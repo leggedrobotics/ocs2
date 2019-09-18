@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef QUADROTOR_DEFINITIONS_OCS2_H_
-#define QUADROTOR_DEFINITIONS_OCS2_H_
+#pragma once
 
 #include <cstddef>
 
@@ -42,5 +41,3 @@ enum quadrotor : size_t {
 
 }  // namespace quadrotor
 }  // namespace ocs2
-
-#endif  // DEFINITIONS_OCS2_H_

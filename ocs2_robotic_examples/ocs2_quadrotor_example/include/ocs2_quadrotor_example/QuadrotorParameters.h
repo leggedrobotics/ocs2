@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef QUADROTOR_PARAMETERS_OCS2_H_
-#define QUADROTOR_PARAMETERS_OCS2_H_
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -94,5 +93,3 @@ class QuadrotorParameters {
 
 }  // namespace quadrotor
 }  // namespace ocs2
-
-#endif  // QUADROTOR_PARAMETERS_OCS2_H_

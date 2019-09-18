@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef QUADROTOR_DYNAMICS_Derivatives_OCS2_H_
-#define QUADROTOR_DYNAMICS_Derivatives_OCS2_H_
+#pragma once
 
 #include <ocs2_core/dynamics/DerivativesBase.h>
 
@@ -39,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace quadrotor {
 
-class QuadrotorDynamicsDerivatives : public DerivativesBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> {
+class QuadrotorDynamicsDerivatives final : public DerivativesBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -56,23 +55,11 @@ class QuadrotorDynamicsDerivatives : public DerivativesBase<quadrotor::STATE_DIM
 
   QuadrotorDynamicsDerivatives(const quadrotor_parameters_t& quadrotorParameters) : param_(quadrotorParameters) {}
 
-  ~QuadrotorDynamicsDerivatives() = default;
+  ~QuadrotorDynamicsDerivatives() override = default;
 
-  /**
-   * Returns pointer to the class.
-   *
-   * @return A raw pointer to the class.
-   */
-  virtual QuadrotorDynamicsDerivatives* clone() const { return new QuadrotorDynamicsDerivatives(*this); }
+  QuadrotorDynamicsDerivatives* clone() const override { return new QuadrotorDynamicsDerivatives(*this); }
 
-  /**
-   * Sets the current time, state, and control inpout.
-   *
-   * @param [in] t: Current time.
-   * @param [in] x: Current state.
-   * @param [in] u: Current input.
-   */
-  virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
+  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override {
     // BASE class method
     BASE::setCurrentStateAndControl(t, x, u);
 
@@ -82,11 +69,7 @@ class QuadrotorDynamicsDerivatives : public DerivativesBase<quadrotor::STATE_DIM
     jacobianOfAngularVelocityMapping_ = JacobianOfAngularVelocityMapping(eulerAngle, angularVelocity).transpose();
   }
 
-  /**
-   * TODO
-   * @param A
-   */
-  void getFlowMapDerivativeState(state_matrix_t& A) {
+  void getFlowMapDerivativeState(state_matrix_t& A) override {
     // positions
     scalar_t qxQ = BASE::x_(0);  // x
     scalar_t qyQ = BASE::x_(1);  // y
@@ -171,11 +154,7 @@ class QuadrotorDynamicsDerivatives : public DerivativesBase<quadrotor::STATE_DIM
     A(11, 11) = param_.Thzz_ * dqth * t6 * t7 * t10;
   }
 
-  /**
-   * TODO
-   * @param B
-   */
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) {
+  void getFlowMapDerivativeInput(state_input_matrix_t& B) override {
     scalar_t qph = BASE::x_(3);
     scalar_t qth = BASE::x_(4);
     scalar_t qps = BASE::x_(5);
@@ -211,5 +190,3 @@ class QuadrotorDynamicsDerivatives : public DerivativesBase<quadrotor::STATE_DIM
 
 }  // namespace quadrotor
 }  // namespace ocs2
-
-#endif /* QUADROTOR_DYNAMICS_Derivatives_OCS2_H_ */

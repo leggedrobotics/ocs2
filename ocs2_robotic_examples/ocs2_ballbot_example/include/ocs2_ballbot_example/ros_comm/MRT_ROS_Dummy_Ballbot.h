@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef MRT_ROS_DUMMY_BALLBOT_OCS2_H_
-#define MRT_ROS_DUMMY_BALLBOT_OCS2_H_
+#pragma once
 
 #include <tf/tf.h>
 #include <tf/transform_broadcaster.h>
@@ -42,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace ballbot {
 
-class MRT_ROS_Dummy_Ballbot : public MRT_ROS_Dummy_Loop<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> {
+class MRT_ROS_Dummy_Ballbot final : public MRT_ROS_Dummy_Loop<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -213,5 +212,3 @@ class MRT_ROS_Dummy_Ballbot : public MRT_ROS_Dummy_Loop<ballbot::STATE_DIM_, bal
 
 }  // namespace ballbot
 }  // namespace ocs2
-
-#endif /* MRT_ROS_DUMMY_BALLBOT_OCS2_H_ */

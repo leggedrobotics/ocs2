@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef QUADROTOR_SYSTEM_DYNAMICS_OCS2_H_
-#define QUADROTOR_SYSTEM_DYNAMICS_OCS2_H_
+#pragma once
 
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 
@@ -39,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace quadrotor {
 
-class QuadrotorSystemDynamics : public ControlledSystemBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> {
+class QuadrotorSystemDynamics final : public ControlledSystemBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -62,24 +61,12 @@ class QuadrotorSystemDynamics : public ControlledSystemBase<quadrotor::STATE_DIM
   /**
    * Destructor
    */
-  ~QuadrotorSystemDynamics() = default;
+  ~QuadrotorSystemDynamics() override = default;
 
-  /**
-   * Returns pointer to the class.
-   *
-   * @return A raw pointer to the class.
-   */
-  virtual QuadrotorSystemDynamics* clone() const { return new QuadrotorSystemDynamics(*this); }
+  QuadrotorSystemDynamics* clone() const override { return new QuadrotorSystemDynamics(*this); }
 
-  /**
-   * TODO
-   *
-   * @param [in] time: time.
-   * @param [in] state: state vector.
-   * @param [in] input: input vector
-   * @param [out] stateDerivative: state vector time derivative.
-   */
-  void computeFlowMap(const scalar_t& time, const state_vector_t& state, const input_vector_t& input, state_vector_t& stateDerivative) {
+  void computeFlowMap(const scalar_t& time, const state_vector_t& state, const input_vector_t& input,
+                      state_vector_t& stateDerivative) override {
     // angular velocities to Euler angle Derivatives transformation
     Eigen::Matrix<scalar_t, 3, 1> eulerAngle = state.segment<3>(3);
     Eigen::Matrix<scalar_t, 3, 3> T = AngularVelocitiesToEulerAngleDerivativesMatrix<scalar_t>(eulerAngle);
@@ -155,5 +142,3 @@ class QuadrotorSystemDynamics : public ControlledSystemBase<quadrotor::STATE_DIM
 
 }  // namespace quadrotor
 }  // namespace ocs2
-
-#endif /* QUADROTOR_SYSTEM_DYNAMICS_OCS2_H_ */

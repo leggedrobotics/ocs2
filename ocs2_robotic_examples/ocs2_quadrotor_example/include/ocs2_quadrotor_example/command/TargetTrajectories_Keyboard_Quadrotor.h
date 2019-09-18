@@ -46,7 +46,7 @@ namespace quadrotor {
  * @tparam SCALAR_T: scalar type.
  */
 template <typename SCALAR_T>
-class TargetTrajectories_Keyboard_Quadrotor : public ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T> {
+class TargetTrajectories_Keyboard_Quadrotor final : public ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -92,14 +92,14 @@ class TargetTrajectories_Keyboard_Quadrotor : public ocs2::TargetTrajectories_Ke
   /**
    * Default destructor
    */
-  ~TargetTrajectories_Keyboard_Quadrotor() = default;
+  ~TargetTrajectories_Keyboard_Quadrotor() override = default;
 
   void observationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) {
     std::lock_guard<std::mutex> lock(latestObservationMutex_);
     latestObservation_ = msg;
   }
 
-  cost_desired_trajectories_t toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) final {
+  cost_desired_trajectories_t toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) override {
     SystemObservation<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> observation;
     ::ros::spinOnce();
     {

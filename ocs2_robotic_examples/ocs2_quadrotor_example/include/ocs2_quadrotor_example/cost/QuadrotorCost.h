@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef QUADROTOR_COST_OCS2_H_
-#define QUADROTOR_COST_OCS2_H_
+#pragma once
 
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
@@ -71,7 +70,7 @@ class QuadrotorCost final : public QuadraticCostFunction<quadrotor::STATE_DIM_, 
   /**
    * Destructor
    */
-  ~QuadrotorCost() = default;
+  ~QuadrotorCost() override = default;
 
   /**
    * Returns pointer to the class.
@@ -102,5 +101,3 @@ class QuadrotorCost final : public QuadraticCostFunction<quadrotor::STATE_DIM_, 
 
 }  // namespace quadrotor
 }  // namespace ocs2
-
-#endif  // QUADROTOR_COST_OCS2_H_

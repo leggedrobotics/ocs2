@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef BALLBOTINTERFACE_OCS2_BALLBOT_OCS2_H_
-#define BALLBOTINTERFACE_OCS2_BALLBOT_OCS2_H_
+#pragma once
 
 // C++
 #include <cstdlib>
@@ -107,7 +106,7 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
    *
    * @param [in] taskFile: Task's file full path.
    */
-  void loadSettings(const std::string& taskFile) final;
+  void loadSettings(const std::string& taskFile);
 
   /**************
    * Variables
@@ -139,5 +138,3 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
 
 }  // namespace ballbot
 }  // namespace ocs2
-
-#endif /* BALLBOTINTERFACE_OCS2_BALLBOT_OCS2_H_ */

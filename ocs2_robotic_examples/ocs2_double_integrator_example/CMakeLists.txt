@@ -38,18 +38,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 ###################################
 
 catkin_package(
-        INCLUDE_DIRS
-            include
-            ${EIGEN3_INCLUDE_DIRS}
-        CATKIN_DEPENDS
-            ocs2_core
-            ocs2_slq
-            ocs2_ocs2
-            ocs2_mpc
-            ocs2_comm_interfaces
-            ocs2_robotic_tools
-        DEPENDS
-            Boost
+  INCLUDE_DIRS
+    include
+    ${EIGEN3_INCLUDE_DIRS}
+  CATKIN_DEPENDS
+    ocs2_core
+    ocs2_slq
+    ocs2_ocs2
+    ocs2_mpc
+    ocs2_comm_interfaces
+    ocs2_robotic_tools
+  DEPENDS
+    Boost
 )
 
 ###########
@@ -57,36 +57,36 @@ catkin_package(
 ###########
 
 include_directories(
-        include
-        ${EIGEN3_INCLUDE_DIRS}
-        ${Boost_INCLUDE_DIRS}
-        ${catkin_INCLUDE_DIRS}
+  include
+  ${EIGEN3_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS}
 )
 
 # double integrator interface library
 add_library(double_integrator_interface
-        src/DoubleIntegratorInterface.cpp
-        )
+  src/DoubleIntegratorInterface.cpp
+)
 add_dependencies(double_integrator_interface
-        ${catkin_EXPORTED_TARGETS}
-        )
+  ${catkin_EXPORTED_TARGETS}
+)
 target_link_libraries(double_integrator_interface
-        ${catkin_LIBRARIES}
-        ${Boost_LIBRARIES}
-        dl
-        )
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  dl
+)
 
 # Mpc node
 add_executable(double_integrator_mpc
-        src/MPC_Double_Integrator_Node.cpp
-        )
+  src/MPC_Double_Integrator_Node.cpp
+)
 add_dependencies(double_integrator_mpc
-        ${catkin_EXPORTED_TARGETS}
-        )
+  ${catkin_EXPORTED_TARGETS}
+)
 target_link_libraries(double_integrator_mpc
-        double_integrator_interface
-        ${catkin_LIBRARIES}
-        )
+  double_integrator_interface
+  ${catkin_LIBRARIES}
+)
 
 add_executable(double_integrator_pi
   src/PI_Double_Integrator.cpp
@@ -102,27 +102,27 @@ target_link_libraries(double_integrator_pi
 
 # Dummy node
 add_executable(double_integrator_dummy_test
-        src/Dummy_Double_Integrator_Node.cpp
-        )
+  src/Dummy_Double_Integrator_Node.cpp
+)
 add_dependencies(double_integrator_dummy_test
-        ${catkin_EXPORTED_TARGETS}
-        )
+  ${catkin_EXPORTED_TARGETS}
+)
 target_link_libraries(double_integrator_dummy_test
-        double_integrator_interface
-        ${catkin_LIBRARIES}
-        )
+  double_integrator_interface
+  ${catkin_LIBRARIES}
+)
 
 # Target node
 add_executable(double_integrator_target
-        src/DoubleIntegratorTargetPoseCommand.cpp
-        )
+  src/DoubleIntegratorTargetPoseCommand.cpp
+)
 add_dependencies(double_integrator_target
-        ${catkin_EXPORTED_TARGETS}
-        )
+  ${catkin_EXPORTED_TARGETS}
+)
 target_link_libraries(double_integrator_target
-        ${catkin_LIBRARIES}
-        ${Boost_LIBRARIES}
-        )
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
 
 # Pybindings Cpp library
 add_library(DoubleIntegratorPyBindings_Cpp

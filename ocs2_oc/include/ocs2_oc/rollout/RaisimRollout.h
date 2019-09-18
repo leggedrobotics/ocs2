@@ -58,14 +58,21 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
         inputToRaisimGeneralizedForce_(std::move(inputToRaisimGeneralizedForce)),
         dataExtractionCallback_(dataExtractionCallback) {
     system_ = world_.addArticulatedSystem(pathToUrdf);
+
+    std::cout << "Instatiated Raisim System with DoF = " << system_->getDOF() << std::endl;
+
     ground_ = world_.addGround();
     world_.setTimeStep(this->settings().minTimeStep_);
+    //    raisim::Vec<3> gravity;
+    //    gravity.setZero();
+    //    world_.setGravity(gravity);
   }
 
   state_vector_t run(size_t partitionIndex, scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
                      controller_t* controller, logic_rules_machine_t& logicRulesMachine, scalar_array_t& timeTrajectory,
                      size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
                      input_vector_array_t& inputTrajectory) override {
+    std::cout << "Starting RaisimRollout" << std::endl;
     // Prepare arrays
     const auto numSteps = static_cast<int>(std::round((finalTime - initTime) / this->settings().minTimeStep_));
     timeTrajectory.clear();
@@ -83,6 +90,7 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
     // Forward simulate
     for (int i = 0; i < numSteps; i++) {
+      std::cout << "RaisimRollout step " << i << " of " << numSteps << std::endl;
       world_.integrate1();  // prepares all dynamical quantities for current time step
 
       Eigen::VectorXd raisim_q, raisim_dq;
@@ -98,8 +106,11 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
       stateTrajectory.emplace_back(raisimGenCoordGenVelToState_(raisim_q, raisim_dq));
 
       input_vector_t input = controller->computeInput(time, stateTrajectory.back());
-      inputTrajectory.emplace_back(input);
-      system_->setGeneralizedForce(inputToRaisimGeneralizedForce_(time, input, stateTrajectory.back()));
+      inputTrajectory.push_back(input);
+
+      Eigen::VectorXd tau = inputToRaisimGeneralizedForce_(time, input, stateTrajectory.back());
+      assert(tau.rows() == system_->getDOF());
+      system_->setGeneralizedForce(tau);
 
       world_.integrate2();
     }
@@ -119,7 +130,11 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
     }
 
     input_vector_t input = controller->computeInput(timeTrajectory.back(), stateTrajectory.back());
-    inputTrajectory.emplace_back(input);
+    inputTrajectory.push_back(input);
+
+    std::cout << "RaisimRollout done." << std::endl;
+
+    return stateTrajectory.back();
   }
 
  protected:

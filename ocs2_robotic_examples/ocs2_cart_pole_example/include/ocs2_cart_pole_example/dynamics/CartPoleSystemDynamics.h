@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef CART_POLE_SYSTEM_DYNAMICS_OCS2_H_
-#define CART_POLE_SYSTEM_DYNAMICS_OCS2_H_
+#pragma once
 
 #include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
@@ -44,11 +43,11 @@ class CartPoleSytemDynamics : public SystemDynamicsBaseAD<cartpole::STATE_DIM_, 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using BASE = SystemDynamicsBaseAD<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, 1>;
-  using typename BASE::scalar_t;
-  using typename BASE::state_vector_t;
-  using typename BASE::state_matrix_t;
   using typename BASE::input_vector_t;
+  using typename BASE::scalar_t;
   using typename BASE::state_input_matrix_t;
+  using typename BASE::state_matrix_t;
+  using typename BASE::state_vector_t;
 
   using cart_pole_parameters_t = CartPoleParameters<scalar_t>;
 
@@ -87,5 +86,3 @@ class CartPoleSytemDynamics : public SystemDynamicsBaseAD<cartpole::STATE_DIM_, 
 
 }  // namespace cartpole
 }  // namespace ocs2
-
-#endif  // CART_POLE_SYSTEM_DYNAMICS_OCS2_H_

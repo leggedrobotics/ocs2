@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
   if (argc <= 1) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
-  std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+  std::string taskFileFolderName(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
   // doubleSlitInterface
   double_slit::DoubleSlitInterface doubleSlitInterface(taskFileFolderName);

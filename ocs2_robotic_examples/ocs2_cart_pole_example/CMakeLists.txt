@@ -93,19 +93,19 @@ target_link_libraries(cartpole_dummy_test
 #########################
 ###   CLANG TOOLING   ###
 #########################
-#find_package(cmake_clang_tools QUIET)
-#if(cmake_clang_tools_FOUND)
-#  message(STATUS "Run clang tooling for target ocs2_cart_pole_example")
-#  add_clang_tooling(
-#    TARGETS
-#        cartpole_interface
-#        cartpole_mpc
-#        cartpole_dummy_test
-#    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
-#    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
-#    CF_WERROR
-#  )
-#endif(cmake_clang_tools_FOUND)
+find_package(cmake_clang_tools QUIET)
+if(cmake_clang_tools_FOUND)
+  message(STATUS "Run clang tooling for target ocs2_cart_pole_example")
+  add_clang_tooling(
+    TARGETS
+        cartpole_interface
+        cartpole_mpc
+        cartpole_dummy_test
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CF_WERROR
+  )
+endif(cmake_clang_tools_FOUND)
 
 #############
 ## Install ##

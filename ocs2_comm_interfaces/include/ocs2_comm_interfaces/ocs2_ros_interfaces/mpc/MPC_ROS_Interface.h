@@ -120,11 +120,11 @@ class MPC_ROS_Interface {
   /**
    * Constructor.
    *
-   * @param [in] mpcPtr: The MPC pointer to be interfaced.
+   * @param [in] mpc: The underlying MPC class to be used.
    * @param [in] robotName: The robot's name.
    * @param [in] taskListenerArray: An array of the shared_ptr to task listeners.
    */
-  explicit MPC_ROS_Interface(mpc_t* mpcPtr, const std::string& robotName = "robot",
+  explicit MPC_ROS_Interface(mpc_t& mpc, const std::string& robotName = "robot",
                              const task_listener_ptr_array_t& taskListenerArray = task_listener_ptr_array_t());
 
   /**
@@ -134,11 +134,8 @@ class MPC_ROS_Interface {
 
   /**
    * Sets the class as its constructor.
-   *
-   * @param [in] mpcPtr: The MPC pointer to be interfaced.
-   * @param [in] robotName: The robot's name.
    */
-  void set(mpc_t* mpcPtr, const std::string& robotName = "robot");
+  void set();
 
   /**
    * Resets the class to its instantiation state.
@@ -240,9 +237,8 @@ class MPC_ROS_Interface {
    * @brief fillMpcOutputBuffers updates the *Buffer variables from the MPC object.
    * This method is automatically called by advanceMpc()
    * @param [in] mpcInitObservation: The observation used to run the MPC.
-   * @param [in] mpc: A reference to the MPC instance.
    */
-  void fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc);
+  void fillMpcOutputBuffers(system_observation_t mpcInitObservation);
 
   /**
    * The callback method which receives the current observation, invokes the MPC algorithm,
@@ -270,7 +266,7 @@ class MPC_ROS_Interface {
   /*
    * Variables
    */
-  mpc_t* mpcPtr_;
+  mpc_t& mpc_;
 
   std::string robotName_;
 

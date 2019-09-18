@@ -27,51 +27,46 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
+
 #include "ocs2_double_integrator_example/DoubleIntegratorInterface.h"
 #include "ocs2_double_integrator_example/definitions.h"
-#include "ocs2_double_integrator_example/ros_comm/MRT_ROS_Double_Integrator.h"
 #include "ocs2_double_integrator_example/ros_comm/MRT_ROS_Dummy_Double_Integrator.h"
 
 using namespace ocs2;
-using namespace double_integrator;
 
 int main(int argc, char** argv) {
   // task file
   if (argc <= 1) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
-  std::string taskFileFolderName = std::string(argv[1]);
+  std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
   // double_integratorInterface
-  DoubleIntegratorInterface double_integratorInterface(taskFileFolderName);
+  double_integrator::DoubleIntegratorInterface double_integratorInterface(taskFileFolderName);
 
-  using mrt_base_ptr_t = MRT_ROS_Dummy_Linear_System::mrt_ptr_t;
-  using system_observation_t = MRT_ROS_Dummy_Linear_System::system_observation_t;
-
-  mrt_base_ptr_t mrtPtr(new MRT_ROS_Double_Integrator("double_integrator"));
+  using mrt_base_ptr_t = double_integrator::MRT_ROS_Dummy_Linear_System::mrt_ptr_t;
+  mrt_base_ptr_t mrtPtr(new MRT_ROS_Interface<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>("double_integrator"));
 
   // Dummy double_integrator
-  MRT_ROS_Dummy_Linear_System dummyDoubleIntegrator(mrtPtr, double_integratorInterface.mpcSettings().mrtDesiredFrequency_,
-                                                    double_integratorInterface.mpcSettings().mpcDesiredFrequency_,
-                                                    &double_integratorInterface.getDynamics());
+  double_integrator::MRT_ROS_Dummy_Linear_System dummyDoubleIntegrator(
+      mrtPtr, double_integratorInterface.mpcSettings().mrtDesiredFrequency_, double_integratorInterface.mpcSettings().mpcDesiredFrequency_,
+      &double_integratorInterface.getDynamics());
 
   dummyDoubleIntegrator.launchNodes(argc, argv);
 
   // initialize state
-  MRT_ROS_Dummy_Linear_System::system_observation_t initObservation;
+  double_integrator::MRT_ROS_Dummy_Linear_System::system_observation_t initObservation;
   double_integratorInterface.getInitialState(initObservation.state());
 
   // initial command
-  MRT_ROS_Dummy_Linear_System::cost_desired_trajectories_t initCostDesiredTrajectories;
+  double_integrator::MRT_ROS_Dummy_Linear_System::cost_desired_trajectories_t initCostDesiredTrajectories;
   initCostDesiredTrajectories.desiredTimeTrajectory().resize(1);
-
+  initCostDesiredTrajectories.desiredTimeTrajectory().front() = 0.0;
   initCostDesiredTrajectories.desiredStateTrajectory().resize(1);
-  initCostDesiredTrajectories.desiredStateTrajectory().front().resize(STATE_DIM_);
-  initCostDesiredTrajectories.desiredStateTrajectory().front().head<1>().setZero(); /*targetPoseDisplacement*/
-  initCostDesiredTrajectories.desiredStateTrajectory().front().tail<1>().setZero(); /*targetVelocity*/
-
+  initCostDesiredTrajectories.desiredStateTrajectory().front().setZero(double_integrator::STATE_DIM_);
   initCostDesiredTrajectories.desiredInputTrajectory().resize(1);
-  initCostDesiredTrajectories.desiredInputTrajectory().front().setZero(INPUT_DIM_);
+  initCostDesiredTrajectories.desiredInputTrajectory().front().setZero(double_integrator::INPUT_DIM_);
 
   // run dummy
   dummyDoubleIntegrator.run(initObservation, initCostDesiredTrajectories);

@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef MRT_ROS_DUMMY_QUADROTOR_OCS2_H_
-#define MRT_ROS_DUMMY_QUADROTOR_OCS2_H_
+#pragma once
 
 #include <tf/transform_broadcaster.h>
 
@@ -38,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace quadrotor {
 
-class MRT_ROS_Dummy_Quadrotor : public MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> {
+class MRT_ROS_Dummy_Quadrotor final : public MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -62,7 +61,7 @@ class MRT_ROS_Dummy_Quadrotor : public MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_,
   /**
    * Default destructor.
    */
-  virtual ~MRT_ROS_Dummy_Quadrotor() = default;
+  ~MRT_ROS_Dummy_Quadrotor() override = default;
 
  protected:
   void publishVisualizer(const system_observation_t& observation, const primal_solution_t& policy, const command_data_t& command) override {
@@ -78,5 +77,3 @@ class MRT_ROS_Dummy_Quadrotor : public MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_,
 
 }  // namespace quadrotor
 }  // namespace ocs2
-
-#endif /* MRT_ROS_DUMMY_QUADROTOR_OCS2_H_ */

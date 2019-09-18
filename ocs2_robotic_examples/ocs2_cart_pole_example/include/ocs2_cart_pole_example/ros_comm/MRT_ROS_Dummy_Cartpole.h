@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef MRT_ROS_DUMMY_CARTPOLE_OCS2_H_
-#define MRT_ROS_DUMMY_CARTPOLE_OCS2_H_
+#pragma once
 
 #include <ocs2_comm_interfaces/test/MRT_ROS_Dummy_Loop.h>
 #include "ocs2_cart_pole_example/definitions.h"
@@ -96,5 +95,3 @@ class MRT_ROS_Dummy_Cartpole : public MRT_ROS_Dummy_Loop<cartpole::STATE_DIM_, c
 
 }  // namespace cartpole
 }  // namespace ocs2
-
-#endif /* MRT_ROS_DUMMY_CARTPOLE_OCS2_H_ */

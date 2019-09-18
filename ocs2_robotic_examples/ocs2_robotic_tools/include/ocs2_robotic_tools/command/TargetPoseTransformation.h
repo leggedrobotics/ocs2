@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef TARGETPOSETRANSFORMATION_OCS2_H_
-#define TARGETPOSETRANSFORMATION_OCS2_H_
+#pragma once
 
 #include <vector>
 #include <csignal>
@@ -203,5 +202,3 @@ private:
 };
 
 } // namespace ocs2
-
-#endif /* TARGETPOSETRANSFORMATION_OCS2_H_ */

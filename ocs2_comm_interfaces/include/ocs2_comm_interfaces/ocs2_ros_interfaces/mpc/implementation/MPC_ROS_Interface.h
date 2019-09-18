@@ -327,7 +327,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_
     mpcPtr_->getSolverPtr()->swapCostDesiredTrajectories(costDesiredTrajectoriesBuffer_);
     costDesiredTrajectoriesBufferUpdated_ = false;
 
-    if (mpcSettings_.debugPrint_) {
+    if (mpcPtr_->settings().debugPrint_) {
       std::cerr << "### The target position is updated to " << std::endl;
       mpcPtr_->getSolverPtr()->getCostDesiredTrajectories().display();
     }

@@ -48,7 +48,7 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class SensitivitySequentialRiccatiEquations : public OdeBase<STATE_DIM*(STATE_DIM + 1) / 2 + STATE_DIM + 1> {
+class SensitivitySequentialRiccatiEquations final : public OdeBase<STATE_DIM*(STATE_DIM + 1) / 2 + STATE_DIM + 1> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -89,14 +89,14 @@ class SensitivitySequentialRiccatiEquations : public OdeBase<STATE_DIM*(STATE_DI
   /**
    * Default destructor.
    */
-  ~SensitivitySequentialRiccatiEquations() = default;
+  ~SensitivitySequentialRiccatiEquations() override = default;
 
   /**
    * Returns pointer to the class.
    *
    * @return A raw pointer to the class.
    */
-  virtual SensitivitySequentialRiccatiEquations<STATE_DIM, INPUT_DIM>* clone() const {
+  SensitivitySequentialRiccatiEquations<STATE_DIM, INPUT_DIM>* clone() const {
     return new SensitivitySequentialRiccatiEquations<STATE_DIM, INPUT_DIM>(*this);
   }
 
@@ -188,13 +188,6 @@ class SensitivitySequentialRiccatiEquations : public OdeBase<STATE_DIM*(STATE_DI
   }
 
   /**
-   * Reset the sensitivity Riccati equation
-   */
-  void reset() {
-    // TODO(ruben) remove this function and its callers
-  }
-
-  /**
    * Sets the multiplier of exogenous part of the equation. It is either zero
    * or plus-minus 1/(s_{i+1}-s_{i})
    *
@@ -208,7 +201,7 @@ class SensitivitySequentialRiccatiEquations : public OdeBase<STATE_DIM*(STATE_DI
    * @param [in] allSs
    * @param [out] derivatives
    */
-  void computeFlowMap(const scalar_t& z, const s_vector_t& allSs, s_vector_t& derivatives) {
+  void computeFlowMap(const scalar_t& z, const s_vector_t& allSs, s_vector_t& derivatives) override {
     BASE::numFunctionCalls_++;
 
     // denormalized time

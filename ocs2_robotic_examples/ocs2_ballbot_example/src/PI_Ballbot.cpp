@@ -5,8 +5,6 @@
 using namespace ocs2;
 
 int main(int argc, char* argv[]) {
-  //  feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
-
   // task file
   if (argc <= 1) {
     throw std::runtime_error("No task file specified. Aborting.");

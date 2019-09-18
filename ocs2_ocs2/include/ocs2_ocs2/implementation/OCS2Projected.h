@@ -149,11 +149,15 @@ SLQ_Settings& OCS2Projected<STATE_DIM, INPUT_DIM>::slqSettings() {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 size_t OCS2Projected<STATE_DIM, INPUT_DIM>::findNearestController(const dynamic_vector_t& enquiryParameter) const {
-  if (parameterBag_.size() == 0) throw std::runtime_error("controllerStock bag is empty.");
+  if (parameterBag_.size() == 0) {
+    throw std::runtime_error("controllerStock bag is empty.");
+  }
 
   // evaluating distance
   std::vector<scalar_t> distance(parameterBag_.size());
-  for (size_t i = 0; i < parameterBag_.size(); i++) distance[i] = (parameterBag_[i] - enquiryParameter).squaredNorm();
+  for (size_t i = 0; i < parameterBag_.size(); i++) {
+    distance[i] = (parameterBag_[i] - enquiryParameter).squaredNorm();
+  }
 
   // min index
   auto it = std::min_element(distance.begin(), distance.end());
@@ -168,9 +172,12 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void OCS2Projected<STATE_DIM, INPUT_DIM>::calculateLinearEqualityConstraint(dynamic_matrix_t& Am, dynamic_vector_t& Bv) {
   Am = dynamic_matrix_t::Zero(BASE::numParameters() + 1, BASE::numParameters());
   for (size_t i = 0; i < BASE::numParameters() + 1; i++) {
-    if (i < BASE::numParameters()) Am(i, i) = -1.0;
-
-    if (i > 0) Am(i, i - 1) = 1.0;
+    if (i < BASE::numParameters()) {
+      Am(i, i) = -1.0;
+    }
+    if (i > 0) {
+      Am(i, i - 1) = 1.0;
+    }
   }
 
   Bv = dynamic_vector_t::Zero(BASE::numParameters() + 1);
@@ -204,7 +211,9 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 bool OCS2Projected<STATE_DIM, INPUT_DIM>::calculateCost(const size_t& id, const dynamic_vector_t& parameters, scalar_t& cost) {
   // switching time vector
   scalar_array_t eventTimes(BASE::numParameters());
-  for (size_t j = 0; j < BASE::numParameters(); j++) eventTimes[j] = parameters(j);
+  for (size_t j = 0; j < BASE::numParameters(); j++) {
+    eventTimes[j] = parameters(j);
+  }
 
   // TODO
   std::share_ptr<HybridLogicRules> logicRules(new HybridLogicRules());
@@ -300,7 +309,9 @@ void OCS2Projected<STATE_DIM, INPUT_DIM>::getSolution(size_t idStar) {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void OCS2Projected<STATE_DIM, INPUT_DIM>::rewindOptimizer(const size_t& firstIndex, bool initRun /*=false*/) {
   // rewind SLQ solvers
-  for (size_t i = 0; i < slqSolverPtrs_.size(); i++) slqSolverPtrs_[i]->rewindOptimizer(firstIndex, initRun);
+  for (size_t i = 0; i < slqSolverPtrs_.size(); i++) {
+    slqSolverPtrs_[i]->rewindOptimizer(firstIndex, initRun);
+  }
 }
 
 /******************************************************************************************************/
@@ -308,7 +319,9 @@ void OCS2Projected<STATE_DIM, INPUT_DIM>::rewindOptimizer(const size_t& firstInd
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void OCS2Projected<STATE_DIM, INPUT_DIM>::setupOptimizer(const size_t& numPartitions) {
-  if (numPartitions == 0) throw std::runtime_error("Number of partitions cannot be zero!");
+  if (numPartitions == 0) {
+    throw std::runtime_error("Number of partitions cannot be zero!");
+  }
 }
 
 /******************************************************************************************************/
@@ -343,7 +356,9 @@ void OCS2Projected<STATE_DIM, INPUT_DIM>::run(
     // set the settings (they might have been modified after construction)
     slqSolverPtrs_[i]->settings() = slqSettings_;
     // update cost's desired trajectory if it is set
-    if (costDesiredTrajectories.empty() == false) slqSolverPtrs_[i]->setCostDesiredTrajectories(costDesiredTrajectories);
+    if (costDesiredTrajectories.empty() == false) {
+      slqSolverPtrs_[i]->setCostDesiredTrajectories(costDesiredTrajectories);
+    }
   }
 
   // from std vector to eEigen vector

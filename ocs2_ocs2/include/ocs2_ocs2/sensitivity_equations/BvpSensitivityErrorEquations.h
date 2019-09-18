@@ -47,7 +47,7 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class BvpSensitivityErrorEquations : public OdeBase<STATE_DIM> {
+class BvpSensitivityErrorEquations final : public OdeBase<STATE_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -83,14 +83,14 @@ class BvpSensitivityErrorEquations : public OdeBase<STATE_DIM> {
   /**
    * Default destructor.
    */
-  ~BvpSensitivityErrorEquations() = default;
+  ~BvpSensitivityErrorEquations() override = default;
 
   /**
    * Returns pointer to the class.
    *
    * @return A raw pointer to the class.
    */
-  virtual BvpSensitivityErrorEquations<STATE_DIM, INPUT_DIM>* clone() const {
+  BvpSensitivityErrorEquations<STATE_DIM, INPUT_DIM>* clone() const {
     return new BvpSensitivityErrorEquations<STATE_DIM, INPUT_DIM>(*this);
   }
 
@@ -113,11 +113,6 @@ class BvpSensitivityErrorEquations : public OdeBase<STATE_DIM> {
     EvDevProjectedFunc_.setData(timeStampPtr, EvDevProjectedPtr);
     SmFunc_.setData(SmTimeStampPtr, SmPtr);
   }
-
-  /**
-   * Reset the Riccati equation
-   */
-  void reset() {}
 
   /**
    * Computes Derivative

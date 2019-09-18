@@ -96,7 +96,9 @@ inline void EventTimeIndexer::display() const {
     for (const auto& pi : partitions) {
       std::cerr << pi << ", ";
     }
-    if (!partitions.empty()) std::cerr << "\b\b";
+    if (!partitions.empty()) {
+      std::cerr << "\b\b";
+    }
     std::cerr << "},  ";
   }
   std::cerr << std::endl;
@@ -110,7 +112,9 @@ inline void EventTimeIndexer::display() const {
     for (const auto& i : indeces) {
       std::cerr << i << ", ";
     }
-    if (!indeces.empty()) std::cerr << "\b\b";
+    if (!indeces.empty()) {
+      std::cerr << "\b\b";
+    }
     std::cerr << "},  ";
   }
   std::cerr << std::endl;
@@ -130,7 +134,9 @@ void EventTimeIndexer::findSubsystemActiveTimeIntervals(const size_t& subsystemI
   const int_array_t& coveringPartitions = partitionsDistribution_[subsystemIndex];
 
   // subsystems which are out of the time partitions coverage
-  if (coveringPartitions[0] == -1 || coveringPartitions[0] == numPartitions_) return;
+  if (coveringPartitions[0] == -1 || coveringPartitions[0] == numPartitions_) {
+    return;
+  }
 
   // The point is that either subsystemsIndeces_[subsystemIndex has no elements (the above return case)
   // or it has the same number of elements as coveringPartitions.
@@ -156,7 +162,9 @@ void EventTimeIndexer::findSubsystemActiveTimeIntervals(const size_t& subsystemI
       size_array_t eventsPastTheEndIndeces(NE + 2);
       eventsPastTheEndIndeces[0] = 0;
       eventsPastTheEndIndeces[NE + 1] = timeTrajectoriesStock[p].size();
-      for (size_t j = 0; j < NE; j++) eventsPastTheEndIndeces[j + 1] = eventsPastTheEndIndecesStock[p][j];
+      for (size_t j = 0; j < NE; j++) {
+        eventsPastTheEndIndeces[j + 1] = eventsPastTheEndIndecesStock[p][j];
+      }
       range_t range = std::make_pair(eventsPastTheEndIndeces[index - numInactiveSubsystems],
                                      eventsPastTheEndIndeces[index + 1 - numInactiveSubsystems]);
       subsystemRange.emplace_back(p, range);
@@ -181,11 +189,14 @@ inline void EventTimeIndexer::findPartitionsDistribution(const size_t& numSubsys
     subsystemsIndeces[subsystem].clear();
 
     for (int j = partitionIndex; j < numPartitions_; j++) {
-      if (j > partitionIndex) indexInPartition = -1;
-
+      if (j > partitionIndex) {
+        indexInPartition = -1;
+      }
       it = std::find(eventCountersStock[j].begin() + indexInPartition + 1, eventCountersStock[j].end(), subsystem);
       if (it == eventCountersStock[j].end()) {
-        if (j > partitionIndex) break;
+        if (j > partitionIndex) {
+          break;
+        }
       } else {
         indexInPartition = it - eventCountersStock[j].begin();
         subsystemsIndeces[subsystem].push_back((size_t)indexInPartition);

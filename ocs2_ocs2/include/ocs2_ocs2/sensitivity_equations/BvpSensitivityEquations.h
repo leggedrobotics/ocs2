@@ -47,7 +47,7 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class BvpSensitivityEquations : public OdeBase<STATE_DIM> {
+class BvpSensitivityEquations final : public OdeBase<STATE_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -88,7 +88,7 @@ class BvpSensitivityEquations : public OdeBase<STATE_DIM> {
    *
    * @return A raw pointer to the class.
    */
-  virtual BvpSensitivityEquations<STATE_DIM, INPUT_DIM>* clone() const { return new BvpSensitivityEquations<STATE_DIM, INPUT_DIM>(*this); }
+  BvpSensitivityEquations<STATE_DIM, INPUT_DIM>* clone() const { return new BvpSensitivityEquations<STATE_DIM, INPUT_DIM>(*this); }
 
   /**
    * Sets Data
@@ -113,11 +113,6 @@ class BvpSensitivityEquations : public OdeBase<STATE_DIM> {
     KmConstrainedFunc_.setData(controllerTimeStampPtr, KmConstrainedPtr);
     SmFunc_.setData(controllerTimeStampPtr, SmPtr);
   }
-
-  /**
-   * Reset the Riccati equation
-   */
-  void reset() {}
 
   /**
    * Sets the multiplier of exogenous part of the equation. It is either zero

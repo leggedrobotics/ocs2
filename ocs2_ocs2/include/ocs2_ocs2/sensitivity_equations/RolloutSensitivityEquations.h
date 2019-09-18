@@ -48,7 +48,7 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class RolloutSensitivityEquations : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
+class RolloutSensitivityEquations final : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -78,14 +78,14 @@ class RolloutSensitivityEquations : public ControlledSystemBase<STATE_DIM, INPUT
   /**
    * Default destructor.
    */
-  virtual ~RolloutSensitivityEquations() = default;
+  virtual ~RolloutSensitivityEquations() override = default;
 
   /**
    * Returns pointer to the class.
    *
    * @return A raw pointer to the class.
    */
-  virtual RolloutSensitivityEquations<STATE_DIM, INPUT_DIM>* clone() const {
+  virtual RolloutSensitivityEquations<STATE_DIM, INPUT_DIM>* clone() const override {
     return new RolloutSensitivityEquations<STATE_DIM, INPUT_DIM>(*this);
   }
 
@@ -106,11 +106,6 @@ class RolloutSensitivityEquations : public ControlledSystemBase<STATE_DIM, INPUT
   }
 
   /**
-   * Reset the Riccati equation
-   */
-  void reset() {}
-
-  /**
    * Sets the multiplier of exogenous part of the equation. It is either zero
    * or plus-minus 1/(s_{i+1}-s_{i})
    *
@@ -126,7 +121,8 @@ class RolloutSensitivityEquations : public ControlledSystemBase<STATE_DIM, INPUT
    * @param [in] nabla_Uv: input sensitivity vector which is computed by using sensitivity controller.
    * @param [out] derivatives: time derivative of the state sensitivity vector
    */
-  void computeFlowMap(const scalar_t& t, const state_vector_t& nabla_x, const input_vector_t& nabla_u, state_vector_t& derivative) {
+  void computeFlowMap(const scalar_t& t, const state_vector_t& nabla_x, const input_vector_t& nabla_u,
+                      state_vector_t& derivative) override {
     auto indexAlpha = AmFunc_.interpolate(t, Am_);
     BmFunc_.interpolate(indexAlpha, Bm_);
 

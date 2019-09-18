@@ -338,7 +338,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::propagateRolloutSensitivity(size_t workerIndex,
     const size_t NE = eventsPastTheEndIndecesStock[i].size();
 
     // set data for rollout sensitivity equation
-    rolloutSensitivityEquationsPtrStock_[workerIndex]->reset();
+    rolloutSensitivityEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
     rolloutSensitivityEquationsPtrStock_[workerIndex]->setData(
         &dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->AmTrajectoriesStock_[i], &dcPtr_->BmTrajectoriesStock_[i],
         &dcPtr_->nominalFlowMapTrajectoriesStock_[i], &controllersStock[i].timeStamp_, &LvTrajectoriesStock[i],
@@ -519,7 +519,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
     const size_t NE = dcPtr_->SsNormalizedEventsPastTheEndIndecesStock_[i].size();
 
     // set data for Riccati sensitivity equations
-    riccatiSensitivityEquationsPtrStock_[workerIndex]->reset();
+    riccatiSensitivityEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
     riccatiSensitivityEquationsPtrStock_[workerIndex]->setData(
         learningRate, &dcPtr_->SsTimeTrajectoriesStock_[i], &dcPtr_->SmTrajectoriesStock_[i], &dcPtr_->SvTrajectoriesStock_[i],
         &dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->AmTrajectoriesStock_[i], &dcPtr_->BmTrajectoriesStock_[i],
@@ -638,7 +638,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(size_t workerIndex, const s
     }
 
     // set data for Riccati equations
-    bvpSensitivityEquationsPtrStock_[workerIndex]->reset();
     bvpSensitivityEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
     bvpSensitivityEquationsPtrStock_[workerIndex]->setData(
         &dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->AmTrajectoriesStock_[i], &dcPtr_->BmTrajectoriesStock_[i],
@@ -648,7 +647,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(size_t workerIndex, const s
         &dcPtr_->optimizedControllersStock_[i].gainArray_, &dcPtr_->SmTrajectoriesStock_[i]);
 
     // set data for Riccati error equations
-    bvpSensitivityErrorEquationsPtrStock_[workerIndex]->reset();
     bvpSensitivityErrorEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
     bvpSensitivityErrorEquationsPtrStock_[workerIndex]->setData(
         &dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->BmTrajectoriesStock_[i], &dcPtr_->AmConstrainedTrajectoriesStock_[i],

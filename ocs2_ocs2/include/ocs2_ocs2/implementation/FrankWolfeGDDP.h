@@ -46,11 +46,14 @@ void FrankWolfeGDDP<STATE_DIM, INPUT_DIM>::run(scalar_array_t eventTimes, const 
   this->run(eventTimes, dcPtr);
 
   // no need for using Frank-Wolfe if there is no constraint
-  if (!eventTimeConstraintPtr) return;
+  if (!eventTimeConstraintPtr) {
+    return;
+  }
 
   // display
-  if (this->gddpSettings_.displayInfo_)
+  if (this->gddpSettings_.displayInfo_) {
     std::cerr << "Gradient:             " << this->nominalCostFuntionDerivative_.transpose() << std::endl;
+  }
 
   // compute the projected gradient
   dynamic_vector_t fwDescentDirection;

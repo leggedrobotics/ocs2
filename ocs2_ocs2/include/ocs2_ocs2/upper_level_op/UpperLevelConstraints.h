@@ -96,9 +96,12 @@ class UpperLevelConstraints final : public NLP_Constraints {
                                            dynamic_vector_t& Dv) {
     Cm = dynamic_matrix_t::Zero(numEventTimes + 1, numEventTimes);
     for (size_t i = 0; i < numEventTimes + 1; i++) {
-      if (i < numEventTimes) Cm(i, i) = +1.0;
-
-      if (i > 0) Cm(i, i - 1) = -1.0;
+      if (i < numEventTimes) {
+        Cm(i, i) = +1.0;
+      }
+      if (i > 0) {
+        Cm(i, i - 1) = -1.0;
+      }
     }
 
     Dv = dynamic_vector_t::Zero(numEventTimes + 1);

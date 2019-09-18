@@ -7,6 +7,9 @@
 
 #include "ocs2_anymal_switched_model/dynamics/AnymalComKinoDynamics.h"
 
+#include "ocs2_anymal_switched_model/dynamics/AnymalCom.h"
+#include "ocs2_anymal_switched_model/kinematics/AnymalKinematics.h"
+
 namespace anymal {
 
 AnymalComKinoDynamics::AnymalComKinoDynamics(const switched_model::Model_Settings& options)

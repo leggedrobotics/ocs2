@@ -48,8 +48,11 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
+  src/AnymalCom.cpp
+  src/AnymalKinematics.cpp
   src/AnymalComKinoDynamics.cpp
   src/AnymalComKinoDynamicsDerivative.cpp
+  src/AnymalSystemDynamicsAd.cpp
   src/AnymalComKinoConstraint.cpp
   src/AnymalCost.cpp
   src/AnymalModelStateEstimator.cpp
@@ -66,18 +69,6 @@ target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
    dl
 )
-
-add_executable(debug_frictionCone
-        test/debug_frictionCone.cpp)
-add_dependencies(debug_frictionCone
-        ${PROJECT_NAME}
-        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-        ${catkin_EXPORTED_TARGETS}
-        )
-target_link_libraries(debug_frictionCone
-        ${PROJECT_NAME}
-        ${catkin_LIBRARIES}
-        )
 
 #############
 ## Install ##
@@ -109,15 +100,14 @@ target_link_libraries(anymal_switched_model_test
         ${catkin_LIBRARIES}
         )
 
-#catkin_add_gtest(debug_frictionCone
-#        test/debug_frictionCone.cpp)
-#
-#add_dependencies(debug_frictionCone
-#        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-#        ${catkin_EXPORTED_TARGETS}
+#catkin_add_gtest(anymal_ad_switched_model_test
+#        test/TestAnymalAdSwitchedModel.cpp
 #        )
 #
-#target_link_libraries(debug_frictionCone
+#add_dependencies(anymal_ad_switched_model_test ${catkin_EXPORTED_TARGETS})
+#
+#target_link_libraries(anymal_ad_switched_model_test
 #        ${PROJECT_NAME}
 #        ${catkin_LIBRARIES}
+#        dl
 #        )

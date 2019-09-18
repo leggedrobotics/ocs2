@@ -1,8 +1,6 @@
-#ifndef ANYMAL_COMKINOCONSTRAINT_H_
-#define ANYMAL_COMKINOCONSTRAINT_H_
+#pragma once
 
 #include <ocs2_switched_model_interface/constraint/ComKinoConstraintBase.h>
-
 
 namespace anymal {
 
@@ -21,11 +19,7 @@ public:
 	virtual ~AnymalComKinoConstraint() = default;
 
 	AnymalComKinoConstraint* clone() const override;
-
-private:
-
 };
 
 } //end of namespace anymal
 
-#endif /* ANYMAL_COMKINOCONSTRAINT_H_ */

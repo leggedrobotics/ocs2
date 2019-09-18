@@ -5,12 +5,8 @@
  *      Author: farbod
  */
 
-#ifndef ANYMAL_COMKINOOPERATINGPOINTS_H_
-#define ANYMAL_COMKINOOPERATINGPOINTS_H_
+#pragma once
 
-#include <ocs2_anymal_switched_model/dynamics/AnymalCom.h>
-#include <ocs2_anymal_switched_model/kinematics/AnymalKinematics.h>
-#include <ocs2_switched_model_interface/core/MotionPhaseDefinition.h>
 #include <ocs2_switched_model_interface/initialization/ComKinoOperatingPointsBase.h>
 
 namespace anymal {
@@ -32,11 +28,6 @@ public:
 	~AnymalComKinoOperatingPoints() {}
 
 	AnymalComKinoOperatingPoints* clone() const override;
-
-private:
-
 };
 
 } //end of namespace anymal
-
-#endif /* ANYMAL_COMKINOOPERATINGPOINTS_H_ */

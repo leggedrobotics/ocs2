@@ -1,10 +1,6 @@
-#ifndef ANYMAL_COMKINODYNAMICSDERIVATIVE_H_
-#define ANYMAL_COMKINODYNAMICSDERIVATIVE_H_
+#pragma once
 
-#include <ocs2_switched_model_interface/core/MotionPhaseDefinition.h>
 #include <ocs2_switched_model_interface/dynamics_derivative/ComKinoDynamicsDerivativeBase.h>
-#include "ocs2_anymal_switched_model/dynamics/AnymalCom.h"
-#include "ocs2_anymal_switched_model/kinematics/AnymalKinematics.h"
 
 namespace anymal {
 
@@ -22,11 +18,6 @@ public:
 	~AnymalComKinoDynamicsDerivative() {}
 
 	AnymalComKinoDynamicsDerivative* clone() const override;
-
-private:
-
 };
 
 } //end of namespace anymal
-
-#endif /* end of include guard: ANYMAL_COMKINODYNAMICSDERIVATIVE_H_ */

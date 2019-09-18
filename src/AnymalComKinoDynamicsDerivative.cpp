@@ -7,6 +7,9 @@
 
 #include "ocs2_anymal_switched_model/dynamics_derivative/AnymalComKinoDynamicsDerivative.h"
 
+#include "ocs2_anymal_switched_model/dynamics/AnymalCom.h"
+#include "ocs2_anymal_switched_model/kinematics/AnymalKinematics.h"
+
 namespace anymal {
 
 AnymalComKinoDynamicsDerivative::AnymalComKinoDynamicsDerivative(const switched_model::Model_Settings& options)

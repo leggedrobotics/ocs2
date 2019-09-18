@@ -12,7 +12,12 @@ namespace anymal {
 AnymalSystemDynamicsAd::AnymalSystemDynamicsAd(bool recompileModel /* = true */) : BASE() {
   std::string libName = "anymal_dynamics";
   std::string libFolder = "/tmp/ocs2";
-  this->initialize(libName, libFolder, recompileModel, true);
+  const bool verbose = recompileModel;
+  this->initialize(libName, libFolder, recompileModel, verbose);
+}
+
+AnymalSystemDynamicsAd* AnymalSystemDynamicsAd::clone() const {
+  return new AnymalSystemDynamicsAd(*this);
 }
 
 void AnymalSystemDynamicsAd::systemFlowMap(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,

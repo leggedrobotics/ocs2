@@ -10,7 +10,7 @@
           output="screen" args="$(arg task_name)" launch-prefix=""/>
 
     <node pkg="ocs2_anymal_interface" type="anymal_dummy_raisim" name="anymal_dummy_raisim"
-          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal -- gdb -ex start --args"/>
+          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
 
     <node pkg="ocs2_anymal_interface" type="gait_command_node" name="gait_command_node"
           output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>

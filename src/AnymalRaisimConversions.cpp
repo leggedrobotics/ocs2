@@ -44,12 +44,18 @@ Eigen::Matrix<double, 24, 1> AnymalRaisimConversions::raisimGenCoordGenVelToStat
 
 Eigen::VectorXd AnymalRaisimConversions::inputToRaisimGeneralizedForce(double time, const Eigen::Matrix<double, 24, 1>& input,
                                                                        const Eigen::Matrix<double, 24, 1>& state) {
+  std::cout << "inputToRaisimGeneralizedForce ...";
   Eigen::Matrix<double, 2 * (6 + 12), 1> ocs2RbdState;
+  Eigen::Matrix<double, 18, 1> raisimInput;
+  raisimInput.setZero();
+
   Eigen::Matrix<double, 12, 1> ocs2RbdInput;
   size_t subsystem;
+  mrt_->rolloutPolicy(time, state, ocs2RbdState, ocs2RbdInput, subsystem);
+  raisimInput.tail<12>() = ocs2RbdInput;
 
-  //  mrt_->rolloutPolicy(time, state, ocs2RbdState, ocs2RbdInput, subsystem);
-  return ocs2RbdInput;
+  std::cout << " done." << std::endl;
+  return raisimInput;
 }
 
 void AnymalRaisimConversions::extractModelData(double time, const raisim::ArticulatedSystem& sys) {}

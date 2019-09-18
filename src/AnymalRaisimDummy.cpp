@@ -24,17 +24,20 @@ int main(int argc, char* argv[]) {
   std::shared_ptr<mrt_t> anymal_mrt(new mrt_t(anymal_interface, "anymal"));
 
   anymal::AnymalRaisimConversions conversions(anymal_mrt, anymal_interface);
+  {
+    using sim_rollout_t = ocs2::RaisimRollout<STATE_DIM, INPUT_DIM>;
+    std::unique_ptr<sim_rollout_t> simRollout(new sim_rollout_t(
+        ros::package::getPath("ocs2_anymal_interface") + "/urdf/anymal.urdf",
+        std::bind(&anymal::AnymalRaisimConversions::stateToRaisimGenCoordGenVel, &conversions, std::placeholders::_1,
+                  std::placeholders::_2),
+        std::bind(&anymal::AnymalRaisimConversions::raisimGenCoordGenVelToState, &conversions, std::placeholders::_1,
+                  std::placeholders::_2),
+        std::bind(&anymal::AnymalRaisimConversions::inputToRaisimGeneralizedForce, &conversions, std::placeholders::_1,
+                  std::placeholders::_2, std::placeholders::_3),
+        std::bind(&anymal::AnymalRaisimConversions::extractModelData, &conversions, std::placeholders::_1, std::placeholders::_2)));
 
-  using sim_rollout_t = ocs2::RaisimRollout<STATE_DIM, INPUT_DIM>;
-  std::unique_ptr<sim_rollout_t> simRollout(new sim_rollout_t(
-      ros::package::getPath("ocs2_anymal_interface") + "/urdf/anymal.urdf",
-      std::bind(&anymal::AnymalRaisimConversions::stateToRaisimGenCoordGenVel, &conversions, std::placeholders::_1, std::placeholders::_2),
-      std::bind(&anymal::AnymalRaisimConversions::raisimGenCoordGenVelToState, &conversions, std::placeholders::_1, std::placeholders::_2),
-      std::bind(&anymal::AnymalRaisimConversions::inputToRaisimGeneralizedForce, &conversions, std::placeholders::_1, std::placeholders::_2,
-                std::placeholders::_3),
-      std::bind(&anymal::AnymalRaisimConversions::extractModelData, &conversions, std::placeholders::_1, std::placeholders::_2)));
-
-  anymal_mrt->initRollout(std::move(simRollout));
+    anymal_mrt->initRollout(std::move(simRollout));
+  }
 
   switched_model::MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE> mrt_dummy_loop(anymal_interface, anymal_mrt,
                                                                            anymal_interface->mpcSettings().mrtDesiredFrequency_, "anymal",

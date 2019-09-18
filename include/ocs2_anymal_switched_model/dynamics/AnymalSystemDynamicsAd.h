@@ -1,7 +1,6 @@
 #pragma once
 
 #include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
-#include <ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h>
 
 namespace anymal {
 

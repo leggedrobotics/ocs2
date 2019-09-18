@@ -7,6 +7,9 @@
 
 #include "ocs2_anymal_switched_model/initialization/AnymalComKinoOperatingPoints.h"
 
+#include <ocs2_anymal_switched_model/dynamics/AnymalCom.h>
+#include <ocs2_anymal_switched_model/kinematics/AnymalKinematics.h>
+
 namespace anymal {
 
 AnymalComKinoOperatingPoints::AnymalComKinoOperatingPoints(

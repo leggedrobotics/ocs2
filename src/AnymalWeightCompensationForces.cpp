@@ -7,6 +7,8 @@
 
 #include "ocs2_anymal_switched_model/misc/AnymalWeightCompensationForces.h"
 
+#include "ocs2_anymal_switched_model/kinematics/AnymalKinematics.h"
+#include "ocs2_anymal_switched_model/dynamics/AnymalCom.h"
 
 namespace anymal {
 

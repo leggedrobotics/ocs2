@@ -148,7 +148,7 @@ class MPC_OCS2 : public MPC_SLQ<STATE_DIM, INPUT_DIM> {
  private:
   std::unique_ptr<gddp_t> gddpPtr_;
 
-  std::unique_ptr<std::thread> workerOCS2Ptr_;
+  std::thread workerOCS2_;
 
   std::mutex dataCollectorMutex_;
   bool activateOCS2_;

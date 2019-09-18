@@ -36,7 +36,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_OCS2<STATE_DIM, INPUT_DIM>::MPC_OCS2()
 
     : BASE(), gddpPtr_(new gddp_t()), activateOCS2_(false), terminateOCS2_(false) {
-  workerOCS2Ptr_.reset(new std::thread(&MPC_OCS2::runOCS2, this));
+  workerOCS2_ = std::thread(&MPC_OCS2::runOCS2, this);
 }
 
 /******************************************************************************************************/
@@ -59,7 +59,7 @@ MPC_OCS2<STATE_DIM, INPUT_DIM>::MPC_OCS2(const controlled_system_base_t* systemD
       activateOCS2_(false),
       terminateOCS2_(false),
       slqDataCollectorPtr_(new slq_data_collector_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr)) {
-  workerOCS2Ptr_.reset(new std::thread(&MPC_OCS2::runOCS2, this));
+  workerOCS2_ = std::thread(&MPC_OCS2::runOCS2, this);
 }
 
 /******************************************************************************************************/
@@ -69,7 +69,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_OCS2<STATE_DIM, INPUT_DIM>::~MPC_OCS2() {
   terminateOCS2_ = true;
   ocs2Synchronization_.notify_all();
-  workerOCS2Ptr_->join();
+  workerOCS2_.join();
 }
 
 /******************************************************************************************************/

@@ -169,6 +169,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeSwit
                                                                                                state_vector_t& comkinoState) {
   typename state_estimator_t::comkino_model_state_t comKinoState_truesize;
   switchedModelStateEstimator_.estimateComkinoModelState(rbdState, comKinoState_truesize);
+  comkinoState.setZero();
   comkinoState.template segment<12 + JOINT_COORD_SIZE>(0) = comKinoState_truesize;
 }
 
@@ -332,13 +333,14 @@ typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::slq_bas
 OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getSLQ() {
   return *slqPtr_;
 }
+
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::slq_base_ptr_t&
-OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getSLQPtr() {
-  return slqPtr_;
+typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::mpc_t&
+OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getMpc() {
+	return *mpcPtr_;
 }
 
 /******************************************************************************************************/
@@ -356,41 +358,9 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getPerforma
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getOptimizedControllerPtr(
-    linear_controller_ptr_array_t& controllersPtrStock) const {
-  controllersPtrStock.clear();
-  for (const auto& controllerPtr : controllersPtrStock_) {
-    controllersPtrStock.emplace_back(dynamic_cast<linear_controller_t*>(controllerPtr));
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getOptimizedTrajectoriesPtr(
-    const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr, const state_vector_array2_t*& stateTrajectoriesStockPtr,
-    const input_vector_array2_t*& inputTrajectoriesStockPtr) const {
-  timeTrajectoriesStockPtr = timeTrajectoriesStockPtr_;
-  stateTrajectoriesStockPtr = stateTrajectoriesStockPtr_;
-  inputTrajectoriesStockPtr = inputTrajectoriesStockPtr_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getEventTimesPtr(const scalar_array_t*& eventTimesPtr) const {
-  eventTimesPtr = &eventTimes_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getSubsystemsSequencePtr(
-    const size_array_t*& subsystemsSequencePtr) const {
-  subsystemsSequencePtr = &subsystemsSequence_;
+typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::primal_solution_t
+OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getPrimalSolution() const {
+  return primalSolution_;
 }
 
 /******************************************************************************************************/
@@ -451,50 +421,9 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getLoadedTi
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::concatenate() {
-  timeTrajectory_ = timeTrajectoriesStockPtr_->at(0);
-  stateTrajectory_ = stateTrajectoriesStockPtr_->at(0);
-  inputTrajectory_ = inputTrajectoriesStockPtr_->at(0);
-  for (size_t i = 1; i < numSubsystems_; i++) {
-    timeTrajectory_.insert(timeTrajectory_.end(), timeTrajectoriesStockPtr_->at(i).begin(), timeTrajectoriesStockPtr_->at(i).end());
-    stateTrajectory_.insert(stateTrajectory_.end(), stateTrajectoriesStockPtr_->at(i).begin(), stateTrajectoriesStockPtr_->at(i).end());
-    inputTrajectory_.insert(inputTrajectory_.end(), inputTrajectoriesStockPtr_->at(i).begin(), inputTrajectoriesStockPtr_->at(i).end());
-  }
-
-  controllerTimeTrajectory_.clear();
-  controllerFBTrajectory_.clear();
-  controllerFFTrajector_.clear();
-  for (size_t i = 0; i < numSubsystems_; i++) {
-    auto linearCtrlPtr = dynamic_cast<linear_controller_t*>(controllersPtrStock_[i]);
-    controllerTimeTrajectory_.insert(controllerTimeTrajectory_.end(), linearCtrlPtr->timeStamp_.begin(), linearCtrlPtr->timeStamp_.end());
-    controllerFBTrajectory_.insert(controllerFBTrajectory_.end(), linearCtrlPtr->gainArray_.begin(), linearCtrlPtr->gainArray_.end());
-    controllerFFTrajector_.insert(controllerFFTrajector_.end(), linearCtrlPtr->biasArray_.begin(), linearCtrlPtr->biasArray_.end());
-  }
-
-  linInterpolateState_.setTimeStamp(&timeTrajectory_);
-  linInterpolateState_.setData(&stateTrajectory_);
-
-  linInterpolateInput_.setTimeStamp(&timeTrajectory_);
-  linInterpolateInput_.setData(&inputTrajectory_);
-
-  linInterpolateUff_.setTimeStamp(&controllerTimeTrajectory_);
-  linInterpolateUff_.setData(&controllerFFTrajector_);
-
-  linInterpolateK_.setTimeStamp(&controllerTimeTrajectory_);
-  linInterpolateK_.setData(&controllerFBTrajectory_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runSLQ(
     const scalar_t& initTime, const rbd_state_vector_t& initRbdState, const scalar_t& finalTime,
     const linear_controller_ptr_array_t& initialControllersStock /*=linear_controller_ptr_array_t()*/) {
-  // reference trajectories
-  input_vector_t uNominalForWeightCompensation;
-  designWeightCompensatingInput(initialState_, uNominalForWeightCompensation);
-
   // reference time
   costDesiredTrajectories_.desiredTimeTrajectory().resize(2);
   costDesiredTrajectories_.desiredTimeTrajectory().at(0) = initEventTimes_.front();
@@ -505,8 +434,9 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runSLQ(
   costDesiredTrajectories_.desiredStateTrajectory().at(1) = xFinal_;
   // reference inputs for weight compensation
   costDesiredTrajectories_.desiredInputTrajectory().resize(2);
-  costDesiredTrajectories_.desiredInputTrajectory().at(0) = uNominalForWeightCompensation;
-  costDesiredTrajectories_.desiredInputTrajectory().at(1) = uNominalForWeightCompensation;
+  costDesiredTrajectories_.desiredInputTrajectory().at(0).setZero(INPUT_DIM);
+  costDesiredTrajectories_.desiredInputTrajectory().at(0).setZero(INPUT_DIM);
+  costDesiredTrajectories_.desiredInputTrajectory().at(1).setZero(INPUT_DIM);
 
   slqPtr_->setCostDesiredTrajectories(costDesiredTrajectories_);
 
@@ -531,69 +461,17 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runSLQ(
   slqPtr_->getIterationsLog(iterationCost_, iterationISE1_, iterationISE2_);
   slqPtr_->getPerformanceIndeces(costFunction_, constriantISE1_, constriantISE2_);
 
-  controllersPtrStock_ = slqPtr_->getController();
-  slqPtr_->getNominalTrajectoriesPtr(timeTrajectoriesStockPtr_, stateTrajectoriesStockPtr_, inputTrajectoriesStockPtr_);
+  primalSolution_ = slqPtr_->primalSolution(slqPtr_->getFinalTime());
 
   // get gait sequence (should be copied since it might be overridden in the next iteration)
-  eventTimes_ = logicRulesPtr_->eventTimes();
-  subsystemsSequence_ = logicRulesPtr_->subsystemsSequence();
   contactFlagsSequence_ = logicRulesPtr_->getContactFlagsSequence();
 
-  //	concatenate();
-}
+  linInterpolateState_.setData(&primalSolution_.timeTrajectory_, &primalSolution_.stateTrajectory_);
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-bool OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runMPC(const scalar_t& initTime, const rbd_state_vector_t& initState) {
-  initTime_ = initTime;
-  computeSwitchedModelState(initState, initialState_);
+  linInterpolateInput_.setData(&primalSolution_.timeTrajectory_, &primalSolution_.inputTrajectory_);
 
-  // update controller
-  bool controllerIsUpdated = mpcPtr_->run(initTime_, initialState_);
-
-  // get the optimizer outputs
-  mpcPtr_->getOptimizedControllerPtr(controllersPtrStock_);
-
-  mpcPtr_->getOptimizedTrajectoriesPtr(timeTrajectoriesStockPtr_, stateTrajectoriesStockPtr_, inputTrajectoriesStockPtr_);
-
-  // get gait sequence (should be copied since it might be overridden in the next iteration)
-  eventTimes_ = logicRulesPtr_->eventTimes();
-  subsystemsSequence_ = logicRulesPtr_->subsystemsSequence();
-  //	contactFlagsSequence_ = mpcPtr_->getLogicRulesPtr()->getContactFlagsSequence();
-
-  return controllerIsUpdated;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runOCS2(const scalar_t& initTime,
-                                                                             const rbd_state_vector_t& initHyQState,
-                                                                             const scalar_array_t& switchingTimes /*=scalar_array_t()*/) {
-  //	if (switchingTimes.empty()==true)
-  //		switchingTimes_ = initEventTimes_;
-  //	else
-  //		switchingTimes_ = switchingTimes;
-  //
-  //	initTime_ = initTime;
-  //	computeSwitchedModelState(initHyQState, initSwitchedState_);
-  //
-  //	// run ocs2
-  //	ocs2Ptr_->run(initTime_, initSwitchedState_, switchingTimes_.back(), initSystemStockIndexes_, switchingTimes_,
-  //			controller_array_t(),
-  //			desiredTimeTrajectoriesStock_, desiredStateTrajectoriesStock_);
-  //
-  //	// get the optimizer outputs
-  //	ocs2Ptr_->getOCS2IterationsLog(ocs2Iterationcost_);
-  //	ocs2Ptr_->getSLQIterationsLog(iterationCost_, iterationISE1_);
-  //	ocs2Ptr_->getCostFunction(costFunction_);
-  //	constriantISE_ = iterationISE1_.back()(0);
-  //	ocs2Ptr_->getSwitchingTimes(switchingTimes_);
-  //	ocs2Ptr_->getController(controllersStock_);
-  //	ocs2Ptr_->getNominalTrajectories(timeTrajectoriesStock_, stateTrajectoriesStock_, inputTrajectoriesStock_);
+//  linInterpolateUff_.setData(&controllerTimeTrajectory_, &controllerFFTrajector_);
+//  linInterpolateK_.setData(&controllerTimeTrajectory_, &controllerFBTrajectory_);
 }
 
 /******************************************************************************************************/

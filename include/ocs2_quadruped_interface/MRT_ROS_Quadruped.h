@@ -40,7 +40,10 @@ class MRT_ROS_Quadruped : public ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM> {
   enum { rbd_state_dim_ = quadruped_interface_t::rbd_state_dim_ };
 
   using BASE = ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
+  using typename BASE::command_data_t;
+  using typename BASE::primal_solution_t;
   using typename BASE::system_observation_t;
+  using typename BASE::controller_t;
   using typename BASE::scalar_t;
   using typename BASE::scalar_array_t;
   using typename BASE::size_array_t;
@@ -48,12 +51,7 @@ class MRT_ROS_Quadruped : public ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM> {
   using typename BASE::state_vector_array_t;
   using typename BASE::input_vector_t;
   using typename BASE::input_vector_array_t;
-  using typename BASE::input_state_matrix_t;
   using typename BASE::input_state_matrix_array_t;
-  using typename BASE::CommandData;
-  using typename BASE::PolicyData;
-
-  using controller_t = typename BASE::controller_t;
 
   using feet_z_planner_t = FeetZDirectionPlanner<scalar_t, SplineCPG<scalar_t>>;
   using feet_z_planner_ptr_t = typename feet_z_planner_t::Ptr;
@@ -177,9 +175,9 @@ class MRT_ROS_Quadruped : public ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM> {
   void findsIndicesEventTimes(const scalar_array_t& eventTimes, const scalar_array_t& timeTrajectory,
                               std::vector<int>& eventsIndices) const;
 
-  void modifyPolicy(const CommandData& command, PolicyData& policy) override;
+  void modifyPolicy(const command_data_t& command, primal_solution_t& primalSolution) override;
 
-  void modifyBufferPolicy(const CommandData& commandBuffer, PolicyData& policyBuffer) override;
+  void modifyBufferPolicy(const command_data_t& commandBuffer, primal_solution_t& primalSolutionBuffer) override;
 
   /**
    * Updates feet trajectories.

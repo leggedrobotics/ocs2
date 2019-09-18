@@ -40,7 +40,6 @@
 #include <ocs2_switched_model_interface/ground/FlatGroundProfile.h>
 #include <ocs2_switched_model_interface/initialization/ComKinoOperatingPointsBase.h>
 #include <ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h>
-#include <ocs2_switched_model_interface/misc/WeightCompensationForces.h>
 #include <ocs2_switched_model_interface/state_constraint/EllipticalConstraint.h>
 #include <ocs2_switched_model_interface/state_constraint/EndEffectorConstraintBase.h>
 #include <ocs2_switched_model_interface/state_constraint/EndEffectorConstraintsUtilities.h>
@@ -118,6 +117,7 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
   using linear_controller_t = typename slq_base_t::linear_controller_t;
   using controller_ptr_array_t = typename slq_base_t::controller_ptr_array_t;
   using linear_controller_ptr_array_t = std::vector<linear_controller_t*>;
+  using primal_solution_t = typename slq_base_t::primal_solution_t;
 
   using controlled_system_base_t = ocs2::ControlledSystemBase<STATE_DIM, INPUT_DIM>;
   using controlled_system_base_ptr_t = typename controlled_system_base_t::Ptr;
@@ -146,14 +146,6 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
                               slq_base_ptr_t& slqPtr, mpc_ptr_t& mpcPtr) = 0;
 
   /**
-   * Designs weight compensating input.
-   *
-   * @param [in] switchedState: Switched model state.
-   * @param [out] uForWeightCompensation: Weight compensating input.
-   */
-  virtual void designWeightCompensatingInput(const state_vector_t& switchedState, input_vector_t& uForWeightCompensation) = 0;
-
-  /**
    * Run the SLQ algorithm.
    *
    * @param initTime: Initial time.
@@ -163,24 +155,6 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
    */
   void runSLQ(const scalar_t& initTime, const rbd_state_vector_t& initState, const scalar_t& finalTime,
               const linear_controller_ptr_array_t& initialControllersStock = linear_controller_ptr_array_t());
-
-  /**
-   * Run the SLQ-MPC algorithm.
-   *
-   * @param initTime: Initial time.
-   * @param initState: Initial robot's RBD state.
-   * @return
-   */
-  bool runMPC(const scalar_t& initTime, const rbd_state_vector_t& initState);
-
-  /**
-   * Run OCS2.
-   *
-   * @param initTime
-   * @param initState
-   * @param switchingTimes
-   */
-  void runOCS2(const scalar_t& initTime, const rbd_state_vector_t& initState, const scalar_array_t& switchingTimes = scalar_array_t());
 
   std::shared_ptr<ocs2::HybridLogicRules> getLogicRulesPtr() override { return logicRulesPtr_; }
 
@@ -262,14 +236,7 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
    */
   slq_base_t& getSLQ();
 
-  /**
-   * Gets a pointer to the internal SLQ class.
-   *
-   * @return Pointer to the internal SLQ
-   */
-  slq_base_ptr_t& getSLQPtr();
-
-  mpc_t& getMpc() override { return *mpcPtr_; }
+  mpc_t& getMpc() override;
 
   /**
    * Gets the cost function and ISEs of the type-1 and type-2 constraints at the initial time.
@@ -291,36 +258,11 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
                         eigen_scalar_array_t& iterationISE2) const;
 
   /**
-   * Gets a pointer to the optimized array of the linear control policies.
+   * Gets optimized solution.
    *
-   * @param [out] controllersPtrStock: A pointer to the optimal array of the linear control policies
+   * @return The SLQ solution
    */
-  void getOptimizedControllerPtr(linear_controller_ptr_array_t& controllersPtrStock) const;
-
-  /**
-   * Gets a pointer to the optimized time, state, and input trajectories.
-   *
-   * @param [out] timeTrajectoriesStockPtr: A pointer to an array of trajectories containing the output time trajectory stamp.
-   * @param [out] stateTrajectoriesStockPtr: A pointer to an array of trajectories containing the output state trajectory.
-   * @param [out] inputTrajectoriesStockPtr: A pointer to an array of trajectories containing the output control input trajectory.
-   */
-  void getOptimizedTrajectoriesPtr(const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
-                                   const state_vector_array2_t*& stateTrajectoriesStockPtr,
-                                   const input_vector_array2_t*& inputTrajectoriesStockPtr) const;
-
-  /**
-   * Get events times.
-   *
-   * @param [in] eventTimesPtr: a pointer to eventTimesPtr_
-   */
-  void getEventTimesPtr(const scalar_array_t*& eventTimesPtr) const;
-
-  /**
-   * Get motion subsystems sequence.
-   *
-   * @param [in] motionPhasesSequencePtr: a pointer to motionPhasesSequencePtr_
-   */
-  void getSubsystemsSequencePtr(const size_array_t*& motionPhasesSequencePtr) const;
+  primal_solution_t getPrimalSolution() const;
 
   /**
    * Get contact flags sequence
@@ -389,11 +331,6 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
    */
   void setupOptimizer(const std::string& taskFile) final { throw std::runtime_error("It has been overloaded."); }
 
-  /**
-   * concatenate the container stocks
-   */
-  void concatenate();
-
   /*
    * Variables
    */
@@ -458,28 +395,14 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
   // MPC
   mpc_ptr_t mpcPtr_;
 
-  scalar_array_t eventTimes_;
-  size_array_t subsystemsSequence_;
+  primal_solution_t primalSolution_;
   std::vector<contact_flag_t> contactFlagsSequence_;
-
-  controller_ptr_array_t controllersPtrStock_;
-  const std::vector<scalar_array_t>* timeTrajectoriesStockPtr_;
-  const state_vector_array2_t* stateTrajectoriesStockPtr_;
-  const input_vector_array2_t* inputTrajectoriesStockPtr_;
-
   cost_desired_trajectories_t costDesiredTrajectories_;
 
-  scalar_array_t timeTrajectory_;
-  state_vector_array_t stateTrajectory_;
-  input_vector_array_t inputTrajectory_;
-  scalar_array_t controllerTimeTrajectory_;
-  input_vector_array_t controllerFFTrajector_;
-  input_state_matrix_array_t controllerFBTrajectory_;
-
-  ocs2::LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t>> linInterpolateState_;
-  ocs2::LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t>> linInterpolateInput_;
-  ocs2::LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t>> linInterpolateUff_;
-  ocs2::LinearInterpolation<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t>> linInterpolateK_;
+  ocs2::EigenLinearInterpolation<state_vector_t> linInterpolateState_;
+  ocs2::EigenLinearInterpolation<input_vector_t> linInterpolateInput_;
+  ocs2::EigenLinearInterpolation<input_vector_t> linInterpolateUff_;
+  ocs2::EigenLinearInterpolation<input_state_matrix_t> linInterpolateK_;
 };
 
 }  // end of namespace switched_model

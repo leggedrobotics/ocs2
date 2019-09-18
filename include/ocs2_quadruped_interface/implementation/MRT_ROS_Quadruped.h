@@ -22,9 +22,7 @@ MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MRT_ROS_Quadruped(con
   BASE::setLogicRules(logic_rules_mrt_);
 
   // set up the rollout
-  if (ocs2QuadrupedInterfacePtr->mpcSettings().useFeedbackPolicy_) {
-    BASE::initRollout(ocs2QuadrupedInterfacePtr_->getDynamics(), ocs2QuadrupedInterfacePtr_->slqSettings().rolloutSettings_);
-  }
+  BASE::initRollout(ocs2QuadrupedInterfacePtr_->getDynamics(), ocs2QuadrupedInterfacePtr_->slqSettings().rolloutSettings_);
 }
 
 /******************************************************************************************************/
@@ -77,20 +75,18 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::findsIndicesEven
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferPolicy(const CommandData& commandBuffer, PolicyData& policyBuffer) {
-  const auto& mpcInitObservationBuffer = commandBuffer.mpcInitObservation_;
-  const auto& mpcTimeTrajectoryBuffer = policyBuffer.mpcTimeTrajectory_;
-  const auto& mpcStateTrajectoryBuffer = policyBuffer.mpcStateTrajectory_;
-  const auto& eventTimesBuffer = policyBuffer.eventTimes_;
-  const auto& subsystemsSequenceBuffer = policyBuffer.subsystemsSequence_;
-  auto& mpcControllerBuffer = policyBuffer.mpcController_;
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferPolicy(const command_data_t& commandBuffer, primal_solution_t& primalSolutionBuffer) {
+  const auto& mpcTimeTrajectoryBuffer = primalSolutionBuffer.timeTrajectory_;
+  const auto& mpcStateTrajectoryBuffer = primalSolutionBuffer.stateTrajectory_;
+  const auto& eventTimesBuffer = primalSolutionBuffer.eventTimes_;
+  auto& mpcControllerBuffer = primalSolutionBuffer.controllerPtr_;
 
-  // only continue if we are using feedforward policy
+  // only continue if we are using feedforward primalSolution
   if (mpcControllerBuffer->getType() != ocs2::ControllerType::FEEDFORWARD) {
     return;
   }
 
-  const size_t NE = subsystemsSequenceBuffer.size();
+  const size_t NE = primalSolutionBuffer.subsystemsSequence_.size();
   touchdownTimeStockBuffer_.clear();
   touchdownTimeStockBuffer_.reserve(NE + 1);
   touchdownStateStockBuffer_.clear();
@@ -106,7 +102,7 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferPoli
   touchdownInputStockBuffer_.push_back(mpcControllerBuffer->computeInput(t_init, x_init));
   // making the reference and the measured EE velocity the same
   touchdownInputStockBuffer_.front().template segment<JOINT_COORD_SIZE>(12) =
-      mpcInitObservationBuffer.input().template segment<JOINT_COORD_SIZE>(12);
+    commandBuffer.mpcInitObservation_.input().template segment<JOINT_COORD_SIZE>(12);
 
   // find event indices
   std::vector<int> eventsIndices;
@@ -142,12 +138,12 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferPoli
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyPolicy(const CommandData& command, PolicyData& policy) {
-  const auto& mpcController = policy.mpcController_;
-  const auto& eventTimes = policy.eventTimes_;
-  const auto& subsystemsSequence = policy.subsystemsSequence_;
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyPolicy(const command_data_t& command, primal_solution_t& primalSolution) {
+  const auto& mpcController = primalSolution.controllerPtr_;
+  const auto& eventTimes = primalSolution.eventTimes_;
+  const auto& subsystemsSequence = primalSolution.subsystemsSequence_;
 
-  // only continue if we are using feedforward policy
+  // only continue if we are using feedforward primalSolution
   if (mpcController->getType() != ocs2::ControllerType::FEEDFORWARD) {
     return;
   }

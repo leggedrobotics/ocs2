@@ -103,9 +103,12 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::update() {
     contactFlagsStock_[i] = modeNumber2StanceLeg(subsystemsSequence()[i]);
   }
 
+  std::lock_guard<std::mutex> lock(feetReferenceUpdateMutex_);
   feetReferencePtrStock_.resize(numSubsystems);
   feetReferenceUpdatedStock_.resize(numSubsystems);
-  for (size_t i = 0; i < numSubsystems; i++) feetReferenceUpdatedStock_[i] = false;
+  for (size_t i = 0; i < numSubsystems; i++) {
+    feetReferenceUpdatedStock_[i] = false;
+  }
 }
 
 /******************************************************************************************************/
@@ -142,16 +145,17 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::getMotionPhaseLogics(
   contactFlags = contactFlagsStock_[index];
 
   // plan feetReferencePtrStock_[index] if it is not yet updated
+  std::lock_guard<std::mutex> lock(feetReferenceUpdateMutex_);
   if (feetReferenceUpdatedStock_[index] == false) {
-    std::lock_guard<std::mutex> lock(feetReferenceUpdateMutex_);  // avoids racing
-
     if (feetReferenceUpdatedStock_[index] == false) {
       feetPlannerPtr_->planSingleMode(index, subsystemsSequence(), eventTimes(), feetReferencePtrStock_[index]);
       feetReferenceUpdatedStock_[index] = true;
     }
   }
 
-  for (size_t i = 0; i < feetReferencePtrStock_[index].size(); i++) feetReferencePtr[i] = feetReferencePtrStock_[index][i].get();
+  for (size_t i = 0; i < feetReferencePtrStock_[index].size(); i++) {
+    feetReferencePtr[i] = feetReferencePtrStock_[index][i].get();
+  }
 }
 
 /******************************************************************************************************/

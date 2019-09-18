@@ -171,14 +171,15 @@ class SwitchedModelLogicRulesBase : public ocs2::HybridLogicRules {
 
  private:
   mutable std::mutex feetReferenceUpdateMutex_;
+  mutable std::vector<feet_cpg_ptr_t> feetReferencePtrStock_;
+  mutable std::vector<bool> feetReferenceUpdatedStock_;
 
   feet_planner_ptr_t feetPlannerPtr_;
 
   scalar_t phaseTransitionStanceTime_;
 
   std::vector<contact_flag_t> contactFlagsStock_;
-  mutable std::vector<feet_cpg_ptr_t> feetReferencePtrStock_;
-  mutable std::vector<bool> feetReferenceUpdatedStock_;
+
 
   std::vector<EndEffectorConstraintBase::ConstPtr> endEffectorStateConstraints_;
 };

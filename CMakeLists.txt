@@ -70,18 +70,6 @@ target_link_libraries(${PROJECT_NAME}
    dl
 )
 
-add_executable(debug_frictionCone
-        test/debug_frictionCone.cpp)
-add_dependencies(debug_frictionCone
-        ${PROJECT_NAME}
-        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-        ${catkin_EXPORTED_TARGETS}
-        )
-target_link_libraries(debug_frictionCone
-        ${PROJECT_NAME}
-        ${catkin_LIBRARIES}
-        )
-
 #############
 ## Install ##
 #############
@@ -122,17 +110,4 @@ target_link_libraries(anymal_switched_model_test
 #        ${PROJECT_NAME}
 #        ${catkin_LIBRARIES}
 #        dl
-#        )
-
-#catkin_add_gtest(debug_frictionCone
-#        test/debug_frictionCone.cpp)
-#
-#add_dependencies(debug_frictionCone
-#        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-#        ${catkin_EXPORTED_TARGETS}
-#        )
-#
-#target_link_libraries(debug_frictionCone
-#        ${PROJECT_NAME}
-#        ${catkin_LIBRARIES}
 #        )

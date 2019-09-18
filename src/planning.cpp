@@ -47,10 +47,7 @@ int main( int argc, char* argv[] )
     std::cerr << "]" << std::endl;
 
     // Get solution
-    const std::vector<anymal::OCS2AnymalInterface::scalar_array_t>* timeTrajectoriesStockPtr;
-    const anymal::OCS2AnymalInterface::state_vector_array2_t*	stateTrajectoriesStockPtr;
-    const anymal::OCS2AnymalInterface::input_vector_array2_t* 	inputTrajectoriesStockPtr;
-    anymalInterface->getOptimizedTrajectoriesPtr(timeTrajectoriesStockPtr, stateTrajectoriesStockPtr, inputTrajectoriesStockPtr);
+    anymal::OCS2AnymalInterface::primal_solution_t primalSolution = anymalInterface->getPrimalSolution();
 
     // Convert to observations
     typedef switched_model::QuadrupedXppVisualizer<12, 24, 24> visualizer_t;
@@ -59,14 +56,12 @@ int main( int argc, char* argv[] )
 
     visualizer_t::system_observation_array_t observation_array;
 
-    for (size_t i=0; i< timeTrajectoriesStockPtr->size(); i++){
-        for (size_t k=0; k< timeTrajectoriesStockPtr->at(i).size(); k++){
-            visualizer_t::system_observation_t observation;
-            observation.time() = timeTrajectoriesStockPtr->at(i)[k];
-            observation.state() = stateTrajectoriesStockPtr->at(i)[k];
-            observation.input() = inputTrajectoriesStockPtr->at(i)[k];
-            observation_array.push_back(observation);
-        }
+    for (size_t k=0; k< primalSolution.timeTrajectory_.size(); k++){
+    	visualizer_t::system_observation_t observation;
+    	observation.time() = primalSolution.timeTrajectory_[k];
+    	observation.state() = primalSolution.stateTrajectory_[k];
+    	observation.input() = primalSolution.inputTrajectory_[k];
+    	observation_array.emplace_back(observation);
     }
 
     visualizer.publishTrajectory(observation_array, 0.25);

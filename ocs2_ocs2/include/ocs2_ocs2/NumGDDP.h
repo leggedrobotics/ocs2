@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef NUMGDDP_OCS2_H_
-#define NUMGDDP_OCS2_H_
+#pragma once
 
 #include <ocs2_slq/SLQ.h>
 
@@ -139,5 +138,3 @@ protected:
 } // namespace ocs2
 
 #include "implementation/NumGDDP.h"
-
-#endif /* NUMGDDP_OCS2_H_ */

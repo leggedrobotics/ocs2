@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef NLP_SETTINGS_OCS2_H_
-#define NLP_SETTINGS_OCS2_H_
+#pragma once
 
 #include <iostream>
 
@@ -66,5 +65,3 @@ class NLP_Settings {
 };
 
 }  // namespace ocs2
-
-#endif /* NLP_SETTINGS_OCS2_H_ */

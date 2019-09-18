@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <Eigen/Dense>
+
 #include <cmath>
 #include <iostream>
 #include <limits>

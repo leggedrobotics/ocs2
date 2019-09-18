@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef STATETRIGGERED_ROLLOUT_H_
-#define STATETRIGGERED_ROLLOUT_H_
+#pragma once
 
 #include <memory>
 
@@ -230,5 +229,3 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 };
 
 }  // namespace ocs2
-
-#endif /* STATETRIGGERED_ROLLOUT_H_ */

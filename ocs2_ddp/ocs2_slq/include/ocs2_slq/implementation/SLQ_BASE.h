@@ -357,6 +357,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t 
 
   nu = DmDagerTransRm * (CmProjected * deltaX + EvProjected) -
        DmDager.leftCols(nc1).transpose() * (Pm * deltaX + Bm.transpose() * costate + Rv);
+
+  //  alternative computation
+  //  nu = DmDager.leftCols(nc1).transpose() * (Rm * DmDager.leftCols(nc1).transpose() * CmProjected * deltaX - Rv - Bm.transpose() *
+  //  costate);
 }
 
 /******************************************************************************************************/

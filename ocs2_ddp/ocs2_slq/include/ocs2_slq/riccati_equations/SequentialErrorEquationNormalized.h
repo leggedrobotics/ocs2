@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef SEQUENTIALERROREQUATIONNORMALIZED_OCS2_H_
-#define SEQUENTIALERROREQUATIONNORMALIZED_OCS2_H_
+#pragma once
 
 #include <Eigen/Dense>
 
@@ -123,5 +122,3 @@ class SequentialErrorEquationNormalized final : public OdeBase<STATE_DIM> {
 };
 
 }  // namespace ocs2
-
-#endif /* SEQUENTIALERROREQUATIONNORMALIZED_OCS2_H_ */

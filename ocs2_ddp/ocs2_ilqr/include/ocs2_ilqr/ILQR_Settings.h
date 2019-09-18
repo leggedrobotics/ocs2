@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef ILQR_SETTINGS_OCS2_H_
-#define ILQR_SETTINGS_OCS2_H_
+#pragma once
 
 #include <boost/property_tree/info_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -108,5 +107,3 @@ inline void ILQR_Settings::loadSettings(const std::string& filename, const std::
 }
 
 }  // namespace ocs2
-
-#endif /* ILQR_SETTINGS_OCS2_H_ */

@@ -27,11 +27,12 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SOLVER_BASE_OCS2_H_
-#define SOLVER_BASE_OCS2_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
+#include <unsupported/Eigen/MatrixFunctions>
+
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -39,16 +40,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <mutex>
 #include <numeric>
 #include <type_traits>
-#include <unsupported/Eigen/MatrixFunctions>
 #include <vector>
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/control/ControllerBase.h>
+#include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 #include <ocs2_core/misc/Numerics.h>
+
+#include "ocs2_oc/oc_data/PrimalSolution.h"
 
 namespace ocs2 {
 
@@ -126,12 +129,16 @@ class Solver_BASE {
 
   using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
 
+  using primal_solution_t = PrimalSolution<STATE_DIM, INPUT_DIM>;
+
   using logic_rules_machine_t = HybridLogicRulesMachine;
   using logic_rules_machine_ptr_t = typename logic_rules_machine_t::Ptr;
 
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
   using controller_array_t = typename controller_t::array_t;
   using controller_ptr_array_t = std::vector<controller_t*>;
+  using controller_const_ptr_array_t = std::vector<const controller_t*>;
+  using feedforward_controller_t = FeedforwardController<STATE_DIM, INPUT_DIM>;
 
   explicit Solver_BASE(std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr);
 
@@ -310,71 +317,29 @@ class Solver_BASE {
    *
    * @return true if it is updated.
    */
-  bool costDesiredTrajectoriesUpdated() const { return costDesiredTrajectoriesUpdated_; };
-
-  /**
-   * Returns an array of pointer to the optimal control policies.
-   *
-   * @return An array of pointers to the optimized control policies.
-   */
-  virtual const controller_ptr_array_t& getController() const = 0;
-
-  /**
-   * Gets an array of pointer to the optimal control policies.
-   *
-   * @param [out] controllersStockPtr: An array of pointers to the optimized control policies.
-   */
-  virtual void getControllerPtr(const controller_ptr_array_t*& controllersPtrStock) const = 0;
-
-  /**
-   * Returns the nominal time trajectories.
-   *
-   * @return nominalTimeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   */
-  virtual const std::vector<scalar_array_t>& getNominalTimeTrajectories() const = 0;
-
-  /**
-   * Returns the nominal state trajectories.
-   *
-   * @return nominalStateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-   */
-  virtual const state_vector_array2_t& getNominalStateTrajectories() const = 0;
-
-  /**
-   * Returns the nominal input trajectories.
-   *
-   * @return nominalInputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   */
-  virtual const input_vector_array2_t& getNominalInputTrajectories() const = 0;
-
-  /**
-   * Gets a pointer to the nominal time, state, and input trajectories.
-   *
-   * @param [out] nominalTimeTrajectoriesStockPtr: A pointer to an array of trajectories containing the output time trajectory stamp.
-   * @param [out] nominalStateTrajectoriesStockPtr: A pointer to an array of trajectories containing the output state trajectory.
-   * @param [out] nominalInputTrajectoriesStockPtr: A pointer to an array of trajectories containing the output control input trajectory.
-   */
-  virtual void getNominalTrajectoriesPtr(const std::vector<scalar_array_t>*& nominalTimeTrajectoriesStockPtr,
-                                         const state_vector_array2_t*& nominalStateTrajectoriesStockPtr,
-                                         const input_vector_array2_t*& nominalInputTrajectoriesStockPtr) const = 0;
-
-  /**
-   * Swaps the the outputs with the nominal trajectories.
-   * Care should be take since this method modifies the internal variable.
-   *
-   * @param [out] nominalTimeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   * @param [out] nominalStateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-   * @param [out] nominalInputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   */
-  virtual void swapNominalTrajectories(std::vector<scalar_array_t>& nominalTimeTrajectoriesStock,
-                                       state_vector_array2_t& nominalStateTrajectoriesStock,
-                                       input_vector_array2_t& nominalInputTrajectoriesStock) = 0;
+  bool costDesiredTrajectoriesUpdated() const;
 
   /**
    * @brief updateCostDesiredTrajectories: Swap buffered costDesiredTrajectories to the in-use ones.
    * @return true if updated (i.e., something new was swapped in), false otherwise
    */
   bool updateCostDesiredTrajectories();
+
+  /**
+   * @brief Returns the optimized policy data.
+   *
+   * @param [in] finalTime: The final time.
+   * @param [out] primalSolutionPtr: The primal problem's solution.
+   */
+  virtual void getPrimalSolution(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const = 0;
+
+  /**
+   * @brief Returns the optimized policy data.
+   *
+   * @param [in] finalTime: The final time.
+   * @return: The primal problem's solution.
+   */
+  primal_solution_t primalSolution(scalar_t finalTime) const;
 
   /**
    * Calculates the value function at the given time and state.
@@ -438,5 +403,3 @@ class Solver_BASE {
 }  // namespace ocs2
 
 #include "implementation/Solver_BASE.h"
-
-#endif /* SOLVER_BASE_OCS2_H_ */

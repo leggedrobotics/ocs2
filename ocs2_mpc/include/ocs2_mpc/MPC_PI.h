@@ -12,14 +12,16 @@ class MPC_PI final : public MPC_BASE<STATE_DIM, INPUT_DIM> {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using BASE = MPC_BASE<STATE_DIM, INPUT_DIM>;
-  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
 
+  using typename BASE::DIMENSIONS;
   using scalar_t = typename DIMENSIONS::scalar_t;
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;
   using state_vector_t = typename DIMENSIONS::state_vector_t;
   using state_vector_array2_t = typename DIMENSIONS::state_vector_array2_t;
   using input_vector_array2_t = typename DIMENSIONS::input_vector_array2_t;
+
   using controller_ptr_array_t = typename BASE::controller_ptr_array_t;
+  using controller_const_ptr_array_t = typename BASE::controller_const_ptr_array_t;
 
   using solver_t = PiSolver<STATE_DIM, INPUT_DIM>;
   using constraint_t = typename solver_t::constraint_t;
@@ -35,18 +37,14 @@ class MPC_PI final : public MPC_BASE<STATE_DIM, INPUT_DIM> {
 
   virtual ~MPC_PI() = default;
 
-  void calculateController(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
-                           const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr,
-                           const state_vector_array2_t*& stateTrajectoriesStockPtr, const input_vector_array2_t*& inputTrajectoriesStockPtr,
-                           const controller_ptr_array_t*& controllerStockPtr) override {
+  void calculateController(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime) override {
     scalar_array_t partitioningTimesDummy;
     piSolverPtr_->run(initTime, initState, finalTime, partitioningTimesDummy);
-
-    piSolverPtr_->getNominalTrajectoriesPtr(timeTrajectoriesStockPtr, stateTrajectoriesStockPtr, inputTrajectoriesStockPtr);
-    piSolverPtr_->getControllerPtr(controllerStockPtr);
   }
 
   solver_t* getSolverPtr() override { return piSolverPtr_.get(); }
+
+  const solver_t* getSolverPtr() const override { return piSolverPtr_.get(); }
 
  protected:
   std::unique_ptr<solver_t> piSolverPtr_;

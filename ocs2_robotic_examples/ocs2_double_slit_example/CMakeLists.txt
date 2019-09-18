@@ -5,19 +5,19 @@ project(ocs2_double_slit_example)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(catkin REQUIRED COMPONENTS
-        roslib
-        ocs2_core
-        ocs2_slq
-        ocs2_ocs2
-        ocs2_mpc
-        ocs2_comm_interfaces
-        ocs2_robotic_tools
-        )
+  roslib
+  ocs2_core
+  ocs2_slq
+  ocs2_ocs2
+  ocs2_mpc
+  ocs2_comm_interfaces
+  ocs2_robotic_tools
+)
 
 find_package(Boost REQUIRED COMPONENTS
-        system
-        filesystem
-        )
+  system
+  filesystem
+)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
@@ -30,18 +30,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 ###################################
 
 catkin_package(
-        INCLUDE_DIRS
-            include
-            ${EIGEN3_INCLUDE_DIRS}
-        CATKIN_DEPENDS
-            ocs2_core
-            ocs2_slq
-            ocs2_ocs2
-            ocs2_mpc
-            ocs2_comm_interfaces
-            ocs2_robotic_tools
-        DEPENDS
-            Boost
+  INCLUDE_DIRS
+    include
+    ${EIGEN3_INCLUDE_DIRS}
+  CATKIN_DEPENDS
+    ocs2_core
+    ocs2_slq
+    ocs2_ocs2
+    ocs2_mpc
+    ocs2_comm_interfaces
+    ocs2_robotic_tools
+  DEPENDS
+    Boost
 )
 
 ###########
@@ -49,23 +49,23 @@ catkin_package(
 ###########
 
 include_directories(
-        include
-        ${EIGEN3_INCLUDE_DIRS}
-        ${Boost_INCLUDE_DIRS}
-        ${catkin_INCLUDE_DIRS}
+  include
+  ${EIGEN3_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS}
 )
 
 add_library(double_slit_interface
-        src/DoubleSlitInterface.cpp
-        )
+   src/DoubleSlitInterface.cpp
+)
 add_dependencies(double_slit_interface
-        ${catkin_EXPORTED_TARGETS}
-        )
+  ${catkin_EXPORTED_TARGETS}
+)
 target_link_libraries(double_slit_interface
-        ${catkin_LIBRARIES}
-        ${Boost_LIBRARIES}
-        dl
-        )
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  dl
+)
 
 add_executable(double_slit_pi
   src/PI_Double_Slit.cpp
@@ -83,15 +83,15 @@ target_link_libraries(double_slit_pi
 
 # Dummy node
 add_executable(double_slit_dummy_test
-        src/Dummy_Double_Slit_Node.cpp
-        )
+  src/Dummy_Double_Slit_Node.cpp
+)
 add_dependencies(double_slit_dummy_test
-        ${catkin_EXPORTED_TARGETS}
-        )
+  ${catkin_EXPORTED_TARGETS}
+)
 target_link_libraries(double_slit_dummy_test
-        double_slit_interface
-        ${catkin_LIBRARIES}
-        )
+  double_slit_interface
+  ${catkin_LIBRARIES}
+)
 
 #########################
 ###   CLANG TOOLING   ###
@@ -103,7 +103,6 @@ if(cmake_clang_tools_FOUND)
     TARGET double_slit_pi
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
-    CT_WERROR
     CF_WERROR
   )
 endif(cmake_clang_tools_FOUND)
@@ -113,17 +112,19 @@ endif(cmake_clang_tools_FOUND)
 #############
 
 install(TARGETS double_slit_interface
-        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-        )
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 install(DIRECTORY include/${PROJECT_NAME}/
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
 
 install(TARGETS double_slit_pi double_slit_dummy_test
-        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 install(DIRECTORY config launch
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-        )
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)

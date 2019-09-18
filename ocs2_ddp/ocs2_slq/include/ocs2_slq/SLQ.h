@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SLQ_OCS2_H_
-#define SLQ_OCS2_H_
+#pragma once
 
 #include "ocs2_slq/SLQ_BASE.h"
 
@@ -188,5 +187,3 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
 }  // namespace ocs2
 
 #include "implementation/SLQ.h"
-
-#endif /* SLQ_OCS2_H_ */

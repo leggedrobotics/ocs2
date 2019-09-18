@@ -27,11 +27,12 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef TASK_LISTENER_BASE_OCS2_H_
-#define TASK_LISTENER_BASE_OCS2_H_
+#pragma once
+
+#include <Eigen/StdVector>
 
 #include <ros/ros.h>
-#include <Eigen/StdVector>
+
 #include <memory>
 #include <vector>
 
@@ -73,5 +74,3 @@ class TaskListenerBase {
 };
 
 }  // namespace ocs2
-
-#endif /* TASK_LISTENER_BASE_OCS2_H_ */

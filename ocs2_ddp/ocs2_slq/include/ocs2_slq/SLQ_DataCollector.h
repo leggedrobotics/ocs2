@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SLQ_DATACOLLECTOR_OCS2_H_
-#define SLQ_DATACOLLECTOR_OCS2_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <vector>
@@ -274,5 +273,3 @@ class SLQ_DataCollector {
 }  // namespace ocs2
 
 #include "implementation/SLQ_DataCollector.h"
-
-#endif /* SLQ_DATACOLLECTOR_OCS2_H_ */

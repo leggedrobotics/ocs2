@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef OPERATINGTRAJECTORIES_ROLLOUT_OCS2_H_
-#define OPERATINGTRAJECTORIES_ROLLOUT_OCS2_H_
+#pragma once
 
 #include <memory>
 
@@ -168,5 +167,3 @@ class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 };
 
 }  // namespace ocs2
-
-#endif /* OPERATINGTRAJECTORIES_ROLLOUT_OCS2_H_ */

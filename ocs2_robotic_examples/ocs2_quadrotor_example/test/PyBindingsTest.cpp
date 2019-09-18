@@ -36,6 +36,7 @@ TEST(QuadrotorTest, PyBindings) {
 
   bindings.getMpcSolution(t_arr, x_arr, u_arr);
 
+
   EXPECT_EQ(t_arr.size(), x_arr.size());
   EXPECT_EQ(t_arr.size(), u_arr.size());
 

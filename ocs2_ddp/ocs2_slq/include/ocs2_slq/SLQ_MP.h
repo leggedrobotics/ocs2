@@ -27,11 +27,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SLQ_MP_OCS2_H_
-#define SLQ_MP_OCS2_H_
+#pragma once
 
 #include <atomic>
 #include <condition_variable>
+#include <exception>
 #include <thread>
 
 #include <ocs2_core/misc/SetThreadPriority.h>
@@ -294,10 +294,11 @@ class SLQ_MP : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
   std::atomic_bool alphaBestFound_;
   std::atomic_size_t lsWorkerCompleted_;
   std::vector<bool> alphaProcessed_;
+
+  std::mutex workerExceptionMutex_;
+  std::exception_ptr workerException_;
 };
 
 }  // namespace ocs2
 
 #include "implementation/SLQ_MP.h"
-
-#endif /* SLQ_MP_H_ */

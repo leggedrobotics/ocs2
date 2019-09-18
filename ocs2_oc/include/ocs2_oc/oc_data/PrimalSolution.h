@@ -29,70 +29,75 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <memory>
+
 #include <ocs2_core/Dimensions.h>
+#include <ocs2_core/control/ControllerBase.h>
 
 namespace ocs2 {
 
 /**
- * This class is an interface to a NLP cost.
+ * This class contains the primal problem's solution.
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam INPUT_DIM: Dimension of the control input space.
  */
-class NLP_Cost {
- public:
+template <size_t STATE_DIM, size_t INPUT_DIM>
+struct PrimalSolution {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using DIMENSIONS = Dimensions<0, 0>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-  using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
+  using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
+  using dim_t = Dimensions<STATE_DIM, INPUT_DIM>;
+  using size_array_t = typename dim_t::size_array_t;
+  using scalar_array_t = typename dim_t::scalar_array_t;
+  using state_vector_array_t = typename dim_t::state_vector_array_t;
+  using input_vector_array_t = typename dim_t::input_vector_array_t;
 
   /**
-   * Default constructor.
+   * Constructor
    */
-  NLP_Cost() = default;
+  PrimalSolution() = default;
 
   /**
-   * Default destructor.
+   * Destructor
    */
-  virtual ~NLP_Cost() = default;
+  ~PrimalSolution() = default;
 
   /**
-   * Sets the current parameter vector.
-   *
-   * @param [in] x: The value of parameter vector.
-   * @return id: It returns a number which identifies the cached data.
+   * Move constructor
    */
-  virtual size_t setCurrentParameter(const dynamic_vector_t& x) = 0;
+  PrimalSolution(PrimalSolution&& other) = default;
 
   /**
-   * Gets the cost value.
-   *
-   * @param [in] id: The ID of the cached data.
-   * @param [out] f: The value of the cost.
-   * @return status: whether the cost computation was successful.
+   * Copy constructor
    */
-  virtual bool getCost(size_t id, scalar_t& f) = 0;
+  PrimalSolution(const PrimalSolution& other)
+      : timeTrajectory_(other.timeTrajectory_),
+        stateTrajectory_(other.stateTrajectory_),
+        inputTrajectory_(other.inputTrajectory_),
+        eventTimes_(other.eventTimes_),
+        subsystemsSequence_(other.subsystemsSequence_),
+        controllerPtr_(other.controllerPtr_->clone()) {}
 
   /**
-   * Gets the gradient of the cost w.r.t. parameter vector.
-   *
-   * @param [in] id: The ID of the cached data.
-   * @param [out] g: The gradient of the cost.
+   * Assignment operators
    */
-  virtual void getCostDerivative(size_t id, dynamic_vector_t& g) = 0;
+  PrimalSolution& operator=(PrimalSolution other) noexcept {
+    timeTrajectory_.swap(other.timeTrajectory_);
+    stateTrajectory_.swap(other.stateTrajectory_);
+    inputTrajectory_.swap(other.inputTrajectory_);
+    eventTimes_.swap(other.eventTimes_);
+    subsystemsSequence_.swap(other.subsystemsSequence_);
+    controllerPtr_.swap(other.controllerPtr_);
+    return *this;
+  }
 
-  /**
-   * Gets the Hessian of the cost w.r.t. parameter vector.
-   *
-   * @param [in] id: The ID of the cached data.
-   * @param [out] H: The Hessian of the cost.
-   */
-  virtual void getCostSecondDerivative(size_t id, dynamic_matrix_t& H) = 0;
-
-  /**
-   * Clears the cache.
-   */
-  virtual void clearCache() = 0;
+  scalar_array_t timeTrajectory_;
+  state_vector_array_t stateTrajectory_;
+  input_vector_array_t inputTrajectory_;
+  scalar_array_t eventTimes_;
+  size_array_t subsystemsSequence_;
+  std::unique_ptr<controller_t> controllerPtr_;
 };
 
 }  // namespace ocs2

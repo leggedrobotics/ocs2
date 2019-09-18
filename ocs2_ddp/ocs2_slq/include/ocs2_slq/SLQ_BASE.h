@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SLQ_BASE_OCS2_H_
-#define SLQ_BASE_OCS2_H_
+#pragma once
 
 #include <ocs2_ddp_base/DDP_BASE.h>
 
@@ -376,5 +375,3 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
 }  // namespace ocs2
 
 #include "implementation/SLQ_BASE.h"
-
-#endif /* SLQ_BASE_OCS2_H_ */

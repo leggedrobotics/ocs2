@@ -37,8 +37,13 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MRT_BASE<STATE_DIM, INPUT_DIM>::MRT_BASE(std::shared_ptr<HybridLogicRules> logicRules) {
+MRT_BASE<STATE_DIM, INPUT_DIM>::MRT_BASE(std::shared_ptr<HybridLogicRules> logicRules)
+    : currentPrimalSolution_(new primal_solution_t),
+      primalSolutionBuffer_(new primal_solution_t),
+      currentCommand_(new command_data_t),
+      commandBuffer_(new command_data_t) {
   reset();
+
   if (!logicRules) {
     logicRules.reset(new NullLogicRules());
   }
@@ -52,12 +57,6 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_BASE<STATE_DIM, INPUT_DIM>::reset() {
   std::lock_guard<std::mutex> lock(policyBufferMutex_);
 
-  currentPolicy_.reset(new PolicyData());
-  policyBuffer_.reset(new PolicyData());
-
-  currentCommand_.reset(new CommandData());
-  commandBuffer_.reset(new CommandData());
-
   policyReceivedEver_ = false;
   newPolicyInBuffer_ = false;
 
@@ -65,6 +64,7 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::reset() {
   policyUpdatedBuffer_ = false;
 
   mpcLinInterpolateState_.setZero();
+  mpcLinInterpolateInput_.setZero();
 
   partitioningTimesUpdate(0.0, partitioningTimes_);
   partitioningTimesUpdate(0.0, partitioningTimesBuffer_);
@@ -93,13 +93,13 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::initRollout(std::unique_ptr<RolloutBase<STA
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_BASE<STATE_DIM, INPUT_DIM>::evaluatePolicy(scalar_t currentTime, const state_vector_t& currentState, state_vector_t& mpcState,
                                                     input_vector_t& mpcInput, size_t& subsystem) {
-  if (currentTime > currentPolicy_->mpcTimeTrajectory_.back()) {
+  if (currentTime > currentPrimalSolution_->timeTrajectory_.back()) {
     std::cerr << "The requested currentTime is greater than the received plan: " + std::to_string(currentTime) + ">" +
-                     std::to_string(currentPolicy_->mpcTimeTrajectory_.back())
+                     std::to_string(currentPrimalSolution_->timeTrajectory_.back())
               << std::endl;
   }
 
-  mpcInput = currentPolicy_->mpcController_->computeInput(currentTime, currentState);
+  mpcInput = currentPrimalSolution_->controllerPtr_->computeInput(currentTime, currentState);
   mpcLinInterpolateState_.interpolate(currentTime, mpcState);
 
   size_t index = findActiveSubsystemFnc_(currentTime);
@@ -112,9 +112,9 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::evaluatePolicy(scalar_t currentTime, const 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const state_vector_t& currentState, const scalar_t& timeStep,
                                                    state_vector_t& mpcState, input_vector_t& mpcInput, size_t& subsystem) {
-  if (currentTime > currentPolicy_->mpcTimeTrajectory_.back()) {
+  if (currentTime > currentPrimalSolution_->timeTrajectory_.back()) {
     std::cerr << "The requested currentTime is greater than the received plan: " + std::to_string(currentTime) + ">" +
-                     std::to_string(currentPolicy_->mpcTimeTrajectory_.back())
+                     std::to_string(currentPrimalSolution_->timeTrajectory_.back())
               << std::endl;
   }
 
@@ -131,8 +131,8 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const s
 
   // perform a rollout
   if (policyUpdated_) {
-    rolloutPtr_->run(activePartitionIndex, currentTime, currentState, finalTime, currentPolicy_->mpcController_.get(), *logicMachinePtr_,
-                     timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+    rolloutPtr_->run(activePartitionIndex, currentTime, currentState, finalTime, currentPrimalSolution_->controllerPtr_.get(),
+                     *logicMachinePtr_, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
   } else {
     throw std::runtime_error("MRT_ROS_interface: policy should be updated before rollout.");
   }
@@ -150,28 +150,22 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const s
 template <size_t STATE_DIM, size_t INPUT_DIM>
 bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicy() {
   std::lock_guard<std::mutex> lock(policyBufferMutex_);
-  return updatePolicyImpl();
-}
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicyImpl() {
-  if (!policyUpdatedBuffer_ or !newPolicyInBuffer_) {
+
+  if (!policyUpdatedBuffer_ || !newPolicyInBuffer_) {
     return false;
   }
-
   newPolicyInBuffer_ = false;  // make sure we don't swap in the old policy again
 
   // update the current policy from buffer
   policyUpdated_ = policyUpdatedBuffer_;
   currentCommand_.swap(commandBuffer_);
-  currentPolicy_.swap(policyBuffer_);
-  mpcLinInterpolateState_.setData(&currentPolicy_->mpcTimeTrajectory_, &currentPolicy_->mpcStateTrajectory_);
+  currentPrimalSolution_.swap(primalSolutionBuffer_);
+  mpcLinInterpolateState_.setData(&currentPrimalSolution_->timeTrajectory_, &currentPrimalSolution_->stateTrajectory_);
+  mpcLinInterpolateInput_.setData(&currentPrimalSolution_->timeTrajectory_, &currentPrimalSolution_->inputTrajectory_);
   partitioningTimes_.swap(partitioningTimesBuffer_);
 
   // update logic rules
-  logicMachinePtr_->getLogicRulesPtr()->setModeSequence(currentPolicy_->subsystemsSequence_, currentPolicy_->eventTimes_);
+  logicMachinePtr_->getLogicRulesPtr()->setModeSequence(currentPrimalSolution_->subsystemsSequence_, currentPrimalSolution_->eventTimes_);
   logicMachinePtr_->logicRulesUpdated();
   logicMachinePtr_->updateLogicRules(partitioningTimes_);
 
@@ -179,7 +173,7 @@ bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicyImpl() {
   const size_t partitionIndex = 0;  // we assume only one partition
   findActiveSubsystemFnc_ = std::move(logicMachinePtr_->getHandleToFindActiveEventCounter(partitionIndex));
 
-  modifyPolicy(*currentCommand_, *currentPolicy_);
+  modifyPolicy(*currentCommand_, *currentPrimalSolution_);
 
   return true;
 }

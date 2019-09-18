@@ -29,40 +29,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Dense>
-#include <memory>
+#include <ocs2_core/Dimensions.h>
 
 namespace ocs2 {
 
 /**
+ * This class contains the dual problem's solution.
  *
- * @tparam STATE_DIM
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM>
-class TimeHorizonEstimatorBase {
- public:
+template <size_t STATE_DIM, size_t INPUT_DIM>
+struct DualSolution {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Ptr = std::shared_ptr<TimeHorizonEstimatorBase<STATE_DIM> >;
-
-  TimeHorizonEstimatorBase() : currentTimeHorizon_(1000) {}
-
-  virtual ~TimeHorizonEstimatorBase() = default;
-
-  /**
-   * Updates the time horizon
-   * @param [in] currentInitialState
-   */
-  virtual void updateTimeHorizon(const Eigen::Matrix<double, STATE_DIM, 1>& currentInitialState) { currentTimeHorizon_ = 0.0; };
-
-  /**
-   * Gets time horizon
-   * @return double
-   */
-  const double getTimeHorizon() const { return currentTimeHorizon_; }
-
- protected:
-  double currentTimeHorizon_;
+  using dim_t = Dimensions<STATE_DIM, INPUT_DIM>;
+  using size_array_t = typename dim_t::size_array_t;
+  using scalar_array_t = typename dim_t::scalar_array_t;
+  using state_vector_array_t = typename dim_t::state_vector_array_t;
+  using input_vector_array_t = typename dim_t::input_vector_array_t;
 };
 
 }  // namespace ocs2

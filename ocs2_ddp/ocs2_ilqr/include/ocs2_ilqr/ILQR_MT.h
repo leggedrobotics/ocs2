@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef ILQR_MT_OCS2_H_
-#define ILQR_MT_OCS2_H_
+#pragma once
 
 #include <atomic>
 #include <condition_variable>
@@ -301,5 +300,3 @@ class ILQR_MT : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
 }  // namespace ocs2
 
 #include "implementation/ILQR_MT.h"
-
-#endif /* ILQR_MT_H_ */

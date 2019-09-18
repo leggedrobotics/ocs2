@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef TARGETTRAJECTORIES_ROS_INTERFACE_OCS2_H_
-#define TARGETTRAJECTORIES_ROS_INTERFACE_OCS2_H_
+#pragma once
 
 #include <string>
 #include <vector>
@@ -113,5 +112,3 @@ class TargetTrajectories_ROS_Interface {
 }  // namespace ocs2
 
 #include "implementation/TargetTrajectories_ROS_Interface.h"
-
-#endif /* TARGETTRAJECTORIES_ROS_INTERFACE_OCS2_H_ */

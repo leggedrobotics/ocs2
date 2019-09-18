@@ -27,8 +27,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef GDDP_OCS2_H_
-#define GDDP_OCS2_H_
+#pragma once
+
+#include <Eigen/StdVector>
+#include <Eigen/Dense>
 
 #include <array>
 #include <mutex>
@@ -36,11 +38,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <numeric>
 #include <cstddef>
-#include <Eigen/StdVector>
 #include <vector>
 #include <type_traits>
 #include <chrono>
-#include <Eigen/Dense>
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/control/LinearController.h>
@@ -497,5 +497,3 @@ protected:
 } // namespace ocs2
 
 #include "implementation/GDDP.h"
-
-#endif /* GDDP_OCS2_H_ */

@@ -81,7 +81,7 @@ class MRT_ROS_Dummy_Linear_System : public MRT_ROS_Dummy_Loop<double_integrator:
     ROS_INFO_STREAM("Visualization subscriber is connected.");
   }
 
-  void publishVisualizer(const system_observation_t& observation, const commandData_t& command, const policyData_t& policy) override {
+  void publishVisualizer(const system_observation_t& observation, const primal_solution_t& policy, const command_data_t& command) override {
     const auto& costDesiredTrajectories = command.mpcCostDesiredTrajectories_;
     sensor_msgs::JointState joint_state;
     joint_state.header.stamp = ros::Time::now();

@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef MPC_OCS2_OCS2_H_
-#define MPC_OCS2_OCS2_H_
+#pragma once
 
 #include <condition_variable>
 #include <mutex>
@@ -149,12 +148,11 @@ class MPC_OCS2 : public MPC_SLQ<STATE_DIM, INPUT_DIM> {
  private:
   std::unique_ptr<gddp_t> gddpPtr_;
 
-  std::thread workerOCS2;
+  std::thread workerOCS2_;
 
   std::mutex dataCollectorMutex_;
-
   bool activateOCS2_;
-  bool terminateOCS2_;
+  std::atomic_bool terminateOCS2_;
   std::condition_variable ocs2Synchronization_;
 
   std::unique_ptr<slq_data_collector_t> slqDataCollectorPtr_;
@@ -166,5 +164,3 @@ class MPC_OCS2 : public MPC_SLQ<STATE_DIM, INPUT_DIM> {
 }  // namespace ocs2
 
 #include "implementation/MPC_OCS2.h"
-
-#endif /* MPC_OCS2_OCS2_H_ */

@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef ROSMSGCONVERSIONS_OCS2_H_
-#define ROSMSGCONVERSIONS_OCS2_H_
+#pragma once
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
@@ -161,5 +160,3 @@ class RosMsgConversions {
 }  // namespace ocs2
 
 #include "implementation/RosMsgConversions.h"
-
-#endif /* ROSMSGCONVERSIONS_OCS2_H_ */

@@ -37,10 +37,6 @@ MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE()
 
     : initRun_(true),
       logicRulesTemplateUpdated_(false),
-      optimizedControllersStockPtr_(nullptr),
-      optimizedTimeTrajectoriesStockPtr_(nullptr),
-      optimizedStateTrajectoriesStockPtr_(nullptr),
-      optimizedInputTrajectoriesStockPtr_(nullptr),
       initnumPartitions_(0),
       initPartitioningTimes_(0),
       numPartitions_(0),
@@ -59,10 +55,6 @@ MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE(const scalar_array_t& partitioningTimes
     : mpcSettings_(mpcSettings),
       initRun_(true),
       logicRulesTemplateUpdated_(false),
-      optimizedControllersStockPtr_(nullptr),
-      optimizedTimeTrajectoriesStockPtr_(nullptr),
-      optimizedStateTrajectoriesStockPtr_(nullptr),
-      optimizedInputTrajectoriesStockPtr_(nullptr),
       initnumPartitions_(partitioningTimes.size() - 1),
       initPartitioningTimes_(partitioningTimes),
       numPartitions_(0),
@@ -92,6 +84,11 @@ MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE(const scalar_array_t& partitioningTimes
     numPartitions_ = initnumPartitions_;
     partitioningTimes_ = initPartitioningTimes_;
   }
+
+  // correcting solutionTimeWindow
+  if (mpcSettings_.recedingHorizon_) {
+    mpcSettings_.solutionTimeWindow_ = -1;
+  }
 }
 
 /******************************************************************************************************/
@@ -101,10 +98,6 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_BASE<STATE_DIM, INPUT_DIM>::reset() {
   initRun_ = true;
   logicRulesTemplateUpdated_ = false;
-  optimizedControllersStockPtr_ = nullptr;
-  optimizedTimeTrajectoriesStockPtr_ = nullptr;
-  optimizedStateTrajectoriesStockPtr_ = nullptr;
-  optimizedInputTrajectoriesStockPtr_ = nullptr;
 
   mpcTimer_.reset();
 
@@ -297,9 +290,8 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
   /******************************************************************************************
    * Calculate controller
    ******************************************************************************************/
-  // calculate the MPC controller
-  calculateController(initTime, currentState, finalTime, optimizedTimeTrajectoriesStockPtr_, optimizedStateTrajectoriesStockPtr_,
-                      optimizedInputTrajectoriesStockPtr_, optimizedControllersStockPtr_);
+  // calculate the MPC policy
+  calculateController(initTime, currentState, finalTime);
 
   // set initRun flag to false
   initRun_ = false;
@@ -399,27 +391,7 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::setNewLogicRulesTemplate(const mode_sequenc
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-typename MPC_BASE<STATE_DIM, INPUT_DIM>::controller_ptr_array_t const* MPC_BASE<STATE_DIM, INPUT_DIM>::getOptimizedControllerPtr() const {
-  return optimizedControllersStockPtr_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_BASE<STATE_DIM, INPUT_DIM>::getOptimizedTrajectoriesPtr(const scalar_array2_t*& optimizedTimeTrajectoriesStockPtr,
-                                                                 const state_vector_array2_t*& optimizedStateTrajectoriesStockPtr,
-                                                                 const input_vector_array2_t*& optimizedInputTrajectoriesStockPtr) const {
-  optimizedTimeTrajectoriesStockPtr = optimizedTimeTrajectoriesStockPtr_;
-  optimizedStateTrajectoriesStockPtr = optimizedStateTrajectoriesStockPtr_;
-  optimizedInputTrajectoriesStockPtr = optimizedInputTrajectoriesStockPtr_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_Settings& MPC_BASE<STATE_DIM, INPUT_DIM>::settings() {
+const MPC_Settings& MPC_BASE<STATE_DIM, INPUT_DIM>::settings() const {
   return mpcSettings_;
 }
 

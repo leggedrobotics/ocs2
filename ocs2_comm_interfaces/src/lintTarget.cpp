@@ -1,3 +1,4 @@
+#include <ocs2_comm_interfaces/CommandData.h>
 #include <ocs2_comm_interfaces/SystemObservation.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/TargetPoseCommand.h>
 

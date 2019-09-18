@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef ILQR_BASE_OCS2_H_
-#define ILQR_BASE_OCS2_H_
+#pragma once
 
 #include <ocs2_ddp_base/DDP_BASE.h>
 
@@ -322,5 +321,3 @@ class ILQR_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
 }  // namespace ocs2
 
 #include "implementation/ILQR_BASE.h"
-
-#endif /* ILQR_BASE_OCS2_H_ */

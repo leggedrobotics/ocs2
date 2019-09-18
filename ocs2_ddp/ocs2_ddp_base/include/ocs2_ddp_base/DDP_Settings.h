@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef DDP_SETTINGS_OCS2_H_
-#define DDP_SETTINGS_OCS2_H_
+#pragma once
 
 #include <boost/property_tree/info_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -86,6 +85,9 @@ class DDP_Settings {
         lsStepsizeGreedy_(true),
         checkNumericalStability_(true),
         useRiccatiSolver_(true)
+
+        ,
+        useFeedbackPolicy_(false)
 
         ,
         debugPrintRollout_(false)
@@ -190,6 +192,9 @@ class DDP_Settings {
 
   /** If true, DDP uses ode solver to solve the Riccati equations. Otherwise it uses matrix exponential to solve it. */
   bool useRiccatiSolver_;
+
+  /** Use either the optimized control policy (true) or the optimized state-input trajectory (false). */
+  bool useFeedbackPolicy_;
 
   /** Printing rollout trajectory for debugging. */
   bool debugPrintRollout_;
@@ -547,6 +552,18 @@ inline void DDP_Settings::loadSettings(const std::string& filename, const std::s
   }
 
   try {
+    useFeedbackPolicy_ = pt.get<bool>(fieldName + ".useFeedbackPolicy");
+    if (verbose) {
+      std::cerr << " #### Option loader : option 'useFeedbackPolicy' ................... " << useFeedbackPolicy_ << std::endl;
+    }
+  } catch (const std::exception& e) {
+    if (verbose) {
+      std::cerr << " #### Option loader : option 'useFeedbackPolicy' ................... " << useFeedbackPolicy_ << " (default)"
+                << std::endl;
+    }
+  }
+
+  try {
     debugPrintRollout_ = pt.get<bool>(fieldName + ".debugPrintRollout");
     if (verbose) {
       std::cerr << " #### Option loader : option 'debugPrintRollout' ................... " << debugPrintRollout_ << std::endl;
@@ -564,5 +581,3 @@ inline void DDP_Settings::loadSettings(const std::string& filename, const std::s
 }
 
 }  // namespace ocs2
-
-#endif /* DDP_SETTINGS_OCS2_H_ */

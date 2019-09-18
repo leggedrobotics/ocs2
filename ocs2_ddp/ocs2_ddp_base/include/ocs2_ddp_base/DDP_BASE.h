@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef DDP_BASE_OCS2_H_
-#define DDP_BASE_OCS2_H_
+#pragma once
 
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
@@ -123,11 +122,13 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::state_vector_array_t;
   using typename BASE::state_vector_t;
 
-  using typename BASE::cost_desired_trajectories_t;
-
   using typename BASE::controller_array_t;
+  using typename BASE::controller_const_ptr_array_t;
   using typename BASE::controller_ptr_array_t;
   using typename BASE::controller_t;
+  using typename BASE::cost_desired_trajectories_t;
+  using typename BASE::feedforward_controller_t;
+  using typename BASE::primal_solution_t;
 
   using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
   using linear_controller_array_t = typename linear_controller_t::array_t;
@@ -410,22 +411,12 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   DDP_Settings& ddpSettings();
 
-  const controller_ptr_array_t& getController() const override;
+  /**
+   * Const access to ddp settings
+   */
+  const DDP_Settings& ddpSettings() const;
 
-  void getControllerPtr(const controller_ptr_array_t*& controllersPtrStock) const override;
-
-  const scalar_array2_t& getNominalTimeTrajectories() const override;
-
-  const state_vector_array2_t& getNominalStateTrajectories() const override;
-
-  const input_vector_array2_t& getNominalInputTrajectories() const override;
-
-  void getNominalTrajectoriesPtr(const scalar_array2_t*& nominalTimeTrajectoriesStockPtr,
-                                 const state_vector_array2_t*& nominalStateTrajectoriesStockPtr,
-                                 const input_vector_array2_t*& nominalInputTrajectoriesStockPtr) const override;
-
-  void swapNominalTrajectories(scalar_array2_t& nominalTimeTrajectoriesStock, state_vector_array2_t& nominalStateTrajectoriesStock,
-                               input_vector_array2_t& nominalInputTrajectoriesStock) override;
+  void getPrimalSolution(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const final;
 
   scalar_t getFinalTime() const override;
 
@@ -696,12 +687,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void calculateControllerUpdateMaxNorm(scalar_t& maxDeltaUffNorm, scalar_t& maxDeltaUeeNorm);
 
   /**
-   * Updates pointers in nominalControllerPtrStock from memory location of
-   * nominalControllersStock_ members.
-   */
-  void updateNominalControllerPtrStock();
-
-  /**
    * Display rollout info and scores.
    */
   void printRolloutInfo();
@@ -771,7 +756,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   std::vector<std::shared_ptr<penalty_base_t>> penaltyPtrStock_;
 
   linear_controller_array_t nominalControllersStock_;
-  controller_ptr_array_t nominalControllerPtrStock_;
 
   std::vector<scalar_array_t> nominalTimeTrajectoriesStock_;
   std::vector<size_array_t> nominalEventsPastTheEndIndecesStock_;
@@ -857,5 +841,3 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 }  // namespace ocs2
 
 #include "implementation/DDP_BASE.h"
-
-#endif /* DDP_BASE_OCS2_H_ */

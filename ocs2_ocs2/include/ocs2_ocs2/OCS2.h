@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef OCS2_OCS2_OCS2_H_
-#define OCS2_OCS2_OCS2_H_
+#pragma once
 
 #include <array>
 #include <memory>
@@ -137,5 +136,3 @@ private:
 }  // end of ocs2 namespace
 
 #include "implementation/OCS2.h"
-
-#endif /* OCS2_OCS2_OCS2_H_ */

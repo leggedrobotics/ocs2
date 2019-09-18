@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef GDDP_SETTINGS_OCS2_H_
-#define GDDP_SETTINGS_OCS2_H_
+#pragma once
 
 #include <string>
 #include <iostream>
@@ -341,5 +340,3 @@ inline void GDDP_Settings::loadSettings(const std::string& filename, const std::
 }
 
 } // namespace ocs2
-
-#endif /* GDDP_SETTINGS_OCS2_H_ */

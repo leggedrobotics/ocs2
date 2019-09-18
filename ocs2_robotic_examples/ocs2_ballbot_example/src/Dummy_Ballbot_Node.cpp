@@ -45,11 +45,10 @@ int main(int argc, char** argv) {
   // ballbotInterface
   BallbotInterface ballbotInterface(taskFileFolderName);
 
-  using mrt_t = MRT_ROS_Ballbot;
-  using mrt_ptr_t = mrt_t::Ptr;
-  using system_observation_t = mrt_t::system_observation_t;
+  using mrt_base_ptr_t = MRT_ROS_Dummy_Ballbot::mrt_ptr_t;
+  using system_observation_t = MRT_ROS_Dummy_Ballbot::system_observation_t;
 
-  mrt_ptr_t mrtPtr(new mrt_t("ballbot"));
+  mrt_base_ptr_t mrtPtr(new MRT_ROS_Ballbot("ballbot"));
 
   // Dummy ballbot
   MRT_ROS_Dummy_Ballbot dummyBallbot(mrtPtr, ballbotInterface.mpcSettings().mrtDesiredFrequency_,

@@ -29,40 +29,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Dense>
 #include <memory>
+
+#include <ocs2_comm_interfaces/SystemObservation.h>
+#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/cost/CostDesiredTrajectories.h>
 
 namespace ocs2 {
 
 /**
+ * This class contains the policy requirements and desired set-point.
  *
- * @tparam STATE_DIM
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM>
-class TimeHorizonEstimatorBase {
- public:
+template <size_t STATE_DIM, size_t INPUT_DIM>
+struct CommandData {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Ptr = std::shared_ptr<TimeHorizonEstimatorBase<STATE_DIM> >;
+  using dim_t = Dimensions<STATE_DIM, INPUT_DIM>;
+  using scalar_t = typename dim_t::scalar_t;
 
-  TimeHorizonEstimatorBase() : currentTimeHorizon_(1000) {}
-
-  virtual ~TimeHorizonEstimatorBase() = default;
-
-  /**
-   * Updates the time horizon
-   * @param [in] currentInitialState
-   */
-  virtual void updateTimeHorizon(const Eigen::Matrix<double, STATE_DIM, 1>& currentInitialState) { currentTimeHorizon_ = 0.0; };
-
-  /**
-   * Gets time horizon
-   * @return double
-   */
-  const double getTimeHorizon() const { return currentTimeHorizon_; }
-
- protected:
-  double currentTimeHorizon_;
+  SystemObservation<STATE_DIM, INPUT_DIM> mpcInitObservation_;
+  CostDesiredTrajectories<scalar_t> mpcCostDesiredTrajectories_;
 };
 
 }  // namespace ocs2

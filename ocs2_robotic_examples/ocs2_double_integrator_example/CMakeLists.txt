@@ -89,7 +89,6 @@ target_link_libraries(double_integrator_mpc
         )
 
 add_executable(double_integrator_pi
-  # src/double_integrator/DoubleIntegratorInterface.cpp
   src/PI_Double_Integrator.cpp
 )
 add_dependencies(double_integrator_pi
@@ -171,14 +170,14 @@ endif()
 #########################
 find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
-  message(STATUS "Run clang tooling for target " double_integrator_mpc)
+  message(STATUS "Run clang tooling for target ocs2_double_integrator_example")
   add_clang_tooling(
     TARGETS
-        double_integrator_interface
-        double_integrator_mpc
-        double_integrator_pi
-        double_integrator_dummy_test
-        double_integrator_target
+      double_integrator_interface
+      double_integrator_mpc
+      double_integrator_pi
+      double_integrator_dummy_test
+      double_integrator_target
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
@@ -190,29 +189,30 @@ endif(cmake_clang_tools_FOUND)
 #############
 
 install(TARGETS double_integrator_interface DoubleIntegratorPyBindings_Cpp
-        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-        )
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 install(DIRECTORY include/${PROJECT_NAME}/
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
-
-install(TARGETS double_integrator_mpc
-                double_integrator_dummy_test
-                double_integrator_target
-        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
+install(TARGETS 
+  double_integrator_mpc
+  double_integrator_dummy_test
+  double_integrator_target
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 install(DIRECTORY urdf launch config rviz
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-        )
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 if(${pybind11_FOUND})
   # TODO handle python2/3 case properly
   install(TARGETS DoubleIntegratorPyBindings
-          ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
-          LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
-          )
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+  )
 endif()
 
 #############

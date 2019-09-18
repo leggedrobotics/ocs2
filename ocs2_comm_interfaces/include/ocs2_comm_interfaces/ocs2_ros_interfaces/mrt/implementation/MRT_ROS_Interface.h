@@ -154,18 +154,20 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcPolicyCallback(const ocs2_msgs:
   //	std::cout << "\t Plan is received at time: " << msg->initObservation.time << std::endl;
 
   std::lock_guard<std::mutex> lk(this->policyBufferMutex_);
-  auto& timeBuffer = this->policyBuffer_->mpcTimeTrajectory_;
-  auto& stateBuffer = this->policyBuffer_->mpcStateTrajectory_;
-  auto& controlBuffer = this->policyBuffer_->mpcController_;
-  auto& eventBuffer = this->policyBuffer_->eventTimes_;
-  auto& subsystemBuffer = this->policyBuffer_->subsystemsSequence_;
+  auto& timeBuffer = this->primalSolutionBuffer_->timeTrajectory_;
+  auto& stateBuffer = this->primalSolutionBuffer_->stateTrajectory_;
+  auto& inputBuffer = this->primalSolutionBuffer_->inputTrajectory_;
+  auto& controlBuffer = this->primalSolutionBuffer_->controllerPtr_;
+  auto& eventBuffer = this->primalSolutionBuffer_->eventTimes_;
+  auto& subsystemBuffer = this->primalSolutionBuffer_->subsystemsSequence_;
   auto& initObservationBuffer = this->commandBuffer_->mpcInitObservation_;
   auto& costDesiredBuffer = this->commandBuffer_->mpcCostDesiredTrajectories_;
 
-  // if mpc did not update the policy
+  // if MPC did not update the policy
   if (!static_cast<bool>(msg->controllerIsUpdated)) {
     timeBuffer.clear();
     stateBuffer.clear();
+    inputBuffer.clear();
     controlBuffer.reset(nullptr);
     eventBuffer.clear();
     subsystemBuffer.clear();
@@ -193,11 +195,15 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcPolicyCallback(const ocs2_msgs:
   timeBuffer.reserve(N);
   stateBuffer.clear();
   stateBuffer.reserve(N);
+  inputBuffer.clear();
+  inputBuffer.reserve(N);
 
   for (size_t i = 0; i < N; i++) {
-    timeBuffer.push_back(msg->timeTrajectory[i]);
-    stateBuffer.push_back(
+    timeBuffer.emplace_back(msg->timeTrajectory[i]);
+    stateBuffer.emplace_back(
         Eigen::Map<const Eigen::Matrix<float, STATE_DIM, 1>>(msg->stateTrajectory[i].value.data(), STATE_DIM).template cast<scalar_t>());
+    inputBuffer.emplace_back(
+        Eigen::Map<const Eigen::Matrix<float, INPUT_DIM, 1>>(msg->inputTrajectory[i].value.data(), INPUT_DIM).template cast<scalar_t>());
   }  // end of i loop
 
   // instantiate the correct controller
@@ -230,7 +236,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcPolicyCallback(const ocs2_msgs:
   controlBuffer->unFlatten(timeBuffer, controllerDataPtrArray);
 
   // allow user to modify the buffer
-  this->modifyBufferPolicy(*this->commandBuffer_, *this->policyBuffer_);
+  this->modifyBufferPolicy(*this->commandBuffer_, *this->primalSolutionBuffer_);
 
   if (!this->policyReceivedEver_ && this->policyUpdatedBuffer_) {
     this->policyReceivedEver_ = true;

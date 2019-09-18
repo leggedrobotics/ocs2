@@ -152,7 +152,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(const system_observation_t& i
     }
 
     // Visualization
-    publishVisualizer(observation_,  mrtPtr_->getCommand(), mrtPtr_->getPolicy());
+    publishVisualizer(observation_, mrtPtr_->getPolicy(), mrtPtr_->getCommand());
 
     rosRate.sleep();
   }  // end of while loop

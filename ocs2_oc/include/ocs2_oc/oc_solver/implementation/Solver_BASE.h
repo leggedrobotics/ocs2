@@ -86,6 +86,17 @@ void Solver_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(scalar_array
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
+typename Solver_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t Solver_BASE<STATE_DIM, INPUT_DIM>::primalSolution(scalar_t finalTime) const {
+  primal_solution_t primalSolution;
+  getPrimalSolution(finalTime, &primalSolution);
+  return primalSolution;
+}
+
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
 void Solver_BASE<STATE_DIM, INPUT_DIM>::printString(const std::string& text) {
   std::lock_guard<std::mutex> outputDisplayGuard(outputDisplayGuardMutex_);
   std::cerr << text << std::endl;

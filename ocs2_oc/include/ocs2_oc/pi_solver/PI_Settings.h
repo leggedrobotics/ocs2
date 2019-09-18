@@ -17,8 +17,8 @@ class PI_Settings {
   /**
    * @brief PI_Settings constructor with default values
    */
-  explicit PI_Settings(double gamma = 0.1, size_t numSamples = 100, int debugPrint = 0)
-      : gamma_(gamma), numSamples_(numSamples), debugPrint_(debugPrint) {}
+  explicit PI_Settings(double gamma = 0.1, size_t numSamples = 100, bool useFeedbackPolicy = false, int debugPrint = 0)
+      : gamma_(gamma), numSamples_(numSamples), useFeedbackPolicy_(useFeedbackPolicy), debugPrint_(debugPrint) {}
 
   /**
    * @brief loadSettings reads the settings from a config file
@@ -31,6 +31,8 @@ class PI_Settings {
   double gamma_;       //! temperature/level of noise
   size_t numSamples_;  //! how many trajectories to sample
   int debugPrint_;     //! verbose printing output for debugging
+
+  bool useFeedbackPolicy_;  //! Use either the optimized control policy (true) or the optimized state-input trajectory (false).
 
   Rollout_Settings rolloutSettings_;  //! settings for rollouts used in PI solver
 };
@@ -49,11 +51,11 @@ void PI_Settings::loadSettings(const std::string& filename, const std::string& f
   try {
     gamma_ = pt.get<double>(fieldName + ".gamma");
     if (verbose) {
-      std::cerr << " #### Option loader : option 'gamma' ....................... " << gamma_ << std::endl;
+      std::cerr << " #### Option loader : option 'gamma' ............................ " << gamma_ << std::endl;
     }
   } catch (const boost::property_tree::ptree_bad_path&) {
     if (verbose) {
-      std::cerr << " #### Option loader : option 'gamma' ....................... " << gamma_ << "\t(default)" << std::endl;
+      std::cerr << " #### Option loader : option 'gamma' ............................ " << gamma_ << "\t(default)" << std::endl;
     }
   }
 
@@ -65,6 +67,17 @@ void PI_Settings::loadSettings(const std::string& filename, const std::string& f
   } catch (const boost::property_tree::ptree_bad_path&) {
     if (verbose) {
       std::cerr << " #### Option loader : option 'numSamples' ....................... " << numSamples_ << "\t(default)" << std::endl;
+    }
+  }
+
+  try {
+    useFeedbackPolicy_ = pt.get<bool>(fieldName + ".useFeedbackPolicy");
+    if (verbose) {
+      std::cerr << " #### Option loader : option 'useFeedbackPolicy' ................ " << useFeedbackPolicy_ << std::endl;
+    }
+  } catch (const std::exception& e) {
+    if (verbose) {
+      std::cerr << " #### Option loader : option 'useFeedbackPolicy' ................ " << useFeedbackPolicy_ << " (default)" << std::endl;
     }
   }
 

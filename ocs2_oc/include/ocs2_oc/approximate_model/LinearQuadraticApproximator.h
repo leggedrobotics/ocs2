@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef LINEAR_QUADRATIC_APPROXIMATOR_OCS2_H_
-#define LINEAR_QUADRATIC_APPROXIMATOR_OCS2_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
@@ -402,5 +401,3 @@ class LinearQuadraticApproximator {
 };
 
 }  // namespace ocs2
-
-#endif /* LINEAR_QUADRATIC_APPROXIMATOR_OCS2_H_ */

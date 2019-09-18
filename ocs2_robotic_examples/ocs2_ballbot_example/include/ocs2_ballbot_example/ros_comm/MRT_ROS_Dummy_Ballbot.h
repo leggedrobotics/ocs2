@@ -81,7 +81,7 @@ class MRT_ROS_Dummy_Ballbot : public MRT_ROS_Dummy_Loop<ballbot::STATE_DIM_, bal
     tfBroadcasterPtr_.reset(new tf::TransformBroadcaster);
   }
 
-  void publishVisualizer(const system_observation_t& observation, const commandData_t& command, const policyData_t& policy) override {
+  void publishVisualizer(const system_observation_t& observation, const primal_solution_t& policy, const command_data_t& command) override {
     const auto& costDesiredTrajectories = command.mpcCostDesiredTrajectories_;
 
     updateTfPublisher(observation, costDesiredTrajectories);

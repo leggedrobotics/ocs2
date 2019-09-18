@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef MODESEQUENCE_ROS_INTERFACE_OCS2_H_
-#define MODESEQUENCE_ROS_INTERFACE_OCS2_H_
+#pragma once
 
 #include <string>
 #include <vector>
@@ -108,5 +107,3 @@ class ModeSequence_ROS_Interface {
 }  // namespace ocs2
 
 #include "implementation/ModeSequence_ROS_Interface.h"
-
-#endif /* MODESEQUENCE_ROS_INTERFACE_OCS2_H_ */

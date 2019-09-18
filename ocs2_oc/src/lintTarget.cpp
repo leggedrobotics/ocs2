@@ -1,6 +1,10 @@
 // Approximate model
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 
+// oc_data
+#include <ocs2_oc/oc_data/DualSolution.h>
+#include <ocs2_oc/oc_data/PrimalSolution.h>
+
 // oc_solver
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
 

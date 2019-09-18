@@ -40,12 +40,12 @@ class MRT_ROS_Dummy_Quadruped : public ocs2::MRT_ROS_Dummy_Loop<STATE_DIM, INPUT
 
   using BASE = ocs2::MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>;
   using typename BASE::command_data_t;
-  using typename BASE::primal_solution_t;
   using typename BASE::cost_desired_trajectories_t;
   using typename BASE::input_state_matrix_array_t;
   using typename BASE::input_state_matrix_t;
   using typename BASE::input_vector_array_t;
   using typename BASE::input_vector_t;
+  using typename BASE::primal_solution_t;
   using typename BASE::scalar_array_t;
   using typename BASE::scalar_t;
   using typename BASE::size_array_t;
@@ -82,7 +82,7 @@ class MRT_ROS_Dummy_Quadruped : public ocs2::MRT_ROS_Dummy_Loop<STATE_DIM, INPUT
    * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz
    */
   MRT_ROS_Dummy_Quadruped(quadruped_interface_ptr_t ocs2QuadrupedInterfacePtr, mrt_ptr_t mrtPtr, scalar_t mrtDesiredFrequency,
-                          const std::string& robotName = "robot", scalar_t mpcDesiredFrequency = -1);
+                          std::string robotName = "robot", scalar_t mpcDesiredFrequency = -1);
 
   /**
    * Default destructor.
@@ -94,7 +94,8 @@ class MRT_ROS_Dummy_Quadruped : public ocs2::MRT_ROS_Dummy_Loop<STATE_DIM, INPUT
 
   void launchVisualizerNode(int argc, char* argv[]) override;
 
-  void publishVisualizer(const system_observation_t& observation, const primal_solution_t& primalSolution, const command_data_t& command) override;
+  void publishVisualizer(const system_observation_t& observation, const primal_solution_t& primalSolution,
+                         const command_data_t& command) override;
 
  private:
   visualizer_t quadrupedXppVisualizer_;

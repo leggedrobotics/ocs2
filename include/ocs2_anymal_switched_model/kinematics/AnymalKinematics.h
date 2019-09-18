@@ -14,6 +14,8 @@
 #include "ocs2_anymal_switched_model/generated/jacobians.h"
 #include "ocs2_anymal_switched_model/generated/transforms.h"
 
+#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
+
 
 namespace anymal {
 namespace tpl {
@@ -62,6 +64,7 @@ public:
 	void footJacobainBaseFrame(const size_t& footIndex, Eigen::Matrix<SCALAR_T,6,12>& footJacobian) override;
 
 private:
+  struct RbdImpl;
 	// RBD homogeneous transforms of feet
 	typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_FOOT fr_trunk_X_fr_LF_foot_;
 	typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_FOOT fr_trunk_X_fr_RF_foot_;
@@ -82,7 +85,10 @@ using AnymalKinematics = tpl::AnymalKinematics<double>;
 
 }  // end of anymal namespace
 
-
-#include "implementation/AnymalKinematics.h"
+/**
+ *  Explicit instantiation, for instantiation additional types, include the implementation file instead of this one.
+ */
+extern template class anymal::tpl::AnymalKinematics<double>;
+extern template class anymal::tpl::AnymalKinematics<ocs2::CppAdInterface<double>::ad_scalar_t>;
 
 #endif /* ANYMAL_ANYMALKINEMATICS_H_ */

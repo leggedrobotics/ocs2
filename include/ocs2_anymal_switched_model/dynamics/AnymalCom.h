@@ -15,6 +15,8 @@
 #include "ocs2_anymal_switched_model/generated/jsim.h"
 #include "ocs2_anymal_switched_model/generated/miscellaneous.h"
 
+#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
+
 namespace anymal {
 namespace tpl {
 
@@ -137,4 +139,8 @@ using AnymalCom = tpl::AnymalCom<double>;
 
 }  // end of anymal namespace
 
-#include "implementation/AnymalCom.h"
+/**
+ *  Explicit instantiation, for instantiation additional types, include the implementation file instead of this one.
+ */
+extern template class anymal::tpl::AnymalCom<double>;
+extern template class anymal::tpl::AnymalCom<ocs2::CppAdInterface<double>::ad_scalar_t>;

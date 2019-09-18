@@ -36,6 +36,7 @@ public:
 	, frictionCoefficient_(1.0)
 	, enforceTorqueConstraint_(false)
 	, torqueLimit_(40.0)
+	, recompileLibraries_(true)
 	{}
 
 	virtual ~Model_Settings() = default;
@@ -60,6 +61,7 @@ public:
 	double frictionCoefficient_;
 	bool enforceTorqueConstraint_;
 	double torqueLimit_;
+	bool recompileLibraries_;
 
 	double eps_ = 0.01;
 	double eta_ = 10.0;
@@ -236,6 +238,14 @@ inline void Model_Settings::loadSettings(const std::string& filename, bool verbo
 	catch (const std::exception& e){
 		if (verbose)  std::cerr << " #### torqueLimit .................. " << torqueLimit_ << "\t(default)" << std::endl;
 	}
+
+        try {
+          recompileLibraries_ = pt.get<bool>("model_settings.recompileLibraries");
+          if (verbose)  std::cerr << " #### recompileLibraries ................. " << recompileLibraries_ << std::endl;
+        }
+        catch (const std::exception& e){
+          if (verbose)  std::cerr << " #### recompileLibraries ................. " << recompileLibraries_ << "\t(default)" << std::endl;
+        }
 
 	try {
 		eps_ = pt.get<double>("model_settings.eps");

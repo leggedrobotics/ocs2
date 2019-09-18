@@ -82,7 +82,7 @@ class MRT_ROS_Dummy_Quadruped : public ocs2::MRT_ROS_Dummy_Loop<STATE_DIM, INPUT
    * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz
    */
   MRT_ROS_Dummy_Quadruped(quadruped_interface_ptr_t ocs2QuadrupedInterfacePtr, mrt_ptr_t mrtPtr, scalar_t mrtDesiredFrequency,
-                          std::string robotName = "robot", scalar_t mpcDesiredFrequency = -1);
+                          const std::string& robotName = "robot", scalar_t mpcDesiredFrequency = -1);
 
   /**
    * Default destructor.

@@ -27,9 +27,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
+
 #include "ocs2_double_slit_example/DoubleSlitInterface.h"
 #include "ocs2_double_slit_example/definitions.h"
-#include "ocs2_double_slit_example/ros_comm/MRT_ROS_Double_Slit.h"
 #include "ocs2_double_slit_example/ros_comm/MRT_ROS_Dummy_Double_Slit.h"
 
 using namespace ocs2;
@@ -44,13 +45,11 @@ int main(int argc, char* argv[]) {
   // doubleSlitInterface
   double_slit::DoubleSlitInterface doubleSlitInterface(taskFileFolderName);
 
-  using mrt_base_ptr_t = double_slit::MrtRosDummyDoubleSlit::mrt_ptr_t;
-
   double rollout_dt;
   loadData::loadCppDataType(doubleSlitInterface.taskFile_, "pathIntegral.rollout_settings.minTimeStep", rollout_dt);
 
   // Dummy double_slit
-  double_slit::MrtRosDoubleSlit mrt("double_slit");
+  MRT_ROS_Interface<double_slit::STATE_DIM_, double_slit::INPUT_DIM_> mrt("double_slit");
   double_slit::MrtRosDummyDoubleSlit dummyDoubleSlit(
       mrt, doubleSlitInterface.mpcSettings().mrtDesiredFrequency_, doubleSlitInterface.mpcSettings().mpcDesiredFrequency_,
       &doubleSlitInterface.getDynamics(), Rollout_Settings(1e-9, 1e-6, 5000, rollout_dt, IntegratorType::EULER, false, true));

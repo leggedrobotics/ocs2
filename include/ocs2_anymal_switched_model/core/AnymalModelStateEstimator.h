@@ -5,11 +5,9 @@
  *      Author: farbod
  */
 
-#ifndef ANYMAL_MODELSTATEESTIMATOR_H_
-#define ANYMAL_MODELSTATEESTIMATOR_H_
+#pragma once
 
 #include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
-#include "ocs2_anymal_switched_model/dynamics/AnymalCom.h"
 
 namespace anymal {
 
@@ -25,11 +23,7 @@ public:
 	AnymalModelStateEstimator(const AnymalModelStateEstimator& rhs);
 
 	~AnymalModelStateEstimator() {}
-
-private:
-
 };
 
 } //end of namespace anymal
 
-#endif /* ANYMAL_MODELSTATEESTIMATOR_H_ */

@@ -50,6 +50,7 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/AnymalComKinoDynamics.cpp
   src/AnymalComKinoDynamicsDerivative.cpp
+  src/AnymalSystemDynamicsAd.cpp
   src/AnymalComKinoConstraint.cpp
   src/AnymalCost.cpp
   src/AnymalModelStateEstimator.cpp
@@ -107,6 +108,18 @@ add_dependencies(anymal_switched_model_test ${catkin_EXPORTED_TARGETS})
 target_link_libraries(anymal_switched_model_test
         ${PROJECT_NAME}
         ${catkin_LIBRARIES}
+        )
+
+catkin_add_gtest(anymal_ad_switched_model_test
+        test/TestAnymalAdSwitchedModel.cpp
+        )
+
+add_dependencies(anymal_ad_switched_model_test ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(anymal_ad_switched_model_test
+        ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        dl
         )
 
 #catkin_add_gtest(debug_frictionCone

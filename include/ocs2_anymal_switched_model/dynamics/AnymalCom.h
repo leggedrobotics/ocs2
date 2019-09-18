@@ -5,8 +5,7 @@
  *      Author: farbod
  */
 
-#ifndef ANYMAL_ANYMALCOM_H_
-#define ANYMAL_ANYMALCOM_H_
+#pragma once
 
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
 #include <iit/rbd/traits/TraitSelector.h>
@@ -139,5 +138,3 @@ using AnymalCom = tpl::AnymalCom<double>;
 }  // end of anymal namespace
 
 #include "implementation/AnymalCom.h"
-
-#endif /* ANYMAL_ANYMALCOM_H_ */

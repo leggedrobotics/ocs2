@@ -12,8 +12,7 @@
 #include <ocs2_quadrotor_example/definitions.h>
 #include <ocs2_quadrotor_example/dynamics/QuadrotorSystemDynamics.h>
 
-
-#include <ocs2_core/misc/loadEigenMatrix.h>
+#include <ocs2_core/misc/LoadData.h>
 #include <ros/package.h>
 
 int main(int argc, char* argv[]) {
@@ -35,16 +34,16 @@ int main(int argc, char* argv[]) {
 
   // Initial, nominal and final state
   dim_t::state_vector_t xInit, xNominal, xFinal;
-  ocs2::loadEigenMatrix(taskFile, "initialState", xInit);
+  ocs2::loadData::loadEigenMatrix(taskFile, "initialState", xInit);
   xNominal.setZero();
-  ocs2::loadEigenMatrix(taskFile, "x_final", xFinal);
+  ocs2::loadData::loadEigenMatrix(taskFile, "x_final", xFinal);
 
   // Cost function
   dim_t::state_matrix_t Q, QFinal;
-  ocs2::loadEigenMatrix(taskFile, "Q", Q);
-  ocs2::loadEigenMatrix(taskFile, "Q_final", QFinal);
+  ocs2::loadData::loadEigenMatrix(taskFile, "Q", Q);
+  ocs2::loadData::loadEigenMatrix(taskFile, "Q_final", QFinal);
   dim_t::input_matrix_t R;
-  ocs2::loadEigenMatrix(taskFile, "R", R);
+  ocs2::loadData::loadEigenMatrix(taskFile, "R", R);
   dim_t::input_vector_t uNominal;
   uNominal.setZero();
   using cost_t = ocs2::quadrotor::QuadrotorCost;
@@ -83,7 +82,7 @@ int main(int argc, char* argv[]) {
   using cost_desired_trajectories_t = ocs2::PiSolver<ocs2::quadrotor::STATE_DIM_, ocs2::quadrotor::INPUT_DIM_>::cost_desired_trajectories_t;
   double initTime, finalTime;
   initTime = 0.0;
-  ocs2::loadScalar(taskFile, "mpcTimeHorizon.timehorizon", finalTime);
+  ocs2::loadData::loadCppDataType(taskFile, "mpcTimeHorizon.timehorizon", finalTime);
   cost_desired_trajectories_t::scalar_array_t desiredTimeArray{initTime, finalTime};
   cost_desired_trajectories_t::dynamic_vector_array_t desiredStateArray(2), desiredInputArray(2);
   desiredStateArray[0] = xFinal;

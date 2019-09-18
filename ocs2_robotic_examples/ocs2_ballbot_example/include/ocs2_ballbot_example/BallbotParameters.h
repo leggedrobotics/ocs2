@@ -34,9 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <vector>
 
-#include <boost/property_tree/info_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
-
 namespace ocs2 {
 namespace ballbot {
 
@@ -46,7 +43,7 @@ class BallbotParameters {
   /**
    * Constructor.
    */
-  BallbotParameters() : ballRadius_(0.125), wheelRadius_(0.064), heightBallCenterToBase_(0.317) {}
+  BallbotParameters() : ballRadius_(0.125), wheelRadius_(0.064), heightBallCenterToBase_(0.275) {}
 
   /**
    * Default destructor.

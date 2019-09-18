@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef UPPER_LEVEL_CONSTRAINTS_OCS2_H_
-#define UPPER_LEVEL_CONSTRAINTS_OCS2_H_
+#pragma once
 
 #include <ocs2_frank_wolfe/NLP_Constraints.h>
 
@@ -73,23 +72,8 @@ public:
 
 	void setCurrentParameter(const dynamic_vector_t& x) override {
 
-		const size_t numEventTimes = x.size();
-
 		eventTime_ = x;
-
-		Cm_ = dynamic_matrix_t::Zero(numEventTimes+1, numEventTimes);
-		for (size_t i=0; i<numEventTimes+1; i++) {
-
-			if (i < numEventTimes)
-				Cm_(i,i)  = +1.0;
-
-			if (i > 0)
-				Cm_(i,i-1) = -1.0;
-		}
-
-		Dv_ = dynamic_vector_t::Zero(numEventTimes+1);
-		Dv_(0) = -initTime_;
-		Dv_(numEventTimes) = finalTime_;
+		linearInequalityCoefficients(x.size(), initTime_, finalTime_, Cm_, Dv_);
 	}
 
 	void getLinearInequalityConstraint(dynamic_vector_t& h) override {
@@ -100,6 +84,40 @@ public:
 	void getLinearInequalityConstraintDerivative(dynamic_matrix_t& dhdx) override {
 
 		dhdx = Cm_;
+	}
+
+	/**
+	 * Computes the inequality constraints coefficients for the following conditions:
+	 *
+	 * \f$t_0 < s_0 < s_1 < ... < s_{n-1} < t_f\f$,
+	 *
+	 * where \f$t_0\f$ is the initial time and \f$t_f\f$ is the final time.
+	 * \f$n\f$ is the number of event times and \f$s_i\f$ is the ith event time.
+	 * The inequality constraints have the following format: \f$C_m [s_i] + D_v > 0\f$.
+	 *
+	 * @param [in] numEventTimes: The number of event times, \f$n\f$.
+	 * @param [in] initTime: The initial time, \f$t_0\f$.
+	 * @param [in] finalTime: The final time, \f$t_f\f$.
+	 * @param [out] Cm: \f$C_m\f$ matrix of the inequality constraints.
+	 * @param [out] Dv: \f$D_v\f$ vector of the inequality constraints.
+	 *
+	 */
+	static void linearInequalityCoefficients(size_t numEventTimes, scalar_t initTime, scalar_t finalTime,
+			dynamic_matrix_t& Cm, dynamic_vector_t& Dv) {
+
+		Cm = dynamic_matrix_t::Zero(numEventTimes+1, numEventTimes);
+		for (size_t i=0; i<numEventTimes+1; i++) {
+
+			if (i < numEventTimes)
+				Cm(i,i)  = +1.0;
+
+			if (i > 0)
+				Cm(i,i-1) = -1.0;
+		}
+
+		Dv = dynamic_vector_t::Zero(numEventTimes+1);
+		Dv(0) = -initTime;
+		Dv(numEventTimes) = finalTime;
 	}
 
 private:
@@ -113,5 +131,3 @@ private:
 };
 
 }  // namespace ocs2
-
-#endif /* UPPER_LEVEL_CONSTRAINTS_OCS2_H_ */

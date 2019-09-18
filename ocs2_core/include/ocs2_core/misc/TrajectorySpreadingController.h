@@ -85,23 +85,32 @@ class TrajectorySpreadingController {
 
  protected:
   /**
-   * Finds the indices of a event times vector.
+   * Finds the indices of the entries in the control policy that their time stamps are greater or equal to the associated event time.
    *
-   * @param eventTimes: Event time vector.
-   * @param controllersStock: Control policy.
-   * @param eventsIndices: event time indices over the control policy time stamp.
+   * @param [in] eventTimes: Event time vector.
+   * @param [in] controllersStock: Control policy.
+   * @param [out] eventsIndices: event time indices in the control policy time stamp.
    */
-  void findsIndicesEventTimes(const scalar_array_t& eventTimes, const controller_array_t& controllersStock,
-                              std::vector<index_t>& eventsIndices) const;
+  void findEventTimesIndices(const scalar_array_t& eventTimes, const controller_array_t& controllersStock,
+                             std::vector<index_t>& eventsIndices) const;
 
   /**
-   * Returns true if a <= b
+   * Returns true if a <= b.
    *
-   * @param a
-   * @param b
-   * @return
+   * @param [in] a: first index.
+   * @param [in] b: second index.
+   * @return true if a <= b.
    */
-  bool smallerEqualIndexFunc(const index_t& a, const index_t& b) const;
+  bool isSmallerEqual(const index_t& a, const index_t& b) const;
+
+  /**
+   * Finds the index before the input index
+   *
+   * @param [in] a: first index.
+   * @param [in] b: second index.
+   * @return true if a <= b.
+   */
+  index_t findPreviousIndex(index_t index, const controller_array_t& controllersStock) const;
 
   /**
    *
@@ -110,17 +119,15 @@ class TrajectorySpreadingController {
    * @param ControlerEventTimeIndex
    * @param controllersStock
    */
-  void spreadController(const scalar_t& eventTime, const index_t& eventTimeIndex, const index_t& controlerEventTimeIndex,
+  void spreadController(scalar_t eventTime, index_t eventTimeIndex, index_t controlerEventTimeIndex,
                         controller_array_t& controllersStock) const;
 
   /***********
    * Variables
    ***********/
-  int initActivePartition_ = 0;
-  int finalActivePartition_ = 0;
-
-  std::vector<index_t> eventsIndices_;
-  std::vector<index_t> controllerEventsIndices_;
+  const int undefined_ = -1;
+  int initActivePartitionIndex_ = 0;
+  int finalActivePartitionIndex_ = 0;
 };
 
 }  // namespace ocs2

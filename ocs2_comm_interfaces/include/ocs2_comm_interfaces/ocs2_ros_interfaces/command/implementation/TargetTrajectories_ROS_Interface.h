@@ -33,8 +33,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-TargetTrajectories_ROS_Interface<SCALAR_T>::TargetTrajectories_ROS_Interface(int argc, char* argv[],
-                                                                             std::string robotName /*= "robot"*/)
+TargetTrajectories_ROS_Interface<SCALAR_T>::TargetTrajectories_ROS_Interface(int argc, char* argv[], std::string robotName /*= "robot"*/)
     : robotName_(std::move(robotName)) {
   ::ros::init(argc, argv, robotName_ + "_mpc_target");
   nodeHandle_.reset(new ::ros::NodeHandle);

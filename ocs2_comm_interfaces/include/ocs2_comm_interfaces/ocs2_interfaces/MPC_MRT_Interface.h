@@ -1,8 +1,34 @@
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
 #pragma once
 
-#include <ocs2_comm_interfaces/ocs2_interfaces/MRT_BASE.h>
-
-#include <chrono>
 #include <condition_variable>
 #include <csignal>
 #include <ctime>
@@ -10,12 +36,11 @@
 #include <string>
 #include <thread>
 
-#include <ocs2_comm_interfaces/SystemObservation.h>
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
+#include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_mpc/MPC_BASE.h>
 
-// For RosWarnStream, can be removed if std::cout is used instead
-#include <ros/ros.h>
+#include "ocs2_comm_interfaces/ocs2_interfaces/MRT_BASE.h"
 
 namespace ocs2 {
 
@@ -31,6 +56,8 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using Base = MRT_BASE<STATE_DIM, INPUT_DIM>;
+  using typename Base::command_data_t;
+  using typename Base::primal_solution_t;
 
   using Ptr = std::shared_ptr<MPC_MRT_Interface<STATE_DIM, INPUT_DIM>>;
 
@@ -38,6 +65,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
 
   using scalar_t = typename mpc_t::scalar_t;
   using scalar_array_t = typename mpc_t::scalar_array_t;
+  using scalar_array2_t = typename mpc_t::scalar_array2_t;
   using size_array_t = typename mpc_t::size_array_t;
   using state_vector_t = typename mpc_t::state_vector_t;
   using state_vector_array_t = typename mpc_t::state_vector_array_t;
@@ -49,6 +77,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   using controller_ptr_array_t = typename mpc_t::controller_ptr_array_t;
   using input_state_matrix_t = typename mpc_t::input_state_matrix_t;
   using input_state_matrix_array_t = typename mpc_t::input_state_matrix_array_t;
+  using dynamic_vector_t = typename mpc_t::dynamic_vector_t;
 
   using cost_desired_trajectories_t = typename mpc_t::cost_desired_trajectories_t;
   using mode_sequence_template_t = typename mpc_t::mode_sequence_template_t;
@@ -60,10 +89,10 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
 
   /**
    * Constructor
-   * @param[in] mpc the underlying MPC class to be used
-   * @param[in] logicRules (optional)
+   * @param [in] mpc the underlying MPC class to be used
+   * @param [in] logicRules (optional)
    */
-  explicit MPC_MRT_Interface(mpc_t* mpc, std::shared_ptr<HybridLogicRules> logicRules = nullptr);
+  explicit MPC_MRT_Interface(mpc_t& mpc, std::shared_ptr<HybridLogicRules> logicRules = nullptr);
 
   /**
    * Destructor.
@@ -84,7 +113,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Set a new mode sequence template
    * It is safe to set a new value while the MPC optimization is running
-   * @param modeSequenceTemplate
+   * @param [in] modeSequenceTemplate
    */
   void setModeSequence(const mode_sequence_template_t& modeSequenceTemplate);
 
@@ -96,36 +125,52 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   void advanceMpc();
 
   /**
-   * @brief Access the currently in-use input trajectory.
-   * @note To get the latest policy from MPC, call updatePolicy() first
+   * @brief Access the solver's internal value function
+   * @param time query time
+   * @param state query state
+   * @return value of the given state at the given time
    */
-  const input_vector_array_t& getMpcInputTrajectory() const { return mpcInputTrajectory_; };
+  scalar_t getValueFunction(scalar_t time, const state_vector_t& state);
+
+  /**
+   * @brief Calculates the state derivative of the value function
+   * @param [in] time the query time
+   * @param [out] Vx partial derivative of the value function at requested time at nominal state
+   */
+  void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx);
+
+  /**
+   * @brief getLinearFeedbackGain retrieves K matrix from solver
+   * @param [in] time
+   * @param [out] K
+   */
+  void getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K);
+
+  /**
+   * @brief Computes the Lagrange multiplier related to the state-input constraints
+   * @param [in] time: query time
+   * @param [in] state: query state
+   * @param [out] nu: the Lagrange multiplier
+   */
+  void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const;
 
  protected:
-  bool updatePolicyImpl() override;
-
   /**
    * @brief fillMpcOutputBuffers updates the *Buffer variables from the MPC object.
    * This method is automatically called by advanceMpc()
-   * @param[in] mpcInitObservation the observation used to run the mpc
+   * @param [in] mpcInitObservation: The observation used to run the MPC.
+   * @param [in] mpc: A reference to the MPC instance.
    */
-  void fillMpcOutputBuffers(system_observation_t mpcInitObservation);
+  void fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc);
 
  protected:
-  mpc_t* mpcPtr_;
+  mpc_t& mpc_;
 
-  size_t numMpcIterations_;
-  scalar_t maxDelay_ = 0;
-  scalar_t meanDelay_ = 0;
+  benchmark::RepeatedTimer mpcTimer_;
 
   // MPC inputs
   system_observation_t currentObservation_;
   std::mutex observationMutex_;
-
-  // MPC outputs (additional to the buffer variables in Base)
-  input_vector_array_t mpcInputTrajectoryBuffer_;
-  input_vector_array_t mpcInputTrajectory_;
-  input_linear_interpolation_t mpcLinInterpolateInput_;
 };
 
 }  // namespace ocs2

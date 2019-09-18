@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SLQ_DATACOLLECTOR_OCS2_H_
-#define SLQ_DATACOLLECTOR_OCS2_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <vector>
@@ -52,6 +51,9 @@ class SLQ_DataCollector {
 
   using Ptr = std::shared_ptr<SLQ_DataCollector<STATE_DIM, INPUT_DIM>>;
 
+  using controller_t = typename slq_t::controller_t;
+  using controller_ptr_array_t = typename slq_t::controller_ptr_array_t;
+  using linear_controller_t = typename slq_t::linear_controller_t;
   using linear_controller_array_t = typename slq_t::linear_controller_array_t;
   using size_array_t = typename slq_t::size_array_t;
   using scalar_t = typename slq_t::scalar_t;
@@ -271,5 +273,3 @@ class SLQ_DataCollector {
 }  // namespace ocs2
 
 #include "implementation/SLQ_DataCollector.h"
-
-#endif /* SLQ_DATACOLLECTOR_OCS2_H_ */

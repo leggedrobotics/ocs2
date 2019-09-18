@@ -27,10 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef MRT_ROS_DUMMY_LOOP_OCS2_H_
-#define MRT_ROS_DUMMY_LOOP_OCS2_H_
+#pragma once
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
+#include "ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h"
 
 namespace ocs2 {
 
@@ -46,7 +45,8 @@ class MRT_ROS_Dummy_Loop {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using mrt_t = ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
-  using mrt_ptr_t = typename mrt_t::Ptr;
+  using primal_solution_t = typename mrt_t::primal_solution_t;
+  using command_data_t = typename mrt_t::command_data_t;
 
   using controller_t = typename mrt_t::controller_t;
   using scalar_t = typename mrt_t::scalar_t;
@@ -61,10 +61,10 @@ class MRT_ROS_Dummy_Loop {
 
   using system_observation_t = typename mrt_t::system_observation_t;
   using cost_desired_trajectories_t = typename mrt_t::cost_desired_trajectories_t;
-  using commandData_t = typename mrt_t::CommandData;
-  using policyData_t = typename mrt_t::PolicyData;
 
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
+
+  using mrt_ptr_t = std::shared_ptr<mrt_t>;
 
   /**
    * Constructor.
@@ -78,7 +78,7 @@ class MRT_ROS_Dummy_Loop {
    * @param [in] rolloutSettings settings to use when dummy rolls out the received controller
    */
   MRT_ROS_Dummy_Loop(const mrt_ptr_t& mrtPtr, const scalar_t& mrtDesiredFrequency = 100, const scalar_t& mpcDesiredFrequency = -1,
-                     controlled_system_base_t* systemPtr = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings());
+                     const controlled_system_base_t* systemPtr = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings());
 
   /**
    * Destructor.
@@ -121,10 +121,10 @@ class MRT_ROS_Dummy_Loop {
    * Visualizes the current observation.
    *
    * @param [in] observation: The current observation.
+   * @param [in] primalSolution: The primal problem's solution.
    * @param [in] command: Contains costdesired trajectory and init observation.
-   * @param [in] policy: Contains the optimized mpc policy.
    */
-  virtual void publishVisualizer(const system_observation_t& observation, const commandData_t& command, const policyData_t& policy) {}
+  virtual void publishVisualizer(const system_observation_t& observation, const primal_solution_t& primalSolution, const command_data_t& command) {}
 
  protected:
   /*
@@ -133,7 +133,7 @@ class MRT_ROS_Dummy_Loop {
   mrt_ptr_t mrtPtr_;
   scalar_t mrtDesiredFrequency_;
   scalar_t mpcDesiredFrequency_;
-  controlled_system_base_t* systemPtr_;
+  std::unique_ptr<controlled_system_base_t> systemPtr_;
 
   bool realtimeLoop_;
 
@@ -143,5 +143,3 @@ class MRT_ROS_Dummy_Loop {
 }  // namespace ocs2
 
 #include "implementation/MRT_ROS_Dummy_Loop.h"
-
-#endif /* MRT_ROS_DUMMY_LOOP_OCS2_H_ */

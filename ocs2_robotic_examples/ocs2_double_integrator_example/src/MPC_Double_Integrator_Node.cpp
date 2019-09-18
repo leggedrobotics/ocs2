@@ -45,8 +45,8 @@ int main(int argc, char** argv) {
   DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
 
   // Launch MPC ROS node
-  MPC_ROS_Interface<ocs2::double_integrator::STATE_DIM_, ocs2::double_integrator::INPUT_DIM_> mpcNode(
-      doubleIntegratorInterface.getMPCPtr().get(), "double_integrator");
+  MPC_ROS_Interface<ocs2::double_integrator::STATE_DIM_, ocs2::double_integrator::INPUT_DIM_> mpcNode(&doubleIntegratorInterface.getMpc(),
+                                                                                                      "double_integrator");
   mpcNode.launchNodes(argc, argv);
 
   // Successful exit

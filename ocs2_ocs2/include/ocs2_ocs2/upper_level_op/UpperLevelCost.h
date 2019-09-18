@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef UPPER_LEVEL_COST_OCS2_H_
-#define UPPER_LEVEL_COST_OCS2_H_
+#pragma once
 
 #include <ocs2_slq/SLQ_BASE.h>
 #include <ocs2_slq/SLQ.h>
@@ -223,5 +222,3 @@ private:
 };
 
 }  // namespace ocs2
-
-#endif /* UPPER_LEVEL_COST_OCS2_H_ */

@@ -68,19 +68,19 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using Base = MRT_BASE<STATE_DIM, INPUT_DIM>;
+  using typename Base::command_data_t;
+  using typename Base::primal_solution_t;
 
-  using Ptr = std::shared_ptr<MRT_ROS_Interface<STATE_DIM, INPUT_DIM>>;
-
-  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using size_array_t = typename DIMENSIONS::size_array_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-  using input_vector_t = typename DIMENSIONS::input_vector_t;
-  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
-  using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
+  using typename Base::dim_t;
+  using scalar_t = typename dim_t::scalar_t;
+  using scalar_array_t = typename dim_t::scalar_array_t;
+  using size_array_t = typename dim_t::size_array_t;
+  using state_vector_t = typename dim_t::state_vector_t;
+  using state_vector_array_t = typename dim_t::state_vector_array_t;
+  using input_vector_t = typename dim_t::input_vector_t;
+  using input_vector_array_t = typename dim_t::input_vector_array_t;
+  using input_state_matrix_t = typename dim_t::input_state_matrix_t;
+  using input_state_matrix_array_t = typename dim_t::input_state_matrix_array_t;
 
   using ros_msg_conversions_t = RosMsgConversions<STATE_DIM, INPUT_DIM>;
   using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
@@ -88,7 +88,6 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   using time_triggered_rollout_t = TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
   using system_observation_t = SystemObservation<STATE_DIM, INPUT_DIM>;
-  using state_linear_interpolation_t = LinearInterpolation<state_vector_t, Eigen::aligned_allocator<state_vector_t>>;
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
 
   /**
@@ -97,7 +96,8 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] robotName: The robot's name.
    * @param [in] logicRules: A logic rule class of derived from the hybrid logicRules base.
    */
-  explicit MRT_ROS_Interface(std::string robotName = "robot", std::shared_ptr<HybridLogicRules> logicRules = nullptr);
+  explicit MRT_ROS_Interface(std::string robotName = "robot", std::shared_ptr<HybridLogicRules> logicRules = nullptr,
+                             ros::TransportHints mrtTransportHints = ::ros::TransportHints().tcpNoDelay());
 
   /**
    * Destructor
@@ -112,7 +112,7 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @param [in] planObservation: The observation of the policy.
    */
-  virtual void initCall(const SystemObservation<STATE_DIM, INPUT_DIM>& planObservation) {}
+  virtual void initCall(const system_observation_t& planObservation) {}
 
   /**
    * Shut down the ROS nodes.
@@ -187,6 +187,7 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   ocs2_msgs::mpc_observation mpcObservationMsgBuffer_;
 
   ::ros::CallbackQueue mrtCallbackQueue_;
+  ::ros::TransportHints mrtTransportHints_;
 
   // Multi-threading for publishers
   bool terminateThread_;

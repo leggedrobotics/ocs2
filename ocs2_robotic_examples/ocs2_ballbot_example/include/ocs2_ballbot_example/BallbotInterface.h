@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define BALLBOTINTERFACE_OCS2_BALLBOT_OCS2_H_
 
 // C++
-#include <stdlib.h>
+#include <cstdlib>
 #include <iostream>
 #include <string>
 
@@ -39,15 +39,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
-#include <ocs2_core/misc/loadEigenMatrix.h>
-#include <ocs2_mpc/MPC_PI.h>
-#include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
 // Ballbot
 #include "ocs2_ballbot_example/cost/BallbotCost.h"
 #include "ocs2_ballbot_example/definitions.h"
 #include "ocs2_ballbot_example/dynamics/BallbotSystemDynamics.h"
+#include "ocs2_ballbot_example/solvers/BallbotPI.h"
+#include "ocs2_ballbot_example/solvers/BallbotSLQ.h"
 
 namespace ocs2 {
 namespace ballbot {
@@ -80,12 +79,7 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
    */
   ~BallbotInterface() = default;
 
-  /**
-   * setup all optimizes.
-   *
-   * @param [in] taskFile: Task's file full path.
-   */
-  void setupOptimizer(const std::string& taskFile);
+  void setupOptimizer(const std::string& taskFile) override;
 
   /**
    * Gets SLQ settings.
@@ -94,20 +88,18 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
    */
   SLQ_Settings& slqSettings();
 
-  /**
-   * Gets a pointer to the internal SLQ-MPC class.
-   *
-   * @return Pointer to the internal MPC
-   */
-  mpc_t::Ptr& getMPCPtr();
+  mpc_t& getMpc() override { return *mpcPtr_; }
 
   /**
-   * @brief getMpcPiPtr
-   * @return pointer to the internal path integral MPC
+   * @brief getMpcPi
+   * @return reference to the internal path integral MPC
    */
-  mpc_pi_t* getMpcPiPtr() { return mpcPi_.get(); }
+  mpc_pi_t& getMpcPi() { return *mpcPi_; }
 
-  BallbotSystemDynamics* getDynamicsPtr() { return ballbotSystemDynamicsPtr_.get(); }
+  const BallbotSystemDynamics& getDynamics() const override { return *ballbotSystemDynamicsPtr_; }
+  const BallbotSystemDynamics& getDynamicsDerivatives() const override { return *ballbotSystemDynamicsPtr_; }
+
+  const BallbotCost& getCost() const override { return *ballbotCostPtr_; }
 
  protected:
   /**
@@ -125,13 +117,13 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
 
   SLQ_Settings slqSettings_;
   PI_Settings piSettings_;
-  mpc_t::Ptr mpcPtr_;
+  std::unique_ptr<mpc_t> mpcPtr_;
   std::unique_ptr<mpc_pi_t> mpcPi_;
 
-  BallbotSystemDynamics::Ptr ballbotSystemDynamicsPtr_;
-  BallbotCost::Ptr ballbotCostPtr_;
-  ballbotConstraint_t::Ptr ballbotConstraintPtr_;
-  ballbotOperatingPoint_t::Ptr ballbotOperatingPointPtr_;
+  std::unique_ptr<BallbotSystemDynamics> ballbotSystemDynamicsPtr_;
+  std::unique_ptr<BallbotCost> ballbotCostPtr_;
+  std::unique_ptr<ballbotConstraint_t> ballbotConstraintPtr_;
+  std::unique_ptr<ballbotOperatingPoint_t> ballbotOperatingPointPtr_;
 
   // cost parameters
   dim_t::state_matrix_t Q_;
@@ -143,9 +135,6 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
 
   size_t numPartitions_ = 0;
   dim_t::scalar_array_t partitioningTimes_;
-
-  // flag to generate dynamic files
-  bool libraryFilesAreGenerated_ = false;
 };
 
 }  // namespace ballbot

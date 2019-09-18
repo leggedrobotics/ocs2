@@ -88,7 +88,7 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     samplingPolicy_.reset(other.samplingPolicy_->clone());
   }
 
-  PiController<STATE_DIM, INPUT_DIM>* clone() override { return new PiController<STATE_DIM, INPUT_DIM>(*this); }
+  PiController<STATE_DIM, INPUT_DIM>* clone() const override { return new PiController<STATE_DIM, INPUT_DIM>(*this); }
 
   /**
    * Default destructor.
@@ -177,7 +177,7 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     throw std::runtime_error("not implemented");
   }
 
-  void concatenate(const Base* nextController) override { throw std::runtime_error("not implemented"); }
+  void concatenate(const Base* nextController, int index, int length) override { throw std::runtime_error("not implemented"); }
 
   /**
    * @brief setSamplingPolicy Allows setting a controller for importance sampling (warm-starting)
@@ -188,6 +188,8 @@ class PiController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
   }
 
   virtual void swap(PiController<STATE_DIM, INPUT_DIM>& other) { throw std::runtime_error("not implemented"); }
+
+  int size() const override { throw std::runtime_error("not implemented"); }
 
   ControllerType getType() const override { return ControllerType::PATH_INTEGRAL; }
 

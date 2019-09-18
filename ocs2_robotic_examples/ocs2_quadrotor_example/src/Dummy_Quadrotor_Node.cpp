@@ -35,7 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_quadrotor_example/ros_comm/MRT_ROS_Quadrotor.h"
 
 using namespace ocs2;
-using namespace quadrotor;
 
 int main(int argc, char** argv) {
   // task file
@@ -44,22 +43,24 @@ int main(int argc, char** argv) {
   }
   std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
-  QuadrotorInterface quadrotorInterface(taskFileFolderName);
+  // QuadrotorInterface
+  quadrotor::QuadrotorInterface quadrotorInterface(taskFileFolderName);
 
-  MRT_ROS_Quadrotor::Ptr mrtPtr(new MRT_ROS_Quadrotor("quadrotor"));
+  using mrt_base_ptr_t = quadrotor::MRT_ROS_Dummy_Quadrotor::mrt_ptr_t;
+  mrt_base_ptr_t mrtPtr(new quadrotor::MRT_ROS_Quadrotor("quadrotor"));
 
   // Dummy quadrotor
-  MRT_ROS_Dummy_Quadrotor dummyQuadrotor(mrtPtr, quadrotorInterface.mpcSettings().mrtDesiredFrequency_,
-                                         quadrotorInterface.mpcSettings().mpcDesiredFrequency_, quadrotorInterface.getDynamicsPtr());
+  quadrotor::MRT_ROS_Dummy_Quadrotor dummyQuadrotor(mrtPtr, quadrotorInterface.mpcSettings().mrtDesiredFrequency_,
+                                         quadrotorInterface.mpcSettings().mpcDesiredFrequency_, &quadrotorInterface.getDynamics());
 
   dummyQuadrotor.launchNodes(argc, argv);
 
   // initial state
-  MRT_ROS_Dummy_Quadrotor::system_observation_t initObservation;
+  quadrotor::MRT_ROS_Dummy_Quadrotor::system_observation_t initObservation;
   quadrotorInterface.getInitialState(initObservation.state());
 
   // initial command
-  MRT_ROS_Dummy_Quadrotor::cost_desired_trajectories_t initCostDesiredTrajectories;
+  quadrotor::MRT_ROS_Dummy_Quadrotor::cost_desired_trajectories_t initCostDesiredTrajectories;
   initCostDesiredTrajectories.desiredTimeTrajectory().push_back(initObservation.time());
   initCostDesiredTrajectories.desiredStateTrajectory().push_back(initObservation.state());
   initCostDesiredTrajectories.desiredInputTrajectory().push_back(initObservation.input());

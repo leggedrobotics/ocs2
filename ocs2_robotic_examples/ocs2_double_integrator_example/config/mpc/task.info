@@ -66,6 +66,7 @@ slq
         debugPrintMT                0
         lsStepsizeGreedy            1
 
+        useFeedbackPolicy           1
         useRiccatiSolver            1  
     }
     
@@ -84,26 +85,17 @@ mpc
 {
 	runtimeMaxNumIterations     1
 	initMaxNumIterations        100
-	
 	runtimeMaxLearningRate      1.0
 	runtimeMinLearningRate      1.0
 	initMinLearningRate         0.1
 	initMaxLearningRate         1.0
-	
-	debugPrint                  0
 	coldStart                   0
-	recedingHorizon             1   ; use receding horizon MPC
-
-	useParallelRiccatiSolver    0   ; use disjoint riccati solver in MP case and recedingHorizon fashion
-	
-	useFeedbackPolicy           0
-	forwardSimulationTime       28    ; [ms] MRT time
-	
-	rosMsgTimeWindow            1e+5  ; [ms]
-	adaptiveRosMsgTimeWindow    0
-	
+	recedingHorizon             1    ; use receding horizon MPC
+	useParallelRiccatiSolver    0    ; use disjoint riccati solver in MP case and recedingHorizon fashion
+	solutionTimeWindow          -1   ; maximum [s]
 	mpcDesiredFrequency         100  ; [Hz] 
 	mrtDesiredFrequency         400  ; [Hz] 
+	debugPrint                  1
 }                                                                                                                                 	
                                                                               	
 
@@ -112,6 +104,7 @@ pathIntegral
   gamma 0.01 ; temperature/level of noise
   numSamples 1000 ; how many trajectories to sample
   debugPrint 2 ; verbosity level
+  useFeedbackPolicy 0
 
   rollout_settings
   {

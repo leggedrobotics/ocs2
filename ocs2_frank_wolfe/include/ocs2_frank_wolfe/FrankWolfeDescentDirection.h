@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef FRANK_WOLFE_OCS2_H_
-#define FRANK_WOLFE_OCS2_H_
+#pragma once
 
 #include <memory>
 
@@ -36,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <glpk.h>
 
 #include <ocs2_core/Dimensions.h>
+#include <ocs2_core/misc/Numerics.h>
 #include <ocs2_frank_wolfe/NLP_Constraints.h>
 
 namespace ocs2 {
@@ -120,5 +120,3 @@ private:
 }  // namespace ocs2
 
 #include "implementation/FrankWolfeDescentDirection.h"
-
-#endif /* FRANK_WOLFE_OCS2_H_ */

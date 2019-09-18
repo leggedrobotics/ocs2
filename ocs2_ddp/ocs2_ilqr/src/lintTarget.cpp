@@ -4,4 +4,6 @@
 #include <ocs2_ilqr/ILQR_Settings.h>
 
 // dummy target for clang toolchain
-int main() { return 0; }
+int main() {
+  return 0;
+}

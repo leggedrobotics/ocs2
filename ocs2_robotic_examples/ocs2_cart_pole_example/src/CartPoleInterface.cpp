@@ -59,7 +59,7 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
 	/*
 	 * Default initial condition
 	 */
-	loadEigenMatrix(taskFile, "initialState", initialState_);
+	loadInitialState(taskFile, initialState_);
 
 	/*
 	 * SLQ-MPC settings
@@ -77,15 +77,15 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
 	 * Dynamics
 	 */
 	cartPoleSystemDynamicsPtr_.reset(new CartPoleSytemDynamics(cartPoleParameters));
-	cartPoleSystemDynamicsPtr_->createModels("cartpole_dynamics", libraryFolder_);
+	cartPoleSystemDynamicsPtr_->initialize("cartpole_dynamics", libraryFolder_, true, true);
 
 	/*
 	 * Cost function
 	 */
-	loadEigenMatrix(taskFile, "Q", Q_);
-	loadEigenMatrix(taskFile, "R", R_);
-	loadEigenMatrix(taskFile, "Q_final", QFinal_);
-	loadEigenMatrix(taskFile, "x_final", xFinal_);
+	loadData::loadEigenMatrix(taskFile, "Q", Q_);
+	loadData::loadEigenMatrix(taskFile, "R", R_);
+	loadData::loadEigenMatrix(taskFile, "Q_final", QFinal_);
+	loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
 	//	xNominal_ = dim_t::state_vector_t::Zero();
 	xNominal_ = xFinal_;
 	uNominal_ = dim_t::input_vector_t::Zero();
@@ -141,14 +141,6 @@ void CartPoleInterface::setupOptimizer(const std::string& taskFile) {
 SLQ_Settings& CartPoleInterface::slqSettings() {
 
 	return slqSettings_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-CartPoleInterface::mpc_t::Ptr& CartPoleInterface::getMPCPtr() {
-
-	return mpcPtr_;
 }
 
 } // namespace cartpole

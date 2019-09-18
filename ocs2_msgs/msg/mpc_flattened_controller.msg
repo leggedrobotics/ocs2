@@ -10,8 +10,9 @@ uint8                   controllerType         # what type of controller is this
 mpc_observation         initObservation        # Plan initial observation
 
 mpc_target_trajectories planTargetTrajectories # target trajectory in cost function
-mpc_state[]             stateTrajectory        # optimized nominal state trajectory from planner
-float32[]               timeTrajectory         # time trajectory for stateTrajectories
+mpc_state[]             stateTrajectory        # optimized state trajectory from planner
+mpc_input[]             inputTrajectory        # optimized input trajectory from planner
+float32[]               timeTrajectory         # time trajectory for stateTrajectory and inputTrajectory
 mode_sequence           modeSequence           # Optimal/Predefined MPC mode sequence
 
 bool                    controllerIsUpdated

@@ -27,156 +27,91 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef QUADRATICCOSTFUNCTIONAD_OCS2_H_
-#define QUADRATICCOSTFUNCTIONAD_OCS2_H_
+#pragma once
 
 #include "ocs2_core/cost/CostFunctionBaseAD.h"
 
 namespace ocs2 {
 
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t LOGIC_VARIABLE_DIM=0>
-class QuadraticCostFunctionAD : public
-CostFunctionBaseAD<QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_VARIABLE_DIM>, STATE_DIM, INPUT_DIM, LOGIC_VARIABLE_DIM>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class QuadraticCostFunctionAD : public CostFunctionBaseAD<STATE_DIM, INPUT_DIM> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef std::shared_ptr<QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_VARIABLE_DIM> > Ptr;
-	typedef std::shared_ptr<const QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_VARIABLE_DIM> > ConstPtr;
+  using BASE = CostFunctionBaseAD<STATE_DIM, INPUT_DIM>;
+  using typename BASE::ad_dynamic_vector_t;
+  using typename BASE::ad_scalar_t;
+  using typename BASE::dynamic_vector_t;
+  using typename BASE::input_matrix_t;
+  using typename BASE::input_state_matrix_t;
+  using typename BASE::input_vector_array_t;
+  using typename BASE::input_vector_t;
+  using typename BASE::scalar_array_t;
+  using typename BASE::scalar_t;
+  using typename BASE::state_matrix_t;
+  using typename BASE::state_vector_array_t;
+  using typename BASE::state_vector_t;
 
-	typedef CostFunctionBaseAD<
-			QuadraticCostFunctionAD<STATE_DIM, INPUT_DIM, LOGIC_VARIABLE_DIM>,
-			STATE_DIM, INPUT_DIM, LOGIC_VARIABLE_DIM> BASE;
-	typedef typename BASE::scalar_t             scalar_t;
-	typedef typename BASE::scalar_array_t       scalar_array_t;
-	typedef typename BASE::state_vector_t       state_vector_t;
-	typedef typename BASE::state_vector_array_t state_vector_array_t;
-	typedef typename BASE::state_matrix_t       state_matrix_t;
-	typedef typename BASE::input_vector_t       input_vector_t;
-	typedef typename BASE::input_vector_array_t input_vector_array_t;
-	typedef typename BASE::input_matrix_t       input_matrix_t;
-	typedef typename BASE::input_state_matrix_t input_state_matrix_t;
-	typedef typename BASE::logic_variable_t     logic_variable_t;
+  QuadraticCostFunctionAD(const state_matrix_t& Q, const input_matrix_t& R, const state_vector_t& xNominal, const input_vector_t& uNominal,
+                          const state_matrix_t& QFinal, const state_vector_t& xFinal,
+                          const input_state_matrix_t& P = input_state_matrix_t::Zero())
+      : BASE(), Q_(Q), R_(R), P_(P), QFinal_(QFinal), xNominal_(xNominal), uNominal_(uNominal), xFinal_(xFinal) {}
 
-	QuadraticCostFunctionAD(
-			const state_matrix_t& Q,
-			const input_matrix_t& R,
-			const state_vector_t& xNominal,
-			const input_vector_t& uNominal,
-			const state_matrix_t& QFinal,
-			const input_state_matrix_t& P = input_state_matrix_t::Zero())
-	: Q_(Q)
-	, R_(R)
-	, P_(P)
-	, QFinal_(QFinal)
-	, xNominal_(xNominal)
-	, uNominal_(uNominal)
-	{}
+  QuadraticCostFunctionAD(const QuadraticCostFunctionAD& rhs)
+      : BASE(rhs),
+        Q_(rhs.Q_),
+        R_(rhs.R_),
+        P_(rhs.P_),
+        QFinal_(rhs.QFinal_),
+        xNominal_(rhs.xNominal_),
+        uNominal_(rhs.uNominal_),
+        xFinal_(rhs.xFinal_){};
 
-	/**
-	 * Default destructor.
-	 */
-	virtual ~QuadraticCostFunctionAD() = default;
+  ~QuadraticCostFunctionAD() override = default;
 
-	/**
-	 * Interface method to the intermediate cost function. This method should be implemented by the derived class.
-	 *
-	 * @tparam scalar type. All the floating point operations should be with this type.
-	 * @param [in] time: time.
-	 * @param [in] state: state vector.
-	 * @param [in] input: input vector.
-	 * @param [in] stateDesired: desired state vector.
-	 * @param [in] inputDesired: desired input vector.
-	 * @param [in] logicVariable: logic variable vector.
-	 * @param [out] costValue: cost value.
-	 */
-	template <typename SCALAR_T>
-	void intermediateCostFunction(
-			const SCALAR_T& time,
-			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
-			const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& input,
-			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& stateDesired,
-			const Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>& inputDesired,
-			const Eigen::Matrix<SCALAR_T, LOGIC_VARIABLE_DIM, 1>& logicVariable,
-			SCALAR_T& costValue) {
+  QuadraticCostFunctionAD* clone() const override { return new QuadraticCostFunctionAD(*this); }
 
-		Eigen::Matrix<SCALAR_T, STATE_DIM, 1> xDeviation = state - stateDesired;
-		Eigen::Matrix<SCALAR_T, INPUT_DIM, 1> uDeviation = input - inputDesired;
+ protected:
+  dynamic_vector_t getIntermediateParameters(scalar_t time) const override {
+    dynamic_vector_t parameters(STATE_DIM + INPUT_DIM);
+    parameters << xNominal_, uNominal_;
+    return parameters;
+  }
 
-		costValue = 0.5 * xDeviation.dot(Q_.template cast<SCALAR_T>() * xDeviation)
-				+ 0.5 * uDeviation.dot(R_.template cast<SCALAR_T>() * uDeviation)
-				+ uDeviation.dot(P_.template cast<SCALAR_T>() * xDeviation);;
-	}
+  size_t getNumIntermediateParameters() const override { return STATE_DIM + INPUT_DIM; };
 
-	/**
-	 * Interface method to the terminal cost function. This method should be implemented by the derived class.
-	 *
-	 * @tparam scalar type. All the floating point operations should be with this type.
-	 * @param [in] time: time.
-	 * @param [in] state: state vector.
-	 * @param [in] stateDesired: desired state vector.
-	 * @param [in] logicVariable: logic variable vector.
-	 * @param [out] costValue: cost value.
-	 */
-	template <typename SCALAR_T>
-	void terminalCostFunction(
-			const SCALAR_T& time,
-			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& state,
-			const Eigen::Matrix<SCALAR_T, STATE_DIM, 1>& stateDesired,
-			const Eigen::Matrix<SCALAR_T, LOGIC_VARIABLE_DIM, 1>& logicVariable,
-			SCALAR_T& costValue) {
+  dynamic_vector_t getTerminalParameters(scalar_t time) const override { return xFinal_; }
 
-		Eigen::Matrix<SCALAR_T, STATE_DIM, 1> xDeviation = state - stateDesired;
-		costValue = 0.5 * xDeviation.dot(QFinal_.template cast<SCALAR_T>() * xDeviation);
-	}
+  size_t getNumTerminalParameters() const override { return STATE_DIM; };
 
-	/**
-	 * Gets a user-defined desired state at the give time.
-	 *
-	 * @param [in] t: Current time.
-	 * @return The desired state at the give time.
-	 */
-	state_vector_t getDesiredState(const scalar_t& t) {
+  void intermediateCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
+                                const ad_dynamic_vector_t& parameters, ad_scalar_t& costValue) const {
+    ad_dynamic_vector_t stateDesired = parameters.template head<STATE_DIM>();
+    ad_dynamic_vector_t inputDesired = parameters.template tail<INPUT_DIM>();
+    ad_dynamic_vector_t xDeviation = state - stateDesired;
+    ad_dynamic_vector_t uDeviation = input - inputDesired;
 
-		return xNominal_;
-	}
+    costValue = 0.5 * xDeviation.dot(Q_.template cast<ad_scalar_t>() * xDeviation) +
+                0.5 * uDeviation.dot(R_.template cast<ad_scalar_t>() * uDeviation) +
+                uDeviation.dot(P_.template cast<ad_scalar_t>() * xDeviation);
+  }
 
-	/**
-	 * Gets a user-defined desired input at the give time.
-	 *
-	 * @param [in] t: Current time.
-	 * @return The desired input at the give time.
-	 */
-	input_vector_t getDesiredInput(const scalar_t& t) {
+  void terminalCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& parameters,
+                            ad_scalar_t& costValue) const {
+    ad_dynamic_vector_t stateDesired = parameters.template head<STATE_DIM>();
+    ad_dynamic_vector_t xDeviation = state - stateDesired;
+    costValue = 0.5 * xDeviation.dot(QFinal_.template cast<ad_scalar_t>() * xDeviation);
+  }
 
-		return uNominal_;
-	}
+ private:
+  state_matrix_t Q_;
+  input_matrix_t R_;
+  input_state_matrix_t P_;
+  state_matrix_t QFinal_;
 
-	/**
-	 * Gets a user-defined logic variable based on the given logic rules.
-	 *
-	 * @param [in] logicRulesMachine: A class which contains and parse the logic rules e.g
-	 * method findActiveSubsystemHandle returns a Lambda expression which can be used to
-	 * find the ID of the current active subsystem.
-	 * @param [in] partitionIndex: index of the time partition.
-	 * @param [in] algorithmName: The algorithm that class this class (default not defined).
-	 * @return The the logic variables.
-	 */
-	logic_variable_t getlogicVariables(scalar_t time) {
-
-		return logic_variable_t::Zero();
-	}
-
-private:
-	state_matrix_t Q_;
-	input_matrix_t R_;
-	input_state_matrix_t P_;
-	state_matrix_t QFinal_;
-
-	state_vector_t xNominal_;
-	input_vector_t uNominal_;
+  state_vector_t xNominal_;
+  input_vector_t uNominal_;
+  state_vector_t xFinal_;
 };
 
-} // namespace ocs2
-
-#endif /* QUADRATICCOSTFUNCTIONAD_OCS2_H_ */
+}  // namespace ocs2

@@ -18,7 +18,7 @@
 namespace CppAD {
 
 template<class Base>
-inline bool IdenticalPar(const CppAD::cg::CG<Base>& x) throw (CppAD::cg::CGException) {
+inline bool IdenticalPar(const CppAD::cg::CG<Base>& x) {
     if (!x.isParameter()) {
         return false; // its value may change after tapping
     }
@@ -26,7 +26,7 @@ inline bool IdenticalPar(const CppAD::cg::CG<Base>& x) throw (CppAD::cg::CGExcep
 }
 
 template<class Base>
-inline bool IdenticalZero(const CppAD::cg::CG<Base>& x) throw (CppAD::cg::CGException) {
+inline bool IdenticalZero(const CppAD::cg::CG<Base>& x) {
     if (!x.isParameter()) {
         return false; // its value may change after tapping
     }
@@ -34,7 +34,7 @@ inline bool IdenticalZero(const CppAD::cg::CG<Base>& x) throw (CppAD::cg::CGExce
 }
 
 template<class Base>
-inline bool IdenticalOne(const CppAD::cg::CG<Base>& x) throw (CppAD::cg::CGException) {
+inline bool IdenticalOne(const CppAD::cg::CG<Base>& x) {
     if (!x.isParameter()) {
         return false; // its value may change after tapping
     }

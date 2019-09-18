@@ -27,8 +27,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef GDDP_OCS2_H_
-#define GDDP_OCS2_H_
+#pragma once
+
+#include <Eigen/StdVector>
+#include <Eigen/Dense>
 
 #include <array>
 #include <mutex>
@@ -36,15 +38,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <numeric>
 #include <cstddef>
-#include <Eigen/StdVector>
 #include <vector>
 #include <type_traits>
 #include <chrono>
-#include <Eigen/Dense>
 
 #include <ocs2_core/Dimensions.h>
+#include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/integration/Integrator.h>
-#include <ocs2_core/misc/FindActiveIntervalIndex.h>
+#include <ocs2_core/misc/Lookup.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
 #include <ocs2_slq/SLQ_DataCollector.h>
@@ -76,12 +77,10 @@ public:
 	using rollout_sensitivity_equations_t = RolloutSensitivityEquations<STATE_DIM, INPUT_DIM>;
 	using riccati_sensitivity_equations_t = SensitivitySequentialRiccatiEquations<STATE_DIM, INPUT_DIM>;
 
+	using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
+	using linear_controller_array_t = typename linear_controller_t::array_t;
+
 	using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
-	using controller_t = typename DIMENSIONS::controller_t;
-	using controller_array_t = typename DIMENSIONS::controller_array_t;
-	using linear_controller_array_t = typename slq_data_collector_t::linear_controller_array_t;
-	using lagrange_t = typename DIMENSIONS::lagrange_t;
-	using lagrange_array_t = typename DIMENSIONS::lagrange_array_t;
 	using size_array_t = typename DIMENSIONS::size_array_t;
 	using scalar_t = typename DIMENSIONS::scalar_t;
 	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
@@ -243,31 +242,6 @@ protected:
 			state_vector_array2_t& costateTrajectoriesStock);
 
 	/**
-	 * Calculates the linear function approximation of the state-input constraint Lagrangian.
-	 * This method uses the following variables:
-	 *
-	 * @param [out] lagrangeMultiplierFunctionsStock: the linear function approximation of the type-1 constraint Lagrangian.
-	 * @param [in] learningRate: the learning rate.
-	 */
-	void calculateInputConstraintLagrangian(
-			lagrange_array_t& lagrangeMultiplierFunctionsStock,
-			scalar_t learningRate = 0.0);
-
-	/**
-	 * Computes the Lagrange multiplier of the state-input constraint over the given rollout.
-	 *
-	 * @param [in] timeTrajectoriesStock: the inquiry rollout time
-	 * @param [in] stateTrajectoriesStock: the inquiry rollout state
-	 * @param [in] lagrangeMultiplierFunctionsStock: the coefficients of the linear function for lagrangeMultiplier
-	 * @param [out] lagrangeTrajectoriesStock: lagrangeMultiplier value over the given trajectory
-	 */
-	void calculateRolloutLagrangeMultiplier(
-			const std::vector<scalar_array_t>& timeTrajectoriesStock,
-			const state_vector_array2_t& stateTrajectoriesStock,
-			const lagrange_array_t& lagrangeMultiplierFunctionsStock,
-			constraint1_vector_array2_t& lagrangeTrajectoriesStock);
-
-	/**
 	 * Computes the Lagrange multiplier of the state-input constraint over the given time trajectory.
 	 *
 	 * @param [in] timeTrajectoriesStock: the inquiry rollout time
@@ -276,36 +250,6 @@ protected:
 	void calculateNominalRolloutLagrangeMultiplier(
 			const std::vector<scalar_array_t>& timeTrajectoriesStock,
 			constraint1_vector_array2_t& lagrangeTrajectoriesStock);
-
-	/**
-	 * Finds the active subsystem. It output is is in the set: {0, 1, ..., #eventTimes+1}.
-	 * Thus if no event takes place it returns zero, otherwise the i'th subsystem is active
-	 * in the time period [te_{i-1}, te_{i}].
-	 *
-	 * @param [in] partitioningTimes: a sorted event times sequence.
-	 * @param [in] time: inquiry time.
-	 * @param [in] ceilingFunction: Use the ceiling function.
-	 * @return Active subsystem index.
-	 */
-	size_t findActiveSubsystemIndex(
-			const scalar_array_t& eventTimes,
-			const scalar_t& time,
-			bool ceilingFunction = true) const;
-
-	/**
-	 * Finds the interval of partitioningTimes to which the input time belongs to it.
-	 * time is in interval i if: partitioningTimes[i] < t <= partitioningTimes[i+1]
-	 * Exception: if time=partitioningTimes[0] then time is interval 0
-	 *
-	 * @param [in] partitioningTimes: a sorted time sequence.
-	 * @param [in] time: Enquiry time.
-	 * @param [in] ceilingFunction: Use the ceiling function.
-	 * @return Active subsystem index.
-	 */
-	size_t findActivePartitionIndex(
-			const scalar_array_t& partitioningTimes,
-			const scalar_t& time,
-			bool ceilingFunction = true) const;
 
 	/**
 	 * Computes the equivalent system formulation multiplier. which is
@@ -460,7 +404,7 @@ protected:
      * @param [in] state: The inquired state.
      * @param [out] valueFunctionDerivative: The value function's derivative w.r.t. an event time.
      */
-	void getValueFuntionDerivative(
+	void getValueFuntionSensitivity(
 			const size_t& eventTimeIndex,
 			const scalar_t& time,
 			const state_vector_t& state,
@@ -553,5 +497,3 @@ protected:
 } // namespace ocs2
 
 #include "implementation/GDDP.h"
-
-#endif /* GDDP_OCS2_H_ */

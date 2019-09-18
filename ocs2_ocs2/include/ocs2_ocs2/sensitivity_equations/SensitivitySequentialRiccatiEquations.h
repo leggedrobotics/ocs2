@@ -27,16 +27,17 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SENSITIVITYSEQUENTIALRICCATIEQUATIONS_OCS2_H_
-#define SENSITIVITYSEQUENTIALRICCATIEQUATIONS_OCS2_H_
+#pragma once
+
+#include <Eigen/Dense>
 
 #include <array>
-#include <Eigen/Dense>
 #include <limits>
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/integration/OdeBase.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
+#include <ocs2_core/misc/Numerics.h>
 
 namespace ocs2{
 
@@ -60,7 +61,6 @@ public:
 	typedef OdeBase<S_DIM_> BASE;
 
 	typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
-	using controller_t = typename DIMENSIONS::controller_t;
 	using scalar_t = typename DIMENSIONS::scalar_t;
 	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
 	using eigen_scalar_t = typename DIMENSIONS::eigen_scalar_t;
@@ -276,7 +276,7 @@ public:
 		nabla_Lm_ = invRm_ * Bm_.transpose() * nabla_Sm_;
 
 		// Riccati equations
-		if (std::abs(multiplier_) > std::numeric_limits<scalar_t>::epsilon()) {
+		if (!numerics::almost_eq(multiplier_, 0.0)) {
 			dSmdt_ = Qm_ + Am_.transpose()*Sm_ + Sm_.transpose()*Am_ - Lm_.transpose()*Rm_*Lm_;
 			dSmdt_ = 0.5*(dSmdt_+dSmdt_.transpose()).eval();
 			dSvdt_ = Qv_ + Am_.transpose()*Sv_ - Lm_.transpose()*Rm_*Lv_;
@@ -369,7 +369,3 @@ private:
 };
 
 } // namespace ocs2
-
-
-
-#endif /* SENSITIVITYSEQUENTIALRICCATIEQUATIONS_OCS2_H_ */

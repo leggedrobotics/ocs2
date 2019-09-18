@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 08.05.19.
-//
+
 
 #include <gtest/gtest.h>
 #include <ocs2_core/loopshaping/dynamics/LoopshapingFilterDynamics.h>

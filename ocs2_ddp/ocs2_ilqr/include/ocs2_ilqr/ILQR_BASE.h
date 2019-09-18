@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef ILQR_BASE_OCS2_H_
-#define ILQR_BASE_OCS2_H_
+#pragma once
 
 #include <ocs2_ddp_base/DDP_BASE.h>
 
@@ -49,79 +48,85 @@ class ILQR_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
 
   using BASE = DDP_BASE<STATE_DIM, INPUT_DIM>;
 
-  using DIMENSIONS = typename BASE::DIMENSIONS;
-  using controller_t = typename BASE::controller_t;
-  using size_array_t = typename BASE::size_array_t;
-  using size_array2_t = typename BASE::size_array2_t;
-  using scalar_t = typename BASE::scalar_t;
-  using scalar_array_t = typename BASE::scalar_array_t;
-  using scalar_array2_t = typename BASE::scalar_array2_t;
-  using scalar_array3_t = typename BASE::scalar_array3_t;
-  using eigen_scalar_t = typename BASE::eigen_scalar_t;
-  using eigen_scalar_array_t = typename BASE::eigen_scalar_array_t;
-  using eigen_scalar_array2_t = typename BASE::eigen_scalar_array2_t;
-  using state_vector_t = typename BASE::state_vector_t;
-  using state_vector_array_t = typename BASE::state_vector_array_t;
-  using state_vector_array2_t = typename BASE::state_vector_array2_t;
-  using state_vector_array3_t = typename BASE::state_vector_array3_t;
-  using input_vector_t = typename BASE::input_vector_t;
-  using input_vector_array_t = typename BASE::input_vector_array_t;
-  using input_vector_array2_t = typename BASE::input_vector_array2_t;
-  using input_vector_array3_t = typename BASE::input_vector_array3_t;
-  using input_state_matrix_t = typename BASE::input_state_matrix_t;
-  using input_state_matrix_array_t = typename BASE::input_state_matrix_array_t;
-  using input_state_matrix_array2_t = typename BASE::input_state_matrix_array2_t;
-  using input_state_matrix_array3_t = typename BASE::input_state_matrix_array3_t;
-  using state_matrix_t = typename BASE::state_matrix_t;
-  using state_matrix_array_t = typename BASE::state_matrix_array_t;
-  using state_matrix_array2_t = typename BASE::state_matrix_array2_t;
-  using state_matrix_array3_t = typename BASE::state_matrix_array3_t;
-  using input_matrix_t = typename BASE::input_matrix_t;
-  using input_matrix_array_t = typename BASE::input_matrix_array_t;
-  using input_matrix_array2_t = typename BASE::input_matrix_array2_t;
-  using input_matrix_array3_t = typename BASE::input_matrix_array3_t;
-  using state_input_matrix_t = typename BASE::state_input_matrix_t;
-  using state_input_matrix_array_t = typename BASE::state_input_matrix_array_t;
-  using state_input_matrix_array2_t = typename BASE::state_input_matrix_array2_t;
-  using state_input_matrix_array3_t = typename BASE::state_input_matrix_array3_t;
-  using constraint1_vector_t = typename BASE::constraint1_vector_t;
-  using constraint1_vector_array_t = typename BASE::constraint1_vector_array_t;
-  using constraint1_vector_array2_t = typename BASE::constraint1_vector_array2_t;
-  using constraint1_state_matrix_t = typename BASE::constraint1_state_matrix_t;
-  using constraint1_state_matrix_array_t = typename BASE::constraint1_state_matrix_array_t;
-  using constraint1_state_matrix_array2_t = typename BASE::constraint1_state_matrix_array2_t;
-  using constraint1_input_matrix_t = typename BASE::constraint1_input_matrix_t;
-  using constraint1_input_matrix_array_t = typename BASE::constraint1_input_matrix_array_t;
-  using constraint1_input_matrix_array2_t = typename BASE::constraint1_input_matrix_array2_t;
-  using input_constraint1_matrix_t = typename BASE::input_constraint1_matrix_t;
-  using input_constraint1_matrix_array_t = typename BASE::input_constraint1_matrix_array_t;
-  using input_constraint1_matrix_array2_t = typename BASE::input_constraint1_matrix_array2_t;
-  using constraint2_vector_t = typename BASE::constraint2_vector_t;
-  using constraint2_vector_array_t = typename BASE::constraint2_vector_array_t;
-  using constraint2_vector_array2_t = typename BASE::constraint2_vector_array2_t;
-  using constraint2_state_matrix_t = typename BASE::constraint2_state_matrix_t;
-  using constraint2_state_matrix_array_t = typename BASE::constraint2_state_matrix_array_t;
-  using constraint2_state_matrix_array2_t = typename BASE::constraint2_state_matrix_array2_t;
-  using dynamic_vector_t = typename BASE::dynamic_vector_t;
-  using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
+  using typename BASE::constraint1_input_matrix_array2_t;
+  using typename BASE::constraint1_input_matrix_array_t;
+  using typename BASE::constraint1_input_matrix_t;
+  using typename BASE::constraint1_state_matrix_array2_t;
+  using typename BASE::constraint1_state_matrix_array_t;
+  using typename BASE::constraint1_state_matrix_t;
+  using typename BASE::constraint1_vector_array2_t;
+  using typename BASE::constraint1_vector_array_t;
+  using typename BASE::constraint1_vector_t;
+  using typename BASE::constraint2_state_matrix_array2_t;
+  using typename BASE::constraint2_state_matrix_array_t;
+  using typename BASE::constraint2_state_matrix_t;
+  using typename BASE::constraint2_vector_array2_t;
+  using typename BASE::constraint2_vector_array_t;
+  using typename BASE::constraint2_vector_t;
+  using typename BASE::DIMENSIONS;
+  using typename BASE::dynamic_input_matrix_t;
+  using typename BASE::dynamic_matrix_array2_t;
+  using typename BASE::dynamic_matrix_t;
+  using typename BASE::dynamic_vector_array_t;
+  using typename BASE::dynamic_vector_t;
+  using typename BASE::eigen_scalar_array2_t;
+  using typename BASE::eigen_scalar_array_t;
+  using typename BASE::eigen_scalar_t;
+  using typename BASE::input_constraint1_matrix_array2_t;
+  using typename BASE::input_constraint1_matrix_array_t;
+  using typename BASE::input_constraint1_matrix_t;
+  using typename BASE::input_matrix_array2_t;
+  using typename BASE::input_matrix_array3_t;
+  using typename BASE::input_matrix_array_t;
+  using typename BASE::input_matrix_t;
+  using typename BASE::input_state_matrix_array2_t;
+  using typename BASE::input_state_matrix_array3_t;
+  using typename BASE::input_state_matrix_array_t;
+  using typename BASE::input_state_matrix_t;
+  using typename BASE::input_vector_array2_t;
+  using typename BASE::input_vector_array3_t;
+  using typename BASE::input_vector_array_t;
+  using typename BASE::input_vector_t;
+  using typename BASE::scalar_array2_t;
+  using typename BASE::scalar_array3_t;
+  using typename BASE::scalar_array_t;
+  using typename BASE::scalar_t;
+  using typename BASE::size_array2_t;
+  using typename BASE::size_array_t;
+  using typename BASE::state_input_matrix_array2_t;
+  using typename BASE::state_input_matrix_array3_t;
+  using typename BASE::state_input_matrix_array_t;
+  using typename BASE::state_input_matrix_t;
+  using typename BASE::state_matrix_array2_t;
+  using typename BASE::state_matrix_array3_t;
+  using typename BASE::state_matrix_array_t;
+  using typename BASE::state_matrix_t;
+  using typename BASE::state_vector_array2_t;
+  using typename BASE::state_vector_array3_t;
+  using typename BASE::state_vector_array_t;
+  using typename BASE::state_vector_t;
 
-  using controller_ptr_array_t = typename BASE::controller_ptr_array_t;
-  using linear_controller_t = typename BASE::linear_controller_t;
-  using linear_controller_array_t = typename BASE::linear_controller_array_t;
-  using event_handler_t = typename BASE::event_handler_t;
-  using controlled_system_base_t = typename BASE::controlled_system_base_t;
-  using derivatives_base_t = typename BASE::derivatives_base_t;
-  using constraint_base_t = typename BASE::constraint_base_t;
-  using cost_function_base_t = typename BASE::cost_function_base_t;
-  using operating_trajectories_base_t = typename BASE::operating_trajectories_base_t;
-  using penalty_base_t = typename BASE::penalty_base_t;
-  using rollout_base_t = typename BASE::rollout_base_t;
-  using time_triggered_rollout_t = typename BASE::time_triggered_rollout_t;
-  using linear_quadratic_approximator_t = typename BASE::linear_quadratic_approximator_t;
-  using operating_trajectorie_rollout_t = typename BASE::operating_trajectorie_rollout_t;
-  using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
-  using logic_rules_machine_t = typename BASE::logic_rules_machine_t;
-  using logic_rules_machine_ptr_t = typename BASE::logic_rules_machine_ptr_t;
+  using typename BASE::controller_array_t;
+  using typename BASE::controller_ptr_array_t;
+  using typename BASE::controller_t;
+  using typename BASE::linear_controller_array_t;
+  using typename BASE::linear_controller_ptr_array_t;
+  using typename BASE::linear_controller_t;
+
+  using typename BASE::constraint_base_t;
+  using typename BASE::controlled_system_base_t;
+  using typename BASE::cost_desired_trajectories_t;
+  using typename BASE::cost_function_base_t;
+  using typename BASE::derivatives_base_t;
+  using typename BASE::event_handler_t;
+  using typename BASE::linear_quadratic_approximator_t;
+  using typename BASE::logic_rules_machine_ptr_t;
+  using typename BASE::logic_rules_machine_t;
+  using typename BASE::operating_trajectorie_rollout_t;
+  using typename BASE::operating_trajectories_base_t;
+  using typename BASE::penalty_base_t;
+  using typename BASE::rollout_base_t;
+  using typename BASE::time_triggered_rollout_t;
 
   //	/**
   //	 * class for collecting ILQR data
@@ -188,6 +193,8 @@ class ILQR_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * 		- quadratized final cost
    */
   void approximateOptimalControlProblem() override;
+
+  void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const override;
 
   /**
    * Calculates the controller. This method uses the following variables:
@@ -314,5 +321,3 @@ class ILQR_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
 }  // namespace ocs2
 
 #include "implementation/ILQR_BASE.h"
-
-#endif /* ILQR_BASE_OCS2_H_ */

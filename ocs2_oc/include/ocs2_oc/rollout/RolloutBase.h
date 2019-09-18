@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef ROLLOUT_BASE_OCS2_H_
-#define ROLLOUT_BASE_OCS2_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
@@ -230,5 +229,3 @@ class RolloutBase {
 };
 
 }  // namespace ocs2
-
-#endif /* ROLLOUT_BASE_OCS2_H_ */

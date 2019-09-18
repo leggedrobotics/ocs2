@@ -1,10 +1,7 @@
-//
-// Created by johannes on 01.04.19.
-//
 #include <gtest/gtest.h>
+#include <ocs2_comm_interfaces/ocs2_interfaces/MPC_MRT_Interface.h>
+#include <ocs2_double_integrator_example/DoubleIntegratorInterface.h>
 #include <cmath>
-#include "ocs2_comm_interfaces/ocs2_interfaces/MPC_MRT_Interface.h"
-#include "ocs2_double_integrator_example/DoubleIntegratorInterface.h"
 
 using namespace ocs2;
 using namespace double_integrator;
@@ -14,7 +11,7 @@ typedef MPC_MRT_Interface<dim_t::STATE_DIM_, dim_t::INPUT_DIM_> mpc_t;
 TEST(DoubleIntegratorIntegrationTest, synchronousTracking) {
   std::string taskFileFolderName = "mpc";
   DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
-  mpc_t mpcInterface(doubleIntegratorInterface.getMPCPtr().get());
+  mpc_t mpcInterface(doubleIntegratorInterface.getMpc());
 
   double time = 1234.5;  // start from a random time
 
@@ -72,7 +69,7 @@ TEST(DoubleIntegratorIntegrationTest, asynchronousTracking) {
   std::string taskFileFolderName = "mpc";
 
   DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
-  mpc_t mpcInterface(doubleIntegratorInterface.getMPCPtr().get());
+  mpc_t mpcInterface(doubleIntegratorInterface.getMpc());
 
   double time = 1234.5;  // start from a random time
 

@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef TIMEHORIZONESTIMATORBASE_H_
-#define TIMEHORIZONESTIMATORBASE_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <memory>
@@ -67,5 +66,3 @@ class TimeHorizonEstimatorBase {
 };
 
 }  // namespace ocs2
-
-#endif /* TIMEHORIZONESTIMATORBASE_H_ */

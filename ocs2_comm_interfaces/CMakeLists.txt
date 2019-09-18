@@ -2,12 +2,12 @@ cmake_minimum_required(VERSION 3.0)
 project(ocs2_comm_interfaces)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
-        roscpp
-        ocs2_msgs
-        ocs2_core
-        ocs2_slq
-        ocs2_ocs2
-        ocs2_mpc
+  roscpp
+  ocs2_msgs
+  ocs2_core
+  ocs2_slq
+  ocs2_ocs2
+  ocs2_mpc
 )
 
 ## Find catkin macros and libraries
@@ -18,9 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-find_package(Boost REQUIRED COMPONENTS
-  filesystem
-)
+find_package(Boost REQUIRED COMPONENTS filesystem)
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -55,38 +53,37 @@ include_directories(
 )
 
 add_executable(test_custom_callback_queue
-        test/test_custom_callback_queue.cpp
-        )
+  test/test_custom_callback_queue.cpp
+)
 add_dependencies(test_custom_callback_queue
-        ${catkin_EXPORTED_TARGETS}
-        )
+  ${catkin_EXPORTED_TARGETS}
+)
 target_link_libraries(test_custom_callback_queue
-        ${catkin_LIBRARIES}
-        )
+  ${catkin_LIBRARIES}
+)
 
 add_executable(${PROJECT_NAME}_lintTarget
-        src/lintTarget.cpp
-        )
+  src/lintTarget.cpp
+)
 add_dependencies(${PROJECT_NAME}_lintTarget
-        ${catkin_EXPORTED_TARGETS}
-        )
+  ${catkin_EXPORTED_TARGETS}
+)
 target_link_libraries(${PROJECT_NAME}_lintTarget
-        ${catkin_LIBRARIES}
-        )
+  ${catkin_LIBRARIES}
+)
 
 #########################
 ###   CLANG TOOLING   ###
 #########################
 find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
-    message(STATUS "Run clang tooling for target " ${PROJECT_NAME}_lintTarget)
-    add_clang_tooling(
-    TARGETS ${PROJECT_NAME}_lintTarget
-            SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
-            CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
-            CF_FIX
-            CF_WERROR
-    )
+  message(STATUS "Run clang tooling for target " ${PROJECT_NAME}_lintTarget)
+  add_clang_tooling(
+  TARGETS ${PROJECT_NAME}_lintTarget
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CF_WERROR
+)
 endif(cmake_clang_tools_FOUND)
 
 #############

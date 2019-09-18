@@ -35,7 +35,7 @@ namespace ocs2 {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_SLQ<STATE_DIM, INPUT_DIM>::MPC_SLQ()
 
-    : BASE(), optimizedTimeTrajectoriesStock_(0), optimizedStateTrajectoriesStock_(0), optimizedInputTrajectoriesStock_(0) {}
+    : BASE() {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -50,12 +50,7 @@ MPC_SLQ<STATE_DIM, INPUT_DIM>::MPC_SLQ(const controlled_system_base_t* systemDyn
                                        const mode_sequence_template_t* modeSequenceTemplatePtr /* = nullptr*/,
                                        const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
-    : BASE(partitioningTimes, mpcSettings),
-      optimizedTimeTrajectoriesStock_(0),
-      optimizedStateTrajectoriesStock_(0),
-      optimizedInputTrajectoriesStock_(0)
-
-{
+    : BASE(partitioningTimes, mpcSettings) {
   // SLQ
   if (slqSettings.ddpSettings_.useMultiThreading_) {
     slqPtr_.reset(new slq_mp_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
@@ -109,11 +104,16 @@ typename MPC_SLQ<STATE_DIM, INPUT_DIM>::slq_base_t* MPC_SLQ<STATE_DIM, INPUT_DIM
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
+const typename MPC_SLQ<STATE_DIM, INPUT_DIM>::slq_base_t* MPC_SLQ<STATE_DIM, INPUT_DIM>::getSolverPtr() const {
+  return slqPtr_.get();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_SLQ<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTime, const state_vector_t& initState,
-                                                        const scalar_t& finalTime, const scalar_array2_t*& timeTrajectoriesStockPtr,
-                                                        const state_vector_array2_t*& stateTrajectoriesStockPtr,
-                                                        const input_vector_array2_t*& inputTrajectoriesStockPtr,
-                                                        const controller_ptr_array_t*& controllerStockPtr) {
+                                                        const scalar_t& finalTime) {
   //*****************************************************************************************
   // cost goal check
   //*****************************************************************************************
@@ -158,21 +158,6 @@ void MPC_SLQ<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTime
   } else {
     slqPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_, typename slq_base_t::controller_ptr_array_t());
   }
-
-  //*****************************************************************************************
-  // Get optimized outputs
-  //*****************************************************************************************
-  // swap the optimized trajectories
-  optimizedTimeTrajectoriesStock_.clear();
-  optimizedStateTrajectoriesStock_.clear();
-  optimizedInputTrajectoriesStock_.clear();
-  slqPtr_->swapNominalTrajectories(optimizedTimeTrajectoriesStock_, optimizedStateTrajectoriesStock_, optimizedInputTrajectoriesStock_);
-  timeTrajectoriesStockPtr = &optimizedTimeTrajectoriesStock_;
-  stateTrajectoriesStockPtr = &optimizedStateTrajectoriesStock_;
-  inputTrajectoriesStockPtr = &optimizedInputTrajectoriesStock_;
-
-  // get the optimal controller
-  slqPtr_->getControllerPtr(controllerStockPtr);
 }
 
 }  // namespace ocs2

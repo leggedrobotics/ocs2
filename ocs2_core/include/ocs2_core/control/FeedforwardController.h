@@ -159,17 +159,20 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM> 
     }
   }
 
-  void concatenate(const Base* nextController) override {
+  void concatenate(const Base* nextController, int index, int length) override {
     if (auto nextFfwdCtrl = dynamic_cast<const FeedforwardController*>(nextController)) {
-      if (timeStamp_.back() > nextFfwdCtrl->timeStamp_.front()) {
+      if (!timeStamp_.empty() && timeStamp_.back() > nextFfwdCtrl->timeStamp_.front()) {
         throw std::runtime_error("Concatenate requires that the nextController comes later in time.");
       }
-      timeStamp_.insert(timeStamp_.end(), nextFfwdCtrl->timeStamp_.begin(), nextFfwdCtrl->timeStamp_.end());
-      uffArray_.insert(uffArray_.end(), nextFfwdCtrl->uffArray_.begin(), nextFfwdCtrl->uffArray_.end());
+      int last = index + length;
+      timeStamp_.insert(timeStamp_.end(), nextFfwdCtrl->timeStamp_.begin() + index, nextFfwdCtrl->timeStamp_.begin() + last);
+      uffArray_.insert(uffArray_.end(), nextFfwdCtrl->uffArray_.begin() + index, nextFfwdCtrl->uffArray_.begin() + last);
     } else {
       throw std::runtime_error("Concatenate only works with controllers of the same type.");
     }
   }
+
+  int size() const override { return timeStamp_.size(); }
 
   ControllerType getType() const override { return ControllerType::FEEDFORWARD; }
 
@@ -199,14 +202,7 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM> 
     swap(uffArray_, other.uffArray_);
   }
 
-  FeedforwardController<STATE_DIM, INPUT_DIM>* clone() override { return new FeedforwardController<STATE_DIM, INPUT_DIM>(*this); }
-
-  /**
-   * Returns the size of the controller (in particular the time stamp).
-   *
-   * @return the size of the controller.
-   */
-  size_t size() const { return timeStamp_.size(); }
+  FeedforwardController<STATE_DIM, INPUT_DIM>* clone() const override { return new FeedforwardController<STATE_DIM, INPUT_DIM>(*this); }
 
   void display() const override {
     for (int i = 0; i < timeStamp_.size(); i++) {

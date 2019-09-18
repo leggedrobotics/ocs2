@@ -32,107 +32,104 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // OCS2
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_core/misc/loadEigenMatrix.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
 #include <ocs2_mpc/MPC_ILQR.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
 // Quadrotor
-#include "ocs2_quadrotor_example/definitions.h"
 #include "ocs2_quadrotor_example/QuadrotorParameters.h"
-#include "ocs2_quadrotor_example/dynamics/QuadrotorSystemDynamics.h"
-#include "ocs2_quadrotor_example/dynamics/QuadrotorDynamicsDerivatives.h"
 #include "ocs2_quadrotor_example/cost/QuadrotorCost.h"
+#include "ocs2_quadrotor_example/definitions.h"
+#include "ocs2_quadrotor_example/dynamics/QuadrotorDynamicsDerivatives.h"
+#include "ocs2_quadrotor_example/dynamics/QuadrotorSystemDynamics.h"
 
 namespace ocs2 {
 namespace quadrotor {
 
-class QuadrotorInterface : public RobotInterfaceBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class QuadrotorInterface final : public RobotInterfaceBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using BASE = RobotInterfaceBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
+  using BASE = RobotInterfaceBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 
-	using dim_t = Dimensions<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
-	using QuadrotorConstraint = ConstraintBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
-	using QuadrotorOperatingPoint = SystemOperatingPoint<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
+  using dim_t = Dimensions<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
+  using QuadrotorConstraint = ConstraintBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
+  using QuadrotorOperatingPoint = SystemOperatingPoint<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 
-	using mpc_t = MPC_ILQR<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
+  using mpc_t = MPC_ILQR<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 
-	/**
-	 * Constructor
-	 *
-	 * @param [in] taskFileFolderName: The name of the folder containing task file
-	 */
-	QuadrotorInterface(const std::string& taskFileFolderName);
+  /**
+   * Constructor
+   *
+   * @param [in] taskFileFolderName: The name of the folder containing task file
+   */
+  QuadrotorInterface(const std::string& taskFileFolderName);
 
-	/**
-	 * Destructor
-	 */
-	~QuadrotorInterface() = default;
+  /**
+   * Destructor
+   */
+  ~QuadrotorInterface() = default;
 
-	/**
-	 * setup all optimizes.
-	 *
-	 * @param [in] taskFile: Task's file full path.
-	 */
-	void setupOptimizer(const std::string& taskFile) final;
+  /**
+   * setup all optimizes.
+   *
+   * @param [in] taskFile: Task's file full path.
+   */
+  void setupOptimizer(const std::string& taskFile) final;
 
-	/**
-	 * Gets ILQR settings.
-	 *
-	 * @return ILQR settings
-	 */
-	ILQR_Settings& ilqrSettings();
+  /**
+   * Gets ILQR settings.
+   *
+   * @return ILQR settings
+   */
+  ILQR_Settings& ilqrSettings() { return ilqrSettings(); }
 
-	/**
-	 * Gets a pointer to the internal SLQ-MPC class.
-	 *
-	 * @return Pointer to the internal MPC
-	 */
-	mpc_t::Ptr& getMPCPtr();
+  mpc_t& getMpc() override { return *mpcPtr_; }
 
-	QuadrotorSystemDynamics * getDynamicsPtr() { return quadrotorSystemDynamicsPtr_.get(); }
+  const QuadrotorSystemDynamics& getDynamics() const override { return *quadrotorSystemDynamicsPtr_; }
 
-protected:
-	/**
-	 * Load the settings from the path file.
-	 *
-	 * @param [in] taskFile: Task's file full path.
-	 */
-	void loadSettings(const std::string& taskFile) final;
+  const QuadrotorDynamicsDerivatives& getDynamicsDerivatives() const override { return *quadrotorDynamicsDerivativesPtr_; }
 
-	/**************
-	 * Variables
-	 **************/
-	std::string taskFile_;
-	std::string libraryFolder_;
+  const QuadrotorCost& getCost() const override { return *quadrotorCostPtr_; }
 
-	ILQR_Settings ilqrSettings_;
+ protected:
+  /**
+   * Load the settings from the path file.
+   *
+   * @param [in] taskFile: Task's file full path.
+   */
+  void loadSettings(const std::string& taskFile) final;
 
-	mpc_t::Ptr mpcPtr_;
+  /**************
+   * Variables
+   **************/
+  std::string taskFile_;
+  std::string libraryFolder_;
 
-	QuadrotorSystemDynamics::Ptr quadrotorSystemDynamicsPtr_;
-	QuadrotorDynamicsDerivatives::Ptr quadrotorDynamicsDerivativesPtr_;
-	QuadrotorCost::Ptr quadrotorCostPtr_;
-	QuadrotorConstraint::Ptr quadrotorConstraintPtr_;
-	QuadrotorOperatingPoint::Ptr quadrotorOperatingPointPtr_;
+  ILQR_Settings ilqrSettings_;
 
-	// cost parameters
-	dim_t::state_matrix_t Q_;
-	dim_t::input_matrix_t R_;
-	dim_t::state_matrix_t QFinal_;
-	dim_t::state_vector_t xFinal_;
-	dim_t::state_vector_t xNominal_;
-	dim_t::input_vector_t uNominal_;
+  std::unique_ptr<mpc_t> mpcPtr_;
 
-	size_t numPartitions_ = 0;
-	dim_t::scalar_array_t partitioningTimes_;
+  QuadrotorSystemDynamics::Ptr quadrotorSystemDynamicsPtr_;
+  QuadrotorDynamicsDerivatives::Ptr quadrotorDynamicsDerivativesPtr_;
+  QuadrotorCost::Ptr quadrotorCostPtr_;
+  QuadrotorConstraint::Ptr quadrotorConstraintPtr_;
+  QuadrotorOperatingPoint::Ptr quadrotorOperatingPointPtr_;
+
+  // cost parameters
+  dim_t::state_matrix_t Q_;
+  dim_t::input_matrix_t R_;
+  dim_t::state_matrix_t QFinal_;
+  dim_t::state_vector_t xFinal_;
+  dim_t::state_vector_t xNominal_;
+  dim_t::input_vector_t uNominal_;
+
+  size_t numPartitions_ = 0;
+  dim_t::scalar_array_t partitioningTimes_;
 };
 
-} // namespace quadrotor
-} // namespace ocs2
+}  // namespace quadrotor
+}  // namespace ocs2
 
 #endif /* QUADROTORINTERFACE_OCS2_H_ */

@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef EVENTTIMEINDEXER_OCS2_H_
-#define EVENTTIMEINDEXER_OCS2_H_
+#pragma once
 
 #include <vector>
 #include <utility>
@@ -165,7 +164,3 @@ private:
 } // namespace ocs2
 
 #include "implementation/EventTimeIndexer.h"
-
-#endif /* EVENTTIMEINDEXER_OCS2_H_ */
-
-

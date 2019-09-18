@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 16.05.19.
-//
+
 
 #include <gtest/gtest.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
@@ -85,7 +83,28 @@ TEST(testLinearInterpolation, testSizeOneTime) {
   test_interpolation( 2.0, 0, 1.0);
 }
 
+TEST(testLinearInterpolation, testDifferentEigenSizes) {
+  using Data_T = Eigen::MatrixXd;
+  std::vector<double> times = {0.0, 1.0};
+  std::vector<Data_T, Eigen::aligned_allocator<Data_T>> data = {Data_T::Zero(2,3), Data_T::Ones(4,4)};
 
+  Data_T result;
+  ocs2::EigenLinearInterpolation<Data_T>::interpolate(0.4, result, &times, &data);
+  bool test = result.isApprox(data[0]);
+  ASSERT_TRUE(test);
+
+  ocs2::EigenLinearInterpolation<Data_T>::interpolate(0.6, result, &times, &data);
+  test = result.isApprox(data[1]);
+  ASSERT_TRUE(test);
+
+  ocs2::EigenLinearInterpolation<Data_T>::interpolate(-0.1, result, &times, &data);
+  test = result.isApprox(data[0]);
+  ASSERT_TRUE(test);
+
+  ocs2::EigenLinearInterpolation<Data_T>::interpolate(1.1, result, &times, &data);
+  test = result.isApprox(data[1]);
+  ASSERT_TRUE(test);
+}
 
 int main(int argc, char** argv)
 {

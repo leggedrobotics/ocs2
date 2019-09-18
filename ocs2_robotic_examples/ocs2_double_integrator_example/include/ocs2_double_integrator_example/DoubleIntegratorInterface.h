@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 // C++
-#include <stdlib.h>
+#include <cstdlib>
 #include <iostream>
 #include <string>
 
@@ -38,7 +38,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
-#include <ocs2_core/misc/loadEigenMatrix.h>
 #include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
@@ -51,7 +50,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace double_integrator {
 
-class DoubleIntegratorInterface : public RobotInterfaceBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> {
+class DoubleIntegratorInterface final : public RobotInterfaceBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -66,7 +65,7 @@ class DoubleIntegratorInterface : public RobotInterfaceBase<double_integrator::S
    * Constructor
    * @param [in] taskFileFolderName: The name of the folder containing task file
    */
-  DoubleIntegratorInterface(const std::string& taskFileFolderName);
+  explicit DoubleIntegratorInterface(const std::string& taskFileFolderName);
 
   /**
    * Destructor
@@ -87,20 +86,15 @@ class DoubleIntegratorInterface : public RobotInterfaceBase<double_integrator::S
    */
   SLQ_Settings& slqSettings();
 
-  /**
-   * Gets a pointer to the internal SLQ-MPC class.
-   *
-   * @return Pointer to the internal MPC
-   */
-  mpc_t::Ptr& getMPCPtr();
+  mpc_t& getMpc() override { return *mpcPtr_; }
 
   const dim_t::state_vector_t& getXFinal() { return xFinal_; }
 
-  /**
-   * Gets a pointer to the internal system dynamics
-   * @return pointer to system dynamics
-   */
-  DoubleIntegratorDynamics::Ptr getDynamicsPtr() { return linearSystemDynamicsPtr_; }
+  const DoubleIntegratorDynamics& getDynamics() const override { return *linearSystemDynamicsPtr_; }
+
+  const DoubleIntegratorDynamicsDerivatives& getDynamicsDerivatives() const override { return *linearSystemDynamicsDerivativesPtr_; }
+
+  const DoubleIntegratorCost& getCost() const override { return *linearSystemCostPtr_; }
 
  protected:
   /**
@@ -117,7 +111,7 @@ class DoubleIntegratorInterface : public RobotInterfaceBase<double_integrator::S
   std::string libraryFolder_;
 
   SLQ_Settings slqSettings_;
-  mpc_t::Ptr mpcPtr_;
+  std::unique_ptr<mpc_t> mpcPtr_;
 
   DoubleIntegratorDynamics::Ptr linearSystemDynamicsPtr_;
   DoubleIntegratorDynamicsDerivatives::Ptr linearSystemDynamicsDerivativesPtr_;

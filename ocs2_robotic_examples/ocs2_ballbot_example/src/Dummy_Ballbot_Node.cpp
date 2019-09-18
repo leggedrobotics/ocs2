@@ -40,21 +40,19 @@ int main(int argc, char** argv) {
   if (argc <= 1) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
-  std::string taskFileFolderName = std::string(argv[1]);
+  std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
   // ballbotInterface
   BallbotInterface ballbotInterface(taskFileFolderName);
 
-  using mrt_t = MRT_ROS_Ballbot;
-  using mrt_ptr_t = mrt_t::Ptr;
-  using scalar_t = mrt_t::scalar_t;
-  using system_observation_t = mrt_t::system_observation_t;
+  using mrt_base_ptr_t = MRT_ROS_Dummy_Ballbot::mrt_ptr_t;
+  using system_observation_t = MRT_ROS_Dummy_Ballbot::system_observation_t;
 
-  mrt_ptr_t mrtPtr(new mrt_t("ballbot"));
+  mrt_base_ptr_t mrtPtr(new MRT_ROS_Ballbot("ballbot"));
 
   // Dummy ballbot
   MRT_ROS_Dummy_Ballbot dummyBallbot(mrtPtr, ballbotInterface.mpcSettings().mrtDesiredFrequency_,
-                                     ballbotInterface.mpcSettings().mpcDesiredFrequency_, ballbotInterface.getDynamicsPtr());
+                                     ballbotInterface.mpcSettings().mpcDesiredFrequency_, &ballbotInterface.getDynamics());
 
   dummyBallbot.launchNodes(argc, argv);
 

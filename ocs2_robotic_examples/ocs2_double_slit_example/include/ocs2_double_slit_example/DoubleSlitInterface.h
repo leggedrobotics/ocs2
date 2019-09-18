@@ -1,3 +1,32 @@
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************/
+
 #pragma once
 
 // C++
@@ -8,7 +37,6 @@
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
-#include <ocs2_core/misc/loadEigenMatrix.h>
 #include <ocs2_mpc/MPC_PI.h>
 #include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
@@ -31,7 +59,6 @@ class DoubleSlitInterface final : public RobotInterfaceBase<DoubleSlit::STATE_DI
   using DoubleSlitConstraint = ocs2::ConstraintBase<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
   using DoubleSlitOperatingPoint = ocs2::SystemOperatingPoint<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
 
-  using mpc_t = ocs2::MPC_SLQ<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
   using pi_mpc_t = ocs2::MPC_PI<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
 
   /**
@@ -47,24 +74,15 @@ class DoubleSlitInterface final : public RobotInterfaceBase<DoubleSlit::STATE_DI
 
   void setupOptimizer(const std::string& taskFile) override;
 
-  /**
-   * Gets a pointer to the internal SLQ-MPC class.
-   *
-   * @return Pointer to the internal MPC
-   */
-  mpc_t::Ptr getMPCPtr() { return mpcPtr_; }
+  pi_mpc_t& getMpc() override { return *piMpcPtr_; }
 
-  /**
-   * @brief getDynamicsPtr
-   * @return pointer to the internal system dynamics
-   */
-  DoubleSlitDynamics::Ptr getDynamicsPtr() { return linearSystemDynamicsPtr_; }
+  const DoubleSlitDynamics& getDynamics() const override { return *linearSystemDynamicsPtr_; }
 
-  /**
-   * Gets a pointer to the internal PI-MPC class
-   * @return Pointer to PI MPC
-   */
-  pi_mpc_t* getPiMpcPtr() { return piMpcPtr_.get(); }
+  const DerivativesBase<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>& getDynamicsDerivatives() const override {
+    throw std::runtime_error("Not implemented");
+  }
+
+  const DoubleSlitBarrierCost& getCost() const override { return *costPtr_; }
 
   /**
    * @brief doubleSlitPotentialWall models the potential wall of our problem
@@ -81,7 +99,6 @@ class DoubleSlitInterface final : public RobotInterfaceBase<DoubleSlit::STATE_DI
    **************/
   std::string taskFile_;
 
-  mpc_t::Ptr mpcPtr_;
   std::unique_ptr<pi_mpc_t> piMpcPtr_;
 
   DoubleSlitDynamics::Ptr linearSystemDynamicsPtr_;

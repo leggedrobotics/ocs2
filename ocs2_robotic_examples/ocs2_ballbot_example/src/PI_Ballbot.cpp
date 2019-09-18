@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
 
   ocs2::ballbot::BallbotInterface ballbotInterface(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
-  ocs2::MPC_ROS_Interface<ocs2::ballbot::STATE_DIM_, ocs2::ballbot::INPUT_DIM_> mpcNode(ballbotInterface.getMpcPiPtr(), "ballbot");
+  ocs2::MPC_ROS_Interface<ocs2::ballbot::STATE_DIM_, ocs2::ballbot::INPUT_DIM_> mpcNode(&ballbotInterface.getMpcPi(), "ballbot");
   mpcNode.launchNodes(argc, argv);
 
   return 0;

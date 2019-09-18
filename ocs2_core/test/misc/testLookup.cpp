@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 27.07.19.
-//
+
 
 #include <gtest/gtest.h>
 #include <ocs2_core/misc/Lookup.h>
@@ -131,8 +129,6 @@ TEST(testLookup, findBoundedActiveIntervalInTimeArray)
   ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArrayEmpty,  0.0));
   ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArrayEmpty,  1.0));
 }
-
-
 
 
 int main(int argc, char** argv)

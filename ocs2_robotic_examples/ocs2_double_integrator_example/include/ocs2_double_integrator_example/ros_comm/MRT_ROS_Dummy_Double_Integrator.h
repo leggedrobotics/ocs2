@@ -55,7 +55,7 @@ class MRT_ROS_Dummy_Linear_System : public MRT_ROS_Dummy_Loop<double_integrator:
    * will be simulated to run by this frequency. Note that this might not be the MPC's realtime frequency.
    */
   MRT_ROS_Dummy_Linear_System(const mrt_ptr_t& mrtPtr, const scalar_t& mrtDesiredFrequency, const scalar_t& mpcDesiredFrequency,
-                              controlled_system_base_t* system = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings())
+                              const controlled_system_base_t* system = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings())
       : BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency, system, rolloutSettings) {}
 
   /**
@@ -81,7 +81,7 @@ class MRT_ROS_Dummy_Linear_System : public MRT_ROS_Dummy_Loop<double_integrator:
     ROS_INFO_STREAM("Visualization subscriber is connected.");
   }
 
-  void publishVisualizer(const system_observation_t& observation, const commandData_t& command, const policyData_t& policy) override {
+  void publishVisualizer(const system_observation_t& observation, const primal_solution_t& policy, const command_data_t& command) override {
     const auto& costDesiredTrajectories = command.mpcCostDesiredTrajectories_;
     sensor_msgs::JointState joint_state;
     joint_state.header.stamp = ros::Time::now();

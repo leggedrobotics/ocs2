@@ -56,7 +56,7 @@ class MRT_ROS_Dummy_Quadrotor : public MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_,
    * @param [in] rolloutSettings settings to use when dummy rolls out the received controller
    */
   MRT_ROS_Dummy_Quadrotor(const mrt_ptr_t& mrtPtr, const scalar_t& mrtDesiredFrequency, const scalar_t& mpcDesiredFrequency,
-                          controlled_system_base_t* systemPtr = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings())
+                          const controlled_system_base_t* systemPtr = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings())
       : BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency, systemPtr, rolloutSettings) {}
 
   /**
@@ -65,7 +65,7 @@ class MRT_ROS_Dummy_Quadrotor : public MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_,
   virtual ~MRT_ROS_Dummy_Quadrotor() = default;
 
  protected:
-  void publishVisualizer(const system_observation_t& observation, const commandData_t& command, const policyData_t& policy) override {
+  void publishVisualizer(const system_observation_t& observation, const primal_solution_t& policy, const command_data_t& command) override {
     const auto& costDesiredTrajectories = command.mpcCostDesiredTrajectories_;
     static tf::TransformBroadcaster transformBroadcaster;
     tf::Transform transform;

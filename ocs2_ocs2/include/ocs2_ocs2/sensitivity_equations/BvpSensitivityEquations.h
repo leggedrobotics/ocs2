@@ -27,12 +27,12 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef BVPSENSITIVITYEQUATIONS_OCS2_H_
-#define BVPSENSITIVITYEQUATIONS_OCS2_H_
+#pragma once
 
 #include <Eigen/StdVector>
-#include <vector>
 #include <Eigen/Dense>
+
+#include <vector>
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/integration/OdeBase.h>
@@ -211,5 +211,3 @@ private:
 };
 
 } // namespace ocs2
-
-#endif /* BVPSENSITIVITYEQUATIONS_OCS2_H_ */

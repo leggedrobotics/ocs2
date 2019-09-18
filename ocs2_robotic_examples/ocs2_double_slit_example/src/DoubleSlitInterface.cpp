@@ -5,6 +5,9 @@
 namespace ocs2 {
 namespace double_slit {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 DoubleSlitInterface::DoubleSlitInterface(const std::string& taskFileFolderName)
     : barrierLowerEnd_(-0.5), barrierUpperEnd_(0.5), barrierTimePos_(50.0) {
   taskFile_ = ros::package::getPath("ocs2_double_slit_example") + "/config/" + taskFileFolderName + "/task.info";
@@ -14,6 +17,9 @@ DoubleSlitInterface::DoubleSlitInterface(const std::string& taskFileFolderName)
   setupOptimizer(taskFile_);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void DoubleSlitInterface::loadSettings(const std::string& taskFile) {
   /*
    * Default initial condition
@@ -28,12 +34,12 @@ void DoubleSlitInterface::loadSettings(const std::string& taskFile) {
   /*
    * Cost function
    */
-  loadScalar(taskFile, "systemParameters.barrierTimePosition", barrierTimePos_);
-  loadScalar(taskFile, "systemParameters.barrierLowerEnd", barrierLowerEnd_);
-  loadScalar(taskFile, "systemParameters.barrierUpperEnd", barrierUpperEnd_);
-  loadEigenMatrix(taskFile, "Q", qM_);
-  loadEigenMatrix(taskFile, "R", rM_);
-  loadEigenMatrix(taskFile, "Q_final", qMFinal_);
+  loadData::loadCppDataType(taskFile, "systemParameters.barrierTimePosition", barrierTimePos_);
+  loadData::loadCppDataType(taskFile, "systemParameters.barrierLowerEnd", barrierLowerEnd_);
+  loadData::loadCppDataType(taskFile, "systemParameters.barrierUpperEnd", barrierUpperEnd_);
+  loadData::loadEigenMatrix(taskFile, "Q", qM_);
+  loadData::loadEigenMatrix(taskFile, "R", rM_);
+  loadData::loadEigenMatrix(taskFile, "Q_final", qMFinal_);
   xNominal_ = dim_t::state_vector_t::Zero();
   uNominal_ = dim_t::input_vector_t::Zero();
 
@@ -67,6 +73,9 @@ void DoubleSlitInterface::loadSettings(const std::string& taskFile) {
   definePartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void DoubleSlitInterface::setupOptimizer(const std::string& taskFile) {
   mpcSettings_.loadSettings(taskFile);
 
@@ -77,6 +86,9 @@ void DoubleSlitInterface::setupOptimizer(const std::string& taskFile) {
                                std::move(piSettings)));
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 DoubleSlitInterface::scalar_t DoubleSlitInterface::doubleSlitPotentialWall(dim_t::state_vector_t x, scalar_t t) const {
   if ((std::abs(t - barrierTimePos_) < 0.1) and x(0) > barrierLowerEnd_ and x(0) < barrierUpperEnd_) {
     return std::numeric_limits<scalar_t>::infinity();

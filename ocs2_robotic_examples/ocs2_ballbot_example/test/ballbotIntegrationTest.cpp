@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 29.03.19.
-//
+
 
 #include <gtest/gtest.h>
 
@@ -18,11 +16,10 @@ TEST(BallbotIntegrationTest, createDummyMRT) {
   BallbotInterface ballbotInterface(taskFileFolderName);
 
   typedef MRT_ROS_Ballbot mrt_t;
-  typedef mrt_t::Ptr mrt_ptr_t;
   typedef mrt_t::scalar_t scalar_t;
   typedef mrt_t::system_observation_t system_observation_t;
 
-  mrt_ptr_t mrtPtr(new mrt_t("ballbot"));
+  MRT_ROS_Dummy_Ballbot::mrt_ptr_t mrtPtr(new mrt_t("ballbot"));
 
   // Dummy ballbot
   MRT_ROS_Dummy_Ballbot dummyBallbot(
@@ -42,7 +39,7 @@ TEST(BallbotIntegrationTest, createMPC) {
   BallbotInterface ballbotInterface(taskFileFolderName);
 
   // Launch MPC ROS node
-  MPC_ROS_Interface<STATE_DIM_, INPUT_DIM_> mpcNode(ballbotInterface.getMPCPtr().get(), "ballbot");
+  MPC_ROS_Interface<STATE_DIM_, INPUT_DIM_> mpcNode(&ballbotInterface.getMpc(), "ballbot");
 
   ASSERT_TRUE(true);
 }

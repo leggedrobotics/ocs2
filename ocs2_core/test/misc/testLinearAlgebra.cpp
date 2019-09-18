@@ -1,6 +1,4 @@
-//
-// Created by rgrandia on 14.06.19.
-//
+
 
 #include <gtest/gtest.h>
 #include <ocs2_core/misc/LinearAlgebra.h>

@@ -45,17 +45,15 @@ int main(int argc, char** argv) {
   // double_integratorInterface
   DoubleIntegratorInterface double_integratorInterface(taskFileFolderName);
 
-  using mrt_t = MRT_ROS_Double_Integrator;
-  using mrt_ptr_t = mrt_t::Ptr;
-  using scalar_t = mrt_t::scalar_t;
-  using system_observation_t = mrt_t::system_observation_t;
+  using mrt_base_ptr_t = MRT_ROS_Dummy_Linear_System::mrt_ptr_t;
+  using system_observation_t = MRT_ROS_Dummy_Linear_System::system_observation_t;
 
-  mrt_ptr_t mrtPtr(new mrt_t("double_integrator"));
+  mrt_base_ptr_t mrtPtr(new MRT_ROS_Double_Integrator("double_integrator"));
 
   // Dummy double_integrator
   MRT_ROS_Dummy_Linear_System dummyDoubleIntegrator(mrtPtr, double_integratorInterface.mpcSettings().mrtDesiredFrequency_,
                                                     double_integratorInterface.mpcSettings().mpcDesiredFrequency_,
-                                                    double_integratorInterface.getDynamicsPtr().get());
+                                                    &double_integratorInterface.getDynamics());
 
   dummyDoubleIntegrator.launchNodes(argc, argv);
 

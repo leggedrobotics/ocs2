@@ -27,16 +27,17 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef ROLLOUTSENSITIVITYEQUATIONS_OCS2_H_
-#define ROLLOUTSENSITIVITYEQUATIONS_OCS2_H_
+#pragma once
+
+#include <Eigen/Dense>
 
 #include <array>
-#include <Eigen/Dense>
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
+#include <ocs2_core/misc/Numerics.h>
 
 namespace ocs2{
 
@@ -149,7 +150,7 @@ public:
 		auto indexAlpha = AmFunc_.interpolate(t, Am_);
 		BmFunc_.interpolate(indexAlpha,  Bm_);
 
-		if (std::abs(multiplier_) > 1e-9) {
+		if (!numerics::almost_eq(multiplier_, 0.0)) {
 			flowMapFunc_.interpolate(indexAlpha,  flowMap_);
 			derivative = Am_*nabla_x + Bm_*nabla_u + multiplier_*flowMap_;
 		} else {
@@ -172,6 +173,4 @@ protected:
 };
 
 } // namespace ocs2
-
-#endif /* ROLLOUTSENSITIVITYEQUATIONS_OCS2_H_ */
 

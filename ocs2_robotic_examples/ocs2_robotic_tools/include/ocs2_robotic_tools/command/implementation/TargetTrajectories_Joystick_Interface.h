@@ -34,10 +34,12 @@ namespace ocs2{
 /******************************************************************************************************/
 template <typename SCALAR_T>
 TargetTrajectories_Joystick_Interface<SCALAR_T>::TargetTrajectories_Joystick_Interface(
-		const std::string& robotName /*= "robot"*/,
+        int argc,
+        char* argv[],
+        const std::string& robotName /*= "robot"*/,
 		const size_t targetCommandSize /*= 0*/,
 		const scalar_array_t& targetCommandLimits /*= scalar_array_t()*/)
-	: BASE(robotName)
+	: BASE(argc, argv, robotName)
 	, targetCommandSize_(targetCommandSize)
 	, targetCommandLimits_(targetCommandLimits)
 {
@@ -58,20 +60,10 @@ size_t& TargetTrajectories_Joystick_Interface<SCALAR_T>::targetCommandSize() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-void TargetTrajectories_Joystick_Interface<SCALAR_T>::publishTargetTrajectoriesFromDesiredState(dynamic_vector_t desiredState) {
-
-	// user defined modification of the joystick commands
-	cost_desired_trajectories_t costDesiredTrajectories(1);
-	// time
-	costDesiredTrajectories.desiredTimeTrajectory()[0]= 0.0;
-	// state -- this is setup in adjustTargetTrajectories in the robot_interface
-	costDesiredTrajectories.desiredStateTrajectory()[0] = desiredState;
-	// input
-	costDesiredTrajectories.desiredInputTrajectory()[0] = dynamic_vector_t::Zero(0);
+void TargetTrajectories_Joystick_Interface<SCALAR_T>::publishTargetTrajectoriesFromDesiredState(cost_desired_trajectories_t costDesiredTrajectories) {
 
 	// publish cost desired trajectories
 	BASE::publishTargetTrajectories(costDesiredTrajectories);
-
 
 }
 } // namespace ocs2

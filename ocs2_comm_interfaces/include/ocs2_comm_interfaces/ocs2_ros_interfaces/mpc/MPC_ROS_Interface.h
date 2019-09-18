@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef MPC_ROS_INTERFACE_OCS2_H_
-#define MPC_ROS_INTERFACE_OCS2_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <array>
@@ -50,8 +49,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/misc/Benchmark.h>
-
 #include <ocs2_mpc/MPC_BASE.h>
+#include <ocs2_oc/oc_data/PrimalSolution.h>
 
 // MPC messages
 #include <ocs2_msgs/dummy.h>
@@ -61,6 +60,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_msgs/mpc_target_trajectories.h>
 #include <ocs2_msgs/reset.h>
 
+#include "ocs2_comm_interfaces/CommandData.h"
 #include "ocs2_comm_interfaces/SystemObservation.h"
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h"
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/task_listener/TaskListenerBase.h"
@@ -87,6 +87,7 @@ class MPC_ROS_Interface {
 
   using scalar_t = typename mpc_t::scalar_t;
   using scalar_array_t = typename mpc_t::scalar_array_t;
+  using scalar_array2_t = typename mpc_t::scalar_array2_t;
   using size_array_t = typename mpc_t::size_array_t;
   using state_vector_t = typename mpc_t::state_vector_t;
   using state_vector_array_t = typename mpc_t::state_vector_array_t;
@@ -101,6 +102,9 @@ class MPC_ROS_Interface {
   using mode_sequence_template_t = typename mpc_t::mode_sequence_template_t;
 
   using system_observation_t = SystemObservation<STATE_DIM, INPUT_DIM>;
+
+  using primal_solution_t = PrimalSolution<STATE_DIM, INPUT_DIM>;
+  using command_data_t = CommandData<STATE_DIM, INPUT_DIM>;
 
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
   using controller_ptr_array_t = std::vector<controller_t*>;
@@ -217,28 +221,28 @@ class MPC_ROS_Interface {
   void publishDummy();
 
   /**
-   * Publishes the MPC policy.
+   * Creates MPC Policy message.
    *
-   * @param [in] currentObservation: The observation that MPC designed from.
    * @param [in] controllerIsUpdated: Whether the policy is updated.
-   * @param [in] costDesiredTrajectoriesPtr: The target trajectories that MPC optimized.
-   * @param [in] controllerStockPtr: A pointer to the MPC optimized control policy.
-   * @param [in] timeTrajectoriesStockPtr: A pointer to the MPC optimized time trajectory.
-   * @param [in] stateTrajectoriesStockPtr: A pointer to the  MPC optimized state trajectory.
-   * @param [in] inputTrajectoriesStockPtr: A pointer to the  MPC optimized input trajectory.
-   * @param [in] eventTimesPtr: A pointer to the event time sequence.
-   * @param [in] subsystemsSequencePtr: A pointer to the subsystem sequence.
+   * @param [in] primalSolution: The policy data of the MPC.
+   * @param [in] commandDataPtr: The command data of the MPC.
+   * @return MPC policy message.
    */
-  void publishPolicy(const system_observation_t& currentObservation, const bool& controllerIsUpdated,
-                     const cost_desired_trajectories_t*& costDesiredTrajectoriesPtr, const controller_ptr_array_t*& controllerStockPtr,
-                     const std::vector<scalar_array_t>*& timeTrajectoriesStockPtr, const state_vector_array2_t*& stateTrajectoriesStockPtr,
-                     const input_vector_array2_t*& inputTrajectoriesStockPtr, const scalar_array_t*& eventTimesPtr,
-                     const size_array_t*& subsystemsSequencePtr);
+  static ocs2_msgs::mpc_flattened_controller createMpcPolicyMsg(bool controllerIsUpdated, const primal_solution_t& primalSolution,
+                                                                const command_data_t& commandData);
 
   /**
    * Handles ROS publishing thread.
    */
   void publisherWorkerThread();
+
+  /**
+   * @brief fillMpcOutputBuffers updates the *Buffer variables from the MPC object.
+   * This method is automatically called by advanceMpc()
+   * @param [in] mpcInitObservation: The observation used to run the MPC.
+   * @param [in] mpc: A reference to the MPC instance.
+   */
+  void fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc);
 
   /**
    * The callback method which receives the current observation, invokes the MPC algorithm,
@@ -267,7 +271,6 @@ class MPC_ROS_Interface {
    * Variables
    */
   mpc_t* mpcPtr_;
-  MPC_Settings mpcSettings_;
 
   std::string robotName_;
 
@@ -283,9 +286,12 @@ class MPC_ROS_Interface {
   ::ros::Publisher dummyPublisher_;
   ::ros::ServiceServer mpcResetServiceServer_;
 
-  // ROS messages
-  ocs2_msgs::mpc_flattened_controller mpcPolicyMsg_;
-  ocs2_msgs::mpc_flattened_controller mpcPolicyMsgBuffer_;
+  std::unique_ptr<primal_solution_t> currentPrimalSolution_;
+  std::unique_ptr<primal_solution_t> primalSolutionBuffer_;
+  std::unique_ptr<command_data_t> currentCommand_;
+  std::unique_ptr<command_data_t> commandBuffer_;
+
+  mutable std::mutex policyBufferMutex_;  // for policy variables WITH suffix (*Buffer_)
 
   // multi-threading for publishers
   bool terminateThread_;
@@ -295,16 +301,13 @@ class MPC_ROS_Interface {
   std::condition_variable msgReady_;
 
   benchmark::RepeatedTimer mpcTimer_;
-  scalar_t currentDelay_;
 
   // MPC reset
   bool initialCall_;
   std::mutex resetMutex_;
-  std::atomic<bool> resetRequestedEver_;
+  std::atomic_bool resetRequestedEver_;
 };
 
 }  // namespace ocs2
 
 #include "implementation/MPC_ROS_Interface.h"
-
-#endif /* MPC_ROS_INTERFACE_OCS2_H_ */

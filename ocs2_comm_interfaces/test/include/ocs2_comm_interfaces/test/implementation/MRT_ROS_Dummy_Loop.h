@@ -35,12 +35,11 @@ namespace ocs2 {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Loop(const mrt_ptr_t& mrtPtr, const scalar_t& mrtDesiredFrequency /*= 100*/,
                                                              const scalar_t& mpcDesiredFrequency /*= -1*/,
-                                                             controlled_system_base_t* systemPtr /* = nullptr*/,
+                                                             const controlled_system_base_t* systemPtr /* = nullptr*/,
                                                              Rollout_Settings rolloutSettings /*= Rollout_Settings()*/)
     : mrtPtr_(mrtPtr),
       mrtDesiredFrequency_(mrtDesiredFrequency),
       mpcDesiredFrequency_(mpcDesiredFrequency),
-      systemPtr_(systemPtr),
       realtimeLoop_(mpcDesiredFrequency <= 0)  // true if mpcDesiredFrequency is not set or it is negative
 {
   if (mrtDesiredFrequency_ < 0) {
@@ -51,7 +50,8 @@ MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Loop(const mrt_ptr_t& mr
     ROS_WARN_STREAM("MPC loop is not realtime! For realtime setting, set mpcDesiredFrequency to any negative number.");
   }
 
-  if (systemPtr_) {
+  if (systemPtr) {
+    systemPtr_.reset(systemPtr->clone());
     mrtPtr_->initRollout(*systemPtr_, rolloutSettings);
   }
 }
@@ -152,7 +152,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(const system_observation_t& i
     }
 
     // Visualization
-    publishVisualizer(observation_,  mrtPtr_->getCommand(), mrtPtr_->getPolicy());
+    publishVisualizer(observation_, mrtPtr_->getPolicy(), mrtPtr_->getCommand());
 
     rosRate.sleep();
   }  // end of while loop

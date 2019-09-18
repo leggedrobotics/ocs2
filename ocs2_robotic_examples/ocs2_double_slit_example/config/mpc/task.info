@@ -22,17 +22,17 @@ pathIntegral
 
 mpcTimeHorizon
 {
-    debugPrint 1
-    timehorizon 100
-    numPartitions 1
+    debugPrint      1
+    timehorizon     100
+    numPartitions   1
 }
 
 mpc
 {
-    debugPrint 1
-    mpcDesiredFrequency 1
-    mrtDesiredFrequency 1
-    maxTimeStep 1
+    mpcDesiredFrequency   1
+    mrtDesiredFrequency   1
+    maxTimeStep           1
+    debugPrint            1
 }
 
 timeHorizon 100; time steps to end

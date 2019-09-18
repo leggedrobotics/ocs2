@@ -27,112 +27,103 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef CART_POLEINTERFACE_OCS2_H_
-#define CART_POLEINTERFACE_OCS2_H_
+#pragma once
 
 // C++
-#include <string>
-#include <iostream>
 #include <stdlib.h>
+#include <iostream>
+#include <string>
 
 // OCS2
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_core/misc/loadEigenMatrix.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
 #include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
 // CartPole
-#include "ocs2_cart_pole_example/definitions.h"
 #include "ocs2_cart_pole_example/CartPoleParameters.h"
-#include "ocs2_cart_pole_example/dynamics/CartPoleSystemDynamics.h"
 #include "ocs2_cart_pole_example/cost/CartPoleCost.h"
+#include "ocs2_cart_pole_example/definitions.h"
+#include "ocs2_cart_pole_example/dynamics/CartPoleSystemDynamics.h"
 
 namespace ocs2 {
 namespace cartpole {
 
-class CartPoleInterface : public RobotInterfaceBase<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class CartPoleInterface final : public RobotInterfaceBase<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using BASE = RobotInterfaceBase<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
+  using BASE = RobotInterfaceBase<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
 
-	using dim_t = Dimensions<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
-	using CartPoleConstraint = ConstraintBase<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
-	using CartPoleOperatingPoint = SystemOperatingPoint<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
+  using dim_t = Dimensions<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
+  using CartPoleConstraint = ConstraintBase<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
+  using CartPoleOperatingPoint = SystemOperatingPoint<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
 
-	using mpc_t = MPC_SLQ<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
+  using mpc_t = MPC_SLQ<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
 
-	/**
-	 * Constructor
-	 *
-	 * @param [in] taskFileFolderName: The name of the folder containing task file
-	 */
-	CartPoleInterface(const std::string& taskFileFolderName);
+  /**
+   * Constructor
+   *
+   * @param [in] taskFileFolderName: The name of the folder containing task file
+   */
+  explicit CartPoleInterface(const std::string& taskFileFolderName);
 
-	/**
-	 * Destructor
-	 */
-	~CartPoleInterface() = default;
+  /**
+   * Destructor
+   */
+  ~CartPoleInterface() = default;
 
-	/**
-	 * setup all optimizes.
-	 *
-	 * @param [in] taskFile: Task's file full path.
-	 */
-	void setupOptimizer(const std::string& taskFile) final;
+  void setupOptimizer(const std::string& taskFile) override;
 
-	/**
-	 * Gets SLQ settings.
-	 *
-	 * @return SLQ settings
-	 */
-	SLQ_Settings& slqSettings();
+  /**
+   * Gets SLQ settings.
+   *
+   * @return SLQ settings
+   */
+  SLQ_Settings& slqSettings();
 
-	/**
-	 * Gets a pointer to the internal SLQ-MPC class.
-	 *
-	 * @return Pointer to the internal MPC
-	 */
-	mpc_t::Ptr& getMPCPtr();
+  mpc_t& getMpc() override { return *mpcPtr_; }
 
-protected:
-	/**
-	 * Loads the settings from the path file.
-	 *
-	 * @param [in] taskFile: Task's file full path.
-	 */
-	void loadSettings(const std::string& taskFile) final;
+  const CartPoleSytemDynamics& getDynamics() const override { return *cartPoleSystemDynamicsPtr_; }
 
-	/**************
-	 * Variables
-	 **************/
-	std::string taskFile_;
-	std::string libraryFolder_;
+  const CartPoleSytemDynamics& getDynamicsDerivatives() const override { return *cartPoleSystemDynamicsPtr_; }
 
-	SLQ_Settings slqSettings_;
-	mpc_t::Ptr mpcPtr_;
+  const CartPoleCost& getCost() const override { return *cartPoleCostPtr_; }
 
-	CartPoleSytemDynamics::Ptr cartPoleSystemDynamicsPtr_;
-	CartPoleCost::Ptr cartPoleCostPtr_;
-	CartPoleConstraint::Ptr cartPoleConstraintPtr_;
-	CartPoleOperatingPoint::Ptr cartPoleOperatingPointPtr_;
+ protected:
+  /**
+   * Loads the settings from the path file.
+   *
+   * @param [in] taskFile: Task's file full path.
+   */
+  void loadSettings(const std::string& taskFile) final;
 
-	// cost parameters
-	dim_t::state_matrix_t Q_;
-	dim_t::input_matrix_t R_;
-	dim_t::state_matrix_t QFinal_;
-	dim_t::state_vector_t xFinal_;
-	dim_t::state_vector_t xNominal_;
-	dim_t::input_vector_t uNominal_;
+  /**************
+   * Variables
+   **************/
+  std::string taskFile_;
+  std::string libraryFolder_;
 
-	size_t numPartitions_ = 0;
-	dim_t::scalar_array_t partitioningTimes_;
+  SLQ_Settings slqSettings_;
+  std::unique_ptr<mpc_t> mpcPtr_;
+
+  std::unique_ptr<CartPoleSytemDynamics> cartPoleSystemDynamicsPtr_;
+  std::unique_ptr<CartPoleCost> cartPoleCostPtr_;
+  std::unique_ptr<CartPoleConstraint> cartPoleConstraintPtr_;
+  std::unique_ptr<CartPoleOperatingPoint> cartPoleOperatingPointPtr_;
+
+  // cost parameters
+  dim_t::state_matrix_t Q_;
+  dim_t::input_matrix_t R_;
+  dim_t::state_matrix_t QFinal_;
+  dim_t::state_vector_t xFinal_;
+  dim_t::state_vector_t xNominal_;
+  dim_t::input_vector_t uNominal_;
+
+  size_t numPartitions_ = 0;
+  dim_t::scalar_array_t partitioningTimes_;
 };
 
-} //namespace cartpole
-} // namespace ocs2
-
-#endif /* CART_POLEINTERFACE_OCS2_H_ */
+}  // namespace cartpole
+}  // namespace ocs2

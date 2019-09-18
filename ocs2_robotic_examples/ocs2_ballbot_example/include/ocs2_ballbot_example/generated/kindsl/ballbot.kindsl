@@ -30,9 +30,9 @@ link dummy_ball1 {
 link ball {
     id = 2
     inertia_properties {
-        mass = 5.45
+        mass = 2.65
         CoM = (0.0, 0.0, 0.0)
-        Ix=0.0341 Iy= 0.0341  Iz= 0.0341  Ixy=0.0  Ixz=0.0  Iyz=0.0
+        Ix=0.0166 Iy= 0.0166  Iz= 0.0166  Ixy=0.0  Ixz=0.0  Iyz=0.0
     }
     children {dummy_base1 via jbase_z}
 }
@@ -61,9 +61,9 @@ link dummy_base2 {
 link base {
     id = 5
     inertia_properties {
-        mass = 16.944
-        CoM = (-0.1956, 0.0033, 0.003)
-        Ix=0.1670  Iy=2.4521  Iz=2.4483 Ixy=-0.0099  Ixz=-0.0099  Iyz=0.0002
+        mass = 18.66
+        CoM = (-0.29, 0.004, 0.0)
+        Ix=0.2102  Iy=2.04  Iz=2.04 Ixy=-0.0216  Ixz=0.0  Iyz=0.0
     }
     children {}
     frames {

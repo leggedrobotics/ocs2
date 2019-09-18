@@ -86,21 +86,21 @@ target_link_libraries(ballbot_SLQ
   ${catkin_LIBRARIES}
 )
 
-add_library(ballbot_dynamics
+add_library(ocs2_ballbot_dynamics
   src/dynamics/BallbotSystemDynamics.cpp
 )
 
 # Ballbot interface library
-add_library(ballbot_interface
+add_library(ocs2_ballbot
   src/BallbotInterface.cpp
 )
-add_dependencies(ballbot_interface
+add_dependencies(ocs2_ballbot
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(ballbot_interface
+target_link_libraries(ocs2_ballbot
   ballbot_SLQ
   ballbot_PI
-  ballbot_dynamics
+  ocs2_ballbot_dynamics
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   dl
@@ -114,7 +114,7 @@ add_dependencies(ballbot_mpc
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(ballbot_mpc
-  ballbot_interface
+  ocs2_ballbot
   ${catkin_LIBRARIES}
 )
 
@@ -126,7 +126,7 @@ add_dependencies(ballbot_pi_mpc
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(ballbot_pi_mpc
-  ballbot_interface
+  ocs2_ballbot
   ${catkin_LIBRARIES}
 )
 
@@ -138,7 +138,7 @@ add_dependencies(ballbot_dummy_test
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(ballbot_dummy_test
-  ballbot_interface
+  ocs2_ballbot
   ${catkin_LIBRARIES}
 )
 
@@ -163,7 +163,7 @@ add_dependencies(ballbot_simple_example
 )
 target_link_libraries(ballbot_simple_example
   ballbot_SLQ
-  ballbot_dynamics
+  ocs2_ballbot_dynamics
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   dl
@@ -174,11 +174,11 @@ add_library(ballbotPyBindings_cpp
   src/BallbotPyBindings.cpp
 )
 add_dependencies(ballbotPyBindings_cpp
-  ballbot_interface
+  ocs2_ballbot
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(ballbotPyBindings_cpp
-  ballbot_interface
+  ocs2_ballbot
   ${catkin_LIBRARIES}
 )
 
@@ -219,7 +219,7 @@ if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target ocs2_ballbot_example")
   add_clang_tooling(
     TARGETS
-        ballbot_interface
+        ocs2_ballbot
         ballbot_mpc
         ballbot_pi_mpc
         ballbot_dummy_test
@@ -228,6 +228,7 @@ if(cmake_clang_tools_FOUND)
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_EXCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/generated
+    CF_FIX
     CF_WERROR
   )
 endif(cmake_clang_tools_FOUND)
@@ -236,7 +237,7 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS ballbot_interface ballbot_PI ballbot_SLQ ballbot_dynamics ballbotPyBindings_cpp
+install(TARGETS ocs2_ballbot ballbot_PI ballbot_SLQ ocs2_ballbot_dynamics ballbotPyBindings_cpp
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -268,7 +269,7 @@ catkin_add_gtest(ballbot_integration_test
   test/ballbotIntegrationTest.cpp
 )
 target_link_libraries(ballbot_integration_test
-  ballbot_interface
+  ocs2_ballbot
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )

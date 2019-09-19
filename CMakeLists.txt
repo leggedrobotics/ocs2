@@ -54,6 +54,7 @@ add_library(${PROJECT_NAME}
   src/AnymalComKinoDynamicsDerivative.cpp
   src/AnymalSystemDynamicsAd.cpp
   src/AnymalComKinoConstraint.cpp
+  src/AnymalComKinoConstraintAd.cpp
   src/AnymalCost.cpp
   src/AnymalModelStateEstimator.cpp
   src/AnymalComKinoOperatingPoints.cpp
@@ -96,6 +97,22 @@ catkin_add_gtest(anymal_switched_model_test
 add_dependencies(anymal_switched_model_test ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(anymal_switched_model_test
+        ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        )
+
+catkin_add_gtest(test_eeVelocityConstraint
+        test/constraint/testEEVelocityConstraint.cpp
+        )
+target_link_libraries(test_eeVelocityConstraint
+        ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        )
+
+catkin_add_gtest(test_eePositionConstraint
+        test/constraint/testEEPositionConstraint.cpp
+        )
+target_link_libraries(test_eePositionConstraint
         ${PROJECT_NAME}
         ${catkin_LIBRARIES}
         )

@@ -82,6 +82,7 @@ private:
 }  // end of tpl namespace
 
 using AnymalKinematics = tpl::AnymalKinematics<double>;
+using AnymalKinematicsAd= tpl::AnymalKinematics<ocs2::CppAdInterface<double>::ad_scalar_t>;
 
 }  // end of anymal namespace
 

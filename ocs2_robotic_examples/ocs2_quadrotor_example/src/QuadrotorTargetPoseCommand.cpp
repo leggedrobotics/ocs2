@@ -32,15 +32,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace ocs2;
 using namespace quadrotor;
 
-int main( int argc, char* argv[] )
-{
-	TargetTrajectories_Keyboard_Quadrotor<double> targetPoseCommand(argc, argv, "quadrotor");
+int main(int argc, char* argv[]) {
+  TargetTrajectories_Keyboard_Quadrotor<double> targetPoseCommand(argc, argv, "quadrotor");
 
-	targetPoseCommand.launchNodes();
+  targetPoseCommand.launchNodes();
 
-	const std::string commadMsg = "Enter XYZ displacement and RollPitchYaw for the robot, separated by spaces";
-	targetPoseCommand.getKeyboardCommand(commadMsg);
+  const std::string commadMsg = "Enter XYZ displacement and RollPitchYaw for the robot, separated by spaces";
+  targetPoseCommand.getKeyboardCommand(commadMsg);
 
-	// Successful exit
-	return 0;
+  // Successful exit
+  return 0;
 }

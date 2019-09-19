@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef MRT_ROS_DUMMY_DOUBLE_INTEGRATOR_OCS2_H_
-#define MRT_ROS_DUMMY_DOUBLE_INTEGRATOR_OCS2_H_
+#pragma once
 
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
@@ -40,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace double_integrator {
 
-class MRT_ROS_Dummy_Linear_System : public MRT_ROS_Dummy_Loop<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> {
+class MRT_ROS_Dummy_Linear_System final : public MRT_ROS_Dummy_Loop<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -49,14 +48,14 @@ class MRT_ROS_Dummy_Linear_System : public MRT_ROS_Dummy_Loop<double_integrator:
   /**
    * Constructor.
    *
-   * @param [in] mrtPtr
+   * @param [in] mrt: The underlying MRT class to be used.
    * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz. This should always set to a positive number.
    * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
    * will be simulated to run by this frequency. Note that this might not be the MPC's realtime frequency.
    */
-  MRT_ROS_Dummy_Linear_System(const mrt_ptr_t& mrtPtr, const scalar_t& mrtDesiredFrequency, const scalar_t& mpcDesiredFrequency,
+  MRT_ROS_Dummy_Linear_System(mrt_t& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency,
                               const controlled_system_base_t* system = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings())
-      : BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency, system, rolloutSettings) {}
+      : BASE(mrt, mrtDesiredFrequency, mpcDesiredFrequency, system, rolloutSettings) {}
 
   /**
    * Destructor.
@@ -64,12 +63,6 @@ class MRT_ROS_Dummy_Linear_System : public MRT_ROS_Dummy_Loop<double_integrator:
   ~MRT_ROS_Dummy_Linear_System() override = default;
 
  protected:
-  /**
-   * Launches the visualization node
-   *
-   * @param [in] argc: command line number of inputs.
-   * @param [in] argv: command line inputs' value.
-   */
   void launchVisualizerNode(int argc, char* argv[]) override {
     ros::init(argc, argv, "double_integrator_visualization_node");
     ros::NodeHandle n;
@@ -93,9 +86,6 @@ class MRT_ROS_Dummy_Linear_System : public MRT_ROS_Dummy_Loop<double_integrator:
     joint_state.position[1] = costDesiredTrajectories.desiredStateTrajectory()[0](0);
 
     jointPublisher_.publish(joint_state);
-    //		std::cout << "Target " << costDesiredTrajectories.desiredStateTrajectory()[0](0) << std::endl;
-    //		std::cout << "State  " << observation.state()[0] << " , " << observation.state()[1] << std::endl;
-    //		std::cout << "Input  " << observation.input()[0] << std::endl;
   }
 
  private:
@@ -104,5 +94,3 @@ class MRT_ROS_Dummy_Linear_System : public MRT_ROS_Dummy_Loop<double_integrator:
 
 }  // namespace double_integrator
 }  // namespace ocs2
-
-#endif /* MRT_ROS_DUMMY_DOUBLE_INTEGRATOR_OCS2_H_ */

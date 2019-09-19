@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef MRT_ROS_DUMMY_CARTPOLE_OCS2_H_
-#define MRT_ROS_DUMMY_CARTPOLE_OCS2_H_
+#pragma once
 
 #include <ocs2_comm_interfaces/test/MRT_ROS_Dummy_Loop.h>
 #include "ocs2_cart_pole_example/definitions.h"
@@ -48,13 +47,13 @@ class MRT_ROS_Dummy_Cartpole : public MRT_ROS_Dummy_Loop<cartpole::STATE_DIM_, c
   /**
    * Constructor.
    *
-   * @param [in] mrtPtr: A pointer to MRT.
+   * @param [in] mrt: The underlying MRT class to be used.
    * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz. This should always set to a positive number.
    * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
    * will be simulated to run by this frequency. Note that this might not be the MPC's realtime frequency.
    */
-  MRT_ROS_Dummy_Cartpole(const mrt_ptr_t& mrtPtr, const scalar_t& mrtDesiredFrequency, const scalar_t& mpcDesiredFrequency)
-      : BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency) {}
+  MRT_ROS_Dummy_Cartpole(mrt_t& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency)
+      : BASE(mrt, mrtDesiredFrequency, mpcDesiredFrequency) {}
 
   /**
    * Destructor.
@@ -96,5 +95,3 @@ class MRT_ROS_Dummy_Cartpole : public MRT_ROS_Dummy_Loop<cartpole::STATE_DIM_, c
 
 }  // namespace cartpole
 }  // namespace ocs2
-
-#endif /* MRT_ROS_DUMMY_CARTPOLE_OCS2_H_ */

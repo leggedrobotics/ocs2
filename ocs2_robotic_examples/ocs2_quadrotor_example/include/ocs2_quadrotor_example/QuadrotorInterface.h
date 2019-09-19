@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef QUADROTORINTERFACE_OCS2_H_
-#define QUADROTORINTERFACE_OCS2_H_
+#pragma once
 
 // OCS2
 #include <ocs2_core/Dimensions.h>
@@ -131,5 +130,3 @@ class QuadrotorInterface final : public RobotInterfaceBase<quadrotor::STATE_DIM_
 
 }  // namespace quadrotor
 }  // namespace ocs2
-
-#endif /* QUADROTORINTERFACE_OCS2_H_ */

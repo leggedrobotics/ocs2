@@ -30,10 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 
 #include "ocs2_double_integrator_example/DoubleIntegratorInterface.h"
-#include "ocs2_double_integrator_example/definitions.h"
 
 using namespace ocs2;
-using namespace double_integrator;
 
 int main(int argc, char** argv) {
   // task file
@@ -42,11 +40,11 @@ int main(int argc, char** argv) {
   }
   std::string taskFileFolderName = std::string(argv[1]);
 
-  DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
+  double_integrator::DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
 
   // Launch MPC ROS node
-  MPC_ROS_Interface<ocs2::double_integrator::STATE_DIM_, ocs2::double_integrator::INPUT_DIM_> mpcNode(&doubleIntegratorInterface.getMpc(),
-                                                                                                      "double_integrator");
+  MPC_ROS_Interface<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> mpcNode(doubleIntegratorInterface.getMpc(),
+                                                                                          "double_integrator");
   mpcNode.launchNodes(argc, argv);
 
   // Successful exit

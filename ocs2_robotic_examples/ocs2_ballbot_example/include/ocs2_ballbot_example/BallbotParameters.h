@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef BALLBOT_PARAMETERS_OCS2_H_
-#define BALLBOT_PARAMETERS_OCS2_H_
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -69,5 +68,3 @@ class BallbotParameters {
 
 }  // namespace ballbot
 }  // namespace ocs2
-
-#endif  // BALLBOT_PARAMETERS_OCS2_H_

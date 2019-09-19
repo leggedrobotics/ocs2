@@ -33,101 +33,79 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-NumGDDP<STATE_DIM, INPUT_DIM>::NumGDDP(
-		const controlled_system_base_t* systemDynamicsPtr,
-		const derivatives_base_t* systemDerivativesPtr,
-		const constraint_base_t* systemConstraintsPtr,
-		const cost_function_base_t* costFunctionPtr,
-		const operating_trajectories_base_t* operatingTrajectoriesPtr,
-		const SLQ_Settings& settings /*= SLQ_Settings()*/,
-		const LOGIC_RULES_T* logicRulesPtr /*= nullptr*/,
-		const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
+NumGDDP<STATE_DIM, INPUT_DIM>::NumGDDP(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+                                       const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
+                                       const operating_trajectories_base_t* operatingTrajectoriesPtr,
+                                       const SLQ_Settings& settings /*= SLQ_Settings()*/, const LOGIC_RULES_T* logicRulesPtr /*= nullptr*/,
+                                       const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
-	: BASE(systemDynamicsPtr,
-			systemDerivativesPtr,
-			systemConstraintsPtr,
-			costFunctionPtr,
-			operatingTrajectoriesPtr,
-			settings,
-			logicRulesPtr,
-			heuristicsFunctionPtr)
-	, eps_(std::sqrt(settings.ddpSettings_.minRelCost_))
-{}
+    : BASE(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings,
+           logicRulesPtr, heuristicsFunctionPtr),
+      eps_(std::sqrt(settings.ddpSettings_.minRelCost_)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 template <typename Derived>
-void NumGDDP<STATE_DIM, INPUT_DIM>::getCostFuntionDerivative(
-		Eigen::MatrixBase<Derived> const& costFunctionDerivative) const {
-
-	// refer to Eigen documentation under the topic "Writing Functions Taking Eigen Types as Parameters"
-	const_cast<Eigen::MatrixBase<Derived>&>(costFunctionDerivative) = nominalCostFuntionDerivative_;
+void NumGDDP<STATE_DIM, INPUT_DIM>::getCostFuntionDerivative(Eigen::MatrixBase<Derived> const& costFunctionDerivative) const {
+  // refer to Eigen documentation under the topic "Writing Functions Taking Eigen Types as Parameters"
+  const_cast<Eigen::MatrixBase<Derived>&>(costFunctionDerivative) = nominalCostFuntionDerivative_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void NumGDDP<STATE_DIM, INPUT_DIM>::setSolverEventTime(
-		const scalar_array_t& eventTimes) {
-
-	BASE::getLogicRulesPtr()->setEventTimes(eventTimes);
-	BASE::getLogicRulesMachinePtr()->logicRulesUpdated();
+void NumGDDP<STATE_DIM, INPUT_DIM>::setSolverEventTime(const scalar_array_t& eventTimes) {
+  BASE::getLogicRulesPtr()->setEventTimes(eventTimes);
+  BASE::getLogicRulesMachinePtr()->logicRulesUpdated();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void NumGDDP<STATE_DIM, INPUT_DIM>::run(
-		const scalar_t& initTime,
-		const state_vector_t& initState,
-		const scalar_t& finalTime,
-		const scalar_array_t& partitioningTimes,
-		const scalar_array_t& eventTimes)  {
+void NumGDDP<STATE_DIM, INPUT_DIM>::run(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
+                                        const scalar_array_t& partitioningTimes, const scalar_array_t& eventTimes) {
+  // find active event times range: [activeEventTimeBeginIndex_, activeEventTimeEndIndex_)
+  activeEventTimeBeginIndex_ = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes, initTime));
+  activeEventTimeEndIndex_ = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes, finalTime));
 
-	// find active event times range: [activeEventTimeBeginIndex_, activeEventTimeEndIndex_)
-	activeEventTimeBeginIndex_ = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes, initTime));
-	activeEventTimeEndIndex_   = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes, finalTime));
+  // set the event time
+  setSolverEventTime(eventTimes);
 
-	// set the event time
-	setSolverEventTime(eventTimes);
+  // run SLQ
+  BASE::run(initTime, initState, finalTime, partitioningTimes);
 
-	// run SLQ
-	BASE::run(initTime, initState, finalTime, partitioningTimes);
+  // get cost function
+  scalar_t costFunction, constraint1ISE, constraint2ISE;
+  BASE::getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
 
-	// get cost function
-	scalar_t costFunction, constraint1ISE, constraint2ISE;
-	BASE::getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
+  // get controller for warm starting
+  typename BASE::controller_ptr_array_t controller = BASE::getController();
 
-	// get controller for warm starting
-	typename BASE::controller_ptr_array_t controller = BASE::getController();
+  // numerical computation of the gradient
+  nominalCostFuntionDerivative_ = dynamic_vector_t::Zero(eventTimes.size());
+  for (size_t i = activeEventTimeBeginIndex_; i < activeEventTimeEndIndex_; i++) {
+    // perturbation
+    scalar_array_t eventTimesPlus = eventTimes;
+    scalar_t h = eps_ * std::max(std::fabs(eventTimesPlus[i]), 1.0);
+    eventTimesPlus[i] += h;
 
-	// numerical computation of the gradient
-	nominalCostFuntionDerivative_ = dynamic_vector_t::Zero(eventTimes.size());
-	for (size_t i=activeEventTimeBeginIndex_; i<activeEventTimeEndIndex_; i++) {
-		// perturbation
-		scalar_array_t eventTimesPlus = eventTimes;
-		scalar_t h = eps_ * std::max(std::fabs(eventTimesPlus[i]), 1.0);
-		eventTimesPlus[i] += h;
+    // set the event time
+    setSolverEventTime(eventTimesPlus);
 
-		// set the event time
-		setSolverEventTime(eventTimesPlus);
+    // run SLQ
+    BASE::reset();
+    BASE::run(initTime, initState, finalTime, partitioningTimes);
 
-		// run SLQ
-		BASE::reset();
-		BASE::run(initTime, initState, finalTime, partitioningTimes);
+    // get cost function
+    scalar_t costFunctionPlus, constraint1ISEPlus, constraint2ISEPlus;
+    BASE::getPerformanceIndeces(costFunctionPlus, constraint1ISEPlus, constraint2ISEPlus);
 
-		// get cost function
-		scalar_t costFunctionPlus, constraint1ISEPlus, constraint2ISEPlus;
-		BASE::getPerformanceIndeces(costFunctionPlus, constraint1ISEPlus, constraint2ISEPlus);
-
-		nominalCostFuntionDerivative_[i] = (costFunctionPlus-costFunction)/h;
-	}
-
+    nominalCostFuntionDerivative_[i] = (costFunctionPlus - costFunction) / h;
+  }
 }
 
-
-} // namespace ocs2
+}  // namespace ocs2

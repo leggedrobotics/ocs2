@@ -16,7 +16,7 @@ MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Q
     std::string robotName /*= "robot"*/, scalar_t mpcDesiredFrequency /*= -1*/)
     : BASE(mrt, mrtDesiredFrequency, mpcDesiredFrequency, &ocs2QuadrupedInterfacePtr->getDynamics(),
            ocs2QuadrupedInterfacePtr->slqSettings().rolloutSettings_),
-      quadrupedXppVisualizer_(ocs2QuadrupedInterfacePtr, robotName, true) {}
+      quadrupedXppVisualizer_(std::move(ocs2QuadrupedInterfacePtr), std::move(robotName), true) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

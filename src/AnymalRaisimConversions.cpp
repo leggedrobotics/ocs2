@@ -1,8 +1,6 @@
 #include <Eigen/Geometry>
 #include <ocs2_anymal_interface/AnymalRaisimConversions.hpp>
 
-#include <ocs2_robotic_tools/common/RotationTransforms.h>
-
 void make_euler_angles_unique(Eigen::Vector3d& eulerAngles) {
   // wrap angles into [-pi,pi),[-pi/2,pi/2),[-pi,pi)
   // from: https://github.com/ANYbotics/kindr/blob/0b159ec60b710706656b70148211ed04573fbfda/include/kindr/rotations/EulerAnglesXyz.hpp

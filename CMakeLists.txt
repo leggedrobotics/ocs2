@@ -18,9 +18,13 @@ find_package(Boost REQUIRED COMPONENTS
 )
 
 # Raisim
+option(USE_RAISIM_VISUALIZER "Compile Raisim with OGRE Visualizer" OFF)
 find_package(raisim CONFIG QUIET)
 if(raisim_FOUND)
-  find_package(raisimOgre REQUIRED)
+  if(USE_RAISIM_VISUALIZER)
+    find_package(raisimOgre REQUIRED)
+    add_definitions(-DUSE_RAISIM_VISUALIZER)
+  endif(USE_RAISIM_VISUALIZER)
 endif(raisim_FOUND)
 
 
@@ -170,8 +174,12 @@ if(raisim_FOUND)
     ocs2_anymal_interface
     ${catkin_LIBRARIES}
     raisim::raisim
-    raisim::raisimOgre
   )
+  if(USE_RAISIM_VISUALIZER)
+    target_link_libraries(anymal_dummy_raisim
+      raisim::raisimOgre
+    )
+  endif(USE_RAISIM_VISUALIZER)
 endif(raisim_FOUND)
 
 

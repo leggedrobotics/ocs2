@@ -62,6 +62,24 @@ install(TARGETS ${PROJECT_NAME}
 install(DIRECTORY include/${PROJECT_NAME}/
 		DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
+#############
+## Testing ##
+#############
+
+catkin_add_gtest(test_constraintTerm
+        test/constraint/testConstraintTerm.cpp
+        )
+target_link_libraries(test_constraintTerm
+        ${catkin_LIBRARIES}
+        )
+
+catkin_add_gtest(test_constraintCollection
+        test/constraint/testConstraintCollection.cpp
+        )
+target_link_libraries(test_constraintCollection
+        ${catkin_LIBRARIES}
+        )
+
 ###########################
 ## doxygen documentation ##
 ###########################

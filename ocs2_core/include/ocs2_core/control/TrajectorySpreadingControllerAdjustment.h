@@ -37,21 +37,21 @@ class TrajectorySpreadingControllerAdjustment final : public ControllerAdjustmen
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = ControllerAdjustmentBase <STATE_DIM, INPUT_DIM>;
+  using BASE = ControllerAdjustmentBase<STATE_DIM, INPUT_DIM>;
 
-  using typename BASE::scalar_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::state_vector_t;
-  using typename BASE::state_vector_array_t;
-  using typename BASE::state_matrix_t;
-  using typename BASE::input_vector_t;
-  using typename BASE::input_vector_array_t;
+  using typename BASE::index_t;  // (partition, index)
   using typename BASE::input_matrix_t;
   using typename BASE::input_state_matrix_t;
-  using typename BASE::state_input_matrix_t;
-  using typename BASE::linear_controller_t;
+  using typename BASE::input_vector_array_t;
+  using typename BASE::input_vector_t;
   using typename BASE::linear_controller_array_t;
-  using typename BASE::index_t;  // (partition, index)
+  using typename BASE::linear_controller_t;
+  using typename BASE::scalar_array_t;
+  using typename BASE::scalar_t;
+  using typename BASE::state_input_matrix_t;
+  using typename BASE::state_matrix_t;
+  using typename BASE::state_vector_array_t;
+  using typename BASE::state_vector_t;
 
   /**
    * Constructor
@@ -64,7 +64,7 @@ class TrajectorySpreadingControllerAdjustment final : public ControllerAdjustmen
   ~TrajectorySpreadingControllerAdjustment() = default;
 
   void adjustController(const scalar_array_t& eventTimes, const scalar_array_t& controllerEventTimes,
-		  linear_controller_array_t& controllersStock) override;
+                        linear_controller_array_t& controllersStock) override;
 
  protected:
   /**
@@ -116,4 +116,3 @@ class TrajectorySpreadingControllerAdjustment final : public ControllerAdjustmen
 }  // namespace ocs2
 
 #include "implementation/TrajectorySpreadingControllerAdjustment.h"
-

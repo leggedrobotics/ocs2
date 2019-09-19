@@ -35,8 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <memory>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 
 #include "ocs2_core/Dimensions.h"
 #include "ocs2_core/OCS2NumericTraits.h"
@@ -90,12 +90,12 @@ class ControllerAdjustmentBase {
    * @param controllerStock: The controller stock which will be modified.
    */
   virtual void adjustController(const scalar_array_t& eventTimes, const scalar_array_t& controllerEventTimes,
-		  linear_controller_array_t& controllersStock) = 0;
+                                linear_controller_array_t& controllersStock) = 0;
 
   /***********
    * Variables
    ***********/
-//  const int undefined_ = -1;
+  //  const int undefined_ = -1;
 };
 
 }  // namespace ocs2

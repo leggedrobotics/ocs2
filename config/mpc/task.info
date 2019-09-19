@@ -164,7 +164,7 @@ mpc
   rosMsgTimeWindow                200	; [ms]
   adaptiveRosMsgTimeWindow        0
 
-  mpcDesiredFrequency             -1 ; [Hz]
+  mpcDesiredFrequency             100 ; [Hz]
   mrtDesiredFrequency             400 ; [Hz]
 
   maxTimeStep                     10e-3

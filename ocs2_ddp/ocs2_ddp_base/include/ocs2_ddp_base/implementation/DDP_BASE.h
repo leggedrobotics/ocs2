@@ -130,8 +130,19 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
   useParallelRiccatiSolverFromInitItr_ = false;
 
   for (size_t i = 0; i < numPartitions_; i++) {
-    // very important :)
+    // very important, these are variables that are carried in between iterations
     nominalControllersStock_[i].clear();
+    nominalTimeTrajectoriesStock_[i].clear();
+    nominalEventsPastTheEndIndecesStock_[i].clear();
+    nominalStateTrajectoriesStock_[i].clear();
+    nominalInputTrajectoriesStock_[i].clear();
+    lambdaEquality2TrajectoryStock_[i].clear();
+
+    nominalPrevTimeTrajectoriesStock_[i].clear();
+    nominalPrevEventsPastTheEndIndecesStock_[i].clear();
+    nominalPrevStateTrajectoriesStock_[i].clear();
+    nominalPrevInputTrajectoriesStock_[i].clear();
+    lambdaEquality2TrajectoryStockPrev_[i].clear();
 
     // for Riccati equation parallel computation
     SmFinalStock_[i] = state_matrix_t::Zero();
@@ -403,7 +414,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCost(const scalar_array2_t&
                                                           const input_vector_array2_t& inputTrajectoriesStock, scalar_t& totalCost,
                                                           size_t threadId /*= 0*/) {
   totalCost = 0.0;
-
   for (size_t i = 0; i < numPartitions_; i++) {
     scalar_t cost;
     calculateCostWorker(threadId, i, timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i], stateTrajectoriesStock[i],
@@ -479,6 +489,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
     nc2TrajectoriesStock_[i].resize(N);
     HvTrajectoryStock_[i].resize(N);
     FmTrajectoryStock_[i].resize(N);
+
+    lambdaEquality2TrajectoryStock_[i].resize(N);
 
     // for inequality constraints
     ncIneqTrajectoriesStock_[i].resize(N);  // ncIneq: Number of inequality constraints
@@ -604,21 +616,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateEventsLQWorker(size_t workerInde
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchBase(bool computeISEs) {
-  // display
-  if (ddpSettings_.displayInfo_) {
-    scalar_t maxDeltaUffNorm, maxDeltaUeeNorm;
-    calculateControllerUpdateMaxNorm(maxDeltaUffNorm, maxDeltaUeeNorm);
-
-    std::cerr << "max feedforward update norm:  " << maxDeltaUffNorm << std::endl;
-    std::cerr << "max type-1 error update norm: " << maxDeltaUeeNorm << std::endl;
-  }
-
-  // catch the nominal trajectories for which the LQ problem is constructed and solved
-  nominalPrevTimeTrajectoriesStock_.swap(nominalTimeTrajectoriesStock_);
-  nominalPrevEventsPastTheEndIndecesStock_.swap(nominalEventsPastTheEndIndecesStock_);
-  nominalPrevStateTrajectoriesStock_.swap(nominalStateTrajectoriesStock_);
-  nominalPrevInputTrajectoriesStock_.swap(nominalInputTrajectoriesStock_);
-
   // perform one rollout while the input correction for the type-1 constraint is considered.
   avgTimeStepFP_ =
       rolloutTrajectory(initTime_, initState_, finalTime_, partitioningTimes_, nominalControllersStock_, nominalTimeTrajectoriesStock_,
@@ -992,6 +989,19 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateControllerUpdateMaxNorm(scalar_t& 
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::cacheNominalTrajectories() {
+  nominalPrevTimeTrajectoriesStock_.swap(nominalTimeTrajectoriesStock_);
+  nominalPrevEventsPastTheEndIndecesStock_.swap(nominalEventsPastTheEndIndecesStock_);
+  nominalPrevStateTrajectoriesStock_.swap(nominalStateTrajectoriesStock_);
+  nominalPrevInputTrajectoriesStock_.swap(nominalInputTrajectoriesStock_);
+
+  lambdaEquality2TrajectoryStockPrev_.swap(lambdaEquality2TrajectoryStock_);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::printRolloutInfo() {
   std::cerr << "optimization cost:         " << nominalTotalCost_ << std::endl;
   std::cerr << "constraint type-1 ISE:     " << nominalConstraint1ISE_ << std::endl;
@@ -1307,6 +1317,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   nominalPrevEventsPastTheEndIndecesStock_.resize(numPartitions);
   nominalPrevStateTrajectoriesStock_.resize(numPartitions);
   nominalPrevInputTrajectoriesStock_.resize(numPartitions);
+  lambdaEquality2TrajectoryStockPrev_.resize(numPartitions);
 
   /*
    * Riccati solver variables and controller update
@@ -1324,6 +1335,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   SvTrajectoryStock_.resize(numPartitions);
   SveTrajectoryStock_.resize(numPartitions);
   SmTrajectoryStock_.resize(numPartitions);
+
+  lambdaEquality2TrajectoryStock_.resize(numPartitions);
 
   initialControllerDesignStock_.resize(numPartitions);
 
@@ -1369,6 +1382,33 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
+  // TODO: if blockwiseMovingHorizon_ is not set, use the previous partition's variables for
+  // the first call of the partition.
+  if (!blockwiseMovingHorizon_) {
+    for (size_t i = 1; i <= finalActivePartition_; i++) {
+      if (nominalControllersStock_[i].empty() && !nominalControllersStock_[i - 1].empty()) {
+        // controller
+        scalar_t& time = partitioningTimes_[i];  // partition's start time
+        input_vector_t bias;
+        nominalControllersStock_[i - 1].getBias(time, bias);
+        input_state_matrix_t gain;
+        nominalControllersStock_[i - 1].getFeedbackGain(time, gain);
+        nominalControllersStock_[i].setController(scalar_array_t{time}, input_vector_array_t{bias}, input_state_matrix_array_t{gain});
+        //      }
+        //      if (nominalPrevTimeTrajectoriesStock_[i].empty() && !nominalPrevTimeTrajectoriesStock_[i - 1].empty()) {
+        nominalPrevTimeTrajectoriesStock_[i].push_back(nominalPrevTimeTrajectoriesStock_[i - 1].back());
+        nominalPrevStateTrajectoriesStock_[i].push_back(nominalPrevStateTrajectoriesStock_[i - 1].back());
+        nominalPrevInputTrajectoriesStock_[i].push_back(nominalPrevInputTrajectoriesStock_[i - 1].back());
+
+        // Lagrange multipliers
+        lambdaEquality2TrajectoryStockPrev_[i].push_back(lambdaEquality2TrajectoryStockPrev_[i - 1].back());
+      }
+    }
+  }
+
+  // cache the nominal trajectories before the new rollout (time, state, input, Lagrangians)
+  cacheNominalTrajectories();
+
   // initial controller rollout
   forwardPassTimer_.startTimer();
   avgTimeStepFP_ =
@@ -1428,6 +1468,10 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
+  // cache the nominal trajectories before the new rollout (time, state, input, Lagrangians)
+  cacheNominalTrajectories();
+
+  // finding the optimal learningRate and getting the optimal trajectories and controller
   bool computeISEs = ddpSettings_.displayInfo_ || !ddpSettings_.noStateConstraints_;
 
   // finding the optimal learningRate
@@ -1649,6 +1693,11 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
     // display
     if (ddpSettings_.displayInfo_) {
       std::cerr << "\n#### Iteration " << iteration_ << std::endl;
+
+      scalar_t maxDeltaUffNorm, maxDeltaUeeNorm;
+      calculateControllerUpdateMaxNorm(maxDeltaUffNorm, maxDeltaUeeNorm);
+      std::cerr << "max feedforward update norm:  " << maxDeltaUffNorm << std::endl;
+      std::cerr << "max type-1 error update norm: " << maxDeltaUeeNorm << std::endl;
     }
 
     // run the an iteration of the DDP algorithm and update the member variables
@@ -1670,13 +1719,21 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
 
   }  // end of while loop
 
+  // display
   if (ddpSettings_.displayInfo_) {
     std::cerr << "\n#### Final rollout" << std::endl;
+
+    scalar_t maxDeltaUffNorm, maxDeltaUeeNorm;
+    calculateControllerUpdateMaxNorm(maxDeltaUffNorm, maxDeltaUeeNorm);
+    std::cerr << "max feedforward update norm:  " << maxDeltaUffNorm << std::endl;
+    std::cerr << "max type-1 error update norm: " << maxDeltaUeeNorm << std::endl;
   }
 
-  bool computeISEs = !ddpSettings_.noStateConstraints_ || ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_;
+  // cache the nominal trajectories before the new rollout (time, state, input, Lagrangians)
+  cacheNominalTrajectories();
 
   // finding the final optimal learningRate and getting the optimal trajectories and controller
+  bool computeISEs = !ddpSettings_.noStateConstraints_ || ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_;
   maxLearningRate_ = ddpSettings_.maxLearningRate_;
   linesearchTimer_.startTimer();
   lineSearch(computeISEs);

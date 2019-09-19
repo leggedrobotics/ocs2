@@ -127,7 +127,7 @@ class MRT_ROS_Quadruped : public ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM> {
    * @param [out] mpcInput: the new control input of MPC.
    * @param [out] subsystem: the active subsystem.
    */
-  void rolloutPolicy(scalar_t time, const state_vector_t& state, rbd_state_vector_t& rbdState, joint_coordinate_t& rbdInput,
+  void rolloutPolicy(scalar_t time, const rbd_state_vector_t& rbdState, rbd_state_vector_t& rbdStateRef, joint_coordinate_t& rbdInputRef,
                      size_t& subsystem);
 
 //  void rolloutPolicy(scalar_t currentTime, const state_vector_t& currentState, const scalar_t& timeStep, state_vector_t& mpcState,

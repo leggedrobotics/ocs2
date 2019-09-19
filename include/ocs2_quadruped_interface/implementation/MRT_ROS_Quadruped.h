@@ -84,7 +84,8 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::findsIndicesEven
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferPolicy(const command_data_t& commandBuffer, primal_solution_t& primalSolutionBuffer) {
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferPolicy(const command_data_t& commandBuffer,
+                                                                                   primal_solution_t& primalSolutionBuffer) {
   const auto& mpcTimeTrajectoryBuffer = primalSolutionBuffer.timeTrajectory_;
   const auto& mpcStateTrajectoryBuffer = primalSolutionBuffer.stateTrajectory_;
   const auto& eventTimesBuffer = primalSolutionBuffer.eventTimes_;
@@ -111,7 +112,7 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferPoli
   touchdownInputStockBuffer_.push_back(mpcControllerBuffer->computeInput(t_init, x_init));
   // making the reference and the measured EE velocity the same
   touchdownInputStockBuffer_.front().template segment<JOINT_COORD_SIZE>(12) =
-    commandBuffer.mpcInitObservation_.input().template segment<JOINT_COORD_SIZE>(12);
+      commandBuffer.mpcInitObservation_.input().template segment<JOINT_COORD_SIZE>(12);
 
   // find event indices
   std::vector<int> eventsIndices;
@@ -147,7 +148,8 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyBufferPoli
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyPolicy(const command_data_t& command, primal_solution_t& primalSolution) {
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modifyPolicy(const command_data_t& command,
+                                                                             primal_solution_t& primalSolution) {
   const auto& mpcController = primalSolution.controllerPtr_;
   const auto& eventTimes = primalSolution.eventTimes_;
   const auto& subsystemsSequence = primalSolution.subsystemsSequence_;
@@ -480,20 +482,24 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::rolloutPolicy(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t time, const state_vector_t& state,
-                                                                              rbd_state_vector_t& rbdState, joint_coordinate_t& rbdInput,
-                                                                              size_t& subsystem) {
+void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t time, const rbd_state_vector_t& rbdState,
+                                                                              rbd_state_vector_t& rbdStateRef,
+                                                                              joint_coordinate_t& rbdInputRef, size_t& subsystem) {
+  // extract ocs2 state from rbdState
+  state_vector_t state;
+  ocs2QuadrupedInterfacePtr_->computeSwitchedModelState(rbdState, state);
+
   // optimal switched model state and input
   state_vector_t stateRef;
   input_vector_t inputRef;
   BASE::evaluatePolicy(time, state, stateRef, inputRef, subsystem);
 
   // calculate rbd state.
-  ocs2QuadrupedInterfacePtr_->computeRbdModelState(stateRef, inputRef, rbdState);
-  base_coordinate_t qBase = rbdState.template segment<6>(0);
-  joint_coordinate_t qJoints = rbdState.template segment<12>(6);
-  base_coordinate_t qdBase = rbdState.template segment<6>(18);
-  joint_coordinate_t qdJoints = rbdState.template segment<12>(24);
+  ocs2QuadrupedInterfacePtr_->computeRbdModelState(stateRef, inputRef, rbdStateRef);
+  base_coordinate_t qBase = rbdStateRef.template segment<6>(0);
+  joint_coordinate_t qJoints = rbdStateRef.template segment<12>(6);
+  base_coordinate_t qdBase = rbdStateRef.template segment<6>(18);
+  joint_coordinate_t qdJoints = rbdStateRef.template segment<12>(24);
 
   // look one dt ahead to obtain acceleration
   const scalar_t dt = 1.0 / ocs2QuadrupedInterfacePtr_->modelSettings().feetFilterFrequency_;
@@ -505,23 +511,26 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::rolloutPolicy(sc
   vector_3d_array_t o_feetPositionRef_ahead, o_feetVelocityRef_ahead;
   vector_3d_array_t o_contactForces_ahead;
   joint_coordinate_t qddJoints = (inputRef_ahead.template tail<JOINT_COORD_SIZE>() - inputRef.template tail<JOINT_COORD_SIZE>()) / dt;
+  if (subsystem != subsystem_ahead) {
+    qddJoints.setZero();
+  }
 
   // inverse dynamics
   // RBD homogeneous transforms of feet
   ocs2QuadrupedInterfacePtr_->getKinematicModel().update(qBase, qJoints);
   // force transformed in the lowerLeg coordinate
-  iit::rbd::ForceVector extForceBase[4];
+  base_coordinate_t extForceBase = base_coordinate_t::Zero();
   for (size_t j = 0; j < 4; j++) {
     vector_3d_t b_footPosition;
     ocs2QuadrupedInterfacePtr_->getKinematicModel().footPositionBaseFrame(j, b_footPosition);
-    extForceBase[j].head<3>() = b_footPosition.cross(inputRef.template segment<3>(3 * j));
-    extForceBase[j].tail<3>() = inputRef.template segment<3>(3 * j);
+    extForceBase.template head<3>() += b_footPosition.cross(inputRef.template segment<3>(3 * j));
+    extForceBase.template tail<3>() += inputRef.template segment<3>(3 * j);
   }
-  joint_coordinate_t extForceJoint[4];
+  joint_coordinate_t extForceJoint = joint_coordinate_t::Zero();
   for (size_t j = 0; j < 4; j++) {
     Eigen::Matrix<double, 6, JOINT_COORD_SIZE> b_footJacobain;
     ocs2QuadrupedInterfacePtr_->getKinematicModel().footJacobainBaseFrame(j, b_footJacobain);
-    extForceJoint[j] = b_footJacobain.template bottomRows<3>().transpose() * inputRef.template segment<3>(3 * j);
+    extForceJoint += b_footJacobain.template bottomRows<3>().transpose() * inputRef.template segment<3>(3 * j);
   }
 
   iit::ANYmal::dyn::InertiaProperties inertias;
@@ -558,27 +567,23 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::rolloutPolicy(sc
 
   // compute Base local acceleration about Base frame
   base_coordinate_t comLocalAcceleration =
-      -Mm.template topRightCorner<6, JOINT_COORD_SIZE>() * qddJoints - Cv.template head<6>() - Gv.template head<6>();
-  for (size_t j = 0; j < 4; j++) {
-    comLocalAcceleration += extForceBase[j];
-  }
+      -Mm.template topRightCorner<6, JOINT_COORD_SIZE>() * qddJoints - Cv.template head<6>() - Gv.template head<6>() + extForceBase;
   comLocalAcceleration = Mm.template topLeftCorner<6, 6>().ldlt().solve(comLocalAcceleration);
 
   // compute joint torque
-  rbdInput = Mm.template bottomLeftCorner<JOINT_COORD_SIZE, 6>() * comLocalAcceleration +
-             Mm.template bottomRightCorner<JOINT_COORD_SIZE, JOINT_COORD_SIZE>() * qddJoints + Cv.template tail<JOINT_COORD_SIZE>() +
-             Gv.template tail<JOINT_COORD_SIZE>();
-  for (size_t j = 0; j < 4; j++) {
-    rbdInput -= extForceJoint[j];
-  }
+  rbdInputRef = Mm.template bottomLeftCorner<JOINT_COORD_SIZE, 6>() * comLocalAcceleration +
+                Mm.template bottomRightCorner<JOINT_COORD_SIZE, JOINT_COORD_SIZE>() * qddJoints + Cv.template tail<JOINT_COORD_SIZE>() +
+                Gv.template tail<JOINT_COORD_SIZE>() - extForceJoint;
 
-  //  for (size_t i=0; i<4; i++) {
-  //	  Eigen::Matrix<double,6,JOINT_COORD_SIZE> footJacobain;
-  //	  ocs2QuadrupedInterfacePtr_->getKinematicModel().footJacobainBaseFrame(i, footJacobain);
-  //	  joint_coordinate_t tau = footJacobain.template bottomRows<3>().transpose() * inputRef.template segment<3>(3*i);
-  //	  std::cout << "True torque " << i << ":      " << rbdInput.template segment<3>(3*i).transpose() << std::endl;
-  //	  std::cout << "Estimated torque " << i << ": " << -tau.template segment<3>(3*i).transpose() << std::endl;
-  //  }
+  vector_3d_t kp, kd;
+  kp.setConstant(80.0);
+  kd.setConstant(5.0);
+
+  for (int i = 0; i < 4; i++) {
+    rbdInputRef.template segment<3>(i * 3) +=
+        kp.asDiagonal() * (rbdStateRef.template segment<3>(6 + 3 * i) - rbdState.template segment<3>(6 + 3 * i)) +
+        kd.asDiagonal() * (rbdStateRef.template segment<3>(24 + 3 * i) - rbdState.template segment<3>(24 + 3 * i));
+  }
 }
 
 /******************************************************************************************************/

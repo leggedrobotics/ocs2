@@ -24,8 +24,12 @@ class MRT_ROS_Anymal : public switched_model::MRT_ROS_Quadruped<12> {
 
   typedef OCS2AnymalInterface ocs2_anymal_interface_t;
 
-  MRT_ROS_Anymal(const std::string& pathToConfigFolder)
-      : BASE(ocs2_anymal_interface_t::Ptr(new ocs2_anymal_interface_t(pathToConfigFolder)), "anymal"){};
+  /**
+   * @param [in] ocs2QuadrupedInterfacePtr: A shared pointer to the quadruped interface class.
+   * @param [in] robotName: The name's of the robot.
+   */
+  MRT_ROS_Anymal(const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr, const std::string& pathToConfigFolder)
+      : BASE(ocs2QuadrupedInterfacePtr, "anymal") {};
 
   ~MRT_ROS_Anymal() = default;
 };

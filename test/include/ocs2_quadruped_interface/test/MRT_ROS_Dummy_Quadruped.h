@@ -17,6 +17,7 @@
 #include <xpp_msgs/topic_names.h>
 
 #include <ocs2_comm_interfaces/test/MRT_ROS_Dummy_Loop.h>
+
 #include "ocs2_quadruped_interface/MRT_ROS_Quadruped.h"
 #include "ocs2_quadruped_interface/QuadrupedXppVisualizer.h"
 
@@ -57,31 +58,18 @@ class MRT_ROS_Dummy_Quadruped : public ocs2::MRT_ROS_Dummy_Loop<STATE_DIM, INPUT
   using vector_3d_array_t = std::array<vector_3d_t, 4>;
 
   using mrt_t = MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>;
-  using mrt_ptr_t = typename mrt_t::Ptr;
-
   using visualizer_t = QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>;
 
   /**
    * Constructor.
    *
    * @param [in] ocs2QuadrupedInterfacePtr
-   * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz
+   * @param [in] mrt: The underlying MRT class to be used.
+   * @param [in] mrtDesiredFrequency: The MRT loop frequency in Hz
    * @param [in] robotName
-   * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz
+   * @param [in] mpcDesiredFrequency: The MPC loop frequency in Hz
    */
-  MRT_ROS_Dummy_Quadruped(quadruped_interface_ptr_t ocs2QuadrupedInterfacePtr, scalar_t mrtDesiredFrequency,
-                          std::string robotName = "robot", scalar_t mpcDesiredFrequency = -1);
-
-  /**
-   * Constructor.
-   *
-   * @param [in] ocs2QuadrupedInterfacePtr
-   * @param [in] mrtPtr: A pointer to MRT instance
-   * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz
-   * @param [in] robotName
-   * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz
-   */
-  MRT_ROS_Dummy_Quadruped(quadruped_interface_ptr_t ocs2QuadrupedInterfacePtr, mrt_ptr_t mrtPtr, scalar_t mrtDesiredFrequency,
+  MRT_ROS_Dummy_Quadruped(quadruped_interface_ptr_t ocs2QuadrupedInterfacePtr, mrt_t& mrt, scalar_t mrtDesiredFrequency,
                           std::string robotName = "robot", scalar_t mpcDesiredFrequency = -1);
 
   /**

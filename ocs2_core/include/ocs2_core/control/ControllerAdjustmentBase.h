@@ -87,15 +87,10 @@ class ControllerAdjustmentBase {
    *
    * @param [in] eventTimes: The new event times.
    * @param [in] controllerEventTimes: The control policy stock's event times.
-   * @param controllerStock: The controller stock which will be modified.
+   * @param [out] controllerStock: The controller stock which will be modified.
    */
   virtual void adjustController(const scalar_array_t& eventTimes, const scalar_array_t& controllerEventTimes,
                                 linear_controller_array_t& controllersStock) = 0;
-
-  /***********
-   * Variables
-   ***********/
-  //  const int undefined_ = -1;
 };
 
 }  // namespace ocs2

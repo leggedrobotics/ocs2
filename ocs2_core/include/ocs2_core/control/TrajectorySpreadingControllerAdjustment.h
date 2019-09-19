@@ -61,7 +61,7 @@ class TrajectorySpreadingControllerAdjustment final : public ControllerAdjustmen
   /**
    * Destructor
    */
-  ~TrajectorySpreadingControllerAdjustment() = default;
+  ~TrajectorySpreadingControllerAdjustment() override = default;
 
   void adjustController(const scalar_array_t& eventTimes, const scalar_array_t& controllerEventTimes,
                         linear_controller_array_t& controllersStock) override;

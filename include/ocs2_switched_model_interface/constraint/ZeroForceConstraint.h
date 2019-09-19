@@ -1,9 +1,6 @@
+#pragma once
 
-
-#ifndef OCS2_CTRL_ZEROFORCECONSTRAINT_H
-#define OCS2_CTRL_ZEROFORCECONSTRAINT_H
-
-#include <ocs2_core/constraint/ConstraintTerm.h>
+#include <ocs2_switched_model_interface/constraint/ConstraintTerm.h>
 
 namespace switched_model {
 
@@ -62,6 +59,3 @@ class ZeroForceConstraint final : public ocs2::ConstraintTerm<STATE_DIM, INPUT_D
 };
 
 } // namespace switched_model
-
-
-#endif //OCS2_CTRL_ZEROFORCECONSTRAINT_H

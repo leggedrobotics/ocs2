@@ -3,10 +3,18 @@
 #ifndef OCS2_CTRL_FRICTIONCONECONSTRAINT_H
 #define OCS2_CTRL_FRICTIONCONECONSTRAINT_H
 
-#include <ocs2_core/constraint/ConstraintTerm.h>
+#include <ocs2_switched_model_interface/constraint/ConstraintTerm.h>
 
 namespace switched_model {
 
+/**
+ * Implements the constraint h(t,x,u) >= 0
+ *
+ * Fz * sqrt(frictionCoefficient_ * frictionCoefficient_) - sqrt(Fx * Fx + Fy * Fy + regularization_)
+ *
+ * @tparam STATE_DIM
+ * @tparam INPUT_DIM
+ */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class FrictionConeConstraint final : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> {
  public:

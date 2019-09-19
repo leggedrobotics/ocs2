@@ -80,6 +80,14 @@ target_link_libraries(test_constraintCollection
         ${catkin_LIBRARIES}
         )
 
+catkin_add_gtest(test_zeroForceConstraint
+		test/constraint/testZeroForceConstraint.cpp
+		)
+
+catkin_add_gtest(test_frictionConeConstraint
+		test/constraint/testFrictionConeConstraint.cpp
+		)
+
 ###########################
 ## doxygen documentation ##
 ###########################

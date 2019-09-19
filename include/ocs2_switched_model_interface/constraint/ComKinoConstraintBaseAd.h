@@ -1,52 +1,35 @@
-/*
- * ComKinoConstraintBase.h
- *
- *  Created on: Nov 12, 2017
- *      Author: Farbod
- */
-
-#ifndef COMKINOCONSTRAINTBASE_AD_H_
-#define COMKINOCONSTRAINTBASE_AD_H_
-
-#include <Eigen/Dense>
-#include <Eigen/StdVector>
-#include <array>
-#include <iostream>
-#include <memory>
-#include <string>
+#pragma once
 
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/constraint/ConstraintCollection.h>
 
-#include "ocs2_switched_model_interface/constraint/EndEffectorPositionConstraint.h"
-#include "ocs2_switched_model_interface/constraint/EndEffectorVelocityContraint.h"
-#include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
-#include "ocs2_switched_model_interface/constraint/ZeroForceConstraint.h"
+#include "ocs2_switched_model_interface/constraint/ConstraintCollection.h"
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
 #include "ocs2_switched_model_interface/core/Model_Settings.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
-#include "ocs2_switched_model_interface/ground/TerrainModel.h"
 #include "ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h"
 #include "ocs2_switched_model_interface/state_constraint/EndEffectorConstraintBase.h"
+
+// Constraints
+#include "ocs2_switched_model_interface/constraint/EndEffectorVelocityContraint.h"
+#include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
+#include "ocs2_switched_model_interface/constraint/ZeroForceConstraint.h"
 
 namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM = 12 + JOINT_COORD_SIZE, size_t INPUT_DIM = 12 + JOINT_COORD_SIZE>
-class ComKinoConstraintBaseAD : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZE, 12 + JOINT_COORD_SIZE> {
+class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZE, 12 + JOINT_COORD_SIZE> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  enum { STATE_DIM_ = STATE_DIM, INPUT_DIM_ = INPUT_DIM, NUM_CONTACT_POINTS_ = SwitchedModel<JOINT_COORD_SIZE>::NUM_CONTACT_POINTS };
+  static constexpr size_t NUM_CONTACT_POINTS_ = SwitchedModel<JOINT_COORD_SIZE>::NUM_CONTACT_POINTS;
 
-  typedef SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, double> logic_rules_t;
-  typedef typename logic_rules_t::foot_cpg_t foot_cpg_t;
+  using logic_rules_t = SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, double>;
+  using foot_cpg_t = typename logic_rules_t::foot_cpg_t;
 
   using ad_base_t = CppAD::cg::CG<double>;
   using ad_scalar_t = CppAD::AD<ad_base_t>;
-  using com_model_t = ComModelBase<JOINT_COORD_SIZE>;
   using ad_com_model_t = ComModelBase<JOINT_COORD_SIZE, ad_scalar_t>;
-  using kinematic_model_t = KinematicsModelBase<JOINT_COORD_SIZE>;
   using ad_kinematic_model_t = KinematicsModelBase<JOINT_COORD_SIZE, ad_scalar_t>;
 
   using Base = ocs2::ConstraintBase<STATE_DIM, INPUT_DIM>;
@@ -81,24 +64,28 @@ class ComKinoConstraintBaseAD : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZ
   using ConstraintTerm_t = ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM>;
   using FrictionConeConstraint_t = FrictionConeConstraint<STATE_DIM, INPUT_DIM>;
   using EndEffectorVelocityConstraint_t = EndEffectorVelocityConstraint<STATE_DIM, INPUT_DIM>;
-  using EndEffectorPositionConstraint_t = EndEffectorPositionConstraint<STATE_DIM, INPUT_DIM>;
   using ZeroForceConstraint_t = ZeroForceConstraint<STATE_DIM, INPUT_DIM>;
 
   // Enumeration and naming
   enum class FeetEnum { LF, RF, LH, RH };
   const std::array<std::string, 4> feetNames{"LF", "RF", "LH", "RH"};
 
-  ComKinoConstraintBaseAD(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel,
-                        const ad_com_model_t& adComModel, std::shared_ptr<const logic_rules_t> logicRulesPtr, std::shared_ptr<const TerrainModel> terrainModel = nullptr,
-                        const Model_Settings& options = Model_Settings())
-      : Base(), adKinematicModelPtr_(adKinematicModel.clone()), adComModelPtr_(adComModel.clone()), logicRulesPtr_(std::move(logicRulesPtr)), terrainModel_(std::move(terrainModel)), options_(options) {
+  ComKinoConstraintBaseAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
+                          std::shared_ptr<const logic_rules_t> logicRulesPtr, const Model_Settings& options = Model_Settings())
+      : Base(),
+        adKinematicModelPtr_(adKinematicModel.clone()),
+        adComModelPtr_(adComModel.clone()),
+        logicRulesPtr_(std::move(logicRulesPtr)),
+        options_(options),
+        inequalityConstraintsComputed_(false),
+        stateInputConstraintsComputed_(false) {
     if (!logicRulesPtr_) {
       throw std::runtime_error("[ComKinoConstraintBaseAD] logicRules cannot be a nullptr");
     }
     InitializeConstraintTerms();
   }
 
-  ComKinoConstraintBaseAD(const ComKinoConstraintBaseAD& rhs)
+  ComKinoConstraintBaseAd(const ComKinoConstraintBaseAd& rhs)
       : Base(rhs),
         adKinematicModelPtr_(rhs.adKinematicModelPtr_->clone()),
         adComModelPtr_(rhs.adComModelPtr_->clone()),
@@ -106,35 +93,29 @@ class ComKinoConstraintBaseAD : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZ
         options_(rhs.options_),
         inequalityConstraintCollection_(rhs.inequalityConstraintCollection_),
         equalityStateInputConstraintCollection_(rhs.equalityStateInputConstraintCollection_),
-        eePosConSettings_(rhs.eePosConSettings_),
-        eeVelConSettings_(rhs.eeVelConSettings_),
-        terrainModel_(rhs.terrainModel_){}
+        inequalityConstraintsComputed_(false),
+        stateInputConstraintsComputed_(false) {}
 
   /**
    * Initialize Constraint Terms
    */
   void InitializeConstraintTerms() {
-
     for (int i = 0; i < NUM_CONTACT_POINTS_; i++) {
       auto footName = feetNames[i];
 
       // Friction cone constraint
       auto frictionCone = std::unique_ptr<ConstraintTerm_t>(new FrictionConeConstraint_t(options_.frictionCoefficient_, 25.0, i));
 
-      // EE position
-      auto endEffectorConstraint = std::unique_ptr<ConstraintTerm_t>(
-          new EndEffectorPositionConstraint_t(i, eePosConSettings_[i], *adComModelPtr_.get(), *adKinematicModelPtr_.get(), options_.generateModels_));
-
       // EE force
       auto zeroForceConstraint = std::unique_ptr<ConstraintTerm_t>(new ZeroForceConstraint_t(i));
 
       // Velocity Constraint
-      auto endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(
-          new EndEffectorVelocityConstraint_t(i, eeVelConSettings_[i], *adComModelPtr_.get(), *adKinematicModelPtr_.get(), options_.generateModels_));
+
+      auto endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityConstraint_t(
+          i, EndEffectorVelocityConstraintSettings(), *adComModelPtr_.get(), *adKinematicModelPtr_.get(), options_.recompileLibraries_));
 
       // Inequalities
       inequalityConstraintCollection_.add(std::move(frictionCone), footName + "_FrictionCone");
-      inequalityConstraintCollection_.add(std::move(endEffectorConstraint), footName + "_EEPos");
 
       // State input equalities
       equalityStateInputConstraintCollection_.add(std::move(zeroForceConstraint), footName + "_ZeroForce");
@@ -142,9 +123,9 @@ class ComKinoConstraintBaseAD : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZ
     }
   }
 
-  ~ComKinoConstraintBaseAD() override = default;
+  ~ComKinoConstraintBaseAd() override = default;
 
-  ComKinoConstraintBaseAD<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>* clone() const override;
+  ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>* clone() const override;
 
   void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
 
@@ -182,19 +163,18 @@ class ComKinoConstraintBaseAD : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZ
   void getStanceLegs(contact_flag_t& stanceLegs);
 
  private:
-  ConstraintCollection_t inequalityConstraintCollection_;
+  // State input equality constraints
   ConstraintCollection_t equalityStateInputConstraintCollection_;
-
-  std::array<EndEffectorVelocityConstraintSettings, 4> eeVelConSettings_;
-  std::array<EndEffectorPositionConstraintSettings, 4> eePosConSettings_;
-  std::shared_ptr<const TerrainModel> terrainModel_;
-  ConvexPlanarPolytope3dArray polytopes;
-
+  bool stateInputConstraintsComputed_;
   LinearConstraintApproximationAsMatrices_t linearStateInputConstraintApproximation_;
+
+  // Inequality constraints
+  ConstraintCollection_t inequalityConstraintCollection_;
+  bool inequalityConstraintsComputed_;
   QuadraticConstraintApproximation_t quadraticInequalityConstraintApproximation_;
 
-  typename ad_kinematic_model_t::Ptr adKinematicModelPtr_;
-  typename ad_com_model_t::Ptr adComModelPtr_;
+  std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
+  std::unique_ptr<ad_com_model_t> adComModelPtr_;
   Model_Settings options_;
 
   std::shared_ptr<const logic_rules_t> logicRulesPtr_;
@@ -202,11 +182,8 @@ class ComKinoConstraintBaseAD : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZ
   size_t numEventTimes_;
 
   std::array<const foot_cpg_t*, NUM_CONTACT_POINTS_> zDirectionRefsPtr_;
-
 };
 
 }  // end of namespace switched_model
 
-#include "implementation/ComKinoConstraintBaseAD.h"
-
-#endif /* COMKINOCONSTRAINTBASE_AD_H_ */
+#include "ocs2_switched_model_interface/constraint/implementation/ComKinoConstraintBaseAd.h"

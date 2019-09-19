@@ -8,12 +8,6 @@
 #ifndef COMKINOCONSTRAINTBASE_H_
 #define COMKINOCONSTRAINTBASE_H_
 
-#include <array>
-#include <memory>
-#include <iostream>
-#include <string>
-#include <Eigen/Dense>
-
 #include <ocs2_core/constraint/ConstraintBase.h>
 
 #include "ocs2_switched_model_interface/core/ComModelBase.h"

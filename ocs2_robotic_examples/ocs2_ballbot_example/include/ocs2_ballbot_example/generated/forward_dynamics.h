@@ -6,9 +6,9 @@
 #include <iit/rbd/robcogen_commons.h>
 
 #include "declarations.h"
+#include "transforms.h"
 #include "inertia_properties.h"
 #include "link_data_map.h"
-#include "transforms.h"
 
 namespace iit {
 namespace Ballbot {

@@ -1,8 +1,8 @@
 ; Time Horizon
 mpcTimeHorizon
 {
-    timehorizon      2.0
-    numPartitions    2
+    timehorizon      1.0
+    numPartitions    4
 }
 
 ; Mode sequence 
@@ -23,15 +23,17 @@ templateSwitchingTimes
 slq
 {
     useNominalTimeForBackwardPass  0
-    RiccatiIntegratorType          1     ; ODE45 = 1, ADAMS_BASHFORTH = 2, BULIRSCH_STOER = 3, ADAMS_BASHFORTH_MOULTON = 4
+    RiccatiIntegratorType          1        ; ODE45 = 1, ADAMS_BASHFORTH = 2, BULIRSCH_STOER = 3, ADAMS_BASHFORTH_MOULTON = 4
     adams_integrator_dt            0.01
-    
-    warmStartGSLQ                  1
+    preComputeRiccatiTerms         0
+
+    warmStartGSLQP                 1
     useLQForDerivatives            0
+
     displayGradientDescent         0
     tolGradientDescent             1e-2
     acceptableTolGradientDescent   1e-2
-    maxIterationGradientDescent    5 
+    maxIterationGradientDescent    5
     minLearningRateNLP             0.05
     maxLearningRateNLP             0.6
     useAscendingLineSearchNLP      1
@@ -39,77 +41,83 @@ slq
 
     ddp
     {
-        maxNumIterations               10      ; 50
-        minLearningRate                1.0     ; 0.1
+
+        maxNumIterations               10    ; 50
+        minLearningRate                1.0   ; 0.1
         maxLearningRate                1.0
-        minRelCost                     0.1     ; 0.01
+        minRelCost                     0.1   ; 0.01
         stateConstraintPenaltyCoeff    100.0
         stateConstraintPenaltyBase     1.1
+        inequalityConstraintMu         100.0
+        inequalityConstraintDelta      1.1
         meritFunctionRho               50.0
-        constraintStepSize             1.0    ; 1.0
+        constraintStepSize             1.0   ; 1.0
         displayInfo                    0
-        displayShortSummary            1
-    
-        AbsTolODE                      1e-5     ;1e-6
-        RelTolODE                      1e-3     ;1e-4
+        displayShortSummary            0
+
+        AbsTolODE                      1e-5    ;1e-6
+        RelTolODE                      1e-3    ;1e-4
         minTimeStep                    1e-3
         maxNumStepsPerSecond           50000
-        simulationIsConstrained        0
+        simulationIsConstrained        1
         noStateConstraints             1
         useMakePSD                     0
+        addedRiccatiDiagonal           1e-3
         minAbsConstraint1ISE           5e-3
         minRelConstraint1ISE           5e-6
         checkNumericalStability        0
-    
-        useMultiThreading              1
-        nThreads                       4
-        debugPrintMT                   0
-        lsStepsizeGreedy               1
-    
-        useRiccatiSolver               1
-    }
 
+        useMultiThreading              0
+        nThreads                       4
+        threadPriority                 0
+        debugPrintMP                   0
+        lsStepsizeGreedy               1
+
+        useRiccatiSolver               1
+
+    }
     rollout
     {
-        AbsTolODE                      1e-5     ;1e-6
-        RelTolODE                      1e-3     ;1e-4
+        AbsTolODE                      1e-5    ;1e-6
+        RelTolODE                      1e-3    ;1e-4
         minTimeStep                    1e-3
         maxNumStepsPerSecond           50000
         checkNumericalStability        0
     }
+
 }
 
 ; MPC settings
 mpc
 {
-	runtimeMaxNumIterations     1
-	initMaxNumIterations        10
-	                               
-	runtimeMaxLearningRate      1.0
-	runtimeMinLearningRate      1.0
-	initMinLearningRate         0.1
-	initMaxLearningRate         1.0
-	                               
-	debugPrint                  1
-	coldStart                   0
-	recedingHorizon             1    ; use receding horizon MPC
+    runtimeMaxNumIterations         1
+    initMaxNumIterations           10
 
-	useParallelRiccatiSolver    1    ; use disjoint riccati solver in MP case and recedingHorizon fashion
+    runtimeMinLearningRate         1.0
+    runtimeMaxLearningRate         1.0
+    initMaxLearningRate            1.0
+    initMinLearningRate            0.1
 
-	useFeedbackPolicy           0
-	forwardSimulationTime       28   ; [ms] MRT time
+    debugPrint                     0
+    coldStart                      0
+    recedingHorizon                1     ; use receding horizon MPC
 
-	rosMsgTimeWindow            200  ; [ms]
-	adaptiveRosMsgTimeWindow    0
+    useParallelRiccatiSolver       1     ; use disjoint riccati solver in MP case and recedingHorizon fashion
 
-	mpcDesiredFrequency         100  ; [Hz] 
-	mrtDesiredFrequency         400  ; [Hz] 
+    useFeedbackPolicy              0
+    forwardSimulationTime          28    ; [ms] MRT time
+
+    rosMsgTimeWindow               200   ; [ms]
+    adaptiveRosMsgTimeWindow       0
+
+    mpcDesiredFrequency            100   ; [Hz]
+    mrtDesiredFrequency            400   ; [Hz]
 }
 
 ; ballbot interface settings
 ballbot_interface
 {
-	recompileLibraries          0    ; put this flag to 1 to force recompilation of dynamics library
+	recompileLibraries       0    ; put this flag to 1 to force recompilation of dynamics library
 }
 
 pathIntegral
@@ -135,7 +143,7 @@ initialState
    (2,0) 0.0  ; thetaz
    (3,0) 0.0  ; thetay
    (4,0) 0.0  ; thetax
-   
+
    (5,0) 0.0  ; px_dot
    (6,0) 0.0  ; py_dot
    (7,0) 0.0  ; thetaz_dot
@@ -148,27 +156,27 @@ Q
 {
     scaling 1e+0
 
-   (0,0) 100.0	; px
-   (1,1) 100.0	; py
-   (2,2) 500.0	; thetaz
-   (3,3) 500.0	; thetay
-   (4,4) 500.0  ; thetax
-   
-   (5,5) 100.0 ; px_dot
-   (6,6) 100.0 ; py_dot
-   (7,7) 50.0 ; thetaz_dot
-   (8,8) 50.0 ; thetay_dot
-   (9,9) 50.0 ; thetax_dot
+   (0,0) 110.0	; px
+   (1,1) 110.0	; py
+   (2,2) 400.0	; thetaz
+   (3,3) 0.0	; thetay
+   (4,4) 0.0  ; thetax
+
+   (5,5) 35.0 ; px_dot
+   (6,6) 35.0 ; py_dot
+   (7,7) 30.0 ; thetaz_dot
+   (8,8) 20.0 ; thetay_dot
+   (9,9) 20.0 ; thetax_dot
 }
 
 ; control weight matrix
 R
 {
-   scaling 1e+1
+   scaling 1e+0
 
    (0,0)  2.0  ; torque wheel1
-   (1,1)  2.0  ; torque wheel2 
-   (2,2)  2.0  ; torque wheel3 
+   (1,1)  2.0  ; torque wheel2
+   (2,2)  2.0  ; torque wheel3
 }
 
 ; final state weight matrix
@@ -197,11 +205,13 @@ x_final
    (2,0) 0.0  ; thetaz
    (3,0) 0.0  ; thetay
    (4,0) 0.0  ; thetax
-   
+
    (5,0) 0.0  ; px_dot
    (6,0) 0.0  ; py_dot
    (7,0) 0.0  ; thetaz_dot
    (8,0) 0.0  ; thetay_dot
    (9,0) 0.0  ; thetax_dot
 }
+
+
 

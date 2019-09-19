@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ocs2_comm_interfaces/ocs2_interfaces/MPC_MRT_Interface.h>
+#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
@@ -36,6 +37,7 @@ class PythonInterface {
   using dynamic_vector_t = typename dim_t::dynamic_vector_t;
   using dynamic_vector_array_t = typename dim_t::dynamic_vector_array_t;
   using dynamic_matrix_t = typename dim_t::dynamic_matrix_t;
+  using input_matrix_array_t = typename dim_t::input_matrix_array_t;
 
   /**
    * @brief Constructor
@@ -88,10 +90,10 @@ class PythonInterface {
 
   /**
    * @brief Obtains feedback gain matrix, if the underlying MPC algorithm computes it
-   * @param[in] time: Query time
+   * @param[in] t: Query time
    * @return State-feedback matrix
    */
-  input_state_matrix_t getLinearFeedbackGain(scalar_t time);
+  input_state_matrix_t getLinearFeedbackGain(scalar_t t);
 
   /**
    * @brief Access to system dynamics flow map
@@ -123,31 +125,48 @@ class PythonInterface {
   state_input_matrix_t computeFlowMapDerivativeInput();
 
   /**
-   * @brief Access running cost
+   * @brief Access intermediate cost
    * @param[in] t time
    * @param[in] x state
    * @param[in] u input
    * @return Running cost at provided t-x-u
    */
-  double getRunningCost(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
+  double getIntermediateCost(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
 
   /**
-   * @brief Access to state derivative of running cost (L)
+   * @brief Access to state derivative of intermediate cost (L)
    * @param[in] t time
    * @param[in] x state
    * @param[in] u input
    * @return dL/dx at provided t-x-u
    */
-  state_vector_t getRunningCostDerivativeState(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
+  state_vector_t getIntermediateCostDerivativeState(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
 
   /**
-   * @brief Access to input derivative of running cost (L)
+   * @brief Access to input derivative of intermediate cost (L)
    * @param[in] t time
    * @param[in] x state
    * @param[in] u input
    * @return dL/du at provided t-x-u
    */
-  input_vector_t getRunningCostDerivativeInput(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
+  input_vector_t getIntermediateCostDerivativeInput(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
+
+  /**
+   * @brief Access to second input derivative of intermediate cost (L)
+   * @param[in] t time
+   * @param[in] x state
+   * @param[in] u input
+   * @return d^2L/du^2 at provided t-x-u
+   */
+  input_matrix_t getIntermediateCostSecondDerivativeInput(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
+
+  /**
+   * @brief Access the solver's internal value function
+   * @param t query time
+   * @param x query state
+   * @return value function at given t-x
+   */
+  double getValueFunction(double t, Eigen::Ref<const state_vector_t> x);
 
   /**
    * @brief Access the solver's internal state derivative of the value function
@@ -186,6 +205,18 @@ class PythonInterface {
    */
   dynamic_vector_t getStateInputConstraintLagrangian(double t, Eigen::Ref<const state_vector_t> x);
 
+  /**
+   * @brief Visualize the time-state-input trajectory
+   * @param[in] t Array of times
+   * @param[in] x Array of states
+   * @param[in] u (Optional) Array of inputs
+   * @param[in] speed (Optional) Factor compared to real time playback (>1 ==> slow motion)
+   */
+  virtual void visualizeTrajectory(const scalar_array_t& t, const state_vector_array_t& x,
+                                   const input_vector_array_t& u = input_vector_array_t(), double speed = 1.0) {
+    throw std::runtime_error("PythonInterface::visualizeTrajectory must be implemented by robot-specific derived class.");
+  }
+
  protected:
   /**
    * @brief initRobotInterface Must be implemented by a derived class to instantiate
@@ -211,6 +242,8 @@ class PythonInterface {
 
   std::unique_ptr<cost_t> cost_;
   cost_desired_trajectories_t targetTrajectories_;
+
+  std::unique_ptr<PenaltyBase<STATE_DIM, INPUT_DIM>> penalty_;
 
   // multithreading helper variables
   bool run_mpc_async_;

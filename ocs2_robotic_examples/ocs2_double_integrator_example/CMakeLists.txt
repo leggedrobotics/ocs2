@@ -22,13 +22,12 @@ find_package(Boost REQUIRED COMPONENTS
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 # Pybind11
-option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" ON)
+option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)
 if(USE_PYBIND_PYTHON_3)
   set(PYTHON_EXECUTABLE /usr/bin/python3)
   set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
 endif(USE_PYBIND_PYTHON_3)
 find_package(pybind11 QUIET)
-message(WARNING "PYTHON_INCLUDE_DIRS ${PYTHON_INCLUDE_DIRS}")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -Wfatal-errors -Wl,--no-as-needed")
 set(CMAKE_CXX_STANDARD 14)
@@ -242,3 +241,9 @@ target_link_libraries(ocs2_double_integrator_pybinding_test
   DoubleIntegratorPyBindings_Cpp
   ${catkin_LIBRARIES}
   )
+
+if(${pybind11_FOUND})
+  if (CATKIN_ENABLE_TESTING)
+    catkin_add_nosetests(test/DoubleIntegratorPyBindingTest.py)
+  endif(CATKIN_ENABLE_TESTING)
+endif(${pybind11_FOUND})

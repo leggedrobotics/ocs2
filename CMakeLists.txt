@@ -100,6 +100,22 @@ target_link_libraries(anymal_switched_model_test
         ${catkin_LIBRARIES}
         )
 
+catkin_add_gtest(test_eeVelocityConstraint
+        test/constraint/testEEVelocityConstraint.cpp
+        )
+target_link_libraries(test_eeVelocityConstraint
+        ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        )
+
+catkin_add_gtest(test_eePositionConstraint
+        test/constraint/testEEPositionConstraint.cpp
+        )
+target_link_libraries(test_eePositionConstraint
+        ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        )
+
 #catkin_add_gtest(anymal_ad_switched_model_test
 #        test/TestAnymalAdSwitchedModel.cpp
 #        )

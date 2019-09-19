@@ -136,6 +136,7 @@ private:
 }  // end of tpl namespace
 
 using AnymalCom = tpl::AnymalCom<double>;
+using AnymalComAd = tpl::AnymalCom<ocs2::CppAdInterface<double>::ad_scalar_t>;
 
 }  // end of anymal namespace
 

@@ -17,7 +17,12 @@ find_package(Boost REQUIRED COMPONENTS
   filesystem
 )
 
+# Raisim
 find_package(raisim CONFIG QUIET)
+if(raisim_FOUND)
+  find_package(raisimOgre REQUIRED)
+endif(raisim_FOUND)
+
 
 # Pybind11
 option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)
@@ -165,6 +170,7 @@ if(raisim_FOUND)
     ocs2_anymal_interface
     ${catkin_LIBRARIES}
     raisim::raisim
+    raisim::raisimOgre
   )
 endif(raisim_FOUND)
 
@@ -249,6 +255,18 @@ install(DIRECTORY config launch
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+if(raisim_FOUND)
+  catkin_add_gtest(testAnymalRaisimConversions
+    test/testAnymalRaisimConversions.cpp
+    src/AnymalRaisimConversions.cpp
+  )
+  target_link_libraries(testAnymalRaisimConversions
+    ocs2_anymal_interface
+    ${catkin_LIBRARIES}
+    raisim::raisim
+  )
+endif(raisim_FOUND)
 
 if(${pybind11_FOUND})
   catkin_add_gtest(anymal_pybindings_test

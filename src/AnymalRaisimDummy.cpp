@@ -25,6 +25,9 @@ int main(int argc, char* argv[]) {
 
   anymal::AnymalRaisimConversions conversions(anymal_mrt, anymal_interface);
   {
+    std::vector<std::string> orderedJointNames{"LF_HAA", "LF_HFE", "LF_KFE", "RF_HAA", "RF_HFE", "RF_KFE",
+                                               "LH_HAA", "LH_HFE", "LH_KFE", "RH_HAA", "RH_HFE", "RH_KFE"};
+    //    std::vector<std::string> orderedJointNames{};
     using sim_rollout_t = ocs2::RaisimRollout<STATE_DIM, INPUT_DIM>;
     std::unique_ptr<sim_rollout_t> simRollout(new sim_rollout_t(
         ros::package::getPath("ocs2_anymal_interface") + "/urdf/anymal.urdf",
@@ -34,6 +37,7 @@ int main(int argc, char* argv[]) {
                   std::placeholders::_2),
         std::bind(&anymal::AnymalRaisimConversions::inputToRaisimGeneralizedForce, &conversions, std::placeholders::_1,
                   std::placeholders::_2, std::placeholders::_3),
+        orderedJointNames,
         std::bind(&anymal::AnymalRaisimConversions::extractModelData, &conversions, std::placeholders::_1, std::placeholders::_2)));
 
     anymal_mrt->initRollout(std::move(simRollout));

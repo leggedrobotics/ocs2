@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <ocs2_anymal_switched_model/constraint/AnymalComKinoConstraint.h>
+#include <ocs2_anymal_switched_model/constraint/AnymalComKinoConstraintAd.h>
 #include <ocs2_anymal_switched_model/cost/AnymalCost.h>
 #include <ocs2_anymal_switched_model/dynamics/AnymalSystemDynamicsAd.h>
 #include <ocs2_anymal_switched_model/initialization/AnymalComKinoOperatingPoints.h>
@@ -26,7 +26,7 @@ class OCS2AnymalInterface final : public switched_model::OCS2QuadrupedInterface<
 
   using system_dynamics_t = AnymalSystemDynamicsAd;
   using system_dynamics_derivative_t = AnymalSystemDynamicsAd;
-  using constraint_t = AnymalComKinoConstraint;
+  using constraint_t = AnymalComKinoConstraintAd;
   using cost_function_t = AnymalCost;
   using operating_point_t = AnymalComKinoOperatingPoints;
 

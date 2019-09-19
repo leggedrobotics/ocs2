@@ -1,8 +1,11 @@
 #pragma once
 
 #include <ocs2_oc/rollout/RolloutBase.h>
-#include <raisim/OgreVis.hpp>
 #include <raisim/World.hpp>
+
+#ifdef USE_RAISIM_VISUALIZER
+#include <raisim/OgreVis.hpp>
+#endif
 
 namespace ocs2 {
 
@@ -60,15 +63,8 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
         raisimGenCoordGenVelToState_(std::move(raisimGenCoordGenVelToState)),
         inputToRaisimGeneralizedForce_(std::move(inputToRaisimGeneralizedForce)),
         dataExtractionCallback_(dataExtractionCallback) {
+    world_.setTimeStep(this->settings().minTimeStep_);
     system_ = world_.addArticulatedSystem(pathToUrdf, "", orderedJointNames);
-
-    auto vis = raisim::OgreVis::get();
-    vis->setWorld(&world_);
-    vis->setWindowSize(1280, 720);
-    // more setup options here: https://github.com/leggedrobotics/raisimGym/blob/master/raisim_gym/env/env/ANYmal/Environment.hpp
-    vis->initApp();
-
-    systemVisual_ = vis->createGraphicalObject(system_, "system");
 
     std::cout << "\nInstatiated Raisim System with DoF = " << system_->getDOF() << std::endl;
     const auto bodyNames = system_->getBodyNames();
@@ -79,24 +75,27 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
     ground_ = world_.addGround();
     //    world_.setERP(0, 0);
+
+#ifdef USE_RAISIM_VISUALIZER
+    auto vis = raisim::OgreVis::get();
+    vis->setWorld(&world_);
+    vis->setWindowSize(1280, 720);
+    // more setup options here: https://github.com/leggedrobotics/raisimGym/blob/master/raisim_gym/env/env/ANYmal/Environment.hpp
+    vis->initApp();
+
+    systemVisual_ = vis->createGraphicalObject(system_, "system");
     groundVisual_ = vis->createGraphicalObject(ground_, 20, "floor", "checkerboard_green");
+
     vis->setDesiredFPS(30);
     vis->select(groundVisual_->at(0), false);
     vis->getCameraMan()->setYawPitchDist(Ogre::Radian(M_PI_4), Ogre::Radian(-1.3), 3, true);
-
-    world_.setTimeStep(this->settings().minTimeStep_);
-    //    raisim::Vec<3> gravity;
-    //    gravity.setZero();
-    //    gravity[2] = -9.81;
-    //    world_.setGravity(gravity);
+#endif
   }
 
   state_vector_t run(size_t partitionIndex, scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
                      controller_t* controller, logic_rules_machine_t& logicRulesMachine, scalar_array_t& timeTrajectory,
                      size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
                      input_vector_array_t& inputTrajectory) override {
-    //    finalTime = 2.0;  // debugging
-
     // Prepare arrays
     const auto numSteps = static_cast<int>(std::round((finalTime - initTime) / this->settings().minTimeStep_));
     timeTrajectory.clear();
@@ -109,13 +108,6 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
     // Set inital state to simulation
     Eigen::VectorXd q_init, dq_init;
     std::tie(q_init, dq_init) = stateToRaisimGenCoordGenVel_(initState, controller->computeInput(initTime, initState));
-
-    //    q_init(2) += 1.0;
-    //    q_init(3) = cos(M_PI / 6.0 / 2.0);
-    //    q_init(6) = sin(M_PI / 6.0 / 2.0);
-
-    //    std::cout << "q_init " << q_init.transpose() << std::endl;
-    //    std::cout << "dq_init " << dq_init.transpose() << std::endl;
     assert(system_->getGeneralizedCoordinateDim() == q_init.rows());
 
     static bool setOnce = false;
@@ -151,11 +143,13 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
       system_->setGeneralizedForce(tau);
 
       world_.integrate2();
+
+#ifdef USE_RAISIM_VISUALIZER
+      auto vis = raisim::OgreVis::get();
+      vis->renderOneFrame();
+#endif
     }
     //    assert(initState.isApprox(stateTrajectory.front()));
-
-    //    auto vis = raisim::OgreVis::get();
-    //    vis->renderOneFrame();
 
     // also push back final state and input
     timeTrajectory.push_back(initTime + numSteps * this->settings().minTimeStep_);
@@ -173,8 +167,6 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
     input_vector_t input = controller->computeInput(timeTrajectory.back(), stateTrajectory.back());
     inputTrajectory.push_back(input);
 
-    //    std::cout << "raisim ended at state " << stateTrajectory.back().transpose() << std::endl;
-
     return stateTrajectory.back();
   }
 
@@ -183,8 +175,11 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
   raisim::World world_;
   raisim::Ground* ground_;
   raisim::ArticulatedSystem* system_;
+
+#ifdef USE_RAISIM_VISUALIZER
   std::vector<raisim::GraphicObject>* systemVisual_;
   std::vector<raisim::GraphicObject>* groundVisual_;
+#endif
 
   // Robot-specific conversions
   state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel_;

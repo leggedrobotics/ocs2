@@ -9,8 +9,10 @@
 #include <iostream>
 #include <ros/package.h>
 #include <ocs2_quadruped_interface/test/MRT_ROS_Dummy_Quadruped.h>
+#include "ocs2_quadruped_interface/MRT_ROS_Quadruped.h"
 #include <ocs2_robotic_tools/command/TargetPoseTransformation.h>
 #include "ocs2_anymal_interface/OCS2AnymalInterface.h"
+#include "ocs2_anymal_interface/MRT_ROS_Anymal.h"
 
 using namespace anymal;
 using namespace switched_model;
@@ -18,8 +20,8 @@ using namespace switched_model;
 int main( int argc, char* argv[] )
 {
 
-	typedef OCS2AnymalInterface ocs2_robot_interface_t;
-
+	using ocs2_robot_interface_t = OCS2AnymalInterface;
+	using mrt_t = MRT_ROS_Anymal ;
 	const std::string robotName = "anymal";
 
 	/******************************************************************************************************/
@@ -29,9 +31,11 @@ int main( int argc, char* argv[] )
 	std::cerr << "Loading task file: " << taskFile << std::endl;
 
 	ocs2_robot_interface_t::Ptr optimizationInterfacePtr( new ocs2_robot_interface_t(taskFolder) );
+	mrt_t mrt(optimizationInterfacePtr, robotName);
 
 	MRT_ROS_Dummy_Quadruped<12> dummySimulator(
 			optimizationInterfacePtr,
+			mrt,
 			optimizationInterfacePtr->mpcSettings().mrtDesiredFrequency_,
 			robotName,
 			optimizationInterfacePtr->mpcSettings().mpcDesiredFrequency_);

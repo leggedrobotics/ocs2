@@ -46,6 +46,8 @@ model_settings
   torqueMixingFactor            0.0
 
   gaitOptimization              0
+
+  recompileLibraries            1
 }
 
 initialModeSequenceTemplate

@@ -313,7 +313,11 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::evaluatePolicy(
     computeFeetState(stateRef_ahead, inputRef_ahead, o_feetPositionRef_ahead, o_feetVelocityRef_ahead, o_contactForces_ahead);
 
     for (size_t j = 0; j < 4; j++) {
-      o_feetAccelerationRef[j] = (o_feetVelocityRef_ahead[j] - o_feetVelocityRef[j]) / dt;
+      if (subsystem_ahead == subsystem) {
+        o_feetAccelerationRef[j] = (o_feetVelocityRef_ahead[j] - o_feetVelocityRef[j]) / dt;
+      } else { // When subsystem changes jumps occur in the velocity reference.
+        o_feetAccelerationRef[j].setZero();
+      }
     }
 
   } else {

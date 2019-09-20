@@ -51,14 +51,14 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
   using Base = RolloutBase<STATE_DIM, INPUT_DIM>;
 
-  using controller_t = typename Base::controller_t;
-  using size_array_t = typename Base::size_array_t;
-  using scalar_t = typename Base::scalar_t;
-  using scalar_array_t = typename Base::scalar_array_t;
-  using state_vector_t = typename Base::state_vector_t;
-  using state_vector_array_t = typename Base::state_vector_array_t;
-  using input_vector_t = typename Base::input_vector_t;
-  using input_vector_array_t = typename Base::input_vector_array_t;
+  using typename Base::controller_t;
+  using typename Base::input_vector_array_t;
+  using typename Base::input_vector_t;
+  using typename Base::scalar_array_t;
+  using typename Base::scalar_t;
+  using typename Base::size_array_t;
+  using typename Base::state_vector_array_t;
+  using typename Base::state_vector_t;
 
   using logic_rules_machine_t = HybridLogicRulesMachine;
 

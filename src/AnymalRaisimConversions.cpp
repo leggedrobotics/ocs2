@@ -9,9 +9,9 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> AnymalRaisimConversions::stateToRais
   anymalInterface_->computeRbdModelState(state, input, ocs2RbdState);
 
   // quaternion between world and base orientation
-  const Eigen::Quaterniond q_world_base = Eigen::AngleAxisd(ocs2RbdState(2), Eigen::Vector3d::UnitZ()) *
+  const Eigen::Quaterniond q_world_base = Eigen::AngleAxisd(ocs2RbdState(0), Eigen::Vector3d::UnitX()) *
                                           Eigen::AngleAxisd(ocs2RbdState(1), Eigen::Vector3d::UnitY()) *
-                                          Eigen::AngleAxisd(ocs2RbdState(0), Eigen::Vector3d::UnitX());
+                                          Eigen::AngleAxisd(ocs2RbdState(2), Eigen::Vector3d::UnitZ());
 
   Eigen::VectorXd q(3 + 4 + 12);
   q << ocs2RbdState.segment<3>(3), q_world_base.w(), q_world_base.x(), q_world_base.y(), q_world_base.z(), ocs2RbdState.segment<12>(6);
@@ -25,11 +25,11 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> AnymalRaisimConversions::stateToRais
 AnymalRaisimConversions::rbd_state_vector_t AnymalRaisimConversions::raisimGenCoordGenVelToRbdState(const Eigen::VectorXd& q,
                                                                                                     const Eigen::VectorXd& dq) {
   Eigen::Quaterniond q_world_base(q(3), q(4), q(5), q(6));  // quaternion coefficients w, x, y z
-  Eigen::Vector3d eulerAngles = q_world_base.toRotationMatrix().eulerAngles(2, 1, 0);
+  Eigen::Vector3d eulerAngles = q_world_base.toRotationMatrix().eulerAngles(0, 1, 2);
   makeEulerAnglesUnique(eulerAngles);
 
   rbd_state_vector_t ocs2RbdState;
-  ocs2RbdState << eulerAngles(2), eulerAngles(1), eulerAngles(0), q.head<3>(), q.tail<12>(), q_world_base.inverse() * dq.segment<3>(3),
+  ocs2RbdState << eulerAngles, q.head<3>(), q.tail<12>(), q_world_base.inverse() * dq.segment<3>(3),
       q_world_base.inverse() * dq.segment<3>(0), dq.tail<12>();
 
   return ocs2RbdState;

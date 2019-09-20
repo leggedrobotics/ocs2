@@ -86,14 +86,16 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishXppV
   // construct the message
   xpp_msgs::RobotStateCartesian point;
 
-  Eigen::Quaternion<scalar_t> qx(cos(basePose(0) / 2), sin(basePose(0) / 2), 0.0, 0.0);
-  Eigen::Quaternion<scalar_t> qy(cos(basePose(1) / 2), 0.0, sin(basePose(1) / 2), 0.0);
-  Eigen::Quaternion<scalar_t> qz(cos(basePose(2) / 2), 0.0, 0.0, sin(basePose(2) / 2));
-  Eigen::Quaternion<scalar_t> qxyz = qz * qy * qx;
-  point.base.pose.orientation.x = qxyz.x();
-  point.base.pose.orientation.y = qxyz.y();
-  point.base.pose.orientation.z = qxyz.z();
-  point.base.pose.orientation.w = qxyz.w();
+  const auto roll = basePose(0);
+  const auto pitch = basePose(1);
+  const auto yaw = basePose(2);
+  const Eigen::Quaternion<scalar_t> q_world_base = Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX())*
+      Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY()) *
+      Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ());
+  point.base.pose.orientation.x = q_world_base.x();
+  point.base.pose.orientation.y = q_world_base.y();
+  point.base.pose.orientation.z = q_world_base.z();
+  point.base.pose.orientation.w = q_world_base.w();
   point.base.pose.position.x = basePose(3);
   point.base.pose.position.y = basePose(4);
   point.base.pose.position.z = basePose(5);

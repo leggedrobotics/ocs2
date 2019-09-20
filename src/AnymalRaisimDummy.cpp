@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
     anymal_mrt->initRollout(std::move(simRollout));
   }
 
-  switched_model::MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE> mrt_dummy_loop(anymal_interface, anymal_mrt,
+  switched_model::MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE> mrt_dummy_loop(anymal_interface, *anymal_mrt,
                                                                            anymal_interface->mpcSettings().mrtDesiredFrequency_, "anymal",
                                                                            anymal_interface->mpcSettings().mpcDesiredFrequency_);
 

@@ -20,6 +20,7 @@ class AnymalPyBindings final : public ocs2::PythonInterface<OCS2AnymalInterface:
 
  protected:
   std::unique_ptr<visualizer_t> visualizer_;
+  std::string taskFileFolder_;
 };
 
 }  // namespace anymal

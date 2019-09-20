@@ -162,7 +162,7 @@ void iit::Ballbot::dyn::tpl::ForwardDynamics<TRAIT>::fd(
     
     
     // ---------------------- THIRD PASS ---------------------- //
-    dummy_ball1_a = (motionTransforms-> fr_dummy_ball1_X_fr_base0).col(iit::rbd::LZ) * Scalar(iit::rbd::g);
+    dummy_ball1_a = (motionTransforms-> fr_dummy_ball1_X_fr_world).col(iit::rbd::LZ) * Scalar(iit::rbd::g);
     qdd(JBALL_X) = (dummy_ball1_u - dummy_ball1_U.dot(dummy_ball1_a)) / dummy_ball1_D;
     dummy_ball1_a(iit::rbd::LZ) += qdd(JBALL_X);
     

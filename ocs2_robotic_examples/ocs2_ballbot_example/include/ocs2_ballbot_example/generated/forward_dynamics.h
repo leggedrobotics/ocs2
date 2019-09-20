@@ -143,7 +143,7 @@ private:
 
 template <typename TRAIT>
 inline void ForwardDynamics<TRAIT>::setJointStatus(const JointState& q) const {
-    (motionTransforms-> fr_dummy_ball1_X_fr_base0)(q);
+    (motionTransforms-> fr_dummy_ball1_X_fr_world)(q);
     (motionTransforms-> fr_ball_X_fr_dummy_ball1)(q);
     (motionTransforms-> fr_dummy_base1_X_fr_ball)(q);
     (motionTransforms-> fr_dummy_base2_X_fr_dummy_base1)(q);

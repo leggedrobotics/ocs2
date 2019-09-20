@@ -54,12 +54,12 @@ iit::Ballbot::dyn::tpl::InertiaProperties<TRAIT>::InertiaProperties()
         Scalar(18.66),
         com_base,
         rbd::Utils::buildInertiaTensor(
-                Scalar(0.1671),
-                Scalar(2.5178),
-                Scalar(2.5141),
-                Scalar(-0.012),
-                Scalar(-0.0109),
-                Scalar(2.0E-4)) );
+                Scalar(0.16707414),
+                Scalar(2.5177875),
+                Scalar(2.5141227),
+                Scalar(-0.012044657),
+                Scalar(-0.010949616),
+                Scalar(1.84734E-4)) );
 
 }
 

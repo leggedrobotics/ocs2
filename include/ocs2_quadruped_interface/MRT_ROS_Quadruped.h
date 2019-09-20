@@ -82,6 +82,7 @@ class MRT_ROS_Quadruped : public ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM> {
   virtual ~MRT_ROS_Quadruped() = default;
 
   using BASE::evaluatePolicy;
+  using BASE::rolloutPolicy;
 
   /**
    * Computes the optimized plan for the given time based on the latest received optimized trajectory message.

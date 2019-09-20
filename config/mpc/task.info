@@ -136,7 +136,7 @@ slq
   {
     AbsTolODE                     1e-5  ;1e-6
     RelTolODE                     1e-3  ;1e-4
-    minTimeStep                   1e-3
+    minTimeStep                   1e-2
     maxNumStepsPerSecond          50000
     checkNumericalStability       0
   }
@@ -152,7 +152,7 @@ mpc
   initMinLearningRate             1e-2
   initMaxLearningRate             1.0
 
-  debugPrint                      1
+  debugPrint                      0
   coldStart                       0
   recedingHorizon                 1	; use receding horizon MPC
 

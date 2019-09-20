@@ -62,8 +62,8 @@ link base {
     id = 5
     inertia_properties {
         mass = 18.66
-        CoM = (-0.29, 0.004, 0.0)
-        Ix=0.2102  Iy=2.04  Iz=2.04 Ixy=-0.0216  Ixz=0.0  Iyz=0.0
+        CoM = (-0.1956, 0.003, 0.003)
+        Ix=0.1670  Iy=2.5178  Iz=2.5141 Ixy=-0.0109  Ixz=-0.0109  Iyz=0.0002
     }
     children {}
     frames {

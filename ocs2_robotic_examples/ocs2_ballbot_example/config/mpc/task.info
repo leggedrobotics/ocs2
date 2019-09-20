@@ -100,7 +100,7 @@ mpc
     recedingHorizon                1     ; use receding horizon MPC
     useParallelRiccatiSolver       1     ; use disjoint riccati solver in MP case and recedingHorizon fashion
     solutionTimeWindow             0.2   ; [s]
-    mpcDesiredFrequency            100   ; [Hz]
+    mpcDesiredFrequency            -1   ; [Hz]
     mrtDesiredFrequency            400   ; [Hz]
     debugPrint                     0
 }

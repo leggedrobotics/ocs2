@@ -262,6 +262,9 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::input_vector_t PythonInterface<S
   return dLdu + dLdu_penalty;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename PythonInterface<STATE_DIM, INPUT_DIM>::input_matrix_t
 PythonInterface<STATE_DIM, INPUT_DIM>::getIntermediateCostSecondDerivativeInput(double t, Eigen::Ref<const state_vector_t> x,

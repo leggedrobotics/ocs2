@@ -47,13 +47,13 @@ class MrtRosDummyCartpole : public MRT_ROS_Dummy_Loop<cartpole::STATE_DIM_, cart
   /**
    * Constructor.
    *
-   * @param [in] mrtPtr: A pointer to MRT.
+   * @param [in] mrt: The underlying MRT class to be used.
    * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz. This should always set to a positive number.
    * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
    * will be simulated to run by this frequency. Note that this might not be the MPC's realtime frequency.
    */
-  MrtRosDummyCartpole(const mrt_ptr_t& mrtPtr, const scalar_t& mrtDesiredFrequency, const scalar_t& mpcDesiredFrequency)
-      : BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency) {}
+  MrtRosDummyCartpole(mrt_t& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency)
+      : BASE(mrt, mrtDesiredFrequency, mpcDesiredFrequency) {}
 
   /**
    * Destructor.

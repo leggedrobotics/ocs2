@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef TARGETTRAJECTORIES_JOYSTICK_INTERFACE_OCS2_H_
-#define TARGETTRAJECTORIES_JOYSTICK_INTERFACE_OCS2_H_
+#pragma once
 
 #include <vector>
 #include <csignal>
@@ -104,5 +103,3 @@ protected:
 } // namespace ocs2
 
 #include "implementation/TargetTrajectories_Joystick_Interface.h"
-
-#endif /* TARGETTRAJECTORIES_JOYSTCK_INTERFACE_OCS2_H_ */

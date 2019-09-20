@@ -27,8 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-# include "ocs2_quadrotor_example/QuadrotorInterface.h"
-# include <ros/package.h>
+#include "ocs2_quadrotor_example/QuadrotorInterface.h"
+#include <ros/package.h>
 
 namespace ocs2 {
 namespace quadrotor {
@@ -36,104 +36,91 @@ namespace quadrotor {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-QuadrotorInterface::QuadrotorInterface(const std::string& taskFileFolderName)
-{
-	taskFile_ = ros::package::getPath("ocs2_quadrotor_example") + "/config/" + taskFileFolderName + "/task.info";
-	std::cerr << "Loading task file: " << taskFile_ << std::endl;
+QuadrotorInterface::QuadrotorInterface(const std::string& taskFileFolderName) {
+  taskFile_ = ros::package::getPath("ocs2_quadrotor_example") + "/config/" + taskFileFolderName + "/task.info";
+  std::cerr << "Loading task file: " << taskFile_ << std::endl;
 
-	libraryFolder_ = ros::package::getPath("ocs2_quadrotor_example") + "/auto_generated";
-	std::cerr << "Generated library path: " << libraryFolder_ << std::endl;
+  libraryFolder_ = ros::package::getPath("ocs2_quadrotor_example") + "/auto_generated";
+  std::cerr << "Generated library path: " << libraryFolder_ << std::endl;
 
-	// load setting from loading file
-	loadSettings(taskFile_);
+  // load setting from loading file
+  loadSettings(taskFile_);
 
-	// MPC
-	setupOptimizer(taskFile_);
+  // MPC
+  setupOptimizer(taskFile_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void QuadrotorInterface::loadSettings(const std::string& taskFile) {
+  /*
+   * Default initial condition
+   */
+  loadInitialState(taskFile, initialState_);
 
-	/*
-	 * Default initial condition
-	 */
-	loadInitialState(taskFile, initialState_);
+  /*
+   * Solver settings
+   */
+  ilqrSettings_.loadSettings(taskFile);
+  mpcSettings_.loadSettings(taskFile);
 
-	/*
-	 * Solver settings
-	 */
-	ilqrSettings_.loadSettings(taskFile);
-	mpcSettings_.loadSettings(taskFile);
+  /*
+   * quadrotor parameters
+   */
+  QuadrotorParameters<dim_t::scalar_t> quadrotorParameters;
+  quadrotorParameters.loadSettings(taskFile);
 
-	/*
-	 * quadrotor parameters
-	 */
-	QuadrotorParameters<dim_t::scalar_t> quadrotorParameters;
-	quadrotorParameters.loadSettings(taskFile);
+  /*
+   * Dynamics and derivatives
+   */
+  quadrotorSystemDynamicsPtr_.reset(new QuadrotorSystemDynamics(quadrotorParameters));
+  quadrotorDynamicsDerivativesPtr_.reset(new QuadrotorDynamicsDerivatives(quadrotorParameters));
 
-	/*
-	 * Dynamics and derivatives
-	 */
-	quadrotorSystemDynamicsPtr_.reset(new QuadrotorSystemDynamics(quadrotorParameters));
-	quadrotorDynamicsDerivativesPtr_.reset(new QuadrotorDynamicsDerivatives(quadrotorParameters));
+  /*
+   * Cost function
+   */
+  loadData::loadEigenMatrix(taskFile, "Q", Q_);
+  loadData::loadEigenMatrix(taskFile, "R", R_);
+  loadData::loadEigenMatrix(taskFile, "Q_final", QFinal_);
+  loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
+  xNominal_ = dim_t::state_vector_t::Zero();
+  uNominal_ = dim_t::input_vector_t::Zero();
 
-	/*
-	 * Cost function
-	 */
-	loadData::loadEigenMatrix(taskFile, "Q", Q_);
-	loadData::loadEigenMatrix(taskFile, "R", R_);
-	loadData::loadEigenMatrix(taskFile, "Q_final", QFinal_);
-	loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
-	xNominal_ = dim_t::state_vector_t::Zero();
-	uNominal_ = dim_t::input_vector_t::Zero();
+  std::cerr << "Q:  \n" << Q_ << std::endl;
+  std::cerr << "R:  \n" << R_ << std::endl;
+  std::cerr << "Q_final:\n" << QFinal_ << std::endl;
+  std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
+  std::cerr << "x_final:  " << xFinal_.transpose() << std::endl;
 
-	std::cerr << "Q:  \n" << Q_ << std::endl;
-	std::cerr << "R:  \n" << R_ << std::endl;
-	std::cerr << "Q_final:\n" << QFinal_ << std::endl;
-	std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
-	std::cerr << "x_final:  " << xFinal_.transpose() << std::endl;
+  quadrotorCostPtr_.reset(new QuadrotorCost(Q_, R_, xNominal_, uNominal_, QFinal_, xFinal_));
 
-	quadrotorCostPtr_.reset(new QuadrotorCost(Q_, R_, xNominal_, uNominal_, QFinal_, xFinal_));
+  /*
+   * Constraints
+   */
+  quadrotorConstraintPtr_.reset(new QuadrotorConstraint);
 
-	/*
-	 * Constraints
-	 */
-	quadrotorConstraintPtr_.reset(new QuadrotorConstraint);
+  /*
+   * Initialization
+   */
+  initialInput_ = dim_t::input_vector_t::Zero();
+  initialInput_(0) = quadrotorParameters.quadrotorMass_ * quadrotorParameters.gravity_;
+  quadrotorOperatingPointPtr_.reset(new QuadrotorOperatingPoint(initialState_, initialInput_));
 
-	/*
-	 * Initialization
-	 */
-	initialInput_ = dim_t::input_vector_t::Zero();
-	initialInput_(0) = quadrotorParameters.quadrotorMass_*quadrotorParameters.gravity_;
-	quadrotorOperatingPointPtr_.reset( new QuadrotorOperatingPoint(
-			initialState_, initialInput_) );
-
-	/*
-	 * Time partitioning which defines the time horizon and the number of data partitioning
-	 */
-	scalar_t timeHorizon;
-	definePartitioningTimes(taskFile, timeHorizon,
-			numPartitions_, partitioningTimes_, true);
+  /*
+   * Time partitioning which defines the time horizon and the number of data partitioning
+   */
+  scalar_t timeHorizon;
+  definePartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void QuadrotorInterface::setupOptimizer(const std::string& taskFile) {
-
-	mpcPtr_.reset(new mpc_t(
-			quadrotorSystemDynamicsPtr_.get(),
-			quadrotorDynamicsDerivativesPtr_.get(),
-			quadrotorConstraintPtr_.get(),
-			quadrotorCostPtr_.get(),
-			quadrotorOperatingPointPtr_.get(),
-			partitioningTimes_,
-			ilqrSettings_,
-			mpcSettings_));
+  mpcPtr_.reset(new mpc_t(quadrotorSystemDynamicsPtr_.get(), quadrotorDynamicsDerivativesPtr_.get(), quadrotorConstraintPtr_.get(),
+                          quadrotorCostPtr_.get(), quadrotorOperatingPointPtr_.get(), partitioningTimes_, ilqrSettings_, mpcSettings_));
 }
 
-} // namespace quadrotor
-} // namespace ocs2
-
+}  // namespace quadrotor
+}  // namespace ocs2

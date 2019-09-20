@@ -26,71 +26,71 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
-
 #pragma once
 
+#include <Eigen/Dense>
+#include <Eigen/StdVector>
+
 #include <algorithm>
-#include <array>
-#include <iterator>
+#include <iostream>
 #include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
-#include <ocs2_frank_wolfe/FrankWolfeDescentDirection.h>
-#include <ocs2_frank_wolfe/NLP_Constraints.h>
-
-#include "ocs2_ocs2/GDDP.h"
+#include "ocs2_core/Dimensions.h"
+#include "ocs2_core/OCS2NumericTraits.h"
+#include "ocs2_core/control/LinearController.h"
 
 namespace ocs2 {
 
+/**
+ * The base class for all controllers adjustment.
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
+ * @tparam INPUT_DIM: Dimension of the control input space.
+ */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class FrankWolfeGDDP : public GDDP<STATE_DIM, INPUT_DIM> {
+class ControllerAdjustmentBase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef GDDP<STATE_DIM, INPUT_DIM> BASE;
+  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
+  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+  using state_matrix_t = typename DIMENSIONS::state_matrix_t;
+  using input_vector_t = typename DIMENSIONS::input_vector_t;
+  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+  using input_matrix_t = typename DIMENSIONS::input_matrix_t;
+  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+  using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
 
-  using typename BASE::dynamic_matrix_t;
-  using typename BASE::dynamic_vector_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::scalar_t;
-  using typename BASE::slq_data_collector_t;
+  using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
+  using linear_controller_array_t = typename linear_controller_t::array_t;
+
+  using index_t = std::pair<int, int>;  // (partition, index)
 
   /**
    * Default constructor.
    */
-  FrankWolfeGDDP() : FrankWolfeGDDP(GDDP_Settings()) {}
-
-  /**
-   * Constructor.
-   *
-   * @param [in] settings: Structure containing the settings for the SLQ algorithm.
-   */
-  explicit FrankWolfeGDDP(const GDDP_Settings& gddpSettings);
+  ControllerAdjustmentBase() = default;
 
   /**
    * Default destructor.
    */
-  ~FrankWolfeGDDP() = default;
+  virtual ~ControllerAdjustmentBase() = default;
 
   /**
-   * Runs the GDDP to compute the gradient of the cost function w.r.t. the event times while respecting
-   * the provided constraints.
+   * Adjust the controller based on the last changes in the logic rules.
    *
-   * @param [in] eventTimes: The event times vector.
-   * @param [in] dcPtr: A constant pointer to SLQ data collector which already collected the SLQ variables.
-   * @param [in] maxGradientInverse: descent directions element-wise maximum inverse. Note that if there is no
-   * limit for a direction set associated element to zero.
-   * @param [in] eventTimeConstraintPtr: A pointer to the NLP constraints for event times.
+   * @param [in] eventTimes: The new event times.
+   * @param [in] controllerEventTimes: The control policy stock's event times.
+   * @param [out] controllerStock: The controller stock which will be modified.
    */
-  void run(scalar_array_t eventTimes, const slq_data_collector_t* dcPtr, const dynamic_vector_t& maxGradientInverse,
-           NLP_Constraints* eventTimeConstraintPtr);
-
- protected:
-  /***********
-   * Variables
-   **********/
-  std::unique_ptr<FrankWolfeDescentDirection> frankWolfeDescentDirectionPtr_;
+  virtual void adjustController(const scalar_array_t& eventTimes, const scalar_array_t& controllerEventTimes,
+                                linear_controller_array_t& controllersStock) = 0;
 };
 
 }  // namespace ocs2
-
-#include "implementation/FrankWolfeGDDP.h"

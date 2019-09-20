@@ -27,10 +27,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef TARGETTRAJECTORIES_KEYBOARD_INTERFACE_OCS2_H_
-#define TARGETTRAJECTORIES_KEYBOARD_INTERFACE_OCS2_H_
+#pragma once
 
 #include <Eigen/Core>
+#include <Eigen/StdVector>
+
 #include <csignal>
 #include <iomanip>
 #include <iostream>
@@ -134,5 +135,3 @@ class TargetTrajectories_Keyboard_Interface : public ocs2::TargetTrajectories_RO
 }  // namespace ocs2
 
 #include "implementation/TargetTrajectories_Keyboard_Interface.h"
-
-#endif /* TARGETTRAJECTORIES_KEYBOARD_INTERFACE_OCS2_H_ */

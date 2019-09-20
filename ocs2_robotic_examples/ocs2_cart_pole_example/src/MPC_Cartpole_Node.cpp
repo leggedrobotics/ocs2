@@ -27,11 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-// OCS2
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
-#include <ocs2_mpc/MPC_SLQ.h>
 
-// CartPole
 #include "ocs2_cart_pole_example/CartPoleInterface.h"
 
 int main(int argc, char** argv) {
@@ -47,6 +44,5 @@ int main(int argc, char** argv) {
   ocs2::MPC_ROS_Interface<ocs2::cartpole::STATE_DIM_, ocs2::cartpole::INPUT_DIM_> mpcNode(&cartPoleInterface.getMpc(), "cartpole");
   mpcNode.launchNodes(argc, argv);
 
-  // Successful exit
   return 0;
 }

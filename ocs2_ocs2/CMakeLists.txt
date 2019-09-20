@@ -16,6 +16,9 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
 
+# Generate compile_commands.json for clang tools
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -43,12 +46,35 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+add_executable(${PROJECT_NAME}_lintTarget
+  src/lintTarget.cpp
+)
+target_link_libraries(${PROJECT_NAME}_lintTarget
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+#########################
+###   CLANG TOOLING   ###
+#########################
+find_package(cmake_clang_tools QUIET)
+if(cmake_clang_tools_FOUND)
+  message(STATUS "Run clang tooling for target ocs2_ocs2")
+  add_clang_tooling(
+    TARGETS ${PROJECT_NAME}_lintTarget
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CF_WERROR
+)
+endif(cmake_clang_tools_FOUND)
+
 #############
 ## Install ##
 #############
 
 install(DIRECTORY include/${PROJECT_NAME}/
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
 
 #############
 ## Testing ##

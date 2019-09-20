@@ -27,69 +27,58 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-namespace ocs2{
+namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-OCS2<STATE_DIM, INPUT_DIM>::OCS2(
-		const controlled_system_base_t* systemDynamicsPtr,
-		const derivatives_base_t* systemDerivativesPtr,
-		const constraint_base_t* systemConstraintsPtr,
-		const cost_function_base_t* costFunctionPtr,
-		const operating_trajectories_base_t* operatingTrajectoriesPtr,
-		const SLQ_Settings& settings /*= SLQ_Settings()*/,
-		std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
-		const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/,
-		const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/,
-		const NLP_Settings& nlpSettings /*= NLP_Settings()*/)
+OCS2<STATE_DIM, INPUT_DIM>::OCS2(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+                                 const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
+                                 const operating_trajectories_base_t* operatingTrajectoriesPtr,
+                                 const SLQ_Settings& settings /*= SLQ_Settings()*/,
+                                 std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
+                                 const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/,
+                                 const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/,
+                                 const NLP_Settings& nlpSettings /*= NLP_Settings()*/)
 
-		: BASE(nlpSettings)
-		, ulCostPtr_( new upper_level_cost_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr,
-				operatingTrajectoriesPtr, settings, logicRulesPtr, heuristicsFunctionPtr, nlpSettings.displayInfo_, gddpSettings) )
-		, ulConstraintsPtr_( new upper_level_constraints_t )
-{}
+    : BASE(nlpSettings),
+      ulCostPtr_(new upper_level_cost_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr,
+                                        operatingTrajectoriesPtr, settings, logicRulesPtr, heuristicsFunctionPtr, nlpSettings.displayInfo_,
+                                        gddpSettings)),
+      ulConstraintsPtr_(new upper_level_constraints_t) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 GDDP_Settings& OCS2<STATE_DIM, INPUT_DIM>::gddpSettings() {
-
-	return ulCostPtr_->getGDDP().settings();
+  return ulCostPtr_->getGDDP().settings();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-SLQ_Settings& OCS2<STATE_DIM, INPUT_DIM>::slqSettings(){
-
-	return ulCostPtr_->getSLQ().settings();
+SLQ_Settings& OCS2<STATE_DIM, INPUT_DIM>::slqSettings() {
+  return ulCostPtr_->getSLQ().settings();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void OCS2<STATE_DIM, INPUT_DIM>::run(
-		const scalar_t& initTime,
-		const state_vector_t& initState,
-		const scalar_t& finalTime,
-		const scalar_array_t& partitioningTimes,
-		const scalar_array_t& initEventTimes) {
+void OCS2<STATE_DIM, INPUT_DIM>::run(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
+                                     const scalar_array_t& partitioningTimes, const scalar_array_t& initEventTimes) {
+  ulCostPtr_->setDDP(initTime, initState, finalTime, partitioningTimes);
+  ulConstraintsPtr_->set(initTime, finalTime);
 
-	ulCostPtr_->setDDP(initTime, initState, finalTime, partitioningTimes);
-	ulConstraintsPtr_->set(initTime, finalTime);
+  const size_t numEventTimes = initEventTimes.size();
+  dynamic_vector_t initParameters = Eigen::Map<const dynamic_vector_t>(initEventTimes.data(), numEventTimes);
 
-	const size_t numEventTimes = initEventTimes.size();
-	dynamic_vector_t initParameters = Eigen::Map<const dynamic_vector_t>(initEventTimes.data(), numEventTimes);
-
-	// run Frank-Wolfe gradient descent
-	dynamic_vector_t maxGradientInverse = dynamic_vector_t::Zero(numEventTimes);
-	BASE::run(initParameters, maxGradientInverse, ulCostPtr_.get(), ulConstraintsPtr_.get());
+  // run Frank-Wolfe gradient descent
+  dynamic_vector_t maxGradientInverse = dynamic_vector_t::Zero(numEventTimes);
+  BASE::run(initParameters, maxGradientInverse, ulCostPtr_.get(), ulConstraintsPtr_.get());
 }
 
-
-}  // end of ocs2 namespace
+}  // namespace ocs2

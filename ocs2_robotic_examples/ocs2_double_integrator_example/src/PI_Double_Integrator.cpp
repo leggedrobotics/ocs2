@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
   piSettings.loadSettings(taskFile);
   ocs2::MPC_PI<STATE_DIM, INPUT_DIM> mpc_pi(dynamics, std::move(cost), constraint, partitioningTimes, mpcSettings, piSettings);
   mpc_pi.getSolverPtr()->setCostDesiredTrajectories(costDesiredTraj);
-  ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM> mpcNode(&mpc_pi, "double_integrator");
+  ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM> mpcNode(mpc_pi, "double_integrator");
 
   mpcNode.launchNodes(argc, argv);
 

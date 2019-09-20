@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef BALLBOTCOST_OCS2_BALLBOT_OCS2_H_
-#define BALLBOTCOST_OCS2_BALLBOT_OCS2_H_
+#pragma once
 
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 
@@ -99,5 +98,3 @@ class BallbotCost final : public ocs2::QuadraticCostFunction<ballbot::STATE_DIM_
 
 }  // namespace ballbot
 }  // namespace ocs2
-
-#endif /* BALLBOTCOST_OCS2_BALLBOT_OCS2_H_ */

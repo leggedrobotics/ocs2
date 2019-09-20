@@ -58,7 +58,7 @@ iit::Ballbot::dyn::tpl::InertiaProperties<TRAIT>::InertiaProperties()
                 Scalar(2.5177875),
                 Scalar(2.5141227),
                 Scalar(-0.012044657),
-                Scalar(-0.010949616),
+                Scalar(-0.010949688),
                 Scalar(1.84734E-4)) );
 
 }

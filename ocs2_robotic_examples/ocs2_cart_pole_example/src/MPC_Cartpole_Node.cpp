@@ -36,12 +36,12 @@ int main(int argc, char** argv) {
   if (argc <= 1) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
-  std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+  std::string taskFileFolderName(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
   ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFileFolderName);
 
   // Launch MPC ROS node
-  ocs2::MPC_ROS_Interface<ocs2::cartpole::STATE_DIM_, ocs2::cartpole::INPUT_DIM_> mpcNode(&cartPoleInterface.getMpc(), "cartpole");
+  ocs2::MPC_ROS_Interface<ocs2::cartpole::STATE_DIM_, ocs2::cartpole::INPUT_DIM_> mpcNode(cartPoleInterface.getMpc(), "cartpole");
   mpcNode.launchNodes(argc, argv);
 
   return 0;

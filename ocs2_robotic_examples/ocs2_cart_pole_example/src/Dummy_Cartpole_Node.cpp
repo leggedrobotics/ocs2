@@ -42,15 +42,16 @@ int main(int argc, char** argv) {
 
   ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFileFolderName);
 
-  using mrt_t = ocs2::cartpole::MRT_ROS_Cartpole;
-  using mrt_ptr_t = mrt_t::Ptr;
+  using ocs2::cartpole::INPUT_DIM_;
+  using ocs2::cartpole::STATE_DIM_;
+  using mrt_t = ocs2::MRT_ROS_Interface<STATE_DIM_, INPUT_DIM_>;
   using scalar_t = mrt_t::scalar_t;
   using system_observation_t = mrt_t::system_observation_t;
 
-  mrt_ptr_t mrtPtr(new mrt_t("cartpole"));
+  mrt_t mrt("cartpole");
 
   // Dummy cartpole
-  ocs2::cartpole::MrtRosDummyCartpole dummyCartpole(mrtPtr, cartPoleInterface.mpcSettings().mrtDesiredFrequency_,
+  ocs2::cartpole::MrtRosDummyCartpole dummyCartpole(mrt, cartPoleInterface.mpcSettings().mrtDesiredFrequency_,
                                                     cartPoleInterface.mpcSettings().mpcDesiredFrequency_);
   dummyCartpole.launchNodes(argc, argv);
 
@@ -63,9 +64,9 @@ int main(int argc, char** argv) {
   initCostDesiredTrajectories.desiredTimeTrajectory().resize(1);
   initCostDesiredTrajectories.desiredTimeTrajectory().front() = 0.0;
   initCostDesiredTrajectories.desiredStateTrajectory().resize(1);
-  initCostDesiredTrajectories.desiredStateTrajectory().front().setZero(cartpole::STATE_DIM_);
+  initCostDesiredTrajectories.desiredStateTrajectory().front().setZero(STATE_DIM_);
   initCostDesiredTrajectories.desiredInputTrajectory().resize(1);
-  initCostDesiredTrajectories.desiredInputTrajectory().front().setZero(cartpole::INPUT_DIM_);
+  initCostDesiredTrajectories.desiredInputTrajectory().front().setZero(INPUT_DIM_);
 
   // run dummy
   dummyCartpole.run(initObservation, initCostDesiredTrajectories);

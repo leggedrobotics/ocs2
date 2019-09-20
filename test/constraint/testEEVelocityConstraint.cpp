@@ -28,7 +28,7 @@ TEST(TestEEVelocityConstraint, evaluate){
   u.setRandom();
   x.setRandom();
 
-  auto approximation = eeVelocityConstraint.getQuadraticApproximation(t, x, u);
+  auto approximation = eeVelocityConstraint.getLinearApproximation(t, x, u);
   std::cout << "h" << std::endl;
   for (auto h : approximation.constraintValues){
     std::cout << h << std::endl;
@@ -42,27 +42,6 @@ TEST(TestEEVelocityConstraint, evaluate){
   std::cout << "dhdu" << std::endl;
   for (auto dhdu : approximation.derivativeInput){
     std::cout << dhdu.transpose() << std::endl;
-  }
-
-  std::cout << "ddhdxdx" << std::endl;
-  int count = 0;
-  for (auto ddhdxdx : approximation.secondDerivativesState){
-    std::cout << "\t ddhdxdx[" << count << "]" << std::endl;
-    std::cout << ddhdxdx << std::endl;
-  }
-
-  std::cout << "ddhdudu" << std::endl;
-  count = 0;
-  for (auto ddhdudu : approximation.secondDerivativesInput){
-    std::cout << "\t ddhdudu[" << count << "]" << std::endl;
-    std::cout << ddhdudu << std::endl;
-  }
-
-  std::cout << "ddhdudx" << std::endl;
-  count = 0;
-  for (auto ddhdudx : approximation.derivativesInputState){
-    std::cout << "\t ddhdudx[" << count << "]" << std::endl;
-    std::cout << ddhdudx << std::endl;
   }
 }
 

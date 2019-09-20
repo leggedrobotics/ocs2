@@ -131,7 +131,8 @@ class MRT_BASE {
    * @param [in] controlledSystemBase: System to roll out.
    * @param [in] rolloutSettings
    */
-  void initRollout(const ControlledSystemBase<STATE_DIM, INPUT_DIM>& controlledSystemBase, const Rollout_Settings& rolloutSettings);
+  void initRollout(const ControlledSystemBase<STATE_DIM, INPUT_DIM>& controlledSystemBase,
+                   const Rollout_Settings& rolloutSettings = Rollout_Settings());
 
   /**
    * @brief Initializes rollout class to roll out a feedback policy

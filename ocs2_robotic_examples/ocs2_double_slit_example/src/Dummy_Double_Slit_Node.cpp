@@ -47,17 +47,15 @@ int main(int argc, char* argv[]) {
   using ocs2::double_slit::INPUT_DIM_;
   using ocs2::double_slit::STATE_DIM_;
 
-  // Rollout
+  // Rollout settings
   double rollout_dt;
   ocs2::loadData::loadCppDataType(doubleSlitInterface.taskFile_, "pathIntegral.rollout_settings.minTimeStep", rollout_dt);
   ocs2::Rollout_Settings rolloutSettings(1e-9, 1e-6, 5000, rollout_dt, ocs2::IntegratorType::EULER, false, true);
-  using rollout_t = ocs2::TimeTriggeredRollout<STATE_DIM_, INPUT_DIM_>;
-  std::unique_ptr<rollout_t> rollout(new rollout_t(doubleSlitInterface.getDynamics(), rolloutSettings));
 
   // Dummy double_slit
   using ocs2::double_slit::MrtRosDummyDoubleSlit;
   ocs2::MRT_ROS_Interface<STATE_DIM_, INPUT_DIM_> mrt("double_slit");
-  mrt.initRollout(std::move(rollout));
+  mrt.initRollout(doubleSlitInterface.getDynamics(), rolloutSettings);
   MrtRosDummyDoubleSlit dummyDoubleSlit(mrt, doubleSlitInterface.mpcSettings().mrtDesiredFrequency_,
                                         doubleSlitInterface.mpcSettings().mpcDesiredFrequency_);
   dummyDoubleSlit.launchNodes(argc, argv);

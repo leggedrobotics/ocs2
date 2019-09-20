@@ -50,13 +50,9 @@ class MRT_ROS_Dummy_Quadrotor final : public MRT_ROS_Dummy_Loop<quadrotor::STATE
    * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz. This should always set to a positive number.
    * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
    * will be simulated to run by this frequency. Note that this might not be the MPC's realtime frequency.
-   * @param [in] systemPtr: Optional pointer to the system dynamics. If provided, the dummy will roll out the
-   * received controller using these dynamics instead of just sending back a planned state.
-   * @param [in] rolloutSettings settings to use when dummy rolls out the received controller
    */
-  MRT_ROS_Dummy_Quadrotor(mrt_t& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency,
-                          const controlled_system_base_t* systemPtr = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings())
-      : BASE(mrt, mrtDesiredFrequency, mpcDesiredFrequency, systemPtr, rolloutSettings) {}
+  MRT_ROS_Dummy_Quadrotor(mrt_t& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency)
+      : BASE(mrt, mrtDesiredFrequency, mpcDesiredFrequency) {}
 
   /**
    * Default destructor.

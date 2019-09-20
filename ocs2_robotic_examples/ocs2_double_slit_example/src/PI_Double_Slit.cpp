@@ -33,8 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cfenv>
 
-using namespace ocs2;
-
 int main(int argc, char* argv[]) {
   feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
 
@@ -44,12 +42,12 @@ int main(int argc, char* argv[]) {
   }
 
   // instantiate interface
-  double_slit::DoubleSlitInterface doubleSlitInterface(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+  ocs2::double_slit::DoubleSlitInterface doubleSlitInterface(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
   // MPC ROS Node
-  MPC_ROS_Interface<double_slit::STATE_DIM_, double_slit::INPUT_DIM_> mpcNode(doubleSlitInterface.getMpc(), "double_slit");
+  ocs2::MPC_ROS_Interface<ocs2::double_slit::STATE_DIM_, ocs2::double_slit::INPUT_DIM_> mpcNode(doubleSlitInterface.getMpc(),
+                                                                                                "double_slit");
   mpcNode.launchNodes(argc, argv);
 
-  // Successful exit
   return 0;
 }

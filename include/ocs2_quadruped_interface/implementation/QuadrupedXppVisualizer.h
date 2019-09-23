@@ -5,6 +5,8 @@
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 
+#include "ocs2_quadruped_interface/QuadrupedXppVisualizer.h"
+
 namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
@@ -135,7 +137,12 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishXppV
 
   if (save_rosbag_) {
     const auto stamp = ros::Time(startTime_.toSec() + time);
-    bag_.write("xpp/state_des", stamp, point);
+    try {
+      bag_.write("xpp/state_des", stamp, point);
+    } catch (const rosbag::BagException& err) {
+      std::cerr << "Error writing rosbag message: " << err.what() << std::endl;
+    }
+
     robotStateCartesianTrajectoryMsg_.points.push_back(point);
   }
 }
@@ -241,7 +248,7 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishOpti
 
   // Array message header
   visualization_msgs::MarkerArray arrayMsg;
-  for (int i = 0; i<4; i++){
+  for (int i = 0; i < 4; i++) {
     visualization_msgs::Marker footMsg;
     footMsg.header.frame_id = "world";
     footMsg.id = i;
@@ -278,7 +285,7 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishOpti
     points.push_back(comPosition);
 
     computeFeetState(state, input_vector_t::Zero(), o_feetPositionRef, o_feetVelocityRef, o_feetForceRef);
-    for (int i = 0; i<4; i++) {
+    for (int i = 0; i < 4; i++) {
       geometry_msgs::Point footPosition;
       footPosition.x = o_feetPositionRef[i][0];
       footPosition.y = o_feetPositionRef[i][1];

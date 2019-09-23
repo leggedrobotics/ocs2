@@ -287,20 +287,22 @@ TEST(testLogicRulesMachine, shortPartition)
 	testPass = checkSolution(logicRulesMachine, eventTimesStockResult, switchedSystemIDsStockResult);
 	ASSERT_TRUE(testPass);
 
-
 	// Partially overlapping with no event
-	partitioningTimes = std::vector<double>{0.5, 1.0, 2.0, 2.5};
+	partitioningTimes = std::vector<double>{0.5, 1.5, 2.5};
 	logicRulesMachine.updateLogicRules(partitioningTimes);
 
 	std::cerr << std::endl << "======================" << std::endl;
 	std::cerr << "### Partially overlapping with no event:" << std::endl;
 	logicRulesMachine.display();
 
-	eventTimesStockResult.resize(1);
-	switchedSystemIDsStockResult.resize(1);
+	eventTimesStockResult.resize(2);
+	switchedSystemIDsStockResult.resize(2);
 
 	eventTimesStockResult[0] = std::vector<double>{};
 	switchedSystemIDsStockResult[0] = std::vector<size_t>{1};
+
+	eventTimesStockResult[1] = std::vector<double>{2.5};
+	switchedSystemIDsStockResult[1] = std::vector<size_t>{1};
 
 	testPass = checkSolution(logicRulesMachine, eventTimesStockResult, switchedSystemIDsStockResult);
 	ASSERT_TRUE(testPass);

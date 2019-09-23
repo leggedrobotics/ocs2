@@ -1,0 +1,16 @@
+<launch>
+
+  <!-- Load robot description -->
+  <include file="$(find anymal_bear_rsl_description)/launch/load.launch">
+    <arg name="simulation"                                     value="false"/>
+    <arg name="description_name"                               value="ocs2_anymal_description"/>
+    <arg name="velodyne"                                       value="false"/>
+    <arg name="realsense"                                      value="true"/>
+    <arg name="teleop_head"                                    value="false"/>
+    <arg name="darpa_head"                                     value="false"/>
+    <arg name="jetson"                                         value="false"/>
+    <arg name="forward_facing_vi_sensor"                       value="false"/>
+    <arg name="darpa_calibrated_velodyne"                      value="true"/>
+  </include>
+
+</launch>

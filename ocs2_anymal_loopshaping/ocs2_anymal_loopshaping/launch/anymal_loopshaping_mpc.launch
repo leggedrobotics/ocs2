@@ -3,7 +3,7 @@
     <arg name="task_name"  default="mpc_augmented"/>
 
     <group if="$(arg rviz)">
-      <include file="$(find xpp_anymal)/launch/xpp_anymal.launch"/>
+      <include file="$(find ocs2_anymal_visualization)/launch/visualization.launch"/>
     </group>
 
     <node pkg="ocs2_anymal_loopshaping" type="anymal_loopshaping_asConstraint_mpc_node" name="anymal_loopshaping_asConstraint_mpc_node"

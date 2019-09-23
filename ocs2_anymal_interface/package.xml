@@ -14,6 +14,8 @@
   <depend>ocs2_anymal_switched_model</depend>
   <depend>ocs2_quadruped_interface</depend>
 
+  <exec_depend>ocs2_anymal_description</exec_depend>
+  <exec_depend>ocs2_anymal_visualization</exec_depend>
   <exec_depend>xpp_anymal</exec_depend>
 
 </package>

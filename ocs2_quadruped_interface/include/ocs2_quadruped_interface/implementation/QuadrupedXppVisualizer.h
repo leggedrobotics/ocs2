@@ -16,6 +16,7 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::launchVisua
 
   ros::NodeHandle n;
   visualizationPublisher_ = n.advertise<xpp_msgs::RobotStateCartesian>(xpp_msgs::robot_state_desired, 1);
+  visualizationJointPublisher_ = n.advertise<xpp_msgs::RobotStateJoint>("xpp/joint_anymal_des", 1);
   costDesiredPublisher_ = n.advertise<visualization_msgs::Marker>("desiredBaseTrajectory", 100);
   stateOptimizedPublisher_ = n.advertise<visualization_msgs::Marker>("optimizedBaseTrajectory", 100);
   feetOptimizedPublisher_ = n.advertise<visualization_msgs::MarkerArray>("optimizedFeetTrajectories", 100);
@@ -54,7 +55,7 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishObse
     o_feetForceRef[i] = observation.input().template segment<3>(3 * i);
   }
 
-  publishXppVisualizer(observation.time(), rbdState.template head<6>(), rbdState.template segment<6>(18), o_feetPositionRef,
+  publishXppVisualizer(observation.time(), rbdState.template head<6>(), rbdState.template segment<6>(18), rbdState.template segment<12>(6), o_feetPositionRef,
                        o_feetVelocityRef, o_feetAccelerationRef, o_feetForceRef);
 }
 
@@ -75,7 +76,7 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishTraj
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishXppVisualizer(
-    const scalar_t& time, const base_coordinate_t& basePose, const base_coordinate_t& baseLocalVelocities,
+    const scalar_t& time, const base_coordinate_t& basePose, const base_coordinate_t& baseLocalVelocities, const joint_coordinate_t& jointAngles,
     const vector_3d_array_t& feetPosition, const vector_3d_array_t& feetVelocity, const vector_3d_array_t& feetAcceleration,
     const vector_3d_array_t& feetForce) {
   const scalar_t minTimeDifference = 10e-3;
@@ -86,7 +87,7 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishXppV
   lastTime = time;
 
   // construct the message
-  xpp_msgs::RobotStateCartesian point;
+  xpp_msgs::RobotStateCartesian robotStateCartesianMsg;
 
   const auto roll = basePose(0);
   const auto pitch = basePose(1);
@@ -94,57 +95,67 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishXppV
   const Eigen::Quaternion<scalar_t> q_world_base = Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX())*
       Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY()) *
       Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ());
-  point.base.pose.orientation.x = q_world_base.x();
-  point.base.pose.orientation.y = q_world_base.y();
-  point.base.pose.orientation.z = q_world_base.z();
-  point.base.pose.orientation.w = q_world_base.w();
-  point.base.pose.position.x = basePose(3);
-  point.base.pose.position.y = basePose(4);
-  point.base.pose.position.z = basePose(5);
+  robotStateCartesianMsg.base.pose.orientation.x = q_world_base.x();
+  robotStateCartesianMsg.base.pose.orientation.y = q_world_base.y();
+  robotStateCartesianMsg.base.pose.orientation.z = q_world_base.z();
+  robotStateCartesianMsg.base.pose.orientation.w = q_world_base.w();
+  robotStateCartesianMsg.base.pose.position.x = basePose(3);
+  robotStateCartesianMsg.base.pose.position.y = basePose(4);
+  robotStateCartesianMsg.base.pose.position.z = basePose(5);
 
-  point.base.twist.linear.x = baseLocalVelocities(0);
-  point.base.twist.linear.y = baseLocalVelocities(1);
-  point.base.twist.linear.z = baseLocalVelocities(2);
-  point.base.twist.angular.x = baseLocalVelocities(3);
-  point.base.twist.angular.y = baseLocalVelocities(4);
-  point.base.twist.angular.z = baseLocalVelocities(5);
+  robotStateCartesianMsg.base.twist.linear.x = baseLocalVelocities(0);
+  robotStateCartesianMsg.base.twist.linear.y = baseLocalVelocities(1);
+  robotStateCartesianMsg.base.twist.linear.z = baseLocalVelocities(2);
+  robotStateCartesianMsg.base.twist.angular.x = baseLocalVelocities(3);
+  robotStateCartesianMsg.base.twist.angular.y = baseLocalVelocities(4);
+  robotStateCartesianMsg.base.twist.angular.z = baseLocalVelocities(5);
 
-  point.time_from_start = ros::Duration(time);
+  robotStateCartesianMsg.time_from_start = ros::Duration(time);
 
   constexpr int numEE = 4;
-  point.ee_motion.resize(numEE);
-  point.ee_forces.resize(numEE);
-  point.ee_contact.resize(numEE);
+  robotStateCartesianMsg.ee_motion.resize(numEE);
+  robotStateCartesianMsg.ee_forces.resize(numEE);
+  robotStateCartesianMsg.ee_contact.resize(numEE);
   for (size_t ee_k = 0; ee_k < numEE; ee_k++) {
-    point.ee_motion[ee_k].pos.x = feetPosition[ee_k](0);
-    point.ee_motion[ee_k].pos.y = feetPosition[ee_k](1);
-    point.ee_motion[ee_k].pos.z = feetPosition[ee_k](2);
+    robotStateCartesianMsg.ee_motion[ee_k].pos.x = feetPosition[ee_k](0);
+    robotStateCartesianMsg.ee_motion[ee_k].pos.y = feetPosition[ee_k](1);
+    robotStateCartesianMsg.ee_motion[ee_k].pos.z = feetPosition[ee_k](2);
 
-    point.ee_motion[ee_k].vel.x = feetVelocity[ee_k](0);
-    point.ee_motion[ee_k].vel.y = feetVelocity[ee_k](1);
-    point.ee_motion[ee_k].vel.z = feetVelocity[ee_k](2);
+    robotStateCartesianMsg.ee_motion[ee_k].vel.x = feetVelocity[ee_k](0);
+    robotStateCartesianMsg.ee_motion[ee_k].vel.y = feetVelocity[ee_k](1);
+    robotStateCartesianMsg.ee_motion[ee_k].vel.z = feetVelocity[ee_k](2);
 
-    point.ee_motion[ee_k].acc.x = feetAcceleration[ee_k](0);
-    point.ee_motion[ee_k].acc.y = feetAcceleration[ee_k](1);
-    point.ee_motion[ee_k].acc.z = feetAcceleration[ee_k](2);
+    robotStateCartesianMsg.ee_motion[ee_k].acc.x = feetAcceleration[ee_k](0);
+    robotStateCartesianMsg.ee_motion[ee_k].acc.y = feetAcceleration[ee_k](1);
+    robotStateCartesianMsg.ee_motion[ee_k].acc.z = feetAcceleration[ee_k](2);
 
-    point.ee_forces[ee_k].x = feetForce[ee_k](0);
-    point.ee_forces[ee_k].y = feetForce[ee_k](1);
-    point.ee_forces[ee_k].z = feetForce[ee_k](2);
+    robotStateCartesianMsg.ee_forces[ee_k].x = feetForce[ee_k](0);
+    robotStateCartesianMsg.ee_forces[ee_k].y = feetForce[ee_k](1);
+    robotStateCartesianMsg.ee_forces[ee_k].z = feetForce[ee_k](2);
   }
-
-  visualizationPublisher_.publish(point);
 
   if (save_rosbag_) {
     const auto stamp = ros::Time(startTime_.toSec() + time);
     try {
-      bag_.write("xpp/state_des", stamp, point);
+      bag_.write("xpp/state_des", stamp, robotStateCartesianMsg);
     } catch (const rosbag::BagException& err) {
       std::cerr << "Error writing rosbag message: " << err.what() << std::endl;
     }
 
-    robotStateCartesianTrajectoryMsg_.points.push_back(point);
+    robotStateCartesianTrajectoryMsg_.points.push_back(robotStateCartesianMsg);
   }
+
+  // Joint space message
+  xpp_msgs::RobotStateJoint robotStateJointMsg;
+  robotStateJointMsg.time_from_start = robotStateCartesianMsg.time_from_start;
+  robotStateJointMsg.base = robotStateCartesianMsg.base;
+  robotStateJointMsg.ee_contact = robotStateCartesianMsg.ee_contact;
+  robotStateJointMsg.joint_state.position = std::vector<double>(jointAngles.data(), jointAngles.data()+jointAngles.size());
+  // Attention: Not filling joint velocities or torques
+
+  // Publish
+  visualizationPublisher_.publish(robotStateCartesianMsg);
+  visualizationJointPublisher_.publish(robotStateJointMsg);
 }
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
@@ -206,7 +217,7 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishDesi
   msg.scale.x = 0.005;  // used for line width
   msg.color.g = 1.0;
   msg.color.a = 1.0;
-  auto& points = msg.points;
+  auto& robotStateCartesianMsgs = msg.points;
 
   // Set up state interpolator
   auto& timeTrajectory = costDesiredTrajectory.desiredTimeTrajectory();
@@ -225,7 +236,7 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishDesi
     comPosition.x = state[3];
     comPosition.y = state[4];
     comPosition.z = state[5];
-    points.push_back(comPosition);
+    robotStateCartesianMsgs.push_back(comPosition);
     t = (t == endTime) ? endTime + dt : std::min(t + dt, endTime);  // make sure endTime is always published, but only once
   }
 
@@ -244,7 +255,7 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishOpti
   msg.scale.x = 0.005;  // used for line width
   msg.color.r = 1.0;
   msg.color.a = 1.0;
-  auto& points = msg.points;
+  auto& robotStateCartesianMsgs = msg.points;
 
   // Array message header
   visualization_msgs::MarkerArray arrayMsg;
@@ -282,7 +293,7 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishOpti
     comPosition.x = state[3];
     comPosition.y = state[4];
     comPosition.z = state[5];
-    points.push_back(comPosition);
+    robotStateCartesianMsgs.push_back(comPosition);
 
     computeFeetState(state, input_vector_t::Zero(), o_feetPositionRef, o_feetVelocityRef, o_feetForceRef);
     for (int i = 0; i < 4; i++) {

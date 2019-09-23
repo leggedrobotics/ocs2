@@ -19,6 +19,13 @@ int main(int argc, char* argv[]) {
   std::shared_ptr<anymal::OCS2AnymalInterface> anymal_interface(
       new anymal::OCS2AnymalInterface(ros::package::getPath("ocs2_anymal_interface") + "/config/" + taskFileFolderName));
 
+  std::string urdf_param = "ocs2_anymal_description";
+
+  std::string urdf;
+  if (!ros::param::get(urdf_param, urdf)) {
+    throw ros::Exception("Error reading ros parameter: " + urdf_param);
+  }
+
   // setup MRT with simulator rollouts
   using mrt_t = switched_model::MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>;
   std::shared_ptr<mrt_t> anymal_mrt(new mrt_t(anymal_interface, "anymal"));
@@ -29,7 +36,7 @@ int main(int argc, char* argv[]) {
                                                "LH_HAA", "LH_HFE", "LH_KFE", "RH_HAA", "RH_HFE", "RH_KFE"};
     using sim_rollout_t = ocs2::RaisimRollout<STATE_DIM, INPUT_DIM>;
     std::unique_ptr<sim_rollout_t> simRollout(new sim_rollout_t(
-        ros::package::getPath("ocs2_anymal_interface") + "/urdf/anymal.urdf",
+        urdf,
         std::bind(&anymal::AnymalRaisimConversions::stateToRaisimGenCoordGenVel, &conversions, std::placeholders::_1,
                   std::placeholders::_2),
         std::bind(&anymal::AnymalRaisimConversions::raisimGenCoordGenVelToState, &conversions, std::placeholders::_1,

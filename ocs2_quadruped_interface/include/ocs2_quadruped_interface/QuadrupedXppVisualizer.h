@@ -9,6 +9,7 @@
 
 #include <xpp_msgs/RobotStateCartesian.h>
 #include <xpp_msgs/RobotStateCartesianTrajectory.h>
+#include <xpp_msgs/RobotStateJoint.h>
 #include <xpp_msgs/topic_names.h>
 
 #include <ocs2_comm_interfaces/SystemObservation.h>
@@ -102,6 +103,7 @@ class QuadrupedXppVisualizer {
    * @param feetForce: Contact forces acting on the feet in the origin frame.
    */
   void publishXppVisualizer(const scalar_t& time, const base_coordinate_t& basePose, const base_coordinate_t& baseLocalVelocities,
+                            const joint_coordinate_t& jointAngles,
                             const vector_3d_array_t& feetPosition, const vector_3d_array_t& feetVelocity,
                             const vector_3d_array_t& feetAcceleration, const vector_3d_array_t& feetForce);
 
@@ -117,6 +119,7 @@ class QuadrupedXppVisualizer {
   std::string rosbagFile_;
 
   ros::Publisher visualizationPublisher_;
+  ros::Publisher visualizationJointPublisher_;
   ros::Publisher costDesiredPublisher_;
   ros::Publisher stateOptimizedPublisher_;
   ros::Publisher feetOptimizedPublisher_;

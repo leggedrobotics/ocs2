@@ -130,19 +130,6 @@ class MRT_ROS_Quadruped : public ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM> {
   void rolloutPolicy(scalar_t time, const rbd_state_vector_t& rbdState, rbd_state_vector_t& rbdStateRef, joint_coordinate_t& rbdInputRef,
                      size_t& subsystem);
 
-//  void rolloutPolicy(scalar_t currentTime, const state_vector_t& currentState, const scalar_t& timeStep, state_vector_t& mpcState,
-//                       input_vector_t& mpcInput, size_t& subsystem) override {
-//
-//	  BASE::rolloutPolicy(currentTime, currentState, timeStep, mpcState, mpcInput, subsystem);
-//
-//	  {
-//		  rbd_state_vector_t rbdState;
-//		  joint_coordinate_t rbdInput;
-//		  size_t subsystem;
-//		  rolloutPolicy(currentTime, currentState, rbdState, rbdInput, subsystem);
-//	  }
-//  }
-
   /**
    * Get the swing phase progress for a requested leg.
    *

@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ocs2_anymal_switched_model</name>
+  <version>0.0.1</version>
+  <description>The ocs2_anymal_switched_model package</description>
+
+  <maintainer email="farbod@todo.todo">farbod</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>ocs2_switched_model_interface</depend>
+  <depend>ocs2_robotic_tools</depend>
+
+</package>

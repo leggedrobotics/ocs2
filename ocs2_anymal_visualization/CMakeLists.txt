@@ -17,7 +17,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-err
 
 catkin_package(
     INCLUDE_DIRS
-        include
     CATKIN_DEPENDS
         xpp_vis
 )
@@ -27,7 +26,6 @@ catkin_package(
 ###########
 
 include_directories(
-  include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -43,10 +41,6 @@ target_link_libraries(anymal_visualizer
 #############
 ## Install ##
 #############
-
-install(DIRECTORY
-            include/${PROJECT_NAME}/
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 #############
 ## Testing ##

@@ -1,5 +1,8 @@
 <?xml version="1.0"?>
 <robot name="cartpole">
+
+    <link name="world"/>
+
     <link name="slideBar">
     <visual>
       <geometry>
@@ -15,6 +18,12 @@
       <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
     </inertial>
   </link>
+
+  <joint name="world_to_slideBar" type="fixed">
+    <parent link="world"/>
+    <child link="slideBar"/>
+    <origin xyz="0.0 0.0 0.0"/>
+  </joint>
 
   <link name="cart">
     <visual>

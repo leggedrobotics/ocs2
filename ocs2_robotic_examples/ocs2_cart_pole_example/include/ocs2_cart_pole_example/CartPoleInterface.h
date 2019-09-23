@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 // C++
-#include <stdlib.h>
+#include <cstdlib>
 #include <iostream>
 #include <string>
 
@@ -114,9 +114,9 @@ class CartPoleInterface final : public RobotInterfaceBase<cartpole::STATE_DIM_, 
   std::unique_ptr<CartPoleOperatingPoint> cartPoleOperatingPointPtr_;
 
   // cost parameters
-  dim_t::state_matrix_t Q_;
-  dim_t::input_matrix_t R_;
-  dim_t::state_matrix_t QFinal_;
+  dim_t::state_matrix_t qm_;
+  dim_t::input_matrix_t rm_;
+  dim_t::state_matrix_t qmFinal_;
   dim_t::state_vector_t xFinal_;
   dim_t::state_vector_t xNominal_;
   dim_t::input_vector_t uNominal_;

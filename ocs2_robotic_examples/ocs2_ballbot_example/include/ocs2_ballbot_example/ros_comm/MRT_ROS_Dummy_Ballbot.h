@@ -58,7 +58,11 @@ class MRT_ROS_Dummy_Ballbot final : public MRT_ROS_Dummy_Loop<ballbot::STATE_DIM
    */
   MRT_ROS_Dummy_Ballbot(mrt_t& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency,
                         const controlled_system_base_t* systemPtr = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings())
-      : BASE(mrt, mrtDesiredFrequency, mpcDesiredFrequency, systemPtr, rolloutSettings) {}
+      : BASE(mrt, mrtDesiredFrequency, mpcDesiredFrequency) {
+    if (systemPtr) {
+      mrt.initRollout(*systemPtr, rolloutSettings);
+    }
+  }
 
   /**
    * Destructor.

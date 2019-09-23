@@ -131,7 +131,14 @@ class MRT_BASE {
    * @param [in] controlledSystemBase: System to roll out.
    * @param [in] rolloutSettings
    */
-  void initRollout(const ControlledSystemBase<STATE_DIM, INPUT_DIM>& controlledSystemBase, const Rollout_Settings& rolloutSettings);
+  void initRollout(const ControlledSystemBase<STATE_DIM, INPUT_DIM>& controlledSystemBase,
+                   const Rollout_Settings& rolloutSettings = Rollout_Settings());
+
+  /**
+   * @brief Initializes rollout class to roll out a feedback policy
+   * @param rolloutPtr: The rollout object to be used
+   */
+  void initRollout(std::unique_ptr<RolloutBase<STATE_DIM, INPUT_DIM>> rolloutPtr);
 
   /**
    * @brief Evaluates the controller
@@ -173,6 +180,12 @@ class MRT_BASE {
    * @param [in] logicRules : pointer to the shared logic rules.
    */
   void setLogicRules(std::shared_ptr<HybridLogicRules> logicRules);
+
+  /**
+   * @brief rolloutSet: Whether or not the internal rollout object has been set
+   * @return True if a rollout object is available.
+   */
+  bool rolloutSet() const { return rolloutPtr_.get(); }
 
  protected:
   /**

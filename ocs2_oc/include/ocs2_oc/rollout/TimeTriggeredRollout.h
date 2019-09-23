@@ -79,10 +79,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   explicit TimeTriggeredRollout(const controlled_system_base_t& systemDynamics,
                                 const Rollout_Settings& rolloutSettings = Rollout_Settings(), const char algorithmName[] = nullptr)
 
-      : BASE(rolloutSettings, algorithmName),
-        systemDynamicsPtr_(systemDynamics.clone()),
-        systemEventHandlersPtr_(new event_handler_t),
-        reconstructInputTrajectory_(rolloutSettings.reconstructInputTrajectory_) {
+      : BASE(rolloutSettings, algorithmName), systemDynamicsPtr_(systemDynamics.clone()), systemEventHandlersPtr_(new event_handler_t) {
     switch (rolloutSettings.integratorType_) {
       case (IntegratorType::EULER): {
         dynamicsIntegratorsPtr_.reset(new IntegratorEuler<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
@@ -206,7 +203,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       dynamicsIntegratorsPtr_->integrate(beginState, beginTime, endTime, stateTrajectory, timeTrajectory, BASE::settings().minTimeStep_,
                                          BASE::settings().absTolODE_, BASE::settings().relTolODE_, maxNumSteps, true);
 
-      if (reconstructInputTrajectory_) {
+      if (this->settings().reconstructInputTrajectory_) {
         // compute control input trajectory and concatenate to inputTrajectory
         for (; k_u < timeTrajectory.size(); k_u++) {
           inputTrajectory.emplace_back(systemDynamicsPtr_->controllerPtr()->computeInput(timeTrajectory[k_u], stateTrajectory[k_u]));
@@ -244,12 +241,8 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
  private:
   std::shared_ptr<controlled_system_base_t> systemDynamicsPtr_;
-
   std::shared_ptr<event_handler_t> systemEventHandlersPtr_;
-
   std::unique_ptr<ode_base_t> dynamicsIntegratorsPtr_;
-
-  bool reconstructInputTrajectory_;
 };
 
 }  // namespace ocs2

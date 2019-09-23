@@ -83,6 +83,14 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::initRollout(const ControlledSystemBase<STAT
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
+void MRT_BASE<STATE_DIM, INPUT_DIM>::initRollout(std::unique_ptr<RolloutBase<STATE_DIM, INPUT_DIM>> rolloutPtr) {
+  rolloutPtr_ = std::move(rolloutPtr);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_BASE<STATE_DIM, INPUT_DIM>::evaluatePolicy(scalar_t currentTime, const state_vector_t& currentState, state_vector_t& mpcState,
                                                     input_vector_t& mpcInput, size_t& subsystem) {
   if (currentTime > currentPrimalSolution_->timeTrajectory_.back()) {

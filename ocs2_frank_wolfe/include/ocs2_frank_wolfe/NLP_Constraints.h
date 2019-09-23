@@ -36,73 +36,64 @@ namespace ocs2 {
 /**
  * This class is an interface to a NLP constraints.
  */
-class NLP_Constraints
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class NLP_Constraints {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using DIMENSIONS = Dimensions<0, 0>;
-	using scalar_t = typename DIMENSIONS::scalar_t;
-	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-	using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
+  using DIMENSIONS = Dimensions<0, 0>;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+  using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
 
-	/**
-	 * Default constructor.
-	 */
-	NLP_Constraints() = default;
+  /**
+   * Default constructor.
+   */
+  NLP_Constraints() = default;
 
-	/**
-	 * Default destructor.
-	 */
-	virtual ~NLP_Constraints() = default;
+  /**
+   * Default destructor.
+   */
+  virtual ~NLP_Constraints() = default;
 
-	/**
-	 * Sets the current parameter vector.
-	 *
-	 * @param [in] x: The value of parameter vector.
-	 */
-	virtual void setCurrentParameter(const dynamic_vector_t& x) {}
+  /**
+   * Sets the current parameter vector.
+   *
+   * @param [in] x: The value of parameter vector.
+   */
+  virtual void setCurrentParameter(const dynamic_vector_t& x) {}
 
-	/**
-	 * Gets the linear equality constraints. \n
-	 * \f$ g_v = A_m x_v + b_v = 0\f$
-	 *
-	 * @param [out] g: The evaluation of the equality constraints, \f$ g_v \f$ vector.
-	 */
-	virtual void getLinearEqualityConstraint(dynamic_vector_t& g) {
-		g.resize(0);
-	}
+  /**
+   * Gets the linear equality constraints. \n
+   * \f$ g_v = A_m x_v + b_v = 0\f$
+   *
+   * @param [out] g: The evaluation of the equality constraints, \f$ g_v \f$ vector.
+   */
+  virtual void getLinearEqualityConstraint(dynamic_vector_t& g) { g.resize(0); }
 
-	/**
-	 * Gets the derivative of the linear equality constraints. \n
-	 * \f$ g_v = A_m x_v + b_v = 0\f$
-	 *
-	 * @param [out] dgdx: The Jacobian of the equality constraints, \f$ A_m \f$ vector.
-	 */
-	virtual void getLinearEqualityConstraintDerivative(dynamic_matrix_t& dgdx) {
-		dgdx.resize(0, 0);
-	}
+  /**
+   * Gets the derivative of the linear equality constraints. \n
+   * \f$ g_v = A_m x_v + b_v = 0\f$
+   *
+   * @param [out] dgdx: The Jacobian of the equality constraints, \f$ A_m \f$ vector.
+   */
+  virtual void getLinearEqualityConstraintDerivative(dynamic_matrix_t& dgdx) { dgdx.resize(0, 0); }
 
-	/**
-	 * Gets the linear inequality constraints. \n
-	 * \f$ h_v = C_m x_v + d_v \geq 0\f$
-	 *
-	 * @param [out] h: The evaluation of the inequality constraints, \f$ h_v \f$ vector.
-	 */
-	virtual void getLinearInequalityConstraint(dynamic_vector_t& h) {
-		h.resize(0);
-	}
+  /**
+   * Gets the linear inequality constraints. \n
+   * \f$ h_v = C_m x_v + d_v \geq 0\f$
+   *
+   * @param [out] h: The evaluation of the inequality constraints, \f$ h_v \f$ vector.
+   */
+  virtual void getLinearInequalityConstraint(dynamic_vector_t& h) { h.resize(0); }
 
-	/**
-	 * Gets the derivative of the linear inequality constraints. \n
-	 * \f$ h_v = C_m x_v + d_v \geq 0\f$
-	 *
-	 * @param [out] dhdx: The Jacobian of the inequality constraints, \f$ C_m \f$ vector.
-	 */
-	virtual void getLinearInequalityConstraintDerivative(dynamic_matrix_t& dhdx) {
-		dhdx.resize(0, 0);
-	}
+  /**
+   * Gets the derivative of the linear inequality constraints. \n
+   * \f$ h_v = C_m x_v + d_v \geq 0\f$
+   *
+   * @param [out] dhdx: The Jacobian of the inequality constraints, \f$ C_m \f$ vector.
+   */
+  virtual void getLinearInequalityConstraintDerivative(dynamic_matrix_t& dhdx) { dhdx.resize(0, 0); }
 };
 
 }  // namespace ocs2

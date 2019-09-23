@@ -31,21 +31,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_cart_pole_example/CartPoleInterface.h"
 
-using namespace ocs2;
-
 int main(int argc, char** argv) {
   // task file
   if (argc <= 1) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
-  std::string taskFileFolderName = std::string(argv[1]);
+  std::string taskFileFolderName(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
-  cartpole::CartPoleInterface cartPoleInterface(taskFileFolderName);
+  ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFileFolderName);
 
   // Launch MPC ROS node
-  MPC_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> mpcNode(cartPoleInterface.getMpc(), "cartpole");
+  ocs2::MPC_ROS_Interface<ocs2::cartpole::STATE_DIM_, ocs2::cartpole::INPUT_DIM_> mpcNode(cartPoleInterface.getMpc(), "cartpole");
   mpcNode.launchNodes(argc, argv);
 
-  // Successful exit
   return 0;
 }

@@ -13,7 +13,10 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <build_depend>roslib</build_depend>
-  <build_depend>tf </build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>urdf</build_depend>
+  <build_depend>kdl_parser</build_depend>
+  <build_depend>robot_state_publisher</build_depend>
   <build_depend>visualization_msgs</build_depend>
   <build_depend>ocs2_core</build_depend>
   <build_depend>ocs2_slq</build_depend>
@@ -25,6 +28,8 @@
 
   <run_depend>tf</run_depend>
   <run_depend>urdf</run_depend>
+  <run_depend>kdl_parser</run_depend>
+  <run_depend>robot_state_publisher</run_depend>
   <run_depend>visualization_msgs</run_depend>
   <run_depend>ocs2_core</run_depend>
   <run_depend>ocs2_slq</run_depend>

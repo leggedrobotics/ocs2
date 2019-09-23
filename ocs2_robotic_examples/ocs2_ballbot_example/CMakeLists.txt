@@ -7,6 +7,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(catkin REQUIRED COMPONENTS
   roslib
   tf
+  urdf
+  kdl_parser
+  robot_state_publisher
   visualization_msgs
   ocs2_core
   ocs2_slq
@@ -43,6 +46,9 @@ catkin_package(
     ${EIGEN3_INCLUDE_DIRS}
   CATKIN_DEPENDS
     tf
+    urdf
+    kdl_parser
+    robot_state_publisher
     visualization_msgs
     ocs2_core
     ocs2_slq

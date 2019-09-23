@@ -41,8 +41,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/OCS2NumericTraits.h>
 #include <ocs2_core/control/ControllerBase.h>
-#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
-#include <ocs2_core/logic/rules/NullLogicRules.h>
 
 #include "Rollout_Settings.h"
 
@@ -70,8 +68,6 @@ class RolloutBase {
   using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
   using input_vector_t = typename DIMENSIONS::input_vector_t;
   using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-
-  using logic_rules_machine_t = HybridLogicRulesMachine;
 
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
 
@@ -108,37 +104,46 @@ class RolloutBase {
    * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
    * to integrate the system dynamics in time period [initTime, finalTime].
    *
-   * @param [in] partitionIndex: Time partition index.
    * @param [in] initTime: The initial time.
    * @param [in] initState: The initial state.
    * @param [in] finalTime: The final time.
    * @param [in] controller: control policy.
-   * @param [in] logicRulesMachine: logic rules machine.
+   * @param [in] eventTimes: The sorted event times array which can cover time beyond initTime and finalTime {s_0 < ... < s_{n-1}}.
    * @param [out] timeTrajectory: The time trajectory stamp.
    * @param [out] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
    * @param [out] stateTrajectory: The state trajectory.
    * @param [out] inputTrajectory: The control input trajectory.
+   *
    * @return The final state (state jump is considered if it took place)
    */
-  virtual state_vector_t run(size_t partitionIndex, scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
-                             controller_t* controller, logic_rules_machine_t& logicRulesMachine, scalar_array_t& timeTrajectory,
-                             size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
-                             input_vector_array_t& inputTrajectory) = 0;
+  state_vector_t run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, controller_t* controller,
+                     const scalar_array_t& eventTimes, scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces,
+                     state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory) {
+    if (initTime > finalTime) {
+      throw std::runtime_error("Initial time should be less-equal to final time.");
+    }
+
+    // switching times
+    auto firstIndex = std::upper_bound(eventTimes.begin(), eventTimes.end(), initTime);
+    auto lastIndex = std::upper_bound(eventTimes.begin(), eventTimes.end(), finalTime);
+    scalar_array_t switchingTimes;
+    switchingTimes.push_back(initTime);
+    switchingTimes.insert(switchingTimes.end(), firstIndex, lastIndex);
+    switchingTimes.push_back(finalTime);
+
+    return runImpl(switchingTimes, initState, controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+  }
 
   /**
    * Prints out the rollout.
    *
-   * @param [in] partitionIndex: Time partition index.
    * @param [in] timeTrajectory: The time trajectory stamp.
    * @param [in] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
    * @param [in] stateTrajectory: The state trajectory.
    * @param [in] inputTrajectory: The control input trajectory.
    */
-  static void display(const size_t& partitionIndex, const scalar_array_t& timeTrajectory, const size_array_t& eventsPastTheEndIndeces,
+  static void display(const scalar_array_t& timeTrajectory, const size_array_t& eventsPastTheEndIndeces,
                       const state_vector_array_t& stateTrajectory, const input_vector_array_t* const inputTrajectory) {
-    std::cerr << std::endl << "++++++++++++++++++++++++++++++" << std::endl;
-    std::cerr << "Partition: " << partitionIndex;
-    std::cerr << std::endl << "++++++++++++++++++++++++++++++" << std::endl;
     std::cerr << "Trajectory length:      " << timeTrajectory.size() << std::endl;
     std::cerr << "Total number of events: " << eventsPastTheEndIndeces.size() << std::endl;
     if (!eventsPastTheEndIndeces.empty()) {
@@ -172,17 +177,33 @@ class RolloutBase {
 
  protected:
   /**
+   * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
+   * to integrate the system dynamics in time period [initTime, finalTime].
+   *
+   * @param [in] switchingTimes: The switching time which include [t_0, s_0, ..., s_{n-1}, tf].
+   * @param [in] initState: The initial state.
+   * @param [in] controller: control policy.
+   * @param [out] timeTrajectory: The time trajectory stamp.
+   * @param [out] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
+   * @param [out] stateTrajectory: The state trajectory.
+   * @param [out] inputTrajectory: The control input trajectory.
+   *
+   * @return The final state (state jump is considered if it took place)
+   */
+  virtual state_vector_t runImpl(scalar_array_t& switchingTimes, const state_vector_t& initState, controller_t* controller,
+                                 scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces,
+                                 state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory) = 0;
+
+  /**
    * Checks for the numerical stability if Rollout_Settings::checkNumericalStability_ is true.
    *
-   * @param [in] partitionIndex: Time partition index.
    * @param [in] timeTrajectory: The time trajectory stamp.
    * @param [in] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
    * @param [in] stateTrajectory: The state trajectory.
    * @param [in] inputTrajectory: The control input trajectory.
    */
-  void checkNumericalStability(const size_t& partitionIndex, controller_t* controller, const scalar_array_t& timeTrajectory,
-                               const size_array_t& eventsPastTheEndIndeces, const state_vector_array_t& stateTrajectory,
-                               const input_vector_array_t& inputTrajectory) const {
+  void checkNumericalStability(controller_t* controller, const scalar_array_t& timeTrajectory, const size_array_t& eventsPastTheEndIndeces,
+                               const state_vector_array_t& stateTrajectory, const input_vector_array_t& inputTrajectory) const {
     if (!rolloutSettings_.checkNumericalStability_) {
       return;
     }
@@ -213,7 +234,7 @@ class RolloutBase {
         // display
         const input_vector_array_t* const inputTrajectoryTempPtr =
             rolloutSettings_.reconstructInputTrajectory_ ? &inputTrajectoryTemp : nullptr;
-        display(partitionIndex, timeTrajectoryTemp, eventsPastTheEndIndeces, stateTrajectoryTemp, inputTrajectoryTempPtr);
+        display(timeTrajectoryTemp, eventsPastTheEndIndeces, stateTrajectoryTemp, inputTrajectoryTempPtr);
 
         controller->display();
 

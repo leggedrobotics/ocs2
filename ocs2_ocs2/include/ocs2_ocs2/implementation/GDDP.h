@@ -569,9 +569,8 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
         riccatiSensitivityIntegratorsPtrStock_[workerIndex]->integrate(SsFinal, beginTimeItr, endTimeItr, allSsTrajectory,
                                                                        gddpSettings_.minTimeStep_, gddpSettings_.absTolODE_,
                                                                        gddpSettings_.relTolODE_, maxNumSteps, true);
-
       } else {
-        allSsTrajectory.push_back(SsFinal);
+        allSsTrajectory.insert(allSsTrajectory.end(), 2, SsFinal);  // integration would have added two points
       }
 
       // final value of the next subsystem
@@ -708,14 +707,14 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(size_t workerIndex, const s
                                                                         gddpSettings_.relTolODE_, maxNumSteps, true);
 
       } else {
-        rMvTrajectory.push_back(MvFinalInternal);
-        rMveTrajectory.push_back(MveFinalInternal);
+        rMvTrajectory.insert(rMvTrajectory.end(), 2, MvFinalInternal);     // integration would have added two points
+        rMveTrajectory.insert(rMveTrajectory.end(), 2, MveFinalInternal);  // integration would have added two points
       }
 
       // final value of the next subsystem
       if (j < NE) {
         MvFinalInternal = rMvTrajectory.back();
-        //				MvFinalInternal += dcPtr_->QvFinalStock_[i][NE-1-j];
+        // MvFinalInternal += dcPtr_->QvFinalStock_[i][NE-1-j];
         MveFinalInternal = rMveTrajectory.back();
       }
     }  // end of j loop

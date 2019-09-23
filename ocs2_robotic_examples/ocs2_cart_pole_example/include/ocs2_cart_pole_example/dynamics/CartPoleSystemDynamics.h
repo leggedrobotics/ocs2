@@ -51,11 +51,11 @@ class CartPoleSytemDynamics : public SystemDynamicsBaseAD<cartpole::STATE_DIM_, 
 
   using cart_pole_parameters_t = CartPoleParameters<scalar_t>;
 
-  CartPoleSytemDynamics(const cart_pole_parameters_t& cartPoleParameters) : param_(cartPoleParameters) {}
+  explicit CartPoleSytemDynamics(const cart_pole_parameters_t& cartPoleParameters) : param_(cartPoleParameters) {}
 
-  ~CartPoleSytemDynamics() = default;
+  ~CartPoleSytemDynamics() override = default;
 
-  CartPoleSytemDynamics(const CartPoleSytemDynamics& rhs) : BASE(rhs), param_(rhs.param_) {}
+  CartPoleSytemDynamics(const CartPoleSytemDynamics& rhs) = default;
 
   CartPoleSytemDynamics* clone() const override { return new CartPoleSytemDynamics(*this); }
 

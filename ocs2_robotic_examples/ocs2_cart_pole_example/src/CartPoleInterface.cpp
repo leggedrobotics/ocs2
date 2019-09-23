@@ -80,21 +80,21 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   /*
    * Cost function
    */
-  loadData::loadEigenMatrix(taskFile, "Q", Q_);
-  loadData::loadEigenMatrix(taskFile, "R", R_);
-  loadData::loadEigenMatrix(taskFile, "Q_final", QFinal_);
+  loadData::loadEigenMatrix(taskFile, "Q", qm_);
+  loadData::loadEigenMatrix(taskFile, "R", rm_);
+  loadData::loadEigenMatrix(taskFile, "Q_final", qmFinal_);
   loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
   //	xNominal_ = dim_t::state_vector_t::Zero();
   xNominal_ = xFinal_;
   uNominal_ = dim_t::input_vector_t::Zero();
 
-  std::cerr << "Q:  \n" << Q_ << std::endl;
-  std::cerr << "R:  \n" << R_ << std::endl;
-  std::cerr << "Q_final:\n" << QFinal_ << std::endl;
+  std::cerr << "Q:  \n" << qm_ << std::endl;
+  std::cerr << "R:  \n" << rm_ << std::endl;
+  std::cerr << "Q_final:\n" << qmFinal_ << std::endl;
   std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
   std::cerr << "x_final:  " << xFinal_.transpose() << std::endl;
 
-  cartPoleCostPtr_.reset(new CartPoleCost(Q_, R_, xNominal_, uNominal_, QFinal_, xFinal_));
+  cartPoleCostPtr_.reset(new CartPoleCost(qm_, rm_, xNominal_, uNominal_, qmFinal_, xFinal_));
 
   /*
    * Constraints
@@ -104,8 +104,6 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   /*
    * Initialization
    */
-  //	cartPoleOperatingPointPtr_.reset(new CartPoleOperatingPoint(
-  //			dim_t::state_vector_t::Zero(), dim_t::input_vector_t::Zero()));
   cartPoleOperatingPointPtr_.reset(new CartPoleOperatingPoint(initialState_, dim_t::input_vector_t::Zero()));
 
   /*

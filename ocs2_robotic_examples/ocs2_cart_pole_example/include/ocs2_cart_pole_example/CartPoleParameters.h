@@ -45,8 +45,8 @@ class CartPoleParameters {
   /**
    * Constructor.
    */
-  CartPoleParameters(SCALAR_T cartMass = 1.0, SCALAR_T poleMass = 1.0, SCALAR_T poleLength = 1.0, SCALAR_T poleWidth = 0.05,
-                     SCALAR_T gravity = 9.8)
+  explicit CartPoleParameters(SCALAR_T cartMass = 1.0, SCALAR_T poleMass = 1.0, SCALAR_T poleLength = 1.0, SCALAR_T poleWidth = 0.05,
+                              SCALAR_T gravity = 9.8)
 
       : cartMass_(cartMass), poleMass_(poleMass), poleLength_(poleLength), poleWidth_(poleWidth), gravity_(gravity) {
     computeInertiaTerms();
@@ -77,42 +77,66 @@ class CartPoleParameters {
     boost::property_tree::ptree pt;
     boost::property_tree::read_info(filename, pt);
 
-    if (verbose) std::cerr << "\n #### Cart-pole Parameters:" << std::endl;
-    if (verbose) std::cerr << " #### =========================================" << std::endl;
+    if (verbose) {
+      std::cerr << "\n #### Cart-pole Parameters:" << std::endl;
+    }
+    if (verbose) {
+      std::cerr << " #### =========================================" << std::endl;
+    }
 
     try {
       cartMass_ = pt.get<SCALAR_T>("CartPoleParameters.cartMass");
-      if (verbose) std::cerr << " #### cartMass ......... " << cartMass_ << std::endl;
+      if (verbose) {
+        std::cerr << " #### cartMass ......... " << cartMass_ << std::endl;
+      }
     } catch (const std::exception& e) {
-      if (verbose) std::cerr << " #### cartMass ......... " << cartMass_ << "\t(default)" << std::endl;
+      if (verbose) {
+        std::cerr << " #### cartMass ......... " << cartMass_ << "\t(default)" << std::endl;
+      }
     }
 
     try {
       poleMass_ = pt.get<SCALAR_T>("CartPoleParameters.poleMass");
-      if (verbose) std::cerr << " #### poleMass ......... " << poleMass_ << std::endl;
+      if (verbose) {
+        std::cerr << " #### poleMass ......... " << poleMass_ << std::endl;
+      }
     } catch (const std::exception& e) {
-      if (verbose) std::cerr << " #### poleMass ......... " << poleMass_ << "\t(default)" << std::endl;
+      if (verbose) {
+        std::cerr << " #### poleMass ......... " << poleMass_ << "\t(default)" << std::endl;
+      }
     }
 
     try {
       poleLength_ = pt.get<SCALAR_T>("CartPoleParameters.poleLength");
-      if (verbose) std::cerr << " #### poleLength ....... " << poleLength_ << std::endl;
+      if (verbose) {
+        std::cerr << " #### poleLength ....... " << poleLength_ << std::endl;
+      }
     } catch (const std::exception& e) {
-      if (verbose) std::cerr << " #### poleLength ....... " << poleLength_ << "\t(default)" << std::endl;
+      if (verbose) {
+        std::cerr << " #### poleLength ....... " << poleLength_ << "\t(default)" << std::endl;
+      }
     }
 
     try {
       poleWidth_ = pt.get<SCALAR_T>("CartPoleParameters.poleWidth");
-      if (verbose) std::cerr << " #### poleWidth ........ " << poleWidth_ << std::endl;
+      if (verbose) {
+        std::cerr << " #### poleWidth ........ " << poleWidth_ << std::endl;
+      }
     } catch (const std::exception& e) {
-      if (verbose) std::cerr << " #### poleWidth ........ " << poleWidth_ << "\t(default)" << std::endl;
+      if (verbose) {
+        std::cerr << " #### poleWidth ........ " << poleWidth_ << "\t(default)" << std::endl;
+      }
     }
 
     try {
       gravity_ = pt.get<SCALAR_T>("CartPoleParameters.gravity");
-      if (verbose) std::cerr << " #### gravity .......... " << gravity_ << std::endl;
+      if (verbose) {
+        std::cerr << " #### gravity .......... " << gravity_ << std::endl;
+      }
     } catch (const std::exception& e) {
-      if (verbose) std::cerr << " #### gravity .......... " << gravity_ << "\t(default)" << std::endl;
+      if (verbose) {
+        std::cerr << " #### gravity .......... " << gravity_ << "\t(default)" << std::endl;
+      }
     }
 
     computeInertiaTerms();

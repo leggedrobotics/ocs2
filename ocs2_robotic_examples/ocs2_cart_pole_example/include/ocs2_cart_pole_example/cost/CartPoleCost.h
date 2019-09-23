@@ -71,14 +71,14 @@ class CartPoleCost final : public QuadraticCostFunction<cartpole::STATE_DIM_, ca
   /**
    * Destructor
    */
-  ~CartPoleCost() = default;
+  ~CartPoleCost() override = default;
 
   /**
    * Returns pointer to the class.
    *
    * @return A raw pointer to the class.
    */
-  CartPoleCost* clone() const { return new CartPoleCost(*this); }
+  CartPoleCost* clone() const override { return new CartPoleCost(*this); }
 
  private:
 };

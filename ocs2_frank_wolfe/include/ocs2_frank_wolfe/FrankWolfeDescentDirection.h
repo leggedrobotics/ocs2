@@ -45,78 +45,68 @@ namespace ocs2 {
  * respecting linear equalities and inequalities. For more discussion on this
  * algorithm, the reader should refer to \cite jaggi13 .
  */
-class FrankWolfeDescentDirection
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class FrankWolfeDescentDirection {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using DIMENSIONS = Dimensions<0, 0>;
-	using scalar_t = typename DIMENSIONS::scalar_t;
-	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-	using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
+  using DIMENSIONS = Dimensions<0, 0>;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+  using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param [in] display:
-	 */
-	explicit FrankWolfeDescentDirection(bool display);
+  /**
+   * Constructor.
+   *
+   * @param [in] display:
+   */
+  explicit FrankWolfeDescentDirection(bool display);
 
-	/**
-	 * Default destructor.
-	 */
-	~FrankWolfeDescentDirection() = default;
+  /**
+   * Default destructor.
+   */
+  ~FrankWolfeDescentDirection() = default;
 
-	/**
-	 * Calculates the Frank-Wolfe descent direction which respects the domain
-	 * constraints as well as element-wise maximum of the descent direction
-	 * which defined as: \n
-	 * \f$ | diag[e_v] d_v | \leq 1 0\f$.
-	 *
-	 * Note that if there is no limit for a direction set associated
-	 * element of \f$ e_v \f$ to zero.
-	 *
-	 * @param [in] parameter: The value of parameter vector.
-	 * @param [in] gradient: The gradient at the current parameter vector.
-	 * @param [in] maxGradientInverse: descent directions element-wise maximum inverse, \f$ e_v \f$.
-	 * @param [in] nlpConstraintsPtr: A pointer to the NLP constraints.
-	 * @param [out] fwDescentDirection: The Frank-Wolfe descent direction at the current parameter vector.
-	 */
-	void run(const dynamic_vector_t& parameter,
-			const dynamic_vector_t& gradient,
-			const dynamic_vector_t& maxGradientInverse,
-			NLP_Constraints* nlpConstraintsPtr,
-			dynamic_vector_t& fwDescentDirection);
+  /**
+   * Calculates the Frank-Wolfe descent direction which respects the domain
+   * constraints as well as element-wise maximum of the descent direction
+   * which defined as: \n
+   * \f$ | diag[e_v] d_v | \leq 1 0\f$.
+   *
+   * Note that if there is no limit for a direction set associated
+   * element of \f$ e_v \f$ to zero.
+   *
+   * @param [in] parameter: The value of parameter vector.
+   * @param [in] gradient: The gradient at the current parameter vector.
+   * @param [in] maxGradientInverse: descent directions element-wise maximum inverse, \f$ e_v \f$.
+   * @param [in] nlpConstraintsPtr: A pointer to the NLP constraints.
+   * @param [out] fwDescentDirection: The Frank-Wolfe descent direction at the current parameter vector.
+   */
+  void run(const dynamic_vector_t& parameter, const dynamic_vector_t& gradient, const dynamic_vector_t& maxGradientInverse,
+           NLP_Constraints* nlpConstraintsPtr, dynamic_vector_t& fwDescentDirection);
 
-private:
-	/**
-	 * Instantiates GLPK solver
-	 */
-	void instantiateGLPK();
+ private:
+  /**
+   * Instantiates GLPK solver
+   */
+  void instantiateGLPK();
 
-	/**
-	 * Sets up Frank-Wolfe linear program.
-	 *
-	 * @param [in] parameter: The value of parameter vector.
-	 * @param [in] gradient: The gradient at the current parameter vector.
-	 * @param [in] maxGradientInverse: descent directions element-wise maximum inverse, \f$ e_v \f$.
-	 * @param [in] nlpConstraintsPtr: A pointer to the NLP constraints.
-	 */
-	void setupLP(
-			const dynamic_vector_t& parameter,
-			const dynamic_vector_t& gradient,
-			const dynamic_vector_t& maxGradientInverse,
-			NLP_Constraints* nlpConstraintsPtr);
+  /**
+   * Sets up Frank-Wolfe linear program.
+   *
+   * @param [in] parameter: The value of parameter vector.
+   * @param [in] gradient: The gradient at the current parameter vector.
+   * @param [in] maxGradientInverse: descent directions element-wise maximum inverse, \f$ e_v \f$.
+   * @param [in] nlpConstraintsPtr: A pointer to the NLP constraints.
+   */
+  void setupLP(const dynamic_vector_t& parameter, const dynamic_vector_t& gradient, const dynamic_vector_t& maxGradientInverse,
+               NLP_Constraints* nlpConstraintsPtr);
 
-	/***********
-	 * Variables
-	 **********/
-	std::unique_ptr<glp_prob, void(*)(glp_prob*)> lpPtr_;
-	std::unique_ptr<glp_smcp> lpOptionsPtr_;
-
+  /***********
+   * Variables
+   **********/
+  std::unique_ptr<glp_prob, void (*)(glp_prob*)> lpPtr_;
+  std::unique_ptr<glp_smcp> lpOptionsPtr_;
 };
 
 }  // namespace ocs2
-
-#include "implementation/FrankWolfeDescentDirection.h"

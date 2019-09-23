@@ -34,9 +34,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Loop(mrt_t& mrt, scalar_t mrtDesiredFrequency /*= 100*/,
-                                                             scalar_t mpcDesiredFrequency /*= -1*/,
-                                                             const controlled_system_base_t* systemPtr /* = nullptr*/,
-                                                             Rollout_Settings rolloutSettings /*= Rollout_Settings()*/)
+                                                             scalar_t mpcDesiredFrequency /*= -1*/)
     : mrt_(mrt),
       mrtDesiredFrequency_(mrtDesiredFrequency),
       mpcDesiredFrequency_(mpcDesiredFrequency),
@@ -48,11 +46,6 @@ MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Loop(mrt_t& mrt, scalar_
 
   if (mpcDesiredFrequency_ > 0) {
     ROS_WARN_STREAM("MPC loop is not realtime! For realtime setting, set mpcDesiredFrequency to any negative number.");
-  }
-
-  if (systemPtr) {
-    systemPtr_.reset(systemPtr->clone());
-    mrt_.initRollout(*systemPtr_, rolloutSettings);
   }
 }
 
@@ -129,7 +122,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(const system_observation_t& i
 
     // integrate nominal dynamics if available, otherwise fake simulation
     state_vector_t stateTemp = observation_.state();
-    if (systemPtr_) {
+    if (mrt_.rolloutSet()) {
       mrt_.rolloutPolicy(time, stateTemp, timeStep, observation_.state(), observation_.input(), observation_.subsystem());
     } else {
       mrt_.evaluatePolicy(time + timeStep, stateTemp, observation_.state(), observation_.input(), observation_.subsystem());

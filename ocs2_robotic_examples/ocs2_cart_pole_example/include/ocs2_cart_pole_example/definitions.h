@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace cartpole {
 
-enum cartpole : size_t {
+enum Cartpole : size_t {
   STATE_DIM_ = 4,
   INPUT_DIM_ = 1,
 };

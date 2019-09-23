@@ -1,1 +1,0 @@
-[![Build Status](https://ci.leggedrobotics.com/buildStatus/icon?job=bitbucket_leggedrobotics/ocs2_anymal_interface/master)](https://ci.leggedrobotics.com/job/bitbucket_leggedrobotics/job/ocs2_anymal_interface/job/master/)

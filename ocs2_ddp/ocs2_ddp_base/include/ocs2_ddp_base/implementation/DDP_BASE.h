@@ -210,8 +210,8 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
     }
 
     // call rollout worker for the partition 'i' on the thread 'threadId'
-    const scalar_t t0 = (i != initActivePartition) ? partitioningTimes[i] : initTime;
-    const scalar_t tf = (i != finalActivePartition) ? partitioningTimes[i + 1] : finalTime;
+    const scalar_t t0 = (i == initActivePartition) ? initTime : partitioningTimes[i];
+    const scalar_t tf = (i == finalActivePartition) ? finalTime : partitioningTimes[i + 1];
     const scalar_array_t& eventTimes = BASE::getLogicRulesMachinePtr()->getLogicRulesPtr()->eventTimes();
     if (!controllerPtrTemp->empty()) {
       x0 = dynamicsForwardRolloutPtrStock_[threadId]->run(t0, x0, tf, controllerPtrTemp, eventTimes, timeTrajectoriesStock[i],

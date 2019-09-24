@@ -190,7 +190,7 @@ class RolloutBase {
    *
    * @return The final state (state jump is considered if it took place)
    */
-  virtual state_vector_t runImpl(scalar_array_t& switchingTimes, const state_vector_t& initState, controller_t* controller,
+  virtual state_vector_t runImpl(const scalar_array_t& switchingTimes, const state_vector_t& initState, controller_t* controller,
                                  scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces,
                                  state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory) = 0;
 

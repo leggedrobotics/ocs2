@@ -33,6 +33,8 @@ catkin_package(
   INCLUDE_DIRS
     include
     ${EIGEN3_INCLUDE_DIRS}
+  LIBRARIES
+    cartpole_interface
   CATKIN_DEPENDS
     ocs2_core
     ocs2_slq
@@ -92,20 +94,6 @@ target_link_libraries(cartpole_dummy_test
   ${catkin_LIBRARIES}
 )
 
-# Dummy node with raisim rollout
-if(raisim_FOUND)
-  add_executable(cartpole_dummy_raisim
-    src/Dummy_Cartpole_Raisim_Node.cpp
-  )
-  add_dependencies(cartpole_dummy_raisim
-    ${catkin_EXPORTED_TARGETS}
-  )
-  target_link_libraries(cartpole_dummy_raisim
-    cartpole_interface
-    ${catkin_LIBRARIES}
-    raisim::raisim
-  )
-endif(raisim_FOUND)
 
 #########################
 ###   CLANG TOOLING   ###

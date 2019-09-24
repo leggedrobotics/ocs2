@@ -30,7 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/integration/Integrator.h>
-#include <ocs2_core/integration/StateTriggeredEventHandler.h>
 #include <ocs2_core/integration/SystemEventHandler.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 
@@ -139,8 +138,6 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   using error_equation_t = SequentialErrorEquationNormalized<STATE_DIM, INPUT_DIM>;
   using s_vector_t = typename riccati_equations_t::s_vector_t;
   using s_vector_array_t = typename riccati_equations_t::s_vector_array_t;
-
-  //  using state_triggered_rollout_t = StateTriggeredRollout<STATE_DIM, INPUT_DIM>;
 
   /**
    * class for collecting SLQ data

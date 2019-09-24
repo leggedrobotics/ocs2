@@ -127,7 +127,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   ~TimeTriggeredRollout() override = default;
 
  protected:
-  state_vector_t runImpl(scalar_array_t& switchingTimes, const state_vector_t& initState, controller_t* controller,
+  state_vector_t runImpl(const scalar_array_t& switchingTimes, const state_vector_t& initState, controller_t* controller,
                          scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
                          input_vector_array_t& inputTrajectory) override {
     if (controller == nullptr) {

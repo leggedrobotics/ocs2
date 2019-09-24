@@ -60,6 +60,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using typename BASE::size_array_t;
   using typename BASE::state_vector_array_t;
   using typename BASE::state_vector_t;
+  using typename BASE::time_interval_array_t;
 
   using event_handler_t = SystemEventHandler<STATE_DIM>;
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
@@ -127,19 +128,19 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   ~TimeTriggeredRollout() override = default;
 
  protected:
-  state_vector_t runImpl(const scalar_array_t& switchingTimes, const state_vector_t& initState, controller_t* controller,
+  state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
                          scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
                          input_vector_array_t& inputTrajectory) override {
     if (controller == nullptr) {
       throw std::runtime_error("The input controller is not set.");
     }
 
-    const int numEvents = switchingTimes.size() - 2;
-    const int numSubsystems = switchingTimes.size() - 1;
+    const int numSubsystems = timeIntervalArray.size();
+    const int numEvents = numSubsystems - 1;
 
     // max number of steps for integration
-    const auto maxNumSteps =
-        static_cast<size_t>(BASE::settings().maxNumStepsPerSecond_ * std::max(1.0, switchingTimes.back() - switchingTimes.front()));
+    const auto maxNumSteps = static_cast<size_t>(BASE::settings().maxNumStepsPerSecond_ *
+                                                 std::max(1.0, timeIntervalArray.back().second - timeIntervalArray.front().first));
 
     // clearing the output trajectories
     timeTrajectory.clear();
@@ -163,21 +164,10 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     state_vector_t beginState = initState;
     size_t k_u = 0;  // control input iterator
     for (int i = 0; i < numSubsystems; i++) {
-      scalar_t beginTime = switchingTimes[i];
-      scalar_t endTime = switchingTimes[i + 1];
-
-      const scalar_t eps = OCS2NumericTraits<scalar_t>::weakEpsilon();
-      if (endTime - beginTime > eps) {
-        // in order to correctly detect the next subsystem (right limit)
-        beginTime += eps;
-
-        // integrate controlled system
-        dynamicsIntegratorsPtr_->integrate(beginState, beginTime, endTime, stateTrajectory, timeTrajectory, BASE::settings().minTimeStep_,
-                                           BASE::settings().absTolODE_, BASE::settings().relTolODE_, maxNumSteps, true);
-      } else {
-        timeTrajectory.insert(timeTrajectory.end(), 2, endTime);       // integration would have added two points
-        stateTrajectory.insert(stateTrajectory.end(), 2, beginState);  // integration would have added two points
-      }
+      // integrate controlled system
+      dynamicsIntegratorsPtr_->integrate(beginState, timeIntervalArray[i].first, timeIntervalArray[i].second, stateTrajectory,
+                                         timeTrajectory, BASE::settings().minTimeStep_, BASE::settings().absTolODE_,
+                                         BASE::settings().relTolODE_, maxNumSteps, true);
 
       // compute control input trajectory and concatenate to inputTrajectory
       if (BASE::settings().reconstructInputTrajectory_) {
@@ -190,7 +180,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       if (i < numEvents) {
         eventsPastTheEndIndeces.push_back(stateTrajectory.size());
         // jump map
-        systemDynamicsPtr_->computeJumpMap(endTime, stateTrajectory.back(), beginState);
+        systemDynamicsPtr_->computeJumpMap(timeTrajectory.back(), stateTrajectory.back(), beginState);
       }
     }  // end of i loop
 

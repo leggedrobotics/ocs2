@@ -5,16 +5,7 @@ include(ExternalProject)
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-## pull in Raisim
-#ExternalProject_Add(raisim
-#  GIT_REPOSITORY https://github.com/leggedrobotics/raisimLib.git
-#  PREFIX ${CMAKE_BINARY_DIR}/raisim
-#  CONFIGURE_COMMAND "" # "${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/raisim/install && make && make install"
-#  BUILD_COMMAND ""
-#  INSTALL_COMMAND ""
-#)
-
-#file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/raisim/)
+# installing raisim before find_package(raisim)
 execute_process(
   COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/raisim_subproject/
@@ -34,7 +25,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(raisim REQUIRED
-  PATHS ${CMAKE_BINARY_DIR}/raisim/install/lib/cmake/raisim
+  PATHS ${CMAKE_CURRENT_SOURCE_DIR}/raisim_subproject/raisim/install/lib/cmake/raisim
 )
 
 ###################################

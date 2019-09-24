@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 project(ocs2_raisim)
+include(ExternalProject)
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -13,7 +14,16 @@ find_package(catkin REQUIRED COMPONENTS
     ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
-find_package(raisim REQUIRED)
+# pull in Raisim
+ExternalProject_Add(raisim
+  GIT_REPOSITORY https://github.com/leggedrobotics/raisimLib.git
+  PREFIX ${CMAKE_BINARY_DIR}/raisim
+  CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/raisim/install"
+)
+
+find_package(raisim REQUIRED
+  PATHS ${CMAKE_BINARY_DIR}/raisim/install/lib/cmake/raisim
+)
 
 ###################################
 ## catkin specific configuration ##

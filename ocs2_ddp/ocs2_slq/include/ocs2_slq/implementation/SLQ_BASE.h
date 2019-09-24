@@ -653,13 +653,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::integrateRiccatiEquationNominalTime(
     typename scalar_array_t::const_iterator beginTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i];
     typename scalar_array_t::const_iterator endTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i + 1];
 
-    // solve Riccati equations if interval length is not zero (no event time at final time)
-    if (*beginTimeItr < *(endTimeItr - 1)) {
-      riccatiIntegrator.integrate(allSsFinal, beginTimeItr, endTimeItr, allSsTrajectory, BASE::ddpSettings_.minTimeStep_,
-                                  BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps, true);
-    } else {
-      allSsTrajectory.insert(allSsTrajectory.end(), 2, allSsFinal);  // integration would have added two points
-    }
+    // solve Riccati equations
+    riccatiIntegrator.integrate(allSsFinal, beginTimeItr, endTimeItr, allSsTrajectory, BASE::ddpSettings_.minTimeStep_,
+                                BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps, true);
 
     if (i < numEvents) {
       SsNormalizedEventsPastTheEndIndices.push_back(allSsTrajectory.size());
@@ -705,14 +701,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::integrateRiccatiEquationAdaptiveTime(
     scalar_t beginTime = SsNormalizedSwitchingTimes[i];
     scalar_t endTime = SsNormalizedSwitchingTimes[i + 1];
 
-    // solve Riccati equations if interval length is not zero (no event time at final time)
-    if (beginTime < endTime) {
-      riccatiIntegrator.integrate(allSsFinal, beginTime, endTime, allSsTrajectory, SsNormalizedTime, BASE::ddpSettings_.minTimeStep_,
-                                  BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps, true);
-    } else {
-      SsNormalizedTime.insert(SsNormalizedTime.end(), 2, endTime);   // integration would have added two points
-      allSsTrajectory.insert(allSsTrajectory.end(), 2, allSsFinal);  // integration would have added two points
-    }
+    // solve Riccati equations
+    riccatiIntegrator.integrate(allSsFinal, beginTime, endTime, allSsTrajectory, SsNormalizedTime, BASE::ddpSettings_.minTimeStep_,
+                                BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps, true);
 
     // if not the last interval which definitely does not have any event at
     // its final time (there is no even at the beginning of partition)
@@ -816,14 +807,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveErrorRiccatiEquationWorker(size_t work
     beginTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i];
     endTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i + 1];
 
-    // solve Riccati equations if interval length is not zero (no event time at final time)
-    if (*beginTimeItr < *(endTimeItr - 1)) {
-      errorIntegratorPtrStock_[workerIndex]->integrate(SveFinalInternal, beginTimeItr, endTimeItr, SveTrajectory,
-                                                       BASE::ddpSettings_.minTimeStep_, BASE::ddpSettings_.absTolODE_,
-                                                       BASE::ddpSettings_.relTolODE_, maxNumSteps, true);
-    } else {
-      SveTrajectory.insert(SveTrajectory.end(), 2, SveFinalInternal);  // integration would have added two points
-    }
+    // solve error Riccati equations
+    errorIntegratorPtrStock_[workerIndex]->integrate(SveFinalInternal, beginTimeItr, endTimeItr, SveTrajectory,
+                                                     BASE::ddpSettings_.minTimeStep_, BASE::ddpSettings_.absTolODE_,
+                                                     BASE::ddpSettings_.relTolODE_, maxNumSteps, true);
 
     if (i < numEvents) {
       errorEquationPtrStock_[workerIndex]->computeJumpMap(*endTimeItr, SveTrajectory.back(), SveFinalInternal);

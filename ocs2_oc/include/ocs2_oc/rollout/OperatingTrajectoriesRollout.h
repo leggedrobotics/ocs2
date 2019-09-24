@@ -50,18 +50,17 @@ class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
   using BASE = RolloutBase<STATE_DIM, INPUT_DIM>;
 
-  using controller_t = typename BASE::controller_t;
-  using size_array_t = typename BASE::size_array_t;
-  using scalar_t = typename BASE::scalar_t;
-  using scalar_array_t = typename BASE::scalar_array_t;
-  using state_vector_t = typename BASE::state_vector_t;
-  using state_vector_array_t = typename BASE::state_vector_array_t;
-  using input_vector_t = typename BASE::input_vector_t;
-  using input_vector_array_t = typename BASE::input_vector_array_t;
+  using typename BASE::controller_t;
+  using typename BASE::input_vector_array_t;
+  using typename BASE::input_vector_t;
+  using typename BASE::scalar_array_t;
+  using typename BASE::scalar_t;
+  using typename BASE::size_array_t;
+  using typename BASE::state_vector_array_t;
+  using typename BASE::state_vector_t;
+  using typename BASE::time_interval_array_t;
 
   using operating_trajectories_t = SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM>;
-
-  using logic_rules_machine_t = HybridLogicRulesMachine;
 
   /**
    * Constructor.
@@ -80,11 +79,11 @@ class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   ~OperatingTrajectoriesRollout() override = default;
 
  protected:
-  state_vector_t runImpl(const scalar_array_t& switchingTimes, const state_vector_t& initState, controller_t* controller,
+  state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
                          scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
                          input_vector_array_t& inputTrajectory) override {
-    const int numEvents = switchingTimes.size() - 2;
-    const int numSubsystems = switchingTimes.size() - 1;
+    const int numSubsystems = timeIntervalArray.size();
+    const int numEvents = numSubsystems - 1;
 
     // clearing the output trajectories
     timeTrajectory.clear();
@@ -99,17 +98,9 @@ class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     state_vector_t beginState = initState;
     scalar_t beginTime, endTime;
     for (int i = 0; i < numSubsystems; i++) {
-      scalar_t beginTime = switchingTimes[i];
-      scalar_t endTime = switchingTimes[i + 1];
-
-      const scalar_t eps = OCS2NumericTraits<scalar_t>::weakEpsilon();
-      if (endTime - beginTime > eps) {
-        // in order to correctly detect the next subsystem (right limit)
-        beginTime += eps;
-      }
       // get operating trajectories
-      operatingTrajectoriesPtr_->getSystemOperatingTrajectories(beginState, beginTime, endTime, timeTrajectory, stateTrajectory,
-                                                                inputTrajectory, true);
+      operatingTrajectoriesPtr_->getSystemOperatingTrajectories(beginState, timeIntervalArray[i].first, timeIntervalArray[i].second,
+                                                                timeTrajectory, stateTrajectory, inputTrajectory, true);
 
       if (i < numEvents) {
         eventsPastTheEndIndeces.push_back(stateTrajectory.size());

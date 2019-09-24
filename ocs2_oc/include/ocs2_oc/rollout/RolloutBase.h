@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 #include <numeric>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include <ocs2_core/Dimensions.h>
@@ -71,6 +72,9 @@ class RolloutBase {
 
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
 
+  using time_interval_t = std::pair<scalar_t, scalar_t>;
+  using time_interval_array_t = std::vector<time_interval_t>;
+
   /**
    * Default constructor.
    *
@@ -78,7 +82,6 @@ class RolloutBase {
    * @param [in] algorithmName: The algorithm that calls this class (default not defined).
    */
   explicit RolloutBase(const Rollout_Settings& rolloutSettings = Rollout_Settings(), const char* algorithmName = nullptr)
-
       : rolloutSettings_(rolloutSettings), algorithmName_(algorithmName) {}
 
   /**
@@ -131,7 +134,25 @@ class RolloutBase {
     switchingTimes.insert(switchingTimes.end(), firstIndex, lastIndex);
     switchingTimes.push_back(finalTime);
 
-    return runImpl(switchingTimes, initState, controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+    // constructing the rollout time intervals
+    time_interval_array_t timeIntervalArray;
+    const int numSubsystems = switchingTimes.size() - 1;
+    for (int i = 0; i < numSubsystems; i++) {
+      const auto& beginTime = switchingTimes[i];
+      const auto& endTime = switchingTimes[i + 1];
+      timeIntervalArray.emplace_back(beginTime, endTime);
+
+      // adjusting the start time for correcting the subsystem recognition
+      const scalar_t eps = OCS2NumericTraits<scalar_t>::weakEpsilon();
+      if (endTime - beginTime > eps) {
+        timeIntervalArray.back().first += eps;
+      } else {
+        timeIntervalArray.back().first = endTime;
+      }
+    }  // end of for loop
+
+    return runImpl(std::move(timeIntervalArray), initState, controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory,
+                   inputTrajectory);
   }
 
   /**
@@ -159,7 +180,7 @@ class RolloutBase {
     size_t k = 0;
     for (size_t i = 0; i < numSubsystems; i++) {
       for (; k < timeTrajectory.size(); k++) {
-        std::cerr << "k:     " << k << std::endl;
+        std::cerr << "Index: " << k << std::endl;
         std::cerr << "Time:  " << std::setprecision(9) << timeTrajectory[k] << std::endl;
         std::cerr << "State: " << std::setprecision(3) << stateTrajectory[k].transpose() << std::endl;
         if (inputTrajectory) {
@@ -180,7 +201,7 @@ class RolloutBase {
    * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
    * to integrate the system dynamics in time period [initTime, finalTime].
    *
-   * @param [in] switchingTimes: The switching time which include [t_0, s_0, ..., s_{n-1}, tf].
+   * @param [in] timeIntervalArray: An array of the rollout's start and final times.
    * @param [in] initState: The initial state.
    * @param [in] controller: control policy.
    * @param [out] timeTrajectory: The time trajectory stamp.
@@ -190,7 +211,7 @@ class RolloutBase {
    *
    * @return The final state (state jump is considered if it took place)
    */
-  virtual state_vector_t runImpl(const scalar_array_t& switchingTimes, const state_vector_t& initState, controller_t* controller,
+  virtual state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
                                  scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces,
                                  state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory) = 0;
 

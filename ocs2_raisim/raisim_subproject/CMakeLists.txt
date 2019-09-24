@@ -8,6 +8,6 @@ ExternalProject_Add(raisim
   GIT_REPOSITORY https://github.com/leggedrobotics/raisimLib.git
   PREFIX ${CMAKE_BINARY_DIR}/raisim
   CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/raisim/install"
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ""
+  #BUILD_COMMAND ""
+  #INSTALL_COMMAND ""
 )

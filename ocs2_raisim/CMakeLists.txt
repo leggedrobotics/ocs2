@@ -5,6 +5,25 @@ include(ExternalProject)
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+## pull in Raisim
+#ExternalProject_Add(raisim
+#  GIT_REPOSITORY https://github.com/leggedrobotics/raisimLib.git
+#  PREFIX ${CMAKE_BINARY_DIR}/raisim
+#  CONFIGURE_COMMAND "" # "${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/raisim/install && make && make install"
+#  BUILD_COMMAND ""
+#  INSTALL_COMMAND ""
+#)
+
+#file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/raisim/)
+execute_process(
+  COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/raisim_subproject/
+)
+execute_process(
+  COMMAND make
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/raisim_subproject/
+)
+
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_oc
@@ -12,13 +31,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
 
 find_package(catkin REQUIRED COMPONENTS
     ${CATKIN_PACKAGE_DEPENDENCIES}
-)
-
-# pull in Raisim
-ExternalProject_Add(raisim
-  GIT_REPOSITORY https://github.com/leggedrobotics/raisimLib.git
-  PREFIX ${CMAKE_BINARY_DIR}/raisim
-  CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/raisim/install"
 )
 
 find_package(raisim REQUIRED

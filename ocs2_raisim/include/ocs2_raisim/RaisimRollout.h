@@ -94,7 +94,7 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
         stateToRaisimGenCoordGenVel_(std::move(stateToRaisimGenCoordGenVel)),
         raisimGenCoordGenVelToState_(std::move(raisimGenCoordGenVelToState)),
         inputToRaisimGeneralizedForce_(std::move(inputToRaisimGeneralizedForce)),
-        dataExtractionCallback_(dataExtractionCallback) {
+        dataExtractionCallback_(std::move(dataExtractionCallback)) {
     world_.setTimeStep(this->settings().minTimeStep_);
     system_ = world_.addArticulatedSystem(pathToUrdf, "", orderedJointNames);
 

@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ocs2_anymal_raisim</name>
+  <version>0.0.1</version>
+  <description>The ocs2_anymal_raisim package</description>
+
+  <maintainer email="jcarius@ethz.ch">Jan Carius</maintainer>
+  <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
+
+  <license>BSD</license>
+
+  <author email="jcarius@ethz.ch">Jan Carius</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>cmake_modules</build_depend>
+  <build_depend>cmake_clang_tools</build_depend>
+
+  <depend>roslib</depend>
+  <depend>ocs2_raisim</depend>
+  <depend>ocs2_anymal_interface</depend>
+
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+  </export>
+
+</package>
+

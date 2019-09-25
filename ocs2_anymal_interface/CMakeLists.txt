@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 project(ocs2_anymal_interface)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roslib
   ocs2_anymal_switched_model
@@ -16,17 +13,6 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(Boost REQUIRED COMPONENTS
   filesystem
 )
-
-# Raisim
-option(USE_RAISIM_VISUALIZER "Compile Raisim with OGRE Visualizer" OFF)
-find_package(raisim CONFIG QUIET)
-if(raisim_FOUND)
-  if(USE_RAISIM_VISUALIZER)
-    find_package(raisimOgre REQUIRED)
-    add_definitions(-DUSE_RAISIM_VISUALIZER)
-  endif(USE_RAISIM_VISUALIZER)
-endif(raisim_FOUND)
-
 
 # Pybind11
 option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)
@@ -161,28 +147,6 @@ target_link_libraries(dummy_mrt_node
   ${catkin_LIBRARIES}
 )
 
-# Dummy node with raisim rollout
-if(raisim_FOUND)
-  add_executable(anymal_dummy_raisim
-    src/AnymalRaisimConversions.cpp
-    src/AnymalRaisimDummy.cpp
-  )
-  add_dependencies(anymal_dummy_raisim
-    ${catkin_EXPORTED_TARGETS}
-  )
-  target_link_libraries(anymal_dummy_raisim
-    ocs2_anymal_interface
-    ${catkin_LIBRARIES}
-    raisim::raisim
-  )
-  if(USE_RAISIM_VISUALIZER)
-    target_link_libraries(anymal_dummy_raisim
-      raisim::raisimOgre
-    )
-  endif(USE_RAISIM_VISUALIZER)
-endif(raisim_FOUND)
-
-
 # PyBindings library (c++ side)
 add_library(anymalPyBindings_cpp
   src/AnymalPyBindings.cpp
@@ -254,28 +218,6 @@ install(DIRECTORY config launch
 #############
 ## Testing ##
 #############
-
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_ocs2_anymal_interface.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
-
-if(raisim_FOUND)
-  catkin_add_gtest(testAnymalRaisimConversions
-    test/testAnymalRaisimConversions.cpp
-    src/AnymalRaisimConversions.cpp
-  )
-  target_link_libraries(testAnymalRaisimConversions
-    ocs2_anymal_interface
-    ${catkin_LIBRARIES}
-    raisim::raisim
-  )
-endif(raisim_FOUND)
-
 if(${pybind11_FOUND})
   catkin_add_gtest(anymal_pybindings_test
     test/PyBindingsTest.cpp

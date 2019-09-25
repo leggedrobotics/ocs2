@@ -210,7 +210,7 @@ void ComDynamicsDerivativeBase<JOINT_COORD_SIZE>::getApproximateDerivativesJoint
 	// partila_q ([W]*I*W)
 	if (useInertiaMatrixDerivate())
 		for (size_t j=0; j<12; j++)
-			partrialF_q.template block<3,1>(6,j) -= CrossProductMatrix(x_.segment<3>(6)) * partialM_[j].topLeftCorner<3,3>() * x_.segment<3>(6);
+			partrialF_q.template block<3,1>(6,j) -= CrossProductMatrix(x_.segment<3>(6)) * partialM_[j].template topLeftCorner<3,3>() * x_.segment<3>(6);
 
 	partrialF_q.template block<6,12>(6,0) = ( MInverse_ * partrialF_q.template block<6,12>(6,0) ).eval();
 

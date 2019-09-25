@@ -1,5 +1,5 @@
+#include <ocs2_anymal_raisim/AnymalRaisimConversions.h>
 #include <Eigen/Geometry>
-#include <ocs2_anymal_interface/AnymalRaisimConversions.hpp>
 
 namespace anymal {
 

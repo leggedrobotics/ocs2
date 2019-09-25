@@ -1,9 +1,9 @@
 #include <ros/package.h>
 
 #include <ocs2_anymal_interface/OCS2AnymalInterface.h>
-#include <ocs2_oc/rollout/RaisimRollout.h>
+#include <ocs2_anymal_raisim/AnymalRaisimConversions.h>
 #include <ocs2_quadruped_interface/test/MRT_ROS_Dummy_Quadruped.h>
-#include <ocs2_anymal_interface/AnymalRaisimConversions.hpp>
+#include <ocs2_raisim/RaisimRollout.h>
 
 int main(int argc, char* argv[]) {
   // task file
@@ -12,14 +12,17 @@ int main(int argc, char* argv[]) {
   }
   std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
+  ros::init(argc, argv, "anymal_visualizer");
+
   constexpr int STATE_DIM = 24;
   constexpr int INPUT_DIM = 24;
   constexpr int JOINT_COORD_SIZE = 12;
 
-  std::shared_ptr<anymal::OCS2AnymalInterface> anymal_interface(
-      new anymal::OCS2AnymalInterface(ros::package::getPath("ocs2_anymal_interface") + "/config/" + taskFileFolderName));
+  using interface_t = anymal::OCS2AnymalInterface;
+  std::shared_ptr<interface_t> anymal_interface(
+      new interface_t(ros::package::getPath("ocs2_anymal_interface") + "/config/" + taskFileFolderName));
 
-  std::string urdf_param = "ocs2_anymal_description";
+  std::string urdf_param = "/ocs2_anymal_description";
 
   std::string urdf;
   if (!ros::param::get(urdf_param, urdf)) {
@@ -59,7 +62,7 @@ int main(int argc, char* argv[]) {
   mrt_dummy_loop.launchNodes(argc, argv);
 
   // initial state
-  anymal::OCS2AnymalInterface::rbd_state_vector_t initRbdState;
+  interface_t::rbd_state_vector_t initRbdState;
   anymal_interface->getLoadedInitialState(initRbdState);
   mrt_t::system_observation_t initObservation;
   initObservation.time() = 0.0;

@@ -42,7 +42,7 @@ Eigen::VectorXd inputToRaisimGeneralizedForce(double, const ocs2::Dimensions<STA
                                               const ocs2::Dimensions<STATE_DIM_, INPUT_DIM_>::state_vector_t&, const Eigen::VectorXd&,
                                               const Eigen::VectorXd&) {
   Eigen::VectorXd generalizedForce = Eigen::VectorXd::Zero(2);
-  generalizedForce.head(1) = input;
+  generalizedForce.tail(1) = input;
   return generalizedForce;
 }
 

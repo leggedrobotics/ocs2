@@ -187,10 +187,8 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
   // finding the active subsystem index at initTime
   auto finalActivePartition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, finalTime);
 
-  scalar_t t0 = initTime;
-  state_vector_t x0 = initState;
-  scalar_t tf;
   size_t numSteps = 0;
+  state_vector_t x0 = initState;
   for (size_t i = 0; i < numPartitions; i++) {
     // for subsystems before the initial time
     if (i < initActivePartition || i > finalActivePartition) {
@@ -200,9 +198,6 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
       inputTrajectoriesStock[i].clear();
       continue;
     }
-
-    // final time
-    tf = (i != finalActivePartition) ? partitioningTimes[i + 1] : finalTime;
 
     // if blockwiseMovingHorizon_ is not set, use the previous partition's controller for
     // the first rollout of the partition. However for the very first run of the algorithm,
@@ -215,50 +210,36 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
     }
 
     // call rollout worker for the partition 'i' on the thread 'threadId'
-    state_vector_t x0Temp;
+    const scalar_t t0 = (i == initActivePartition) ? initTime : partitioningTimes[i];
+    const scalar_t tf = (i == finalActivePartition) ? finalTime : partitioningTimes[i + 1];
+    const scalar_array_t& eventTimes = BASE::getLogicRulesMachinePtr()->getLogicRulesPtr()->eventTimes();
     if (!controllerPtrTemp->empty()) {
-      x0Temp = dynamicsForwardRolloutPtrStock_[threadId]->run(i, t0, x0, tf, controllerPtrTemp, *BASE::getLogicRulesMachinePtr(),
-                                                              timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
-                                                              stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
+      x0 = dynamicsForwardRolloutPtrStock_[threadId]->run(t0, x0, tf, controllerPtrTemp, eventTimes, timeTrajectoriesStock[i],
+                                                          eventsPastTheEndIndecesStock[i], stateTrajectoriesStock[i],
+                                                          inputTrajectoriesStock[i]);
 
     } else {
-      x0Temp = operatingTrajectoriesRolloutPtrStock_[threadId]->run(i, t0, x0, tf, nullptr, *BASE::getLogicRulesMachinePtr(),
-                                                                    timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i],
-                                                                    stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
+      x0 = operatingTrajectoriesRolloutPtrStock_[threadId]->run(t0, x0, tf, nullptr, eventTimes, timeTrajectoriesStock[i],
+                                                                eventsPastTheEndIndecesStock[i], stateTrajectoriesStock[i],
+                                                                inputTrajectoriesStock[i]);
     }
-    // if there was an event time at the end of the previous partition
-    if (initActivePartition < i && eventsPastTheEndIndecesStock[i - 1].size() > 0) {
-      if (eventsPastTheEndIndecesStock[i - 1].back() == stateTrajectoriesStock[i - 1].size()) {
-        timeTrajectoriesStock[i - 1].push_back(t0);
-        stateTrajectoriesStock[i - 1].push_back(x0);
-        inputTrajectoriesStock[i - 1].push_back(inputTrajectoriesStock[i].front());
-      }
-    }
-
-    // reset the initial time and state
-    t0 = timeTrajectoriesStock[i].back();
-    x0.swap(x0Temp);
 
     // total number of steps
     numSteps += timeTrajectoriesStock[i].size();
 
   }  // end of i loop
 
-  // if there is an active event at the finalTime, we remove it.
-  if (eventsPastTheEndIndecesStock[finalActivePartition].size() > 0) {
-    if (eventsPastTheEndIndecesStock[finalActivePartition].back() == stateTrajectoriesStock[finalActivePartition].size()) {
-      eventsPastTheEndIndecesStock[finalActivePartition].pop_back();
-    }
-  }
-
-  if (x0 != x0) {
+  if (!x0.allFinite()) {
     throw std::runtime_error("System became unstable during the rollout.");
   }
 
   // debug print
   if (ddpSettings_.debugPrintRollout_) {
     for (size_t i = 0; i < numPartitions; i++) {
-      rollout_base_t::display(i, timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i], stateTrajectoriesStock[i],
+      std::cerr << std::endl << "++++++++++++++++++++++++++++++" << std::endl;
+      std::cerr << "Partition: " << i;
+      std::cerr << std::endl << "++++++++++++++++++++++++++++++" << std::endl;
+      rollout_base_t::display(timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i], stateTrajectoriesStock[i],
                               &inputTrajectoriesStock[i]);
     }
   }

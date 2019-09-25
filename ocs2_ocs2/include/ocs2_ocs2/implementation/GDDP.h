@@ -553,26 +553,20 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
       beginTimeItr = dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].begin() + SsNormalizedSwitchingTimesIndices[j];
       endTimeItr = dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].begin() + SsNormalizedSwitchingTimesIndices[j + 1];
 
-      // if the event time does not take place at the end of partition
-      if (*beginTimeItr < *(endTimeItr - 1)) {
-        // finding the current active subsystem
-        scalar_t midNormalizedTime = 0.5 * (*beginTimeItr + *(endTimeItr - 1));
-        scalar_t midTime = -midNormalizedTime;
-        size_t activeSubsystem = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, midTime));
+      // finding the current active subsystem
+      scalar_t midNormalizedTime = 0.5 * (*beginTimeItr + *(endTimeItr - 1));
+      scalar_t midTime = -midNormalizedTime;
+      size_t activeSubsystem = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, midTime));
 
-        // compute multiplier of the equivalent system
-        scalar_t multiplier;
-        computeEquivalentSystemMultiplier(eventTimeIndex, activeSubsystem, multiplier);
-        riccatiSensitivityEquationsPtrStock_[workerIndex]->setMultiplier(multiplier);
+      // compute multiplier of the equivalent system
+      scalar_t multiplier;
+      computeEquivalentSystemMultiplier(eventTimeIndex, activeSubsystem, multiplier);
+      riccatiSensitivityEquationsPtrStock_[workerIndex]->setMultiplier(multiplier);
 
-        // solve Riccati sensitivity equations
-        riccatiSensitivityIntegratorsPtrStock_[workerIndex]->integrate(SsFinal, beginTimeItr, endTimeItr, allSsTrajectory,
-                                                                       gddpSettings_.minTimeStep_, gddpSettings_.absTolODE_,
-                                                                       gddpSettings_.relTolODE_, maxNumSteps, true);
-
-      } else {
-        allSsTrajectory.push_back(SsFinal);
-      }
+      // solve Riccati sensitivity equations
+      riccatiSensitivityIntegratorsPtrStock_[workerIndex]->integrate(SsFinal, beginTimeItr, endTimeItr, allSsTrajectory,
+                                                                     gddpSettings_.minTimeStep_, gddpSettings_.absTolODE_,
+                                                                     gddpSettings_.relTolODE_, maxNumSteps, true);
 
       // final value of the next subsystem
       if (j < NE) {
@@ -685,37 +679,30 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(size_t workerIndex, const s
       beginTimeItr = dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].begin() + SsNormalizedSwitchingTimesIndices[j];
       endTimeItr = dcPtr_->SsNormalizedTimeTrajectoriesStock_[i].begin() + SsNormalizedSwitchingTimesIndices[j + 1];
 
-      // if the event time does not take place at the end of partition
-      if (*beginTimeItr < *(endTimeItr - 1)) {
-        // finding the current active subsystem
-        scalar_t midNormalizedTime = 0.5 * (*beginTimeItr + *(endTimeItr - 1));
-        scalar_t midTime = -midNormalizedTime;
-        size_t activeSubsystem = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, midTime));
+      // finding the current active subsystem
+      scalar_t midNormalizedTime = 0.5 * (*beginTimeItr + *(endTimeItr - 1));
+      scalar_t midTime = -midNormalizedTime;
+      size_t activeSubsystem = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, midTime));
 
-        // compute multiplier of the equivalent system
-        scalar_t multiplier;
-        computeEquivalentSystemMultiplier(eventTimeIndex, activeSubsystem, multiplier);
-        bvpSensitivityEquationsPtrStock_[workerIndex]->setMultiplier(multiplier);
+      // compute multiplier of the equivalent system
+      scalar_t multiplier;
+      computeEquivalentSystemMultiplier(eventTimeIndex, activeSubsystem, multiplier);
+      bvpSensitivityEquationsPtrStock_[workerIndex]->setMultiplier(multiplier);
 
-        // solve Riccati equations for Mv
-        bvpSensitivityIntegratorsPtrStock_[workerIndex]->integrate(MvFinalInternal, beginTimeItr, endTimeItr, rMvTrajectory,
-                                                                   gddpSettings_.minTimeStep_, gddpSettings_.absTolODE_,
-                                                                   gddpSettings_.relTolODE_, maxNumSteps, true);
+      // solve Riccati equations for Mv
+      bvpSensitivityIntegratorsPtrStock_[workerIndex]->integrate(MvFinalInternal, beginTimeItr, endTimeItr, rMvTrajectory,
+                                                                 gddpSettings_.minTimeStep_, gddpSettings_.absTolODE_,
+                                                                 gddpSettings_.relTolODE_, maxNumSteps, true);
 
-        // solve Riccati equations for Mve
-        bvpSensitivityErrorIntegratorsPtrStock_[workerIndex]->integrate(MveFinalInternal, beginTimeItr, endTimeItr, rMveTrajectory,
-                                                                        gddpSettings_.minTimeStep_, gddpSettings_.absTolODE_,
-                                                                        gddpSettings_.relTolODE_, maxNumSteps, true);
-
-      } else {
-        rMvTrajectory.push_back(MvFinalInternal);
-        rMveTrajectory.push_back(MveFinalInternal);
-      }
+      // solve Riccati equations for Mve
+      bvpSensitivityErrorIntegratorsPtrStock_[workerIndex]->integrate(MveFinalInternal, beginTimeItr, endTimeItr, rMveTrajectory,
+                                                                      gddpSettings_.minTimeStep_, gddpSettings_.absTolODE_,
+                                                                      gddpSettings_.relTolODE_, maxNumSteps, true);
 
       // final value of the next subsystem
       if (j < NE) {
         MvFinalInternal = rMvTrajectory.back();
-        //				MvFinalInternal += dcPtr_->QvFinalStock_[i][NE-1-j];
+        // MvFinalInternal += dcPtr_->QvFinalStock_[i][NE-1-j];
         MveFinalInternal = rMveTrajectory.back();
       }
     }  // end of j loop

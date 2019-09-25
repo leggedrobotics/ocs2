@@ -96,7 +96,7 @@ class UpperLevelCost final : public NLP_Cost {
   /**
    * Default destructor.
    */
-  ~UpperLevelCost() = default;
+  ~UpperLevelCost() override = default;
 
   /**
    * The main routine of solver which runs the optimizer for a given initial state, initial time, and final time.

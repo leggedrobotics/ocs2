@@ -670,7 +670,10 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::executeLineSearchWorker(size_t threadId) {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename ILQR_MT<STATE_DIM, INPUT_DIM>::scalar_t ILQR_MT<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(
     const state_matrix_t& SmFinal, const state_vector_t& SvFinal, const eigen_scalar_t& sFinal) {
-  numSubsystemsProcessed_ = 0;
+  {
+    std::lock_guard<std::mutex> waitLock(riccatiSolverBarrierMutex_);
+    numSubsystemsProcessed_ = 0;
+  }
 
   BASE::SmFinalStock_[BASE::finalActivePartition_] = SmFinal;
   BASE::SvFinalStock_[BASE::finalActivePartition_] = SvFinal;
@@ -730,11 +733,10 @@ typename ILQR_MT<STATE_DIM, INPUT_DIM>::scalar_t ILQR_MT<STATE_DIM, INPUT_DIM>::
       BASE::printString("[MT]: Will wait now until workers have done RiccatiSolver Task.");
     }
 
-    std::unique_lock<std::mutex> waitLock(riccatiSolverBarrierMutex_);
-    while (numSubsystemsProcessed_.load() < BASE::numPartitions_) {
-      riccatiSolverCompletedCondition_.wait(waitLock);
+    {
+      std::unique_lock<std::mutex> waitLock(riccatiSolverBarrierMutex_);
+      riccatiSolverCompletedCondition_.wait(waitLock, [&]{ return numSubsystemsProcessed_ >= BASE::numPartitions_;});
     }
-    waitLock.unlock();
 
     {
       std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
@@ -788,7 +790,10 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::executeRiccatiSolver(size_t threadId) {
       // unlock data
       dataWriteLock.unlock();
 
-      numSubsystemsProcessed_++;
+      {
+        std::lock_guard<std::mutex> waitLock(riccatiSolverBarrierMutex_);
+        numSubsystemsProcessed_++;
+      }
 
       continue;
     }
@@ -830,14 +835,14 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::executeRiccatiSolver(size_t threadId) {
     // unlock data
     dataWriteLock.unlock();
 
-    numSubsystemsProcessed_++;
+    {
+      std::lock_guard<std::mutex> waitLock(riccatiSolverBarrierMutex_);
+      numSubsystemsProcessed_++;
+    }
   }
 
   // notify the main thread so that it stops waiting
-  //	std::unique_lock<std::mutex> lock(riccatiSolverBarrierNotifyMutex_);
-  std::unique_lock<std::mutex> lock(riccatiSolverBarrierMutex_);
   riccatiSolverCompletedCondition_.notify_one();
-  lock.unlock();
 }
 
 /******************************************************************************************************/

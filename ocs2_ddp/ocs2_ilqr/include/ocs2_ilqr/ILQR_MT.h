@@ -278,15 +278,12 @@ class ILQR_MT : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
   std::array<std::atomic_bool, 100> subsystemsDone_;
   std::array<std::atomic_bool, 100> subsystemsProcessing_;
   std::atomic_int numSubsystemsProcessed_;
-  std::mutex riccatiSolverMutex_;
   std::mutex riccatiSolverBarrierMutex_;
-  std::mutex riccatiSolverBarrierNotifyMutex_;
   std::mutex riccatiSolverDataMutex_;
   std::condition_variable riccatiSolverCompletedCondition_;
   std::vector<int> startingIndicesRiccatiWorker_;
   std::vector<int> endingIndicesRiccatiWorker_;
 
-  size_t alphaMax_;
   size_t alphaExpBest_;
   size_t alphaExpMax_;
   scalar_t baselineTotalCost_;

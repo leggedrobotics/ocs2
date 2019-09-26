@@ -136,7 +136,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
 
   {
     std::unique_lock<std::mutex> waitLock(alphaBestFoundMutex_);
-    alphaBestFoundCondition_.wait(waitLock, [&]{ return lsWorkerCompleted_ >= BASE::ddpSettings_.nThreads_; } );
+    alphaBestFoundCondition_.wait(waitLock, [&] { return lsWorkerCompleted_ >= BASE::ddpSettings_.nThreads_; });
   }
 
   {

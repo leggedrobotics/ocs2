@@ -10,5 +10,6 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <exec_depend>anymal_bear_rsl_description</exec_depend>
+  <exec_depend>urdf2robcogen</exec_depend>
 
 </package>

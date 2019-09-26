@@ -1,9 +1,11 @@
 <launch>
 
+  <arg name="description_name"      default="ocs2_anymal_description"/>
+
   <!-- Load robot description -->
   <include file="$(find anymal_bear_rsl_description)/launch/load.launch">
     <arg name="simulation"                                     value="false"/>
-    <arg name="description_name"                               value="ocs2_anymal_description"/>
+    <arg name="description_name"                               value="$(arg description_name)"/>
     <arg name="velodyne"                                       value="false"/>
     <arg name="realsense"                                      value="true"/>
     <arg name="teleop_head"                                    value="false"/>

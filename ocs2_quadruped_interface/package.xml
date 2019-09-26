@@ -21,6 +21,7 @@
   <depend>ocs2_comm_interfaces</depend>
   <depend>ocs2_robotic_tools</depend>
   <depend>ocs2_switched_model_interface</depend>
+  <depend>ocs2_anymal_switched_model</depend>
   <depend>rosbag</depend>
   <depend>xpp_msgs</depend>
 

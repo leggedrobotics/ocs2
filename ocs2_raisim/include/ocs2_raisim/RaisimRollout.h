@@ -71,7 +71,7 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
   /**
    * @brief Constructor
-   * @param[in] pathToUrdf: Full file path to the urdf description for initializing the simulator
+   * @param[in] path: Absolute file path to the *.urdf description or the urdf string (xml document)
    * @param[in] stateToRaisimGenCoordGenVel: Transformation function that converts ocs2 state to generalized coordinate and generalized
    * velocity used by Raisim
    * @param[in] raisimGenCoordGenVelToState: Transformation function that converts Raisim generalized coordinates and velocities to ocs2
@@ -83,7 +83,7 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
    * @param[in] rolloutSettings
    * @param[in] algorithmName
    */
-  RaisimRollout(const std::string& pathToUrdf, state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel,
+  RaisimRollout(const std::string& urdf, state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel,
                 raisim_gen_coord_gen_vel_to_state_t raisimGenCoordGenVelToState,
                 input_to_raisim_generalized_force_t inputToRaisimGeneralizedForce, const std::vector<std::string>& orderedJointNames = {},
                 data_extraction_callback_t dataExtractionCallback = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings(),
@@ -96,7 +96,11 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
         inputToRaisimGeneralizedForce_(std::move(inputToRaisimGeneralizedForce)),
         dataExtractionCallback_(std::move(dataExtractionCallback)) {
     world_.setTimeStep(this->settings().minTimeStep_);
-    system_ = world_.addArticulatedSystem(pathToUrdf, "", orderedJointNames);
+
+    // avoid self-collisions
+    constexpr CollisionGroup collisionGroup = 0b10;
+    constexpr CollisionGroup collisionMask = 0b01;
+    system_ = world_.addArticulatedSystem(urdf, "", orderedJointNames, collisionGroup, collisionMask);
 
     std::cerr << "\nInstatiated Raisim System with DoF = " << system_->getDOF() << std::endl;
     const auto bodyNames = system_->getBodyNames();

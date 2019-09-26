@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <ros/package.h>
-#include <ocs2_anymal_interface/AnymalRaisimConversions.hpp>
+#include <ocs2_anymal_raisim/AnymalRaisimConversions.h>
 
 TEST(AnymalRaisim, Conversions) {
   constexpr size_t JOINT_COORD_SIZE = 12;

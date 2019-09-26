@@ -71,11 +71,10 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    *
    * @param [in] systemDynamics: The system dynamics for forward rollout.
    * @param [in] rolloutSettings: The rollout settings.
-   * @param [in] algorithmName: The algorithm that calls this class (default not defined).
    */
   explicit TimeTriggeredRollout(const controlled_system_base_t& systemDynamics,
-                                const Rollout_Settings& rolloutSettings = Rollout_Settings(), const char algorithmName[] = nullptr)
-      : BASE(rolloutSettings, algorithmName), systemDynamicsPtr_(systemDynamics.clone()), systemEventHandlersPtr_(new event_handler_t) {
+                                const Rollout_Settings& rolloutSettings = Rollout_Settings())
+      : BASE(rolloutSettings), systemDynamicsPtr_(systemDynamics.clone()), systemEventHandlersPtr_(new event_handler_t) {
     switch (rolloutSettings.integratorType_) {
       case (IntegratorType::EULER): {
         dynamicsIntegratorsPtr_.reset(new IntegratorEuler<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
@@ -126,6 +125,10 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    * Default destructor.
    */
   ~TimeTriggeredRollout() override = default;
+
+  TimeTriggeredRollout<STATE_DIM, INPUT_DIM>* clone() const override {
+    return new TimeTriggeredRollout<STATE_DIM, INPUT_DIM>(*systemDynamicsPtr_, this->settings());
+  }
 
  protected:
   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,

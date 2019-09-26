@@ -306,7 +306,11 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex)
     }
 
     kTaken_approx_[partitionIndex] = 0;
-    kCompleted_approx_[partitionIndex] = 0;
+
+    {
+      std::lock_guard<std::mutex> lck(kCompletedMutex_);
+      kCompleted_[partitionIndex] = 0;
+    }
 
     // activates all threads' APPROXIMATE_LQ task which in turn runs executeApproximatePartitionLQWorker routine
     workerTask_ = APPROXIMATE_LQ;
@@ -320,11 +324,10 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex)
     }
 
     // wait until all threads finish their task
-    std::unique_lock<std::mutex> waitLock(kCompletedMutex_);
-    while (kCompleted_approx_[partitionIndex].load() < N) {
-      kCompletedCondition_.wait(waitLock);
+    {
+      std::unique_lock<std::mutex> waitLock(kCompletedMutex_);
+      kCompletedCondition_.wait(waitLock, [&] { return kCompleted_[partitionIndex] >= N; });
     }
-    waitLock.unlock();
 
     // reset threads to no task mode
     workerTask_ = IDLE;
@@ -362,16 +365,17 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t th
       BASE::approximateLQWorker(threadId, partitionIndex, k);
 
       // increment the number of completed nodes
-      kCompleted_local = ++kCompleted_approx_[partitionIndex];
+      {
+        std::lock_guard<std::mutex> lck(kCompletedMutex_);
+        kCompleted_local = ++kCompleted_[partitionIndex];
+      }
     }
 
   }  // enf of while loop
 
   // all k's are already covered. If all the nodes are completed notify and return, else just return.
   if (kCompleted_local >= N) {
-    std::unique_lock<std::mutex> lock(kCompletedMutex_);
     kCompletedCondition_.notify_all();
-    lock.unlock();
 
     // display
     if (BASE::ddpSettings_.debugPrintMT_) {
@@ -406,7 +410,10 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partition
     }
 
     kTaken_ctrl_[partitionIndex] = 0;
-    kCompleted_ctrl_[partitionIndex] = 0;
+    {
+      std::lock_guard<std::mutex> lck(kCompletedMutex_);
+      kCompleted_[partitionIndex] = 0;
+    }
 
     workerTask_ = CALCULATE_CONTROLLER;
     std::unique_lock<std::mutex> lock(workerWakeUpMutex_);
@@ -419,11 +426,10 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partition
     }
 
     // wait until all threads finish their task
-    std::unique_lock<std::mutex> waitLock(kCompletedMutex_);
-    while (kCompleted_ctrl_[partitionIndex].load() < N) {
-      kCompletedCondition_.wait(waitLock);
+    {
+      std::unique_lock<std::mutex> waitLock(kCompletedMutex_);
+      kCompletedCondition_.wait(waitLock, [&] { return kCompleted_[partitionIndex] >= N; });
     }
-    waitLock.unlock();
 
     // reset threads to no task mode
     workerTask_ = IDLE;
@@ -460,16 +466,17 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(size_t th
       BASE::calculateControllerWorker(threadId, partitionIndex, k);
 
       // increment the number of completed nodes
-      kCompleted_local = ++kCompleted_ctrl_[partitionIndex];
+      {
+        std::lock_guard<std::mutex> lck(kCompletedMutex_);
+        kCompleted_local = ++kCompleted_[partitionIndex];
+      }
     }
 
   }  // enf of while loop
 
   // all k's are already covered. If all the nodes are completed notify and return, else just return.
   if (kCompleted_local >= N) {
-    std::unique_lock<std::mutex> lock(kCompletedMutex_);
     kCompletedCondition_.notify_all();
-    lock.unlock();
 
     // display
     if (BASE::ddpSettings_.debugPrintMT_) {

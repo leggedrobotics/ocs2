@@ -26,10 +26,6 @@ iit::ANYmal::dyn::tpl::InverseDynamics<TRAIT>::InverseDynamics(IProperties& iner
         LH_SHANK_Ic(LH_SHANK_I),
         RH_SHANK_Ic(RH_SHANK_I)
 {
-#ifndef EIGEN_NO_DEBUG
-    std::cout << "Robot ANYmal, InverseDynamics<TRAIT>::InverseDynamics()" << std::endl;
-    std::cout << "Compiled with Eigen debug active" << std::endl;
-#endif
     LF_HIP_v.setZero();
     LF_THIGH_v.setZero();
     LF_SHANK_v.setZero();

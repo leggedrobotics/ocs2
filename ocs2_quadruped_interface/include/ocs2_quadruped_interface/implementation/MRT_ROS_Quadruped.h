@@ -326,7 +326,7 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::evaluatePolicy(
     for (size_t j = 0; j < 4; j++) {
       if (subsystem_ahead == subsystem) {
         o_feetAccelerationRef[j] = (o_feetVelocityRef_ahead[j] - o_feetVelocityRef[j]) / dt;
-      } else { // When subsystem changes jumps occur in the velocity reference.
+      } else {  // When subsystem changes jumps occur in the velocity reference.
         o_feetAccelerationRef[j].setZero();
       }
     }
@@ -442,6 +442,7 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::rolloutPolicy(sc
   if (subsystem != subsystem_ahead) {
     qddJoints.setZero();
   }
+  qddJoints.setZero();  // FIXME(jcarius) investigate why accelerations make control go unstable
 
   // inverse dynamics
   // RBD homogeneous transforms of feet

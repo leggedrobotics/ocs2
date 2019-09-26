@@ -59,8 +59,8 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using typename Base::size_array_t;
   using typename Base::state_vector_array_t;
   using typename Base::state_vector_t;
-
-  using logic_rules_machine_t = HybridLogicRulesMachine;
+  using typename Base::time_interval_array_t;
+  using typename Base::time_interval_t;
 
   using state_to_raisim_gen_coord_gen_vel_t =
       std::function<std::pair<Eigen::VectorXd, Eigen::VectorXd>(const state_vector_t&, const input_vector_t&)>;
@@ -71,7 +71,7 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
   /**
    * @brief Constructor
-   * @param[in] pathToUrdf: Full file path to the urdf description for initializing the simulator
+   * @param[in] path: Absolute file path to the *.urdf description or the urdf string (xml document)
    * @param[in] stateToRaisimGenCoordGenVel: Transformation function that converts ocs2 state to generalized coordinate and generalized
    * velocity used by Raisim
    * @param[in] raisimGenCoordGenVelToState: Transformation function that converts Raisim generalized coordinates and velocities to ocs2
@@ -83,7 +83,7 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
    * @param[in] rolloutSettings
    * @param[in] algorithmName
    */
-  RaisimRollout(const std::string& pathToUrdf, state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel,
+  RaisimRollout(const std::string& urdf, state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel,
                 raisim_gen_coord_gen_vel_to_state_t raisimGenCoordGenVelToState,
                 input_to_raisim_generalized_force_t inputToRaisimGeneralizedForce, const std::vector<std::string>& orderedJointNames = {},
                 data_extraction_callback_t dataExtractionCallback = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings(),
@@ -94,9 +94,13 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
         stateToRaisimGenCoordGenVel_(std::move(stateToRaisimGenCoordGenVel)),
         raisimGenCoordGenVelToState_(std::move(raisimGenCoordGenVelToState)),
         inputToRaisimGeneralizedForce_(std::move(inputToRaisimGeneralizedForce)),
-        dataExtractionCallback_(dataExtractionCallback) {
+        dataExtractionCallback_(std::move(dataExtractionCallback)) {
     world_.setTimeStep(this->settings().minTimeStep_);
-    system_ = world_.addArticulatedSystem(pathToUrdf, "", orderedJointNames);
+
+    // avoid self-collisions
+    constexpr CollisionGroup collisionGroup = 0b10;
+    constexpr CollisionGroup collisionMask = 0b01;
+    system_ = world_.addArticulatedSystem(urdf, "", orderedJointNames, collisionGroup, collisionMask);
 
     std::cerr << "\nInstatiated Raisim System with DoF = " << system_->getDOF() << std::endl;
     const auto bodyNames = system_->getBodyNames();
@@ -107,7 +111,6 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
     std::cerr << std::endl;
 
     ground_ = world_.addGround();
-    //    world_.setERP(0, 0);
 
 #ifdef USE_RAISIM_VISUALIZER
     auto vis = raisim::OgreVis::get();
@@ -125,37 +128,73 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
 #endif
   }
 
-  state_vector_t run(size_t partitionIndex, scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
-                     controller_t* controller, logic_rules_machine_t& logicRulesMachine, scalar_array_t& timeTrajectory,
-                     size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
-                     input_vector_array_t& inputTrajectory) override {
+ protected:
+  state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
+                         scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
+                         input_vector_array_t& inputTrajectory) override {
+    assert(controller != nullptr);
+
+    world_.setTimeStep(this->settings().minTimeStep_);
+
     // Prepare arrays
-    const auto numSteps = static_cast<int>(std::round((finalTime - initTime) / this->settings().minTimeStep_));
+    const int numSubsystems = timeIntervalArray.size();
+    const auto maxNumSteps =
+        static_cast<int>(std::round((timeIntervalArray.back().second - timeIntervalArray.front().first) / this->settings().minTimeStep_));
     timeTrajectory.clear();
-    timeTrajectory.reserve(numSteps + 1);
+    timeTrajectory.reserve(maxNumSteps + numSubsystems);
     stateTrajectory.clear();
-    stateTrajectory.reserve(numSteps + 1);
+    stateTrajectory.reserve(maxNumSteps + numSubsystems);
     inputTrajectory.clear();
-    inputTrajectory.reserve(numSteps + 1);
+    inputTrajectory.reserve(maxNumSteps + numSubsystems);
+    eventsPastTheEndIndeces.clear();
+    eventsPastTheEndIndeces.reserve(numSubsystems - 1);
 
     // Set inital state to simulation if requested
     if (setSimulatorStateOnRolloutRunAlways_ or setSimulatorStateOnRolloutRunOnce_) {
       Eigen::VectorXd q_init, dq_init;
-      std::tie(q_init, dq_init) = stateToRaisimGenCoordGenVel_(initState, controller->computeInput(initTime, initState));
+      std::tie(q_init, dq_init) =
+          stateToRaisimGenCoordGenVel_(initState, controller->computeInput(timeIntervalArray.front().first, initState));
       assert(system_->getGeneralizedCoordinateDim() == q_init.rows());
       system_->setState(q_init, dq_init);
       setSimulatorStateOnRolloutRunOnce_ = false;
     }
 
-    // Forward simulate
+    // loop through intervals and integrate each separately
+    for (const auto& interval : timeIntervalArray) {
+      runSimulation(interval, controller, timeTrajectory, stateTrajectory, inputTrajectory);
+      eventsPastTheEndIndeces.push_back(stateTrajectory.size());
+    }
+    eventsPastTheEndIndeces.pop_back();  // the last interval does not have any events afterwards
+
+    return stateTrajectory.back();
+  }
+
+ private:
+  /**
+   * @brief Internal helper method to step the simulation forward for a given time interval and save results
+   * @note Assumes the state of the simulation has already been set
+   * @param[in] timeInterval: Times between which the integration is performed
+   * @param[in] controller: Pointer to controller that will be used during the rollout
+   * @param[out] timeTrajectory: Vector to which times will be appended
+   * @param[out] stateTrajectory: Vector to which states will be appended
+   * @param[out] inputTrajectory: Vector to which inputs will be appended
+   */
+  void runSimulation(const time_interval_t& timeInterval, controller_t* controller, scalar_array_t& timeTrajectory,
+                     state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory) {
+    const auto numSteps = static_cast<int>(std::ceil((timeInterval.second - timeInterval.first) / this->settings().minTimeStep_));
+
     for (int i = 0; i < numSteps; i++) {
+      const auto time = timeInterval.first + i * this->settings().minTimeStep_;
+      timeTrajectory.push_back(time);
+
+      if (i == (numSteps - 1)) {
+        // last step uses potentially smaller time step
+        world_.setTimeStep(timeInterval.second - time);
+      }
       world_.integrate1();  // prepares all dynamical quantities for current time step
 
       Eigen::VectorXd raisim_q, raisim_dq;
       system_->getState(raisim_q, raisim_dq);
-
-      const auto time = initTime + i * this->settings().minTimeStep_;
-      timeTrajectory.push_back(time);
 
       if (dataExtractionCallback_) {
         dataExtractionCallback_(time, *system_);
@@ -170,7 +209,7 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
       assert(tau.rows() == system_->getDOF());
       system_->setGeneralizedForce(tau);
 
-      world_.integrate2();
+      world_.integrate2();  // actually move time foward and change the state
 
 #ifdef USE_RAISIM_VISUALIZER
       auto vis = raisim::OgreVis::get();
@@ -178,12 +217,8 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
 #endif
     }
 
-    if (setSimulatorStateOnRolloutRunAlways_) {
-      assert(initState.isApprox(stateTrajectory.front()));
-    }
-
     // also push back final state and input
-    timeTrajectory.push_back(initTime + numSteps * this->settings().minTimeStep_);
+    timeTrajectory.push_back(timeInterval.second);
 
     world_.integrate1();
 
@@ -198,7 +233,7 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
     input_vector_t input = controller->computeInput(timeTrajectory.back(), stateTrajectory.back());
     inputTrajectory.push_back(input);
 
-    return stateTrajectory.back();
+    world_.setTimeStep(this->settings().minTimeStep_);  // always reset time step again
   }
 
  public:

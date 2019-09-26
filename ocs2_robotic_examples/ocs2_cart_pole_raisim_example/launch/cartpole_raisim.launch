@@ -7,8 +7,8 @@
     </group>
 
     <node pkg="ocs2_cart_pole_example" type="cartpole_mpc" name="cartpole_mpc"
-          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
+          output="screen" args="$(arg task_name)" launch-prefix=""/>
 
-    <node pkg="ocs2_cart_pole_example" type="cartpole_dummy_raisim" name="cartpole_dummy_raisim"
+    <node pkg="ocs2_cart_pole_raisim_example" type="cartpole_dummy_raisim" name="cartpole_dummy_raisim"
           output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
 </launch>

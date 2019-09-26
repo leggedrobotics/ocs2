@@ -763,7 +763,8 @@ typename SLQ_MP<STATE_DIM, INPUT_DIM>::scalar_t SLQ_MP<STATE_DIM, INPUT_DIM>::so
 
     {
       std::unique_lock<std::mutex> waitLock(riccatiSolverBarrierMutex_);
-      riccatiSolverCompletedCondition_.wait(waitLock, [&]{ return (numSubsystemsProcessed_ >= BASE::numPartitions_) || workerException_ ;});
+      riccatiSolverCompletedCondition_.wait(waitLock,
+                                            [&] { return (numSubsystemsProcessed_ >= BASE::numPartitions_) || workerException_; });
     }
 
     {

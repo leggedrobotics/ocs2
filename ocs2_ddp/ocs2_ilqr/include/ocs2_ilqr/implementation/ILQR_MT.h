@@ -735,7 +735,7 @@ typename ILQR_MT<STATE_DIM, INPUT_DIM>::scalar_t ILQR_MT<STATE_DIM, INPUT_DIM>::
 
     {
       std::unique_lock<std::mutex> waitLock(riccatiSolverBarrierMutex_);
-      riccatiSolverCompletedCondition_.wait(waitLock, [&]{ return numSubsystemsProcessed_ >= BASE::numPartitions_;});
+      riccatiSolverCompletedCondition_.wait(waitLock, [&] { return numSubsystemsProcessed_ >= BASE::numPartitions_; });
     }
 
     {

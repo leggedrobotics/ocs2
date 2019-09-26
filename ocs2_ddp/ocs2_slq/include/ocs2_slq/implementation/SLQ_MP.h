@@ -107,7 +107,11 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
   alphaProcessed_.clear();
   alphaTaken_ = 0;
   alphaBestFound_ = false;
-  lsWorkerCompleted_ = 0;
+
+  {
+    std::lock_guard<std::mutex> waitLock(alphaBestFoundMutex_);
+    lsWorkerCompleted_ = 0;
+  }
 
   auto maxNumOfLineSearches = static_cast<size_t>(std::log(BASE::ddpSettings_.minLearningRate_ / BASE::ddpSettings_.maxLearningRate_) /
                                                       std::log(BASE::ddpSettings_.lineSearchContractionRate_) +
@@ -131,11 +135,10 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
     BASE::printString("[MT]: Will sleep now until we have results ");
   }
 
-  std::unique_lock<std::mutex> waitLock(alphaBestFoundMutex_);
-  while (lsWorkerCompleted_.load() < BASE::ddpSettings_.nThreads_) {
-    alphaBestFoundCondition_.wait(waitLock);
+  {
+    std::unique_lock<std::mutex> waitLock(alphaBestFoundMutex_);
+    alphaBestFoundCondition_.wait(waitLock, [&]{ return lsWorkerCompleted_ >= BASE::ddpSettings_.nThreads_; } );
   }
-  waitLock.unlock();
 
   workerTask_ = IDLE;
 
@@ -634,20 +637,22 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::executeLineSearchWorker(size_t threadId) {
 
   }  // end of while loop
 
-  // add to the number of threads that finished their tasks
-  lsWorkerCompleted_++;
 
-  if (BASE::ddpSettings_.debugPrintMT_) {
-    BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: Leaving executeLineSearchWorker ");
-  }
-
-  if (lsWorkerCompleted_.load() >= BASE::ddpSettings_.nThreads_) {
-    std::unique_lock<std::mutex> lock(alphaBestFoundMutex_);
-    alphaBestFoundCondition_.notify_all();
-    lock.unlock();
+  {
+    std::lock_guard<std::mutex> waitLock(alphaBestFoundMutex_);
+    // add to the number of threads that finished their tasks
+    lsWorkerCompleted_++;
 
     if (BASE::ddpSettings_.debugPrintMT_) {
-      BASE::printString("[MT]: NOTIFYING LS WORKERs since all workers are now done.");
+      BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: Leaving executeLineSearchWorker ");
+    }
+
+    if (lsWorkerCompleted_ >= BASE::ddpSettings_.nThreads_) {
+      alphaBestFoundCondition_.notify_all();
+
+      if (BASE::ddpSettings_.debugPrintMT_) {
+        BASE::printString("[MT]: NOTIFYING LS WORKERs since all workers are now done.");
+      }
     }
   }
 }

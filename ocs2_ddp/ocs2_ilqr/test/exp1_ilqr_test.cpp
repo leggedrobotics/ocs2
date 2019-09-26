@@ -32,6 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ctime>
 #include <iostream>
 
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+
 #include <ocs2_ilqr/ILQR_MT.h>
 #include <ocs2_ilqr/ILQR_ST.h>
 
@@ -58,9 +60,10 @@ TEST(exp1_ilqr_test, exp1_ilqr_test) {
   ilqrSettings.ddpSettings_.useFeedbackPolicy_ = false;
   ilqrSettings.ddpSettings_.debugPrintRollout_ = false;
 
-  ilqrSettings.rolloutSettings_.absTolODE_ = 1e-11;
-  ilqrSettings.rolloutSettings_.relTolODE_ = 1e-8;
-  ilqrSettings.rolloutSettings_.maxNumStepsPerSecond_ = 10000;
+  Rollout_Settings rolloutSettings;
+  rolloutSettings.absTolODE_ = 1e-11;
+  rolloutSettings.relTolODE_ = 1e-8;
+  rolloutSettings.maxNumStepsPerSecond_ = 10000;
 
   // switching times
   std::vector<double> switchingTimes{0.2262, 1.0176};
@@ -82,8 +85,9 @@ TEST(exp1_ilqr_test, exp1_ilqr_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
-  // system dynamics
+  // system rollout
   EXP1_System systemDynamics(logicRules);
+  TimeTriggeredRollout<STATE_DIM, INPUT_DIM> timeTriggeredRollout(systemDynamics, rolloutSettings);
 
   // system derivatives
   EXP1_SystemDerivative systemDerivative(logicRules);
@@ -103,12 +107,12 @@ TEST(exp1_ilqr_test, exp1_ilqr_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // ILQR - single-threaded version
-  ILQR_ST<STATE_DIM, INPUT_DIM> ilqrST(&systemDynamics, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
+  ILQR_ST<STATE_DIM, INPUT_DIM> ilqrST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
                                        ilqrSettings, logicRules);
 
   // ILQR - multi-threaded version
   //	ILQR_MT<STATE_DIM, INPUT_DIM> ilqrMT(
-  //			&systemDynamics, &systemDerivative,
+  //			&timeTriggeredRollout, &systemDerivative,
   //			&systemConstraint, &systemCostFunction,
   //			&operatingTrajectories, ilqrSettings, logicRules);
 

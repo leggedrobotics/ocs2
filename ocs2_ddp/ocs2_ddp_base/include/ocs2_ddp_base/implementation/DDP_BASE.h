@@ -35,17 +35,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                          const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                          const operating_trajectories_base_t* operatingTrajectoriesPtr, const DDP_Settings& ddpSettings,
-                                         const Rollout_Settings& rolloutSettings, const cost_function_base_t* heuristicsFunctionPtr,
-                                         const char* algorithmName, std::shared_ptr<HybridLogicRules> logicRulesPtr)
-    : BASE(std::move(logicRulesPtr)),
-      ddpSettings_(ddpSettings),
-      rolloutSettings_(rolloutSettings),
-      algorithmName_(algorithmName),
-      rewindCounter_(0),
-      iteration_(0) {
+                                         const cost_function_base_t* heuristicsFunctionPtr, const char* algorithmName,
+                                         std::shared_ptr<HybridLogicRules> logicRulesPtr)
+    : BASE(std::move(logicRulesPtr)), ddpSettings_(ddpSettings), algorithmName_(algorithmName), rewindCounter_(0), iteration_(0) {
   // Dynamics, Constraints, derivatives, and cost
   linearQuadraticApproximatorPtrStock_.clear();
   linearQuadraticApproximatorPtrStock_.reserve(ddpSettings_.nThreads_);
@@ -53,26 +48,24 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const controlled_system_base_t* systemD
   heuristicsFunctionsPtrStock_.reserve(ddpSettings_.nThreads_);
   penaltyPtrStock_.clear();
   penaltyPtrStock_.reserve(ddpSettings_.nThreads_);
-
-  dynamicsForwardRolloutPtrStock_.resize(ddpSettings_.nThreads_);
-  operatingTrajectoriesRolloutPtrStock_.resize(ddpSettings_.nThreads_);
+  dynamicsForwardRolloutPtrStock_.clear();
+  dynamicsForwardRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
+  operatingTrajectoriesRolloutPtrStock_.clear();
+  operatingTrajectoriesRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
 
   // initialize all subsystems, etc.
   for (size_t i = 0; i < ddpSettings_.nThreads_; i++) {
     // initialize rollout
-    dynamicsForwardRolloutPtrStock_[i].reset(new time_triggered_rollout_t(*systemDynamicsPtr, rolloutSettings_, algorithmName_.c_str()));
+    dynamicsForwardRolloutPtrStock_.emplace_back(rolloutPtr->clone());
 
     // initialize operating points
-    operatingTrajectoriesRolloutPtrStock_[i].reset(
-        new operating_trajectorie_rollout_t(*operatingTrajectoriesPtr, rolloutSettings_, algorithmName_.c_str()));
+    operatingTrajectoriesRolloutPtrStock_.emplace_back(
+        new operating_trajectorie_rollout_t(*operatingTrajectoriesPtr, rolloutPtr->settings()));
 
     // initialize LQ approximator
     linearQuadraticApproximatorPtrStock_.emplace_back(
         new linear_quadratic_approximator_t(*systemDerivativesPtr, *systemConstraintsPtr, *costFunctionPtr, algorithmName_.c_str(),
                                             ddpSettings_.checkNumericalStability_, ddpSettings_.useMakePSD_));
-
-    // initialize operating trajectories
-    operatingTrajectoriesPtrStock_.emplace_back(operatingTrajectoriesPtr->clone());
 
     // initialize heuristics functions
     if (heuristicsFunctionPtr != nullptr) {

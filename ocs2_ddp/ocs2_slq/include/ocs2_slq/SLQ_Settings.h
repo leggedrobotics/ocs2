@@ -55,9 +55,7 @@ class SLQ_Settings {
       : useNominalTimeForBackwardPass_(false),
         preComputeRiccatiTerms_(true),
         RiccatiIntegratorType_(RICCATI_INTEGRATOR_TYPE::ODE45),
-        adams_integrator_dt_(0.001)
-
-        ,
+        adams_integrator_dt_(0.001),
         ddpSettings_(),
         rolloutSettings_()
 

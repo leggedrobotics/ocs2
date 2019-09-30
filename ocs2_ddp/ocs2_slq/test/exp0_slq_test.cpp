@@ -57,6 +57,7 @@ TEST(exp0_slq_test, exp0_slq_test) {
   slqSettings.ddpSettings_.minRelCost_ = 5e-4;
   slqSettings.ddpSettings_.checkNumericalStability_ = false;
   slqSettings.ddpSettings_.useFeedbackPolicy_ = true;
+  slqSettings.ddpSettings_.debugPrintRollout_ = false;
   slqSettings.rolloutSettings_.absTolODE_ = 1e-10;
   slqSettings.rolloutSettings_.relTolODE_ = 1e-7;
   slqSettings.rolloutSettings_.maxNumStepsPerSecond_ = 10000;

@@ -728,6 +728,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   // (LQR). In this case: 1) The feedforward component and the type-1 constraint
   // input are set to zero 2) Final cost will be ignored
   std::vector<bool> initialControllerDesignStock_;
+  scalar_t initialControllerDesignFromTime_;
 
   // trajectory spreading
   TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM> trajectorySpreadingController_;

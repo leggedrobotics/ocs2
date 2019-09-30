@@ -388,7 +388,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
     }  // end of j loop
 
     // current partition update
-    BASE::constraintStepSize_ = BASE::initialControllerDesignStock_[i] ? 0.0 : BASE::ddpSettings_.constraintStepSize_;
+    BASE::constraintStepSize_ = BASE::ddpSettings_.constraintStepSize_;
 
     /*
      * perform the calculatePartitionController for partition i
@@ -441,13 +441,17 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerInde
 
   input_matrix_t DmNullProjection = input_matrix_t::Identity() - DmProjected;
 
+  //  const auto localConstraintStepSize_ = (time > BASE::initialControllerDesignFromTime_) ? 0.0 : BASE::constraintStepSize_;
+
+  const auto localConstraintStepSize_ = 1.0;
+
   // Feedback gains K
   BASE::nominalControllersStock_[i].gainArray_[k] = -CmProjected;
   BASE::nominalControllersStock_[i].gainArray_[k].noalias() -= DmNullProjection * Lm;
 
   // Bias input
   BASE::nominalControllersStock_[i].biasArray_[k] = nominalInput - BASE::nominalControllersStock_[i].gainArray_[k] * nominalState -
-                                                    BASE::constraintStepSize_ * (DmNullProjection * Lve + EvProjected);
+                                                    localConstraintStepSize_ * (DmNullProjection * Lve + EvProjected);
   BASE::nominalControllersStock_[i].deltaBiasArray_[k] = -DmNullProjection * Lv;
 
   // checking the numerical stability of the controller parameters
@@ -614,6 +618,16 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIn
     SsTimeTrajectory[k] = -SsNormalizedTime[outputN - 1 - k];
     riccati_equations_t::convert2Matrix(allSsTrajectory[outputN - 1 - k], SmTrajectory[k], SvTrajectory[k], sTrajectory[k]);
   }  // end of k loop
+
+  if (BASE::ddpSettings_.debugPrintRollout_) {
+    std::cerr << std::endl << "+++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+    std::cerr << "Partition: " << partitionIndex << ", backward pass time trajectory";
+    std::cerr << std::endl << "+++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+    for (size_t k = 0; k < outputN; k++) {
+      std::cerr << "k: " << k << ", t = " << std::setprecision(12) << SsTimeTrajectory[k] << "\n";
+    }
+    std::cerr << std::endl;
+  }
 }
 
 /******************************************************************************************************/

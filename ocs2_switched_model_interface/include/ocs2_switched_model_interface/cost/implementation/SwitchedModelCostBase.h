@@ -79,7 +79,9 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::inputFromCon
 
   if (numStanceLegs > 0) {
     for (size_t i = 0; i < numEE; i++) {
-      inputs(3 * i + 2) = totalMass / numStanceLegs;
+      if (contactFlags[i]) {
+        inputs(3 * i + 2) = totalMass / numStanceLegs;
+      }
     }
   }
 }

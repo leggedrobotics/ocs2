@@ -124,7 +124,7 @@ slq
     checkNumericalStability       0
 
     useMultiThreading             1
-    nThreads                      5
+    nThreads                      3
     threadPriority                50
     debugPrintMP                  0
     lsStepsizeGreedy              1
@@ -165,7 +165,7 @@ mpc
   rosMsgTimeWindow                200	; [ms]
   adaptiveRosMsgTimeWindow        0
 
-  mpcDesiredFrequency             100 ; [Hz]
+  mpcDesiredFrequency             20 ; [Hz]
   mrtDesiredFrequency             400 ; [Hz]
 
   maxTimeStep                     10e-3

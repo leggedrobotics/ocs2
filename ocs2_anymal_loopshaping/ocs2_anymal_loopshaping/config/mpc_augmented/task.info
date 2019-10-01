@@ -117,7 +117,7 @@ slq
     noStateConstraints            0
     minAbsConstraint1ISE          5e-3
     minRelConstraint1ISE          5e-6
-    checkNumericalStability       1
+    checkNumericalStability       0
 
     useMultiThreading             1
     nThreads                      3
@@ -136,7 +136,7 @@ slq
     RelTolODE                     1e-3  ;1e-4
     minTimeStep                   1e-2
     maxNumStepsPerSecond          50000
-    checkNumericalStability       1
+    checkNumericalStability       0
   }
 }
 
@@ -161,7 +161,7 @@ mpc
   rosMsgTimeWindow                100	; [ms]
   adaptiveRosMsgTimeWindow        0
 
-  mpcDesiredFrequency             100 ; [Hz]
+  mpcDesiredFrequency             20 ; [Hz]
   mrtDesiredFrequency             400 ; [Hz]
   
   maxTimeStep                     10e-3
@@ -179,7 +179,7 @@ initialRobotState
    ; position
    (3,0) 0.0     ; x
    (4,0) 0.0     ; y
-   (5,0) 0.47  ; z
+   (5,0) 0.495  ; z
 
    ; joint state
    (6,0)  -0.1; -0.2     ; LF_HAA

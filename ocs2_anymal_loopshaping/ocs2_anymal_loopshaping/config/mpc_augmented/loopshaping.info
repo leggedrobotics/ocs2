@@ -18,7 +18,7 @@ s_inv_filter
         DCGain      1;
         zeros
         {
-           (0) -10.0;
+           (0) -20.0;
         }
         poles
         {

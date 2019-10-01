@@ -33,12 +33,11 @@ namespace ocs2 {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-SLQ_DataCollector<STATE_DIM, INPUT_DIM>::SLQ_DataCollector(const controlled_system_base_t* systemDynamicsPtr,
-                                                           const derivatives_base_t* systemDerivativesPtr,
+SLQ_DataCollector<STATE_DIM, INPUT_DIM>::SLQ_DataCollector(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                                            const constraint_base_t* systemConstraintsPtr,
                                                            const cost_function_base_t* costFunctionPtr)
 
-    : systemDynamicsPtr_(systemDynamicsPtr->clone()),
+    : rolloutPtr_(rolloutPtr->clone()),
       systemDerivativesPtr_(systemDerivativesPtr->clone()),
       systemConstraintsPtr_(systemConstraintsPtr->clone()),
       costFunctionPtr_(costFunctionPtr->clone()) {}
@@ -189,12 +188,17 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::calculateFlowMap(const slq_t* cons
     const size_t N = timeTrajectoriesStock[i].size();
     flowMapTrajectoriesStock[i].resize(N);
 
+    auto timeTriggeredRolloutPtr = dynamic_cast<TimeTriggeredRollout<STATE_DIM, INPUT_DIM>*>(rolloutPtr_.get());
+    if (!timeTriggeredRolloutPtr) {
+      throw std::runtime_error("The Rollout pointer provided to SLQ_DataCollector is not of type TimeTriggeredRollout.");
+    }
+
     // set controller
-    systemDynamicsPtr_->setController(&(slqPtr->nominalControllersStock_[i]));
+    timeTriggeredRolloutPtr->systemDynamicsPtr()->setController(&(slqPtr->nominalControllersStock_[i]));
 
     for (size_t k = 0; k < N; k++) {
-      systemDynamicsPtr_->computeFlowMap(timeTrajectoriesStock[i][k], stateTrajectoriesStock[i][k], inputTrajectoriesStock[i][k],
-                                         flowMapTrajectoriesStock[i][k]);
+      timeTriggeredRolloutPtr->systemDynamicsPtr()->computeFlowMap(timeTrajectoriesStock[i][k], stateTrajectoriesStock[i][k],
+                                                                   inputTrajectoriesStock[i][k], flowMapTrajectoriesStock[i][k]);
     }  // end of k loop
   }    // end of i loop
 }

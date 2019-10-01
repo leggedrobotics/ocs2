@@ -33,268 +33,239 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace ocs2;
 
-class TestLogicRules : public HybridLogicRules
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class TestLogicRules : public HybridLogicRules {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef HybridLogicRules BASE;
-	typedef BASE::scalar_t scalar_t;
-	typedef BASE::scalar_array_t scalar_array_t;
-	typedef BASE::size_array_t size_array_t;
+  typedef HybridLogicRules BASE;
+  typedef BASE::scalar_t scalar_t;
+  typedef BASE::scalar_array_t scalar_array_t;
+  typedef BASE::size_array_t size_array_t;
 
-	TestLogicRules() {}
+  TestLogicRules() {}
 
-	virtual ~TestLogicRules() {}
+  virtual ~TestLogicRules() {}
 
-	void set(const scalar_array_t& eventTimes) {
-		eventTimes_ = eventTimes;
-	}
+  void set(const scalar_array_t& eventTimes) { eventTimes_ = eventTimes; }
 
-	void update() override
-	{}
+  void update() override {}
 
-	void rewind(const scalar_t& lowerBoundTime,
-			const scalar_t& upperBoundTime) override
-	{}
+  void rewind(const scalar_t& lowerBoundTime, const scalar_t& upperBoundTime) override {}
 
  protected:
-  void insertModeSequenceTemplate(
-		  const logic_template_type& modeSequenceTemplate,
-		  const scalar_t& startTime,
-		  const scalar_t& finalTime) override {};
+  void insertModeSequenceTemplate(const logic_template_type& modeSequenceTemplate, const scalar_t& startTime,
+                                  const scalar_t& finalTime) override{};
 
-private:
-
+ private:
 };
 
+TEST(testEventTimeIndexer, test_0) {
+  std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
+  HybridLogicRulesMachine logicRulesMachine(logicRules);
 
-TEST(testEventTimeIndexer, test_0)
-{
-	std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
-	HybridLogicRulesMachine logicRulesMachine(logicRules);
+  // Times
+  std::vector<double> partitioningTimes{0.5, 1.5, 2.5};
+  std::vector<double> logicRulesEventTimes = std::vector<double>{0.25, 0.75, 1.25, 1.75, 2.25, 2.75};
 
-	// Times
-	std::vector<double> partitioningTimes{0.5,1.5,2.5};
-	std::vector<double> logicRulesEventTimes = std::vector<double>{0.25, 0.75, 1.25, 1.75, 2.25, 2.75};
+  // Set logic
+  logicRules->set(logicRulesEventTimes);
+  logicRulesMachine.setLogicRules(logicRules);
+  logicRulesMachine.updateLogicRules(partitioningTimes);
 
-	// Set logic
-	logicRules->set(logicRulesEventTimes);
-	logicRulesMachine.setLogicRules(logicRules);
-	logicRulesMachine.updateLogicRules(partitioningTimes);
+  // expected result
+  EventTimeIndexer::size_array2_t subsystemsIndecesResult(logicRulesEventTimes.size() + 1);
+  EventTimeIndexer::int_array2_t partitionsDistResult(logicRulesEventTimes.size() + 1);
 
-	// expected result
-	EventTimeIndexer::size_array2_t subsystemsIndecesResult(logicRulesEventTimes.size()+1);
-	EventTimeIndexer::int_array2_t partitionsDistResult(logicRulesEventTimes.size()+1);
+  partitionsDistResult[0] = EventTimeIndexer::int_array_t{-1};
+  subsystemsIndecesResult[0] = EventTimeIndexer::size_array_t{};
 
-	partitionsDistResult[0] = EventTimeIndexer::int_array_t{-1};
-	subsystemsIndecesResult[0] = EventTimeIndexer::size_array_t{};
+  partitionsDistResult[1] = EventTimeIndexer::int_array_t{0};
+  subsystemsIndecesResult[1] = EventTimeIndexer::size_array_t{0};
 
-	partitionsDistResult[1] = EventTimeIndexer::int_array_t{0};
-	subsystemsIndecesResult[1] = EventTimeIndexer::size_array_t{0};
+  partitionsDistResult[2] = EventTimeIndexer::int_array_t{0};
+  subsystemsIndecesResult[2] = EventTimeIndexer::size_array_t{1};
 
-	partitionsDistResult[2] = EventTimeIndexer::int_array_t{0};
-	subsystemsIndecesResult[2] = EventTimeIndexer::size_array_t{1};
+  partitionsDistResult[3] = EventTimeIndexer::int_array_t{0, 1};
+  subsystemsIndecesResult[3] = EventTimeIndexer::size_array_t{2, 0};
 
-	partitionsDistResult[3] = EventTimeIndexer::int_array_t{0, 1};
-	subsystemsIndecesResult[3] = EventTimeIndexer::size_array_t{2, 0};
+  partitionsDistResult[4] = EventTimeIndexer::int_array_t{1};
+  subsystemsIndecesResult[4] = EventTimeIndexer::size_array_t{1};
 
-	partitionsDistResult[4] = EventTimeIndexer::int_array_t{1};
-	subsystemsIndecesResult[4] = EventTimeIndexer::size_array_t{1};
+  partitionsDistResult[5] = EventTimeIndexer::int_array_t{1};
+  subsystemsIndecesResult[5] = EventTimeIndexer::size_array_t{2};
 
-	partitionsDistResult[5] = EventTimeIndexer::int_array_t{1};
-	subsystemsIndecesResult[5] = EventTimeIndexer::size_array_t{2};
+  partitionsDistResult[6] = EventTimeIndexer::int_array_t{2};
+  subsystemsIndecesResult[6] = EventTimeIndexer::size_array_t{};
 
-	partitionsDistResult[6] = EventTimeIndexer::int_array_t{2};
-	subsystemsIndecesResult[6] = EventTimeIndexer::size_array_t{};
+  // display
+  std::cerr << std::endl;
+  std::cerr << std::endl << "======================" << std::endl;
+  logicRulesMachine.display();
 
-	// display
-	std::cerr << std::endl;
-	std::cerr << std::endl << "======================" << std::endl;
-	logicRulesMachine.display();
+  EventTimeIndexer eventTimeIndexer;
+  eventTimeIndexer.set(logicRulesMachine);
+  eventTimeIndexer.display();
 
-	EventTimeIndexer eventTimeIndexer;
-	eventTimeIndexer.set(logicRulesMachine);
-	eventTimeIndexer.display();
+  bool testPass = true;
+  for (size_t i = 0; i < eventTimeIndexer.numSubsystems(); i++) {
+    if (partitionsDistResult[i] != eventTimeIndexer.partitionsDistribution(i)) testPass = false;
+    if (subsystemsIndecesResult[i] != eventTimeIndexer.subsystemIndeces(i)) testPass = false;
+  }
 
-	bool testPass = true;
-	for (size_t i=0; i<eventTimeIndexer.numSubsystems(); i++) {
-		if (partitionsDistResult[i] != eventTimeIndexer.partitionsDistribution(i))
-			testPass = false;
-		if (subsystemsIndecesResult[i] != eventTimeIndexer.subsystemIndeces(i))
-			testPass = false;
-	}
-
-	ASSERT_TRUE(testPass);
+  ASSERT_TRUE(testPass);
 }
 
+TEST(testEventTimeIndexer, test_1) {
+  std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
+  HybridLogicRulesMachine logicRulesMachine(logicRules);
 
-TEST(testEventTimeIndexer, test_1)
-{
-	std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
-	HybridLogicRulesMachine logicRulesMachine(logicRules);
+  // Times
+  std::vector<double> partitioningTimes{1, 2, 3};
+  std::vector<double> logicRulesEventTimes = std::vector<double>{0, 1, 2, 3, 4};
 
-	// Times
-	std::vector<double> partitioningTimes{1, 2, 3};
-	std::vector<double> logicRulesEventTimes = std::vector<double>{0, 1, 2, 3, 4};
+  // Set logic
+  logicRules->set(logicRulesEventTimes);
+  logicRulesMachine.setLogicRules(logicRules);
+  logicRulesMachine.updateLogicRules(partitioningTimes);
 
-	// Set logic
-	logicRules->set(logicRulesEventTimes);
-	logicRulesMachine.setLogicRules(logicRules);
-	logicRulesMachine.updateLogicRules(partitioningTimes);
+  // expected result
+  EventTimeIndexer::size_array2_t subsystemsIndecesResult(logicRulesEventTimes.size() + 1);
+  EventTimeIndexer::int_array2_t partitionsDistResult(logicRulesEventTimes.size() + 1);
 
-	// expected result
-	EventTimeIndexer::size_array2_t subsystemsIndecesResult(logicRulesEventTimes.size()+1);
-	EventTimeIndexer::int_array2_t partitionsDistResult(logicRulesEventTimes.size()+1);
+  partitionsDistResult[0] = EventTimeIndexer::int_array_t{-1};
+  subsystemsIndecesResult[0] = EventTimeIndexer::size_array_t{};
 
-	partitionsDistResult[0] = EventTimeIndexer::int_array_t{-1};
-	subsystemsIndecesResult[0] = EventTimeIndexer::size_array_t{};
+  partitionsDistResult[1] = EventTimeIndexer::int_array_t{-1};
+  subsystemsIndecesResult[1] = EventTimeIndexer::size_array_t{};
 
-	partitionsDistResult[1] = EventTimeIndexer::int_array_t{-1};
-	subsystemsIndecesResult[1] = EventTimeIndexer::size_array_t{};
+  partitionsDistResult[2] = EventTimeIndexer::int_array_t{0};
+  subsystemsIndecesResult[2] = EventTimeIndexer::size_array_t{0};
 
-	partitionsDistResult[2] = EventTimeIndexer::int_array_t{0};
-	subsystemsIndecesResult[2] = EventTimeIndexer::size_array_t{0};
+  partitionsDistResult[3] = EventTimeIndexer::int_array_t{1};
+  subsystemsIndecesResult[3] = EventTimeIndexer::size_array_t{0};
 
-	partitionsDistResult[3] = EventTimeIndexer::int_array_t{1};
-	subsystemsIndecesResult[3] = EventTimeIndexer::size_array_t{0};
+  partitionsDistResult[4] = EventTimeIndexer::int_array_t{2};
+  subsystemsIndecesResult[4] = EventTimeIndexer::size_array_t{};
 
-	partitionsDistResult[4] = EventTimeIndexer::int_array_t{2};
-	subsystemsIndecesResult[4] = EventTimeIndexer::size_array_t{};
+  partitionsDistResult[5] = EventTimeIndexer::int_array_t{2};
+  subsystemsIndecesResult[5] = EventTimeIndexer::size_array_t{};
 
-	partitionsDistResult[5] = EventTimeIndexer::int_array_t{2};
-	subsystemsIndecesResult[5] = EventTimeIndexer::size_array_t{};
+  // display
+  std::cerr << std::endl;
+  std::cerr << std::endl << "======================" << std::endl;
+  logicRulesMachine.display();
 
-	// display
-	std::cerr << std::endl;
-	std::cerr << std::endl << "======================" << std::endl;
-	logicRulesMachine.display();
+  EventTimeIndexer eventTimeIndexer;
+  eventTimeIndexer.set(logicRulesMachine);
+  eventTimeIndexer.display();
 
-	EventTimeIndexer eventTimeIndexer;
-	eventTimeIndexer.set(logicRulesMachine);
-	eventTimeIndexer.display();
+  bool testPass = true;
+  for (size_t i = 0; i < eventTimeIndexer.numSubsystems(); i++) {
+    if (partitionsDistResult[i] != eventTimeIndexer.partitionsDistribution(i)) testPass = false;
+    if (subsystemsIndecesResult[i] != eventTimeIndexer.subsystemIndeces(i)) testPass = false;
+  }
 
-	bool testPass = true;
-	for (size_t i=0; i<eventTimeIndexer.numSubsystems(); i++) {
-		if (partitionsDistResult[i] != eventTimeIndexer.partitionsDistribution(i))
-			testPass = false;
-		if (subsystemsIndecesResult[i] != eventTimeIndexer.subsystemIndeces(i))
-			testPass = false;
-	}
-
-	ASSERT_TRUE(testPass);
+  ASSERT_TRUE(testPass);
 }
 
+TEST(testEventTimeIndexer, test_2) {
+  std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
+  HybridLogicRulesMachine logicRulesMachine(logicRules);
 
-TEST(testEventTimeIndexer, test_2)
-{
-	std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
-	HybridLogicRulesMachine logicRulesMachine(logicRules);
+  // Times
+  std::vector<double> partitioningTimes{1, 2, 3, 4, 5};
+  std::vector<double> logicRulesEventTimes = std::vector<double>{0, 4.1};
 
-	// Times
-	std::vector<double> partitioningTimes{1, 2, 3, 4, 5};
-	std::vector<double> logicRulesEventTimes = std::vector<double>{0, 4.1};
+  // Set logic
+  logicRules->set(logicRulesEventTimes);
+  logicRulesMachine.setLogicRules(logicRules);
+  logicRulesMachine.updateLogicRules(partitioningTimes);
 
-	// Set logic
-	logicRules->set(logicRulesEventTimes);
-	logicRulesMachine.setLogicRules(logicRules);
-	logicRulesMachine.updateLogicRules(partitioningTimes);
+  // expected result
+  EventTimeIndexer::size_array2_t subsystemsIndecesResult(logicRulesEventTimes.size() + 1);
+  EventTimeIndexer::int_array2_t partitionsDistResult(logicRulesEventTimes.size() + 1);
 
-	// expected result
-	EventTimeIndexer::size_array2_t subsystemsIndecesResult(logicRulesEventTimes.size()+1);
-	EventTimeIndexer::int_array2_t partitionsDistResult(logicRulesEventTimes.size()+1);
+  partitionsDistResult[0] = EventTimeIndexer::int_array_t{-1};
+  subsystemsIndecesResult[0] = EventTimeIndexer::size_array_t{};
 
-	partitionsDistResult[0] = EventTimeIndexer::int_array_t{-1};
-	subsystemsIndecesResult[0] = EventTimeIndexer::size_array_t{};
+  partitionsDistResult[1] = EventTimeIndexer::int_array_t{0, 1, 2, 3};
+  subsystemsIndecesResult[1] = EventTimeIndexer::size_array_t{0, 0, 0, 0};
 
-	partitionsDistResult[1] = EventTimeIndexer::int_array_t{0, 1, 2, 3};
-	subsystemsIndecesResult[1] = EventTimeIndexer::size_array_t{0, 0, 0, 0};
+  partitionsDistResult[2] = EventTimeIndexer::int_array_t{3};
+  subsystemsIndecesResult[2] = EventTimeIndexer::size_array_t{1};
 
-	partitionsDistResult[2] = EventTimeIndexer::int_array_t{3};
-	subsystemsIndecesResult[2] = EventTimeIndexer::size_array_t{1};
+  // display
+  std::cerr << std::endl;
+  std::cerr << std::endl << "======================" << std::endl;
+  logicRulesMachine.display();
 
-	// display
-	std::cerr << std::endl;
-	std::cerr << std::endl << "======================" << std::endl;
-	logicRulesMachine.display();
+  EventTimeIndexer eventTimeIndexer;
+  eventTimeIndexer.set(logicRulesMachine);
+  eventTimeIndexer.display();
 
-	EventTimeIndexer eventTimeIndexer;
-	eventTimeIndexer.set(logicRulesMachine);
-	eventTimeIndexer.display();
+  bool testPass = true;
+  for (size_t i = 0; i < eventTimeIndexer.numSubsystems(); i++) {
+    if (partitionsDistResult[i] != eventTimeIndexer.partitionsDistribution(i)) testPass = false;
+    if (subsystemsIndecesResult[i] != eventTimeIndexer.subsystemIndeces(i)) testPass = false;
+  }
 
-	bool testPass = true;
-	for (size_t i=0; i<eventTimeIndexer.numSubsystems(); i++) {
-		if (partitionsDistResult[i] != eventTimeIndexer.partitionsDistribution(i))
-			testPass = false;
-		if (subsystemsIndecesResult[i] != eventTimeIndexer.subsystemIndeces(i))
-			testPass = false;
-	}
-
-	ASSERT_TRUE(testPass);
+  ASSERT_TRUE(testPass);
 }
 
+TEST(testEventTimeIndexer, test_3) {
+  std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
+  HybridLogicRulesMachine logicRulesMachine(logicRules);
 
-TEST(testEventTimeIndexer, test_3)
-{
-	std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
-	HybridLogicRulesMachine logicRulesMachine(logicRules);
+  // Times
+  std::vector<double> partitioningTimes{1, 2.5, 3, 5};
+  std::vector<double> logicRulesEventTimes = std::vector<double>{1.0, 1.5, 2.0, 3.5, 4.0};
 
-	// Times
-	std::vector<double> partitioningTimes{1, 2.5, 3, 5};
-	std::vector<double> logicRulesEventTimes = std::vector<double>{1.0, 1.5, 2.0, 3.5, 4.0};
+  // Set logic
+  logicRules->set(logicRulesEventTimes);
+  logicRulesMachine.setLogicRules(logicRules);
+  logicRulesMachine.updateLogicRules(partitioningTimes);
 
-	// Set logic
-	logicRules->set(logicRulesEventTimes);
-	logicRulesMachine.setLogicRules(logicRules);
-	logicRulesMachine.updateLogicRules(partitioningTimes);
+  // expected result
+  EventTimeIndexer::size_array2_t subsystemsIndecesResult(logicRulesEventTimes.size() + 1);
+  EventTimeIndexer::int_array2_t partitionsDistResult(logicRulesEventTimes.size() + 1);
 
-	// expected result
-	EventTimeIndexer::size_array2_t subsystemsIndecesResult(logicRulesEventTimes.size()+1);
-	EventTimeIndexer::int_array2_t partitionsDistResult(logicRulesEventTimes.size()+1);
+  partitionsDistResult[0] = EventTimeIndexer::int_array_t{-1};
+  subsystemsIndecesResult[0] = EventTimeIndexer::size_array_t{};
 
-	partitionsDistResult[0] = EventTimeIndexer::int_array_t{-1};
-	subsystemsIndecesResult[0] = EventTimeIndexer::size_array_t{};
+  partitionsDistResult[1] = EventTimeIndexer::int_array_t{0};
+  subsystemsIndecesResult[1] = EventTimeIndexer::size_array_t{0};
 
-	partitionsDistResult[1] = EventTimeIndexer::int_array_t{0};
-	subsystemsIndecesResult[1] = EventTimeIndexer::size_array_t{0};
+  partitionsDistResult[2] = EventTimeIndexer::int_array_t{0};
+  subsystemsIndecesResult[2] = EventTimeIndexer::size_array_t{1};
 
-	partitionsDistResult[2] = EventTimeIndexer::int_array_t{0};
-	subsystemsIndecesResult[2] = EventTimeIndexer::size_array_t{1};
+  partitionsDistResult[3] = EventTimeIndexer::int_array_t{0, 1, 2};
+  subsystemsIndecesResult[3] = EventTimeIndexer::size_array_t{2, 0, 0};
 
-	partitionsDistResult[3] = EventTimeIndexer::int_array_t{0, 1, 2};
-	subsystemsIndecesResult[3] = EventTimeIndexer::size_array_t{2, 0, 0};
+  partitionsDistResult[4] = EventTimeIndexer::int_array_t{2};
+  subsystemsIndecesResult[4] = EventTimeIndexer::size_array_t{1};
 
-	partitionsDistResult[4] = EventTimeIndexer::int_array_t{2};
-	subsystemsIndecesResult[4] = EventTimeIndexer::size_array_t{1};
+  partitionsDistResult[5] = EventTimeIndexer::int_array_t{2};
+  subsystemsIndecesResult[5] = EventTimeIndexer::size_array_t{2};
 
-	partitionsDistResult[5] = EventTimeIndexer::int_array_t{2};
-	subsystemsIndecesResult[5] = EventTimeIndexer::size_array_t{2};
+  // display
+  std::cerr << std::endl;
+  std::cerr << std::endl << "======================" << std::endl;
+  logicRulesMachine.display();
 
-	// display
-	std::cerr << std::endl;
-	std::cerr << std::endl << "======================" << std::endl;
-	logicRulesMachine.display();
+  EventTimeIndexer eventTimeIndexer;
+  eventTimeIndexer.set(logicRulesMachine);
+  eventTimeIndexer.display();
 
-	EventTimeIndexer eventTimeIndexer;
-	eventTimeIndexer.set(logicRulesMachine);
-	eventTimeIndexer.display();
+  bool testPass = true;
+  for (size_t i = 0; i < eventTimeIndexer.numSubsystems(); i++) {
+    if (partitionsDistResult[i] != eventTimeIndexer.partitionsDistribution(i)) testPass = false;
+    if (subsystemsIndecesResult[i] != eventTimeIndexer.subsystemIndeces(i)) testPass = false;
+  }
 
-	bool testPass = true;
-	for (size_t i=0; i<eventTimeIndexer.numSubsystems(); i++) {
-
-		if (partitionsDistResult[i] != eventTimeIndexer.partitionsDistribution(i))
-			testPass = false;
-		if (subsystemsIndecesResult[i] != eventTimeIndexer.subsystemIndeces(i))
-			testPass = false;
-	}
-
-	ASSERT_TRUE(testPass);
+  ASSERT_TRUE(testPass);
 }
 
-int main(int argc, char** argv)
-{
-	testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
+int main(int argc, char** argv) {
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
-
-

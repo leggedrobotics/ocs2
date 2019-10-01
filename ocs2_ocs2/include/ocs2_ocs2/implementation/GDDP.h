@@ -60,7 +60,7 @@ GDDP<STATE_DIM, INPUT_DIM>::GDDP(const GDDP_Settings& gddpSettings /*= GDDP_Sett
     rolloutSensitivityEquationsPtrStock_.emplace_back(new rollout_sensitivity_equations_t);
     riccatiSensitivityEquationsPtrStock_.emplace_back(new riccati_sensitivity_equations_t);
 
-    switch (gddpSettings_.RiccatiIntegratorType_) {
+    switch (gddpSettings_.riccatiIntegratorType_) {
       case DIMENSIONS::RiccatiIntegratorType::ODE45: {
         bvpSensitivityIntegratorsPtrStock_.emplace_back(new ODE45<STATE_DIM>(bvpSensitivityEquationsPtrStock_.back()));
 
@@ -233,10 +233,11 @@ void GDDP<STATE_DIM, INPUT_DIM>::computeEquivalentSystemMultiplier(const size_t&
 
   if (activeSubsystem == eventTimeIndex + 1) {
     if (activeSubsystem == eventTimes_.size()) {
-      if (dcPtr_->finalTime_ < eventTimes_[eventTimeIndex])
+      if (dcPtr_->finalTime_ < eventTimes_[eventTimeIndex]) {
         throw std::runtime_error("Final time is smaller than the last triggered event time.");
-      else
+      } else {
         timePeriod = dcPtr_->finalTime_ - eventTimes_[eventTimeIndex];
+      }
     } else {
       timePeriod = eventTimes_[eventTimeIndex + 1] - eventTimes_[eventTimeIndex];
     }
@@ -245,10 +246,11 @@ void GDDP<STATE_DIM, INPUT_DIM>::computeEquivalentSystemMultiplier(const size_t&
 
   } else if (activeSubsystem == eventTimeIndex) {
     if (activeSubsystem == 0) {
-      if (dcPtr_->initTime_ > eventTimes_[eventTimeIndex])
+      if (dcPtr_->initTime_ > eventTimes_[eventTimeIndex]) {
         throw std::runtime_error("Initial time is greater than the last triggered event time.");
-      else
+      } else {
         timePeriod = eventTimes_[eventTimeIndex] - dcPtr_->initTime_;
+      }
     } else {
       timePeriod = eventTimes_[eventTimeIndex] - eventTimes_[eventTimeIndex - 1];
     }
@@ -367,7 +369,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::propagateRolloutSensitivity(size_t workerIndex,
       if (endTimeItr != beginTimeItr) {
         // finding the current active subsystem
         scalar_t midTime = 0.5 * (*beginTimeItr + *(endTimeItr - 1));
-        size_t activeSubsystem = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, midTime));
+        auto activeSubsystem = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, midTime));
 
         // compute multiplier of the equivalent system
         scalar_t multiplier;
@@ -492,8 +494,8 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
     throw std::runtime_error("The index is associated to an inactive event or it is out of range.");
   }
 
-  typedef typename riccati_sensitivity_equations_t::s_vector_t s_vector_t;
-  typedef typename riccati_sensitivity_equations_t::s_vector_array_t s_vector_array_t;
+  using s_vector_t = typename riccati_sensitivity_equations_t::s_vector_t;
+  using s_vector_array_t = typename riccati_sensitivity_equations_t::s_vector_array_t;
 
   // Resizing
   nablasTrajectoriesStock.resize(numPartitions_);
@@ -556,7 +558,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
       // finding the current active subsystem
       scalar_t midNormalizedTime = 0.5 * (*beginTimeItr + *(endTimeItr - 1));
       scalar_t midTime = -midNormalizedTime;
-      size_t activeSubsystem = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, midTime));
+      auto activeSubsystem = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, midTime));
 
       // compute multiplier of the equivalent system
       scalar_t multiplier;
@@ -682,7 +684,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(size_t workerIndex, const s
       // finding the current active subsystem
       scalar_t midNormalizedTime = 0.5 * (*beginTimeItr + *(endTimeItr - 1));
       scalar_t midTime = -midNormalizedTime;
-      size_t activeSubsystem = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, midTime));
+      auto activeSubsystem = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, midTime));
 
       // compute multiplier of the equivalent system
       scalar_t multiplier;
@@ -874,7 +876,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::getValueFuntionSensitivity(const size_t& eventT
   EigenLinearInterpolation<state_vector_t> nablaSvFunc;
   EigenLinearInterpolation<state_matrix_t> nablaSmFunc;
 
-  size_t activePartition = static_cast<size_t>(lookup::findBoundedActiveIntervalInTimeArray(dcPtr_->partitioningTimes_, time));
+  auto activePartition = static_cast<size_t>(lookup::findBoundedActiveIntervalInTimeArray(dcPtr_->partitioningTimes_, time));
 
   state_vector_t nominalState;
   state_vector_t deltsState;
@@ -929,7 +931,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateCostDerivative(size_t workerIndex, con
         // finding the current active subsystem
         scalar_t midTime =
             0.5 * (dcPtr_->nominalTimeTrajectoriesStock_[i][beginIndex] + dcPtr_->nominalTimeTrajectoriesStock_[i][endIndex - 1]);
-        size_t activeSubsystem = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, midTime));
+        auto activeSubsystem = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, midTime));
 
         // compute multiplier of the equivalent system
         scalar_t multiplier;
@@ -996,9 +998,10 @@ void GDDP<STATE_DIM, INPUT_DIM>::runLQBasedMethod() {
         // for the first iteration set Lv to zero
         if (iteration == 1) {
           nablaLvTrajectoriesStockSet_[index].resize(numPartitions_);
-          for (size_t i = dcPtr_->initActivePartition_; i <= dcPtr_->finalActivePartition_; i++)
+          for (size_t i = dcPtr_->initActivePartition_; i <= dcPtr_->finalActivePartition_; i++) {
             nablaLvTrajectoriesStockSet_[index][i] =
                 input_vector_array_t(dcPtr_->optimizedControllersStock_[i].timeStamp_.size(), input_vector_t::Zero());
+          }
         }
 
         const size_t workerIndex = 0;
@@ -1140,7 +1143,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::run(const scalar_array_t& eventTimes, const slq
   activeEventTimeEndIndex_ = static_cast<size_t>(lookup::findIndexInTimeArray(eventTimes_, dcPtr_->finalTime_));
 
   // use the LQ-based method or Sweeping-BVP method
-  if (gddpSettings_.useLQForDerivatives_ == true) {
+  if (gddpSettings_.useLQForDerivatives_) {
     runLQBasedMethod();
   } else {
     runSweepingBVPMethod();

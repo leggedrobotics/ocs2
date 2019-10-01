@@ -44,7 +44,7 @@ namespace ocs2 {
  */
 class GDDP_Settings {
  public:
-  typedef Dimensions<0, 0>::RiccatiIntegratorType RICCATI_INTEGRATOR_TYPE;
+  using RICCATI_INTEGRATOR_TYPE = Dimensions<0, 0>::RiccatiIntegratorType;
 
   /**
    * Default constructor.
@@ -63,7 +63,7 @@ class GDDP_Settings {
         minEventTimeDifference_(0.0),
         nThreads_(4),
         useNominalTimeForBackwardPass_(false),
-        RiccatiIntegratorType_(RICCATI_INTEGRATOR_TYPE::ODE45),
+        riccatiIntegratorType_(RICCATI_INTEGRATOR_TYPE::ODE45),
         absTolODE_(1e-9),
         relTolODE_(1e-6),
         maxNumStepsPerSecond_(5000),
@@ -127,7 +127,7 @@ class GDDP_Settings {
   /** If true, GDDP solves the backward path over the nominal time trajectory. */
   bool useNominalTimeForBackwardPass_;
   /** Riccati integrator type. */
-  size_t RiccatiIntegratorType_;
+  size_t riccatiIntegratorType_;
   /** This value determines the absolute tolerance error for ode solvers. */
   double absTolODE_;
   /** This value determines the relative tolerance error for ode solvers. */
@@ -302,13 +302,13 @@ inline void GDDP_Settings::loadSettings(const std::string& filename, const std::
   }
 
   try {
-    RiccatiIntegratorType_ = pt.get<size_t>(fieldName + ".RiccatiIntegratorType");
+    riccatiIntegratorType_ = pt.get<size_t>(fieldName + ".RiccatiIntegratorType");
     if (verbose) {
-      std::cerr << " #### Option loader : option 'RiccatiIntegratorType' ............... " << RiccatiIntegratorType_ << std::endl;
+      std::cerr << " #### Option loader : option 'riccatiIntegratorType' ............... " << riccatiIntegratorType_ << std::endl;
     }
   } catch (const std::exception& e) {
     if (verbose) {
-      std::cerr << " #### Option loader : option 'RiccatiIntegratorType' ............... " << RiccatiIntegratorType_ << "   \t(default)"
+      std::cerr << " #### Option loader : option 'riccatiIntegratorType' ............... " << riccatiIntegratorType_ << "   \t(default)"
                 << std::endl;
     }
   }
@@ -336,7 +336,7 @@ inline void GDDP_Settings::loadSettings(const std::string& filename, const std::
   }
 
   try {
-    maxNumStepsPerSecond_ = pt.get<double>(fieldName + ".maxNumStepsPerSecond");
+    maxNumStepsPerSecond_ = pt.get<size_t>(fieldName + ".maxNumStepsPerSecond");
     if (verbose) {
       std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << std::endl;
     }

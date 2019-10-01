@@ -132,16 +132,11 @@ class GDDP {
   using dynamic_input_matrix_t = typename DIMENSIONS::dynamic_input_matrix_t;
 
   /**
-   * Default constructor.
-   */
-  GDDP() : GDDP(GDDP_Settings()) {}
-
-  /**
    * Constructor.
    *
    * @param [in] settings: Structure containing the settings for the GDDP algorithm.
    */
-  GDDP(const GDDP_Settings& gddpSettings);
+  explicit GDDP(const GDDP_Settings& gddpSettings = GDDP_Settings());
 
   /**
    * Default destructor.

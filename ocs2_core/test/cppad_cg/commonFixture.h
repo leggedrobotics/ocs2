@@ -72,7 +72,7 @@ class CommonCppAdNoParameterFixture : public ::testing::Test {
 
 class CommonCppAdParameterizedFixture : public ::testing::Test {
  public:
-  using scalar_t = float;
+  using scalar_t = double;
   using ad_base_t = CppAD::cg::CG<scalar_t>;
   using ad_t = CppAD::AD<ad_base_t>;
   using ad_fun_t = CppAD::ADFun<ad_base_t>;

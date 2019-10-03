@@ -77,6 +77,15 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   ballbotSystemDynamicsPtr_->initialize("ballbot_dynamics", libraryFolder_, recompileLibraries, true);
 
   /*
+   * Rollout
+   */
+  Rollout_Settings rolloutSettings;
+  rolloutSettings.loadSettings(taskFile, "slq.rollout");
+  ddpBallbotRolloutPtr_.reset(new time_triggered_rollout_t(*ballbotSystemDynamicsPtr_, rolloutSettings));
+  rolloutSettings.loadSettings(taskFile, "pi.rollout");
+  piBallbotRolloutPtr_.reset(new time_triggered_rollout_t(*ballbotSystemDynamicsPtr_, rolloutSettings));
+
+  /*
    * Cost function
    */
   ocs2::loadData::loadEigenMatrix(taskFile, "Q", Q_);
@@ -115,12 +124,12 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void BallbotInterface::setupOptimizer(const std::string& taskFile) {
-  mpcPtr_.reset(new mpc_t(ballbotSystemDynamicsPtr_.get(), ballbotSystemDynamicsPtr_.get(), ballbotConstraintPtr_.get(),
-                          ballbotCostPtr_.get(), ballbotOperatingPointPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_));
+  mpcPtr_.reset(new mpc_t(ddpBallbotRolloutPtr_.get(), ballbotSystemDynamicsPtr_.get(), ballbotConstraintPtr_.get(), ballbotCostPtr_.get(),
+                          ballbotOperatingPointPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_));
 
   std::unique_ptr<BallbotCost> cost(ballbotCostPtr_->clone());
-  mpcPi_.reset(new mpc_pi_t(std::shared_ptr<BallbotSystemDynamics>(ballbotSystemDynamicsPtr_->clone()), std::move(cost),
-                            *ballbotConstraintPtr_, partitioningTimes_, mpcSettings_, piSettings_));
+  mpcPi_.reset(
+      new mpc_pi_t(piBallbotRolloutPtr_.get(), std::move(cost), *ballbotConstraintPtr_, partitioningTimes_, mpcSettings_, piSettings_));
 }
 
 /******************************************************************************************************/

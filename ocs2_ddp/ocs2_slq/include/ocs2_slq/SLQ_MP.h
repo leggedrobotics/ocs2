@@ -270,9 +270,8 @@ class SLQ_MP : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
   std::condition_variable alphaBestFoundCondition_;
 
   std::array<std::atomic_size_t, 100> kTaken_approx_;
-  std::array<std::atomic_size_t, 100> kCompleted_approx_;
+  std::array<std::atomic_size_t, 100> kCompleted_;
   std::array<std::atomic_size_t, 100> kTaken_ctrl_;
-  std::array<std::atomic_size_t, 100> kCompleted_ctrl_;
 
   // parallel Riccati solver
   std::array<std::atomic_bool, 100> subsystemsDone_;

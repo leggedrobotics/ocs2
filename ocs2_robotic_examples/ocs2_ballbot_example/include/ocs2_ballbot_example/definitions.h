@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef BALLBOT_DEFINITIONS_OCS2_H_
-#define BALLBOT_DEFINITIONS_OCS2_H_
+#pragma once
 
 #include <cstddef>
 
@@ -39,5 +38,3 @@ enum ballbot : size_t { STATE_DIM_ = 10, INPUT_DIM_ = 3, JOINTS_DOF_NUM_ = 5 };
 
 }  // namespace ballbot
 }  // namespace ocs2
-
-#endif /* BALLBOT_DEFINITIONS_OCS2_H_ */

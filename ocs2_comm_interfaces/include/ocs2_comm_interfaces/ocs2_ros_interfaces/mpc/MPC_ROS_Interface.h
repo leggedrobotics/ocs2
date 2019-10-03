@@ -124,10 +124,10 @@ class MPC_ROS_Interface {
   /**
    * Constructor.
    *
-   * @param [in] mpcPtr: The MPC pointer to be interfaced.
+   * @param [in] mpc: The underlying MPC class to be used.
    * @param [in] robotName: The robot's name.
    */
-  explicit MPC_ROS_Interface(mpc_t* mpcPtr, const std::string& robotName = "robot");
+  explicit MPC_ROS_Interface(mpc_t& mpc, const std::string& robotName = "robot");
 
   /**
    * Destructor.
@@ -136,11 +136,8 @@ class MPC_ROS_Interface {
 
   /**
    * Sets the class as its constructor.
-   *
-   * @param [in] mpcPtr: The MPC pointer to be interfaced.
-   * @param [in] robotName: The robot's name.
    */
-  void set(mpc_t* mpcPtr, const std::string& robotName = "robot");
+  void set();
 
   /**
    * Resets the class to its instantiation state.
@@ -247,9 +244,8 @@ class MPC_ROS_Interface {
    * @brief fillMpcOutputBuffers updates the *Buffer variables from the MPC object.
    * This method is automatically called by advanceMpc()
    * @param [in] mpcInitObservation: The observation used to run the MPC.
-   * @param [in] mpc: A reference to the MPC instance.
    */
-  void fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc);
+  void fillMpcOutputBuffers(system_observation_t mpcInitObservation);
 
   /**
    * The callback method which receives the current observation, invokes the MPC algorithm,
@@ -277,7 +273,7 @@ class MPC_ROS_Interface {
   /*
    * Variables
    */
-  mpc_t* mpcPtr_;
+  mpc_t& mpc_;
 
   std::string robotName_;
 
@@ -301,8 +297,8 @@ class MPC_ROS_Interface {
   mpc_synchronized_ros_module_array_t mpcSynchronizedRosModules_;
 
   // multi-threading for publishers
-  bool terminateThread_;
-  bool readyToPublish_;
+  std::atomic_bool terminateThread_;
+  std::atomic_bool readyToPublish_;
   std::thread publisherWorker_;
   std::mutex publisherMutex_;
   std::condition_variable msgReady_;

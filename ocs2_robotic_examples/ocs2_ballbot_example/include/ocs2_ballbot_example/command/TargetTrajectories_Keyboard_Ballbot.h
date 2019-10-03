@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef TARGETTRAJECTORIES_KEYBOARD_BALLBOT_OCS2_H_
-#define TARGETTRAJECTORIES_KEYBOARD_BALLBOT_OCS2_H_
+#pragma once
 
 #include <ocs2_ballbot_example/definitions.h>
 #include <ocs2_comm_interfaces/SystemObservation.h>
@@ -49,7 +48,7 @@ namespace ballbot {
  * @tparam SCALAR_T: scalar type.
  */
 template <typename SCALAR_T>
-class TargetTrajectories_Keyboard_Ballbot : public TargetTrajectories_Keyboard_Interface<SCALAR_T> {
+class TargetTrajectories_Keyboard_Ballbot final : public TargetTrajectories_Keyboard_Interface<SCALAR_T> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -88,7 +87,7 @@ class TargetTrajectories_Keyboard_Ballbot : public TargetTrajectories_Keyboard_I
    */
   ~TargetTrajectories_Keyboard_Ballbot() override = default;
 
-  cost_desired_trajectories_t toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) final {
+  cost_desired_trajectories_t toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) override {
     auto deg2rad = [](const scalar_t& deg) { return (deg * M_PI / 180.0); };
 
     SystemObservation<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> observation;
@@ -147,5 +146,3 @@ class TargetTrajectories_Keyboard_Ballbot : public TargetTrajectories_Keyboard_I
 
 }  // namespace ballbot
 }  // namespace ocs2
-
-#endif /* TARGETTRAJECTORIES_KEYBOARD_BALLBOT_OCS2_H_ */

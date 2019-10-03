@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 
 #include "ocs2_core/initialization/SystemOperatingTrajectoriesBase.h"
+#include "ocs2_core/misc/Numerics.h"
 
 namespace ocs2 {
 
@@ -71,28 +72,10 @@ class SystemOperatingPoint : public SystemOperatingTrajectoriesBase<STATE_DIM, I
   /**
    * Default destructor.
    */
-  virtual ~SystemOperatingPoint() = default;
+  virtual ~SystemOperatingPoint() override = default;
 
-  /**
-   * Returns pointer to the class.
-   *
-   * @return A raw pointer to the class.
-   */
   SystemOperatingPoint<STATE_DIM, INPUT_DIM>* clone() const override { return new SystemOperatingPoint<STATE_DIM, INPUT_DIM>(*this); }
 
-  /**
-   * Gets the operating points for the system in time interval [startTime, finalTime] where there is
-   * no intermediate switches except possibly the end time.
-   *
-   * @param [in] initialState: Initial state.
-   * @param [in] startTime: Initial time.
-   * @param [in] finalTime: Final time.
-   * @param [out] timeTrajectory: Output time stamp trajectory.
-   * @param [out] stateTrajectory: Output state trajectory.
-   * @param [out] inputTrajectory: Output control input trajectory.
-   * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or
-   * override (default).
-   */
   void getSystemOperatingTrajectories(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime,
                                       scalar_array_t& timeTrajectory, state_vector_array_t& stateTrajectory,
                                       input_vector_array_t& inputTrajectory, bool concatOutput = false) override {
@@ -103,13 +86,14 @@ class SystemOperatingPoint : public SystemOperatingTrajectoriesBase<STATE_DIM, I
     }
 
     timeTrajectory.emplace_back(startTime);
-    timeTrajectory.emplace_back(finalTime);
-
     stateTrajectory.emplace_back(stateOperatingPoint_);
-    stateTrajectory.emplace_back(stateOperatingPoint_);
+    inputTrajectory.emplace_back(inputOperatingPoint_);
 
-    inputTrajectory.emplace_back(inputOperatingPoint_);
-    inputTrajectory.emplace_back(inputOperatingPoint_);
+    if (!numerics::almost_eq(startTime, finalTime)) {
+      timeTrajectory.emplace_back(finalTime);
+      stateTrajectory.emplace_back(stateOperatingPoint_);
+      inputTrajectory.emplace_back(inputOperatingPoint_);
+    }
   }
 
  protected:

@@ -164,10 +164,10 @@ public:
      * \param vect3d the 3x1 vector to be transformed
      * \return the 3D vector that results from the rotation plus translation
      */
-    template <typename Derived, typename Other>
-    static Vector3d transform(
+    template <typename Derived, typename Scalar>
+    static Eigen::Matrix<Scalar, 3, 1> transform(
             const MatrixBase<Derived>& homT,
-            const MatrixBase<Other>& vect3d)
+            const Eigen::Matrix<Scalar, 3, 1>& vect3d)
     {
         eigen_assert(homT.rows() == 4  &&  homT.cols() == 4); // weak way to check if it is a homogeneous transform
         eigen_assert(vect3d.rows() == 3  &&  vect3d.cols() == 1); // check if it is a 3d column

@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef TARGETTRAJECTORIES_KEYBOARD_DOUBLE_INTEGRATOR_OCS2_H_
-#define TARGETTRAJECTORIES_KEYBOARD_DOUBLE_INTEGRATOR_OCS2_H_
+#pragma once
 
 #include <ocs2_robotic_tools/command/TargetPoseTransformation.h>
 #include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
@@ -42,7 +41,7 @@ namespace double_integrator {
  * @tparam SCALAR_T: scalar type.
  */
 template <typename SCALAR_T>
-class TargetTrajectories_Keyboard_Double_Integrator : public ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T> {
+class TargetTrajectories_Keyboard_Double_Integrator final : public ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -73,16 +72,8 @@ class TargetTrajectories_Keyboard_Double_Integrator : public ocs2::TargetTraject
    */
   ~TargetTrajectories_Keyboard_Double_Integrator() override = default;
 
-  /**
-   * From command line loaded command to desired time, state, and input.
-   *
-   * @param [out] commadLineTarget: The loaded command target.
-   * @param [in] desiredTime: Desired time to be published.
-   * @param [in] desiredState: Desired state to be published.
-   * @param [in] desiredInput: Desired input to be published.
-   */
   void toCostDesiredTimeStateInput(const scalar_array_t& commadLineTarget, scalar_t& desiredTime, dynamic_vector_t& desiredState,
-                                   dynamic_vector_t& desiredInput) final {
+                                   dynamic_vector_t& desiredInput) override {
     // time
     desiredTime = 0.0;
     // state
@@ -96,5 +87,3 @@ class TargetTrajectories_Keyboard_Double_Integrator : public ocs2::TargetTraject
 
 }  // namespace double_integrator
 }  // namespace ocs2
-
-#endif /* TARGETTRAJECTORIES_KEYBOARD_DOUBLE_INTEGRATOR_OCS2_H_ */

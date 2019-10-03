@@ -26,62 +26,45 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
+#pragma once
 
-#ifndef TRAJECTORY_SPREADING_CONTROLLER_OCS2_H_
-#define TRAJECTORY_SPREADING_CONTROLLER_OCS2_H_
-
-#include <algorithm>
-#include <iostream>
-#include <utility>
-
-#include "ocs2_core/Dimensions.h"
-#include "ocs2_core/OCS2NumericTraits.h"
-#include "ocs2_core/control/LinearController.h"
+#include "ocs2_core/control/ControllerAdjustmentBase.h"
 
 namespace ocs2 {
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class TrajectorySpreadingController {
+class TrajectorySpreadingControllerAdjustment final : public ControllerAdjustmentBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  enum { state_dim_ = STATE_DIM, input_dim_ = INPUT_DIM };
+  using BASE = ControllerAdjustmentBase<STATE_DIM, INPUT_DIM>;
 
-  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-  using state_matrix_t = typename DIMENSIONS::state_matrix_t;
-  using input_vector_t = typename DIMENSIONS::input_vector_t;
-  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-  using input_matrix_t = typename DIMENSIONS::input_matrix_t;
-  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
-  using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
-
-  using controller_t = LinearController<STATE_DIM, INPUT_DIM>;
-  using controller_array_t = typename controller_t::array_t;
-
-  using index_t = std::pair<int, int>;  // (partition, index)
+  using typename BASE::index_t;  // (partition, index)
+  using typename BASE::input_matrix_t;
+  using typename BASE::input_state_matrix_t;
+  using typename BASE::input_vector_array_t;
+  using typename BASE::input_vector_t;
+  using typename BASE::linear_controller_array_t;
+  using typename BASE::linear_controller_t;
+  using typename BASE::scalar_array_t;
+  using typename BASE::scalar_t;
+  using typename BASE::state_input_matrix_t;
+  using typename BASE::state_matrix_t;
+  using typename BASE::state_vector_array_t;
+  using typename BASE::state_vector_t;
 
   /**
    * Constructor
    */
-  TrajectorySpreadingController() = default;
+  TrajectorySpreadingControllerAdjustment() = default;
 
   /**
    * Destructor
    */
-  ~TrajectorySpreadingController() = default;
+  ~TrajectorySpreadingControllerAdjustment() override = default;
 
-  /**
-   * Adjust the controller based on the last changes in the logic rules.
-   *
-   * @param [in] eventTimes: The new event times.
-   * @param [in] controllerEventTimes: The control policy stock's event times.
-   * @param controllerStock: The controller stock which will be modified.
-   */
-  void adjustController(const scalar_array_t& eventTimes, const scalar_array_t& controllerEventTimes, controller_array_t& controllersStock);
+  void adjustController(const scalar_array_t& eventTimes, const scalar_array_t& controllerEventTimes,
+                        linear_controller_array_t& controllersStock) override;
 
  protected:
   /**
@@ -91,7 +74,7 @@ class TrajectorySpreadingController {
    * @param [in] controllersStock: Control policy.
    * @param [out] eventsIndices: event time indices in the control policy time stamp.
    */
-  void findEventTimesIndices(const scalar_array_t& eventTimes, const controller_array_t& controllersStock,
+  void findEventTimesIndices(const scalar_array_t& eventTimes, const linear_controller_array_t& controllersStock,
                              std::vector<index_t>& eventsIndices) const;
 
   /**
@@ -110,7 +93,7 @@ class TrajectorySpreadingController {
    * @param [in] b: second index.
    * @return true if a <= b.
    */
-  index_t findPreviousIndex(index_t index, const controller_array_t& controllersStock) const;
+  index_t findPreviousIndex(index_t index, const linear_controller_array_t& controllersStock) const;
 
   /**
    *
@@ -120,7 +103,7 @@ class TrajectorySpreadingController {
    * @param controllersStock
    */
   void spreadController(scalar_t eventTime, index_t eventTimeIndex, index_t controlerEventTimeIndex,
-                        controller_array_t& controllersStock) const;
+                        linear_controller_array_t& controllersStock) const;
 
   /***********
    * Variables
@@ -132,6 +115,4 @@ class TrajectorySpreadingController {
 
 }  // namespace ocs2
 
-#include "implementation/TrajectorySpreadingController.h"
-
-#endif /* TRAJECTORY_SPREADING_CONTROLLER_OCS2_H_ */
+#include "implementation/TrajectorySpreadingControllerAdjustment.h"

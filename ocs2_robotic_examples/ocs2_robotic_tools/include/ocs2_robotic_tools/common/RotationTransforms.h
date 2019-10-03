@@ -46,7 +46,7 @@ namespace ocs2 {
  */
 template <typename SCALAR_T>
 Eigen::Matrix<SCALAR_T, 3, 1> quaternionDistance(const Eigen::Quaternion<SCALAR_T>& eeQuaternion,
-                                                 const Eigen::Quaternion<SCALAR_T>& commandQuaternion) const {
+                                                 const Eigen::Quaternion<SCALAR_T>& commandQuaternion) {
     return eeQuaternion.w() * commandQuaternion.vec() - commandQuaternion.w() * eeQuaternion.vec() -
            commandQuaternion.vec().cross(eeQuaternion.vec());
 }
@@ -58,7 +58,7 @@ Eigen::Matrix<SCALAR_T, 3, 1> quaternionDistance(const Eigen::Quaternion<SCALAR_
  * @return The corresponding quaternion
  */
 template <typename SCALAR_T>
-Eigen::Quaternion<SCALAR_T> getQuaternionFromEulerAnglesZyx(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAnglesZyx) const {
+Eigen::Quaternion<SCALAR_T> getQuaternionFromEulerAnglesZyx(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAnglesZyx) {
     SCALAR_T yaw = eulerAnglesZyx(0);
     SCALAR_T pitch = eulerAnglesZyx(1);
     SCALAR_T roll = eulerAnglesZyx(2);

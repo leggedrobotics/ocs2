@@ -56,8 +56,10 @@ ILQR_MT<STATE_DIM, INPUT_DIM>::ILQR_MT(const controlled_system_base_t* systemDyn
 template <size_t STATE_DIM, size_t INPUT_DIM>
 ILQR_MT<STATE_DIM, INPUT_DIM>::~ILQR_MT() {
   workersActive_ = false;
-  workerTask_ = SHUTDOWN;
-
+  {
+    std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+    workerTask_ = SHUTDOWN;
+  }
   workerWakeUpCondition_.notify_all();
 
   if (BASE::ddpSettings_.debugPrintMT_) {
@@ -104,7 +106,11 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
   alphaProcessed_.clear();
   alphaTaken_ = 0;
   alphaBestFound_ = false;
-  lsWorkerCompleted_ = 0;
+
+  {
+    std::lock_guard<std::mutex> waitLock(alphaBestFoundMutex_);
+    lsWorkerCompleted_ = 0;
+  }
 
   size_t maxNumOfLineSearches = (int)(log(BASE::ddpSettings_.minLearningRate_ / BASE::ddpSettings_.maxLearningRate_) /
                                       log(BASE::ddpSettings_.lineSearchContractionRate_)) +
@@ -118,22 +124,25 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
     std::cerr << "[MT]: Waking up workers for line search " << std::endl;
   }
 
-  workerTask_ = LINE_SEARCH;
-  std::unique_lock<std::mutex> lock(workerWakeUpMutex_);
+  {
+    std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+    workerTask_ = LINE_SEARCH;
+  }
   workerWakeUpCondition_.notify_all();
-  lock.unlock();
 
   if (BASE::ddpSettings_.debugPrintMT_) {
     BASE::printString("[MT]: Will sleep now until we have results ");
   }
 
-  std::unique_lock<std::mutex> waitLock(alphaBestFoundMutex_);
-  while (lsWorkerCompleted_.load() < BASE::ddpSettings_.nThreads_) {
-    alphaBestFoundCondition_.wait(waitLock);
+  {
+    std::unique_lock<std::mutex> waitLock(alphaBestFoundMutex_);
+    alphaBestFoundCondition_.wait(waitLock, [&] { return lsWorkerCompleted_ >= BASE::ddpSettings_.nThreads_; });
   }
-  waitLock.unlock();
 
-  workerTask_ = IDLE;
+  {
+    std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+    workerTask_ = IDLE;
+  }
 
   // revitalize all integrator
   event_handler_t::deactivateKillIntegration();
@@ -155,7 +164,10 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void ILQR_MT<STATE_DIM, INPUT_DIM>::launchWorkerThreads() {
   workersActive_ = true;
-  workerTask_ = IDLE;
+  {
+    std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+    workerTask_ = IDLE;
+  }
 
   workerThreads_.clear();
   for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
@@ -202,12 +214,12 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId) {
       }
 
       // sleep until the state is not IDLE any more and we have a different process ID than before
-      std::unique_lock<std::mutex> waitLock(workerWakeUpMutex_);
-      while (workerTask_ == IDLE ||
-             (uniqueProcessID == generateUniqueProcessID(BASE::iteration_, (int)workerTask_.load(), (int)subsystemProcessed_.load()))) {
-        workerWakeUpCondition_.wait(waitLock);
+      {
+        std::unique_lock<std::mutex> waitLock(workerWakeUpMutex_);
+        workerWakeUpCondition_.wait(waitLock, [&] {
+          return (workerTask_ != IDLE) && (uniqueProcessID != generateUniqueProcessID(BASE::iteration_, workerTask_, subsystemProcessed_));
+        });
       }
-      waitLock.unlock();
 
       subsystemProcessed_local = subsystemProcessed_.load();
       workerTask_local = workerTask_.load();
@@ -294,10 +306,11 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex
     kCompleted_approx_[partitionIndex] = 0;
 
     // activates all threads' APPROXIMATE_LQ task which in turn runs executeApproximatePartitionLQWorker routine
-    workerTask_ = APPROXIMATE_LQ;
-    std::unique_lock<std::mutex> lock(workerWakeUpMutex_);
+    {
+      std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+      workerTask_ = APPROXIMATE_LQ;
+    }
     workerWakeUpCondition_.notify_all();
-    lock.unlock();
 
     // display
     if (BASE::ddpSettings_.debugPrintMT_) {
@@ -312,7 +325,10 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex
     waitLock.unlock();
 
     // reset threads to no task mode
-    workerTask_ = IDLE;
+    {
+      std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+      workerTask_ = IDLE;
+    }
 
     // display
     if (BASE::ddpSettings_.debugPrintMT_) {
@@ -393,10 +409,11 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitio
     kTaken_ctrl_[partitionIndex] = 0;
     kCompleted_ctrl_[partitionIndex] = 0;
 
-    workerTask_ = CALCULATE_CONTROLLER;
-    std::unique_lock<std::mutex> lock(workerWakeUpMutex_);
+    {
+      std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+      workerTask_ = CALCULATE_CONTROLLER;
+    }
     workerWakeUpCondition_.notify_all();
-    lock.unlock();
 
     // display
     if (BASE::ddpSettings_.debugPrintMT_) {
@@ -411,7 +428,10 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitio
     waitLock.unlock();
 
     // reset threads to no task mode
-    workerTask_ = IDLE;
+    {
+      std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+      workerTask_ = IDLE;
+    }
 
     // display
     if (BASE::ddpSettings_.debugPrintMT_) {
@@ -619,20 +639,21 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::executeLineSearchWorker(size_t threadId) {
 
   }  // end of while loop
 
-  // add to the number of threads that finished their tasks
-  lsWorkerCompleted_++;
-
-  if (BASE::ddpSettings_.debugPrintMT_) {
-    BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: Leaving executeLineSearchWorker ");
-  }
-
-  if (lsWorkerCompleted_.load() >= BASE::ddpSettings_.nThreads_) {
-    std::unique_lock<std::mutex> lock(alphaBestFoundMutex_);
-    alphaBestFoundCondition_.notify_all();
-    lock.unlock();
+  {
+    std::lock_guard<std::mutex> waitLock(alphaBestFoundMutex_);
+    // add to the number of threads that finished their tasks
+    lsWorkerCompleted_++;
 
     if (BASE::ddpSettings_.debugPrintMT_) {
-      BASE::printString("[MT]: NOTIFYING LS WORKERs since all workers are now done.");
+      BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: Leaving executeLineSearchWorker ");
+    }
+
+    if (lsWorkerCompleted_ >= BASE::ddpSettings_.nThreads_) {
+      alphaBestFoundCondition_.notify_all();
+
+      if (BASE::ddpSettings_.debugPrintMT_) {
+        BASE::printString("[MT]: NOTIFYING LS WORKERs since all workers are now done.");
+      }
     }
   }
 }
@@ -693,10 +714,11 @@ typename ILQR_MT<STATE_DIM, INPUT_DIM>::scalar_t ILQR_MT<STATE_DIM, INPUT_DIM>::
       BASE::printString("[MT]: Waking up workers to do RiccatiSolver Task.");
     }
 
-    workerTask_ = SOLVE_RICCATI;
-    std::unique_lock<std::mutex> lock(workerWakeUpMutex_);
+    {
+      std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+      workerTask_ = SOLVE_RICCATI;
+    }
     workerWakeUpCondition_.notify_all();
-    lock.unlock();
 
     if (BASE::ddpSettings_.debugPrintMT_) {
       BASE::printString("[MT]: Will wait now until workers have done RiccatiSolver Task.");
@@ -708,7 +730,10 @@ typename ILQR_MT<STATE_DIM, INPUT_DIM>::scalar_t ILQR_MT<STATE_DIM, INPUT_DIM>::
     }
     waitLock.unlock();
 
-    workerTask_ = IDLE;
+    {
+      std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+      workerTask_ = IDLE;
+    }
   }
 
   if (BASE::ddpSettings_.debugPrintMT_) {

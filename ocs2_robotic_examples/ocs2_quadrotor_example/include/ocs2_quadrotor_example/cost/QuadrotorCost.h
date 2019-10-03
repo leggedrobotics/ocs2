@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef QUADROTOR_COST_OCS2_H_
-#define QUADROTOR_COST_OCS2_H_
+#pragma once
 
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
@@ -39,83 +38,66 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace quadrotor {
 
-class QuadrotorCost final : public QuadraticCostFunction<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class QuadrotorCost final : public QuadraticCostFunction<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using Ptr = std::shared_ptr<QuadrotorCost>;
-	using ConstPtr = std::shared_ptr<const QuadrotorCost>;
+  using Ptr = std::shared_ptr<QuadrotorCost>;
+  using ConstPtr = std::shared_ptr<const QuadrotorCost>;
 
-	using BASE = QuadraticCostFunction<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
-	using scalar_t = typename BASE::scalar_t;
-	using state_vector_t = typename BASE::state_vector_t;
-	using state_matrix_t = typename BASE::state_matrix_t;
-	using input_vector_t = typename BASE::input_vector_t;
-	using input_matrix_t = typename BASE::input_matrix_t;
+  using BASE = QuadraticCostFunction<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
+  using scalar_t = typename BASE::scalar_t;
+  using state_vector_t = typename BASE::state_vector_t;
+  using state_matrix_t = typename BASE::state_matrix_t;
+  using input_vector_t = typename BASE::input_vector_t;
+  using input_matrix_t = typename BASE::input_matrix_t;
 
-	/**
-	 * Constructor for the running and final cost function defined as the following:
-	 * - \f$ L = 0.5(x-x_{nominal})' Q (x-x_{nominal}) + 0.5(u-u_{nominal})' R (u-u_{nominal}) \f$
-	 * - \f$ \Phi = 0.5(x-x_{final})' Q_{final} (x-x_{final}) \f$.
-	 * @param [in] Q: \f$ Q \f$
-	 * @param [in] R: \f$ R \f$
-	 * @param [in] xNominal: \f$ x_{nominal}\f$
-	 * @param [in] uNominal: \f$ u_{nominal}\f$
-	 * @param [in] QFinal: \f$ Q_{final}\f$
-	 * @param [in] xFinal: \f$ x_{final}\f$
-	 */
-	QuadrotorCost(
-			const state_matrix_t& Q,
-			const input_matrix_t& R,
-			const state_vector_t& x_nominal,
-			const input_vector_t& u_nominal,
-			const state_matrix_t& Q_final,
-			const state_vector_t& x_final)
-	: QuadraticCostFunction(Q, R, x_nominal, u_nominal, Q_final, x_final)
-	{}
+  /**
+   * Constructor for the running and final cost function defined as the following:
+   * - \f$ L = 0.5(x-x_{nominal})' Q (x-x_{nominal}) + 0.5(u-u_{nominal})' R (u-u_{nominal}) \f$
+   * - \f$ \Phi = 0.5(x-x_{final})' Q_{final} (x-x_{final}) \f$.
+   * @param [in] Q: \f$ Q \f$
+   * @param [in] R: \f$ R \f$
+   * @param [in] xNominal: \f$ x_{nominal}\f$
+   * @param [in] uNominal: \f$ u_{nominal}\f$
+   * @param [in] QFinal: \f$ Q_{final}\f$
+   * @param [in] xFinal: \f$ x_{final}\f$
+   */
+  QuadrotorCost(const state_matrix_t& Q, const input_matrix_t& R, const state_vector_t& x_nominal, const input_vector_t& u_nominal,
+                const state_matrix_t& Q_final, const state_vector_t& x_final)
+      : QuadraticCostFunction(Q, R, x_nominal, u_nominal, Q_final, x_final) {}
 
-	/**
-	 * Destructor
-	 */
-	~QuadrotorCost() = default;
+  /**
+   * Destructor
+   */
+  ~QuadrotorCost() override = default;
 
-    /**
-     * Returns pointer to the class.
-     *
-     * @return A raw pointer to the class.
-     */
-	QuadrotorCost* clone() const {
+  /**
+   * Returns pointer to the class.
+   *
+   * @return A raw pointer to the class.
+   */
+  QuadrotorCost* clone() const { return new QuadrotorCost(*this); }
 
-		return new QuadrotorCost(*this);
-	}
+  /**
+   * Sets the current time, state, and control input.
+   *
+   * @param [in] t: Current time.
+   * @param [in] x: Current state vector.
+   * @param [in] u: Current input vector.
+   */
+  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
+    dynamic_vector_t xNominal(static_cast<int>(quadrotor::STATE_DIM_));
+    BASE::xNominalFunc_.interpolate(t, xNominal);
+    dynamic_vector_t uNominal(static_cast<int>(quadrotor::INPUT_DIM_));
+    BASE::uNominalFunc_.interpolate(t, uNominal);
 
-	/**
-	 * Sets the current time, state, and control input.
-	 *
-	 * @param [in] t: Current time.
-	 * @param [in] x: Current state vector.
-	 * @param [in] u: Current input vector.
-	 */
-	void setCurrentStateAndControl(
-			const scalar_t& t,
-			const state_vector_t& x,
-			const input_vector_t& u) {
+    // set base class
+    BASE::setCurrentStateAndControl(t, x, u, xNominal, uNominal, xNominal);
+  }
 
-		dynamic_vector_t xNominal(static_cast<int>(quadrotor::STATE_DIM_));
-		BASE::xNominalFunc_.interpolate(t, xNominal);
-		dynamic_vector_t uNominal(static_cast<int>(quadrotor::INPUT_DIM_));
-		BASE::uNominalFunc_.interpolate(t, uNominal);
-
-		// set base class
-		BASE::setCurrentStateAndControl(t, x, u, xNominal, uNominal, xNominal);
-	}
-
-private:
-
+ private:
 };
 
-} // namespace quadrotor
-} // namespace ocs2
-
-#endif //QUADROTOR_COST_OCS2_H_
+}  // namespace quadrotor
+}  // namespace ocs2

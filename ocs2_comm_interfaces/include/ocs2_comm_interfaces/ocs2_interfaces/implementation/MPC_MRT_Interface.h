@@ -76,7 +76,7 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
   if (!controllerIsUpdated) {
     return;
   }
-  fillMpcOutputBuffers(currentObservation, mpc_);
+  fillMpcOutputBuffers(currentObservation);
 
   // measure the delay for sending ROS messages
   mpcTimer_.endTimer();
@@ -104,21 +104,21 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observation_t mpcInitObservation, const mpc_t& mpc) {
+void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observation_t mpcInitObservation) {
   // buffer policy mutex
   std::lock_guard<std::mutex> policyBufferLock(this->policyBufferMutex_);
 
   // get solution
   scalar_t startTime = mpcInitObservation.time();
-  scalar_t finalTime = startTime + mpc.settings().solutionTimeWindow_;
-  if (mpc.settings().solutionTimeWindow_ < 0) {
-    finalTime = mpc.getSolverPtr()->getFinalTime();
+  scalar_t finalTime = startTime + mpc_.settings().solutionTimeWindow_;
+  if (mpc_.settings().solutionTimeWindow_ < 0) {
+    finalTime = mpc_.getSolverPtr()->getFinalTime();
   }
-  mpc.getSolverPtr()->getPrimalSolution(finalTime, this->primalSolutionBuffer_.get());
+  mpc_.getSolverPtr()->getPrimalSolution(finalTime, this->primalSolutionBuffer_.get());
 
   // command
   this->commandBuffer_->mpcInitObservation_ = std::move(mpcInitObservation);
-  this->commandBuffer_->mpcCostDesiredTrajectories_ = mpc.getSolverPtr()->getCostDesiredTrajectories();
+  this->commandBuffer_->mpcCostDesiredTrajectories_ = mpc_.getSolverPtr()->getCostDesiredTrajectories();
 
   // logic
   this->partitioningTimesUpdate(startTime, this->partitioningTimesBuffer_);

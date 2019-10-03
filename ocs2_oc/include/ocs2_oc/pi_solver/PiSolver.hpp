@@ -130,8 +130,8 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
         // braces to guard against usage of temporary rollout quantities
         typename rollout_t::size_array_t eventsPastTheEndIndeces;
         typename rollout_t::input_vector_array_t inputTrajectory;
-        rollout_.run(0, initTime, initState, finalTime, &controller_, *Base::getLogicRulesMachinePtr(), timeTrajectory,
-                     eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+        rollout_.run(initTime, initState, finalTime, &controller_, Base::getLogicRulesMachinePtr()->getLogicRulesPtr()->eventTimes(),
+                     timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
         // see Euler-Maruyama method (https://infoscience.epfl.ch/record/143450/files/sde_tutorial.pdf)
       }
 
@@ -274,8 +274,8 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     typename rollout_t::size_array_t eventsPastTheEndIndecesNominal;
     typename rollout_t::state_vector_array_t stateTrajectoryNominal;
     typename rollout_t::input_vector_array_t inputTrajectoryNominal;
-    rollout_.run(0, initTime, initState, finalTime, &controller_, *Base::getLogicRulesMachinePtr(), timeTrajectoryNominal,
-                 eventsPastTheEndIndecesNominal, stateTrajectoryNominal, inputTrajectoryNominal);
+    rollout_.run(initTime, initState, finalTime, &controller_, Base::getLogicRulesMachinePtr()->getLogicRulesPtr()->eventTimes(),
+                 timeTrajectoryNominal, eventsPastTheEndIndecesNominal, stateTrajectoryNominal, inputTrajectoryNominal);
 
     nominalStateTrajectoriesStock_.clear();
     nominalStateTrajectoriesStock_.push_back(stateTrajectoryNominal);

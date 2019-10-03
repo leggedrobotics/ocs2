@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef BALLBOTSYSTEMDYNAMICS_OCS2_BALLBOT_OCS2_H_
-#define BALLBOTSYSTEMDYNAMICS_OCS2_BALLBOT_OCS2_H_
+#pragma once
 
 // ocs2
 #include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
@@ -90,5 +89,3 @@ class BallbotSystemDynamics : public SystemDynamicsBaseAD<ballbot::STATE_DIM_, b
 
 }  // namespace ballbot
 }  // namespace ocs2
-
-#endif /* BALLBOTSYSTEMDYNAMICS_OCS2_BALLBOT_OCS2_H_ */

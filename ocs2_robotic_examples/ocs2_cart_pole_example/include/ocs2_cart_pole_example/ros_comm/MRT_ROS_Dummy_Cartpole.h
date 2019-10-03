@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef MRT_ROS_DUMMY_CARTPOLE_OCS2_H_
-#define MRT_ROS_DUMMY_CARTPOLE_OCS2_H_
+#pragma once
 
 #include <ocs2_comm_interfaces/test/MRT_ROS_Dummy_Loop.h>
 #include "ocs2_cart_pole_example/definitions.h"
@@ -39,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace cartpole {
 
-class MRT_ROS_Dummy_Cartpole : public MRT_ROS_Dummy_Loop<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> {
+class MrtRosDummyCartpole : public MRT_ROS_Dummy_Loop<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -48,18 +47,18 @@ class MRT_ROS_Dummy_Cartpole : public MRT_ROS_Dummy_Loop<cartpole::STATE_DIM_, c
   /**
    * Constructor.
    *
-   * @param [in] mrtPtr: A pointer to MRT.
+   * @param [in] mrt: The underlying MRT class to be used.
    * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz. This should always set to a positive number.
    * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
    * will be simulated to run by this frequency. Note that this might not be the MPC's realtime frequency.
    */
-  MRT_ROS_Dummy_Cartpole(const mrt_ptr_t& mrtPtr, const scalar_t& mrtDesiredFrequency, const scalar_t& mpcDesiredFrequency)
-      : BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency) {}
+  MrtRosDummyCartpole(mrt_t& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency)
+      : BASE(mrt, mrtDesiredFrequency, mpcDesiredFrequency) {}
 
   /**
    * Destructor.
    */
-  virtual ~MRT_ROS_Dummy_Cartpole() = default;
+  ~MrtRosDummyCartpole() override = default;
 
  protected:
   /**
@@ -68,7 +67,7 @@ class MRT_ROS_Dummy_Cartpole : public MRT_ROS_Dummy_Loop<cartpole::STATE_DIM_, c
    * @param [in] argc: command line number of inputs.
    * @param [in] argv: command line inputs' value.
    */
-  virtual void launchVisualizerNode(int argc, char* argv[]) override {
+  void launchVisualizerNode(int argc, char* argv[]) override {
     ros::init(argc, argv, "cartpole_visualization_node");
     ros::NodeHandle n;
     jointPublisher_ = n.advertise<sensor_msgs::JointState>("joint_states", 1);
@@ -96,5 +95,3 @@ class MRT_ROS_Dummy_Cartpole : public MRT_ROS_Dummy_Loop<cartpole::STATE_DIM_, c
 
 }  // namespace cartpole
 }  // namespace ocs2
-
-#endif /* MRT_ROS_DUMMY_CARTPOLE_OCS2_H_ */

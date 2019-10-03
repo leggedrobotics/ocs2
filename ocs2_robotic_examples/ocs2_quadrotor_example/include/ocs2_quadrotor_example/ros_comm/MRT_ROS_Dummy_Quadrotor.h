@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef MRT_ROS_DUMMY_QUADROTOR_OCS2_H_
-#define MRT_ROS_DUMMY_QUADROTOR_OCS2_H_
+#pragma once
 
 #include <tf/transform_broadcaster.h>
 
@@ -38,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace quadrotor {
 
-class MRT_ROS_Dummy_Quadrotor : public MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> {
+class MRT_ROS_Dummy_Quadrotor final : public MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -47,22 +46,18 @@ class MRT_ROS_Dummy_Quadrotor : public MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_,
   /**
    * Constructor.
    *
-   * @param [in] mrtPtr: A pointer to MRT.
+   * @param [in] mrt: The underlying MRT class to be used.
    * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz. This should always set to a positive number.
    * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
    * will be simulated to run by this frequency. Note that this might not be the MPC's realtime frequency.
-   * @param [in] systemPtr: Optional pointer to the system dynamics. If provided, the dummy will roll out the
-   * received controller using these dynamics instead of just sending back a planned state.
-   * @param [in] rolloutSettings settings to use when dummy rolls out the received controller
    */
-  MRT_ROS_Dummy_Quadrotor(const mrt_ptr_t& mrtPtr, const scalar_t& mrtDesiredFrequency, const scalar_t& mpcDesiredFrequency,
-                          const controlled_system_base_t* systemPtr = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings())
-      : BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency, systemPtr, rolloutSettings) {}
+  MRT_ROS_Dummy_Quadrotor(mrt_t& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency)
+      : BASE(mrt, mrtDesiredFrequency, mpcDesiredFrequency) {}
 
   /**
    * Default destructor.
    */
-  virtual ~MRT_ROS_Dummy_Quadrotor() = default;
+  ~MRT_ROS_Dummy_Quadrotor() override = default;
 
  protected:
   void publishVisualizer(const system_observation_t& observation, const primal_solution_t& policy, const command_data_t& command) override {
@@ -78,5 +73,3 @@ class MRT_ROS_Dummy_Quadrotor : public MRT_ROS_Dummy_Loop<quadrotor::STATE_DIM_,
 
 }  // namespace quadrotor
 }  // namespace ocs2
-
-#endif /* MRT_ROS_DUMMY_QUADROTOR_OCS2_H_ */

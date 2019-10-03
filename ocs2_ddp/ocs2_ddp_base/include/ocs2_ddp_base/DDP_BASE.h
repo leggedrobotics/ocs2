@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 #include <ocs2_core/control/LinearController.h>
+#include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
@@ -39,7 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
-#include <ocs2_core/misc/TrajectorySpreadingController.h>
+#include <ocs2_core/misc/Numerics.h>
 
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
@@ -729,7 +730,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   std::vector<bool> initialControllerDesignStock_;
 
   // trajectory spreading
-  TrajectorySpreadingController<STATE_DIM, INPUT_DIM> trajectorySpreadingController_;
+  TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM> trajectorySpreadingController_;
 
   std::atomic_size_t iteration_;
   eigen_scalar_array_t iterationCost_;

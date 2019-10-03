@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef MRT_ROS_DUMMY_BALLBOT_OCS2_H_
-#define MRT_ROS_DUMMY_BALLBOT_OCS2_H_
+#pragma once
 
 #include <tf/tf.h>
 #include <tf/transform_broadcaster.h>
@@ -42,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace ballbot {
 
-class MRT_ROS_Dummy_Ballbot : public MRT_ROS_Dummy_Loop<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> {
+class MRT_ROS_Dummy_Ballbot final : public MRT_ROS_Dummy_Loop<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -52,14 +51,18 @@ class MRT_ROS_Dummy_Ballbot : public MRT_ROS_Dummy_Loop<ballbot::STATE_DIM_, bal
   /**
    * Constructor.
    *
-   * @param [in] mrtPtr
+   * @param [in] mrt: The underlying MRT class to be used.
    * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz. This should always set to a positive number.
    * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
    * will be simulated to run by this frequency. Note that this might not be the MPC's realtime frequency.
    */
-  MRT_ROS_Dummy_Ballbot(const mrt_ptr_t& mrtPtr, const scalar_t& mrtDesiredFrequency, const scalar_t& mpcDesiredFrequency,
+  MRT_ROS_Dummy_Ballbot(mrt_t& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency,
                         const controlled_system_base_t* systemPtr = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings())
-      : BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency, systemPtr, rolloutSettings) {}
+      : BASE(mrt, mrtDesiredFrequency, mpcDesiredFrequency) {
+    if (systemPtr) {
+      mrt.initRollout(*systemPtr, rolloutSettings);
+    }
+  }
 
   /**
    * Destructor.
@@ -213,5 +216,3 @@ class MRT_ROS_Dummy_Ballbot : public MRT_ROS_Dummy_Loop<ballbot::STATE_DIM_, bal
 
 }  // namespace ballbot
 }  // namespace ocs2
-
-#endif /* MRT_ROS_DUMMY_BALLBOT_OCS2_H_ */

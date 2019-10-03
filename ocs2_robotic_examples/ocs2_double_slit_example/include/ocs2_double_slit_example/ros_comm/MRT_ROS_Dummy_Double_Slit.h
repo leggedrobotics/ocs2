@@ -48,14 +48,13 @@ class MrtRosDummyDoubleSlit final : public MRT_ROS_Dummy_Loop<double_slit::STATE
   /**
    * Constructor.
    *
-   * @param [in] mrtPtr
+   * @param [in] mrt: The underlying MRT class to be used.
    * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz. This should always set to a positive number.
    * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
    * will be simulated to run by this frequency. Note that this might not be the MPC's realtime frequency.
    */
-  MrtRosDummyDoubleSlit(const mrt_ptr_t& mrtPtr, const scalar_t& mrtDesiredFrequency, const scalar_t& mpcDesiredFrequency,
-                        const controlled_system_base_t* system = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings())
-      : BASE(mrtPtr, mrtDesiredFrequency, mpcDesiredFrequency, system, rolloutSettings) {}
+  MrtRosDummyDoubleSlit(mrt_t& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency)
+      : BASE(mrt, mrtDesiredFrequency, mpcDesiredFrequency) {}
 
   /**
    * Destructor.

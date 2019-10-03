@@ -84,7 +84,7 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
 
   using ros_msg_conversions_t = RosMsgConversions<STATE_DIM, INPUT_DIM>;
   using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
-  using rollout_base_ptr_t = typename std::unique_ptr<RolloutBase<STATE_DIM, INPUT_DIM>>;
+  using rollout_base_t = RolloutBase<STATE_DIM, INPUT_DIM>;
   using time_triggered_rollout_t = TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
   using system_observation_t = SystemObservation<STATE_DIM, INPUT_DIM>;

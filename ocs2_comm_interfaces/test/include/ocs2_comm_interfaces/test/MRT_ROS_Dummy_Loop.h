@@ -44,7 +44,7 @@ class MRT_ROS_Dummy_Loop {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using mrt_t = ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
+  using mrt_t = MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
   using primal_solution_t = typename mrt_t::primal_solution_t;
   using command_data_t = typename mrt_t::command_data_t;
 
@@ -59,10 +59,8 @@ class MRT_ROS_Dummy_Loop {
   using input_state_matrix_t = typename mrt_t::input_state_matrix_t;
   using input_state_matrix_array_t = typename mrt_t::input_state_matrix_array_t;
 
-  using system_observation_t = typename mrt_t::system_observation_t;
   using cost_desired_trajectories_t = typename mrt_t::cost_desired_trajectories_t;
-
-  using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
+  using system_observation_t = typename mrt_t::system_observation_t;
 
   /**
    * Constructor.
@@ -128,7 +126,6 @@ class MRT_ROS_Dummy_Loop {
   mrt_t& mrt_;
   scalar_t mrtDesiredFrequency_;
   scalar_t mpcDesiredFrequency_;
-  std::unique_ptr<controlled_system_base_t> systemPtr_;
 
   bool realtimeLoop_;
 

@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/control/ControllerBase.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_core/dynamics/ControlledSystemBase.h>
+#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
@@ -71,6 +71,8 @@ class MRT_BASE {
   using input_vector_array_t = typename dim_t::input_vector_array_t;
 
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
+  using rollout_base_t = RolloutBase<STATE_DIM, INPUT_DIM>;
+
   using state_linear_interpolation_t = EigenLinearInterpolation<state_vector_t>;
   using input_linear_interpolation_t = EigenLinearInterpolation<input_vector_t>;
 
@@ -126,19 +128,10 @@ class MRT_BASE {
   const primal_solution_t& getPolicy() const { return *currentPrimalSolution_; };
 
   /**
-   * Initializes rollout class to roll out a feedback policy
-   *
-   * @param [in] controlledSystemBase: System to roll out.
-   * @param [in] rolloutSettings
-   */
-  void initRollout(const ControlledSystemBase<STATE_DIM, INPUT_DIM>& controlledSystemBase,
-                   const Rollout_Settings& rolloutSettings = Rollout_Settings());
-
-  /**
    * @brief Initializes rollout class to roll out a feedback policy
    * @param rolloutPtr: The rollout object to be used
    */
-  void initRollout(std::unique_ptr<RolloutBase<STATE_DIM, INPUT_DIM>> rolloutPtr);
+  void initRollout(const rollout_base_t* rolloutPtr);
 
   /**
    * @brief Evaluates the controller
@@ -237,7 +230,7 @@ class MRT_BASE {
 
   // variables needed for policy evaluation
   std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
-  std::unique_ptr<RolloutBase<STATE_DIM, INPUT_DIM>> rolloutPtr_;
+  std::unique_ptr<rollout_base_t> rolloutPtr_;
   HybridLogicRulesMachine::Ptr logicMachinePtr_;
 
   // variables

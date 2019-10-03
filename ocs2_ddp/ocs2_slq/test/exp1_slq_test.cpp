@@ -106,10 +106,8 @@ TEST(exp1_slq_test, Exp1_slq_test) {
                                   slqSettings, logicRules);
 
   // SLQ - multi-threaded version
-  //	SLQ_MP<STATE_DIM, INPUT_DIM, EXP1_LogicRules> slqMT(
-  //			&systemDynamics, &systemDerivative,
-  //			&systemConstraint, &systemCostFunction,
-  //			&operatingTrajectories, slqSettings, logicRules);
+  SLQ_MP<STATE_DIM, INPUT_DIM> slqMT(&systemDynamics, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
+                                     slqSettings, logicRules);
 
   // run single-threaded SLQ
   if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
@@ -117,23 +115,23 @@ TEST(exp1_slq_test, Exp1_slq_test) {
   slqST.run(startTime, initState, finalTime, partitioningTimes);
 
   // run multi-threaded SLQ
-  //	if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
-  //		std::cerr << "\n>>> multi-core SLQ" << std::endl;
-  //	slqMT.run(startTime, initState, finalTime, partitioningTimes);
+  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
+    std::cerr << "\n>>> multi-core SLQ" << std::endl;
+  slqMT.run(startTime, initState, finalTime, partitioningTimes);
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
   // get solution
   SLQ_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t solutionST = slqST.primalSolution(finalTime);
-  //	SLQ_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t solutionMT = slqMT.primalSolution(finalTime);
+  SLQ_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t solutionMT = slqMT.primalSolution(finalTime);
 
   // get performance indices
   double totalCostST, totalCostMT;
   double constraint1ISE_ST, constraint1ISE_MT;
   double constraint2ISE_ST, constraint2ISE_MT;
   slqST.getPerformanceIndeces(totalCostST, constraint1ISE_ST, constraint2ISE_ST);
-  //	slqMT.getPerformanceIndeces(totalCostMT, constraint1ISE_MT, constraint2ISE_MT);
+  slqMT.getPerformanceIndeces(totalCostMT, constraint1ISE_MT, constraint2ISE_MT);
 
   /******************************************************************************************************/
   /******************************************************************************************************/
@@ -141,20 +139,20 @@ TEST(exp1_slq_test, Exp1_slq_test) {
   const double expectedCost = 5.4399;
   ASSERT_LT(fabs(totalCostST - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_)
       << "MESSAGE: single-threaded SLQ failed in the EXP1's cost test!";
-  //	ASSERT_LT(fabs(totalCostMT - expectedCost), 10*slqSettings.ddpSettings_.minRelCost_) <<
-  //			"MESSAGE: multi-threaded SLQ failed in the EXP1's cost test!";
+  ASSERT_LT(fabs(totalCostMT - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_)
+      << "MESSAGE: multi-threaded SLQ failed in the EXP1's cost test!";
 
   const double expectedISE1 = 0.0;
   ASSERT_LT(fabs(constraint1ISE_ST - expectedISE1), 10 * slqSettings.ddpSettings_.minRelConstraint1ISE_)
       << "MESSAGE: single-threaded SLQ failed in the EXP1's type-1 constraint ISE test!";
-  //	ASSERT_LT(fabs(constraint1ISE_MT - expectedISE1), 10*slqSettings.ddpSettings_.minRelConstraint1ISE_) <<
-  //			"MESSAGE: multi-threaded SLQ failed in the EXP1's type-1 constraint ISE test!";
+  ASSERT_LT(fabs(constraint1ISE_MT - expectedISE1), 10 * slqSettings.ddpSettings_.minRelConstraint1ISE_)
+      << "MESSAGE: multi-threaded SLQ failed in the EXP1's type-1 constraint ISE test!";
 
   const double expectedISE2 = 0.0;
   ASSERT_LT(fabs(constraint2ISE_ST - expectedISE2), 10 * slqSettings.ddpSettings_.minRelConstraint1ISE_)
       << "MESSAGE: single-threaded SLQ failed in the EXP1's type-2 constraint ISE test!";
-  //	ASSERT_LT(fabs(constraint2ISE_MT - expectedISE2), 10*slqSettings.ddpSettings_.minRelConstraint1ISE_) <<
-  //			"MESSAGE: multi-threaded SLQ failed in the EXP1's type-2 constraint ISE test!";
+  ASSERT_LT(fabs(constraint2ISE_MT - expectedISE2), 10 * slqSettings.ddpSettings_.minRelConstraint1ISE_)
+      << "MESSAGE: multi-threaded SLQ failed in the EXP1's type-2 constraint ISE test!";
 
   double ctrlFinalTime;
   if (slqSettings.ddpSettings_.useFeedbackPolicy_) {

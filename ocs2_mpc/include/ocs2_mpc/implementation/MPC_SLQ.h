@@ -41,7 +41,7 @@ MPC_SLQ<STATE_DIM, INPUT_DIM>::MPC_SLQ()
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_SLQ<STATE_DIM, INPUT_DIM>::MPC_SLQ(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+MPC_SLQ<STATE_DIM, INPUT_DIM>::MPC_SLQ(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                        const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                        const operating_trajectories_base_t* operatingTrajectoriesPtr,
                                        const scalar_array_t& partitioningTimes, const SLQ_Settings& slqSettings /* = SLQ_Settings()*/,
@@ -53,11 +53,11 @@ MPC_SLQ<STATE_DIM, INPUT_DIM>::MPC_SLQ(const controlled_system_base_t* systemDyn
     : BASE(partitioningTimes, mpcSettings) {
   // SLQ
   if (slqSettings.ddpSettings_.useMultiThreading_) {
-    slqPtr_.reset(new slq_mp_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
+    slqPtr_.reset(new slq_mp_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
                                slqSettings, logicRulesPtr, heuristicsFunctionPtr));
   } else {
-    slqPtr_.reset(new slq_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
-                            slqSettings, logicRulesPtr, heuristicsFunctionPtr));
+    slqPtr_.reset(new slq_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, slqSettings,
+                            logicRulesPtr, heuristicsFunctionPtr));
   }
 
   // set base solver's pointer

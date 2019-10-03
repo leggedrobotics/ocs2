@@ -41,7 +41,7 @@ MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR()
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                          const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                          const operating_trajectories_base_t* operatingTrajectoriesPtr,
                                          const scalar_array_t& partitioningTimes, const ILQR_Settings& ilqrSettings /* = ILQR_Settings()*/,
@@ -53,10 +53,10 @@ MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR(const controlled_system_base_t* systemD
     : BASE(partitioningTimes, mpcSettings) {
   // ILQR
   if (ilqrSettings.ddpSettings_.useMultiThreading_) {
-    ilqrPtr_.reset(new ilqr_mp_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
+    ilqrPtr_.reset(new ilqr_mp_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
                                  ilqrSettings, logicRulesPtr, heuristicsFunctionPtr));
   } else {
-    ilqrPtr_.reset(new ilqr_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
+    ilqrPtr_.reset(new ilqr_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
                               ilqrSettings, logicRulesPtr, heuristicsFunctionPtr));
   }
 

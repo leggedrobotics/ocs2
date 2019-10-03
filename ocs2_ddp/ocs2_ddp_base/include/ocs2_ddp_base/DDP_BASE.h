@@ -663,6 +663,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
                const controller_ptr_array_t& controllersPtrStock) override;
 
+ protected:
   // Variables
   DDP_Settings ddpSettings_;
   Rollout_Settings rolloutSettings_;

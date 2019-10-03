@@ -173,11 +173,6 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   std::mutex costDesiredTrajectoriesBufferMutex_;
   std::atomic_bool costDesiredTrajectoriesBufferUpdated_;
   cost_desired_trajectories_t costDesiredTrajectoriesBuffer_;
-
-  // MPC outputs (additional to the buffer variables in Base)
-  input_vector_array_t mpcInputTrajectoryBuffer_;
-  input_vector_array_t mpcInputTrajectory_;
-  input_linear_interpolation_t mpcLinInterpolateInput_;
 };
 
 }  // namespace ocs2

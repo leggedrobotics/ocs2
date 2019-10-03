@@ -10,7 +10,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::MPC_MRT_Interface(mpc_t& mpc, std::shared_ptr<HybridLogicRules> logicRules)
-    : Base(std::move(logicRules)), mpc_(mpc), costDesiredTrajectoriesBufferUpdated_(false) {}
+    : Base(std::move(logicRules)), mpc_(mpc), costDesiredTrajectoriesBufferUpdated_(false) {
+  mpcTimer_.reset();
+}
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const cost_desired_trajectories_t& initCostDesiredTrajectories) {

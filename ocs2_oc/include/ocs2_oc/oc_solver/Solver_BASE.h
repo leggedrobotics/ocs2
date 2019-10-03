@@ -367,13 +367,12 @@ class Solver_BASE {
    */
   void printString(const std::string& text);
 
- protected:
+ private:
   virtual void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) = 0;
 
   virtual void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
                        const controller_ptr_array_t& controllersPtrStock) = 0;
 
- private:
   void preRun(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime);
 
   void postRun();

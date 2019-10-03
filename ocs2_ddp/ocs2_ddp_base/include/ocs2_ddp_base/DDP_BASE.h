@@ -445,11 +445,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   virtual void runExit();
 
  protected:
-  void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;
-
-  void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-               const controller_ptr_array_t& controllersPtrStock) override;
-
   /**
    * Sets up optimizer for different number of partitions.
    *
@@ -661,6 +656,12 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * Display rollout info and scores.
    */
   void printRolloutInfo();
+
+ private:
+  void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;
+
+  void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
+               const controller_ptr_array_t& controllersPtrStock) override;
 
   // Variables
   DDP_Settings ddpSettings_;

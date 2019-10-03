@@ -34,8 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 #include <vector>
 
-#include <ocs2_mpc/MpcSynchronizedModule.h>
-
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
 
 #include <ocs2_core/Dimensions.h>
@@ -89,10 +87,6 @@ class MPC_BASE {
 
   using solver_base_t = Solver_BASE<STATE_DIM, INPUT_DIM>;
   using primal_solution_t = typename solver_base_t::primal_solution_t;
-  using solver_base_ptr_t = typename solver_base_t::Ptr;
-
-  using mpc_synchronized_module_t = MpcSynchronizedModule<STATE_DIM, scalar_t>;
-  using mpc_synchronized_module_array_t = std::vector<std::shared_ptr<mpc_synchronized_module_t>>;
 
   /**
    * Default constructor.
@@ -132,11 +126,6 @@ class MPC_BASE {
    * @param [in] finalTime: Final time. This value can be adjusted by the optimizer.
    */
   virtual void calculateController(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime) = 0;
-
-  /**
-   * Set all modules that need to be synchronized with the mpc. Each module is updated once before solving an mpc problem
-   */
-  void setMpcSynchronizedModules(const mpc_synchronized_module_array_t& mpcSynchronizedModules);
 
   /**
    * Gets a pointer to the underlying solver used in the MPC.
@@ -253,7 +242,6 @@ class MPC_BASE {
 
  private:
   solver_base_t* solverPtr_;
-  mpc_synchronized_module_array_t mpcSynchronizedModules_;
 };
 
 }  // namespace ocs2

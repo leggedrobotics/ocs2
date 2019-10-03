@@ -93,7 +93,6 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   ~PiSolver() override = default;
 
   void reset() override {
-    this->costDesiredTrajectories_.clear();
     nominalTimeTrajectoriesStock_.clear();
     nominalStateTrajectoriesStock_.clear();
     nominalInputTrajectoriesStock_.clear();
@@ -101,10 +100,10 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     numIterations_ = 0;
   }
 
-  void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override {
+  void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override {
     numIterations_++;
 
-    costFunction_->setCostDesiredTrajectories(this->costDesiredTrajectories_);
+    costFunction_->setCostDesiredTrajectories(this->getCostDesiredTrajectories());
 
     const auto numSteps = static_cast<size_t>(std::round((finalTime - initTime) / piSettings_.rolloutSettings_.minTimeStep_)) + 1;
 
@@ -318,8 +317,8 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     }
   }
 
-  void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-           const controller_ptr_array_t& controllersStock) override {
+  void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
+               const controller_ptr_array_t& controllersStock) override {
     throw std::runtime_error("not implemented.");
   }
 

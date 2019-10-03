@@ -52,6 +52,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/Numerics.h>
 
 #include "ocs2_oc/oc_data/PrimalSolution.h"
+#include "ocs2_oc/oc_solver/SolverSynchronizedModule.h"
 
 namespace ocs2 {
 
@@ -65,8 +66,6 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 class Solver_BASE {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using Ptr = std::shared_ptr<Solver_BASE<STATE_DIM, INPUT_DIM>>;
 
   using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
 
@@ -140,6 +139,9 @@ class Solver_BASE {
   using controller_const_ptr_array_t = std::vector<const controller_t*>;
   using feedforward_controller_t = FeedforwardController<STATE_DIM, INPUT_DIM>;
 
+  using synchronized_module_t = SolverSynchronizedModule<STATE_DIM, INPUT_DIM>;
+  using synchronized_module_array_t = std::vector<std::shared_ptr<synchronized_module_t>>;
+
   explicit Solver_BASE(std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr);
 
   /**
@@ -160,7 +162,7 @@ class Solver_BASE {
    * @param [in] finalTime: The final time.
    * @param [in] partitioningTimes: The partitioning times between subsystems.
    */
-  virtual void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) = 0;
+  void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes);
 
   /**
    * The main routine of solver which runs the optimizer for a given initial state, initial time, final time, and
@@ -175,8 +177,13 @@ class Solver_BASE {
    * are possible: either the internal controller is already set (such as the MPC case where the warm starting option is set true) or the
    * internal controller is empty in which instead of performing a rollout the operating trajectories will be used.
    */
-  virtual void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-                   const controller_ptr_array_t& controllersPtrStock) = 0;
+  void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
+           const controller_ptr_array_t& controllersPtrStock);
+
+  /**
+   * Set all modules that need to be synchronized with the solver. Each module is updated once before and once after solving the problem
+   */
+  void setSynchronizedModules(const synchronized_module_array_t& synchronizedModules) { synchronizedModules_ = synchronizedModules; };
 
   /**
    * MPC_BASE activates this if the final time of the MPC will increase by the length of a time partition instead
@@ -283,34 +290,18 @@ class Solver_BASE {
    *
    * @param [in] costDesiredTrajectories: The cost function desired trajectories
    */
-  void setCostDesiredTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories);
-
-  /**
-   * Sets the cost function desired trajectories.
-   *
-   * @param [in] desiredTimeTrajectory: The desired time trajectory for cost.
-   * @param [in] desiredStateTrajectory: The desired state trajectory for cost.
-   * @param [in] desiredInputTrajectory: The desired input trajectory for cost.
-   */
-  void setCostDesiredTrajectories(const scalar_array_t& desiredTimeTrajectory, const dynamic_vector_array_t& desiredStateTrajectory,
-                                  const dynamic_vector_array_t& desiredInputTrajectory);
+  void setCostDesiredTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories) {
+    costDesiredTrajectories_ = costDesiredTrajectories;
+  };
 
   /**
    * Swaps the cost function desired trajectories.
    *
    * @param [in] costDesiredTrajectories: The cost function desired trajectories
    */
-  void swapCostDesiredTrajectories(cost_desired_trajectories_t& costDesiredTrajectories);
-
-  /**
-   * Swaps the cost function desired trajectories.
-   *
-   * @param [in] desiredTimeTrajectory: The desired time trajectory for cost.
-   * @param [in] desiredStateTrajectory: The desired state trajectory for cost.
-   * @param [in] desiredInputTrajectory: The desired input trajectory for cost.
-   */
-  void swapCostDesiredTrajectories(scalar_array_t& desiredTimeTrajectory, dynamic_vector_array_t& desiredStateTrajectory,
-                                   dynamic_vector_array_t& desiredInputTrajectory);
+  void swapCostDesiredTrajectories(cost_desired_trajectories_t& costDesiredTrajectories) {
+    costDesiredTrajectories_.swap(costDesiredTrajectories);
+  };
 
   /**
    * @brief Returns the optimized policy data.
@@ -377,11 +368,20 @@ class Solver_BASE {
   void printString(const std::string& text);
 
  protected:
-  cost_desired_trajectories_t costDesiredTrajectories_;
+  virtual void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) = 0;
+
+  virtual void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
+                       const controller_ptr_array_t& controllersPtrStock) = 0;
 
  private:
+  void preRun(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime);
+
+  void postRun();
+
   std::mutex outputDisplayGuardMutex_;
   logic_rules_machine_ptr_t logicRulesMachinePtr_;
+  cost_desired_trajectories_t costDesiredTrajectories_;
+  synchronized_module_array_t synchronizedModules_;
 };
 
 }  // namespace ocs2

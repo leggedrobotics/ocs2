@@ -37,49 +37,31 @@ namespace ocs2 {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 Solver_BASE<STATE_DIM, INPUT_DIM>::Solver_BASE(std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr */) {
   if (!logicRulesPtr) {
-    logicRulesPtr = std::shared_ptr<HybridLogicRules>(new NullLogicRules());
+    logicRulesPtr.reset(new NullLogicRules());
   }
-  logicRulesMachinePtr_ = logic_rules_machine_ptr_t(new logic_rules_machine_t(std::move(logicRulesPtr)));
+  logicRulesMachinePtr_.reset(new logic_rules_machine_t(std::move(logicRulesPtr)));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void Solver_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories) {
-  costDesiredTrajectories_ = costDesiredTrajectories;
+void Solver_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
+                                            const scalar_array_t& partitioningTimes) {
+  preRun(initTime, initState, finalTime);
+  runImpl(initTime, initState, finalTime, partitioningTimes);
+  postRun();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void Solver_BASE<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(const scalar_array_t& desiredTimeTrajectory,
-                                                                   const dynamic_vector_array_t& desiredStateTrajectory,
-                                                                   const dynamic_vector_array_t& desiredInputTrajectory) {
-  costDesiredTrajectories_.desiredTimeTrajectory() = desiredTimeTrajectory;
-  costDesiredTrajectories_.desiredStateTrajectory() = desiredStateTrajectory;
-  costDesiredTrajectories_.desiredInputTrajectory() = desiredInputTrajectory;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void Solver_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(cost_desired_trajectories_t& costDesiredTrajectories) {
-  costDesiredTrajectories_.swap(costDesiredTrajectories);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void Solver_BASE<STATE_DIM, INPUT_DIM>::swapCostDesiredTrajectories(scalar_array_t& desiredTimeTrajectory,
-                                                                    dynamic_vector_array_t& desiredStateTrajectory,
-                                                                    dynamic_vector_array_t& desiredInputTrajectory) {
-  costDesiredTrajectories_.desiredTimeTrajectory().swap(desiredTimeTrajectory);
-  costDesiredTrajectories_.desiredStateTrajectory().swap(desiredStateTrajectory);
-  costDesiredTrajectories_.desiredInputTrajectory().swap(desiredInputTrajectory);
+void Solver_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
+                                            const scalar_array_t& partitioningTimes, const controller_ptr_array_t& controllersPtrStock) {
+  preRun(initTime, initState, finalTime);
+  runImpl(initTime, initState, finalTime, partitioningTimes, controllersPtrStock);
+  postRun();
 }
 
 /******************************************************************************************************/
@@ -99,6 +81,28 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void Solver_BASE<STATE_DIM, INPUT_DIM>::printString(const std::string& text) {
   std::lock_guard<std::mutex> outputDisplayGuard(outputDisplayGuardMutex_);
   std::cerr << text << std::endl;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void Solver_BASE<STATE_DIM, INPUT_DIM>::preRun(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime) {
+  for (auto& module : synchronizedModules_) {
+    module->preSolverRun(initTime, finalTime, initState, costDesiredTrajectories_, getLogicRulesPtr());
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void Solver_BASE<STATE_DIM, INPUT_DIM>::postRun() {
+  for (auto& module : synchronizedModules_) {
+    const auto& finalTime = getFinalTime();
+    const auto& solution = primalSolution(finalTime);
+    module->postSolverRun(solution);
+  }
 }
 
 }  // namespace ocs2

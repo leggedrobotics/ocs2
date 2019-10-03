@@ -31,20 +31,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/ros.h>
 
-#include <ocs2_mpc/MpcSynchronizedModule.h>
+#include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
 
 namespace ocs2 {
 
 /**
- * MpcSynchronizedRosModule adds ROS functionality to an MpcSynchronizedModule.
- * @tparam STATE_DIM : State dimension
- * @tparam scalar_t : scalar numerical type
+ * SolverSynchronizedRosModule adds ROS functionality to a SolverSynchronizedModule.
  */
-template <size_t STATE_DIM, typename scalar_t = float>
-class MpcSynchronizedRosModule : public MpcSynchronizedModule<STATE_DIM, scalar_t> {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class SolverSynchronizedRosModule : public SolverSynchronizedModule<STATE_DIM, INPUT_DIM> {
  public:
   //! Default destructor
-  virtual ~MpcSynchronizedRosModule() = default;
+  virtual ~SolverSynchronizedRosModule() = default;
 
   //! Get node handle to subscribe to topics
   virtual void subscribe(::ros::NodeHandle& nodeHandle) = 0;

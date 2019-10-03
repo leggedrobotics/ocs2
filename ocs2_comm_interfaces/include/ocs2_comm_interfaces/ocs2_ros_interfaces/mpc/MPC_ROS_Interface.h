@@ -63,7 +63,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_comm_interfaces/CommandData.h"
 #include "ocs2_comm_interfaces/SystemObservation.h"
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h"
-#include "ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MpcSynchronizedRosModule.h"
+#include "ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/SolverSynchronizedRosModule.h"
 
 //#define PUBLISH_DUMMY
 #define PUBLISH_THREAD
@@ -111,10 +111,8 @@ class MPC_ROS_Interface {
 
   using ros_msg_conversions_t = RosMsgConversions<STATE_DIM, INPUT_DIM>;
 
-  using mpc_synchronized_module_t = MpcSynchronizedModule<STATE_DIM, scalar_t>;
-  using mpc_synchronized_ros_module_t = MpcSynchronizedRosModule<STATE_DIM, scalar_t>;
-  using mpc_synchronized_module_array_t = std::vector<std::shared_ptr<mpc_synchronized_module_t>>;
-  using mpc_synchronized_ros_module_array_t = std::vector<std::shared_ptr<mpc_synchronized_ros_module_t>>;
+  using synchronized_ros_module_t = SolverSynchronizedRosModule<STATE_DIM, INPUT_DIM>;
+  using synchronized_ros_module_array_t = std::vector<std::shared_ptr<synchronized_ros_module_t>>;
 
   /**
    * Default constructor
@@ -147,9 +145,12 @@ class MPC_ROS_Interface {
   virtual void reset(const cost_desired_trajectories_t& initCostDesiredTrajectories);
 
   /**
-   * Set all modules that need to be synchronized with the mpc. Each module is updated once before solving an mpc problem
+   * Set all modules that need to be synchronized with the mpc. Must be called before launchNodes.
+   * This method does not add the modules to the solver
    */
-  void setMpcSynchronizedModules(const mpc_synchronized_ros_module_array_t& mpcSynchronizedRosModules);
+  void subscribeSynchronizedModules(const synchronized_ros_module_array_t& synchronizedRosModules) {
+    synchronizedRosModules_ = synchronizedRosModules;
+  };
 
   /**
    * Shutdowns the ROS node.
@@ -294,7 +295,7 @@ class MPC_ROS_Interface {
 
   mutable std::mutex policyBufferMutex_;  // for policy variables WITH suffix (*Buffer_)
 
-  mpc_synchronized_ros_module_array_t mpcSynchronizedRosModules_;
+  synchronized_ros_module_array_t synchronizedRosModules_;
 
   // multi-threading for publishers
   std::atomic_bool terminateThread_;

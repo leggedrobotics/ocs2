@@ -11,7 +11,7 @@
 
 // MPC
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MpcSynchronizedRosModule.h>
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/SolverSynchronizedRosModule.h>
 
 // MRT
 #include <ocs2_comm_interfaces/ocs2_interfaces/MPC_MRT_Interface.h>

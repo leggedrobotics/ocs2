@@ -33,11 +33,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::MPC_ROS_Interface(
-    mpc_t& mpc, const std::string& robotName /*= "robot"*/,
-    costDesiredTrajectoriesBufferUpdated_(false) : mpc_(mpc),
+MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::MPC_ROS_Interface(mpc_t& mpc, const std::string& robotName /*= "robot"*/)
+    : mpc_(mpc),
       robotName_(robotName),
-      taskListenerArray_(taskListenerArray),
       currentPrimalSolution_(new primal_solution_t()),
       primalSolutionBuffer_(new primal_solution_t()),
       currentCommand_(new command_data_t()),
@@ -94,28 +92,11 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::reset(const cost_desired_trajector
 
   mpc_.getSolverPtr()->setCostDesiredTrajectories(initCostDesiredTrajectories);
   costDesiredTrajectoriesBufferUpdated_ = false;
-  
+
   mpcTimer_.reset();
 
   terminateThread_ = false;
   readyToPublish_ = false;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::setMpcSynchronizedModules(
-    const mpc_synchronized_ros_module_array_t& mpcSynchronizedRosModules) {
-  mpcSynchronizedRosModules_ = mpcSynchronizedRosModules;
-
-  // Create shared pointers to non-ros interface
-  mpc_synchronized_module_array_t mpcSynchronizedModules;
-  for (const auto& module : mpcSynchronizedRosModules_) {
-    mpcSynchronizedModules.emplace_back(module);
-  }
-
-  mpcPtr_->setMpcSynchronizedModules(mpcSynchronizedModules);
 }
 
 /******************************************************************************************************/
@@ -316,12 +297,12 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_
   // Set latest cost desired trajectories
   if (costDesiredTrajectoriesBufferUpdated_) {
     std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
-    mpcPtr_->getSolverPtr()->swapCostDesiredTrajectories(costDesiredTrajectoriesBuffer_);
+    mpc_.getSolverPtr()->swapCostDesiredTrajectories(costDesiredTrajectoriesBuffer_);
     costDesiredTrajectoriesBufferUpdated_ = false;
 
-    if (mpcPtr_->settings().debugPrint_) {
+    if (mpc_.settings().debugPrint_) {
       std::cerr << "### The target position is updated to " << std::endl;
-      mpcPtr_->getSolverPtr()->getCostDesiredTrajectories().display();
+      mpc_.getSolverPtr()->getCostDesiredTrajectories().display();
     }
   }
 
@@ -501,7 +482,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::launchNodes(int argc, char* argv[]
   // MPC reset service server
   mpcResetServiceServer_ = nodeHandlerPtr_->advertiseService(robotName_ + "_mpc_reset", &MPC_ROS_Interface::resetMpcCallback, this);
 
-  for (auto& module : mpcSynchronizedRosModules_) {
+  for (auto& module : synchronizedRosModules_) {
     module->subscribe(*nodeHandlerPtr_);
   }
 

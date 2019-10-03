@@ -106,14 +106,12 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // ILQR - single-threaded version
-  ILQR_ST<STATE_DIM, INPUT_DIM> ilqrST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
-                                       ilqrSettings, logicRules);
+  ILQR_ST<STATE_DIM, INPUT_DIM> ilqrST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
+                                       &operatingTrajectories, ilqrSettings, logicRules);
 
   // ILQR - multi-threaded version
-  //  ILQR_MT<STATE_DIM, INPUT_DIM> ilqrMT(
-  //		  &timeTriggeredRollout, &systemDerivative,
-  //		  &systemConstraint, &systemCostFunction,
-  //		  &operatingTrajectories, ilqrSettings, logicRules);
+  ILQR_MT<STATE_DIM, INPUT_DIM> ilqrMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
+                                       &operatingTrajectories, ilqrSettings, logicRules);
 
   // run single_threaded core ILQR
   if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_)
@@ -121,23 +119,23 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   ilqrST.run(startTime, initState, finalTime, partitioningTimes);
 
   // run multi-threaded ILQR
-  //  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_)
-  //	  std::cerr << "\n>>> multi-threaded ILQR" << std::endl;
-  //  ilqrMT.run(startTime, initState, finalTime, partitioningTimes);
+  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_)
+    std::cerr << "\n>>> multi-threaded ILQR" << std::endl;
+  ilqrMT.run(startTime, initState, finalTime, partitioningTimes);
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
   // get solution
   ILQR_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t solutionST = ilqrST.primalSolution(finalTime);
-  //  ILQR_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t solutionMT = ilqrMT.primalSolution(finalTime);
+  ILQR_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t solutionMT = ilqrMT.primalSolution(finalTime);
 
   // get performance indices
   double totalCost_st, totalCost_mt;
   double constraint1ISE_st, constraint1ISE_mt;
   double constraint2ISE_st, constraint2ISE_mt;
   ilqrST.getPerformanceIndeces(totalCost_st, constraint1ISE_st, constraint2ISE_st);
-  //  ilqrMT.getPerformanceIndeces(totalCost_mt, constraint1ISE_mt, constraint2ISE_mt);
+  ilqrMT.getPerformanceIndeces(totalCost_mt, constraint1ISE_mt, constraint2ISE_mt);
 
   /******************************************************************************************************/
   /******************************************************************************************************/
@@ -145,26 +143,27 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   const double expectedCost = 9.7667;
   ASSERT_LT(fabs(totalCost_st - expectedCost), 10 * ilqrSettings.ddpSettings_.minRelCost_)
       << "MESSAGE: ILQR_ST failed in the EXP0's cost test!";
-  //  ASSERT_LT(fabs(totalCost_mt - expectedCost), 10*ilqrSettings.ddpSettings_.minRelCost_) <<
-  //		  "MESSAGE: ILQR_MT failed in the EXP1's cost test!";
+  ASSERT_LT(fabs(totalCost_mt - expectedCost), 10 * ilqrSettings.ddpSettings_.minRelCost_)
+      << "MESSAGE: ILQR_MT failed in the EXP1's cost test!";
 
   const double expectedISE1 = 0.0;
   ASSERT_LT(fabs(constraint1ISE_st - expectedISE1), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
       << "MESSAGE: ILQR_ST failed in the EXP0's type-1 constraint ISE test!";
-  //  ASSERT_LT(fabs(constraint1ISE_mt - expectedISE1), 10*ilqrSettings.ddpSettings_.minRelConstraint1ISE_) <<
-  //		  "MESSAGE: ILQR_MT failed in the EXP1's type-1 constraint ISE test!";
+  ASSERT_LT(fabs(constraint1ISE_mt - expectedISE1), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
+      << "MESSAGE: ILQR_MT failed in the EXP1's type-1 constraint ISE test!";
 
   const double expectedISE2 = 0.0;
   ASSERT_LT(fabs(constraint2ISE_st - expectedISE2), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
       << "MESSAGE: ILQR_ST failed in the EXP0's type-2 constraint ISE test!";
-  //  ASSERT_LT(fabs(constraint2ISE_mt - expectedISE2), 10*ilqrSettings.ddpSettings_.minRelConstraint1ISE_) <<
-  //		  "MESSAGE: ILQR_MT failed in the EXP1's type-2 constraint ISE test!";
+  ASSERT_LT(fabs(constraint2ISE_mt - expectedISE2), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
+      << "MESSAGE: ILQR_MT failed in the EXP1's type-2 constraint ISE test!";
 
   double ctrlFinalTime;
   if (ilqrSettings.ddpSettings_.useFeedbackPolicy_) {
-	  ctrlFinalTime = dynamic_cast<ILQR_ST<STATE_DIM, INPUT_DIM>::linear_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
+    ctrlFinalTime = dynamic_cast<ILQR_ST<STATE_DIM, INPUT_DIM>::linear_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
   } else {
-	  ctrlFinalTime = dynamic_cast<ILQR_ST<STATE_DIM, INPUT_DIM>::feedforward_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
+    ctrlFinalTime =
+        dynamic_cast<ILQR_ST<STATE_DIM, INPUT_DIM>::feedforward_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
   }
   ASSERT_DOUBLE_EQ(solutionST.timeTrajectory_.back(), finalTime) << "MESSAGE: ILQR_ST failed in policy final time of trajectory!";
   ASSERT_DOUBLE_EQ(ctrlFinalTime, finalTime) << "MESSAGE: ILQR_ST failed in policy final time of controller!";

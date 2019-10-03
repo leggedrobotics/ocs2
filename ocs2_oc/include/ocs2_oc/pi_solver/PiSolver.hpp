@@ -8,7 +8,7 @@
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
 #include <ocs2_oc/pi_solver/PI_Settings.h>
-#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+#include <ocs2_oc/rollout/RolloutBase.h>
 
 #include <Eigen/Cholesky>
 #include <random>
@@ -51,32 +51,30 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using typename Base::state_vector_t;
 
   using scalar_array2_t = std::vector<scalar_array_t>;
-  using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
   using cost_function_t = CostFunctionBase<STATE_DIM, INPUT_DIM>;
-  using rollout_t = TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
+  using rollout_base_t = RolloutBase<STATE_DIM, INPUT_DIM>;
   using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM>;
   using pi_controller_t = PiController<STATE_DIM, INPUT_DIM>;
 
   /**
    * @brief Constructor with all options
    *
-   * @param systemDynamicsPtr: System dynamics
+   * @param rolloutPtr: The rollout class used for simulating the system dynamics.
    * @param costFunction: The cost function to optimize
    * @param constraint: Any constraints for the dynamical system
    * @param piSettings: Settings related to PI algorithm
    * @param logicRules: Optional pointer to logic rules
    */
-  PiSolver(const typename controlled_system_base_t::Ptr systemDynamicsPtr, std::unique_ptr<cost_function_t> costFunction,
-           const constraint_t constraint, PI_Settings piSettings, std::shared_ptr<HybridLogicRules> logicRules = nullptr)
+  PiSolver(const rollout_base_t* rolloutPtr, std::unique_ptr<cost_function_t> costFunction, const constraint_t constraint,
+           PI_Settings piSettings, std::shared_ptr<HybridLogicRules> logicRules = nullptr)
       : Base(std::move(logicRules)),
         piSettings_(std::move(piSettings)),
-        systemDynamics_(systemDynamicsPtr),
+        rolloutPtr_(rolloutPtr->clone()),
         costFunction_(std::move(costFunction)),
         constraint_(constraint),
         controller_(&constraint_, costFunction_.get(), piSettings_.rolloutSettings_.minTimeStep_,
                     piSettings_.gamma_),  //!@warn need to use member var
-        numIterations_(0),
-        rollout_(*systemDynamicsPtr, piSettings_.rolloutSettings_) {
+        numIterations_(0) {
     // TODO(jcarius) how to ensure that we are given a control affine system?
     // TODO(jcarius) how to ensure that we are given a suitable cost function?
     // TODO(jcarius) how to ensure that the constraint is input-affine and full row-rank D?
@@ -126,14 +124,14 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     for (size_t sample = 0; sample < piSettings_.numSamples_; sample++) {
       controller_.cacheData_.clear();
 
-      typename rollout_t::state_vector_array_t stateTrajectory;
-      typename rollout_t::scalar_array_t timeTrajectory;
+      typename rollout_base_t::state_vector_array_t stateTrajectory;
+      typename rollout_base_t::scalar_array_t timeTrajectory;
       {
         // braces to guard against usage of temporary rollout quantities
-        typename rollout_t::size_array_t eventsPastTheEndIndeces;
-        typename rollout_t::input_vector_array_t inputTrajectory;
-        rollout_.run(initTime, initState, finalTime, &controller_, Base::getLogicRulesMachinePtr()->getLogicRulesPtr()->eventTimes(),
-                     timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+        typename rollout_base_t::size_array_t eventsPastTheEndIndeces;
+        typename rollout_base_t::input_vector_array_t inputTrajectory;
+        rolloutPtr_->run(initTime, initState, finalTime, &controller_, Base::getLogicRulesMachinePtr()->getLogicRulesPtr()->eventTimes(),
+                         timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
         // see Euler-Maruyama method (https://infoscience.epfl.ch/record/143450/files/sde_tutorial.pdf)
       }
 
@@ -272,12 +270,12 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     controller_.gamma_ = 0.0;
     controller_.cacheResults_ = false;
 
-    typename rollout_t::scalar_array_t timeTrajectoryNominal;
-    typename rollout_t::size_array_t eventsPastTheEndIndecesNominal;
-    typename rollout_t::state_vector_array_t stateTrajectoryNominal;
-    typename rollout_t::input_vector_array_t inputTrajectoryNominal;
-    rollout_.run(initTime, initState, finalTime, &controller_, Base::getLogicRulesMachinePtr()->getLogicRulesPtr()->eventTimes(),
-                 timeTrajectoryNominal, eventsPastTheEndIndecesNominal, stateTrajectoryNominal, inputTrajectoryNominal);
+    typename rollout_base_t::scalar_array_t timeTrajectoryNominal;
+    typename rollout_base_t::size_array_t eventsPastTheEndIndecesNominal;
+    typename rollout_base_t::state_vector_array_t stateTrajectoryNominal;
+    typename rollout_base_t::input_vector_array_t inputTrajectoryNominal;
+    rolloutPtr_->run(initTime, initState, finalTime, &controller_, Base::getLogicRulesMachinePtr()->getLogicRulesPtr()->eventTimes(),
+                     timeTrajectoryNominal, eventsPastTheEndIndecesNominal, stateTrajectoryNominal, inputTrajectoryNominal);
 
     nominalStateTrajectoriesStock_.clear();
     nominalStateTrajectoriesStock_.push_back(stateTrajectoryNominal);
@@ -456,7 +454,7 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
  protected:
   PI_Settings piSettings_;  //! path integral settings
 
-  typename controlled_system_base_t::Ptr systemDynamics_;
+  std::unique_ptr<rollout_base_t> rolloutPtr_;  //! rollout owned by solver
 
   std::unique_ptr<cost_function_t> costFunction_;  //! cost function owned by solver
   constraint_t constraint_;                        //! constraint owned by solver
@@ -464,8 +462,6 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   pi_controller_t controller_;  //! internal controller used for rollouts
 
   size_t numIterations_;
-
-  rollout_t rollout_;
 
   std::vector<scalar_array_t> nominalTimeTrajectoriesStock_;
   state_vector_array2_t nominalStateTrajectoriesStock_;

@@ -37,8 +37,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+
 #include <ocs2_mpc/MPC_PI.h>
-#include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
 // Double Slit
@@ -55,6 +56,9 @@ class DoubleSlitInterface final : public RobotInterfaceBase<DoubleSlit::STATE_DI
 
   using dim_t = ocs2::Dimensions<DoubleSlit::STATE_DIM_, DoubleSlit::INPUT_DIM_>;
   using scalar_t = double;
+
+  using rollout_base_t = RolloutBase<DoubleSlit::STATE_DIM_, DoubleSlit::INPUT_DIM_>;
+  using time_triggered_rollout_t = TimeTriggeredRollout<DoubleSlit::STATE_DIM_, DoubleSlit::INPUT_DIM_>;
 
   using DoubleSlitConstraint = ocs2::ConstraintBase<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
   using DoubleSlitOperatingPoint = ocs2::SystemOperatingPoint<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
@@ -84,6 +88,8 @@ class DoubleSlitInterface final : public RobotInterfaceBase<DoubleSlit::STATE_DI
 
   const DoubleSlitBarrierCost& getCost() const override { return *costPtr_; }
 
+  const rollout_base_t& getRollout() const { return *piLinearSystemRolloutPtr_; }
+
   /**
    * @brief doubleSlitPotentialWall models the potential wall of our problem
    * @param x state
@@ -101,8 +107,9 @@ class DoubleSlitInterface final : public RobotInterfaceBase<DoubleSlit::STATE_DI
 
   std::unique_ptr<pi_mpc_t> piMpcPtr_;
 
-  DoubleSlitDynamics::Ptr linearSystemDynamicsPtr_;
+  std::unique_ptr<rollout_base_t> piLinearSystemRolloutPtr_;
 
+  DoubleSlitDynamics::Ptr linearSystemDynamicsPtr_;
   std::unique_ptr<DoubleSlitBarrierCost> costPtr_;
   DoubleSlitConstraint::Ptr linearSystemConstraintPtr_;
   DoubleSlitOperatingPoint::Ptr linearSystemOperatingPointPtr_;

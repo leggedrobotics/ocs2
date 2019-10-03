@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
   // Dummy double_slit
   using ocs2::double_slit::MrtRosDummyDoubleSlit;
   ocs2::MRT_ROS_Interface<STATE_DIM_, INPUT_DIM_> mrt("double_slit");
-  mrt.initRollout(doubleSlitInterface.getDynamics(), rolloutSettings);
+  mrt.initRollout(&doubleSlitInterface.getRollout());
   MrtRosDummyDoubleSlit dummyDoubleSlit(mrt, doubleSlitInterface.mpcSettings().mrtDesiredFrequency_,
                                         doubleSlitInterface.mpcSettings().mpcDesiredFrequency_);
   dummyDoubleSlit.launchNodes(argc, argv);

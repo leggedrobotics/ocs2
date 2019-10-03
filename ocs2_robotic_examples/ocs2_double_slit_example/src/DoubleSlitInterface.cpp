@@ -32,6 +32,13 @@ void DoubleSlitInterface::loadSettings(const std::string& taskFile) {
   linearSystemDynamicsPtr_.reset(new DoubleSlitDynamics());
 
   /*
+   * Rollout
+   */
+  Rollout_Settings rolloutSettings;
+  rolloutSettings.loadSettings(taskFile, "pi.rollout");
+  piLinearSystemRolloutPtr_.reset(new time_triggered_rollout_t(*linearSystemDynamicsPtr_, rolloutSettings));
+
+  /*
    * Cost function
    */
   loadData::loadCppDataType(taskFile, "systemParameters.barrierTimePosition", barrierTimePos_);
@@ -82,8 +89,8 @@ void DoubleSlitInterface::setupOptimizer(const std::string& taskFile) {
   PI_Settings piSettings;
   piSettings.loadSettings(taskFile);
 
-  piMpcPtr_.reset(new pi_mpc_t(linearSystemDynamicsPtr_, std::move(costPtr_), *linearSystemConstraintPtr_, partitioningTimes_, mpcSettings_,
-                               std::move(piSettings)));
+  piMpcPtr_.reset(new pi_mpc_t(piLinearSystemRolloutPtr_.get(), std::move(costPtr_), *linearSystemConstraintPtr_, partitioningTimes_,
+                               mpcSettings_, std::move(piSettings)));
 }
 
 /******************************************************************************************************/

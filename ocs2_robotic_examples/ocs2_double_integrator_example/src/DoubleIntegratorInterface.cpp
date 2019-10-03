@@ -76,6 +76,13 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
   linearSystemDynamicsDerivativesPtr_.reset(new DoubleIntegratorDynamicsDerivatives(A, B));
 
   /*
+   * Rollout
+   */
+  Rollout_Settings rolloutSettings;
+  rolloutSettings.loadSettings(taskFile, "slq.rollout");
+  ddpLinearSystemRolloutPtr_.reset(new time_triggered_rollout_t(*linearSystemDynamicsPtr_, rolloutSettings));
+
+  /*
    * Cost function
    */
   loadData::loadEigenMatrix(taskFile, "Q", Q_);
@@ -114,7 +121,7 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void DoubleIntegratorInterface::setupOptimizer(const std::string& taskFile) {
-  mpcPtr_.reset(new mpc_t(linearSystemDynamicsPtr_.get(), linearSystemDynamicsDerivativesPtr_.get(), linearSystemConstraintPtr_.get(),
+  mpcPtr_.reset(new mpc_t(ddpLinearSystemRolloutPtr_.get(), linearSystemDynamicsDerivativesPtr_.get(), linearSystemConstraintPtr_.get(),
                           linearSystemCostPtr_.get(), linearSystemOperatingPointPtr_.get(), partitioningTimes_, slqSettings_,
                           mpcSettings_));
 }

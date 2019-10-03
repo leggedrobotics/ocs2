@@ -242,4 +242,3 @@ class CppAdInterface {
  *  Explicit instantiation, for instantiation additional types, include the implementation file instead of this one.
  */
 extern template class ocs2::CppAdInterface<double>;
-extern template class ocs2::CppAdInterface<float>;

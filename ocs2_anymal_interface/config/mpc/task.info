@@ -30,7 +30,7 @@ model_settings
 
   swingLegLiftOff               0.30
   liftOffVelocity               0.0
-  touchDownVelocity             -0.75
+  touchDownVelocity             -0.5
 
   mpcGoalCommandDelay           0.1
 

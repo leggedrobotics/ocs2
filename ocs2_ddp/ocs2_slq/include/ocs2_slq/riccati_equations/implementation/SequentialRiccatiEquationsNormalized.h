@@ -98,18 +98,16 @@ void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::setData(
   const int input_dim = (*BmPtr)[0].cols();
 
   // Initialize members with proper dimensions for Eigen::Dynamic sized matrices.
-  Sm_.setZero(state_dim, state_dim);
-  Sv_.setZero(state_dim);
-  s_.setZero();
-  Qm_.setZero(state_dim, state_dim);
-  Qv_.setZero(state_dim);
-  q_.setZero();
-  AmT_minus_P_Rinv_Bm_.setZero(state_dim, state_dim);
-  AmT_Sm_.setZero(state_dim, state_dim);
-  Am_.setZero(state_dim, state_dim);
-  Bm_.setZero(state_dim, input_dim);
-  Rv_.setZero(input_dim);
-  Pm_.setZero(input_dim, state_dim);
+  Sm_.resize(state_dim, state_dim);
+  Sv_.resize(state_dim);
+  Qm_.resize(state_dim, state_dim);
+  Qv_.resize(state_dim);
+  AmT_minus_P_Rinv_Bm_.resize(state_dim, state_dim);
+  AmT_Sm_.resize(state_dim, state_dim);
+  Am_.resize(state_dim, state_dim);
+  Bm_.resize(state_dim, input_dim);
+  Rv_.resize(input_dim);
+  Pm_.resize(input_dim, state_dim);
 
   eventTimes_.clear();
   eventTimes_.reserve(eventsPastTheEndIndecesPtr->size());

@@ -56,10 +56,10 @@ class RiccatiInitializer {
     B = state_input_matrix_t::Random(state_dim, input_dim);
     q_ = eigen_scalar_t::Random();
     qv = state_vector_t::Random(state_dim);
-    Q = generateSPDmatrix<state_matrix_t>(state_dim);
+    Q = ocs2::LinearAlgebra::generateSPDmatrix<state_matrix_t>(state_dim);
     rv = input_vector_t::Random(input_dim);
     P = input_state_matrix_t::Random(input_dim, state_dim);
-    R = generateSPDmatrix<input_matrix_t>(input_dim);
+    R = ocs2::LinearAlgebra::generateSPDmatrix<input_matrix_t>(input_dim);
     RinvChol_.resize(input_dim, input_dim);
     ocs2::LinearAlgebra::computeLinvTLinv(R, RinvChol_);
 
@@ -75,16 +75,8 @@ class RiccatiInitializer {
   }
 
   void initialize(riccati_t& riccati) {
-    riccati.setData(timeStamp.get(), Am.get(), Bm.get(), q.get(), Qv.get(), Qm.get(), Rv.get(), RinvChol.get(), Pm.get(), &eventsPastTheEndIndeces, &qFinal, &QvFinal, &QmFinal);
-  }
-
-  template <typename MatrixType>
-  MatrixType generateSPDmatrix(int size) {
-    MatrixType A(size, size);
-    A.setRandom();
-    A = 0.5 * (A + A.transpose()).eval();    // Avoid aliasing
-    A.diagonal().array() += A.rows() * 1.0;  // makes the matrix diagonally dominant
-    return A;
+    riccati.setData(timeStamp.get(), Am.get(), Bm.get(), q.get(), Qv.get(), Qm.get(), Rv.get(), RinvChol.get(), Pm.get(),
+                    &eventsPastTheEndIndeces, &qFinal, &QvFinal, &QmFinal);
   }
 };
 

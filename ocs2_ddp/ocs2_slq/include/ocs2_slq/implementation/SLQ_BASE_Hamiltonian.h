@@ -249,9 +249,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
         if (!BASE::QmTrajectoryStock_[i][k].isApprox(BASE::QmTrajectoryStock_[i][k].transpose())) {
           throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not self-adjoint.");
         }
-        if (BASE::QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
+        if (LinearAlgebra::eigenvalues(BASE::QmTrajectoryStock_[i][k]).real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
           throw std::runtime_error("Q matrix is not positive semi-definite. It's smallest eigenvalue is " +
-                                   std::to_string(BASE::QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()) + ".");
+                                   std::to_string(LinearAlgebra::eigenvalues(BASE::QmTrajectoryStock_[i][k]).real().minCoeff()) + ".");
         }
         if (!BASE::RvTrajectoryStock_[i][k].allFinite()) {
           throw std::runtime_error("Intermediate cost first derivative w.r.t. input is is not finite.");
@@ -269,9 +269,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
           throw std::runtime_error("R matrix is not invertible. It's reciprocal condition number is " +
                                    std::to_string(BASE::RmTrajectoryStock_[i][k].ldlt().rcond()) + ".");
         }
-        if (BASE::RmTrajectoryStock_[i][k].eigenvalues().real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon()) {
+        if (LinearAlgebra::eigenvalues(BASE::RmTrajectoryStock_[i][k]).real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon()) {
           throw std::runtime_error("R matrix is not positive definite. It's smallest eigenvalue is " +
-                                   std::to_string(BASE::RmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()) + ".");
+                                   std::to_string(LinearAlgebra::eigenvalues(BASE::RmTrajectoryStock_[i][k]).real().minCoeff()) + ".");
         }
       } catch (const std::exception& error) {
         std::cerr << "After adding inequality constraint penalty" << std::endl;
@@ -320,7 +320,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::approximateConstrainedLQWork
 
     // check numerical stability_
     if (BASE::ddpSettings_.checkNumericalStability_ && nc1 > 0) {
-      if (Dm.colPivHouseholderQr().rank() != nc1) {
+      if (LinearAlgebra::rank(Dm) != nc1) {
         BASE::printString(
             ">>> WARNING: The state-input constraints are rank deficient "
             "(at time " +
@@ -576,9 +576,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
         if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite()) {
           throw std::runtime_error("Sm is unstable.");
         }
-        if (BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
-          throw std::runtime_error("Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
-                                   std::to_string(BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff()) + ".");
+        if (LinearAlgebra::eigenvalues(BASE::SmTrajectoryStock_[partitionIndex][k]).real().minCoeff() <
+            -Eigen::NumTraits<scalar_t>::epsilon()) {
+          throw std::runtime_error(
+              "Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
+              std::to_string(LinearAlgebra::eigenvalues(BASE::SmTrajectoryStock_[partitionIndex][k]).real().minCoeff()) + ".");
         }
         if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite()) {
           throw std::runtime_error("Sv is unstable.");
@@ -712,9 +714,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
         if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite()) {
           throw std::runtime_error("Sm is unstable.");
         }
-        if (BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
-          throw std::runtime_error("Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
-                                   std::to_string(BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff()) + ".");
+        if (LinearAlgebra::eigenvalues(BASE::SmTrajectoryStock_[partitionIndex][k]).real().minCoeff() <
+            -Eigen::NumTraits<scalar_t>::epsilon()) {
+          throw std::runtime_error(
+              "Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
+              std::to_string(LinearAlgebra::eigenvalues(BASE::SmTrajectoryStock_[partitionIndex][k]).real().minCoeff()) + ".");
         }
         if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite()) {
           throw std::runtime_error("Sv is unstable.");

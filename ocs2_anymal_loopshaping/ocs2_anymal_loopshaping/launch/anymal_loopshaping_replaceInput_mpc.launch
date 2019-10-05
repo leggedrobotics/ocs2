@@ -12,9 +12,9 @@
     <node pkg="ocs2_anymal_loopshaping" type="anymal_loopshaping_replaceInput_dummy" name="anymal_loopshaping_replaceInput_dummy"
           output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal -- "/>
 
-    <node pkg="ocs2_anymal_interface" type="gait_command_node" name="gait_command_node"
-          output="screen" args="mpc" launch-prefix="gnome-terminal --"/>
+    <node pkg="ocs2_anymal_commands" type="gait_command_node" name="gait_command_node"
+          output="screen" launch-prefix="gnome-terminal --"/>
 
-    <node pkg="ocs2_anymal_interface" type="target_command_node" name="target_command_node"
-          output="screen" args="mpc" launch-prefix="gnome-terminal --"/>
+    <node pkg="ocs2_anymal_commands" type="target_command_node" name="target_command_node"
+          output="screen" launch-prefix="gnome-terminal --"/>
 </launch>

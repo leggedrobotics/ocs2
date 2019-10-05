@@ -15,7 +15,6 @@
 
   <exec_depend>ocs2_anymal_description</exec_depend>
   <exec_depend>ocs2_anymal_visualization</exec_depend>
-  <exec_depend>ocs2_anymal_interface</exec_depend>
-  <exec_depend>xpp_anymal</exec_depend>
+  <exec_depend>ocs2_anymal_commands</exec_depend>
 
 </package>

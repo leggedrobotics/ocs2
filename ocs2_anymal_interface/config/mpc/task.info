@@ -28,14 +28,11 @@ model_settings
   enforceTorqueConstraint       0
   torqueLimit                   40.0
 
-  swingLegLiftOff               0.30
-  liftOffVelocity               0.0
-  touchDownVelocity             -0.5
+  swingLegLiftOff               0.25
+  liftOffVelocity               0.20
+  touchDownVelocity             -0.40
 
   mpcGoalCommandDelay           0.1
-
-  targetDisplacementVelocity    0.5;
-  targetRotationVelocity        0.3;
 
   useFeetTrajectoryFiltering    0
   feetFilterFrequency           1000.0

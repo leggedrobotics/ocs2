@@ -40,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/integration/SystemEventHandler.h>
+#include <ocs2_core/misc/LinearAlgebra.h>
 
 namespace ocs2 {
 
@@ -275,7 +276,7 @@ class LinearQuadraticApproximator {
           if (!Dm.topRows(ncEqStateInput).allFinite()) {
             throw std::runtime_error("Input-state constraint derivative w.r.t. input is not finite.");
           }
-          size_t DmRank = Dm.topRows(ncEqStateInput).colPivHouseholderQr().rank();
+          size_t DmRank = LinearAlgebra::rank(Dm.topRows(ncEqStateInput));
           if (DmRank != ncEqStateInput) {
             throw std::runtime_error(
                 "Input-state constraint derivative w.r.t. input is not full-row rank. It's rank "
@@ -340,9 +341,9 @@ class LinearQuadraticApproximator {
         if (!makePsdWillBePerformedLater_ && !Qm.isApprox(Qm.transpose())) {
           throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not self-adjoint.");
         }
-        if (!makePsdWillBePerformedLater_ && Qm.eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
+        if (!makePsdWillBePerformedLater_ && LinearAlgebra::eigenvalues(Qm).real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
           throw std::runtime_error("Q matrix is not positive semi-definite. It's smallest eigenvalue is " +
-                                   std::to_string(Qm.eigenvalues().real().minCoeff()) + ".");
+                                   std::to_string(LinearAlgebra::eigenvalues(Qm).real().minCoeff()) + ".");
         }
         if (!Rv.allFinite()) {
           throw std::runtime_error("Intermediate cost first derivative w.r.t. input is is not finite.");
@@ -360,9 +361,9 @@ class LinearQuadraticApproximator {
           throw std::runtime_error("R matrix is not invertible. It's reciprocal condition number is " + std::to_string(Rm.ldlt().rcond()) +
                                    ".");
         }
-        if (!makePsdWillBePerformedLater_ && Rm.eigenvalues().real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon()) {
+        if (!makePsdWillBePerformedLater_ && LinearAlgebra::eigenvalues(Rm).real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon()) {
           throw std::runtime_error("R matrix is not positive definite. It's smallest eigenvalue is " +
-                                   std::to_string(Rm.eigenvalues().real().minCoeff()) + ".");
+                                   std::to_string(LinearAlgebra::eigenvalues(Rm).real().minCoeff()) + ".");
         }
       } catch (const std::exception& error) {
         std::cerr << "what(): " << error.what() << " at time " << time << " [sec]." << std::endl;
@@ -371,10 +372,10 @@ class LinearQuadraticApproximator {
         std::cerr << "q: " << q << std::endl;
         std::cerr << "Qv: " << Qv.transpose() << std::endl;
         std::cerr << "Qm: \n" << Qm << std::endl;
-        std::cerr << "Qm eigenvalues : " << Qm.eigenvalues().transpose() << std::endl;
+        std::cerr << "Qm eigenvalues : " << LinearAlgebra::eigenvalues(Qm).transpose() << std::endl;
         std::cerr << "Rv: " << Rv.transpose() << std::endl;
         std::cerr << "Rm: \n" << Rm << std::endl;
-        std::cerr << "Rm eigenvalues : " << Rm.eigenvalues().transpose() << std::endl;
+        std::cerr << "Rm eigenvalues : " << LinearAlgebra::eigenvalues(Rm).transpose() << std::endl;
         std::cerr << "Pm: \n" << Pm << std::endl;
         throw;
       }

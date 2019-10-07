@@ -1518,12 +1518,12 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t
   }
 
   // update numPartitions_ if it has been changed
-  if (numPartitions_ + 1 != partitioningTimes.size()) {
+  if (numPartitions_ != partitioningTimes.size() - 1) {
+    numPartitions_ = partitioningTimes.size() - 1;
     setupOptimizer(numPartitions_);
   }
 
   // update partitioningTimes_
-  numPartitions_ = partitioningTimes.size() - 1;
   partitioningTimes_ = partitioningTimes;
   initActivePartition_ = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, initTime);
   finalActivePartition_ = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, finalTime);

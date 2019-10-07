@@ -200,10 +200,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * given control policies and initial state, to integrate the system dynamics
    * in time period [initTime, finalTime].
    *
-   * @param [in] initTime: The initial time.
-   * @param [in] initState: The initial state.
-   * @param [in] finalTime: The final time.
-   * @param [in] partitioningTimes: Time partitioning
    * @param [in] controllersStock: Array of control policies.
    * @param [out] timeTrajectoriesStock: Array of trajectories containing the
    * output time trajectory stamp.
@@ -217,11 +213,9 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @return average time step.
    */
-  scalar_t rolloutTrajectory(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
-                             const scalar_array_t& partitioningTimes, linear_controller_array_t& controllersStock,
-                             scalar_array2_t& timeTrajectoriesStock, size_array2_t& eventsPastTheEndIndecesStock,
-                             state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
-                             size_t threadId = 0);
+  scalar_t rolloutTrajectory(linear_controller_array_t& controllersStock, scalar_array2_t& timeTrajectoriesStock,
+                             size_array2_t& eventsPastTheEndIndecesStock, state_vector_array2_t& stateTrajectoriesStock,
+                             input_vector_array2_t& inputTrajectoriesStock, size_t threadId = 0);
 
   /**
    * Calculates a rollout constraints. It uses the given rollout trajectories
@@ -440,7 +434,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Runs the exit method DDP.
    */
-  virtual void runExit();
+  virtual void runExit() {}
 
   /**
    * The main routine of DDP which runs DDP for a given initial state, initial
@@ -664,18 +658,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   scalar_t calculateInequalityConstraintPenalty(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& ncIneqTrajectoriesStock,
                                                 const scalar_array3_t& hTrajectoriesStock, scalar_t& inequalityISE, size_t workerIndex = 0);
-  /**
-   * Truncates the internal array of the control policies based on the initTime.
-   *
-   * @param [in] partitioningTimes: Switching times.
-   * @param [in] initTime: Initial time.
-   * @param [out] controllersStock: Truncated array of the control policies.
-   * @param [out] initActivePartition: Initial active subsystems.
-   * @param [out] deletedcontrollersStock: The deleted part of the control
-   * policies.
-   */
-  void truncateController(const scalar_array_t& partitioningTimes, double initTime, linear_controller_array_t& controllersStock,
-                          size_t& initActivePartition, linear_controller_array_t& deletedcontrollersStock);
 
   /**
    * Calculates max feedforward update norm and max type-1 error update norm.
@@ -756,9 +738,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   bool lsComputeISEs_;                                // whether lineSearch routine needs to calculate ISEs
   linear_controller_array_t initLScontrollersStock_;  // needed for lineSearch
-
-  linear_controller_array_t deletedcontrollersStock_;  // needed for concatenating the new controller
-                                                       // to the old one
 
   std::vector<EigenLinearInterpolation<state_vector_t>> nominalStateFunc_;
   std::vector<EigenLinearInterpolation<input_vector_t>> nominalInputFunc_;

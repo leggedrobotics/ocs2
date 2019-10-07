@@ -44,14 +44,14 @@ void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::convert2Vector(
    * transcribe it in column-wise fashion into allSs*/
   size_t count = 0;  // count the total number of scalar entries covered
   size_t nRows = 0;
-  const size_t state_dim = Sm.rows();
+  const size_t state_dim = Sm.cols();
 
   // Ensure proper size in case of Eigen::Dynamic size.
-  allSs.resize(state_dim * (state_dim + 1) / 2 + state_dim + 1);
+  allSs.resize(s_vector_dim(state_dim));
 
-  for (size_t nCols = 0; nCols < state_dim; nCols++) {
-    nRows = nCols + 1;
-    allSs.segment(count, nRows) << Eigen::Map<const dynamic_vector_t>(Sm.data() + nCols * state_dim, nRows);
+  for (size_t col = 0; col < state_dim; col++) {
+    nRows = col + 1;
+    allSs.segment(count, nRows) << Eigen::Map<const dynamic_vector_t>(Sm.data() + col * state_dim, nRows);
     count += nRows;
   }
 
@@ -66,17 +66,16 @@ template <int STATE_DIM, int INPUT_DIM>
 void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::convert2Matrix(const s_vector_t& allSs, state_matrix_t& Sm,
                                                                                 state_vector_t& Sv, eigen_scalar_t& s) {
   /* Sm is symmetric. Here, we map the first entries from allSs onto the
-   * respective elements in the symmetric matrix*/
+   * upper triangular part of the symmetric matrix*/
   size_t count = 0;
-  size_t nCols = 0;
-  const size_t state_dim = Sm.rows();
-  for (size_t rows = 0; rows < state_dim; rows++) {
-    nCols = rows + 1;
-    Sm.block(rows, 0, 1, nCols) << Eigen::Map<const dynamic_vector_t>(allSs.data() + count, nCols).transpose();
-    // "nCols-1" because diagonal elements have already been covered
-    Sm.block(0, rows, nCols - 1, 1) << Eigen::Map<const dynamic_vector_t>(allSs.data() + count, nCols - 1);
-    count += nCols;
+  size_t nRows = 0;
+  const size_t state_dim = Sm.cols();
+  for (size_t col = 0; col < state_dim; col++) {
+    nRows = col + 1;
+    Sm.block(0, col, nRows, 1) << Eigen::Map<const dynamic_vector_t>(allSs.data() + count, nRows);
+    count += nRows;
   }
+  Sm.template triangularView<Eigen::Lower>() = Sm.template triangularView<Eigen::Upper>().transpose();
 
   /* extract the vector Sv*/
   Sv = Eigen::Map<const dynamic_vector_t>(allSs.data() + count, state_dim);

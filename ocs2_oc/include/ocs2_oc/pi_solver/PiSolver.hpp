@@ -325,12 +325,6 @@ class PiSolver final : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     throw std::runtime_error("not implemented.");
   }
 
-  void blockwiseMovingHorizon(bool flag) override {
-    if (flag) {
-      std::cerr << "[PiSolver] BlockwiseMovingHorizon enabled." << std::endl;
-    }
-  }
-
   void getPerformanceIndeces(scalar_t& costFunction, scalar_t& constraint1ISE, scalar_t& constraint2ISE) const override {
     throw std::runtime_error("not implemented.");
   }

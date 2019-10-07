@@ -5,7 +5,6 @@
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
 #include <ocs2_mpc/MPC_PI.h>
 #include <ocs2_mpc/MPC_Settings.h>
-#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 #include <ocs2_oc/pi_solver/PiSolver.hpp>
 
@@ -31,7 +30,7 @@ int main(int argc, char* argv[]) {
   using dynamics_t = ocs2::quadrotor::QuadrotorSystemDynamics;
   ocs2::quadrotor::QuadrotorParameters<double> quadrotorParameters;
   quadrotorParameters.loadSettings(taskFile);
-  dynamics_t dynamics(quadrotorParameters);
+  dynamics_t::Ptr dynamics(new dynamics_t(quadrotorParameters));
 
   // Initial, nominal and final state
   dim_t::state_vector_t xInit, xNominal, xFinal;
@@ -71,11 +70,8 @@ int main(int argc, char* argv[]) {
   mpcSettings.loadSettings(taskFile);
   ocs2::PI_Settings piSettings;
   piSettings.loadSettings(taskFile);
-  ocs2::Rollout_Settings rolloutSettings;
-  rolloutSettings.loadSettings(taskFile, "pi.rollout");
-  ocs2::TimeTriggeredRollout<ocs2::quadrotor::STATE_DIM_, ocs2::quadrotor::INPUT_DIM_> rollout(dynamics, rolloutSettings);
 
-  ocs2::MPC_PI<ocs2::quadrotor::STATE_DIM_, ocs2::quadrotor::INPUT_DIM_> mpc_pi(&rollout, std::move(quadrotorCost), quadrotorConstraint,
+  ocs2::MPC_PI<ocs2::quadrotor::STATE_DIM_, ocs2::quadrotor::INPUT_DIM_> mpc_pi(dynamics, std::move(quadrotorCost), quadrotorConstraint,
                                                                                 partitioningTimes, mpcSettings, piSettings);
 
   using ffwd_ctrl_t = ocs2::FeedforwardController<ocs2::quadrotor::STATE_DIM_, ocs2::quadrotor::INPUT_DIM_>;

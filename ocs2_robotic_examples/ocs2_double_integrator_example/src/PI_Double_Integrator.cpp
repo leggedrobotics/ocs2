@@ -6,7 +6,6 @@
 #include <ocs2_mpc/MPC_PI.h>
 #include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_oc/pi_solver/PI_Settings.h>
-#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ros/package.h>
 
@@ -20,34 +19,34 @@ int main(int argc, char** argv) {
 
   std::string taskFile = ros::package::getPath("ocs2_double_integrator_example") + "/config/" + std::string(argv[1]) + "/task.info";
 
-  using DIMENSIONS = ocs2::MPC_PI<ocs2::double_integrator::STATE_DIM_, ocs2::double_integrator::INPUT_DIM_>::DIMENSIONS;
-  constexpr auto STATE_DIM = DIMENSIONS::STATE_DIM_;
-  constexpr auto INPUT_DIM = DIMENSIONS::INPUT_DIM_;
+  using dynamics_t = ocs2::double_integrator::DoubleIntegratorDynamics;
+  constexpr auto STATE_DIM = dynamics_t::DIMENSIONS::STATE_DIM_;
+  constexpr auto INPUT_DIM = dynamics_t::DIMENSIONS::INPUT_DIM_;
   using solver_t = ocs2::PiSolver<STATE_DIM, INPUT_DIM>;
 
   // Dynamics
-  DIMENSIONS::state_matrix_t A;
+  dynamics_t::DIMENSIONS::state_matrix_t A;
   A << 0.0, 1.0, 0.0, 0.0;
-  DIMENSIONS::state_input_matrix_t B;
+  dynamics_t::DIMENSIONS::state_input_matrix_t B;
   B << 0.0, 1.0;
-  ocs2::double_integrator::DoubleIntegratorDynamics dynamics(A, B);
+  dynamics_t::Ptr dynamics(new dynamics_t(A, B));
 
   // Initial state
-  DIMENSIONS::state_vector_t xInitial;
+  dynamics_t::DIMENSIONS::state_vector_t xInitial;
   ocs2::loadData::loadEigenMatrix(taskFile, "initialState", xInitial);
 
   // Cost function
-  DIMENSIONS::state_matrix_t Q, QFinal;
+  dynamics_t::DIMENSIONS::state_matrix_t Q, QFinal;
   ocs2::loadData::loadEigenMatrix(taskFile, "Q", Q);
   ocs2::loadData::loadEigenMatrix(taskFile, "Q_final", QFinal);
 
-  DIMENSIONS::input_matrix_t R;
+  dynamics_t::DIMENSIONS::input_matrix_t R;
   ocs2::loadData::loadEigenMatrix(taskFile, "R", R);
 
-  DIMENSIONS::state_vector_t xFinal;
+  dynamics_t::DIMENSIONS::state_vector_t xFinal;
   ocs2::loadData::loadEigenMatrix(taskFile, "x_final", xFinal);
 
-  DIMENSIONS::input_vector_t uNominal;
+  dynamics_t::DIMENSIONS::input_vector_t uNominal;
   uNominal.setZero();
 
   std::cerr << "Path Integral: Cost function parameters\n"
@@ -60,8 +59,8 @@ int main(int argc, char** argv) {
   std::unique_ptr<cost_t> cost(new cost_t(Q, R, QFinal));
 
   // cost desired trajectories
-  const DIMENSIONS::scalar_t initTime(0.0);
-  DIMENSIONS::scalar_t finalTime;
+  const dynamics_t::scalar_t initTime(0.0);
+  dynamics_t::scalar_t finalTime;
   ocs2::loadData::loadCppDataType(taskFile, "mpcTimeHorizon.timehorizon", finalTime);
   using cost_desired_trajectories_t = solver_t::cost_desired_trajectories_t;
   cost_desired_trajectories_t::scalar_array_t desiredTimeArray{initTime, finalTime};
@@ -76,7 +75,7 @@ int main(int argc, char** argv) {
   solver_t::constraint_t constraint;
 
   // partitioning times
-  DIMENSIONS::scalar_array_t partitioningTimes{0.0, 1.0};
+  dynamics_t::DIMENSIONS::scalar_array_t partitioningTimes{0.0, 1.0};
 
   // MPC ROS Node
   // ocs2::double_integrator::DoubleIntegratorInterface doubleIntegratorInterface(argv[1]);
@@ -84,11 +83,7 @@ int main(int argc, char** argv) {
   mpcSettings.loadSettings(taskFile);
   ocs2::PI_Settings piSettings;
   piSettings.loadSettings(taskFile);
-  ocs2::Rollout_Settings rolloutSettings;
-  rolloutSettings.loadSettings(taskFile, "pi.rollout");
-  ocs2::TimeTriggeredRollout<STATE_DIM, INPUT_DIM> rollout(dynamics, rolloutSettings);
-
-  ocs2::MPC_PI<STATE_DIM, INPUT_DIM> mpc_pi(&rollout, std::move(cost), constraint, partitioningTimes, mpcSettings, piSettings);
+  ocs2::MPC_PI<STATE_DIM, INPUT_DIM> mpc_pi(dynamics, std::move(cost), constraint, partitioningTimes, mpcSettings, piSettings);
   mpc_pi.getSolverPtr()->setCostDesiredTrajectories(costDesiredTraj);
   ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM> mpcNode(mpc_pi, "double_integrator");
 

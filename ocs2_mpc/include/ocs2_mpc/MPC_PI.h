@@ -25,13 +25,13 @@ class MPC_PI final : public MPC_BASE<STATE_DIM, INPUT_DIM> {
 
   using solver_t = PiSolver<STATE_DIM, INPUT_DIM>;
   using constraint_t = typename solver_t::constraint_t;
-  using rollout_base_t = typename solver_t::rollout_base_t;
+  using controlled_system_base_t = typename solver_t::controlled_system_base_t;
   using cost_function_t = typename solver_t::cost_function_t;
 
-  MPC_PI(const rollout_base_t* rolloutPtr, std::unique_ptr<cost_function_t> cost, const constraint_t constraint,
+  MPC_PI(typename controlled_system_base_t::Ptr dynamics, std::unique_ptr<cost_function_t> cost, const constraint_t constraint,
          const scalar_array_t& partitioningTimes, const MPC_Settings& mpcSettings, PI_Settings piSettings)
       : BASE(partitioningTimes, mpcSettings) {
-    piSolverPtr_.reset(new solver_t(rolloutPtr, std::move(cost), constraint, std::move(piSettings)));
+    piSolverPtr_.reset(new solver_t(dynamics, std::move(cost), constraint, std::move(piSettings)));
     BASE::setBaseSolverPtr(piSolverPtr_.get());
   }
 

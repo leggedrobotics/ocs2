@@ -140,7 +140,7 @@ class Solver_BASE {
   using feedforward_controller_t = FeedforwardController<STATE_DIM, INPUT_DIM>;
 
   using synchronized_module_t = SolverSynchronizedModule<STATE_DIM, INPUT_DIM>;
-  using synchronized_module_array_t = std::vector<std::shared_ptr<synchronized_module_t>>;
+  using synchronized_module_ptr_array_t = std::vector<std::shared_ptr<synchronized_module_t>>;
 
   explicit Solver_BASE(std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr);
 
@@ -183,7 +183,7 @@ class Solver_BASE {
   /**
    * Set all modules that need to be synchronized with the solver. Each module is updated once before and once after solving the problem
    */
-  void setSynchronizedModules(const synchronized_module_array_t& synchronizedModules) { synchronizedModules_ = synchronizedModules; };
+  void setSynchronizedModules(const synchronized_module_ptr_array_t& synchronizedModules) { synchronizedModules_ = synchronizedModules; };
 
   /**
    * MPC_BASE activates this if the final time of the MPC will increase by the length of a time partition instead
@@ -380,7 +380,7 @@ class Solver_BASE {
   std::mutex outputDisplayGuardMutex_;
   logic_rules_machine_ptr_t logicRulesMachinePtr_;
   cost_desired_trajectories_t costDesiredTrajectories_;
-  synchronized_module_array_t synchronizedModules_;
+  synchronized_module_ptr_array_t synchronizedModules_;
 };
 
 }  // namespace ocs2

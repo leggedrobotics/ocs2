@@ -112,7 +112,7 @@ class MPC_ROS_Interface {
   using ros_msg_conversions_t = RosMsgConversions<STATE_DIM, INPUT_DIM>;
 
   using synchronized_ros_module_t = SolverSynchronizedRosModule<STATE_DIM, INPUT_DIM>;
-  using synchronized_ros_module_array_t = std::vector<std::shared_ptr<synchronized_ros_module_t>>;
+  using synchronized_ros_module_ptr_array_t = std::vector<std::shared_ptr<synchronized_ros_module_t>>;
 
   /**
    * Default constructor
@@ -148,7 +148,7 @@ class MPC_ROS_Interface {
    * Set all modules that need to be synchronized with the mpc. Must be called before launchNodes.
    * This method does not add the modules to the solver
    */
-  void subscribeSynchronizedModules(const synchronized_ros_module_array_t& synchronizedRosModules) {
+  void subscribeSynchronizedModules(const synchronized_ros_module_ptr_array_t& synchronizedRosModules) {
     synchronizedRosModules_ = synchronizedRosModules;
   };
 
@@ -295,7 +295,7 @@ class MPC_ROS_Interface {
 
   mutable std::mutex policyBufferMutex_;  // for policy variables WITH suffix (*Buffer_)
 
-  synchronized_ros_module_array_t synchronizedRosModules_;
+  synchronized_ros_module_ptr_array_t synchronizedRosModules_;
 
   // multi-threading for publishers
   std::atomic_bool terminateThread_;

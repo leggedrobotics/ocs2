@@ -170,9 +170,6 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
       continue;
     }
 
-    // current partition update
-    BASE::constraintStepSize_ = BASE::initialControllerDesignStock_[i] ? 0.0 : BASE::ddpSettings_.constraintStepSize_;
-
     /*
      * perform the calculatePartitionController for partition i
      */

@@ -116,10 +116,6 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::reset() {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_BASE<STATE_DIM, INPUT_DIM>::setBaseSolverPtr(solver_base_t* solverPtr) {
   solverPtr_ = solverPtr;
-
-  // MPC activates this if the final time of the MPC will increase by the length of a time partition instead
-  // of commonly used scheme where the final time is gradual increased.
-  solverPtr_->blockwiseMovingHorizon(mpcSettings_.blockwiseMovingHorizon_);
 }
 
 /******************************************************************************************************/

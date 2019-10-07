@@ -387,9 +387,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
       BASE::nominalInputFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::nominalInputTrajectoriesStock_[i]));
     }  // end of j loop
 
-    // current partition update
-    BASE::constraintStepSize_ = BASE::ddpSettings_.constraintStepSize_;
-
     /*
      * perform the calculatePartitionController for partition i
      */
@@ -441,17 +438,13 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerInde
 
   input_matrix_t DmNullProjection = input_matrix_t::Identity() - DmProjected;
 
-  //  const auto localConstraintStepSize_ = (time > BASE::initialControllerDesignFromTime_) ? 0.0 : BASE::constraintStepSize_;
-
-  const auto localConstraintStepSize_ = 1.0;
-
   // Feedback gains K
   BASE::nominalControllersStock_[i].gainArray_[k] = -CmProjected;
   BASE::nominalControllersStock_[i].gainArray_[k].noalias() -= DmNullProjection * Lm;
 
   // Bias input
   BASE::nominalControllersStock_[i].biasArray_[k] = nominalInput - BASE::nominalControllersStock_[i].gainArray_[k] * nominalState -
-                                                    localConstraintStepSize_ * (DmNullProjection * Lve + EvProjected);
+                                                    BASE::ddpSettings_.constraintStepSize_ * (DmNullProjection * Lve + EvProjected);
   BASE::nominalControllersStock_[i].deltaBiasArray_[k] = -DmNullProjection * Lv;
 
   // checking the numerical stability of the controller parameters

@@ -179,14 +179,6 @@ class Solver_BASE {
                    const controller_ptr_array_t& controllersPtrStock) = 0;
 
   /**
-   * MPC_BASE activates this if the final time of the MPC will increase by the length of a time partition instead
-   * of commonly used scheme where the final time is gradually increased.
-   *
-   * @param [in] flag: If set true, the final time of the MPC will increase by the length of a time partition.
-   */
-  virtual void blockwiseMovingHorizon(bool flag) = 0;
-
-  /**
    * Gets the cost function and ISEs of the type-1 and type-2 constraints at the initial time.
    *
    * @param [out] costFunction: cost function value

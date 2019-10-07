@@ -395,8 +395,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   void useParallelRiccatiSolverFromInitItr(bool flag);
 
-  void blockwiseMovingHorizon(bool flag) override;
-
   void getPerformanceIndeces(scalar_t& costFunction, scalar_t& constraint1ISE, scalar_t& constraint2ISE) const override;
 
   size_t getNumIterations() const override;
@@ -701,9 +699,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   unsigned long long int rewindCounter_;
 
   bool useParallelRiccatiSolverFromInitItr_ = false;
-  // If true the final time of the MPC will increase by a time partition instead
-  // of common gradual increase.
-  bool blockwiseMovingHorizon_ = false;
 
   scalar_t initTime_;
   scalar_t finalTime_;
@@ -714,21 +709,9 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   size_t numPartitions_ = 0;
   scalar_array_t partitioningTimes_;
 
-  const scalar_array2_t* desiredTimeTrajectoryStockPtr_;
-  const state_vector_array2_t* desiredStateTrajectoryStockPtr_;
-  const input_vector_array2_t* desiredInputTrajectoryStockPtr_;
-
   scalar_t learningRateStar_ = 1.0;  // The optimal learning rate.
   scalar_t maxLearningRate_ = 1.0;   // The maximum permitted learning rate
                                      // (settings_.maxLearningRateSLQ_).
-  scalar_t constraintStepSize_ = 1.0;
-
-  // It is true if an initial controller is not provided for a partition which
-  // causes that the first iteration of SLQ to design an initial controller
-  // (LQR). In this case: 1) The feedforward component and the type-1 constraint
-  // input are set to zero 2) Final cost will be ignored
-  std::vector<bool> initialControllerDesignStock_;
-  scalar_t initialControllerDesignFromTime_;
 
   // trajectory spreading
   TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM> trajectorySpreadingController_;

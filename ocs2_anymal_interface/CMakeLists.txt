@@ -1,0 +1,288 @@
+cmake_minimum_required(VERSION 3.0)
+project(ocs2_anymal_interface)
+
+## Find catkin macros and libraries
+## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
+## is used, also find other catkin packages
+find_package(catkin REQUIRED COMPONENTS
+  roslib
+  ocs2_anymal_switched_model
+  ocs2_quadruped_interface
+)
+
+## Eigen3
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+
+find_package(Boost REQUIRED COMPONENTS
+  filesystem
+)
+
+# Raisim
+option(USE_RAISIM_VISUALIZER "Compile Raisim with OGRE Visualizer" OFF)
+find_package(raisim CONFIG QUIET)
+if(raisim_FOUND)
+  if(USE_RAISIM_VISUALIZER)
+    find_package(raisimOgre REQUIRED)
+    add_definitions(-DUSE_RAISIM_VISUALIZER)
+  endif(USE_RAISIM_VISUALIZER)
+endif(raisim_FOUND)
+
+
+# Pybind11
+option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)
+if(USE_PYBIND_PYTHON_3)
+  set(PYTHON_EXECUTABLE /usr/bin/python3)
+  set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
+endif(USE_PYBIND_PYTHON_3)
+find_package(pybind11 QUIET)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -ffast-math -fPIC")
+
+###################################
+## catkin specific configuration ##
+###################################
+## The catkin_package macro generates cmake config files for your package
+## Declare things to be passed to dependent projects
+## INCLUDE_DIRS: uncomment this if you package contains header files
+## LIBRARIES: libraries you create in this project that dependent projects also need
+## CATKIN_DEPENDS: catkin_packages dependent projects also need
+## DEPENDS: system dependencies of this project that dependent projects also need
+catkin_package(
+  INCLUDE_DIRS 
+    include
+    ${EIGEN_INCLUDE_DIRS}
+  
+  LIBRARIES 
+    ocs2_anymal_interface
+
+  CATKIN_DEPENDS
+    ocs2_anymal_switched_model
+    ocs2_quadruped_interface
+
+  DEPENDS
+    Boost
+)
+
+###########
+## Build ##
+###########
+
+## Specify additional locations of header files
+## Your package locations should be listed before other locations
+# include_directories(include)
+include_directories(
+  include
+  ${EIGEN_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS}
+)
+
+# Declare a C++ library
+add_library(ocs2_anymal_interface
+  src/OCS2AnymalInterface.cpp
+)
+add_dependencies(ocs2_anymal_interface
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(ocs2_anymal_interface
+  ${catkin_LIBRARIES}
+)
+#set_property(TARGET ocs2_anymal_interface PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+# Declare a C++ Executable
+add_executable(target_command_node
+  src/AnymalTargetPoseCommand.cpp
+)
+add_dependencies(target_command_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(target_command_node
+  ${catkin_LIBRARIES}
+)
+
+add_executable(target_command_node_velocity
+  src/AnymalTargetVelocityCommand.cpp
+)
+add_dependencies(target_command_node_velocity
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(target_command_node_velocity
+  ${catkin_LIBRARIES}
+)
+
+add_executable(gait_command_node
+  src/AnymalModeSequenceCommand.cpp
+)
+add_dependencies(gait_command_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(gait_command_node
+  ${catkin_LIBRARIES}
+)
+
+add_executable(planning
+        src/planning.cpp
+        )
+add_dependencies(planning
+        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(planning
+        ocs2_anymal_interface
+        ${catkin_LIBRARIES}
+        )
+
+add_executable(anymal_mpc_node
+  src/AnymalMPC.cpp
+)
+add_dependencies(anymal_mpc_node
+  ocs2_anymal_interface
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(anymal_mpc_node
+  ocs2_anymal_interface
+  ${catkin_LIBRARIES}
+)
+
+add_executable(dummy_mrt_node
+  test/DummyMRT.cpp
+)
+add_dependencies(dummy_mrt_node
+  ocs2_anymal_interface
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(dummy_mrt_node
+  ocs2_anymal_interface
+  ${catkin_LIBRARIES}
+)
+
+# Dummy node with raisim rollout
+if(raisim_FOUND)
+  add_executable(anymal_dummy_raisim
+    src/AnymalRaisimConversions.cpp
+    src/AnymalRaisimDummy.cpp
+  )
+  add_dependencies(anymal_dummy_raisim
+    ${catkin_EXPORTED_TARGETS}
+  )
+  target_link_libraries(anymal_dummy_raisim
+    ocs2_anymal_interface
+    ${catkin_LIBRARIES}
+    raisim::raisim
+  )
+  if(USE_RAISIM_VISUALIZER)
+    target_link_libraries(anymal_dummy_raisim
+      raisim::raisimOgre
+    )
+  endif(USE_RAISIM_VISUALIZER)
+endif(raisim_FOUND)
+
+
+# PyBindings library (c++ side)
+add_library(anymalPyBindings_cpp
+  src/AnymalPyBindings.cpp
+)
+add_dependencies(anymalPyBindings_cpp
+  ocs2_anymal_interface
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(anymalPyBindings_cpp
+  ocs2_anymal_interface
+  ${catkin_LIBRARIES}
+)
+
+# Build python bindings if possible
+if(${pybind11_FOUND})
+  pybind11_add_module(AnymalPyBindings SHARED
+    src/pyBindModule.cpp
+  )
+  add_dependencies(AnymalPyBindings
+    anymalPyBindings_cpp
+    ${catkin_EXPORTED_TARGETS}
+  )
+  target_link_libraries(AnymalPyBindings PRIVATE
+    anymalPyBindings_cpp
+    ${catkin_LIBRARIES}
+  )
+
+  if(USE_PYBIND_PYTHON_3)
+    # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
+    set_target_properties(AnymalPyBindings
+      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
+    )
+  else(USE_PYBIND_PYTHON_3)
+    set_target_properties(AnymalPyBindings
+        PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+    )
+  endif(USE_PYBIND_PYTHON_3)
+
+  catkin_python_setup()
+endif()
+
+#############
+## Install ##
+#############
+
+install(TARGETS
+            ocs2_anymal_interface
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        )
+
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+
+install(TARGETS
+            target_command_node
+            target_command_node_velocity
+            gait_command_node
+            planning
+            anymal_mpc_node
+            dummy_mrt_node
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+install(DIRECTORY config launch
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+        )
+
+#############
+## Testing ##
+#############
+
+## Add gtest based cpp test target and link libraries
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_ocs2_anymal_interface.cpp)
+# if(TARGET ${PROJECT_NAME}-test)
+#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
+# endif()
+
+## Add folders to be run by python nosetests
+# catkin_add_nosetests(test)
+
+if(raisim_FOUND)
+  catkin_add_gtest(testAnymalRaisimConversions
+    test/testAnymalRaisimConversions.cpp
+    src/AnymalRaisimConversions.cpp
+  )
+  target_link_libraries(testAnymalRaisimConversions
+    ocs2_anymal_interface
+    ${catkin_LIBRARIES}
+    raisim::raisim
+  )
+endif(raisim_FOUND)
+
+if(${pybind11_FOUND})
+  catkin_add_gtest(anymal_pybindings_test
+    test/PyBindingsTest.cpp
+    )
+  target_link_libraries(anymal_pybindings_test
+    anymalPyBindings_cpp
+    ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES}
+    )
+endif()

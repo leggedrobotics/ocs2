@@ -257,7 +257,8 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
       // Remove last point of the controller rollout if it is directly past an event. Here where we want to use the operating point
       // instead. However, we do start the integration at the state after the event. i.e. the jump map remains applied.
       if (!eventsPastTheEndIndecesStock[i].empty() && eventsPastTheEndIndecesStock[i].back() == (timeTrajectoriesStock[i].size() - 1)) {
-        // Start new integration at the time point after the event to remain consistent with added epsilons in the rollout
+        // Start new integration at the time point after the event to remain consistent with added epsilons in the rollout. The operating
+        // point rollout does not add this epsilon because it does not know about this event.
         operatingPointsFromTo.first = timeTrajectoriesStock[i].back();
         timeTrajectoriesStock[i].pop_back();
         stateTrajectoriesStock[i].pop_back();

@@ -44,7 +44,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_ballbot_example/cost/BallbotCost.h"
 #include "ocs2_ballbot_example/definitions.h"
 #include "ocs2_ballbot_example/dynamics/BallbotSystemDynamics.h"
-#include "ocs2_ballbot_example/solvers/BallbotPI.h"
 #include "ocs2_ballbot_example/solvers/BallbotSLQ.h"
 
 namespace ocs2 {
@@ -65,7 +64,6 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
   using ballbotOperatingPoint_t = SystemOperatingPoint<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
   using mpc_t = MPC_SLQ<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
-  using mpc_pi_t = MPC_PI<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
   /**
    * Constructor
@@ -89,12 +87,6 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
 
   mpc_t& getMpc() override { return *mpcPtr_; }
 
-  /**
-   * @brief getMpcPi
-   * @return reference to the internal path integral MPC
-   */
-  mpc_pi_t& getMpcPi() { return *mpcPi_; }
-
   const BallbotSystemDynamics& getDynamics() const override { return *ballbotSystemDynamicsPtr_; }
   const BallbotSystemDynamics& getDynamicsDerivatives() const override { return *ballbotSystemDynamicsPtr_; }
 
@@ -115,9 +107,7 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
   std::string libraryFolder_;
 
   SLQ_Settings slqSettings_;
-  PI_Settings piSettings_;
   std::unique_ptr<mpc_t> mpcPtr_;
-  std::unique_ptr<mpc_pi_t> mpcPi_;
 
   std::unique_ptr<BallbotSystemDynamics> ballbotSystemDynamicsPtr_;
   std::unique_ptr<BallbotCost> ballbotCostPtr_;

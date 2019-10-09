@@ -88,18 +88,6 @@ target_link_libraries(double_integrator_mpc
   ${catkin_LIBRARIES}
 )
 
-add_executable(double_integrator_pi
-  src/PI_Double_Integrator.cpp
-)
-add_dependencies(double_integrator_pi
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(double_integrator_pi
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  dl
-)
-
 # Dummy node
 add_executable(double_integrator_dummy_test
   src/Dummy_Double_Integrator_Node.cpp
@@ -175,7 +163,6 @@ if(cmake_clang_tools_FOUND)
     TARGETS
       double_integrator_interface
       double_integrator_mpc
-      double_integrator_pi
       double_integrator_dummy_test
       double_integrator_target
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test

@@ -82,18 +82,6 @@ target_link_libraries(quadrotor_mpc
   ${catkin_LIBRARIES}
 )
 
-# PI node
-add_executable(quadrotor_pi
-  src/PI_Quadrotor.cpp
-)
-add_dependencies(quadrotor_pi
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(quadrotor_pi
-  quadrotor_interface
-  ${catkin_LIBRARIES}
-)
-
 # Dummy node
 add_executable(quadrotor_dummy_test
   src/Dummy_Quadrotor_Node.cpp
@@ -168,7 +156,6 @@ if(cmake_clang_tools_FOUND)
     TARGETS
       quadrotor_interface
       quadrotor_mpc
-      quadrotor_pi
       quadrotor_dummy_test
       quadrotor_target
       quadrotorPyBindings_Cpp
@@ -191,7 +178,7 @@ install(TARGETS quadrotor_interface quadrotorPyBindings_Cpp
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
-install(TARGETS quadrotor_mpc quadrotor_pi quadrotor_dummy_test quadrotor_target
+install(TARGETS quadrotor_mpc quadrotor_dummy_test quadrotor_target
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 install(DIRECTORY urdf launch config rviz

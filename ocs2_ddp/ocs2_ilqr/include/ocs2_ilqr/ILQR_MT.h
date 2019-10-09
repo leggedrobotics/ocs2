@@ -107,11 +107,11 @@ class ILQR_MT : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::linear_controller_t;
 
   using typename BASE::constraint_base_t;
-  using typename BASE::controlled_system_base_t;
   using typename BASE::cost_function_base_t;
   using typename BASE::derivatives_base_t;
   using typename BASE::event_handler_t;
   using typename BASE::operating_trajectories_base_t;
+  using typename BASE::rollout_base_t;
 
   /**
    * worker state enum
@@ -126,7 +126,7 @@ class ILQR_MT : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Constructor
    *
-   * @param [in] systemDynamicsPtr: The system dynamics which possibly includes some subsystems.
+   * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
    * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
    * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
@@ -136,10 +136,10 @@ class ILQR_MT : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
-  ILQR_MT(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
-          const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
-          const operating_trajectories_base_t* operatingTrajectoriesPtr, const ILQR_Settings& settings = ILQR_Settings(),
-          std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr, const cost_function_base_t* heuristicsFunctionPtr = nullptr);
+  ILQR_MT(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
+          const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
+          const ILQR_Settings& settings = ILQR_Settings(), std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
+          const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
   /**
    * Default destructor.

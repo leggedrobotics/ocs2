@@ -43,7 +43,7 @@ MPC_OCS2<STATE_DIM, INPUT_DIM>::MPC_OCS2()
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_OCS2<STATE_DIM, INPUT_DIM>::MPC_OCS2(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+MPC_OCS2<STATE_DIM, INPUT_DIM>::MPC_OCS2(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                          const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                          const operating_trajectories_base_t* operatingTrajectoriesPtr,
                                          const scalar_array_t& partitioningTimes, const SLQ_Settings& slqSettings /*= SLQ_Settings()*/,
@@ -53,12 +53,12 @@ MPC_OCS2<STATE_DIM, INPUT_DIM>::MPC_OCS2(const controlled_system_base_t* systemD
                                          const mode_sequence_template_t* modeSequenceTemplatePtr /*= nullptr*/,
                                          const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
-    : BASE(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, partitioningTimes,
+    : BASE(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, partitioningTimes,
            slqSettings, mpcSettings, logicRulesPtr, modeSequenceTemplatePtr, heuristicsFunctionPtr),
       gddpPtr_(new gddp_t(gddpSettings)),
       activateOCS2_(false),
       terminateOCS2_(false),
-      slqDataCollectorPtr_(new slq_data_collector_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr)) {
+      slqDataCollectorPtr_(new slq_data_collector_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr)) {
   workerOCS2_ = std::thread(&MPC_OCS2::runOCS2, this);
 }
 

@@ -57,9 +57,9 @@ class SensitivitySequentialRiccatiEquations final : public OdeBase<STATE_DIM*(ST
     S_DIM_ = STATE_DIM * (STATE_DIM + 1) / 2 + STATE_DIM + 1
   };
 
-  typedef OdeBase<S_DIM_> BASE;
+  using BASE = OdeBase<S_DIM_>;
 
-  typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
   using scalar_t = typename DIMENSIONS::scalar_t;
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;
   using eigen_scalar_t = typename DIMENSIONS::eigen_scalar_t;
@@ -78,8 +78,8 @@ class SensitivitySequentialRiccatiEquations final : public OdeBase<STATE_DIM*(ST
   using state_input_matrix_array_t = typename DIMENSIONS::state_input_matrix_array_t;
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
 
-  typedef Eigen::Matrix<scalar_t, S_DIM_, 1> s_vector_t;
-  typedef std::vector<s_vector_t, Eigen::aligned_allocator<s_vector_t> > s_vector_array_t;
+  using s_vector_t = Eigen::Matrix<scalar_t, S_DIM_, 1>;
+  using s_vector_array_t = std::vector<s_vector_t, Eigen::aligned_allocator<s_vector_t> >;
 
   /**
    * Default constructor.
@@ -117,7 +117,7 @@ class SensitivitySequentialRiccatiEquations final : public OdeBase<STATE_DIM*(ST
     size_t nRows = 0;
     for (size_t nCols = 0; nCols < STATE_DIM; nCols++) {
       nRows = nCols + 1;
-      allSs.template segment(count, nRows) << Eigen::Map<const dynamic_vector_t>(nabla_Sm.data() + nCols * STATE_DIM, nRows);
+      allSs.segment(count, nRows) << Eigen::Map<const dynamic_vector_t>(nabla_Sm.data() + nCols * STATE_DIM, nRows);
       count += nRows;
     }
 
@@ -144,9 +144,9 @@ class SensitivitySequentialRiccatiEquations final : public OdeBase<STATE_DIM*(ST
     size_t nCols = 0;
     for (size_t rows = 0; rows < STATE_DIM; rows++) {
       nCols = rows + 1;
-      nabla_Sm.template block(rows, 0, 1, nCols) << Eigen::Map<const dynamic_vector_t>(allSs.data() + count, nCols).transpose();
+      nabla_Sm.block(rows, 0, 1, nCols) << Eigen::Map<const dynamic_vector_t>(allSs.data() + count, nCols).transpose();
       // "nCols-1" because diagonal elements have already been covered
-      nabla_Sm.template block(0, rows, nCols - 1, 1) << Eigen::Map<const dynamic_vector_t>(allSs.data() + count, nCols - 1);
+      nabla_Sm.block(0, rows, nCols - 1, 1) << Eigen::Map<const dynamic_vector_t>(allSs.data() + count, nCols - 1);
       count += nCols;
     }
 

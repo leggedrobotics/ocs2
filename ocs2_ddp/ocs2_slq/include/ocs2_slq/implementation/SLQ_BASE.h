@@ -35,15 +35,15 @@ namespace ocs2 {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-SLQ_BASE<STATE_DIM, INPUT_DIM>::SLQ_BASE(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+SLQ_BASE<STATE_DIM, INPUT_DIM>::SLQ_BASE(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                          const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                          const operating_trajectories_base_t* operatingTrajectoriesPtr,
                                          const SLQ_Settings& settings /*= SLQ_Settings()*/,
                                          std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
                                          const cost_function_base_t* heuristicsFunctionPtr /* = nullptr*/)
 
-    : BASE(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings.ddpSettings_,
-           settings.rolloutSettings_, heuristicsFunctionPtr, "SLQ", std::move(logicRulesPtr)),
+    : BASE(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings.ddpSettings_,
+           heuristicsFunctionPtr, "SLQ", std::move(logicRulesPtr)),
       settings_(settings) {
   // Riccati Solver
   riccatiEquationsPtrStock_.clear();

@@ -33,15 +33,15 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-ILQR_ST<STATE_DIM, INPUT_DIM>::ILQR_ST(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+ILQR_ST<STATE_DIM, INPUT_DIM>::ILQR_ST(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                        const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                        const operating_trajectories_base_t* operatingTrajectoriesPtr,
                                        const ILQR_Settings& settings /*= ILQR_Settings()*/,
                                        std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
                                        const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
-    : BASE(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings,
-           logicRulesPtr, heuristicsFunctionPtr) {}
+    : BASE(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings, logicRulesPtr,
+           heuristicsFunctionPtr) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

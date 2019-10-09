@@ -34,8 +34,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <string>
 
+#include <ocs2_core/Dimensions.h>
+
 #include <ocs2_ddp_base/DDP_Settings.h>
-#include <ocs2_oc/rollout/Rollout_Settings.h>
 
 namespace ocs2 {
 
@@ -48,8 +49,7 @@ class ILQR_Settings {
    * Default constructor.
    */
   ILQR_Settings()
-      : ddpSettings_(),
-        rolloutSettings_()
+      : ddpSettings_()
 
   {}
 
@@ -83,9 +83,6 @@ class ILQR_Settings {
   /** This structure contains the settings for DDP algorithms. */
   DDP_Settings ddpSettings_;
 
-  /** This structure contains the settings for forward rollout algorithms. */
-  Rollout_Settings rolloutSettings_;
-
 };  // end of ILQR_Settings class
 
 inline void ILQR_Settings::loadSettings(const std::string& filename, const std::string& fieldName /*= ilqr*/, bool verbose /*= true*/) {
@@ -93,8 +90,6 @@ inline void ILQR_Settings::loadSettings(const std::string& filename, const std::
   boost::property_tree::read_info(filename, pt);
 
   ddpSettings_.loadSettings(filename, fieldName + ".ddp", verbose);
-
-  rolloutSettings_.loadSettings(filename, fieldName + ".rollout", verbose);
 
   if (verbose) {
     std::cerr << std::endl << " #### ILQR Settings: " << std::endl;

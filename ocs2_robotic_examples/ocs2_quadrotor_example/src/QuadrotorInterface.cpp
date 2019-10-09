@@ -78,6 +78,13 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
   quadrotorDynamicsDerivativesPtr_.reset(new QuadrotorDynamicsDerivatives(quadrotorParameters));
 
   /*
+   * Rollout
+   */
+  Rollout_Settings rolloutSettings;
+  rolloutSettings.loadSettings(taskFile, "slq.rollout");
+  ddpQuadrotorRolloutPtr_.reset(new time_triggered_rollout_t(*quadrotorSystemDynamicsPtr_, rolloutSettings));
+
+  /*
    * Cost function
    */
   loadData::loadEigenMatrix(taskFile, "Q", Q_);
@@ -118,7 +125,7 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void QuadrotorInterface::setupOptimizer(const std::string& taskFile) {
-  mpcPtr_.reset(new mpc_t(quadrotorSystemDynamicsPtr_.get(), quadrotorDynamicsDerivativesPtr_.get(), quadrotorConstraintPtr_.get(),
+  mpcPtr_.reset(new mpc_t(ddpQuadrotorRolloutPtr_.get(), quadrotorDynamicsDerivativesPtr_.get(), quadrotorConstraintPtr_.get(),
                           quadrotorCostPtr_.get(), quadrotorOperatingPointPtr_.get(), partitioningTimes_, ilqrSettings_, mpcSettings_));
 }
 

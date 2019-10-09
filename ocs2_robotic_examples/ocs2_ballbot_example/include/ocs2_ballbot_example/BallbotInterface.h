@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
 // Ballbot
@@ -62,6 +63,9 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
   using dim_t = Dimensions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
   using ballbotConstraint_t = ConstraintBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
   using ballbotOperatingPoint_t = SystemOperatingPoint<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
+
+  using rollout_base_t = RolloutBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
+  using time_triggered_rollout_t = TimeTriggeredRollout<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
   using mpc_t = MPC_SLQ<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
@@ -88,9 +92,12 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
   mpc_t& getMpc() override { return *mpcPtr_; }
 
   const BallbotSystemDynamics& getDynamics() const override { return *ballbotSystemDynamicsPtr_; }
+
   const BallbotSystemDynamics& getDynamicsDerivatives() const override { return *ballbotSystemDynamicsPtr_; }
 
   const BallbotCost& getCost() const override { return *ballbotCostPtr_; }
+
+  const rollout_base_t& getRollout() const { return *ddpBallbotRolloutPtr_; }
 
  protected:
   /**
@@ -108,6 +115,8 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
 
   SLQ_Settings slqSettings_;
   std::unique_ptr<mpc_t> mpcPtr_;
+
+  std::unique_ptr<rollout_base_t> ddpBallbotRolloutPtr_;
 
   std::unique_ptr<BallbotSystemDynamics> ballbotSystemDynamicsPtr_;
   std::unique_ptr<BallbotCost> ballbotCostPtr_;

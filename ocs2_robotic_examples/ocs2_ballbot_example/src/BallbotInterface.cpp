@@ -121,8 +121,8 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void BallbotInterface::setupOptimizer(const std::string& taskFile) {
-  mpcPtr_.reset(new mpc_t(ballbotSystemDynamicsPtr_.get(), ballbotSystemDynamicsPtr_.get(), ballbotConstraintPtr_.get(),
-                          ballbotCostPtr_.get(), ballbotOperatingPointPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_));
+  mpcPtr_.reset(new mpc_t(ddpBallbotRolloutPtr_.get(), ballbotSystemDynamicsPtr_.get(), ballbotConstraintPtr_.get(), ballbotCostPtr_.get(),
+                          ballbotOperatingPointPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_));
 }
 
 /******************************************************************************************************/

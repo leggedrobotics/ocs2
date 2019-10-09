@@ -117,7 +117,6 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
   std::unique_ptr<mpc_t> mpcPtr_;
 
   std::unique_ptr<rollout_base_t> ddpBallbotRolloutPtr_;
-  std::unique_ptr<rollout_base_t> piBallbotRolloutPtr_;
 
   std::unique_ptr<BallbotSystemDynamics> ballbotSystemDynamicsPtr_;
   std::unique_ptr<BallbotCost> ballbotCostPtr_;

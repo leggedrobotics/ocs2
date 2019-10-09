@@ -65,16 +65,6 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(ballbot_PI
-  src/solvers/BallbotPI.cpp
-)
-add_dependencies(ballbot_PI
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(ballbot_PI
-  ${catkin_LIBRARIES}
-)
-
 # SLQ
 add_library(ballbot_SLQ
   src/solvers/BallbotSLQ.cpp
@@ -99,7 +89,6 @@ add_dependencies(ocs2_ballbot
 )
 target_link_libraries(ocs2_ballbot
   ballbot_SLQ
-  ballbot_PI
   ocs2_ballbot_dynamics
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
@@ -114,18 +103,6 @@ add_dependencies(ballbot_mpc
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(ballbot_mpc
-  ocs2_ballbot
-  ${catkin_LIBRARIES}
-)
-
-# Path integral mpc
-add_executable(ballbot_pi_mpc
-  src/PI_Ballbot.cpp
-)
-add_dependencies(ballbot_pi_mpc
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(ballbot_pi_mpc
   ocs2_ballbot
   ${catkin_LIBRARIES}
 )
@@ -221,7 +198,6 @@ if(cmake_clang_tools_FOUND)
     TARGETS
         ocs2_ballbot
         ballbot_mpc
-        ballbot_pi_mpc
         ballbot_dummy_test
         ballbot_target
         ballbotPyBindings_cpp
@@ -236,7 +212,7 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS ocs2_ballbot ballbot_PI ballbot_SLQ ocs2_ballbot_dynamics ballbotPyBindings_cpp
+install(TARGETS ocs2_ballbot ballbot_SLQ ocs2_ballbot_dynamics ballbotPyBindings_cpp
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

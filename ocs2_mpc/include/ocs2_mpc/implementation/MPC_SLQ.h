@@ -115,16 +115,6 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_SLQ<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTime, const state_vector_t& initState,
                                                         const scalar_t& finalTime) {
   //*****************************************************************************************
-  // cost goal check
-  //*****************************************************************************************
-  if (BASE::initRun_ && !slqPtr_->costDesiredTrajectoriesUpdated()) {
-    std::cerr << "### WARNING: The initial desired trajectories are not set. "
-                 "This may cause undefined behavior. Use the MPC_SLQ::setCostDesiredTrajectories() "
-                 "method to provide appropriate goal trajectories."
-              << std::endl;
-  }
-
-  //*****************************************************************************************
   // updating real-time iteration settings
   //*****************************************************************************************
   // number of iterations

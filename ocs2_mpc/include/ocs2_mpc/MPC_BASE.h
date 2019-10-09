@@ -87,7 +87,6 @@ class MPC_BASE {
 
   using solver_base_t = Solver_BASE<STATE_DIM, INPUT_DIM>;
   using primal_solution_t = typename solver_base_t::primal_solution_t;
-  using solver_base_ptr_t = typename solver_base_t::Ptr;
 
   /**
    * Default constructor.

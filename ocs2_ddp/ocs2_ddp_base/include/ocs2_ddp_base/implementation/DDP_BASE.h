@@ -136,13 +136,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
   blockwiseMovingHorizon_ = false;
   useParallelRiccatiSolverFromInitItr_ = false;
 
-  this->costDesiredTrajectories_.clear();
-  {
-    std::lock_guard<std::mutex> lock(this->costDesiredTrajectoriesBufferMutex_);
-    this->costDesiredTrajectoriesBuffer_.clear();
-    this->costDesiredTrajectoriesUpdated_ = false;
-  }
-
   for (size_t i = 0; i < numPartitions_; i++) {
     // very important :)
     nominalControllersStock_[i].clear();
@@ -373,7 +366,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateCostWorker(size_t workerIndex, siz
   cost_function_base_t& costFunction = linearQuadraticApproximatorPtrStock_[workerIndex]->costFunction();
 
   // set desired trajectories
-  costFunction.setCostDesiredTrajectories(this->costDesiredTrajectories_);
+  costFunction.setCostDesiredTrajectories(this->getCostDesiredTrajectories());
 
   totalCost = 0.0;
   auto eventsPastTheEndItr = eventsPastTheEndIndeces.begin();
@@ -427,7 +420,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCost(const scalar_array2_t&
 
   // calculate the Heuristics function at the final time
   // set desired trajectories
-  heuristicsFunctionsPtrStock_[threadId]->setCostDesiredTrajectories(this->costDesiredTrajectories_);
+  heuristicsFunctionsPtrStock_[threadId]->setCostDesiredTrajectories(this->getCostDesiredTrajectories());
   // set state-input
   heuristicsFunctionsPtrStock_[threadId]->setCurrentStateAndControl(timeTrajectoriesStock[finalActivePartition_].back(),
                                                                     stateTrajectoriesStock[finalActivePartition_].back(),
@@ -527,7 +520,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
     if (N > 0) {
       for (size_t j = 0; j < ddpSettings_.nThreads_; j++) {
         // set desired trajectories
-        linearQuadraticApproximatorPtrStock_[j]->costFunction().setCostDesiredTrajectories(this->costDesiredTrajectories_);
+        linearQuadraticApproximatorPtrStock_[j]->costFunction().setCostDesiredTrajectories(this->getCostDesiredTrajectories());
       }  // end of j loop
 
       // perform the approximateSubsystemLQ for partition i
@@ -537,7 +530,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
   }  // end of i loop
 
   // calculate the Heuristics function at the final time
-  heuristicsFunctionsPtrStock_[0]->setCostDesiredTrajectories(this->costDesiredTrajectories_);
+  heuristicsFunctionsPtrStock_[0]->setCostDesiredTrajectories(this->getCostDesiredTrajectories());
   heuristicsFunctionsPtrStock_[0]->setCurrentStateAndControl(nominalTimeTrajectoriesStock_[finalActivePartition_].back(),
                                                              nominalStateTrajectoriesStock_[finalActivePartition_].back(),
                                                              nominalInputTrajectoriesStock_[finalActivePartition_].back());
@@ -1514,8 +1507,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runExit() {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
-                                         const scalar_array_t& partitioningTimes) {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
+                                             const scalar_array_t& partitioningTimes) {
   const size_t numPartitions = partitioningTimes.size() - 1;
 
   linear_controller_array_t noInitialController(numPartitions, linear_controller_t());
@@ -1525,15 +1518,15 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t
   }
 
   // call the "run" method which uses the internal controllers stock (i.e. nominalControllersStock_)
-  run(initTime, initState, finalTime, partitioningTimes, noInitialControllerPtrArray);
+  runImpl(initTime, initState, finalTime, partitioningTimes, noInitialControllerPtrArray);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
-                                         const scalar_array_t& partitioningTimes, const controller_ptr_array_t& controllersPtrStock) {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
+                                             const scalar_array_t& partitioningTimes, const controller_ptr_array_t& controllersPtrStock) {
   if (ddpSettings_.displayInfo_) {
     std::cerr << std::endl;
     std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
@@ -1589,8 +1582,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t
       throw std::runtime_error("The internal controller is not compatible with the number of partitions.");
     }
   }
-
-  this->updateCostDesiredTrajectories();
 
   // update the logic rules in the beginning of the run routine
   bool logicRulesModified = BASE::getLogicRulesMachinePtr()->updateLogicRules(partitioningTimes_);

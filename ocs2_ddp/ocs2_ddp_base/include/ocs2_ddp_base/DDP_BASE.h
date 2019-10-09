@@ -444,41 +444,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   virtual void runExit();
 
-  /**
-   * The main routine of DDP which runs DDP for a given initial state, initial
-   * time, and final time. In order to retrieve the initial nominal trajectories
-   * in the forward pass, DDP will use the given operatingTrajectories in the
-   * constructor.
-   *
-   * @param [in] initTime: The initial time.
-   * @param [in] initState: The initial state.
-   * @param [in] finalTime: The final time.
-   * @param [in] partitioningTimes: The partitioning times between subsystems.
-   */
-  void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;
-
-  /**
-   * The main routine of DDP which runs DDP for a given initial state, initial
-   * time, and final time. In order to retrieve the initial nominal trajectories
-   * in the forward pass, DDP will use the provided control policy. If you want
-   * to use the control policy which was designed by the previous call of the
-   * "run" routine, you should pass DDP_BASE::INTERNAL_CONTROLLER().
-   *
-   * @param [in] initTime: The initial time.
-   * @param [in] initState: The initial state.
-   * @param [in] finalTime: The final time.
-   * @param [in] partitioningTimes: The time partitioning.
-   * @param [in] controllersPtrStock: Array of pointers to the initial control
-   * policies. If you want to use the control policy which was designed by the
-   * previous call of the "run" routine, you should pass an empty array. In the
-   * this case, two scenarios are possible: either the internal controller is
-   * already set (such as the MPC case where the warm starting option is set
-   * true) or the internal controller is empty in which instead of performing a
-   * rollout the operating trajectories will be used.
-   */
-  void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-           const controller_ptr_array_t& controllersPtrStock) override;
-
  protected:
   /**
    * Sets up optimizer for different number of partitions.
@@ -692,6 +657,13 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   void printRolloutInfo();
 
+ private:
+  void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;
+
+  void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
+               const controller_ptr_array_t& controllersPtrStock) override;
+
+ protected:
   // Variables
   DDP_Settings ddpSettings_;
   Rollout_Settings rolloutSettings_;

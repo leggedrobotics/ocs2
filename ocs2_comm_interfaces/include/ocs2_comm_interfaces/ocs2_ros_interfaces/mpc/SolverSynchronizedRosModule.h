@@ -29,47 +29,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/StdVector>
-
 #include <ros/ros.h>
 
-#include <memory>
-#include <vector>
+#include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
 
 namespace ocs2 {
 
 /**
- * The class task listener interface class.
- *
- * @tparam SCALAR_T: scalar type.
+ * SolverSynchronizedRosModule adds ROS functionality to a SolverSynchronizedModule.
  */
-template <typename SCALAR_T = float>
-class TaskListenerBase {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class SolverSynchronizedRosModule : public SolverSynchronizedModule<STATE_DIM, INPUT_DIM> {
  public:
-  using scalar_t = SCALAR_T;
+  //! Default destructor
+  virtual ~SolverSynchronizedRosModule() = default;
 
-  using shared_ptr_t = std::shared_ptr<TaskListenerBase<SCALAR_T>>;
-  using shared_ptr_array_t = std::vector<shared_ptr_t>;
-
-  /**
-   * Default constructor.
-   *
-   */
-  TaskListenerBase() = default;
-
-  /**
-   * Default destructor.
-   */
-  virtual ~TaskListenerBase() = default;
-
-  /**
-   * This method should swap the active variables with the buffer variables.
-   */
-  virtual void update() = 0;
-
-  /**
-   * Gets a ROS node handle to for subscribing a topic.
-   */
+  //! Get node handle to subscribe to topics
   virtual void subscribe(::ros::NodeHandle& nodeHandle) = 0;
 };
 

@@ -8,10 +8,6 @@
 // oc_solver
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
 
-// pi solver
-#include <ocs2_oc/pi_solver/PI_Settings.h>
-#include <ocs2_oc/pi_solver/PiSolver.hpp>
-
 // rollout
 #include <ocs2_oc/rollout/OperatingTrajectoriesRollout.h>
 #include <ocs2_oc/rollout/RolloutBase.h>

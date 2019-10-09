@@ -21,6 +21,20 @@ MatrixType generateSPDmatrix() {
 }
 
 /**
+ * Compute random symmetric positive definite (SPD) matrix of dimension size.
+ * @param [in] size: Matrix dimension.
+ * @return random SPD matrix.
+ */
+template <typename MatrixType>
+MatrixType generateSPDmatrix(int size) {
+  MatrixType A(size, size);
+  A.setRandom();
+  A = 0.5 * (A + A.transpose()).eval();    // Avoid aliasing
+  A.diagonal().array() += A.rows() * 1.0;  // makes the matrix diagonally dominant
+  return A;
+}
+
+/**
  * Compute random full row rank matrix
  * @return random SPD matrix.
  */

@@ -29,12 +29,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <vector>
-#include <csignal>
-#include <iostream>
-#include <iomanip>
-#include <string>
 #include <Eigen/Core>
+#include <csignal>
+#include <iomanip>
+#include <iostream>
+#include <string>
+#include <vector>
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/command/TargetTrajectories_ROS_Interface.h>
 
@@ -46,60 +46,55 @@ namespace ocs2 {
  * @tparam SCALAR_T: scalar type.
  */
 template <typename SCALAR_T>
-class TargetTrajectories_Joystick_Interface : public ocs2::TargetTrajectories_ROS_Interface<SCALAR_T>
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class TargetTrajectories_Joystick_Interface : public ocs2::TargetTrajectories_ROS_Interface<SCALAR_T> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using BASE = ocs2::TargetTrajectories_ROS_Interface<SCALAR_T>;
-	using scalar_t = typename BASE::scalar_t;
-	using scalar_array_t = typename BASE::scalar_array_t;
-	using dynamic_vector_t = typename BASE::dynamic_vector_t;
-	using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
-	using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
+  using BASE = ocs2::TargetTrajectories_ROS_Interface<SCALAR_T>;
+  using scalar_t = typename BASE::scalar_t;
+  using scalar_array_t = typename BASE::scalar_array_t;
+  using dynamic_vector_t = typename BASE::dynamic_vector_t;
+  using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
+  using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
 
-	/**
-	 * Constructor
-	 *
-	 * @param [in] robotName: robot's name.
-	 * @param [in] targetCommandSize: command expected length
-	 * @param [in] targetCommandLimits: The limits of the loaded command from
-	 * command-line (for safety purposes).
-	 */
-	TargetTrajectories_Joystick_Interface(int argc, char* argv[], const std::string& robotName = "robot",const size_t targetCommandSize = 0,
-	                                      const scalar_array_t& targetCommandLimits = scalar_array_t());
+  /**
+   * Constructor
+   *
+   * @param [in] robotName: robot's name.
+   * @param [in] targetCommandSize: command expected length
+   * @param [in] targetCommandLimits: The limits of the loaded command from
+   * command-line (for safety purposes).
+   */
+  TargetTrajectories_Joystick_Interface(int argc, char* argv[], const std::string& robotName = "robot", const size_t targetCommandSize = 0,
+                                        const scalar_array_t& targetCommandLimits = scalar_array_t());
 
-	/**
-	 * Default destructor
-	 */
-	virtual ~TargetTrajectories_Joystick_Interface() = default;
+  /**
+   * Default destructor
+   */
+  virtual ~TargetTrajectories_Joystick_Interface() = default;
 
-	/**
-	 * Gets the command vector size.
-	 *
-	 * @return The command vector size.
-	 */
-	size_t& targetCommandSize();
+  /**
+   * Gets the command vector size.
+   *
+   * @return The command vector size.
+   */
+  size_t& targetCommandSize();
 
-	/**
-	 * Sets cost trajectories from input desired state, and publishes cost desired trajectories
-	 */
-	void publishTargetTrajectoriesFromDesiredState(cost_desired_trajectories_t costDesiredTrajectories);
+  /**
+   * Sets cost trajectories from input desired state, and publishes cost desired trajectories
+   */
+  void publishTargetTrajectoriesFromDesiredState(cost_desired_trajectories_t costDesiredTrajectories);
 
+ protected:
+  /******
+   * Variables
+   ******/
+  size_t targetCommandSize_;
+  scalar_array_t targetCommandLimits_;
 
-protected:
-
-
-/******
- * Variables
- ******/
-	size_t targetCommandSize_;
-	scalar_array_t targetCommandLimits_;
-
-	scalar_array_t targetCommand_;
-
+  scalar_array_t targetCommand_;
 };
 
-} // namespace ocs2
+}  // namespace ocs2
 
 #include "implementation/TargetTrajectories_Joystick_Interface.h"

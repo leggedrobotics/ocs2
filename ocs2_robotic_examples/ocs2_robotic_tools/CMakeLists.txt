@@ -19,7 +19,6 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 include_directories(
   include
-  include/${PROJECT_NAME}/rbd_libraries/robcogen
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
 )
@@ -27,7 +26,6 @@ include_directories(
 catkin_package(
   INCLUDE_DIRS 
     include
-    include/${PROJECT_NAME}/rbd_libraries/robcogen
     ${EIGEN3_INCLUDE_DIRS}
   CATKIN_DEPENDS
     ocs2_slq
@@ -49,7 +47,7 @@ if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target " ${PROJECT_NAME}_lintTarget)
   add_clang_tooling(
     TARGETS ${PROJECT_NAME}_lintTarget
-    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include/command ${CMAKE_CURRENT_SOURCE_DIR}/include/common
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
   )
@@ -63,10 +61,3 @@ install(DIRECTORY
             include/${PROJECT_NAME}/
         DESTINATION
             ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
-
-install(DIRECTORY
-        include/${PROJECT_NAME}/rbd_libraries/robcogen/
-        DESTINATION
-        "${CATKIN_PACKAGE_INCLUDE_DESTINATION}/../")
-
-

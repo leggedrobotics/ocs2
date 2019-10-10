@@ -3,6 +3,7 @@ project(ocs2_core)
 
 find_package(catkin REQUIRED COMPONENTS 
   cmake_modules
+  ocs2_thirdparty
 ) 
 find_package(Boost REQUIRED COMPONENTS 
   system
@@ -24,12 +25,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 catkin_package(
   INCLUDE_DIRS 
     include
-    include/external
     ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
     ${PROJECT_NAME}_logic
     ${PROJECT_NAME}_cppad_interface
     ${PROJECT_NAME}_misc
+  CATKIN_DEPENDS
+    ocs2_thirdparty
   DEPENDS 
     Boost
 )
@@ -96,9 +98,6 @@ install(TARGETS ${PROJECT_NAME}_logic ${PROJECT_NAME}_cppad_interface ${PROJECT_
 
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
-
-install(DIRECTORY include/external/
-        DESTINATION "${CATKIN_PACKAGE_INCLUDE_DESTINATION}/../")
 
 #############
 ## Testing ##

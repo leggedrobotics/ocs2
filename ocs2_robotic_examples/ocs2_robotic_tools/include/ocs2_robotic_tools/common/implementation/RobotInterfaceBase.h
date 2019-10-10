@@ -27,17 +27,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-namespace ocs2
-{
+namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::getInitialState(
-		state_vector_t& initialState) const {
-
-	initialState = initialState_;
+void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::getInitialState(state_vector_t& initialState) const {
+  initialState = initialState_;
 }
 
 /******************************************************************************************************/
@@ -45,66 +42,54 @@ void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::getInitialState(
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_Settings& RobotInterfaceBase<STATE_DIM, INPUT_DIM>::mpcSettings() {
-
-	return mpcSettings_;
+  return mpcSettings_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::definePartitioningTimes(
-		const std::string& taskFile,
-		scalar_t& timeHorizon,
-		size_t& numPartitions,
-		scalar_array_t& partitioningTimes,
-		bool verbose /*= false*/) {
+void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::definePartitioningTimes(const std::string& taskFile, scalar_t& timeHorizon,
+                                                                       size_t& numPartitions, scalar_array_t& partitioningTimes,
+                                                                       bool verbose /*= false*/) {
+  // load from task file
+  loadMpcTimeHorizon(taskFile, timeHorizon, numPartitions);
 
-	// load from task file
-	loadMpcTimeHorizon(taskFile, timeHorizon, numPartitions);
+  if (numPartitions == 0) {
+    throw std::runtime_error("mpcTimeHorizon field is not defined.");
+  }
 
-	if (numPartitions==0) {
-		throw std::runtime_error("mpcTimeHorizon field is not defined.");
-	}
-
-	partitioningTimes.resize(numPartitions+1);
-	partitioningTimes[0] = 0.0;
-	for (size_t i=0; i<numPartitions; i++) {
-		partitioningTimes[i+1] = partitioningTimes[i] + timeHorizon/numPartitions;
-	}
-	partitioningTimes[numPartitions] = timeHorizon;
+  partitioningTimes.resize(numPartitions + 1);
+  partitioningTimes[0] = 0.0;
+  for (size_t i = 0; i < numPartitions; i++) {
+    partitioningTimes[i + 1] = partitioningTimes[i] + timeHorizon / numPartitions;
+  }
+  partitioningTimes[numPartitions] = timeHorizon;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadMpcTimeHorizon(
-		const std::string& taskFile,
-		scalar_t& timeHorizon,
-		size_t& numPartitions,
-		bool verbose /*= false*/) {
+void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadMpcTimeHorizon(const std::string& taskFile, scalar_t& timeHorizon, size_t& numPartitions,
+                                                                  bool verbose /*= false*/) {
+  loadData::loadCppDataType(taskFile, "mpcTimeHorizon.timehorizon", timeHorizon);
+  loadData::loadCppDataType(taskFile, "mpcTimeHorizon.numPartitions", numPartitions);
 
-	loadData::loadCppDataType(taskFile, "mpcTimeHorizon.timehorizon", timeHorizon);
-	loadData::loadCppDataType(taskFile, "mpcTimeHorizon.numPartitions", numPartitions);
-
-	if (verbose) {
-		std::cerr<<"Time Horizon Settings: " << std::endl;
-		std::cerr<<"=====================================" << std::endl;
-		std::cerr<<"Time Horizon .................. " << timeHorizon << std::endl;
-		std::cerr<<"Number of Partitions .......... " << numPartitions << std::endl << std::endl;
-	}
+  if (verbose) {
+    std::cerr << "Time Horizon Settings: " << std::endl;
+    std::cerr << "=====================================" << std::endl;
+    std::cerr << "Time Horizon .................. " << timeHorizon << std::endl;
+    std::cerr << "Number of Partitions .......... " << numPartitions << std::endl << std::endl;
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadInitialState(
-		const std::string& taskFile,
-		state_vector_t& initialState) {
-
-	loadData::loadEigenMatrix(taskFile, "initialState", initialState);
+void RobotInterfaceBase<STATE_DIM, INPUT_DIM>::loadInitialState(const std::string& taskFile, state_vector_t& initialState) {
+  loadData::loadEigenMatrix(taskFile, "initialState", initialState);
 }
 
 }  // namespace ocs2

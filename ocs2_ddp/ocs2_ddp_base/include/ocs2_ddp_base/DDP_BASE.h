@@ -648,12 +648,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void calculateControllerUpdateMaxNorm(scalar_t& maxDeltaUffNorm, scalar_t& maxDeltaUeeNorm);
 
   /**
-   * Updates pointers in nominalControllerPtrStock from memory location of
-   * nominalControllersStock_ members.
-   */
-  void updateNominalControllerPtrStock();
-
-  /**
    * Caches the nominal trajectories.
    */
   void cacheNominalTrajectories();
@@ -807,10 +801,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   eigen_scalar_t sHeuristics_;
   state_vector_t SvHeuristics_;
   state_matrix_t SmHeuristics_;
-
-  // Augmented Lagrangina multiplier
-  constraint2_vector_array2_t lambdaEquality2TrajectoryStock_;
-  constraint2_vector_array2_t lambdaEquality2TrajectoryStockPrev_;
 
   // benchmarking
   benchmark::RepeatedTimer forwardPassTimer_;

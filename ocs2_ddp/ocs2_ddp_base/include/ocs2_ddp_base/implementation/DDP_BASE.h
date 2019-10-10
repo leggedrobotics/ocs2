@@ -136,13 +136,11 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
     nominalEventsPastTheEndIndecesStock_[i].clear();
     nominalStateTrajectoriesStock_[i].clear();
     nominalInputTrajectoriesStock_[i].clear();
-    lambdaEquality2TrajectoryStock_[i].clear();
 
     nominalPrevTimeTrajectoriesStock_[i].clear();
     nominalPrevEventsPastTheEndIndecesStock_[i].clear();
     nominalPrevStateTrajectoriesStock_[i].clear();
     nominalPrevInputTrajectoriesStock_[i].clear();
-    lambdaEquality2TrajectoryStockPrev_[i].clear();
 
     // for Riccati equation parallel computation
     SmFinalStock_[i] = state_matrix_t::Zero();
@@ -489,8 +487,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
     nc2TrajectoriesStock_[i].resize(N);
     HvTrajectoryStock_[i].resize(N);
     FmTrajectoryStock_[i].resize(N);
-
-    lambdaEquality2TrajectoryStock_[i].resize(N);
 
     // for inequality constraints
     ncIneqTrajectoriesStock_[i].resize(N);  // ncIneq: Number of inequality constraints
@@ -994,8 +990,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::cacheNominalTrajectories() {
   nominalPrevEventsPastTheEndIndecesStock_.swap(nominalEventsPastTheEndIndecesStock_);
   nominalPrevStateTrajectoriesStock_.swap(nominalStateTrajectoriesStock_);
   nominalPrevInputTrajectoriesStock_.swap(nominalInputTrajectoriesStock_);
-
-  lambdaEquality2TrajectoryStockPrev_.swap(lambdaEquality2TrajectoryStock_);
 }
 
 /******************************************************************************************************/
@@ -1317,7 +1311,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   nominalPrevEventsPastTheEndIndecesStock_.resize(numPartitions);
   nominalPrevStateTrajectoriesStock_.resize(numPartitions);
   nominalPrevInputTrajectoriesStock_.resize(numPartitions);
-  lambdaEquality2TrajectoryStockPrev_.resize(numPartitions);
 
   /*
    * Riccati solver variables and controller update
@@ -1335,8 +1328,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   SvTrajectoryStock_.resize(numPartitions);
   SveTrajectoryStock_.resize(numPartitions);
   SmTrajectoryStock_.resize(numPartitions);
-
-  lambdaEquality2TrajectoryStock_.resize(numPartitions);
 
   initialControllerDesignStock_.resize(numPartitions);
 
@@ -1388,8 +1379,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
       nominalPrevTimeTrajectoriesStock_[i].push_back(partitioningTime_[i]);
       nominalPrevStateTrajectoriesStock_[i].push_back(nominalPrevStateTrajectoriesStock_[i - 1].back());
       nominalPrevInputTrajectoriesStock_[i].push_back(nominalPrevInputTrajectoriesStock_[i - 1].back());
-      // Lagrange multipliers
-      lambdaEquality2TrajectoryStockPrev_[i].push_back(lambdaEquality2TrajectoryStockPrev_[i - 1].back());
     }
   }
 

@@ -1441,9 +1441,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
-  // cache the nominal trajectories before the new rollout (time, state, input, Lagrangians)
-  cacheNominalTrajectories();
-
   // finding the optimal learningRate and getting the optimal trajectories and controller
   bool computeISEs = ddpSettings_.displayInfo_ || !ddpSettings_.noStateConstraints_;
 
@@ -1660,18 +1657,21 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
     // increment iteration counter
     iteration_++;
 
-    scalar_t costCashed = nominalTotalCost_;
-    scalar_t constraint1ISECashed = nominalConstraint1ISE_;
-
-    // display
+    // display the iteration's input update norm (before caching the old nominals)
     if (ddpSettings_.displayInfo_) {
       std::cerr << "\n#### Iteration " << iteration_ << std::endl;
 
       scalar_t maxDeltaUffNorm, maxDeltaUeeNorm;
       calculateControllerUpdateMaxNorm(maxDeltaUffNorm, maxDeltaUeeNorm);
-      std::cerr << "max feedforward update norm:  " << maxDeltaUffNorm << std::endl;
-      std::cerr << "max type-1 error update norm: " << maxDeltaUeeNorm << std::endl;
+      std::cerr << "max feedforward update norm:                            " << maxDeltaUffNorm << std::endl;
+      std::cerr << "max state-input equality constraints error update norm: " << maxDeltaUeeNorm << std::endl;
     }
+
+    scalar_t costCashed = nominalTotalCost_;
+    scalar_t constraint1ISECashed = nominalConstraint1ISE_;
+
+    // cache the nominal trajectories before the new rollout (time, state, input, ...)
+    cacheNominalTrajectories();
 
     // run the an iteration of the DDP algorithm and update the member variables
     runIteration();
@@ -1692,17 +1692,17 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
 
   }  // end of while loop
 
-  // display
+  // display the final iteration's input update norm (before caching the old nominals)
   if (ddpSettings_.displayInfo_) {
     std::cerr << "\n#### Final rollout" << std::endl;
 
     scalar_t maxDeltaUffNorm, maxDeltaUeeNorm;
     calculateControllerUpdateMaxNorm(maxDeltaUffNorm, maxDeltaUeeNorm);
-    std::cerr << "max feedforward update norm:  " << maxDeltaUffNorm << std::endl;
-    std::cerr << "max type-1 error update norm: " << maxDeltaUeeNorm << std::endl;
+    std::cerr << "max feedforward update norm:                            " << maxDeltaUffNorm << std::endl;
+    std::cerr << "max state-input equality constraints error update norm: " << maxDeltaUeeNorm << std::endl;
   }
 
-  // cache the nominal trajectories before the new rollout (time, state, input, Lagrangians)
+  // cache the nominal trajectories before the new rollout (time, state, input, ...)
   cacheNominalTrajectories();
 
   // finding the final optimal learningRate and getting the optimal trajectories and controller

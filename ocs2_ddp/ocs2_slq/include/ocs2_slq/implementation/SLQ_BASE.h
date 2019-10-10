@@ -151,25 +151,12 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateLQWorker(size_t workerIndex, siz
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t workerIndex, size_t i, size_t k,
                                                                     scalar_t stateConstraintPenalty) {
-  // state-only equality constraint coefficients
+  // constraint type 2 coefficients
   const auto nc2 = BASE::nc2TrajectoriesStock_[i][k];
   if (nc2 > 0) {
-    // update Lagrange multiplier
-    constraint2_vector_t lambdaEquality2Prev = constraint2_vector_t::Zero(nc2);
-    if (!BASE::lambdaEquality2TrajectoryStockPrev_.empty()) {
-      EigenLinearInterpolation<constraint2_vector_t>::interpolate(BASE::nominalTimeTrajectoriesStock_[i][k], lambdaEquality2Prev,
-                                                                  &BASE::nominalPrevTimeTrajectoriesStock_[i],
-                                                                  &BASE::lambdaEquality2TrajectoryStockPrev_[i]);
-    }
-
-    BASE::lambdaEquality2TrajectoryStock_[i][k].head(nc2) =
-        lambdaEquality2Prev.head(nc2) - stateConstraintPenalty * BASE::HvTrajectoryStock_[i][k].head(nc2);
-
     BASE::qTrajectoryStock_[i][k] +=
-        BASE::lambdaEquality2TrajectoryStock_[i][k].head(nc2).transpose() * BASE::HvTrajectoryStock_[i][k].head(nc2) +
         0.5 * stateConstraintPenalty * BASE::HvTrajectoryStock_[i][k].head(nc2).transpose() * BASE::HvTrajectoryStock_[i][k].head(nc2);
     BASE::QvTrajectoryStock_[i][k] +=
-        BASE::FmTrajectoryStock_[i][k].topRows(nc2).transpose() * BASE::lambdaEquality2TrajectoryStock_[i][k].head(nc2) +
         stateConstraintPenalty * BASE::FmTrajectoryStock_[i][k].topRows(nc2).transpose() * BASE::HvTrajectoryStock_[i][k].head(nc2);
     BASE::QmTrajectoryStock_[i][k] +=
         stateConstraintPenalty * BASE::FmTrajectoryStock_[i][k].topRows(nc2).transpose() * BASE::FmTrajectoryStock_[i][k].topRows(nc2);
@@ -265,7 +252,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t worke
   LinearAlgebra::computeLinvTLinv(BASE::RmTrajectoryStock_[i][k], RinvChol);
   RmInverseTrajectoryStock_[i][k].noalias() = RinvChol * RinvChol.transpose();
 
-  // state-input equality constraint coefficients
+  // constraint type 1 coefficients
   const auto nc1 = BASE::nc1TrajectoriesStock_[i][k];
   if (nc1 == 0) {
     DmDagerTrajectoryStock_[i][k].setZero();

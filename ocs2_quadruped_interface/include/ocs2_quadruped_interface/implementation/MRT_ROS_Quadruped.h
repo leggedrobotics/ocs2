@@ -31,7 +31,7 @@ MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MRT_ROS_Quadruped(con
   BASE::setLogicRules(logic_rules_mrt_);
 
   // set up the rollout
-  BASE::initRollout(ocs2QuadrupedInterfacePtr_->getDynamics(), ocs2QuadrupedInterfacePtr_->slqSettings().rolloutSettings_);
+  BASE::initRollout(&ocs2QuadrupedInterfacePtr_->getRollout());
 }
 
 /******************************************************************************************************/

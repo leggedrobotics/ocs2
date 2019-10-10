@@ -45,6 +45,8 @@ class OCS2AnymalInterface final : public switched_model::OCS2QuadrupedInterface<
 
   const constraint_t* getConstraintPtr() const override { return constraintsPtr_.get(); }
 
+  const rollout_base_t& getRollout() const override { return *timeTriggeredRolloutPtr_; }
+
  protected:
   // dynamics
   std::unique_ptr<system_dynamics_t> dynamicsPtr_;
@@ -56,6 +58,8 @@ class OCS2AnymalInterface final : public switched_model::OCS2QuadrupedInterface<
   std::unique_ptr<cost_function_t> costFunctionPtr_;
   // operating points
   std::unique_ptr<operating_point_t> operatingPointsPtr_;
+  //rollout
+  std::unique_ptr<rollout_base_t> timeTriggeredRolloutPtr_;
 };
 
 }  // end of namespace anymal

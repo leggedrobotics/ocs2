@@ -67,6 +67,7 @@ void OCS2AnymalAugmentedInterface<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM
   anymalCostFunctionPtr_.reset(new anymal_cost_funtion_t(logicRulesPtr, Q_system_, R_system_, Q_system_final_));
   generalized_coordinate_t defaultCoordinate = initRbdState_.template head<18>();
   anymalOperatingPointPtr_.reset(new anymal_operating_point_t(logicRulesPtr, modelSettings_, defaultCoordinate));
+  timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, BASE::rolloutSettings_));
 
   dynamicsPtr_ = system_dynamics_t::create(*anymalDynamicsPtr_, loopshapingDefinition_);
   dynamicsDerivativesPtr_ = system_dynamics_derivative_t::create(*anymalDynamicsDerivativesPtr_, loopshapingDefinition_);
@@ -76,21 +77,21 @@ void OCS2AnymalAugmentedInterface<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM
 
   // SLQ
   if (slqSettings_.ddpSettings_.useMultiThreading_) {
-    slqPtr.reset(new slq_mp_t(dynamicsPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(), costFunctionPtr_.get(),
+    slqPtr.reset(new slq_mp_t(timeTriggeredRolloutPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(), costFunctionPtr_.get(),
                                          operatingPointsPtr_.get(), slqSettings_, logicRulesPtr));
   } else {
-    slqPtr.reset(new slq_t(dynamicsPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(), costFunctionPtr_.get(),
+    slqPtr.reset(new slq_t(timeTriggeredRolloutPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(), costFunctionPtr_.get(),
                                       operatingPointsPtr_.get(), slqSettings_, logicRulesPtr));
   }
 
   // MPC
   if (!modelSettings_.gaitOptimization_) {
-    mpcPtr.reset(new mpc_t(dynamicsPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(), costFunctionPtr_.get(),
+    mpcPtr.reset(new mpc_t(timeTriggeredRolloutPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(), costFunctionPtr_.get(),
                                  operatingPointsPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_, logicRulesPtr,
                                  modeSequenceTemplatePtr));
 
   } else {
-    //		mpcPtr = mpc_ptr_t( new mpc_ocs2_t(dynamicsPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
+    //		mpcPtr = mpc_ptr_t( new mpc_ocs2_t(timeTriggeredRolloutPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
     //				costFunctionPtr_.get(), operatingPointsPtr_.get(),
     //				partitioningTimes_,
     //				slqSettings_, mpcSettings_, logicRulesPtr, modeSequenceTemplatePtr));

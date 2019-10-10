@@ -33,27 +33,23 @@ int main(int argc, char* argv[]) {
   using mrt_t = switched_model::MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>;
   std::shared_ptr<mrt_t> anymal_mrt(new mrt_t(anymal_interface, "anymal"));
 
-  anymal::AnymalRaisimConversions conversions(anymal_mrt, anymal_interface);
-  {
-    std::vector<std::string> orderedJointNames{"LF_HAA", "LF_HFE", "LF_KFE", "RF_HAA", "RF_HFE", "RF_KFE",
-                                               "LH_HAA", "LH_HFE", "LH_KFE", "RH_HAA", "RH_HFE", "RH_KFE"};
-    using sim_rollout_t = ocs2::RaisimRollout<STATE_DIM, INPUT_DIM>;
-    std::unique_ptr<sim_rollout_t> simRollout(new sim_rollout_t(
-        urdf,
-        std::bind(&anymal::AnymalRaisimConversions::stateToRaisimGenCoordGenVel, &conversions, std::placeholders::_1,
-                  std::placeholders::_2),
-        std::bind(&anymal::AnymalRaisimConversions::raisimGenCoordGenVelToState, &conversions, std::placeholders::_1,
-                  std::placeholders::_2),
-        std::bind(&anymal::AnymalRaisimConversions::inputToRaisimGeneralizedForce, &conversions, std::placeholders::_1,
-                  std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5),
-        orderedJointNames,
-        std::bind(&anymal::AnymalRaisimConversions::extractModelData, &conversions, std::placeholders::_1, std::placeholders::_2)));
+  anymal::AnymalRaisimConversions conversions;
 
-    simRollout->setSimulatorStateOnRolloutRunAlways_ = false;
-    simRollout->setSimulatorStateOnRolloutRunOnce_ = true;
+  std::vector<std::string> orderedJointNames{"LF_HAA", "LF_HFE", "LF_KFE", "RF_HAA", "RF_HFE", "RF_KFE",
+                                             "LH_HAA", "LH_HFE", "LH_KFE", "RH_HAA", "RH_HFE", "RH_KFE"};
+  ocs2::RaisimRollout<STATE_DIM, INPUT_DIM> simRollout(
+      urdf,
+      std::bind(&anymal::AnymalRaisimConversions::stateToRaisimGenCoordGenVel, &conversions, std::placeholders::_1, std::placeholders::_2),
+      std::bind(&anymal::AnymalRaisimConversions::raisimGenCoordGenVelToState, &conversions, std::placeholders::_1, std::placeholders::_2),
+      std::bind(&anymal::AnymalRaisimConversions::inputToRaisimGeneralizedForce, &conversions, std::placeholders::_1, std::placeholders::_2,
+                std::placeholders::_3, std::placeholders::_4, std::placeholders::_5),
+      orderedJointNames,
+      std::bind(&anymal::AnymalRaisimConversions::extractModelData, &conversions, std::placeholders::_1, std::placeholders::_2));
 
-    anymal_mrt->initRollout(std::move(simRollout));
-  }
+  simRollout.setSimulatorStateOnRolloutRunAlways_ = false;
+  simRollout.setSimulatorStateOnRolloutRunOnce_ = true;
+
+  anymal_mrt->initRollout(&simRollout);
 
   switched_model::MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE> mrt_dummy_loop(anymal_interface, *anymal_mrt,
                                                                            anymal_interface->mpcSettings().mrtDesiredFrequency_, "anymal",

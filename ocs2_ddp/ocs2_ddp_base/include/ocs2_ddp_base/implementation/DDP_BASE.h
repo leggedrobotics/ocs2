@@ -1382,32 +1382,16 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
-  // TODO: if blockwiseMovingHorizon_ is not set, use the previous partition's variables for
-  // the first call of the partition.
-  if (!blockwiseMovingHorizon_) {
-    for (size_t i = 1; i <= finalActivePartition_; i++) {
-      if (nominalControllersStock_[i].empty() && !nominalControllersStock_[i - 1].empty()) {
-        // controller
-        scalar_t& time = partitioningTimes_[i];  // partition's start time
-        input_vector_t bias;
-        nominalControllersStock_[i - 1].getBias(time, bias);
-        input_state_matrix_t gain;
-        nominalControllersStock_[i - 1].getFeedbackGain(time, gain);
-        nominalControllersStock_[i].setController(scalar_array_t{time}, input_vector_array_t{bias}, input_state_matrix_array_t{gain});
-        //      }
-        //      if (nominalPrevTimeTrajectoriesStock_[i].empty() && !nominalPrevTimeTrajectoriesStock_[i - 1].empty()) {
-        nominalPrevTimeTrajectoriesStock_[i].push_back(nominalPrevTimeTrajectoriesStock_[i - 1].back());
-        nominalPrevStateTrajectoriesStock_[i].push_back(nominalPrevStateTrajectoriesStock_[i - 1].back());
-        nominalPrevInputTrajectoriesStock_[i].push_back(nominalPrevInputTrajectoriesStock_[i - 1].back());
-
-        // Lagrange multipliers
-        lambdaEquality2TrajectoryStockPrev_[i].push_back(lambdaEquality2TrajectoryStockPrev_[i - 1].back());
-      }
+  // TODO: use the cached variables of the previously last partition for the newly added, empty partition.
+  for (size_t i = 1; i <= finalActivePartition_; i++) {
+    if (nominalPrevTimeTrajectoriesStock_[i].empty() && !nominalPrevTimeTrajectoriesStock_[i - 1].empty()) {
+      nominalPrevTimeTrajectoriesStock_[i].push_back(partitioningTime_[i]);
+      nominalPrevStateTrajectoriesStock_[i].push_back(nominalPrevStateTrajectoriesStock_[i - 1].back());
+      nominalPrevInputTrajectoriesStock_[i].push_back(nominalPrevInputTrajectoriesStock_[i - 1].back());
+      // Lagrange multipliers
+      lambdaEquality2TrajectoryStockPrev_[i].push_back(lambdaEquality2TrajectoryStockPrev_[i - 1].back());
     }
   }
-
-  // cache the nominal trajectories before the new rollout (time, state, input, Lagrangians)
-  cacheNominalTrajectories();
 
   // initial controller rollout
   forwardPassTimer_.startTimer();

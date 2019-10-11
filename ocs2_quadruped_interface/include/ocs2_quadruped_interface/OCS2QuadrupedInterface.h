@@ -25,6 +25,8 @@
 #include <ocs2_mpc/MPC_OCS2.h>
 #include <ocs2_mpc/MPC_SLQ.h>
 
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
 #include <ocs2_switched_model_interface/constraint/ComKinoConstraintBase.h>
@@ -81,6 +83,9 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
 
   using cost_desired_trajectories_t = ocs2::CostDesiredTrajectories<scalar_t>;
 
+  using rollout_base_t = ocs2::RolloutBase<STATE_DIM, INPUT_DIM>;
+  using time_triggered_rollout_t = ocs2::TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
+
   using switched_model_t = SwitchedModel<JOINT_COORD_SIZE>;
   using contact_flag_t = typename switched_model_t::contact_flag_t;
   using generalized_coordinate_t = typename switched_model_t::generalized_coordinate_t;
@@ -105,14 +110,14 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
   using slq_base_t = ocs2::SLQ_BASE<STATE_DIM, INPUT_DIM>;
   using slq_t = ocs2::SLQ<STATE_DIM, INPUT_DIM>;
   using slq_mp_t = ocs2::SLQ_MP<STATE_DIM, INPUT_DIM>;
-  //	using 			ocs2_t = ocs2::OCS2Projected<STATE_DIM, INPUT_DIM>;
+//  using ocs2_t = ocs2::OCS2Projected<STATE_DIM, INPUT_DIM>;
   using mpc_t = ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>;
 
-  using slq_base_ptr_t = typename slq_base_t::Ptr;
-  using slq_ptr_t = typename slq_t::Ptr;
-  using slq_mp_ptr_t = typename slq_mp_t::Ptr;
-  //	using 		ocs2_ptr_t = typename ocs2_t::Ptr;
-  using mpc_ptr_t = std::shared_ptr<mpc_t>;
+  using slq_base_ptr_t = std::unique_ptr<slq_base_t>;
+  using slq_ptr_t = std::unique_ptr<slq_t>;
+  using slq_mp_ptr_t = std::unique_ptr<slq_mp_t>;
+//  using ocs2_ptr_t = std::unique_ptr<ocs2_t>;
+  using mpc_ptr_t = std::unique_ptr<mpc_t>;
 
   using linear_controller_t = typename slq_base_t::linear_controller_t;
   using controller_ptr_array_t = typename slq_base_t::controller_ptr_array_t;
@@ -144,6 +149,9 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
    */
   virtual void setupOptimizer(const logic_rules_ptr_t& logicRulesPtr, const mode_sequence_template_t* modeSequenceTemplatePtr,
                               slq_base_ptr_t& slqPtr, mpc_ptr_t& mpcPtr) = 0;
+
+  /** Gets the rollout class */
+  virtual const rollout_base_t& getRollout() const = 0;
 
   /**
    * Run the SLQ algorithm.
@@ -335,6 +343,7 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
    * Variables
    */
   ocs2::SLQ_Settings slqSettings_;
+  ocs2::Rollout_Settings rolloutSettings_;
 
   typename kinematic_model_t::Ptr kinematicModelPtr_;
   typename com_model_t::Ptr comModelPtr_;

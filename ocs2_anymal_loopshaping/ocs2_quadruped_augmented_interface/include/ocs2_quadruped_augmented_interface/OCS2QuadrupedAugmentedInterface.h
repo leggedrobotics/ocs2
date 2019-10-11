@@ -24,6 +24,9 @@ class OCS2QuadrupedAugmentedInterface : public OCS2QuadrupedInterface<JOINT_COOR
   using state_vector_t = typename BASE::state_vector_t;
   using input_vector_t = typename BASE::input_vector_t;
 
+  using typename BASE::rollout_base_t;
+  using typename BASE::time_triggered_rollout_t;
+
   using filter_state_t = Eigen::Matrix<double, FILTER_STATE_DIM, 1>;
 
   using system_state_matrix_t = Eigen::Matrix<double, SYSTEM_STATE_DIM, SYSTEM_STATE_DIM>;

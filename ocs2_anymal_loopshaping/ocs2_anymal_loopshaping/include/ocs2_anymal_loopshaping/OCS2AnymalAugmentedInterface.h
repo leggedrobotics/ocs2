@@ -59,6 +59,8 @@ class OCS2AnymalAugmentedInterface : public switched_model::OCS2QuadrupedAugment
   using typename BASE::BASE::contact_flag_t;
   using typename BASE::controlled_system_base_ptr_t;
   using typename BASE::controlled_system_base_t;
+  using typename BASE::rollout_base_t;
+  using typename BASE::time_triggered_rollout_t;
 //  using mpc_ocs2_t = ocs2::MPC_OCS2<STATE_DIM, INPUT_DIM>;
 
   using system_dynamics_t = ocs2::LoopshapingDynamics<
@@ -116,12 +118,16 @@ class OCS2AnymalAugmentedInterface : public switched_model::OCS2QuadrupedAugment
 
   const constraint_t* getConstraintPtr() const override { return constraintsPtr_.get(); }
 
+  const rollout_base_t& getRollout() const override { return *timeTriggeredRolloutPtr_; }
+
  protected:
   typename anymal_system_dynamics_t::Ptr anymalDynamicsPtr_;
   typename anymal_system_dynamics_derivative_t::Ptr anymalDynamicsDerivativesPtr_;
   typename anymal_constraint_t::Ptr anymalConstraintsPtr_;
   typename anymal_cost_funtion_t::Ptr anymalCostFunctionPtr_;
   typename anymal_operating_point_t::Ptr anymalOperatingPointPtr_;
+  //rollout
+  std::unique_ptr<rollout_base_t> timeTriggeredRolloutPtr_;
 
   typename system_dynamics_t::Ptr dynamicsPtr_;
   typename system_dynamics_derivative_t::Ptr dynamicsDerivativesPtr_;

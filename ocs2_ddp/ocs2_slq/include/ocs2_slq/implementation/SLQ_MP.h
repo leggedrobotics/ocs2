@@ -289,8 +289,20 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId) {
           return;
         }
       }
+    } catch (const std::exception& e) {
+      std::cerr << "Caught exception while doing thread work (workerTask_local " << workerTask_local << ")\n"
+                << "\twhat(): " << e.what() << "\n"
+                << std::endl;
+      {
+        std::lock(workerExceptionMutex_, riccatiSolverBarrierMutex_);
+        std::lock_guard<std::mutex> lk1(workerExceptionMutex_, std::adopt_lock);
+        std::lock_guard<std::mutex> lk2(riccatiSolverBarrierMutex_, std::adopt_lock);
+        workerException_ = std::current_exception();
+      }
+
+      riccatiSolverCompletedCondition_.notify_one();
     } catch (...) {
-      std::cerr << "Caught runtime error while doing thread work (workerTask_local " << workerTask_local << ")" << std::endl;
+      std::cerr << "Caught unknown exception while doing thread work (workerTask_local " << workerTask_local << ")" << std::endl;
       {
         std::lock(workerExceptionMutex_, riccatiSolverBarrierMutex_);
         std::lock_guard<std::mutex> lk1(workerExceptionMutex_, std::adopt_lock);

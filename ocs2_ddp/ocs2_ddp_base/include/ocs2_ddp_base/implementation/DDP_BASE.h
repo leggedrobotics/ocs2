@@ -1464,8 +1464,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
-                                         const scalar_array_t& partitioningTimes) {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
+                                             const scalar_array_t& partitioningTimes) {
   const size_t numPartitions = partitioningTimes.size() - 1;
 
   linear_controller_array_t noInitialController(numPartitions, linear_controller_t());

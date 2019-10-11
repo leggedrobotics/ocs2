@@ -63,6 +63,7 @@ add_library(${PROJECT_NAME}_cppad_interface
 
 add_library(${PROJECT_NAME}_misc
   src/misc/LinearAlgebra.cpp
+  src/misc/ThreadPool.cpp
 )
 
 add_executable(${PROJECT_NAME}_lintTarget
@@ -252,4 +253,14 @@ catkin_add_gtest(derivative_checker_unittest
 )
 target_link_libraries(derivative_checker_unittest
         ${catkin_LIBRARIES}
+)
+
+catkin_add_gtest(test_ThreadPool
+  test/misc/testThreadPool.cpp
+)
+target_link_libraries(test_ThreadPool
+  ${PROJECT_NAME}_misc
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  gtest_main
 )

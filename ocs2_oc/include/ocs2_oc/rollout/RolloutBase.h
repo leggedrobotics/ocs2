@@ -186,7 +186,7 @@ class RolloutBase {
     for (size_t i = 0; i < numSubsystems; i++) {
       for (; k < timeTrajectory.size(); k++) {
         std::cerr << "Index: " << k << std::endl;
-        std::cerr << "Time:  " << std::setprecision(9) << timeTrajectory[k] << std::endl;
+        std::cerr << "Time:  " << std::setprecision(12) << timeTrajectory[k] << std::endl;
         std::cerr << "State: " << std::setprecision(3) << stateTrajectory[k].transpose() << std::endl;
         if (inputTrajectory) {
           std::cerr << "Input: " << std::setprecision(3) << (*inputTrajectory)[k].transpose() << std::endl;

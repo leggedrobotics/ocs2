@@ -110,14 +110,14 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
   using slq_base_t = ocs2::SLQ_BASE<STATE_DIM, INPUT_DIM>;
   using slq_t = ocs2::SLQ<STATE_DIM, INPUT_DIM>;
   using slq_mp_t = ocs2::SLQ_MP<STATE_DIM, INPUT_DIM>;
-  //	using 			ocs2_t = ocs2::OCS2Projected<STATE_DIM, INPUT_DIM>;
+//  using ocs2_t = ocs2::OCS2Projected<STATE_DIM, INPUT_DIM>;
   using mpc_t = ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>;
 
-  using slq_base_ptr_t = std::shared_ptr<slq_base_t>;
-  using slq_ptr_t = std::shared_ptr<slq_t>;
-  using slq_mp_ptr_t = std::shared_ptr<slq_mp_t>;
-  //	using 		ocs2_ptr_t = std::shared_ptr<ocs2_t>;
-  using mpc_ptr_t = std::shared_ptr<mpc_t>;
+  using slq_base_ptr_t = std::unique_ptr<slq_base_t>;
+  using slq_ptr_t = std::unique_ptr<slq_t>;
+  using slq_mp_ptr_t = std::unique_ptr<slq_mp_t>;
+//  using ocs2_ptr_t = std::unique_ptr<ocs2_t>;
+  using mpc_ptr_t = std::unique_ptr<mpc_t>;
 
   using linear_controller_t = typename slq_base_t::linear_controller_t;
   using controller_ptr_array_t = typename slq_base_t::controller_ptr_array_t;

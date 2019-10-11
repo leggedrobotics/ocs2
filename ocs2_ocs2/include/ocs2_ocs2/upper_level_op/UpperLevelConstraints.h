@@ -40,11 +40,11 @@ class UpperLevelConstraints final : public NLP_Constraints {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef NLP_Constraints BASE;
-  using scalar_t = typename NLP_Constraints::scalar_t;
-  using scalar_array_t = typename NLP_Constraints::scalar_array_t;
-  using dynamic_vector_t = typename NLP_Constraints::dynamic_vector_t;
-  using dynamic_matrix_t = typename NLP_Constraints::dynamic_matrix_t;
+  using BASE = NLP_Constraints;
+  using typename BASE::dynamic_matrix_t;
+  using typename BASE::dynamic_vector_t;
+  using typename BASE::scalar_array_t;
+  using typename BASE::scalar_t;
 
   /**
    * Default constructor.
@@ -54,7 +54,7 @@ class UpperLevelConstraints final : public NLP_Constraints {
   /**
    * Default destructor.
    */
-  ~UpperLevelConstraints() = default;
+  ~UpperLevelConstraints() override = default;
 
   /**
    * Sets the initial time, and final time.

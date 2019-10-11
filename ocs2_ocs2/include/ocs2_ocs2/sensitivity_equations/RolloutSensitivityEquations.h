@@ -52,9 +52,9 @@ class RolloutSensitivityEquations final : public ControlledSystemBase<STATE_DIM,
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef ControlledSystemBase<STATE_DIM, INPUT_DIM> BASE;
+  using BASE = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
 
-  typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
   using scalar_t = typename DIMENSIONS::scalar_t;
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;
   using state_vector_t = typename DIMENSIONS::state_vector_t;
@@ -78,14 +78,14 @@ class RolloutSensitivityEquations final : public ControlledSystemBase<STATE_DIM,
   /**
    * Default destructor.
    */
-  virtual ~RolloutSensitivityEquations() override = default;
+  ~RolloutSensitivityEquations() override = default;
 
   /**
    * Returns pointer to the class.
    *
    * @return A raw pointer to the class.
    */
-  virtual RolloutSensitivityEquations<STATE_DIM, INPUT_DIM>* clone() const override {
+  RolloutSensitivityEquations<STATE_DIM, INPUT_DIM>* clone() const override {
     return new RolloutSensitivityEquations<STATE_DIM, INPUT_DIM>(*this);
   }
 

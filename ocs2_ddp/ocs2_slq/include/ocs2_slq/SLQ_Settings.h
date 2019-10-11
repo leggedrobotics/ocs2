@@ -37,7 +37,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 
 #include <ocs2_ddp_base/DDP_Settings.h>
-#include <ocs2_oc/rollout/Rollout_Settings.h>
 
 namespace ocs2 {
 
@@ -56,8 +55,7 @@ class SLQ_Settings {
         preComputeRiccatiTerms_(true),
         RiccatiIntegratorType_(RICCATI_INTEGRATOR_TYPE::ODE45),
         adams_integrator_dt_(0.001),
-        ddpSettings_(),
-        rolloutSettings_()
+        ddpSettings_()
 
   {}
 
@@ -100,9 +98,6 @@ class SLQ_Settings {
   /** This structure contains the settings for DDP algorithms. */
   DDP_Settings ddpSettings_;
 
-  /** This structure contains the settings for forward rollout algorithms. */
-  Rollout_Settings rolloutSettings_;
-
 };  // end of SLQ_Settings class
 
 inline void SLQ_Settings::loadSettings(const std::string& filename, const std::string& fieldName /*= slq*/, bool verbose /*= true*/) {
@@ -110,8 +105,6 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, const std::s
   boost::property_tree::read_info(filename, pt);
 
   ddpSettings_.loadSettings(filename, fieldName + ".ddp", verbose);
-
-  rolloutSettings_.loadSettings(filename, fieldName + ".rollout", verbose);
 
   if (verbose) {
     std::cerr << std::endl << " #### SLQ Settings: " << std::endl;

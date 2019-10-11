@@ -35,17 +35,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                          const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                          const operating_trajectories_base_t* operatingTrajectoriesPtr, const DDP_Settings& ddpSettings,
-                                         const Rollout_Settings& rolloutSettings, const cost_function_base_t* heuristicsFunctionPtr,
-                                         const char* algorithmName, std::shared_ptr<HybridLogicRules> logicRulesPtr)
-    : BASE(std::move(logicRulesPtr)),
-      ddpSettings_(ddpSettings),
-      rolloutSettings_(rolloutSettings),
-      algorithmName_(algorithmName),
-      rewindCounter_(0),
-      iteration_(0) {
+                                         const cost_function_base_t* heuristicsFunctionPtr, const char* algorithmName,
+                                         std::shared_ptr<HybridLogicRules> logicRulesPtr)
+    : BASE(std::move(logicRulesPtr)), ddpSettings_(ddpSettings), algorithmName_(algorithmName), rewindCounter_(0), iteration_(0) {
   // Dynamics, Constraints, derivatives, and cost
   linearQuadraticApproximatorPtrStock_.clear();
   linearQuadraticApproximatorPtrStock_.reserve(ddpSettings_.nThreads_);
@@ -53,26 +48,24 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const controlled_system_base_t* systemD
   heuristicsFunctionsPtrStock_.reserve(ddpSettings_.nThreads_);
   penaltyPtrStock_.clear();
   penaltyPtrStock_.reserve(ddpSettings_.nThreads_);
-
-  dynamicsForwardRolloutPtrStock_.resize(ddpSettings_.nThreads_);
-  operatingTrajectoriesRolloutPtrStock_.resize(ddpSettings_.nThreads_);
+  dynamicsForwardRolloutPtrStock_.clear();
+  dynamicsForwardRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
+  operatingTrajectoriesRolloutPtrStock_.clear();
+  operatingTrajectoriesRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
 
   // initialize all subsystems, etc.
   for (size_t i = 0; i < ddpSettings_.nThreads_; i++) {
     // initialize rollout
-    dynamicsForwardRolloutPtrStock_[i].reset(new time_triggered_rollout_t(*systemDynamicsPtr, rolloutSettings_, algorithmName_.c_str()));
+    dynamicsForwardRolloutPtrStock_.emplace_back(rolloutPtr->clone());
 
     // initialize operating points
-    operatingTrajectoriesRolloutPtrStock_[i].reset(
-        new operating_trajectorie_rollout_t(*operatingTrajectoriesPtr, rolloutSettings_, algorithmName_.c_str()));
+    operatingTrajectoriesRolloutPtrStock_.emplace_back(
+        new operating_trajectorie_rollout_t(*operatingTrajectoriesPtr, rolloutPtr->settings()));
 
     // initialize LQ approximator
     linearQuadraticApproximatorPtrStock_.emplace_back(
         new linear_quadratic_approximator_t(*systemDerivativesPtr, *systemConstraintsPtr, *costFunctionPtr, algorithmName_.c_str(),
                                             ddpSettings_.checkNumericalStability_, ddpSettings_.useMakePSD_));
-
-    // initialize operating trajectories
-    operatingTrajectoriesPtrStock_.emplace_back(operatingTrajectoriesPtr->clone());
 
     // initialize heuristics functions
     if (heuristicsFunctionPtr != nullptr) {
@@ -106,17 +99,17 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::~DDP_BASE() {
       forwardPassTotal + linearQuadraticApproximationTotal + backwardPassTotal + computeControllerTotal + finalRolloutTotal;
 
   if (benchmarkTotal > 0 && (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_)) {
-    std::cerr << "\n################################################################\n";
-    std::cerr << "Benchmarking         :\tAverage time [ms]   (% of total runtime)\n";
-    std::cerr << "\tForward Pass       :\t" << forwardPassTimer_.getAverageInMilliseconds() << " [ms] \t("
+    std::cerr << "\n########################################################################\n";
+    std::cerr << "Benchmarking\t           :\tAverage time [ms]   (% of total runtime)\n";
+    std::cerr << "\tForward Pass       :\t" << forwardPassTimer_.getAverageInMilliseconds() << " [ms] \t\t("
               << forwardPassTotal / benchmarkTotal * 100 << "%)\n";
-    std::cerr << "\tLQ Approximation   :\t" << linearQuadraticApproximationTimer_.getAverageInMilliseconds() << " [ms] \t("
+    std::cerr << "\tLQ Approximation   :\t" << linearQuadraticApproximationTimer_.getAverageInMilliseconds() << " [ms] \t\t("
               << linearQuadraticApproximationTotal / benchmarkTotal * 100 << "%)\n";
-    std::cerr << "\tBackward Pass      :\t" << backwardPassTimer_.getAverageInMilliseconds() << " [ms] \t("
+    std::cerr << "\tBackward Pass      :\t" << backwardPassTimer_.getAverageInMilliseconds() << " [ms] \t\t("
               << backwardPassTotal / benchmarkTotal * 100 << "%)\n";
-    std::cerr << "\tCompute Controller :\t" << computeControllerTimer_.getAverageInMilliseconds() << " [ms] \t("
+    std::cerr << "\tCompute Controller :\t" << computeControllerTimer_.getAverageInMilliseconds() << " [ms] \t\t("
               << computeControllerTotal / benchmarkTotal * 100 << "%)\n";
-    std::cerr << "\tLinesearch         :\t" << linesearchTimer_.getAverageInMilliseconds() << " [ms] \t("
+    std::cerr << "\tLinesearch         :\t" << linesearchTimer_.getAverageInMilliseconds() << " [ms] \t\t("
               << finalRolloutTotal / benchmarkTotal * 100 << "%)" << std::endl;
   }
 }
@@ -133,13 +126,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
   maxLearningRate_ = 1.0;
 
   useParallelRiccatiSolverFromInitItr_ = false;
-
-  this->costDesiredTrajectories_.clear();
-  {
-    std::lock_guard<std::mutex> lock(this->costDesiredTrajectoriesBufferMutex_);
-    this->costDesiredTrajectoriesBuffer_.clear();
-    this->costDesiredTrajectoriesUpdated_ = false;
-  }
 
   for (size_t i = 0; i < numPartitions_; i++) {
     // very important :)
@@ -435,7 +421,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateCostWorker(size_t workerIndex, siz
   cost_function_base_t& costFunction = linearQuadraticApproximatorPtrStock_[workerIndex]->costFunction();
 
   // set desired trajectories
-  costFunction.setCostDesiredTrajectories(this->costDesiredTrajectories_);
+  costFunction.setCostDesiredTrajectories(this->getCostDesiredTrajectories());
 
   totalCost = 0.0;
   auto eventsPastTheEndItr = eventsPastTheEndIndeces.begin();
@@ -489,7 +475,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCost(const scalar_array2_t&
 
   // calculate the Heuristics function at the final time
   // set desired trajectories
-  heuristicsFunctionsPtrStock_[threadId]->setCostDesiredTrajectories(this->costDesiredTrajectories_);
+  heuristicsFunctionsPtrStock_[threadId]->setCostDesiredTrajectories(this->getCostDesiredTrajectories());
   // set state-input
   heuristicsFunctionsPtrStock_[threadId]->setCurrentStateAndControl(timeTrajectoriesStock[finalActivePartition_].back(),
                                                                     stateTrajectoriesStock[finalActivePartition_].back(),
@@ -589,7 +575,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
     if (N > 0) {
       for (size_t j = 0; j < ddpSettings_.nThreads_; j++) {
         // set desired trajectories
-        linearQuadraticApproximatorPtrStock_[j]->costFunction().setCostDesiredTrajectories(this->costDesiredTrajectories_);
+        linearQuadraticApproximatorPtrStock_[j]->costFunction().setCostDesiredTrajectories(this->getCostDesiredTrajectories());
       }  // end of j loop
 
       // perform the approximateSubsystemLQ for partition i
@@ -599,7 +585,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
   }  // end of i loop
 
   // calculate the Heuristics function at the final time
-  heuristicsFunctionsPtrStock_[0]->setCostDesiredTrajectories(this->costDesiredTrajectories_);
+  heuristicsFunctionsPtrStock_[0]->setCostDesiredTrajectories(this->getCostDesiredTrajectories());
   heuristicsFunctionsPtrStock_[0]->setCurrentStateAndControl(nominalTimeTrajectoriesStock_[finalActivePartition_].back(),
                                                              nominalStateTrajectoriesStock_[finalActivePartition_].back(),
                                                              nominalInputTrajectoriesStock_[finalActivePartition_].back());
@@ -1489,15 +1475,15 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t
   }
 
   // call the "run" method which uses the internal controllers stock (i.e. nominalControllersStock_)
-  run(initTime, initState, finalTime, partitioningTimes, noInitialControllerPtrArray);
+  runImpl(initTime, initState, finalTime, partitioningTimes, noInitialControllerPtrArray);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
-                                         const scalar_array_t& partitioningTimes, const controller_ptr_array_t& controllersPtrStock) {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
+                                             const scalar_array_t& partitioningTimes, const controller_ptr_array_t& controllersPtrStock) {
   if (ddpSettings_.displayInfo_) {
     std::cerr << std::endl;
     std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
@@ -1554,8 +1540,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t
       throw std::runtime_error("The internal controller is not compatible with the number of partitions.");
     }
   }
-
-  this->updateCostDesiredTrajectories();
 
   // update the logic rules in the beginning of the run routine
   bool logicRulesModified = BASE::getLogicRulesMachinePtr()->updateLogicRules(partitioningTimes_);

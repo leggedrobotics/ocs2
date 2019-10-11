@@ -78,6 +78,13 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   cartPoleSystemDynamicsPtr_->initialize("cartpole_dynamics", libraryFolder_, true, true);
 
   /*
+   * Rollout
+   */
+  Rollout_Settings rolloutSettings;
+  rolloutSettings.loadSettings(taskFile, "slq.rollout");
+  ddpCartPoleRolloutPtr_.reset(new time_triggered_rollout_t(*cartPoleSystemDynamicsPtr_, rolloutSettings));
+
+  /*
    * Cost function
    */
   loadData::loadEigenMatrix(taskFile, "Q", qm_);
@@ -117,7 +124,7 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void CartPoleInterface::setupOptimizer(const std::string& taskFile) {
-  mpcPtr_.reset(new mpc_t(cartPoleSystemDynamicsPtr_.get(), cartPoleSystemDynamicsPtr_.get(), cartPoleConstraintPtr_.get(),
+  mpcPtr_.reset(new mpc_t(ddpCartPoleRolloutPtr_.get(), cartPoleSystemDynamicsPtr_.get(), cartPoleConstraintPtr_.get(),
                           cartPoleCostPtr_.get(), cartPoleOperatingPointPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_));
 }
 

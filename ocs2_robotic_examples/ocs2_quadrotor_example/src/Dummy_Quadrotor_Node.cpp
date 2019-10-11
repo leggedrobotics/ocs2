@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
 
   // Dummy quadrotor
   MRT_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> mrt("quadrotor");
-  mrt.initRollout(quadrotorInterface.getDynamics());
+  mrt.initRollout(&quadrotorInterface.getRollout());
   quadrotor::MRT_ROS_Dummy_Quadrotor dummyQuadrotor(mrt, quadrotorInterface.mpcSettings().mrtDesiredFrequency_,
                                                     quadrotorInterface.mpcSettings().mpcDesiredFrequency_);
 

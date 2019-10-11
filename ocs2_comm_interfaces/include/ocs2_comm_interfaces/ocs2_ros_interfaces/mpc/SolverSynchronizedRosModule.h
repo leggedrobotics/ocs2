@@ -29,40 +29,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Dense>
-#include <memory>
+#include <ros/ros.h>
+
+#include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
 
 namespace ocs2 {
 
 /**
- *
- * @tparam STATE_DIM
+ * SolverSynchronizedRosModule adds ROS functionality to a SolverSynchronizedModule.
  */
-template <size_t STATE_DIM>
-class TimeHorizonEstimatorBase {
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class SolverSynchronizedRosModule : public SolverSynchronizedModule<STATE_DIM, INPUT_DIM> {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  //! Default destructor
+  virtual ~SolverSynchronizedRosModule() = default;
 
-  using Ptr = std::shared_ptr<TimeHorizonEstimatorBase<STATE_DIM> >;
-
-  TimeHorizonEstimatorBase() : currentTimeHorizon_(1000) {}
-
-  virtual ~TimeHorizonEstimatorBase() = default;
-
-  /**
-   * Updates the time horizon
-   * @param [in] currentInitialState
-   */
-  virtual void updateTimeHorizon(const Eigen::Matrix<double, STATE_DIM, 1>& currentInitialState) { currentTimeHorizon_ = 0.0; };
-
-  /**
-   * Gets time horizon
-   * @return double
-   */
-  const double getTimeHorizon() const { return currentTimeHorizon_; }
-
- protected:
-  double currentTimeHorizon_;
+  //! Get node handle to subscribe to topics
+  virtual void subscribe(::ros::NodeHandle& nodeHandle) = 0;
 };
 
 }  // namespace ocs2

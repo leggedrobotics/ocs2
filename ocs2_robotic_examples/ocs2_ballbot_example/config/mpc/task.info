@@ -76,6 +76,7 @@ slq
         useRiccatiSolver               1
 
     }
+
     rollout
     {
         AbsTolODE                      1e-5    ;1e-6
@@ -84,7 +85,6 @@ slq
         maxNumStepsPerSecond           50000
         checkNumericalStability        0
     }
-
 }
 
 ; MPC settings

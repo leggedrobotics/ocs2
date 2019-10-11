@@ -32,6 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ctime>
 #include <iostream>
 
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+
 #include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
 
@@ -78,8 +80,9 @@ TEST(exp2_slq_test, DISABLED_Exp2_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
-  // system dynamics
+  // system rollout
   EXP2_System systemDynamics(logicRules);
+  TimeTriggeredRollout<STATE_DIM, INPUT_DIM> timeTriggeredRollout(systemDynamics);
 
   // system derivatives
   EXP2_SystemDerivative systemDerivative(logicRules);
@@ -100,7 +103,7 @@ TEST(exp2_slq_test, DISABLED_Exp2_slq_test) {
   /******************************************************************************************************/
 
   // SLQ - single core version
-  SLQ<STATE_DIM, INPUT_DIM> slq(&systemDynamics, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
+  SLQ<STATE_DIM, INPUT_DIM> slq(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
                                 slqSettings, logicRules);
 
   // run single core SLQ

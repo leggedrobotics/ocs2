@@ -32,6 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ctime>
 #include <iostream>
 
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+
 #include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
 
@@ -58,9 +60,11 @@ TEST(exp0_slq_test, exp0_slq_test) {
   slqSettings.ddpSettings_.checkNumericalStability_ = false;
   slqSettings.ddpSettings_.useFeedbackPolicy_ = true;
   slqSettings.ddpSettings_.debugPrintRollout_ = false;
-  slqSettings.rolloutSettings_.absTolODE_ = 1e-10;
-  slqSettings.rolloutSettings_.relTolODE_ = 1e-7;
-  slqSettings.rolloutSettings_.maxNumStepsPerSecond_ = 10000;
+
+  Rollout_Settings rolloutSettings;
+  rolloutSettings.absTolODE_ = 1e-10;
+  rolloutSettings.relTolODE_ = 1e-7;
+  rolloutSettings.maxNumStepsPerSecond_ = 10000;
 
   // switching times
   std::vector<double> eventTimes{0.1897};
@@ -81,9 +85,9 @@ TEST(exp0_slq_test, exp0_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
-
-  // system dynamics
+  // system rollout
   EXP0_System systemDynamics(logicRules);
+  TimeTriggeredRollout<STATE_DIM, INPUT_DIM> timeTriggeredRollout(systemDynamics, rolloutSettings);
 
   // system derivatives
   EXP0_SystemDerivative systemDerivative(logicRules);
@@ -103,11 +107,11 @@ TEST(exp0_slq_test, exp0_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // SLQ - single-thread version
-  SLQ<STATE_DIM, INPUT_DIM> slqST(&systemDynamics, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
+  SLQ<STATE_DIM, INPUT_DIM> slqST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
                                   slqSettings, logicRules);
 
   // SLQ - multi-thread version
-  SLQ_MP<STATE_DIM, INPUT_DIM> slqMT(&systemDynamics, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
+  SLQ_MP<STATE_DIM, INPUT_DIM> slqMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
                                      slqSettings, logicRules);
 
   // run single core SLQ

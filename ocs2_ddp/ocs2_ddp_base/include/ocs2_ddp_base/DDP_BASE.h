@@ -653,6 +653,14 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void cacheNominalTrajectories();
 
   /**
+   * Corrects the initial caching of the nominal trajectories.
+   * This is necessary for:
+   *   + The moving horizon (MPC) application
+   *   + The very first call of the algorithm where there is no previous nominal trajectories.
+   */
+  void correctInitcachedNominalTrajectories();
+
+  /**
    * Display rollout info and scores.
    */
   void printRolloutInfo();

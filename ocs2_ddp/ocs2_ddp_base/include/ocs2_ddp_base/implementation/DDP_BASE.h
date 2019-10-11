@@ -996,6 +996,62 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::cacheNominalTrajectories() {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::correctInitcachedNominalTrajectories() {
+  for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
+    if (nominalPrevTimeTrajectoriesStock_[i].empty()) {
+      nominalPrevTimeTrajectoriesStock_[i] = nominalTimeTrajectoriesStock_[i];
+      nominalPrevStateTrajectoriesStock_[i] = nominalStateTrajectoriesStock_[i];
+      nominalPrevInputTrajectoriesStock_[i] = nominalInputTrajectoriesStock_[i];
+      nominalPrevEventsPastTheEndIndecesStock_[i] = nominalEventsPastTheEndIndecesStock_[i];
+
+    } else if (nominalPrevTimeTrajectoriesStock_[i].back() < nominalTimeTrajectoriesStock_[i].back()) {
+      const scalar_t finalTimePrev = nominalPrevTimeTrajectoriesStock_[i].back() + OCS2NumericTraits<scalar_t>::weakEpsilon();
+
+      // time
+      nominalPrevTimeTrajectoriesStock_[i].emplace_back(finalTimePrev);
+
+      // state
+      state_vector_t finalStatePrev;
+      auto indexAlpha = EigenLinearInterpolation<state_vector_t>::interpolate(
+          finalTimePrev, finalStatePrev, &nominalTimeTrajectoriesStock_[i], &nominalStateTrajectoriesStock_[i]);
+      nominalPrevStateTrajectoriesStock_[i].emplace_back(finalStatePrev);
+
+      // input
+      input_vector_t finalInputPrev;
+      EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, finalInputPrev, &nominalInputTrajectoriesStock_[i]);
+      nominalPrevInputTrajectoriesStock_[i].emplace_back(finalInputPrev);
+
+      const size_t sizeBeforeInsert = nominalPrevTimeTrajectoriesStock_[i].size();
+
+      nominalPrevTimeTrajectoriesStock_[i].insert(nominalPrevTimeTrajectoriesStock_[i].end(),
+                                                  nominalTimeTrajectoriesStock_[i].begin() + indexAlpha.first + 1,
+                                                  nominalTimeTrajectoriesStock_[i].end());
+      nominalPrevStateTrajectoriesStock_[i].insert(nominalPrevStateTrajectoriesStock_[i].end(),
+                                                   nominalStateTrajectoriesStock_[i].begin() + indexAlpha.first + 1,
+                                                   nominalStateTrajectoriesStock_[i].end());
+      nominalPrevInputTrajectoriesStock_[i].insert(nominalPrevInputTrajectoriesStock_[i].end(),
+                                                   nominalInputTrajectoriesStock_[i].begin() + indexAlpha.first + 1,
+                                                   nominalInputTrajectoriesStock_[i].end());
+      for (auto ind : nominalEventsPastTheEndIndecesStock_[i]) {
+        if (ind > indexAlpha.first) {
+          nominalPrevEventsPastTheEndIndecesStock_[i].push_back(ind - indexAlpha.first + sizeBeforeInsert - 1);
+        }
+      }
+
+      if (ddpSettings_.checkCaching_) {
+        dynamic_vector_t testTimes = dynamic_vector_t::LinSpaced(5, finalTimePrev, nominalTimeTrajectoriesStock_[i].back());
+        for (size_t i = 0; i < testTimes.size(); i++) {
+          //    		  testTimes(i) // TODO
+        }
+      }
+    }
+  }  // end of i loop
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::printRolloutInfo() {
   std::cerr << "optimization cost:         " << nominalTotalCost_ << std::endl;
   std::cerr << "constraint type-1 ISE:     " << nominalConstraint1ISE_ << std::endl;
@@ -1302,6 +1358,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
    * nominal trajectories
    */
   nominalControllersStock_.resize(numPartitions);
+
   nominalTimeTrajectoriesStock_.resize(numPartitions);
   nominalEventsPastTheEndIndecesStock_.resize(numPartitions);
   nominalStateTrajectoriesStock_.resize(numPartitions);
@@ -1373,14 +1430,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
-  // TODO: use the cached variables of the previously last partition for the newly added, empty partition.
-  for (size_t i = 1; i <= finalActivePartition_; i++) {
-    if (nominalPrevTimeTrajectoriesStock_[i].empty() && !nominalPrevTimeTrajectoriesStock_[i - 1].empty()) {
-      nominalPrevTimeTrajectoriesStock_[i].push_back(partitioningTime_[i]);
-      nominalPrevStateTrajectoriesStock_[i].push_back(nominalPrevStateTrajectoriesStock_[i - 1].back());
-      nominalPrevInputTrajectoriesStock_[i].push_back(nominalPrevInputTrajectoriesStock_[i - 1].back());
-    }
-  }
+  // cache the nominal trajectories before the new rollout (time, state, input, ...)
+  cacheNominalTrajectories();
 
   // initial controller rollout
   forwardPassTimer_.startTimer();
@@ -1388,6 +1439,11 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
       rolloutTrajectory(initTime_, initState_, finalTime_, partitioningTimes_, nominalControllersStock_, nominalTimeTrajectoriesStock_,
                         nominalEventsPastTheEndIndecesStock_, nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_);
   forwardPassTimer_.endTimer();
+
+  // This is necessary for:
+  // + The moving horizon (MPC) application
+  // + The very first call of the algorithm where there is no previous nominal trajectories.
+  correctInitcachedNominalTrajectories();
 
   // linearizing the dynamics and quadratizing the cost function along nominal trajectories
   linearQuadraticApproximationTimer_.startTimer();

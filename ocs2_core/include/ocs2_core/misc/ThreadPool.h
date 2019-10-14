@@ -51,7 +51,7 @@ class ThreadPool {
    */
   void nextTask(Task& task);
 
-  std::atomic<bool> active_;
+  std::atomic<bool> stop_;
   std::vector<std::thread> workerThreads_;
   std::queue<Task> taskQueue_;
   std::condition_variable taskQueueCondition_;

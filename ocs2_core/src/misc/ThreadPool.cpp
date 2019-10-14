@@ -1,7 +1,7 @@
 #include <ocs2_core/misc/ThreadPool.h>
 
-ThreadPool::ThreadPool(size_t nThreads) : active_(true) {
-  active_.store(true);
+ThreadPool::ThreadPool(size_t nThreads) {
+  stop_.store(false);
   workerThreads_.reserve(nThreads);
   for (size_t i = 0; i < nThreads; i++) {
     workerThreads_.push_back(std::thread(&ThreadPool::worker, this, i));
@@ -12,7 +12,7 @@ ThreadPool::~ThreadPool() {
   // set exit flag, wake up threads and join
   {
     std::unique_lock<std::mutex> lock(taskQueueLock_);
-    active_.store(false);
+    stop_.store(true);
   }
   taskQueueCondition_.notify_all();
   for (auto& thread : workerThreads_) {
@@ -38,7 +38,7 @@ void ThreadPool::worker(int workerId) {
     nextTask(task);
 
     // exit condition
-    if (!active_.load()) {
+    if (stop_.load()) {
       break;
     }
 
@@ -50,7 +50,7 @@ void ThreadPool::nextTask(Task& task) {
   {
     {
       std::unique_lock<std::mutex> lock(taskQueueLock_);
-      taskQueueCondition_.wait(lock, [&] { return !active_.load() || !taskQueue_.empty(); });
+      taskQueueCondition_.wait(lock, [&] { return stop_.load() || !taskQueue_.empty(); });
       if (!taskQueue_.empty()) {
         task = std::move(taskQueue_.front());
         taskQueue_.pop();

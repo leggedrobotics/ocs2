@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
 #include <memory>
+#include <type_traits>
 #include <vector>
 
 #include <ocs2_core/misc/Lookup.h>
@@ -106,6 +107,33 @@ class LinearInterpolation {
   }
 
   /**
+   * Finds the time segment which constrains the given time. When duplicate values exist the lower range is selected s.t. ( ]
+   * Example: t = [0.0, 1.0, 1.0, 2.0]
+   * when querying tk = 1.0, the range (0.0, 1.0] is selected
+   *
+   * @param [in]  enquiryTime: The enquiry time for interpolation.
+   * @param [in] timeStampPtr: Pointer to vector of times
+   * @return {index, alpha}: The greatest smaller time stamp index and the interpolation coefficient [1, 0]
+   */
+  static std::pair<int, scalar_t> timeSegment(scalar_t enquiryTime, const std::vector<scalar_t>* timeStampPtr) {
+    if (timeStampPtr != nullptr) {
+      if (timeStampPtr->size() > 1) {
+        // Normal interpolation case, time vector has at least two elements
+        return getIndexAlpha(*timeStampPtr, enquiryTime);
+      } else if (timeStampPtr->size() == 1) {
+        // Time vector has only 1 element -> Constant function
+        return {0, scalar_t(0.0)};
+      } else {
+        // Time empty -> zero function
+        return {0, scalar_t(0.0)};
+      }
+    } else {
+      // No time set -> zero function
+      return {0, scalar_t(0.0)};
+    }
+  }
+
+  /**
    * Linearly interpolates at the given time. When duplicate values exist the lower range is selected s.t. ( ]
    * Example: t = [0.0, 1.0, 1.0, 2.0]
    * when querying tk = 1.0, the range (0.0, 1.0] is selected
@@ -118,26 +146,9 @@ class LinearInterpolation {
    */
   static std::pair<int, scalar_t> interpolate(scalar_t enquiryTime, Data_T& enquiryData, const std::vector<scalar_t>* timeStampPtr,
                                               const std::vector<Data_T, Alloc>* dataPtr) {
-    if (timeStampPtr != nullptr) {
-      if (timeStampPtr->size() > 1) {
-        // Normal interpolation case, time vector has at least two elements
-        const auto indexAlpha = getIndexAlpha(*timeStampPtr, enquiryTime);
-        interpolate(indexAlpha, enquiryData, dataPtr);
-        return indexAlpha;
-      } else if (timeStampPtr->size() == 1) {
-        // Time vector has only 1 element -> Constant function
-        enquiryData = dataPtr->front();
-        return {0, scalar_t(0.0)};
-      } else {
-        // Time empty -> zero function
-        enquiryData.setZero();
-        return {0, scalar_t(0.0)};
-      }
-    } else {
-      // No time set -> zero function
-      enquiryData.setZero();
-      return {0, scalar_t(0.0)};
-    }
+    const auto indexAlpha = getIndexAlpha(*timeStampPtr, enquiryTime);
+    interpolate(indexAlpha, enquiryData, dataPtr);
+    return indexAlpha;
   }
 
   /**
@@ -225,6 +236,31 @@ class LinearInterpolation {
 
   const std::vector<scalar_t>* timeStampPtr_;
   const std::vector<Data_T, Alloc>* dataPtr_;
+};
+
+// Specialization of interpolate() member method for floating point types
+template <>
+void LinearInterpolation<double>::interpolate(std::pair<int, scalar_t> indexAlpha, double& enquiryData,
+                                              const std::vector<double>* dataPtr) {
+  if (dataPtr != nullptr) {
+    if (dataPtr->size() > 1) {
+      // Normal interpolation case
+      int index = indexAlpha.first;
+      scalar_t alpha = indexAlpha.second;
+      auto& lhs = (*dataPtr)[index];
+      auto& rhs = (*dataPtr)[index + 1];
+      enquiryData = alpha * lhs + (scalar_t(1.0) - alpha) * rhs;
+    } else if (dataPtr->size() == 1) {
+      // Time vector has only 1 element -> Constant function
+      enquiryData = dataPtr->front();
+    } else {
+      // Time empty -> zero function
+      enquiryData = scalar_t(0.0);
+    }
+  } else {
+    // No data set -> zero Function
+    enquiryData = scalar_t(0.0);
+  }
 };
 
 // Specialization for Eigen types

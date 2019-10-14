@@ -47,9 +47,9 @@ class ThreadPool {
   /**
    * Retrieve the next task in the queue
    *
-   * @param [out] task: task reference
+   * @return next task from queue
    */
-  void nextTask(Task& task);
+  Task nextTask();
 
   std::atomic<bool> stop_;
   std::vector<std::thread> workerThreads_;

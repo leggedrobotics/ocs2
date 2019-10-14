@@ -35,7 +35,7 @@ void ThreadPool::worker(int workerId) {
   while (1) {
     Task task;
 
-    nextTask(task);
+    task = nextTask();
 
     // exit condition
     if (stop_.load()) {
@@ -46,15 +46,15 @@ void ThreadPool::worker(int workerId) {
   }  // end while
 }
 
-void ThreadPool::nextTask(Task& task) {
+ThreadPool::Task ThreadPool::nextTask() {
+  Task task;
   {
-    {
-      std::unique_lock<std::mutex> lock(taskQueueLock_);
-      taskQueueCondition_.wait(lock, [&] { return stop_.load() || !taskQueue_.empty(); });
-      if (!taskQueue_.empty()) {
-        task = std::move(taskQueue_.front());
-        taskQueue_.pop();
-      }
+    std::unique_lock<std::mutex> lock(taskQueueLock_);
+    taskQueueCondition_.wait(lock, [&] { return stop_.load() || !taskQueue_.empty(); });
+    if (!taskQueue_.empty()) {
+      task = std::move(taskQueue_.front());
+      taskQueue_.pop();
     }
   }
+  return task;
 }

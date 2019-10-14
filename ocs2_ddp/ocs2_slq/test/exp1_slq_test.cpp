@@ -111,8 +111,8 @@ TEST(exp1_slq_test, Exp1_slq_test) {
                                   slqSettings, logicRules);
 
   // SLQ - multi-threaded version
-  SLQ_MP<STATE_DIM, INPUT_DIM> slqMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
-                                     slqSettings, logicRules);
+  SLQ_MP<STATE_DIM, INPUT_DIM> slqMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
+                                     &operatingTrajectories, slqSettings, logicRules);
 
   // run single-threaded SLQ
   if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)

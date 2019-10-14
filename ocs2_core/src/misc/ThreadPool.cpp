@@ -20,12 +20,15 @@ ThreadPool::~ThreadPool() {
   }
 }
 
-void ThreadPool::run(Task task) {
+std::future<void> ThreadPool::run(std::function<void(void)> taskFunction) {
+  Task task(taskFunction);
+  std::future<void> barrier = task.get_future();
   {
     std::unique_lock<std::mutex> lock(taskQueueLock_);
-    taskQueue_.push(task);
+    taskQueue_.push(std::move(task));
   }
   taskQueueCondition_.notify_one();
+  return barrier;
 }
 
 void ThreadPool::worker(int workerId) {
@@ -39,11 +42,7 @@ void ThreadPool::worker(int workerId) {
       break;
     }
 
-    try {
-      task();
-    } catch (...) {
-      // do nothing
-    }
+    task();
   }  // end while
 }
 
@@ -53,7 +52,7 @@ void ThreadPool::nextTask(Task& task) {
       std::unique_lock<std::mutex> lock(taskQueueLock_);
       taskQueueCondition_.wait(lock, [&] { return !active_.load() || !taskQueue_.empty(); });
       if (!taskQueue_.empty()) {
-        task = taskQueue_.front();
+        task = std::move(taskQueue_.front());
         taskQueue_.pop();
       }
     }

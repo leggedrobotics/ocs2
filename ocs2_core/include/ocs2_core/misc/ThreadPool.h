@@ -14,8 +14,6 @@
  */
 class ThreadPool {
  public:
-  using Task = std::function<void(void)>;
-
   /**
    * Constructor
    *
@@ -31,15 +29,18 @@ class ThreadPool {
   /**
    * Run a task asynchronously in another thread
    *
-   * @param nThreads: Number of threads to launch in the pool
+   * @param [in] taskFunction: task function to run in the pool
+   * @return future object for synchronization
    */
-  void run(Task task);
+  std::future<void> run(std::function<void(void)> taskFunction);
 
  private:
+  using Task = std::packaged_task<void(void)>;
+
   /**
    * Thread worker loop
    *
-   * @param [in] workerId: therad id number
+   * @param [in] workerId: thread id number
    */
   void worker(int id);
 

@@ -57,8 +57,10 @@ class SLQ_DataCollector {
   using linear_controller_t = typename slq_t::linear_controller_t;
   using linear_controller_array_t = typename slq_t::linear_controller_array_t;
   using size_array_t = typename slq_t::size_array_t;
+  using size_array2_t = typename slq_t::size_array2_t;
   using scalar_t = typename slq_t::scalar_t;
   using scalar_array_t = typename slq_t::scalar_array_t;
+  using scalar_array2_t = typename slq_t::scalar_array2_t;
   using scalar_array3_t = typename slq_t::scalar_array3_t;
   using eigen_scalar_t = typename slq_t::eigen_scalar_t;
   using eigen_scalar_array_t = typename slq_t::eigen_scalar_array_t;
@@ -151,32 +153,27 @@ class SLQ_DataCollector {
 
   linear_controller_array_t optimizedControllersStock_;
 
-  //	std::vector<scalar_array_t>  optimizedTimeTrajectoriesStock_;
-  //	std::vector<size_array_t>    optimizedEventsPastTheEndIndecesStock_;
-  //	state_vector_array2_t        optimizedStateTrajectoriesStock_;
-  //	input_vector_array2_t        optimizedInputTrajectoriesStock_;
-
-  std::vector<scalar_array_t> nominalTimeTrajectoriesStock_;
-  std::vector<size_array_t> nominalEventsPastTheEndIndecesStock_;
+  scalar_array2_t nominalTimeTrajectoriesStock_;
+  size_array2_t nominalPostEventIndicesStock_;
   state_vector_array2_t nominalStateTrajectoriesStock_;
   input_vector_array2_t nominalInputTrajectoriesStock_;
 
   state_matrix_array2_t AmTrajectoriesStock_;
   state_input_matrix_array2_t BmTrajectoriesStock_;
 
-  std::vector<size_array_t> nc1TrajectoriesStock_;  // nc1: Number of the Type-1  active constraints
+  size_array2_t nc1TrajectoriesStock_;  // nc1: Number of the Type-1  active constraints
   constraint1_vector_array2_t EvTrajectoriesStock_;
   constraint1_state_matrix_array2_t CmTrajectoriesStock_;
   constraint1_input_matrix_array2_t DmTrajectoriesStock_;
 
-  std::vector<size_array_t> nc2TrajectoriesStock_;  // nc2: Number of the Type-2 active constraints
+  size_array2_t nc2TrajectoriesStock_;  // nc2: Number of the Type-2 active constraints
   constraint2_vector_array2_t HvTrajectoriesStock_;
   constraint2_state_matrix_array2_t FmTrajectoriesStock_;
   std::vector<size_array_t> nc2FinalStock_;
   constraint2_vector_array2_t HvFinalStock_;
   constraint2_state_matrix_array2_t FmFinalStock_;
 
-  std::vector<size_array_t> ncIneqTrajectoriesStock_;  // ncIneq: Number of inequality constraints
+  size_array2_t ncIneqTrajectoriesStock_;  // ncIneq: Number of inequality constraints
   scalar_array3_t hTrajectoryStock_;
   state_vector_array3_t dhdxTrajectoryStock_;
   state_matrix_array3_t ddhdxdxTrajectoryStock_;
@@ -210,9 +207,9 @@ class SLQ_DataCollector {
   state_vector_t SvHeuristics_;
   state_matrix_t SmHeuristics_;
 
-  std::vector<scalar_array_t> SsTimeTrajectoriesStock_;
-  std::vector<scalar_array_t> SsNormalizedTimeTrajectoriesStock_;
-  std::vector<size_array_t> SsNormalizedEventsPastTheEndIndecesStock_;
+  scalar_array2_t SsTimeTrajectoriesStock_;
+  scalar_array2_t SsNormalizedTimeTrajectoriesStock_;
+  size_array2_t SsNormalizedEventsPastTheEndIndecesStock_;
   state_matrix_array2_t SmTrajectoriesStock_;
   state_vector_array2_t SvTrajectoriesStock_;
   state_vector_array2_t SveTrajectoriesStock_;

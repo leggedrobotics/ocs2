@@ -120,7 +120,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::setupOptimizer(const size_t& numPartitions) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GDDP<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(const std::vector<scalar_array_t>& timeTrajectoriesStock,
+void GDDP<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(const scalar_array2_t& timeTrajectoriesStock,
                                                          const state_vector_array2_t& stateTrajectoriesStock,
                                                          state_vector_array2_t& costateTrajectoriesStock, scalar_t learningRate /*= 0.0*/) {
   costateTrajectoriesStock.resize(numPartitions_);
@@ -195,7 +195,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(const std::vector<scala
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GDDP<STATE_DIM, INPUT_DIM>::calculateNominalRolloutLagrangeMultiplier(const std::vector<scalar_array_t>& timeTrajectoriesStock,
+void GDDP<STATE_DIM, INPUT_DIM>::calculateNominalRolloutLagrangeMultiplier(const scalar_array2_t& timeTrajectoriesStock,
                                                                            constraint1_vector_array2_t& lagrangeTrajectoriesStock) {
   lagrangeTrajectoriesStock.resize(numPartitions_);
 
@@ -313,8 +313,8 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void GDDP<STATE_DIM, INPUT_DIM>::propagateRolloutSensitivity(size_t workerIndex, const size_t& eventTimeIndex,
                                                              const linear_controller_array_t& controllersStock,
                                                              const input_vector_array2_t& LvTrajectoriesStock,
-                                                             const std::vector<scalar_array_t>& sensitivityTimeTrajectoriesStock,
-                                                             const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
+                                                             const scalar_array2_t& sensitivityTimeTrajectoriesStock,
+                                                             const size_array2_t& postEventIndicesStock,
                                                              state_vector_array2_t& sensitivityStateTrajectoriesStock,
                                                              input_vector_array2_t& sensitivityInputTrajectoriesStock) {
   if (eventTimeIndex < activeEventTimeBeginIndex_ || eventTimeIndex >= activeEventTimeEndIndex_) {
@@ -337,7 +337,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::propagateRolloutSensitivity(size_t workerIndex,
     }
 
     const size_t N = sensitivityTimeTrajectoriesStock[i].size();
-    const size_t NE = eventsPastTheEndIndecesStock[i].size();
+    const size_t NE = postEventIndicesStock[i].size();
 
     // set data for rollout sensitivity equation
     rolloutSensitivityEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
@@ -361,9 +361,9 @@ void GDDP<STATE_DIM, INPUT_DIM>::propagateRolloutSensitivity(size_t workerIndex,
     typename scalar_array_t::const_iterator beginTimeItr, endTimeItr;
     for (size_t j = 0; j <= NE; j++) {
       beginTimeItr = (j == 0) ? sensitivityTimeTrajectoriesStock[i].begin()
-                              : sensitivityTimeTrajectoriesStock[i].begin() + eventsPastTheEndIndecesStock[i][j - 1];
-      endTimeItr = (j == NE) ? sensitivityTimeTrajectoriesStock[i].end()
-                             : sensitivityTimeTrajectoriesStock[i].begin() + eventsPastTheEndIndecesStock[i][j];
+                              : sensitivityTimeTrajectoriesStock[i].begin() + postEventIndicesStock[i][j - 1];
+      endTimeItr =
+          (j == NE) ? sensitivityTimeTrajectoriesStock[i].end() : sensitivityTimeTrajectoriesStock[i].begin() + postEventIndicesStock[i][j];
 
       // if it should be integrated
       if (endTimeItr != beginTimeItr) {
@@ -432,8 +432,8 @@ void GDDP<STATE_DIM, INPUT_DIM>::approximateNominalLQPSensitivity2EventTime(cons
     }
 
     const size_t N = dcPtr_->nominalTimeTrajectoriesStock_[i].size();
-    const size_t NE = dcPtr_->nominalEventsPastTheEndIndecesStock_[i].size();
-    auto eventsPastTheEndItr = dcPtr_->nominalEventsPastTheEndIndecesStock_[i].begin();
+    const size_t NE = dcPtr_->nominalPostEventIndicesStock_[i].size();
+    auto postEventIndexItr = dcPtr_->nominalPostEventIndicesStock_[i].begin();
 
     // resizing
     nablaqTrajectoriesStock[i].resize(N);
@@ -456,16 +456,16 @@ void GDDP<STATE_DIM, INPUT_DIM>::approximateNominalLQPSensitivity2EventTime(cons
       nablaRvTrajectoriesStock[i][k] = Pm * sensitivityStateTrajectoriesStock[i][k] + Rm * sensitivityInputTrajectoriesStock[i][k];
 
       // terminal cost sensitivity to switching times
-      if (eventsPastTheEndItr != dcPtr_->nominalEventsPastTheEndIndecesStock_[i].end() && k + 1 == *eventsPastTheEndItr) {
-        const size_t eventIndex = eventsPastTheEndItr - dcPtr_->nominalEventsPastTheEndIndecesStock_[i].begin();
-        const size_t timeIndex = *eventsPastTheEndItr - 1;
+      if (postEventIndexItr != dcPtr_->nominalPostEventIndicesStock_[i].end() && k + 1 == *postEventIndexItr) {
+        const size_t eventIndex = postEventIndexItr - dcPtr_->nominalPostEventIndicesStock_[i].begin();
+        const size_t timeIndex = *postEventIndexItr - 1;
         const state_vector_t& Qv = dcPtr_->QvFinalStock_[i][eventIndex];
         const state_matrix_t& Qm = dcPtr_->QmFinalStock_[i][eventIndex];
 
         nablaqFinalStock[i][eventIndex] = Qv.transpose() * sensitivityStateTrajectoriesStock[i][timeIndex];
         nablaQvFinalStock[i][eventIndex] = Qm * sensitivityStateTrajectoriesStock[i][timeIndex];
 
-        eventsPastTheEndItr++;
+        postEventIndexItr++;
       }
     }  // end of k loop
   }    // end of i loop
@@ -762,7 +762,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(size_t workerIndex, const s
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GDDP<STATE_DIM, INPUT_DIM>::calculateLQSensitivityControllerForward(size_t workerIndex, const size_t& eventTimeIndex,
-                                                                         const std::vector<scalar_array_t>& timeTrajectoriesStock,
+                                                                         const scalar_array2_t& timeTrajectoriesStock,
                                                                          const state_vector_array2_t& nablaSvTrajectoriesStock,
                                                                          input_vector_array2_t& nablaLvTrajectoriesStock) {
   if (eventTimeIndex < activeEventTimeBeginIndex_ || eventTimeIndex >= activeEventTimeEndIndex_) {
@@ -812,7 +812,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateLQSensitivityControllerForward(size_t 
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GDDP<STATE_DIM, INPUT_DIM>::calculateBVPSensitivityControllerForward(size_t workerIndex, const size_t& eventTimeIndex,
-                                                                          const std::vector<scalar_array_t>& timeTrajectoriesStock,
+                                                                          const scalar_array2_t& timeTrajectoriesStock,
                                                                           const state_vector_array2_t& MvTrajectoriesStock,
                                                                           const state_vector_array2_t& MveTrajectoriesStock,
                                                                           input_vector_array2_t& LvTrajectoriesStock) {
@@ -920,11 +920,11 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateCostDerivative(size_t workerIndex, con
 
   for (size_t i = dcPtr_->initActivePartition_; i <= dcPtr_->finalActivePartition_; i++) {
     const size_t N = dcPtr_->nominalTimeTrajectoriesStock_[i].size();
-    const size_t NE = dcPtr_->nominalEventsPastTheEndIndecesStock_[i].size();
+    const size_t NE = dcPtr_->nominalPostEventIndicesStock_[i].size();
 
     for (size_t j = 0; j <= NE; j++) {
-      beginIndex = (j == 0) ? 0 : dcPtr_->nominalEventsPastTheEndIndecesStock_[i][j - 1];
-      endIndex = (j == NE) ? N : dcPtr_->nominalEventsPastTheEndIndecesStock_[i][j];
+      beginIndex = (j == 0) ? 0 : dcPtr_->nominalPostEventIndicesStock_[i][j - 1];
+      endIndex = (j == NE) ? N : dcPtr_->nominalPostEventIndicesStock_[i][j];
 
       // integrates the intermediate cost sensitivity using the trapezoidal approximation method
       if (beginIndex != endIndex) {
@@ -1008,7 +1008,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::runLQBasedMethod() {
 
         // calculate rollout sensitivity to event times
         propagateRolloutSensitivity(workerIndex, index, dcPtr_->optimizedControllersStock_, nablaLvTrajectoriesStockSet_[index],
-                                    dcPtr_->nominalTimeTrajectoriesStock_, dcPtr_->nominalEventsPastTheEndIndecesStock_,
+                                    dcPtr_->nominalTimeTrajectoriesStock_, dcPtr_->nominalPostEventIndicesStock_,
                                     sensitivityStateTrajectoriesStockSet_[index], sensitivityInputTrajectoriesStockSet_[index]);
 
         // approximate the nominal LQ sensitivity to switching times
@@ -1094,7 +1094,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::runSweepingBVPMethod() {
 
       // calculate rollout sensitivity to event times
       propagateRolloutSensitivity(workerIndex, index, dcPtr_->optimizedControllersStock_, LvTrajectoriesStockSet_[index],
-                                  dcPtr_->nominalTimeTrajectoriesStock_, dcPtr_->nominalEventsPastTheEndIndecesStock_,
+                                  dcPtr_->nominalTimeTrajectoriesStock_, dcPtr_->nominalPostEventIndicesStock_,
                                   sensitivityStateTrajectoriesStockSet_[index], sensitivityInputTrajectoriesStockSet_[index]);
 
       // calculate the cost function derivatives w.r.t. event times

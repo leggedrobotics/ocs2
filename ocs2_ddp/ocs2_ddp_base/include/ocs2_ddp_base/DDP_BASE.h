@@ -553,7 +553,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param lsInequalityConstraintISE
    * @param lsControllersStock
    * @param lsTimeTrajectoriesStock
-   * @param lsEventsPastTheEndIndecesStock
+   * @param lsPostEventIndicesStock
    * @param lsStateTrajectoriesStock
    * @param lsInputTrajectoriesStock
    */
@@ -561,7 +561,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                                 scalar_t& lsConstraint1MaxNorm, scalar_t& lsConstraint2ISE, scalar_t& lsConstraint2MaxNorm,
                                 scalar_t& lsInequalityConstraintPenalty, scalar_t& lsInequalityConstraintISE,
                                 linear_controller_array_t& lsControllersStock, scalar_array2_t& lsTimeTrajectoriesStock,
-                                size_array2_t& lsEventsPastTheEndIndecesStock, state_vector_array2_t& lsStateTrajectoriesStock,
+                                size_array2_t& lsPostEventIndicesStock, state_vector_array2_t& lsStateTrajectoriesStock,
                                 input_vector_array2_t& lsInputTrajectoriesStock);
 
   /**
@@ -702,8 +702,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   linear_controller_array_t nominalControllersStock_;
 
-  std::vector<scalar_array_t> nominalTimeTrajectoriesStock_;
-  std::vector<size_array_t> nominalEventsPastTheEndIndecesStock_;
+  scalar_array2_t nominalTimeTrajectoriesStock_;
+  size_array2_t nominalPostEventIndicesStock_;
   state_vector_array2_t nominalStateTrajectoriesStock_;
   input_vector_array2_t nominalInputTrajectoriesStock_;
 

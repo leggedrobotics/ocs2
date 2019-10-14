@@ -559,12 +559,12 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIn
       &BASE::BmTrajectoryStock_[partitionIndex], &BASE::qTrajectoryStock_[partitionIndex], &QvConstrainedTrajectoryStock_[partitionIndex],
       &QmConstrainedTrajectoryStock_[partitionIndex], &BASE::RvTrajectoryStock_[partitionIndex],
       &RmInvConstrainedCholTrajectoryStock_[partitionIndex], &BASE::PmTrajectoryStock_[partitionIndex],
-      &BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex], &BASE::qFinalStock_[partitionIndex],
-      &BASE::QvFinalStock_[partitionIndex], &BASE::QmFinalStock_[partitionIndex]);
+      &BASE::nominalPostEventIndicesStock_[partitionIndex], &BASE::qFinalStock_[partitionIndex], &BASE::QvFinalStock_[partitionIndex],
+      &BASE::QmFinalStock_[partitionIndex]);
 
   // Const partition containers
   const auto& nominalTimeTrajectory = BASE::nominalTimeTrajectoriesStock_[partitionIndex];
-  const auto& nominalEventsPastTheEndIndices = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex];
+  const auto& nominalEventsPastTheEndIndices = BASE::nominalPostEventIndicesStock_[partitionIndex];
 
   // Modified partition containers
   auto& SsNormalizedTime = BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex];

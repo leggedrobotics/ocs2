@@ -131,7 +131,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
     // very important, these are variables that are carried in between iterations
     nominalControllersStock_[i].clear();
     nominalTimeTrajectoriesStock_[i].clear();
-    nominalEventsPastTheEndIndecesStock_[i].clear();
+    nominalPostEventIndicesStock_[i].clear();
     nominalStateTrajectoriesStock_[i].clear();
     nominalInputTrajectoriesStock_[i].clear();
 
@@ -566,7 +566,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
     PmTrajectoryStock_[i].resize(N);
 
     // event times LQ variables
-    size_t NE = nominalEventsPastTheEndIndecesStock_[i].size();
+    size_t NE = nominalPostEventIndicesStock_[i].size();
 
     // final state equality constraints at event times
     nc2FinalStock_[i].resize(NE);
@@ -630,9 +630,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateUnconstrainedLQWorker(size_t wor
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateEventsLQWorker(size_t workerIndex, size_t i, size_t k, scalar_t stateConstraintPenalty) {
   // if a switch took place calculate switch related variables
-  size_t NE = nominalEventsPastTheEndIndecesStock_[i].size();
+  size_t NE = nominalPostEventIndicesStock_[i].size();
   for (size_t ke = 0; ke < NE; ke++) {
-    if (nominalEventsPastTheEndIndecesStock_[i][ke] == k + 1) {
+    if (nominalPostEventIndicesStock_[i][ke] == k + 1) {
       linearQuadraticApproximatorPtrStock_[workerIndex]->approximateUnconstrainedLQProblemAtEventTime(
           nominalTimeTrajectoriesStock_[i][k], nominalStateTrajectoriesStock_[i][k], nominalInputTrajectoriesStock_[i][k]);
 
@@ -673,12 +673,12 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateEventsLQWorker(size_t workerInde
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchBase(bool computeISEs) {
   // perform one rollout while the input correction for the type-1 constraint is considered.
-  avgTimeStepFP_ = rolloutTrajectory(nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalEventsPastTheEndIndecesStock_,
+  avgTimeStepFP_ = rolloutTrajectory(nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_,
                                      nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_);
 
   if (computeISEs) {
     // calculate constraint
-    calculateRolloutConstraints(nominalTimeTrajectoriesStock_, nominalEventsPastTheEndIndecesStock_, nominalStateTrajectoriesStock_,
+    calculateRolloutConstraints(nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_,
                                 nominalInputTrajectoriesStock_, nc1TrajectoriesStock_, EvTrajectoryStock_, nc2TrajectoriesStock_,
                                 HvTrajectoryStock_, ncIneqTrajectoriesStock_, hTrajectoryStock_, nc2FinalStock_, HvFinalStock_);
     // calculate constraint type-1 ISE and maximum norm
@@ -701,7 +701,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchBase(bool computeISEs) {
   }
 
   // calculates cost
-  calculateRolloutCost(nominalTimeTrajectoriesStock_, nominalEventsPastTheEndIndecesStock_, nominalStateTrajectoriesStock_,
+  calculateRolloutCost(nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_,
                        nominalInputTrajectoriesStock_, nominalConstraint2ISE_, nominalInequalityConstraintPenalty_, nc2FinalStock_,
                        HvFinalStock_, nominalTotalCost_);
 
@@ -727,12 +727,14 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchBase(bool computeISEs) {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(
-    size_t workerIndex, scalar_t learningRate, scalar_t& lsTotalCost, scalar_t& lsConstraint1ISE, scalar_t& lsConstraint1MaxNorm,
-    scalar_t& lsConstraint2ISE, scalar_t& lsConstraint2MaxNorm, scalar_t& lsInequalityConstraintPenalty,
-    scalar_t& lsInequalityConstraintISE, linear_controller_array_t& lsControllersStock, scalar_array2_t& lsTimeTrajectoriesStock,
-    size_array2_t& lsEventsPastTheEndIndecesStock, state_vector_array2_t& lsStateTrajectoriesStock,
-    input_vector_array2_t& lsInputTrajectoriesStock) {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t workerIndex, scalar_t learningRate, scalar_t& lsTotalCost,
+                                                      scalar_t& lsConstraint1ISE, scalar_t& lsConstraint1MaxNorm,
+                                                      scalar_t& lsConstraint2ISE, scalar_t& lsConstraint2MaxNorm,
+                                                      scalar_t& lsInequalityConstraintPenalty, scalar_t& lsInequalityConstraintISE,
+                                                      linear_controller_array_t& lsControllersStock,
+                                                      scalar_array2_t& lsTimeTrajectoriesStock, size_array2_t& lsPostEventIndicesStock,
+                                                      state_vector_array2_t& lsStateTrajectoriesStock,
+                                                      input_vector_array2_t& lsInputTrajectoriesStock) {
   // modifying uff by local increments
   for (size_t i = 0; i < numPartitions_; i++) {
     for (size_t k = 0; k < lsControllersStock[i].timeStamp_.size(); k++) {
@@ -742,7 +744,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(
 
   try {
     // perform a rollout
-    scalar_t avgTimeStepFP = rolloutTrajectory(lsControllersStock, lsTimeTrajectoriesStock, lsEventsPastTheEndIndecesStock,
+    scalar_t avgTimeStepFP = rolloutTrajectory(lsControllersStock, lsTimeTrajectoriesStock, lsPostEventIndicesStock,
                                                lsStateTrajectoriesStock, lsInputTrajectoriesStock, workerIndex);
 
     // calculate rollout constraints
@@ -757,10 +759,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(
 
     if (lsComputeISEs_) {
       // calculate rollout constraints
-      calculateRolloutConstraints(lsTimeTrajectoriesStock, lsEventsPastTheEndIndecesStock, lsStateTrajectoriesStock,
-                                  lsInputTrajectoriesStock, lsNc1TrajectoriesStock, lsEvTrajectoryStock, lsNc2TrajectoriesStock,
-                                  lsHvTrajectoryStock, lsNcIneqTrajectoriesStock, lshTrajectoryStock, lsNc2FinalStock, lsHvFinalStock,
-                                  workerIndex);
+      calculateRolloutConstraints(lsTimeTrajectoriesStock, lsPostEventIndicesStock, lsStateTrajectoriesStock, lsInputTrajectoriesStock,
+                                  lsNc1TrajectoriesStock, lsEvTrajectoryStock, lsNc2TrajectoriesStock, lsHvTrajectoryStock,
+                                  lsNcIneqTrajectoriesStock, lshTrajectoryStock, lsNc2FinalStock, lsHvFinalStock, workerIndex);
       // calculate constraint type-1 ISE and maximum norm
       lsConstraint1MaxNorm = calculateConstraintISE(lsTimeTrajectoriesStock, lsNc1TrajectoriesStock, lsEvTrajectoryStock, lsConstraint1ISE);
       // calculates type-2 constraint ISE and maximum norm
@@ -776,7 +777,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(
     }
 
     // calculate rollout cost
-    calculateRolloutCost(lsTimeTrajectoriesStock, lsEventsPastTheEndIndecesStock, lsStateTrajectoriesStock, lsInputTrajectoriesStock,
+    calculateRolloutCost(lsTimeTrajectoriesStock, lsPostEventIndicesStock, lsStateTrajectoriesStock, lsInputTrajectoriesStock,
                          lsConstraint2ISE, lsInequalityConstraintPenalty, lsNc2FinalStock, lsHvFinalStock, lsTotalCost, workerIndex);
 
     // display
@@ -981,7 +982,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateControllerUpdateMaxNorm(scalar_t& 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::cacheNominalTrajectories() {
   cachedTimeTrajectoriesStock_.swap(nominalTimeTrajectoriesStock_);
-  cachedPostEventIndicesStock_.swap(nominalEventsPastTheEndIndecesStock_);
+  cachedPostEventIndicesStock_.swap(nominalPostEventIndicesStock_);
   cachedStateTrajectoriesStock_.swap(nominalStateTrajectoriesStock_);
   cachedInputTrajectoriesStock_.swap(nominalInputTrajectoriesStock_);
 }
@@ -994,7 +995,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::correctInitcachedNominalTrajectories() {
   // for each partition
   for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
     if (cachedTimeTrajectoriesStock_[i].empty()) {
-      cachedPostEventIndicesStock_[i] = nominalEventsPastTheEndIndecesStock_[i];
+      cachedPostEventIndicesStock_[i] = nominalPostEventIndicesStock_[i];
       cachedTimeTrajectoriesStock_[i] = nominalTimeTrajectoriesStock_[i];
       cachedStateTrajectoriesStock_[i] = nominalStateTrajectoriesStock_[i];
       cachedInputTrajectoriesStock_[i] = nominalInputTrajectoriesStock_[i];
@@ -1006,7 +1007,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::correctInitcachedNominalTrajectories() {
 
       // post event index
       const int sizeBeforeCorrection = cachedTimeTrajectoriesStock_[i].size();
-      for (auto ind : nominalEventsPastTheEndIndecesStock_[i]) {
+      for (auto ind : nominalPostEventIndicesStock_[i]) {
         if (ind > timeSegment.first) {
           cachedPostEventIndicesStock_[i].push_back(ind - timeSegment.first + sizeBeforeCorrection);
         }
@@ -1042,9 +1043,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::correctInitcachedNominalTrajectories() {
 
     // check for the event time indices
     if (ddpSettings_.debugCaching_) {
-      auto postEvent = nominalEventsPastTheEndIndecesStock_[i].rbegin();
+      auto postEvent = nominalPostEventIndicesStock_[i].rbegin();
       auto cachedPostEvent = cachedPostEventIndicesStock_[i].rbegin();
-      for (; postEvent != nominalEventsPastTheEndIndecesStock_[i].rend(); ++postEvent) {
+      for (; postEvent != nominalPostEventIndicesStock_[i].rend(); ++postEvent) {
         // nominal trajectory should have less event since it spans a shorter time period
         if (nominalTimeTrajectoriesStock_[i][*postEvent] != cachedTimeTrajectoriesStock_[i][*cachedPostEvent]) {
           throw std::runtime_error("Cached post event indexes are in correct.");
@@ -1383,7 +1384,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   nominalControllersStock_.resize(numPartitions);
 
   nominalTimeTrajectoriesStock_.resize(numPartitions);
-  nominalEventsPastTheEndIndecesStock_.resize(numPartitions);
+  nominalPostEventIndicesStock_.resize(numPartitions);
   nominalStateTrajectoriesStock_.resize(numPartitions);
   nominalInputTrajectoriesStock_.resize(numPartitions);
 
@@ -1456,7 +1457,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
 
   // initial controller rollout
   forwardPassTimer_.startTimer();
-  avgTimeStepFP_ = rolloutTrajectory(nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalEventsPastTheEndIndecesStock_,
+  avgTimeStepFP_ = rolloutTrajectory(nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_,
                                      nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_);
   forwardPassTimer_.endTimer();
 
@@ -1483,7 +1484,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
       nominalConstraint2ISE_ = nominalConstraint2MaxNorm_ = 0.0;
     }
     // calculate rollout cost
-    calculateRolloutCost(nominalTimeTrajectoriesStock_, nominalEventsPastTheEndIndecesStock_, nominalStateTrajectoriesStock_,
+    calculateRolloutCost(nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_,
                          nominalInputTrajectoriesStock_, nominalTotalCost_);
   } else {
     nominalTotalCost_ = 0.0;

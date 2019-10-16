@@ -35,7 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
 #include <memory>
-#include <type_traits>
 #include <vector>
 
 #include <ocs2_core/misc/Lookup.h>
@@ -107,33 +106,6 @@ class LinearInterpolation {
   }
 
   /**
-   * Finds the time segment which constrains the given time. When duplicate values exist the lower range is selected s.t. ( ]
-   * Example: t = [0.0, 1.0, 1.0, 2.0]
-   * when querying tk = 1.0, the range (0.0, 1.0] is selected
-   *
-   * @param [in]  enquiryTime: The enquiry time for interpolation.
-   * @param [in] timeStampPtr: Pointer to vector of times
-   * @return {index, alpha}: The greatest smaller time stamp index and the interpolation coefficient [1, 0]
-   */
-  static std::pair<int, scalar_t> timeSegment(scalar_t enquiryTime, const std::vector<scalar_t>* timeStampPtr) {
-    if (timeStampPtr != nullptr) {
-      if (timeStampPtr->size() > 1) {
-        // Normal interpolation case, time vector has at least two elements
-        return getIndexAlpha(*timeStampPtr, enquiryTime);
-      } else if (timeStampPtr->size() == 1) {
-        // Time vector has only 1 element -> Constant function
-        return {0, scalar_t(0.0)};
-      } else {
-        // Time empty -> zero function
-        return {0, scalar_t(0.0)};
-      }
-    } else {
-      // No time set -> zero function
-      return {0, scalar_t(0.0)};
-    }
-  }
-
-  /**
    * Linearly interpolates at the given time. When duplicate values exist the lower range is selected s.t. ( ]
    * Example: t = [0.0, 1.0, 1.0, 2.0]
    * when querying tk = 1.0, the range (0.0, 1.0] is selected
@@ -146,7 +118,7 @@ class LinearInterpolation {
    */
   static std::pair<int, scalar_t> interpolate(scalar_t enquiryTime, Data_T& enquiryData, const std::vector<scalar_t>* timeStampPtr,
                                               const std::vector<Data_T, Alloc>* dataPtr) {
-    const auto indexAlpha = getIndexAlpha(*timeStampPtr, enquiryTime);
+    const auto indexAlpha = timeSegment(enquiryTime, timeStampPtr);
     interpolate(indexAlpha, enquiryData, dataPtr);
     return indexAlpha;
   }
@@ -173,7 +145,7 @@ class LinearInterpolation {
    * @param [in] dataPtr: Pointer to vector of data
    */
   static void interpolate(std::pair<int, scalar_t> indexAlpha, Data_T& enquiryData, const std::vector<Data_T, Alloc>* dataPtr) {
-    if (dataPtr != nullptr) {
+    if (dataPtr) {
       if (dataPtr->size() > 1) {
         // Normal interpolation case
         int index = indexAlpha.first;
@@ -206,34 +178,38 @@ class LinearInterpolation {
    */
   void interpolate(std::pair<int, scalar_t> indexAlpha, Data_T& enquiryData) const { interpolate(indexAlpha, enquiryData, dataPtr_); }
 
- private:
   /**
    * Get the interval index and interpolation coefficient alpha.
    * Alpha = 1 at the start of the interval and alpha = 0 at the end.
    *
-   * @param [in] timeArray: interpolation time array.
    * @param [in] enquiryTime: The enquiry time for interpolation.
+   * @param [in] timeArrayPtr: interpolation time array.
    * @return std::pair<int, double> : {index, alpha}
    */
-  static std::pair<int, double> getIndexAlpha(const std::vector<scalar_t>& timeArray, scalar_t enquiryTime) {
-    int index = lookup::findIntervalInTimeArray(timeArray, enquiryTime);
-    auto lastInterval = static_cast<int>(timeArray.size() - 1);
+  static std::pair<int, double> timeSegment(scalar_t enquiryTime, const std::vector<scalar_t>* timeArrayPtr) {
+    // corner cases (no time set OR single time element)
+    if (!timeArrayPtr || timeArrayPtr->size() <= 1) {
+      return {0, scalar_t(1.0)};
+    }
+
+    int index = lookup::findIntervalInTimeArray(*timeArrayPtr, enquiryTime);
+    auto lastInterval = static_cast<int>(timeArrayPtr->size() - 1);
     if (index >= 0) {
       if (index < lastInterval) {
         // interpolation : 0 <= index < lastInterval
-        scalar_t alpha = (enquiryTime - timeArray[index + 1]) / (timeArray[index] - timeArray[index + 1]);
+        scalar_t alpha = (enquiryTime - (*timeArrayPtr)[index + 1]) / ((*timeArrayPtr)[index] - (*timeArrayPtr)[index + 1]);
         return {index, alpha};
       } else {
         // upper bound : index >= lastInterval
-        // Catch corner case of having timeArray.size() = 1 with max
-        return {std::max(lastInterval - 1, 0), 0.0};
+        return {std::max(lastInterval - 1, 0), scalar_t(0.0)};
       }
     } else {
       // lower bound : index < 0
-      return {0, 1.0};
+      return {0, scalar_t(1.0)};
     }
   }
 
+ private:
   const std::vector<scalar_t>* timeStampPtr_;
   const std::vector<Data_T, Alloc>* dataPtr_;
 };
@@ -242,7 +218,7 @@ class LinearInterpolation {
 template <>
 void LinearInterpolation<double>::interpolate(std::pair<int, scalar_t> indexAlpha, double& enquiryData,
                                               const std::vector<double>* dataPtr) {
-  if (dataPtr != nullptr) {
+  if (dataPtr) {
     if (dataPtr->size() > 1) {
       // Normal interpolation case
       int index = indexAlpha.first;

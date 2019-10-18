@@ -4,4 +4,3 @@
 
 // Explicit instantiation
 template class ocs2::CppAdInterface<double>;
-template class ocs2::CppAdInterface<float>;

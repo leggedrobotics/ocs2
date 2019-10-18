@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef NLP_SETTINGS_OCS2_H_
-#define NLP_SETTINGS_OCS2_H_
+#pragma once
 
 #include <iostream>
 
@@ -37,36 +36,32 @@ namespace ocs2 {
 /**
  * This structure contains the settings for the gradient-descent algorithm.
  */
-class NLP_Settings
-{
-public:
-	NLP_Settings()
-	: displayInfo_(true)
-	, maxIterations_(1000)
-	, minRelCost_(1e-6)
-	, maxLearningRate_(1.0)
-	, minLearningRate_(0.05)
-	, useAscendingLineSearchNLP_(true)
-	{}
+class NLP_Settings {
+ public:
+  NLP_Settings()
+      : displayInfo_(true),
+        maxIterations_(1000),
+        minRelCost_(1e-6),
+        maxLearningRate_(1.0),
+        minLearningRate_(0.05),
+        useAscendingLineSearchNLP_(true) {}
 
-	/** This value determines to display the log output.*/
-	bool displayInfo_;
-	/** This value determines the maximum number of algorithm iterations.*/
-	size_t maxIterations_;
-	/** This value determines the termination condition based on the minimum relative changes of the cost.*/
-	double minRelCost_;
-	/** This value determines the maximum step size for the line search scheme.*/
-	double maxLearningRate_;
-	/** This value determines the minimum step size for the line search scheme.*/
-	double minLearningRate_;
-	/**
-	 * This value determines the line search scheme to be used. \n
-	 * - \b Ascending: The step size eventually increases from the minimum value to the maximum. \n
-	 * - \b Descending: The step size eventually decreases from the minimum value to the maximum.
-	 * */
-	bool useAscendingLineSearchNLP_;
+  /** This value determines to display the log output.*/
+  bool displayInfo_;
+  /** This value determines the maximum number of algorithm iterations.*/
+  size_t maxIterations_;
+  /** This value determines the termination condition based on the minimum relative changes of the cost.*/
+  double minRelCost_;
+  /** This value determines the maximum step size for the line search scheme.*/
+  double maxLearningRate_;
+  /** This value determines the minimum step size for the line search scheme.*/
+  double minLearningRate_;
+  /**
+   * This value determines the line search scheme to be used. \n
+   * - \b Ascending: The step size eventually increases from the minimum value to the maximum. \n
+   * - \b Descending: The step size eventually decreases from the minimum value to the maximum.
+   * */
+  bool useAscendingLineSearchNLP_;
 };
 
-}  // end of ocs2 namespace
-
-#endif /* NLP_SETTINGS_OCS2_H_ */
+}  // namespace ocs2

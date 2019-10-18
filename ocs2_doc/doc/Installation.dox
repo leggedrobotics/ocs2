@@ -3,7 +3,7 @@
 @page ocs2_doc_installation Installation
 
 \section ocs2_doc_requirements Requirements
-This library is written in C++11. It is tested under Ubuntu 14.04 with
+This library is written in C++11. It is tested under Ubuntu 18.04 with
 library versions as provided in the package sources.
 
 \subsection ocs2_doc_dep Dependencies
@@ -13,26 +13,30 @@ library versions as provided in the package sources.
  - catkin
  - <a href="https://www.gnu.org/software/glpk/">GLPK</a> 
  	 \code{.sh}
-	sudo apt-get install libglpk-dev
+	sudo apt install libglpk-dev
 	\endcode
- - catkin-pkg package for python 2 and 3. Install with `pip install catkin-pkg`
+ - `catkin-pkg` package for python 2 (and 3, if python3 bindings are required). Install with `pip install catkin-pkg`
+
+\subsection ocs2_doc_dep_optinal Optional Dependencies
+ - [Raisim](https://github.com/leggedrobotics/raisimLib) simulator can be used as a provider for rollouts.
+ - [RaisimOgre](https://github.com/leggedrobotics/raisimOgre) Visualizer for Raisim. Can be used for debugging purposes to see if conversions between OCS2 and Raisim are correct.
 
 \section ocs2_doc_install Installation
 \subsection ocs2_doc_build_lib Build the library
 
 \code{.sh}
 cd catkin_ws/src
-git clone git@bitbucket.org:adrlab/ocs2.git
+git clone git@bitbucket.org:leggedrobotics/ocs2.git
 catkin build -DCMAKE_BUILD_TYPE=RelWithDebInfo
 
 \endcode
 
 
 \subsection ocs2_doc_build_doc Build this Documentation
-
+Assuming python catkin tools are installed, run the following command:
 \code{.sh}
-catkin build ocs2_doc --make-args doc
+catkin build ocs2_doc
 \endcode
-This will build the documentation and open it in your browser.
+This will build the documentation and place it in the `ocs2_doc/doc/html` folder.
 
 */

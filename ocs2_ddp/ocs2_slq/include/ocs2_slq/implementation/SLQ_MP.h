@@ -35,14 +35,14 @@ namespace ocs2 {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-SLQ_MP<STATE_DIM, INPUT_DIM>::SLQ_MP(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+SLQ_MP<STATE_DIM, INPUT_DIM>::SLQ_MP(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                      const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                      const operating_trajectories_base_t* operatingTrajectoriesPtr,
                                      const SLQ_Settings& settings /*= SLQ_Settings()*/,
                                      std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
                                      const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
-    : BASE(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings,
+    : BASE(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings,
            std::move(logicRulesPtr), heuristicsFunctionPtr),
       workerTask_(IDLE),
       subsystemProcessed_(0),
@@ -59,8 +59,10 @@ SLQ_MP<STATE_DIM, INPUT_DIM>::SLQ_MP(const controlled_system_base_t* systemDynam
 template <size_t STATE_DIM, size_t INPUT_DIM>
 SLQ_MP<STATE_DIM, INPUT_DIM>::~SLQ_MP() {
   workersActive_ = false;
-  workerTask_ = SHUTDOWN;
-
+  {
+    std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+    workerTask_ = SHUTDOWN;
+  }
   workerWakeUpCondition_.notify_all();
 
   if (BASE::ddpSettings_.debugPrintMT_) {
@@ -103,11 +105,19 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
     return;
   }
 
-  subsystemProcessed_ = 0;  // not required for linesearch, but assign to not let it dangle around
+  {
+    std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+    subsystemProcessed_ = 0;  // not required for linesearch, but assign to not let it dangle around
+  }
+
   alphaProcessed_.clear();
   alphaTaken_ = 0;
   alphaBestFound_ = false;
-  lsWorkerCompleted_ = 0;
+
+  {
+    std::lock_guard<std::mutex> waitLock(alphaBestFoundMutex_);
+    lsWorkerCompleted_ = 0;
+  }
 
   auto maxNumOfLineSearches = static_cast<size_t>(std::log(BASE::ddpSettings_.minLearningRate_ / BASE::ddpSettings_.maxLearningRate_) /
                                                       std::log(BASE::ddpSettings_.lineSearchContractionRate_) +
@@ -122,22 +132,25 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
     std::cerr << "[MT]: Waking up workers for line search " << std::endl;
   }
 
-  workerTask_ = LINE_SEARCH;
-  std::unique_lock<std::mutex> lock(workerWakeUpMutex_);
+  {
+    std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+    workerTask_ = LINE_SEARCH;
+  }
   workerWakeUpCondition_.notify_all();
-  lock.unlock();
 
   if (BASE::ddpSettings_.debugPrintMT_) {
     BASE::printString("[MT]: Will sleep now until we have results ");
   }
 
-  std::unique_lock<std::mutex> waitLock(alphaBestFoundMutex_);
-  while (lsWorkerCompleted_.load() < BASE::ddpSettings_.nThreads_) {
-    alphaBestFoundCondition_.wait(waitLock);
+  {
+    std::unique_lock<std::mutex> waitLock(alphaBestFoundMutex_);
+    alphaBestFoundCondition_.wait(waitLock, [&] { return lsWorkerCompleted_ >= BASE::ddpSettings_.nThreads_; });
   }
-  waitLock.unlock();
 
-  workerTask_ = IDLE;
+  {
+    std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+    workerTask_ = IDLE;
+  }
 
   // revitalize all integrator
   event_handler_t::deactivateKillIntegration();
@@ -159,7 +172,10 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQ_MP<STATE_DIM, INPUT_DIM>::launchWorkerThreads() {
   workersActive_ = true;
-  workerTask_ = IDLE;
+  {
+    std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+    workerTask_ = IDLE;
+  }
 
   workerThreads_.clear();
   for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
@@ -206,12 +222,12 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId) {
       }
 
       // sleep until the state is not IDLE any more and we have a different process ID than before
-      std::unique_lock<std::mutex> waitLock(workerWakeUpMutex_);
-      while (workerTask_ == IDLE ||
-             (uniqueProcessID == generateUniqueProcessID(BASE::iteration_, workerTask_.load(), subsystemProcessed_.load()))) {
-        workerWakeUpCondition_.wait(waitLock);
+      {
+        std::unique_lock<std::mutex> waitLock(workerWakeUpMutex_);
+        workerWakeUpCondition_.wait(waitLock, [&] {
+          return (workerTask_ != IDLE) && (uniqueProcessID != generateUniqueProcessID(BASE::iteration_, workerTask_, subsystemProcessed_));
+        });
       }
-      waitLock.unlock();
 
       subsystemProcessed_local = subsystemProcessed_.load();
       workerTask_local = workerTask_.load();
@@ -273,14 +289,27 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId) {
           return;
         }
       }
-    } catch (...) {
-      std::cerr << "Caught runtime error while doing thread work (workerTask_local " << workerTask_local << ")" << std::endl;
+    } catch (const std::exception& e) {
+      std::cerr << "Caught exception while doing thread work (workerTask_local " << workerTask_local << ")\n"
+                << "\twhat(): " << e.what() << "\n"
+                << std::endl;
       {
-        std::lock_guard<std::mutex> lock(workerExceptionMutex_);
+        std::lock(workerExceptionMutex_, riccatiSolverBarrierMutex_);
+        std::lock_guard<std::mutex> lk1(workerExceptionMutex_, std::adopt_lock);
+        std::lock_guard<std::mutex> lk2(riccatiSolverBarrierMutex_, std::adopt_lock);
         workerException_ = std::current_exception();
       }
 
-      std::lock_guard<std::mutex> lock(riccatiSolverBarrierMutex_);
+      riccatiSolverCompletedCondition_.notify_one();
+    } catch (...) {
+      std::cerr << "Caught unknown exception while doing thread work (workerTask_local " << workerTask_local << ")" << std::endl;
+      {
+        std::lock(workerExceptionMutex_, riccatiSolverBarrierMutex_);
+        std::lock_guard<std::mutex> lk1(workerExceptionMutex_, std::adopt_lock);
+        std::lock_guard<std::mutex> lk2(riccatiSolverBarrierMutex_, std::adopt_lock);
+        workerException_ = std::current_exception();
+      }
+
       riccatiSolverCompletedCondition_.notify_one();
     }
 
@@ -295,7 +324,10 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId) {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQ_MP<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex) {
-  subsystemProcessed_ = partitionIndex;
+  {
+    std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+    subsystemProcessed_ = partitionIndex;
+  }
 
   size_t N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
 
@@ -306,13 +338,18 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex)
     }
 
     kTaken_approx_[partitionIndex] = 0;
-    kCompleted_approx_[partitionIndex] = 0;
+
+    {
+      std::lock_guard<std::mutex> lck(kCompletedMutex_);
+      kCompleted_[partitionIndex] = 0;
+    }
 
     // activates all threads' APPROXIMATE_LQ task which in turn runs executeApproximatePartitionLQWorker routine
-    workerTask_ = APPROXIMATE_LQ;
-    std::unique_lock<std::mutex> lock(workerWakeUpMutex_);
+    {
+      std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+      workerTask_ = APPROXIMATE_LQ;
+    }
     workerWakeUpCondition_.notify_all();
-    lock.unlock();
 
     // display
     if (BASE::ddpSettings_.debugPrintMT_) {
@@ -320,14 +357,16 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex)
     }
 
     // wait until all threads finish their task
-    std::unique_lock<std::mutex> waitLock(kCompletedMutex_);
-    while (kCompleted_approx_[partitionIndex].load() < N) {
-      kCompletedCondition_.wait(waitLock);
+    {
+      std::unique_lock<std::mutex> waitLock(kCompletedMutex_);
+      kCompletedCondition_.wait(waitLock, [&] { return kCompleted_[partitionIndex] >= N; });
     }
-    waitLock.unlock();
 
     // reset threads to no task mode
-    workerTask_ = IDLE;
+    {
+      std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+      workerTask_ = IDLE;
+    }
 
     // display
     if (BASE::ddpSettings_.debugPrintMT_) {
@@ -362,16 +401,17 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t th
       BASE::approximateLQWorker(threadId, partitionIndex, k);
 
       // increment the number of completed nodes
-      kCompleted_local = ++kCompleted_approx_[partitionIndex];
+      {
+        std::lock_guard<std::mutex> lck(kCompletedMutex_);
+        kCompleted_local = ++kCompleted_[partitionIndex];
+      }
     }
 
   }  // enf of while loop
 
   // all k's are already covered. If all the nodes are completed notify and return, else just return.
   if (kCompleted_local >= N) {
-    std::unique_lock<std::mutex> lock(kCompletedMutex_);
     kCompletedCondition_.notify_all();
-    lock.unlock();
 
     // display
     if (BASE::ddpSettings_.debugPrintMT_) {
@@ -395,7 +435,10 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t th
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQ_MP<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitionIndex) {
-  subsystemProcessed_ = partitionIndex;
+  {
+    std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+    subsystemProcessed_ = partitionIndex;
+  }
 
   size_t N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
 
@@ -406,12 +449,16 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partition
     }
 
     kTaken_ctrl_[partitionIndex] = 0;
-    kCompleted_ctrl_[partitionIndex] = 0;
+    {
+      std::lock_guard<std::mutex> lck(kCompletedMutex_);
+      kCompleted_[partitionIndex] = 0;
+    }
 
-    workerTask_ = CALCULATE_CONTROLLER;
-    std::unique_lock<std::mutex> lock(workerWakeUpMutex_);
+    {
+      std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+      workerTask_ = CALCULATE_CONTROLLER;
+    }
     workerWakeUpCondition_.notify_all();
-    lock.unlock();
 
     // display
     if (BASE::ddpSettings_.debugPrintMT_) {
@@ -419,14 +466,16 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partition
     }
 
     // wait until all threads finish their task
-    std::unique_lock<std::mutex> waitLock(kCompletedMutex_);
-    while (kCompleted_ctrl_[partitionIndex].load() < N) {
-      kCompletedCondition_.wait(waitLock);
+    {
+      std::unique_lock<std::mutex> waitLock(kCompletedMutex_);
+      kCompletedCondition_.wait(waitLock, [&] { return kCompleted_[partitionIndex] >= N; });
     }
-    waitLock.unlock();
 
     // reset threads to no task mode
-    workerTask_ = IDLE;
+    {
+      std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+      workerTask_ = IDLE;
+    }
 
     // display
     if (BASE::ddpSettings_.debugPrintMT_) {
@@ -460,16 +509,17 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(size_t th
       BASE::calculateControllerWorker(threadId, partitionIndex, k);
 
       // increment the number of completed nodes
-      kCompleted_local = ++kCompleted_ctrl_[partitionIndex];
+      {
+        std::lock_guard<std::mutex> lck(kCompletedMutex_);
+        kCompleted_local = ++kCompleted_[partitionIndex];
+      }
     }
 
   }  // enf of while loop
 
   // all k's are already covered. If all the nodes are completed notify and return, else just return.
   if (kCompleted_local >= N) {
-    std::unique_lock<std::mutex> lock(kCompletedMutex_);
     kCompletedCondition_.notify_all();
-    lock.unlock();
 
     // display
     if (BASE::ddpSettings_.debugPrintMT_) {
@@ -634,20 +684,21 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::executeLineSearchWorker(size_t threadId) {
 
   }  // end of while loop
 
-  // add to the number of threads that finished their tasks
-  lsWorkerCompleted_++;
-
-  if (BASE::ddpSettings_.debugPrintMT_) {
-    BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: Leaving executeLineSearchWorker ");
-  }
-
-  if (lsWorkerCompleted_.load() >= BASE::ddpSettings_.nThreads_) {
-    std::unique_lock<std::mutex> lock(alphaBestFoundMutex_);
-    alphaBestFoundCondition_.notify_all();
-    lock.unlock();
+  {
+    std::lock_guard<std::mutex> waitLock(alphaBestFoundMutex_);
+    // add to the number of threads that finished their tasks
+    lsWorkerCompleted_++;
 
     if (BASE::ddpSettings_.debugPrintMT_) {
-      BASE::printString("[MT]: NOTIFYING LS WORKERs since all workers are now done.");
+      BASE::printString("[MT]: [Thread " + std::to_string(threadId) + "]: Leaving executeLineSearchWorker ");
+    }
+
+    if (lsWorkerCompleted_ >= BASE::ddpSettings_.nThreads_) {
+      alphaBestFoundCondition_.notify_all();
+
+      if (BASE::ddpSettings_.debugPrintMT_) {
+        BASE::printString("[MT]: NOTIFYING LS WORKERs since all workers are now done.");
+      }
     }
   }
 }
@@ -658,7 +709,10 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::executeLineSearchWorker(size_t threadId) {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename SLQ_MP<STATE_DIM, INPUT_DIM>::scalar_t SLQ_MP<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(
     const state_matrix_t& SmFinal, const state_vector_t& SvFinal, const eigen_scalar_t& sFinal) {
-  numSubsystemsProcessed_ = 0;
+  {
+    std::lock_guard<std::mutex> waitLock(riccatiSolverBarrierMutex_);
+    numSubsystemsProcessed_ = 0;
+  }
 
   BASE::SmFinalStock_[BASE::finalActivePartition_] = SmFinal;
   BASE::SvFinalStock_[BASE::finalActivePartition_] = SvFinal;
@@ -709,22 +763,26 @@ typename SLQ_MP<STATE_DIM, INPUT_DIM>::scalar_t SLQ_MP<STATE_DIM, INPUT_DIM>::so
       BASE::printString("[MT]: Waking up workers to do RiccatiSolver Task.");
     }
 
-    workerTask_ = SOLVE_RICCATI;
-    std::unique_lock<std::mutex> lock(workerWakeUpMutex_);
+    {
+      std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+      workerTask_ = SOLVE_RICCATI;
+    }
     workerWakeUpCondition_.notify_all();
-    lock.unlock();
 
     if (BASE::ddpSettings_.debugPrintMT_) {
       BASE::printString("[MT]: Will wait now until workers have done RiccatiSolver Task.");
     }
 
-    std::unique_lock<std::mutex> waitLock(riccatiSolverBarrierMutex_);
-    while (numSubsystemsProcessed_.load() < BASE::numPartitions_ && !workerException_) {
-      riccatiSolverCompletedCondition_.wait(waitLock);
+    {
+      std::unique_lock<std::mutex> waitLock(riccatiSolverBarrierMutex_);
+      riccatiSolverCompletedCondition_.wait(waitLock,
+                                            [&] { return (numSubsystemsProcessed_ >= BASE::numPartitions_) || workerException_; });
     }
-    waitLock.unlock();
 
-    workerTask_ = IDLE;
+    {
+      std::lock_guard<std::mutex> waitLock(workerWakeUpMutex_);
+      workerTask_ = IDLE;
+    }
   }
 
   if (BASE::ddpSettings_.debugPrintMT_) {
@@ -773,7 +831,10 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::executeRiccatiSolver(size_t threadId) {
       // unlock data
       dataWriteLock.unlock();
 
-      numSubsystemsProcessed_++;
+      {
+        std::lock_guard<std::mutex> waitLock(riccatiSolverBarrierMutex_);
+        numSubsystemsProcessed_++;
+      }
 
       continue;
     }
@@ -815,14 +876,14 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::executeRiccatiSolver(size_t threadId) {
     // unlock data
     dataWriteLock.unlock();
 
-    numSubsystemsProcessed_++;
+    {
+      std::lock_guard<std::mutex> waitLock(riccatiSolverBarrierMutex_);
+      numSubsystemsProcessed_++;
+    }
   }
 
   // notify the main thread so that it stops waiting
-  //	std::unique_lock<std::mutex> lock(riccatiSolverBarrierNotifyMutex_);
-  std::unique_lock<std::mutex> lock(riccatiSolverBarrierMutex_);
   riccatiSolverCompletedCondition_.notify_one();
-  lock.unlock();
 }
 
 /******************************************************************************************************/
@@ -898,7 +959,9 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::runIteration() {
   Eigen::setNbThreads(1);
 
   {
-    std::lock_guard<std::mutex> lock(workerExceptionMutex_);
+    std::lock(workerExceptionMutex_, riccatiSolverBarrierMutex_);
+    std::lock_guard<std::mutex> lk1(workerExceptionMutex_, std::adopt_lock);
+    std::lock_guard<std::mutex> lk2(riccatiSolverBarrierMutex_, std::adopt_lock);
     workerException_ = nullptr;
   }
 

@@ -1,3 +1,32 @@
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
 #pragma once
 
 #include <Eigen/Dense>
@@ -7,13 +36,16 @@
 #include <memory>
 #include <mutex>
 
-#include <ocs2_comm_interfaces/SystemObservation.h>
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/control/ControllerBase.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_core/dynamics/ControlledSystemBase.h>
+#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
+#include <ocs2_oc/oc_data/PrimalSolution.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
+
+#include "ocs2_comm_interfaces/CommandData.h"
+#include "ocs2_comm_interfaces/SystemObservation.h"
 
 namespace ocs2 {
 
@@ -39,22 +71,13 @@ class MRT_BASE {
   using input_vector_array_t = typename dim_t::input_vector_array_t;
 
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
-  using state_linear_interpolation_t = EigenLinearInterpolation<typename dim_t::state_vector_t>;
+  using rollout_base_t = RolloutBase<STATE_DIM, INPUT_DIM>;
 
-  struct CommandData {
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    SystemObservation<STATE_DIM, INPUT_DIM> mpcInitObservation_;
-    CostDesiredTrajectories<scalar_t> mpcCostDesiredTrajectories_;
-  };
+  using state_linear_interpolation_t = EigenLinearInterpolation<state_vector_t>;
+  using input_linear_interpolation_t = EigenLinearInterpolation<input_vector_t>;
 
-  struct PolicyData {
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    scalar_array_t mpcTimeTrajectory_;
-    state_vector_array_t mpcStateTrajectory_;
-    std::unique_ptr<controller_t> mpcController_;
-    scalar_array_t eventTimes_;
-    size_array_t subsystemsSequence_;
-  };
+  using primal_solution_t = PrimalSolution<STATE_DIM, INPUT_DIM>;
+  using command_data_t = CommandData<STATE_DIM, INPUT_DIM>;
 
   /**
    * @brief MRT_BASE constructor
@@ -96,21 +119,19 @@ class MRT_BASE {
    *
    * @return a constant reference to command data.
    */
-  const CommandData& getCommand() const { return *currentCommand_; };
+  const command_data_t& getCommand() const { return *currentCommand_; };
 
   /**
    * Gets a reference to current optimized policy.
    * @return constant reference to the policy data.
    */
-  const PolicyData& getPolicy() const { return *currentPolicy_; };
+  const primal_solution_t& getPolicy() const { return *currentPrimalSolution_; };
 
   /**
-   * Initializes rollout class to roll out a feedback policy
-   *
-   * @param [in] controlledSystemBase: System to roll out.
-   * @param [in] rolloutSettings
+   * @brief Initializes rollout class to roll out a feedback policy
+   * @param rolloutPtr: The rollout object to be used
    */
-  void initRollout(const ControlledSystemBase<STATE_DIM, INPUT_DIM>& controlledSystemBase, const Rollout_Settings& rolloutSettings);
+  void initRollout(const rollout_base_t* rolloutPtr);
 
   /**
    * @brief Evaluates the controller
@@ -153,6 +174,12 @@ class MRT_BASE {
    */
   void setLogicRules(std::shared_ptr<HybridLogicRules> logicRules);
 
+  /**
+   * @brief rolloutSet: Whether or not the internal rollout object has been set
+   * @return True if a rollout object is available.
+   */
+  bool rolloutSet() const { return rolloutPtr_.get(); }
+
  protected:
   /**
    * The updatePolicy() method will call this method which allows the user to
@@ -165,15 +192,15 @@ class MRT_BASE {
    * policy messages on the data buffer.
    *
    */
-  virtual void modifyPolicy(const CommandData& command, PolicyData& policy) {}
+  virtual void modifyPolicy(const command_data_t& command, primal_solution_t& primalSolution) {}
 
   /**
    * This method can be used to modify the policy on the buffer without inputting the main thread.
    *
    * @param [in] commandBuffer: buffered command data.
-   * @param policyBuffer: policy message on the buffer.
+   * @param primalSolutionBuffer: The primal problem's solution on the buffer.
    */
-  virtual void modifyBufferPolicy(const CommandData& commandBuffer, PolicyData& policyBuffer) {}
+  virtual void modifyBufferPolicy(const command_data_t& commandBuffer, primal_solution_t& primalSolutionBuffer) {}
 
   /**
    * Constructs a partitioningTimes vector with 2 elements: minimum of the already
@@ -185,15 +212,6 @@ class MRT_BASE {
    */
   void partitioningTimesUpdate(scalar_t time, scalar_array_t& partitioningTimes) const;
 
-  /**
-   * Checks the data buffer for an update of the MPC policy. If a new policy
-   * is available on the buffer this method will load it to the in-use policy.
-   * This implementation method assumes that the policyBufferMutex_ is locked.
-   *
-   * @return True if the policy is updated.
-   */
-  virtual bool updatePolicyImpl();
-
  protected:
   // flags on state of the class
   std::atomic_bool policyReceivedEver_;
@@ -202,24 +220,25 @@ class MRT_BASE {
   // variables related to the MPC output
   std::atomic_bool policyUpdated_;  //! Whether the policy was updated by MPC (i.e., MPC succeeded)
   bool policyUpdatedBuffer_;        //! Whether the policy in buffer was upated by MPC (i.e., MPC succeeded)
-  std::unique_ptr<PolicyData> currentPolicy_;
-  std::unique_ptr<PolicyData> policyBuffer_;
-  std::unique_ptr<CommandData> currentCommand_;
-  std::unique_ptr<CommandData> commandBuffer_;
+  std::unique_ptr<primal_solution_t> currentPrimalSolution_;
+  std::unique_ptr<primal_solution_t> primalSolutionBuffer_;
+  std::unique_ptr<command_data_t> currentCommand_;
+  std::unique_ptr<command_data_t> commandBuffer_;
 
   // thread safety
   mutable std::mutex policyBufferMutex_;  // for policy variables WITH suffix (*Buffer_)
 
   // variables needed for policy evaluation
   std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
-  std::unique_ptr<RolloutBase<STATE_DIM, INPUT_DIM>> rolloutPtr_;
+  std::unique_ptr<rollout_base_t> rolloutPtr_;
   HybridLogicRulesMachine::Ptr logicMachinePtr_;
 
-  // Varia
+  // variables
   scalar_array_t partitioningTimes_;
   scalar_array_t partitioningTimesBuffer_;
   SystemObservation<STATE_DIM, INPUT_DIM> initPlanObservation_;  //! The initial observation of the first plan ever received
   state_linear_interpolation_t mpcLinInterpolateState_;
+  input_linear_interpolation_t mpcLinInterpolateInput_;
 };
 
 }  // namespace ocs2

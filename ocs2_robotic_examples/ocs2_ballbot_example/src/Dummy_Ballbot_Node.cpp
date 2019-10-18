@@ -27,13 +27,13 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
+
 #include "ocs2_ballbot_example/BallbotInterface.h"
 #include "ocs2_ballbot_example/definitions.h"
-#include "ocs2_ballbot_example/ros_comm/MRT_ROS_Ballbot.h"
 #include "ocs2_ballbot_example/ros_comm/MRT_ROS_Dummy_Ballbot.h"
 
 using namespace ocs2;
-using namespace ballbot;
 
 int main(int argc, char** argv) {
   // task file
@@ -43,26 +43,22 @@ int main(int argc, char** argv) {
   std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
   // ballbotInterface
-  BallbotInterface ballbotInterface(taskFileFolderName);
-
-  using mrt_t = MRT_ROS_Ballbot;
-  using mrt_ptr_t = mrt_t::Ptr;
-  using system_observation_t = mrt_t::system_observation_t;
-
-  mrt_ptr_t mrtPtr(new mrt_t("ballbot"));
+  ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
 
   // Dummy ballbot
-  MRT_ROS_Dummy_Ballbot dummyBallbot(mrtPtr, ballbotInterface.mpcSettings().mrtDesiredFrequency_,
-                                     ballbotInterface.mpcSettings().mpcDesiredFrequency_, &ballbotInterface.getDynamics());
+  MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> mrt("ballbot");
+  mrt.initRollout(&ballbotInterface.getRollout());
+  ballbot::MRT_ROS_Dummy_Ballbot dummyBallbot(mrt, ballbotInterface.mpcSettings().mrtDesiredFrequency_,
+                                              ballbotInterface.mpcSettings().mpcDesiredFrequency_);
 
   dummyBallbot.launchNodes(argc, argv);
 
   // initial state
-  MRT_ROS_Dummy_Ballbot::system_observation_t initObservation;
+  ballbot::MRT_ROS_Dummy_Ballbot::system_observation_t initObservation;
   ballbotInterface.getInitialState(initObservation.state());
 
   // initial command
-  MRT_ROS_Dummy_Ballbot::cost_desired_trajectories_t initCostDesiredTrajectories;
+  ballbot::MRT_ROS_Dummy_Ballbot::cost_desired_trajectories_t initCostDesiredTrajectories;
   initCostDesiredTrajectories.desiredTimeTrajectory().push_back(initObservation.time());
   initCostDesiredTrajectories.desiredStateTrajectory().push_back(initObservation.state());
   initCostDesiredTrajectories.desiredInputTrajectory().push_back(initObservation.input());

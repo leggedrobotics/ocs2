@@ -27,10 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef MRT_ROS_DUMMY_LOOP_OCS2_H_
-#define MRT_ROS_DUMMY_LOOP_OCS2_H_
+#pragma once
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
+#include "ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h"
 
 namespace ocs2 {
 
@@ -45,8 +44,9 @@ class MRT_ROS_Dummy_Loop {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using mrt_t = ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
-  using mrt_ptr_t = typename mrt_t::Ptr;
+  using mrt_t = MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
+  using primal_solution_t = typename mrt_t::primal_solution_t;
+  using command_data_t = typename mrt_t::command_data_t;
 
   using controller_t = typename mrt_t::controller_t;
   using scalar_t = typename mrt_t::scalar_t;
@@ -59,26 +59,19 @@ class MRT_ROS_Dummy_Loop {
   using input_state_matrix_t = typename mrt_t::input_state_matrix_t;
   using input_state_matrix_array_t = typename mrt_t::input_state_matrix_array_t;
 
-  using system_observation_t = typename mrt_t::system_observation_t;
   using cost_desired_trajectories_t = typename mrt_t::cost_desired_trajectories_t;
-  using commandData_t = typename mrt_t::CommandData;
-  using policyData_t = typename mrt_t::PolicyData;
-
-  using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
+  using system_observation_t = typename mrt_t::system_observation_t;
 
   /**
    * Constructor.
    *
-   * @param [in] mrtPtr
+   * @param [in] mrt: The underlying MRT class to be used. If MRT contains a rollout object, the dummy will roll out
+   * the received controller using the MRT::rolloutPolicy() method instead of just sending back a planned state.
    * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz. This should always set to a positive number.
    * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
    * will be simulated to run by this frequency. Note that this might not be the MPC's real-time frequency.
-   * @param [in] systemPtr: Optional pointer to the system dynamics. If provided, the dummy will roll out the
-   * received controller using these dynamics instead of just sending back a planned state.
-   * @param [in] rolloutSettings settings to use when dummy rolls out the received controller
    */
-  MRT_ROS_Dummy_Loop(const mrt_ptr_t& mrtPtr, const scalar_t& mrtDesiredFrequency = 100, const scalar_t& mpcDesiredFrequency = -1,
-                     const controlled_system_base_t* systemPtr = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings());
+  MRT_ROS_Dummy_Loop(mrt_t& mrt, scalar_t mrtDesiredFrequency = 100, scalar_t mpcDesiredFrequency = -1);
 
   /**
    * Destructor.
@@ -121,19 +114,18 @@ class MRT_ROS_Dummy_Loop {
    * Visualizes the current observation.
    *
    * @param [in] observation: The current observation.
+   * @param [in] primalSolution: The primal problem's solution.
    * @param [in] command: Contains costdesired trajectory and init observation.
-   * @param [in] policy: Contains the optimized mpc policy.
    */
-  virtual void publishVisualizer(const system_observation_t& observation, const commandData_t& command, const policyData_t& policy) {}
+  virtual void publishVisualizer(const system_observation_t& observation, const primal_solution_t& primalSolution, const command_data_t& command) {}
 
  protected:
   /*
    * Variables
    */
-  mrt_ptr_t mrtPtr_;
+  mrt_t& mrt_;
   scalar_t mrtDesiredFrequency_;
   scalar_t mpcDesiredFrequency_;
-  std::unique_ptr<controlled_system_base_t> systemPtr_;
 
   bool realtimeLoop_;
 
@@ -143,5 +135,3 @@ class MRT_ROS_Dummy_Loop {
 }  // namespace ocs2
 
 #include "implementation/MRT_ROS_Dummy_Loop.h"
-
-#endif /* MRT_ROS_DUMMY_LOOP_OCS2_H_ */

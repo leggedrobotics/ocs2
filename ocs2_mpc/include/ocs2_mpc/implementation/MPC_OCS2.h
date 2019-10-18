@@ -35,13 +35,15 @@ namespace ocs2 {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_OCS2<STATE_DIM, INPUT_DIM>::MPC_OCS2()
 
-    : BASE(), gddpPtr_(new gddp_t()), workerOCS2(&MPC_OCS2::runOCS2, this), activateOCS2_(false), terminateOCS2_(false) {}
+    : BASE(), gddpPtr_(new gddp_t()), activateOCS2_(false), terminateOCS2_(false) {
+  workerOCS2_ = std::thread(&MPC_OCS2::runOCS2, this);
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_OCS2<STATE_DIM, INPUT_DIM>::MPC_OCS2(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+MPC_OCS2<STATE_DIM, INPUT_DIM>::MPC_OCS2(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                          const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                          const operating_trajectories_base_t* operatingTrajectoriesPtr,
                                          const scalar_array_t& partitioningTimes, const SLQ_Settings& slqSettings /*= SLQ_Settings()*/,
@@ -51,13 +53,14 @@ MPC_OCS2<STATE_DIM, INPUT_DIM>::MPC_OCS2(const controlled_system_base_t* systemD
                                          const mode_sequence_template_t* modeSequenceTemplatePtr /*= nullptr*/,
                                          const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
-    : BASE(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, partitioningTimes,
+    : BASE(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, partitioningTimes,
            slqSettings, mpcSettings, logicRulesPtr, modeSequenceTemplatePtr, heuristicsFunctionPtr),
       gddpPtr_(new gddp_t(gddpSettings)),
-      workerOCS2(&MPC_OCS2::runOCS2, this),
       activateOCS2_(false),
       terminateOCS2_(false),
-      slqDataCollectorPtr_(new slq_data_collector_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr)) {}
+      slqDataCollectorPtr_(new slq_data_collector_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr)) {
+  workerOCS2_ = std::thread(&MPC_OCS2::runOCS2, this);
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -66,7 +69,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_OCS2<STATE_DIM, INPUT_DIM>::~MPC_OCS2() {
   terminateOCS2_ = true;
   ocs2Synchronization_.notify_all();
-  workerOCS2.join();
+  workerOCS2_.join();
 }
 
 /******************************************************************************************************/
@@ -76,6 +79,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_OCS2<STATE_DIM, INPUT_DIM>::reset() {
   BASE::reset();
 
+  std::lock_guard<std::mutex> ocs2Lock(dataCollectorMutex_);
   activateOCS2_ = false;
   eventTimesOptimized_.clear();
   subsystemsSequenceOptimized_.clear();
@@ -94,12 +98,12 @@ void MPC_OCS2<STATE_DIM, INPUT_DIM>::rewind() {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_OCS2<STATE_DIM, INPUT_DIM>::runOCS2() {
-  while (terminateOCS2_ == false) {
+  while (!terminateOCS2_) {
     std::unique_lock<std::mutex> ocs2Lock(dataCollectorMutex_);
     ocs2Synchronization_.wait(ocs2Lock, [&] { return activateOCS2_ || terminateOCS2_; });
 
     // exit loop
-    if (terminateOCS2_ == true) {
+    if (terminateOCS2_) {
       break;
     }
 

@@ -27,12 +27,12 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SLQ_DATACOLLECTOR_OCS2_H_
-#define SLQ_DATACOLLECTOR_OCS2_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <vector>
 
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_slq/SLQ_BASE.h>
 
 namespace ocs2 {
@@ -99,10 +99,10 @@ class SLQ_DataCollector {
   using constraint1_vector_array3_t = std::vector<constraint1_vector_array2_t, Eigen::aligned_allocator<constraint1_vector_array2_t>>;
   using constraint2_vector_array3_t = std::vector<constraint2_vector_array2_t, Eigen::aligned_allocator<constraint2_vector_array2_t>>;
 
-  using controlled_system_base_t = typename slq_t::controlled_system_base_t;
   using derivatives_base_t = typename slq_t::derivatives_base_t;
   using constraint_base_t = typename slq_t::constraint_base_t;
   using cost_function_base_t = typename slq_t::cost_function_base_t;
+  using rollout_base_t = typename slq_t::rollout_base_t;
 
   /**
    * Default constructor.
@@ -112,9 +112,12 @@ class SLQ_DataCollector {
   /**
    * Constructor.
    *
-   * @param [in] systemDynamicsPtr: The system dynamics.
+   * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
+   * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
+   * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
+   * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
    */
-  SLQ_DataCollector(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+  SLQ_DataCollector(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                     const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr);
 
   /**
@@ -265,7 +268,7 @@ class SLQ_DataCollector {
                                                  input_vector_array3_t& EvDevEventTimesProjectedTrajectoriesStockSet);
 
  private:
-  std::unique_ptr<controlled_system_base_t> systemDynamicsPtr_;
+  std::unique_ptr<rollout_base_t> rolloutPtr_;
   std::unique_ptr<derivatives_base_t> systemDerivativesPtr_;
   std::unique_ptr<constraint_base_t> systemConstraintsPtr_;
   std::unique_ptr<cost_function_base_t> costFunctionPtr_;
@@ -274,5 +277,3 @@ class SLQ_DataCollector {
 }  // namespace ocs2
 
 #include "implementation/SLQ_DataCollector.h"
-
-#endif /* SLQ_DATACOLLECTOR_OCS2_H_ */

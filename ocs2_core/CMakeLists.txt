@@ -29,7 +29,7 @@ catkin_package(
   LIBRARIES
     ${PROJECT_NAME}_logic
     ${PROJECT_NAME}_cppad_interface
-
+    ${PROJECT_NAME}_misc
   DEPENDS 
     Boost
 )
@@ -59,6 +59,10 @@ add_library(${PROJECT_NAME}_cppad_interface
   src/automatic_differentation/CppAdSparsity.cpp
 )
 
+add_library(${PROJECT_NAME}_misc
+  src/misc/LinearAlgebra.cpp
+)
+
 add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp
 )
@@ -84,7 +88,7 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS ${PROJECT_NAME}_logic ${PROJECT_NAME}_cppad_interface
+install(TARGETS ${PROJECT_NAME}_logic ${PROJECT_NAME}_cppad_interface ${PROJECT_NAME}_misc
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -231,6 +235,7 @@ catkin_add_gtest(test_LinearAlgebra
   test/misc/testLinearAlgebra.cpp
 )
 target_link_libraries(test_LinearAlgebra
+  ${PROJECT_NAME}_misc
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
 )

@@ -27,16 +27,16 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef ILQR_SETTINGS_OCS2_H_
-#define ILQR_SETTINGS_OCS2_H_
+#pragma once
 
 #include <boost/property_tree/info_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <iostream>
 #include <string>
 
+#include <ocs2_core/Dimensions.h>
+
 #include <ocs2_ddp_base/DDP_Settings.h>
-#include <ocs2_oc/rollout/Rollout_Settings.h>
 
 namespace ocs2 {
 
@@ -49,8 +49,7 @@ class ILQR_Settings {
    * Default constructor.
    */
   ILQR_Settings()
-      : ddpSettings_(),
-        rolloutSettings_()
+      : ddpSettings_()
 
   {}
 
@@ -84,9 +83,6 @@ class ILQR_Settings {
   /** This structure contains the settings for DDP algorithms. */
   DDP_Settings ddpSettings_;
 
-  /** This structure contains the settings for forward rollout algorithms. */
-  Rollout_Settings rolloutSettings_;
-
 };  // end of ILQR_Settings class
 
 inline void ILQR_Settings::loadSettings(const std::string& filename, const std::string& fieldName /*= ilqr*/, bool verbose /*= true*/) {
@@ -94,8 +90,6 @@ inline void ILQR_Settings::loadSettings(const std::string& filename, const std::
   boost::property_tree::read_info(filename, pt);
 
   ddpSettings_.loadSettings(filename, fieldName + ".ddp", verbose);
-
-  rolloutSettings_.loadSettings(filename, fieldName + ".rollout", verbose);
 
   if (verbose) {
     std::cerr << std::endl << " #### ILQR Settings: " << std::endl;
@@ -108,5 +102,3 @@ inline void ILQR_Settings::loadSettings(const std::string& filename, const std::
 }
 
 }  // namespace ocs2
-
-#endif /* ILQR_SETTINGS_OCS2_H_ */

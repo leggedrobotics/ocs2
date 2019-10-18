@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef ILQR_MT_OCS2_H_
-#define ILQR_MT_OCS2_H_
+#pragma once
 
 #include <atomic>
 #include <condition_variable>
@@ -108,11 +107,11 @@ class ILQR_MT : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::linear_controller_t;
 
   using typename BASE::constraint_base_t;
-  using typename BASE::controlled_system_base_t;
   using typename BASE::cost_function_base_t;
   using typename BASE::derivatives_base_t;
   using typename BASE::event_handler_t;
   using typename BASE::operating_trajectories_base_t;
+  using typename BASE::rollout_base_t;
 
   /**
    * worker state enum
@@ -127,7 +126,7 @@ class ILQR_MT : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Constructor
    *
-   * @param [in] systemDynamicsPtr: The system dynamics which possibly includes some subsystems.
+   * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
    * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
    * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
@@ -137,10 +136,10 @@ class ILQR_MT : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
-  ILQR_MT(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
-          const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
-          const operating_trajectories_base_t* operatingTrajectoriesPtr, const ILQR_Settings& settings = ILQR_Settings(),
-          std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr, const cost_function_base_t* heuristicsFunctionPtr = nullptr);
+  ILQR_MT(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
+          const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
+          const ILQR_Settings& settings = ILQR_Settings(), std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
+          const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
   /**
    * Default destructor.
@@ -272,23 +271,19 @@ class ILQR_MT : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
   std::condition_variable alphaBestFoundCondition_;
 
   std::array<std::atomic_size_t, 100> kTaken_approx_;
-  std::array<std::atomic_size_t, 100> kCompleted_approx_;
+  std::array<std::atomic_size_t, 100> kCompleted_;
   std::array<std::atomic_size_t, 100> kTaken_ctrl_;
-  std::array<std::atomic_size_t, 100> kCompleted_ctrl_;
 
   // parallel Riccati solver
   std::array<std::atomic_bool, 100> subsystemsDone_;
   std::array<std::atomic_bool, 100> subsystemsProcessing_;
   std::atomic_int numSubsystemsProcessed_;
-  std::mutex riccatiSolverMutex_;
   std::mutex riccatiSolverBarrierMutex_;
-  std::mutex riccatiSolverBarrierNotifyMutex_;
   std::mutex riccatiSolverDataMutex_;
   std::condition_variable riccatiSolverCompletedCondition_;
   std::vector<int> startingIndicesRiccatiWorker_;
   std::vector<int> endingIndicesRiccatiWorker_;
 
-  size_t alphaMax_;
   size_t alphaExpBest_;
   size_t alphaExpMax_;
   scalar_t baselineTotalCost_;
@@ -301,5 +296,3 @@ class ILQR_MT : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
 }  // namespace ocs2
 
 #include "implementation/ILQR_MT.h"
-
-#endif /* ILQR_MT_H_ */

@@ -5,10 +5,16 @@
 
 namespace ocs2 {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 PythonInterface<STATE_DIM, INPUT_DIM>::PythonInterface(bool async)
     : run_mpc_async_(async), run_mpc_done_(false), run_mpc_requested_(false), shutdown_requested_(false) {}
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 PythonInterface<STATE_DIM, INPUT_DIM>::~PythonInterface() {
   if (run_mpc_async_) {
@@ -22,6 +28,9 @@ PythonInterface<STATE_DIM, INPUT_DIM>::~PythonInterface() {
   }
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void PythonInterface<STATE_DIM, INPUT_DIM>::reset(cost_desired_trajectories_t targetTrajectories) {
   targetTrajectories_ = std::move(targetTrajectories);
@@ -29,6 +38,9 @@ void PythonInterface<STATE_DIM, INPUT_DIM>::reset(cost_desired_trajectories_t ta
   cost_->setCostDesiredTrajectories(targetTrajectories_);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void PythonInterface<STATE_DIM, INPUT_DIM>::init(const std::string& taskFileFolder) {
   initRobotInterface(taskFileFolder);
@@ -47,6 +59,9 @@ void PythonInterface<STATE_DIM, INPUT_DIM>::init(const std::string& taskFileFold
   }
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void PythonInterface<STATE_DIM, INPUT_DIM>::setObservation(double t, Eigen::Ref<const state_vector_t> x) {
   SystemObservation<STATE_DIM, INPUT_DIM> observation;
@@ -55,6 +70,9 @@ void PythonInterface<STATE_DIM, INPUT_DIM>::setObservation(double t, Eigen::Ref<
   mpcMrtInterface_->setCurrentObservation(observation);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void PythonInterface<STATE_DIM, INPUT_DIM>::setTargetTrajectories(cost_desired_trajectories_t targetTrajectories) {
   targetTrajectories_ = std::move(targetTrajectories);
@@ -62,6 +80,9 @@ void PythonInterface<STATE_DIM, INPUT_DIM>::setTargetTrajectories(cost_desired_t
   mpcMrtInterface_->setTargetTrajectories(targetTrajectories_);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void PythonInterface<STATE_DIM, INPUT_DIM>::advanceMpc() {
   if (run_mpc_async_) {
@@ -72,6 +93,9 @@ void PythonInterface<STATE_DIM, INPUT_DIM>::advanceMpc() {
   }
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void PythonInterface<STATE_DIM, INPUT_DIM>::runMpcAsync() {
   std::cerr << "runMpcAsync started in thread " << std::this_thread::get_id() << std::endl;
@@ -89,6 +113,9 @@ void PythonInterface<STATE_DIM, INPUT_DIM>::runMpcAsync() {
   }
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void PythonInterface<STATE_DIM, INPUT_DIM>::getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u) {
   if (run_mpc_async_) {
@@ -101,11 +128,14 @@ void PythonInterface<STATE_DIM, INPUT_DIM>::getMpcSolution(scalar_array_t& t, st
 
   mpcMrtInterface_->updatePolicy();
 
-  t = mpcMrtInterface_->getPolicy().mpcTimeTrajectory_;
-  x = mpcMrtInterface_->getPolicy().mpcStateTrajectory_;
-  u = mpcMrtInterface_->getMpcInputTrajectory();
+  t = mpcMrtInterface_->getPolicy().timeTrajectory_;
+  x = mpcMrtInterface_->getPolicy().stateTrajectory_;
+  u = mpcMrtInterface_->getPolicy().inputTrajectory_;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename PythonInterface<STATE_DIM, INPUT_DIM>::input_state_matrix_t PythonInterface<STATE_DIM, INPUT_DIM>::getLinearFeedbackGain(
     scalar_t time) {
@@ -114,6 +144,9 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::input_state_matrix_t PythonInter
   return K;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename PythonInterface<STATE_DIM, INPUT_DIM>::state_vector_t PythonInterface<STATE_DIM, INPUT_DIM>::computeFlowMap(
     double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u) {
@@ -122,12 +155,18 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::state_vector_t PythonInterface<S
   return dxdt;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void PythonInterface<STATE_DIM, INPUT_DIM>::setFlowMapDerivativeStateAndControl(double t, Eigen::Ref<const state_vector_t> x,
                                                                                 Eigen::Ref<const input_vector_t> u) {
   dynamicsDerivatives_->setCurrentStateAndControl(t, x, u);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename PythonInterface<STATE_DIM, INPUT_DIM>::state_matrix_t PythonInterface<STATE_DIM, INPUT_DIM>::computeFlowMapDerivativeState() {
   state_matrix_t A;
@@ -135,6 +174,9 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::state_matrix_t PythonInterface<S
   return A;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename PythonInterface<STATE_DIM, INPUT_DIM>::state_input_matrix_t
 PythonInterface<STATE_DIM, INPUT_DIM>::computeFlowMapDerivativeInput() {
@@ -143,6 +185,9 @@ PythonInterface<STATE_DIM, INPUT_DIM>::computeFlowMapDerivativeInput() {
   return B;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 double PythonInterface<STATE_DIM, INPUT_DIM>::getIntermediateCost(double t, Eigen::Ref<const state_vector_t> x,
                                                                   Eigen::Ref<const input_vector_t> u) {
@@ -163,6 +208,9 @@ double PythonInterface<STATE_DIM, INPUT_DIM>::getIntermediateCost(double t, Eige
   return L + L_penalty;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename PythonInterface<STATE_DIM, INPUT_DIM>::state_vector_t PythonInterface<STATE_DIM, INPUT_DIM>::getIntermediateCostDerivativeState(
     double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u) {
@@ -187,6 +235,9 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::state_vector_t PythonInterface<S
   return dLdx + dLdx_penalty;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename PythonInterface<STATE_DIM, INPUT_DIM>::input_vector_t PythonInterface<STATE_DIM, INPUT_DIM>::getIntermediateCostDerivativeInput(
     double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u) {
@@ -211,6 +262,9 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::input_vector_t PythonInterface<S
   return dLdu + dLdu_penalty;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename PythonInterface<STATE_DIM, INPUT_DIM>::input_matrix_t
 PythonInterface<STATE_DIM, INPUT_DIM>::getIntermediateCostSecondDerivativeInput(double t, Eigen::Ref<const state_vector_t> x,
@@ -238,11 +292,17 @@ PythonInterface<STATE_DIM, INPUT_DIM>::getIntermediateCostSecondDerivativeInput(
   return ddLduu + ddLduu_penalty;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 double PythonInterface<STATE_DIM, INPUT_DIM>::getValueFunction(double t, Eigen::Ref<const state_vector_t> x) {
   return mpcMrtInterface_->getValueFunction(t, x);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename PythonInterface<STATE_DIM, INPUT_DIM>::state_vector_t PythonInterface<STATE_DIM, INPUT_DIM>::getValueFunctionStateDerivative(
     double t, Eigen::Ref<const state_vector_t> x) {
@@ -251,6 +311,9 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::state_vector_t PythonInterface<S
   return dVdx;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename PythonInterface<STATE_DIM, INPUT_DIM>::dynamic_vector_t PythonInterface<STATE_DIM, INPUT_DIM>::getStateInputConstraint(
     double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u) {
@@ -263,6 +326,9 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::dynamic_vector_t PythonInterface
   return e.head(constraints_->numStateInputConstraint(t));
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename PythonInterface<STATE_DIM, INPUT_DIM>::dynamic_matrix_t
 PythonInterface<STATE_DIM, INPUT_DIM>::getStateInputConstraintDerivativeControl(double t, Eigen::Ref<const state_vector_t> x,
@@ -276,6 +342,9 @@ PythonInterface<STATE_DIM, INPUT_DIM>::getStateInputConstraintDerivativeControl(
   return D.topRows(constraints_->numStateInputConstraint(t));
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename PythonInterface<STATE_DIM, INPUT_DIM>::dynamic_vector_t PythonInterface<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(
     double t, Eigen::Ref<const state_vector_t> x) {

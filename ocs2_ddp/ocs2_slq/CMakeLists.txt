@@ -2,14 +2,14 @@ cmake_minimum_required(VERSION 2.8.3)
 project(ocs2_slq)
 
 ## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS 
-  cmake_modules 
+find_package(catkin REQUIRED COMPONENTS
+  cmake_modules
   ocs2_core
   ocs2_ddp_base
 )
-find_package(Boost REQUIRED COMPONENTS 
+find_package(Boost REQUIRED COMPONENTS
   system
-  filesystem 
+  filesystem
 )
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
@@ -24,13 +24,15 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-err
 ###################################
 
 catkin_package(
-  INCLUDE_DIRS 
+  INCLUDE_DIRS
     include
     ${EIGEN3_INCLUDE_DIRS}
-  CATKIN_DEPENDS 
+  LIBRARIES
+    ${PROJECT_NAME}_dynamic_size
+  CATKIN_DEPENDS
     ocs2_core
     ocs2_ddp_base
-  DEPENDS 
+  DEPENDS
     Boost
 )
 
@@ -45,6 +47,13 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+add_library(${PROJECT_NAME}_dynamic_size
+  src/SequentialRiccatiEquationsNormalized.cpp
+)
+target_link_libraries(${PROJECT_NAME}_dynamic_size
+  ${catkin_LIBRARIES}
+)
+
 add_executable(${PROJECT_NAME}_lintTarget
         src/lintTarget.cpp
         )
@@ -56,7 +65,7 @@ find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target " ${PROJECT_NAME}_lintTarget)
   add_clang_tooling(
-    TARGETS ${PROJECT_NAME}_lintTarget
+    TARGETS ${PROJECT_NAME}_lintTarget ${PROJECT_NAME}_dynamic_size
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
@@ -67,8 +76,15 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
+install(TARGETS ${PROJECT_NAME}_dynamic_size
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
 install(DIRECTORY include/${PROJECT_NAME}/
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
 
 #############
 ## Testing ##
@@ -80,7 +96,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_slq
 
-catkin_add_gtest(exp0_slq_test 
+catkin_add_gtest(exp0_slq_test
   test/exp0_slq_test.cpp
 )
 target_link_libraries(exp0_slq_test
@@ -88,7 +104,7 @@ target_link_libraries(exp0_slq_test
   ${Boost_LIBRARIES}
 )
 
-catkin_add_gtest(exp1_slq_test 
+catkin_add_gtest(exp1_slq_test
   test/exp1_slq_test.cpp
 )
 target_link_libraries(exp1_slq_test
@@ -96,7 +112,7 @@ target_link_libraries(exp1_slq_test
   ${Boost_LIBRARIES}
 )
 
-catkin_add_gtest(exp2_slq_test 
+catkin_add_gtest(exp2_slq_test
   test/exp2_slq_test.cpp
 )
 target_link_libraries(exp2_slq_test
@@ -105,6 +121,13 @@ target_link_libraries(exp2_slq_test
 )
 
 catkin_add_gtest(testRiccatiEquations
-        test/testRiccatiEquations.cpp
-        )
+  test/testRiccatiEquations.cpp
+)
+target_link_libraries(testRiccatiEquations
+  ${catkin_LIBRARIES}
+)
 
+target_link_libraries(testRiccatiEquations
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}_dynamic_size
+)

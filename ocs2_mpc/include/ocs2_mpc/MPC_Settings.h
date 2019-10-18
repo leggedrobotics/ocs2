@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef MPC_SETTINGS_OCS2_H_
-#define MPC_SETTINGS_OCS2_H_
+#pragma once
 
 #include <boost/property_tree/info_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -57,16 +56,10 @@ class MPC_Settings {
         coldStart_(false),
         recedingHorizon_(true),
         blockwiseMovingHorizon_(false),
-        forwardSimulationTime_(0)  // [ms]
-        ,
-        useFeedbackPolicy_(false),
         useParallelRiccatiSolver_(false),
-        rosMsgTimeWindow_(1e+8),
-        adaptiveRosMsgTimeWindow_(false),
-        mpcDesiredFrequency_(-1)  // [Hz]
-        ,
-        mrtDesiredFrequency_(100)  // [Hz]
-        ,
+        solutionTimeWindow_(-1),    // [s]
+        mpcDesiredFrequency_(-1),   // [Hz]
+        mrtDesiredFrequency_(100),  // [Hz]
         maxTimeStep_(1e-3) {}
 
   /**
@@ -104,18 +97,11 @@ class MPC_Settings {
   /** If true the final time of the MPC will increase by the length of a time partition
    * instead of commonly used scheme where the final time is gradual increased. */
   bool blockwiseMovingHorizon_;
-  /** in [ms] */
-  int forwardSimulationTime_;
-  /** Use either the optimized control policy (true) or the optimized state-input trajectory
-   * (false). */
-  bool useFeedbackPolicy_;
   /** If set true, the parallel Riccati solver will be used from the first iteration of SLQ
    * solver. */
   bool useParallelRiccatiSolver_;
-  /** The time window for broadcasting the optimized output (controller and trajectory). */
-  double rosMsgTimeWindow_;
-  /** Use an adaptive scheme to estimate the time window for broadcasting the optimized output. */
-  bool adaptiveRosMsgTimeWindow_;
+  /** The time window for retrieving the optimized output (controller and trajectory). */
+  double solutionTimeWindow_;
   /**
    * MPC loop frequency in Hz. This setting is only used in Dummy_Loop for testing.
    * If set to a positive number, MPC loop of test will be simulated to run by this
@@ -253,28 +239,6 @@ inline void MPC_Settings::loadSettings(const std::string& filename, bool verbose
   }
 
   try {
-    forwardSimulationTime_ = pt.get<int>("mpc.forwardSimulationTime");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'forwardSimulationTime' ...... " << forwardSimulationTime_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'forwardSimulationTime' ...... " << forwardSimulationTime_ << " (default)" << std::endl;
-    }
-  }
-
-  try {
-    useFeedbackPolicy_ = pt.get<bool>("mpc.useFeedbackPolicy");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useFeedbackPolicy' .......... " << useFeedbackPolicy_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useFeedbackPolicy' .......... " << useFeedbackPolicy_ << " (default)" << std::endl;
-    }
-  }
-
-  try {
     useParallelRiccatiSolver_ = pt.get<bool>("mpc.useParallelRiccatiSolver");
     if (verbose) {
       std::cerr << " #### Option loader : option 'useParallelRiccatiSolver' ... " << useParallelRiccatiSolver_ << std::endl;
@@ -286,24 +250,13 @@ inline void MPC_Settings::loadSettings(const std::string& filename, bool verbose
   }
 
   try {
-    rosMsgTimeWindow_ = pt.get<double>("mpc.rosMsgTimeWindow");
+    solutionTimeWindow_ = pt.get<double>("mpc.solutionTimeWindow");
     if (verbose) {
-      std::cerr << " #### Option loader : option 'rosMsgTimeWindow' ........... " << rosMsgTimeWindow_ << std::endl;
+      std::cerr << " #### Option loader : option 'solutionTimeWindow' ......... " << solutionTimeWindow_ << std::endl;
     }
   } catch (const std::exception& e) {
     if (verbose) {
-      std::cerr << " #### Option loader : option 'rosMsgTimeWindow' ........... " << rosMsgTimeWindow_ << " (default)" << std::endl;
-    }
-  }
-
-  try {
-    adaptiveRosMsgTimeWindow_ = pt.get<bool>("mpc.adaptiveRosMsgTimeWindow");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'adaptiveRosMsgTimeWindow' ... " << adaptiveRosMsgTimeWindow_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'adaptiveRosMsgTimeWindow' ... " << adaptiveRosMsgTimeWindow_ << " (default)" << std::endl;
+      std::cerr << " #### Option loader : option 'solutionTimeWindow' ......... " << solutionTimeWindow_ << " (default)" << std::endl;
     }
   }
 
@@ -346,5 +299,3 @@ inline void MPC_Settings::loadSettings(const std::string& filename, bool verbose
 }
 
 }  // namespace ocs2
-
-#endif /* MPC_SETTINGS_OCS2_H_ */

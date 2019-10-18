@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef ANGULAR_VELOCITY_MAPPING_OCS2_H_
-#define ANGULAR_VELOCITY_MAPPING_OCS2_H_
+#pragma once
 
 #include <Eigen/Core>
 #include <array>
@@ -126,5 +125,3 @@ inline Eigen::Matrix<SCALAR_T, 6, 3> JacobianOfAngularVelocityMapping(const Eige
 }
 
 }  // namespace ocs2
-
-#endif /* ANGULAR_VELOCITY_MAPPING_OCS2_H_ */

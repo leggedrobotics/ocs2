@@ -35,13 +35,13 @@ namespace ocs2 {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR()
 
-    : BASE(), optimizedTimeTrajectoriesStock_(0), optimizedStateTrajectoriesStock_(0), optimizedInputTrajectoriesStock_(0) {}
+    : BASE() {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                          const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                          const operating_trajectories_base_t* operatingTrajectoriesPtr,
                                          const scalar_array_t& partitioningTimes, const ILQR_Settings& ilqrSettings /* = ILQR_Settings()*/,
@@ -50,18 +50,13 @@ MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR(const controlled_system_base_t* systemD
                                          const mode_sequence_template_t* modeSequenceTemplatePtr /* = nullptr*/,
                                          const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
-    : BASE(partitioningTimes, mpcSettings),
-      optimizedTimeTrajectoriesStock_(0),
-      optimizedStateTrajectoriesStock_(0),
-      optimizedInputTrajectoriesStock_(0)
-
-{
+    : BASE(partitioningTimes, mpcSettings) {
   // ILQR
   if (ilqrSettings.ddpSettings_.useMultiThreading_) {
-    ilqrPtr_.reset(new ilqr_mp_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
+    ilqrPtr_.reset(new ilqr_mp_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
                                  ilqrSettings, logicRulesPtr, heuristicsFunctionPtr));
   } else {
-    ilqrPtr_.reset(new ilqr_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
+    ilqrPtr_.reset(new ilqr_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
                               ilqrSettings, logicRulesPtr, heuristicsFunctionPtr));
   }
 
@@ -99,21 +94,16 @@ typename MPC_ILQR<STATE_DIM, INPUT_DIM>::ilqr_base_t* MPC_ILQR<STATE_DIM, INPUT_
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ILQR<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTime, const state_vector_t& initState,
-                                                         const scalar_t& finalTime, const scalar_array2_t*& timeTrajectoriesStockPtr,
-                                                         const state_vector_array2_t*& stateTrajectoriesStockPtr,
-                                                         const input_vector_array2_t*& inputTrajectoriesStockPtr,
-                                                         const controller_ptr_array_t*& controllerStockPtr) {
-  //*****************************************************************************************
-  // cost goal check
-  //*****************************************************************************************
-  if (BASE::initRun_ && !ilqrPtr_->costDesiredTrajectoriesUpdated()) {
-    std::cerr << "### WARNING: The initial desired trajectories are not set. "
-                 "This may cause undefined behavior. Use the MPC_ILQR::setCostDesiredTrajectories() "
-                 "method to provide appropriate goal trajectories."
-              << std::endl;
-  }
+const typename MPC_ILQR<STATE_DIM, INPUT_DIM>::ilqr_base_t* MPC_ILQR<STATE_DIM, INPUT_DIM>::getSolverPtr() const {
+  return ilqrPtr_.get();
+}
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void MPC_ILQR<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTime, const state_vector_t& initState,
+                                                         const scalar_t& finalTime) {
   //*****************************************************************************************
   // updating real-time iteration settings
   //*****************************************************************************************
@@ -148,21 +138,6 @@ void MPC_ILQR<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTim
   } else {
     ilqrPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_, typename ilqr_base_t::controller_ptr_array_t());
   }
-
-  //*****************************************************************************************
-  // Get optimized outputs
-  //*****************************************************************************************
-  // swap the optimized trajectories
-  optimizedTimeTrajectoriesStock_.clear();
-  optimizedStateTrajectoriesStock_.clear();
-  optimizedInputTrajectoriesStock_.clear();
-  ilqrPtr_->swapNominalTrajectories(optimizedTimeTrajectoriesStock_, optimizedStateTrajectoriesStock_, optimizedInputTrajectoriesStock_);
-  timeTrajectoriesStockPtr = &optimizedTimeTrajectoriesStock_;
-  stateTrajectoriesStockPtr = &optimizedStateTrajectoriesStock_;
-  inputTrajectoriesStockPtr = &optimizedInputTrajectoriesStock_;
-
-  // get the optimal controller
-  ilqrPtr_->getControllerPtr(controllerStockPtr);
 }
 
 }  // namespace ocs2

@@ -27,20 +27,19 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef OCS2_OCS2_OCS2_H_
-#define OCS2_OCS2_OCS2_H_
+#pragma once
 
-#include <array>
-#include <memory>
-#include <iterator>
 #include <algorithm>
+#include <array>
+#include <iterator>
+#include <memory>
 
 #include <ocs2_frank_wolfe/GradientDescent.h>
 
-#include "ocs2_ocs2/upper_level_op/UpperLevelCost.h"
 #include "ocs2_ocs2/upper_level_op/UpperLevelConstraints.h"
+#include "ocs2_ocs2/upper_level_op/UpperLevelCost.h"
 
-namespace ocs2{
+namespace ocs2 {
 
 /**
  * OCS2
@@ -49,93 +48,87 @@ namespace ocs2{
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class OCS2 : public GradientDescent
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class OCS2 : public GradientDescent {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	typedef GradientDescent BASE;
-	using dynamic_vector_t = typename BASE::dynamic_vector_t;
-	using dynamic_matrix_t = typename BASE::dynamic_matrix_t;
+  using BASE = GradientDescent;
+  using typename BASE::dynamic_matrix_t;
+  using typename BASE::dynamic_vector_t;
 
-	typedef UpperLevelCost<STATE_DIM, INPUT_DIM> upper_level_cost_t;
-	typedef UpperLevelConstraints upper_level_constraints_t;
+  using upper_level_cost_t = UpperLevelCost<STATE_DIM, INPUT_DIM>;
+  using upper_level_constraints_t = UpperLevelConstraints;
 
-	using state_vector_t           = typename upper_level_cost_t::state_vector_t;
-	using controlled_system_base_t = typename upper_level_cost_t::controlled_system_base_t;
-	using derivatives_base_t       = typename upper_level_cost_t::derivatives_base_t;
-	using constraint_base_t        = typename upper_level_cost_t::constraint_base_t;
-	using cost_function_base_t     = typename upper_level_cost_t::cost_function_base_t;
-	using operating_trajectories_base_t = typename upper_level_cost_t::operating_trajectories_base_t;
+  using state_vector_t = typename upper_level_cost_t::state_vector_t;
+  using derivatives_base_t = typename upper_level_cost_t::derivatives_base_t;
+  using constraint_base_t = typename upper_level_cost_t::constraint_base_t;
+  using cost_function_base_t = typename upper_level_cost_t::cost_function_base_t;
+  using operating_trajectories_base_t = typename upper_level_cost_t::operating_trajectories_base_t;
+  using rollout_base_t = typename upper_level_cost_t::rollout_base_t;
 
-	/**
-	 * Default constructor.
-	 */
-	OCS2() = default;
+  /**
+   * Default constructor.
+   */
+  OCS2() = default;
 
-	/**
-	 * Constructor
-	 * @param [in] subsystemDynamicsPtr
-	 * @param [in] subsystemDerivativesPtr
-	 * @param [in] subsystemCostFunctionsPtr
-	 * @param [in] slqSettings
-	 * @param [in] stateOperatingPoints
-	 * @param [in] inputOperatingPoints
-	 */
-	OCS2(const controlled_system_base_t* systemDynamicsPtr,
-			const derivatives_base_t* systemDerivativesPtr,
-			const constraint_base_t* systemConstraintsPtr,
-			const cost_function_base_t* costFunctionPtr,
-			const operating_trajectories_base_t* operatingTrajectoriesPtr,
-			const SLQ_Settings& settings = SLQ_Settings(),
-			std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
-			const cost_function_base_t* heuristicsFunctionPtr = nullptr,
-			const GDDP_Settings& gddpSettings = GDDP_Settings(),
-			const NLP_Settings& nlpSettings = NLP_Settings());
+  /**
+   * Constructor
+   *
+   * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
+   * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
+   * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
+   * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
+   * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of SLQ.
+   * @param [in] settings: Structure containing the settings for the SLQ algorithm.
+   * @param [in] logicRulesPtr: The logic rules used for implementing mixed-logic dynamical systems.
+   * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
+   * defined, we will use the terminal cost function defined in costFunctionPtr.
+   * @param [in] gddpSettings: Structure containing the settings for the GDDP algorithm.
+   * @param [in] nlpSettings: Structure containing the settings for the NLP algorithm.
+   */
+  OCS2(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
+       const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
+       const SLQ_Settings& settings = SLQ_Settings(), std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
+       const cost_function_base_t* heuristicsFunctionPtr = nullptr, const GDDP_Settings& gddpSettings = GDDP_Settings(),
+       const NLP_Settings& nlpSettings = NLP_Settings());
 
-	/**
-	 * Default destructor.
-	 */
-	virtual ~OCS2() = default;
+  /**
+   * Default destructor.
+   */
+  ~OCS2() override = default;
 
-	/**
-	 * Gets a reference to the GDDP settings structure.
-	 *
-	 * @return a reference to the GDDP settings.
-	 */
-	GDDP_Settings& gddpSettings();
+  /**
+   * Gets a reference to the GDDP settings structure.
+   *
+   * @return a reference to the GDDP settings.
+   */
+  GDDP_Settings& gddpSettings();
 
-	/**
-	 * Gets a reference to the SLQ settings structure.
-	 *
-	 * @return a reference to the SLQ settings.
-	 */
-	SLQ_Settings& slqSettings();
+  /**
+   * Gets a reference to the SLQ settings structure.
+   *
+   * @return a reference to the SLQ settings.
+   */
+  SLQ_Settings& slqSettings();
 
-	/**
-	 * The main routine of DDP which runs DDP for a given initial state, initial time, and final time. In order
-	 * to retrieve the initial nominal trajectories in the forward pass, DDP will use the given operatingTrajectories
-	 * in the constructor.
-	 *
-	 * @param [in] initTime: The initial time.
-	 * @param [in] initState: The initial state.
-	 * @param [in] finalTime: The final time.
-	 * @param [in] partitioningTimes: The partitioning times between subsystems.
-	 */
-	void run(
-			const scalar_t& initTime,
-			const state_vector_t& initState,
-			const scalar_t& finalTime,
-			const scalar_array_t& partitioningTimes,
-			const scalar_array_t& initEventTimes);
+  /**
+   * The main routine of DDP which runs DDP for a given initial state, initial time, and final time. In order
+   * to retrieve the initial nominal trajectories in the forward pass, DDP will use the given operatingTrajectories
+   * in the constructor.
+   *
+   * @param [in] initTime: The initial time.
+   * @param [in] initState: The initial state.
+   * @param [in] finalTime: The final time.
+   * @param [in] partitioningTimes: The partitioning times between subsystems.
+   */
+  void run(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime, const scalar_array_t& partitioningTimes,
+           const scalar_array_t& initEventTimes);
 
-private:
-	std::unique_ptr<upper_level_cost_t> ulCostPtr_;
-	std::unique_ptr<upper_level_constraints_t> ulConstraintsPtr_;
+ private:
+  std::unique_ptr<upper_level_cost_t> ulCostPtr_;
+  std::unique_ptr<upper_level_constraints_t> ulConstraintsPtr_;
 };
 
-}  // end of ocs2 namespace
+}  // namespace ocs2
 
 #include "implementation/OCS2.h"
-
-#endif /* OCS2_OCS2_OCS2_H_ */

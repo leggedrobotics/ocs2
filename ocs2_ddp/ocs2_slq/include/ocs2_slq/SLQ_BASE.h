@@ -27,22 +27,17 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SLQ_BASE_OCS2_H_
-#define SLQ_BASE_OCS2_H_
-
-#include <ocs2_ddp_base/DDP_BASE.h>
+#pragma once
 
 #include <ocs2_core/integration/Integrator.h>
-#include <ocs2_core/integration/StateTriggeredEventHandler.h>
 #include <ocs2_core/integration/SystemEventHandler.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 
-#include <ocs2_oc/rollout/StateTriggeredRollout.h>
+#include <ocs2_ddp_base/DDP_BASE.h>
 
-#include <ocs2_slq/SLQ_Settings.h>
-
-#include <ocs2_slq/riccati_equations/SequentialErrorEquationNormalized.h>
-#include <ocs2_slq/riccati_equations/SequentialRiccatiEquationsNormalized.h>
+#include "ocs2_slq/SLQ_Settings.h"
+#include "ocs2_slq/riccati_equations/SequentialErrorEquationNormalized.h"
+#include "ocs2_slq/riccati_equations/SequentialRiccatiEquationsNormalized.h"
 
 namespace ocs2 {
 
@@ -125,7 +120,6 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::linear_controller_t;
 
   using typename BASE::constraint_base_t;
-  using typename BASE::controlled_system_base_t;
   using typename BASE::cost_desired_trajectories_t;
   using typename BASE::cost_function_base_t;
   using typename BASE::derivatives_base_t;
@@ -137,14 +131,11 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::operating_trajectories_base_t;
   using typename BASE::penalty_base_t;
   using typename BASE::rollout_base_t;
-  using typename BASE::time_triggered_rollout_t;
 
   using riccati_equations_t = SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>;
   using error_equation_t = SequentialErrorEquationNormalized<STATE_DIM, INPUT_DIM>;
   using s_vector_t = typename riccati_equations_t::s_vector_t;
   using s_vector_array_t = typename riccati_equations_t::s_vector_array_t;
-
-  using state_triggered_rollout_t = StateTriggeredRollout<STATE_DIM, INPUT_DIM>;
 
   /**
    * class for collecting SLQ data
@@ -161,7 +152,7 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Constructor
    *
-   * @param [in] systemDynamicsPtr: The system dynamics which possibly includes some subsystems.
+   * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
    * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
    * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
@@ -171,10 +162,10 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
-  SLQ_BASE(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
-           const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
-           const operating_trajectories_base_t* operatingTrajectoriesPtr, const SLQ_Settings& settings = SLQ_Settings(),
-           std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr, const cost_function_base_t* heuristicsFunctionPtr = nullptr);
+  SLQ_BASE(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
+           const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
+           const SLQ_Settings& settings = SLQ_Settings(), std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
+           const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
   /**
    * Default destructor.
@@ -295,8 +286,6 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    ****************/
   SLQ_Settings settings_;
 
-  std::vector<typename rollout_base_t::Ptr> state_dynamicsForwardRolloutPtrStock_;
-
   state_matrix_array2_t AmConstrainedTrajectoryStock_;
   state_matrix_array2_t QmConstrainedTrajectoryStock_;
   state_vector_array2_t QvConstrainedTrajectoryStock_;
@@ -376,5 +365,3 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
 }  // namespace ocs2
 
 #include "implementation/SLQ_BASE.h"
-
-#endif /* SLQ_BASE_OCS2_H_ */

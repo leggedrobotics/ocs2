@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef MPC_ILQR_OCS2_H_
-#define MPC_ILQR_OCS2_H_
+#pragma once
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_ddp_base/DDP_BASE.h>
@@ -54,7 +53,7 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
 
   using BASE = MPC_BASE<STATE_DIM, INPUT_DIM>;
 
-  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
+  using typename BASE::DIMENSIONS;
   using scalar_t = typename DIMENSIONS::scalar_t;
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;
   using scalar_array2_t = typename DIMENSIONS::scalar_array2_t;
@@ -72,9 +71,10 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
   using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
 
-  using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
-  using mode_sequence_template_t = typename BASE::mode_sequence_template_t;
-  using controller_ptr_array_t = typename BASE::controller_ptr_array_t;
+  using typename BASE::controller_const_ptr_array_t;
+  using typename BASE::controller_ptr_array_t;
+  using typename BASE::cost_desired_trajectories_t;
+  using typename BASE::mode_sequence_template_t;
 
   using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
   using linear_controller_array_t = typename linear_controller_t::array_t;
@@ -86,12 +86,12 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
   using ilqr_mp_t = ocs2::ILQR_MT<STATE_DIM, INPUT_DIM>;
 
   using logic_rules_machine_t = typename ddp_base_t::logic_rules_machine_t;
-  using controlled_system_base_t = typename ddp_base_t::controlled_system_base_t;
   using event_handler_t = typename ddp_base_t::event_handler_t;
   using derivatives_base_t = typename ddp_base_t::derivatives_base_t;
   using constraint_base_t = typename ddp_base_t::constraint_base_t;
   using cost_function_base_t = typename ddp_base_t::cost_function_base_t;
   using operating_trajectories_base_t = typename ddp_base_t::operating_trajectories_base_t;
+  using rollout_base_t = typename ddp_base_t::rollout_base_t;
 
   /**
    * Default constructor.
@@ -101,7 +101,7 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Constructor
    *
-   * @param [in] systemDynamicsPtr: The system dynamics which possibly includes some subsystems.
+   * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
    * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
    * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
@@ -114,12 +114,11 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
-  MPC_ILQR(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
-           const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
-           const operating_trajectories_base_t* operatingTrajectoriesPtr, const scalar_array_t& partitioningTimes,
-           const ILQR_Settings& ilqrSettings = ILQR_Settings(), const MPC_Settings& mpcSettings = MPC_Settings(),
-           std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr, const mode_sequence_template_t* modeSequenceTemplatePtr = nullptr,
-           const cost_function_base_t* heuristicsFunctionPtr = nullptr);
+  MPC_ILQR(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
+           const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
+           const scalar_array_t& partitioningTimes, const ILQR_Settings& ilqrSettings = ILQR_Settings(),
+           const MPC_Settings& mpcSettings = MPC_Settings(), std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
+           const mode_sequence_template_t* modeSequenceTemplatePtr = nullptr, const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
   /**
    * Default destructor.
@@ -133,42 +132,19 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
    */
   virtual ILQR_Settings& ilqrSettings();
 
-  /**
-   * Gets a pointer to the underlying solver used in the MPC.
-   *
-   * @return A pointer to the underlying solver used in the MPC
-   */
   ilqr_base_t* getSolverPtr() override;
 
-  /**
-   * Solves the optimal control problem for the given state and time period ([initTime,finalTime]).
-   *
-   * @param [out] initTime: Initial time.
-   * @param [in] initState: Initial state.
-   * @param [out] finalTime: Final time.
-   * @param [out] timeTrajectoriesStock: A pointer to the optimized time trajectories.
-   * @param [out] stateTrajectoriesStock: A pointer to the optimized state trajectories.
-   * @param [out] inputTrajectoriesStock: A pointer to the optimized input trajectories.
-   * @param [out] controllerStock_out: A pointer to the optimized control policy.
-   */
-  void calculateController(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
-                           const scalar_array2_t*& timeTrajectoriesStockPtr, const state_vector_array2_t*& stateTrajectoriesStockPtr,
-                           const input_vector_array2_t*& inputTrajectoriesStockPtr,
-                           const controller_ptr_array_t*& controllerStockPtr) override;
+  const ilqr_base_t* getSolverPtr() const override;
+
+  void calculateController(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime) override;
 
  protected:
   /***********
    * Variables
    ***********/
   std::unique_ptr<ilqr_base_t> ilqrPtr_;
-
-  scalar_array2_t optimizedTimeTrajectoriesStock_;
-  state_vector_array2_t optimizedStateTrajectoriesStock_;
-  input_vector_array2_t optimizedInputTrajectoriesStock_;
 };
 
 }  // namespace ocs2
 
 #include "implementation/MPC_ILQR.h"
-
-#endif /* MPC_ILQR_OCS2_H_ */

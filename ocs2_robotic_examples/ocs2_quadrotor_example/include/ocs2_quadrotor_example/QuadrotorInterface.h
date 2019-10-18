@@ -27,13 +27,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef QUADROTORINTERFACE_OCS2_H_
-#define QUADROTORINTERFACE_OCS2_H_
+#pragma once
 
 // OCS2
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+
 #include <ocs2_mpc/MPC_ILQR.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
@@ -56,6 +57,9 @@ class QuadrotorInterface final : public RobotInterfaceBase<quadrotor::STATE_DIM_
   using dim_t = Dimensions<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
   using QuadrotorConstraint = ConstraintBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
   using QuadrotorOperatingPoint = SystemOperatingPoint<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
+
+  using rollout_base_t = RolloutBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
+  using time_triggered_rollout_t = TimeTriggeredRollout<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 
   using mpc_t = MPC_ILQR<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 
@@ -93,6 +97,8 @@ class QuadrotorInterface final : public RobotInterfaceBase<quadrotor::STATE_DIM_
 
   const QuadrotorCost& getCost() const override { return *quadrotorCostPtr_; }
 
+  const rollout_base_t& getRollout() const { return *ddpQuadrotorRolloutPtr_; }
+
  protected:
   /**
    * Load the settings from the path file.
@@ -108,8 +114,9 @@ class QuadrotorInterface final : public RobotInterfaceBase<quadrotor::STATE_DIM_
   std::string libraryFolder_;
 
   ILQR_Settings ilqrSettings_;
-
   std::unique_ptr<mpc_t> mpcPtr_;
+
+  std::unique_ptr<rollout_base_t> ddpQuadrotorRolloutPtr_;
 
   QuadrotorSystemDynamics::Ptr quadrotorSystemDynamicsPtr_;
   QuadrotorDynamicsDerivatives::Ptr quadrotorDynamicsDerivativesPtr_;
@@ -131,5 +138,3 @@ class QuadrotorInterface final : public RobotInterfaceBase<quadrotor::STATE_DIM_
 
 }  // namespace quadrotor
 }  // namespace ocs2
-
-#endif /* QUADROTORINTERFACE_OCS2_H_ */

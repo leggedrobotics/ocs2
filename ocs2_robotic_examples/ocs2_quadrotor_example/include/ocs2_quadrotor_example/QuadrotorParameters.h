@@ -27,90 +27,69 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef QUADROTOR_PARAMETERS_OCS2_H_
-#define QUADROTOR_PARAMETERS_OCS2_H_
+#pragma once
 
-#include <vector>
-#include <string>
 #include <iostream>
+#include <string>
+#include <vector>
 
-#include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/info_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 
 namespace ocs2 {
 namespace quadrotor {
 
-template<typename SCALAR_T>
-class QuadrotorParameters
-{
-public:
-	QuadrotorParameters(
-			SCALAR_T quadrotorMass = 1.0,
-			SCALAR_T Thzz = 1.0,
-			SCALAR_T Thxxyy = 1.0,
-			SCALAR_T gravity = 9.8)
-	: quadrotorMass_(quadrotorMass)
-	, Thzz_(Thzz)
-	, Thxxyy_(Thxxyy)
-	, gravity_(gravity)
-	{}
+template <typename SCALAR_T>
+class QuadrotorParameters {
+ public:
+  QuadrotorParameters(SCALAR_T quadrotorMass = 1.0, SCALAR_T Thzz = 1.0, SCALAR_T Thxxyy = 1.0, SCALAR_T gravity = 9.8)
+      : quadrotorMass_(quadrotorMass), Thzz_(Thzz), Thxxyy_(Thxxyy), gravity_(gravity) {}
 
-	~QuadrotorParameters() = default;
+  ~QuadrotorParameters() = default;
 
-	inline void loadSettings(const std::string& filename, bool verbose = true) {
+  inline void loadSettings(const std::string& filename, bool verbose = true) {
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_info(filename, pt);
 
-		boost::property_tree::ptree pt;
-		boost::property_tree::read_info(filename, pt);
+    if (verbose) std::cerr << "\n #### Quadrotor Parameters:" << std::endl;
+    if (verbose) std::cerr << " #### =========================================" << std::endl;
 
-		if (verbose) std::cerr << "\n #### Quadrotor Parameters:" << std::endl;
-		if (verbose) std::cerr << " #### =========================================" << std::endl;
+    try {
+      quadrotorMass_ = pt.get<SCALAR_T>("QuadrotorParameters.quadrotorMass");
+      if (verbose) std::cerr << " #### quadrotorMass ......... " << quadrotorMass_ << std::endl;
+    } catch (const std::exception& e) {
+      if (verbose) std::cerr << " #### quadrotorMass ......... " << quadrotorMass_ << "\t(default)" << std::endl;
+    }
 
-		try {
-			quadrotorMass_ = pt.get<SCALAR_T>("QuadrotorParameters.quadrotorMass");
-			if (verbose) std::cerr << " #### quadrotorMass ......... " << quadrotorMass_ << std::endl;
-		}
-		catch (const std::exception &e) {
-			if (verbose) std::cerr << " #### quadrotorMass ......... " << quadrotorMass_ << "\t(default)" << std::endl;
-		}
+    try {
+      Thzz_ = pt.get<SCALAR_T>("QuadrotorParameters.Thzz");
+      if (verbose) std::cerr << " #### Thzz .................. " << Thzz_ << std::endl;
+    } catch (const std::exception& e) {
+      if (verbose) std::cerr << " #### Thzz .................. " << Thzz_ << "\t(default)" << std::endl;
+    }
 
-		try {
-			Thzz_ = pt.get<SCALAR_T>("QuadrotorParameters.Thzz");
-			if (verbose) std::cerr << " #### Thzz .................. " << Thzz_ << std::endl;
-		}
-		catch (const std::exception &e) {
-			if (verbose) std::cerr << " #### Thzz .................. " << Thzz_ << "\t(default)" << std::endl;
-		}
+    try {
+      Thxxyy_ = pt.get<SCALAR_T>("QuadrotorParameters.Thxxyy");
+      if (verbose) std::cerr << " #### Thxx/yy ............... " << Thxxyy_ << std::endl;
+    } catch (const std::exception& e) {
+      if (verbose) std::cerr << " #### Thxx/yy ............... " << Thxxyy_ << "\t(default)" << std::endl;
+    }
 
-		try {
-			Thxxyy_ = pt.get<SCALAR_T>("QuadrotorParameters.Thxxyy");
-			if (verbose) std::cerr << " #### Thxx/yy ............... " << Thxxyy_ << std::endl;
-		}
-		catch (const std::exception &e) {
-			if (verbose) std::cerr << " #### Thxx/yy ............... " << Thxxyy_ << "\t(default)" << std::endl;
-		}
+    try {
+      gravity_ = pt.get<SCALAR_T>("QuadrotorParameters.gravity");
+      if (verbose) std::cerr << " #### gravity ............... " << gravity_ << std::endl;
+    } catch (const std::exception& e) {
+      if (verbose) std::cerr << " #### gravity ............... " << gravity_ << "\t(default)" << std::endl;
+    }
+  }
 
-
-		try {
-			gravity_ = pt.get<SCALAR_T>("QuadrotorParameters.gravity");
-			if (verbose) std::cerr << " #### gravity ............... " << gravity_ << std::endl;
-		}
-		catch (const std::exception &e) {
-			if (verbose) std::cerr << " #### gravity ............... " << gravity_ << "\t(default)" << std::endl;
-		}
-
-	}
-
-public:
-	// For safety, these parameters cannot be modified
-	SCALAR_T quadrotorMass_; // [kg]
-	SCALAR_T Thzz_;
-	SCALAR_T Thxxyy_;
-	SCALAR_T gravity_;
-
-
+ public:
+  // For safety, these parameters cannot be modified
+  SCALAR_T quadrotorMass_;  // [kg]
+  SCALAR_T Thzz_;
+  SCALAR_T Thxxyy_;
+  SCALAR_T gravity_;
 };
 
-} // namespace quadrotor
-} // namespace ocs2
-
-#endif // QUADROTOR_PARAMETERS_OCS2_H_
+}  // namespace quadrotor
+}  // namespace ocs2

@@ -41,7 +41,7 @@ MPC_SLQ<STATE_DIM, INPUT_DIM>::MPC_SLQ()
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_SLQ<STATE_DIM, INPUT_DIM>::MPC_SLQ(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+MPC_SLQ<STATE_DIM, INPUT_DIM>::MPC_SLQ(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                        const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                        const operating_trajectories_base_t* operatingTrajectoriesPtr,
                                        const scalar_array_t& partitioningTimes, const SLQ_Settings& slqSettings /* = SLQ_Settings()*/,
@@ -53,11 +53,11 @@ MPC_SLQ<STATE_DIM, INPUT_DIM>::MPC_SLQ(const controlled_system_base_t* systemDyn
     : BASE(partitioningTimes, mpcSettings) {
   // SLQ
   if (slqSettings.ddpSettings_.useMultiThreading_) {
-    slqPtr_.reset(new slq_mp_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
+    slqPtr_.reset(new slq_mp_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
                                slqSettings, logicRulesPtr, heuristicsFunctionPtr));
   } else {
-    slqPtr_.reset(new slq_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
-                            slqSettings, logicRulesPtr, heuristicsFunctionPtr));
+    slqPtr_.reset(new slq_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, slqSettings,
+                            logicRulesPtr, heuristicsFunctionPtr));
   }
 
   // set base solver's pointer
@@ -114,16 +114,6 @@ const typename MPC_SLQ<STATE_DIM, INPUT_DIM>::slq_base_t* MPC_SLQ<STATE_DIM, INP
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_SLQ<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTime, const state_vector_t& initState,
                                                         const scalar_t& finalTime) {
-  //*****************************************************************************************
-  // cost goal check
-  //*****************************************************************************************
-  if (BASE::initRun_ && !slqPtr_->costDesiredTrajectoriesUpdated()) {
-    std::cerr << "### WARNING: The initial desired trajectories are not set. "
-                 "This may cause undefined behavior. Use the MPC_SLQ::setCostDesiredTrajectories() "
-                 "method to provide appropriate goal trajectories."
-              << std::endl;
-  }
-
   //*****************************************************************************************
   // updating real-time iteration settings
   //*****************************************************************************************

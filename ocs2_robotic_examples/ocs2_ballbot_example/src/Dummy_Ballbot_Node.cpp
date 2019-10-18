@@ -47,8 +47,9 @@ int main(int argc, char** argv) {
 
   // Dummy ballbot
   MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> mrt("ballbot");
+  mrt.initRollout(&ballbotInterface.getRollout());
   ballbot::MRT_ROS_Dummy_Ballbot dummyBallbot(mrt, ballbotInterface.mpcSettings().mrtDesiredFrequency_,
-                                              ballbotInterface.mpcSettings().mpcDesiredFrequency_, &ballbotInterface.getDynamics());
+                                              ballbotInterface.mpcSettings().mpcDesiredFrequency_);
 
   dummyBallbot.launchNodes(argc, argv);
 

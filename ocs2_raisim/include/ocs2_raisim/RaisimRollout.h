@@ -80,15 +80,13 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
    * @param[in] orderedJointNames: Ordered vector of joint names. Parents must be named before children, names must be identical to URDF
    * joints
    * @param[in] dataExtractionCallback: Optional callback function to extract user-defined information from the simulation at each timestep
-   * @param[in] rolloutSettings
-   * @param[in] algorithmName
+   * @param[in] rolloutSettings: The rollout settings.
    */
   RaisimRollout(const std::string& urdf, state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel,
                 raisim_gen_coord_gen_vel_to_state_t raisimGenCoordGenVelToState,
                 input_to_raisim_generalized_force_t inputToRaisimGeneralizedForce, const std::vector<std::string>& orderedJointNames = {},
-                data_extraction_callback_t dataExtractionCallback = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings(),
-                char algorithmName[] = nullptr)
-      : Base(std::move(rolloutSettings), std::move(algorithmName)),
+                data_extraction_callback_t dataExtractionCallback = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings())
+      : Base(std::move(rolloutSettings)),
         setSimulatorStateOnRolloutRunAlways_(true),
         setSimulatorStateOnRolloutRunOnce_(false),
         stateToRaisimGenCoordGenVel_(std::move(stateToRaisimGenCoordGenVel)),
@@ -127,6 +125,8 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
     vis->getCameraMan()->setYawPitchDist(Ogre::Radian(M_PI_4), Ogre::Radian(-1.3), 3, true);
 #endif
   }
+
+  RaisimRollout<STATE_DIM, INPUT_DIM>* clone() const override { throw std::runtime_error("Not implemented."); }
 
  protected:
   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,

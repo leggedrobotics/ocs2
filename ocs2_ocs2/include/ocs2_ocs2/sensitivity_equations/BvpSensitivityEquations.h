@@ -51,9 +51,9 @@ class BvpSensitivityEquations final : public OdeBase<STATE_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef OdeBase<STATE_DIM> BASE;
+  using BASE = OdeBase<STATE_DIM>;
 
-  typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
+  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
   using scalar_t = typename DIMENSIONS::scalar_t;
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;
   using state_vector_t = typename DIMENSIONS::state_vector_t;
@@ -81,7 +81,7 @@ class BvpSensitivityEquations final : public OdeBase<STATE_DIM> {
   /**
    * Default destructor.
    */
-  ~BvpSensitivityEquations() = default;
+  ~BvpSensitivityEquations() override = default;
 
   /**
    * Returns pointer to the class.

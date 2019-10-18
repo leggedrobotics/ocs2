@@ -74,17 +74,8 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_BASE<STATE_DIM, INPUT_DIM>::initRollout(const ControlledSystemBase<STATE_DIM, INPUT_DIM>& controlSystemBase,
-                                                 const Rollout_Settings& rolloutSettings) {
-  rolloutPtr_.reset(new TimeTriggeredRollout<STATE_DIM, INPUT_DIM>(controlSystemBase, rolloutSettings, "mrt"));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_BASE<STATE_DIM, INPUT_DIM>::initRollout(std::unique_ptr<RolloutBase<STATE_DIM, INPUT_DIM>> rolloutPtr) {
-  rolloutPtr_ = std::move(rolloutPtr);
+void MRT_BASE<STATE_DIM, INPUT_DIM>::initRollout(const rollout_base_t* rolloutPtr) {
+  rolloutPtr_.reset(rolloutPtr->clone());
 }
 
 /******************************************************************************************************/

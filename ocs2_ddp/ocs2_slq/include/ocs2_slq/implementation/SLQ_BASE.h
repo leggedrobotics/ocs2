@@ -35,15 +35,15 @@ namespace ocs2 {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-SLQ_BASE<STATE_DIM, INPUT_DIM>::SLQ_BASE(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+SLQ_BASE<STATE_DIM, INPUT_DIM>::SLQ_BASE(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                          const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                          const operating_trajectories_base_t* operatingTrajectoriesPtr,
                                          const SLQ_Settings& settings /*= SLQ_Settings()*/,
                                          std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
                                          const cost_function_base_t* heuristicsFunctionPtr /* = nullptr*/)
 
-    : BASE(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings.ddpSettings_,
-           settings.rolloutSettings_, heuristicsFunctionPtr, "SLQ", std::move(logicRulesPtr)),
+    : BASE(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings.ddpSettings_,
+           heuristicsFunctionPtr, "SLQ", std::move(logicRulesPtr)),
       settings_(settings) {
   // Riccati Solver
   riccatiEquationsPtrStock_.clear();
@@ -204,9 +204,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t worke
         if (!BASE::QmTrajectoryStock_[i][k].isApprox(BASE::QmTrajectoryStock_[i][k].transpose())) {
           throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not self-adjoint.");
         }
-        if (BASE::QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
+        if (LinearAlgebra::eigenvalues(BASE::QmTrajectoryStock_[i][k]).real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
           throw std::runtime_error("Q matrix is not positive semi-definite. It's smallest eigenvalue is " +
-                                   std::to_string(BASE::QmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()) + ".");
+                                   std::to_string(LinearAlgebra::eigenvalues(BASE::QmTrajectoryStock_[i][k]).real().minCoeff()) + ".");
         }
         if (!BASE::RvTrajectoryStock_[i][k].allFinite()) {
           throw std::runtime_error("Intermediate cost first derivative w.r.t. input is is not finite.");
@@ -224,9 +224,9 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t worke
           throw std::runtime_error("R matrix is not invertible. It's reciprocal condition number is " +
                                    std::to_string(BASE::RmTrajectoryStock_[i][k].ldlt().rcond()) + ".");
         }
-        if (BASE::RmTrajectoryStock_[i][k].eigenvalues().real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon()) {
+        if (LinearAlgebra::eigenvalues(BASE::RmTrajectoryStock_[i][k]).real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon()) {
           throw std::runtime_error("R matrix is not positive definite. It's smallest eigenvalue is " +
-                                   std::to_string(BASE::RmTrajectoryStock_[i][k].eigenvalues().real().minCoeff()) + ".");
+                                   std::to_string(LinearAlgebra::eigenvalues(BASE::RmTrajectoryStock_[i][k]).real().minCoeff()) + ".");
         }
       } catch (const std::exception& error) {
         std::cerr << "After adding inequality constraint penalty" << std::endl;
@@ -236,10 +236,10 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t worke
         std::cerr << "q: " << BASE::qTrajectoryStock_[i][k] << std::endl;
         std::cerr << "Qv: " << BASE::QvTrajectoryStock_[i][k].transpose() << std::endl;
         std::cerr << "Qm: \n" << BASE::QmTrajectoryStock_[i][k] << std::endl;
-        std::cerr << "Qm eigenvalues : " << BASE::QmTrajectoryStock_[i][k].eigenvalues().transpose() << std::endl;
+        std::cerr << "Qm eigenvalues : " << LinearAlgebra::eigenvalues(BASE::QmTrajectoryStock_[i][k]).transpose() << std::endl;
         std::cerr << "Rv: " << BASE::RvTrajectoryStock_[i][k].transpose() << std::endl;
         std::cerr << "Rm: \n" << BASE::RmTrajectoryStock_[i][k] << std::endl;
-        std::cerr << "Rm eigenvalues : " << BASE::RmTrajectoryStock_[i][k].eigenvalues().transpose() << std::endl;
+        std::cerr << "Rm eigenvalues : " << LinearAlgebra::eigenvalues(BASE::RmTrajectoryStock_[i][k]).transpose() << std::endl;
         std::cerr << "Pm: \n" << BASE::PmTrajectoryStock_[i][k] << std::endl;
         throw;
       }
@@ -269,7 +269,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t worke
 
     // check numerical stability_
     if (BASE::ddpSettings_.checkNumericalStability_) {
-      if (Dm.colPivHouseholderQr().rank() != nc1) {
+      if (LinearAlgebra::rank(Dm) != nc1) {
         BASE::printString(
             ">>> WARNING: The state-input constraints are rank deficient "
             "(at time " +
@@ -387,9 +387,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
       BASE::nominalInputFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::nominalInputTrajectoriesStock_[i]));
     }  // end of j loop
 
-    // current partition update
-    BASE::constraintStepSize_ = BASE::initialControllerDesignStock_[i] ? 0.0 : BASE::ddpSettings_.constraintStepSize_;
-
     /*
      * perform the calculatePartitionController for partition i
      */
@@ -447,7 +444,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerInde
 
   // Bias input
   BASE::nominalControllersStock_[i].biasArray_[k] = nominalInput - BASE::nominalControllersStock_[i].gainArray_[k] * nominalState -
-                                                    BASE::constraintStepSize_ * (DmNullProjection * Lve + EvProjected);
+                                                    BASE::ddpSettings_.constraintStepSize_ * (DmNullProjection * Lve + EvProjected);
   BASE::nominalControllersStock_[i].deltaBiasArray_[k] = -DmNullProjection * Lv;
 
   // checking the numerical stability of the controller parameters
@@ -486,9 +483,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveSlqRiccatiEquationsWorker(size_t worke
         if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite()) {
           throw std::runtime_error("Sm is unstable.");
         }
-        if (BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
-          throw std::runtime_error("Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
-                                   std::to_string(BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff()) + ".");
+        if (LinearAlgebra::eigenvalues(BASE::SmTrajectoryStock_[partitionIndex][k]).real().minCoeff() <
+            -Eigen::NumTraits<scalar_t>::epsilon()) {
+          throw std::runtime_error(
+              "Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
+              std::to_string(LinearAlgebra::eigenvalues(BASE::SmTrajectoryStock_[partitionIndex][k]).real().minCoeff()) + ".");
         }
         if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite()) {
           throw std::runtime_error("Sv is unstable.");
@@ -614,6 +613,16 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIn
     SsTimeTrajectory[k] = -SsNormalizedTime[outputN - 1 - k];
     riccati_equations_t::convert2Matrix(allSsTrajectory[outputN - 1 - k], SmTrajectory[k], SvTrajectory[k], sTrajectory[k]);
   }  // end of k loop
+
+  if (BASE::ddpSettings_.debugPrintRollout_) {
+    std::cerr << std::endl << "+++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+    std::cerr << "Partition: " << partitionIndex << ", backward pass time trajectory";
+    std::cerr << std::endl << "+++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+    for (size_t k = 0; k < outputN; k++) {
+      std::cerr << "k: " << k << ", t = " << std::setprecision(12) << SsTimeTrajectory[k] << "\n";
+    }
+    std::cerr << std::endl;
+  }
 }
 
 /******************************************************************************************************/

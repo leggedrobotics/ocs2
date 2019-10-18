@@ -35,17 +35,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                          const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                          const operating_trajectories_base_t* operatingTrajectoriesPtr, const DDP_Settings& ddpSettings,
-                                         const Rollout_Settings& rolloutSettings, const cost_function_base_t* heuristicsFunctionPtr,
-                                         const char* algorithmName, std::shared_ptr<HybridLogicRules> logicRulesPtr)
-    : BASE(std::move(logicRulesPtr)),
-      ddpSettings_(ddpSettings),
-      rolloutSettings_(rolloutSettings),
-      algorithmName_(algorithmName),
-      rewindCounter_(0),
-      iteration_(0) {
+                                         const cost_function_base_t* heuristicsFunctionPtr, const char* algorithmName,
+                                         std::shared_ptr<HybridLogicRules> logicRulesPtr)
+    : BASE(std::move(logicRulesPtr)), ddpSettings_(ddpSettings), algorithmName_(algorithmName), rewindCounter_(0), iteration_(0) {
   // Dynamics, Constraints, derivatives, and cost
   linearQuadraticApproximatorPtrStock_.clear();
   linearQuadraticApproximatorPtrStock_.reserve(ddpSettings_.nThreads_);
@@ -53,26 +48,24 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const controlled_system_base_t* systemD
   heuristicsFunctionsPtrStock_.reserve(ddpSettings_.nThreads_);
   penaltyPtrStock_.clear();
   penaltyPtrStock_.reserve(ddpSettings_.nThreads_);
-
-  dynamicsForwardRolloutPtrStock_.resize(ddpSettings_.nThreads_);
-  operatingTrajectoriesRolloutPtrStock_.resize(ddpSettings_.nThreads_);
+  dynamicsForwardRolloutPtrStock_.clear();
+  dynamicsForwardRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
+  operatingTrajectoriesRolloutPtrStock_.clear();
+  operatingTrajectoriesRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
 
   // initialize all subsystems, etc.
   for (size_t i = 0; i < ddpSettings_.nThreads_; i++) {
     // initialize rollout
-    dynamicsForwardRolloutPtrStock_[i].reset(new time_triggered_rollout_t(*systemDynamicsPtr, rolloutSettings_, algorithmName_.c_str()));
+    dynamicsForwardRolloutPtrStock_.emplace_back(rolloutPtr->clone());
 
     // initialize operating points
-    operatingTrajectoriesRolloutPtrStock_[i].reset(
-        new operating_trajectorie_rollout_t(*operatingTrajectoriesPtr, rolloutSettings_, algorithmName_.c_str()));
+    operatingTrajectoriesRolloutPtrStock_.emplace_back(
+        new operating_trajectorie_rollout_t(*operatingTrajectoriesPtr, rolloutPtr->settings()));
 
     // initialize LQ approximator
     linearQuadraticApproximatorPtrStock_.emplace_back(
         new linear_quadratic_approximator_t(*systemDerivativesPtr, *systemConstraintsPtr, *costFunctionPtr, algorithmName_.c_str(),
                                             ddpSettings_.checkNumericalStability_, ddpSettings_.useMakePSD_));
-
-    // initialize operating trajectories
-    operatingTrajectoriesPtrStock_.emplace_back(operatingTrajectoriesPtr->clone());
 
     // initialize heuristics functions
     if (heuristicsFunctionPtr != nullptr) {
@@ -106,17 +99,17 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::~DDP_BASE() {
       forwardPassTotal + linearQuadraticApproximationTotal + backwardPassTotal + computeControllerTotal + finalRolloutTotal;
 
   if (benchmarkTotal > 0 && (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_)) {
-    std::cerr << "\n################################################################\n";
-    std::cerr << "Benchmarking         :\tAverage time [ms]   (% of total runtime)\n";
-    std::cerr << "\tForward Pass       :\t" << forwardPassTimer_.getAverageInMilliseconds() << " [ms] \t("
+    std::cerr << "\n########################################################################\n";
+    std::cerr << "Benchmarking\t           :\tAverage time [ms]   (% of total runtime)\n";
+    std::cerr << "\tForward Pass       :\t" << forwardPassTimer_.getAverageInMilliseconds() << " [ms] \t\t("
               << forwardPassTotal / benchmarkTotal * 100 << "%)\n";
-    std::cerr << "\tLQ Approximation   :\t" << linearQuadraticApproximationTimer_.getAverageInMilliseconds() << " [ms] \t("
+    std::cerr << "\tLQ Approximation   :\t" << linearQuadraticApproximationTimer_.getAverageInMilliseconds() << " [ms] \t\t("
               << linearQuadraticApproximationTotal / benchmarkTotal * 100 << "%)\n";
-    std::cerr << "\tBackward Pass      :\t" << backwardPassTimer_.getAverageInMilliseconds() << " [ms] \t("
+    std::cerr << "\tBackward Pass      :\t" << backwardPassTimer_.getAverageInMilliseconds() << " [ms] \t\t("
               << backwardPassTotal / benchmarkTotal * 100 << "%)\n";
-    std::cerr << "\tCompute Controller :\t" << computeControllerTimer_.getAverageInMilliseconds() << " [ms] \t("
+    std::cerr << "\tCompute Controller :\t" << computeControllerTimer_.getAverageInMilliseconds() << " [ms] \t\t("
               << computeControllerTotal / benchmarkTotal * 100 << "%)\n";
-    std::cerr << "\tLinesearch         :\t" << linesearchTimer_.getAverageInMilliseconds() << " [ms] \t("
+    std::cerr << "\tLinesearch         :\t" << linesearchTimer_.getAverageInMilliseconds() << " [ms] \t\t("
               << finalRolloutTotal / benchmarkTotal * 100 << "%)" << std::endl;
   }
 }
@@ -131,17 +124,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
 
   learningRateStar_ = 1.0;
   maxLearningRate_ = 1.0;
-  constraintStepSize_ = 1.0;
 
-  blockwiseMovingHorizon_ = false;
   useParallelRiccatiSolverFromInitItr_ = false;
-
-  this->costDesiredTrajectories_.clear();
-  {
-    std::lock_guard<std::mutex> lock(this->costDesiredTrajectoriesBufferMutex_);
-    this->costDesiredTrajectoriesBuffer_.clear();
-    this->costDesiredTrajectoriesUpdated_ = false;
-  }
 
   for (size_t i = 0; i < numPartitions_; i++) {
     // very important :)
@@ -168,74 +152,138 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::rolloutTrajectory(
-    scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
     linear_controller_array_t& controllersStock, scalar_array2_t& timeTrajectoriesStock, size_array2_t& eventsPastTheEndIndecesStock,
     state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock, size_t threadId /*= 0*/) {
-  size_t numPartitions = partitioningTimes.size() - 1;
+  const scalar_array_t& eventTimes = BASE::getLogicRulesMachinePtr()->getLogicRulesPtr()->eventTimes();
 
-  if (controllersStock.size() != numPartitions) {
+  if (controllersStock.size() != numPartitions_) {
     throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
   }
 
-  timeTrajectoriesStock.resize(numPartitions);
-  eventsPastTheEndIndecesStock.resize(numPartitions);
-  stateTrajectoriesStock.resize(numPartitions);
-  inputTrajectoriesStock.resize(numPartitions);
+  // Prepare outputs
+  timeTrajectoriesStock.resize(numPartitions_);
+  eventsPastTheEndIndecesStock.resize(numPartitions_);
+  stateTrajectoriesStock.resize(numPartitions_);
+  inputTrajectoriesStock.resize(numPartitions_);
+  for (size_t i = 0; i < numPartitions_; i++) {
+    timeTrajectoriesStock[i].clear();
+    eventsPastTheEndIndecesStock[i].clear();
+    stateTrajectoriesStock[i].clear();
+    inputTrajectoriesStock[i].clear();
+  }
 
-  // finding the active subsystem index at initTime
-  auto initActivePartition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, initTime);
-  // finding the active subsystem index at initTime
-  auto finalActivePartition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, finalTime);
+  // Find until where we have a controller available for the rollout
+  scalar_t controllerAvailableTill = initTime_;
+  size_t partitionOfLastController = initActivePartition_;
+  for (size_t i = initActivePartition_; i < finalActivePartition_ + 1; i++) {
+    if (!controllersStock[i].empty()) {
+      controllerAvailableTill = controllersStock[i].timeStamp_.back();
+      partitionOfLastController = i;
+    } else {
+      break;  // break on the first empty controller (cannot have gaps in the controllers)
+    }
+  }
+
+  /*
+   * Define till where we use the controller
+   * - If the first controller is empty, don't use a controller at all
+   * - If we have a controller and no events, use the controller till the final time
+   * - Otherwise, use the controller until the first event time after the controller has reached it's end.
+   */
+  scalar_t useControllerTill = initTime_;
+  if (!controllersStock[initActivePartition_].empty()) {
+    useControllerTill = finalTime_;
+    for (const auto eventTime : eventTimes) {
+      if (eventTime >= controllerAvailableTill) {
+        useControllerTill = std::min(eventTime, finalTime_);
+        break;
+      }
+    }
+  }
+
+  if (ddpSettings_.debugPrintRollout_) {
+    std::cerr << "[DDP_BASE::rolloutTrajectory] for t = [" << initTime_ << ", " << finalTime_ << "]\n"
+              << "\tcontroller available till t = " << controllerAvailableTill << "\n"
+              << "\twill use controller until t = " << useControllerTill << std::endl;
+  }
 
   size_t numSteps = 0;
-  state_vector_t x0 = initState;
-  for (size_t i = 0; i < numPartitions; i++) {
-    // for subsystems before the initial time
-    if (i < initActivePartition || i > finalActivePartition) {
-      timeTrajectoriesStock[i].clear();
-      eventsPastTheEndIndecesStock[i].clear();
-      stateTrajectoriesStock[i].clear();
-      inputTrajectoriesStock[i].clear();
-      continue;
-    }
+  state_vector_t xCurrent = initState_;
+  for (size_t i = initActivePartition_; i < finalActivePartition_ + 1; i++) {
+    // Start and end of rollout segment
+    const scalar_t t0 = (i == initActivePartition_) ? initTime_ : partitioningTimes_[i];
+    const scalar_t tf = (i == finalActivePartition_) ? finalTime_ : partitioningTimes_[i + 1];
 
-    // if blockwiseMovingHorizon_ is not set, use the previous partition's controller for
-    // the first rollout of the partition. However for the very first run of the algorithm,
-    // it will still use operating trajectories if an initial controller is not provided.
-    linear_controller_t* controllerPtrTemp = &controllersStock[i];
-    if (!blockwiseMovingHorizon_) {
-      if (controllerPtrTemp->empty() && i > 0 && !controllersStock[i - 1].empty()) {
-        controllerPtrTemp = &controllersStock[i - 1];
+    // Divide the rollout segment in controller rollout and operating points
+    const std::pair<scalar_t, scalar_t> controllerRolloutFromTo{t0, std::max(t0, std::min(useControllerTill, tf))};
+    std::pair<scalar_t, scalar_t> operatingPointsFromTo{controllerRolloutFromTo.second, tf};
+
+    if (ddpSettings_.debugPrintRollout_) {
+      std::cerr << "[DDP_BASE::rolloutTrajectory] partition " << i << " for t = [" << t0 << ", " << tf << "]" << std::endl;
+      if (controllerRolloutFromTo.first < controllerRolloutFromTo.second) {
+        std::cerr << "\twill use controller for t = [" << controllerRolloutFromTo.first << ", " << controllerRolloutFromTo.second << "]"
+                  << std::endl;
+      }
+      if (operatingPointsFromTo.first < operatingPointsFromTo.second) {
+        std::cerr << "\twill use operating points for t = [" << operatingPointsFromTo.first << ", " << operatingPointsFromTo.second << "]"
+                  << std::endl;
       }
     }
 
-    // call rollout worker for the partition 'i' on the thread 'threadId'
-    const scalar_t t0 = (i == initActivePartition) ? initTime : partitioningTimes[i];
-    const scalar_t tf = (i == finalActivePartition) ? finalTime : partitioningTimes[i + 1];
-    const scalar_array_t& eventTimes = BASE::getLogicRulesMachinePtr()->getLogicRulesPtr()->eventTimes();
-    if (!controllerPtrTemp->empty()) {
-      x0 = dynamicsForwardRolloutPtrStock_[threadId]->run(t0, x0, tf, controllerPtrTemp, eventTimes, timeTrajectoriesStock[i],
-                                                          eventsPastTheEndIndecesStock[i], stateTrajectoriesStock[i],
-                                                          inputTrajectoriesStock[i]);
+    // Rollout with controller
+    if (controllerRolloutFromTo.first < controllerRolloutFromTo.second) {
+      auto controllerPtr = &controllersStock[std::min(i, partitionOfLastController)];
+      xCurrent = dynamicsForwardRolloutPtrStock_[threadId]->run(
+          controllerRolloutFromTo.first, xCurrent, controllerRolloutFromTo.second, controllerPtr, eventTimes, timeTrajectoriesStock[i],
+          eventsPastTheEndIndecesStock[i], stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
+    }
 
-    } else {
-      x0 = operatingTrajectoriesRolloutPtrStock_[threadId]->run(t0, x0, tf, nullptr, eventTimes, timeTrajectoriesStock[i],
-                                                                eventsPastTheEndIndecesStock[i], stateTrajectoriesStock[i],
-                                                                inputTrajectoriesStock[i]);
+    // Finish rollout with operating points
+    if (operatingPointsFromTo.first < operatingPointsFromTo.second) {
+      // Remove last point of the controller rollout if it is directly past an event. Here where we want to use the operating point
+      // instead. However, we do start the integration at the state after the event. i.e. the jump map remains applied.
+      if (!eventsPastTheEndIndecesStock[i].empty() && eventsPastTheEndIndecesStock[i].back() == (timeTrajectoriesStock[i].size() - 1)) {
+        // Start new integration at the time point after the event to remain consistent with added epsilons in the rollout. The operating
+        // point rollout does not add this epsilon because it does not know about this event.
+        operatingPointsFromTo.first = timeTrajectoriesStock[i].back();
+        timeTrajectoriesStock[i].pop_back();
+        stateTrajectoriesStock[i].pop_back();
+        inputTrajectoriesStock[i].pop_back();
+        // eventsPastTheEndIndeces is not removed because we need to mark the start of the operatingPointTrajectory as being after an event.
+      }
+
+      scalar_array_t timeTrajectoryTail;
+      size_array_t eventsPastTheEndIndecesTail;
+      state_vector_array_t stateTrajectoryTail;
+      input_vector_array_t inputTrajectoryTail;
+      xCurrent = operatingTrajectoriesRolloutPtrStock_[threadId]->run(operatingPointsFromTo.first, xCurrent, operatingPointsFromTo.second,
+                                                                      nullptr, eventTimes, timeTrajectoryTail, eventsPastTheEndIndecesTail,
+                                                                      stateTrajectoryTail, inputTrajectoryTail);
+
+      // Add controller rollout length to event past the indeces
+      for (auto& eventIndex : eventsPastTheEndIndecesTail) {
+        eventIndex += stateTrajectoriesStock[i].size();  // This size of this trajectory part was missing when counting events in the tail
+      }
+
+      // Concatenate the operating points to the rollout
+      timeTrajectoriesStock[i].insert(timeTrajectoriesStock[i].end(), timeTrajectoryTail.begin(), timeTrajectoryTail.end());
+      eventsPastTheEndIndecesStock[i].insert(eventsPastTheEndIndecesStock[i].end(), eventsPastTheEndIndecesTail.begin(),
+                                             eventsPastTheEndIndecesTail.end());
+      stateTrajectoriesStock[i].insert(stateTrajectoriesStock[i].end(), stateTrajectoryTail.begin(), stateTrajectoryTail.end());
+      inputTrajectoriesStock[i].insert(inputTrajectoriesStock[i].end(), inputTrajectoryTail.begin(), inputTrajectoryTail.end());
     }
 
     // total number of steps
     numSteps += timeTrajectoriesStock[i].size();
-
   }  // end of i loop
 
-  if (!x0.allFinite()) {
+  if (!xCurrent.allFinite()) {
     throw std::runtime_error("System became unstable during the rollout.");
   }
 
   // debug print
   if (ddpSettings_.debugPrintRollout_) {
-    for (size_t i = 0; i < numPartitions; i++) {
+    for (size_t i = 0; i < numPartitions_; i++) {
       std::cerr << std::endl << "++++++++++++++++++++++++++++++" << std::endl;
       std::cerr << "Partition: " << i;
       std::cerr << std::endl << "++++++++++++++++++++++++++++++" << std::endl;
@@ -245,7 +293,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
   }
 
   // average time step
-  return (finalTime - initTime) / numSteps;
+  return (finalTime_ - initTime_) / numSteps;
 }
 
 /******************************************************************************************************/
@@ -373,7 +421,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateCostWorker(size_t workerIndex, siz
   cost_function_base_t& costFunction = linearQuadraticApproximatorPtrStock_[workerIndex]->costFunction();
 
   // set desired trajectories
-  costFunction.setCostDesiredTrajectories(this->costDesiredTrajectories_);
+  costFunction.setCostDesiredTrajectories(this->getCostDesiredTrajectories());
 
   totalCost = 0.0;
   auto eventsPastTheEndItr = eventsPastTheEndIndeces.begin();
@@ -427,7 +475,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCost(const scalar_array2_t&
 
   // calculate the Heuristics function at the final time
   // set desired trajectories
-  heuristicsFunctionsPtrStock_[threadId]->setCostDesiredTrajectories(this->costDesiredTrajectories_);
+  heuristicsFunctionsPtrStock_[threadId]->setCostDesiredTrajectories(this->getCostDesiredTrajectories());
   // set state-input
   heuristicsFunctionsPtrStock_[threadId]->setCurrentStateAndControl(timeTrajectoriesStock[finalActivePartition_].back(),
                                                                     stateTrajectoriesStock[finalActivePartition_].back(),
@@ -527,7 +575,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
     if (N > 0) {
       for (size_t j = 0; j < ddpSettings_.nThreads_; j++) {
         // set desired trajectories
-        linearQuadraticApproximatorPtrStock_[j]->costFunction().setCostDesiredTrajectories(this->costDesiredTrajectories_);
+        linearQuadraticApproximatorPtrStock_[j]->costFunction().setCostDesiredTrajectories(this->getCostDesiredTrajectories());
       }  // end of j loop
 
       // perform the approximateSubsystemLQ for partition i
@@ -537,7 +585,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
   }  // end of i loop
 
   // calculate the Heuristics function at the final time
-  heuristicsFunctionsPtrStock_[0]->setCostDesiredTrajectories(this->costDesiredTrajectories_);
+  heuristicsFunctionsPtrStock_[0]->setCostDesiredTrajectories(this->getCostDesiredTrajectories());
   heuristicsFunctionsPtrStock_[0]->setCurrentStateAndControl(nominalTimeTrajectoriesStock_[finalActivePartition_].back(),
                                                              nominalStateTrajectoriesStock_[finalActivePartition_].back(),
                                                              nominalInputTrajectoriesStock_[finalActivePartition_].back());
@@ -634,9 +682,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchBase(bool computeISEs) {
   nominalPrevInputTrajectoriesStock_.swap(nominalInputTrajectoriesStock_);
 
   // perform one rollout while the input correction for the type-1 constraint is considered.
-  avgTimeStepFP_ =
-      rolloutTrajectory(initTime_, initState_, finalTime_, partitioningTimes_, nominalControllersStock_, nominalTimeTrajectoriesStock_,
-                        nominalEventsPastTheEndIndecesStock_, nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_);
+  avgTimeStepFP_ = rolloutTrajectory(nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalEventsPastTheEndIndecesStock_,
+                                     nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_);
 
   if (computeISEs) {
     // calculate constraint
@@ -704,9 +751,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(
 
   try {
     // perform a rollout
-    scalar_t avgTimeStepFP =
-        rolloutTrajectory(initTime_, initState_, finalTime_, partitioningTimes_, lsControllersStock, lsTimeTrajectoriesStock,
-                          lsEventsPastTheEndIndecesStock, lsStateTrajectoriesStock, lsInputTrajectoriesStock, workerIndex);
+    scalar_t avgTimeStepFP = rolloutTrajectory(lsControllersStock, lsTimeTrajectoriesStock, lsEventsPastTheEndIndecesStock,
+                                               lsStateTrajectoriesStock, lsInputTrajectoriesStock, workerIndex);
 
     // calculate rollout constraints
     size_array2_t lsNc1TrajectoriesStock(numPartitions_);
@@ -916,70 +962,6 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::truncateController(const scalar_array_t& partitioningTimes, double initTime,
-                                                        linear_controller_array_t& controllersStock, size_t& initActivePartition,
-                                                        linear_controller_array_t& deletedcontrollersStock) {
-  deletedcontrollersStock.resize(numPartitions_);
-  for (size_t i = 0; i < numPartitions_; i++) {
-    deletedcontrollersStock[i].clear();
-  }
-
-  // finding the active subsystem index at initTime_
-  initActivePartition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, initTime);
-
-  // saving the deleting part and clearing controllersStock
-  for (size_t i = 0; i < initActivePartition; i++) {
-    deletedcontrollersStock[i].swap(controllersStock[i]);
-  }
-
-  if (controllersStock[initActivePartition].empty()) {
-    return;
-  }
-
-  // interpolating uff
-  LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t>> uffFunc;
-  uffFunc.setData(&controllersStock[initActivePartition].timeStamp_, &controllersStock[initActivePartition].biasArray_);
-  input_vector_t uffInit;
-  const auto indexAlpha = uffFunc.interpolate(initTime, uffInit);
-  auto greatestLessTimeStampIndex = indexAlpha.first;
-
-  // interpolating k
-  LinearInterpolation<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t>> kFunc;
-  kFunc.setData(&controllersStock[initActivePartition].timeStamp_, &controllersStock[initActivePartition].gainArray_);
-  input_state_matrix_t kInit;
-  kFunc.interpolate(indexAlpha, kInit);
-
-  // deleting the controller in the active subsystem for the subsystems before initTime
-  if (greatestLessTimeStampIndex > 0) {
-    deletedcontrollersStock[initActivePartition].timeStamp_.resize(greatestLessTimeStampIndex + 1);
-    deletedcontrollersStock[initActivePartition].biasArray_.resize(greatestLessTimeStampIndex + 1);
-    deletedcontrollersStock[initActivePartition].gainArray_.resize(greatestLessTimeStampIndex + 1);
-    for (size_t k = 0; k <= greatestLessTimeStampIndex; k++) {
-      deletedcontrollersStock[initActivePartition].timeStamp_[k] = controllersStock[initActivePartition].timeStamp_[k];
-      deletedcontrollersStock[initActivePartition].biasArray_[k] = controllersStock[initActivePartition].biasArray_[k];
-      deletedcontrollersStock[initActivePartition].gainArray_[k] = controllersStock[initActivePartition].gainArray_[k];
-    }
-
-    controllersStock[initActivePartition].timeStamp_.erase(
-        controllersStock[initActivePartition].timeStamp_.begin(),
-        controllersStock[initActivePartition].timeStamp_.begin() + greatestLessTimeStampIndex);
-    controllersStock[initActivePartition].biasArray_.erase(
-        controllersStock[initActivePartition].biasArray_.begin(),
-        controllersStock[initActivePartition].biasArray_.begin() + greatestLessTimeStampIndex);
-    controllersStock[initActivePartition].gainArray_.erase(
-        controllersStock[initActivePartition].gainArray_.begin(),
-        controllersStock[initActivePartition].gainArray_.begin() + greatestLessTimeStampIndex);
-  }
-
-  controllersStock[initActivePartition].timeStamp_[0] = initTime;
-  controllersStock[initActivePartition].biasArray_[0] = uffInit;
-  controllersStock[initActivePartition].gainArray_[0] = kInit;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateControllerUpdateMaxNorm(scalar_t& maxDeltaUffNorm, scalar_t& maxDeltaUeeNorm) {
   maxDeltaUffNorm = 0.0;
   maxDeltaUeeNorm = 0.0;
@@ -1108,14 +1090,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFunctionStateDerivative(scalar_t ti
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::useParallelRiccatiSolverFromInitItr(bool flag) {
   useParallelRiccatiSolverFromInitItr_ = flag;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::blockwiseMovingHorizon(bool flag) {
-  blockwiseMovingHorizon_ = flag;
 }
 
 /******************************************************************************************************/
@@ -1339,8 +1313,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   SveTrajectoryStock_.resize(numPartitions);
   SmTrajectoryStock_.resize(numPartitions);
 
-  initialControllerDesignStock_.resize(numPartitions);
-
   /*
    * approximate LQ variables
    */
@@ -1385,9 +1357,8 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
   // initial controller rollout
   forwardPassTimer_.startTimer();
-  avgTimeStepFP_ =
-      rolloutTrajectory(initTime_, initState_, finalTime_, partitioningTimes_, nominalControllersStock_, nominalTimeTrajectoriesStock_,
-                        nominalEventsPastTheEndIndecesStock_, nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_);
+  avgTimeStepFP_ = rolloutTrajectory(nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalEventsPastTheEndIndecesStock_,
+                                     nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_);
   forwardPassTimer_.endTimer();
 
   // linearizing the dynamics and quadratizing the cost function along nominal trajectories
@@ -1493,29 +1464,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::runExit() {
-  //	// add the deleted parts of the controller
-  //	for (size_t i=0; i<initActivePartition_; i++)
-  //		nominalControllersStock_[i].swap(deletedcontrollersStock_[i]);
-  //
-  //	if (deletedcontrollersStock_[initActivePartition_].timeStamp_.empty()==false) {
-  //
-  //		nominalControllersStock_[initActivePartition_].swap(deletedcontrollersStock_[initActivePartition_]);
-  //
-  //		for (size_t k=0; k<deletedcontrollersStock_[initActivePartition_].timeStamp_.size(); k++) {
-  //			nominalControllersStock_[initActivePartition_].timeStamp_.push_back(deletedcontrollersStock_[initActivePartition_].timeStamp_[k]);
-  //			nominalControllersStock_[initActivePartition_].biasArray_.push_back(deletedcontrollersStock_[initActivePartition_].biasArray_[k]);
-  //			nominalControllersStock_[initActivePartition_].gainArray_.push_back(deletedcontrollersStock_[initActivePartition_].gainArray_[k]);
-  //		}  // end of k loop
-  //	}
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
-                                         const scalar_array_t& partitioningTimes) {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
+                                             const scalar_array_t& partitioningTimes) {
   const size_t numPartitions = partitioningTimes.size() - 1;
 
   linear_controller_array_t noInitialController(numPartitions, linear_controller_t());
@@ -1525,15 +1475,15 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t
   }
 
   // call the "run" method which uses the internal controllers stock (i.e. nominalControllersStock_)
-  run(initTime, initState, finalTime, partitioningTimes, noInitialControllerPtrArray);
+  runImpl(initTime, initState, finalTime, partitioningTimes, noInitialControllerPtrArray);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
-                                         const scalar_array_t& partitioningTimes, const controller_ptr_array_t& controllersPtrStock) {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
+                                             const scalar_array_t& partitioningTimes, const controller_ptr_array_t& controllersPtrStock) {
   if (ddpSettings_.displayInfo_) {
     std::cerr << std::endl;
     std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
@@ -1555,14 +1505,15 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t
   }
 
   // update numPartitions_ if it has been changed
-  if (numPartitions_ + 1 != partitioningTimes.size()) {
+  if (numPartitions_ != partitioningTimes.size() - 1) {
     numPartitions_ = partitioningTimes.size() - 1;
-    partitioningTimes_ = partitioningTimes;
     setupOptimizer(numPartitions_);
   }
 
   // update partitioningTimes_
   partitioningTimes_ = partitioningTimes;
+  initActivePartition_ = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, initTime);
+  finalActivePartition_ = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, finalTime);
 
   // Use the input controller if it is not empty otherwise use the internal controller (nominalControllersStock_).
   // In the later case 2 scenarios are possible: either the internal controller is already set (such as the MPC case
@@ -1590,8 +1541,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t
     }
   }
 
-  this->updateCostDesiredTrajectories();
-
   // update the logic rules in the beginning of the run routine
   bool logicRulesModified = BASE::getLogicRulesMachinePtr()->updateLogicRules(partitioningTimes_);
 
@@ -1612,12 +1561,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t
   iterationISE1_.clear();
   iterationISE2_.clear();
 
-  // finding the initial active partition index and truncating the controller
-  truncateController(partitioningTimes_, initTime_, nominalControllersStock_, initActivePartition_, deletedcontrollersStock_);
-
-  // the final active partition index.
-  finalActivePartition_ = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, finalTime_);
-
   // check if after the truncation the internal controller is empty
   bool isInitInternalControllerEmpty = false;
   for (const linear_controller_t& controller : nominalControllersStock_) {
@@ -1629,18 +1572,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t
     std::cerr << "\n#### Iteration " << iteration_ << " (Dynamics might have been violated)" << std::endl;
   }
 
-  // if a controller is not set for a partition
-  for (size_t i = 0; i < numPartitions_; i++) {
-    initialControllerDesignStock_[i] = nominalControllersStock_[i].empty() ? true : false;
-  }
-
   // run DDP initializer and update the member variables
   runInit();
-
-  // after iteration zero always allow feedforward policy update
-  for (size_t i = 0; i < numPartitions_; i++) {
-    initialControllerDesignStock_[i] = false;
-  }
 
   iterationCost_.push_back((Eigen::VectorXd(1) << nominalTotalCost_).finished());
   iterationISE1_.push_back((Eigen::VectorXd(1) << nominalConstraint1ISE_).finished());
@@ -1698,9 +1631,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t
   lineSearch(computeISEs);
   linesearchTimer_.endTimer();
 
-  /*
-   * adds the deleted controller parts
-   */
   runExit();
 
   // display

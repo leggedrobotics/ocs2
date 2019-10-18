@@ -79,10 +79,8 @@ class RolloutBase {
    * Default constructor.
    *
    * @param [in] rolloutSettings: The rollout settings.
-   * @param [in] algorithmName: The algorithm that calls this class (default not defined).
    */
-  explicit RolloutBase(const Rollout_Settings& rolloutSettings = Rollout_Settings(), const char* algorithmName = nullptr)
-      : rolloutSettings_(rolloutSettings), algorithmName_(algorithmName) {}
+  explicit RolloutBase(Rollout_Settings rolloutSettings = Rollout_Settings()) : rolloutSettings_(std::move(rolloutSettings)) {}
 
   /**
    * Default destructor.
@@ -97,11 +95,18 @@ class RolloutBase {
   Rollout_Settings& settings() { return rolloutSettings_; }
 
   /**
-   * Returns the algorithm's name which called this class.
+   * Returns the rollout settings.
    *
-   * @return The algorithm's name which called this class.
+   * @return The rollout settings.
    */
-  const char* algorithmName() { return algorithmName_; }
+  const Rollout_Settings& settings() const { return rolloutSettings_; }
+
+  /**
+   * Returns pointer to the class.
+   *
+   * @return A raw pointer to the class.
+   */
+  virtual RolloutBase<STATE_DIM, INPUT_DIM>* clone() const = 0;
 
   /**
    * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
@@ -181,7 +186,7 @@ class RolloutBase {
     for (size_t i = 0; i < numSubsystems; i++) {
       for (; k < timeTrajectory.size(); k++) {
         std::cerr << "Index: " << k << std::endl;
-        std::cerr << "Time:  " << std::setprecision(9) << timeTrajectory[k] << std::endl;
+        std::cerr << "Time:  " << std::setprecision(12) << timeTrajectory[k] << std::endl;
         std::cerr << "State: " << std::setprecision(3) << stateTrajectory[k].transpose() << std::endl;
         if (inputTrajectory) {
           std::cerr << "Input: " << std::setprecision(3) << (*inputTrajectory)[k].transpose() << std::endl;
@@ -266,8 +271,6 @@ class RolloutBase {
 
  private:
   Rollout_Settings rolloutSettings_;
-
-  const char* algorithmName_;
 };
 
 }  // namespace ocs2

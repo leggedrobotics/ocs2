@@ -67,16 +67,19 @@ class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    *
    * @param [in] operatingTrajectories: The operating trajectories used for initialization.
    * @param [in] rolloutSettings: The rollout settings.
-   * @param [in] algorithmName: The algorithm that calls this class (default not defined).
    */
   explicit OperatingTrajectoriesRollout(const operating_trajectories_t& operatingTrajectories,
-                                        const Rollout_Settings& rolloutSettings = Rollout_Settings(), const char* algorithmName = nullptr)
-      : BASE(rolloutSettings, algorithmName), operatingTrajectoriesPtr_(operatingTrajectories.clone()) {}
+                                        const Rollout_Settings& rolloutSettings = Rollout_Settings())
+      : BASE(rolloutSettings), operatingTrajectoriesPtr_(operatingTrajectories.clone()) {}
 
   /**
    * Default destructor.
    */
   ~OperatingTrajectoriesRollout() override = default;
+
+  OperatingTrajectoriesRollout<STATE_DIM, INPUT_DIM>* clone() const override {
+    return new OperatingTrajectoriesRollout<STATE_DIM, INPUT_DIM>(*operatingTrajectoriesPtr_, this->settings());
+  }
 
  protected:
   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,

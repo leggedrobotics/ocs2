@@ -35,7 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 #include <ocs2_core/misc/Benchmark.h>
@@ -159,8 +158,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Constructor
    *
-   * @param [in] systemDynamicsPtr: The system dynamics which possibly includes
-   * some subsystems.
+   * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
    * @param [in] systemDerivativesPtr: The system dynamics derivatives for
    * subsystems of the system.
    * @param [in] systemConstraintsPtr: The system constraint function and its
@@ -171,18 +169,15 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * which will be used for initialization.
    * @param [in] ddpSettings: Structure containing the settings for the DDP
    * algorithm.
-   * @param [in] rolloutSettings: Structure containing the settings for the
-   * rollout.
    * @param [in] logicRulesPtr: The logic rules used for implementing
    * mixed-logic dynamical systems.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite
    * time optimal control formulation. If it is not defined, we will use the
    * terminal cost function defined in costFunctionPtr.
    */
-  DDP_BASE(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
-           const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
-           const operating_trajectories_base_t* operatingTrajectoriesPtr, const DDP_Settings& ddpSettings,
-           const Rollout_Settings& rolloutSettings, const cost_function_base_t* heuristicsFunctionPtr, const char* algorithmName,
+  DDP_BASE(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
+           const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
+           const DDP_Settings& ddpSettings, const cost_function_base_t* heuristicsFunctionPtr, const char* algorithmName,
            std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr);
 
   /**
@@ -200,10 +195,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * given control policies and initial state, to integrate the system dynamics
    * in time period [initTime, finalTime].
    *
-   * @param [in] initTime: The initial time.
-   * @param [in] initState: The initial state.
-   * @param [in] finalTime: The final time.
-   * @param [in] partitioningTimes: Time partitioning
    * @param [in] controllersStock: Array of control policies.
    * @param [out] timeTrajectoriesStock: Array of trajectories containing the
    * output time trajectory stamp.
@@ -217,11 +208,9 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @return average time step.
    */
-  scalar_t rolloutTrajectory(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
-                             const scalar_array_t& partitioningTimes, linear_controller_array_t& controllersStock,
-                             scalar_array2_t& timeTrajectoriesStock, size_array2_t& eventsPastTheEndIndecesStock,
-                             state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
-                             size_t threadId = 0);
+  scalar_t rolloutTrajectory(linear_controller_array_t& controllersStock, scalar_array2_t& timeTrajectoriesStock,
+                             size_array2_t& eventsPastTheEndIndecesStock, state_vector_array2_t& stateTrajectoriesStock,
+                             input_vector_array2_t& inputTrajectoriesStock, size_t threadId = 0);
 
   /**
    * Calculates a rollout constraints. It uses the given rollout trajectories
@@ -395,8 +384,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   void useParallelRiccatiSolverFromInitItr(bool flag);
 
-  void blockwiseMovingHorizon(bool flag) override;
-
   void getPerformanceIndeces(scalar_t& costFunction, scalar_t& constraint1ISE, scalar_t& constraint2ISE) const override;
 
   size_t getNumIterations() const override;
@@ -442,42 +429,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Runs the exit method DDP.
    */
-  virtual void runExit();
-
-  /**
-   * The main routine of DDP which runs DDP for a given initial state, initial
-   * time, and final time. In order to retrieve the initial nominal trajectories
-   * in the forward pass, DDP will use the given operatingTrajectories in the
-   * constructor.
-   *
-   * @param [in] initTime: The initial time.
-   * @param [in] initState: The initial state.
-   * @param [in] finalTime: The final time.
-   * @param [in] partitioningTimes: The partitioning times between subsystems.
-   */
-  void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;
-
-  /**
-   * The main routine of DDP which runs DDP for a given initial state, initial
-   * time, and final time. In order to retrieve the initial nominal trajectories
-   * in the forward pass, DDP will use the provided control policy. If you want
-   * to use the control policy which was designed by the previous call of the
-   * "run" routine, you should pass DDP_BASE::INTERNAL_CONTROLLER().
-   *
-   * @param [in] initTime: The initial time.
-   * @param [in] initState: The initial state.
-   * @param [in] finalTime: The final time.
-   * @param [in] partitioningTimes: The time partitioning.
-   * @param [in] controllersPtrStock: Array of pointers to the initial control
-   * policies. If you want to use the control policy which was designed by the
-   * previous call of the "run" routine, you should pass an empty array. In the
-   * this case, two scenarios are possible: either the internal controller is
-   * already set (such as the MPC case where the warm starting option is set
-   * true) or the internal controller is empty in which instead of performing a
-   * rollout the operating trajectories will be used.
-   */
-  void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-           const controller_ptr_array_t& controllersPtrStock) override;
+  virtual void runExit() {}
 
  protected:
   /**
@@ -666,18 +618,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   scalar_t calculateInequalityConstraintPenalty(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& ncIneqTrajectoriesStock,
                                                 const scalar_array3_t& hTrajectoriesStock, scalar_t& inequalityISE, size_t workerIndex = 0);
-  /**
-   * Truncates the internal array of the control policies based on the initTime.
-   *
-   * @param [in] partitioningTimes: Switching times.
-   * @param [in] initTime: Initial time.
-   * @param [out] controllersStock: Truncated array of the control policies.
-   * @param [out] initActivePartition: Initial active subsystems.
-   * @param [out] deletedcontrollersStock: The deleted part of the control
-   * policies.
-   */
-  void truncateController(const scalar_array_t& partitioningTimes, double initTime, linear_controller_array_t& controllersStock,
-                          size_t& initActivePartition, linear_controller_array_t& deletedcontrollersStock);
 
   /**
    * Calculates max feedforward update norm and max type-1 error update norm.
@@ -692,18 +632,21 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   void printRolloutInfo();
 
+ private:
+  void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;
+
+  void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
+               const controller_ptr_array_t& controllersPtrStock) override;
+
+ protected:
   // Variables
   DDP_Settings ddpSettings_;
-  Rollout_Settings rolloutSettings_;
 
   std::string algorithmName_;
 
   unsigned long long int rewindCounter_;
 
   bool useParallelRiccatiSolverFromInitItr_ = false;
-  // If true the final time of the MPC will increase by a time partition instead
-  // of common gradual increase.
-  bool blockwiseMovingHorizon_ = false;
 
   scalar_t initTime_;
   scalar_t finalTime_;
@@ -714,20 +657,9 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   size_t numPartitions_ = 0;
   scalar_array_t partitioningTimes_;
 
-  const scalar_array2_t* desiredTimeTrajectoryStockPtr_;
-  const state_vector_array2_t* desiredStateTrajectoryStockPtr_;
-  const input_vector_array2_t* desiredInputTrajectoryStockPtr_;
-
   scalar_t learningRateStar_ = 1.0;  // The optimal learning rate.
   scalar_t maxLearningRate_ = 1.0;   // The maximum permitted learning rate
                                      // (settings_.maxLearningRateSLQ_).
-  scalar_t constraintStepSize_ = 1.0;
-
-  // It is true if an initial controller is not provided for a partition which
-  // causes that the first iteration of SLQ to design an initial controller
-  // (LQR). In this case: 1) The feedforward component and the type-1 constraint
-  // input are set to zero 2) Final cost will be ignored
-  std::vector<bool> initialControllerDesignStock_;
 
   // trajectory spreading
   TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM> trajectorySpreadingController_;
@@ -749,11 +681,10 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   scalar_t avgTimeStepFP_;
   scalar_t avgTimeStepBP_;
 
-  std::vector<typename rollout_base_t::Ptr> dynamicsForwardRolloutPtrStock_;
-  std::vector<typename rollout_base_t::Ptr> operatingTrajectoriesRolloutPtrStock_;
+  std::vector<std::unique_ptr<rollout_base_t>> dynamicsForwardRolloutPtrStock_;
+  std::vector<std::unique_ptr<rollout_base_t>> operatingTrajectoriesRolloutPtrStock_;
   std::vector<std::unique_ptr<linear_quadratic_approximator_t>> linearQuadraticApproximatorPtrStock_;
   std::vector<typename cost_function_base_t::Ptr> heuristicsFunctionsPtrStock_;
-  std::vector<typename operating_trajectories_base_t::Ptr> operatingTrajectoriesPtrStock_;
   std::vector<std::shared_ptr<penalty_base_t>> penaltyPtrStock_;
 
   linear_controller_array_t nominalControllersStock_;
@@ -772,9 +703,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   bool lsComputeISEs_;                                // whether lineSearch routine needs to calculate ISEs
   linear_controller_array_t initLScontrollersStock_;  // needed for lineSearch
-
-  linear_controller_array_t deletedcontrollersStock_;  // needed for concatenating the new controller
-                                                       // to the old one
 
   std::vector<EigenLinearInterpolation<state_vector_t>> nominalStateFunc_;
   std::vector<EigenLinearInterpolation<input_vector_t>> nominalInputFunc_;

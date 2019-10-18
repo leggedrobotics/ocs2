@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
       ros::package::getPath("ocs2_cart_pole_example") + "/urdf/cartpole.urdf", &ocs2::cartpole::stateToRaisimGenCoordGenVel,
       &ocs2::cartpole::raisimGenCoordGenVelToState, &ocs2::cartpole::inputToRaisimGeneralizedForce));
   ocs2::MRT_ROS_Interface<STATE_DIM_, INPUT_DIM_> mrt("cartpole");
-  mrt.initRollout(std::move(simRollout));
+  mrt.initRollout(simRollout.get());
 
   ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFileFolderName);
   ocs2::cartpole::MrtRosDummyCartpole dummyCartpole(mrt, cartPoleInterface.mpcSettings().mrtDesiredFrequency_,

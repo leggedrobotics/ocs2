@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
 
   // Dummy double_integrator
   MRT_ROS_Interface<STATE_DIM_, INPUT_DIM_> mrt("double_integrator");
-  mrt.initRollout(double_integratorInterface.getDynamics());
+  mrt.initRollout(&double_integratorInterface.getRollout());
   double_integrator::MRT_ROS_Dummy_Linear_System dummyDoubleIntegrator(mrt, double_integratorInterface.mpcSettings().mrtDesiredFrequency_,
                                                                        double_integratorInterface.mpcSettings().mpcDesiredFrequency_);
 

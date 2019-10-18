@@ -78,21 +78,15 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::collect(const slq_t* constSlqPtr) 
   // optimized controller
   optimizedControllersStock_ = slqPtr->nominalControllersStock_;
 
-  // optimized trajectories
-  //	optimizedTimeTrajectoriesStock_        = slqPtr->nominalTimeTrajectoriesStock_;
-  //	optimizedEventsPastTheEndIndecesStock_ = slqPtr->nominalEventsPastTheEndIndecesStock_;
-  //	optimizedStateTrajectoriesStock_       = slqPtr->nominalStateTrajectoriesStock_;
-  //	optimizedInputTrajectoriesStock_       = slqPtr->nominalInputTrajectoriesStock_;
-
   /*
    * Data which can be swapped. Note that these variables should have correct size.
    * Otherwise use setOptimizer() to construct them with correct size
    */
   // nominal trajectories
-  nominalEventsPastTheEndIndecesStock_.swap(slqPtr->nominalPrevEventsPastTheEndIndecesStock_);
-  nominalStateTrajectoriesStock_.swap(slqPtr->nominalPrevStateTrajectoriesStock_);
-  nominalTimeTrajectoriesStock_.swap(slqPtr->nominalPrevTimeTrajectoriesStock_);
-  nominalInputTrajectoriesStock_.swap(slqPtr->nominalPrevInputTrajectoriesStock_);
+  nominalPostEventIndicesStock_.swap(slqPtr->cachedPostEventIndicesStock_);
+  nominalStateTrajectoriesStock_.swap(slqPtr->cachedStateTrajectoriesStock_);
+  nominalTimeTrajectoriesStock_.swap(slqPtr->cachedTimeTrajectoriesStock_);
+  nominalInputTrajectoriesStock_.swap(slqPtr->cachedInputTrajectoriesStock_);
 
   // linearized system coefficients
   AmTrajectoriesStock_.swap(slqPtr->AmTrajectoryStock_);
@@ -287,7 +281,7 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::resizeDataContainer(const size_t& 
 
   // nominal trajectories
   nominalTimeTrajectoriesStock_.resize(numPartitions);
-  nominalEventsPastTheEndIndecesStock_.resize(numPartitions);
+  nominalPostEventIndicesStock_.resize(numPartitions);
   nominalStateTrajectoriesStock_.resize(numPartitions);
   nominalInputTrajectoriesStock_.resize(numPartitions);
 

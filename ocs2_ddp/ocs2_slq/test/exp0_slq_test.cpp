@@ -111,8 +111,8 @@ TEST(exp0_slq_test, exp0_slq_test) {
                                   slqSettings, logicRules);
 
   // SLQ - multi-thread version
-  SLQ_MP<STATE_DIM, INPUT_DIM> slqMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
-                                     slqSettings, logicRules);
+  SLQ_MP<STATE_DIM, INPUT_DIM> slqMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
+                                     &operatingTrajectories, slqSettings, logicRules);
 
   // run single core SLQ
   if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
@@ -143,8 +143,8 @@ TEST(exp0_slq_test, exp0_slq_test) {
   /******************************************************************************************************/
   const double expectedCost = 9.7667;
   ASSERT_LT(fabs(totalCostST - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_) << "MESSAGE: SLQ failed in the EXP0's cost test!";
-    ASSERT_LT(fabs(totalCostMT - expectedCost), 10*slqSettings.ddpSettings_.minRelCost_) <<
-  		  "MESSAGE: SLQ_MP failed in the EXP1's cost test!";
+  ASSERT_LT(fabs(totalCostMT - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_)
+      << "MESSAGE: SLQ_MP failed in the EXP1's cost test!";
 
   const double expectedISE1 = 0.0;
   ASSERT_LT(fabs(constraint1ISE_ST - expectedISE1), 10 * slqSettings.ddpSettings_.minRelConstraint1ISE_)
@@ -166,6 +166,101 @@ TEST(exp0_slq_test, exp0_slq_test) {
   }
   ASSERT_DOUBLE_EQ(solutionST.timeTrajectory_.back(), finalTime) << "MESSAGE: SLQ_ST failed in policy final time of trajectory!";
   ASSERT_DOUBLE_EQ(ctrlFinalTime, finalTime) << "MESSAGE: SLQ_ST failed in policy final time of controller!";
+}
+
+TEST(exp0_slq_test, caching_test) {
+  SLQ_Settings slqSettings;
+  slqSettings.useNominalTimeForBackwardPass_ = false;
+  slqSettings.ddpSettings_.displayInfo_ = false;
+  slqSettings.ddpSettings_.displayShortSummary_ = true;
+  slqSettings.ddpSettings_.absTolODE_ = 1e-10;
+  slqSettings.ddpSettings_.relTolODE_ = 1e-7;
+  slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
+  slqSettings.ddpSettings_.maxNumIterations_ = 1;
+  slqSettings.ddpSettings_.lsStepsizeGreedy_ = true;
+  slqSettings.ddpSettings_.noStateConstraints_ = true;
+  slqSettings.ddpSettings_.minLearningRate_ = 0.0001;
+  slqSettings.ddpSettings_.minRelCost_ = 5e-4;
+  slqSettings.ddpSettings_.checkNumericalStability_ = false;
+  slqSettings.ddpSettings_.useFeedbackPolicy_ = true;
+  slqSettings.ddpSettings_.debugPrintRollout_ = false;
+  slqSettings.ddpSettings_.debugCaching_ = true;  // for this test, debugCaching_ should be active
+
+  Rollout_Settings rolloutSettings;
+  rolloutSettings.absTolODE_ = 1e-10;
+  rolloutSettings.relTolODE_ = 1e-7;
+  rolloutSettings.maxNumStepsPerSecond_ = 10000;
+
+  // switching times
+  std::vector<double> eventTimes{1.0};
+  std::vector<size_t> subsystemsSequence{0, 1};
+  std::shared_ptr<EXP0_LogicRules> logicRules(new EXP0_LogicRules(eventTimes, subsystemsSequence));
+
+  // partitioning times
+  std::vector<double> partitioningTimes;
+  partitioningTimes.push_back(0.0);
+  partitioningTimes.push_back(0.8);
+  partitioningTimes.push_back(1.4);
+  partitioningTimes.push_back(2.0);
+
+  EXP0_System::state_vector_t initState(0.0, 2.0);
+
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+  // system rollout
+  EXP0_System systemDynamics(logicRules);
+  TimeTriggeredRollout<STATE_DIM, INPUT_DIM> timeTriggeredRollout(systemDynamics, rolloutSettings);
+
+  // system derivatives
+  EXP0_SystemDerivative systemDerivative(logicRules);
+
+  // system constraints
+  EXP0_SystemConstraint systemConstraint;
+
+  // system cost functions
+  EXP0_CostFunction systemCostFunction(logicRules);
+
+  // system operatingTrajectories
+  Eigen::Matrix<double, 2, 1> stateOperatingPoint = Eigen::Matrix<double, 2, 1>::Zero();
+  Eigen::Matrix<double, 1, 1> inputOperatingPoint = Eigen::Matrix<double, 1, 1>::Zero();
+  EXP0_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
+
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+  // SLQ - single-thread version
+  using slq_t = SLQ<STATE_DIM, INPUT_DIM>;
+  slq_t slqST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings,
+              logicRules);
+
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+  // run single core SLQ (no active event)
+  double startTime = 0.2;
+  double finalTime = 0.7;
+  ASSERT_NO_THROW(slqST.run(startTime, initState, finalTime, partitioningTimes));
+
+  // run similar to the MPC setup (a new partition)
+  startTime = 0.4;
+  finalTime = 0.9;
+  ASSERT_NO_THROW(slqST.run(startTime, initState, finalTime, partitioningTimes, slq_t::controller_ptr_array_t()));
+
+  // run similar to the MPC setup (one active event)
+  startTime = 0.6;
+  finalTime = 1.2;
+  ASSERT_NO_THROW(slqST.run(startTime, initState, finalTime, partitioningTimes, slq_t::controller_ptr_array_t()));
+
+  // run similar to the MPC setup (no active event + a new partition)
+  startTime = 1.1;
+  finalTime = 1.5;
+  ASSERT_NO_THROW(slqST.run(startTime, initState, finalTime, partitioningTimes, slq_t::controller_ptr_array_t()));
+
+  // run similar to the MPC setup (no overlap)
+  startTime = 1.6;
+  finalTime = 2.0;
+  ASSERT_NO_THROW(slqST.run(startTime, initState, finalTime, partitioningTimes, slq_t::controller_ptr_array_t()));
 }
 
 int main(int argc, char** argv) {

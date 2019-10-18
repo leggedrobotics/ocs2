@@ -90,7 +90,8 @@ class DDP_Settings {
         useFeedbackPolicy_(false)
 
         ,
-        debugPrintRollout_(false)
+        debugPrintRollout_(false),
+        debugCaching_(false)
 
   {}
 
@@ -198,6 +199,8 @@ class DDP_Settings {
 
   /** Printing rollout trajectory for debugging. */
   bool debugPrintRollout_;
+  /** Debugs the cached nominal trajectories. */
+  bool debugCaching_;
 
 };  // end of DDP_Settings class
 
@@ -571,6 +574,18 @@ inline void DDP_Settings::loadSettings(const std::string& filename, const std::s
   } catch (const std::exception& e) {
     if (verbose) {
       std::cerr << " #### Option loader : option 'debugPrintRollout' ................... " << debugPrintRollout_ << "   \t(default)"
+                << std::endl;
+    }
+  }
+
+  try {
+    debugCaching_ = pt.get<bool>(fieldName + ".debugCaching");
+    if (verbose) {
+      std::cerr << " #### Option loader : option 'debugCaching' ........................ " << debugCaching_ << std::endl;
+    }
+  } catch (const std::exception& e) {
+    if (verbose) {
+      std::cerr << " #### Option loader : option 'debugCaching' ........................ " << debugCaching_ << "   \t(default)"
                 << std::endl;
     }
   }

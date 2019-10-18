@@ -92,26 +92,9 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    */
   ~StateTriggeredRollout() = default;
 
-  /**
-   * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
-   * to integrate the system dynamics in time period [initTime, finalTime].
-   *
-   * @param [in] partitionIndex: Time partition index.
-   * @param [in] initTime: The initial time.
-   * @param [in] initState: The initial state.
-   * @param [in] finalTime: The final time.
-   * @param [in] controller: control policy.
-   * @param [in] hybridLlogicRulesMachine: logic rules machine.
-   * @param [out] timeTrajectory: The time trajectory stamp.
-   * @param [out] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
-   * @param [out] stateTrajectory: The state trajectory.
-   * @param [out] inputTrajectory: The control input trajectory.
-   *
-   * @return The final state (state jump is considered if it took place)
-   */
   state_vector_t run(size_t partitionIndex, scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
                      controller_t* controller, logic_rules_machine_t& hybridLlogicRulesMachine, scalar_array_t& timeTrajectory,
-                     size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
+                     size_array_t& postEventIndicesStock, state_vector_array_t& stateTrajectory,
                      input_vector_array_t& inputTrajectory) override {
     //
     //		scalar_array_t guardSurfacesValues;
@@ -139,7 +122,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     //		stateTrajectory.reserve(maxNumSteps+1);
     //		inputTrajectory.clear();
     //		inputTrajectory.reserve(maxNumSteps+1);
-    //		eventsPastTheEndIndeces.clear();
+    //		postEventIndicesStock.clear();
     //
     //		// initialize the model and set controller
     //		if (controller.empty()==false) {
@@ -191,7 +174,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     //
     //			} catch (const size_t& eventID) {
     //
-    //				eventsPastTheEndIndeces.push_back( timeTrajectory.size() );
+    //				postEventIndicesStock.push_back( timeTrajectory.size() );
     //				systemDynamicsPtr_->computeJumpMap(timeTrajectory.back(), stateTrajectory.back(), x0);
     //
     //				eventTimes.push_back(timeTrajectory.back());

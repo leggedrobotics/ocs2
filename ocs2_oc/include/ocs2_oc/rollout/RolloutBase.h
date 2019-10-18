@@ -118,14 +118,14 @@ class RolloutBase {
    * @param [in] controller: control policy.
    * @param [in] eventTimes: The sorted event times array which can cover time beyond initTime and finalTime {s_0 < ... < s_{n-1}}.
    * @param [out] timeTrajectory: The time trajectory stamp.
-   * @param [out] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
+   * @param [out] postEventIndicesStock: Indices containing past-the-end index of events trigger.
    * @param [out] stateTrajectory: The state trajectory.
    * @param [out] inputTrajectory: The control input trajectory.
    *
    * @return The final state (state jump is considered if it took place)
    */
   state_vector_t run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, controller_t* controller,
-                     const scalar_array_t& eventTimes, scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces,
+                     const scalar_array_t& eventTimes, scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock,
                      state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory) {
     if (initTime > finalTime) {
       throw std::runtime_error("Initial time should be less-equal to final time.");
@@ -156,7 +156,7 @@ class RolloutBase {
       }
     }  // end of for loop
 
-    return runImpl(std::move(timeIntervalArray), initState, controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory,
+    return runImpl(std::move(timeIntervalArray), initState, controller, timeTrajectory, postEventIndicesStock, stateTrajectory,
                    inputTrajectory);
   }
 
@@ -164,24 +164,24 @@ class RolloutBase {
    * Prints out the rollout.
    *
    * @param [in] timeTrajectory: The time trajectory stamp.
-   * @param [in] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
+   * @param [in] postEventIndicesStock: An array of the post-event indices.
    * @param [in] stateTrajectory: The state trajectory.
    * @param [in] inputTrajectory: The control input trajectory.
    */
-  static void display(const scalar_array_t& timeTrajectory, const size_array_t& eventsPastTheEndIndeces,
+  static void display(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndicesStock,
                       const state_vector_array_t& stateTrajectory, const input_vector_array_t* const inputTrajectory) {
     std::cerr << "Trajectory length:      " << timeTrajectory.size() << std::endl;
-    std::cerr << "Total number of events: " << eventsPastTheEndIndeces.size() << std::endl;
-    if (!eventsPastTheEndIndeces.empty()) {
+    std::cerr << "Total number of events: " << postEventIndicesStock.size() << std::endl;
+    if (!postEventIndicesStock.empty()) {
       std::cerr << "Event times: ";
-      for (size_t ind : eventsPastTheEndIndeces) {
+      for (size_t ind : postEventIndicesStock) {
         std::cerr << timeTrajectory[ind] << ", ";
       }
       std::cerr << std::endl;
     }
     std::cerr << std::endl;
 
-    const size_t numSubsystems = eventsPastTheEndIndeces.size() + 1;
+    const size_t numSubsystems = postEventIndicesStock.size() + 1;
     size_t k = 0;
     for (size_t i = 0; i < numSubsystems; i++) {
       for (; k < timeTrajectory.size(); k++) {
@@ -192,7 +192,7 @@ class RolloutBase {
           std::cerr << "Input: " << std::setprecision(3) << (*inputTrajectory)[k].transpose() << std::endl;
         }
 
-        if (i < eventsPastTheEndIndeces.size() && k + 1 == eventsPastTheEndIndeces[i]) {
+        if (i < postEventIndicesStock.size() && k + 1 == postEventIndicesStock[i]) {
           std::cerr << "+++ event took place +++" << std::endl;
           k++;
           break;
@@ -210,25 +210,25 @@ class RolloutBase {
    * @param [in] initState: The initial state.
    * @param [in] controller: control policy.
    * @param [out] timeTrajectory: The time trajectory stamp.
-   * @param [out] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
+   * @param [out] postEventIndicesStock: Indices containing past-the-end index of events trigger.
    * @param [out] stateTrajectory: The state trajectory.
    * @param [out] inputTrajectory: The control input trajectory.
    *
    * @return The final state (state jump is considered if it took place)
    */
   virtual state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
-                                 scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces,
-                                 state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory) = 0;
+                                 scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, state_vector_array_t& stateTrajectory,
+                                 input_vector_array_t& inputTrajectory) = 0;
 
   /**
    * Checks for the numerical stability if Rollout_Settings::checkNumericalStability_ is true.
    *
    * @param [in] timeTrajectory: The time trajectory stamp.
-   * @param [in] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
+   * @param [in] postEventIndicesStock: Indices containing past-the-end index of events trigger.
    * @param [in] stateTrajectory: The state trajectory.
    * @param [in] inputTrajectory: The control input trajectory.
    */
-  void checkNumericalStability(controller_t* controller, const scalar_array_t& timeTrajectory, const size_array_t& eventsPastTheEndIndeces,
+  void checkNumericalStability(controller_t* controller, const scalar_array_t& timeTrajectory, const size_array_t& postEventIndicesStock,
                                const state_vector_array_t& stateTrajectory, const input_vector_array_t& inputTrajectory) const {
     if (!rolloutSettings_.checkNumericalStability_) {
       return;
@@ -260,7 +260,7 @@ class RolloutBase {
         // display
         const input_vector_array_t* const inputTrajectoryTempPtr =
             rolloutSettings_.reconstructInputTrajectory_ ? &inputTrajectoryTemp : nullptr;
-        display(timeTrajectoryTemp, eventsPastTheEndIndeces, stateTrajectoryTemp, inputTrajectoryTempPtr);
+        display(timeTrajectoryTemp, postEventIndicesStock, stateTrajectoryTemp, inputTrajectoryTempPtr);
 
         controller->display();
 

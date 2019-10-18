@@ -980,7 +980,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateControllerUpdateMaxNorm(scalar_t& 
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::cacheNominalTrajectories() {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::swapNominalTrajectoriesToCache() {
   cachedTimeTrajectoriesStock_.swap(nominalTimeTrajectoriesStock_);
   cachedPostEventIndicesStock_.swap(nominalPostEventIndicesStock_);
   cachedStateTrajectoriesStock_.swap(nominalStateTrajectoriesStock_);
@@ -1014,11 +1014,11 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::correctInitcachedNominalTrajectories() {
       }
 
       // time
-      correctInitcachedNominalTrajectoryImpl(timeSegment, nominalTimeTrajectoriesStock_[i], cachedTimeTrajectoriesStock_[i]);
+      correctcachedTrajectoryTail(timeSegment, nominalTimeTrajectoriesStock_[i], cachedTimeTrajectoriesStock_[i]);
       // state
-      correctInitcachedNominalTrajectoryImpl(timeSegment, nominalStateTrajectoriesStock_[i], cachedStateTrajectoriesStock_[i]);
+      correctcachedTrajectoryTail(timeSegment, nominalStateTrajectoriesStock_[i], cachedStateTrajectoriesStock_[i]);
       // input
-      correctInitcachedNominalTrajectoryImpl(timeSegment, nominalInputTrajectoriesStock_[i], cachedInputTrajectoriesStock_[i]);
+      correctcachedTrajectoryTail(timeSegment, nominalInputTrajectoriesStock_[i], cachedInputTrajectoriesStock_[i]);
 
       // debugging checks for the added tail
       if (ddpSettings_.debugCaching_) {
@@ -1066,9 +1066,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::correctInitcachedNominalTrajectories() {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 template <typename Data_T, class Alloc>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::correctInitcachedNominalTrajectoryImpl(std::pair<int, scalar_t> timeSegment,
-                                                                            const std::vector<Data_T, Alloc>& currentTrajectory,
-                                                                            std::vector<Data_T, Alloc>& cachedTrajectory) const {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::correctcachedTrajectoryTail(std::pair<int, scalar_t> timeSegment,
+                                                                 const std::vector<Data_T, Alloc>& currentTrajectory,
+                                                                 std::vector<Data_T, Alloc>& cachedTrajectory) {
   // adding the fist cashed value
   Data_T firstCachedValue;
   LinearInterpolation<Data_T, Alloc>::interpolate(timeSegment, firstCachedValue, &currentTrajectory);
@@ -1453,7 +1453,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
   // cache the nominal trajectories before the new rollout (time, state, input, ...)
-  cacheNominalTrajectories();
+  swapNominalTrajectoriesToCache();
 
   // initial controller rollout
   forwardPassTimer_.startTimer();
@@ -1712,7 +1712,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
     scalar_t constraint1ISECashed = nominalConstraint1ISE_;
 
     // cache the nominal trajectories before the new rollout (time, state, input, ...)
-    cacheNominalTrajectories();
+    swapNominalTrajectoriesToCache();
 
     // run the an iteration of the DDP algorithm and update the member variables
     runIteration();
@@ -1744,7 +1744,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
   }
 
   // cache the nominal trajectories before the new rollout (time, state, input, ...)
-  cacheNominalTrajectories();
+  swapNominalTrajectoriesToCache();
 
   // finding the final optimal learningRate and getting the optimal trajectories and controller
   bool computeISEs = !ddpSettings_.noStateConstraints_ || ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_;

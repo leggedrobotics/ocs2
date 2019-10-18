@@ -626,8 +626,14 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Caches the nominal trajectories.
    */
-  void cacheNominalTrajectories();
+  void swapNominalTrajectoriesToCache();
 
+  /**
+   * Display rollout info and scores.
+   */
+  void printRolloutInfo();
+
+ private:
   /**
    * Corrects the initial caching of the nominal trajectories.
    * This is necessary for:
@@ -637,14 +643,18 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void correctInitcachedNominalTrajectories();
 
   /**
-   * Display rollout info and scores.
+   * Corrects for the tail of the cached trajectory based on the nominal trajectory. This compensates for the
+   * the moving horizon (MPC) applications where the final time of the cached trajectory is smaller than the
+   * nominal one.
+   *
+   * @param [in] timeSegment: The interval index and interpolation coefficient alpha of the cached trajectory final
+   * time in the nominal time trajectory.
+   * @param [in] currentTrajectory: The nominal trajectory.
+   * @param [out] cachedTrajectory: The cached trajectory.
    */
-  void printRolloutInfo();
-
- private:
   template <typename Data_T, class Alloc>
-  void correctInitcachedNominalTrajectoryImpl(std::pair<int, scalar_t> timeSegment, const std::vector<Data_T, Alloc>& currentTrajectory,
-                                              std::vector<Data_T, Alloc>& cachedTrajectory) const;
+  static void correctcachedTrajectoryTail(std::pair<int, scalar_t> timeSegment, const std::vector<Data_T, Alloc>& currentTrajectory,
+                                          std::vector<Data_T, Alloc>& cachedTrajectory);
 
   void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;
 

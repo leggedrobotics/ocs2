@@ -50,13 +50,12 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/AnymalCom.cpp
   src/AnymalKinematics.cpp
-        src/AnymalSystemDynamicsAd.cpp
+  src/AnymalSystemDynamicsAd.cpp
   src/AnymalComKinoConstraintAd.cpp
   src/AnymalCost.cpp
   src/AnymalModelStateEstimator.cpp
   src/AnymalComKinoOperatingPoints.cpp
-  src/AnymalWeightCompensationForces.cpp
-)
+        )
 
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}

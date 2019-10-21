@@ -5,7 +5,7 @@
  *      Author: farbod
  */
 
-#include "ocs2_anymal_switched_model/kinematics/AnymalKinematics.h"
+#include "ocs2_anymal_switched_model/core/AnymalKinematics.h"
 
 namespace anymal {
 namespace tpl {

@@ -7,8 +7,8 @@
 
 #include <ocs2_switched_model_interface/constraint/EndEffectorPositionConstraint.h>
 
-#include "ocs2_anymal_switched_model/kinematics/AnymalKinematics.h"
-#include "ocs2_anymal_switched_model/dynamics/AnymalCom.h"
+#include "ocs2_anymal_switched_model/core/AnymalKinematics.h"
+#include "ocs2_anymal_switched_model/core/AnymalCom.h"
 
 TEST(TestEEPositionConstraint, evaluate){
   using TestedConstraint = switched_model::EndEffectorPositionConstraint<24, 24>;

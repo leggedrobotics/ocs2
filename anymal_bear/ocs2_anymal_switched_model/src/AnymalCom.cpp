@@ -5,7 +5,7 @@
  *      Author: farbod
  */
 
-#include "ocs2_anymal_switched_model/dynamics/implementation/AnymalCom.h"
+#include "ocs2_anymal_switched_model/core/implementation/AnymalCom.h"
 
 // Explicit instantiation
 template class anymal::tpl::AnymalCom<double>;

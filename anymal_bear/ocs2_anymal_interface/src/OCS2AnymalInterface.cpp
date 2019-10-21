@@ -7,8 +7,8 @@
 
 #include "ocs2_anymal_interface/OCS2AnymalInterface.h"
 
-#include <ocs2_anymal_switched_model/dynamics/AnymalCom.h>
-#include <ocs2_anymal_switched_model/kinematics/AnymalKinematics.h>
+#include <ocs2_anymal_switched_model/core/AnymalCom.h>
+#include <ocs2_anymal_switched_model/core/AnymalKinematics.h>
 
 namespace anymal {
 /******************************************************************************************************/

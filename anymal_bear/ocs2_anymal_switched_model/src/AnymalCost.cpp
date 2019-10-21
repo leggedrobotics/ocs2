@@ -6,7 +6,7 @@
  */
 
 #include "ocs2_anymal_switched_model/cost/AnymalCost.h"
-#include "ocs2_anymal_switched_model/dynamics/AnymalCom.h"
+#include "ocs2_anymal_switched_model/core/AnymalCom.h"
 
 namespace anymal {
 

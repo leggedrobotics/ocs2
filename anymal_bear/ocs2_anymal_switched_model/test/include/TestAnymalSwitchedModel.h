@@ -7,8 +7,8 @@
 #pragma once
 
 // model
-#include <ocs2_anymal_switched_model/kinematics/AnymalKinematics.h>
-#include <ocs2_anymal_switched_model/dynamics/AnymalCom.h>
+#include <ocs2_anymal_switched_model/core/AnymalKinematics.h>
+#include <ocs2_anymal_switched_model/core/AnymalCom.h>
 
 namespace anymal {
 

@@ -11,6 +11,9 @@
 
 namespace ocs2 {
 
+/**
+ * Task interface class for thread pool storage object.
+ */
 class TaskBase {
  public:
   TaskBase() = default;
@@ -24,6 +27,11 @@ class TaskBase {
   std::list<int> children_;
 };
 
+/**
+ * Task class for a specific function type.
+ *
+ * @tparam Functor: Type of callable task object (functor).
+ */
 template <typename Functor>
 class Task : TaskBase {
  private:
@@ -62,7 +70,7 @@ class ThreadPool {
    *
    * @param [in] taskFunction: task function to run in the pool
    * @param [out] thisTaskId: ID of the new task.
-   * @return pair containing future and task ID
+   * @return future object with taskFunction retrun value
    */
   template <typename Functor>
   std::future<typename std::result_of<Functor(int)>::type> run(Functor taskFunction, int& thisTaskId);
@@ -73,14 +81,14 @@ class ThreadPool {
    * Run a task that depends on antother task
    *
    * @param [in] taskFunction: task function to run in the pool.
-   * @param [in] runAfterID: execution is delayed until task with given ID has finished.
-   * @param [out] thisTaskId: ID of the new task.
-   * @return pair containing future and task ID
+   * @param [in] runAfterId: new task is delayed until task with given ID has finished.
+   * @param [out] thisTaskId: new task ID.
+   * @return future object with taskFunction retrun value
    */
   template <typename Functor>
-  std::future<typename std::result_of<Functor(int)>::type> runAfter(int runAfterID, Functor taskFunction, int& thisTaskId);
+  std::future<typename std::result_of<Functor(int)>::type> runAfter(int runAfterId, Functor taskFunction, int& thisTaskId);
   template <typename Functor>
-  std::future<typename std::result_of<Functor(int)>::type> runAfter(int runAfterID, Functor taskFunction);
+  std::future<typename std::result_of<Functor(int)>::type> runAfter(int runAfterId, Functor taskFunction);
 
  private:
   /**
@@ -88,10 +96,10 @@ class ThreadPool {
    *
    * @param [in] taskId next task from queue
    */
-  void pushReady(int taskid);
+  void pushReady(int taskId);
 
   /**
-   * Retrieve next task in ready queue
+   * Pop next task from ready queue
    *
    * @return next task from queue
    */
@@ -107,7 +115,7 @@ class ThreadPool {
   /**
    * Run a task asynchronously in another thread
    *
-   * @param [in] taskFunction: task function to run in the pool
+   * @param [in] task: task object
    * @return task ID
    */
   int runTask(std::shared_ptr<TaskBase> task);
@@ -115,11 +123,11 @@ class ThreadPool {
   /**
    * Run a task asynchronously in another thread with dependency
    *
-   * @param [in] taskFunction: task function to run in the pool.
-   * @param [in] runAfterID: task must run only after task with given ID has finished.
+   * @param [in] task: task object
+   * @param [in] runAfterId: new task is delayed until task with given ID has finished.
    * @return task ID
    */
-  int runTaskWithDependency(std::shared_ptr<TaskBase> task, int runAfterID);
+  int runTaskWithDependency(std::shared_ptr<TaskBase> task, int runAfterId);
 
   int nextTaskId_;  // protected by taskRegistryLock_
   std::map<int, std::shared_ptr<TaskBase>> taskRegistry_;
@@ -132,12 +140,18 @@ class ThreadPool {
   std::mutex readyQueueLock_;
 };
 
+/**************************************************************************************************/
+/**************************************************************************************************/
+/**************************************************************************************************/
 template <typename Functor>
 std::future<typename std::result_of<Functor(int)>::type> ThreadPool::run(Functor taskFunction) {
   int dummy;
   return run(taskFunction, dummy);
 }
 
+/**************************************************************************************************/
+/**************************************************************************************************/
+/**************************************************************************************************/
 template <typename Functor>
 std::future<typename std::result_of<Functor(int)>::type> ThreadPool::run(Functor taskFunction, int& thisTaskId) {
   using T = typename std::result_of<Functor(int)>::type;
@@ -154,14 +168,20 @@ std::future<typename std::result_of<Functor(int)>::type> ThreadPool::run(Functor
   return std::move(future);
 }
 
+/**************************************************************************************************/
+/**************************************************************************************************/
+/**************************************************************************************************/
 template <typename Functor>
-std::future<typename std::result_of<Functor(int)>::type> ThreadPool::runAfter(int runAfterID, Functor taskFunction) {
+std::future<typename std::result_of<Functor(int)>::type> ThreadPool::runAfter(int runAfterId, Functor taskFunction) {
   int dummy;
-  return runAfter(runAfterID, taskFunction, dummy);
+  return runAfter(runAfterId, taskFunction, dummy);
 }
 
+/**************************************************************************************************/
+/**************************************************************************************************/
+/**************************************************************************************************/
 template <typename Functor>
-std::future<typename std::result_of<Functor(int)>::type> ThreadPool::runAfter(int runAfterID, Functor taskFunction, int& thisTaskId) {
+std::future<typename std::result_of<Functor(int)>::type> ThreadPool::runAfter(int runAfterId, Functor taskFunction, int& thisTaskId) {
   using T = typename std::result_of<Functor(int)>::type;
   int taskId;
   std::future<T> future;
@@ -170,7 +190,7 @@ std::future<typename std::result_of<Functor(int)>::type> ThreadPool::runAfter(in
   future = task->packaged_task_.get_future();
 
   std::shared_ptr<TaskBase> task_shared(static_cast<TaskBase*>(task));
-  taskId = runTaskWithDependency(std::move(task_shared), runAfterID);
+  taskId = runTaskWithDependency(std::move(task_shared), runAfterId);
 
   thisTaskId = taskId;
   return std::move(future);

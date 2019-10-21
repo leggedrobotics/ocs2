@@ -216,8 +216,8 @@ class LinearInterpolation {
 
 // Specialization of interpolate() member method for floating point types
 template <>
-void LinearInterpolation<double>::interpolate(std::pair<int, scalar_t> indexAlpha, double& enquiryData,
-                                              const std::vector<double>* dataPtr) {
+inline void LinearInterpolation<double>::interpolate(std::pair<int, scalar_t> indexAlpha, double& enquiryData,
+                                                     const std::vector<double>* dataPtr) {
   if (dataPtr) {
     if (dataPtr->size() > 1) {
       // Normal interpolation case

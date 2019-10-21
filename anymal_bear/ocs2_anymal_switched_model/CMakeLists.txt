@@ -53,9 +53,8 @@ add_library(${PROJECT_NAME}
   src/AnymalSystemDynamicsAd.cpp
   src/AnymalComKinoConstraintAd.cpp
   src/AnymalCost.cpp
-  src/AnymalModelStateEstimator.cpp
   src/AnymalComKinoOperatingPoints.cpp
-        )
+)
 
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}

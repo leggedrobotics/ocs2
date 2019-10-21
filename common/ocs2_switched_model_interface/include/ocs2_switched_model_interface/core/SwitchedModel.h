@@ -8,9 +8,9 @@
 #ifndef SWITCHEDMODEL_H_
 #define SWITCHEDMODEL_H_
 
+#include <Eigen/Dense>
 #include <array>
 #include <cmath>
-#include <Eigen/Dense>
 
 namespace switched_model {
 
@@ -18,30 +18,28 @@ namespace switched_model {
  * General typedefs and enums for all Base classes
  * @tparam JOINT_COORD_SIZE
  */
-template <size_t JOINT_COORD_SIZE, typename SCALAR_T=double>
-class SwitchedModel
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+template <size_t JOINT_COORD_SIZE, typename SCALAR_T = double>
+class SwitchedModel {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	/**
-	 * Enumerations defining base, joint and generalized coordinate size
-	 */
-	enum
-	{
-		NUM_CONTACT_POINTS			= 4,
-		BASE_COORDINATE_SIZE        = 6,
-		JOINT_COORDINATE_SIZE       = JOINT_COORD_SIZE,
-		GENERALIZED_COORDINATE_SIZE = BASE_COORDINATE_SIZE + JOINT_COORD_SIZE
-	};
+  /**
+   * Enumerations defining base, joint and generalized coordinate size
+   */
+  enum {
+    NUM_CONTACT_POINTS = 4,
+    BASE_COORDINATE_SIZE = 6,
+    JOINT_COORDINATE_SIZE = JOINT_COORD_SIZE,
+    GENERALIZED_COORDINATE_SIZE = BASE_COORDINATE_SIZE + JOINT_COORD_SIZE
+  };
 
-	typedef std::array<bool, NUM_CONTACT_POINTS> contact_flag_t;
+  typedef std::array<bool, NUM_CONTACT_POINTS> contact_flag_t;
 
-	typedef Eigen::Matrix<SCALAR_T, GENERALIZED_COORDINATE_SIZE,1> generalized_coordinate_t;
-	typedef Eigen::Matrix<SCALAR_T, JOINT_COORDINATE_SIZE,1>       joint_coordinate_t;
-	typedef Eigen::Matrix<SCALAR_T, BASE_COORDINATE_SIZE,1>        base_coordinate_t;
+  typedef Eigen::Matrix<SCALAR_T, GENERALIZED_COORDINATE_SIZE, 1> generalized_coordinate_t;
+  typedef Eigen::Matrix<SCALAR_T, JOINT_COORDINATE_SIZE, 1> joint_coordinate_t;
+  typedef Eigen::Matrix<SCALAR_T, BASE_COORDINATE_SIZE, 1> base_coordinate_t;
 
-  	enum class FeetEnum { LF, RF, LH, RH };
+  enum class FeetEnum { LF, RF, LH, RH };
 };
 
 /**
@@ -49,7 +47,7 @@ public:
  * @return
  */
 inline bool useInertiaMatrixDerivate() {
-	return false;
+  return false;
 }
 
 /**
@@ -58,26 +56,24 @@ inline bool useInertiaMatrixDerivate() {
  * @param [in] eulerAngles
  * @return
  */
-template <typename SCALAR_T=double, typename Derived>
+template <typename SCALAR_T = double, typename Derived>
 inline Eigen::Matrix<SCALAR_T, 3, 3> RotationMatrixOrigintoBase(const Eigen::DenseBase<Derived>& eulerAngles) {
+  if (eulerAngles.innerSize() != 3 || eulerAngles.outerSize() != 1) throw std::runtime_error("Input argument should be a 3-by-1 vector.");
 
-	if (eulerAngles.innerSize()!=3 || eulerAngles.outerSize()!=1)
-		throw std::runtime_error("Input argument should be a 3-by-1 vector.");
+  // inputs are the intrinsic rotation angles in RADIANTS
+  SCALAR_T sinAlpha = sin(eulerAngles(0));
+  SCALAR_T cosAlpha = cos(eulerAngles(0));
+  SCALAR_T sinBeta = sin(eulerAngles(1));
+  SCALAR_T cosBeta = cos(eulerAngles(1));
+  SCALAR_T sinGamma = sin(eulerAngles(2));
+  SCALAR_T cosGamma = cos(eulerAngles(2));
 
-	// inputs are the intrinsic rotation angles in RADIANTS
-	SCALAR_T sinAlpha = sin(eulerAngles(0));
-	SCALAR_T cosAlpha = cos(eulerAngles(0));
-	SCALAR_T sinBeta  = sin(eulerAngles(1));
-	SCALAR_T cosBeta  = cos(eulerAngles(1));
-	SCALAR_T sinGamma = sin(eulerAngles(2));
-	SCALAR_T cosGamma = cos(eulerAngles(2));
+  Eigen::Matrix<SCALAR_T, 3, 3> Rx, Ry, Rz;
+  Rx << SCALAR_T(1), SCALAR_T(0), SCALAR_T(0), SCALAR_T(0), cosAlpha, sinAlpha, SCALAR_T(0), -sinAlpha, cosAlpha;
+  Ry << cosBeta, SCALAR_T(0), -sinBeta, SCALAR_T(0), SCALAR_T(1), SCALAR_T(0), sinBeta, SCALAR_T(0), cosBeta;
+  Rz << cosGamma, sinGamma, SCALAR_T(0), -sinGamma, cosGamma, SCALAR_T(0), SCALAR_T(0), SCALAR_T(0), SCALAR_T(1);
 
-	Eigen::Matrix<SCALAR_T, 3, 3> Rx, Ry, Rz;
-	Rx << SCALAR_T(1), SCALAR_T(0), SCALAR_T(0),					SCALAR_T(0), cosAlpha, sinAlpha,		SCALAR_T(0), -sinAlpha, cosAlpha;
-	Ry << cosBeta, SCALAR_T(0), -sinBeta,		SCALAR_T(0), SCALAR_T(1), SCALAR_T(0),		 			sinBeta, SCALAR_T(0), cosBeta;
-	Rz << cosGamma, sinGamma, SCALAR_T(0), 	-sinGamma, cosGamma, SCALAR_T(0),		SCALAR_T(0), SCALAR_T(0), SCALAR_T(1);
-
-	return Rz*Ry*Rx;
+  return Rz * Ry * Rx;
 }
 
 /**
@@ -86,26 +82,24 @@ inline Eigen::Matrix<SCALAR_T, 3, 3> RotationMatrixOrigintoBase(const Eigen::Den
  * @param [in] eulerAngles
  * @return
  */
-template <typename SCALAR_T=double, typename Derived>
+template <typename SCALAR_T = double, typename Derived>
 inline Eigen::Matrix<SCALAR_T, 3, 3> RotationMatrixBasetoOrigin(const Eigen::DenseBase<Derived>& eulerAngles) {
+  if (eulerAngles.innerSize() != 3 || eulerAngles.outerSize() != 1) throw std::runtime_error("Input argument should be a 3-by-1 vector.");
 
-	if (eulerAngles.innerSize()!=3 || eulerAngles.outerSize()!=1)
-		throw std::runtime_error("Input argument should be a 3-by-1 vector.");
+  // inputs are the intrinsic rotation angles in RADIANTS
+  SCALAR_T sinAlpha = sin(eulerAngles(0));
+  SCALAR_T cosAlpha = cos(eulerAngles(0));
+  SCALAR_T sinBeta = sin(eulerAngles(1));
+  SCALAR_T cosBeta = cos(eulerAngles(1));
+  SCALAR_T sinGamma = sin(eulerAngles(2));
+  SCALAR_T cosGamma = cos(eulerAngles(2));
 
-	// inputs are the intrinsic rotation angles in RADIANTS
-	SCALAR_T sinAlpha = sin(eulerAngles(0));
-	SCALAR_T cosAlpha = cos(eulerAngles(0));
-	SCALAR_T sinBeta  = sin(eulerAngles(1));
-	SCALAR_T cosBeta  = cos(eulerAngles(1));
-	SCALAR_T sinGamma = sin(eulerAngles(2));
-	SCALAR_T cosGamma = cos(eulerAngles(2));
+  Eigen::Matrix<SCALAR_T, 3, 3> RxT, RyT, RzT;
+  RxT << SCALAR_T(1), SCALAR_T(0), SCALAR_T(0), SCALAR_T(0), cosAlpha, -sinAlpha, SCALAR_T(0), sinAlpha, cosAlpha;
+  RyT << cosBeta, SCALAR_T(0), sinBeta, SCALAR_T(0), SCALAR_T(1), SCALAR_T(0), -sinBeta, SCALAR_T(0), cosBeta;
+  RzT << cosGamma, -sinGamma, SCALAR_T(0), sinGamma, cosGamma, SCALAR_T(0), SCALAR_T(0), SCALAR_T(0), SCALAR_T(1);
 
-	Eigen::Matrix<SCALAR_T, 3, 3> RxT, RyT, RzT;
-	RxT << SCALAR_T(1), SCALAR_T(0), SCALAR_T(0),					SCALAR_T(0), cosAlpha, -sinAlpha,		SCALAR_T(0), sinAlpha, cosAlpha;
-	RyT << cosBeta, SCALAR_T(0), sinBeta,		SCALAR_T(0), SCALAR_T(1), SCALAR_T(0),		 			-sinBeta, SCALAR_T(0), cosBeta;
-	RzT << cosGamma, -sinGamma, SCALAR_T(0), 	sinGamma, cosGamma, SCALAR_T(0),		SCALAR_T(0), SCALAR_T(0), SCALAR_T(1);
-
-	return RxT*RyT*RzT;
+  return RxT * RyT * RzT;
 }
 
 /**
@@ -114,16 +108,13 @@ inline Eigen::Matrix<SCALAR_T, 3, 3> RotationMatrixBasetoOrigin(const Eigen::Den
  * @param [in] in
  * @return
  */
-template <typename SCALAR_T=double, typename Derived>
+template <typename SCALAR_T = double, typename Derived>
 inline Eigen::Matrix<SCALAR_T, 3, 3> CrossProductMatrix(const Eigen::DenseBase<Derived>& in) {
+  if (in.innerSize() != 3 || in.outerSize() != 1) throw std::runtime_error("Input argument should be a 3-by-1 vector.");
 
-	if (in.innerSize()!=3 || in.outerSize()!=1)  throw std::runtime_error("Input argument should be a 3-by-1 vector.");
-
-	Eigen::Matrix<SCALAR_T, 3, 3> out;
-	out <<   SCALAR_T(0.0),   -in(2), +in(1),
-			+in(2),  SCALAR_T(0.0),   -in(0),
-			-in(1), +in(0),  SCALAR_T(0.0);
-	return out;
+  Eigen::Matrix<SCALAR_T, 3, 3> out;
+  out << SCALAR_T(0.0), -in(2), +in(1), +in(2), SCALAR_T(0.0), -in(0), -in(1), +in(0), SCALAR_T(0.0);
+  return out;
 }
 
 /*
@@ -133,21 +124,19 @@ inline Eigen::Matrix<SCALAR_T, 3, 3> CrossProductMatrix(const Eigen::DenseBase<D
  * @return M: matrix that does the transformation
  */
 template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 3, 3> AngularVelocitiesToEulerAngleDerivativesMatrix (const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles){
+Eigen::Matrix<SCALAR_T, 3, 3> AngularVelocitiesToEulerAngleDerivativesMatrix(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
+  Eigen::Matrix<SCALAR_T, 3, 3> M;
+  SCALAR_T sinPsi = sin(eulerAngles(2));
+  SCALAR_T cosPsi = cos(eulerAngles(2));
+  SCALAR_T sinTheta = sin(eulerAngles(1));
+  SCALAR_T cosTheta = cos(eulerAngles(1));
 
-	Eigen::Matrix<SCALAR_T, 3, 3> M;
-	SCALAR_T sinPsi = sin(eulerAngles(2));
-	SCALAR_T cosPsi = cos(eulerAngles(2));
-	SCALAR_T sinTheta = sin(eulerAngles(1));
-	SCALAR_T cosTheta = cos(eulerAngles(1));
+  M << cosPsi / cosTheta, -sinPsi / cosTheta, SCALAR_T(0), sinPsi, cosPsi, SCALAR_T(0), -cosPsi * sinTheta / cosTheta,
+      sinTheta * sinPsi / cosTheta, SCALAR_T(1);
 
-	M << 	cosPsi/cosTheta,          -sinPsi/cosTheta,          SCALAR_T(0),
-			sinPsi, 				   cosPsi,                   SCALAR_T(0),
-			-cosPsi*sinTheta/cosTheta,  sinTheta*sinPsi/cosTheta, SCALAR_T(1);
-
-	return M;
+  return M;
 }
 
-} // end of namespace switched_model
+}  // end of namespace switched_model
 
 #endif /* SWITCHEDMODEL_H_ */

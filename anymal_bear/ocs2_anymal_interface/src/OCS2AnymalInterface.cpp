@@ -31,8 +31,7 @@ void OCS2AnymalInterface::setupOptimizer(const logic_rules_ptr_t& logicRulesPtr,
   costFunctionPtr_.reset(new cost_function_t(logicRulesPtr, Q_, R_, QFinal_));
   timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, rolloutSettings_));
 
-  generalized_coordinate_t defaultCoordinate = initRbdState_.template head<18>();
-  operatingPointsPtr_.reset(new operating_point_t(logicRulesPtr, modelSettings_, defaultCoordinate));
+  operatingPointsPtr_.reset(new operating_point_t(logicRulesPtr));
 
   // SLQ
   if (slqSettings_.ddpSettings_.useMultiThreading_) {

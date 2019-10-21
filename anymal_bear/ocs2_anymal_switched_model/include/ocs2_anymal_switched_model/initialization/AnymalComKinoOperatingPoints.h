@@ -19,9 +19,7 @@ public:
 	using Base = switched_model::ComKinoOperatingPointsBase;
   	using logic_rules_t = switched_model::SwitchedModelPlannerLogicRules<12, double>;
 
-	AnymalComKinoOperatingPoints(std::shared_ptr<const logic_rules_t> logicRulesPtr,
-								const switched_model::Model_Settings& options = switched_model::Model_Settings(),
-								const generalized_coordinate_t& defaultConfiguration = generalized_coordinate_t::Zero());
+	AnymalComKinoOperatingPoints(std::shared_ptr<const logic_rules_t> logicRulesPtr);
 
 	AnymalComKinoOperatingPoints(const AnymalComKinoOperatingPoints& rhs);
 

@@ -8,15 +8,12 @@
 #include "ocs2_anymal_switched_model/initialization/AnymalComKinoOperatingPoints.h"
 
 #include <ocs2_anymal_switched_model/core/AnymalCom.h>
-#include <ocs2_anymal_switched_model/core/AnymalKinematics.h>
 
 namespace anymal {
 
 AnymalComKinoOperatingPoints::AnymalComKinoOperatingPoints(
-		std::shared_ptr<const logic_rules_t> logicRulesPtr,
-		const switched_model::Model_Settings& options,
-		const generalized_coordinate_t& defaultConfiguration)
-: Base(AnymalKinematics(), AnymalCom(), std::move(logicRulesPtr), options, defaultConfiguration)
+		std::shared_ptr<const logic_rules_t> logicRulesPtr)
+: Base(AnymalCom(), std::move(logicRulesPtr))
 {}
 
 AnymalComKinoOperatingPoints::AnymalComKinoOperatingPoints(const AnymalComKinoOperatingPoints& rhs)

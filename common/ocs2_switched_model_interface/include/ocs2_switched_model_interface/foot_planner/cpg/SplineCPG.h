@@ -11,7 +11,7 @@
 #include <cmath>
 
 #include "ocs2_switched_model_interface/foot_planner/cpg/CPG_BASE.h"
-#include "ocs2_switched_model_interface/misc/CubicSpline.h"
+#include "ocs2_switched_model_interface/foot_planner/CubicSpline.h"
 
 namespace switched_model {
 

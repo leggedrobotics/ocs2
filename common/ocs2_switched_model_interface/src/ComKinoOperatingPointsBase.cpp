@@ -1,13 +1,21 @@
-/*
- * ComKinoOperatingPointsBase.h
- *
- *  Created on: Feb 9, 2018
- *      Author: farbod
- */
-
 #include "ocs2_switched_model_interface/initialization/ComKinoOperatingPointsBase.h"
 
+#include "ocs2_switched_model_interface/core/MotionPhaseDefinition.h"
+
 namespace switched_model {
+
+ComKinoOperatingPointsBase::ComKinoOperatingPointsBase(const com_model_t& comModel, std::shared_ptr<const logic_rules_t> logicRulesPtr)
+    : Base(), comModelPtr_(comModel.clone()), logicRulesPtr_(std::move(logicRulesPtr)) {
+  if (!logicRulesPtr_) {
+    throw std::runtime_error("[ComKinoOperatingPointsBase] logicRules cannot be a nullptr");
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ComKinoOperatingPointsBase::ComKinoOperatingPointsBase(const ComKinoOperatingPointsBase& rhs)
+    : Base(rhs), comModelPtr_(rhs.comModelPtr_->clone()), logicRulesPtr_(rhs.logicRulesPtr_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -19,76 +27,43 @@ ComKinoOperatingPointsBase* ComKinoOperatingPointsBase::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoOperatingPointsBase::computeOperatingPoints(
-    const generalized_coordinate_t& defaultConfiguration, std::vector<contact_flag_t>& possibleStanceLegs,
-    state_vector_array_t& stateOperatingPoints, input_vector_array_t& inputOperatingPoints) {
-  const size_t NUM_PHASES = std::pow(2, (int)NUM_CONTACT_POINTS_);
+void ComKinoOperatingPointsBase::computeInputOperatingPoints(contact_flag_t contactFlags, input_vector_t& inputs) {
+  // Distribute total mass equally over active stance legs.
+  inputs.setZero();
 
-  possibleStanceLegs.resize(NUM_PHASES);
-  for (size_t i = 0; i < NUM_PHASES; i++) {
-    if (options_.constrainedIntegration_ == true) {
-      possibleStanceLegs[i] = modeNumber2StanceLeg(i);
-      //			possibleStanceLegs[i] = contact_flag_t{1,1,1,1};
+  const scalar_t totalMass = comModelPtr_->totalMass() * 9.81;
+  size_t numStanceLegs(0);
 
-    } else {
-      possibleStanceLegs[i] = contact_flag_t{1, 1, 1, 1};
+  for (size_t i = 0; i < NUM_CONTACT_POINTS_; i++) {
+    if (contactFlags[i]) {
+      ++numStanceLegs;
     }
-  }  // end of i loop
+  }
 
-  stateOperatingPoints.resize(NUM_PHASES);
-  inputOperatingPoints.resize(NUM_PHASES);
-  for (size_t i = 0; i < NUM_PHASES; i++) {
-    // state operating point
-    stateOperatingPoints[i].setZero();
-    stateOperatingPoints[i].template head<6>() = defaultConfiguration.template head<6>();
-    stateOperatingPoints[i].template segment<6>(6).setZero();
-    stateOperatingPoints[i].template segment<JOINT_COORD_SIZE>(12) = defaultConfiguration.template segment<JOINT_COORD_SIZE>(6);
-
-    // Input operating point
-    computeInputOperatingPoints(stateOperatingPoints[i], possibleStanceLegs[i], inputOperatingPoints[i]);
-
-  }  // end of i loop
+  if (numStanceLegs > 0) {
+    for (size_t i = 0; i < NUM_CONTACT_POINTS_; i++) {
+      if (contactFlags[i]) {
+        inputs(3 * i + 2) = totalMass / numStanceLegs;
+      }
+    }
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoOperatingPointsBase::computeInputOperatingPoints(const state_vector_t& switchedState,
-                                                                                                     const contact_flag_t& stanceLegs,
-                                                                                                     input_vector_t& inputOperatingPoint) {
-  matrix3d_t b_R_o = RotationMatrixOrigintoBase(switchedState.template head<3>());
-
-  // Input operating point
-  std::array<vector3d_t, NUM_CONTACT_POINTS_> sphericalWeightCompensationForces;
-  weightCompensationForces_.computeCartesianForces(b_R_o * o_gravityVector_, stanceLegs,
-                                                   switchedState.template segment<JOINT_COORD_SIZE>(12), sphericalWeightCompensationForces);
-
-  inputOperatingPoint.setZero();
-  for (size_t j = 0; j < NUM_CONTACT_POINTS_; j++) inputOperatingPoint.template segment<3>(3 * j) = sphericalWeightCompensationForces[j];
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ComKinoOperatingPointsBase::getSystemOperatingTrajectories(
-    const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime, scalar_array_t& timeTrajectory,
-    state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory, bool concatOutput /*= false*/) {
+void ComKinoOperatingPointsBase::getSystemOperatingTrajectories(const state_vector_t& initialState, const scalar_t& startTime,
+                                                                const scalar_t& finalTime, scalar_array_t& timeTrajectory,
+                                                                state_vector_array_t& stateTrajectory,
+                                                                input_vector_array_t& inputTrajectory, bool concatOutput /*= false*/) {
   size_t index = logicRulesPtr_->getEventTimeCount(0.5 * (startTime + finalTime));
-  logicRulesPtr_->getContactFlags(index, stanceLegs_);
+  contact_flag_t contactFlags_;
+  logicRulesPtr_->getContactFlags(index, contactFlags_);
 
-  // approach 1: using the default values
-  size_t mode = stanceLeg2ModeNumber(stanceLegs_);
-  //	Base::stateOperatingPoint_ = allStateOperatingPoints_[mode];
-  //	Base::stateOperatingPoint_.template head<6>() = initialState.template head<6>();
   Base::stateOperatingPoint_ = initialState;
-  Base::inputOperatingPoint_ = allInputOperatingPoints_[mode];
+  computeInputOperatingPoints(contactFlags_, Base::inputOperatingPoint_);
 
-  // approach 2: recomputing the inpu
-  //	Base::stateOperatingPoint_ = initialState;
-  //	Base::stateOperatingPoint_.template segment<6>(6).setZero();
-  //	computeInputOperatingPoints(Base::stateOperatingPoint_, stanceLegs_, Base::inputOperatingPoint_);
-
-  if (concatOutput == false) {
+  if (!concatOutput) {
     timeTrajectory.clear();
     stateTrajectory.clear();
     inputTrajectory.clear();
@@ -104,4 +79,4 @@ void ComKinoOperatingPointsBase::getSystemOperatingTrajectories(
   inputTrajectory.push_back(Base::inputOperatingPoint_);
 }
 
-}  // end of namespace switched_model
+}  // namespace switched_model

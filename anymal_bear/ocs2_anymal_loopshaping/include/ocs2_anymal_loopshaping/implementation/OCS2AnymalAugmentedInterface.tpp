@@ -65,8 +65,7 @@ void OCS2AnymalAugmentedInterface<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM
   anymalDynamicsDerivativesPtr_.reset(anymalDynamicsPtr_->clone());
   anymalConstraintsPtr_.reset(new anymal_constraint_t(logicRulesPtr, modelSettings_));
   anymalCostFunctionPtr_.reset(new anymal_cost_funtion_t(logicRulesPtr, Q_system_, R_system_, Q_system_final_));
-  generalized_coordinate_t defaultCoordinate = initRbdState_.template head<18>();
-  anymalOperatingPointPtr_.reset(new anymal_operating_point_t(logicRulesPtr, modelSettings_, defaultCoordinate));
+  anymalOperatingPointPtr_.reset(new anymal_operating_point_t(logicRulesPtr));
 
   dynamicsPtr_ = system_dynamics_t::create(*anymalDynamicsPtr_, loopshapingDefinition_);
   dynamicsDerivativesPtr_ = system_dynamics_derivative_t::create(*anymalDynamicsDerivativesPtr_, loopshapingDefinition_);

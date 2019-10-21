@@ -11,11 +11,11 @@
 
 namespace anymal {
 
-class AnymalCost final : public switched_model::SwitchedModelCostBase<12> {
+class AnymalCost final : public switched_model::SwitchedModelCostBase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Base = SwitchedModelCostBase<12>;
+  using Base = SwitchedModelCostBase;
   using Base::logic_rules_t;
 
   AnymalCost(std::shared_ptr<const logic_rules_t> logicRulesPtr, const state_matrix_t& Q, const input_matrix_t& R,

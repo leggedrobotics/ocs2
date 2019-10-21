@@ -88,8 +88,8 @@ class OCS2AnymalAugmentedInterface : public switched_model::OCS2QuadrupedAugment
       SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM,
       FILTER_STATE_DIM, FILTER_INPUT_DIM>;
 
-  using anymal_system_dynamics_t = AnymalSystemDynamicsAd;
-  using anymal_system_dynamics_derivative_t = AnymalSystemDynamicsAd;
+  using anymal_system_dynamics_t = ComKinoSystemDynamicsAd;
+  using anymal_system_dynamics_derivative_t = ComKinoSystemDynamicsAd;
   using anymal_constraint_t = AnymalComKinoConstraintAd;
   using anymal_cost_funtion_t = AnymalCost;
   using anymal_operating_point_t = AnymalComKinoOperatingPoints;

@@ -4,9 +4,11 @@
 
 namespace switched_model {
 
-template<size_t STATE_DIM, size_t INPUT_DIM>
-class ZeroForceConstraint final : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> {
+class ZeroForceConstraint final : public ocs2::ConstraintTerm<24, 24> {
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  static constexpr size_t STATE_DIM = 24;
+  static constexpr size_t INPUT_DIM = 24;
 
   using BASE = ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM>;
   using typename BASE::input_vector_t;

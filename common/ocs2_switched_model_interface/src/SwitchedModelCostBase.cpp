@@ -5,16 +5,15 @@
  *      Author: farbod
  */
 
+#include "ocs2_switched_model_interface/cost/SwitchedModelCostBase.h"
+
 namespace switched_model {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::SwitchedModelCostBase(const com_model_t& comModel,
-                                                                                     std::shared_ptr<const logic_rules_t> logicRulesPtr,
-                                                                                     const state_matrix_t& Q, const input_matrix_t& R,
-                                                                                     const state_matrix_t& QFinal)
+SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel, std::shared_ptr<const logic_rules_t> logicRulesPtr,
+                                             const state_matrix_t& Q, const input_matrix_t& R, const state_matrix_t& QFinal)
     : BASE(Q, R, state_vector_t::Zero(), input_vector_t::Zero(), QFinal, state_vector_t::Zero()),
       comModelPtr_(comModel.clone()),
       logicRulesPtr_(std::move(logicRulesPtr)) {
@@ -26,25 +25,21 @@ SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::SwitchedModelCost
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::SwitchedModelCostBase(const SwitchedModelCostBase& rhs)
+SwitchedModelCostBase::SwitchedModelCostBase(const SwitchedModelCostBase& rhs)
     : BASE(rhs), comModelPtr_(rhs.comModelPtr_->clone()), logicRulesPtr_(rhs.logicRulesPtr_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>* SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::clone()
-    const {
-  return new SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>(*this);
+
+SwitchedModelCostBase* SwitchedModelCostBase::clone() const {
+  return new SwitchedModelCostBase(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x,
-                                                                                              const input_vector_t& u) {
+void SwitchedModelCostBase::setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
   // Get stance configuration
   contact_flag_t stanceLegs;
   size_t index = logicRulesPtr_->getEventTimeCount(t);
@@ -61,9 +56,7 @@ void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::setCurrentSt
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::inputFromContactFlags(contact_flag_t contactFlags,
-                                                                                          dynamic_vector_t& inputs) {
+void SwitchedModelCostBase::inputFromContactFlags(contact_flag_t contactFlags, dynamic_vector_t& inputs) {
   // Distribute total mass equally over active stance legs.
   inputs.setZero(INPUT_DIM);
 

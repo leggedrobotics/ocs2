@@ -4,11 +4,11 @@
 
 namespace anymal {
 
-class AnymalComKinoConstraintAd final : public switched_model::ComKinoConstraintBaseAd<12> {
+class AnymalComKinoConstraintAd final : public switched_model::ComKinoConstraintBaseAd {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Base = switched_model::ComKinoConstraintBaseAd<12>;
+  using Base = switched_model::ComKinoConstraintBaseAd;
   using logic_rules_t = switched_model::SwitchedModelPlannerLogicRules<12, double>;
 
   AnymalComKinoConstraintAd(std::shared_ptr<const logic_rules_t> logicRulesPtr,

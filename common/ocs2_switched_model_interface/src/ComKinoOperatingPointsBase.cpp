@@ -5,22 +5,21 @@
  *      Author: farbod
  */
 
+#include "ocs2_switched_model_interface/initialization/ComKinoOperatingPointsBase.h"
+
 namespace switched_model {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>*
-ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::clone() const {
-  return new ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>(*this);
+ComKinoOperatingPointsBase* ComKinoOperatingPointsBase::clone() const {
+  return new ComKinoOperatingPointsBase(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeOperatingPoints(
+void ComKinoOperatingPointsBase::computeOperatingPoints(
     const generalized_coordinate_t& defaultConfiguration, std::vector<contact_flag_t>& possibleStanceLegs,
     state_vector_array_t& stateOperatingPoints, input_vector_array_t& inputOperatingPoints) {
   const size_t NUM_PHASES = std::pow(2, (int)NUM_CONTACT_POINTS_);
@@ -54,8 +53,7 @@ void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::compute
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeInputOperatingPoints(const state_vector_t& switchedState,
+void ComKinoOperatingPointsBase::computeInputOperatingPoints(const state_vector_t& switchedState,
                                                                                                      const contact_flag_t& stanceLegs,
                                                                                                      input_vector_t& inputOperatingPoint) {
   matrix3d_t b_R_o = RotationMatrixOrigintoBase(switchedState.template head<3>());
@@ -72,8 +70,7 @@ void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::compute
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getSystemOperatingTrajectories(
+void ComKinoOperatingPointsBase::getSystemOperatingTrajectories(
     const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime, scalar_array_t& timeTrajectory,
     state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory, bool concatOutput /*= false*/) {
   size_t index = logicRulesPtr_->getEventTimeCount(0.5 * (startTime + finalTime));

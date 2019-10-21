@@ -11,12 +11,12 @@
 
 namespace anymal {
 
-class AnymalComKinoOperatingPoints final : public switched_model::ComKinoOperatingPointsBase<12>
+class AnymalComKinoOperatingPoints final : public switched_model::ComKinoOperatingPointsBase
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using Base = switched_model::ComKinoOperatingPointsBase<12>;
+	using Base = switched_model::ComKinoOperatingPointsBase;
   	using logic_rules_t = switched_model::SwitchedModelPlannerLogicRules<12, double>;
 
 	AnymalComKinoOperatingPoints(std::shared_ptr<const logic_rules_t> logicRulesPtr,

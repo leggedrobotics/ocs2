@@ -20,17 +20,15 @@
 
 namespace switched_model {
 
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM=12+JOINT_COORD_SIZE, size_t INPUT_DIM=12+JOINT_COORD_SIZE>
-class ComKinoOperatingPointsBase : public
-ocs2::SystemOperatingPoint<STATE_DIM, INPUT_DIM>
+class ComKinoOperatingPointsBase : public ocs2::SystemOperatingPoint<24, 24>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	enum
-	{
-		NUM_CONTACT_POINTS_ = SwitchedModel<JOINT_COORD_SIZE>::NUM_CONTACT_POINTS
-	};
+        static constexpr size_t JOINT_COORD_SIZE = 12;
+        static constexpr size_t STATE_DIM = 24;
+        static constexpr size_t INPUT_DIM = 24;
+        static constexpr size_t NUM_CONTACT_POINTS_ = SwitchedModel<JOINT_COORD_SIZE>::NUM_CONTACT_POINTS;
 
 	using Base = ocs2::SystemOperatingPoint<STATE_DIM, INPUT_DIM>;
 	using typename Base::scalar_t;
@@ -59,7 +57,7 @@ public:
 			const com_model_t& comModel,
 			std::shared_ptr<const logic_rules_t> logicRulesPtr,
 			const Model_Settings& options = Model_Settings(),
-			const generalized_coordinate_t& defaultConfiguration = generalized_coordinate_t::Zero)
+			const generalized_coordinate_t& defaultConfiguration = generalized_coordinate_t::Zero())
 	: Base()
 	, kinematicModelPtr_(kinematicModel.clone())
 	, comModelPtr_(comModel.clone())
@@ -101,7 +99,7 @@ public:
 	 *
 	 * @return A raw pointer to the class.
 	 */
-	virtual ComKinoOperatingPointsBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>* clone() const override;
+	virtual ComKinoOperatingPointsBase* clone() const override;
 
 	/**
 	 * Gets the Operating points for the system in time interval [startTime, finalTime] where there is
@@ -169,6 +167,5 @@ private:
 
 } // end of namespace switched_model
 
-#include "implementation/ComKinoOperatingPointsBase.h"
 
 #endif /* COMKINOOPERATINGPOINTSBASE_H_ */

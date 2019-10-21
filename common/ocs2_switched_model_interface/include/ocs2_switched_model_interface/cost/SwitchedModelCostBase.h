@@ -14,10 +14,12 @@
 
 namespace switched_model {
 
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM = 12 + JOINT_COORD_SIZE, size_t INPUT_DIM = 12 + JOINT_COORD_SIZE>
-class SwitchedModelCostBase : public ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM> {
+class SwitchedModelCostBase : public ocs2::QuadraticCostFunction<24, 24> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  static constexpr size_t JOINT_COORD_SIZE = 12;
+  static constexpr size_t STATE_DIM = 24;
+  static constexpr size_t INPUT_DIM = 24;
 
   typedef ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM> BASE;
   using typename BASE::input_matrix_t;
@@ -43,7 +45,7 @@ class SwitchedModelCostBase : public ocs2::QuadraticCostFunction<STATE_DIM, INPU
   ~SwitchedModelCostBase() override = default;
 
   //! clone SwitchedModelCostBase class.
-  SwitchedModelCostBase<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>* clone() const override;
+  SwitchedModelCostBase* clone() const override;
 
   void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
 
@@ -56,5 +58,3 @@ class SwitchedModelCostBase : public ocs2::QuadraticCostFunction<STATE_DIM, INPU
 };
 
 }  // end of namespace switched_model
-
-#include "implementation/SwitchedModelCostBase.h"

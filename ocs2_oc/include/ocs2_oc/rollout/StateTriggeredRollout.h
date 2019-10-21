@@ -62,6 +62,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using state_vector_array_t = typename BASE::state_vector_array_t;
   using input_vector_t = typename BASE::input_vector_t;
   using input_vector_array_t = typename BASE::input_vector_array_t;
+  using time_interval_array_t = typename BASE::time_interval_array_t;
 
   using event_handler_t = SystemEventHandler<STATE_DIM>;
   using state_triggered_event_handler_t = StateTriggeredEventHandler<STATE_DIM>;
@@ -77,20 +78,28 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    *
    * @param [in] systemDynamics: The system dynamics for forward rollout.
    * @param [in] rolloutSettings: The rollout settings.
-   * @param [in] algorithmName: The algorithm that calls this class (default not defined).
    */
-  explicit StateTriggeredRollout(const controlled_system_base_t& systemDynamics,
-                                 const Rollout_Settings& rolloutSettings = Rollout_Settings(), const char* algorithmName = nullptr)
 
-      : BASE(rolloutSettings, algorithmName),
+  explicit StateTriggeredRollout(const controlled_system_base_t& systemDynamics, const Rollout_Settings& rolloutSettings = Rollout_Settings())
+      : BASE(std::move(rolloutSettings)),
         systemDynamicsPtr_(systemDynamics.clone()),
         systemEventHandlersPtr_(new state_triggered_event_handler_t),
-        dynamicsIntegratorsPtr_(new ODE45<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_)) {}
+        dynamicsIntegratorPtr_(this->settings().integratorType_) {}
 
   /**
    * Default destructor.
    */
   ~StateTriggeredRollout() = default;
+
+  /**
+   * Returns the underlying dynamics
+   */
+
+  controlled_system_base_t* systemDynamicsPtr() {return systemDynamicsPtr_.get(); }
+
+  StateTriggeredRollout<STATE_DIM, INPUT_DIM>* clone() const override {
+    return new StateTriggeredRollout<STATE_DIM, INPUT_DIM> (*systemDynamicsPtr_, this->settings());
+  }
 
   /**
    * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
@@ -109,10 +118,11 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    *
    * @return The final state (state jump is considered if it took place)
    */
-  state_vector_t run(size_t partitionIndex, scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
-                     controller_t* controller, logic_rules_machine_t& hybridLlogicRulesMachine, scalar_array_t& timeTrajectory,
-                     size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
-                     input_vector_array_t& inputTrajectory) override {
+
+ protected:
+   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
+                          scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
+                          input_vector_array_t& inputTrajectory) override {
     //
     //		scalar_array_t guardSurfacesValues;
     //		scalar_array_t eventTimes;
@@ -179,7 +189,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     //
     //			try {
     //				// integrate controlled system
-    //				dynamicsIntegratorsPtr_->integrate(
+    //				dynamicsIntegratorPtr_->integrate(
     //						x0, t0, finalTime,
     //						stateTrajectory,
     //						timeTrajectory,
@@ -220,12 +230,64 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     return state_vector_t::Zero();
   }
 
+   /**
+      * Constructs dynamicsIntegratorPtr_ based on the integratorType.
+      *
+      * @param [in] integratorType: Integrator type.
+      */
+     void constructDynamicsIntegrator(IntegratorType integratorType) {
+       switch (integratorType) {
+         case (IntegratorType::EULER): {
+           dynamicsIntegratorPtr_.reset(new IntegratorEuler<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
+           break;
+         }
+         case (IntegratorType::MODIFIED_MIDPOINT): {
+           dynamicsIntegratorPtr_.reset(new IntegratorModifiedMidpoint<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
+           break;
+         }
+         case (IntegratorType::RK4): {
+           dynamicsIntegratorPtr_.reset(new IntegratorRK4<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
+           break;
+         }
+         case (IntegratorType::RK5_VARIABLE): {
+           dynamicsIntegratorPtr_.reset(new IntegratorRK5Variable<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
+           break;
+         }
+         case (IntegratorType::ODE45): {
+           dynamicsIntegratorPtr_.reset(new ODE45<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
+           break;
+         }
+         case (IntegratorType::ADAMS_BASHFORTH): {
+           const size_t numberSteps = 1;
+           dynamicsIntegratorPtr_.reset(new IntegratorAdamsBashforth<STATE_DIM, numberSteps>(systemDynamicsPtr_, systemEventHandlersPtr_));
+           break;
+         }
+         case (IntegratorType::BULIRSCH_STOER): {
+           dynamicsIntegratorPtr_.reset(new IntegratorBulirschStoer<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
+           break;
+         }
+   #if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 55)
+         case (IntegratorType::ADAMS_BASHFORTH_MOULTON): {
+           const size_t numberSteps = 1;  // maximum is 8
+           dynamicsIntegratorPtr_.reset(
+               new IntegratorAdamsBashforthMoulton<STATE_DIM, numberSteps>(systemDynamicsPtr_, systemEventHandlersPtr_));
+           break;
+         }
+   #endif
+         default: {
+           throw std::runtime_error("Integrator of type " +
+                                    std::to_string(static_cast<std::underlying_type<IntegratorType>::type>(integratorType)) +
+                                    " not supported in TimeTriggeredRollout.");
+         }
+       }
+     }
+
  private:
   std::shared_ptr<controlled_system_base_t> systemDynamicsPtr_;
 
   std::shared_ptr<event_handler_t> systemEventHandlersPtr_;
 
-  std::unique_ptr<ode_base_t> dynamicsIntegratorsPtr_;
+  std::unique_ptr<ode_base_t> dynamicsIntegratorPtr_;
 };
 
 }  // namespace ocs2

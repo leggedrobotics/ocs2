@@ -11,10 +11,10 @@
 #include <ocs2_core/loopshaping/Loopshaping.h>
 
 // Anymal
-#include <ocs2_anymal_switched_model/dynamics/AnymalSystemDynamicsAd.h>
-#include <ocs2_anymal_switched_model/constraint/AnymalComKinoConstraintAd.h>
-#include <ocs2_anymal_switched_model/cost/AnymalCost.h>
-#include <ocs2_anymal_switched_model/initialization/AnymalComKinoOperatingPoints.h>
+#include <ocs2_switched_model_interface/constraint/ComKinoConstraintBaseAd.h>
+#include <ocs2_switched_model_interface/cost/SwitchedModelCostBase.h>
+#include <ocs2_switched_model_interface/dynamics/ComKinoSystemDynamicsAd.h>
+#include <ocs2_switched_model_interface/initialization/ComKinoOperatingPointsBase.h>
 
 namespace anymal {
 
@@ -88,11 +88,11 @@ class OCS2AnymalAugmentedInterface : public switched_model::OCS2QuadrupedAugment
       SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM,
       FILTER_STATE_DIM, FILTER_INPUT_DIM>;
 
-  using anymal_system_dynamics_t = AnymalSystemDynamicsAd;
-  using anymal_system_dynamics_derivative_t = AnymalSystemDynamicsAd;
-  using anymal_constraint_t = AnymalComKinoConstraintAd;
-  using anymal_cost_funtion_t = AnymalCost;
-  using anymal_operating_point_t = AnymalComKinoOperatingPoints;
+  using anymal_system_dynamics_t = switched_model::ComKinoSystemDynamicsAd;
+  using anymal_system_dynamics_derivative_t = switched_model::ComKinoSystemDynamicsAd;
+  using anymal_constraint_t = switched_model::ComKinoConstraintBaseAd;
+  using anymal_cost_function_t = switched_model::SwitchedModelCostBase;
+  using anymal_operating_point_t = switched_model::ComKinoOperatingPointsBase;
 
   OCS2AnymalAugmentedInterface(const std::string &pathToConfigFolder);
 
@@ -121,20 +121,19 @@ class OCS2AnymalAugmentedInterface : public switched_model::OCS2QuadrupedAugment
   const rollout_base_t& getRollout() const override { return *timeTriggeredRolloutPtr_; }
 
  protected:
-  typename anymal_system_dynamics_t::Ptr anymalDynamicsPtr_;
-  typename anymal_system_dynamics_derivative_t::Ptr anymalDynamicsDerivativesPtr_;
-  typename anymal_constraint_t::Ptr anymalConstraintsPtr_;
-  typename anymal_cost_funtion_t::Ptr anymalCostFunctionPtr_;
-  typename anymal_operating_point_t::Ptr anymalOperatingPointPtr_;
-  //rollout
+  std::unique_ptr<anymal_system_dynamics_t> anymalDynamicsPtr_;
+  std::unique_ptr<anymal_system_dynamics_derivative_t> anymalDynamicsDerivativesPtr_;
+  std::unique_ptr<anymal_constraint_t> anymalConstraintsPtr_;
+  std::unique_ptr<anymal_cost_function_t> anymalCostFunctionPtr_;
+  std::unique_ptr<anymal_operating_point_t> anymalOperatingPointPtr_;
   std::unique_ptr<rollout_base_t> timeTriggeredRolloutPtr_;
 
-  typename system_dynamics_t::Ptr dynamicsPtr_;
-  typename system_dynamics_derivative_t::Ptr dynamicsDerivativesPtr_;
-  typename constraint_t::Ptr constraintsPtr_;
-  typename cost_function_t::Ptr costFunctionPtr_;
-  typename operating_point_t::Ptr operatingPointsPtr_;
-  typename filter_dynamics_t::Ptr filterDynamicsPtr_;
+  std::unique_ptr<system_dynamics_t> dynamicsPtr_;
+  std::unique_ptr<system_dynamics_derivative_t> dynamicsDerivativesPtr_;
+  std::unique_ptr<constraint_t> constraintsPtr_;
+  std::unique_ptr<cost_function_t> costFunctionPtr_;
+  std::unique_ptr<operating_point_t> operatingPointsPtr_;
+  std::unique_ptr<filter_dynamics_t> filterDynamicsPtr_;
 
   using BASE::BASE::initialState_;
   using BASE::BASE::initRbdState_;

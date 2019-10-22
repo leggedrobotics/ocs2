@@ -37,7 +37,7 @@ void OCS2AnymalAugmentedInterface<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM
   const auto totalWeight = anymalCom.totalMass() * 9.81;
   typename system_dynamics_t::system_input_vector_t uSystemForWeightCompensation;
   uSystemForWeightCompensation.setZero();
-  size_t numLegs;
+  size_t numLegs(4);
   for (size_t i = 0; i < numLegs; i++) {
     uSystemForWeightCompensation(3 * i + 2) = totalWeight / numLegs;
   }
@@ -61,11 +61,11 @@ void OCS2AnymalAugmentedInterface<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM
                                   JOINT_COORD_SIZE>::setupOptimizer(const logic_rules_ptr_t& logicRulesPtr,
                                                                     const mode_sequence_template_t* modeSequenceTemplatePtr,
                                                                     slq_base_ptr_t& slqPtr, mpc_ptr_t& mpcPtr) {
-  anymalDynamicsPtr_.reset(new anymal_system_dynamics_t(modelSettings_.recompileLibraries_));
+  anymalDynamicsPtr_.reset(new anymal_system_dynamics_t(AnymalKinematicsAd(), AnymalComAd(), modelSettings_.recompileLibraries_));
   anymalDynamicsDerivativesPtr_.reset(anymalDynamicsPtr_->clone());
-  anymalConstraintsPtr_.reset(new anymal_constraint_t(logicRulesPtr, modelSettings_));
-  anymalCostFunctionPtr_.reset(new anymal_cost_funtion_t(logicRulesPtr, Q_system_, R_system_, Q_system_final_));
-  anymalOperatingPointPtr_.reset(new anymal_operating_point_t(logicRulesPtr));
+  anymalConstraintsPtr_.reset(new anymal_constraint_t(AnymalKinematicsAd(), AnymalComAd(), logicRulesPtr, modelSettings_));
+  anymalCostFunctionPtr_.reset(new anymal_cost_function_t(AnymalCom(), logicRulesPtr, Q_system_, R_system_, Q_system_final_));
+  anymalOperatingPointPtr_.reset(new anymal_operating_point_t(AnymalCom(), logicRulesPtr));
 
   dynamicsPtr_ = system_dynamics_t::create(*anymalDynamicsPtr_, loopshapingDefinition_);
   dynamicsDerivativesPtr_ = system_dynamics_derivative_t::create(*anymalDynamicsDerivativesPtr_, loopshapingDefinition_);

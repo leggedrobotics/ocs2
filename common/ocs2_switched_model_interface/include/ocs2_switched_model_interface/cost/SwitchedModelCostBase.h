@@ -9,17 +9,15 @@
 
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 
+#include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h"
 
 namespace switched_model {
 
-class SwitchedModelCostBase : public ocs2::QuadraticCostFunction<24, 24> {
+class SwitchedModelCostBase : public ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  static constexpr size_t JOINT_COORD_SIZE = 12;
-  static constexpr size_t STATE_DIM = 24;
-  static constexpr size_t INPUT_DIM = 24;
 
   typedef ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM> BASE;
   using typename BASE::input_matrix_t;
@@ -29,8 +27,7 @@ class SwitchedModelCostBase : public ocs2::QuadraticCostFunction<24, 24> {
   using typename BASE::state_vector_t;
   using typename BASE::dynamic_vector_t;
 
-  using logic_rules_t = SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, double>;
-  using contact_flag_t = typename SwitchedModel<JOINT_COORD_SIZE>::contact_flag_t;
+  using logic_rules_t = SwitchedModelLogicRulesBase;
 
   using com_model_t = ComModelBase<double>;
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Eigen/Dense>
+#include <ocs2_switched_model_interface/core/SwitchedModel.h>
 
 namespace switched_model {
 
@@ -12,8 +13,8 @@ class ComModelBase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using base_coordinate_t = Eigen::Matrix<SCALAR_T, 6, 1>;
-  using joint_coordinate_t = Eigen::Matrix<SCALAR_T, 12, 1>;
+  using base_coordinate_t = Eigen::Matrix<SCALAR_T, BASE_COORDINATE_SIZE, 1>;
+  using joint_coordinate_t = Eigen::Matrix<SCALAR_T, JOINT_COORDINATE_SIZE, 1>;
 
   using vector3s_t = Eigen::Matrix<SCALAR_T, 3, 1>;
   using matrix3s_t = Eigen::Matrix<SCALAR_T, 3, 3>;

@@ -5,8 +5,7 @@
  *      Author: farbod
  */
 
-#ifndef SWITCHEDMODELLOGICRULESBASE_H_
-#define SWITCHEDMODELLOGICRULESBASE_H_
+#pragma once
 
 #include <mutex>
 
@@ -21,33 +20,21 @@ namespace switched_model {
 /**
  * Logic rules base class
  */
-template <size_t JOINT_COORD_SIZE, class cpg_t>
 class SwitchedModelLogicRulesBase : public ocs2::HybridLogicRules {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef std::shared_ptr<SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>> Ptr;
+  using BASE = ocs2::HybridLogicRules ;
+  using typename BASE::size_array_t ;
+  using typename BASE::scalar_t ;
+  using typename BASE::scalar_array_t ;
+  using typename BASE::logic_template_type ;
 
-  typedef ocs2::HybridLogicRules BASE;
-
-  typedef typename BASE::size_array_t size_array_t;
-  typedef typename BASE::scalar_t scalar_t;
-  typedef typename BASE::scalar_array_t scalar_array_t;
-
-  typedef typename BASE::logic_template_type logic_template_type;
-
-  typedef SwitchedModel<JOINT_COORD_SIZE> switched_model_t;
-  typedef typename switched_model_t::contact_flag_t contact_flag_t;
-
-  typedef FeetPlannerBase<scalar_t, cpg_t> feet_planner_t;
-  typedef typename feet_planner_t::Ptr feet_planner_ptr_t;
-  typedef cpg_t foot_cpg_t;
-  typedef typename feet_planner_t::feet_cpg_ptr_t feet_cpg_ptr_t;
-  typedef typename feet_planner_t::feet_cpg_const_ptr_t feet_cpg_const_ptr_t;
-
- private:
-  using read_lock_t = std::unique_lock<std::mutex>;
-  using write_lock_t = std::unique_lock<std::mutex>;
+  using foot_cpg_t = CPG_BASE<scalar_t> ;
+  using feet_planner_t = FeetPlannerBase<scalar_t, foot_cpg_t> ;
+  using feet_planner_ptr_t = typename feet_planner_t::Ptr ;
+  using feet_cpg_ptr_t = typename feet_planner_t::feet_cpg_ptr_t ;
+  using feet_cpg_const_ptr_t = typename feet_planner_t::feet_cpg_const_ptr_t ;
 
  public:
   /**
@@ -107,7 +94,7 @@ class SwitchedModelLogicRulesBase : public ocs2::HybridLogicRules {
    * @param [out] feetReferencePtr: An array of planned motion for the swing legs (note that
    * for the stance legs the behavior might not be defined).
    */
-  void getMotionPhaseLogics(const size_t& index, contact_flag_t& contactFlags, std::array<const cpg_t*, 4>& feetReferencePtr) const;
+  void getMotionPhaseLogics(const size_t& index, contact_flag_t& contactFlags, std::array<const foot_cpg_t*, 4>& feetReferencePtr) const;
 
   /**
    * Gets a reference to the feet planner class.
@@ -162,14 +149,4 @@ class SwitchedModelLogicRulesBase : public ocs2::HybridLogicRules {
   std::vector<contact_flag_t> contactFlagsStock_;
 };
 
-/**
- * Specialization for planner which uses only Z direction planner
- */
-template <size_t JOINT_COORD_SIZE, typename scalar_t = double>
-using SwitchedModelPlannerLogicRules = SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, CPG_BASE<scalar_t>>;
-
 }  // namespace switched_model
-
-#include "implementation/SwitchedModelLogicRulesBase.h"
-
-#endif /* SWITCHEDMODELLOGICRULESBASE_H_ */

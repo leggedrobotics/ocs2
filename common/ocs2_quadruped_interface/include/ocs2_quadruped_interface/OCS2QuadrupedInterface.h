@@ -90,7 +90,7 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
   using feet_z_planner_t = FeetZDirectionPlanner<scalar_t, cpg_t>;
   using feet_z_planner_ptr_t = typename feet_z_planner_t::Ptr;
 
-  using logic_rules_t = SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE>;
+  using logic_rules_t = SwitchedModelLogicRulesBase;
   using logic_rules_ptr_t = typename logic_rules_t::Ptr;
 
   using mode_sequence_template_t = ocs2::ModeSequenceTemplate<scalar_t>;

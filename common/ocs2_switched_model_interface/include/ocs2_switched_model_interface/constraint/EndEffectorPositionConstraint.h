@@ -5,8 +5,11 @@
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_switched_model_interface/constraint/ConstraintTerm.h>
 
+#include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
+
+#include <ocs2_switched_model_interface/core/Rotations.h>
 
 namespace switched_model {
 
@@ -17,12 +20,9 @@ struct EndEffectorPositionConstraintSettings {
   Eigen::VectorXd b;
 };
 
-class EndEffectorPositionConstraint final : public ocs2::ConstraintTerm<24, 24> {
+class EndEffectorPositionConstraint final : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  static constexpr size_t STATE_DIM = 24;
-  static constexpr size_t INPUT_DIM = 24;
 
   using BASE = ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM>;
   using typename BASE::input_matrix_t;

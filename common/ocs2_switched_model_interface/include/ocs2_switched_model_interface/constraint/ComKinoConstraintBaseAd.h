@@ -12,24 +12,19 @@
 
 namespace switched_model {
 
-class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<24, 24> {
+class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  static constexpr size_t JOINT_COORD_SIZE = 12;
-  static constexpr size_t STATE_DIM = 24;
-  static constexpr size_t INPUT_DIM = 24;
-  static constexpr size_t NUM_CONTACT_POINTS_ = SwitchedModel<JOINT_COORD_SIZE>::NUM_CONTACT_POINTS;
-
-  using logic_rules_t = SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, double>;
+  using logic_rules_t = SwitchedModelLogicRulesBase;
   using foot_cpg_t = typename logic_rules_t::foot_cpg_t;
 
   using ad_base_t = CppAD::cg::CG<double>;
   using ad_scalar_t = CppAD::AD<ad_base_t>;
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
-  using ad_kinematic_model_t = KinematicsModelBase<JOINT_COORD_SIZE, ad_scalar_t>;
+  using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
 
-  using Base = ocs2::ConstraintBase<24, 24>;
+  using Base = ocs2::ConstraintBase<STATE_DIM, INPUT_DIM>;
   using typename Base::constraint1_input_matrix_t;
   using typename Base::constraint1_state_matrix_t;
   using typename Base::constraint1_vector_array_t;
@@ -50,10 +45,6 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<24, 24> {
   using typename Base::state_matrix_t;
   using typename Base::state_vector_array_t;
   using typename Base::state_vector_t;
-
-  using contact_flag_t = typename SwitchedModel<JOINT_COORD_SIZE>::contact_flag_t;
-  using base_coordinate_t = typename SwitchedModel<JOINT_COORD_SIZE>::base_coordinate_t;
-  using joint_coordinate_t = typename SwitchedModel<JOINT_COORD_SIZE>::joint_coordinate_t;
 
   using ConstraintCollection_t = ocs2::ConstraintCollection<STATE_DIM, INPUT_DIM>;
   using LinearConstraintApproximationAsMatrices_t = ocs2::LinearConstraintApproximationAsMatrices<STATE_DIM, INPUT_DIM>;
@@ -153,7 +144,7 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<24, 24> {
   contact_flag_t stanceLegs_;
   size_t numEventTimes_;
 
-  std::array<const foot_cpg_t*, NUM_CONTACT_POINTS_> zDirectionRefsPtr_;
+  std::array<const foot_cpg_t*, NUM_CONTACT_POINTS> zDirectionRefsPtr_;
 };
 
 }  // end of namespace switched_model

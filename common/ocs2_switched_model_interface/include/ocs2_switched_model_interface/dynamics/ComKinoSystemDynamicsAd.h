@@ -2,22 +2,22 @@
 
 #include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
 
+#include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
 
 namespace switched_model {
 
-class ComKinoSystemDynamicsAd : public ocs2::SystemDynamicsBaseAD<24, 24> {
+class ComKinoSystemDynamicsAd : public ocs2::SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  constexpr static size_t JOINT_COORD_SIZE = 12;
 
-  using Base = ocs2::SystemDynamicsBaseAD<24, 24>;
+  using Base = ocs2::SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM>;
   using typename Base::ad_dynamic_vector_t;
   using typename Base::ad_scalar_t;
 
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
-  using ad_kinematic_model_t = KinematicsModelBase<JOINT_COORD_SIZE, ad_scalar_t>;
+  using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
 
   using Vector3Ad = Eigen::Matrix<ad_scalar_t, 3, 1>;
   using Vector6Ad = Eigen::Matrix<ad_scalar_t, 6, 1>;

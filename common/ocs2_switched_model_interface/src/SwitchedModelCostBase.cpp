@@ -61,17 +61,16 @@ void SwitchedModelCostBase::inputFromContactFlags(contact_flag_t contactFlags, d
   inputs.setZero(INPUT_DIM);
 
   const scalar_t totalMass = comModelPtr_->totalMass() * 9.81;
-  const size_t numEE(4);
   size_t numStanceLegs(0);
 
-  for (size_t i = 0; i < numEE; i++) {
+  for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
     if (contactFlags[i]) {
       ++numStanceLegs;
     }
   }
 
   if (numStanceLegs > 0) {
-    for (size_t i = 0; i < numEE; i++) {
+    for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
       if (contactFlags[i]) {
         inputs(3 * i + 2) = totalMass / numStanceLegs;
       }

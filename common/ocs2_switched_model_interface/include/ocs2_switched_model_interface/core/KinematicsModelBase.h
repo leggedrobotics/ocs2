@@ -22,16 +22,17 @@ namespace switched_model {
  * @tparam JOINT_COORD_SIZE
  * @tparam SCALAR_T
  */
-template <size_t JOINT_COORD_SIZE, typename SCALAR_T = double>
+template <typename SCALAR_T = double>
 class KinematicsModelBase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef std::unique_ptr<KinematicsModelBase<JOINT_COORD_SIZE, SCALAR_T>> Ptr;
+  using base_coordinate_t = Eigen::Matrix<SCALAR_T, BASE_COORDINATE_SIZE, 1>;
+  using joint_coordinate_t = Eigen::Matrix<SCALAR_T, JOINT_COORDINATE_SIZE, 1>;
+  using generalized_coordinate_t = Eigen::Matrix<SCALAR_T, GENERALIZED_COORDINATE_SIZE, 1>;
 
-  typedef typename SwitchedModel<JOINT_COORD_SIZE, SCALAR_T>::generalized_coordinate_t generalized_coordinate_t;
-  typedef typename SwitchedModel<JOINT_COORD_SIZE, SCALAR_T>::joint_coordinate_t joint_coordinate_t;
-  typedef typename SwitchedModel<JOINT_COORD_SIZE, SCALAR_T>::base_coordinate_t base_coordinate_t;
+  using geometic_jacobian_t = Eigen::Matrix<SCALAR_T, 6, GENERALIZED_COORDINATE_SIZE>;
+  using joint_jacobian_t = Eigen::Matrix<SCALAR_T, 6, JOINT_COORDINATE_SIZE>;
 
   typedef Eigen::Matrix<SCALAR_T, 3, 1> vector3d_t;
   typedef Eigen::Matrix<SCALAR_T, 3, 3> matrix3d_t;
@@ -43,7 +44,7 @@ class KinematicsModelBase {
   /**
    * Clone KinematicsModelBase class.
    */
-  virtual KinematicsModelBase<JOINT_COORD_SIZE, SCALAR_T>* clone() const = 0;
+  virtual KinematicsModelBase<SCALAR_T>* clone() const = 0;
 
   /**
    * Gets a (6+JOINT_COORD_SIZE)-by-1 generalized coordinate and calculates the rotation ...
@@ -117,7 +118,7 @@ class KinematicsModelBase {
    * @param [in] footIndex
    * @param [out] footJacobain
    */
-  virtual void footJacobainBaseFrame(const size_t& footIndex, Eigen::Matrix<SCALAR_T, 6, JOINT_COORD_SIZE>& footJacobain) = 0;
+  virtual void footJacobainBaseFrame(const size_t& footIndex, joint_jacobian_t& footJacobain) = 0;
 
   /**
    * calculates the Jacobian matrix in the Inertia frame using rotation "i_R_b" from the Base frame to Inertia
@@ -128,8 +129,8 @@ class KinematicsModelBase {
    * @param [out] i_J_point
    */
   static void FromBaseJacobianToInertiaJacobian(const matrix3d_t& i_R_b, const vector3d_t& b_r_point,
-                                                const Eigen::Matrix<SCALAR_T, 6, JOINT_COORD_SIZE>& b_J_point,
-                                                Eigen::Matrix<SCALAR_T, 6, JOINT_COORD_SIZE + 6>& i_J_point);
+                                                const joint_jacobian_t& b_J_point,
+                                                geometic_jacobian_t& i_J_point);
 
   /**
    * calculates the velocity in the Inertia frame using rotation "i_R_b" from the Base frame to Inertia
@@ -144,19 +145,6 @@ class KinematicsModelBase {
   static void FromBaseVelocityToInertiaVelocity(const matrix3d_t& i_R_b, const base_coordinate_t& baseLocalVelocities,
                                                 const vector3d_t& b_r_point, const vector3d_t& b_v_point, vector3d_t& i_v_point);
 
-  /**
-   * Origin to base rotation matrix
-   * @return matrix3d_t
-   */
-  const matrix3d_t& rotationMatrixOrigintoBase() const;
-
-  /**
-   * From unite quaternion to roll-pitch-yaw Euler angles.
-   *
-   * @param [in] q: Input unite quaternion.
-   * @return roll-pitch-yaw Euler angles
-   */
-  static vector3d_t ToEulerAngle(const Eigen::Quaternion<SCALAR_T>& q);
 
  protected:
   base_coordinate_t qBase_;

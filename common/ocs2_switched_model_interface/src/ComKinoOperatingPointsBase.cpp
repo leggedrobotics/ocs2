@@ -34,14 +34,14 @@ void ComKinoOperatingPointsBase::computeInputOperatingPoints(contact_flag_t cont
   const scalar_t totalMass = comModelPtr_->totalMass() * 9.81;
   size_t numStanceLegs(0);
 
-  for (size_t i = 0; i < NUM_CONTACT_POINTS_; i++) {
+  for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
     if (contactFlags[i]) {
       ++numStanceLegs;
     }
   }
 
   if (numStanceLegs > 0) {
-    for (size_t i = 0; i < NUM_CONTACT_POINTS_; i++) {
+    for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
       if (contactFlags[i]) {
         inputs(3 * i + 2) = totalMass / numStanceLegs;
       }

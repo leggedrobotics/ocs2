@@ -4,6 +4,8 @@
 
 #include "ocs2_switched_model_interface/dynamics/ComKinoSystemDynamicsAd.h"
 
+#include <ocs2_switched_model_interface/core/Rotations.h>
+
 namespace switched_model {
 
 ComKinoSystemDynamicsAd::ComKinoSystemDynamicsAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
@@ -33,7 +35,7 @@ void ComKinoSystemDynamicsAd::systemFlowMap(ad_scalar_t time, const ad_dynamic_v
   ad_joint_coordinate_t dqJoints = input.segment(12, 12);
 
   Vector3Ad com_base2CoM = adComModelPtr_->comPositionBaseFrame();
-  Matrix3Ad o_R_b = switched_model::RotationMatrixBasetoOrigin<ad_scalar_t>(baseEulerAngles);
+  Matrix3Ad o_R_b = RotationMatrixBasetoOrigin<ad_scalar_t>(baseEulerAngles);
   ad_base_coordinate_t basePose;
   basePose << baseEulerAngles, o_comPosition - o_R_b * com_base2CoM;
 

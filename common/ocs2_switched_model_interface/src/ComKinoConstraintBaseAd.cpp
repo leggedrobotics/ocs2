@@ -19,7 +19,7 @@ ComKinoConstraintBaseAd* ComKinoConstraintBaseAd::clone() const {
 /******************************************************************************************************/
 void ComKinoConstraintBaseAd::InitializeConstraintTerms() {
 
-  for (int i = 0; i < NUM_CONTACT_POINTS_; i++) {
+  for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
     auto footName = feetNames[i];
 
     // Friction cone constraint
@@ -54,7 +54,7 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
   auto activeSubsystem = logicRulesPtr_->getEventTimeCount(t);
   logicRulesPtr_->getMotionPhaseLogics(activeSubsystem, stanceLegs_, zDirectionRefsPtr_);
 
-  for (int i = 0; i < NUM_CONTACT_POINTS_; i++) {
+  for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
     auto footName = feetNames[i];
 
     // Active friction cone constraint for stanceLegs

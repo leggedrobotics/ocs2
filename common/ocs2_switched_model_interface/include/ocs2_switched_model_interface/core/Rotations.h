@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Eigen/Dense>
+#include <Eigen/Geometry>
 #include <cmath>
 
 namespace switched_model {
@@ -15,8 +16,8 @@ namespace switched_model {
  * @param [in] eulerAngles
  * @return
  */
-template <typename SCALAR_T, typename Derived>
-Eigen::Matrix<SCALAR_T, 3, 3> RotationMatrixBasetoOrigin(const Eigen::DenseBase<Derived>& eulerAngles) {
+template <typename SCALAR_T>
+Eigen::Matrix<SCALAR_T, 3, 3> RotationMatrixBasetoOrigin(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
   if (eulerAngles.innerSize() != 3 || eulerAngles.outerSize() != 1) throw std::runtime_error("Input argument should be a 3-by-1 vector.");
 
   // inputs are the intrinsic rotation angles in RADIANTS
@@ -35,11 +36,24 @@ Eigen::Matrix<SCALAR_T, 3, 3> RotationMatrixBasetoOrigin(const Eigen::DenseBase<
   return Rx * Ry * Rz;
 }
 
-template <typename SCALAR_T, typename Derived>
-Eigen::Matrix<SCALAR_T, 3, 3> RotationMatrixOrigintoBase(const Eigen::DenseBase<Derived>& eulerAngles) {
-  return RotationMatrixBasetoOrigin<SCALAR_T, Derived>(eulerAngles).transpose();
+template <typename SCALAR_T>
+Eigen::Matrix<SCALAR_T, 3, 3> RotationMatrixOrigintoBase(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
+  return RotationMatrixBasetoOrigin<SCALAR_T>(eulerAngles).transpose();
 }
 
+template <typename SCALAR_T>
+Eigen::Quaternion<SCALAR_T> QuaternionBaseToOrigin(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
+  const auto roll = eulerAngles(0);
+  const auto pitch = eulerAngles(1);
+  const auto yaw = eulerAngles(2);
+  return Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX()) * Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY()) *
+         Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ());
+}
+
+template <typename SCALAR_T>
+Eigen::Matrix<SCALAR_T, 3, 1> EulerAnglesFromQuaternionBaseToOrigin(const Eigen::Quaternion<SCALAR_T>& q_origin_base) {
+  return q_origin_base.toRotationMatrix().eulerAngles(0, 1, 2);
+}
 
 /**
  * Calculates the skew matrix for vector cross product
@@ -55,7 +69,6 @@ Eigen::Matrix<SCALAR_T, 3, 3> CrossProductMatrix(const Eigen::DenseBase<Derived>
   out << SCALAR_T(0.0), -in(2), +in(1), +in(2), SCALAR_T(0.0), -in(0), -in(1), +in(0), SCALAR_T(0.0);
   return out;
 }
-
 
 /**
  * Computes the matrix which transforms derivatives of angular velocities in the body frame to euler angles derivatives
@@ -77,4 +90,4 @@ Eigen::Matrix<SCALAR_T, 3, 3> AngularVelocitiesToEulerAngleDerivativesMatrix(con
   return M;
 }
 
-}
+}  // namespace switched_model

@@ -9,7 +9,7 @@ namespace anymal {
 class AnymalPyBindings final : public ocs2::PythonInterface<OCS2AnymalInterface::BASE::state_dim_, OCS2AnymalInterface::BASE::input_dim_> {
  public:
   using Base = ocs2::PythonInterface<OCS2AnymalInterface::BASE::state_dim_, OCS2AnymalInterface::BASE::input_dim_>;
-  using visualizer_t = switched_model::QuadrupedXppVisualizer<OCS2AnymalInterface::BASE::switched_model_t::JOINT_COORDINATE_SIZE,
+  using visualizer_t = switched_model::QuadrupedXppVisualizer<switched_model::JOINT_COORDINATE_SIZE,
                                                               OCS2AnymalInterface::BASE::state_dim_, OCS2AnymalInterface::BASE::input_dim_>;
 
   AnymalPyBindings(const std::string& taskFileFolder, bool async = false);

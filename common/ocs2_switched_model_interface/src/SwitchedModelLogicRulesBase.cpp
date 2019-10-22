@@ -103,7 +103,7 @@ void SwitchedModelLogicRulesBase::getContactFlags(const size_t& index, contact_f
 /******************************************************************************************************/
 /******************************************************************************************************/
 void SwitchedModelLogicRulesBase::getMotionPhaseLogics(const size_t& index, contact_flag_t& contactFlags,
-                                                       std::array<const cpg_t*, 4>& feetReferencePtr) const {
+                                                       std::array<const foot_cpg_t*, 4>& feetReferencePtr) const {
   if (index >= contactFlagsStock_.size()) {
     throw std::runtime_error("The requested index " + std::to_string(index) + " refers to an out-of-bound motion phase.");
   }

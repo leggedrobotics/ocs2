@@ -62,8 +62,7 @@ void ComKinoSystemDynamicsAd::systemFlowMap(ad_scalar_t time, const ad_dynamic_v
   ad_base_coordinate_t JcTransposeLambda;
   JcTransposeLambda.setZero();
   for (size_t i = 0; i < 4; i++) {
-    Vector3Ad com_base2StanceFeet;
-    adKinematicModelPtr_->footPositionBaseFrame(i, com_base2StanceFeet);
+    Vector3Ad com_base2StanceFeet = adKinematicModelPtr_->footPositionBaseFrame(i);
     Vector3Ad com_comToFoot = com_base2StanceFeet - com_base2CoM;
     JcTransposeLambda.head(3) += com_comToFoot.cross(input.template segment<3>(3 * i));
     JcTransposeLambda.tail(3) += input.template segment<3>(3 * i);

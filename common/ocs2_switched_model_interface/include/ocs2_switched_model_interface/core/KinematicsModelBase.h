@@ -19,7 +19,6 @@ namespace switched_model {
 
 /**
  * ModelKinematics Base Class
- * @tparam JOINT_COORD_SIZE
  * @tparam SCALAR_T
  */
 template <typename SCALAR_T = double>
@@ -31,7 +30,7 @@ class KinematicsModelBase {
   using joint_coordinate_t = Eigen::Matrix<SCALAR_T, JOINT_COORDINATE_SIZE, 1>;
   using generalized_coordinate_t = Eigen::Matrix<SCALAR_T, GENERALIZED_COORDINATE_SIZE, 1>;
 
-  using geometic_jacobian_t = Eigen::Matrix<SCALAR_T, 6, GENERALIZED_COORDINATE_SIZE>;
+  using geometric_jacobian_t = Eigen::Matrix<SCALAR_T, 6, GENERALIZED_COORDINATE_SIZE>;
   using joint_jacobian_t = Eigen::Matrix<SCALAR_T, 6, JOINT_COORDINATE_SIZE>;
 
   typedef Eigen::Matrix<SCALAR_T, 3, 1> vector3d_t;
@@ -57,8 +56,7 @@ class KinematicsModelBase {
    * @param [in] qBase
    * @param [in] qJoint
    */
-  template <typename BASE_COORDINATE, typename JOINT_COORDINATE>
-  void update(const Eigen::DenseBase<BASE_COORDINATE>& qBase, const Eigen::DenseBase<JOINT_COORDINATE>& qJoint);
+  void update(const base_coordinate_t& qBase, const joint_coordinate_t& qJoint);
 
   /**
    * calculate the feet position in the Base frame
@@ -71,13 +69,13 @@ class KinematicsModelBase {
    * @param [in] footIndex
    * @param [out] footPosition
    */
-  virtual void footPositionBaseFrame(const size_t& footIndex, vector3d_t& footPosition) = 0;
+  virtual vector3d_t footPositionBaseFrame(size_t footIndex) const = 0;
 
   /**
    * Calculate the feet position in the Base frame
    * @param [out] feetPositions
    */
-  void feetPositionsBaseFrame(std::array<vector3d_t, 4>& feetPositions);
+  std::array<vector3d_t, NUM_CONTACT_POINTS> feetPositionsBaseFrame() const;
 
   /**
    * Calculate the feet position in the Origin frame
@@ -90,35 +88,20 @@ class KinematicsModelBase {
    * @param [in] footIndex
    * @param [out] footPosition
    */
-  void footPositionOriginFrame(const size_t& footIndex, vector3d_t& footPosition);
-
-  /**
-   * Calculate feet Positions in Origin Frame
-   * @param [in] generalizedCoordinate
-   * @param [in] footIndex
-   * @param [out] footPosition
-   */
-  void footPositionOriginFrame(const generalized_coordinate_t& generalizedCoordinate, const size_t& footIndex, vector3d_t& footPosition);
+  vector3d_t footPositionOriginFrame(size_t footIndex) const;
 
   /**
    * Calculate feet Positions in Origin Frame
    * @param [out] feetPositions
    */
-  void feetPositionsOriginFrame(std::array<vector3d_t, 4>& feetPositions);
-
-  /**
-   * Calculate feet Positions in Origin Frame
-   * @param [in] generalizedCoordinate
-   * @param [out] feetPositions
-   */
-  void feetPositionsOriginFrame(const generalized_coordinate_t& generalizedCoordinate, std::array<vector3d_t, 4>& feetPositions);
+  std::array<vector3d_t, NUM_CONTACT_POINTS> feetPositionsOriginFrame() const;
 
   /**
    * Calculate foot Jacobian in Base frame
    * @param [in] footIndex
-   * @param [out] footJacobain
+   * @param [out] footJacobian
    */
-  virtual void footJacobainBaseFrame(const size_t& footIndex, joint_jacobian_t& footJacobain) = 0;
+  virtual joint_jacobian_t footJacobianBaseFrame(size_t footIndex) const = 0;
 
   /**
    * calculates the Jacobian matrix in the Inertia frame using rotation "i_R_b" from the Base frame to Inertia
@@ -126,11 +109,10 @@ class KinematicsModelBase {
    * @param [in] i_R_b
    * @param [in] b_r_point
    * @param [in] b_J_point
-   * @param [out] i_J_point
+   * @return i_J_point
    */
-  static void FromBaseJacobianToInertiaJacobian(const matrix3d_t& i_R_b, const vector3d_t& b_r_point,
-                                                const joint_jacobian_t& b_J_point,
-                                                geometic_jacobian_t& i_J_point);
+  static geometric_jacobian_t FromBaseJacobianToInertiaJacobian(const matrix3d_t& i_R_b, const vector3d_t& b_r_point,
+                                                                const joint_jacobian_t& b_J_point);
 
   /**
    * calculates the velocity in the Inertia frame using rotation "i_R_b" from the Base frame to Inertia
@@ -140,11 +122,10 @@ class KinematicsModelBase {
    * @param baseLocalVelocities
    * @param b_r_point
    * @param b_v_point
-   * @param i_v_point
+   * @return i_v_point
    */
-  static void FromBaseVelocityToInertiaVelocity(const matrix3d_t& i_R_b, const base_coordinate_t& baseLocalVelocities,
-                                                const vector3d_t& b_r_point, const vector3d_t& b_v_point, vector3d_t& i_v_point);
-
+  static vector3d_t FromBaseVelocityToInertiaVelocity(const matrix3d_t& i_R_b, const base_coordinate_t& baseLocalVelocities,
+                                                      const vector3d_t& b_r_point, const vector3d_t& b_v_point);
 
  protected:
   base_coordinate_t qBase_;

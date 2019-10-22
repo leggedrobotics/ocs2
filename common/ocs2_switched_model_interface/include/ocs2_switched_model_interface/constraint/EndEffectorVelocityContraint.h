@@ -173,10 +173,8 @@ class EndEffectorVelocityConstraint final : public ocs2::ConstraintTerm<STATE_DI
 
     // Get foot position and Jacobian
     using ad_footJacobian_t = Eigen::Matrix<ad_scalar_t, 6, 12>;
-    Vector3Ad com_base2StanceFeet_;
-    ad_footJacobian_t b_feetJacobians_;
-    adKinematicsModel.footPositionBaseFrame(legNumber_, com_base2StanceFeet_);  // base to stance feet displacement in the CoM frame
-    adKinematicsModel.footJacobainBaseFrame(legNumber_, b_feetJacobians_);      // foot Jacobian's in the Base frame
+    Vector3Ad com_base2StanceFeet_ = adKinematicsModel.footPositionBaseFrame(legNumber_); // base to stance feet displacement in the CoM frame
+    ad_footJacobian_t b_feetJacobians_ = adKinematicsModel.footJacobianBaseFrame(legNumber_); // foot Jacobian's in the Base frame
 
     // Compute foot velocity
     Vector3Ad com_footVelocity =

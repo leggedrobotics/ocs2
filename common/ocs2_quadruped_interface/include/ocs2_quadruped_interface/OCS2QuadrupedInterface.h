@@ -53,7 +53,7 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
   using Ptr = std::shared_ptr<OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>>;
 
   using com_model_t = ComModelBase<double>;
-  using kinematic_model_t = KinematicsModelBase<JOINT_COORD_SIZE>;
+  using kinematic_model_t = KinematicsModelBase<double>;
 
   using state_estimator_t = SwitchedModelStateEstimator;
 
@@ -79,11 +79,6 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
   using rollout_base_t = ocs2::RolloutBase<STATE_DIM, INPUT_DIM>;
   using time_triggered_rollout_t = ocs2::TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
 
-  using switched_model_t = SwitchedModel<JOINT_COORD_SIZE>;
-  using contact_flag_t = typename switched_model_t::contact_flag_t;
-  using generalized_coordinate_t = typename switched_model_t::generalized_coordinate_t;
-  using joint_coordinate_t = typename switched_model_t::joint_coordinate_t;
-  using base_coordinate_t = typename switched_model_t::base_coordinate_t;
   using rbd_state_vector_t = Eigen::Matrix<scalar_t, rbd_state_dim_, 1>;
 
   using cpg_t = SplineCPG<scalar_t>;
@@ -91,7 +86,7 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
   using feet_z_planner_ptr_t = typename feet_z_planner_t::Ptr;
 
   using logic_rules_t = SwitchedModelLogicRulesBase;
-  using logic_rules_ptr_t = typename logic_rules_t::Ptr;
+  using logic_rules_ptr_t = std::shared_ptr<logic_rules_t>;
 
   using mode_sequence_template_t = ocs2::ModeSequenceTemplate<scalar_t>;
 

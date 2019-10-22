@@ -5,13 +5,6 @@
  *      Author: farbod
  */
 
-#include <ocs2_robotic_tools/rbd_libraries/robcogen/iit/rbd/rbd.h>
-
-#include "ocs2_anymal_switched_model/generated/inertia_properties.h"
-#include "ocs2_anymal_switched_model/generated/inverse_dynamics.h"
-#include "ocs2_anymal_switched_model/generated/jsim.h"
-#include "ocs2_anymal_switched_model/generated/transforms.h"
-
 #include "ocs2_quadruped_interface/MRT_ROS_Quadruped.h"
 
 namespace switched_model {
@@ -261,24 +254,22 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeFeetState
   base_coordinate_t baseLocalVelocities = ocs2QuadrupedInterfacePtr_->getComModel().calculateBaseLocalVelocities(comLocalVelocities);
 
   ocs2QuadrupedInterfacePtr_->getKinematicModel().update(basePose, qJoints);
-  Eigen::Matrix3d o_R_b = ocs2QuadrupedInterfacePtr_->getKinematicModel().rotationMatrixOrigintoBase().transpose();
+  Eigen::Matrix3d o_R_b = RotationMatrixBasetoOrigin<scalar_t>(state.template head<3>());
 
-  for (size_t i = 0; i < 4; i++) {
+  for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
     // calculates foot position in the base frame
-    vector_3d_t b_footPosition;
-    ocs2QuadrupedInterfacePtr_->getKinematicModel().footPositionBaseFrame(i, b_footPosition);
+    vector_3d_t b_footPosition = ocs2QuadrupedInterfacePtr_->getKinematicModel().footPositionBaseFrame(i);
 
     // calculates foot position in the origin frame
     o_feetPosition[i] = o_R_b * b_footPosition + basePose.template tail<3>();
 
     // calculates foot velocity in the base frame
-    Eigen::Matrix<scalar_t, 6, JOINT_COORD_SIZE> b_footJacobain;
-    ocs2QuadrupedInterfacePtr_->getKinematicModel().footJacobainBaseFrame(i, b_footJacobain);
-    vector_3d_t b_footVelocity = (b_footJacobain * dqJoints).template tail<3>();
+    Eigen::Matrix<scalar_t, 6, JOINT_COORD_SIZE> b_footJacobian = ocs2QuadrupedInterfacePtr_->getKinematicModel().footJacobianBaseFrame(i);
+    vector_3d_t b_footVelocity = (b_footJacobian * dqJoints).template tail<3>();
 
     // calculates foot velocity in the origin frame
-    ocs2QuadrupedInterfacePtr_->getKinematicModel().FromBaseVelocityToInertiaVelocity(o_R_b, baseLocalVelocities, b_footPosition,
-                                                                                      b_footVelocity, o_feetVelocity[i]);
+    o_feetVelocity[i] = ocs2QuadrupedInterfacePtr_->getKinematicModel().FromBaseVelocityToInertiaVelocity(o_R_b, baseLocalVelocities, b_footPosition,
+                                                                                      b_footVelocity);
 
     // calculates contact forces in the origin frame
     o_contactForces[i] = o_R_b * input.template segment<3>(3 * i);
@@ -404,114 +395,6 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::rolloutPolicy(
   ocs2QuadrupedInterfacePtr_->computeComStateInOrigin(stateRef, inputRef, o_comPoseRef, o_comVelocityRef, o_comAccelerationRef);
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t time, const rbd_state_vector_t& rbdState,
-                                                                              rbd_state_vector_t& rbdStateRef,
-                                                                              joint_coordinate_t& rbdInputRef, size_t& subsystem) {
-  // extract ocs2 state from rbdState
-  state_vector_t state;
-  ocs2QuadrupedInterfacePtr_->computeSwitchedModelState(rbdState, state);
-
-  // optimal switched model state and input
-  state_vector_t stateRef;
-  input_vector_t inputRef;
-  BASE::evaluatePolicy(time, state, stateRef, inputRef, subsystem);
-
-  // calculate rbd state.
-  ocs2QuadrupedInterfacePtr_->computeRbdModelState(stateRef, inputRef, rbdStateRef);
-  base_coordinate_t qBase = rbdStateRef.template segment<6>(0);
-  joint_coordinate_t qJoints = rbdStateRef.template segment<12>(6);
-  base_coordinate_t qdBase = rbdStateRef.template segment<6>(18);
-  joint_coordinate_t qdJoints = rbdStateRef.template segment<12>(24);
-
-  // look one dt ahead to obtain acceleration
-  const scalar_t dt = 1.0 / ocs2QuadrupedInterfacePtr_->modelSettings().feetFilterFrequency_;
-  state_vector_t stateRef_ahead;
-  input_vector_t inputRef_ahead;
-  size_t subsystem_ahead;
-  BASE::evaluatePolicy(time + dt, stateRef, stateRef_ahead, inputRef_ahead, subsystem_ahead);
-  //  BASE::rolloutPolicy(time, state, dt, stateRef_ahead, inputRef_ahead, subsystem_ahead);
-  vector_3d_array_t o_feetPositionRef_ahead, o_feetVelocityRef_ahead;
-  vector_3d_array_t o_contactForces_ahead;
-  joint_coordinate_t qddJoints = (inputRef_ahead.template tail<JOINT_COORD_SIZE>() - inputRef.template tail<JOINT_COORD_SIZE>()) / dt;
-  if (subsystem != subsystem_ahead) {
-    qddJoints.setZero();
-  }
-  qddJoints.setZero();  // FIXME(jcarius) investigate why accelerations make control go unstable
-
-  // inverse dynamics
-  // RBD homogeneous transforms of feet
-  ocs2QuadrupedInterfacePtr_->getKinematicModel().update(qBase, qJoints);
-  // force transformed in the lowerLeg coordinate
-  base_coordinate_t extForceBase = base_coordinate_t::Zero();
-  for (size_t j = 0; j < 4; j++) {
-    vector_3d_t b_footPosition;
-    ocs2QuadrupedInterfacePtr_->getKinematicModel().footPositionBaseFrame(j, b_footPosition);
-    extForceBase.template head<3>() += b_footPosition.cross(inputRef.template segment<3>(3 * j));
-    extForceBase.template tail<3>() += inputRef.template segment<3>(3 * j);
-  }
-  joint_coordinate_t extForceJoint = joint_coordinate_t::Zero();
-  for (size_t j = 0; j < 4; j++) {
-    Eigen::Matrix<double, 6, JOINT_COORD_SIZE> b_footJacobain;
-    ocs2QuadrupedInterfacePtr_->getKinematicModel().footJacobainBaseFrame(j, b_footJacobain);
-    extForceJoint += b_footJacobain.template bottomRows<3>().transpose() * inputRef.template segment<3>(3 * j);
-  }
-
-  iit::ANYmal::dyn::InertiaProperties inertias;
-  iit::ANYmal::MotionTransforms MotionTransforms;
-  iit::ANYmal::ForceTransforms forceTransforms;
-
-  iit::ANYmal::dyn::JSIM Mm(inertias, forceTransforms);
-  Mm.update(qJoints);
-
-  iit::ANYmal::dyn::InverseDynamics inverseDynamics(inertias, MotionTransforms);
-  inverseDynamics.setJointStatus(qJoints);
-
-  generalized_coordinate_t Gv;
-  {
-    // gravity vetor in the base frame
-    iit::rbd::Vector6D gravity;
-    Eigen::Matrix3d b_R_o = ocs2QuadrupedInterfacePtr_->getKinematicModel().rotationMatrixOrigintoBase();
-    double gravitationalAcceleration = ocs2QuadrupedInterfacePtr_->modelSettings().gravitationalAcceleration_;
-    gravity << vector_3d_t::Zero(), b_R_o * vector_3d_t(0.0, 0.0, -gravitationalAcceleration);
-
-    iit::rbd::Vector6D baseWrench;
-    joint_coordinate_t jForces;
-    inverseDynamics.G_terms_fully_actuated(baseWrench, jForces, gravity);
-    Gv << baseWrench, jForces;
-  }
-
-  generalized_coordinate_t Cv;
-  {
-    iit::rbd::Vector6D baseWrench;
-    joint_coordinate_t jForces;
-    inverseDynamics.C_terms_fully_actuated(baseWrench, jForces, qdBase, qdJoints);
-    Cv << baseWrench, jForces;
-  }
-
-  // compute Base local acceleration about Base frame
-  base_coordinate_t comLocalAcceleration =
-      -Mm.template topRightCorner<6, JOINT_COORD_SIZE>() * qddJoints - Cv.template head<6>() - Gv.template head<6>() + extForceBase;
-  comLocalAcceleration = Mm.template topLeftCorner<6, 6>().ldlt().solve(comLocalAcceleration);
-
-  // compute joint torque
-  rbdInputRef = Mm.template bottomLeftCorner<JOINT_COORD_SIZE, 6>() * comLocalAcceleration +
-                Mm.template bottomRightCorner<JOINT_COORD_SIZE, JOINT_COORD_SIZE>() * qddJoints + Cv.template tail<JOINT_COORD_SIZE>() +
-                Gv.template tail<JOINT_COORD_SIZE>() - extForceJoint;
-
-  vector_3d_t kp, kd;
-  kp.setConstant(80.0);
-  kd.setConstant(5.0);
-
-  for (int i = 0; i < 4; i++) {
-    rbdInputRef.template segment<3>(i * 3) +=
-        kp.asDiagonal() * (rbdStateRef.template segment<3>(6 + 3 * i) - rbdState.template segment<3>(6 + 3 * i)) +
-        kd.asDiagonal() * (rbdStateRef.template segment<3>(24 + 3 * i) - rbdState.template segment<3>(24 + 3 * i));
-  }
-}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

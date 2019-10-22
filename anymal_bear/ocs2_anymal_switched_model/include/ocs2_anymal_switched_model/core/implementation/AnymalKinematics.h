@@ -7,6 +7,11 @@
 
 #include "ocs2_anymal_switched_model/core/AnymalKinematics.h"
 
+#include <iit/rbd/traits/TraitSelector.h>
+
+#include "ocs2_anymal_switched_model/generated/jacobians.h"
+#include "ocs2_anymal_switched_model/generated/transforms.h"
+
 namespace anymal {
 namespace tpl {
 
@@ -15,83 +20,78 @@ namespace tpl {
 /******************************************************************************************************/
 template <typename SCALAR_T>
 AnymalKinematics<SCALAR_T>* AnymalKinematics<SCALAR_T>::clone() const {
-
-	return new AnymalKinematics<SCALAR_T>(*this);
+  return new AnymalKinematics<SCALAR_T>(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-void AnymalKinematics<SCALAR_T>::footPositionBaseFrame(
-		const size_t& footIndex,
-		vector3d_t& footPosition){
+typename AnymalKinematics<SCALAR_T>::vector3d_t AnymalKinematics<SCALAR_T>::footPositionBaseFrame(size_t footIndex) const {
+  typedef typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait trait_t;
 
-	switch (footIndex) {
-	case LF:
-	{
-		footPosition = fr_trunk_X_fr_LF_foot_(BASE::qJoint_).template topRightCorner<3,1>();
-		break;
-	}
-	case RF:
-	{
-		footPosition = fr_trunk_X_fr_RF_foot_(BASE::qJoint_).template topRightCorner<3,1>();
-		break;
-	}
-	case LH:
-	{
-		footPosition = fr_trunk_X_fr_LH_foot_(BASE::qJoint_).template topRightCorner<3,1>();
-		break;
-	}
-	case RH:
-	{
-		footPosition = fr_trunk_X_fr_RH_foot_(BASE::qJoint_).template topRightCorner<3,1>();
-		break;
-	}
-	default:
-		std::runtime_error("Not defined foot index.");
-		break;
-	}
+  switch (footIndex) {
+    case LF: {
+      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_FOOT fr_trunk_X_fr_LF_foot_;
+      return fr_trunk_X_fr_LF_foot_(BASE::qJoint_).template topRightCorner<3, 1>();
+    }
+    case RF: {
+      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_FOOT fr_trunk_X_fr_RF_foot_;
+      return fr_trunk_X_fr_RF_foot_(BASE::qJoint_).template topRightCorner<3, 1>();
+    }
+    case LH: {
+      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_FOOT fr_trunk_X_fr_LH_foot_;
+      return fr_trunk_X_fr_LH_foot_(BASE::qJoint_).template topRightCorner<3, 1>();
+    }
+    case RH: {
+      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_FOOT fr_trunk_X_fr_RH_foot_;
+      return fr_trunk_X_fr_RH_foot_(BASE::qJoint_).template topRightCorner<3, 1>();
+    }
+    default:
+      std::runtime_error("Not defined foot index.");
+      break;
+  }
 }
-
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-void AnymalKinematics<SCALAR_T>::footJacobainBaseFrame(
-		const size_t& footIndex, Eigen::Matrix<SCALAR_T,6,12>& footJacobian){
+typename AnymalKinematics<SCALAR_T>::joint_jacobian_t AnymalKinematics<SCALAR_T>::footJacobianBaseFrame(size_t footIndex) const {
+  typedef typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait trait_t;
 
-	footJacobian.setZero();
+  joint_jacobian_t footJacobian;
+  footJacobian.setZero();
 
-	switch (footIndex) {
-	case LF:
-	{
-		footJacobian.template block<6,3>(0,0) = fr_trunk_J_fr_LF_foot_(BASE::qJoint_);
-		break;
-	}
-	case RF:
-	{
-		footJacobian.template block<6,3>(0,3) = fr_trunk_J_fr_RF_foot_(BASE::qJoint_);
-		break;
-	}
-	case LH:
-	{
-		footJacobian.template block<6,3>(0,6) = fr_trunk_J_fr_LH_foot_(BASE::qJoint_);
-		break;
-	}
-	case RH:
-	{
-		footJacobian.template block<6,3>(0,9) = fr_trunk_J_fr_RH_foot_(BASE::qJoint_);
-		break;
-	}
-	default:
-	{
-		std::runtime_error("Not defined foot index.");
-		break;
-	}
-	}
+  switch (footIndex) {
+    case LF: {
+      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LF_FOOT fr_trunk_J_fr_LF_foot_;
+      footJacobian.template block<6, 3>(0, 0) = fr_trunk_J_fr_LF_foot_(BASE::qJoint_);
+      break;
+    }
+    case RF: {
+      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RF_FOOT fr_trunk_J_fr_RF_foot_;
+      footJacobian.template block<6, 3>(0, 3) = fr_trunk_J_fr_RF_foot_(BASE::qJoint_);
+      break;
+    }
+    case LH: {
+      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LH_FOOT fr_trunk_J_fr_LH_foot_;
+      footJacobian.template block<6, 3>(0, 6) = fr_trunk_J_fr_LH_foot_(BASE::qJoint_);
+      break;
+    }
+    case RH: {
+      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RH_FOOT fr_trunk_J_fr_RH_foot_;
+      footJacobian.template block<6, 3>(0, 9) = fr_trunk_J_fr_RH_foot_(BASE::qJoint_);
+      break;
+    }
+    default: {
+      std::runtime_error("Not defined foot index.");
+      break;
+    }
+  }
+
+  return footJacobian;
 }
 
-}  // end of tpl namespace
+}  // namespace tpl
 }  // end of namespace anymal

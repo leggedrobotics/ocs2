@@ -31,10 +31,6 @@ class MRT_ROS_Quadruped : public ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM> {
 
   using quadruped_interface_t = OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>;
   using quadruped_interface_ptr_t = typename quadruped_interface_t::Ptr;
-  using contact_flag_t = typename quadruped_interface_t::contact_flag_t;
-  using generalized_coordinate_t = typename quadruped_interface_t::generalized_coordinate_t;
-  using joint_coordinate_t = typename quadruped_interface_t::joint_coordinate_t;
-  using base_coordinate_t = typename quadruped_interface_t::base_coordinate_t;
   using rbd_state_vector_t = typename quadruped_interface_t::rbd_state_vector_t;
 
   enum { rbd_state_dim_ = quadruped_interface_t::rbd_state_dim_ };
@@ -63,7 +59,7 @@ class MRT_ROS_Quadruped : public ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM> {
   using cubic_spline_ptr_t = typename cubic_spline_t::Ptr;
 
   using logic_rules_t = typename quadruped_interface_t::logic_rules_t;
-  using logic_rules_ptr_t = typename logic_rules_t::Ptr;
+  using logic_rules_ptr_t = std::shared_ptr<logic_rules_t>;
 
   using vector_3d_t = Eigen::Matrix<scalar_t, 3, 1>;
   using vector_3d_array_t = std::array<vector_3d_t, 4>;
@@ -117,19 +113,6 @@ class MRT_ROS_Quadruped : public ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM> {
   void rolloutPolicy(const scalar_t& time, const state_vector_t& state, vector_3d_array_t& o_feetPositionRef,
                      vector_3d_array_t& o_feetVelocityRef, vector_3d_array_t& o_feetAccelerationRef, base_coordinate_t& o_comPoseRef,
                      base_coordinate_t& o_comVelocityRef, base_coordinate_t& o_comAccelerationRef, contact_flag_t& stanceLegs);
-
-  /**
-   * @brief Rolls out the control policy from the current time and state to get the next state and input using the MPC policy.
-   *
-   * @param [in] currentTime: start time of the rollout.
-   * @param [in] currentState: state to start rollout from.
-   * @param [in] timeStep: duration of the forward rollout.
-   * @param [out] mpcState: the new forwarded state of MPC.
-   * @param [out] mpcInput: the new control input of MPC.
-   * @param [out] subsystem: the active subsystem.
-   */
-  void rolloutPolicy(scalar_t time, const rbd_state_vector_t& rbdState, rbd_state_vector_t& rbdStateRef, joint_coordinate_t& rbdInputRef,
-                     size_t& subsystem);
 
   /**
    * Get the swing phase progress for a requested leg.

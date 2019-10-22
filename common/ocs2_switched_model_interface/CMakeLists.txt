@@ -43,6 +43,7 @@ add_library(${PROJECT_NAME}
 		src/SwitchedModelCostBase.cpp
 		src/ComKinoOperatingPointsBase.cpp
         src/SwitchedModelStateEstimator.cpp
+		src/SwitchedModelLogicRulesBase.cpp
 		)
 
 add_dependencies(${PROJECT_NAME}

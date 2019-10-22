@@ -72,8 +72,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
   Eigen::Matrix<double, 12, 12> J_allFeet;
   kinematicModelPtr_->update(initRbdState_.template segment<18>(0));
   for (int leg = 0; leg < 4; ++leg) {
-    Eigen::Matrix<double, 6, 12> J_thisfoot;
-    kinematicModelPtr_->footJacobainBaseFrame(leg, J_thisfoot);
+    Eigen::Matrix<double, 6, 12> J_thisfoot = kinematicModelPtr_->footJacobianBaseFrame(leg);
     J_allFeet.block<3, 12>(3 * leg, 0) = J_thisfoot.bottomRows<3>();
   }
 
@@ -203,7 +202,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeComL
   Eigen::VectorBlock<const input_vector_t, 3 * 4> lambda = comkinoInput.template head<12>();
 
   // Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
-  Eigen::Matrix3d o_R_b = RotationMatrixBasetoOrigin(xCOM.template head<3>());
+  Eigen::Matrix3d o_R_b = RotationMatrixBasetoOrigin<scalar_t>(xCOM.template head<3>());
 
   // base to CoM displacement in the CoM frame
   vector_3_t b_base2CoM = comModelPtr_->comPositionBaseFrame();
@@ -217,8 +216,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeComL
   kinematicModelPtr_->update(xBase, qJoints);
 
   // base to stance feet displacement in the CoM frame
-  std::array<vector_3_t, 4> b_base2StanceFeet;
-  for (size_t i = 0; i < 4; i++) kinematicModelPtr_->footPositionBaseFrame(i, b_base2StanceFeet[i]);
+  std::array<vector_3_t, NUM_CONTACT_POINTS> b_base2StanceFeet = kinematicModelPtr_->feetPositionsBaseFrame();
 
   // Inertia matrix in the CoM frame and its derivatives
   matrix_6_t M = comModelPtr_->comInertia();
@@ -258,6 +256,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeComS
                                                                                              base_coordinate_t& o_comPose,
                                                                                              base_coordinate_t& o_comVelocity,
                                                                                              base_coordinate_t& o_comAcceleration) {
+  Eigen::VectorBlock<const state_vector_t, 3> eulerAngles = comkinoState.template segment<3>(0);
   Eigen::VectorBlock<const state_vector_t, 3> o_r_com = comkinoState.template segment<3>(3);
   Eigen::VectorBlock<const state_vector_t, 3> b_W_com = comkinoState.template segment<3>(6);
   Eigen::VectorBlock<const state_vector_t, 3> b_V_com = comkinoState.template segment<3>(9);
@@ -267,10 +266,10 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeComS
   computeComLocalAcceleration(comkinoState, comkinoInput, comLocalAcceleration);
 
   // Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
-  Eigen::Matrix3d o_R_b = kinematicModelPtr_->rotationMatrixOrigintoBase().transpose();
+  Eigen::Matrix3d o_R_b = RotationMatrixBasetoOrigin<scalar_t>(eulerAngles);
 
   // CoM pose in the origin frame
-  o_comPose << comkinoState.template head<3>(), o_r_com;
+  o_comPose << eulerAngles, o_r_com;
 
   // CoM velocity in the origin frame
   o_comVelocity.template head<3>() = o_R_b * b_W_com;
@@ -290,8 +289,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::estimateFla
                                                                                         scalar_t& groundHight) const {
   kinematicModelPtr_->update(rbdState.template head<6 + JOINT_COORD_SIZE>());
 
-  std::array<Eigen::Vector3d, 4> feetPositions;
-  kinematicModelPtr_->feetPositionsOriginFrame(feetPositions);
+  std::array<Eigen::Vector3d, 4> feetPositions = kinematicModelPtr_->feetPositionsOriginFrame();
 
   scalar_t totalHeight = 0.0;
   int feetInContact = 0;

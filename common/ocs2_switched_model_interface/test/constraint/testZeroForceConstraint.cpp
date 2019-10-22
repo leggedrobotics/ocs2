@@ -8,7 +8,7 @@
 #include "ocs2_switched_model_interface/constraint/ZeroForceConstraint.h"
 
 TEST(TestZeroForceConstraint, evaluate){
-  using TestedConstraint = switched_model::ZeroForceConstraint<24, 24>;
+  using TestedConstraint = switched_model::ZeroForceConstraint;
   TestedConstraint zeroForceConstraint(0);
 
   // evaluation point

@@ -1,20 +1,51 @@
+#include "ocs2_switched_model_interface/constraint/ComKinoConstraintBaseAd.h"
+
+// Constraints
+#include "ocs2_switched_model_interface/constraint/EndEffectorVelocityContraint.h"
+#include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
+#include "ocs2_switched_model_interface/constraint/ZeroForceConstraint.h"
+
 namespace switched_model {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>* ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::clone()
-    const {
-  return new ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>(*this);
+ComKinoConstraintBaseAd* ComKinoConstraintBaseAd::clone() const {
+  return new ComKinoConstraintBaseAd(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x,
-                                                                                                const input_vector_t& u) {
+void ComKinoConstraintBaseAd::InitializeConstraintTerms() {
+
+  for (int i = 0; i < NUM_CONTACT_POINTS_; i++) {
+    auto footName = feetNames[i];
+
+    // Friction cone constraint
+    auto frictionCone = std::unique_ptr<ConstraintTerm_t>(new FrictionConeConstraint(options_.frictionCoefficient_, 25.0, i));
+
+    // EE force
+    auto zeroForceConstraint = std::unique_ptr<ConstraintTerm_t>(new ZeroForceConstraint(i));
+
+    // Velocity Constraint
+
+    auto endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityConstraint(
+        i, EndEffectorVelocityConstraintSettings(), *adComModelPtr_.get(), *adKinematicModelPtr_.get(), options_.recompileLibraries_));
+
+    // Inequalities
+    inequalityConstraintCollection_.add(std::move(frictionCone), footName + "_FrictionCone");
+
+    // State input equalities
+    equalityStateInputConstraintCollection_.add(std::move(zeroForceConstraint), footName + "_ZeroForce");
+    equalityStateInputConstraintCollection_.add(std::move(endEffectorVelocityConstraint), footName + "_EEVel");
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
   stateInputConstraintsComputed_ = false;
   inequalityConstraintsComputed_ = false;
 
@@ -34,7 +65,7 @@ void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::setCurrent
 
     // Active foot placement for stance legs
     auto EEVelConstraint =
-        equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityConstraint_t>(footName + "_EEVel");
+        equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityConstraint>(footName + "_EEVel");
     EEVelConstraint->setActivity(true);
     EndEffectorVelocityConstraintSettings eeVelConSettings;
     if (stanceLegs_[i]) {  // in stance: All velocity equal to zero
@@ -53,8 +84,7 @@ void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::setCurrent
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getConstraint1(constraint1_vector_t& g1) {
+void ComKinoConstraintBaseAd::getConstraint1(constraint1_vector_t& g1) {
   size_t numConstraints = numStateInputConstraint(Base::t_);
   g1.head(numConstraints) = equalityStateInputConstraintCollection_.getConstraints().getValueAsVector(Base::t_, Base::x_, Base::u_);
 }
@@ -62,60 +92,52 @@ void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getConstra
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-size_t ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::numStateInputConstraint(const scalar_t& time) {
+size_t ComKinoConstraintBaseAd::numStateInputConstraint(const scalar_t& time) {
   return equalityStateInputConstraintCollection_.getConstraints().getNumConstraints(time);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getConstraint2(constraint2_vector_t& g2) {}
+void ComKinoConstraintBaseAd::getConstraint2(constraint2_vector_t& g2) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-size_t ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::numStateOnlyConstraint(const scalar_t& time) {
+size_t ComKinoConstraintBaseAd::numStateOnlyConstraint(const scalar_t& time) {
   return 0;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraint(scalar_array_t& h) {
+void ComKinoConstraintBaseAd::getInequalityConstraint(scalar_array_t& h) {
   h = inequalityConstraintCollection_.getConstraints().getValue(Base::t_, Base::x_, Base::u_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-size_t ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::numInequalityConstraint(const scalar_t& time) {
+size_t ComKinoConstraintBaseAd::numInequalityConstraint(const scalar_t& time) {
   return inequalityConstraintCollection_.getConstraints().getNumConstraints(time);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getFinalConstraint2(constraint2_vector_t& g2Final) {}
+void ComKinoConstraintBaseAd::getFinalConstraint2(constraint2_vector_t& g2Final) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-size_t ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::numStateOnlyFinalConstraint(const scalar_t& time) {
+size_t ComKinoConstraintBaseAd::numStateOnlyFinalConstraint(const scalar_t& time) {
   return 0;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getConstraint1DerivativesState(constraint1_state_matrix_t& C) {
+void ComKinoConstraintBaseAd::getConstraint1DerivativesState(constraint1_state_matrix_t& C) {
   if (!stateInputConstraintsComputed_) {
     linearStateInputConstraintApproximation_ =
         equalityStateInputConstraintCollection_.getConstraints().getLinearApproximationAsMatrices(Base::t_, Base::x_, Base::u_);
@@ -128,8 +150,7 @@ void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getConstra
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getConstraint1DerivativesControl(constraint1_input_matrix_t& D) {
+void ComKinoConstraintBaseAd::getConstraint1DerivativesControl(constraint1_input_matrix_t& D) {
   if (!stateInputConstraintsComputed_) {
     linearStateInputConstraintApproximation_ =
         equalityStateInputConstraintCollection_.getConstraints().getLinearApproximationAsMatrices(Base::t_, Base::x_, Base::u_);
@@ -142,9 +163,7 @@ void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getConstra
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getConstraint1DerivativesEventTimes(
-    constraint1_vector_array_t& g1DevArray) {
+void ComKinoConstraintBaseAd::getConstraint1DerivativesEventTimes(constraint1_vector_array_t& g1DevArray) {
   // set all to zero
   g1DevArray.resize(numEventTimes_);
   for (constraint1_vector_t& g1Dev : g1DevArray) g1Dev.setZero();
@@ -153,14 +172,12 @@ void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getConstra
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getConstraint2DerivativesState(constraint2_state_matrix_t& F) {}
+void ComKinoConstraintBaseAd::getConstraint2DerivativesState(constraint2_state_matrix_t& F) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraintDerivativesState(state_vector_array_t& dhdx) {
+void ComKinoConstraintBaseAd::getInequalityConstraintDerivativesState(state_vector_array_t& dhdx) {
   if (!inequalityConstraintsComputed_) {
     quadraticInequalityConstraintApproximation_ =
         inequalityConstraintCollection_.getConstraints().getQuadraticApproximation(Base::t_, Base::x_, Base::u_);
@@ -172,9 +189,7 @@ void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequal
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraintDerivativesInput(
-    switched_model::ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::input_vector_array_t& dhdu) {
+void ComKinoConstraintBaseAd::getInequalityConstraintDerivativesInput(switched_model::ComKinoConstraintBaseAd::input_vector_array_t& dhdu) {
   if (!inequalityConstraintsComputed_) {
     quadraticInequalityConstraintApproximation_ =
         inequalityConstraintCollection_.getConstraints().getQuadraticApproximation(Base::t_, Base::x_, Base::u_);
@@ -186,9 +201,8 @@ void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequal
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraintSecondDerivativesState(
-    switched_model::ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::state_matrix_array_t& ddhdxdx) {
+void ComKinoConstraintBaseAd::getInequalityConstraintSecondDerivativesState(
+    switched_model::ComKinoConstraintBaseAd::state_matrix_array_t& ddhdxdx) {
   if (!inequalityConstraintsComputed_) {
     quadraticInequalityConstraintApproximation_ =
         inequalityConstraintCollection_.getConstraints().getQuadraticApproximation(Base::t_, Base::x_, Base::u_);
@@ -200,9 +214,8 @@ void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequal
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraintSecondDerivativesInput(
-    switched_model::ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::input_matrix_array_t& ddhdudu) {
+void ComKinoConstraintBaseAd::getInequalityConstraintSecondDerivativesInput(
+    switched_model::ComKinoConstraintBaseAd::input_matrix_array_t& ddhdudu) {
   if (!inequalityConstraintsComputed_) {
     quadraticInequalityConstraintApproximation_ =
         inequalityConstraintCollection_.getConstraints().getQuadraticApproximation(Base::t_, Base::x_, Base::u_);
@@ -214,9 +227,8 @@ void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequal
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequalityConstraintDerivativesInputState(
-    switched_model::ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::input_state_matrix_array_t& ddhdudx) {
+void ComKinoConstraintBaseAd::getInequalityConstraintDerivativesInputState(
+    switched_model::ComKinoConstraintBaseAd::input_state_matrix_array_t& ddhdudx) {
   if (!inequalityConstraintsComputed_) {
     quadraticInequalityConstraintApproximation_ =
         inequalityConstraintCollection_.getConstraints().getQuadraticApproximation(Base::t_, Base::x_, Base::u_);
@@ -228,22 +240,19 @@ void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getInequal
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F) {}
+void ComKinoConstraintBaseAd::getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::setStanceLegs(const contact_flag_t& stanceLegs) {
+void ComKinoConstraintBaseAd::setStanceLegs(const contact_flag_t& stanceLegs) {
   stanceLegs_ = stanceLegs;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getStanceLegs(contact_flag_t& stanceLegs) {
+void ComKinoConstraintBaseAd::getStanceLegs(contact_flag_t& stanceLegs) {
   stanceLegs = stanceLegs_;
 }
 

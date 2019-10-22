@@ -7,11 +7,11 @@
 
 #include <ocs2_switched_model_interface/constraint/EndEffectorVelocityContraint.h>
 
-#include "ocs2_anymal_switched_model/kinematics/AnymalKinematics.h"
-#include "ocs2_anymal_switched_model/dynamics/AnymalCom.h"
+#include "ocs2_anymal_switched_model/core/AnymalKinematics.h"
+#include "ocs2_anymal_switched_model/core/AnymalCom.h"
 
 TEST(TestEEVelocityConstraint, evaluate){
-  using TestedConstraint = switched_model::EndEffectorVelocityConstraint<24, 24>;
+  using TestedConstraint = switched_model::EndEffectorVelocityConstraint;
 
   switched_model::EndEffectorVelocityConstraintSettings settings;
   settings.A.setIdentity(3, 3);

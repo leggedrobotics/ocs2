@@ -5,7 +5,7 @@
  *      Author: farbod
  */
 
-#include "ocs2_anymal_switched_model/dynamics/AnymalCom.h"
+#include "ocs2_anymal_switched_model/core/AnymalCom.h"
 
 namespace anymal {
 namespace tpl {

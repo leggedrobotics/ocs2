@@ -15,8 +15,8 @@
 
 #include <ocs2_switched_model_interface/foot_planner/FeetZDirectionPlanner.h>
 #include <ocs2_switched_model_interface/foot_planner/cpg/SplineCPG.h>
+#include <ocs2_switched_model_interface/foot_planner/CubicSpline.h>
 #include <ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h>
-#include <ocs2_switched_model_interface/misc/CubicSpline.h>
 
 #include "ocs2_quadruped_interface/OCS2QuadrupedInterface.h"
 

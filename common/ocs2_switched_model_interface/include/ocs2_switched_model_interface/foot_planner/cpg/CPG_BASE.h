@@ -15,88 +15,71 @@
 namespace switched_model {
 
 template <typename scalar_t = double>
-class CPG_BASE
-{
-public:
-	typedef std::shared_ptr<CPG_BASE<scalar_t>> 		Ptr;
-	typedef std::shared_ptr<const CPG_BASE<scalar_t>> 	ConstPtr;
+class CPG_BASE {
+ public:
+  typedef std::shared_ptr<CPG_BASE<scalar_t>> Ptr;
+  typedef std::shared_ptr<const CPG_BASE<scalar_t>> ConstPtr;
 
-	CPG_BASE()
-	: CPG_BASE(0.15, 1.0)
-	{}
+  CPG_BASE() : CPG_BASE(0.15, 1.0) {}
 
-	CPG_BASE(
-			const scalar_t& swingLegLiftOff,
-			const scalar_t& swingTimeScale = 1.0,
-			const scalar_t& liftOffVelocity = 0.0,
-			const scalar_t& touchDownVelocity = 0.0)
-	: swingLegLiftOff_(swingLegLiftOff),
-	  swingTimeScale_(swingTimeScale)
-	{}
+  CPG_BASE(const scalar_t& swingLegLiftOff, const scalar_t& swingTimeScale = 1.0, const scalar_t& liftOffVelocity = 0.0,
+           const scalar_t& touchDownVelocity = 0.0)
+      : swingLegLiftOff_(swingLegLiftOff), swingTimeScale_(swingTimeScale) {}
 
-	virtual ~CPG_BASE() = default;
+  virtual ~CPG_BASE() = default;
 
-	virtual void setConstant() = 0;
+  virtual void setConstant() = 0;
 
-	virtual void set(const scalar_t& startTime, const scalar_t& finalTime, const scalar_t& maxHight) {
-		startTime_ = startTime;
-		finalTime_ = finalTime;
-		maxHight_ = maxHight;
-	}
+  virtual void set(const scalar_t& startTime, const scalar_t& finalTime, const scalar_t& maxHight) {
+    startTime_ = startTime;
+    finalTime_ = finalTime;
+    maxHight_ = maxHight;
+  }
 
-	virtual scalar_t adaptiveSwingLegLiftOff(const scalar_t& startTime, const scalar_t& finalTime) {
-		return swingLegLiftOff_* std::min(1.0, (finalTime-startTime)/swingTimeScale_);
-//		return swingLegLiftOff_;
-	}
+  virtual scalar_t adaptiveSwingLegLiftOff(const scalar_t& startTime, const scalar_t& finalTime) {
+    return swingLegLiftOff_ * std::min(1.0, (finalTime - startTime) / swingTimeScale_);
+    //		return swingLegLiftOff_;
+  }
 
-	// calculate the position of the CPG output
-	virtual scalar_t calculatePosition(const scalar_t& time) const = 0;
+  // calculate the position of the CPG output
+  virtual scalar_t calculatePosition(const scalar_t& time) const = 0;
 
-	// calculate the velocity of the CPG output
-	virtual scalar_t calculateVelocity(const scalar_t& time) const {
+  // calculate the velocity of the CPG output
+  virtual scalar_t calculateVelocity(const scalar_t& time) const {
+    const scalar_t h = sqrt(std::numeric_limits<scalar_t>::epsilon());
 
-		const scalar_t h = sqrt(std::numeric_limits<scalar_t>::epsilon());
+    scalar_t positionPlus = calculatePosition(time + h / 2.0);
+    scalar_t positionMinus = calculatePosition(time - h / 2.0);
 
-		scalar_t positionPlus  = calculatePosition(time+h/2.0);
-		scalar_t positionMinus = calculatePosition(time-h/2.0);
+    return (positionPlus - positionMinus) / h;
+  }
 
-		return (positionPlus-positionMinus)/h;
-	}
+  // calculate the velocity of the CPG output
+  virtual scalar_t calculateAcceleration(const scalar_t& time) const {
+    const scalar_t h = sqrt(std::numeric_limits<scalar_t>::epsilon());
 
-	// calculate the velocity of the CPG output
-	virtual scalar_t calculateAcceleration(const scalar_t& time) const {
+    scalar_t velocityPlus = calculateVelocity(time + h / 2.0);
+    scalar_t velocityMinus = calculateVelocity(time - h / 2.0);
 
-		const scalar_t h = sqrt(std::numeric_limits<scalar_t>::epsilon());
+    return (velocityPlus - velocityMinus) / h;
+  }
 
-		scalar_t velocityPlus  = calculateVelocity(time+h/2.0);
-		scalar_t velocityMinus = calculateVelocity(time-h/2.0);
+  virtual scalar_t calculateStartTimeDerivative(const scalar_t& time) const { return 0.0; }
 
-		return (velocityPlus-velocityMinus)/h;
-	}
+  virtual scalar_t calculateFinalTimeDerivative(const scalar_t& time) const { return 0.0; }
 
-	virtual scalar_t calculateStartTimeDerivative(const scalar_t& time) const {
+  scalar_t getTimeSinceStart(const scalar_t& time) const { return time - startTime_; };
+  scalar_t getTimeTillEnd(const scalar_t& time) const { return finalTime_ - time; };
 
-		return 0.0;
-	}
+ protected:
+  scalar_t startTime_;
+  scalar_t finalTime_;
+  scalar_t maxHight_;
 
-	virtual scalar_t calculateFinalTimeDerivative(const scalar_t& time) const {
-
-		return 0.0;
-	}
-
-  	scalar_t getTimeSinceStart(const scalar_t& time) const { return time - startTime_; };
-  	scalar_t getTimeTillEnd(const scalar_t& time) const { return finalTime_ - time; };
-
-protected:
-	scalar_t startTime_;
-	scalar_t finalTime_;
-	scalar_t maxHight_;
-
-	scalar_t swingLegLiftOff_;
-	scalar_t swingTimeScale_;
+  scalar_t swingLegLiftOff_;
+  scalar_t swingTimeScale_;
 };
 
-
-}  // end of switched_model namespace
+}  // namespace switched_model
 
 #endif /* CPG_BASE_H_ */

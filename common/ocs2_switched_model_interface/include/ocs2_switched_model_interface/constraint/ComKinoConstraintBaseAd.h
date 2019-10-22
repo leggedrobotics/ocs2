@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ocs2_core/constraint/ConstraintBase.h>
+#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 
 #include "ocs2_switched_model_interface/constraint/ConstraintCollection.h"
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
@@ -9,18 +10,15 @@
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h"
 
-// Constraints
-#include "ocs2_switched_model_interface/constraint/EndEffectorVelocityContraint.h"
-#include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
-#include "ocs2_switched_model_interface/constraint/ZeroForceConstraint.h"
-
 namespace switched_model {
 
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM = 12 + JOINT_COORD_SIZE, size_t INPUT_DIM = 12 + JOINT_COORD_SIZE>
-class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZE, 12 + JOINT_COORD_SIZE> {
+class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<24, 24> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+  static constexpr size_t JOINT_COORD_SIZE = 12;
+  static constexpr size_t STATE_DIM = 24;
+  static constexpr size_t INPUT_DIM = 24;
   static constexpr size_t NUM_CONTACT_POINTS_ = SwitchedModel<JOINT_COORD_SIZE>::NUM_CONTACT_POINTS;
 
   using logic_rules_t = SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, double>;
@@ -31,7 +29,7 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZ
   using ad_com_model_t = ComModelBase<JOINT_COORD_SIZE, ad_scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<JOINT_COORD_SIZE, ad_scalar_t>;
 
-  using Base = ocs2::ConstraintBase<STATE_DIM, INPUT_DIM>;
+  using Base = ocs2::ConstraintBase<24, 24>;
   using typename Base::constraint1_input_matrix_t;
   using typename Base::constraint1_state_matrix_t;
   using typename Base::constraint1_vector_array_t;
@@ -61,9 +59,6 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZ
   using LinearConstraintApproximationAsMatrices_t = ocs2::LinearConstraintApproximationAsMatrices<STATE_DIM, INPUT_DIM>;
   using QuadraticConstraintApproximation_t = ocs2::QuadraticConstraintApproximation<STATE_DIM, INPUT_DIM>;
   using ConstraintTerm_t = ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM>;
-  using FrictionConeConstraint_t = FrictionConeConstraint<STATE_DIM, INPUT_DIM>;
-  using EndEffectorVelocityConstraint_t = EndEffectorVelocityConstraint<STATE_DIM, INPUT_DIM>;
-  using ZeroForceConstraint_t = ZeroForceConstraint<STATE_DIM, INPUT_DIM>;
 
   // Enumeration and naming
   enum class FeetEnum { LF, RF, LH, RH };
@@ -98,33 +93,11 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZ
   /**
    * Initialize Constraint Terms
    */
-  void InitializeConstraintTerms() {
-    for (int i = 0; i < NUM_CONTACT_POINTS_; i++) {
-      auto footName = feetNames[i];
-
-      // Friction cone constraint
-      auto frictionCone = std::unique_ptr<ConstraintTerm_t>(new FrictionConeConstraint_t(options_.frictionCoefficient_, 25.0, i));
-
-      // EE force
-      auto zeroForceConstraint = std::unique_ptr<ConstraintTerm_t>(new ZeroForceConstraint_t(i));
-
-      // Velocity Constraint
-
-      auto endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityConstraint_t(
-          i, EndEffectorVelocityConstraintSettings(), *adComModelPtr_.get(), *adKinematicModelPtr_.get(), options_.recompileLibraries_));
-
-      // Inequalities
-      inequalityConstraintCollection_.add(std::move(frictionCone), footName + "_FrictionCone");
-
-      // State input equalities
-      equalityStateInputConstraintCollection_.add(std::move(zeroForceConstraint), footName + "_ZeroForce");
-      equalityStateInputConstraintCollection_.add(std::move(endEffectorVelocityConstraint), footName + "_EEVel");
-    }
-  }
+  void InitializeConstraintTerms();
 
   ~ComKinoConstraintBaseAd() override = default;
 
-  ComKinoConstraintBaseAd<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>* clone() const override;
+  ComKinoConstraintBaseAd* clone() const override;
 
   void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
 
@@ -185,4 +158,3 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<12 + JOINT_COORD_SIZ
 
 }  // end of namespace switched_model
 
-#include "ocs2_switched_model_interface/constraint/implementation/ComKinoConstraintBaseAd.h"

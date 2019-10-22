@@ -8,7 +8,7 @@
 #include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
 
 TEST(TestFrictionConeConstraint, evaluate){
-  using TestedConstraint = switched_model::FrictionConeConstraint<24, 24>;
+  using TestedConstraint = switched_model::FrictionConeConstraint;
   const double mu = 0.7;
   const double regularization = 25;
   TestedConstraint frictionConeConstraint(mu, regularization, 0);

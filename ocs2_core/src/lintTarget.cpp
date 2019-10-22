@@ -23,6 +23,7 @@
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/cost/CostFunctionBaseAD.h>
+#include <ocs2_core/cost/CostFunctionLinearCombination.h>
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 
 // Dynamics

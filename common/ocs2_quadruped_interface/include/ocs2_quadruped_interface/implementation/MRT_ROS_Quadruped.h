@@ -257,10 +257,8 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeFeetState
   joint_coordinate_t qJoints = state.template segment<JOINT_COORD_SIZE>(12);
   joint_coordinate_t dqJoints = input.template segment<JOINT_COORD_SIZE>(12);
 
-  base_coordinate_t basePose;
-  ocs2QuadrupedInterfacePtr_->getComModel().calculateBasePose(qJoints, comPose, basePose);
-  base_coordinate_t baseLocalVelocities;
-  ocs2QuadrupedInterfacePtr_->getComModel().calculateBaseLocalVelocities(qJoints, dqJoints, comLocalVelocities, baseLocalVelocities);
+  base_coordinate_t basePose = ocs2QuadrupedInterfacePtr_->getComModel().calculateBasePose(comPose);;
+  base_coordinate_t baseLocalVelocities = ocs2QuadrupedInterfacePtr_->getComModel().calculateBaseLocalVelocities(comLocalVelocities);
 
   ocs2QuadrupedInterfacePtr_->getKinematicModel().update(basePose, qJoints);
   Eigen::Matrix3d o_R_b = ocs2QuadrupedInterfacePtr_->getKinematicModel().rotationMatrixOrigintoBase().transpose();

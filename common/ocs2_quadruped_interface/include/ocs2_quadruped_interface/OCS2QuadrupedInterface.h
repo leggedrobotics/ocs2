@@ -52,10 +52,10 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
 
   using Ptr = std::shared_ptr<OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>>;
 
-  using com_model_t = ComModelBase<JOINT_COORD_SIZE>;
+  using com_model_t = ComModelBase<double>;
   using kinematic_model_t = KinematicsModelBase<JOINT_COORD_SIZE>;
 
-  using state_estimator_t = SwitchedModelStateEstimator<JOINT_COORD_SIZE>;
+  using state_estimator_t = SwitchedModelStateEstimator;
 
   using dimension_t = typename BASE::DIMENSIONS;
   using scalar_t = typename dimension_t::scalar_t;
@@ -326,8 +326,8 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
   ocs2::SLQ_Settings slqSettings_;
   ocs2::Rollout_Settings rolloutSettings_;
 
-  typename kinematic_model_t::Ptr kinematicModelPtr_;
-  typename com_model_t::Ptr comModelPtr_;
+  std::unique_ptr<kinematic_model_t> kinematicModelPtr_;
+  std::unique_ptr<com_model_t> comModelPtr_;
 
   state_estimator_t switchedModelStateEstimator_;
 

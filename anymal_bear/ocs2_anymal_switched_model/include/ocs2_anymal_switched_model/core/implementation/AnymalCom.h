@@ -7,6 +7,12 @@
 
 #include "ocs2_anymal_switched_model/core/AnymalCom.h"
 
+#include <iit/rbd/traits/TraitSelector.h>
+#include "ocs2_anymal_switched_model/generated/inertia_properties.h"
+#include "ocs2_anymal_switched_model/generated/jsim.h"
+#include "ocs2_anymal_switched_model/generated/miscellaneous.h"
+#include "ocs2_anymal_switched_model/generated/transforms.h"
+
 namespace anymal {
 namespace tpl {
 
@@ -14,8 +20,7 @@ namespace tpl {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-AnymalCom<SCALAR_T>::AnymalCom()
-    : inertiaProperties_(), homTransforms_(), forceTransforms_(), jointSpaceInertiaMatrix_(inertiaProperties_, forceTransforms_) {
+AnymalCom<SCALAR_T>::AnymalCom() {
   joint_coordinate_t defaultJointConfig;
   defaultJointConfig << SCALAR_T(-0.1), SCALAR_T(0.7), SCALAR_T(-1.0), SCALAR_T(0.1), SCALAR_T(0.7), SCALAR_T(-1.0), SCALAR_T(-0.1),
       SCALAR_T(-0.7), SCALAR_T(1.0), SCALAR_T(0.1), SCALAR_T(-0.7), SCALAR_T(1.0);
@@ -36,93 +41,23 @@ AnymalCom<SCALAR_T>* AnymalCom<SCALAR_T>::clone() const {
 /******************************************************************************************************/
 template <typename SCALAR_T>
 void AnymalCom<SCALAR_T>::setJointConfiguration(const joint_coordinate_t& q) {
+  using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait ;
+  iit::ANYmal::dyn::tpl::InertiaProperties<trait_t> inertiaProperties_;
+  iit::ANYmal::tpl::HomogeneousTransforms<trait_t> homTransforms_;
+  iit::ANYmal::tpl::ForceTransforms<trait_t> forceTransforms_;
+  iit::ANYmal::dyn::tpl::JSIM<trait_t> jointSpaceInertiaMatrix_(inertiaProperties_, forceTransforms_);
+
   jointSpaceInertiaMatrix_.update(q);
   comPositionBaseFrame_ = iit::ANYmal::getWholeBodyCOM(inertiaProperties_, q, homTransforms_);
 
   comInertia_ = jointSpaceInertiaMatrix_.getWholeBodyInertia();
   SCALAR_T& mass = comInertia_(5, 5);
-  matrix3d_t crossComPositionBaseFrame = switched_model::CrossProductMatrix<SCALAR_T>(comPositionBaseFrame_);
+  matrix3s_t crossComPositionBaseFrame = switched_model::CrossProductMatrix<SCALAR_T>(comPositionBaseFrame_);
   comInertia_.template topLeftCorner<3, 3>() -= mass * crossComPositionBaseFrame * crossComPositionBaseFrame.transpose();
   comInertia_.template topRightCorner<3, 3>().setZero();
   comInertia_.template bottomLeftCorner<3, 3>().setZero();
-}
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-typename AnymalCom<SCALAR_T>::vector3d_t AnymalCom<SCALAR_T>::comPositionBaseFrame(const joint_coordinate_t& q) {
-  return comPositionBaseFrame_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 6, 6> AnymalCom<SCALAR_T>::comInertia(const joint_coordinate_t& q) {
-  // total inertia of robot in the default config in base frame
-  return comInertia_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-SCALAR_T AnymalCom<SCALAR_T>::totalMass() const {
-  return inertiaProperties_.getTotalMass();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 4, 4> AnymalCom<SCALAR_T>::comHomogeneous(const joint_coordinate_t& q) {
-  Eigen::Matrix<SCALAR_T, 4, 4> res = Eigen::Matrix<SCALAR_T, 4, 4>::Identity();
-  res.template topRightCorner<3, 1>() = comPositionBaseFrame(q);
-  return res;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 4, 4> AnymalCom<SCALAR_T>::comHomogeneous() {
-  Eigen::Matrix<SCALAR_T, 4, 4> res = Eigen::Matrix<SCALAR_T, 4, 4>::Identity();
-  res.template topRightCorner<3, 1>() = comPositionBaseFrame();
-  return res;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 6, 6> AnymalCom<SCALAR_T>::comInertiaDerivative(const joint_coordinate_t& q, const joint_coordinate_t& dq) {
-  return Eigen::Matrix<SCALAR_T, 6, 6>::Zero();  // massless limbs
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 6, 12> AnymalCom<SCALAR_T>::comMomentumJacobian(const joint_coordinate_t& q) {
-  return Eigen::Matrix<SCALAR_T, 6, 12>::Zero();  // massless limbs
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 6, 12> AnymalCom<SCALAR_T>::comMomentumJacobianDerivative(const joint_coordinate_t& q,
-                                                                                  const joint_coordinate_t& dq) {
-  return Eigen::Matrix<SCALAR_T, 6, 12>::Zero();  // massless limbs
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 3, 1> AnymalCom<SCALAR_T>::comVelocityInBaseFrame(const joint_coordinate_t& q, const joint_coordinate_t& dq) {
-  return Eigen::Matrix<SCALAR_T, 3, 1>::Zero();  // massless limbs
+  totalMass_ = inertiaProperties_.getTotalMass();
 }
 
 }  // namespace tpl

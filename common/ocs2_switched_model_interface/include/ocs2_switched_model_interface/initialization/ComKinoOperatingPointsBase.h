@@ -25,7 +25,7 @@ class ComKinoOperatingPointsBase : public ocs2::SystemOperatingPoint<24, 24> {
   using typename Base::state_vector_array_t;
   using typename Base::state_vector_t;
 
-  using com_model_t = ComModelBase<JOINT_COORD_SIZE>;
+  using com_model_t = ComModelBase<double>;
   using logic_rules_t = SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, double>;
   using contact_flag_t = typename SwitchedModel<JOINT_COORD_SIZE>::contact_flag_t;
 

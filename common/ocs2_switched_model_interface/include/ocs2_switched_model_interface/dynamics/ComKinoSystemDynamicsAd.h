@@ -16,7 +16,7 @@ class ComKinoSystemDynamicsAd : public ocs2::SystemDynamicsBaseAD<24, 24> {
   using typename Base::ad_dynamic_vector_t;
   using typename Base::ad_scalar_t;
 
-  using ad_com_model_t = ComModelBase<JOINT_COORD_SIZE, ad_scalar_t>;
+  using ad_com_model_t = ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<JOINT_COORD_SIZE, ad_scalar_t>;
 
   using Vector3Ad = Eigen::Matrix<ad_scalar_t, 3, 1>;

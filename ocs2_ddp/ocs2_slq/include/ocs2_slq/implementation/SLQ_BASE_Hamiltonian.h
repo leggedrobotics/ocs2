@@ -486,11 +486,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
       &BASE::BmTrajectoryStock_[partitionIndex], &BASE::qTrajectoryStock_[partitionIndex], &QvConstrainedTrajectoryStock_[partitionIndex],
       &QmConstrainedTrajectoryStock_[partitionIndex], &BASE::RvTrajectoryStock_[partitionIndex],
       &RmInvConstrainedCholTrajectoryStock_[partitionIndex], &BASE::PmTrajectoryStock_[partitionIndex],
-      &BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex], &BASE::qFinalStock_[partitionIndex],
-      &BASE::QvFinalStock_[partitionIndex], &BASE::QmFinalStock_[partitionIndex]);
+      &BASE::nominalPostEventIndicesStock_[partitionIndex], &BASE::qFinalStock_[partitionIndex], &BASE::QvFinalStock_[partitionIndex],
+      &BASE::QmFinalStock_[partitionIndex]);
 
   const size_t N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
-  const size_t NE = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex].size();
+  const size_t NE = BASE::nominalPostEventIndicesStock_[partitionIndex].size();
 
   const scalar_t scalingStart = BASE::partitioningTimes_[partitionIndex];
   const scalar_t scalingFinal = BASE::partitioningTimes_[partitionIndex + 1];
@@ -526,7 +526,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsWorker(
   SsNormalizedSwitchingTimes.reserve(NE + 2);
   SsNormalizedSwitchingTimes.push_back(startNormalizedTime);
   for (int k = NE - 1; k >= 0; k--) {
-    const size_t& index = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex][k];
+    const size_t& index = BASE::nominalPostEventIndicesStock_[partitionIndex][k];
     const scalar_t& si = BASE::nominalTimeTrajectoriesStock_[partitionIndex][index];
     SsNormalizedSwitchingTimes.push_back((si - scalingFinal) / scalingFactor);
   }
@@ -624,11 +624,11 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
       &BASE::BmTrajectoryStock_[partitionIndex], &BASE::qTrajectoryStock_[partitionIndex], &QvConstrainedTrajectoryStock_[partitionIndex],
       &QmConstrainedTrajectoryStock_[partitionIndex], &BASE::RvTrajectoryStock_[partitionIndex],
       &RmInvConstrainedCholTrajectoryStock_[partitionIndex], &BASE::PmTrajectoryStock_[partitionIndex],
-      &BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex], &BASE::qFinalStock_[partitionIndex],
-      &BASE::QvFinalStock_[partitionIndex], &BASE::QmFinalStock_[partitionIndex]);
+      &BASE::nominalPostEventIndicesStock_[partitionIndex], &BASE::qFinalStock_[partitionIndex], &BASE::QvFinalStock_[partitionIndex],
+      &BASE::QmFinalStock_[partitionIndex]);
 
   const size_t N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
-  const size_t NE = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex].size();
+  const size_t NE = BASE::nominalPostEventIndicesStock_[partitionIndex].size();
 
   const scalar_t scalingStart = BASE::partitioningTimes_[partitionIndex];
   const scalar_t scalingFinal = BASE::partitioningTimes_[partitionIndex + 1];
@@ -645,7 +645,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
   BASE::SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex].resize(NE);
   for (size_t k = 0; k < NE; k++) {
     BASE::SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex][NE - 1 - k] =
-        N - BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex][k];
+        N - BASE::nominalPostEventIndicesStock_[partitionIndex][k];
   }
 
   // max number of steps of integration
@@ -666,7 +666,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquationsForNomi
   SsNormalizedSwitchingTimesIndices.reserve(NE + 2);
   SsNormalizedSwitchingTimesIndices.push_back(0);
   for (int k = NE - 1; k >= 0; k--) {
-    const size_t& index = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex][k];
+    const size_t& index = BASE::nominalPostEventIndicesStock_[partitionIndex][k];
     SsNormalizedSwitchingTimesIndices.push_back(N - index);
   }
   SsNormalizedSwitchingTimesIndices.push_back(N);
@@ -1030,12 +1030,12 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::fullRiccatiBackwardSweepWork
 
   ControllerFunc_(partitionIndex, N - 1, constraintStepSize, _LmConstrained, _LvConstrained, _LveConstrained);
 
-  int remainingEvents = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex].size();
+  int remainingEvents = BASE::nominalPostEventIndicesStock_[partitionIndex].size();
   bool eventDetected = false;
   scalar_t deltaT = 0.0;
   for (int k = N - 2; k >= 0; k--) {
     // check if an event is detected.
-    if (remainingEvents > 0 && k + 1 == BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex][remainingEvents - 1]) {
+    if (remainingEvents > 0 && k + 1 == BASE::nominalPostEventIndicesStock_[partitionIndex][remainingEvents - 1]) {
       eventDetected = true;
       remainingEvents--;
     } else {

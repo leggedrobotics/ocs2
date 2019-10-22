@@ -116,14 +116,14 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const s
   const size_t activePartitionIndex = 0;  // there is only one partition.
   scalar_t finalTime = currentTime + timeStep;
   scalar_array_t timeTrajectory;
-  size_array_t eventsPastTheEndIndeces;
+  size_array_t postEventIndicesStock;
   state_vector_array_t stateTrajectory;
   input_vector_array_t inputTrajectory;
 
   // perform a rollout
   if (policyUpdated_) {
     rolloutPtr_->run(currentTime, currentState, finalTime, currentPrimalSolution_->controllerPtr_.get(),
-                     logicMachinePtr_->getLogicRulesPtr()->eventTimes(), timeTrajectory, eventsPastTheEndIndeces, stateTrajectory,
+                     logicMachinePtr_->getLogicRulesPtr()->eventTimes(), timeTrajectory, postEventIndicesStock, stateTrajectory,
                      inputTrajectory);
   } else {
     throw std::runtime_error("MRT_ROS_interface: policy should be updated before rollout.");

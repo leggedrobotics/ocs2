@@ -225,7 +225,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void ILQR_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal,
                                                                   const state_vector_t& SvFinal, const eigen_scalar_t& sFinal) {
   const size_t N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
-  const size_t NE = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex].size();
+  const size_t NE = BASE::nominalPostEventIndicesStock_[partitionIndex].size();
 
   const scalar_t scalingStart = BASE::partitioningTimes_[partitionIndex];
   const scalar_t scalingFinal = BASE::partitioningTimes_[partitionIndex + 1];
@@ -242,7 +242,7 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerI
   BASE::SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex].resize(NE);
   for (size_t k = 0; k < NE; k++) {
     BASE::SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex][NE - 1 - k] =
-        N - BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex][k];
+        N - BASE::nominalPostEventIndicesStock_[partitionIndex][k];
   }
 
   // output containers resizing
@@ -266,7 +266,7 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerI
   SsSwitchingTimesIndices.reserve(NE + 2);
   SsSwitchingTimesIndices.push_back(0);
   for (size_t k = 0; k < NE; k++) {
-    const auto index = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex][k];
+    const auto index = BASE::nominalPostEventIndicesStock_[partitionIndex][k];
     SsSwitchingTimesIndices.push_back(index);
   }
   SsSwitchingTimesIndices.push_back(N);

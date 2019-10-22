@@ -128,8 +128,17 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
   useParallelRiccatiSolverFromInitItr_ = false;
 
   for (size_t i = 0; i < numPartitions_; i++) {
-    // very important :)
+    // very important, these are variables that are carried in between iterations
     nominalControllersStock_[i].clear();
+    nominalTimeTrajectoriesStock_[i].clear();
+    nominalPostEventIndicesStock_[i].clear();
+    nominalStateTrajectoriesStock_[i].clear();
+    nominalInputTrajectoriesStock_[i].clear();
+
+    cachedTimeTrajectoriesStock_[i].clear();
+    cachedPostEventIndicesStock_[i].clear();
+    cachedStateTrajectoriesStock_[i].clear();
+    cachedInputTrajectoriesStock_[i].clear();
 
     // for Riccati equation parallel computation
     SmFinalStock_[i] = state_matrix_t::Zero();
@@ -152,7 +161,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::rolloutTrajectory(
-    linear_controller_array_t& controllersStock, scalar_array2_t& timeTrajectoriesStock, size_array2_t& eventsPastTheEndIndecesStock,
+    linear_controller_array_t& controllersStock, scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
     state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock, size_t threadId /*= 0*/) {
   const scalar_array_t& eventTimes = BASE::getLogicRulesMachinePtr()->getLogicRulesPtr()->eventTimes();
 
@@ -162,12 +171,12 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
 
   // Prepare outputs
   timeTrajectoriesStock.resize(numPartitions_);
-  eventsPastTheEndIndecesStock.resize(numPartitions_);
+  postEventIndicesStock.resize(numPartitions_);
   stateTrajectoriesStock.resize(numPartitions_);
   inputTrajectoriesStock.resize(numPartitions_);
   for (size_t i = 0; i < numPartitions_; i++) {
     timeTrajectoriesStock[i].clear();
-    eventsPastTheEndIndecesStock[i].clear();
+    postEventIndicesStock[i].clear();
     stateTrajectoriesStock[i].clear();
     inputTrajectoriesStock[i].clear();
   }
@@ -235,14 +244,14 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
       auto controllerPtr = &controllersStock[std::min(i, partitionOfLastController)];
       xCurrent = dynamicsForwardRolloutPtrStock_[threadId]->run(
           controllerRolloutFromTo.first, xCurrent, controllerRolloutFromTo.second, controllerPtr, eventTimes, timeTrajectoriesStock[i],
-          eventsPastTheEndIndecesStock[i], stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
+          postEventIndicesStock[i], stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
     }
 
     // Finish rollout with operating points
     if (operatingPointsFromTo.first < operatingPointsFromTo.second) {
       // Remove last point of the controller rollout if it is directly past an event. Here where we want to use the operating point
       // instead. However, we do start the integration at the state after the event. i.e. the jump map remains applied.
-      if (!eventsPastTheEndIndecesStock[i].empty() && eventsPastTheEndIndecesStock[i].back() == (timeTrajectoriesStock[i].size() - 1)) {
+      if (!postEventIndicesStock[i].empty() && postEventIndicesStock[i].back() == (timeTrajectoriesStock[i].size() - 1)) {
         // Start new integration at the time point after the event to remain consistent with added epsilons in the rollout. The operating
         // point rollout does not add this epsilon because it does not know about this event.
         operatingPointsFromTo.first = timeTrajectoriesStock[i].back();
@@ -267,8 +276,8 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
 
       // Concatenate the operating points to the rollout
       timeTrajectoriesStock[i].insert(timeTrajectoriesStock[i].end(), timeTrajectoryTail.begin(), timeTrajectoryTail.end());
-      eventsPastTheEndIndecesStock[i].insert(eventsPastTheEndIndecesStock[i].end(), eventsPastTheEndIndecesTail.begin(),
-                                             eventsPastTheEndIndecesTail.end());
+      postEventIndicesStock[i].insert(postEventIndicesStock[i].end(), eventsPastTheEndIndecesTail.begin(),
+                                      eventsPastTheEndIndecesTail.end());
       stateTrajectoriesStock[i].insert(stateTrajectoriesStock[i].end(), stateTrajectoryTail.begin(), stateTrajectoryTail.end());
       inputTrajectoriesStock[i].insert(inputTrajectoriesStock[i].end(), inputTrajectoryTail.begin(), inputTrajectoryTail.end());
     }
@@ -287,8 +296,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
       std::cerr << std::endl << "++++++++++++++++++++++++++++++" << std::endl;
       std::cerr << "Partition: " << i;
       std::cerr << std::endl << "++++++++++++++++++++++++++++++" << std::endl;
-      rollout_base_t::display(timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i], stateTrajectoriesStock[i],
-                              &inputTrajectoriesStock[i]);
+      rollout_base_t::display(timeTrajectoriesStock[i], postEventIndicesStock[i], stateTrajectoriesStock[i], &inputTrajectoriesStock[i]);
     }
   }
 
@@ -380,7 +388,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateConstraintsWorker(
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutConstraints(
-    const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& eventsPastTheEndIndecesStock,
+    const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
     const state_vector_array2_t& stateTrajectoriesStock, const input_vector_array2_t& inputTrajectoriesStock,
     size_array2_t& nc1TrajectoriesStock, constraint1_vector_array2_t& EvTrajectoryStock, size_array2_t& nc2TrajectoriesStock,
     constraint2_vector_array2_t& HvTrajectoryStock, size_array2_t& ncIneqTrajectoriesStock, scalar_array3_t& hTrajectoryStock,
@@ -404,7 +412,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutConstraints(
   hTrajectoryStock.resize(numPartitions_);
 
   for (size_t i = 0; i < numPartitions_; i++) {
-    calculateConstraintsWorker(threadId, i, timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i], stateTrajectoriesStock[i],
+    calculateConstraintsWorker(threadId, i, timeTrajectoriesStock[i], postEventIndicesStock[i], stateTrajectoriesStock[i],
                                inputTrajectoriesStock[i], nc1TrajectoriesStock[i], EvTrajectoryStock[i], nc2TrajectoriesStock[i],
                                HvTrajectoryStock[i], ncIneqTrajectoriesStock[i], hTrajectoryStock[i], nc2FinalStock[i], HvFinalStock[i]);
   }  // end of i loop
@@ -460,15 +468,14 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateCostWorker(size_t workerIndex, siz
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCost(const scalar_array2_t& timeTrajectoriesStock,
-                                                          const size_array2_t& eventsPastTheEndIndecesStock,
+                                                          const size_array2_t& postEventIndicesStock,
                                                           const state_vector_array2_t& stateTrajectoriesStock,
                                                           const input_vector_array2_t& inputTrajectoriesStock, scalar_t& totalCost,
                                                           size_t threadId /*= 0*/) {
   totalCost = 0.0;
-
   for (size_t i = 0; i < numPartitions_; i++) {
     scalar_t cost;
-    calculateCostWorker(threadId, i, timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i], stateTrajectoriesStock[i],
+    calculateCostWorker(threadId, i, timeTrajectoriesStock[i], postEventIndicesStock[i], stateTrajectoriesStock[i],
                         inputTrajectoriesStock[i], cost);
     totalCost += cost;
   }  // end of i loop
@@ -491,14 +498,13 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCost(const scalar_array2_t&
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCost(const scalar_array2_t& timeTrajectoriesStock,
-                                                          const size_array2_t& eventsPastTheEndIndecesStock,
+                                                          const size_array2_t& postEventIndicesStock,
                                                           const state_vector_array2_t& stateTrajectoriesStock,
                                                           const input_vector_array2_t& inputTrajectoriesStock, scalar_t constraint2ISE,
                                                           scalar_t inequalityConstraintPenalty, const size_array2_t& nc2FinalStock,
                                                           const constraint2_vector_array2_t& HvFinalStock, scalar_t& totalCost,
                                                           size_t threadId /*= 0*/) {
-  calculateRolloutCost(timeTrajectoriesStock, eventsPastTheEndIndecesStock, stateTrajectoriesStock, inputTrajectoriesStock, totalCost,
-                       threadId);
+  calculateRolloutCost(timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock, totalCost, threadId);
 
   const scalar_t stateConstraintPenalty =
       ddpSettings_.stateConstraintPenaltyCoeff_ * std::pow(ddpSettings_.stateConstraintPenaltyBase_, iteration_);
@@ -560,7 +566,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
     PmTrajectoryStock_[i].resize(N);
 
     // event times LQ variables
-    size_t NE = nominalEventsPastTheEndIndecesStock_[i].size();
+    size_t NE = nominalPostEventIndicesStock_[i].size();
 
     // final state equality constraints at event times
     nc2FinalStock_[i].resize(NE);
@@ -624,9 +630,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateUnconstrainedLQWorker(size_t wor
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateEventsLQWorker(size_t workerIndex, size_t i, size_t k, scalar_t stateConstraintPenalty) {
   // if a switch took place calculate switch related variables
-  size_t NE = nominalEventsPastTheEndIndecesStock_[i].size();
+  size_t NE = nominalPostEventIndicesStock_[i].size();
   for (size_t ke = 0; ke < NE; ke++) {
-    if (nominalEventsPastTheEndIndecesStock_[i][ke] == k + 1) {
+    if (nominalPostEventIndicesStock_[i][ke] == k + 1) {
       linearQuadraticApproximatorPtrStock_[workerIndex]->approximateUnconstrainedLQProblemAtEventTime(
           nominalTimeTrajectoriesStock_[i][k], nominalStateTrajectoriesStock_[i][k], nominalInputTrajectoriesStock_[i][k]);
 
@@ -666,28 +672,13 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateEventsLQWorker(size_t workerInde
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchBase(bool computeISEs) {
-  // display
-  if (ddpSettings_.displayInfo_) {
-    scalar_t maxDeltaUffNorm, maxDeltaUeeNorm;
-    calculateControllerUpdateMaxNorm(maxDeltaUffNorm, maxDeltaUeeNorm);
-
-    std::cerr << "max feedforward update norm:  " << maxDeltaUffNorm << std::endl;
-    std::cerr << "max type-1 error update norm: " << maxDeltaUeeNorm << std::endl;
-  }
-
-  // catch the nominal trajectories for which the LQ problem is constructed and solved
-  nominalPrevTimeTrajectoriesStock_.swap(nominalTimeTrajectoriesStock_);
-  nominalPrevEventsPastTheEndIndecesStock_.swap(nominalEventsPastTheEndIndecesStock_);
-  nominalPrevStateTrajectoriesStock_.swap(nominalStateTrajectoriesStock_);
-  nominalPrevInputTrajectoriesStock_.swap(nominalInputTrajectoriesStock_);
-
   // perform one rollout while the input correction for the type-1 constraint is considered.
-  avgTimeStepFP_ = rolloutTrajectory(nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalEventsPastTheEndIndecesStock_,
+  avgTimeStepFP_ = rolloutTrajectory(nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_,
                                      nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_);
 
   if (computeISEs) {
     // calculate constraint
-    calculateRolloutConstraints(nominalTimeTrajectoriesStock_, nominalEventsPastTheEndIndecesStock_, nominalStateTrajectoriesStock_,
+    calculateRolloutConstraints(nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_,
                                 nominalInputTrajectoriesStock_, nc1TrajectoriesStock_, EvTrajectoryStock_, nc2TrajectoriesStock_,
                                 HvTrajectoryStock_, ncIneqTrajectoriesStock_, hTrajectoryStock_, nc2FinalStock_, HvFinalStock_);
     // calculate constraint type-1 ISE and maximum norm
@@ -710,7 +701,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchBase(bool computeISEs) {
   }
 
   // calculates cost
-  calculateRolloutCost(nominalTimeTrajectoriesStock_, nominalEventsPastTheEndIndecesStock_, nominalStateTrajectoriesStock_,
+  calculateRolloutCost(nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_,
                        nominalInputTrajectoriesStock_, nominalConstraint2ISE_, nominalInequalityConstraintPenalty_, nc2FinalStock_,
                        HvFinalStock_, nominalTotalCost_);
 
@@ -736,12 +727,14 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchBase(bool computeISEs) {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(
-    size_t workerIndex, scalar_t learningRate, scalar_t& lsTotalCost, scalar_t& lsConstraint1ISE, scalar_t& lsConstraint1MaxNorm,
-    scalar_t& lsConstraint2ISE, scalar_t& lsConstraint2MaxNorm, scalar_t& lsInequalityConstraintPenalty,
-    scalar_t& lsInequalityConstraintISE, linear_controller_array_t& lsControllersStock, scalar_array2_t& lsTimeTrajectoriesStock,
-    size_array2_t& lsEventsPastTheEndIndecesStock, state_vector_array2_t& lsStateTrajectoriesStock,
-    input_vector_array2_t& lsInputTrajectoriesStock) {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t workerIndex, scalar_t learningRate, scalar_t& lsTotalCost,
+                                                      scalar_t& lsConstraint1ISE, scalar_t& lsConstraint1MaxNorm,
+                                                      scalar_t& lsConstraint2ISE, scalar_t& lsConstraint2MaxNorm,
+                                                      scalar_t& lsInequalityConstraintPenalty, scalar_t& lsInequalityConstraintISE,
+                                                      linear_controller_array_t& lsControllersStock,
+                                                      scalar_array2_t& lsTimeTrajectoriesStock, size_array2_t& lsPostEventIndicesStock,
+                                                      state_vector_array2_t& lsStateTrajectoriesStock,
+                                                      input_vector_array2_t& lsInputTrajectoriesStock) {
   // modifying uff by local increments
   for (size_t i = 0; i < numPartitions_; i++) {
     for (size_t k = 0; k < lsControllersStock[i].timeStamp_.size(); k++) {
@@ -751,7 +744,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(
 
   try {
     // perform a rollout
-    scalar_t avgTimeStepFP = rolloutTrajectory(lsControllersStock, lsTimeTrajectoriesStock, lsEventsPastTheEndIndecesStock,
+    scalar_t avgTimeStepFP = rolloutTrajectory(lsControllersStock, lsTimeTrajectoriesStock, lsPostEventIndicesStock,
                                                lsStateTrajectoriesStock, lsInputTrajectoriesStock, workerIndex);
 
     // calculate rollout constraints
@@ -766,10 +759,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(
 
     if (lsComputeISEs_) {
       // calculate rollout constraints
-      calculateRolloutConstraints(lsTimeTrajectoriesStock, lsEventsPastTheEndIndecesStock, lsStateTrajectoriesStock,
-                                  lsInputTrajectoriesStock, lsNc1TrajectoriesStock, lsEvTrajectoryStock, lsNc2TrajectoriesStock,
-                                  lsHvTrajectoryStock, lsNcIneqTrajectoriesStock, lshTrajectoryStock, lsNc2FinalStock, lsHvFinalStock,
-                                  workerIndex);
+      calculateRolloutConstraints(lsTimeTrajectoriesStock, lsPostEventIndicesStock, lsStateTrajectoriesStock, lsInputTrajectoriesStock,
+                                  lsNc1TrajectoriesStock, lsEvTrajectoryStock, lsNc2TrajectoriesStock, lsHvTrajectoryStock,
+                                  lsNcIneqTrajectoriesStock, lshTrajectoryStock, lsNc2FinalStock, lsHvFinalStock, workerIndex);
       // calculate constraint type-1 ISE and maximum norm
       lsConstraint1MaxNorm = calculateConstraintISE(lsTimeTrajectoriesStock, lsNc1TrajectoriesStock, lsEvTrajectoryStock, lsConstraint1ISE);
       // calculates type-2 constraint ISE and maximum norm
@@ -785,7 +777,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(
     }
 
     // calculate rollout cost
-    calculateRolloutCost(lsTimeTrajectoriesStock, lsEventsPastTheEndIndecesStock, lsStateTrajectoriesStock, lsInputTrajectoriesStock,
+    calculateRolloutCost(lsTimeTrajectoriesStock, lsPostEventIndicesStock, lsStateTrajectoriesStock, lsInputTrajectoriesStock,
                          lsConstraint2ISE, lsInequalityConstraintPenalty, lsNc2FinalStock, lsHvFinalStock, lsTotalCost, workerIndex);
 
     // display
@@ -982,6 +974,110 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateControllerUpdateMaxNorm(scalar_t& 
 
     }  // end of k loop
   }    // end of i loop
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::swapNominalTrajectoriesToCache() {
+  cachedTimeTrajectoriesStock_.swap(nominalTimeTrajectoriesStock_);
+  cachedPostEventIndicesStock_.swap(nominalPostEventIndicesStock_);
+  cachedStateTrajectoriesStock_.swap(nominalStateTrajectoriesStock_);
+  cachedInputTrajectoriesStock_.swap(nominalInputTrajectoriesStock_);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::correctInitcachedNominalTrajectories() {
+  // for each partition
+  for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
+    if (cachedTimeTrajectoriesStock_[i].empty()) {
+      cachedPostEventIndicesStock_[i] = nominalPostEventIndicesStock_[i];
+      cachedTimeTrajectoriesStock_[i] = nominalTimeTrajectoriesStock_[i];
+      cachedStateTrajectoriesStock_[i] = nominalStateTrajectoriesStock_[i];
+      cachedInputTrajectoriesStock_[i] = nominalInputTrajectoriesStock_[i];
+
+    } else if (cachedTimeTrajectoriesStock_[i].back() < nominalTimeTrajectoriesStock_[i].back()) {
+      // find the time segment
+      const scalar_t finalTime = cachedTimeTrajectoriesStock_[i].back() + OCS2NumericTraits<scalar_t>::weakEpsilon();
+      const auto timeSegment = LinearInterpolation<scalar_t>::timeSegment(finalTime, &nominalTimeTrajectoriesStock_[i]);
+
+      // post event index
+      const int sizeBeforeCorrection = cachedTimeTrajectoriesStock_[i].size();
+      for (auto ind : nominalPostEventIndicesStock_[i]) {
+        if (ind > timeSegment.first) {
+          cachedPostEventIndicesStock_[i].push_back(ind - timeSegment.first + sizeBeforeCorrection);
+        }
+      }
+
+      // time
+      correctcachedTrajectoryTail(timeSegment, nominalTimeTrajectoriesStock_[i], cachedTimeTrajectoriesStock_[i]);
+      // state
+      correctcachedTrajectoryTail(timeSegment, nominalStateTrajectoriesStock_[i], cachedStateTrajectoriesStock_[i]);
+      // input
+      correctcachedTrajectoryTail(timeSegment, nominalInputTrajectoriesStock_[i], cachedInputTrajectoriesStock_[i]);
+
+      // debugging checks for the added tail
+      if (ddpSettings_.debugCaching_) {
+        for (int k = timeSegment.first + 1; k < nominalTimeTrajectoriesStock_[i].size(); k++) {
+          auto indexAlpha =
+              LinearInterpolation<scalar_t>::timeSegment(nominalTimeTrajectoriesStock_[i][k], &cachedTimeTrajectoriesStock_[i]);
+
+          state_vector_t stateCached;
+          EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, stateCached, &cachedStateTrajectoriesStock_[i]);
+          if (!stateCached.isApprox(nominalStateTrajectoriesStock_[i][k])) {
+            throw std::runtime_error("The tail of the cached state trajectory is not correctly set.");
+          }
+
+          input_vector_t inputCached;
+          EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, inputCached, &cachedInputTrajectoriesStock_[i]);
+          if (!inputCached.isApprox(nominalInputTrajectoriesStock_[i][k])) {
+            throw std::runtime_error("The tail of the cached input trajectory is not correctly set.");
+          }
+        }  // end of k loop
+      }
+    }
+
+    // check for the event time indices
+    if (ddpSettings_.debugCaching_) {
+      auto postEvent = nominalPostEventIndicesStock_[i].rbegin();
+      auto cachedPostEvent = cachedPostEventIndicesStock_[i].rbegin();
+      for (; postEvent != nominalPostEventIndicesStock_[i].rend(); ++postEvent) {
+        // nominal trajectory should have less event since it spans a shorter time period
+        if (nominalTimeTrajectoriesStock_[i][*postEvent] != cachedTimeTrajectoriesStock_[i][*cachedPostEvent]) {
+          throw std::runtime_error("Cached post event indexes are in correct.");
+        }
+        // check for the repeated time
+        if (nominalTimeTrajectoriesStock_[i][*postEvent - 1] != cachedTimeTrajectoriesStock_[i][*cachedPostEvent - 1]) {
+          throw std::runtime_error("Cached post event indexes are biased by -1.");
+        }
+        ++cachedPostEvent;
+      }  // end of postEvent loop
+    }
+
+  }  // end of i loop
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+template <typename Data_T, class Alloc>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::correctcachedTrajectoryTail(std::pair<int, scalar_t> timeSegment,
+                                                                 const std::vector<Data_T, Alloc>& currentTrajectory,
+                                                                 std::vector<Data_T, Alloc>& cachedTrajectory) {
+  // adding the fist cashed value
+  Data_T firstCachedValue;
+  LinearInterpolation<Data_T, Alloc>::interpolate(timeSegment, firstCachedValue, &currentTrajectory);
+  cachedTrajectory.emplace_back(firstCachedValue);
+
+  // Concatenate the rest
+  const int ignoredSizeOfNominal = timeSegment.first + 1;
+
+  cachedTrajectory.insert(cachedTrajectory.end(), currentTrajectory.begin() + ignoredSizeOfNominal, currentTrajectory.end());
 }
 
 /******************************************************************************************************/
@@ -1286,15 +1382,16 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
    * nominal trajectories
    */
   nominalControllersStock_.resize(numPartitions);
+
   nominalTimeTrajectoriesStock_.resize(numPartitions);
-  nominalEventsPastTheEndIndecesStock_.resize(numPartitions);
+  nominalPostEventIndicesStock_.resize(numPartitions);
   nominalStateTrajectoriesStock_.resize(numPartitions);
   nominalInputTrajectoriesStock_.resize(numPartitions);
 
-  nominalPrevTimeTrajectoriesStock_.resize(numPartitions);
-  nominalPrevEventsPastTheEndIndecesStock_.resize(numPartitions);
-  nominalPrevStateTrajectoriesStock_.resize(numPartitions);
-  nominalPrevInputTrajectoriesStock_.resize(numPartitions);
+  cachedTimeTrajectoriesStock_.resize(numPartitions);
+  cachedPostEventIndicesStock_.resize(numPartitions);
+  cachedStateTrajectoriesStock_.resize(numPartitions);
+  cachedInputTrajectoriesStock_.resize(numPartitions);
 
   /*
    * Riccati solver variables and controller update
@@ -1355,11 +1452,19 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
+  // cache the nominal trajectories before the new rollout (time, state, input, ...)
+  swapNominalTrajectoriesToCache();
+
   // initial controller rollout
   forwardPassTimer_.startTimer();
-  avgTimeStepFP_ = rolloutTrajectory(nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalEventsPastTheEndIndecesStock_,
+  avgTimeStepFP_ = rolloutTrajectory(nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_,
                                      nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_);
   forwardPassTimer_.endTimer();
+
+  // This is necessary for:
+  // + The moving horizon (MPC) application
+  // + The very first call of the algorithm where there is no previous nominal trajectories.
+  correctInitcachedNominalTrajectories();
 
   // linearizing the dynamics and quadratizing the cost function along nominal trajectories
   linearQuadraticApproximationTimer_.startTimer();
@@ -1379,7 +1484,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
       nominalConstraint2ISE_ = nominalConstraint2MaxNorm_ = 0.0;
     }
     // calculate rollout cost
-    calculateRolloutCost(nominalTimeTrajectoriesStock_, nominalEventsPastTheEndIndecesStock_, nominalStateTrajectoriesStock_,
+    calculateRolloutCost(nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_,
                          nominalInputTrajectoriesStock_, nominalTotalCost_);
   } else {
     nominalTotalCost_ = 0.0;
@@ -1413,6 +1518,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
+  // finding the optimal learningRate and getting the optimal trajectories and controller
   bool computeISEs = ddpSettings_.displayInfo_ || !ddpSettings_.noStateConstraints_;
 
   // finding the optimal learningRate
@@ -1592,13 +1698,21 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
     // increment iteration counter
     iteration_++;
 
+    // display the iteration's input update norm (before caching the old nominals)
+    if (ddpSettings_.displayInfo_) {
+      std::cerr << "\n#### Iteration " << iteration_ << std::endl;
+
+      scalar_t maxDeltaUffNorm, maxDeltaUeeNorm;
+      calculateControllerUpdateMaxNorm(maxDeltaUffNorm, maxDeltaUeeNorm);
+      std::cerr << "max feedforward update norm:                            " << maxDeltaUffNorm << std::endl;
+      std::cerr << "max state-input equality constraints error update norm: " << maxDeltaUeeNorm << std::endl;
+    }
+
     scalar_t costCashed = nominalTotalCost_;
     scalar_t constraint1ISECashed = nominalConstraint1ISE_;
 
-    // display
-    if (ddpSettings_.displayInfo_) {
-      std::cerr << "\n#### Iteration " << iteration_ << std::endl;
-    }
+    // cache the nominal trajectories before the new rollout (time, state, input, ...)
+    swapNominalTrajectoriesToCache();
 
     // run the an iteration of the DDP algorithm and update the member variables
     runIteration();
@@ -1619,13 +1733,21 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
 
   }  // end of while loop
 
+  // display the final iteration's input update norm (before caching the old nominals)
   if (ddpSettings_.displayInfo_) {
     std::cerr << "\n#### Final rollout" << std::endl;
+
+    scalar_t maxDeltaUffNorm, maxDeltaUeeNorm;
+    calculateControllerUpdateMaxNorm(maxDeltaUffNorm, maxDeltaUeeNorm);
+    std::cerr << "max feedforward update norm:                            " << maxDeltaUffNorm << std::endl;
+    std::cerr << "max state-input equality constraints error update norm: " << maxDeltaUeeNorm << std::endl;
   }
 
-  bool computeISEs = !ddpSettings_.noStateConstraints_ || ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_;
+  // cache the nominal trajectories before the new rollout (time, state, input, ...)
+  swapNominalTrajectoriesToCache();
 
   // finding the final optimal learningRate and getting the optimal trajectories and controller
+  bool computeISEs = !ddpSettings_.noStateConstraints_ || ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_;
   maxLearningRate_ = ddpSettings_.maxLearningRate_;
   linesearchTimer_.startTimer();
   lineSearch(computeISEs);
@@ -1638,6 +1760,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
     std::cerr << "++++++++++++++ " + algorithmName_ + " solver is terminated ++++++++++++++" << std::endl;
     std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+    std::cerr << "Time Period:               [" << initTime_ << " ," << finalTime_ << "]" << std::endl;
     std::cerr << "Number of Iterations:      " << iteration_ + 1 << " out of " << ddpSettings_.maxNumIterations_ << std::endl;
 
     printRolloutInfo();

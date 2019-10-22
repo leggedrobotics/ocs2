@@ -11,7 +11,7 @@
 #include "ocs2_anymal_switched_model/core/AnymalCom.h"
 
 TEST(TestEEPositionConstraint, evaluate){
-  using TestedConstraint = switched_model::EndEffectorPositionConstraint<24, 24>;
+  using TestedConstraint = switched_model::EndEffectorPositionConstraint;
 
   switched_model::EndEffectorPositionConstraintSettings settings;
   settings.A.setIdentity(3, 3);

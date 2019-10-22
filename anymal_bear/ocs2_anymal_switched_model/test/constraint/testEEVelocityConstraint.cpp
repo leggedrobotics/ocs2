@@ -11,7 +11,7 @@
 #include "ocs2_anymal_switched_model/core/AnymalCom.h"
 
 TEST(TestEEVelocityConstraint, evaluate){
-  using TestedConstraint = switched_model::EndEffectorVelocityConstraint<24, 24>;
+  using TestedConstraint = switched_model::EndEffectorVelocityConstraint;
 
   switched_model::EndEffectorVelocityConstraintSettings settings;
   settings.A.setIdentity(3, 3);

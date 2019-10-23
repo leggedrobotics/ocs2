@@ -10,6 +10,7 @@
 #include <Eigen/Dense>
 #include <memory>
 
+#include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 
 namespace switched_model {

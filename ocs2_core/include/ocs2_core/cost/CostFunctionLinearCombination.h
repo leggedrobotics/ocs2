@@ -34,9 +34,11 @@ class CostFunctionLinearCombination : public ocs2::CostFunctionBase<STATE_DIM, I
   using typename BASE::state_vector_array_t;
   using typename BASE::state_vector_t;
 
-  CostFunctionLinearCombination(const std::vector<WeightedCost>& weightedCosts);
+  explicit CostFunctionLinearCombination(const std::vector<WeightedCost>& weightedCosts);
 
   CostFunctionLinearCombination(const CostFunctionLinearCombination& rhs);
+
+  CostFunctionLinearCombination() = delete;
 
   CostFunctionLinearCombination<STATE_DIM, INPUT_DIM>* clone() const override;
   void getIntermediateCost(scalar_t& L) override;
@@ -52,9 +54,6 @@ class CostFunctionLinearCombination : public ocs2::CostFunctionBase<STATE_DIM, I
   void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
   void getIntermediateCostDerivativeTime(scalar_t& dLdt) override;
   void getTerminalCostDerivativeTime(scalar_t& dPhidt) override;
-
- protected:
-  CostFunctionLinearCombination() = default;
 
  protected:
   std::vector<WeightedCost> weightedCosts_;

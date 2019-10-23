@@ -12,8 +12,7 @@ CostFunctionLinearCombination<STATE_DIM, INPUT_DIM>::CostFunctionLinearCombinati
     : weightedCosts_(weightedCosts) {}
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-CostFunctionLinearCombination<STATE_DIM, INPUT_DIM>::CostFunctionLinearCombination(const CostFunctionLinearCombination& rhs)
-    : BASE(rhs), weightedCosts_() {
+CostFunctionLinearCombination<STATE_DIM, INPUT_DIM>::CostFunctionLinearCombination(const CostFunctionLinearCombination& rhs) : BASE(rhs) {
   weightedCosts_.resize(rhs.weightedCosts_.size());
   for (int i = 0; i < rhs.weightedCosts_.size(); i++) {
     weightedCosts_[i].first = rhs.weightedCosts_[i].first;

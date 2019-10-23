@@ -387,9 +387,6 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
       BASE::nominalInputFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::nominalInputTrajectoriesStock_[i]));
     }  // end of j loop
 
-    // current partition update
-    BASE::constraintStepSize_ = BASE::initialControllerDesignStock_[i] ? 0.0 : BASE::ddpSettings_.constraintStepSize_;
-
     /*
      * perform the calculatePartitionController for partition i
      */
@@ -447,7 +444,7 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerInde
 
   // Bias input
   BASE::nominalControllersStock_[i].biasArray_[k] = nominalInput - BASE::nominalControllersStock_[i].gainArray_[k] * nominalState -
-                                                    BASE::constraintStepSize_ * (DmNullProjection * Lve + EvProjected);
+                                                    BASE::ddpSettings_.constraintStepSize_ * (DmNullProjection * Lve + EvProjected);
   BASE::nominalControllersStock_[i].deltaBiasArray_[k] = -DmNullProjection * Lv;
 
   // checking the numerical stability of the controller parameters
@@ -562,12 +559,12 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIn
       &BASE::BmTrajectoryStock_[partitionIndex], &BASE::qTrajectoryStock_[partitionIndex], &QvConstrainedTrajectoryStock_[partitionIndex],
       &QmConstrainedTrajectoryStock_[partitionIndex], &BASE::RvTrajectoryStock_[partitionIndex],
       &RmInvConstrainedCholTrajectoryStock_[partitionIndex], &BASE::PmTrajectoryStock_[partitionIndex],
-      &BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex], &BASE::qFinalStock_[partitionIndex],
-      &BASE::QvFinalStock_[partitionIndex], &BASE::QmFinalStock_[partitionIndex]);
+      &BASE::nominalPostEventIndicesStock_[partitionIndex], &BASE::qFinalStock_[partitionIndex], &BASE::QvFinalStock_[partitionIndex],
+      &BASE::QmFinalStock_[partitionIndex]);
 
   // Const partition containers
   const auto& nominalTimeTrajectory = BASE::nominalTimeTrajectoriesStock_[partitionIndex];
-  const auto& nominalEventsPastTheEndIndices = BASE::nominalEventsPastTheEndIndecesStock_[partitionIndex];
+  const auto& nominalEventsPastTheEndIndices = BASE::nominalPostEventIndicesStock_[partitionIndex];
 
   // Modified partition containers
   auto& SsNormalizedTime = BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex];
@@ -616,6 +613,16 @@ void SLQ_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIn
     SsTimeTrajectory[k] = -SsNormalizedTime[outputN - 1 - k];
     riccati_equations_t::convert2Matrix(allSsTrajectory[outputN - 1 - k], SmTrajectory[k], SvTrajectory[k], sTrajectory[k]);
   }  // end of k loop
+
+  if (BASE::ddpSettings_.debugPrintRollout_) {
+    std::cerr << std::endl << "+++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+    std::cerr << "Partition: " << partitionIndex << ", backward pass time trajectory";
+    std::cerr << std::endl << "+++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+    for (size_t k = 0; k < outputN; k++) {
+      std::cerr << "k: " << k << ", t = " << std::setprecision(12) << SsTimeTrajectory[k] << "\n";
+    }
+    std::cerr << std::endl;
+  }
 }
 
 /******************************************************************************************************/

@@ -107,13 +107,13 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
 
   void getIntermediateCostDerivativeState(state_vector_t& dLdx) final;
 
-  void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) final;
+  void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) override;
 
   void getIntermediateCostDerivativeInput(input_vector_t& dLdu) final;
 
-  void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) final;
+  void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) override;
 
-  void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) final;
+  void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) override;
 
   void getTerminalCost(scalar_t& Phi) final;
 
@@ -121,7 +121,7 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
 
   void getTerminalCostDerivativeState(state_vector_t& dPhidx) final;
 
-  void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final;
+  void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override;
 
  protected:
   /**

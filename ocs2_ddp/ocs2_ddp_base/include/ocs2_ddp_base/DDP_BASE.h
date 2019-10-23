@@ -195,15 +195,10 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * given control policies and initial state, to integrate the system dynamics
    * in time period [initTime, finalTime].
    *
-   * @param [in] initTime: The initial time.
-   * @param [in] initState: The initial state.
-   * @param [in] finalTime: The final time.
-   * @param [in] partitioningTimes: Time partitioning
    * @param [in] controllersStock: Array of control policies.
    * @param [out] timeTrajectoriesStock: Array of trajectories containing the
    * output time trajectory stamp.
-   * @param [out] eventsPastTheEndIndecesStock: Array of indices containing
-   * past-the-end index of events trigger.
+   * @param [out] postEventIndicesStock: Array of the post-event indices.
    * @param [out] stateTrajectoriesStock: Array of trajectories containing the
    * output state trajectory.
    * @param [out] inputTrajectoriesStock: Array of trajectories containing the
@@ -212,11 +207,9 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @return average time step.
    */
-  scalar_t rolloutTrajectory(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
-                             const scalar_array_t& partitioningTimes, linear_controller_array_t& controllersStock,
-                             scalar_array2_t& timeTrajectoriesStock, size_array2_t& eventsPastTheEndIndecesStock,
-                             state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
-                             size_t threadId = 0);
+  scalar_t rolloutTrajectory(linear_controller_array_t& controllersStock, scalar_array2_t& timeTrajectoriesStock,
+                             size_array2_t& postEventIndicesStock, state_vector_array2_t& stateTrajectoriesStock,
+                             input_vector_array2_t& inputTrajectoriesStock, size_t threadId = 0);
 
   /**
    * Calculates a rollout constraints. It uses the given rollout trajectories
@@ -224,8 +217,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @param [in] timeTrajectoriesStock: Array of trajectories containing the
    * output time trajectory stamp.
-   * @param [in] eventsPastTheEndIndecesStock: Array of indices containing
-   * past-the-end index of events trigger.
+   * @param [in] postEventIndicesStock: Array of the post-event indices.
    * @param [in] stateTrajectoriesStock: Array of trajectories containing the
    * output state trajectory.
    * @param [in] inputTrajectoriesStock: Array of trajectories containing the
@@ -245,7 +237,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * state-only constraints.
    * @param [in] threadId: Working thread (default is 0).
    */
-  void calculateRolloutConstraints(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& eventsPastTheEndIndecesStock,
+  void calculateRolloutConstraints(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
                                    const state_vector_array2_t& stateTrajectoriesStock, const input_vector_array2_t& inputTrajectoriesStock,
                                    size_array2_t& nc1TrajectoriesStock, constraint1_vector_array2_t& EvTrajectoryStock,
                                    size_array2_t& nc2TrajectoriesStock, constraint2_vector_array2_t& HvTrajectoryStock,
@@ -258,8 +250,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] threadId: Working thread.
    * @param [in] timeTrajectoriesStock: Array of trajectories containing the
    * time trajectory stamp of a rollout.
-   * @param [in] eventsPastTheEndIndecesStock: Array of indices containing
-   * past-the-end index of events trigger.
+   * @param [in] postEventIndicesStock: Array of the post-event indices.
    * @param [in] stateTrajectoriesStock: Array of trajectories containing the
    * state trajectory of a rollout.
    * @param [in] inputTrajectoriesStock: Array of trajectories containing the
@@ -267,7 +258,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [out] totalCost: The total cost of the rollout.
    * @param [in] threadId: Working thread (default is 0).
    */
-  void calculateRolloutCost(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& eventsPastTheEndIndecesStock,
+  void calculateRolloutCost(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
                             const state_vector_array2_t& stateTrajectoriesStock, const input_vector_array2_t& inputTrajectoriesStock,
                             scalar_t& totalCost, size_t threadId = 0);
 
@@ -278,8 +269,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] threadId: Working thread.
    * @param [in] timeTrajectoriesStock: Array of trajectories containing the
    * time trajectory stamp of a rollout.
-   * @param [in] eventsPastTheEndIndecesStock: Array of indices containing
-   * past-the-end index of events trigger.
+   * @param [in] postEventIndicesStock: Array of the post-event indices.
    * @param [in] stateTrajectoriesStock: Array of trajectories containing the
    * state trajectory of a rollout.
    * @param [in] inputTrajectoriesStock: Array of trajectories containing the
@@ -293,7 +283,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [out] totalCost: The total cost plus state-only constraints penalty.
    * @param [in] threadId: Working thread (default is 0).
    */
-  void calculateRolloutCost(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& eventsPastTheEndIndecesStock,
+  void calculateRolloutCost(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
                             const state_vector_array2_t& stateTrajectoriesStock, const input_vector_array2_t& inputTrajectoriesStock,
                             scalar_t constraint2ISE, scalar_t inequalityConstraintPenalty, const size_array2_t& nc2FinalStock,
                             const constraint2_vector_array2_t& HvFinalStock, scalar_t& totalCost, size_t threadId = 0);
@@ -390,8 +380,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   void useParallelRiccatiSolverFromInitItr(bool flag);
 
-  void blockwiseMovingHorizon(bool flag) override;
-
   void getPerformanceIndeces(scalar_t& costFunction, scalar_t& constraint1ISE, scalar_t& constraint2ISE) const override;
 
   size_t getNumIterations() const override;
@@ -437,7 +425,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Runs the exit method DDP.
    */
-  virtual void runExit();
+  virtual void runExit() {}
 
  protected:
   /**
@@ -565,7 +553,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param lsInequalityConstraintISE
    * @param lsControllersStock
    * @param lsTimeTrajectoriesStock
-   * @param lsEventsPastTheEndIndecesStock
+   * @param lsPostEventIndicesStock
    * @param lsStateTrajectoriesStock
    * @param lsInputTrajectoriesStock
    */
@@ -573,7 +561,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                                 scalar_t& lsConstraint1MaxNorm, scalar_t& lsConstraint2ISE, scalar_t& lsConstraint2MaxNorm,
                                 scalar_t& lsInequalityConstraintPenalty, scalar_t& lsInequalityConstraintISE,
                                 linear_controller_array_t& lsControllersStock, scalar_array2_t& lsTimeTrajectoriesStock,
-                                size_array2_t& lsEventsPastTheEndIndecesStock, state_vector_array2_t& lsStateTrajectoriesStock,
+                                size_array2_t& lsPostEventIndicesStock, state_vector_array2_t& lsStateTrajectoriesStock,
                                 input_vector_array2_t& lsInputTrajectoriesStock);
 
   /**
@@ -626,18 +614,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   scalar_t calculateInequalityConstraintPenalty(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& ncIneqTrajectoriesStock,
                                                 const scalar_array3_t& hTrajectoriesStock, scalar_t& inequalityISE, size_t workerIndex = 0);
-  /**
-   * Truncates the internal array of the control policies based on the initTime.
-   *
-   * @param [in] partitioningTimes: Switching times.
-   * @param [in] initTime: Initial time.
-   * @param [out] controllersStock: Truncated array of the control policies.
-   * @param [out] initActivePartition: Initial active subsystems.
-   * @param [out] deletedcontrollersStock: The deleted part of the control
-   * policies.
-   */
-  void truncateController(const scalar_array_t& partitioningTimes, double initTime, linear_controller_array_t& controllersStock,
-                          size_t& initActivePartition, linear_controller_array_t& deletedcontrollersStock);
 
   /**
    * Calculates max feedforward update norm and max type-1 error update norm.
@@ -648,11 +624,38 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void calculateControllerUpdateMaxNorm(scalar_t& maxDeltaUffNorm, scalar_t& maxDeltaUeeNorm);
 
   /**
+   * Caches the nominal trajectories.
+   */
+  void swapNominalTrajectoriesToCache();
+
+  /**
    * Display rollout info and scores.
    */
   void printRolloutInfo();
 
  private:
+  /**
+   * Corrects the initial caching of the nominal trajectories.
+   * This is necessary for:
+   *   + The moving horizon (MPC) application
+   *   + The very first call of the algorithm where there is no previous nominal trajectories.
+   */
+  void correctInitcachedNominalTrajectories();
+
+  /**
+   * Corrects for the tail of the cached trajectory based on the nominal trajectory. This compensates for the
+   * the moving horizon (MPC) applications where the final time of the cached trajectory is smaller than the
+   * nominal one.
+   *
+   * @param [in] timeSegment: The interval index and interpolation coefficient alpha of the cached trajectory final
+   * time in the nominal time trajectory.
+   * @param [in] currentTrajectory: The nominal trajectory.
+   * @param [out] cachedTrajectory: The cached trajectory.
+   */
+  template <typename Data_T, class Alloc>
+  static void correctcachedTrajectoryTail(std::pair<int, scalar_t> timeSegment, const std::vector<Data_T, Alloc>& currentTrajectory,
+                                          std::vector<Data_T, Alloc>& cachedTrajectory);
+
   void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;
 
   void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
@@ -667,9 +670,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   unsigned long long int rewindCounter_;
 
   bool useParallelRiccatiSolverFromInitItr_ = false;
-  // If true the final time of the MPC will increase by a time partition instead
-  // of common gradual increase.
-  bool blockwiseMovingHorizon_ = false;
 
   scalar_t initTime_;
   scalar_t finalTime_;
@@ -680,20 +680,9 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   size_t numPartitions_ = 0;
   scalar_array_t partitioningTimes_;
 
-  const scalar_array2_t* desiredTimeTrajectoryStockPtr_;
-  const state_vector_array2_t* desiredStateTrajectoryStockPtr_;
-  const input_vector_array2_t* desiredInputTrajectoryStockPtr_;
-
   scalar_t learningRateStar_ = 1.0;  // The optimal learning rate.
   scalar_t maxLearningRate_ = 1.0;   // The maximum permitted learning rate
                                      // (settings_.maxLearningRateSLQ_).
-  scalar_t constraintStepSize_ = 1.0;
-
-  // It is true if an initial controller is not provided for a partition which
-  // causes that the first iteration of SLQ to design an initial controller
-  // (LQR). In this case: 1) The feedforward component and the type-1 constraint
-  // input are set to zero 2) Final cost will be ignored
-  std::vector<bool> initialControllerDesignStock_;
 
   // trajectory spreading
   TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM> trajectorySpreadingController_;
@@ -723,23 +712,20 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   linear_controller_array_t nominalControllersStock_;
 
-  std::vector<scalar_array_t> nominalTimeTrajectoriesStock_;
-  std::vector<size_array_t> nominalEventsPastTheEndIndecesStock_;
+  scalar_array2_t nominalTimeTrajectoriesStock_;
+  size_array2_t nominalPostEventIndicesStock_;
   state_vector_array2_t nominalStateTrajectoriesStock_;
   input_vector_array2_t nominalInputTrajectoriesStock_;
 
-  // Used for catching the nominal trajectories for which the LQ problem is
+  // Used for caching the nominal trajectories for which the LQ problem is
   // constructed and solved before terminating run()
-  scalar_array2_t nominalPrevTimeTrajectoriesStock_;
-  size_array2_t nominalPrevEventsPastTheEndIndecesStock_;
-  state_vector_array2_t nominalPrevStateTrajectoriesStock_;
-  input_vector_array2_t nominalPrevInputTrajectoriesStock_;
+  scalar_array2_t cachedTimeTrajectoriesStock_;
+  size_array2_t cachedPostEventIndicesStock_;
+  state_vector_array2_t cachedStateTrajectoriesStock_;
+  input_vector_array2_t cachedInputTrajectoriesStock_;
 
   bool lsComputeISEs_;                                // whether lineSearch routine needs to calculate ISEs
   linear_controller_array_t initLScontrollersStock_;  // needed for lineSearch
-
-  linear_controller_array_t deletedcontrollersStock_;  // needed for concatenating the new controller
-                                                       // to the old one
 
   std::vector<EigenLinearInterpolation<state_vector_t>> nominalStateFunc_;
   std::vector<EigenLinearInterpolation<input_vector_t>> nominalInputFunc_;
@@ -797,6 +783,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   state_vector_t SvHeuristics_;
   state_matrix_t SmHeuristics_;
 
+  // benchmarking
   benchmark::RepeatedTimer forwardPassTimer_;
   benchmark::RepeatedTimer linearQuadraticApproximationTimer_;
   benchmark::RepeatedTimer backwardPassTimer_;

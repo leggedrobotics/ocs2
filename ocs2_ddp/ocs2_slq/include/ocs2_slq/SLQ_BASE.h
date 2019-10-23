@@ -286,8 +286,6 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    ****************/
   SLQ_Settings settings_;
 
-  std::vector<typename rollout_base_t::Ptr> state_dynamicsForwardRolloutPtrStock_;
-
   state_matrix_array2_t AmConstrainedTrajectoryStock_;
   state_matrix_array2_t QmConstrainedTrajectoryStock_;
   state_vector_array2_t QvConstrainedTrajectoryStock_;

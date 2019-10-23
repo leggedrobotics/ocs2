@@ -109,7 +109,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
   scalar_t lsConstraint1MaxNorm, lsConstraint2MaxNorm;
   linear_controller_array_t lsControllersStock(BASE::numPartitions_);
   scalar_array2_t lsTimeTrajectoriesStock(BASE::numPartitions_);
-  size_array2_t lsEventsPastTheEndIndecesStock(BASE::numPartitions_);
+  size_array2_t lsPostEventIndicesStock(BASE::numPartitions_);
   state_vector_array2_t lsStateTrajectoriesStock(BASE::numPartitions_);
   input_vector_array2_t lsInputTrajectoriesStock(BASE::numPartitions_);
 
@@ -118,7 +118,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
     lsControllersStock = BASE::initLScontrollersStock_;
     BASE::lineSearchWorker(workerIndex, learningRate, lsTotalCost, lsConstraint1ISE, lsConstraint1MaxNorm, lsConstraint2ISE,
                            lsConstraint2MaxNorm, lsInequalityConstraintPenalty, lsInequalityConstraintISE, lsControllersStock,
-                           lsTimeTrajectoriesStock, lsEventsPastTheEndIndecesStock, lsStateTrajectoriesStock, lsInputTrajectoriesStock);
+                           lsTimeTrajectoriesStock, lsPostEventIndicesStock, lsStateTrajectoriesStock, lsInputTrajectoriesStock);
 
     // break condition 1: it exits with largest learningRate that its cost is smaller than nominal cost.
     if (lsTotalCost < BASE::nominalTotalCost_ * (1 - 1e-3 * learningRate)) {
@@ -140,7 +140,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
 
     BASE::nominalControllersStock_.swap(lsControllersStock);
     BASE::nominalTimeTrajectoriesStock_.swap(lsTimeTrajectoriesStock);
-    BASE::nominalEventsPastTheEndIndecesStock_.swap(lsEventsPastTheEndIndecesStock);
+    BASE::nominalPostEventIndicesStock_.swap(lsPostEventIndicesStock);
     BASE::nominalStateTrajectoriesStock_.swap(lsStateTrajectoriesStock);
     BASE::nominalInputTrajectoriesStock_.swap(lsInputTrajectoriesStock);
 

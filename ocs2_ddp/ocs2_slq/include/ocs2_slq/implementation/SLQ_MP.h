@@ -289,8 +289,20 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::threadWork(size_t threadId) {
           return;
         }
       }
+    } catch (const std::exception& e) {
+      std::cerr << "Caught exception while doing thread work (workerTask_local " << workerTask_local << ")\n"
+                << "\twhat(): " << e.what() << "\n"
+                << std::endl;
+      {
+        std::lock(workerExceptionMutex_, riccatiSolverBarrierMutex_);
+        std::lock_guard<std::mutex> lk1(workerExceptionMutex_, std::adopt_lock);
+        std::lock_guard<std::mutex> lk2(riccatiSolverBarrierMutex_, std::adopt_lock);
+        workerException_ = std::current_exception();
+      }
+
+      riccatiSolverCompletedCondition_.notify_one();
     } catch (...) {
-      std::cerr << "Caught runtime error while doing thread work (workerTask_local " << workerTask_local << ")" << std::endl;
+      std::cerr << "Caught unknown exception while doing thread work (workerTask_local " << workerTask_local << ")" << std::endl;
       {
         std::lock(workerExceptionMutex_, riccatiSolverBarrierMutex_);
         std::lock_guard<std::mutex> lk1(workerExceptionMutex_, std::adopt_lock);
@@ -539,7 +551,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::executeLineSearchWorker(size_t threadId) {
   scalar_t lsConstraint1MaxNorm, lsConstraint2MaxNorm;
   linear_controller_array_t lsControllersStock(BASE::numPartitions_);
   scalar_array2_t lsTimeTrajectoriesStock(BASE::numPartitions_);
-  size_array2_t lsEventsPastTheEndIndecesStock(BASE::numPartitions_);
+  size_array2_t lsPostEventIndicesStock(BASE::numPartitions_);
   state_vector_array2_t lsStateTrajectoriesStock(BASE::numPartitions_);
   input_vector_array2_t lsInputTrajectoriesStock(BASE::numPartitions_);
 
@@ -572,7 +584,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::executeLineSearchWorker(size_t threadId) {
     lsControllersStock = BASE::initLScontrollersStock_;
     BASE::lineSearchWorker(threadId, learningRate, lsTotalCost, lsConstraint1ISE, lsConstraint1MaxNorm, lsConstraint2ISE,
                            lsConstraint2MaxNorm, lsInequalityConstraintPenalty, lsInequalityConstraintISE, lsControllersStock,
-                           lsTimeTrajectoriesStock, lsEventsPastTheEndIndecesStock, lsStateTrajectoriesStock, lsInputTrajectoriesStock);
+                           lsTimeTrajectoriesStock, lsPostEventIndicesStock, lsStateTrajectoriesStock, lsInputTrajectoriesStock);
 
     // break condition: make sure we do not alter an existing result
     if (alphaBestFound_.load()) {
@@ -644,7 +656,7 @@ void SLQ_MP<STATE_DIM, INPUT_DIM>::executeLineSearchWorker(size_t threadId) {
 
       BASE::nominalControllersStock_.swap(lsControllersStock);
       BASE::nominalTimeTrajectoriesStock_.swap(lsTimeTrajectoriesStock);
-      BASE::nominalEventsPastTheEndIndecesStock_.swap(lsEventsPastTheEndIndecesStock);
+      BASE::nominalPostEventIndicesStock_.swap(lsPostEventIndicesStock);
       BASE::nominalStateTrajectoriesStock_.swap(lsStateTrajectoriesStock);
       BASE::nominalInputTrajectoriesStock_.swap(lsInputTrajectoriesStock);
     }

@@ -246,3 +246,10 @@ target_link_libraries(test_lookup
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
 )
+
+catkin_add_gtest(derivative_checker_unittest
+        test/dynamics/testSystemDynamicsLinearizer.cpp
+)
+target_link_libraries(derivative_checker_unittest
+        ${catkin_LIBRARIES}
+)

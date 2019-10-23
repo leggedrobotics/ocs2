@@ -89,7 +89,7 @@ void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::setData(
     const scalar_array_t* timeStampPtr, const state_matrix_array_t* AmPtr, const state_input_matrix_array_t* BmPtr,
     const eigen_scalar_array_t* qPtr, const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr,
     const input_vector_array_t* RvPtr, const dynamic_matrix_array_t* RinvCholPtr, const input_state_matrix_array_t* PmPtr,
-    const size_array_t* eventsPastTheEndIndecesPtr, const eigen_scalar_array_t* qFinalPtr, const state_vector_array_t* QvFinalPtr,
+    const size_array_t* postEventIndicesPtr, const eigen_scalar_array_t* qFinalPtr, const state_vector_array_t* QvFinalPtr,
     const state_matrix_array_t* QmFinalPtr) {
   BASE::resetNumFunctionCalls();
 
@@ -109,9 +109,9 @@ void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::setData(
   Pm_.resize(input_dim, state_dim);
 
   eventTimes_.clear();
-  eventTimes_.reserve(eventsPastTheEndIndecesPtr->size());
-  for (const size_t& pastTheEndIndex : *eventsPastTheEndIndecesPtr) {
-    eventTimes_.push_back((*timeStampPtr)[pastTheEndIndex - 1]);
+  eventTimes_.reserve(postEventIndicesPtr->size());
+  for (const size_t& postEventIndex : *postEventIndicesPtr) {
+    eventTimes_.push_back((*timeStampPtr)[postEventIndex - 1]);
   }
 
   qFinalPtr_ = qFinalPtr;

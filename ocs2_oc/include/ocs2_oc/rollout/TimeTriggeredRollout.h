@@ -94,7 +94,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
  protected:
   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
-                         scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
+                         scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, state_vector_array_t& stateTrajectory,
                          input_vector_array_t& inputTrajectory) override {
     if (controller == nullptr) {
       throw std::runtime_error("The input controller is not set.");
@@ -114,8 +114,8 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     stateTrajectory.reserve(maxNumSteps + 1);
     inputTrajectory.clear();
     inputTrajectory.reserve(maxNumSteps + 1);
-    eventsPastTheEndIndeces.clear();
-    eventsPastTheEndIndeces.reserve(numEvents);
+    postEventIndicesStock.clear();
+    postEventIndicesStock.reserve(numEvents);
 
     // set controller
     systemDynamicsPtr_->setController(controller);
@@ -143,14 +143,14 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
       // a jump has taken place
       if (i < numEvents) {
-        eventsPastTheEndIndeces.push_back(stateTrajectory.size());
+        postEventIndicesStock.push_back(stateTrajectory.size());
         // jump map
         systemDynamicsPtr_->computeJumpMap(timeTrajectory.back(), stateTrajectory.back(), beginState);
       }
     }  // end of i loop
 
     // check for the numerical stability
-    this->checkNumericalStability(controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+    this->checkNumericalStability(controller, timeTrajectory, postEventIndicesStock, stateTrajectory, inputTrajectory);
 
     return stateTrajectory.back();
   }

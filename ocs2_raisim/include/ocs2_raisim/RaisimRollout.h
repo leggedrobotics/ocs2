@@ -130,7 +130,7 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
  protected:
   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
-                         scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
+                         scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, state_vector_array_t& stateTrajectory,
                          input_vector_array_t& inputTrajectory) override {
     assert(controller != nullptr);
 
@@ -146,8 +146,8 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
     stateTrajectory.reserve(maxNumSteps + numSubsystems);
     inputTrajectory.clear();
     inputTrajectory.reserve(maxNumSteps + numSubsystems);
-    eventsPastTheEndIndeces.clear();
-    eventsPastTheEndIndeces.reserve(numSubsystems - 1);
+    postEventIndicesStock.clear();
+    postEventIndicesStock.reserve(numSubsystems - 1);
 
     // Set inital state to simulation if requested
     if (setSimulatorStateOnRolloutRunAlways_ or setSimulatorStateOnRolloutRunOnce_) {
@@ -162,9 +162,9 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
     // loop through intervals and integrate each separately
     for (const auto& interval : timeIntervalArray) {
       runSimulation(interval, controller, timeTrajectory, stateTrajectory, inputTrajectory);
-      eventsPastTheEndIndeces.push_back(stateTrajectory.size());
+      postEventIndicesStock.push_back(stateTrajectory.size());
     }
-    eventsPastTheEndIndeces.pop_back();  // the last interval does not have any events afterwards
+    postEventIndicesStock.pop_back();  // the last interval does not have any events afterwards
 
     return stateTrajectory.back();
   }

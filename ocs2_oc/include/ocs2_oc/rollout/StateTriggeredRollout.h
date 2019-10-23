@@ -168,6 +168,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
      bool refining = false;
      int its = 0;
+     RootFind RF;
 
      while(true){ //Keeps loopping until end time condition is fullfilled, after wich the loop is broken
     	 try{

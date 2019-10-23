@@ -72,13 +72,13 @@ TEST(StateRolloutTests, Case1)
 		EXPECT_LT(std::fabs(energy - 9.81*stateTrajectory[0][0] + 0.5*stateTrajectory[0][1]*stateTrajectory[0][1]), 1e-6);
 		// Test 2: No Significant penetration of Guard Surface
 		EXPECT_GT(stateTrajectory[i][0], -1e-6);
-
+		// Test 2b: No significant penetration of second Guard Surface (only checked on parts after initial conditions passes trough)
 		if (timeTrajectory[i] > 0.45)
 		{
 		EXPECT_GT(-stateTrajectory[i][0] + 0.1 + timeTrajectory[i]/50, -1e-6);
 		}
-
-		if(true)
+		// Optional output of state and time trajectories
+		if(false)
 		{
 			std::cout<<i<<";"<<timeTrajectory[i]<<";"<<stateTrajectory[i][0]<<";"<<stateTrajectory	[i][1]<<std::endl;
 		}

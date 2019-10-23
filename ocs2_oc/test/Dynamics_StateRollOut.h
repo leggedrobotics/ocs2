@@ -65,7 +65,7 @@ public:
 					const state_vector_t& state, 
 					dynamic_vector_t& guardSurfacesValue){
 
-	guardSurfacesValue = Eigen::Matrix<double,1,1>();
+	guardSurfacesValue = Eigen::Matrix<double,2,1>();
 	guardSurfacesValue[0] = state[0];
 	guardSurfacesValue[1] = -state[0] + 0.1 + time/50;
 	}

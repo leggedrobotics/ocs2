@@ -35,7 +35,7 @@ TEST(StateRolloutTests, Case1)
 // Construct Variables for run
 	// Simulation time
 	scalar_t t0 = 0;
-	scalar_t t1 = 1000;
+	scalar_t t1 = 100;
 	// Initial State
 	state_vector_t initState(2,0);
 	initState[0] = 1;
@@ -71,7 +71,17 @@ TEST(StateRolloutTests, Case1)
 		double energy = 9.81*stateTrajectory[i][0] + 0.5*stateTrajectory[i][1]*stateTrajectory[i][1];
 		EXPECT_LT(std::fabs(energy - 9.81*stateTrajectory[0][0] + 0.5*stateTrajectory[0][1]*stateTrajectory[0][1]), 1e-6);
 		// Test 2: No Significant penetration of Guard Surface
-		EXPECT_GT(stateTrajectory[i][0], 0);
+		EXPECT_GT(stateTrajectory[i][0], -1e-6);
+
+		if (timeTrajectory[i] > 0.45)
+		{
+		EXPECT_GT(-stateTrajectory[i][0] + 0.1 + timeTrajectory[i]/50, -1e-6);
+		}
+
+		if(false)
+		{
+			std::cout<<i<<";"<<timeTrajectory[i]<<";"<<stateTrajectory[i][0]<<";"<<stateTrajectory	[i][1]<<std::endl;
+		}
 	}
 }
 

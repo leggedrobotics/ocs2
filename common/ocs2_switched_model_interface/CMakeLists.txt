@@ -42,6 +42,7 @@ add_library(${PROJECT_NAME}
 		src/ComKinoSystemDynamicsAd.cpp
 		src/SwitchedModelCostBase.cpp
 		src/ComKinoOperatingPointsBase.cpp
+        src/SwitchedModelStateEstimator.cpp
 		)
 
 add_dependencies(${PROJECT_NAME}

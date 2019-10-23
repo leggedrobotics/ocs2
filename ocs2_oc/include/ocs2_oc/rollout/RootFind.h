@@ -6,11 +6,11 @@ using scalar_t = double;
 using interval_t = std::pair<scalar_t, scalar_t>;
 
 namespace ocs2{
-class Anderson_Bjorck{
+class RootFind{
 
 public:
-	Anderson_Bjorck(){};
-	~Anderson_Bjorck(){};
+	RootFind(){};
+	~RootFind(){};
 
 	void set_Init_Bracket(const interval_t &time_int, const interval_t &guard_int)
 	{

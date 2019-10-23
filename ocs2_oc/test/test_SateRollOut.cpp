@@ -78,7 +78,7 @@ TEST(StateRolloutTests, Case1)
 		EXPECT_GT(-stateTrajectory[i][0] + 0.1 + timeTrajectory[i]/50, -1e-6);
 		}
 
-		if(false)
+		if(true)
 		{
 			std::cout<<i<<";"<<timeTrajectory[i]<<";"<<stateTrajectory[i][0]<<";"<<stateTrajectory	[i][1]<<std::endl;
 		}

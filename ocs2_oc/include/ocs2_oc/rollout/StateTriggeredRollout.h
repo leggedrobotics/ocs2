@@ -88,8 +88,9 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       : BASE(std::move(rolloutSettings)),
         systemDynamicsPtr_(systemDynamics.clone()),
         systemEventHandlersPtr_(new state_triggered_event_handler_t)
-		// construct dynamicsIntegratorsPtr
-		{constructDynamicsIntegrator(this->settings().integratorType_);}
+  	  {
+	  constructDynamicsIntegrator(this->settings().integratorType_);
+  	  }
 
   /**
    * Default destructor.
@@ -100,7 +101,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    * Returns the underlying dynamics
    */
 
-  controlled_system_base_t* systemDynamicsPtr() {return systemDynamicsPtr_.get(); }
+  controlled_system_base_t* systemDynamicsPtr() {return systemDynamicsPtr_.get();}
 
   StateTriggeredRollout<STATE_DIM, INPUT_DIM>* clone() const override {
     return new StateTriggeredRollout<STATE_DIM, INPUT_DIM> (*systemDynamicsPtr_, this->settings());
@@ -162,42 +163,44 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
      scalar_t t0  = timeIntervalArray[0].first;
      scalar_t t1  = timeIntervalArray[0].second;
-     scalar_t tend= t1;
+     scalar_t tend= t1; // Stored separately due to overwriting t1 when refining
      size_t eventID_m;
 
-     Anderson_Bjorck RF;
      bool refining = false;
-     int i = 0;
+     int its = 0;
 
-     while(true){
+     while(true){ //Keeps loopping until end time condition is fullfilled, after wich the loop is broken
     	 try{
        dynamicsIntegratorPtr_->integrate(beginState, t0, t1 , stateTrajectory,
                                          timeTrajectory, BASE::settings().minTimeStep_, BASE::settings().absTolODE_,
                                          BASE::settings().relTolODE_, maxNumSteps, true);
     	 }
     	 catch(const size_t& eventID){eventID_m = eventID;}
-    	 scalar_t 		time_query  = timeTrajectory.back();
+
+    	 // Calculate GuardSurface value of last query state and time
+    	 scalar_t time_query  = timeTrajectory.back();
     	 state_vector_t state_query = stateTrajectory.back();
 
-    	 dynamic_vector_t GuardSurfaces_query;
+         dynamic_vector_t GuardSurfaces_query;
     	 systemDynamicsPtr_->computeGuardSurfaces(time_query,state_query,GuardSurfaces_query);
     	 scalar_t guard_query = GuardSurfaces_query[eventID_m];
 
-    	 // Remove the element past the guard surface
+    	 // Remove the element past the guard surface if it is past the guard surface
+    	 // (Due to checking in EventHandler this can only happen to the last element of the trajectory)
     	 if(guard_query < 0)
     	 {
     	 stateTrajectory.pop_back();
     	 timeTrajectory.pop_back();
     	 }
 
-       // compute control input trajectory and concatenate to inputTrajectory
+       // Compute control input trajectory and concatenate to inputTrajectory
              if (BASE::settings().reconstructInputTrajectory_) {
                for (; k_u < timeTrajectory.size(); k_u++) {
                  inputTrajectory.emplace_back(systemDynamicsPtr_->controllerPtr()->computeInput(timeTrajectory[k_u], stateTrajectory[k_u]));
                }  // end of k loop
              }
 
-       // End time Condition
+       // End time Condition, means iteration procedure is done
        if (std::fabs(tend - timeTrajectory.back()) == 0){
               break;
        }
@@ -207,7 +210,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       bool time_accuracy_condition = std::fabs(t1-t0) < (1/(BASE::settings().maxNumStepsPerSecond_));
       bool accuracy_condition = guard_accuracy_condition || time_accuracy_condition;
 
-      if (accuracy_condition) {
+      if (accuracy_condition) { // If Sufficiently accuracte crossing location has been determined
             eventsPastTheEndIndeces.push_back(stateTrajectory.size());
             // jump map
             beginState = stateTrajectory.back();
@@ -216,16 +219,16 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
             t0 = timeTrajectory.back();
             t1 = tend;
 
-            dynamic_vector_t GuardSurfaces_cross(0);
+            dynamic_vector_t GuardSurfaces_cross;
             systemDynamicsPtr_->computeGuardSurfaces(t0,beginState,GuardSurfaces_cross);
             UpdateTriggerdTime(t0,GuardSurfaces_cross);
 
             refining = false;
             }
-      // Otherwise keep refining or start refining
-      else {
+
+      else {// Otherwise keep refining or start refining
     	  if (!refining)
-    	  {
+    	  { //Properly configure Rootfinding method to start refining
     		  scalar_t time_before = timeTrajectory[timeTrajectory.size()-2];
     		  state_vector_t state_before = stateTrajectory[stateTrajectory.size()-2];
     		  dynamic_vector_t GuardSurfaces_before;
@@ -242,7 +245,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     		  refining = true;
     	  }
     	  else
-    	  {
+    	  { // Apply the Rules of the Rootfinding method to continue refining
     		RF.Update_Bracket(time_query,guard_query);
     		RF.getNewQuery(time_query);
 
@@ -251,7 +254,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     		t1 = time_query;
     	  }
       }
-      i++;
+      its++; // count iterations
      }  // end of while loop
 
      // check for the numerical stability

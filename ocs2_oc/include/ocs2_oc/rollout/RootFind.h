@@ -65,6 +65,13 @@ public:
 
 	}
 
+	void Display()
+	{
+		std::cout<<"Root Finding Information"<<std::endl;
+		std::cout<<"Time Bracket: ["<< time_int_m.first<<";"<<time_int_m.second<<"]"<<std::endl;
+		std::cout<<"Value Bracket: ["<< guard_int_m.first<<";"<<guard_int_m.second<<"]"<<std::endl;
+	}
+
 
 private:
 	interval_t time_int_m;

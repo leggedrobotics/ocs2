@@ -117,13 +117,15 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
     BASE::systemPtr_->computeGuardSurfaces(time, state, guardSurfacesValuesCurrent_);
 
     bool eventTriggered = false;
-    for (size_t i = 0; i < guardSurfacesValuesPrevious_.size(); i++) {
-      if (guardSurfacesValuesCurrent_[i] <= 0 && guardSurfacesValuesPrevious_(i) > 0) {
-        eventTriggered = true;
-        triggeredEventSurface_ = i;
-      }
+    if(time- lastEventTriggeredTime_ > minEventTimeDifference_)
+    {
+    	for (size_t i = 0; i < guardSurfacesValuesPrevious_.size(); i++) {
+    		if (guardSurfacesValuesCurrent_[i] <= 0 && guardSurfacesValuesPrevious_(i) > 0) {
+    			eventTriggered = true;
+    			triggeredEventSurface_ = i;
+    		}
+    	}
     }
-
     if (!eventTriggered) {
       guardSurfacesValuesPrevious_ = guardSurfacesValuesCurrent_;
     }
@@ -154,8 +156,8 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
     computeZeroCrossing(stateTrajectory, timeTrajectory, lastIndex, zeroCrossingState, zeroCrossingTime);
 
     if (lastIndex > 0) {
-      timeTrajectory.erase(timeTrajectory.begin() + lastIndex + 2, timeTrajectory.end());
-      stateTrajectory.erase(stateTrajectory.begin() + lastIndex + 2, stateTrajectory.end());
+      timeTrajectory.erase(timeTrajectory.begin() + lastIndex + 1, timeTrajectory.end());
+      stateTrajectory.erase(stateTrajectory.begin() + lastIndex + 1, stateTrajectory.end());
     }
 
     //lastEventTriggeredTime_ = timeTrajectory[lastIndex];

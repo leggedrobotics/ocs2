@@ -87,8 +87,9 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   explicit StateTriggeredRollout(const controlled_system_base_t& systemDynamics, const Rollout_Settings& rolloutSettings = Rollout_Settings())
       : BASE(std::move(rolloutSettings)),
         systemDynamicsPtr_(systemDynamics.clone()),
-        systemEventHandlersPtr_(new state_triggered_event_handler_t),
-        dynamicsIntegratorPtr_(this->settings().integratorType_) {}
+        systemEventHandlersPtr_(new state_triggered_event_handler_t)
+		// construct dynamicsIntegratorsPtr
+		{constructDynamicsIntegrator(this->settings().integratorType_);}
 
   /**
    * Default destructor.
@@ -104,6 +105,14 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   StateTriggeredRollout<STATE_DIM, INPUT_DIM>* clone() const override {
     return new StateTriggeredRollout<STATE_DIM, INPUT_DIM> (*systemDynamicsPtr_, this->settings());
   }
+
+  /**
+   * Update Last event triggered times of Event Handler
+   */
+  void UpdateTriggerdTime(scalar_t time_triggered,dynamic_vector_t guard_triggered){
+	  systemEventHandlersPtr_->setEventTimesGuard(1e-2,time_triggered,guard_triggered);
+  }
+
 
   /**
    * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
@@ -158,6 +167,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
      Anderson_Bjorck RF;
      bool refining = false;
+     int i = 0;
 
      while(true){
     	 try{
@@ -166,12 +176,11 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
                                          BASE::settings().relTolODE_, maxNumSteps, true);
     	 }
     	 catch(const size_t& eventID){eventID_m = eventID;}
-
     	 scalar_t 		time_query  = timeTrajectory.back();
     	 state_vector_t state_query = stateTrajectory.back();
 
     	 dynamic_vector_t GuardSurfaces_query;
-    	 systemDynamicsPtr_.computeGuardSurfaces(time_query,state_query,GuardSurfaces_query);
+    	 systemDynamicsPtr_->computeGuardSurfaces(time_query,state_query,GuardSurfaces_query);
     	 scalar_t guard_query = GuardSurfaces_query[eventID_m];
 
     	 // Remove the element past the guard surface
@@ -189,7 +198,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
              }
 
        // End time Condition
-       if (std::fabs(tend - timeTrajectory.back()) < 1/(BASE::settings().maxNumStepsPerSecond_)){
+       if (std::fabs(tend - timeTrajectory.back()) == 0){
               break;
        }
 
@@ -201,11 +210,15 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       if (accuracy_condition) {
             eventsPastTheEndIndeces.push_back(stateTrajectory.size());
             // jump map
+            beginState = stateTrajectory.back();
             systemDynamicsPtr_->computeJumpMap(timeTrajectory.back(), stateTrajectory.back(), beginState);
 
             t0 = timeTrajectory.back();
-            beginState = stateTrajectory.back();
             t1 = tend;
+
+            dynamic_vector_t GuardSurfaces_cross(0);
+            systemDynamicsPtr_->computeGuardSurfaces(t0,beginState,GuardSurfaces_cross);
+            UpdateTriggerdTime(t0,GuardSurfaces_cross);
 
             refining = false;
             }
@@ -216,7 +229,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     		  scalar_t time_before = timeTrajectory[timeTrajectory.size()-2];
     		  state_vector_t state_before = stateTrajectory[stateTrajectory.size()-2];
     		  dynamic_vector_t GuardSurfaces_before;
-    		  systemDynamicsPtr_.computeGuardSurfaces(time_query,state_query,GuardSurfaces_before);
+    		  systemDynamicsPtr_->computeGuardSurfaces(time_before,state_before,GuardSurfaces_before);
     		  scalar_t guard_before = GuardSurfaces_before[eventID_m];
 
     		  RF.set_Init_Bracket(time_before,time_query,guard_before,guard_query);
@@ -237,9 +250,8 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     		beginState = stateTrajectory.back();
     		t1 = time_query;
     	  }
-
-
       }
+      i++;
      }  // end of while loop
 
      // check for the numerical stability
@@ -302,7 +314,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
  private:
   std::shared_ptr<controlled_system_base_t> systemDynamicsPtr_;
 
-  std::shared_ptr<event_handler_t> systemEventHandlersPtr_;
+  std::shared_ptr<state_triggered_event_handler_t> systemEventHandlersPtr_;
 
   std::unique_ptr<ode_base_t> dynamicsIntegratorPtr_;
 };

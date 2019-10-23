@@ -87,3 +87,11 @@ install(DIRECTORY test/include/${PROJECT_NAME}/
 ## $ catkin run_tests --no-deps --this
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_oc
+
+catkin_add_gtest(test_StateRollOut
+   test/test_SateRollOut.cpp
+)
+target_link_libraries(test_StateRollOut
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+)

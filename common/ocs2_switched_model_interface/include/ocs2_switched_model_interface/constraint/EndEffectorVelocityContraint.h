@@ -47,7 +47,7 @@ class EndEffectorVelocityConstraint final : public ocs2::ConstraintTerm<24, 24> 
   using timeStateInput_matrix_t = Eigen::Matrix<scalar_t, 1 + STATE_DIM + INPUT_DIM, 1 + STATE_DIM + INPUT_DIM>;
 
  public:
-  using ad_com_model_t = ComModelBase<12, ad_scalar_t>;
+  using ad_com_model_t = ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<12, ad_scalar_t>;
 
   explicit EndEffectorVelocityConstraint(int legNumber, EndEffectorVelocityConstraintSettings settings, ad_com_model_t& adComModel,
@@ -160,7 +160,7 @@ class EndEffectorVelocityConstraint final : public ocs2::ConstraintTerm<24, 24> 
     ad_joint_coordinate_t dqJoints = u.segment(12, 12);
 
     // base coordinates [EulerAngles, base position in world]
-    Vector3Ad com_base2CoM_ = adComModel.comPositionBaseFrame(qJoints);
+    Vector3Ad com_base2CoM_ = adComModel.comPositionBaseFrame();
     Matrix3Ad o_R_b_ = RotationMatrixBasetoOrigin<ad_scalar_t>(baseEulerAngles);
     ad_base_coordinate_t basePose;
     basePose << baseEulerAngles, o_comPosition - o_R_b_ * com_base2CoM_;

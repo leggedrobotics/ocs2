@@ -32,13 +32,13 @@ void ComKinoSystemDynamicsAd::systemFlowMap(ad_scalar_t time, const ad_dynamic_v
   ad_joint_coordinate_t qJoints = state.segment(12, 12);
   ad_joint_coordinate_t dqJoints = input.segment(12, 12);
 
-  Vector3Ad com_base2CoM = adComModelPtr_->comPositionBaseFrame(qJoints);
+  Vector3Ad com_base2CoM = adComModelPtr_->comPositionBaseFrame();
   Matrix3Ad o_R_b = switched_model::RotationMatrixBasetoOrigin<ad_scalar_t>(baseEulerAngles);
   ad_base_coordinate_t basePose;
   basePose << baseEulerAngles, o_comPosition - o_R_b * com_base2CoM;
 
   // Inertia matrix in the CoM frame and its derivatives
-  Matrix6Ad M = adComModelPtr_->comInertia(qJoints);
+  Matrix6Ad M = adComModelPtr_->comInertia();
   Matrix3Ad rotationalInertia = M.template topLeftCorner<3, 3>();
   Matrix3Ad rotationMInverse = rotationalInertia.inverse();
   Matrix6Ad MInverse;

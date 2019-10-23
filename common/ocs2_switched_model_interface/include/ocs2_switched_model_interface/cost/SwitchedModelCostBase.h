@@ -32,7 +32,7 @@ class SwitchedModelCostBase : public ocs2::QuadraticCostFunction<24, 24> {
   using logic_rules_t = SwitchedModelPlannerLogicRules<JOINT_COORD_SIZE, double>;
   using contact_flag_t = typename SwitchedModel<JOINT_COORD_SIZE>::contact_flag_t;
 
-  using com_model_t = ComModelBase<JOINT_COORD_SIZE>;
+  using com_model_t = ComModelBase<double>;
 
   //! Constructor
   SwitchedModelCostBase(const com_model_t& comModel, std::shared_ptr<const logic_rules_t> logicRulesPtr, const state_matrix_t& Q,

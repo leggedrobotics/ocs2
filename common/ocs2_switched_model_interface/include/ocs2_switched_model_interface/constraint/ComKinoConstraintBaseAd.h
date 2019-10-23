@@ -26,7 +26,7 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<24, 24> {
 
   using ad_base_t = CppAD::cg::CG<double>;
   using ad_scalar_t = CppAD::AD<ad_base_t>;
-  using ad_com_model_t = ComModelBase<JOINT_COORD_SIZE, ad_scalar_t>;
+  using ad_com_model_t = ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<JOINT_COORD_SIZE, ad_scalar_t>;
 
   using Base = ocs2::ConstraintBase<24, 24>;

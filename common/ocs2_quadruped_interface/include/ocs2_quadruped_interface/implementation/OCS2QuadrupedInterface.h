@@ -165,8 +165,7 @@ ocs2::SLQ_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DI
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeSwitchedModelState(const rbd_state_vector_t& rbdState,
                                                                                                state_vector_t& comkinoState) {
-  typename state_estimator_t::comkino_model_state_t comKinoState_truesize;
-  switchedModelStateEstimator_.estimateComkinoModelState(rbdState, comKinoState_truesize);
+  typename state_estimator_t::comkino_model_state_t comKinoState_truesize = switchedModelStateEstimator_.estimateComkinoModelState(rbdState);
   comkinoState.setZero();
   comkinoState.template segment<12 + JOINT_COORD_SIZE>(0) = comKinoState_truesize;
 }
@@ -178,8 +177,8 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeRbdModelState(const state_vector_t& comkinoState,
                                                                                           const input_vector_t& comkinoInput,
                                                                                           rbd_state_vector_t& rbdState) {
-  switchedModelStateEstimator_.estimateRbdModelState(comkinoState.template segment<12 + JOINT_COORD_SIZE>(0),
-                                                     comkinoInput.template segment<JOINT_COORD_SIZE>(12), rbdState);
+  rbdState = switchedModelStateEstimator_.estimateRbdModelState(
+      comkinoState.template segment<12 + JOINT_COORD_SIZE>(0), comkinoInput.template segment<JOINT_COORD_SIZE>(12));
 }
 
 /******************************************************************************************************/
@@ -207,7 +206,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeComL
   Eigen::Matrix3d o_R_b = RotationMatrixBasetoOrigin(xCOM.template head<3>());
 
   // base to CoM displacement in the CoM frame
-  vector_3_t b_base2CoM = comModelPtr_->comPositionBaseFrame(qJoints);
+  vector_3_t b_base2CoM = comModelPtr_->comPositionBaseFrame();
 
   // base coordinate
   base_coordinate_t xBase;
@@ -222,15 +221,14 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeComL
   for (size_t i = 0; i < 4; i++) kinematicModelPtr_->footPositionBaseFrame(i, b_base2StanceFeet[i]);
 
   // Inertia matrix in the CoM frame and its derivatives
-  matrix_6_t M = comModelPtr_->comInertia(qJoints);
-  matrix_6_t dMdt = comModelPtr_->comInertiaDerivative(qJoints, dqJoints);
+  matrix_6_t M = comModelPtr_->comInertia();
   matrix_3_t rotationMInverse = M.template topLeftCorner<3, 3>().inverse();
   matrix_6_t MInverse;
   MInverse << rotationMInverse, matrix_3_t::Zero(), matrix_3_t::Zero(), (1 / M(5, 5)) * matrix_3_t::Identity();
 
   // Coriolis and centrifugal forces
   vector_6_t C;
-  C.template head<3>() = b_W_com.cross(M.template topLeftCorner<3, 3>() * b_W_com) + dMdt.template topLeftCorner<3, 3>() * b_W_com;
+  C.template head<3>() = b_W_com.cross(M.template topLeftCorner<3, 3>() * b_W_com);
   C.template tail<3>().setZero();
 
   // gravity effect on CoM in CoM coordinate

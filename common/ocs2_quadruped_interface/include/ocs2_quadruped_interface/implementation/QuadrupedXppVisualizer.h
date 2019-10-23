@@ -56,8 +56,8 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishObse
     o_feetForceRef[i] = observation.input().template segment<3>(3 * i);
   }
 
-  publishXppVisualizer(observation.time(), rbdState.template head<6>(), rbdState.template segment<6>(18), rbdState.template segment<12>(6), o_feetPositionRef,
-                       o_feetVelocityRef, o_feetAccelerationRef, o_feetForceRef);
+  publishXppVisualizer(observation.time(), rbdState.template head<6>(), rbdState.template segment<6>(18), rbdState.template segment<12>(6),
+                       o_feetPositionRef, o_feetVelocityRef, o_feetAccelerationRef, o_feetForceRef);
 }
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
@@ -77,9 +77,9 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishTraj
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishXppVisualizer(
-    const scalar_t& time, const base_coordinate_t& basePose, const base_coordinate_t& baseLocalVelocities, const joint_coordinate_t& jointAngles,
-    const vector_3d_array_t& feetPosition, const vector_3d_array_t& feetVelocity, const vector_3d_array_t& feetAcceleration,
-    const vector_3d_array_t& feetForce) {
+    const scalar_t& time, const base_coordinate_t& basePose, const base_coordinate_t& baseLocalVelocities,
+    const joint_coordinate_t& jointAngles, const vector_3d_array_t& feetPosition, const vector_3d_array_t& feetVelocity,
+    const vector_3d_array_t& feetAcceleration, const vector_3d_array_t& feetForce) {
   const scalar_t minTimeDifference = 10e-3;
 
   static scalar_t lastTime = 0.0;
@@ -146,7 +146,7 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishXppV
   robotStateJointMsg.time_from_start = robotStateCartesianMsg.time_from_start;
   robotStateJointMsg.base = robotStateCartesianMsg.base;
   robotStateJointMsg.ee_contact = robotStateCartesianMsg.ee_contact;
-  robotStateJointMsg.joint_state.position = std::vector<double>(jointAngles.data(), jointAngles.data()+jointAngles.size());
+  robotStateJointMsg.joint_state.position = std::vector<double>(jointAngles.data(), jointAngles.data() + jointAngles.size());
   // Attention: Not filling joint velocities or torques
 
   // Publish
@@ -168,27 +168,14 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeFeet
   base_coordinate_t basePose = ocs2QuadrupedInterfacePtr_->getComModel().calculateBasePose(comPose);
   base_coordinate_t baseLocalVelocities = ocs2QuadrupedInterfacePtr_->getComModel().calculateBaseLocalVelocities(comLocalVelocities);
 
-  ocs2QuadrupedInterfacePtr_->getKinematicModel().update(basePose, qJoints);
   Eigen::Matrix3d o_R_b = RotationMatrixBasetoOrigin<scalar_t>(state.template head<3>());
 
-  for (size_t i = 0; i < 4; i++) {
-    // calculates foot position in the base frame
-    vector_3d_t b_footPosition = ocs2QuadrupedInterfacePtr_->getKinematicModel().footPositionBaseFrame(i);
-
-    // calculates foot position in the origin frame
-    o_feetPosition[i] = o_R_b * b_footPosition + basePose.template tail<3>();
-
-    // calculates foot velocity in the base frame
-    Eigen::Matrix<scalar_t, 6, JOINT_COORD_SIZE> b_footJacobian = ocs2QuadrupedInterfacePtr_->getKinematicModel().footJacobianBaseFrame(i);
-    vector_3d_t b_footVelocity = (b_footJacobian * dqJoints).template tail<3>();
-
-    // calculates foot velocity in the origin frame
-    o_feetVelocity[i] = ocs2QuadrupedInterfacePtr_->getKinematicModel().FromBaseVelocityToInertiaVelocity(o_R_b, baseLocalVelocities, b_footPosition,
-                                                                                      b_footVelocity);
-
-    // calculates contact forces in the origin frame
+  for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
+    o_feetPosition[i] = ocs2QuadrupedInterfacePtr_->getKinematicModel().footPositionInOriginFrame(i, basePose, qJoints);
+    o_feetVelocity[i] =
+        ocs2QuadrupedInterfacePtr_->getKinematicModel().footVelocityInOriginFrame(i, basePose, baseLocalVelocities, qJoints, dqJoints);
     o_contactForces[i] = o_R_b * input.template segment<3>(3 * i);
-  }  // end of i loop
+  }
 }
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>

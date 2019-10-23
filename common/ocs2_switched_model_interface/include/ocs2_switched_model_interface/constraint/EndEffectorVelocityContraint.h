@@ -144,42 +144,20 @@ class EndEffectorVelocityConstraint final : public ocs2::ConstraintTerm<STATE_DI
                       ad_dynamic_vector_t& o_footVelocity) {
     // Extract elements from taped input
     ad_scalar_t t = tapedInput(0);
-    ad_dynamic_vector_t x = tapedInput.segment(1, STATE_DIM);
-    ad_dynamic_vector_t u = tapedInput.segment(1 + STATE_DIM, INPUT_DIM);
+    comkino_state_ad_t x = tapedInput.segment(1, STATE_DIM);
+    comkino_input_ad_t u = tapedInput.segment(1 + STATE_DIM, INPUT_DIM);
 
     // Extract elements from state
-    using Vector3Ad = typename ad_kinematic_model_t::vector3d_t;
-    using Matrix3Ad = typename ad_kinematic_model_t::matrix3d_t;
-    using ad_joint_coordinate_t = typename ad_kinematic_model_t::joint_coordinate_t;
-    using ad_base_coordinate_t = typename ad_kinematic_model_t::base_coordinate_t;
-    Vector3Ad baseEulerAngles = x.segment(0, 3);
-    Vector3Ad o_comPosition = x.segment(3, 3);            // in origin frame
-    Vector3Ad com_baseAngularVelocity = x.segment(6, 3);  // in com frame
-    Vector3Ad com_comLinearVelocity = x.segment(9, 3);    // in com frame
-    ad_joint_coordinate_t qJoints = x.segment(12, 12);
-    ad_joint_coordinate_t dqJoints = u.segment(12, 12);
+    const base_coordinate_ad_t comPose = getComPose(x);
+    const base_coordinate_ad_t com_comTwist = getComLocalVelocities(x);
+    const joint_coordinate_ad_t qJoints = getJointPositions(x);
+    const joint_coordinate_ad_t dqJoints = getJointVelocities(u);
 
-    // base coordinates [EulerAngles, base position in world]
-    Vector3Ad com_base2CoM_ = adComModel.comPositionBaseFrame();
-    Matrix3Ad o_R_b_ = RotationMatrixBasetoOrigin<ad_scalar_t>(baseEulerAngles);
-    ad_base_coordinate_t basePose;
-    basePose << baseEulerAngles, o_comPosition - o_R_b_ * com_base2CoM_;
+    // Get base state from com state
+    const base_coordinate_ad_t basePose = adComModel.calculateBasePose(comPose);
+    const base_coordinate_ad_t com_baseTwist = adComModel.calculateBaseLocalVelocities(com_comTwist);
 
-    // baseLocalVelocities_ = [omega, vel]_base in com frame
-    Vector3Ad com_baseLinearVelocity = com_comLinearVelocity + com_base2CoM_.cross(com_baseAngularVelocity);
-
-    // update kinematic model
-    adKinematicsModel.update(basePose, qJoints);
-
-    // Get foot position and Jacobian
-    using ad_footJacobian_t = Eigen::Matrix<ad_scalar_t, 6, 12>;
-    Vector3Ad com_base2StanceFeet_ = adKinematicsModel.footPositionBaseFrame(legNumber_); // base to stance feet displacement in the CoM frame
-    ad_footJacobian_t b_feetJacobians_ = adKinematicsModel.footJacobianBaseFrame(legNumber_); // foot Jacobian's in the Base frame
-
-    // Compute foot velocity
-    Vector3Ad com_footVelocity =
-        b_feetJacobians_.bottomRows(3) * dqJoints + com_baseLinearVelocity + com_baseAngularVelocity.cross(com_base2StanceFeet_);
-    o_footVelocity = o_R_b_ * com_footVelocity;
+    o_footVelocity = adKinematicsModel.footVelocityInOriginFrame(legNumber_, basePose, com_baseTwist, qJoints, dqJoints);
   }
 
   void setAdInterface(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel) {

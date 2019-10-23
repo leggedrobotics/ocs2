@@ -6,7 +6,10 @@
  */
 
 #include "ocs2_quadruped_interface/OCS2QuadrupedInterface.h"
+
 #include <ocs2_core/misc/LoadData.h>
+#include <ocs2_switched_model_interface/core/Rotations.h>
+#include <ocs2_switched_model_interface/dynamics/ComKinoSystemDynamicsAd.h>
 
 namespace switched_model {
 
@@ -70,9 +73,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
   ocs2::loadData::loadEigenMatrix(pathToConfigFile, "Q_final", QFinal_);
   // costs over Cartesian velocities
   Eigen::Matrix<double, 12, 12> J_allFeet;
-  kinematicModelPtr_->update(initRbdState_.template segment<18>(0));
   for (int leg = 0; leg < 4; ++leg) {
-    Eigen::Matrix<double, 6, 12> J_thisfoot = kinematicModelPtr_->footJacobianBaseFrame(leg);
+    Eigen::Matrix<double, 6, 12> J_thisfoot = kinematicModelPtr_->baseToFootJacobianInBaseFrame(leg, getJointPositions(initRbdState_));
     J_allFeet.block<3, 12>(3 * leg, 0) = J_thisfoot.bottomRows<3>();
   }
 
@@ -99,7 +101,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
   std::cerr << std::endl;
   loadModeSequenceTemplate(pathToConfigFile, "initialModeSequenceTemplate", initialModeSequenceTemplate_, false);
   std::cerr << std::endl;
-  if (initialModeSequenceTemplate_.templateSubsystemsSequence_.size() == 0){
+  if (initialModeSequenceTemplate_.templateSubsystemsSequence_.size() == 0) {
     throw std::runtime_error("initialModeSequenceTemplate.templateSubsystemsSequence should have at least one entry.");
   }
   if (initialModeSequenceTemplate_.templateSwitchingTimes_.size() != initialModeSequenceTemplate_.templateSubsystemsSequence_.size() + 1) {
@@ -164,7 +166,7 @@ ocs2::SLQ_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DI
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeSwitchedModelState(const rbd_state_vector_t& rbdState,
                                                                                                state_vector_t& comkinoState) {
-  typename state_estimator_t::comkino_model_state_t comKinoState_truesize = switchedModelStateEstimator_.estimateComkinoModelState(rbdState);
+  comkino_state_t comKinoState_truesize = switchedModelStateEstimator_.estimateComkinoModelState(rbdState);
   comkinoState.setZero();
   comkinoState.template segment<12 + JOINT_COORD_SIZE>(0) = comKinoState_truesize;
 }
@@ -176,8 +178,8 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeRbdModelState(const state_vector_t& comkinoState,
                                                                                           const input_vector_t& comkinoInput,
                                                                                           rbd_state_vector_t& rbdState) {
-  rbdState = switchedModelStateEstimator_.estimateRbdModelState(
-      comkinoState.template segment<12 + JOINT_COORD_SIZE>(0), comkinoInput.template segment<JOINT_COORD_SIZE>(12));
+  rbdState = switchedModelStateEstimator_.estimateRbdModelState(comkinoState.template segment<12 + JOINT_COORD_SIZE>(0),
+                                                                comkinoInput.template segment<JOINT_COORD_SIZE>(12));
 }
 
 /******************************************************************************************************/
@@ -187,64 +189,11 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeComLocalAcceleration(const state_vector_t& comkinoState,
                                                                                                  const input_vector_t& comkinoInput,
                                                                                                  base_coordinate_t& comLocalAcceleration) {
-  typedef Eigen::Matrix<scalar_t, 3, 3> matrix_3_t;
-  typedef Eigen::Matrix<scalar_t, 3, 1> vector_3_t;
-  typedef Eigen::Matrix<scalar_t, 6, 6> matrix_6_t;
-  typedef Eigen::Matrix<scalar_t, 6, 1> vector_6_t;
-
-  static vector_3_t o_gravityVector = vector_3_t(0.0, 0.0, -modelSettings_.gravitationalAcceleration_);
-
-  Eigen::VectorBlock<const state_vector_t, 6> xCOM = comkinoState.template segment<6>(0);
-  Eigen::VectorBlock<const state_vector_t, 3> b_W_com = comkinoState.template segment<3>(6);
-  Eigen::VectorBlock<const state_vector_t, 3> b_V_com = comkinoState.template segment<3>(9);
-  Eigen::VectorBlock<const state_vector_t, 12> qJoints = comkinoState.template segment<12>(12);
-  Eigen::VectorBlock<const input_vector_t, 12> dqJoints = comkinoInput.template segment<12>(12);
-  Eigen::VectorBlock<const input_vector_t, 3 * 4> lambda = comkinoInput.template head<12>();
-
-  // Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
-  Eigen::Matrix3d o_R_b = RotationMatrixBasetoOrigin<scalar_t>(xCOM.template head<3>());
-
-  // base to CoM displacement in the CoM frame
-  vector_3_t b_base2CoM = comModelPtr_->comPositionBaseFrame();
-
-  // base coordinate
-  base_coordinate_t xBase;
-  xBase.template head<3>() = xCOM.template head<3>();
-  xBase.template tail<3>() = xCOM.template tail<3>() - o_R_b * b_base2CoM;
-
-  // update kinematic model
-  kinematicModelPtr_->update(xBase, qJoints);
-
-  // base to stance feet displacement in the CoM frame
-  std::array<vector_3_t, NUM_CONTACT_POINTS> b_base2StanceFeet = kinematicModelPtr_->feetPositionsBaseFrame();
-
-  // Inertia matrix in the CoM frame and its derivatives
-  matrix_6_t M = comModelPtr_->comInertia();
-  matrix_3_t rotationMInverse = M.template topLeftCorner<3, 3>().inverse();
-  matrix_6_t MInverse;
-  MInverse << rotationMInverse, matrix_3_t::Zero(), matrix_3_t::Zero(), (1 / M(5, 5)) * matrix_3_t::Identity();
-
-  // Coriolis and centrifugal forces
-  vector_6_t C;
-  C.template head<3>() = b_W_com.cross(M.template topLeftCorner<3, 3>() * b_W_com);
-  C.template tail<3>().setZero();
-
-  // gravity effect on CoM in CoM coordinate
-  vector_6_t MInverseG;
-  MInverseG << vector_3_t::Zero(), -o_R_b.transpose() * o_gravityVector;
-
-  // contact JacobianTransposeLambda
-  vector_3_t b_comToFoot;
-  vector_6_t JcTransposeLambda = vector_6_t::Zero();
-  for (size_t i = 0; i < 4; i++) {
-    b_comToFoot = b_base2StanceFeet[i] - b_base2CoM;
-
-    JcTransposeLambda.template head<3>() += b_comToFoot.cross(lambda.template segment<3>(3 * i));
-    JcTransposeLambda.template tail<3>() += lambda.template segment<3>(3 * i);
-  }
-
+  com_state_t comStateDerivative = ComKinoSystemDynamicsAd::computeComStateDerivative(
+      *comModelPtr_, *kinematicModelPtr_, comkinoState.template head<switched_model::STATE_DIM>(),
+      comkinoInput.template head<switched_model::INPUT_DIM>());
   // CoM acceleration about CoM frame
-  comLocalAcceleration = MInverse * (-C + JcTransposeLambda) - MInverseG;
+  comLocalAcceleration = comStateDerivative.template tail<BASE_COORDINATE_SIZE>();
 }
 
 /******************************************************************************************************/
@@ -287,26 +236,25 @@ template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::estimateFlatGround(const rbd_state_vector_t& rbdState,
                                                                                         const contact_flag_t& contactFlag,
                                                                                         scalar_t& groundHight) const {
-  kinematicModelPtr_->update(rbdState.template head<6 + JOINT_COORD_SIZE>());
-
-  std::array<Eigen::Vector3d, 4> feetPositions = kinematicModelPtr_->feetPositionsOriginFrame();
+  std::array<Eigen::Vector3d, 4> feetPositions =
+      kinematicModelPtr_->feetPositionsInOriginFrame(getBasePose(rbdState), getJointPositions(rbdState));
 
   scalar_t totalHeight = 0.0;
   int feetInContact = 0;
-  for (size_t j = 0; j < 4; j++)
-    if (contactFlag[j] == true) {
+  for (size_t j = 0; j < NUM_CONTACT_POINTS; j++)
+    if (contactFlag[j]) {
       feetInContact++;
       totalHeight += feetPositions[j](2);
     }
-  groundHight = totalHeight / scalar_t(feetInContact);
+  groundHight = totalHeight / feetInContact;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::kinematic_model_t&
-OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getKinematicModel() {
+const typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::kinematic_model_t&
+OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getKinematicModel() const {
   return *kinematicModelPtr_;
 }
 
@@ -314,8 +262,8 @@ OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getKinematicMode
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::com_model_t&
-OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getComModel() {
+const typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::com_model_t&
+OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getComModel() const {
   return *comModelPtr_;
 }
 
@@ -334,7 +282,7 @@ OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getSLQ() {
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 typename OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::mpc_t&
 OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getMpc() {
-	return *mpcPtr_;
+  return *mpcPtr_;
 }
 
 /******************************************************************************************************/
@@ -455,34 +403,8 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runSLQ(
 
   linInterpolateInput_.setData(&primalSolution_.timeTrajectory_, &primalSolution_.inputTrajectory_);
 
-//  linInterpolateUff_.setData(&controllerTimeTrajectory_, &controllerFFTrajector_);
-//  linInterpolateK_.setData(&controllerTimeTrajectory_, &controllerFBTrajectory_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSimulationSettings(const std::string& filename, scalar_t& dt,
-                                                                                            scalar_t& tFinal, scalar_t& initSettlingTime) {
-  const scalar_t defaultInitSettlingTime = 1.5;
-  boost::property_tree::ptree pt;
-
-  try {
-    boost::property_tree::read_info(filename, pt);
-    dt = pt.get<scalar_t>("simulationSettings.dt");
-    tFinal = pt.get<scalar_t>("simulationSettings.tFinal");
-    initSettlingTime = pt.get<scalar_t>("simulationSettings.initSettlingTime", defaultInitSettlingTime);
-  } catch (const std::exception& e) {
-    std::cerr << "Tried to open file " << filename << " but failed: " << std::endl;
-    std::cerr << "Error in loading simulation settings: " << e.what() << std::endl;
-    throw;
-  }
-  std::cerr << "Simulation Settings: " << std::endl;
-  std::cerr << "=====================================" << std::endl;
-  std::cerr << "Simulation time step ......... " << dt << std::endl;
-  std::cerr << "Controller simulation time ... [0, " << tFinal << "]" << std::endl;
-  std::cerr << "initial settling time ......... " << initSettlingTime << std::endl << std::endl;
+  //  linInterpolateUff_.setData(&controllerTimeTrajectory_, &controllerFFTrajector_);
+  //  linInterpolateK_.setData(&controllerTimeTrajectory_, &controllerFBTrajectory_);
 }
 
 }  // end of namespace switched_model

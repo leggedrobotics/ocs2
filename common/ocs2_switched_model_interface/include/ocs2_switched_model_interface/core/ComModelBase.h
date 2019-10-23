@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Eigen/Dense>
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 
 namespace switched_model {
@@ -12,13 +11,6 @@ template <typename SCALAR_T>
 class ComModelBase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using base_coordinate_t = Eigen::Matrix<SCALAR_T, BASE_COORDINATE_SIZE, 1>;
-  using joint_coordinate_t = Eigen::Matrix<SCALAR_T, JOINT_COORDINATE_SIZE, 1>;
-
-  using vector3s_t = Eigen::Matrix<SCALAR_T, 3, 1>;
-  using matrix3s_t = Eigen::Matrix<SCALAR_T, 3, 3>;
-  using matrix6s_t = Eigen::Matrix<SCALAR_T, 6, 6>;
 
   ComModelBase() = default;
 
@@ -32,17 +24,21 @@ class ComModelBase {
   /**
   * Set default joint configuration. Updates the CoM position and inertia
   */
-  virtual void setJointConfiguration(const joint_coordinate_t& q) = 0;
+  virtual void setJointConfiguration(const joint_coordinate_s_t<SCALAR_T>& q) = 0;
 
   /**
    * Calculate CoM Position in Base frame from Base origin
    */
-  virtual vector3s_t comPositionBaseFrame() const = 0;
+  virtual vector3_s_t<SCALAR_T> comPositionBaseFrame() const = 0;
 
   /**
    *   Calculate CoM inertia tensor around CoM
    */
-  virtual matrix6s_t comInertia() const = 0;
+  virtual matrix6_s_t<SCALAR_T> comInertia() const = 0;
+
+  matrix3_s_t<SCALAR_T> rotationalInertia() const;
+
+  matrix6_s_t<SCALAR_T> comInertiaInverse() const;
 
   /**
    * Total mass of robot
@@ -59,9 +55,9 @@ class ComModelBase {
    * @param [in]  comPose
    * @param [out] basePose
    */
-  base_coordinate_t calculateBasePose(const base_coordinate_t& comPose) const;
+  base_coordinate_s_t<SCALAR_T> calculateBasePose(const base_coordinate_s_t<SCALAR_T>& comPose) const;
 
-  base_coordinate_t calculateComPose(const base_coordinate_t& basePose) const;
+  base_coordinate_s_t<SCALAR_T> calculateComPose(const base_coordinate_s_t<SCALAR_T>& basePose) const;
 
   /**
    * Calculates the Base local velocities based on the CoM local velocities (comLocalVelocities).
@@ -69,11 +65,12 @@ class ComModelBase {
    * linear velocities in base frame (inertia frame coincide at Base frame)
    * (6-states)
    */
-  base_coordinate_t calculateBaseLocalVelocities(const base_coordinate_t& comLocalVelocities) const;
+  base_coordinate_s_t<SCALAR_T> calculateBaseLocalVelocities(const base_coordinate_s_t<SCALAR_T>& comLocalVelocities) const;
 
-  base_coordinate_t calculateComLocalVelocities(const base_coordinate_t& baseLocalVelocities) const;
+  base_coordinate_s_t<SCALAR_T> calculateComLocalVelocities(const base_coordinate_s_t<SCALAR_T>& baseLocalVelocities) const;
 };
 
-}  // end of namespace switched_model
+extern template class ComModelBase<double>;
+extern template class ComModelBase<ocs2::CppAdInterface<double>::ad_scalar_t>;
 
-#include "implementation/ComModelBase.h"
+}  // end of namespace switched_model

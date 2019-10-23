@@ -211,14 +211,14 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
    *
    * @return A reference to the robot kinematic model
    */
-  kinematic_model_t& getKinematicModel();
+  const kinematic_model_t& getKinematicModel() const;
 
   /**
    * Get a reference to the robot CoM model.
    *
    * @return A reference to the robot CoM model
    */
-  com_model_t& getComModel();
+  const com_model_t& getComModel() const;
 
   /**
    * Gets a reference to the internal SLQ class.
@@ -282,16 +282,6 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
    * @param [out] timeHorizon: The time horizon of the MPC.
    */
   void getLoadedTimeHorizon(scalar_t& timeHorizon) const;
-
-  /**
-   * This function loads the simulation-specific settings: dt, tFinal, initSettlingTime
-   *
-   * @param filename
-   * @param dt
-   * @param tFinal
-   * @param initSettlingTime
-   */
-  static void loadSimulationSettings(const std::string& filename, scalar_t& dt, scalar_t& tFinal, scalar_t& initSettlingTime);
 
   /**
    * Gets SLQ settings.

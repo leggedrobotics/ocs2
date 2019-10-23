@@ -49,7 +49,7 @@ class EndEffectorPositionConstraint final : public ocs2::ConstraintTerm<STATE_DI
 
  public:
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
-  using ad_kinematic_model_t = KinematicsModelBase<12, ad_scalar_t>;
+  using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
 
   explicit EndEffectorPositionConstraint(int legNumber, EndEffectorPositionConstraintSettings settings, ad_com_model_t& adComModel,
                                          ad_kinematic_model_t& adKinematicsModel, bool generateModels)
@@ -148,31 +148,17 @@ class EndEffectorPositionConstraint final : public ocs2::ConstraintTerm<STATE_DI
                       ad_dynamic_vector_t& o_footPosition) {
     // Extract elements from taped input
     ad_scalar_t t = tapedInput(0);
-    ad_dynamic_vector_t x = tapedInput.segment(1, STATE_DIM);
-    ad_dynamic_vector_t u = tapedInput.segment(1 + STATE_DIM, INPUT_DIM);
+    comkino_state_ad_t x = tapedInput.segment(1, STATE_DIM);
+    comkino_input_ad_t u = tapedInput.segment(1 + STATE_DIM, INPUT_DIM);
 
     // Extract elements from state
-    using Vector3Ad = typename ad_kinematic_model_t::vector3d_t;
-    using Matrix3Ad = typename ad_kinematic_model_t::matrix3d_t;
-    using ad_joint_coordinate_t = typename ad_kinematic_model_t::joint_coordinate_t;
-    using ad_base_coordinate_t = typename ad_kinematic_model_t::base_coordinate_t;
-    Vector3Ad baseEulerAngles = x.segment(0, 3);
-    Vector3Ad o_comPosition = x.segment(3, 3);  // in origin frame
-    ad_joint_coordinate_t qJoints = x.segment(12, 12);
+    const base_coordinate_ad_t comPose = getComPose(x);
+    const joint_coordinate_ad_t qJoints = getJointPositions(x);
 
-    // base coordinates [EulerAngles, base position in world]
-    Vector3Ad com_base2CoM_ = adComModel.comPositionBaseFrame();
-    Matrix3Ad o_R_b_ = RotationMatrixBasetoOrigin<ad_scalar_t>(baseEulerAngles);
-    ad_base_coordinate_t basePose;
-    basePose << baseEulerAngles, o_comPosition - o_R_b_ * com_base2CoM_;
+    // Get base state from com state
+    const base_coordinate_ad_t basePose = adComModel.calculateBasePose(comPose);
 
-    // update kinematic model
-    adKinematicsModel.update(basePose, qJoints);
-
-    // Get foot position and Jacobian
-    Vector3Ad footPositionInWorld;
-    adKinematicsModel.footPositionOriginFrame(legNumber_, footPositionInWorld);
-    o_footPosition = footPositionInWorld;
+    o_footPosition = adKinematicsModel.footPositionInOriginFrame(legNumber_, basePose, qJoints);
   }
 
   void setAdInterface(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel) {

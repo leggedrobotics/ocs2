@@ -18,7 +18,6 @@ ComKinoConstraintBaseAd* ComKinoConstraintBaseAd::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void ComKinoConstraintBaseAd::InitializeConstraintTerms() {
-
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
     auto footName = feetNames[i];
 

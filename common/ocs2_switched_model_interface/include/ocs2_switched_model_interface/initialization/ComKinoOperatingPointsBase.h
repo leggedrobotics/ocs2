@@ -32,11 +32,10 @@ class ComKinoOperatingPointsBase : public ocs2::SystemOperatingPoint<STATE_DIM, 
   ComKinoOperatingPointsBase* clone() const override;
 
   void getSystemOperatingTrajectories(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime,
-                                              scalar_array_t& timeTrajectory, state_vector_array_t& stateTrajectory,
-                                              input_vector_array_t& inputTrajectory, bool concatOutput = false) override;
+                                      scalar_array_t& timeTrajectory, state_vector_array_t& stateTrajectory,
+                                      input_vector_array_t& inputTrajectory, bool concatOutput = false) override;
 
  private:
-
   void computeInputOperatingPoints(contact_flag_t contactFlags, input_vector_t& inputs);
 
   std::unique_ptr<com_model_t> comModelPtr_;
@@ -44,4 +43,3 @@ class ComKinoOperatingPointsBase : public ocs2::SystemOperatingPoint<STATE_DIM, 
 };
 
 }  // end of namespace switched_model
-

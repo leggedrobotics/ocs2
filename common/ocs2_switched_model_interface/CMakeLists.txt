@@ -44,6 +44,9 @@ add_library(${PROJECT_NAME}
 		src/ComKinoOperatingPointsBase.cpp
         src/SwitchedModelStateEstimator.cpp
 		src/SwitchedModelLogicRulesBase.cpp
+		src/KinematicsModelBase.cpp
+		src/ComModelBase.cpp
+		src/Model_Settings.cpp
 		)
 
 add_dependencies(${PROJECT_NAME}

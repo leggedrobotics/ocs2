@@ -9,8 +9,6 @@
 
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
 
-#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
-
 namespace anymal {
 namespace tpl {
 
@@ -20,15 +18,9 @@ class AnymalKinematics final : public switched_model::KinematicsModelBase<SCALAR
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   typedef switched_model::KinematicsModelBase<SCALAR_T> BASE;
+  using typename BASE::joint_jacobian_t;
 
   enum { LF = 0, RF = 1, LH = 2, RH = 3 };
-
-  typedef typename BASE::vector3d_t vector3d_t;
-  typedef typename BASE::matrix3d_t matrix3d_t;
-  typedef typename BASE::base_coordinate_t base_coordinate_t;
-  typedef typename BASE::joint_coordinate_t joint_coordinate_t;
-  typedef typename BASE::generalized_coordinate_t generalized_coordinate_t;
-  typedef typename BASE::joint_jacobian_t joint_jacobian_t;
 
   AnymalKinematics() = default;
 
@@ -36,9 +28,11 @@ class AnymalKinematics final : public switched_model::KinematicsModelBase<SCALAR
 
   AnymalKinematics<SCALAR_T>* clone() const override;
 
-  vector3d_t footPositionBaseFrame(size_t footIndex) const override;
+  switched_model::vector3_s_t<SCALAR_T> positionBaseToFootInBaseFrame(
+      size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const override;
 
-  joint_jacobian_t footJacobianBaseFrame(size_t footIndex) const override;
+  joint_jacobian_t baseToFootJacobianInBaseFrame(size_t footIndex,
+                                                 const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const override;
 };
 
 }  // namespace tpl

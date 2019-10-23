@@ -24,17 +24,17 @@ class SwitchedModelLogicRulesBase : public ocs2::HybridLogicRules {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = ocs2::HybridLogicRules ;
-  using typename BASE::size_array_t ;
-  using typename BASE::scalar_t ;
-  using typename BASE::scalar_array_t ;
-  using typename BASE::logic_template_type ;
+  using BASE = ocs2::HybridLogicRules;
+  using typename BASE::logic_template_type;
+  using typename BASE::scalar_array_t;
+  using typename BASE::scalar_t;
+  using typename BASE::size_array_t;
 
-  using foot_cpg_t = CPG_BASE<scalar_t> ;
-  using feet_planner_t = FeetPlannerBase<scalar_t, foot_cpg_t> ;
-  using feet_planner_ptr_t = typename feet_planner_t::Ptr ;
-  using feet_cpg_ptr_t = typename feet_planner_t::feet_cpg_ptr_t ;
-  using feet_cpg_const_ptr_t = typename feet_planner_t::feet_cpg_const_ptr_t ;
+  using foot_cpg_t = CPG_BASE<scalar_t>;
+  using feet_planner_t = FeetPlannerBase<scalar_t, foot_cpg_t>;
+  using feet_planner_ptr_t = typename feet_planner_t::Ptr;
+  using feet_cpg_ptr_t = typename feet_planner_t::feet_cpg_ptr_t;
+  using feet_cpg_const_ptr_t = typename feet_planner_t::feet_cpg_const_ptr_t;
 
  public:
   /**

@@ -5,7 +5,7 @@
  *      Author: farbod
  */
 
-#include <ocs2_robotic_tools/rbd_libraries/robcogen/iit/rbd/rbd.h>
+#include <iit/rbd/rbd.h>
 
 #include "ocs2_anymal_switched_model/generated/inertia_properties.h"
 #include "ocs2_anymal_switched_model/generated/inverse_dynamics.h"

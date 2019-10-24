@@ -24,7 +24,7 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> AnymalRaisimConversions::stateToRais
 AnymalRaisimConversions::rbd_state_vector_t AnymalRaisimConversions::raisimGenCoordGenVelToRbdState(const Eigen::VectorXd& q,
                                                                                                     const Eigen::VectorXd& dq) {
   Eigen::Quaterniond q_world_base(q(3), q(4), q(5), q(6));  // quaternion coefficients w, x, y z
-  Eigen::Vector3d eulerAngles = switched_model::EulerAnglesFromQuaternionBaseToOrigin<double >(q_world_base);
+  Eigen::Vector3d eulerAngles = switched_model::EulerAnglesFromQuaternionBaseToOrigin<double>(q_world_base);
   makeEulerAnglesUnique(eulerAngles);
 
   rbd_state_vector_t ocs2RbdState;

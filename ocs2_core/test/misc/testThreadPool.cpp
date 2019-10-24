@@ -8,11 +8,9 @@ TEST(testThreadPool, testCanExecuteTask) {
   std::future<void> res;
   int answer = 0;
 
-  // send task to pool
   res = pool.run([&answer](int) { answer = 42; });
-
-  // wait for pool to run task with timeout
   res.wait_for(std::chrono::milliseconds(10));
+
   EXPECT_EQ(answer, 42);
 }
 
@@ -151,4 +149,14 @@ TEST(testThreadPool, testDependsOnNonexistingTask) {
   // The task should run without delay.
   ASSERT_EQ(status, std::future_status::ready);
   fut.get();
+}
+
+TEST(testThreadPool, testRunMultiple) {
+  ThreadPool pool(2);
+  std::atomic_int counter;
+  counter = 0;
+
+  pool.runMultiple([&](int) { counter++; }, 42);
+
+  EXPECT_EQ(counter, 42);
 }

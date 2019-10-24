@@ -134,4 +134,20 @@ int ThreadPool::runTaskWithDependency(std::shared_ptr<TaskBase> task, int runsAf
   return taskId;
 }
 
+/**************************************************************************************************/
+/**************************************************************************************************/
+/**************************************************************************************************/
+void ThreadPool::runMultiple(std::function<void(int)> taskFunction, size_t N) {
+  std::vector<std::future<void>> futures;
+  futures.reserve(N);
+
+  for (int i = 0; i < N; i++) {
+    futures.push_back(std::move(run(taskFunction)));
+  }
+
+  for (auto&& fut : futures) {
+    fut.get();
+  }
+}
+
 }  // namespace ocs2

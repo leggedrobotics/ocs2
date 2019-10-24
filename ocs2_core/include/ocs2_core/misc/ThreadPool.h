@@ -90,6 +90,16 @@ class ThreadPool {
   template <typename Functor>
   std::future<typename std::result_of<Functor(int)>::type> runAfter(int runAfterId, Functor taskFunction);
 
+  /**
+   * Helper function to run a task N times on the pool
+   *
+   * @note this is a blocking operation, returns when all tasks are completed.
+   *
+   * @param [in] taskFunction: task function to run in the pool.
+   * @param [in] N: number of times to run the task.
+   */
+  void runMultiple(std::function<void(int)> taskFunction, size_t N);
+
  private:
   /**
    * Push task to ready queue

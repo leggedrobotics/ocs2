@@ -49,7 +49,8 @@ Eigen::VectorXd AnymalRaisimConversions::inputToRaisimGeneralizedForce(double ti
   Eigen::Matrix<double, 2 * (6 + 12), 1> ocs2RbdStateRef;
   Eigen::Matrix<double, 12, 1> ocs2RbdInput;
   size_t subsystem;
-  mrt_->rolloutPolicy(time, ocs2RbdState, ocs2RbdStateRef, ocs2RbdInput, subsystem);
+  // FIXME(Jan) : rolloutPolicy is deleted
+  //  mrt_->rolloutPolicy(time, ocs2RbdState, ocs2RbdStateRef, ocs2RbdInput, subsystem);
 
   Eigen::Matrix<double, 18, 1> raisimInput;
   raisimInput.setZero();

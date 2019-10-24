@@ -43,7 +43,7 @@ using namespace ocs2;
 
 enum { STATE_DIM = 2, INPUT_DIM = 1 };
 
-TEST(exp0_ilqr_test, exp0_ilqr_test) {
+TEST(DISABLED_exp0_ilqr_test, exp0_ilqr_test) {
   ILQR_Settings ilqrSettings;
   ilqrSettings.ddpSettings_.displayInfo_ = false;
   ilqrSettings.ddpSettings_.displayShortSummary_ = true;

@@ -96,8 +96,9 @@ int ThreadPool::runTask(std::shared_ptr<TaskBase> task) {
   int taskId;
 
   {
-    taskId = nextTaskId_++;
     std::lock_guard<std::mutex> lock(taskRegistryLock_);
+
+    taskId = nextTaskId_++;
     taskRegistry_.insert({taskId, std::move(task)});
   }
 
@@ -113,9 +114,10 @@ int ThreadPool::runTaskWithDependency(std::shared_ptr<TaskBase> task, int runsAf
   int taskId;
 
   {
+    std::lock_guard<std::mutex> lock(taskRegistryLock_);
+
     taskId = nextTaskId_++;
     // register task with id
-    std::lock_guard<std::mutex> lock(taskRegistryLock_);
     taskRegistry_.insert({taskId, std::move(task)});
 
     // register task at parent

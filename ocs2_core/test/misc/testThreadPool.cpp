@@ -160,3 +160,14 @@ TEST(testThreadPool, testRunMultiple) {
 
   EXPECT_EQ(counter, 42);
 }
+
+TEST(testThreadPool, testNoThreads) {
+  ThreadPool pool(0);
+  int id;
+
+  auto fut1 = pool.run([&](int) -> std::string { return "foo"; }, id);
+  EXPECT_EQ(fut1.get(), "foo");
+
+  auto fut2 = pool.runAfter(id, [&](int) -> std::string { return "ok"; });
+  EXPECT_EQ(fut2.get(), "ok");
+}

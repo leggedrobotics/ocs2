@@ -172,7 +172,13 @@ std::future<typename std::result_of<Functor(int)>::type> ThreadPool::run(Functor
   future = task->packaged_task_.get_future();
 
   std::shared_ptr<TaskBase> task_shared(static_cast<TaskBase*>(task));
-  taskId = runTask(std::move(task_shared));
+
+  if (workerThreads_.size() > 0) {
+    taskId = runTask(std::move(task_shared));
+  } else {
+    taskId = nextTaskId_++;
+    task_shared->operator()(0);
+  }
 
   thisTaskId = taskId;
   return std::move(future);
@@ -200,7 +206,13 @@ std::future<typename std::result_of<Functor(int)>::type> ThreadPool::runAfter(in
   future = task->packaged_task_.get_future();
 
   std::shared_ptr<TaskBase> task_shared(static_cast<TaskBase*>(task));
-  taskId = runTaskWithDependency(std::move(task_shared), runAfterId);
+
+  if (workerThreads_.size() > 0) {
+    taskId = runTaskWithDependency(std::move(task_shared), runAfterId);
+  } else {
+    taskId = nextTaskId_++;
+    task_shared->operator()(0);
+  }
 
   thisTaskId = taskId;
   return std::move(future);

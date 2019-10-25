@@ -100,6 +100,13 @@ class ThreadPool {
    */
   void runMultiple(std::function<void(int)> taskFunction, size_t N);
 
+  /**
+   * Enable debug log
+   *
+   * @param [in] debugPrint: re-entrant line printing function
+   */
+  void enableDebug(std::function<void(const std::string)> debugPrint);
+
  private:
   /**
    * Push task to ready queue
@@ -139,6 +146,14 @@ class ThreadPool {
    */
   int runTaskWithDependency(std::shared_ptr<TaskBase> task, int runAfterId);
 
+  /**
+   * Print debug message
+   *
+   * @param [in] workerId: thread id number
+   * @param [in] msg: debug message
+   */
+  void debugMessage(const std::string msg, int workerId = -1);
+
   int nextTaskId_;  // protected by taskRegistryLock_
   std::map<int, std::shared_ptr<TaskBase>> taskRegistry_;
   std::mutex taskRegistryLock_;
@@ -148,6 +163,9 @@ class ThreadPool {
   std::queue<int> readyQueue_;
   std::condition_variable readyQueueCondition_;
   std::mutex readyQueueLock_;
+
+  bool debug_;
+  std::function<void(const std::string)> debugPrint_;
 };
 
 /**************************************************************************************************/

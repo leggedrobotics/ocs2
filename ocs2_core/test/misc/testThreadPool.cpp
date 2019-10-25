@@ -88,6 +88,8 @@ TEST(testThreadPool, testCanExecuteMultipleTasks) {
 
 TEST(testThreadPool, testTaskDependency) {
   ThreadPool pool(2);
+  // pool.enableDebug([](const std::string msg) { std::cout << "[ThreadPool]: " << msg << std::endl; });
+
   std::future<void> fut1, fut2, fut3;
   int id1, id2;
 

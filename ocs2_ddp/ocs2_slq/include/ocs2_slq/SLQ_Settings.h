@@ -81,6 +81,17 @@ class SLQ_Settings {
    */
   void loadSettings(const std::string& filename, const std::string& fieldName = "slq", bool verbose = true);
 
+  /**
+   * Helper function for loading setting fields
+   *
+   * @param [in] pt: Property_tree.
+   * @param [in] prefix: Field name prefix.
+   * @param [in] fieldName: Field name.
+   * @param [in] verbose: Print loaded settings if true.
+   */
+  template <typename T>
+  void loadField(const boost::property_tree::ptree& pt, const std::string& prefix, const std::string& fieldName, T& field, bool verbose);
+
  public:
   /****************
    *** Variables **
@@ -100,6 +111,22 @@ class SLQ_Settings {
 
 };  // end of SLQ_Settings class
 
+template <typename T>
+inline void SLQ_Settings::loadField(const boost::property_tree::ptree& pt, const std::string& prefix, const std::string& fieldName,
+                                    T& field, bool verbose) {
+  std::string comment;
+  try {
+    field = pt.get<T>(prefix + "." + fieldName);
+  } catch (const std::exception& e) {
+    comment = "   \t(default)";
+  }
+
+  if (verbose) {
+    int fill = std::max<int>(0, 36 - static_cast<int>(fieldName.length()));
+    std::cerr << " #### Option loader : option '" << fieldName << "' " << std::string(fill, '.') << " " << field << comment << std::endl;
+  }
+}
+
 inline void SLQ_Settings::loadSettings(const std::string& filename, const std::string& fieldName /*= slq*/, bool verbose /*= true*/) {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);
@@ -111,51 +138,10 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, const std::s
     std::cerr << " #### =============================================================================" << std::endl;
   }
 
-  try {
-    useNominalTimeForBackwardPass_ = pt.get<bool>(fieldName + ".useNominalTimeForBackwardPass");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useNominalTimeForBackwardPass' ....... " << useNominalTimeForBackwardPass_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useNominalTimeForBackwardPass' ....... " << useNominalTimeForBackwardPass_
-                << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    preComputeRiccatiTerms_ = pt.get<bool>(fieldName + ".preComputeRiccatiTerms");
-    if (verbose)
-      std::cerr << " #### Option loader : option 'preComputeRiccatiTerms' .............. " << preComputeRiccatiTerms_ << std::endl;
-  } catch (const std::exception& e) {
-    if (verbose)
-      std::cerr << " #### Option loader : option 'preComputeRiccatiTerms' .............. " << preComputeRiccatiTerms_ << "   \t(default)"
-                << std::endl;
-  }
-
-  try {
-    RiccatiIntegratorType_ = pt.get<size_t>(fieldName + ".RiccatiIntegratorType");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'RiccatiIntegratorType' ............... " << RiccatiIntegratorType_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'RiccatiIntegratorType' ............... " << RiccatiIntegratorType_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    adams_integrator_dt_ = pt.get<double>(fieldName + ".adams_integrator_dt");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'adams_integrator_dt' ................. " << adams_integrator_dt_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'adams_integrator_dt' ................. " << adams_integrator_dt_ << "   \t(default)"
-                << std::endl;
-    }
-  }
+  loadField(pt, fieldName, "useNominalTimeForBackwardPass", useNominalTimeForBackwardPass_, verbose);
+  loadField(pt, fieldName, "preComputeRiccatiTerms", preComputeRiccatiTerms_, verbose);
+  loadField(pt, fieldName, "RiccatiIntegratorType", RiccatiIntegratorType_, verbose);
+  loadField(pt, fieldName, "adams_integrator_dt", adams_integrator_dt_, verbose);
 
   if (verbose) {
     std::cerr << " #### =============================================================================" << std::endl;

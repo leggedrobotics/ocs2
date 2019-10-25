@@ -91,6 +91,17 @@ class GDDP_Settings {
    */
   void loadSettings(const std::string& filename, const std::string& fieldName = "gddp", bool verbose = true);
 
+  /**
+   * Helper function for loading setting fields
+   *
+   * @param [in] pt: Property_tree.
+   * @param [in] prefix: Field name prefix.
+   * @param [in] fieldName: Field name.
+   * @param [in] verbose: Print loaded settings if true.
+   */
+  template <typename T>
+  void loadField(const boost::property_tree::ptree& pt, const std::string& prefix, const std::string& fieldName, T& field, bool verbose);
+
  public:
   /****************
    *** Variables **
@@ -139,6 +150,22 @@ class GDDP_Settings {
 
 };  // end of GDDP_Settings class
 
+template <typename T>
+inline void GDDP_Settings::loadField(const boost::property_tree::ptree& pt, const std::string& prefix, const std::string& fieldName,
+                                     T& field, bool verbose) {
+  std::string comment;
+  try {
+    field = pt.get<T>(prefix + "." + fieldName);
+  } catch (const std::exception& e) {
+    comment = "   \t(default)";
+  }
+
+  if (verbose) {
+    int fill = std::max<int>(0, 36 - static_cast<int>(fieldName.length()));
+    std::cerr << " #### Option loader : option '" << fieldName << "' " << std::string(fill, '.') << " " << field << comment << std::endl;
+  }
+}
+
 inline void GDDP_Settings::loadSettings(const std::string& filename, const std::string& fieldName /*= ilqr*/, bool verbose /*= true*/) {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);
@@ -148,215 +175,24 @@ inline void GDDP_Settings::loadSettings(const std::string& filename, const std::
     std::cerr << " #### =============================================================================" << std::endl;
   }
 
-  try {
-    displayInfo_ = pt.get<bool>(fieldName + ".displayInfo");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'displayInfo' ......................... " << displayInfo_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'displayInfo' ......................... " << displayInfo_ << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    checkNumericalStability_ = pt.get<bool>(fieldName + ".checkNumericalStability");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    warmStart_ = pt.get<bool>(fieldName + ".warmStart");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'warmStart' ........................... " << warmStart_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'warmStart' ........................... " << warmStart_ << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    useLQForDerivatives_ = pt.get<bool>(fieldName + ".useLQForDerivatives");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useLQForDerivatives' ................. " << useLQForDerivatives_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useLQForDerivatives' ................. " << useLQForDerivatives_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    maxNumIterationForLQ_ = pt.get<size_t>(fieldName + ".maxNumIterationForLQ");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'maxNumIterationForLQ' ................ " << maxNumIterationForLQ_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'maxNumIterationForLQ' ................ " << maxNumIterationForLQ_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    tolGradientDescent_ = pt.get<double>(fieldName + ".tolGradientDescent");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'tolGradientDescent' .................. " << tolGradientDescent_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'tolGradientDescent' .................. " << tolGradientDescent_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    acceptableTolGradientDescent_ = pt.get<double>(fieldName + ".acceptableTolGradientDescent");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'acceptableTolGradientDescent' ........ " << acceptableTolGradientDescent_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'acceptableTolGradientDescent' ........ " << acceptableTolGradientDescent_
-                << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    maxIterationGradientDescent_ = pt.get<int>(fieldName + ".maxIterationGradientDescent");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'maxIterationGradientDescent' ......... " << maxIterationGradientDescent_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'maxIterationGradientDescent' ......... " << maxIterationGradientDescent_
-                << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    minLearningRateNLP_ = pt.get<double>(fieldName + ".minLearningRateNLP");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'minLearningRateNLP' .................. " << minLearningRateNLP_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'minLearningRateNLP' .................. " << minLearningRateNLP_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    maxLearningRateNLP_ = pt.get<double>(fieldName + ".maxLearningRateNLP");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'maxLearningRateNLP' .................. " << maxLearningRateNLP_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'maxLearningRateNLP' .................. " << maxLearningRateNLP_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    minEventTimeDifference_ = pt.get<double>(fieldName + ".minEventTimeDifference");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'minEventTimeDifference' .............. " << minEventTimeDifference_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'minEventTimeDifference' .............. " << minEventTimeDifference_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    nThreads_ = pt.get<int>(fieldName + ".nThreads");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'nThreads' ............................ " << nThreads_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'nThreads' ............................ " << nThreads_ << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    useNominalTimeForBackwardPass_ = pt.get<bool>(fieldName + ".useNominalTimeForBackwardPass");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useNominalTimeForBackwardPass' ....... " << useNominalTimeForBackwardPass_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useNominalTimeForBackwardPass' ....... " << useNominalTimeForBackwardPass_
-                << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    riccatiIntegratorType_ = pt.get<size_t>(fieldName + ".RiccatiIntegratorType");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'riccatiIntegratorType' ............... " << riccatiIntegratorType_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'riccatiIntegratorType' ............... " << riccatiIntegratorType_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    absTolODE_ = pt.get<double>(fieldName + ".AbsTolODE");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    relTolODE_ = pt.get<double>(fieldName + ".RelTolODE");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    maxNumStepsPerSecond_ = pt.get<size_t>(fieldName + ".maxNumStepsPerSecond");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    minTimeStep_ = pt.get<double>(fieldName + ".minTimeStep");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << "   \t(default)" << std::endl;
-    }
-  }
+  loadField(pt, fieldName, "displayInfo", displayInfo_, verbose);
+  loadField(pt, fieldName, "checkNumericalStability", checkNumericalStability_, verbose);
+  loadField(pt, fieldName, "warmStart", warmStart_, verbose);
+  loadField(pt, fieldName, "useLQForDerivatives", useLQForDerivatives_, verbose);
+  loadField(pt, fieldName, "maxNumIterationForLQ", maxNumIterationForLQ_, verbose);
+  loadField(pt, fieldName, "tolGradientDescent", tolGradientDescent_, verbose);
+  loadField(pt, fieldName, "acceptableTolGradientDescent", acceptableTolGradientDescent_, verbose);
+  loadField(pt, fieldName, "maxIterationGradientDescent", maxIterationGradientDescent_, verbose);
+  loadField(pt, fieldName, "minLearningRateNLP", minLearningRateNLP_, verbose);
+  loadField(pt, fieldName, "maxLearningRateNLP", maxLearningRateNLP_, verbose);
+  loadField(pt, fieldName, "minEventTimeDifference", minEventTimeDifference_, verbose);
+  loadField(pt, fieldName, "nThreads", nThreads_, verbose);
+  loadField(pt, fieldName, "useNominalTimeForBackwardPass", useNominalTimeForBackwardPass_, verbose);
+  loadField(pt, fieldName, "RiccatiIntegratorType", riccatiIntegratorType_, verbose);
+  loadField(pt, fieldName, "AbsTolODE", absTolODE_, verbose);
+  loadField(pt, fieldName, "RelTolODE", relTolODE_, verbose);
+  loadField(pt, fieldName, "maxNumStepsPerSecond", maxNumStepsPerSecond_, verbose);
+  loadField(pt, fieldName, "minTimeStep", minTimeStep_, verbose);
 
   if (verbose) {
     std::cerr << " #### =============================================================================" << std::endl;

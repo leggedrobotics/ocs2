@@ -90,6 +90,17 @@ class Rollout_Settings {
    */
   void loadSettings(const std::string& filename, const std::string& fieldName, bool verbose = true);
 
+  /**
+   * Helper function for loading setting fields
+   *
+   * @param [in] pt: Property_tree.
+   * @param [in] prefix: Field name prefix.
+   * @param [in] fieldName: Field name.
+   * @param [in] verbose: Print loaded settings if true.
+   */
+  template <typename T>
+  void loadField(const boost::property_tree::ptree& pt, const std::string& prefix, const std::string& fieldName, T& field, bool verbose);
+
  public:
   /****************
    *** Variables **
@@ -111,6 +122,22 @@ class Rollout_Settings {
 
 };  // end of Rollout_Settings class
 
+template <typename T>
+inline void Rollout_Settings::loadField(const boost::property_tree::ptree& pt, const std::string& prefix, const std::string& fieldName,
+                                        T& field, bool verbose) {
+  std::string comment;
+  try {
+    field = pt.get<T>(prefix + "." + fieldName);
+  } catch (const std::exception& e) {
+    comment = "   \t(default)";
+  }
+
+  if (verbose) {
+    int fill = std::max<int>(0, 36 - static_cast<int>(fieldName.length()));
+    std::cerr << " #### Option loader : option '" << fieldName << "' " << std::string(fill, '.') << " " << field << comment << std::endl;
+  }
+}
+
 inline void Rollout_Settings::loadSettings(const std::string& filename, const std::string& fieldName, bool verbose /*= true*/) {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);
@@ -120,86 +147,17 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, const st
     std::cerr << " #### =============================================================================" << std::endl;
   }
 
-  try {
-    absTolODE_ = pt.get<double>(fieldName + ".AbsTolODE");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << "   \t(default)" << std::endl;
-    }
-  }
+  loadField(pt, fieldName, "AbsTolODE", absTolODE_, verbose);
+  loadField(pt, fieldName, "RelTolODE", relTolODE_, verbose);
+  loadField(pt, fieldName, "maxNumStepsPerSecond", maxNumStepsPerSecond_, verbose);
+  loadField(pt, fieldName, "minTimeStep", minTimeStep_, verbose);
 
-  try {
-    relTolODE_ = pt.get<double>(fieldName + ".RelTolODE");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << "   \t(default)" << std::endl;
-    }
-  }
+  int tmp = static_cast<int>(integratorType_);
+  loadField(pt, fieldName, "integratorType", tmp, verbose);
+  integratorType_ = static_cast<IntegratorType>(tmp);
 
-  try {
-    maxNumStepsPerSecond_ = pt.get<size_t>(fieldName + ".maxNumStepsPerSecond");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    minTimeStep_ = pt.get<double>(fieldName + ".minTimeStep");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    integratorType_ = static_cast<IntegratorType>(pt.get<int>(fieldName + ".integratorType"));
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'integratorType' ...................... " << ocs2::toString(integratorType_) << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'integratorType' ...................... " << ocs2::toString(integratorType_)
-                << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    checkNumericalStability_ = pt.get<bool>(fieldName + ".checkNumericalStability");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    reconstructInputTrajectory_ = pt.get<bool>(fieldName + ".reconstructInputTrajectory");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'reconstructInputTrajectory' .......... " << reconstructInputTrajectory_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'reconstructInputTrajectory' .......... " << reconstructInputTrajectory_
-                << "   \t(default)" << std::endl;
-    }
-  }
+  loadField(pt, fieldName, "checkNumericalStability", checkNumericalStability_, verbose);
+  loadField(pt, fieldName, "reconstructInputTrajectory", reconstructInputTrajectory_, verbose);
 
   if (verbose) {
     std::cerr << " #### =============================================================================" << std::endl;

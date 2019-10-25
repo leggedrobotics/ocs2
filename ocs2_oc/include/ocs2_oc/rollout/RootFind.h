@@ -12,18 +12,52 @@ public:
 	RootFind(){};
 	~RootFind(){};
 
+	/**
+	 * Set the initial bracket when the RootFinding method is intialized.
+	 * Normally done when first zero crossing is detected
+	 *
+	 * @param [in] time_int: 		Pair of two time moments
+	 * @param [in] guard_int:		Pair of two function values at time_int times, should have opposite sign
+	 *
+	 */
 	void set_Init_Bracket(const interval_t &time_int, const interval_t &guard_int)
 	{
+		if(guard_int.first * guard_int.second > 0)
+		{throw std::runtime_error("Bracket function values should have opposite sign");}
+
 		time_int_m = time_int;
 		guard_int_m = guard_int;
 
 	}
 
+	/**
+	 * Set the initial bracket when the RootFinding method is intialized.
+	 * Normally done when first zero crossing is detected
+	 *
+	 * @param [in] t0: 		First time of bracketing interval
+	 * @param [in] t1: 		Second time of bracketing interval
+	 * @param [in] f0: 		Function value corresponding to t0
+	 * @param [in] f1: 		Function value corresponding to t1, of opposite sign to f0
+	 *
+	 */
+
 	void set_Init_Bracket(const scalar_t t0,const scalar_t t1, const scalar_t f0, const scalar_t f1)
 	{
+		if(f0 * f1 > 0)
+		{throw std::runtime_error("Bracket function values should have opposite sign");}
+
+
 		time_int_m = std::make_pair(t0,t1);
 		guard_int_m= std::make_pair(f0,f1);
 	}
+
+	/**
+	 * Update Current bracket, based on based on sign of the new query point
+	 *
+	 * @param [in] query:		Time moment of last query point
+	 * @param [in] f_query:		Function evaluation of last query time
+	 *
+	 */
 
 	void Update_Bracket(const scalar_t &query,const scalar_t &f_query)
 	{
@@ -52,6 +86,13 @@ public:
 		}
 	}
 
+	/**
+	 * Use (adapted-) regula falsi method to obtain a new query point
+	 *
+	 * @param [out] query:		Time moment of new query point
+	 *
+	 */
+
 	void getNewQuery(double &query)
 	{
 		scalar_t fa = guard_int_m.first;
@@ -64,6 +105,11 @@ public:
 
 
 	}
+
+	/**
+	 * Display relevant bracketing information
+	 *
+	 */
 
 	void Display()
 	{

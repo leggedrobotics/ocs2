@@ -95,6 +95,14 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
   const dynamic_vector_t& getGuardSurfacesValues() const { return guardSurfacesValuesPrevious_; }
 
   /**
+   * Get miminum time required between events occuring
+   *
+   * @return The value of minEventTimeDifference
+   */
+
+  const scalar_t&  getminEventTimeDifference() const {return minEventTimeDifference_; }
+
+  /**
    * Checks if an event is activated.
    *
    * @param [in] state: Current state vector.

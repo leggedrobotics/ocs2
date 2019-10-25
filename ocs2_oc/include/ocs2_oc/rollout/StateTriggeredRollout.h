@@ -143,12 +143,15 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
      const auto maxNumSteps = static_cast<size_t>(BASE::settings().maxNumStepsPerSecond_ *
                                                       std::max(1.0, timeIntervalArray.back().second - timeIntervalArray.front().first));
 
-     // clearing the output trajectories (todo reserve?)
+     // clearing the output trajectories
      timeTrajectory.clear();
+     timeTrajectory.reserve(maxNumSteps + 1);
      stateTrajectory.clear();
+     stateTrajectory.reserve(maxNumSteps + 1);
      inputTrajectory.clear();
+     inputTrajectory.reserve(maxNumSteps + 1);
      eventsPastTheEndIndeces.clear();
-
+     eventsPastTheEndIndeces.reserve((timeIntervalArray.back().second - timeIntervalArray.front().first) / systemEventHandlersPtr_->getminEventTimeDifference());
      // set controller
      systemDynamicsPtr_->setController(controller);
 
@@ -168,9 +171,9 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
      bool refining = false;
      int its = 0;
-     RootFind RF;
+     RootFind rootFind;
 
-     while(true){ //Keeps loopping until end time condition is fullfilled, after wich the loop is broken
+     while(true){ //Keeps looping until end time condition is fulfilled, after which the loop is broken
     	 try{
        dynamicsIntegratorPtr_->integrate(beginState, t0, t1 , stateTrajectory,
                                          timeTrajectory, BASE::settings().minTimeStep_, BASE::settings().absTolODE_,
@@ -203,6 +206,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
        // End time Condition, means iteration procedure is done
        if (std::fabs(tend - timeTrajectory.back()) == 0){
+    	   	  std::cout<<its<<" ; "<<timeTrajectory.back()<<std::endl;
               break;
        }
 
@@ -211,7 +215,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       bool time_accuracy_condition = std::fabs(t1-t0) < (1/(BASE::settings().maxNumStepsPerSecond_));
       bool accuracy_condition = guard_accuracy_condition || time_accuracy_condition;
 
-      if (accuracy_condition) { // If Sufficiently accuracte crossing location has been determined
+      if (accuracy_condition) { // If Sufficiently accurate crossing location has been determined
             eventsPastTheEndIndeces.push_back(stateTrajectory.size());
             // jump map
             beginState = stateTrajectory.back();
@@ -236,8 +240,8 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     		  systemDynamicsPtr_->computeGuardSurfaces(time_before,state_before,GuardSurfaces_before);
     		  scalar_t guard_before = GuardSurfaces_before[eventID_m];
 
-    		  RF.set_Init_Bracket(time_before,time_query,guard_before,guard_query);
-    		  RF.getNewQuery(time_query);
+    		  rootFind.set_Init_Bracket(time_before,time_query,guard_before,guard_query);
+    		  rootFind.getNewQuery(time_query);
 
     		  t0 = timeTrajectory.back();
     		  beginState = stateTrajectory.back();
@@ -247,8 +251,8 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     	  }
     	  else
     	  { // Apply the Rules of the Rootfinding method to continue refining
-    		RF.Update_Bracket(time_query,guard_query);
-    		RF.getNewQuery(time_query);
+    		rootFind.Update_Bracket(time_query,guard_query);
+    		rootFind.getNewQuery(time_query);
 
     		t0 = timeTrajectory.back();
     		beginState = stateTrajectory.back();

@@ -42,7 +42,6 @@ catkin_package(
 
 include_directories(
   include
-  include/external
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}

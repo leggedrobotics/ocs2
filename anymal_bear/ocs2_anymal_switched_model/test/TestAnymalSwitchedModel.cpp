@@ -1,8 +1,8 @@
 /*!
-* @file   TestAnymalSwitchedModel.cpp
-* @author Jan Carius
-* @date   Nov, 2017
-*/
+ * @file   TestAnymalSwitchedModel.cpp
+ * @author Jan Carius
+ * @date   Nov, 2017
+ */
 
 #include <gtest/gtest.h>
 
@@ -10,60 +10,43 @@
 
 using namespace anymal;
 
-class SwitchedModelTests : public ::testing::Test,
-                           public TestAnymalSwitchedModel {
-public:
+class SwitchedModelTests : public ::testing::Test, public TestAnymalSwitchedModel {
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  typedef AnymalKinematics::generalized_coordinate_t generalized_coordinate_t;
-  typedef AnymalKinematics::joint_coordinate_t joint_coordinate_t;
 };
 
+TEST_F(SwitchedModelTests, Kinematics) {
+  switched_model::joint_coordinate_t qJoints;
+  qJoints.setZero();
+  std::cout << "Joint coordinate:\n" << qJoints.transpose() << std::endl;
 
-TEST_F(SwitchedModelTests, Kinematics){
-
-  generalized_coordinate_t gen_cor;
-  gen_cor.setZero();
-  std::cout << "Generalized coordinate:\n" << gen_cor.transpose() << std::endl;
-
-  kinematics_.update(gen_cor);
-
-  Eigen::Vector3d footPosition_LF;
-  kinematics_.footPositionBaseFrame(0, footPosition_LF);
+  Eigen::Vector3d footPosition_LF = kinematics_.positionBaseToFootInBaseFrame(0, qJoints);
   std::cout << "Foot position LF:\n" << footPosition_LF << std::endl;
 
-  Eigen::Vector3d footPosition_RF;
-  kinematics_.footPositionBaseFrame(1, footPosition_RF);
+  Eigen::Vector3d footPosition_RF = kinematics_.positionBaseToFootInBaseFrame(1, qJoints);
   std::cout << "Foot position RF:\n" << footPosition_RF << std::endl;
 
-  Eigen::Vector3d footPosition_LH;
-  kinematics_.footPositionBaseFrame(2, footPosition_LH);
+  Eigen::Vector3d footPosition_LH = kinematics_.positionBaseToFootInBaseFrame(2, qJoints);
   std::cout << "Foot position LH:\n" << footPosition_LH << std::endl;
 
-  Eigen::Vector3d footPosition_RH;
-  kinematics_.footPositionBaseFrame(3, footPosition_RH);
+  Eigen::Vector3d footPosition_RH = kinematics_.positionBaseToFootInBaseFrame(3, qJoints);
   std::cout << "Foot position RH:\n" << footPosition_RH << std::endl;
 
-
-  Eigen::Matrix<double,6,12> footJacobian_LF;
-  kinematics_.footJacobainBaseFrame(0, footJacobian_LF);
+  Eigen::Matrix<double, 6, 12> footJacobian_LF = kinematics_.baseToFootJacobianInBaseFrame(0, qJoints);
   std::cout << "Foot jacobian LF:\n" << footJacobian_LF << std::endl;
 
-  Eigen::Matrix<double,6,12> footJacobian_RF;
-  kinematics_.footJacobainBaseFrame(1, footJacobian_RF);
+  Eigen::Matrix<double, 6, 12> footJacobian_RF = kinematics_.baseToFootJacobianInBaseFrame(1, qJoints);
   std::cout << "Foot jacobian RF:\n" << footJacobian_RF << std::endl;
 
-  Eigen::Matrix<double,6,12> footJacobian_LH;
-  kinematics_.footJacobainBaseFrame(2, footJacobian_LH);
+  Eigen::Matrix<double, 6, 12> footJacobian_LH = kinematics_.baseToFootJacobianInBaseFrame(2, qJoints);
   std::cout << "Foot jacobian LH:\n" << footJacobian_LH << std::endl;
 
-  Eigen::Matrix<double,6,12> footJacobian_RH;
-  kinematics_.footJacobainBaseFrame(3, footJacobian_RH);
+  Eigen::Matrix<double, 6, 12> footJacobian_RH = kinematics_.baseToFootJacobianInBaseFrame(3, qJoints);
   std::cout << "Foot jacobian RH:\n" << footJacobian_RH << std::endl;
-
 }
 
-TEST_F(SwitchedModelTests, ComDynamics){
-  joint_coordinate_t joint_cor;
+TEST_F(SwitchedModelTests, ComDynamics) {
+  switched_model::joint_coordinate_t joint_cor;
   joint_cor.setZero();
   std::cout << "Joint coordinates:\n" << joint_cor.transpose() << std::endl;
 
@@ -74,13 +57,8 @@ TEST_F(SwitchedModelTests, ComDynamics){
   std::cout << "comInertiaDefault:\n" << comDynamics_.comInertia() << std::endl;
 }
 
-TEST_F(SwitchedModelTests, ComKinoDynamics){
-  
-}
-
-
 /// Run all the tests that were declared with TEST()
-int main(int argc, char **argv){
+int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

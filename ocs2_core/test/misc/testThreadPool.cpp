@@ -9,7 +9,7 @@ TEST(testThreadPool, testCanExecuteTask) {
   int answer = 0;
 
   res = pool.run([&answer](int) { answer = 42; });
-  res.wait_for(std::chrono::milliseconds(10));
+  res.wait_for(std::chrono::seconds(1));
 
   EXPECT_EQ(answer, 42);
 }
@@ -64,7 +64,7 @@ TEST(testThreadPool, testCanExecuteMultipleTasks) {
     data2 = "done";
   });
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
   // check that both threads are blocking
   EXPECT_EQ(data1, "running");
   EXPECT_EQ(data2, "running");
@@ -72,16 +72,15 @@ TEST(testThreadPool, testCanExecuteMultipleTasks) {
   // signal threads
   barrier_promise.set_value();
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(1));
-  EXPECT_EQ(data1, "done");
-  EXPECT_EQ(data2, "done");
-
   // wait for pool to run tasks
-  std::future_status status1 = res1.wait_for(std::chrono::milliseconds(1));
+  std::future_status status1 = res1.wait_for(std::chrono::seconds(1));
   ASSERT_EQ(status1, std::future_status::ready);
 
-  std::future_status status2 = res2.wait_for(std::chrono::milliseconds(1));
+  std::future_status status2 = res2.wait_for(std::chrono::seconds(1));
   ASSERT_EQ(status2, std::future_status::ready);
+
+  EXPECT_EQ(data1, "done");
+  EXPECT_EQ(data2, "done");
 
   res1.get();
   res2.get();
@@ -130,7 +129,7 @@ TEST(testThreadPool, testDependsOnFinishedTask) {
   // first task has finihed here
 
   fut = pool.runAfter(firstId, doNothing);
-  std::future_status status = fut.wait_for(std::chrono::milliseconds(1));
+  std::future_status status = fut.wait_for(std::chrono::seconds(1));
   // second task should run without delay
 
   ASSERT_EQ(status, std::future_status::ready);
@@ -143,7 +142,7 @@ TEST(testThreadPool, testDependsOnNonexistingTask) {
 
   fut = pool.runAfter(0xdead, [](int) { /* nop */ });
 
-  std::future_status status = fut.wait_for(std::chrono::milliseconds(1));
+  std::future_status status = fut.wait_for(std::chrono::seconds(1));
 
   // In case of an unknown ID dependency is regarded as fulfilled.
   // The task should run without delay.

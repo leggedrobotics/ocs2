@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 
 #include <ocs2_core/Dimensions.h>
+#include <ocs2_core/misc/LoadData.h>
 
 namespace ocs2 {
 
@@ -116,17 +117,6 @@ class DDP_Settings {
    * @param [in] verbose: Flag to determine whether to print out the loaded settings or not (The default is true).
    */
   void loadSettings(const std::string& filename, const std::string& fieldName, bool verbose = true);
-
-  /**
-   * Helper function for loading setting fields
-   *
-   * @param [in] pt: Property_tree.
-   * @param [in] prefix: Field name prefix.
-   * @param [in] fieldName: Field name.
-   * @param [in] verbose: Print loaded settings if true.
-   */
-  template <typename T>
-  void loadField(const boost::property_tree::ptree& pt, const std::string& prefix, const std::string& fieldName, T& field, bool verbose);
 
  public:
   /****************
@@ -215,22 +205,6 @@ class DDP_Settings {
 
 };  // end of DDP_Settings class
 
-template <typename T>
-inline void DDP_Settings::loadField(const boost::property_tree::ptree& pt, const std::string& prefix, const std::string& fieldName,
-                                    T& field, bool verbose) {
-  std::string comment;
-  try {
-    field = pt.get<T>(prefix + "." + fieldName);
-  } catch (const std::exception& e) {
-    comment = "   \t(default)";
-  }
-
-  if (verbose) {
-    int fill = std::max<int>(0, 36 - static_cast<int>(fieldName.length()));
-    std::cerr << " #### Option loader : option '" << fieldName << "' " << std::string(fill, '.') << " " << field << comment << std::endl;
-  }
-}
-
 inline void DDP_Settings::loadSettings(const std::string& filename, const std::string& fieldName, bool verbose /*= true*/) {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);
@@ -240,38 +214,38 @@ inline void DDP_Settings::loadSettings(const std::string& filename, const std::s
     std::cerr << " #### =============================================================================" << std::endl;
   }
 
-  loadField(pt, fieldName, "useMultiThreading", useMultiThreading_, verbose);
-  loadField(pt, fieldName, "nThreads", nThreads_, verbose);
-  loadField(pt, fieldName, "threadPriority", threadPriority_, verbose);
-  loadField(pt, fieldName, "maxNumIterations", maxNumIterations_, verbose);
-  loadField(pt, fieldName, "minLearningRate", minLearningRate_, verbose);
-  loadField(pt, fieldName, "maxLearningRate", maxLearningRate_, verbose);
-  loadField(pt, fieldName, "minRelCost", minRelCost_, verbose);
-  loadField(pt, fieldName, "stateConstraintPenaltyCoeff", stateConstraintPenaltyCoeff_, verbose);
-  loadField(pt, fieldName, "stateConstraintPenaltyBase", stateConstraintPenaltyBase_, verbose);
-  loadField(pt, fieldName, "inequalityConstraintMu", inequalityConstraintMu_, verbose);
-  loadField(pt, fieldName, "inequalityConstraintDelta", inequalityConstraintDelta_, verbose);
-  loadField(pt, fieldName, "meritFunctionRho", meritFunctionRho_, verbose);
-  loadField(pt, fieldName, "constraintStepSize", constraintStepSize_, verbose);
-  loadField(pt, fieldName, "displayInfo", displayInfo_, verbose);
-  loadField(pt, fieldName, "displayShortSummary", displayShortSummary_, verbose);
-  loadField(pt, fieldName, "AbsTolODE", absTolODE_, verbose);
-  loadField(pt, fieldName, "RelTolODE", relTolODE_, verbose);
-  loadField(pt, fieldName, "maxNumStepsPerSecond", maxNumStepsPerSecond_, verbose);
-  loadField(pt, fieldName, "minTimeStep", minTimeStep_, verbose);
-  loadField(pt, fieldName, "simulationIsConstrained", simulationIsConstrained_, verbose);
-  loadField(pt, fieldName, "noStateConstraints", noStateConstraints_, verbose);
-  loadField(pt, fieldName, "useMakePSD", useMakePSD_, verbose);
-  loadField(pt, fieldName, "addedRiccatiDiagonal", addedRiccatiDiagonal_, verbose);
-  loadField(pt, fieldName, "minAbsConstraint1ISE", minAbsConstraint1ISE_, verbose);
-  loadField(pt, fieldName, "minRelConstraint1ISE", minRelConstraint1ISE_, verbose);
-  loadField(pt, fieldName, "debugPrintMT", debugPrintMT_, verbose);
-  loadField(pt, fieldName, "lsStepsizeGreedy", lsStepsizeGreedy_, verbose);
-  loadField(pt, fieldName, "checkNumericalStability", checkNumericalStability_, verbose);
-  loadField(pt, fieldName, "useRiccatiSolver", useRiccatiSolver_, verbose);
-  loadField(pt, fieldName, "useFeedbackPolicy", useFeedbackPolicy_, verbose);
-  loadField(pt, fieldName, "debugPrintRollout", debugPrintRollout_, verbose);
-  loadField(pt, fieldName, "debugCaching", debugCaching_, verbose);
+  loadData::loadPtreeValue(pt, useMultiThreading_, fieldName + ".useMultiThreading", verbose);
+  loadData::loadPtreeValue(pt, nThreads_, fieldName + ".nThreads", verbose);
+  loadData::loadPtreeValue(pt, threadPriority_, fieldName + ".threadPriority", verbose);
+  loadData::loadPtreeValue(pt, maxNumIterations_, fieldName + ".maxNumIterations", verbose);
+  loadData::loadPtreeValue(pt, minLearningRate_, fieldName + ".minLearningRate", verbose);
+  loadData::loadPtreeValue(pt, maxLearningRate_, fieldName + ".maxLearningRate", verbose);
+  loadData::loadPtreeValue(pt, minRelCost_, fieldName + ".minRelCost", verbose);
+  loadData::loadPtreeValue(pt, stateConstraintPenaltyCoeff_, fieldName + ".stateConstraintPenaltyCoeff", verbose);
+  loadData::loadPtreeValue(pt, stateConstraintPenaltyBase_, fieldName + ".stateConstraintPenaltyBase", verbose);
+  loadData::loadPtreeValue(pt, inequalityConstraintMu_, fieldName + ".inequalityConstraintMu", verbose);
+  loadData::loadPtreeValue(pt, inequalityConstraintDelta_, fieldName + ".inequalityConstraintDelta", verbose);
+  loadData::loadPtreeValue(pt, meritFunctionRho_, fieldName + ".meritFunctionRho", verbose);
+  loadData::loadPtreeValue(pt, constraintStepSize_, fieldName + ".constraintStepSize", verbose);
+  loadData::loadPtreeValue(pt, displayInfo_, fieldName + ".displayInfo", verbose);
+  loadData::loadPtreeValue(pt, displayShortSummary_, fieldName + ".displayShortSummary", verbose);
+  loadData::loadPtreeValue(pt, absTolODE_, fieldName + ".AbsTolODE", verbose);
+  loadData::loadPtreeValue(pt, relTolODE_, fieldName + ".RelTolODE", verbose);
+  loadData::loadPtreeValue(pt, maxNumStepsPerSecond_, fieldName + ".maxNumStepsPerSecond", verbose);
+  loadData::loadPtreeValue(pt, minTimeStep_, fieldName + ".minTimeStep", verbose);
+  loadData::loadPtreeValue(pt, simulationIsConstrained_, fieldName + ".simulationIsConstrained", verbose);
+  loadData::loadPtreeValue(pt, noStateConstraints_, fieldName + ".noStateConstraints", verbose);
+  loadData::loadPtreeValue(pt, useMakePSD_, fieldName + ".useMakePSD", verbose);
+  loadData::loadPtreeValue(pt, addedRiccatiDiagonal_, fieldName + ".addedRiccatiDiagonal", verbose);
+  loadData::loadPtreeValue(pt, minAbsConstraint1ISE_, fieldName + ".minAbsConstraint1ISE", verbose);
+  loadData::loadPtreeValue(pt, minRelConstraint1ISE_, fieldName + ".minRelConstraint1ISE", verbose);
+  loadData::loadPtreeValue(pt, debugPrintMT_, fieldName + ".debugPrintMT", verbose);
+  loadData::loadPtreeValue(pt, lsStepsizeGreedy_, fieldName + ".lsStepsizeGreedy", verbose);
+  loadData::loadPtreeValue(pt, checkNumericalStability_, fieldName + ".checkNumericalStability", verbose);
+  loadData::loadPtreeValue(pt, useRiccatiSolver_, fieldName + ".useRiccatiSolver", verbose);
+  loadData::loadPtreeValue(pt, useFeedbackPolicy_, fieldName + ".useFeedbackPolicy", verbose);
+  loadData::loadPtreeValue(pt, debugPrintRollout_, fieldName + ".debugPrintRollout", verbose);
+  loadData::loadPtreeValue(pt, debugCaching_, fieldName + ".debugCaching", verbose);
 
   if (verbose) {
     std::cerr << " #### =============================================================================" << std::endl;

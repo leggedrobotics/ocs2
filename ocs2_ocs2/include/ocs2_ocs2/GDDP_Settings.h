@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/integration/Integrator.h>
+#include <ocs2_core/misc/LoadData.h>
 
 namespace ocs2 {
 
@@ -91,17 +92,6 @@ class GDDP_Settings {
    */
   void loadSettings(const std::string& filename, const std::string& fieldName = "gddp", bool verbose = true);
 
-  /**
-   * Helper function for loading setting fields
-   *
-   * @param [in] pt: Property_tree.
-   * @param [in] prefix: Field name prefix.
-   * @param [in] fieldName: Field name.
-   * @param [in] verbose: Print loaded settings if true.
-   */
-  template <typename T>
-  void loadField(const boost::property_tree::ptree& pt, const std::string& prefix, const std::string& fieldName, T& field, bool verbose);
-
  public:
   /****************
    *** Variables **
@@ -150,22 +140,6 @@ class GDDP_Settings {
 
 };  // end of GDDP_Settings class
 
-template <typename T>
-inline void GDDP_Settings::loadField(const boost::property_tree::ptree& pt, const std::string& prefix, const std::string& fieldName,
-                                     T& field, bool verbose) {
-  std::string comment;
-  try {
-    field = pt.get<T>(prefix + "." + fieldName);
-  } catch (const std::exception& e) {
-    comment = "   \t(default)";
-  }
-
-  if (verbose) {
-    int fill = std::max<int>(0, 36 - static_cast<int>(fieldName.length()));
-    std::cerr << " #### Option loader : option '" << fieldName << "' " << std::string(fill, '.') << " " << field << comment << std::endl;
-  }
-}
-
 inline void GDDP_Settings::loadSettings(const std::string& filename, const std::string& fieldName /*= ilqr*/, bool verbose /*= true*/) {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);
@@ -175,24 +149,24 @@ inline void GDDP_Settings::loadSettings(const std::string& filename, const std::
     std::cerr << " #### =============================================================================" << std::endl;
   }
 
-  loadField(pt, fieldName, "displayInfo", displayInfo_, verbose);
-  loadField(pt, fieldName, "checkNumericalStability", checkNumericalStability_, verbose);
-  loadField(pt, fieldName, "warmStart", warmStart_, verbose);
-  loadField(pt, fieldName, "useLQForDerivatives", useLQForDerivatives_, verbose);
-  loadField(pt, fieldName, "maxNumIterationForLQ", maxNumIterationForLQ_, verbose);
-  loadField(pt, fieldName, "tolGradientDescent", tolGradientDescent_, verbose);
-  loadField(pt, fieldName, "acceptableTolGradientDescent", acceptableTolGradientDescent_, verbose);
-  loadField(pt, fieldName, "maxIterationGradientDescent", maxIterationGradientDescent_, verbose);
-  loadField(pt, fieldName, "minLearningRateNLP", minLearningRateNLP_, verbose);
-  loadField(pt, fieldName, "maxLearningRateNLP", maxLearningRateNLP_, verbose);
-  loadField(pt, fieldName, "minEventTimeDifference", minEventTimeDifference_, verbose);
-  loadField(pt, fieldName, "nThreads", nThreads_, verbose);
-  loadField(pt, fieldName, "useNominalTimeForBackwardPass", useNominalTimeForBackwardPass_, verbose);
-  loadField(pt, fieldName, "RiccatiIntegratorType", riccatiIntegratorType_, verbose);
-  loadField(pt, fieldName, "AbsTolODE", absTolODE_, verbose);
-  loadField(pt, fieldName, "RelTolODE", relTolODE_, verbose);
-  loadField(pt, fieldName, "maxNumStepsPerSecond", maxNumStepsPerSecond_, verbose);
-  loadField(pt, fieldName, "minTimeStep", minTimeStep_, verbose);
+  loadData::loadPtreeValue(pt, displayInfo_, fieldName + ".displayInfo", verbose);
+  loadData::loadPtreeValue(pt, checkNumericalStability_, fieldName + ".checkNumericalStability", verbose);
+  loadData::loadPtreeValue(pt, warmStart_, fieldName + ".warmStart", verbose);
+  loadData::loadPtreeValue(pt, useLQForDerivatives_, fieldName + ".useLQForDerivatives", verbose);
+  loadData::loadPtreeValue(pt, maxNumIterationForLQ_, fieldName + ".maxNumIterationForLQ", verbose);
+  loadData::loadPtreeValue(pt, tolGradientDescent_, fieldName + ".tolGradientDescent", verbose);
+  loadData::loadPtreeValue(pt, acceptableTolGradientDescent_, fieldName + ".acceptableTolGradientDescent", verbose);
+  loadData::loadPtreeValue(pt, maxIterationGradientDescent_, fieldName + ".maxIterationGradientDescent", verbose);
+  loadData::loadPtreeValue(pt, minLearningRateNLP_, fieldName + ".minLearningRateNLP", verbose);
+  loadData::loadPtreeValue(pt, maxLearningRateNLP_, fieldName + ".maxLearningRateNLP", verbose);
+  loadData::loadPtreeValue(pt, minEventTimeDifference_, fieldName + ".minEventTimeDifference", verbose);
+  loadData::loadPtreeValue(pt, nThreads_, fieldName + ".nThreads", verbose);
+  loadData::loadPtreeValue(pt, useNominalTimeForBackwardPass_, fieldName + ".useNominalTimeForBackwardPass", verbose);
+  loadData::loadPtreeValue(pt, riccatiIntegratorType_, fieldName + ".RiccatiIntegratorType", verbose);
+  loadData::loadPtreeValue(pt, absTolODE_, fieldName + ".AbsTolODE", verbose);
+  loadData::loadPtreeValue(pt, relTolODE_, fieldName + ".RelTolODE", verbose);
+  loadData::loadPtreeValue(pt, maxNumStepsPerSecond_, fieldName + ".maxNumStepsPerSecond", verbose);
+  loadData::loadPtreeValue(pt, minTimeStep_, fieldName + ".minTimeStep", verbose);
 
   if (verbose) {
     std::cerr << " #### =============================================================================" << std::endl;

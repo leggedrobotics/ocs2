@@ -34,6 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <string>
 
+#include <ocs2_core/misc/LoadData.h>
+
 namespace ocs2 {
 
 /**
@@ -70,17 +72,6 @@ class MPC_Settings {
    * (The default is true).
    */
   void loadSettings(const std::string& filename, bool verbose = true);
-
-  /**
-   * Helper function for loading setting fields
-   *
-   * @param [in] pt: Property_tree.
-   * @param [in] prefix: Field name prefix.
-   * @param [in] fieldName: Field name.
-   * @param [in] verbose: Print loaded settings if true.
-   */
-  template <typename T>
-  void loadField(const boost::property_tree::ptree& pt, const std::string& prefix, const std::string& fieldName, T& field, bool verbose);
 
  public:
   /****************
@@ -130,22 +121,6 @@ class MPC_Settings {
 
 };  // end of MPC_Settings class
 
-template <typename T>
-inline void MPC_Settings::loadField(const boost::property_tree::ptree& pt, const std::string& prefix, const std::string& fieldName,
-                                    T& field, bool verbose) {
-  std::string comment;
-  try {
-    field = pt.get<T>(prefix + "." + fieldName);
-  } catch (const std::exception& e) {
-    comment = "   \t(default)";
-  }
-
-  if (verbose) {
-    int fill = std::max<int>(0, 36 - static_cast<int>(fieldName.length()));
-    std::cerr << " #### Option loader : option '" << fieldName << "' " << std::string(fill, '.') << " " << field << comment << std::endl;
-  }
-}
-
 inline void MPC_Settings::loadSettings(const std::string& filename, bool verbose /*= true*/) {
   std::string fieldName = "mpc";
   boost::property_tree::ptree pt;
@@ -156,21 +131,21 @@ inline void MPC_Settings::loadSettings(const std::string& filename, bool verbose
     std::cerr << " #### =============================================================================" << std::endl;
   }
 
-  loadField(pt, fieldName, "runtimeMaxNumIterations", runtimeMaxNumIterations_, verbose);
-  loadField(pt, fieldName, "initMaxNumIterations", initMaxNumIterations_, verbose);
-  loadField(pt, fieldName, "runtimeMaxLearningRate", runtimeMaxLearningRate_, verbose);
-  loadField(pt, fieldName, "runtimeMinLearningRate", runtimeMinLearningRate_, verbose);
-  loadField(pt, fieldName, "initMaxLearningRate", initMaxLearningRate_, verbose);
-  loadField(pt, fieldName, "initMinLearningRate", initMinLearningRate_, verbose);
-  loadField(pt, fieldName, "debugPrint", debugPrint_, verbose);
-  loadField(pt, fieldName, "coldStart", coldStart_, verbose);
-  loadField(pt, fieldName, "recedingHorizon", recedingHorizon_, verbose);
-  loadField(pt, fieldName, "blockwiseMovingHorizon", blockwiseMovingHorizon_, verbose);
-  loadField(pt, fieldName, "useParallelRiccatiSolver", useParallelRiccatiSolver_, verbose);
-  loadField(pt, fieldName, "solutionTimeWindow", solutionTimeWindow_, verbose);
-  loadField(pt, fieldName, "mpcDesiredFrequency", mpcDesiredFrequency_, verbose);
-  loadField(pt, fieldName, "mrtDesiredFrequency", mrtDesiredFrequency_, verbose);
-  loadField(pt, fieldName, "maxTimeStep", maxTimeStep_, verbose);
+  loadData::loadPtreeValue(pt, runtimeMaxNumIterations_, fieldName + ".runtimeMaxNumIterations", verbose);
+  loadData::loadPtreeValue(pt, initMaxNumIterations_, fieldName + ".initMaxNumIterations", verbose);
+  loadData::loadPtreeValue(pt, runtimeMaxLearningRate_, fieldName + ".runtimeMaxLearningRate", verbose);
+  loadData::loadPtreeValue(pt, runtimeMinLearningRate_, fieldName + ".runtimeMinLearningRate", verbose);
+  loadData::loadPtreeValue(pt, initMaxLearningRate_, fieldName + ".initMaxLearningRate", verbose);
+  loadData::loadPtreeValue(pt, initMinLearningRate_, fieldName + ".initMinLearningRate", verbose);
+  loadData::loadPtreeValue(pt, debugPrint_, fieldName + ".debugPrint", verbose);
+  loadData::loadPtreeValue(pt, coldStart_, fieldName + ".coldStart", verbose);
+  loadData::loadPtreeValue(pt, recedingHorizon_, fieldName + ".recedingHorizon", verbose);
+  loadData::loadPtreeValue(pt, blockwiseMovingHorizon_, fieldName + ".blockwiseMovingHorizon", verbose);
+  loadData::loadPtreeValue(pt, useParallelRiccatiSolver_, fieldName + ".useParallelRiccatiSolver", verbose);
+  loadData::loadPtreeValue(pt, solutionTimeWindow_, fieldName + ".solutionTimeWindow", verbose);
+  loadData::loadPtreeValue(pt, mpcDesiredFrequency_, fieldName + ".mpcDesiredFrequency", verbose);
+  loadData::loadPtreeValue(pt, mrtDesiredFrequency_, fieldName + ".mrtDesiredFrequency", verbose);
+  loadData::loadPtreeValue(pt, maxTimeStep_, fieldName + ".maxTimeStep", verbose);
 
   if (verbose) {
     std::cerr << " #### =============================================================================" << std::endl;

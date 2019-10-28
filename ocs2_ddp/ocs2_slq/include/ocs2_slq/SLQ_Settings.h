@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 
 #include <ocs2_core/Dimensions.h>
+#include <ocs2_core/misc/LoadData.h>
 
 #include <ocs2_ddp_base/DDP_Settings.h>
 
@@ -81,17 +82,6 @@ class SLQ_Settings {
    */
   void loadSettings(const std::string& filename, const std::string& fieldName = "slq", bool verbose = true);
 
-  /**
-   * Helper function for loading setting fields
-   *
-   * @param [in] pt: Property_tree.
-   * @param [in] prefix: Field name prefix.
-   * @param [in] fieldName: Field name.
-   * @param [in] verbose: Print loaded settings if true.
-   */
-  template <typename T>
-  void loadField(const boost::property_tree::ptree& pt, const std::string& prefix, const std::string& fieldName, T& field, bool verbose);
-
  public:
   /****************
    *** Variables **
@@ -111,22 +101,6 @@ class SLQ_Settings {
 
 };  // end of SLQ_Settings class
 
-template <typename T>
-inline void SLQ_Settings::loadField(const boost::property_tree::ptree& pt, const std::string& prefix, const std::string& fieldName,
-                                    T& field, bool verbose) {
-  std::string comment;
-  try {
-    field = pt.get<T>(prefix + "." + fieldName);
-  } catch (const std::exception& e) {
-    comment = "   \t(default)";
-  }
-
-  if (verbose) {
-    int fill = std::max<int>(0, 36 - static_cast<int>(fieldName.length()));
-    std::cerr << " #### Option loader : option '" << fieldName << "' " << std::string(fill, '.') << " " << field << comment << std::endl;
-  }
-}
-
 inline void SLQ_Settings::loadSettings(const std::string& filename, const std::string& fieldName /*= slq*/, bool verbose /*= true*/) {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);
@@ -138,10 +112,10 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, const std::s
     std::cerr << " #### =============================================================================" << std::endl;
   }
 
-  loadField(pt, fieldName, "useNominalTimeForBackwardPass", useNominalTimeForBackwardPass_, verbose);
-  loadField(pt, fieldName, "preComputeRiccatiTerms", preComputeRiccatiTerms_, verbose);
-  loadField(pt, fieldName, "RiccatiIntegratorType", RiccatiIntegratorType_, verbose);
-  loadField(pt, fieldName, "adams_integrator_dt", adams_integrator_dt_, verbose);
+  loadData::loadPtreeValue(pt, useNominalTimeForBackwardPass_, fieldName + ".useNominalTimeForBackwardPass", verbose);
+  loadData::loadPtreeValue(pt, preComputeRiccatiTerms_, fieldName + ".preComputeRiccatiTerms", verbose);
+  loadData::loadPtreeValue(pt, RiccatiIntegratorType_, fieldName + ".RiccatiIntegratorType", verbose);
+  loadData::loadPtreeValue(pt, adams_integrator_dt_, fieldName + ".adams_integrator_dt", verbose);
 
   if (verbose) {
     std::cerr << " #### =============================================================================" << std::endl;

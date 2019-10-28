@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/integration/Integrator.h>
+#include <ocs2_core/misc/LoadData.h>
 
 namespace ocs2 {
 
@@ -90,17 +91,6 @@ class Rollout_Settings {
    */
   void loadSettings(const std::string& filename, const std::string& fieldName, bool verbose = true);
 
-  /**
-   * Helper function for loading setting fields
-   *
-   * @param [in] pt: Property_tree.
-   * @param [in] prefix: Field name prefix.
-   * @param [in] fieldName: Field name.
-   * @param [in] verbose: Print loaded settings if true.
-   */
-  template <typename T>
-  void loadField(const boost::property_tree::ptree& pt, const std::string& prefix, const std::string& fieldName, T& field, bool verbose);
-
  public:
   /****************
    *** Variables **
@@ -122,22 +112,6 @@ class Rollout_Settings {
 
 };  // end of Rollout_Settings class
 
-template <typename T>
-inline void Rollout_Settings::loadField(const boost::property_tree::ptree& pt, const std::string& prefix, const std::string& fieldName,
-                                        T& field, bool verbose) {
-  std::string comment;
-  try {
-    field = pt.get<T>(prefix + "." + fieldName);
-  } catch (const std::exception& e) {
-    comment = "   \t(default)";
-  }
-
-  if (verbose) {
-    int fill = std::max<int>(0, 36 - static_cast<int>(fieldName.length()));
-    std::cerr << " #### Option loader : option '" << fieldName << "' " << std::string(fill, '.') << " " << field << comment << std::endl;
-  }
-}
-
 inline void Rollout_Settings::loadSettings(const std::string& filename, const std::string& fieldName, bool verbose /*= true*/) {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);
@@ -147,17 +121,17 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, const st
     std::cerr << " #### =============================================================================" << std::endl;
   }
 
-  loadField(pt, fieldName, "AbsTolODE", absTolODE_, verbose);
-  loadField(pt, fieldName, "RelTolODE", relTolODE_, verbose);
-  loadField(pt, fieldName, "maxNumStepsPerSecond", maxNumStepsPerSecond_, verbose);
-  loadField(pt, fieldName, "minTimeStep", minTimeStep_, verbose);
+  loadData::loadPtreeValue(pt, absTolODE_, fieldName + ".AbsTolODE", verbose);
+  loadData::loadPtreeValue(pt, relTolODE_, fieldName + ".RelTolODE", verbose);
+  loadData::loadPtreeValue(pt, maxNumStepsPerSecond_, fieldName + ".maxNumStepsPerSecond", verbose);
+  loadData::loadPtreeValue(pt, minTimeStep_, fieldName + ".minTimeStep", verbose);
 
   int tmp = static_cast<int>(integratorType_);
-  loadField(pt, fieldName, "integratorType", tmp, verbose);
+  loadData::loadPtreeValue(pt, tmp, fieldName + ".integratorType", verbose);
   integratorType_ = static_cast<IntegratorType>(tmp);
 
-  loadField(pt, fieldName, "checkNumericalStability", checkNumericalStability_, verbose);
-  loadField(pt, fieldName, "reconstructInputTrajectory", reconstructInputTrajectory_, verbose);
+  loadData::loadPtreeValue(pt, checkNumericalStability_, fieldName + ".checkNumericalStability", verbose);
+  loadData::loadPtreeValue(pt, reconstructInputTrajectory_, fieldName + ".reconstructInputTrajectory", verbose);
 
   if (verbose) {
     std::cerr << " #### =============================================================================" << std::endl;

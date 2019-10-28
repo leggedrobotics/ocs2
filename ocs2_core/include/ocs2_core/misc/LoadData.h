@@ -32,12 +32,53 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <Eigen/Dense>
 #include <iostream>
+#include <string>
 
 #include <boost/property_tree/info_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 
 namespace ocs2 {
 namespace loadData {
+
+/**
+ * An auxiliary function to help loading OCS2 settings from a property tree
+ *
+ * @param[in] pt: Fully initialized tree object
+ * @param[out] value: The value to be read (unchanged if tree does not contain a corresponding entry)
+ * @param[in] name: Property field name
+ * @param[in] verbose: Whether or not to print the extreacted value (or error)
+ * @param[in] printWidth: Optional argument to change the width of the aligned printout
+ */
+template <typename T>
+inline void loadPtreeValue(const boost::property_tree::ptree& pt, T& value, const std::string& name, bool verbose, long printWidth = 80) {
+  bool updated = true;
+
+  try {
+    value = pt.get<T>(name);
+  } catch (const boost::property_tree::ptree_bad_path&) {
+    updated = false;
+  }
+
+  if (verbose) {
+    const auto lastDotPosition = name.find_last_of('.');
+
+    const std::string nameString = " #### Option loader : option '" + name.substr(lastDotPosition + 1) + "' ";
+    std::cerr << nameString;
+
+    // prepare stream
+    printWidth = std::max<long>(printWidth, nameString.size() + 15);
+    std::cerr.width(printWidth - nameString.size());
+    char fill = std::cerr.fill('.');
+
+    if (updated) {
+      std::cerr << value << std::endl;
+    } else {
+      std::cerr << value << " (default)" << std::endl;
+    }
+
+    std::cerr.fill(fill);
+  }
+}
 
 /**
  * An auxiliary function which loads value of the c++ data types from a file. The file uses property tree data structure with INFO format

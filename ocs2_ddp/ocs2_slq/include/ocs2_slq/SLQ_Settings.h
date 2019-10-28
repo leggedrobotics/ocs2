@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 
 #include <ocs2_core/Dimensions.h>
+#include <ocs2_core/misc/LoadData.h>
 
 #include <ocs2_ddp_base/DDP_Settings.h>
 
@@ -111,51 +112,10 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, const std::s
     std::cerr << " #### =============================================================================" << std::endl;
   }
 
-  try {
-    useNominalTimeForBackwardPass_ = pt.get<bool>(fieldName + ".useNominalTimeForBackwardPass");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useNominalTimeForBackwardPass' ....... " << useNominalTimeForBackwardPass_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useNominalTimeForBackwardPass' ....... " << useNominalTimeForBackwardPass_
-                << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    preComputeRiccatiTerms_ = pt.get<bool>(fieldName + ".preComputeRiccatiTerms");
-    if (verbose)
-      std::cerr << " #### Option loader : option 'preComputeRiccatiTerms' .............. " << preComputeRiccatiTerms_ << std::endl;
-  } catch (const std::exception& e) {
-    if (verbose)
-      std::cerr << " #### Option loader : option 'preComputeRiccatiTerms' .............. " << preComputeRiccatiTerms_ << "   \t(default)"
-                << std::endl;
-  }
-
-  try {
-    RiccatiIntegratorType_ = pt.get<size_t>(fieldName + ".RiccatiIntegratorType");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'RiccatiIntegratorType' ............... " << RiccatiIntegratorType_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'RiccatiIntegratorType' ............... " << RiccatiIntegratorType_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    adams_integrator_dt_ = pt.get<double>(fieldName + ".adams_integrator_dt");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'adams_integrator_dt' ................. " << adams_integrator_dt_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'adams_integrator_dt' ................. " << adams_integrator_dt_ << "   \t(default)"
-                << std::endl;
-    }
-  }
+  loadData::loadPtreeValue(pt, useNominalTimeForBackwardPass_, fieldName + ".useNominalTimeForBackwardPass", verbose);
+  loadData::loadPtreeValue(pt, preComputeRiccatiTerms_, fieldName + ".preComputeRiccatiTerms", verbose);
+  loadData::loadPtreeValue(pt, RiccatiIntegratorType_, fieldName + ".RiccatiIntegratorType", verbose);
+  loadData::loadPtreeValue(pt, adams_integrator_dt_, fieldName + ".adams_integrator_dt", verbose);
 
   if (verbose) {
     std::cerr << " #### =============================================================================" << std::endl;

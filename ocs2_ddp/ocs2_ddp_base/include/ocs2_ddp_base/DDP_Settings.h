@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 
 #include <ocs2_core/Dimensions.h>
+#include <ocs2_core/misc/LoadData.h>
 
 namespace ocs2 {
 
@@ -213,382 +214,38 @@ inline void DDP_Settings::loadSettings(const std::string& filename, const std::s
     std::cerr << " #### =============================================================================" << std::endl;
   }
 
-  try {
-    useMultiThreading_ = pt.get<bool>(fieldName + ".useMultiThreading");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useMultiThreading' ................... " << useMultiThreading_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useMultiThreading' ................... " << useMultiThreading_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    nThreads_ = pt.get<int>(fieldName + ".nThreads");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'nThreads' ............................ " << nThreads_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'nThreads' ............................ " << nThreads_ << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    threadPriority_ = pt.get<int>(fieldName + ".threadPriority");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'threadPriority' ...................... " << threadPriority_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'threadPriority' ...................... " << threadPriority_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    maxNumIterations_ = pt.get<int>(fieldName + ".maxNumIterations");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'maxNumIterations' .................... " << maxNumIterations_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'maxNumIterations' .................... " << maxNumIterations_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    minLearningRate_ = pt.get<double>(fieldName + ".minLearningRate");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'minLearningRate' ..................... " << minLearningRate_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'minLearningRate' ..................... " << minLearningRate_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    maxLearningRate_ = pt.get<double>(fieldName + ".maxLearningRate");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'maxLearningRate' ..................... " << maxLearningRate_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'maxLearningRate' ..................... " << maxLearningRate_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    minRelCost_ = pt.get<double>(fieldName + ".minRelCost");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'minRelCost' .......................... " << minRelCost_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'minRelCost' .......................... " << minRelCost_ << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    stateConstraintPenaltyCoeff_ = pt.get<double>(fieldName + ".stateConstraintPenaltyCoeff");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'stateConstraintPenaltyCoeff' ......... " << stateConstraintPenaltyCoeff_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'stateConstraintPenaltyCoeff' ......... " << stateConstraintPenaltyCoeff_
-                << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    stateConstraintPenaltyBase_ = pt.get<double>(fieldName + ".stateConstraintPenaltyBase");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'stateConstraintPenaltyBase' .......... " << stateConstraintPenaltyBase_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'stateConstraintPenaltyBase' .......... " << stateConstraintPenaltyBase_
-                << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    inequalityConstraintMu_ = pt.get<double>(fieldName + ".inequalityConstraintMu");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'inequalityConstraintMu' .............. " << inequalityConstraintMu_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'inequalityConstraintMu' .............. " << inequalityConstraintMu_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    inequalityConstraintDelta_ = pt.get<double>(fieldName + ".inequalityConstraintDelta");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'inequalityConstraintDelta' ........... " << inequalityConstraintDelta_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'inequalityConstraintDelta' ........... " << inequalityConstraintDelta_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    meritFunctionRho_ = pt.get<double>(fieldName + ".meritFunctionRho");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'meritFunctionRho' .................... " << meritFunctionRho_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'meritFunctionRho' .................... " << meritFunctionRho_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    constraintStepSize_ = pt.get<double>(fieldName + ".constraintStepSize");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'constraintStepSize' .................. " << constraintStepSize_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'constraintStepSize' .................. " << constraintStepSize_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    displayInfo_ = pt.get<bool>(fieldName + ".displayInfo");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'displayInfo' ......................... " << displayInfo_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'displayInfo' ......................... " << displayInfo_ << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    displayShortSummary_ = pt.get<bool>(fieldName + ".displayShortSummary");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'displayShortSummary' ................. " << displayShortSummary_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'displayShortSummary' ................. " << displayShortSummary_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    absTolODE_ = pt.get<double>(fieldName + ".AbsTolODE");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    relTolODE_ = pt.get<double>(fieldName + ".RelTolODE");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    maxNumStepsPerSecond_ = pt.get<size_t>(fieldName + ".maxNumStepsPerSecond");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    minTimeStep_ = pt.get<double>(fieldName + ".minTimeStep");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    simulationIsConstrained_ = pt.get<bool>(fieldName + ".simulationIsConstrained");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'simulationIsConstrained' ............. " << simulationIsConstrained_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'simulationIsConstrained' ............. " << simulationIsConstrained_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    noStateConstraints_ = pt.get<bool>(fieldName + ".noStateConstraints");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'noStateConstraints' .................. " << noStateConstraints_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'noStateConstraints' .................. " << noStateConstraints_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    useMakePSD_ = pt.get<bool>(fieldName + ".useMakePSD");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useMakePSD' .......................... " << useMakePSD_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useMakePSD' .......................... " << useMakePSD_ << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    addedRiccatiDiagonal_ = pt.get<double>(fieldName + ".addedRiccatiDiagonal");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'addedRiccatiDiagonal' ................ " << addedRiccatiDiagonal_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'addedRiccatiDiagonal' ................ " << addedRiccatiDiagonal_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    minAbsConstraint1ISE_ = pt.get<double>(fieldName + ".minAbsConstraint1ISE");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'minAbsConstraint1ISE' ................ " << minAbsConstraint1ISE_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'minAbsConstraint1ISE' ................ " << minAbsConstraint1ISE_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    minRelConstraint1ISE_ = pt.get<double>(fieldName + ".minRelConstraint1ISE");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'minRelConstraint1ISE' ................ " << minRelConstraint1ISE_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'minRelConstraint1ISE' ................ " << minRelConstraint1ISE_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    debugPrintMT_ = pt.get<bool>(fieldName + ".debugPrintMT");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'debugPrintMT' ........................ " << debugPrintMT_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'debugPrintMT' ........................ " << debugPrintMT_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    lsStepsizeGreedy_ = pt.get<bool>(fieldName + ".lsStepsizeGreedy");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'lsStepsizeGreedy' .................... " << lsStepsizeGreedy_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'lsStepsizeGreedy' .................... " << lsStepsizeGreedy_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    checkNumericalStability_ = pt.get<bool>(fieldName + ".checkNumericalStability");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    useRiccatiSolver_ = pt.get<bool>(fieldName + ".useRiccatiSolver");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useRiccatiSolver' .................... " << useRiccatiSolver_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useRiccatiSolver' .................... " << useRiccatiSolver_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    useFeedbackPolicy_ = pt.get<bool>(fieldName + ".useFeedbackPolicy");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useFeedbackPolicy' ................... " << useFeedbackPolicy_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useFeedbackPolicy' ................... " << useFeedbackPolicy_ << " (default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    debugPrintRollout_ = pt.get<bool>(fieldName + ".debugPrintRollout");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'debugPrintRollout' ................... " << debugPrintRollout_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'debugPrintRollout' ................... " << debugPrintRollout_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    debugCaching_ = pt.get<bool>(fieldName + ".debugCaching");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'debugCaching' ........................ " << debugCaching_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'debugCaching' ........................ " << debugCaching_ << "   \t(default)"
-                << std::endl;
-    }
-  }
+  loadData::loadPtreeValue(pt, useMultiThreading_, fieldName + ".useMultiThreading", verbose);
+  loadData::loadPtreeValue(pt, nThreads_, fieldName + ".nThreads", verbose);
+  loadData::loadPtreeValue(pt, threadPriority_, fieldName + ".threadPriority", verbose);
+  loadData::loadPtreeValue(pt, maxNumIterations_, fieldName + ".maxNumIterations", verbose);
+  loadData::loadPtreeValue(pt, minLearningRate_, fieldName + ".minLearningRate", verbose);
+  loadData::loadPtreeValue(pt, maxLearningRate_, fieldName + ".maxLearningRate", verbose);
+  loadData::loadPtreeValue(pt, minRelCost_, fieldName + ".minRelCost", verbose);
+  loadData::loadPtreeValue(pt, stateConstraintPenaltyCoeff_, fieldName + ".stateConstraintPenaltyCoeff", verbose);
+  loadData::loadPtreeValue(pt, stateConstraintPenaltyBase_, fieldName + ".stateConstraintPenaltyBase", verbose);
+  loadData::loadPtreeValue(pt, inequalityConstraintMu_, fieldName + ".inequalityConstraintMu", verbose);
+  loadData::loadPtreeValue(pt, inequalityConstraintDelta_, fieldName + ".inequalityConstraintDelta", verbose);
+  loadData::loadPtreeValue(pt, meritFunctionRho_, fieldName + ".meritFunctionRho", verbose);
+  loadData::loadPtreeValue(pt, constraintStepSize_, fieldName + ".constraintStepSize", verbose);
+  loadData::loadPtreeValue(pt, displayInfo_, fieldName + ".displayInfo", verbose);
+  loadData::loadPtreeValue(pt, displayShortSummary_, fieldName + ".displayShortSummary", verbose);
+  loadData::loadPtreeValue(pt, absTolODE_, fieldName + ".AbsTolODE", verbose);
+  loadData::loadPtreeValue(pt, relTolODE_, fieldName + ".RelTolODE", verbose);
+  loadData::loadPtreeValue(pt, maxNumStepsPerSecond_, fieldName + ".maxNumStepsPerSecond", verbose);
+  loadData::loadPtreeValue(pt, minTimeStep_, fieldName + ".minTimeStep", verbose);
+  loadData::loadPtreeValue(pt, simulationIsConstrained_, fieldName + ".simulationIsConstrained", verbose);
+  loadData::loadPtreeValue(pt, noStateConstraints_, fieldName + ".noStateConstraints", verbose);
+  loadData::loadPtreeValue(pt, useMakePSD_, fieldName + ".useMakePSD", verbose);
+  loadData::loadPtreeValue(pt, addedRiccatiDiagonal_, fieldName + ".addedRiccatiDiagonal", verbose);
+  loadData::loadPtreeValue(pt, minAbsConstraint1ISE_, fieldName + ".minAbsConstraint1ISE", verbose);
+  loadData::loadPtreeValue(pt, minRelConstraint1ISE_, fieldName + ".minRelConstraint1ISE", verbose);
+  loadData::loadPtreeValue(pt, debugPrintMT_, fieldName + ".debugPrintMT", verbose);
+  loadData::loadPtreeValue(pt, lsStepsizeGreedy_, fieldName + ".lsStepsizeGreedy", verbose);
+  loadData::loadPtreeValue(pt, checkNumericalStability_, fieldName + ".checkNumericalStability", verbose);
+  loadData::loadPtreeValue(pt, useRiccatiSolver_, fieldName + ".useRiccatiSolver", verbose);
+  loadData::loadPtreeValue(pt, useFeedbackPolicy_, fieldName + ".useFeedbackPolicy", verbose);
+  loadData::loadPtreeValue(pt, debugPrintRollout_, fieldName + ".debugPrintRollout", verbose);
+  loadData::loadPtreeValue(pt, debugCaching_, fieldName + ".debugCaching", verbose);
 
   if (verbose) {
     std::cerr << " #### =============================================================================" << std::endl;

@@ -34,6 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <string>
 
+#include <ocs2_core/misc/LoadData.h>
+
 namespace ocs2 {
 
 /**
@@ -120,6 +122,7 @@ class MPC_Settings {
 };  // end of MPC_Settings class
 
 inline void MPC_Settings::loadSettings(const std::string& filename, bool verbose /*= true*/) {
+  std::string fieldName = "mpc";
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);
 
@@ -128,170 +131,21 @@ inline void MPC_Settings::loadSettings(const std::string& filename, bool verbose
     std::cerr << " #### =============================================================================" << std::endl;
   }
 
-  try {
-    runtimeMaxNumIterations_ = pt.get<size_t>("mpc.runtimeMaxNumIterations");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'runtimeMaxNumIterations' .... " << runtimeMaxNumIterations_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'runtimeMaxNumIterations' .... " << runtimeMaxNumIterations_ << " (default)" << std::endl;
-    }
-  }
-
-  try {
-    initMaxNumIterations_ = pt.get<size_t>("mpc.initMaxNumIterations");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'initMaxNumIterations' ....... " << initMaxNumIterations_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'initMaxNumIterations' ....... " << initMaxNumIterations_ << " (default)" << std::endl;
-    }
-  }
-
-  try {
-    runtimeMaxLearningRate_ = pt.get<double>("mpc.runtimeMaxLearningRate");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'runtimeMaxLearningRate' ..... " << runtimeMaxLearningRate_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'runtimeMaxLearningRate' ..... " << runtimeMaxLearningRate_ << " (default)" << std::endl;
-    }
-  }
-
-  try {
-    runtimeMinLearningRate_ = pt.get<double>("mpc.runtimeMinLearningRate");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'runtimeMinLearningRate' ..... " << runtimeMinLearningRate_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'runtimeMinLearningRate' ..... " << runtimeMinLearningRate_ << " (default)" << std::endl;
-    }
-  }
-
-  try {
-    initMaxLearningRate_ = pt.get<double>("mpc.initMaxLearningRate");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'initMaxLearningRate' ........ " << initMaxLearningRate_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'initMaxLearningRate' ........ " << initMaxLearningRate_ << " (default)" << std::endl;
-    }
-  }
-
-  try {
-    initMinLearningRate_ = pt.get<double>("mpc.initMinLearningRate");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'initMinLearningRate' ........ " << initMinLearningRate_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'initMinLearningRate' ........ " << initMinLearningRate_ << " (default)" << std::endl;
-    }
-  }
-
-  try {
-    debugPrint_ = pt.get<bool>("mpc.debugPrint");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'debugPrint' ................. " << debugPrint_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'debugPrint' ................. " << debugPrint_ << " (default)" << std::endl;
-    }
-  }
-
-  try {
-    coldStart_ = pt.get<bool>("mpc.coldStart");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'coldStart' .................. " << coldStart_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'coldStart' .................. " << coldStart_ << " (default)" << std::endl;
-    }
-  }
-
-  try {
-    recedingHorizon_ = pt.get<bool>("mpc.recedingHorizon");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'recedingHorizon' ............ " << recedingHorizon_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'recedingHorizon' ............ " << recedingHorizon_ << " (default)" << std::endl;
-    }
-  }
-
-  try {
-    blockwiseMovingHorizon_ = pt.get<bool>("mpc.blockwiseMovingHorizon");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'blockwiseMovingHorizon' ..... " << blockwiseMovingHorizon_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'blockwiseMovingHorizon' ..... " << blockwiseMovingHorizon_ << " (default)" << std::endl;
-    }
-  }
-
-  try {
-    useParallelRiccatiSolver_ = pt.get<bool>("mpc.useParallelRiccatiSolver");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useParallelRiccatiSolver' ... " << useParallelRiccatiSolver_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'useParallelRiccatiSolver' ... " << useParallelRiccatiSolver_ << " (default)" << std::endl;
-    }
-  }
-
-  try {
-    solutionTimeWindow_ = pt.get<double>("mpc.solutionTimeWindow");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'solutionTimeWindow' ......... " << solutionTimeWindow_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'solutionTimeWindow' ......... " << solutionTimeWindow_ << " (default)" << std::endl;
-    }
-  }
-
-  try {
-    mpcDesiredFrequency_ = pt.get<double>("mpc.mpcDesiredFrequency");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'mpcDesiredFrequency' ........ " << mpcDesiredFrequency_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'mpcDesiredFrequency' ........ " << mpcDesiredFrequency_ << " (default)" << std::endl;
-    }
-  }
-
-  try {
-    mrtDesiredFrequency_ = pt.get<double>("mpc.mrtDesiredFrequency");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'mrtDesiredFrequency' ........ " << mrtDesiredFrequency_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'mrtDesiredFrequency' ........ " << mrtDesiredFrequency_ << " (default)" << std::endl;
-    }
-  }
-
-  try {
-    maxTimeStep_ = pt.get<double>("mpc.maxTimeStep");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'maxTimeStep' ................ " << maxTimeStep_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'maxTimeStep' ................ " << maxTimeStep_ << " (default)" << std::endl;
-    }
-  }
+  loadData::loadPtreeValue(pt, runtimeMaxNumIterations_, fieldName + ".runtimeMaxNumIterations", verbose);
+  loadData::loadPtreeValue(pt, initMaxNumIterations_, fieldName + ".initMaxNumIterations", verbose);
+  loadData::loadPtreeValue(pt, runtimeMaxLearningRate_, fieldName + ".runtimeMaxLearningRate", verbose);
+  loadData::loadPtreeValue(pt, runtimeMinLearningRate_, fieldName + ".runtimeMinLearningRate", verbose);
+  loadData::loadPtreeValue(pt, initMaxLearningRate_, fieldName + ".initMaxLearningRate", verbose);
+  loadData::loadPtreeValue(pt, initMinLearningRate_, fieldName + ".initMinLearningRate", verbose);
+  loadData::loadPtreeValue(pt, debugPrint_, fieldName + ".debugPrint", verbose);
+  loadData::loadPtreeValue(pt, coldStart_, fieldName + ".coldStart", verbose);
+  loadData::loadPtreeValue(pt, recedingHorizon_, fieldName + ".recedingHorizon", verbose);
+  loadData::loadPtreeValue(pt, blockwiseMovingHorizon_, fieldName + ".blockwiseMovingHorizon", verbose);
+  loadData::loadPtreeValue(pt, useParallelRiccatiSolver_, fieldName + ".useParallelRiccatiSolver", verbose);
+  loadData::loadPtreeValue(pt, solutionTimeWindow_, fieldName + ".solutionTimeWindow", verbose);
+  loadData::loadPtreeValue(pt, mpcDesiredFrequency_, fieldName + ".mpcDesiredFrequency", verbose);
+  loadData::loadPtreeValue(pt, mrtDesiredFrequency_, fieldName + ".mrtDesiredFrequency", verbose);
+  loadData::loadPtreeValue(pt, maxTimeStep_, fieldName + ".maxTimeStep", verbose);
 
   if (verbose) {
     std::cerr << " #### =============================================================================" << std::endl;

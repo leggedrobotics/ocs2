@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <thread>
 
 #include <ocs2_core/misc/SetThreadPriority.h>
+#include <ocs2_core/misc/ThreadPool.h>
 
 #include "ocs2_ilqr/ILQR_BASE.h"
 
@@ -114,14 +115,9 @@ class ILQR_MT : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::rollout_base_t;
 
   /**
-   * worker state enum
-   */
-  enum WORKER_STATE { IDLE = 0, LINE_SEARCH, APPROXIMATE_LQ, CALCULATE_CONTROLLER, SOLVE_RICCATI, SHUTDOWN };
-
-  /**
    * Default constructor.
    */
-  ILQR_MT() : BASE(), workerTask_(IDLE), subsystemProcessed_(0) {}
+  ILQR_MT() : BASE(), threadPool_(1) {}
 
   /**
    * Constructor
@@ -193,10 +189,9 @@ class ILQR_MT : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Finds the next node's uncompleted LQ approximation and executes approximateLQWorker.
    *
-   * @param [in] threadId: Thread ID
    * @param [in] partitionIndex: Time partition index
    */
-  void executeApproximatePartitionLQWorker(size_t threadId, size_t partitionIndex);
+  void executeApproximatePartitionLQWorker(size_t partitionIndex);
 
   /**
    * Computes the controller for a particular time partition
@@ -208,28 +203,15 @@ class ILQR_MT : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Finds the next node's uncompleted CALCULATE_CONTROLLER task and executes calculateControllerWorker.
    *
-   * @param [in] threadId: Thread ID
    * @param [in] partitionIndex: Time partition index
    */
-  void executeCalculatePartitionController(size_t threadId, size_t partitionIndex);
-
-  /**
-   * Launches worker threads
-   */
-  void launchWorkerThreads();
-  /**
-   * Sets number of worker threads
-   * @param [in] threadId: Thread ID
-   */
-  void threadWork(size_t threadId);
+  void executeCalculatePartitionController(size_t partitionIndex);
 
   /**
    * Execute line search worker on a thread with various learning rates and accept the result if it satisfies the step
    * size policy (defined in settings_.lsStepsizeGreedy_)
-   *
-   * @param [in] threadId
    */
-  void executeLineSearchWorker(size_t threadId);
+  void executeLineSearchWorker();
 
   /**
    * Distributes work
@@ -238,59 +220,26 @@ class ILQR_MT : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
 
   /**
    * Solves Riccati equations for the partitions assigned to the given thread
-   *
-   * @param [in] threadId
    */
-  void executeRiccatiSolver(size_t threadId);
-
-  /**
-   * a heuristic that generates a unique id for a process, such that we can manage the tasks.
-   * Generates a unique identifiers for subsystem, task, iteration:
-   * @param [in] iterateNo
-   * @param [in] workerState
-   * @param [in] subsystemId
-   * @return size_t:
-   */
-  size_t generateUniqueProcessID(size_t iterateNo, int workerState, int subsystemId) {
-    return (10e9 * (workerState + 1) + 10e6 * (subsystemId + 1) + iterateNo + 1);
-  }
+  void executeRiccatiSolver();
 
  private:
   // multi-threading helper variables
-  std::vector<std::thread> workerThreads_;
-  std::atomic_bool workersActive_;
-  std::atomic_int workerTask_;
-  std::atomic_int subsystemProcessed_;  // the subsystem the threads are currently working on
+  ThreadPool threadPool_;
 
-  std::mutex workerWakeUpMutex_;
-  std::condition_variable workerWakeUpCondition_;
-  std::mutex kCompletedMutex_;
-  std::condition_variable kCompletedCondition_;
-  std::mutex lineSearchResultMutex_;
-  std::mutex alphaBestFoundMutex_;
-  std::condition_variable alphaBestFoundCondition_;
-
-  std::array<std::atomic_size_t, 100> kTaken_approx_;
-  std::array<std::atomic_size_t, 100> kCompleted_;
-  std::array<std::atomic_size_t, 100> kTaken_ctrl_;
+  std::atomic_size_t nextTaskId_;
+  std::atomic_size_t nextTimeIndex_;
 
   // parallel Riccati solver
-  std::array<std::atomic_bool, 100> subsystemsDone_;
-  std::array<std::atomic_bool, 100> subsystemsProcessing_;
-  std::atomic_int numSubsystemsProcessed_;
-  std::mutex riccatiSolverBarrierMutex_;
   std::mutex riccatiSolverDataMutex_;
-  std::condition_variable riccatiSolverCompletedCondition_;
   std::vector<int> startingIndicesRiccatiWorker_;
   std::vector<int> endingIndicesRiccatiWorker_;
 
+  std::mutex lineSearchResultMutex_;
   size_t alphaExpBest_;
-  size_t alphaExpMax_;
-  scalar_t baselineTotalCost_;
-  std::atomic_size_t alphaTaken_;
-  std::atomic_bool alphaBestFound_;
-  std::atomic_size_t lsWorkerCompleted_;
+  std::atomic_size_t alphaExpNext_;
   std::vector<bool> alphaProcessed_;
+  scalar_t baselineTotalCost_;
 };
 
 }  // namespace ocs2

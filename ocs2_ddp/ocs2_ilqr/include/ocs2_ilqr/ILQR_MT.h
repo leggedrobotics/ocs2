@@ -34,7 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <thread>
 
 #include <ocs2_core/misc/SetThreadPriority.h>
-#include <ocs2_core/misc/ThreadPool.h>
 
 #include "ocs2_ilqr/ILQR_BASE.h"
 
@@ -117,7 +116,7 @@ class ILQR_MT : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Default constructor.
    */
-  ILQR_MT() : BASE(), threadPool_(1) {}
+  ILQR_MT() : BASE() {}
 
   /**
    * Constructor
@@ -225,8 +224,6 @@ class ILQR_MT : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
 
  private:
   // multi-threading helper variables
-  ThreadPool threadPool_;
-
   std::atomic_size_t nextTaskId_;
   std::atomic_size_t nextTimeIndex_;
 

@@ -41,8 +41,7 @@ ILQR_MT<STATE_DIM, INPUT_DIM>::ILQR_MT(const rollout_base_t* rolloutPtr, const d
                                        const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
     : BASE(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings, logicRulesPtr,
-           heuristicsFunctionPtr),
-      threadPool_(BASE::ddpSettings_.nThreads_) {
+           heuristicsFunctionPtr) {
   Eigen::initParallel();
 }
 
@@ -98,8 +97,8 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
   }
 
   nextTaskId_ = 0;
-  std::function<void(int)> task = [this](int) { executeLineSearchWorker(); };
-  threadPool_.runMultiple(task, BASE::ddpSettings_.nThreads_);
+  std::function<void(void)> task = [this] { executeLineSearchWorker(); };
+  BASE::BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
 
   // revitalize all integrators
   event_handler_t::deactivateKillIntegration();
@@ -133,8 +132,8 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex
 
   nextTimeIndex_ = 0;
   nextTaskId_ = 0;
-  std::function<void(int)> task = [this, partitionIndex](int) { executeApproximatePartitionLQWorker(partitionIndex); };
-  threadPool_.runMultiple(task, BASE::ddpSettings_.nThreads_);
+  std::function<void(void)> task = [this, partitionIndex] { executeApproximatePartitionLQWorker(partitionIndex); };
+  BASE::BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
 
   // display
   if (BASE::ddpSettings_.debugPrintMT_) {
@@ -194,8 +193,8 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitio
 
   nextTimeIndex_ = 0;
   nextTaskId_ = 0;
-  std::function<void(int)> task = [this, partitionIndex](int) { executeCalculatePartitionController(partitionIndex); };
-  threadPool_.runMultiple(task, BASE::ddpSettings_.nThreads_);
+  std::function<void(void)> task = [this, partitionIndex] { executeCalculatePartitionController(partitionIndex); };
+  BASE::BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
 
   // display
   if (BASE::ddpSettings_.debugPrintMT_) {
@@ -445,8 +444,8 @@ typename ILQR_MT<STATE_DIM, INPUT_DIM>::scalar_t ILQR_MT<STATE_DIM, INPUT_DIM>::
     }
 
     nextTaskId_ = 0;
-    std::function<void(int)> task = [this](int) { executeRiccatiSolver(); };
-    threadPool_.runMultiple(task, BASE::ddpSettings_.nThreads_);
+    std::function<void(void)> task = [this] { executeRiccatiSolver(); };
+    BASE::BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
   }
 
   if (BASE::ddpSettings_.debugPrintMT_) {

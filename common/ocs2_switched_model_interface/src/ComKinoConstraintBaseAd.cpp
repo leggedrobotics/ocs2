@@ -17,7 +17,7 @@ ComKinoConstraintBaseAd* ComKinoConstraintBaseAd::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::InitializeConstraintTerms() {
+void ComKinoConstraintBaseAd::initializeConstraintTerms() {
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
     auto footName = feetNames[i];
 
@@ -30,7 +30,7 @@ void ComKinoConstraintBaseAd::InitializeConstraintTerms() {
     // Velocity Constraint
 
     auto endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityConstraint(
-        i, EndEffectorVelocityConstraintSettings(), *adComModelPtr_.get(), *adKinematicModelPtr_.get(), options_.recompileLibraries_));
+        i, EndEffectorVelocityConstraintSettings(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
 
     // Inequalities
     inequalityConstraintCollection_.add(std::move(frictionCone), footName + "_FrictionCone");
@@ -83,9 +83,9 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::getConstraint1(constraint1_vector_t& g1) {
+void ComKinoConstraintBaseAd::getConstraint1(constraint1_vector_t& e) {
   size_t numConstraints = numStateInputConstraint(Base::t_);
-  g1.head(numConstraints) = equalityStateInputConstraintCollection_.getConstraints().getValueAsVector(Base::t_, Base::x_, Base::u_);
+  e.head(numConstraints) = equalityStateInputConstraintCollection_.getConstraints().getValueAsVector(Base::t_, Base::x_, Base::u_);
 }
 
 /******************************************************************************************************/
@@ -98,7 +98,7 @@ size_t ComKinoConstraintBaseAd::numStateInputConstraint(const scalar_t& time) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::getConstraint2(constraint2_vector_t& g2) {}
+void ComKinoConstraintBaseAd::getConstraint2(constraint2_vector_t& h) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -124,7 +124,7 @@ size_t ComKinoConstraintBaseAd::numInequalityConstraint(const scalar_t& time) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::getFinalConstraint2(constraint2_vector_t& g2Final) {}
+void ComKinoConstraintBaseAd::getFinalConstraint2(constraint2_vector_t& h_f) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -165,7 +165,9 @@ void ComKinoConstraintBaseAd::getConstraint1DerivativesControl(constraint1_input
 void ComKinoConstraintBaseAd::getConstraint1DerivativesEventTimes(constraint1_vector_array_t& g1DevArray) {
   // set all to zero
   g1DevArray.resize(numEventTimes_);
-  for (constraint1_vector_t& g1Dev : g1DevArray) g1Dev.setZero();
+  for (constraint1_vector_t& g1Dev : g1DevArray) {
+    g1Dev.setZero();
+  }
 }
 
 /******************************************************************************************************/

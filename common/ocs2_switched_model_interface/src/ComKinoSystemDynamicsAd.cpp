@@ -47,7 +47,7 @@ com_state_s_t<SCALAR_T> ComKinoSystemDynamicsAd::computeComStateDerivative(const
   const joint_coordinate_s_t<SCALAR_T> qJoints = getJointPositions(comKinoState);
 
   const vector3_s_t<SCALAR_T> baseEulerAngles = getOrientation(comPose);
-  const matrix3_s_t<SCALAR_T> o_R_b = RotationMatrixBasetoOrigin(baseEulerAngles);
+  const matrix3_s_t<SCALAR_T> o_R_b = rotationMatrixBaseToOrigin(baseEulerAngles);
 
   const vector3_s_t<SCALAR_T> com_comAngularVelocity = getAngularVelocity(com_comTwist);
   const vector3_s_t<SCALAR_T> com_comLinearVelocity = getLinearVelocity(com_comTwist);
@@ -77,7 +77,7 @@ com_state_s_t<SCALAR_T> ComKinoSystemDynamicsAd::computeComStateDerivative(const
   }
 
   // angular velocities to Euler angle derivatives transformation
-  const matrix3_s_t<SCALAR_T> transformAngVel2EulerAngDev = switched_model::AngularVelocitiesToEulerAngleDerivativesMatrix(baseEulerAngles);
+  const matrix3_s_t<SCALAR_T> transformAngVel2EulerAngDev = switched_model::angularVelocitiesToEulerAngleDerivativesMatrix(baseEulerAngles);
 
   // CoM dynamics
   com_state_s_t<SCALAR_T> stateDerivativeCoM;

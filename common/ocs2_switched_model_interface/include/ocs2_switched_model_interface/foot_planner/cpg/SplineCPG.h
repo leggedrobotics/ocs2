@@ -10,8 +10,8 @@
 
 #include <cmath>
 
-#include "ocs2_switched_model_interface/foot_planner/cpg/CPG_BASE.h"
 #include "ocs2_switched_model_interface/foot_planner/CubicSpline.h"
+#include "ocs2_switched_model_interface/foot_planner/cpg/CPG_BASE.h"
 
 namespace switched_model {
 

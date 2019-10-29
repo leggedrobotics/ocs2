@@ -90,7 +90,7 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishXppV
   // construct the message
   xpp_msgs::RobotStateCartesian robotStateCartesianMsg;
 
-  const Eigen::Quaternion<scalar_t> q_world_base = QuaternionBaseToOrigin<scalar_t>(basePose.template head<3>());
+  const Eigen::Quaternion<scalar_t> q_world_base = quaternionBaseToOrigin<scalar_t>(basePose.template head<3>());
   robotStateCartesianMsg.base.pose.orientation.x = q_world_base.x();
   robotStateCartesianMsg.base.pose.orientation.y = q_world_base.y();
   robotStateCartesianMsg.base.pose.orientation.z = q_world_base.z();
@@ -168,7 +168,7 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeFeet
   base_coordinate_t basePose = ocs2QuadrupedInterfacePtr_->getComModel().calculateBasePose(comPose);
   base_coordinate_t baseLocalVelocities = ocs2QuadrupedInterfacePtr_->getComModel().calculateBaseLocalVelocities(comLocalVelocities);
 
-  Eigen::Matrix3d o_R_b = RotationMatrixBasetoOrigin<scalar_t>(state.template head<3>());
+  Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin<scalar_t>(state.template head<3>());
 
   for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
     o_feetPosition[i] = ocs2QuadrupedInterfacePtr_->getKinematicModel().footPositionInOriginFrame(i, basePose, qJoints);

@@ -45,4 +45,4 @@ rbd_state_t SwitchedModelStateEstimator::estimateRbdModelState(const comkino_sta
   return rbdState;
 }
 
-}
+}  // namespace switched_model

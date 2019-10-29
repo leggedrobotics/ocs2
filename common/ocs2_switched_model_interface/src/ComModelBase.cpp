@@ -39,7 +39,7 @@ base_coordinate_s_t<SCALAR_T> ComModelBase<SCALAR_T>::calculateBasePose(const ba
   base_coordinate_s_t<SCALAR_T> basePose;
 
   // Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
-  matrix3_s_t<SCALAR_T> o_R_b = RotationMatrixBasetoOrigin<SCALAR_T>(getOrientation(comPose));
+  matrix3_s_t<SCALAR_T> o_R_b = rotationMatrixBaseToOrigin<SCALAR_T>(getOrientation(comPose));
 
   // base to CoM displacement in the CoM frame
   vector3_s_t<SCALAR_T> com_base2CoM = comPositionBaseFrame();
@@ -58,7 +58,7 @@ base_coordinate_s_t<SCALAR_T> ComModelBase<SCALAR_T>::calculateComPose(const bas
   base_coordinate_s_t<SCALAR_T> comPose;
 
   // Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
-  matrix3_s_t<SCALAR_T> o_R_b = RotationMatrixBasetoOrigin<SCALAR_T>(getOrientation(basePose));
+  matrix3_s_t<SCALAR_T> o_R_b = rotationMatrixBaseToOrigin<SCALAR_T>(getOrientation(basePose));
 
   // base to CoM displacement in the CoM frame
   vector3_s_t<SCALAR_T> com_base2CoM = comPositionBaseFrame();

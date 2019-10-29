@@ -17,9 +17,7 @@ namespace switched_model {
  * @return
  */
 template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 3, 3> RotationMatrixBasetoOrigin(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
-  if (eulerAngles.innerSize() != 3 || eulerAngles.outerSize() != 1) throw std::runtime_error("Input argument should be a 3-by-1 vector.");
-
+Eigen::Matrix<SCALAR_T, 3, 3> rotationMatrixBaseToOrigin(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
   // inputs are the intrinsic rotation angles in RADIANTS
   SCALAR_T sinAlpha = sin(eulerAngles(0));
   SCALAR_T cosAlpha = cos(eulerAngles(0));
@@ -37,12 +35,12 @@ Eigen::Matrix<SCALAR_T, 3, 3> RotationMatrixBasetoOrigin(const Eigen::Matrix<SCA
 }
 
 template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 3, 3> RotationMatrixOrigintoBase(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
-  return RotationMatrixBasetoOrigin<SCALAR_T>(eulerAngles).transpose();
+Eigen::Matrix<SCALAR_T, 3, 3> rotationMatrixOriginToBase(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
+  return rotationMatrixBaseToOrigin<SCALAR_T>(eulerAngles).transpose();
 }
 
 template <typename SCALAR_T>
-Eigen::Quaternion<SCALAR_T> QuaternionBaseToOrigin(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
+Eigen::Quaternion<SCALAR_T> quaternionBaseToOrigin(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
   const auto roll = eulerAngles(0);
   const auto pitch = eulerAngles(1);
   const auto yaw = eulerAngles(2);
@@ -51,7 +49,7 @@ Eigen::Quaternion<SCALAR_T> QuaternionBaseToOrigin(const Eigen::Matrix<SCALAR_T,
 }
 
 template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 3, 1> EulerAnglesFromQuaternionBaseToOrigin(const Eigen::Quaternion<SCALAR_T>& q_origin_base) {
+Eigen::Matrix<SCALAR_T, 3, 1> eulerAnglesFromQuaternionBaseToOrigin(const Eigen::Quaternion<SCALAR_T>& q_origin_base) {
   return q_origin_base.toRotationMatrix().eulerAngles(0, 1, 2);
 }
 
@@ -62,8 +60,10 @@ Eigen::Matrix<SCALAR_T, 3, 1> EulerAnglesFromQuaternionBaseToOrigin(const Eigen:
  * @return
  */
 template <typename SCALAR_T, typename Derived>
-Eigen::Matrix<SCALAR_T, 3, 3> CrossProductMatrix(const Eigen::DenseBase<Derived>& in) {
-  if (in.innerSize() != 3 || in.outerSize() != 1) throw std::runtime_error("Input argument should be a 3-by-1 vector.");
+Eigen::Matrix<SCALAR_T, 3, 3> crossProductMatrix(const Eigen::DenseBase<Derived>& in) {
+  if (in.innerSize() != 3 || in.outerSize() != 1) {
+    throw std::runtime_error("Input argument should be a 3-by-1 vector.");
+  }
 
   Eigen::Matrix<SCALAR_T, 3, 3> out;
   out << SCALAR_T(0.0), -in(2), +in(1), +in(2), SCALAR_T(0.0), -in(0), -in(1), +in(0), SCALAR_T(0.0);
@@ -77,7 +77,7 @@ Eigen::Matrix<SCALAR_T, 3, 3> CrossProductMatrix(const Eigen::DenseBase<Derived>
  * @return M: matrix that does the transformation
  */
 template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 3, 3> AngularVelocitiesToEulerAngleDerivativesMatrix(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
+Eigen::Matrix<SCALAR_T, 3, 3> angularVelocitiesToEulerAngleDerivativesMatrix(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
   Eigen::Matrix<SCALAR_T, 3, 3> M;
   SCALAR_T sinPsi = sin(eulerAngles(2));
   SCALAR_T cosPsi = cos(eulerAngles(2));

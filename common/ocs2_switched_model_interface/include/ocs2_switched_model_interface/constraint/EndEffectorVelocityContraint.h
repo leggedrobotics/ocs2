@@ -71,7 +71,7 @@ class EndEffectorVelocityConstraint final : public ocs2::ConstraintTerm<STATE_DI
         settings_(rhs.settings_),
         libName_(rhs.libName_),
         libFolder_(rhs.libFolder_),
-        adInterface_(new ad_interface_t(*rhs.adInterface_)) { }
+        adInterface_(new ad_interface_t(*rhs.adInterface_)) {}
 
   EndEffectorVelocityConstraint* clone() const override { return new EndEffectorVelocityConstraint(*this); }
 

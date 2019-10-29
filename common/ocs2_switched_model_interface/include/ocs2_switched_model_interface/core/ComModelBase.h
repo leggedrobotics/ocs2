@@ -22,8 +22,8 @@ class ComModelBase {
   virtual ComModelBase<SCALAR_T>* clone() const = 0;
 
   /**
-  * Set default joint configuration. Updates the CoM position and inertia
-  */
+   * Set default joint configuration. Updates the CoM position and inertia
+   */
   virtual void setJointConfiguration(const joint_coordinate_s_t<SCALAR_T>& q) = 0;
 
   /**

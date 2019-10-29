@@ -5,9 +5,9 @@
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_switched_model_interface/constraint/ConstraintTerm.h>
 
-#include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
+#include "ocs2_switched_model_interface/core/SwitchedModel.h"
 
 #include <ocs2_switched_model_interface/core/Rotations.h>
 
@@ -73,11 +73,9 @@ class EndEffectorPositionConstraint final : public ocs2::ConstraintTerm<STATE_DI
         settings_(rhs.settings_),
         libName_(rhs.libName_),
         libFolder_(rhs.libFolder_),
-        adInterface_(new ad_interface_t(*rhs.adInterface_)) { }
+        adInterface_(new ad_interface_t(*rhs.adInterface_)) {}
 
-  EndEffectorPositionConstraint* clone() const override {
-    return new EndEffectorPositionConstraint(*this);
-  }
+  EndEffectorPositionConstraint* clone() const override { return new EndEffectorPositionConstraint(*this); }
 
   void configure(const EndEffectorPositionConstraintSettings& settings) { settings_ = settings; };
 

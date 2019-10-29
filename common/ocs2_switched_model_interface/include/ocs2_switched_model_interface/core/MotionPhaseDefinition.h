@@ -49,52 +49,52 @@ inline contact_flag_t modeNumber2StanceLeg(const size_t& modeNumber) {
 
   switch (modeNumber) {
     case 0:
-      stanceLegs = contact_flag_t{0, 0, 0, 0};
+      stanceLegs = contact_flag_t{false, false, false, false};
       break;  // 0:  0-leg-stance
     case 1:
-      stanceLegs = contact_flag_t{0, 0, 0, 1};
+      stanceLegs = contact_flag_t{false, false, false, true};
       break;  // 1:  RH
     case 2:
-      stanceLegs = contact_flag_t{0, 0, 1, 0};
+      stanceLegs = contact_flag_t{false, false, true, false};
       break;  // 2:  LH
     case 3:
-      stanceLegs = contact_flag_t{0, 0, 1, 1};
+      stanceLegs = contact_flag_t{false, false, true, true};
       break;  // 3:  RH, LH
     case 4:
-      stanceLegs = contact_flag_t{0, 1, 0, 0};
+      stanceLegs = contact_flag_t{false, true, false, false};
       break;  // 4:  RF
     case 5:
-      stanceLegs = contact_flag_t{0, 1, 0, 1};
+      stanceLegs = contact_flag_t{false, true, false, true};
       break;  // 5:  RF, RH
     case 6:
-      stanceLegs = contact_flag_t{0, 1, 1, 0};
+      stanceLegs = contact_flag_t{false, true, true, false};
       break;  // 6:  RF, LH
     case 7:
-      stanceLegs = contact_flag_t{0, 1, 1, 1};
+      stanceLegs = contact_flag_t{false, true, true, true};
       break;  // 7:  RF, LH, RH
     case 8:
-      stanceLegs = contact_flag_t{1, 0, 0, 0};
+      stanceLegs = contact_flag_t{true, false, false, false};
       break;  // 8:  LF,
     case 9:
-      stanceLegs = contact_flag_t{1, 0, 0, 1};
+      stanceLegs = contact_flag_t{true, false, false, true};
       break;  // 9:  LF, RH
     case 10:
-      stanceLegs = contact_flag_t{1, 0, 1, 0};
+      stanceLegs = contact_flag_t{true, false, true, false};
       break;  // 10: LF, LH
     case 11:
-      stanceLegs = contact_flag_t{1, 0, 1, 1};
+      stanceLegs = contact_flag_t{true, false, true, true};
       break;  // 11: LF, LH, RH
     case 12:
-      stanceLegs = contact_flag_t{1, 1, 0, 0};
+      stanceLegs = contact_flag_t{true, true, false, false};
       break;  // 12: LF, RF
     case 13:
-      stanceLegs = contact_flag_t{1, 1, 0, 1};
+      stanceLegs = contact_flag_t{true, true, false, true};
       break;  // 13: LF, RF, RH
     case 14:
-      stanceLegs = contact_flag_t{1, 1, 1, 0};
+      stanceLegs = contact_flag_t{true, true, true, false};
       break;  // 14: LF, RF, LH
     case 15:
-      stanceLegs = contact_flag_t{1, 1, 1, 1};
+      stanceLegs = contact_flag_t{true, true, true, true};
       break;  // 15: 4-leg-stance
   }
 
@@ -105,7 +105,8 @@ inline contact_flag_t modeNumber2StanceLeg(const size_t& modeNumber) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 inline size_t stanceLeg2ModeNumber(const contact_flag_t& stanceLegs) {
-  return stanceLegs[3] + 2 * stanceLegs[2] + 4 * stanceLegs[1] + 8 * stanceLegs[0];
+  return static_cast<size_t>(stanceLegs[3]) + 2 * static_cast<size_t>(stanceLegs[2]) + 4 * static_cast<size_t>(stanceLegs[1]) +
+         8 * static_cast<size_t>(stanceLegs[0]);
 }
 
 /******************************************************************************************************/
@@ -181,12 +182,14 @@ void loadStdVector(const std::string& filename, const std::string& topicName, st
   }  // end of while loop
 
   // display
-  if (verbose == true) {
+  if (verbose) {
     if (vectorSize == 0) {
       std::cerr << topicName << ": { }";
     } else {
       std::cerr << topicName << ": {";
-      for (size_t i = 0; i < vectorSize; i++) std::cerr << loadVector[i] << ", ";
+      for (size_t i = 0; i < vectorSize; i++) {
+        std::cerr << loadVector[i] << ", ";
+      }
       std::cerr << "\b\b}" << std::endl;
     }
   }
@@ -206,15 +209,19 @@ inline void loadModes(const std::string& filename, const std::string& topicName,
 
   // convert the mode name to mode enum
   switchingModes.resize(numSubsystems);
-  for (size_t i = 0; i < numSubsystems; i++) switchingModes[i] = string2ModeNumber(switchingModesString[i]);
+  for (size_t i = 0; i < numSubsystems; i++) {
+    switchingModes[i] = string2ModeNumber(switchingModesString[i]);
+  }
 
   // display
-  if (verbose == true) {
+  if (verbose) {
     if (numSubsystems == 0) {
       std::cerr << topicName << ": { }";
     } else {
       std::cerr << topicName << ": {";
-      for (size_t i = 0; i < numSubsystems; i++) std::cerr << modeNumber2String(switchingModes[i]) << ", ";
+      for (size_t i = 0; i < numSubsystems; i++) {
+        std::cerr << modeNumber2String(switchingModes[i]) << ", ";
+      }
       std::cerr << "\b\b}" << std::endl;
     }
   }

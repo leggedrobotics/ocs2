@@ -8,9 +8,9 @@
 
 namespace switched_model {
 
-class Model_Settings {
+class ModelSettings {
  public:
-  Model_Settings()
+  ModelSettings()
       : constrainedIntegration_(true),
         gravitationalAcceleration_(9.81),
         contactForceWeight_(0.1),
@@ -62,4 +62,3 @@ class Model_Settings {
 };
 
 }  // end of namespace switched_model
-

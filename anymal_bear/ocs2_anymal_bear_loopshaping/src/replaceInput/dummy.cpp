@@ -3,7 +3,7 @@
 //
 #include <boost/filesystem.hpp>
 
-#include <ocs2_anymal_loopshaping/replaceInput/definitions.h>
+#include <ocs2_anymal_bear_loopshaping/replaceInput/definitions.h>
 #include <ocs2_robotic_tools/command/TargetPoseTransformation.h>
 #include <ocs2_quadruped_interface/test/MRT_ROS_Dummy_Quadruped.h>
 

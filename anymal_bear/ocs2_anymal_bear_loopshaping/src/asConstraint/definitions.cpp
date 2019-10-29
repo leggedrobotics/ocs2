@@ -2,9 +2,9 @@
 // Created by ruben on 01.12.18.
 //
 
-#include <ocs2_anymal_loopshaping/asConstraint/definitions.h>
-#include <ocs2_anymal_loopshaping/implementation/OCS2AnymalAugmentedInterface.tpp>
-#include <ocs2_anymal_loopshaping/implementation/MRT_ROS_Anymal_Augmented.tpp>
+#include <ocs2_anymal_bear_loopshaping/asConstraint/definitions.h>
+#include <ocs2_anymal_bear_loopshaping/implementation/OCS2AnymalAugmentedInterface.tpp>
+#include <ocs2_anymal_bear_loopshaping/implementation/MRT_ROS_Anymal_Augmented.tpp>
 
 namespace anymal{
     template class OCS2AnymalAugmentedInterface<

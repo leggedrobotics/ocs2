@@ -6,9 +6,9 @@
 #define OCS2_ANYMAL_LOOPSHAPING_DEFINITIONS_REPLACEINPUT_H
 
 #include <cstddef>
-#include "ocs2_anymal_loopshaping/OCS2AnymalAugmentedInterface.h"
+#include "ocs2_anymal_bear_loopshaping/OCS2AnymalAugmentedInterface.h"
 #include <ocs2_quadruped_interface/MPC_ROS_Quadruped.h>
-#include "ocs2_anymal_loopshaping/MRT_ROS_Anymal_Augmented.h"
+#include "ocs2_anymal_bear_loopshaping/MRT_ROS_Anymal_Augmented.h"
 
 namespace anymal {
 

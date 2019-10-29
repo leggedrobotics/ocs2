@@ -2,7 +2,7 @@
 // Created by ruben on 25.07.18.
 //
 
-#include <ocs2_anymal_loopshaping/MRT_ROS_Anymal_Augmented.h>
+#include <ocs2_anymal_bear_loopshaping/MRT_ROS_Anymal_Augmented.h>
 
 namespace anymal {
 

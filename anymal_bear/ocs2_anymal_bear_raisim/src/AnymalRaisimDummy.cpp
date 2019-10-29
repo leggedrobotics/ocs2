@@ -1,7 +1,7 @@
 #include <ros/package.h>
 
 #include <ocs2_anymal_bear/AnymalBearInterface.h>
-#include <ocs2_anymal_raisim/AnymalRaisimConversions.h>
+#include <ocs2_anymal_bear_raisim/AnymalRaisimConversions.h>
 #include <ocs2_quadruped_interface/test/MRT_ROS_Dummy_Quadruped.h>
 #include <ocs2_raisim/RaisimRollout.h>
 

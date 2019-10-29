@@ -8,7 +8,7 @@
 
 #include <boost/filesystem.hpp>
 
-#include <ocs2_anymal_loopshaping/replaceInput/definitions.h>
+#include <ocs2_anymal_bear_loopshaping/replaceInput/definitions.h>
 
 int main( int argc, char* argv[] )
 {

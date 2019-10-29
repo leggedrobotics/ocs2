@@ -1,7 +1,7 @@
 //
 // Created by ruben on 25.07.18.
 //
-#include <ocs2_anymal_loopshaping/OCS2AnymalAugmentedInterface.h>
+#include <ocs2_anymal_bear_loopshaping/OCS2AnymalAugmentedInterface.h>
 
 #include <ocs2_anymal_bear_switched_model/core/AnymalKinematics.h>
 #include <ocs2_anymal_bear_switched_model/core/AnymalCom.h>

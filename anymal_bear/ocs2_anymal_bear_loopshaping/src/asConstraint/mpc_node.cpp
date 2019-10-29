@@ -6,7 +6,7 @@
 #include <iostream>
 #include <string>
 
-#include <ocs2_anymal_loopshaping/asConstraint/definitions.h>
+#include <ocs2_anymal_bear_loopshaping/asConstraint/definitions.h>
 #include <boost/filesystem.hpp>
 
 int main(int argc, char* argv[]) {

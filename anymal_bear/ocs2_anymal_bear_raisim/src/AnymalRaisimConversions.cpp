@@ -1,7 +1,7 @@
+#include <ocs2_anymal_bear_raisim/AnymalRaisimConversions.h>
 #include <ocs2_anymal_bear_switched_model/core/AnymalKinematics.h>
 #include <ocs2_anymal_bear_switched_model/generated/inverse_dynamics.h>
 #include <ocs2_anymal_bear_switched_model/generated/jsim.h>
-#include <ocs2_anymal_raisim/AnymalRaisimConversions.h>
 #include <ocs2_switched_model_interface/core/Rotations.h>
 
 namespace anymal {

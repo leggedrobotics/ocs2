@@ -9,8 +9,6 @@
 
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
 
-#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
-
 namespace anymal {
 namespace tpl {
 
@@ -18,12 +16,6 @@ template <typename SCALAR_T>
 class AnymalCom : public switched_model::ComModelBase<SCALAR_T> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = switched_model::ComModelBase<SCALAR_T>;
-  using typename BASE::joint_coordinate_t;
-  using typename BASE::matrix3s_t;
-  using typename BASE::matrix6s_t;
-  using typename BASE::vector3s_t;
 
   /**
    * Constructor needed for initialization
@@ -37,9 +29,9 @@ class AnymalCom : public switched_model::ComModelBase<SCALAR_T> {
 
   AnymalCom<SCALAR_T>* clone() const override;
 
-  void setJointConfiguration(const joint_coordinate_t& q) override;
+  void setJointConfiguration(const switched_model::joint_coordinate_s_t<SCALAR_T>& q) override;
 
-  vector3s_t comPositionBaseFrame() const override { return comPositionBaseFrame_; }
+  switched_model::vector3_s_t<SCALAR_T> comPositionBaseFrame() const override { return comPositionBaseFrame_; }
 
   SCALAR_T totalMass() const override { return totalMass_; }
 
@@ -47,8 +39,8 @@ class AnymalCom : public switched_model::ComModelBase<SCALAR_T> {
 
  private:
   // cached values for current default joint configuration
-  vector3s_t comPositionBaseFrame_;
-  matrix6s_t comInertia_;
+  switched_model::vector3_s_t<SCALAR_T> comPositionBaseFrame_;
+  switched_model::matrix6_s_t<SCALAR_T> comInertia_;
   SCALAR_T totalMass_;
 };
 

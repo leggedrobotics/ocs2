@@ -4,8 +4,9 @@
 #include <raisim/World.hpp>
 #include <utility>
 
-#include <ocs2_anymal_interface/OCS2AnymalInterface.h>
-#include <ocs2_quadruped_interface/MRT_ROS_Quadruped.h>
+#include <ocs2_anymal_switched_model/core/AnymalCom.h>
+#include <ocs2_core/Dimensions.h>
+#include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
 
 namespace anymal {
 
@@ -19,17 +20,14 @@ class AnymalRaisimConversions {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using mrt_t = switched_model::MRT_ROS_Quadruped<12>;
-  using state_vector_t = OCS2AnymalInterface::state_vector_t;
-  using input_vector_t = OCS2AnymalInterface::input_vector_t;
-  using rbd_state_vector_t = OCS2AnymalInterface::rbd_state_vector_t;
+  using dim_t = ocs2::Dimensions<switched_model::STATE_DIM, switched_model::INPUT_DIM>;
+  using state_vector_t = typename dim_t::state_vector_t;
+  using input_vector_t = typename dim_t::input_vector_t;
 
   /**
    * @brief Constructor
-   * @param mrt: Shared pointer to an MRT instance, which is assumed to be updated by MPC
    */
-  AnymalRaisimConversions(std::shared_ptr<mrt_t> mrt, std::shared_ptr<anymal::OCS2AnymalInterface> anymalInterface)
-      : mrt_(std::move(mrt)), anymalInterface_(std::move(anymalInterface)) {}
+  explicit AnymalRaisimConversions() : switchedModelStateEstimator_(AnymalCom()) {}
 
   /**
    * @brief Convert ocs2 anymal state to generalized coordinate and generalized velocity used by RAIsim
@@ -37,7 +35,7 @@ class AnymalRaisimConversions {
    * @param[in] input: current input (includes state-information due to the kinematic leg model)
    * @return {q, dq} pair that represents the state
    */
-  std::pair<Eigen::VectorXd, Eigen::VectorXd> stateToRaisimGenCoordGenVel(const state_vector_t& state, const input_vector_t& input);
+  std::pair<Eigen::VectorXd, Eigen::VectorXd> stateToRaisimGenCoordGenVel(const state_vector_t& state, const input_vector_t& input) const;
 
   /**
    * @brief Convert RAIsim generalized coordinates and velocities to ocs2 anymal RBD state
@@ -45,7 +43,7 @@ class AnymalRaisimConversions {
    * @param[in] dq the generalized velocity
    * @return the corresponding anymal RBD state
    */
-  static rbd_state_vector_t raisimGenCoordGenVelToRbdState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq);
+  static switched_model::rbd_state_t raisimGenCoordGenVelToRbdState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq);
 
   /**
    * @brief Convert RAIsim generalized coordinates and velocities to ocs2 anymal state
@@ -54,7 +52,7 @@ class AnymalRaisimConversions {
    * @param[in] dq the generalized velocity
    * @return the corresponding ocs2 anymal state
    */
-  state_vector_t raisimGenCoordGenVelToState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq);
+  state_vector_t raisimGenCoordGenVelToState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq) const;
 
   /**
    * @brief Convert ocs2 control input to RAIsim generalized force
@@ -66,7 +64,7 @@ class AnymalRaisimConversions {
    * @return The generalized forces to be applied to the system
    */
   Eigen::VectorXd inputToRaisimGeneralizedForce(double time, const input_vector_t& input, const state_vector_t& state,
-                                                const Eigen::VectorXd& q, const Eigen::VectorXd& dq);
+                                                const Eigen::VectorXd& q, const Eigen::VectorXd& dq) const;
 
   /**
    * @brief extractModelData
@@ -84,7 +82,6 @@ class AnymalRaisimConversions {
   static void makeEulerAnglesUnique(Eigen::Vector3d& eulerAngles);
 
  protected:
-  std::shared_ptr<mrt_t> mrt_;
-  std::shared_ptr<anymal::OCS2AnymalInterface> anymalInterface_;
+  const switched_model::SwitchedModelStateEstimator switchedModelStateEstimator_;  // const for thread safety
 };
 }  // namespace anymal

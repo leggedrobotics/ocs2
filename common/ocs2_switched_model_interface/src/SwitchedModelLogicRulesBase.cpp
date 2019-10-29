@@ -1,18 +1,12 @@
-/*
- * SwitchedModelLogicRulesBase.h
- *
- *  Created on: Mar 14, 2018
- *      Author: Farbod
- */
+#include <ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h>
 
 namespace switched_model {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t>
-SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::SwitchedModelLogicRulesBase(const feet_planner_ptr_t& feetPlannerPtr,
-                                                                                  const scalar_t& phaseTransitionStanceTime /*= 0.4*/)
+SwitchedModelLogicRulesBase::SwitchedModelLogicRulesBase(const feet_planner_ptr_t& feetPlannerPtr,
+                                                         const scalar_t& phaseTransitionStanceTime /*= 0.4*/)
 
     : BASE(),
       feetPlannerPtr_(feetPlannerPtr)  // shallow copy: points to the same asset
@@ -22,8 +16,7 @@ SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::SwitchedModelLogicRulesBas
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t>
-SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::SwitchedModelLogicRulesBase(const SwitchedModelLogicRulesBase& rhs)
+SwitchedModelLogicRulesBase::SwitchedModelLogicRulesBase(const SwitchedModelLogicRulesBase& rhs)
 
     : BASE(rhs),
       feetPlannerPtr_(rhs.feetPlannerPtr_),
@@ -36,9 +29,7 @@ SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::SwitchedModelLogicRulesBas
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t>
-SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>& SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::operator=(
-    SwitchedModelLogicRulesBase&& other) {
+SwitchedModelLogicRulesBase& SwitchedModelLogicRulesBase::operator=(SwitchedModelLogicRulesBase&& other) {
   if (this != &other) {
     // base class
     BASE::operator=(std::move(other));
@@ -56,9 +47,7 @@ SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>& SwitchedModelLogicRulesBas
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t>
-SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>& SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::operator=(
-    const SwitchedModelLogicRulesBase& other) {
+SwitchedModelLogicRulesBase& SwitchedModelLogicRulesBase::operator=(const SwitchedModelLogicRulesBase& other) {
   if (this != &other) {
     // base class
     BASE::operator=(other);
@@ -76,8 +65,7 @@ SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>& SwitchedModelLogicRulesBas
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t>
-void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::update() {
+void SwitchedModelLogicRulesBase::update() {
   const size_t numSubsystems = this->getNumSubsystems();
 
   contactFlagsStock_.resize(numSubsystems);
@@ -96,17 +84,14 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::update() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t>
-const std::vector<typename SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::contact_flag_t>&
-SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::getContactFlagsSequence() const {
+const std::vector<contact_flag_t>& SwitchedModelLogicRulesBase::getContactFlagsSequence() const {
   return contactFlagsStock_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t>
-void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::getContactFlags(const size_t& index, contact_flag_t& contactFlags) const {
+void SwitchedModelLogicRulesBase::getContactFlags(const size_t& index, contact_flag_t& contactFlags) const {
   if (index >= contactFlagsStock_.size()) {
     throw std::runtime_error("The requested index " + std::to_string(index) + " refers to an out-of-bound motion phase.");
   }
@@ -117,9 +102,8 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::getContactFlags(const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t>
-void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::getMotionPhaseLogics(const size_t& index, contact_flag_t& contactFlags,
-                                                                                std::array<const cpg_t*, 4>& feetReferencePtr) const {
+void SwitchedModelLogicRulesBase::getMotionPhaseLogics(const size_t& index, contact_flag_t& contactFlags,
+                                                       std::array<const foot_cpg_t*, 4>& feetReferencePtr) const {
   if (index >= contactFlagsStock_.size()) {
     throw std::runtime_error("The requested index " + std::to_string(index) + " refers to an out-of-bound motion phase.");
   }
@@ -143,19 +127,15 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::getMotionPhaseLogics(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t>
-const typename SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::feet_planner_t&
-SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::getFeetPlanner() const {
+const typename SwitchedModelLogicRulesBase::feet_planner_t& SwitchedModelLogicRulesBase::getFeetPlanner() const {
   return *feetPlannerPtr_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t>
-void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::insertModeSequenceTemplate(const logic_template_type& modeSequenceTemplate,
-                                                                                      const scalar_t& startTime,
-                                                                                      const scalar_t& finalTime) {
+void SwitchedModelLogicRulesBase::insertModeSequenceTemplate(const logic_template_type& modeSequenceTemplate, const scalar_t& startTime,
+                                                             const scalar_t& finalTime) {
   // find the index on which the new gait should be added
   const size_t index = std::lower_bound(eventTimes().begin(), eventTimes().end(), startTime) - eventTimes().begin();
 
@@ -184,8 +164,7 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::insertModeSequenceTem
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t>
-void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::rewind(const scalar_t& lowerBoundTime, const scalar_t& upperBoundTime) {
+void SwitchedModelLogicRulesBase::rewind(const scalar_t& lowerBoundTime, const scalar_t& upperBoundTime) {
   const size_t index = std::lower_bound(eventTimes().begin(), eventTimes().end(), lowerBoundTime) - eventTimes().begin();
 
   if (index > 0) {
@@ -214,9 +193,8 @@ void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::rewind(const scalar_t
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, class cpg_t>
-void SwitchedModelLogicRulesBase<JOINT_COORD_SIZE, cpg_t>::tileModeSequenceTemplate(const logic_template_type& modeSequenceTemplate,
-                                                                                    const scalar_t& startTime, const scalar_t& finalTime) {
+void SwitchedModelLogicRulesBase::tileModeSequenceTemplate(const logic_template_type& modeSequenceTemplate, const scalar_t& startTime,
+                                                           const scalar_t& finalTime) {
   const size_t numTemplateSubsystems = modeSequenceTemplate.templateSubsystemsSequence_.size();
 
   // If no template subsystem is defined, the last subsystem should continue for ever

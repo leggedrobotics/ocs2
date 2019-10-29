@@ -31,10 +31,6 @@ class MRT_ROS_Dummy_Quadruped : public ocs2::MRT_ROS_Dummy_Loop<STATE_DIM, INPUT
   using quadruped_interface_t = OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>;
   using quadruped_interface_ptr_t = typename quadruped_interface_t::Ptr;
 
-  using contact_flag_t = typename quadruped_interface_t::contact_flag_t;
-  using generalized_coordinate_t = typename quadruped_interface_t::generalized_coordinate_t;
-  using joint_coordinate_t = typename quadruped_interface_t::joint_coordinate_t;
-  using base_coordinate_t = typename quadruped_interface_t::base_coordinate_t;
   using rbd_state_vector_t = typename quadruped_interface_t::rbd_state_vector_t;
 
   enum { rbd_state_dim_ = quadruped_interface_t::rbd_state_dim_ };

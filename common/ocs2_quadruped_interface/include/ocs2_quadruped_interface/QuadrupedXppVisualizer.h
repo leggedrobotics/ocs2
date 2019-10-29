@@ -26,10 +26,6 @@ class QuadrupedXppVisualizer {
 
   using quadruped_interface_t = OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>;
   using quadruped_interface_ptr_t = typename quadruped_interface_t::Ptr;
-  using contact_flag_t = typename quadruped_interface_t::contact_flag_t;
-  using generalized_coordinate_t = typename quadruped_interface_t::generalized_coordinate_t;
-  using joint_coordinate_t = typename quadruped_interface_t::joint_coordinate_t;
-  using base_coordinate_t = typename quadruped_interface_t::base_coordinate_t;
   using rbd_state_vector_t = typename quadruped_interface_t::rbd_state_vector_t;
   using scalar_t = typename quadruped_interface_t::scalar_t;
   using state_vector_t = typename quadruped_interface_t::state_vector_t;

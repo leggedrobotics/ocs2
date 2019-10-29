@@ -55,8 +55,6 @@ class OCS2AnymalAugmentedInterface : public switched_model::OCS2QuadrupedAugment
   using typename BASE::BASE::mpc_t;
   using typename BASE::BASE::state_vector_t;
   using typename BASE::BASE::input_vector_t;
-  using typename BASE::BASE::generalized_coordinate_t;
-  using typename BASE::BASE::contact_flag_t;
   using typename BASE::controlled_system_base_ptr_t;
   using typename BASE::controlled_system_base_t;
   using typename BASE::rollout_base_t;

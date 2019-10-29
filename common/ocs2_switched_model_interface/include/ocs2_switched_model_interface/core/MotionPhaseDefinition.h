@@ -16,7 +16,9 @@
 #include <boost/property_tree/info_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 
-#include <ocs2_core/logic/rules/HybridLogicRules.h>
+#include "ocs2_switched_model_interface/core/SwitchedModel.h"
+
+#include <ocs2_core/logic/rules/ModeSequenceTemplate.h>
 
 namespace switched_model {
 
@@ -42,57 +44,57 @@ enum ModeNumber {  // {LF, RF, LH, RH}
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-inline std::array<bool, 4> modeNumber2StanceLeg(const size_t& modeNumber) {
-  std::array<bool, 4> stanceLegs;  // {LF, RF, LH, RH}
+inline contact_flag_t modeNumber2StanceLeg(const size_t& modeNumber) {
+  contact_flag_t stanceLegs;  // {LF, RF, LH, RH}
 
   switch (modeNumber) {
     case 0:
-      stanceLegs = std::array<bool, 4>{0, 0, 0, 0};
+      stanceLegs = contact_flag_t{0, 0, 0, 0};
       break;  // 0:  0-leg-stance
     case 1:
-      stanceLegs = std::array<bool, 4>{0, 0, 0, 1};
+      stanceLegs = contact_flag_t{0, 0, 0, 1};
       break;  // 1:  RH
     case 2:
-      stanceLegs = std::array<bool, 4>{0, 0, 1, 0};
+      stanceLegs = contact_flag_t{0, 0, 1, 0};
       break;  // 2:  LH
     case 3:
-      stanceLegs = std::array<bool, 4>{0, 0, 1, 1};
+      stanceLegs = contact_flag_t{0, 0, 1, 1};
       break;  // 3:  RH, LH
     case 4:
-      stanceLegs = std::array<bool, 4>{0, 1, 0, 0};
+      stanceLegs = contact_flag_t{0, 1, 0, 0};
       break;  // 4:  RF
     case 5:
-      stanceLegs = std::array<bool, 4>{0, 1, 0, 1};
+      stanceLegs = contact_flag_t{0, 1, 0, 1};
       break;  // 5:  RF, RH
     case 6:
-      stanceLegs = std::array<bool, 4>{0, 1, 1, 0};
+      stanceLegs = contact_flag_t{0, 1, 1, 0};
       break;  // 6:  RF, LH
     case 7:
-      stanceLegs = std::array<bool, 4>{0, 1, 1, 1};
+      stanceLegs = contact_flag_t{0, 1, 1, 1};
       break;  // 7:  RF, LH, RH
     case 8:
-      stanceLegs = std::array<bool, 4>{1, 0, 0, 0};
+      stanceLegs = contact_flag_t{1, 0, 0, 0};
       break;  // 8:  LF,
     case 9:
-      stanceLegs = std::array<bool, 4>{1, 0, 0, 1};
+      stanceLegs = contact_flag_t{1, 0, 0, 1};
       break;  // 9:  LF, RH
     case 10:
-      stanceLegs = std::array<bool, 4>{1, 0, 1, 0};
+      stanceLegs = contact_flag_t{1, 0, 1, 0};
       break;  // 10: LF, LH
     case 11:
-      stanceLegs = std::array<bool, 4>{1, 0, 1, 1};
+      stanceLegs = contact_flag_t{1, 0, 1, 1};
       break;  // 11: LF, LH, RH
     case 12:
-      stanceLegs = std::array<bool, 4>{1, 1, 0, 0};
+      stanceLegs = contact_flag_t{1, 1, 0, 0};
       break;  // 12: LF, RF
     case 13:
-      stanceLegs = std::array<bool, 4>{1, 1, 0, 1};
+      stanceLegs = contact_flag_t{1, 1, 0, 1};
       break;  // 13: LF, RF, RH
     case 14:
-      stanceLegs = std::array<bool, 4>{1, 1, 1, 0};
+      stanceLegs = contact_flag_t{1, 1, 1, 0};
       break;  // 14: LF, RF, LH
     case 15:
-      stanceLegs = std::array<bool, 4>{1, 1, 1, 1};
+      stanceLegs = contact_flag_t{1, 1, 1, 1};
       break;  // 15: 4-leg-stance
   }
 
@@ -102,7 +104,7 @@ inline std::array<bool, 4> modeNumber2StanceLeg(const size_t& modeNumber) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-inline size_t stanceLeg2ModeNumber(const std::array<bool, 4>& stanceLegs) {
+inline size_t stanceLeg2ModeNumber(const contact_flag_t& stanceLegs) {
   return stanceLegs[3] + 2 * stanceLegs[2] + 4 * stanceLegs[1] + 8 * stanceLegs[0];
 }
 

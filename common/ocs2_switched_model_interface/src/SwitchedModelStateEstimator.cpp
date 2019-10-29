@@ -6,21 +6,19 @@
 
 namespace switched_model {
 
-SwitchedModelStateEstimator::SwitchedModelStateEstimator(const ComModelBase<scalar_t>& comModel) : comModelPtr_(comModel.clone()) {}
+SwitchedModelStateEstimator::SwitchedModelStateEstimator(const com_model_t& comModel) : comModelPtr_(comModel.clone()) {}
 
 SwitchedModelStateEstimator::SwitchedModelStateEstimator(const SwitchedModelStateEstimator& rhs)
     : comModelPtr_(rhs.comModelPtr_->clone()) {}
 
-typename SwitchedModelStateEstimator::comkino_model_state_t SwitchedModelStateEstimator::estimateComkinoModelState(
-    const rbd_model_state_t& rbdState) const {
-  comkino_model_state_t comkinoState;
+comkino_state_t SwitchedModelStateEstimator::estimateComkinoModelState(const rbd_state_t& rbdState) const {
+  comkino_state_t comkinoState;
   comkinoState << estimateComState(rbdState), getJointPositions(rbdState);
   return comkinoState;
 }
 
-typename SwitchedModelStateEstimator::com_model_state_t SwitchedModelStateEstimator::estimateComState(
-    const rbd_model_state_t& rbdState) const {
-  com_model_state_t comState;
+com_state_t SwitchedModelStateEstimator::estimateComState(const rbd_state_t& rbdState) const {
+  com_state_t comState;
 
   base_coordinate_t basePose = getBasePose(rbdState);
   base_coordinate_t baselocalVelocities = getBaseLocalVelocity(rbdState);
@@ -32,9 +30,9 @@ typename SwitchedModelStateEstimator::com_model_state_t SwitchedModelStateEstima
   return comState;
 }
 
-typename SwitchedModelStateEstimator::rbd_model_state_t SwitchedModelStateEstimator::estimateRbdModelState(
-    const comkino_model_state_t& comkinoState, const joint_coordinate_t& dqJoints) const {
-  rbd_model_state_t rbdState;
+rbd_state_t SwitchedModelStateEstimator::estimateRbdModelState(const comkino_state_t& comkinoState,
+                                                               const joint_coordinate_t& dqJoints) const {
+  rbd_state_t rbdState;
 
   base_coordinate_t comPose = getComPose(comkinoState);
   base_coordinate_t comLocalVelocities = getComLocalVelocities(comkinoState);

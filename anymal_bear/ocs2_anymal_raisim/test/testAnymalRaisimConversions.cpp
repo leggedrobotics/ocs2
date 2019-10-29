@@ -10,13 +10,7 @@ TEST(AnymalRaisim, Conversions) {
   using state_vector_t = Eigen::Matrix<double, STATE_DIM, 1>;
   using input_vector_t = Eigen::Matrix<double, INPUT_DIM, 1>;
 
-  std::shared_ptr<anymal::OCS2AnymalInterface> anymalInterface(
-      new anymal::OCS2AnymalInterface(ros::package::getPath("ocs2_anymal_interface") + "/config/mpc"));
-
-  using mrt_t = switched_model::MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>;
-  std::shared_ptr<mrt_t> anymalMrt(new mrt_t(anymalInterface, "anymal"));
-
-  auto conversions = anymal::AnymalRaisimConversions(anymalMrt, anymalInterface);
+  anymal::AnymalRaisimConversions conversions;
 
   // consistency test ocs2 -> raisim -> ocs2
   for (int i = 0; i < 100; i++) {

@@ -1,142 +1,145 @@
-/*
- * SwitchedModel.h
- *
- *  Created on: Aug 11, 2017
- *      Author: asutosh
- */
-
-#ifndef SWITCHEDMODEL_H_
-#define SWITCHEDMODEL_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <array>
-#include <cmath>
+
+#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 
 namespace switched_model {
 
-/**
- * General typedefs and enums for all Base classes
- * @tparam JOINT_COORD_SIZE
- */
-template <size_t JOINT_COORD_SIZE, typename SCALAR_T = double>
-class SwitchedModel {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+constexpr size_t NUM_CONTACT_POINTS = 4;
+constexpr size_t BASE_COORDINATE_SIZE = 6;
+constexpr size_t JOINT_COORDINATE_SIZE = 12;
+constexpr size_t GENERALIZED_COORDINATE_SIZE = BASE_COORDINATE_SIZE + JOINT_COORDINATE_SIZE;  // 18
+constexpr size_t STATE_DIM = 2 * BASE_COORDINATE_SIZE + JOINT_COORDINATE_SIZE;                // 24
+constexpr size_t INPUT_DIM = 3 * NUM_CONTACT_POINTS + JOINT_COORDINATE_SIZE;                  // 24
 
-  /**
-   * Enumerations defining base, joint and generalized coordinate size
-   */
-  enum {
-    NUM_CONTACT_POINTS = 4,
-    BASE_COORDINATE_SIZE = 6,
-    JOINT_COORDINATE_SIZE = JOINT_COORD_SIZE,
-    GENERALIZED_COORDINATE_SIZE = BASE_COORDINATE_SIZE + JOINT_COORD_SIZE
-  };
+enum class FeetEnum { LF, RF, LH, RH };
+using contact_flag_t = std::array<bool, NUM_CONTACT_POINTS>;
 
-  typedef std::array<bool, NUM_CONTACT_POINTS> contact_flag_t;
+template <typename scalar_t>
+using vector3_s_t = Eigen::Matrix<scalar_t, 3, 1>;
+using vector3_t = vector3_s_t<double>;
+using vector3_ad_t = vector3_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
 
-  typedef Eigen::Matrix<SCALAR_T, GENERALIZED_COORDINATE_SIZE, 1> generalized_coordinate_t;
-  typedef Eigen::Matrix<SCALAR_T, JOINT_COORDINATE_SIZE, 1> joint_coordinate_t;
-  typedef Eigen::Matrix<SCALAR_T, BASE_COORDINATE_SIZE, 1> base_coordinate_t;
+template <typename scalar_t>
+using matrix3_s_t = Eigen::Matrix<scalar_t, 3, 3>;
+using matrix3_t = matrix3_s_t<double>;
+using matrix3_ad_t = matrix3_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
 
-  enum class FeetEnum { LF, RF, LH, RH };
-};
+template <typename scalar_t>
+using vector6_s_t = Eigen::Matrix<scalar_t, 6, 1>;
+using vector6_t = vector6_s_t<double>;
+using vector6_ad_t = vector6_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
 
-/**
- * Whether to use Inertia Matrix derived
- * @return
- */
-inline bool useInertiaMatrixDerivate() {
-  return false;
+template <typename scalar_t>
+using matrix6_s_t = Eigen::Matrix<scalar_t, 6, 6>;
+using matrix6_t = matrix6_s_t<double>;
+using matrix6_ad_t = matrix6_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
+
+template <typename scalar_t>
+using base_coordinate_s_t = Eigen::Matrix<scalar_t, BASE_COORDINATE_SIZE, 1>;
+using base_coordinate_t = base_coordinate_s_t<double>;
+using base_coordinate_ad_t = base_coordinate_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
+
+template <typename scalar_t>
+using joint_coordinate_s_t = Eigen::Matrix<scalar_t, JOINT_COORDINATE_SIZE, 1>;
+using joint_coordinate_t = joint_coordinate_s_t<double>;
+using joint_coordinate_ad_t = joint_coordinate_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
+
+template <typename scalar_t>
+using generalized_coordinate_s_t = Eigen::Matrix<scalar_t, GENERALIZED_COORDINATE_SIZE, 1>;
+using generalized_coordinate_t = generalized_coordinate_s_t<double>;
+using generalized_coordinate_ad_t = generalized_coordinate_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
+
+template <typename scalar_t>
+using com_state_s_t = Eigen::Matrix<scalar_t, 2 * BASE_COORDINATE_SIZE, 1>;
+using com_state_t = com_state_s_t<double>;
+using com_state_ad_t = com_state_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
+
+template <typename scalar_t>
+using comkino_state_s_t = Eigen::Matrix<scalar_t, STATE_DIM, 1>;
+using comkino_state_t = comkino_state_s_t<double>;
+using comkino_state_ad_t = comkino_state_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
+
+template <typename scalar_t>
+using comkino_input_s_t = Eigen::Matrix<scalar_t, STATE_DIM, 1>;
+using comkino_input_t = comkino_input_s_t<double>;
+using comkino_input_ad_t = comkino_input_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
+
+template <typename scalar_t>
+using rbd_state_s_t = Eigen::Matrix<scalar_t, 2 * GENERALIZED_COORDINATE_SIZE, 1>;
+using rbd_state_t = rbd_state_s_t<double>;
+using rbd_state_ad_t = rbd_state_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
+
+template <typename scalar_t>
+base_coordinate_s_t<scalar_t> getComPose(const comkino_state_s_t<scalar_t>& comkinoState) {
+  return comkinoState.template head<BASE_COORDINATE_SIZE>();
 }
 
-/**
- * Origin to base rotation matrix
- * @tparam Derived
- * @param [in] eulerAngles
- * @return
- */
-template <typename SCALAR_T = double, typename Derived>
-inline Eigen::Matrix<SCALAR_T, 3, 3> RotationMatrixOrigintoBase(const Eigen::DenseBase<Derived>& eulerAngles) {
-  if (eulerAngles.innerSize() != 3 || eulerAngles.outerSize() != 1) throw std::runtime_error("Input argument should be a 3-by-1 vector.");
-
-  // inputs are the intrinsic rotation angles in RADIANTS
-  SCALAR_T sinAlpha = sin(eulerAngles(0));
-  SCALAR_T cosAlpha = cos(eulerAngles(0));
-  SCALAR_T sinBeta = sin(eulerAngles(1));
-  SCALAR_T cosBeta = cos(eulerAngles(1));
-  SCALAR_T sinGamma = sin(eulerAngles(2));
-  SCALAR_T cosGamma = cos(eulerAngles(2));
-
-  Eigen::Matrix<SCALAR_T, 3, 3> Rx, Ry, Rz;
-  Rx << SCALAR_T(1), SCALAR_T(0), SCALAR_T(0), SCALAR_T(0), cosAlpha, sinAlpha, SCALAR_T(0), -sinAlpha, cosAlpha;
-  Ry << cosBeta, SCALAR_T(0), -sinBeta, SCALAR_T(0), SCALAR_T(1), SCALAR_T(0), sinBeta, SCALAR_T(0), cosBeta;
-  Rz << cosGamma, sinGamma, SCALAR_T(0), -sinGamma, cosGamma, SCALAR_T(0), SCALAR_T(0), SCALAR_T(0), SCALAR_T(1);
-
-  return Rz * Ry * Rx;
+template <typename scalar_t>
+base_coordinate_s_t<scalar_t> getBasePose(const generalized_coordinate_s_t<scalar_t>& generalizedCoordinate) {
+  return generalizedCoordinate.template head<BASE_COORDINATE_SIZE>();
 }
 
-/**
- * Base to origin rotation matrix
- * @tparam Derived
- * @param [in] eulerAngles
- * @return
- */
-template <typename SCALAR_T = double, typename Derived>
-inline Eigen::Matrix<SCALAR_T, 3, 3> RotationMatrixBasetoOrigin(const Eigen::DenseBase<Derived>& eulerAngles) {
-  if (eulerAngles.innerSize() != 3 || eulerAngles.outerSize() != 1) throw std::runtime_error("Input argument should be a 3-by-1 vector.");
-
-  // inputs are the intrinsic rotation angles in RADIANTS
-  SCALAR_T sinAlpha = sin(eulerAngles(0));
-  SCALAR_T cosAlpha = cos(eulerAngles(0));
-  SCALAR_T sinBeta = sin(eulerAngles(1));
-  SCALAR_T cosBeta = cos(eulerAngles(1));
-  SCALAR_T sinGamma = sin(eulerAngles(2));
-  SCALAR_T cosGamma = cos(eulerAngles(2));
-
-  Eigen::Matrix<SCALAR_T, 3, 3> RxT, RyT, RzT;
-  RxT << SCALAR_T(1), SCALAR_T(0), SCALAR_T(0), SCALAR_T(0), cosAlpha, -sinAlpha, SCALAR_T(0), sinAlpha, cosAlpha;
-  RyT << cosBeta, SCALAR_T(0), sinBeta, SCALAR_T(0), SCALAR_T(1), SCALAR_T(0), -sinBeta, SCALAR_T(0), cosBeta;
-  RzT << cosGamma, -sinGamma, SCALAR_T(0), sinGamma, cosGamma, SCALAR_T(0), SCALAR_T(0), SCALAR_T(0), SCALAR_T(1);
-
-  return RxT * RyT * RzT;
+template <typename scalar_t>
+base_coordinate_s_t<scalar_t> getBasePose(const rbd_state_s_t<scalar_t>& rbdState) {
+  return rbdState.template head<BASE_COORDINATE_SIZE>();
 }
 
-/**
- * Calculates the skew matrix for vector cross product
- * @tparam Derived
- * @param [in] in
- * @return
- */
-template <typename SCALAR_T = double, typename Derived>
-inline Eigen::Matrix<SCALAR_T, 3, 3> CrossProductMatrix(const Eigen::DenseBase<Derived>& in) {
-  if (in.innerSize() != 3 || in.outerSize() != 1) throw std::runtime_error("Input argument should be a 3-by-1 vector.");
-
-  Eigen::Matrix<SCALAR_T, 3, 3> out;
-  out << SCALAR_T(0.0), -in(2), +in(1), +in(2), SCALAR_T(0.0), -in(0), -in(1), +in(0), SCALAR_T(0.0);
-  return out;
+template <typename scalar_t>
+vector3_s_t<scalar_t> getOrientation(base_coordinate_s_t<scalar_t> baseCoordinate) {
+  return baseCoordinate.template head<3>();
 }
 
-/*
- * @brief Computes the matrix which transforms derivatives of angular velocities in the body frame to euler angles derivatives
- * WARNING: matrix is singular when rotation around y axis is +/- 90 degrees
- * @param[in] eulerAngles: euler angles in xyz convention
- * @return M: matrix that does the transformation
- */
-template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 3, 3> AngularVelocitiesToEulerAngleDerivativesMatrix(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
-  Eigen::Matrix<SCALAR_T, 3, 3> M;
-  SCALAR_T sinPsi = sin(eulerAngles(2));
-  SCALAR_T cosPsi = cos(eulerAngles(2));
-  SCALAR_T sinTheta = sin(eulerAngles(1));
-  SCALAR_T cosTheta = cos(eulerAngles(1));
+template <typename scalar_t>
+vector3_s_t<scalar_t> getPositionInOrigin(base_coordinate_s_t<scalar_t> baseCoordinate) {
+  return baseCoordinate.template tail<3>();
+}
 
-  M << cosPsi / cosTheta, -sinPsi / cosTheta, SCALAR_T(0), sinPsi, cosPsi, SCALAR_T(0), -cosPsi * sinTheta / cosTheta,
-      sinTheta * sinPsi / cosTheta, SCALAR_T(1);
+template <typename scalar_t>
+base_coordinate_s_t<scalar_t> getBaseLocalVelocity(const rbd_state_s_t<scalar_t>& rbdState) {
+  return rbdState.template segment<BASE_COORDINATE_SIZE>(GENERALIZED_COORDINATE_SIZE);
+}
 
-  return M;
+template <typename scalar_t>
+base_coordinate_s_t<scalar_t> getComLocalVelocities(const comkino_state_s_t<scalar_t>& comkinoState) {
+  return comkinoState.template segment<BASE_COORDINATE_SIZE>(BASE_COORDINATE_SIZE);
+}
+
+template <typename scalar_t>
+vector3_s_t<scalar_t> getAngularVelocity(base_coordinate_s_t<scalar_t> baseTwist) {
+  return baseTwist.template head<3>();
+}
+
+template <typename scalar_t>
+vector3_s_t<scalar_t> getLinearVelocity(base_coordinate_s_t<scalar_t> baseTwist) {
+  return baseTwist.template tail<3>();
+}
+
+template <typename scalar_t>
+joint_coordinate_s_t<scalar_t> getJointPositions(const comkino_state_s_t<scalar_t>& comkinoState) {
+  return comkinoState.template segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE);
+}
+
+template <typename scalar_t>
+base_coordinate_s_t<scalar_t> getJointPositions(const generalized_coordinate_s_t<scalar_t>& generalizedCoordinate) {
+  return generalizedCoordinate.template segment<JOINT_COORDINATE_SIZE>(BASE_COORDINATE_SIZE);
+}
+
+template <typename scalar_t>
+joint_coordinate_s_t<scalar_t> getJointPositions(const rbd_state_s_t<scalar_t>& rbdState) {
+  return rbdState.template segment<JOINT_COORDINATE_SIZE>(BASE_COORDINATE_SIZE);
+}
+
+template <typename scalar_t>
+joint_coordinate_s_t<scalar_t> getJointVelocities(const comkino_input_s_t<scalar_t>& comkinoInput) {
+  return comkinoInput.template segment<JOINT_COORDINATE_SIZE>(NUM_CONTACT_POINTS * 3);
+}
+
+template <typename scalar_t>
+joint_coordinate_s_t<scalar_t> getJointVelocities(const rbd_state_s_t<scalar_t>& rbdState) {
+  return rbdState.template segment<JOINT_COORDINATE_SIZE>(GENERALIZED_COORDINATE_SIZE + BASE_COORDINATE_SIZE);
 }
 
 }  // end of namespace switched_model
-
-#endif /* SWITCHEDMODEL_H_ */

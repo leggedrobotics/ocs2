@@ -4,6 +4,8 @@
 
 #include "ocs2_switched_model_interface/dynamics/ComKinoSystemDynamicsAd.h"
 
+#include <ocs2_switched_model_interface/core/Rotations.h>
+
 namespace switched_model {
 
 ComKinoSystemDynamicsAd::ComKinoSystemDynamicsAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
@@ -24,60 +26,74 @@ ComKinoSystemDynamicsAd* ComKinoSystemDynamicsAd::clone() const {
 
 void ComKinoSystemDynamicsAd::systemFlowMap(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
                                             ad_dynamic_vector_t& stateDerivative) const {
-  // Extract elements from state
-  Vector3Ad baseEulerAngles = state.segment(0, 3);
-  Vector3Ad o_comPosition = state.segment(3, 3);            // in origin frame
-  Vector3Ad com_baseAngularVelocity = state.segment(6, 3);  // in com frame
-  Vector3Ad com_comLinearVelocity = state.segment(9, 3);    // in com frame
-  ad_joint_coordinate_t qJoints = state.segment(12, 12);
-  ad_joint_coordinate_t dqJoints = input.segment(12, 12);
+  const comkino_state_ad_t comkinoState = state;
+  const comkino_input_ad_t comkinoInput = input;
 
-  Vector3Ad com_base2CoM = adComModelPtr_->comPositionBaseFrame();
-  Matrix3Ad o_R_b = switched_model::RotationMatrixBasetoOrigin<ad_scalar_t>(baseEulerAngles);
-  ad_base_coordinate_t basePose;
-  basePose << baseEulerAngles, o_comPosition - o_R_b * com_base2CoM;
+  const joint_coordinate_ad_t dqJoints = getJointVelocities(comkinoInput);
+  const com_state_ad_t comStateDerivative = computeComStateDerivative(*adComModelPtr_, *adKinematicModelPtr_, comkinoState, comkinoInput);
+
+  // extended state time derivatives
+  stateDerivative << comStateDerivative, dqJoints;
+}
+
+template <typename SCALAR_T>
+com_state_s_t<SCALAR_T> ComKinoSystemDynamicsAd::computeComStateDerivative(const ComModelBase<SCALAR_T>& comModel,
+                                                                           const KinematicsModelBase<SCALAR_T>& kinematicsModel,
+                                                                           const comkino_state_s_t<SCALAR_T>& comKinoState,
+                                                                           const comkino_state_s_t<SCALAR_T>& comKinoInput) {
+  // Extract elements from state
+  const base_coordinate_s_t<SCALAR_T> comPose = getComPose(comKinoState);
+  const base_coordinate_s_t<SCALAR_T> com_comTwist = getComLocalVelocities(comKinoState);
+  const joint_coordinate_s_t<SCALAR_T> qJoints = getJointPositions(comKinoState);
+
+  const vector3_s_t<SCALAR_T> baseEulerAngles = getOrientation(comPose);
+  const matrix3_s_t<SCALAR_T> o_R_b = RotationMatrixBasetoOrigin(baseEulerAngles);
+
+  const vector3_s_t<SCALAR_T> com_comAngularVelocity = getAngularVelocity(com_comTwist);
+  const vector3_s_t<SCALAR_T> com_comLinearVelocity = getLinearVelocity(com_comTwist);
 
   // Inertia matrix in the CoM frame and its derivatives
-  Matrix6Ad M = adComModelPtr_->comInertia();
-  Matrix3Ad rotationalInertia = M.template topLeftCorner<3, 3>();
-  Matrix3Ad rotationMInverse = rotationalInertia.inverse();
-  Matrix6Ad MInverse;
-  MInverse << rotationMInverse, Matrix3Ad::Zero(), Matrix3Ad::Zero(), Matrix3Ad::Identity() / M(5, 5);
+  const matrix6_s_t<SCALAR_T> MInverse = comModel.comInertiaInverse();
 
   // gravity effect on CoM in CoM coordinate
-  Vector3Ad o_gravityVector;
-  o_gravityVector << ad_scalar_t(0), ad_scalar_t(0), ad_scalar_t(-9.81);
-  Vector6Ad MInverseG;
-  MInverseG << Vector3Ad::Zero(), -o_R_b.transpose() * o_gravityVector;
+  const vector3_s_t<SCALAR_T> o_gravityVector(SCALAR_T(0.0), SCALAR_T(0.0), SCALAR_T(-9.81));
+  vector6_s_t<SCALAR_T> MInverseG;
+  MInverseG << vector3_s_t<SCALAR_T>::Zero(), -o_R_b.transpose() * o_gravityVector;
 
   // Coriolis and centrifugal forces
-  ad_base_coordinate_t C;
-  C.head(3) = com_baseAngularVelocity.cross(rotationalInertia * com_baseAngularVelocity);
+  base_coordinate_s_t<SCALAR_T> C;
+  C.head(3) = com_comAngularVelocity.cross(comModel.rotationalInertia() * com_comAngularVelocity);
   C.tail(3).setZero();
 
   // contact JacobianTransposeLambda
-  adKinematicModelPtr_->update(basePose, qJoints);
-  ad_base_coordinate_t JcTransposeLambda;
+  const vector3_s_t<SCALAR_T> com_base2CoM = comModel.comPositionBaseFrame();
+  base_coordinate_s_t<SCALAR_T> JcTransposeLambda;
   JcTransposeLambda.setZero();
-  for (size_t i = 0; i < 4; i++) {
-    Vector3Ad com_base2StanceFeet;
-    adKinematicModelPtr_->footPositionBaseFrame(i, com_base2StanceFeet);
-    Vector3Ad com_comToFoot = com_base2StanceFeet - com_base2CoM;
-    JcTransposeLambda.head(3) += com_comToFoot.cross(input.template segment<3>(3 * i));
-    JcTransposeLambda.tail(3) += input.template segment<3>(3 * i);
+  for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
+    vector3_s_t<SCALAR_T> com_base2StanceFeet = kinematicsModel.positionBaseToFootInBaseFrame(i, qJoints);
+    vector3_s_t<SCALAR_T> com_comToFoot = com_base2StanceFeet - com_base2CoM;
+    JcTransposeLambda.head(3) += com_comToFoot.cross(comKinoInput.template segment<3>(3 * i));
+    JcTransposeLambda.tail(3) += comKinoInput.template segment<3>(3 * i);
   }
 
   // angular velocities to Euler angle derivatives transformation
-  Matrix3Ad transformAngVel2EulerAngDev = switched_model::AngularVelocitiesToEulerAngleDerivativesMatrix(baseEulerAngles);
+  const matrix3_s_t<SCALAR_T> transformAngVel2EulerAngDev = switched_model::AngularVelocitiesToEulerAngleDerivativesMatrix(baseEulerAngles);
 
   // CoM dynamics
-  Eigen::Matrix<ad_scalar_t, 12, 1> stateDerivativeCoM;
-  stateDerivativeCoM.segment(0, 3) = transformAngVel2EulerAngDev * com_baseAngularVelocity;
+  com_state_s_t<SCALAR_T> stateDerivativeCoM;
+  stateDerivativeCoM.segment(0, 3) = transformAngVel2EulerAngDev * com_comAngularVelocity;
   stateDerivativeCoM.segment(3, 3) = o_R_b * com_comLinearVelocity;
   stateDerivativeCoM.segment(6, 6) = MInverse * (-C + JcTransposeLambda) - MInverseG;
-
-  // extended state time derivatives
-  stateDerivative << stateDerivativeCoM, dqJoints;
+  return stateDerivativeCoM;
 }
+
+template com_state_t ComKinoSystemDynamicsAd::computeComStateDerivative(const ComModelBase<double>& comModel,
+                                                                        const KinematicsModelBase<double>& kinematicsModel,
+                                                                        const comkino_state_t& comKinoState,
+                                                                        const comkino_state_t& comKinoInput);
+template com_state_ad_t ComKinoSystemDynamicsAd::computeComStateDerivative(
+    const ComModelBase<ocs2::CppAdInterface<double>::ad_scalar_t>& comModel,
+    const KinematicsModelBase<ocs2::CppAdInterface<double>::ad_scalar_t>& kinematicsModel, const comkino_state_ad_t& comKinoState,
+    const comkino_state_ad_t& comKinoInput);
 
 }  // namespace switched_model

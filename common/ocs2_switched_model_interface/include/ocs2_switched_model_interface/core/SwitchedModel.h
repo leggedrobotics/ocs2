@@ -10,9 +10,9 @@ namespace switched_model {
 constexpr size_t NUM_CONTACT_POINTS = 4;
 constexpr size_t BASE_COORDINATE_SIZE = 6;
 constexpr size_t JOINT_COORDINATE_SIZE = 12;
-constexpr size_t GENERALIZED_COORDINATE_SIZE = BASE_COORDINATE_SIZE + JOINT_COORDINATE_SIZE; // 18
-constexpr size_t STATE_DIM = 2*BASE_COORDINATE_SIZE + JOINT_COORDINATE_SIZE; // 24
-constexpr size_t INPUT_DIM = 3*NUM_CONTACT_POINTS + JOINT_COORDINATE_SIZE; // 24
+constexpr size_t GENERALIZED_COORDINATE_SIZE = BASE_COORDINATE_SIZE + JOINT_COORDINATE_SIZE;  // 18
+constexpr size_t STATE_DIM = 2 * BASE_COORDINATE_SIZE + JOINT_COORDINATE_SIZE;                // 24
+constexpr size_t INPUT_DIM = 3 * NUM_CONTACT_POINTS + JOINT_COORDINATE_SIZE;                  // 24
 
 enum class FeetEnum { LF, RF, LH, RH };
 using contact_flag_t = std::array<bool, NUM_CONTACT_POINTS>;
@@ -107,7 +107,6 @@ base_coordinate_s_t<scalar_t> getComLocalVelocities(const comkino_state_s_t<scal
   return comkinoState.template segment<BASE_COORDINATE_SIZE>(BASE_COORDINATE_SIZE);
 }
 
-
 template <typename scalar_t>
 vector3_s_t<scalar_t> getAngularVelocity(base_coordinate_s_t<scalar_t> baseTwist) {
   return baseTwist.template head<3>();
@@ -134,9 +133,13 @@ joint_coordinate_s_t<scalar_t> getJointPositions(const rbd_state_s_t<scalar_t>& 
 }
 
 template <typename scalar_t>
-joint_coordinate_s_t<scalar_t> getJointVelocities(const comkino_input_s_t <scalar_t>& comkinoInput) {
-  return comkinoInput.template segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE);
+joint_coordinate_s_t<scalar_t> getJointVelocities(const comkino_input_s_t<scalar_t>& comkinoInput) {
+  return comkinoInput.template segment<JOINT_COORDINATE_SIZE>(NUM_CONTACT_POINTS * 3);
 }
 
+template <typename scalar_t>
+joint_coordinate_s_t<scalar_t> getJointVelocities(const rbd_state_s_t<scalar_t>& rbdState) {
+  return rbdState.template segment<JOINT_COORDINATE_SIZE>(GENERALIZED_COORDINATE_SIZE + BASE_COORDINATE_SIZE);
+}
 
 }  // end of namespace switched_model

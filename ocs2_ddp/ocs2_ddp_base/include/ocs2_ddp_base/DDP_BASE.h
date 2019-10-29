@@ -633,6 +633,14 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   void printRolloutInfo();
 
+  /**
+   * Helper to run task multiple times in parallel (blocking)
+   *
+   * @param [in] taskFunction: task function
+   * @param [in] N: number of times to run taskFunction, if N = 1 it is run in the main thread
+   */
+  void runParallel(std::function<void(void)> taskFunction, size_t N);
+
  private:
   /**
    * Corrects the initial caching of the nominal trajectories.

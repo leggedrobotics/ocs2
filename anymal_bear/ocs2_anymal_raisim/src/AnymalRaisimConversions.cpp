@@ -12,7 +12,7 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> AnymalRaisimConversions::stateToRais
       switchedModelStateEstimator_.estimateRbdModelState(state, input.segment<switched_model::JOINT_COORDINATE_SIZE>(12));
 
   // quaternion between world and base orientation
-  const Eigen::Quaterniond q_world_base = switched_model::QuaternionBaseToOrigin<double>(ocs2RbdState.head<3>());
+  const Eigen::Quaterniond q_world_base = switched_model::quaternionBaseToOrigin<double>(ocs2RbdState.head<3>());
 
   Eigen::VectorXd q(3 + 4 + 12);
   q << ocs2RbdState.segment<3>(3), q_world_base.w(), q_world_base.x(), q_world_base.y(), q_world_base.z(), ocs2RbdState.segment<12>(6);
@@ -35,7 +35,7 @@ switched_model::rbd_state_t AnymalRaisimConversions::raisimGenCoordGenVelToRbdSt
   }
 
   Eigen::Quaterniond q_world_base(q(3), q(4), q(5), q(6));  // quaternion coefficients w, x, y z
-  Eigen::Vector3d eulerAngles = switched_model::EulerAnglesFromQuaternionBaseToOrigin<double>(q_world_base);
+  Eigen::Vector3d eulerAngles = switched_model::eulerAnglesFromQuaternionBaseToOrigin<double>(q_world_base);
   makeEulerAnglesUnique(eulerAngles);
 
   switched_model::rbd_state_t ocs2RbdState;
@@ -88,7 +88,7 @@ Eigen::VectorXd AnymalRaisimConversions::inputToRaisimGeneralizedForce(double ti
   {
     // gravity vetor in the base frame
     iit::rbd::Vector6D gravity;
-    const Eigen::Matrix3d b_R_o = switched_model::RotationMatrixOrigintoBase<double>(qBase.head<3>());
+    const Eigen::Matrix3d b_R_o = switched_model::rotationMatrixOriginToBase<double>(qBase.head<3>());
     //! @todo(jcarius) Gravity hardcoded
     const double gravitationalAcceleration = 9.81;
     gravity << Eigen::Vector3d::Zero(), b_R_o * Eigen::Vector3d(0.0, 0.0, -gravitationalAcceleration);

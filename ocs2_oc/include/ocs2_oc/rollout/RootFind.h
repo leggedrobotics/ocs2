@@ -44,7 +44,10 @@ public:
 	void set_Init_Bracket(const scalar_t t0,const scalar_t t1, const scalar_t f0, const scalar_t f1)
 	{
 		if(f0 * f1 > 0)
-		{throw std::runtime_error("Bracket function values should have opposite sign");}
+		{	std::cout<<t0<<";"<<t1<<std::endl;
+			std::cout<<f0<<";"<<f1<<std::endl;
+			std::cout<<t1-100<<std::endl;
+			throw std::runtime_error("Bracket function values should have opposite sign");}
 
 
 		time_int_m = std::make_pair(t0,t1);

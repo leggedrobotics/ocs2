@@ -9,8 +9,6 @@
 
 namespace ocs2{
 
-//using state_input_matrix_t = Eigen::Matrix<scalar_t, 2, 1>;
-
 class ball_tester_logic : public HybridLogicRules{
 
 
@@ -43,7 +41,7 @@ protected:
 };
 
 
-class ball_tester_dyn : public ControlledSystemBase<2,1>{
+class ball_tester_dyn : public ControlledSystemBase<3,1>{
 
 public:
 
@@ -52,14 +50,22 @@ public:
 	ball_tester_dyn() = default;
 	~ball_tester_dyn() = default;
 
-	void computeFlowMap( const double& t, const Eigen::Vector2d& x, const Eigen::Matrix<double,1,1>& u, Eigen::Vector2d& dxdt){
+	void computeFlowMap( const double& t, const Eigen::Vector3d& x, const Eigen::Matrix<double,1,1>& u, Eigen::Vector3d& dxdt){
 
-	  Eigen::Matrix<double,2,2> A;
-	    A << 0,1,0,0 ;
-	    Eigen::Matrix<double,2,1> B;
-	    B << 0,0;
-	    Eigen::Matrix<double,2,1> F;
-	    F << 0,-9.81;
+	  Eigen::Matrix<double,3,3> A;
+	  	if (x(2) < 1)
+	  	{
+	  		A << -0.1,0.9,0,-1,-0.01,0,0,0,0 ;
+	  	}
+	  	else
+	  	{
+	  		A << -0,3,0,-3,0,0,0,0,0 ;
+	  	}
+
+	    Eigen::Matrix<double,3,1> B;
+	    B << 0,1,0;
+	    Eigen::Matrix<double,3,1> F;
+	    F << 0,-9.81,0;
 
 	    dxdt = A*x + B*u + F;
 }
@@ -70,6 +76,15 @@ public:
 	{
 			mappedState[0] = state[0];
 			mappedState[1] = -state[1];
+
+			if (state[2] <1)
+			{
+				mappedState[2] = 1;
+			}
+			else
+			{
+				mappedState[2] = 0;
+			}
 	}
 				
 
@@ -77,9 +92,17 @@ public:
 					const state_vector_t& state, 
 					dynamic_vector_t& guardSurfacesValue){
 
-	guardSurfacesValue = Eigen::Matrix<double,2,1>();
-	guardSurfacesValue[0] = state[0];
-	guardSurfacesValue[1] = -state[0] + 0.1 + time/50;
+	guardSurfacesValue = Eigen::Matrix<double,1,1>();
+
+
+	if (state[2] <1)
+	{
+			guardSurfacesValue[0] = state[0]*state[1];
+	}
+	else
+	{
+			guardSurfacesValue[0] = -state[0]*state[1];
+	}
 	}
 
 	ball_tester_dyn* clone() const final{
@@ -88,7 +111,7 @@ public:
 
 };
 
-class ball_tester_der : public DerivativesBase<2,1>
+class ball_tester_der : public DerivativesBase<3,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -97,12 +120,12 @@ public:
 	~ball_tester_der() = default;
 
 	void getFlowMapDerivativeState(state_matrix_t &A) override{
-		A << 0,1,0,0;
+		 A << -0.1,0.9,0,-1,-0.01,0,0,0,0 ;
 	}
 	
 	void getFlowMapDerivativeInput(state_input_matrix_t &B) override
 	{
-		B << 0,0;
+		B << 0,1,0;
 	}
 	
 	ball_tester_der* clone() const override{
@@ -110,12 +133,12 @@ public:
 	}
 };
 
-class ball_tester_cost : public CostFunctionBase<2,1>
+class ball_tester_cost : public CostFunctionBase<3,1>
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using Base = CostFunctionBase<2,1>;
+	using Base = CostFunctionBase<3,1>;
 
 	ball_tester_cost() = default;
 	~ball_tester_cost() = default;
@@ -128,23 +151,23 @@ public:
 	Intermediate Cost Functions
 	*/
 	void getIntermediateCost(scalar_t &L) final{
-		L = 0.5*pow(x_[0]-1,2) + 0.5*pow(x_[1],2) + 0.5*pow(u_[0],2);
+		L = 0.5*pow(x_[0]+0.5,2) + 0.5*pow(x_[1],2) + 0.005*pow(u_[0],2);
 	}
 
 	void getIntermediateCostDerivativeState(state_vector_t& dLdx) final {
-		dLdx << x_[0]-1 , x_[1];
+		dLdx << x_[0]+0.5 , x_[1] , 0;
 	}
 
 	void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) final {
-		dLdxx << 1.0 , 0.0 , 0.0, 1.0;
+		dLdxx << 1.0 , 0.0, 0.0 , 0.0, 1.0, 0.0, 0.0, 0.0, 0.0;
 	}
 
 	void getIntermediateCostDerivativeInput(input_vector_t& dLdu) final {
-		dLdu << u_[0];
+		dLdu << 0.01*u_[0];
 	}
 
 	void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) final {
-		dLduu << 1.0;
+		dLduu << 0.01;
 	}
 
 	void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdxu) final {
@@ -153,14 +176,14 @@ public:
 	/*
 	Terminal Cost Functions
 	*/
-	void getTerminalCost(scalar_t& Phi) final {0.5*pow(x_[0]-0.1,2) + 0.5*pow(x_[1],2);}
-	void getTerminalCostDerivativeState(state_vector_t &dPhidx) final{dPhidx<< x_[0]-1, x_[1];}
+	void getTerminalCost(scalar_t& Phi) final {Phi = 0.5*pow(x_[0]+0.5,2) + 0.5*pow(x_[1],2);}
+	void getTerminalCostDerivativeState(state_vector_t &dPhidx) final{dPhidx<< x_[0]+0.5, x_[1], 0;}
 	void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final 
-	{dPhidxx<<1.0, 0.0, 0.0, 1.0;}
+	{dPhidxx<<1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0;}
 
 };
 
-using ball_tester_constr = ConstraintBase<2,1>;
-using ball_tester_op = SystemOperatingPoint<2,1>;
+using ball_tester_constr = ConstraintBase<3,1>;
+using ball_tester_op = SystemOperatingPoint<3,1>;
 
 }

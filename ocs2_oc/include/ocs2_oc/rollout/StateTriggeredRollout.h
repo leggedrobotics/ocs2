@@ -167,19 +167,24 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
      scalar_t t0  = timeIntervalArray[0].first;
      scalar_t t1  = timeIntervalArray[0].second;
      scalar_t tend= t1; // Stored separately due to overwriting t1 when refining
-     size_t eventID_m;
+     size_t eventID_m = 0;
 
      bool refining = false;
+     bool triggered = false;
+
      int its = 0;
      RootFind rootFind;
-
      while(true){ //Keeps looping until end time condition is fulfilled, after which the loop is broken
     	 try{
-       dynamicsIntegratorPtr_->integrate(beginState, t0, t1 , stateTrajectory,
+    		 dynamicsIntegratorPtr_->integrate(beginState, t0, t1 , stateTrajectory,
                                          timeTrajectory, BASE::settings().minTimeStep_, BASE::settings().absTolODE_,
                                          BASE::settings().relTolODE_, maxNumSteps, true);
     	 }
-    	 catch(const size_t& eventID){eventID_m = eventID;}
+    	 catch(const size_t& eventID)
+    	 {	eventID_m = eventID;
+    	 	triggered = true;
+    	 }
+
 
     	 // Calculate GuardSurface value of last query state and time
     	 scalar_t time_query  = timeTrajectory.back();
@@ -189,12 +194,13 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     	 systemDynamicsPtr_->computeGuardSurfaces(time_query,state_query,GuardSurfaces_query);
     	 scalar_t guard_query = GuardSurfaces_query[eventID_m];
 
-    	 // Remove the element past the guard surface if it is past the guard surface
+    	 // Remove the element past the guard surface if the event handler was triggered
     	 // (Due to checking in EventHandler this can only happen to the last element of the trajectory)
-    	 if(guard_query < 0)
+    	 if(triggered)
     	 {
     	 stateTrajectory.pop_back();
     	 timeTrajectory.pop_back();
+    	 triggered = false;
     	 }
 
        // Compute control input trajectory and concatenate to inputTrajectory
@@ -206,13 +212,11 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
        // End time Condition, means iteration procedure is done
        if (std::fabs(tend - timeTrajectory.back()) == 0){
-    	   	  std::cout<<its<<" ; "<<timeTrajectory.back()<<std::endl;
               break;
        }
-
        // Accuracy Condition for event refinement
       bool guard_accuracy_condition = std::fabs(guard_query) < BASE::settings().absTolODE_;
-      bool time_accuracy_condition = std::fabs(t1-t0) < (1/(BASE::settings().maxNumStepsPerSecond_));
+      bool time_accuracy_condition = std::fabs(t1-t0) < BASE::settings().absTolODE_;
       bool accuracy_condition = guard_accuracy_condition || time_accuracy_condition;
 
       if (accuracy_condition) { // If Sufficiently accurate crossing location has been determined
@@ -234,8 +238,9 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       else {// Otherwise keep refining or start refining
     	  if (!refining)
     	  { //Properly configure Rootfinding method to start refining
-    		  scalar_t time_before = timeTrajectory[timeTrajectory.size()-2];
-    		  state_vector_t state_before = stateTrajectory[stateTrajectory.size()-2];
+    		  scalar_t time_before = timeTrajectory.back();
+    		  state_vector_t state_before = stateTrajectory.back();
+
     		  dynamic_vector_t GuardSurfaces_before;
     		  systemDynamicsPtr_->computeGuardSurfaces(time_before,state_before,GuardSurfaces_before);
     		  scalar_t guard_before = GuardSurfaces_before[eventID_m];
@@ -246,7 +251,6 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     		  t0 = timeTrajectory.back();
     		  beginState = stateTrajectory.back();
     		  t1 = time_query;
-
     		  refining = true;
     	  }
     	  else
@@ -261,7 +265,6 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       }
       its++; // count iterations
      }  // end of while loop
-
      // check for the numerical stability
          this->checkNumericalStability(controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
          return stateTrajectory.back();

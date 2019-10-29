@@ -131,3 +131,11 @@ target_link_libraries(testRiccatiEquations
   ${catkin_LIBRARIES}
   ${PROJECT_NAME}_dynamic_size
 )
+
+catkin_add_gtest(test_StateSLQ
+  test/test_StateRollOut_SLQ.cpp
+)
+target_link_libraries(test_StateSLQ
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)

@@ -2,8 +2,8 @@
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
 #include <ocs2_oc/rollout/Rollout_Settings.h>
 #include <ocs2_core/control/LinearController.h>
-#include "Dynamics_StateRollOut.h"
-#include "Dynamics_StateRollOut2.h"
+#include "include/ocs2_oc/test/Dynamics_StateRollOut.h"
+#include "include/ocs2_oc/test/Dynamics_StateRollOut2.h"
 
 #include <gtest/gtest.h>
 

@@ -9,8 +9,6 @@
 
 namespace ocs2{
 
-//using state_input_matrix_t = Eigen::Matrix<scalar_t, 2, 1>;
-
 class ball_tester_logic : public HybridLogicRules{
 
 
@@ -57,7 +55,7 @@ public:
 	  Eigen::Matrix<double,2,2> A;
 	    A << 0,1,0,0 ;
 	    Eigen::Matrix<double,2,1> B;
-	    B << 0,0;
+	    B << 0,1;
 	    Eigen::Matrix<double,2,1> F;
 	    F << 0,-9.81;
 
@@ -102,7 +100,7 @@ public:
 	
 	void getFlowMapDerivativeInput(state_input_matrix_t &B) override
 	{
-		B << 0,0;
+		B << 0,1;
 	}
 	
 	ball_tester_der* clone() const override{
@@ -128,11 +126,11 @@ public:
 	Intermediate Cost Functions
 	*/
 	void getIntermediateCost(scalar_t &L) final{
-		L = 0.5*pow(x_[0]-1,2) + 0.5*pow(x_[1],2) + 0.5*pow(u_[0],2);
+		L = 0.5*pow(x_[0],2) + 0.5*pow(x_[1],2) + 0.005*pow(u_[0],2);
 	}
 
 	void getIntermediateCostDerivativeState(state_vector_t& dLdx) final {
-		dLdx << x_[0]-1 , x_[1];
+		dLdx << x_[0] , x_[1];
 	}
 
 	void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) final {
@@ -140,11 +138,11 @@ public:
 	}
 
 	void getIntermediateCostDerivativeInput(input_vector_t& dLdu) final {
-		dLdu << u_[0];
+		dLdu << 0.01*u_[0];
 	}
 
 	void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) final {
-		dLduu << 1.0;
+		dLduu << 0.01;
 	}
 
 	void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdxu) final {
@@ -153,8 +151,8 @@ public:
 	/*
 	Terminal Cost Functions
 	*/
-	void getTerminalCost(scalar_t& Phi) final {0.5*pow(x_[0]-0.1,2) + 0.5*pow(x_[1],2);}
-	void getTerminalCostDerivativeState(state_vector_t &dPhidx) final{dPhidx<< x_[0]-1, x_[1];}
+	void getTerminalCost(scalar_t& Phi) final {0.5*pow(x_[0],2) + 0.5*pow(x_[1],2);}
+	void getTerminalCostDerivativeState(state_vector_t &dPhidx) final{dPhidx<< x_[0], x_[1];}
 	void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final 
 	{dPhidxx<<1.0, 0.0, 0.0, 1.0;}
 

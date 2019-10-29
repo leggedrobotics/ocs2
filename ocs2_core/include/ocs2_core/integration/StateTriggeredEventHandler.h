@@ -117,23 +117,21 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
     }
 
     //** StateTriggered event **//
-    // No event will happen if one is recently hanned
-    if (time - lastEventTriggeredTime_ < minEventTimeDifference_) {
-      return false;
-    } else {}
-
     BASE::systemPtr_->computeGuardSurfaces(time, state, guardSurfacesValuesCurrent_);
 
     bool eventTriggered = false;
+
     if(time- lastEventTriggeredTime_ > minEventTimeDifference_)
     {
     	for (size_t i = 0; i < guardSurfacesValuesPrevious_.size(); i++) {
     		if (guardSurfacesValuesCurrent_[i] <= 0 && guardSurfacesValuesPrevious_(i) > 0) {
     			eventTriggered = true;
     			triggeredEventSurface_ = i;
+
     		}
     	}
     }
+
     if (!eventTriggered) {
       guardSurfacesValuesPrevious_ = guardSurfacesValuesCurrent_;
     }

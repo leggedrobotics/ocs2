@@ -35,7 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <thread>
 
 #include <ocs2_core/misc/SetThreadPriority.h>
-#include <ocs2_core/misc/ThreadPool.h>
 
 #include "ocs2_slq/SLQ_BASE.h"
 
@@ -116,7 +115,7 @@ class SLQ_MP : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Default constructor.
    */
-  SLQ_MP() : BASE(), threadPool_(1) {}
+  SLQ_MP() : BASE() {}
 
   /**
    * Constructor
@@ -224,8 +223,6 @@ class SLQ_MP : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
 
  private:
   // multi-threading helper variables
-  ThreadPool threadPool_;
-
   std::atomic_size_t nextTaskId_;
   std::atomic_size_t nextTimeIndex_;
 

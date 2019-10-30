@@ -73,7 +73,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
 
   using logic_rules_machine_t = HybridLogicRulesMachine;
-  using logic_rules_t = HybridLogicRules*;
+  using logic_rules_t = HybridLogicRules;
 
   using ode_base_t = IntegratorBase<STATE_DIM>;
 
@@ -127,6 +127,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    * @param [out] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
    * @param [out] stateTrajectory: The state trajectory.
    * @param [out] inputTrajectory: The control input trajectory.
+   * @param [in]  logicRules: pointer to system logicrules (required for state-triggerd rollout)
    *
    * @return The final state (state jump is considered if it took place)
    */
@@ -134,7 +135,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
  protected:
   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
                           scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
-                          input_vector_array_t& inputTrajectory, logic_rules_t logicRules = nullptr) override {
+                          input_vector_array_t& inputTrajectory, logic_rules_t* logicRules = nullptr) override {
     if (controller == nullptr){
         throw std::runtime_error("The input controller is not set.");
     }
@@ -271,13 +272,11 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     			beginState = stateTrajectory.back();
     			t1 = time_query;
     		}
-    			rootFind.Display();
         }
         its++; // count iterations
     }  // end of while loop
      // check for the numerical stability
     this->checkNumericalStability(controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
-    logicRules->display();
     return stateTrajectory.back();
   } //end of function
 

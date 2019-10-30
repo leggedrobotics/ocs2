@@ -20,19 +20,19 @@ int main()
 
 SLQ_Settings slqSettings;
   slqSettings.useNominalTimeForBackwardPass_ = true;
-  slqSettings.ddpSettings_.displayInfo_ = true;
-  slqSettings.ddpSettings_.displayShortSummary_ = false;
+  slqSettings.ddpSettings_.displayInfo_ = false;
+  slqSettings.ddpSettings_.displayShortSummary_ = true;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
   slqSettings.ddpSettings_.nThreads_ = 1;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
   slqSettings.ddpSettings_.lsStepsizeGreedy_ = true;
   slqSettings.ddpSettings_.noStateConstraints_ = true;
-  slqSettings.ddpSettings_.checkNumericalStability_ = true;
+  slqSettings.ddpSettings_.checkNumericalStability_ = false;
   slqSettings.ddpSettings_.absTolODE_ = 1e-6;
   slqSettings.ddpSettings_.relTolODE_ = 1e-7;
   slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 1e6;
   slqSettings.ddpSettings_.useFeedbackPolicy_ = false;
-  slqSettings.ddpSettings_.debugPrintRollout_ = true;
+  slqSettings.ddpSettings_.debugPrintRollout_ = false;
 
 Rollout_Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-6;
@@ -79,11 +79,12 @@ slqST.run(startTime, initState, finalTime, partitioningTimes);
 
 SLQ_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t solutionST = slqST.primalSolution(finalTime);
 
+if (false){
 for(int i = 0; i<solutionST.stateTrajectory_.size();i++)
 {
 	std::cout<<i<<";"<<solutionST.timeTrajectory_[i]<<";"<<solutionST.stateTrajectory_[i][0]<<";"<<solutionST.stateTrajectory_[i][1]<<";"<<solutionST.stateTrajectory_[i][2]<<";"<<solutionST.inputTrajectory_[i]<<std::endl;
 }
-
+}
 
 
 return 0;

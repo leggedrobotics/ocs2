@@ -151,9 +151,13 @@ class HybridLogicRules {
    *
    */
   void reset(){
+	  size_t prev_size = subsystemsSequence_.size()<100 ? 100: subsystemsSequence_.size();
+
 	  subsystemsSequence_.erase(subsystemsSequence_.begin()+1,subsystemsSequence_.end());
 	  eventTimes_.clear();
 
+	  subsystemsSequence_.reserve(prev_size);
+	  eventTimes_.reserve(prev_size);
 
 	  update();
   }

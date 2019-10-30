@@ -14,7 +14,7 @@ mpcTimeHorizon
     numPartitions      2
 }
 
-; Mode sequence 
+; Mode sequence
 subsystemsSequence
 {
     [0]     0
@@ -44,19 +44,18 @@ ilqr
         displayInfo                      0
         displayShortSummary              1
 
-        AbsTolODE                        2e-5    ;1e-5	;1e-6
-        RelTolODE                        1e-3    ;1e-3	;1e-4
+        AbsTolODE                        2e-5    ;1e-5  ;1e-6
+        RelTolODE                        1e-3    ;1e-3  ;1e-4
         minTimeStep                      1e-3
         maxNumStepsPerSecond             50000
-        simulationIsConstrained          0 
-        noStateConstraints               1  
+        simulationIsConstrained          0
+        noStateConstraints               1
         useMakePSD                       0
         addedRiccatiDiagonal             1e-3
         minAbsConstraint1ISE             5e-3
         minRelConstraint1ISE             5e-6
         checkNumericalStability          0
 
-        useMultiThreading                1
         nThreads                         4
         debugPrintMT                     0
         lsStepsizeGreedy                 1
@@ -67,8 +66,8 @@ ilqr
 
     rollout
     {
-        AbsTolODE                        2e-5    ;1e-5	;1e-6
-        RelTolODE                        1e-3    ;1e-3	;1e-4
+        AbsTolODE                        2e-5    ;1e-5  ;1e-6
+        RelTolODE                        1e-3    ;1e-3  ;1e-4
         minTimeStep                      1e-3
         maxNumStepsPerSecond             50000
         checkNumericalStability          0
@@ -88,8 +87,8 @@ mpc
     recedingHorizon             1       ; use receding horizon MPC
     useParallelRiccatiSolver    1       ; use parallel riccati solver in MP case and recedingHorizon fashion
     solutionTimeWindow          0.5     ; [s]
-    mpcDesiredFrequency         100     ; [Hz] 
-    mrtDesiredFrequency         400     ; [Hz]  
+    mpcDesiredFrequency         100     ; [Hz]
+    mrtDesiredFrequency         400     ; [Hz]
     debugPrint                  1
 }
 
@@ -99,7 +98,7 @@ pathIntegral
   gamma 1e-5 ; temperature/level of noise
   numSamples 1000 ; how many trajectories to sample
   debugPrint 1
-  useFeedbackPolicy 0 
+  useFeedbackPolicy 0
 
   rollout_settings
   {

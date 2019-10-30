@@ -15,15 +15,15 @@ mpcTimeHorizon
     numPartitions   2
 }
 
-; Mode sequence 
+; Mode sequence
 subsystemsSequence
 {
-  	[0]     0
+    [0]     0
 }
 ; Template mode sequence
 templateSubsystemsSequence
 {
-  	[0]     0
+    [0]     0
 }
 templateSwitchingTimes
 {
@@ -34,17 +34,17 @@ slq
 {
     RiccatiIntegratorType        1      ; ODE45 = 1, ADAMS_BASHFORTH = 2, BULIRSCH_STOER = 3, ADAMS_BASHFORTH_MOULTON = 4
     adams_integrator_dt          0.01
-    
+
     warmStartGSLQ                1
     useLQForDerivatives          0
     displayGradientDescent       0
     tolGradientDescent           1e-2
     acceptableTolGradientDescent 1e-2
-    maxIterationGradientDescent  5 
+    maxIterationGradientDescent  5
     minLearningRateNLP           0.05
     maxLearningRateNLP           0.6
     useAscendingLineSearchNLP    1
-    
+
     ddp
     {
         maxNumIterations             10     ; 50
@@ -57,30 +57,29 @@ slq
         constraintStepSize           1.0    ; 1.0
         displayInfo                  1
         displayShortSummary          0
-        
-        
+
+
         AbsTolODE                    1e-9
         RelTolODE                    1e-6
         minTimeStep                  1e-3
         maxNumStepsPerSecond         1e+5
-        simulationIsConstrained      0 
+        simulationIsConstrained      0
         noStateConstraints           1
         useMakePSD                   1
         minAbsConstraint1ISE         5e-3
         minRelConstraint1ISE         5e-6
         checkNumericalStability      1
-        
-        useMultiThreading            0
-        nThreads                     4
+
+        nThreads                     1
         debugPrintMT                 0
         lsStepsizeGreedy             1
-        
+
         useFeedbackPolicy            0
         useRiccatiSolver             1
-        
+
         minEventTimeDifference       0.01
     }
-    
+
     rollout
     {
         AbsTolODE                    1e-9
@@ -104,13 +103,13 @@ mpc
     recedingHorizon             1     ; use receding horizon MPC
     useParallelRiccatiSolver    0     ; use disjoint riccati solver in MP case and recedingHorizon fashion
     solutionTimeWindow          -1    ; maximum [s]
-    mpcDesiredFrequency         100   ; [Hz] 
-    mrtDesiredFrequency         400   ; [Hz] 
+    mpcDesiredFrequency         100   ; [Hz]
+    mrtDesiredFrequency         400   ; [Hz]
     debugPrint                  1
 }
 
 
-; initial state 
+; initial state
 initialState
 {
    (0,0) 0.6    ; theta
@@ -124,10 +123,10 @@ Q
 {
     scaling 1e+1
 
-   (0,0)  0.0	; theta
-   (1,1)  0.0	; x
-   (2,2)  10.0	; theta_dot
-   (3,3)  10.0	; x_dot
+   (0,0)  0.0 ; theta
+   (1,1)  0.0 ; x
+   (2,2)  10.0  ; theta_dot
+   (3,3)  10.0  ; x_dot
 }
 
 
@@ -144,20 +143,20 @@ R
 Q_final
 {
     scaling 1e+1
-	
+
    ; orientation
-   (0,0)  10.0	; theta
-   (1,1)  10.0	; x
-   (2,2)  10.0	; theta_dot
-   (3,3)  10.0	; x_dot
+   (0,0)  10.0  ; theta
+   (1,1)  10.0  ; x
+   (2,2)  10.0  ; theta_dot
+   (3,3)  10.0  ; x_dot
 }
 
 ; final goal
 x_final
 {
-   (0,0)  0.0	; theta
-   (1,0)  0.0	; x
-   (2,0)  0.0	; theta_dot
-   (3,0)  0.0	; x_dot
+   (0,0)  0.0 ; theta
+   (1,0)  0.0 ; x
+   (2,0)  0.0 ; theta_dot
+   (3,0)  0.0 ; x_dot
 }
 

@@ -60,8 +60,7 @@ slq
         minRelConstraint1ISE         5e-6
         checkNumericalStability      1
 
-        useMultiThreading           0
-        nThreads                    4
+        nThreads                    1
         debugPrintMT                0
         lsStepsizeGreedy            1
 

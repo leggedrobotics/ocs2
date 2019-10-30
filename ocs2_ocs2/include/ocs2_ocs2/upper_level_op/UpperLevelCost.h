@@ -29,9 +29,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_BASE.h>
 #include <ocs2_slq/SLQ_DataCollector.h>
-#include <ocs2_slq/SLQ_MP.h>
 
 #include <ocs2_frank_wolfe/NLP_Cost.h>
 
@@ -56,17 +56,16 @@ class UpperLevelCost final : public NLP_Cost {
   using typename BASE::scalar_t;
 
   using gddp_t = GDDP<STATE_DIM, INPUT_DIM>;
-  using slq_t = SLQ_BASE<STATE_DIM, INPUT_DIM>;
-  using slq_st_t = SLQ_MP<STATE_DIM, INPUT_DIM>;
-  using slq_mt_t = SLQ_MP<STATE_DIM, INPUT_DIM>;
+  using slq_base_t = SLQ_BASE<STATE_DIM, INPUT_DIM>;
+  using slq_t = SLQ<STATE_DIM, INPUT_DIM>;
   using slq_data_collector_t = SLQ_DataCollector<STATE_DIM, INPUT_DIM>;
 
-  using state_vector_t = typename slq_t::state_vector_t;
-  using derivatives_base_t = typename slq_t::derivatives_base_t;
-  using constraint_base_t = typename slq_t::constraint_base_t;
-  using cost_function_base_t = typename slq_t::cost_function_base_t;
-  using operating_trajectories_base_t = typename slq_t::operating_trajectories_base_t;
-  using rollout_base_t = typename slq_t::rollout_base_t;
+  using state_vector_t = typename slq_base_t::state_vector_t;
+  using derivatives_base_t = typename slq_base_t::derivatives_base_t;
+  using constraint_base_t = typename slq_base_t::constraint_base_t;
+  using cost_function_base_t = typename slq_base_t::cost_function_base_t;
+  using operating_trajectories_base_t = typename slq_base_t::operating_trajectories_base_t;
+  using rollout_base_t = typename slq_base_t::rollout_base_t;
 
   /**
    * Constructor
@@ -86,8 +85,8 @@ class UpperLevelCost final : public NLP_Cost {
                  const operating_trajectories_base_t* operatingTrajectoriesPtr, const SLQ_Settings& settings = SLQ_Settings(),
                  std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr, const cost_function_base_t* heuristicsFunctionPtr = nullptr,
                  bool display = false, const GDDP_Settings& gddpSettings = GDDP_Settings())
-      : slqPtr_(new slq_st_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings,
-                             logicRulesPtr, heuristicsFunctionPtr)),
+      : slqPtr_(new slq_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings,
+                          logicRulesPtr, heuristicsFunctionPtr)),
         slqDataCollectorPtr_(new slq_data_collector_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr)),
         gddpPtr_(new gddp_t(gddpSettings)),
         display_(display) {}
@@ -167,7 +166,7 @@ class UpperLevelCost final : public NLP_Cost {
    *
    * @return a reference to SLQ
    */
-  slq_t& getSLQ() { return *slqPtr_; }
+  slq_base_t& getSLQ() { return *slqPtr_; }
 
   /**
    * Returns a reference to GDDP
@@ -177,7 +176,7 @@ class UpperLevelCost final : public NLP_Cost {
   gddp_t& getGDDP() { return *gddpPtr_; }
 
  private:
-  std::unique_ptr<slq_t> slqPtr_;
+  std::unique_ptr<slq_base_t> slqPtr_;
   std::unique_ptr<slq_data_collector_t> slqDataCollectorPtr_;
   std::unique_ptr<gddp_t> gddpPtr_;
   bool display_;

@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/test/EXP1.h>
 
-#include <ocs2_slq/SLQ_MP.h>
+#include <ocs2_slq/SLQ.h>
 
 #include <ocs2_ocs2/GDDP.h>
 
@@ -115,8 +115,8 @@ TEST(exp1_gddp_test, optimum_gradient_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // SLQ - single tread version
-  SLQ_MP<STATE_DIM, INPUT_DIM> slqST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
-                                     &operatingTrajectories, slqSettings, logicRules);
+  SLQ<STATE_DIM, INPUT_DIM> slqST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
+                                  slqSettings, logicRules);
   // SLQ data collector
   SLQ_DataCollector<STATE_DIM, INPUT_DIM> slqDataCollector(&timeTriggeredRollout, &systemDerivative, &systemConstraint,
                                                            &systemCostFunction);

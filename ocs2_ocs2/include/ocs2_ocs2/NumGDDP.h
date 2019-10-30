@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_slq/SLQ_MP.h>
+#include <ocs2_slq/SLQ.h>
 
 namespace ocs2 {
 
@@ -40,11 +40,11 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class NumGDDP : public SLQ_MP<STATE_DIM, INPUT_DIM> {
+class NumGDDP : public SLQ<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef SLQ_MP<STATE_DIM, INPUT_DIM> BASE;
+  typedef SLQ<STATE_DIM, INPUT_DIM> BASE;
 
   using typename BASE::constraint_base_t;
   using typename BASE::controlled_system_base_t;

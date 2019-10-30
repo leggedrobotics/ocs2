@@ -32,8 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_ddp_base/DDP_BASE.h>
 
+#include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_BASE.h>
-#include <ocs2_slq/SLQ_MP.h>
 
 #include "ocs2_mpc/MPC_BASE.h"
 
@@ -81,7 +81,7 @@ class MPC_SLQ : public MPC_BASE<STATE_DIM, INPUT_DIM> {
   using ddp_base_t = ocs2::DDP_BASE<STATE_DIM, INPUT_DIM>;
 
   using slq_base_t = ocs2::SLQ_BASE<STATE_DIM, INPUT_DIM>;
-  using slq_mp_t = ocs2::SLQ_MP<STATE_DIM, INPUT_DIM>;
+  using slq_t = ocs2::SLQ<STATE_DIM, INPUT_DIM>;
 
   using logic_rules_machine_t = typename ddp_base_t::logic_rules_machine_t;
   using event_handler_t = typename ddp_base_t::event_handler_t;

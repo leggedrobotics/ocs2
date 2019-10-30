@@ -1,6 +1,6 @@
+#include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_BASE.h>
 #include <ocs2_slq/SLQ_DataCollector.h>
-#include <ocs2_slq/SLQ_MP.h>
 #include <ocs2_slq/SLQ_Settings.h>
 
 // riccati equations

@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
-#include <ocs2_slq/SLQ_MP.h>
+#include <ocs2_slq/SLQ.h>
 
 #include <ocs2_oc/test/EXP1.h>
 
@@ -43,7 +43,7 @@ using namespace ocs2;
 enum { STATE_DIM = 2, INPUT_DIM = 1 };
 
 TEST(exp1_slq_test, Exp1_slq_test) {
-  using slq_t = SLQ_MP<STATE_DIM, INPUT_DIM>;
+  using slq_t = SLQ<STATE_DIM, INPUT_DIM>;
 
   SLQ_Settings slqSettings;
   slqSettings.useNominalTimeForBackwardPass_ = true;

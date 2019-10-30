@@ -81,7 +81,7 @@ else()
 endif()
 
 # find ocs2_slq
-find_path(SOURCE_OCS2_SLQ_DIR NAMES ocs2_slq/SLQ_MP.h PATHS ${ocs2_slq_INCLUDE_DIRS}... NO_DEFAULT_PATH)
+find_path(SOURCE_OCS2_SLQ_DIR NAMES ocs2_slq/SLQ.h PATHS ${ocs2_slq_INCLUDE_DIRS}... NO_DEFAULT_PATH)
 if(EXISTS "${SOURCE_OCS2_SLQ_DIR}")
   set(SOURCE_OCS2_SLQ_DIR "${SOURCE_OCS2_SLQ_DIR}/ocs2_slq")
   message(STATUS "Found ocs2_slq at: ${SOURCE_OCS2_SLQ_DIR}")

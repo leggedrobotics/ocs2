@@ -81,7 +81,7 @@ class DDP_Settings {
 
         ,
         useMultiThreading_(false),
-        nThreads_(4),
+        nThreads_(1),
         threadPriority_(99),
         debugPrintMT_(false),
         lsStepsizeGreedy_(true),

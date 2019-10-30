@@ -36,7 +36,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_frank_wolfe/GradientDescent.h>
 
-#include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_BASE.h>
 #include <ocs2_slq/SLQ_MP.h>
 
@@ -58,7 +57,7 @@ class OCS2Projected : private nlp::GradientDescent<double> {
   typedef nlp::GradientDescent<double> BASE;
 
   typedef SLQ_BASE<STATE_DIM, INPUT_DIM> slq_base_t;
-  typedef SLQ<STATE_DIM, INPUT_DIM> slq_t;
+  typedef SLQ_MP<STATE_DIM, INPUT_DIM> slq_t;
   typedef SLQ_MP<STATE_DIM, INPUT_DIM> slq_mp_t;
   typedef GDDP<STATE_DIM, INPUT_DIM> gddp_t;
   typedef typename slq_base_t::Ptr slq_base_ptr_t;

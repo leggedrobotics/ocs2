@@ -29,7 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_BASE.h>
 #include <ocs2_slq/SLQ_DataCollector.h>
 #include <ocs2_slq/SLQ_MP.h>
@@ -58,7 +57,7 @@ class UpperLevelCost final : public NLP_Cost {
 
   using gddp_t = GDDP<STATE_DIM, INPUT_DIM>;
   using slq_t = SLQ_BASE<STATE_DIM, INPUT_DIM>;
-  using slq_st_t = SLQ<STATE_DIM, INPUT_DIM>;
+  using slq_st_t = SLQ_MP<STATE_DIM, INPUT_DIM>;
   using slq_mt_t = SLQ_MP<STATE_DIM, INPUT_DIM>;
   using slq_data_collector_t = SLQ_DataCollector<STATE_DIM, INPUT_DIM>;
 

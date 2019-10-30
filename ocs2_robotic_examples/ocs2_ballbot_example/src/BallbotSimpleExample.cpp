@@ -130,8 +130,9 @@ int main(int argc, char** argv) {
   /*
    * define solver and run
    */
-  SLQ<STATE_DIM_, INPUT_DIM_> slqST(ballbotRolloutPtr.get(), ballbotSystemDynamicsPtr.get(), ballbotConstraintPtr.get(),
-                                    ballbotCostPtr.get(), ballbotOperatingPointPtr.get(), slqSettings);
+  slqSettings.ddpSettings_.nThreads_ = 1;
+  SLQ_MP<STATE_DIM_, INPUT_DIM_> slqST(ballbotRolloutPtr.get(), ballbotSystemDynamicsPtr.get(), ballbotConstraintPtr.get(),
+                                       ballbotCostPtr.get(), ballbotOperatingPointPtr.get(), slqSettings);
   slqST.run(0.0, xInit, timeHorizon, partitioningTimes);
 
   /*

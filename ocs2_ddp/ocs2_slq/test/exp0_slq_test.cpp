@@ -34,7 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
-#include <ocs2_slq/SLQ.h>
 #include <ocs2_slq/SLQ_MP.h>
 
 #include <ocs2_oc/test/EXP0.h>
@@ -44,6 +43,8 @@ using namespace ocs2;
 enum { STATE_DIM = 2, INPUT_DIM = 1 };
 
 TEST(exp0_slq_test, exp0_slq_test) {
+  using slq_t = SLQ_MP<STATE_DIM, INPUT_DIM>;
+
   SLQ_Settings slqSettings;
   slqSettings.useNominalTimeForBackwardPass_ = false;
   slqSettings.ddpSettings_.displayInfo_ = true;
@@ -51,7 +52,6 @@ TEST(exp0_slq_test, exp0_slq_test) {
   slqSettings.ddpSettings_.absTolODE_ = 1e-10;
   slqSettings.ddpSettings_.relTolODE_ = 1e-7;
   slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
-  slqSettings.ddpSettings_.nThreads_ = 3;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
   slqSettings.ddpSettings_.lsStepsizeGreedy_ = true;
   slqSettings.ddpSettings_.noStateConstraints_ = true;
@@ -107,12 +107,14 @@ TEST(exp0_slq_test, exp0_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // SLQ - single-thread version
-  SLQ<STATE_DIM, INPUT_DIM> slqST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
-                                  slqSettings, logicRules);
+  slqSettings.ddpSettings_.nThreads_ = 1;
+  slq_t slqST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings,
+              logicRules);
 
+  slqSettings.ddpSettings_.nThreads_ = 3;
   // SLQ - multi-thread version
-  SLQ_MP<STATE_DIM, INPUT_DIM> slqMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
-                                     &operatingTrajectories, slqSettings, logicRules);
+  slq_t slqMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings,
+              logicRules);
 
   // run single core SLQ
   if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
@@ -160,9 +162,9 @@ TEST(exp0_slq_test, exp0_slq_test) {
 
   double ctrlFinalTime;
   if (slqSettings.ddpSettings_.useFeedbackPolicy_) {
-    ctrlFinalTime = dynamic_cast<SLQ<STATE_DIM, INPUT_DIM>::linear_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
+    ctrlFinalTime = dynamic_cast<slq_t::linear_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
   } else {
-    ctrlFinalTime = dynamic_cast<SLQ<STATE_DIM, INPUT_DIM>::feedforward_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
+    ctrlFinalTime = dynamic_cast<slq_t::feedforward_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
   }
   ASSERT_DOUBLE_EQ(solutionST.timeTrajectory_.back(), finalTime) << "MESSAGE: SLQ_ST failed in policy final time of trajectory!";
   ASSERT_DOUBLE_EQ(ctrlFinalTime, finalTime) << "MESSAGE: SLQ_ST failed in policy final time of controller!";
@@ -185,6 +187,7 @@ TEST(exp0_slq_test, caching_test) {
   slqSettings.ddpSettings_.useFeedbackPolicy_ = true;
   slqSettings.ddpSettings_.debugPrintRollout_ = false;
   slqSettings.ddpSettings_.debugCaching_ = true;  // for this test, debugCaching_ should be active
+  slqSettings.ddpSettings_.nThreads_ = 1;         // single threaded
 
   Rollout_Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;
@@ -230,7 +233,7 @@ TEST(exp0_slq_test, caching_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // SLQ - single-thread version
-  using slq_t = SLQ<STATE_DIM, INPUT_DIM>;
+  using slq_t = SLQ_MP<STATE_DIM, INPUT_DIM>;
   slq_t slqST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings,
               logicRules);
 

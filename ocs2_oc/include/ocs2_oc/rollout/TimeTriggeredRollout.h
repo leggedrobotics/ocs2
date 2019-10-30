@@ -94,9 +94,9 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   }
 
  protected:
-  state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller, logic_rules_t logicRules,
+  state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
                          scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
-                         input_vector_array_t& inputTrajectory) override {
+                         input_vector_array_t& inputTrajectory, logic_rules_t logicRules = nullptr) override {
     if (controller == nullptr) {
       throw std::runtime_error("The input controller is not set.");
     }

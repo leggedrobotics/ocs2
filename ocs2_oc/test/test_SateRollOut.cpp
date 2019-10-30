@@ -65,9 +65,9 @@ TEST(StateRolloutTests, Case1)
 // Output State
 	state_vector_t FinalState;
 // Run
-	FinalState = Rollout.run( t0,initState,t1,Controller,logicRules, eventTimes,
+	FinalState = Rollout.run( t0,initState,t1,Controller, eventTimes,
 	    				      timeTrajectory,eventsPastTheEndIndeces,
-							  stateTrajectory,inputTrajectory);
+							  stateTrajectory,inputTrajectory, logicRules);
 
 	logicRules->display();
 

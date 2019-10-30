@@ -61,6 +61,8 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using typename Base::state_vector_t;
   using typename Base::time_interval_array_t;
   using typename Base::time_interval_t;
+  using typename Base::logic_rules_t;
+
 
   using state_to_raisim_gen_coord_gen_vel_t =
       std::function<std::pair<Eigen::VectorXd, Eigen::VectorXd>(const state_vector_t&, const input_vector_t&)>;
@@ -131,7 +133,7 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
  protected:
   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
                          scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
-                         input_vector_array_t& inputTrajectory) override {
+                         input_vector_array_t& inputTrajectory,logic_rules_t logicRules = nullptr) override {
     assert(controller != nullptr);
 
     world_.setTimeStep(this->settings().minTimeStep_);

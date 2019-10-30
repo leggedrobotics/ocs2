@@ -73,7 +73,7 @@ class RolloutBase {
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
 
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
-  using logic_rules_t = HybridLogicRules*;
+  using logic_rules_t = HybridLogicRules*; //todo
 
   using time_interval_t = std::pair<scalar_t, scalar_t>;
   using time_interval_array_t = std::vector<time_interval_t>;
@@ -127,9 +127,9 @@ class RolloutBase {
    *
    * @return The final state (state jump is considered if it took place)
    */
-  state_vector_t run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, controller_t* controller, logic_rules_t logicRules,
+  state_vector_t run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, controller_t* controller,
                      const scalar_array_t& eventTimes, scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces,
-                     state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory) {
+                     state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory,logic_rules_t logicRules = nullptr) {
     if (initTime > finalTime) {
       throw std::runtime_error("Initial time should be less-equal to final time.");
     }
@@ -159,8 +159,8 @@ class RolloutBase {
       }
     }  // end of for loop
 
-    return runImpl(std::move(timeIntervalArray), initState, controller, logicRules,timeTrajectory, eventsPastTheEndIndeces, stateTrajectory,
-                   inputTrajectory);
+    return runImpl(std::move(timeIntervalArray), initState, controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory,
+                   inputTrajectory, logicRules);
   }
 
   /**
@@ -218,10 +218,11 @@ class RolloutBase {
    * @param [out] inputTrajectory: The control input trajectory.
    *
    * @return The final state (state jump is considered if it took place)
+   * todo add logic
    */
-  virtual state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller, logic_rules_t logicRules,
+  virtual state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
                                  scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces,
-                                 state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory) = 0;
+                                 state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory, logic_rules_t logicRules = nullptr) = 0;
 
   /**
    * Checks for the numerical stability if Rollout_Settings::checkNumericalStability_ is true.

@@ -35,7 +35,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
+DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t*  rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                          const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                          const operating_trajectories_base_t* operatingTrajectoriesPtr, const DDP_Settings& ddpSettings,
                                          const cost_function_base_t* heuristicsFunctionPtr, const char* algorithmName,
@@ -234,8 +234,8 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
     if (controllerRolloutFromTo.first < controllerRolloutFromTo.second) {
       auto controllerPtr = &controllersStock[std::min(i, partitionOfLastController)];
       xCurrent = dynamicsForwardRolloutPtrStock_[threadId]->run(
-          controllerRolloutFromTo.first, xCurrent, controllerRolloutFromTo.second, controllerPtr, eventTimes, timeTrajectoriesStock[i],
-          eventsPastTheEndIndecesStock[i], stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
+          controllerRolloutFromTo.first, xCurrent, controllerRolloutFromTo.second, controllerPtr, this->getLogicRulesPtr(), eventTimes,
+		  timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i], stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
     }
 
     // Finish rollout with operating points
@@ -257,7 +257,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
       state_vector_array_t stateTrajectoryTail;
       input_vector_array_t inputTrajectoryTail;
       xCurrent = operatingTrajectoriesRolloutPtrStock_[threadId]->run(operatingPointsFromTo.first, xCurrent, operatingPointsFromTo.second,
-                                                                      nullptr, eventTimes, timeTrajectoryTail, eventsPastTheEndIndecesTail,
+                                                                      nullptr, this->getLogicRulesPtr(), eventTimes, timeTrajectoryTail, eventsPastTheEndIndecesTail,
                                                                       stateTrajectoryTail, inputTrajectoryTail);
 
       // Add controller rollout length to event past the indeces

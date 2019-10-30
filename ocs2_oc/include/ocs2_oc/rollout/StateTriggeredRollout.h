@@ -73,7 +73,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
 
   using logic_rules_machine_t = HybridLogicRulesMachine;
-  //	using hybrid_logic_rules_machine_t = HybridLogicRulesMachine;
+  using logic_rules_t = HybridLogicRules*;
 
   using ode_base_t = IntegratorBase<STATE_DIM>;
 
@@ -111,7 +111,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    * Update Last event triggered times of Event Handler
    */
   void UpdateTriggerdTime(scalar_t time_triggered,dynamic_vector_t guard_triggered){
-	  systemEventHandlersPtr_->setEventTimesGuard(1e-2,time_triggered,guard_triggered);
+	  systemEventHandlersPtr_->setLastEventTimes(time_triggered,guard_triggered);
   }
 
 
@@ -132,143 +132,154 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    */
 
  protected:
-   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
+  state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller, logic_rules_t logicRules,
                           scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
                           input_vector_array_t& inputTrajectory) override {
-     if (controller == nullptr){
-       throw std::runtime_error("The input controller is not set.");
-     }
+    if (controller == nullptr){
+        throw std::runtime_error("The input controller is not set.");
+    }
 
-     // max number of steps for integration
-     const auto maxNumSteps = static_cast<size_t>(BASE::settings().maxNumStepsPerSecond_ *
+    if (logicRules == nullptr){
+            throw std::runtime_error("The LogicRules are not set.");
+    }
+
+    // max number of steps for integration
+    const auto maxNumSteps = static_cast<size_t>(BASE::settings().maxNumStepsPerSecond_ *
                                                       std::max(1.0, timeIntervalArray.back().second - timeIntervalArray.front().first));
 
-     // clearing the output trajectories
-     timeTrajectory.clear();
-     timeTrajectory.reserve(maxNumSteps + 1);
-     stateTrajectory.clear();
-     stateTrajectory.reserve(maxNumSteps + 1);
-     inputTrajectory.clear();
-     inputTrajectory.reserve(maxNumSteps + 1);
-     eventsPastTheEndIndeces.clear();
-     eventsPastTheEndIndeces.reserve((timeIntervalArray.back().second - timeIntervalArray.front().first) / systemEventHandlersPtr_->getminEventTimeDifference());
-     // set controller
-     systemDynamicsPtr_->setController(controller);
+    // clearing the output trajectories
+    timeTrajectory.clear();
+    timeTrajectory.reserve(maxNumSteps + 1);
+    stateTrajectory.clear();
+    stateTrajectory.reserve(maxNumSteps + 1);
+    inputTrajectory.clear();
+    inputTrajectory.reserve(maxNumSteps + 1);
+    eventsPastTheEndIndeces.clear();
+    eventsPastTheEndIndeces.reserve((timeIntervalArray.back().second - timeIntervalArray.front().first) / systemEventHandlersPtr_->getminEventTimeDifference());
 
-     // reset function calls counter
-     systemDynamicsPtr_->resetNumFunctionCalls();
+    // set controller
+    systemDynamicsPtr_->setController(controller);
 
-     // Reset the event class
-     systemEventHandlersPtr_->reset();
+    // reset function calls counter
+    systemDynamicsPtr_->resetNumFunctionCalls();
 
-     state_vector_t beginState = initState;
-     size_t k_u = 0;  // control input iterator
+    // Reset the event class
+    systemEventHandlersPtr_->reset();
 
-     scalar_t t0  = timeIntervalArray[0].first;
-     scalar_t t1  = timeIntervalArray[0].second;
-     scalar_t tend= t1; // Stored separately due to overwriting t1 when refining
-     size_t eventID_m = 0;
+    // Reset the EventTimes
+    logicRules->reset();
 
-     bool refining = false;
-     bool triggered = false;
+    state_vector_t beginState = initState;
+    size_t k_u = 0;  // control input iterator
 
-     int its = 0;
-     RootFind rootFind;
-     while(true){ //Keeps looping until end time condition is fulfilled, after which the loop is broken
-    	 try{
-    		 dynamicsIntegratorPtr_->integrate(beginState, t0, t1 , stateTrajectory,
-                                         timeTrajectory, BASE::settings().minTimeStep_, BASE::settings().absTolODE_,
-                                         BASE::settings().relTolODE_, maxNumSteps, true);
-    	 }
-    	 catch(const size_t& eventID)
-    	 {	eventID_m = eventID;
-    	 	triggered = true;
-    	 }
+    scalar_t t0  = timeIntervalArray.front().first;
+    scalar_t t1  = timeIntervalArray.back().second;
+    scalar_t tend= t1; // Stored separately due to overwriting t1 when refining
+    size_t eventID_m = 0;
+
+    bool refining = false;
+    bool triggered = false;
+
+    int its = 0;
+    RootFind rootFind;
+    while(true){ //Keeps looping until end time condition is fulfilled, after which the loop is broken
+        try
+        {
+    		dynamicsIntegratorPtr_->integrate(beginState, t0, t1 , stateTrajectory,
+                                              timeTrajectory, BASE::settings().minTimeStep_, BASE::settings().absTolODE_,
+                                              BASE::settings().relTolODE_, maxNumSteps, true);
+        }
+        catch(const size_t& eventID)
+        { 	eventID_m = eventID;
+    		triggered = true;
+        }
 
 
-    	 // Calculate GuardSurface value of last query state and time
-    	 scalar_t time_query  = timeTrajectory.back();
-    	 state_vector_t state_query = stateTrajectory.back();
+        // Calculate GuardSurface value of last query state and time
+        scalar_t time_query  = timeTrajectory.back();
+        state_vector_t state_query = stateTrajectory.back();
 
-         dynamic_vector_t GuardSurfaces_query;
-    	 systemDynamicsPtr_->computeGuardSurfaces(time_query,state_query,GuardSurfaces_query);
-    	 scalar_t guard_query = GuardSurfaces_query[eventID_m];
+        dynamic_vector_t GuardSurfaces_query;
+        systemDynamicsPtr_->computeGuardSurfaces(time_query,state_query,GuardSurfaces_query);
+        scalar_t guard_query = GuardSurfaces_query[eventID_m];
 
-    	 // Remove the element past the guard surface if the event handler was triggered
-    	 // (Due to checking in EventHandler this can only happen to the last element of the trajectory)
-    	 if(triggered)
-    	 {
-    	 stateTrajectory.pop_back();
-    	 timeTrajectory.pop_back();
-    	 triggered = false;
-    	 }
+        // Remove the element past the guard surface if the event handler was triggered
+        // (Due to checking in EventHandler this can only happen to the last element of the trajectory)
+        if(triggered)
+        {   stateTrajectory.pop_back();
+    		timeTrajectory.pop_back();
+    		triggered = false;
+        }
 
-       // Compute control input trajectory and concatenate to inputTrajectory
-             if (BASE::settings().reconstructInputTrajectory_) {
-               for (; k_u < timeTrajectory.size(); k_u++) {
-                 inputTrajectory.emplace_back(systemDynamicsPtr_->controllerPtr()->computeInput(timeTrajectory[k_u], stateTrajectory[k_u]));
-               }  // end of k loop
-             }
+        // Compute control input trajectory and concatenate to inputTrajectory
+        if (BASE::settings().reconstructInputTrajectory_) {
+    		for (; k_u < timeTrajectory.size(); k_u++) {
+    			inputTrajectory.emplace_back(systemDynamicsPtr_->controllerPtr()->computeInput(timeTrajectory[k_u], stateTrajectory[k_u]));
+    		}  // end of k loop
+        }
 
-       // End time Condition, means iteration procedure is done
-       if (std::fabs(tend - timeTrajectory.back()) == 0){
+        // End time Condition, means iteration procedure is done
+        if (std::fabs(tend - timeTrajectory.back()) == 0){
               break;
-       }
-       // Accuracy Condition for event refinement
-      bool guard_accuracy_condition = std::fabs(guard_query) < BASE::settings().absTolODE_;
-      bool time_accuracy_condition = std::fabs(t1-t0) < BASE::settings().absTolODE_;
-      bool accuracy_condition = guard_accuracy_condition || time_accuracy_condition;
+        }
+        // Accuracy Condition for event refinement
+        bool guard_accuracy_condition = std::fabs(guard_query) < BASE::settings().absTolODE_;
+        bool time_accuracy_condition = std::fabs(t1-t0) < 1e-3;
+        bool accuracy_condition = guard_accuracy_condition || time_accuracy_condition;
 
-      if (accuracy_condition) { // If Sufficiently accurate crossing location has been determined
-            eventsPastTheEndIndeces.push_back(stateTrajectory.size());
-            // jump map
-            beginState = stateTrajectory.back();
-            systemDynamicsPtr_->computeJumpMap(timeTrajectory.back(), stateTrajectory.back(), beginState);
-
-            t0 = timeTrajectory.back();
-            t1 = tend;
-
-            dynamic_vector_t GuardSurfaces_cross;
-            systemDynamicsPtr_->computeGuardSurfaces(t0,beginState,GuardSurfaces_cross);
-            UpdateTriggerdTime(t0,GuardSurfaces_cross);
-
-            refining = false;
-            }
-
-      else {// Otherwise keep refining or start refining
-    	  if (!refining)
-    	  { //Properly configure Rootfinding method to start refining
-    		  scalar_t time_before = timeTrajectory.back();
-    		  state_vector_t state_before = stateTrajectory.back();
-
-    		  dynamic_vector_t GuardSurfaces_before;
-    		  systemDynamicsPtr_->computeGuardSurfaces(time_before,state_before,GuardSurfaces_before);
-    		  scalar_t guard_before = GuardSurfaces_before[eventID_m];
-
-    		  rootFind.set_Init_Bracket(time_before,time_query,guard_before,guard_query);
-    		  rootFind.getNewQuery(time_query);
-
-    		  t0 = timeTrajectory.back();
-    		  beginState = stateTrajectory.back();
-    		  t1 = time_query;
-    		  refining = true;
-    	  }
-    	  else
-    	  { // Apply the Rules of the Rootfinding method to continue refining
-    		rootFind.Update_Bracket(time_query,guard_query);
-    		rootFind.getNewQuery(time_query);
+        if (accuracy_condition) { // If Sufficiently accurate crossing location has been determined
+    		eventsPastTheEndIndeces.push_back(stateTrajectory.size());
+    		// jump map
+    		beginState = stateTrajectory.back();
+      		systemDynamicsPtr_->computeJumpMap(timeTrajectory.back(), stateTrajectory.back(), beginState);
 
     		t0 = timeTrajectory.back();
-    		beginState = stateTrajectory.back();
-    		t1 = time_query;
-    	  }
-      }
-      its++; // count iterations
-     }  // end of while loop
+    		t1 = tend;
+
+    		dynamic_vector_t GuardSurfaces_cross;
+    		systemDynamicsPtr_->computeGuardSurfaces(t0,beginState,GuardSurfaces_cross);
+      		UpdateTriggerdTime(t0,GuardSurfaces_cross);
+
+      		logicRules->appendModeSequence(eventID_m,t0);
+    		refining = false;
+    		its = 0;
+        }
+        else {// Otherwise keep or start refining
+    		if (!refining)
+    		{ //Properly configure Rootfinding method to start refining
+    			scalar_t time_before = timeTrajectory.back();
+    			state_vector_t state_before = stateTrajectory.back();
+
+    			dynamic_vector_t GuardSurfaces_before;
+    			systemDynamicsPtr_->computeGuardSurfaces(time_before,state_before,GuardSurfaces_before);
+    			scalar_t guard_before = GuardSurfaces_before[eventID_m];
+
+    			rootFind.set_Init_Bracket(time_before,time_query,guard_before,guard_query);
+    			rootFind.getNewQuery(time_query);
+
+    			t0 = timeTrajectory.back();
+    			beginState = stateTrajectory.back();
+    			t1 = time_query;
+    			refining = true;
+    		}
+    		else
+    		{ // Apply the Rules of the Rootfinding method to continue refining
+    			rootFind.Update_Bracket(time_query,guard_query);
+     			rootFind.getNewQuery(time_query);
+
+    			t0 = timeTrajectory.back();
+    			beginState = stateTrajectory.back();
+    			t1 = time_query;
+    		}
+    			rootFind.Display();
+        }
+        its++; // count iterations
+    }  // end of while loop
      // check for the numerical stability
-         this->checkNumericalStability(controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
-         return stateTrajectory.back();
-   }
+    this->checkNumericalStability(controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+    logicRules->display();
+    return stateTrajectory.back();
+  } //end of function
 
    /**
       * Constructs dynamicsIntegratorPtr_ based on the integratorType.

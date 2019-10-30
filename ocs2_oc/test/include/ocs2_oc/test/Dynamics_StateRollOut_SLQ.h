@@ -151,11 +151,11 @@ public:
 	Intermediate Cost Functions
 	*/
 	void getIntermediateCost(scalar_t &L) final{
-		L = 0.5*pow(x_[0]+0.5,2) + 0.5*pow(x_[1],2) + 0.005*pow(u_[0],2);
+		L = 0.5*pow(x_[0],2) + 0.5*pow(x_[1]+0.5,2) + 0.005*pow(u_[0],2);
 	}
 
 	void getIntermediateCostDerivativeState(state_vector_t& dLdx) final {
-		dLdx << x_[0]+0.5 , x_[1] , 0;
+		dLdx << x_[0] , x_[1]+0.5 , 0;
 	}
 
 	void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) final {
@@ -176,8 +176,8 @@ public:
 	/*
 	Terminal Cost Functions
 	*/
-	void getTerminalCost(scalar_t& Phi) final {Phi = 0.5*pow(x_[0]+0.5,2) + 0.5*pow(x_[1],2);}
-	void getTerminalCostDerivativeState(state_vector_t &dPhidx) final{dPhidx<< x_[0]+0.5, x_[1], 0;}
+	void getTerminalCost(scalar_t& Phi) final {Phi = 0.5*pow(x_[0],2) *pow(x_[1],2);}
+	void getTerminalCostDerivativeState(state_vector_t &dPhidx) final{dPhidx<< x_[0], x_[1]+0.5, 0;}
 	void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final 
 	{dPhidxx<<1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0;}
 

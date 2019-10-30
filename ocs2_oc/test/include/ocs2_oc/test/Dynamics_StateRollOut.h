@@ -75,9 +75,9 @@ public:
 					const state_vector_t& state, 
 					dynamic_vector_t& guardSurfacesValue){
 
-	guardSurfacesValue = Eigen::Matrix<double,2,1>();
+	guardSurfacesValue = Eigen::Matrix<double,1,1>();
 	guardSurfacesValue[0] = state[0];
-	guardSurfacesValue[1] = -state[0] + 0.1 + time/50;
+	//guardSurfacesValue[1] = -state[0] + 0.1 + time/50;
 	}
 
 	ball_tester_dyn* clone() const final{
@@ -126,7 +126,7 @@ public:
 	Intermediate Cost Functions
 	*/
 	void getIntermediateCost(scalar_t &L) final{
-		L = 0.5*pow(x_[0],2) + 0.5*pow(x_[1],2) + 0.005*pow(u_[0],2);
+		L = 0.5*pow(x_[0],2) + 0.5*pow(x_[1],2) + 0.05*pow(u_[0],2);
 	}
 
 	void getIntermediateCostDerivativeState(state_vector_t& dLdx) final {
@@ -138,11 +138,11 @@ public:
 	}
 
 	void getIntermediateCostDerivativeInput(input_vector_t& dLdu) final {
-		dLdu << 0.01*u_[0];
+		dLdu << 0.1*u_[0];
 	}
 
 	void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) final {
-		dLduu << 0.01;
+		dLduu << 0.1;
 	}
 
 	void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdxu) final {

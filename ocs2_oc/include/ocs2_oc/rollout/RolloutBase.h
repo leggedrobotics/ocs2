@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/OCS2NumericTraits.h>
 #include <ocs2_core/control/ControllerBase.h>
+#include <ocs2_core/logic/rules/HybridLogicRules.h>
 
 #include "Rollout_Settings.h"
 
@@ -72,6 +73,7 @@ class RolloutBase {
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
 
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
+  using logic_rules_t = HybridLogicRules*;
 
   using time_interval_t = std::pair<scalar_t, scalar_t>;
   using time_interval_array_t = std::vector<time_interval_t>;
@@ -125,7 +127,7 @@ class RolloutBase {
    *
    * @return The final state (state jump is considered if it took place)
    */
-  state_vector_t run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, controller_t* controller,
+  state_vector_t run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, controller_t* controller, logic_rules_t logicRules,
                      const scalar_array_t& eventTimes, scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces,
                      state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory) {
     if (initTime > finalTime) {
@@ -157,7 +159,7 @@ class RolloutBase {
       }
     }  // end of for loop
 
-    return runImpl(std::move(timeIntervalArray), initState, controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory,
+    return runImpl(std::move(timeIntervalArray), initState, controller, logicRules,timeTrajectory, eventsPastTheEndIndeces, stateTrajectory,
                    inputTrajectory);
   }
 
@@ -217,7 +219,7 @@ class RolloutBase {
    *
    * @return The final state (state jump is considered if it took place)
    */
-  virtual state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
+  virtual state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller, logic_rules_t logicRules,
                                  scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces,
                                  state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory) = 0;
 

@@ -61,6 +61,7 @@ class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using typename BASE::time_interval_array_t;
 
   using operating_trajectories_t = SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM>;
+  using logic_rules_t = HybridLogicRules*;
 
   /**
    * Constructor.
@@ -82,7 +83,7 @@ class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   }
 
  protected:
-  state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
+  state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller, logic_rules_t logicRules,
                          scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
                          input_vector_array_t& inputTrajectory) override {
     const int numSubsystems = timeIntervalArray.size();

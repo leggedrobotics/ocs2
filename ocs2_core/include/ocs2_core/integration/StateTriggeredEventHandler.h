@@ -87,6 +87,26 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
     guardSurfacesValuesPrevious_ = lastGuardSurfacesValues;
   }
 
+
+  /**
+     * Sets parameters to control event times detection.
+     *
+     * @param [in] lastEventTriggeredTime: Last Time that an event is triggered.
+     * @param [in] lastGuardSurfacesValues: The value of the guard functions at lastEventTriggeredTime.
+     */
+
+  virtual void setLastEventTimes(  const scalar_t& lastEventTriggeredTime = std::numeric_limits<scalar_t>::lowest(),
+                                    const dynamic_vector_t& lastGuardSurfacesValues = dynamic_vector_t::Zero(0)) {
+      if (lastEventTriggeredTime > std::numeric_limits<scalar_t>::lowest() && lastGuardSurfacesValues.size() == 0) {
+        throw std::runtime_error(
+            "Since the time of the last event is provided, "
+            "the value of the guard functions at that time should also be provided.");
+      }
+
+      lastEventTriggeredTime_ = lastEventTriggeredTime;
+      guardSurfacesValuesPrevious_ = lastGuardSurfacesValues;
+    }
+
   /**
    * Gets the value of the guard surfaces.
    *

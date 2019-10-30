@@ -65,6 +65,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using event_handler_t = SystemEventHandler<STATE_DIM>;
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
   using ode_base_t = IntegratorBase<STATE_DIM>;
+  using logic_rules_t = HybridLogicRules*;
 
   /**
    * Constructor.
@@ -93,7 +94,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   }
 
  protected:
-  state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
+  state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller, logic_rules_t logicRules,
                          scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
                          input_vector_array_t& inputTrajectory) override {
     if (controller == nullptr) {

@@ -9,9 +9,10 @@
 #include <ocs2_slq/SLQ_MP.h>
 #include <ocs2_slq/SLQ_Settings.h>
 
-#include <ocs2_oc/test/Dynamics_StateRollOut_SLQ.h>
+#include <ocs2_oc/test/Dynamics_StateRollOut.h>
 
 using namespace ocs2;
+enum { STATE_DIM = 2, INPUT_DIM = 1 };
 
 int main()
 {
@@ -27,14 +28,14 @@ SLQ_Settings slqSettings;
   slqSettings.ddpSettings_.lsStepsizeGreedy_ = true;
   slqSettings.ddpSettings_.noStateConstraints_ = true;
   slqSettings.ddpSettings_.checkNumericalStability_ = true;
-  slqSettings.ddpSettings_.absTolODE_ = 1e-3;
+  slqSettings.ddpSettings_.absTolODE_ = 1e-6;
   slqSettings.ddpSettings_.relTolODE_ = 1e-7;
   slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 1e6;
   slqSettings.ddpSettings_.useFeedbackPolicy_ = false;
-  slqSettings.ddpSettings_.debugPrintRollout_ = false;
+  slqSettings.ddpSettings_.debugPrintRollout_ = true;
 
 Rollout_Settings rolloutSettings;
-  rolloutSettings.absTolODE_ = 1e-3;
+  rolloutSettings.absTolODE_ = 1e-6;
   rolloutSettings.relTolODE_ = 1e-7;
   rolloutSettings.maxNumStepsPerSecond_ = 1e6;
 
@@ -44,20 +45,20 @@ std::vector<size_t> subsystemsSequence{0};
 std::shared_ptr<ball_tester_logic> logicRules(new ball_tester_logic(eventTimes,subsystemsSequence));
 
 double startTime = 0.0;
-double finalTime = 5;
+double finalTime = 5.0;
 
 std::vector<double> partitioningTimes;
 partitioningTimes.push_back(startTime);
 partitioningTimes.push_back(finalTime);
 
-ball_tester_dyn::state_vector_t initState(1.0,1.0,0.0);
+ball_tester_dyn::state_vector_t initState(5,0.0);
 
 /*****												
 *****/
 
 // rollout
 ball_tester_dyn sysdyn;
-StateTriggeredRollout<3,1> stateTriggeredRollout(sysdyn,rolloutSettings);
+StateTriggeredRollout<STATE_DIM,1> stateTriggeredRollout(sysdyn,rolloutSettings);
 
 // derivatives
 ball_tester_der sysder;
@@ -67,16 +68,16 @@ ball_tester_constr sysconstr;
 ball_tester_cost syscost;
 
 // operatingTrajectories
-  Eigen::Matrix<double, 3, 1> stateOperatingPoint = Eigen::Matrix<double, 3, 1>::Zero();
-  Eigen::Matrix<double, 1, 1> inputOperatingPoint = Eigen::Matrix<double, 1, 1>::Zero();
+  Eigen::Matrix<double, STATE_DIM, 1> stateOperatingPoint = Eigen::Matrix<double, STATE_DIM, 1>::Zero();
+  Eigen::Matrix<double, INPUT_DIM, 1> inputOperatingPoint = Eigen::Matrix<double, INPUT_DIM, 1>::Zero();
   ball_tester_op operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
 // SLQ 
-SLQ<3,1> slqST(&stateTriggeredRollout, &sysder, &sysconstr, &syscost, &operatingTrajectories,slqSettings,logicRules);
+SLQ<STATE_DIM,INPUT_DIM> slqST(&stateTriggeredRollout, &sysder, &sysconstr, &syscost, &operatingTrajectories,slqSettings,logicRules);
 
 slqST.run(startTime, initState, finalTime, partitioningTimes);
 
-SLQ_BASE<3, 1>::primal_solution_t solutionST = slqST.primalSolution(finalTime);
+SLQ_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t solutionST = slqST.primalSolution(finalTime);
 
 for(int i = 0; i<solutionST.stateTrajectory_.size();i++)
 {

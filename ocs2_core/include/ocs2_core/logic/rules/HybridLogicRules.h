@@ -138,6 +138,27 @@ class HybridLogicRules {
   }
 
   /**
+   *
+   */
+  void appendModeSequence(size_t subsystem, scalar_t eventTime){
+	  subsystemsSequence_.push_back(subsystem);
+	  eventTimes_.push_back(eventTime);
+
+	  update();
+  }
+
+  /**
+   *
+   */
+  void reset(){
+	  subsystemsSequence_.erase(subsystemsSequence_.begin()+1,subsystemsSequence_.end());
+	  eventTimes_.clear();
+
+
+	  update();
+  }
+
+  /**
    * Retrieves the sequence of the triggered subsystems.
    *
    * @return A constant reference to subsystemsSequence_.

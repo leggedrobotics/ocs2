@@ -62,7 +62,7 @@ slq
         AbsTolODE                    1e-9
         RelTolODE                    1e-6
         minTimeStep                  1e-3
-        maxNumStepsPerSecond         1e+5
+        maxNumStepsPerSecond         100000
         simulationIsConstrained      0
         noStateConstraints           1
         useMakePSD                   1
@@ -85,7 +85,7 @@ slq
         AbsTolODE                    1e-9
         RelTolODE                    1e-6
         minTimeStep                  1e-3
-        maxNumStepsPerSecond         1e+5
+        maxNumStepsPerSecond         100000
         checkNumericalStability      1
     }
 }

@@ -35,7 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_ilqr/ILQR_MT.h>
-#include <ocs2_ilqr/ILQR_ST.h>
 
 #include <ocs2_oc/test/EXP0.h>
 
@@ -44,13 +43,15 @@ using namespace ocs2;
 enum { STATE_DIM = 2, INPUT_DIM = 1 };
 
 TEST(DISABLED_exp0_ilqr_test, exp0_ilqr_test) {
+  using linear_controller_t = ILQR_MT<STATE_DIM, INPUT_DIM>::linear_controller_t;
+  using feedforward_controller_t = ILQR_MT<STATE_DIM, INPUT_DIM>::feedforward_controller_t;
+
   ILQR_Settings ilqrSettings;
   ilqrSettings.ddpSettings_.displayInfo_ = false;
   ilqrSettings.ddpSettings_.displayShortSummary_ = true;
   ilqrSettings.ddpSettings_.absTolODE_ = 1e-10;
   ilqrSettings.ddpSettings_.relTolODE_ = 1e-7;
   ilqrSettings.ddpSettings_.maxNumStepsPerSecond_ = 1000000;
-  ilqrSettings.ddpSettings_.nThreads_ = 3;
   ilqrSettings.ddpSettings_.maxNumIterations_ = 30;
   ilqrSettings.ddpSettings_.lsStepsizeGreedy_ = true;
   ilqrSettings.ddpSettings_.noStateConstraints_ = true;
@@ -106,10 +107,12 @@ TEST(DISABLED_exp0_ilqr_test, exp0_ilqr_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // ILQR - single-threaded version
-  ILQR_ST<STATE_DIM, INPUT_DIM> ilqrST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
+  ilqrSettings.ddpSettings_.nThreads_ = 1;
+  ILQR_MT<STATE_DIM, INPUT_DIM> ilqrST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
                                        &operatingTrajectories, ilqrSettings, logicRules);
 
   // ILQR - multi-threaded version
+  ilqrSettings.ddpSettings_.nThreads_ = 3;
   ILQR_MT<STATE_DIM, INPUT_DIM> ilqrMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
                                        &operatingTrajectories, ilqrSettings, logicRules);
 
@@ -160,10 +163,9 @@ TEST(DISABLED_exp0_ilqr_test, exp0_ilqr_test) {
 
   double ctrlFinalTime;
   if (ilqrSettings.ddpSettings_.useFeedbackPolicy_) {
-    ctrlFinalTime = dynamic_cast<ILQR_ST<STATE_DIM, INPUT_DIM>::linear_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
+    ctrlFinalTime = dynamic_cast<linear_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
   } else {
-    ctrlFinalTime =
-        dynamic_cast<ILQR_ST<STATE_DIM, INPUT_DIM>::feedforward_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
+    ctrlFinalTime = dynamic_cast<feedforward_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
   }
   ASSERT_DOUBLE_EQ(solutionST.timeTrajectory_.back(), finalTime) << "MESSAGE: ILQR_ST failed in policy final time of trajectory!";
   ASSERT_DOUBLE_EQ(ctrlFinalTime, finalTime) << "MESSAGE: ILQR_ST failed in policy final time of controller!";

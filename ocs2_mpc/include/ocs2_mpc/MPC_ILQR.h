@@ -34,7 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_ilqr/ILQR_BASE.h>
 #include <ocs2_ilqr/ILQR_MT.h>
-#include <ocs2_ilqr/ILQR_ST.h>
 
 #include "ocs2_mpc/MPC_BASE.h"
 
@@ -82,7 +81,7 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
   using ddp_base_t = ocs2::DDP_BASE<STATE_DIM, INPUT_DIM>;
 
   using ilqr_base_t = ocs2::ILQR_BASE<STATE_DIM, INPUT_DIM>;
-  using ilqr_t = ocs2::ILQR_ST<STATE_DIM, INPUT_DIM>;
+  using ilqr_t = ocs2::ILQR_MT<STATE_DIM, INPUT_DIM>;
   using ilqr_mp_t = ocs2::ILQR_MT<STATE_DIM, INPUT_DIM>;
 
   using logic_rules_machine_t = typename ddp_base_t::logic_rules_machine_t;

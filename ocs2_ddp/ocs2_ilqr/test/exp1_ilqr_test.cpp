@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
-#include <ocs2_ilqr/ILQR_MT.h>
+#include <ocs2_ilqr/ILQR.h>
 
 #include <ocs2_oc/test/EXP1.h>
 
@@ -43,8 +43,8 @@ using namespace ocs2;
 enum { STATE_DIM = 2, INPUT_DIM = 1 };
 
 TEST(exp1_ilqr_test, exp1_ilqr_test) {
-  using linear_controller_t = ILQR_MT<STATE_DIM, INPUT_DIM>::linear_controller_t;
-  using feedforward_controller_t = ILQR_MT<STATE_DIM, INPUT_DIM>::feedforward_controller_t;
+  using linear_controller_t = ILQR<STATE_DIM, INPUT_DIM>::linear_controller_t;
+  using feedforward_controller_t = ILQR<STATE_DIM, INPUT_DIM>::feedforward_controller_t;
 
   ILQR_Settings ilqrSettings;
   ilqrSettings.ddpSettings_.displayInfo_ = false;
@@ -109,13 +109,13 @@ TEST(exp1_ilqr_test, exp1_ilqr_test) {
   /******************************************************************************************************/
   // ILQR - single-threaded version
   ilqrSettings.ddpSettings_.nThreads_ = 1;
-  ILQR_MT<STATE_DIM, INPUT_DIM> ilqrST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
-                                       &operatingTrajectories, ilqrSettings, logicRules);
+  ILQR<STATE_DIM, INPUT_DIM> ilqrST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
+                                    &operatingTrajectories, ilqrSettings, logicRules);
 
   // ILQR - multi-threaded version
   ilqrSettings.ddpSettings_.nThreads_ = 3;
-  ILQR_MT<STATE_DIM, INPUT_DIM> ilqrMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
-                                       &operatingTrajectories, ilqrSettings, logicRules);
+  ILQR<STATE_DIM, INPUT_DIM> ilqrMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
+                                    &operatingTrajectories, ilqrSettings, logicRules);
 
   // run single_threaded core ILQR
   if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_)

@@ -33,12 +33,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-ILQR_MT<STATE_DIM, INPUT_DIM>::ILQR_MT(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
-                                       const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
-                                       const operating_trajectories_base_t* operatingTrajectoriesPtr,
-                                       const ILQR_Settings& settings /*= ILQR_Settings()*/,
-                                       std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
-                                       const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
+ILQR<STATE_DIM, INPUT_DIM>::ILQR(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
+                                 const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
+                                 const operating_trajectories_base_t* operatingTrajectoriesPtr,
+                                 const ILQR_Settings& settings /*= ILQR_Settings()*/,
+                                 std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
+                                 const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
     : BASE(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings, logicRulesPtr,
            heuristicsFunctionPtr) {
@@ -49,13 +49,13 @@ ILQR_MT<STATE_DIM, INPUT_DIM>::ILQR_MT(const rollout_base_t* rolloutPtr, const d
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-ILQR_MT<STATE_DIM, INPUT_DIM>::~ILQR_MT() {}
+ILQR<STATE_DIM, INPUT_DIM>::~ILQR() {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_MT<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
+void ILQR<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
   // perform one rollout while the input correction for the type-1 constraint is considered.
   BASE::lineSearchBase(computeISEs);
 
@@ -118,7 +118,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_MT<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex) {
+void ILQR<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex) {
   size_t N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
 
   if (N == 0) {
@@ -147,7 +147,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_MT<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t partitionIndex) {
+void ILQR<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t partitionIndex) {
   int N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
   int completedCount = 0;
   int timeIndex;
@@ -180,7 +180,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t p
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_MT<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitionIndex) {
+void ILQR<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitionIndex) {
   size_t N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
 
   if (N == 0) {
@@ -208,7 +208,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitio
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_MT<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(size_t partitionIndex) {
+void ILQR<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(size_t partitionIndex) {
   int N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
   int timeIndex;
   size_t taskId = nextTaskId_++;  // assign task ID (atomic)
@@ -234,7 +234,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(size_t p
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_MT<STATE_DIM, INPUT_DIM>::executeLineSearchWorker() {
+void ILQR<STATE_DIM, INPUT_DIM>::executeLineSearchWorker() {
   size_t taskId = nextTaskId_++;  // assign task ID (atomic)
 
   if (BASE::ddpSettings_.debugPrintMT_) {
@@ -393,8 +393,9 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::executeLineSearchWorker() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-typename ILQR_MT<STATE_DIM, INPUT_DIM>::scalar_t ILQR_MT<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(
-    const state_matrix_t& SmFinal, const state_vector_t& SvFinal, const eigen_scalar_t& sFinal) {
+typename ILQR<STATE_DIM, INPUT_DIM>::scalar_t ILQR<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(const state_matrix_t& SmFinal,
+                                                                                                          const state_vector_t& SvFinal,
+                                                                                                          const eigen_scalar_t& sFinal) {
   BASE::SmFinalStock_[BASE::finalActivePartition_] = SmFinal;
   BASE::SvFinalStock_[BASE::finalActivePartition_] = SvFinal;
   BASE::SveFinalStock_[BASE::finalActivePartition_].setZero();
@@ -468,7 +469,7 @@ typename ILQR_MT<STATE_DIM, INPUT_DIM>::scalar_t ILQR_MT<STATE_DIM, INPUT_DIM>::
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_MT<STATE_DIM, INPUT_DIM>::executeRiccatiSolver() {
+void ILQR<STATE_DIM, INPUT_DIM>::executeRiccatiSolver() {
   size_t taskId = nextTaskId_++;  // assign task ID (atomic)
 
   for (int i = endingIndicesRiccatiWorker_[taskId]; i >= startingIndicesRiccatiWorker_[taskId]; i--) {
@@ -541,7 +542,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::executeRiccatiSolver() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_MT<STATE_DIM, INPUT_DIM>::distributeWork() {
+void ILQR<STATE_DIM, INPUT_DIM>::distributeWork() {
   const int N = BASE::ddpSettings_.nThreads_;
   startingIndicesRiccatiWorker_.resize(N);
   endingIndicesRiccatiWorker_.resize(N);
@@ -584,7 +585,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::distributeWork() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_MT<STATE_DIM, INPUT_DIM>::runInit() {
+void ILQR<STATE_DIM, INPUT_DIM>::runInit() {
   // disable Eigen multi-threading
   Eigen::setNbThreads(1);
 
@@ -599,7 +600,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::runInit() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_MT<STATE_DIM, INPUT_DIM>::runIteration() {
+void ILQR<STATE_DIM, INPUT_DIM>::runIteration() {
   // disable Eigen multi-threading
   Eigen::setNbThreads(1);
 
@@ -613,7 +614,7 @@ void ILQR_MT<STATE_DIM, INPUT_DIM>::runIteration() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_MT<STATE_DIM, INPUT_DIM>::runExit() {
+void ILQR<STATE_DIM, INPUT_DIM>::runExit() {
   // disable Eigen multi-threading
   Eigen::setNbThreads(1);
 

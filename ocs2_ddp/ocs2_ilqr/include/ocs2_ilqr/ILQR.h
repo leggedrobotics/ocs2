@@ -46,7 +46,7 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class ILQR_MT : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
+class ILQR : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -116,7 +116,7 @@ class ILQR_MT : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Default constructor.
    */
-  ILQR_MT() : BASE() {}
+  ILQR() : BASE() {}
 
   /**
    * Constructor
@@ -131,15 +131,15 @@ class ILQR_MT : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
-  ILQR_MT(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
-          const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
-          const ILQR_Settings& settings = ILQR_Settings(), std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
-          const cost_function_base_t* heuristicsFunctionPtr = nullptr);
+  ILQR(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
+       const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
+       const ILQR_Settings& settings = ILQR_Settings(), std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
+       const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
   /**
    * Default destructor.
    */
-  ~ILQR_MT();
+  ~ILQR();
 
   /**
    * Line search on the feedforwrd parts of the controller. It uses the following approach for line search:
@@ -241,4 +241,4 @@ class ILQR_MT : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
 
 }  // namespace ocs2
 
-#include "implementation/ILQR_MT.h"
+#include "implementation/ILQR.h"

@@ -73,7 +73,7 @@ class RolloutBase {
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
 
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
-  using logic_rules_t = HybridLogicRules; //todo
+  using logic_rules_t = HybridLogicRules;
 
   using time_interval_t = std::pair<scalar_t, scalar_t>;
   using time_interval_array_t = std::vector<time_interval_t>;
@@ -220,7 +220,6 @@ class RolloutBase {
    * @param [in] logicRules : system logicrules (only used and required by statetriggered rollout)
    *
    * @return The final state (state jump is considered if it took place)
-   * todo add logic
    */
   virtual state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
                                  scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces,

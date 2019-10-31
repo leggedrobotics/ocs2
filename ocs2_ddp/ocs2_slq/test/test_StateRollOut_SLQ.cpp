@@ -9,10 +9,9 @@
 #include <ocs2_slq/SLQ_MP.h>
 #include <ocs2_slq/SLQ_Settings.h>
 
-#include <ocs2_oc/test/Dynamics_StateRollOut.h>
+#include <ocs2_oc/test/Dynamics_StateRollOut_SLQ.h>
 
 using namespace ocs2;
-enum { STATE_DIM = 2, INPUT_DIM = 1 };
 
 int main()
 {
@@ -40,49 +39,51 @@ Rollout_Settings rolloutSettings;
   rolloutSettings.maxNumStepsPerSecond_ = 1e6;
 
 std::vector<double> eventTimes(0);
-std::vector<size_t> subsystemsSequence{0};
+std::vector<size_t> subsystemsSequence{1};
 
-std::shared_ptr<ball_tester_logic> logicRules(new ball_tester_logic(eventTimes,subsystemsSequence));
+std::shared_ptr<system_logic> logicRulesPtr(new system_logic(eventTimes,subsystemsSequence));
 
 double startTime = 0.0;
-double finalTime = 5.0;
+double finalTime = 25.0;
 
 std::vector<double> partitioningTimes;
 partitioningTimes.push_back(startTime);
 partitioningTimes.push_back(finalTime);
 
-ball_tester_dyn::state_vector_t initState(5,0.0);
+system_dyn::state_vector_t initState(1.0,1.0);
 
-/*****												
+/*****
 *****/
 
 // rollout
-ball_tester_dyn sysdyn;
+system_dyn sysdyn(logicRulesPtr);
 StateTriggeredRollout<STATE_DIM,1> stateTriggeredRollout(sysdyn,rolloutSettings);
 
 // derivatives
-ball_tester_der sysder;
+system_der sysder(logicRulesPtr);
 // constraints
-ball_tester_constr sysconstr;
+system_constr sysconstr;
 // cost function
-ball_tester_cost syscost;
+system_cost syscost;
+
 
 // operatingTrajectories
   Eigen::Matrix<double, STATE_DIM, 1> stateOperatingPoint = Eigen::Matrix<double, STATE_DIM, 1>::Zero();
   Eigen::Matrix<double, INPUT_DIM, 1> inputOperatingPoint = Eigen::Matrix<double, INPUT_DIM, 1>::Zero();
-  ball_tester_op operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
+  system_op operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
-// SLQ 
-SLQ<STATE_DIM,INPUT_DIM> slqST(&stateTriggeredRollout, &sysder, &sysconstr, &syscost, &operatingTrajectories,slqSettings,logicRules);
+// SLQ
+SLQ<STATE_DIM,INPUT_DIM> slqST(&stateTriggeredRollout, &sysder, &sysconstr, &syscost, &operatingTrajectories,slqSettings,logicRulesPtr);
 
 slqST.run(startTime, initState, finalTime, partitioningTimes);
 
 SLQ_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t solutionST = slqST.primalSolution(finalTime);
+solutionST.controllerPtr_->display();
 
 if (false){
 for(int i = 0; i<solutionST.stateTrajectory_.size();i++)
 {
-	std::cout<<i<<";"<<solutionST.timeTrajectory_[i]<<";"<<solutionST.stateTrajectory_[i][0]<<";"<<solutionST.stateTrajectory_[i][1]<<";"<<solutionST.stateTrajectory_[i][2]<<";"<<solutionST.inputTrajectory_[i]<<std::endl;
+	std::cout<<i<<";"<<solutionST.timeTrajectory_[i]<<";"<<solutionST.stateTrajectory_[i][0]<<";"<<solutionST.stateTrajectory_[i][1]<<";"<<solutionST.inputTrajectory_[i]<<std::endl;
 }
 }
 

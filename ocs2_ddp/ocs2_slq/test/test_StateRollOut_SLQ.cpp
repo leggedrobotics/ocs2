@@ -23,18 +23,20 @@ SLQ_Settings slqSettings;
   slqSettings.ddpSettings_.displayShortSummary_ = true;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
   slqSettings.ddpSettings_.nThreads_ = 1;
-  slqSettings.ddpSettings_.maxNumIterations_ = 30;
   slqSettings.ddpSettings_.lsStepsizeGreedy_ = true;
-  slqSettings.ddpSettings_.noStateConstraints_ = true;
+  slqSettings.ddpSettings_.noStateConstraints_ = false;
+  slqSettings.ddpSettings_.stateConstraintPenaltyCoeff_ = 1.0;
+  slqSettings.ddpSettings_.inequalityConstraintMu_ = 0.1;
+  slqSettings.ddpSettings_.inequalityConstraintDelta_= 1e-6;
   slqSettings.ddpSettings_.checkNumericalStability_ = false;
-  slqSettings.ddpSettings_.absTolODE_ = 1e-6;
+  slqSettings.ddpSettings_.absTolODE_ = 1e-10;
   slqSettings.ddpSettings_.relTolODE_ = 1e-7;
   slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 1e6;
   slqSettings.ddpSettings_.useFeedbackPolicy_ = false;
   slqSettings.ddpSettings_.debugPrintRollout_ = false;
 
 Rollout_Settings rolloutSettings;
-  rolloutSettings.absTolODE_ = 1e-6;
+  rolloutSettings.absTolODE_ = 1e-10;
   rolloutSettings.relTolODE_ = 1e-7;
   rolloutSettings.maxNumStepsPerSecond_ = 1e6;
 
@@ -44,13 +46,13 @@ std::vector<size_t> subsystemsSequence{1};
 std::shared_ptr<system_logic> logicRulesPtr(new system_logic(eventTimes,subsystemsSequence));
 
 double startTime = 0.0;
-double finalTime = 25.0;
+double finalTime = 150.0;
 
 std::vector<double> partitioningTimes;
 partitioningTimes.push_back(startTime);
 partitioningTimes.push_back(finalTime);
 
-system_dyn::state_vector_t initState(1.0,1.0);
+system_dyn::state_vector_t initState(0.5,0.5);
 
 /*****
 *****/
@@ -62,9 +64,9 @@ StateTriggeredRollout<STATE_DIM,1> stateTriggeredRollout(sysdyn,rolloutSettings)
 // derivatives
 system_der sysder(logicRulesPtr);
 // constraints
-system_constr sysconstr;
+system_const sysconstr(logicRulesPtr);
 // cost function
-system_cost syscost;
+system_cost syscost(logicRulesPtr);
 
 
 // operatingTrajectories
@@ -72,18 +74,17 @@ system_cost syscost;
   Eigen::Matrix<double, INPUT_DIM, 1> inputOperatingPoint = Eigen::Matrix<double, INPUT_DIM, 1>::Zero();
   system_op operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
+
+std::cout<<"Starting SLQ Procedure"<<std::endl;
 // SLQ
 SLQ<STATE_DIM,INPUT_DIM> slqST(&stateTriggeredRollout, &sysder, &sysconstr, &syscost, &operatingTrajectories,slqSettings,logicRulesPtr);
-
 slqST.run(startTime, initState, finalTime, partitioningTimes);
-
 SLQ_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t solutionST = slqST.primalSolution(finalTime);
-solutionST.controllerPtr_->display();
 
-if (false){
+if (true){
 for(int i = 0; i<solutionST.stateTrajectory_.size();i++)
 {
-	std::cout<<i<<";"<<solutionST.timeTrajectory_[i]<<";"<<solutionST.stateTrajectory_[i][0]<<";"<<solutionST.stateTrajectory_[i][1]<<";"<<solutionST.inputTrajectory_[i]<<std::endl;
+	std::cout<<i<<";"<<solutionST.timeTrajectory_[i]<<";"<<solutionST.stateTrajectory_[i][0]<<";"<<solutionST.stateTrajectory_[i][1]<<";"<<logicRulesPtr->getSubSystemTime(solutionST.timeTrajectory_[i])<<";"<<solutionST.inputTrajectory_[i]<<std::endl;
 }
 }
 

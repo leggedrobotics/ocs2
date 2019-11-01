@@ -138,9 +138,20 @@ class HybridLogicRules {
   }
 
   /**
-   *
+   * 		todo
    */
-  void appendModeSequence(size_t subsystem, scalar_t eventTime){
+  virtual void getswitchingLaw(const size_t &eventID,size_t &subsystem)
+  {
+	  subsystem = eventID;
+  }
+
+
+  /**
+   *		todo
+   */
+  void appendModeSequence(const size_t &eventID, const scalar_t &eventTime){
+	  size_t subsystem;
+	  getswitchingLaw(eventID,subsystem);
 	  subsystemsSequence_.push_back(subsystem);
 	  eventTimes_.push_back(eventTime);
 
@@ -148,10 +159,10 @@ class HybridLogicRules {
   }
 
   /**
-   *
+   *		todo
    */
   void reset(){
-	  size_t prev_size = subsystemsSequence_.size()<100 ? 100: subsystemsSequence_.size();
+	  size_t prev_size = subsystemsSequence_.size();
 
 	  subsystemsSequence_.erase(subsystemsSequence_.begin()+1,subsystemsSequence_.end());
 	  eventTimes_.clear();

@@ -46,13 +46,13 @@ std::vector<size_t> subsystemsSequence{1};
 std::shared_ptr<system_logic> logicRulesPtr(new system_logic(eventTimes,subsystemsSequence));
 
 double startTime = 0.0;
-double finalTime = 150.0;
+double finalTime = 5.0;
 
 std::vector<double> partitioningTimes;
 partitioningTimes.push_back(startTime);
 partitioningTimes.push_back(finalTime);
 
-system_dyn::state_vector_t initState(0.5,0.5);
+system_dyn::state_vector_t initState(0.5,0);
 
 /*****
 *****/

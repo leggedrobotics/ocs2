@@ -138,7 +138,11 @@ class HybridLogicRules {
   }
 
   /**
-   * 		todo
+   * Allows specification of custom conversion between eventID (array index of activated guardSurface) and
+   * activation of the next subsystem in state triggered rollout
+   *
+   * @param [in]		eventID	: array index of guardSurface
+   * @param [out]	subsystem : array index of next subsystem
    */
   virtual void getswitchingLaw(const size_t &eventID,size_t &subsystem)
   {
@@ -147,7 +151,11 @@ class HybridLogicRules {
 
 
   /**
-   *		todo
+   * Appends an event to the internal storage of the logicrules class
+   * Used in state triggered rollout to keep track of discovered events
+   *
+   * @param [in] eventID	: activated guardSurface
+   * @param [out] eventTime : time of event
    */
   void appendModeSequence(const size_t &eventID, const scalar_t &eventTime){
 	  size_t subsystem;
@@ -159,7 +167,10 @@ class HybridLogicRules {
   }
 
   /**
-   *		todo
+   * Reset the logicrules class, empties subsystemSequence and eventTimes
+   * first element of subsystemsSequence is kept, because this is the initial active subsystem
+   * Also reserves spaces in the vector, as much as were needed last iteration
+   *
    */
   void reset(){
 	  size_t prev_size = subsystemsSequence_.size();

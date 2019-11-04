@@ -69,7 +69,7 @@ public:
 		Eigen::Matrix<double,STATE_DIM,STATE_DIM> A;
 		A << -1,1,-1,-0.1;
 		Eigen::Matrix<double,STATE_DIM,INPUT_DIM> B;
-		B << 0,1,0;
+		B << 0,1;
 		Eigen::Matrix<double,STATE_DIM,1> F;
 		F << 0,0,0;
 
@@ -112,7 +112,7 @@ public:
 		Eigen::Matrix<double,STATE_DIM,STATE_DIM> A;
 		A << -0,3,-3,0;
 		Eigen::Matrix<double,STATE_DIM,INPUT_DIM> B;
-		B << 0,1,0;
+		B << 0,1;
 		Eigen::Matrix<double,STATE_DIM,1> F;
 		F << 0,0,0;
 
@@ -216,7 +216,7 @@ public:
 
 	void getFlowMapDerivativeInput(state_input_matrix_t &B) override
 	{
-		B << 0,1,0;
+		B << 0,1;
 	}
 
 	system_der_1* clone() const override{
@@ -238,7 +238,7 @@ public:
 
 	void getFlowMapDerivativeInput(state_input_matrix_t &B) override
 	{
-		B << 0,1,0;
+		B << 0,1;
 	}
 
 	system_der_2* clone() const override{
@@ -340,7 +340,7 @@ public:
 	/*
 	Terminal Cost Functions
 	 */
-	void getTerminalCost(scalar_t& Phi) final {Phi = 0.5*pow(x_[0],2) *pow(x_[1],2);}
+	void getTerminalCost(scalar_t& Phi) final {Phi = 0.5*pow(x_[0],2)+ 0.5*pow(x_[1],2);}
 	void getTerminalCostDerivativeState(state_vector_t &dPhidx) final{dPhidx<< x_[0], x_[1], 0;}
 	void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final {dPhidxx<<1.0 , 0.0, 1.0, 0.0;}
 };

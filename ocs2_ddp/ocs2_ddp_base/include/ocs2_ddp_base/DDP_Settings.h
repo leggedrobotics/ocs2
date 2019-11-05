@@ -80,6 +80,7 @@ class DDP_Settings {
         addedRiccatiDiagonal_(1e-5)
 
         ,
+        useMultiThreading_(false),
         nThreads_(1),
         threadPriority_(99),
         debugPrintMT_(false),
@@ -177,6 +178,8 @@ class DDP_Settings {
   /** Check the numerical stability of the algorithms for debugging purpose. */
   bool checkNumericalStability_;
 
+  /** Use multi threading for the DDP algorithms. */
+  bool useMultiThreading_;
   /** Number of threads used in the multi-threading scheme. */
   size_t nThreads_;
   /** Priority of threads used in the multi-threading scheme. */
@@ -212,6 +215,7 @@ inline void DDP_Settings::loadSettings(const std::string& filename, const std::s
     std::cerr << " #### =============================================================================" << std::endl;
   }
 
+  loadData::loadPtreeValue(pt, useMultiThreading_, fieldName + ".useMultiThreading", verbose);
   loadData::loadPtreeValue(pt, nThreads_, fieldName + ".nThreads", verbose);
   loadData::loadPtreeValue(pt, threadPriority_, fieldName + ".threadPriority", verbose);
   loadData::loadPtreeValue(pt, maxNumIterations_, fieldName + ".maxNumIterations", verbose);

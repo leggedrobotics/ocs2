@@ -6,11 +6,10 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 SwitchedModelLogicRulesBase::SwitchedModelLogicRulesBase(const feet_planner_ptr_t& feetPlannerPtr,
-                                                         const scalar_t& phaseTransitionStanceTime /*= 0.4*/)
+                                                         scalar_t phaseTransitionStanceTime /*= 0.4*/)
 
     : BASE(),
-      feetPlannerPtr_(feetPlannerPtr)  // shallow copy: points to the same asset
-      ,
+      feetPlannerPtr_(feetPlannerPtr),  // shallow copy: points to the same asset
       phaseTransitionStanceTime_(phaseTransitionStanceTime) {}
 
 /******************************************************************************************************/
@@ -22,8 +21,7 @@ SwitchedModelLogicRulesBase::SwitchedModelLogicRulesBase(const SwitchedModelLogi
       feetPlannerPtr_(rhs.feetPlannerPtr_),
       phaseTransitionStanceTime_(rhs.phaseTransitionStanceTime_),
       contactFlagsStock_(rhs.contactFlagsStock_),
-      feetReferencePtrStock_(rhs.feetReferencePtrStock_.size())  // shallow copy: points to the same asset
-      ,
+      feetReferencePtrStock_(rhs.feetReferencePtrStock_.size()),  // shallow copy: points to the same asset
       feetReferenceUpdatedStock_(rhs.feetReferenceUpdatedStock_.size(), false) {}
 
 /******************************************************************************************************/

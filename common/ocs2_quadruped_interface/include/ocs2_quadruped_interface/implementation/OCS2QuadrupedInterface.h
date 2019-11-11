@@ -215,7 +215,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeComS
   computeComLocalAcceleration(comkinoState, comkinoInput, comLocalAcceleration);
 
   // Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
-  Eigen::Matrix3d o_R_b = RotationMatrixBasetoOrigin<scalar_t>(eulerAngles);
+  Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin<scalar_t>(eulerAngles);
 
   // CoM pose in the origin frame
   o_comPose << eulerAngles, o_r_com;
@@ -330,7 +330,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::getIteratio
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-Model_Settings& OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modelSettings() {
+ModelSettings& OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::modelSettings() {
   return modelSettings_;
 }
 

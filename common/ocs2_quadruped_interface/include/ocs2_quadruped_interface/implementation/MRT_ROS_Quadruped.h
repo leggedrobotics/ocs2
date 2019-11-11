@@ -253,7 +253,7 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeFeetState
   base_coordinate_t basePose = ocs2QuadrupedInterfacePtr_->getComModel().calculateBasePose(comPose);
   base_coordinate_t baseLocalVelocities = ocs2QuadrupedInterfacePtr_->getComModel().calculateBaseLocalVelocities(comLocalVelocities);
 
-  Eigen::Matrix3d o_R_b = RotationMatrixBasetoOrigin<scalar_t>(state.template head<3>());
+  Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin<scalar_t>(state.template head<3>());
 
   for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
     o_feetPosition[i] = ocs2QuadrupedInterfacePtr_->getKinematicModel().footPositionInOriginFrame(i, basePose, qJoints);

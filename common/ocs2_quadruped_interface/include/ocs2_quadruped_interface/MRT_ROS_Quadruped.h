@@ -194,7 +194,7 @@ class MRT_ROS_Quadruped : public ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM> {
   quadruped_interface_ptr_t ocs2QuadrupedInterfacePtr_;
   logic_rules_ptr_t logic_rules_mrt_;
 
-  Model_Settings modelSettings_;
+  ModelSettings modelSettings_;
 
   std::array<const cpg_t*, 4> feetZPlanPtr_;
   std::array<scalar_t, 4> swingPhaseProgress_;

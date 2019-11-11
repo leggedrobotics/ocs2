@@ -1,12 +1,12 @@
 #pragma once
 
-#include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
+#include <ocs2_core/constraint/ConstraintBase.h>
 
 #include "ocs2_switched_model_interface/constraint/ConstraintCollection.h"
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
-#include "ocs2_switched_model_interface/core/Model_Settings.h"
+#include "ocs2_switched_model_interface/core/ModelSettings.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h"
 
@@ -56,7 +56,7 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
   const std::array<std::string, 4> feetNames{"LF", "RF", "LH", "RH"};
 
   ComKinoConstraintBaseAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-                          std::shared_ptr<const logic_rules_t> logicRulesPtr, const Model_Settings& options = Model_Settings())
+                          std::shared_ptr<const logic_rules_t> logicRulesPtr, const ModelSettings& options = ModelSettings())
       : Base(),
         adKinematicModelPtr_(adKinematicModel.clone()),
         adComModelPtr_(adComModel.clone()),
@@ -67,7 +67,7 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
     if (!logicRulesPtr_) {
       throw std::runtime_error("[ComKinoConstraintBaseAD] logicRules cannot be a nullptr");
     }
-    InitializeConstraintTerms();
+    initializeConstraintTerms();
   }
 
   ComKinoConstraintBaseAd(const ComKinoConstraintBaseAd& rhs)
@@ -84,7 +84,7 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
   /**
    * Initialize Constraint Terms
    */
-  void InitializeConstraintTerms();
+  void initializeConstraintTerms();
 
   ~ComKinoConstraintBaseAd() override = default;
 
@@ -138,7 +138,7 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
 
   std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
   std::unique_ptr<ad_com_model_t> adComModelPtr_;
-  Model_Settings options_;
+  ModelSettings options_;
 
   std::shared_ptr<const logic_rules_t> logicRulesPtr_;
   contact_flag_t stanceLegs_;
@@ -148,4 +148,3 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
 };
 
 }  // end of namespace switched_model
-

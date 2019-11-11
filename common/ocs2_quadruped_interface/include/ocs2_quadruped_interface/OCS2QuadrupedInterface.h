@@ -29,7 +29,7 @@
 
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
-#include <ocs2_switched_model_interface/core/Model_Settings.h>
+#include <ocs2_switched_model_interface/core/ModelSettings.h>
 #include <ocs2_switched_model_interface/core/MotionPhaseDefinition.h>
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 #include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
@@ -267,7 +267,7 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
    *
    * @return Model settings.
    */
-  Model_Settings& modelSettings();
+  ModelSettings& modelSettings();
 
   /**
    * Gets the loaded initial RBD state.
@@ -318,7 +318,7 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
 
   logic_rules_ptr_t logicRulesPtr_;  // logic
 
-  Model_Settings modelSettings_;
+  ModelSettings modelSettings_;
 
   state_matrix_t Q_;
   input_matrix_t R_;

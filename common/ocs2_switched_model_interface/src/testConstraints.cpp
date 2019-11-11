@@ -1,10 +1,8 @@
 
 
-
 #include <ocs2_switched_model_interface/constraint/EndEffectorVelocityContraint.h>
 
-int main(int argc, char **argv)
-{
+int main(int argc, char** argv) {
   using EndEffectorVelocityConstraint_t = switched_model::EndEffectorVelocityConstraint<3, 2>;
 
   // Set up constraint
@@ -25,17 +23,17 @@ int main(int argc, char **argv)
   auto linearApproximation = EeVelconstraint.getLinearApproximation(time, state, input);
 
   std::cout << "Constraint values" << std::endl;
-  for (auto &c : constraints) {
+  for (auto& c : constraints) {
     std::cout << c << std::endl;
   }
 
   std::cout << "State Derivatives" << std::endl;
-  for (auto &dcdx : linearApproximation.derivativeState) {
+  for (auto& dcdx : linearApproximation.derivativeState) {
     std::cout << dcdx.transpose() << std::endl;
   }
 
   std::cout << "Input Derivatives" << std::endl;
-  for (auto &dcdu : linearApproximation.derivativeInput) {
+  for (auto& dcdu : linearApproximation.derivativeInput) {
     std::cout << dcdu.transpose() << std::endl;
   }
 

@@ -9,8 +9,8 @@
 
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 
-#include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
+#include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h"
 
 namespace switched_model {
@@ -20,12 +20,12 @@ class SwitchedModelCostBase : public ocs2::QuadraticCostFunction<STATE_DIM, INPU
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   typedef ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM> BASE;
+  using typename BASE::dynamic_vector_t;
   using typename BASE::input_matrix_t;
   using typename BASE::input_vector_t;
   using typename BASE::scalar_t;
   using typename BASE::state_matrix_t;
   using typename BASE::state_vector_t;
-  using typename BASE::dynamic_vector_t;
 
   using logic_rules_t = SwitchedModelLogicRulesBase;
 

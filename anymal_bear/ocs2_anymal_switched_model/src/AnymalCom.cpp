@@ -43,7 +43,7 @@ AnymalCom<SCALAR_T>* AnymalCom<SCALAR_T>::clone() const {
 /******************************************************************************************************/
 template <typename SCALAR_T>
 void AnymalCom<SCALAR_T>::setJointConfiguration(const switched_model::joint_coordinate_s_t<SCALAR_T>& q) {
-  using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait ;
+  using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
   iit::ANYmal::dyn::tpl::InertiaProperties<trait_t> inertiaProperties_;
   iit::ANYmal::tpl::HomogeneousTransforms<trait_t> homTransforms_;
   iit::ANYmal::tpl::ForceTransforms<trait_t> forceTransforms_;
@@ -54,7 +54,7 @@ void AnymalCom<SCALAR_T>::setJointConfiguration(const switched_model::joint_coor
 
   comInertia_ = jointSpaceInertiaMatrix_.getWholeBodyInertia();
   SCALAR_T mass = comInertia_(5, 5);
-  switched_model::matrix3_s_t<SCALAR_T> crossComPositionBaseFrame = switched_model::CrossProductMatrix<SCALAR_T>(comPositionBaseFrame_);
+  switched_model::matrix3_s_t<SCALAR_T> crossComPositionBaseFrame = switched_model::crossProductMatrix<SCALAR_T>(comPositionBaseFrame_);
   comInertia_.template topLeftCorner<3, 3>() -= mass * crossComPositionBaseFrame * crossComPositionBaseFrame.transpose();
   comInertia_.template topRightCorner<3, 3>().setZero();
   comInertia_.template bottomLeftCorner<3, 3>().setZero();
@@ -68,4 +68,3 @@ void AnymalCom<SCALAR_T>::setJointConfiguration(const switched_model::joint_coor
 // Explicit instantiation
 template class anymal::tpl::AnymalCom<double>;
 template class anymal::tpl::AnymalCom<ocs2::CppAdInterface<double>::ad_scalar_t>;
-

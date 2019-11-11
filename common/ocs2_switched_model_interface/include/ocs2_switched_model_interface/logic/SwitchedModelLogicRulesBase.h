@@ -48,7 +48,7 @@ class SwitchedModelLogicRulesBase : public ocs2::HybridLogicRules {
    * @param [in] feetPlannerPtr: A pointer to the FeetPlanner class.
    * @param [in] phaseTransitionStanceTime: The phase transition stance time.
    */
-  SwitchedModelLogicRulesBase(const feet_planner_ptr_t& feetPlannerPtr, const scalar_t& phaseTransitionStanceTime = 0.4);
+  explicit SwitchedModelLogicRulesBase(const feet_planner_ptr_t& feetPlannerPtr, scalar_t phaseTransitionStanceTime = 0.4);
 
   /**
    * Copy constructor
@@ -58,7 +58,7 @@ class SwitchedModelLogicRulesBase : public ocs2::HybridLogicRules {
   /**
    * Destructor
    */
-  virtual ~SwitchedModelLogicRulesBase() = default;
+  ~SwitchedModelLogicRulesBase() override = default;
 
   /**
    * Move assignment
@@ -107,7 +107,7 @@ class SwitchedModelLogicRulesBase : public ocs2::HybridLogicRules {
    * This method can be used to update the internal variables. This method will be called by any
    * program that tries to update the logic rules variables.
    */
-  virtual void update() override;
+  void update() override;
 
   /**
    * Rewinds the class. This method is only called in the MPC class.
@@ -115,7 +115,7 @@ class SwitchedModelLogicRulesBase : public ocs2::HybridLogicRules {
    * @param [in] lowerBoundTime: The smallest time for which the logicRules should be defined.
    * @param [in] upperBoundTime: The greatest time for which the logicRules should be defined.
    */
-  virtual void rewind(const scalar_t& lowerBoundTime, const scalar_t& upperBoundTime) override;
+  void rewind(const scalar_t& lowerBoundTime, const scalar_t& upperBoundTime) override;
 
  protected:
   /**
@@ -125,8 +125,8 @@ class SwitchedModelLogicRulesBase : public ocs2::HybridLogicRules {
    * @param [in] startTime: The initial time from which the new logicRules template should be augmented.
    * @param [in] finalTime: The final time to which the new logicRules template should be augmented.
    */
-  virtual void insertModeSequenceTemplate(const logic_template_type& modeSequenceTemplate, const scalar_t& startTime,
-                                          const scalar_t& finalTime) override;
+  void insertModeSequenceTemplate(const logic_template_type& modeSequenceTemplate, const scalar_t& startTime,
+                                  const scalar_t& finalTime) override;
 
   /**
    * Extends the switch information from lowerBoundTime to upperBoundTime based on the template mode sequence.

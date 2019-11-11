@@ -9,6 +9,9 @@ find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
+# Generate compile_commands.json for clang tools
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 ## Eigen3
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
@@ -46,7 +49,7 @@ add_library(${PROJECT_NAME}
 		src/SwitchedModelLogicRulesBase.cpp
 		src/KinematicsModelBase.cpp
 		src/ComModelBase.cpp
-		src/Model_Settings.cpp
+		src/ModelSettings.cpp
 		)
 
 add_dependencies(${PROJECT_NAME}
@@ -58,6 +61,20 @@ target_link_libraries(${PROJECT_NAME}
 		${catkin_LIBRARIES}
 		dl
 		)
+
+#########################
+###   CLANG TOOLING   ###
+#########################
+find_package(cmake_clang_tools QUIET)
+if(cmake_clang_tools_FOUND)
+	message(STATUS "Run clang tooling")
+	add_clang_tooling(
+			TARGETS ${PROJECT_NAME}
+			SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+			CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+			CF_WERROR
+	)
+endif(cmake_clang_tools_FOUND)
 
 #############
 ## Install ##

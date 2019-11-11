@@ -198,8 +198,6 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
         { 	eventID_m = eventID;
     		triggered = true;
         }
-
-
         // Calculate GuardSurface value of last query state and time
         scalar_t time_query  = timeTrajectory.back();
         state_vector_t state_query = stateTrajectory.back();
@@ -235,11 +233,19 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
         if (accuracy_condition) { // If Sufficiently accurate crossing location has been determined
     		eventsPastTheEndIndeces.push_back(stateTrajectory.size());
     		// jump map
-    		beginState = stateTrajectory.back();
-      		systemDynamicsPtr_->computeJumpMap(timeTrajectory.back(), stateTrajectory.back(), beginState);
-
-    		t0 = timeTrajectory.back();
+    		beginState = state_query;
+    		t0 = time_query;
     		t1 = tend;
+
+    		if(timeTrajectory.back()!=t0)// if last element was outside guard surface,
+    		{			 				// but within tolerance it needs to be included with the trajectory
+    			stateTrajectory.push_back(beginState);
+    			timeTrajectory.push_back(t0);
+    			inputTrajectory.emplace_back(systemDynamicsPtr_->controllerPtr()->computeInput(timeTrajectory.back(), stateTrajectory.back()));
+    			k_u++;
+    		}
+
+    		systemDynamicsPtr_->computeJumpMap(time_query, state_query, beginState);
 
     		dynamic_vector_t GuardSurfaces_cross;
     		systemDynamicsPtr_->computeGuardSurfaces(t0,beginState,GuardSurfaces_cross);
@@ -286,12 +292,10 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
      // check for the numerical stability
     this->checkNumericalStability(controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
-    if(false)
-    {
-    	std::cout << "###########"<<std::endl;
-    	std::cout << "Rollout finished after " << global_its << " Iterations"<<std::endl;
-    	std::cout << "###########"<<std::endl;
-    }
+//  std::cout << "###########"<<std::endl;
+//  std::cout << "Rollout finished after " << global_its << " Iterations"<<std::endl;
+//  std::cout << "###########"<<std::endl;
+
 
     return stateTrajectory.back();
   } //end of function

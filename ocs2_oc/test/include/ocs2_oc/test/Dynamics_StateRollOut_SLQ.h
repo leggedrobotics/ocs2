@@ -67,7 +67,7 @@ public:
 	void computeFlowMap( const double& t, const Eigen::Vector2d& x, const Eigen::Matrix<double,1,1>& u, Eigen::Vector2d& dxdt){
 
 		Eigen::Matrix<double,STATE_DIM,STATE_DIM> A;
-		A << 0,1,-1,0;
+		A << -0.1,0.9,-1,-0.01;
 		Eigen::Matrix<double,STATE_DIM,INPUT_DIM> B;
 		B << 0,1;
 		Eigen::Matrix<double,STATE_DIM,1> F;
@@ -210,7 +210,7 @@ public:
 	~system_der_1() = default;
 
 	void getFlowMapDerivativeState(state_matrix_t &A) override{
-		A << 0,1,-1,0;
+		A << -0.1,0.9,-1,-0.01;
 	}
 
 	void getFlowMapDerivativeInput(state_input_matrix_t &B) override

@@ -82,8 +82,6 @@ public:
 				gamma = 0.5;
 			}
 
-			gamma = 0.5;
-
 			guard_int_m.first = f_query;
 			time_int_m.first = query;
 

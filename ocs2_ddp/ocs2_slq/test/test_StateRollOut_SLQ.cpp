@@ -13,7 +13,9 @@
 
 using namespace ocs2;
 
-int main()
+using dynamic_vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
+
+TEST(testStateRollOut_SLQ, RunExample)
 {
 
 
@@ -31,14 +33,14 @@ SLQ_Settings slqSettings;
   slqSettings.ddpSettings_.checkNumericalStability_ = false;
   slqSettings.ddpSettings_.absTolODE_ = 1e-10;
   slqSettings.ddpSettings_.relTolODE_ = 1e-7;
-  slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 1e6;
+  slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 1e5;
   slqSettings.ddpSettings_.useFeedbackPolicy_ = false;
   slqSettings.ddpSettings_.debugPrintRollout_ = false;
 
 Rollout_Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;
   rolloutSettings.relTolODE_ = 1e-7;
-  rolloutSettings.maxNumStepsPerSecond_ = 1e6;
+  rolloutSettings.maxNumStepsPerSecond_ = 1e5;
 
 std::vector<double> eventTimes(0);
 std::vector<size_t> subsystemsSequence{1};
@@ -52,7 +54,7 @@ std::vector<double> partitioningTimes;
 partitioningTimes.push_back(startTime);
 partitioningTimes.push_back(finalTime);
 
-system_dyn::state_vector_t initState(0.5,0);
+system_dyn::state_vector_t initState(5,2);
 
 /*****
 *****/
@@ -88,6 +90,32 @@ for(int i = 0; i<solutionST.stateTrajectory_.size();i++)
 }
 }
 
+//EXPECT_EQ(logicRulesPtr->getNumSubsystems(),3);
 
-return 0;
+for(int i = 0; i<solutionST.stateTrajectory_.size();i++)
+{
+	dynamic_vector_t guardSurfacesValue;
+	sysdyn.computeGuardSurfaces(solutionST.timeTrajectory_[i],solutionST.stateTrajectory_[i],guardSurfacesValue);
+	EXPECT_GT(guardSurfacesValue[0],-1e-10);
+	EXPECT_GT(guardSurfacesValue[1],-1e-10);
+
+	if (guardSurfacesValue[0]<-1e-10)
+	{
+		std::cout<<guardSurfacesValue[0]<<";"<<i<<std::endl;
+	}
+
+	if ( i<solutionST.stateTrajectory_.size()-1){
+	bool event_happened = (logicRulesPtr->getSubSystemTime(solutionST.timeTrajectory_[i]) != logicRulesPtr->getSubSystemTime(solutionST.timeTrajectory_[i+1]));
+	if (event_happened){
+	EXPECT_EQ(solutionST.timeTrajectory_[i]-solutionST.timeTrajectory_[i-1],0);
+	}
+	}
+
+}
+
+}
+
+int main(int argc, char** argv){
+	testing::InitGoogleTest(&argc, argv);
+	return RUN_ALL_TESTS();
 }

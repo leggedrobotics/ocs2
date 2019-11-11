@@ -67,11 +67,11 @@ public:
 	void computeFlowMap( const double& t, const Eigen::Vector2d& x, const Eigen::Matrix<double,1,1>& u, Eigen::Vector2d& dxdt){
 
 		Eigen::Matrix<double,STATE_DIM,STATE_DIM> A;
-		A << -1,1,-1,-0.1;
+		A << 0,1,-1,0;
 		Eigen::Matrix<double,STATE_DIM,INPUT_DIM> B;
 		B << 0,1;
 		Eigen::Matrix<double,STATE_DIM,1> F;
-		F << 0,0,0;
+		F << 0,0;
 
 		dxdt = A*x + B*u + F;
 	}
@@ -114,7 +114,7 @@ public:
 		Eigen::Matrix<double,STATE_DIM,INPUT_DIM> B;
 		B << 0,1;
 		Eigen::Matrix<double,STATE_DIM,1> F;
-		F << 0,0,0;
+		F << 0,0;
 
 		dxdt = A*x + B*u + F;
 	}
@@ -189,7 +189,6 @@ public:
 	{
 		activeSubsystem_ = logicRulesPtr_->getSubSystemTime(time);
 		subsystemDynamicsPtr_[activeSubsystem_]->computeGuardSurfaces(time,state,guardSurfacesValue);
-
 	}
 
 private:
@@ -318,7 +317,7 @@ public:
 	}
 
 	void getIntermediateCostDerivativeState(state_vector_t &dLdx) final{
-		dLdx << x_[0] , x_[1], 0;
+		dLdx << x_[0] , x_[1];
 	}
 
 	void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) final {
@@ -326,7 +325,7 @@ public:
 	}
 
 	void getIntermediateCostDerivativeInput(input_vector_t& dLdu) final {
-		dLdu << 0.001*u_[0];
+		dLdu << 0.01*u_[0];
 	}
 
 	void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) final {
@@ -341,7 +340,7 @@ public:
 	Terminal Cost Functions
 	 */
 	void getTerminalCost(scalar_t& Phi) final {Phi = 0.5*pow(x_[0],2)+ 0.5*pow(x_[1],2);}
-	void getTerminalCostDerivativeState(state_vector_t &dPhidx) final{dPhidx<< x_[0], x_[1], 0;}
+	void getTerminalCostDerivativeState(state_vector_t &dPhidx) final{dPhidx<< x_[0], x_[1];}
 	void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final {dPhidxx<<1.0 , 0.0, 1.0, 0.0;}
 };
 
@@ -362,7 +361,7 @@ public:
 	}
 
 	void getIntermediateCostDerivativeState(state_vector_t &dLdx) final{
-		dLdx << x_[0] , x_[1], 0;
+		dLdx << x_[0] , x_[1];
 	}
 
 	void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) final {
@@ -385,7 +384,7 @@ public:
 	Terminal Cost Functions
 	 */
 	void getTerminalCost(scalar_t& Phi) final {Phi = 0.5*pow(x_[0],2) *pow(x_[1],2);}
-	void getTerminalCostDerivativeState(state_vector_t &dPhidx) final{dPhidx<< x_[0], x_[1], 0;}
+	void getTerminalCostDerivativeState(state_vector_t &dPhidx) final{dPhidx<< x_[0], x_[1];}
 	void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final {dPhidxx<<1.0 , 0.0, 1.0, 0.0;}
 
 };
@@ -504,10 +503,10 @@ public:
 
 	void getInequalityConstraint(scalar_array_t& h) override {
 		h.resize(4);
-		h[0] = -u_[0] + 2 ;
-		h[1] =  u_[0] + 2;
-		h[2] =  x_[0] + 1;
-		h[3] =  -x_[0] + 1;
+		h[0] = -u_[0] + 10;
+		h[1] =  u_[0] + 10;
+		h[2] =  x_[0] + 50;
+		h[3] =  -x_[0]+ 50;
 	}
 
 	size_t numInequalityConstraint(const scalar_t& time) override {
@@ -567,10 +566,10 @@ public:
 
 	void getInequalityConstraint(scalar_array_t& h) override {
 		h.resize(4);
-		h[0] = -u_[0] + 2 ;
-		h[1] =  u_[0] + 2 ;
-		h[2] =  x_[0] + 1;
-		h[3] =  -x_[0] + 1;
+		h[0] = -u_[0] + 10;
+		h[1] =  u_[0] + 10;
+		h[2] =  x_[0] + 50;
+		h[3] =  -x_[0] + 50;
 	}
 
 	size_t numInequalityConstraint(const scalar_t& time) override {

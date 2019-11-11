@@ -141,7 +141,8 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     }
 
     if (logicRules == nullptr){
-            throw std::runtime_error("The LogicRules are not set.");
+            //throw std::runtime_error("The LogicRules are not set.");
+            std::cout<<"No logicRules are set";
     }
 
     // max number of steps for integration
@@ -168,7 +169,10 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     systemEventHandlersPtr_->reset();
 
     // Reset the EventTimes
-    logicRules->reset();
+    if (logicRules != nullptr)
+    {
+        logicRules->reset();
+    }
 
     state_vector_t beginState = initState;
     size_t k_u = 0;  // control input iterator
@@ -202,6 +206,8 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
         dynamic_vector_t GuardSurfaces_query;
         systemDynamicsPtr_->computeGuardSurfaces(time_query,state_query,GuardSurfaces_query);
+        std::cout<<"Number of Guard Surfaces: "<<GuardSurfaces_query.size()<<std::endl;
+        std::cout<<"Value [0]: "<<GuardSurfaces_query[0]<<std::endl;
         scalar_t guard_query = GuardSurfaces_query[eventID_m];
 
         // Remove the element past the guard surface if the event handler was triggered
@@ -241,7 +247,9 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     		systemDynamicsPtr_->computeGuardSurfaces(t0,beginState,GuardSurfaces_cross);
       		UpdateTriggerdTime(t0,GuardSurfaces_cross);
 
+      		if (logicRules != nullptr){
       		logicRules->appendModeSequence(eventID_m,t0);
+      		}
     		refining = false;
     		its = 0;
         }

@@ -283,8 +283,18 @@ class HybridLogicRules {
   /**
    *
    */
-  size_t getSubSystemTime(scalar_t time) const { size_t idx = lookup::findIndexInTimeArray(eventTimes_,time);
-  	  	  	  	  	  	  	  	  	  	  	  	 return subsystemsSequence_[idx];							}
+  size_t getSubSystemTime(scalar_t time) const
+  { 				  if(eventTimes_.size()>0 && eventTimes_.back()<time)
+  	  	  	  	  	  {
+	  	  	  	  	  	  return subsystemsSequence_.back();
+  	  	  	  	  	  }
+  	  	  	  	  	  else
+  	  	  	  	  	  {
+  	  	  	  	  		  size_t idx = lookup::findIndexInTimeArray(eventTimes_,time);
+	   	  	  	  	  	  return subsystemsSequence_[idx];
+  	  	  	  	  	  }
+
+  }
 
 
  protected:

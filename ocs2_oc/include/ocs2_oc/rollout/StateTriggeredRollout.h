@@ -141,8 +141,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     }
 
     if (logicRules == nullptr){
-            //throw std::runtime_error("The LogicRules are not set.");
-            std::cout<<"No logicRules are set";
+            throw std::runtime_error("The LogicRules are not set.");
     }
 
     // max number of steps for integration
@@ -185,7 +184,8 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     bool refining = false;
     bool triggered = false;
 
-    int its = 0;
+    int local_its = 0;			// Iterations since last event
+    int global_its = 0;			// Overall iterations
     RootFind rootFind;
     while(true){ //Keeps looping until end time condition is fulfilled, after which the loop is broken
         try
@@ -206,8 +206,6 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
         dynamic_vector_t GuardSurfaces_query;
         systemDynamicsPtr_->computeGuardSurfaces(time_query,state_query,GuardSurfaces_query);
-        std::cout<<"Number of Guard Surfaces: "<<GuardSurfaces_query.size()<<std::endl;
-        std::cout<<"Value [0]: "<<GuardSurfaces_query[0]<<std::endl;
         scalar_t guard_query = GuardSurfaces_query[eventID_m];
 
         // Remove the element past the guard surface if the event handler was triggered
@@ -231,7 +229,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
         }
         // Accuracy Condition for event refinement
         bool guard_accuracy_condition = std::fabs(guard_query) < BASE::settings().absTolODE_;
-        bool time_accuracy_condition = std::fabs(t1-t0) < 1e-3;
+        bool time_accuracy_condition = std::fabs(t1-t0) < BASE::settings().absTolODE_;
         bool accuracy_condition = guard_accuracy_condition || time_accuracy_condition;
 
         if (accuracy_condition) { // If Sufficiently accurate crossing location has been determined
@@ -250,8 +248,9 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       		if (logicRules != nullptr){
       		logicRules->appendModeSequence(eventID_m,t0);
       		}
+
     		refining = false;
-    		its = 0;
+    		local_its = 0;
         }
         else {// Otherwise keep or start refining
     		if (!refining)
@@ -281,10 +280,19 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     			t1 = time_query;
     		}
         }
-        its++; // count iterations
+        local_its++;
+        global_its++; // count iterations
     }  // end of while loop
      // check for the numerical stability
     this->checkNumericalStability(controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+
+    if(false)
+    {
+    	std::cout << "###########"<<std::endl;
+    	std::cout << "Rollout finished after " << global_its << " Iterations"<<std::endl;
+    	std::cout << "###########"<<std::endl;
+    }
+
     return stateTrajectory.back();
   } //end of function
 

@@ -48,7 +48,7 @@ std::vector<size_t> subsystemsSequence{1};
 std::shared_ptr<system_logic> logicRulesPtr(new system_logic(eventTimes,subsystemsSequence));
 
 double startTime = 0.0;
-double finalTime = 5.0;
+double finalTime = 50.0;
 
 std::vector<double> partitioningTimes;
 partitioningTimes.push_back(startTime);
@@ -84,9 +84,9 @@ slqST.run(startTime, initState, finalTime, partitioningTimes);
 SLQ_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t solutionST = slqST.primalSolution(finalTime);
 
 if (true){
-for(int i = 0; i<solutionST.stateTrajectory_.size();i++)
+for(int i = 1; i<solutionST.stateTrajectory_.size();i++)
 {
-	std::cout<<i<<";"<<solutionST.timeTrajectory_[i]<<";"<<solutionST.stateTrajectory_[i][0]<<";"<<solutionST.stateTrajectory_[i][1]<<";"<<logicRulesPtr->getSubSystemTime(solutionST.timeTrajectory_[i])<<";"<<solutionST.inputTrajectory_[i]<<std::endl;
+	std::cout<<i<<";"<<solutionST.timeTrajectory_[i]<<";"<<solutionST.timeTrajectory_[i]-solutionST.timeTrajectory_[i-1]<<";"<<solutionST.stateTrajectory_[i][0]<<";"<<solutionST.stateTrajectory_[i][1]<<";"<<logicRulesPtr->getSubSystemTime(solutionST.timeTrajectory_[i])<<";"<<solutionST.inputTrajectory_[i]<<std::endl;
 }
 }
 

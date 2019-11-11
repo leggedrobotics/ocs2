@@ -54,7 +54,7 @@ public:
 				state_vector_t& mappedState	)
 	{
 			mappedState[0] = state[0];
-			mappedState[1] = -state[1];
+			mappedState[1] = -0.9*state[1];
 	}
 				
 
@@ -63,7 +63,7 @@ public:
 					dynamic_vector_t& guardSurfacesValue){
 
 	guardSurfacesValue = Eigen::Matrix<double,2,1>();
-	guardSurfacesValue[0] = state[0] + 3.1415/2;
+	guardSurfacesValue[0] = state[0];
 	guardSurfacesValue[1] = 1;
 	}
 

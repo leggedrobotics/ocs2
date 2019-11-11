@@ -90,17 +90,20 @@ TEST(StateRolloutTests, Case1)
 	}
 }
 
-/*
+
 TEST(StateRolloutTests, Case2)
 {
 // Construct State TriggerdRollout Object
 	ocs2::Rollout_Settings sets;
 	ocs2::pendulum_dyn dynamics;
 	ocs2::StateTriggeredRollout<2,1> Rollout(dynamics,sets);
+// Create Logic Rules
+	ocs2::pendulum_logic logic;
+	ocs2::pendulum_logic* logicRules = &logic;
 // Construct Variables for run
 	// Simulation time
 	scalar_t t0 = 0;
-	scalar_t t1 = 1000;
+	scalar_t t1 = 100;
 	// Initial State
 	state_vector_t initState(2,0);
 	initState[0] = 3.1415;
@@ -129,7 +132,9 @@ TEST(StateRolloutTests, Case2)
 // Run
 	FinalState = Rollout.run( t0,initState,t1,Controller,eventTimes,
 	    				      timeTrajectory,eventsPastTheEndIndeces,
-							  stateTrajectory,inputTrajectory);
+							  stateTrajectory,inputTrajectory, logicRules);
+
+	logicRules->display();
 
 	for(int i = 0; i<timeTrajectory.size();i++){
 		// Test 1: No Significant penetration of Guard Surface
@@ -137,11 +142,11 @@ TEST(StateRolloutTests, Case2)
 		// Optional output of state and time trajectories
 		if(false)
 		{
-			std::cout<<i<<";"<<timeTrajectory[i]<<";"<<stateTrajectory[i][0]<<";"<<stateTrajectory[i][1]<<inputTrajectory[i]<<std::endl;
+			std::cout<<i<<";"<<timeTrajectory[i]<<";"<<stateTrajectory[i][0]<<";"<<stateTrajectory[i][1]<<";"<<inputTrajectory[i]<<std::endl;
 		}
 	}
 }
-*/
+
 
 
 

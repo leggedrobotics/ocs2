@@ -1,6 +1,7 @@
 #include "ocs2_core/Dimensions.h"
 #include <utility>
 #include <vector>
+#include <iostream>
 
 using scalar_t = double;
 using interval_t = std::pair<scalar_t, scalar_t>;
@@ -81,6 +82,10 @@ public:
 			{
 				gamma = 0.5;
 			}
+
+			//gamma = guard_int_m.first/(guard_int_m.first + f_query); // Pegasus Method
+			//gamma = 0.5;		// Illinois Method
+			//gamma = 1;		// Regular Regula Falsi
 
 			guard_int_m.first = f_query;
 			time_int_m.first = query;

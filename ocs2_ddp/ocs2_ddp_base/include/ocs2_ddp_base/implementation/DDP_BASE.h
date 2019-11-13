@@ -782,29 +782,29 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t workerIndex, scalar
 
     // display
     if (ddpSettings_.displayInfo_) {
-      std::string finalConstraintDisplay;
-      finalConstraintDisplay = "\t [Thread" + std::to_string(workerIndex) + "] - learningRate " + std::to_string(learningRate) +
-                               " \t cost: " + std::to_string(lsTotalCost) + " \t constraint ISE: " + std::to_string(lsConstraint1ISE) +
-                               " \t inequality penalty: " + std::to_string(lsInequalityConstraintPenalty) +
-                               " \t inequality ISE: " + std::to_string(lsInequalityConstraintISE) + "\n";
-      finalConstraintDisplay += "\t final constraint type-2:   ";
+      std::string linesearchDisplay;
+      linesearchDisplay = "\t [Thread " + std::to_string(workerIndex) + "] - learningRate " + std::to_string(learningRate) +
+                          " \t cost: " + std::to_string(lsTotalCost) + " \t constraint ISE: " + std::to_string(lsConstraint1ISE) +
+                          " \t inequality penalty: " + std::to_string(lsInequalityConstraintPenalty) +
+                          " \t inequality ISE: " + std::to_string(lsInequalityConstraintISE) + "\n";
+      linesearchDisplay += "\t final constraint type-2:   ";
       for (size_t i = 0; i < numPartitions_; i++) {
-        finalConstraintDisplay += "[" + std::to_string(i) + "]: ";
+        linesearchDisplay += "[" + std::to_string(i) + "]: ";
         for (size_t j = 0; j < lsNc2FinalStock[i].size(); j++) {
           for (size_t m = 0; m < lsNc2FinalStock[i][j]; m++) {
-            finalConstraintDisplay += std::to_string(lsHvFinalStock[i][j](m)) + ", ";
+            linesearchDisplay += std::to_string(lsHvFinalStock[i][j](m)) + ", ";
           }
         }
-        finalConstraintDisplay += "  ";
+        linesearchDisplay += "  ";
       }  // end of i loop
-      finalConstraintDisplay += "\n\t forward pass average time step: " + std::to_string(avgTimeStepFP * 1e+3) + " [ms].";
-      BASE::printString(finalConstraintDisplay);
+      linesearchDisplay += "\n\t forward pass average time step: " + std::to_string(avgTimeStepFP * 1e+3) + " [ms].";
+      BASE::printString(linesearchDisplay);
     }
 
   } catch (const std::exception& error) {
     lsTotalCost = std::numeric_limits<scalar_t>::max();
     if (ddpSettings_.displayInfo_) {
-      BASE::printString("\t [Thread" + std::to_string(workerIndex) + "] rollout with learningRate " + std::to_string(learningRate) +
+      BASE::printString("\t [Thread " + std::to_string(workerIndex) + "] rollout with learningRate " + std::to_string(learningRate) +
                         " is terminated: " + error.what());
     }
   }

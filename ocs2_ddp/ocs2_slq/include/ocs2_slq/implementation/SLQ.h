@@ -80,7 +80,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
                           1);
 
   alphaExpNext_ = 0;
-  alphaExpBest_ = maxNumOfLineSearches + 1;
+  alphaExpBest_ = maxNumOfLineSearches + 1;  // this works as inf for representation zero step-size (baselineTotalCost_)
   alphaProcessed_ = std::vector<bool>(maxNumOfLineSearches, false);
 
   nextTaskId_ = 0;
@@ -191,35 +191,25 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeLineSearchWorker() {
     size_t alphaExp = alphaExpNext_++;
     scalar_t learningRate = BASE::maxLearningRate_ * std::pow(BASE::ddpSettings_.lineSearchContractionRate_, alphaExp);
 
-    /* break condition:
-     * Stop line search for this thread if the current learning rate:
-     * - is less than best candidate
-     * - is less than minimal learning rate
+    /*
+     * finish this thread's task since the learning rate is less than the minimum learning rate.
+     * This means that the all the line search tasks are already processed or they are under
+     * process in other threads.
      */
-    if (alphaExp > alphaExpBest_ || !numerics::almost_ge(learningRate, BASE::ddpSettings_.minLearningRate_)) {
-      bool alphaBestFound = true;
-
-      {
-        std::lock_guard<std::mutex> lock(lineSearchResultMutex_);
-
-        // accept best candidate if all potentially better candidates are processed.
-        for (size_t i = 0; i < alphaExpBest_; i++) {
-          if (!alphaProcessed_[i]) {
-            alphaBestFound = false;
-            break;
-          }
-        }
-      }
-
-      // kill ongoing line search if best learning rate was found
-      if (alphaBestFound) {
-        event_handler_t::activateKillIntegration();  // kill all integrators
-        if (BASE::ddpSettings_.displayInfo_) {
-          BASE::printString("\t LS: terminate other rollouts with different alphas. alpha_best found or terminating without improvement.");
-        }
-      }
-
+    if (!numerics::almost_ge(learningRate, BASE::ddpSettings_.minLearningRate_)) {
       break;
+    }
+
+    // skip if the current learning rate is less than the best candidate
+    if (alphaExp > alphaExpBest_) {
+      // display
+      if (BASE::ddpSettings_.displayInfo_) {
+        std::string linesearchDisplay;
+        linesearchDisplay = "\t [Thread " + std::to_string(taskId) + "] rollout with learningRate " + std::to_string(learningRate) +
+                            " is skipped: A larger learning rate is already found!";
+        BASE::printString(linesearchDisplay);
+      }
+      continue;
     }
 
     // do a line search
@@ -228,35 +218,16 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeLineSearchWorker() {
                            lsConstraint2MaxNorm, lsInequalityConstraintPenalty, lsInequalityConstraintISE, lsControllersStock,
                            lsTimeTrajectoriesStock, lsPostEventIndicesStock, lsStateTrajectoriesStock, lsInputTrajectoriesStock);
 
+    bool terminateLinesearchTasks = false;
     {
       std::lock_guard<std::mutex> lock(lineSearchResultMutex_);
 
-      // break condition: best learning rate already found, nothing to update
-      if (alphaExp > alphaExpBest_) {
-        break;
-      }
-
-      // Based on the LS policy check whether the best solution should be updated with these results.
-      bool updatePolicy = false;
-      if (BASE::ddpSettings_.lsStepsizeGreedy_) {
-        /*
-         * Use stepsize greedy where cost should be better than the last iteration but learning rate
-         * should be as high as possible. This is equivalent to a single core lineSearch.
-         */
-        if (lsTotalCost < (baselineTotalCost_ * (1 - 1e-3 * learningRate)) && learningRate > BASE::learningRateStar_) {
-          updatePolicy = true;
-        }
-
-      } else {
-        /*
-         * line search acts cost greedy which minimize cost as much as possible
-         */
-        if (lsTotalCost < (BASE::nominalTotalCost_ * (1 - 1e-3 * learningRate))) {
-          updatePolicy = true;
-        }
-      }
-
-      if (updatePolicy) {
+      /*
+       * based on the "greedy learning rate selection" policy:
+       * cost should be better than the baseline cost but learning rate should
+       * be as high as possible. This is equivalent to a single core line search.
+       */
+      if (lsTotalCost < (baselineTotalCost_ * (1 - 1e-3 * learningRate)) && learningRate > BASE::learningRateStar_) {
         alphaExpBest_ = alphaExp;
         BASE::nominalTotalCost_ = lsTotalCost;
         BASE::learningRateStar_ = learningRate;
@@ -272,11 +243,32 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeLineSearchWorker() {
         BASE::nominalPostEventIndicesStock_.swap(lsPostEventIndicesStock);
         BASE::nominalStateTrajectoriesStock_.swap(lsStateTrajectoriesStock);
         BASE::nominalInputTrajectoriesStock_.swap(lsInputTrajectoriesStock);
-      }
+
+        // whether to stop all other thread.
+        terminateLinesearchTasks = true;
+        for (size_t i = 0; i < alphaExp; i++) {
+          if (!alphaProcessed_[i]) {
+            terminateLinesearchTasks = false;
+            break;
+          }
+        }  // end of i loop
+
+      }  // end of if
 
       alphaProcessed_[alphaExp] = true;
+
     }  // end lock
-  }    // end of while loop
+
+    // kill other ongoing line search tasks
+    if (terminateLinesearchTasks) {
+      event_handler_t::activateKillIntegration();  // kill all integrators
+      if (BASE::ddpSettings_.displayInfo_) {
+        BASE::printString("\t LS: interrupt other rollout's integrations.");
+      }
+      break;
+    }
+
+  }  // end of while loop
 }
 
 /******************************************************************************************************/

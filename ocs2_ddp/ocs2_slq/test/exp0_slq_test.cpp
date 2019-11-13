@@ -117,13 +117,15 @@ TEST(exp0_slq_test, exp0_slq_test) {
               logicRules);
 
   // run single core SLQ
-  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
+  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {
     std::cerr << "\n>>> single-core SLQ" << std::endl;
+  }
   slqST.run(startTime, initState, finalTime, partitioningTimes);
 
   // run multi-core SLQ
-  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
+  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {
     std::cerr << "\n>>> multi-core SLQ" << std::endl;
+  }
   slqMT.run(startTime, initState, finalTime, partitioningTimes);
 
   /******************************************************************************************************/

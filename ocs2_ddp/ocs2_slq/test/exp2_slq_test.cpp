@@ -106,8 +106,9 @@ TEST(exp2_slq_test, DISABLED_Exp2_slq_test) {
                                 slqSettings, logicRules);
 
   // run single core SLQ
-  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
+  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {
     std::cerr << "\n>>> single-core SLQ" << std::endl;
+  }
   slq.run(startTime, initState, finalTime, partitioningTimes);
 
   /******************************************************************************************************/

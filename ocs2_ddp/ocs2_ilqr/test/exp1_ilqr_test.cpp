@@ -118,13 +118,15 @@ TEST(exp1_ilqr_test, exp1_ilqr_test) {
                                     &operatingTrajectories, ilqrSettings, logicRules);
 
   // run single_threaded core ILQR
-  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_)
+  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_) {
     std::cerr << "\n>>> single-threaded ILQR" << std::endl;
+  }
   ilqrST.run(startTime, initState, finalTime, partitioningTimes);
 
   // run multi-threaded ILQR
-  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_)
+  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_) {
     std::cerr << "\n>>> multi-threaded ILQR" << std::endl;
+  }
   ilqrMT.run(startTime, initState, finalTime, partitioningTimes);
 
   /******************************************************************************************************/

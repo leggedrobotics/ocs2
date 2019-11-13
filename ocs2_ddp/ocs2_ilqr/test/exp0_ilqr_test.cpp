@@ -42,7 +42,7 @@ using namespace ocs2;
 
 enum { STATE_DIM = 2, INPUT_DIM = 1 };
 
-TEST(DISABLED_exp0_ilqr_test, exp0_ilqr_test) {
+TEST(exp0_ilqr_test, exp0_ilqr_test) {
   using linear_controller_t = ILQR<STATE_DIM, INPUT_DIM>::linear_controller_t;
   using feedforward_controller_t = ILQR<STATE_DIM, INPUT_DIM>::feedforward_controller_t;
 
@@ -117,13 +117,15 @@ TEST(DISABLED_exp0_ilqr_test, exp0_ilqr_test) {
                                     &operatingTrajectories, ilqrSettings, logicRules);
 
   // run single_threaded core ILQR
-  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_)
+  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_) {
     std::cerr << "\n>>> single-threaded ILQR" << std::endl;
+  }
   ilqrST.run(startTime, initState, finalTime, partitioningTimes);
 
   // run multi-threaded ILQR
-  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_)
+  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_) {
     std::cerr << "\n>>> multi-threaded ILQR" << std::endl;
+  }
   ilqrMT.run(startTime, initState, finalTime, partitioningTimes);
 
   /******************************************************************************************************/

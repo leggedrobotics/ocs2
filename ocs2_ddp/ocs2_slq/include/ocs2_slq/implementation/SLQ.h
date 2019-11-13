@@ -74,7 +74,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
                               std::log(BASE::ddpSettings_.lineSearchContractionRate_) +
                           1);
 
-  alphaExpBest_ = maxNumOfLineSearches;
+  alphaExpBest_ = maxNumOfLineSearches + 1;
   alphaProcessed_ = std::vector<bool>(maxNumOfLineSearches, false);
 
   if (BASE::ddpSettings_.debugPrintMT_) {
@@ -84,7 +84,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
 
   nextTaskId_ = 0;
   std::function<void(void)> task = [this] { executeLineSearchWorker(); };
-  BASE::BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
+  BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
 
   // revitalize all integrators
   event_handler_t::deactivateKillIntegration();
@@ -119,7 +119,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex) {
   nextTimeIndex_ = 0;
   nextTaskId_ = 0;
   std::function<void(void)> task = [this, partitionIndex] { executeApproximatePartitionLQWorker(partitionIndex); };
-  BASE::BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
+  BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
 
   // display
   if (BASE::ddpSettings_.debugPrintMT_) {
@@ -180,7 +180,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitionInd
   nextTimeIndex_ = 0;
   nextTaskId_ = 0;
   std::function<void(void)> task = [this, partitionIndex] { executeCalculatePartitionController(partitionIndex); };
-  BASE::BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
+  BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
 
   // display
   if (BASE::ddpSettings_.debugPrintMT_) {
@@ -433,7 +433,7 @@ typename SLQ<STATE_DIM, INPUT_DIM>::scalar_t SLQ<STATE_DIM, INPUT_DIM>::solveSeq
 
     nextTaskId_ = 0;
     std::function<void(void)> task = [this] { executeRiccatiSolver(); };
-    BASE::BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
+    BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
   }
 
   if (BASE::ddpSettings_.debugPrintMT_) {

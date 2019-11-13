@@ -436,6 +436,11 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   virtual void setupOptimizer(size_t numPartitions);
 
   /**
+   * Distributes the sequential tasks (e.g. Riccati solver) in between threads.
+   */
+  void distributeWork();
+
+  /**
    * Computes the linearized dynamics for a particular time partition
    *
    * @param [in] partitionIndex: Time partition index
@@ -691,6 +696,9 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   scalar_t learningRateStar_ = 1.0;  // The optimal learning rate.
   scalar_t maxLearningRate_ = 1.0;   // The maximum permitted learning rate
                                      // (settings_.maxLearningRateSLQ_).
+
+  std::vector<int> startingIndicesRiccatiWorker_;
+  std::vector<int> endingIndicesRiccatiWorker_;
 
   // trajectory spreading
   TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM> trajectorySpreadingController_;

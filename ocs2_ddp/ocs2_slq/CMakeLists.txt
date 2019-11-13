@@ -55,8 +55,8 @@ target_link_libraries(${PROJECT_NAME}_dynamic_size
 )
 
 add_executable(${PROJECT_NAME}_lintTarget
-        src/lintTarget.cpp
-        )
+  src/lintTarget.cpp
+)
 
 #########################
 ###   CLANG TOOLING   ###

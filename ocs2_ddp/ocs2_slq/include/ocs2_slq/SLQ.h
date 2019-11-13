@@ -134,9 +134,9 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
       const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
   /**
-   * Destructor.
+   * Default destructor.
    */
-  ~SLQ();
+  ~SLQ() = default;
 
   /**
    * Line search on the feedforwrd parts of the controller. It uses the following approach for line search:
@@ -210,11 +210,6 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
   void executeLineSearchWorker();
 
   /**
-   * Distributes work
-   */
-  void distributeWork();
-
-  /**
    * Solves Riccati equations for the partitions assigned to the given thread
    */
   void executeRiccatiSolver();
@@ -226,8 +221,6 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
 
   // parallel Riccati solver
   std::mutex riccatiSolverDataMutex_;
-  std::vector<int> startingIndicesRiccatiWorker_;
-  std::vector<int> endingIndicesRiccatiWorker_;
 
   std::mutex lineSearchResultMutex_;
   std::atomic_size_t alphaExpBest_;

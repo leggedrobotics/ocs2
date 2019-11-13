@@ -1373,6 +1373,48 @@ const unsigned long long int& DDP_BASE<STATE_DIM, INPUT_DIM>::getRewindCounter()
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::distributeWork() {
+  const int N = ddpSettings_.nThreads_;
+  startingIndicesRiccatiWorker_.resize(N);
+  endingIndicesRiccatiWorker_.resize(N);
+
+  int subsystemsPerThread = (finalActivePartition_ - initActivePartition_ + 1) / N;
+  int remainingSubsystems = (finalActivePartition_ - initActivePartition_ + 1) % N;
+
+  int startingId, endingId = finalActivePartition_;
+  for (size_t i = 0; i < N; i++) {
+    endingIndicesRiccatiWorker_[i] = endingId;
+    if (remainingSubsystems > 0) {
+      startingId = endingId - subsystemsPerThread;
+      remainingSubsystems--;
+    } else {
+      startingId = endingId - subsystemsPerThread + 1;
+    }
+    startingIndicesRiccatiWorker_[i] = startingId;
+    endingId = startingId - 1;
+  }
+
+  // adding the inactive subsystems
+  endingIndicesRiccatiWorker_.front() = numPartitions_ - 1;
+  startingIndicesRiccatiWorker_.back() = 0;
+
+  if (ddpSettings_.displayInfo_) {
+    std::cerr << "Initial Active Subsystem: " << initActivePartition_ << std::endl;
+    std::cerr << "Final Active Subsystem:   " << finalActivePartition_ << std::endl;
+    std::cerr << "Backward path work distribution:" << std::endl;
+    for (size_t i = 0; i < N; i++) {
+      std::cerr << "start: " << startingIndicesRiccatiWorker_[i] << "\t";
+      std::cerr << "end: " << endingIndicesRiccatiWorker_[i] << "\t";
+      std::cerr << "num: " << endingIndicesRiccatiWorker_[i] - startingIndicesRiccatiWorker_[i] + 1 << std::endl;
+    }
+    std::cerr << std::endl;
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   if (numPartitions == 0) {
     throw std::runtime_error("Number of partitions cannot be zero!");
@@ -1677,6 +1719,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
   if (ddpSettings_.displayInfo_) {
     std::cerr << "\n#### Iteration " << iteration_ << " (Dynamics might have been violated)" << std::endl;
   }
+
+  // distribution of the sequential tasks (e.g. Riccati solver) in between threads
+  distributeWork();
 
   // run DDP initializer and update the member variables
   runInit();

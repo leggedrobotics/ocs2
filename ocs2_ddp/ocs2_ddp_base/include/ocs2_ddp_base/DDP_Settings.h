@@ -83,7 +83,6 @@ class DDP_Settings {
         useMultiThreading_(false),
         nThreads_(1),
         threadPriority_(99),
-        debugPrintMT_(false),
         lsStepsizeGreedy_(true),
         checkNumericalStability_(true),
         useRiccatiSolver_(true)
@@ -184,8 +183,6 @@ class DDP_Settings {
   size_t nThreads_;
   /** Priority of threads used in the multi-threading scheme. */
   int threadPriority_;
-  /** Special debugging output for multi-threading scheme. */
-  bool debugPrintMT_;
   /**
    * line search options in multi-threading scheme.
    * - True: The largest acceptable step-size will be chosen. This strategy is equivalent to the single core one.
@@ -240,7 +237,6 @@ inline void DDP_Settings::loadSettings(const std::string& filename, const std::s
   loadData::loadPtreeValue(pt, addedRiccatiDiagonal_, fieldName + ".addedRiccatiDiagonal", verbose);
   loadData::loadPtreeValue(pt, minAbsConstraint1ISE_, fieldName + ".minAbsConstraint1ISE", verbose);
   loadData::loadPtreeValue(pt, minRelConstraint1ISE_, fieldName + ".minRelConstraint1ISE", verbose);
-  loadData::loadPtreeValue(pt, debugPrintMT_, fieldName + ".debugPrintMT", verbose);
   loadData::loadPtreeValue(pt, lsStepsizeGreedy_, fieldName + ".lsStepsizeGreedy", verbose);
   loadData::loadPtreeValue(pt, checkNumericalStability_, fieldName + ".checkNumericalStability", verbose);
   loadData::loadPtreeValue(pt, useRiccatiSolver_, fieldName + ".useRiccatiSolver", verbose);

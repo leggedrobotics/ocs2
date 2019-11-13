@@ -139,7 +139,7 @@ class ILQR : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Default destructor.
    */
-  ~ILQR();
+  ~ILQR() = default;
 
   /**
    * Line search on the feedforwrd parts of the controller. It uses the following approach for line search:
@@ -211,11 +211,6 @@ class ILQR : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
    * size policy (defined in settings_.lsStepsizeGreedy_)
    */
   void executeLineSearchWorker();
-
-  /**
-   * Distributes work
-   */
-  void distributeWork();
 
   /**
    * Solves Riccati equations for the partitions assigned to the given thread

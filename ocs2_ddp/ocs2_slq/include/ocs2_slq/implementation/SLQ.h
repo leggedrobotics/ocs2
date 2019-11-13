@@ -51,12 +51,6 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivativ
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-SLQ<STATE_DIM, INPUT_DIM>::~SLQ() {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQ<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
   // perform one rollout while the input correction for the type-1 constraint is considered.
   BASE::lineSearchBase(computeISEs);
@@ -66,21 +60,28 @@ void SLQ<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
   BASE::learningRateStar_ = 0.0;                                   // input correction learning rate is zero
   BASE::initLScontrollersStock_ = BASE::nominalControllersStock_;  // this will serve to init the workers
 
-  alphaProcessed_.clear();
-  alphaExpNext_ = 0;
+  // if no line search
+  if (BASE::ddpSettings_.maxLearningRate_ < OCS2NumericTraits<scalar_t>::limitEpsilon()) {
+    // clear the feedforward increments
+    for (size_t i = 0; i < BASE::numPartitions_; i++) {
+      BASE::nominalControllersStock_[i].deltaBiasArray_.clear();
+    }
+    // display
+    if (BASE::ddpSettings_.displayInfo_) {
+      std::cerr << "The chosen learningRate is: " << BASE::learningRateStar_ << std::endl;
+    }
+
+    return;
+  }
 
   const auto maxNumOfLineSearches =
       static_cast<size_t>(std::log(BASE::ddpSettings_.minLearningRate_ / BASE::ddpSettings_.maxLearningRate_) /
                               std::log(BASE::ddpSettings_.lineSearchContractionRate_) +
                           1);
 
+  alphaExpNext_ = 0;
   alphaExpBest_ = maxNumOfLineSearches + 1;
   alphaProcessed_ = std::vector<bool>(maxNumOfLineSearches, false);
-
-  if (BASE::ddpSettings_.debugPrintMT_) {
-    std::cerr << "[MT]: calculated maximum number of line searches " + std::to_string(maxNumOfLineSearches) << std::endl;
-    std::cerr << "[MT]: Waking up workers for line search " << std::endl;
-  }
 
   nextTaskId_ = 0;
   std::function<void(void)> task = [this] { executeLineSearchWorker(); };
@@ -111,22 +112,10 @@ void SLQ<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex) {
     return;  // nothing to do
   }
 
-  // display
-  if (BASE::ddpSettings_.debugPrintMT_) {
-    std::cerr << "[MT]: Activating threads to perform LQ approximation for partition " + std::to_string(partitionIndex) << std::endl;
-  }
-
   nextTimeIndex_ = 0;
   nextTaskId_ = 0;
   std::function<void(void)> task = [this, partitionIndex] { executeApproximatePartitionLQWorker(partitionIndex); };
   BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
-
-  // display
-  if (BASE::ddpSettings_.debugPrintMT_) {
-    std::cerr << "[MT]: Back to main thread, workers should now have finished LQ approximation for partition " +
-                     std::to_string(partitionIndex)
-              << std::endl;
-  }
 }
 
 /******************************************************************************************************/
@@ -141,24 +130,11 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t parti
 
   // get next time index is atomic
   while ((timeIndex = nextTimeIndex_++) < N) {
-    // display
-    if (BASE::ddpSettings_.debugPrintMT_ && timeIndex % 10 == 0) {
-      BASE::printString("[MT]: [Task " + std::to_string(taskId) + "], partition " + std::to_string(partitionIndex) +
-                        ":Start approximating system LQ on index k = " + std::to_string(timeIndex) + " out of " + std::to_string(N - 1));
-    }
-
     // execute approximateLQ for the given partition and time node index
     BASE::approximateLQWorker(taskId, partitionIndex, timeIndex);
 
     // increment the number of completed nodes
     completedCount++;
-  }
-
-  // display
-  if (BASE::ddpSettings_.debugPrintMT_) {
-    BASE::printString("[MT]: [Task " + std::to_string(taskId) + "], partition " + std::to_string(partitionIndex) + ", k " +
-                      std::to_string(timeIndex) + ", completedCount " + std::to_string(completedCount) + ", KMax " + std::to_string(N) +
-                      ": leaving executeApproximatePartitionLQWorker ");
   }
 }
 
@@ -172,22 +148,11 @@ void SLQ<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitionInd
   if (N == 0) {
     return;  // nothing to do
   }
-  // display
-  if (BASE::ddpSettings_.debugPrintMT_) {
-    std::cerr << "[MT]: Waking up workers to calculate controller for partition " + std::to_string(partitionIndex) << std::endl;
-  }
 
   nextTimeIndex_ = 0;
   nextTaskId_ = 0;
   std::function<void(void)> task = [this, partitionIndex] { executeCalculatePartitionController(partitionIndex); };
   BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
-
-  // display
-  if (BASE::ddpSettings_.debugPrintMT_) {
-    BASE::printString("[MT]: Controllers have been calculated for partition " + std::to_string(partitionIndex));
-    std::cerr << "[MT]: Back to main thread, workers should now have designed controllers for partition " + std::to_string(partitionIndex)
-              << std::endl;
-  }
 }
 
 /******************************************************************************************************/
@@ -201,18 +166,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(size_t parti
 
   // get next time index (atomic)
   while ((timeIndex = nextTimeIndex_++) < N) {
-    // display
-    if (BASE::ddpSettings_.debugPrintMT_ && timeIndex % 10 == 0) {
-      BASE::printString("[MT]: [Task " + std::to_string(taskId) +
-                        "]: Start calculating controller on index k = " + std::to_string(timeIndex) + " out of " + std::to_string(N - 1));
-    }
-
     BASE::calculateControllerWorker(taskId, partitionIndex, timeIndex);
-  }
-
-  if (BASE::ddpSettings_.debugPrintMT_) {
-    BASE::printString("[MT]: [Task " + std::to_string(taskId) + "], subsystem " + std::to_string(partitionIndex) +
-                      ": leaving executeCalculatePartitionController() ");
   }
 }
 
@@ -222,10 +176,6 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(size_t parti
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQ<STATE_DIM, INPUT_DIM>::executeLineSearchWorker() {
   size_t taskId = nextTaskId_++;  // assign task ID (atomic)
-
-  if (BASE::ddpSettings_.debugPrintMT_) {
-    BASE::printString("[MT]: [Task " + std::to_string(taskId) + "]: Starting executeLineSearchWorker. ");
-  }
 
   // local search forward simulation's variables
   scalar_t lsTotalCost;
@@ -269,22 +219,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeLineSearchWorker() {
         }
       }
 
-      // display
-      if (BASE::ddpSettings_.debugPrintMT_) {
-        if (alphaExp > alphaExpBest_) {
-          BASE::printString("[MT]: [Task " + std::to_string(taskId) +
-                            "]: Leaving executeLineSearchWorker because best alpha is found OR no improvement for any alpha");
-        } else if (!numerics::almost_ge(learningRate, BASE::ddpSettings_.minLearningRate_)) {
-          BASE::printString("[MT]: [Task " + std::to_string(taskId) +
-                            "]: Leaving executeLineSearchWorker because learningRate is less than BASE::ddpSettings_.minLearningRate_");
-        }
-      }
-
       break;
-    }
-
-    if (BASE::ddpSettings_.debugPrintMT_) {
-      BASE::printString("[MT]: [Task " + std::to_string(taskId) + "]: Trying learningRate " + std::to_string(learningRate));
     }
 
     // do a line search
@@ -298,11 +233,6 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeLineSearchWorker() {
 
       // break condition: best learning rate already found, nothing to update
       if (alphaExp > alphaExpBest_) {
-        // display
-        if (BASE::ddpSettings_.debugPrintMT_) {
-          BASE::printString("[MT]: [Task " + std::to_string(taskId) +
-                            "]: Leaving executeLineSearchWorker because best alpha already found by another thread.");
-        }
         break;
       }
 
@@ -313,46 +243,20 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeLineSearchWorker() {
          * Use stepsize greedy where cost should be better than the last iteration but learning rate
          * should be as high as possible. This is equivalent to a single core lineSearch.
          */
-
         if (lsTotalCost < (baselineTotalCost_ * (1 - 1e-3 * learningRate)) && learningRate > BASE::learningRateStar_) {
           updatePolicy = true;
-          // display
-          if (BASE::ddpSettings_.debugPrintMT_) {
-            BASE::printString("[MT]: [LS, Task " + std::to_string(taskId) + "]: stepsize-greedy mode: better stepsize and cost found: " +
-                              std::to_string(lsTotalCost) + " at learningRate: " + std::to_string(learningRate));
-          }
-        } else {
-          // display
-          if (BASE::ddpSettings_.debugPrintMT_) {
-            BASE::printString("[MT]: [LS, Task " + std::to_string(taskId) + "]: stepsize-greedy mode: no better combination found, cost " +
-                              std::to_string(lsTotalCost) + " at learningRate: " + std::to_string(learningRate));
-          }
         }
 
       } else {
         /*
          * line search acts cost greedy which minimize cost as much as possible
          */
-
         if (lsTotalCost < (BASE::nominalTotalCost_ * (1 - 1e-3 * learningRate))) {
           updatePolicy = true;
-          if (BASE::ddpSettings_.debugPrintMT_) {
-            BASE::printString("[MT]: [LS, Task " + std::to_string(taskId) + "]: cost-greedy mode : better cost found: " +
-                              std::to_string(lsTotalCost) + " at learningRate: " + std::to_string(learningRate));
-          }
-        } else {
-          if (BASE::ddpSettings_.debugPrintMT_) {
-            BASE::printString("[MT]: [LS, Task " + std::to_string(taskId) + "]: cost-greedy mode : no better cost found, cost " +
-                              std::to_string(lsTotalCost) + " at learningRate: " + std::to_string(learningRate) + ". Best cost was " +
-                              std::to_string(BASE::nominalTotalCost_));
-          }
         }
       }
 
       if (updatePolicy) {
-        if (BASE::ddpSettings_.debugPrintMT_) {
-          BASE::printString("[MT]: [Task " + std::to_string(taskId) + "]: new candidate learningRate " + std::to_string(learningRate));
-        }
         alphaExpBest_ = alphaExp;
         BASE::nominalTotalCost_ = lsTotalCost;
         BASE::learningRateStar_ = learningRate;
@@ -427,19 +331,9 @@ typename SLQ<STATE_DIM, INPUT_DIM>::scalar_t SLQ<STATE_DIM, INPUT_DIM>::solveSeq
   }
   // solve it in parallel if useParallelRiccatiSolverFromInitItr_ is true
   else {
-    if (BASE::ddpSettings_.debugPrintMT_) {
-      BASE::printString("[MT]: Waking up workers to do RiccatiSolver Task.");
-    }
-
     nextTaskId_ = 0;
     std::function<void(void)> task = [this] { executeRiccatiSolver(); };
     BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
-  }
-
-  if (BASE::ddpSettings_.debugPrintMT_) {
-    BASE::printString("[MT]: Iteration: " + std::to_string(BASE::iteration_) + " done.");
-    BASE::printString("----------------------------------");
-    BASE::printString("----------------------------------");
   }
 
   // total number of call
@@ -459,11 +353,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQ<STATE_DIM, INPUT_DIM>::executeRiccatiSolver() {
   size_t taskId = nextTaskId_++;  // assign task ID (atomic)
 
-  for (int i = endingIndicesRiccatiWorker_[taskId]; i >= startingIndicesRiccatiWorker_[taskId]; i--) {
-    if (BASE::ddpSettings_.debugPrintMT_) {
-      BASE::printString("[MT]: Task " + std::to_string(taskId) + " processing subsystem " + std::to_string(i));
-    }
-
+  for (int i = BASE::endingIndicesRiccatiWorker_[taskId]; i >= BASE::startingIndicesRiccatiWorker_[taskId]; i--) {
     // for inactive subsystems
     if (i < BASE::initActivePartition_ || i > BASE::finalActivePartition_) {
       BASE::SsTimeTrajectoryStock_[i].clear();
@@ -483,7 +373,6 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeRiccatiSolver() {
       }
 
     } else {
-      // TODO(mspieler): solveSlqRiccatiEquationsWorker takes const reference. why copy? (except for SvFinal)
       state_matrix_t SmFinal;
       state_vector_t SvFinal;
       state_vector_t SveFinal;
@@ -501,7 +390,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeRiccatiSolver() {
       }
 
       // modify the end subsystem final values based on the cached values for asynchronous run
-      if (i == endingIndicesRiccatiWorker_[taskId] && i < BASE::finalActivePartition_) {
+      if (i == BASE::endingIndicesRiccatiWorker_[taskId] && i < BASE::finalActivePartition_) {
         const state_vector_t deltaState = BASE::nominalStateTrajectoriesStock_[i + 1].front() - xFinal;
         sFinal += deltaState.transpose() * (0.5 * SmFinal * deltaState + SvFinal);
         SvFinal += SmFinal * deltaState;
@@ -529,54 +418,10 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeRiccatiSolver() {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::distributeWork() {
-  const int N = BASE::ddpSettings_.nThreads_;
-  startingIndicesRiccatiWorker_.resize(N);
-  endingIndicesRiccatiWorker_.resize(N);
-
-  int subsystemsPerThread = (BASE::finalActivePartition_ - BASE::initActivePartition_ + 1) / N;
-  int remainingSubsystems = (BASE::finalActivePartition_ - BASE::initActivePartition_ + 1) % N;
-
-  int startingId, endingId = BASE::finalActivePartition_;
-  for (size_t i = 0; i < N; i++) {
-    endingIndicesRiccatiWorker_[i] = endingId;
-    if (remainingSubsystems > 0) {
-      startingId = endingId - subsystemsPerThread;
-      remainingSubsystems--;
-    } else {
-      startingId = endingId - subsystemsPerThread + 1;
-    }
-    startingIndicesRiccatiWorker_[i] = startingId;
-    endingId = startingId - 1;
-  }
-
-  // adding the inactive subsystems
-  endingIndicesRiccatiWorker_.front() = BASE::numPartitions_ - 1;
-  startingIndicesRiccatiWorker_.back() = 0;
-
-  if (BASE::ddpSettings_.displayInfo_) {
-    std::cerr << "Initial Active Subsystem: " << BASE::initActivePartition_ << std::endl;
-    std::cerr << "Final Active Subsystem:   " << BASE::finalActivePartition_ << std::endl;
-    std::cerr << "Backward path work distribution:" << std::endl;
-    for (size_t i = 0; i < N; i++) {
-      std::cerr << "start: " << startingIndicesRiccatiWorker_[i] << "\t";
-      std::cerr << "end: " << endingIndicesRiccatiWorker_[i] << "\t";
-      std::cerr << "num: " << endingIndicesRiccatiWorker_[i] - startingIndicesRiccatiWorker_[i] + 1 << std::endl;
-      ;
-    }
-    std::cerr << std::endl;
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQ<STATE_DIM, INPUT_DIM>::runInit() {
   // disable Eigen multi-threading
   Eigen::setNbThreads(1);
 
-  distributeWork();
   BASE::runInit();
 
   // restore default Eigen thread number

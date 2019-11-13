@@ -1598,7 +1598,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
   }
 
   // infeasible learning rate adjustment scheme
-  if (ddpSettings_.maxLearningRate_ < ddpSettings_.minLearningRate_ - OCS2NumericTraits<scalar_t>::limitEpsilon()) {
+  if (!numerics::almost_ge(ddpSettings_.maxLearningRate_, ddpSettings_.minLearningRate_)) {
     throw std::runtime_error("The maximum learning rate is smaller than the minimum learning rate.");
   }
 

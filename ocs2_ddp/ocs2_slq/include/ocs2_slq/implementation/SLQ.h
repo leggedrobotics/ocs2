@@ -66,26 +66,13 @@ void SLQ<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
   BASE::learningRateStar_ = 0.0;                                   // input correction learning rate is zero
   BASE::initLScontrollersStock_ = BASE::nominalControllersStock_;  // this will serve to init the workers
 
-  // if no line search
-  if (BASE::ddpSettings_.maxLearningRate_ < OCS2NumericTraits<scalar_t>::limitEpsilon()) {
-    // clear the feedforward increments
-    for (size_t i = 0; i < BASE::numPartitions_; i++) {
-      BASE::nominalControllersStock_[i].deltaBiasArray_.clear();
-    }
-    // display
-    if (BASE::ddpSettings_.displayInfo_) {
-      std::cerr << "The chosen learningRate is: " << BASE::learningRateStar_ << std::endl;
-    }
-
-    return;
-  }
-
   alphaProcessed_.clear();
   alphaExpNext_ = 0;
 
-  size_t maxNumOfLineSearches = static_cast<size_t>(std::log(BASE::ddpSettings_.minLearningRate_ / BASE::ddpSettings_.maxLearningRate_) /
-                                                        std::log(BASE::ddpSettings_.lineSearchContractionRate_) +
-                                                    1);
+  const auto maxNumOfLineSearches =
+      static_cast<size_t>(std::log(BASE::ddpSettings_.minLearningRate_ / BASE::ddpSettings_.maxLearningRate_) /
+                              std::log(BASE::ddpSettings_.lineSearchContractionRate_) +
+                          1);
 
   alphaExpBest_ = maxNumOfLineSearches;
   alphaProcessed_ = std::vector<bool>(maxNumOfLineSearches, false);

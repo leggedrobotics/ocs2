@@ -515,9 +515,9 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeRiccatiSolver() {
 
       // modify the end subsystem final values based on the cached values for asynchronous run
       if (i == endingIndicesRiccatiWorker_[taskId] && i < BASE::finalActivePartition_) {
-        const state_vector_t& x = BASE::nominalStateTrajectoriesStock_[i + 1].front();
-        SvFinal += SmFinal * (x - xFinal);
-        // TODO for sFinal
+        const state_vector_t deltaState = BASE::nominalStateTrajectoriesStock_[i + 1].front() - xFinal;
+        sFinal += deltaState.transpose() * (0.5 * SmFinal * deltaState + SvFinal);
+        SvFinal += SmFinal * deltaState;
       }
 
       // solve the backward pass

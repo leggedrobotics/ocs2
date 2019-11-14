@@ -401,46 +401,4 @@ void ILQR<STATE_DIM, INPUT_DIM>::executeRiccatiSolver() {
   }
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::runInit() {
-  // disable Eigen multi-threading
-  Eigen::setNbThreads(1);
-
-  BASE::runInit();
-
-  // restore default Eigen thread number
-  Eigen::setNbThreads(0);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::runIteration() {
-  // disable Eigen multi-threading
-  Eigen::setNbThreads(1);
-
-  BASE::runIteration();
-
-  // restore default Eigen thread number
-  Eigen::setNbThreads(0);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::runExit() {
-  // disable Eigen multi-threading
-  Eigen::setNbThreads(1);
-
-  BASE::runExit();
-
-  // restore default Eigen thread number
-  Eigen::setNbThreads(0);
-}
-
 }  // namespace ocs2

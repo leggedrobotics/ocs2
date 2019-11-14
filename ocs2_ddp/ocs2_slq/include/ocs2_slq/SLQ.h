@@ -148,11 +148,6 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
   void lineSearch(bool computeISEs) override;
 
   /**
-   * Runs the initialization method for single thread SLQ.
-   */
-  void runInit() override;
-
-  /**
    * Solves Riccati equations for all the partitions.
    *
    * @param [in] SmFinal: The final Sm for Riccati equation.
@@ -163,16 +158,6 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
    */
   scalar_t solveSequentialRiccatiEquations(const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
                                            const eigen_scalar_t& sFinal) override;
-
-  /**
-   * Runs a single iteration of single thread SLQ.
-   */
-  void runIteration() override;
-
-  /**
-   * Runs the exit method single thread SLQ.
-   */
-  void runExit() override;
 
  protected:
   /**

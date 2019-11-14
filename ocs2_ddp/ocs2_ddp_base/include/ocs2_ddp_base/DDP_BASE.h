@@ -412,20 +412,13 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   /**
    * Runs the initialization method for DDP.
-   *
    */
-  virtual void runInit();
+  void runInit();
 
   /**
    * Runs a single iteration of DDP.
-   *
    */
-  virtual void runIteration();
-
-  /**
-   * Runs the exit method DDP.
-   */
-  virtual void runExit() {}
+  void runIteration();
 
  protected:
   /**

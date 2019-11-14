@@ -1499,6 +1499,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
+  // disable Eigen multi-threading
+  Eigen::setNbThreads(1);
+
   // cache the nominal trajectories before the new rollout (time, state, input, ...)
   swapNominalTrajectoriesToCache();
 
@@ -1558,6 +1561,10 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
   if (ddpSettings_.displayInfo_) {
     printRolloutInfo();
   }
+
+  // TODO(mspieler): this is not exception safe
+  // restore default Eigen thread number
+  Eigen::setNbThreads(0);
 }
 
 /******************************************************************************************************/
@@ -1565,6 +1572,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
+  // disable Eigen multi-threading
+  Eigen::setNbThreads(1);
+
   // finding the optimal learningRate and getting the optimal trajectories and controller
   bool computeISEs = ddpSettings_.displayInfo_ || !ddpSettings_.noStateConstraints_;
 
@@ -1611,6 +1621,10 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
   if (ddpSettings_.displayInfo_) {
     printRolloutInfo();
   }
+
+  // TODO(mspieler): this is not exception safe
+  // restore default Eigen thread number
+  Eigen::setNbThreads(0);
 }
 
 /******************************************************************************************************/
@@ -1802,8 +1816,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
   linesearchTimer_.startTimer();
   lineSearch(computeISEs);
   linesearchTimer_.endTimer();
-
-  runExit();
 
   // display
   if (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_) {

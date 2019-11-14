@@ -228,7 +228,6 @@ class ILQR : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
   std::vector<int> endingIndicesRiccatiWorker_;
 
   std::mutex lineSearchResultMutex_;
-  size_t alphaExpBest_;
   std::atomic_size_t alphaExpNext_;
   std::vector<bool> alphaProcessed_;
   scalar_t baselineTotalCost_;

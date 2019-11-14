@@ -638,14 +638,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   void printRolloutInfo();
 
-  /**
-   * Helper to run task multiple times in parallel (blocking)
-   *
-   * @param [in] taskFunction: task function
-   * @param [in] N: number of times to run taskFunction, if N = 1 it is run in the main thread
-   */
-  void runParallel(std::function<void(void)> taskFunction, size_t N);
-
  private:
   /**
    * Corrects the initial caching of the nominal trajectories.
@@ -694,8 +686,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   scalar_array_t partitioningTimes_;
 
   std::atomic<scalar_t> learningRateStar_;  // The optimal learning rate.
-  scalar_t maxLearningRate_ = 1.0;   // The maximum permitted learning rate
-                                     // (settings_.maxLearningRateSLQ_).
+  scalar_t maxLearningRate_ = 1.0;          // The maximum permitted learning rate
+                                            // (settings_.maxLearningRateSLQ_).
 
   std::vector<int> startingIndicesRiccatiWorker_;
   std::vector<int> endingIndicesRiccatiWorker_;

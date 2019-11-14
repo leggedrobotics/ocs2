@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <array>
 #include <chrono>
 #include <cstddef>
+#include <future>
 #include <mutex>
 #include <numeric>
 #include <type_traits>
@@ -358,6 +359,14 @@ class Solver_BASE {
    * @param [in] input text.
    */
   void printString(const std::string& text);
+
+  /**
+   * Helper to run task multiple times in parallel (blocking)
+   *
+   * @param [in] taskFunction: task function
+   * @param [in] N: number of times to run taskFunction, if N = 1 it is run in the main thread
+   */
+  void runParallel(std::function<void(void)> taskFunction, size_t N);
 
  private:
   virtual void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) = 0;

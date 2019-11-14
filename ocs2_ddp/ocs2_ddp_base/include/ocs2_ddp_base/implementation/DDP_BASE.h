@@ -40,7 +40,12 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t* rolloutPtr, const
                                          const operating_trajectories_base_t* operatingTrajectoriesPtr, const DDP_Settings& ddpSettings,
                                          const cost_function_base_t* heuristicsFunctionPtr, const char* algorithmName,
                                          std::shared_ptr<HybridLogicRules> logicRulesPtr)
-    : BASE(std::move(logicRulesPtr)), ddpSettings_(ddpSettings), algorithmName_(algorithmName), rewindCounter_(0), iteration_(0) {
+    : BASE(std::move(logicRulesPtr)),
+      ddpSettings_(ddpSettings),
+      algorithmName_(algorithmName),
+      rewindCounter_(0),
+      iteration_(0),
+      learningRateStar_(1.0) {
   // Dynamics, Constraints, derivatives, and cost
   linearQuadraticApproximatorPtrStock_.clear();
   linearQuadraticApproximatorPtrStock_.reserve(ddpSettings_.nThreads_);

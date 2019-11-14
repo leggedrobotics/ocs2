@@ -693,7 +693,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   size_t numPartitions_ = 0;
   scalar_array_t partitioningTimes_;
 
-  scalar_t learningRateStar_ = 1.0;  // The optimal learning rate.
+  std::atomic<scalar_t> learningRateStar_;  // The optimal learning rate.
   scalar_t maxLearningRate_ = 1.0;   // The maximum permitted learning rate
                                      // (settings_.maxLearningRateSLQ_).
 

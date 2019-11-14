@@ -223,7 +223,6 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
   std::mutex riccatiSolverDataMutex_;
 
   std::mutex lineSearchResultMutex_;
-  std::atomic_size_t alphaExpBest_;
   std::atomic_size_t alphaExpNext_;
   std::vector<bool> alphaProcessed_;
   scalar_t baselineTotalCost_;

@@ -80,7 +80,6 @@ void SLQ<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
                           1);
 
   alphaExpNext_ = 0;
-  alphaExpBest_ = maxNumOfLineSearches + 1;  // this works as inf for representation zero step-size (baselineTotalCost_)
   alphaProcessed_ = std::vector<bool>(maxNumOfLineSearches, false);
 
   nextTaskId_ = 0;
@@ -201,7 +200,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeLineSearchWorker() {
     }
 
     // skip if the current learning rate is less than the best candidate
-    if (alphaExp > alphaExpBest_) {
+    if (learningRate < BASE::learningRateStar_) {
       // display
       if (BASE::ddpSettings_.displayInfo_) {
         std::string linesearchDisplay;
@@ -209,7 +208,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeLineSearchWorker() {
                             " is skipped: A larger learning rate is already found!";
         BASE::printString(linesearchDisplay);
       }
-      continue;
+      break;
     }
 
     // do a line search
@@ -228,7 +227,6 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeLineSearchWorker() {
        * be as high as possible. This is equivalent to a single core line search.
        */
       if (lsTotalCost < (baselineTotalCost_ * (1 - 1e-3 * learningRate)) && learningRate > BASE::learningRateStar_) {
-        alphaExpBest_ = alphaExp;
         BASE::nominalTotalCost_ = lsTotalCost;
         BASE::learningRateStar_ = learningRate;
         BASE::nominalConstraint1ISE_ = lsConstraint1ISE;

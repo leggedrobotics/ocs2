@@ -283,40 +283,9 @@ typename SLQ<STATE_DIM, INPUT_DIM>::scalar_t SLQ<STATE_DIM, INPUT_DIM>::solveSeq
 
   // solve it sequentially for the first time when useParallelRiccatiSolverFromInitItr_ is false
   if (BASE::iteration_ == 0 && !BASE::useParallelRiccatiSolverFromInitItr_) {
-    for (int i = BASE::numPartitions_ - 1; i >= 0; i--) {
-      if (i < BASE::initActivePartition_ || i > BASE::finalActivePartition_) {
-        BASE::SsTimeTrajectoryStock_[i].clear();
-        BASE::SsNormalizedTimeTrajectoryStock_[i].clear();
-        BASE::SsNormalizedEventsPastTheEndIndecesStock_[i].clear();
-        BASE::SmTrajectoryStock_[i].clear();
-        BASE::SvTrajectoryStock_[i].clear();
-        BASE::SveTrajectoryStock_[i].clear();
-        BASE::sTrajectoryStock_[i].clear();
-
-        BASE::SmFinalStock_[i].setZero();
-        BASE::SvFinalStock_[i].setZero();
-        BASE::SveFinalStock_[i].setZero();
-        BASE::sFinalStock_[i].setZero();
-        BASE::xFinalStock_[i].setZero();
-
-        continue;
-      }
-
-      // for each partition, there is one worker
-      const size_t workerIndex = 0;
-
-      // solve backward pass
-      BASE::solveSlqRiccatiEquationsWorker(workerIndex, i, BASE::SmFinalStock_[i], BASE::SvFinalStock_[i], BASE::sFinalStock_[i],
-                                           BASE::SveFinalStock_[i]);
-
-      // set the final value for next Riccati equation
-      if (i > BASE::initActivePartition_) {
-        BASE::SmFinalStock_[i - 1] = BASE::SmTrajectoryStock_[i].front();
-        BASE::SvFinalStock_[i - 1] = BASE::SvTrajectoryStock_[i].front();
-        BASE::SveFinalStock_[i - 1] = BASE::SveTrajectoryStock_[i].front();
-        BASE::sFinalStock_[i - 1] = BASE::sTrajectoryStock_[i].front();
-        BASE::xFinalStock_[i - 1] = BASE::nominalStateTrajectoriesStock_[i].front();
-      }
+    nextTaskId_ = 0;
+    for (int i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
+      executeRiccatiSolver();
     }
   }
   // solve it in parallel if useParallelRiccatiSolverFromInitItr_ is true

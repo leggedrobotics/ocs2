@@ -80,7 +80,8 @@ void ILQR<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
   alphaExpNext_ = 0;
   alphaProcessed_ = std::vector<bool>(maxNumOfLineSearches, false);
 
-  std::function<void(int)> task = [this](int threadId) { executeLineSearchWorker(threadId); };
+  nextTaskId_ = 0;
+  std::function<void(void)> task = [this] { executeLineSearchWorker(); };
   BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
 
   // revitalize all integrators
@@ -109,7 +110,8 @@ void ILQR<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex) {
   }
 
   nextTimeIndex_ = 0;
-  std::function<void(int)> task = [this, partitionIndex](int threadId) { executeApproximatePartitionLQWorker(threadId, partitionIndex); };
+  nextTaskId_ = 0;
+  std::function<void(void)> task = [this, partitionIndex] { executeApproximatePartitionLQWorker(partitionIndex); };
   BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
 }
 
@@ -117,14 +119,19 @@ void ILQR<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t threadId, size_t partitionIndex) {
+void ILQR<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t partitionIndex) {
   int N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
+  int completedCount = 0;
   int timeIndex;
+  size_t taskId = nextTaskId_++;  // assign task ID (atomic)
 
   // get next time index is atomic
   while ((timeIndex = nextTimeIndex_++) < N) {
     // execute approximateLQ for the given partition and time node index
-    BASE::approximateLQWorker(threadId, partitionIndex, timeIndex);
+    BASE::approximateLQWorker(taskId, partitionIndex, timeIndex);
+
+    // increment the number of completed nodes
+    completedCount++;
   }
 }
 
@@ -140,7 +147,8 @@ void ILQR<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitionIn
   }
 
   nextTimeIndex_ = 0;
-  std::function<void(int)> task = [this, partitionIndex](int threadId) { executeCalculatePartitionController(threadId, partitionIndex); };
+  nextTaskId_ = 0;
+  std::function<void(void)> task = [this, partitionIndex] { executeCalculatePartitionController(partitionIndex); };
   BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
 }
 
@@ -148,13 +156,14 @@ void ILQR<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitionIn
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(size_t threadId, size_t partitionIndex) {
+void ILQR<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(size_t partitionIndex) {
   int N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
   int timeIndex;
+  size_t taskId = nextTaskId_++;  // assign task ID (atomic)
 
   // get next time index (atomic)
   while ((timeIndex = nextTimeIndex_++) < N) {
-    BASE::calculateControllerWorker(threadId, partitionIndex, timeIndex);
+    BASE::calculateControllerWorker(taskId, partitionIndex, timeIndex);
   }
 }
 
@@ -162,7 +171,9 @@ void ILQR<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(size_t thre
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::executeLineSearchWorker(size_t threadId) {
+void ILQR<STATE_DIM, INPUT_DIM>::executeLineSearchWorker() {
+  size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+
   // local search forward simulation's variables
   scalar_t lsTotalCost;
   scalar_t lsConstraint1ISE, lsConstraint2ISE, lsInequalityConstraintPenalty, lsInequalityConstraintISE;
@@ -191,7 +202,7 @@ void ILQR<STATE_DIM, INPUT_DIM>::executeLineSearchWorker(size_t threadId) {
       // display
       if (BASE::ddpSettings_.displayInfo_) {
         std::string linesearchDisplay;
-        linesearchDisplay = "\t [Thread " + std::to_string(threadId) + "] rollout with learningRate " + std::to_string(learningRate) +
+        linesearchDisplay = "\t [Thread " + std::to_string(taskId) + "] rollout with learningRate " + std::to_string(learningRate) +
                             " is skipped: A larger learning rate is already found!";
         BASE::printString(linesearchDisplay);
       }
@@ -200,7 +211,7 @@ void ILQR<STATE_DIM, INPUT_DIM>::executeLineSearchWorker(size_t threadId) {
 
     // do a line search
     lsControllersStock = BASE::initLScontrollersStock_;
-    BASE::lineSearchWorker(threadId, learningRate, lsTotalCost, lsConstraint1ISE, lsConstraint1MaxNorm, lsConstraint2ISE,
+    BASE::lineSearchWorker(taskId, learningRate, lsTotalCost, lsConstraint1ISE, lsConstraint1MaxNorm, lsConstraint2ISE,
                            lsConstraint2MaxNorm, lsInequalityConstraintPenalty, lsInequalityConstraintISE, lsControllersStock,
                            lsTimeTrajectoriesStock, lsPostEventIndicesStock, lsStateTrajectoriesStock, lsInputTrajectoriesStock);
 
@@ -270,13 +281,15 @@ typename ILQR<STATE_DIM, INPUT_DIM>::scalar_t ILQR<STATE_DIM, INPUT_DIM>::solveS
 
   // solve it sequentially for the first time when useParallelRiccatiSolverFromInitItr_ is false
   if (BASE::iteration_ == 0 && !BASE::useParallelRiccatiSolverFromInitItr_) {
-    for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
-      executeRiccatiSolver(i);
+    nextTaskId_ = 0;
+    for (int i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
+      executeRiccatiSolver();
     }
   }
   // solve it in parallel if useParallelRiccatiSolverFromInitItr_ is true
   else {
-    std::function<void(int)> task = [this](int threadId) { executeRiccatiSolver(threadId); };
+    nextTaskId_ = 0;
+    std::function<void(void)> task = [this] { executeRiccatiSolver(); };
     BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
   }
 
@@ -294,8 +307,10 @@ typename ILQR<STATE_DIM, INPUT_DIM>::scalar_t ILQR<STATE_DIM, INPUT_DIM>::solveS
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::executeRiccatiSolver(size_t threadId) {
-  for (int i = BASE::endingIndicesRiccatiWorker_[threadId]; i >= BASE::startingIndicesRiccatiWorker_[threadId]; i--) {
+void ILQR<STATE_DIM, INPUT_DIM>::executeRiccatiSolver() {
+  size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+
+  for (int i = BASE::endingIndicesRiccatiWorker_[taskId]; i >= BASE::startingIndicesRiccatiWorker_[taskId]; i--) {
     // for inactive subsystems
     if (i < BASE::initActivePartition_ || i > BASE::finalActivePartition_) {
       BASE::SsTimeTrajectoryStock_[i].clear();
@@ -332,14 +347,14 @@ void ILQR<STATE_DIM, INPUT_DIM>::executeRiccatiSolver(size_t threadId) {
       }
 
       // modify the end subsystem final values based on the cached values for asynchronous run
-      if (i == BASE::endingIndicesRiccatiWorker_[threadId] && i < BASE::finalActivePartition_) {
+      if (i == BASE::endingIndicesRiccatiWorker_[taskId] && i < BASE::finalActivePartition_) {
         const state_vector_t deltaState = BASE::nominalStateTrajectoriesStock_[i + 1].front() - xFinal;
         sFinal += deltaState.transpose() * (0.5 * SmFinal * deltaState + SvFinal);
         SvFinal += SmFinal * deltaState;
       }
 
       // solve the backward pass
-      BASE::solveRiccatiEquationsWorker(threadId, i, SmFinal, SvFinal, sFinal);
+      BASE::solveRiccatiEquationsWorker(taskId, i, SmFinal, SvFinal, sFinal);
 
       // set the final value for next Riccati equation
       if (i > BASE::initActivePartition_) {

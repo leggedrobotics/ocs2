@@ -175,7 +175,7 @@ class ILQR : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @param [in] partitionIndex: Time partition index
    */
-  void executeApproximatePartitionLQWorker(size_t threadId, size_t partitionIndex);
+  void executeApproximatePartitionLQWorker(size_t partitionIndex);
 
   /**
    * Computes the controller for a particular time partition
@@ -189,20 +189,21 @@ class ILQR : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @param [in] partitionIndex: Time partition index
    */
-  void executeCalculatePartitionController(size_t threadId, size_t partitionIndex);
+  void executeCalculatePartitionController(size_t partitionIndex);
 
   /**
    * Execute line search worker on a thread with various learning rates and choose the largest acceptable step-size.
    */
-  void executeLineSearchWorker(size_t threadId);
+  void executeLineSearchWorker();
 
   /**
    * Solves Riccati equations for the partitions assigned to the given thread
    */
-  void executeRiccatiSolver(size_t threadId);
+  void executeRiccatiSolver();
 
  private:
   // multi-threading helper variables
+  std::atomic_size_t nextTaskId_;
   std::atomic_size_t nextTimeIndex_;
 
   // parallel Riccati solver

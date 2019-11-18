@@ -1421,8 +1421,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::distributeWork() {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::runParallel(std::function<void(int)> taskFunction, size_t N) {
-  threadPool_.runParallel(taskFunction, N);
+void DDP_BASE<STATE_DIM, INPUT_DIM>::runParallel(std::function<void(void)> taskFunction, size_t N) {
+  threadPool_.runParallel([&](int) { taskFunction(); }, N);
 }
 
 /******************************************************************************************************/

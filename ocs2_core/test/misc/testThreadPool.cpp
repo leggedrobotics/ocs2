@@ -157,7 +157,7 @@ TEST(testThreadPool, testRunMultiple) {
   std::atomic_int counter;
   counter = 0;
 
-  pool.runMultiple([&](int) { counter++; }, 42);
+  pool.runParallel([&](int) { counter++; }, 42);
 
   EXPECT_EQ(counter, 42);
 }

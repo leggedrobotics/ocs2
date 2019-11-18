@@ -172,7 +172,7 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @param [in] partitionIndex: Time partition index
    */
-  void executeApproximatePartitionLQWorker(size_t partitionIndex);
+  void executeApproximatePartitionLQWorker(size_t threadId, size_t partitionIndex);
 
   /**
    * Computes the controller for a particular time partition
@@ -186,21 +186,20 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @param [in] partitionIndex: Time partition index
    */
-  void executeCalculatePartitionController(size_t partitionIndex);
+  void executeCalculatePartitionController(size_t threadId, size_t partitionIndex);
 
   /**
    * Execute line search worker on a thread with various learning rates and choose the largest acceptable step-size.
    */
-  void executeLineSearchWorker();
+  void executeLineSearchWorker(size_t threadId);
 
   /**
    * Solves Riccati equations for the partitions assigned to the given thread
    */
-  void executeRiccatiSolver();
+  void executeRiccatiSolver(size_t threadId);
 
  private:
   // multi-threading helper variables
-  std::atomic_size_t nextTaskId_;
   std::atomic_size_t nextTimeIndex_;
 
   // parallel Riccati solver

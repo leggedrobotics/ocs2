@@ -51,7 +51,6 @@ TEST(exp1_slq_test, Exp1_slq_test) {
   slqSettings.ddpSettings_.displayShortSummary_ = true;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
-  slqSettings.ddpSettings_.lsStepsizeGreedy_ = true;
   slqSettings.ddpSettings_.noStateConstraints_ = true;
   slqSettings.ddpSettings_.checkNumericalStability_ = false;
   slqSettings.ddpSettings_.absTolODE_ = 1e-10;

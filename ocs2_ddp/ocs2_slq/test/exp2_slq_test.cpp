@@ -55,7 +55,6 @@ TEST(exp2_slq_test, DISABLED_Exp2_slq_test) {
   slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
   slqSettings.ddpSettings_.nThreads_ = 1;  // single threaded
   slqSettings.ddpSettings_.useMakePSD_ = true;
-  slqSettings.ddpSettings_.lsStepsizeGreedy_ = true;
   slqSettings.ddpSettings_.noStateConstraints_ = true;
   slqSettings.ddpSettings_.checkNumericalStability_ = true;
 

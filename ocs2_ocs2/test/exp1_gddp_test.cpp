@@ -52,7 +52,6 @@ TEST(exp1_gddp_test, optimum_gradient_test) {
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
   slqSettings.ddpSettings_.nThreads_ = 1;  // single threaded
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
-  slqSettings.ddpSettings_.lsStepsizeGreedy_ = true;
   slqSettings.ddpSettings_.noStateConstraints_ = true;
   slqSettings.ddpSettings_.checkNumericalStability_ = false;
   slqSettings.ddpSettings_.absTolODE_ = 1e-10;

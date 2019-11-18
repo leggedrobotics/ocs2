@@ -192,8 +192,7 @@ class ILQR : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
   void executeCalculatePartitionController(size_t partitionIndex);
 
   /**
-   * Execute line search worker on a thread with various learning rates and accept the result if it satisfies the step
-   * size policy (defined in settings_.lsStepsizeGreedy_)
+   * Execute line search worker on a thread with various learning rates and choose the largest acceptable step-size.
    */
   void executeLineSearchWorker();
 

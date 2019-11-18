@@ -62,7 +62,6 @@ slq
 
         nThreads                    1
         debugPrintMT                0
-        lsStepsizeGreedy            1
 
         useFeedbackPolicy           1
         useRiccatiSolver            1

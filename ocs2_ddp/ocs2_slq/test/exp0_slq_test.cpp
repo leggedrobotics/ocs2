@@ -53,7 +53,6 @@ TEST(exp0_slq_test, exp0_slq_test) {
   slqSettings.ddpSettings_.relTolODE_ = 1e-7;
   slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
-  slqSettings.ddpSettings_.lsStepsizeGreedy_ = true;
   slqSettings.ddpSettings_.noStateConstraints_ = true;
   slqSettings.ddpSettings_.minLearningRate_ = 0.0001;
   slqSettings.ddpSettings_.minRelCost_ = 5e-4;
@@ -180,7 +179,6 @@ TEST(exp0_slq_test, caching_test) {
   slqSettings.ddpSettings_.relTolODE_ = 1e-7;
   slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
   slqSettings.ddpSettings_.maxNumIterations_ = 1;
-  slqSettings.ddpSettings_.lsStepsizeGreedy_ = true;
   slqSettings.ddpSettings_.noStateConstraints_ = true;
   slqSettings.ddpSettings_.minLearningRate_ = 0.0001;
   slqSettings.ddpSettings_.minRelCost_ = 5e-4;

@@ -69,7 +69,6 @@ slq
         nThreads                       1
         threadPriority                 0
         debugPrintMP                   0
-        lsStepsizeGreedy               1
 
         useFeedbackPolicy              0
         useRiccatiSolver               1

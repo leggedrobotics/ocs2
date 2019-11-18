@@ -58,7 +58,7 @@ class ThreadPool {
    *
    * @param [in] nThreads: Number of threads to launch in the pool
    */
-  ThreadPool(size_t nThreads);
+  ThreadPool(size_t nThreads = 1);
 
   /**
    * Destructor

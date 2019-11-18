@@ -42,6 +42,7 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t* rolloutPtr, const
                                          std::shared_ptr<HybridLogicRules> logicRulesPtr)
     : BASE(std::move(logicRulesPtr)),
       ddpSettings_(ddpSettings),
+      threadPool_(ddpSettings.nThreads_),
       algorithmName_(algorithmName),
       rewindCounter_(0),
       iteration_(0),
@@ -1414,6 +1415,14 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::distributeWork() {
     }
     std::cerr << std::endl;
   }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::runParallel(std::function<void(void)> taskFunction, size_t N) {
+  threadPool_.runParallel([&](int) { taskFunction(); }, N);
 }
 
 /******************************************************************************************************/

@@ -40,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/Numerics.h>
+#include <ocs2_core/misc/ThreadPool.h>
 
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
@@ -434,6 +435,14 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void distributeWork();
 
   /**
+   * Helper to run task multiple times in parallel (blocking)
+   *
+   * @param [in] taskFunction: task function
+   * @param [in] N: number of times to run taskFunction, if N = 1 it is run in the main thread
+   */
+  void runParallel(std::function<void(void)> taskFunction, size_t N);
+
+  /**
    * Computes the linearized dynamics for a particular time partition
    *
    * @param [in] partitionIndex: Time partition index
@@ -662,6 +671,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
  protected:
   // Variables
   DDP_Settings ddpSettings_;
+
+  ThreadPool threadPool_;
 
   std::string algorithmName_;
 

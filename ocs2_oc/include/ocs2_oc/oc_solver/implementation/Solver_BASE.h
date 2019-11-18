@@ -85,29 +85,6 @@ void Solver_BASE<STATE_DIM, INPUT_DIM>::printString(const std::string& text) {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void Solver_BASE<STATE_DIM, INPUT_DIM>::runParallel(std::function<void(void)> taskFunction, size_t N) {
-  std::launch policy = std::launch::async;
-
-  if (N <= 1) {
-    N = 1;
-    policy = std::launch::deferred;
-  }
-
-  std::vector<std::future<void>> futures;
-  futures.reserve(N);
-  for (int i = 0; i < N; i++) {
-    futures.push_back(std::move(std::async(taskFunction)));
-  }
-
-  for (auto&& fut : futures) {
-    fut.get();
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void Solver_BASE<STATE_DIM, INPUT_DIM>::preRun(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime) {

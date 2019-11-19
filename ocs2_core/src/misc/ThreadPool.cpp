@@ -152,7 +152,12 @@ int ThreadPool::runTaskWithDependency(std::shared_ptr<TaskBase> task, int runAft
 /**************************************************************************************************/
 /**************************************************************************************************/
 /**************************************************************************************************/
-void ThreadPool::runMultiple(std::function<void(int)> taskFunction, size_t N) {
+void ThreadPool::runParallel(std::function<void(int)> taskFunction, size_t N) {
+  if (N <= 1) {
+    taskFunction(0);
+    return;
+  }
+
   std::vector<std::future<void>> futures;
   futures.reserve(N);
 

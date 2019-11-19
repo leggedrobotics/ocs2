@@ -35,7 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_slq/SLQ.h>
-#include <ocs2_slq/SLQ_MP.h>
 
 #include <ocs2_oc/test/EXP2.h>
 
@@ -54,9 +53,8 @@ TEST(exp2_slq_test, DISABLED_Exp2_slq_test) {
   slqSettings.ddpSettings_.relTolODE_ = 1e-7;
   slqSettings.ddpSettings_.constraintStepSize_ = 0.1;
   slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
-  slqSettings.ddpSettings_.nThreads_ = 3;
+  slqSettings.ddpSettings_.nThreads_ = 1;  // single threaded
   slqSettings.ddpSettings_.useMakePSD_ = true;
-  slqSettings.ddpSettings_.lsStepsizeGreedy_ = true;
   slqSettings.ddpSettings_.noStateConstraints_ = true;
   slqSettings.ddpSettings_.checkNumericalStability_ = true;
 
@@ -107,8 +105,9 @@ TEST(exp2_slq_test, DISABLED_Exp2_slq_test) {
                                 slqSettings, logicRules);
 
   // run single core SLQ
-  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
+  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {
     std::cerr << "\n>>> single-core SLQ" << std::endl;
+  }
   slq.run(startTime, initState, finalTime, partitioningTimes);
 
   /******************************************************************************************************/

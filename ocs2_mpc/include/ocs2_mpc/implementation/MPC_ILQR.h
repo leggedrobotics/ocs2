@@ -52,13 +52,8 @@ MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR(const rollout_base_t* rolloutPtr, const
 
     : BASE(partitioningTimes, mpcSettings) {
   // ILQR
-  if (ilqrSettings.ddpSettings_.useMultiThreading_) {
-    ilqrPtr_.reset(new ilqr_mp_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
-                                 ilqrSettings, logicRulesPtr, heuristicsFunctionPtr));
-  } else {
-    ilqrPtr_.reset(new ilqr_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
-                              ilqrSettings, logicRulesPtr, heuristicsFunctionPtr));
-  }
+  ilqrPtr_.reset(new ilqr_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, ilqrSettings,
+                            logicRulesPtr, heuristicsFunctionPtr));
 
   // set base solver's pointer
   BASE::setBaseSolverPtr(ilqrPtr_.get());

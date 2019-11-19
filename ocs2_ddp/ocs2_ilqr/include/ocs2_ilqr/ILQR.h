@@ -31,25 +31,28 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <atomic>
 #include <condition_variable>
-#include <exception>
 #include <thread>
 
-#include "ocs2_slq/SLQ_BASE.h"
+#include <ocs2_core/misc/SetThreadPriority.h>
+
+#include "ocs2_ilqr/ILQR_BASE.h"
 
 namespace ocs2 {
 
 /**
- * This class implements SLQ algorithm.
+ * This class implements multi-threaded ILQR algorithm.
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
+class ILQR : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = SLQ_BASE<STATE_DIM, INPUT_DIM>;
+  using BASE = ILQR_BASE<STATE_DIM, INPUT_DIM>;
+
+  using DIMENSIONS = typename BASE::DIMENSIONS;
 
   using typename BASE::constraint1_input_matrix_array2_t;
   using typename BASE::constraint1_input_matrix_array_t;
@@ -113,7 +116,7 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Default constructor.
    */
-  SLQ() : BASE() {}
+  ILQR() : BASE() {}
 
   /**
    * Constructor
@@ -122,26 +125,26 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
    * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
-   * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of SLQ.
-   * @param [in] settings: Structure containing the settings for the SLQ algorithm.
+   * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of ILQR.
+   * @param [in] settings: Structure containing the settings for the ILQR algorithm.
    * @param [in] logicRulesPtr: The logic rules used for implementing mixed logical dynamical systems.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
-  SLQ(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
-      const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
-      const SLQ_Settings& settings = SLQ_Settings(), std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
-      const cost_function_base_t* heuristicsFunctionPtr = nullptr);
+  ILQR(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
+       const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
+       const ILQR_Settings& settings = ILQR_Settings(), std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
+       const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
   /**
    * Default destructor.
    */
-  ~SLQ() = default;
+  ~ILQR() = default;
 
   /**
    * Line search on the feedforwrd parts of the controller. It uses the following approach for line search:
    * The constraint TYPE-1 correction term is directly added through a user defined stepSize (defined in settings_.constraintStepSize_).
-   * But the cost minimization term is optimized through a line-search strategy defined in SLQ settings.
+   * But the cost minimization term is optimized through a line-search strategy defined in ILQR settings.
    *
    * @param [in] computeISEs: Whether lineSearch needs to calculate ISEs indeces for type_1 and type-2 constraints.
    */
@@ -205,6 +208,8 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
 
   // parallel Riccati solver
   std::mutex riccatiSolverDataMutex_;
+  std::vector<int> startingIndicesRiccatiWorker_;
+  std::vector<int> endingIndicesRiccatiWorker_;
 
   std::mutex lineSearchResultMutex_;
   std::atomic_size_t alphaExpNext_;
@@ -214,4 +219,4 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
 
 }  // namespace ocs2
 
-#include "implementation/SLQ.h"
+#include "implementation/ILQR.h"

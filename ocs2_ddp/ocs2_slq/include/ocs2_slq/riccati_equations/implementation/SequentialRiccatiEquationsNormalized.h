@@ -32,11 +32,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <int STATE_DIM, int INPUT_DIM>
 SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::SequentialRiccatiEquationsNormalized(bool useMakePSD,
                                                                                                  bool preComputeRiccatiTerms)
     : useMakePSD_(useMakePSD), preComputeRiccatiTerms_(preComputeRiccatiTerms) {}
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <int STATE_DIM, int INPUT_DIM>
 void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::convert2Vector(const state_matrix_t& Sm, const state_vector_t& Sv,
                                                                                 const eigen_scalar_t& s, s_vector_t& allSs) {
@@ -62,6 +68,9 @@ void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::convert2Vector(
   allSs.template tail<1>() << s;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <int STATE_DIM, int INPUT_DIM>
 void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::convert2Matrix(const s_vector_t& allSs, state_matrix_t& Sm,
                                                                                 state_vector_t& Sv, eigen_scalar_t& s) {
@@ -84,6 +93,9 @@ void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::convert2Matrix(
   s = allSs.template tail<1>();
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <int STATE_DIM, int INPUT_DIM>
 void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::setData(
     const scalar_array_t* timeStampPtr, const state_matrix_array_t* AmPtr, const state_input_matrix_array_t* BmPtr,
@@ -169,6 +181,9 @@ void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::setData(
   }
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <int STATE_DIM, int INPUT_DIM>
 void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::computeJumpMap(const scalar_t& z, const s_vector_t& state,
                                                                                 s_vector_t& mappedState) {
@@ -183,6 +198,9 @@ void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::computeJumpMap(
   mappedState = state + allSsJump;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <int STATE_DIM, int INPUT_DIM>
 void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::computeFlowMap(const scalar_t& z, const s_vector_t& allSs,
                                                                                 s_vector_t& derivatives) {

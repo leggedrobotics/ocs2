@@ -40,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/Numerics.h>
+#include <ocs2_core/misc/ThreadPool.h>
 
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
@@ -412,20 +413,13 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   /**
    * Runs the initialization method for DDP.
-   *
    */
-  virtual void runInit();
+  void runInit();
 
   /**
    * Runs a single iteration of DDP.
-   *
    */
-  virtual void runIteration();
-
-  /**
-   * Runs the exit method DDP.
-   */
-  virtual void runExit() {}
+  void runIteration();
 
  protected:
   /**
@@ -434,6 +428,19 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] numPartitions: number of partitions.
    */
   virtual void setupOptimizer(size_t numPartitions);
+
+  /**
+   * Distributes the sequential tasks (e.g. Riccati solver) in between threads.
+   */
+  void distributeWork();
+
+  /**
+   * Helper to run task multiple times in parallel (blocking)
+   *
+   * @param [in] taskFunction: task function
+   * @param [in] N: number of times to run taskFunction, if N = 1 it is run in the main thread
+   */
+  void runParallel(std::function<void(void)> taskFunction, size_t N);
 
   /**
    * Computes the linearized dynamics for a particular time partition
@@ -665,6 +672,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   // Variables
   DDP_Settings ddpSettings_;
 
+  ThreadPool threadPool_;
+
   std::string algorithmName_;
 
   unsigned long long int rewindCounter_;
@@ -680,9 +689,12 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   size_t numPartitions_ = 0;
   scalar_array_t partitioningTimes_;
 
-  scalar_t learningRateStar_ = 1.0;  // The optimal learning rate.
-  scalar_t maxLearningRate_ = 1.0;   // The maximum permitted learning rate
-                                     // (settings_.maxLearningRateSLQ_).
+  std::atomic<scalar_t> learningRateStar_;  // The optimal learning rate.
+  scalar_t maxLearningRate_ = 1.0;          // The maximum permitted learning rate
+                                            // (settings_.maxLearningRateSLQ_).
+
+  std::vector<int> startingIndicesRiccatiWorker_;
+  std::vector<int> endingIndicesRiccatiWorker_;
 
   // trajectory spreading
   TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM> trajectorySpreadingController_;

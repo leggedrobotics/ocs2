@@ -34,8 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
-#include <ocs2_ilqr/ILQR_MT.h>
-#include <ocs2_ilqr/ILQR_ST.h>
+#include <ocs2_ilqr/ILQR.h>
 
 #include <ocs2_oc/test/EXP0.h>
 
@@ -43,16 +42,17 @@ using namespace ocs2;
 
 enum { STATE_DIM = 2, INPUT_DIM = 1 };
 
-TEST(DISABLED_exp0_ilqr_test, exp0_ilqr_test) {
+TEST(exp0_ilqr_test, exp0_ilqr_test) {
+  using linear_controller_t = ILQR<STATE_DIM, INPUT_DIM>::linear_controller_t;
+  using feedforward_controller_t = ILQR<STATE_DIM, INPUT_DIM>::feedforward_controller_t;
+
   ILQR_Settings ilqrSettings;
   ilqrSettings.ddpSettings_.displayInfo_ = false;
   ilqrSettings.ddpSettings_.displayShortSummary_ = true;
   ilqrSettings.ddpSettings_.absTolODE_ = 1e-10;
   ilqrSettings.ddpSettings_.relTolODE_ = 1e-7;
   ilqrSettings.ddpSettings_.maxNumStepsPerSecond_ = 1000000;
-  ilqrSettings.ddpSettings_.nThreads_ = 3;
   ilqrSettings.ddpSettings_.maxNumIterations_ = 30;
-  ilqrSettings.ddpSettings_.lsStepsizeGreedy_ = true;
   ilqrSettings.ddpSettings_.noStateConstraints_ = true;
   ilqrSettings.ddpSettings_.minLearningRate_ = 0.0001;
   ilqrSettings.ddpSettings_.minRelCost_ = 5e-4;
@@ -106,21 +106,25 @@ TEST(DISABLED_exp0_ilqr_test, exp0_ilqr_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // ILQR - single-threaded version
-  ILQR_ST<STATE_DIM, INPUT_DIM> ilqrST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
-                                       &operatingTrajectories, ilqrSettings, logicRules);
+  ilqrSettings.ddpSettings_.nThreads_ = 1;
+  ILQR<STATE_DIM, INPUT_DIM> ilqrST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
+                                    &operatingTrajectories, ilqrSettings, logicRules);
 
   // ILQR - multi-threaded version
-  ILQR_MT<STATE_DIM, INPUT_DIM> ilqrMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
-                                       &operatingTrajectories, ilqrSettings, logicRules);
+  ilqrSettings.ddpSettings_.nThreads_ = 3;
+  ILQR<STATE_DIM, INPUT_DIM> ilqrMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
+                                    &operatingTrajectories, ilqrSettings, logicRules);
 
   // run single_threaded core ILQR
-  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_)
+  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_) {
     std::cerr << "\n>>> single-threaded ILQR" << std::endl;
+  }
   ilqrST.run(startTime, initState, finalTime, partitioningTimes);
 
   // run multi-threaded ILQR
-  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_)
+  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_) {
     std::cerr << "\n>>> multi-threaded ILQR" << std::endl;
+  }
   ilqrMT.run(startTime, initState, finalTime, partitioningTimes);
 
   /******************************************************************************************************/
@@ -160,10 +164,9 @@ TEST(DISABLED_exp0_ilqr_test, exp0_ilqr_test) {
 
   double ctrlFinalTime;
   if (ilqrSettings.ddpSettings_.useFeedbackPolicy_) {
-    ctrlFinalTime = dynamic_cast<ILQR_ST<STATE_DIM, INPUT_DIM>::linear_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
+    ctrlFinalTime = dynamic_cast<linear_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
   } else {
-    ctrlFinalTime =
-        dynamic_cast<ILQR_ST<STATE_DIM, INPUT_DIM>::feedforward_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
+    ctrlFinalTime = dynamic_cast<feedforward_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
   }
   ASSERT_DOUBLE_EQ(solutionST.timeTrajectory_.back(), finalTime) << "MESSAGE: ILQR_ST failed in policy final time of trajectory!";
   ASSERT_DOUBLE_EQ(ctrlFinalTime, finalTime) << "MESSAGE: ILQR_ST failed in policy final time of controller!";

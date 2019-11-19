@@ -58,7 +58,7 @@ class ThreadPool {
    *
    * @param [in] nThreads: Number of threads to launch in the pool
    */
-  ThreadPool(size_t nThreads);
+  ThreadPool(size_t nThreads = 1);
 
   /**
    * Destructor
@@ -91,14 +91,14 @@ class ThreadPool {
   std::future<typename std::result_of<Functor(int)>::type> runAfter(int runAfterId, Functor taskFunction);
 
   /**
-   * Helper function to run a task N times on the pool
+   * Helper function to run a task N times parallel on the pool
    *
    * @note this is a blocking operation, returns when all tasks are completed.
    *
    * @param [in] taskFunction: task function to run in the pool.
-   * @param [in] N: number of times to run the task.
+   * @param [in] N: number of times to run taskFunction, if N = 1 it is run on main thread.
    */
-  void runMultiple(std::function<void(int)> taskFunction, size_t N);
+  void runParallel(std::function<void(int)> taskFunction, size_t N);
 
   /**
    * Enable debug log

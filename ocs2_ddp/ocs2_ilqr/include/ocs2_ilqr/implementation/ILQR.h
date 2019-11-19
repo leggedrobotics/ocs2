@@ -27,31 +27,29 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_slq/SLQ.h"
-
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
-                               const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
-                               const operating_trajectories_base_t* operatingTrajectoriesPtr,
-                               const SLQ_Settings& settings /*= SLQ_Settings()*/,
-                               std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
-                               const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
+ILQR<STATE_DIM, INPUT_DIM>::ILQR(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
+                                 const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
+                                 const operating_trajectories_base_t* operatingTrajectoriesPtr,
+                                 const ILQR_Settings& settings /*= ILQR_Settings()*/,
+                                 std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
+                                 const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
-    : BASE(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings,
-           std::move(logicRulesPtr), heuristicsFunctionPtr) {
+    : BASE(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings, logicRulesPtr,
+           heuristicsFunctionPtr) {
   Eigen::initParallel();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
+void ILQR<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
   // perform one rollout while the input correction for the type-1 constraint is considered.
   BASE::lineSearchBase(computeISEs);
 
@@ -102,9 +100,9 @@ void SLQ<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex) {
+void ILQR<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex) {
   size_t N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
 
   if (N == 0) {
@@ -119,9 +117,9 @@ void SLQ<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex) {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t partitionIndex) {
+void ILQR<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t partitionIndex) {
   int N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
   int completedCount = 0;
   int timeIndex;
@@ -139,9 +137,9 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t parti
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitionIndex) {
+void ILQR<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitionIndex) {
   size_t N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
 
   if (N == 0) {
@@ -156,9 +154,9 @@ void SLQ<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitionInd
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(size_t partitionIndex) {
+void ILQR<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(size_t partitionIndex) {
   int N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
   int timeIndex;
   size_t taskId = nextTaskId_++;  // assign task ID (atomic)
@@ -171,9 +169,9 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(size_t parti
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::executeLineSearchWorker() {
+void ILQR<STATE_DIM, INPUT_DIM>::executeLineSearchWorker() {
   size_t taskId = nextTaskId_++;  // assign task ID (atomic)
 
   // local search forward simulation's variables
@@ -271,11 +269,11 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeLineSearchWorker() {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-typename SLQ<STATE_DIM, INPUT_DIM>::scalar_t SLQ<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(const state_matrix_t& SmFinal,
-                                                                                                        const state_vector_t& SvFinal,
-                                                                                                        const eigen_scalar_t& sFinal) {
+typename ILQR<STATE_DIM, INPUT_DIM>::scalar_t ILQR<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(const state_matrix_t& SmFinal,
+                                                                                                          const state_vector_t& SvFinal,
+                                                                                                          const eigen_scalar_t& sFinal) {
   BASE::SmFinalStock_[BASE::finalActivePartition_] = SmFinal;
   BASE::SvFinalStock_[BASE::finalActivePartition_] = SvFinal;
   BASE::SveFinalStock_[BASE::finalActivePartition_].setZero();
@@ -307,9 +305,9 @@ typename SLQ<STATE_DIM, INPUT_DIM>::scalar_t SLQ<STATE_DIM, INPUT_DIM>::solveSeq
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::executeRiccatiSolver() {
+void ILQR<STATE_DIM, INPUT_DIM>::executeRiccatiSolver() {
   size_t taskId = nextTaskId_++;  // assign task ID (atomic)
 
   for (int i = BASE::endingIndicesRiccatiWorker_[taskId]; i >= BASE::startingIndicesRiccatiWorker_[taskId]; i--) {
@@ -356,7 +354,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeRiccatiSolver() {
       }
 
       // solve the backward pass
-      BASE::solveSlqRiccatiEquationsWorker(taskId, i, SmFinal, SvFinal, sFinal, SveFinal);
+      BASE::solveRiccatiEquationsWorker(taskId, i, SmFinal, SvFinal, sFinal);
 
       // set the final value for next Riccati equation
       if (i > BASE::initActivePartition_) {
@@ -365,7 +363,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeRiccatiSolver() {
 
         BASE::SmFinalStock_[i - 1] = BASE::SmTrajectoryStock_[i].front();
         BASE::SvFinalStock_[i - 1] = BASE::SvTrajectoryStock_[i].front();
-        BASE::SveFinalStock_[i - 1] = BASE::SveTrajectoryStock_[i].front();
+        // BASE::SveFinalStock_[i - 1] = BASE::SveTrajectoryStock_[i].front();
         BASE::sFinalStock_[i - 1] = BASE::sTrajectoryStock_[i].front();
         BASE::xFinalStock_[i - 1] = BASE::nominalStateTrajectoriesStock_[i].front();
       }

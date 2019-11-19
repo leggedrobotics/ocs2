@@ -35,7 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_slq/SLQ.h>
-#include <ocs2_slq/SLQ_MP.h>
 
 #include <ocs2_oc/test/EXP1.h>
 
@@ -44,14 +43,14 @@ using namespace ocs2;
 enum { STATE_DIM = 2, INPUT_DIM = 1 };
 
 TEST(exp1_slq_test, Exp1_slq_test) {
+  using slq_t = SLQ<STATE_DIM, INPUT_DIM>;
+
   SLQ_Settings slqSettings;
   slqSettings.useNominalTimeForBackwardPass_ = true;
   slqSettings.ddpSettings_.displayInfo_ = true;
   slqSettings.ddpSettings_.displayShortSummary_ = true;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
-  slqSettings.ddpSettings_.nThreads_ = 3;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
-  slqSettings.ddpSettings_.lsStepsizeGreedy_ = true;
   slqSettings.ddpSettings_.noStateConstraints_ = true;
   slqSettings.ddpSettings_.checkNumericalStability_ = false;
   slqSettings.ddpSettings_.absTolODE_ = 1e-10;
@@ -107,21 +106,25 @@ TEST(exp1_slq_test, Exp1_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // SLQ - single core version
-  SLQ<STATE_DIM, INPUT_DIM> slqST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
-                                  slqSettings, logicRules);
+  slqSettings.ddpSettings_.nThreads_ = 1;
+  slq_t slqST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings,
+              logicRules);
 
+  slqSettings.ddpSettings_.nThreads_ = 3;
   // SLQ - multi-threaded version
-  SLQ_MP<STATE_DIM, INPUT_DIM> slqMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
-                                     &operatingTrajectories, slqSettings, logicRules);
+  slq_t slqMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings,
+              logicRules);
 
   // run single-threaded SLQ
-  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
+  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {
     std::cerr << "\n>>> single-core SLQ" << std::endl;
+  }
   slqST.run(startTime, initState, finalTime, partitioningTimes);
 
   // run multi-threaded SLQ
-  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_)
+  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {
     std::cerr << "\n>>> multi-core SLQ" << std::endl;
+  }
   slqMT.run(startTime, initState, finalTime, partitioningTimes);
 
   /******************************************************************************************************/
@@ -161,9 +164,9 @@ TEST(exp1_slq_test, Exp1_slq_test) {
 
   double ctrlFinalTime;
   if (slqSettings.ddpSettings_.useFeedbackPolicy_) {
-    ctrlFinalTime = dynamic_cast<SLQ<STATE_DIM, INPUT_DIM>::linear_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
+    ctrlFinalTime = dynamic_cast<slq_t::linear_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
   } else {
-    ctrlFinalTime = dynamic_cast<SLQ<STATE_DIM, INPUT_DIM>::feedforward_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
+    ctrlFinalTime = dynamic_cast<slq_t::feedforward_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
   }
   ASSERT_DOUBLE_EQ(solutionST.timeTrajectory_.back(), finalTime) << "MESSAGE: SLQ_ST failed in policy final time of trajectory!";
   ASSERT_DOUBLE_EQ(ctrlFinalTime, finalTime) << "MESSAGE: SLQ_ST failed in policy final time of controller!";

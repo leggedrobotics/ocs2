@@ -40,7 +40,13 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t* rolloutPtr, const
                                          const operating_trajectories_base_t* operatingTrajectoriesPtr, const DDP_Settings& ddpSettings,
                                          const cost_function_base_t* heuristicsFunctionPtr, const char* algorithmName,
                                          std::shared_ptr<HybridLogicRules> logicRulesPtr)
-    : BASE(std::move(logicRulesPtr)), ddpSettings_(ddpSettings), algorithmName_(algorithmName), rewindCounter_(0), iteration_(0) {
+    : BASE(std::move(logicRulesPtr)),
+      ddpSettings_(ddpSettings),
+      threadPool_(ddpSettings.nThreads_),
+      algorithmName_(algorithmName),
+      rewindCounter_(0),
+      iteration_(0),
+      learningRateStar_(1.0) {
   // Dynamics, Constraints, derivatives, and cost
   linearQuadraticApproximatorPtrStock_.clear();
   linearQuadraticApproximatorPtrStock_.reserve(ddpSettings_.nThreads_);
@@ -782,29 +788,29 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t workerIndex, scalar
 
     // display
     if (ddpSettings_.displayInfo_) {
-      std::string finalConstraintDisplay;
-      finalConstraintDisplay = "\t [Thread" + std::to_string(workerIndex) + "] - learningRate " + std::to_string(learningRate) +
-                               " \t cost: " + std::to_string(lsTotalCost) + " \t constraint ISE: " + std::to_string(lsConstraint1ISE) +
-                               " \t inequality penalty: " + std::to_string(lsInequalityConstraintPenalty) +
-                               " \t inequality ISE: " + std::to_string(lsInequalityConstraintISE) + "\n";
-      finalConstraintDisplay += "\t final constraint type-2:   ";
+      std::string linesearchDisplay;
+      linesearchDisplay = "\t [Thread " + std::to_string(workerIndex) + "] - learningRate " + std::to_string(learningRate) +
+                          " \t cost: " + std::to_string(lsTotalCost) + " \t constraint ISE: " + std::to_string(lsConstraint1ISE) +
+                          " \t inequality penalty: " + std::to_string(lsInequalityConstraintPenalty) +
+                          " \t inequality ISE: " + std::to_string(lsInequalityConstraintISE) + "\n";
+      linesearchDisplay += "\t final constraint type-2:   ";
       for (size_t i = 0; i < numPartitions_; i++) {
-        finalConstraintDisplay += "[" + std::to_string(i) + "]: ";
+        linesearchDisplay += "[" + std::to_string(i) + "]: ";
         for (size_t j = 0; j < lsNc2FinalStock[i].size(); j++) {
           for (size_t m = 0; m < lsNc2FinalStock[i][j]; m++) {
-            finalConstraintDisplay += std::to_string(lsHvFinalStock[i][j](m)) + ", ";
+            linesearchDisplay += std::to_string(lsHvFinalStock[i][j](m)) + ", ";
           }
         }
-        finalConstraintDisplay += "  ";
+        linesearchDisplay += "  ";
       }  // end of i loop
-      finalConstraintDisplay += "\n\t forward pass average time step: " + std::to_string(avgTimeStepFP * 1e+3) + " [ms].";
-      BASE::printString(finalConstraintDisplay);
+      linesearchDisplay += "\n\t forward pass average time step: " + std::to_string(avgTimeStepFP * 1e+3) + " [ms].";
+      BASE::printString(linesearchDisplay);
     }
 
   } catch (const std::exception& error) {
     lsTotalCost = std::numeric_limits<scalar_t>::max();
     if (ddpSettings_.displayInfo_) {
-      BASE::printString("\t [Thread" + std::to_string(workerIndex) + "] rollout with learningRate " + std::to_string(learningRate) +
+      BASE::printString("\t [Thread " + std::to_string(workerIndex) + "] rollout with learningRate " + std::to_string(learningRate) +
                         " is terminated: " + error.what());
     }
   }
@@ -1373,6 +1379,56 @@ const unsigned long long int& DDP_BASE<STATE_DIM, INPUT_DIM>::getRewindCounter()
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::distributeWork() {
+  const int N = ddpSettings_.nThreads_;
+  startingIndicesRiccatiWorker_.resize(N);
+  endingIndicesRiccatiWorker_.resize(N);
+
+  int subsystemsPerThread = (finalActivePartition_ - initActivePartition_ + 1) / N;
+  int remainingSubsystems = (finalActivePartition_ - initActivePartition_ + 1) % N;
+
+  int startingId, endingId = finalActivePartition_;
+  for (size_t i = 0; i < N; i++) {
+    endingIndicesRiccatiWorker_[i] = endingId;
+    if (remainingSubsystems > 0) {
+      startingId = endingId - subsystemsPerThread;
+      remainingSubsystems--;
+    } else {
+      startingId = endingId - subsystemsPerThread + 1;
+    }
+    startingIndicesRiccatiWorker_[i] = startingId;
+    endingId = startingId - 1;
+  }
+
+  // adding the inactive subsystems
+  endingIndicesRiccatiWorker_.front() = numPartitions_ - 1;
+  startingIndicesRiccatiWorker_.back() = 0;
+
+  if (ddpSettings_.displayInfo_) {
+    std::cerr << "Initial Active Subsystem: " << initActivePartition_ << std::endl;
+    std::cerr << "Final Active Subsystem:   " << finalActivePartition_ << std::endl;
+    std::cerr << "Backward path work distribution:" << std::endl;
+    for (size_t i = 0; i < N; i++) {
+      std::cerr << "start: " << startingIndicesRiccatiWorker_[i] << "\t";
+      std::cerr << "end: " << endingIndicesRiccatiWorker_[i] << "\t";
+      std::cerr << "num: " << endingIndicesRiccatiWorker_[i] - startingIndicesRiccatiWorker_[i] + 1 << std::endl;
+    }
+    std::cerr << std::endl;
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::runParallel(std::function<void(void)> taskFunction, size_t N) {
+  threadPool_.runParallel([&](int) { taskFunction(); }, N);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   if (numPartitions == 0) {
     throw std::runtime_error("Number of partitions cannot be zero!");
@@ -1452,6 +1508,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
+  // disable Eigen multi-threading
+  Eigen::setNbThreads(1);
+
   // cache the nominal trajectories before the new rollout (time, state, input, ...)
   swapNominalTrajectoriesToCache();
 
@@ -1511,6 +1570,10 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
   if (ddpSettings_.displayInfo_) {
     printRolloutInfo();
   }
+
+  // TODO(mspieler): this is not exception safe
+  // restore default Eigen thread number
+  Eigen::setNbThreads(0);
 }
 
 /******************************************************************************************************/
@@ -1518,6 +1581,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
+  // disable Eigen multi-threading
+  Eigen::setNbThreads(1);
+
   // finding the optimal learningRate and getting the optimal trajectories and controller
   bool computeISEs = ddpSettings_.displayInfo_ || !ddpSettings_.noStateConstraints_;
 
@@ -1564,6 +1630,10 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
   if (ddpSettings_.displayInfo_) {
     printRolloutInfo();
   }
+
+  // TODO(mspieler): this is not exception safe
+  // restore default Eigen thread number
+  Eigen::setNbThreads(0);
 }
 
 /******************************************************************************************************/
@@ -1598,7 +1668,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
   }
 
   // infeasible learning rate adjustment scheme
-  if (ddpSettings_.maxLearningRate_ < ddpSettings_.minLearningRate_ - OCS2NumericTraits<scalar_t>::limitEpsilon()) {
+  if (!numerics::almost_ge(ddpSettings_.maxLearningRate_, ddpSettings_.minLearningRate_)) {
     throw std::runtime_error("The maximum learning rate is smaller than the minimum learning rate.");
   }
 
@@ -1678,6 +1748,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
     std::cerr << "\n#### Iteration " << iteration_ << " (Dynamics might have been violated)" << std::endl;
   }
 
+  // distribution of the sequential tasks (e.g. Riccati solver) in between threads
+  distributeWork();
+
   // run DDP initializer and update the member variables
   runInit();
 
@@ -1752,8 +1825,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
   linesearchTimer_.startTimer();
   lineSearch(computeISEs);
   linesearchTimer_.endTimer();
-
-  runExit();
 
   // display
   if (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_) {

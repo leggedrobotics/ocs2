@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <array>
 #include <chrono>
 #include <cstddef>
+#include <future>
 #include <mutex>
 #include <numeric>
 #include <type_traits>

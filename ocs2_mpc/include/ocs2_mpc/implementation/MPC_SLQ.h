@@ -52,13 +52,9 @@ MPC_SLQ<STATE_DIM, INPUT_DIM>::MPC_SLQ(const rollout_base_t* rolloutPtr, const d
 
     : BASE(partitioningTimes, mpcSettings) {
   // SLQ
-  if (slqSettings.ddpSettings_.useMultiThreading_) {
-    slqPtr_.reset(new slq_mp_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
-                               slqSettings, logicRulesPtr, heuristicsFunctionPtr));
-  } else {
-    slqPtr_.reset(new slq_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, slqSettings,
-                            logicRulesPtr, heuristicsFunctionPtr));
-  }
+
+  slqPtr_.reset(new slq_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, slqSettings,
+                          logicRulesPtr, heuristicsFunctionPtr));
 
   // set base solver's pointer
   BASE::setBaseSolverPtr(slqPtr_.get());

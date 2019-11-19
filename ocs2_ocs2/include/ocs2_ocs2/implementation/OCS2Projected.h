@@ -61,13 +61,8 @@ OCS2Projected<STATE_DIM, INPUT_DIM>::OCS2Projected(
   slqSolverPtrs_.resize(BASE::numLineSearch() + 1);
   for (size_t i = 0; i < slqSolverPtrs_.size(); i++) {
     // SLQ solvers
-    if (slqSettings_.useMultiThreading_ == true) {
-      slqSolverPtrs_[i].reset(new slq_mp_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr,
-                                           operatingTrajectoriesPtr, slqSettings, logicRulesPtr, heuristicsFunctionPtr));
-    } else {
-      slqSolverPtrs_[i].reset(new slq_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr,
-                                        operatingTrajectoriesPtr, slqSettings, logicRulesPtr, heuristicsFunctionPtr));
-    }
+    slqSolverPtrs_[i].reset(new slq_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr,
+                                      operatingTrajectoriesPtr, slqSettings, logicRulesPtr, heuristicsFunctionPtr));
 
   }  // end of i loop
 }

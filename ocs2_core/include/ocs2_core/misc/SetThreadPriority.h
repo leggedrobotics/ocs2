@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SETTHREADPRIORITY_OCS2_H_
 
 #include <pthread.h>
+#include <iostream>
 #include <thread>
 
 namespace ocs2 {

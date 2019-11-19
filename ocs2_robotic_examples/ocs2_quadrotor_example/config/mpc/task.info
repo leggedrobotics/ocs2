@@ -56,8 +56,7 @@ ilqr
         minRelConstraint1ISE             5e-6
         checkNumericalStability          0
 
-        nThreads                         4
-        debugPrintMT                     0
+        nThreads                         1
 
         useFeedbackPolicy                0
         useRiccatiSolver                 1

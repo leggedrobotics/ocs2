@@ -71,7 +71,6 @@ slq
         checkNumericalStability      1
 
         nThreads                     1
-        debugPrintMT                 0
 
         useFeedbackPolicy            0
         useRiccatiSolver             1

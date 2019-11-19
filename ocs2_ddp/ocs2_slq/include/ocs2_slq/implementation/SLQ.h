@@ -316,6 +316,8 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeRiccatiSolver() {
     // for inactive subsystems
     if (i < BASE::initActivePartition_ || i > BASE::finalActivePartition_) {
       BASE::SsTimeTrajectoryStock_[i].clear();
+      BASE::SsNormalizedTimeTrajectoryStock_[i].clear();
+      BASE::SsNormalizedEventsPastTheEndIndecesStock_[i].clear();
       BASE::SmTrajectoryStock_[i].clear();
       BASE::SvTrajectoryStock_[i].clear();
       BASE::SveTrajectoryStock_[i].clear();

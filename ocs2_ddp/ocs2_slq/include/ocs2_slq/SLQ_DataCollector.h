@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
-#include <ocs2_slq/SLQ_BASE.h>
+#include <ocs2_slq/SLQ.h>
 
 namespace ocs2 {
 
@@ -48,7 +48,7 @@ class SLQ_DataCollector {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using slq_t = SLQ_BASE<STATE_DIM, INPUT_DIM>;
+  using slq_t = SLQ<STATE_DIM, INPUT_DIM>;
 
   using Ptr = std::shared_ptr<SLQ_DataCollector<STATE_DIM, INPUT_DIM>>;
 

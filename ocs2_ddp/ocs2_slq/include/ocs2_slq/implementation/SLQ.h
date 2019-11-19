@@ -142,28 +142,18 @@ void SLQ<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex) {
 
   nextTimeIndex_ = 0;
   nextTaskId_ = 0;
-  std::function<void(void)> task = [this, partitionIndex] { executeApproximatePartitionLQWorker(partitionIndex); };
+  std::function<void(void)> task = [this, partitionIndex] {
+    int N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
+    int timeIndex;
+    size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+
+    // get next time index is atomic
+    while ((timeIndex = nextTimeIndex_++) < N) {
+      // execute approximateLQ for the given partition and time node index
+      approximateLQWorker(taskId, partitionIndex, timeIndex);
+    }
+  };
   BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::executeApproximatePartitionLQWorker(size_t partitionIndex) {
-  int N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
-  int completedCount = 0;
-  int timeIndex;
-  size_t taskId = nextTaskId_++;  // assign task ID (atomic)
-
-  // get next time index is atomic
-  while ((timeIndex = nextTimeIndex_++) < N) {
-    // execute approximateLQ for the given partition and time node index
-    approximateLQWorker(taskId, partitionIndex, timeIndex);
-
-    // increment the number of completed nodes
-    completedCount++;
-  }
 }
 
 /******************************************************************************************************/
@@ -445,23 +435,17 @@ void SLQ<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitionInd
 
   nextTimeIndex_ = 0;
   nextTaskId_ = 0;
-  std::function<void(void)> task = [this, partitionIndex] { executeCalculatePartitionController(partitionIndex); };
+  std::function<void(void)> task = [this, partitionIndex] {
+    int N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
+    int timeIndex;
+    size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+
+    // get next time index (atomic)
+    while ((timeIndex = nextTimeIndex_++) < N) {
+      calculateControllerWorker(taskId, partitionIndex, timeIndex);
+    }
+  };
   BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::executeCalculatePartitionController(size_t partitionIndex) {
-  int N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
-  int timeIndex;
-  size_t taskId = nextTaskId_++;  // assign task ID (atomic)
-
-  // get next time index (atomic)
-  while ((timeIndex = nextTimeIndex_++) < N) {
-    calculateControllerWorker(taskId, partitionIndex, timeIndex);
-  }
 }
 
 /******************************************************************************************************/

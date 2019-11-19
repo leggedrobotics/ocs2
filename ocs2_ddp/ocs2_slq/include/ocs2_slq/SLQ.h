@@ -232,7 +232,7 @@ class SLQ : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @param [in] numPartitions: number of partitions.
    */
-  virtual void setupOptimizer(size_t numPartitions);
+  void setupOptimizer(size_t numPartitions) override;
 
   /**
    * Computes the controller for a particular time partition
@@ -242,25 +242,11 @@ class SLQ : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   void calculatePartitionController(size_t partitionIndex);
 
   /**
-   * Finds the next node's uncompleted CALCULATE_CONTROLLER task and executes calculateControllerWorker.
-   *
-   * @param [in] partitionIndex: Time partition index
-   */
-  void executeCalculatePartitionController(size_t partitionIndex);
-
-  /**
    * Computes the linearized dynamics for a particular time partition.
    *
    * @param [in] partitionIndex: Time partition index
    */
   void approximatePartitionLQ(size_t partitionIndex) override;
-
-  /**
-   * Finds the next node's uncompleted LQ approximation and executes approximateLQWorker.
-   *
-   * @param [in] partitionIndex: Time partition index
-   */
-  void executeApproximatePartitionLQWorker(size_t partitionIndex);
 
   /**
    * Calculates an LQ approximate of the optimal control problem at a given partition and a node.

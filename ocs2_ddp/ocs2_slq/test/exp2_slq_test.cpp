@@ -43,7 +43,7 @@ using namespace ocs2;
 enum { STATE_DIM = 2, INPUT_DIM = 2 };
 
 // This test have problem. It does not converge properly.
-TEST(exp2_slq_test, DISABLED_Exp2_slq_test) {
+TEST(exp2_slq_test, DISABLED_exp2_slq_test) {
   SLQ_Settings slqSettings;
   slqSettings.useNominalTimeForBackwardPass_ = false;
   slqSettings.ddpSettings_.displayInfo_ = true;

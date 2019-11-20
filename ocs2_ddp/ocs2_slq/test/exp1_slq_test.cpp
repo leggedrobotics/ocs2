@@ -42,7 +42,7 @@ using namespace ocs2;
 
 enum { STATE_DIM = 2, INPUT_DIM = 1 };
 
-TEST(exp1_slq_test, Exp1_slq_test) {
+TEST(exp1_slq_test, exp1_slq_test) {
   using slq_t = SLQ<STATE_DIM, INPUT_DIM>;
 
   SLQ_Settings slqSettings;

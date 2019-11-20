@@ -67,9 +67,11 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
         equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityConstraint>(footName + "_EEVel");
     EEVelConstraint->setActivity(true);
     EndEffectorVelocityConstraintSettings eeVelConSettings;
-    if (stanceLegs_[i]) {  // in stance: All velocity equal to zero
-      eeVelConSettings.b = Eigen::Vector3d::Zero();
-      eeVelConSettings.A = Eigen::Matrix3d::Identity();
+    if (stanceLegs_[i]) {  // in stance: y,z velocitys are zero
+      eeVelConSettings.b.resize(2);
+      eeVelConSettings.A.resize(2, 3);
+      eeVelConSettings.b << 0, 0;
+      eeVelConSettings.A << 0, 1, 0, 0, 0, 1;
     } else {  // in swing: z-velocity is provided
       eeVelConSettings.b.resize(1);
       eeVelConSettings.A.resize(1, 3);

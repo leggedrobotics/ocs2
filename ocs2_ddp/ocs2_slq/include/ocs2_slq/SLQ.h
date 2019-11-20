@@ -30,26 +30,32 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <atomic>
-#include <condition_variable>
 #include <exception>
-#include <thread>
 
-#include "ocs2_slq/SLQ_BASE.h"
+#include <ocs2_core/integration/Integrator.h>
+#include <ocs2_core/integration/SystemEventHandler.h>
+#include <ocs2_core/misc/LinearAlgebra.h>
+
+#include <ocs2_ddp_base/DDP_BASE.h>
+
+#include "ocs2_slq/SLQ_Settings.h"
+#include "ocs2_slq/riccati_equations/SequentialErrorEquationNormalized.h"
+#include "ocs2_slq/riccati_equations/SequentialRiccatiEquationsNormalized.h"
 
 namespace ocs2 {
 
 /**
- * This class implements SLQ algorithm.
+ * This class is an interface class for the single-thread and multi-thread SLQ.
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
+class SLQ : public DDP_BASE<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = SLQ_BASE<STATE_DIM, INPUT_DIM>;
+  using BASE = DDP_BASE<STATE_DIM, INPUT_DIM>;
 
   using typename BASE::constraint1_input_matrix_array2_t;
   using typename BASE::constraint1_input_matrix_array_t;
@@ -66,6 +72,11 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::constraint2_vector_array2_t;
   using typename BASE::constraint2_vector_array_t;
   using typename BASE::constraint2_vector_t;
+  using typename BASE::DIMENSIONS;
+  using typename BASE::dynamic_input_matrix_t;
+  using typename BASE::dynamic_matrix_array2_t;
+  using typename BASE::dynamic_matrix_t;
+  using typename BASE::dynamic_vector_t;
   using typename BASE::eigen_scalar_array2_t;
   using typename BASE::eigen_scalar_array_t;
   using typename BASE::eigen_scalar_t;
@@ -110,10 +121,22 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::operating_trajectories_base_t;
   using typename BASE::rollout_base_t;
 
+  using riccati_equations_t = SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>;
+  using error_equation_t = SequentialErrorEquationNormalized<STATE_DIM, INPUT_DIM>;
+  using s_vector_t = typename riccati_equations_t::s_vector_t;
+  using s_vector_array_t = typename riccati_equations_t::s_vector_array_t;
+
+  /**
+   * class for collecting SLQ data
+   */
+  template <size_t OTHER_STATE_DIM, size_t OTHER_INPUT_DIM>
+  friend class SLQ_DataCollector;
+
+ public:
   /**
    * Default constructor.
    */
-  SLQ() : BASE() {}
+  SLQ() = default;
 
   /**
    * Constructor
@@ -124,7 +147,7 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
    * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of SLQ.
    * @param [in] settings: Structure containing the settings for the SLQ algorithm.
-   * @param [in] logicRulesPtr: The logic rules used for implementing mixed logical dynamical systems.
+   * @param [in] logicRulesPtr: The logic rules used for implementing mixed-logic dynamical systems.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
@@ -136,16 +159,53 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Default destructor.
    */
-  ~SLQ() = default;
+  virtual ~SLQ() = default;
 
   /**
-   * Line search on the feedforwrd parts of the controller. It uses the following approach for line search:
-   * The constraint TYPE-1 correction term is directly added through a user defined stepSize (defined in settings_.constraintStepSize_).
-   * But the cost minimization term is optimized through a line-search strategy defined in SLQ settings.
+   * Approximates the nonlinear problem as a linear-quadratic problem around the nominal
+   * state and control trajectories. This method updates the following variables:
+   * 	- linearized system model and constraints
+   * 	- \f$ dxdt = A_m(t)x + B_m(t)u \f$.
+   * 	- s.t. \f$ C_m(t)x + D_m(t)u + E_v(t) = 0 \f$ \\
+   * 	-      \f$ F_m(t)x + H_v(t) = 0 \f$ .
+   * 	- AmTrajectoryStock_: \f$ A_m\f$  matrix.
+   * 	- BmTrajectoryStock_: \f$ B_m\f$  matrix.
+   * 	- CmTrajectoryStock_: \f$ C_m\f$ matrix.
+   * 	- DmTrajectoryStock_: \f$ D_m\f$ matrix.
+   * 	- EvTrajectoryStock_: \f$ E_v\f$ vector.
+   * 	- FmTrajectoryStock_: \f$ F_m\f$ vector.
+   * 	- HvTrajectoryStock_: \f$ H_v\f$ vector.
    *
-   * @param [in] computeISEs: Whether lineSearch needs to calculate ISEs indeces for type_1 and type-2 constraints.
+   * 	- quadratized intermediate cost function
+   * 	- intermediate cost: \f$ q(t) + 0.5 xQ_m(t)x + x'Q_v(t) + u'P_m(t)x + 0.5u'R_m(t)u + u'R_v(t) \f$
+   * 	- qTrajectoryStock_:  \f$ q\f$
+   * 	- QvTrajectoryStock_: \f$ Q_v\f$ vector.
+   * 	- QmTrajectoryStock_:\f$  Q_m\f$ matrix.
+   * 	- PmTrajectoryStock_: \f$ P_m\f$ matrix.
+   * 	- RvTrajectoryStock_: \f$ R_v\f$ vector.
+   * 	- RmTrajectoryStock_: \f$ R_m\f$ matrix.
+   * 	- RmInverseTrajectoryStock_: inverse of \f$ R_m\f$ matrix.
+   *
+   * 	- as well as the constrained coefficients of
+   * 		- linearized system model
+   * 		- quadratized intermediate cost function
+   * 		- quadratized final cost
+   *
    */
-  void lineSearch(bool computeISEs) override;
+  void approximateOptimalControlProblem() override;
+
+  void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const override;
+
+  /**
+   * Calculates the controller. This method uses the following variables:
+   * - constrained, linearized model
+   * - constrained, quadratized cost
+   *
+   * The method modifies:
+   * - nominalControllersStock_: the controller that stabilizes the system around the new nominal trajectory and
+   * 				improves the constraints as well as the increment to the feed-forward control input.
+   */
+  void calculateController() override;
 
   /**
    * Solves Riccati equations for all the partitions.
@@ -159,7 +219,28 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
   scalar_t solveSequentialRiccatiEquations(const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
                                            const eigen_scalar_t& sFinal) override;
 
+  /**
+   * Gets a reference to the Options structure.
+   *
+   * @return a reference to the Options structure.
+   */
+  SLQ_Settings& settings();
+
  protected:
+  /**
+   * Sets up optimizer for different number of partitions.
+   *
+   * @param [in] numPartitions: number of partitions.
+   */
+  void setupOptimizer(size_t numPartitions) override;
+
+  /**
+   * Computes the controller for a particular time partition
+   *
+   * @param partitionIndex: Time partition index
+   */
+  void calculatePartitionController(size_t partitionIndex);
+
   /**
    * Computes the linearized dynamics for a particular time partition.
    *
@@ -168,25 +249,41 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
   void approximatePartitionLQ(size_t partitionIndex) override;
 
   /**
-   * Finds the next node's uncompleted LQ approximation and executes approximateLQWorker.
+   * Calculates an LQ approximate of the optimal control problem at a given partition and a node.
    *
-   * @param [in] partitionIndex: Time partition index
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] partitionIndex: Time partition index.
+   * @param [in] timeIndex: Time index in the partition.
    */
-  void executeApproximatePartitionLQWorker(size_t partitionIndex);
+  void approximateLQWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
 
   /**
-   * Computes the controller for a particular time partition
+   * Modify the unconstrained LQ coefficients to constrained ones.
    *
-   * @param partitionIndex: Time partition index
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] i: Time partition index.
+   * @param [in] k: Time index in the partition.
+   * @param [in] stateConstraintPenalty: State-only constraint penalty.
    */
-  void calculatePartitionController(size_t partitionIndex) override;
+  void approximateConstrainedLQWorker(size_t workerIndex, size_t i, size_t k, scalar_t stateConstraintPenalty);
 
   /**
-   * Finds the next node's uncompleted CALCULATE_CONTROLLER task and executes calculateControllerWorker.
+   * Calculates controller at a given partition and a node.
    *
+   * @param [in] workerIndex: Working agent index.
    * @param [in] partitionIndex: Time partition index
+   * @param [in] timeIndex: Time index in the partition
    */
-  void executeCalculatePartitionController(size_t partitionIndex);
+  void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
+
+  /**
+   * Line search on the feedforwrd parts of the controller. It uses the following approach for line search:
+   * The constraint TYPE-1 correction term is directly added through a user defined stepSize (defined in settings_.constraintStepSize_).
+   * But the cost minimization term is optimized through a line-search strategy defined in ILQR settings.
+   *
+   * @param [in] computeISEs: Whether lineSearch needs to calculate ISEs indeces for type_1 and type-2 constraints.
+   */
+  void lineSearch(bool computeISEs);
 
   /**
    * Execute line search worker on a thread with various learning rates and choose the largest acceptable step-size.
@@ -198,7 +295,24 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
    */
   void executeRiccatiSolver();
 
- private:
+  /**
+   * Solves a set of Riccati equations and type_1 constraints error correction compensation for the partition in the given index.
+   *
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
+   * @param [in] SmFinal: The final Sm for Riccati equation.
+   * @param [in] SvFinal: The final Sv for Riccati equation.
+   * @param [in] sFinal: The final s for Riccati equation.
+   * @param [in] SveFinal: The final Sve for the current Riccati equation.
+   */
+  void solveSlqRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal,
+                                      const state_vector_t& SvFinal, const eigen_scalar_t& sFinal, const state_vector_t& SveFinal);
+
+  /****************
+   *** Variables **
+   ****************/
+  SLQ_Settings settings_;
+
   // multi-threading helper variables
   std::atomic_size_t nextTaskId_;
   std::atomic_size_t nextTimeIndex_;
@@ -206,10 +320,86 @@ class SLQ : public SLQ_BASE<STATE_DIM, INPUT_DIM> {
   // parallel Riccati solver
   std::mutex riccatiSolverDataMutex_;
 
+  // line search
   std::mutex lineSearchResultMutex_;
   std::atomic_size_t alphaExpNext_;
   std::vector<bool> alphaProcessed_;
   scalar_t baselineTotalCost_;
+
+  state_matrix_array2_t AmConstrainedTrajectoryStock_;
+  state_matrix_array2_t QmConstrainedTrajectoryStock_;
+  state_vector_array2_t QvConstrainedTrajectoryStock_;
+  dynamic_matrix_array2_t RmInvConstrainedCholTrajectoryStock_;
+  input_constraint1_matrix_array2_t DmDagerTrajectoryStock_;
+  input_vector_array2_t EvProjectedTrajectoryStock_;        // DmDager * Ev
+  input_state_matrix_array2_t CmProjectedTrajectoryStock_;  // DmDager * Cm
+  input_matrix_array2_t DmProjectedTrajectoryStock_;        // DmDager * Dm
+  input_matrix_array2_t RmInverseTrajectoryStock_;
+
+  std::vector<std::shared_ptr<riccati_equations_t>> riccatiEquationsPtrStock_;
+  std::vector<std::shared_ptr<SystemEventHandler<riccati_equations_t::S_DIM_>>> riccatiEventPtrStock_;
+  std::vector<std::shared_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>> riccatiIntegratorPtrStock_;
+  std::vector<std::shared_ptr<error_equation_t>> errorEquationPtrStock_;
+  std::vector<std::shared_ptr<SystemEventHandler<STATE_DIM>>> errorEventPtrStock_;
+  std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>> errorIntegratorPtrStock_;
+
+ private:
+  /**
+   * Solves a set of Riccati equations for the partition in the given index.
+   *
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
+   * @param [in] SmFinal: The final Sm for Riccati equation.
+   * @param [in] SvFinal: The final Sv for Riccati equation.
+   * @param [in] sFinal: The final s for Riccati equation.
+   */
+  void solveRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
+                                   const eigen_scalar_t& sFinal);
+
+  /**
+   * Type_1 constraints error correction compensation which solves a set of error Riccati equations for the partition in the given index.
+   *
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
+   * @param [in] SveFinal: The final Sve for the current Riccati equation.
+   */
+  void solveErrorRiccatiEquationWorker(size_t workerIndex, size_t partitionIndex, const state_vector_t& SveFinal);
+
+  /**
+   * Integrates the riccati equation and generates the value function at the times set in nominal Time Trajectory.
+   *
+   * @param riccatiIntegrator [in] : Riccati integrator object
+   * @param riccatiEquation [in] : Riccati equation object
+   * @param nominalTimeTrajectory [in] : time trajectory produced in the forward rollout.
+   * @param nominalEventsPastTheEndIndices [in] : Indices into nominalTimeTrajectory to point to times right after event times
+   * @param allSsFinal [in] : Final value of the value function.
+   * @param SsNormalizedTime [out] : Time trajectory of the value function.
+   * @param SsNormalizedEventsPastTheEndIndices [out] : Indices into SsNormalizedTime to point to times right after event times
+   * @param allSsTrajectory [out] : Value function in vector format.
+   */
+  void integrateRiccatiEquationNominalTime(IntegratorBase<riccati_equations_t::S_DIM_>& riccatiIntegrator,
+                                           riccati_equations_t& riccatiEquation, const scalar_array_t& nominalTimeTrajectory,
+                                           const size_array_t& nominalEventsPastTheEndIndices, s_vector_t allSsFinal,
+                                           scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedEventsPastTheEndIndices,
+                                           s_vector_array_t& allSsTrajectory);
+
+  /**
+   * Integrates the riccati equation and freely selects the time nodes for the value function.
+   *
+   * @param riccatiIntegrator [in] : Riccati integrator object
+   * @param riccatiEquation [in] : Riccati equation object
+   * @param nominalTimeTrajectory [in] : time trajectory produced in the forward rollout.
+   * @param nominalEventsPastTheEndIndices [in] : Indices into nominalTimeTrajectory to point to times right after event times
+   * @param allSsFinal [in] : Final value of the value function.
+   * @param SsNormalizedTime [out] : Time trajectory of the value function.
+   * @param SsNormalizedEventsPastTheEndIndices [out] : Indices into SsNormalizedTime to point to times right after event times
+   * @param allSsTrajectory [out] : Value function in vector format.
+   */
+  void integrateRiccatiEquationAdaptiveTime(IntegratorBase<riccati_equations_t::S_DIM_>& riccatiIntegrator,
+                                            riccati_equations_t& riccatiEquation, const scalar_array_t& nominalTimeTrajectory,
+                                            const size_array_t& nominalEventsPastTheEndIndices, s_vector_t allSsFinal,
+                                            scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedEventsPastTheEndIndices,
+                                            s_vector_array_t& allSsTrajectory);
 };
 
 }  // namespace ocs2

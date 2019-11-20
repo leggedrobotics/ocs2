@@ -733,7 +733,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
   // perform one rollout while the input correction for the type-1 constraint is considered.
-  lineSearchBase(computeISEs);
+  baselineRollout(computeISEs);
 
   lsComputeISEs_ = computeISEs;
   baselineTotalCost_ = nominalTotalCost_;
@@ -782,7 +782,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchBase(bool computeISEs) {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::baselineRollout(bool computeISEs) {
   // perform one rollout while the input correction for the type-1 constraint is considered.
   avgTimeStepFP_ = rolloutTrajectory(nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_,
                                      nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_);

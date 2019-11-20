@@ -524,13 +524,11 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   virtual void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) = 0;
 
   /**
-   * Performs one rollout while the input correction for the type-1 constraint
-   * is considered.
+   * Performs one rollout while only the input correction for the type-1 constraint is considered.
    *
-   * @param [in] computeISEs: Whether needs to calculate ISEs indices for type_1
-   * and type-2 constraints.
+   * @param [in] computeISEs: Whether needs to calculate ISEs indices for type_1 and type-2 constraints.
    */
-  virtual void lineSearchBase(bool computeISEs);
+  virtual void baselineRollout(bool computeISEs);
 
   /**
    * Defines line search task on a thread with various learning rates and choose the largest acceptable step-size.

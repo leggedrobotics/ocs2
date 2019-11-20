@@ -151,30 +151,7 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void ILQR_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
-  for (size_t i = 0; i < BASE::numPartitions_; i++) {
-    if (i < BASE::initActivePartition_ || i > BASE::finalActivePartition_) {
-      BASE::nominalControllersStock_[i].clear();
-      continue;
-    }
-
-    const auto N = BASE::SsTimeTrajectoryStock_[i].size();
-
-    BASE::nominalControllersStock_[i].timeStamp_ = BASE::SsTimeTrajectoryStock_[i];
-    BASE::nominalControllersStock_[i].gainArray_.resize(N);
-    BASE::nominalControllersStock_[i].biasArray_.resize(N);
-    BASE::nominalControllersStock_[i].deltaBiasArray_.resize(N);
-
-    // if the partition is not active
-    if (N == 0) {
-      continue;
-    }
-
-    /*
-     * perform the calculatePartitionController for partition i
-     */
-    calculatePartitionController(i);
-
-  }  // end of i loop
+  BASE::calculateController();
 
   // correcting for the last controller element of partitions
   for (size_t i = BASE::initActivePartition_; i < BASE::finalActivePartition_; i++) {
@@ -222,8 +199,76 @@ void ILQR_BASE<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerInd
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR_BASE<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal,
-                                                                  const state_vector_t& SvFinal, const eigen_scalar_t& sFinal) {
+void ILQR_BASE<STATE_DIM, INPUT_DIM>::riccatiSolverTask() {
+  size_t taskId = BASE::nextTaskId_++;  // assign task ID (atomic)
+
+  for (int i = BASE::endingIndicesRiccatiWorker_[taskId]; i >= BASE::startingIndicesRiccatiWorker_[taskId]; i--) {
+    // for inactive subsystems
+    if (i < BASE::initActivePartition_ || i > BASE::finalActivePartition_) {
+      BASE::SsTimeTrajectoryStock_[i].clear();
+      BASE::SmTrajectoryStock_[i].clear();
+      BASE::SvTrajectoryStock_[i].clear();
+      BASE::SveTrajectoryStock_[i].clear();
+      BASE::sTrajectoryStock_[i].clear();
+
+      {  // lock data
+        std::lock_guard<std::mutex> lock(riccatiSolverDataMutex_);
+
+        BASE::SmFinalStock_[i].setZero();
+        BASE::SvFinalStock_[i].setZero();
+        BASE::SveFinalStock_[i].setZero();
+        BASE::sFinalStock_[i].setZero();
+        BASE::xFinalStock_[i].setZero();
+      }
+
+    } else {
+      state_matrix_t SmFinal;
+      state_vector_t SvFinal;
+      state_vector_t SveFinal;
+      eigen_scalar_t sFinal;
+      state_vector_t xFinal;
+
+      {  // lock data
+        std::lock_guard<std::mutex> lock(riccatiSolverDataMutex_);
+
+        SmFinal = BASE::SmFinalStock_[i];
+        SvFinal = BASE::SvFinalStock_[i];
+        SveFinal = BASE::SveFinalStock_[i];
+        sFinal = BASE::sFinalStock_[i];
+        xFinal = BASE::xFinalStock_[i];
+      }
+
+      // modify the end subsystem final values based on the cached values for asynchronous run
+      if (i == BASE::endingIndicesRiccatiWorker_[taskId] && i < BASE::finalActivePartition_) {
+        const state_vector_t deltaState = BASE::nominalStateTrajectoriesStock_[i + 1].front() - xFinal;
+        sFinal += deltaState.transpose() * (0.5 * SmFinal * deltaState + SvFinal);
+        SvFinal += SmFinal * deltaState;
+      }
+
+      // solve the backward pass
+      riccatiEquationsWorker(taskId, i, SmFinal, SvFinal, sFinal);
+
+      // set the final value for next Riccati equation
+      if (i > BASE::initActivePartition_) {
+        // lock data
+        std::lock_guard<std::mutex> lock(riccatiSolverDataMutex_);
+
+        BASE::SmFinalStock_[i - 1] = BASE::SmTrajectoryStock_[i].front();
+        BASE::SvFinalStock_[i - 1] = BASE::SvTrajectoryStock_[i].front();
+        // BASE::SveFinalStock_[i - 1] = BASE::SveTrajectoryStock_[i].front();
+        BASE::sFinalStock_[i - 1] = BASE::sTrajectoryStock_[i].front();
+        BASE::xFinalStock_[i - 1] = BASE::nominalStateTrajectoriesStock_[i].front();
+      }
+    }
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR_BASE<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal,
+                                                             const state_vector_t& SvFinal, const eigen_scalar_t& sFinal) {
   const size_t N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
   const size_t NE = BASE::nominalPostEventIndicesStock_[partitionIndex].size();
 

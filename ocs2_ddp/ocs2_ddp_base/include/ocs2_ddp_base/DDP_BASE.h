@@ -333,7 +333,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * around the new nominal trajectory and improves the constraints as well as
    * the increment to the feed-forward control input.
    */
-  virtual void calculateController() = 0;
+  virtual void calculateController();
 
   /**
    * Line search on the feedforward parts of the controller. It uses the
@@ -345,7 +345,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] computeISEs: Whether lineSearch needs to calculate ISEs indices
    * for type_1 and type-2 constraints.
    */
-  virtual void lineSearch(bool computeISEs) = 0;
+  virtual void lineSearch(bool computeISEs);
 
   /**
    * Solves Riccati equations for all the partitions.
@@ -357,7 +357,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @return average time step
    */
   virtual scalar_t solveSequentialRiccatiEquations(const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
-                                                   const eigen_scalar_t& sFinal) = 0;
+                                                   const eigen_scalar_t& sFinal);
 
   /**
    * Adjust the nominal controller based on the last changes in the logic rules.
@@ -441,20 +441,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] N: number of times to run taskFunction, if N = 1 it is run in the main thread
    */
   void runParallel(std::function<void(void)> taskFunction, size_t N);
-
-  /**
-   * Computes the linearized dynamics for a particular time partition
-   *
-   * @param [in] partitionIndex: Time partition index
-   */
-  virtual void approximatePartitionLQ(size_t partitionIndex) = 0;
-
-  /**
-   * Computes the controller for a particular time partition
-   *
-   * @param partitionIndex: Time partition index
-   */
-  virtual void calculatePartitionController(size_t partitionIndex) = 0;
 
   /**
    * Calculates an LQ approximate of the optimal control problem at a given
@@ -547,6 +533,11 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   virtual void lineSearchBase(bool computeISEs);
 
   /**
+   * Defines line search task on a thread with various learning rates and choose the largest acceptable step-size.
+   */
+  void lineSearchTask();
+
+  /**
    * Line search with a specific learning rate.
    *
    * @param workerIndex
@@ -564,12 +555,17 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param lsStateTrajectoriesStock
    * @param lsInputTrajectoriesStock
    */
-  virtual void lineSearchWorker(size_t workerIndex, scalar_t learningRate, scalar_t& lsTotalCost, scalar_t& lsConstraint1ISE,
-                                scalar_t& lsConstraint1MaxNorm, scalar_t& lsConstraint2ISE, scalar_t& lsConstraint2MaxNorm,
-                                scalar_t& lsInequalityConstraintPenalty, scalar_t& lsInequalityConstraintISE,
-                                linear_controller_array_t& lsControllersStock, scalar_array2_t& lsTimeTrajectoriesStock,
-                                size_array2_t& lsPostEventIndicesStock, state_vector_array2_t& lsStateTrajectoriesStock,
-                                input_vector_array2_t& lsInputTrajectoriesStock);
+  void lineSearchWorker(size_t workerIndex, scalar_t learningRate, scalar_t& lsTotalCost, scalar_t& lsConstraint1ISE,
+                        scalar_t& lsConstraint1MaxNorm, scalar_t& lsConstraint2ISE, scalar_t& lsConstraint2MaxNorm,
+                        scalar_t& lsInequalityConstraintPenalty, scalar_t& lsInequalityConstraintISE,
+                        linear_controller_array_t& lsControllersStock, scalar_array2_t& lsTimeTrajectoriesStock,
+                        size_array2_t& lsPostEventIndicesStock, state_vector_array2_t& lsStateTrajectoriesStock,
+                        input_vector_array2_t& lsInputTrajectoriesStock);
+
+  /**
+   * Solves Riccati equations for the partitions assigned to the given thread.
+   */
+  virtual void riccatiSolverTask() = 0;
 
   /**
    * compute the merit function for given rollout
@@ -674,6 +670,10 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   ThreadPool threadPool_;
 
+  // multi-threading helper variables
+  std::atomic_size_t nextTaskId_;
+  std::atomic_size_t nextTimeIndex_;
+
   std::string algorithmName_;
 
   unsigned long long int rewindCounter_;
@@ -736,7 +736,12 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   state_vector_array2_t cachedStateTrajectoriesStock_;
   input_vector_array2_t cachedInputTrajectoriesStock_;
 
+  // line search
+  std::mutex lineSearchResultMutex_;
+  std::atomic_size_t alphaExpNext_;
+  std::vector<bool> alphaProcessed_;
   bool lsComputeISEs_;                                // whether lineSearch routine needs to calculate ISEs
+  scalar_t baselineTotalCost_;                        // the cost of the rollout for zero learning rate
   linear_controller_array_t initLScontrollersStock_;  // needed for lineSearch
 
   std::vector<EigenLinearInterpolation<state_vector_t>> nominalStateFunc_;

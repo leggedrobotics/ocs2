@@ -133,33 +133,6 @@ void SLQ<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::approximatePartitionLQ(size_t partitionIndex) {
-  size_t N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
-
-  if (N == 0) {
-    return;  // nothing to do
-  }
-
-  nextTimeIndex_ = 0;
-  nextTaskId_ = 0;
-  std::function<void(void)> task = [this, partitionIndex] {
-    int N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
-    int timeIndex;
-    size_t taskId = nextTaskId_++;  // assign task ID (atomic)
-
-    // get next time index is atomic
-    while ((timeIndex = nextTimeIndex_++) < N) {
-      // execute approximateLQ for the given partition and time node index
-      approximateLQWorker(taskId, partitionIndex, timeIndex);
-    }
-  };
-  BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQ<STATE_DIM, INPUT_DIM>::approximateLQWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) {
   // unconstrained LQ problem
   BASE::approximateUnconstrainedLQWorker(workerIndex, partitionIndex, timeIndex);
@@ -388,70 +361,6 @@ void SLQ<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t time,
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::calculateController() {
-  for (size_t i = 0; i < BASE::numPartitions_; i++) {
-    if (i < BASE::initActivePartition_ || i > BASE::finalActivePartition_) {
-      BASE::nominalControllersStock_[i].clear();
-      continue;
-    }
-
-    const size_t N = BASE::SsTimeTrajectoryStock_[i].size();
-
-    BASE::nominalControllersStock_[i].timeStamp_ = BASE::SsTimeTrajectoryStock_[i];
-    BASE::nominalControllersStock_[i].gainArray_.resize(N);
-    BASE::nominalControllersStock_[i].biasArray_.resize(N);
-    BASE::nominalControllersStock_[i].deltaBiasArray_.resize(N);
-
-    // if the partition is not active
-    if (N == 0) {
-      continue;
-    }
-
-    // initialize interpolating function
-    for (size_t j = 0; j < BASE::ddpSettings_.nThreads_; j++) {
-      // functions for controller
-      BASE::nominalStateFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::nominalStateTrajectoriesStock_[i]));
-      BASE::nominalInputFunc_[j].setData(&(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::nominalInputTrajectoriesStock_[i]));
-    }  // end of j loop
-
-    /*
-     * perform the calculatePartitionController for partition i
-     */
-    calculatePartitionController(i);
-
-  }  // end of i loop
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::calculatePartitionController(size_t partitionIndex) {
-  size_t N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
-
-  if (N == 0) {
-    return;  // nothing to do
-  }
-
-  nextTimeIndex_ = 0;
-  nextTaskId_ = 0;
-  std::function<void(void)> task = [this, partitionIndex] {
-    int N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
-    int timeIndex;
-    size_t taskId = nextTaskId_++;  // assign task ID (atomic)
-
-    // get next time index (atomic)
-    while ((timeIndex = nextTimeIndex_++) < N) {
-      calculateControllerWorker(taskId, partitionIndex, timeIndex);
-    }
-  };
-  BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQ<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) {
   const auto i = partitionIndex;
   const auto k = timeIndex;
@@ -469,9 +378,9 @@ void SLQ<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, si
   input_matrix_t DmProjected;
 
   // interpolate
-  const auto indexAlpha = BASE::nominalStateFunc_[workerIndex].interpolate(time, nominalState);
-  BASE::nominalInputFunc_[workerIndex].interpolate(indexAlpha, nominalInput);
-
+  const auto indexAlpha = EigenLinearInterpolation<state_vector_t>::interpolate(
+      time, nominalState, &(BASE::nominalTimeTrajectoriesStock_[i]), &(BASE::nominalStateTrajectoriesStock_[i]));
+  EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, nominalInput, &(BASE::nominalInputTrajectoriesStock_[i]));
   EigenLinearInterpolation<state_input_matrix_t>::interpolate(indexAlpha, Bm, &(BASE::BmTrajectoryStock_[i]));
   EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, Pm, &(BASE::PmTrajectoryStock_[i]));
   EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, Rv, &(BASE::RvTrajectoryStock_[i]));
@@ -517,199 +426,10 @@ void SLQ<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, si
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
-  // perform one rollout while the input correction for the type-1 constraint is considered.
-  BASE::lineSearchBase(computeISEs);
-
-  BASE::lsComputeISEs_ = computeISEs;
-  baselineTotalCost_ = BASE::nominalTotalCost_;
-  BASE::learningRateStar_ = 0.0;                                   // input correction learning rate is zero
-  BASE::initLScontrollersStock_ = BASE::nominalControllersStock_;  // this will serve to init the workers
-
-  // if no line search
-  if (BASE::ddpSettings_.maxLearningRate_ < OCS2NumericTraits<scalar_t>::limitEpsilon()) {
-    // clear the feedforward increments
-    for (size_t i = 0; i < BASE::numPartitions_; i++) {
-      BASE::nominalControllersStock_[i].deltaBiasArray_.clear();
-    }
-    // display
-    if (BASE::ddpSettings_.displayInfo_) {
-      std::cerr << "The chosen learningRate is: " << BASE::learningRateStar_ << std::endl;
-    }
-
-    return;
-  }
-
-  const auto maxNumOfLineSearches =
-      static_cast<size_t>(std::log(BASE::ddpSettings_.minLearningRate_ / BASE::ddpSettings_.maxLearningRate_) /
-                              std::log(BASE::ddpSettings_.lineSearchContractionRate_) +
-                          1);
-
-  alphaExpNext_ = 0;
-  alphaProcessed_ = std::vector<bool>(maxNumOfLineSearches, false);
-
-  nextTaskId_ = 0;
-  std::function<void(void)> task = [this] { executeLineSearchWorker(); };
-  BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
-
-  // revitalize all integrators
-  event_handler_t::deactivateKillIntegration();
-
-  // clear the feedforward increments
-  for (size_t i = 0; i < BASE::numPartitions_; i++) {
-    BASE::nominalControllersStock_[i].deltaBiasArray_.clear();
-  }
-
-  // display
-  if (BASE::ddpSettings_.displayInfo_) {
-    std::cerr << "The chosen learningRate is: " + std::to_string(BASE::learningRateStar_) << std::endl;
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::executeLineSearchWorker() {
-  size_t taskId = nextTaskId_++;  // assign task ID (atomic)
-
-  // local search forward simulation's variables
-  scalar_t lsTotalCost;
-  scalar_t lsConstraint1ISE, lsConstraint2ISE, lsInequalityConstraintPenalty, lsInequalityConstraintISE;
-  scalar_t lsConstraint1MaxNorm, lsConstraint2MaxNorm;
-  linear_controller_array_t lsControllersStock(BASE::numPartitions_);
-  scalar_array2_t lsTimeTrajectoriesStock(BASE::numPartitions_);
-  size_array2_t lsPostEventIndicesStock(BASE::numPartitions_);
-  state_vector_array2_t lsStateTrajectoriesStock(BASE::numPartitions_);
-  input_vector_array2_t lsInputTrajectoriesStock(BASE::numPartitions_);
-
-  while (true) {
-    size_t alphaExp = alphaExpNext_++;
-    scalar_t learningRate = BASE::maxLearningRate_ * std::pow(BASE::ddpSettings_.lineSearchContractionRate_, alphaExp);
-
-    /*
-     * finish this thread's task since the learning rate is less than the minimum learning rate.
-     * This means that the all the line search tasks are already processed or they are under
-     * process in other threads.
-     */
-    if (!numerics::almost_ge(learningRate, BASE::ddpSettings_.minLearningRate_)) {
-      break;
-    }
-
-    // skip if the current learning rate is less than the best candidate
-    if (learningRate < BASE::learningRateStar_) {
-      // display
-      if (BASE::ddpSettings_.displayInfo_) {
-        std::string linesearchDisplay;
-        linesearchDisplay = "\t [Thread " + std::to_string(taskId) + "] rollout with learningRate " + std::to_string(learningRate) +
-                            " is skipped: A larger learning rate is already found!";
-        BASE::printString(linesearchDisplay);
-      }
-      break;
-    }
-
-    // do a line search
-    lsControllersStock = BASE::initLScontrollersStock_;
-    BASE::lineSearchWorker(taskId, learningRate, lsTotalCost, lsConstraint1ISE, lsConstraint1MaxNorm, lsConstraint2ISE,
-                           lsConstraint2MaxNorm, lsInequalityConstraintPenalty, lsInequalityConstraintISE, lsControllersStock,
-                           lsTimeTrajectoriesStock, lsPostEventIndicesStock, lsStateTrajectoriesStock, lsInputTrajectoriesStock);
-
-    bool terminateLinesearchTasks = false;
-    {
-      std::lock_guard<std::mutex> lock(lineSearchResultMutex_);
-
-      /*
-       * based on the "greedy learning rate selection" policy:
-       * cost should be better than the baseline cost but learning rate should
-       * be as high as possible. This is equivalent to a single core line search.
-       */
-      if (lsTotalCost < (baselineTotalCost_ * (1 - 1e-3 * learningRate)) && learningRate > BASE::learningRateStar_) {
-        BASE::nominalTotalCost_ = lsTotalCost;
-        BASE::learningRateStar_ = learningRate;
-        BASE::nominalConstraint1ISE_ = lsConstraint1ISE;
-        BASE::nominalConstraint1MaxNorm_ = lsConstraint1MaxNorm;
-        BASE::nominalConstraint2ISE_ = lsConstraint2ISE;
-        BASE::nominalConstraint2MaxNorm_ = lsConstraint2MaxNorm;
-        BASE::nominalInequalityConstraintPenalty_ = lsInequalityConstraintPenalty;
-        BASE::nominalInequalityConstraintISE_ = lsInequalityConstraintISE;
-
-        BASE::nominalControllersStock_.swap(lsControllersStock);
-        BASE::nominalTimeTrajectoriesStock_.swap(lsTimeTrajectoriesStock);
-        BASE::nominalPostEventIndicesStock_.swap(lsPostEventIndicesStock);
-        BASE::nominalStateTrajectoriesStock_.swap(lsStateTrajectoriesStock);
-        BASE::nominalInputTrajectoriesStock_.swap(lsInputTrajectoriesStock);
-
-        // whether to stop all other thread.
-        terminateLinesearchTasks = true;
-        for (size_t i = 0; i < alphaExp; i++) {
-          if (!alphaProcessed_[i]) {
-            terminateLinesearchTasks = false;
-            break;
-          }
-        }  // end of i loop
-
-      }  // end of if
-
-      alphaProcessed_[alphaExp] = true;
-
-    }  // end lock
-
-    // kill other ongoing line search tasks
-    if (terminateLinesearchTasks) {
-      event_handler_t::activateKillIntegration();  // kill all integrators
-      if (BASE::ddpSettings_.displayInfo_) {
-        BASE::printString("\t LS: interrupt other rollout's integrations.");
-      }
-      break;
-    }
-
-  }  // end of while loop
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-typename SLQ<STATE_DIM, INPUT_DIM>::scalar_t SLQ<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(const state_matrix_t& SmFinal,
-                                                                                                        const state_vector_t& SvFinal,
-                                                                                                        const eigen_scalar_t& sFinal) {
-  BASE::SmFinalStock_[BASE::finalActivePartition_] = SmFinal;
-  BASE::SvFinalStock_[BASE::finalActivePartition_] = SvFinal;
-  BASE::SveFinalStock_[BASE::finalActivePartition_].setZero();
-  BASE::sFinalStock_[BASE::finalActivePartition_] = sFinal;
-
-  // solve it sequentially for the first time when useParallelRiccatiSolverFromInitItr_ is false
-  if (BASE::iteration_ == 0 && !BASE::useParallelRiccatiSolverFromInitItr_) {
-    nextTaskId_ = 0;
-    for (int i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
-      executeRiccatiSolver();
-    }
-  }
-  // solve it in parallel if useParallelRiccatiSolverFromInitItr_ is true
-  else {
-    nextTaskId_ = 0;
-    std::function<void(void)> task = [this] { executeRiccatiSolver(); };
-    BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
-  }
-
-  // total number of call
-  size_t numSteps = 0;
-  for (size_t i = BASE::initActivePartition_; i <= BASE::finalActivePartition_; i++) {
-    numSteps += BASE::SsTimeTrajectoryStock_[i].size();
-  }
-
-  // average time step
-  return (BASE::finalTime_ - BASE::initTime_) / numSteps;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::executeRiccatiSolver() {
-  size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+void SLQ<STATE_DIM, INPUT_DIM>::riccatiSolverTask() {
+  size_t taskId = BASE::nextTaskId_++;  // assign task ID (atomic)
 
   for (int i = BASE::endingIndicesRiccatiWorker_[taskId]; i >= BASE::startingIndicesRiccatiWorker_[taskId]; i--) {
     // for inactive subsystems
@@ -757,7 +477,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeRiccatiSolver() {
       }
 
       // solve the backward pass
-      solveSlqRiccatiEquationsWorker(taskId, i, SmFinal, SvFinal, sFinal, SveFinal);
+      constrainedRiccatiEquationsWorker(taskId, i, SmFinal, SvFinal, sFinal, SveFinal);
 
       // set the final value for next Riccati equation
       if (i > BASE::initActivePartition_) {
@@ -778,14 +498,14 @@ void SLQ<STATE_DIM, INPUT_DIM>::executeRiccatiSolver() {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::solveSlqRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal,
-                                                               const state_vector_t& SvFinal, const eigen_scalar_t& sFinal,
-                                                               const state_vector_t& SveFinal) {
+void SLQ<STATE_DIM, INPUT_DIM>::constrainedRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal,
+                                                                  const state_vector_t& SvFinal, const eigen_scalar_t& sFinal,
+                                                                  const state_vector_t& SveFinal) {
   // solve Sm, Sv, s
-  solveRiccatiEquationsWorker(workerIndex, partitionIndex, SmFinal, SvFinal, sFinal);
+  riccatiEquationsWorker(workerIndex, partitionIndex, SmFinal, SvFinal, sFinal);
 
   // Solve Sve
-  solveErrorRiccatiEquationWorker(workerIndex, partitionIndex, SveFinal);
+  errorRiccatiEquationWorker(workerIndex, partitionIndex, SveFinal);
 
   // testing the numerical stability of the Riccati equations
   int N = BASE::SsTimeTrajectoryStock_[partitionIndex].size();
@@ -862,8 +582,8 @@ void SLQ<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::solveRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal,
-                                                            const state_vector_t& SvFinal, const eigen_scalar_t& sFinal) {
+void SLQ<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal,
+                                                       const state_vector_t& SvFinal, const eigen_scalar_t& sFinal) {
   // set data for Riccati equations
   riccatiEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
   riccatiEquationsPtrStock_[workerIndex]->setData(
@@ -1039,7 +759,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::integrateRiccatiEquationAdaptiveTime(
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::solveErrorRiccatiEquationWorker(size_t workerIndex, size_t partitionIndex, const state_vector_t& SveFinal) {
+void SLQ<STATE_DIM, INPUT_DIM>::errorRiccatiEquationWorker(size_t workerIndex, size_t partitionIndex, const state_vector_t& SveFinal) {
   // Const partition containers
   const auto& nominalTimeTrajectory = BASE::nominalTimeTrajectoriesStock_[partitionIndex];
   const auto& SsNormalizedTime = BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex];

@@ -590,8 +590,21 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
         linearQuadraticApproximatorPtrStock_[j]->costFunction().setCostDesiredTrajectories(this->getCostDesiredTrajectories());
       }  // end of j loop
 
-      // perform the approximateSubsystemLQ for partition i
-      approximatePartitionLQ(i);
+      // perform the approximateLQWorker for partition i
+      nextTimeIndex_ = 0;
+      nextTaskId_ = 0;
+      std::function<void(void)> task = [this, i] {
+        int N = nominalTimeTrajectoriesStock_[i].size();
+        int timeIndex;
+        size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+
+        // get next time index is atomic
+        while ((timeIndex = nextTimeIndex_++) < N) {
+          // execute approximateLQ for the given partition and time node index
+          approximateLQWorker(taskId, i, timeIndex);
+        }
+      };
+      runParallel(task, ddpSettings_.nThreads_);
     }
 
   }  // end of i loop
@@ -677,6 +690,98 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateEventsLQWorker(size_t workerInde
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
+  for (size_t i = 0; i < numPartitions_; i++) {
+    if (i < initActivePartition_ || i > finalActivePartition_) {
+      nominalControllersStock_[i].clear();
+      continue;
+    }
+
+    const auto N = SsTimeTrajectoryStock_[i].size();
+
+    nominalControllersStock_[i].timeStamp_ = SsTimeTrajectoryStock_[i];
+    nominalControllersStock_[i].gainArray_.resize(N);
+    nominalControllersStock_[i].biasArray_.resize(N);
+    nominalControllersStock_[i].deltaBiasArray_.resize(N);
+
+    // if the partition is not active
+    if (N == 0) {
+      continue;
+    }
+
+    // perform the calculateControllerWorker for partition i
+    nextTimeIndex_ = 0;
+    nextTaskId_ = 0;
+    std::function<void(void)> task = [this, i] {
+      int N = SsTimeTrajectoryStock_[i].size();
+      int timeIndex;
+      size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+
+      // get next time index (atomic)
+      while ((timeIndex = nextTimeIndex_++) < N) {
+        calculateControllerWorker(taskId, i, timeIndex);
+      }
+    };
+    runParallel(task, ddpSettings_.nThreads_);
+
+  }  // end of i loop
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
+  // perform one rollout while the input correction for the type-1 constraint is considered.
+  lineSearchBase(computeISEs);
+
+  lsComputeISEs_ = computeISEs;
+  baselineTotalCost_ = nominalTotalCost_;
+  learningRateStar_ = 0.0;                             // input correction learning rate is zero
+  initLScontrollersStock_ = nominalControllersStock_;  // this will serve to init the workers
+
+  // if no line search
+  if (ddpSettings_.maxLearningRate_ < OCS2NumericTraits<scalar_t>::limitEpsilon()) {
+    // clear the feedforward increments
+    for (size_t i = 0; i < numPartitions_; i++) {
+      nominalControllersStock_[i].deltaBiasArray_.clear();
+    }
+    // display
+    if (ddpSettings_.displayInfo_) {
+      std::cerr << "The chosen learningRate is: " << learningRateStar_ << std::endl;
+    }
+
+    return;
+  }
+
+  const auto maxNumOfLineSearches = static_cast<size_t>(
+      std::log(ddpSettings_.minLearningRate_ / ddpSettings_.maxLearningRate_) / std::log(ddpSettings_.lineSearchContractionRate_) + 1);
+
+  alphaExpNext_ = 0;
+  alphaProcessed_ = std::vector<bool>(maxNumOfLineSearches, false);
+
+  nextTaskId_ = 0;
+  std::function<void(void)> task = [this] { lineSearchTask(); };
+  runParallel(task, ddpSettings_.nThreads_);
+
+  // revitalize all integrators
+  event_handler_t::deactivateKillIntegration();
+
+  // clear the feedforward increments
+  for (size_t i = 0; i < numPartitions_; i++) {
+    nominalControllersStock_[i].deltaBiasArray_.clear();
+  }
+
+  // display
+  if (ddpSettings_.displayInfo_) {
+    std::cerr << "The chosen learningRate is: " + std::to_string(learningRateStar_) << std::endl;
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchBase(bool computeISEs) {
   // perform one rollout while the input correction for the type-1 constraint is considered.
   avgTimeStepFP_ = rolloutTrajectory(nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_,
@@ -727,6 +832,106 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchBase(bool computeISEs) {
     std::cerr << std::endl;
     std::cerr << "\t forward pass average time step: " << avgTimeStepFP_ * 1e+3 << " [ms]." << std::endl;
   }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
+  size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+
+  // local search forward simulation's variables
+  scalar_t lsTotalCost;
+  scalar_t lsConstraint1ISE, lsConstraint2ISE, lsInequalityConstraintPenalty, lsInequalityConstraintISE;
+  scalar_t lsConstraint1MaxNorm, lsConstraint2MaxNorm;
+  linear_controller_array_t lsControllersStock(numPartitions_);
+  scalar_array2_t lsTimeTrajectoriesStock(numPartitions_);
+  size_array2_t lsPostEventIndicesStock(numPartitions_);
+  state_vector_array2_t lsStateTrajectoriesStock(numPartitions_);
+  input_vector_array2_t lsInputTrajectoriesStock(numPartitions_);
+
+  while (true) {
+    size_t alphaExp = alphaExpNext_++;
+    scalar_t learningRate = maxLearningRate_ * std::pow(ddpSettings_.lineSearchContractionRate_, alphaExp);
+
+    /*
+     * finish this thread's task since the learning rate is less than the minimum learning rate.
+     * This means that the all the line search tasks are already processed or they are under
+     * process in other threads.
+     */
+    if (!numerics::almost_ge(learningRate, ddpSettings_.minLearningRate_)) {
+      break;
+    }
+
+    // skip if the current learning rate is less than the best candidate
+    if (learningRate < learningRateStar_) {
+      // display
+      if (ddpSettings_.displayInfo_) {
+        std::string linesearchDisplay;
+        linesearchDisplay = "\t [Thread " + std::to_string(taskId) + "] rollout with learningRate " + std::to_string(learningRate) +
+                            " is skipped: A larger learning rate is already found!";
+        BASE::printString(linesearchDisplay);
+      }
+      break;
+    }
+
+    // do a line search
+    lsControllersStock = initLScontrollersStock_;
+    lineSearchWorker(taskId, learningRate, lsTotalCost, lsConstraint1ISE, lsConstraint1MaxNorm, lsConstraint2ISE, lsConstraint2MaxNorm,
+                     lsInequalityConstraintPenalty, lsInequalityConstraintISE, lsControllersStock, lsTimeTrajectoriesStock,
+                     lsPostEventIndicesStock, lsStateTrajectoriesStock, lsInputTrajectoriesStock);
+
+    bool terminateLinesearchTasks = false;
+    {
+      std::lock_guard<std::mutex> lock(lineSearchResultMutex_);
+
+      /*
+       * based on the "greedy learning rate selection" policy:
+       * cost should be better than the baseline cost but learning rate should
+       * be as high as possible. This is equivalent to a single core line search.
+       */
+      if (lsTotalCost < (baselineTotalCost_ * (1 - 1e-3 * learningRate)) && learningRate > learningRateStar_) {
+        nominalTotalCost_ = lsTotalCost;
+        learningRateStar_ = learningRate;
+        nominalConstraint1ISE_ = lsConstraint1ISE;
+        nominalConstraint1MaxNorm_ = lsConstraint1MaxNorm;
+        nominalConstraint2ISE_ = lsConstraint2ISE;
+        nominalConstraint2MaxNorm_ = lsConstraint2MaxNorm;
+        nominalInequalityConstraintPenalty_ = lsInequalityConstraintPenalty;
+        nominalInequalityConstraintISE_ = lsInequalityConstraintISE;
+
+        nominalControllersStock_.swap(lsControllersStock);
+        nominalTimeTrajectoriesStock_.swap(lsTimeTrajectoriesStock);
+        nominalPostEventIndicesStock_.swap(lsPostEventIndicesStock);
+        nominalStateTrajectoriesStock_.swap(lsStateTrajectoriesStock);
+        nominalInputTrajectoriesStock_.swap(lsInputTrajectoriesStock);
+
+        // whether to stop all other thread.
+        terminateLinesearchTasks = true;
+        for (size_t i = 0; i < alphaExp; i++) {
+          if (!alphaProcessed_[i]) {
+            terminateLinesearchTasks = false;
+            break;
+          }
+        }  // end of i loop
+
+      }  // end of if
+
+      alphaProcessed_[alphaExp] = true;
+
+    }  // end lock
+
+    // kill other ongoing line search tasks
+    if (terminateLinesearchTasks) {
+      event_handler_t::activateKillIntegration();  // kill all integrators
+      if (ddpSettings_.displayInfo_) {
+        BASE::printString("\t LS: interrupt other rollout's integrations.");
+      }
+      break;
+    }
+
+  }  // end of while loop
 }
 
 /******************************************************************************************************/
@@ -814,6 +1019,41 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t workerIndex, scalar
                         " is terminated: " + error.what());
     }
   }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(
+    const state_matrix_t& SmFinal, const state_vector_t& SvFinal, const eigen_scalar_t& sFinal) {
+  SmFinalStock_[finalActivePartition_] = SmFinal;
+  SvFinalStock_[finalActivePartition_] = SvFinal;
+  SveFinalStock_[finalActivePartition_].setZero();
+  sFinalStock_[finalActivePartition_] = sFinal;
+
+  // solve it sequentially for the first time when useParallelRiccatiSolverFromInitItr_ is false
+  if (iteration_ == 0 && !useParallelRiccatiSolverFromInitItr_) {
+    nextTaskId_ = 0;
+    for (int i = 0; i < ddpSettings_.nThreads_; i++) {
+      riccatiSolverTask();
+    }
+  }
+  // solve it in parallel if useParallelRiccatiSolverFromInitItr_ is true
+  else {
+    nextTaskId_ = 0;
+    std::function<void(void)> task = [this] { riccatiSolverTask(); };
+    runParallel(task, ddpSettings_.nThreads_);
+  }
+
+  // total number of call
+  size_t numSteps = 0;
+  for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
+    numSteps += SsTimeTrajectoryStock_[i].size();
+  }
+
+  // average time step
+  return (finalTime_ - initTime_) / numSteps;
 }
 
 /******************************************************************************************************/

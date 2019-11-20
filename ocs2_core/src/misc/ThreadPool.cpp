@@ -1,3 +1,4 @@
+#include <ocs2_core/misc/SetThreadPriority.h>
 #include <ocs2_core/misc/ThreadPool.h>
 
 #define DEBUG_MSG(...)         \
@@ -10,10 +11,11 @@ namespace ocs2 {
 /**************************************************************************************************/
 /**************************************************************************************************/
 /**************************************************************************************************/
-ThreadPool::ThreadPool(size_t nThreads) : nextTaskId_(0), stop_(false), debug_(false) {
+ThreadPool::ThreadPool(size_t nThreads, int priority) : nextTaskId_(0), stop_(false), debug_(false) {
   workerThreads_.reserve(nThreads);
   for (size_t i = 0; i < nThreads; i++) {
     workerThreads_.push_back(std::thread(&ThreadPool::worker, this, i));
+    setThreadPriority(priority, workerThreads_.back());
   }
 }
 

@@ -190,10 +190,9 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     while(true){ //Keeps looping until end time condition is fulfilled, after which the loop is broken
         try
         {
-    		dynamicsIntegratorPtr_->integrate(beginState, t0, t1 , stateTrajectory,
+        	dynamicsIntegratorPtr_->integrate(beginState, t0, t1 , stateTrajectory,
                                               timeTrajectory, BASE::settings().minTimeStep_, BASE::settings().absTolODE_,
-                                              BASE::settings().relTolODE_, maxNumSteps, true);
-        }
+                                              BASE::settings().relTolODE_, maxNumSteps, true);        }
         catch(const size_t& eventID)
         { 	eventID_m = eventID;
     		triggered = true;
@@ -231,21 +230,21 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
         bool accuracy_condition = guard_accuracy_condition || time_accuracy_condition;
 
         if (accuracy_condition) { // If Sufficiently accurate crossing location has been determined
-    		eventsPastTheEndIndeces.push_back(stateTrajectory.size());
     		// jump map
     		beginState = state_query;
     		t0 = time_query;
     		t1 = tend;
 
-    		if(timeTrajectory.back()!=t0)// if last element was outside guard surface,
-    		{			 				// but within tolerance it needs to be included with the trajectory
+    		if(timeTrajectory.back()!=time_query)// if last element was outside guard surface,
+    		{// but within tolerance it needs to be included with the trajectory
     			stateTrajectory.push_back(beginState);
-    			timeTrajectory.push_back(t0);
-    			inputTrajectory.emplace_back(systemDynamicsPtr_->controllerPtr()->computeInput(timeTrajectory.back(), stateTrajectory.back()));
+    			timeTrajectory.push_back(time_query);
+    			inputTrajectory.emplace_back(systemDynamicsPtr_->controllerPtr()->computeInput(timeTrajectory[k_u], stateTrajectory[k_u]));
     			k_u++;
     		}
 
-    		systemDynamicsPtr_->computeJumpMap(time_query, state_query, beginState);
+    		systemDynamicsPtr_->computeJumpMap(t0, state_query, beginState);
+    		eventsPastTheEndIndeces.push_back(stateTrajectory.size());
 
     		dynamic_vector_t GuardSurfaces_cross;
     		systemDynamicsPtr_->computeGuardSurfaces(t0,beginState,GuardSurfaces_cross);
@@ -255,7 +254,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       		logicRules->appendModeSequence(eventID_m,t0);
       		}
 
-    		refining = false;
+      		refining = false;
     		local_its = 0;
         }
         else {// Otherwise keep or start refining
@@ -292,10 +291,15 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
      // check for the numerical stability
     this->checkNumericalStability(controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
-//  std::cout << "###########"<<std::endl;
-//  std::cout << "Rollout finished after " << global_its << " Iterations"<<std::endl;
-//  std::cout << "###########"<<std::endl;
+   std::cout << "###########"<<std::endl;
+   std::cout << "Rollout finished after " << global_its << " Iterations"<<std::endl;
+   std::cout << "###########"<<std::endl;
 
+   for(int i = 0; i< timeTrajectory.size(); i++)
+   {
+		std::cout<<i<<";"<<stateTrajectory[i][2]<<";"<<0<<";"<<timeTrajectory[i]<<";"<<stateTrajectory[i][0]<<";"<<0<<";"<<stateTrajectory[i][1]<<";"<<0<<";"<<inputTrajectory[i]<<";"<<0<<std::endl;
+
+   }
 
     return stateTrajectory.back();
   } //end of function

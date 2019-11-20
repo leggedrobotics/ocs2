@@ -166,8 +166,8 @@ TEST(StateRolloutTests, Case3)
 	scalar_t t1 = 50;
 	// Initial State
 	state_vector_t initState(2,0);
-	initState[0] = 1;
-	initState[1] = 1;
+	initState[0] = 5;
+	initState[1] = 2;
 	// Controller (time constant zero controller)
 	scalar_array_t timestamp(1,t0);
 	input_vector_t bias;
@@ -175,7 +175,7 @@ TEST(StateRolloutTests, Case3)
 	input_vector_array_t bias_array(1,bias);
 
 	input_state_matrix_t gain;
-	gain<< 0.5,0;
+	gain<< 0,0;
 	input_state_matrix_array_t gain_array(1,gain);
 	ocs2::LinearController<2,1> Control(timestamp,bias_array,gain_array);
 	ocs2::LinearController<2,1>* Controller = &Control;

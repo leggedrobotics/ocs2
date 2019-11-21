@@ -11,7 +11,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
     robot_state_publisher
     visualization_msgs
     ocs2_core
-    ocs2_slq
+    ocs2_ddp
     ocs2_ocs2
     ocs2_mpc
     ocs2_comm_interfaces

@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/test/EXP0.h>
 
-#include <ocs2_slq/SLQ.h>
+#include <ocs2_ddp/SLQ.h>
 
 #include <ocs2_ocs2/GDDP.h>
 

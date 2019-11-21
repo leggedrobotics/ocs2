@@ -33,49 +33,41 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
-#include <ocs2_oc/test/EXP1.h>
 
 #include <ocs2_ddp/SLQ.h>
 
-#include <ocs2_ocs2/GDDP.h>
+#include <ocs2_oc/test/EXP1.h>
 
 using namespace ocs2;
 
 enum { STATE_DIM = 2, INPUT_DIM = 1 };
 
-TEST(exp1_gddp_test, optimum_gradient_test) {
+TEST(exp1_slq_test, exp1_slq_test) {
+  using slq_t = SLQ<STATE_DIM, INPUT_DIM>;
+
   SLQ_Settings slqSettings;
-  slqSettings.ddpSettings_.displayInfo_ = false;
-  slqSettings.ddpSettings_.displayShortSummary_ = true;
-  slqSettings.preComputeRiccatiTerms_ = true;
   slqSettings.useNominalTimeForBackwardPass_ = true;
+  slqSettings.ddpSettings_.displayInfo_ = true;
+  slqSettings.ddpSettings_.displayShortSummary_ = true;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
-  slqSettings.ddpSettings_.nThreads_ = 1;  // single threaded
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
   slqSettings.ddpSettings_.noStateConstraints_ = true;
   slqSettings.ddpSettings_.checkNumericalStability_ = false;
   slqSettings.ddpSettings_.absTolODE_ = 1e-10;
   slqSettings.ddpSettings_.relTolODE_ = 1e-7;
   slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
+  slqSettings.ddpSettings_.useFeedbackPolicy_ = false;
+  slqSettings.ddpSettings_.debugPrintRollout_ = false;
 
   Rollout_Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;
   rolloutSettings.relTolODE_ = 1e-7;
   rolloutSettings.maxNumStepsPerSecond_ = 10000;
 
-  GDDP_Settings gddpSettings;
-  gddpSettings.displayInfo_ = true;
-  gddpSettings.checkNumericalStability_ = false;
-  gddpSettings.nThreads_ = 3;
-  gddpSettings.useLQForDerivatives_ = false;
-  gddpSettings.absTolODE_ = 1e-10;
-  gddpSettings.relTolODE_ = 1e-7;
-  gddpSettings.maxNumStepsPerSecond_ = 10000;
-
-  // logic rule
-  std::vector<double> optimumEventTimes{0.2262, 1.0176};
+  // switching times
+  std::vector<double> eventTimes{0.2262, 1.0176};
   std::vector<size_t> subsystemsSequence{0, 1, 2};
-  std::shared_ptr<EXP1_LogicRules> logicRules(new EXP1_LogicRules(optimumEventTimes, subsystemsSequence));
+  std::shared_ptr<EXP1_LogicRules> logicRules(new EXP1_LogicRules(eventTimes, subsystemsSequence));
 
   double startTime = 0.0;
   double finalTime = 3.0;
@@ -83,16 +75,16 @@ TEST(exp1_gddp_test, optimum_gradient_test) {
   // partitioning times
   std::vector<double> partitioningTimes;
   partitioningTimes.push_back(startTime);
-  partitioningTimes.push_back(1.0);
-  partitioningTimes.push_back(2.0);
+  partitioningTimes.push_back(eventTimes[0]);
+  partitioningTimes.push_back(eventTimes[1]);
   partitioningTimes.push_back(finalTime);
 
-  Eigen::Vector2d initState(2.0, 3.0);
+  EXP1_System::state_vector_t initState(2.0, 3.0);
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
-  // system dynamics
+  // system rollout
   EXP1_System systemDynamics(logicRules);
   TimeTriggeredRollout<STATE_DIM, INPUT_DIM> timeTriggeredRollout(systemDynamics, rolloutSettings);
 
@@ -113,50 +105,71 @@ TEST(exp1_gddp_test, optimum_gradient_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
-  // SLQ - single tread version
-  SLQ<STATE_DIM, INPUT_DIM> slqST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
-                                  slqSettings, logicRules);
-  // SLQ data collector
-  SLQ_DataCollector<STATE_DIM, INPUT_DIM> slqDataCollector(&timeTriggeredRollout, &systemDerivative, &systemConstraint,
-                                                           &systemCostFunction);
-  // GDDP
-  GDDP<STATE_DIM, INPUT_DIM> gddp(gddpSettings);
+  // SLQ - single core version
+  slqSettings.ddpSettings_.nThreads_ = 1;
+  slq_t slqST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings,
+              logicRules);
 
-  // run SLQ
+  slqSettings.ddpSettings_.nThreads_ = 3;
+  // SLQ - multi-threaded version
+  slq_t slqMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings,
+              logicRules);
+
+  // run single-threaded SLQ
+  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {
+    std::cerr << "\n>>> single-core SLQ" << std::endl;
+  }
   slqST.run(startTime, initState, finalTime, partitioningTimes);
-  slqDataCollector.collect(&slqST);
 
-  // cost
-  double costFunction, constraint1ISE, constraint2ISE;
-  slqST.getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
-
-  // run GDDP using LQ
-  gddp.settings().useLQForDerivatives_ = true;
-  gddp.run(optimumEventTimes, &slqDataCollector);
-  // cost derivative
-  Eigen::Matrix<double, 2, 1> costFunctionDerivative_LQ;
-  gddp.getCostFuntionDerivative(costFunctionDerivative_LQ);
-
-  // run GDDP using BVP
-  gddp.settings().useLQForDerivatives_ = false;
-  gddp.run(optimumEventTimes, &slqDataCollector);
-  // cost derivative
-  Eigen::Matrix<double, 2, 1> costFunctionDerivative_BVP;
-  gddp.getCostFuntionDerivative(costFunctionDerivative_BVP);
+  // run multi-threaded SLQ
+  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {
+    std::cerr << "\n>>> multi-core SLQ" << std::endl;
+  }
+  slqMT.run(startTime, initState, finalTime, partitioningTimes);
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
-  std::cerr << "### Optimum cost is: " << costFunction << "\n";
-  std::cerr << "### Optimum event times are:            ["
-            << Eigen::Map<Eigen::VectorXd>(optimumEventTimes.data(), optimumEventTimes.size()).transpose() << "]\n";
-  std::cerr << "### Optimum cost derivative LQ method:  [" << costFunctionDerivative_LQ.transpose() << "]\n";
-  std::cerr << "### Optimum cost derivative BVP method: [" << costFunctionDerivative_BVP.transpose() << "]\n";
+  // get solution
+  SLQ<STATE_DIM, INPUT_DIM>::primal_solution_t solutionST = slqST.primalSolution(finalTime);
+  SLQ<STATE_DIM, INPUT_DIM>::primal_solution_t solutionMT = slqMT.primalSolution(finalTime);
 
-  ASSERT_LT(costFunctionDerivative_LQ.norm() / fabs(costFunction), 50 * slqSettings.ddpSettings_.minRelCost_ /*0.05*/)
-      << "MESSAGE: GDDP failed in the EXP1's cost derivative LQ test!";
-  ASSERT_LT(costFunctionDerivative_BVP.norm() / fabs(costFunction), 50 * slqSettings.ddpSettings_.minRelCost_ /*0.05*/)
-      << "MESSAGE: GDDP failed in the EXP1's cost derivative BVP test!";
+  // get performance indices
+  double totalCostST, totalCostMT;
+  double constraint1ISE_ST, constraint1ISE_MT;
+  double constraint2ISE_ST, constraint2ISE_MT;
+  slqST.getPerformanceIndeces(totalCostST, constraint1ISE_ST, constraint2ISE_ST);
+  slqMT.getPerformanceIndeces(totalCostMT, constraint1ISE_MT, constraint2ISE_MT);
+
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+  const double expectedCost = 5.4399;
+  ASSERT_LT(fabs(totalCostST - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_)
+      << "MESSAGE: single-threaded SLQ failed in the EXP1's cost test!";
+  ASSERT_LT(fabs(totalCostMT - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_)
+      << "MESSAGE: multi-threaded SLQ failed in the EXP1's cost test!";
+
+  const double expectedISE1 = 0.0;
+  ASSERT_LT(fabs(constraint1ISE_ST - expectedISE1), 10 * slqSettings.ddpSettings_.minRelConstraint1ISE_)
+      << "MESSAGE: single-threaded SLQ failed in the EXP1's type-1 constraint ISE test!";
+  ASSERT_LT(fabs(constraint1ISE_MT - expectedISE1), 10 * slqSettings.ddpSettings_.minRelConstraint1ISE_)
+      << "MESSAGE: multi-threaded SLQ failed in the EXP1's type-1 constraint ISE test!";
+
+  const double expectedISE2 = 0.0;
+  ASSERT_LT(fabs(constraint2ISE_ST - expectedISE2), 10 * slqSettings.ddpSettings_.minRelConstraint1ISE_)
+      << "MESSAGE: single-threaded SLQ failed in the EXP1's type-2 constraint ISE test!";
+  ASSERT_LT(fabs(constraint2ISE_MT - expectedISE2), 10 * slqSettings.ddpSettings_.minRelConstraint1ISE_)
+      << "MESSAGE: multi-threaded SLQ failed in the EXP1's type-2 constraint ISE test!";
+
+  double ctrlFinalTime;
+  if (slqSettings.ddpSettings_.useFeedbackPolicy_) {
+    ctrlFinalTime = dynamic_cast<slq_t::linear_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
+  } else {
+    ctrlFinalTime = dynamic_cast<slq_t::feedforward_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
+  }
+  ASSERT_DOUBLE_EQ(solutionST.timeTrajectory_.back(), finalTime) << "MESSAGE: SLQ_ST failed in policy final time of trajectory!";
+  ASSERT_DOUBLE_EQ(ctrlFinalTime, finalTime) << "MESSAGE: SLQ_ST failed in policy final time of controller!";
 }
 
 int main(int argc, char** argv) {

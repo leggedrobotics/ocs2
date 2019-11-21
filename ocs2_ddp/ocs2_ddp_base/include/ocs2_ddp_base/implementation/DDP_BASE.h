@@ -42,7 +42,7 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t* rolloutPtr, const
                                          std::shared_ptr<HybridLogicRules> logicRulesPtr)
     : BASE(std::move(logicRulesPtr)),
       ddpSettings_(ddpSettings),
-      threadPool_(ddpSettings.nThreads_),
+      threadPool_(ddpSettings.nThreads_, ddpSettings.threadPriority_),
       algorithmName_(algorithmName),
       rewindCounter_(0),
       iteration_(0),

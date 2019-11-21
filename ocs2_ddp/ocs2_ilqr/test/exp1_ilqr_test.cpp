@@ -132,8 +132,8 @@ TEST(exp1_ilqr_test, exp1_ilqr_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // get solution
-  ILQR_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t solutionST = ilqrST.primalSolution(finalTime);
-  ILQR_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t solutionMT = ilqrMT.primalSolution(finalTime);
+  ILQR<STATE_DIM, INPUT_DIM>::primal_solution_t solutionST = ilqrST.primalSolution(finalTime);
+  ILQR<STATE_DIM, INPUT_DIM>::primal_solution_t solutionMT = ilqrMT.primalSolution(finalTime);
 
   // get performance indices
   double totalCost_st, totalCost_mt;

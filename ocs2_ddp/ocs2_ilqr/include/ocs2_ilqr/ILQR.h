@@ -29,30 +29,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <atomic>
-#include <condition_variable>
-#include <thread>
+#include <ocs2_ddp_base/DDP_BASE.h>
 
-#include <ocs2_core/misc/SetThreadPriority.h>
-
-#include "ocs2_ilqr/ILQR_BASE.h"
+#include <ocs2_ilqr/ILQR_Settings.h>
 
 namespace ocs2 {
 
 /**
- * This class implements multi-threaded ILQR algorithm.
+ * This class is an interface class for the single-thread and multi-thread ILQR.
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class ILQR : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
+class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = ILQR_BASE<STATE_DIM, INPUT_DIM>;
-
-  using DIMENSIONS = typename BASE::DIMENSIONS;
+  using BASE = DDP_BASE<STATE_DIM, INPUT_DIM>;
 
   using typename BASE::constraint1_input_matrix_array2_t;
   using typename BASE::constraint1_input_matrix_array_t;
@@ -69,6 +63,12 @@ class ILQR : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::constraint2_vector_array2_t;
   using typename BASE::constraint2_vector_array_t;
   using typename BASE::constraint2_vector_t;
+  using typename BASE::DIMENSIONS;
+  using typename BASE::dynamic_input_matrix_t;
+  using typename BASE::dynamic_matrix_array2_t;
+  using typename BASE::dynamic_matrix_t;
+  using typename BASE::dynamic_vector_array_t;
+  using typename BASE::dynamic_vector_t;
   using typename BASE::eigen_scalar_array2_t;
   using typename BASE::eigen_scalar_array_t;
   using typename BASE::eigen_scalar_t;
@@ -76,26 +76,33 @@ class ILQR : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::input_constraint1_matrix_array_t;
   using typename BASE::input_constraint1_matrix_t;
   using typename BASE::input_matrix_array2_t;
+  using typename BASE::input_matrix_array3_t;
   using typename BASE::input_matrix_array_t;
   using typename BASE::input_matrix_t;
   using typename BASE::input_state_matrix_array2_t;
+  using typename BASE::input_state_matrix_array3_t;
   using typename BASE::input_state_matrix_array_t;
   using typename BASE::input_state_matrix_t;
   using typename BASE::input_vector_array2_t;
+  using typename BASE::input_vector_array3_t;
   using typename BASE::input_vector_array_t;
   using typename BASE::input_vector_t;
   using typename BASE::scalar_array2_t;
+  using typename BASE::scalar_array3_t;
   using typename BASE::scalar_array_t;
   using typename BASE::scalar_t;
   using typename BASE::size_array2_t;
   using typename BASE::size_array_t;
   using typename BASE::state_input_matrix_array2_t;
+  using typename BASE::state_input_matrix_array3_t;
   using typename BASE::state_input_matrix_array_t;
   using typename BASE::state_input_matrix_t;
   using typename BASE::state_matrix_array2_t;
+  using typename BASE::state_matrix_array3_t;
   using typename BASE::state_matrix_array_t;
   using typename BASE::state_matrix_t;
   using typename BASE::state_vector_array2_t;
+  using typename BASE::state_vector_array3_t;
   using typename BASE::state_vector_array_t;
   using typename BASE::state_vector_t;
 
@@ -107,16 +114,28 @@ class ILQR : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::linear_controller_t;
 
   using typename BASE::constraint_base_t;
+  using typename BASE::cost_desired_trajectories_t;
   using typename BASE::cost_function_base_t;
   using typename BASE::derivatives_base_t;
   using typename BASE::event_handler_t;
+  using typename BASE::linear_quadratic_approximator_t;
+  using typename BASE::logic_rules_machine_ptr_t;
+  using typename BASE::logic_rules_machine_t;
+  using typename BASE::operating_trajectorie_rollout_t;
   using typename BASE::operating_trajectories_base_t;
+  using typename BASE::penalty_base_t;
   using typename BASE::rollout_base_t;
+
+  //	/**
+  //	 * class for collecting ILQR data
+  //	 */
+  //	template <size_t OTHER_STATE_DIM, size_t OTHER_INPUT_DIM>
+  //	friend class SLQ_DataCollector;
 
   /**
    * Default constructor.
    */
-  ILQR() : BASE() {}
+  ILQR() = default;
 
   /**
    * Constructor
@@ -127,7 +146,7 @@ class ILQR : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
    * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of ILQR.
    * @param [in] settings: Structure containing the settings for the ILQR algorithm.
-   * @param [in] logicRulesPtr: The logic rules used for implementing mixed logical dynamical systems.
+   * @param [in] logicRulesPtr: The logic rules used for implementing mixed-logic dynamical systems.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
@@ -139,7 +158,77 @@ class ILQR : public ILQR_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Default destructor.
    */
-  ~ILQR() = default;
+  virtual ~ILQR() = default;
+
+  void approximateOptimalControlProblem() override;
+
+  void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const override;
+
+  void calculateController() override;
+
+  /**
+   * Gets a reference to the Options structure.
+   *
+   * @return a reference to the Options structure.
+   */
+  ILQR_Settings& settings();
+
+ protected:
+  void setupOptimizer(size_t numPartitions) override;
+
+  void approximateLQWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
+
+  void approximateUnconstrainedLQWorker(size_t workerIndex, size_t i, size_t k) override;
+
+  void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
+
+  void riccatiSolverTask() override;
+
+  /**
+   * Calculates the discrete-time LQ approximation from the continuous-time LQ approximation.
+   *
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] i: Time partition index.
+   * @param [in] k: Time index in the partition.
+   */
+  void discreteLQWorker(size_t workerIndex, size_t i, size_t k);
+
+  /**
+   * Solves a set of Riccati equations for the partition in the given index.
+   *
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
+   * @param [in] SmFinal: The final Sm for Riccati equation.
+   * @param [in] SvFinal: The final Sv for Riccati equation.
+   * @param [in] sFinal: The final s for Riccati equation.
+   */
+  void riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
+                              const eigen_scalar_t& sFinal);
+
+  /****************
+   *** Variables **
+   ****************/
+  ILQR_Settings settings_;
+
+  // parallel Riccati solver
+  std::mutex riccatiSolverDataMutex_;
+
+  // Discrete-time components
+  state_matrix_array2_t AmDtimeTrajectoryStock_;
+  state_input_matrix_array2_t BmDtimeTrajectoryStock_;
+
+  eigen_scalar_array2_t qDtimeTrajectoryStock_;
+  state_vector_array2_t QvDtimeTrajectoryStock_;
+  state_matrix_array2_t QmDtimeTrajectoryStock_;
+  input_vector_array2_t RvDtimeTrajectoryStock_;
+  input_matrix_array2_t RmDtimeTrajectoryStock_;
+  input_state_matrix_array2_t PmDtimeTrajectoryStock_;
+  input_matrix_array2_t RmInverseDtimeTrajectoryStock_;
+
+  input_matrix_array2_t HmTrajectoryStock_;
+  input_matrix_array2_t HmInverseTrajectoryStock_;
+  input_state_matrix_array2_t GmTrajectoryStock_;
+  input_vector_array2_t GvTrajectoryStock_;
 };
 
 }  // namespace ocs2

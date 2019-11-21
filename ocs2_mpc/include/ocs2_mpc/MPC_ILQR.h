@@ -33,7 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ddp_base/DDP_BASE.h>
 
 #include <ocs2_ilqr/ILQR.h>
-#include <ocs2_ilqr/ILQR_BASE.h>
 
 #include "ocs2_mpc/MPC_BASE.h"
 
@@ -80,7 +79,6 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
 
   using ddp_base_t = ocs2::DDP_BASE<STATE_DIM, INPUT_DIM>;
 
-  using ilqr_base_t = ocs2::ILQR_BASE<STATE_DIM, INPUT_DIM>;
   using ilqr_t = ocs2::ILQR<STATE_DIM, INPUT_DIM>;
 
   using logic_rules_machine_t = typename ddp_base_t::logic_rules_machine_t;
@@ -130,9 +128,9 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
    */
   virtual ILQR_Settings& ilqrSettings();
 
-  ilqr_base_t* getSolverPtr() override;
+  ilqr_t* getSolverPtr() override;
 
-  const ilqr_base_t* getSolverPtr() const override;
+  const ilqr_t* getSolverPtr() const override;
 
   void calculateController(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime) override;
 
@@ -140,7 +138,7 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
   /***********
    * Variables
    ***********/
-  std::unique_ptr<ilqr_base_t> ilqrPtr_;
+  std::unique_ptr<ilqr_t> ilqrPtr_;
 };
 
 }  // namespace ocs2

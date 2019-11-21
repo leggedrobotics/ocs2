@@ -4,12 +4,11 @@ project(ocs2_mpc)
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   ocs2_core
-  ocs2_slq
-  ocs2_ilqr
+  ocs2_ddp
   ocs2_ocs2
 )
 find_package(Boost REQUIRED COMPONENTS
-  system 
+  system
   filesystem
 )
 
@@ -23,15 +22,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 ###################################
 
 catkin_package(
-  INCLUDE_DIRS 
+  INCLUDE_DIRS
     include
     ${EIGEN3_INCLUDE_DIRS}
-  CATKIN_DEPENDS 
-    ocs2_core 
-    ocs2_slq 
-    ocs2_ilqr
+  CATKIN_DEPENDS
+    ocs2_core
+    ocs2_ddp
     ocs2_ocs2
-  DEPENDS 
+  DEPENDS
     Boost
 )
 

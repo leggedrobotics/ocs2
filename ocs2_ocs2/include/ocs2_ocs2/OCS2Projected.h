@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_frank_wolfe/GradientDescent.h>
 
-#include <ocs2_slq/SLQ.h>
+#include <ocs2_ddp/SLQ.h>
 
 #include "ocs2_ocs2/GDDP.h"
 

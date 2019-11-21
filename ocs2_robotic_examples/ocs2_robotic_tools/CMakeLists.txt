@@ -5,7 +5,7 @@ project(ocs2_robotic_tools)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(catkin REQUIRED COMPONENTS
-        ocs2_slq
+        ocs2_ddp
         ocs2_core
         ocs2_mpc
         ocs2_comm_interfaces
@@ -24,11 +24,11 @@ include_directories(
 )
 
 catkin_package(
-  INCLUDE_DIRS 
+  INCLUDE_DIRS
     include
     ${EIGEN3_INCLUDE_DIRS}
   CATKIN_DEPENDS
-    ocs2_slq
+    ocs2_ddp
     ocs2_core
     ocs2_mpc
     ocs2_comm_interfaces

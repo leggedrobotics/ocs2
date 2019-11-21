@@ -30,9 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_ddp_base/DDP_BASE.h>
-
-#include <ocs2_ilqr/ILQR.h>
+#include <ocs2_ddp/DDP_BASE.h>
+#include <ocs2_ddp/ILQR.h>
 
 #include "ocs2_mpc/MPC_BASE.h"
 

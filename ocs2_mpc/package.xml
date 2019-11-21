@@ -28,8 +28,7 @@
   <build_depend>cmake_clang_tools</build_depend>
 
   <depend>ocs2_core</depend>
-  <depend>ocs2_slq</depend>
-  <depend>ocs2_ilqr</depend>
+  <depend>ocs2_ddp</depend>
   <depend>ocs2_ocs2</depend>
 
   <!-- The export tag contains other, unspecified, tags -->

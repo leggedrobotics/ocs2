@@ -130,7 +130,7 @@ class RolloutBase {
    */
   state_vector_t run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, controller_t* controller,
                      const scalar_array_t& eventTimes, scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces,
-                     state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory,logic_rules_t* logicRules = nullptr) {
+                     state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory) {
     if (initTime > finalTime) {
       throw std::runtime_error("Initial time should be less-equal to final time.");
     }
@@ -161,7 +161,7 @@ class RolloutBase {
     }  // end of for loop
 
     return runImpl(std::move(timeIntervalArray), initState, controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory,
-                   inputTrajectory, logicRules);
+                   inputTrajectory);
   }
 
   /**
@@ -223,7 +223,7 @@ class RolloutBase {
    */
   virtual state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
                                  scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces,
-                                 state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory, logic_rules_t* logicRules = nullptr) = 0;
+                                 state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory) = 0;
 
   /**
    * Checks for the numerical stability if Rollout_Settings::checkNumericalStability_ is true.

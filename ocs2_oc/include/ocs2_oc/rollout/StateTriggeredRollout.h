@@ -135,13 +135,10 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
  protected:
   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
                           scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
-                          input_vector_array_t& inputTrajectory, logic_rules_t* logicRules = nullptr) override {
+                          input_vector_array_t& inputTrajectory) override {
+
     if (controller == nullptr){
         throw std::runtime_error("The input controller is not set.");
-    }
-
-    if (logicRules == nullptr){
-            throw std::runtime_error("The LogicRules are not set.");
     }
 
     // max number of steps for integration
@@ -156,7 +153,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     inputTrajectory.clear();
     inputTrajectory.reserve(maxNumSteps + 1);
     eventsPastTheEndIndeces.clear();
-    eventsPastTheEndIndeces.reserve((timeIntervalArray.back().second - timeIntervalArray.front().first) / systemEventHandlersPtr_->getminEventTimeDifference());
+    eventsPastTheEndIndeces.reserve(maxNumSteps);
 
     // set controller
     systemDynamicsPtr_->setController(controller);
@@ -167,19 +164,13 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     // Reset the event class
     systemEventHandlersPtr_->reset();
 
-    // Reset the EventTimes
-    if (logicRules != nullptr)
-    {
-        logicRules->reset();
-    }
-
     state_vector_t beginState = initState;
     size_t k_u = 0;  // control input iterator
 
     scalar_t t0  = timeIntervalArray.front().first;
     scalar_t t1  = timeIntervalArray.back().second;
     scalar_t tend= t1; // Stored separately due to overwriting t1 when refining
-    size_t eventID_m = 0;
+    size_t eventID_m = 0; // todo
 
     bool refining = false;
     bool triggered = false;
@@ -198,16 +189,24 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     		triggered = true;
         }
         // Calculate GuardSurface value of last query state and time
-        scalar_t time_query  = timeTrajectory.back();
-        state_vector_t state_query = stateTrajectory.back();
+        const scalar_t time_query  = timeTrajectory.back();
+        const state_vector_t state_query = stateTrajectory.back();
 
         dynamic_vector_t GuardSurfaces_query;
         systemDynamicsPtr_->computeGuardSurfaces(time_query,state_query,GuardSurfaces_query);
         scalar_t guard_query = GuardSurfaces_query[eventID_m];
 
+        // Accuracy conditions on the obtained guard_query and width of time window
+        bool guard_accuracy_condition = std::fabs(guard_query) < BASE::settings().absTolODE_;
+        bool time_accuracy_condition = std::fabs(t1-t0) < BASE::settings().absTolODE_;
+        bool accuracy_condition = guard_accuracy_condition || time_accuracy_condition;
+
+        bool time_end_termination = std::fabs(tend - timeTrajectory.back()) == 0; //todo
+
         // Remove the element past the guard surface if the event handler was triggered
         // (Due to checking in EventHandler this can only happen to the last element of the trajectory)
-        if(triggered)
+        // Exception is when the element is outside the guardSurface but within tolerance
+        if(triggered && !accuracy_condition)
         {   stateTrajectory.pop_back();
     		timeTrajectory.pop_back();
     		triggered = false;
@@ -221,87 +220,77 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
         }
 
         // End time Condition, means iteration procedure is done
-        if (std::fabs(tend - timeTrajectory.back()) == 0){
-              break;
-        }
-        // Accuracy Condition for event refinement
-        bool guard_accuracy_condition = std::fabs(guard_query) < BASE::settings().absTolODE_;
-        bool time_accuracy_condition = std::fabs(t1-t0) < BASE::settings().absTolODE_;
-        bool accuracy_condition = guard_accuracy_condition || time_accuracy_condition;
+        if (time_end_termination){break;}
 
-        if (accuracy_condition) { // If Sufficiently accurate crossing location has been determined
-    		// jump map
-    		beginState = state_query;
+        // Accuracy Condition for event refinement
+        // If Sufficiently accurate crossing location has been determined
+        if (accuracy_condition) {
+        	// Set new begin/end time and begin state
+        	beginState = state_query;
     		t0 = time_query;
     		t1 = tend;
 
-    		if(timeTrajectory.back()!=time_query)// if last element was outside guard surface,
-    		{// but within tolerance it needs to be included with the trajectory
-    			stateTrajectory.push_back(beginState);
-    			timeTrajectory.push_back(time_query);
-    			inputTrajectory.emplace_back(systemDynamicsPtr_->controllerPtr()->computeInput(timeTrajectory[k_u], stateTrajectory[k_u]));
-    			k_u++;
-    		}
-
+    		// Compute Jump Map
     		systemDynamicsPtr_->computeJumpMap(t0, state_query, beginState);
+
+    		// Append Event to Array with event indices
     		eventsPastTheEndIndeces.push_back(stateTrajectory.size());
 
+    		// Determine GuardSurface_cross value and update the eventHandler
     		dynamic_vector_t GuardSurfaces_cross;
     		systemDynamicsPtr_->computeGuardSurfaces(t0,beginState,GuardSurfaces_cross);
       		UpdateTriggerdTime(t0,GuardSurfaces_cross);
 
-      		if (logicRules != nullptr){
-      		logicRules->appendModeSequence(eventID_m,t0);
-      		}
-
+      		// Reset Relevant boolean and counter
       		refining = false;
     		local_its = 0;
         }
-        else {// Otherwise keep or start refining
-    		if (!refining)
-    		{ //Properly configure Rootfinding method to start refining
-    			scalar_t time_before = timeTrajectory.back();
-    			state_vector_t state_before = stateTrajectory.back();
+        // Otherwise keep or start refining
+        else {
+    		if (refining)
+    		{ // Apply the Rules of the Rootfinding method to continue refining
+    		    rootFind.Update_Bracket(time_query,guard_query);
+    		    rootFind.getNewQuery(t1);
 
-    			dynamic_vector_t GuardSurfaces_before;
-    			systemDynamicsPtr_->computeGuardSurfaces(time_before,state_before,GuardSurfaces_before);
-    			scalar_t guard_before = GuardSurfaces_before[eventID_m];
-
-    			rootFind.set_Init_Bracket(time_before,time_query,guard_before,guard_query);
-    			rootFind.getNewQuery(time_query);
-
-    			t0 = timeTrajectory.back();
-    			beginState = stateTrajectory.back();
-    			t1 = time_query;
-    			refining = true;
+    		    t0 = timeTrajectory.back();
+    		    beginState = stateTrajectory.back();
     		}
     		else
-    		{ // Apply the Rules of the Rootfinding method to continue refining
-    			rootFind.Update_Bracket(time_query,guard_query);
-     			rootFind.getNewQuery(time_query);
+    		{ //Properly configure Rootfinding method to start refining
+    		    scalar_t time_before = timeTrajectory.back();
+    		    state_vector_t state_before = stateTrajectory.back();
 
-    			t0 = timeTrajectory.back();
-    			beginState = stateTrajectory.back();
-    			t1 = time_query;
-    		}
+    		    dynamic_vector_t GuardSurfaces_before;
+    		    systemDynamicsPtr_->computeGuardSurfaces(time_before,state_before,GuardSurfaces_before);
+    		    scalar_t guard_before = GuardSurfaces_before[eventID_m];
+
+    		    rootFind.set_Init_Bracket(time_before,time_query,guard_before,guard_query);
+    		    rootFind.getNewQuery(t1);
+
+    		    t0 = timeTrajectory.back();
+    		    beginState = stateTrajectory.back();
+    		    refining = true;
+    		 }
+
+    		stateTrajectory.pop_back();
+    		timeTrajectory.pop_back();
+    		inputTrajectory.pop_back();
+    		k_u--;
         }
         local_its++;
         global_its++; // count iterations
     }  // end of while loop
+
      // check for the numerical stability
     this->checkNumericalStability(controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
-   std::cout << "###########"<<std::endl;
-   std::cout << "Rollout finished after " << global_its << " Iterations"<<std::endl;
-   std::cout << "###########"<<std::endl;
-
-   for(int i = 0; i< timeTrajectory.size(); i++)
-   {
-		std::cout<<i<<";"<<stateTrajectory[i][2]<<";"<<0<<";"<<timeTrajectory[i]<<";"<<stateTrajectory[i][0]<<";"<<0<<";"<<stateTrajectory[i][1]<<";"<<0<<";"<<inputTrajectory[i]<<";"<<0<<std::endl;
-
+   if(true){
+	   std::cout << "###########"<<std::endl;
+	   std::cout << "Rollout finished after " << global_its << " Iterations"<<std::endl;
+	   std::cout << "###########"<<std::endl;
    }
 
-    return stateTrajectory.back();
+   return stateTrajectory.back();
   } //end of function
 
    /**

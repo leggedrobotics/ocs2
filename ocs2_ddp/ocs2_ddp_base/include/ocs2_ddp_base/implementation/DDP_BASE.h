@@ -231,12 +231,11 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
     }
 
     // Rollout with controller
-    HybridLogicRules* logicRules = this->getLogicRulesPtr();
     if (controllerRolloutFromTo.first < controllerRolloutFromTo.second) {
       auto controllerPtr = &controllersStock[std::min(i, partitionOfLastController)];
       xCurrent = dynamicsForwardRolloutPtrStock_[threadId]->run(
           controllerRolloutFromTo.first, xCurrent, controllerRolloutFromTo.second, controllerPtr, eventTimes,
-		  timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i], stateTrajectoriesStock[i], inputTrajectoriesStock[i], logicRules);
+		  timeTrajectoriesStock[i], eventsPastTheEndIndecesStock[i], stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
     }
 
     // Finish rollout with operating points
@@ -259,7 +258,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
       input_vector_array_t inputTrajectoryTail;
       xCurrent = operatingTrajectoriesRolloutPtrStock_[threadId]->run(operatingPointsFromTo.first, xCurrent, operatingPointsFromTo.second,
                                                                       nullptr, eventTimes, timeTrajectoryTail, eventsPastTheEndIndecesTail,
-                                                                      stateTrajectoryTail, inputTrajectoryTail, logicRules);
+                                                                      stateTrajectoryTail, inputTrajectoryTail);
       // Add controller rollout length to event past the indeces
       for (auto& eventIndex : eventsPastTheEndIndecesTail) {
         eventIndex += stateTrajectoriesStock[i].size();  // This size of this trajectory part was missing when counting events in the tail

@@ -47,8 +47,8 @@ public:
 		if(f0 * f1 > 0)
 		{	std::cout<<t0<<";"<<t1<<std::endl;
 			std::cout<<f0<<";"<<f1<<std::endl;
-			std::cout<<t1-100<<std::endl;
-			throw std::runtime_error("Bracket function values should have opposite sign");}
+			throw std::runtime_error("Bracket function values should have opposite sign");
+		}
 
 
 		time_int_m = std::make_pair(t0,t1);

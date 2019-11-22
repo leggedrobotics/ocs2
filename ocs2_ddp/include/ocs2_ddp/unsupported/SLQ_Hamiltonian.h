@@ -162,9 +162,9 @@ class SLQ_Hamiltonian : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
   SLQ_Hamiltonian(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
-           const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
-           const operating_trajectories_base_t* operatingTrajectoriesPtr, const SLQ_Settings& settings = SLQ_Settings(),
-           const LOGIC_RULES_T* logicRulesPtr = nullptr, const cost_function_base_t* heuristicsFunctionPtr = nullptr);
+                  const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
+                  const operating_trajectories_base_t* operatingTrajectoriesPtr, const SLQ_Settings& settings = SLQ_Settings(),
+                  const LOGIC_RULES_T* logicRulesPtr = nullptr, const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
   /**
    * Default destructor.

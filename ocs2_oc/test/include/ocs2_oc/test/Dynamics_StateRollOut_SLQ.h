@@ -148,7 +148,7 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	using Base = ControlledSystemBase<2,1>;
 
-	system_dyn(std::shared_ptr<const system_logic> logicRulesPtr) :
+	system_dyn(std::shared_ptr<system_logic> logicRulesPtr) :
 		logicRulesPtr_(std::move(logicRulesPtr)),
 		activeSubsystem_(1),
 		subsystemDynamicsPtr_(2)
@@ -161,6 +161,12 @@ public:
 
 	system_dyn* clone() const final{
 		return new system_dyn(*this);
+	}
+
+	void resetNumFunctionCalls(){
+		numFunctionCalls_ = 0;
+		//logicRulesPtr_->reset();
+
 	}
 
 	system_dyn(const system_dyn& other)
@@ -179,10 +185,19 @@ public:
 		subsystemDynamicsPtr_[activeSubsystem_]->computeFlowMap(t, x, u, dxdt);
 	}
 
-	void ComputeJumpMaps(const scalar_t& time, const state_vector_t state, state_vector_t mappedstate)
+	void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override
 	{
 		activeSubsystem_ = logicRulesPtr_->getSubSystemTime(time);
-		subsystemDynamicsPtr_[activeSubsystem_]->computeJumpMap(time, state, mappedstate);
+		subsystemDynamicsPtr_[activeSubsystem_]->computeJumpMap(time, state, mappedState);
+
+		if(activeSubsystem_ == 0)
+		{
+			logicRulesPtr_->appendModeSequence(1,time);
+		}
+		else
+		{
+			logicRulesPtr_->appendModeSequence(0,time);
+		}
 	}
 
 	void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue)
@@ -193,7 +208,7 @@ public:
 
 private:
 	int activeSubsystem_;
-	std::shared_ptr<const system_logic> logicRulesPtr_;
+	std::shared_ptr<system_logic> logicRulesPtr_;
 	std::vector<Base::Ptr> subsystemDynamicsPtr_;
 
 };
@@ -235,7 +250,7 @@ public:
 		A << -0,3,-3,0;
 	}
 
-	void getFlowMapDerivativeInput(state_input_matrix_t &B) override
+	void getFlowMapDerivativeInput(state_input_matrix_t 	&B) override
 	{
 		B << 0,1;
 	}
@@ -251,7 +266,7 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	using Base = DerivativesBase<STATE_DIM,INPUT_DIM>;
 
-	system_der(std::shared_ptr<const system_logic> logicRulesPtr) :
+	system_der(std::shared_ptr<system_logic> logicRulesPtr) :
 		logicRulesPtr_(std::move(logicRulesPtr)),
 		activeSubsystem_(1),
 		subsystemDerPtr_(2)
@@ -293,7 +308,7 @@ public:
 
 private:
 	int activeSubsystem_;
-	std::shared_ptr<const system_logic> logicRulesPtr_;
+	std::shared_ptr<system_logic> logicRulesPtr_;
 	std::vector<Base::Ptr> subsystemDerPtr_;
 };
 
@@ -397,7 +412,7 @@ public:
 	using Base = CostFunctionBase<STATE_DIM,INPUT_DIM>;
 
 
-	system_cost(std::shared_ptr<const system_logic> logicRulesPtr) :
+	system_cost(std::shared_ptr<system_logic> logicRulesPtr) :
 		logicRulesPtr_(std::move(logicRulesPtr)),
 		activeSubsystem_(1),
 		subsystemCostPtr_(2)
@@ -485,7 +500,7 @@ public:
 
 private:
 	int activeSubsystem_;
-	std::shared_ptr<const system_logic> logicRulesPtr_;
+	std::shared_ptr<system_logic> logicRulesPtr_;
 	std::vector<Base::Ptr> subsystemCostPtr_;
 };
 // #############################
@@ -622,7 +637,7 @@ class system_const : public ConstraintBase<STATE_DIM,INPUT_DIM>
 public:
 	using Base = ConstraintBase<STATE_DIM,INPUT_DIM>;
 
-	system_const(std::shared_ptr <const system_logic> logicRulesPtr):
+	system_const(std::shared_ptr <system_logic> logicRulesPtr):
 		logicRulesPtr_(std::move(logicRulesPtr)),
 		activeSubsystem_(1),
 		subsystemConstPtr_(2)
@@ -676,7 +691,7 @@ public:
 
 private:
 	int activeSubsystem_;
-	std::shared_ptr<const system_logic> logicRulesPtr_;
+	std::shared_ptr<system_logic> logicRulesPtr_;
 	std::vector<Base::Ptr> subsystemConstPtr_;
 };
 

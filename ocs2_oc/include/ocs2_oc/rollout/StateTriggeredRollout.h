@@ -177,7 +177,8 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
     int local_its = 0;			// Iterations since last event
     int global_its = 0;			// Overall iterations
-    RootFind rootFind;
+    RootFind rootFind;			// rootFinding algorithm
+
     while(true){ //Keeps looping until end time condition is fulfilled, after which the loop is broken
         try
         {

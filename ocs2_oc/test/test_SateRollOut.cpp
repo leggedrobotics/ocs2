@@ -70,7 +70,7 @@ TEST(StateRolloutTests, Case1)
 // Run
 	FinalState = Rollout.run( t0,initState,t1,Controller, eventTimes,
 	    				      timeTrajectory,eventsPastTheEndIndeces,
-							  stateTrajectory,inputTrajectory, logicRules);
+							  stateTrajectory,inputTrajectory);
 
 	logicRules->display();
 
@@ -135,7 +135,7 @@ TEST(StateRolloutTests, Case2)
 // Run
 	FinalState = Rollout.run( t0,initState,t1,Controller,eventTimes,
 	    				      timeTrajectory,eventsPastTheEndIndeces,
-							  stateTrajectory,inputTrajectory, logicRules);
+							  stateTrajectory,inputTrajectory);
 
 	logicRules->display();
 
@@ -190,7 +190,7 @@ TEST(StateRolloutTests, Case3)
 // Run
 	FinalState = Rollout.run( t0,initState,t1,Controller,eventTimes,
 	    				      timeTrajectory,eventsPastTheEndIndeces,
-							  stateTrajectory,inputTrajectory,&(*logicRules));
+							  stateTrajectory,inputTrajectory);
 
 	logicRules->display();
 

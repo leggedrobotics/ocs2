@@ -51,7 +51,7 @@ public:
 
 	void computeJumpMap(	const scalar_t& time, 
 				const state_vector_t& state,
-				state_vector_t& mappedState	)
+				state_vector_t& mappedState	) override
 	{
 			mappedState[0] = state[0];
 			mappedState[1] = -0.9*state[1];

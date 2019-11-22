@@ -31,8 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *  !! Copy of SLQ_BASE with the unfinished Hamiltonian implementation for the backward pass !!
  */
 
-#ifndef SLQ_BASE_HAMILTONIAN_OCS2_H_
-#define SLQ_BASE_HAMILTONIAN_OCS2_H_
+#pragma once
 
 #include <ocs2_ddp/DDP_BASE.h>
 
@@ -59,11 +58,11 @@ namespace ocs2 {
  * @tparam LOGIC_RULES_T: Logic Rules type (default NullLogicRules).
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, class LOGIC_RULES_T = NullLogicRules>
-class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
+class SLQ_Hamiltonian : public DDP_BASE<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
+  using BASE = DDP_BASE<STATE_DIM, INPUT_DIM>;
 
   using DIMENSIONS = typename BASE::DIMENSIONS;
   using controller_t = typename BASE::controller_t;
@@ -144,28 +143,10 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
   using hamiltonian_equation_t = LTI_Equations<2 * STATE_DIM, STATE_DIM, double>;
   using hamiltonian_increment_equation_t = LTI_Equations<STATE_DIM, 1, double>;
 
-  using riccati_equations_t = SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>;
-  using error_equation_t = SequentialErrorEquationNormalized<STATE_DIM, INPUT_DIM>;
-
-  using state_triggered_rollout_t = StateTriggeredRollout<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>;
-
-  /**
-   * class for collecting SLQ data
-   */
-  template <size_t OTHER_STATE_DIM, size_t OTHER_INPUT_DIM, class OTHER_LOGIC_RULES_T>
-  friend class SLQ_DataCollector;
-
- public:
-  void rolloutStateTriggeredTrajectory(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
-                                       const scalar_array_t& partitioningTimes, const linear_controller_array_t& controllersStock,
-                                       scalar_array2_t& timeTrajectoriesStock, size_array2_t& eventsPastTheEndIndecesStock,
-                                       state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
-                                       size_t threadId = 0);
-
   /**
    * Default constructor.
    */
-  SLQ_BASE() = default;
+  SLQ_Hamiltonian() = default;
 
   /**
    * Constructor
@@ -180,7 +161,7 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
-  SLQ_BASE(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+  SLQ_Hamiltonian(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
            const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
            const operating_trajectories_base_t* operatingTrajectoriesPtr, const SLQ_Settings& settings = SLQ_Settings(),
            const LOGIC_RULES_T* logicRulesPtr = nullptr, const cost_function_base_t* heuristicsFunctionPtr = nullptr);
@@ -188,7 +169,7 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
   /**
    * Default destructor.
    */
-  virtual ~SLQ_BASE() = default;
+  virtual ~SLQ_Hamiltonian() = default;
 
   /**
    * Approximates the nonlinear problem as a linear-quadratic problem around the nominal
@@ -362,43 +343,10 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
   /****************
    *** Variables **
    ****************/
-  SLQ_Settings settings_;
-
-  std::vector<typename rollout_base_t::Ptr> state_dynamicsForwardRolloutPtrStock_;
-
-  state_matrix_array2_t AmConstrainedTrajectoryStock_;
-  state_matrix_array2_t QmConstrainedTrajectoryStock_;
-  state_vector_array2_t QvConstrainedTrajectoryStock_;
-  dynamic_matrix_array2_t RmInvConstrainedCholTrajectoryStock_;
-  input_constraint1_matrix_array2_t DmDagerTrajectoryStock_;
-  input_vector_array2_t EvProjectedTrajectoryStock_;        // DmDager * Ev
-  input_state_matrix_array2_t CmProjectedTrajectoryStock_;  // DmDager * Cm
-  input_matrix_array2_t DmProjectedTrajectoryStock_;        // DmDager * Dm
-  state_input_matrix_array2_t BmConstrainedTrajectoryStock_;
-  input_state_matrix_array2_t PmConstrainedTrajectoryStock_;
-  input_vector_array2_t RvConstrainedTrajectoryStock_;
-  input_matrix_array2_t RmInverseTrajectoryStock_;
-
-  std::vector<std::shared_ptr<riccati_equations_t>> riccatiEquationsPtrStock_;
-  std::vector<std::shared_ptr<SystemEventHandler<riccati_equations_t::S_DIM_>>> riccatiEventPtrStock_;
-  std::vector<std::shared_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>> riccatiIntegratorPtrStock_;
-  std::vector<std::shared_ptr<error_equation_t>> errorEquationPtrStock_;
-  std::vector<std::shared_ptr<SystemEventHandler<STATE_DIM>>> errorEventPtrStock_;
-  std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>> errorIntegratorPtrStock_;
-
   std::vector<std::shared_ptr<hamiltonian_equation_t>> hamiltonianEquationPtrStock_;
   std::vector<std::shared_ptr<IntegratorBase<hamiltonian_equation_t::LTI_DIM_>>> hamiltonianIntegratorPtrStock_;
   std::vector<std::shared_ptr<hamiltonian_increment_equation_t>> hamiltonianIncrementEquationPtrStock_;
   std::vector<std::shared_ptr<IntegratorBase<hamiltonian_increment_equation_t::LTI_DIM_>>> hamiltonianIncrementIntegratorPtrStock_;
-
-  // functions for controller and lagrange multiplier
-  std::vector<EigenLinearInterpolation<state_input_matrix_t>> BmFunc_;
-  std::vector<EigenLinearInterpolation<input_state_matrix_t>> PmFunc_;
-  std::vector<EigenLinearInterpolation<input_matrix_t>> RmInverseFunc_;
-  std::vector<EigenLinearInterpolation<input_vector_t>> RvFunc_;
-  std::vector<EigenLinearInterpolation<input_vector_t>> EvProjectedFunc_;
-  std::vector<EigenLinearInterpolation<input_state_matrix_t>> CmProjectedFunc_;
-  std::vector<EigenLinearInterpolation<input_matrix_t>> DmProjectedFunc_;
 
   // function for Riccati error equation
   std::vector<EigenLinearInterpolation<state_matrix_t>> SmFuncs_;
@@ -447,6 +395,4 @@ class SLQ_BASE : public DDP_BASE<STATE_DIM, INPUT_DIM, LOGIC_RULES_T> {
 
 }  // namespace ocs2
 
-#include "implementation/SLQ_BASE_Hamiltonian.h"
-
-#endif /* SLQ_BASE_HAMILTONIAN_OCS2_H_ */
+#include "implementation/SLQ_Hamiltonian.h"

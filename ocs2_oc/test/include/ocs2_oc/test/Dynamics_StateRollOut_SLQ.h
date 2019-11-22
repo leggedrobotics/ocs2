@@ -38,11 +38,6 @@ public:
 	void update() final
 			{}
 
-	void getswitchingLaw(const size_t &eventID,size_t &subsystem) override
-	{
-		subsystem = eventID;
-	}
-
 protected:
 
 	void insertModeSequenceTemplate(const logic_template_type& modeSequenceTemplate,

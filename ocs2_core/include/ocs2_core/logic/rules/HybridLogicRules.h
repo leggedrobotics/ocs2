@@ -138,19 +138,6 @@ class HybridLogicRules {
   }
 
   /**
-   * Allows specification of custom conversion between eventID (array index of activated guardSurface) and
-   * activation of the next subsystem in state triggered rollout
-   *
-   * @param [in]		eventID	: array index of guardSurface
-   * @param [out]	subsystem : array index of next subsystem
-   */
-  virtual void getswitchingLaw(const size_t &eventID,size_t &subsystem)
-  {
-	  subsystem = eventID;
-  }
-
-
-  /**
    * Appends an event to the internal storage of the logicrules class
    * Used in state triggered rollout to keep track of discovered events
    *
@@ -158,11 +145,8 @@ class HybridLogicRules {
    * @param [out] eventTime : time of event
    */
   void appendModeSequence(const size_t &eventID, const scalar_t &eventTime){
-	  size_t subsystem;
-	  getswitchingLaw(eventID,subsystem);
-	  subsystemsSequence_.push_back(subsystem);
+	  subsystemsSequence_.push_back(eventID);
 	  eventTimes_.push_back(eventTime);
-
 	  update();
   }
 
@@ -281,21 +265,23 @@ class HybridLogicRules {
   size_t getEventTimeCount(scalar_t time) const { return lookup::findIndexInTimeArray(eventTimes_, time); }
 
   /**
-   *
-   */
-  size_t getSubSystemTime(scalar_t time) const
-  { 				  if(eventTimes_.size()>0 && eventTimes_.back()<time)
-  	  	  	  	  	  {
-	  	  	  	  	  	  return subsystemsSequence_.back();
-  	  	  	  	  	  }
-  	  	  	  	  	  else
-  	  	  	  	  	  {
-  	  	  	  	  		  size_t idx = lookup::findIndexInTimeArray(eventTimes_,time);
-	   	  	  	  	  	  return subsystemsSequence_[idx];
-  	  	  	  	  	  }
-
+     *  Finds the subsystem based on the query time and eventTimes
+     *  If time equal equal to a switch time is requested, the lower subsystem is taken
+     *
+     *  @param [in] time
+     *  @return idx of the subsytem the input time belongs to
+     */
+  size_t getSubSystemTime(scalar_t time) const{
+	  if(eventTimes_.size()>0 && eventTimes_.back()<time)
+  	  {
+	  	  return subsystemsSequence_.back();
+  	  }
+  	  else
+  	  {
+  	     size_t idx = lookup::findIndexInTimeArray(eventTimes_,time);
+	     return subsystemsSequence_[idx];
+  	  }
   }
-
 
  protected:
   /**

@@ -42,9 +42,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/logic/rules/HybridLogicRules.h>
 #include <ocs2_core/misc/LoadData.h>
+#include <ocs2_ddp/SLQ_Settings.h>
 #include <ocs2_mpc/MPC_BASE.h>
 #include <ocs2_mpc/MPC_Settings.h>
-#include <ocs2_slq/SLQ_Settings.h>
 
 namespace ocs2 {
 

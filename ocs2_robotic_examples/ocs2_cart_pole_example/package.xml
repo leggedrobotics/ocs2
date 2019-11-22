@@ -14,7 +14,7 @@
 
   <build_depend>roslib </build_depend>
   <build_depend>ocs2_core</build_depend>
-  <build_depend>ocs2_slq</build_depend>
+  <build_depend>ocs2_ddp</build_depend>
   <build_depend>ocs2_ocs2</build_depend>
   <build_depend>ocs2_mpc</build_depend>
   <build_depend>ocs2_comm_interfaces</build_depend>
@@ -22,7 +22,7 @@
 
   <run_depend>robot_state_publisher</run_depend>
   <run_depend>ocs2_core</run_depend>
-  <run_depend>ocs2_slq</run_depend>
+  <run_depend>ocs2_ddp</run_depend>
   <run_depend>ocs2_ocs2</run_depend>
   <run_depend>ocs2_mpc</run_depend>
   <run_depend>ocs2_comm_interfaces</run_depend>

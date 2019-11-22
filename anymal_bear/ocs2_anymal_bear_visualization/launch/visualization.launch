@@ -1,0 +1,20 @@
+<launch>
+
+  <!-- Load robot description -->
+  <include file="$(find ocs2_anymal_bear_description)/launch/load.launch" />
+
+  <!-- visualizes goal, opt. parameters and cartesian base state, endeffector positions and forces -->
+  <node name="rviz_marker_node" pkg="xpp_vis" type="rviz_marker_node" output="screen">
+  </node>
+
+  <!-- Launch rviz with specific configuration -->
+  <node name="rviz_ocs2" pkg="rviz" type="rviz"  args="-d $(find ocs2_anymal_bear_visualization)/config/config.rviz">
+  </node>
+
+  <!-- Publishes tf -->
+  <node name="ocs2_anymal_bear_visualization_visualizer" pkg="ocs2_anymal_bear_visualization" type="ocs2_anymal_bear_visualization_visualizer" output="screen">
+  </node>
+
+</launch>
+
+

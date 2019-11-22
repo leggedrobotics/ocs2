@@ -204,7 +204,7 @@ inline void EventTimeIndexer::findPartitionsDistribution(const size_t& numSubsys
       }
     }  // end of j loop
 
-    if (partitionsDistribution[subsystem].empty() == false) {
+    if (!partitionsDistribution[subsystem].empty()) {
       partitionIndex = partitionsDistribution[subsystem].back();
 
     } else {

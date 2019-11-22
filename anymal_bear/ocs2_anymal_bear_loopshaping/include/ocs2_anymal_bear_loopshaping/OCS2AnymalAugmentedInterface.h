@@ -18,19 +18,11 @@
 
 namespace anymal {
 
-template<
-    size_t STATE_DIM,
-    size_t INPUT_DIM,
-    size_t SYSTEM_STATE_DIM,
-    size_t SYSTEM_INPUT_DIM,
-    size_t FILTER_STATE_DIM,
-    size_t FILTER_INPUT_DIM,
-    size_t JOINT_COORD_SIZE>
-class OCS2AnymalAugmentedInterface : public switched_model::OCS2QuadrupedAugmentedInterface<
-    STATE_DIM, INPUT_DIM,
-    SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM,
-    FILTER_STATE_DIM, FILTER_INPUT_DIM,
-    JOINT_COORD_SIZE> {
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t SYSTEM_STATE_DIM, size_t SYSTEM_INPUT_DIM, size_t FILTER_STATE_DIM,
+          size_t FILTER_INPUT_DIM, size_t JOINT_COORD_SIZE>
+class OCS2AnymalAugmentedInterface
+    : public switched_model::OCS2QuadrupedAugmentedInterface<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM,
+                                                             FILTER_INPUT_DIM, JOINT_COORD_SIZE> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -40,51 +32,35 @@ class OCS2AnymalAugmentedInterface : public switched_model::OCS2QuadrupedAugment
   static constexpr size_t STATE_DIM_ = STATE_DIM;
   static constexpr size_t INPUT_DIM_ = INPUT_DIM;
 
-  using BASE = switched_model::OCS2QuadrupedAugmentedInterface<
-      STATE_DIM, INPUT_DIM,
-      SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM,
-      FILTER_STATE_DIM, FILTER_INPUT_DIM,
-      JOINT_COORD_SIZE>;
-  using typename BASE::BASE::logic_rules_t;
-  using typename BASE::BASE::logic_rules_ptr_t;
-  using typename BASE::BASE::mode_sequence_template_t;
-  using typename BASE::BASE::slq_base_ptr_t;
-  using typename BASE::BASE::slq_mp_t;
-  using typename BASE::BASE::slq_t;
-  using typename BASE::BASE::mpc_ptr_t;
-  using typename BASE::BASE::mpc_t;
-  using typename BASE::BASE::state_vector_t;
-  using typename BASE::BASE::input_vector_t;
+  using BASE = switched_model::OCS2QuadrupedAugmentedInterface<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM,
+                                                               FILTER_INPUT_DIM, JOINT_COORD_SIZE>;
   using typename BASE::controlled_system_base_ptr_t;
   using typename BASE::controlled_system_base_t;
   using typename BASE::rollout_base_t;
   using typename BASE::time_triggered_rollout_t;
-//  using mpc_ocs2_t = ocs2::MPC_OCS2<STATE_DIM, INPUT_DIM>;
+  using typename BASE::BASE::input_vector_t;
+  using typename BASE::BASE::logic_rules_ptr_t;
+  using typename BASE::BASE::logic_rules_t;
+  using typename BASE::BASE::mode_sequence_template_t;
+  using typename BASE::BASE::mpc_ptr_t;
+  using typename BASE::BASE::mpc_t;
+  using typename BASE::BASE::slq_ptr_t;
+  using typename BASE::BASE::slq_t;
+  using typename BASE::BASE::state_vector_t;
+  //  using mpc_ocs2_t = ocs2::MPC_OCS2<STATE_DIM, INPUT_DIM>;
 
-  using system_dynamics_t = ocs2::LoopshapingDynamics<
-      STATE_DIM, INPUT_DIM,
-      SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM,
-      FILTER_STATE_DIM, FILTER_INPUT_DIM>;
-  using system_dynamics_derivative_t = ocs2::LoopshapingDynamicsDerivative<
-      STATE_DIM, INPUT_DIM,
-      SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM,
-      FILTER_STATE_DIM, FILTER_INPUT_DIM>;
-  using constraint_t = ocs2::LoopshapingConstraint<
-      STATE_DIM, INPUT_DIM,
-      SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM,
-      FILTER_STATE_DIM, FILTER_INPUT_DIM>;
-  using operating_point_t = ocs2::LoopshapingOperatingPoint<
-      STATE_DIM, INPUT_DIM,
-      SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM,
-      FILTER_STATE_DIM, FILTER_INPUT_DIM>;
-  using cost_function_t = ocs2::LoopshapingCost<
-      STATE_DIM, INPUT_DIM,
-      SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM,
-      FILTER_STATE_DIM, FILTER_INPUT_DIM>;
-  using filter_dynamics_t = ocs2::LoopshapingFilterDynamics<
-      STATE_DIM, INPUT_DIM,
-      SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM,
-      FILTER_STATE_DIM, FILTER_INPUT_DIM>;
+  using system_dynamics_t =
+      ocs2::LoopshapingDynamics<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM, FILTER_INPUT_DIM>;
+  using system_dynamics_derivative_t =
+      ocs2::LoopshapingDynamicsDerivative<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM, FILTER_INPUT_DIM>;
+  using constraint_t =
+      ocs2::LoopshapingConstraint<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM, FILTER_INPUT_DIM>;
+  using operating_point_t =
+      ocs2::LoopshapingOperatingPoint<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM, FILTER_INPUT_DIM>;
+  using cost_function_t =
+      ocs2::LoopshapingCost<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM, FILTER_INPUT_DIM>;
+  using filter_dynamics_t =
+      ocs2::LoopshapingFilterDynamics<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM, FILTER_INPUT_DIM>;
 
   using anymal_system_dynamics_t = switched_model::ComKinoSystemDynamicsAd;
   using anymal_system_dynamics_derivative_t = switched_model::ComKinoSystemDynamicsAd;
@@ -92,19 +68,21 @@ class OCS2AnymalAugmentedInterface : public switched_model::OCS2QuadrupedAugment
   using anymal_cost_function_t = switched_model::SwitchedModelCostBase;
   using anymal_operating_point_t = switched_model::ComKinoOperatingPointsBase;
 
-  OCS2AnymalAugmentedInterface(const std::string &pathToConfigFolder);
+  OCS2AnymalAugmentedInterface(const std::string& pathToConfigFolder);
 
   ~OCS2AnymalAugmentedInterface() = default;
 
   /**
    * setup all optimizes
    */
-  void setupOptimizer(const logic_rules_ptr_t& logicRulesPtr, const mode_sequence_template_t* modeSequenceTemplatePtr,
-                      slq_base_ptr_t& slqPtr, mpc_ptr_t& mpcPtr) override;
+  void setupOptimizer(const logic_rules_ptr_t& logicRulesPtr, const mode_sequence_template_t* modeSequenceTemplatePtr, slq_ptr_t& slqPtr,
+                      mpc_ptr_t& mpcPtr) override;
 
   void initializeFilterState();
 
-  std::unique_ptr<filter_dynamics_t> getFilterDynamics() { return std::unique_ptr<filter_dynamics_t>(new filter_dynamics_t(loopshapingDefinition_)); };
+  std::unique_ptr<filter_dynamics_t> getFilterDynamics() {
+    return std::unique_ptr<filter_dynamics_t>(new filter_dynamics_t(loopshapingDefinition_));
+  };
 
   std::shared_ptr<ocs2::LoopshapingDefinition> getLoopshapingDefinition() { return loopshapingDefinition_; };
 
@@ -133,25 +111,24 @@ class OCS2AnymalAugmentedInterface : public switched_model::OCS2QuadrupedAugment
   std::unique_ptr<operating_point_t> operatingPointsPtr_;
   std::unique_ptr<filter_dynamics_t> filterDynamicsPtr_;
 
+  using BASE::Q_system_;
+  using BASE::Q_system_final_;
+  using BASE::R_system_;
+  using BASE::x_system_final_;
   using BASE::BASE::initialState_;
   using BASE::BASE::initRbdState_;
-  using BASE::Q_system_;
-  using BASE::R_system_;
-  using BASE::Q_system_final_;
-  using BASE::x_system_final_;
 
   using BASE::loopshapingDefinition_;
-  using BASE::BASE::logicRulesPtr_;
-  using BASE::BASE::slqPtr_;
-  using BASE::BASE::mpcPtr_;
   using BASE::BASE::defaultModeSequenceTemplate_;
-  using BASE::BASE::partitioningTimes_;
+  using BASE::BASE::logicRulesPtr_;
   using BASE::BASE::modelSettings_;
-  using BASE::BASE::slqSettings_;
+  using BASE::BASE::mpcPtr_;
   using BASE::BASE::mpcSettings_;
-
+  using BASE::BASE::partitioningTimes_;
+  using BASE::BASE::slqPtr_;
+  using BASE::BASE::slqSettings_;
 };
-} // end of namespace anymal
+}  // end of namespace anymal
 
 //#include "implementation/OCS2AnymalAugmentedInterface.tpp"
 

@@ -3,8 +3,8 @@
 //
 #include <ocs2_anymal_bear_loopshaping/OCS2AnymalAugmentedInterface.h>
 
-#include <ocs2_anymal_bear_switched_model/core/AnymalKinematics.h>
 #include <ocs2_anymal_bear_switched_model/core/AnymalCom.h>
+#include <ocs2_anymal_bear_switched_model/core/AnymalKinematics.h>
 
 namespace anymal {
 /******************************************************************************************************/
@@ -60,7 +60,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM, size_t SYSTEM_STATE_DIM, size_t SY
 void OCS2AnymalAugmentedInterface<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM, FILTER_INPUT_DIM,
                                   JOINT_COORD_SIZE>::setupOptimizer(const logic_rules_ptr_t& logicRulesPtr,
                                                                     const mode_sequence_template_t* modeSequenceTemplatePtr,
-                                                                    slq_base_ptr_t& slqPtr, mpc_ptr_t& mpcPtr) {
+                                                                    slq_ptr_t& slqPtr, mpc_ptr_t& mpcPtr) {
   anymalDynamicsPtr_.reset(new anymal_system_dynamics_t(AnymalKinematicsAd(), AnymalComAd(), modelSettings_.recompileLibraries_));
   anymalDynamicsDerivativesPtr_.reset(anymalDynamicsPtr_->clone());
   anymalConstraintsPtr_.reset(new anymal_constraint_t(AnymalKinematicsAd(), AnymalComAd(), logicRulesPtr, modelSettings_));
@@ -76,19 +76,14 @@ void OCS2AnymalAugmentedInterface<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM
   timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, BASE::rolloutSettings_));
 
   // SLQ
-  if (slqSettings_.ddpSettings_.useMultiThreading_) {
-    slqPtr.reset(new slq_mp_t(timeTriggeredRolloutPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(), costFunctionPtr_.get(),
-                                         operatingPointsPtr_.get(), slqSettings_, logicRulesPtr));
-  } else {
-    slqPtr.reset(new slq_t(timeTriggeredRolloutPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(), costFunctionPtr_.get(),
-                                      operatingPointsPtr_.get(), slqSettings_, logicRulesPtr));
-  }
+  slqPtr.reset(new slq_t(timeTriggeredRolloutPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(), costFunctionPtr_.get(),
+                         operatingPointsPtr_.get(), slqSettings_, logicRulesPtr));
 
   // MPC
   if (!modelSettings_.gaitOptimization_) {
     mpcPtr.reset(new mpc_t(timeTriggeredRolloutPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(), costFunctionPtr_.get(),
-                                 operatingPointsPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_, logicRulesPtr,
-                                 modeSequenceTemplatePtr));
+                           operatingPointsPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_, logicRulesPtr,
+                           modeSequenceTemplatePtr));
 
   } else {
     //		mpcPtr = mpc_ptr_t( new mpc_ocs2_t(timeTriggeredRolloutPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),

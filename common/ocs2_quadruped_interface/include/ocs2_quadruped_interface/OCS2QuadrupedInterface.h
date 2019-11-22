@@ -18,9 +18,8 @@
 #include <string>
 #include <vector>
 
-#include <ocs2_slq/SLQ.h>
-#include <ocs2_slq/SLQ_MP.h>
-#include <ocs2_slq/SLQ_Settings.h>
+#include <ocs2_ddp/SLQ.h>
+#include <ocs2_ddp/SLQ_Settings.h>
 
 #include <ocs2_mpc/MPC_OCS2.h>
 #include <ocs2_mpc/MPC_SLQ.h>
@@ -90,22 +89,16 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
 
   using mode_sequence_template_t = ocs2::ModeSequenceTemplate<scalar_t>;
 
-  using slq_base_t = ocs2::SLQ_BASE<STATE_DIM, INPUT_DIM>;
   using slq_t = ocs2::SLQ<STATE_DIM, INPUT_DIM>;
-  using slq_mp_t = ocs2::SLQ_MP<STATE_DIM, INPUT_DIM>;
-  //  using ocs2_t = ocs2::OCS2Projected<STATE_DIM, INPUT_DIM>;
   using mpc_t = ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>;
 
-  using slq_base_ptr_t = std::unique_ptr<slq_base_t>;
   using slq_ptr_t = std::unique_ptr<slq_t>;
-  using slq_mp_ptr_t = std::unique_ptr<slq_mp_t>;
-  //  using ocs2_ptr_t = std::unique_ptr<ocs2_t>;
   using mpc_ptr_t = std::unique_ptr<mpc_t>;
 
-  using linear_controller_t = typename slq_base_t::linear_controller_t;
-  using controller_ptr_array_t = typename slq_base_t::controller_ptr_array_t;
+  using linear_controller_t = typename slq_t::linear_controller_t;
+  using controller_ptr_array_t = typename slq_t::controller_ptr_array_t;
   using linear_controller_ptr_array_t = std::vector<linear_controller_t*>;
-  using primal_solution_t = typename slq_base_t::primal_solution_t;
+  using primal_solution_t = typename slq_t::primal_solution_t;
 
   using controlled_system_base_t = ocs2::ControlledSystemBase<STATE_DIM, INPUT_DIM>;
   using controlled_system_base_ptr_t = typename controlled_system_base_t::Ptr;
@@ -131,7 +124,7 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
    * setup all optimizes
    */
   virtual void setupOptimizer(const logic_rules_ptr_t& logicRulesPtr, const mode_sequence_template_t* modeSequenceTemplatePtr,
-                              slq_base_ptr_t& slqPtr, mpc_ptr_t& mpcPtr) = 0;
+                              slq_ptr_t& slqPtr, mpc_ptr_t& mpcPtr) = 0;
 
   /** Gets the rollout class */
   virtual const rollout_base_t& getRollout() const = 0;
@@ -225,7 +218,7 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
    *
    * @return Reference to the internal SLQ
    */
-  slq_base_t& getSLQ();
+  slq_t& getSLQ();
 
   mpc_t& getMpc() override;
 
@@ -360,7 +353,7 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
   eigen_scalar_array_t ocs2Iterationcost_;
 
   // SLQ
-  slq_base_ptr_t slqPtr_;
+  slq_ptr_t slqPtr_;
   // OCS2
   //	ocs2_ptr_t 		ocs2Ptr_;
   // MPC

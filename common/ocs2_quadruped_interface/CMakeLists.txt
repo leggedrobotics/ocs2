@@ -4,7 +4,7 @@ project(ocs2_quadruped_interface)
 ## Catkin Dependencies
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
-  ocs2_slq
+  ocs2_ddp
   ocs2_mpc
   ocs2_comm_interfaces
   ocs2_robotic_tools

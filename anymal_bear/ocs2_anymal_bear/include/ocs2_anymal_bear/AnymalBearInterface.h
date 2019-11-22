@@ -34,8 +34,8 @@ class AnymalBearInterface final : public switched_model::OCS2QuadrupedInterface<
 
   ~AnymalBearInterface() override = default;
 
-  void setupOptimizer(const logic_rules_ptr_t& logicRulesPtr, const mode_sequence_template_t* modeSequenceTemplatePtr,
-                      slq_base_ptr_t& slqPtr, mpc_ptr_t& mpcPtr) override;
+  void setupOptimizer(const logic_rules_ptr_t& logicRulesPtr, const mode_sequence_template_t* modeSequenceTemplatePtr, slq_ptr_t& slqPtr,
+                      mpc_ptr_t& mpcPtr) override;
 
   const system_dynamics_t& getDynamics() const override { return *dynamicsPtr_; }
 
@@ -48,7 +48,6 @@ class AnymalBearInterface final : public switched_model::OCS2QuadrupedInterface<
   const rollout_base_t& getRollout() const override { return *timeTriggeredRolloutPtr_; }
 
  private:
-
   std::unique_ptr<system_dynamics_t> dynamicsPtr_;
   std::unique_ptr<system_dynamics_derivative_t> dynamicsDerivativesPtr_;
   std::unique_ptr<constraint_t> constraintsPtr_;

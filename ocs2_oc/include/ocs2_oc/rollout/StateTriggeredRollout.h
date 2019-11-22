@@ -155,6 +155,8 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     eventsPastTheEndIndeces.clear();
     eventsPastTheEndIndeces.reserve(maxNumSteps);
 
+    // Reset LogicRules when applicable
+    systemDynamicsPtr_->reset();
     // set controller
     systemDynamicsPtr_->setController(controller);
 
@@ -202,7 +204,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
         bool time_accuracy_condition = std::fabs(t1-t0) < BASE::settings().absTolODE_;
         bool accuracy_condition = guard_accuracy_condition || time_accuracy_condition;
 
-        bool time_end_termination = std::fabs(tend - timeTrajectory.back()) == 0; //todo
+        bool time_end_termination = std::fabs(tend - timeTrajectory.back()) == 0; //Condition to detect end of Simulation
 
         // Remove the element past the guard surface if the event handler was triggered
         // (Due to checking in EventHandler this can only happen to the last element of the trajectory)
@@ -285,7 +287,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
      // check for the numerical stability
     this->checkNumericalStability(controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
-   if(true){
+   if(false){
 	   std::cout << "###########"<<std::endl;
 	   std::cout << "Rollout finished after " << global_its << " Iterations"<<std::endl;
 	   std::cout << "###########"<<std::endl;

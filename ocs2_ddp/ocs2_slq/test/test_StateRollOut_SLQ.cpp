@@ -83,7 +83,7 @@ SLQ<STATE_DIM,INPUT_DIM> slqST(&stateTriggeredRollout, &sysder, &sysconstr, &sys
 slqST.run(startTime, initState, finalTime, partitioningTimes);
 SLQ_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t solutionST = slqST.primalSolution(finalTime);
 
-if (true){
+if (false){
 for(int i = 0; i<solutionST.stateTrajectory_.size();i++)
 {
 	std::cout<<i<<";"<<solutionST.timeTrajectory_[i]<<";"<<solutionST.stateTrajectory_[i][0]<<";"<<solutionST.stateTrajectory_[i][1]<<";"<<logicRulesPtr->getSubSystemTime(solutionST.timeTrajectory_[i])<<";"<<solutionST.inputTrajectory_[i]<<std::endl;
@@ -91,29 +91,27 @@ for(int i = 0; i<solutionST.stateTrajectory_.size();i++)
 }
 
 //EXPECT_EQ(logicRulesPtr->getNumSubsystems(),3);
-
 for(int i = 0; i<solutionST.stateTrajectory_.size();i++)
 {
 	dynamic_vector_t guardSurfacesValue;
 	sysdyn.computeGuardSurfaces(solutionST.timeTrajectory_[i],solutionST.stateTrajectory_[i],guardSurfacesValue);
+
 	EXPECT_GT(guardSurfacesValue[0],-1e-10);
-	EXPECT_GT(guardSurfacesValue[1],-1e-10);
 
-	if (guardSurfacesValue[0]<-1e-10)
+	if(!(guardSurfacesValue[0]>-1e-10))
 	{
-		std::cout<<guardSurfacesValue[0]<<";"<<i<<std::endl;
+		std::cout<<solutionST.timeTrajectory_[i]<<","<<guardSurfacesValue[0]<<","<<guardSurfacesValue[1]<<std::endl;
 	}
 
-	if ( i<solutionST.stateTrajectory_.size()-1){
-	bool event_happened = (logicRulesPtr->getSubSystemTime(solutionST.timeTrajectory_[i]) != logicRulesPtr->getSubSystemTime(solutionST.timeTrajectory_[i+1]));
-	if (event_happened){
-	EXPECT_EQ(solutionST.timeTrajectory_[i]-solutionST.timeTrajectory_[i-1],0);
+	EXPECT_GT(guardSurfacesValue[1],-1e-10);
+	if(!(guardSurfacesValue[1]>-1e-10))
+	{
+		std::cout<<solutionST.timeTrajectory_[i]<<","<<guardSurfacesValue[0]<<","<<guardSurfacesValue[1]<<std::endl;
 	}
-	}
-
+}
+	//logicRulesPtr->display();
 }
 
-}
 
 int main(int argc, char** argv){
 	testing::InitGoogleTest(&argc, argv);

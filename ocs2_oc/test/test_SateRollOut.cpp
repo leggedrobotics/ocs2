@@ -72,7 +72,7 @@ TEST(StateRolloutTests, Case1)
 	    				      timeTrajectory,eventsPastTheEndIndeces,
 							  stateTrajectory,inputTrajectory);
 
-	logicRules->display();
+	//logicRules->display();
 
 	for(int i = 0; i<timeTrajectory.size();i++){
 		// Test 1: Energy Conservation
@@ -86,7 +86,7 @@ TEST(StateRolloutTests, Case1)
 		//EXPECT_GT(-stateTrajectory[i][0] + 0.1 + timeTrajectory[i]/50, -1e-6);
 		}
 		// Optional output of state and time trajectories
-		if(true)
+		if(false)
 		{
 			std::cout<<i<<";"<<timeTrajectory[i]<<";"<<stateTrajectory[i][0]<<";"<<stateTrajectory[i][1]<<";"<<inputTrajectory[i]<<std::endl;
 		}
@@ -137,13 +137,13 @@ TEST(StateRolloutTests, Case2)
 	    				      timeTrajectory,eventsPastTheEndIndeces,
 							  stateTrajectory,inputTrajectory);
 
-	logicRules->display();
+	//logicRules->display();
 
 	for(int i = 0; i<timeTrajectory.size();i++){
 		// Test 1: No Significant penetration of Guard Surface
 		EXPECT_GT(stateTrajectory[i][0] + 3.1415/2, -1e-6);
 		// Optional output of state and time trajectories
-		if(true)
+		if(false)
 		{
 			std::cout<<i<<";"<<timeTrajectory[i]<<";"<<stateTrajectory[i][0]<<";"<<stateTrajectory[i][1]<<";"<<inputTrajectory[i]<<std::endl;
 		}
@@ -192,7 +192,7 @@ TEST(StateRolloutTests, Case3)
 	    				      timeTrajectory,eventsPastTheEndIndeces,
 							  stateTrajectory,inputTrajectory);
 
-	logicRules->display();
+	//logicRules->display();
 
 	for(int i = 0; i<timeTrajectory.size();i++){
 		// Test 1: No Significant penetration of Guard Surface
@@ -204,7 +204,7 @@ TEST(StateRolloutTests, Case3)
 		EXPECT_GT(guard_values_i[0], -1e-6);
 		EXPECT_GT(guard_values_i[1], -1e-6);
 		// Optional output of state and time trajectories
-		if(true)
+		if(false)
 		{
 			std::cout<<i<<";"<<timeTrajectory[i]<<";"<<stateTrajectory[i][0]<<";"<<stateTrajectory[i][1]<<";"<<logicRules->getSubSystemTime(timeTrajectory[i])<<";"<<inputTrajectory[i]<<std::endl;
 		}

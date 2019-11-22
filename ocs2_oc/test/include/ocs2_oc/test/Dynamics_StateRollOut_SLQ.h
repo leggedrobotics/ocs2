@@ -158,10 +158,9 @@ public:
 		return new system_dyn(*this);
 	}
 
-	void resetNumFunctionCalls(){
-		numFunctionCalls_ = 0;
-		//logicRulesPtr_->reset();
-
+	void reset() override{
+		Base::reset();
+		logicRulesPtr_->reset();
 	}
 
 	system_dyn(const system_dyn& other)
@@ -182,9 +181,6 @@ public:
 
 	void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override
 	{
-		activeSubsystem_ = logicRulesPtr_->getSubSystemTime(time);
-		subsystemDynamicsPtr_[activeSubsystem_]->computeJumpMap(time, state, mappedState);
-
 		if(activeSubsystem_ == 0)
 		{
 			logicRulesPtr_->appendModeSequence(1,time);
@@ -193,6 +189,9 @@ public:
 		{
 			logicRulesPtr_->appendModeSequence(0,time);
 		}
+
+		activeSubsystem_ = logicRulesPtr_->getSubSystemTime(time);
+		subsystemDynamicsPtr_[activeSubsystem_]->computeJumpMap(time, state, mappedState);
 	}
 
 	void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue)

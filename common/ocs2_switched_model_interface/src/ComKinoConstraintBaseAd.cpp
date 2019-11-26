@@ -1,7 +1,7 @@
 #include "ocs2_switched_model_interface/constraint/ComKinoConstraintBaseAd.h"
 
 // Constraints
-#include "ocs2_switched_model_interface/constraint/EndEffectorVelocityContraint.h"
+#include "ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h"
 #include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
 #include "ocs2_switched_model_interface/constraint/ZeroForceConstraint.h"
 

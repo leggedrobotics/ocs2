@@ -27,24 +27,17 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-namespace ocs2{
+namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
 TargetTrajectories_Joystick_Interface<SCALAR_T>::TargetTrajectories_Joystick_Interface(
-        int argc,
-        char* argv[],
-        const std::string& robotName /*= "robot"*/,
-		const size_t targetCommandSize /*= 0*/,
-		const scalar_array_t& targetCommandLimits /*= scalar_array_t()*/)
-	: BASE(argc, argv, robotName)
-	, targetCommandSize_(targetCommandSize)
-	, targetCommandLimits_(targetCommandLimits)
-{
-	if (targetCommandLimits.size()!=targetCommandSize)
-		throw std::runtime_error("Target command limits are not set properly");
+    int argc, char* argv[], const std::string& robotName /*= "robot"*/, const size_t targetCommandSize /*= 0*/,
+    const scalar_array_t& targetCommandLimits /*= scalar_array_t()*/)
+    : BASE(argc, argv, robotName), targetCommandSize_(targetCommandSize), targetCommandLimits_(targetCommandLimits) {
+  if (targetCommandLimits.size() != targetCommandSize) throw std::runtime_error("Target command limits are not set properly");
 }
 
 /******************************************************************************************************/
@@ -52,18 +45,16 @@ TargetTrajectories_Joystick_Interface<SCALAR_T>::TargetTrajectories_Joystick_Int
 /******************************************************************************************************/
 template <typename SCALAR_T>
 size_t& TargetTrajectories_Joystick_Interface<SCALAR_T>::targetCommandSize() {
-
-	return targetCommandSize_;
+  return targetCommandSize_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-void TargetTrajectories_Joystick_Interface<SCALAR_T>::publishTargetTrajectoriesFromDesiredState(cost_desired_trajectories_t costDesiredTrajectories) {
-
-	// publish cost desired trajectories
-	BASE::publishTargetTrajectories(costDesiredTrajectories);
-
+void TargetTrajectories_Joystick_Interface<SCALAR_T>::publishTargetTrajectoriesFromDesiredState(
+    cost_desired_trajectories_t costDesiredTrajectories) {
+  // publish cost desired trajectories
+  BASE::publishTargetTrajectories(costDesiredTrajectories);
 }
-} // namespace ocs2
+}  // namespace ocs2

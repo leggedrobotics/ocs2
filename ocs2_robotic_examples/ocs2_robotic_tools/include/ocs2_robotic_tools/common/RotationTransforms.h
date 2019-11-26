@@ -47,8 +47,8 @@ namespace ocs2 {
 template <typename SCALAR_T>
 Eigen::Matrix<SCALAR_T, 3, 1> quaternionDistance(const Eigen::Quaternion<SCALAR_T>& eeQuaternion,
                                                  const Eigen::Quaternion<SCALAR_T>& commandQuaternion) {
-    return eeQuaternion.w() * commandQuaternion.vec() - commandQuaternion.w() * eeQuaternion.vec() -
-           commandQuaternion.vec().cross(eeQuaternion.vec());
+  return eeQuaternion.w() * commandQuaternion.vec() - commandQuaternion.w() * eeQuaternion.vec() -
+         commandQuaternion.vec().cross(eeQuaternion.vec());
 }
 
 /**
@@ -59,24 +59,24 @@ Eigen::Matrix<SCALAR_T, 3, 1> quaternionDistance(const Eigen::Quaternion<SCALAR_
  */
 template <typename SCALAR_T>
 Eigen::Quaternion<SCALAR_T> getQuaternionFromEulerAnglesZyx(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAnglesZyx) {
-    SCALAR_T yaw = eulerAnglesZyx(0);
-    SCALAR_T pitch = eulerAnglesZyx(1);
-    SCALAR_T roll = eulerAnglesZyx(2);
-    // Abbreviations for the trigonometric functions
-    SCALAR_T cy = cos(yaw * 0.5);
-    SCALAR_T sy = sin(yaw * 0.5);
-    SCALAR_T cp = cos(pitch * 0.5);
-    SCALAR_T sp = sin(pitch * 0.5);
-    SCALAR_T cr = cos(roll * 0.5);
-    SCALAR_T sr = sin(roll * 0.5);
+  SCALAR_T yaw = eulerAnglesZyx(0);
+  SCALAR_T pitch = eulerAnglesZyx(1);
+  SCALAR_T roll = eulerAnglesZyx(2);
+  // Abbreviations for the trigonometric functions
+  SCALAR_T cy = cos(yaw * 0.5);
+  SCALAR_T sy = sin(yaw * 0.5);
+  SCALAR_T cp = cos(pitch * 0.5);
+  SCALAR_T sp = sin(pitch * 0.5);
+  SCALAR_T cr = cos(roll * 0.5);
+  SCALAR_T sr = sin(roll * 0.5);
 
-    Eigen::Quaternion<SCALAR_T> quaternion;
-    quaternion.w() = cy * cp * cr + sy * sp * sr;
-    quaternion.x() = cy * cp * sr - sy * sp * cr;
-    quaternion.y() = sy * cp * sr + cy * sp * cr;
-    quaternion.z() = sy * cp * cr - cy * sp * sr;
+  Eigen::Quaternion<SCALAR_T> quaternion;
+  quaternion.w() = cy * cp * cr + sy * sp * sr;
+  quaternion.x() = cy * cp * sr - sy * sp * cr;
+  quaternion.y() = sy * cp * sr + cy * sp * cr;
+  quaternion.z() = sy * cp * cr - cy * sp * sr;
 
-    return quaternion;
+  return quaternion;
 }
 
-}
+}  // namespace ocs2

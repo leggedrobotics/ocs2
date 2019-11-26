@@ -3,6 +3,7 @@ project(ocs2_core)
 
 find_package(catkin REQUIRED COMPONENTS 
   cmake_modules
+  ocs2_thirdparty
 ) 
 find_package(Boost REQUIRED COMPONENTS 
   system
@@ -24,12 +25,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 catkin_package(
   INCLUDE_DIRS 
     include
-    include/external
     ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
     ${PROJECT_NAME}_logic
     ${PROJECT_NAME}_cppad_interface
     ${PROJECT_NAME}_misc
+  CATKIN_DEPENDS
+    ocs2_thirdparty
   DEPENDS 
     Boost
 )
@@ -40,7 +42,6 @@ catkin_package(
 
 include_directories(
   include
-  include/external
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
@@ -61,6 +62,7 @@ add_library(${PROJECT_NAME}_cppad_interface
 
 add_library(${PROJECT_NAME}_misc
   src/misc/LinearAlgebra.cpp
+  src/misc/ThreadPool.cpp
 )
 
 add_executable(${PROJECT_NAME}_lintTarget
@@ -96,9 +98,6 @@ install(TARGETS ${PROJECT_NAME}_logic ${PROJECT_NAME}_cppad_interface ${PROJECT_
 
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
-
-install(DIRECTORY include/external/
-        DESTINATION "${CATKIN_PACKAGE_INCLUDE_DESTINATION}/../")
 
 #############
 ## Testing ##
@@ -246,4 +245,21 @@ catkin_add_gtest(test_lookup
 target_link_libraries(test_lookup
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
+)
+
+catkin_add_gtest(derivative_checker_unittest
+        test/dynamics/testSystemDynamicsLinearizer.cpp
+)
+target_link_libraries(derivative_checker_unittest
+        ${catkin_LIBRARIES}
+)
+
+catkin_add_gtest(test_ThreadPool
+  test/misc/testThreadPool.cpp
+)
+target_link_libraries(test_ThreadPool
+  ${PROJECT_NAME}_misc
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  gtest_main
 )

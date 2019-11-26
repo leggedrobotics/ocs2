@@ -224,9 +224,16 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
   /**
    * @brief getFeedbackGain: Extracts the feedback matrix at the requested time
    * @param[in] time
-   * @param[out] K linear feedback gain
+   * @param[out] gain: linear feedback gain
    */
-  void getFeedbackGain(scalar_t time, input_state_matrix_t& K) const { linInterpolateGain_.interpolate(time, K); }
+  void getFeedbackGain(scalar_t time, input_state_matrix_t& gain) const { linInterpolateGain_.interpolate(time, gain); }
+
+  /**
+   * @brief getFeedbackGain: Extracts the bias term at the requested time
+   * @param[in] time
+   * @param[out] bias: the controller bias term
+   */
+  void getBias(scalar_t time, input_vector_t& bias) const { linInterpolateBias_.interpolate(time, bias); }
 
  public:
   scalar_array_t timeStamp_;

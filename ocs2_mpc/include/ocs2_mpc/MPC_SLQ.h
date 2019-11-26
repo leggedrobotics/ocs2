@@ -30,11 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_ddp_base/DDP_BASE.h>
-
-#include <ocs2_slq/SLQ.h>
-#include <ocs2_slq/SLQ_BASE.h>
-#include <ocs2_slq/SLQ_MP.h>
+#include <ocs2_ddp/DDP_BASE.h>
+#include <ocs2_ddp/SLQ.h>
 
 #include "ocs2_mpc/MPC_BASE.h"
 
@@ -81,9 +78,7 @@ class MPC_SLQ : public MPC_BASE<STATE_DIM, INPUT_DIM> {
 
   using ddp_base_t = ocs2::DDP_BASE<STATE_DIM, INPUT_DIM>;
 
-  using slq_base_t = ocs2::SLQ_BASE<STATE_DIM, INPUT_DIM>;
   using slq_t = ocs2::SLQ<STATE_DIM, INPUT_DIM>;
-  using slq_mp_t = ocs2::SLQ_MP<STATE_DIM, INPUT_DIM>;
 
   using logic_rules_machine_t = typename ddp_base_t::logic_rules_machine_t;
   using event_handler_t = typename ddp_base_t::event_handler_t;
@@ -132,9 +127,9 @@ class MPC_SLQ : public MPC_BASE<STATE_DIM, INPUT_DIM> {
    */
   virtual SLQ_Settings& slqSettings();
 
-  slq_base_t* getSolverPtr() override;
+  slq_t* getSolverPtr() override;
 
-  const slq_base_t* getSolverPtr() const override;
+  const slq_t* getSolverPtr() const override;
 
   void calculateController(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime) override;
 
@@ -142,7 +137,7 @@ class MPC_SLQ : public MPC_BASE<STATE_DIM, INPUT_DIM> {
   /***********
    * Variables
    ***********/
-  std::unique_ptr<slq_base_t> slqPtr_;
+  std::unique_ptr<slq_t> slqPtr_;
 };
 
 }  // namespace ocs2

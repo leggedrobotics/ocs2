@@ -52,13 +52,9 @@ MPC_SLQ<STATE_DIM, INPUT_DIM>::MPC_SLQ(const rollout_base_t* rolloutPtr, const d
 
     : BASE(partitioningTimes, mpcSettings) {
   // SLQ
-  if (slqSettings.ddpSettings_.useMultiThreading_) {
-    slqPtr_.reset(new slq_mp_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
-                               slqSettings, logicRulesPtr, heuristicsFunctionPtr));
-  } else {
-    slqPtr_.reset(new slq_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, slqSettings,
-                            logicRulesPtr, heuristicsFunctionPtr));
-  }
+
+  slqPtr_.reset(new slq_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, slqSettings,
+                          logicRulesPtr, heuristicsFunctionPtr));
 
   // set base solver's pointer
   BASE::setBaseSolverPtr(slqPtr_.get());
@@ -96,7 +92,7 @@ SLQ_Settings& MPC_SLQ<STATE_DIM, INPUT_DIM>::slqSettings() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-typename MPC_SLQ<STATE_DIM, INPUT_DIM>::slq_base_t* MPC_SLQ<STATE_DIM, INPUT_DIM>::getSolverPtr() {
+typename MPC_SLQ<STATE_DIM, INPUT_DIM>::slq_t* MPC_SLQ<STATE_DIM, INPUT_DIM>::getSolverPtr() {
   return slqPtr_.get();
 }
 
@@ -104,7 +100,7 @@ typename MPC_SLQ<STATE_DIM, INPUT_DIM>::slq_base_t* MPC_SLQ<STATE_DIM, INPUT_DIM
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename MPC_SLQ<STATE_DIM, INPUT_DIM>::slq_base_t* MPC_SLQ<STATE_DIM, INPUT_DIM>::getSolverPtr() const {
+const typename MPC_SLQ<STATE_DIM, INPUT_DIM>::slq_t* MPC_SLQ<STATE_DIM, INPUT_DIM>::getSolverPtr() const {
   return slqPtr_.get();
 }
 
@@ -146,7 +142,7 @@ void MPC_SLQ<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTime
     slqPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_);
 
   } else {
-    slqPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_, typename slq_base_t::controller_ptr_array_t());
+    slqPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_, typename slq_t::controller_ptr_array_t());
   }
 }
 

@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_slq/GLQP.h>
+#include <ocs2_ddp/GLQP.h>
 
 #include "ocs2_ocs2/GDDP.h"
 

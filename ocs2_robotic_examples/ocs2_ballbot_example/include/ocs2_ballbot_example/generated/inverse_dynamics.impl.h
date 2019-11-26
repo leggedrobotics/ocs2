@@ -40,7 +40,7 @@ template <typename TRAIT>
 void iit::Ballbot::dyn::tpl::InverseDynamics<TRAIT>::G_terms(JointState& jForces)
 {
     // Link 'dummy_ball1'
-    dummy_ball1_a = (xm->fr_dummy_ball1_X_fr_base0).col(iit::rbd::LZ) * Scalar(iit::rbd::g);
+    dummy_ball1_a = (xm->fr_dummy_ball1_X_fr_world).col(iit::rbd::LZ) * Scalar(iit::rbd::g);
     dummy_ball1_f = dummy_ball1_I * dummy_ball1_a;
     // Link 'ball'
     ball_a = (xm->fr_ball_X_fr_dummy_ball1) * dummy_ball1_a;
@@ -115,7 +115,7 @@ template <typename TRAIT>
 void iit::Ballbot::dyn::tpl::InverseDynamics<TRAIT>::firstPass(const JointState& qd, const JointState& qdd, const ExtForces& fext)
 {
     // First pass, link 'dummy_ball1'
-    dummy_ball1_a = (xm->fr_dummy_ball1_X_fr_base0).col(iit::rbd::LZ) * Scalar(iit::rbd::g);
+    dummy_ball1_a = (xm->fr_dummy_ball1_X_fr_world).col(iit::rbd::LZ) * Scalar(iit::rbd::g);
     dummy_ball1_a(iit::rbd::LZ) += qdd(JBALL_X);
     dummy_ball1_v(iit::rbd::LZ) = qd(JBALL_X);   // dummy_ball1_v = vJ, for the first link of a fixed base robot
     

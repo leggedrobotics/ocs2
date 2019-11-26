@@ -36,9 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_frank_wolfe/GradientDescent.h>
 
-#include <ocs2_slq/SLQ.h>
-#include <ocs2_slq/SLQ_BASE.h>
-#include <ocs2_slq/SLQ_MP.h>
+#include <ocs2_ddp/SLQ.h>
 
 #include "ocs2_ocs2/GDDP.h"
 
@@ -57,23 +55,19 @@ class OCS2Projected : private nlp::GradientDescent<double> {
 
   typedef nlp::GradientDescent<double> BASE;
 
-  typedef SLQ_BASE<STATE_DIM, INPUT_DIM> slq_base_t;
   typedef SLQ<STATE_DIM, INPUT_DIM> slq_t;
-  typedef SLQ_MP<STATE_DIM, INPUT_DIM> slq_mp_t;
   typedef GDDP<STATE_DIM, INPUT_DIM> gddp_t;
-  typedef typename slq_base_t::Ptr slq_base_ptr_t;
   typedef typename slq_t::Ptr slq_ptr_t;
-  typedef typename slq_mp_t::Ptr slq_mp_ptr_t;
 
   typedef SLQ_DataCollector<STATE_DIM, INPUT_DIM> slq_data_collector_t;
   typedef typename slq_data_collector_t::Ptr slq_data_collector_ptr_t;
 
-  typedef typename slq_base_t::controlled_system_base_t controlled_system_base_t;
-  typedef typename slq_base_t::derivatives_base_t derivatives_base_t;
-  typedef typename slq_base_t::constraint_base_t constraint_base_t;
-  typedef typename slq_base_t::cost_function_base_t cost_function_base_t;
-  typedef typename slq_base_t::cost_desired_trajectories_t cost_desired_trajectories_t;
-  typedef typename slq_base_t::operating_trajectories_base_t operating_trajectories_base_t;
+  typedef typename slq_t::controlled_system_base_t controlled_system_base_t;
+  typedef typename slq_t::derivatives_base_t derivatives_base_t;
+  typedef typename slq_t::constraint_base_t constraint_base_t;
+  typedef typename slq_t::cost_function_base_t cost_function_base_t;
+  typedef typename slq_t::cost_desired_trajectories_t cost_desired_trajectories_t;
+  typedef typename slq_t::operating_trajectories_base_t operating_trajectories_base_t;
 
   typedef Dimensions<STATE_DIM, INPUT_DIM> DIMENSIONS;
 
@@ -284,7 +278,7 @@ class OCS2Projected : private nlp::GradientDescent<double> {
 
   std::unique_ptr<gddp_t> gddpSolverPtr_;
   slq_data_collector_ptr_t slqDataCollectorPtr_;
-  std::vector<slq_base_ptr_t> slqSolverPtrs_;
+  std::vector<slq_ptr_t> slqSolverPtrs_;
 
   eigen_scalar_array_t slqIterationCost_;
   eigen_scalar_array_t slqIterationISE1_;

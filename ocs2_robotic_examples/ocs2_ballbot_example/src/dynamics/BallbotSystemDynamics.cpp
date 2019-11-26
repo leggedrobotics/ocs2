@@ -3,8 +3,8 @@
 #include <ocs2_ballbot_example/dynamics/BallbotSystemDynamics.h>
 
 // robcogen
-#include <ocs2_robotic_tools/rbd_libraries/robcogen/iit/rbd/rbd.h>
-#include <ocs2_robotic_tools/rbd_libraries/robcogen/iit/rbd/traits/TraitSelector.h>
+#include <iit/rbd/rbd.h>
+#include <iit/rbd/traits/TraitSelector.h>
 
 #include "ocs2_ballbot_example/generated/forward_dynamics.h"
 #include "ocs2_ballbot_example/generated/inertia_properties.h"

@@ -52,13 +52,8 @@ MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR(const rollout_base_t* rolloutPtr, const
 
     : BASE(partitioningTimes, mpcSettings) {
   // ILQR
-  if (ilqrSettings.ddpSettings_.useMultiThreading_) {
-    ilqrPtr_.reset(new ilqr_mp_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
-                                 ilqrSettings, logicRulesPtr, heuristicsFunctionPtr));
-  } else {
-    ilqrPtr_.reset(new ilqr_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
-                              ilqrSettings, logicRulesPtr, heuristicsFunctionPtr));
-  }
+  ilqrPtr_.reset(new ilqr_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, ilqrSettings,
+                            logicRulesPtr, heuristicsFunctionPtr));
 
   // set base solver's pointer
   BASE::setBaseSolverPtr(ilqrPtr_.get());
@@ -86,7 +81,7 @@ ILQR_Settings& MPC_ILQR<STATE_DIM, INPUT_DIM>::ilqrSettings() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-typename MPC_ILQR<STATE_DIM, INPUT_DIM>::ilqr_base_t* MPC_ILQR<STATE_DIM, INPUT_DIM>::getSolverPtr() {
+typename MPC_ILQR<STATE_DIM, INPUT_DIM>::ilqr_t* MPC_ILQR<STATE_DIM, INPUT_DIM>::getSolverPtr() {
   return ilqrPtr_.get();
 }
 
@@ -94,7 +89,7 @@ typename MPC_ILQR<STATE_DIM, INPUT_DIM>::ilqr_base_t* MPC_ILQR<STATE_DIM, INPUT_
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename MPC_ILQR<STATE_DIM, INPUT_DIM>::ilqr_base_t* MPC_ILQR<STATE_DIM, INPUT_DIM>::getSolverPtr() const {
+const typename MPC_ILQR<STATE_DIM, INPUT_DIM>::ilqr_t* MPC_ILQR<STATE_DIM, INPUT_DIM>::getSolverPtr() const {
   return ilqrPtr_.get();
 }
 
@@ -136,7 +131,7 @@ void MPC_ILQR<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTim
     ilqrPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_);
 
   } else {
-    ilqrPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_, typename ilqr_base_t::controller_ptr_array_t());
+    ilqrPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_, typename ilqr_t::controller_ptr_array_t());
   }
 }
 

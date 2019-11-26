@@ -4,16 +4,23 @@ project(ocs2_ballbot_example)
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(CATKIN_PACKAGE_DEPENDENCIES
+    tf
+    urdf
+    kdl_parser
+    robot_state_publisher
+    visualization_msgs
+    ocs2_core
+    ocs2_ddp
+    ocs2_ocs2
+    ocs2_mpc
+    ocs2_comm_interfaces
+    ocs2_robotic_tools
+    )
+
 find_package(catkin REQUIRED COMPONENTS
-  roslib
-  tf
-  visualization_msgs
-  ocs2_core
-  ocs2_slq
-  ocs2_ocs2
-  ocs2_mpc
-  ocs2_comm_interfaces
-  ocs2_robotic_tools
+    roslib
+    ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
 find_package(Boost REQUIRED COMPONENTS
@@ -42,14 +49,7 @@ catkin_package(
     include
     ${EIGEN3_INCLUDE_DIRS}
   CATKIN_DEPENDS
-    tf
-    visualization_msgs
-    ocs2_core
-    ocs2_slq
-    ocs2_ocs2
-    ocs2_mpc
-    ocs2_comm_interfaces
-    ocs2_robotic_tools
+    ${CATKIN_PACKAGE_DEPENDENCIES}
   DEPENDS
     Boost
 )

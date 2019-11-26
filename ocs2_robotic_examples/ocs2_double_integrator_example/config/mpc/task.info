@@ -1,19 +1,19 @@
 ; Time Horizon
 mpcTimeHorizon
 {
-    timehorizon				2.5
-    numPartitions			2
+    timehorizon       2.5
+    numPartitions     2
 }
 
-; Mode sequence 
+; Mode sequence
 subsystemsSequence
 {
-  	[0]     0
+    [0]     0
 }
 ; Template mode sequence
 templateSubsystemsSequence
 {
-  	[0]     0
+    [0]     0
 }
 templateSwitchingTimes
 {
@@ -24,58 +24,54 @@ slq
 {
     RiccatiIntegratorType       1      ; ODE45 = 1, ADAMS_BASHFORTH = 2, BULIRSCH_STOER = 3, ADAMS_BASHFORTH_MOULTON = 4
     adams_integrator_dt         0.01
-    
+
     warmStartGSLQ                1
     useLQForDerivatives          0
     displayGradientDescent       0
     tolGradientDescent           1e-2
     acceptableTolGradientDescent 1e-2
-    maxIterationGradientDescent  5	
+    maxIterationGradientDescent  5
     minLearningRateNLP           0.05
     maxLearningRateNLP           0.6
     useAscendingLineSearchNLP    1
-    
+
     ddp
     {
-        maxNumIterations             10      ; 50                                          
-        minLearningRate              1.0     ; 0.1                                        	
-        maxLearningRate              1.0                                          	
-        minRelCost                   0.1     ; 0.01                                        	
-        stateConstraintPenaltyCoeff  100.0                                         	
-        stateConstraintPenaltyBase   1.1                                          	
-        meritFunctionRho             50.0                                         	
-        constraintStepSize           1.0     ; 1.0                                          	
+        maxNumIterations             10      ; 50
+        minLearningRate              1.0     ; 0.1
+        maxLearningRate              1.0
+        minRelCost                   0.1     ; 0.01
+        stateConstraintPenaltyCoeff  100.0
+        stateConstraintPenaltyBase   1.1
+        meritFunctionRho             50.0
+        constraintStepSize           1.0     ; 1.0
         displayInfo                  0
         displayShortSummary          0
         debugPrintRollout            0
-        
-                                                                                  	
-        AbsTolODE                    1e-9	;1e-5	;1e-6                                                                          
-        RelTolODE                    1e-6	;1e-3	;1e-4
-        minTimeStep                  1e-3                                         	
-        maxNumStepsPerSecond         5e+4		; 50000                                        	
-        simulationIsConstrained      0 
-        noStateConstraints           1  
-        useMakePSD                   1                       	
-        minAbsConstraint1ISE         5e-3                                        	
+
+        AbsTolODE                    1e-9 ;1e-5 ;1e-6
+        RelTolODE                    1e-6 ;1e-3 ;1e-4
+        minTimeStep                  1e-3
+        maxNumStepsPerSecond         50000
+        simulationIsConstrained      0
+        noStateConstraints           1
+        useMakePSD                   1
+        minAbsConstraint1ISE         5e-3
         minRelConstraint1ISE         5e-6
-        checkNumericalStability      1                                            
-        
-        useMultiThreading           0
-        nThreads                    4
-        debugPrintMT                0
-        lsStepsizeGreedy            1
+        checkNumericalStability      1
+
+        nThreads                    1
 
         useFeedbackPolicy           1
-        useRiccatiSolver            1  
+        useRiccatiSolver            1
     }
-    
+
     rollout
     {
-        AbsTolODE                    1e-9	;1e-5	;1e-6
-        RelTolODE                    1e-6	;1e-3	;1e-4
+        AbsTolODE                    1e-9 ;1e-5 ;1e-6
+        RelTolODE                    1e-6 ;1e-3 ;1e-4
         minTimeStep                  1e-3
-        maxNumStepsPerSecond         5e+4   ; 50000
+        maxNumStepsPerSecond         50000
         checkNumericalStability      1
     }
 }
@@ -83,21 +79,21 @@ slq
 ; MPC settings
 mpc
 {
-	runtimeMaxNumIterations     1
-	initMaxNumIterations        100
-	runtimeMaxLearningRate      1.0
-	runtimeMinLearningRate      1.0
-	initMinLearningRate         0.1
-	initMaxLearningRate         1.0
-	coldStart                   0
-	recedingHorizon             1    ; use receding horizon MPC
-	useParallelRiccatiSolver    0    ; use disjoint riccati solver in MP case and recedingHorizon fashion
-	solutionTimeWindow          -1   ; maximum [s]
-	mpcDesiredFrequency         100  ; [Hz] 
-	mrtDesiredFrequency         400  ; [Hz] 
-	debugPrint                  1
-}                                                                                                                                 	
-                                                                              	
+  runtimeMaxNumIterations     1
+  initMaxNumIterations        100
+  runtimeMaxLearningRate      1.0
+  runtimeMinLearningRate      1.0
+  initMinLearningRate         0.1
+  initMaxLearningRate         1.0
+  coldStart                   0
+  recedingHorizon             1    ; use receding horizon MPC
+  useParallelRiccatiSolver    0    ; use disjoint riccati solver in MP case and recedingHorizon fashion
+  solutionTimeWindow          -1   ; maximum [s]
+  mpcDesiredFrequency         100  ; [Hz]
+  mrtDesiredFrequency         400  ; [Hz]
+  debugPrint                  1
+}
+
 
 pathIntegral
 {
@@ -115,9 +111,9 @@ pathIntegral
   }
 }
 
-                                                                              	
-; initial state                                                               	
-initialState                                                               	
+
+; initial state
+initialState
 {
    (0,0) 0.0    ; x1
    (1,0) 0.0    ; x2
@@ -128,8 +124,8 @@ Q
 {
     scaling 1e-1
 
-   (0,0)  1.0	; x1
-   (1,1)  1.0	; x2
+   (0,0)  1.0 ; x1
+   (1,1)  1.0 ; x2
 }
 
 
@@ -146,10 +142,10 @@ R
 Q_final
 {
     scaling 1e+1
-   (0,0)  2.7064	; x11
-   (0,1)  3.1623	; x12
-   (1,0)  3.1623	; x21
-   (1,1)  8.5584	; x22
+   (0,0)  2.7064  ; x11
+   (0,1)  3.1623  ; x12
+   (1,0)  3.1623  ; x21
+   (1,1)  8.5584  ; x22
 
 }
 

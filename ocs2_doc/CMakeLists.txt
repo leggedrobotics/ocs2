@@ -8,9 +8,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_oc
   ocs2_frank_wolfe
-  ocs2_ddp_base
-  ocs2_ilqr
-  ocs2_slq
+  ocs2_ddp
   ocs2_ocs2
   ocs2_raisim
   ocs2_mpc
@@ -62,31 +60,13 @@ else()
   message(FATAL_ERROR "Couldn't find ocs2_frank_wolfe")
 endif()
 
-# find ocs2_ddp_base
-find_path(SOURCE_OCS2_DDP_BASE_DIR NAMES ocs2_ddp_base/DDP_BASE.h PATHS ${ocs2_ddp_base_INCLUDE_DIRS}... NO_DEFAULT_PATH)
+# find ocs2_ddp
+find_path(SOURCE_OCS2_DDP_BASE_DIR NAMES ocs2_ddp/DDP_BASE.h PATHS ${ocs2_ddp_INCLUDE_DIRS}... NO_DEFAULT_PATH)
 if(EXISTS "${SOURCE_OCS2_DDP_BASE_DIR}")
-  set(SOURCE_OCS2_DDP_BASE_DIR "${SOURCE_OCS2_DDP_BASE_DIR}/ocs2_ddp_base")
-  message(STATUS "Found ocs2_ddp_base at: ${SOURCE_OCS2_DDP_BASE_DIR}")
+  set(SOURCE_OCS2_DDP_BASE_DIR "${SOURCE_OCS2_DDP_BASE_DIR}/ocs2_ddp")
+  message(STATUS "Found ocs2_ddp at: ${SOURCE_OCS2_DDP_BASE_DIR}")
 else()
-  message(FATAL_ERROR "Couldn't find ocs2_ddp_base")
-endif()
-
-# find ocs2_ilqr
-find_path(SOURCE_OCS2_ILQR_DIR NAMES ocs2_ilqr/ILQR_BASE.h PATHS ${ocs2_ilqr_INCLUDE_DIRS}... NO_DEFAULT_PATH)
-if(EXISTS "${SOURCE_OCS2_ILQR_DIR}")
-  set(SOURCE_OCS2_ILQR_DIR "${SOURCE_OCS2_ILQR_DIR}/ocs2_ilqr")
-  message(STATUS "Found ocs2_ilqr at: ${SOURCE_OCS2_ILQR_DIR}")
-else()
-  message(FATAL_ERROR "Couldn't find ocs2_ilqr")
-endif()
-
-# find ocs2_slq
-find_path(SOURCE_OCS2_SLQ_DIR NAMES ocs2_slq/SLQ.h PATHS ${ocs2_slq_INCLUDE_DIRS}... NO_DEFAULT_PATH)
-if(EXISTS "${SOURCE_OCS2_SLQ_DIR}")
-  set(SOURCE_OCS2_SLQ_DIR "${SOURCE_OCS2_SLQ_DIR}/ocs2_slq")
-  message(STATUS "Found ocs2_slq at: ${SOURCE_OCS2_SLQ_DIR}")
-else()
-  message(FATAL_ERROR "Couldn't find ocs2_slq")
+  message(FATAL_ERROR "Couldn't find ocs2_ddp")
 endif()
 
 # find ocs2_ocs2
@@ -189,9 +169,7 @@ Set(DOXYGEN_SOURCE_DIRS "${DOXYGEN_SOURCE_DIRS}\
   \"${SOURCE_OCS2_CORE_DIR}/\"\
   \"${SOURCE_OCS2_OC_DIR}/\"\
   \"${SOURCE_OCS2_FRANK_WOLFE_DIR}/\"\
-  \"${SOURCE_OCS2_DDP_BASE_DIR}/\"\
-  \"${SOURCE_OCS2_ILQR_DIR}/\"\
-  \"${SOURCE_OCS2_SLQ_DIR}/\"\
+  \"${SOURCE_OCS2_DDP_DIR}/\"\
   \"${SOURCE_OCS2_OCS2_DIR}/\"\
   \"${SOURCE_OCS2_RAISIM_DIR}/\"\
   \"${SOURCE_OCS2_MPC_DIR}/\"\

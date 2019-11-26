@@ -7,7 +7,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(catkin REQUIRED COMPONENTS
    roslib
    ocs2_core
-   ocs2_slq
+   ocs2_ddp
    ocs2_ocs2
    ocs2_mpc
    ocs2_comm_interfaces
@@ -37,7 +37,7 @@ catkin_package(
     cartpole_interface
   CATKIN_DEPENDS
     ocs2_core
-    ocs2_slq
+    ocs2_ddp
     ocs2_ocs2
     ocs2_mpc
     ocs2_comm_interfaces

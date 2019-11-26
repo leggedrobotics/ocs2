@@ -66,7 +66,7 @@ const T& LinkDataMap<T>::operator[](LinkIdentifiers l) const {
 
 template<typename T> inline
 void LinkDataMap<T>::copydata(const LinkDataMap& rhs) {
-    data[BASE0] = rhs[BASE0];
+    data[WORLD] = rhs[WORLD];
     data[DUMMY_BALL1] = rhs[DUMMY_BALL1];
     data[BALL] = rhs[BALL];
     data[DUMMY_BASE1] = rhs[DUMMY_BASE1];
@@ -76,7 +76,7 @@ void LinkDataMap<T>::copydata(const LinkDataMap& rhs) {
 
 template<typename T> inline
 void LinkDataMap<T>::assigndata(const T& value) {
-    data[BASE0] = value;
+    data[WORLD] = value;
     data[DUMMY_BALL1] = value;
     data[BALL] = value;
     data[DUMMY_BASE1] = value;
@@ -87,8 +87,8 @@ void LinkDataMap<T>::assigndata(const T& value) {
 template<typename T> inline
 std::ostream& operator<<(std::ostream& out, const LinkDataMap<T>& map) {
     out
-    << "   base0 = "
-    << map[BASE0]
+    << "   world = "
+    << map[WORLD]
     << "   dummy_ball1 = "
     << map[DUMMY_BALL1]
     << "   ball = "

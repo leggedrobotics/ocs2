@@ -5,15 +5,15 @@ mpcTimeHorizon
     numPartitions    4
 }
 
-; Mode sequence 
+; Mode sequence
 subsystemsSequence
 {
-  	[0]     0
+    [0]     0
 }
 ; Template mode sequence
 templateSubsystemsSequence
 {
-  	[0]     0
+    [0]     0
 }
 templateSwitchingTimes
 {
@@ -66,12 +66,9 @@ slq
         minRelConstraint1ISE           5e-6
         checkNumericalStability        0
 
-        useMultiThreading              0
-        nThreads                       4
+        nThreads                       1
         threadPriority                 0
-        debugPrintMP                   0
-        lsStepsizeGreedy               1
-        
+
         useFeedbackPolicy              0
         useRiccatiSolver               1
 
@@ -108,7 +105,7 @@ mpc
 ; ballbot interface settings
 ballbot_interface
 {
-	recompileLibraries       0    ; put this flag to 1 to force recompilation of dynamics library
+  recompileLibraries       0    ; put this flag to 1 to force recompilation of dynamics library
 }
 
 pathIntegral
@@ -147,10 +144,10 @@ Q
 {
     scaling 1e+0
 
-   (0,0) 110.0	; px
-   (1,1) 110.0	; py
-   (2,2) 400.0	; thetaz
-   (3,3) 0.0	; thetay
+   (0,0) 110.0  ; px
+   (1,1) 110.0  ; py
+   (2,2) 400.0  ; thetaz
+   (3,3) 0.0  ; thetay
    (4,4) 0.0  ; thetax
 
    (5,5) 35.0 ; px_dot

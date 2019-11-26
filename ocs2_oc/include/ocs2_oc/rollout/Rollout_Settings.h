@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/integration/Integrator.h>
+#include <ocs2_core/misc/LoadData.h>
 
 namespace ocs2 {
 
@@ -120,86 +121,17 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, const st
     std::cerr << " #### =============================================================================" << std::endl;
   }
 
-  try {
-    absTolODE_ = pt.get<double>(fieldName + ".AbsTolODE");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'AbsTolODE' ........................... " << absTolODE_ << "   \t(default)" << std::endl;
-    }
-  }
+  loadData::loadPtreeValue(pt, absTolODE_, fieldName + ".AbsTolODE", verbose);
+  loadData::loadPtreeValue(pt, relTolODE_, fieldName + ".RelTolODE", verbose);
+  loadData::loadPtreeValue(pt, maxNumStepsPerSecond_, fieldName + ".maxNumStepsPerSecond", verbose);
+  loadData::loadPtreeValue(pt, minTimeStep_, fieldName + ".minTimeStep", verbose);
 
-  try {
-    relTolODE_ = pt.get<double>(fieldName + ".RelTolODE");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'RelTolODE' ........................... " << relTolODE_ << "   \t(default)" << std::endl;
-    }
-  }
+  int tmp = static_cast<int>(integratorType_);
+  loadData::loadPtreeValue(pt, tmp, fieldName + ".integratorType", verbose);
+  integratorType_ = static_cast<IntegratorType>(tmp);
 
-  try {
-    maxNumStepsPerSecond_ = pt.get<size_t>(fieldName + ".maxNumStepsPerSecond");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'maxNumStepsPerSecond' ................ " << maxNumStepsPerSecond_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    minTimeStep_ = pt.get<double>(fieldName + ".minTimeStep");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'minTimeStep' ......................... " << minTimeStep_ << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    integratorType_ = static_cast<IntegratorType>(pt.get<int>(fieldName + ".integratorType"));
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'integratorType' ...................... " << ocs2::toString(integratorType_) << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'integratorType' ...................... " << ocs2::toString(integratorType_)
-                << "   \t(default)" << std::endl;
-    }
-  }
-
-  try {
-    checkNumericalStability_ = pt.get<bool>(fieldName + ".checkNumericalStability");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'checkNumericalStability' ............. " << checkNumericalStability_ << "   \t(default)"
-                << std::endl;
-    }
-  }
-
-  try {
-    reconstructInputTrajectory_ = pt.get<bool>(fieldName + ".reconstructInputTrajectory");
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'reconstructInputTrajectory' .......... " << reconstructInputTrajectory_ << std::endl;
-    }
-  } catch (const std::exception& e) {
-    if (verbose) {
-      std::cerr << " #### Option loader : option 'reconstructInputTrajectory' .......... " << reconstructInputTrajectory_
-                << "   \t(default)" << std::endl;
-    }
-  }
+  loadData::loadPtreeValue(pt, checkNumericalStability_, fieldName + ".checkNumericalStability", verbose);
+  loadData::loadPtreeValue(pt, reconstructInputTrajectory_, fieldName + ".reconstructInputTrajectory", verbose);
 
   if (verbose) {
     std::cerr << " #### =============================================================================" << std::endl;

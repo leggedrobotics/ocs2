@@ -31,7 +31,7 @@ enum JointIdentifiers {
 };
 
 enum LinkIdentifiers {
-    BASE0 = 0
+    WORLD = 0
     , DUMMY_BALL1
     , BALL
     , DUMMY_BASE1
@@ -43,7 +43,7 @@ static const JointIdentifiers orderedJointIDs[jointsCount] =
     {JBALL_X,JBALL_Y,JBASE_Z,JBASE_Y,JBASE_X};
 
 static const LinkIdentifiers orderedLinkIDs[linksCount] =
-    {BASE0,DUMMY_BALL1,BALL,DUMMY_BASE1,DUMMY_BASE2,BASE};
+    {WORLD,DUMMY_BALL1,BALL,DUMMY_BASE1,DUMMY_BASE2,BASE};
 
 }
 }

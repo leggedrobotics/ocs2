@@ -97,6 +97,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    */
   ~StateTriggeredRollout() = default;
 
+<<<<<<< HEAD
   /**
    * Returns the underlying dynamics
    */
@@ -172,7 +173,6 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     scalar_t t0  = timeIntervalArray.front().first;
     scalar_t t1  = timeIntervalArray.back().second;
     scalar_t tend= t1; // Stored separately due to overwriting t1 when refining
-    size_t eventID_m = 0; // todo
 
     bool refining = false;
     bool triggered = false;
@@ -188,7 +188,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
                                               timeTrajectory, BASE::settings().minTimeStep_, BASE::settings().absTolODE_,
                                               BASE::settings().relTolODE_, maxNumSteps, true);        }
         catch(const size_t& eventID)
-        { 	eventID_m = eventID;
+        {
     		triggered = true;
         }
         // Calculate GuardSurface value of last query state and time

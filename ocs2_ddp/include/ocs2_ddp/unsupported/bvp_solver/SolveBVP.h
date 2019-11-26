@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
-#include "ocs2_ddp/bvp_solver/BVPEquations.h"
+#include "../unsupported/bvp_solver/BVPEquations.h"
 
 namespace ocs2 {
 

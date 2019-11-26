@@ -133,7 +133,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 bool MPC_OCS2<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const state_vector_t& currentState) {
   std::unique_lock<std::mutex> slqLock(dataCollectorMutex_, std::defer_lock_t());
   bool ownership = slqLock.try_lock();
-  if (ownership && BASE::initRun_ == false) {
+  if (ownership && !BASE::initRun_) {
     bool rewaindTookPlace = currentTime > 0.1 && BASE::slqPtr_->getRewindCounter() != slqDataCollectorPtr_->rewindCounter_;
     bool modeSequenceUpdated = subsystemsSequenceOptimized_ != BASE::slqPtr_->getLogicRulesPtr()->subsystemsSequence();
     if (!rewaindTookPlace && !modeSequenceUpdated) {

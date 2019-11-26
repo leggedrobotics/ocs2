@@ -154,4 +154,3 @@ target_link_libraries(exp1_ilqr_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
-

@@ -2,6 +2,7 @@
 
 // Constraints
 #include "ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h"
+#include "ocs2_switched_model_interface/constraint/EndEffectorBaseVelocityConstraint.h"
 #include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
 #include "ocs2_switched_model_interface/constraint/ZeroForceConstraint.h"
 
@@ -28,8 +29,10 @@ void ComKinoConstraintBaseAd::initializeConstraintTerms() {
     auto zeroForceConstraint = std::unique_ptr<ConstraintTerm_t>(new ZeroForceConstraint(i));
 
     // Velocity Constraint
+    auto _b_endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorBaseVelocityConstraint(
+        i, EndEffectorVelocityConstraintSettings(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
 
-    auto endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityConstraint(
+    auto _o_endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityConstraint(
         i, EndEffectorVelocityConstraintSettings(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
 
     // Inequalities
@@ -37,7 +40,8 @@ void ComKinoConstraintBaseAd::initializeConstraintTerms() {
 
     // State input equalities
     equalityStateInputConstraintCollection_.add(std::move(zeroForceConstraint), footName + "_ZeroForce");
-    equalityStateInputConstraintCollection_.add(std::move(endEffectorVelocityConstraint), footName + "_EEVel");
+    equalityStateInputConstraintCollection_.add(std::move(_o_endEffectorVelocityConstraint), footName + "_o_EEVel");
+    equalityStateInputConstraintCollection_.add(std::move(_b_endEffectorVelocityConstraint), footName + "_b_EEVel");
   }
 }
 
@@ -63,22 +67,29 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
     equalityStateInputConstraintCollection_.modifyConstraint(footName + "_ZeroForce")->setActivity(!stanceLegs_[i]);
 
     // Active foot placement for stance legs
-    auto EEVelConstraint =
-        equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityConstraint>(footName + "_EEVel");
-    EEVelConstraint->setActivity(true);
-    EndEffectorVelocityConstraintSettings eeVelConSettings;
+    auto _o_EEVelConstraint =
+        equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityConstraint>(footName + "_o_EEVel");
+    auto _b_EEVelConstraint =
+        equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityConstraint>(footName + "_b_EEVel");
+
+    EndEffectorVelocityConstraintSettings _o_eeVelConSettings;
+    EndEffectorVelocityConstraintSettings _b_eeVelConSettings;
+
     if (stanceLegs_[i]) {  // in stance: y,z velocitys are zero
-      eeVelConSettings.b.resize(2);
-      eeVelConSettings.A.resize(2, 3);
-      eeVelConSettings.b << 0, 0;
-      eeVelConSettings.A << 0, 1, 0, 0, 0, 1;
+      _b_EEVelConstraint->setActivity(true);
+      _b_eeVelConSettings.b.resize(2);
+      _b_eeVelConSettings.A.resize(2, 3);
+      _b_eeVelConSettings.b << 0, 0;
+      _b_eeVelConSettings.A << 0, 1, 0, 0, 0, 1;
+      _b_EEVelConstraint->configure(_b_eeVelConSettings);
     } else {  // in swing: z-velocity is provided
-      eeVelConSettings.b.resize(1);
-      eeVelConSettings.A.resize(1, 3);
-      eeVelConSettings.b << -zDirectionRefsPtr_[i]->calculateVelocity(Base::t_);
-      eeVelConSettings.A << 0, 0, 1;
+      _o_EEVelConstraint->setActivity(true);
+      _o_eeVelConSettings.b.resize(1);
+      _o_eeVelConSettings.A.resize(1, 3);
+      _o_eeVelConSettings.b << -zDirectionRefsPtr_[i]->calculateVelocity(Base::t_);
+      _o_eeVelConSettings.A << 0, 0, 1;
+      _o_EEVelConstraint->configure(_o_eeVelConSettings);
     }
-    EEVelConstraint->configure(eeVelConSettings);
   }
 }
 

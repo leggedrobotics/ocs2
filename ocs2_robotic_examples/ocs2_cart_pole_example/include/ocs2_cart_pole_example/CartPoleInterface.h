@@ -104,7 +104,7 @@ class CartPoleInterface final : public RobotInterfaceBase<cartpole::STATE_DIM_, 
    *
    * @param [in] taskFile: Task's file full path.
    */
-  void loadSettings(const std::string& taskFile) final;
+  void loadSettings(const std::string& taskFile) override;
 
   /**************
    * Variables

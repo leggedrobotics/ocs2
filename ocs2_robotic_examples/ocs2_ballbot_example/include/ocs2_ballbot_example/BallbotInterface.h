@@ -105,7 +105,7 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
    *
    * @param [in] taskFile: Task's file full path.
    */
-  void loadSettings(const std::string& taskFile);
+  void loadSettings(const std::string& taskFile) override;
 
   /**************
    * Variables

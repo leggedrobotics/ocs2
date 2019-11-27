@@ -125,7 +125,7 @@ class MPC_ROS_Interface {
    * @param [in] mpc: The underlying MPC class to be used.
    * @param [in] robotName: The robot's name.
    */
-  explicit MPC_ROS_Interface(mpc_t& mpc, const std::string& robotName = "robot");
+  explicit MPC_ROS_Interface(mpc_t& mpc, std::string robotName = "robot");
 
   /**
    * Destructor.

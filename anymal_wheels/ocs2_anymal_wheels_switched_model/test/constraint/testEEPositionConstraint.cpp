@@ -1,14 +1,16 @@
-//
-// Created by rgrandia on 19.09.19.
-//
+/*!
+ * @file   testEEPositionConstraint.cpp
+ * @author Marko Bjelonic
+ * @date   Nov 27, 2019
+ */
 
 
 #include <gtest/gtest.h>
 
 #include <ocs2_switched_model_interface/constraint/EndEffectorPositionConstraint.h>
 
-#include "ocs2_anymal_bear_switched_model/core/AnymalKinematics.h"
-#include "ocs2_anymal_bear_switched_model/core/AnymalCom.h"
+#include "ocs2_anymal_wheels_switched_model/core/AnymalWheelsKinematics.h"
+#include "ocs2_anymal_wheels_switched_model/core/AnymalWheelsCom.h"
 
 TEST(TestEEPositionConstraint, evaluate){
   using TestedConstraint = switched_model::EndEffectorPositionConstraint;
@@ -17,8 +19,8 @@ TEST(TestEEPositionConstraint, evaluate){
   settings.A.setIdentity(3, 3);
   settings.b.setZero(3);
 
-  anymal::AnymalComAd anymalComAd;
-  anymal::AnymalKinematicsAd anymalKinematicsAd;
+  anymal::AnymalWheelsComAd anymalComAd;
+  anymal::AnymalWheelsKinematicsAd anymalKinematicsAd;
   TestedConstraint eePositionConstraint(0, settings, anymalComAd, anymalKinematicsAd, true);
 
   // evaluation point

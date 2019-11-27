@@ -82,7 +82,7 @@ install(DIRECTORY
 
 # Build unit tests
 catkin_add_gtest(${PROJECT_NAME}_switched_model_test
-        test/TestAnymalSwitchedModel.cpp
+        test/TestAnymalWheelsSwitchedModel.cpp
         )
 
 add_dependencies(${PROJECT_NAME}_switched_model_test ${catkin_EXPORTED_TARGETS})

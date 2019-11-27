@@ -138,33 +138,25 @@ class HybridLogicRules {
   }
 
   /**
-   * Appends an event to the internal storage of the logicrules class
+   * Appends an event to the internal storage of the LogicRules class
    * Used in state triggered rollout to keep track of discovered events
    *
-   * @param [in] eventID	: activated guardSurface
-   * @param [out] eventTime : time of event
+   * @param [in] eventID: activated guardSurface
+   * @param [in] eventTime: time of event
    */
-  void appendModeSequence(const size_t& eventID, const scalar_t& eventTime) {
-    subsystemsSequence_.push_back(eventID);
-    eventTimes_.push_back(eventTime);
+  void appendModeSequence(size_t eventID, scalar_t eventTime) {
+    subsystemsSequence_.emplace_back(eventID);
+    eventTimes_.emplace_back(eventTime);
     update();
   }
 
   /**
-   * Reset the logicrules class, empties subsystemSequence and eventTimes
-   * first element of subsystemsSequence is kept, because this is the initial active subsystem
-   * Also reserves spaces in the vector, as much as were needed last iteration
-   *
+   * Reset the LogicRules class, empties subsystemSequence and eventTimes.
+   * first element of subsystemsSequence is kept, because this is the initial active subsystem.
    */
   void reset() {
-    size_t prev_size = subsystemsSequence_.size();
-
     subsystemsSequence_.erase(subsystemsSequence_.begin() + 1, subsystemsSequence_.end());
     eventTimes_.clear();
-
-    subsystemsSequence_.reserve(prev_size);
-    eventTimes_.reserve(prev_size);
-
     update();
   }
 
@@ -268,15 +260,15 @@ class HybridLogicRules {
    *  Finds the subsystem based on the query time and eventTimes
    *  If time equal equal to a switch time is requested, the lower subsystem is taken
    *
-   *  @param [in] time
-   *  @return idx of the subsytem the input time belongs to
+   *  @param [in] time: The inquiry time.
+   *  @return index of the subsystem the input time belongs to.
    */
   size_t getSubSystemTime(scalar_t time) const {
-    if (eventTimes_.size() > 0 && eventTimes_.back() < time) {
+    if (!eventTimes_.empty() && eventTimes_.back() < time) {
       return subsystemsSequence_.back();
     } else {
-      size_t idx = lookup::findIndexInTimeArray(eventTimes_, time);
-      return subsystemsSequence_[idx];
+      int ind = lookup::findIndexInTimeArray(eventTimes_, time);
+      return subsystemsSequence_[ind];
     }
   }
 

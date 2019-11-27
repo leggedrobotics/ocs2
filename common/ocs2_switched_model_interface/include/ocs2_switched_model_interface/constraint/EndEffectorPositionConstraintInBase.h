@@ -36,11 +36,10 @@ class EndEffectorPositionConstraintInBase : public switched_model::EndEffectorPo
   using typename BASE::state_vector_t;
   using typename BASE::timeStateInput_matrix_t;
 
-  static constexpr char[] kConstraintPrefix = "b_EEPositionConstraint_";
 
-  explicit EndEffectorPositionConstraint(intInBase legNumber, EndEffectorPositionConstraintSettings settings, ad_com_model_t& adComModel,
+  explicit EndEffectorPositionConstraintInBase(int legNumber, EndEffectorPositionConstraintSettings settings, ad_com_model_t& adComModel,
                                              ad_kinematic_model_t& adKinematicsModel, bool generateModels,
-                                             std::string constraintPrefix = std::move(std::string(kConstraintPrefix)))
+                                             std::string constraintPrefix = "b_EEPositionConstraint_")
       : BASE(legNumber, std::move(settings), adComModel, adKinematicsModel, generateModels, constraintPrefix) {}
 
   EndEffectorPositionConstraintInBase(const EndEffectorPositionConstraintInBase& rhs) : BASE(rhs) {}

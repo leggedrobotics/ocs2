@@ -39,14 +39,14 @@ class EndEffectorVelocityConstraint : public switched_model::EndEffectorConstrai
 
   static constexpr ocs2::ConstraintOrder kConstraintOrder = ocs2::ConstraintOrder::Linear;
 
-
   explicit EndEffectorVelocityConstraint(int legNumber, EndEffectorVelocityConstraintSettings settings, ad_com_model_t& adComModel,
-                                         ad_kinematic_model_t& adKinematicsModel, bool generateModels, std::string constraintPrefix = "EEVelocityConstraint_")
+                                         ad_kinematic_model_t& adKinematicsModel, bool generateModels,
+                                         std::string constraintPrefix = "EEVelocityConstraint_")
     : BASE(kConstraintOrder, constraintPrefix, legNumber, std::move(settings)) {
       initializeADInterface(adComModel, adKinematicsModel, generateModels);
     }
 
-  explicit EndEffectorVelocityConstraint(int legNumber, EndEffectorVelocityConstraintSettings settings,  std::string constraintPrefix =  "EEVelocityConstraint_")
+  explicit EndEffectorVelocityConstraint(int legNumber, EndEffectorVelocityConstraintSettings settings,  std::string constraintPrefix = "EEVelocityConstraint_")
     : BASE(kConstraintOrder, constraintPrefix, legNumber, std::move(settings))
     {}
 

@@ -75,21 +75,21 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
     EndEffectorVelocityConstraintSettings _o_eeVelConSettings;
     EndEffectorVelocityConstraintSettings _b_eeVelConSettings;
 
+    _b_EEVelConstraint->setActivity(true);
+    _o_EEVelConstraint->setActivity(true);
     if (stanceLegs_[i]) {  // in stance: y,z velocitys are zero
-      _b_EEVelConstraint->setActivity(true);
       _b_eeVelConSettings.b.resize(2);
       _b_eeVelConSettings.A.resize(2, 3);
       _b_eeVelConSettings.b << 0, 0;
       _b_eeVelConSettings.A << 0, 1, 0, 0, 0, 1;
-      _b_EEVelConstraint->configure(_b_eeVelConSettings);
     } else {  // in swing: z-velocity is provided
-      _o_EEVelConstraint->setActivity(true);
       _o_eeVelConSettings.b.resize(1);
       _o_eeVelConSettings.A.resize(1, 3);
       _o_eeVelConSettings.b << -zDirectionRefsPtr_[i]->calculateVelocity(Base::t_);
       _o_eeVelConSettings.A << 0, 0, 1;
-      _o_EEVelConstraint->configure(_o_eeVelConSettings);
     }
+    _b_EEVelConstraint->configure(_b_eeVelConSettings);
+    _o_EEVelConstraint->configure(_o_eeVelConSettings);
   }
 }
 

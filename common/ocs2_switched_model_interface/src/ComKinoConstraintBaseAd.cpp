@@ -2,7 +2,7 @@
 
 // Constraints
 #include "ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h"
-#include "ocs2_switched_model_interface/constraint/EndEffectorBaseVelocityConstraint.h"
+#include "ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraintInBase.h"
 #include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
 #include "ocs2_switched_model_interface/constraint/ZeroForceConstraint.h"
 
@@ -29,7 +29,7 @@ void ComKinoConstraintBaseAd::initializeConstraintTerms() {
     auto zeroForceConstraint = std::unique_ptr<ConstraintTerm_t>(new ZeroForceConstraint(i));
 
     // Velocity Constraint
-    auto _b_endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorBaseVelocityConstraint(
+    auto _b_endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityConstraintInBase(
         i, EndEffectorVelocityConstraintSettings(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
 
     auto _o_endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityConstraint(

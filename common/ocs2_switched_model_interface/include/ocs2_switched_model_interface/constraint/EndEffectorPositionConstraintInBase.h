@@ -13,7 +13,7 @@
 
 namespace switched_model {
 
-class EndEffectorBasePositionConstraint : public switched_model::EndEffectorPositionConstraint {
+class EndEffectorPositionConstraintInBase : public switched_model::EndEffectorPositionConstraint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -38,17 +38,15 @@ class EndEffectorBasePositionConstraint : public switched_model::EndEffectorPosi
 
   static constexpr char[] kConstraintPrefix = "b_EEPositionConstraint_";
 
-  explicit EndEffectorBasePositionConstraint(int legNumber, EndEffectorPositionConstraintSettings settings, ad_com_model_t& adComModel,
+  explicit EndEffectorPositionConstraint(intInBase legNumber, EndEffectorPositionConstraintSettings settings, ad_com_model_t& adComModel,
                                              ad_kinematic_model_t& adKinematicsModel, bool generateModels,
                                              std::string constraintPrefix = std::string(kConstraintPrefix))
       : BASE(legNumber, std::move(settings), adComModel, adKinematicsModel, generateModels, constraintPrefix) {}
 
-  EndEffectorBasePositionConstraint(const EndEffectorBasePositionConstraint& rhs) : BASE(rhs) {}
+  EndEffectorPositionConstraintInBase(const EndEffectorPositionConstraintInBase& rhs) : BASE(rhs) {}
 
-  EndEffectorBasePositionConstraint* clone() const override { return new EndEffectorBasePositionConstraint(*this); }
-
-  // Constraints are still stored in the origin frame, use BASE's methods
-  // scalar_array_t getValue(scalar_t time, const state_vector_t& state, const input_vector_t& input) const override {};
+  EndEffectorPositionConstraintInBase* clone() const override { return new
+  EndEffectorPositionConstraintInBase(*this); }
 
  private:
   void adFootPosition(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, const ad_dynamic_vector_t& tapedInput,

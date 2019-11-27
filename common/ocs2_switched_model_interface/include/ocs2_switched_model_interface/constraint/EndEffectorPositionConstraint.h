@@ -37,16 +37,16 @@ class EndEffectorPositionConstraint : public switched_model::EndEffectorConstrai
   using typename BASE::state_vector_t;
   using typename BASE::timeStateInput_matrix_t;
 
-  const char * const kConstraintPrefix = "EEPositionConstraint_";
+
   const ocs2::ConstraintOrder kConstraintOrder = ocs2::ConstraintOrder::Quadratic;
 
   explicit EndEffectorPositionConstraint(int legNumber, EndEffectorPositionConstraintSettings settings, ad_com_model_t& adComModel,
-                                         ad_kinematic_model_t& adKinematicsModel, bool generateModels, std::string constraintPrefix = std::move(std::string(kConstraintPrefix)))
+                                         ad_kinematic_model_t& adKinematicsModel, bool generateModels, std::string constraintPrefix = "EEPositionConstraint_")
     : BASE(kConstraintOrder, constraintPrefix, legNumber, std::move(settings)) {
       initializeADInterface(adComModel, adKinematicsModel, generateModels);
     }
 
-  explicit EndEffectorPositionConstraint(int legNumber, EndEffectorVelocityConstraintSettings settings,  std::string constraintPrefix = std::move(std::string(kConstraintPrefix)))
+  explicit EndEffectorPositionConstraint(int legNumber, EndEffectorVelocityConstraintSettings settings,  std::string constraintPrefix = "EEPositionConstraint_")
     : BASE(kConstraintOrder, constraintPrefix, legNumber, std::move(settings))
     {}
 

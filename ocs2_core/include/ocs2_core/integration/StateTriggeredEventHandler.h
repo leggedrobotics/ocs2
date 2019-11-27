@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef STATETRIGGEREDEVENTHANDLER_OCS2_H_
-#define STATETRIGGEREDEVENTHANDLER_OCS2_H_
+#pragma once
 
 #include "ocs2_core/integration/SystemEventHandler.h"
 
@@ -39,7 +38,7 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Ptr = std::shared_ptr<StateTriggeredEventHandler<STATE_DIM> >;
+  using Ptr = std::shared_ptr<StateTriggeredEventHandler<STATE_DIM>>;
 
   using BASE = SystemEventHandler<STATE_DIM>;
   using scalar_t = typename BASE::scalar_t;
@@ -49,9 +48,14 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
   using dynamic_vector_t = typename BASE::dynamic_vector_t;
 
   /**
-   * Default constructor
+   * Constructor
+   *
+   * @param [in] minEventTimeDifference: Minimum accepted time difference between two consecutive events.
    */
-  StateTriggeredEventHandler() : BASE(), systemEventHandlerTriggered_(false), triggeredEventSurface_(0) { reset(); }
+  StateTriggeredEventHandler(scalar_t minEventTimeDifference = 1e-2)
+      : BASE(), systemEventHandlerTriggered_(false), triggeredEventSurface_(0), minEventTimeDifference_(std::move(minEventTimeDifference)) {
+    reset();
+  }
 
   /**
    * Default destructor
@@ -63,28 +67,8 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
    */
   void reset() override {
     BASE::reset();
-    setEventTimesGuard();
-  }
-
-  /**
-   * Sets parameters to control event times detection.
-   *
-   * @param [in] minEventTimeDifference: Minimum accepted time difference between two consecutive events.
-   * @param [in] lastEventTriggeredTime: Last Time that an event is triggered.
-   * @param [in] lastGuardSurfacesValues: The value of the guard functions at lastEventTriggeredTime.
-   */
-  virtual void setEventTimesGuard(const scalar_t& minEventTimeDifference = 1e-2,
-                                  const scalar_t& lastEventTriggeredTime = std::numeric_limits<scalar_t>::lowest(),
-                                  const dynamic_vector_t& lastGuardSurfacesValues = dynamic_vector_t::Zero(0)) {
-    if (lastEventTriggeredTime > std::numeric_limits<scalar_t>::lowest() && lastGuardSurfacesValues.size() == 0) {
-      throw std::runtime_error(
-          "Since the time of the last event is provided, "
-          "the value of the guard functions at that time should also be provided.");
-    }
-
-    minEventTimeDifference_ = minEventTimeDifference;
-    lastEventTriggeredTime_ = lastEventTriggeredTime;
-    guardSurfacesValuesPrevious_ = lastGuardSurfacesValues;
+    lastEventTriggeredTime_ = std::numeric_limits<scalar_t>::lowest();
+    guardSurfacesValuesPrevious_.setZero(0);
   }
 
   /**
@@ -93,16 +77,8 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
    * @param [in] lastEventTriggeredTime: Last Time that an event is triggered.
    * @param [in] lastGuardSurfacesValues: The value of the guard functions at lastEventTriggeredTime.
    */
-
-  virtual void setLastEventTimes(scalar_t lastEventTriggeredTime = std::numeric_limits<scalar_t>::lowest(),
-                                 const dynamic_vector_t& lastGuardSurfacesValues = dynamic_vector_t::Zero(0)) {
-    if (lastEventTriggeredTime > std::numeric_limits<scalar_t>::lowest() && lastGuardSurfacesValues.size() == 0) {
-      throw std::runtime_error(
-          "Since the time of the last event is provided, "
-          "the value of the guard functions at that time should also be provided.");
-    }
-
-    lastEventTriggeredTime_ = lastEventTriggeredTime;
+  void setLastEventTimes(scalar_t lastEventTriggeredTime, const dynamic_vector_t& lastGuardSurfacesValues) {
+    lastEventTriggeredTime_ = std::move(lastEventTriggeredTime);
     guardSurfacesValuesPrevious_ = lastGuardSurfacesValues;
   }
 
@@ -114,12 +90,11 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
   const dynamic_vector_t& getGuardSurfacesValues() const { return guardSurfacesValuesPrevious_; }
 
   /**
-   * Get miminum time required between events occuring
+   * Gets the minimum acceptable time in between two consecutive events.
    *
-   * @return The value of minEventTimeDifference
+   * @return The value of minEventTimeDifference_
    */
-
-  const scalar_t& getminEventTimeDifference() const { return minEventTimeDifference_; }
+  scalar_t getminEventTimeDifference() const { return minEventTimeDifference_; }
 
   /**
    * Checks if an event is activated.
@@ -135,7 +110,7 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
       return true;
     }
 
-    //** StateTriggered event **//
+    // StateTriggered event
     BASE::systemPtr_->computeGuardSurfaces(time, state, guardSurfacesValuesCurrent_);
 
     bool eventTriggered = false;
@@ -164,7 +139,7 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
    *
    * @param [out] stateTrajectory: The state trajectory which contains the current state vector as its last element.
    * @param [out] timeTrajectory: The time trajectory which contains the current time as its last element.
-   * @retune boolean: A non-negative unique ID for the active events.
+   * @return A non-negative unique ID for the active events.
    */
   int handleEvent(state_vector_array_t& stateTrajectory, scalar_array_t& timeTrajectory) override {
     // SystemEventHandler event
@@ -227,16 +202,12 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
 
  protected:
   bool systemEventHandlerTriggered_;
-
   size_t triggeredEventSurface_;
+  scalar_t minEventTimeDifference_;
 
   dynamic_vector_t guardSurfacesValuesCurrent_;
   dynamic_vector_t guardSurfacesValuesPrevious_;  // memory
-
-  scalar_t minEventTimeDifference_;
-  scalar_t lastEventTriggeredTime_;  // memory
+  scalar_t lastEventTriggeredTime_;               // memory
 };
 
 }  // namespace ocs2
-
-#endif /* STATETRIGGEREDEVENTHANDLER_OCS2_H_ */

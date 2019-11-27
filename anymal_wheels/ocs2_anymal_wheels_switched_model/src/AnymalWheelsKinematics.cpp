@@ -1,8 +1,11 @@
-//
-// Created by rgrandia on 18.09.19.
-//
+/*
+ * AnymalWheelsKinematics.cpp
+ *
+ *  Created on: Nov 25, 2019
+ *      Author: Marko Bjelonic
+ */
 
-#include "ocs2_anymal_wheels_switched_model/core/AnymalKinematics.h"
+#include "ocs2_anymal_wheels_switched_model/core/AnymalWheelsKinematics.h"
 
 #include <iit/rbd/traits/TraitSelector.h>
 
@@ -16,33 +19,33 @@ namespace tpl {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-AnymalKinematics<SCALAR_T>* AnymalKinematics<SCALAR_T>::clone() const {
-  return new AnymalKinematics<SCALAR_T>(*this);
+AnymalWheelsKinematics<SCALAR_T>* AnymalWheelsKinematics<SCALAR_T>::clone() const {
+  return new AnymalWheelsKinematics<SCALAR_T>(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-switched_model::vector3_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::positionBaseToFootInBaseFrame(
+switched_model::vector3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::positionBaseToFootInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
 
   switch (footIndex) {
     case LF: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_FOOT fr_trunk_X_fr_LF_foot_;
+      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL_L fr_trunk_X_fr_LF_foot_;
       return fr_trunk_X_fr_LF_foot_(jointPositions).template topRightCorner<3, 1>();
     }
     case RF: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_FOOT fr_trunk_X_fr_RF_foot_;
+      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_WHEEL_L fr_trunk_X_fr_RF_foot_;
       return fr_trunk_X_fr_RF_foot_(jointPositions).template topRightCorner<3, 1>();
     }
     case LH: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_FOOT fr_trunk_X_fr_LH_foot_;
+      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_WHEEL_L fr_trunk_X_fr_LH_foot_;
       return fr_trunk_X_fr_LH_foot_(jointPositions).template topRightCorner<3, 1>();
     }
     case RH: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_FOOT fr_trunk_X_fr_RH_foot_;
+      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_WHEEL_L fr_trunk_X_fr_RH_foot_;
       return fr_trunk_X_fr_RH_foot_(jointPositions).template topRightCorner<3, 1>();
     }
     default:
@@ -55,7 +58,7 @@ switched_model::vector3_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::positionBaseTo
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-typename AnymalKinematics<SCALAR_T>::joint_jacobian_t AnymalKinematics<SCALAR_T>::baseToFootJacobianInBaseFrame(
+typename AnymalWheelsKinematics<SCALAR_T>::joint_jacobian_t AnymalWheelsKinematics<SCALAR_T>::baseToFootJacobianInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
 
@@ -64,23 +67,23 @@ typename AnymalKinematics<SCALAR_T>::joint_jacobian_t AnymalKinematics<SCALAR_T>
 
   switch (footIndex) {
     case LF: {
-      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LF_FOOT fr_trunk_J_fr_LF_foot_;
-      footJacobian.template block<6, 3>(0, 0) = fr_trunk_J_fr_LF_foot_(jointPositions);
+      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LF_WHEEL_L fr_trunk_J_fr_LF_foot_;
+      footJacobian.template block<6, 4>(0, 0) = fr_trunk_J_fr_LF_foot_(jointPositions);
       break;
     }
     case RF: {
-      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RF_FOOT fr_trunk_J_fr_RF_foot_;
-      footJacobian.template block<6, 3>(0, 3) = fr_trunk_J_fr_RF_foot_(jointPositions);
+      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RF_WHEEL_L fr_trunk_J_fr_RF_foot_;
+      footJacobian.template block<6, 4>(0, 4) = fr_trunk_J_fr_RF_foot_(jointPositions);
       break;
     }
     case LH: {
-      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LH_FOOT fr_trunk_J_fr_LH_foot_;
-      footJacobian.template block<6, 3>(0, 6) = fr_trunk_J_fr_LH_foot_(jointPositions);
+      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LH_WHEEL_L fr_trunk_J_fr_LH_foot_;
+      footJacobian.template block<6, 4>(0, 8) = fr_trunk_J_fr_LH_foot_(jointPositions);
       break;
     }
     case RH: {
-      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RH_FOOT fr_trunk_J_fr_RH_foot_;
-      footJacobian.template block<6, 3>(0, 9) = fr_trunk_J_fr_RH_foot_(jointPositions);
+      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RH_WHEEL_L fr_trunk_J_fr_RH_foot_;
+      footJacobian.template block<6, 4>(0, 12) = fr_trunk_J_fr_RH_foot_(jointPositions);
       break;
     }
     default: {
@@ -96,5 +99,5 @@ typename AnymalKinematics<SCALAR_T>::joint_jacobian_t AnymalKinematics<SCALAR_T>
 }  // end of namespace anymal
 
 // Explicit instantiation
-template class anymal::tpl::AnymalKinematics<double>;
-template class anymal::tpl::AnymalKinematics<ocs2::CppAdInterface<double>::ad_scalar_t>;
+template class anymal::tpl::AnymalWheelsKinematics<double>;
+template class anymal::tpl::AnymalWheelsKinematics<ocs2::CppAdInterface<double>::ad_scalar_t>;

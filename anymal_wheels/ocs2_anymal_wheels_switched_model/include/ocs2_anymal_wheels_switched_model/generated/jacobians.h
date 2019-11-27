@@ -29,10 +29,50 @@ class Jacobians {
 
         typedef JointState<Scalar> JState;
 
+        class Type_fr_base_J_fr_LF_WHEEL_L : public JacobianT<Scalar, 4, Type_fr_base_J_fr_LF_WHEEL_L>
+        {
+        public:
+            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+            Type_fr_base_J_fr_LF_WHEEL_L();
+            const Type_fr_base_J_fr_LF_WHEEL_L& update(const JState&);
+        protected:
+        };
+        
+        class Type_fr_base_J_fr_LH_WHEEL_L : public JacobianT<Scalar, 4, Type_fr_base_J_fr_LH_WHEEL_L>
+        {
+        public:
+            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+            Type_fr_base_J_fr_LH_WHEEL_L();
+            const Type_fr_base_J_fr_LH_WHEEL_L& update(const JState&);
+        protected:
+        };
+        
+        class Type_fr_base_J_fr_RF_WHEEL_L : public JacobianT<Scalar, 4, Type_fr_base_J_fr_RF_WHEEL_L>
+        {
+        public:
+            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+            Type_fr_base_J_fr_RF_WHEEL_L();
+            const Type_fr_base_J_fr_RF_WHEEL_L& update(const JState&);
+        protected:
+        };
+        
+        class Type_fr_base_J_fr_RH_WHEEL_L : public JacobianT<Scalar, 4, Type_fr_base_J_fr_RH_WHEEL_L>
+        {
+        public:
+            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+            Type_fr_base_J_fr_RH_WHEEL_L();
+            const Type_fr_base_J_fr_RH_WHEEL_L& update(const JState&);
+        protected:
+        };
+        
     public:
         Jacobians();
         void updateParameters();
     public:
+        Type_fr_base_J_fr_LF_WHEEL_L fr_base_J_fr_LF_WHEEL_L;
+        Type_fr_base_J_fr_LH_WHEEL_L fr_base_J_fr_LH_WHEEL_L;
+        Type_fr_base_J_fr_RF_WHEEL_L fr_base_J_fr_RF_WHEEL_L;
+        Type_fr_base_J_fr_RH_WHEEL_L fr_base_J_fr_RH_WHEEL_L;
 
     protected:
 

@@ -48,8 +48,8 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
-  src/AnymalCom.cpp
-  src/AnymalKinematics.cpp
+  src/AnymalWheelsCom.cpp
+  src/AnymalWheelsKinematics.cpp
 )
 
 add_dependencies(${PROJECT_NAME}

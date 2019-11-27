@@ -1,8 +1,8 @@
 /*
- * AnymalWheelsCom.h
+ * AnymalWheelsCom.cpp
  *
- *  Created on: Nov, 2018
- *      Author: farbod
+ *  Created on: Nov 25, 2019
+ *      Author: Marko Bjelonic
  */
 
 #include "ocs2_anymal_wheels_switched_model/core/AnymalWheelsCom.h"

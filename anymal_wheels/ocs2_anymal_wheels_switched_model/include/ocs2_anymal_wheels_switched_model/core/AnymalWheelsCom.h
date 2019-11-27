@@ -2,7 +2,7 @@
  * AnymalWheelsCom.h
  *
  *  Created on: Nov 25, 2019
- *      Author: farbod
+ *      Author: Marko Bjelonic
  */
 
 #pragma once

@@ -333,7 +333,7 @@ inline const typename InertiaProperties<TRAIT>::Vec3d& InertiaProperties<TRAIT>:
 
 template <typename TRAIT>
 inline typename InertiaProperties<TRAIT>::Scalar InertiaProperties<TRAIT>::getTotalMass() const {
-    return 22.753315 + 1.8623549 + 2.3501198 + 0.41052794 + 0.6363391 + 1.8623549 + 2.3501198 + 0.41052794 + 0.6363391 + 1.8623549 + 2.3501198 + 0.41052794 + 0.6363391 + 1.8623549 + 2.3501198 + 0.41052794 + 0.6363391;
+    return Scalar(22.753315 + 1.8623549 + 2.3501198 + 0.41052794 + 0.6363391 + 1.8623549 + 2.3501198 + 0.41052794 + 0.6363391 + 1.8623549 + 2.3501198 + 0.41052794 + 0.6363391 + 1.8623549 + 2.3501198 + 0.41052794 + 0.6363391);
 }
 
 }

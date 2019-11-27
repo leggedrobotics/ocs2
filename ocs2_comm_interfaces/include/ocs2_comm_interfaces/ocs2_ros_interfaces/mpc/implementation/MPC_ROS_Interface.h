@@ -35,7 +35,7 @@ namespace ocs2 {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::MPC_ROS_Interface(mpc_t& mpc, std::string robotName /*= "robot"*/)
     : mpc_(mpc),
-      robotName_(robotName),
+      robotName_(std::move(robotName)),
       currentPrimalSolution_(new primal_solution_t()),
       primalSolutionBuffer_(new primal_solution_t()),
       currentCommand_(new command_data_t()),

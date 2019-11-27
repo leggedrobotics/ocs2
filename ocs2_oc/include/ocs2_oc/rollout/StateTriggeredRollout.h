@@ -122,6 +122,8 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     eventsPastTheEndIndeces.clear();
     eventsPastTheEndIndeces.reserve(maxNumSteps);
 
+    // reset LogicRules when applicable
+    systemDynamicsPtr_->reset();
     // set controller
     systemDynamicsPtr_->setController(controller);
 

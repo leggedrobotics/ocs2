@@ -35,7 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/integration/StateTriggeredEventHandler.h>
 #include <ocs2_core/integration/SystemEventHandler.h>
-#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 
 #include <ocs2_oc/rollout/RootFind.h>
 
@@ -70,10 +69,6 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using event_handler_t = SystemEventHandler<STATE_DIM>;
   using state_triggered_event_handler_t = StateTriggeredEventHandler<STATE_DIM>;
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
-
-  using logic_rules_machine_t = HybridLogicRulesMachine;
-  using logic_rules_t = HybridLogicRules;
-
   using ode_base_t = IntegratorBase<STATE_DIM>;
 
   /**
@@ -83,58 +78,33 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    * @param [in] rolloutSettings: The rollout settings.
    */
 
-  explicit StateTriggeredRollout(const controlled_system_base_t& systemDynamics,
-                                 const Rollout_Settings& rolloutSettings = Rollout_Settings())
+  explicit StateTriggeredRollout(const controlled_system_base_t& systemDynamics, Rollout_Settings rolloutSettings = Rollout_Settings())
       : BASE(std::move(rolloutSettings)),
         systemDynamicsPtr_(systemDynamics.clone()),
         systemEventHandlersPtr_(new state_triggered_event_handler_t) {
+    // construct dynamicsIntegratorsPtr
     constructDynamicsIntegrator(this->settings().integratorType_);
   }
 
   /**
    * Default destructor.
    */
-  ~StateTriggeredRollout() = default;
-
-  /**
-   * Returns the underlying dynamics
-   */
-
-  controlled_system_base_t* systemDynamicsPtr() { return systemDynamicsPtr_.get(); }
+  ~StateTriggeredRollout() override = default;
 
   StateTriggeredRollout<STATE_DIM, INPUT_DIM>* clone() const override {
     return new StateTriggeredRollout<STATE_DIM, INPUT_DIM>(*systemDynamicsPtr_, this->settings());
   }
 
   /**
-   * Update Last event triggered times of Event Handler
+   * Returns the underlying dynamics
    */
-  void UpdateTriggerdTime(scalar_t time_triggered, dynamic_vector_t guard_triggered) {
-    systemEventHandlersPtr_->setLastEventTimes(time_triggered, guard_triggered);
-  }
-
-  /**
-   * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
-   * to integrate the system dynamics in time period [initTime, finalTime].
-   *
-   * @param [in] timeIntervalArray: begin and end time of the rollout
-   * @param [in] initState: The initial state.
-   * @param [in] controller: control policy.
-   * @param [in] hybridLlogicRulesMachine: logic rules machine.
-   * @param [out] timeTrajectory: The time trajectory stamp.
-   * @param [out] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
-   * @param [out] stateTrajectory: The state trajectory.
-   * @param [out] inputTrajectory: The control input trajectory.
-   * @param [in]  logicRules: pointer to system logicrules (required for state-triggerd rollout)
-   *
-   * @return The final state (state jump is considered if it took place)
-   */
+  controlled_system_base_t* systemDynamicsPtr() { return systemDynamicsPtr_.get(); }
 
  protected:
   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
                          scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
                          input_vector_array_t& inputTrajectory) override {
-    if (controller == nullptr) {
+    if (!controller) {
       throw std::runtime_error("The input controller is not set.");
     }
 
@@ -152,15 +122,13 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     eventsPastTheEndIndeces.clear();
     eventsPastTheEndIndeces.reserve(maxNumSteps);
 
-    // Reset LogicRules when applicable
-    systemDynamicsPtr_->reset();
     // set controller
     systemDynamicsPtr_->setController(controller);
 
     // reset function calls counter
     systemDynamicsPtr_->resetNumFunctionCalls();
 
-    // Reset the event class
+    // reset the event class
     systemEventHandlersPtr_->reset();
 
     state_vector_t beginState = initState;
@@ -174,9 +142,9 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     bool refining = false;
     bool triggered = false;
 
-    int local_its = 0;   // Iterations since last event
-    int global_its = 0;  // Overall iterations
-    RootFind rootFind;   // rootFinding algorithm
+    int localNumIterations = 0;  // Iterations since last event
+    int numIterations = 0;       // Overall number of iterations
+    RootFind rootFind;           // rootFinding algorithm
 
     while (true) {  // Keeps looping until end time condition is fulfilled, after which the loop is broken
       try {
@@ -186,7 +154,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
         eventID_m = eventID;
         triggered = true;
       }
-      // Calculate GuardSurface value of last query state and time
+      // calculate GuardSurface value of last query state and time
       const scalar_t time_query = timeTrajectory.back();
       const state_vector_t state_query = stateTrajectory.back();
 
@@ -194,14 +162,14 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       systemDynamicsPtr_->computeGuardSurfaces(time_query, state_query, GuardSurfaces_query);
       scalar_t guard_query = GuardSurfaces_query[eventID_m];
 
-      // Accuracy conditions on the obtained guard_query and width of time window
+      // accuracy conditions on the obtained guard_query and width of time window
       bool guard_accuracy_condition = std::fabs(guard_query) < BASE::settings().absTolODE_;
       bool time_accuracy_condition = std::fabs(t1 - t0) < BASE::settings().absTolODE_;
       bool accuracy_condition = guard_accuracy_condition || time_accuracy_condition;
 
       bool time_end_termination = std::fabs(tend - timeTrajectory.back()) == 0;  // Condition to detect end of Simulation
 
-      // Remove the element past the guard surface if the event handler was triggered
+      // remove the element past the guard surface if the event handler was triggered
       // (Due to checking in EventHandler this can only happen to the last element of the trajectory)
       // Exception is when the element is outside the guardSurface but within tolerance
       if (triggered && !accuracy_condition) {
@@ -210,50 +178,50 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
         triggered = false;
       }
 
-      // Compute control input trajectory and concatenate to inputTrajectory
+      // compute control input trajectory and concatenate to inputTrajectory
       if (BASE::settings().reconstructInputTrajectory_) {
         for (; k_u < timeTrajectory.size(); k_u++) {
           inputTrajectory.emplace_back(systemDynamicsPtr_->controllerPtr()->computeInput(timeTrajectory[k_u], stateTrajectory[k_u]));
         }  // end of k loop
       }
 
-      // End time Condition, means iteration procedure is done
+      // end time Condition, means iteration procedure is done
       if (time_end_termination) {
         break;
       }
 
-      // Accuracy Condition for event refinement
-      // If Sufficiently accurate crossing location has been determined
+      // accuracy condition for event refinement. If Sufficiently accurate crossing location has been determined
       if (accuracy_condition) {
         // Set new begin/end time and begin state
         beginState = state_query;
         t0 = time_query;
         t1 = tend;
 
-        // Compute Jump Map
+        // compute Jump Map
         systemDynamicsPtr_->computeJumpMap(t0, state_query, beginState);
 
-        // Append Event to Array with event indices
+        // append Event to Array with event indices
         eventsPastTheEndIndeces.push_back(stateTrajectory.size());
 
-        // Determine GuardSurface_cross value and update the eventHandler
+        // determine GuardSurface_cross value and update the eventHandler
         dynamic_vector_t GuardSurfaces_cross;
         systemDynamicsPtr_->computeGuardSurfaces(t0, beginState, GuardSurfaces_cross);
-        UpdateTriggerdTime(t0, GuardSurfaces_cross);
+        // updates the last event triggered times of Event Handler
+        systemEventHandlersPtr_->setLastEventTimes(t0, GuardSurfaces_cross);
 
-        // Reset Relevant boolean and counter
+        // reset Relevant boolean and counter
         refining = false;
-        local_its = 0;
+        localNumIterations = 0;
       }
-      // Otherwise keep or start refining
+      // otherwise keep or start refining
       else {
-        if (refining) {  // Apply the Rules of the Rootfinding method to continue refining
+        if (refining) {  // apply the Rules of the Rootfinding method to continue refining
           rootFind.Update_Bracket(time_query, guard_query);
           rootFind.getNewQuery(t1);
 
           t0 = timeTrajectory.back();
           beginState = stateTrajectory.back();
-        } else {  // Properly configure Rootfinding method to start refining
+        } else {  // properly configure Root-finding method to start refining
           scalar_t time_before = timeTrajectory.back();
           state_vector_t state_before = stateTrajectory.back();
 
@@ -274,17 +242,17 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
         inputTrajectory.pop_back();
         k_u--;
       }
-      local_its++;
-      global_its++;  // count iterations
-    }                // end of while loop
+      localNumIterations++;
+      numIterations++;  // count iterations
+    }                   // end of while loop
 
     // check for the numerical stability
     this->checkNumericalStability(controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
     if (false) {
-      std::cout << "###########" << std::endl;
-      std::cout << "Rollout finished after " << global_its << " Iterations" << std::endl;
-      std::cout << "###########" << std::endl;
+      std::cerr << "###########" << std::endl;
+      std::cerr << "Rollout finished after " << numIterations << " iterations." << std::endl;
+      std::cerr << "###########" << std::endl;
     }
 
     return stateTrajectory.back();

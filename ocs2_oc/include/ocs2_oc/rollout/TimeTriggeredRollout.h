@@ -83,20 +83,20 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    */
   ~TimeTriggeredRollout() override = default;
 
+  TimeTriggeredRollout<STATE_DIM, INPUT_DIM>* clone() const override {
+    return new TimeTriggeredRollout<STATE_DIM, INPUT_DIM>(*systemDynamicsPtr_, this->settings());
+  }
+
   /**
    * Returns the underlying dynamics.
    */
   controlled_system_base_t* systemDynamicsPtr() { return systemDynamicsPtr_.get(); }
 
-  TimeTriggeredRollout<STATE_DIM, INPUT_DIM>* clone() const override {
-    return new TimeTriggeredRollout<STATE_DIM, INPUT_DIM>(*systemDynamicsPtr_, this->settings());
-  }
-
  protected:
   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
                          scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, state_vector_array_t& stateTrajectory,
                          input_vector_array_t& inputTrajectory) override {
-    if (controller == nullptr) {
+    if (!controller) {
       throw std::runtime_error("The input controller is not set.");
     }
 
@@ -123,7 +123,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     // reset function calls counter
     systemDynamicsPtr_->resetNumFunctionCalls();
 
-    // Reset the event class
+    // reset the event class
     systemEventHandlersPtr_->reset();
 
     state_vector_t beginState = initState;

@@ -41,12 +41,12 @@ class EndEffectorPositionConstraint : public switched_model::EndEffectorConstrai
   const ocs2::ConstraintOrder kConstraintOrder = ocs2::ConstraintOrder::Quadratic;
 
   explicit EndEffectorPositionConstraint(int legNumber, EndEffectorPositionConstraintSettings settings, ad_com_model_t& adComModel,
-                                         ad_kinematic_model_t& adKinematicsModel, bool generateModels, std::string constraintPrefix = std::string(kConstraintPrefix))
+                                         ad_kinematic_model_t& adKinematicsModel, bool generateModels, std::string constraintPrefix = std::move(std::string(kConstraintPrefix)))
     : BASE(kConstraintOrder, constraintPrefix, legNumber, std::move(settings)) {
       initializeADInterface(adComModel, adKinematicsModel, generateModels);
     }
 
-  explicit EndEffectorPositionConstraint(int legNumber, EndEffectorVelocityConstraintSettings settings,  std::string constraintPrefix{kConstraintPrefix})
+  explicit EndEffectorPositionConstraint(int legNumber, EndEffectorVelocityConstraintSettings settings,  std::string constraintPrefix = std::move(std::string(kConstraintPrefix)))
     : BASE(kConstraintOrder, constraintPrefix, legNumber, std::move(settings))
     {}
 

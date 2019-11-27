@@ -40,7 +40,7 @@ class EndEffectorPositionConstraintInBase : public switched_model::EndEffectorPo
 
   explicit EndEffectorPositionConstraint(intInBase legNumber, EndEffectorPositionConstraintSettings settings, ad_com_model_t& adComModel,
                                              ad_kinematic_model_t& adKinematicsModel, bool generateModels,
-                                             std::string constraintPrefix = std::string(kConstraintPrefix))
+                                             std::string constraintPrefix = std::move(std::string(kConstraintPrefix)))
       : BASE(legNumber, std::move(settings), adComModel, adKinematicsModel, generateModels, constraintPrefix) {}
 
   EndEffectorPositionConstraintInBase(const EndEffectorPositionConstraintInBase& rhs) : BASE(rhs) {}

@@ -80,7 +80,7 @@ class QuadrotorInterface final : public RobotInterfaceBase<quadrotor::STATE_DIM_
    *
    * @param [in] taskFile: Task's file full path.
    */
-  void setupOptimizer(const std::string& taskFile) final;
+  void setupOptimizer(const std::string& taskFile) override;
 
   /**
    * Gets ILQR settings.
@@ -105,7 +105,7 @@ class QuadrotorInterface final : public RobotInterfaceBase<quadrotor::STATE_DIM_
    *
    * @param [in] taskFile: Task's file full path.
    */
-  void loadSettings(const std::string& taskFile) final;
+  void loadSettings(const std::string& taskFile) override;
 
   /**************
    * Variables

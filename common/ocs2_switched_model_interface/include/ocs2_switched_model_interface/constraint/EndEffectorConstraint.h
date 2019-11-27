@@ -47,25 +47,40 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
 
+  /*
+   *
+   * Children must first call intializeADInterface.
+   *
+   */
   EndEffectorConstraint(ocs2::ConstraintOrder constraintOrder, std::string eeConstraintName, int legNumber,
-                        EndEffectorConstraintSettings settings, ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel,
-                        bool generateModels)
-      : BASE(constraintOrder),
-        legNumber_(legNumber),
-        settings_(std::move(settings)),
-        libName_(eeConstraintName + std::to_string(legNumber_)),
-        libFolder_(libFolderDir) {
+                        EndEffectorConstraintSettings settings)
+      : BASE{constraintOrder},
+        legNumber_{legNumber},
+        settings_{std::move(settings)},
+        libName_{eeConstraintName + std::to_string(legNumber_)},
+        libFolder_{std::string{libFolderDir},
+        isAdInterfaceIntialized_=false
+        }
+  {}
+
+  EndEffectorConstraint(const EndEffectorConstraint& rhs)
+      : BASE(rhs),
+        legNumber_(rhs.legNumber_),
+        settings_(rhs.settings_),
+        libName_(rhs.libName_),
+        libFolder_(rhs.libFolder_),
+        adInterface_(new ad_interface_t(*rhs.adInterface_)) {}
+
+  // virtual EndEffectorConstraint* clone() const override { return new EndEffectorConstraint(*this); }
+
+  virtual void configure(const EndEffectorConstraintSettings& settings) { settings_ = settings; };
+
+  void initializeADInterface(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, bool generateModels) {
     setAdInterface(adComModel, adKinematicsModel);
-    switch (constraintOrder) {
+    isAdInterfaceIntialized_ = true;
+    switch (this->getOrder()) {
       case ocs2::ConstraintOrder::None:
-        // TODO(oharley) unsure what we put here?
-        // if (generateModels) {
-        //   // adInterface_->createModels(ad_interface_t::ApproximationOrder::Zero, true);
-        // } else {
-        //
-        //   adInterface_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::Zero, true);
-        // }
-        // break;
+        assert("__FILE__:__LINE__: Not implemented.");
       case ocs2::ConstraintOrder::Linear:
         if (generateModels) {
           adInterface_->createModels(ad_interface_t::ApproximationOrder::First, true);
@@ -81,20 +96,9 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
         }
         break;
     }
+
+
   }
-
-  EndEffectorConstraint(const EndEffectorConstraint& rhs)
-      : BASE(rhs),
-        legNumber_(rhs.legNumber_),
-        settings_(rhs.settings_),
-        libName_(rhs.libName_),
-        libFolder_(rhs.libFolder_),
-        adInterface_(new ad_interface_t(*rhs.adInterface_)) {}
-
-  // virtual EndEffectorConstraint* clone() const override { return new EndEffectorConstraint(*this); }
-
-  virtual void configure(const EndEffectorConstraintSettings& settings) { settings_ = settings; };
-
   size_t getNumConstraints(scalar_t time) const override { return settings_.A.rows(); };
 
   // virtual scalar_array_t getValue(scalar_t time, const state_vector_t& state, const input_vector_t& input) const = 0;
@@ -163,5 +167,7 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
   std::string libName_;
   std::string libFolder_;
   std::unique_ptr<ad_interface_t> adInterface_;
+private:
+  bool isAdInterfaceIntialized_;
 };
 }  // namespace switched_model

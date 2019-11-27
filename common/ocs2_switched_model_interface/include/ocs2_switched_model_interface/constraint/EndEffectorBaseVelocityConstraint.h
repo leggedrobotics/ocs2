@@ -36,10 +36,14 @@ class EndEffectorBaseVelocityConstraint : public switched_model::EndEffectorVelo
   using typename BASE::state_vector_t;
   using typename BASE::timeStateInput_matrix_t;
 
+  static constexpr char kConstraintPrefix[] = "b_EEVelocityConstraint_";
+
   explicit EndEffectorBaseVelocityConstraint(int legNumber, EndEffectorVelocityConstraintSettings settings, ad_com_model_t& adComModel,
                                              ad_kinematic_model_t& adKinematicsModel, bool generateModels,
-                                             std::string constraintPrefix = "EEBaseVelocityConstraint_")
-      : BASE(legNumber, std::move(settings), adComModel, adKinematicsModel, generateModels, constraintPrefix) {}
+                                             std::string constraintPrefix = std::string(kConstraintPrefix))
+    : BASE(legNumber, std::move(settings), constraintPrefix) {
+      initializeADInterface(adComModel, adKinematicsModel, generateModels);
+    }
 
   EndEffectorBaseVelocityConstraint(const EndEffectorBaseVelocityConstraint& rhs) : BASE(rhs) {}
 

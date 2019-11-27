@@ -65,7 +65,6 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using event_handler_t = SystemEventHandler<STATE_DIM>;
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
   using ode_base_t = IntegratorBase<STATE_DIM>;
-  using logic_rules_t = HybridLogicRules;
 
   /**
    * Constructor.

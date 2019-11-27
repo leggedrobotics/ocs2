@@ -35,7 +35,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t*  rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
+DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                          const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                          const operating_trajectories_base_t* operatingTrajectoriesPtr, const DDP_Settings& ddpSettings,
                                          const cost_function_base_t* heuristicsFunctionPtr, const char* algorithmName,
@@ -274,6 +274,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
       xCurrent = operatingTrajectoriesRolloutPtrStock_[threadId]->run(operatingPointsFromTo.first, xCurrent, operatingPointsFromTo.second,
                                                                       nullptr, eventTimes, timeTrajectoryTail, eventsPastTheEndIndecesTail,
                                                                       stateTrajectoryTail, inputTrajectoryTail);
+
       // Add controller rollout length to event past the indeces
       for (auto& eventIndex : eventsPastTheEndIndecesTail) {
         eventIndex += stateTrajectoriesStock[i].size();  // This size of this trajectory part was missing when counting events in the tail

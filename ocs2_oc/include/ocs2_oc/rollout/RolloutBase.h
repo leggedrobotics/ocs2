@@ -42,7 +42,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/OCS2NumericTraits.h>
 #include <ocs2_core/control/ControllerBase.h>
-#include <ocs2_core/logic/rules/HybridLogicRules.h>
 
 #include "Rollout_Settings.h"
 
@@ -73,7 +72,6 @@ class RolloutBase {
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
 
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
-  using logic_rules_t = HybridLogicRules;
 
   using time_interval_t = std::pair<scalar_t, scalar_t>;
   using time_interval_array_t = std::vector<time_interval_t>;
@@ -124,7 +122,6 @@ class RolloutBase {
    * @param [out] postEventIndicesStock: Indices containing past-the-end index of events trigger.
    * @param [out] stateTrajectory: The state trajectory.
    * @param [out] inputTrajectory: The control input trajectory.
-   * @param [in] logicRules: system logicrules (only used and required by statetriggered rollout)
    *
    * @return The final state (state jump is considered if it took place)
    */
@@ -217,7 +214,6 @@ class RolloutBase {
    * @param [out] postEventIndicesStock: Indices containing past-the-end index of events trigger.
    * @param [out] stateTrajectory: The state trajectory.
    * @param [out] inputTrajectory: The control input trajectory.
-   * @param [in] logicRules : system logicrules (only used and required by statetriggered rollout)
    *
    * @return The final state (state jump is considered if it took place)
    */

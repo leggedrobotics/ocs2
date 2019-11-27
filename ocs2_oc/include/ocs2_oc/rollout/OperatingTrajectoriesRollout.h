@@ -61,7 +61,6 @@ class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using typename BASE::time_interval_array_t;
 
   using operating_trajectories_t = SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM>;
-  using logic_rules_t = HybridLogicRules*;
 
   /**
    * Constructor.

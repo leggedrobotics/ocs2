@@ -61,8 +61,6 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using typename Base::state_vector_t;
   using typename Base::time_interval_array_t;
   using typename Base::time_interval_t;
-  using typename Base::logic_rules_t;
-
 
   using state_to_raisim_gen_coord_gen_vel_t =
       std::function<std::pair<Eigen::VectorXd, Eigen::VectorXd>(const state_vector_t&, const input_vector_t&)>;

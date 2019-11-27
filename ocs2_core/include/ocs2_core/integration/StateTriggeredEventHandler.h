@@ -87,25 +87,24 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
     guardSurfacesValuesPrevious_ = lastGuardSurfacesValues;
   }
 
-
   /**
-     * Sets parameters to control event times detection.
-     *
-     * @param [in] lastEventTriggeredTime: Last Time that an event is triggered.
-     * @param [in] lastGuardSurfacesValues: The value of the guard functions at lastEventTriggeredTime.
-     */
+   * Sets parameters to control event times detection.
+   *
+   * @param [in] lastEventTriggeredTime: Last Time that an event is triggered.
+   * @param [in] lastGuardSurfacesValues: The value of the guard functions at lastEventTriggeredTime.
+   */
 
-  virtual void setLastEventTimes(  const scalar_t& lastEventTriggeredTime = std::numeric_limits<scalar_t>::lowest(),
-                                    const dynamic_vector_t& lastGuardSurfacesValues = dynamic_vector_t::Zero(0)) {
-      if (lastEventTriggeredTime > std::numeric_limits<scalar_t>::lowest() && lastGuardSurfacesValues.size() == 0) {
-        throw std::runtime_error(
-            "Since the time of the last event is provided, "
-            "the value of the guard functions at that time should also be provided.");
-      }
-
-      lastEventTriggeredTime_ = lastEventTriggeredTime;
-      guardSurfacesValuesPrevious_ = lastGuardSurfacesValues;
+  virtual void setLastEventTimes(const scalar_t& lastEventTriggeredTime = std::numeric_limits<scalar_t>::lowest(),
+                                 const dynamic_vector_t& lastGuardSurfacesValues = dynamic_vector_t::Zero(0)) {
+    if (lastEventTriggeredTime > std::numeric_limits<scalar_t>::lowest() && lastGuardSurfacesValues.size() == 0) {
+      throw std::runtime_error(
+          "Since the time of the last event is provided, "
+          "the value of the guard functions at that time should also be provided.");
     }
+
+    lastEventTriggeredTime_ = lastEventTriggeredTime;
+    guardSurfacesValuesPrevious_ = lastGuardSurfacesValues;
+  }
 
   /**
    * Gets the value of the guard surfaces.
@@ -120,7 +119,7 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
    * @return The value of minEventTimeDifference
    */
 
-  const scalar_t&  getminEventTimeDifference() const {return minEventTimeDifference_; }
+  const scalar_t& getminEventTimeDifference() const { return minEventTimeDifference_; }
 
   /**
    * Checks if an event is activated.
@@ -141,14 +140,13 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
 
     bool eventTriggered = false;
 
-    if(time - lastEventTriggeredTime_ > minEventTimeDifference_)
-    {
-    	for (size_t i = 0; i < guardSurfacesValuesPrevious_.size(); i++) {
-    		if (guardSurfacesValuesCurrent_[i] <= 0 && guardSurfacesValuesPrevious_(i) > 0) {
-    			eventTriggered = true;
-    			triggeredEventSurface_ = i;
-    		}
-    	}
+    if (time - lastEventTriggeredTime_ > minEventTimeDifference_) {
+      for (size_t i = 0; i < guardSurfacesValuesPrevious_.size(); i++) {
+        if (guardSurfacesValuesCurrent_[i] <= 0 && guardSurfacesValuesPrevious_(i) > 0) {
+          eventTriggered = true;
+          triggeredEventSurface_ = i;
+        }
+      }
     }
 
     if (!eventTriggered) {
@@ -185,8 +183,8 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
       stateTrajectory.erase(stateTrajectory.begin() + lastIndex + 1, stateTrajectory.end());
     }
 
-    //lastEventTriggeredTime_ = timeTrajectory[lastIndex];
-    //guardSurfacesValuesPrevious_.swap(guardSurfacesValuesCurrent_);
+    // lastEventTriggeredTime_ = timeTrajectory[lastIndex];
+    // guardSurfacesValuesPrevious_.swap(guardSurfacesValuesCurrent_);
 
     // StateTriggered event
     return triggeredEventSurface_;
@@ -207,8 +205,7 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
       lastIndex = 0;
       zeroCrossingTime = timeTrajectory.front();
       zeroCrossingState = stateTrajectory.front();
-    }
-    else {
+    } else {
       lastIndex = timeTrajectory.size() - 1;
 
       if (timeTrajectory[timeTrajectory.size() - 2] - lastEventTriggeredTime_ < minEventTimeDifference_) {
@@ -217,7 +214,7 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
           if (guardSurfacesValuesPrevious_[triggeredEventSurface_] > 0) {
             break;
           } else {
-        	  guardSurfacesValuesCurrent_.swap(guardSurfacesValuesPrevious_);
+            guardSurfacesValuesCurrent_.swap(guardSurfacesValuesPrevious_);
             lastIndex = i;
           }
         }

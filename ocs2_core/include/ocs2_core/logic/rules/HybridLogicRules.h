@@ -144,10 +144,10 @@ class HybridLogicRules {
    * @param [in] eventID	: activated guardSurface
    * @param [out] eventTime : time of event
    */
-  void appendModeSequence(const size_t &eventID, const scalar_t &eventTime){
-	  subsystemsSequence_.push_back(eventID);
-	  eventTimes_.push_back(eventTime);
-	  update();
+  void appendModeSequence(const size_t& eventID, const scalar_t& eventTime) {
+    subsystemsSequence_.push_back(eventID);
+    eventTimes_.push_back(eventTime);
+    update();
   }
 
   /**
@@ -156,16 +156,16 @@ class HybridLogicRules {
    * Also reserves spaces in the vector, as much as were needed last iteration
    *
    */
-  void reset(){
-	  size_t prev_size = subsystemsSequence_.size();
+  void reset() {
+    size_t prev_size = subsystemsSequence_.size();
 
-	  subsystemsSequence_.erase(subsystemsSequence_.begin()+1,subsystemsSequence_.end());
-	  eventTimes_.clear();
+    subsystemsSequence_.erase(subsystemsSequence_.begin() + 1, subsystemsSequence_.end());
+    eventTimes_.clear();
 
-	  subsystemsSequence_.reserve(prev_size);
-	  eventTimes_.reserve(prev_size);
+    subsystemsSequence_.reserve(prev_size);
+    eventTimes_.reserve(prev_size);
 
-	  update();
+    update();
   }
 
   /**
@@ -265,22 +265,19 @@ class HybridLogicRules {
   size_t getEventTimeCount(scalar_t time) const { return lookup::findIndexInTimeArray(eventTimes_, time); }
 
   /**
-     *  Finds the subsystem based on the query time and eventTimes
-     *  If time equal equal to a switch time is requested, the lower subsystem is taken
-     *
-     *  @param [in] time
-     *  @return idx of the subsytem the input time belongs to
-     */
-  size_t getSubSystemTime(scalar_t time) const{
-	  if(eventTimes_.size()>0 && eventTimes_.back()<time)
-  	  {
-	  	  return subsystemsSequence_.back();
-  	  }
-  	  else
-  	  {
-  	     size_t idx = lookup::findIndexInTimeArray(eventTimes_,time);
-	     return subsystemsSequence_[idx];
-  	  }
+   *  Finds the subsystem based on the query time and eventTimes
+   *  If time equal equal to a switch time is requested, the lower subsystem is taken
+   *
+   *  @param [in] time
+   *  @return idx of the subsytem the input time belongs to
+   */
+  size_t getSubSystemTime(scalar_t time) const {
+    if (eventTimes_.size() > 0 && eventTimes_.back() < time) {
+      return subsystemsSequence_.back();
+    } else {
+      size_t idx = lookup::findIndexInTimeArray(eventTimes_, time);
+      return subsystemsSequence_[idx];
+    }
   }
 
  protected:

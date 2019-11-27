@@ -4,15 +4,12 @@
 #include <iostream>
 
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
+#include <ocs2_oc/test/Dynamics_StateRollOut_SLQ.h>
 
 #include <ocs2_ddp/SLQ.h>
 #include <ocs2_ddp/SLQ_Settings.h>
 
-#include <ocs2_oc/test/Dynamics_StateRollOut_SLQ.h>
-
 using namespace ocs2;
-
-using dynamic_vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
 
 TEST(testStateRollOut_SLQ, RunExample) {
   SLQ_Settings slqSettings;
@@ -87,7 +84,7 @@ TEST(testStateRollOut_SLQ, RunExample) {
 
   // EXPECT_EQ(logicRulesPtr->getNumSubsystems(),3);
   for (int i = 0; i < solutionST.stateTrajectory_.size(); i++) {
-    dynamic_vector_t guardSurfacesValue;
+    Eigen::VectorXd guardSurfacesValue;
     sysdyn.computeGuardSurfaces(solutionST.timeTrajectory_[i], solutionST.stateTrajectory_[i], guardSurfacesValue);
 
     EXPECT_GT(guardSurfacesValue[0], -1e-10);

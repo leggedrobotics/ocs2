@@ -52,7 +52,7 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
    *
    * @param [in] minEventTimeDifference: Minimum accepted time difference between two consecutive events.
    */
-  StateTriggeredEventHandler(scalar_t minEventTimeDifference = 1e-2)
+  StateTriggeredEventHandler(scalar_t minEventTimeDifference)
       : BASE(), systemEventHandlerTriggered_(false), triggeredEventSurface_(0), minEventTimeDifference_(std::move(minEventTimeDifference)) {
     reset();
   }

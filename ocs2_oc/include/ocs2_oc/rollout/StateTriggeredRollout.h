@@ -81,7 +81,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   explicit StateTriggeredRollout(const controlled_system_base_t& systemDynamics, Rollout_Settings rolloutSettings = Rollout_Settings())
       : BASE(std::move(rolloutSettings)),
         systemDynamicsPtr_(systemDynamics.clone()),
-        systemEventHandlersPtr_(new state_triggered_event_handler_t) {
+        systemEventHandlersPtr_(new state_triggered_event_handler_t(this->settings().minTimeStep_)) {
     // construct dynamicsIntegratorsPtr
     constructDynamicsIntegrator(this->settings().integratorType_);
   }

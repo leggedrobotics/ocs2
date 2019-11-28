@@ -126,7 +126,6 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     systemDynamicsPtr_->reset();
     // set controller
     systemDynamicsPtr_->setController(controller);
-
     // reset function calls counter
     systemDynamicsPtr_->resetNumFunctionCalls();
 
@@ -146,7 +145,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
     int localNumIterations = 0;  // Iterations since last event
     int numIterations = 0;       // Overall number of iterations
-    RootFind rootFind;           // rootFinding algorithm
+    RootFinder rootFind;         // rootFinding algorithm
 
     while (true) {  // Keeps looping until end time condition is fulfilled, after which the loop is broken
       try {
@@ -218,7 +217,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       // otherwise keep or start refining
       else {
         if (refining) {  // apply the Rules of the Rootfinding method to continue refining
-          rootFind.Update_Bracket(time_query, guard_query);
+          rootFind.updateBracket(time_query, guard_query);
           rootFind.getNewQuery(t1);
 
           t0 = timeTrajectory.back();
@@ -231,7 +230,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
           systemDynamicsPtr_->computeGuardSurfaces(time_before, state_before, GuardSurfaces_before);
           scalar_t guard_before = GuardSurfaces_before[eventID_m];
 
-          rootFind.set_Init_Bracket(time_before, time_query, guard_before, guard_query);
+          rootFind.setInitBracket(time_before, time_query, guard_before, guard_query);
           rootFind.getNewQuery(t1);
 
           t0 = timeTrajectory.back();

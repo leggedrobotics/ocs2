@@ -170,9 +170,9 @@ class RootFinder {
    *
    */
   void display() {
-    std::cout << "Root Finding Information" << std::endl;
-    std::cout << "Time Bracket: [" << timeInt_.first << ";" << timeInt_.second << "]" << std::endl;
-    std::cout << "Value Bracket: [" << guardInt_.first << ";" << guardInt_.second << "]" << std::endl;
+    std::cerr << "Root Finding Information" << std::endl;
+    std::cerr << "Time Bracket: [" << timeInt_.first << ";" << timeInt_.second << "]" << std::endl;
+    std::cerr << "Value Bracket: [" << guardInt_.first << ";" << guardInt_.second << "]" << std::endl;
   }
 
  private:

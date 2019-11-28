@@ -138,14 +138,14 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     scalar_t t0 = timeIntervalArray.front().first;
     scalar_t t1 = timeIntervalArray.back().second;
     scalar_t tend = t1;    // Stored separately due to overwriting t1 when refining
-    size_t eventID_m = 0;  // todo
+    size_t eventID_m = 0;
 
     bool refining = false;
     bool triggered = false;
 
     int localNumIterations = 0;  // Iterations since last event
     int numIterations = 0;       // Overall number of iterations
-    RootFinder rootFind;         // rootFinding algorithm
+    RootFinder rootFind(this->settings().rootFindingAlgorithm_);         // rootFinding algorithm
 
     while (true) {  // Keeps looping until end time condition is fulfilled, after which the loop is broken
       try {

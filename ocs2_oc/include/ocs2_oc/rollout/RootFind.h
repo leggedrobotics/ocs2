@@ -38,7 +38,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * This class is ...
+ * This class is used in StateTriggerdRollout to find a new query point,
+ * based on a previously known interval, which is the best guess to find
+ * the root of the guardSurface.
+ *
+ * It assumes that on initialization an interval is known on which the
+ * guard function changes sign, and that within this interval a single root
+ * is located.
+ *
+ * The implemented algorithms are:
+ * Regular Regula Falsi:
+ * form: [Improved Algorithms of Illinois-Type for the Numerical Solution of Non-
+ * 	      Linear Equations by J.A. Ford]
+ * Illinois method:
+ * from: [A Modified Regula Falsi Method for Computing the Root of an Equation
+ *        by M. Dowell and P. Jarrat]
+ * Pegasus method:
+ * from: [The "Pegasus" Method for Computing the Root of an Equation
+ *        by M. Dowell and P. Jarrat]
+ * Anderson & Bjorck Method (default):
+ * from: [A New High Order Method of Regula Falsi Type for Computing a Root of an Equation
+ *        by N.Anderson and A. Bjorck]
+ *
+ *
  */
 class RootFinder {
  public:
@@ -48,7 +70,7 @@ class RootFinder {
   /**
    * Default Constructor.
    */
-  RootFinder() = default;
+  RootFinder(int rootFindingAlgorithm): rootFindingAlgorithm_(rootFindingAlgorithm){}
 
   /**
    * Default destructor.
@@ -99,15 +121,26 @@ class RootFinder {
       timeInt_.first = query;
 
     } else {
-      scalar_t gamma = 1 - (fQuery / guardInt_.first);
-
-      if (gamma < 0) {
-        gamma = 0.5;
-      }
-
-      // gamma = guard_int_m.first/(guard_int_m.first + f_query); // Pegasus Method
-      // gamma = 0.5;		// Illinois Method
-      // gamma = 1;		// Regular Regula Falsi
+    	scalar_t gamma;
+    	if (rootFindingAlgorithm_ == 0)// Anderson & Bjorck method
+    	{
+    		gamma = 1 - (fQuery / guardInt_.first);
+    		if (gamma < 0) {
+    		   gamma = 0.5;
+    		}
+    	}
+    	else if(rootFindingAlgorithm_ == 1)// Pegasus Method
+    	{
+    		gamma = guardInt_.first/(guardInt_.first + fQuery);
+    	}
+    	else if(rootFindingAlgorithm_ == 2)// Illinois method
+    	{
+    		gamma = 0.5;
+    	}
+    	else	// Regular Regula Falsi
+    	{
+    		gamma = 1;
+    	}
 
       guardInt_.first = fQuery;
       timeInt_.first = query;
@@ -145,6 +178,7 @@ class RootFinder {
  private:
   interval_t timeInt_;
   interval_t guardInt_;
+  size_t rootFindingAlgorithm_;
 };
 
 }  // namespace ocs2

@@ -60,14 +60,15 @@ class Rollout_Settings {
    */
   explicit Rollout_Settings(double absTolODE = 1e-9, double relTolODE = 1e-6, size_t maxNumStepsPerSecond = 5000, double minTimeStep = 1e-3,
                             IntegratorType integratorType = IntegratorType::ODE45, bool checkNumericalStability = false,
-                            bool reconstructInputTrajectory = true)
+                            bool reconstructInputTrajectory = true, size_t rootFindingAlgorithm = 0)
       : absTolODE_(absTolODE),
         relTolODE_(relTolODE),
         maxNumStepsPerSecond_(maxNumStepsPerSecond),
         minTimeStep_(minTimeStep),
         integratorType_(integratorType),
         checkNumericalStability_(checkNumericalStability),
-        reconstructInputTrajectory_(reconstructInputTrajectory) {}
+        reconstructInputTrajectory_(reconstructInputTrajectory),
+  	  	rootFindingAlgorithm_(rootFindingAlgorithm){}
 
   /**
    * This function loads the "Rollout_Settings" variables from a config file. This file contains the settings for the Rollout algorithms.
@@ -109,6 +110,13 @@ class Rollout_Settings {
   bool checkNumericalStability_;
   /** Whether to run controller again after integration to construct input trajectory */
   bool reconstructInputTrajectory_;
+  /** Which of the RootFinding algorithms to use in StateRollout
+   * 		0:		Anderson & Björck		(default)
+   * 		1:		Pegasus
+   * 		2:		Illinois
+   * 		3:		Regula Falsi
+   */
+  size_t rootFindingAlgorithm_;
 
 };  // end of Rollout_Settings class
 
@@ -132,6 +140,7 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, const st
 
   loadData::loadPtreeValue(pt, checkNumericalStability_, fieldName + ".checkNumericalStability", verbose);
   loadData::loadPtreeValue(pt, reconstructInputTrajectory_, fieldName + ".reconstructInputTrajectory", verbose);
+  loadData::loadPtreeValue(pt, rootFindingAlgorithm_, fieldName + ".rootFindingAlgorithm", verbose);
 
   if (verbose) {
     std::cerr << " #### =============================================================================" << std::endl;

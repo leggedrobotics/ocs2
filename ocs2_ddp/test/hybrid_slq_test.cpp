@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
-#include <ocs2_oc/test/Dynamics_StateRollOut_SLQ.h>
+#include <ocs2_oc/test/dynamics_hybrid_slq_test.h>
 
 #include <ocs2_ddp/SLQ.h>
 #include <ocs2_ddp/SLQ_Settings.h>

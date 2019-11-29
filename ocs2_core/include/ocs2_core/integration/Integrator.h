@@ -88,6 +88,7 @@ class Integrator : public IntegratorBase<STATE_DIM> {
   using scalar_array_t = typename BASE::scalar_array_t;
   using state_vector_t = typename BASE::state_vector_t;
   using state_vector_array_t = typename BASE::state_vector_array_t;
+  using observer_func_t = std::function<void(const state_vector_t& x, const scalar_t& t)>;
 
   /**
    * Constructor
@@ -276,9 +277,6 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    ********/
   std::unique_ptr<Stepper> stepperPtr_;
   std::unique_ptr<Observer<STATE_DIM>> observerPtr_;  // observer for saving the variable of interest.
-
-  std::function<void(const state_vector_t&, const scalar_t&)> observerFunction_;
-  std::function<void(const state_vector_t&, state_vector_t&, const scalar_t&)> systemFunction_;
 
 #if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 60)
   std::unique_ptr<boost::numeric::odeint::max_step_checker> maxStepCheckerPtr_;

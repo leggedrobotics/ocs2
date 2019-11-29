@@ -69,6 +69,11 @@ class IntegratorBase {
     if (eventHandlerPtr_) {
       eventHandlerPtr_->setSystem(systemPtr_);
     }
+
+    // setup system function
+    systemFunction_ = [this](const state_vector_t& x, state_vector_t& dxdt, const scalar_t& t) {
+      BASE::systemPtr_->computeFlowMap(t, x, dxdt);
+    };
   }
 
   /**
@@ -105,20 +110,6 @@ class IntegratorBase {
   const SystemEventHandler<STATE_DIM>& getEventHandler() const { return *eventHandlerPtr_; }
 
   /**
-   * Sets the pointer to model data trajectory.
-   *
-   * @return: pointer to model data trajectory
-   */
-  void setModelDataTrajectoryPtr(model_data_array_t* modelDataTrajectoryPtr) { modelDataTrajectoryPtr_ = modelDataTrajectoryPtr; }
-
-  /**
-   * Gets the pointer to model data trajectory.
-   *
-   * @return: pointer to model data trajectory
-   */
-  model_data_array_t* getModelDataTrajectoryPtr() { return modelDataTrajectoryPtr_; }
-
-  /**
    * Equidistant integration based on initial and final time as well as step length.
    *
    * @param [in] initialState: Initial state.
@@ -132,6 +123,14 @@ class IntegratorBase {
    */
   inline void integrate(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime, scalar_t dt,
                         state_vector_array_t& stateTrajectory, scalar_array_t& timeTrajectory, bool concatOutput = false) {
+    // setup observer function
+    observerFunction_ = [this](const state_vector_t& x, const scalar_t& t) {
+      observerPtr_->observe(systemPtr_, eventHandlerPtr_, x, t);
+    };
+
+    if (this->eventHandlerPtr_ && maxNumSteps < std::numeric_limits<int>::max()) {
+      this->eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
+    }
     runIntegration(initialState, startTime, finalTime, dt, stateTrajectory, timeTrajectory, concatOutput);
   }
 
@@ -159,6 +158,9 @@ class IntegratorBase {
                         state_vector_array_t& stateTrajectory, scalar_array_t& timeTrajectory, scalar_t dtInitial = 0.01,
                         scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3, int maxNumSteps = std::numeric_limits<int>::max(),
                         bool concatOutput = false) {
+    if (this->eventHandlerPtr_ && maxNumSteps < std::numeric_limits<int>::max()) {
+      this->eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
+    }
     runIntegration(initialState, startTime, finalTime, stateTrajectory, timeTrajectory, dtInitial, AbsTol, RelTol, maxNumSteps,
                    concatOutput);
   }
@@ -187,6 +189,10 @@ class IntegratorBase {
                         typename scalar_array_t::const_iterator endTimeItr, state_vector_array_t& stateTrajectory,
                         scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-9, scalar_t RelTol = 1e-6,
                         int maxNumSteps = std::numeric_limits<int>::max(), bool concatOutput = false) {
+
+    if (this->eventHandlerPtr_ && maxNumSteps < std::numeric_limits<int>::max()) {
+      this->eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
+    }
     runIntegration(initialState, beginTimeItr, endTimeItr, stateTrajectory, dtInitial, AbsTol, RelTol, maxNumSteps, concatOutput);
   }
 
@@ -248,10 +254,8 @@ class IntegratorBase {
    * Variables
    */
   std::shared_ptr<OdeBase<STATE_DIM>> systemPtr_;  // System dynamics used by integrator.
-
   std::shared_ptr<SystemEventHandler<STATE_DIM>> eventHandlerPtr_;  // Event handler used by integrator.
-
-  model_data_array_t* modelDataTrajectoryPtr_;
+  std::function<void(const state_vector_t&, state_vector_t&, const scalar_t&)> systemFunction_;
 };
 
 }  // namespace ocs2

@@ -43,9 +43,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-template <int STATE_DIM>
-class IntegratorBase;
-
 /**
  * Observer Class
  * @tparam STATE_DIM
@@ -67,19 +64,17 @@ class Observer {
    * Constructor
    * @param [in] eventHandler
    */
-  explicit Observer(const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr = nullptr)
-      : eventHandlerPtr_(eventHandlerPtr),
-        timeTrajectoryPtr_(nullptr),
-        stateTrajectoryPtr_(nullptr),
-        modelDataTrajectoryPtr_(nullptr),
-        initialCall_(false) {}
+  explicit Observer(scalar_array_t* timeTraj = nullptr, state_vector_array_t* stateTraj = nullptr,
+                    model_data_array_t* modelDataTraj = nullptr)
+      : timeTrajectoryPtr_(timeTraj), stateTrajectoryPtr_(stateTraj), modelDataTrajectoryPtr_(modelDataTraj), initialCall_(false) {}
 
   /**
    * Observe function to retrieve the variable of interest.
    * @param [in] x: Current state.
    * @param [in] t: Current time.
    */
-  void observe(std::shared_ptr<OdeBase<STATE_DIM>> systemPtr, const state_vector_t& x, const scalar_t& t) {
+  void observe(std::shared_ptr<OdeBase<STATE_DIM>> systemPtr, const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr,
+               const state_vector_t& x, const scalar_t& t) {
     // Store data
     if (stateTrajectoryPtr_) {
       stateTrajectoryPtr_->push_back(x);
@@ -112,9 +107,9 @@ class Observer {
     systemPtr->nextModelDataPtrIterator() = systemPtr->beginModelDataPtrIterator();
 
     // Check events
-    if (stateTrajectoryPtr_ && timeTrajectoryPtr_ && eventHandlerPtr_ && eventHandlerPtr_->checkEvent(x, t)) {
+    if (stateTrajectoryPtr_ && timeTrajectoryPtr_ && eventHandlerPtr && eventHandlerPtr->checkEvent(x, t)) {
       // Act on the event
-      int eventID = eventHandlerPtr_->handleEvent(*stateTrajectoryPtr_, *timeTrajectoryPtr_);
+      int eventID = eventHandlerPtr->handleEvent(*stateTrajectoryPtr_, *timeTrajectoryPtr_);
 
       switch (eventID) {
         case sys_event_id::killIntegration: {
@@ -133,6 +128,21 @@ class Observer {
         }
         default: { throw static_cast<size_t>(eventID); }
       }
+    }
+  }
+
+  /**
+   * Clear all available trajectories.
+   */
+  void clearTrajectories() {
+    if (timeTrajectoryPtr_) {
+      timeTrajectoryPtr_->clear();
+    }
+    if (stateTrajectoryPtr_) {
+      stateTrajectoryPtr_->clear();
+    }
+    if (modelDataTrajectoryPtr_) {
+      modelDataTrajectoryPtr_->clear();
     }
   }
 
@@ -158,8 +168,6 @@ class Observer {
   void setModelDataTrajectory(model_data_array_t* modelDataTrajectoryPtr) { modelDataTrajectoryPtr_ = modelDataTrajectoryPtr; }
 
  private:
-  std::shared_ptr<SystemEventHandler<STATE_DIM>> eventHandlerPtr_;
-
   scalar_array_t* timeTrajectoryPtr_;
   state_vector_array_t* stateTrajectoryPtr_;
   model_data_array_t* modelDataTrajectoryPtr_;

@@ -263,10 +263,10 @@ class HybridLogicRules {
    *  @param [in] time: The inquiry time.
    *  @return index of the subsystem the input time belongs to.
    */
-  size_t getSubSystemTime(scalar_t time) const {
+  size_t getSubSystemTime(const scalar_t time) const {
       int ind = lookup::findIndexInTimeArray(eventTimes_, time);
       return subsystemsSequence_[ind];
-  }
+	}
 
  protected:
   /**

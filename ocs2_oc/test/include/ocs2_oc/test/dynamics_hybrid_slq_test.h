@@ -100,7 +100,6 @@ class system_dyn2 : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
 
   void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) {
     guardSurfacesValue = Eigen::Matrix<double, 2, 1>();
-
     guardSurfacesValue[0] = state[0] * state[1];
     guardSurfacesValue[1] = 1;
   }
@@ -113,8 +112,8 @@ class system_dyn : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Base = ControlledSystemBase<STATE_DIM,INPUT_DIM>;
 
-  system_dyn(std::shared_ptr<system_logic> logicRulesPtr)
-      : logicRulesPtr_(std::move(logicRulesPtr)), subsystemDynamicsPtr_(2) {
+  system_dyn()
+      : subsystemDynamicsPtr_(2) {
     subsystemDynamicsPtr_[0].reset(new system_dyn1);
     subsystemDynamicsPtr_[1].reset(new system_dyn2);
   }
@@ -126,7 +125,6 @@ class system_dyn : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
   system_dyn(const system_dyn& other) : subsystemDynamicsPtr_(2) {
     subsystemDynamicsPtr_[0].reset(other.subsystemDynamicsPtr_[0]->clone());
     subsystemDynamicsPtr_[1].reset(other.subsystemDynamicsPtr_[1]->clone());
-    logicRulesPtr_ = other.logicRulesPtr_;
   }
 
   void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) final {
@@ -135,23 +133,17 @@ class system_dyn : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
   }
 
   void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override {
-//    if (activeSubsystem == 0) {
-//      logicRulesPtr_->appendModeSequence(1, time);
-//    } else {
-//      logicRulesPtr_->appendModeSequence(0, time);
-//    }
 	size_t activeSubsystem = state[2];
     subsystemDynamicsPtr_[activeSubsystem]->computeJumpMap(time, state, mappedState);
   }
 
   void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) {
-	size_t activeSubsystem_1 = logicRulesPtr_->getSubSystemTime(time);
     size_t activeSubsystem = state[2];
+    guardSurfacesValue = Eigen::Matrix<double, 2, 1>();
     subsystemDynamicsPtr_[activeSubsystem]->computeGuardSurfaces(time, state, guardSurfacesValue);
   }
 
  private:
-  std::shared_ptr<system_logic> logicRulesPtr_;
   std::vector<Base::Ptr> subsystemDynamicsPtr_;
 };
 
@@ -191,8 +183,8 @@ class system_der : public DerivativesBase<STATE_DIM, INPUT_DIM> {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Base = DerivativesBase<STATE_DIM, INPUT_DIM>;
 
-  system_der(std::shared_ptr<system_logic> logicRulesPtr)
-      : logicRulesPtr_(std::move(logicRulesPtr)), activeSubsystem_(1), subsystemDerPtr_(2) {
+  system_der()
+      : activeSubsystem_(1), subsystemDerPtr_(2) {
     subsystemDerPtr_[0].reset(new system_der_1);
     subsystemDerPtr_[1].reset(new system_der_2);
   }
@@ -204,7 +196,6 @@ class system_der : public DerivativesBase<STATE_DIM, INPUT_DIM> {
   system_der(const system_der& other) : activeSubsystem_(other.activeSubsystem_), subsystemDerPtr_(2) {
     subsystemDerPtr_[0].reset(other.subsystemDerPtr_[0]->clone());
     subsystemDerPtr_[1].reset(other.subsystemDerPtr_[1]->clone());
-    logicRulesPtr_ = other.logicRulesPtr_;
   }
 
   void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) final {
@@ -219,7 +210,6 @@ class system_der : public DerivativesBase<STATE_DIM, INPUT_DIM> {
 
  private:
   int activeSubsystem_;
-  std::shared_ptr<system_logic> logicRulesPtr_;
   std::vector<Base::Ptr> subsystemDerPtr_;
 };
 
@@ -289,8 +279,8 @@ class system_cost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Base = CostFunctionBase<STATE_DIM, INPUT_DIM>;
 
-  system_cost(std::shared_ptr<system_logic> logicRulesPtr)
-      : logicRulesPtr_(std::move(logicRulesPtr)), activeSubsystem_(1), subsystemCostPtr_(2) {
+  system_cost()
+      : activeSubsystem_(1), subsystemCostPtr_(2) {
     subsystemCostPtr_[0].reset(new system_cost_1);
     subsystemCostPtr_[1].reset(new system_cost_2);
   }
@@ -302,7 +292,6 @@ class system_cost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
   system_cost(const system_cost& other) : activeSubsystem_(other.activeSubsystem_), subsystemCostPtr_(2) {
     subsystemCostPtr_[0].reset(other.subsystemCostPtr_[0]->clone());
     subsystemCostPtr_[1].reset(other.subsystemCostPtr_[1]->clone());
-    logicRulesPtr_ = other.logicRulesPtr_;
   }
 
   void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
@@ -367,7 +356,6 @@ class system_cost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
 
  private:
   int activeSubsystem_;
-  std::shared_ptr<system_logic> logicRulesPtr_;
   std::vector<Base::Ptr> subsystemCostPtr_;
 };
 // #############################
@@ -491,8 +479,8 @@ class system_const : public ConstraintBase<STATE_DIM, INPUT_DIM> {
  public:
   using Base = ConstraintBase<STATE_DIM, INPUT_DIM>;
 
-  system_const(std::shared_ptr<system_logic> logicRulesPtr)
-      : logicRulesPtr_(std::move(logicRulesPtr)), activeSubsystem_(1), subsystemConstPtr_(2) {
+  system_const()
+      : activeSubsystem_(1), subsystemConstPtr_(2) {
     subsystemConstPtr_[0].reset(new system_const_1);
     subsystemConstPtr_[1].reset(new system_const_2);
   }
@@ -538,7 +526,6 @@ class system_const : public ConstraintBase<STATE_DIM, INPUT_DIM> {
 
  private:
   int activeSubsystem_;
-  std::shared_ptr<system_logic> logicRulesPtr_;
   std::vector<Base::Ptr> subsystemConstPtr_;
 };
 

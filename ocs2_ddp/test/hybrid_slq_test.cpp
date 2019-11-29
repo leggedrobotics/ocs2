@@ -9,9 +9,10 @@
 #include <ocs2_ddp/SLQ.h>
 #include <ocs2_ddp/SLQ_Settings.h>
 
-using namespace ocs2;
 
 TEST(testStateRollOut_SLQ, RunExample) {
+	using namespace ocs2;
+
   SLQ_Settings slqSettings;
   slqSettings.useNominalTimeForBackwardPass_ = true;
   slqSettings.ddpSettings_.displayInfo_ = false;
@@ -52,15 +53,15 @@ TEST(testStateRollOut_SLQ, RunExample) {
   *****/
 
   // rollout
-  system_dyn sysdyn(logicRulesPtr);
+  system_dyn sysdyn;
   StateTriggeredRollout<STATE_DIM, 1> stateTriggeredRollout(sysdyn, rolloutSettings);
 
   // derivatives
-  system_der sysder(logicRulesPtr);
+  system_der sysder;
   // constraints
-  system_const sysconstr(logicRulesPtr);
+  system_const sysconstr;
   // cost function
-  system_cost syscost(logicRulesPtr);
+  system_cost syscost;
 
   // operatingTrajectories
   Eigen::Matrix<double, STATE_DIM, 1> stateOperatingPoint = Eigen::Matrix<double, STATE_DIM, 1>::Zero();
@@ -73,8 +74,9 @@ TEST(testStateRollOut_SLQ, RunExample) {
                                   logicRulesPtr);
   slqST.run(startTime, initState, finalTime, partitioningTimes);
   SLQ<STATE_DIM, INPUT_DIM>::primal_solution_t solutionST = slqST.primalSolution(finalTime);
+  std::cout << "SLQ Procedure Done" << std::endl;
 
-  if (true) {
+  if (false) {
     for (int i = 0; i < solutionST.stateTrajectory_.size(); i++) {
       std::cout << i << ";" << solutionST.timeTrajectory_[i] << ";" << solutionST.stateTrajectory_[i][0] << ";"
                 << solutionST.stateTrajectory_[i][1] << ";" << solutionST.stateTrajectory_[i][2] << ";"
@@ -82,7 +84,6 @@ TEST(testStateRollOut_SLQ, RunExample) {
     }
   }
 
-  // EXPECT_EQ(logicRulesPtr->getNumSubsystems(),3);
   for (int i = 0; i < solutionST.stateTrajectory_.size(); i++) {
     Eigen::VectorXd guardSurfacesValue;
     sysdyn.computeGuardSurfaces(solutionST.timeTrajectory_[i], solutionST.stateTrajectory_[i], guardSurfacesValue);
@@ -98,7 +99,6 @@ TEST(testStateRollOut_SLQ, RunExample) {
       std::cout << solutionST.timeTrajectory_[i] << "," << guardSurfacesValue[0] << "," << guardSurfacesValue[1] << std::endl;
     }
   }
-  // logicRulesPtr->display();
 }
 
 int main(int argc, char** argv) {

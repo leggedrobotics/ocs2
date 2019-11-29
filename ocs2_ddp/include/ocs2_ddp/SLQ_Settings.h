@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 
 #include <ocs2_core/Dimensions.h>
+#include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/misc/LoadData.h>
 
 #include <ocs2_ddp/DDP_Settings.h>
@@ -46,19 +47,15 @@ namespace ocs2 {
  */
 class SLQ_Settings {
  public:
-  using RICCATI_INTEGRATOR_TYPE = Dimensions<0, 0>::RiccatiIntegratorType;
-
   /**
    * Default constructor.
    */
   SLQ_Settings()
       : useNominalTimeForBackwardPass_(false),
         preComputeRiccatiTerms_(true),
-        RiccatiIntegratorType_(RICCATI_INTEGRATOR_TYPE::ODE45),
+        RiccatiIntegratorType_(IntegratorType::ODE45),
         adams_integrator_dt_(0.001),
-        ddpSettings_()
-
-  {}
+        ddpSettings_() {}
 
   /**
    * This function loads the "SLQ_Settings" variables from a config file. This file contains the settings for the SQL and OCS2 algorithms.
@@ -92,7 +89,7 @@ class SLQ_Settings {
   /** If true, terms of the Riccati equation will be precomputed before interpolation in the flowmap */
   bool preComputeRiccatiTerms_;
   /** Riccati integrator type. */
-  size_t RiccatiIntegratorType_;
+  IntegratorType RiccatiIntegratorType_;
   /** Adams integrator's time step. */
   double adams_integrator_dt_;
 
@@ -114,7 +111,11 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, const std::s
 
   loadData::loadPtreeValue(pt, useNominalTimeForBackwardPass_, fieldName + ".useNominalTimeForBackwardPass", verbose);
   loadData::loadPtreeValue(pt, preComputeRiccatiTerms_, fieldName + ".preComputeRiccatiTerms", verbose);
-  loadData::loadPtreeValue(pt, RiccatiIntegratorType_, fieldName + ".RiccatiIntegratorType", verbose);
+
+  std::string integratorName = toString(RiccatiIntegratorType_);  // keep default
+  loadData::loadPtreeValue(pt, integratorName, fieldName + ".RiccatiIntegratorType", verbose);
+  RiccatiIntegratorType_ = fromString(integratorName);
+
   loadData::loadPtreeValue(pt, adams_integrator_dt_, fieldName + ".adams_integrator_dt", verbose);
 
   if (verbose) {

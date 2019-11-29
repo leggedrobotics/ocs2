@@ -33,19 +33,26 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+/**
+ * State triggered event handler class for ode solvers.
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
+ */
 template <int STATE_DIM>
-class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
+class StateTriggeredEventHandler final : public SystemEventHandler<STATE_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using Ptr = std::shared_ptr<StateTriggeredEventHandler<STATE_DIM>>;
 
   using BASE = SystemEventHandler<STATE_DIM>;
-  using scalar_t = typename BASE::scalar_t;
-  using scalar_array_t = typename BASE::scalar_array_t;
-  using state_vector_t = typename BASE::state_vector_t;
-  using state_vector_array_t = typename BASE::state_vector_array_t;
-  using dynamic_vector_t = typename BASE::dynamic_vector_t;
+  using typename BASE::dynamic_vector_t;
+  using typename BASE::scalar_array_t;
+  using typename BASE::scalar_t;
+  using typename BASE::state_vector_array_t;
+  using typename BASE::state_vector_t;
+
+  using typename BASE::system_t;
 
   /**
    * Constructor
@@ -60,7 +67,7 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
   /**
    * Default destructor
    */
-  virtual ~StateTriggeredEventHandler() = default;
+  ~StateTriggeredEventHandler() override = default;
 
   /**
    * Resets the class.

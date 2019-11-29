@@ -34,7 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <string>
 
-#include <ocs2_core/Dimensions.h>
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/misc/LoadData.h>
 
@@ -45,8 +44,6 @@ namespace ocs2 {
  */
 class GDDP_Settings {
  public:
-  using RICCATI_INTEGRATOR_TYPE = Dimensions<0, 0>::RiccatiIntegratorType;
-
   /**
    * Default constructor.
    */
@@ -64,7 +61,7 @@ class GDDP_Settings {
         minEventTimeDifference_(0.0),
         nThreads_(4),
         useNominalTimeForBackwardPass_(false),
-        riccatiIntegratorType_(RICCATI_INTEGRATOR_TYPE::ODE45),
+        riccatiIntegratorType_(IntegratorType::ODE45),
         absTolODE_(1e-9),
         relTolODE_(1e-6),
         maxNumStepsPerSecond_(5000),
@@ -128,7 +125,7 @@ class GDDP_Settings {
   /** If true, GDDP solves the backward path over the nominal time trajectory. */
   bool useNominalTimeForBackwardPass_;
   /** Riccati integrator type. */
-  size_t riccatiIntegratorType_;
+  IntegratorType riccatiIntegratorType_;
   /** This value determines the absolute tolerance error for ode solvers. */
   double absTolODE_;
   /** This value determines the relative tolerance error for ode solvers. */
@@ -162,7 +159,11 @@ inline void GDDP_Settings::loadSettings(const std::string& filename, const std::
   loadData::loadPtreeValue(pt, minEventTimeDifference_, fieldName + ".minEventTimeDifference", verbose);
   loadData::loadPtreeValue(pt, nThreads_, fieldName + ".nThreads", verbose);
   loadData::loadPtreeValue(pt, useNominalTimeForBackwardPass_, fieldName + ".useNominalTimeForBackwardPass", verbose);
-  loadData::loadPtreeValue(pt, riccatiIntegratorType_, fieldName + ".RiccatiIntegratorType", verbose);
+
+  std::string integratorName = toString(riccatiIntegratorType_);  // keep default
+  loadData::loadPtreeValue(pt, integratorName, fieldName + ".RiccatiIntegratorType", verbose);
+  riccatiIntegratorType_ = fromString(integratorName);
+
   loadData::loadPtreeValue(pt, absTolODE_, fieldName + ".AbsTolODE", verbose);
   loadData::loadPtreeValue(pt, relTolODE_, fieldName + ".RelTolODE", verbose);
   loadData::loadPtreeValue(pt, maxNumStepsPerSecond_, fieldName + ".maxNumStepsPerSecond", verbose);

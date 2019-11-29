@@ -304,7 +304,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   }
 
  private:
-  std::shared_ptr<controlled_system_base_t> systemDynamicsPtr_;
+  std::unique_ptr<controlled_system_base_t> systemDynamicsPtr_;
 
   std::shared_ptr<state_triggered_event_handler_t> systemEventHandlersPtr_;
 

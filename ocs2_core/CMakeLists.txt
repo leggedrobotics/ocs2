@@ -115,6 +115,7 @@ catkin_add_gtest(integration_unittest
 target_link_libraries(integration_unittest
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  gtest_main
 )
 
 catkin_add_gtest(interpolation_unittest

@@ -110,10 +110,9 @@ class system_dyn2 : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
 class system_dyn : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  using Base = ControlledSystemBase<STATE_DIM,INPUT_DIM>;
+  using Base = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
 
-  system_dyn()
-      : subsystemDynamicsPtr_(2) {
+  system_dyn() : subsystemDynamicsPtr_(2) {
     subsystemDynamicsPtr_[0].reset(new system_dyn1);
     subsystemDynamicsPtr_[1].reset(new system_dyn2);
   }
@@ -133,7 +132,7 @@ class system_dyn : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
   }
 
   void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override {
-	size_t activeSubsystem = state[2];
+    size_t activeSubsystem = state[2];
     subsystemDynamicsPtr_[activeSubsystem]->computeJumpMap(time, state, mappedState);
   }
 
@@ -183,8 +182,7 @@ class system_der : public DerivativesBase<STATE_DIM, INPUT_DIM> {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Base = DerivativesBase<STATE_DIM, INPUT_DIM>;
 
-  system_der()
-      : activeSubsystem_(1), subsystemDerPtr_(2) {
+  system_der() : activeSubsystem_(1), subsystemDerPtr_(2) {
     subsystemDerPtr_[0].reset(new system_der_1);
     subsystemDerPtr_[1].reset(new system_der_2);
   }
@@ -242,7 +240,7 @@ class system_cost_1 : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    */
   void getTerminalCost(scalar_t& Phi) final { Phi = 0.5 * pow(x_[0], 2) + 0.5 * pow(x_[1], 2); }
   void getTerminalCostDerivativeState(state_vector_t& dPhidx) final { dPhidx << x_[0], x_[1]; }
-  void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final { dPhidxx << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0, 0, 0;}
+  void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final { dPhidxx << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0, 0, 0; }
 };
 
 class system_cost_2 : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
@@ -279,8 +277,7 @@ class system_cost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Base = CostFunctionBase<STATE_DIM, INPUT_DIM>;
 
-  system_cost()
-      : activeSubsystem_(1), subsystemCostPtr_(2) {
+  system_cost() : activeSubsystem_(1), subsystemCostPtr_(2) {
     subsystemCostPtr_[0].reset(new system_cost_1);
     subsystemCostPtr_[1].reset(new system_cost_2);
   }
@@ -307,32 +304,32 @@ class system_cost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    */
 
   void getIntermediateCost(scalar_t& L) final {
-	activeSubsystem_ = x_[2];
+    activeSubsystem_ = x_[2];
     subsystemCostPtr_[activeSubsystem_]->getIntermediateCost(L);
   }
 
   void getIntermediateCostDerivativeState(state_vector_t& dLdx) final {
-	activeSubsystem_ = x_[2];
+    activeSubsystem_ = x_[2];
     subsystemCostPtr_[activeSubsystem_]->getIntermediateCostDerivativeState(dLdx);
   }
 
   void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) final {
-	activeSubsystem_ = x_[2];
+    activeSubsystem_ = x_[2];
     subsystemCostPtr_[activeSubsystem_]->getIntermediateCostSecondDerivativeState(dLdxx);
   }
 
   void getIntermediateCostDerivativeInput(input_vector_t& dLdu) final {
-	activeSubsystem_ = x_[2];
+    activeSubsystem_ = x_[2];
     subsystemCostPtr_[activeSubsystem_]->getIntermediateCostDerivativeInput(dLdu);
   }
 
   void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) final {
-	activeSubsystem_ = x_[2];
+    activeSubsystem_ = x_[2];
     subsystemCostPtr_[activeSubsystem_]->getIntermediateCostSecondDerivativeInput(dLduu);
   }
 
   void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdxu) final {
-	activeSubsystem_ = x_[2];
+    activeSubsystem_ = x_[2];
     subsystemCostPtr_[activeSubsystem_]->getIntermediateCostDerivativeInputState(dLdxu);
   }
 
@@ -340,17 +337,17 @@ class system_cost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
           Terminal Cost Functions
    */
   void getTerminalCost(scalar_t& Phi) final {
-	activeSubsystem_ = x_[2];
+    activeSubsystem_ = x_[2];
     subsystemCostPtr_[activeSubsystem_]->getTerminalCost(Phi);
   }
 
   void getTerminalCostDerivativeState(state_vector_t& dPhidx) final {
-	activeSubsystem_ = x_[2];
+    activeSubsystem_ = x_[2];
     subsystemCostPtr_[activeSubsystem_]->getTerminalCostDerivativeState(dPhidx);
   }
 
   void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final {
-	activeSubsystem_ = x_[2];
+    activeSubsystem_ = x_[2];
     subsystemCostPtr_[activeSubsystem_]->getTerminalCostSecondDerivativeState(dPhidxx);
   }
 
@@ -479,8 +476,7 @@ class system_const : public ConstraintBase<STATE_DIM, INPUT_DIM> {
  public:
   using Base = ConstraintBase<STATE_DIM, INPUT_DIM>;
 
-  system_const()
-      : activeSubsystem_(1), subsystemConstPtr_(2) {
+  system_const() : activeSubsystem_(1), subsystemConstPtr_(2) {
     subsystemConstPtr_[0].reset(new system_const_1);
     subsystemConstPtr_[1].reset(new system_const_2);
   }

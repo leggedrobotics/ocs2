@@ -70,7 +70,7 @@ class RootFinder {
   /**
    * Default Constructor.
    */
-  RootFinder(int rootFindingAlgorithm): rootFindingAlgorithm_(rootFindingAlgorithm){}
+  RootFinder(int rootFindingAlgorithm) : rootFindingAlgorithm_(rootFindingAlgorithm) {}
 
   /**
    * Default destructor.
@@ -103,7 +103,7 @@ class RootFinder {
    * @param [in] f1: Function value corresponding to t1, of opposite sign to f0.
    */
   void setInitBracket(const scalar_t t0, const scalar_t t1, const scalar_t f0, const scalar_t f1) {
-	  setInitBracket(std::make_pair(t0,t1),std::make_pair(f0,f1));
+    setInitBracket(std::make_pair(t0, t1), std::make_pair(f0, f1));
   }
 
   /**
@@ -121,26 +121,23 @@ class RootFinder {
       timeInt_.first = query;
 
     } else {
-    	scalar_t gamma;
-    	if (rootFindingAlgorithm_ == 0)// Anderson & Bjorck method
-    	{
-    		gamma = 1 - (fQuery / guardInt_.first);
-    		if (gamma < 0) {
-    		   gamma = 0.5;
-    		}
-    	}
-    	else if(rootFindingAlgorithm_ == 1)// Pegasus Method
-    	{
-    		gamma = guardInt_.first/(guardInt_.first + fQuery);
-    	}
-    	else if(rootFindingAlgorithm_ == 2)// Illinois method
-    	{
-    		gamma = 0.5;
-    	}
-    	else	// Regular Regula Falsi
-    	{
-    		gamma = 1;
-    	}
+      scalar_t gamma;
+      if (rootFindingAlgorithm_ == 0)  // Anderson & Bjorck method
+      {
+        gamma = 1 - (fQuery / guardInt_.first);
+        if (gamma < 0) {
+          gamma = 0.5;
+        }
+      } else if (rootFindingAlgorithm_ == 1)  // Pegasus Method
+      {
+        gamma = guardInt_.first / (guardInt_.first + fQuery);
+      } else if (rootFindingAlgorithm_ == 2)  // Illinois method
+      {
+        gamma = 0.5;
+      } else  // Regular Regula Falsi
+      {
+        gamma = 1;
+      }
 
       guardInt_.first = fQuery;
       timeInt_.first = query;

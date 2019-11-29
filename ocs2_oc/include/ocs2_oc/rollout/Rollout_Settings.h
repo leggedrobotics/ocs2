@@ -68,7 +68,7 @@ class Rollout_Settings {
         integratorType_(integratorType),
         checkNumericalStability_(checkNumericalStability),
         reconstructInputTrajectory_(reconstructInputTrajectory),
-  	  	rootFindingAlgorithm_(rootFindingAlgorithm){}
+        rootFindingAlgorithm_(rootFindingAlgorithm) {}
 
   /**
    * This function loads the "Rollout_Settings" variables from a config file. This file contains the settings for the Rollout algorithms.

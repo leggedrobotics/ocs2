@@ -2,8 +2,8 @@
 #include <ocs2_oc/rollout/Rollout_Settings.h>
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
 #include "include/ocs2_oc/test/ball_dynamics_staterollout.h"
-#include "include/ocs2_oc/test/pendulum_dynamics_staterollout.h"
 #include "include/ocs2_oc/test/dynamics_hybrid_slq_test.h"
+#include "include/ocs2_oc/test/pendulum_dynamics_staterollout.h"
 #include "ocs2_core/Dimensions.h"
 
 #include <gtest/gtest.h>

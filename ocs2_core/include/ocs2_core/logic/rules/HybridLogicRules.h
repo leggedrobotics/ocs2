@@ -264,9 +264,9 @@ class HybridLogicRules {
    *  @return index of the subsystem the input time belongs to.
    */
   size_t getSubSystemTime(const scalar_t time) const {
-      int ind = lookup::findIndexInTimeArray(eventTimes_, time);
-      return subsystemsSequence_[ind];
-	}
+    int ind = lookup::findIndexInTimeArray(eventTimes_, time);
+    return subsystemsSequence_[ind];
+  }
 
  protected:
   /**

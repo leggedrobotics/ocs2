@@ -9,24 +9,23 @@
 #include <gtest/gtest.h>
 
 TEST(StateRolloutTests, Case1) {
-	using DIMENSIONS = ocs2::Dimensions<2, 1>;
-	using controller_t = ocs2::ControllerBase<2, 1>;
+  using DIMENSIONS = ocs2::Dimensions<2, 1>;
+  using controller_t = ocs2::ControllerBase<2, 1>;
 
-	using scalar_t = typename DIMENSIONS::scalar_t;
-	using state_vector_t = typename DIMENSIONS::state_vector_t;
-	using time_interval_t = std::pair<scalar_t, scalar_t>;
-	using input_vector_t = typename DIMENSIONS::input_vector_t;
-	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
+  using time_interval_t = std::pair<scalar_t, scalar_t>;
+  using input_vector_t = typename DIMENSIONS::input_vector_t;
+  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
 
-	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-	using size_array_t = typename DIMENSIONS::size_array_t;
-	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
-	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+  using size_array_t = typename DIMENSIONS::size_array_t;
+  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+  using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
+  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
 
-	using time_interval_array_t = std::vector<time_interval_t>;
-
+  using time_interval_array_t = std::vector<time_interval_t>;
 
   // Construct State TriggerdRollout Object
   ocs2::Rollout_Settings sets;
@@ -89,23 +88,23 @@ TEST(StateRolloutTests, Case1) {
 }
 
 TEST(StateRolloutTests, Case2) {
-	using DIMENSIONS = ocs2::Dimensions<2, 1>;
-	using controller_t = ocs2::ControllerBase<2, 1>;
+  using DIMENSIONS = ocs2::Dimensions<2, 1>;
+  using controller_t = ocs2::ControllerBase<2, 1>;
 
-	using scalar_t = typename DIMENSIONS::scalar_t;
-	using state_vector_t = typename DIMENSIONS::state_vector_t;
-	using time_interval_t = std::pair<scalar_t, scalar_t>;
-	using input_vector_t = typename DIMENSIONS::input_vector_t;
-	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
+  using time_interval_t = std::pair<scalar_t, scalar_t>;
+  using input_vector_t = typename DIMENSIONS::input_vector_t;
+  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
 
-	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-	using size_array_t = typename DIMENSIONS::size_array_t;
-	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
-	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+  using size_array_t = typename DIMENSIONS::size_array_t;
+  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+  using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
+  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
 
-	using time_interval_array_t = std::vector<time_interval_t>;
+  using time_interval_array_t = std::vector<time_interval_t>;
   // Construct State TriggerdRollout Object
   ocs2::Rollout_Settings sets;
   ocs2::pendulum_dyn dynamics;
@@ -160,23 +159,23 @@ TEST(StateRolloutTests, Case2) {
 }
 
 TEST(StateRolloutTests, Case3) {
-	using DIMENSIONS = ocs2::Dimensions<3, 1>;
-	using controller_t = ocs2::ControllerBase<3, 1>;
+  using DIMENSIONS = ocs2::Dimensions<3, 1>;
+  using controller_t = ocs2::ControllerBase<3, 1>;
 
-	using scalar_t = typename DIMENSIONS::scalar_t;
-	using state_vector_t = typename DIMENSIONS::state_vector_t;
-	using time_interval_t = std::pair<scalar_t, scalar_t>;
-	using input_vector_t = typename DIMENSIONS::input_vector_t;
-	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
+  using time_interval_t = std::pair<scalar_t, scalar_t>;
+  using input_vector_t = typename DIMENSIONS::input_vector_t;
+  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
 
-	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-	using size_array_t = typename DIMENSIONS::size_array_t;
-	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
-	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+  using size_array_t = typename DIMENSIONS::size_array_t;
+  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+  using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
+  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
 
-	using time_interval_array_t = std::vector<time_interval_t>;
+  using time_interval_array_t = std::vector<time_interval_t>;
   // Create Logic Rules
   std::vector<double> eventTimes(0);
   std::vector<size_t> subsystemsSequence{1};

@@ -9,9 +9,8 @@
 #include <ocs2_ddp/SLQ.h>
 #include <ocs2_ddp/SLQ_Settings.h>
 
-
 TEST(testStateRollOut_SLQ, RunExample) {
-	using namespace ocs2;
+  using namespace ocs2;
 
   SLQ_Settings slqSettings;
   slqSettings.useNominalTimeForBackwardPass_ = true;
@@ -47,7 +46,7 @@ TEST(testStateRollOut_SLQ, RunExample) {
   partitioningTimes.push_back(startTime);
   partitioningTimes.push_back(finalTime);
 
-  system_dyn::state_vector_t initState= {5,2,1};
+  system_dyn::state_vector_t initState = {5, 2, 1};
 
   /*****
   *****/
@@ -79,8 +78,8 @@ TEST(testStateRollOut_SLQ, RunExample) {
   if (false) {
     for (int i = 0; i < solutionST.stateTrajectory_.size(); i++) {
       std::cout << i << ";" << solutionST.timeTrajectory_[i] << ";" << solutionST.stateTrajectory_[i][0] << ";"
-                << solutionST.stateTrajectory_[i][1] << ";" << solutionST.stateTrajectory_[i][2] << ";"
-                << solutionST.inputTrajectory_[i] << std::endl;
+                << solutionST.stateTrajectory_[i][1] << ";" << solutionST.stateTrajectory_[i][2] << ";" << solutionST.inputTrajectory_[i]
+                << std::endl;
     }
   }
 

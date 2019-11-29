@@ -89,7 +89,7 @@ install(DIRECTORY test/include/${PROJECT_NAME}/
 ## $ catkin_test_results ../../../build/ocs2_oc
 
 catkin_add_gtest(test_StateRollOut
-   test/test_SateRollOut.cpp
+   test/test_StateRollOut.cpp
 )
 target_link_libraries(test_StateRollOut
   ${Boost_LIBRARIES}

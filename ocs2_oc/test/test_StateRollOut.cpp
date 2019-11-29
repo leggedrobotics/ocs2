@@ -8,27 +8,26 @@
 
 #include <gtest/gtest.h>
 
-using DIMENSIONS = ocs2::Dimensions<2, 1>;
-using controller_t = ocs2::ControllerBase<2, 1>;
-
-using scalar_t = typename DIMENSIONS::scalar_t;
-using state_vector_t = typename DIMENSIONS::state_vector_t;
-using time_interval_t = std::pair<scalar_t, scalar_t>;
-using input_vector_t = typename DIMENSIONS::input_vector_t;
-using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
-
-using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-using size_array_t = typename DIMENSIONS::size_array_t;
-using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
-using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-
-using time_interval_array_t = std::vector<time_interval_t>;
-
-void testfunc(controller_t* input);
-
 TEST(StateRolloutTests, Case1) {
+	using DIMENSIONS = ocs2::Dimensions<2, 1>;
+	using controller_t = ocs2::ControllerBase<2, 1>;
+
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using state_vector_t = typename DIMENSIONS::state_vector_t;
+	using time_interval_t = std::pair<scalar_t, scalar_t>;
+	using input_vector_t = typename DIMENSIONS::input_vector_t;
+	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+	using size_array_t = typename DIMENSIONS::size_array_t;
+	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
+	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+
+	using time_interval_array_t = std::vector<time_interval_t>;
+
+
   // Construct State TriggerdRollout Object
   ocs2::Rollout_Settings sets;
   ocs2::ball_tester_dyn dynamics;
@@ -90,6 +89,23 @@ TEST(StateRolloutTests, Case1) {
 }
 
 TEST(StateRolloutTests, Case2) {
+	using DIMENSIONS = ocs2::Dimensions<2, 1>;
+	using controller_t = ocs2::ControllerBase<2, 1>;
+
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using state_vector_t = typename DIMENSIONS::state_vector_t;
+	using time_interval_t = std::pair<scalar_t, scalar_t>;
+	using input_vector_t = typename DIMENSIONS::input_vector_t;
+	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+	using size_array_t = typename DIMENSIONS::size_array_t;
+	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
+	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+
+	using time_interval_array_t = std::vector<time_interval_t>;
   // Construct State TriggerdRollout Object
   ocs2::Rollout_Settings sets;
   ocs2::pendulum_dyn dynamics;
@@ -144,20 +160,37 @@ TEST(StateRolloutTests, Case2) {
 }
 
 TEST(StateRolloutTests, Case3) {
+	using DIMENSIONS = ocs2::Dimensions<3, 1>;
+	using controller_t = ocs2::ControllerBase<3, 1>;
+
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using state_vector_t = typename DIMENSIONS::state_vector_t;
+	using time_interval_t = std::pair<scalar_t, scalar_t>;
+	using input_vector_t = typename DIMENSIONS::input_vector_t;
+	using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+	using size_array_t = typename DIMENSIONS::size_array_t;
+	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+	using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+	using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
+	using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+
+	using time_interval_array_t = std::vector<time_interval_t>;
   // Create Logic Rules
   std::vector<double> eventTimes(0);
   std::vector<size_t> subsystemsSequence{1};
   std::shared_ptr<ocs2::system_logic> logicRules(new ocs2::system_logic(eventTimes, subsystemsSequence));
   // Construct State TriggerdRollout Object
   ocs2::Rollout_Settings sets;
-  ocs2::system_dyn dynamics(logicRules);
-  ocs2::StateTriggeredRollout<2, 1> Rollout(dynamics, sets);
+  ocs2::system_dyn dynamics;
+  ocs2::StateTriggeredRollout<3, 1> Rollout(dynamics, sets);
   // Construct Variables for run
   // Simulation time
   scalar_t t0 = 0;
   scalar_t t1 = 50;
   // Initial State
-  state_vector_t initState(2, 0);
+  state_vector_t initState(2, 0, 1);
   initState[0] = 5;
   initState[1] = 2;
   // Controller (time constant zero controller)
@@ -167,10 +200,10 @@ TEST(StateRolloutTests, Case3) {
   input_vector_array_t bias_array(1, bias);
 
   input_state_matrix_t gain;
-  gain << 0, 0;
+  gain << 0, 0, 0;
   input_state_matrix_array_t gain_array(1, gain);
-  ocs2::LinearController<2, 1> Control(timestamp, bias_array, gain_array);
-  ocs2::LinearController<2, 1>* Controller = &Control;
+  ocs2::LinearController<3, 1> control(timestamp, bias_array, gain_array);
+  ocs2::LinearController<3, 1>* Controller = &control;
 
   // Trajectory storage
   scalar_array_t timeTrajectory(0);

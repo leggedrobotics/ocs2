@@ -46,7 +46,7 @@ TEST(testStateRollOut_SLQ, RunExample) {
   partitioningTimes.push_back(startTime);
   partitioningTimes.push_back(finalTime);
 
-  system_dyn::state_vector_t initState(5, 2);
+  system_dyn::state_vector_t initState= {5,2,1};
 
   /*****
   *****/
@@ -74,10 +74,10 @@ TEST(testStateRollOut_SLQ, RunExample) {
   slqST.run(startTime, initState, finalTime, partitioningTimes);
   SLQ<STATE_DIM, INPUT_DIM>::primal_solution_t solutionST = slqST.primalSolution(finalTime);
 
-  if (false) {
+  if (true) {
     for (int i = 0; i < solutionST.stateTrajectory_.size(); i++) {
       std::cout << i << ";" << solutionST.timeTrajectory_[i] << ";" << solutionST.stateTrajectory_[i][0] << ";"
-                << solutionST.stateTrajectory_[i][1] << ";" << logicRulesPtr->getSubSystemTime(solutionST.timeTrajectory_[i]) << ";"
+                << solutionST.stateTrajectory_[i][1] << ";" << solutionST.stateTrajectory_[i][2] << ";"
                 << solutionST.inputTrajectory_[i] << std::endl;
     }
   }

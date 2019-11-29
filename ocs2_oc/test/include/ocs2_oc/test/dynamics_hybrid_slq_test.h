@@ -7,7 +7,7 @@
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
 #include <ocs2_core/logic/rules/HybridLogicRules.h>
 
-enum { STATE_DIM = 2, INPUT_DIM = 1 };
+enum { STATE_DIM = 3, INPUT_DIM = 1 };
 
 namespace ocs2 {
 
@@ -48,13 +48,13 @@ class system_dyn1 : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
   system_dyn1() = default;
   ~system_dyn1() = default;
 
-  void computeFlowMap(const double& t, const Eigen::Vector2d& x, const Eigen::Matrix<double, 1, 1>& u, Eigen::Vector2d& dxdt) {
+  void computeFlowMap(const double& t, const state_vector_t& x, const Eigen::Matrix<double, 1, 1>& u, state_vector_t& dxdt) {
     Eigen::Matrix<double, STATE_DIM, STATE_DIM> A;
-    A << -0.1, 0.9, -1, -0.01;
+    A << -0.1, 0.9, 0, -1, -0.01, 0, 0, 0, 0;
     Eigen::Matrix<double, STATE_DIM, INPUT_DIM> B;
-    B << 0, 1;
+    B << 0, 1, 0;
     Eigen::Matrix<double, STATE_DIM, 1> F;
-    F << 0, 0;
+    F << 0, 0, 0;
 
     dxdt = A * x + B * u + F;
   }
@@ -62,6 +62,7 @@ class system_dyn1 : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
   void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) {
     mappedState[0] = state[0];
     mappedState[1] = state[1];
+    mappedState[2] = 1;
   }
 
   void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) {
@@ -80,13 +81,13 @@ class system_dyn2 : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
   system_dyn2() = default;
   ~system_dyn2() = default;
 
-  void computeFlowMap(const double& t, const Eigen::Vector2d& x, const Eigen::Matrix<double, 1, 1>& u, Eigen::Vector2d& dxdt) {
+  void computeFlowMap(const double& t, const state_vector_t& x, const Eigen::Matrix<double, 1, 1>& u, state_vector_t& dxdt) {
     Eigen::Matrix<double, STATE_DIM, STATE_DIM> A;
-    A << -0, 3, -3, 0;
+    A << -0, 3, 0, -3, 0, 0, 0, 0, 0;
     Eigen::Matrix<double, STATE_DIM, INPUT_DIM> B;
-    B << 0, 1;
+    B << 0, 1, 0;
     Eigen::Matrix<double, STATE_DIM, 1> F;
-    F << 0, 0;
+    F << 0, 0, 0;
 
     dxdt = A * x + B * u + F;
   }
@@ -94,6 +95,7 @@ class system_dyn2 : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
   void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) {
     mappedState[0] = state[0];
     mappedState[1] = state[1];
+    mappedState[2] = 0;
   }
 
   void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) {
@@ -109,10 +111,10 @@ class system_dyn2 : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
 class system_dyn : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  using Base = ControlledSystemBase<2, 1>;
+  using Base = ControlledSystemBase<STATE_DIM,INPUT_DIM>;
 
   system_dyn(std::shared_ptr<system_logic> logicRulesPtr)
-      : logicRulesPtr_(std::move(logicRulesPtr)), activeSubsystem_(1), subsystemDynamicsPtr_(2) {
+      : logicRulesPtr_(std::move(logicRulesPtr)), subsystemDynamicsPtr_(2) {
     subsystemDynamicsPtr_[0].reset(new system_dyn1);
     subsystemDynamicsPtr_[1].reset(new system_dyn2);
   }
@@ -121,40 +123,34 @@ class system_dyn : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
 
   system_dyn* clone() const final { return new system_dyn(*this); }
 
-  void reset() override {
-    Base::reset();
-    logicRulesPtr_->reset();
-  }
-
-  system_dyn(const system_dyn& other) : activeSubsystem_(other.activeSubsystem_), subsystemDynamicsPtr_(2) {
+  system_dyn(const system_dyn& other) : subsystemDynamicsPtr_(2) {
     subsystemDynamicsPtr_[0].reset(other.subsystemDynamicsPtr_[0]->clone());
     subsystemDynamicsPtr_[1].reset(other.subsystemDynamicsPtr_[1]->clone());
     logicRulesPtr_ = other.logicRulesPtr_;
   }
 
   void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) final {
-    activeSubsystem_ = logicRulesPtr_->getSubSystemTime(t);
-    subsystemDynamicsPtr_[activeSubsystem_]->computeFlowMap(t, x, u, dxdt);
+    size_t activeSubsystem = x[2];
+    subsystemDynamicsPtr_[activeSubsystem]->computeFlowMap(t, x, u, dxdt);
   }
 
   void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override {
-    if (activeSubsystem_ == 0) {
-      logicRulesPtr_->appendModeSequence(1, time);
-    } else {
-      logicRulesPtr_->appendModeSequence(0, time);
-    }
-
-    activeSubsystem_ = logicRulesPtr_->getSubSystemTime(time);
-    subsystemDynamicsPtr_[activeSubsystem_]->computeJumpMap(time, state, mappedState);
+//    if (activeSubsystem == 0) {
+//      logicRulesPtr_->appendModeSequence(1, time);
+//    } else {
+//      logicRulesPtr_->appendModeSequence(0, time);
+//    }
+	size_t activeSubsystem = state[2];
+    subsystemDynamicsPtr_[activeSubsystem]->computeJumpMap(time, state, mappedState);
   }
 
   void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) {
-    activeSubsystem_ = logicRulesPtr_->getSubSystemTime(time);
-    subsystemDynamicsPtr_[activeSubsystem_]->computeGuardSurfaces(time, state, guardSurfacesValue);
+	size_t activeSubsystem_1 = logicRulesPtr_->getSubSystemTime(time);
+    size_t activeSubsystem = state[2];
+    subsystemDynamicsPtr_[activeSubsystem]->computeGuardSurfaces(time, state, guardSurfacesValue);
   }
 
  private:
-  int activeSubsystem_;
   std::shared_ptr<system_logic> logicRulesPtr_;
   std::vector<Base::Ptr> subsystemDynamicsPtr_;
 };
@@ -169,9 +165,9 @@ class system_der_1 : public DerivativesBase<STATE_DIM, INPUT_DIM> {
   system_der_1() = default;
   ~system_der_1() = default;
 
-  void getFlowMapDerivativeState(state_matrix_t& A) override { A << -0.1, 0.9, -1, -0.01; }
+  void getFlowMapDerivativeState(state_matrix_t& A) override { A << -0.1, 0.9, 0, -1, -0.01, 0, 0, 0, 0; }
 
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B << 0, 1; }
+  void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B << 0, 1, 0; }
 
   system_der_1* clone() const override { return new system_der_1(*this); }
 };
@@ -183,9 +179,9 @@ class system_der_2 : public DerivativesBase<STATE_DIM, INPUT_DIM> {
   system_der_2() = default;
   ~system_der_2() = default;
 
-  void getFlowMapDerivativeState(state_matrix_t& A) override { A << -0, 3, -3, 0; }
+  void getFlowMapDerivativeState(state_matrix_t& A) override { A << -0, 3, 0, -3, 0, 0, 0, 0, 0; }
 
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B << 0, 1; }
+  void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B << 0, 1, 0; }
 
   system_der_2* clone() const override { return new system_der_2(*this); }
 };
@@ -213,7 +209,7 @@ class system_der : public DerivativesBase<STATE_DIM, INPUT_DIM> {
 
   void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) final {
     Base::setCurrentStateAndControl(t, x, u);
-    activeSubsystem_ = logicRulesPtr_->getSubSystemTime(t);
+    activeSubsystem_ = x[2];
     subsystemDerPtr_[activeSubsystem_]->setCurrentStateAndControl(t, x, u);
   }
 
@@ -243,7 +239,7 @@ class system_cost_1 : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
 
   void getIntermediateCostDerivativeState(state_vector_t& dLdx) final { dLdx << x_[0], x_[1]; }
 
-  void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) final { dLdxx << 1.0, 0.0, 1.0, 0.0; }
+  void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) final { dLdxx << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0, 0, 0; }
 
   void getIntermediateCostDerivativeInput(input_vector_t& dLdu) final { dLdu << 0.01 * u_[0]; }
 
@@ -256,7 +252,7 @@ class system_cost_1 : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    */
   void getTerminalCost(scalar_t& Phi) final { Phi = 0.5 * pow(x_[0], 2) + 0.5 * pow(x_[1], 2); }
   void getTerminalCostDerivativeState(state_vector_t& dPhidx) final { dPhidx << x_[0], x_[1]; }
-  void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final { dPhidxx << 1.0, 0.0, 1.0, 0.0; }
+  void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final { dPhidxx << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0, 0, 0;}
 };
 
 class system_cost_2 : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
@@ -270,9 +266,9 @@ class system_cost_2 : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
 
   void getIntermediateCost(scalar_t& L) final { L = 0.5 * pow(x_[0], 2) + 0.5 * pow(x_[1], 2) + 0.005 * pow(u_[0], 2); }
 
-  void getIntermediateCostDerivativeState(state_vector_t& dLdx) final { dLdx << x_[0], x_[1]; }
+  void getIntermediateCostDerivativeState(state_vector_t& dLdx) final { dLdx << x_[0], x_[1], 0; }
 
-  void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) final { dLdxx << 1.0, 0.0, 1.0, 0.0; }
+  void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) final { dLdxx << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0, 0, 0; }
 
   void getIntermediateCostDerivativeInput(input_vector_t& dLdu) final { dLdu << 0.01 * u_[0]; }
 
@@ -285,7 +281,7 @@ class system_cost_2 : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    */
   void getTerminalCost(scalar_t& Phi) final { Phi = 0.5 * pow(x_[0], 2) * pow(x_[1], 2); }
   void getTerminalCostDerivativeState(state_vector_t& dPhidx) final { dPhidx << x_[0], x_[1]; }
-  void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final { dPhidxx << 1.0, 0.0, 1.0, 0.0; }
+  void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final { dPhidxx << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0, 0, 0; }
 };
 
 class system_cost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
@@ -314,7 +310,7 @@ class system_cost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
     x_ = x;
     u_ = u;
 
-    activeSubsystem_ = logicRulesPtr_->getSubSystemTime(t_);
+    activeSubsystem_ = x_[2];
     subsystemCostPtr_[activeSubsystem_]->setCurrentStateAndControl(t, x, u);
   }
   /*
@@ -322,32 +318,32 @@ class system_cost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    */
 
   void getIntermediateCost(scalar_t& L) final {
-    activeSubsystem_ = logicRulesPtr_->getSubSystemTime(t_);
+	activeSubsystem_ = x_[2];
     subsystemCostPtr_[activeSubsystem_]->getIntermediateCost(L);
   }
 
   void getIntermediateCostDerivativeState(state_vector_t& dLdx) final {
-    activeSubsystem_ = logicRulesPtr_->getSubSystemTime(t_);
+	activeSubsystem_ = x_[2];
     subsystemCostPtr_[activeSubsystem_]->getIntermediateCostDerivativeState(dLdx);
   }
 
   void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) final {
-    activeSubsystem_ = logicRulesPtr_->getSubSystemTime(t_);
+	activeSubsystem_ = x_[2];
     subsystemCostPtr_[activeSubsystem_]->getIntermediateCostSecondDerivativeState(dLdxx);
   }
 
   void getIntermediateCostDerivativeInput(input_vector_t& dLdu) final {
-    activeSubsystem_ = logicRulesPtr_->getSubSystemTime(t_);
+	activeSubsystem_ = x_[2];
     subsystemCostPtr_[activeSubsystem_]->getIntermediateCostDerivativeInput(dLdu);
   }
 
   void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) final {
-    activeSubsystem_ = logicRulesPtr_->getSubSystemTime(t_);
+	activeSubsystem_ = x_[2];
     subsystemCostPtr_[activeSubsystem_]->getIntermediateCostSecondDerivativeInput(dLduu);
   }
 
   void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdxu) final {
-    activeSubsystem_ = logicRulesPtr_->getSubSystemTime(t_);
+	activeSubsystem_ = x_[2];
     subsystemCostPtr_[activeSubsystem_]->getIntermediateCostDerivativeInputState(dLdxu);
   }
 
@@ -355,17 +351,17 @@ class system_cost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
           Terminal Cost Functions
    */
   void getTerminalCost(scalar_t& Phi) final {
-    activeSubsystem_ = logicRulesPtr_->getSubSystemTime(t_);
+	activeSubsystem_ = x_[2];
     subsystemCostPtr_[activeSubsystem_]->getTerminalCost(Phi);
   }
 
   void getTerminalCostDerivativeState(state_vector_t& dPhidx) final {
-    activeSubsystem_ = logicRulesPtr_->getSubSystemTime(t_);
+	activeSubsystem_ = x_[2];
     subsystemCostPtr_[activeSubsystem_]->getTerminalCostDerivativeState(dPhidx);
   }
 
   void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final {
-    activeSubsystem_ = logicRulesPtr_->getSubSystemTime(t_);
+	activeSubsystem_ = x_[2];
     subsystemCostPtr_[activeSubsystem_]->getTerminalCostSecondDerivativeState(dPhidxx);
   }
 
@@ -398,8 +394,8 @@ class system_const_1 : public ConstraintBase<STATE_DIM, INPUT_DIM> {
     dhdx.resize(4);
     dhdx[0].setZero();
     dhdx[1].setZero();
-    dhdx[2] << 1, 0;
-    dhdx[3] << -1, 0;
+    dhdx[2] << 1, 0, 0;
+    dhdx[3] << -1, 0, 0;
   }
 
   void getInequalityConstraintDerivativesInput(input_vector_array_t& dhdu) override {
@@ -455,8 +451,8 @@ class system_const_2 : public ConstraintBase<STATE_DIM, INPUT_DIM> {
     dhdx.resize(4);
     dhdx[0].setZero();
     dhdx[1].setZero();
-    dhdx[2] << 1, 0;
-    dhdx[3] << -1, 0;
+    dhdx[2] << 1, 0, 0;
+    dhdx[3] << -1, 0, 0;
   }
 
   void getInequalityConstraintDerivativesInput(input_vector_array_t& dhdu) override {
@@ -508,7 +504,7 @@ class system_const : public ConstraintBase<STATE_DIM, INPUT_DIM> {
     x_ = x;
     u_ = u;
 
-    activeSubsystem_ = logicRulesPtr_->getSubSystemTime(t_);
+    activeSubsystem_ = x[2];
     subsystemConstPtr_[activeSubsystem_]->setCurrentStateAndControl(t_, x_, u_);
   }
 

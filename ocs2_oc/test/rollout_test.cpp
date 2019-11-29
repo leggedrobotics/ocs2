@@ -60,7 +60,7 @@ class TestLogicRules : public HybridLogicRules {
                                   const scalar_t& finalTime) override{};
 };
 
-TEST(time_triggered_rollout_test, time_triggered_rollout_test) {
+TEST(DISABLED_time_triggered_rollout_test, time_triggered_rollout_test) {
   double initTime = 0.0;
   double finalTime = 10.0;
 

@@ -44,10 +44,10 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>cmake_modules</build_depend>
   <build_depend>ocs2_core</build_depend>
-  <build_depend>ocs2_slq</build_depend>
+  <build_depend>ocs2_ddp</build_depend>
   <build_depend>ocs2_frank_wolfe</build_depend>
   <run_depend>ocs2_core</run_depend>
-  <run_depend>ocs2_slq</run_depend>
+  <run_depend>ocs2_ddp</run_depend>
   <run_depend>ocs2_frank_wolfe</run_depend>
   
   <!-- The export tag contains other, unspecified, tags -->

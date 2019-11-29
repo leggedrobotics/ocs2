@@ -44,7 +44,7 @@ class MRT_ROS_Dummy_Loop {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using mrt_t = ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
+  using mrt_t = MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
   using primal_solution_t = typename mrt_t::primal_solution_t;
   using command_data_t = typename mrt_t::command_data_t;
 
@@ -59,24 +59,19 @@ class MRT_ROS_Dummy_Loop {
   using input_state_matrix_t = typename mrt_t::input_state_matrix_t;
   using input_state_matrix_array_t = typename mrt_t::input_state_matrix_array_t;
 
-  using system_observation_t = typename mrt_t::system_observation_t;
   using cost_desired_trajectories_t = typename mrt_t::cost_desired_trajectories_t;
-
-  using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
+  using system_observation_t = typename mrt_t::system_observation_t;
 
   /**
    * Constructor.
    *
-   * @param [in] mrt: The underlying MRT class to be used.
+   * @param [in] mrt: The underlying MRT class to be used. If MRT contains a rollout object, the dummy will roll out
+   * the received controller using the MRT::rolloutPolicy() method instead of just sending back a planned state.
    * @param [in] mrtDesiredFrequency: MRT loop frequency in Hz. This should always set to a positive number.
    * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
    * will be simulated to run by this frequency. Note that this might not be the MPC's real-time frequency.
-   * @param [in] systemPtr: Optional pointer to the system dynamics. If provided, the dummy will roll out the
-   * received controller using these dynamics instead of just sending back a planned state.
-   * @param [in] rolloutSettings settings to use when dummy rolls out the received controller
    */
-  MRT_ROS_Dummy_Loop(mrt_t& mrt, scalar_t mrtDesiredFrequency = 100, scalar_t mpcDesiredFrequency = -1,
-                     const controlled_system_base_t* systemPtr = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings());
+  MRT_ROS_Dummy_Loop(mrt_t& mrt, scalar_t mrtDesiredFrequency = 100, scalar_t mpcDesiredFrequency = -1);
 
   /**
    * Destructor.
@@ -131,7 +126,6 @@ class MRT_ROS_Dummy_Loop {
   mrt_t& mrt_;
   scalar_t mrtDesiredFrequency_;
   scalar_t mpcDesiredFrequency_;
-  std::unique_ptr<controlled_system_base_t> systemPtr_;
 
   bool realtimeLoop_;
 

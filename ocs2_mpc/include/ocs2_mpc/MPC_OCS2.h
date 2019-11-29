@@ -33,8 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <mutex>
 #include <thread>
 
+#include <ocs2_ddp/SLQ_DataCollector.h>
 #include <ocs2_ocs2/FrankWolfeGDDP.h>
-#include <ocs2_slq/SLQ_DataCollector.h>
 
 #include "ocs2_mpc/MPC_SLQ.h"
 
@@ -76,12 +76,12 @@ class MPC_OCS2 : public MPC_SLQ<STATE_DIM, INPUT_DIM> {
 
   using mode_sequence_template_t = typename BASE::mode_sequence_template_t;
   using logic_rules_machine_t = typename BASE::logic_rules_machine_t;
-  using controlled_system_base_t = typename BASE::controlled_system_base_t;
   using event_handler_t = typename BASE::event_handler_t;
   using derivatives_base_t = typename BASE::derivatives_base_t;
   using constraint_base_t = typename BASE::constraint_base_t;
   using cost_function_base_t = typename BASE::cost_function_base_t;
   using operating_trajectories_base_t = typename BASE::operating_trajectories_base_t;
+  using rollout_base_t = typename BASE::rollout_base_t;
 
   /**
    * Default constructor.
@@ -91,7 +91,7 @@ class MPC_OCS2 : public MPC_SLQ<STATE_DIM, INPUT_DIM> {
   /**
    * Constructor
    *
-   * @param [in] systemDynamicsPtr: The system dynamics which possibly includes some subsystems.
+   * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
    * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
    * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
@@ -105,12 +105,12 @@ class MPC_OCS2 : public MPC_SLQ<STATE_DIM, INPUT_DIM> {
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
-  MPC_OCS2(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
-           const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
-           const operating_trajectories_base_t* operatingTrajectoriesPtr, const scalar_array_t& partitioningTimes,
-           const SLQ_Settings& slqSettings = SLQ_Settings(), const GDDP_Settings& gddpSettings = GDDP_Settings(),
-           const MPC_Settings& mpcSettings = MPC_Settings(), std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
-           const mode_sequence_template_t* modeSequenceTemplatePtr = nullptr, const cost_function_base_t* heuristicsFunctionPtr = nullptr);
+  MPC_OCS2(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
+           const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
+           const scalar_array_t& partitioningTimes, const SLQ_Settings& slqSettings = SLQ_Settings(),
+           const GDDP_Settings& gddpSettings = GDDP_Settings(), const MPC_Settings& mpcSettings = MPC_Settings(),
+           std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr, const mode_sequence_template_t* modeSequenceTemplatePtr = nullptr,
+           const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
   /**
    * Destructor.

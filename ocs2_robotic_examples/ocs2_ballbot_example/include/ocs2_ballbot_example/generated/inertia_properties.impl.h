@@ -15,12 +15,12 @@ iit::Ballbot::dyn::tpl::InertiaProperties<TRAIT>::InertiaProperties()
 
     com_ball = iit::rbd::Vector3d(0.0,0.0,0.0).cast<Scalar>();
     tensor_ball.fill(
-        Scalar(5.45),
+        Scalar(2.65),
         com_ball,
         rbd::Utils::buildInertiaTensor(
-                Scalar(0.0341),
-                Scalar(0.0341),
-                Scalar(0.0341),
+                Scalar(0.0166),
+                Scalar(0.0166),
+                Scalar(0.0166),
                 Scalar(0.0),
                 Scalar(0.0),
                 Scalar(0.0)) );
@@ -51,15 +51,15 @@ iit::Ballbot::dyn::tpl::InertiaProperties<TRAIT>::InertiaProperties()
 
     com_base = iit::rbd::Vector3d(-0.1956,0.0033,0.003).cast<Scalar>();
     tensor_base.fill(
-        Scalar(16.944),
+        Scalar(18.66),
         com_base,
         rbd::Utils::buildInertiaTensor(
-                Scalar(0.167),
-                Scalar(2.4521),
-                Scalar(2.4483),
-                Scalar(-0.0099),
-                Scalar(-0.0099),
-                Scalar(2.0E-4)) );
+                Scalar(0.16707414),
+                Scalar(2.5177875),
+                Scalar(2.5141227),
+                Scalar(-0.012044657),
+                Scalar(-0.010949688),
+                Scalar(1.84734E-4)) );
 
 }
 

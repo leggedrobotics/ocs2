@@ -7,7 +7,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(catkin REQUIRED COMPONENTS
         roslib
         ocs2_core
-        ocs2_slq
+        ocs2_ddp
         ocs2_ocs2
         ocs2_mpc
         ocs2_comm_interfaces
@@ -43,7 +43,7 @@ catkin_package(
     ${EIGEN3_INCLUDE_DIRS}
   CATKIN_DEPENDS
     ocs2_core
-    ocs2_slq
+    ocs2_ddp
     ocs2_ocs2
     ocs2_mpc
     ocs2_comm_interfaces
@@ -86,18 +86,6 @@ add_dependencies(double_integrator_mpc
 target_link_libraries(double_integrator_mpc
   double_integrator_interface
   ${catkin_LIBRARIES}
-)
-
-add_executable(double_integrator_pi
-  src/PI_Double_Integrator.cpp
-)
-add_dependencies(double_integrator_pi
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(double_integrator_pi
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  dl
 )
 
 # Dummy node
@@ -175,7 +163,6 @@ if(cmake_clang_tools_FOUND)
     TARGETS
       double_integrator_interface
       double_integrator_mpc
-      double_integrator_pi
       double_integrator_dummy_test
       double_integrator_target
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test

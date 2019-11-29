@@ -7,7 +7,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(catkin REQUIRED COMPONENTS
    roslib
    ocs2_core
-   ocs2_slq
+   ocs2_ddp
    ocs2_ocs2
    ocs2_mpc
    ocs2_comm_interfaces
@@ -21,6 +21,8 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
+find_package(raisim CONFIG QUIET)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
 
 ###################################
@@ -31,9 +33,11 @@ catkin_package(
   INCLUDE_DIRS
     include
     ${EIGEN3_INCLUDE_DIRS}
+  LIBRARIES
+    cartpole_interface
   CATKIN_DEPENDS
     ocs2_core
-    ocs2_slq
+    ocs2_ddp
     ocs2_ocs2
     ocs2_mpc
     ocs2_comm_interfaces
@@ -90,12 +94,13 @@ target_link_libraries(cartpole_dummy_test
   ${catkin_LIBRARIES}
 )
 
+
 #########################
 ###   CLANG TOOLING   ###
 #########################
 find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
-  message(STATUS "Run clang tooling for target ocs2_cart_pole_example")
+  message(STATUS "Running clang tooling.")
   add_clang_tooling(
     TARGETS
         cartpole_interface
@@ -103,7 +108,9 @@ if(cmake_clang_tools_FOUND)
         cartpole_dummy_test
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CT_HEADER_EXCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/generated
     CF_WERROR
+    CT_WERROR
   )
 endif(cmake_clang_tools_FOUND)
 

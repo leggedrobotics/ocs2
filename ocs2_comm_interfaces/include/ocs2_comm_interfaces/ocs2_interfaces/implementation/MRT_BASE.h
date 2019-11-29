@@ -29,7 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_comm_interfaces/ocs2_interfaces/MRT_BASE.h>
 
-#include <ocs2_core/logic/rules/NullLogicRules.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 namespace ocs2 {
@@ -75,9 +74,8 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_BASE<STATE_DIM, INPUT_DIM>::initRollout(const ControlledSystemBase<STATE_DIM, INPUT_DIM>& controlSystemBase,
-                                                 const Rollout_Settings& rolloutSettings) {
-  rolloutPtr_.reset(new TimeTriggeredRollout<STATE_DIM, INPUT_DIM>(controlSystemBase, rolloutSettings, "mrt"));
+void MRT_BASE<STATE_DIM, INPUT_DIM>::initRollout(const rollout_base_t* rolloutPtr) {
+  rolloutPtr_.reset(rolloutPtr->clone());
 }
 
 /******************************************************************************************************/
@@ -118,14 +116,15 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const s
   const size_t activePartitionIndex = 0;  // there is only one partition.
   scalar_t finalTime = currentTime + timeStep;
   scalar_array_t timeTrajectory;
-  size_array_t eventsPastTheEndIndeces;
+  size_array_t postEventIndicesStock;
   state_vector_array_t stateTrajectory;
   input_vector_array_t inputTrajectory;
 
   // perform a rollout
   if (policyUpdated_) {
-    rolloutPtr_->run(activePartitionIndex, currentTime, currentState, finalTime, currentPrimalSolution_->controllerPtr_.get(),
-                     *logicMachinePtr_, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+    rolloutPtr_->run(currentTime, currentState, finalTime, currentPrimalSolution_->controllerPtr_.get(),
+                     logicMachinePtr_->getLogicRulesPtr()->eventTimes(), timeTrajectory, postEventIndicesStock, stateTrajectory,
+                     inputTrajectory);
   } else {
     throw std::runtime_error("MRT_ROS_interface: policy should be updated before rollout.");
   }

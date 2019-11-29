@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
 #include <ocs2_core/misc/LoadData.h>
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 // Ballbot
 #include "ocs2_ballbot_example/cost/BallbotCost.h"
@@ -64,16 +65,25 @@ int main(int argc, char** argv) {
   std::cerr << "Generated library path: " << libraryFolder << std::endl;
 
   /*
-   * SLQ-MPC settings
+   * SLQ settings
    */
   SLQ_Settings slqSettings;
   slqSettings.loadSettings(taskFile);
+  slqSettings.ddpSettings_.displayInfo_ = true;  // display iteration information
 
   /*
-   * Dynamics
+   * Rollout settings
+   */
+  Rollout_Settings rolloutSettings;
+  rolloutSettings.loadSettings(taskFile, "slq.rollout");
+
+  /*
+   * Rollout
    */
   std::unique_ptr<BallbotSystemDynamics> ballbotSystemDynamicsPtr(new BallbotSystemDynamics());
   ballbotSystemDynamicsPtr->initialize("ballbot_dynamics", libraryFolder, true, true);
+  std::unique_ptr<TimeTriggeredRollout<STATE_DIM_, INPUT_DIM_>> ballbotRolloutPtr(
+      new TimeTriggeredRollout<STATE_DIM_, INPUT_DIM_>(*ballbotSystemDynamicsPtr, rolloutSettings));
 
   /*
    * Cost function
@@ -120,7 +130,8 @@ int main(int argc, char** argv) {
   /*
    * define solver and run
    */
-  SLQ<STATE_DIM_, INPUT_DIM_> slqST(ballbotSystemDynamicsPtr.get(), ballbotSystemDynamicsPtr.get(), ballbotConstraintPtr.get(),
+  slqSettings.ddpSettings_.nThreads_ = 1;
+  SLQ<STATE_DIM_, INPUT_DIM_> slqST(ballbotRolloutPtr.get(), ballbotSystemDynamicsPtr.get(), ballbotConstraintPtr.get(),
                                     ballbotCostPtr.get(), ballbotOperatingPointPtr.get(), slqSettings);
   slqST.run(0.0, xInit, timeHorizon, partitioningTimes);
 

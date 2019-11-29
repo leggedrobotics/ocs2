@@ -184,7 +184,7 @@ private:
 template <typename TRAIT>
 inline void InverseDynamics<TRAIT>::setJointStatus(const JointState& q) const
 {
-    (xm->fr_dummy_ball1_X_fr_base0)(q);
+    (xm->fr_dummy_ball1_X_fr_world)(q);
     (xm->fr_ball_X_fr_dummy_ball1)(q);
     (xm->fr_dummy_base1_X_fr_ball)(q);
     (xm->fr_dummy_base2_X_fr_dummy_base1)(q);

@@ -77,7 +77,7 @@ class QuadrotorCost final : public QuadraticCostFunction<quadrotor::STATE_DIM_, 
    *
    * @return A raw pointer to the class.
    */
-  QuadrotorCost* clone() const { return new QuadrotorCost(*this); }
+  QuadrotorCost* clone() const override { return new QuadrotorCost(*this); }
 
   /**
    * Sets the current time, state, and control input.
@@ -86,7 +86,7 @@ class QuadrotorCost final : public QuadraticCostFunction<quadrotor::STATE_DIM_, 
    * @param [in] x: Current state vector.
    * @param [in] u: Current input vector.
    */
-  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
+  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override {
     dynamic_vector_t xNominal(static_cast<int>(quadrotor::STATE_DIM_));
     BASE::xNominalFunc_.interpolate(t, xNominal);
     dynamic_vector_t uNominal(static_cast<int>(quadrotor::INPUT_DIM_));

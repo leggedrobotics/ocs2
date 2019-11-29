@@ -30,11 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_ddp_base/DDP_BASE.h>
-
-#include <ocs2_ilqr/ILQR_BASE.h>
-#include <ocs2_ilqr/ILQR_MT.h>
-#include <ocs2_ilqr/ILQR_ST.h>
+#include <ocs2_ddp/DDP_BASE.h>
+#include <ocs2_ddp/ILQR.h>
 
 #include "ocs2_mpc/MPC_BASE.h"
 
@@ -81,17 +78,15 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
 
   using ddp_base_t = ocs2::DDP_BASE<STATE_DIM, INPUT_DIM>;
 
-  using ilqr_base_t = ocs2::ILQR_BASE<STATE_DIM, INPUT_DIM>;
-  using ilqr_t = ocs2::ILQR_ST<STATE_DIM, INPUT_DIM>;
-  using ilqr_mp_t = ocs2::ILQR_MT<STATE_DIM, INPUT_DIM>;
+  using ilqr_t = ocs2::ILQR<STATE_DIM, INPUT_DIM>;
 
   using logic_rules_machine_t = typename ddp_base_t::logic_rules_machine_t;
-  using controlled_system_base_t = typename ddp_base_t::controlled_system_base_t;
   using event_handler_t = typename ddp_base_t::event_handler_t;
   using derivatives_base_t = typename ddp_base_t::derivatives_base_t;
   using constraint_base_t = typename ddp_base_t::constraint_base_t;
   using cost_function_base_t = typename ddp_base_t::cost_function_base_t;
   using operating_trajectories_base_t = typename ddp_base_t::operating_trajectories_base_t;
+  using rollout_base_t = typename ddp_base_t::rollout_base_t;
 
   /**
    * Default constructor.
@@ -101,7 +96,7 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Constructor
    *
-   * @param [in] systemDynamicsPtr: The system dynamics which possibly includes some subsystems.
+   * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
    * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
    * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
@@ -114,12 +109,11 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
-  MPC_ILQR(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
-           const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
-           const operating_trajectories_base_t* operatingTrajectoriesPtr, const scalar_array_t& partitioningTimes,
-           const ILQR_Settings& ilqrSettings = ILQR_Settings(), const MPC_Settings& mpcSettings = MPC_Settings(),
-           std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr, const mode_sequence_template_t* modeSequenceTemplatePtr = nullptr,
-           const cost_function_base_t* heuristicsFunctionPtr = nullptr);
+  MPC_ILQR(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
+           const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
+           const scalar_array_t& partitioningTimes, const ILQR_Settings& ilqrSettings = ILQR_Settings(),
+           const MPC_Settings& mpcSettings = MPC_Settings(), std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
+           const mode_sequence_template_t* modeSequenceTemplatePtr = nullptr, const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
   /**
    * Default destructor.
@@ -133,9 +127,9 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
    */
   virtual ILQR_Settings& ilqrSettings();
 
-  ilqr_base_t* getSolverPtr() override;
+  ilqr_t* getSolverPtr() override;
 
-  const ilqr_base_t* getSolverPtr() const override;
+  const ilqr_t* getSolverPtr() const override;
 
   void calculateController(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime) override;
 
@@ -143,7 +137,7 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
   /***********
    * Variables
    ***********/
-  std::unique_ptr<ilqr_base_t> ilqrPtr_;
+  std::unique_ptr<ilqr_t> ilqrPtr_;
 };
 
 }  // namespace ocs2

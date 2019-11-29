@@ -29,12 +29,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <vector>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <csignal>
 #include <iostream>
 #include <string>
-#include <Eigen/Core>
-#include <Eigen/Geometry>
+#include <vector>
 
 namespace ocs2 {
 
@@ -84,121 +84,105 @@ namespace ocs2 {
  *
  */
 template <typename SCALAR_T>
-class TargetPoseTransformation
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class TargetPoseTransformation {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	enum DIM : size_t
-	{
-		POSE_DIM_ = 6,
-	};
+  enum DIM : size_t {
+    POSE_DIM_ = 6,
+  };
 
-	using scalar_t = SCALAR_T;
-	using scalar_array_t = std::vector<scalar_t>;
-	using pose_vector_t = Eigen::Matrix<scalar_t, POSE_DIM_, 1>;
-	using dynamic_vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
+  using scalar_t = SCALAR_T;
+  using scalar_array_t = std::vector<scalar_t>;
+  using pose_vector_t = Eigen::Matrix<scalar_t, POSE_DIM_, 1>;
+  using dynamic_vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
 
-	/**
-	 * Constructor
-	 */
-	TargetPoseTransformation() = default;
+  /**
+   * Constructor
+   */
+  TargetPoseTransformation() = default;
 
-	/**
-	 * Destructor
-	 */
-	~TargetPoseTransformation() = default;
+  /**
+   * Destructor
+   */
+  ~TargetPoseTransformation() = default;
 
-	/**
-	 * Transforms the cost function's desired state to the target pose displacement.
-	 *
-	 * @param [in] desiredState: The cost function's desired state.
-	 * @param [out] targetPoseDisplacement: The target pose displacement.
-	 * @param [out] targetVelocity: The target velocity.
-	 */
-	static void toTargetPoseDisplacement(
-			const dynamic_vector_t& desiredState,
-			pose_vector_t& targetPoseDisplacement,
-			pose_vector_t& targetVelocity) {
+  /**
+   * Transforms the cost function's desired state to the target pose displacement.
+   *
+   * @param [in] desiredState: The cost function's desired state.
+   * @param [out] targetPoseDisplacement: The target pose displacement.
+   * @param [out] targetVelocity: The target velocity.
+   */
+  static void toTargetPoseDisplacement(const dynamic_vector_t& desiredState, pose_vector_t& targetPoseDisplacement,
+                                       pose_vector_t& targetVelocity) {
+    Eigen::Quaternion<scalar_t> qxyz(desiredState(0), desiredState(1), desiredState(2), desiredState(3));
 
-		Eigen::Quaternion<scalar_t> qxyz(
-				desiredState(0),
-				desiredState(1),
-				desiredState(2),
-				desiredState(3));
+    targetPoseDisplacement.template head<3>() = qxyz.toRotationMatrix().eulerAngles(0, 1, 2);
+    targetPoseDisplacement(3) = desiredState(4);
+    targetPoseDisplacement(4) = desiredState(5);
+    targetPoseDisplacement(5) = desiredState(6);
 
-		targetPoseDisplacement.template head<3>() = qxyz.toRotationMatrix().eulerAngles(0, 1, 2);
-		targetPoseDisplacement(3) = desiredState(4);
-		targetPoseDisplacement(4) = desiredState(5);
-		targetPoseDisplacement(5) = desiredState(6);
+    // if velocities are included
+    if (desiredState.size() > POSE_DIM_ + 1) {
+      targetVelocity(0) = desiredState(7);
+      targetVelocity(1) = desiredState(8);
+      targetVelocity(2) = desiredState(9);
+      targetVelocity(3) = desiredState(10);
+      targetVelocity(4) = desiredState(11);
+      targetVelocity(5) = desiredState(12);
 
-		// if velocities are included
-		if (desiredState.size()>POSE_DIM_+1) {
-			targetVelocity(0) = desiredState(7);
-			targetVelocity(1) = desiredState(8);
-			targetVelocity(2) = desiredState(9);
-			targetVelocity(3) = desiredState(10);
-			targetVelocity(4) = desiredState(11);
-			targetVelocity(5) = desiredState(12);
+    } else {
+      targetVelocity.setZero();
+    }
+  }
 
-		} else {
-			targetVelocity.setZero();
-		}
-	}
+  /**
+   * Transforms the target pose displacement to the cost function's desired state.
+   *
+   * @param [in] targetPoseDisplacementVelocity: The target base pose displacement and base local velocities.
+   * @param [out] desiredState: The cost function's desired state.
+   */
+  static void toCostDesiredState(const scalar_array_t& targetPoseDisplacementVelocity, dynamic_vector_t& desiredState) {
+    if (targetPoseDisplacementVelocity.size() < 12) {
+      throw std::runtime_error("target command should have at least 12 elements.");
+    }
 
-	/**
-	 * Transforms the target pose displacement to the cost function's desired state.
-	 *
-	 * @param [in] targetPoseDisplacementVelocity: The target base pose displacement and base local velocities.
-	 * @param [out] desiredState: The cost function's desired state.
-	 */
-	static void toCostDesiredState(
-				const scalar_array_t& targetPoseDisplacementVelocity,
-				dynamic_vector_t& desiredState) {
+    auto deg2rad = [](const scalar_t& deg) { return (deg * M_PI / 180.0); };
 
-		if (targetPoseDisplacementVelocity.size()<12) {
-			throw std::runtime_error("target command should have at least 12 elements.");
-		}
+    desiredState.resize(targetPoseDisplacementVelocity.size() + 1);
 
-		auto deg2rad = [](const scalar_t& deg) { return (deg*M_PI/180.0); };
+    // Orientation
+    Eigen::Quaternion<scalar_t> qxyz =
+        Eigen::AngleAxis<scalar_t>(deg2rad(targetPoseDisplacementVelocity[0]), Eigen::Vector3d::UnitX()) *  // roll
+        Eigen::AngleAxis<scalar_t>(deg2rad(targetPoseDisplacementVelocity[1]), Eigen::Vector3d::UnitY()) *  // pitch
+        Eigen::AngleAxis<scalar_t>(deg2rad(targetPoseDisplacementVelocity[2]), Eigen::Vector3d::UnitZ());   // yaw
 
-		desiredState.resize(targetPoseDisplacementVelocity.size()+1);
+    desiredState(0) = qxyz.w();
+    desiredState(1) = qxyz.x();
+    desiredState(2) = qxyz.y();
+    desiredState(3) = qxyz.z();
 
-		// Orientation
-		Eigen::Quaternion<scalar_t> qxyz =
-				Eigen::AngleAxis<scalar_t>(
-						deg2rad(targetPoseDisplacementVelocity[0]), Eigen::Vector3d::UnitX()) *  // roll
-				Eigen::AngleAxis<scalar_t>(
-						deg2rad(targetPoseDisplacementVelocity[1]), Eigen::Vector3d::UnitY()) *  // pitch
-				Eigen::AngleAxis<scalar_t>(
-						deg2rad(targetPoseDisplacementVelocity[2]), Eigen::Vector3d::UnitZ());   // yaw
+    // Position
+    desiredState(4) = targetPoseDisplacementVelocity[3];
+    desiredState(5) = targetPoseDisplacementVelocity[4];
+    desiredState(6) = targetPoseDisplacementVelocity[5];
 
-		desiredState(0) = qxyz.w();
-		desiredState(1) = qxyz.x();
-		desiredState(2) = qxyz.y();
-		desiredState(3) = qxyz.z();
+    // if velocities are included
+    if (targetPoseDisplacementVelocity.size() > POSE_DIM_) {
+      // Angular velocity
+      desiredState(7) = targetPoseDisplacementVelocity[6];
+      desiredState(8) = targetPoseDisplacementVelocity[7];
+      desiredState(9) = targetPoseDisplacementVelocity[8];
 
-		// Position
-		desiredState(4) = targetPoseDisplacementVelocity[3];
-		desiredState(5) = targetPoseDisplacementVelocity[4];
-		desiredState(6) = targetPoseDisplacementVelocity[5];
+      // Linear velocity
+      desiredState(10) = targetPoseDisplacementVelocity[9];
+      desiredState(11) = targetPoseDisplacementVelocity[10];
+      desiredState(12) = targetPoseDisplacementVelocity[11];
+    }
+  }
 
-		// if velocities are included
-		if (targetPoseDisplacementVelocity.size()>POSE_DIM_) {
-			// Angular velocity
-			desiredState(7) = targetPoseDisplacementVelocity[6];
-			desiredState(8) = targetPoseDisplacementVelocity[7];
-			desiredState(9) = targetPoseDisplacementVelocity[8];
-
-			// Linear velocity
-			desiredState(10) = targetPoseDisplacementVelocity[9];
-			desiredState(11) = targetPoseDisplacementVelocity[10];
-			desiredState(12) = targetPoseDisplacementVelocity[11];
-		}
-	}
-
-private:
-
+ private:
 };
 
-} // namespace ocs2
+}  // namespace ocs2

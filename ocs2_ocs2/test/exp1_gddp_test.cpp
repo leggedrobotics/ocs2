@@ -27,146 +27,139 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <iostream>
+#include <gtest/gtest.h>
 #include <cstdlib>
 #include <ctime>
-#include <gtest/gtest.h>
+#include <iostream>
 
-#include <ocs2_slq/SLQ.h>
-#include <ocs2_slq/SLQ_MP.h>
-
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/test/EXP1.h>
+
+#include <ocs2_ddp/SLQ.h>
 
 #include <ocs2_ocs2/GDDP.h>
 
 using namespace ocs2;
 
-enum {
-	STATE_DIM = 2,
-	INPUT_DIM = 1
-};
+enum { STATE_DIM = 2, INPUT_DIM = 1 };
 
-TEST(exp1_gddp_test, optimum_gradient_test)
-{
-	SLQ_Settings slqSettings;
-	slqSettings.ddpSettings_.displayInfo_ = false;
-	slqSettings.ddpSettings_.displayShortSummary_ = true;
-	slqSettings.preComputeRiccatiTerms_ = true;
-	slqSettings.useNominalTimeForBackwardPass_ = true;
-	slqSettings.ddpSettings_.maxNumIterations_ = 30;
-	slqSettings.ddpSettings_.nThreads_ = 3;
-	slqSettings.ddpSettings_.maxNumIterations_ = 30;
-	slqSettings.ddpSettings_.lsStepsizeGreedy_ = true;
-	slqSettings.ddpSettings_.noStateConstraints_ = true;
-	slqSettings.ddpSettings_.checkNumericalStability_ = false;
-	slqSettings.ddpSettings_.absTolODE_ = 1e-10;
-	slqSettings.ddpSettings_.relTolODE_ = 1e-7;
-	slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
-	slqSettings.rolloutSettings_.absTolODE_ = 1e-10;
-	slqSettings.rolloutSettings_.relTolODE_ = 1e-7;
-	slqSettings.rolloutSettings_.maxNumStepsPerSecond_ = 10000;
+TEST(exp1_gddp_test, optimum_gradient_test) {
+  SLQ_Settings slqSettings;
+  slqSettings.ddpSettings_.displayInfo_ = false;
+  slqSettings.ddpSettings_.displayShortSummary_ = true;
+  slqSettings.preComputeRiccatiTerms_ = true;
+  slqSettings.useNominalTimeForBackwardPass_ = true;
+  slqSettings.ddpSettings_.maxNumIterations_ = 30;
+  slqSettings.ddpSettings_.nThreads_ = 1;  // single threaded
+  slqSettings.ddpSettings_.maxNumIterations_ = 30;
+  slqSettings.ddpSettings_.noStateConstraints_ = true;
+  slqSettings.ddpSettings_.checkNumericalStability_ = false;
+  slqSettings.ddpSettings_.absTolODE_ = 1e-10;
+  slqSettings.ddpSettings_.relTolODE_ = 1e-7;
+  slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
 
-	GDDP_Settings gddpSettings;
-	gddpSettings.displayInfo_ = true;
-	gddpSettings.checkNumericalStability_ = false;
-	gddpSettings.nThreads_ = 3;
-	gddpSettings.useLQForDerivatives_ = false;
-	gddpSettings.absTolODE_ = 1e-10;
-	gddpSettings.relTolODE_ = 1e-7;
-	gddpSettings.maxNumStepsPerSecond_ = 10000;
+  Rollout_Settings rolloutSettings;
+  rolloutSettings.absTolODE_ = 1e-10;
+  rolloutSettings.relTolODE_ = 1e-7;
+  rolloutSettings.maxNumStepsPerSecond_ = 10000;
 
-	// logic rule
-	std::vector<double> optimumEventTimes {0.2262, 1.0176};
-	std::vector<size_t> subsystemsSequence{0, 1, 2};
-	std::shared_ptr<EXP1_LogicRules> logicRules(new EXP1_LogicRules(optimumEventTimes, subsystemsSequence));
+  GDDP_Settings gddpSettings;
+  gddpSettings.displayInfo_ = true;
+  gddpSettings.checkNumericalStability_ = false;
+  gddpSettings.nThreads_ = 3;
+  gddpSettings.useLQForDerivatives_ = false;
+  gddpSettings.absTolODE_ = 1e-10;
+  gddpSettings.relTolODE_ = 1e-7;
+  gddpSettings.maxNumStepsPerSecond_ = 10000;
 
-	double startTime = 0.0;
-	double finalTime = 3.0;
+  // logic rule
+  std::vector<double> optimumEventTimes{0.2262, 1.0176};
+  std::vector<size_t> subsystemsSequence{0, 1, 2};
+  std::shared_ptr<EXP1_LogicRules> logicRules(new EXP1_LogicRules(optimumEventTimes, subsystemsSequence));
 
-	// partitioning times
-	std::vector<double> partitioningTimes;
-	partitioningTimes.push_back(startTime);
-	partitioningTimes.push_back(1.0);
-	partitioningTimes.push_back(2.0);
-	partitioningTimes.push_back(finalTime);
+  double startTime = 0.0;
+  double finalTime = 3.0;
 
-	Eigen::Vector2d initState(2.0, 3.0);
+  // partitioning times
+  std::vector<double> partitioningTimes;
+  partitioningTimes.push_back(startTime);
+  partitioningTimes.push_back(1.0);
+  partitioningTimes.push_back(2.0);
+  partitioningTimes.push_back(finalTime);
 
-	/******************************************************************************************************/
-	/******************************************************************************************************/
-	/******************************************************************************************************/
-	// system dynamics
-	EXP1_System systemDynamics(logicRules);
+  Eigen::Vector2d initState(2.0, 3.0);
 
-	// system derivatives
-	EXP1_SystemDerivative systemDerivative(logicRules);
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+  // system dynamics
+  EXP1_System systemDynamics(logicRules);
+  TimeTriggeredRollout<STATE_DIM, INPUT_DIM> timeTriggeredRollout(systemDynamics, rolloutSettings);
 
-	// system constraints
-	EXP1_SystemConstraint systemConstraint;
+  // system derivatives
+  EXP1_SystemDerivative systemDerivative(logicRules);
 
-	// system cost functions
-	EXP1_CostFunction systemCostFunction(logicRules);
+  // system constraints
+  EXP1_SystemConstraint systemConstraint;
 
-	// system operatingTrajectories
-	Eigen::Matrix<double,STATE_DIM,1> stateOperatingPoint = Eigen::Matrix<double,STATE_DIM,1>::Zero();
-	Eigen::Matrix<double,INPUT_DIM,1> inputOperatingPoint = Eigen::Matrix<double,INPUT_DIM,1>::Zero();
-	EXP1_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
+  // system cost functions
+  EXP1_CostFunction systemCostFunction(logicRules);
 
+  // system operatingTrajectories
+  Eigen::Matrix<double, STATE_DIM, 1> stateOperatingPoint = Eigen::Matrix<double, STATE_DIM, 1>::Zero();
+  Eigen::Matrix<double, INPUT_DIM, 1> inputOperatingPoint = Eigen::Matrix<double, INPUT_DIM, 1>::Zero();
+  EXP1_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
-	/******************************************************************************************************/
-	/******************************************************************************************************/
-	/******************************************************************************************************/
-	// SLQ - single tread version
-	SLQ<STATE_DIM, INPUT_DIM> slqST(
-			&systemDynamics, &systemDerivative,
-			&systemConstraint, &systemCostFunction,
-			&operatingTrajectories, slqSettings, logicRules);
-	// SLQ data collector
-	SLQ_DataCollector<STATE_DIM, INPUT_DIM> slqDataCollector(
-			&systemDynamics, &systemDerivative,
-			&systemConstraint, &systemCostFunction);
-	// GDDP
-	GDDP<STATE_DIM, INPUT_DIM> gddp(gddpSettings);
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+  // SLQ - single tread version
+  SLQ<STATE_DIM, INPUT_DIM> slqST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
+                                  slqSettings, logicRules);
+  // SLQ data collector
+  SLQ_DataCollector<STATE_DIM, INPUT_DIM> slqDataCollector(&timeTriggeredRollout, &systemDerivative, &systemConstraint,
+                                                           &systemCostFunction);
+  // GDDP
+  GDDP<STATE_DIM, INPUT_DIM> gddp(gddpSettings);
 
-	// run SLQ
-	slqST.run(startTime, initState, finalTime, partitioningTimes);
-	slqDataCollector.collect(&slqST);
+  // run SLQ
+  slqST.run(startTime, initState, finalTime, partitioningTimes);
+  slqDataCollector.collect(&slqST);
 
-	// cost
-	double costFunction, constraint1ISE, constraint2ISE;
-	slqST.getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
+  // cost
+  double costFunction, constraint1ISE, constraint2ISE;
+  slqST.getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
 
-	// run GDDP using LQ
-	gddp.settings().useLQForDerivatives_ = true;
-	gddp.run(optimumEventTimes, &slqDataCollector);
-	// cost derivative
-	Eigen::Matrix<double,2,1> costFunctionDerivative_LQ;
-	gddp.getCostFuntionDerivative(costFunctionDerivative_LQ);
+  // run GDDP using LQ
+  gddp.settings().useLQForDerivatives_ = true;
+  gddp.run(optimumEventTimes, &slqDataCollector);
+  // cost derivative
+  Eigen::Matrix<double, 2, 1> costFunctionDerivative_LQ;
+  gddp.getCostFuntionDerivative(costFunctionDerivative_LQ);
 
-	// run GDDP using BVP
-	gddp.settings().useLQForDerivatives_ = false;
-	gddp.run(optimumEventTimes, &slqDataCollector);
-	// cost derivative
-	Eigen::Matrix<double,2,1> costFunctionDerivative_BVP;
-	gddp.getCostFuntionDerivative(costFunctionDerivative_BVP);
+  // run GDDP using BVP
+  gddp.settings().useLQForDerivatives_ = false;
+  gddp.run(optimumEventTimes, &slqDataCollector);
+  // cost derivative
+  Eigen::Matrix<double, 2, 1> costFunctionDerivative_BVP;
+  gddp.getCostFuntionDerivative(costFunctionDerivative_BVP);
 
-	/******************************************************************************************************/
-	/******************************************************************************************************/
-	/******************************************************************************************************/
-	std::cerr << "### Optimum cost is: " << costFunction << "\n";
-	std::cerr << "### Optimum event times are:            [" << Eigen::Map<Eigen::VectorXd>(optimumEventTimes.data(), optimumEventTimes.size()).transpose() << "]\n";
-	std::cerr << "### Optimum cost derivative LQ method:  [" << costFunctionDerivative_LQ.transpose() << "]\n";
-	std::cerr << "### Optimum cost derivative BVP method: [" << costFunctionDerivative_BVP.transpose()<< "]\n";
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+  /******************************************************************************************************/
+  std::cerr << "### Optimum cost is: " << costFunction << "\n";
+  std::cerr << "### Optimum event times are:            ["
+            << Eigen::Map<Eigen::VectorXd>(optimumEventTimes.data(), optimumEventTimes.size()).transpose() << "]\n";
+  std::cerr << "### Optimum cost derivative LQ method:  [" << costFunctionDerivative_LQ.transpose() << "]\n";
+  std::cerr << "### Optimum cost derivative BVP method: [" << costFunctionDerivative_BVP.transpose() << "]\n";
 
-	ASSERT_LT(costFunctionDerivative_LQ.norm()/fabs(costFunction), 50*slqSettings.ddpSettings_.minRelCost_ /*0.05*/) <<
-			"MESSAGE: GDDP failed in the EXP1's cost derivative LQ test!";
-	ASSERT_LT(costFunctionDerivative_BVP.norm()/fabs(costFunction), 50*slqSettings.ddpSettings_.minRelCost_ /*0.05*/) <<
-			"MESSAGE: GDDP failed in the EXP1's cost derivative BVP test!";
+  ASSERT_LT(costFunctionDerivative_LQ.norm() / fabs(costFunction), 50 * slqSettings.ddpSettings_.minRelCost_ /*0.05*/)
+      << "MESSAGE: GDDP failed in the EXP1's cost derivative LQ test!";
+  ASSERT_LT(costFunctionDerivative_BVP.norm() / fabs(costFunction), 50 * slqSettings.ddpSettings_.minRelCost_ /*0.05*/)
+      << "MESSAGE: GDDP failed in the EXP1's cost derivative BVP test!";
 }
 
-
-int main(int argc, char** argv)
-{
-	testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
+int main(int argc, char** argv) {
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

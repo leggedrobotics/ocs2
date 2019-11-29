@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_slq/SLQ.h>
+#include <ocs2_ddp/SLQ.h>
 
 namespace ocs2 {
 

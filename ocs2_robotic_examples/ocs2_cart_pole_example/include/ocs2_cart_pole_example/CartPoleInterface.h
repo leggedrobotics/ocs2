@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 // C++
-#include <stdlib.h>
+#include <cstdlib>
 #include <iostream>
 #include <string>
 
@@ -38,6 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+
 #include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
@@ -59,6 +61,9 @@ class CartPoleInterface final : public RobotInterfaceBase<cartpole::STATE_DIM_, 
   using dim_t = Dimensions<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
   using CartPoleConstraint = ConstraintBase<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
   using CartPoleOperatingPoint = SystemOperatingPoint<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
+
+  using rollout_base_t = RolloutBase<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
+  using time_triggered_rollout_t = TimeTriggeredRollout<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
 
   using mpc_t = MPC_SLQ<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
 
@@ -91,13 +96,15 @@ class CartPoleInterface final : public RobotInterfaceBase<cartpole::STATE_DIM_, 
 
   const CartPoleCost& getCost() const override { return *cartPoleCostPtr_; }
 
+  const rollout_base_t& getRollout() const { return *ddpCartPoleRolloutPtr_; }
+
  protected:
   /**
    * Loads the settings from the path file.
    *
    * @param [in] taskFile: Task's file full path.
    */
-  void loadSettings(const std::string& taskFile) final;
+  void loadSettings(const std::string& taskFile) override;
 
   /**************
    * Variables
@@ -108,15 +115,17 @@ class CartPoleInterface final : public RobotInterfaceBase<cartpole::STATE_DIM_, 
   SLQ_Settings slqSettings_;
   std::unique_ptr<mpc_t> mpcPtr_;
 
+  std::unique_ptr<rollout_base_t> ddpCartPoleRolloutPtr_;
+
   std::unique_ptr<CartPoleSytemDynamics> cartPoleSystemDynamicsPtr_;
   std::unique_ptr<CartPoleCost> cartPoleCostPtr_;
   std::unique_ptr<CartPoleConstraint> cartPoleConstraintPtr_;
   std::unique_ptr<CartPoleOperatingPoint> cartPoleOperatingPointPtr_;
 
   // cost parameters
-  dim_t::state_matrix_t Q_;
-  dim_t::input_matrix_t R_;
-  dim_t::state_matrix_t QFinal_;
+  dim_t::state_matrix_t qm_;
+  dim_t::input_matrix_t rm_;
+  dim_t::state_matrix_t qmFinal_;
   dim_t::state_vector_t xFinal_;
   dim_t::state_vector_t xNominal_;
   dim_t::input_vector_t uNominal_;

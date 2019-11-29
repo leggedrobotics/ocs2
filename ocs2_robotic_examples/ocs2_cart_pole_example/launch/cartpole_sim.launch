@@ -1,0 +1,16 @@
+<launch>
+    <arg name="rviz"       default="true" />
+    <arg name="task_name"  default="mpc"/>
+
+    <group if="$(arg rviz)">
+      <include file="$(find ocs2_cart_pole_example)/launch/visualize.launch"/>
+    </group>
+
+    <node pkg="ocs2_cart_pole_example" type="cartpole_mpc" name="cartpole_mpc"
+          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
+
+    <node pkg="ocs2_cart_pole_example" type="cartpole_dummy_simulator" name="cartpole_dummy_simulator"
+          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal -- gdb -ex run --args"/>
+</launch>
+
+

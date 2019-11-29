@@ -33,8 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_cart_pole_example/definitions.h"
 #include "ocs2_cart_pole_example/ros_comm/MRT_ROS_Dummy_Cartpole.h"
 
-using namespace ocs2;
-
 int main(int argc, char** argv) {
   // task file
   if (argc <= 1) {
@@ -42,32 +40,36 @@ int main(int argc, char** argv) {
   }
   std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
-  // CartPoleInterface
-  cartpole::CartPoleInterface cartPoleInterface(taskFileFolderName);
+  ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFileFolderName);
+
+  using ocs2::cartpole::INPUT_DIM_;
+  using ocs2::cartpole::STATE_DIM_;
+  using mrt_t = ocs2::MRT_ROS_Interface<STATE_DIM_, INPUT_DIM_>;
+  using scalar_t = mrt_t::scalar_t;
+  using system_observation_t = mrt_t::system_observation_t;
+
+  mrt_t mrt("cartpole");
 
   // Dummy cartpole
-  MRT_ROS_Interface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> mrt("cartpole");
-  cartpole::MRT_ROS_Dummy_Cartpole dummyCartpole(mrt, cartPoleInterface.mpcSettings().mrtDesiredFrequency_,
-                                                 cartPoleInterface.mpcSettings().mpcDesiredFrequency_);
-
+  ocs2::cartpole::MrtRosDummyCartpole dummyCartpole(mrt, cartPoleInterface.mpcSettings().mrtDesiredFrequency_,
+                                                    cartPoleInterface.mpcSettings().mpcDesiredFrequency_);
   dummyCartpole.launchNodes(argc, argv);
 
   // initial state
-  cartpole::MRT_ROS_Dummy_Cartpole::system_observation_t initObservation;
+  mrt_t::system_observation_t initObservation;
   cartPoleInterface.getInitialState(initObservation.state());
 
   // initial command
-  cartpole::MRT_ROS_Dummy_Cartpole::cost_desired_trajectories_t initCostDesiredTrajectories;
+  mrt_t::cost_desired_trajectories_t initCostDesiredTrajectories;
   initCostDesiredTrajectories.desiredTimeTrajectory().resize(1);
   initCostDesiredTrajectories.desiredTimeTrajectory().front() = 0.0;
   initCostDesiredTrajectories.desiredStateTrajectory().resize(1);
-  initCostDesiredTrajectories.desiredStateTrajectory().front().setZero(cartpole::STATE_DIM_);
+  initCostDesiredTrajectories.desiredStateTrajectory().front().setZero(STATE_DIM_);
   initCostDesiredTrajectories.desiredInputTrajectory().resize(1);
-  initCostDesiredTrajectories.desiredInputTrajectory().front().setZero(cartpole::INPUT_DIM_);
+  initCostDesiredTrajectories.desiredInputTrajectory().front().setZero(INPUT_DIM_);
 
   // run dummy
   dummyCartpole.run(initObservation, initCostDesiredTrajectories);
 
-  // Successful exit
   return 0;
 }

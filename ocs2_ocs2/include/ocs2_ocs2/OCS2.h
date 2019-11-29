@@ -52,19 +52,19 @@ class OCS2 : public GradientDescent {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  typedef GradientDescent BASE;
-  using dynamic_vector_t = typename BASE::dynamic_vector_t;
-  using dynamic_matrix_t = typename BASE::dynamic_matrix_t;
+  using BASE = GradientDescent;
+  using typename BASE::dynamic_matrix_t;
+  using typename BASE::dynamic_vector_t;
 
-  typedef UpperLevelCost<STATE_DIM, INPUT_DIM> upper_level_cost_t;
-  typedef UpperLevelConstraints upper_level_constraints_t;
+  using upper_level_cost_t = UpperLevelCost<STATE_DIM, INPUT_DIM>;
+  using upper_level_constraints_t = UpperLevelConstraints;
 
   using state_vector_t = typename upper_level_cost_t::state_vector_t;
-  using controlled_system_base_t = typename upper_level_cost_t::controlled_system_base_t;
   using derivatives_base_t = typename upper_level_cost_t::derivatives_base_t;
   using constraint_base_t = typename upper_level_cost_t::constraint_base_t;
   using cost_function_base_t = typename upper_level_cost_t::cost_function_base_t;
   using operating_trajectories_base_t = typename upper_level_cost_t::operating_trajectories_base_t;
+  using rollout_base_t = typename upper_level_cost_t::rollout_base_t;
 
   /**
    * Default constructor.
@@ -73,23 +73,29 @@ class OCS2 : public GradientDescent {
 
   /**
    * Constructor
-   * @param [in] subsystemDynamicsPtr
-   * @param [in] subsystemDerivativesPtr
-   * @param [in] subsystemCostFunctionsPtr
-   * @param [in] slqSettings
-   * @param [in] stateOperatingPoints
-   * @param [in] inputOperatingPoints
+   *
+   * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
+   * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
+   * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
+   * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
+   * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of SLQ.
+   * @param [in] settings: Structure containing the settings for the SLQ algorithm.
+   * @param [in] logicRulesPtr: The logic rules used for implementing mixed-logic dynamical systems.
+   * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
+   * defined, we will use the terminal cost function defined in costFunctionPtr.
+   * @param [in] gddpSettings: Structure containing the settings for the GDDP algorithm.
+   * @param [in] nlpSettings: Structure containing the settings for the NLP algorithm.
    */
-  OCS2(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
-       const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
-       const operating_trajectories_base_t* operatingTrajectoriesPtr, const SLQ_Settings& settings = SLQ_Settings(),
-       std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr, const cost_function_base_t* heuristicsFunctionPtr = nullptr,
-       const GDDP_Settings& gddpSettings = GDDP_Settings(), const NLP_Settings& nlpSettings = NLP_Settings());
+  OCS2(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
+       const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
+       const SLQ_Settings& settings = SLQ_Settings(), std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
+       const cost_function_base_t* heuristicsFunctionPtr = nullptr, const GDDP_Settings& gddpSettings = GDDP_Settings(),
+       const NLP_Settings& nlpSettings = NLP_Settings());
 
   /**
    * Default destructor.
    */
-  virtual ~OCS2() = default;
+  ~OCS2() override = default;
 
   /**
    * Gets a reference to the GDDP settings structure.

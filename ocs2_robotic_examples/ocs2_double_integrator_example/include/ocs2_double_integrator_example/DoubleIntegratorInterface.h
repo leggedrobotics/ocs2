@@ -38,6 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+
 #include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
 
@@ -58,6 +60,9 @@ class DoubleIntegratorInterface final : public RobotInterfaceBase<double_integra
 
   using DoubleIntegratorConstraint = ocs2::ConstraintBase<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
   using DoubleIntegratorOperatingPoint = ocs2::SystemOperatingPoint<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
+
+  using rollout_base_t = RolloutBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
+  using time_triggered_rollout_t = TimeTriggeredRollout<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
 
   using mpc_t = ocs2::MPC_SLQ<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
 
@@ -96,6 +101,8 @@ class DoubleIntegratorInterface final : public RobotInterfaceBase<double_integra
 
   const DoubleIntegratorCost& getCost() const override { return *linearSystemCostPtr_; }
 
+  const rollout_base_t& getRollout() const { return *ddpLinearSystemRolloutPtr_; }
+
  protected:
   /**
    * Loads the settings from the path file.
@@ -112,6 +119,8 @@ class DoubleIntegratorInterface final : public RobotInterfaceBase<double_integra
 
   SLQ_Settings slqSettings_;
   std::unique_ptr<mpc_t> mpcPtr_;
+
+  std::unique_ptr<rollout_base_t> ddpLinearSystemRolloutPtr_;
 
   DoubleIntegratorDynamics::Ptr linearSystemDynamicsPtr_;
   DoubleIntegratorDynamicsDerivatives::Ptr linearSystemDynamicsDerivativesPtr_;

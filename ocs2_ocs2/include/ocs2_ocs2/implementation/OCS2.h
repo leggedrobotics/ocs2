@@ -33,7 +33,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-OCS2<STATE_DIM, INPUT_DIM>::OCS2(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
+OCS2<STATE_DIM, INPUT_DIM>::OCS2(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                  const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                  const operating_trajectories_base_t* operatingTrajectoriesPtr,
                                  const SLQ_Settings& settings /*= SLQ_Settings()*/,
@@ -43,9 +43,8 @@ OCS2<STATE_DIM, INPUT_DIM>::OCS2(const controlled_system_base_t* systemDynamicsP
                                  const NLP_Settings& nlpSettings /*= NLP_Settings()*/)
 
     : BASE(nlpSettings),
-      ulCostPtr_(new upper_level_cost_t(systemDynamicsPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr,
-                                        operatingTrajectoriesPtr, settings, logicRulesPtr, heuristicsFunctionPtr, nlpSettings.displayInfo_,
-                                        gddpSettings)),
+      ulCostPtr_(new upper_level_cost_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
+                                        settings, logicRulesPtr, heuristicsFunctionPtr, nlpSettings.displayInfo_, gddpSettings)),
       ulConstraintsPtr_(new upper_level_constraints_t) {}
 
 /******************************************************************************************************/

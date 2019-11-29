@@ -63,7 +63,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_comm_interfaces/CommandData.h"
 #include "ocs2_comm_interfaces/SystemObservation.h"
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h"
-#include "ocs2_comm_interfaces/ocs2_ros_interfaces/task_listener/TaskListenerBase.h"
+#include "ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/SolverSynchronizedRosModule.h"
 
 //#define PUBLISH_DUMMY
 #define PUBLISH_THREAD
@@ -110,7 +110,9 @@ class MPC_ROS_Interface {
   using controller_ptr_array_t = std::vector<controller_t*>;
 
   using ros_msg_conversions_t = RosMsgConversions<STATE_DIM, INPUT_DIM>;
-  using task_listener_ptr_array_t = typename TaskListenerBase<scalar_t>::shared_ptr_array_t;
+
+  using synchronized_ros_module_t = SolverSynchronizedRosModule<STATE_DIM, INPUT_DIM>;
+  using synchronized_ros_module_ptr_array_t = std::vector<std::shared_ptr<synchronized_ros_module_t>>;
 
   /**
    * Default constructor
@@ -122,10 +124,8 @@ class MPC_ROS_Interface {
    *
    * @param [in] mpc: The underlying MPC class to be used.
    * @param [in] robotName: The robot's name.
-   * @param [in] taskListenerArray: An array of the shared_ptr to task listeners.
    */
-  explicit MPC_ROS_Interface(mpc_t& mpc, const std::string& robotName = "robot",
-                             const task_listener_ptr_array_t& taskListenerArray = task_listener_ptr_array_t());
+  explicit MPC_ROS_Interface(mpc_t& mpc, std::string robotName = "robot");
 
   /**
    * Destructor.
@@ -143,6 +143,14 @@ class MPC_ROS_Interface {
    * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
    */
   virtual void reset(const cost_desired_trajectories_t& initCostDesiredTrajectories);
+
+  /**
+   * Set all modules that need to be synchronized with the mpc. Must be called before launchNodes.
+   * This method does not add the modules to the solver
+   */
+  void subscribeSynchronizedModules(const synchronized_ros_module_ptr_array_t& synchronizedRosModules) {
+    synchronizedRosModules_ = synchronizedRosModules;
+  };
 
   /**
    * Shutdowns the ROS node.
@@ -270,8 +278,6 @@ class MPC_ROS_Interface {
 
   std::string robotName_;
 
-  task_listener_ptr_array_t taskListenerArray_;
-
   std::shared_ptr<ros::NodeHandle> nodeHandlerPtr_;
 
   // Publishers and subscribers
@@ -289,6 +295,8 @@ class MPC_ROS_Interface {
 
   mutable std::mutex policyBufferMutex_;  // for policy variables WITH suffix (*Buffer_)
 
+  synchronized_ros_module_ptr_array_t synchronizedRosModules_;
+
   // multi-threading for publishers
   std::atomic_bool terminateThread_;
   std::atomic_bool readyToPublish_;
@@ -301,7 +309,11 @@ class MPC_ROS_Interface {
   // MPC reset
   bool initialCall_;
   std::mutex resetMutex_;
-  std::atomic_bool resetRequestedEver_;
+  std::atomic<bool> resetRequestedEver_;
+
+  std::mutex costDesiredTrajectoriesBufferMutex_;
+  std::atomic_bool costDesiredTrajectoriesBufferUpdated_;
+  cost_desired_trajectories_t costDesiredTrajectoriesBuffer_;
 };
 
 }  // namespace ocs2

@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace cartpole {
 
-class MRT_ROS_Dummy_Cartpole : public MRT_ROS_Dummy_Loop<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> {
+class MrtRosDummyCartpole : public MRT_ROS_Dummy_Loop<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -52,13 +52,13 @@ class MRT_ROS_Dummy_Cartpole : public MRT_ROS_Dummy_Loop<cartpole::STATE_DIM_, c
    * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
    * will be simulated to run by this frequency. Note that this might not be the MPC's realtime frequency.
    */
-  MRT_ROS_Dummy_Cartpole(mrt_t& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency)
+  MrtRosDummyCartpole(mrt_t& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency)
       : BASE(mrt, mrtDesiredFrequency, mpcDesiredFrequency) {}
 
   /**
    * Destructor.
    */
-  virtual ~MRT_ROS_Dummy_Cartpole() = default;
+  ~MrtRosDummyCartpole() override = default;
 
  protected:
   /**
@@ -67,7 +67,7 @@ class MRT_ROS_Dummy_Cartpole : public MRT_ROS_Dummy_Loop<cartpole::STATE_DIM_, c
    * @param [in] argc: command line number of inputs.
    * @param [in] argv: command line inputs' value.
    */
-  virtual void launchVisualizerNode(int argc, char* argv[]) override {
+  void launchVisualizerNode(int argc, char* argv[]) override {
     ros::init(argc, argv, "cartpole_visualization_node");
     ros::NodeHandle n;
     jointPublisher_ = n.advertise<sensor_msgs::JointState>("joint_states", 1);

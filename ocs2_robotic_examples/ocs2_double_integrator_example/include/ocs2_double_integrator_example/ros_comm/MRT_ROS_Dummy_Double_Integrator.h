@@ -53,9 +53,8 @@ class MRT_ROS_Dummy_Linear_System final : public MRT_ROS_Dummy_Loop<double_integ
    * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
    * will be simulated to run by this frequency. Note that this might not be the MPC's realtime frequency.
    */
-  MRT_ROS_Dummy_Linear_System(mrt_t& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency,
-                              const controlled_system_base_t* system = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings())
-      : BASE(mrt, mrtDesiredFrequency, mpcDesiredFrequency, system, rolloutSettings) {}
+  MRT_ROS_Dummy_Linear_System(mrt_t& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency)
+      : BASE(mrt, mrtDesiredFrequency, mpcDesiredFrequency) {}
 
   /**
    * Destructor.

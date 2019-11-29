@@ -48,7 +48,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/Lookup.h>
 
-#include <ocs2_slq/SLQ_DataCollector.h>
+#include <ocs2_ddp/SLQ_DataCollector.h>
 
 #include "ocs2_ocs2/GDDP_Settings.h"
 #include "ocs2_ocs2/sensitivity_equations/BvpSensitivityEquations.h"
@@ -81,8 +81,10 @@ class GDDP {
 
   using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
   using size_array_t = typename DIMENSIONS::size_array_t;
+  using size_array2_t = typename DIMENSIONS::size_array2_t;
   using scalar_t = typename DIMENSIONS::scalar_t;
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+  using scalar_array2_t = typename DIMENSIONS::scalar_array2_t;
   using eigen_scalar_t = typename DIMENSIONS::eigen_scalar_t;
   using eigen_scalar_array_t = typename DIMENSIONS::eigen_scalar_array_t;
   using eigen_scalar_array2_t = typename DIMENSIONS::eigen_scalar_array2_t;
@@ -132,16 +134,11 @@ class GDDP {
   using dynamic_input_matrix_t = typename DIMENSIONS::dynamic_input_matrix_t;
 
   /**
-   * Default constructor.
-   */
-  GDDP() : GDDP(GDDP_Settings()) {}
-
-  /**
    * Constructor.
    *
    * @param [in] settings: Structure containing the settings for the GDDP algorithm.
    */
-  GDDP(const GDDP_Settings& gddpSettings);
+  explicit GDDP(const GDDP_Settings& gddpSettings = GDDP_Settings());
 
   /**
    * Default destructor.
@@ -216,9 +213,8 @@ class GDDP {
    * @param [out] costateTrajectoriesStock: costate vector for the given trajectory
    * @param [in] learningRate: the learning rate.
    */
-  void calculateRolloutCostate(const std::vector<scalar_array_t>& timeTrajectoriesStock,
-                               const state_vector_array2_t& stateTrajectoriesStock, state_vector_array2_t& costateTrajectoriesStock,
-                               scalar_t learningRate = 0.0);
+  void calculateRolloutCostate(const scalar_array2_t& timeTrajectoriesStock, const state_vector_array2_t& stateTrajectoriesStock,
+                               state_vector_array2_t& costateTrajectoriesStock, scalar_t learningRate = 0.0);
 
   /**
    * Computes the nominal costate over the given time.
@@ -235,7 +231,7 @@ class GDDP {
    * @param [in] timeTrajectoriesStock: the inquiry rollout time
    * @param [out] lagrangeTrajectoriesStock: lagrangeMultiplier value over the given trajectory
    */
-  void calculateNominalRolloutLagrangeMultiplier(const std::vector<scalar_array_t>& timeTrajectoriesStock,
+  void calculateNominalRolloutLagrangeMultiplier(const scalar_array2_t& timeTrajectoriesStock,
                                                  constraint1_vector_array2_t& lagrangeTrajectoriesStock);
 
   /**
@@ -257,14 +253,13 @@ class GDDP {
    * @param [in] controllersStock: Nominal controller.
    * @param [in] LvTrajectoriesStock: Controller's feedforward sensitivity
    * @param [in] sensitivityTimeTrajectoriesStock: Integration time trajectory.
-   * @param [in] eventsPastTheEndIndecesStock: Indices containing past-the-end index of events trigger.
+   * @param [in] postEventIndicesStock: Post event indices array.
    * @param [out] sensitivityStateTrajectoriesStock: Array of state sensitivity trajectory.
    * @param [out] sensitivityInputTrajectoriesStock: Array of input sensitivity trajectory.
    */
   void propagateRolloutSensitivity(size_t workerIndex, const size_t& eventTimeIndex, const linear_controller_array_t& controllersStock,
                                    const input_vector_array2_t& LvTrajectoriesStock,
-                                   const std::vector<scalar_array_t>& sensitivityTimeTrajectoriesStock,
-                                   const std::vector<size_array_t>& eventsPastTheEndIndecesStock,
+                                   const scalar_array2_t& sensitivityTimeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
                                    state_vector_array2_t& sensitivityStateTrajectoriesStock,
                                    input_vector_array2_t& sensitivityInputTrajectoriesStock);
 
@@ -338,7 +333,7 @@ class GDDP {
    * @param [out] nablaLvTrajectoriesStock: Sensitivity of the control input increment to event times.
    */
   void calculateLQSensitivityControllerForward(size_t workerIndex, const size_t& eventTimeIndex,
-                                               const std::vector<scalar_array_t>& timeTrajectoriesStock,
+                                               const scalar_array2_t& timeTrajectoriesStock,
                                                const state_vector_array2_t& nablaSvTrajectoriesStock,
                                                input_vector_array2_t& nablaLvTrajectoriesStock);
 
@@ -353,7 +348,7 @@ class GDDP {
    * @param [out] LvTrajectoriesStock: Sensitivity of the control input increment to event times.
    */
   void calculateBVPSensitivityControllerForward(size_t workerIndex, const size_t& eventTimeIndex,
-                                                const std::vector<scalar_array_t>& timeTrajectoriesStock,
+                                                const scalar_array2_t& timeTrajectoriesStock,
                                                 const state_vector_array2_t& MvTrajectoriesStock,
                                                 const state_vector_array2_t& MveTrajectoriesStock,
                                                 input_vector_array2_t& LvTrajectoriesStock);

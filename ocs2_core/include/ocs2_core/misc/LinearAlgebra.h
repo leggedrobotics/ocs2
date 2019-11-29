@@ -42,26 +42,15 @@ namespace LinearAlgebra {
  * @param [out] squareMatrix: The matrix to become PSD.
  * @return true if the matrix had negative eigen values.
  */
+bool makePSD(Eigen::MatrixXd& squareMatrix);
+
 template <typename Derived>
 bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
-  if (squareMatrix.rows() != squareMatrix.cols()) throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
+  bool hasNegativeEigenValue;
 
-  Eigen::SelfAdjointEigenSolver<Derived> eig(squareMatrix, Eigen::EigenvaluesOnly);
-  Eigen::VectorXd lambda = eig.eigenvalues();
-
-  bool hasNegativeEigenValue = false;
-  for (size_t j = 0; j < lambda.size(); j++)
-    if (lambda(j) < 0.0) {
-      hasNegativeEigenValue = true;
-      lambda(j) = 1e-6;
-    }
-
-  if (hasNegativeEigenValue) {
-    eig.compute(squareMatrix, Eigen::ComputeEigenvectors);
-    squareMatrix = eig.eigenvectors() * lambda.asDiagonal() * eig.eigenvectors().inverse();
-  } else {
-    squareMatrix = 0.5 * (squareMatrix + squareMatrix.transpose()).eval();
-  }
+  Eigen::MatrixXd mat = squareMatrix;
+  hasNegativeEigenValue = makePSD(mat);
+  squareMatrix = mat;
 
   return hasNegativeEigenValue;
 }
@@ -92,33 +81,37 @@ void computeLinvTLinv(const Derived& A, Derived& LinvT) {
  * @param [out] DdaggerT_R_Ddagger_Chol: Cholesky decomposition of DdaggerT_R_Ddagger
  * @param [out] RinvConstrainedChol: Decomposition of inv(R)^T * (I-Ddagger*D)^T * R * (I-Ddagger*D) * inv(R)
  */
+void computeConstraintProjection(const Eigen::MatrixXd& D, const Eigen::MatrixXd& RinvChol, Eigen::MatrixXd& Ddagger,
+                                 Eigen::MatrixXd& DdaggerT_R_Ddagger_Chol, Eigen::MatrixXd& RinvConstrainedChol);
+
 template <typename DerivedInputMatrix>
 void computeConstraintProjection(const Eigen::MatrixXd& D, const DerivedInputMatrix& RinvChol, Eigen::MatrixXd& Ddagger,
                                  Eigen::MatrixXd& DdaggerT_R_Ddagger_Chol, Eigen::MatrixXd& RinvConstrainedChol) {
-  const auto numConstraints = D.rows();
-  const auto numInputs = D.cols();
+  computeConstraintProjection(D, Eigen::MatrixXd(RinvChol), Ddagger, DdaggerT_R_Ddagger_Chol, RinvConstrainedChol);
+}
 
-  // Constraint Projectors are based on the QR decomposition
-  Eigen::HouseholderQR<Eigen::MatrixXd> QRof_RinvCholT_DmT(RinvChol.transpose() * D.transpose());
+/**
+ * Compute the rank of a matrix
+ * @param [in] A: Matrix
+ * @return rank of A
+ */
+int rank(const Eigen::MatrixXd& A);
 
-  Eigen::MatrixXd QRof_RinvCholT_DmT_Rc =
-      QRof_RinvCholT_DmT.matrixQR().topLeftCorner(numConstraints, numConstraints).template triangularView<Eigen::Upper>();
+template <typename Derived>
+int rank(const Derived& A) {
+  return rank(Eigen::MatrixXd(A));
+}
 
-  // Computes the inverse of Rc with an efficient in-place forward-backward substitution
-  // Turns out that this is equal to the cholesky decomposition of Ddagger^T * R * Ddagger after simplification
-  DdaggerT_R_Ddagger_Chol.setIdentity(numConstraints, numConstraints);
-  QRof_RinvCholT_DmT_Rc.template triangularView<Eigen::Upper>().solveInPlace(DdaggerT_R_Ddagger_Chol);
+/**
+ * Compute the eigenvalues of A
+ * @param [in] A: Matrix
+ * @return Vector of complex eigenvalues
+ */
+Eigen::VectorXcd eigenvalues(const Eigen::MatrixXd& A);
 
-  DerivedInputMatrix QRof_RinvCholT_DmT_Q = QRof_RinvCholT_DmT.householderQ();
-  // Auto take reference to the column view here without making a temporary
-  auto QRof_RinvCholT_DmT_Qc = QRof_RinvCholT_DmT_Q.leftCols(numConstraints);
-  auto QRof_RinvCholT_DmT_Qu = QRof_RinvCholT_DmT_Q.rightCols(numInputs - numConstraints);
-
-  // Compute Weighted Pseudo Inverse, brackets used to compute the smaller, right-side product first
-  Ddagger.noalias() = RinvChol * (QRof_RinvCholT_DmT_Qc * DdaggerT_R_Ddagger_Chol.transpose());
-
-  // Constraint input cost cholesky decomposition
-  RinvConstrainedChol.noalias() = RinvChol * QRof_RinvCholT_DmT_Qu;
+template <typename Derived>
+Eigen::VectorXcd eigenvalues(const Derived& A) {
+  return eigenvalues(Eigen::MatrixXd(A));
 }
 
 }  // namespace LinearAlgebra

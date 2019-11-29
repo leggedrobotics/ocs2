@@ -45,11 +45,14 @@ int main(int argc, char** argv) {
   // double_integratorInterface
   double_integrator::DoubleIntegratorInterface double_integratorInterface(taskFileFolderName);
 
+  using double_integrator::INPUT_DIM_;
+  using double_integrator::STATE_DIM_;
+
   // Dummy double_integrator
-  MRT_ROS_Interface<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> mrt("double_integrator");
+  MRT_ROS_Interface<STATE_DIM_, INPUT_DIM_> mrt("double_integrator");
+  mrt.initRollout(&double_integratorInterface.getRollout());
   double_integrator::MRT_ROS_Dummy_Linear_System dummyDoubleIntegrator(mrt, double_integratorInterface.mpcSettings().mrtDesiredFrequency_,
-                                                                       double_integratorInterface.mpcSettings().mpcDesiredFrequency_,
-                                                                       &double_integratorInterface.getDynamics());
+                                                                       double_integratorInterface.mpcSettings().mpcDesiredFrequency_);
 
   dummyDoubleIntegrator.launchNodes(argc, argv);
 

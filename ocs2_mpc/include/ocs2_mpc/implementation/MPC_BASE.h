@@ -44,9 +44,7 @@ MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE()
       initActivePartitionIndex_(0),
       finalActivePartitionIndex_(0),
       lastControlDesignTime_(0.0),
-      solverPtr_(nullptr)
-
-{}
+      solverPtr_(nullptr) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -64,9 +62,7 @@ MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE(const scalar_array_t& partitioningTimes
       initActivePartitionIndex_(0),
       finalActivePartitionIndex_(0),
       lastControlDesignTime_(partitioningTimes.front()),
-      solverPtr_(nullptr)
-
-{
+      solverPtr_(nullptr) {
   if (partitioningTimes.size() < 2) {
     throw std::runtime_error("There should be at least one time partition.");
   }
@@ -116,10 +112,6 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::reset() {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_BASE<STATE_DIM, INPUT_DIM>::setBaseSolverPtr(solver_base_t* solverPtr) {
   solverPtr_ = solverPtr;
-
-  // MPC activates this if the final time of the MPC will increase by the length of a time partition instead
-  // of commonly used scheme where the final time is gradual increased.
-  solverPtr_->blockwiseMovingHorizon(mpcSettings_.blockwiseMovingHorizon_);
 }
 
 /******************************************************************************************************/
@@ -272,6 +264,16 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
     solverPtr_->getLogicRulesMachinePtr()->logicRulesUpdated();
 
     logicRulesTemplateUpdated_ = false;
+  }
+
+  /******************************************************************************************
+   * cost goal check
+   ******************************************************************************************/
+  if (initRun_ && solverPtr_->getCostDesiredTrajectories().empty()) {
+    std::cerr << "### WARNING: The initial desired trajectories are not set. "
+                 "This may cause undefined behavior. Use the MPC_SLQ::setCostDesiredTrajectories() "
+                 "method to provide appropriate goal trajectories."
+              << std::endl;
   }
 
   /******************************************************************************************

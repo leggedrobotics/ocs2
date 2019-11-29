@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 3.0)
 project(ocs2_ocs2)
 
-find_package(catkin REQUIRED COMPONENTS 
-  cmake_modules 
-  ocs2_core 
-  ocs2_slq 
+find_package(catkin REQUIRED COMPONENTS
+  cmake_modules
+  ocs2_core
+  ocs2_ddp
   ocs2_frank_wolfe
 )
-find_package(Boost REQUIRED COMPONENTS 
+find_package(Boost REQUIRED COMPONENTS
   system
-  filesystem 
+  filesystem
 )
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
@@ -24,14 +24,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 ###################################
 
 catkin_package(
-  INCLUDE_DIRS 
+  INCLUDE_DIRS
     include
     ${EIGEN3_INCLUDE_DIRS}
-  CATKIN_DEPENDS 
-    ocs2_core 
-    ocs2_slq 
+  CATKIN_DEPENDS
+    ocs2_core
+    ocs2_ddp
     ocs2_frank_wolfe
-  DEPENDS 
+  DEPENDS
     Boost
 )
 
@@ -62,7 +62,7 @@ if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target ocs2_ocs2")
   add_clang_tooling(
     TARGETS ${PROJECT_NAME}_lintTarget
-    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include  ${CMAKE_CURRENT_SOURCE_DIR}/test
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
 )

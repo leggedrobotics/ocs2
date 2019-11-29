@@ -4,9 +4,11 @@
 #include <Eigen/StdVector>
 #include <iostream>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "ocs2_core/Dimensions.h"
+#include "ocs2_core/misc/LinearAlgebra.h"
 
 namespace ocs2 {
 
@@ -20,8 +22,14 @@ struct ModelDataBase {
   using dynamic_vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
   using dynamic_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic>;
 
+  using scalar_array_t = typename Dimensions<0, 0>::scalar_array_t;
+  using eigen_scalar_t = typename Dimensions<0, 0>::eigen_scalar_t;
+  using dynamic_vector_array_t = typename Dimensions<0, 0>::dynamic_vector_array_t;
+  using dynamic_matrix_array_t = typename Dimensions<0, 0>::dynamic_matrix_array_t;
+
   using self_t = ModelDataBase;
   using array_t = std::vector<self_t, Eigen::aligned_allocator<self_t>>;
+  using array2_t = std::vector<array_t, Eigen::aligned_allocator<array_t>>;
 
   /**
    * Default constructor.
@@ -55,7 +63,7 @@ struct ModelDataBase {
     std::cerr << "Flow Map State Derivative: " << flowMapStateDerivative_ << "\n";
     std::cerr << "Flow Map Input Derivative: " << flowMapInputDerivative_ << "\n";
 
-    std::cerr << "cost: " << cost << "\n";
+    std::cerr << "Cost: " << cost_ << "\n";
     std::cerr << "Cost State Derivative: " << costStateDerivative_ << "\n";
     std::cerr << "Cost Input Derivative: " << costInputDerivative_ << "\n";
     std::cerr << "Cost State Second Derivative: " << costStateSecondDerivative_ << "\n";
@@ -66,13 +74,118 @@ struct ModelDataBase {
   }
 
   /**
+   * Checks whether the size of the member variables matches the state and input dimension.
+   *
+   * @param [in] stateDim: The dimension of the state vector.
+   * @param [in] inputDim: The dimension of the input vecotr.
+   */
+  void checkSizes(int stateDim, int inputDim) const {
+    assert(stateDim_ == stateDim);
+    assert(inputDim_ == stateDim);
+
+    // dynamics flow map
+    assert(flowMap_.size() == stateDim);
+    assert(flowMapStateDerivative_.rows() == stateDim);
+    assert(flowMapStateDerivative_.cols() == stateDim);
+    assert(flowMapInputDerivative_.rows() == stateDim);
+    assert(flowMapInputDerivative_.cols() == inputDim);
+
+    // cost
+    assert(costStateDerivative_.size() == stateDim);
+    assert(costStateSecondDerivative_.rows() == stateDim);
+    assert(costStateSecondDerivative_.cols() == stateDim);
+    assert(costInputDerivative_.size() == inputDim);
+    assert(costInputSecondDerivative_.rows() == inputDim);
+    assert(costInputSecondDerivative_.cols() == inputDim);
+    assert(costInputStateDerivative_.rows() == inputDim);
+    assert(costInputStateDerivative_.cols() == stateDim);
+
+    // state equality constraints
+    assert(stateEqConstr_.size() == numStateEqConstr_);
+    assert(stateEqConstrStateDerivative_.rows() == stateEqConstr_.size());
+    assert(stateEqConstrStateDerivative_.cols() == stateDim);
+
+    // state-input equality constraints
+    assert(stateInputEqConstr_.size() == numStateInputEqConstr_);
+    assert(stateInputEqConstrStateDerivative_.rows() == stateInputEqConstr_.size());
+    assert(stateInputEqConstrStateDerivative_.cols() == stateDim);
+    assert(stateInputEqConstrInputDerivative_.rows() == stateInputEqConstr_.size());
+    assert(stateInputEqConstrInputDerivative_.cols() == inputDim);
+
+    // inequality constraints
+    assert(ineqConstr_.size() == numIneqConstr_);
+    assert(ineqConstrStateDerivative_.size() == ineqConstr_.size());
+    assert(ineqConstrInputDerivative_.size() == ineqConstr_.size());
+    assert(ineqConstrStateSecondDerivative_.size() == ineqConstr_.size());
+    assert(ineqConstrInputSecondDerivative_.size() == ineqConstr_.size());
+    assert(ineqConstrInputStateDerivative_.size() == ineqConstr_.size());
+    for (int i = 0; i < ineqConstr_.size(); i++) {
+      assert(ineqConstrStateDerivative_[i].size() == stateDim);
+      assert(ineqConstrInputDerivative_[i].size() == inputDim);
+      assert(ineqConstrStateSecondDerivative_[i].rows() == stateDim);
+      assert(ineqConstrStateSecondDerivative_[i].cols() == stateDim);
+      assert(ineqConstrInputSecondDerivative_[i].rows() == inputDim);
+      assert(ineqConstrInputSecondDerivative_[i].cols() == inputDim);
+      assert(ineqConstrInputStateDerivative_[i].rows() == inputDim);
+      assert(ineqConstrInputStateDerivative_[i].cols() == stateDim);
+    }  // end of i loop
+  }
+
+  /**
+   * Checks the numerical properties of the cost function and its derivatives.
+   * @return The description of the error. If there was no error it would be empty;
+   */
+  std::string checkCostProperties() const {
+    std::string errorDescription;
+
+    if (!cost_.allFinite()) {
+      errorDescription += "Intermediate cost is is not finite.";
+    }
+    if (!costStateDerivative_.allFinite()) {
+      errorDescription += "Intermediate cost first derivative w.r.t. state is is not finite.";
+    }
+    if (!costStateSecondDerivative_.allFinite()) {
+      errorDescription += "Intermediate cost second derivative w.r.t. state is is not finite.";
+    }
+    if (!costStateSecondDerivative_.isApprox(costStateSecondDerivative_.transpose())) {
+      errorDescription += "Intermediate cost second derivative w.r.t. state is is not self-adjoint.";
+    }
+    if (LinearAlgebra::eigenvalues(costStateSecondDerivative_).real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
+      errorDescription += "Q matrix is not positive semi-definite. It's smallest eigenvalue is " +
+                          std::to_string(LinearAlgebra::eigenvalues(costStateSecondDerivative_).real().minCoeff()) + ".";
+    }
+    if (!costInputDerivative_.allFinite()) {
+      errorDescription += "Intermediate cost first derivative w.r.t. input is is not finite.";
+    }
+    if (!costInputSecondDerivative_.allFinite()) {
+      errorDescription += "Intermediate cost second derivative w.r.t. input is is not finite.";
+    }
+    if (!costInputSecondDerivative_.isApprox(costInputSecondDerivative_.transpose())) {
+      errorDescription += "Intermediate cost second derivative w.r.t. input is is not self-adjoint.";
+    }
+    if (!costInputStateDerivative_.allFinite()) {
+      errorDescription += "Intermediate cost second derivative w.r.t. input-state is is not finite.";
+    }
+    if (costInputSecondDerivative_.ldlt().rcond() < Eigen::NumTraits<scalar_t>::epsilon()) {
+      errorDescription += "R matrix is not invertible. It's reciprocal condition number is " +
+                          std::to_string(costInputSecondDerivative_.ldlt().rcond()) + ".";
+    }
+    if (LinearAlgebra::eigenvalues(costInputSecondDerivative_).real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon()) {
+      errorDescription += "R matrix is not positive definite. It's smallest eigenvalue is " +
+                          std::to_string(LinearAlgebra::eigenvalues(costInputSecondDerivative_).real().minCoeff()) + ".";
+    }
+
+    return errorDescription;
+  }
+
+  /**
    * Variables
    */
   scalar_t time_;
   int stateDim_;
   int inputDim_;
 
-  // dynamics
+  // dynamics flow
   dynamic_vector_t flowMap_;
   dynamic_matrix_t flowMapStateDerivative_;
   dynamic_matrix_t flowMapInputDerivative_;
@@ -82,12 +195,32 @@ struct ModelDataBase {
   dynamic_matrix_t jumpMapInputDerivative_;
 
   // cost
-  scalar_t cost;
+  eigen_scalar_t cost_;
   dynamic_vector_t costStateDerivative_;
   dynamic_vector_t costInputDerivative_;
   dynamic_matrix_t costStateSecondDerivative_;
   dynamic_matrix_t costInputSecondDerivative_;
   dynamic_matrix_t costInputStateDerivative_;
+
+  // state equality constraints
+  int numStateEqConstr_;
+  dynamic_vector_t stateEqConstr_;
+  dynamic_matrix_t stateEqConstrStateDerivative_;
+
+  // state-input equality constraints
+  int numStateInputEqConstr_;
+  dynamic_vector_t stateInputEqConstr_;
+  dynamic_matrix_t stateInputEqConstrStateDerivative_;
+  dynamic_matrix_t stateInputEqConstrInputDerivative_;
+
+  // inequality constraints
+  int numIneqConstr_;
+  scalar_array_t ineqConstr_;
+  dynamic_vector_array_t ineqConstrStateDerivative_;
+  dynamic_vector_array_t ineqConstrInputDerivative_;
+  dynamic_matrix_array_t ineqConstrStateSecondDerivative_;
+  dynamic_matrix_array_t ineqConstrInputSecondDerivative_;
+  dynamic_matrix_array_t ineqConstrInputStateDerivative_;
 };
 
 }  // namespace ocs2

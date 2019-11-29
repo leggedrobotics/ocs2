@@ -68,6 +68,9 @@
 #include <ocs2_core/misc/SetThreadPriority.h>
 #include <ocs2_core/misc/randomMatrices.h>
 
+// model_data
+#include <ocs2_core/model_data/ModelDataBase.h>
+
 // dummy target for clang toolchain
 int main() {
   return 0;

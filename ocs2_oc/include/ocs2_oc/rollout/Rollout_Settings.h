@@ -38,6 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/misc/LoadData.h>
 
+#include "ocs2_oc/rollout/RootFinderType.h"
+
 namespace ocs2 {
 
 /**
@@ -60,7 +62,7 @@ class Rollout_Settings {
    */
   explicit Rollout_Settings(double absTolODE = 1e-9, double relTolODE = 1e-6, size_t maxNumStepsPerSecond = 5000, double minTimeStep = 1e-3,
                             IntegratorType integratorType = IntegratorType::ODE45, bool checkNumericalStability = false,
-                            bool reconstructInputTrajectory = true, size_t rootFindingAlgorithm = 0)
+                            bool reconstructInputTrajectory = true, RootFinderType rootFindingAlgorithm = RootFinderType::ANDERSON_BJORCK)
       : absTolODE_(absTolODE),
         relTolODE_(relTolODE),
         maxNumStepsPerSecond_(maxNumStepsPerSecond),
@@ -116,7 +118,7 @@ class Rollout_Settings {
    * 		2:		Illinois
    * 		3:		Regula Falsi
    */
-  size_t rootFindingAlgorithm_;
+  RootFinderType rootFindingAlgorithm_;
 
 };  // end of Rollout_Settings class
 
@@ -134,13 +136,16 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, const st
   loadData::loadPtreeValue(pt, maxNumStepsPerSecond_, fieldName + ".maxNumStepsPerSecond", verbose);
   loadData::loadPtreeValue(pt, minTimeStep_, fieldName + ".minTimeStep", verbose);
 
-  int tmp = static_cast<int>(integratorType_);
+  auto tmp = static_cast<int>(integratorType_);
   loadData::loadPtreeValue(pt, tmp, fieldName + ".integratorType", verbose);
   integratorType_ = static_cast<IntegratorType>(tmp);
 
   loadData::loadPtreeValue(pt, checkNumericalStability_, fieldName + ".checkNumericalStability", verbose);
   loadData::loadPtreeValue(pt, reconstructInputTrajectory_, fieldName + ".reconstructInputTrajectory", verbose);
-  loadData::loadPtreeValue(pt, rootFindingAlgorithm_, fieldName + ".rootFindingAlgorithm", verbose);
+
+  tmp = static_cast<int>(rootFindingAlgorithm_);
+  loadData::loadPtreeValue(pt, tmp, fieldName + ".rootFindingAlgorithm", verbose);
+  rootFindingAlgorithm_ = static_cast<RootFinderType>(tmp);
 
   if (verbose) {
     std::cerr << " #### =============================================================================" << std::endl;

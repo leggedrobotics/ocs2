@@ -202,7 +202,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       default: {
         throw std::runtime_error("Integrator of type " +
                                  std::to_string(static_cast<std::underlying_type<IntegratorType>::type>(integratorType)) +
-                                 " not supported in TimeTriggeredRollout.");
+                                 " is not supported in TimeTriggeredRollout.");
       }
     }
   }

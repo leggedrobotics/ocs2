@@ -35,6 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Dimensions.h>
 
+#include "ocs2_oc/rollout/RootFinderType.h"
+
 namespace ocs2 {
 
 /**
@@ -47,30 +49,29 @@ namespace ocs2 {
  * is located.
  *
  * The implemented algorithms are:
- * Regular Regula Falsi:
- * form: [Improved Algorithms of Illinois-Type for the Numerical Solution of Non-
- * 	      Linear Equations by J.A. Ford]
- * Illinois method:
- * from: [A Modified Regula Falsi Method for Computing the Root of an Equation
- *        by M. Dowell and P. Jarrat]
- * Pegasus method:
- * from: [The "Pegasus" Method for Computing the Root of an Equation
- *        by M. Dowell and P. Jarrat]
  * Anderson & Bjorck Method (default):
  * from: [A New High Order Method of Regula Falsi Type for Computing a Root of an Equation
  *        by N.Anderson and A. Bjorck]
- *
- *
+ * Pegasus method:
+ * from: [The "Pegasus" Method for Computing the Root of an Equation
+ *        by M. Dowell and P. Jarrat]
+ * Illinois method:
+ * from: [A Modified Regula Falsi Method for Computing the Root of an Equation
+ *        by M. Dowell and P. Jarrat]
+ * Regular Regula Falsi:
+ * form: [Improved Algorithms of Illinois-Type for the Numerical Solution of Non-
+ * 	      Linear Equations by J.A. Ford]
  */
 class RootFinder {
  public:
   using scalar_t = Dimensions<0, 0>::scalar_t;
-  using interval_t = std::pair<scalar_t, scalar_t>;
+  using pair_t = std::pair<scalar_t, scalar_t>;
 
   /**
    * Default Constructor.
    */
-  RootFinder(int rootFindingAlgorithm) : rootFindingAlgorithm_(rootFindingAlgorithm) {}
+  explicit RootFinder(RootFinderType rootFindingAlgorithm = RootFinderType::ANDERSON_BJORCK)
+      : rootFindingAlgorithm_(rootFindingAlgorithm) {}
 
   /**
    * Default destructor.
@@ -78,23 +79,22 @@ class RootFinder {
   ~RootFinder() = default;
 
   /**
-   * Set the initial bracket when the RootFinding method is initialized.
+   * Sets the initial bracket when the RootFinding method is initialized.
    * Normally done when first zero crossing is detected
    *
    * @param [in] timeInt: Pair of two time moments
    * @param [in] guardInt: Pair of two function values at time_int times, should have opposite sign
    */
-  void setInitBracket(const interval_t& timeInt, const interval_t& guardInt) {
+  void setInitBracket(pair_t timeInt, pair_t guardInt) {
     if (guardInt.first * guardInt.second > 0) {
-      throw std::runtime_error("Bracket function values should have opposite sign");
+      throw std::runtime_error("Bracket function values should have opposite signs!");
     }
-
     timeInt_ = timeInt;
     guardInt_ = guardInt;
   }
 
   /**
-   * Set the initial bracket when the RootFinding method is initialized.
+   * Sets the initial bracket when the RootFinding method is initialized.
    * Normally done when first zero crossing is detected.
    *
    * @param [in] t0: First time of bracketing interval.
@@ -102,12 +102,12 @@ class RootFinder {
    * @param [in] f0: Function value corresponding to t0.
    * @param [in] f1: Function value corresponding to t1, of opposite sign to f0.
    */
-  void setInitBracket(const scalar_t t0, const scalar_t t1, const scalar_t f0, const scalar_t f1) {
+  void setInitBracket(scalar_t t0, scalar_t t1, scalar_t f0, scalar_t f1) {
     setInitBracket(std::make_pair(t0, t1), std::make_pair(f0, f1));
   }
 
   /**
-   * Update Current bracket, based on based on sign of the new query point
+   * Updates the current bracket, based on the sign of the new query point.
    *
    * @param [in] query: Time moment of last query point
    * @param [in] fQuery: Function evaluation of last query time
@@ -122,21 +122,31 @@ class RootFinder {
 
     } else {
       scalar_t gamma;
-      if (rootFindingAlgorithm_ == 0)  // Anderson & Bjorck method
-      {
-        gamma = 1 - (fQuery / guardInt_.first);
-        if (gamma < 0) {
-          gamma = 0.5;
+      switch (rootFindingAlgorithm_) {
+        case (RootFinderType::ANDERSON_BJORCK): {
+          gamma = 1 - (fQuery / guardInt_.first);
+          if (gamma < 0) {
+            gamma = 0.5;
+          }
+          break;
         }
-      } else if (rootFindingAlgorithm_ == 1)  // Pegasus Method
-      {
-        gamma = guardInt_.first / (guardInt_.first + fQuery);
-      } else if (rootFindingAlgorithm_ == 2)  // Illinois method
-      {
-        gamma = 0.5;
-      } else  // Regular Regula Falsi
-      {
-        gamma = 1;
+        case (RootFinderType::PEGASUS): {
+          gamma = guardInt_.first / (guardInt_.first + fQuery);
+          break;
+        }
+        case (RootFinderType::ILLINOIS): {
+          gamma = 0.5;
+          break;
+        }
+        case (RootFinderType::REGULA_FALSI): {
+          gamma = 1.0;
+          break;
+        }
+        default: {
+          throw std::runtime_error("Root finding algorithm of type " +
+                                   std::to_string(static_cast<std::underlying_type<RootFinderType>::type>(rootFindingAlgorithm_)) +
+                                   " is not supported.");
+        }
       }
 
       guardInt_.first = fQuery;
@@ -147,24 +157,20 @@ class RootFinder {
   }
 
   /**
-   * Use (adapted-) regula falsi method to obtain a new query point
+   * Uses (adapted-) regula falsi method to obtain a new query point
    *
-   * @param [out] query: Time moment of new query point
-   *
+   * @return Time moment of new query point
    */
-  void getNewQuery(double& query) {
-    scalar_t fa = guardInt_.first;
-    scalar_t ta = timeInt_.first;
-
-    scalar_t fb = guardInt_.second;
-    scalar_t tb = timeInt_.second;
-
-    query = (ta * fb - tb * fa) / (fb - fa);
+  inline scalar_t getNewQuery() {
+    const scalar_t& fa = guardInt_.first;
+    const scalar_t& ta = timeInt_.first;
+    const scalar_t& fb = guardInt_.second;
+    const scalar_t& tb = timeInt_.second;
+    return (ta * fb - tb * fa) / (fb - fa);
   }
 
   /**
-   * Display relevant bracketing information
-   *
+   * Displays relevant bracketing information
    */
   void display() {
     std::cerr << "Root Finding Information" << std::endl;
@@ -173,9 +179,9 @@ class RootFinder {
   }
 
  private:
-  interval_t timeInt_;
-  interval_t guardInt_;
-  size_t rootFindingAlgorithm_;
+  RootFinderType rootFindingAlgorithm_;
+  pair_t timeInt_;
+  pair_t guardInt_;
 };
 
 }  // namespace ocs2

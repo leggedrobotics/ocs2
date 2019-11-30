@@ -36,9 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/StateTriggeredEventHandler.h>
 #include <ocs2_core/integration/SystemEventHandler.h>
 
-#include <ocs2_oc/rollout/RootFind.h>
-
-#include "RolloutBase.h"
+#include "ocs2_oc/rollout/RolloutBase.h"
+#include "ocs2_oc/rollout/RootFinder.h"
 
 namespace ocs2 {
 
@@ -77,7 +76,6 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    * @param [in] systemDynamics: The system dynamics for forward rollout.
    * @param [in] rolloutSettings: The rollout settings.
    */
-
   explicit StateTriggeredRollout(const controlled_system_base_t& systemDynamics, Rollout_Settings rolloutSettings = Rollout_Settings())
       : BASE(std::move(rolloutSettings)),
         systemDynamicsPtr_(systemDynamics.clone()),
@@ -136,33 +134,33 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     scalar_t t0 = timeIntervalArray.front().first;
     scalar_t t1 = timeIntervalArray.back().second;
     scalar_t tend = t1;  // Stored separately due to overwriting t1 when refining
-    size_t eventID_m = 0;
+    size_t eventID = 0;
 
     bool refining = false;
     bool triggered = false;
 
-    int localNumIterations = 0;                                   // Iterations since last event
-    int numIterations = 0;                                        // Overall number of iterations
-    RootFinder rootFind(this->settings().rootFindingAlgorithm_);  // rootFinding algorithm
+    int localNumIterations = 0;                                     // Iterations since last event
+    int numIterations = 0;                                          // Overall number of iterations
+    RootFinder rootFinder(this->settings().rootFindingAlgorithm_);  // rootFinding algorithm
 
-    while (true) {  // Keeps looping until end time condition is fulfilled, after which the loop is broken
+    while (true) {  // keeps looping until end time condition is fulfilled, after which the loop is broken
       try {
         dynamicsIntegratorPtr_->integrate(beginState, t0, t1, stateTrajectory, timeTrajectory, BASE::settings().minTimeStep_,
                                           BASE::settings().absTolODE_, BASE::settings().relTolODE_, maxNumSteps, true);
-      } catch (const size_t& eventID) {
-        eventID_m = eventID;
+      } catch (const size_t& e) {
+        eventID = e;
         triggered = true;
       }
       // calculate GuardSurface value of last query state and time
-      const scalar_t time_query = timeTrajectory.back();
-      const state_vector_t state_query = stateTrajectory.back();
+      const scalar_t& queryTime = timeTrajectory.back();
+      const state_vector_t& queryState = stateTrajectory.back();
 
-      dynamic_vector_t GuardSurfaces_query;
-      systemDynamicsPtr_->computeGuardSurfaces(time_query, state_query, GuardSurfaces_query);
-      scalar_t guard_query = GuardSurfaces_query[eventID_m];
+      dynamic_vector_t queryGuardArray;
+      systemDynamicsPtr_->computeGuardSurfaces(queryTime, queryState, queryGuardArray);
+      const scalar_t& queryGuard = queryGuardArray[eventID];
 
-      // accuracy conditions on the obtained guard_query and width of time window
-      bool guard_accuracy_condition = std::fabs(guard_query) < BASE::settings().absTolODE_;
+      // accuracy conditions on the obtained queryGuard and width of time window
+      bool guard_accuracy_condition = std::fabs(queryGuard) < BASE::settings().absTolODE_;
       bool time_accuracy_condition = std::fabs(t1 - t0) < BASE::settings().absTolODE_;
       bool accuracy_condition = guard_accuracy_condition || time_accuracy_condition;
 
@@ -191,13 +189,13 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
       // accuracy condition for event refinement. If Sufficiently accurate crossing location has been determined
       if (accuracy_condition) {
-        // Set new begin/end time and begin state
-        beginState = state_query;
-        t0 = time_query;
+        // set new begin/end time and begin state
+        beginState = queryState;
+        t0 = queryTime;
         t1 = tend;
 
         // compute Jump Map
-        systemDynamicsPtr_->computeJumpMap(t0, state_query, beginState);
+        systemDynamicsPtr_->computeJumpMap(t0, queryState, beginState);
 
         // append Event to Array with event indices
         eventsPastTheEndIndeces.push_back(stateTrajectory.size());
@@ -208,28 +206,26 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
         // updates the last event triggered times of Event Handler
         systemEventHandlersPtr_->setLastEventTimes(t0, GuardSurfaces_cross);
 
-        // reset Relevant boolean and counter
+        // reset relevant boolean and counter
         refining = false;
         localNumIterations = 0;
-      }
-      // otherwise keep or start refining
-      else {
-        if (refining) {  // apply the Rules of the Rootfinding method to continue refining
-          rootFind.updateBracket(time_query, guard_query);
-          rootFind.getNewQuery(t1);
+      } else {           // otherwise keep or start refining
+        if (refining) {  // apply the Rules of the root-finding method to continue refining
+          rootFinder.updateBracket(queryTime, queryGuard);
+          t1 = rootFinder.getNewQuery();
 
           t0 = timeTrajectory.back();
           beginState = stateTrajectory.back();
-        } else {  // properly configure Root-finding method to start refining
+        } else {  // properly configure root-finding method to start refining
           scalar_t time_before = timeTrajectory.back();
           state_vector_t state_before = stateTrajectory.back();
 
           dynamic_vector_t GuardSurfaces_before;
           systemDynamicsPtr_->computeGuardSurfaces(time_before, state_before, GuardSurfaces_before);
-          scalar_t guard_before = GuardSurfaces_before[eventID_m];
+          scalar_t guard_before = GuardSurfaces_before[eventID];
 
-          rootFind.setInitBracket(time_before, time_query, guard_before, guard_query);
-          rootFind.getNewQuery(t1);
+          rootFinder.setInitBracket(time_before, queryTime, guard_before, queryGuard);
+          t1 = rootFinder.getNewQuery();
 
           t0 = timeTrajectory.back();
           beginState = stateTrajectory.back();
@@ -304,7 +300,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       default: {
         throw std::runtime_error("Integrator of type " +
                                  std::to_string(static_cast<std::underlying_type<IntegratorType>::type>(integratorType)) +
-                                 " not supported in StateTriggeredRollout.");
+                                 " is not supported in StateTriggeredRollout.");
       }
     }
   }

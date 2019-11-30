@@ -55,16 +55,14 @@ class OdeBase {
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
 
   /**
-   * Default constructor
+   * Constructor.
+   * @param [in] modelData: The model data which will be used for storing outputs.
    */
-  OdeBase(const ModelDataBase* modelDataPtr = new ModelDataBase)
+  explicit OdeBase(const ModelDataBase& modelData = ModelDataBase())
       : numFunctionCalls_(0), defaultModelDataArraySize_(7), modelDataPtrArray_(defaultModelDataArraySize_) {
-    if (modelDataPtr) {
-      for (auto& modelPtr_i : modelDataPtrArray_) {
-        modelPtr_i.reset(modelDataPtr->clone());
-      }
+    for (auto& modelPtr_i : modelDataPtrArray_) {
+      modelPtr_i.reset(modelData.clone());
     }
-
     nextModelDataPtrIterator() = beginModelDataPtrIterator();
   }
 

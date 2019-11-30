@@ -75,9 +75,9 @@ class SystemEventHandler : public EventHandlerBase<STATE_DIM> {
   /**
    * Default destructor
    */
-  virtual ~SystemEventHandler() = default;
+  ~SystemEventHandler() override = default;
 
-  virtual bool checkEvent(const state_vector_t& state, const scalar_t& time) override {
+  bool checkEvent(const state_vector_t& state, const scalar_t& time) override {
     bool terminateFlag = false;
 
     if (killIntegration_) {

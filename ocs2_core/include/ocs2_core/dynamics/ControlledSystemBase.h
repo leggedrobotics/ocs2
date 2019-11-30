@@ -73,9 +73,10 @@ class ControlledSystemBase : public OdeBase<STATE_DIM> {
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
 
   /**
-   * Default constructor.
+   * Constructor.
+   * @param [in] modelData: The model data which will be used for storing outputs.
    */
-  ControlledSystemBase(const ModelDataBase* modelDataPtr = new ModelDataBase) : BASE(modelDataPtr), controllerPtr_(nullptr) {}
+  explicit ControlledSystemBase(const ModelDataBase& modelData = ModelDataBase()) : BASE(modelData), controllerPtr_(nullptr) {}
 
   /**
    * Copy constructor.

@@ -102,7 +102,7 @@ class SystemEventHandler : public EventHandlerBase<STATE_DIM> {
    *
    * @param [in] maxNumSteps: maximum number of integration points
    */
-  void setMaxNumSteps(int maxNumSteps) { maxNumSteps_ = maxNumSteps; }
+  inline void setMaxNumSteps(int maxNumSteps) { maxNumSteps_ = maxNumSteps; }
 
   /**
    * Activate KillIntegrationEvent.

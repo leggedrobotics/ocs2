@@ -95,6 +95,7 @@ class Observer {
         model_data_t* modelDataPtr = systemPtr->beginModelDataPtrIterator()->get();
         modelDataTrajectoryPtr_->emplace_back(*modelDataPtr);
       }
+      // TODO(mspieler): Double check initial call handling logic
       initialCall_ = systemPtr->nextModelDataPtrIterator() == systemPtr->beginModelDataPtrIterator();
 
       // get the model data

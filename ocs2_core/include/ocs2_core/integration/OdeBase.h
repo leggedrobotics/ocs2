@@ -81,31 +81,31 @@ class OdeBase {
    *
    * @return size_t: number of function calls
    */
-  int getNumFunctionCalls() { return numFunctionCalls_; }
+  inline int getNumFunctionCalls() { return numFunctionCalls_; }
 
   /**
    * Resets the number of function calls to zero.
    *
    */
-  void resetNumFunctionCalls() { numFunctionCalls_ = 0; }
+  inline void resetNumFunctionCalls() { numFunctionCalls_ = 0; }
 
   /**
    * Returns the iterator pointing to the next free model data.
    * @return iterator to the next free model data.
    */
-  std::list<std::shared_ptr<ModelDataBase>>::iterator& nextModelDataPtrIterator() { return nextModelDataPtrIterator_; }
+  inline std::list<std::shared_ptr<ModelDataBase>>::iterator& nextModelDataPtrIterator() { return nextModelDataPtrIterator_; }
 
   /**
    * Returns the iterator to begin()
    * @return modelDataPtrArray_.begin()
    */
-  std::list<std::shared_ptr<ModelDataBase>>::iterator beginModelDataPtrIterator() { return modelDataPtrArray_.begin(); }
+  inline std::list<std::shared_ptr<ModelDataBase>>::iterator beginModelDataPtrIterator() { return modelDataPtrArray_.begin(); }
 
   /**
    * Returns the iterator to end()
    * @return modelDataPtrArray_.end()
    */
-  std::list<std::shared_ptr<ModelDataBase>>::iterator endModelDataPtrIterator() { return modelDataPtrArray_.end(); }
+  inline std::list<std::shared_ptr<ModelDataBase>>::iterator endModelDataPtrIterator() { return modelDataPtrArray_.end(); }
 
   /**
    * Resizes the internal model data array.
@@ -114,6 +114,7 @@ class OdeBase {
   void resizeInternalModelDataPtrArray() {
     --nextModelDataPtrIterator_;  // since next will change
     for (int i = 0; i < defaultModelDataArraySize_; i++) {
+      // TODO(mspieler): Better way to keep it a derived class?
       modelDataPtrArray_.emplace_back(modelDataPtrArray_.front()->clone());
     }
     ++nextModelDataPtrIterator_;  // new next

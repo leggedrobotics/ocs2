@@ -130,8 +130,8 @@ class IntegratorBase {
    * @param [in] concatOutput: Whether to concatenate the output to the input
    * trajectories or override (default).
    */
-  void integrate(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime, scalar_t dt,
-                 state_vector_array_t& stateTrajectory, scalar_array_t& timeTrajectory, bool concatOutput = false) {
+  inline void integrate(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime, scalar_t dt,
+                        state_vector_array_t& stateTrajectory, scalar_array_t& timeTrajectory, bool concatOutput = false) {
     runIntegration(initialState, startTime, finalTime, dt, stateTrajectory, timeTrajectory, concatOutput);
   }
 
@@ -155,9 +155,10 @@ class IntegratorBase {
    * @param [in] concatOutput: Whether to concatenate the output to the input
    * trajectories or override (default).
    */
-  void integrate(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime,
-                 state_vector_array_t& stateTrajectory, scalar_array_t& timeTrajectory, scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6,
-                 scalar_t RelTol = 1e-3, int maxNumSteps = std::numeric_limits<int>::max(), bool concatOutput = false) {
+  inline void integrate(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime,
+                        state_vector_array_t& stateTrajectory, scalar_array_t& timeTrajectory, scalar_t dtInitial = 0.01,
+                        scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3, int maxNumSteps = std::numeric_limits<int>::max(),
+                        bool concatOutput = false) {
     runIntegration(initialState, startTime, finalTime, stateTrajectory, timeTrajectory, dtInitial, AbsTol, RelTol, maxNumSteps,
                    concatOutput);
   }
@@ -182,10 +183,10 @@ class IntegratorBase {
    * @param [in] concatOutput: Whether to concatenate the output to the input trajectories
    * or override (default).
    */
-  void integrate(const state_vector_t& initialState, typename scalar_array_t::const_iterator beginTimeItr,
-                 typename scalar_array_t::const_iterator endTimeItr, state_vector_array_t& stateTrajectory, scalar_t dtInitial = 0.01,
-                 scalar_t AbsTol = 1e-9, scalar_t RelTol = 1e-6, int maxNumSteps = std::numeric_limits<int>::max(),
-                 bool concatOutput = false) {
+  inline void integrate(const state_vector_t& initialState, typename scalar_array_t::const_iterator beginTimeItr,
+                        typename scalar_array_t::const_iterator endTimeItr, state_vector_array_t& stateTrajectory,
+                        scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-9, scalar_t RelTol = 1e-6,
+                        int maxNumSteps = std::numeric_limits<int>::max(), bool concatOutput = false) {
     runIntegration(initialState, beginTimeItr, endTimeItr, stateTrajectory, dtInitial, AbsTol, RelTol, maxNumSteps, concatOutput);
   }
 

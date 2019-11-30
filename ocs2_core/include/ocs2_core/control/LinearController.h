@@ -82,9 +82,9 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
   /**
    * @brief Destructor
    */
-  virtual ~LinearController() = default;
+  ~LinearController() override = default;
 
-  virtual LinearController* clone() const override { return new LinearController(*this); }
+  LinearController* clone() const override { return new LinearController(*this); }
 
   /**
    * @brief setController Assign control law

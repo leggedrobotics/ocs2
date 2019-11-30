@@ -1684,6 +1684,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   nominalStateTrajectoriesStock_.resize(numPartitions);
   nominalInputTrajectoriesStock_.resize(numPartitions);
 
+  modelDataTrajectoriesStock_.resize(numPartitions);
+
   cachedTimeTrajectoriesStock_.resize(numPartitions);
   cachedPostEventIndicesStock_.resize(numPartitions);
   cachedStateTrajectoriesStock_.resize(numPartitions);

@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/Numerics.h>
 #include <ocs2_core/misc/ThreadPool.h>
+#include <ocs2_core/model_data/ModelDataBase.h>
 
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
@@ -726,6 +727,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   size_array2_t nominalPostEventIndicesStock_;
   state_vector_array2_t nominalStateTrajectoriesStock_;
   input_vector_array2_t nominalInputTrajectoriesStock_;
+
+  ModelDataBase::array2_t modelDataTrajectoriesStock_;
 
   // Used for caching the nominal trajectories for which the LQ problem is
   // constructed and solved before terminating run()

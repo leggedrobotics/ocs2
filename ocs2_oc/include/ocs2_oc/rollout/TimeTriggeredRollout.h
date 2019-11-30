@@ -83,6 +83,10 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    */
   ~TimeTriggeredRollout() override = default;
 
+  TimeTriggeredRollout(const TimeTriggeredRollout&) = delete;
+
+  TimeTriggeredRollout& operator=(const TimeTriggeredRollout&) = delete;
+
   TimeTriggeredRollout<STATE_DIM, INPUT_DIM>* clone() const override {
     return new TimeTriggeredRollout<STATE_DIM, INPUT_DIM>(*systemDynamicsPtr_, this->settings());
   }
@@ -104,7 +108,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     const int numEvents = numSubsystems - 1;
 
     // max number of steps for integration
-    const auto maxNumSteps = static_cast<size_t>(BASE::settings().maxNumStepsPerSecond_ *
+    const auto maxNumSteps = static_cast<size_t>(this->settings().maxNumStepsPerSecond_ *
                                                  std::max(1.0, timeIntervalArray.back().second - timeIntervalArray.front().first));
 
     // clearing the output trajectories
@@ -131,11 +135,11 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     for (int i = 0; i < numSubsystems; i++) {
       // integrate controlled system
       dynamicsIntegratorPtr_->integrate(beginState, timeIntervalArray[i].first, timeIntervalArray[i].second, stateTrajectory,
-                                        timeTrajectory, BASE::settings().minTimeStep_, BASE::settings().absTolODE_,
-                                        BASE::settings().relTolODE_, maxNumSteps, true);
+                                        timeTrajectory, this->settings().minTimeStep_, this->settings().absTolODE_,
+                                        this->settings().relTolODE_, maxNumSteps, true);
 
       // compute control input trajectory and concatenate to inputTrajectory
-      if (BASE::settings().reconstructInputTrajectory_) {
+      if (this->settings().reconstructInputTrajectory_) {
         for (; k_u < timeTrajectory.size(); k_u++) {
           inputTrajectory.emplace_back(systemDynamicsPtr_->controllerPtr()->computeInput(timeTrajectory[k_u], stateTrajectory[k_u]));
         }  // end of k loop

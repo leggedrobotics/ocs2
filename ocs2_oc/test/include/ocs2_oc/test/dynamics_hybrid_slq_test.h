@@ -225,9 +225,9 @@ class system_cost_1 : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
 
   void getIntermediateCost(scalar_t& L) final { L = 0.5 * pow(x_[0], 2) + 0.5 * pow(x_[1], 2) + 0.005 * pow(u_[0], 2); }
 
-  void getIntermediateCostDerivativeState(state_vector_t& dLdx) final { dLdx << x_[0], x_[1]; }
+  void getIntermediateCostDerivativeState(state_vector_t& dLdx) final { dLdx << x_[0], x_[1], 0.0; }
 
-  void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) final { dLdxx << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0, 0, 0; }
+  void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) final { dLdxx << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0; }
 
   void getIntermediateCostDerivativeInput(input_vector_t& dLdu) final { dLdu << 0.01 * u_[0]; }
 
@@ -239,8 +239,8 @@ class system_cost_1 : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
   Terminal Cost Functions
    */
   void getTerminalCost(scalar_t& Phi) final { Phi = 0.5 * pow(x_[0], 2) + 0.5 * pow(x_[1], 2); }
-  void getTerminalCostDerivativeState(state_vector_t& dPhidx) final { dPhidx << x_[0], x_[1]; }
-  void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final { dPhidxx << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0, 0, 0; }
+  void getTerminalCostDerivativeState(state_vector_t& dPhidx) final { dPhidx << x_[0], x_[1], 0.0; }
+  void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final { dPhidxx << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0; }
 };
 
 class system_cost_2 : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
@@ -254,9 +254,9 @@ class system_cost_2 : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
 
   void getIntermediateCost(scalar_t& L) final { L = 0.5 * pow(x_[0], 2) + 0.5 * pow(x_[1], 2) + 0.005 * pow(u_[0], 2); }
 
-  void getIntermediateCostDerivativeState(state_vector_t& dLdx) final { dLdx << x_[0], x_[1], 0; }
+  void getIntermediateCostDerivativeState(state_vector_t& dLdx) final { dLdx << x_[0], x_[1], 0.0; }
 
-  void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) final { dLdxx << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0, 0, 0; }
+  void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) final { dLdxx << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0; }
 
   void getIntermediateCostDerivativeInput(input_vector_t& dLdu) final { dLdu << 0.01 * u_[0]; }
 
@@ -268,8 +268,8 @@ class system_cost_2 : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
   Terminal Cost Functions
    */
   void getTerminalCost(scalar_t& Phi) final { Phi = 0.5 * pow(x_[0], 2) * pow(x_[1], 2); }
-  void getTerminalCostDerivativeState(state_vector_t& dPhidx) final { dPhidx << x_[0], x_[1]; }
-  void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final { dPhidxx << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0, 0, 0; }
+  void getTerminalCostDerivativeState(state_vector_t& dPhidx) final { dPhidx << x_[0], x_[1], 0.0; }
+  void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final { dPhidxx << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0; }
 };
 
 class system_cost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {

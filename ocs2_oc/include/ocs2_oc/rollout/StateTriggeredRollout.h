@@ -134,7 +134,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     systemEventHandlersPtr_->reset();
 
     state_vector_t x0 = initState;
-    size_t k_u = 0;  // control input iterator
+    int k_u = 0;  // control input iterator
 
     size_t eventID = 0;
     scalar_t t0 = timeIntervalArray.front().first;
@@ -142,13 +142,13 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     const scalar_t finalTime = t1;  // stored separately due to overwriting t1 when refining
 
     bool refining = false;
-    bool triggered = false;
+    int singleEventIterations = 0;  // iterations for a single event
+    int numTotalIterations = 0;     // overall number of iterations
 
-    int localNumIterations = 0;                                     // iterations since last event
-    int numIterations = 0;                                          // overall number of iterations
-    RootFinder rootFinder(this->settings().rootFindingAlgorithm_);  // RootFinding algorithm
+    RootFinder rootFinder(this->settings().rootFindingAlgorithm_);  // root-finding algorithm
 
     while (true) {  // keeps looping until end time condition is fulfilled, after which the loop is broken
+      bool triggered = false;
       try {
         dynamicsIntegratorPtr_->integrate(x0, t0, t1, stateTrajectory, timeTrajectory, this->settings().minTimeStep_,
                                           this->settings().absTolODE_, this->settings().relTolODE_, maxNumSteps, true);
@@ -156,21 +156,17 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
         eventID = e;
         triggered = true;
       }
-      // calculate GuardSurface value of last query state and time
+      // calculate guard surface value of last query state and time
       const scalar_t queryTime = timeTrajectory.back();
       const state_vector_t queryState = stateTrajectory.back();
-
       dynamic_vector_t guardSurfaces;
       systemDynamicsPtr_->computeGuardSurfaces(queryTime, queryState, guardSurfaces);
       const scalar_t queryGuard = guardSurfaces[eventID];
 
-      // accuracy conditions on the obtained queryGuard and width of time window
-      bool guardAccuracyCondition = std::fabs(queryGuard) < this->settings().absTolODE_;
-      bool timeAccuracyCondition = std::fabs(t1 - t0) < this->settings().absTolODE_;
-      bool accuracyCondition = guardAccuracyCondition || timeAccuracyCondition;
-
-      // condition to detect end of simulation
-      bool timeEndTermination = std::fabs(finalTime - timeTrajectory.back()) == 0;
+      // accuracy conditions on the obtained query guard and width of time window
+      const bool guardAccuracyCondition = std::fabs(queryGuard) < this->settings().absTolODE_;
+      const bool timeAccuracyCondition = std::fabs(t1 - t0) < this->settings().absTolODE_;
+      const bool accuracyCondition = guardAccuracyCondition || timeAccuracyCondition;
 
       // remove the element past the guard surface if the event handler was triggered
       // (Due to checking in EventHandler this can only happen to the last element of the trajectory)
@@ -178,8 +174,8 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       if (triggered && !accuracyCondition) {
         stateTrajectory.pop_back();
         timeTrajectory.pop_back();
-        triggered = false;
       }
+      triggered = false;
 
       // compute control input trajectory and concatenate to inputTrajectory
       if (this->settings().reconstructInputTrajectory_) {
@@ -188,71 +184,63 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
         }  // end of k loop
       }
 
-      // end time condition, means iteration procedure is done
-      if (timeEndTermination) {
+      // end time condition to detect end of simulation, means iteration procedure is done
+      if (numerics::almost_eq(finalTime, timeTrajectory.back())) {
         break;
       }
 
       // accuracy condition for event refinement. If sufficiently accurate crossing location has been determined
       if (accuracyCondition) {
         // set new begin/end time and begin state
-        x0 = queryState;
         t0 = queryTime;
         t1 = finalTime;
+        // compute jump
+        systemDynamicsPtr_->computeJumpMap(queryTime, queryState, x0);
 
-        // compute Jump Map
-        systemDynamicsPtr_->computeJumpMap(t0, queryState, x0);
-
-        // append Event to Array with event indices
+        // append the event to array with event indices
         eventsPastTheEndIndeces.push_back(stateTrajectory.size());
 
-        // determine GuardSurface_cross value and update the eventHandler
-        dynamic_vector_t GuardSurfacesCross;
-        systemDynamicsPtr_->computeGuardSurfaces(t0, x0, GuardSurfacesCross);
-        // updates the last event triggered times of Event Handler
-        systemEventHandlersPtr_->setLastEvent(t0, GuardSurfacesCross);
+        // determine guard surface cross value and update the eventHandler
+        dynamic_vector_t guardSurfacesCross;
+        systemDynamicsPtr_->computeGuardSurfaces(t0, x0, guardSurfacesCross);
+        // updates the last event triggering times of Event Handler
+        systemEventHandlersPtr_->setLastEvent(t0, guardSurfacesCross);
 
         // reset relevant boolean and counter
         refining = false;
-        localNumIterations = 0;
+        singleEventIterations = 0;
       } else {           // otherwise keep or start refining
         if (refining) {  // apply the rules of the root-finding method to continue refining
           rootFinder.updateBracket(queryTime, queryGuard);
-          t1 = rootFinder.getNewQuery();
-
-          t0 = timeTrajectory.back();
-          x0 = stateTrajectory.back();
         } else {  // properly configure root-finding method to start refining
-          scalar_t timeBefore = timeTrajectory.back();
-          state_vector_t stateBefore = stateTrajectory.back();
-
+          const scalar_t& timeBefore = timeTrajectory.back();
+          const state_vector_t& stateBefore = stateTrajectory.back();
           dynamic_vector_t guardSurfacesBefore;
           systemDynamicsPtr_->computeGuardSurfaces(timeBefore, stateBefore, guardSurfacesBefore);
-          scalar_t guardBefore = guardSurfacesBefore[eventID];
+          const scalar_t& guardBefore = guardSurfacesBefore[eventID];
 
           rootFinder.setInitBracket(timeBefore, queryTime, guardBefore, queryGuard);
-          t1 = rootFinder.getNewQuery();
-
-          t0 = timeTrajectory.back();
-          x0 = stateTrajectory.back();
           refining = true;
         }
+        t1 = rootFinder.getNewQuery();
+        t0 = timeTrajectory.back();
+        x0 = stateTrajectory.back();
 
         stateTrajectory.pop_back();
         timeTrajectory.pop_back();
         inputTrajectory.pop_back();
         k_u--;
       }
-      localNumIterations++;
-      numIterations++;  // count iterations
-    }                   // end of while loop
+      singleEventIterations++;
+      numTotalIterations++;
+    }  // end of while loop
 
     // check for the numerical stability
     this->checkNumericalStability(controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
     if (false) {
       std::cerr << "###########" << std::endl;
-      std::cerr << "Rollout finished after " << numIterations << " iterations." << std::endl;
+      std::cerr << "Rollout finished after " << numTotalIterations << " iterations." << std::endl;
       std::cerr << "###########" << std::endl;
     }
 

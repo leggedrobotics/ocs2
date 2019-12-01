@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/OCS2NumericTraits.h>
 #include <ocs2_core/control/ControllerBase.h>
+#include "ocs2_core/misc/Numerics.h"
 
 #include "Rollout_Settings.h"
 

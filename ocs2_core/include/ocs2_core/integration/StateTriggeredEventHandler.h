@@ -77,7 +77,7 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
    * @param [in] lastEventTriggeredTime: Last Time that an event is triggered.
    * @param [in] lastGuardSurfacesValues: The value of the guard functions at lastEventTriggeredTime.
    */
-  void setLastEventTimes(scalar_t lastEventTriggeredTime, const dynamic_vector_t& lastGuardSurfacesValues) {
+  void setLastEvent(scalar_t lastEventTriggeredTime, const dynamic_vector_t& lastGuardSurfacesValues) {
     lastEventTriggeredTime_ = std::move(lastEventTriggeredTime);
     guardSurfacesValuesPrevious_ = lastGuardSurfacesValues;
   }

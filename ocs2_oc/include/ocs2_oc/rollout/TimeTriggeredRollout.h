@@ -131,7 +131,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     systemEventHandlersPtr_->reset();
 
     state_vector_t beginState = initState;
-    size_t k_u = 0;  // control input iterator
+    int k_u = 0;  // control input iterator
     for (int i = 0; i < numSubsystems; i++) {
       // integrate controlled system
       dynamicsIntegratorPtr_->integrate(beginState, timeIntervalArray[i].first, timeIntervalArray[i].second, stateTrajectory,

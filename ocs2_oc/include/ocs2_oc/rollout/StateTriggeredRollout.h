@@ -210,7 +210,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
         dynamic_vector_t GuardSurfacesCross;
         systemDynamicsPtr_->computeGuardSurfaces(t0, x0, GuardSurfacesCross);
         // updates the last event triggered times of Event Handler
-        systemEventHandlersPtr_->setLastEventTimes(t0, GuardSurfacesCross);
+        systemEventHandlersPtr_->setLastEvent(t0, GuardSurfacesCross);
 
         // reset relevant boolean and counter
         refining = false;

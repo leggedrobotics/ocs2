@@ -117,7 +117,7 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
 
     if (time - lastEventTriggeredTime_ > minEventTimeDifference_) {
       for (size_t i = 0; i < guardSurfacesValuesPrevious_.size(); i++) {
-        if (guardSurfacesValuesCurrent_[i] <= 0 && guardSurfacesValuesPrevious_(i) > 0) {
+        if (guardSurfacesValuesCurrent_(i) <= 0 && guardSurfacesValuesPrevious_(i) > 0) {
           eventTriggered = true;
           triggeredEventSurface_ = i;
         }
@@ -157,9 +157,6 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
       timeTrajectory.erase(timeTrajectory.begin() + lastIndex + 1, timeTrajectory.end());
       stateTrajectory.erase(stateTrajectory.begin() + lastIndex + 1, stateTrajectory.end());
     }
-
-    // lastEventTriggeredTime_ = timeTrajectory[lastIndex];
-    // guardSurfacesValuesPrevious_.swap(guardSurfacesValuesCurrent_);
 
     // StateTriggered event
     return triggeredEventSurface_;

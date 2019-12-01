@@ -68,7 +68,9 @@ class RootFinder {
   using pair_t = std::pair<scalar_t, scalar_t>;
 
   /**
-   * Default Constructor.
+   * Constructor.
+   *
+   * @param [in] rootFindingAlgorithm: The root-finding algorithm. The default algorithm is "Anderson & Bjorck" method.
    */
   explicit RootFinder(RootFinderType rootFindingAlgorithm = RootFinderType::ANDERSON_BJORCK)
       : rootFindingAlgorithm_(rootFindingAlgorithm) {}
@@ -82,8 +84,8 @@ class RootFinder {
    * Sets the initial bracket when the RootFinding method is initialized.
    * Normally done when first zero crossing is detected
    *
-   * @param [in] timeInt: Pair of two time moments
-   * @param [in] guardInt: Pair of two function values at time_int times, should have opposite sign
+   * @param [in] timeInt: Pair of two time moments.
+   * @param [in] guardInt: Pair of two function values at time_int times, should have opposite sign.
    */
   void setInitBracket(pair_t timeInt, pair_t guardInt) {
     if (guardInt.first * guardInt.second > 0) {
@@ -174,7 +176,7 @@ class RootFinder {
    */
   void display() {
     std::cerr << "Root Finding Information" << std::endl;
-    std::cerr << "Time Bracket: [" << timeInt_.first << ";" << timeInt_.second << "]" << std::endl;
+    std::cerr << "Time Bracket:  [" << timeInt_.first << ";" << timeInt_.second << "]" << std::endl;
     std::cerr << "Value Bracket: [" << guardInt_.first << ";" << guardInt_.second << "]" << std::endl;
   }
 

@@ -64,7 +64,7 @@ class system_dyn1 final : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
   }
 
   void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) override {
-    guardSurfacesValue = Eigen::Matrix<double, 2, 1>();
+	guardSurfacesValue.resize(2);
     guardSurfacesValue[0] = 1;
     guardSurfacesValue[1] = -state[0] * state[1];
   }
@@ -97,8 +97,8 @@ class system_dyn2 final : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
   }
 
   void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) override {
-    guardSurfacesValue = Eigen::Matrix<double, 2, 1>();
-    guardSurfacesValue[0] = state[0] * state[1];
+	guardSurfacesValue.resize(2);
+	guardSurfacesValue[0] = state[0] * state[1];
     guardSurfacesValue[1] = 1;
   }
 
@@ -136,7 +136,6 @@ class system_dyn final : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
 
   void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) override {
     size_t activeSubsystem = state[2];
-    guardSurfacesValue = Eigen::Matrix<double, 2, 1>();
     subsystemDynamicsPtr_[activeSubsystem]->computeGuardSurfaces(time, state, guardSurfacesValue);
   }
 

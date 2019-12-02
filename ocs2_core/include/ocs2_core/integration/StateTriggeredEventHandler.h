@@ -147,16 +147,16 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
       return BASE::handleEvent(stateTrajectory, timeTrajectory);
     }
 
-    // Correcting for the zero crossing
-    size_t lastIndex;
-    scalar_t zeroCrossingTime;
-    state_vector_t zeroCrossingState;
-    computeZeroCrossing(stateTrajectory, timeTrajectory, lastIndex, zeroCrossingState, zeroCrossingTime);
-
-    if (lastIndex > 0) {
-      timeTrajectory.erase(timeTrajectory.begin() + lastIndex + 1, timeTrajectory.end());
-      stateTrajectory.erase(stateTrajectory.begin() + lastIndex + 1, stateTrajectory.end());
-    }
+//    // Correcting for the zero crossing
+//    size_t lastIndex;
+//    scalar_t zeroCrossingTime;
+//    state_vector_t zeroCrossingState;
+//    computeZeroCrossing(stateTrajectory, timeTrajectory, lastIndex, zeroCrossingState, zeroCrossingTime);
+//
+//    if (lastIndex > 0) {
+//      timeTrajectory.erase(timeTrajectory.begin() + lastIndex + 1, timeTrajectory.end());
+//      stateTrajectory.erase(stateTrajectory.begin() + lastIndex + 1, stateTrajectory.end());
+//    }
 
     // StateTriggered event
     return triggeredEventSurface_;

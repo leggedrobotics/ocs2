@@ -6,6 +6,8 @@
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
 #include <ocs2_oc/test/dynamics_hybrid_slq_test.h>
 
+#include <ocs2_core/cost/QuadraticCostFunction.h>
+
 #include <ocs2_ddp/SLQ.h>
 #include <ocs2_ddp/SLQ_Settings.h>
 
@@ -40,7 +42,7 @@ TEST(testStateRollOut_SLQ, RunExample) {
   std::shared_ptr<hybridSysLogic> logicRulesPtr(new hybridSysLogic(eventTimes, subsystemsSequence));
 
   double startTime = 0.0;
-  double finalTime = 50.0;
+  double finalTime = 5.0;
 
   std::vector<double> partitioningTimes;
   partitioningTimes.push_back(startTime);
@@ -57,7 +59,20 @@ TEST(testStateRollOut_SLQ, RunExample) {
   // constraints
   hybridSysConstraints systemConstraints;
   // cost function
-  hybridSysCost systemCost;
+  Eigen::Matrix<double, STATE_DIM, STATE_DIM> Q;
+  Q<< 0.5, 0, 0, 0, 0.5, 0, 0, 0, 0;
+  Eigen::Matrix<double, STATE_DIM, STATE_DIM> P;
+  P<< 0.5, 0, 0, 0, 0.5, 0, 0, 0, 0;
+  Eigen::Matrix<double, INPUT_DIM, INPUT_DIM> R;
+  R<< 0.005;
+  Eigen::Matrix<double, INPUT_DIM, STATE_DIM> crossTerm;
+  crossTerm.setZero();
+  Eigen::Matrix<double, STATE_DIM, 1> xNominal;
+  xNominal.setZero();
+  Eigen::Matrix<double, INPUT_DIM, 1> uNominal;
+  uNominal.setZero();
+
+  QuadraticCostFunction<STATE_DIM,INPUT_DIM> systemCost(Q,R,xNominal,uNominal,P,xNominal,crossTerm);
 
   // operatingTrajectories
   Eigen::Matrix<double, STATE_DIM, 1> stateOperatingPoint = Eigen::Matrix<double, STATE_DIM, 1>::Zero();

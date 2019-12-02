@@ -201,7 +201,7 @@ TEST(StateRolloutTests, runHybridDynamics) {
   // Construct Variables for run
   // Simulation time
   scalar_t t0 = 0;
-  scalar_t t1 = 50;
+  scalar_t t1 = 5;
   // Initial State
   state_vector_t initState(2, 0, 1);
   initState[0] = 5;

@@ -152,7 +152,7 @@ TEST(StateRolloutTests, rolloutTestPendulumDynamics) {
   for (int i = 0; i < timeTrajectory.size(); i++) {
     // Test 1: No Significant penetration of Guard Surface
     EXPECT_GT(stateTrajectory[i][0], -1e-6);
-    // Test 2: No Significant lose of energy along trajectory (apart from due to damping during bounce)
+    // Test 2: No Significant loss of energy along trajectory (apart from due to damping during bounce)
     scalar_t h = 1 - std::cos(stateTrajectory[i][0]); // height at time i (since length = 1)
     scalar_t vx = stateTrajectory[i][1] * std::cos(stateTrajectory[i][0]); // x component velocity
     scalar_t vy = stateTrajectory[i][1] * std::sin(stateTrajectory[i][0]); // y component velocity

@@ -31,7 +31,7 @@ TEST(StateRolloutTests, rolloutTestBallDynamics) {
   // Construct State TriggerdRollout Object
   ocs2::Rollout_Settings RolloutSettings;
   ocs2::ballDyn dynamics;
-  ocs2::StateTriggeredRollout<2,1> Rollout(dynamics, RolloutSettings);
+  ocs2::StateTriggeredRollout<2,1> rollout(dynamics, RolloutSettings);
   // Construct Variables for run
   // Simulation time
   scalar_t t0 = 0;
@@ -47,12 +47,12 @@ TEST(StateRolloutTests, rolloutTestBallDynamics) {
 
    input_vector_t bias;
    bias << 0;
-   input_vector_array_t bias_array(1, bias);
+   input_vector_array_t biasArray(1, bias);
 
    input_state_matrix_t gain;
    gain << 1, 0;
-   input_state_matrix_array_t gain_array(1, gain);
-   ocs2::LinearController<2, 1> control(timestamp, bias_array, gain_array);
+   input_state_matrix_array_t gainArray(1, gain);
+   ocs2::LinearController<2, 1> control(timestamp, biasArray, gainArray);
    ocs2::LinearController<2, 1>* controller = &control;
 
   // Trajectory storage
@@ -64,7 +64,7 @@ TEST(StateRolloutTests, rolloutTestBallDynamics) {
   state_vector_t finalState;
   // Run
   finalState =
-      Rollout.run(t0, initState, t1, controller, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+      rollout.run(t0, initState, t1, controller, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
   for (int i = 0; i < timeTrajectory.size(); i++) {
     // Test 1: Energy Conservation
@@ -104,9 +104,9 @@ TEST(StateRolloutTests, rolloutTestPendulumDynamics) {
 
   using time_interval_array_t = std::vector<time_interval_t>;
   // Construct State TriggerdRollout Object
-  ocs2::Rollout_Settings RolloutSettings;
+  ocs2::Rollout_Settings rolloutSettings;
   ocs2::pendulum_dyn dynamics;
-  ocs2::StateTriggeredRollout<2, 1> Rollout(dynamics, RolloutSettings);
+  ocs2::StateTriggeredRollout<2, 1> rollout(dynamics, rolloutSettings);
   // Create Logic Rules
   ocs2::pendulum_logic logic;
   ocs2::pendulum_logic* logicRules = &logic;
@@ -142,7 +142,7 @@ TEST(StateRolloutTests, rolloutTestPendulumDynamics) {
   state_vector_t FinalState;
   // Run
   FinalState =
-      Rollout.run(t0, initState, t1, controller, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+      rollout.run(t0, initState, t1, controller, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
   // logicRules->display();
 
@@ -195,9 +195,9 @@ TEST(StateRolloutTests, runHybridDynamics) {
   std::vector<size_t> subsystemsSequence{1};
   std::shared_ptr<ocs2::system_logic> logicRules(new ocs2::system_logic(eventTimes, subsystemsSequence));
   // Construct State TriggerdRollout Object
-  ocs2::Rollout_Settings sets;
+  ocs2::Rollout_Settings rolloutSettings;
   ocs2::system_dyn dynamics;
-  ocs2::StateTriggeredRollout<3, 1> Rollout(dynamics, sets);
+  ocs2::StateTriggeredRollout<3, 1> rollout(dynamics, rolloutSettings);
   // Construct Variables for run
   // Simulation time
   scalar_t t0 = 0;
@@ -210,12 +210,12 @@ TEST(StateRolloutTests, runHybridDynamics) {
   scalar_array_t timestamp(1, t0);
   input_vector_t bias;
   bias << 0;
-  input_vector_array_t bias_array(1, bias);
+  input_vector_array_t biasArray(1, bias);
 
   input_state_matrix_t gain;
   gain << 0, 0, 0;
-  input_state_matrix_array_t gain_array(1, gain);
-  ocs2::LinearController<3, 1> control(timestamp, bias_array, gain_array);
+  input_state_matrix_array_t gainArray(1, gain);
+  ocs2::LinearController<3, 1> control(timestamp, biasArray, gainArray);
   ocs2::LinearController<3, 1>* Controller = &control;
 
   // Trajectory storage
@@ -224,22 +224,22 @@ TEST(StateRolloutTests, runHybridDynamics) {
   state_vector_array_t stateTrajectory(0);
   input_vector_array_t inputTrajectory(0);
   // Output State
-  state_vector_t FinalState;
+  state_vector_t finalState;
   // Run
-  FinalState =
-      Rollout.run(t0, initState, t1, Controller, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+  finalState =
+      rollout.run(t0, initState, t1, Controller, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
   // logicRules->display();
 
   for (int i = 0; i < timeTrajectory.size(); i++) {
     // Test 1: No Significant penetration of Guard Surface
-    dynamic_vector_t guard_values_i;
-    scalar_t time_i = timeTrajectory[i];
-    state_vector_t state_i = stateTrajectory[i];
-    dynamics.computeGuardSurfaces(time_i, state_i, guard_values_i);
+    dynamic_vector_t currentGuardValues;
+    scalar_t currentTime = timeTrajectory[i];
+    state_vector_t currentState = stateTrajectory[i];
+    dynamics.computeGuardSurfaces(currentTime,currentState,currentGuardValues);
 
-    EXPECT_GT(guard_values_i[0], -1e-6);
-    EXPECT_GT(guard_values_i[1], -1e-6);
+    EXPECT_GT(currentGuardValues[0], -1e-6);
+    EXPECT_GT(currentGuardValues[1], -1e-6);
     // Optional output of state and time trajectories
     if (false) {
       std::cout << i << ";" << timeTrajectory[i] << ";" << stateTrajectory[i][0] << ";" << stateTrajectory[i][1] << ";"

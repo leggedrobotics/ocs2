@@ -147,54 +147,8 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
       return BASE::handleEvent(stateTrajectory, timeTrajectory);
     }
 
-//    // Correcting for the zero crossing
-//    size_t lastIndex;
-//    scalar_t zeroCrossingTime;
-//    state_vector_t zeroCrossingState;
-//    computeZeroCrossing(stateTrajectory, timeTrajectory, lastIndex, zeroCrossingState, zeroCrossingTime);
-//
-//    if (lastIndex > 0) {
-//      timeTrajectory.erase(timeTrajectory.begin() + lastIndex + 1, timeTrajectory.end());
-//      stateTrajectory.erase(stateTrajectory.begin() + lastIndex + 1, stateTrajectory.end());
-//    }
-
     // StateTriggered event
     return triggeredEventSurface_;
-  }
-
-  /**
-   * Computes the zero crossing.
-   *
-   * @param [in] stateTrajectory: The state trajectory which contains the current state vector as its last element.
-   * @param [in] timeTrajectory: The time trajectory which contains the current time as its last element.
-   * @param [out] lastIndex: The first index after crossing.
-   * @param [out] zeroCrossingState: State at zero crossing.
-   * @param [out] zeroCrossingTime: Time of the zero crossing.
-   */
-  void computeZeroCrossing(const state_vector_array_t& stateTrajectory, const scalar_array_t& timeTrajectory, size_t& lastIndex,
-                           state_vector_t& zeroCrossingState, scalar_t& zeroCrossingTime) {
-    if (timeTrajectory.size() == 1) {
-      lastIndex = 0;
-      zeroCrossingTime = timeTrajectory.front();
-      zeroCrossingState = stateTrajectory.front();
-    } else {
-      lastIndex = timeTrajectory.size() - 1;
-
-      if (timeTrajectory[timeTrajectory.size() - 2] - lastEventTriggeredTime_ < minEventTimeDifference_) {
-        for (int i = timeTrajectory.size() - 2; i >= 0; i--) {
-          BASE::systemPtr_->computeGuardSurfaces(timeTrajectory[i], stateTrajectory[i], guardSurfacesValuesPrevious_);
-          if (guardSurfacesValuesPrevious_[triggeredEventSurface_] > 0) {
-            break;
-          } else {
-            guardSurfacesValuesCurrent_.swap(guardSurfacesValuesPrevious_);
-            lastIndex = i;
-          }
-        }
-      }
-    }
-
-    dynamic_vector_t zeroCrossingGuardSurfacesValues;
-    BASE::systemPtr_->computeGuardSurfaces(zeroCrossingTime, zeroCrossingState, zeroCrossingGuardSurfacesValues);
   }
 
  protected:

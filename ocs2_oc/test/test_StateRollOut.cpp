@@ -146,7 +146,7 @@ TEST(StateRolloutTests, rolloutTestPendulumDynamics) {
 
   // logicRules->display();
 
-  scalar_t energyPrevious = 9.81*2; // Initial energy (pendulum in upright position h = 1)
+  scalar_t energyPrevious = 9.81*2; // Initial energy (pendulum in upright position h = 2*L)
   size_t eventCounter = 0;
 
   for (int i = 0; i < timeTrajectory.size(); i++) {
@@ -165,7 +165,7 @@ TEST(StateRolloutTests, rolloutTestPendulumDynamics) {
     energyPrevious = E;
 
     // Optional output of state and time trajectories
-    if (true) {
+    if (false) {
       std::cout << i << ";" << timeTrajectory[i] << ";" << stateTrajectory[i][0] << ";" << stateTrajectory[i][1] << ";"
                 << inputTrajectory[i] << std::endl;
     }

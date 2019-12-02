@@ -72,7 +72,7 @@ class SystemOperatingPoint : public SystemOperatingTrajectoriesBase<STATE_DIM, I
   /**
    * Default destructor.
    */
-  virtual ~SystemOperatingPoint() override = default;
+  ~SystemOperatingPoint() override = default;
 
   SystemOperatingPoint<STATE_DIM, INPUT_DIM>* clone() const override { return new SystemOperatingPoint<STATE_DIM, INPUT_DIM>(*this); }
 

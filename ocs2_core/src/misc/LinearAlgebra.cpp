@@ -33,7 +33,9 @@ namespace ocs2 {
 namespace LinearAlgebra {
 
 bool makePSD(Eigen::MatrixXd& squareMatrix) {
-  if (squareMatrix.rows() != squareMatrix.cols()) throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
+  if (squareMatrix.rows() != squareMatrix.cols()) {
+    throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
+  }
 
   Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eig(squareMatrix, Eigen::EigenvaluesOnly);
   Eigen::VectorXd lambda = eig.eigenvalues();

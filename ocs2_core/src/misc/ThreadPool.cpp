@@ -14,7 +14,7 @@ namespace ocs2 {
 ThreadPool::ThreadPool(size_t nThreads, int priority) : nextTaskId_(0), stop_(false), debug_(false) {
   workerThreads_.reserve(nThreads);
   for (size_t i = 0; i < nThreads; i++) {
-    workerThreads_.push_back(std::thread(&ThreadPool::worker, this, i));
+    workerThreads_.emplace_back(&ThreadPool::worker, this, i);
     setThreadPriority(priority, workerThreads_.back());
   }
 }
@@ -64,7 +64,7 @@ int ThreadPool::popReady() {
 /**************************************************************************************************/
 /**************************************************************************************************/
 void ThreadPool::worker(int workerId) {
-  while (1) {
+  while (true) {
     int taskId;
 
     taskId = popReady();  // can return if stop_ flag is set

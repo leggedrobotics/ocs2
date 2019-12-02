@@ -61,24 +61,13 @@ class HybridLogicRulesMachine {
   using scalar_array_t = DIMENSIONS::scalar_array_t;
 
   /**
-   * Default constructor.
-   */
-  HybridLogicRulesMachine()
-      : logicRulesModified_(false),
-        newLogicRulesInBuffer_(false),
-        numPartitions_(1),
-        partitioningTimes_{-10000, 10000},
-        eventTimesStock_(1, scalar_array_t(0)),
-        switchingTimesStock_(1, partitioningTimes_),
-        eventCountersStock_(1, size_array_t{0}) {}
-
-  /**
    * Constructor.
    *
    * @param logicRules: The logic rules class.
    */
-  explicit HybridLogicRulesMachine(std::shared_ptr<HybridLogicRules> logicRules)
+  explicit HybridLogicRulesMachine(std::shared_ptr<HybridLogicRules> logicRules = nullptr)
       : logicRules_(std::move(logicRules)),
+        logicRulesBuffer_(nullptr),
         logicRulesModified_(false),
         newLogicRulesInBuffer_(false),
         numPartitions_(1),
@@ -93,19 +82,28 @@ class HybridLogicRulesMachine {
   virtual ~HybridLogicRulesMachine() = default;
 
   /**
-   * Copy constructor
+   * Copy constructor.
    */
-  HybridLogicRulesMachine(const HybridLogicRulesMachine& rhs) = default;
+  HybridLogicRulesMachine(const HybridLogicRulesMachine& rhs)
+      : logicRules_(rhs.logicRules_),
+        logicRulesBuffer_(nullptr),
+        logicRulesModified_(false),
+        newLogicRulesInBuffer_(false),
+        numPartitions_(rhs.numPartitions_),
+        partitioningTimes_(rhs.partitioningTimes_),
+        eventTimesStock_(rhs.eventTimesStock_),
+        switchingTimesStock_(rhs.switchingTimesStock_),
+        eventCountersStock_(rhs.eventCountersStock_) {}
 
   /**
-   * Move assignment
+   * Deleted copy assignment since std::atomic members are neither copyable nor movable.
    */
-  HybridLogicRulesMachine& operator=(HybridLogicRulesMachine&& other) = default;
+  HybridLogicRulesMachine& operator=(const HybridLogicRulesMachine& other) = delete;
 
   /**
-   * Assignment
+   * Deleted move assignment since std::atomic members are neither copyable nor movable.
    */
-  HybridLogicRulesMachine& operator=(const HybridLogicRulesMachine& other) = default;
+  HybridLogicRulesMachine& operator=(HybridLogicRulesMachine&& other) = delete;
 
   /**
    * Sets a new logic rules class.

@@ -85,7 +85,7 @@ TEST(StateRolloutTests, rolloutTestBallDynamics) {
   }
 }
 
-TEST(StateRolloutTests, Case2) {
+TEST(StateRolloutTests, rolloutTestPendulumDynamics) {
   using DIMENSIONS = ocs2::Dimensions<2, 1>;
   using controller_t = ocs2::ControllerBase<2, 1>;
 
@@ -104,33 +104,34 @@ TEST(StateRolloutTests, Case2) {
 
   using time_interval_array_t = std::vector<time_interval_t>;
   // Construct State TriggerdRollout Object
-  ocs2::Rollout_Settings sets;
+  ocs2::Rollout_Settings RolloutSettings;
   ocs2::pendulum_dyn dynamics;
-  ocs2::StateTriggeredRollout<2, 1> Rollout(dynamics, sets);
+  ocs2::StateTriggeredRollout<2, 1> Rollout(dynamics, RolloutSettings);
   // Create Logic Rules
   ocs2::pendulum_logic logic;
   ocs2::pendulum_logic* logicRules = &logic;
   // Construct Variables for run
   // Simulation time
   scalar_t t0 = 0;
-  scalar_t t1 = 5;
+  scalar_t t1 = 15;
   // Initial State
   state_vector_t initState(2, 0);
   initState[0] = 3.1415;
-  // Event times (none)
+  // Initial Event times (none)
   scalar_array_t eventTimes(1, t0);
   // Controller (time constant zero controller)
   scalar_array_t timestamp(1, t0);
-
+  // bias Array of Controller
   input_vector_t bias;
   bias << 0;
-  input_vector_array_t bias_array(1, bias);
-
+  input_vector_array_t biasArray(1, bias);
+  // gain Array of Controller
   input_state_matrix_t gain;
-  gain << 1, 0;
-  input_state_matrix_array_t gain_array(1, gain);
-  ocs2::LinearController<2, 1> Control(timestamp, bias_array, gain_array);
-  ocs2::LinearController<2, 1>* Controller = &Control;
+  gain << 0, 0;
+  input_state_matrix_array_t gainArray(1, gain);
+
+  ocs2::LinearController<2, 1> control(timestamp, biasArray, gainArray);
+  ocs2::LinearController<2, 1>* controller = &control;
 
   // Trajectory storage
   scalar_array_t timeTrajectory(0);
@@ -141,22 +142,37 @@ TEST(StateRolloutTests, Case2) {
   state_vector_t FinalState;
   // Run
   FinalState =
-      Rollout.run(t0, initState, t1, Controller, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+      Rollout.run(t0, initState, t1, controller, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
   // logicRules->display();
 
+  scalar_t energyPrevious = 9.81*2; // Initial energy (pendulum in upright position h = 1)
+  size_t eventCounter = 0;
+
   for (int i = 0; i < timeTrajectory.size(); i++) {
     // Test 1: No Significant penetration of Guard Surface
-    EXPECT_GT(stateTrajectory[i][0] + 3.1415 / 2, -1e-6);
+    EXPECT_GT(stateTrajectory[i][0], -1e-6);
+    // Test 2: No Significant lose of energy along trajectory (apart from due to damping during bounce)
+    scalar_t h = 1 - std::cos(stateTrajectory[i][0]); // height at time i (since length = 1)
+    scalar_t vx = stateTrajectory[i][1] * std::cos(stateTrajectory[i][0]); // x component velocity
+    scalar_t vy = stateTrajectory[i][1] * std::sin(stateTrajectory[i][0]); // y component velocity
+    scalar_t vsq = std::pow(vx,2) + std::pow(vy,2); // squared velocity
+    scalar_t E = 9.81*h + 0.5*vsq;
+
+    if (i != eventsPastTheEndIndeces[eventCounter])
+    {EXPECT_LT(std::fabs(E-energyPrevious), 1e-5);}
+    else{eventCounter++;}
+    energyPrevious = E;
+
     // Optional output of state and time trajectories
-    if (false) {
+    if (true) {
       std::cout << i << ";" << timeTrajectory[i] << ";" << stateTrajectory[i][0] << ";" << stateTrajectory[i][1] << ";"
                 << inputTrajectory[i] << std::endl;
     }
   }
 }
 
-TEST(StateRolloutTests, Case3) {
+TEST(StateRolloutTests, runHybridDynamics) {
   using DIMENSIONS = ocs2::Dimensions<3, 1>;
   using controller_t = ocs2::ControllerBase<3, 1>;
 

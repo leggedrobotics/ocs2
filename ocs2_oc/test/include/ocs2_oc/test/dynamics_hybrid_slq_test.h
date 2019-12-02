@@ -46,7 +46,7 @@ class system_dyn1 final : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
   system_dyn1() = default;
   ~system_dyn1() override = default;
 
-  void computeFlowMap(const double& t, const state_vector_t& x, const Eigen::Matrix<double, 1, 1>& u, state_vector_t& dxdt) override {
+  void computeFlowMap(const double& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) override {
     Eigen::Matrix<double, STATE_DIM, STATE_DIM> A;
     A << -0.1, 0.9, 0, -1, -0.01, 0, 0, 0, 0;
     Eigen::Matrix<double, STATE_DIM, INPUT_DIM> B;
@@ -79,7 +79,7 @@ class system_dyn2 final : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
   system_dyn2() = default;
   ~system_dyn2() override = default;
 
-  void computeFlowMap(const double& t, const state_vector_t& x, const Eigen::Matrix<double, 1, 1>& u, state_vector_t& dxdt) override {
+  void computeFlowMap(const double& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) override {
     Eigen::Matrix<double, STATE_DIM, STATE_DIM> A;
     A << -0, 3, 0, -3, 0, 0, 0, 0, 0;
     Eigen::Matrix<double, STATE_DIM, INPUT_DIM> B;

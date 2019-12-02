@@ -63,18 +63,4 @@ class ballDyn : public ControlledSystemBase<2, 1> {
 
   ballDyn* clone() const override { return new ballDyn(*this); }
 };
-
-class ballDev final : public DerivativesBase<2, 1> {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  ballDev() = default;
-  ~ballDev() override = default;
-
-  void getFlowMapDerivativeState(state_matrix_t& A) override { A << 0.0, 1.0, 0.0, 0.0; }
-
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B << 0.0, 1.0; }
-
-  ballDev* clone() const override { return new ballDev(*this); }
-};
 }  // namespace ocs2

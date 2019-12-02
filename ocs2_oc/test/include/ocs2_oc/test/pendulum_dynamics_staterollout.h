@@ -1,3 +1,4 @@
+#pragma once
 #include <cmath>
 
 namespace ocs2 {
@@ -29,7 +30,7 @@ class pendulum_dyn final : public ControlledSystemBase<2, 1> {
   pendulum_dyn() = default;
   ~pendulum_dyn() override = default;
 
-  void computeFlowMap(const double& t, const Eigen::Vector2d& x, const Eigen::Matrix<double, 1, 1>& u, Eigen::Vector2d& dxdt) override {
+  void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) override {
     double g = 9.81;
     double L = 1;
     dxdt << x[1], -(g / L) * std::sin(x[0]);
@@ -41,9 +42,8 @@ class pendulum_dyn final : public ControlledSystemBase<2, 1> {
   }
 
   void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) override {
-    guardSurfacesValue = Eigen::Matrix<double, 2, 1>();
+    guardSurfacesValue.resize(1);
     guardSurfacesValue[0] = state[0];
-    guardSurfacesValue[1] = 1;
   }
 
   pendulum_dyn* clone() const override { return new pendulum_dyn(*this); }

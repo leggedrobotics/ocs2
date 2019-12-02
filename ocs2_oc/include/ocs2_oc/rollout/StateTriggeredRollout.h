@@ -194,7 +194,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       // accuracy condition for event refinement. If sufficiently accurate crossing location has been determined
       if (accuracyCondition) {
         // set new begin/end time and begin state
-        t0 = queryTime;
+        t0 = queryTime + OCS2NumericTraits<scalar_t>::weakEpsilon();
         t1 = finalTime;
         // compute jump
         systemDynamicsPtr_->computeJumpMap(queryTime, queryState, x0);

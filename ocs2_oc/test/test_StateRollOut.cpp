@@ -139,9 +139,9 @@ TEST(StateRolloutTests, rolloutTestPendulumDynamics) {
   state_vector_array_t stateTrajectory(0);
   input_vector_array_t inputTrajectory(0);
   // Output State
-  state_vector_t FinalState;
+  state_vector_t finalState;
   // Run
-  FinalState =
+  finalState =
       rollout.run(t0, initState, t1, controller, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
   // logicRules->display();
@@ -193,10 +193,10 @@ TEST(StateRolloutTests, runHybridDynamics) {
   // Create Logic Rules
   std::vector<double> eventTimes(0);
   std::vector<size_t> subsystemsSequence{1};
-  std::shared_ptr<ocs2::system_logic> logicRules(new ocs2::system_logic(eventTimes, subsystemsSequence));
+  std::shared_ptr<ocs2::hybridSysLogic> logicRules(new ocs2::hybridSysLogic(eventTimes, subsystemsSequence));
   // Construct State TriggerdRollout Object
   ocs2::Rollout_Settings rolloutSettings;
-  ocs2::system_dyn dynamics;
+  ocs2::hybridSysDynamics dynamics;
   ocs2::StateTriggeredRollout<3, 1> rollout(dynamics, rolloutSettings);
   // Construct Variables for run
   // Simulation time

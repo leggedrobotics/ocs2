@@ -37,7 +37,7 @@ TEST(testStateRollOut_SLQ, RunExample) {
   std::vector<double> eventTimes(0);
   std::vector<size_t> subsystemsSequence{1};
 
-  std::shared_ptr<system_logic> logicRulesPtr(new system_logic(eventTimes, subsystemsSequence));
+  std::shared_ptr<hybridSysLogic> logicRulesPtr(new hybridSysLogic(eventTimes, subsystemsSequence));
 
   double startTime = 0.0;
   double finalTime = 50.0;
@@ -46,21 +46,18 @@ TEST(testStateRollOut_SLQ, RunExample) {
   partitioningTimes.push_back(startTime);
   partitioningTimes.push_back(finalTime);
 
-  system_dyn::state_vector_t initState = {5, 2, 1};
-
-  /*****
-  *****/
+  Eigen::Matrix<double, STATE_DIM, 1> initState = {5,2,1};
 
   // rollout
-  system_dyn sysdyn;
-  StateTriggeredRollout<STATE_DIM, 1> stateTriggeredRollout(sysdyn, rolloutSettings);
+  hybridSysDynamics systemDynamics;
+  StateTriggeredRollout<STATE_DIM, 1> stateTriggeredRollout(systemDynamics, rolloutSettings);
 
   // derivatives
-  system_der sysder;
+  hybridSysDerivatives systemDerivatives;
   // constraints
-  system_const sysconstr;
+  hybridSysConstraints systemConstraints;
   // cost function
-  system_cost syscost;
+  hybridSysCost systemCost;
 
   // operatingTrajectories
   Eigen::Matrix<double, STATE_DIM, 1> stateOperatingPoint = Eigen::Matrix<double, STATE_DIM, 1>::Zero();
@@ -69,7 +66,7 @@ TEST(testStateRollOut_SLQ, RunExample) {
 
   std::cout << "Starting SLQ Procedure" << std::endl;
   // SLQ
-  SLQ<STATE_DIM, INPUT_DIM> slqST(&stateTriggeredRollout, &sysder, &sysconstr, &syscost, &operatingTrajectories, slqSettings,
+  SLQ<STATE_DIM, INPUT_DIM> slqST(&stateTriggeredRollout, &systemDerivatives, &systemConstraints, &systemCost, &operatingTrajectories, slqSettings,
                                   logicRulesPtr);
   slqST.run(startTime, initState, finalTime, partitioningTimes);
   SLQ<STATE_DIM, INPUT_DIM>::primal_solution_t solutionST = slqST.primalSolution(finalTime);
@@ -85,7 +82,7 @@ TEST(testStateRollOut_SLQ, RunExample) {
 
   for (int i = 0; i < solutionST.stateTrajectory_.size(); i++) {
     Eigen::VectorXd guardSurfacesValue;
-    sysdyn.computeGuardSurfaces(solutionST.timeTrajectory_[i], solutionST.stateTrajectory_[i], guardSurfacesValue);
+    systemDynamics.computeGuardSurfaces(solutionST.timeTrajectory_[i], solutionST.stateTrajectory_[i], guardSurfacesValue);
 
     EXPECT_GT(guardSurfacesValue[0], -1e-10);
 

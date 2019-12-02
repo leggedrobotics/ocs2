@@ -14,17 +14,17 @@ namespace ocs2 {
 // #######################
 // ####LOGIC CLASSES######
 // #######################
-class system_logic final : public HybridLogicRules {
+class hybridSysLogic final : public HybridLogicRules {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using BASE = HybridLogicRules;
 
-  system_logic() = default;
+  hybridSysLogic() = default;
 
-  ~system_logic() override = default;
+  ~hybridSysLogic() override = default;
 
-  system_logic(scalar_array_t switchingTimes, size_array_t subsystemsSequence)
+  hybridSysLogic(scalar_array_t switchingTimes, size_array_t subsystemsSequence)
       : BASE(std::move(switchingTimes), std::move(subsystemsSequence)) {}
 
   void rewind(const scalar_t& lowerBoundTime, const scalar_t& upperBoundTime) override {}
@@ -39,20 +39,20 @@ class system_logic final : public HybridLogicRules {
 // #######################
 // ###DYNAMICS CLASSES####
 // #######################
-class system_dyn1 final : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
+class hybridSysDynamics1 final : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  system_dyn1() = default;
-  ~system_dyn1() override = default;
+  hybridSysDynamics1() = default;
+  ~hybridSysDynamics1() override = default;
 
   void computeFlowMap(const double& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) override {
     Eigen::Matrix<double, STATE_DIM, STATE_DIM> A;
-    A << -0.1, 0.9, 0, -1, -0.01, 0, 0, 0, 0;
+    A << -0.1, 0.9, 0.0, -1, -0.01, 0.0, 0.0, 0.0, 0.0;
     Eigen::Matrix<double, STATE_DIM, INPUT_DIM> B;
-    B << 0, 1, 0;
+    B << 0.0, 1.0, 0.0;
     Eigen::Matrix<double, STATE_DIM, 1> F;
-    F << 0, 0, 0;
+    F << 0.0, 0.0, 0.0;
 
     dxdt = A * x + B * u + F;
   }
@@ -69,23 +69,23 @@ class system_dyn1 final : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
     guardSurfacesValue[1] = -state[0] * state[1];
   }
 
-  system_dyn1* clone() const override { return new system_dyn1(*this); }
+  hybridSysDynamics1* clone() const override { return new hybridSysDynamics1(*this); }
 };
 
-class system_dyn2 final : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
+class hybridSysDynamics2 final : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  system_dyn2() = default;
-  ~system_dyn2() override = default;
+  hybridSysDynamics2() = default;
+  ~hybridSysDynamics2() override = default;
 
   void computeFlowMap(const double& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) override {
     Eigen::Matrix<double, STATE_DIM, STATE_DIM> A;
-    A << -0, 3, 0, -3, 0, 0, 0, 0, 0;
+    A << -0.0, 3.0, 0.0, -3.0, 0.0, 0.0, 0.0, 0.0, 0.0;
     Eigen::Matrix<double, STATE_DIM, INPUT_DIM> B;
-    B << 0, 1, 0;
+    B << 0.0, 1.0, 0.0;
     Eigen::Matrix<double, STATE_DIM, 1> F;
-    F << 0, 0, 0;
+    F << 0.0, 0.0, 0.0;
 
     dxdt = A * x + B * u + F;
   }
@@ -102,24 +102,24 @@ class system_dyn2 final : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
     guardSurfacesValue[1] = 1;
   }
 
-  system_dyn2* clone() const final { return new system_dyn2(*this); }
+  hybridSysDynamics2* clone() const final { return new hybridSysDynamics2(*this); }
 };
 
-class system_dyn final : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
+class hybridSysDynamics final : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Base = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
 
-  system_dyn() : subsystemDynamicsPtr_(2) {
-    subsystemDynamicsPtr_[0].reset(new system_dyn1);
-    subsystemDynamicsPtr_[1].reset(new system_dyn2);
+  hybridSysDynamics() : subsystemDynamicsPtr_(2) {
+    subsystemDynamicsPtr_[0].reset(new hybridSysDynamics1);
+    subsystemDynamicsPtr_[1].reset(new hybridSysDynamics2);
   }
 
-  ~system_dyn() override = default;
+  ~hybridSysDynamics() override = default;
 
-  system_dyn* clone() const override { return new system_dyn(*this); }
+  hybridSysDynamics* clone() const override { return new hybridSysDynamics(*this); }
 
-  system_dyn(const system_dyn& other) : subsystemDynamicsPtr_(2) {
+  hybridSysDynamics(const hybridSysDynamics& other) : subsystemDynamicsPtr_(2) {
     subsystemDynamicsPtr_[0].reset(other.subsystemDynamicsPtr_[0]->clone());
     subsystemDynamicsPtr_[1].reset(other.subsystemDynamicsPtr_[1]->clone());
   }
@@ -146,49 +146,49 @@ class system_dyn final : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
 // ############################
 // ####DERIVATIVE CLASSES######
 // ############################
-class system_der_1 final : public DerivativesBase<STATE_DIM, INPUT_DIM> {
+class hybridSysDerivatives1 final : public DerivativesBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  system_der_1() = default;
-  ~system_der_1() override = default;
+  hybridSysDerivatives1() = default;
+  ~hybridSysDerivatives1() override = default;
 
-  void getFlowMapDerivativeState(state_matrix_t& A) override { A << -0.1, 0.9, 0, -1, -0.01, 0, 0, 0, 0; }
+  void getFlowMapDerivativeState(state_matrix_t& A) override { A << -0.1, 0.9, 0.0, -1.0, -0.01, 0.0, 0.0, 0.0, 0.0; }
 
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B << 0, 1, 0; }
+  void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B << 0.0, 1.0, 0.0; }
 
-  system_der_1* clone() const override { return new system_der_1(*this); }
+  hybridSysDerivatives1* clone() const override { return new hybridSysDerivatives1(*this); }
 };
 
-class system_der_2 final : public DerivativesBase<STATE_DIM, INPUT_DIM> {
+class hybridSysDerivatives2 final : public DerivativesBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  system_der_2() = default;
-  ~system_der_2() override = default;
+  hybridSysDerivatives2() = default;
+  ~hybridSysDerivatives2() override = default;
 
-  void getFlowMapDerivativeState(state_matrix_t& A) override { A << -0, 3, 0, -3, 0, 0, 0, 0, 0; }
+  void getFlowMapDerivativeState(state_matrix_t& A) override { A << -0.0, 3.0, 0.0, -3.0, 0.0, 0.0, 0.0, 0.0, 0.0; }
 
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B << 0, 1, 0; }
+  void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B << 0.0, 1.0, 0.0; }
 
-  system_der_2* clone() const override { return new system_der_2(*this); }
+  hybridSysDerivatives2* clone() const override { return new hybridSysDerivatives2(*this); }
 };
 
-class system_der final : public DerivativesBase<STATE_DIM, INPUT_DIM> {
+class hybridSysDerivatives final : public DerivativesBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Base = DerivativesBase<STATE_DIM, INPUT_DIM>;
 
-  system_der() : activeSubsystem_(1), subsystemDerPtr_(2) {
-    subsystemDerPtr_[0].reset(new system_der_1);
-    subsystemDerPtr_[1].reset(new system_der_2);
+  hybridSysDerivatives() : activeSubsystem_(1), subsystemDerPtr_(2) {
+    subsystemDerPtr_[0].reset(new hybridSysDerivatives1);
+    subsystemDerPtr_[1].reset(new hybridSysDerivatives2);
   }
 
-  ~system_der() override = default;
+  ~hybridSysDerivatives() override = default;
 
-  system_der* clone() const final { return new system_der(*this); }
+  hybridSysDerivatives* clone() const final { return new hybridSysDerivatives(*this); }
 
-  system_der(const system_der& other) : activeSubsystem_(other.activeSubsystem_), subsystemDerPtr_(2) {
+  hybridSysDerivatives(const hybridSysDerivatives& other) : activeSubsystem_(other.activeSubsystem_), subsystemDerPtr_(2) {
     subsystemDerPtr_[0].reset(other.subsystemDerPtr_[0]->clone());
     subsystemDerPtr_[1].reset(other.subsystemDerPtr_[1]->clone());
   }
@@ -211,14 +211,14 @@ class system_der final : public DerivativesBase<STATE_DIM, INPUT_DIM> {
 // #######################
 // #### COST CLASSES######
 // #######################
-class system_cost_1 final : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
+class hybridSysCost1 final : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  system_cost_1() = default;
-  ~system_cost_1() = default;
+  hybridSysCost1() = default;
+  ~hybridSysCost1() = default;
 
-  system_cost_1* clone() const override { return new system_cost_1(*this); }
+  hybridSysCost1* clone() const override { return new hybridSysCost1(*this); }
 
   void getIntermediateCost(scalar_t& L) override { L = 0.5 * pow(x_[0], 2) + 0.5 * pow(x_[1], 2) + 0.005 * pow(u_[0], 2); }
 
@@ -240,14 +240,14 @@ class system_cost_1 final : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
   void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override { dPhidxx << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0; }
 };
 
-class system_cost_2 final : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
+class hybridSysCost2 final : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  system_cost_2() = default;
-  ~system_cost_2() override = default;
+  hybridSysCost2() = default;
+  ~hybridSysCost2() override = default;
 
-  system_cost_2* clone() const override { return new system_cost_2(*this); }
+  hybridSysCost2* clone() const override { return new hybridSysCost2(*this); }
 
   void getIntermediateCost(scalar_t& L) override { L = 0.5 * pow(x_[0], 2) + 0.5 * pow(x_[1], 2) + 0.005 * pow(u_[0], 2); }
 
@@ -269,21 +269,21 @@ class system_cost_2 final : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
   void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override { dPhidxx << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0; }
 };
 
-class system_cost final : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
+class hybridSysCost final : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Base = CostFunctionBase<STATE_DIM, INPUT_DIM>;
 
-  system_cost() : activeSubsystem_(1), subsystemCostPtr_(2) {
-    subsystemCostPtr_[0].reset(new system_cost_1);
-    subsystemCostPtr_[1].reset(new system_cost_2);
+  hybridSysCost() : activeSubsystem_(1), subsystemCostPtr_(2) {
+    subsystemCostPtr_[0].reset(new hybridSysCost1);
+    subsystemCostPtr_[1].reset(new hybridSysCost2);
   }
 
-  system_cost* clone() const final { return new system_cost(*this); }
+  hybridSysCost* clone() const final { return new hybridSysCost(*this); }
 
-  ~system_cost() override = default;
+  ~hybridSysCost() override = default;
 
-  system_cost(const system_cost& other) : activeSubsystem_(other.activeSubsystem_), subsystemCostPtr_(2) {
+  hybridSysCost(const hybridSysCost& other) : activeSubsystem_(other.activeSubsystem_), subsystemCostPtr_(2) {
     subsystemCostPtr_[0].reset(other.subsystemCostPtr_[0]->clone());
     subsystemCostPtr_[1].reset(other.subsystemCostPtr_[1]->clone());
   }
@@ -356,12 +356,12 @@ class system_cost final : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
 // #############################
 // #### CONSTRAINT CLASSES######
 // #############################
-class system_const_1 final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
+class hybridSysConstraints1 final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
  public:
-  system_const_1() = default;
-  ~system_const_1() = default;
+  hybridSysConstraints1() = default;
+  ~hybridSysConstraints1() = default;
 
-  system_const_1* clone() const override { return new system_const_1(*this); }
+  hybridSysConstraints1* clone() const override { return new hybridSysConstraints1(*this); }
 
   void getInequalityConstraint(scalar_array_t& h) override {
     h.resize(4);
@@ -377,16 +377,16 @@ class system_const_1 final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
     dhdx.resize(4);
     dhdx[0].setZero();
     dhdx[1].setZero();
-    dhdx[2] << 1, 0, 0;
-    dhdx[3] << -1, 0, 0;
+    dhdx[2] << 1.0, 0.0, 0.0;
+    dhdx[3] << -1.0, 0.0, 0.0;
   }
 
   void getInequalityConstraintDerivativesInput(input_vector_array_t& dhdu) override {
     dhdu.resize(4);
-    dhdu[0] << -1;
-    dhdu[1] << 1;
-    dhdu[2] << 0;
-    dhdu[3] << 0;
+    dhdu[0] << -1.0;
+    dhdu[1] << 1.0;
+    dhdu[2] << 0.0;
+    dhdu[3] << 0.0;
   }
 
   void getInequalityConstraintSecondDerivativesState(state_matrix_array_t& ddhdxdx) override {
@@ -413,12 +413,12 @@ class system_const_1 final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
   }
 };
 
-class system_const_2 final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
+class hybridSysConstraints2 final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
  public:
-  system_const_2() = default;
-  ~system_const_2() override = default;
+  hybridSysConstraints2() = default;
+  ~hybridSysConstraints2() override = default;
 
-  system_const_2* clone() const override { return new system_const_2(*this); }
+  hybridSysConstraints2* clone() const override { return new hybridSysConstraints2(*this); }
 
   void getInequalityConstraint(scalar_array_t& h) override {
     h.resize(4);
@@ -434,16 +434,16 @@ class system_const_2 final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
     dhdx.resize(4);
     dhdx[0].setZero();
     dhdx[1].setZero();
-    dhdx[2] << 1, 0, 0;
-    dhdx[3] << -1, 0, 0;
+    dhdx[2] << 1.0, 0.0, 0.0;
+    dhdx[3] << -1.0, 0.0, 0.0;
   }
 
   void getInequalityConstraintDerivativesInput(input_vector_array_t& dhdu) override {
     dhdu.resize(4);
-    dhdu[0] << -1;
-    dhdu[1] << 1;
-    dhdu[2] << 0;
-    dhdu[3] << 0;
+    dhdu[0] << -1.0;
+    dhdu[1] << 1.0;
+    dhdu[2] << 0.0;
+    dhdu[3] << 0.0;
   }
 
   void getInequalityConstraintSecondDerivativesState(state_matrix_array_t& ddhdxdx) override {
@@ -470,16 +470,16 @@ class system_const_2 final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
   }
 };
 
-class system_const final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
+class hybridSysConstraints final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
  public:
   using Base = ConstraintBase<STATE_DIM, INPUT_DIM>;
 
-  system_const() : activeSubsystem_(1), subsystemConstPtr_(2) {
-    subsystemConstPtr_[0].reset(new system_const_1);
-    subsystemConstPtr_[1].reset(new system_const_2);
+  hybridSysConstraints() : activeSubsystem_(1), subsystemConstPtr_(2) {
+    subsystemConstPtr_[0].reset(new hybridSysConstraints1);
+    subsystemConstPtr_[1].reset(new hybridSysConstraints2);
   }
 
-  ~system_const() override = default;
+  ~hybridSysConstraints() override = default;
 
   virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override {
     t_ = t;
@@ -516,7 +516,7 @@ class system_const final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
     subsystemConstPtr_[activeSubsystem_]->getInequalityConstraintDerivativesInputState(ddhdudx);
   }
 
-  system_const* clone() const override { return new system_const(*this); }
+  hybridSysConstraints* clone() const override { return new hybridSysConstraints(*this); }
 
  private:
   int activeSubsystem_;

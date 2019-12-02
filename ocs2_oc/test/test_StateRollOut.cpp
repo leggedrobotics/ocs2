@@ -8,7 +8,8 @@
 
 #include <gtest/gtest.h>
 
-TEST(StateRolloutTests, Case1) {
+TEST(StateRolloutTests, rolloutTestBallDynamics) {
+
   using DIMENSIONS = ocs2::Dimensions<2, 1>;
   using controller_t = ocs2::ControllerBase<2, 1>;
 
@@ -28,33 +29,31 @@ TEST(StateRolloutTests, Case1) {
   using time_interval_array_t = std::vector<time_interval_t>;
 
   // Construct State TriggerdRollout Object
-  ocs2::Rollout_Settings sets;
-  ocs2::ball_tester_dyn dynamics;
-  ocs2::StateTriggeredRollout<2, 1> Rollout(dynamics, sets);
-  // Create LogicRules
-  ocs2::ball_tester_logic logic;
-  ocs2::ball_tester_logic* logicRules = &logic;
+  ocs2::Rollout_Settings RolloutSettings;
+  ocs2::ballDyn dynamics;
+  ocs2::StateTriggeredRollout<2,1> Rollout(dynamics, RolloutSettings);
   // Construct Variables for run
   // Simulation time
   scalar_t t0 = 0;
-  scalar_t t1 = 50;
+  scalar_t t1 = 10;
   // Initial State
   state_vector_t initState(2, 0);
   initState[0] = 1;
-  // Event times (none)
+  // Initial Event times (none)
   scalar_array_t eventTimes(1, t0);
   // Controller (time constant zero controller)
-  scalar_array_t timestamp(1, t0);
+  // Controller (time constant zero controller)
+   scalar_array_t timestamp(1, t0);
 
-  input_vector_t bias;
-  bias << 0;
-  input_vector_array_t bias_array(1, bias);
+   input_vector_t bias;
+   bias << 0;
+   input_vector_array_t bias_array(1, bias);
 
-  input_state_matrix_t gain;
-  gain << 1, 0;
-  input_state_matrix_array_t gain_array(1, gain);
-  ocs2::LinearController<2, 1> Control(timestamp, bias_array, gain_array);
-  ocs2::LinearController<2, 1>* Controller = &Control;
+   input_state_matrix_t gain;
+   gain << 1, 0;
+   input_state_matrix_array_t gain_array(1, gain);
+   ocs2::LinearController<2, 1> control(timestamp, bias_array, gain_array);
+   ocs2::LinearController<2, 1>* controller = &control;
 
   // Trajectory storage
   scalar_array_t timeTrajectory(0);
@@ -62,22 +61,21 @@ TEST(StateRolloutTests, Case1) {
   state_vector_array_t stateTrajectory(0);
   input_vector_array_t inputTrajectory(0);
   // Output State
-  state_vector_t FinalState;
+  state_vector_t finalState;
   // Run
-  FinalState =
-      Rollout.run(t0, initState, t1, Controller, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
-
-  // logicRules->display();
+  finalState =
+      Rollout.run(t0, initState, t1, controller, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
   for (int i = 0; i < timeTrajectory.size(); i++) {
     // Test 1: Energy Conservation
     double energy = 9.81 * stateTrajectory[i][0] + 0.5 * stateTrajectory[i][1] * stateTrajectory[i][1];
-    // EXPECT_LT(std::fabs(energy - 9.81*stateTrajectory[0][0] + 0.5*stateTrajectory[0][1]*stateTrajectory[0][1]), 1e-6);
-    // Test 2: No Significant penetration of Guard Surface
+    EXPECT_LT(std::fabs(energy - 9.81*stateTrajectory[0][0] + 0.5*stateTrajectory[0][1]*stateTrajectory[0][1]), 1e-6);
+    // Test 2a: No Significant penetration of first Guard Surface
     EXPECT_GT(stateTrajectory[i][0], -1e-6);
-    // Test 2b: No significant penetration of second Guard Surface (only checked on parts after initial conditions passes trough)
-    if (timeTrajectory[i] > 0.45) {
-      // EXPECT_GT(-stateTrajectory[i][0] + 0.1 + timeTrajectory[i]/50, -1e-6);
+    // Test 2b: No Significant penetration of second Guard Surface, after first event
+    if(i>eventsPastTheEndIndeces[0])
+    {
+    	EXPECT_GT(-stateTrajectory[i][0] + 0.1 +timeTrajectory[i]/50, -1e-6);
     }
     // Optional output of state and time trajectories
     if (false) {

@@ -9,16 +9,16 @@
 
 namespace ocs2 {
 
-class ball_tester_logic final : public HybridLogicRules {
+class ballLogic final : public HybridLogicRules {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using BASE = HybridLogicRules;
 
-  ball_tester_logic() = default;
-  ~ball_tester_logic() override = default;
+  ballLogic() = default;
+  ~ballLogic() override = default;
 
-  ball_tester_logic(scalar_array_t switchingTimes, size_array_t subsystemsSequence)
+  ballLogic(scalar_array_t switchingTimes, size_array_t subsystemsSequence)
       : BASE(std::move(switchingTimes), std::move(subsystemsSequence)) {}
 
   void rewind(const scalar_t& lowerBoundTime, const scalar_t& upperBoundTime) override {}
@@ -30,22 +30,24 @@ class ball_tester_logic final : public HybridLogicRules {
                                   const scalar_t& finalTime) override{};
 };
 
-class ball_tester_dyn : public ControlledSystemBase<2, 1> {
+class ballDyn : public ControlledSystemBase<2, 1> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  ball_tester_dyn() = default;
-  ~ball_tester_dyn() = default;
+  using Base = ControlledSystemBase<2, 1>;
+  using state_matrix_t = typename BASE::DIMENSIONS::state_matrix_t;
+  using state_input_matrix_t = typename BASE::DIMENSIONS::state_input_matrix_t;
 
-  void computeFlowMap(const double& t, const Eigen::Vector2d& x, const Eigen::Matrix<double, 1, 1>& u, Eigen::Vector2d& dxdt) override {
-    Eigen::Matrix<double, 2, 2> A;
-    A << 0, 1, 0, 0;
-    Eigen::Matrix<double, 2, 1> B;
-    B << 0, 1;
-    Eigen::Matrix<double, 2, 1> F;
-    F << 0, -9.81;
+  ballDyn() = default;
+  ~ballDyn() = default;
 
-    dxdt = A * x + B * u + F;
+  void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) override {
+	state_matrix_t A;
+    A << 0.0, 1.0, 0.0, 0.0;
+    state_vector_t F;
+    F << 0.0, -9.81;
+
+    dxdt = A*x + F;
   }
 
   void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override {
@@ -54,62 +56,25 @@ class ball_tester_dyn : public ControlledSystemBase<2, 1> {
   }
 
   void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) override {
-    guardSurfacesValue = Eigen::Matrix<double, 2, 1>();
+    guardSurfacesValue.resize(2);
     guardSurfacesValue[0] = state[0];
     guardSurfacesValue[1] = -state[0] + 0.1 + time / 50;
   }
 
-  ball_tester_dyn* clone() const override { return new ball_tester_dyn(*this); }
+  ballDyn* clone() const override { return new ballDyn(*this); }
 };
 
-class ball_tester_der final : public DerivativesBase<2, 1> {
+class ballDev final : public DerivativesBase<2, 1> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  ball_tester_der() = default;
-  ~ball_tester_der() override = default;
+  ballDev() = default;
+  ~ballDev() override = default;
 
-  void getFlowMapDerivativeState(state_matrix_t& A) override { A << 0, 1, 0, 0; }
+  void getFlowMapDerivativeState(state_matrix_t& A) override { A << 0.0, 1.0, 0.0, 0.0; }
 
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B << 0, 1; }
+  void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B << 0.0, 1.0; }
 
-  ball_tester_der* clone() const override { return new ball_tester_der(*this); }
+  ballDev* clone() const override { return new ballDev(*this); }
 };
-
-class ball_tester_cost final : public CostFunctionBase<2, 1> {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using Base = CostFunctionBase<2, 1>;
-
-  ball_tester_cost() = default;
-  ~ball_tester_cost() override = default;
-
-  ball_tester_cost* clone() const override { return new ball_tester_cost(*this); }
-
-  /*
-   * Intermediate Cost Functions
-   */
-  void getIntermediateCost(scalar_t& L) override { L = 0.5 * pow(x_[0], 2) + 0.5 * pow(x_[1], 2) + 0.05 * pow(u_[0], 2); }
-
-  void getIntermediateCostDerivativeState(state_vector_t& dLdx) override { dLdx << x_[0], x_[1]; }
-
-  void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) override { dLdxx << 1.0, 0.0, 0.0, 1.0; }
-
-  void getIntermediateCostDerivativeInput(input_vector_t& dLdu) override { dLdu << 0.1 * u_[0]; }
-
-  void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) override { dLduu << 0.1; }
-
-  void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdxu) override { dLdxu.setZero(); }
-  /*
-  Terminal Cost Functions
-  */
-  void getTerminalCost(scalar_t& Phi) override { 0.5 * pow(x_[0], 2) + 0.5 * pow(x_[1], 2); }
-  void getTerminalCostDerivativeState(state_vector_t& dPhidx) override { dPhidx << x_[0], x_[1]; }
-  void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override { dPhidxx << 1.0, 0.0, 0.0, 1.0; }
-};
-
-using ball_tester_constr = ConstraintBase<2, 1>;
-using ball_tester_op = SystemOperatingPoint<2, 1>;
-
 }  // namespace ocs2

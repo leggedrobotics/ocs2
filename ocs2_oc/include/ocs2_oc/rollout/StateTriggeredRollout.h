@@ -167,6 +167,8 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       const bool guardAccuracyCondition = std::fabs(queryGuard) < this->settings().absTolODE_;
       const bool timeAccuracyCondition = std::fabs(t1 - t0) < this->settings().absTolODE_;
       const bool accuracyCondition = guardAccuracyCondition || timeAccuracyCondition;
+      // condition to check whether max number of iterations has not been reached, to prevent an infinite loop
+      const bool maxNumIterationsReached = singleEventIterations < this->settings().maxSingleEventIterations_;
 
       // remove the element past the guard surface if the event handler was triggered
       // (Due to checking in EventHandler this can only happen to the last element of the trajectory)

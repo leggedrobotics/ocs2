@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cmath>
 #include <functional>
+#include <stdexcept>
 #include <type_traits>
 
 #include <boost/numeric/odeint.hpp>
@@ -47,30 +48,65 @@ namespace ocs2 {
  * @brief The IntegratorType enum
  * Enum used in selecting a specific integrator.
  */
-enum class IntegratorType { EULER, MODIFIED_MIDPOINT, RK4, RK5_VARIABLE, ODE45, ADAMS_BASHFORTH, BULIRSCH_STOER, ADAMS_BASHFORTH_MOULTON };
+enum class IntegratorType { EULER, ODE45, ADAMS_BASHFORTH, BULIRSCH_STOER, MODIFIED_MIDPOINT, RK4, RK5_VARIABLE, ADAMS_BASHFORTH_MOULTON };
 
 static std::string toString(IntegratorType integratorType) {
   switch (integratorType) {
     case IntegratorType::EULER:
       return std::string("EULER");
-    case IntegratorType::MODIFIED_MIDPOINT:
-      return std::string("MODIFIED_MIDPOINT");
-    case IntegratorType::RK4:
-      return std::string("RK4");
-    case IntegratorType::RK5_VARIABLE:
-      return std::string("RK5_VARIABLE");
     case IntegratorType::ODE45:
       return std::string("ODE45");
     case IntegratorType::ADAMS_BASHFORTH:
       return std::string("ADAMS_BASHFORTH");
     case IntegratorType::BULIRSCH_STOER:
       return std::string("BULIRSCH_STOER");
+    case IntegratorType::MODIFIED_MIDPOINT:
+      return std::string("MODIFIED_MIDPOINT");
+    case IntegratorType::RK4:
+      return std::string("RK4");
+    case IntegratorType::RK5_VARIABLE:
+      return std::string("RK5_VARIABLE");
     case IntegratorType::ADAMS_BASHFORTH_MOULTON:
       return std::string("ADAMS_BASHFORTH_MOULTON");
     default:
-      return std::to_string(static_cast<int>(integratorType));
+      return std::string("UNKNOWN ") + std::itos(integratorType);
   }
 }
+
+static IntegratorType fromString(const std::string& name) {
+  if (name == "EULER") {
+    return IntegratorType::EULER;
+  } else if (name == "ODE45") {
+    return IntegratorType::ODE45;
+  } else if (name == "ADAMS_BASHFORTH") {
+    return IntegratorType::ADAMS_BASHFORTH;
+  } else if (name == "BULIRSCH_STOER") {
+    return IntegratorType::BULIRSCH_STOER;
+  } else if (name == "MODIFIED_MIDPOINT") {
+    return IntegratorType::MODIFIED_MIDPOINT;
+  } else if (name == "RK4") {
+    return IntegratorType::RK4;
+  } else if (name == "RK5_VARIABLE") {
+    return IntegratorType::RK5_VARIABLE;
+  } else if (name == "ADAMS_BASHFORTH_MOULTON") {
+    return IntegratorType::ADAMS_BASHFORTH_MOULTON;
+  } else {
+    return std::stoi(name);  // TODO(mspieler): workaround to allow integer values
+  }
+}
+
+/**
+ * Create Integrator of given type.
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
+ *
+ * @param [in] integratorType: The integrator type.
+ * @param [in] system: The system dynamics.
+ * @param [in] eventHandler: The integration event function.
+ */
+template <int STATE_DIM>
+IntegratorBase<STATE_DIM>* newIntegrator(IntegratorType integratorType, const std::shared_ptr<OdeBase<STATE_DIM>>& systemPtr,
+                                         const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr = nullptr);
 
 /**
  * Integrator class for autonomous systems.

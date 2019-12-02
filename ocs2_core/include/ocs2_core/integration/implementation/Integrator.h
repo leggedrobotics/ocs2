@@ -32,6 +32,50 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+template <int STATE_DIM>
+IntegratorBase<STATE_DIM>* newIntegrator(IntegratorType integratorType, const std::shared_ptr<OdeBase<STATE_DIM>>& systemPtr,
+                                         const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr = nullptr) {
+  IntegratorBase<STATE_DIM>* integrator = nullptr;
+  switch (integratorType) {
+    case (IntegratorType::EULER):
+      integrator = new IntegratorEuler<STATE_DIM>(systemPtr, eventHandlerPtr);
+      break;
+    case (IntegratorType::ODE45):
+      integrator = new ODE45<STATE_DIM>(systemPtr, eventHandlerPtr);
+      break;
+    case (IntegratorType::ADAMS_BASHFORTH): {
+      const size_t numberSteps = 1;
+      integrator = new IntegratorAdamsBashforth<STATE_DIM, numberSteps>(systemPtr, eventHandlerPtr);
+      break;
+    }
+    case (IntegratorType::BULIRSCH_STOER):
+      integrator = new IntegratorBulirschStoer<STATE_DIM>(systemPtr, eventHandlerPtr);
+      break;
+    case (IntegratorType::MODIFIED_MIDPOINT):
+      integrator = new IntegratorModifiedMidpoint<STATE_DIM>(systemPtr, eventHandlerPtr);
+      break;
+    case (IntegratorType::RK4):
+      integrator = new IntegratorRK4<STATE_DIM>(systemPtr, eventHandlerPtr);
+      break;
+    case (IntegratorType::RK5_VARIABLE):
+      integrator = new IntegratorRK5Variable<STATE_DIM>(systemPtr, eventHandlerPtr);
+      break;
+#if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 55)
+    case (IntegratorType::ADAMS_BASHFORTH_MOULTON): {
+      const size_t numberSteps = 1;  // maximum is 8
+      integrator = new IntegratorAdamsBashforthMoulton<STATE_DIM, numberSteps>(systemPtr, eventHandlerPtr);
+      break;
+    }
+#endif
+    default:
+      throw std::runtime_error("Integrator of type " + toString(integratorType) + " not supported.");
+  }
+  return integrator;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <int STATE_DIM, class Stepper>
 Integrator<STATE_DIM, Stepper>::Integrator(const std::shared_ptr<OdeBase<STATE_DIM>>& systemPtr,
                                            const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr /*= nullptr*/)
@@ -43,8 +87,8 @@ Integrator<STATE_DIM, Stepper>::Integrator(const std::shared_ptr<OdeBase<STATE_D
 /******************************************************************************************************/
 template <int STATE_DIM, class Stepper>
 void Integrator<STATE_DIM, Stepper>::integrate_const(const state_vector_t& initialState, const scalar_t& startTime,
-                                                    const scalar_t& finalTime, scalar_t dt, state_vector_array_t& stateTrajectory,
-                                                    scalar_array_t& timeTrajectory, bool concatOutput) {
+                                                     const scalar_t& finalTime, scalar_t dt, state_vector_array_t& stateTrajectory,
+                                                     scalar_array_t& timeTrajectory, bool concatOutput) {
   state_vector_t initialStateInternal = initialState;
 
   /*
@@ -66,9 +110,9 @@ void Integrator<STATE_DIM, Stepper>::integrate_const(const state_vector_t& initi
 /******************************************************************************************************/
 template <int STATE_DIM, class Stepper>
 void Integrator<STATE_DIM, Stepper>::integrate_adaptive(const state_vector_t& initialState, const scalar_t& startTime,
-                                                    const scalar_t& finalTime, state_vector_array_t& stateTrajectory,
-                                                    scalar_array_t& timeTrajectory, scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol,
-                                                    int maxNumSteps, bool concatOutput) {
+                                                        const scalar_t& finalTime, state_vector_array_t& stateTrajectory,
+                                                        scalar_array_t& timeTrajectory, scalar_t dtInitial, scalar_t AbsTol,
+                                                        scalar_t RelTol, int maxNumSteps, bool concatOutput) {
   state_vector_t internalStartState = initialState;
 
   integrate_adaptive_specialized<Stepper>(internalStartState, startTime, finalTime, dtInitial, AbsTol, RelTol);
@@ -79,10 +123,10 @@ void Integrator<STATE_DIM, Stepper>::integrate_adaptive(const state_vector_t& in
 /******************************************************************************************************/
 template <int STATE_DIM, class Stepper>
 void Integrator<STATE_DIM, Stepper>::integrate_times(const state_vector_t& initialState,
-                                                    typename scalar_array_t::const_iterator beginTimeItr,
-                                                    typename scalar_array_t::const_iterator endTimeItr,
-                                                    state_vector_array_t& stateTrajectory, scalar_t dtInitial, scalar_t AbsTol,
-                                                    scalar_t RelTol, int maxNumSteps, bool concatOutput) {
+                                                     typename scalar_array_t::const_iterator beginTimeItr,
+                                                     typename scalar_array_t::const_iterator endTimeItr,
+                                                     state_vector_array_t& stateTrajectory, scalar_t dtInitial, scalar_t AbsTol,
+                                                     scalar_t RelTol, int maxNumSteps, bool concatOutput) {
   state_vector_t internalStartState = initialState;
 
 #if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 60)

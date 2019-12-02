@@ -54,48 +54,27 @@ GDDP<STATE_DIM, INPUT_DIM>::GDDP(const GDDP_Settings& gddpSettings /*= GDDP_Sett
   riccatiSensitivityIntegratorsPtrStock_.clear();
   riccatiSensitivityIntegratorsPtrStock_.reserve(gddpSettings_.nThreads_);
 
+  IntegratorType integratorType = gddpSettings_.riccatiIntegratorType_;
+  if (integratorType != IntegratorType::ODE45 && integratorType != IntegratorType::BULIRSCH_STOER) {
+    throw(std::runtime_error("Unsupported Riccati equation integrator type: " + toString(integratorType)));
+  }
+
   for (size_t i = 0; i < gddpSettings_.nThreads_; i++) {
     bvpSensitivityEquationsPtrStock_.emplace_back(new bvp_sensitivity_equations_t);
     bvpSensitivityErrorEquationsPtrStock_.emplace_back(new bvp_sensitivity_error_equations_t);
     rolloutSensitivityEquationsPtrStock_.emplace_back(new rollout_sensitivity_equations_t);
     riccatiSensitivityEquationsPtrStock_.emplace_back(new riccati_sensitivity_equations_t);
 
-    switch (gddpSettings_.riccatiIntegratorType_) {
-      case DIMENSIONS::RiccatiIntegratorType::ODE45: {
-        bvpSensitivityIntegratorsPtrStock_.emplace_back(new ODE45<STATE_DIM>(bvpSensitivityEquationsPtrStock_.back()));
+    bvpSensitivityIntegratorsPtrStock_.emplace_back(newIntegrator<STATE_DIM>(integratorType, bvpSensitivityEquationsPtrStock_.back()));
 
-        bvpSensitivityErrorIntegratorsPtrStock_.emplace_back(new ODE45<STATE_DIM>(bvpSensitivityErrorEquationsPtrStock_.back()));
+    bvpSensitivityErrorIntegratorsPtrStock_.emplace_back(
+        newIntegrator<STATE_DIM>(integratorType, bvpSensitivityErrorEquationsPtrStock_.back()));
 
-        rolloutSensitivityIntegratorsPtrStock_.emplace_back(new ODE45<STATE_DIM>(rolloutSensitivityEquationsPtrStock_.back()));
+    rolloutSensitivityIntegratorsPtrStock_.emplace_back(
+        newIntegrator<STATE_DIM>(integratorType, rolloutSensitivityEquationsPtrStock_.back()));
 
-        riccatiSensitivityIntegratorsPtrStock_.emplace_back(
-            new ODE45<riccati_sensitivity_equations_t::S_DIM_>(riccatiSensitivityEquationsPtrStock_.back()));
-
-        break;
-      }
-      /* note: this case is not yet working. It would most likely work if we had an adaptive time adams-bashforth integrator */
-      case DIMENSIONS::RiccatiIntegratorType::ADAMS_BASHFORTH: {
-        throw std::runtime_error("This ADAMS_BASHFORTH is not implemented for Riccati Integrator.");
-        break;
-      }
-      case DIMENSIONS::RiccatiIntegratorType::BULIRSCH_STOER: {
-        bvpSensitivityIntegratorsPtrStock_.emplace_back(new IntegratorBulirschStoer<STATE_DIM>(bvpSensitivityEquationsPtrStock_.back()));
-
-        bvpSensitivityErrorIntegratorsPtrStock_.emplace_back(
-            new IntegratorBulirschStoer<STATE_DIM>(bvpSensitivityErrorEquationsPtrStock_.back()));
-
-        rolloutSensitivityIntegratorsPtrStock_.emplace_back(
-            new IntegratorBulirschStoer<STATE_DIM>(rolloutSensitivityEquationsPtrStock_.back()));
-
-        riccatiSensitivityIntegratorsPtrStock_.emplace_back(
-            new IntegratorBulirschStoer<riccati_sensitivity_equations_t::S_DIM_>(riccatiSensitivityEquationsPtrStock_.back()));
-
-        break;
-      }
-      default:
-        throw(std::runtime_error("Riccati equations integrator type specified wrongly."));
-    }
-
+    riccatiSensitivityIntegratorsPtrStock_.emplace_back(
+        newIntegrator<riccati_sensitivity_equations_t::S_DIM_>(integratorType, riccatiSensitivityEquationsPtrStock_.back()));
   }  // end of i loop
 
   // calculateBVPSensitivityControllerForward & calculateLQSensitivityControllerForward

@@ -59,6 +59,11 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivativ
   errorIntegratorPtrStock_.clear();
   errorIntegratorPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 
+  IntegratorType integratorType = settings_.RiccatiIntegratorType_;
+  if (integratorType != IntegratorType::ODE45 && integratorType != IntegratorType::BULIRSCH_STOER) {
+    throw(std::runtime_error("Unsupported Riccati equation integrator type: " + toString(settings_.RiccatiIntegratorType_)));
+  }
+
   for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
     using riccati_equations_alloc_t = Eigen::aligned_allocator<riccati_equations_t>;
     riccatiEquationsPtrStock_.emplace_back(std::allocate_shared<riccati_equations_t, riccati_equations_alloc_t>(
@@ -77,29 +82,10 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivativ
     errorEventPtrStock_.emplace_back(
         std::allocate_shared<error_event_handler_t, error_event_handler_alloc_t>(error_event_handler_alloc_t()));
 
-    switch (settings_.RiccatiIntegratorType_) {
-      case DIMENSIONS::RiccatiIntegratorType::ODE45: {
-        riccatiIntegratorPtrStock_.emplace_back(
-            new ODE45<riccati_equations_t::S_DIM_>(riccatiEquationsPtrStock_.back(), riccatiEventPtrStock_.back()));
-        errorIntegratorPtrStock_.emplace_back(new ODE45<STATE_DIM>(errorEquationPtrStock_.back(), errorEventPtrStock_.back()));
-        break;
-      }
-      /*note: this case is not yet working. It would most likely work if we had an adaptive time adams-bashforth integrator */
-      case DIMENSIONS::RiccatiIntegratorType::ADAMS_BASHFORTH: {
-        throw std::runtime_error("This ADAMS_BASHFORTH is not implemented for Riccati Integrator.");
-        break;
-      }
-      case DIMENSIONS::RiccatiIntegratorType::BULIRSCH_STOER: {
-        riccatiIntegratorPtrStock_.emplace_back(
-            new IntegratorBulirschStoer<riccati_equations_t::S_DIM_>(riccatiEquationsPtrStock_.back(), riccatiEventPtrStock_.back()));
-        errorIntegratorPtrStock_.emplace_back(
-            new IntegratorBulirschStoer<STATE_DIM>(errorEquationPtrStock_.back(), errorEventPtrStock_.back()));
-        break;
-      }
-      default:
-        throw(std::runtime_error("Riccati equation integrator type specified wrongly."));
-    }
-
+    errorIntegratorPtrStock_.emplace_back(
+        newIntegrator<STATE_DIM>(integratorType, errorEquationPtrStock_.back(), errorEventPtrStock_.back()));
+    riccatiIntegratorPtrStock_.emplace_back(
+        newIntegrator<riccati_equations_t::S_DIM_>(integratorType, riccatiEquationsPtrStock_.back(), riccatiEventPtrStock_.back()));
   }  // end of i loop
 
   Eigen::initParallel();

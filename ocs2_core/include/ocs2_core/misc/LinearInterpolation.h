@@ -78,7 +78,8 @@ class LinearInterpolation {
    * @param [in] dataPtr: Pointer to vector of data
    * @return {index, alpha}: The greatest smaller time stamp index and the interpolation coefficient [1, 0]
    */
-  static std::pair<int, scalar_t> interpolate(scalar_t enquiryTime, Data_T& enquiryData, const std::vector<scalar_t>* timeStampPtr,
+  template <typename Field_T>
+  static std::pair<int, scalar_t> interpolate(scalar_t enquiryTime, Field_T& enquiryData, const std::vector<scalar_t>* timeStampPtr,
                                               const std::vector<Data_T, Alloc>* dataPtr) {
     const auto indexAlpha = timeSegment(enquiryTime, timeStampPtr);
     interpolate(indexAlpha, enquiryData, dataPtr);

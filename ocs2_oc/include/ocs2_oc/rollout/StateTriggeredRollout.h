@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_oc/rollout/RolloutBase.h"
 #include "ocs2_oc/rollout/RootFinder.h"
+#include <ocs2_core/control/StateBasedLinearController.h>
 
 namespace ocs2 {
 
@@ -125,7 +126,9 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     eventsPastTheEndIndeces.reserve(maxNumSteps);
 
     // set controller
-    systemDynamicsPtr_->setController(controller);
+    controller->getStateEvents(EventTimesCtrl_);
+    StateBasedLinearController<STATE_DIM,INPUT_DIM> controller_state(controller,EventTimesCtrl_);
+    systemDynamicsPtr_->setController(&controller_state);
 
     // reset function calls counter
     systemDynamicsPtr_->resetNumFunctionCalls();

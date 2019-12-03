@@ -25,6 +25,7 @@ class ControllerBase {
 
   using dimensions_t = Dimensions<STATE_DIM, INPUT_DIM>;
   using scalar_t = typename dimensions_t::scalar_t;
+  using size_array_t = typename dimensions_t::size_array_t;
   using scalar_array_t = typename dimensions_t::scalar_array_t;
   using float_array_t = std::vector<float>;
   using state_vector_t = typename dimensions_t::state_vector_t;
@@ -130,6 +131,11 @@ class ControllerBase {
    * Displays controller's data.
    */
   virtual void display() const {}
+
+  /*
+   *
+   */
+  virtual void getStateEvents(scalar_array_t &eventTimes) {}
 };
 
 }  // namespace ocs2

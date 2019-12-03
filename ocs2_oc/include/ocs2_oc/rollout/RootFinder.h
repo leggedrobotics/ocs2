@@ -87,7 +87,7 @@ class RootFinder {
    * @param [in] timeInt: Pair of two time moments.
    * @param [in] guardInt: Pair of two function values at time_int times, should have opposite sign.
    */
-  void setInitBracket(pair_t timeInt, pair_t guardInt) {
+  inline void setInitBracket(pair_t timeInt, pair_t guardInt) {
     if (guardInt.first * guardInt.second > 0) {
       throw std::runtime_error("Bracket function values should have opposite signs!");
     }

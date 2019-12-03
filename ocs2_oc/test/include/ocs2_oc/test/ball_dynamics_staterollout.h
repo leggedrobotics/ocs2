@@ -27,7 +27,7 @@ class ballLogic final : public HybridLogicRules {
 
  protected:
   void insertModeSequenceTemplate(const logic_template_type& modeSequenceTemplate, const scalar_t& startTime,
-                                  const scalar_t& finalTime) override{};
+                                  const scalar_t& finalTime) override {};
 };
 
 class ballDyn : public ControlledSystemBase<2, 1> {

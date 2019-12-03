@@ -700,6 +700,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
     const auto N = SsTimeTrajectoryStock_[i].size();
 
     nominalControllersStock_[i].timeStamp_ = SsTimeTrajectoryStock_[i];
+    nominalControllersStock_[i].eventIdx_ = nominalPostEventIndicesStock_[i];
     nominalControllersStock_[i].gainArray_.resize(N);
     nominalControllersStock_[i].biasArray_.resize(N);
     nominalControllersStock_[i].deltaBiasArray_.resize(N);
@@ -723,7 +724,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
       }
     };
     runParallel(task, ddpSettings_.nThreads_);
-
+    std::cout<<nominalControllersStock_[i].eventIdx_.size()<<std::endl;
   }  // end of i loop
 }
 
@@ -739,6 +740,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
   baselineTotalCost_ = nominalTotalCost_;
   learningRateStar_ = 0.0;                             // input correction learning rate is zero
   initLScontrollersStock_ = nominalControllersStock_;  // this will serve to init the workers
+  initLScontrollersStock_[0].eventIdx_ = nominalControllersStock_[0].eventIdx_; // todo
 
   // if no line search
   if (ddpSettings_.maxLearningRate_ < OCS2NumericTraits<scalar_t>::limitEpsilon()) {
@@ -878,6 +880,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
 
     // do a line search
     lsControllersStock = initLScontrollersStock_;
+    lsControllersStock[0].eventIdx_ = initLScontrollersStock_[0].eventIdx_; // todo
+
     lineSearchWorker(taskId, learningRate, lsTotalCost, lsConstraint1ISE, lsConstraint1MaxNorm, lsConstraint2ISE, lsConstraint2MaxNorm,
                      lsInequalityConstraintPenalty, lsInequalityConstraintISE, lsControllersStock, lsTimeTrajectoriesStock,
                      lsPostEventIndicesStock, lsStateTrajectoriesStock, lsInputTrajectoriesStock);

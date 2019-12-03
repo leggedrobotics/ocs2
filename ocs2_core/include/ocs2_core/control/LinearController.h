@@ -243,11 +243,19 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
 
   void getStateEvents(scalar_array_t &eventTimes) override
   {
+	  scalar_t lastevent = 0;
 	  for(int i = 0; i<timeStamp_.size()-1; i++)
 	  {
-		  if(timeStamp_[i+1]-timeStamp_[i]<=2*OCS2NumericTraits<scalar_t>::weakEpsilon())
+		  if(timeStamp_[i+1]-timeStamp_[i]<=2*OCS2NumericTraits<scalar_t>::weakEpsilon() && std::fabs(timeStamp_[i]-lastevent)>10*OCS2NumericTraits<scalar_t>::weakEpsilon())
 		  {
 			  eventTimes.push_back(timeStamp_[i]);
+			  lastevent = eventTimes.back();
+		  }
+		  else if(timeStamp_[i+1]-timeStamp_[i]<=2*OCS2NumericTraits<scalar_t>::weakEpsilon())
+		  {
+			  eventTimes.back() = timeStamp_[i];
+			  lastevent = eventTimes.back();
+
 		  }
 	  }
   }

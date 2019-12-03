@@ -10,7 +10,7 @@ namespace ocs2{
 
 template<size_t STATE_DIM, size_t INPUT_DIM>
 
-class StateBasedLinearController final : public ControllerBase<STATE_DIM,INPUT_DIM>{
+class stateBasedLinearController final : public ControllerBase<STATE_DIM,INPUT_DIM>{
 
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -31,9 +31,9 @@ public:
 	using logic_rules_t = HybridLogicRules;
 	using controller_t =  ControllerBase<STATE_DIM,INPUT_DIM>;
 
-	StateBasedLinearController() = default;
+	stateBasedLinearController() = default;
 
-	StateBasedLinearController(controller_t* CtrlPtr, scalar_array_t eventTimes): CtrlPtr_(CtrlPtr)
+	stateBasedLinearController(controller_t* CtrlPtr, scalar_array_t eventTimes): CtrlPtr_(CtrlPtr)
 	{
 		CurrentMode_ = 0;
 
@@ -50,11 +50,9 @@ public:
 		{
 			std::cout<<i<<";"<<std::setprecision(12)<<CtrlEventTimes_[i]<<std::endl;
 		}
-
-		CtrlPtr->display();
 	}
 
-	~StateBasedLinearController() = default;
+	~stateBasedLinearController() = default;
 
 	input_vector_t computeInput(const scalar_t& t, const state_vector_t& x)
 	{
@@ -64,7 +62,6 @@ public:
 		}
 
 		CurrentMode_ = x[2];
-		//auto alpha = LinearInterpolation<scalar_t>::timeSegment(t,&CtrlEventTimes_);
 		auto alpha = CurrentMode_;
 		scalar_t tau_minus, tau, tau_plus;
 
@@ -88,42 +85,23 @@ public:
 			tau_plus = CtrlEventTimes_.back();
 		}
 
-		bool tMuchSmaller = tau_minus -t > 0.1;
-		bool tMuchBigger =  t - tau > 0.1;
+		bool tMuchSmaller = tau_minus -t > 1e-1;
+		bool tMuchBigger =  t - tau > 1e-1;
 		bool tMismatch = tMuchSmaller || tMuchBigger;
 
-		if((t>tau_minus && t<tau) || tMismatch)
+		bool pastAllEvents = tau_minus == tau && t>tau_minus;
+
+		if((t>tau_minus && t<tau)  ||pastAllEvents)
 		{
-			std::cout<<"--"<<std::endl;
-			std::cout<<x<<std::endl;
-			std::cout<<tau_minus<<","<<tau<<","<<t<<"dus  "<<t<<std::endl;
-			std::cout<<"--"<<std::endl;
-
 			return CtrlPtr_->computeInput(t,x);
-
-
 		}
 		else if (t<tau_minus)
 		{
-			std::cout<<"--"<<std::endl;
-			std::cout<<x<<std::endl;
-			std::cout<<tau_minus<<","<<tau<<","<<t<<"dus  "<<tau_minus+1e-9<<std::endl;
-			std::cout<<"--"<<std::endl;
-
 			return CtrlPtr_->computeInput(tau_minus+1e-9,x);
-
 		}
 		else if (t>tau)
 		{
-			std::cout<<"--"<<std::endl;
-			std::cout<<x<<std::endl;
-			std::cout<<tau_minus<<","<<tau<<","<<t<<"dus  "<<tau-1e-9<<std::endl;
-			std::cout<<"--"<<std::endl;
 			return CtrlPtr_->computeInput(tau-1e-9,x);
-		}
-		else
-		{
-			std::cout<<"What is happening"<<std::endl;
 		}
 	}
 
@@ -172,9 +150,9 @@ public:
 		CtrlPtr_->display();
 	}
 
-	StateBasedLinearController* clone() const override
+	stateBasedLinearController* clone() const override
 	{
-		return new StateBasedLinearController(*this);
+		return new stateBasedLinearController(*this);
 	}
 
 private:

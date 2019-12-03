@@ -126,9 +126,10 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     eventsPastTheEndIndeces.reserve(maxNumSteps);
 
     // set controller
-    controller->getStateEvents(EventTimesCtrl_);
-    StateBasedLinearController<STATE_DIM,INPUT_DIM> controller_state(controller,EventTimesCtrl_);
-    systemDynamicsPtr_->setController(&controller_state);
+    scalar_array_t eventTimesCtrl(0);
+    controller->getStateEvents(eventTimesCtrl);
+    stateBasedLinearController<STATE_DIM,INPUT_DIM> controllerState(controller,eventTimesCtrl);
+    systemDynamicsPtr_->setController(&controllerState);
 
     // reset function calls counter
     systemDynamicsPtr_->resetNumFunctionCalls();

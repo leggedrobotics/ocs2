@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef OCS2_OBSERVER_H_
-#define OCS2_OBSERVER_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
@@ -46,6 +45,8 @@ namespace ocs2 {
 /**
  * Observer Class
  * @tparam STATE_DIM
+ *
+ * The Observer class stores data in given containers and handles events during integration.
  */
 template <int STATE_DIM>
 class Observer {
@@ -176,5 +177,3 @@ class Observer {
 };
 
 }  // namespace ocs2
-
-#endif /* OCS2OBSERVER_H_ */

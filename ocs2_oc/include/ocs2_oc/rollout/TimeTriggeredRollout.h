@@ -129,10 +129,11 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     state_vector_t beginState = initState;
     size_t k_u = 0;  // control input iterator
     for (int i = 0; i < numSubsystems; i++) {
+      Observer<STATE_DIM> observer(&timeTrajectory, &stateTrajectory);  // concatenate trajectory
       // integrate controlled system
-      dynamicsIntegratorPtr_->integrate(beginState, timeIntervalArray[i].first, timeIntervalArray[i].second, stateTrajectory,
-                                        timeTrajectory, BASE::settings().minTimeStep_, BASE::settings().absTolODE_,
-                                        BASE::settings().relTolODE_, maxNumSteps, true);
+      dynamicsIntegratorPtr_->integrate_adaptive(beginState, timeIntervalArray[i].first, timeIntervalArray[i].second, observer,
+                                                 BASE::settings().minTimeStep_, BASE::settings().absTolODE_, BASE::settings().relTolODE_,
+                                                 maxNumSteps);
 
       // compute control input trajectory and concatenate to inputTrajectory
       if (BASE::settings().reconstructInputTrajectory_) {

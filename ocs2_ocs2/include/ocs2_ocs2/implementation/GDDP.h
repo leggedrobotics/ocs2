@@ -355,10 +355,12 @@ void GDDP<STATE_DIM, INPUT_DIM>::propagateRolloutSensitivity(size_t workerIndex,
         computeEquivalentSystemMultiplier(eventTimeIndex, activeSubsystem, multiplier);
         rolloutSensitivityEquationsPtrStock_[workerIndex]->setMultiplier(multiplier);
 
+        Observer<STATE_DIM> observer(nullptr, &sensitivityStateTrajectoriesStock[i]);  // concat trajectory
+
         // solve sensitivity ODE
-        rolloutSensitivityIntegratorsPtrStock_[workerIndex]->integrate(
-            nabla_xInit, beginTimeItr, endTimeItr, sensitivityStateTrajectoriesStock[i], gddpSettings_.minTimeStep_,
-            gddpSettings_.absTolODE_, gddpSettings_.relTolODE_, maxNumSteps, true);
+        rolloutSensitivityIntegratorsPtrStock_[workerIndex]->integrate_times(nabla_xInit, beginTimeItr, endTimeItr, observer,
+                                                                             gddpSettings_.minTimeStep_, gddpSettings_.absTolODE_,
+                                                                             gddpSettings_.relTolODE_, maxNumSteps);
 
         // compute input sensitivity
         for (; k_u < sensitivityStateTrajectoriesStock[i].size(); k_u++) {
@@ -544,10 +546,12 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
       computeEquivalentSystemMultiplier(eventTimeIndex, activeSubsystem, multiplier);
       riccatiSensitivityEquationsPtrStock_[workerIndex]->setMultiplier(multiplier);
 
+      Observer<riccati_sensitivity_equations_t::S_DIM_> observer(nullptr, &allSsTrajectory);  // concatenate trajectory
+
       // solve Riccati sensitivity equations
-      riccatiSensitivityIntegratorsPtrStock_[workerIndex]->integrate(SsFinal, beginTimeItr, endTimeItr, allSsTrajectory,
-                                                                     gddpSettings_.minTimeStep_, gddpSettings_.absTolODE_,
-                                                                     gddpSettings_.relTolODE_, maxNumSteps, true);
+      riccatiSensitivityIntegratorsPtrStock_[workerIndex]->integrate_times(SsFinal, beginTimeItr, endTimeItr, observer,
+                                                                           gddpSettings_.minTimeStep_, gddpSettings_.absTolODE_,
+                                                                           gddpSettings_.relTolODE_, maxNumSteps);
 
       // final value of the next subsystem
       if (j < NE) {
@@ -670,15 +674,17 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(size_t workerIndex, const s
       computeEquivalentSystemMultiplier(eventTimeIndex, activeSubsystem, multiplier);
       bvpSensitivityEquationsPtrStock_[workerIndex]->setMultiplier(multiplier);
 
+      Observer<STATE_DIM> rMvObserver(nullptr, &rMvTrajectory);  // concatenate trajectory
       // solve Riccati equations for Mv
-      bvpSensitivityIntegratorsPtrStock_[workerIndex]->integrate(MvFinalInternal, beginTimeItr, endTimeItr, rMvTrajectory,
-                                                                 gddpSettings_.minTimeStep_, gddpSettings_.absTolODE_,
-                                                                 gddpSettings_.relTolODE_, maxNumSteps, true);
+      bvpSensitivityIntegratorsPtrStock_[workerIndex]->integrate_times(MvFinalInternal, beginTimeItr, endTimeItr, rMvObserver,
+                                                                       gddpSettings_.minTimeStep_, gddpSettings_.absTolODE_,
+                                                                       gddpSettings_.relTolODE_, maxNumSteps);
 
+      Observer<STATE_DIM> rMveObserver(nullptr, &rMveTrajectory);  // concatenate trajectory
       // solve Riccati equations for Mve
-      bvpSensitivityErrorIntegratorsPtrStock_[workerIndex]->integrate(MveFinalInternal, beginTimeItr, endTimeItr, rMveTrajectory,
-                                                                      gddpSettings_.minTimeStep_, gddpSettings_.absTolODE_,
-                                                                      gddpSettings_.relTolODE_, maxNumSteps, true);
+      bvpSensitivityErrorIntegratorsPtrStock_[workerIndex]->integrate_times(MveFinalInternal, beginTimeItr, endTimeItr, rMveObserver,
+                                                                            gddpSettings_.minTimeStep_, gddpSettings_.absTolODE_,
+                                                                            gddpSettings_.relTolODE_, maxNumSteps);
 
       // final value of the next subsystem
       if (j < NE) {

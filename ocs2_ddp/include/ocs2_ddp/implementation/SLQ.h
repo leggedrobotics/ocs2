@@ -680,9 +680,10 @@ void SLQ<STATE_DIM, INPUT_DIM>::integrateRiccatiEquationNominalTime(
     typename scalar_array_t::const_iterator beginTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i];
     typename scalar_array_t::const_iterator endTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i + 1];
 
+    Observer<riccati_equations_t::S_DIM_> observer(nullptr, &allSsTrajectory);  // concatenate trajectory
     // solve Riccati equations
-    riccatiIntegrator.integrate(allSsFinal, beginTimeItr, endTimeItr, allSsTrajectory, BASE::ddpSettings_.minTimeStep_,
-                                BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps, true);
+    riccatiIntegrator.integrate_times(allSsFinal, beginTimeItr, endTimeItr, observer, BASE::ddpSettings_.minTimeStep_,
+                                      BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps);
 
     if (i < numEvents) {
       SsNormalizedEventsPastTheEndIndices.push_back(allSsTrajectory.size());
@@ -728,9 +729,10 @@ void SLQ<STATE_DIM, INPUT_DIM>::integrateRiccatiEquationAdaptiveTime(
     scalar_t beginTime = SsNormalizedSwitchingTimes[i];
     scalar_t endTime = SsNormalizedSwitchingTimes[i + 1];
 
+    Observer<riccati_equations_t::S_DIM_> observer(&SsNormalizedTime, &allSsTrajectory);  // concatenate trajectory
     // solve Riccati equations
-    riccatiIntegrator.integrate(allSsFinal, beginTime, endTime, allSsTrajectory, SsNormalizedTime, BASE::ddpSettings_.minTimeStep_,
-                                BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps, true);
+    riccatiIntegrator.integrate_adaptive(allSsFinal, beginTime, endTime, observer, BASE::ddpSettings_.minTimeStep_,
+                                         BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps);
 
     // if not the last interval which definitely does not have any event at
     // its final time (there is no even at the beginning of partition)
@@ -833,10 +835,11 @@ void SLQ<STATE_DIM, INPUT_DIM>::errorRiccatiEquationWorker(size_t workerIndex, s
     beginTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i];
     endTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i + 1];
 
+    Observer<STATE_DIM> observer(nullptr, &SveTrajectory);  // concatenate trajectory
     // solve error Riccati equations
-    errorIntegratorPtrStock_[workerIndex]->integrate(SveFinalInternal, beginTimeItr, endTimeItr, SveTrajectory,
-                                                     BASE::ddpSettings_.minTimeStep_, BASE::ddpSettings_.absTolODE_,
-                                                     BASE::ddpSettings_.relTolODE_, maxNumSteps, true);
+    errorIntegratorPtrStock_[workerIndex]->integrate_times(SveFinalInternal, beginTimeItr, endTimeItr, observer,
+                                                           BASE::ddpSettings_.minTimeStep_, BASE::ddpSettings_.absTolODE_,
+                                                           BASE::ddpSettings_.relTolODE_, maxNumSteps);
 
     if (i < numEvents) {
       errorEquationPtrStock_[workerIndex]->computeJumpMap(*endTimeItr, SveTrajectory.back(), SveFinalInternal);

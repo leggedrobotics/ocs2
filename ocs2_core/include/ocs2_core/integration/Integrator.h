@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cmath>
 #include <functional>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
 
 #include <boost/numeric/odeint.hpp>
@@ -69,7 +70,7 @@ static std::string toString(IntegratorType integratorType) {
     case IntegratorType::ADAMS_BASHFORTH_MOULTON:
       return std::string("ADAMS_BASHFORTH_MOULTON");
     default:
-      return std::string("UNKNOWN ") + std::itos(integratorType);
+      return std::string("UNKNOWN ") + std::to_string(static_cast<int>(integratorType));
   }
 }
 
@@ -91,7 +92,13 @@ static IntegratorType fromString(const std::string& name) {
   } else if (name == "ADAMS_BASHFORTH_MOULTON") {
     return IntegratorType::ADAMS_BASHFORTH_MOULTON;
   } else {
-    return std::stoi(name);  // TODO(mspieler): workaround to allow integer values
+    int val;
+    try {
+      val = std::stoi(name);
+    } catch (std::invalid_argument const& e) {
+      throw std::runtime_error("Unknown IntegratorType: " + name);
+    }
+    return static_cast<IntegratorType>(val);  // TODO(mspieler): workaround to allow integer values
   }
 }
 
@@ -124,7 +131,7 @@ class Integrator : public IntegratorBase<STATE_DIM> {
   using scalar_array_t = typename BASE::scalar_array_t;
   using state_vector_t = typename BASE::state_vector_t;
   using state_vector_array_t = typename BASE::state_vector_array_t;
-  using observer_func_t = std::function<void(const state_vector_t& x, const scalar_t& t)>;
+  using observer_func_t = typename BASE::observer_func_t;
 
   /**
    * Constructor
@@ -148,12 +155,10 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    * @param [in] startTime: Initial time.
    * @param [in] finalTime: Final time.
    * @param [in] dt: Time step.
-   * @param [out] stateTrajectory: Output state trajectory.
-   * @param [out] timeTrajectory: Output time stamp trajectory.
-   * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or override.
+   * @param [in] observerFunc: Observer callback
    */
-  void runIntegration(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime, scalar_t dt,
-                      state_vector_array_t& stateTrajectory, scalar_array_t& timeTrajectory, bool concatOutput) final;
+  void run_integrate_const(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime, scalar_t dt,
+                           observer_func_t observerFunc) final;
 
   /**
    * Adaptive time integration based on start time and final time. This method can
@@ -165,18 +170,13 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    * @param [in] initialState: Initial state.
    * @param [in] startTime: Initial time.
    * @param [in] finalTime: Final time.
-   * @param [out] stateTrajectory: Output state trajectory.
-   * @param [out] timeTrajectory: Output time stamp trajectory.
    * @param [in] dtInitial: Initial time step.
    * @param [in] AbsTol: The absolute tolerance error for ode solver.
    * @param [in] RelTol: The relative tolerance error for ode solver.
-   * @param [in] maxNumSteps: The maximum number of integration points per a
-   * second for ode solver.
-   * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or override.
+   * @param [in] observerFunc: Observer callback
    */
-  void runIntegration(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime,
-                      state_vector_array_t& stateTrajectory, scalar_array_t& timeTrajectory, scalar_t dtInitial, scalar_t AbsTol,
-                      scalar_t RelTol, int maxNumSteps, bool concatOutput) final;
+  void run_integrate_adaptive(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime, scalar_t dtInitial,
+                              scalar_t AbsTol, scalar_t RelTol, observer_func_t observerFunc) final;
 
   /**
    * Output integration based on a given time trajectory. This method can solve ODEs
@@ -189,26 +189,14 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    * @param [in] initialState: Initial state.
    * @param [in] beginTimeItr: The iterator to the beginning of the time stamp trajectory.
    * @param [in] endTimeItr: The iterator to the end of the time stamp trajectory.
-   * @param [out] stateTrajectory: Output state trajectory.
    * @param [in] dtInitial: Initial time step.
    * @param [in] AbsTol: The absolute tolerance error for ode solver.
    * @param [in] RelTol: The relative tolerance error for ode solver.
-   * @param [in] maxNumSteps: The maximum number of integration points per a second
-   * for ode solver.
-   * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or override.
+   * @param [in] observerFunc: Observer callback
    */
-  void runIntegration(const state_vector_t& initialState, typename scalar_array_t::const_iterator beginTimeItr,
-                      typename scalar_array_t::const_iterator endTimeItr, state_vector_array_t& stateTrajectory, scalar_t dtInitial,
-                      scalar_t AbsTol, scalar_t RelTol, int maxNumSteps, bool concatOutput) final;
-
-  /**
-   * Initializes the integrator.
-   *
-   * @param [in] initialState
-   * @param [in] t
-   * @param [in] dt
-   */
-  void initialize(state_vector_t& initialState, scalar_t& t, scalar_t dt);
+  void run_integrate_times(const state_vector_t& initialState, typename scalar_array_t::const_iterator beginTimeItr,
+                           typename scalar_array_t::const_iterator endTimeItr, scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol,
+                           observer_func_t observerFunc) final;
 
   /**
    * Integrate adaptive specialized.
@@ -217,17 +205,15 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    * @param [in] initialState: Initial state.
    * @param [in] startTime: Initial time.
    * @param [in] finalTime: Final time.
-   * @param [out] stateTrajectory: Output state trajectory.
-   * @param [out] timeTrajectory: Output time stamp trajectory.
    * @param [in] dtInitial: Initial time step.
    * @param [in] AbsTol: The absolute tolerance error for ode solver.
    * @param [in] RelTol: The relative tolerance error for ode solver.
-   * @return
+   * @param [in] observerFunc: Observer callback
    */
   template <typename S>
   typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value, void>::type integrate_adaptive_specialized(
       state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime, scalar_t dtInitial, scalar_t AbsTol,
-      scalar_t RelTol);
+      scalar_t RelTol, observer_func_t observerFunc);
 
   /**
    * Integrate adaptive specialized,
@@ -236,17 +222,15 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    * @param [in] initialState: Initial state.
    * @param [in] startTime: Initial time.
    * @param [in] finalTime: Final time.
-   * @param [out] stateTrajectory: Output state trajectory.
-   * @param [out] timeTrajectory: Output time stamp trajectory.
    * @param [in] dtInitial: Initial time step.
    * @param [in] AbsTol: The absolute tolerance error for ode solver.
    * @param [in] RelTol: The relative tolerance error for ode solver.
-   * @return
+   * @param [in] observerFunc: Observer callback
    */
   template <typename S>
   typename std::enable_if<!std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value, void>::type integrate_adaptive_specialized(
       state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime, scalar_t dtInitial, scalar_t AbsTol,
-      scalar_t RelTol);
+      scalar_t RelTol, observer_func_t observerFunc);
 
   /**
    * Integrate times specialized function
@@ -254,16 +238,16 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    * @param [in] initialState: Initial state.
    * @param [in] beginTimeItr: The iterator to the beginning of the time stamp trajectory.
    * @param [in] endTimeItr: The iterator to the end of the time stamp trajectory.
-   * @param [out] stateTrajectory: Output state trajectory.
    * @param [in] dtInitial: Initial time step.
    * @param [in] AbsTol: The absolute tolerance error for ode solver.
    * @param [in] RelTol: The relative tolerance error for ode solver.
-   * @return
+   * @param [in] observerFunc: Observer callback
    */
   template <typename S = Stepper>
   typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value, void>::type integrate_times_specialized(
       state_vector_t& initialState, typename scalar_array_t::const_iterator beginTimeItr,
-      typename scalar_array_t::const_iterator endTimeItr, scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol);
+      typename scalar_array_t::const_iterator endTimeItr, scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol,
+      observer_func_t observerFunc);
 
   /**
    * Integrate times specialized function
@@ -271,16 +255,16 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    * @param [in] initialState: Initial state.
    * @param [in] beginTimeItr: The iterator to the beginning of the time stamp trajectory.
    * @param [in] endTimeItr: The iterator to the end of the time stamp trajectory.
-   * @param [out] stateTrajectory: Output state trajectory.
    * @param [in] dtInitial: Initial time step.
    * @param [in] AbsTol: The absolute tolerance error for ode solver.
    * @param [in] RelTol: The relative tolerance error for ode solver.
-   * @return
+   * @param [in] observerFunc: Observer callback
    */
   template <typename S = Stepper>
   typename std::enable_if<!std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value, void>::type integrate_times_specialized(
       state_vector_t& initialState, typename scalar_array_t::const_iterator beginTimeItr,
-      typename scalar_array_t::const_iterator endTimeItr, scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol);
+      typename scalar_array_t::const_iterator endTimeItr, scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol,
+      observer_func_t observerFunc);
 
   /**
    * Functionality to reset stepper. If we integrate with ODE45, we don't need to reset the stepper, hence specialize empty function
@@ -288,7 +272,6 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    * @param [in] initialState: Initial state.
    * @param [in] t: Time.
    * @param [in] dt: Time step.
-   * @return
    */
   template <typename S = Stepper>
   typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value, void>::type initializeStepper(
@@ -302,7 +285,6 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    * @param [in] initialState
    * @param [in] t: Time.
    * @param [in] dt: Time step.
-   * @return
    */
   template <typename S = Stepper>
   typename std::enable_if<!(std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value), void>::type initializeStepper(
@@ -312,11 +294,6 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    * Variables
    ********/
   std::unique_ptr<Stepper> stepperPtr_;
-  std::unique_ptr<Observer<STATE_DIM>> observerPtr_;  // observer for saving the variable of interest.
-
-#if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 60)
-  std::unique_ptr<boost::numeric::odeint::max_step_checker> maxStepCheckerPtr_;
-#endif
 };
 
 /**

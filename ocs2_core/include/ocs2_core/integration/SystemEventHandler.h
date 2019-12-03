@@ -93,7 +93,7 @@ class SystemEventHandler : public EventHandlerBase<STATE_DIM> {
     return terminateFlag;
   }
 
-  virtual void reset() override {}
+  void reset() override {}
 
   int handleEvent(state_vector_array_t& stateTrajectory, scalar_array_t& timeTrajectory) override { return eventID_; }
 
@@ -102,7 +102,7 @@ class SystemEventHandler : public EventHandlerBase<STATE_DIM> {
    *
    * @param [in] maxNumSteps: maximum number of integration points
    */
-  inline void setMaxNumSteps(int maxNumSteps) { maxNumSteps_ = maxNumSteps; }
+  void setMaxNumSteps(int maxNumSteps) { maxNumSteps_ = maxNumSteps; }
 
   /**
    * Activate KillIntegrationEvent.

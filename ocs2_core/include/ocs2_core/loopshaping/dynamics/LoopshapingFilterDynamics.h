@@ -24,7 +24,7 @@ class LoopshapingFilterDynamics {
   using filter_state_array_t = typename FILTER_DIMENSIONS::state_vector_array_t;
   using scalar_array_t = typename FILTER_DIMENSIONS::scalar_array_t;
 
-  LoopshapingFilterDynamics(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+  explicit LoopshapingFilterDynamics(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
       : loopshapingDefinition_(std::move(loopshapingDefinition)),
         ode_fun_(new OdeFunc<FILTER_STATE_DIM>(std::bind(&LoopshapingFilterDynamics::computeFlowMap, this, std::placeholders::_1,
                                                          std::placeholders::_2, input_vector_t::Zero(), std::placeholders::_3))),

@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 #include <ocs2_core/misc/randomMatrices.h>
-#include <ocs2_ddp/riccati_equations/SequentialRiccatiEquationsNormalized.h>
+#include <ocs2_ddp/riccati_equations/SequentialRiccatiEquations.h>
 #include <memory>
 
 template <typename riccati_t>
@@ -85,7 +85,7 @@ TEST(testRiccatiEquations, compareImplementations) {
   constexpr int INPUT_DIM = 10;
   constexpr bool makePSD = false;
 
-  using riccati_t = ocs2::SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>;
+  using riccati_t = ocs2::SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>;
 
   riccati_t riccatiEquationPrecompute(makePSD, true);
   riccati_t riccatiEquationNoPrecompute(makePSD, false);
@@ -111,7 +111,7 @@ TEST(testRiccatiEquations, compareFixedAndDynamicSizedImplementation) {
   const int input_dim = 10;
   const int state_dim = 48;
 
-  using riccati_static_t = ocs2::SequentialRiccatiEquationsNormalized<state_dim, input_dim>;
+  using riccati_static_t = ocs2::SequentialRiccatiEquations<state_dim, input_dim>;
   riccati_static_t riccati_static(makePSD, precompute);
   srand(42);
   RiccatiInitializer<riccati_static_t> ris(state_dim, input_dim);
@@ -122,7 +122,7 @@ TEST(testRiccatiEquations, compareFixedAndDynamicSizedImplementation) {
   S_static.setRandom();
   riccati_static.computeFlowMap(0.6, S_static, dSdz_static);
 
-  using riccati_dynamic_t = ocs2::SequentialRiccatiEquationsNormalized<Eigen::Dynamic, Eigen::Dynamic>;
+  using riccati_dynamic_t = ocs2::SequentialRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;
   riccati_dynamic_t riccati_dynamic(makePSD, precompute);
   srand(42);
   RiccatiInitializer<riccati_dynamic_t> rid(state_dim, input_dim);
@@ -138,7 +138,7 @@ TEST(testRiccatiEquations, compareFixedAndDynamicSizedImplementation) {
 
 TEST(testRiccatiEquations, testFlattenSMatrix) {
   const int state_dim = 4;
-  using riccati_t = ocs2::SequentialRiccatiEquationsNormalized<Eigen::Dynamic, Eigen::Dynamic>;
+  using riccati_t = ocs2::SequentialRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;
 
   riccati_t::s_vector_t allSs, allSs_expect;
   riccati_t::state_matrix_t Sm;
@@ -166,7 +166,7 @@ TEST(testRiccatiEquations, testFlattenSMatrix) {
 TEST(testRiccatiEquations, testFlattenAndUnflattenSMatrix) {
   const int input_dim = 10;
   const int state_dim = 48;
-  using riccati_t = ocs2::SequentialRiccatiEquationsNormalized<state_dim, input_dim>;
+  using riccati_t = ocs2::SequentialRiccatiEquations<state_dim, input_dim>;
 
   riccati_t::s_vector_t allSs;
   riccati_t::state_matrix_t Sm, Sm_out;
@@ -188,7 +188,7 @@ TEST(testRiccatiEquations, testFlattenAndUnflattenSMatrix) {
 
 TEST(testRiccatiEquations, testFlattenAndUnflattenSMatrixDynamic) {
   const int state_dim = 42;
-  using riccati_t = ocs2::SequentialRiccatiEquationsNormalized<Eigen::Dynamic, Eigen::Dynamic>;
+  using riccati_t = ocs2::SequentialRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;
 
   riccati_t::s_vector_t allSs;
   riccati_t::state_matrix_t Sm, Sm_out;

@@ -431,18 +431,6 @@ class GDDP {
   input_vector_array3_t sensitivityInputTrajectoriesStockSet_;
 
   dynamic_vector_t nominalCostFuntionDerivative_;
-
-  // calculateBVPSensitivityControllerForward & calculateLQSensitivityControllerForward
-  std::vector<EigenLinearInterpolation<state_input_matrix_t>> BmFuncStock_;
-  std::vector<EigenLinearInterpolation<input_matrix_t>> RmInverseFuncStock_;
-  std::vector<EigenLinearInterpolation<input_matrix_t>> DmProjectedFuncStock_;
-  std::vector<EigenLinearInterpolation<input_vector_t>> EvDevEventTimesProjectedFuncStock_;
-  std::vector<EigenLinearInterpolation<input_vector_t>> nablaRvFuncStock_;
-
-  EigenLinearInterpolation<state_matrix_t> SmFunc_;
-  EigenLinearInterpolation<state_vector_t> SvFunc_;
-  EigenLinearInterpolation<state_vector_t> SveFunc_;
-  EigenLinearInterpolation<state_vector_t> nominalStateFunc_;
 };
 
 }  // namespace ocs2

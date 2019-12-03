@@ -88,9 +88,9 @@ class QuadrotorCost final : public QuadraticCostFunction<quadrotor::STATE_DIM_, 
    */
   void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override {
     dynamic_vector_t xNominal(static_cast<int>(quadrotor::STATE_DIM_));
-    BASE::xNominalFunc_.interpolate(t, xNominal);
+    BASE::costDesiredTrajectoriesPtr_->getDesiredState(t, xNominal);
     dynamic_vector_t uNominal(static_cast<int>(quadrotor::INPUT_DIM_));
-    BASE::uNominalFunc_.interpolate(t, uNominal);
+    BASE::costDesiredTrajectoriesPtr_->getDesiredInput(t, uNominal);
 
     // set base class
     BASE::setCurrentStateAndControl(t, x, u, xNominal, uNominal, xNominal);

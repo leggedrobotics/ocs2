@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef COSTFUNCTIONBASE_OCS2_H_
-#define COSTFUNCTIONBASE_OCS2_H_
+#pragma once
 
 #include <memory>
 
@@ -76,10 +75,7 @@ class CostFunctionBase {
   /**
    * Default constructor
    */
-  CostFunctionBase() : costDesiredTrajectoriesPtr_(nullptr), xNominalFunc_(), uNominalFunc_() {
-    xNominalFunc_.setZero();
-    uNominalFunc_.setZero();
-  };
+  CostFunctionBase() : costDesiredTrajectoriesPtr_(nullptr) {}
 
   /**
    * Copy constructor
@@ -94,16 +90,11 @@ class CostFunctionBase {
   /**
    * Sets the desired state and input trajectories used in the cost function.
    *
-   * @param [in] CostDesiredTrajectories: cost desired trajectories interface class.
+   * @param [in] CostDesiredTrajectoriesPtr: A cost pointer to desired trajectories.
    */
-  virtual void setCostDesiredTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories);
-
-  /**
-   * Gets the desired state and input trajectories used in the cost function.
-   *
-   * @param [in] CostDesiredTrajectories: cost desired trajectories interface class.
-   */
-  virtual void getCostDesiredTrajectories(cost_desired_trajectories_t& costDesiredTrajectories) const;
+  virtual void setCostDesiredTrajectoriesPtr(const cost_desired_trajectories_t* costDesiredTrajectoriesPtr) {
+    costDesiredTrajectoriesPtr_ = costDesiredTrajectoriesPtr;
+  }
 
   /**
    * Returns pointer to the class.
@@ -208,16 +199,9 @@ class CostFunctionBase {
    */
   const cost_desired_trajectories_t* costDesiredTrajectoriesPtr_;
 
-  typename cost_desired_trajectories_t::dynamic_linear_interpolation_t xNominalFunc_;
-  typename cost_desired_trajectories_t::dynamic_linear_interpolation_t uNominalFunc_;
-
   scalar_t t_;
   state_vector_t x_;
   input_vector_t u_;
 };
 
 }  // namespace ocs2
-
-#include "implementation/CostFunctionBase.h"
-
-#endif /* COSTFUNCTIONBASE_OCS2_H_ */

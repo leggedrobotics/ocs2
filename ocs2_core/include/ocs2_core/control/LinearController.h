@@ -1,3 +1,32 @@
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
 #pragma once
 
 #include "ocs2_core/control/ControllerBase.h"
@@ -33,7 +62,7 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
   /**
    * @brief Default constructor leaves object uninitialized
    */
-  LinearController() : Base(), linInterpolateBias_(&timeStamp_, &biasArray_), linInterpolateGain_(&timeStamp_, &gainArray_) {}
+  LinearController() = default;
 
   /**
    * @brief Constructor initializes all required members of the controller.
@@ -101,10 +130,10 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
 
   input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
     input_vector_t uff;
-    const auto indexAlpha = linInterpolateBias_.interpolate(t, uff);
+    const auto indexAlpha = EigenLinearInterpolation<input_vector_t>::interpolate(t, uff, &timeStamp_, &biasArray_);
 
     input_state_matrix_t k;
-    linInterpolateGain_.interpolate(indexAlpha, k);
+    EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, k, &gainArray_);
 
     uff.noalias() += k * x;
     return uff;
@@ -128,10 +157,10 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     flatArray.resize(INPUT_DIM + INPUT_DIM * STATE_DIM);
 
     input_vector_t uff;
-    const auto indexAlpha = linInterpolateBias_.interpolate(time, uff);
+    const auto indexAlpha = EigenLinearInterpolation<input_vector_t>::interpolate(time, uff, &timeStamp_, &biasArray_);
 
     input_state_matrix_t k;
-    linInterpolateGain_.interpolate(indexAlpha, k);
+    EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, k, &gainArray_);
 
     for (int i = 0; i < INPUT_DIM; i++) {  // i loops through input dim
       flatArray[i * (STATE_DIM + 1) + 0] = static_cast<float>(uff(i));
@@ -226,24 +255,24 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
    * @param[in] time
    * @param[out] gain: linear feedback gain
    */
-  void getFeedbackGain(scalar_t time, input_state_matrix_t& gain) const { linInterpolateGain_.interpolate(time, gain); }
+  void getFeedbackGain(scalar_t time, input_state_matrix_t& gain) const {
+    EigenLinearInterpolation<input_state_matrix_t>::interpolate(time, gain, &timeStamp_, &gainArray_);
+  }
 
   /**
    * @brief getFeedbackGain: Extracts the bias term at the requested time
    * @param[in] time
    * @param[out] bias: the controller bias term
    */
-  void getBias(scalar_t time, input_vector_t& bias) const { linInterpolateBias_.interpolate(time, bias); }
+  void getBias(scalar_t time, input_vector_t& bias) const {
+    EigenLinearInterpolation<input_vector_t>::interpolate(time, bias, &timeStamp_, &biasArray_);
+  }
 
  public:
   scalar_array_t timeStamp_;
   input_vector_array_t biasArray_;
   input_vector_array_t deltaBiasArray_;
   input_state_matrix_array_t gainArray_;
-
- protected:
-  EigenLinearInterpolation<input_vector_t> linInterpolateBias_;
-  EigenLinearInterpolation<input_state_matrix_t> linInterpolateGain_;
 };
 
 template <size_t STATE_DIM, size_t INPUT_DIM>

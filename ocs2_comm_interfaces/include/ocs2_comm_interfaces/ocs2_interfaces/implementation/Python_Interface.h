@@ -35,7 +35,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void PythonInterface<STATE_DIM, INPUT_DIM>::reset(cost_desired_trajectories_t targetTrajectories) {
   targetTrajectories_ = std::move(targetTrajectories);
   mpcMrtInterface_->resetMpcNode(targetTrajectories_);
-  cost_->setCostDesiredTrajectories(targetTrajectories_);
+  cost_->setCostDesiredTrajectoriesPtr(&targetTrajectories_);
 }
 
 /******************************************************************************************************/
@@ -76,7 +76,7 @@ void PythonInterface<STATE_DIM, INPUT_DIM>::setObservation(double t, Eigen::Ref<
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void PythonInterface<STATE_DIM, INPUT_DIM>::setTargetTrajectories(cost_desired_trajectories_t targetTrajectories) {
   targetTrajectories_ = std::move(targetTrajectories);
-  cost_->setCostDesiredTrajectories(targetTrajectories_);
+  cost_->setCostDesiredTrajectoriesPtr(&targetTrajectories_);
   mpcMrtInterface_->setTargetTrajectories(targetTrajectories_);
 }
 

@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef COSTDESIREDTRAJECTORIES_OCS2_H_
-#define COSTDESIREDTRAJECTORIES_OCS2_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <iomanip>
@@ -49,10 +48,10 @@ class CostDesiredTrajectories {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+  using scalar_t = SCALAR_T;
   using scalar_array_t = std::vector<SCALAR_T>;
   using dynamic_vector_t = Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>;
   using dynamic_vector_array_t = std::vector<dynamic_vector_t, Eigen::aligned_allocator<dynamic_vector_t>>;
-  using dynamic_linear_interpolation_t = EigenLinearInterpolation<dynamic_vector_t>;
 
   explicit CostDesiredTrajectories(const scalar_array_t& desiredTimeTrajectory = scalar_array_t(),
                                    const dynamic_vector_array_t& desiredStateTrajectory = dynamic_vector_array_t(),
@@ -97,19 +96,19 @@ class CostDesiredTrajectories {
   dynamic_vector_array_t& desiredInputTrajectory() { return desiredInputTrajectory_; }
   const dynamic_vector_array_t& desiredInputTrajectory() const { return desiredInputTrajectory_; }
 
-  void getDesiredStateFunc(dynamic_linear_interpolation_t& desiredStateFunc) const {
-    if (!desiredStateTrajectory_.empty()) {
-      desiredStateFunc.setData(&desiredTimeTrajectory_, &desiredStateTrajectory_);
+  void getDesiredState(const scalar_t& time, dynamic_vector_t& desiredState) const {
+    if (!desiredTimeTrajectory_.empty() && !desiredStateTrajectory_.empty()) {
+      EigenLinearInterpolation<dynamic_vector_t>::interpolate(time, desiredState, &desiredTimeTrajectory_, &desiredStateTrajectory_);
     } else {
-      desiredStateFunc.setZero();
+      desiredState.setZero();
     }
   }
 
-  void getDesiredInputFunc(dynamic_linear_interpolation_t& desiredInputFunc) const {
-    if (!desiredInputTrajectory_.empty()) {
-      desiredInputFunc.setData(&desiredTimeTrajectory_, &desiredInputTrajectory_);
+  void getDesiredInput(const scalar_t& time, dynamic_vector_t& desiredInput) const {
+    if (!desiredTimeTrajectory_.empty() && !desiredInputTrajectory_.empty()) {
+      EigenLinearInterpolation<dynamic_vector_t>::interpolate(time, desiredInput, &desiredTimeTrajectory_, &desiredInputTrajectory_);
     } else {
-      desiredInputFunc.setZero();
+      desiredInput.setZero();
     }
   }
 
@@ -154,5 +153,3 @@ class CostDesiredTrajectories {
 };
 
 }  // namespace ocs2
-
-#endif /* COSTDESIREDTRAJECTORIES_OCS2_H_ */

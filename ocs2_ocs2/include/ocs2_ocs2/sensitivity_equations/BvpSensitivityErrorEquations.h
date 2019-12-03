@@ -103,15 +103,17 @@ class BvpSensitivityErrorEquations final : public OdeBase<STATE_DIM> {
                const input_vector_array_t* EvDevProjectedPtr, const scalar_array_t* SmTimeStampPtr, const state_matrix_array_t* SmPtr) {
     BASE::resetNumFunctionCalls();
 
-    BmFunc_.setData(timeStampPtr, BmPtr);
-    AmConstrainedFunc_.setData(timeStampPtr, AmConstrainedPtr);
-    CmProjectedFunc_.setData(timeStampPtr, CmProjectedPtr);
-    PmFunc_.setData(timeStampPtr, PmPtr);
-    RmFunc_.setData(timeStampPtr, RmPtr);
-    RmInverseFunc_.setData(timeStampPtr, RmInversePtr);
-    RinvChol_Func_.setData(timeStampPtr, RinvCholPtr);
-    EvDevProjectedFunc_.setData(timeStampPtr, EvDevProjectedPtr);
-    SmFunc_.setData(SmTimeStampPtr, SmPtr);
+    timeStampPtr_ = timeStampPtr;
+    BmPtr_ = BmPtr;
+    AmConstrainedPtr_ = AmConstrainedPtr;
+    CmProjectedPtr_ = CmProjectedPtr;
+    PmPtr_ = PmPtr;
+    RmPtr_ = RmPtr;
+    RmInversePtr_ = RmInversePtr;
+    RinvCholPtr_ = RinvCholPtr;
+    EvDevProjectedPtr_ = EvDevProjectedPtr;
+    SmTimeStampPtr_ = SmTimeStampPtr;
+    SmPtr_ = SmPtr;
   }
 
   /**
@@ -126,16 +128,16 @@ class BvpSensitivityErrorEquations final : public OdeBase<STATE_DIM> {
     // denormalized time
     const scalar_t t = -z;
 
-    auto indexAlpha = BmFunc_.interpolate(t, Bm_);
-    AmConstrainedFunc_.interpolate(indexAlpha, AmConstrained_);
-    CmProjectedFunc_.interpolate(indexAlpha, CmProjected_);
-    PmFunc_.interpolate(indexAlpha, Pm_);
-    RmFunc_.interpolate(indexAlpha, Rm_);
-    RmInverseFunc_.interpolate(indexAlpha, RmInverse_);
-    RinvChol_Func_.interpolate(indexAlpha, RinvChol_);
-    EvDevProjectedFunc_.interpolate(indexAlpha, EvDevProjected_);
+    auto indexAlpha = EigenLinearInterpolation<state_input_matrix_t>::interpolate(t, Bm_, timeStampPtr_, BmPtr_);
+    EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, AmConstrained_, AmConstrainedPtr_);
+    EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, CmProjected_, CmProjectedPtr_);
+    EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, Pm_, PmPtr_);
+    EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, Rm_, RmPtr_);
+    EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, RmInverse_, RmInversePtr_);
+    EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, RinvChol_, RinvCholPtr_);
+    EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, EvDevProjected_, EvDevProjectedPtr_);
 
-    SmFunc_.interpolate(t, Sm_);
+    EigenLinearInterpolation<state_matrix_t>::interpolate(t, Sm_, SmTimeStampPtr_, SmPtr_);
 
     // Lm
     // TODO: Double check if equations are correct after change to cholesky decomposition approach
@@ -148,15 +150,17 @@ class BvpSensitivityErrorEquations final : public OdeBase<STATE_DIM> {
  private:
   scalar_t multiplier_ = 0.0;
 
-  LinearInterpolation<state_input_matrix_t, Eigen::aligned_allocator<state_input_matrix_t>> BmFunc_;
-  LinearInterpolation<state_matrix_t, Eigen::aligned_allocator<state_matrix_t>> AmConstrainedFunc_;
-  LinearInterpolation<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t>> CmProjectedFunc_;
-  LinearInterpolation<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t>> PmFunc_;
-  LinearInterpolation<input_matrix_t, Eigen::aligned_allocator<input_matrix_t>> RmFunc_;
-  LinearInterpolation<input_matrix_t, Eigen::aligned_allocator<input_matrix_t>> RmInverseFunc_;
-  EigenLinearInterpolation<dynamic_matrix_t> RinvChol_Func_;
-  LinearInterpolation<input_vector_t, Eigen::aligned_allocator<input_vector_t>> EvDevProjectedFunc_;
-  LinearInterpolation<state_matrix_t, Eigen::aligned_allocator<state_matrix_t>> SmFunc_;
+  const scalar_array_t* timeStampPtr_;
+  const state_input_matrix_array_t* BmPtr_;
+  const state_matrix_array_t* AmConstrainedPtr_;
+  const input_state_matrix_array_t* CmProjectedPtr_;
+  const input_state_matrix_array_t* PmPtr_;
+  const input_matrix_array_t* RmPtr_;
+  const input_matrix_array_t* RmInversePtr_;
+  const dynamic_matrix_array_t* RinvCholPtr_;
+  const input_vector_array_t* EvDevProjectedPtr_;
+  const scalar_array_t* SmTimeStampPtr_;
+  const state_matrix_array_t* SmPtr_;
 
   state_input_matrix_t Bm_;
   state_matrix_t AmConstrained_;

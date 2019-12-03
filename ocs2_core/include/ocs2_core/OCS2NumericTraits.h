@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef OCS2NUMERICTRAITS_OCS2_H_
-#define OCS2NUMERICTRAITS_OCS2_H_
+#pragma once
 
 namespace ocs2 {
 /**
@@ -54,5 +53,3 @@ class OCS2NumericTraits {
 };
 
 }  // namespace ocs2
-
-#endif /* OCS2NUMERICTRAITS_OCS2_H_ */

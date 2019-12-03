@@ -101,17 +101,19 @@ class BvpSensitivityEquations final : public OdeBase<STATE_DIM> {
                const state_matrix_array_t* SmPtr) {
     BASE::resetNumFunctionCalls();
 
-    AmFunc_.setData(timeStampPtr, AmPtr);
-    BmFunc_.setData(timeStampPtr, BmPtr);
-    CmFunc_.setData(timeStampPtr, CmPtr);
-    AmConstrainedFunc_.setData(timeStampPtr, AmConstrainedPtr);
-    CmProjectedFunc_.setData(timeStampPtr, CmProjectedPtr);
-    QvFunc_.setData(timeStampPtr, QvPtr);
-    flowMapFunc_.setData(timeStampPtr, flowMapPtr);
-    costateFunc_.setData(timeStampPtr, costatePtr);
-    lagrangianFunc_.setData(timeStampPtr, lagrangianPtr);
-    KmConstrainedFunc_.setData(controllerTimeStampPtr, KmConstrainedPtr);
-    SmFunc_.setData(controllerTimeStampPtr, SmPtr);
+    timeStampPtr_ = timeStampPtr;
+    AmPtr_ = AmPtr;
+    BmPtr_ = BmPtr;
+    CmPtr_ = CmPtr;
+    AmConstrainedPtr_ = AmConstrainedPtr;
+    CmProjectedPtr_ = CmProjectedPtr;
+    QvPtr_ = QvPtr;
+    flowMapPtr_ = flowMapPtr;
+    costatePtr_ = costatePtr;
+    lagrangianPtr_ = lagrangianPtr;
+    controllerTimeStampPtr_ = controllerTimeStampPtr;
+    KmConstrainedPtr_ = KmConstrainedPtr;
+    SmPtr_ = SmPtr;
   }
 
   /**
@@ -134,19 +136,19 @@ class BvpSensitivityEquations final : public OdeBase<STATE_DIM> {
     // denormalized time
     const scalar_t t = -z;
 
-    auto indexAlpha = AmFunc_.interpolate(t, Am_);
-    BmFunc_.interpolate(indexAlpha, Bm_);
-    CmFunc_.interpolate(indexAlpha, Cm_);
-    AmConstrainedFunc_.interpolate(indexAlpha, AmConstrained_);
-    CmProjectedFunc_.interpolate(indexAlpha, CmProjected_);
-    QvFunc_.interpolate(indexAlpha, Qv_);
+    auto indexAlpha = EigenLinearInterpolation<state_matrix_t>::interpolate(t, Am_, timeStampPtr_, AmPtr_);
+    EigenLinearInterpolation<state_input_matrix_t>::interpolate(indexAlpha, Bm_, BmPtr_);
+    EigenLinearInterpolation<constraint1_state_matrix_t>::interpolate(indexAlpha, Cm_, CmPtr_);
+    EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, AmConstrained_, AmConstrainedPtr_);
+    EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, CmProjected_, CmProjectedPtr_);
+    EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Qv_, QvPtr_);
 
-    flowMapFunc_.interpolate(indexAlpha, flowMap_);
-    costateFunc_.interpolate(indexAlpha, costate_);
-    lagrangianFunc_.interpolate(indexAlpha, lagrangian_);
+    EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, flowMap_, flowMapPtr_);
+    EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, costate_, costatePtr_);
+    EigenLinearInterpolation<constraint1_vector_t>::interpolate(indexAlpha, lagrangian_, lagrangianPtr_);
 
-    indexAlpha = KmConstrainedFunc_.interpolate(t, KmConstrained_);
-    SmFunc_.interpolate(indexAlpha, Sm_);
+    indexAlpha = EigenLinearInterpolation<input_state_matrix_t>::interpolate(t, KmConstrained_, controllerTimeStampPtr_, KmConstrainedPtr_);
+    EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, Sm_, SmPtr_);
 
     // here we have used RmConstrained = (I-DmConstrained).transpose() * Rm
     // and Km = -(I-DmConstrained) \tilde{L} - CmProjected_
@@ -157,17 +159,19 @@ class BvpSensitivityEquations final : public OdeBase<STATE_DIM> {
  private:
   scalar_t multiplier_ = 0.0;
 
-  EigenLinearInterpolation<state_matrix_t> AmFunc_;
-  EigenLinearInterpolation<state_input_matrix_t> BmFunc_;
-  EigenLinearInterpolation<constraint1_state_matrix_t> CmFunc_;
-  EigenLinearInterpolation<state_matrix_t> AmConstrainedFunc_;
-  EigenLinearInterpolation<input_state_matrix_t> CmProjectedFunc_;
-  EigenLinearInterpolation<state_vector_t> QvFunc_;
-  EigenLinearInterpolation<state_vector_t> flowMapFunc_;
-  EigenLinearInterpolation<state_vector_t> costateFunc_;
-  EigenLinearInterpolation<constraint1_vector_t> lagrangianFunc_;
-  EigenLinearInterpolation<input_state_matrix_t> KmConstrainedFunc_;
-  EigenLinearInterpolation<state_matrix_t> SmFunc_;
+  const scalar_array_t* timeStampPtr_;
+  const state_matrix_array_t* AmPtr_;
+  const state_input_matrix_array_t* BmPtr_;
+  const constraint1_state_matrix_array_t* CmPtr_;
+  const state_matrix_array_t* AmConstrainedPtr_;
+  const input_state_matrix_array_t* CmProjectedPtr_;
+  const state_vector_array_t* QvPtr_;
+  const state_vector_array_t* flowMapPtr_;
+  const state_vector_array_t* costatePtr_;
+  const constraint1_vector_array_t* lagrangianPtr_;
+  const scalar_array_t* controllerTimeStampPtr_;
+  const input_state_matrix_array_t* KmConstrainedPtr_;
+  const state_matrix_array_t* SmPtr_;
 
   state_matrix_t Am_;
   state_input_matrix_t Bm_;

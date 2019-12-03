@@ -170,21 +170,23 @@ class SensitivitySequentialRiccatiEquations final : public OdeBase<STATE_DIM*(ST
 
     alpha_ = learningRate;
 
-    SvFunc_.setData(SsTimePtr, SvPtr);
-    SmFunc_.setData(SsTimePtr, SmPtr);
+    SsTimePtr_ = SsTimePtr;
+    SmPtr_ = SmPtr;
+    SvPtr_ = SvPtr;
 
-    AmFunc_.setData(timeStampPtr, AmPtr);
-    BmFunc_.setData(timeStampPtr, BmPtr);
-    qFunc_.setData(timeStampPtr, qPtr);
-    QvFunc_.setData(timeStampPtr, QvPtr);
-    QmFunc_.setData(timeStampPtr, QmPtr);
-    RvFunc_.setData(timeStampPtr, RvPtr);
-    RmInverseFunc_.setData(timeStampPtr, RmInversePtr);
-    RmFunc_.setData(timeStampPtr, RmPtr);
-    PmFunc_.setData(timeStampPtr, PmPtr);
-    nabla_qFunc_.setData(timeStampPtr, nablaqPtr);
-    nabla_QvFunc_.setData(timeStampPtr, nablaQvPtr);
-    nabla_RvFunc_.setData(timeStampPtr, nablaRvPtr);
+    timeStampPtr_ = timeStampPtr;
+    AmPtr_ = AmPtr;
+    BmPtr_ = BmPtr;
+    qPtr_ = qPtr;
+    QvPtr_ = QvPtr;
+    QmPtr_ = QmPtr;
+    RvPtr_ = RvPtr;
+    RmInversePtr_ = RmInversePtr;
+    RmPtr_ = RmPtr;
+    PmPtr_ = PmPtr;
+    nablaqPtr_ = nablaqPtr;
+    nablaQvPtr_ = nablaQvPtr;
+    nablaRvPtr_ = nablaRvPtr;
   }
 
   /**
@@ -209,21 +211,21 @@ class SensitivitySequentialRiccatiEquations final : public OdeBase<STATE_DIM*(ST
 
     convert2Matrix(allSs, nabla_Sm_, nabla_Sv_, nabla_s_);
 
-    auto indexAlpha = SvFunc_.interpolate(t, Sv_);
-    SmFunc_.interpolate(indexAlpha, Sm_);
+    auto indexAlpha = EigenLinearInterpolation<state_vector_t>::interpolate(t, Sv_, SsTimePtr_, SvPtr_);
+    EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, Sm_, SmPtr_);
 
-    indexAlpha = AmFunc_.interpolate(t, Am_);
-    BmFunc_.interpolate(indexAlpha, Bm_);
-    qFunc_.interpolate(t, q_);
-    QvFunc_.interpolate(indexAlpha, Qv_);
-    QmFunc_.interpolate(indexAlpha, Qm_);
-    RvFunc_.interpolate(indexAlpha, Rv_);
-    RmInverseFunc_.interpolate(indexAlpha, invRm_);
-    RmFunc_.interpolate(indexAlpha, Rm_);
-    PmFunc_.interpolate(indexAlpha, Pm_);
-    nabla_qFunc_.interpolate(indexAlpha, nabla_q_);
-    nabla_QvFunc_.interpolate(indexAlpha, nabla_Qv_);
-    nabla_RvFunc_.interpolate(indexAlpha, nabla_Rv_);
+    indexAlpha = EigenLinearInterpolation<state_matrix_t>::interpolate(t, Am_, timeStampPtr_, AmPtr_);
+    EigenLinearInterpolation<state_input_matrix_t>::interpolate(indexAlpha, Bm_, BmPtr_);
+    EigenLinearInterpolation<eigen_scalar_t>::interpolate(indexAlpha, q_, qPtr_);
+    EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Qv_, QvPtr_);
+    EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, Qm_, QmPtr_);
+    EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, Rv_, RvPtr_);
+    EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, invRm_, RmInversePtr_);
+    EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, Rm_, RmPtr_);
+    EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, Pm_, PmPtr_);
+    EigenLinearInterpolation<eigen_scalar_t>::interpolate(indexAlpha, nabla_q_, nablaqPtr_);
+    EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, nabla_Qv_, nablaQvPtr_);
+    EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, nabla_Rv_, nablaRvPtr_);
 
     Lv_ = invRm_ * (Rv_ + Bm_.transpose() * Sv_);
     Lm_ = invRm_ * (Pm_ + Bm_.transpose() * Sm_);
@@ -265,6 +267,23 @@ class SensitivitySequentialRiccatiEquations final : public OdeBase<STATE_DIM*(ST
   scalar_t alpha_ = 0.0;
   scalar_t multiplier_ = 0.0;
 
+  const scalar_array_t* SsTimePtr_;
+  const state_matrix_array_t* SmPtr_;
+  const state_vector_array_t* SvPtr_;
+  const scalar_array_t* timeStampPtr_;
+  const state_matrix_array_t* AmPtr_;
+  const state_input_matrix_array_t* BmPtr_;
+  const eigen_scalar_array_t* qPtr_;
+  const state_vector_array_t* QvPtr_;
+  const state_matrix_array_t* QmPtr_;
+  const input_vector_array_t* RvPtr_;
+  const input_matrix_array_t* RmInversePtr_;
+  const input_matrix_array_t* RmPtr_;
+  const input_state_matrix_array_t* PmPtr_;
+  const eigen_scalar_array_t* nablaqPtr_;
+  const state_vector_array_t* nablaQvPtr_;
+  const input_vector_array_t* nablaRvPtr_;
+
   state_matrix_t nabla_Sm_;
   state_vector_t nabla_Sv_;
   eigen_scalar_t nabla_s_;
@@ -301,23 +320,6 @@ class SensitivitySequentialRiccatiEquations final : public OdeBase<STATE_DIM*(ST
   state_matrix_t nabla_dSmdt_;
   state_vector_t nabla_dSvdt_;
   eigen_scalar_t nabla_dsdt_;
-
-  EigenLinearInterpolation<state_vector_t> SvFunc_;
-  EigenLinearInterpolation<state_matrix_t> SmFunc_;
-
-  EigenLinearInterpolation<state_matrix_t> AmFunc_;
-  EigenLinearInterpolation<state_input_matrix_t> BmFunc_;
-  EigenLinearInterpolation<eigen_scalar_t> qFunc_;
-  EigenLinearInterpolation<state_vector_t> QvFunc_;
-  EigenLinearInterpolation<state_matrix_t> QmFunc_;
-  EigenLinearInterpolation<input_vector_t> RvFunc_;
-  EigenLinearInterpolation<input_matrix_t> RmInverseFunc_;
-  EigenLinearInterpolation<input_matrix_t> RmFunc_;
-  EigenLinearInterpolation<input_state_matrix_t> PmFunc_;
-
-  EigenLinearInterpolation<eigen_scalar_t> nabla_qFunc_;
-  EigenLinearInterpolation<state_vector_t> nabla_QvFunc_;
-  EigenLinearInterpolation<input_vector_t> nabla_RvFunc_;
 };
 
 }  // namespace ocs2

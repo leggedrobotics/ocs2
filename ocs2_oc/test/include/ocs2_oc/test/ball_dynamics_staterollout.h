@@ -52,13 +52,13 @@ class ballDyn : public ControlledSystemBase<2, 1> {
 
   void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override {
     mappedState[0] = state[0];
-    mappedState[1] = -state[1];
+    mappedState[1] = -0.95*state[1];
   }
 
   void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) override {
     guardSurfacesValue.resize(2);
     guardSurfacesValue[0] = state[0];
-    guardSurfacesValue[1] = -state[0] + 0.1 + time / 50;
+    guardSurfacesValue[1] = -state[0] + 0.5;
   }
 
   ballDyn* clone() const override { return new ballDyn(*this); }

@@ -96,18 +96,18 @@ class CostDesiredTrajectories {
   const dynamic_vector_array_t& desiredInputTrajectory() const { return desiredInputTrajectory_; }
 
   void getDesiredState(const scalar_t& time, dynamic_vector_t& desiredState) const {
-    if (!desiredTimeTrajectory_.empty() && !desiredStateTrajectory_.empty()) {
-      EigenLinearInterpolation<dynamic_vector_t>::interpolate(time, desiredState, &desiredTimeTrajectory_, &desiredStateTrajectory_);
-    } else {
+    if (desiredTimeTrajectory_.empty() || desiredStateTrajectory_.empty()) {
       desiredState.setZero();
+    } else {
+      EigenLinearInterpolation<dynamic_vector_t>::interpolate(time, desiredState, &desiredTimeTrajectory_, &desiredStateTrajectory_);
     }
   }
 
   void getDesiredInput(const scalar_t& time, dynamic_vector_t& desiredInput) const {
-    if (!desiredTimeTrajectory_.empty() && !desiredInputTrajectory_.empty()) {
-      EigenLinearInterpolation<dynamic_vector_t>::interpolate(time, desiredInput, &desiredTimeTrajectory_, &desiredInputTrajectory_);
-    } else {
+    if (desiredTimeTrajectory_.empty() || desiredInputTrajectory_.empty()) {
       desiredInput.setZero();
+    } else {
+      EigenLinearInterpolation<dynamic_vector_t>::interpolate(time, desiredInput, &desiredTimeTrajectory_, &desiredInputTrajectory_);
     }
   }
 

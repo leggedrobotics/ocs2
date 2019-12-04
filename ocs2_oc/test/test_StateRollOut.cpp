@@ -7,7 +7,18 @@
 #include "ocs2_core/Dimensions.h"
 
 #include <gtest/gtest.h>
-
+/*
+ * 		Test 1 for StateTriggeredRollout
+ * 		The system being tested is a bouncing ball system with dissipation on bouncing
+ *
+ * 		Guard Surfaces are:			x_1 > 0
+ * 									x_1 < 0.1 + t/50
+ *
+ * 		The following tests are implemented and performed:
+ *
+ * 		-	No penetration of Guard Surfaces
+ * 		- 	Conservation of energy in between jumps
+ */
 TEST(StateRolloutTests, rolloutTestBallDynamics) {
 
   using DIMENSIONS = ocs2::Dimensions<2, 1>;
@@ -84,7 +95,18 @@ TEST(StateRolloutTests, rolloutTestBallDynamics) {
     }
   }
 }
-
+/*
+ * 		Test 2 for StateTriggeredRollout
+ * 		The system being tested is a pendulum system with an object on which it bounces
+ * 		the bounces are dissipative
+ *
+ * 		Guard Surfaces are:			x[0] > 0
+ *
+ * 		The following tests are implemented and performed:
+ *
+ * 		-	No penetration of Guard Surface
+ * 		- 	Conservation of energy in between jumps
+ */
 TEST(StateRolloutTests, rolloutTestPendulumDynamics) {
   using DIMENSIONS = ocs2::Dimensions<2, 1>;
   using controller_t = ocs2::ControllerBase<2, 1>;
@@ -171,7 +193,18 @@ TEST(StateRolloutTests, rolloutTestPendulumDynamics) {
     }
   }
 }
-
+/*
+ * 		Test 3 for StateTriggeredRollout
+ * 		The system being tested is a combination of two Linear system
+ * 		it switches between these systems on an event
+ *
+ * 		Guard Surfaces are:			x[0]*x[1] < 0 			when in mode 0
+ * 									x[0]*x[1] > 0 			when in mode 1
+ *
+ * 		The following tests are implemented and performed:
+ *
+ * 		-	No penetration of Guard Surface
+ */
 TEST(StateRolloutTests, runHybridDynamics) {
   using DIMENSIONS = ocs2::Dimensions<3, 1>;
   using controller_t = ocs2::ControllerBase<3, 1>;

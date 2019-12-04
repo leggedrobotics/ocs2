@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef QUADRATICCOSTFUNCTION_OCS2_H_
-#define QUADRATICCOSTFUNCTION_OCS2_H_
+#pragma once
 
 #include "ocs2_core/cost/CostFunctionBase.h"
 
@@ -213,5 +212,3 @@ class QuadraticCostFunction : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
 };
 
 }  // namespace ocs2
-
-#endif /* QUADRATICCOSTFUNCTION_OCS2_H_ */

@@ -83,7 +83,6 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   using input_state_matrix_array_t = typename dim_t::input_state_matrix_array_t;
 
   using ros_msg_conversions_t = RosMsgConversions<STATE_DIM, INPUT_DIM>;
-  using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
   using rollout_base_t = RolloutBase<STATE_DIM, INPUT_DIM>;
   using time_triggered_rollout_t = TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
@@ -104,7 +103,7 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    */
   virtual ~MRT_ROS_Interface();
 
-  void resetMpcNode(const cost_desired_trajectories_t& initCostDesiredTrajectories) override;
+  void resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) override;
 
   /**
    * This method will be called either after the very fist call of the class or after a call to reset().

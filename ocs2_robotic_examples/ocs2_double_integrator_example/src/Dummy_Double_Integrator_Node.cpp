@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
   double_integratorInterface.getInitialState(initObservation.state());
 
   // initial command
-  double_integrator::MRT_ROS_Dummy_Linear_System::cost_desired_trajectories_t initCostDesiredTrajectories;
+  CostDesiredTrajectories initCostDesiredTrajectories;
   initCostDesiredTrajectories.desiredTimeTrajectory().resize(1);
   initCostDesiredTrajectories.desiredTimeTrajectory().front() = 0.0;
   initCostDesiredTrajectories.desiredStateTrajectory().resize(1);

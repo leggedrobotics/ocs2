@@ -11,7 +11,6 @@ TEST(Ballbot, PyBindings) {
   using state_vector_array_t = bindings_t::state_vector_array_t;
   using input_vector_array_t = bindings_t::input_vector_array_t;
   using input_state_matrix_array_t = bindings_t::input_state_matrix_array_t;
-  using cost_desired_trajectories_t = bindings_t::cost_desired_trajectories_t;
 
   bindings_t bindings("mpc", false);
 
@@ -19,7 +18,7 @@ TEST(Ballbot, PyBindings) {
   initState(0) = 0.0;
   initState(2) = 0.0;
 
-  auto costDesiredTraj = cost_desired_trajectories_t();
+  ocs2::CostDesiredTrajectories costDesiredTraj;
   costDesiredTraj.desiredTimeTrajectory().resize(2, 0.0);
   costDesiredTraj.desiredTimeTrajectory()[1] = 2.0;
   costDesiredTraj.desiredInputTrajectory().resize(2, input_vector_t::Zero());

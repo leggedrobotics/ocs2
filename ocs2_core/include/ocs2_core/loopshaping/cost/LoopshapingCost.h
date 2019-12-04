@@ -22,7 +22,6 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM> 
   using ConstPtr = std::shared_ptr<const LoopshapingCost>;
 
   using BASE = CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM>;
-  using typename BASE::cost_desired_trajectories_t;
   using typename BASE::dynamic_vector_t;
   using typename BASE::input_matrix_t;
   using typename BASE::input_state_matrix_t;
@@ -66,12 +65,12 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM> 
     BASE::setCurrentStateAndControl(t, x, u);
   }
 
-  void setCostDesiredTrajectoriesPtr(const cost_desired_trajectories_t* costDesiredTrajectoriesPtr) override {
+  void setCostDesiredTrajectoriesPtr(const CostDesiredTrajectories* costDesiredTrajectoriesPtr) override {
     BASE::setCostDesiredTrajectoriesPtr(costDesiredTrajectoriesPtr);
 
     // Desired trajectories are dynamic size -> must resize for future cast to fixed size vectors
     size_t reference_length = costDesiredTrajectoriesPtr->desiredTimeTrajectory().size();
-    systemCostDesiredTrajectories_ = cost_desired_trajectories_t(reference_length);
+    systemCostDesiredTrajectories_ = CostDesiredTrajectories(reference_length);
     systemCostDesiredTrajectories_.desiredTimeTrajectory() = costDesiredTrajectoriesPtr->desiredTimeTrajectory();
     auto& systemStateTrajectory = systemCostDesiredTrajectories_.desiredStateTrajectory();
     auto& systemInputTrajectory = systemCostDesiredTrajectories_.desiredInputTrajectory();
@@ -127,7 +126,7 @@ class LoopshapingCost : public CostFunctionBase<FULL_STATE_DIM, FULL_INPUT_DIM> 
 
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
 
-  cost_desired_trajectories_t systemCostDesiredTrajectories_;
+  CostDesiredTrajectories systemCostDesiredTrajectories_;
   using BASE::costDesiredTrajectoriesPtr_;
 
   scalar_t t_;

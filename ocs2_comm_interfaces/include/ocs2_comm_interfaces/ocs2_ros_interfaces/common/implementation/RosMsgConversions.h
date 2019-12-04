@@ -178,7 +178,7 @@ void RosMsgConversions<STATE_DIM, INPUT_DIM>::readModeSequenceTemplateMsg(
 template <size_t STATE_DIM, size_t INPUT_DIM>
 template <class ContainerAllocator>
 void RosMsgConversions<STATE_DIM, INPUT_DIM>::createTargetTrajectoriesMsg(
-    const cost_desired_trajectories_t& costDesiredTrajectories,
+    const CostDesiredTrajectories& costDesiredTrajectories,
     ocs2_msgs::mpc_target_trajectories_<ContainerAllocator>& targetTrajectoriesMsg) {
   const scalar_array_t& desiredTimeTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
   const dynamic_vector_array_t& desiredStateTrajectory = costDesiredTrajectories.desiredStateTrajectory();
@@ -211,7 +211,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 template <class ContainerAllocator>
 void RosMsgConversions<STATE_DIM, INPUT_DIM>::readTargetTrajectoriesMsg(
     const ocs2_msgs::mpc_target_trajectories_<ContainerAllocator>& targetTrajectoriesMsg,
-    cost_desired_trajectories_t& costDesiredTrajectories) {
+    CostDesiredTrajectories& costDesiredTrajectories) {
   scalar_array_t& desiredTimeTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
   dynamic_vector_array_t& desiredStateTrajectory = costDesiredTrajectories.desiredStateTrajectory();
   dynamic_vector_array_t& desiredInputTrajectory = costDesiredTrajectories.desiredInputTrajectory();

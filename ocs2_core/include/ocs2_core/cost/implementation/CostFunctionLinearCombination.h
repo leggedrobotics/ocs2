@@ -108,7 +108,7 @@ void CostFunctionLinearCombination<STATE_DIM, INPUT_DIM>::getTerminalCostSecondD
 }
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void CostFunctionLinearCombination<STATE_DIM, INPUT_DIM>::setCostDesiredTrajectories(
-    const cost_desired_trajectories_t& costDesiredTrajectories) {
+    const CostDesiredTrajectories& costDesiredTrajectories) {
   BASE::setCostDesiredTrajectories(costDesiredTrajectories);
   for (int i = 0; i < weightedCosts_.size(); i++) {
     weightedCosts_[i].second->setCostDesiredTrajectories(costDesiredTrajectories);

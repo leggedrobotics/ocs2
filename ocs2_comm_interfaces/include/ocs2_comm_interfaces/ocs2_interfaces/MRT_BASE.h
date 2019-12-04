@@ -97,7 +97,7 @@ class MRT_BASE {
    *
    * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
    */
-  virtual void resetMpcNode(const CostDesiredTrajectories<scalar_t>& initCostDesiredTrajectories) = 0;
+  virtual void resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) = 0;
 
   /**
    * Whether the initial MPC policy has been already received.

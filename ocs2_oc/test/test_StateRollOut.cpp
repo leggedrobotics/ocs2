@@ -204,6 +204,7 @@ TEST(StateRolloutTests, rolloutTestPendulumDynamics) {
  * 		The following tests are implemented and performed:
  *
  * 		-	No penetration of Guard Surface
+ * 		- 	Eventtimes compared to accurate run of rollout
  */
 TEST(StateRolloutTests, runHybridDynamics) {
   using DIMENSIONS = ocs2::Dimensions<3, 1>;
@@ -262,8 +263,15 @@ TEST(StateRolloutTests, runHybridDynamics) {
   finalState =
       rollout.run(t0, initState, t1, Controller, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
-  // logicRules->display();
+  // Test Eventtimes
+  EXPECT_EQ(eventsPastTheEndIndeces.size(),5);
+  EXPECT_LT(std::fabs(timeTrajectory[eventsPastTheEndIndeces[0]-1]-0.126835459),1e-8);
+  EXPECT_LT(std::fabs(timeTrajectory[eventsPastTheEndIndeces[1]-1]-1.73439091),1e-8);
+  EXPECT_LT(std::fabs(timeTrajectory[eventsPastTheEndIndeces[2]-1]-2.25798967),1e-8);
+  EXPECT_LT(std::fabs(timeTrajectory[eventsPastTheEndIndeces[3]-1]-3.86554513),1e-8);
+  EXPECT_LT(std::fabs(timeTrajectory[eventsPastTheEndIndeces[4]-1]-4.38914388),1e-8);
 
+  // Test (and display statetrajectory)
   for (int i = 0; i < timeTrajectory.size(); i++) {
     // Test 1: No Significant penetration of Guard Surface
     dynamic_vector_t currentGuardValues;
@@ -275,8 +283,8 @@ TEST(StateRolloutTests, runHybridDynamics) {
     EXPECT_GT(currentGuardValues[1], -1e-6);
     // Optional output of state and time trajectories
     if (false) {
-      std::cout << i << ";" << timeTrajectory[i] << ";" << stateTrajectory[i][0] << ";" << stateTrajectory[i][1] << ";"
-                << logicRules->getSubSystemTime(timeTrajectory[i]) << ";" << inputTrajectory[i] << std::endl;
+      std::cout << i << ";" << std::setprecision(9) <<timeTrajectory[i] << ";" << stateTrajectory[i][0] << ";" << stateTrajectory[i][1] << ";"
+                << stateTrajectory[i][2] << ";" << inputTrajectory[i] << std::endl;
     }
   }
 }

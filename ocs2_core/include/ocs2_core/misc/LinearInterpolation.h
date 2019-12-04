@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/StdVector>
 
 #include <algorithm>
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -56,6 +57,7 @@ class LinearInterpolation {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using scalar_t = double;
+  using size_type = typename std::vector<Data_T, Alloc>::size_type;
 
   /**
    * Default constructor.
@@ -79,10 +81,11 @@ class LinearInterpolation {
    * @return {index, alpha}: The greatest smaller time stamp index and the interpolation coefficient [1, 0]
    */
   template <typename Field_T>
-  static std::pair<int, scalar_t> interpolate(scalar_t enquiryTime, Field_T& enquiryData, const std::vector<scalar_t>* timeStampPtr,
-                                              const std::vector<Data_T, Alloc>* dataPtr) {
+  static std::pair<int, scalar_t> interpolate(
+      scalar_t enquiryTime, Field_T& enquiryData, const std::vector<scalar_t>* timeStampPtr, const std::vector<Data_T, Alloc>* dataPtr,
+      std::function<const Field_T&(size_type, const std::vector<Data_T, Alloc>*)> accessFun = stdAccessFun) {
     const auto indexAlpha = timeSegment(enquiryTime, timeStampPtr);
-    interpolate(indexAlpha, enquiryData, dataPtr);
+    interpolate(indexAlpha, enquiryData, dataPtr, accessFun);
     return indexAlpha;
   }
 
@@ -95,14 +98,15 @@ class LinearInterpolation {
    * @param [in] dataPtr: Pointer to vector of data
    */
   template <typename Field_T>
-  static void interpolate(std::pair<int, scalar_t> indexAlpha, Field_T& enquiryData, const std::vector<Data_T, Alloc>* dataPtr) {
+  static void interpolate(std::pair<int, scalar_t> indexAlpha, Field_T& enquiryData, const std::vector<Data_T, Alloc>* dataPtr,
+                          std::function<const Field_T&(size_type, const std::vector<Data_T, Alloc>*)> accessFun = stdAccessFun) {
     if (dataPtr) {
       if (dataPtr->size() > 1) {
         // Normal interpolation case
         int index = indexAlpha.first;
         scalar_t alpha = indexAlpha.second;
-        auto& lhs = (*dataPtr)[index];
-        auto& rhs = (*dataPtr)[index + 1];
+        auto& lhs = accessFun(index, dataPtr);
+        auto& rhs = accessFun(index + 1, dataPtr);
         if (lhs.rows() == rhs.rows() && lhs.cols() == rhs.cols()) {
           enquiryData = alpha * lhs + (scalar_t(1.0) - alpha) * rhs;
         } else {
@@ -110,7 +114,7 @@ class LinearInterpolation {
         }
       } else if (dataPtr->size() == 1) {
         // Time vector has only 1 element -> Constant function
-        enquiryData = dataPtr->front();
+        enquiryData = accessFun(0, dataPtr);
       } else {
         // Time empty -> zero function
         enquiryData.setZero();
@@ -121,21 +125,22 @@ class LinearInterpolation {
     }
   }
 
-  /*
+  /**
    * Specialization of interpolate() member method for floating point types.
    */
-  static void interpolate(std::pair<int, scalar_t> indexAlpha, double& enquiryData, const std::vector<Data_T, Alloc>* dataPtr) {
+  static void interpolate(std::pair<int, scalar_t> indexAlpha, double& enquiryData, const std::vector<Data_T, Alloc>* dataPtr,
+                          std::function<const double&(size_type, const std::vector<Data_T, Alloc>*)> accessFun = stdAccessFun) {
     if (dataPtr) {
       if (dataPtr->size() > 1) {
         // Normal interpolation case
         int index = indexAlpha.first;
         scalar_t alpha = indexAlpha.second;
-        auto& lhs = (*dataPtr)[index];
-        auto& rhs = (*dataPtr)[index + 1];
+        auto& lhs = accessFun(index, dataPtr);
+        auto& rhs = accessFun(index + 1, dataPtr);
         enquiryData = alpha * lhs + (scalar_t(1.0) - alpha) * rhs;
       } else if (dataPtr->size() == 1) {
         // Time vector has only 1 element -> Constant function
-        enquiryData = dataPtr->front();
+        enquiryData = accessFun(0, dataPtr);
       } else {
         // Time empty -> zero function
         enquiryData = scalar_t(0.0);
@@ -144,7 +149,23 @@ class LinearInterpolation {
       // No data set -> zero Function
       enquiryData = scalar_t(0.0);
     }
-  };
+  }
+
+  /**
+   * Helper specialization of interpolate() for Eigen::VectorXd to simplify the DataModel calls.
+   */
+  static void interpolate(std::pair<int, scalar_t> indexAlpha, Eigen::VectorXd& enquiryData, const std::vector<Data_T, Alloc>* dataPtr,
+                          std::function<const Eigen::VectorXd&(size_type, const std::vector<Data_T, Alloc>*)> accessFun = stdAccessFun) {
+    interpolate<Eigen::VectorXd>(indexAlpha, enquiryData, dataPtr, accessFun);
+  }
+
+  /**
+   * Helper specialization of interpolate() for Eigen::MatrixXd to simplify the DataModel calls.
+   */
+  static void interpolate(std::pair<int, scalar_t> indexAlpha, Eigen::MatrixXd& enquiryData, const std::vector<Data_T, Alloc>* dataPtr,
+                          std::function<const Eigen::MatrixXd&(size_type, const std::vector<Data_T, Alloc>*)> accessFun = stdAccessFun) {
+    interpolate<Eigen::MatrixXd>(indexAlpha, enquiryData, dataPtr, accessFun);
+  }
 
   /**
    * Get the interval index and interpolation coefficient alpha.
@@ -176,6 +197,9 @@ class LinearInterpolation {
       return {0, scalar_t(1.0)};
     }
   }
+
+ private:
+  static inline const Data_T& stdAccessFun(size_type ind, const std::vector<Data_T, Alloc>* vec) { return (*vec)[ind]; }
 };
 
 // Specialization for Eigen types

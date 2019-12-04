@@ -1,7 +1,7 @@
 
 
 #include <gtest/gtest.h>
-#include <ocs2_core/misc/LinearAlgebra.h>
+#include "ocs2_core/misc/LinearAlgebra.h"
 #include "ocs2_core/misc/randomMatrices.h"
 
 using namespace ocs2;

@@ -57,9 +57,7 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
    */
   LinearController(const LinearController& other) : LinearController(other.timeStamp_, other.biasArray_, other.gainArray_){
     deltaBiasArray_ = other.deltaBiasArray_;
-    eventIdx_ = other.eventIdx_;
-    std::cout<<other.eventIdx_.size()<<std::endl;
-    std::cout<<eventIdx_.size()<<std::endl;
+
   }
 
   /**
@@ -262,7 +260,6 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
 
  public:
   scalar_array_t timeStamp_;
-  size_array_t eventIdx_;
   input_vector_array_t biasArray_;
   input_vector_array_t deltaBiasArray_;
   input_state_matrix_array_t gainArray_;

@@ -44,12 +44,6 @@ public:
 		{
 			CtrlEventTimes_.insert(CtrlEventTimes_.begin(),0);
 		}
-
-		std::cout<<"Event Times this round"<<std::endl;
-		for(int i = 0;i<CtrlEventTimes_.size();i++)
-		{
-			std::cout<<i<<";"<<std::setprecision(12)<<CtrlEventTimes_[i]<<std::endl;
-		}
 	}
 
 	~stateBasedLinearController() = default;

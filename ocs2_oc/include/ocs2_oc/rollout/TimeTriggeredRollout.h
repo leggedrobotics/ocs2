@@ -75,7 +75,8 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   explicit TimeTriggeredRollout(const controlled_system_base_t& systemDynamics, Rollout_Settings rolloutSettings = Rollout_Settings())
       : BASE(std::move(rolloutSettings)), systemDynamicsPtr_(systemDynamics.clone()), systemEventHandlersPtr_(new event_handler_t) {
     // construct dynamicsIntegratorsPtr
-    dynamicsIntegratorPtr_.reset(newIntegrator<STATE_DIM>(BASE::settings().integratorType_, systemDynamicsPtr_, systemEventHandlersPtr_));
+    dynamicsIntegratorPtr_ =
+        std::move(newIntegrator<STATE_DIM>(BASE::settings().integratorType_, systemDynamicsPtr_, systemEventHandlersPtr_));
   }
 
   /**

@@ -280,10 +280,10 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
 
   std::vector<std::shared_ptr<riccati_equations_t>> riccatiEquationsPtrStock_;
   std::vector<std::shared_ptr<SystemEventHandler<riccati_equations_t::S_DIM_>>> riccatiEventPtrStock_;
-  std::vector<std::shared_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>> riccatiIntegratorPtrStock_;
+  std::vector<std::unique_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>> riccatiIntegratorPtrStock_;
   std::vector<std::shared_ptr<error_equation_t>> errorEquationPtrStock_;
   std::vector<std::shared_ptr<SystemEventHandler<STATE_DIM>>> errorEventPtrStock_;
-  std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>> errorIntegratorPtrStock_;
+  std::vector<std::unique_ptr<IntegratorBase<STATE_DIM>>> errorIntegratorPtrStock_;
 };
 
 }  // namespace ocs2

@@ -33,8 +33,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int STATE_DIM>
-IntegratorBase<STATE_DIM>* newIntegrator(IntegratorType integratorType, const std::shared_ptr<OdeBase<STATE_DIM>>& systemPtr,
-                                         const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr) {
+std::unique_ptr<IntegratorBase<STATE_DIM>> newIntegrator(IntegratorType integratorType,
+                                                         const std::shared_ptr<OdeBase<STATE_DIM>>& systemPtr,
+                                                         const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr) {
   IntegratorBase<STATE_DIM>* integrator = nullptr;
   switch (integratorType) {
     case (IntegratorType::EULER):
@@ -70,7 +71,7 @@ IntegratorBase<STATE_DIM>* newIntegrator(IntegratorType integratorType, const st
     default:
       throw std::runtime_error("Integrator of type " + toString(integratorType) + " not supported.");
   }
-  return integrator;
+  return std::unique_ptr<IntegratorBase<STATE_DIM>>(integrator);
 }
 
 /******************************************************************************************************/

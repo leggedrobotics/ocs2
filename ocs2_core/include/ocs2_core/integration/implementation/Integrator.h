@@ -33,38 +33,36 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int STATE_DIM>
-std::unique_ptr<IntegratorBase<STATE_DIM>> newIntegrator(IntegratorType integratorType,
-                                                         const std::shared_ptr<OdeBase<STATE_DIM>>& systemPtr,
-                                                         const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr) {
+std::unique_ptr<IntegratorBase<STATE_DIM>> newIntegrator(IntegratorType integratorType) {
   IntegratorBase<STATE_DIM>* integrator = nullptr;
   switch (integratorType) {
     case (IntegratorType::EULER):
-      integrator = new IntegratorEuler<STATE_DIM>(systemPtr, eventHandlerPtr);
+      integrator = new IntegratorEuler<STATE_DIM>();
       break;
     case (IntegratorType::ODE45):
-      integrator = new ODE45<STATE_DIM>(systemPtr, eventHandlerPtr);
+      integrator = new ODE45<STATE_DIM>();
       break;
     case (IntegratorType::ADAMS_BASHFORTH): {
       const size_t numberSteps = 1;
-      integrator = new IntegratorAdamsBashforth<STATE_DIM, numberSteps>(systemPtr, eventHandlerPtr);
+      integrator = new IntegratorAdamsBashforth<STATE_DIM, numberSteps>();
       break;
     }
     case (IntegratorType::BULIRSCH_STOER):
-      integrator = new IntegratorBulirschStoer<STATE_DIM>(systemPtr, eventHandlerPtr);
+      integrator = new IntegratorBulirschStoer<STATE_DIM>();
       break;
     case (IntegratorType::MODIFIED_MIDPOINT):
-      integrator = new IntegratorModifiedMidpoint<STATE_DIM>(systemPtr, eventHandlerPtr);
+      integrator = new IntegratorModifiedMidpoint<STATE_DIM>();
       break;
     case (IntegratorType::RK4):
-      integrator = new IntegratorRK4<STATE_DIM>(systemPtr, eventHandlerPtr);
+      integrator = new IntegratorRK4<STATE_DIM>();
       break;
     case (IntegratorType::RK5_VARIABLE):
-      integrator = new IntegratorRK5Variable<STATE_DIM>(systemPtr, eventHandlerPtr);
+      integrator = new IntegratorRK5Variable<STATE_DIM>();
       break;
 #if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 55)
     case (IntegratorType::ADAMS_BASHFORTH_MOULTON): {
       const size_t numberSteps = 1;  // maximum is 8
-      integrator = new IntegratorAdamsBashforthMoulton<STATE_DIM, numberSteps>(systemPtr, eventHandlerPtr);
+      integrator = new IntegratorAdamsBashforthMoulton<STATE_DIM, numberSteps>();
       break;
     }
 #endif
@@ -78,54 +76,43 @@ std::unique_ptr<IntegratorBase<STATE_DIM>> newIntegrator(IntegratorType integrat
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int STATE_DIM, class Stepper>
-Integrator<STATE_DIM, Stepper>::Integrator(const std::shared_ptr<OdeBase<STATE_DIM>>& systemPtr,
-                                           const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr)
-
-    : BASE(systemPtr, eventHandlerPtr), stepperPtr_(new Stepper) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <int STATE_DIM, class Stepper>
-void Integrator<STATE_DIM, Stepper>::run_integrate_const(const state_vector_t& initialState, scalar_t startTime, scalar_t finalTime,
-                                                         scalar_t dt, observer_func_t observerFunc) {
+void Integrator<STATE_DIM, Stepper>::run_integrate_const(system_func_t system, observer_func_t observer, const state_vector_t& initialState,
+                                                         scalar_t startTime, scalar_t finalTime, scalar_t dt) {
   // TODO(mspieler): initializeStepper not used, why?
   // /*
   //  * use a temporary state for initialization, the state returned by initialize is different
   //  * from the real init state (already forward integrated)
   //  */
   // state_vector_t initialStateInternal_init_temp = initialState;
-  // scalar_t startTime_temp = startTime;
-  // initializeStepper(initialStateInternal_init_temp, startTime_temp, dt);
+  // initializeStepper(initialStateInternal_init_temp, startTime, dt);
 
   state_vector_t initialStateInternal = initialState;
   // Ensure that finalTime is included by adding a fraction of dt such that: N * dt <= finalTime < (N + 1) * dt.
   finalTime += 0.1 * dt;
-  boost::numeric::odeint::integrate_const(*stepperPtr_, BASE::systemFunction_, initialStateInternal, startTime, finalTime, dt,
-                                          observerFunc);
+  boost::numeric::odeint::integrate_const(stepper_, system, initialStateInternal, startTime, finalTime, dt, observer);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int STATE_DIM, class Stepper>
-void Integrator<STATE_DIM, Stepper>::run_integrate_adaptive(const state_vector_t& initialState, scalar_t startTime, scalar_t finalTime,
-                                                            scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol,
-                                                            observer_func_t observerFunc) {
+void Integrator<STATE_DIM, Stepper>::run_integrate_adaptive(system_func_t system, observer_func_t observer,
+                                                            const state_vector_t& initialState, scalar_t startTime, scalar_t finalTime,
+                                                            scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol) {
   state_vector_t internalStartState = initialState;
-  integrate_adaptive_specialized<Stepper>(internalStartState, startTime, finalTime, dtInitial, AbsTol, RelTol, observerFunc);
+  integrate_adaptive_specialized<Stepper>(system, observer, internalStartState, startTime, finalTime, dtInitial, AbsTol, RelTol);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int STATE_DIM, class Stepper>
-void Integrator<STATE_DIM, Stepper>::run_integrate_times(const state_vector_t& initialState,
+void Integrator<STATE_DIM, Stepper>::run_integrate_times(system_func_t system, observer_func_t observer, const state_vector_t& initialState,
                                                          typename scalar_array_t::const_iterator beginTimeItr,
                                                          typename scalar_array_t::const_iterator endTimeItr, scalar_t dtInitial,
-                                                         scalar_t AbsTol, scalar_t RelTol, observer_func_t observerFunc) {
+                                                         scalar_t AbsTol, scalar_t RelTol) {
   state_vector_t internalStartState = initialState;
-  integrate_times_specialized<Stepper>(internalStartState, beginTimeItr, endTimeItr, dtInitial, AbsTol, RelTol, observerFunc);
+  integrate_times_specialized<Stepper>(system, observer, internalStartState, beginTimeItr, endTimeItr, dtInitial, AbsTol, RelTol);
 }
 
 /******************************************************************************************************/
@@ -134,11 +121,11 @@ void Integrator<STATE_DIM, Stepper>::run_integrate_times(const state_vector_t& i
 template <int STATE_DIM, class Stepper>
 template <typename S>
 typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value, void>::type
-Integrator<STATE_DIM, Stepper>::integrate_adaptive_specialized(state_vector_t& initialState, scalar_t startTime, scalar_t finalTime,
-                                                               scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol,
-                                                               observer_func_t observerFunc) {
-  boost::numeric::odeint::integrate_adaptive(boost::numeric::odeint::make_controlled<S>(AbsTol, RelTol), BASE::systemFunction_,
-                                             initialState, startTime, finalTime, dtInitial, observerFunc);
+Integrator<STATE_DIM, Stepper>::integrate_adaptive_specialized(system_func_t system, observer_func_t observer, state_vector_t& initialState,
+                                                               scalar_t startTime, scalar_t finalTime, scalar_t dtInitial, scalar_t AbsTol,
+                                                               scalar_t RelTol) {
+  boost::numeric::odeint::integrate_adaptive(boost::numeric::odeint::make_controlled<S>(AbsTol, RelTol), system, initialState, startTime,
+                                             finalTime, dtInitial, observer);
 }
 
 /******************************************************************************************************/
@@ -147,11 +134,10 @@ Integrator<STATE_DIM, Stepper>::integrate_adaptive_specialized(state_vector_t& i
 template <int STATE_DIM, class Stepper>
 template <typename S>
 typename std::enable_if<!std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value, void>::type
-Integrator<STATE_DIM, Stepper>::integrate_adaptive_specialized(state_vector_t& initialState, scalar_t startTime, scalar_t finalTime,
-                                                               scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol,
-                                                               observer_func_t observerFunc) {
-  boost::numeric::odeint::integrate_adaptive(*stepperPtr_, BASE::systemFunction_, initialState, startTime, finalTime, dtInitial,
-                                             observerFunc);
+Integrator<STATE_DIM, Stepper>::integrate_adaptive_specialized(system_func_t system, observer_func_t observer, state_vector_t& initialState,
+                                                               scalar_t startTime, scalar_t finalTime, scalar_t dtInitial, scalar_t AbsTol,
+                                                               scalar_t RelTol) {
+  boost::numeric::odeint::integrate_adaptive(stepper_, system, initialState, startTime, finalTime, dtInitial, observer);
 }
 
 /******************************************************************************************************/
@@ -160,19 +146,19 @@ Integrator<STATE_DIM, Stepper>::integrate_adaptive_specialized(state_vector_t& i
 template <int STATE_DIM, class Stepper>
 template <typename S>
 typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value, void>::type
-Integrator<STATE_DIM, Stepper>::integrate_times_specialized(state_vector_t& initialState,
+Integrator<STATE_DIM, Stepper>::integrate_times_specialized(system_func_t system, observer_func_t observer, state_vector_t& initialState,
                                                             typename scalar_array_t::const_iterator beginTimeItr,
                                                             typename scalar_array_t::const_iterator endTimeItr, scalar_t dtInitial,
-                                                            scalar_t AbsTol, scalar_t RelTol, observer_func_t observerFunc) {
+                                                            scalar_t AbsTol, scalar_t RelTol) {
 #if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 60)
   boost::numeric::odeint::max_step_checker maxStepChecker(
       std::numeric_limits<int>::max());  // maxNumSteps is already checked by event handler.
 
-  boost::numeric::odeint::integrate_times(boost::numeric::odeint::make_controlled<S>(AbsTol, RelTol), BASE::systemFunction_, initialState,
-                                          beginTimeItr, endTimeItr, dtInitial, observerFunc, maxStepChecker);
+  boost::numeric::odeint::integrate_times(boost::numeric::odeint::make_controlled<S>(AbsTol, RelTol), system, initialState, beginTimeItr,
+                                          endTimeItr, dtInitial, observer, maxStepChecker);
 #else
-  boost::numeric::odeint::integrate_times(boost::numeric::odeint::make_controlled<S>(AbsTol, RelTol), BASE::systemFunction_, initialState,
-                                          beginTimeItr, endTimeItr, dtInitial, observerFunc);
+  boost::numeric::odeint::integrate_times(boost::numeric::odeint::make_controlled<S>(AbsTol, RelTol), system, initialState, beginTimeItr,
+                                          endTimeItr, dtInitial, observer);
 #endif
 }
 
@@ -182,20 +168,18 @@ Integrator<STATE_DIM, Stepper>::integrate_times_specialized(state_vector_t& init
 template <int STATE_DIM, class Stepper>
 template <typename S>
 typename std::enable_if<!std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value, void>::type
-Integrator<STATE_DIM, Stepper>::integrate_times_specialized(state_vector_t& initialState,
+Integrator<STATE_DIM, Stepper>::integrate_times_specialized(system_func_t system, observer_func_t observer, state_vector_t& initialState,
                                                             typename scalar_array_t::const_iterator beginTimeItr,
                                                             typename scalar_array_t::const_iterator endTimeItr, scalar_t dtInitial,
-                                                            scalar_t AbsTol, scalar_t RelTol, observer_func_t observerFunc) {
+                                                            scalar_t AbsTol, scalar_t RelTol) {
 #if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 60)
   boost::numeric::odeint::max_step_checker maxStepChecker(
       std::numeric_limits<int>::max());  // maxNumSteps is already checked by event handler.
 
-  boost::numeric::odeint::integrate_times(*stepperPtr_, BASE::systemFunction_, initialState, beginTimeItr, endTimeItr, dtInitial,
-                                          observerFunc, maxStepChecker);
+  boost::numeric::odeint::integrate_times(stepper_, system, initialState, beginTimeItr, endTimeItr, dtInitial, observer, maxStepChecker);
 
 #else
-  boost::numeric::odeint::integrate_times(*stepperPtr_, BASE::systemFunction_, initialState, beginTimeItr, endTimeItr, dtInitial,
-                                          observerFunc);
+  boost::numeric::odeint::integrate_times(stepper_, system, initialState, beginTimeItr, endTimeItr, dtInitial, observer);
 #endif
 }
 
@@ -205,7 +189,7 @@ Integrator<STATE_DIM, Stepper>::integrate_times_specialized(state_vector_t& init
 template <int STATE_DIM, class Stepper>
 template <typename S>
 typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value, void>::type
-Integrator<STATE_DIM, Stepper>::initializeStepper(state_vector_t& initialState, scalar_t& t, scalar_t dt) {
+Integrator<STATE_DIM, Stepper>::initializeStepper(state_vector_t& initialState, scalar_t t, scalar_t dt) {
   /**do nothing, runge_kutta_5_t does not have a init method */
 }
 
@@ -215,8 +199,8 @@ Integrator<STATE_DIM, Stepper>::initializeStepper(state_vector_t& initialState, 
 template <int STATE_DIM, class Stepper>
 template <typename S>
 typename std::enable_if<!(std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value), void>::type
-Integrator<STATE_DIM, Stepper>::initializeStepper(state_vector_t& initialState, scalar_t& t, scalar_t dt) {
-  stepperPtr_->initialize(runge_kutta_dopri5_t<STATE_DIM>(), BASE::systemFunction_, initialState, t, dt);
+Integrator<STATE_DIM, Stepper>::initializeStepper(state_vector_t& initialState, scalar_t t, scalar_t dt) {
+  stepper_.initialize(runge_kutta_dopri5_t<STATE_DIM>(), system, initialState, t, dt);
 }
 
 }  // namespace ocs2

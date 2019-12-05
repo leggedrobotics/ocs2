@@ -53,6 +53,7 @@ class OdeBase {
   using scalar_t = typename DIMENSIONS::scalar_t;
   using state_vector_t = typename DIMENSIONS::state_vector_t;
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+  using system_func_t = std::function<void(const state_vector_t& x, state_vector_t& dxdt, scalar_t t)>;
 
   /**
    * Constructor.
@@ -64,6 +65,7 @@ class OdeBase {
       modelPtr_i.reset(modelData.clone());
     }
     nextModelDataPtrIterator() = beginModelDataPtrIterator();
+    systemFunction_ = [this](const state_vector_t& x, state_vector_t& dxdt, scalar_t t) { computeFlowMap(t, x, dxdt); };
   }
 
   /**
@@ -75,6 +77,13 @@ class OdeBase {
    * Default copy constructor
    */
   OdeBase(const OdeBase& rhs) : OdeBase(*rhs.modelDataPtrArray_.front()) {}
+
+  /**
+   * Get a system function callback that calls computeFlowMap for integration.
+   */
+  inline system_func_t systemFunction() {
+    return systemFunction_;
+  }
 
   /**
    * Gets the number of function calls.
@@ -151,6 +160,7 @@ class OdeBase {
  protected:
   int numFunctionCalls_;
 
+  system_func_t systemFunction_;
   const int defaultModelDataArraySize_;
   std::list<std::shared_ptr<ModelDataBase>> modelDataPtrArray_;
   std::list<std::shared_ptr<ModelDataBase>>::iterator nextModelDataPtrIterator_;

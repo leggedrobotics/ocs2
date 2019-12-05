@@ -61,56 +61,72 @@ class Observer {
   using model_data_t = ModelDataBase;
   using model_data_array_t = model_data_t::array_t;
 
+  using observer_callback_t = std::function<void(const state_vector_t& x, scalar_t t)>;
+
   /**
    * Constructor
    * @param [in] eventHandler
    */
-  explicit Observer(scalar_array_t* timeTraj = nullptr, state_vector_array_t* stateTraj = nullptr,
-                    model_data_array_t* modelDataTraj = nullptr)
-      : timeTrajectoryPtr_(timeTraj), stateTrajectoryPtr_(stateTraj), modelDataTrajectoryPtr_(modelDataTraj), initialCall_(false) {}
+  explicit Observer(const std::shared_ptr<OdeBase<STATE_DIM>>& systemPtr,
+                    const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr = nullptr)
+      : systemPtr_(systemPtr), eventHandlerPtr_(eventHandlerPtr) {}
 
+  /**
+   * Make observer callback function for integration
+   * @param [out] timeTraj: Time of each trajectory point
+   * @param [out] stateTraj: State trajectory
+   * @param [out] modelDataTraj: Model data trajectory
+   */
+  observer_callback_t getCallback(scalar_array_t* timeTraj = nullptr, state_vector_array_t* stateTraj = nullptr,
+                                       model_data_array_t* modelDataTraj = nullptr) {
+    return [=](const state_vector_t& x, scalar_t t) { observe(x, t, timeTraj, stateTraj, modelDataTraj); };
+  }
+
+ private:
   /**
    * Observe function to retrieve the variable of interest.
    * @param [in] x: Current state.
    * @param [in] t: Current time.
    */
-  void observe(std::shared_ptr<OdeBase<STATE_DIM>> systemPtr, const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr,
-               const state_vector_t& x, const scalar_t& t) {
+  void observe(const state_vector_t& x, const scalar_t& t, scalar_array_t* timeTraj, state_vector_array_t* stateTraj,
+               model_data_array_t* modelDataTraj) {
     // Store data
-    if (stateTrajectoryPtr_) {
-      stateTrajectoryPtr_->push_back(x);
+    if (stateTraj) {
+      stateTraj->push_back(x);
     }
-    if (timeTrajectoryPtr_) {
-      timeTrajectoryPtr_->push_back(t);
+    if (timeTraj) {
+      timeTraj->push_back(t);
     }
 
-    // extract model data
-    if (modelDataTrajectoryPtr_) {
-      // check for initial call
-      if (initialCall_) {
-        model_data_t* modelDataPtr = systemPtr->beginModelDataPtrIterator()->get();
-        modelDataTrajectoryPtr_->emplace_back(*modelDataPtr);
-      }
-      // TODO(mspieler): Double check initial call handling logic
-      initialCall_ = systemPtr->nextModelDataPtrIterator() == systemPtr->beginModelDataPtrIterator();
+    if (systemPtr_) {
+      // extract model data
+      if (modelDataTraj) {
+        // check for initial call
+        if (initialCall_) {
+          model_data_t* modelDataPtr = systemPtr_->beginModelDataPtrIterator()->get();
+          modelDataTraj->emplace_back(*modelDataPtr);
+        }
+        // TODO(mspieler): Double check initial call handling logic
+        initialCall_ = systemPtr_->nextModelDataPtrIterator() == systemPtr_->beginModelDataPtrIterator();
 
-      // get the model data
-      while (systemPtr->nextModelDataPtrIterator() != systemPtr->beginModelDataPtrIterator()) {
-        --systemPtr->nextModelDataPtrIterator();
-        model_data_t* modelDataPtr = systemPtr->nextModelDataPtrIterator()->get();
-        if (modelDataTrajectoryPtr_ && numerics::almost_eq(modelDataPtr->time_, t)) {
-          modelDataTrajectoryPtr_->emplace_back(*modelDataPtr);
-          systemPtr->nextModelDataPtrIterator() = systemPtr->beginModelDataPtrIterator();
-          break;
+        // get the model data
+        while (systemPtr_->nextModelDataPtrIterator() != systemPtr_->beginModelDataPtrIterator()) {
+          --systemPtr_->nextModelDataPtrIterator();
+          model_data_t* modelDataPtr = systemPtr_->nextModelDataPtrIterator()->get();
+          if (modelDataTraj && numerics::almost_eq(modelDataPtr->time_, t)) {
+            modelDataTraj->emplace_back(*modelDataPtr);
+            systemPtr_->nextModelDataPtrIterator() = systemPtr_->beginModelDataPtrIterator();
+            break;
+          }
         }
       }
+      systemPtr_->nextModelDataPtrIterator() = systemPtr_->beginModelDataPtrIterator();
     }
-    systemPtr->nextModelDataPtrIterator() = systemPtr->beginModelDataPtrIterator();
 
     // Check events
-    if (stateTrajectoryPtr_ && timeTrajectoryPtr_ && eventHandlerPtr && eventHandlerPtr->checkEvent(x, t)) {
+    if (stateTraj && timeTraj && eventHandlerPtr_ && eventHandlerPtr_->checkEvent(x, t)) {
       // Act on the event
-      int eventID = eventHandlerPtr->handleEvent(*stateTrajectoryPtr_, *timeTrajectoryPtr_);
+      int eventID = eventHandlerPtr_->handleEvent(*stateTraj, *timeTraj);
 
       switch (eventID) {
         case sys_event_id::killIntegration: {
@@ -132,46 +148,8 @@ class Observer {
     }
   }
 
-  /**
-   * Clear all available trajectories.
-   */
-  void clearTrajectories() {
-    if (timeTrajectoryPtr_) {
-      timeTrajectoryPtr_->clear();
-    }
-    if (stateTrajectoryPtr_) {
-      stateTrajectoryPtr_->clear();
-    }
-    if (modelDataTrajectoryPtr_) {
-      modelDataTrajectoryPtr_->clear();
-    }
-  }
-
-  /**
-   * Set state trajectory pointer to observer.
-   *
-   * @param stateTrajectoryPtr: A pointer to state trajectory.
-   */
-  void setStateTrajectory(state_vector_array_t* stateTrajectoryPtr) { stateTrajectoryPtr_ = stateTrajectoryPtr; }
-
-  /**
-   * Set time trajectory pointer to observer.
-   *
-   * @param timeTrajectoryPtr: A pointer to time trajectory.
-   */
-  void setTimeTrajectory(scalar_array_t* timeTrajectoryPtr) { timeTrajectoryPtr_ = timeTrajectoryPtr; }
-
-  /**
-   * Sets a pointer to model data trajectory.
-   *
-   * @param modelDataTrajectoryPtr: A pointer to model data trajectory
-   */
-  void setModelDataTrajectory(model_data_array_t* modelDataTrajectoryPtr) { modelDataTrajectoryPtr_ = modelDataTrajectoryPtr; }
-
- private:
-  scalar_array_t* timeTrajectoryPtr_;
-  state_vector_array_t* stateTrajectoryPtr_;
-  model_data_array_t* modelDataTrajectoryPtr_;
+  std::shared_ptr<OdeBase<STATE_DIM>> systemPtr_;
+  std::shared_ptr<SystemEventHandler<STATE_DIM>> eventHandlerPtr_;
 
   bool initialCall_;
 };

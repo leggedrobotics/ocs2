@@ -69,13 +69,12 @@ void testSecondOrderSystem() {
   Eigen::Vector2d x0;
   x0.setZero();
   const double dt = 0.05;
-  Observer<2> observer;
+  Observer<2> observer(sys);
 
   // Adaptive time integrator
-  Integrator odeAdaptive(sys);
-  observer.setTimeTrajectory(&timeTrajectory1);
-  observer.setStateTrajectory(&stateTrajectory1);
-  odeAdaptive.integrate_adaptive(x0, t0, t1, observer);
+  Integrator odeAdaptive;
+  auto observerFunc1 = observer.getCallback(&timeTrajectory1, &stateTrajectory1);
+  odeAdaptive.integrate_adaptive(sys->systemFunction(), observerFunc1, x0, t0, t1);
 
   EXPECT_NEAR(timeTrajectory1.front(), t0, 1e-6);
   EXPECT_NEAR(timeTrajectory1.back(), t1, 1e-6);
@@ -83,10 +82,9 @@ void testSecondOrderSystem() {
   EXPECT_NEAR(stateTrajectory1.back()(1), 1.0, 1e-3);
 
   // Equidistant time integrator
-  Integrator odeConst(sys);
-  observer.setTimeTrajectory(&timeTrajectory2);
-  observer.setStateTrajectory(&stateTrajectory2);
-  odeConst.integrate_const(x0, t0, t1, dt, observer);
+  Integrator odeConst;
+  auto observerFunc2 = observer.getCallback(&timeTrajectory2, &stateTrajectory2);
+  odeConst.integrate_const(sys->systemFunction(), observerFunc2, x0, t0, t1, dt);
 
   EXPECT_NEAR(timeTrajectory2.front(), t0, 1e-6);
   EXPECT_NEAR(timeTrajectory2.back(), t1, 1e-6);
@@ -94,9 +92,11 @@ void testSecondOrderSystem() {
   EXPECT_NEAR(stateTrajectory2.back()(1), 1.0, 1e-3);
 
   // Integrator with given time trajectory
-  Integrator odeTime(sys);
-  observer.setStateTrajectory(&stateTrajectory3);
-  odeTime.integrate_times(x0, timeTrajectory1.begin(), timeTrajectory1.end(), observer);  // integrate with given time trajectory
+  Integrator odeTime;
+  auto observerFunc3 = observer.getCallback(nullptr, &stateTrajectory3);
+
+  // integrate with given time trajectory
+  odeTime.integrate_times(sys->systemFunction(), observerFunc3, x0, timeTrajectory1.begin(), timeTrajectory1.end());
 
   EXPECT_NEAR(stateTrajectory3.back()(1), 1.0, 1e-3);
 }
@@ -138,19 +138,21 @@ TEST(IntegrationTest, model_data_test) {
   auto controller = std::unique_ptr<controller_t>(new controller_t(cntTimeStamp, uff, k));
   sys->setController(controller.get());
 
-  ODE45<2> odeAdaptive(sys);  // integrate adaptive
+  ODE45<2> integrator;  // integrate adaptive
+  Observer<2> observer(sys);
 
   std::vector<double> timeTrajectory;
   std::vector<Eigen::Matrix<double, 2, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 2, 1>>> stateTrajectory;
+  ModelDataBase::array_t modelDataTrajectory;
 
   Eigen::Matrix<double, 2, 1> x0;
   x0.setZero();
+  auto observerFunc = observer.getCallback(&timeTrajectory, &stateTrajectory, &modelDataTrajectory);
 
   // integrate adaptive
   sys->resetNumFunctionCalls();
-  Observer<2>::model_data_array_t modelDataTrajectory;
-  Observer<2> observer(&timeTrajectory, &stateTrajectory, &modelDataTrajectory);
-  odeAdaptive.integrate_adaptive(x0, 0.0, 10.0, observer);
+
+  integrator.integrate_adaptive(sys->systemFunction(), observerFunc, x0, 0.0, 10.0);
 
   ASSERT_EQ(modelDataTrajectory.size(), stateTrajectory.size())
       << "MESSAGE: ModelData trajectory size is not equal to state trajectory size!";
@@ -159,6 +161,20 @@ TEST(IntegrationTest, model_data_test) {
     ASSERT_FLOAT_EQ(modelDataTrajectory[i].time_, timeTrajectory[i])
         << "MESSAGE: ModelData trajectory time does not match the time trajectory!";
   }
+}
+
+TEST(IntegrationTest, simple_integration_dynamic_size) {
+  ODE45<Eigen::Dynamic> integrator;
+
+  std::vector<Eigen::VectorXd> traj;
+
+  auto system = [](const Eigen::VectorXd& x, Eigen::VectorXd& dxdt, double t) { dxdt = Eigen::VectorXd(Eigen::Vector2d(sin(t), cos(t))); };
+  auto observerFunc = [&](const Eigen::VectorXd& x, double t) { traj.push_back(x); };
+  Eigen::VectorXd x0 = Eigen::Vector2d(0, 0);
+
+  integrator.integrate_adaptive(system, observerFunc, x0, 0.0, M_PI);
+
+  EXPECT_TRUE(traj.back().isApprox(Eigen::Vector2d(2.0, 0.0), 1e-3));
 }
 
 int main(int argc, char** argv) {

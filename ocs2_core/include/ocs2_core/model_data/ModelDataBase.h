@@ -138,7 +138,7 @@ struct ModelDataBase {
   std::string checkCostProperties() const {
     std::string errorDescription;
 
-    if (!cost_.allFinite()) {
+    if (cost_ != cost_) {
       errorDescription += "Intermediate cost is is not finite.";
     }
     if (!costStateDerivative_.allFinite()) {
@@ -195,7 +195,7 @@ struct ModelDataBase {
   dynamic_matrix_t jumpMapInputDerivative_;
 
   // cost
-  eigen_scalar_t cost_;
+  scalar_t cost_;
   dynamic_vector_t costStateDerivative_;
   dynamic_vector_t costInputDerivative_;
   dynamic_matrix_t costStateSecondDerivative_;

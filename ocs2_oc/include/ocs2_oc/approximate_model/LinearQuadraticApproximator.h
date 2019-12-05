@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/integration/SystemEventHandler.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
+#include <ocs2_core/model_data/ModelDataBase.h>
 
 namespace ocs2 {
 
@@ -146,6 +147,74 @@ class LinearQuadraticApproximator {
     approximateConstraints(time, state, input, ncEqStateInput, Ev, Cm, Dm, ncEqStateOnly, Hv, Fm, ncIneq, h, dhdx, dhdu, ddhdxdx, ddhdudu,
                            ddhdudx);
     approximateIntermediateCost(time, state, input, q, Qv, Qm, Rv, Rm, Pm);
+  }
+
+  /**
+   * Calculates an LQ approximate of the unconstrained optimal control problem at a given time, state, and input.
+   *
+   * @param [in] time: The current time.
+   * @param [in] state: The current state.
+   * @param [in] input: The current input .
+   * @param [out] modelData: The output data model.
+   */
+  void approximateUnconstrainedLQProblem(const scalar_t& time, const state_vector_t& state, const input_vector_t& input, ModelDataBase& modelData) {
+
+    // dynamics
+    state_matrix_t Am;
+    state_input_matrix_t Bm;
+    approximateDynamics(time, state, input, Am, Bm);
+    modelData.flowMapStateDerivative_ = Am;
+    modelData.flowMapInputDerivative_ = Bm;
+
+    // constraints
+    size_t ncEqStateInput;
+    constraint1_vector_t Ev;
+    constraint1_state_matrix_t Cm;
+    constraint1_input_matrix_t Dm;
+    size_t ncEqStateOnly;
+    constraint2_vector_t Hv;
+    constraint2_state_matrix_t Fm;
+    size_t ncIneq;
+    scalar_array_t h;
+    state_vector_array_t dhdx;
+    input_vector_array_t dhdu;
+    state_matrix_array_t ddhdxdx;
+    input_matrix_array_t ddhdudu;
+    input_state_matrix_array_t ddhdudx;
+    approximateConstraints(time, state, input, ncEqStateInput, Ev, Cm, Dm, ncEqStateOnly, Hv, Fm, ncIneq, h, dhdx, dhdu, ddhdxdx, ddhdudu,
+                           ddhdudx);
+    modelData.numStateInputEqConstr_ = ncEqStateInput;
+    modelData.stateInputEqConstr_ = Ev.head(ncEqStateInput);
+    modelData.stateInputEqConstrStateDerivative_ = Cm.topRows(ncEqStateInput);
+    modelData.stateInputEqConstrInputDerivative_ = Dm.topRows(ncEqStateInput);
+    modelData.numStateEqConstr_ = ncEqStateOnly;
+    modelData.stateEqConstr_ = Hv.head(ncEqStateOnly);
+    modelData.stateEqConstrStateDerivative_ = Fm.topRows(ncEqStateOnly);
+    modelData.numIneqConstr_ = ncIneq;
+    modelData.ineqConstr_ = h;
+    modelData.ineqConstrStateDerivative_ = dhdx;
+    modelData.ineqConstrInputDerivative_ = dhdu;
+    modelData.ineqConstrStateSecondDerivative_ = ddhdxdx;
+    modelData.ineqConstrInputSecondDerivative_ = ddhdudu;
+    modelData.ineqConstrInputStateDerivative_ = ddhdudx;
+
+	// cost
+    eigen_scalar_t q;
+    state_vector_t Qv;
+    state_matrix_t Qm;
+    input_vector_t Rv;
+    input_matrix_t Rm;
+    input_state_matrix_t Pm;
+    approximateIntermediateCost(time, state, input, q, Qv, Qm, Rv, Rm, Pm);
+    modelData.cost = q(0);
+    modelData.costStateDerivative_ = Qv;
+    modelData.costStateSecondDerivative_ = Qm;
+    modelData.costInputDerivative_ = Rv;
+    modelData.costInputSecondDerivative_ = Rm;
+    modelData.costInputStateDerivative_ = Pm;
+
+    // check dimensions
+    modelData.checkSizes(STATE_DIM, INPUT_DIM);
   }
 
   /**

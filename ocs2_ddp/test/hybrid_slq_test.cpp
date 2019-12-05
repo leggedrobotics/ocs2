@@ -32,6 +32,8 @@
  *
  * 		-	No penetration of Guard Surfaces
  * 		-	Constraint compliance
+ * 		- 	Check of costfunction compared against cost
+ * 		    calculated during trusted run of SLQ
  */
 TEST(testStateRollOut_SLQ, RunExample){
   using namespace ocs2;
@@ -117,6 +119,7 @@ TEST(testStateRollOut_SLQ, RunExample){
     }
   }
 
+  double cost;
   for (int i = 0; i < solution.stateTrajectory_.size(); i++) {
     // Test 1 : Constraint Compliance
     double constraint0 = -solution.inputTrajectory_[i][0] + 2;
@@ -143,6 +146,12 @@ TEST(testStateRollOut_SLQ, RunExample){
       std::cout << solution.timeTrajectory_[i] << "," << guardSurfacesValue[0] << "," << guardSurfacesValue[1] << std::endl;
     }
   }
+  // Test 3: Check of cost function
+  double costFunction;
+  double constraint1ISE;
+  double constraint2ISE;
+  slqST.getPerformanceIndeces(costFunction,constraint1ISE,constraint2ISE);
+  EXPECT_LT(std::fabs(costFunction-18.938001),1e-6);
 }
 
 int main(int argc, char** argv) {

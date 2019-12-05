@@ -158,7 +158,7 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    * @param [in] dt: Time step.
    * @param [in] observerFunc: Observer callback
    */
-  void run_integrate_const(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime, scalar_t dt,
+  void run_integrate_const(const state_vector_t& initialState, scalar_t startTime, scalar_t finalTime, scalar_t dt,
                            observer_func_t observerFunc) final;
 
   /**
@@ -176,7 +176,7 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    * @param [in] RelTol: The relative tolerance error for ode solver.
    * @param [in] observerFunc: Observer callback
    */
-  void run_integrate_adaptive(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime, scalar_t dtInitial,
+  void run_integrate_adaptive(const state_vector_t& initialState, scalar_t startTime, scalar_t finalTime, scalar_t dtInitial,
                               scalar_t AbsTol, scalar_t RelTol, observer_func_t observerFunc) final;
 
   /**
@@ -213,8 +213,8 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    */
   template <typename S>
   typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value, void>::type integrate_adaptive_specialized(
-      state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime, scalar_t dtInitial, scalar_t AbsTol,
-      scalar_t RelTol, observer_func_t observerFunc);
+      state_vector_t& initialState, scalar_t startTime, scalar_t finalTime, scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol,
+      observer_func_t observerFunc);
 
   /**
    * Integrate adaptive specialized,
@@ -230,8 +230,8 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    */
   template <typename S>
   typename std::enable_if<!std::is_same<S, runge_kutta_dopri5_t<STATE_DIM>>::value, void>::type integrate_adaptive_specialized(
-      state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime, scalar_t dtInitial, scalar_t AbsTol,
-      scalar_t RelTol, observer_func_t observerFunc);
+      state_vector_t& initialState, scalar_t startTime, scalar_t finalTime, scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol,
+      observer_func_t observerFunc);
 
   /**
    * Integrate times specialized function

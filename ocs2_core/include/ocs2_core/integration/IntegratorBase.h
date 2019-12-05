@@ -116,8 +116,8 @@ class IntegratorBase {
    * @param [in] observer: Observer.
    * @param [in] maxNumSteps: The maximum number of integration points per a second for ode solver.
    */
-  inline void integrate_const(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime, scalar_t dt,
-                              observer_t& observer, int maxNumSteps = std::numeric_limits<int>::max()) {
+  inline void integrate_const(const state_vector_t& initialState, scalar_t startTime, scalar_t finalTime, scalar_t dt, observer_t& observer,
+                              int maxNumSteps = std::numeric_limits<int>::max()) {
     // setup observer function
     auto observerFunc = [&, this](const state_vector_t& x, const scalar_t& t) { observer.observe(systemPtr_, eventHandlerPtr_, x, t); };
 
@@ -143,8 +143,8 @@ class IntegratorBase {
    * @param [in] RelTol: The relative tolerance error for ode solver.
    * @param [in] maxNumSteps: The maximum number of integration points per a second for ode solver.
    */
-  inline void integrate_adaptive(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime,
-                                 observer_t& observer, scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3,
+  inline void integrate_adaptive(const state_vector_t& initialState, scalar_t startTime, scalar_t finalTime, observer_t& observer,
+                                 scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3,
                                  int maxNumSteps = std::numeric_limits<int>::max()) {
     // setup observer function
     auto observerFunc = [&, this](const state_vector_t& x, const scalar_t& t) { observer.observe(systemPtr_, eventHandlerPtr_, x, t); };
@@ -194,7 +194,7 @@ class IntegratorBase {
    * @param [in] dt: Time step.
    * @param [in] observerFunc: Observer callback
    */
-  virtual void run_integrate_const(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime, scalar_t dt,
+  virtual void run_integrate_const(const state_vector_t& initialState, scalar_t startTime, scalar_t finalTime, scalar_t dt,
                                    observer_func_t observerFunc) = 0;
 
   /**
@@ -212,8 +212,8 @@ class IntegratorBase {
    * @param [in] RelTol: The relative tolerance error for ode solver.
    * @param [in] observerFunc: Observer callback
    */
-  virtual void run_integrate_adaptive(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime,
-                                      scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol, observer_func_t observerFunc) = 0;
+  virtual void run_integrate_adaptive(const state_vector_t& initialState, scalar_t startTime, scalar_t finalTime, scalar_t dtInitial,
+                                      scalar_t AbsTol, scalar_t RelTol, observer_func_t observerFunc) = 0;
 
   /**
    * Output integration based on a given time trajectory. This method can solve ODEs

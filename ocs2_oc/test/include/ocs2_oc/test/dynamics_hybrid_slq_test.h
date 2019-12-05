@@ -220,10 +220,10 @@ class hybridSysConstraints1 final : public ConstraintBase<STATE_DIM, INPUT_DIM> 
 
   void getInequalityConstraint(scalar_array_t& h) override {
     h.resize(4);
-    h[0] = -u_[0] + 10;
-    h[1] = u_[0] + 10;
-    h[2] = x_[0] + 50;
-    h[3] = -x_[0] + 50;
+    h[0] = -u_[0] + 2;
+    h[1] = u_[0] + 2;
+    h[2] = x_[0] + 2;
+    h[3] = -x_[0] + 2;
   }
 
   size_t numInequalityConstraint(const scalar_t& time) override { return 4; }
@@ -277,10 +277,10 @@ class hybridSysConstraints2 final : public ConstraintBase<STATE_DIM, INPUT_DIM> 
 
   void getInequalityConstraint(scalar_array_t& h) override {
     h.resize(4);
-    h[0] = -u_[0] + 10;
-    h[1] = u_[0] + 10;
-    h[2] = x_[0] + 50;
-    h[3] = -x_[0] + 50;
+    h[0] = -u_[0] + 2;
+    h[1] = u_[0] + 2;
+    h[2] = x_[0] + 2;
+    h[3] = -x_[0] + 2;
   }
 
   size_t numInequalityConstraint(const scalar_t& time) override { return 4; }

@@ -35,7 +35,7 @@
  * 		- 	Check of costfunction compared against cost
  * 		    calculated during trusted run of SLQ
  */
-TEST(testStateRollOut_SLQ, RunExample){
+TEST(testStateRollOut_SLQ, HybridSystemSLQTest){
   using namespace ocs2;
 
   SLQ_Settings slqSettings;

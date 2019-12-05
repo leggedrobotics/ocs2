@@ -103,7 +103,7 @@ TEST(StateRolloutTests, rolloutTestBallDynamics) {
     	EXPECT_GT(-stateTrajectory[i][0] + 0.5, -1e-6);
     }
     // Optional output of state and time trajectories
-    if (true) {
+    if (false) {
       std::cerr << i << ";" << timeTrajectory[i] << ";" << stateTrajectory[i][0] << ";" << stateTrajectory[i][1] << ";"
                 << inputTrajectory[i] << std::endl;
     }

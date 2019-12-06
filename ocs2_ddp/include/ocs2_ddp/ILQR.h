@@ -203,7 +203,7 @@ class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] sFinal: The final s for Riccati equation.
    */
   void riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
-                              const eigen_scalar_t& sFinal);
+                              const scalar_t& sFinal);
 
   /****************
    *** Variables **
@@ -213,16 +213,8 @@ class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   // parallel Riccati solver
   std::mutex riccatiSolverDataMutex_;
 
-  // Discrete-time components
-  state_matrix_array2_t AmDtimeTrajectoryStock_;
-  state_input_matrix_array2_t BmDtimeTrajectoryStock_;
+  ModelDataBase::array2_t discreteModelDataTrajectoriesStock_;
 
-  eigen_scalar_array2_t qDtimeTrajectoryStock_;
-  state_vector_array2_t QvDtimeTrajectoryStock_;
-  state_matrix_array2_t QmDtimeTrajectoryStock_;
-  input_vector_array2_t RvDtimeTrajectoryStock_;
-  input_matrix_array2_t RmDtimeTrajectoryStock_;
-  input_state_matrix_array2_t PmDtimeTrajectoryStock_;
   input_matrix_array2_t RmInverseDtimeTrajectoryStock_;
 
   input_matrix_array2_t HmTrajectoryStock_;

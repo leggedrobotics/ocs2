@@ -89,7 +89,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::dynamic_vector_t;
   using typename BASE::eigen_scalar_array2_t;
   using typename BASE::eigen_scalar_array_t;
-  using typename BASE::eigen_scalar_t;
   using typename BASE::input_constraint1_matrix_array2_t;
   using typename BASE::input_constraint1_matrix_array_t;
   using typename BASE::input_constraint1_matrix_t;
@@ -247,80 +246,63 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                                    constraint2_vector_array2_t& HvFinalStock, size_t threadId = 0);
 
   /**
-   * Calculates cost of a rollout.
+   * Calculates constraints ISE (Integral of Square Error).
    *
-   * @param [in] threadId: Working thread.
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the
-   * time trajectory stamp of a rollout.
+   * @param [in] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
    * @param [in] postEventIndicesStock: Array of the post-event indices.
-   * @param [in] stateTrajectoriesStock: Array of trajectories containing the
-   * state trajectory of a rollout.
-   * @param [in] inputTrajectoriesStock: Array of trajectories containing the
-   * control input trajectory of a rollout.
-   * @param [out] totalCost: The total cost of the rollout.
-   * @param [in] threadId: Working thread (default is 0).
+   * @param [in] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
+   * @param [in] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
+   * @param [out] stateInputEqConstraintISE: The state-input equality constraints ISE.
+   * @param [out] stateEqConstraintISE: The state-only equality constraints ISE.
+   * @param [out] stateEqFinalConstraintISE: The final state equality constraints ISE.
+   * @param [out] inequalityConstraintISE: The inequality constraints ISE.
+   * @param [out] inequalityConstraintPenalty: The inequality constraints penalty.
+   * @return maximum norm of the constraints.
    */
-  void calculateRolloutCost(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
-                            const state_vector_array2_t& stateTrajectoriesStock, const input_vector_array2_t& inputTrajectoriesStock,
-                            scalar_t& totalCost, size_t threadId = 0);
+  void calculateRolloutConstraintsISE(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
+                                      const state_vector_array2_t& stateTrajectoriesStock,
+                                      const input_vector_array2_t& inputTrajectoriesStock, scalar_t& stateInputEqConstraintISE,
+                                      scalar_t& stateEqConstraintISE, scalar_t& stateEqFinalConstraintISE,
+                                      scalar_t& inequalityConstraintISE, scalar_t& inequalityConstraintPenalty, size_t workerIndex = 0);
 
   /**
-   * Calculates the cost function plus penalty for state-only constraints of a
-   * rollout.
+   * Calculates cost of a rollout.
    *
-   * @param [in] threadId: Working thread.
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the
-   * time trajectory stamp of a rollout.
+   * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
    * @param [in] postEventIndicesStock: Array of the post-event indices.
-   * @param [in] stateTrajectoriesStock: Array of trajectories containing the
-   * state trajectory of a rollout.
-   * @param [in] inputTrajectoriesStock: Array of trajectories containing the
-   * control input trajectory of a rollout.
-   * @param [in] constraint2ISE: Type-2 constraint's ISE (Integral Squared
-   * Error).
-   * @param [in] nc2FinalStock: Array containing the number of the active final
-   * state-only constraints.
-   * @param [in] HvFinalStock: Array containing the value of the final
-   * state-only constraints.
-   * @param [out] totalCost: The total cost plus state-only constraints penalty.
-   * @param [in] threadId: Working thread (default is 0).
+   * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
+   * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
+   * @param [in] threadId: Working thread.
+   * @return The total cost of the rollout.
    */
-  void calculateRolloutCost(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
-                            const state_vector_array2_t& stateTrajectoriesStock, const input_vector_array2_t& inputTrajectoriesStock,
-                            scalar_t constraint2ISE, scalar_t inequalityConstraintPenalty, const size_array2_t& nc2FinalStock,
-                            const constraint2_vector_array2_t& HvFinalStock, scalar_t& totalCost, size_t threadId = 0);
+  scalar_t calculateRolloutCost(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
+                                const state_vector_array2_t& stateTrajectoriesStock, const input_vector_array2_t& inputTrajectoriesStock,
+                                size_t threadId);
+
+  /**
+   * Calculates cost of a merit.
+   *
+   * @param [in] cost: The rollout cost.
+   * @param [in] stateInputEqConstraintISE: The state-input equality constraints ISE.
+   * @param [in] stateEqConstraintISE: The state-only equality constraints ISE.
+   * @param [in] stateEqFinalConstraintISE: The final state equality constraints ISE.
+   * @param [in] inequalityConstraintPenalty: The inequality constraints penalty.
+   * @return Merit value.
+   */
+  inline scalar_t calculateRolloutMerit(const scalar_t& cost, const scalar_t& stateInputEqConstraintISE,
+                                        const scalar_t& stateEqConstraintISE, const scalar_t& stateEqFinalConstraintISE,
+                                        const scalar_t& inequalityConstraintPenalty) const;
 
   /**
    * Approximates the nonlinear problem as a linear-quadratic problem around the
    * nominal state and control trajectories. This method updates the following
    * variables:
    * 	- linearized system model and constraints
-   * 	- \f$ dxdt = A_m(t)x + B_m(t)u \f$.
-   * 	- s.t. \f$ C_m(t)x + D_m(t)u + E_v(t) = 0 \f$ \\
-   * 	-      \f$ F_m(t)x + H_v(t) = 0 \f$ .
-   * 	- AmTrajectoryStock_: \f$ A_m\f$  matrix.
-   * 	- BmTrajectoryStock_: \f$ B_m\f$  matrix.
-   * 	- CmTrajectoryStock_: \f$ C_m\f$ matrix.
-   * 	- DmTrajectoryStock_: \f$ D_m\f$ matrix.
-   * 	- EvTrajectoryStock_: \f$ E_v\f$ vector.
-   * 	- FmTrajectoryStock_: \f$ F_m\f$ vector.
-   * 	- HvTrajectoryStock_: \f$ H_v\f$ vector.
-   *
-   * 	- quadratized intermediate cost function
-   * 	- intermediate cost: \f$ q(t) + 0.5 xQ_m(t)x + x'Q_v(t) + u'P_m(t)x +
-   * 0.5u'R_m(t)u + u'R_v(t) \f$
-   * 	- qTrajectoryStock_:  \f$ q\f$
-   * 	- QvTrajectoryStock_: \f$ Q_v\f$ vector.
-   * 	- QmTrajectoryStock_:\f$  Q_m\f$ matrix.
-   * 	- PmTrajectoryStock_: \f$ P_m\f$ matrix.
-   * 	- RvTrajectoryStock_: \f$ R_v\f$ vector.
-   * 	- RmTrajectoryStock_: \f$ R_m\f$ matrix.
-   *
+   * 	- quadratized cost function
    * 	- as well as the constrained coefficients of
    * 		- linearized system model
    * 		- quadratized intermediate cost function
    * 		- quadratized final cost
-   *
    */
   virtual void approximateOptimalControlProblem();
 
@@ -342,11 +324,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * is directly added through a user defined stepSize (defined in
    * settings_.constraintStepSize_). But the cost minimization term is optimized
    * through a line-search strategy defined in ILQR settings.
-   *
-   * @param [in] computeISEs: Whether lineSearch needs to calculate ISEs indices
-   * for type_1 and type-2 constraints.
    */
-  virtual void lineSearch(bool computeISEs);
+  virtual void lineSearch();
 
   /**
    * Solves Riccati equations for all the partitions.
@@ -357,8 +336,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @return average time step
    */
-  virtual scalar_t solveSequentialRiccatiEquations(const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
-                                                   const eigen_scalar_t& sFinal);
+  virtual scalar_t solveSequentialRiccatiEquations(const state_matrix_t& SmFinal, const state_vector_t& SvFinal, const scalar_t& sFinal);
 
   /**
    * Adjust the nominal controller based on the last changes in the logic rules.
@@ -526,10 +504,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   /**
    * Performs one rollout while only the input correction for the type-1 constraint is considered.
-   *
-   * @param [in] computeISEs: Whether needs to calculate ISEs indices for type_1 and type-2 constraints.
    */
-  virtual void baselineRollout(bool computeISEs);
+  virtual void baselineRollout();
 
   /**
    * Defines line search task on a thread with various learning rates and choose the largest acceptable step-size.
@@ -539,27 +515,25 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Line search with a specific learning rate.
    *
-   * @param workerIndex
-   * @param learningRate
-   * @param lsTotalCost
-   * @param lsConstraint1ISE
-   * @param lsConstraint1MaxNorm
-   * @param lsConstraint2ISE
-   * @param lsConstraint2MaxNorm
-   * @param lsInequalityConstraintPenalty
-   * @param lsInequalityConstraintISE
-   * @param lsControllersStock
-   * @param lsTimeTrajectoriesStock
-   * @param lsPostEventIndicesStock
-   * @param lsStateTrajectoriesStock
-   * @param lsInputTrajectoriesStock
+   * @param [in] workerIndex
+   * @param [in] learningRate
+   * @param [out] totalCost
+   * @param [out] stateInputEqConstraintISE
+   * @param [out] stateEqConstraintISE
+   * @Param [out] stateEqFinalConstraintISE
+   * @param [out] inequalityConstraintPenalty
+   * @param [out] inequalityConstraintISE
+   * @param [out] controllersStock
+   * @param [out] timeTrajectoriesStock
+   * @param [out] postEventIndicesStock
+   * @param [out] stateTrajectoriesStock
+   * @param [out] inputTrajectoriesStock
    */
-  void lineSearchWorker(size_t workerIndex, scalar_t learningRate, scalar_t& lsTotalCost, scalar_t& lsConstraint1ISE,
-                        scalar_t& lsConstraint1MaxNorm, scalar_t& lsConstraint2ISE, scalar_t& lsConstraint2MaxNorm,
-                        scalar_t& lsInequalityConstraintPenalty, scalar_t& lsInequalityConstraintISE,
-                        linear_controller_array_t& lsControllersStock, scalar_array2_t& lsTimeTrajectoriesStock,
-                        size_array2_t& lsPostEventIndicesStock, state_vector_array2_t& lsStateTrajectoriesStock,
-                        input_vector_array2_t& lsInputTrajectoriesStock);
+  void lineSearchWorker(size_t workerIndex, scalar_t learningRate, scalar_t& totalCost, scalar_t& stateInputEqConstraintISE,
+                        scalar_t& stateEqConstraintISE, scalar_t& stateEqFinalConstraintISE, scalar_t& inequalityConstraintPenalty,
+                        scalar_t& inequalityConstraintISE, linear_controller_array_t& controllersStock,
+                        scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
+                        state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock);
 
   /**
    * Solves Riccati equations for the partitions assigned to the given thread.
@@ -586,31 +560,22 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                               scalar_t& meritFunctionValue, scalar_t& constraintISE);
 
   /**
-   * Calculates state-input constraints ISE (Integral of Square Error). It also
-   * return the maximum norm of the constraints.
+   * Calculates state-input constraints ISE (Integral of Square Error).
    *
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the
-   * time trajectory stamp.
-   * @param [in] nc1TrajectoriesStock: Array of trajectories containing the
-   * number of the active state-input constraints.
-   * @param [in] EvTrajectoriesStock: Array of trajectories containing the value
-   * of the state-input constraints.
-   * @param [out] constraintISE: The state-input constraints ISE.
-   * @return maximum norm of the constraints.
+   * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp.
+   * @param [in] nc1TrajectoriesStock: Array of trajectories containing the number of the active constraints.
+   * @param [in] EvTrajectoriesStock: Array of trajectories containing the value of the constraints.
+   * @return The constraints ISE.
    */
-  scalar_t calculateConstraintISE(const scalar_array2_t& timeTrajectoriesStock,
-                                  const std::vector<std::vector<size_t>>& nc1TrajectoriesStock,
-                                  const constraint1_vector_array2_t& EvTrajectoriesStock, scalar_t& constraintISE);
+  scalar_t calculateConstraintISE(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& nc1TrajectoriesStock,
+                                  const constraint1_vector_array2_t& EvTrajectoriesStock) const;
 
   /**
    * Calculate integrated penalty from inequality constraints.
    *
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the
-   * time trajectory stamp.
-   * @param [in] ncIneqTrajectoriesStock: Array of trajectories containing the
-   * number of inequalityConstraints
-   * @param [in] hTrajectoriesStock: Array of trajectories containing the value
-   * of the inequality constraints.
+   * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp.
+   * @param [in] ncIneqTrajectoriesStock: Array of trajectories containing the number of inequalityConstraints
+   * @param [in] hTrajectoriesStock: Array of trajectories containing the value of the inequality constraints.
    * @param [in] penaltyPtrStock: Array of penalty function pointers.
    * @return constraintPenalty: The inequality constraints penalty.
    */
@@ -688,9 +653,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   size_t numPartitions_ = 0;
   scalar_array_t partitioningTimes_;
 
-  std::atomic<scalar_t> learningRateStar_;  // The optimal learning rate.
-  scalar_t maxLearningRate_ = 1.0;          // The maximum permitted learning rate
-                                            // (settings_.maxLearningRateSLQ_).
+  std::atomic<scalar_t> learningRateStar_;  // optimal learning rate.
+  scalar_t maxLearningRate_ = 1.0;          // max learning rate (settings_.maxLearningRateSLQ_).
 
   std::vector<int> startingIndicesRiccatiWorker_;
   std::vector<int> endingIndicesRiccatiWorker_;
@@ -704,12 +668,11 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   eigen_scalar_array_t iterationISE2_;
 
   scalar_t nominalTotalCost_;
-  scalar_t nominalConstraint1ISE_;
-  scalar_t nominalConstraint1MaxNorm_;
-  scalar_t nominalConstraint2ISE_;
-  scalar_t nominalConstraint2MaxNorm_;
-  scalar_t nominalInequalityConstraintPenalty_;
-  scalar_t nominalInequalityConstraintISE_;
+  scalar_t stateInputEqConstraintISE_;
+  scalar_t stateEqConstraintISE_;
+  scalar_t stateEqFinalConstraintISE_;
+  scalar_t inequalityConstraintPenalty_;
+  scalar_t inequalityConstraintISE_;
 
   // Forward pass and backward pass average time step
   scalar_t avgTimeStepFP_;
@@ -728,8 +691,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   state_vector_array2_t nominalStateTrajectoriesStock_;
   input_vector_array2_t nominalInputTrajectoriesStock_;
 
-  ModelDataBase::array2_t modelDataTrajectoriesStock_;
-
   // Used for caching the nominal trajectories for which the LQ problem is
   // constructed and solved before terminating run()
   scalar_array2_t cachedTimeTrajectoriesStock_;
@@ -741,44 +702,16 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   std::mutex lineSearchResultMutex_;
   std::atomic_size_t alphaExpNext_;
   std::vector<bool> alphaProcessed_;
-  bool lsComputeISEs_;                                // whether lineSearch routine needs to calculate ISEs
   scalar_t baselineTotalCost_;                        // the cost of the rollout for zero learning rate
   linear_controller_array_t initLScontrollersStock_;  // needed for lineSearch
 
-  std::vector<EigenLinearInterpolation<state_vector_t>> nominalStateFunc_;
-  std::vector<EigenLinearInterpolation<input_vector_t>> nominalInputFunc_;
+  // model data trajectory
+  ModelDataBase::array2_t modelDataTrajectoriesStock_;
 
-  state_matrix_array2_t AmTrajectoryStock_;
-  state_input_matrix_array2_t BmTrajectoryStock_;
-
-  size_array2_t nc1TrajectoriesStock_;  // nc1: Number of the Type-1  active constraints
-  constraint1_vector_array2_t EvTrajectoryStock_;
-  constraint1_state_matrix_array2_t CmTrajectoryStock_;
-  constraint1_input_matrix_array2_t DmTrajectoryStock_;
-
-  size_array2_t nc2TrajectoriesStock_;  // nc2: Number of the Type-2 active constraints
-  constraint2_vector_array2_t HvTrajectoryStock_;
-  constraint2_state_matrix_array2_t FmTrajectoryStock_;
   size_array2_t nc2FinalStock_;
   constraint2_vector_array2_t HvFinalStock_;
   constraint2_state_matrix_array2_t FmFinalStock_;
-
-  size_array2_t ncIneqTrajectoriesStock_;  // ncIneq: Number of inequality constraints
-  scalar_array3_t hTrajectoryStock_;
-  state_vector_array3_t dhdxTrajectoryStock_;
-  state_matrix_array3_t ddhdxdxTrajectoryStock_;
-  input_vector_array3_t dhduTrajectoryStock_;
-  input_matrix_array3_t ddhduduTrajectoryStock_;
-  input_state_matrix_array3_t ddhdudxTrajectoryStock_;
-
-  eigen_scalar_array2_t qTrajectoryStock_;
-  state_vector_array2_t QvTrajectoryStock_;
-  state_matrix_array2_t QmTrajectoryStock_;
-  input_vector_array2_t RvTrajectoryStock_;
-  input_matrix_array2_t RmTrajectoryStock_;
-  input_state_matrix_array2_t PmTrajectoryStock_;
-
-  eigen_scalar_array2_t qFinalStock_;
+  scalar_array2_t qFinalStock_;
   state_vector_array2_t QvFinalStock_;
   state_matrix_array2_t QmFinalStock_;
 
@@ -786,18 +719,18 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   scalar_array2_t SsTimeTrajectoryStock_;
   scalar_array2_t SsNormalizedTimeTrajectoryStock_;
   size_array2_t SsNormalizedEventsPastTheEndIndecesStock_;
-  eigen_scalar_array2_t sTrajectoryStock_;
+  scalar_array2_t sTrajectoryStock_;
   state_vector_array2_t SvTrajectoryStock_;
   state_vector_array2_t SveTrajectoryStock_;
   state_matrix_array2_t SmTrajectoryStock_;
 
-  eigen_scalar_array_t sFinalStock_;
+  scalar_array_t sFinalStock_;
   state_vector_array_t SvFinalStock_;
   state_vector_array_t SveFinalStock_;
   state_matrix_array_t SmFinalStock_;
   state_vector_array_t xFinalStock_;
 
-  eigen_scalar_t sHeuristics_;
+  scalar_t sHeuristics_;
   state_vector_t SvHeuristics_;
   state_matrix_t SmHeuristics_;
 

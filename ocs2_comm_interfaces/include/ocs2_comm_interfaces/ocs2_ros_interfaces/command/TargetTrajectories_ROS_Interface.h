@@ -53,12 +53,10 @@ class TargetTrajectories_ROS_Interface {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using scalar_t = SCALAR_T;
-
-  using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
-  using scalar_array_t = typename cost_desired_trajectories_t::scalar_array_t;
-  using dynamic_vector_t = typename cost_desired_trajectories_t::dynamic_vector_t;
-  using dynamic_vector_array_t = typename cost_desired_trajectories_t::dynamic_vector_array_t;
+  using scalar_t = CostDesiredTrajectories::scalar_t;
+  using scalar_array_t = CostDesiredTrajectories::scalar_array_t;
+  using dynamic_vector_t = CostDesiredTrajectories::dynamic_vector_t;
+  using dynamic_vector_array_t = CostDesiredTrajectories::dynamic_vector_array_t;
 
   /**
    * Constructor.
@@ -95,7 +93,7 @@ class TargetTrajectories_ROS_Interface {
    *
    * @param [in] costDesiredTrajectories: The target trajectories.
    */
-  void publishTargetTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories);
+  void publishTargetTrajectories(const CostDesiredTrajectories& costDesiredTrajectories);
 
  protected:
   std::string robotName_;

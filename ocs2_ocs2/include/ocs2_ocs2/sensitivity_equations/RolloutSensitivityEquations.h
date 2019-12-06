@@ -96,12 +96,12 @@ class RolloutSensitivityEquations final : public ControlledSystemBase<STATE_DIM,
                const state_input_matrix_array_t* BmTrajectoryPtr, const state_vector_array_t* flowMapTrajectoryPtr,
                const scalar_array_t* sensitivityControllerTimePtr, const input_vector_array_t* sensitivityControllerFeedforwardPtr,
                const input_state_matrix_array_t* sensitivityControllerFeedbackPtr) {
-    AmFunc_.setData(timeTrajectoryPtr, AmTrajectoryPtr);
-    BmFunc_.setData(timeTrajectoryPtr, BmTrajectoryPtr);
-    flowMapFunc_.setData(timeTrajectoryPtr, flowMapTrajectoryPtr);
+    timeTrajectoryPtr_ = timeTrajectoryPtr;
+    AmTrajectoryPtr_ = AmTrajectoryPtr;
+    BmTrajectoryPtr_ = BmTrajectoryPtr;
+    flowMapTrajectoryPtr_ = flowMapTrajectoryPtr;
 
     linearController_.setController(*sensitivityControllerTimePtr, *sensitivityControllerFeedforwardPtr, *sensitivityControllerFeedbackPtr);
-
     this->setController(&linearController_);
   }
 
@@ -123,11 +123,11 @@ class RolloutSensitivityEquations final : public ControlledSystemBase<STATE_DIM,
    */
   void computeFlowMap(const scalar_t& t, const state_vector_t& nabla_x, const input_vector_t& nabla_u,
                       state_vector_t& derivative) override {
-    auto indexAlpha = AmFunc_.interpolate(t, Am_);
-    BmFunc_.interpolate(indexAlpha, Bm_);
+    auto indexAlpha = EigenLinearInterpolation<state_matrix_t>::interpolate(t, Am_, timeTrajectoryPtr_, AmTrajectoryPtr_);
+    EigenLinearInterpolation<state_input_matrix_t>::interpolate(indexAlpha, Bm_, BmTrajectoryPtr_);
 
     if (!numerics::almost_eq(multiplier_, 0.0)) {
-      flowMapFunc_.interpolate(indexAlpha, flowMap_);
+      EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, flowMap_, flowMapTrajectoryPtr_);
       derivative = Am_ * nabla_x + Bm_ * nabla_u + multiplier_ * flowMap_;
     } else {
       derivative = Am_ * nabla_x + Bm_ * nabla_u;
@@ -138,13 +138,14 @@ class RolloutSensitivityEquations final : public ControlledSystemBase<STATE_DIM,
   scalar_t multiplier_ = 0.0;
   linear_controller_t linearController_;
 
+  const scalar_array_t* timeTrajectoryPtr_;
+  const state_matrix_array_t* AmTrajectoryPtr_;
+  const state_input_matrix_array_t* BmTrajectoryPtr_;
+  const state_vector_array_t* flowMapTrajectoryPtr_;
+
   state_matrix_t Am_;
   state_input_matrix_t Bm_;
   state_vector_t flowMap_;
-
-  EigenLinearInterpolation<state_matrix_t> AmFunc_;
-  EigenLinearInterpolation<state_input_matrix_t> BmFunc_;
-  EigenLinearInterpolation<state_vector_t> flowMapFunc_;
 };
 
 }  // namespace ocs2

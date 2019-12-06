@@ -33,7 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
@@ -128,7 +127,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::controller_const_ptr_array_t;
   using typename BASE::controller_ptr_array_t;
   using typename BASE::controller_t;
-  using typename BASE::cost_desired_trajectories_t;
   using typename BASE::feedforward_controller_t;
   using typename BASE::primal_solution_t;
 

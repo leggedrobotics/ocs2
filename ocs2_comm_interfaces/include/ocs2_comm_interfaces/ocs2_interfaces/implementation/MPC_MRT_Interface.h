@@ -15,7 +15,7 @@ MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::MPC_MRT_Interface(mpc_t& mpc, std::shar
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const cost_desired_trajectories_t& initCostDesiredTrajectories) {
+void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) {
   mpc_.reset();
   mpcTimer_.reset();
   setTargetTrajectories(initCostDesiredTrajectories);
@@ -25,7 +25,7 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const cost_desired_tr
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::setTargetTrajectories(const cost_desired_trajectories_t& targetTrajectories) {
+void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::setTargetTrajectories(const CostDesiredTrajectories& targetTrajectories) {
   std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
   costDesiredTrajectoriesBuffer_ = targetTrajectories;
   costDesiredTrajectoriesBufferUpdated_ = true;

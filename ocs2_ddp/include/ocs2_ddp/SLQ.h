@@ -39,8 +39,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ddp/DDP_BASE.h>
 
 #include "ocs2_ddp/SLQ_Settings.h"
-#include "ocs2_ddp/riccati_equations/SequentialErrorEquationNormalized.h"
-#include "ocs2_ddp/riccati_equations/SequentialRiccatiEquationsNormalized.h"
+#include "ocs2_ddp/riccati_equations/SequentialErrorEquation.h"
+#include "ocs2_ddp/riccati_equations/SequentialRiccatiEquations.h"
 
 namespace ocs2 {
 
@@ -121,8 +121,8 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::operating_trajectories_base_t;
   using typename BASE::rollout_base_t;
 
-  using riccati_equations_t = SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>;
-  using error_equation_t = SequentialErrorEquationNormalized<STATE_DIM, INPUT_DIM>;
+  using riccati_equations_t = SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>;
+  using error_equation_t = SequentialErrorEquation<STATE_DIM, INPUT_DIM>;
   using s_vector_t = typename riccati_equations_t::s_vector_t;
   using s_vector_array_t = typename riccati_equations_t::s_vector_array_t;
 

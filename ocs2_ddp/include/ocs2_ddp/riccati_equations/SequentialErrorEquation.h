@@ -44,7 +44,7 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class SequentialErrorEquationNormalized final : public OdeBase<STATE_DIM> {
+class SequentialErrorEquation final : public OdeBase<STATE_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -61,12 +61,12 @@ class SequentialErrorEquationNormalized final : public OdeBase<STATE_DIM> {
   /**
    * Default constructor.
    */
-  SequentialErrorEquationNormalized() = default;
+  SequentialErrorEquation() = default;
 
   /**
    * Default destructor.
    */
-  ~SequentialErrorEquationNormalized() = default;
+  ~SequentialErrorEquation() = default;
 
   /**
    * Sets coefficients of the model.
@@ -79,9 +79,9 @@ class SequentialErrorEquationNormalized final : public OdeBase<STATE_DIM> {
    */
   void setData(const scalar_array_t* timeStampPtr, const state_vector_array_t* GvPtr, const state_matrix_array_t* GmPtr) {
     BASE::resetNumFunctionCalls();
-
-    GvFunc_.setData(timeStampPtr, GvPtr);
-    GmFunc_.setData(timeStampPtr, GmPtr);
+    timeStampPtr_ = timeStampPtr;
+    GvPtr_ = GvPtr;
+    GmPtr_ = GmPtr;
   }
 
   /**
@@ -106,16 +106,17 @@ class SequentialErrorEquationNormalized final : public OdeBase<STATE_DIM> {
     // normal time
     const scalar_t t = -z;
 
-    const auto indexAlpha = GmFunc_.interpolate(t, Gm_);
+    const auto indexAlpha = EigenLinearInterpolation<state_matrix_t>::interpolate(t, Gm_, timeStampPtr_, GmPtr_);
 
     // derivatives = Gv + Gm*Sve
-    GvFunc_.interpolate(indexAlpha, derivatives);
+    EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, derivatives, GvPtr_);
     derivatives.noalias() += Gm_.transpose() * Sve;
   }
 
  private:
-  EigenLinearInterpolation<state_vector_t> GvFunc_;
-  EigenLinearInterpolation<state_matrix_t> GmFunc_;
+  const scalar_array_t* timeStampPtr_;
+  const state_vector_array_t* GvPtr_;
+  const state_matrix_array_t* GmPtr_;
 
   // members required in computeFlowMap
   state_matrix_t Gm_;

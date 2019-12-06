@@ -51,7 +51,7 @@ TargetTrajectories_ROS_Interface<SCALAR_T>::~TargetTrajectories_ROS_Interface() 
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-void TargetTrajectories_ROS_Interface<SCALAR_T>::publishTargetTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories) {
+void TargetTrajectories_ROS_Interface<SCALAR_T>::publishTargetTrajectories(const CostDesiredTrajectories& costDesiredTrajectories) {
   RosMsgConversions<0, 0>::createTargetTrajectoriesMsg(costDesiredTrajectories, mpcTargetTrajectoriesMsg_);
 
   mpcTargetTrajectoriesPublisher_.publish(mpcTargetTrajectoriesMsg_);

@@ -85,9 +85,6 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t* rolloutPtr, const
         new RelaxedBarrierPenalty<STATE_DIM, INPUT_DIM>(ddpSettings_.inequalityConstraintMu_, ddpSettings_.inequalityConstraintDelta_)));
 
   }  // end of i loop
-
-  nominalStateFunc_.resize(ddpSettings_.nThreads_);
-  nominalInputFunc_.resize(ddpSettings_.nThreads_);
 }
 
 /******************************************************************************************************/
@@ -435,7 +432,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateCostWorker(size_t workerIndex, siz
   cost_function_base_t& costFunction = linearQuadraticApproximatorPtrStock_[workerIndex]->costFunction();
 
   // set desired trajectories
-  costFunction.setCostDesiredTrajectories(this->getCostDesiredTrajectories());
+  costFunction.setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
 
   totalCost = 0.0;
   auto eventsPastTheEndItr = eventsPastTheEndIndeces.begin();
@@ -488,7 +485,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCost(const scalar_array2_t&
 
   // calculate the Heuristics function at the final time
   // set desired trajectories
-  heuristicsFunctionsPtrStock_[threadId]->setCostDesiredTrajectories(this->getCostDesiredTrajectories());
+  heuristicsFunctionsPtrStock_[threadId]->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
   // set state-input
   heuristicsFunctionsPtrStock_[threadId]->setCurrentStateAndControl(timeTrajectoriesStock[finalActivePartition_].back(),
                                                                     stateTrajectoriesStock[finalActivePartition_].back(),
@@ -587,7 +584,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
     if (N > 0) {
       for (size_t j = 0; j < ddpSettings_.nThreads_; j++) {
         // set desired trajectories
-        linearQuadraticApproximatorPtrStock_[j]->costFunction().setCostDesiredTrajectories(this->getCostDesiredTrajectories());
+        linearQuadraticApproximatorPtrStock_[j]->costFunction().setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
       }  // end of j loop
 
       // perform the approximateLQWorker for partition i
@@ -610,7 +607,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
   }  // end of i loop
 
   // calculate the Heuristics function at the final time
-  heuristicsFunctionsPtrStock_[0]->setCostDesiredTrajectories(this->getCostDesiredTrajectories());
+  heuristicsFunctionsPtrStock_[0]->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
   heuristicsFunctionsPtrStock_[0]->setCurrentStateAndControl(nominalTimeTrajectoriesStock_[finalActivePartition_].back(),
                                                              nominalStateTrajectoriesStock_[finalActivePartition_].back(),
                                                              nominalInputTrajectoriesStock_[finalActivePartition_].back());
@@ -1204,16 +1201,15 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateControllerUpdateMaxNorm(scalar_t& 
   maxDeltaUffNorm = 0.0;
   maxDeltaUeeNorm = 0.0;
   for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
-    nominalStateFunc_[0].setData(&(nominalTimeTrajectoriesStock_[i]), &(nominalStateTrajectoriesStock_[i]));
-    nominalInputFunc_[0].setData(&(nominalTimeTrajectoriesStock_[i]), &(nominalInputTrajectoriesStock_[i]));
-
     for (size_t k = 0; k < nominalControllersStock_[i].timeStamp_.size(); k++) {
       maxDeltaUffNorm = std::max(maxDeltaUffNorm, nominalControllersStock_[i].deltaBiasArray_[k].norm());
 
+      const auto& time = nominalControllersStock_[i].timeStamp_[k];
+      const auto indexAlpha = EigenLinearInterpolation<state_vector_t>::timeSegment(time, &(nominalTimeTrajectoriesStock_[i]));
       state_vector_t nominalState;
-      const auto indexAlpha = nominalStateFunc_[0].interpolate(nominalControllersStock_[i].timeStamp_[k], nominalState);
+      EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, nominalState, &(nominalStateTrajectoriesStock_[i]));
       input_vector_t nominalInput;
-      nominalInputFunc_[0].interpolate(indexAlpha, nominalInput);
+      EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, nominalInput, &(nominalInputTrajectoriesStock_[i]));
       input_vector_t deltaUee =
           nominalInput - nominalControllersStock_[i].gainArray_[k] * nominalState - nominalControllersStock_[i].biasArray_[k];
       maxDeltaUeeNorm = std::max(maxDeltaUeeNorm, deltaUee.norm());

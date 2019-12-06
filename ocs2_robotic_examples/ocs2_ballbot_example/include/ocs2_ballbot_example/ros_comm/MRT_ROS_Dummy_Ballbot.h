@@ -111,7 +111,27 @@ class MRT_ROS_Dummy_Ballbot final : public MRT_ROS_Dummy_Loop<ballbot::STATE_DIM
     world_transform.transform.rotation.w = 1.0;
     tfBroadcasterPtr_->sendTransform(world_transform);
 
-    // publish arm joints transforms
+    // publish command transform
+    const Eigen::Vector3d desiredPositionWorldToTarget = Eigen::Vector3d(costDesiredTrajectories.desiredStateTrajectory().back()(0),
+                                                                         costDesiredTrajectories.desiredStateTrajectory().back()(1), 0.0);
+    const Eigen::Quaterniond desiredQuaternionBaseToWorld =
+        Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory().back()(2), Eigen::Vector3d{0, 0, 1}} *
+        Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory().back()(3), Eigen::Vector3d{0, 1, 0}} *
+        Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory().back()(4), Eigen::Vector3d{1, 0, 0}};
+    geometry_msgs::TransformStamped command_frame_transform;
+    command_frame_transform.header.stamp = timeMsg;
+    command_frame_transform.header.frame_id = "odom";
+    command_frame_transform.child_frame_id = "command";
+    command_frame_transform.transform.translation.x = desiredPositionWorldToTarget.x();
+    command_frame_transform.transform.translation.y = desiredPositionWorldToTarget.y();
+    command_frame_transform.transform.translation.z = desiredPositionWorldToTarget.z();
+    command_frame_transform.transform.rotation.w = desiredQuaternionBaseToWorld.w();
+    command_frame_transform.transform.rotation.x = desiredQuaternionBaseToWorld.x();
+    command_frame_transform.transform.rotation.y = desiredQuaternionBaseToWorld.y();
+    command_frame_transform.transform.rotation.z = desiredQuaternionBaseToWorld.z();
+    tfBroadcasterPtr_->sendTransform(command_frame_transform);
+
+    // publish joints transforms
     std::map<std::string, double> jointPositions;
     // initialize jointPositions to be used by the robot state publisher
     jointPositions.insert(std::pair<std::string, double>("jball_x", observation.state()(0)));

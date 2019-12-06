@@ -76,13 +76,6 @@ GDDP<STATE_DIM, INPUT_DIM>::GDDP(const GDDP_Settings& gddpSettings /*= GDDP_Sett
     riccatiSensitivityIntegratorsPtrStock_.emplace_back(
         newIntegrator<riccati_sensitivity_equations_t::S_DIM_>(integratorType, riccatiSensitivityEquationsPtrStock_.back()));
   }  // end of i loop
-
-  // calculateBVPSensitivityControllerForward & calculateLQSensitivityControllerForward
-  BmFuncStock_.resize(gddpSettings_.nThreads_);
-  RmInverseFuncStock_.resize(gddpSettings_.nThreads_);
-  DmProjectedFuncStock_.resize(gddpSettings_.nThreads_);
-  EvDevEventTimesProjectedFuncStock_.resize(gddpSettings_.nThreads_);
-  nablaRvFuncStock_.resize(gddpSettings_.nThreads_);
 }
 
 /******************************************************************************************************/
@@ -111,25 +104,22 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(const scalar_array2_t& 
       continue;
     }
 
-    SmFunc_.setData(&dcPtr_->SsTimeTrajectoriesStock_[i], &dcPtr_->SmTrajectoriesStock_[i]);
-    SvFunc_.setData(&dcPtr_->SsTimeTrajectoriesStock_[i], &dcPtr_->SvTrajectoriesStock_[i]);
-    SveFunc_.setData(&dcPtr_->SsTimeTrajectoriesStock_[i], &dcPtr_->SveTrajectoriesStock_[i]);
-    nominalStateFunc_.setData(&dcPtr_->SsTimeTrajectoriesStock_[i], &dcPtr_->nominalStateTrajectoriesStock_[i]);
-
     const size_t N = timeTrajectoriesStock[i].size();
     costateTrajectoriesStock[i].resize(N);
     for (size_t k = 0; k < N; k++) {
       const scalar_t& t = timeTrajectoriesStock[i][k];
 
+      const auto indexAlpha = EigenLinearInterpolation<state_matrix_t>::timeSegment(t, &dcPtr_->SsTimeTrajectoriesStock_[i]);
       state_matrix_t Sm;
-      const auto indexAlpha = SmFunc_.interpolate(t, Sm);
+      EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, Sm, &dcPtr_->SmTrajectoriesStock_[i]);
       state_vector_t Sv;
-      SvFunc_.interpolate(indexAlpha, Sv);
+      EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Sv, &dcPtr_->SvTrajectoriesStock_[i]);
       state_vector_t Sve;
-      SveFunc_.interpolate(indexAlpha, Sve);
+      EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Sve, &dcPtr_->SveTrajectoriesStock_[i]);
 
       state_vector_t nominalState;
-      nominalStateFunc_.interpolate(t, nominalState);
+      EigenLinearInterpolation<state_vector_t>::interpolate(t, nominalState, &dcPtr_->nominalTimeTrajectoriesStock_[i],
+                                                            &dcPtr_->nominalStateTrajectoriesStock_[i]);
 
       costateTrajectoriesStock[i][k] = Sve + Sv + learningRate * Sm * (stateTrajectoriesStock[i][k] - nominalState);
 
@@ -152,18 +142,15 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(const std::vector<scala
       continue;
     }
 
-    SvFunc_.setData(&dcPtr_->SsTimeTrajectoriesStock_[i], &dcPtr_->SvTrajectoriesStock_[i]);
-    SveFunc_.setData(&dcPtr_->SsTimeTrajectoriesStock_[i], &dcPtr_->SveTrajectoriesStock_[i]);
-
     const size_t N = timeTrajectoriesStock[i].size();
     costateTrajectoriesStock[i].resize(N);
     for (size_t k = 0; k < N; k++) {
       const scalar_t& t = timeTrajectoriesStock[i][k];
-
+      auto indexAlpha = EigenLinearInterpolation<state_vector_t>::timeSegment(t, &dcPtr_->SsTimeTrajectoriesStock_[i]);
       state_vector_t Sv;
-      auto indexAlpha = SvFunc_.interpolate(t, Sv);
+      EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Sv, &dcPtr_->SvTrajectoriesStock_[i]);
       state_vector_t Sve;
-      SveFunc_.interpolate(indexAlpha, Sve);
+      EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Sve, &dcPtr_->SveTrajectoriesStock_[i]);
 
       costateTrajectoriesStock[i][k] = Sve + Sv;
     }  // end of k loop
@@ -764,11 +751,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateLQSensitivityControllerForward(size_t 
       continue;
     }
 
-    // set data
-    BmFuncStock_[workerIndex].setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->BmTrajectoriesStock_[i]);
-    RmInverseFuncStock_[workerIndex].setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->RmInverseTrajectoriesStock_[i]);
-    nablaRvFuncStock_[workerIndex].setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &nablaRvTrajectoriesStockSet_[eventTimeIndex][i]);
-
     // resizing
     const size_t N = nablaSvTrajectoriesStock[i].size();
     nablaLvTrajectoriesStock[i].resize(N);
@@ -776,16 +758,16 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateLQSensitivityControllerForward(size_t 
     for (size_t k = 0; k < N; k++) {
       // time
       const scalar_t& t = timeTrajectoriesStock[i][k];
-
+      auto indexAlpha = EigenLinearInterpolation<state_input_matrix_t>::timeSegment(t, &dcPtr_->nominalTimeTrajectoriesStock_[i]);
       // Bm
       state_input_matrix_t Bm;
-      auto indexAlpha = BmFuncStock_[workerIndex].interpolate(t, Bm);
+      EigenLinearInterpolation<state_input_matrix_t>::interpolate(indexAlpha, Bm, &dcPtr_->BmTrajectoriesStock_[i]);
       // RmInverse
       input_matrix_t RmInverse;
-      RmInverseFuncStock_[workerIndex].interpolate(indexAlpha, RmInverse);
+      EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, RmInverse, &dcPtr_->RmInverseTrajectoriesStock_[i]);
       // nablaRv
       input_vector_t nablaRv;
-      nablaRvFuncStock_[workerIndex].interpolate(indexAlpha, nablaRv);
+      EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, nablaRv, &nablaRvTrajectoriesStockSet_[eventTimeIndex][i]);
 
       nablaLvTrajectoriesStock[i][k] = -RmInverse * (nablaRv + Bm.transpose() * nablaSvTrajectoriesStock[i][k]);
     }  // end of k loop
@@ -814,30 +796,25 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateBVPSensitivityControllerForward(size_t
       continue;
     }
 
-    // set data
-    BmFuncStock_[workerIndex].setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->BmTrajectoriesStock_[i]);
-    RmInverseFuncStock_[workerIndex].setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->RmInverseTrajectoriesStock_[i]);
-    DmProjectedFuncStock_[workerIndex].setData(&dcPtr_->nominalTimeTrajectoriesStock_[i], &dcPtr_->DmProjectedTrajectoriesStock_[i]);
-    EvDevEventTimesProjectedFuncStock_[workerIndex].setData(&dcPtr_->nominalTimeTrajectoriesStock_[i],
-                                                            &dcPtr_->EvDevEventTimesProjectedTrajectoriesStockSet_[eventTimeIndex][i]);
-
     const size_t N = timeTrajectoriesStock[i].size();
     LvTrajectoriesStock[i].resize(N);
     for (size_t k = 0; k < N; k++) {
       // time
       const scalar_t& t = timeTrajectoriesStock[i][k];
+      auto indexAlpha = EigenLinearInterpolation<state_input_matrix_t>::timeSegment(t, &dcPtr_->nominalTimeTrajectoriesStock_[i]);
       // Bm
       state_input_matrix_t Bm;
-      auto indexAlpha = BmFuncStock_[workerIndex].interpolate(t, Bm);
+      EigenLinearInterpolation<state_input_matrix_t>::interpolate(indexAlpha, Bm, &dcPtr_->BmTrajectoriesStock_[i]);
       // RmInverse
       input_matrix_t RmInverse;
-      RmInverseFuncStock_[workerIndex].interpolate(indexAlpha, RmInverse);
+      EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, RmInverse, &dcPtr_->RmInverseTrajectoriesStock_[i]);
       // DmProjected
       input_matrix_t DmProjected;
-      DmProjectedFuncStock_[workerIndex].interpolate(indexAlpha, DmProjected);
+      EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, DmProjected, &dcPtr_->DmProjectedTrajectoriesStock_[i]);
       // EvDevEventTimesProjected
       input_vector_t EvDevEventTimeProjected;
-      EvDevEventTimesProjectedFuncStock_[workerIndex].interpolate(indexAlpha, EvDevEventTimeProjected);
+      EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, EvDevEventTimeProjected,
+                                                            &dcPtr_->EvDevEventTimesProjectedTrajectoriesStockSet_[eventTimeIndex][i]);
 
       LvTrajectoriesStock[i][k] = -(input_matrix_t::Identity() - DmProjected) * RmInverse * Bm.transpose() *
                                       (MvTrajectoriesStock[i][k] + MveTrajectoriesStock[i][k]) -
@@ -856,7 +833,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::getValueFuntionSensitivity(const size_t& eventT
     throw std::runtime_error("The index is associated to an inactive event or it is out of range.");
   }
 
-  EigenLinearInterpolation<state_vector_t> nominalStateFunc;
   EigenLinearInterpolation<eigen_scalar_t> nablasFunc;
   EigenLinearInterpolation<state_vector_t> nablaSvFunc;
   EigenLinearInterpolation<state_matrix_t> nablaSmFunc;
@@ -864,24 +840,22 @@ void GDDP<STATE_DIM, INPUT_DIM>::getValueFuntionSensitivity(const size_t& eventT
   auto activePartition = static_cast<size_t>(lookup::findBoundedActiveIntervalInTimeArray(dcPtr_->partitioningTimes_, time));
 
   state_vector_t nominalState;
-  state_vector_t deltsState;
+  EigenLinearInterpolation<state_vector_t>::interpolate(time, nominalState, &dcPtr_->nominalTimeTrajectoriesStock_[activePartition],
+                                                        &dcPtr_->nominalStateTrajectoriesStock_[activePartition]);
+  state_vector_t deltsState = state - nominalState;
+
+  const auto indexAlpha = EigenLinearInterpolation<eigen_scalar_t>::timeSegment(time, &dcPtr_->SsTimeTrajectoriesStock_[activePartition]);
+
   eigen_scalar_t nablas;
+  EigenLinearInterpolation<eigen_scalar_t>::interpolate(indexAlpha, nablas, &nablasTrajectoriesStockSet_[eventTimeIndex][activePartition]);
+
   state_vector_t nablaSv;
+  EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, nablaSv,
+                                                        &nablaSvTrajectoriesStockSet_[eventTimeIndex][activePartition]);
+
   state_matrix_t nablaSm;
-
-  nominalStateFunc.setData(&dcPtr_->nominalTimeTrajectoriesStock_[activePartition],
-                           &dcPtr_->nominalStateTrajectoriesStock_[activePartition]);
-  nominalStateFunc.interpolate(time, nominalState);
-  deltsState = state - nominalState;
-
-  nablasFunc.setData(&dcPtr_->SsTimeTrajectoriesStock_[activePartition], &nablasTrajectoriesStockSet_[eventTimeIndex][activePartition]);
-  const auto indexAlpha = nablasFunc.interpolate(time, nablas);
-
-  nablaSvFunc.setData(&dcPtr_->SsTimeTrajectoriesStock_[activePartition], &nablaSvTrajectoriesStockSet_[eventTimeIndex][activePartition]);
-  nablaSvFunc.interpolate(indexAlpha, nablaSv);
-
-  nablaSmFunc.setData(&dcPtr_->SsTimeTrajectoriesStock_[activePartition], &nablaSmTrajectoriesStockSet_[eventTimeIndex][activePartition]);
-  nablaSmFunc.interpolate(indexAlpha, nablaSm);
+  EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, nablaSm,
+                                                        &nablaSmTrajectoriesStockSet_[eventTimeIndex][activePartition]);
 
   valueFunctionDerivative = nablas(0) + deltsState.dot(nablaSv) + 0.5 * deltsState.dot(nablaSm * deltsState);
 }

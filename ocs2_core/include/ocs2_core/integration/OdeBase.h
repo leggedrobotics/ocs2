@@ -81,9 +81,7 @@ class OdeBase {
   /**
    * Get a system function callback that calls computeFlowMap for integration.
    */
-  inline system_func_t systemFunction() {
-    return systemFunction_;
-  }
+  inline system_func_t systemFunction() { return systemFunction_; }
 
   /**
    * Gets the number of function calls.

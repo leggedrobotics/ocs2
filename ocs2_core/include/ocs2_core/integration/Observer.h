@@ -78,7 +78,7 @@ class Observer {
    * @param [out] modelDataTraj: Model data trajectory
    */
   observer_callback_t getCallback(scalar_array_t* timeTraj = nullptr, state_vector_array_t* stateTraj = nullptr,
-                                       model_data_array_t* modelDataTraj = nullptr) {
+                                  model_data_array_t* modelDataTraj = nullptr) {
     return [=](const state_vector_t& x, scalar_t t) { observe(x, t, timeTraj, stateTraj, modelDataTraj); };
   }
 

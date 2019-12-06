@@ -5,9 +5,9 @@
 #include <ocs2_ddp/SLQ_DataCollector.h>
 #include <ocs2_ddp/SLQ_Settings.h>
 
-// riccati equations
-#include <ocs2_ddp/riccati_equations/SequentialErrorEquationNormalized.h>
-#include <ocs2_ddp/riccati_equations/SequentialRiccatiEquationsNormalized.h>
+// Riccati equations
+#include <ocs2_ddp/riccati_equations/SequentialErrorEquation.h>
+#include <ocs2_ddp/riccati_equations/SequentialRiccatiEquations.h>
 
 #include <ocs2_ddp/ILQR.h>
 #include <ocs2_ddp/ILQR_Settings.h>

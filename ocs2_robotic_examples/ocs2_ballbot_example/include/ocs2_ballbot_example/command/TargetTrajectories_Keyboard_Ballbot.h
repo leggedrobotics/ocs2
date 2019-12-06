@@ -55,7 +55,6 @@ class TargetTrajectories_Keyboard_Ballbot final : public TargetTrajectories_Keyb
   enum { command_dim_ = 6 };
 
   using BASE = TargetTrajectories_Keyboard_Interface<SCALAR_T>;
-  using typename BASE::cost_desired_trajectories_t;
   using typename BASE::dynamic_vector_array_t;
   using typename BASE::dynamic_vector_t;
   using typename BASE::scalar_array_t;
@@ -87,7 +86,7 @@ class TargetTrajectories_Keyboard_Ballbot final : public TargetTrajectories_Keyb
    */
   ~TargetTrajectories_Keyboard_Ballbot() override = default;
 
-  cost_desired_trajectories_t toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) override {
+  CostDesiredTrajectories toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) override {
     auto deg2rad = [](const scalar_t& deg) { return (deg * M_PI / 180.0); };
 
     SystemObservation<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> observation;
@@ -109,14 +108,14 @@ class TargetTrajectories_Keyboard_Ballbot final : public TargetTrajectories_Keyb
     scalar_t targetReachingDuration = std::max(targetReachingDuration1, targetReachingDuration2);
 
     // Desired time trajectory
-    cost_desired_trajectories_t costDesiredTrajectories(2);
+    CostDesiredTrajectories costDesiredTrajectories(2);
     scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
     tDesiredTrajectory.resize(2);
     tDesiredTrajectory[0] = observation.time();
     tDesiredTrajectory[1] = observation.time() + targetReachingDuration;
 
     // Desired state trajectory
-    typename cost_desired_trajectories_t::dynamic_vector_array_t& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
+    typename CostDesiredTrajectories::dynamic_vector_array_t& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
     xDesiredTrajectory.resize(2);
     xDesiredTrajectory[0] = observation.state();
     xDesiredTrajectory[1] = observation.state();
@@ -124,7 +123,7 @@ class TargetTrajectories_Keyboard_Ballbot final : public TargetTrajectories_Keyb
     xDesiredTrajectory[1].template tail<5>() << relativeState.template tail<3>(), 0.0, 0.0;
 
     // Desired input trajectory
-    typename cost_desired_trajectories_t::dynamic_vector_array_t& uDesiredTrajectory = costDesiredTrajectories.desiredInputTrajectory();
+    typename CostDesiredTrajectories::dynamic_vector_array_t& uDesiredTrajectory = costDesiredTrajectories.desiredInputTrajectory();
     uDesiredTrajectory.resize(2);
     uDesiredTrajectory[0].setZero(3);
     uDesiredTrajectory[1].setZero(3);

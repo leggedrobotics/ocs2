@@ -15,18 +15,15 @@ TEST(testLinearInterpolation, testInterpolation) {
     v.emplace_back(t_k * Data_T::Ones());
   }
 
-  // Create interpolator
-  ocs2::EigenLinearInterpolation<Data_T> interpolator(&t, &v);
-
   std::cout << "TEST DATA" << std::endl;
   for (int k=0; k<t.size(); k++){
     std::cout << "time: " << t[k] << " v: " << v[k].transpose() << std::endl;
   }
 
   // Test function
-  auto test_interpolation = [&interpolator](double time, int index, double value){
+  auto test_interpolation = [&](double time, int index, double value){
     Data_T v_t;
-    auto indexAlpha = interpolator.interpolate(time, v_t);
+    auto indexAlpha = ocs2::EigenLinearInterpolation<Data_T>::interpolate(time, v_t, &t, &v);
     auto foundIndex = indexAlpha.first;
     std::cout << "time: " << time << " index: " << foundIndex << " v: " << v_t.transpose() << std::endl;
     ASSERT_EQ(foundIndex, index);
@@ -59,18 +56,15 @@ TEST(testLinearInterpolation, testSizeOneTime) {
     v.emplace_back(t_k * Data_T::Ones());
   }
 
-  // Create interpolator
-  ocs2::EigenLinearInterpolation<Data_T> interpolator(&t, &v);
-
   std::cout << "TEST DATA" << std::endl;
   for (int k=0; k<t.size(); k++){
     std::cout << "time: " << t[k] << " v: " << v[k].transpose() << std::endl;
   }
 
   // Test function
-  auto test_interpolation = [&interpolator](double time, int index, double value){
+  auto test_interpolation = [&](double time, int index, double value){
     Data_T v_t;
-    auto indexAlpha = interpolator.interpolate(time, v_t);
+    auto indexAlpha = ocs2::EigenLinearInterpolation<Data_T>::interpolate(time, v_t, &t, &v);
     auto foundIndex = indexAlpha.first;
     std::cout << "time: " << time << " index: " << foundIndex << " v: " << v_t.transpose() << std::endl;
     ASSERT_EQ(foundIndex, index);

@@ -63,7 +63,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::launchNodes(int argc, char* argv[
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(const system_observation_t& initObservation,
-                                                   const cost_desired_trajectories_t& initCostDesiredTrajectories) {
+                                                   const CostDesiredTrajectories& initCostDesiredTrajectories) {
   ::ros::Rate rosRate(mrtDesiredFrequency_);  // in Hz
 
   // time step

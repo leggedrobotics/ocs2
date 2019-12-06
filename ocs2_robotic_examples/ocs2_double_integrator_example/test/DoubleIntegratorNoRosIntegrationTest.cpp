@@ -23,7 +23,7 @@ TEST(DoubleIntegratorIntegrationTest, synchronousTracking) {
   mpcInterface.setCurrentObservation(observation);
 
   // initialize reference:
-  mpc_t::cost_desired_trajectories_t costDesiredTrajectories;
+  CostDesiredTrajectories costDesiredTrajectories;
   costDesiredTrajectories.desiredTimeTrajectory().push_back(time);
   costDesiredTrajectories.desiredTimeTrajectory().push_back(time + 1);
   mpc_t::state_vector_t goalState = doubleIntegratorInterface.getXFinal();
@@ -77,7 +77,7 @@ TEST(DoubleIntegratorIntegrationTest, asynchronousTracking) {
   doubleIntegratorInterface.getInitialState(initialState);
 
   // initialize reference:
-  mpc_t::cost_desired_trajectories_t costDesiredTrajectories;
+  CostDesiredTrajectories costDesiredTrajectories;
   costDesiredTrajectories.desiredTimeTrajectory().push_back(time);
   costDesiredTrajectories.desiredTimeTrajectory().push_back(time + 1);
   mpc_t::state_vector_t goalState = doubleIntegratorInterface.getXFinal();

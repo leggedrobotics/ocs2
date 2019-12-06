@@ -27,32 +27,30 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef COSTDESIREDTRAJECTORIES_OCS2_H_
-#define COSTDESIREDTRAJECTORIES_OCS2_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <iomanip>
 #include <iostream>
 #include <vector>
 
+#include "ocs2_core/Dimensions.h"
 #include "ocs2_core/misc/LinearInterpolation.h"
 
 namespace ocs2 {
 
 /**
  * This class is an interface class for the cost desired trajectories.
- *
- * @tparam SCALAR_T: scalar type.
  */
-template <typename SCALAR_T>
 class CostDesiredTrajectories {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using scalar_array_t = std::vector<SCALAR_T>;
-  using dynamic_vector_t = Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>;
-  using dynamic_vector_array_t = std::vector<dynamic_vector_t, Eigen::aligned_allocator<dynamic_vector_t>>;
-  using dynamic_linear_interpolation_t = EigenLinearInterpolation<dynamic_vector_t>;
+  using DIMENSIONS = Dimensions<0, 0>;
+  using scalar_t = DIMENSIONS::scalar_t;
+  using scalar_array_t = DIMENSIONS::scalar_array_t;
+  using dynamic_vector_t = DIMENSIONS::dynamic_vector_t;
+  using dynamic_vector_array_t = DIMENSIONS::dynamic_vector_array_t;
 
   explicit CostDesiredTrajectories(const scalar_array_t& desiredTimeTrajectory = scalar_array_t(),
                                    const dynamic_vector_array_t& desiredStateTrajectory = dynamic_vector_array_t(),
@@ -74,19 +72,19 @@ class CostDesiredTrajectories {
     desiredInputTrajectory_.clear();
   }
 
-  void swap(CostDesiredTrajectories<SCALAR_T>& other) {
+  void swap(CostDesiredTrajectories& other) {
     desiredTimeTrajectory_.swap(other.desiredTimeTrajectory_);
     desiredStateTrajectory_.swap(other.desiredStateTrajectory_);
     desiredInputTrajectory_.swap(other.desiredInputTrajectory_);
   }
 
-  bool operator==(const CostDesiredTrajectories<SCALAR_T>& other) {
+  bool operator==(const CostDesiredTrajectories& other) {
     return this->desiredTimeTrajectory() == other.desiredTimeTrajectory() &&
            this->desiredStateTrajectory() == other.desiredStateTrajectory() &&
            this->desiredInputTrajectory() == other.desiredInputTrajectory();
   }
 
-  bool operator!=(const CostDesiredTrajectories<SCALAR_T>& other) { return !(*this == other); }
+  bool operator!=(const CostDesiredTrajectories& other) { return !(*this == other); }
 
   scalar_array_t& desiredTimeTrajectory() { return desiredTimeTrajectory_; }
   const scalar_array_t& desiredTimeTrajectory() const { return desiredTimeTrajectory_; }
@@ -97,19 +95,19 @@ class CostDesiredTrajectories {
   dynamic_vector_array_t& desiredInputTrajectory() { return desiredInputTrajectory_; }
   const dynamic_vector_array_t& desiredInputTrajectory() const { return desiredInputTrajectory_; }
 
-  void getDesiredStateFunc(dynamic_linear_interpolation_t& desiredStateFunc) const {
-    if (!desiredStateTrajectory_.empty()) {
-      desiredStateFunc.setData(&desiredTimeTrajectory_, &desiredStateTrajectory_);
+  void getDesiredState(scalar_t time, dynamic_vector_t& desiredState) const {
+    if (desiredTimeTrajectory_.empty() || desiredStateTrajectory_.empty()) {
+      desiredState.setZero();
     } else {
-      desiredStateFunc.setZero();
+      EigenLinearInterpolation<dynamic_vector_t>::interpolate(time, desiredState, &desiredTimeTrajectory_, &desiredStateTrajectory_);
     }
   }
 
-  void getDesiredInputFunc(dynamic_linear_interpolation_t& desiredInputFunc) const {
-    if (!desiredInputTrajectory_.empty()) {
-      desiredInputFunc.setData(&desiredTimeTrajectory_, &desiredInputTrajectory_);
+  void getDesiredInput(scalar_t time, dynamic_vector_t& desiredInput) const {
+    if (desiredTimeTrajectory_.empty() || desiredInputTrajectory_.empty()) {
+      desiredInput.setZero();
     } else {
-      desiredInputFunc.setZero();
+      EigenLinearInterpolation<dynamic_vector_t>::interpolate(time, desiredInput, &desiredTimeTrajectory_, &desiredInputTrajectory_);
     }
   }
 
@@ -154,5 +152,3 @@ class CostDesiredTrajectories {
 };
 
 }  // namespace ocs2
-
-#endif /* COSTDESIREDTRAJECTORIES_OCS2_H_ */

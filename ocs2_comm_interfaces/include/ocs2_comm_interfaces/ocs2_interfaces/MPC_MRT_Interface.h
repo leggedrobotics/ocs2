@@ -79,7 +79,6 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   using input_state_matrix_array_t = typename mpc_t::input_state_matrix_array_t;
   using dynamic_vector_t = typename mpc_t::dynamic_vector_t;
 
-  using cost_desired_trajectories_t = typename mpc_t::cost_desired_trajectories_t;
   using mode_sequence_template_t = typename mpc_t::mode_sequence_template_t;
 
   using system_observation_t = SystemObservation<STATE_DIM, INPUT_DIM>;
@@ -99,7 +98,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    */
   virtual ~MPC_MRT_Interface() = default;
 
-  void resetMpcNode(const cost_desired_trajectories_t& initCostDesiredTrajectories) override;
+  void resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) override;
 
   void setCurrentObservation(const system_observation_t& currentObservation) override;
 
@@ -108,7 +107,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * It is safe to set a new value while the MPC optimization is running
    * @param targetTrajectories
    */
-  void setTargetTrajectories(const cost_desired_trajectories_t& targetTrajectories);
+  void setTargetTrajectories(const CostDesiredTrajectories& targetTrajectories);
 
   /**
    * Set a new mode sequence template
@@ -172,7 +171,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   std::mutex observationMutex_;
   std::mutex costDesiredTrajectoriesBufferMutex_;
   std::atomic_bool costDesiredTrajectoriesBufferUpdated_;
-  cost_desired_trajectories_t costDesiredTrajectoriesBuffer_;
+  CostDesiredTrajectories costDesiredTrajectoriesBuffer_;
 };
 
 }  // namespace ocs2

@@ -62,7 +62,6 @@ class RosMsgConversions {
 
   using system_observation_t = SystemObservation<STATE_DIM, INPUT_DIM>;
 
-  using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
   using mode_sequence_template_t = ModeSequenceTemplate<scalar_t>;
 
   /**
@@ -143,7 +142,7 @@ class RosMsgConversions {
    * @param [out] targetTrajectoriesMsg: The target trajectories message.
    */
   template <class ContainerAllocator>
-  static void createTargetTrajectoriesMsg(const cost_desired_trajectories_t& costDesiredTrajectories,
+  static void createTargetTrajectoriesMsg(const CostDesiredTrajectories& costDesiredTrajectories,
                                           ocs2_msgs::mpc_target_trajectories_<ContainerAllocator>& targetTrajectoriesMsg);
 
   /**
@@ -154,7 +153,7 @@ class RosMsgConversions {
    */
   template <class ContainerAllocator>
   static void readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories_<ContainerAllocator>& targetTrajectoriesMsg,
-                                        cost_desired_trajectories_t& costDesiredTrajectories);
+                                        CostDesiredTrajectories& costDesiredTrajectories);
 };
 
 }  // namespace ocs2

@@ -59,21 +59,20 @@ void TargetTrajectories_Keyboard_Interface<SCALAR_T>::toCostDesiredTimeStateInpu
                                                                                   dynamic_vector_t& desiredInput) {
   // time
   desiredTime = -1.0;
-
   // state
   desiredState = Eigen::Map<const dynamic_vector_t>(commadLineTarget.data(), targetCommandSize_);
   // input
   desiredInput = dynamic_vector_t::Zero(0);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename SCALAR_T>
-typename TargetTrajectories_Keyboard_Interface<SCALAR_T>::cost_desired_trajectories_t
-TargetTrajectories_Keyboard_Interface<SCALAR_T>::toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) {
-  cost_desired_trajectories_t costDesiredTrajectories(1);
-
+CostDesiredTrajectories TargetTrajectories_Keyboard_Interface<SCALAR_T>::toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) {
+  CostDesiredTrajectories costDesiredTrajectories(1);
   toCostDesiredTimeStateInput(commadLineTarget, costDesiredTrajectories.desiredTimeTrajectory()[0],
                               costDesiredTrajectories.desiredStateTrajectory()[0], costDesiredTrajectories.desiredInputTrajectory()[0]);
-
   return costDesiredTrajectories;
 }
 

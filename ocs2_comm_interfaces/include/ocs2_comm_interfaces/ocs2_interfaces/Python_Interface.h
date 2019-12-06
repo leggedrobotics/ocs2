@@ -61,7 +61,6 @@ class PythonInterface {
   using input_state_matrix_t = typename dim_t::input_state_matrix_t;
   using input_state_matrix_array_t = typename dim_t::input_state_matrix_array_t;
   using state_matrix_array_t = typename dim_t::state_matrix_array_t;
-  using cost_desired_trajectories_t = CostDesiredTrajectories<typename dim_t::scalar_t>;
   using cost_t = CostFunctionBase<STATE_DIM, INPUT_DIM>;
   using dynamic_vector_t = typename dim_t::dynamic_vector_t;
   using dynamic_vector_array_t = typename dim_t::dynamic_vector_array_t;
@@ -88,7 +87,7 @@ class PythonInterface {
    * @brief resets MPC to its original state
    * @param[in] targetTrajectories: The new target to be optimized for after resetting
    */
-  void reset(cost_desired_trajectories_t targetTrajectories);
+  void reset(CostDesiredTrajectories targetTrajectories);
 
   /**
    * @brief setObservation provides the MPC with a new starting time and state
@@ -101,7 +100,7 @@ class PythonInterface {
    * @brief setTargetTrajectories
    * @param targetTrajectories
    */
-  void setTargetTrajectories(cost_desired_trajectories_t targetTrajectories);
+  void setTargetTrajectories(CostDesiredTrajectories targetTrajectories);
 
   /**
    * @brief run MPC
@@ -270,7 +269,7 @@ class PythonInterface {
   std::unique_ptr<ConstraintBase<STATE_DIM, INPUT_DIM>> constraints_;
 
   std::unique_ptr<cost_t> cost_;
-  cost_desired_trajectories_t targetTrajectories_;
+  CostDesiredTrajectories targetTrajectories_;
 
   std::unique_ptr<PenaltyBase<STATE_DIM, INPUT_DIM>> penalty_;
 

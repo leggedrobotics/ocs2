@@ -130,6 +130,14 @@ target_link_libraries(riccati_ode_test
   ${PROJECT_NAME}_dynamic_size
 )
 
+catkin_add_gtest(hybrid_slq_test
+  test/hybrid_slq_test.cpp
+)
+target_link_libraries(hybrid_slq_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
 catkin_add_gtest(exp0_ilqr_test
   test/exp0_ilqr_test.cpp
 )

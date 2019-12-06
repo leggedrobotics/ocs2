@@ -70,8 +70,6 @@ class CostFunctionBase {
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
   using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
 
-  using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
-
   /**
    * Default constructor
    */
@@ -92,7 +90,7 @@ class CostFunctionBase {
    *
    * @param [in] CostDesiredTrajectoriesPtr: A cost pointer to desired trajectories.
    */
-  virtual void setCostDesiredTrajectoriesPtr(const cost_desired_trajectories_t* costDesiredTrajectoriesPtr) {
+  virtual void setCostDesiredTrajectoriesPtr(const CostDesiredTrajectories* costDesiredTrajectoriesPtr) {
     costDesiredTrajectoriesPtr_ = costDesiredTrajectoriesPtr;
   }
 
@@ -197,7 +195,7 @@ class CostFunctionBase {
   /*
    * Variables
    */
-  const cost_desired_trajectories_t* costDesiredTrajectoriesPtr_;
+  const CostDesiredTrajectories* costDesiredTrajectoriesPtr_;
 
   scalar_t t_;
   state_vector_t x_;

@@ -67,9 +67,9 @@ class Observer {
    * Constructor
    * @param [in] eventHandler
    */
-  explicit Observer(const std::shared_ptr<OdeBase<STATE_DIM>>& systemPtr,
-                    const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr = nullptr)
-      : systemPtr_(systemPtr), eventHandlerPtr_(eventHandlerPtr) {}
+  explicit Observer(const std::shared_ptr<OdeBase<STATE_DIM>> systemPtr,
+                    const std::shared_ptr<SystemEventHandler<STATE_DIM>> eventHandlerPtr = nullptr)
+      : systemPtr_(std::move(systemPtr)), eventHandlerPtr_(std::move(eventHandlerPtr)) {}
 
   /**
    * Make observer callback function for integration

@@ -177,6 +177,16 @@ TEST(IntegrationTest, simple_integration_dynamic_size) {
   EXPECT_TRUE(traj.back().isApprox(Eigen::Vector2d(2.0, 0.0), 1e-3));
 }
 
+TEST(IntegrationTest, integratorType_from_string) {
+  IntegratorType type = fromString("ODE45");
+  EXPECT_EQ(type, IntegratorType::ODE45);
+}
+
+TEST(IntegrationTest, integratorType_to_string) {
+  std::string name = toString(IntegratorType::ODE45);
+  EXPECT_EQ(name, "ODE45");
+}
+
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

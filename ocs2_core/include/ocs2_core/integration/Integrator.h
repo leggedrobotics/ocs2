@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdexcept>
 #include <string>
 #include <type_traits>
+#include <unordered_map>
 
 #include <boost/numeric/odeint.hpp>
 
@@ -51,55 +52,40 @@ namespace ocs2 {
  */
 enum class IntegratorType { EULER, ODE45, ADAMS_BASHFORTH, BULIRSCH_STOER, MODIFIED_MIDPOINT, RK4, RK5_VARIABLE, ADAMS_BASHFORTH_MOULTON };
 
+/**
+ * Get string name of integrator type
+ * @param [in] integratorType: Integrator type enum
+ */
 static std::string toString(IntegratorType integratorType) {
-  switch (integratorType) {
-    case IntegratorType::EULER:
-      return std::string("EULER");
-    case IntegratorType::ODE45:
-      return std::string("ODE45");
-    case IntegratorType::ADAMS_BASHFORTH:
-      return std::string("ADAMS_BASHFORTH");
-    case IntegratorType::BULIRSCH_STOER:
-      return std::string("BULIRSCH_STOER");
-    case IntegratorType::MODIFIED_MIDPOINT:
-      return std::string("MODIFIED_MIDPOINT");
-    case IntegratorType::RK4:
-      return std::string("RK4");
-    case IntegratorType::RK5_VARIABLE:
-      return std::string("RK5_VARIABLE");
-    case IntegratorType::ADAMS_BASHFORTH_MOULTON:
-      return std::string("ADAMS_BASHFORTH_MOULTON");
-    default:
-      return std::string("UNKNOWN ") + std::to_string(static_cast<int>(integratorType));
-  }
+  static const std::unordered_map<IntegratorType, std::string> integratorMap = {
+      {IntegratorType::EULER, "EULER"},
+      {IntegratorType::ODE45, "ODE45"},
+      {IntegratorType::ADAMS_BASHFORTH, "ADAMS_BASHFORTH"},
+      {IntegratorType::BULIRSCH_STOER, "BULIRSCH_STOER"},
+      {IntegratorType::MODIFIED_MIDPOINT, "MODIFIED_MIDPOINT"},
+      {IntegratorType::RK4, "RK4"},
+      {IntegratorType::RK5_VARIABLE, "RK5_VARIABLE"},
+      {IntegratorType::ADAMS_BASHFORTH_MOULTON, "ADAMS_BASHFORTH_MOULTON"}};
+
+  return integratorMap.at(integratorType);
 }
 
+/**
+ * Get integrator type from string name, useful for reading config file
+ * @param [in] name: Integrator name
+ */
 static IntegratorType fromString(const std::string& name) {
-  if (name == "EULER") {
-    return IntegratorType::EULER;
-  } else if (name == "ODE45") {
-    return IntegratorType::ODE45;
-  } else if (name == "ADAMS_BASHFORTH") {
-    return IntegratorType::ADAMS_BASHFORTH;
-  } else if (name == "BULIRSCH_STOER") {
-    return IntegratorType::BULIRSCH_STOER;
-  } else if (name == "MODIFIED_MIDPOINT") {
-    return IntegratorType::MODIFIED_MIDPOINT;
-  } else if (name == "RK4") {
-    return IntegratorType::RK4;
-  } else if (name == "RK5_VARIABLE") {
-    return IntegratorType::RK5_VARIABLE;
-  } else if (name == "ADAMS_BASHFORTH_MOULTON") {
-    return IntegratorType::ADAMS_BASHFORTH_MOULTON;
-  } else {
-    int val;
-    try {
-      val = std::stoi(name);
-    } catch (std::invalid_argument const& e) {
-      throw std::runtime_error("Unknown IntegratorType: " + name);
-    }
-    return static_cast<IntegratorType>(val);  // TODO(mspieler): workaround to allow integer values
-  }
+  static const std::unordered_map<std::string, IntegratorType> integratorMap = {
+      {"EULER", IntegratorType::EULER},
+      {"ODE45", IntegratorType::ODE45},
+      {"ADAMS_BASHFORTH", IntegratorType::ADAMS_BASHFORTH},
+      {"BULIRSCH_STOER", IntegratorType::BULIRSCH_STOER},
+      {"MODIFIED_MIDPOINT", IntegratorType::MODIFIED_MIDPOINT},
+      {"RK4", IntegratorType::RK4},
+      {"RK5_VARIABLE", IntegratorType::RK5_VARIABLE},
+      {"ADAMS_BASHFORTH_MOULTON", IntegratorType::ADAMS_BASHFORTH_MOULTON}};
+
+  return integratorMap.at(name);
 }
 
 /**
@@ -160,11 +146,7 @@ class Integrator : public IntegratorBase<STATE_DIM> {
                            scalar_t finalTime, scalar_t dt) final;
 
   /**
-   * Adaptive time integration based on start time and final time. This method can
-   * solve ODEs with time-dependent events, if eventsTime is not empty. In this case
-   * the output time-trajectory contains two identical values at the moments
-   * of event triggers. This method uses OdeBase::computeJumpMap() method for
-   * state transition at events.
+   * Adaptive time integration based on start time and final time.
    *
    * @param [in] system: System function
    * @param [in] observer: Observer callback
@@ -179,12 +161,7 @@ class Integrator : public IntegratorBase<STATE_DIM> {
                               scalar_t finalTime, scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol) final;
 
   /**
-   * Output integration based on a given time trajectory. This method can solve ODEs
-   * with time-dependent events. In this case, user should pass past-the-end indices
-   * of events on the input time trajectory. Moreover, this method assumes that there
-   * are two identical time values in the input time-trajectory at the moments of event
-   * triggers. This method uses OdeBase::computeJumpMap() method for state
-   * transition at events.
+   * Output integration based on a given time trajectory.
    *
    * @param [in] system: System function
    * @param [in] observer: Observer callback

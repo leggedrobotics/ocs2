@@ -34,42 +34,28 @@ namespace ocs2 {
 /******************************************************************************************************/
 template <int STATE_DIM>
 std::unique_ptr<IntegratorBase<STATE_DIM>> newIntegrator(IntegratorType integratorType) {
-  IntegratorBase<STATE_DIM>* integrator = nullptr;
   switch (integratorType) {
     case (IntegratorType::EULER):
-      integrator = new IntegratorEuler<STATE_DIM>();
-      break;
+      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorEuler<STATE_DIM>());
     case (IntegratorType::ODE45):
-      integrator = new ODE45<STATE_DIM>();
-      break;
-    case (IntegratorType::ADAMS_BASHFORTH): {
-      const size_t numberSteps = 1;
-      integrator = new IntegratorAdamsBashforth<STATE_DIM, numberSteps>();
-      break;
-    }
+      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new ODE45<STATE_DIM>());
+    case (IntegratorType::ADAMS_BASHFORTH):
+      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorAdamsBashforth<STATE_DIM, 1>());
     case (IntegratorType::BULIRSCH_STOER):
-      integrator = new IntegratorBulirschStoer<STATE_DIM>();
-      break;
+      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorBulirschStoer<STATE_DIM>());
     case (IntegratorType::MODIFIED_MIDPOINT):
-      integrator = new IntegratorModifiedMidpoint<STATE_DIM>();
-      break;
+      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorModifiedMidpoint<STATE_DIM>());
     case (IntegratorType::RK4):
-      integrator = new IntegratorRK4<STATE_DIM>();
-      break;
+      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorRK4<STATE_DIM>());
     case (IntegratorType::RK5_VARIABLE):
-      integrator = new IntegratorRK5Variable<STATE_DIM>();
-      break;
+      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorRK5Variable<STATE_DIM>());
 #if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 55)
-    case (IntegratorType::ADAMS_BASHFORTH_MOULTON): {
-      const size_t numberSteps = 1;  // maximum is 8
-      integrator = new IntegratorAdamsBashforthMoulton<STATE_DIM, numberSteps>();
-      break;
-    }
+    case (IntegratorType::ADAMS_BASHFORTH_MOULTON):
+      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorAdamsBashforthMoulton<STATE_DIM, 1>());
 #endif
     default:
       throw std::runtime_error("Integrator of type " + toString(integratorType) + " not supported.");
   }
-  return std::unique_ptr<IntegratorBase<STATE_DIM>>(integrator);
 }
 
 /******************************************************************************************************/

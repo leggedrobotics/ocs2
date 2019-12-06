@@ -38,6 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/misc/LoadData.h>
 
+#include "ocs2_oc/rollout/RootFinderType.h"
+
 namespace ocs2 {
 
 /**
@@ -60,14 +62,17 @@ class Rollout_Settings {
    */
   explicit Rollout_Settings(double absTolODE = 1e-9, double relTolODE = 1e-6, size_t maxNumStepsPerSecond = 5000, double minTimeStep = 1e-3,
                             IntegratorType integratorType = IntegratorType::ODE45, bool checkNumericalStability = false,
-                            bool reconstructInputTrajectory = true)
+                            bool reconstructInputTrajectory = true, RootFinderType rootFindingAlgorithm = RootFinderType::ANDERSON_BJORCK,
+                            int maxSingleEventIterations = 10)
       : absTolODE_(absTolODE),
         relTolODE_(relTolODE),
         maxNumStepsPerSecond_(maxNumStepsPerSecond),
         minTimeStep_(minTimeStep),
         integratorType_(integratorType),
         checkNumericalStability_(checkNumericalStability),
-        reconstructInputTrajectory_(reconstructInputTrajectory) {}
+        reconstructInputTrajectory_(reconstructInputTrajectory),
+        rootFindingAlgorithm_(rootFindingAlgorithm),
+        maxSingleEventIterations_(maxSingleEventIterations) {}
 
   /**
    * This function loads the "Rollout_Settings" variables from a config file. This file contains the settings for the Rollout algorithms.
@@ -109,6 +114,16 @@ class Rollout_Settings {
   bool checkNumericalStability_;
   /** Whether to run controller again after integration to construct input trajectory */
   bool reconstructInputTrajectory_;
+  /** Which of the RootFinding algorithms to use in StateRollout
+   * 		0:		Anderson & Björck		(default)
+   * 		1:		Pegasus
+   * 		2:		Illinois
+   * 		3:		Regula Falsi
+   */
+  RootFinderType rootFindingAlgorithm_;
+  /** This value determines the maximum number of iterations, per event, allowed in state triggered rollout to find
+   *  the guard surface zero crossing.  */
+  int maxSingleEventIterations_;
 
 };  // end of Rollout_Settings class
 
@@ -126,12 +141,18 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, const st
   loadData::loadPtreeValue(pt, maxNumStepsPerSecond_, fieldName + ".maxNumStepsPerSecond", verbose);
   loadData::loadPtreeValue(pt, minTimeStep_, fieldName + ".minTimeStep", verbose);
 
-  int tmp = static_cast<int>(integratorType_);
+  auto tmp = static_cast<int>(integratorType_);
   loadData::loadPtreeValue(pt, tmp, fieldName + ".integratorType", verbose);
   integratorType_ = static_cast<IntegratorType>(tmp);
 
   loadData::loadPtreeValue(pt, checkNumericalStability_, fieldName + ".checkNumericalStability", verbose);
   loadData::loadPtreeValue(pt, reconstructInputTrajectory_, fieldName + ".reconstructInputTrajectory", verbose);
+
+  tmp = static_cast<int>(rootFindingAlgorithm_);
+  loadData::loadPtreeValue(pt, tmp, fieldName + ".rootFindingAlgorithm", verbose);
+  rootFindingAlgorithm_ = static_cast<RootFinderType>(tmp);
+
+  loadData::loadPtreeValue(pt, maxSingleEventIterations_, fieldName + ".maxSingleEventIterations", verbose);
 
   if (verbose) {
     std::cerr << " #### =============================================================================" << std::endl;

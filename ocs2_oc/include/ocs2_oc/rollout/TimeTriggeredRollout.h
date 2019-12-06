@@ -76,7 +76,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       : BASE(std::move(rolloutSettings)), systemDynamicsPtr_(systemDynamics.clone()), systemEventHandlersPtr_(new event_handler_t) {
     // construct dynamicsIntegratorsPtr
     dynamicsIntegratorPtr_ =
-        std::move(newIntegrator<STATE_DIM>(BASE::settings().integratorType_, systemDynamicsPtr_, systemEventHandlersPtr_));
+        std::move(newIntegrator<STATE_DIM>(this->settings().integratorType_, systemDynamicsPtr_, systemEventHandlersPtr_));
   }
 
   /**
@@ -137,7 +137,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       Observer<STATE_DIM> observer(&timeTrajectory, &stateTrajectory);  // concatenate trajectory
       // integrate controlled system
       dynamicsIntegratorPtr_->integrate_adaptive(beginState, timeIntervalArray[i].first, timeIntervalArray[i].second, observer,
-                                                 BASE::settings().minTimeStep_, BASE::settings().absTolODE_, BASE::settings().relTolODE_,
+                                                 this->settings().minTimeStep_, this->settings().absTolODE_, this->settings().relTolODE_,
                                                  maxNumSteps);
 
       // compute control input trajectory and concatenate to inputTrajectory

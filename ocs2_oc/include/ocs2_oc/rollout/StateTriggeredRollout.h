@@ -81,7 +81,8 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
         systemDynamicsPtr_(systemDynamics.clone()),
         systemEventHandlersPtr_(new state_triggered_event_handler_t(this->settings().minTimeStep_)) {
     // construct dynamicsIntegratorsPtr
-    constructDynamicsIntegrator(this->settings().integratorType_);
+    dynamicsIntegratorPtr_ =
+        std::move(newIntegrator<STATE_DIM>(this->settings().integratorType_, systemDynamicsPtr_, systemEventHandlersPtr_));
   }
 
   /**
@@ -248,58 +249,6 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
     return stateTrajectory.back();
   }  // end of function
-
-  /**
-   * Constructs dynamicsIntegratorPtr_ based on the integratorType.
-   *
-   * @param [in] integratorType: Integrator type.
-   */
-  void constructDynamicsIntegrator(IntegratorType integratorType) {
-    switch (integratorType) {
-      case (IntegratorType::EULER): {
-        dynamicsIntegratorPtr_.reset(new IntegratorEuler<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
-        break;
-      }
-      case (IntegratorType::MODIFIED_MIDPOINT): {
-        dynamicsIntegratorPtr_.reset(new IntegratorModifiedMidpoint<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
-        break;
-      }
-      case (IntegratorType::RK4): {
-        dynamicsIntegratorPtr_.reset(new IntegratorRK4<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
-        break;
-      }
-      case (IntegratorType::RK5_VARIABLE): {
-        dynamicsIntegratorPtr_.reset(new IntegratorRK5Variable<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
-        break;
-      }
-      case (IntegratorType::ODE45): {
-        dynamicsIntegratorPtr_.reset(new ODE45<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
-        break;
-      }
-      case (IntegratorType::ADAMS_BASHFORTH): {
-        const size_t numberSteps = 1;
-        dynamicsIntegratorPtr_.reset(new IntegratorAdamsBashforth<STATE_DIM, numberSteps>(systemDynamicsPtr_, systemEventHandlersPtr_));
-        break;
-      }
-      case (IntegratorType::BULIRSCH_STOER): {
-        dynamicsIntegratorPtr_.reset(new IntegratorBulirschStoer<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
-        break;
-      }
-#if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 55)
-      case (IntegratorType::ADAMS_BASHFORTH_MOULTON): {
-        const size_t numberSteps = 1;  // maximum is 8
-        dynamicsIntegratorPtr_.reset(
-            new IntegratorAdamsBashforthMoulton<STATE_DIM, numberSteps>(systemDynamicsPtr_, systemEventHandlersPtr_));
-        break;
-      }
-#endif
-      default: {
-        throw std::runtime_error("Integrator of type " +
-                                 std::to_string(static_cast<std::underlying_type<IntegratorType>::type>(integratorType)) +
-                                 " is not supported in StateTriggeredRollout.");
-      }
-    }
-  }
 
  private:
   std::shared_ptr<controlled_system_base_t> systemDynamicsPtr_;

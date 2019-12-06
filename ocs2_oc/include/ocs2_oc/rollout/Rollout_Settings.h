@@ -138,14 +138,14 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, const st
   loadData::loadPtreeValue(pt, maxNumStepsPerSecond_, fieldName + ".maxNumStepsPerSecond", verbose);
   loadData::loadPtreeValue(pt, minTimeStep_, fieldName + ".minTimeStep", verbose);
 
-  std::string integratorName = toString(integratorType_);  // keep default
+  auto integratorName = toString(integratorType_);  // keep default
   loadData::loadPtreeValue(pt, integratorName, fieldName + ".integratorType", verbose);
   integratorType_ = fromString(integratorName);
 
   loadData::loadPtreeValue(pt, checkNumericalStability_, fieldName + ".checkNumericalStability", verbose);
   loadData::loadPtreeValue(pt, reconstructInputTrajectory_, fieldName + ".reconstructInputTrajectory", verbose);
 
-  tmp = static_cast<int>(rootFindingAlgorithm_);
+  auto tmp = static_cast<int>(rootFindingAlgorithm_);  // keep default
   loadData::loadPtreeValue(pt, tmp, fieldName + ".rootFindingAlgorithm", verbose);
   rootFindingAlgorithm_ = static_cast<RootFinderType>(tmp);
 

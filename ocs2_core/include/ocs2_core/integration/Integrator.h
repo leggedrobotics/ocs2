@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef INTEGRATOR_OCS2_H_
-#define INTEGRATOR_OCS2_H_
+#pragma once
 
 #include <cmath>
 #include <functional>
@@ -107,7 +106,7 @@ std::unique_ptr<IntegratorBase<STATE_DIM>> newIntegrator(IntegratorType integrat
  * @tparam Stepper: Stepper class type to be used.
  */
 template <int STATE_DIM, class Stepper>
-class Integrator : public IntegratorBase<STATE_DIM> {
+class Integrator final : public IntegratorBase<STATE_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -119,17 +118,14 @@ class Integrator : public IntegratorBase<STATE_DIM> {
   using system_func_t = typename BASE::system_func_t;
 
   /**
-   * Constructor
-   *
-   * @param [in] system: The system dynamics.
-   * @param [in] eventHandler: The integration event function.
+   * Default constructor
    */
   Integrator() = default;
 
   /**
-   * Destructor
+   * Default destructor
    */
-  ~Integrator() = default;
+  ~Integrator() override = default;
 
  private:
   /**
@@ -143,7 +139,7 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    * @param [in] dt: Time step.
    */
   void run_integrate_const(system_func_t system, observer_func_t observer, const state_vector_t& initialState, scalar_t startTime,
-                           scalar_t finalTime, scalar_t dt) final;
+                           scalar_t finalTime, scalar_t dt) override;
 
   /**
    * Adaptive time integration based on start time and final time.
@@ -158,7 +154,7 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    * @param [in] RelTol: The relative tolerance error for ode solver.
    */
   void run_integrate_adaptive(system_func_t system, observer_func_t observer, const state_vector_t& initialState, scalar_t startTime,
-                              scalar_t finalTime, scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol) final;
+                              scalar_t finalTime, scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol) override;
 
   /**
    * Output integration based on a given time trajectory.
@@ -174,7 +170,7 @@ class Integrator : public IntegratorBase<STATE_DIM> {
    */
   void run_integrate_times(system_func_t system, observer_func_t observer, const state_vector_t& initialState,
                            typename scalar_array_t::const_iterator beginTimeItr, typename scalar_array_t::const_iterator endTimeItr,
-                           scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol) final;
+                           scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol) override;
 
   /**
    * Integrate adaptive specialized.
@@ -329,5 +325,3 @@ using IntegratorAdamsBashforthMoulton = Integrator<STATE_DIM, adams_bashforth_mo
 }  // namespace ocs2
 
 #include "implementation/Integrator.h"
-
-#endif /* INTEGRATOR_OCS2_H_ */

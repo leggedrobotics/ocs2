@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <limits>
 
+#include "ocs2_core/Dimensions.h"
 #include "ocs2_core/integration/Observer.h"
 #include "ocs2_core/integration/OdeBase.h"
 #include "ocs2_core/integration/SystemEventHandler.h"
@@ -46,9 +47,10 @@ namespace ocs2 {
 template <int STATE_DIM>
 class IntegratorBase {
  public:
-  using scalar_t = double;
-  using scalar_array_t = std::vector<scalar_t>;
-  using state_vector_t = Eigen::Matrix<scalar_t, STATE_DIM, 1>;
+  using DIMENSIONS = Dimensions<STATE_DIM, 0>;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
 
   using system_func_t = std::function<void(const state_vector_t& x, state_vector_t& dxdt, scalar_t t)>;
   using observer_func_t = std::function<void(const state_vector_t& x, scalar_t t)>;
@@ -73,8 +75,8 @@ class IntegratorBase {
    * @param [in] finalTime: Final time.
    * @param [in] dt: Time step.
    */
-  inline void integrate_const(system_func_t system, observer_func_t observer, const state_vector_t& initialState, scalar_t startTime,
-                              scalar_t finalTime, scalar_t dt) {
+  void integrate_const(system_func_t system, observer_func_t observer, const state_vector_t& initialState, scalar_t startTime,
+                       scalar_t finalTime, scalar_t dt) {
     run_integrate_const(system, observer, initialState, startTime, finalTime, dt);
   }
 
@@ -90,8 +92,8 @@ class IntegratorBase {
    * @param [in] AbsTol: The absolute tolerance error for ode solver.
    * @param [in] RelTol: The relative tolerance error for ode solver.
    */
-  inline void integrate_adaptive(system_func_t system, observer_func_t observer, const state_vector_t& initialState, scalar_t startTime,
-                                 scalar_t finalTime, scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3) {
+  void integrate_adaptive(system_func_t system, observer_func_t observer, const state_vector_t& initialState, scalar_t startTime,
+                          scalar_t finalTime, scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3) {
     run_integrate_adaptive(system, observer, initialState, startTime, finalTime, dtInitial, AbsTol, RelTol);
   }
 
@@ -107,9 +109,9 @@ class IntegratorBase {
    * @param [in] AbsTol: The absolute tolerance error for ode solver.
    * @param [in] RelTol: The relative tolerance error for ode solver.
    */
-  inline void integrate_times(system_func_t system, observer_func_t observer, const state_vector_t& initialState,
-                              typename scalar_array_t::const_iterator beginTimeItr, typename scalar_array_t::const_iterator endTimeItr,
-                              scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3) {
+  void integrate_times(system_func_t system, observer_func_t observer, const state_vector_t& initialState,
+                       typename scalar_array_t::const_iterator beginTimeItr, typename scalar_array_t::const_iterator endTimeItr,
+                       scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3) {
     run_integrate_times(system, observer, initialState, beginTimeItr, endTimeItr, dtInitial, AbsTol, RelTol);
   }
 

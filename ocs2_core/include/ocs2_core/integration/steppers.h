@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef STEPPERS_OCS2_H_
-#define STEPPERS_OCS2_H_
+#pragma once
 
 #include <boost/numeric/odeint.hpp>
 
@@ -104,5 +103,3 @@ using adams_bashforth_moulton_uncontrolled_t =
 #endif
 
 }  // namespace ocs2
-
-#endif /* STEPPERS_OCS2_H_ */

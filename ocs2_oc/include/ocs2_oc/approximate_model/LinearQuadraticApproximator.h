@@ -191,6 +191,11 @@ class LinearQuadraticApproximator {
     modelData.stateEqConstrStateDerivative_ = Fm.topRows(ncEqStateOnly);
     modelData.numIneqConstr_ = ncIneq;
     modelData.ineqConstr_ = h;
+    modelData.ineqConstrStateDerivative_.resize(ncIneq);
+    modelData.ineqConstrInputDerivative_.resize(ncIneq);
+    modelData.ineqConstrStateSecondDerivative_.resize(ncIneq);
+    modelData.ineqConstrInputSecondDerivative_.resize(ncIneq);
+    modelData.ineqConstrInputStateDerivative_.resize(ncIneq);
     for (size_t i = 0; i < ncIneq; i++) {
       modelData.ineqConstrStateDerivative_[i] = dhdx[i];
       modelData.ineqConstrInputDerivative_[i] = dhdu[i];

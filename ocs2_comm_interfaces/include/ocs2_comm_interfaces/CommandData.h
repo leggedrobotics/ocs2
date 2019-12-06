@@ -31,9 +31,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
-#include <ocs2_comm_interfaces/SystemObservation.h>
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
+
+#include "ocs2_comm_interfaces/SystemObservation.h"
 
 namespace ocs2 {
 
@@ -51,7 +52,7 @@ struct CommandData {
   using scalar_t = typename dim_t::scalar_t;
 
   SystemObservation<STATE_DIM, INPUT_DIM> mpcInitObservation_;
-  CostDesiredTrajectories<scalar_t> mpcCostDesiredTrajectories_;
+  CostDesiredTrajectories mpcCostDesiredTrajectories_;
 };
 
 }  // namespace ocs2

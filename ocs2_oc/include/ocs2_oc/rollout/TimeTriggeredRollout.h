@@ -83,20 +83,24 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    */
   ~TimeTriggeredRollout() override = default;
 
-  /**
-   * Returns the underlying dynamics.
-   */
-  controlled_system_base_t* systemDynamicsPtr() { return systemDynamicsPtr_.get(); }
+  TimeTriggeredRollout(const TimeTriggeredRollout&) = delete;
+
+  TimeTriggeredRollout& operator=(const TimeTriggeredRollout&) = delete;
 
   TimeTriggeredRollout<STATE_DIM, INPUT_DIM>* clone() const override {
     return new TimeTriggeredRollout<STATE_DIM, INPUT_DIM>(*systemDynamicsPtr_, this->settings());
   }
 
+  /**
+   * Returns the underlying dynamics.
+   */
+  controlled_system_base_t* systemDynamicsPtr() { return systemDynamicsPtr_.get(); }
+
  protected:
   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
                          scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, state_vector_array_t& stateTrajectory,
                          input_vector_array_t& inputTrajectory) override {
-    if (controller == nullptr) {
+    if (!controller) {
       throw std::runtime_error("The input controller is not set.");
     }
 
@@ -104,7 +108,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     const int numEvents = numSubsystems - 1;
 
     // max number of steps for integration
-    const auto maxNumSteps = static_cast<size_t>(BASE::settings().maxNumStepsPerSecond_ *
+    const auto maxNumSteps = static_cast<size_t>(this->settings().maxNumStepsPerSecond_ *
                                                  std::max(1.0, timeIntervalArray.back().second - timeIntervalArray.front().first));
 
     // clearing the output trajectories
@@ -123,19 +127,19 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     // reset function calls counter
     systemDynamicsPtr_->resetNumFunctionCalls();
 
-    // Reset the event class
+    // reset the event class
     systemEventHandlersPtr_->reset();
 
     state_vector_t beginState = initState;
-    size_t k_u = 0;  // control input iterator
+    int k_u = 0;  // control input iterator
     for (int i = 0; i < numSubsystems; i++) {
       // integrate controlled system
       dynamicsIntegratorPtr_->integrate(beginState, timeIntervalArray[i].first, timeIntervalArray[i].second, stateTrajectory,
-                                        timeTrajectory, BASE::settings().minTimeStep_, BASE::settings().absTolODE_,
-                                        BASE::settings().relTolODE_, maxNumSteps, true);
+                                        timeTrajectory, this->settings().minTimeStep_, this->settings().absTolODE_,
+                                        this->settings().relTolODE_, maxNumSteps, true);
 
       // compute control input trajectory and concatenate to inputTrajectory
-      if (BASE::settings().reconstructInputTrajectory_) {
+      if (this->settings().reconstructInputTrajectory_) {
         for (; k_u < timeTrajectory.size(); k_u++) {
           inputTrajectory.emplace_back(systemDynamicsPtr_->controllerPtr()->computeInput(timeTrajectory[k_u], stateTrajectory[k_u]));
         }  // end of k loop
@@ -202,7 +206,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       default: {
         throw std::runtime_error("Integrator of type " +
                                  std::to_string(static_cast<std::underlying_type<IntegratorType>::type>(integratorType)) +
-                                 " not supported in TimeTriggeredRollout.");
+                                 " is not supported in TimeTriggeredRollout.");
       }
     }
   }

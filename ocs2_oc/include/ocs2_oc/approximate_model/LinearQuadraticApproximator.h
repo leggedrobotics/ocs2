@@ -67,7 +67,6 @@ class LinearQuadraticApproximator {
   using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
   using input_vector_t = typename DIMENSIONS::input_vector_t;
   using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-  using eigen_scalar_t = typename DIMENSIONS::eigen_scalar_t;
   using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
   using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
   using state_matrix_t = typename DIMENSIONS::state_matrix_t;
@@ -140,7 +139,7 @@ class LinearQuadraticApproximator {
                                          constraint1_state_matrix_t& Cm, constraint1_input_matrix_t& Dm, size_t& ncEqStateOnly,
                                          constraint2_vector_t& Hv, constraint2_state_matrix_t& Fm, size_t& ncIneq, scalar_array_t& h,
                                          state_vector_array_t& dhdx, input_vector_array_t& dhdu, state_matrix_array_t& ddhdxdx,
-                                         input_matrix_array_t& ddhdudu, input_state_matrix_array_t& ddhdudx, eigen_scalar_t& q,
+                                         input_matrix_array_t& ddhdudu, input_state_matrix_array_t& ddhdudx, scalar_t& q,
                                          state_vector_t& Qv, state_matrix_t& Qm, input_vector_t& Rv, input_matrix_t& Rm,
                                          input_state_matrix_t& Pm) {
     approximateDynamics(time, state, input, Am, Bm);
@@ -157,8 +156,8 @@ class LinearQuadraticApproximator {
    * @param [in] input: The current input .
    * @param [out] modelData: The output data model.
    */
-  void approximateUnconstrainedLQProblem(const scalar_t& time, const state_vector_t& state, const input_vector_t& input, ModelDataBase& modelData) {
-
+  void approximateUnconstrainedLQProblem(const scalar_t& time, const state_vector_t& state, const input_vector_t& input,
+                                         ModelDataBase& modelData) {
     // dynamics
     state_matrix_t Am;
     state_input_matrix_t Bm;
@@ -192,21 +191,23 @@ class LinearQuadraticApproximator {
     modelData.stateEqConstrStateDerivative_ = Fm.topRows(ncEqStateOnly);
     modelData.numIneqConstr_ = ncIneq;
     modelData.ineqConstr_ = h;
-    modelData.ineqConstrStateDerivative_ = dhdx;
-    modelData.ineqConstrInputDerivative_ = dhdu;
-    modelData.ineqConstrStateSecondDerivative_ = ddhdxdx;
-    modelData.ineqConstrInputSecondDerivative_ = ddhdudu;
-    modelData.ineqConstrInputStateDerivative_ = ddhdudx;
+    for (size_t i = 0; i < ncIneq; i++) {
+      modelData.ineqConstrStateDerivative_[i] = dhdx[i];
+      modelData.ineqConstrInputDerivative_[i] = dhdu[i];
+      modelData.ineqConstrStateSecondDerivative_[i] = ddhdxdx[i];
+      modelData.ineqConstrInputSecondDerivative_[i] = ddhdudu[i];
+      modelData.ineqConstrInputStateDerivative_[i] = ddhdudx[i];
+    }
 
-	// cost
-    eigen_scalar_t q;
+    // cost
+    scalar_t q;
     state_vector_t Qv;
     state_matrix_t Qm;
     input_vector_t Rv;
     input_matrix_t Rm;
     input_state_matrix_t Pm;
     approximateIntermediateCost(time, state, input, q, Qv, Qm, Rv, Rm, Pm);
-    modelData.cost = q(0);
+    modelData.cost_ = q;
     modelData.costStateDerivative_ = Qv;
     modelData.costStateSecondDerivative_ = Qm;
     modelData.costInputDerivative_ = Rv;
@@ -244,7 +245,7 @@ class LinearQuadraticApproximator {
     }
 
     // Final cost
-    costFunctionPtr_->getTerminalCost(qFinal_(0));
+    costFunctionPtr_->getTerminalCost(qFinal_);
     costFunctionPtr_->getTerminalCostDerivativeState(QvFinal_);
     costFunctionPtr_->getTerminalCostSecondDerivativeState(QmFinal_);
   }
@@ -381,14 +382,14 @@ class LinearQuadraticApproximator {
    * @param [in] state: The current state.
    * @param [in] input: The current input .
    */
-  void approximateIntermediateCost(const scalar_t& time, const state_vector_t& state, const input_vector_t& input, eigen_scalar_t& q,
+  void approximateIntermediateCost(const scalar_t& time, const state_vector_t& state, const input_vector_t& input, scalar_t& q,
                                    state_vector_t& Qv, state_matrix_t& Qm, input_vector_t& Rv, input_matrix_t& Rm,
                                    input_state_matrix_t& Pm) {
     // set data
     costFunctionPtr_->setCurrentStateAndControl(time, state, input);
 
     // get results
-    costFunctionPtr_->getIntermediateCost(q(0));
+    costFunctionPtr_->getIntermediateCost(q);
     costFunctionPtr_->getIntermediateCostDerivativeState(Qv);
     costFunctionPtr_->getIntermediateCostSecondDerivativeState(Qm);
     costFunctionPtr_->getIntermediateCostDerivativeInput(Rv);
@@ -398,7 +399,7 @@ class LinearQuadraticApproximator {
     // checking the numerical stability
     if (checkNumericalCharacteristics_) {
       try {
-        if (!q.allFinite()) {
+        if (q != q) {
           throw std::runtime_error("Intermediate cost is is not finite.");
         }
         if (!Qv.allFinite()) {
@@ -456,7 +457,7 @@ class LinearQuadraticApproximator {
   constraint2_vector_t HvFinal_;
   constraint2_state_matrix_t FmFinal_;
 
-  eigen_scalar_t qFinal_;
+  scalar_t qFinal_;
   state_vector_t QvFinal_;
   state_matrix_t QmFinal_;
 

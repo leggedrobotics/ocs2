@@ -12,28 +12,25 @@
 #include <ocs2_ddp/SLQ_Settings.h>
 
 /*
- * 		Test for StateTriggeredRollout in combination with SLQ
+ * Test for StateTriggeredRollout in combination with SLQ
  *
- * 		The system being tested is a combination of two Linear system
- * 		it switches between these systems on an event
+ * The system being tested is a combination of two Linear system
+ * it switches between these systems on an event
  *
- * 		Guard Surfaces are:			x[0]*x[1] < 0 			when in mode 0
- * 									x[0]*x[1] > 0 			when in mode 1
+ * Guard Surfaces are:   x[0]*x[1] < 0 when in mode 0
+ *                       x[0]*x[1] > 0 when in mode 1
  *
- * 		Cost function is:			x(t)^T Q x(t) + u(t)^T R u(t) + x(t1)^T P x(t1)^T
- * 									Q = P = [50,0;0,50];
- * 									R = 1;
+ * Cost function is:     x(t)^T Q x(t) + u(t)^T R u(t) + x(t1)^T P x(t1)^T
+ *                       Q = P = [50,0;0,50];
+ *                       R = 1;
  *
- * 		Constraints are:			|u|< 2
- * 									|x[0]| < 2
+ * Constraints are:      |u|< 2
+ *                       |x[0]| < 2
  *
- *
- * 		The following tests are implemented and performed:
- *
- * 		-	No penetration of Guard Surfaces
- * 		-	Constraint compliance
- * 		- 	Check of costfunction compared against cost
- * 		    calculated during trusted run of SLQ
+ * The following tests are implemented and performed:
+ * (1) No penetration of Guard Surfaces
+ * (2) Constraint compliance
+ * (3) Check of cost function compared against cost calculated during trusted run of SLQ
  */
 TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   using namespace ocs2;

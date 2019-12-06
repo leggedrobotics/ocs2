@@ -81,7 +81,7 @@ RaisimRollout<STATE_DIM, INPUT_DIM>::RaisimRollout(std::string urdf, state_to_ra
 #endif
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM>  // NOLINT(cppcoreguidelines-pro-type-member-init)
+template <size_t STATE_DIM, size_t INPUT_DIM>
 RaisimRollout<STATE_DIM, INPUT_DIM>::RaisimRollout(const RaisimRollout& other)
     : RaisimRollout(other.urdf_, other.stateToRaisimGenCoordGenVel_, other.raisimGenCoordGenVelToState_,
                     other.inputToRaisimGeneralizedForce_, other.orderedJointNames_, other.dataExtractionCallback_, other.settings()) {

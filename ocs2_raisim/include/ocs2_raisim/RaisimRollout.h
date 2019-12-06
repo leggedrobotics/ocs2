@@ -124,8 +124,8 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
   // Handles to Raisim objects
   raisim::World world_;
-  raisim::Ground* ground_;
-  raisim::ArticulatedSystem* system_;
+  raisim::Ground* ground_ = nullptr;
+  raisim::ArticulatedSystem* system_ = nullptr;
 
 #ifdef USE_RAISIM_VISUALIZER
   // Handles to Raisim visualization objects

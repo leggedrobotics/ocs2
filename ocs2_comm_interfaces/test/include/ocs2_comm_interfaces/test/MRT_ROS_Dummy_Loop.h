@@ -59,7 +59,6 @@ class MRT_ROS_Dummy_Loop {
   using input_state_matrix_t = typename mrt_t::input_state_matrix_t;
   using input_state_matrix_array_t = typename mrt_t::input_state_matrix_array_t;
 
-  using cost_desired_trajectories_t = typename mrt_t::cost_desired_trajectories_t;
   using system_observation_t = typename mrt_t::system_observation_t;
 
   /**
@@ -92,7 +91,7 @@ class MRT_ROS_Dummy_Loop {
    * @param [in] initObservation: The initial observation.
    * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
    */
-  void run(const system_observation_t& initObservation, const cost_desired_trajectories_t& initCostDesiredTrajectories);
+  void run(const system_observation_t& initObservation, const CostDesiredTrajectories& initCostDesiredTrajectories);
 
  protected:
   /**

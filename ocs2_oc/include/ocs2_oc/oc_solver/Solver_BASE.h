@@ -127,8 +127,6 @@ class Solver_BASE {
   using dynamic_matrix_array2_t = typename DIMENSIONS::dynamic_matrix_array2_t;
   using dynamic_input_matrix_t = typename DIMENSIONS::dynamic_input_matrix_t;
 
-  using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
-
   using primal_solution_t = PrimalSolution<STATE_DIM, INPUT_DIM>;
 
   using logic_rules_machine_t = HybridLogicRulesMachine;
@@ -276,14 +274,14 @@ class Solver_BASE {
    *
    * @param [out] costDesiredTrajectories: A pointer to the cost function desired trajectories
    */
-  const cost_desired_trajectories_t& getCostDesiredTrajectories() const { return costDesiredTrajectories_; };
+  const CostDesiredTrajectories& getCostDesiredTrajectories() const { return costDesiredTrajectories_; };
 
   /**
    * Sets the cost function desired trajectories.
    *
    * @param [in] costDesiredTrajectories: The cost function desired trajectories
    */
-  void setCostDesiredTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories) {
+  void setCostDesiredTrajectories(const CostDesiredTrajectories& costDesiredTrajectories) {
     costDesiredTrajectories_ = costDesiredTrajectories;
   };
 
@@ -292,7 +290,7 @@ class Solver_BASE {
    *
    * @param [in] costDesiredTrajectories: The cost function desired trajectories
    */
-  void swapCostDesiredTrajectories(cost_desired_trajectories_t& costDesiredTrajectories) {
+  void swapCostDesiredTrajectories(CostDesiredTrajectories& costDesiredTrajectories) {
     costDesiredTrajectories_.swap(costDesiredTrajectories);
   };
 
@@ -372,7 +370,7 @@ class Solver_BASE {
 
   std::mutex outputDisplayGuardMutex_;
   logic_rules_machine_ptr_t logicRulesMachinePtr_;
-  cost_desired_trajectories_t costDesiredTrajectories_;
+  CostDesiredTrajectories costDesiredTrajectories_;
   synchronized_module_ptr_array_t synchronizedModules_;
 };
 

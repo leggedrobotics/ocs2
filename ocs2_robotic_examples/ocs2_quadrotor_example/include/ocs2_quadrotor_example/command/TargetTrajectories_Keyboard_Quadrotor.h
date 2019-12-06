@@ -57,7 +57,6 @@ class TargetTrajectories_Keyboard_Quadrotor final : public ocs2::TargetTrajector
   using scalar_array_t = typename BASE::scalar_array_t;
   using dynamic_vector_t = typename BASE::dynamic_vector_t;
   using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
-  using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
 
   /**
    * Constructor.
@@ -99,7 +98,7 @@ class TargetTrajectories_Keyboard_Quadrotor final : public ocs2::TargetTrajector
     latestObservation_ = msg;
   }
 
-  cost_desired_trajectories_t toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) override {
+  CostDesiredTrajectories toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) override {
     SystemObservation<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> observation;
     ::ros::spinOnce();
     {
@@ -144,7 +143,7 @@ class TargetTrajectories_Keyboard_Quadrotor final : public ocs2::TargetTrajector
     scalar_t targetReachingDuration2 = targetVelocity.norm() / averageAcceleration;
     scalar_t targetReachingDuration = std::max(targetReachingDuration1, targetReachingDuration2);
 
-    cost_desired_trajectories_t costDesiredTrajectories(2);
+    CostDesiredTrajectories costDesiredTrajectories(2);
     // Desired time trajectory
     scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
     tDesiredTrajectory.resize(2);

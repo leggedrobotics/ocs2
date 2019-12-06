@@ -64,38 +64,38 @@ class CostDesiredTrajectories {
 
   ~CostDesiredTrajectories() = default;
 
-  bool empty() const { return desiredTimeTrajectory_.empty(); }
+  inline bool empty() const { return desiredTimeTrajectory_.empty(); }
 
-  void clear() {
+  inline void clear() {
     desiredTimeTrajectory_.clear();
     desiredStateTrajectory_.clear();
     desiredInputTrajectory_.clear();
   }
 
-  void swap(CostDesiredTrajectories& other) {
+  inline void swap(CostDesiredTrajectories& other) {
     desiredTimeTrajectory_.swap(other.desiredTimeTrajectory_);
     desiredStateTrajectory_.swap(other.desiredStateTrajectory_);
     desiredInputTrajectory_.swap(other.desiredInputTrajectory_);
   }
 
-  bool operator==(const CostDesiredTrajectories& other) {
+  inline bool operator==(const CostDesiredTrajectories& other) {
     return this->desiredTimeTrajectory() == other.desiredTimeTrajectory() &&
            this->desiredStateTrajectory() == other.desiredStateTrajectory() &&
            this->desiredInputTrajectory() == other.desiredInputTrajectory();
   }
 
-  bool operator!=(const CostDesiredTrajectories& other) { return !(*this == other); }
+  inline bool operator!=(const CostDesiredTrajectories& other) { return !(*this == other); }
 
-  scalar_array_t& desiredTimeTrajectory() { return desiredTimeTrajectory_; }
-  const scalar_array_t& desiredTimeTrajectory() const { return desiredTimeTrajectory_; }
+  inline scalar_array_t& desiredTimeTrajectory() { return desiredTimeTrajectory_; }
+  inline const scalar_array_t& desiredTimeTrajectory() const { return desiredTimeTrajectory_; }
 
-  dynamic_vector_array_t& desiredStateTrajectory() { return desiredStateTrajectory_; }
-  const dynamic_vector_array_t& desiredStateTrajectory() const { return desiredStateTrajectory_; }
+  inline dynamic_vector_array_t& desiredStateTrajectory() { return desiredStateTrajectory_; }
+  inline const dynamic_vector_array_t& desiredStateTrajectory() const { return desiredStateTrajectory_; }
 
-  dynamic_vector_array_t& desiredInputTrajectory() { return desiredInputTrajectory_; }
-  const dynamic_vector_array_t& desiredInputTrajectory() const { return desiredInputTrajectory_; }
+  inline dynamic_vector_array_t& desiredInputTrajectory() { return desiredInputTrajectory_; }
+  inline const dynamic_vector_array_t& desiredInputTrajectory() const { return desiredInputTrajectory_; }
 
-  void getDesiredState(const scalar_t& time, dynamic_vector_t& desiredState) const {
+  inline void getDesiredState(scalar_t time, dynamic_vector_t& desiredState) const {
     if (desiredTimeTrajectory_.empty() || desiredStateTrajectory_.empty()) {
       desiredState.setZero();
     } else {
@@ -103,7 +103,7 @@ class CostDesiredTrajectories {
     }
   }
 
-  void getDesiredInput(const scalar_t& time, dynamic_vector_t& desiredInput) const {
+  inline void getDesiredInput(scalar_t time, dynamic_vector_t& desiredInput) const {
     if (desiredTimeTrajectory_.empty() || desiredInputTrajectory_.empty()) {
       desiredInput.setZero();
     } else {

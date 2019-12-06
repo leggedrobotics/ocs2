@@ -63,7 +63,7 @@ class Rollout_Settings {
   explicit Rollout_Settings(double absTolODE = 1e-9, double relTolODE = 1e-6, size_t maxNumStepsPerSecond = 5000, double minTimeStep = 1e-3,
                             IntegratorType integratorType = IntegratorType::ODE45, bool checkNumericalStability = false,
                             bool reconstructInputTrajectory = true, RootFinderType rootFindingAlgorithm = RootFinderType::ANDERSON_BJORCK,
-							int maxSingleEventIterations = 10)
+                            int maxSingleEventIterations = 10)
       : absTolODE_(absTolODE),
         relTolODE_(relTolODE),
         maxNumStepsPerSecond_(maxNumStepsPerSecond),
@@ -72,7 +72,7 @@ class Rollout_Settings {
         checkNumericalStability_(checkNumericalStability),
         reconstructInputTrajectory_(reconstructInputTrajectory),
         rootFindingAlgorithm_(rootFindingAlgorithm),
-		maxSingleEventIterations_(maxSingleEventIterations){}
+        maxSingleEventIterations_(maxSingleEventIterations) {}
 
   /**
    * This function loads the "Rollout_Settings" variables from a config file. This file contains the settings for the Rollout algorithms.

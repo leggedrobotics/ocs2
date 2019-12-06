@@ -64,7 +64,7 @@ class hybridSysDynamics1 final : public ControlledSystemBase<STATE_DIM, INPUT_DI
   }
 
   void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) override {
-	guardSurfacesValue.resize(2);
+    guardSurfacesValue.resize(2);
     guardSurfacesValue[0] = 1;
     guardSurfacesValue[1] = -state[0] * state[1];
   }
@@ -97,8 +97,8 @@ class hybridSysDynamics2 final : public ControlledSystemBase<STATE_DIM, INPUT_DI
   }
 
   void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) override {
-	guardSurfacesValue.resize(2);
-	guardSurfacesValue[0] = state[0] * state[1];
+    guardSurfacesValue.resize(2);
+    guardSurfacesValue[0] = state[0] * state[1];
     guardSurfacesValue[1] = 1;
   }
 

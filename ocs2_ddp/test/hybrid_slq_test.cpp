@@ -35,7 +35,7 @@
  * 		- 	Check of costfunction compared against cost
  * 		    calculated during trusted run of SLQ
  */
-TEST(testStateRollOut_SLQ, HybridSystemSLQTest){
+TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   using namespace ocs2;
 
   SLQ_Settings slqSettings;
@@ -72,7 +72,7 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest){
   partitioningTimes.push_back(startTime);
   partitioningTimes.push_back(finalTime);
 
-  Eigen::Matrix<double, STATE_DIM, 1> initState = {0,1,1};
+  Eigen::Matrix<double, STATE_DIM, 1> initState = {0, 1, 1};
 
   // rollout
   hybridSysDynamics systemDynamics;
@@ -84,11 +84,11 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest){
   hybridSysConstraints systemConstraints;
   // cost function
   Eigen::Matrix<double, STATE_DIM, STATE_DIM> Q;
-  Q<< 50, 0, 0, 0, 50, 0, 0, 0, 0;
+  Q << 50, 0, 0, 0, 50, 0, 0, 0, 0;
   Eigen::Matrix<double, STATE_DIM, STATE_DIM> P;
-  P<< 50, 0, 0, 0, 50, 0, 0, 0, 0;
+  P << 50, 0, 0, 0, 50, 0, 0, 0, 0;
   Eigen::Matrix<double, INPUT_DIM, INPUT_DIM> R;
-  R<< 1;
+  R << 1;
   Eigen::Matrix<double, INPUT_DIM, STATE_DIM> crossTerm;
   crossTerm.setZero();
   Eigen::Matrix<double, STATE_DIM, 1> xNominal;
@@ -96,7 +96,7 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest){
   Eigen::Matrix<double, INPUT_DIM, 1> uNominal;
   uNominal.setZero();
 
-  QuadraticCostFunction<STATE_DIM,INPUT_DIM> systemCost(Q,R,xNominal,uNominal,P,xNominal,crossTerm);
+  QuadraticCostFunction<STATE_DIM, INPUT_DIM> systemCost(Q, R, xNominal, uNominal, P, xNominal, crossTerm);
 
   // operatingTrajectories
   Eigen::Matrix<double, STATE_DIM, 1> stateOperatingPoint = Eigen::Matrix<double, STATE_DIM, 1>::Zero();
@@ -105,8 +105,8 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest){
 
   std::cout << "Starting SLQ Procedure" << std::endl;
   // SLQ
-  SLQ<STATE_DIM, INPUT_DIM> slqST(&stateTriggeredRollout, &systemDerivatives, &systemConstraints, &systemCost, &operatingTrajectories, slqSettings,
-                                  logicRulesPtr);
+  SLQ<STATE_DIM, INPUT_DIM> slqST(&stateTriggeredRollout, &systemDerivatives, &systemConstraints, &systemCost, &operatingTrajectories,
+                                  slqSettings, logicRulesPtr);
   slqST.run(startTime, initState, finalTime, partitioningTimes);
   SLQ<STATE_DIM, INPUT_DIM>::primal_solution_t solution = slqST.primalSolution(finalTime);
   std::cout << "SLQ Procedure Done" << std::endl;
@@ -150,8 +150,8 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest){
   double costFunction;
   double constraint1ISE;
   double constraint2ISE;
-  slqST.getPerformanceIndeces(costFunction,constraint1ISE,constraint2ISE);
-  EXPECT_LT(std::fabs(costFunction-18.938001),1e-6);
+  slqST.getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
+  EXPECT_LT(std::fabs(costFunction - 18.938001), 1e-6);
 }
 
 int main(int argc, char** argv) {

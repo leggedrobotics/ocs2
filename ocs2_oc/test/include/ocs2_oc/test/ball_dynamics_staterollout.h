@@ -42,17 +42,17 @@ class ballDyn : public ControlledSystemBase<2, 1> {
   ~ballDyn() = default;
 
   void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) override {
-	state_matrix_t A;
+    state_matrix_t A;
     A << 0.0, 1.0, 0.0, 0.0;
     state_vector_t F;
     F << 0.0, -9.81;
 
-    dxdt = A*x + F;
+    dxdt = A * x + F;
   }
 
   void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override {
     mappedState[0] = state[0];
-    mappedState[1] = -0.95*state[1];
+    mappedState[1] = -0.95 * state[1];
   }
 
   void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) override {

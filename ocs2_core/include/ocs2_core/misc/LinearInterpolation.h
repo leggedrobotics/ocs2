@@ -38,7 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 #include <vector>
 
-#include <ocs2_core/misc/Lookup.h>
+#include "ocs2_core/Dimensions.h"
+#include "ocs2_core/misc/Lookup.h"
 
 namespace ocs2 {
 
@@ -56,7 +57,10 @@ class LinearInterpolation {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using scalar_t = double;
+  using scalar_t = Dimensions<0, 0>::scalar_t;
+  using dynamic_vector_t = Dimensions<0, 0>::dynamic_vector_t;
+  using dynamic_matrix_t = Dimensions<0, 0>::dynamic_matrix_t;
+
   using size_type = typename std::vector<Data_T, Alloc>::size_type;
 
   /**
@@ -81,7 +85,7 @@ class LinearInterpolation {
    * @return {index, alpha}: The greatest smaller time stamp index and the interpolation coefficient [1, 0]
    */
   template <typename Field_T>
-  static std::pair<int, scalar_t> interpolate(
+  static inline std::pair<int, scalar_t> interpolate(
       scalar_t enquiryTime, Field_T& enquiryData, const std::vector<scalar_t>* timeStampPtr, const std::vector<Data_T, Alloc>* dataPtr,
       std::function<const Field_T&(size_type, const std::vector<Data_T, Alloc>*)> accessFun = stdAccessFun) {
     const auto indexAlpha = timeSegment(enquiryTime, timeStampPtr);
@@ -128,8 +132,8 @@ class LinearInterpolation {
   /**
    * Specialization of interpolate() member method for floating point types.
    */
-  static void interpolate(std::pair<int, scalar_t> indexAlpha, double& enquiryData, const std::vector<Data_T, Alloc>* dataPtr,
-                          std::function<const double&(size_type, const std::vector<Data_T, Alloc>*)> accessFun = stdAccessFun) {
+  static void interpolate(std::pair<int, scalar_t> indexAlpha, scalar_t& enquiryData, const std::vector<Data_T, Alloc>* dataPtr,
+                          std::function<const scalar_t&(size_type, const std::vector<Data_T, Alloc>*)> accessFun = stdAccessFun) {
     if (dataPtr) {
       if (dataPtr->size() > 1) {
         // Normal interpolation case
@@ -152,19 +156,19 @@ class LinearInterpolation {
   }
 
   /**
-   * Helper specialization of interpolate() for Eigen::VectorXd to simplify the DataModel calls.
+   * Helper specialization of interpolate() for dynamic_vector_t to simplify the DataModel calls.
    */
-  static void interpolate(std::pair<int, scalar_t> indexAlpha, Eigen::VectorXd& enquiryData, const std::vector<Data_T, Alloc>* dataPtr,
-                          std::function<const Eigen::VectorXd&(size_type, const std::vector<Data_T, Alloc>*)> accessFun = stdAccessFun) {
-    interpolate<Eigen::VectorXd>(indexAlpha, enquiryData, dataPtr, accessFun);
+  static void interpolate(std::pair<int, scalar_t> indexAlpha, dynamic_vector_t& enquiryData, const std::vector<Data_T, Alloc>* dataPtr,
+                          std::function<const dynamic_vector_t&(size_type, const std::vector<Data_T, Alloc>*)> accessFun = stdAccessFun) {
+    interpolate<dynamic_vector_t>(indexAlpha, enquiryData, dataPtr, accessFun);
   }
 
   /**
-   * Helper specialization of interpolate() for Eigen::MatrixXd to simplify the DataModel calls.
+   * Helper specialization of interpolate() for dynamic_matrix_t to simplify the DataModel calls.
    */
-  static void interpolate(std::pair<int, scalar_t> indexAlpha, Eigen::MatrixXd& enquiryData, const std::vector<Data_T, Alloc>* dataPtr,
-                          std::function<const Eigen::MatrixXd&(size_type, const std::vector<Data_T, Alloc>*)> accessFun = stdAccessFun) {
-    interpolate<Eigen::MatrixXd>(indexAlpha, enquiryData, dataPtr, accessFun);
+  static void interpolate(std::pair<int, scalar_t> indexAlpha, dynamic_matrix_t& enquiryData, const std::vector<Data_T, Alloc>* dataPtr,
+                          std::function<const dynamic_matrix_t&(size_type, const std::vector<Data_T, Alloc>*)> accessFun = stdAccessFun) {
+    interpolate<dynamic_matrix_t>(indexAlpha, enquiryData, dataPtr, accessFun);
   }
 
   /**
@@ -173,9 +177,9 @@ class LinearInterpolation {
    *
    * @param [in] enquiryTime: The enquiry time for interpolation.
    * @param [in] timeArrayPtr: interpolation time array.
-   * @return std::pair<int, double> : {index, alpha}
+   * @return std::pair<int, scalar_t> : {index, alpha}
    */
-  static std::pair<int, double> timeSegment(scalar_t enquiryTime, const std::vector<scalar_t>* timeArrayPtr) {
+  static std::pair<int, scalar_t> timeSegment(scalar_t enquiryTime, const std::vector<scalar_t>* timeArrayPtr) {
     // corner cases (no time set OR single time element)
     if (!timeArrayPtr || timeArrayPtr->size() <= 1) {
       return {0, scalar_t(1.0)};

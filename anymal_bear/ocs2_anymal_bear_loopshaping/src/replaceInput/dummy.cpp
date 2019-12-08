@@ -43,7 +43,7 @@ int main( int argc, char* argv[] )
   optimizationInterfacePtr->getInitialState(initObservation.state());
 
   // initial command
-  MRT_ros_vis::cost_desired_trajectories_t initCostDesiredTrajectories;
+  ocs2::CostDesiredTrajectories initCostDesiredTrajectories;
 
   // time
   auto& timeTrajectory = initCostDesiredTrajectories.desiredTimeTrajectory();

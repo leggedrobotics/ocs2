@@ -398,13 +398,6 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::runSLQ(
 
   // get gait sequence (should be copied since it might be overridden in the next iteration)
   contactFlagsSequence_ = logicRulesPtr_->getContactFlagsSequence();
-
-  linInterpolateState_.setData(&primalSolution_.timeTrajectory_, &primalSolution_.stateTrajectory_);
-
-  linInterpolateInput_.setData(&primalSolution_.timeTrajectory_, &primalSolution_.inputTrajectory_);
-
-  //  linInterpolateUff_.setData(&controllerTimeTrajectory_, &controllerFFTrajector_);
-  //  linInterpolateK_.setData(&controllerTimeTrajectory_, &controllerFBTrajectory_);
 }
 
 }  // end of namespace switched_model

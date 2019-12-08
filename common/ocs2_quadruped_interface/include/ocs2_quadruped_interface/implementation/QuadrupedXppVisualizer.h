@@ -201,7 +201,6 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishDesi
   // Set up state interpolator
   auto& timeTrajectory = costDesiredTrajectory.desiredTimeTrajectory();
   auto& stateTrajectory = costDesiredTrajectory.desiredStateTrajectory();
-  ocs2::EigenLinearInterpolation<typename cost_desired_trajectories_t::dynamic_vector_t> stateFunc(&timeTrajectory, &stateTrajectory);
 
   // Evaluation times
   double dt = 0.1;
@@ -209,8 +208,9 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishDesi
   double t = std::min(startTime, endTime);
 
   while (t <= endTime) {
-    Eigen::VectorXd state;
-    stateFunc.interpolate(t, state);
+    using dynamic_vector_t = typename cost_desired_trajectories_t::dynamic_vector_t;
+    dynamic_vector_t state;
+    ocs2::EigenLinearInterpolation<dynamic_vector_t>::interpolate(t, state, &timeTrajectory, &stateTrajectory);
     geometry_msgs::Point comPosition;
     comPosition.x = state[3];
     comPosition.y = state[4];
@@ -250,9 +250,6 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishOpti
     arrayMsg.markers.push_back(footMsg);
   }
 
-  // Set up state interpolator
-  ocs2::EigenLinearInterpolation<state_vector_t> stateFunc(&mpcTimeTrajectory, &mpcStateTrajectory);
-
   // compute Feet state
   vector_3d_array_t o_feetPositionRef;
   vector_3d_array_t o_feetVelocityRef;
@@ -267,7 +264,7 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishOpti
 
   while (t <= endTime) {
     state_vector_t state;
-    stateFunc.interpolate(t, state);
+    ocs2::EigenLinearInterpolation<state_vector_t>::interpolate(t, state, &mpcTimeTrajectory, &mpcStateTrajectory);
     geometry_msgs::Point comPosition;
     comPosition.x = state[3];
     comPosition.y = state[4];

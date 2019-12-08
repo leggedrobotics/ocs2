@@ -73,7 +73,7 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
   using input_state_matrix_t = typename dimension_t::input_state_matrix_t;
   using input_state_matrix_array_t = typename dimension_t::input_state_matrix_array_t;
 
-  using cost_desired_trajectories_t = ocs2::CostDesiredTrajectories<scalar_t>;
+  using cost_desired_trajectories_t = ocs2::CostDesiredTrajectories;
 
   using rollout_base_t = ocs2::RolloutBase<STATE_DIM, INPUT_DIM>;
   using time_triggered_rollout_t = ocs2::TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
@@ -362,11 +362,6 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
   primal_solution_t primalSolution_;
   std::vector<contact_flag_t> contactFlagsSequence_;
   cost_desired_trajectories_t costDesiredTrajectories_;
-
-  ocs2::EigenLinearInterpolation<state_vector_t> linInterpolateState_;
-  ocs2::EigenLinearInterpolation<input_vector_t> linInterpolateInput_;
-  ocs2::EigenLinearInterpolation<input_vector_t> linInterpolateUff_;
-  ocs2::EigenLinearInterpolation<input_state_matrix_t> linInterpolateK_;
 };
 
 }  // end of namespace switched_model

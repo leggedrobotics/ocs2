@@ -37,7 +37,6 @@ class MRT_ROS_Dummy_Quadruped : public ocs2::MRT_ROS_Dummy_Loop<STATE_DIM, INPUT
 
   using BASE = ocs2::MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>;
   using typename BASE::command_data_t;
-  using typename BASE::cost_desired_trajectories_t;
   using typename BASE::input_state_matrix_array_t;
   using typename BASE::input_state_matrix_t;
   using typename BASE::input_vector_array_t;

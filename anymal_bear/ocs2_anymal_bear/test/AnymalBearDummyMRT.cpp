@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
   initObservation.subsystem() = 15;
 
   // initial command
-  MRT_ROS_Dummy_Quadruped<12>::cost_desired_trajectories_t initCostDesiredTrajectories;
+  ocs2::CostDesiredTrajectories initCostDesiredTrajectories;
 
   // time
   auto& timeTrajectory = initCostDesiredTrajectories.desiredTimeTrajectory();

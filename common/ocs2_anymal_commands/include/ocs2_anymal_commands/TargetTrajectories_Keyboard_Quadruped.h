@@ -30,7 +30,6 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
   enum class COMMAND_MODE { POSITION, VELOCITY };
 
   using BASE = ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T>;
-  using typename BASE::cost_desired_trajectories_t;
   using typename BASE::dynamic_vector_array_t;
   using typename BASE::dynamic_vector_t;
   using typename BASE::scalar_array_t;
@@ -130,7 +129,7 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
     desiredInput[2 + 9] = 80.0;
   }
 
-  cost_desired_trajectories_t toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) final {
+  ocs2::CostDesiredTrajectories toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) final {
     ocs2::SystemObservation<STATE_DIM, INPUT_DIM> observation;
     ::ros::spinOnce();
     {
@@ -145,7 +144,7 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
     toCostDesiredTimeStateInput(commadLineTarget, desiredTime, desiredBaseState, desiredInput);
 
     // Trajectory to publish
-    cost_desired_trajectories_t costDesiredTrajectories(2);
+    ocs2::CostDesiredTrajectories costDesiredTrajectories(2);
 
     // Desired time trajectory
     scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
@@ -154,7 +153,7 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
     tDesiredTrajectory[1] = observation.time() + desiredTime;
 
     // Desired state trajectory
-    typename cost_desired_trajectories_t::dynamic_vector_array_t& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
+    ocs2::CostDesiredTrajectories::dynamic_vector_array_t& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
     xDesiredTrajectory.resize(2);
     xDesiredTrajectory[0].resize(STATE_DIM);
     xDesiredTrajectory[0].setZero();
@@ -177,7 +176,7 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
     xDesiredTrajectory[1].segment(12, 12) = defaultJointCoordinates_;
 
     // Desired input trajectory
-    typename cost_desired_trajectories_t::dynamic_vector_array_t& uDesiredTrajectory = costDesiredTrajectories.desiredInputTrajectory();
+    ocs2::CostDesiredTrajectories::dynamic_vector_array_t& uDesiredTrajectory = costDesiredTrajectories.desiredInputTrajectory();
     uDesiredTrajectory.resize(2);
     uDesiredTrajectory[0] = desiredInput;
     uDesiredTrajectory[1] = desiredInput;

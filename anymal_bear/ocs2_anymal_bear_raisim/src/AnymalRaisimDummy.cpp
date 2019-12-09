@@ -37,6 +37,8 @@ int main(int argc, char* argv[]) {
 
   std::vector<std::string> orderedJointNames{"LF_HAA", "LF_HFE", "LF_KFE", "RF_HAA", "RF_HFE", "RF_KFE",
                                              "LH_HAA", "LH_HFE", "LH_KFE", "RH_HAA", "RH_HFE", "RH_KFE"};
+  ocs2::Rollout_Settings rolloutSettings;
+  rolloutSettings.minTimeStep_ = 1.0 / 400;
   ocs2::RaisimRollout<STATE_DIM, INPUT_DIM> simRollout(
       urdf,
       std::bind(&anymal::AnymalRaisimConversions::stateToRaisimGenCoordGenVel, &conversions, std::placeholders::_1, std::placeholders::_2),
@@ -44,10 +46,19 @@ int main(int argc, char* argv[]) {
       std::bind(&anymal::AnymalRaisimConversions::inputToRaisimGeneralizedForce, &conversions, std::placeholders::_1, std::placeholders::_2,
                 std::placeholders::_3, std::placeholders::_4, std::placeholders::_5),
       orderedJointNames,
-      std::bind(&anymal::AnymalRaisimConversions::extractModelData, &conversions, std::placeholders::_1, std::placeholders::_2));
+      std::bind(&anymal::AnymalRaisimConversions::extractModelData, &conversions, std::placeholders::_1, std::placeholders::_2),
+      rolloutSettings, raisim::ControlMode::VELOCITY_PLUS_FEEDFORWARD_TORQUE,
+      std::bind(&anymal::AnymalRaisimConversions::inputToRaisimPdTargets, std::placeholders::_1, std::placeholders::_2,
+                std::placeholders::_3, std::placeholders::_4, std::placeholders::_5));
 
   simRollout.setSimulatorStateOnRolloutRunAlways_ = false;
   simRollout.setSimulatorStateOnRolloutRunOnce_ = true;
+
+  Eigen::VectorXd pGains(18);
+  pGains.setZero();
+  Eigen::VectorXd dGains(18);
+  dGains.setConstant(5.0);
+  simRollout.setPdGains(pGains, dGains);
 
   anymal_mrt->initRollout(&simRollout);
 

@@ -55,7 +55,7 @@ RaisimRollout<STATE_DIM, INPUT_DIM>::RaisimRollout(std::string urdf, state_to_ra
   constexpr CollisionGroup collisionMask = 0b01;
   system_ = world_.addArticulatedSystem(urdf_, "", orderedJointNames_, collisionGroup, collisionMask);
 
-  std::cerr << "\nInstatiated Raisim System with DoF = " << system_->getDOF() << std::endl;
+  std::cerr << "\nInstantiated Raisim System with DoF = " << system_->getDOF() << std::endl;
   const auto bodyNames = system_->getBodyNames();
   std::cerr << "Body Names are";
   for (const auto& bodyName : bodyNames) {
@@ -87,6 +87,10 @@ RaisimRollout<STATE_DIM, INPUT_DIM>::RaisimRollout(const RaisimRollout& other)
                     other.inputToRaisimGeneralizedForce_, other.orderedJointNames_, other.dataExtractionCallback_, other.settings()) {
   setSimulatorStateOnRolloutRunAlways_ = other.setSimulatorStateOnRolloutRunAlways_;
   setSimulatorStateOnRolloutRunOnce_ = other.setSimulatorStateOnRolloutRunOnce_;
+  if (other.heightMap_) {
+    deleteGroundPlane();
+    heightMap_ = world_.addHeightMap(other.heightMap_);
+  }
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
@@ -128,6 +132,25 @@ typename RaisimRollout<STATE_DIM, INPUT_DIM>::state_vector_t RaisimRollout<STATE
   postEventIndicesStock.pop_back();  // the last interval does not have any events afterwards
 
   return stateTrajectory.back();
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
+raisim::HeightMap* RaisimRollout<STATE_DIM, INPUT_DIM>::generateTerrain(raisim::TerrainProperties properties) {
+  deleteGroundPlane();
+
+  heightMap_ = world_.addHeightMap(0.0, 0.0, properties);
+  return heightMap_;
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void RaisimRollout<STATE_DIM, INPUT_DIM>::deleteGroundPlane() {
+  if (ground_) {
+    world_.removeObject(ground_);
+#ifdef USE_RAISIM_VISUALIZER
+    raisim::OgreVis::get()->remove(ground_);
+#endif
+    ground_ = nullptr;
+  }
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>

@@ -95,6 +95,13 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
   RaisimRollout<STATE_DIM, INPUT_DIM>* clone() const override { return new RaisimRollout(*this); }
 
+  /**
+   * @brief Replaces the default flat ground plane with a generated terrain in Raisim
+   * @param properties: Terrain properties
+   * @return Pointer to the created terrain instance
+   */
+  raisim::HeightMap* generateTerrain(raisim::TerrainProperties properties = raisim::TerrainProperties());
+
  protected:
   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
                          scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, state_vector_array_t& stateTrajectory,
@@ -113,11 +120,14 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
   void runSimulation(const time_interval_t& timeInterval, controller_t* controller, scalar_array_t& timeTrajectory,
                      state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory);
 
+  //! Helper method to remove the ground plane from simulation
+  void deleteGroundPlane();
+
  public:
   bool setSimulatorStateOnRolloutRunAlways_;  //! Whether or not to always set the starting state of the rollout to the simulator
   bool setSimulatorStateOnRolloutRunOnce_;    //! Whether or not to set the starting state to the simulator at the next rollout call only
 
- protected:
+ private:
   // Save some constructor arguments required for copy constructor / cloning
   std::string urdf_;
   std::vector<std::string> orderedJointNames_;
@@ -125,6 +135,7 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
   // Handles to Raisim objects
   raisim::World world_;
   raisim::Ground* ground_ = nullptr;
+  raisim::HeightMap* heightMap_ = nullptr;
   raisim::ArticulatedSystem* system_ = nullptr;
 
 #ifdef USE_RAISIM_VISUALIZER

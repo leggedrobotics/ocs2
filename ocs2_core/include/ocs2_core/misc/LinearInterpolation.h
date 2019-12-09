@@ -203,7 +203,7 @@ class LinearInterpolation {
   }
 
  private:
-  static inline const Data_T& stdAccessFun(size_type ind, const std::vector<Data_T, Alloc>* vec) { return (*vec)[ind]; }
+  static const Data_T& stdAccessFun(size_type ind, const std::vector<Data_T, Alloc>* vec) { return (*vec)[ind]; }
 };
 
 // Specialization for Eigen types

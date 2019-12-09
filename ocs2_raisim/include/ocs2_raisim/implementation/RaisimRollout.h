@@ -36,7 +36,9 @@ RaisimRollout<STATE_DIM, INPUT_DIM>::RaisimRollout(std::string urdf, state_to_ra
                                                    raisim_gen_coord_gen_vel_to_state_t raisimGenCoordGenVelToState,
                                                    input_to_raisim_generalized_force_t inputToRaisimGeneralizedForce,
                                                    std::vector<std::string> orderedJointNames,
-                                                   data_extraction_callback_t dataExtractionCallback, Rollout_Settings rolloutSettings)
+                                                   data_extraction_callback_t dataExtractionCallback, Rollout_Settings rolloutSettings,
+                                                   raisim::ControlMode::Type controlMode,
+                                                   input_to_raisim_pd_targets_t inputToRaisimPdTargets)
     : Base(std::move(rolloutSettings)),
       setSimulatorStateOnRolloutRunAlways_(true),
       setSimulatorStateOnRolloutRunOnce_(false),
@@ -47,13 +49,15 @@ RaisimRollout<STATE_DIM, INPUT_DIM>::RaisimRollout(std::string urdf, state_to_ra
       stateToRaisimGenCoordGenVel_(std::move(stateToRaisimGenCoordGenVel)),
       raisimGenCoordGenVelToState_(std::move(raisimGenCoordGenVelToState)),
       inputToRaisimGeneralizedForce_(std::move(inputToRaisimGeneralizedForce)),
-      dataExtractionCallback_(std::move(dataExtractionCallback)) {
+      dataExtractionCallback_(std::move(dataExtractionCallback)),
+      inputToRaisimPdTargets_(std::move(inputToRaisimPdTargets)) {
   world_.setTimeStep(this->settings().minTimeStep_);
 
   // avoid self-collisions
   constexpr CollisionGroup collisionGroup = 0b10;
   constexpr CollisionGroup collisionMask = 0b01;
   system_ = world_.addArticulatedSystem(urdf_, "", orderedJointNames_, collisionGroup, collisionMask);
+  system_->setControlMode(controlMode);
 
   std::cerr << "\nInstantiated Raisim System with DoF = " << system_->getDOF() << std::endl;
   const auto bodyNames = system_->getBodyNames();
@@ -84,13 +88,26 @@ RaisimRollout<STATE_DIM, INPUT_DIM>::RaisimRollout(std::string urdf, state_to_ra
 template <size_t STATE_DIM, size_t INPUT_DIM>
 RaisimRollout<STATE_DIM, INPUT_DIM>::RaisimRollout(const RaisimRollout& other)
     : RaisimRollout(other.urdf_, other.stateToRaisimGenCoordGenVel_, other.raisimGenCoordGenVelToState_,
-                    other.inputToRaisimGeneralizedForce_, other.orderedJointNames_, other.dataExtractionCallback_, other.settings()) {
+                    other.inputToRaisimGeneralizedForce_, other.orderedJointNames_, other.dataExtractionCallback_, other.settings(),
+                    other.system_->getControlMode(), other.inputToRaisimPdTargets_) {
   setSimulatorStateOnRolloutRunAlways_ = other.setSimulatorStateOnRolloutRunAlways_;
   setSimulatorStateOnRolloutRunOnce_ = other.setSimulatorStateOnRolloutRunOnce_;
+
+  if (other.system_->getControlMode() != raisim::ControlMode::FORCE_AND_TORQUE) {
+    setPdGains(other.jointPGains_, other.jointDGains_);
+  }
+
   if (other.heightMap_) {
     deleteGroundPlane();
     heightMap_ = world_.addHeightMap(other.heightMap_);
   }
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void RaisimRollout<STATE_DIM, INPUT_DIM>::setPdGains(const Eigen::VectorXd& pGain, const Eigen::VectorXd& dGain) {
+  jointPGains_ = pGain;
+  jointDGains_ = dGain;
+  system_->setPdGains(pGain, dGain);
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
@@ -197,6 +214,12 @@ void RaisimRollout<STATE_DIM, INPUT_DIM>::runSimulation(const time_interval_t& t
     Eigen::VectorXd tau = inputToRaisimGeneralizedForce_(time, inputTrajectory.back(), stateTrajectory.back(), raisim_q, raisim_dq);
     assert(tau.rows() == system_->getDOF());
     system_->setGeneralizedForce(tau);
+
+    if (system_->getControlMode() != raisim::ControlMode::FORCE_AND_TORQUE) {
+      Eigen::VectorXd pGain, dGain;
+      std::tie(pGain, dGain) = inputToRaisimPdTargets_(time, inputTrajectory.back(), stateTrajectory.back(), raisim_q, raisim_dq);
+      system_->setPdTarget(pGain, dGain);
+    }
 
     world_.integrate2();  // actually move time foward and change the state
 

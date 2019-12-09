@@ -19,13 +19,13 @@ namespace CppAD {
 namespace cg {
 
 /**
- * Holds information on which independents are used by which 
+ * Holds information on which independents are used by which
  * dependent in an equation pattern
  */
 template<class Base>
 class OperationIndexedIndependents {
 public:
-    typedef std::map<size_t, const OperationNode<Base>*> MapDep2Indep_type;
+    using MapDep2Indep_type = std::map<size_t, const OperationNode<Base>*>;
     /**
      * maps the argument index to the several independents used in different
      * equations with the same pattern
@@ -56,7 +56,7 @@ public:
 };
 
 /**
- * Group of variables with the same evaluation pattern 
+ * Group of variables with the same evaluation pattern
  * (same equation different variables)
  */
 template<class Base>
@@ -66,7 +66,7 @@ public:
     const size_t depRefIndex;
     std::set<size_t> dependents;
     /**
-     * maps node ID used by all dependents to the operations of the 
+     * maps node ID used by all dependents to the operations of the
      * reference dependent
      * [dependent index][op] = reference operation
      */
@@ -178,17 +178,17 @@ public:
      * require an index (always the same for all iterations)
      */
     inline void detectNonIndexedIndependents() {
-        typedef typename OperationIndexedIndependents<Base>::MapDep2Indep_type MapIndep2Dep_type;
+        using MapIndep2Dep_type = typename OperationIndexedIndependents<Base>::MapDep2Indep_type;
 
         // loop operations using independents
-        typename std::map<const OperationNode<Base>*, OperationIndexedIndependents<Base> >::iterator itop2a = indexedOpIndep.op2Arguments.begin();
+        auto itop2a = indexedOpIndep.op2Arguments.begin();
         while (itop2a != indexedOpIndep.op2Arguments.end()) {
             const OperationNode<Base>* parentOp = itop2a->first;
             OperationIndexedIndependents<Base>& arg2It = itop2a->second;
 
             bool emptyOp = true;
 
-            // loop the arguments 
+            // loop the arguments
             size_t aSize = arg2It.arg2Independents.size();
             for (size_t argIndex = 0; argIndex < aSize; argIndex++) {
                 MapIndep2Dep_type& dep2Ind = arg2It.arg2Independents[argIndex];
@@ -241,7 +241,7 @@ private:
                      CodeHandlerVector<Base, size_t>& varColor) {
         CodeHandler<Base>* h1 = dep1.getCodeHandler();
         CodeHandler<Base>* h2 = dep2.getCodeHandler();
-        
+
         if (h1 != h2) {
             if (h1 != nullptr && h2 != nullptr)
                 throw CGException("Only one code handler allowed");
@@ -292,7 +292,7 @@ private:
              *  it could fail to detect some patterns! e.g.:
              *    it ref ->  v1 + v1 + v2
              *    it 2   ->  v3 + v1 + v1
-             *   where v1, v2, v3 have the same expression pattern but 
+             *   where v1, v2, v3 have the same expression pattern but
              *   correspond to different nodes
              */
             if (varColor[*sc2] == varColor[*scRef])

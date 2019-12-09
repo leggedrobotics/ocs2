@@ -1,30 +1,28 @@
-// $Id$
 # ifndef CPPAD_CORE_USER_AD_HPP
 # define CPPAD_CORE_USER_AD_HPP
-
 /* --------------------------------------------------------------------------
 CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 /*
 ---------------------------------------------------------------------------
 
 $begin AD$$
 $spell
-	std
-	bool
-	cos
-	Cpp
+    std
+    bool
+    cos
+    Cpp
 $$
 
 $section AD Objects$$
-$mindex require$$
 
 
 $head Purpose$$
@@ -49,13 +47,13 @@ Otherwise, see $cref base_require$$.
 
 
 $childtable%
-	cppad/core/ad_ctor.hpp%
-	cppad/core/ad_assign.hpp%
-	cppad/core/convert.hpp%
-	cppad/core/ad_valued.hpp%
-	cppad/core/bool_valued.hpp%
-	cppad/core/vec_ad.hpp%
-	cppad/base_require.hpp
+    include/cppad/core/ad_ctor.hpp%
+    include/cppad/core/ad_assign.hpp%
+    include/cppad/core/convert.hpp%
+    include/cppad/core/ad_valued.hpp%
+    include/cppad/core/bool_valued.hpp%
+    include/cppad/core/vec_ad.hpp%
+    include/cppad/base_require.hpp
 %$$
 
 $end

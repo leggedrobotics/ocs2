@@ -127,7 +127,8 @@ void ModelCSourceGen<Base>::generateSparseReverseTwoSourcesWithAtomics(const std
         finishedJob();
 
         LanguageC<Base> langC(_baseTypeName);
-        langC.setMaxAssigmentsPerFunction(_maxAssignPerFunc, &_sources);
+        langC.setMaxAssignmentsPerFunction(_maxAssignPerFunc, &_sources);
+        langC.setMaxOperationsPerAssignment(_maxOperationsPerAssignment);
         langC.setParameterPrecision(_parameterPrecision);
         _cache.str("");
         _cache << _name << "_" << FUNCTION_SPARSE_REVERSE_TWO << "_indep" << j;
@@ -229,7 +230,8 @@ void ModelCSourceGen<Base>::generateSparseReverseTwoSourcesNoAtomics(const std::
         }
 
         LanguageC<Base> langC(_baseTypeName);
-        langC.setMaxAssigmentsPerFunction(_maxAssignPerFunc, &_sources);
+        langC.setMaxAssignmentsPerFunction(_maxAssignPerFunc, &_sources);
+        langC.setMaxOperationsPerAssignment(_maxOperationsPerAssignment);
         langC.setParameterPrecision(_parameterPrecision);
         _cache.str("");
         _cache << _name << "_" << FUNCTION_SPARSE_REVERSE_TWO << "_indep" << j;
@@ -260,18 +262,19 @@ void ModelCSourceGen<Base>::generateReverseTwoSources() {
     _cache << "#include <stdlib.h>\n"
             << LanguageC<Base>::ATOMICFUN_STRUCT_DEFINITION << "\n"
             "\n"
-            "void " << _name << "_" << FUNCTION_SPARSE_REVERSE_TWO << "(unsigned long pos, " << argsDcl << ");\n"
+            "int " << _name << "_" << FUNCTION_SPARSE_REVERSE_TWO << "(unsigned long pos, " << argsDcl << ");\n"
             "void " << _name << "_" << FUNCTION_REVERSE_TWO_SPARSITY << "(unsigned long pos, unsigned long const** elements, unsigned long* nnz);\n"
-            "\n"
-            "int " << model_function << "("
-            << _baseTypeName << " const tx[], "
-            << _baseTypeName << " const ty[], "
-            << _baseTypeName << " px[], "
-            << _baseTypeName << " const py[], "
-            << langC.generateArgumentAtomicDcl() << ") {\n"
+            "\n";
+    LanguageC<Base>::printFunctionDeclaration(_cache, "int", model_function, {_baseTypeName + " const tx[]",
+                                                                              _baseTypeName + " const ty[]",
+                                                                              _baseTypeName + " px[]",
+                                                                              _baseTypeName + " const py[]",
+                                                                              langC.generateArgumentAtomicDcl()});
+    _cache << " {\n"
             "    unsigned long ej, ePos, i, j, nnz, nnzMax;\n"
             "    unsigned long const* pos;\n"
             "    unsigned long* txPos;\n"
+            "    unsigned long* txPosTmp;\n"
             "    unsigned long nnzTx;\n"
             "    " << _baseTypeName << " const * in[3];\n"
             "    " << _baseTypeName << "* out[1];\n"
@@ -279,6 +282,7 @@ void ModelCSourceGen<Base>::generateReverseTwoSources() {
             "    " << _baseTypeName << " w[" << m << "];\n"
             "    " << _baseTypeName << "* compressed;\n"
             "    int nonZeroW;\n"
+            "    int ret;\n"
             "\n"
             "    nonZeroW = 0;\n"
             "    for (i = 0; i < " << m << "; i++) {\n"
@@ -293,7 +297,7 @@ void ModelCSourceGen<Base>::generateReverseTwoSources() {
             "       px[j * 2] = 0;\n"
             "    }\n"
             "\n"
-            "    if(nonZeroW == 0)\n"
+            "    if (nonZeroW == 0)\n"
             "        return 0; //nothing to do\n"
             "\n"
             "   txPos = 0;\n"
@@ -301,18 +305,26 @@ void ModelCSourceGen<Base>::generateReverseTwoSources() {
             "   nnzMax = 0;\n"
             "   for (j = 0; j < " << n << "; j++) {\n"
             "      if (tx[j * 2 + 1] != 0.0) {\n"
-            "         nnzTx++;\n"
-            "         txPos = (unsigned long*) realloc(txPos, nnzTx * sizeof(unsigned long));\n"
-            "         txPos[nnzTx - 1] = j;\n"
             "         " << _name << "_" << FUNCTION_REVERSE_TWO_SPARSITY << "(j, &pos, &nnz);\n"
-            "         if(nnz > nnzMax)\n"
+            "         if (nnz > nnzMax)\n"
             "            nnzMax = nnz;\n"
+            "         else if (nnz == 0)\n"
+            "            continue;\n"
+            "         nnzTx++;\n"
+            "         txPosTmp = (unsigned long*) realloc(txPos, nnzTx * sizeof(unsigned long));\n"
+            "         if (txPosTmp != NULL) {\n"
+            "            txPos = txPosTmp;\n"
+            "         } else {\n"
+            "            free(txPos);\n"
+            "            return -1; // failure to allocate memory\n"
+            "         }\n"
+            "         txPos[nnzTx - 1] = j;\n"
             "      }\n"
             "   }\n"
             "\n"
             "   if (nnzTx == 0) {\n"
             "      free(txPos);\n"
-            "      return 0; //nothing to do\n"
+            "      return 0; // nothing to do\n"
             "   }\n"
             "\n"
             "    for (j = 0; j < " << n << "; j++)\n"
@@ -329,11 +341,17 @@ void ModelCSourceGen<Base>::generateReverseTwoSources() {
             "      in[2] = w;\n"
             "      out[0] = compressed;\n";
     if (!_loopTapes.empty()) {
-        _cache << "      for(ePos = 0; ePos < nnz; ePos++)\n"
+        _cache << "      for (ePos = 0; ePos < nnz; ePos++)\n"
                 "         compressed[ePos] = 0;\n"
                 "\n";
     }
-    _cache << "      " << _name << "_" << FUNCTION_SPARSE_REVERSE_TWO << "(j, " << args << ");\n"
+    _cache << "      ret = " << _name << "_" << FUNCTION_SPARSE_REVERSE_TWO << "(j, " << args << ");\n"
+            "\n"
+            "      if (ret != 0) {\n"
+            "         free(compressed);\n"
+            "         free(txPos);\n"
+            "         return ret;\n"
+            "      }\n"
             "\n"
             "      for (ePos = 0; ePos < nnz; ePos++) {\n"
             "         px[pos[ePos] * 2] += compressed[ePos];\n"

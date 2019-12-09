@@ -20,14 +20,16 @@ namespace CppAD {
 namespace cg {
 
 template<class Base>
-DynamicLib<Base>* DynamicModelLibraryProcessor<Base>::loadDynamicLibrary() {
+std::unique_ptr<DynamicLib<Base>> DynamicModelLibraryProcessor<Base>::loadDynamicLibrary() {
+    std::unique_ptr<DynamicLib<Base>> lib;
     const auto it = _options.find("dlOpenMode");
     if (it == _options.end()) {
-        return new LinuxDynamicLib<Base>(_libraryName + system::SystemInfo<>::DYNAMIC_LIB_EXTENSION);
+        lib.reset(new LinuxDynamicLib<Base>(_libraryName + system::SystemInfo<>::DYNAMIC_LIB_EXTENSION));
     } else {
         int dlOpenMode = std::stoi(it->second);
-        return new LinuxDynamicLib<Base>(_libraryName + system::SystemInfo<>::DYNAMIC_LIB_EXTENSION, dlOpenMode);
+        lib.reset(new LinuxDynamicLib<Base>(_libraryName + system::SystemInfo<>::DYNAMIC_LIB_EXTENSION, dlOpenMode));
     }
+    return lib;
 }
 
 } // END cg namespace

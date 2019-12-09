@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2012 Ciengis
+ *    Copyright (C) 2019 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -20,22 +21,22 @@ namespace cg {
 
 /**
  * An operation node.
- * 
+ *
  * @author Joao Leal
  */
 template<class Base>
 class OperationNode {
     friend class CodeHandler<Base>;
 public:
-    typedef typename std::vector<Argument<Base> >::iterator iterator;
-    typedef typename std::vector<Argument<Base> >::const_iterator const_iterator;
-    typedef typename std::vector<Argument<Base> >::const_reverse_iterator const_reverse_iterator;
-    typedef typename std::vector<Argument<Base> >::reverse_iterator reverse_iterator;
+    using iterator = typename std::vector<Argument<Base> >::iterator;
+    using const_iterator = typename std::vector<Argument<Base> >::const_iterator;
+    using const_reverse_iterator = typename std::vector<Argument<Base> >::const_reverse_iterator;
+    using reverse_iterator = typename std::vector<Argument<Base> >::reverse_iterator;
 public:
     static const std::set<CGOpCode> CUSTOM_NODE_CLASS;
 private:
     /**
-     * the source code handler that own this node 
+     * the source code handler that own this node
      * (only null for temporary OperationNodes)
      */
     CodeHandler<Base>* handler_;
@@ -48,7 +49,7 @@ private:
      */
     std::vector<size_t> info_;
     /**
-     * arguments required by the operation 
+     * arguments required by the operation
      * (empty for independent variables and possibly for the 1st assignment
      *  of a dependent variable)
      */
@@ -60,7 +61,7 @@ private:
     /**
      * name for the result of this operation
      */
-    std::string* name_;
+    std::unique_ptr<std::string> name_;
 public:
     /**
      * Changes the current operation type into an Alias.
@@ -72,14 +73,13 @@ public:
         operation_ = CGOpCode::Alias;
         arguments_.resize(1);
         arguments_[0] = other;
-        delete name_;
-        name_ = nullptr;
+        name_.reset();
     }
-    
+
     /**
      * Provides the source code handler that owns this node.
      * It can only be null for temporary nodes.
-     * 
+     *
      * @return a CodeHandler which owns this nodes memory (possibly null)
      */
     inline CodeHandler<Base>* getCodeHandler() const {
@@ -96,7 +96,7 @@ public:
 
     /**
      * Changes the current operation type.
-     * The previous operation information/options might also have to be 
+     * The previous operation information/options might also have to be
      * changed, use getInfo() to change it if required.
      * @param op the new operation type
      * @param arguments the arguments for the new operation
@@ -149,7 +149,7 @@ public:
      *         no name was assigned to this node yet
      */
     inline const std::string* getName() const {
-        return name_;
+        return name_.get();
     }
 
     /**
@@ -160,29 +160,28 @@ public:
         if (name_ != nullptr)
             *name_ = name;
         else
-            name_ = new std::string(name);
+            name_.reset(new std::string(name));
     }
 
     /**
      * Clears any name assigned to this node.
      */
     inline void clearName() {
-        delete name_;
-        name_ = nullptr;
+        name_.reset();
     }
-    
+
     /**
      * Provides the index in CodeHandler which owns this OperationNode.
-     * A value of std::numeric_limits<size_t>::max() means that it is not 
+     * A value of std::numeric_limits<size_t>::max() means that it is not
      * managed by any CodeHandler.
      * This value can change if its position changes in the CodeHandler.
-     * 
-     * @return the index in the CodeHandler's array of managed nodes 
+     *
+     * @return the index in the CodeHandler's array of managed nodes
      */
     inline size_t getHandlerPosition() const {
         return pos_;
     }
-   
+
     // argument iterators
 
     inline iterator begin() {
@@ -232,19 +231,17 @@ public:
     inline const_reverse_iterator crend() const noexcept {
         return arguments_.crend();
     }
-    
-    inline virtual ~OperationNode() {
-        delete name_;
-    }
-    
+
+    inline virtual ~OperationNode() = default;
+
 protected:
-    
+
     inline OperationNode(const OperationNode& orig) :
         handler_(orig.handler_),
         operation_(orig.operation_),
         info_(orig.info_),
         arguments_(orig.arguments_),
-        pos_(std::numeric_limits<size_t>::max()),
+        pos_((std::numeric_limits<size_t>::max)()),
         name_(orig.name_ != nullptr ? new std::string(*orig.name_) : nullptr) {
     }
 
@@ -252,8 +249,7 @@ protected:
                          CGOpCode op) :
         handler_(handler),
         operation_(op),
-        pos_(std::numeric_limits<size_t>::max()),
-        name_(nullptr) {
+        pos_((std::numeric_limits<size_t>::max)()) {
     }
 
     inline OperationNode(CodeHandler<Base>* handler,
@@ -262,8 +258,7 @@ protected:
         handler_(handler),
         operation_(op),
         arguments_ {arg},
-        pos_(std::numeric_limits<size_t>::max()),
-        name_(nullptr) {
+        pos_((std::numeric_limits<size_t>::max)()) {
     }
 
     inline OperationNode(CodeHandler<Base>* handler,
@@ -272,8 +267,7 @@ protected:
         handler_(handler),
         operation_(op),
         arguments_(std::move(args)),
-        pos_(std::numeric_limits<size_t>::max()),
-        name_(nullptr) {
+        pos_((std::numeric_limits<size_t>::max)()) {
     }
 
     inline OperationNode(CodeHandler<Base>* handler,
@@ -284,8 +278,7 @@ protected:
         operation_(op),
         info_(std::move(info)),
         arguments_(std::move(args)),
-        pos_(std::numeric_limits<size_t>::max()),
-        name_(nullptr) {
+        pos_((std::numeric_limits<size_t>::max)()) {
     }
 
     inline OperationNode(CodeHandler<Base>* handler,
@@ -296,10 +289,9 @@ protected:
         operation_(op),
         info_(info),
         arguments_(args),
-        pos_(std::numeric_limits<size_t>::max()),
-        name_(nullptr) {
+        pos_((std::numeric_limits<size_t>::max)()) {
     }
-    
+
     inline void setHandlerPosition(size_t pos) {
         pos_ = pos;
     }
@@ -308,7 +300,7 @@ public:
 
     /**
      * Creates a temporary operation node.
-     * 
+     *
      * @warning This node should never be provided to a CodeHandler.
      */
     static std::unique_ptr<OperationNode<Base>> makeTemporaryNode(CGOpCode op,
@@ -316,14 +308,14 @@ public:
                                                                   const std::vector<Argument<Base> >& args) {
         return std::unique_ptr<OperationNode<Base>> (new OperationNode<Base>(nullptr, op, info, args));
     }
-    
+
 protected:
-    static inline std::set<CGOpCode> makeCustomNodeClassesSet();
+    static inline std::set<CGOpCode> makeCustomNodeClassesSet() noexcept;
 
 };
 
 template<class Base>
-inline std::set<CGOpCode> OperationNode<Base>::makeCustomNodeClassesSet() {
+inline std::set<CGOpCode> OperationNode<Base>::makeCustomNodeClassesSet() noexcept {
     std::set<CGOpCode> s;
     s.insert(CGOpCode::IndexAssign);
     s.insert(CGOpCode::Index);

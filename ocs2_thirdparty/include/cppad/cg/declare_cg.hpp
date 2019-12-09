@@ -24,7 +24,7 @@ class vector;
 template<class Base>
 class AD;
 
-template<class Base>
+template<class Base, class RecBase>
 class ADFun;
 
 namespace cg {
@@ -40,6 +40,9 @@ class CGAbstractAtomicFun;
 
 template<class Base>
 class CGAtomicFun;
+
+template<class Base>
+class AtomicUseInfo;
 
 /***************************************************************************
  * Core
@@ -116,6 +119,8 @@ class SectionedIndexPattern;
 /***************************************************************************
  * Languages
  **************************************************************************/
+template<class Base>
+class LangStreamOperation;
 
 template<class Base>
 class LanguageC;
@@ -191,7 +196,7 @@ template<class Key, class Value>
 class SmartMapValuePointer;
 
 template<class Type>
-class ArrayWrapper;
+class ArrayView;
 
 template<class Base>
 inline void print(const Base& v);
@@ -247,6 +252,18 @@ bool operator>=(const CG<Base>& left, const CG<Base>& right);
 template<class Base>
 bool operator!=(const CG<Base>& left, double right);
 
+template<class Base>
+bool operator==(const CG<Base>& left, const Base& right);
+
+template<class Base>
+bool operator==(const Base& left, const CG<Base>& right);
+
+template<class Base>
+bool operator!=(const CG<Base>& left, Base right);
+
+template<class Base>
+bool operator!=(const Base& left, const CG<Base>& right);
+
 /***************************************************************************
  * Index reduction functions
  **************************************************************************/
@@ -289,7 +306,7 @@ enum class IndexPatternType {
 } // END cg namespace
 
 /***************************************************************************
- * 
+ *
  **************************************************************************/
 // order determining functions, see ordered.hpp
 template<class Base>
@@ -308,14 +325,23 @@ template<class Base>
 bool abs_geq(const cg::CG<Base>& x, const cg::CG<Base>& y);
 
 // The identical property functions, see identical.hpp
+/**
+ * @throws CppAD::cg::CGException
+ */
 template<class Base>
-inline bool IdenticalPar(const cg::CG<Base>& x) ;
+inline bool IdenticalPar(const cg::CG<Base>& x);
 
+/**
+ * @throws CppAD::cg::CGException
+ */
 template<class Base>
-bool IdenticalZero(const cg::CG<Base>& x) ;
+bool IdenticalZero(const cg::CG<Base>& x);
 
+/**
+ * @throws CppAD::cg::CGException
+ */
 template<class Base>
-bool IdenticalOne(const cg::CG<Base>& x) ;
+bool IdenticalOne(const cg::CG<Base>& x);
 
 template<class Base>
 bool IdenticalEqualPar(const cg::CG<Base>& x, const cg::CG<Base>& y);
@@ -411,7 +437,7 @@ inline cg::CG<Base> sqrt(const cg::CG<Base>& x);
 template<class Base>
 inline cg::CG<Base> tan(const cg::CG<Base>& x);
 
-// hyperbolic tangent 
+// hyperbolic tangent
 template<class Base>
 inline cg::CG<Base> tanh(const cg::CG<Base>& x);
 

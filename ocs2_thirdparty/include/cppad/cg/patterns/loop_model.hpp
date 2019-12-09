@@ -19,16 +19,16 @@ namespace CppAD {
 namespace cg {
 
 /**
- * An atomic function for source code generation within loops
- * 
+ * A model representing a loop body for source code generation
+ *
  * @author Joao Leal
  */
 template <class Base>
 class LoopModel {
 public:
-    typedef CppAD::cg::CG<Base> CGB;
-    typedef Argument<Base> Arg;
-    typedef std::pair<size_t, size_t> pairss;
+    using CGB = CppAD::cg::CG<Base>;
+    using Arg = Argument<Base>;
+    using pairss = std::pair<size_t, size_t>;
 public:
     static const std::string ITERATION_INDEX_NAME;
 private:
@@ -38,7 +38,11 @@ private:
     /**
      * The tape for a single loop iteration
      */
-    ADFun<CGB> * const fun_;
+    ADFun<CGB>* const fun_;
+    /**
+     * Whether or not it calls atomic functions
+     */
+    const bool containsAtoms_;
     /**
      * Number of loop iterations
      */
@@ -65,12 +69,12 @@ private:
      */
     std::vector<LoopPosition> temporaryIndependents_;
     /**
-     * Maps the original dependent variable indexes to their positions in 
+     * Maps the original dependent variable indexes to their positions in
      * the loop
      */
     std::map<size_t, LoopIndexedPosition> depOrigIndexes_;
     /**
-     * 
+     *
      */
     std::vector<IterEquationGroup<Base> > equationGroups_;
     std::vector<std::set<const IterEquationGroup<Base>*> > iteration2eqGroups_;
@@ -109,9 +113,9 @@ public:
     /**
      * Creates a new atomic function that is responsible for defining the
      * dependencies to calls of a user atomic function.
-     * 
-     * @param name The atomic function name.
+     *
      * @param fun The tape for a single loop iteration (loop model)
+     * @param containsAtoms Whether or not fun calls atomic functions
      * @param iterationCount Number of loop iterations
      * @param dependentOrigIndexes
      * @param indexedIndepOrigIndexes
@@ -119,6 +123,7 @@ public:
      * @param temporaryIndependents
      */
     LoopModel(ADFun<CGB>* fun,
+              bool containsAtoms,
               size_t iterationCount,
               const std::vector<std::vector<size_t> >& dependentOrigIndexes,
               const std::vector<std::vector<size_t> >& indexedIndepOrigIndexes,
@@ -126,6 +131,7 @@ public:
               const std::vector<size_t>& temporaryIndependents) :
         loopId_(createNewLoopId()),
         fun_(fun),
+        containsAtoms_(containsAtoms),
         iterationCount_(iterationCount),
         m_(dependentOrigIndexes.size()),
         dependentIndexes_(m_, std::vector<LoopPosition>(iterationCount)),
@@ -144,7 +150,7 @@ public:
             for (size_t it = 0; it < iterationCount_; it++) {
                 size_t orig = dependentOrigIndexes[i][it];
                 dependentIndexes_[i][it] = LoopPosition(i, orig);
-                if (orig != std::numeric_limits<size_t>::max()) // some equations are not present in all iterations
+                if (orig != (std::numeric_limits<size_t>::max)()) // some equations are not present in all iterations
                     depOrigIndexes_[orig] = LoopIndexedPosition(dependentIndexes_[i][it].tape,
                                                                 dependentIndexes_[i][it].original,
                                                                 it);
@@ -161,7 +167,7 @@ public:
         for (size_t i = 0; i < lm; i++) {
             std::set<size_t> iterations;
             for (size_t it = 0; it < iterationCount_; it++) {
-                if (dependentIndexes_[i][it].original != std::numeric_limits<size_t>::max()) {
+                if (dependentIndexes_[i][it].original != (std::numeric_limits<size_t>::max)()) {
                     iterations.insert(it);
                 }
             }
@@ -198,7 +204,7 @@ public:
             for (size_t j = 0; j < nIndexed; j++) {
                 size_t orig = indexedIndepOrigIndexes[j][it];
                 indexedIndepIndexes_[j][it] = LoopPosition(j, orig);
-                if (orig != std::numeric_limits<size_t>::max()) //some variables are not present in all iterations
+                if (orig != (std::numeric_limits<size_t>::max)()) //some variables are not present in all iterations
                     iteration2orig2indexedIndepIndexes_[it][orig].insert(j);
             }
         }
@@ -224,7 +230,7 @@ public:
 
     /**
      * Provides a unique identifier for this loop.
-     * 
+     *
      * @return a unique identifier ID
      */
     inline size_t getLoopId() const {
@@ -232,8 +238,17 @@ public:
     }
 
     /**
+     * Whether or not the tape for the loop calls atomic functions.
+     *
+     * @return Whether or not it calls atomic functions.
+     */
+    inline bool isContainsAtomics() const {
+        return containsAtoms_;
+    }
+
+    /**
      * Provides the number of iterations in the loop
-     * 
+     *
      * @return the number of iterations in the loop
      */
     inline const size_t getIterationCount() const {
@@ -242,7 +257,7 @@ public:
 
     /**
      * Provides the tape that represents the loop model
-     * 
+     *
      * @return the tape of the loop model
      */
     inline ADFun<CGB>& getTape() const {
@@ -250,10 +265,10 @@ public:
     }
 
     /**
-     * Provides the number of dependent variables in the loop tape/model 
+     * Provides the number of dependent variables in the loop tape/model
      * (number of equation patterns).
-     * 
-     * @return the number of dependents in the loop model 
+     *
+     * @return the number of dependents in the loop model
      *         (number of equation patterns)
      */
     inline size_t getTapeDependentCount() const {
@@ -261,9 +276,9 @@ public:
     }
 
     /**
-     * Provides the number of independent variables in the loop tape/model 
+     * Provides the number of independent variables in the loop tape/model
      * (number of indexed + non-indexed + temporary variables).
-     * 
+     *
      * @return the number of independents in the loop model
      */
     inline size_t getTapeIndependentCount() const {
@@ -312,7 +327,7 @@ public:
 
     /**
      * Provides the locations where a dependent variable is used
-     * 
+     *
      * @param origI the dependent variable index in the original model
      * @return the locations where a dependent variable is used
      */
@@ -351,7 +366,7 @@ public:
     /**
      * Finds the local tape variable indexes which use a given model
      * variable at a given iteration
-     * 
+     *
      * @param origJ the index of the variable in the original model
      * @param iteration the iteration
      * @return the indexes of tape variables where the variable is used
@@ -370,7 +385,7 @@ public:
 
     /**
      * Finds the local tape variable indexes which use a given model variable
-     * 
+     *
      * @param origJ the index of the variable in the original model
      * @return all the indexed tape variables for each iteration where the
      *         variable is used
@@ -398,7 +413,7 @@ public:
             std::map<size_t, size_t> indexes;
             for (size_t it = 0; it < iterationCount_; it++) {
                 size_t orig = indexedIndepIndexes_[j][it].original;
-                if (orig != std::numeric_limits<size_t>::max()) // some variables are not present in all iteration
+                if (orig != (std::numeric_limits<size_t>::max)()) // some variables are not present in all iteration
                     indexes[it] = orig;
             }
             indepIndexPatterns_[j] = IndexPattern::detect(indexes);
@@ -409,7 +424,7 @@ public:
             std::map<size_t, size_t> indexes;
             for (size_t it = 0; it < iterationCount_; it++) {
                 size_t e = dependentIndexes_[j][it].original;
-                if (e != std::numeric_limits<size_t>::max()) // some equations are not present in all iteration
+                if (e != (std::numeric_limits<size_t>::max)()) // some equations are not present in all iteration
                     indexes[it] = e;
             }
 

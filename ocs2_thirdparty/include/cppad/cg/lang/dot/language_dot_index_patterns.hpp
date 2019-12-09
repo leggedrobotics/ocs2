@@ -242,7 +242,7 @@ inline void LanguageDot<Base>::linearIndexPattern2String(std::ostream& os,
             os << "/" << dx;
         }
         if (dy != 1) {
-            os << "x" << dy;
+            os << "×" << dy;
         }
     } else if (b == 0) {
         os << "0"; // when dy == 0 and b == 0

@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2012 Ciengis
+ *    Copyright (C) 2019 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -19,7 +20,7 @@ namespace CppAD {
 namespace cg {
 
 /**
- * Source code generation exception
+ * The exception used by CppADCodeGen
  * 
  * @author Joao Leal
  */
@@ -29,36 +30,39 @@ protected:
 
 public:
 
-    inline CGException(const std::string& message) throw () :
-        _message(message) {
+    inline explicit CGException(std::string message) noexcept :
+        _message(std::move(message)) {
     }
 
+    inline CGException(const CGException& e) = default;
+
+    inline CGException(CGException&& e) = default;
+
     template<typename... Ts>
-    explicit CGException(const Ts&... ts) throw () {
+    explicit CGException(const Ts&... ts) noexcept {
         std::ostringstream s;
         createMessage(s, ts...);
         _message = s.str();
     }
 
-    CGException() throw () = delete;
+    CGException() noexcept = delete;
 
-    const char* what() const throw () {
+    const char* what() const noexcept override {
         return _message.c_str();
     }
 
-    virtual ~CGException() throw () {
-    }
+    ~CGException() noexcept override = default;
 
 private:
 
     template <typename T, typename... Ts>
-    inline void createMessage(std::ostringstream& s, const T& t, const Ts&... ts) throw () {
+    inline void createMessage(std::ostringstream& s, const T& t, const Ts&... ts) noexcept {
         s << t;
         createMessage(s, ts...);
     }
 
     template <typename T>
-    inline void createMessage(std::ostringstream& s, const T& t) throw () {
+    inline void createMessage(std::ostringstream& s, const T& t) noexcept {
         s << t;
     }
 

@@ -1,47 +1,35 @@
-// $Id: base_require.hpp 3768 2015-12-28 18:58:35Z bradbell $
 # ifndef CPPAD_BASE_REQUIRE_HPP
 # define CPPAD_BASE_REQUIRE_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-15 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*
 $begin base_require$$
 $spell
-	azmul
-	ostream
-	alloc
-	eps
-	std
-	Lt
-	Le
-	Eq
-	Ge
-	Gt
-	cppad.hpp
-	namespace
-	optimizations
-	bool
-	const
-	CppAD
-	enum
-	Lt
-	Le
-	Eq
-	Ge
-	Gt
-	inline
-	Op
-	std
-	CondExp
+    azmul
+    ostream
+    alloc
+    eps
+    std
+    cppad.hpp
+    namespace
+    bool
+    const
+    CppAD
+    enum
+    inline
+    Op
+    std
+    CondExp
 $$
 
 $section AD<Base> Requirements for a CppAD Base Type$$
@@ -69,6 +57,10 @@ $code std::complex<double>$$,
 or $codei%AD<%Other%>%$$,
 these requirements are provided by including the file
 $code cppad/cppad.hpp$$.
+In the documentation, The notation $latex \B{R}$$ denotes
+the field corresponding to the base type.
+Multiplication must be commutative for this field,
+but it need not be the reals; e.g., the complex numbers.
 
 $head Include Order$$
 If you are linking a non-standard base type to CppAD,
@@ -83,7 +75,7 @@ $cref NumericType$$.
 $head Output Operator$$
 The type $icode Base$$ must support the syntax
 $codei%
-	%os% << %x%
+    %os% << %x%
 %$$
 where $icode os$$ is an $code std::ostream&$$
 and $icode x$$ is a $code const base_alloc&$$.
@@ -93,16 +85,16 @@ $cref/base_alloc/base_alloc.hpp/Output Operator/$$.
 $head Integer$$
 The type $icode Base$$ must support the syntax
 $codei%
-	%i% = CppAD::Integer(%x%)
+    %i% = CppAD::Integer(%x%)
 %$$
 which converts $icode x$$ to an $code int$$.
 The argument $icode x$$ has prototype
 $codei%
-	const %Base%& %x%
+    const %Base%& %x%
 %$$
 and the return value $icode i$$ has prototype
 $codei%
-	int %i%
+    int %i%
 %$$
 
 $subhead Suggestion$$
@@ -110,8 +102,8 @@ In many cases, the $icode Base$$ version of the $code Integer$$ function
 can be defined by
 $codei%
 namespace CppAD {
-	inline int Integer(const %Base%& x)
-	{	return static_cast<int>(x); }
+    inline int Integer(const %Base%& x)
+    {   return static_cast<int>(x); }
 }
 %$$
 For example, see
@@ -121,18 +113,18 @@ $cref/base_alloc/base_alloc.hpp/Integer/$$.
 $head Absolute Zero, azmul$$
 The type $icode Base$$ must support the syntax
 $codei%
-	%z% = azmul(%x%, %y%)
+    %z% = azmul(%x%, %y%)
 %$$
 see; $cref azmul$$.
 The following preprocessor macro invocation suffices
 (for most $icode Base$$ types):
 $codei%
 namespace CppAD {
-	CPPAD_AZMUL(%Base%)
+    CPPAD_AZMUL(%Base%)
 }
 %$$
 where the macro is defined by
-$codep */
+$srccode%cpp% */
 # define CPPAD_AZMUL(Base) \
     inline Base azmul(const Base& x, const Base& y) \
     {   Base zero(0.0);   \
@@ -140,17 +132,18 @@ $codep */
             return zero;  \
         return x * y;     \
     }
-/* $$
+/* %$$
 
 $childtable%
-	omh/base_require/base_member.omh%
-	cppad/local/base_cond_exp.hpp%
-	omh/base_require/base_identical.omh%
-	omh/base_require/base_ordered.omh%
-	cppad/local/base_std_math.hpp%
-	cppad/local/base_limits.hpp%
-	cppad/local/base_to_string.hpp%
-	omh/base_require/base_example.omh
+    omh/base_require/base_member.omh%
+    include/cppad/core/base_cond_exp.hpp%
+    omh/base_require/base_identical.omh%
+    omh/base_require/base_ordered.omh%
+    include/cppad/core/base_std_math.hpp%
+    include/cppad/core/base_limits.hpp%
+    include/cppad/core/base_to_string.hpp%
+    include/cppad/core/base_hash.hpp%
+    omh/base_require/base_example.omh
 %$$
 
 $end
@@ -159,25 +152,26 @@ $end
 // definitions that must come before base implementations
 # include <cppad/utility/error_handler.hpp>
 # include <cppad/local/define.hpp>
-# include <cppad/local/cppad_assert.hpp>
+# include <cppad/core/cppad_assert.hpp>
 # include <cppad/local/declare_ad.hpp>
 
 // grouping documentation by feature
-# include <cppad/local/base_cond_exp.hpp>
-# include <cppad/local/base_std_math.hpp>
-# include <cppad/local/base_limits.hpp>
-# include <cppad/local/base_to_string.hpp>
+# include <cppad/core/base_cond_exp.hpp>
+# include <cppad/core/base_std_math.hpp>
+# include <cppad/core/base_limits.hpp>
+# include <cppad/core/base_to_string.hpp>
+# include <cppad/core/base_hash.hpp>
 
 // must define template class numeric_limits before the base cases
-# include <cppad/local/numeric_limits.hpp>
-# include <cppad/local/epsilon.hpp> // deprecated
+# include <cppad/core/numeric_limits.hpp>
+# include <cppad/core/epsilon.hpp> // deprecated
 
 // base cases that come with CppAD
-# include <cppad/local/base_float.hpp>
-# include <cppad/local/base_double.hpp>
-# include <cppad/local/base_complex.hpp>
+# include <cppad/core/base_float.hpp>
+# include <cppad/core/base_double.hpp>
+# include <cppad/core/base_complex.hpp>
 
 // deprecated base type
-# include <cppad/local/zdouble.hpp>
+# include <cppad/core/zdouble.hpp>
 
 # endif

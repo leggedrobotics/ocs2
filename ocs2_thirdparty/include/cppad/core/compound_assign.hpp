@@ -1,28 +1,27 @@
 # ifndef CPPAD_CORE_COMPOUND_ASSIGN_HPP
 # define CPPAD_CORE_COMPOUND_ASSIGN_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*
 -------------------------------------------------------------------------------
 $begin compound_assign$$
 $spell
-	Op
-	VecAD
-	const
+    Op
+    VecAD
+    const
 $$
 
 $section AD Compound Assignment Operators$$
-$mindex + add plus - subtract minus * multiply times / divide multiple$$
 
 
 
@@ -53,13 +52,13 @@ The type $icode Base$$ is determined by the operand $icode x$$.
 $head x$$
 The operand $icode x$$ has the following prototype
 $codei%
-	AD<%Base%> &%x%
+    AD<%Base%> &%x%
 %$$
 
 $head y$$
 The operand $icode y$$ has the following prototype
 $codei%
-	const %Type% &%y%
+    const %Type% &%y%
 %$$
 where $icode Type$$ is
 $codei%VecAD<%Base%>::reference%$$,
@@ -72,28 +71,28 @@ The result of this assignment
 can be used as a reference to $icode x$$.
 For example, if $icode z$$ has the following type
 $codei%
-	AD<%Base%> %z%
+    AD<%Base%> %z%
 %$$
 then the syntax
 $codei%
-	%z% = %x% += %y%
+    %z% = %x% += %y%
 %$$
 will compute $icode x$$ plus $icode y$$
 and then assign this value to both $icode x$$ and $icode z$$.
 
 
 $head Operation Sequence$$
-This is an $cref/atomic/glossary/Operation/Atomic/$$
+This is an $cref/atomic_base/glossary/Operation/Atomic/$$
 $cref/AD of Base/glossary/AD of Base/$$ operation
 and hence it is part of the current
 AD of $icode Base$$
 $cref/operation sequence/glossary/Operation/Sequence/$$.
 
 $children%
-	example/add_eq.cpp%
-	example/sub_eq.cpp%
-	example/mul_eq.cpp%
-	example/div_eq.cpp
+    example/general/add_eq.cpp%
+    example/general/sub_eq.cpp%
+    example/general/mul_eq.cpp%
+    example/general/div_eq.cpp
 %$$
 
 $head Example$$
@@ -112,23 +111,23 @@ $cref/Base functions/glossary/Base Function/$$
 
 $subhead Addition$$
 $latex \[
-	\D{[ f(x) + g(x) ]}{x} = \D{f(x)}{x} + \D{g(x)}{x}
+    \D{[ f(x) + g(x) ]}{x} = \D{f(x)}{x} + \D{g(x)}{x}
 \] $$
 
 $subhead Subtraction$$
 $latex \[
-	\D{[ f(x) - g(x) ]}{x} = \D{f(x)}{x} - \D{g(x)}{x}
+    \D{[ f(x) - g(x) ]}{x} = \D{f(x)}{x} - \D{g(x)}{x}
 \] $$
 
 $subhead Multiplication$$
 $latex \[
-	\D{[ f(x) * g(x) ]}{x} = g(x) * \D{f(x)}{x} + f(x) * \D{g(x)}{x}
+    \D{[ f(x) * g(x) ]}{x} = g(x) * \D{f(x)}{x} + f(x) * \D{g(x)}{x}
 \] $$
 
 $subhead Division$$
 $latex \[
-	\D{[ f(x) / g(x) ]}{x} =
-		[1/g(x)] * \D{f(x)}{x} - [f(x)/g(x)^2] * \D{g(x)}{x}
+    \D{[ f(x) / g(x) ]}{x} =
+        [1/g(x)] * \D{f(x)}{x} - [f(x)/g(x)^2] * \D{g(x)}{x}
 \] $$
 
 $end

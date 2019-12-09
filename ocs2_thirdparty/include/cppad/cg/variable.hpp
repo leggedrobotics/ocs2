@@ -55,7 +55,7 @@ inline void CG<Base>::setValue(const Base& b) {
     if (value_ != nullptr) {
         *value_ = b;
     } else {
-        value_ = new Base(b);
+        value_.reset(new Base(b)); // to replace with value_ = std::make_unique once c++14 is used
     }
 }
 
@@ -78,16 +78,14 @@ inline void CG<Base>::makeParameter(const Base &b) {
 template<class Base>
 inline void CG<Base>::makeVariable(OperationNode<Base>& operation) {
     node_ = &operation;
-    delete value_;
-    value_ = nullptr;
+    value_.reset();
 }
 
 template<class Base>
 inline void CG<Base>::makeVariable(OperationNode<Base>& operation,
                                    std::unique_ptr<Base>& value) {
     node_ = &operation;
-    delete value_;
-    value_ = value.release();
+    value_ = std::move(value);
 }
 
 template<class Base>

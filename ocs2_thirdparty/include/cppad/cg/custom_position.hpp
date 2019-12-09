@@ -82,16 +82,16 @@ public:
     }
 
     inline void filter(CppAD::vector<std::set<size_t> >& sparsity) const {
-        ArrayWrapper<std::set<size_t> > s(sparsity);
+        ArrayView<std::set<size_t> > s(sparsity);
         filter(s);
     }
 
     inline void filter(std::vector<std::set<size_t> >& sparsity) const {
-        ArrayWrapper<std::set<size_t> > s(sparsity);
+        ArrayView<std::set<size_t> > s(sparsity);
         filter(s);
     }
 
-    inline void filter(ArrayWrapper<std::set<size_t> >& sparsity) const {
+    inline void filter(ArrayView<std::set<size_t> >& sparsity) const {
         if (!filterDefined_)
             return; // nothing to do
 

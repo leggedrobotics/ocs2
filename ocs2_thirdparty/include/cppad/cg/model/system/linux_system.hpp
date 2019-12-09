@@ -81,8 +81,13 @@ public:
 
 }
 
+#ifdef CPPAD_CG_SYSTEM_APPLE
+template<class T>
+const std::string SystemInfo<T>::DYNAMIC_LIB_EXTENSION = ".dylib";
+#else
 template<class T>
 const std::string SystemInfo<T>::DYNAMIC_LIB_EXTENSION = ".so";
+#endif
 
 template<class T>
 const std::string SystemInfo<T>::STATIC_LIB_EXTENSION = ".a";
@@ -261,7 +266,13 @@ inline void callExecutable(const std::string& executable,
 
         if (eCode < 0) {
             char buf[512];
+#ifndef CPPAD_CG_SYSTEM_APPLE
             std::string error = executable + ": " + strerror_r(errno, buf, 511); // thread safe
+#else
+            std::string error = executable + ": ";
+            strerror_r(errno, buf, 511); // thread safe
+            error += std::string(buf);
+#endif
             ssize_t size = error.size() + 1;
             if (write(pipeMsg.write.fd, error.c_str(), size) != size) {
                 std::cerr << "Failed to send message to parent process" << std::endl;
@@ -285,7 +296,12 @@ inline void callExecutable(const std::string& executable,
         int error = errno;
         errno = 0;
         char buf[512];
+#ifndef CPPAD_CG_SYSTEM_APPLE
         return std::string(strerror_r(error, buf, 512));
+#else
+        strerror_r(error, buf, 512);
+        return std::string(buf);
+#endif
     };
 
     std::string writeError;

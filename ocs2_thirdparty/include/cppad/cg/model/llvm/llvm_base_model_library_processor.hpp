@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2016 Ciengis
+ *    Copyright (C) 2018 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -20,7 +21,7 @@ namespace cg {
 
 /**
  * Base class for the creation of a model libraries using LLVM.
- * 
+ *
  * @author Joao Leal
  */
 template<class Base>
@@ -31,8 +32,7 @@ public:
             ModelLibraryProcessor<Base>(modelLibraryHelper) {
     }
 
-    inline virtual ~LlvmBaseModelLibraryProcessor() {
-    }
+    inline virtual ~LlvmBaseModelLibraryProcessor() = default;
 
 protected:
 

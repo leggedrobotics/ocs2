@@ -119,7 +119,8 @@ void ModelCSourceGen<Base>::generateSparseReverseOneSourcesWithAtomics(const std
         finishedJob();
 
         LanguageC<Base> langC(_baseTypeName);
-        langC.setMaxAssigmentsPerFunction(_maxAssignPerFunc, &_sources);
+        langC.setMaxAssignmentsPerFunction(_maxAssignPerFunc, &_sources);
+        langC.setMaxOperationsPerAssignment(_maxOperationsPerAssignment);
         langC.setParameterPrecision(_parameterPrecision);
         _cache.str("");
         _cache << _name << "_" << FUNCTION_SPARSE_REVERSE_ONE << "_dep" << i;
@@ -206,7 +207,8 @@ void ModelCSourceGen<Base>::generateSparseReverseOneSourcesNoAtomics(const std::
         const std::string subJobName = _cache.str();
 
         LanguageC<Base> langC(_baseTypeName);
-        langC.setMaxAssigmentsPerFunction(_maxAssignPerFunc, &_sources);
+        langC.setMaxAssignmentsPerFunction(_maxAssignPerFunc, &_sources);
+        langC.setMaxOperationsPerAssignment(_maxOperationsPerAssignment);
         langC.setParameterPrecision(_parameterPrecision);
         _cache.str("");
         _cache << _name << "_" << FUNCTION_SPARSE_REVERSE_ONE << "_dep" << i;
@@ -237,34 +239,44 @@ void ModelCSourceGen<Base>::generateReverseOneSources() {
     _cache << "#include <stdlib.h>\n"
             << LanguageC<Base>::ATOMICFUN_STRUCT_DEFINITION << "\n"
             "\n"
-            "void " << _name << "_" << FUNCTION_SPARSE_REVERSE_ONE << "(unsigned long pos, " << argsDcl << ");\n"
+            "int " << _name << "_" << FUNCTION_SPARSE_REVERSE_ONE << "(unsigned long pos, " << argsDcl << ");\n"
             "void " << _name << "_" << FUNCTION_REVERSE_ONE_SPARSITY << "(unsigned long pos, unsigned long const** elements, unsigned long* nnz);\n"
-            "\n"
-            "int " << model_function << "("
-            << _baseTypeName << " const x[], "
-            << _baseTypeName << " const ty[],"
-            << _baseTypeName << "  px[], "
-            << _baseTypeName << " const py[], "
-            << langC.generateArgumentAtomicDcl() << ") {\n"
+            "\n";
+    LanguageC<Base>::printFunctionDeclaration(_cache, "int", model_function, {_baseTypeName + " const x[]",
+                                                                              _baseTypeName + " const ty[]",
+                                                                              _baseTypeName + " px[]",
+                                                                              _baseTypeName + " const py[]",
+                                                                              langC.generateArgumentAtomicDcl()});
+    _cache << " {\n"
             "   unsigned long ei, ePos, i, j, nnz, nnzMax;\n"
             "   unsigned long const* pos;\n"
             "   unsigned long* pyPos;\n"
+            "   unsigned long* pyPosTmp;\n"
             "   unsigned long nnzPy;\n"
             "   " << _baseTypeName << " const * in[2];\n"
             "   " << _baseTypeName << "* out[1];\n"
             "   " << _baseTypeName << "* compressed;\n"
+            "   int ret;\n"
             "\n"
             "   pyPos = 0;\n"
             "   nnzPy = 0;\n"
             "   nnzMax = 0;\n"
             "   for (i = 0; i < " << m << "; i++) {\n"
             "      if (py[i] != 0.0) {\n"
-            "         nnzPy++;\n"
-            "         pyPos = (unsigned long*) realloc(pyPos, nnzPy * sizeof(unsigned long));\n"
-            "         pyPos[nnzPy - 1] = i;\n"
             "         " << _name << "_" << FUNCTION_REVERSE_ONE_SPARSITY << "(i, &pos, &nnz);\n"
-            "         if(nnz > nnzMax)\n"
+            "         if (nnz > nnzMax)\n"
             "            nnzMax = nnz;\n"
+            "         else if (nnz == 0)\n"
+            "            continue;\n"
+            "         nnzPy++;\n"
+            "         pyPosTmp = (unsigned long*) realloc(pyPos, nnzPy * sizeof(unsigned long));\n"
+            "         if (pyPosTmp != NULL) {\n"
+            "            pyPos = pyPosTmp;\n"
+            "         } else {\n"
+            "            free(pyPos);\n"
+            "            return -1; // failure to allocate memory\n"
+            "         }\n"
+            "         pyPos[nnzPy - 1] = i;\n"
             "      }\n"
             "   }\n"
             "   for (j = 0; j < " << n << "; j++) {\n"
@@ -290,7 +302,13 @@ void ModelCSourceGen<Base>::generateReverseOneSources() {
                 "         compressed[ePos] = 0;\n"
                 "\n";
     }
-    _cache << "      " << _name << "_" << FUNCTION_SPARSE_REVERSE_ONE << "(i, " << args << ");\n"
+    _cache << "      ret = " << _name << "_" << FUNCTION_SPARSE_REVERSE_ONE << "(i, " << args << ");\n"
+            "\n"
+            "      if (ret != 0) {\n"
+            "         free(compressed);\n"
+            "         free(pyPos);\n"
+            "         return ret;\n"
+            "      }\n"
             "\n"
             "      for (ePos = 0; ePos < nnz; ePos++) {\n"
             "         px[pos[ePos]] += compressed[ePos];\n"

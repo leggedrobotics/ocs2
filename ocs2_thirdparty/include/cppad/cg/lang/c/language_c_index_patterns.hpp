@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2013 Ciengis
+ *    Copyright (C) 2019 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -60,21 +61,21 @@ inline void LanguageC<Base>::printRandomIndexPatternDeclaration(std::ostringstre
             /**
              * 1D
              */
-            Random1DIndexPattern* ip1 = static_cast<Random1DIndexPattern*> (ip);
+            auto* ip1 = static_cast<Random1DIndexPattern*> (ip);
             const std::map<size_t, size_t>& x2y = ip1->getValues();
 
             std::vector<size_t> y(x2y.rbegin()->first + 1);
-            for (const std::pair<size_t, size_t>& p : x2y)
+            for (const auto& p : x2y)
                 y[p.first] = p.second;
 
             os << indentation;
             printStaticIndexArray(os, ip->getName(), y);
         } else {
-            CPPADCG_ASSERT_UNKNOWN(ip->getType() == IndexPatternType::Random2D);
+            CPPADCG_ASSERT_UNKNOWN(ip->getType() == IndexPatternType::Random2D)
             /**
              * 2D
              */
-            Random2DIndexPattern* ip2 = static_cast<Random2DIndexPattern*> (ip);
+            auto* ip2 = static_cast<Random2DIndexPattern*> (ip);
             os << indentation;
             printStaticIndexMatrix(os, ip->getName(), ip2->getValues());
         }
@@ -138,7 +139,7 @@ void LanguageC<Base>::printStaticIndexMatrix(std::ostringstream& os,
 
         for (it = values.begin(); it != values.end(); ++it) {
             if (!it->second.empty())
-                n = std::max(n, it->second.rbegin()->first + 1);
+                n = std::max<size_t>(n, it->second.rbegin()->first + 1);
         }
     }
 
@@ -205,19 +206,19 @@ inline std::string LanguageC<Base>::indexPattern2String(const IndexPattern& ip,
     switch (ip.getType()) {
         case IndexPatternType::Linear: // y = x * a + b
         {
-            CPPADCG_ASSERT_KNOWN(indexes.size() == 1, "Invalid number of indexes");
-            const LinearIndexPattern& lip = static_cast<const LinearIndexPattern&> (ip);
+            CPPADCG_ASSERT_KNOWN(indexes.size() == 1, "Invalid number of indexes")
+            const auto& lip = static_cast<const LinearIndexPattern&> (ip);
             return linearIndexPattern2String(lip, *indexes[0]);
         }
         case IndexPatternType::Sectioned:
         {
-            CPPADCG_ASSERT_KNOWN(indexes.size() == 1, "Invalid number of indexes");
-            const SectionedIndexPattern* lip = static_cast<const SectionedIndexPattern*> (&ip);
+            CPPADCG_ASSERT_KNOWN(indexes.size() == 1, "Invalid number of indexes")
+            const auto* lip = static_cast<const SectionedIndexPattern*> (&ip);
             const std::map<size_t, IndexPattern*>& sections = lip->getLinearSections();
             size_t sSize = sections.size();
-            CPPADCG_ASSERT_UNKNOWN(sSize > 1);
+            CPPADCG_ASSERT_UNKNOWN(sSize > 1)
 
-            std::map<size_t, IndexPattern*>::const_iterator its = sections.begin();
+            auto its = sections.begin();
             for (size_t s = 0; s < sSize - 1; s++) {
                 const IndexPattern* lp = its->second;
                 ++its;
@@ -233,9 +234,9 @@ inline std::string LanguageC<Base>::indexPattern2String(const IndexPattern& ip,
 
         case IndexPatternType::Plane2D: // y = f(x) + f(z)
         {
-            CPPADCG_ASSERT_KNOWN(indexes.size() >= 1, "Invalid number of indexes");
+            CPPADCG_ASSERT_KNOWN(!indexes.empty(), "Invalid number of indexes")
             std::string indexExpr;
-            const Plane2DIndexPattern& pip = static_cast<const Plane2DIndexPattern&> (ip);
+            const auto& pip = static_cast<const Plane2DIndexPattern&> (ip);
             bool useParens = pip.getPattern1() != nullptr && pip.getPattern2() != nullptr;
 
             if (useParens) indexExpr += "(";
@@ -254,16 +255,16 @@ inline std::string LanguageC<Base>::indexPattern2String(const IndexPattern& ip,
         }
         case IndexPatternType::Random1D:
         {
-            CPPADCG_ASSERT_KNOWN(indexes.size() == 1, "Invalid number of indexes");
-            const Random1DIndexPattern& rip = static_cast<const Random1DIndexPattern&> (ip);
-            CPPADCG_ASSERT_KNOWN(!rip.getName().empty(), "Invalid name for array");
+            CPPADCG_ASSERT_KNOWN(indexes.size() == 1, "Invalid number of indexes")
+            const auto& rip = static_cast<const Random1DIndexPattern&> (ip);
+            CPPADCG_ASSERT_KNOWN(!rip.getName().empty(), "Invalid name for array")
             return rip.getName() + "[" + (*indexes[0]) + "]";
         }
         case IndexPatternType::Random2D:
         {
-            CPPADCG_ASSERT_KNOWN(indexes.size() == 2, "Invalid number of indexes");
-            const Random2DIndexPattern& rip = static_cast<const Random2DIndexPattern&> (ip);
-            CPPADCG_ASSERT_KNOWN(!rip.getName().empty(), "Invalid name for array");
+            CPPADCG_ASSERT_KNOWN(indexes.size() == 2, "Invalid number of indexes")
+            const auto& rip = static_cast<const Random2DIndexPattern&> (ip);
+            CPPADCG_ASSERT_KNOWN(!rip.getName().empty(), "Invalid name for array")
             return rip.getName() + "[" + (*indexes[0]) + "][" + (*indexes[1]) + "]";
         }
         default:
@@ -320,23 +321,23 @@ bool LanguageC<Base>::isOffsetBy(const IndexPattern* ip,
                                  long offset) {
 
     if (ip->getType() == IndexPatternType::Linear) {
-        const LinearIndexPattern* lIp = dynamic_cast<const LinearIndexPattern*> (ip);
+        const auto* lIp = dynamic_cast<const LinearIndexPattern*> (ip);
         assert(lIp != nullptr);
 
-        if (refIp->getType() == IndexPatternType::Linear)
+        if (refIp->getType() != IndexPatternType::Linear)
             return false;
-        const LinearIndexPattern* refLIp = dynamic_cast<const LinearIndexPattern*> (refIp);
+        const auto* refLIp = dynamic_cast<const LinearIndexPattern*> (refIp);
         assert(refLIp != nullptr);
 
         return isOffsetBy(*lIp, *refLIp, offset);
 
     } else if (ip->getType() == IndexPatternType::Sectioned) {
-        const SectionedIndexPattern* sIp = dynamic_cast<const SectionedIndexPattern*> (ip);
+        const auto* sIp = dynamic_cast<const SectionedIndexPattern*> (ip);
         assert(sIp != nullptr);
 
         if (refIp->getType() != IndexPatternType::Sectioned)
             return false;
-        const SectionedIndexPattern* refSecp = dynamic_cast<const SectionedIndexPattern*> (refIp);
+        const auto* refSecp = dynamic_cast<const SectionedIndexPattern*> (refIp);
         assert(refSecp != nullptr);
 
         return isOffsetBy(*sIp, *refSecp, offset);
@@ -395,8 +396,8 @@ bool LanguageC<Base>::isOffsetBy(const SectionedIndexPattern& sIp,
             return false; // unable to handle this now, consider different patterns
         }
 
-        LinearIndexPattern* refSecLIp = static_cast<LinearIndexPattern*> (itRef->second);
-        LinearIndexPattern* secLIp = static_cast<LinearIndexPattern*> (section.second);
+        auto* refSecLIp = static_cast<LinearIndexPattern*> (itRef->second);
+        auto* secLIp = static_cast<LinearIndexPattern*> (section.second);
 
         if (!isOffsetBy(secLIp, refSecLIp, offset)) {
             return false; // different pattern type
@@ -413,7 +414,7 @@ Plane2DIndexPattern* LanguageC<Base>::encapsulateIndexPattern(const LinearIndexP
                                                               size_t starti) {
     std::unique_ptr<IndexPattern> ip2;
 
-    LinearIndexPattern* lip2 = new LinearIndexPattern(refLIp);
+    auto* lip2 = new LinearIndexPattern(refLIp);
     ip2.reset(lip2);
     lip2->setLinearConstantTerm(lip2->getLinearConstantTerm() - starti);
 
@@ -427,7 +428,7 @@ Plane2DIndexPattern* LanguageC<Base>::encapsulateIndexPattern(const SectionedInd
 
     std::map<size_t, IndexPattern*> sections;
     for (const auto& section : refSecp.getLinearSections()) {
-        LinearIndexPattern* lip2 = new LinearIndexPattern(*static_cast<LinearIndexPattern*> (section.second));
+        auto* lip2 = new LinearIndexPattern(*static_cast<LinearIndexPattern*> (section.second));
         lip2->setLinearConstantTerm(lip2->getLinearConstantTerm() - starti);
         sections[section.first] = lip2;
     }

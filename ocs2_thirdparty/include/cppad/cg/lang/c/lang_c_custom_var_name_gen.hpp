@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2012 Ciengis
+ *    Copyright (C) 2018 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -21,7 +22,7 @@ namespace cg {
 /**
  * Creates variables names for the source code using a list of provided
  * custom names.
- * 
+ *
  * @author Joao Leal
  */
 template<class Base>
@@ -32,18 +33,20 @@ protected:
     const std::vector<std::string> indepNames_;
 public:
 
-    LangCCustomVariableNameGenerator(const std::vector<std::string>& depNames,
-                                     const std::vector<std::string>& indepNames,
+    LangCCustomVariableNameGenerator(std::vector<std::string> depNames,
+                                     std::vector<std::string> indepNames,
                                      const std::string& depName = "y",
                                      const std::string& indepName = "x",
                                      const std::string& tmpName = "v",
                                      const std::string& tmpArrayName = "array") :
         LangCDefaultVariableNameGenerator<Base>(depName, indepName, tmpName, tmpArrayName),
-        depNames_(depNames),
-        indepNames_(indepNames) {
+        depNames_(std::move(depNames)),
+        indepNames_(std::move(indepNames)) {
     }
 
-    virtual std::string generateDependent(size_t index) override {
+    inline virtual ~LangCCustomVariableNameGenerator() = default;
+
+    std::string generateDependent(size_t index) override {
         if (index < depNames_.size() && !depNames_[index].empty()) {
             return depNames_[index];
         } else {
@@ -51,8 +54,8 @@ public:
         }
     }
 
-    virtual std::string generateIndependent(const OperationNode<Base>& independent,
-                                           size_t id) override {
+    std::string generateIndependent(const OperationNode<Base>& independent,
+                                    size_t id) override {
         size_t index = id - 1;
         if (index < indepNames_.size() && !indepNames_[index].empty()) {
             return indepNames_[index];
@@ -61,10 +64,10 @@ public:
         }
     }
 
-    virtual bool isConsecutiveInIndepArray(const OperationNode<Base>& indepFirst,
-                                           size_t idFirst,
-                                           const OperationNode<Base>& indepSecond,
-                                           size_t idSecond) override {
+    bool isConsecutiveInIndepArray(const OperationNode<Base>& indepFirst,
+                                   size_t idFirst,
+                                   const OperationNode<Base>& indepSecond,
+                                   size_t idSecond) override {
         size_t index1 = idFirst - 1;
         size_t index2 = idSecond - 1;
 
@@ -76,18 +79,15 @@ public:
         }
     }
 
-    virtual bool isInSameIndependentArray(const OperationNode<Base>& indep1,
-                                          size_t id1,
-                                          const OperationNode<Base>& indep2,
-                                          size_t id2) override {
+    bool isInSameIndependentArray(const OperationNode<Base>& indep1,
+                                  size_t id1,
+                                  const OperationNode<Base>& indep2,
+                                  size_t id2) override {
         size_t index1 = id1 - 1;
         size_t index2 = id2 - 1;
 
         return (index1 > indepNames_.size() || indepNames_[index1].empty()) &&
                 (index2 > indepNames_.size() || indepNames_[index2].empty());
-    }
-
-    inline virtual ~LangCCustomVariableNameGenerator() {
     }
 
 };

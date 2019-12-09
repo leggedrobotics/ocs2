@@ -1,28 +1,27 @@
-// $Id$
 # ifndef CPPAD_CORE_INTEGER_HPP
 # define CPPAD_CORE_INTEGER_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*
 ------------------------------------------------------------------------------
 $begin Integer$$
 $spell
-	std
-	VecAD
-	CppAD
-	namespace
-	const
-	bool
+    std
+    VecAD
+    CppAD
+    namespace
+    const
+    bool
 $$
 
 
@@ -39,7 +38,7 @@ Converts from an AD type to the corresponding integer value.
 $head i$$
 The result $icode i$$ has prototype
 $codei%
-	int %i%
+    int %i%
 %$$
 
 $head x$$
@@ -47,8 +46,8 @@ $head x$$
 $subhead Real Types$$
 If the argument $icode x$$ has either of the following prototypes:
 $codei%
-	const float                %%  &%x%
-	const double               %%  &%x%
+    const float                %%  &%x%
+    const double               %%  &%x%
 %$$
 the fractional part is dropped to form the integer value.
 For example, if $icode x$$ is 1.5, $icode i$$ is 1.
@@ -60,19 +59,19 @@ smallest integer greater than or equal $icode x$$.
 $subhead Complex Types$$
 If the argument $icode x$$ has either of the following prototypes:
 $codei%
-	const std::complex<float>  %%  &%x%
-	const std::complex<double> %%  &%x%
+    const std::complex<float>  %%  &%x%
+    const std::complex<double> %%  &%x%
 %$$
 The result $icode i$$ is given by
 $codei%
-	%i% = Integer(%x%.real())
+    %i% = Integer(%x%.real())
 %$$
 
 $subhead AD Types$$
 If the argument $icode x$$ has either of the following prototypes:
 $codei%
-	const AD<%Base%>               &%x%
-	const VecAD<%Base%>::reference &%x%
+    const AD<%Base%>               &%x%
+    const VecAD<%Base%>::reference &%x%
 %$$
 $icode Base$$ must support the $code Integer$$ function and
 the conversion has the same meaning as for $icode Base$$.
@@ -86,7 +85,7 @@ $cref/operation sequence/glossary/Operation/Sequence/$$.
 
 $head Example$$
 $children%
-	example/integer.cpp
+    example/general/integer.cpp
 %$$
 The file
 $cref integer.cpp$$
@@ -99,15 +98,14 @@ $end
 
 namespace CppAD {
 
-	template <class Base>
-	CPPAD_INLINE_FRIEND_TEMPLATE_FUNCTION
-	int Integer(const AD<Base> &x)
-	{	return Integer(x.value_); }
+    template <class Base>
+    CPPAD_INLINE_FRIEND_TEMPLATE_FUNCTION
+    int Integer(const AD<Base> &x)
+    {   return Integer(x.value_); }
 
-	template <class Base>
-	CPPAD_INLINE_FRIEND_TEMPLATE_FUNCTION
-	int Integer(const VecAD_reference<Base> &x)
-	{	return Integer( x.ADBase() ); }
+    template <class Base>
+    CPPAD_INLINE_FRIEND_TEMPLATE_FUNCTION
+    int Integer(const VecAD_reference<Base> &x)
+    {   return Integer( x.ADBase() ); }
 }
 # endif
-

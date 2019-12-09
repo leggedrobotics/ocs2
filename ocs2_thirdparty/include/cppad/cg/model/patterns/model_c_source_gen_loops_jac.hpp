@@ -142,8 +142,8 @@ void ModelCSourceGen<Base>::analyseSparseJacobianWithLoops(const std::vector<siz
 
                     //this indexed variable must be request for all iterations 
                     std::vector<size_t>& positions = rowInfo.indexedPositions[tapeJ];
-                    positions.resize(iterations, std::numeric_limits<size_t>::max());
-                    if (positions[iteration] != std::numeric_limits<size_t>::max()) {
+                    positions.resize(iterations, (std::numeric_limits<size_t>::max)());
+                    if (positions[iteration] != (std::numeric_limits<size_t>::max)()) {
                         throw CGException("Repeated Jacobian elements requested (equation ", i, ", variable ", j, ")");
                     }
                     positions[iteration] = e;
@@ -160,8 +160,8 @@ void ModelCSourceGen<Base>::analyseSparseJacobianWithLoops(const std::vector<siz
 
                 //this non-indexed element must be request for all iterations 
                 std::vector<size_t>& positions = rowInfo.nonIndexedPositions[j];
-                positions.resize(iterations, std::numeric_limits<size_t>::max());
-                if (positions[iteration] != std::numeric_limits<size_t>::max()) {
+                positions.resize(iterations, (std::numeric_limits<size_t>::max)());
+                if (positions[iteration] != (std::numeric_limits<size_t>::max)()) {
                     throw CGException("Repeated Jacobian elements requested (equation ", i, ", variable ", j, ")");
                 }
                 positions[iteration] = e;
@@ -191,8 +191,8 @@ void ModelCSourceGen<Base>::analyseSparseJacobianWithLoops(const std::vector<siz
                         noLoopEvalSparsity[nonIndexdedEqSize + k].insert(j); // element required
                         if (!jInNonIndexed) {
                             std::vector<size_t>& positions = rowInfo.nonIndexedPositions[j];
-                            positions.resize(iterations, std::numeric_limits<size_t>::max());
-                            if (positions[iteration] != std::numeric_limits<size_t>::max()) {
+                            positions.resize(iterations, (std::numeric_limits<size_t>::max)());
+                            if (positions[iteration] != (std::numeric_limits<size_t>::max)()) {
                                 throw CGException("Repeated Jacobian elements requested (equation ", i, ", variable ", j, ")");
                             }
                             positions[iteration] = e;
@@ -486,7 +486,7 @@ std::pair<CG<Base>, IndexPattern*> createJacobianElement(CodeHandler<Base>& hand
 
     map<size_t, size_t> locations;
     for (size_t iter = 0; iter < nIter; iter++) {
-        if (positions[iter] != std::numeric_limits<size_t>::max()) {
+        if (positions[iter] != (std::numeric_limits<size_t>::max)()) {
             locations[iter] = positions[iter];
             allLocations.insert(positions[iter]);
         }

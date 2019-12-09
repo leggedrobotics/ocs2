@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2015 Ciengis
+ *    Copyright (C) 2019 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -60,11 +61,11 @@ inline void LanguageMathML<Base>::printRandomIndexPatternDeclaration(std::ostrin
             /**
              * 1D
              */
-            Random1DIndexPattern* ip1 = static_cast<Random1DIndexPattern*> (ip);
+            auto* ip1 = static_cast<Random1DIndexPattern*> (ip);
             const std::map<size_t, size_t>& x2y = ip1->getValues();
 
             std::vector<size_t> y(x2y.rbegin()->first + 1);
-            for (const std::pair<size_t, size_t>& p : x2y)
+            for (const auto& p : x2y)
                 y[p.first] = p.second;
 
             os << indentation;
@@ -74,7 +75,7 @@ inline void LanguageMathML<Base>::printRandomIndexPatternDeclaration(std::ostrin
             /**
              * 2D
              */
-            Random2DIndexPattern* ip2 = static_cast<Random2DIndexPattern*> (ip);
+            auto* ip2 = static_cast<Random2DIndexPattern*> (ip);
             os << indentation;
             printStaticIndexMatrix(os, ip->getName(), ip2->getValues());
         }
@@ -110,7 +111,7 @@ void LanguageMathML<Base>::printStaticIndexMatrix(std::ostringstream& os,
 
         for (it = values.begin(); it != values.end(); ++it) {
             if (!it->second.empty())
-                n = std::max(n, it->second.rbegin()->first + 1);
+                n = std::max<size_t>(n, it->second.rbegin()->first + 1);
         }
     }
 
@@ -161,26 +162,26 @@ inline void LanguageMathML<Base>::indexPattern2String(std::ostream& os,
     switch (ip.getType()) {
         case IndexPatternType::Linear: // y = x * a + b
         {
-            CPPADCG_ASSERT_KNOWN(indexes.size() == 1, "Invalid number of indexes");
-            const LinearIndexPattern& lip = static_cast<const LinearIndexPattern&> (ip);
+            CPPADCG_ASSERT_KNOWN(indexes.size() == 1, "Invalid number of indexes")
+            const auto& lip = static_cast<const LinearIndexPattern&> (ip);
             linearIndexPattern2String(os, lip, *indexes[0]);
             return;
         }
         case IndexPatternType::Sectioned:
         {
-            CPPADCG_ASSERT_KNOWN(indexes.size() == 1, "Invalid number of indexes");
-            const SectionedIndexPattern* lip = static_cast<const SectionedIndexPattern*> (&ip);
+            CPPADCG_ASSERT_KNOWN(indexes.size() == 1, "Invalid number of indexes")
+            const auto* lip = static_cast<const SectionedIndexPattern*> (&ip);
             const std::map<size_t, IndexPattern*>& sections = lip->getLinearSections();
             size_t sSize = sections.size();
             CPPADCG_ASSERT_UNKNOWN(sSize > 1);
 
-            std::map<size_t, IndexPattern*>::const_iterator its = sections.begin();
+            auto its = sections.begin();
             for (size_t s = 0; s < sSize - 1; s++) {
                 const IndexPattern* lp = its->second;
                 ++its;
                 size_t xStart = its->first;
 
-                os << "<mfenced><mrow><mi>" << (*indexes[0]->getName()) << "</mi> <mo>&lt;</mo> <mn>" << xStart << "</mn></mrow></mfenced><mo>?</mo> ";
+                os << "<mfenced><mrow><mi class='index'>" << (*indexes[0]->getName()) << "</mi> <mo>&lt;</mo> <mn>" << xStart << "</mn></mrow></mfenced><mo>?</mo> ";
                 indexPattern2String(os, *lp, *indexes[0]);
                 os << "<mo>:</mo> ";
             }
@@ -191,8 +192,8 @@ inline void LanguageMathML<Base>::indexPattern2String(std::ostream& os,
 
         case IndexPatternType::Plane2D: // y = f(x) + f(z)
         {
-            CPPADCG_ASSERT_KNOWN(indexes.size() >= 1, "Invalid number of indexes");
-            const Plane2DIndexPattern& pip = static_cast<const Plane2DIndexPattern&> (ip);
+            CPPADCG_ASSERT_KNOWN(indexes.size() >= 1, "Invalid number of indexes")
+            const auto& pip = static_cast<const Plane2DIndexPattern&> (ip);
             bool useParens = pip.getPattern1() != nullptr && pip.getPattern2() != nullptr;
 
             if (useParens) os << "<mfenced><mrow>";
@@ -211,17 +212,17 @@ inline void LanguageMathML<Base>::indexPattern2String(std::ostream& os,
         }
         case IndexPatternType::Random1D:
         {
-            CPPADCG_ASSERT_KNOWN(indexes.size() == 1, "Invalid number of indexes");
-            const Random1DIndexPattern& rip = static_cast<const Random1DIndexPattern&> (ip);
-            CPPADCG_ASSERT_KNOWN(!rip.getName().empty(), "Invalid name for array");
+            CPPADCG_ASSERT_KNOWN(indexes.size() == 1, "Invalid number of indexes")
+            const auto& rip = static_cast<const Random1DIndexPattern&> (ip);
+            CPPADCG_ASSERT_KNOWN(!rip.getName().empty(), "Invalid name for array")
             os << rip.getName() << "<mfenced open='[' close=']'><mi>" << (*indexes[0]->getName()) << "</mi></mfenced>";
             return;
         }
         case IndexPatternType::Random2D:
         {
-            CPPADCG_ASSERT_KNOWN(indexes.size() == 2, "Invalid number of indexes");
-            const Random2DIndexPattern& rip = static_cast<const Random2DIndexPattern&> (ip);
-            CPPADCG_ASSERT_KNOWN(!rip.getName().empty(), "Invalid name for array");
+            CPPADCG_ASSERT_KNOWN(indexes.size() == 2, "Invalid number of indexes")
+            const auto& rip = static_cast<const Random2DIndexPattern&> (ip);
+            CPPADCG_ASSERT_KNOWN(!rip.getName().empty(), "Invalid name for array")
             os << rip.getName() <<
                     "<mfenced open='[' close=']'><mrow><mi>" << (*indexes[0]->getName()) << "</mi></mrow></mfenced>"
                     "<mfenced open='[' close=']'><mrow><mi>" << (*indexes[1]->getName()) << "</mi></mrow></mfenced>";
@@ -246,7 +247,7 @@ inline void LanguageMathML<Base>::linearIndexPattern2String(std::ostream& os,
         if (xOffset != 0) {
             os << "<mfenced><mrow>";
         }
-        os << "<mi>" << (*index.getName()) << "</mi>";
+        os << "<mi class='index'>" << (*index.getName()) << "</mi>";
         if (xOffset != 0) {
             os << " <mo>-</mo><mn>" << xOffset << "</mn></mrow></mfenced>";
         }
@@ -255,7 +256,7 @@ inline void LanguageMathML<Base>::linearIndexPattern2String(std::ostream& os,
             os << "<mo>/</mo><mn>" << dx << "</mn>";
         }
         if (dy != 1) {
-            os << "<mo>\\times</mo><mn>" << dy << "</mn>";
+            os << "<mo>&sdot;</mo><mn>" << dy << "</mn>"; // TODO: use _multOpStr
         }
     } else if (b == 0) {
         os << "<mn>0</mn>"; // when dy == 0 and b == 0

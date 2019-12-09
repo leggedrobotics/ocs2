@@ -26,7 +26,9 @@ public:
 
     inline GenericModelExternalFunctionWrapper(GenericModel<Base>& model) :
         model_(&model) {
+    }
 
+    inline virtual ~GenericModelExternalFunctionWrapper() {
     }
 
     virtual bool forward(FunctorGenericModel<Base>& libModel,
@@ -35,22 +37,23 @@ public:
                          const Array tx[],
                          Array& ty) {
         CPPADCG_ASSERT_KNOWN(!tx[0].sparse, "independent array must be dense");
-        const Base* x = static_cast<const Base*> (tx[0].data);
+        ArrayView<const Base> x(static_cast<const Base*> (tx[0].data), tx[0].size);
 
         CPPADCG_ASSERT_KNOWN(!ty.sparse, "dependent array must be dense");
-        Base* y = static_cast<Base*> (ty.data);
+        ArrayView<Base> y(static_cast<Base*> (ty.data), ty.size);
+
 
         if (p == 0) {
-            model_->ForwardZero(x, tx[0].size, y, ty.size);
+            model_->ForwardZero(x, y);
             return true;
 
         } else if (p == 1) {
             CPPADCG_ASSERT_KNOWN(tx[1].sparse, "independent Taylor array must be sparse");
             Base* tx1 = static_cast<Base*> (tx[1].data);
 
-            model_->ForwardOne(x, tx[0].size,
+            model_->ForwardOne(x,
                                tx[1].nnz, tx[1].idx, tx1,
-                               y, ty.size);
+                               y);
             return true;
         }
 
@@ -63,17 +66,17 @@ public:
                          Array& px,
                          const Array py[]) {
         CPPADCG_ASSERT_KNOWN(!tx[0].sparse, "independent array must be dense");
-        const Base* x = static_cast<const Base*> (tx[0].data);
+        ArrayView<const Base> x(static_cast<const Base*> (tx[0].data), tx[0].size);
 
         CPPADCG_ASSERT_KNOWN(!px.sparse, "independent partials array must be dense");
-        Base* pxb = static_cast<Base*> (px.data);
+        ArrayView<Base> pxb(static_cast<Base*> (px.data), px.size);
 
         if (p == 0) {
             CPPADCG_ASSERT_KNOWN(py[0].sparse, "dependent partials array must be sparse");
             Base* pyb = static_cast<Base*> (py[0].data);
 
-            model_->ReverseOne(x, tx[0].size,
-                               pxb, px.size,
+            model_->ReverseOne(x,
+                               pxb,
                                py[0].nnz, py[0].idx, pyb);
             return true;
 
@@ -83,20 +86,18 @@ public:
             CPPADCG_ASSERT_KNOWN(py[0].sparse, "dependent partials array must be sparse");
             CPPADCG_ASSERT_KNOWN(py[0].nnz == 0, "first order dependent partials must be zero");
             CPPADCG_ASSERT_KNOWN(!py[1].sparse, "independent partials array must be dense");
-            Base* py2 = static_cast<Base*> (py[1].data);
+            ArrayView<const Base> py2(static_cast<Base*> (py[1].data), py[1].size);
 
-            model_->ReverseTwo(x, tx[0].size,
+            model_->ReverseTwo(x,
                                tx[1].nnz, tx[1].idx, tx1,
-                               pxb, px.size,
-                               py2, py[1].size);
+                               pxb,
+                               py2);
             return true;
         }
 
         return false;
     }
 
-    inline virtual ~GenericModelExternalFunctionWrapper() {
-    }
 };
 
 } // END cg namespace

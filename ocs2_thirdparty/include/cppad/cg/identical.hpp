@@ -26,6 +26,14 @@ inline bool IdenticalPar(const CppAD::cg::CG<Base>& x) {
 }
 
 template<class Base>
+inline bool IdenticalCon(const CppAD::cg::CG<Base>& x) {
+    if (!x.isParameter()) {
+        return false; // its value may change after tapping
+    }
+    return CppAD::IdenticalCon(x.getValue());
+}
+
+template<class Base>
 inline bool IdenticalZero(const CppAD::cg::CG<Base>& x) {
     if (!x.isParameter()) {
         return false; // its value may change after tapping
@@ -45,6 +53,12 @@ template<class Base>
 inline bool IdenticalEqualPar(const CppAD::cg::CG<Base>& x,
                               const CppAD::cg::CG<Base>& y) {
     return x.isParameter() && y.isParameter() && CppAD::IdenticalEqualPar(x.getValue(), y.getValue());
+}
+
+template<class Base>
+inline bool IdenticalEqualCon(const CppAD::cg::CG<Base>& x,
+                              const CppAD::cg::CG<Base>& y) {
+    return x.isParameter() && y.isParameter() && CppAD::IdenticalEqualCon(x.getValue(), y.getValue());
 }
 
 } // END CppAD namespace

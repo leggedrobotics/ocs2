@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2013 Ciengis
+ *    Copyright (C) 2018 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -20,7 +21,7 @@ namespace cg {
 
 /**
  * Useful class to call the JIT'ed models with LLVM.
- * 
+ *
  * @author Joao Leal
  */
 template<class Base>
@@ -43,8 +44,8 @@ public:
 protected:
 
     /**
-     * Creates a new model 
-     * 
+     * Creates a new model
+     *
      * @param name The model name
      */
     LlvmModel(LlvmModelLibrary<Base>* dynLib,
@@ -57,11 +58,11 @@ protected:
         this->init();
     }
 
-    virtual void* loadFunction(const std::string& functionName, bool required = true) override {
+    void* loadFunction(const std::string& functionName, bool required = true) override {
         return _dynLib->loadFunction(functionName, required);
     }
 
-    virtual void modelLibraryClosed() override {
+    void modelLibraryClosed() override {
         _dynLib = nullptr;
         FunctorGenericModel<Base>::modelLibraryClosed();
     }

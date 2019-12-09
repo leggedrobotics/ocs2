@@ -1,17 +1,16 @@
-// $Id$
 # ifndef CPPAD_CORE_AD_VALUED_HPP
 # define CPPAD_CORE_AD_VALUED_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*
 $begin ADValued$$
@@ -21,14 +20,14 @@ $$
 
 $section AD Valued Operations and Functions$$
 
-$comment atomic.omh includes atomic_base.omh which atomic_base.hpp$$
+$comment atomic.omh includes atomic_two.hpp$$
 $childtable%
-	cppad/core/arithmetic.hpp%
-	cppad/core/standard_math.hpp%
-	cppad/core/cond_exp.hpp%
-	cppad/core/discrete.hpp%
-	cppad/core/numeric_limits.hpp%
-	omh/atomic.omh
+    include/cppad/core/arithmetic.hpp%
+    include/cppad/core/standard_math.hpp%
+    include/cppad/core/cond_exp.hpp%
+    include/cppad/core/discrete.hpp%
+    include/cppad/core/numeric_limits.hpp%
+    include/cppad/core/atomic/atomic.omh
 %$$
 
 $end
@@ -42,8 +41,10 @@ $end
 # include <cppad/core/azmul.hpp>
 # include <cppad/core/cond_exp.hpp>
 # include <cppad/core/discrete.hpp>
-# include <cppad/core/atomic_base.hpp>
-# include <cppad/core/checkpoint.hpp>
-# include <cppad/core/old_atomic.hpp>
+# include <cppad/core/atomic/atomic_three.hpp>
+# include <cppad/core/chkpoint_two/chkpoint_two.hpp>
+# include <cppad/core/atomic/atomic_two.hpp>
+# include <cppad/core/atomic/atomic_one.hpp>
+# include <cppad/core/chkpoint_one/chkpoint_one.hpp>
 
 # endif

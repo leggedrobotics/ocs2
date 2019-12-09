@@ -1,30 +1,28 @@
-// $Id$
 # ifndef CPPAD_CORE_BOOL_FUN_HPP
 # define CPPAD_CORE_BOOL_FUN_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*
 $begin BoolFun$$
 $spell
-	namespace
-	bool
-	CppAD
-	const
+    namespace
+    bool
+    CppAD
+    const
 $$
 
 
 $section AD Boolean Functions$$
-$mindex bool CPPAD_BOOL_UNARY CPPAD_BOOL_BINARY$$
 
 $head Syntax$$
 $codei%CPPAD_BOOL_UNARY(%Base%, %unary_name%)
@@ -54,7 +52,7 @@ argument has type $codei%AD<%Base%>%$$.
 $head u$$
 The argument $icode u$$ has prototype
 $codei%
-	const %Base% &%u%
+    const %Base% &%u%
 %$$
 It is the value at which the user provided version of $icode unary_name$$
 is to be evaluated.
@@ -64,7 +62,7 @@ user provided version of $icode binary_name$$.
 $head x$$
 The argument $icode x$$ has prototype
 $codei%
-	const AD<%Base%> &%x%
+    const AD<%Base%> &%x%
 %$$
 It is the value at which the CppAD provided version of $icode unary_name$$
 is to be evaluated.
@@ -74,13 +72,13 @@ CppAD provided version of $icode binary_name$$.
 $head b$$
 The result $icode b$$ has prototype
 $codei%
-	bool %b%
+    bool %b%
 %$$
 
 $head Create Unary$$
 The preprocessor macro invocation
 $codei%
-	CPPAD_BOOL_UNARY(%Base%, %unary_name%)
+    CPPAD_BOOL_UNARY(%Base%, %unary_name%)
 %$$
 defines the version of $icode unary_name$$ with a $codei%AD<%Base%>%$$
 argument.
@@ -99,7 +97,7 @@ arguments have type $codei%AD<%Base%>%$$.
 $head v$$
 The argument $icode v$$ has prototype
 $codei%
-	const %Base% &%v%
+    const %Base% &%v%
 %$$
 It is the second argument to
 the user provided version of $icode binary_name$$.
@@ -107,7 +105,7 @@ the user provided version of $icode binary_name$$.
 $head y$$
 The argument $icode x$$ has prototype
 $codei%
-	const AD<%Base%> &%y%
+    const AD<%Base%> &%y%
 %$$
 It is the second argument to
 the CppAD provided version of $icode binary_name$$.
@@ -115,7 +113,7 @@ the CppAD provided version of $icode binary_name$$.
 $head Create Binary$$
 The preprocessor macro invocation
 $codei%
-	CPPAD_BOOL_BINARY(%Base%, %binary_name%)
+    CPPAD_BOOL_BINARY(%Base%, %binary_name%)
 %$$
 defines the version of $icode binary_name$$ with $codei%AD<%Base%>%$$
 arguments.
@@ -133,12 +131,11 @@ $cref/operation sequence/glossary/Operation/Sequence/$$.
 
 $head Example$$
 $children%
-	example/bool_fun.cpp
+    example/general/bool_fun.cpp
 %$$
 The file
 $cref bool_fun.cpp$$
 contains an example and test of these operations.
-It returns true if it succeeds and false otherwise.
 
 $head Deprecated 2007-07-31$$
 The preprocessor symbols $code CppADCreateUnaryBool$$
@@ -163,7 +160,7 @@ using <tt>bool F(Base x)</tt>.
 base for the AD type of arguments to this unary bool valued function.
 
 \param unary_name
-name of this unary function; i.e., \c F.
+name of this unary function; i.e., F.
 */
 # define CPPAD_BOOL_UNARY(Base, unary_name)                        \
      inline bool unary_name (const CppAD::AD<Base> &x)             \
@@ -187,12 +184,12 @@ is the name of the function that we are linking.
 is the argument where we are evaluating the function.
 */
 template <class Base>
-inline bool AD<Base>::UnaryBool(
-	bool FunName(const Base &x),
-	const AD<Base> &x
+bool AD<Base>::UnaryBool(
+    bool FunName(const Base &x),
+    const AD<Base> &x
 )
 {
-	return FunName(x.value_);
+    return FunName(x.value_);
 }
 
 /*!
@@ -203,7 +200,7 @@ using <tt>bool F(Base x, Base y)</tt>.
 base for the AD type of arguments to this binary bool valued function.
 
 \param binary_name
-name of this binary function; i.e., \c F.
+name of this binary function; i.e., F.
 */
 
 # define CPPAD_BOOL_BINARY(Base, binary_name)                      \
@@ -232,12 +229,12 @@ is the first argument where we are evaluating the function at.
 is the second argument where we are evaluating the function at.
 */
 template <class Base>
-inline bool AD<Base>::BinaryBool(
-	bool FunName(const Base &x, const Base &y),
-	const AD<Base> &x, const AD<Base> &y
+bool AD<Base>::BinaryBool(
+    bool FunName(const Base &x, const Base &y),
+    const AD<Base> &x, const AD<Base> &y
 )
 {
-	return FunName(x.value_, y.value_);
+    return FunName(x.value_, y.value_);
 }
 
 } // END_CPPAD_NAMESPACE

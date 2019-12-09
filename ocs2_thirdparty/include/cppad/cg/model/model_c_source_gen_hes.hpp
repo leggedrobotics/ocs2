@@ -63,7 +63,8 @@ void ModelCSourceGen<Base>::generateHessianSource() {
     finishedJob();
 
     LanguageC<Base> langC(_baseTypeName);
-    langC.setMaxAssigmentsPerFunction(_maxAssignPerFunc, &_sources);
+    langC.setMaxAssignmentsPerFunction(_maxAssignPerFunc, &_sources);
+    langC.setMaxOperationsPerAssignment(_maxOperationsPerAssignment);
     langC.setParameterPrecision(_parameterPrecision);
     langC.setGenerateFunction(_name + "_" + FUNCTION_HESSIAN);
 
@@ -210,7 +211,8 @@ void ModelCSourceGen<Base>::generateSparseHessianSourceDirectly() {
     finishedJob();
 
     LanguageC<Base> langC(_baseTypeName);
-    langC.setMaxAssigmentsPerFunction(_maxAssignPerFunc, &_sources);
+    langC.setMaxAssignmentsPerFunction(_maxAssignPerFunc, &_sources);
+    langC.setMaxOperationsPerAssignment(_maxOperationsPerAssignment);
     langC.setParameterPrecision(_parameterPrecision);
     langC.setGenerateFunction(_name + "_" + FUNCTION_SPARSE_HESSIAN);
 
@@ -307,13 +309,15 @@ std::string ModelCSourceGen<Base>::generateSparseHessianRev2SingleThreadSource(c
                                                                                const std::string& rev2Suffix) {
     LanguageC<Base> langC(_baseTypeName);
     std::string argsDcl = langC.generateDefaultFunctionArgumentsDcl();
+    std::vector<std::string> argsDcl2 = langC.generateDefaultFunctionArgumentsDcl2();
 
     _cache.str("");
     _cache << "#include <stdlib.h>\n"
             << LanguageC<Base>::ATOMICFUN_STRUCT_DEFINITION << "\n\n";
     generateFunctionDeclarationSource(_cache, functionRev2, rev2Suffix, hessInfo, argsDcl);
-    _cache << "\n"
-            "void " << functionName << "(" << argsDcl << ") {\n"
+    _cache << "\n";
+    LanguageC<Base>::printFunctionDeclaration(_cache, "void", functionName, argsDcl2);
+    _cache << " {\n"
             "   " << _baseTypeName << " const * inLocal[3];\n"
             "   " << _baseTypeName << " inLocal1 = 1;\n"
             "   " << _baseTypeName << " * outLocal[1];\n";
@@ -378,6 +382,7 @@ std::string ModelCSourceGen<Base>::generateSparseHessianRev2MultiThreadSource(co
 
     LanguageC<Base> langC(_baseTypeName);
     std::string argsDcl = langC.generateDefaultFunctionArgumentsDcl();
+    std::vector<std::string> argsDcl2 = langC.generateDefaultFunctionArgumentsDcl2();
 
     _cache.str("");
     _cache << "#include <stdlib.h>\n"
@@ -403,7 +408,9 @@ std::string ModelCSourceGen<Base>::generateSparseHessianRev2MultiThreadSource(co
             continue;
         }
 
-        _cache << "void " << functionRev2 << "_" << rev2Suffix << index << "_wrap(" << argsDcl << ") {\n"
+        std::string functionNameWrap = functionRev2 + "_" + rev2Suffix + std::to_string(index) + "_wrap";
+        LanguageC<Base>::printFunctionDeclaration(_cache, "void", functionNameWrap, argsDcl2);
+        _cache << " {\n"
                 "   " << _baseTypeName << " const * inLocal[3];\n"
                 "   " << _baseTypeName << " inLocal1 = 1;\n"
                 "   " << _baseTypeName << " * outLocal[1];\n"
@@ -647,21 +654,6 @@ void ModelCSourceGen<Base>::determineHessianSparsity() {
                                 _hessSparsity.rows, _hessSparsity.cols);
 
     } else {
-    	std::vector<size_t> possible_hess_rows, possible_hess_cols;
-    	generateSparsityIndexes(_hessSparsity.sparsity,
-    			possible_hess_rows, possible_hess_cols);
-
-    	std::vector<size_t> intersection_hess_rows, intersection_hess_cols;
-    	for (size_t i1=0; i1<_custom_hess.row.size(); i1++)
-    		for (size_t i2=0; i2<possible_hess_rows.size(); i2++)
-    			if (_custom_hess.row[i1] == possible_hess_rows[i2] && _custom_hess.col[i1] == possible_hess_cols[i2]) {
-    				intersection_hess_rows.push_back(_custom_hess.row[i1]);
-    				intersection_hess_cols.push_back(_custom_hess.col[i1]);
-    			}
-
-    	_custom_hess.row = intersection_hess_rows;
-    	_custom_hess.col = intersection_hess_cols;
-
         _hessSparsity.rows = _custom_hess.row;
         _hessSparsity.cols = _custom_hess.col;
     }

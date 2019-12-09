@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
 
   targetPoseCommand.launchNodes();
 
-  const std::string commadMsg = "Enter XY displacement and Yaw for the robot, separated by spaces";
+  const std::string commadMsg = "Enter XY displacement and Yaw (deg) for the robot, separated by spaces";
   targetPoseCommand.getKeyboardCommand(commadMsg);
 
   // Successful exit

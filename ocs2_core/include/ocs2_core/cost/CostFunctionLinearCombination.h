@@ -21,7 +21,6 @@ class CostFunctionLinearCombination : public ocs2::CostFunctionBase<STATE_DIM, I
   using BASE = CostFunctionBase<STATE_DIM, INPUT_DIM>;
   using typename BASE::scalar_t;
   using WeightedCost = std::pair<scalar_t, std::shared_ptr<BASE>>;
-  using typename BASE::cost_desired_trajectories_t;
   using typename BASE::dynamic_vector_array_t;
   using typename BASE::dynamic_vector_t;
   using typename BASE::input_matrix_t;
@@ -50,7 +49,7 @@ class CostFunctionLinearCombination : public ocs2::CostFunctionBase<STATE_DIM, I
   void getTerminalCost(scalar_t& Phi) override;
   void getTerminalCostDerivativeState(state_vector_t& dPhidx) override;
   void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override;
-  void setCostDesiredTrajectories(const cost_desired_trajectories_t& costDesiredTrajectories) override;
+  void setCostDesiredTrajectories(const CostDesiredTrajectories& costDesiredTrajectories) override;
   void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
   void getIntermediateCostDerivativeTime(scalar_t& dLdt) override;
   void getTerminalCostDerivativeTime(scalar_t& dPhidt) override;

@@ -19,7 +19,6 @@ class SolverSynchronizedModule {
   using scalar_t = typename DIMENSIONS::scalar_t;
   using state_vector_t = typename DIMENSIONS::state_vector_t;
 
-  using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
   using primal_solution_t = PrimalSolution<STATE_DIM, INPUT_DIM>;
 
   //! Default destructor
@@ -35,7 +34,7 @@ class SolverSynchronizedModule {
    * @param hybridLogicRules : Logic rules containing discrete event time information
    */
   virtual void preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
-                            const cost_desired_trajectories_t& costDesiredTrajectory, HybridLogicRules const* hybridLogicRules) = 0;
+                            const CostDesiredTrajectories& costDesiredTrajectory, HybridLogicRules const* hybridLogicRules) = 0;
 
   /**
    * Method called right after the solver runs

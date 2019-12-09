@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
   ballbotInterface.getInitialState(initObservation.state());
 
   // initial command
-  ballbot::MRT_ROS_Dummy_Ballbot::cost_desired_trajectories_t initCostDesiredTrajectories;
+  CostDesiredTrajectories initCostDesiredTrajectories;
   initCostDesiredTrajectories.desiredTimeTrajectory().push_back(initObservation.time());
   initCostDesiredTrajectories.desiredStateTrajectory().push_back(initObservation.state());
   initCostDesiredTrajectories.desiredInputTrajectory().push_back(initObservation.input());

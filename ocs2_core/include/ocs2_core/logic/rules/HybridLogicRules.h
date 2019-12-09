@@ -138,6 +138,29 @@ class HybridLogicRules {
   }
 
   /**
+   * Appends an event to the internal storage of the LogicRules class
+   * Used in state triggered rollout to keep track of discovered events
+   *
+   * @param [in] eventID: activated guardSurface
+   * @param [in] eventTime: time of event
+   */
+  void appendModeSequence(size_t eventID, scalar_t eventTime) {
+    subsystemsSequence_.emplace_back(eventID);
+    eventTimes_.emplace_back(eventTime);
+    update();
+  }
+
+  /**
+   * Reset the LogicRules class, empties subsystemSequence and eventTimes.
+   * first element of subsystemsSequence is kept, because this is the initial active subsystem.
+   */
+  void reset() {
+    subsystemsSequence_.erase(subsystemsSequence_.begin() + 1, subsystemsSequence_.end());
+    eventTimes_.clear();
+    update();
+  }
+
+  /**
    * Retrieves the sequence of the triggered subsystems.
    *
    * @return A constant reference to subsystemsSequence_.
@@ -231,7 +254,19 @@ class HybridLogicRules {
    *  @param [in] time
    *  @return count of the event the input time belongs to
    */
-  size_t getEventTimeCount(scalar_t time) const { return lookup::findIndexInTimeArray(eventTimes_, time); };
+  size_t getEventTimeCount(scalar_t time) const { return lookup::findIndexInTimeArray(eventTimes_, time); }
+
+  /**
+   *  Finds the subsystem based on the query time and eventTimes
+   *  If time equal equal to a switch time is requested, the lower subsystem is taken
+   *
+   *  @param [in] time: The inquiry time.
+   *  @return index of the subsystem the input time belongs to.
+   */
+  size_t getSubSystemTime(const scalar_t time) const {
+    int ind = lookup::findIndexInTimeArray(eventTimes_, time);
+    return subsystemsSequence_[ind];
+  }
 
  protected:
   /**

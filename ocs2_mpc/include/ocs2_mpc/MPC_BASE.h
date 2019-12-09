@@ -82,7 +82,6 @@ class MPC_BASE {
   using controller_ptr_array_t = std::vector<controller_t*>;
   using controller_const_ptr_array_t = std::vector<const controller_t*>;
 
-  using cost_desired_trajectories_t = CostDesiredTrajectories<scalar_t>;
   using mode_sequence_template_t = ModeSequenceTemplate<scalar_t>;
 
   using solver_base_t = Solver_BASE<STATE_DIM, INPUT_DIM>;

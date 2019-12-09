@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/OCS2NumericTraits.h>
 #include <ocs2_core/control/ControllerBase.h>
+#include "ocs2_core/misc/Numerics.h"
 
 #include "Rollout_Settings.h"
 
@@ -69,6 +70,7 @@ class RolloutBase {
   using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
   using input_vector_t = typename DIMENSIONS::input_vector_t;
   using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
 
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
 

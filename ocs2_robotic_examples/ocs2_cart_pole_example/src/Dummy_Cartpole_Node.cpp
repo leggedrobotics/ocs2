@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
   cartPoleInterface.getInitialState(initObservation.state());
 
   // initial command
-  mrt_t::cost_desired_trajectories_t initCostDesiredTrajectories;
+  ocs2::CostDesiredTrajectories initCostDesiredTrajectories;
   initCostDesiredTrajectories.desiredTimeTrajectory().resize(1);
   initCostDesiredTrajectories.desiredTimeTrajectory().front() = 0.0;
   initCostDesiredTrajectories.desiredStateTrajectory().resize(1);

@@ -73,9 +73,6 @@ class MRT_BASE {
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
   using rollout_base_t = RolloutBase<STATE_DIM, INPUT_DIM>;
 
-  using state_linear_interpolation_t = EigenLinearInterpolation<state_vector_t>;
-  using input_linear_interpolation_t = EigenLinearInterpolation<input_vector_t>;
-
   using primal_solution_t = PrimalSolution<STATE_DIM, INPUT_DIM>;
   using command_data_t = CommandData<STATE_DIM, INPUT_DIM>;
 
@@ -100,7 +97,7 @@ class MRT_BASE {
    *
    * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
    */
-  virtual void resetMpcNode(const CostDesiredTrajectories<scalar_t>& initCostDesiredTrajectories) = 0;
+  virtual void resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) = 0;
 
   /**
    * Whether the initial MPC policy has been already received.
@@ -237,8 +234,6 @@ class MRT_BASE {
   scalar_array_t partitioningTimes_;
   scalar_array_t partitioningTimesBuffer_;
   SystemObservation<STATE_DIM, INPUT_DIM> initPlanObservation_;  //! The initial observation of the first plan ever received
-  state_linear_interpolation_t mpcLinInterpolateState_;
-  input_linear_interpolation_t mpcLinInterpolateInput_;
 };
 
 }  // namespace ocs2

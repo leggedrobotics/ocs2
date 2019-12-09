@@ -69,7 +69,7 @@ class Observer {
    */
   explicit Observer(const std::shared_ptr<OdeBase<STATE_DIM>> systemPtr,
                     const std::shared_ptr<SystemEventHandler<STATE_DIM>> eventHandlerPtr = nullptr)
-      : systemPtr_(std::move(systemPtr)), eventHandlerPtr_(std::move(eventHandlerPtr)) {}
+      : systemPtr_(std::move(systemPtr)), eventHandlerPtr_(std::move(eventHandlerPtr)), initialCall_(false) {}
 
   /**
    * Make observer callback function for integration
@@ -102,24 +102,26 @@ class Observer {
       // extract model data
       if (modelDataTraj) {
         // check for initial call
-        if (initialCall_) {
+        if (systemPtr_->nextModelDataPtrIterator() == systemPtr_->beginModelDataPtrIterator()) {
+          // do nothing, model data not yet available.
+          initialCall_ = true;
+        } else if (initialCall_) {
+          // this is second observer call, retreive model data from initial call.
           model_data_t* modelDataPtr = systemPtr_->beginModelDataPtrIterator()->get();
           modelDataTraj->emplace_back(*modelDataPtr);
+          initialCall_ = false;
         }
-        // TODO(mspieler): Double check initial call handling logic
-        initialCall_ = systemPtr_->nextModelDataPtrIterator() == systemPtr_->beginModelDataPtrIterator();
-
-        // get the model data
+        // get model data from current timestep
         while (systemPtr_->nextModelDataPtrIterator() != systemPtr_->beginModelDataPtrIterator()) {
           --systemPtr_->nextModelDataPtrIterator();
           model_data_t* modelDataPtr = systemPtr_->nextModelDataPtrIterator()->get();
-          if (modelDataTraj && numerics::almost_eq(modelDataPtr->time_, t)) {
+          if (numerics::almost_eq(modelDataPtr->time_, t)) {
             modelDataTraj->emplace_back(*modelDataPtr);
-            systemPtr_->nextModelDataPtrIterator() = systemPtr_->beginModelDataPtrIterator();
             break;
           }
         }
       }
+      // reset modelDataPtrArray write position
       systemPtr_->nextModelDataPtrIterator() = systemPtr_->beginModelDataPtrIterator();
     }
 

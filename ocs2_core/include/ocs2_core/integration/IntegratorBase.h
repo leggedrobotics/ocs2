@@ -48,9 +48,9 @@ template <int STATE_DIM>
 class IntegratorBase {
  public:
   using DIMENSIONS = Dimensions<STATE_DIM, 0>;
-  using typename DIMENSIONS::scalar_array_t;
-  using typename DIMENSIONS::scalar_t;
-  using typename DIMENSIONS::state_vector_t;
+  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
 
   using system_func_t = std::function<void(const state_vector_t& x, state_vector_t& dxdt, scalar_t t)>;
   using observer_func_t = std::function<void(const state_vector_t& x, scalar_t t)>;

@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef OCS2_INTEGRATORBASE_H_
-#define OCS2_INTEGRATORBASE_H_
+#pragma once
 
 #include <limits>
 
@@ -61,7 +60,7 @@ class IntegratorBase {
    * Default constructor
    * @param [in] eventHandler
    */
-  IntegratorBase(const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr = nullptr)
+  explicit IntegratorBase(std::shared_ptr<SystemEventHandler<STATE_DIM>> eventHandlerPtr = nullptr)
       : eventHandlerPtr_(std::move(eventHandlerPtr)) {
     if (!eventHandlerPtr_) {
       eventHandlerPtr_ = std::shared_ptr<SystemEventHandler<STATE_DIM>>(new SystemEventHandler<STATE_DIM>());
@@ -156,5 +155,3 @@ class IntegratorBase {
 };
 
 }  // namespace ocs2
-
-#endif /* OCS2INTEGRATORBASE_H_ */

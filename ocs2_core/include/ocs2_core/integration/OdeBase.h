@@ -53,6 +53,7 @@ class OdeBase {
   using scalar_t = typename DIMENSIONS::scalar_t;
   using state_vector_t = typename DIMENSIONS::state_vector_t;
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+  using system_func_t = std::function<void(const state_vector_t& x, state_vector_t& dxdt, scalar_t t)>;
 
   /**
    * Constructor.
@@ -64,6 +65,7 @@ class OdeBase {
       modelPtr_i.reset(modelData.clone());
     }
     nextModelDataPtrIterator() = beginModelDataPtrIterator();
+    systemFunction_ = [this](const state_vector_t& x, state_vector_t& dxdt, scalar_t t) { computeFlowMap(t, x, dxdt); };
   }
 
   /**
@@ -77,35 +79,40 @@ class OdeBase {
   OdeBase(const OdeBase& rhs) : OdeBase(*rhs.modelDataPtrArray_.front()) {}
 
   /**
+   * Get a system function callback that calls computeFlowMap for integration.
+   */
+  system_func_t systemFunction() { return systemFunction_; }
+
+  /**
    * Gets the number of function calls.
    *
    * @return size_t: number of function calls
    */
-  inline int getNumFunctionCalls() { return numFunctionCalls_; }
+  int getNumFunctionCalls() const { return numFunctionCalls_; }
 
   /**
    * Resets the number of function calls to zero.
    *
    */
-  inline void resetNumFunctionCalls() { numFunctionCalls_ = 0; }
+  void resetNumFunctionCalls() { numFunctionCalls_ = 0; }
 
   /**
    * Returns the iterator pointing to the next free model data.
    * @return iterator to the next free model data.
    */
-  inline std::list<std::shared_ptr<ModelDataBase>>::iterator& nextModelDataPtrIterator() { return nextModelDataPtrIterator_; }
+  std::list<std::shared_ptr<ModelDataBase>>::iterator& nextModelDataPtrIterator() { return nextModelDataPtrIterator_; }
 
   /**
    * Returns the iterator to begin()
    * @return modelDataPtrArray_.begin()
    */
-  inline std::list<std::shared_ptr<ModelDataBase>>::iterator beginModelDataPtrIterator() { return modelDataPtrArray_.begin(); }
+  std::list<std::shared_ptr<ModelDataBase>>::iterator beginModelDataPtrIterator() { return modelDataPtrArray_.begin(); }
 
   /**
    * Returns the iterator to end()
    * @return modelDataPtrArray_.end()
    */
-  inline std::list<std::shared_ptr<ModelDataBase>>::iterator endModelDataPtrIterator() { return modelDataPtrArray_.end(); }
+  std::list<std::shared_ptr<ModelDataBase>>::iterator endModelDataPtrIterator() { return modelDataPtrArray_.end(); }
 
   /**
    * Resizes the internal model data array.
@@ -151,6 +158,7 @@ class OdeBase {
  protected:
   int numFunctionCalls_;
 
+  system_func_t systemFunction_;
   const int defaultModelDataArraySize_;
   std::list<std::shared_ptr<ModelDataBase>> modelDataPtrArray_;
   std::list<std::shared_ptr<ModelDataBase>>::iterator nextModelDataPtrIterator_;

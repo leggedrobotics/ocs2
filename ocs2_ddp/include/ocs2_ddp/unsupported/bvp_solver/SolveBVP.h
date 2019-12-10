@@ -79,7 +79,7 @@ class SolveBVP {
   /**
    * Default constructor.
    */
-  SolveBVP(const bool& useMakePSD) : bvpEquationsPtr_(new bvp_equations_t(useMakePSD)), bvpOdeSolver_(bvpEquationsPtr_) {}
+  SolveBVP(const bool& useMakePSD) : bvpEquationsPtr_(new bvp_equations_t(useMakePSD)) {}
 
   /**
    * Default destructor.
@@ -132,7 +132,8 @@ class SolveBVP {
     // integrating the Riccati equations
     scalar_array_t normalizedTimeTrajectory;
     full_ode_vector_array_t MSvTrajectory;
-    bvpOdeSolver_.integrate(MSvFinal, 0, 1, MSvTrajectory, normalizedTimeTrajectory, 1e-3, absTolODE, relTolODE);
+    Observer<bvp_equations_t::Full_ODE_VECTOR_DIM> observer(&MSvTrajectory, &normalizedTimeTrajectory);
+    bvpOdeSolver_.integrate_adaptive(*bvpEquationsPtr_, observer, MSvFinal, 0, 1, 1e-3, absTolODE, relTolODE);
 
     // denormalizing time and constructing 'Mm' and 'Sv'
     int N = normalizedTimeTrajectory.size();
@@ -194,7 +195,9 @@ class SolveBVP {
 
     // integrating the Riccati equations
     full_ode_vector_array_t MSvTrajectory;
-    bvpOdeSolver_.integrate(MSvFinal, normalizedTimeTrajectory, MSvTrajectory, 1e-3, absTolODE, relTolODE);
+    Observer<bvp_equations_t::Full_ODE_VECTOR_DIM> observer(&MSvTrajectory);
+    bvpOdeSolver_.integrate_times(*bvpEquationsPtr_, observer, MSvFinal, normalizedTimeTrajectory.begin(), normalizedTimeTrajectory.end(),
+                                  1e-3, absTolODE, relTolODE);
 
     // denormalization of time and constructing 'Mm' and 'Sv'
     MmTrajectory.resize(N);

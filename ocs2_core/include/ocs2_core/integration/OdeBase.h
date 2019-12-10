@@ -88,7 +88,7 @@ class OdeBase {
    *
    * @return size_t: number of function calls
    */
-  inline int getNumFunctionCalls() { return numFunctionCalls_; }
+  inline int getNumFunctionCalls() const { return numFunctionCalls_; }
 
   /**
    * Resets the number of function calls to zero.

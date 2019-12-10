@@ -33,6 +33,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+/**
+ * State triggered event handler class for ode solvers.
+ *
+ * @tparam STATE_DIM: Dimension of the state space.
+ */
 template <int STATE_DIM>
 class StateTriggeredEventHandler final : public SystemEventHandler<STATE_DIM> {
  public:
@@ -40,6 +45,7 @@ class StateTriggeredEventHandler final : public SystemEventHandler<STATE_DIM> {
 
   using BASE = SystemEventHandler<STATE_DIM>;
   using typename BASE::dynamic_vector_t;
+  using typename BASE::ode_t;
   using typename BASE::scalar_t;
   using typename BASE::state_vector_t;
 
@@ -58,7 +64,7 @@ class StateTriggeredEventHandler final : public SystemEventHandler<STATE_DIM> {
    */
   ~StateTriggeredEventHandler() override = default;
 
-  bool checkEvent(OdeBase<STATE_DIM>& system, scalar_t time, const Eigen::Matrix<scalar_t, STATE_DIM, 1>& state, size_t& eventID) override {
+  bool checkEvent(ode_t& system, scalar_t time, const state_vector_t& state, size_t& eventID) override {
     // StateTriggered event
     system.computeGuardSurfaces(time, state, guardSurfacesValuesCurrent_);
 
@@ -115,7 +121,6 @@ class StateTriggeredEventHandler final : public SystemEventHandler<STATE_DIM> {
 
  protected:
   scalar_t minEventTimeDifference_;
-
   dynamic_vector_t guardSurfacesValuesCurrent_;
   dynamic_vector_t guardSurfacesValuesPrevious_;  // memory
   scalar_t lastEventTriggeredTime_;               // memory

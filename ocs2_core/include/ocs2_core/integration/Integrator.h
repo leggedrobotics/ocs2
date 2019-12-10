@@ -97,7 +97,8 @@ static IntegratorType fromString(const std::string& name) {
  * @param [in] eventHandler: The integration event function.
  */
 template <int STATE_DIM>
-std::unique_ptr<IntegratorBase<STATE_DIM>> newIntegrator(IntegratorType integratorType);
+std::unique_ptr<IntegratorBase<STATE_DIM>> newIntegrator(IntegratorType integratorType,
+                                                         const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr = nullptr);
 
 /**
  * Integrator class for autonomous systems.

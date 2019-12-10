@@ -33,25 +33,26 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int STATE_DIM>
-std::unique_ptr<IntegratorBase<STATE_DIM>> newIntegrator(IntegratorType integratorType) {
+std::unique_ptr<IntegratorBase<STATE_DIM>> newIntegrator(IntegratorType integratorType,
+                                                         const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr) {
   switch (integratorType) {
     case (IntegratorType::EULER):
-      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorEuler<STATE_DIM>());
+      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorEuler<STATE_DIM>(eventHandlerPtr));
     case (IntegratorType::ODE45):
-      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new ODE45<STATE_DIM>());
+      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new ODE45<STATE_DIM>(eventHandlerPtr));
     case (IntegratorType::ADAMS_BASHFORTH):
-      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorAdamsBashforth<STATE_DIM, 1>());
+      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorAdamsBashforth<STATE_DIM, 1>(eventHandlerPtr));
     case (IntegratorType::BULIRSCH_STOER):
-      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorBulirschStoer<STATE_DIM>());
+      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorBulirschStoer<STATE_DIM>(eventHandlerPtr));
     case (IntegratorType::MODIFIED_MIDPOINT):
-      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorModifiedMidpoint<STATE_DIM>());
+      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorModifiedMidpoint<STATE_DIM>(eventHandlerPtr));
     case (IntegratorType::RK4):
-      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorRK4<STATE_DIM>());
+      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorRK4<STATE_DIM>(eventHandlerPtr));
     case (IntegratorType::RK5_VARIABLE):
-      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorRK5Variable<STATE_DIM>());
+      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorRK5Variable<STATE_DIM>(eventHandlerPtr));
 #if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 55)
     case (IntegratorType::ADAMS_BASHFORTH_MOULTON):
-      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorAdamsBashforthMoulton<STATE_DIM, 1>());
+      return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorAdamsBashforthMoulton<STATE_DIM, 1>(eventHandlerPtr));
 #endif
     default:
       throw std::runtime_error("Integrator of type " + toString(integratorType) + " not supported.");

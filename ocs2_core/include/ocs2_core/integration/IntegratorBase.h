@@ -83,8 +83,8 @@ class IntegratorBase {
    * @param [in] finalTime: Final time.
    * @param [in] dt: Time step.
    */
-  void integrate_const(OdeBase<STATE_DIM>& system, Observer<STATE_DIM>& observer, const state_vector_t& initialState, scalar_t startTime,
-                       scalar_t finalTime, scalar_t dt, int maxNumSteps = std::numeric_limits<int>::max()) {
+  void integrate_const(system_t& system, observer_t& observer, const state_vector_t& initialState, scalar_t startTime, scalar_t finalTime,
+                       scalar_t dt, int maxNumSteps = std::numeric_limits<int>::max()) {
     eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
     observer_func_t callback = [&](const state_vector_t& x, scalar_t t) {
       observer.observe(system, x, t);
@@ -105,7 +105,7 @@ class IntegratorBase {
    * @param [in] AbsTol: The absolute tolerance error for ode solver.
    * @param [in] RelTol: The relative tolerance error for ode solver.
    */
-  void integrate_adaptive(OdeBase<STATE_DIM>& system, Observer<STATE_DIM>& observer, const state_vector_t& initialState, scalar_t startTime,
+  void integrate_adaptive(system_t& system, observer_t& observer, const state_vector_t& initialState, scalar_t startTime,
                           scalar_t finalTime, scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3,
                           int maxNumSteps = std::numeric_limits<int>::max()) {
     eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
@@ -128,7 +128,7 @@ class IntegratorBase {
    * @param [in] AbsTol: The absolute tolerance error for ode solver.
    * @param [in] RelTol: The relative tolerance error for ode solver.
    */
-  void integrate_times(OdeBase<STATE_DIM>& system, Observer<STATE_DIM>& observer, const state_vector_t& initialState,
+  void integrate_times(system_t& system, observer_t& observer, const state_vector_t& initialState,
                        typename scalar_array_t::const_iterator beginTimeItr, typename scalar_array_t::const_iterator endTimeItr,
                        scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3,
                        int maxNumSteps = std::numeric_limits<int>::max()) {

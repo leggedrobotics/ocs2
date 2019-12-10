@@ -45,9 +45,10 @@ class StateTriggeredEventHandler final : public SystemEventHandler<STATE_DIM> {
 
   using BASE = SystemEventHandler<STATE_DIM>;
   using typename BASE::dynamic_vector_t;
-  using typename BASE::ode_t;
   using typename BASE::scalar_t;
   using typename BASE::state_vector_t;
+
+  using typename BASE::system_t;
 
   /**
    * Constructor
@@ -64,7 +65,7 @@ class StateTriggeredEventHandler final : public SystemEventHandler<STATE_DIM> {
    */
   ~StateTriggeredEventHandler() override = default;
 
-  bool checkEvent(ode_t& system, scalar_t time, const state_vector_t& state, size_t& eventID) override {
+  bool checkEvent(system_t& system, scalar_t time, const state_vector_t& state, size_t& eventID) override {
     // StateTriggered event
     system.computeGuardSurfaces(time, state, guardSurfacesValuesCurrent_);
 

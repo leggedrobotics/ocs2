@@ -63,7 +63,7 @@ class SystemEventHandler {
   using state_vector_t = typename DIMENSIONS::state_vector_t;
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
 
-  using ode_t = OdeBase<STATE_DIM>;
+  using system_t = OdeBase<STATE_DIM>;
 
   /**
    * Default constructor
@@ -73,7 +73,7 @@ class SystemEventHandler {
   /**
    * Default destructor
    */
-  ~SystemEventHandler() = default;
+  virtual ~SystemEventHandler() = default;
 
   /**
    * Checks whether an event is activated. If true, the method should also return
@@ -85,7 +85,7 @@ class SystemEventHandler {
    * @param [out] eventID: A non-negative unique ID for the active events..
    * @return Whether an event is active.
    */
-  virtual bool checkEvent(ode_t& system, scalar_t time, const state_vector_t& state, size_t& eventID) { return false; }
+  virtual bool checkEvent(system_t& system, scalar_t time, const state_vector_t& state, size_t& eventID) { return false; }
 
   /**
    * The operation should be performed if an event is activated.
@@ -94,7 +94,7 @@ class SystemEventHandler {
    * @param [in] time: The current time.
    * @param [in] state: The current state vector.
    */
-  void handleEvent(ode_t& system, scalar_t time, const state_vector_t& state) {
+  void handleEvent(system_t& system, scalar_t time, const state_vector_t& state) {
     // kill integration is triggered
     if (killIntegration_) {
       throw std::runtime_error("Integration terminated due to an external signal triggered by a program.");

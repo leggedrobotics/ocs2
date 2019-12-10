@@ -27,8 +27,7 @@ class LoopshapingFilterDynamics {
   explicit LoopshapingFilterDynamics(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
       : loopshapingDefinition_(std::move(loopshapingDefinition)),
         ode_fun_(new OdeFunc<FILTER_STATE_DIM>(std::bind(&LoopshapingFilterDynamics::computeFlowMap, this, std::placeholders::_1,
-                                                         std::placeholders::_2, input_vector_t::Zero(), std::placeholders::_3))),
-        integrator_(ode_fun_) {
+                                                         std::placeholders::_2, input_vector_t::Zero(), std::placeholders::_3))) {
     filter_state_.setZero();
   }
 
@@ -40,8 +39,8 @@ class LoopshapingFilterDynamics {
     // integrate with integrator that has a shared_ptr to ode_fun_
     filter_state_array_t stateTrajectory;
     scalar_array_t timeTrajectory;
-    Observer<FILTER_STATE_DIM> observer(&timeTrajectory, &stateTrajectory);
-    integrator_.integrate_adaptive(filter_state_, 0.0, dt, observer, dt);
+    Observer<FILTER_STATE_DIM> observer(&stateTrajectory, &timeTrajectory);
+    integrator_.integrate_adaptive(*ode_fun_, observer, filter_state_, 0.0, dt, dt);
 
     filter_state_ = stateTrajectory.back();
   }

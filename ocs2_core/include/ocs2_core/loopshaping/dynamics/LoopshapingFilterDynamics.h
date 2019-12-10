@@ -38,8 +38,7 @@ class LoopshapingFilterDynamics {
 
     // integrate with integrator that has a shared_ptr to ode_fun_
     filter_state_array_t stateTrajectory;
-    scalar_array_t timeTrajectory;
-    Observer<FILTER_STATE_DIM> observer(&stateTrajectory, &timeTrajectory);
+    Observer<FILTER_STATE_DIM> observer(&stateTrajectory);
     integrator_.integrate_adaptive(*ode_fun_, observer, filter_state_, 0.0, dt, dt);
 
     filter_state_ = stateTrajectory.back();

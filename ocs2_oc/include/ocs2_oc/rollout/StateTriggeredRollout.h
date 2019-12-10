@@ -81,8 +81,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
         systemDynamicsPtr_(systemDynamics.clone()),
         systemEventHandlersPtr_(new state_triggered_event_handler_t(this->settings().minTimeStep_)) {
     // construct dynamicsIntegratorsPtr
-    dynamicsIntegratorPtr_ =
-        std::move(newIntegrator<STATE_DIM>(this->settings().integratorType_, systemDynamicsPtr_, systemEventHandlersPtr_));
+    dynamicsIntegratorPtr_ = std::move(newIntegrator<STATE_DIM>(this->settings().integratorType_, systemEventHandlersPtr_));
   }
 
   /**
@@ -151,8 +150,9 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     while (true) {  // keeps looping until end time condition is fulfilled, after which the loop is broken
       bool triggered = false;
       try {
-        dynamicsIntegratorPtr_->integrate(x0, t0, t1, stateTrajectory, timeTrajectory, this->settings().minTimeStep_,
-                                          this->settings().absTolODE_, this->settings().relTolODE_, maxNumSteps, true);
+        Observer<STATE_DIM> observer(&stateTrajectory, &timeTrajectory);  // concatenate trajectory
+        dynamicsIntegratorPtr_->integrate_adaptive(*systemDynamicsPtr_, observer, x0, t0, t1, this->settings().minTimeStep_,
+                                                   this->settings().absTolODE_, this->settings().relTolODE_, maxNumSteps);
       } catch (const size_t& e) {
         eventID = e;
         triggered = true;
@@ -251,7 +251,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   }  // end of function
 
  private:
-  std::shared_ptr<controlled_system_base_t> systemDynamicsPtr_;
+  std::unique_ptr<controlled_system_base_t> systemDynamicsPtr_;
 
   std::shared_ptr<state_triggered_event_handler_t> systemEventHandlersPtr_;
 

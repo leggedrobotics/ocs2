@@ -75,8 +75,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   explicit TimeTriggeredRollout(const controlled_system_base_t& systemDynamics, Rollout_Settings rolloutSettings = Rollout_Settings())
       : BASE(std::move(rolloutSettings)), systemDynamicsPtr_(systemDynamics.clone()), systemEventHandlersPtr_(new event_handler_t) {
     // construct dynamicsIntegratorsPtr
-    dynamicsIntegratorPtr_ =
-        std::move(newIntegrator<STATE_DIM>(this->settings().integratorType_, systemDynamicsPtr_, systemEventHandlersPtr_));
+    dynamicsIntegratorPtr_ = std::move(newIntegrator<STATE_DIM>(this->settings().integratorType_, systemEventHandlersPtr_));
   }
 
   /**
@@ -128,17 +127,14 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     // reset function calls counter
     systemDynamicsPtr_->resetNumFunctionCalls();
 
-    // reset the event class
-    systemEventHandlersPtr_->reset();
-
     state_vector_t beginState = initState;
     int k_u = 0;  // control input iterator
     for (int i = 0; i < numSubsystems; i++) {
-      Observer<STATE_DIM> observer(&timeTrajectory, &stateTrajectory);  // concatenate trajectory
+      Observer<STATE_DIM> observer(&stateTrajectory, &timeTrajectory);  // concatenate trajectory
       // integrate controlled system
-      dynamicsIntegratorPtr_->integrate_adaptive(beginState, timeIntervalArray[i].first, timeIntervalArray[i].second, observer,
-                                                 this->settings().minTimeStep_, this->settings().absTolODE_, this->settings().relTolODE_,
-                                                 maxNumSteps);
+      dynamicsIntegratorPtr_->integrate_adaptive(*systemDynamicsPtr_, observer, beginState, timeIntervalArray[i].first,
+                                                 timeIntervalArray[i].second, this->settings().minTimeStep_, this->settings().absTolODE_,
+                                                 this->settings().relTolODE_, maxNumSteps);
 
       // compute control input trajectory and concatenate to inputTrajectory
       if (this->settings().reconstructInputTrajectory_) {
@@ -162,7 +158,7 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   }
 
  private:
-  std::shared_ptr<controlled_system_base_t> systemDynamicsPtr_;
+  std::unique_ptr<controlled_system_base_t> systemDynamicsPtr_;
 
   std::shared_ptr<event_handler_t> systemEventHandlersPtr_;
 

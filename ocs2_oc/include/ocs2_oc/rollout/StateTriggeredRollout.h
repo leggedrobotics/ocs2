@@ -34,7 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/integration/StateTriggeredEventHandler.h>
-#include <ocs2_core/integration/SystemEventHandler.h>
 
 #include "ocs2_oc/rollout/RolloutBase.h"
 #include "ocs2_oc/rollout/RootFinder.h"
@@ -65,7 +64,6 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using time_interval_array_t = typename BASE::time_interval_array_t;
   using dynamic_vector_t = typename BASE::dynamic_vector_t;
 
-  using event_handler_t = SystemEventHandler<STATE_DIM>;
   using state_triggered_event_handler_t = StateTriggeredEventHandler<STATE_DIM>;
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
   using ode_base_t = IntegratorBase<STATE_DIM>;

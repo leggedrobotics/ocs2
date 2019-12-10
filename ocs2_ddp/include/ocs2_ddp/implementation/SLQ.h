@@ -46,10 +46,10 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivativ
            heuristicsFunctionPtr, "SLQ", std::move(logicRulesPtr)),
       settings_(settings) {
   // Riccati Solver
-  riccatiEquationsPtrStock_.clear();
-  riccatiEquationsPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
   errorEquationPtrStock_.clear();
   errorEquationPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
+  riccatiEquationsPtrStock_.clear();
+  riccatiEquationsPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
   riccatiIntegratorPtrStock_.clear();
   riccatiIntegratorPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
   errorIntegratorPtrStock_.clear();
@@ -61,12 +61,8 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivativ
   }
 
   for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
-    using riccati_equations_alloc_t = Eigen::aligned_allocator<riccati_equations_t>;
-    riccatiEquationsPtrStock_.emplace_back(std::allocate_shared<riccati_equations_t, riccati_equations_alloc_t>(
-        riccati_equations_alloc_t(), BASE::ddpSettings_.useMakePSD_, settings_.preComputeRiccatiTerms_));
-
-    using error_equation_alloc_t = Eigen::aligned_allocator<error_equation_t>;
-    errorEquationPtrStock_.emplace_back(std::allocate_shared<error_equation_t, error_equation_alloc_t>(error_equation_alloc_t()));
+    errorEquationPtrStock_.emplace_back(new error_equation_t);
+    riccatiEquationsPtrStock_.emplace_back(new riccati_equations_t(BASE::ddpSettings_.useMakePSD_, settings_.preComputeRiccatiTerms_));
 
     errorIntegratorPtrStock_.emplace_back(newIntegrator<STATE_DIM>(integratorType));
     riccatiIntegratorPtrStock_.emplace_back(newIntegrator<riccati_equations_t::S_DIM_>(integratorType));

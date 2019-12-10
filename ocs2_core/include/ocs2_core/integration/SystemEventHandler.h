@@ -77,32 +77,31 @@ class SystemEventHandler {
    * Checks whether an event is activated. If true, the method should also return
    * a "Non-Negative" ID which indicates the a unique ID for the active events.
    *
+   * @param [in] system: System dynamics
    * @param [in] time: The current time.
    * @param [in] state: The current state vector.
    * @param [out] eventID: A non-negative unique ID for the active events..
    * @return Whether an event is active.
    */
-  virtual bool checkEvent(scalar_t time, const state_vector_t& state, size_t& eventID) { return false; }
+  virtual bool checkEvent(OdeBase<STATE_DIM>& system, scalar_t time, const Eigen::Matrix<scalar_t, STATE_DIM, 1>& state, size_t& eventID) {
+    return false;
+  }
 
   /**
    * The operation should be performed if an event is activated.
    *
+   * @param [in] system: System dynamics
    * @param [in] time: The current time.
    * @param [in] state: The current state vector.
    */
-  void handleEvent(scalar_t time, const state_vector_t& state) {
-    // check system dynamics
-    if (!systemPtr_) {
-      throw std::runtime_error("System dynamics is not set to event handler.");
-    }
-
+  void handleEvent(OdeBase<STATE_DIM>& system, scalar_t time, const Eigen::Matrix<scalar_t, STATE_DIM, 1>& state) {
     // kill integration is triggered
     if (killIntegration_) {
       throw std::runtime_error("Integration terminated due to an external signal triggered by a program.");
     }
 
     // max number of function calls
-    if (systemPtr_->getNumFunctionCalls() > maxNumSteps_) {
+    if (system.getNumFunctionCalls() > maxNumSteps_) {
       std::string msg = "Integration terminated since the maximum number of function calls is reached. ";
       msg += "State at termination time " + std::to_string(time) + ":\n [";
       for (size_t i = 0; i < state.size() - 1; i++) {
@@ -114,18 +113,10 @@ class SystemEventHandler {
 
     // derived class events
     size_t eventID;
-    if (checkEvent(time, state, eventID)) {
+    if (checkEvent(system, time, state, eventID)) {
       throw eventID;
     }
   }
-
-  /**
-   * Sets a pointer to the system dynamics. This method is invoked by the integrator class in
-   * order to share integrator's system dynamics with eventHandler.
-   *
-   * @param systemPtr: shared pointer to the integrator's system dynamics.
-   */
-  void setSystem(OdeBase<STATE_DIM>* systemPtr) { systemPtr_ = systemPtr; }
 
   /**
    * Sets the maximum number of integration points per a second for ode solvers.
@@ -145,9 +136,8 @@ class SystemEventHandler {
   static void deactivateKillIntegration() { killIntegration_ = false; }
 
  protected:
-  static std::atomic_bool killIntegration_; /*=false*/
+  static std::atomic<bool> killIntegration_; /*=false*/
   int maxNumSteps_ = std::numeric_limits<int>::max();
-  OdeBase<STATE_DIM>* systemPtr_ = nullptr;  // system dynamics used by integrator.
 };
 
 template <int STATE_DIM>

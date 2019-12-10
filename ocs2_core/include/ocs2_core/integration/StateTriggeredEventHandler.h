@@ -58,9 +58,9 @@ class StateTriggeredEventHandler final : public SystemEventHandler<STATE_DIM> {
    */
   ~StateTriggeredEventHandler() override = default;
 
-  bool checkEvent(scalar_t time, const state_vector_t& state, size_t& eventID) override {
+  bool checkEvent(OdeBase<STATE_DIM>& system, scalar_t time, const Eigen::Matrix<scalar_t, STATE_DIM, 1>& state, size_t& eventID) override {
     // StateTriggered event
-    BASE::systemPtr_->computeGuardSurfaces(time, state, guardSurfacesValuesCurrent_);
+    system.computeGuardSurfaces(time, state, guardSurfacesValuesCurrent_);
 
     bool eventTriggered = false;
     if (time - lastEventTriggeredTime_ > minEventTimeDifference_) {

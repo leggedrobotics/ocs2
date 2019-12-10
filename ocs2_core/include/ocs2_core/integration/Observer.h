@@ -36,7 +36,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_core/Dimensions.h"
 #include "ocs2_core/integration/OdeBase.h"
-#include "ocs2_core/integration/SystemEventHandler.h"
 #include "ocs2_core/misc/Numerics.h"
 #include "ocs2_core/model_data/ModelDataBase.h"
 
@@ -57,79 +56,66 @@ class Observer {
   using scalar_array_t = std::vector<scalar_t>;
   using state_vector_t = Eigen::Matrix<scalar_t, STATE_DIM, 1>;
   using state_vector_array_t = std::vector<state_vector_t, Eigen::aligned_allocator<state_vector_t>>;
-
   using model_data_t = ModelDataBase;
   using model_data_array_t = model_data_t::array_t;
 
-  using observer_callback_t = std::function<void(const state_vector_t& x, scalar_t t)>;
-
   /**
    * Constructor
-   * @param [in] eventHandler
-   */
-  explicit Observer(const std::shared_ptr<OdeBase<STATE_DIM>> systemPtr,
-                    const std::shared_ptr<SystemEventHandler<STATE_DIM>> eventHandlerPtr = nullptr)
-      : systemPtr_(std::move(systemPtr)), eventHandlerPtr_(std::move(eventHandlerPtr)), initialCall_(false) {}
-
-  /**
-   * Make observer callback function for integration
-   * @param [out] timeTraj: Time of each trajectory point
    * @param [out] stateTraj: State trajectory
+   * @param [out] timeTraj: Time of each trajectory point
    * @param [out] modelDataTraj: Model data trajectory
    */
-  observer_callback_t getCallback(scalar_array_t* timeTraj = nullptr, state_vector_array_t* stateTraj = nullptr,
-                                  model_data_array_t* modelDataTraj = nullptr) {
-    return [=](const state_vector_t& x, scalar_t t) { observe(x, t, timeTraj, stateTraj, modelDataTraj); };
-  }
+  explicit Observer(state_vector_array_t* stateTraj = nullptr, scalar_array_t* timeTraj = nullptr,
+                    model_data_array_t* modelDataTraj = nullptr)
+      : timeTrajectory_(timeTraj), stateTrajectory_(stateTraj), modelDataTrajectory_(modelDataTraj), initialCall_(false) {}
 
- private:
   /**
    * Observe function to retrieve the variable of interest.
-   * @param [in] x: Current state.
+   * @param [in] system: system dynamics object.
    * @param [in] t: Current time.
+   * @param [in] x: Current state.
    */
-  void observe(const state_vector_t& x, const scalar_t& t, scalar_array_t* timeTraj, state_vector_array_t* stateTraj,
-               model_data_array_t* modelDataTraj) {
+  void observe(OdeBase<STATE_DIM>& system, const state_vector_t& x, const scalar_t& t) {
     // Store data
-    if (stateTraj) {
-      stateTraj->push_back(x);
+    if (stateTrajectory_) {
+      stateTrajectory_->push_back(x);
     }
-    if (timeTraj) {
-      timeTraj->push_back(t);
+    if (timeTrajectory_) {
+      timeTrajectory_->push_back(t);
     }
 
-    if (systemPtr_) {
-      // extract model data
-      if (modelDataTraj) {
-        // check for initial call
-        if (systemPtr_->nextModelDataPtrIterator() == systemPtr_->beginModelDataPtrIterator()) {
-          // do nothing, model data not yet available.
-          initialCall_ = true;
-        } else if (initialCall_) {
-          // this is second observer call, retreive model data from initial call.
-          model_data_t* modelDataPtr = systemPtr_->beginModelDataPtrIterator()->get();
-          modelDataTraj->emplace_back(*modelDataPtr);
-          initialCall_ = false;
-        }
-        // get model data from current timestep
-        while (systemPtr_->nextModelDataPtrIterator() != systemPtr_->beginModelDataPtrIterator()) {
-          --systemPtr_->nextModelDataPtrIterator();
-          model_data_t* modelDataPtr = systemPtr_->nextModelDataPtrIterator()->get();
-          if (numerics::almost_eq(modelDataPtr->time_, t)) {
-            modelDataTraj->emplace_back(*modelDataPtr);
-            break;
-          }
+    // extract model data
+    if (modelDataTrajectory_) {
+      // check for initial call
+      if (system.nextModelDataPtrIterator() == system.beginModelDataPtrIterator()) {
+        // do nothing, model data not yet available.
+        initialCall_ = true;
+      } else if (initialCall_) {
+        // this is second observer call, retreive model data from initial call.
+        model_data_t* modelDataPtr = system.beginModelDataPtrIterator()->get();
+        modelDataTrajectory_->emplace_back(*modelDataPtr);
+        initialCall_ = false;
+      }
+      // get model data from current timestep
+      while (system.nextModelDataPtrIterator() != system.beginModelDataPtrIterator()) {
+        --system.nextModelDataPtrIterator();
+        model_data_t* modelDataPtr = system.nextModelDataPtrIterator()->get();
+        if (numerics::almost_eq(modelDataPtr->time_, t)) {
+          modelDataTrajectory_->emplace_back(*modelDataPtr);
+          break;
         }
       }
       // reset modelDataPtrArray write position
-      systemPtr_->nextModelDataPtrIterator() = systemPtr_->beginModelDataPtrIterator();
+      system.nextModelDataPtrIterator() = system.beginModelDataPtrIterator();
     }
   }
 
-  std::shared_ptr<OdeBase<STATE_DIM>> systemPtr_;
-  std::shared_ptr<SystemEventHandler<STATE_DIM>> eventHandlerPtr_;
-
+ private:
   bool initialCall_;
+
+  state_vector_array_t* stateTrajectory_;
+  scalar_array_t* timeTrajectory_;
+  model_data_array_t* modelDataTrajectory_;
 };
 
 }  // namespace ocs2

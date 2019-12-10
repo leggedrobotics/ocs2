@@ -33,7 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 #include "ocs2_core/control/LinearController.h"
 #include "ocs2_core/dynamics/LinearSystemDynamics.h"
-#include "ocs2_core/integration/EventHandlerBase.h"
 #include "ocs2_core/integration/Integrator.h"
 
 using namespace ocs2;
@@ -69,12 +68,11 @@ void testSecondOrderSystem() {
   Eigen::Vector2d x0;
   x0.setZero();
   const double dt = 0.05;
-  Observer<2> observer(sys);
 
   // Adaptive time integrator
   Integrator odeAdaptive;
-  auto observerFunc1 = observer.getCallback(&timeTrajectory1, &stateTrajectory1);
-  odeAdaptive.integrate_adaptive(sys->systemFunction(), observerFunc1, x0, t0, t1);
+  Observer<2> observer1(&stateTrajectory1, &timeTrajectory1);
+  odeAdaptive.integrate_adaptive(*sys, observer1, x0, t0, t1);
 
   EXPECT_NEAR(timeTrajectory1.front(), t0, 1e-6);
   EXPECT_NEAR(timeTrajectory1.back(), t1, 1e-6);
@@ -83,8 +81,8 @@ void testSecondOrderSystem() {
 
   // Equidistant time integrator
   Integrator odeConst;
-  auto observerFunc2 = observer.getCallback(&timeTrajectory2, &stateTrajectory2);
-  odeConst.integrate_const(sys->systemFunction(), observerFunc2, x0, t0, t1, dt);
+  Observer<2> observer2(&stateTrajectory2, &timeTrajectory2);
+  odeConst.integrate_const(*sys, observer2, x0, t0, t1, dt);
 
   EXPECT_NEAR(timeTrajectory2.front(), t0, 1e-6);
   EXPECT_NEAR(timeTrajectory2.back(), t1, 1e-6);
@@ -93,10 +91,10 @@ void testSecondOrderSystem() {
 
   // Integrator with given time trajectory
   Integrator odeTime;
-  auto observerFunc3 = observer.getCallback(nullptr, &stateTrajectory3);
+  Observer<2> observer3(&stateTrajectory3);
 
   // integrate with given time trajectory
-  odeTime.integrate_times(sys->systemFunction(), observerFunc3, x0, timeTrajectory1.begin(), timeTrajectory1.end());
+  odeTime.integrate_times(*sys, observer3, x0, timeTrajectory1.begin(), timeTrajectory1.end());
 
   EXPECT_NEAR(stateTrajectory3.back()(1), 1.0, 1e-3);
 }
@@ -139,7 +137,6 @@ TEST(IntegrationTest, model_data_test) {
   sys->setController(controller.get());
 
   ODE45<2> integrator;  // integrate adaptive
-  Observer<2> observer(sys);
 
   std::vector<double> timeTrajectory;
   std::vector<Eigen::Matrix<double, 2, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 2, 1>>> stateTrajectory;
@@ -147,12 +144,12 @@ TEST(IntegrationTest, model_data_test) {
 
   Eigen::Matrix<double, 2, 1> x0;
   x0.setZero();
-  auto observerFunc = observer.getCallback(&timeTrajectory, &stateTrajectory, &modelDataTrajectory);
 
   // integrate adaptive
   sys->resetNumFunctionCalls();
 
-  integrator.integrate_adaptive(sys->systemFunction(), observerFunc, x0, 0.0, 10.0);
+  Observer<2> observer(&stateTrajectory, &timeTrajectory, &modelDataTrajectory);
+  integrator.integrate_adaptive(*sys, observer, x0, 0.0, 10.0);
 
   Eigen::Vector2d flowMap;
   sys->systemFunction()(x0, flowMap, timeTrajectory.front());
@@ -165,20 +162,6 @@ TEST(IntegrationTest, model_data_test) {
     ASSERT_FLOAT_EQ(modelDataTrajectory[i].time_, timeTrajectory[i])
         << "MESSAGE: ModelData trajectory time does not match the time trajectory!";
   }
-}
-
-TEST(IntegrationTest, simple_integration_dynamic_size) {
-  ODE45<Eigen::Dynamic> integrator;
-
-  std::vector<Eigen::VectorXd> traj;
-
-  auto system = [](const Eigen::VectorXd& x, Eigen::VectorXd& dxdt, double t) { dxdt = Eigen::VectorXd(Eigen::Vector2d(sin(t), cos(t))); };
-  auto observerFunc = [&](const Eigen::VectorXd& x, double t) { traj.push_back(x); };
-  Eigen::VectorXd x0 = Eigen::Vector2d(0, 0);
-
-  integrator.integrate_adaptive(system, observerFunc, x0, 0.0, M_PI);
-
-  EXPECT_TRUE(traj.back().isApprox(Eigen::Vector2d(2.0, 0.0), 1e-3));
 }
 
 TEST(IntegrationTest, integratorType_from_string) {

@@ -52,13 +52,20 @@ class IntegratorBase {
   using scalar_t = typename DIMENSIONS::scalar_t;
   using state_vector_t = typename DIMENSIONS::state_vector_t;
 
+  using system_t = OdeBase<STATE_DIM>;
+  using observer_t = Observer<STATE_DIM>;
   using system_func_t = std::function<void(const state_vector_t& x, state_vector_t& dxdt, scalar_t t)>;
   using observer_func_t = std::function<void(const state_vector_t& x, scalar_t t)>;
 
   /**
    * Default constructor
+   * @param [in] eventHandler
    */
-  IntegratorBase() = default;
+  IntegratorBase(const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr = nullptr) : eventHandlerPtr_(std::move(eventHandlerPtr)) {
+    if (!eventHandlerPtr_) {
+      eventHandlerPtr_ = std::shared_ptr<SystemEventHandler<STATE_DIM>>(new SystemEventHandler<STATE_DIM>());
+    }
+  }
 
   /**
    * Default destructor
@@ -68,23 +75,28 @@ class IntegratorBase {
   /**
    * Equidistant integration based on initial and final time as well as step length.
    *
-   * @param [in] system: System function
-   * @param [in] observer: Observer callback
+   * @param [in] system: System dynamics
+   * @param [in] observer: Observer
    * @param [in] initialState: Initial state.
    * @param [in] startTime: Initial time.
    * @param [in] finalTime: Final time.
    * @param [in] dt: Time step.
    */
-  void integrate_const(system_func_t system, observer_func_t observer, const state_vector_t& initialState, scalar_t startTime,
-                       scalar_t finalTime, scalar_t dt) {
-    run_integrate_const(system, observer, initialState, startTime, finalTime, dt);
+  void integrate_const(OdeBase<STATE_DIM>& system, Observer<STATE_DIM>& observer, const state_vector_t& initialState, scalar_t startTime,
+                       scalar_t finalTime, scalar_t dt, int maxNumSteps = std::numeric_limits<int>::max()) {
+    eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
+    observer_func_t callback = [&](const state_vector_t& x, scalar_t t) {
+      observer.observe(system, x, t);
+      eventHandlerPtr_->handleEvent(system, t, x);
+    };
+    run_integrate_const(system.systemFunction(), callback, initialState, startTime, finalTime, dt);
   }
 
   /**
    * Adaptive time integration based on start time and final time.
    *
-   * @param [in] system: System function
-   * @param [in] observer: Observer callback
+   * @param [in] system: System dynamics
+   * @param [in] observer: Observer
    * @param [in] initialState: Initial state.
    * @param [in] startTime: Initial time.
    * @param [in] finalTime: Final time.
@@ -92,16 +104,22 @@ class IntegratorBase {
    * @param [in] AbsTol: The absolute tolerance error for ode solver.
    * @param [in] RelTol: The relative tolerance error for ode solver.
    */
-  void integrate_adaptive(system_func_t system, observer_func_t observer, const state_vector_t& initialState, scalar_t startTime,
-                          scalar_t finalTime, scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3) {
-    run_integrate_adaptive(system, observer, initialState, startTime, finalTime, dtInitial, AbsTol, RelTol);
+  void integrate_adaptive(OdeBase<STATE_DIM>& system, Observer<STATE_DIM>& observer, const state_vector_t& initialState, scalar_t startTime,
+                          scalar_t finalTime, scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3,
+                          int maxNumSteps = std::numeric_limits<int>::max()) {
+    eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
+    observer_func_t callback = [&](const state_vector_t& x, scalar_t t) {
+      observer.observe(system, x, t);
+      eventHandlerPtr_->handleEvent(system, t, x);
+    };
+    run_integrate_adaptive(system.systemFunction(), callback, initialState, startTime, finalTime, dtInitial, AbsTol, RelTol);
   }
 
   /**
    * Output integration based on a given time trajectory.
    *
-   * @param [in] system: System function
-   * @param [in] observer: Observer callback
+   * @param [in] system: System dynamics
+   * @param [in] observer: Observer
    * @param [in] initialState: Initial state.
    * @param [in] beginTimeItr: The iterator to the beginning of the time stamp trajectory.
    * @param [in] endTimeItr: The iterator to the end of the time stamp trajectory.
@@ -109,10 +127,16 @@ class IntegratorBase {
    * @param [in] AbsTol: The absolute tolerance error for ode solver.
    * @param [in] RelTol: The relative tolerance error for ode solver.
    */
-  void integrate_times(system_func_t system, observer_func_t observer, const state_vector_t& initialState,
+  void integrate_times(OdeBase<STATE_DIM>& system, Observer<STATE_DIM>& observer, const state_vector_t& initialState,
                        typename scalar_array_t::const_iterator beginTimeItr, typename scalar_array_t::const_iterator endTimeItr,
-                       scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3) {
-    run_integrate_times(system, observer, initialState, beginTimeItr, endTimeItr, dtInitial, AbsTol, RelTol);
+                       scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3,
+                       int maxNumSteps = std::numeric_limits<int>::max()) {
+    eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
+    observer_func_t callback = [&](const state_vector_t& x, scalar_t t) {
+      observer.observe(system, x, t);
+      eventHandlerPtr_->handleEvent(system, t, x);
+    };
+    run_integrate_times(system.systemFunction(), callback, initialState, beginTimeItr, endTimeItr, dtInitial, AbsTol, RelTol);
   }
 
  protected:
@@ -125,6 +149,9 @@ class IntegratorBase {
   virtual void run_integrate_times(system_func_t system, observer_func_t observer, const state_vector_t& initialState,
                                    typename scalar_array_t::const_iterator beginTimeItr, typename scalar_array_t::const_iterator endTimeItr,
                                    scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol) = 0;
+
+ private:
+  std::shared_ptr<SystemEventHandler<STATE_DIM>> eventHandlerPtr_;
 };
 
 }  // namespace ocs2

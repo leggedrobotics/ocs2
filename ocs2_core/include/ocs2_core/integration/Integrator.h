@@ -120,7 +120,7 @@ class Integrator final : public IntegratorBase<STATE_DIM> {
   /**
    * Default constructor
    */
-  Integrator(const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr = nullptr) : BASE(std::move(eventHandlerPtr)) {};
+  Integrator(const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr = nullptr) : BASE(std::move(eventHandlerPtr)){};
 
   /**
    * Default destructor

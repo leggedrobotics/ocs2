@@ -61,7 +61,8 @@ class IntegratorBase {
    * Default constructor
    * @param [in] eventHandler
    */
-  IntegratorBase(const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr = nullptr) : eventHandlerPtr_(std::move(eventHandlerPtr)) {
+  IntegratorBase(const std::shared_ptr<SystemEventHandler<STATE_DIM>>& eventHandlerPtr = nullptr)
+      : eventHandlerPtr_(std::move(eventHandlerPtr)) {
     if (!eventHandlerPtr_) {
       eventHandlerPtr_ = std::shared_ptr<SystemEventHandler<STATE_DIM>>(new SystemEventHandler<STATE_DIM>());
     }

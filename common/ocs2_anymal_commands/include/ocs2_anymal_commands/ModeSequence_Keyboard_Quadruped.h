@@ -15,6 +15,7 @@
 #include <vector>
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/command/ModeSequence_ROS_Interface.h>
+#include <ocs2_core/misc/LoadData.h>
 #include <ocs2_switched_model_interface/core/MotionPhaseDefinition.h>
 
 namespace switched_model {
@@ -40,7 +41,7 @@ class ModeSequence_Keyboard_Quadruped : public ocs2::ModeSequence_ROS_Interface<
    */
   ModeSequence_Keyboard_Quadruped(const std::string& gaitFile, const std::string& robotName = "robot", bool verbose = false)
       : BASE(robotName) {
-    loadStdVector(gaitFile, "list", gaitList_, verbose);
+    ocs2::loadData::loadStdVector(gaitFile, "list", gaitList_, verbose);
 
     gaitBanck_.clear();
     for (const auto& s : gaitList_) {

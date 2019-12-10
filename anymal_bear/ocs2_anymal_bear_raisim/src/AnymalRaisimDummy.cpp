@@ -22,8 +22,7 @@ int main(int argc, char* argv[]) {
   std::shared_ptr<interface_t> anymal_interface(
       new interface_t(ros::package::getPath("ocs2_anymal_bear") + "/config/" + taskFileFolderName));
 
-  std::string urdf_param = "/ocs2_anymal_bear_description";
-
+  const std::string urdf_param = "/ocs2_anymal_bear_description";
   std::string urdf;
   if (!ros::param::get(urdf_param, urdf)) {
     throw ros::Exception("Error reading ros parameter: " + urdf_param);
@@ -35,30 +34,19 @@ int main(int argc, char* argv[]) {
 
   anymal::AnymalRaisimConversions conversions;
 
-  std::vector<std::string> orderedJointNames{"LF_HAA", "LF_HFE", "LF_KFE", "RF_HAA", "RF_HFE", "RF_KFE",
-                                             "LH_HAA", "LH_HFE", "LH_KFE", "RH_HAA", "RH_HFE", "RH_KFE"};
-  ocs2::Rollout_Settings rolloutSettings;
-  rolloutSettings.minTimeStep_ = 1.0 / 400;
+  ocs2::RaisimRolloutSettings raisimRolloutSettings;
+  raisimRolloutSettings.loadSettings(ros::package::getPath("ocs2_anymal_bear_raisim") + "/config/raisim_rollout.info", "rollout");
+
   ocs2::RaisimRollout<STATE_DIM, INPUT_DIM> simRollout(
       urdf,
       std::bind(&anymal::AnymalRaisimConversions::stateToRaisimGenCoordGenVel, &conversions, std::placeholders::_1, std::placeholders::_2),
       std::bind(&anymal::AnymalRaisimConversions::raisimGenCoordGenVelToState, &conversions, std::placeholders::_1, std::placeholders::_2),
       std::bind(&anymal::AnymalRaisimConversions::inputToRaisimGeneralizedForce, &conversions, std::placeholders::_1, std::placeholders::_2,
                 std::placeholders::_3, std::placeholders::_4, std::placeholders::_5),
-      orderedJointNames,
       std::bind(&anymal::AnymalRaisimConversions::extractModelData, &conversions, std::placeholders::_1, std::placeholders::_2),
-      rolloutSettings, raisim::ControlMode::VELOCITY_PLUS_FEEDFORWARD_TORQUE,
+      raisimRolloutSettings,
       std::bind(&anymal::AnymalRaisimConversions::inputToRaisimPdTargets, std::placeholders::_1, std::placeholders::_2,
                 std::placeholders::_3, std::placeholders::_4, std::placeholders::_5));
-
-  simRollout.setSimulatorStateOnRolloutRunAlways_ = false;
-  simRollout.setSimulatorStateOnRolloutRunOnce_ = true;
-
-  Eigen::VectorXd pGains(18);
-  pGains.setZero();
-  Eigen::VectorXd dGains(18);
-  dGains.setConstant(5.0);
-  simRollout.setPdGains(pGains, dGains);
 
   anymal_mrt->initRollout(&simRollout);
 

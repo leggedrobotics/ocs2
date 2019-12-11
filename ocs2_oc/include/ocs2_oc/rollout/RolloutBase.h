@@ -123,12 +123,14 @@ class RolloutBase {
    * @param [out] postEventIndicesStock: Indices containing past-the-end index of events trigger.
    * @param [out] stateTrajectory: The state trajectory.
    * @param [out] inputTrajectory: The control input trajectory.
+   * @param [out] modelDataTrajectoryPtr: A pointer to the model data trajectory.
    *
    * @return The final state (state jump is considered if it took place)
    */
   state_vector_t run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, controller_t* controller,
                      const scalar_array_t& eventTimes, scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock,
-                     state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory) {
+                     state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory,
+                     ModelDataBase::array_t* modelDataTrajectoryPtr = nullptr) {
     if (initTime > finalTime) {
       throw std::runtime_error("Initial time should be less-equal to final time.");
     }
@@ -159,7 +161,7 @@ class RolloutBase {
     }  // end of for loop
 
     return runImpl(std::move(timeIntervalArray), initState, controller, timeTrajectory, postEventIndicesStock, stateTrajectory,
-                   inputTrajectory);
+                   inputTrajectory, modelDataTrajectoryPtr);
   }
 
   /**
@@ -215,12 +217,13 @@ class RolloutBase {
    * @param [out] postEventIndicesStock: Indices containing past-the-end index of events trigger.
    * @param [out] stateTrajectory: The state trajectory.
    * @param [out] inputTrajectory: The control input trajectory.
+   * @param [out] modelDataTrajectoryPtr: A pointer to the model data trajectory.
    *
    * @return The final state (state jump is considered if it took place)
    */
   virtual state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
                                  scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, state_vector_array_t& stateTrajectory,
-                                 input_vector_array_t& inputTrajectory) = 0;
+                                 input_vector_array_t& inputTrajectory, ModelDataBase::array_t* modelDataTrajectoryPtr) = 0;
 
   /**
    * Checks for the numerical stability if Rollout_Settings::checkNumericalStability_ is true.

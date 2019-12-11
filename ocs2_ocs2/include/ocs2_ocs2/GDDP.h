@@ -82,13 +82,10 @@ class GDDP {
   using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
   using size_array_t = typename DIMENSIONS::size_array_t;
   using size_array2_t = typename DIMENSIONS::size_array2_t;
+  using scalar_array3_t = typename DIMENSIONS::scalar_array3_t;
   using scalar_t = typename DIMENSIONS::scalar_t;
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;
   using scalar_array2_t = typename DIMENSIONS::scalar_array2_t;
-  using eigen_scalar_t = typename DIMENSIONS::eigen_scalar_t;
-  using eigen_scalar_array_t = typename DIMENSIONS::eigen_scalar_array_t;
-  using eigen_scalar_array2_t = typename DIMENSIONS::eigen_scalar_array2_t;
-  using eigen_scalar_array3_t = typename DIMENSIONS::eigen_scalar_array3_t;
   using state_vector_t = typename DIMENSIONS::state_vector_t;
   using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
   using state_vector_array2_t = typename DIMENSIONS::state_vector_array2_t;
@@ -183,9 +180,9 @@ class GDDP {
    * Runs the GSLQ to compute the gradient of the cost function w.r.t. the event times.
    *
    * @param [in] eventTimes: The event times vector.
-   * @param [in] dcPtr: A constant pointer to SLQ data collector which already collected the SLQ variables.
+   * @param [in] dataCollectorPtr: A constant pointer to SLQ data collector which already collected the SLQ variables.
    */
-  void run(const scalar_array_t& eventTimes, const slq_data_collector_t* dcPtr);
+  void run(const scalar_array_t& eventTimes, const slq_data_collector_t* dataCollectorPtr);
 
  protected:
   /**
@@ -276,9 +273,8 @@ class GDDP {
    */
   void approximateNominalLQPSensitivity2EventTime(const state_vector_array2_t& sensitivityStateTrajectoriesStock,
                                                   const input_vector_array2_t& sensitivityInputTrajectoriesStock,
-                                                  eigen_scalar_array2_t& nablaqTrajectoriesStock,
-                                                  state_vector_array2_t& nablaQvTrajectoriesStock,
-                                                  input_vector_array2_t& nablaRvTrajectoriesStock, eigen_scalar_array2_t& nablaqFinalStock,
+                                                  scalar_array2_t& nablaqTrajectoriesStock, state_vector_array2_t& nablaQvTrajectoriesStock,
+                                                  input_vector_array2_t& nablaRvTrajectoriesStock, scalar_array2_t& nablaqFinalStock,
                                                   state_vector_array2_t& nablaQvFinalStock) const;
 
   /**
@@ -288,7 +284,7 @@ class GDDP {
    * @param [out] nablasHeuristics: Sensitivity of the Heuristics zero order variation.
    * @param [out] nablaSvHeuristics: Sensitivity of the Heuristics first order state variation.
    */
-  void approximateNominalHeuristicsSensitivity2EventTime(const state_vector_t& sensitivityFinalState, eigen_scalar_t& nablasHeuristics,
+  void approximateNominalHeuristicsSensitivity2EventTime(const state_vector_t& sensitivityFinalState, scalar_t& nablasHeuristics,
                                                          state_vector_t& nablaSvHeuristics) const;
 
   /**
@@ -305,8 +301,8 @@ class GDDP {
    * @param [out] nablaSmTrajectoriesStock: Sensitivity of the Riccati equations's second order variation.
    */
   void solveSensitivityRiccatiEquations(size_t workerIndex, const size_t& eventTimeIndex, const scalar_t& learningRate,
-                                        const eigen_scalar_t& nablasHeuristics, const state_vector_t& nablaSvHeuristics,
-                                        const state_matrix_t& nablaSmHeuristics, eigen_scalar_array2_t& nablasTrajectoriesStock,
+                                        const scalar_t& nablasHeuristics, const state_vector_t& nablaSvHeuristics,
+                                        const state_matrix_t& nablaSmHeuristics, scalar_array2_t& nablasTrajectoriesStock,
                                         state_vector_array2_t& nablaSvTrajectoriesStock, state_matrix_array2_t& nablaSmTrajectoriesStock);
 
   /**
@@ -393,7 +389,7 @@ class GDDP {
   /******************
    * SLQ data collector
    ******************/
-  const slq_data_collector_t* dcPtr_;
+  const slq_data_collector_t* dataCollectorPtr_;
 
   /******************
    * SLQ missing variables
@@ -410,15 +406,15 @@ class GDDP {
   std::vector<std::shared_ptr<riccati_sensitivity_equations_t>> riccatiSensitivityEquationsPtrStock_;
   std::vector<std::unique_ptr<IntegratorBase<riccati_sensitivity_equations_t::S_DIM_>>> riccatiSensitivityIntegratorsPtrStock_;
   //
-  eigen_scalar_array3_t nablaqTrajectoriesStockSet_;
+  scalar_array3_t nablaqTrajectoriesStockSet_;
   state_vector_array3_t nablaQvTrajectoriesStockSet_;
   input_vector_array3_t nablaRvTrajectoriesStockSet_;
-  eigen_scalar_array3_t nablaqFinalStockSet_;
+  scalar_array3_t nablaqFinalStockSet_;
   state_vector_array3_t nablaQvFinalStockSet_;
-  eigen_scalar_array_t nablasHeuristics_;
+  scalar_array_t nablasHeuristics_;
   state_vector_array_t nablaSvHeuristics_;
 
-  eigen_scalar_array3_t nablasTrajectoriesStockSet_;
+  scalar_array3_t nablasTrajectoriesStockSet_;
   state_vector_array3_t nablaSvTrajectoriesStockSet_;
   state_matrix_array3_t nablaSmTrajectoriesStockSet_;
   input_vector_array3_t nablaLvTrajectoriesStockSet_;

@@ -68,10 +68,7 @@ class Observer {
    */
   explicit Observer(state_vector_array_t* stateTrajectoryPtr = nullptr, scalar_array_t* timeTrajectoryPtr = nullptr,
                     model_data_array_t* modelDataTrajectoryPtr = nullptr)
-      : initialCall_(false),
-        timeTrajectoryPtr_(timeTrajectoryPtr),
-        stateTrajectoryPtr_(stateTrajectoryPtr),
-        modelDataTrajectoryPtr_(modelDataTrajectoryPtr) {}
+      : timeTrajectoryPtr_(timeTrajectoryPtr), stateTrajectoryPtr_(stateTrajectoryPtr), modelDataTrajectoryPtr_(modelDataTrajectoryPtr) {}
 
   /**
    * Default destructor.
@@ -97,13 +94,9 @@ class Observer {
     if (modelDataTrajectoryPtr_) {
       // check for initial call
       if (system.nextModelDataPtrIterator() == system.beginModelDataPtrIterator()) {
-        // do nothing, model data not yet available.
-        initialCall_ = true;
-      } else if (initialCall_) {
-        // this is second observer call, retrieve model data from initial call.
-        model_data_t* modelDataPtr = system.beginModelDataPtrIterator()->get();
-        modelDataTrajectoryPtr_->emplace_back(*modelDataPtr);
-        initialCall_ = false;
+        // since the flow map has not been called so far, call it once.
+        state_vector_t flowMap;
+        system.computeFlowMap(time, state, flowMap);
       }
       // get model data from current time step
       while (system.nextModelDataPtrIterator() != system.beginModelDataPtrIterator()) {
@@ -120,7 +113,6 @@ class Observer {
   }
 
  private:
-  bool initialCall_;
   scalar_array_t* timeTrajectoryPtr_;
   state_vector_array_t* stateTrajectoryPtr_;
   model_data_array_t* modelDataTrajectoryPtr_;

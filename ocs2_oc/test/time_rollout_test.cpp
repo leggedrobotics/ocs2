@@ -37,7 +37,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 
-#include "ocs2_oc/rollout/NEWTimeTriggeredRollout.h"
 #include "ocs2_oc/rollout/TimeTriggeredRollout.h"
 #include "ocs2_oc/test/EXP1.h"
 
@@ -45,22 +44,7 @@ using namespace ocs2;
 
 enum { STATE_DIM = 2, INPUT_DIM = 1 };
 
-class TestLogicRules : public HybridLogicRules {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  TestLogicRules() = default;
-  virtual ~TestLogicRules() = default;
-  void set(const scalar_array_t& eventTimes) { eventTimes_ = eventTimes; }
-  void update() override {}
-  void rewind(const scalar_t& lowerBoundTime, const scalar_t& upperBoundTime) override {}
-
- protected:
-  void insertModeSequenceTemplate(const logic_template_type& modeSequenceTemplate, const scalar_t& initTime,
-                                  const scalar_t& finalTime) override{};
-};
-
-TEST(DISABLED_time_triggered_rollout_test, time_triggered_rollout_test) {
+TEST(time_rollout_test, time_rollout_test) {
   double initTime = 0.0;
   double finalTime = 10.0;
 
@@ -82,27 +66,15 @@ TEST(DISABLED_time_triggered_rollout_test, time_triggered_rollout_test) {
   SecondOrderSystem::state_vector_t initState;
   initState.setZero();
 
-  /******************************************************************************************************/
-  /******************************************************************************************************/
-  /******************************************************************************************************/
   // partitioning times
   std::vector<double> partitioningTimes{0.0, 4.0, 5.0, 7.0};
 
   // event times
-  std::shared_ptr<TestLogicRules> logicRules(new TestLogicRules());
-  HybridLogicRulesMachine logicRulesMachine(logicRules);
-
-  // No switch
-  std::vector<double> logicRulesEventTimes = std::vector<double>{3.0, 4.0, 4.0};
-  logicRules->set(logicRulesEventTimes);
-  logicRulesMachine.setLogicRules(logicRules);
-  logicRulesMachine.updateLogicRules(partitioningTimes);
-  logicRulesMachine.display();
+  std::vector<double> eventTimes = std::vector<double>{3.0, 4.0, 4.0};
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
-
   // Rollout Settings
   Rollout_Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-7;
@@ -117,25 +89,27 @@ TEST(DISABLED_time_triggered_rollout_test, time_triggered_rollout_test) {
   rollout_base_t::size_array_t eventsPastTheEndIndeces;
   rollout_base_t::state_vector_array_t stateTrajectory;
   rollout_base_t::input_vector_array_t inputTrajectory;
+  ModelDataBase::array_t modelDataTrajectory;
 
   size_t partitionIndex = 0;
-  rolloutBasePtr->run(partitionIndex, initTime, initState, 4.0, controller.get(), logicRulesMachine, timeTrajectory,
-                      eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
-
-  rolloutBasePtr->display(partitionIndex, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, &inputTrajectory);
+  rolloutBasePtr->run(initTime, initState, finalTime, controller.get(), eventTimes, timeTrajectory, eventsPastTheEndIndeces,
+                      stateTrajectory, inputTrajectory, &modelDataTrajectory);
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
+  // check sizes
+  const auto totalSize = timeTrajectory.size();
+  ASSERT_EQ(totalSize, stateTrajectory.size());
+  ASSERT_EQ(totalSize, inputTrajectory.size());
+  ASSERT_EQ(totalSize, modelDataTrajectory.size());
 
-  // rollout class
-  //	std::unique_ptr<rollout_base_t> newrolloutBasePtr(new NEWTimeTriggeredRollout<STATE_DIM, INPUT_DIM>(systemDynamics,
-  // rolloutSettings));
-  //
-  //	newrolloutBasePtr->run(partitionIndex, initTime, initState, 4.0, controller.get(), logicRulesMachine,
-  //			timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
-  //
-  //	newrolloutBasePtr->display(partitionIndex, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, &inputTrajectory);
+  // check model data trajectory
+  for (const auto& modelData : modelDataTrajectory) {
+    ASSERT_EQ(modelData.stateDim_, stateTrajectory.front().rows());
+    ASSERT_EQ(modelData.inputDim_, inputTrajectory.front().rows());
+    ASSERT_EQ(modelData.flowMap_.rows(), stateTrajectory.front().rows());
+  }
 }
 
 int main(int argc, char** argv) {

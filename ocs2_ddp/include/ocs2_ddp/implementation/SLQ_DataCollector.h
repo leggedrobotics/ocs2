@@ -73,56 +73,32 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::collect(const slq_t* constSlqPtr) 
   rewindCounter_ = slqPtr->rewindCounter_;
 
   eventTimes_ = slqPtr->getLogicRulesPtr()->eventTimes();
-  //	subsystemsSequence_ = slqPtr->getLogicRulesPtr()->subsystemsSequence();
+  // subsystemsSequence_ = slqPtr->getLogicRulesPtr()->subsystemsSequence();
 
   // optimized controller
   optimizedControllersStock_ = slqPtr->nominalControllersStock_;
+
+  // nominal trajectories (LQ approximation is around the cached trajectories)
+  nominalPostEventIndicesStock_ = slqPtr->cachedPostEventIndicesStock_;
+  nominalTimeTrajectoriesStock_ = slqPtr->cachedTimeTrajectoriesStock_;
+  nominalStateTrajectoriesStock_ = slqPtr->cachedStateTrajectoriesStock_;
+  nominalInputTrajectoriesStock_ = slqPtr->cachedInputTrajectoriesStock_;
 
   /*
    * Data which can be swapped. Note that these variables should have correct size.
    * Otherwise use setOptimizer() to construct them with correct size
    */
-  // nominal trajectories
-  nominalPostEventIndicesStock_.swap(slqPtr->cachedPostEventIndicesStock_);
-  nominalStateTrajectoriesStock_.swap(slqPtr->cachedStateTrajectoriesStock_);
-  nominalTimeTrajectoriesStock_.swap(slqPtr->cachedTimeTrajectoriesStock_);
-  nominalInputTrajectoriesStock_.swap(slqPtr->cachedInputTrajectoriesStock_);
+  // model data trajectory
+  modelDataTrajectoriesStock_.swap(slqPtr->cachedModelDataTrajectoriesStock_);
 
-  // linearized system coefficients
-  AmTrajectoriesStock_.swap(slqPtr->AmTrajectoryStock_);
-  BmTrajectoriesStock_.swap(slqPtr->BmTrajectoryStock_);
-
-  nc1TrajectoriesStock_.swap(slqPtr->nc1TrajectoriesStock_);
-  EvTrajectoriesStock_.swap(slqPtr->EvTrajectoryStock_);
-  CmTrajectoriesStock_.swap(slqPtr->CmTrajectoryStock_);
-  DmTrajectoriesStock_.swap(slqPtr->DmTrajectoryStock_);
-
-  nc2TrajectoriesStock_.swap(slqPtr->nc2TrajectoriesStock_);
-  HvTrajectoriesStock_.swap(slqPtr->HvTrajectoryStock_);
-  FmTrajectoriesStock_.swap(slqPtr->FmTrajectoryStock_);
+  // terminal LQ coefficients
   nc2FinalStock_.swap(slqPtr->nc2FinalStock_);
   HvFinalStock_.swap(slqPtr->HvFinalStock_);
   FmFinalStock_.swap(slqPtr->FmFinalStock_);
 
-  ncIneqTrajectoriesStock_.swap(slqPtr->ncIneqTrajectoriesStock_);
-  hTrajectoryStock_.swap(slqPtr->hTrajectoryStock_);
-  dhdxTrajectoryStock_.swap(slqPtr->dhdxTrajectoryStock_);
-  ddhdxdxTrajectoryStock_.swap(slqPtr->ddhdxdxTrajectoryStock_);
-  dhduTrajectoryStock_.swap(slqPtr->dhduTrajectoryStock_);
-  ddhduduTrajectoryStock_.swap(slqPtr->ddhduduTrajectoryStock_);
-  ddhdudxTrajectoryStock_.swap(slqPtr->ddhdudxTrajectoryStock_);
-
-  // cost quadratic approximation coefficients
   qFinalStock_.swap(slqPtr->qFinalStock_);
   QvFinalStock_.swap(slqPtr->QvFinalStock_);
   QmFinalStock_.swap(slqPtr->QmFinalStock_);
-
-  qTrajectoriesStock_.swap(slqPtr->qTrajectoryStock_);
-  QvTrajectoriesStock_.swap(slqPtr->QvTrajectoryStock_);
-  QmTrajectoriesStock_.swap(slqPtr->QmTrajectoryStock_);
-  RvTrajectoriesStock_.swap(slqPtr->RvTrajectoryStock_);
-  RmTrajectoriesStock_.swap(slqPtr->RmTrajectoryStock_);
-  PmTrajectoriesStock_.swap(slqPtr->PmTrajectoryStock_);
 
   // constrained projected variables
   RmInverseTrajectoriesStock_.swap(slqPtr->RmInverseTrajectoryStock_);
@@ -136,7 +112,7 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::collect(const slq_t* constSlqPtr) 
   DmProjectedTrajectoriesStock_.swap(slqPtr->DmProjectedTrajectoryStock_);
 
   // terminal cost which is interpreted as the Heuristic function
-  sHeuristics_.swap(slqPtr->sHeuristics_);
+  sHeuristics_ = slqPtr->sHeuristics_;
   SvHeuristics_.swap(slqPtr->SvHeuristics_);
   SmHeuristics_.swap(slqPtr->SmHeuristics_);
 
@@ -149,52 +125,10 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::collect(const slq_t* constSlqPtr) 
   SveTrajectoriesStock_.swap(slqPtr->SveTrajectoryStock_);
   sTrajectoriesStock_.swap(slqPtr->sTrajectoryStock_);
 
-  // SLQ missing variables flow-map value
-  calculateFlowMap(constSlqPtr, nominalTimeTrajectoriesStock_, nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_,
-                   nominalFlowMapTrajectoriesStock_);
-
   // state-input constraints derivatives w.r.t. to the event times
   calculateStateInputConstraintsSensitivity(constSlqPtr, nominalTimeTrajectoriesStock_, nominalStateTrajectoriesStock_,
                                             nominalInputTrajectoriesStock_, EvDevEventTimesTrajectoriesStockSet_,
                                             EvDevEventTimesProjectedTrajectoriesStockSet_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::calculateFlowMap(const slq_t* constSlqPtr,
-                                                               const std::vector<scalar_array_t>& timeTrajectoriesStock,
-                                                               const state_vector_array2_t& stateTrajectoriesStock,
-                                                               const input_vector_array2_t& inputTrajectoriesStock,
-                                                               state_vector_array2_t& flowMapTrajectoriesStock) {
-  auto* slqPtr = const_cast<slq_t*>(constSlqPtr);
-
-  flowMapTrajectoriesStock.resize(constSlqPtr->numPartitions_);
-
-  for (size_t i = 0; i < constSlqPtr->numPartitions_; i++) {
-    // skip the inactive subsystems
-    if (i < constSlqPtr->initActivePartition_ || i > constSlqPtr->finalActivePartition_) {
-      flowMapTrajectoriesStock[i].clear();
-      continue;
-    }
-
-    const size_t N = timeTrajectoriesStock[i].size();
-    flowMapTrajectoriesStock[i].resize(N);
-
-    auto timeTriggeredRolloutPtr = dynamic_cast<TimeTriggeredRollout<STATE_DIM, INPUT_DIM>*>(rolloutPtr_.get());
-    if (!timeTriggeredRolloutPtr) {
-      throw std::runtime_error("The Rollout pointer provided to SLQ_DataCollector is not of type TimeTriggeredRollout.");
-    }
-
-    // set controller
-    timeTriggeredRolloutPtr->systemDynamicsPtr()->setController(&(slqPtr->nominalControllersStock_[i]));
-
-    for (size_t k = 0; k < N; k++) {
-      timeTriggeredRolloutPtr->systemDynamicsPtr()->computeFlowMap(timeTrajectoriesStock[i][k], stateTrajectoriesStock[i][k],
-                                                                   inputTrajectoriesStock[i][k], flowMapTrajectoriesStock[i][k]);
-    }  // end of k loop
-  }    // end of i loop
 }
 
 /******************************************************************************************************/
@@ -273,12 +207,6 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::resizeDataContainer(const size_t& 
   // optimized controller
   optimizedControllersStock_.resize(numPartitions);
 
-  // optimized trajectories
-  //	optimizedTimeTrajectoriesStock_.resize(numPartitions);
-  //	optimizedEventsPastTheEndIndecesStock_.resize(numPartitions);
-  //	optimizedStateTrajectoriesStock_.resize(numPartitions);
-  //	optimizedInputTrajectoriesStock_.resize(numPartitions);
-
   // nominal trajectories
   nominalTimeTrajectoriesStock_.resize(numPartitions);
   nominalPostEventIndicesStock_.resize(numPartitions);
@@ -289,41 +217,17 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::resizeDataContainer(const size_t& 
    * Data which can be swapped. Note that these variables should have correct size.
    * Otherwise use setOptimizer() to construct them with correct size
    */
-  // linearized system coefficients
-  AmTrajectoriesStock_.resize(numPartitions);
-  BmTrajectoriesStock_.resize(numPartitions);
+  // model data trajectory
+  modelDataTrajectoriesStock_.resize(numPartitions);
 
-  nc1TrajectoriesStock_.resize(numPartitions);
-  EvTrajectoriesStock_.resize(numPartitions);
-  CmTrajectoriesStock_.resize(numPartitions);
-  DmTrajectoriesStock_.resize(numPartitions);
-
-  nc2TrajectoriesStock_.resize(numPartitions);
-  HvTrajectoriesStock_.resize(numPartitions);
-  FmTrajectoriesStock_.resize(numPartitions);
+  // terminal LQ coefficients
   nc2FinalStock_.resize(numPartitions);
   HvFinalStock_.resize(numPartitions);
   FmFinalStock_.resize(numPartitions);
 
-  ncIneqTrajectoriesStock_.resize(numPartitions);
-  hTrajectoryStock_.resize(numPartitions);
-  dhdxTrajectoryStock_.resize(numPartitions);
-  ddhdxdxTrajectoryStock_.resize(numPartitions);
-  dhduTrajectoryStock_.resize(numPartitions);
-  ddhduduTrajectoryStock_.resize(numPartitions);
-  ddhdudxTrajectoryStock_.resize(numPartitions);
-
-  // cost quadratic approximation coefficients
   qFinalStock_.resize(numPartitions);
   QvFinalStock_.resize(numPartitions);
   QmFinalStock_.resize(numPartitions);
-
-  qTrajectoriesStock_.resize(numPartitions);
-  QvTrajectoriesStock_.resize(numPartitions);
-  QmTrajectoriesStock_.resize(numPartitions);
-  RvTrajectoriesStock_.resize(numPartitions);
-  RmTrajectoriesStock_.resize(numPartitions);
-  PmTrajectoriesStock_.resize(numPartitions);
 
   // constrained projected variables
   RmInverseTrajectoriesStock_.resize(numPartitions);

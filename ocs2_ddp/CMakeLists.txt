@@ -119,14 +119,13 @@ target_link_libraries(exp2_slq_test
   ${Boost_LIBRARIES}
 )
 
-catkin_add_gtest(testRiccatiEquations
-  test/testRiccatiEquations.cpp
+catkin_add_gtest(riccati_ode_test
+  test/riccati_ode_test.cpp
 )
-target_link_libraries(testRiccatiEquations
+target_link_libraries(riccati_ode_test
   ${catkin_LIBRARIES}
 )
-
-target_link_libraries(testRiccatiEquations
+target_link_libraries(riccati_ode_test
   ${catkin_LIBRARIES}
   ${PROJECT_NAME}_dynamic_size
 )

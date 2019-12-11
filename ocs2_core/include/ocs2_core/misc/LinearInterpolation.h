@@ -85,7 +85,7 @@ class LinearInterpolation {
    * @return {index, alpha}: The greatest smaller time stamp index and the interpolation coefficient [1, 0]
    */
   template <typename Field_T>
-  static inline std::pair<int, scalar_t> interpolate(
+  static std::pair<int, scalar_t> interpolate(
       scalar_t enquiryTime, Field_T& enquiryData, const std::vector<scalar_t>* timeStampPtr, const std::vector<Data_T, Alloc>* dataPtr,
       std::function<const Field_T&(size_type, const std::vector<Data_T, Alloc>*)> accessFun = stdAccessFun) {
     const auto indexAlpha = timeSegment(enquiryTime, timeStampPtr);

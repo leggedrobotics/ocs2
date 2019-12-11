@@ -540,25 +540,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   virtual void riccatiSolverTask() = 0;
 
   /**
-   * compute the merit function for given rollout
-   *
-   * @param [in] timeTrajectoriesStock: simulation time trajectory
-   * @param [in] nc1TrajectoriesStock: rollout's number of active constraints in
-   * each time step
-   * @param [in] EvTrajectoryStock: rollout's constraints value
-   * @param [in] lagrangeTrajectoriesStock: constraint Lagrange multiplier for
-   * the given rollout
-   * @param [in] totalCost: the total cost of the trajectory
-   * @param [out] meritFunctionValue: the total merit function value of the
-   * trajectory
-   * @param [out] constraintISE: Integral of Square Error (ISE)
-   */
-  void calculateMeritFunction(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& nc1TrajectoriesStock,
-                              const constraint1_vector_array2_t& EvTrajectoryStock,
-                              const std::vector<std::vector<Eigen::VectorXd>>& lagrangeTrajectoriesStock, scalar_t totalCost,
-                              scalar_t& meritFunctionValue, scalar_t& constraintISE);
-
-  /**
    * Calculates state-input constraints ISE (Integral of Square Error).
    *
    * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp.

@@ -1016,51 +1016,6 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateMeritFunction(const scalar_array2_t& timeTrajectoriesStock,
-                                                            const size_array2_t& nc1TrajectoriesStock,
-                                                            const constraint1_vector_array2_t& EvTrajectoryStock,
-                                                            const std::vector<std::vector<Eigen::VectorXd>>& lagrangeTrajectoriesStock,
-                                                            scalar_t totalCost, scalar_t& meritFunctionValue, scalar_t& constraintISE) {
-  // add cost function
-  meritFunctionValue = totalCost;
-
-  // add the L2 penalty for constraint violation
-  constraintISE = calculateConstraintISE(timeTrajectoriesStock, nc1TrajectoriesStock, EvTrajectoryStock);
-  double pho = 1.0;
-  if (ddpSettings_.maxNumIterations_ > 1) {
-    pho = (iteration_ - 1) / (ddpSettings_.maxNumIterations_ - 1) * ddpSettings_.meritFunctionRho_;
-  }
-
-  meritFunctionValue += 0.5 * pho * constraintISE;
-
-  // add the the lagrangian term for the constraint
-  scalar_t currentIntermediateMerit;
-  scalar_t nextIntermediateMerit;
-
-  for (size_t i = 0; i < numPartitions_; i++) {
-    // integrates the intermediate merit using the trapezoidal approximation method
-    currentIntermediateMerit = 0.0;
-    nextIntermediateMerit = 0.0;
-    for (size_t k = 0; k + 1 < timeTrajectoriesStock[i].size(); k++) {
-      if (k == 0) {
-        currentIntermediateMerit = EvTrajectoryStock[i][k].head(nc1TrajectoriesStock[i][k]).transpose() * lagrangeTrajectoriesStock[i][k];
-      } else {
-        currentIntermediateMerit = nextIntermediateMerit;
-      }
-
-      nextIntermediateMerit =
-          EvTrajectoryStock[i][k + 1].head(nc1TrajectoriesStock[i][k + 1]).transpose() * lagrangeTrajectoriesStock[i][k + 1];
-
-      meritFunctionValue +=
-          0.5 * (currentIntermediateMerit + nextIntermediateMerit) * (timeTrajectoriesStock[i][k + 1] - timeTrajectoriesStock[i][k]);
-    }  // end of k loop
-  }    // end of i loop
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::calculateConstraintISE(
     const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& nc1TrajectoriesStock,
     const constraint1_vector_array2_t& EvTrajectoriesStock) const {

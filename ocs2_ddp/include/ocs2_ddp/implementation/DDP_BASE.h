@@ -142,6 +142,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
     cachedPostEventIndicesStock_[i].clear();
     cachedStateTrajectoriesStock_[i].clear();
     cachedInputTrajectoriesStock_[i].clear();
+    cachedModelDataTrajectoriesStock_.clear();
 
     // for Riccati equation parallel computation
     SmFinalStock_[i] = state_matrix_t::Zero();
@@ -165,7 +166,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::rolloutTrajectory(
     linear_controller_array_t& controllersStock, scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-    state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock, size_t threadId /*= 0*/) {
+    state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
+    ModelDataBase::array2_t& modelDataTrajectoriesStock, size_t threadId /*= 0*/) {
   const scalar_array_t& eventTimes = BASE::getLogicRulesMachinePtr()->getLogicRulesPtr()->eventTimes();
 
   if (controllersStock.size() != numPartitions_) {
@@ -177,11 +179,13 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
   postEventIndicesStock.resize(numPartitions_);
   stateTrajectoriesStock.resize(numPartitions_);
   inputTrajectoriesStock.resize(numPartitions_);
+  modelDataTrajectoriesStock.resize(numPartitions_);
   for (size_t i = 0; i < numPartitions_; i++) {
     timeTrajectoriesStock[i].clear();
     postEventIndicesStock[i].clear();
     stateTrajectoriesStock[i].clear();
     inputTrajectoriesStock[i].clear();
+    modelDataTrajectoriesStock[i].clear();
   }
 
   // Find until where we have a controller available for the rollout
@@ -247,7 +251,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
       auto controllerPtr = &controllersStock[std::min(i, partitionOfLastController)];
       xCurrent = dynamicsForwardRolloutPtrStock_[threadId]->run(
           controllerRolloutFromTo.first, xCurrent, controllerRolloutFromTo.second, controllerPtr, eventTimes, timeTrajectoriesStock[i],
-          postEventIndicesStock[i], stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
+          postEventIndicesStock[i], stateTrajectoriesStock[i], inputTrajectoriesStock[i], &modelDataTrajectoriesStock[i]);
     }
 
     // Finish rollout with operating points
@@ -261,6 +265,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
         timeTrajectoriesStock[i].pop_back();
         stateTrajectoriesStock[i].pop_back();
         inputTrajectoriesStock[i].pop_back();
+        modelDataTrajectoriesStock[i].pop_back();
         // eventsPastTheEndIndeces is not removed because we need to mark the start of the operatingPointTrajectory as being after an event.
       }
 
@@ -268,9 +273,10 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
       size_array_t eventsPastTheEndIndecesTail;
       state_vector_array_t stateTrajectoryTail;
       input_vector_array_t inputTrajectoryTail;
+      ModelDataBase::array_t modelDataTrajectoryTail;
       xCurrent = operatingTrajectoriesRolloutPtrStock_[threadId]->run(operatingPointsFromTo.first, xCurrent, operatingPointsFromTo.second,
                                                                       nullptr, eventTimes, timeTrajectoryTail, eventsPastTheEndIndecesTail,
-                                                                      stateTrajectoryTail, inputTrajectoryTail);
+                                                                      stateTrajectoryTail, inputTrajectoryTail, &modelDataTrajectoryTail);
 
       // Add controller rollout length to event past the indeces
       for (auto& eventIndex : eventsPastTheEndIndecesTail) {
@@ -283,6 +289,8 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
                                       eventsPastTheEndIndecesTail.end());
       stateTrajectoriesStock[i].insert(stateTrajectoriesStock[i].end(), stateTrajectoryTail.begin(), stateTrajectoryTail.end());
       inputTrajectoriesStock[i].insert(inputTrajectoriesStock[i].end(), inputTrajectoryTail.begin(), inputTrajectoryTail.end());
+      modelDataTrajectoriesStock[i].insert(modelDataTrajectoriesStock[i].end(), modelDataTrajectoryTail.begin(),
+                                           modelDataTrajectoryTail.end());
     }
 
     // total number of steps
@@ -302,6 +310,11 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
       rollout_base_t::display(timeTrajectoriesStock[i], postEventIndicesStock[i], stateTrajectoriesStock[i], &inputTrajectoriesStock[i]);
     }
   }
+
+  for (size_t i = initActivePartition_; i < finalActivePartition_ + 1; i++)
+    if (modelDataTrajectoriesStock[i].size() != timeTrajectoriesStock[i].size()) {
+      throw std::runtime_error("modelDataTrajectoriesStock[i].size() != timeTrajectoriesStock[i].size()");
+    }
 
   // average time step
   return (finalTime_ - initTime_) / numSteps;
@@ -564,10 +577,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
     // number of the intermediate LQ variables
     auto N = nominalTimeTrajectoriesStock_[i].size();
 
-    // TODO: delete this after constructing modelDataTrajectoriesStock_ during rollout
-    // model data
-    modelDataTrajectoriesStock_[i].resize(N);
-
     // event times LQ variables
     size_t NE = nominalPostEventIndicesStock_[i].size();
 
@@ -780,7 +789,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::baselineRollout() {
 
   // perform one rollout while the input correction for the type-1 constraint is considered.
   avgTimeStepFP_ = rolloutTrajectory(nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_,
-                                     nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_, threadId);
+                                     nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_, modelDataTrajectoriesStock_, threadId);
 
   // calculate constraint ISE
   calculateRolloutConstraintsISE(nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_,
@@ -825,6 +834,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
   size_array2_t postEventIndicesStock(numPartitions_);
   state_vector_array2_t stateTrajectoriesStock(numPartitions_);
   input_vector_array2_t inputTrajectoriesStock(numPartitions_);
+  ModelDataBase::array2_t modelDataTrajectoriesStock(numPartitions_);
 
   while (true) {
     size_t alphaExp = alphaExpNext_++;
@@ -855,7 +865,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
     controllersStock = initLScontrollersStock_;
     lineSearchWorker(taskId, learningRate, totalCost, stateInputEqConstraintISE, stateEqConstraintISE, stateEqFinalConstraintISE,
                      inequalityConstraintPenalty, inequalityConstraintISE, controllersStock, timeTrajectoriesStock, postEventIndicesStock,
-                     stateTrajectoriesStock, inputTrajectoriesStock);
+                     stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock);
 
     bool terminateLinesearchTasks = false;
     {
@@ -880,6 +890,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
         nominalPostEventIndicesStock_.swap(postEventIndicesStock);
         nominalStateTrajectoriesStock_.swap(stateTrajectoriesStock);
         nominalInputTrajectoriesStock_.swap(inputTrajectoriesStock);
+        modelDataTrajectoriesStock_.swap(modelDataTrajectoriesStock);
 
         // whether to stop all other thread.
         terminateLinesearchTasks = true;
@@ -918,7 +929,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t workerIndex, scalar
                                                       scalar_t& inequalityConstraintISE, linear_controller_array_t& controllersStock,
                                                       scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
                                                       state_vector_array2_t& stateTrajectoriesStock,
-                                                      input_vector_array2_t& inputTrajectoriesStock) {
+                                                      input_vector_array2_t& inputTrajectoriesStock,
+                                                      ModelDataBase::array2_t& modelDataTrajectoriesStock) {
   // modifying uff by local increments
   for (size_t i = 0; i < numPartitions_; i++) {
     for (size_t k = 0; k < controllersStock[i].timeStamp_.size(); k++) {
@@ -929,7 +941,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t workerIndex, scalar
   try {
     // perform a rollout
     scalar_t avgTimeStepFP = rolloutTrajectory(controllersStock, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
-                                               inputTrajectoriesStock, workerIndex);
+                                               inputTrajectoriesStock, modelDataTrajectoriesStock, workerIndex);
 
     // calculate rollout constraints
     calculateRolloutConstraintsISE(timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock,
@@ -1169,6 +1181,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::swapNominalTrajectoriesToCache() {
   cachedPostEventIndicesStock_.swap(nominalPostEventIndicesStock_);
   cachedStateTrajectoriesStock_.swap(nominalStateTrajectoriesStock_);
   cachedInputTrajectoriesStock_.swap(nominalInputTrajectoriesStock_);
+  cachedModelDataTrajectoriesStock_.swap(modelDataTrajectoriesStock_);
 }
 
 /******************************************************************************************************/
@@ -1641,6 +1654,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
    * model data
    */
   modelDataTrajectoriesStock_.resize(numPartitions);
+  cachedModelDataTrajectoriesStock_.resize(numPartitions);
 
   /*
    * final LQ approximate variables
@@ -1667,7 +1681,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
   // initial controller rollout
   forwardPassTimer_.startTimer();
   avgTimeStepFP_ = rolloutTrajectory(nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_,
-                                     nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_);
+                                     nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_, modelDataTrajectoriesStock_);
   forwardPassTimer_.endTimer();
 
   // This is necessary for:

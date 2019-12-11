@@ -207,19 +207,6 @@ class SLQ_DataCollector {
   void resizeDataContainer(const size_t& numPartitions);
 
   /**
-   * Calculates the time derivatives of the nominal state trajectory.
-   *
-   * @param [in] constSlqPtr: A pointer to the SLQ instance.
-   * @param [in] timeTrajectoriesStock: The time trajectory stamp.
-   * @param [in] stateTrajectoriesStock: The state trajectory.
-   * @param [in] inputTrajectoriesStock: The control input trajectory.
-   * @param [out] modelDataTrajectoriesStock: The model data trajectory to which flow maps will be saved.
-   */
-  void calculateFlowMap(const slq_t* constSlqPtr, const std::vector<scalar_array_t>& timeTrajectoriesStock,
-                        const state_vector_array2_t& stateTrajectoriesStock, const input_vector_array2_t& inputTrajectoriesStock,
-                        ModelDataBase::array2_t& modelDataTrajectoriesStock) const;
-
-  /**
    * Calculates sensitivity of the state-input constraints to event times.
    *
    * @param [in] constSlqPtr: A pointer to the SLQ instance.

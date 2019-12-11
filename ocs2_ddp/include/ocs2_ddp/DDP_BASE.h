@@ -195,20 +195,19 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * in time period [initTime, finalTime].
    *
    * @param [in] controllersStock: Array of control policies.
-   * @param [out] timeTrajectoriesStock: Array of trajectories containing the
-   * output time trajectory stamp.
+   * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
    * @param [out] postEventIndicesStock: Array of the post-event indices.
-   * @param [out] stateTrajectoriesStock: Array of trajectories containing the
-   * output state trajectory.
-   * @param [out] inputTrajectoriesStock: Array of trajectories containing the
-   * output control input trajectory.
+   * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
+   * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
+   * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
    * @param [in] threadId: Working thread (default is 0).
    *
    * @return average time step.
    */
   scalar_t rolloutTrajectory(linear_controller_array_t& controllersStock, scalar_array2_t& timeTrajectoriesStock,
                              size_array2_t& postEventIndicesStock, state_vector_array2_t& stateTrajectoriesStock,
-                             input_vector_array2_t& inputTrajectoriesStock, size_t threadId = 0);
+                             input_vector_array2_t& inputTrajectoriesStock, ModelDataBase::array2_t& modelDataTrajectoriesStock,
+                             size_t threadId = 0);
 
   /**
    * Calculates a rollout constraints. It uses the given rollout trajectories
@@ -526,12 +525,14 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [out] postEventIndicesStock
    * @param [out] stateTrajectoriesStock
    * @param [out] inputTrajectoriesStock
+   * @param [out] modelDataTrajectoriesStock
    */
   void lineSearchWorker(size_t workerIndex, scalar_t learningRate, scalar_t& totalCost, scalar_t& stateInputEqConstraintISE,
                         scalar_t& stateEqConstraintISE, scalar_t& stateEqFinalConstraintISE, scalar_t& inequalityConstraintPenalty,
                         scalar_t& inequalityConstraintISE, linear_controller_array_t& controllersStock,
                         scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-                        state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock);
+                        state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
+                        ModelDataBase::array2_t& modelDataTrajectoriesStock);
 
   /**
    * Solves Riccati equations for the partitions assigned to the given thread.
@@ -705,6 +706,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   // model data trajectory
   ModelDataBase::array2_t modelDataTrajectoriesStock_;
+  ModelDataBase::array2_t cachedModelDataTrajectoriesStock_;
 
   size_array2_t nc2FinalStock_;
   constraint2_vector_array2_t HvFinalStock_;

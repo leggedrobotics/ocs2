@@ -80,11 +80,11 @@ struct ModelDataBase {
    * @param [in] inputDim: The dimension of the input vecotr.
    */
   void checkSizes(int stateDim, int inputDim) const {
-    //    assert(stateDim_ == stateDim);
-    //    assert(inputDim_ == inputDim);
+    assert(stateDim_ == stateDim);
+    assert(inputDim_ == inputDim);
 
     // dynamics flow map
-    //    assert(flowMap_.size() == stateDim);
+    assert(flowMap_.size() == stateDim);
     assert(flowMapStateDerivative_.rows() == stateDim);
     assert(flowMapStateDerivative_.cols() == stateDim);
     assert(flowMapInputDerivative_.rows() == stateDim);

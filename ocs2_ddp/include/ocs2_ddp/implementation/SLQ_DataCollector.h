@@ -89,7 +89,7 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::collect(const slq_t* constSlqPtr) 
    * Otherwise use setOptimizer() to construct them with correct size
    */
   // model data trajectory
-  modelDataTrajectoriesStock_.swap(slqPtr->modelDataTrajectoriesStock_);
+  modelDataTrajectoriesStock_.swap(slqPtr->cachedModelDataTrajectoriesStock_);
 
   // terminal LQ coefficients
   nc2FinalStock_.swap(slqPtr->nc2FinalStock_);
@@ -125,50 +125,10 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::collect(const slq_t* constSlqPtr) 
   SveTrajectoriesStock_.swap(slqPtr->SveTrajectoryStock_);
   sTrajectoriesStock_.swap(slqPtr->sTrajectoryStock_);
 
-  // TODO: (delete this) SLQ missing variables flow-map value
-  calculateFlowMap(constSlqPtr, nominalTimeTrajectoriesStock_, nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_,
-                   modelDataTrajectoriesStock_);
-
   // state-input constraints derivatives w.r.t. to the event times
   calculateStateInputConstraintsSensitivity(constSlqPtr, nominalTimeTrajectoriesStock_, nominalStateTrajectoriesStock_,
                                             nominalInputTrajectoriesStock_, EvDevEventTimesTrajectoriesStockSet_,
                                             EvDevEventTimesProjectedTrajectoriesStockSet_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::calculateFlowMap(const slq_t* constSlqPtr,
-                                                               const std::vector<scalar_array_t>& timeTrajectoriesStock,
-                                                               const state_vector_array2_t& stateTrajectoriesStock,
-                                                               const input_vector_array2_t& inputTrajectoriesStock,
-                                                               ModelDataBase::array2_t& modelDataTrajectoriesStock) const {
-  auto* slqPtr = const_cast<slq_t*>(constSlqPtr);
-
-  for (size_t i = 0; i < constSlqPtr->numPartitions_; i++) {
-    // skip the inactive subsystems
-    if (i < constSlqPtr->initActivePartition_ || i > constSlqPtr->finalActivePartition_) {
-      continue;
-    }
-
-    const size_t N = timeTrajectoriesStock[i].size();
-
-    auto timeTriggeredRolloutPtr = dynamic_cast<TimeTriggeredRollout<STATE_DIM, INPUT_DIM>*>(rolloutPtr_.get());
-    if (!timeTriggeredRolloutPtr) {
-      throw std::runtime_error("The Rollout pointer provided to SLQ_DataCollector is not of type TimeTriggeredRollout.");
-    }
-
-    // set controller
-    timeTriggeredRolloutPtr->systemDynamicsPtr()->setController(&(slqPtr->nominalControllersStock_[i]));
-
-    state_vector_t flowMap;
-    for (size_t k = 0; k < N; k++) {
-      timeTriggeredRolloutPtr->systemDynamicsPtr()->computeFlowMap(timeTrajectoriesStock[i][k], stateTrajectoriesStock[i][k],
-                                                                   inputTrajectoriesStock[i][k], flowMap);
-      modelDataTrajectoriesStock[i][k].flowMap_ = flowMap;
-    }  // end of k loop
-  }    // end of i loop
 }
 
 /******************************************************************************************************/

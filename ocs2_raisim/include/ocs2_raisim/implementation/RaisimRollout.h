@@ -35,25 +35,29 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 RaisimRollout<STATE_DIM, INPUT_DIM>::RaisimRollout(std::string urdf, state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel,
                                                    raisim_gen_coord_gen_vel_to_state_t raisimGenCoordGenVelToState,
                                                    input_to_raisim_generalized_force_t inputToRaisimGeneralizedForce,
-                                                   std::vector<std::string> orderedJointNames,
-                                                   data_extraction_callback_t dataExtractionCallback, Rollout_Settings rolloutSettings)
-    : Base(std::move(rolloutSettings)),
-      setSimulatorStateOnRolloutRunAlways_(true),
-      setSimulatorStateOnRolloutRunOnce_(false),
+                                                   data_extraction_callback_t dataExtractionCallback,
+                                                   RaisimRolloutSettings raisimRolloutSettings,
+                                                   input_to_raisim_pd_targets_t inputToRaisimPdTargets)
+    : Base(raisimRolloutSettings.rolloutSettings_),
+      raisimRolloutSettings_(std::move(raisimRolloutSettings)),
       urdf_(std::move(urdf)),
-      orderedJointNames_(std::move(orderedJointNames)),
       ground_(nullptr),
       system_(nullptr),
       stateToRaisimGenCoordGenVel_(std::move(stateToRaisimGenCoordGenVel)),
       raisimGenCoordGenVelToState_(std::move(raisimGenCoordGenVelToState)),
       inputToRaisimGeneralizedForce_(std::move(inputToRaisimGeneralizedForce)),
-      dataExtractionCallback_(std::move(dataExtractionCallback)) {
+      dataExtractionCallback_(std::move(dataExtractionCallback)),
+      inputToRaisimPdTargets_(std::move(inputToRaisimPdTargets)) {
   world_.setTimeStep(this->settings().minTimeStep_);
 
   // avoid self-collisions
   constexpr CollisionGroup collisionGroup = 0b10;
   constexpr CollisionGroup collisionMask = 0b01;
-  system_ = world_.addArticulatedSystem(urdf_, "", orderedJointNames_, collisionGroup, collisionMask);
+  system_ = world_.addArticulatedSystem(urdf_, "", raisimRolloutSettings_.orderedJointNames_, collisionGroup, collisionMask);
+  system_->setControlMode(raisimRolloutSettings_.controlMode_);
+  if (raisimRolloutSettings_.controlMode_ != raisim::ControlMode::FORCE_AND_TORQUE) {
+    system_->setPdGains(raisimRolloutSettings_.pGains_, raisimRolloutSettings_.dGains_);
+  }
 
   std::cerr << "\nInstantiated Raisim System with DoF = " << system_->getDOF() << std::endl;
   const auto bodyNames = system_->getBodyNames();
@@ -84,13 +88,19 @@ RaisimRollout<STATE_DIM, INPUT_DIM>::RaisimRollout(std::string urdf, state_to_ra
 template <size_t STATE_DIM, size_t INPUT_DIM>
 RaisimRollout<STATE_DIM, INPUT_DIM>::RaisimRollout(const RaisimRollout& other)
     : RaisimRollout(other.urdf_, other.stateToRaisimGenCoordGenVel_, other.raisimGenCoordGenVelToState_,
-                    other.inputToRaisimGeneralizedForce_, other.orderedJointNames_, other.dataExtractionCallback_, other.settings()) {
-  setSimulatorStateOnRolloutRunAlways_ = other.setSimulatorStateOnRolloutRunAlways_;
-  setSimulatorStateOnRolloutRunOnce_ = other.setSimulatorStateOnRolloutRunOnce_;
+                    other.inputToRaisimGeneralizedForce_, other.dataExtractionCallback_, other.raisimRolloutSettings_,
+                    other.inputToRaisimPdTargets_) {
   if (other.heightMap_) {
     deleteGroundPlane();
     heightMap_ = world_.addHeightMap(other.heightMap_);
   }
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void RaisimRollout<STATE_DIM, INPUT_DIM>::setPdGains(const Eigen::VectorXd& pGain, const Eigen::VectorXd& dGain) {
+  raisimRolloutSettings_.pGains_ = pGain;
+  raisimRolloutSettings_.dGains_ = dGain;
+  system_->setPdGains(pGain, dGain);
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
@@ -115,13 +125,13 @@ typename RaisimRollout<STATE_DIM, INPUT_DIM>::state_vector_t RaisimRollout<STATE
   postEventIndicesStock.reserve(numSubsystems - 1);
 
   // Set inital state to simulation if requested
-  if (setSimulatorStateOnRolloutRunAlways_ or setSimulatorStateOnRolloutRunOnce_) {
+  if (raisimRolloutSettings_.setSimulatorStateOnRolloutRunAlways_ or raisimRolloutSettings_.setSimulatorStateOnRolloutRunOnce_) {
     Eigen::VectorXd q_init, dq_init;
     inputTrajectory.emplace_back(controller->computeInput(timeIntervalArray.front().first, initState));
     std::tie(q_init, dq_init) = stateToRaisimGenCoordGenVel_(initState, inputTrajectory.back());
     assert(system_->getGeneralizedCoordinateDim() == q_init.rows());
     system_->setState(q_init, dq_init);
-    setSimulatorStateOnRolloutRunOnce_ = false;
+    raisimRolloutSettings_.setSimulatorStateOnRolloutRunOnce_ = false;
   }
 
   // loop through intervals and integrate each separately
@@ -166,37 +176,43 @@ void RaisimRollout<STATE_DIM, INPUT_DIM>::runSimulation(const time_interval_t& t
       // last step uses potentially smaller time step
       scalar_t shortened_dt = timeInterval.second - time;
       if (shortened_dt < 1e-4) {
-        // for numerical reasons, don't make a tiny step at the end
-        break;
+        break;  // for numerical reasons, don't make a tiny step at the end
       }
       world_.setTimeStep(shortened_dt);
     } else {
       world_.setTimeStep(this->settings().minTimeStep_);
     }
 
-    timeTrajectory.push_back(time);
-    world_.integrate1();  // prepares all dynamical quantities for current time step
+    world_.integrate1();  // prepares all kinematic and dynamic quantities for the current time step
 
-    Eigen::VectorXd raisim_q, raisim_dq;
-    system_->getState(raisim_q, raisim_dq);
+    if (i % raisimRolloutSettings_.controlDecimation_ == 0) {
+      timeTrajectory.push_back(time);
 
-    if (dataExtractionCallback_) {
-      dataExtractionCallback_(time, *system_);
+      if (dataExtractionCallback_) {
+        dataExtractionCallback_(time, *system_);  // must run before evaluating controller
+      }
+
+      Eigen::VectorXd raisim_q, raisim_dq;
+      system_->getState(raisim_q, raisim_dq);
+      stateTrajectory.emplace_back(raisimGenCoordGenVelToState_(raisim_q, raisim_dq));
+      if (stateTrajectory.back().hasNaN()) {
+        throw std::runtime_error("RaisimRollout::runSimulation - nan in state");
+      }
+
+      // input might have been computed by initialization already
+      if (inputTrajectory.size() < stateTrajectory.size()) {
+        inputTrajectory.emplace_back(controller->computeInput(time, stateTrajectory.back()));
+      }
+      Eigen::VectorXd tau = inputToRaisimGeneralizedForce_(time, inputTrajectory.back(), stateTrajectory.back(), raisim_q, raisim_dq);
+      assert(tau.rows() == system_->getDOF());
+      system_->setGeneralizedForce(tau);
+
+      if (system_->getControlMode() != raisim::ControlMode::FORCE_AND_TORQUE) {
+        Eigen::VectorXd pGain, dGain;
+        std::tie(pGain, dGain) = inputToRaisimPdTargets_(time, inputTrajectory.back(), stateTrajectory.back(), raisim_q, raisim_dq);
+        system_->setPdTarget(pGain, dGain);
+      }
     }
-
-    stateTrajectory.emplace_back(raisimGenCoordGenVelToState_(raisim_q, raisim_dq));
-    if (stateTrajectory.back().hasNaN()) {
-      throw std::runtime_error("RaisimRollout::runSimulation -- nan in state");
-    }
-
-    // input might have been computed by initialization already
-    if (inputTrajectory.size() < stateTrajectory.size()) {
-      inputTrajectory.emplace_back(controller->computeInput(time, stateTrajectory.back()));
-    }
-
-    Eigen::VectorXd tau = inputToRaisimGeneralizedForce_(time, inputTrajectory.back(), stateTrajectory.back(), raisim_q, raisim_dq);
-    assert(tau.rows() == system_->getDOF());
-    system_->setGeneralizedForce(tau);
 
     world_.integrate2();  // actually move time foward and change the state
 

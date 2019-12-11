@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_oc/rollout/RolloutBase.h>
+#include <ocs2_raisim/RaisimRolloutSettings.h>
 #include <raisim/World.hpp>
 
 #ifdef USE_RAISIM_VISUALIZER
@@ -67,6 +68,8 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using raisim_gen_coord_gen_vel_to_state_t = std::function<state_vector_t(const Eigen::VectorXd&, const Eigen::VectorXd&)>;
   using input_to_raisim_generalized_force_t =
       std::function<Eigen::VectorXd(double, const input_vector_t&, const state_vector_t&, const Eigen::VectorXd&, const Eigen::VectorXd&)>;
+  using input_to_raisim_pd_targets_t = std::function<std::pair<Eigen::VectorXd, Eigen::VectorXd>(
+      double, const input_vector_t&, const state_vector_t&, const Eigen::VectorXd&, const Eigen::VectorXd&)>;
   using data_extraction_callback_t = std::function<void(double, const raisim::ArticulatedSystem&)>;
 
   /**
@@ -77,18 +80,20 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
    * @param[in] raisimGenCoordGenVelToState: Transformation function that converts Raisim generalized coordinates and velocities to ocs2
    * state
    * @param[in] inputToRaisimGeneralizedForce: Tranformation function that converts ocs2 control input to Raisim generalized force
-   * @param[in] orderedJointNames: Ordered vector of joint names. Parents must be named before children, names must be identical to URDF
-   * joints
    * @param[in] dataExtractionCallback: Optional callback function to extract user-defined information from the simulation at each timestep
    * @param[in] rolloutSettings: The rollout settings.
+   * @param[in] inputToRaisimPdTargets: Transformation function that converts Raisim generalized positions and velocities to Raisim PD
+   * targets (i.e., joint positions and velocities). This argument is only required if controlMode is not FORCE_AND_TORQUE.
    *
    * @note The function handles stateToRaisimGenCoordGenVel, raisimGenCoordGenVelToState, inputToRaisimGeneralizedForce,
-   * dataExtractionCallback must be thread safe, i.e., multiple rollout instances might execute them in parallel
+   * dataExtractionCallback, inputToRaisimPdTargets must be thread safe, i.e., multiple rollout instances might execute them in parallel
    */
   RaisimRollout(std::string urdf, state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel,
                 raisim_gen_coord_gen_vel_to_state_t raisimGenCoordGenVelToState,
-                input_to_raisim_generalized_force_t inputToRaisimGeneralizedForce, std::vector<std::string> orderedJointNames = {},
-                data_extraction_callback_t dataExtractionCallback = nullptr, Rollout_Settings rolloutSettings = Rollout_Settings());
+                input_to_raisim_generalized_force_t inputToRaisimGeneralizedForce,
+                data_extraction_callback_t dataExtractionCallback = nullptr,
+                RaisimRolloutSettings raisimRolloutSettings = RaisimRolloutSettings(),
+                input_to_raisim_pd_targets_t inputToRaisimPdTargets = nullptr);
 
   //! Copy constructor
   RaisimRollout(const RaisimRollout& other);
@@ -101,6 +106,13 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
    * @return Pointer to the created terrain instance
    */
   raisim::HeightMap* generateTerrain(raisim::TerrainProperties properties = raisim::TerrainProperties());
+
+  /**
+   * @brief Save and apply P and D gain values. They only take effect if the controlMode is not FORCE_AND_TORQUE
+   * @param[in] pGain: Proportional (position) gains (dim == degrees of freedom)
+   * @param[in] dGain: Derivative (velocity) gains (dim == degrees of freedom)
+   */
+  void setPdGains(const Eigen::VectorXd& pGain, const Eigen::VectorXd& dGain);
 
  protected:
   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
@@ -124,13 +136,11 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
   void deleteGroundPlane();
 
  public:
-  bool setSimulatorStateOnRolloutRunAlways_;  //! Whether or not to always set the starting state of the rollout to the simulator
-  bool setSimulatorStateOnRolloutRunOnce_;    //! Whether or not to set the starting state to the simulator at the next rollout call only
+  RaisimRolloutSettings raisimRolloutSettings_;
 
  private:
-  // Save some constructor arguments required for copy constructor / cloning
+  // Save some constructor/function arguments required for copy constructor / cloning
   std::string urdf_;
-  std::vector<std::string> orderedJointNames_;
 
   // Handles to Raisim objects
   raisim::World world_;
@@ -149,6 +159,7 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
   raisim_gen_coord_gen_vel_to_state_t raisimGenCoordGenVelToState_;
   input_to_raisim_generalized_force_t inputToRaisimGeneralizedForce_;
   data_extraction_callback_t dataExtractionCallback_;
+  input_to_raisim_pd_targets_t inputToRaisimPdTargets_;
 };
 
 }  // namespace ocs2

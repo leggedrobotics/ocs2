@@ -147,6 +147,42 @@ inline void loadEigenMatrix(const std::string& filename, const std::string& matr
   }
 }
 
+template <typename T>
+inline void loadStdVector(const std::string& filename, const std::string& topicName, std::vector<T>& loadVector, bool verbose = true) {
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(filename, pt);
+
+  std::vector<T> backup;
+  backup.swap(loadVector);
+  loadVector.clear();
+
+  size_t vectorSize = 0;
+  while (true) {
+    try {
+      loadVector.push_back(pt.get<T>(topicName + ".[" + std::to_string(vectorSize) + "]"));
+      vectorSize++;
+    } catch (const std::exception&) {
+      if (vectorSize == 0) {
+        loadVector.swap(backup);  // if nothing could be loaded, keep the old data
+      }
+      break;
+    }
+  }  // end of while loop
+
+  // display
+  if (verbose) {
+    if (vectorSize == 0) {
+      std::cerr << topicName << ": { }";
+    } else {
+      std::cerr << topicName << ": {";
+      for (size_t i = 0; i < vectorSize; i++) {
+        std::cerr << loadVector[i] << ", ";
+      }
+      std::cerr << "\b\b}" << std::endl;
+    }
+  }
+}
+
 }  // namespace loadData
 }  // namespace ocs2
 

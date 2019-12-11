@@ -63,9 +63,10 @@ void RaisimHeightmapRosConverter::publishGridmap(const raisim::HeightMap& height
   gridmapPublisher_->publish(gridMapMsg);
 }
 
-std::unique_ptr<raisim::HeightMap> RaisimHeightmapRosConverter::getHeightmapFromRos(double timeout) {
+std::pair<std::unique_ptr<raisim::HeightMap>, grid_map_msgs::GridMapConstPtr> RaisimHeightmapRosConverter::getHeightmapFromRos(
+    double timeout) {
   auto gridMapMsg = ros::topic::waitForMessage<grid_map_msgs::GridMap>("/raisim_heightmap", ros::Duration(timeout));
-  return gridMapMsg ? convertGridmapToHeightmap(gridMapMsg) : nullptr;
+  return {gridMapMsg ? convertGridmapToHeightmap(gridMapMsg) : nullptr, gridMapMsg};
 }
 
 }  // namespace ocs2

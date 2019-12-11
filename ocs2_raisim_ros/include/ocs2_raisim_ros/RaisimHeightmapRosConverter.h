@@ -45,9 +45,9 @@ class RaisimHeightmapRosConverter {
    * @brief Obtains the raisim heightmap from ros, e.g., if the terrain is created and published by another node
    * @note Using this method without an instantiation of this class assumes that the ros node has already been fully initialized
    * @param[in] timeout Maximum waiting time if no message is received
-   * @return The received raisim heightmap (or nullptr if no message was received before the timeout)
+   * @return The received raisim heightmap and GridMap (or both nullptr if no message was received before the timeout)
    */
-  static std::unique_ptr<raisim::HeightMap> getHeightmapFromRos(double timeout = 5.0);
+  static std::pair<std::unique_ptr<raisim::HeightMap>, grid_map_msgs::GridMapConstPtr> getHeightmapFromRos(double timeout = 5.0);
 
  private:
   ros::NodeHandle nodeHandle_;

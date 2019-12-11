@@ -16,7 +16,7 @@ namespace anymal {
  * @note Raisim q: position (x y z), quaternion (w x y z), joint positions
  * @note Raisim dq: linear vel in world, angular vel in world, joint vel
  */
-class AnymalRaisimConversions {
+class AnymalRaisimConversions final {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -65,6 +65,19 @@ class AnymalRaisimConversions {
    */
   Eigen::VectorXd inputToRaisimGeneralizedForce(double time, const input_vector_t& input, const state_vector_t& state,
                                                 const Eigen::VectorXd& q, const Eigen::VectorXd& dq) const;
+
+  /**
+   * @brief Convert ocs2 control input to RAIsim PD setpoints
+   * @param[in] time: The current time
+   * @param[in] input: The control computed by the ocs2 controller
+   * @param[in] state: The current state
+   * @param[in] q: The current raisim generalized coordinate
+   * @param[in] dq: The current raisim generalized velocity
+   * @return The generalized position and velocities to be used as PD control setpoints by RAIsim
+   */
+  static std::pair<Eigen::VectorXd, Eigen::VectorXd> inputToRaisimPdTargets(double time, const input_vector_t& input,
+                                                                            const state_vector_t& state, const Eigen::VectorXd& q,
+                                                                            const Eigen::VectorXd& dq);
 
   /**
    * @brief extractModelData

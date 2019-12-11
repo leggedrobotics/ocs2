@@ -19,6 +19,7 @@
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 
 #include <ocs2_core/logic/rules/ModeSequenceTemplate.h>
+#include <ocs2_core/misc/LoadData.h>
 
 namespace switched_model {
 
@@ -164,46 +165,12 @@ inline size_t string2ModeNumber(const std::string& modeString) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename T>
-void loadStdVector(const std::string& filename, const std::string& topicName, std::vector<T>& loadVector, bool verbose = true) {
-  boost::property_tree::ptree pt;
-  boost::property_tree::read_info(filename, pt);
-
-  // read the modes from taskFile
-  size_t vectorSize = 0;
-  loadVector.clear();
-  while (true) {
-    try {
-      loadVector.push_back(pt.get<T>(topicName + ".[" + std::to_string(vectorSize) + "]"));
-      vectorSize++;
-    } catch (const std::exception& e) {
-      break;
-    }
-  }  // end of while loop
-
-  // display
-  if (verbose) {
-    if (vectorSize == 0) {
-      std::cerr << topicName << ": { }";
-    } else {
-      std::cerr << topicName << ": {";
-      for (size_t i = 0; i < vectorSize; i++) {
-        std::cerr << loadVector[i] << ", ";
-      }
-      std::cerr << "\b\b}" << std::endl;
-    }
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 inline void loadModes(const std::string& filename, const std::string& topicName, std::vector<SCALAR_T>& switchingModes,
                       bool verbose = true) {
   // read the modes from taskFile
   std::vector<std::string> switchingModesString;
-  loadStdVector(filename, topicName, switchingModesString, false);
+  ocs2::loadData::loadStdVector(filename, topicName, switchingModesString, false);
 
   const size_t numSubsystems = switchingModesString.size();
 
@@ -236,7 +203,7 @@ inline void loadModeSequenceTemplate(const std::string& filename, const std::str
   // read the modes from file
   try {
     loadModes(filename, topicName + ".templateSubsystemsSequence", modeSequenceTemplate.templateSubsystemsSequence_, verbose);
-    loadStdVector(filename, topicName + ".templateSwitchingTimes", modeSequenceTemplate.templateSwitchingTimes_, verbose);
+    ocs2::loadData::loadStdVector(filename, topicName + ".templateSwitchingTimes", modeSequenceTemplate.templateSwitchingTimes_, verbose);
   } catch (const std::exception& e) {
     std::cerr << "WARNING: Failed to load " + topicName + "!" << std::endl;
   }

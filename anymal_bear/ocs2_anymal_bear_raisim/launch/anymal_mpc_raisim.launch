@@ -3,18 +3,18 @@
     <arg name="task_name"  default="mpc"/>
 
     <group if="$(arg rviz)">
-      <include file="$(find ocs2_anymal_visualization)/launch/visualization.launch"/>
+      <include file="$(find ocs2_anymal_bear_visualization)/launch/visualization.launch"/>
     </group>
 
-    <node pkg="ocs2_anymal_interface" type="anymal_mpc_node" name="anymal_mpc_node"
+    <node pkg="ocs2_anymal_bear" type="ocs2_anymal_bear_mpc_node" name="anymal_mpc_node"
           output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
 
-    <node pkg="ocs2_anymal_raisim" type="anymal_dummy_raisim" name="anymal_dummy_raisim"
+    <node pkg="ocs2_anymal_bear_raisim" type="anymal_dummy_raisim" name="anymal_dummy_raisim"
           output="screen" args="$(arg task_name)" launch-prefix=""/>
 
-    <node pkg="ocs2_anymal_interface" type="gait_command_node" name="gait_command_node"
+    <node pkg="ocs2_anymal_commands" type="gait_command_node" name="gait_command_node"
           output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
 
-    <node pkg="ocs2_anymal_interface" type="target_command_node" name="target_command_node"
+    <node pkg="ocs2_anymal_commands" type="target_command_node" name="target_command_node"
           output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
 </launch>

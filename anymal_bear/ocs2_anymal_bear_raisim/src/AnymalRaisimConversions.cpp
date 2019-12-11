@@ -50,9 +50,8 @@ AnymalRaisimConversions::state_vector_t AnymalRaisimConversions::raisimGenCoordG
   return switchedModelStateEstimator_.estimateComkinoModelState(raisimGenCoordGenVelToRbdState(q, dq));
 }
 
-Eigen::VectorXd AnymalRaisimConversions::inputToRaisimGeneralizedForce(double time, const input_vector_t& input,
-                                                                       const state_vector_t& state, const Eigen::VectorXd& q,
-                                                                       const Eigen::VectorXd& dq) const {
+Eigen::VectorXd AnymalRaisimConversions::inputToRaisimGeneralizedForce(double, const input_vector_t& input, const state_vector_t&,
+                                                                       const Eigen::VectorXd& q, const Eigen::VectorXd& dq) const {
   const auto ocs2RbdState = raisimGenCoordGenVelToRbdState(q, dq);
 
   const switched_model::base_coordinate_t qBase = switched_model::getBasePose(ocs2RbdState);
@@ -118,17 +117,24 @@ Eigen::VectorXd AnymalRaisimConversions::inputToRaisimGeneralizedForce(double ti
                                                     Mm.template bottomRightCorner<12, 12>() * qddJoints + Cv.template tail<12>() +
                                                     Gv.template tail<12>() - extForceJoint;
 
-  // p gains on joint velocity level
-  switched_model::joint_coordinate_t kp;
-  kp.setConstant(5.0);
-  ocs2rbdInput += kp.asDiagonal() * (input.tail<12>() - qdJoints);
-
   // convert to raisim input
   Eigen::Matrix<double, 18, 1> raisimInput;
   raisimInput.setZero();
   raisimInput.tail<12>() = ocs2rbdInput;
 
   return raisimInput;
+}
+
+std::pair<Eigen::VectorXd, Eigen::VectorXd> AnymalRaisimConversions::inputToRaisimPdTargets(double, const input_vector_t& input,
+                                                                                            const state_vector_t&, const Eigen::VectorXd& q,
+                                                                                            const Eigen::VectorXd& dq) {
+  Eigen::VectorXd positionSetpoint = q;
+
+  Eigen::VectorXd velocitySetpoint(dq.size());
+  velocitySetpoint.setZero();
+  velocitySetpoint.tail(12) = input.tail<12>();
+
+  return {positionSetpoint, velocitySetpoint};
 }
 
 void AnymalRaisimConversions::extractModelData(double time, const raisim::ArticulatedSystem& sys) {}

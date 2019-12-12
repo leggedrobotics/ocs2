@@ -108,6 +108,12 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
   raisim::HeightMap* generateTerrain(raisim::TerrainProperties properties = raisim::TerrainProperties());
 
   /**
+   * @brief Replaces the default glat ground plane with the given heightMap
+   * @param[in] heightMap The new terrain
+   */
+  void setTerrain(const raisim::HeightMap& heightMap);
+
+  /**
    * @brief Save and apply P and D gain values. They only take effect if the controlMode is not FORCE_AND_TORQUE
    * @param[in] pGain: Proportional (position) gains (dim == degrees of freedom)
    * @param[in] dGain: Derivative (velocity) gains (dim == degrees of freedom)

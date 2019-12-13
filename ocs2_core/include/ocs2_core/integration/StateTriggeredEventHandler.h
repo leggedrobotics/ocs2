@@ -114,7 +114,6 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
     BASE::systemPtr_->computeGuardSurfaces(time, state, guardSurfacesValuesCurrent_);
 
     bool eventTriggered = false;
-
     if (time - lastEventTriggeredTime_ > minEventTimeDifference_) {
       for (size_t i = 0; i < guardSurfacesValuesPrevious_.size(); i++) {
         if (guardSurfacesValuesCurrent_(i) <= 0 && guardSurfacesValuesPrevious_(i) > 0) {
@@ -146,7 +145,6 @@ class StateTriggeredEventHandler : public SystemEventHandler<STATE_DIM> {
     if (systemEventHandlerTriggered_) {
       return BASE::handleEvent(stateTrajectory, timeTrajectory);
     }
-
     // StateTriggered event
     return triggeredEventSurface_;
   }

@@ -9,6 +9,9 @@
 
 #include "ReferenceModel.h"
 #include "Observer.h"
+
+#include <ocs2_core/Dimensions.h>
+
 /*
  * 	This class constructs, contains a section of the reference, which is contained in
  * 	OverallReference and used in BouncingMass SLQ test.
@@ -18,6 +21,12 @@
  */
 class Reference
 {
+	using DIMENSIONS = ocs2::Dimensions<3, 1>;
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+	using state_vector_t = typename DIMENSIONS::state_vector_t;
+	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+	using input_vector_t = typename DIMENSIONS::input_vector_t;
 
 public:
 
@@ -34,7 +43,7 @@ public:
 	 * @param [in] p0: First waypoint of the reference [position,velocity,acceleration]
 	 * @param [in] p1: Second waypoint of the reference
 	 */
-	Reference(double t0, double t1, Eigen::Vector3d p0, Eigen::Vector3d p1);
+	Reference(scalar_t t0, scalar_t t1, state_vector_t p0, state_vector_t p1);
 
 	/*
 	 * Obtain reference input at the current time
@@ -42,7 +51,7 @@ public:
 	 * @param [in] time: current time
 	 * @param [out] input: current reference input
 	 */
-	void getInput(const double time,double &input);
+	void getInput(const scalar_t time,input_vector_t &input);
 
 	/*
 	 * Obtain reference state at current time
@@ -50,7 +59,7 @@ public:
 	 * @param [in] time: current time
 	 * @param [out] x: current reference state
 	 */
-	void getState(const double time,Eigen::Vector3d &x);
+	void getState(const scalar_t time,state_vector_t &x);
 
 	/*
 	 * Extend the reference by integrating the input signal of the next
@@ -60,16 +69,16 @@ public:
 	 * @param [in] refPre: pointer to previous section of the reference
 	 * @param [in] refPost: pointer to the next section of the reference
 	 */
-	void extendref(double delta, Reference* refPre, Reference* refPost);
+	void extendref(scalar_t delta, Reference* refPre, Reference* refPost);
 
 	/*
 	 * Display the reference
 	 */
 	void display();
 
-	double t0_;
-	double t1_;
-	double delta_ = 0;
+	scalar_t t0_;
+	scalar_t t1_;
+	scalar_t delta_ = 0;
 private:
 
 	/*
@@ -81,7 +90,7 @@ private:
 	 * 	@param [in] p0: first waypoint
 	 * 	@param [in] p1: second waypoint
 	 */
-	void Create5thOrdPol(double t0, double t1, Eigen::Vector3d p0, Eigen::Vector3d p1);
+	void Create5thOrdPol(scalar_t t0, scalar_t t1, state_vector_t p0, state_vector_t p1);
 
 	/*
 	 * 	Find the derivative of the polynomial described by a
@@ -89,7 +98,7 @@ private:
 	 *
 	 * 	@param [in]	pol: coefficients describing the fifth order polynomial
 	 */
-	Eigen::Matrix<double, 6 , 1> polyder(Eigen::Matrix<double, 6 , 1> pol);
+	Eigen::Matrix<scalar_t, 6 , 1> polyder(Eigen::Matrix<scalar_t, 6 , 1> pol);
 
 	/*
 	 * 	Interpolate the extended reference signals to find the reference
@@ -98,16 +107,16 @@ private:
 	 * 	@param [in]	time:	current time
 	 * 	@param [out] x: current state
 	 */
-	void interpolate_ext(double time, Eigen::Vector3d &x);
+	void interpolate_ext(scalar_t time, Eigen::Vector3d &x);
 
-	Eigen::Matrix<double, 6, 1> polU_;
-	Eigen::Matrix<double, 6, 1> polX_;
-	Eigen::Matrix<double, 6, 1> polV_;
+	Eigen::Matrix<scalar_t, 6, 1> polU_;
+	Eigen::Matrix<scalar_t, 6, 1> polX_;
+	Eigen::Matrix<scalar_t, 6, 1> polV_;
 
-	std::vector<Eigen::Vector3d> xPre_;
-	std::vector<double> tPre_;
-	std::vector<Eigen::Vector3d> xPost_;
-	std::vector<double> tPost_;
+	std::vector<state_vector_t> xPre_;
+	std::vector<scalar_t> tPre_;
+	std::vector<state_vector_t> xPost_;
+	std::vector<scalar_t> tPost_;
 
 };
 

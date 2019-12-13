@@ -1,13 +1,20 @@
 #include <OverallReference.h>
 
-OverallReference::OverallReference(std::vector<double> trajTimes, std::vector<Eigen::Vector3d> trajStates)
+using DIMENSIONS = ocs2::Dimensions<3, 1>;
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+	using state_vector_t = typename DIMENSIONS::state_vector_t;
+	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+	using input_vector_t = typename DIMENSIONS::input_vector_t;
+
+OverallReference::OverallReference(std::vector<scalar_t> trajTimes, std::vector<state_vector_t> trajStates)
 {
 
 	References_.clear();
 	References_.resize(trajTimes.size()-1);
 
 	switchtimes_ = trajTimes;
-	Eigen::Vector3d x0 = trajStates[0];
+	state_vector_t x0 = trajStates[0];
 
 	for(int i = 0; i < trajTimes.size()-1; i++)
 	{
@@ -17,7 +24,7 @@ OverallReference::OverallReference(std::vector<double> trajTimes, std::vector<Ei
 	}
 }
 
-int OverallReference::getIndex(double time)
+int OverallReference::getIndex(scalar_t time)
 {
 	for(int i = 0; i<switchtimes_.size()-1; i++)
 	{
@@ -30,7 +37,7 @@ int OverallReference::getIndex(double time)
 	return -1;
 }
 
-void OverallReference::getInput(double time, double &input)
+void OverallReference::getInput(scalar_t time, input_vector_t &input)
 {
 	int idx = getIndex(time);
 	if (idx>=0 && idx<References_.size())
@@ -39,16 +46,16 @@ void OverallReference::getInput(double time, double &input)
 	}
 	else
 	{
-		input  = 0;
+		input.setZero();
 	}
 }
 
-void OverallReference::getInput(double t0, double t1, double dt, std::vector<double>& time, std::vector<double>& input)
+void OverallReference::getInput(scalar_t t0, scalar_t t1, scalar_t dt, std::vector<scalar_t>& time, std::vector<input_vector_t>& input)
 {
 	input.clear();
 
-	double inputT;
-	for(double t = t0; t<=t1; t+=dt)
+	input_vector_t inputT;
+	for(scalar_t t = t0; t<=t1; t+=dt)
 	{
 		time.push_back(t);
 
@@ -58,7 +65,7 @@ void OverallReference::getInput(double t0, double t1, double dt, std::vector<dou
 
 }
 
-void OverallReference::getState(int idx, double time, Eigen::Vector3d &x)
+void OverallReference::getState(int idx, scalar_t time, state_vector_t &x)
 {
 	if (idx>=0 && idx<References_.size())
 	{
@@ -77,7 +84,7 @@ void OverallReference::getState(int idx, double time, Eigen::Vector3d &x)
 	}
 }
 
-void OverallReference::getState(double time, Eigen::Vector3d &x)
+void OverallReference::getState(scalar_t time, state_vector_t &x)
 {
 	int idx = getIndex(time);
 	if (idx>=0 && idx<References_.size())
@@ -90,7 +97,7 @@ void OverallReference::getState(double time, Eigen::Vector3d &x)
 	}
 }
 
-void OverallReference::extendref(double delta)
+void OverallReference::extendref(scalar_t delta)
 {
 	for(int i = 0; i<References_.size(); i++)
 	{	
@@ -124,9 +131,9 @@ void OverallReference::display(int i)
 	References_[i].display();
 }
 
-void OverallReference::jumpMap(Eigen::Vector3d &x)
+void OverallReference::jumpMap(state_vector_t &x)
 {
-	double e = 0.95;
+	scalar_t e = 0.95;
 	x[1] = x[1] - (1 + e) * x[1];
 	x[2] = x[2] + 1;
 }

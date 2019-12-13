@@ -45,7 +45,7 @@ public:
 		}
 	}
 
-	void setReference(scalar_array_t& timeReference,scalar_array_t& inputReference)
+	void setReference(scalar_array_t& timeReference,std::vector<input_vector_t>& inputReference)
 	{
 		timeReference_ = timeReference;
 		inputReference_ = inputReference;
@@ -55,35 +55,35 @@ public:
 
 	input_vector_t computeInput(const scalar_t& t, const state_vector_t& x)
 	{
-		size_t CurrentMode = x.tail(1).value();
+		size_t currentMode = x.tail(1).value();
 		size_t numEvents = CtrlEventTimes_.size();
 
-		scalar_t tau_minus = (numEvents>CurrentMode) ? CtrlEventTimes_[CurrentMode] : CtrlEventTimes_.back();
-		scalar_t tau = (numEvents>CurrentMode+1) ? CtrlEventTimes_[CurrentMode+1] : CtrlEventTimes_.back();
-		scalar_t tau_plus = (numEvents>CurrentMode+2) ? CtrlEventTimes_[CurrentMode+2] : CtrlEventTimes_.back();
+		scalar_t tauMinus = (numEvents>currentMode) ? CtrlEventTimes_[currentMode] : CtrlEventTimes_.back();
+		scalar_t tau = (numEvents>currentMode+1) ? CtrlEventTimes_[currentMode+1] : CtrlEventTimes_.back();
+		scalar_t tauPlus = (numEvents>currentMode+2) ? CtrlEventTimes_[currentMode+2] : CtrlEventTimes_.back();
 
 
-		bool pastAllEvents = tau_minus == tau && t>tau_minus;
+		bool pastAllEvents = (currentMode>=numEvents-1) && (t>tauMinus);
 		scalar_t eps = OCS2NumericTraits<scalar_t>::weakEpsilon();
 
-		if((t>tau_minus && t<tau)  || pastAllEvents)
+		if((t>tauMinus && t<tau)  || pastAllEvents)
 		{
 			return CtrlPtr_->computeInput(t,x);
 		}
-		else if (t<tau_minus)
+		else if (t<tauMinus)
 		{
 			input_vector_t uRefT,uRefTau;
 			// Compenstation of static reference input signal
-			auto alpha = ocs2::LinearInterpolation<double>::interpolate(t,uRefT[0],&timeReference_,&inputReference_);
-			alpha = ocs2::LinearInterpolation<double>::interpolate(tau_minus+2*eps,uRefTau[0],&timeReference_,&inputReference_);
-			return CtrlPtr_->computeInput(tau_minus+2*eps,x) + uRefT - uRefTau;
+			auto alpha = ocs2::LinearInterpolation<input_vector_t>::interpolate(t,uRefT,&timeReference_,&inputReference_);
+			alpha = ocs2::LinearInterpolation<input_vector_t>::interpolate(tauMinus+2*eps,uRefTau,&timeReference_,&inputReference_);
+			return CtrlPtr_->computeInput(tauMinus+2*eps,x) + uRefT - uRefTau;
 		}
 		else if (t>tau)
 		{
 			input_vector_t uRefT,uRefTau;
 			// Compenstation of static reference input signal
-			auto alpha = ocs2::LinearInterpolation<double>::interpolate(t,uRefT[0],&timeReference_,&inputReference_);
-			alpha = ocs2::LinearInterpolation<double>::interpolate(tau-2*eps,uRefTau[0],&timeReference_,&inputReference_);
+			auto alpha = ocs2::LinearInterpolation<input_vector_t>::interpolate(t,uRefT,&timeReference_,&inputReference_);
+			alpha = ocs2::LinearInterpolation<input_vector_t>::interpolate(tau-2*eps,uRefTau,&timeReference_,&inputReference_);
 			return  CtrlPtr_->computeInput(tau-2*eps,x) + uRefT - uRefTau;
 		}
 	}
@@ -143,7 +143,7 @@ private:
 	scalar_array_t CtrlEventTimes_;
 
 	std::vector<double> timeReference_;
-	std::vector<double> inputReference_;
+	std::vector<input_vector_t> inputReference_;
 };
 
 

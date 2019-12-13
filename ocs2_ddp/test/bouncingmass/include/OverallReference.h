@@ -9,7 +9,14 @@
  */
 class OverallReference
 {
-	using dynamic_vector_t = Eigen::Matrix<double, Eigen::Dynamic, 1>;
+	using DIMENSIONS = ocs2::Dimensions<3, 1>;
+	using scalar_t = typename DIMENSIONS::scalar_t;
+	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+	using state_vector_t = typename DIMENSIONS::state_vector_t;
+	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+	using input_vector_t = typename DIMENSIONS::input_vector_t;
+
+	using dynamic_vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
 	using dynamic_vector_array_t = std::vector<dynamic_vector_t, Eigen::aligned_allocator<dynamic_vector_t>>;
 
 public:
@@ -24,7 +31,7 @@ public:
 	 * @param [in] trajTimes: list of times at which the reference is defined
 	 * @param [in] trajState: list of waypoints at which the reference is defined
 	 */
-	OverallReference(std::vector<double> trajTimes, std::vector<Eigen::Vector3d> trajState);
+	OverallReference(std::vector<scalar_t> trajTimes, std::vector<state_vector_t> trajState);
 
 	/*
 	 * Calculate the input at a certain time
@@ -32,7 +39,7 @@ public:
 	 * @param [in] time: time moment at which the input is calculated
 	 * @param [out] input: input corresponding to time
 	 */
-	void getInput(double time, double &input);
+	void getInput(scalar_t time, input_vector_t &input);
 
 	/*
 	 * Calculate the input at a range of times
@@ -43,7 +50,7 @@ public:
 	 * @param [out] time: Time vector
 	 * @param [out] input: Input vector corresponding to time vector
 	 */
-	void getInput(const double t0, const double t1, double dt, std::vector<double>& time, std::vector<double>& input);
+	void getInput(const scalar_t t0, const scalar_t t1, scalar_t dt, std::vector<scalar_t>& time, std::vector<input_vector_t>& input);
 
 	/*
 	 * Calculate the reference state at a certain time
@@ -51,7 +58,7 @@ public:
 	 * @param [in] time: time moment at which the input is calculated
 	 * @param [out] state: state corresponding to time
 	 */
-	void getState(double time, Eigen::Vector3d &x);
+	void getState(scalar_t time, state_vector_t &x);
 
 	/*
 	 * Calculate the reference state at a certain time and mode
@@ -60,7 +67,7 @@ public:
 	 * @param [in] time: time moment at which the input is calculated
 	 * @param [out] state: state corresponding to time and mode
 	 */
-	void getState(int idx, double time, Eigen::Vector3d &x);
+	void getState(int idx, scalar_t time, state_vector_t &x);
 
 	/*
 	 * Extend the reference past the event times, by integrating the input signal
@@ -68,7 +75,7 @@ public:
 	 *
 	 * @param [in] delta: length of the extensions
 	 */
-	void extendref(double delta);
+	void extendref(scalar_t delta);
 
 	/*
 	 * Display the reference
@@ -86,7 +93,7 @@ private:
 	 *
 	 * @return currently active index
 	 */
-	int getIndex(double time);
+	int getIndex(scalar_t time);
 
 	/*
 	 * Jump map of the system
@@ -95,9 +102,9 @@ private:
 	 *
 	 * @return currently active index
 	 */
-	void jumpMap(Eigen::Vector3d &x);
+	void jumpMap(state_vector_t &x);
 
 	std::vector<Reference> 	References_;
-	std::vector<double>	switchtimes_;
+	std::vector<scalar_t>	switchtimes_;
 };
 

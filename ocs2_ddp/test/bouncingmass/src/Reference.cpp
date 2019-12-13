@@ -1,7 +1,13 @@
 #include <Reference.h>
 #include <algorithm>
 
-Reference::Reference(double t0, double t1, Eigen::Vector3d p0, Eigen::Vector3d p1)
+using DIMENSIONS = ocs2::Dimensions<3, 1>;
+using scalar_t = typename DIMENSIONS::scalar_t;
+using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+using state_vector_t = typename DIMENSIONS::state_vector_t;
+using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+
+Reference::Reference(scalar_t t0, scalar_t t1, state_vector_t p0, state_vector_t p1)
 {
 	Create5thOrdPol(t0,t1,p0,p1);
 	polV_ = polyder(polX_);
@@ -11,18 +17,18 @@ Reference::Reference(double t0, double t1, Eigen::Vector3d p0, Eigen::Vector3d p
 	t1_ = t1;
 }
 
-void Reference::getInput(double time,double &input)
+void Reference::getInput(scalar_t time,input_vector_t &input)
 {
-	input = 0;
+	input[0] = 0;
 	for(int i = 0; i<polU_.size(); i++)
 	{
 
-		input += polU_[i] * std::pow(time,i);
+		input[0] += polU_[i] * std::pow(time,i);
 
 	}
 }
 
-void Reference:: getState(double time,Eigen::Vector3d &x)
+void Reference:: getState(scalar_t time,state_vector_t &x)
 {
 	if (time <= t1_ && time>= t0_)
 	{
@@ -42,76 +48,76 @@ void Reference:: getState(double time,Eigen::Vector3d &x)
 	}
 }
 
-void Reference::extendref(double delta, Reference* refPre, Reference* refPost)
+void Reference::extendref(scalar_t delta, Reference* refPre, Reference* refPost)
 {
 	delta_ = delta;
 	boost::numeric::odeint::runge_kutta_dopri5
-	<Eigen::Vector3d,double,Eigen::Vector3d,double,boost::numeric::odeint::vector_space_algebra> stepper;
+	<Eigen::Vector3d,scalar_t,Eigen::Vector3d,scalar_t,boost::numeric::odeint::vector_space_algebra> stepper;
 
 	// pre-part of extension
 	if(refPre != nullptr)
 	{	
-	ReferenceModel preModel(refPre);
+		ReferenceModel preModel(refPre);
 
-	Eigen::Vector3d x0;
-	getState(t0_,x0); 	
-	double t0 = t0_;
-	double t1 = t0-delta;
-	double dt = -1e-3;
+		state_vector_t x0;
+		getState(t0_,x0);
+		scalar_t t0 = t0_;
+		scalar_t t1 = t0-delta;
+		scalar_t dt = -1e-3;
 
-	boost::numeric::odeint::integrate_adaptive(stepper,preModel,x0, t0, t1,dt,Observer(&tPre_,&xPre_));
-	std::reverse(std::begin(tPre_),std::end(tPre_));
-	std::reverse(std::begin(xPre_),std::end(xPre_));
+		boost::numeric::odeint::integrate_adaptive(stepper,preModel,x0, t0, t1,dt,Observer(&tPre_,&xPre_));
+		std::reverse(std::begin(tPre_),std::end(tPre_));
+		std::reverse(std::begin(xPre_),std::end(xPre_));
 	}
 
 	//post-part of extension
 	if(refPost != nullptr)
 	{
-	ReferenceModel postModel(refPost);
+		ReferenceModel postModel(refPost);
 
-	Eigen::Vector3d x0;
-	getState(t1_,x0); 	
-	double t0 = t1_;
-	double t1 = t0+delta;
-	double dt = 1e-3;
-	boost::numeric::odeint::integrate_adaptive(stepper,postModel,x0, t0, t1,dt,Observer(&tPost_,&xPost_));
+		state_vector_t x0;
+		getState(t1_,x0);
+		scalar_t t0 = t1_;
+		scalar_t t1 = t0+delta;
+		scalar_t dt = 1e-3;
+		boost::numeric::odeint::integrate_adaptive(stepper,postModel,x0, t0, t1,dt,Observer(&tPost_,&xPost_));
 	}
 
 
 }
 
-void Reference::Create5thOrdPol(double t0, double t1, Eigen::Vector3d p0, Eigen::Vector3d p1)
+void Reference::Create5thOrdPol(scalar_t t0, scalar_t t1, Eigen::Vector3d p0, Eigen::Vector3d p1)
 {
 
-Eigen::Matrix<double, 6 , 6> A;
-Eigen::Matrix<double, 6 , 6> Ainv;
+	Eigen::Matrix<scalar_t, 6 , 6> A;
+	Eigen::Matrix<scalar_t, 6 , 6> Ainv;
 
-A << 1, 	t0, 	std::pow(t0,2), 	std::pow(t0,3), 	std::pow(t0,4), 	std::pow(t0,5),
-     0, 	1, 		2*t0, 				3*std::pow(t0,2), 	4*std::pow(t0,3), 	5*std::pow(t0,4),
-     0,		0,		2,					6*t0,				12*std::pow(t0,2),	20*std::pow(t0,3),
-     1,		t1,		std::pow(t1,2),		std::pow(t1,3),		std::pow(t1,4),		std::pow(t1,5),
-     0,		1,		2*t1,				3*std::pow(t1,2),	4*std::pow(t1,3),	5*std::pow(t1,4),
-     0,		0,		2,					6*t1,				12*std::pow(t1,2),	20*std::pow(t1,3);
+	A << 1, 	t0, 	std::pow(t0,2), 	std::pow(t0,3), 	std::pow(t0,4), 	std::pow(t0,5),
+			0, 	1, 		2*t0, 				3*std::pow(t0,2), 	4*std::pow(t0,3), 	5*std::pow(t0,4),
+			0,		0,		2,					6*t0,				12*std::pow(t0,2),	20*std::pow(t0,3),
+			1,		t1,		std::pow(t1,2),		std::pow(t1,3),		std::pow(t1,4),		std::pow(t1,5),
+			0,		1,		2*t1,				3*std::pow(t1,2),	4*std::pow(t1,3),	5*std::pow(t1,4),
+			0,		0,		2,					6*t1,				12*std::pow(t1,2),	20*std::pow(t1,3);
 
-Ainv = A.inverse();
+	Ainv = A.inverse();
 
-Eigen::Matrix<double, 6, 1> x;
-x<<p0,p1;
-polX_ = Ainv*x;
+	Eigen::Matrix<scalar_t, 6, 1> x;
+	x<<p0,p1;
+	polX_ = Ainv*x;
 }
 
-void Reference::interpolate_ext(double time, Eigen::Vector3d &x)
+void Reference::interpolate_ext(scalar_t time, Eigen::Vector3d &x)
 {
-	std::vector<double>* tVec;
-	std::vector<Eigen::Vector3d>* xVec;
+	std::vector<scalar_t>* tVec;
+	std::vector<state_vector_t>* xVec;
 	if (time<t0_)
 	{	tVec = &tPre_;
-		xVec = &xPre_;
-		x     = xPre_.front();	}
+	xVec = &xPre_;
+	x     = xPre_.front();	}
 	else
 	{	tVec = &tPost_;
-		xVec = &xPost_;
-		x     = xPost_.back();	}
+	xVec = &xPost_;
+	x     = xPost_.back();	}
 
 	int idx;
 	for (int i = 0; i<tVec->size()-1; i++)
@@ -119,15 +125,15 @@ void Reference::interpolate_ext(double time, Eigen::Vector3d &x)
 		if(time > tVec->at(i) && time<tVec->at(i+1))
 		{
 			idx = i;
-			double fac = (time-tVec->at(idx))/(tVec->at(idx+1)-tVec->at(idx));
+			scalar_t fac = (time-tVec->at(idx))/(tVec->at(idx+1)-tVec->at(idx));
 			x = fac*xVec->at(idx) + (1-fac)*xVec->at(idx+1);
 			return;
 		}		
 	}
-	
-	
-	
-	
+
+
+
+
 }
 
 void Reference::display()
@@ -147,12 +153,10 @@ void Reference::display()
 	float dt = 0.01;
 	for(int i = 0; i<(t1_-t0_)/dt; i++)
 	{
-		double t = t0_ + dt*i;
-		Eigen::Vector3d x;
-		double u;
-		getInput(t,u);
+		scalar_t t = t0_ + dt*i;
+		state_vector_t x;
 		getState(t,x);
-		
+
 		std::cerr<<t<<";"<<x[0]<<";"<<x[1]<<std::endl;
 	}
 
@@ -167,9 +171,9 @@ void Reference::display()
 }
 
 
-Eigen::Matrix<double, 6 , 1> Reference::polyder(Eigen::Matrix<double, 6 , 1> pol)
+Eigen::Matrix<scalar_t, 6 , 1> Reference::polyder(Eigen::Matrix<scalar_t, 6 , 1> pol)
 {
-	Eigen::Matrix<double, 6 , 1> polOld = pol;
+	Eigen::Matrix<scalar_t, 6 , 1> polOld = pol;
 
 	for(int i = 0; i< pol.size(); i++)
 	{

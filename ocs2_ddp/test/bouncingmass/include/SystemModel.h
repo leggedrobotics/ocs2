@@ -50,7 +50,7 @@ using controller_ptr_array_t = std::vector<controller_t*>;
 using logic_template_type = ocs2::ModeSequenceTemplate<scalar_t>;
 using logic_rules_machine_t = ocs2::HybridLogicRulesMachine;
 
-class systemLogic : public ocs2::HybridLogicRules{
+class systemLogic final : public ocs2::HybridLogicRules{
 
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -80,15 +80,13 @@ protected:
 
 };
 
-class systemDynamics : public ocs2::ControlledSystemBase<STATE_DIM,INPUT_DIM>
+class systemDynamics final : public ocs2::ControlledSystemBase<STATE_DIM,INPUT_DIM>
 {
 
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
-	systemDynamics(OverallReference reference,bool controlled = false)
-	: reference_(reference), controlled_(controlled){}
-
+	systemDynamics() = default;
 	~systemDynamics() = default;
 
 	void computeFlowMap(const scalar_t &t, const state_vector_t &x,const input_vector_t &u, state_vector_t &dxdt)
@@ -115,7 +113,6 @@ public:
 		}
 	}
 
-
 	void computeGuardSurfaces(const scalar_t& time,	const state_vector_t& state, dynamic_vector_t& guardSurfacesValue)
 	{
 		guardSurfacesValue.resize(1);
@@ -126,13 +123,9 @@ public:
 	{
 		return new systemDynamics(*this);
 	}
-
-private:
-	OverallReference reference_;
-	bool controlled_;
 };
 
-class systemDerivative : public ocs2::DerivativesBase<STATE_DIM,INPUT_DIM>
+class systemDerivative final : public ocs2::DerivativesBase<STATE_DIM,INPUT_DIM>
 {
 public:
 	systemDerivative() = default;
@@ -166,7 +159,7 @@ private:
 	input_vector_t u_;
 };
 
-class systemCost : public ocs2::QuadraticCostFunction<STATE_DIM,INPUT_DIM>
+class systemCost final : public ocs2::QuadraticCostFunction<STATE_DIM,INPUT_DIM>
 {
 public:
 
@@ -191,7 +184,7 @@ public:
 		scalar_t finalTime = 2.5;
 
 		int i = state_.tail(1).value();
-		ref_.getInput(t_,uRef_[0]);
+		ref_.getInput(t_,uRef_);
 		ref_.getState(i,t_,stateRef_);
 
 		// Terminal cost only calculated for final state, not for intermediate switch states

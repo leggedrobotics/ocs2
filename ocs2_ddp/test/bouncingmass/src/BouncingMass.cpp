@@ -18,10 +18,11 @@
  *
  * Guard Surfaces are:   x[0] > 0
  *
- *
  * Cost function is:     x(t)^T Q x(t) + u(t)^T R u(t) + x(t1)^T P x(t1)^T
- *                       Q = [50,0;0,50]
- *                       P = [56.63,7.07;7.07,8.01];
+ *                       Q = [50,   0;
+ *                             0,  50];
+ *                       P = [56.63, 7.07;
+ *                             7.07, 8.01];
  *                       R = 1;
  *
  * Initial controller is:		K = [25,10]
@@ -78,10 +79,10 @@ TEST(testStateRollOut_SLQ, BouncingMassTest)
 	reference.extendref(delta);
 
 	scalar_array_t timeRef;
-	scalar_array_t inputRef;
+	std::vector<input_vector_t> inputRef;
 	reference.getInput(startTime,finalTime,0.01,timeRef,inputRef);
 	// Dynamics, Constraints and derivative classes
-	systemDynamics systemModel(reference,false);
+	systemDynamics systemModel;
 	systemDerivative systemDerivatives;
 	systemConstraint systemConstraints;
 
@@ -146,7 +147,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest)
 			}
 
 			reference.getState(timeStamp,refState);
-			reference.getInput(timeStamp,refInput[0]);
+			reference.getInput(timeStamp,refInput);
 			controllerBias = controllerGain*refState + refInput;
 
 			timeStampArray.push_back(timeStamp);
@@ -175,7 +176,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest)
 			int idx;
 			idx = solutionST.stateTrajectory_[i][2];
 
-			double uRef;
+			input_vector_t uRef;
 			state_vector_t xRef;
 			reference.getState(idx,solutionST.timeTrajectory_[i],xRef);
 			reference.getInput(solutionST.timeTrajectory_[i],uRef);
@@ -184,7 +185,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest)
 			std::cerr<<std::setprecision(25)<<solutionST.timeTrajectory_[i];
 			std::cerr<<std::setprecision(6)<<";"<<solutionST.stateTrajectory_[i][0]<<";"<< xRef[0]<<";";
 			std::cerr<<solutionST.stateTrajectory_[i][1]<<";"<< xRef[1]<<";";
-			std::cerr<<solutionST.inputTrajectory_[i][0]<<";"<<uRef<<std::endl;
+			std::cerr<<solutionST.inputTrajectory_[i][0]<<";"<<uRef[0]<<std::endl;
 		}
 	}
 

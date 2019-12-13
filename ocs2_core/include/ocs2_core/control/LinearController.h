@@ -4,8 +4,6 @@
 
 #include "ocs2_core/misc/LinearInterpolation.h"
 
-#include<iomanip>
-
 namespace ocs2 {
 
 /**
@@ -55,7 +53,7 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
    * @brief Copy constructor
    * @param other LinearController object to copy from
    */
-  LinearController(const LinearController& other) : LinearController(other.timeStamp_, other.biasArray_, other.gainArray_){
+  LinearController(const LinearController& other) : LinearController(other.timeStamp_, other.biasArray_, other.gainArray_) {
     deltaBiasArray_ = other.deltaBiasArray_;
 
   }
@@ -206,7 +204,7 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
   void display() const override {
     for (size_t k = 0; k < timeStamp_.size(); k++) {
       std::cerr << "k: " << k << std::endl;
-      std::cerr <<std::setprecision(12)<< "time: " << timeStamp_[k] << std::endl;
+      std::cerr << "time: " << timeStamp_[k] << std::endl;
       std::cerr << "bias: " << biasArray_[k].transpose() << std::endl;
       std::cerr << "gain: " << gainArray_[k] << std::endl;
     }

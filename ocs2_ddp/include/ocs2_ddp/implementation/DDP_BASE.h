@@ -877,7 +877,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
 
     // do a line search
     lsControllersStock = initLScontrollersStock_;
-
     lineSearchWorker(taskId, learningRate, lsTotalCost, lsConstraint1ISE, lsConstraint1MaxNorm, lsConstraint2ISE, lsConstraint2MaxNorm,
                      lsInequalityConstraintPenalty, lsInequalityConstraintISE, lsControllersStock, lsTimeTrajectoriesStock,
                      lsPostEventIndicesStock, lsStateTrajectoriesStock, lsInputTrajectoriesStock);

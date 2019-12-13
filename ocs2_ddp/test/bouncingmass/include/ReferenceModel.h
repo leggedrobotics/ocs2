@@ -2,12 +2,15 @@
 #include <iostream>
 #include "Reference.h"
 
-typedef Eigen::Vector3d state_type;
-
+/*
+ * 	Model describing the system dynamics used for integrating the reference input
+ * 	to extend the reference past event times
+ */
 class Reference;
 
 class ReferenceModel
 {
+	typedef Eigen::Vector3d state_type;
 	public:
 
 	ReferenceModel(Reference* ref);

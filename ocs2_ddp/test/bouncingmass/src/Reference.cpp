@@ -137,7 +137,7 @@ void Reference::display()
 	std::cout<<"#########################"<<std::endl;	
 	for(int i =0; i<tPre_.size(); i++)
 	{
-		std::cout<<tPre_[i]<<";"<<xPre_[i][0]<<";"<<xPre_[i][1]<<std::endl;
+		std::cerr<<tPre_[i]<<";"<<xPre_[i][0]<<";"<<xPre_[i][1]<<std::endl;
 	}
 
 	std::cout<<"#########################"<<std::endl;
@@ -153,7 +153,7 @@ void Reference::display()
 		getInput(t,u);
 		getState(t,x);
 		
-		std::cout<<t<<";"<<x[0]<<";"<<x[1]<<std::endl;
+		std::cerr<<t<<";"<<x[0]<<";"<<x[1]<<std::endl;
 	}
 
 	std::cout<<"##########################"<<std::endl;
@@ -162,7 +162,7 @@ void Reference::display()
 
 	for(int i =0; i<tPost_.size(); i++)
 	{
-		std::cout<<tPost_[i]<<";"<<xPost_[i][0]<<";"<<xPost_[i][1]<<std::endl;
+		std::cerr<<tPost_[i]<<";"<<xPost_[i][0]<<";"<<xPost_[i][1]<<std::endl;
 	}
 }
 

@@ -31,71 +31,60 @@ public:
 	using logic_rules_t = HybridLogicRules;
 	using controller_t =  ControllerBase<STATE_DIM,INPUT_DIM>;
 
-	stateBasedLinearController() = default;
+	stateBasedLinearController() : CtrlPtr_(nullptr), CtrlEventTimes_(0),timeReference_(0),inputReference_(0){}
 
-	stateBasedLinearController(controller_t* CtrlPtr, scalar_array_t eventTimes): CtrlPtr_(CtrlPtr)
+	void setController(controller_t* CtrlPtr)
 	{
-		CurrentMode_ = 0;
-
+		CtrlPtr_ = CtrlPtr;
 		CtrlEventTimes_.clear();
 		CtrlPtr->getStateEvents(CtrlEventTimes_);
 
-		if(eventTimes.size()>0 && eventTimes[0]!= 0)
+		if(CtrlEventTimes_.size()>0 && CtrlEventTimes_[0]!= 0)
 		{
 			CtrlEventTimes_.insert(CtrlEventTimes_.begin(),0);
 		}
+	}
+
+	void setReference(scalar_array_t& timeReference,scalar_array_t& inputReference)
+	{
+		timeReference_ = timeReference;
+		inputReference_ = inputReference;
 	}
 
 	~stateBasedLinearController() = default;
 
 	input_vector_t computeInput(const scalar_t& t, const state_vector_t& x)
 	{
-		if(CtrlEventTimes_.size()==0)
-		{
-			return CtrlPtr_->computeInput(t,x);
-		}
+		size_t CurrentMode = x.tail(1).value();
+		size_t numEvents = CtrlEventTimes_.size();
 
-		CurrentMode_ = x[2];
-		auto alpha = CurrentMode_;
-		scalar_t tau_minus, tau, tau_plus;
+		scalar_t tau_minus = (numEvents>CurrentMode) ? CtrlEventTimes_[CurrentMode] : CtrlEventTimes_.back();
+		scalar_t tau = (numEvents>CurrentMode+1) ? CtrlEventTimes_[CurrentMode+1] : CtrlEventTimes_.back();
+		scalar_t tau_plus = (numEvents>CurrentMode+2) ? CtrlEventTimes_[CurrentMode+2] : CtrlEventTimes_.back();
 
-		tau_minus = CtrlEventTimes_[alpha];
-
-		if (CtrlEventTimes_.size()>alpha+1)
-		{
-			tau = CtrlEventTimes_[alpha+1];
-		}
-		else
-		{
-			tau = CtrlEventTimes_.back();
-		}
-
-		if (CtrlEventTimes_.size()>alpha+2)
-		{
-			tau_plus = CtrlEventTimes_[alpha+2];
-		}
-		else
-		{
-			tau_plus = CtrlEventTimes_.back();
-		}
-
-		bool tMuchSmaller = tau_minus -t > 1e-1;
-		bool tMuchBigger =  t - tau > 1e-1;
-		bool tMismatch = tMuchSmaller || tMuchBigger;
 
 		bool pastAllEvents = tau_minus == tau && t>tau_minus;
+		scalar_t eps = OCS2NumericTraits<scalar_t>::weakEpsilon();
 
-		if((t>tau_minus && t<tau)  ||pastAllEvents)
+		if((t>tau_minus && t<tau)  || pastAllEvents)
 		{
 			return CtrlPtr_->computeInput(t,x);
 		}
 		else if (t<tau_minus)
 		{
-			return CtrlPtr_->computeInput(tau_minus+1e-9,x);
+			input_vector_t uRefT,uRefTau;
+			// Compenstation of static reference input signal
+			auto alpha = ocs2::LinearInterpolation<double>::interpolate(t,uRefT[0],&timeReference_,&inputReference_);
+			alpha = ocs2::LinearInterpolation<double>::interpolate(tau_minus+2*eps,uRefTau[0],&timeReference_,&inputReference_);
+			return CtrlPtr_->computeInput(tau_minus+2*eps,x) + uRefT - uRefTau;
 		}
 		else if (t>tau)
 		{
-			return CtrlPtr_->computeInput(tau-1e-9,x);
+			input_vector_t uRefT,uRefTau;
+			// Compenstation of static reference input signal
+			auto alpha = ocs2::LinearInterpolation<double>::interpolate(t,uRefT[0],&timeReference_,&inputReference_);
+			alpha = ocs2::LinearInterpolation<double>::interpolate(tau-2*eps,uRefTau[0],&timeReference_,&inputReference_);
+			return  CtrlPtr_->computeInput(tau-2*eps,x) + uRefT - uRefTau;
 		}
 	}
 
@@ -150,13 +139,11 @@ public:
 	}
 
 private:
-	 controller_t* CtrlPtr_;
-
+	controller_t* CtrlPtr_;
 	scalar_array_t CtrlEventTimes_;
-	//size_array_t CtrlSubSequence_;
 
-	std::shared_ptr<logic_rules_t> logicRulesPtr_;
-	size_t CurrentMode_;
+	std::vector<double> timeReference_;
+	std::vector<double> inputReference_;
 };
 
 

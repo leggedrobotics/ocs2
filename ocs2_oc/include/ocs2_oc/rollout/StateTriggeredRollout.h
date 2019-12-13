@@ -71,16 +71,19 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
   using ode_base_t = IntegratorBase<STATE_DIM>;
 
+  using state_control_t = stateBasedLinearController<STATE_DIM,INPUT_DIM>;
   /**
    * Constructor.
    *
    * @param [in] systemDynamics: The system dynamics for forward rollout.
    * @param [in] rolloutSettings: The rollout settings.
    */
-  explicit StateTriggeredRollout(const controlled_system_base_t& systemDynamics, Rollout_Settings rolloutSettings = Rollout_Settings())
+  explicit StateTriggeredRollout(const controlled_system_base_t& systemDynamics, Rollout_Settings rolloutSettings = Rollout_Settings(), state_control_t* controlPtr = nullptr)
       : BASE(std::move(rolloutSettings)),
         systemDynamicsPtr_(systemDynamics.clone()),
-        systemEventHandlersPtr_(new state_triggered_event_handler_t(this->settings().minTimeStep_)) {
+        systemEventHandlersPtr_(new state_triggered_event_handler_t(this->settings().minTimeStep_)),
+		controlPtr_(controlPtr)
+  {
     // construct dynamicsIntegratorsPtr
     constructDynamicsIntegrator(this->settings().integratorType_);
   }
@@ -95,13 +98,18 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   StateTriggeredRollout& operator=(const StateTriggeredRollout&) = delete;
 
   StateTriggeredRollout<STATE_DIM, INPUT_DIM>* clone() const override {
-    return new StateTriggeredRollout<STATE_DIM, INPUT_DIM>(*systemDynamicsPtr_, this->settings());
+    return new StateTriggeredRollout<STATE_DIM, INPUT_DIM>(*systemDynamicsPtr_, this->settings(), controlPtr_);
   }
 
   /**
    * Returns the underlying dynamics
    */
   controlled_system_base_t* systemDynamicsPtr() { return systemDynamicsPtr_.get(); }
+
+  /**
+   * Set StateBasedController
+   */
+  void setStateBasedController(state_control_t* controlPtr){controlPtr_ = controlPtr;}
 
  protected:
   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
@@ -126,10 +134,15 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     eventsPastTheEndIndeces.reserve(maxNumSteps);
 
     // set controller
-    scalar_array_t eventTimesCtrl(0);
-    controller->getStateEvents(eventTimesCtrl);
-    stateBasedLinearController<STATE_DIM,INPUT_DIM> controllerState(controller,eventTimesCtrl);
-    systemDynamicsPtr_->setController(&controllerState);
+    if (controlPtr_)
+    {
+    	controlPtr_->setController(controller);
+    	systemDynamicsPtr_->setController(controlPtr_);
+    }
+    else
+    {
+    	systemDynamicsPtr_->setController(controller);
+    }
 
     // reset function calls counter
     systemDynamicsPtr_->resetNumFunctionCalls();
@@ -172,7 +185,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       const bool timeAccuracyCondition = std::fabs(t1 - t0) < this->settings().absTolODE_;
       const bool accuracyCondition = guardAccuracyCondition || timeAccuracyCondition;
       // condition to check whether max number of iterations has not been reached, to prevent an infinite loop
-      const bool maxNumIterationsReached = singleEventIterations < this->settings().maxSingleEventIterations_;
+      const bool maxNumIterationsReached = singleEventIterations >= this->settings().maxSingleEventIterations_;
 
       // remove the element past the guard surface if the event handler was triggered
       // (Due to checking in EventHandler this can only happen to the last element of the trajectory)
@@ -196,7 +209,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       }
 
       // accuracy condition for event refinement. If sufficiently accurate crossing location has been determined
-      if (accuracyCondition) {
+      if (accuracyCondition || maxNumIterationsReached) {
         // set new begin/end time and begin state
         t0 = queryTime + OCS2NumericTraits<scalar_t>::weakEpsilon();
         t1 = finalTime;
@@ -311,6 +324,8 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   std::shared_ptr<state_triggered_event_handler_t> systemEventHandlersPtr_;
 
   std::unique_ptr<ode_base_t> dynamicsIntegratorPtr_;
+
+  state_control_t* controlPtr_;
 };
 
 }  // namespace ocs2

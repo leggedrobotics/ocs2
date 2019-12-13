@@ -263,3 +263,12 @@ target_link_libraries(test_ThreadPool
   ${catkin_LIBRARIES}
   gtest_main
 )
+
+catkin_add_gtest(test_CostFunctionLinearCombination
+        test/cost/testCostFunctionLinearCombination.cpp
+        )
+target_link_libraries(test_CostFunctionLinearCombination
+        ${Boost_LIBRARIES}
+        ${catkin_LIBRARIES}
+        gtest_main
+        )

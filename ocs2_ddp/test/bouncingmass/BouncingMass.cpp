@@ -61,6 +61,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   const double startTime = 0.0;
   const double finalTime = 2.5;
   const state_vector_t x0 = {0.7, 0.5, 0};
+  bool outputSolution = false;
 
   // Generation of Reference Trajectory
   const std::vector<double> trajTimes{0, 0.2, 0.8, 1.0, 1.2, 1.8, 2.0};
@@ -158,7 +159,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
     EXPECT_GT(solutionST.stateTrajectory_[i][0], -1e-10);
     // Display output
     // format: 		idx;time;x[0];xref[0];x[1];xref[1];u;uref
-    if (false) {
+    if (outputSolution) {
       int idx;
       idx = solutionST.stateTrajectory_[i][2];
 
@@ -180,7 +181,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   double constraint1ISE;
   double constraint2ISE;
   slq.getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
-  EXPECT_LT(std::fabs(costFunction - 5.294264), 1e-6);
+  EXPECT_LT(std::fabs(costFunction - 7.21852), 1e-5);
 }
 
 int main(int argc, char** argv) {

@@ -163,7 +163,7 @@ class ControllerBase {
 
   /*
    * Gets the event times for which the controller is designed.
-   * @param [out] eventTimes: Event times.
+   * @return The event times of the controller.
    */
   virtual scalar_array_t controllerEventTimes() const {}
 };

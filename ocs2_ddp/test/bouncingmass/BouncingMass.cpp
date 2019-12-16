@@ -37,8 +37,6 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   using dynamic_vector_t = Eigen::Matrix<double, Eigen::Dynamic, 1>;
   using dynamic_vector_array_t = std::vector<dynamic_vector_t, Eigen::aligned_allocator<dynamic_vector_t>>;
 
-  using state_control_t = ocs2::stateBasedLinearController<STATE_DIM, INPUT_DIM>;
-
   ocs2::SLQ_Settings slqSettings;
   slqSettings.useNominalTimeForBackwardPass_ = true;
   slqSettings.ddpSettings_.displayInfo_ = false;
@@ -101,10 +99,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   systemCost systemCost(reference, Q, R, P, xNom, uNom, xFin);
 
   // Rollout Class
-  state_control_t stateBasedController;
-  stateBasedController.setReference(timeRef, inputRef);
   ocs2::StateTriggeredRollout<STATE_DIM, INPUT_DIM> stateTriggeredRollout(systemModel, rolloutSettings);
-  stateTriggeredRollout.setStateBasedController(&stateBasedController);
 
   // Operating points and PartitioningTimes
   std::vector<double> partitioningTimes;

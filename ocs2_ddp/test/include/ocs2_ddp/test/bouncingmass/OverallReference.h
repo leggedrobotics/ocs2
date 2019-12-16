@@ -30,7 +30,7 @@ class OverallReference {
    * @param [in] trajTimes: list of times at which the reference is defined
    * @param [in] trajState: list of waypoints at which the reference is defined
    */
-  OverallReference(std::vector<scalar_t> trajTimes, std::vector<state_vector_t> trajState);
+  OverallReference(const scalar_array_t trajTimes, const state_vector_array_t trajState);
 
   /*
    * Calculate the input at a certain time

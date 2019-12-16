@@ -73,7 +73,7 @@ void Reference::extendref(scalar_t delta, Reference* refPre, Reference* refPost)
   }
 }
 
-void Reference::Create5thOrdPol(scalar_t t0, scalar_t t1, Eigen::Vector3d p0, Eigen::Vector3d p1) {
+void Reference::Create5thOrdPol(scalar_t t0, scalar_t t1, state_vector_t p0, state_vector_t p1) {
   Eigen::Matrix<scalar_t, 6, 6> A;
   Eigen::Matrix<scalar_t, 6, 6> Ainv;
 
@@ -89,9 +89,9 @@ void Reference::Create5thOrdPol(scalar_t t0, scalar_t t1, Eigen::Vector3d p0, Ei
   polX_ = Ainv * x;
 }
 
-void Reference::interpolate_ext(scalar_t time, Eigen::Vector3d& x) {
-  std::vector<scalar_t>* tVec;
-  std::vector<state_vector_t>* xVec;
+void Reference::interpolate_ext(scalar_t time, state_vector_t& x) {
+  scalar_array_t* tVec;
+  state_vector_array_t* xVec;
   if (time < t0_) {
     tVec = &tPre_;
     xVec = &xPre_;
@@ -125,7 +125,7 @@ void Reference::display() {
   std::cout << "####Normal-Trajectory####" << std::endl;
   std::cout << "#########################" << std::endl;
 
-  float dt = 0.01;
+  scalar_t dt = 0.01;
   for (int i = 0; i < (t1_ - t0_) / dt; i++) {
     scalar_t t = t0_ + dt * i;
     state_vector_t x;

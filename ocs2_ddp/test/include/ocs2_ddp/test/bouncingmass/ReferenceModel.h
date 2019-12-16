@@ -1,5 +1,7 @@
 #pragma once
 #include <iostream>
+#include <ocs2_core/Dimensions.h>
+
 #include "Reference.h"
 
 /*
@@ -9,12 +11,16 @@
 class Reference;
 
 class ReferenceModel {
-  typedef Eigen::Vector3d state_type;
+  using DIMENSIONS = ocs2::Dimensions<3, 1>;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
+  using input_vector_t = typename DIMENSIONS::input_vector_t;
+  using state_matrix_t = typename DIMENSIONS::state_matrix_t;
+  using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
 
  public:
   ReferenceModel(Reference* ref);
 
-  void operator()(const state_type& x, state_type& dxdt, const double t);
+  void operator()(const state_vector_t& x, state_vector_t& dxdt, const double t);
 
  private:
   Reference* ref_;

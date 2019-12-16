@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 #include <iostream>
 
-
 #include <ocs2_core/control/StateBasedLinearController.h>
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
+#include <ocs2_core/Dimensions.h>
 
 #include "ocs2_ddp/test/bouncingmass/OverallReference.h"
 #include "ocs2_ddp/test/bouncingmass/SystemModel.h"
@@ -34,6 +34,12 @@
  * (2) Check of cost function compared against cost calculated during trusted run of SLQ
  */
 TEST(testStateRollOut_SLQ, BouncingMassTest) {
+  using DIMENSIONS = ocs2::Dimensions<3, 1>;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
+  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+  using input_vector_t = typename DIMENSIONS::input_vector_t;
   using dynamic_vector_t = Eigen::Matrix<double, Eigen::Dynamic, 1>;
   using dynamic_vector_array_t = std::vector<dynamic_vector_t, Eigen::aligned_allocator<dynamic_vector_t>>;
 
@@ -65,17 +71,17 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   bool outputSolution = false;
 
   // Generation of Reference Trajectory
-  const std::vector<double> trajTimes{0, 0.2, 0.8, 1.0, 1.2, 1.8, 2.0};
+  const scalar_array_t trajTimes{0, 0.2, 0.8, 1.0, 1.2, 1.8, 2.0};
 
-  Eigen::Vector3d state0;  //	Intial and final state
+  state_vector_t state0;  //	Intial and final state
   state0 << 0.5, 0, 0;
-  Eigen::Vector3d state1;  //	Hard impact
+  state_vector_t state1;  //	Hard impact
   state1 << 0, -5, 0;
-  Eigen::Vector3d state2;  // 	Soft impact
+  state_vector_t state2;  // 	Soft impact
   state2 << 0, -1, 0;
 
   const scalar_t delta = 0.5;
-  const std::vector<Eigen::Vector3d> trajStates{state0, state1, state2, state2, state1, state2, state0};
+  const state_vector_array_t trajStates{state0, state1, state2, state2, state1, state2, state0};
   OverallReference reference(trajTimes, trajStates);
   reference.extendref(delta);
 
@@ -101,7 +107,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   ocs2::StateTriggeredRollout<STATE_DIM, INPUT_DIM> stateTriggeredRollout(systemModel, rolloutSettings);
 
   // Operating points and PartitioningTimes
-  std::vector<double> partitioningTimes;
+  scalar_array_t partitioningTimes;
   partitioningTimes.push_back(startTime);
   partitioningTimes.push_back(finalTime);
 
@@ -115,7 +121,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
 
   const scalar_t controllerDeltaTime = 1e-3;  // Time step for controller time array
   const scalar_t eps = ocs2::OCS2NumericTraits<scalar_t>::weakEpsilon();
-  std::vector<double> controlTimes = trajTimes;
+  scalar_array_t controlTimes = trajTimes;
   controlTimes.push_back(finalTime);
 
   for (int i = 0; i < controlTimes.size() - 1; i++) {
@@ -171,9 +177,9 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   }
 
   // Test 2: Check of cost function
-  double costFunction;
-  double constraint1ISE;
-  double constraint2ISE;
+  scalar_t costFunction;
+  scalar_t constraint1ISE;
+  scalar_t constraint2ISE;
   slq.getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
   EXPECT_LT(std::fabs(costFunction - 7.188299), 1e-6);
 }

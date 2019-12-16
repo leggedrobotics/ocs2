@@ -79,9 +79,9 @@ class systemDynamics final : public ocs2::ControlledSystemBase<STATE_DIM, INPUT_
   ~systemDynamics() = default;
 
   void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) {
-    Eigen::Matrix<scalar_t, STATE_DIM, STATE_DIM> A;
+	state_matrix_t A;
     A << 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
-    Eigen::Matrix<scalar_t, STATE_DIM, INPUT_DIM> B;
+    state_input_matrix_t B;
     B << 0.0, 1.0, 0.0;
 
     dxdt = A * x + B * u;
@@ -90,7 +90,7 @@ class systemDynamics final : public ocs2::ControlledSystemBase<STATE_DIM, INPUT_
   void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override {
     double e = 0.95;
 
-    Eigen::Matrix<scalar_t, STATE_DIM, STATE_DIM> delta;
+    state_matrix_t delta;
     delta << 0.0, 0.0, 0.0, 0.0, -(1.0 + e), 0.0, 0.0, 0.0, 0.0;
     mappedState = state + delta * state;
 

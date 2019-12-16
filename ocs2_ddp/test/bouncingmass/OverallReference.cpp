@@ -7,7 +7,7 @@ using state_vector_t = typename DIMENSIONS::state_vector_t;
 using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
 using input_vector_t = typename DIMENSIONS::input_vector_t;
 
-OverallReference::OverallReference(std::vector<scalar_t> trajTimes, std::vector<state_vector_t> trajStates) {
+OverallReference::OverallReference(const scalar_array_t trajTimes, const state_vector_array_t trajStates) {
   References_.clear();
   References_.resize(trajTimes.size() - 1);
 

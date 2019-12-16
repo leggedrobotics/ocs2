@@ -105,14 +105,14 @@ class Reference {
    * 	@param [in]	time:	current time
    * 	@param [out] x: current state
    */
-  void interpolate_ext(scalar_t time, Eigen::Vector3d& x);
+  void interpolate_ext(scalar_t time, state_vector_t& x);
 
   Eigen::Matrix<scalar_t, 6, 1> polU_;
   Eigen::Matrix<scalar_t, 6, 1> polX_;
   Eigen::Matrix<scalar_t, 6, 1> polV_;
 
-  std::vector<state_vector_t> xPre_;
-  std::vector<scalar_t> tPre_;
-  std::vector<state_vector_t> xPost_;
-  std::vector<scalar_t> tPost_;
+  state_vector_array_t xPre_;
+  scalar_array_t tPre_;
+  state_vector_array_t xPost_;
+  scalar_array_t tPost_;
 };

@@ -27,7 +27,6 @@ class stateBasedLinearController final : public ControllerBase<STATE_DIM, INPUT_
   using input_state_matrix_t = typename dimensions_t::input_state_matrix_t;
   using input_state_matrix_array_t = typename dimensions_t::input_state_matrix_array_t;
 
-  using logic_rules_t = HybridLogicRules;
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
 
   stateBasedLinearController() : ctrlPtr_(nullptr), ctrlEventTimes_(0){}

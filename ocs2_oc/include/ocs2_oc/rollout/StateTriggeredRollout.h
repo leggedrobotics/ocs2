@@ -129,7 +129,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     // set controller
     trajectory_spreading_controller_t trajectorySpreadingController;
     trajectorySpreadingController.setController(controller);
-    systemDynamicsPtr_->setController(trajectorySpreadingController);
+    systemDynamicsPtr_->setController(&trajectorySpreadingController);
 
     // reset function calls counter
     systemDynamicsPtr_->resetNumFunctionCalls();

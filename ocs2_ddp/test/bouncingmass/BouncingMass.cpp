@@ -56,6 +56,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   rolloutSettings.relTolODE_ = 1e-7;
   rolloutSettings.maxNumStepsPerSecond_ = 1e7;
   rolloutSettings.maxSingleEventIterations_ = 5;
+  rolloutSettings.useTrajectorySpreadingController_ = true;
 
   // Parameters
   const double startTime = 0.0;

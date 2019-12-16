@@ -276,20 +276,18 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     }
 
     scalar_array_t eventTimes(0);
-    scalar_t lastevent = timeStamp_[0];
-
+    scalar_t lastevent = timeStamp_.front();
     for (int i = 0; i < timeStamp_.size() - 1; i++) {
-   	  bool eventDetected = timeStamp_[i + 1] - timeStamp_[i] < 2.0 * OCS2NumericTraits<scalar_t>::weakEpsilon();
-   	  bool sufficientTimeSinceEvent = timeStamp_[i] - lastevent > 2.0 * OCS2NumericTraits<scalar_t>::weakEpsilon();
+      bool eventDetected = timeStamp_[i + 1] - timeStamp_[i] < 2.0 * OCS2NumericTraits<scalar_t>::weakEpsilon();
+      const bool sufficientTimeSinceEvent = timeStamp_[i] - lastevent > 2.0 * OCS2NumericTraits<scalar_t>::weakEpsilon();
 
-      if (eventDetected && sufficientTimeSinceEvent)
-      {	  // push back event when event is detected
+      if (eventDetected && sufficientTimeSinceEvent) {  // push back event when event is detected
         eventTimes.push_back(timeStamp_[i]);
         lastevent = eventTimes.back();
       } else if (eventDetected) {
-    	  // if event is detected to close to the last event, it is assumed that the earlier event was not an event
-    	  // but was due to the refining steps taken in event detection
-    	  // The last "detected event" is the time the event took place
+        // if event is detected to close to the last event, it is assumed that the earlier event was not an event
+        // but was due to the refining steps taken in event detection
+        // The last "detected event" is the time the event took place
         eventTimes.back() = timeStamp_[i];
         lastevent = eventTimes.back();
       }

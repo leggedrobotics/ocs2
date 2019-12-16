@@ -1,6 +1,6 @@
 #pragma once
-#include <iostream>
 #include <ocs2_core/Dimensions.h>
+#include <iostream>
 
 #include "Reference.h"
 

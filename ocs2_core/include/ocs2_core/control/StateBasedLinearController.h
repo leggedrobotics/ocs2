@@ -29,8 +29,14 @@ class stateBasedLinearController final : public ControllerBase<STATE_DIM, INPUT_
 
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
 
-  stateBasedLinearController() : ctrlPtr_(nullptr), ctrlEventTimes_(0){}
+  /**
+   * Default constructor.
+   */
+  stateBasedLinearController() = default;
 
+  /**
+   * Default destructor.
+   */
   ~stateBasedLinearController() override = default;
 
   /**
@@ -40,10 +46,13 @@ class stateBasedLinearController final : public ControllerBase<STATE_DIM, INPUT_
    * @param[in] ctrlPtr: pointer to the provided controller
    */
   void setController(controller_t* ctrlPtr) {
+    if (!ctrlPtr) {
+      throw std::runtime_error("The controller pointer is null!");
+    }
     ctrlPtr_ = ctrlPtr;
     ctrlEventTimes_ = ctrlPtr->controllerEventTimes();
     if (ctrlEventTimes_.size() > 0) {
-      ctrlEventTimes_.insert(ctrlEventTimes_.begin(), 0);
+      ctrlEventTimes_.insert(ctrlEventTimes_.begin(), 0.0);
     }
   }
 
@@ -62,7 +71,7 @@ class stateBasedLinearController final : public ControllerBase<STATE_DIM, INPUT_
     size_t currentMode = x.tail(1).value();
     size_t numEvents = ctrlEventTimes.size();
 
-    if(numEvents == 0) // Simple case in which the controller does not contain any events
+    if (numEvents == 0)  // Simple case in which the controller does not contain any events
     {
       return ctrlPtr->computeInput(t, x);
     }
@@ -74,15 +83,15 @@ class stateBasedLinearController final : public ControllerBase<STATE_DIM, INPUT_
     bool pastAllEvents = (currentMode >= numEvents - 1) && (t > tauMinus);
     const scalar_t eps = OCS2NumericTraits<scalar_t>::weakEpsilon();
 
-    if ((t > tauMinus && t < tau) || pastAllEvents) { // normal case
+    if ((t > tauMinus && t < tau) || pastAllEvents) {  // normal case
       return ctrlPtr->computeInput(t, x);
       // return normal input signal
     } else if (t < tauMinus) {
-      //if event happened before the event time for which the controller was designed
+      // if event happened before the event time for which the controller was designed
       return ctrlPtr->computeInput(tauMinus + 2.0 * eps, x);
       // request input 1 epsilon after the designed event time
     } else if (t > tau) {
-      //if event has not happened yet at the event time for which the controller was designed
+      // if event has not happened yet at the event time for which the controller was designed
       return ctrlPtr->computeInput(tau - eps, x);
       // request input 1 epsilon before the designed event time
     }
@@ -117,7 +126,7 @@ class stateBasedLinearController final : public ControllerBase<STATE_DIM, INPUT_
   stateBasedLinearController* clone() const override { return new stateBasedLinearController(*this); }
 
  private:
-  controller_t* ctrlPtr_;
+  controller_t* ctrlPtr_ = nullptr;
   scalar_array_t ctrlEventTimes_;
 };
 

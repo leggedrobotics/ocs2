@@ -8,11 +8,12 @@
  * 	to extend the reference past event times
  */
 class Observer {
- using DIMENSIONS = ocs2::Dimensions<3, 1>;
- using state_vector_t = typename DIMENSIONS::state_vector_t;
- using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
- using scalar_t = typename DIMENSIONS::scalar_t;
- using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+  using DIMENSIONS = ocs2::Dimensions<3, 1>;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
+  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+
  public:
   /*
    * Constructor

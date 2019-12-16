@@ -31,12 +31,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
+#include <ocs2_core/control/StateBasedLinearController.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/integration/StateTriggeredEventHandler.h>
 #include <ocs2_core/integration/SystemEventHandler.h>
 
-#include <ocs2_core/control/StateBasedLinearController.h>
 #include "ocs2_oc/rollout/RolloutBase.h"
 #include "ocs2_oc/rollout/RootFinder.h"
 
@@ -128,12 +128,11 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
     // set controller
     trajectory_spreading_controller_t trajectorySpreadingController;
-    if (this->settings().useTrajectorySpreadingController_){
-        trajectorySpreadingController.setController(controller);
-        systemDynamicsPtr_->setController(&trajectorySpreadingController);
-    }
-    else{
-    	systemDynamicsPtr_->setController(controller);
+    if (this->settings().useTrajectorySpreadingController_) {
+      trajectorySpreadingController.setController(controller);
+      systemDynamicsPtr_->setController(&trajectorySpreadingController);
+    } else {
+      systemDynamicsPtr_->setController(controller);
     }
 
     // reset function calls counter

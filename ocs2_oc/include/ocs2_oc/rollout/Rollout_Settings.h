@@ -73,7 +73,7 @@ class Rollout_Settings {
         reconstructInputTrajectory_(reconstructInputTrajectory),
         rootFindingAlgorithm_(rootFindingAlgorithm),
         maxSingleEventIterations_(maxSingleEventIterations),
-        useTrajectorySpreadingController_(useTrajectorySpreadingController){}
+        useTrajectorySpreadingController_(useTrajectorySpreadingController) {}
 
   /**
    * This function loads the "Rollout_Settings" variables from a config file. This file contains the settings for the Rollout algorithms.
@@ -157,7 +157,6 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, const st
 
   loadData::loadPtreeValue(pt, maxSingleEventIterations_, fieldName + ".maxSingleEventIterations", verbose);
   loadData::loadPtreeValue(pt, useTrajectorySpreadingController_, fieldName + ".useTrajectorySpreadingController", verbose);
-
 
   if (verbose) {
     std::cerr << " #### =============================================================================" << std::endl;

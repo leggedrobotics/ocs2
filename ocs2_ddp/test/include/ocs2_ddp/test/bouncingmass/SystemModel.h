@@ -1,25 +1,21 @@
 #pragma once
 #include <Eigen/Dense>
+#include <iostream>
 #include <vector>
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
+#include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
-
-#include <ocs2_core/control/LinearController.h>
-
-#include <ocs2_oc/rollout/StateTriggeredRollout.h>
-#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
-
 #include <ocs2_ddp/SLQ.h>
 #include <ocs2_ddp/SLQ_Settings.h>
-
-#include <iostream>
+#include <ocs2_oc/rollout/StateTriggeredRollout.h>
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include "OverallReference.h"
 
@@ -79,7 +75,7 @@ class systemDynamics final : public ocs2::ControlledSystemBase<STATE_DIM, INPUT_
   ~systemDynamics() = default;
 
   void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) {
-	state_matrix_t A;
+    state_matrix_t A;
     A << 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
     state_input_matrix_t B;
     B << 0.0, 1.0, 0.0;
@@ -88,7 +84,7 @@ class systemDynamics final : public ocs2::ControlledSystemBase<STATE_DIM, INPUT_
   }
 
   void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override {
-    double e = 0.95;
+    const scalar_t e = 0.95;
 
     state_matrix_t delta;
     delta << 0.0, 0.0, 0.0, 0.0, -(1.0 + e), 0.0, 0.0, 0.0, 0.0;

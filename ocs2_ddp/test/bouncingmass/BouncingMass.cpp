@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 #include <iostream>
 
+#include <ocs2_core/Dimensions.h>
 #include <ocs2_core/control/StateBasedLinearController.h>
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
-#include <ocs2_core/Dimensions.h>
 
 #include "ocs2_ddp/test/bouncingmass/OverallReference.h"
 #include "ocs2_ddp/test/bouncingmass/SystemModel.h"
@@ -18,16 +18,16 @@
  * [On Optimal Trajectory Tracking for Mechanical Systems with Unilateral Constraints
  * by M. Rijnen]
  *
- * Guard Surfaces are:   x[0] > 0
+ * Guard Surfaces are:    x[0] > 0
  *
- * Cost function is:     x(t)^T Q x(t) + u(t)^T R u(t) + x(t1)^T P x(t1)^T
- *                       Q = [50,   0;
+ * Cost function is:      x(t)^T Q x(t) + u(t)^T R u(t) + x(t1)^T P x(t1)^T
+ *                        Q = [50,   0;
  *                             0,  50];
- *                       P = [56.63, 7.07;
+ *                        P = [56.63, 7.07;
  *                             7.07, 8.01];
- *                       R = 1;
+ *                        R = 1;
  *
- * Initial controller is:		K = [25,10]
+ * Initial controller is: K = [25,10]
  *
  * The following tests are implemented and performed:
  * (1) No penetration of Guard Surfaces
@@ -48,6 +48,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   slqSettings.ddpSettings_.displayInfo_ = false;
   slqSettings.ddpSettings_.displayShortSummary_ = true;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
+  slqSettings.ddpSettings_.minRelCost_ = 1e-4;
   slqSettings.ddpSettings_.nThreads_ = 1;
   slqSettings.ddpSettings_.noStateConstraints_ = true;
   slqSettings.ddpSettings_.checkNumericalStability_ = true;
@@ -101,7 +102,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   state_vector_t xNom = state0;
   input_vector_t uNom(0);
   state_vector_t xFin = state0;
-  systemCost systemCost(reference, Q, R, P, xNom, uNom, xFin,finalTime);
+  systemCost systemCost(reference, Q, R, P, xNom, uNom, xFin, finalTime);
 
   // Rollout Class
   ocs2::StateTriggeredRollout<STATE_DIM, INPUT_DIM> stateTriggeredRollout(systemModel, rolloutSettings);
@@ -159,7 +160,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
 
   for (int i = 0; i < solutionST.stateTrajectory_.size(); i++) {
     // Test 1		No penetration of Guard Surfaces
-    EXPECT_GT(solutionST.stateTrajectory_[i][0], -1e-10);
+    EXPECT_GT(solutionST.stateTrajectory_[i][0], -slqSettings.ddpSettings_.absTolODE_);
     // Display output
     // format: 		idx;time;x[0];xref[0];x[1];xref[1];u;uref
     if (outputSolution) {
@@ -181,7 +182,8 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   scalar_t constraint1ISE;
   scalar_t constraint2ISE;
   slq.getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
-  EXPECT_LT(std::fabs(costFunction - 7.188299), 1e-6);
+  const scalar_t expectedCost = 7.188299;
+  EXPECT_LT(std::fabs(costFunction - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_);
 }
 
 int main(int argc, char** argv) {

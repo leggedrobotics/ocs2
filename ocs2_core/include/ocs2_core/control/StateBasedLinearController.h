@@ -30,7 +30,7 @@ class stateBasedLinearController final : public ControllerBase<STATE_DIM, INPUT_
   using logic_rules_t = HybridLogicRules;
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
 
-  stateBasedLinearController() : ctrlPtr_(nullptr), ctrlEventTimes_(0), timeReference_(0), inputReference_(0) {}
+  stateBasedLinearController() : ctrlPtr_(nullptr), ctrlEventTimes_(0){}
 
   ~stateBasedLinearController() override = default;
 
@@ -66,17 +66,9 @@ class stateBasedLinearController final : public ControllerBase<STATE_DIM, INPUT_
     if ((t > tauMinus && t < tau) || pastAllEvents) {
       return ctrlPtr->computeInput(t, x);
     } else if (t < tauMinus) {
-      input_vector_t uRefT, uRefTau;
-      // compensation of static reference input signal
-      auto alpha = ocs2::LinearInterpolation<input_vector_t>::interpolate(t, uRefT, &timeReference_, &inputReference_);
-      alpha = ocs2::LinearInterpolation<input_vector_t>::interpolate(tauMinus + 2.0 * eps, uRefTau, &timeReference_, &inputReference_);
-      return ctrlPtr->computeInput(tauMinus + 2.0 * eps, x) + uRefT - uRefTau;
+      return ctrlPtr->computeInput(tauMinus + 2.0 * eps, x);
     } else if (t > tau) {
-      input_vector_t uRefT, uRefTau;
-      // compensation of static reference input signal
-      auto alpha = ocs2::LinearInterpolation<input_vector_t>::interpolate(t, uRefT, &timeReference_, &inputReference_);
-      alpha = ocs2::LinearInterpolation<input_vector_t>::interpolate(tau - 2.0 * eps, uRefTau, &timeReference_, &inputReference_);
-      return ctrlPtr->computeInput(tau - 2.0 * eps, x) + uRefT - uRefTau;
+      return ctrlPtr->computeInput(tau - 2.0 * eps, x);
     }
   }
 

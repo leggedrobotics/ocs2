@@ -178,7 +178,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   double constraint1ISE;
   double constraint2ISE;
   slq.getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
-  EXPECT_LT(std::fabs(costFunction - 7.188299), 1e-5);
+  EXPECT_LT(std::fabs(costFunction - 7.188299), 1e-6);
 }
 
 int main(int argc, char** argv) {

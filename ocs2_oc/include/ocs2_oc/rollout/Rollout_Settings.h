@@ -63,7 +63,7 @@ class Rollout_Settings {
   explicit Rollout_Settings(double absTolODE = 1e-9, double relTolODE = 1e-6, size_t maxNumStepsPerSecond = 5000, double minTimeStep = 1e-3,
                             IntegratorType integratorType = IntegratorType::ODE45, bool checkNumericalStability = false,
                             bool reconstructInputTrajectory = true, RootFinderType rootFindingAlgorithm = RootFinderType::ANDERSON_BJORCK,
-                            int maxSingleEventIterations = 10)
+                            int maxSingleEventIterations = 10, bool useTrajectorySpreadingController = false)
       : absTolODE_(absTolODE),
         relTolODE_(relTolODE),
         maxNumStepsPerSecond_(maxNumStepsPerSecond),
@@ -72,7 +72,8 @@ class Rollout_Settings {
         checkNumericalStability_(checkNumericalStability),
         reconstructInputTrajectory_(reconstructInputTrajectory),
         rootFindingAlgorithm_(rootFindingAlgorithm),
-        maxSingleEventIterations_(maxSingleEventIterations) {}
+        maxSingleEventIterations_(maxSingleEventIterations),
+        useTrajectorySpreadingController_(useTrajectorySpreadingController){}
 
   /**
    * This function loads the "Rollout_Settings" variables from a config file. This file contains the settings for the Rollout algorithms.
@@ -124,6 +125,8 @@ class Rollout_Settings {
   /** This value determines the maximum number of iterations, per event, allowed in state triggered rollout to find
    *  the guard surface zero crossing.  */
   int maxSingleEventIterations_;
+  /** Whether to use the trajectory spreading controller in state triggered rollout */
+  bool useTrajectorySpreadingController_;
 
 };  // end of Rollout_Settings class
 
@@ -153,6 +156,8 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, const st
   rootFindingAlgorithm_ = static_cast<RootFinderType>(tmp);
 
   loadData::loadPtreeValue(pt, maxSingleEventIterations_, fieldName + ".maxSingleEventIterations", verbose);
+  loadData::loadPtreeValue(pt, useTrajectorySpreadingController_, fieldName + ".useTrajectorySpreadingController", verbose);
+
 
   if (verbose) {
     std::cerr << " #### =============================================================================" << std::endl;

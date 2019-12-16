@@ -34,18 +34,22 @@ class stateBasedLinearController final : public ControllerBase<STATE_DIM, INPUT_
   ~stateBasedLinearController() override = default;
 
   /**
-   * TODO
+   * Sets the provided controller pointer which provides the input signal
+   * At the same time the eventtimes of the designed controller are computed
+   *
+   * @param[in] ctrlPtr: pointer to the provided controller
    */
   void setController(controller_t* ctrlPtr) {
     ctrlPtr_ = ctrlPtr;
     ctrlEventTimes_ = ctrlPtr->controllerEventTimes();
-    if (ctrlEventTimes_.size() > 0 && ctrlEventTimes_[0] != 0) {
+    if (ctrlEventTimes_.size() > 0) {
       ctrlEventTimes_.insert(ctrlEventTimes_.begin(), 0);
     }
   }
 
   /**
    * Computes the control input based on the trajectory spreading scheme.
+   *
    * @param [in] t: current time at which input is requested
    * @param [in] x: current state at which input is requested
    * @param [in] ctrlEventTimes: array containing eventTimes around which the controller was designed
@@ -57,6 +61,11 @@ class stateBasedLinearController final : public ControllerBase<STATE_DIM, INPUT_
                                                         controller_t* ctrlPtr) {
     size_t currentMode = x.tail(1).value();
     size_t numEvents = ctrlEventTimes.size();
+
+    if(numEvents == 0) // Simple case in which the controller does not contain any events
+    {
+      return ctrlPtr->computeInput(t, x);
+    }
 
     scalar_t tauMinus = (numEvents > currentMode) ? ctrlEventTimes[currentMode] : ctrlEventTimes.back();
     scalar_t tau = (numEvents > currentMode + 1) ? ctrlEventTimes[currentMode + 1] : ctrlEventTimes.back();

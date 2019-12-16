@@ -41,12 +41,37 @@ class OverallReference {
   void getInput(scalar_t time, input_vector_t& input);
 
   /*
+   * Calculate the input at a certain time
+   *
+   * @param [in] time: time moment at which the input is calculated
+   * @return input corresponding to time
+   */
+  input_vector_t getInput(scalar_t time);
+
+  /*
    * Calculate the reference state at a certain time
    *
    * @param [in] time: time moment at which the input is calculated
    * @param [out] state: state corresponding to time
    */
   void getState(scalar_t time, state_vector_t& x);
+
+  /*
+   * Calculate the reference state at a certain time
+   *
+   * @param [in] time: time moment at which the input is calculated
+   * @return state corresponding to time
+   */
+  state_vector_t getState(scalar_t time);
+
+  /*
+   * Calculate the reference state at a certain time and mode
+   *
+   * @param [in] idx: mode at which the input is calculated
+   * @param [in] time: time moment at which the input is calculated
+   * @return state corresponding to time and mode
+   */
+  state_vector_t getState(int idx, scalar_t time);
 
   /*
    * Calculate the reference state at a certain time and mode

@@ -95,7 +95,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   state_vector_t xNom = state0;
   input_vector_t uNom(0);
   state_vector_t xFin = state0;
-  systemCost systemCost(reference, Q, R, P, xNom, uNom, xFin);
+  systemCost systemCost(reference, Q, R, P, xNom, uNom, xFin,finalTime);
 
   // Rollout Class
   ocs2::StateTriggeredRollout<STATE_DIM, INPUT_DIM> stateTriggeredRollout(systemModel, rolloutSettings);
@@ -122,7 +122,6 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
     scalar_t timeSteps = (controlTimes[i + 1] + eps - controlTimes[i]) / controllerDeltaTime;
     scalar_t timeStamp = 0;
     state_vector_t refState;
-    input_vector_t refInput;
 
     for (int j = 0; j <= timeSteps; j++) {
       if (j == 0 && i < controlTimes.size() - 2) {
@@ -131,8 +130,8 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
         timeStamp = controlTimes[i] + j * controllerDeltaTime;
       }
 
-      reference.getState(timeStamp, refState);
-      reference.getInput(timeStamp, refInput);
+      state_vector_t refState = reference.getState(timeStamp);
+      input_vector_t refInput = reference.getInput(timeStamp);
       controllerBias = controllerGain * refState + refInput;
 
       timeStampArray.push_back(timeStamp);
@@ -158,13 +157,10 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
     // Display output
     // format: 		idx;time;x[0];xref[0];x[1];xref[1];u;uref
     if (outputSolution) {
-      int idx;
-      idx = solutionST.stateTrajectory_[i][2];
+      int idx = solutionST.stateTrajectory_[i][2];
 
-      input_vector_t uRef;
-      state_vector_t xRef;
-      reference.getState(idx, solutionST.timeTrajectory_[i], xRef);
-      reference.getInput(solutionST.timeTrajectory_[i], uRef);
+      input_vector_t uRef = reference.getInput(solutionST.timeTrajectory_[i]);
+      state_vector_t xRef = reference.getState(idx, solutionST.timeTrajectory_[i]);
 
       std::cerr << i << ";" << idx << ";";
       std::cerr << std::setprecision(25) << solutionST.timeTrajectory_[i];

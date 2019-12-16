@@ -80,9 +80,9 @@ class systemDynamics final : public ocs2::ControlledSystemBase<STATE_DIM, INPUT_
 
   void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) {
     Eigen::Matrix<scalar_t, STATE_DIM, STATE_DIM> A;
-    A << 0, 1, 0, 0, 0, 0, 0, 0, 0;
+    A << 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
     Eigen::Matrix<scalar_t, STATE_DIM, INPUT_DIM> B;
-    B << 0, 1, 0;
+    B << 0.0, 1.0, 0.0;
 
     dxdt = A * x + B * u;
   }
@@ -91,7 +91,7 @@ class systemDynamics final : public ocs2::ControlledSystemBase<STATE_DIM, INPUT_
     double e = 0.95;
 
     Eigen::Matrix<scalar_t, STATE_DIM, STATE_DIM> delta;
-    delta << 0, 0, 0, 0, -(1 + e), 0, 0, 0, 0;
+    delta << 0.0, 0.0, 0.0, 0.0, -(1.0 + e), 0.0, 0.0, 0.0, 0.0;
     mappedState = state + delta * state;
 
     if (state[2] < 5) {
@@ -118,9 +118,9 @@ class systemDerivative final : public ocs2::DerivativesBase<STATE_DIM, INPUT_DIM
     u_ = u;
   }
 
-  void getFlowMapDerivativeState(state_matrix_t& A) { A << 0, 1, 0, 0, 0, 0, 0, 0, 0; }
+  void getFlowMapDerivativeState(state_matrix_t& A) { A << 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0; }
 
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) { B << 0, 1, 0; }
+  void getFlowMapDerivativeInput(state_input_matrix_t& B) { B << 0.0, 1.0, 0.0; }
 
   systemDerivative* clone() const final { return new systemDerivative(*this); }
 
@@ -135,8 +135,8 @@ class systemCost final : public ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM
   using BASE = ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM>;
 
   systemCost(OverallReference ref, state_matrix_t Q, input_matrix_t R, state_matrix_t P, state_vector_t xNom, input_vector_t uNom,
-             state_vector_t xFin)
-      : BASE(Q, R, xNom, uNom, P, xFin), ref_(ref), xFin_(xFin) {}
+             state_vector_t xFin, scalar_t timeFinal)
+      : BASE(Q, R, xNom, uNom, P, xFin), ref_(ref), xFin_(xFin), timeFinal_(timeFinal) {}
 
   ~systemCost() = default;
 
@@ -147,14 +147,12 @@ class systemCost final : public ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM
     state_ = state;
     u_ = u;
 
-    scalar_t finalTime = 2.5;
-
-    int i = state_.tail(1).value();
+    int currentMode = state_.tail(1).value();
     ref_.getInput(t_, uRef_);
-    ref_.getState(i, t_, stateRef_);
+    ref_.getState(currentMode, t_, stateRef_);
 
     // Terminal cost only calculated for final state, not for intermediate switch states
-    if (std::fabs(t - finalTime) > ocs2::OCS2NumericTraits<scalar_t>::weakEpsilon()) {
+    if (std::fabs(t - timeFinal_) > ocs2::OCS2NumericTraits<scalar_t>::weakEpsilon()) {
       BASE::setCurrentStateAndControl(t_, state_, u_, stateRef_, uRef_, state_);
     } else {
       BASE::setCurrentStateAndControl(t_, state_, u_, stateRef_, uRef_, stateRef_);
@@ -169,6 +167,7 @@ class systemCost final : public ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM
   input_vector_t uRef_;
 
   state_vector_t xFin_;
+  scalar_t timeFinal_;
 
   OverallReference ref_;
 };

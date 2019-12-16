@@ -40,6 +40,13 @@ void OverallReference::getInput(scalar_t time, input_vector_t& input) {
   }
 }
 
+input_vector_t OverallReference::getInput(scalar_t time){
+	input_vector_t u;
+	getInput(time,u);
+	return u;
+}
+
+
 void OverallReference::getState(int idx, scalar_t time, state_vector_t& x) {
   if (idx >= 0 && idx < References_.size()) {
     if (time < 2) {
@@ -52,6 +59,12 @@ void OverallReference::getState(int idx, scalar_t time, state_vector_t& x) {
   }
 }
 
+state_vector_t OverallReference::getState(int idx, scalar_t time) {
+	state_vector_t state;
+	getState(idx,time,state);
+	return state;
+}
+
 void OverallReference::getState(scalar_t time, state_vector_t& x) {
   int idx = getIndex(time);
   if (idx >= 0 && idx < References_.size()) {
@@ -59,6 +72,12 @@ void OverallReference::getState(scalar_t time, state_vector_t& x) {
   } else {
     References_[0].getState(0, x);
   }
+}
+
+state_vector_t OverallReference::getState(scalar_t time) {
+	state_vector_t state;
+	getState(time,state);
+	return state;
 }
 
 void OverallReference::extendref(scalar_t delta) {

@@ -1,11 +1,13 @@
-#include <OverallReference.h>
 #include <gtest/gtest.h>
 #include <iostream>
 
-#include "SystemModel.h"
 
 #include <ocs2_core/control/StateBasedLinearController.h>
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
+
+#include "ocs2_ddp/test/bouncingmass/OverallReference.h"
+#include "ocs2_ddp/test/bouncingmass/SystemModel.h"
+
 /*	Test for StateTriggeredRollout in combination with SLQ
  *
  * The system being tested is a system consisting of a mass and a wall

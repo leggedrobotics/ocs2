@@ -42,7 +42,7 @@ catkin_package(
 
 include_directories(
   include
-  test/bouncingmass/include
+  test/include
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
@@ -157,10 +157,10 @@ target_link_libraries(exp1_ilqr_test
 )
 
 catkin_add_gtest(bouncing_mass_test
-  test/bouncingmass/src/BouncingMass.cpp
-  test/bouncingmass/src/OverallReference.cpp
-  test/bouncingmass/src/Reference.cpp
-  test/bouncingmass/src/ReferenceModel.cpp
+  test/bouncingmass/BouncingMass.cpp
+  test/bouncingmass/OverallReference.cpp
+  test/bouncingmass/Reference.cpp
+  test/bouncingmass/ReferenceModel.cpp
 )
 target_link_libraries(bouncing_mass_test
   ${catkin_LIBRARIES}

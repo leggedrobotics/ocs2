@@ -162,9 +162,10 @@ class ControllerBase {
   virtual void display() const {}
 
   /*
-   *
+   * Gets the event times for which the controller is designed.
+   * @param [out] eventTimes: Event times.
    */
-  virtual void getStateEvents(scalar_array_t& eventTimes) {}
+  virtual scalar_array_t controllerEventTimes() const {}
 };
 
 }  // namespace ocs2

@@ -30,83 +30,87 @@ class stateBasedLinearController final : public ControllerBase<STATE_DIM, INPUT_
   using logic_rules_t = HybridLogicRules;
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
 
-  stateBasedLinearController() : CtrlPtr_(nullptr), CtrlEventTimes_(0), timeReference_(0), inputReference_(0) {}
+  stateBasedLinearController() : ctrlPtr_(nullptr), ctrlEventTimes_(0), timeReference_(0), inputReference_(0) {}
 
-  void setController(controller_t* CtrlPtr) {
-    CtrlPtr_ = CtrlPtr;
-    CtrlEventTimes_.clear();
-    CtrlPtr->getStateEvents(CtrlEventTimes_);
+  ~stateBasedLinearController() override = default;
 
-    if (CtrlEventTimes_.size() > 0 && CtrlEventTimes_[0] != 0) {
-      CtrlEventTimes_.insert(CtrlEventTimes_.begin(), 0);
+  /**
+   * TODO
+   */
+  void setController(controller_t* ctrlPtr) {
+    ctrlPtr_ = ctrlPtr;
+    ctrlEventTimes_ = ctrlPtr->controllerEventTimes();
+    if (ctrlEventTimes_.size() > 0 && ctrlEventTimes_[0] != 0) {
+      ctrlEventTimes_.insert(ctrlEventTimes_.begin(), 0);
     }
   }
 
-  void setReference(scalar_array_t& timeReference, std::vector<input_vector_t>& inputReference) {
-    timeReference_ = timeReference;
-    inputReference_ = inputReference;
-  }
-
-  ~stateBasedLinearController() = default;
-
-  input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) {
+  /**
+   * Computes the control input based on the trajectory spreading scheme.
+   * @param [in] t: TODO
+   *
+   * @retrun
+   */
+  static input_vector_t computeTrajectorySpreadingInput(const scalar_t& t, const state_vector_t& x, const scalar_array_t& ctrlEventTimes,
+                                                        controller_t* ctrlPtr) {
     size_t currentMode = x.tail(1).value();
-    size_t numEvents = CtrlEventTimes_.size();
+    size_t numEvents = ctrlEventTimes.size();
 
-    scalar_t tauMinus = (numEvents > currentMode) ? CtrlEventTimes_[currentMode] : CtrlEventTimes_.back();
-    scalar_t tau = (numEvents > currentMode + 1) ? CtrlEventTimes_[currentMode + 1] : CtrlEventTimes_.back();
-    scalar_t tauPlus = (numEvents > currentMode + 2) ? CtrlEventTimes_[currentMode + 2] : CtrlEventTimes_.back();
+    scalar_t tauMinus = (numEvents > currentMode) ? ctrlEventTimes[currentMode] : ctrlEventTimes.back();
+    scalar_t tau = (numEvents > currentMode + 1) ? ctrlEventTimes[currentMode + 1] : ctrlEventTimes.back();
+    scalar_t tauPlus = (numEvents > currentMode + 2) ? ctrlEventTimes[currentMode + 2] : ctrlEventTimes.back();
 
     bool pastAllEvents = (currentMode >= numEvents - 1) && (t > tauMinus);
-    scalar_t eps = OCS2NumericTraits<scalar_t>::weakEpsilon();
+    const scalar_t eps = OCS2NumericTraits<scalar_t>::weakEpsilon();
 
     if ((t > tauMinus && t < tau) || pastAllEvents) {
-      return CtrlPtr_->computeInput(t, x);
+      return ctrlPtr->computeInput(t, x);
     } else if (t < tauMinus) {
       input_vector_t uRefT, uRefTau;
-      // Compenstation of static reference input signal
+      // compensation of static reference input signal
       auto alpha = ocs2::LinearInterpolation<input_vector_t>::interpolate(t, uRefT, &timeReference_, &inputReference_);
-      alpha = ocs2::LinearInterpolation<input_vector_t>::interpolate(tauMinus + 2 * eps, uRefTau, &timeReference_, &inputReference_);
-      return CtrlPtr_->computeInput(tauMinus + 2 * eps, x) + uRefT - uRefTau;
+      alpha = ocs2::LinearInterpolation<input_vector_t>::interpolate(tauMinus + 2.0 * eps, uRefTau, &timeReference_, &inputReference_);
+      return ctrlPtr->computeInput(tauMinus + 2.0 * eps, x) + uRefT - uRefTau;
     } else if (t > tau) {
       input_vector_t uRefT, uRefTau;
-      // Compenstation of static reference input signal
+      // compensation of static reference input signal
       auto alpha = ocs2::LinearInterpolation<input_vector_t>::interpolate(t, uRefT, &timeReference_, &inputReference_);
-      alpha = ocs2::LinearInterpolation<input_vector_t>::interpolate(tau - 2 * eps, uRefTau, &timeReference_, &inputReference_);
-      return CtrlPtr_->computeInput(tau - 2 * eps, x) + uRefT - uRefTau;
+      alpha = ocs2::LinearInterpolation<input_vector_t>::interpolate(tau - 2.0 * eps, uRefTau, &timeReference_, &inputReference_);
+      return ctrlPtr->computeInput(tau - 2.0 * eps, x) + uRefT - uRefTau;
     }
+  }
+
+  input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
+    return computeTrajectorySpreadingInput(t, x, ctrlEventTimes_, ctrlPtr_);
   }
 
   void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const override {
-    CtrlPtr_->flatten(timeArray, flatArray2);
+    ctrlPtr_->flatten(timeArray, flatArray2);
   }
 
   void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) override {
-    CtrlPtr_->unFlatten(timeArray, flatArray2);
+    ctrlPtr_->unFlatten(timeArray, flatArray2);
   }
 
-  void concatenate(const Base* nextController, int index, int length) override { CtrlPtr_->concatenate(nextController, index, length); }
+  void concatenate(const Base* nextController, int index, int length) override { ctrlPtr_->concatenate(nextController, index, length); }
 
-  int size() const override { return CtrlPtr_->size(); }
+  int size() const override { return ctrlPtr_->size(); }
 
-  ControllerType getType() const override { return CtrlPtr_->getType(); }
+  ControllerType getType() const override { return ctrlPtr_->getType(); }
 
-  void clear() override { CtrlPtr_->clear(); }
+  void clear() override { ctrlPtr_->clear(); }
 
-  void setZero() override { CtrlPtr_->setZero(); }
+  void setZero() override { ctrlPtr_->setZero(); }
 
-  bool empty() const override { return CtrlPtr_->empty(); }
+  bool empty() const override { return ctrlPtr_->empty(); }
 
-  void display() const override { CtrlPtr_->display(); }
+  void display() const override { ctrlPtr_->display(); }
 
   stateBasedLinearController* clone() const override { return new stateBasedLinearController(*this); }
 
  private:
-  controller_t* CtrlPtr_;
-  scalar_array_t CtrlEventTimes_;
-
-  std::vector<double> timeReference_;
-  std::vector<input_vector_t> inputReference_;
+  controller_t* ctrlPtr_;
+  scalar_array_t ctrlEventTimes_;
 };
 
 }  // namespace ocs2

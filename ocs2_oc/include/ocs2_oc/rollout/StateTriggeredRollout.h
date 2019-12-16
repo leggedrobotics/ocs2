@@ -71,19 +71,17 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
   using ode_base_t = IntegratorBase<STATE_DIM>;
 
-  using state_control_t = stateBasedLinearController<STATE_DIM, INPUT_DIM>;
+  using trajectory_spreading_controller_t = stateBasedLinearController<STATE_DIM, INPUT_DIM>;
   /**
    * Constructor.
    *
    * @param [in] systemDynamics: The system dynamics for forward rollout.
    * @param [in] rolloutSettings: The rollout settings.
    */
-  explicit StateTriggeredRollout(const controlled_system_base_t& systemDynamics, Rollout_Settings rolloutSettings = Rollout_Settings(),
-                                 state_control_t* controlPtr = nullptr)
+  explicit StateTriggeredRollout(const controlled_system_base_t& systemDynamics, Rollout_Settings rolloutSettings = Rollout_Settings())
       : BASE(std::move(rolloutSettings)),
         systemDynamicsPtr_(systemDynamics.clone()),
-        systemEventHandlersPtr_(new state_triggered_event_handler_t(this->settings().minTimeStep_)),
-        controlPtr_(controlPtr) {
+        systemEventHandlersPtr_(new state_triggered_event_handler_t(this->settings().minTimeStep_)) {
     // construct dynamicsIntegratorsPtr
     constructDynamicsIntegrator(this->settings().integratorType_);
   }
@@ -98,18 +96,13 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   StateTriggeredRollout& operator=(const StateTriggeredRollout&) = delete;
 
   StateTriggeredRollout<STATE_DIM, INPUT_DIM>* clone() const override {
-    return new StateTriggeredRollout<STATE_DIM, INPUT_DIM>(*systemDynamicsPtr_, this->settings(), controlPtr_);
+    return new StateTriggeredRollout<STATE_DIM, INPUT_DIM>(*systemDynamicsPtr_, this->settings());
   }
 
   /**
    * Returns the underlying dynamics
    */
   controlled_system_base_t* systemDynamicsPtr() { return systemDynamicsPtr_.get(); }
-
-  /**
-   * Set StateBasedController
-   */
-  void setStateBasedController(state_control_t* controlPtr) { controlPtr_ = controlPtr; }
 
  protected:
   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
@@ -134,12 +127,9 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     eventsPastTheEndIndeces.reserve(maxNumSteps);
 
     // set controller
-    if (controlPtr_) {
-      controlPtr_->setController(controller);
-      systemDynamicsPtr_->setController(controlPtr_);
-    } else {
-      systemDynamicsPtr_->setController(controller);
-    }
+    trajectory_spreading_controller_t trajectorySpreadingController;
+    trajectorySpreadingController.setController(controller);
+    systemDynamicsPtr_->setController(trajectorySpreadingController);
 
     // reset function calls counter
     systemDynamicsPtr_->resetNumFunctionCalls();
@@ -321,8 +311,6 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   std::shared_ptr<state_triggered_event_handler_t> systemEventHandlersPtr_;
 
   std::unique_ptr<ode_base_t> dynamicsIntegratorPtr_;
-
-  state_control_t* controlPtr_;
 };
 
 }  // namespace ocs2

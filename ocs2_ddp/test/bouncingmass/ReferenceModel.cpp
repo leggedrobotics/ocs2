@@ -1,4 +1,4 @@
-#include "ReferenceModel.h"
+#include "ocs2_ddp/test/bouncingmass/ReferenceModel.h"
 
 ReferenceModel::ReferenceModel(Reference* ref) : ref_(ref) {}
 

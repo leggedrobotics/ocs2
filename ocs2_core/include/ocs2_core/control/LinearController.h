@@ -269,7 +269,13 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     EigenLinearInterpolation<input_vector_t>::interpolate(time, bias, &timeStamp_, &biasArray_);
   }
 
-  void getStateEvents(scalar_array_t& eventTimes) override {
+  scalar_array_t controllerEventTimes() override {
+    // simple controller case
+    if (timeStamp_.size() < 2) {
+      return scalar_array_t(0);
+    }
+
+    scalar_array_t eventTimes;
     scalar_t lastevent = 0;
     for (int i = 0; i < timeStamp_.size() - 1; i++) {
       if (timeStamp_[i + 1] - timeStamp_[i] <= 2 * OCS2NumericTraits<scalar_t>::weakEpsilon() &&
@@ -281,6 +287,7 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
         lastevent = eventTimes.back();
       }
     }
+    return eventTimes;
   }
 
  public:

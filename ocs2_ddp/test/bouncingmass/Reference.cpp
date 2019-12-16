@@ -1,5 +1,6 @@
-#include <Reference.h>
 #include <algorithm>
+
+#include "ocs2_ddp/test/bouncingmass/Reference.h"
 
 using DIMENSIONS = ocs2::Dimensions<3, 1>;
 using scalar_t = typename DIMENSIONS::scalar_t;

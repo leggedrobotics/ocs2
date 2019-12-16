@@ -720,6 +720,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
       }
     };
     runParallel(task, ddpSettings_.nThreads_);
+
   }  // end of i loop
 }
 

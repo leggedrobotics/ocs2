@@ -78,9 +78,6 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   OverallReference reference(trajTimes, trajStates);
   reference.extendref(delta);
 
-  scalar_array_t timeRef;
-  std::vector<input_vector_t> inputRef;
-  reference.getInput(startTime, finalTime, 0.01, timeRef, inputRef);
   // Dynamics, Constraints and derivative classes
   systemDynamics systemModel;
   systemDerivative systemDerivatives;
@@ -181,7 +178,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   double constraint1ISE;
   double constraint2ISE;
   slq.getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
-  EXPECT_LT(std::fabs(costFunction - 7.21852), 1e-5);
+  EXPECT_LT(std::fabs(costFunction - 7.188299), 1e-5);
 }
 
 int main(int argc, char** argv) {

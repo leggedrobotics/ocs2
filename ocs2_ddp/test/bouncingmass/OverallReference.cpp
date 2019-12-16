@@ -40,18 +40,6 @@ void OverallReference::getInput(scalar_t time, input_vector_t& input) {
   }
 }
 
-void OverallReference::getInput(scalar_t t0, scalar_t t1, scalar_t dt, std::vector<scalar_t>& time, std::vector<input_vector_t>& input) {
-  input.clear();
-
-  input_vector_t inputT;
-  for (scalar_t t = t0; t <= t1; t += dt) {
-    time.push_back(t);
-
-    getInput(t, inputT);
-    input.push_back(inputT);
-  }
-}
-
 void OverallReference::getState(int idx, scalar_t time, state_vector_t& x) {
   if (idx >= 0 && idx < References_.size()) {
     if (time < 2) {

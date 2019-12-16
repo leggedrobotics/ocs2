@@ -46,7 +46,10 @@ class stateBasedLinearController final : public ControllerBase<STATE_DIM, INPUT_
 
   /**
    * Computes the control input based on the trajectory spreading scheme.
-   * @param [in] t: TODO
+   * @param [in] t: current time at which input is requested
+   * @param [in] x: current state at which input is requested
+   * @param [in] ctrlEventTimes: array containing eventTimes around which the controller was designed
+   * @param [in] ctrlPtr: Pointer to the actual controller
    *
    * @retrun
    */
@@ -62,12 +65,17 @@ class stateBasedLinearController final : public ControllerBase<STATE_DIM, INPUT_
     bool pastAllEvents = (currentMode >= numEvents - 1) && (t > tauMinus);
     const scalar_t eps = OCS2NumericTraits<scalar_t>::weakEpsilon();
 
-    if ((t > tauMinus && t < tau) || pastAllEvents) {
+    if ((t > tauMinus && t < tau) || pastAllEvents) { // normal case
       return ctrlPtr->computeInput(t, x);
+      // return normal input signal
     } else if (t < tauMinus) {
+      //if event happened before the event time for which the controller was designed
       return ctrlPtr->computeInput(tauMinus + 2.0 * eps, x);
+      // request input 1 epsilon after the designed event time
     } else if (t > tau) {
-      return ctrlPtr->computeInput(tau - 2.0 * eps, x);
+      //if event has not happened yet at the event time for which the controller was designed
+      return ctrlPtr->computeInput(tau - eps, x);
+      // request input 1 epsilon before the designed event time
     }
   }
 

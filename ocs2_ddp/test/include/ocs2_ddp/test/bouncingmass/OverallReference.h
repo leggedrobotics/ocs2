@@ -41,17 +41,6 @@ class OverallReference {
   void getInput(scalar_t time, input_vector_t& input);
 
   /*
-   * Calculate the input at a range of times
-   *
-   * @param [in] t0: First time element of output
-   * @param [in] t1: Last time element of output
-   * @param [in] dt: Time step of output vectors
-   * @param [out] time: Time vector
-   * @param [out] input: Input vector corresponding to time vector
-   */
-  void getInput(const scalar_t t0, const scalar_t t1, scalar_t dt, std::vector<scalar_t>& time, std::vector<input_vector_t>& input);
-
-  /*
    * Calculate the reference state at a certain time
    *
    * @param [in] time: time moment at which the input is calculated

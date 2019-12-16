@@ -100,7 +100,7 @@ using namespace pybind11::literals;
     /* bind vector types so they can be used natively in python */                                                                        \
     BIND_VECTOR_TYPES(PY_INTERFACE)                                                                                                       \
     /* bind cost desired trajectories class */                                                                                            \
-    pybind11::class_<PY_INTERFACE::cost_desired_trajectories_t>(m, "cost_desired_trajectories")                                           \
+    pybind11::class_<ocs2::CostDesiredTrajectories>(m, "cost_desired_trajectories")                                                       \
         .def(pybind11::init<PY_INTERFACE::scalar_array_t, PY_INTERFACE::dynamic_vector_array_t, PY_INTERFACE::dynamic_vector_array_t>()); \
     /* bind the actual mpc interface */                                                                                                   \
     pybind11::class_<PY_INTERFACE>(m, "mpc_interface")                                                                                    \

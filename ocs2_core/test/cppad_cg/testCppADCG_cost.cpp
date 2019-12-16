@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 
 #include "QuadraticCostFunctionAD.h"
+#include "../cost/CheckCostFunction.h"
 #include "ocs2_core/cost/QuadraticCostFunction.h"
 
 class testCppADCG_costFixture : public ::testing::Test {
@@ -78,114 +79,6 @@ class testCppADCG_costFixture : public ::testing::Test {
   std::unique_ptr<quadratic_cost_t> quadraticCost_;
   std::unique_ptr<ad_quadratic_cost_t> adQuadraticCost_;
 };
-
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void checkCostFunction(const size_t numTests, ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM>* const quadraticCost1,
-                       ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM>* const quadraticCost2, bool& success) {
-  using quadratic_cost_t = ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM>;
-  using scalar_t = typename quadratic_cost_t::scalar_t;
-  using state_vector_t = typename quadratic_cost_t::state_vector_t;
-  using state_matrix_t = typename quadratic_cost_t::state_matrix_t;
-  using input_vector_t = typename quadratic_cost_t::input_vector_t;
-  using input_matrix_t = typename quadratic_cost_t::input_matrix_t;
-  using input_state_matrix_t = typename quadratic_cost_t::input_state_matrix_t;
-
-  success = true;
-
-  const scalar_t precision = 1e-9;
-
-  state_vector_t x;
-  input_vector_t u;
-
-  for (size_t it = 0; it < numTests; it++) {
-    x.setRandom();
-    u.setRandom();
-
-    quadraticCost1->setCurrentStateAndControl(0.0, x, u);
-    quadraticCost2->setCurrentStateAndControl(0.0, x, u);
-
-    scalar_t L, ad_L;
-    quadraticCost1->getIntermediateCost(L);
-    quadraticCost2->getIntermediateCost(ad_L);
-    if (std::abs(L - ad_L) > precision) {
-      std::cout << "L:    " << L << std::endl;
-      std::cout << "al_L: " << ad_L << std::endl;
-      success = false;
-    }
-
-    state_vector_t dLdx, ad_dLdx;
-    quadraticCost1->getIntermediateCostDerivativeState(dLdx);
-    quadraticCost2->getIntermediateCostDerivativeState(ad_dLdx);
-    if (!dLdx.isApprox(ad_dLdx, precision)) {
-      std::cout << "dLdx:    " << dLdx.transpose() << std::endl;
-      std::cout << "al_dLdx: " << ad_dLdx.transpose() << std::endl;
-      success = false;
-    }
-
-    state_matrix_t dLdxx, ad_dLdxx;
-    quadraticCost1->getIntermediateCostSecondDerivativeState(dLdxx);
-    quadraticCost2->getIntermediateCostSecondDerivativeState(ad_dLdxx);
-    if (!dLdxx.isApprox(ad_dLdxx, precision)) {
-      std::cout << "dLdxx:    \n" << dLdxx << std::endl;
-      std::cout << "al_dLdxx: \n" << ad_dLdxx << std::endl;
-      success = false;
-    }
-
-    input_vector_t dLdu, ad_dLdu;
-    quadraticCost1->getIntermediateCostDerivativeInput(dLdu);
-    quadraticCost2->getIntermediateCostDerivativeInput(ad_dLdu);
-    if (!dLdu.isApprox(ad_dLdu, precision)) {
-      std::cout << "dLdu:    " << dLdu.transpose() << std::endl;
-      std::cout << "al_dLdu: " << ad_dLdu.transpose() << std::endl;
-      success = false;
-    }
-
-    input_matrix_t dLduu, ad_dLduu;
-    quadraticCost1->getIntermediateCostSecondDerivativeInput(dLduu);
-    quadraticCost2->getIntermediateCostSecondDerivativeInput(ad_dLduu);
-    if (!dLduu.isApprox(ad_dLduu, precision)) {
-      std::cout << "dLduu:    \n" << dLduu << std::endl;
-      std::cout << "al_dLduu: \n" << ad_dLduu << std::endl;
-      success = false;
-    }
-
-    input_state_matrix_t dLdxu, ad_dLdxu;
-    quadraticCost1->getIntermediateCostDerivativeInputState(dLdxu);
-    quadraticCost2->getIntermediateCostDerivativeInputState(ad_dLdxu);
-    if (!dLdxu.isApprox(ad_dLdxu, precision)) {
-      std::cout << "dLdxu:    \n" << dLdxu << std::endl;
-      std::cout << "al_dLdxu: \n" << ad_dLdxu << std::endl;
-      success = false;
-    }
-
-    scalar_t Phi, ad_Phi;
-    quadraticCost1->getTerminalCost(Phi);
-    quadraticCost2->getTerminalCost(ad_Phi);
-    if (std::abs(Phi - ad_Phi) > precision) {
-      std::cout << "Phi:    " << Phi << std::endl;
-      std::cout << "al_Phi: " << ad_Phi << std::endl;
-      success = false;
-    }
-
-    state_vector_t dPhidx, ad_dPhidx;
-    quadraticCost1->getTerminalCostDerivativeState(dPhidx);
-    quadraticCost2->getTerminalCostDerivativeState(ad_dPhidx);
-    if (!dPhidx.isApprox(ad_dPhidx, precision)) {
-      std::cout << "dPhidx:    " << dPhidx.transpose() << std::endl;
-      std::cout << "al_dPhidx: " << ad_dPhidx.transpose() << std::endl;
-      success = false;
-    }
-
-    state_matrix_t dPhidxx, ad_dPhidxx;
-    quadraticCost1->getTerminalCostSecondDerivativeState(dPhidxx);
-    quadraticCost2->getTerminalCostSecondDerivativeState(ad_dPhidxx);
-    if (!dPhidxx.isApprox(ad_dPhidxx, precision)) {
-      std::cout << "dPhidxx:    \n" << dPhidxx << std::endl;
-      std::cout << "al_dPhidxx: \n" << ad_dPhidxx << std::endl;
-      success = false;
-    }
-  }  // end of for loop
-}
 
 /******************************************************************************/
 /******************************************************************************/

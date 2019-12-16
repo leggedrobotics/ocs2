@@ -69,9 +69,9 @@ class DoubleIntegratorCost : public QuadraticCostFunction<double_integrator::STA
 
   void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) final {
     dynamic_vector_t xNominalDynamic(state_vector_t::Zero());
-    BASE::xNominalFunc_.interpolate(t, xNominalDynamic);
+    BASE::costDesiredTrajectoriesPtr_->getDesiredState(t, xNominalDynamic);
     dynamic_vector_t uNominalDynamic(input_vector_t::Zero());
-    BASE::uNominalFunc_.interpolate(t, uNominalDynamic);
+    BASE::costDesiredTrajectoriesPtr_->getDesiredInput(t, uNominalDynamic);
 
     BASE::setCurrentStateAndControl(t, x, u, xNominalDynamic, uNominalDynamic, xNominalDynamic);
   }

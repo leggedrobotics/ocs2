@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
   cartPoleInterface.getInitialState(initObservation.state());
 
   // initial command
-  ocs2::CostDesiredTrajectories<double> initCostDesiredTrajectories(2);
+  ocs2::CostDesiredTrajectories initCostDesiredTrajectories(2);
   initCostDesiredTrajectories.desiredTimeTrajectory()[0] = 0.0;
   initCostDesiredTrajectories.desiredTimeTrajectory()[1] = 1.0;
   initCostDesiredTrajectories.desiredStateTrajectory()[0].setZero(STATE_DIM_);

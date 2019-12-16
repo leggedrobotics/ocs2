@@ -57,7 +57,7 @@ static constexpr int s_vector_dim(int state_dim) {
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <int STATE_DIM, int INPUT_DIM>
-class SequentialRiccatiEquationsNormalized final : public OdeBase<s_vector_dim(STATE_DIM)> {
+class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -93,12 +93,12 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<s_vector_dim(S
   /**
    * Constructor.
    */
-  SequentialRiccatiEquationsNormalized(bool useMakePSD, bool preComputeRiccatiTerms = true);
+  SequentialRiccatiEquations(bool useMakePSD, bool preComputeRiccatiTerms = true);
 
   /**
    * Default destructor.
    */
-  ~SequentialRiccatiEquationsNormalized() = default;
+  ~SequentialRiccatiEquations() = default;
 
   /**
    * Transcribe symmetric matrix Sm, vector Sv and scalar s into a single vector.
@@ -162,23 +162,16 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<s_vector_dim(S
   bool useMakePSD_;
   bool preComputeRiccatiTerms_;
 
-  // Interpolation
-  EigenLinearInterpolation<state_matrix_t> QmFunc_;
-  EigenLinearInterpolation<state_vector_t> QvFunc_;
-  EigenLinearInterpolation<eigen_scalar_t> qFunc_;
-  EigenLinearInterpolation<dynamic_matrix_t> RinvChol_Func_;
-  EigenLinearInterpolation<input_state_matrix_t> PmFunc_;
-  EigenLinearInterpolation<input_vector_t> RvFunc_;
-  EigenLinearInterpolation<state_matrix_t> AmFunc_;
-  EigenLinearInterpolation<state_input_matrix_t> BmFunc_;
-
-  // Interpolation of precomputation
-  EigenLinearInterpolation<state_matrix_t> Qm_minus_P_Rinv_P_func_;
-  EigenLinearInterpolation<state_vector_t> Qv_minus_P_Rinv_Rv_func_;
-  EigenLinearInterpolation<eigen_scalar_t> q_minus_half_Rv_Rinv_Rv_func_;
-  EigenLinearInterpolation<state_matrix_t> AmT_minus_P_Rinv_B_func_;
-  EigenLinearInterpolation<dynamic_matrix_t> B_RinvChol_func_;
-  EigenLinearInterpolation<dynamic_vector_t> RinvCholT_Rv_func_;
+  // array pointers
+  const scalar_array_t* timeStampPtr_;
+  const state_matrix_array_t* QmPtr_;
+  const state_vector_array_t* QvPtr_;
+  const eigen_scalar_array_t* qPtr_;
+  const dynamic_matrix_array_t* RinvCholPtr_;
+  const input_state_matrix_array_t* PmPtr_;
+  const input_vector_array_t* RvPtr_;
+  const state_matrix_array_t* AmPtr_;
+  const state_input_matrix_array_t* BmPtr_;
 
   // Arrays to store precomputation
   state_matrix_array_t Qm_minus_P_Rinv_P_array_;
@@ -212,8 +205,8 @@ class SequentialRiccatiEquationsNormalized final : public OdeBase<s_vector_dim(S
   const state_matrix_array_t* QmFinalPtr_;
 };
 
-extern template class SequentialRiccatiEquationsNormalized<Eigen::Dynamic, Eigen::Dynamic>;
+extern template class SequentialRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;
 
 }  // namespace ocs2
 
-#include <ocs2_ddp/riccati_equations/implementation/SequentialRiccatiEquationsNormalized.h>
+#include <ocs2_ddp/riccati_equations/implementation/SequentialRiccatiEquations.h>

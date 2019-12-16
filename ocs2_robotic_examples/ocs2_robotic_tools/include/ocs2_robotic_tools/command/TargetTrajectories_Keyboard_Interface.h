@@ -58,7 +58,6 @@ class TargetTrajectories_Keyboard_Interface : public ocs2::TargetTrajectories_RO
   using scalar_array_t = typename BASE::scalar_array_t;
   using dynamic_vector_t = typename BASE::dynamic_vector_t;
   using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
-  using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
 
   /**
    * Constructor
@@ -105,7 +104,7 @@ class TargetTrajectories_Keyboard_Interface : public ocs2::TargetTrajectories_RO
    * @param[in] commadLineTarget
    * @return costDesiredTrajectories
    */
-  virtual cost_desired_trajectories_t toCostDesiredTrajectories(const scalar_array_t& commadLineTarget);
+  virtual CostDesiredTrajectories toCostDesiredTrajectories(const scalar_array_t& commadLineTarget);
 
   /**
    * Gets command line input. If the input command is shorter than the expected command

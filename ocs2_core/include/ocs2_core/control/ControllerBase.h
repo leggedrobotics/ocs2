@@ -135,7 +135,7 @@ class ControllerBase {
   /*
    *
    */
-  virtual void getStateEvents(scalar_array_t &eventTimes) {}
+  virtual void getStateEvents(scalar_array_t& eventTimes) {}
 };
 
 }  // namespace ocs2

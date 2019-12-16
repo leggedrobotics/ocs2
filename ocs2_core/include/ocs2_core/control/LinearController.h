@@ -55,7 +55,6 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
    */
   LinearController(const LinearController& other) : LinearController(other.timeStamp_, other.biasArray_, other.gainArray_) {
     deltaBiasArray_ = other.deltaBiasArray_;
-
   }
 
   /**
@@ -237,23 +236,18 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
    */
   void getBias(scalar_t time, input_vector_t& bias) const { linInterpolateBias_.interpolate(time, bias); }
 
-  void getStateEvents(scalar_array_t &eventTimes) override
-  {
-	  scalar_t lastevent = 0;
-	  for(int i = 0; i<timeStamp_.size()-1; i++)
-	  {
-		  if(timeStamp_[i+1]-timeStamp_[i]<=2*OCS2NumericTraits<scalar_t>::weakEpsilon() && std::fabs(timeStamp_[i]-lastevent)>10*OCS2NumericTraits<scalar_t>::weakEpsilon())
-		  {
-			  eventTimes.push_back(timeStamp_[i]);
-			  lastevent = eventTimes.back();
-		  }
-		  else if(timeStamp_[i+1]-timeStamp_[i]<=2*OCS2NumericTraits<scalar_t>::weakEpsilon())
-		  {
-			  eventTimes.back() = timeStamp_[i];
-			  lastevent = eventTimes.back();
-
-		  }
-	  }
+  void getStateEvents(scalar_array_t& eventTimes) override {
+    scalar_t lastevent = 0;
+    for (int i = 0; i < timeStamp_.size() - 1; i++) {
+      if (timeStamp_[i + 1] - timeStamp_[i] <= 2 * OCS2NumericTraits<scalar_t>::weakEpsilon() &&
+          std::fabs(timeStamp_[i] - lastevent) > 10 * OCS2NumericTraits<scalar_t>::weakEpsilon()) {
+        eventTimes.push_back(timeStamp_[i]);
+        lastevent = eventTimes.back();
+      } else if (timeStamp_[i + 1] - timeStamp_[i] <= 2 * OCS2NumericTraits<scalar_t>::weakEpsilon()) {
+        eventTimes.back() = timeStamp_[i];
+        lastevent = eventTimes.back();
+      }
+    }
   }
 
  public:

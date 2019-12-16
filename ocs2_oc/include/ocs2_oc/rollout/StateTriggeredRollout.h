@@ -36,9 +36,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/StateTriggeredEventHandler.h>
 #include <ocs2_core/integration/SystemEventHandler.h>
 
+#include <ocs2_core/control/StateBasedLinearController.h>
 #include "ocs2_oc/rollout/RolloutBase.h"
 #include "ocs2_oc/rollout/RootFinder.h"
-#include <ocs2_core/control/StateBasedLinearController.h>
 
 namespace ocs2 {
 
@@ -71,19 +71,19 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
   using ode_base_t = IntegratorBase<STATE_DIM>;
 
-  using state_control_t = stateBasedLinearController<STATE_DIM,INPUT_DIM>;
+  using state_control_t = stateBasedLinearController<STATE_DIM, INPUT_DIM>;
   /**
    * Constructor.
    *
    * @param [in] systemDynamics: The system dynamics for forward rollout.
    * @param [in] rolloutSettings: The rollout settings.
    */
-  explicit StateTriggeredRollout(const controlled_system_base_t& systemDynamics, Rollout_Settings rolloutSettings = Rollout_Settings(), state_control_t* controlPtr = nullptr)
+  explicit StateTriggeredRollout(const controlled_system_base_t& systemDynamics, Rollout_Settings rolloutSettings = Rollout_Settings(),
+                                 state_control_t* controlPtr = nullptr)
       : BASE(std::move(rolloutSettings)),
         systemDynamicsPtr_(systemDynamics.clone()),
         systemEventHandlersPtr_(new state_triggered_event_handler_t(this->settings().minTimeStep_)),
-		controlPtr_(controlPtr)
-  {
+        controlPtr_(controlPtr) {
     // construct dynamicsIntegratorsPtr
     constructDynamicsIntegrator(this->settings().integratorType_);
   }
@@ -109,7 +109,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   /**
    * Set StateBasedController
    */
-  void setStateBasedController(state_control_t* controlPtr){controlPtr_ = controlPtr;}
+  void setStateBasedController(state_control_t* controlPtr) { controlPtr_ = controlPtr; }
 
  protected:
   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
@@ -134,14 +134,11 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     eventsPastTheEndIndeces.reserve(maxNumSteps);
 
     // set controller
-    if (controlPtr_)
-    {
-    	controlPtr_->setController(controller);
-    	systemDynamicsPtr_->setController(controlPtr_);
-    }
-    else
-    {
-    	systemDynamicsPtr_->setController(controller);
+    if (controlPtr_) {
+      controlPtr_->setController(controller);
+      systemDynamicsPtr_->setController(controlPtr_);
+    } else {
+      systemDynamicsPtr_->setController(controller);
     }
 
     // reset function calls counter

@@ -1,14 +1,14 @@
 #pragma once
 
-#include <iostream>
-#include <vector>
-#include <cmath>
 #include <Eigen/Dense>
 #include <algorithm>
 #include <boost/numeric/odeint.hpp>
+#include <cmath>
+#include <iostream>
+#include <vector>
 
-#include "ReferenceModel.h"
 #include "Observer.h"
+#include "ReferenceModel.h"
 
 #include <ocs2_core/Dimensions.h>
 
@@ -19,104 +19,100 @@
  * 	in [On Optimal Trajectory Tracking for Mechanical Systems with Unilateral Constraints
  * by M. Rijnen]
  */
-class Reference
-{
-	using DIMENSIONS = ocs2::Dimensions<3, 1>;
-	using scalar_t = typename DIMENSIONS::scalar_t;
-	using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-	using state_vector_t = typename DIMENSIONS::state_vector_t;
-	using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-	using input_vector_t = typename DIMENSIONS::input_vector_t;
+class Reference {
+  using DIMENSIONS = ocs2::Dimensions<3, 1>;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
+  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+  using input_vector_t = typename DIMENSIONS::input_vector_t;
 
-public:
+ public:
+  /*
+   * Constructor
+   */
+  Reference() = default;
 
-	/*
-	 * Constructor
-	 */
-	Reference() = default;
+  /*
+   * Constructor
+   *
+   * @param [in] t0: Time at which the first waypoint of the reference is defined
+   * @param [in] t1: Time at which the second waypoint of the reference is defined
+   * @param [in] p0: First waypoint of the reference [position,velocity,acceleration]
+   * @param [in] p1: Second waypoint of the reference
+   */
+  Reference(scalar_t t0, scalar_t t1, state_vector_t p0, state_vector_t p1);
 
-	/*
-	 * Constructor
-	 *
-	 * @param [in] t0: Time at which the first waypoint of the reference is defined
-	 * @param [in] t1: Time at which the second waypoint of the reference is defined
-	 * @param [in] p0: First waypoint of the reference [position,velocity,acceleration]
-	 * @param [in] p1: Second waypoint of the reference
-	 */
-	Reference(scalar_t t0, scalar_t t1, state_vector_t p0, state_vector_t p1);
+  /*
+   * Obtain reference input at the current time
+   *
+   * @param [in] time: current time
+   * @param [out] input: current reference input
+   */
+  void getInput(const scalar_t time, input_vector_t& input);
 
-	/*
-	 * Obtain reference input at the current time
-	 *
-	 * @param [in] time: current time
-	 * @param [out] input: current reference input
-	 */
-	void getInput(const scalar_t time,input_vector_t &input);
+  /*
+   * Obtain reference state at current time
+   *
+   * @param [in] time: current time
+   * @param [out] x: current reference state
+   */
+  void getState(const scalar_t time, state_vector_t& x);
 
-	/*
-	 * Obtain reference state at current time
-	 *
-	 * @param [in] time: current time
-	 * @param [out] x: current reference state
-	 */
-	void getState(const scalar_t time,state_vector_t &x);
+  /*
+   * Extend the reference by integrating the input signal of the next
+   * and previous sections
+   *
+   * @param [in] delta: extension time
+   * @param [in] refPre: pointer to previous section of the reference
+   * @param [in] refPost: pointer to the next section of the reference
+   */
+  void extendref(scalar_t delta, Reference* refPre, Reference* refPost);
 
-	/*
-	 * Extend the reference by integrating the input signal of the next
-	 * and previous sections
-	 *
-	 * @param [in] delta: extension time
-	 * @param [in] refPre: pointer to previous section of the reference
-	 * @param [in] refPost: pointer to the next section of the reference
-	 */
-	void extendref(scalar_t delta, Reference* refPre, Reference* refPost);
+  /*
+   * Display the reference
+   */
+  void display();
 
-	/*
-	 * Display the reference
-	 */
-	void display();
+  scalar_t t0_;
+  scalar_t t1_;
+  scalar_t delta_ = 0;
 
-	scalar_t t0_;
-	scalar_t t1_;
-	scalar_t delta_ = 0;
-private:
+ private:
+  /*
+   * 	Find the polynomial coefficients corresponding to the posed constraints
+   * 	on position, velocity and accleration at the posed times
+   *
+   * 	@param [in]	t0:	Time moment of first waypoint
+   * 	@param [in] t1: time moment of second waypoint
+   * 	@param [in] p0: first waypoint
+   * 	@param [in] p1: second waypoint
+   */
+  void Create5thOrdPol(scalar_t t0, scalar_t t1, state_vector_t p0, state_vector_t p1);
 
-	/*
-	 * 	Find the polynomial coefficients corresponding to the posed constraints
-	 * 	on position, velocity and accleration at the posed times
-	 *
-	 * 	@param [in]	t0:	Time moment of first waypoint
-	 * 	@param [in] t1: time moment of second waypoint
-	 * 	@param [in] p0: first waypoint
-	 * 	@param [in] p1: second waypoint
-	 */
-	void Create5thOrdPol(scalar_t t0, scalar_t t1, state_vector_t p0, state_vector_t p1);
+  /*
+   * 	Find the derivative of the polynomial described by a
+   * 	set of coefficients
+   *
+   * 	@param [in]	pol: coefficients describing the fifth order polynomial
+   */
+  Eigen::Matrix<scalar_t, 6, 1> polyder(Eigen::Matrix<scalar_t, 6, 1> pol);
 
-	/*
-	 * 	Find the derivative of the polynomial described by a
-	 * 	set of coefficients
-	 *
-	 * 	@param [in]	pol: coefficients describing the fifth order polynomial
-	 */
-	Eigen::Matrix<scalar_t, 6 , 1> polyder(Eigen::Matrix<scalar_t, 6 , 1> pol);
+  /*
+   * 	Interpolate the extended reference signals to find the reference
+   * 	corresponding to the current time
+   *
+   * 	@param [in]	time:	current time
+   * 	@param [out] x: current state
+   */
+  void interpolate_ext(scalar_t time, Eigen::Vector3d& x);
 
-	/*
-	 * 	Interpolate the extended reference signals to find the reference
-	 * 	corresponding to the current time
-	 *
-	 * 	@param [in]	time:	current time
-	 * 	@param [out] x: current state
-	 */
-	void interpolate_ext(scalar_t time, Eigen::Vector3d &x);
+  Eigen::Matrix<scalar_t, 6, 1> polU_;
+  Eigen::Matrix<scalar_t, 6, 1> polX_;
+  Eigen::Matrix<scalar_t, 6, 1> polV_;
 
-	Eigen::Matrix<scalar_t, 6, 1> polU_;
-	Eigen::Matrix<scalar_t, 6, 1> polX_;
-	Eigen::Matrix<scalar_t, 6, 1> polV_;
-
-	std::vector<state_vector_t> xPre_;
-	std::vector<scalar_t> tPre_;
-	std::vector<state_vector_t> xPost_;
-	std::vector<scalar_t> tPost_;
-
+  std::vector<state_vector_t> xPre_;
+  std::vector<scalar_t> tPre_;
+  std::vector<state_vector_t> xPost_;
+  std::vector<scalar_t> tPost_;
 };
-

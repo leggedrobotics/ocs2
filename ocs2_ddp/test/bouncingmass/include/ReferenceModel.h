@@ -8,15 +8,14 @@
  */
 class Reference;
 
-class ReferenceModel
-{
-	typedef Eigen::Vector3d state_type;
-	public:
+class ReferenceModel {
+  typedef Eigen::Vector3d state_type;
 
-	ReferenceModel(Reference* ref);
+ public:
+  ReferenceModel(Reference* ref);
 
-	void operator()(const state_type &x, state_type &dxdt, const double t);
+  void operator()(const state_type& x, state_type& dxdt, const double t);
 
-	private:
-	Reference* ref_;
+ private:
+  Reference* ref_;
 };

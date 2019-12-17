@@ -160,7 +160,6 @@ catkin_add_gtest(bouncing_mass_test
   test/bouncingmass/BouncingMass.cpp
   test/bouncingmass/OverallReference.cpp
   test/bouncingmass/Reference.cpp
-  test/bouncingmass/ReferenceModel.cpp
 )
 target_link_libraries(bouncing_mass_test
   ${catkin_LIBRARIES}

@@ -47,7 +47,19 @@ void Reference::extendref(scalar_t delta, Reference* refPre, Reference* refPost)
 
   // pre-part of extension
   if (refPre != nullptr) {
-    ReferenceModel preModel(refPre);
+
+    auto preModel = [refPre](const state_vector_t& x, state_vector_t& dxdt, const double t)
+	{
+      input_vector_t uref;
+      refPre->getInput(t, uref);
+
+      state_matrix_t A;
+      A << 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+      state_input_matrix_t B;
+      B << 0.0, 1.0, 0.0;
+
+      dxdt = A * x + B * uref;
+	};
 
     state_vector_t x0;
     getState(t0_, x0);
@@ -62,7 +74,18 @@ void Reference::extendref(scalar_t delta, Reference* refPre, Reference* refPost)
 
   // post-part of extension
   if (refPost != nullptr) {
-    ReferenceModel postModel(refPost);
+    auto postModel = [refPost](const state_vector_t& x, state_vector_t& dxdt, const double t)
+	{
+	  input_vector_t uref;
+      refPost->getInput(t, uref);
+
+	  state_matrix_t A;
+	  A << 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+	  state_input_matrix_t B;
+	  B << 0.0, 1.0, 0.0;
+
+	  dxdt = A * x + B * uref;
+	};
 
     state_vector_t x0;
     getState(t1_, x0);

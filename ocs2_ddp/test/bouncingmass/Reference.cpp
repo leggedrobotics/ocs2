@@ -52,30 +52,30 @@ void Reference::extendref(scalar_t delta, Reference* refPre, Reference* refPost)
                                              boost::numeric::odeint::vector_space_algebra>
       stepper;
 
-  	auto model = [](const state_vector_t& x, state_vector_t& dxdt, const double t, input_vector_t uref)
+  auto model = [](const state_vector_t& x, state_vector_t& dxdt, const double t, input_vector_t uref)
+  {
+    state_matrix_t A;
+    A << 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+  	state_input_matrix_t B;
+    B << 0.0, 1.0, 0.0;
+
+    dxdt = A * x + B * uref;
+  };
+  // pre-part of extension
+  if (refPre != nullptr) {
+	auto preModel = [&refPre,&model](const state_vector_t& x, state_vector_t& dxdt, const double t)
     {
-      state_matrix_t A;
-  	  A << 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
-  	  state_input_matrix_t B;
-		  B << 0.0, 1.0, 0.0;
+	  input_vector_t uref = refPre->getInput(t);
+      model(x,dxdt,t,uref);
+    };
 
-		  dxdt = A * x + B * uref;
-		};
-	  // pre-part of extension
-	  if (refPre != nullptr) {
-		auto preModel = [&refPre,&model](const state_vector_t& x, state_vector_t& dxdt, const double t)
-		{
-		  input_vector_t uref = refPre->getInput(t);
-		  model(x,dxdt,t,uref);
-		};
+	state_vector_t x0;
+	getState(t0_, x0);
+    scalar_t t0 = t0_;
+    scalar_t t1 = t0 - delta;
+	scalar_t dt = -1e-3;
 
-		state_vector_t x0;
-		getState(t0_, x0);
-		scalar_t t0 = t0_;
-		scalar_t t1 = t0 - delta;
-		scalar_t dt = -1e-3;
-
-		boost::numeric::odeint::integrate_adaptive(stepper, preModel, x0, t0, t1, dt, Observer(&tPre_, &xPre_));
+	boost::numeric::odeint::integrate_adaptive(stepper, preModel, x0, t0, t1, dt, Observer(&tPre_, &xPre_));
     std::reverse(std::begin(tPre_), std::end(tPre_));
     std::reverse(std::begin(xPre_), std::end(xPre_));
   }

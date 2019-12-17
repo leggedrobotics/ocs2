@@ -15,9 +15,6 @@ class OverallReference {
   using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
   using input_vector_t = typename DIMENSIONS::input_vector_t;
 
-  using dynamic_vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
-  using dynamic_vector_array_t = std::vector<dynamic_vector_t, Eigen::aligned_allocator<dynamic_vector_t>>;
-
  public:
   /*
    * Constructor

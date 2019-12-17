@@ -36,12 +36,22 @@
 TEST(testStateRollOut_SLQ, BouncingMassTest) {
   using DIMENSIONS = ocs2::Dimensions<3, 1>;
   using scalar_t = typename DIMENSIONS::scalar_t;
+  using input_vector_t = typename DIMENSIONS::input_vector_t;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
+  using dynamic_vector_t = Eigen::Matrix<double, Eigen::Dynamic, 1>;
+
+  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+  using controller_t = ocs2::ControllerBase<STATE_DIM, INPUT_DIM>;
+  using linear_controller_t = ocs2::LinearController<STATE_DIM, INPUT_DIM>;
+
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;
   using state_vector_t = typename DIMENSIONS::state_vector_t;
   using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-  using input_vector_t = typename DIMENSIONS::input_vector_t;
-  using dynamic_vector_t = Eigen::Matrix<double, Eigen::Dynamic, 1>;
+  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
+  using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
   using dynamic_vector_array_t = std::vector<dynamic_vector_t, Eigen::aligned_allocator<dynamic_vector_t>>;
+
+  using controller_ptr_array_t = std::vector<controller_t*>;
 
   ocs2::SLQ_Settings slqSettings;
   slqSettings.useNominalTimeForBackwardPass_ = true;
@@ -147,9 +157,8 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
     }
   }
 
-  ocs2::LinearController<3, 1> Control(timeStampArray, controllerBiasArray, controllerGainArray);
-  ocs2::LinearController<3, 1>* Controller = &Control;
-  std::vector<controller_t*> controllerPtrArray = {&Control};
+  linear_controller_t Control(timeStampArray, controllerBiasArray, controllerGainArray);
+  controller_ptr_array_t controllerPtrArray = {&Control};
 
   systemOperatingTrajectories operatingTrajectories;
   // SLQ

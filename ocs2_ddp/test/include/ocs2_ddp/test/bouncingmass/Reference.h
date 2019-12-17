@@ -21,8 +21,6 @@ class Reference {
   using scalar_t = typename DIMENSIONS::scalar_t;
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;
   using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using state_matrix_t = typename DIMENSIONS::state_matrix_t;
-  using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
   using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
   using input_vector_t = typename DIMENSIONS::input_vector_t;
 

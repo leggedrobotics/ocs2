@@ -24,23 +24,22 @@ enum { STATE_DIM = 3, INPUT_DIM = 1 };
 using DIMENSIONS = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
 using scalar_t = typename DIMENSIONS::scalar_t;
 using state_vector_t = typename DIMENSIONS::state_vector_t;
+using input_vector_t = typename DIMENSIONS::input_vector_t;
+using dynamic_vec_t = typename DIMENSIONS::dynamic_vector_t;
+
 using state_matrix_t = typename DIMENSIONS::state_matrix_t;
 using input_matrix_t = typename DIMENSIONS::input_matrix_t;
 using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
-using dynamic_vec_t = typename DIMENSIONS::dynamic_vector_t;
-using input_vector_t = typename DIMENSIONS::input_vector_t;
-using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
+
 using scalar_array_t = typename DIMENSIONS::scalar_array_t;
 using size_array_t = typename DIMENSIONS::size_array_t;
-using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
 
-using linear_controller_t = ocs2::LinearController<STATE_DIM, INPUT_DIM>;
-using linear_controller_array_t = typename linear_controller_t::array_t;
-using linear_controller_ptr_array_t = std::vector<linear_controller_t*>;
-
-using controller_t = ocs2::ControllerBase<STATE_DIM, INPUT_DIM>;
-using controller_ptr_array_t = std::vector<controller_t*>;
+//using linear_controller_t = ocs2::LinearController<STATE_DIM, INPUT_DIM>;
+//using linear_controller_array_t = typename linear_controller_t::array_t;
+//using linear_controller_ptr_array_t = std::vector<linear_controller_t*>;
+//
+//using controller_t = ocs2::ControllerBase<STATE_DIM, INPUT_DIM>;
+//using controller_ptr_array_t = std::vector<controller_t*>;
 
 using logic_template_type = ocs2::ModeSequenceTemplate<scalar_t>;
 using logic_rules_machine_t = ocs2::HybridLogicRulesMachine;

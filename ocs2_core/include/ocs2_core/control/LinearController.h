@@ -30,7 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "ocs2_core/control/ControllerBase.h"
-
 #include "ocs2_core/misc/LinearInterpolation.h"
 
 namespace ocs2 {
@@ -275,7 +274,7 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
       return scalar_array_t(0);
     }
 
-    scalar_array_t eventTimes(1,0);
+    scalar_array_t eventTimes{0.0};
     scalar_t lastevent = timeStamp_.front();
     for (int i = 0; i < timeStamp_.size() - 1; i++) {
       bool eventDetected = timeStamp_[i + 1] - timeStamp_[i] < 2.0 * OCS2NumericTraits<scalar_t>::weakEpsilon();

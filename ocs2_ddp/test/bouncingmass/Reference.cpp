@@ -29,7 +29,7 @@ void Reference::getInput(scalar_t time, input_vector_t& input) {
 
 input_vector_t Reference::getInput(scalar_t time) {
   input_vector_t input;
-  getInput(time,input);
+  getInput(time, input);
   return input;
 }
 
@@ -54,11 +54,10 @@ void Reference::extendref(scalar_t delta, Reference* refPre, Reference* refPost)
                                              boost::numeric::odeint::vector_space_algebra>
       stepper;
   // Lambda for general system dynamics, assuming that the reference input is available
-  auto model = [](const state_vector_t& x, state_vector_t& dxdt, const double t, input_vector_t uref)
-  {
+  auto model = [](const state_vector_t& x, state_vector_t& dxdt, const double t, input_vector_t uref) {
     state_matrix_t A;
     A << 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
-  	state_input_matrix_t B;
+    state_input_matrix_t B;
     B << 0.0, 1.0, 0.0;
 
     dxdt = A * x + B * uref;
@@ -66,47 +65,43 @@ void Reference::extendref(scalar_t delta, Reference* refPre, Reference* refPost)
   // pre-part of extension
   if (refPre != nullptr) {
     // Construct Lambda to represent System Dynamics with correct reference input
-	auto preModel = [&refPre,&model](const state_vector_t& x, state_vector_t& dxdt, const double t)
-    {
-	  input_vector_t uref = refPre->getInput(t);
-      model(x,dxdt,t,uref);
+    auto preModel = [&refPre, &model](const state_vector_t& x, state_vector_t& dxdt, const double t) {
+      input_vector_t uref = refPre->getInput(t);
+      model(x, dxdt, t, uref);
     };
     // Construct lambda to act as observer, which will store the time and state trajectories
-	scalar_array_t* timeStorePtr = &tPre_;
-	state_vector_array_t* stateStorePtr = &xPre_;
-	auto preObserver = [&timeStorePtr,&stateStorePtr](state_vector_t& x, scalar_t& t)
-    {
-		timeStorePtr->push_back(t);
-		stateStorePtr->push_back(x);
+    scalar_array_t* timeStorePtr = &tPre_;
+    state_vector_array_t* stateStorePtr = &xPre_;
+    auto preObserver = [&timeStorePtr, &stateStorePtr](state_vector_t& x, scalar_t& t) {
+      timeStorePtr->push_back(t);
+      stateStorePtr->push_back(x);
     };
 
-	state_vector_t x0;
-	getState(t0_, x0);
+    state_vector_t x0;
+    getState(t0_, x0);
     scalar_t t0 = t0_;
     scalar_t t1 = t0 - delta;
-	scalar_t dt = -1e-3;
+    scalar_t dt = -1e-3;
 
-	boost::numeric::odeint::integrate_adaptive(stepper, preModel, x0, t0, t1, dt, preObserver);
+    boost::numeric::odeint::integrate_adaptive(stepper, preModel, x0, t0, t1, dt, preObserver);
     std::reverse(std::begin(tPre_), std::end(tPre_));
     std::reverse(std::begin(xPre_), std::end(xPre_));
   }
 
   // post-part of extension
   if (refPost != nullptr) {
-	// Construct Lambda to represent System Dynamics with correct reference input
-	auto postModel = [&refPost,&model](const state_vector_t& x, state_vector_t& dxdt, const double t)
-	{
-	  input_vector_t uref = refPost->getInput(t);
-	  model(x,dxdt,t,uref);
-	};
+    // Construct Lambda to represent System Dynamics with correct reference input
+    auto postModel = [&refPost, &model](const state_vector_t& x, state_vector_t& dxdt, const double t) {
+      input_vector_t uref = refPost->getInput(t);
+      model(x, dxdt, t, uref);
+    };
     // Construct lambda to act as observer, which will store the time and state trajectories
-	scalar_array_t* timeStorePtr = &tPost_;
+    scalar_array_t* timeStorePtr = &tPost_;
     state_vector_array_t* stateStorePtr = &xPost_;
-	auto postObserver = [&timeStorePtr,&stateStorePtr](state_vector_t& x, scalar_t& t)
-	{
-	  timeStorePtr->push_back(t);
-	  stateStorePtr->push_back(x);
-	};
+    auto postObserver = [&timeStorePtr, &stateStorePtr](state_vector_t& x, scalar_t& t) {
+      timeStorePtr->push_back(t);
+      stateStorePtr->push_back(x);
+    };
 
     state_vector_t x0;
     getState(t1_, x0);
@@ -158,16 +153,16 @@ void Reference::interpolate_ext(scalar_t time, state_vector_t& x) {
 }
 
 void Reference::display() {
-  std::cout << "#########################" << std::endl;
-  std::cout << "#Pre-Extended-Trajectory#" << std::endl;
-  std::cout << "#########################" << std::endl;
+  std::cerr << "#########################" << std::endl;
+  std::cerr << "#Pre-Extended-Trajectory#" << std::endl;
+  std::cerr << "#########################" << std::endl;
   for (int i = 0; i < tPre_.size(); i++) {
     std::cerr << tPre_[i] << ";" << xPre_[i][0] << ";" << xPre_[i][1] << std::endl;
   }
 
-  std::cout << "#########################" << std::endl;
-  std::cout << "####Normal-Trajectory####" << std::endl;
-  std::cout << "#########################" << std::endl;
+  std::cerr << "#########################" << std::endl;
+  std::cerr << "####Normal-Trajectory####" << std::endl;
+  std::cerr << "#########################" << std::endl;
 
   scalar_t dt = 0.01;
   for (int i = 0; i < (t1_ - t0_) / dt; i++) {
@@ -178,9 +173,9 @@ void Reference::display() {
     std::cerr << t << ";" << x[0] << ";" << x[1] << std::endl;
   }
 
-  std::cout << "##########################" << std::endl;
-  std::cout << "#Post-Extended-Trajectory#" << std::endl;
-  std::cout << "##########################" << std::endl;
+  std::cerr << "##########################" << std::endl;
+  std::cerr << "#Post-Extended-Trajectory#" << std::endl;
+  std::cerr << "##########################" << std::endl;
 
   for (int i = 0; i < tPost_.size(); i++) {
     std::cerr << tPost_[i] << ";" << xPost_[i][0] << ";" << xPost_[i][1] << std::endl;

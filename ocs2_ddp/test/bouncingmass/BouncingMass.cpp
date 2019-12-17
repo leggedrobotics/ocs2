@@ -168,10 +168,10 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   ocs2::SLQ<STATE_DIM, INPUT_DIM>::primal_solution_t solutionST = slq.primalSolution(finalTime);
 
   for (int i = 0; i < solutionST.stateTrajectory_.size(); i++) {
-    // Test 1		No penetration of Guard Surfaces
+    // Test 1: No penetration of Guard Surfaces
     EXPECT_GT(solutionST.stateTrajectory_[i][0], -slqSettings.ddpSettings_.absTolODE_);
     // Display output
-    // format: 		idx;time;x[0];xref[0];x[1];xref[1];u;uref
+    // format: idx;time;x[0];xref[0];x[1];xref[1];u;uref
     if (outputSolution) {
       int idx = solutionST.stateTrajectory_[i][2];
 

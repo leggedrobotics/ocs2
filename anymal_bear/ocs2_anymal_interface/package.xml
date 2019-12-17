@@ -13,6 +13,7 @@
   <depend>roslib</depend>
   <depend>ocs2_anymal_switched_model</depend>
   <depend>ocs2_quadruped_interface</depend>
+  <depend>ocs2_scp_integration</depend>
 
   <exec_depend>ocs2_anymal_bear_description</exec_depend>
   <exec_depend>ocs2_anymal_visualization</exec_depend>

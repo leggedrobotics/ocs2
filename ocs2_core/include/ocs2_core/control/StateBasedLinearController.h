@@ -51,9 +51,6 @@ class stateBasedLinearController final : public ControllerBase<STATE_DIM, INPUT_
     }
     ctrlPtr_ = ctrlPtr;
     ctrlEventTimes_ = ctrlPtr->controllerEventTimes();
-    if (ctrlEventTimes_.size() > 0) {
-      ctrlEventTimes_.insert(ctrlEventTimes_.begin(), 0.0);
-    }
   }
 
   /**

@@ -248,12 +248,6 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     // check for the numerical stability
     this->checkNumericalStability(controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
-    if (false) {
-      std::cerr << "###########" << std::endl;
-      std::cerr << "Rollout finished after " << numTotalIterations << " iterations." << std::endl;
-      std::cerr << "###########" << std::endl;
-    }
-
     return stateTrajectory.back();
   }  // end of function
 

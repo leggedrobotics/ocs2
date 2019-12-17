@@ -88,10 +88,10 @@ install(DIRECTORY test/include/${PROJECT_NAME}/
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_oc
 
-catkin_add_gtest(test_StateRollOut
-   test/test_StateRollOut.cpp
+catkin_add_gtest(state_triggered_rollout_test
+  test/state_triggered_rollout_test.cpp
 )
-target_link_libraries(test_StateRollOut
+target_link_libraries(state_triggered_rollout_test
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
 )

@@ -8,17 +8,16 @@
 
 #include <gtest/gtest.h>
 /*
- * 		Test 1 for StateTriggeredRollout
- * 		The system being tested is a bouncing ball system with dissipation on bouncing
+ *      Test 1 for StateTriggeredRollout
+ *      The system being tested is a bouncing ball system with dissipation on bouncing
  *
- * 		Guard Surfaces are:			x_1 > 0
- * 									x_1 < 0.5
+ *      Guard Surfaces are:  x_1 > 0
+ *                           x_1 < 0.5
  *
- * 		The following tests are implemented and performed:
- *
- * 		-	No penetration of Guard Surfaces
- * 		- 	Conservation of energy in between jumps
- * 		- 	Eventtimes compared to accurate run of rollout
+ *      The following tests are implemented and performed:
+ *        - No penetration of Guard Surfaces.
+ *        - Conservation of energy in between jumps.
+ *        - Event times compared to accurate run of rollout.
  */
 TEST(StateRolloutTests, rolloutTestBallDynamics) {
   using DIMENSIONS = ocs2::Dimensions<2, 1>;
@@ -96,11 +95,6 @@ TEST(StateRolloutTests, rolloutTestBallDynamics) {
     // Test 2b: No Significant penetration of second Guard Surface, after first event
     if (i > eventsPastTheEndIndeces[0]) {
       EXPECT_GT(-stateTrajectory[i][0] + 0.5, -1e-6);
-    }
-    // Optional output of state and time trajectories
-    if (false) {
-      std::cerr << i << ";" << timeTrajectory[i] << ";" << stateTrajectory[i][0] << ";" << stateTrajectory[i][1] << ";"
-                << inputTrajectory[i] << std::endl;
     }
   }
   // Test 3: Event times (due to high number of actual event times)
@@ -208,12 +202,6 @@ TEST(StateRolloutTests, rolloutTestPendulumDynamics) {
       eventCounter++;
     }
     energyPrevious = E;
-
-    // Optional output of state and time trajectories
-    if (false) {
-      std::cerr << i << ";" << std::setprecision(9) << timeTrajectory[i] << ";" << stateTrajectory[i][0] << ";" << stateTrajectory[i][1]
-                << ";" << inputTrajectory[i] << std::endl;
-    }
   }
 
   // Test 3: Event times
@@ -306,11 +294,6 @@ TEST(StateRolloutTests, runHybridDynamics) {
 
     EXPECT_GT(currentGuardValues[0], -1e-6);
     EXPECT_GT(currentGuardValues[1], -1e-6);
-    // Optional output of state and time trajectories
-    if (false) {
-      std::cerr << i << ";" << std::setprecision(9) << timeTrajectory[i] << ";" << stateTrajectory[i][0] << ";" << stateTrajectory[i][1]
-                << ";" << stateTrajectory[i][2] << ";" << inputTrajectory[i] << std::endl;
-    }
   }
 
   // Test 3: Event times

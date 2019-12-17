@@ -53,6 +53,14 @@ class Reference {
   void getInput(const scalar_t time, input_vector_t& input);
 
   /*
+   * Obtain reference input at the current time
+   *
+   * @param [in] time: current time
+   * @return current reference input
+   */
+  input_vector_t getInput(const scalar_t time);
+
+  /*
    * Obtain reference state at current time
    *
    * @param [in] time: current time

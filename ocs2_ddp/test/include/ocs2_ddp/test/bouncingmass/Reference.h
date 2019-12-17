@@ -7,8 +7,6 @@
 #include <iostream>
 #include <vector>
 
-#include "Observer.h"
-
 #include <ocs2_core/Dimensions.h>
 
 /*

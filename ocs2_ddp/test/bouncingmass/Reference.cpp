@@ -51,7 +51,7 @@ void Reference::extendref(scalar_t delta, Reference* refPre, Reference* refPost)
   boost::numeric::odeint::runge_kutta_dopri5<Eigen::Vector3d, scalar_t, Eigen::Vector3d, scalar_t,
                                              boost::numeric::odeint::vector_space_algebra>
       stepper;
-
+  // Lambda for general system dynamics, assuming that the reference input is available
   auto model = [](const state_vector_t& x, state_vector_t& dxdt, const double t, input_vector_t uref)
   {
     state_matrix_t A;
@@ -63,10 +63,19 @@ void Reference::extendref(scalar_t delta, Reference* refPre, Reference* refPost)
   };
   // pre-part of extension
   if (refPre != nullptr) {
+    // Construct Lambda to represent System Dynamics with correct reference input
 	auto preModel = [&refPre,&model](const state_vector_t& x, state_vector_t& dxdt, const double t)
     {
 	  input_vector_t uref = refPre->getInput(t);
       model(x,dxdt,t,uref);
+    };
+    // Construct lambda to act as observer, which will store the time and state trajectories
+	scalar_array_t* timeStorePtr = &tPre_;
+	state_vector_array_t* stateStorePtr = &xPre_;
+	auto preObserver = [&timeStorePtr,&stateStorePtr](state_vector_t& x, scalar_t& t)
+    {
+		timeStorePtr->push_back(t);
+		stateStorePtr->push_back(x);
     };
 
 	state_vector_t x0;
@@ -75,17 +84,26 @@ void Reference::extendref(scalar_t delta, Reference* refPre, Reference* refPost)
     scalar_t t1 = t0 - delta;
 	scalar_t dt = -1e-3;
 
-	boost::numeric::odeint::integrate_adaptive(stepper, preModel, x0, t0, t1, dt, Observer(&tPre_, &xPre_));
+	boost::numeric::odeint::integrate_adaptive(stepper, preModel, x0, t0, t1, dt, preObserver);
     std::reverse(std::begin(tPre_), std::end(tPre_));
     std::reverse(std::begin(xPre_), std::end(xPre_));
   }
 
   // post-part of extension
   if (refPost != nullptr) {
+	// Construct Lambda to represent System Dynamics with correct reference input
 	auto postModel = [&refPost,&model](const state_vector_t& x, state_vector_t& dxdt, const double t)
 	{
 	  input_vector_t uref = refPost->getInput(t);
 	  model(x,dxdt,t,uref);
+	};
+    // Construct lambda to act as observer, which will store the time and state trajectories
+	scalar_array_t* timeStorePtr = &tPost_;
+    state_vector_array_t* stateStorePtr = &xPost_;
+	auto postObserver = [&timeStorePtr,&stateStorePtr](state_vector_t& x, scalar_t& t)
+	{
+	  timeStorePtr->push_back(t);
+	  stateStorePtr->push_back(x);
 	};
 
     state_vector_t x0;
@@ -93,7 +111,7 @@ void Reference::extendref(scalar_t delta, Reference* refPre, Reference* refPost)
     scalar_t t0 = t1_;
     scalar_t t1 = t0 + delta;
     scalar_t dt = 1e-3;
-    boost::numeric::odeint::integrate_adaptive(stepper, postModel, x0, t0, t1, dt, Observer(&tPost_, &xPost_));
+    boost::numeric::odeint::integrate_adaptive(stepper, postModel, x0, t0, t1, dt, postObserver);
   }
 }
 

@@ -731,21 +731,16 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::calculateControllerUpdateIS(
     const linear_controller_array_t& controllersStock) const {
   // integrates using the trapezoidal approximation method
-  scalar_t prevDeltaSquared = 0.0;
-  scalar_t currDeltaSquared = 0.0;
   scalar_t controllerUpdateIS = 0.0;
   for (const auto& controller : controllersStock) {
-    for (int k = 0; k < controller.size(); k++) {
-      if (k > 0) {
-        prevDeltaSquared = currDeltaSquared;
-      }
-
-      // squared norm of delta bias of controller
-      currDeltaSquared = controller.deltaBiasArray_[k].squaredNorm();
-
-      if (k > 0) {
-        controllerUpdateIS += 0.5 * (prevDeltaSquared + currDeltaSquared) * (controller.timeStamp_[k] - controller.timeStamp_[k - 1]);
-      }
+    scalar_t currDeltaSquared = 0.0;
+    if (controller.size() > 0) {
+      currDeltaSquared = controller.deltaBiasArray_.front().squaredNorm();
+    }
+    for (int k = 0; k < controller.size() - 1; k++) {
+      scalar_t nextDeltaSquared = controller.deltaBiasArray_[k + 1].squaredNorm();
+      controllerUpdateIS += 0.5 * (currDeltaSquared + nextDeltaSquared) * (controller.timeStamp_[k + 1] - controller.timeStamp_[k]);
+      currDeltaSquared = nextDeltaSquared;
     }  // end of k loop
   }    // end of controller loop
 

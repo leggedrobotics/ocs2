@@ -334,6 +334,14 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   virtual void calculateController();
 
   /**
+   * Calculates the integral of the squared (IS) norm of the controller update.
+   *
+   * @param [in] controllersStock: An array of controllers.
+   * @retuen The integral of the squared (IS) norm of the controller update.
+   */
+  scalar_t calculateControllerUpdateIS(const linear_controller_array_t& controllersStock) const;
+
+  /**
    * Line search on the feedforward parts of the controller. It uses the
    * following approach for line search: The constraint TYPE-1 correction term
    * is directly added through a user defined stepSize (defined in
@@ -718,6 +726,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   std::vector<typename cost_function_base_t::Ptr> heuristicsFunctionsPtrStock_;
   std::vector<std::shared_ptr<penalty_base_t>> penaltyPtrStock_;
 
+  scalar_t nominalControllerUpdateIS_ = 0.0;
   linear_controller_array_t nominalControllersStock_;
 
   scalar_array2_t nominalTimeTrajectoriesStock_;

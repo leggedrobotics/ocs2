@@ -726,6 +726,34 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::calculateControllerUpdateIS(
+    const linear_controller_array_t& controllersStock) const {
+  // integrates using the trapezoidal approximation method
+  scalar_t prevDeltaSquared = 0.0;
+  scalar_t currDeltaSquared = 0.0;
+  scalar_t controllerUpdateIS = 0.0;
+  for (const auto& controller : controllersStock) {
+    for (int k = 0; k < controller.size(); k++) {
+      if (k > 0) {
+        prevDeltaSquared = currDeltaSquared;
+      }
+
+      // squared norm of delta bias of controller
+      currDeltaSquared = controller.deltaBiasArray_[k].squaredNorm();
+
+      if (k > 0) {
+        controllerUpdateIS += 0.5 * (prevDeltaSquared + currDeltaSquared) * (controller.timeStamp_[k] - controller.timeStamp_[k - 1]);
+      }
+    }  // end of k loop
+  }    // end of controller loop
+
+  return controllerUpdateIS;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
@@ -884,11 +912,12 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
       std::lock_guard<std::mutex> lock(lineSearchResultMutex_);
 
       /*
-       * based on the "greedy learning rate selection" policy:
+       * based on the "Armijo backtracking step lenght selection" policy:
        * cost should be better than the baseline cost but learning rate should
        * be as high as possible. This is equivalent to a single core line search.
        */
-      if (lsTotalCost < (baselineTotalCost_ * (1 - 1e-3 * learningRate)) && learningRate > learningRateStar_) {
+      const bool armijoCondition = lsTotalCost < (baselineTotalCost_ - 1e-4 * learningRate * nominalControllerUpdateIS_);
+      if (armijoCondition && learningRate > learningRateStar_) {
         nominalTotalCost_ = lsTotalCost;
         learningRateStar_ = learningRate;
         nominalConstraint1ISE_ = lsConstraint1ISE;
@@ -1800,6 +1829,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
   } else {
     throw std::runtime_error("useRiccatiSolver=false is not valid.");
   }
+  nominalControllerUpdateIS_ = calculateControllerUpdateIS(nominalControllersStock_);
   computeControllerTimer_.endTimer();
 
   // display
@@ -1860,6 +1890,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
   } else {
     throw std::runtime_error("useRiccatiSolver=false is not valid.");
   }
+  nominalControllerUpdateIS_ = calculateControllerUpdateIS(nominalControllersStock_);
   computeControllerTimer_.endTimer();
 
   // display

@@ -616,6 +616,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
   heuristicsFunctionsPtrStock_[0]->getTerminalCostSecondDerivativeState(SmHeuristics_);
   if (ddpSettings_.useMakePSD_) {
     LinearAlgebra::makePSD(SmHeuristics_);
+  } else {
+    LinearAlgebra::makePSD_AMI(SmHeuristics_, ddpSettings_.addedRiccatiDiagonal_);
   }
 }
 
@@ -636,7 +638,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateUnconstrainedLQWorker(size_t wor
   if (ddpSettings_.useMakePSD_) {
     LinearAlgebra::makePSD(QmTrajectoryStock_[i][k]);
   } else {
-    QmTrajectoryStock_[i][k].diagonal().array() += ddpSettings_.addedRiccatiDiagonal_;
+    LinearAlgebra::makePSD_AMI(QmTrajectoryStock_[i][k], ddpSettings_.addedRiccatiDiagonal_);
   }
 }
 
@@ -676,6 +678,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateEventsLQWorker(size_t workerInde
       // making sure that Qm remains PSD
       if (ddpSettings_.useMakePSD_) {
         LinearAlgebra::makePSD(QmFinalStock_[i][ke]);
+      } else {
+        LinearAlgebra::makePSD_AMI(QmFinalStock_[i][ke], ddpSettings_.addedRiccatiDiagonal_);
       }
 
       break;

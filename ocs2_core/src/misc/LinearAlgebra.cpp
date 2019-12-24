@@ -42,9 +42,9 @@ bool makePSD(Eigen::MatrixXd& squareMatrix) {
 
   bool hasNegativeEigenValue = false;
   for (size_t j = 0; j < lambda.size(); j++) {
-    if (lambda(j) < 0.0) {
+    if (lambda(j) < OCS2NumericTraits<double>::limitEpsilon()) {
       hasNegativeEigenValue = true;
-      lambda(j) = 1e-6;
+      lambda(j) = OCS2NumericTraits<double>::limitEpsilon();
     }
   }
 

@@ -27,10 +27,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef OCS2_CTRL_LINEARALGEBRA_H
-#define OCS2_CTRL_LINEARALGEBRA_H
+#pragma once
 
 #include <Eigen/Dense>
+
+#include "ocs2_core/OCS2NumericTraits.h"
 
 namespace ocs2 {
 namespace LinearAlgebra {
@@ -39,7 +40,7 @@ namespace LinearAlgebra {
  * Makes the input matrix PSD.
  *
  * @tparam Derived type.
- * @param [out] squareMatrix: The matrix to become PSD.
+ * @param squareMatrix: The matrix to become PSD.
  * @return true if the matrix had negative eigen values.
  */
 bool makePSD(Eigen::MatrixXd& squareMatrix);
@@ -53,6 +54,24 @@ bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
   squareMatrix = mat;
 
   return hasNegativeEigenValue;
+}
+
+/**
+ * Attempts to make the input matrix PSD by Adding a Multiple of the Identity (AMI).
+ * Note that there is no guarantee that resulting matrix is PSD.
+ *
+ * @tparam Derived type.
+ * @param [in] multiple: An initial guess for the multiple to be added.
+ * @param squareMatrix: The matrix to become PSD.
+ * @return true if the matrix had negative eigen values.
+ */
+template <typename Derived>
+bool makePSD_AMI(Eigen::MatrixBase<Derived>& squareMatrix, double multiple = OCS2NumericTraits<double>::limitEpsilon()) {
+  const auto minDiagonalElement = squareMatrix.diagonal().minCoeff();
+  if (minDiagonalElement < OCS2NumericTraits<double>::limitEpsilon()) {
+    multiple -= minDiagonalElement;
+    squareMatrix.diagonal().array() += multiple;
+  }
 }
 
 /**
@@ -116,5 +135,3 @@ Eigen::VectorXcd eigenvalues(const Derived& A) {
 
 }  // namespace LinearAlgebra
 }  // namespace ocs2
-
-#endif  // OCS2_CTRL_LINEARALGEBRA_H

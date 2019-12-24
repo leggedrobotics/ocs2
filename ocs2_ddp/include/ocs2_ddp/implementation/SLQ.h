@@ -307,6 +307,8 @@ void SLQ<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t workerInde
   // making sure that constrained Qm is PSD
   if (BASE::ddpSettings_.useMakePSD_) {
     LinearAlgebra::makePSD(QmConstrainedTrajectoryStock_[i][k]);
+  } else {
+    LinearAlgebra::makePSD_AMI(QmConstrainedTrajectoryStock_[i][k], BASE::ddpSettings_.addedRiccatiDiagonal_);
   }
 }
 

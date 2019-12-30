@@ -44,12 +44,11 @@ slq
     minLearningRateNLP           0.05
     maxLearningRateNLP           0.6
     useAscendingLineSearchNLP    1
+    minEventTimeDifference       0.01
 
     ddp
     {
         maxNumIterations             10     ; 50
-        minLearningRate              1.0    ; 0.1
-        maxLearningRate              1.0
         minRelCost                   0.1    ; 0.01
         stateConstraintPenaltyCoeff  100.0
         stateConstraintPenaltyBase   1.1
@@ -65,7 +64,6 @@ slq
         maxNumStepsPerSecond         100000
         simulationIsConstrained      0
         noStateConstraints           1
-        useMakePSD                   1
         minAbsConstraint1ISE         5e-3
         minRelConstraint1ISE         5e-6
         checkNumericalStability      1
@@ -73,9 +71,15 @@ slq
         nThreads                     1
 
         useFeedbackPolicy            0
-        useRiccatiSolver             1
-
-        minEventTimeDifference       0.01
+        
+        strategy                       LINE_SEARCH
+        lineSearch
+        {
+            minStepLength              1.0
+            maxStepLength              1.0
+            useMakePSD                 1
+            addedRiccatiDiagonal       1e-3
+        }
     }
 
     rollout
@@ -93,10 +97,10 @@ mpc
 {
     runtimeMaxNumIterations     1
     initMaxNumIterations        50
-    runtimeMaxLearningRate      1.0
-    runtimeMinLearningRate      1.0
-    initMinLearningRate         0.1
-    initMaxLearningRate         1.0
+    runtimeMaxStepLength        1.0
+    runtimeMinStepLength        1.0
+    initMinStepLength           0.1
+    initMaxStepLength           1.0
     coldStart                   0
     recedingHorizon             1     ; use receding horizon MPC
     useParallelRiccatiSolver    0     ; use disjoint riccati solver in MP case and recedingHorizon fashion

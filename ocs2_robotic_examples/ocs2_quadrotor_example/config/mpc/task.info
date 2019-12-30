@@ -34,8 +34,6 @@ ilqr
     ddp
     {
         maxNumIterations                 10     ; 50
-        minLearningRate                  1.0    ; 0.1
-        maxLearningRate                  1.0
         minRelCost                       0.1    ; 0.01
         stateConstraintPenaltyCoeff      100.0
         stateConstraintPenaltyBase       1.1
@@ -50,8 +48,6 @@ ilqr
         maxNumStepsPerSecond             50000
         simulationIsConstrained          0
         noStateConstraints               1
-        useMakePSD                       0
-        addedRiccatiDiagonal             1e-3
         minAbsConstraint1ISE             5e-3
         minRelConstraint1ISE             5e-6
         checkNumericalStability          0
@@ -59,7 +55,15 @@ ilqr
         nThreads                         1
 
         useFeedbackPolicy                0
-        useRiccatiSolver                 1
+        
+        strategy                       LINE_SEARCH
+        lineSearch
+        {
+            minStepLength              1.0
+            maxStepLength              1.0
+            useMakePSD                 0
+            addedRiccatiDiagonal       1e-3
+        }
     }
 
     rollout
@@ -77,10 +81,10 @@ mpc
 {
     runtimeMaxNumIterations     1
     initMaxNumIterations        10
-    runtimeMaxLearningRate      1.0
-    runtimeMinLearningRate      1.0
-    initMinLearningRate         0.1
-    initMaxLearningRate         1.0
+    runtimeMaxStepLength        1.0
+    runtimeMinStepLength        1.0
+    initMinStepLength           0.1
+    initMaxStepLength           1.0
     coldStart                   0
     recedingHorizon             1       ; use receding horizon MPC
     useParallelRiccatiSolver    1       ; use parallel riccati solver in MP case and recedingHorizon fashion

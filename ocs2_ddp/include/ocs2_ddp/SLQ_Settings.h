@@ -44,21 +44,20 @@ namespace ocs2 {
 /**
  * This structure contains the settings for the SLQ algorithm.
  */
-class SLQ_Settings {
- public:
+struct SLQ_Settings {
   using RICCATI_INTEGRATOR_TYPE = Dimensions<0, 0>::RiccatiIntegratorType;
 
-  /**
-   * Default constructor.
-   */
-  SLQ_Settings()
-      : useNominalTimeForBackwardPass_(false),
-        preComputeRiccatiTerms_(true),
-        RiccatiIntegratorType_(RICCATI_INTEGRATOR_TYPE::ODE45),
-        adams_integrator_dt_(0.001),
-        ddpSettings_()
+  /** If true, SLQ solves the backward path over the nominal time trajectory. */
+  bool useNominalTimeForBackwardPass_ = false;
+  /** If true, terms of the Riccati equation will be precomputed before interpolation in the flowmap */
+  bool preComputeRiccatiTerms_ = true;
+  /** Riccati integrator type. */
+  size_t RiccatiIntegratorType_ = RICCATI_INTEGRATOR_TYPE::ODE45;
+  /** Adams integrator's time step. */
+  double adams_integrator_dt_ = 1e-3;
 
-  {}
+  /** This structure contains the settings for DDP algorithms. */
+  DDP_Settings ddpSettings_;
 
   /**
    * This function loads the "SLQ_Settings" variables from a config file. This file contains the settings for the SQL and OCS2 algorithms.
@@ -80,46 +79,26 @@ class SLQ_Settings {
    * @param [in] fieldName: Field name which contains the configuration data (the default is slq).
    * @param [in] verbose: Flag to determine whether to print out the loaded settings or not (the default is true).
    */
-  void loadSettings(const std::string& filename, const std::string& fieldName = "slq", bool verbose = true);
+  void loadSettings(const std::string& filename, const std::string& fieldName = "slq", bool verbose = true) {
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_info(filename, pt);
 
- public:
-  /****************
-   *** Variables **
-   ****************/
+    ddpSettings_.loadSettings(filename, fieldName + ".ddp", verbose);
 
-  /** If true, SLQ solves the backward path over the nominal time trajectory. */
-  bool useNominalTimeForBackwardPass_;
-  /** If true, terms of the Riccati equation will be precomputed before interpolation in the flowmap */
-  bool preComputeRiccatiTerms_;
-  /** Riccati integrator type. */
-  size_t RiccatiIntegratorType_;
-  /** Adams integrator's time step. */
-  double adams_integrator_dt_;
+    if (verbose) {
+      std::cerr << std::endl << " #### SLQ Settings: " << std::endl;
+      std::cerr << " #### =============================================================================" << std::endl;
+    }
 
-  /** This structure contains the settings for DDP algorithms. */
-  DDP_Settings ddpSettings_;
+    loadData::loadPtreeValue(pt, useNominalTimeForBackwardPass_, fieldName + ".useNominalTimeForBackwardPass", verbose);
+    loadData::loadPtreeValue(pt, preComputeRiccatiTerms_, fieldName + ".preComputeRiccatiTerms", verbose);
+    loadData::loadPtreeValue(pt, RiccatiIntegratorType_, fieldName + ".RiccatiIntegratorType", verbose);
+    loadData::loadPtreeValue(pt, adams_integrator_dt_, fieldName + ".adams_integrator_dt", verbose);
+
+    if (verbose) {
+      std::cerr << " #### =============================================================================" << std::endl;
+    }
+  }
 
 };  // end of SLQ_Settings class
-
-inline void SLQ_Settings::loadSettings(const std::string& filename, const std::string& fieldName /*= slq*/, bool verbose /*= true*/) {
-  boost::property_tree::ptree pt;
-  boost::property_tree::read_info(filename, pt);
-
-  ddpSettings_.loadSettings(filename, fieldName + ".ddp", verbose);
-
-  if (verbose) {
-    std::cerr << std::endl << " #### SLQ Settings: " << std::endl;
-    std::cerr << " #### =============================================================================" << std::endl;
-  }
-
-  loadData::loadPtreeValue(pt, useNominalTimeForBackwardPass_, fieldName + ".useNominalTimeForBackwardPass", verbose);
-  loadData::loadPtreeValue(pt, preComputeRiccatiTerms_, fieldName + ".preComputeRiccatiTerms", verbose);
-  loadData::loadPtreeValue(pt, RiccatiIntegratorType_, fieldName + ".RiccatiIntegratorType", verbose);
-  loadData::loadPtreeValue(pt, adams_integrator_dt_, fieldName + ".adams_integrator_dt", verbose);
-
-  if (verbose) {
-    std::cerr << " #### =============================================================================" << std::endl;
-  }
-}
-
 }  // namespace ocs2

@@ -43,15 +43,9 @@ namespace ocs2 {
 /**
  * This structure contains the settings for the ILQR algorithm.
  */
-class ILQR_Settings {
- public:
-  /**
-   * Default constructor.
-   */
-  ILQR_Settings()
-      : ddpSettings_()
-
-  {}
+struct ILQR_Settings {
+  /** This structure contains the settings for DDP algorithms. */
+  DDP_Settings ddpSettings_;
 
   /**
    * This function loads the "ILQR_Settings" variables from a config file. This file contains the settings for the SQL and OCS2 algorithms.
@@ -73,32 +67,20 @@ class ILQR_Settings {
    * @param [in] fieldName: Field name which contains the configuration data (the default is ilqr).
    * @param [in] verbose: Flag to determine whether to print out the loaded settings or not (The default is true).
    */
-  void loadSettings(const std::string& filename, const std::string& fieldName = "ilqr", bool verbose = true);
+  void loadSettings(const std::string& filename, const std::string& fieldName = "ilqr", bool verbose = true) {
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_info(filename, pt);
 
- public:
-  /****************
-   *** Variables **
-   ****************/
+    ddpSettings_.loadSettings(filename, fieldName + ".ddp", verbose);
 
-  /** This structure contains the settings for DDP algorithms. */
-  DDP_Settings ddpSettings_;
+    if (verbose) {
+      std::cerr << std::endl << " #### ILQR Settings: " << std::endl;
+      std::cerr << " #### =============================================================================" << std::endl;
+    }
 
+    if (verbose) {
+      std::cerr << " #### =============================================================================" << std::endl;
+    }
+  }
 };  // end of ILQR_Settings class
-
-inline void ILQR_Settings::loadSettings(const std::string& filename, const std::string& fieldName /*= ilqr*/, bool verbose /*= true*/) {
-  boost::property_tree::ptree pt;
-  boost::property_tree::read_info(filename, pt);
-
-  ddpSettings_.loadSettings(filename, fieldName + ".ddp", verbose);
-
-  if (verbose) {
-    std::cerr << std::endl << " #### ILQR Settings: " << std::endl;
-    std::cerr << " #### =============================================================================" << std::endl;
-  }
-
-  if (verbose) {
-    std::cerr << " #### =============================================================================" << std::endl;
-  }
-}
-
 }  // namespace ocs2

@@ -159,7 +159,7 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Default destructor.
    */
-  virtual ~SLQ() = default;
+  ~SLQ() override = default;
 
   void approximateOptimalControlProblem() override;
 

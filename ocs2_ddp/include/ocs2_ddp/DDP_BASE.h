@@ -342,16 +342,21 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   scalar_t calculateControllerUpdateIS(const linear_controller_array_t& controllersStock) const;
 
   /**
+   * Trust Region strategy.
+   */
+  void trustRegion();
+
+  /**
    * Line search on the feedforward parts of the controller. It uses the
    * following approach for line search: The constraint TYPE-1 correction term
-   * is directly added through a user defined stepSize (defined in
+   * is directly added through a user defined step length (defined in
    * settings_.constraintStepSize_). But the cost minimization term is optimized
    * through a line-search strategy defined in ILQR settings.
    *
    * @param [in] computeISEs: Whether lineSearch needs to calculate ISEs indices
    * for type_1 and type-2 constraints.
    */
-  virtual void lineSearch(bool computeISEs);
+  void lineSearch(bool computeISEs);
 
   /**
    * Solves Riccati equations for all the partitions.
@@ -693,12 +698,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   size_t numPartitions_ = 0;
   scalar_array_t partitioningTimes_;
 
-  std::atomic<scalar_t> stepLengthStar_;  // the optimal step length.
-  scalar_t maxStepLength_ = 1.0;          // the maximum permitted step length
-
-  std::vector<int> startingIndicesRiccatiWorker_;
-  std::vector<int> endingIndicesRiccatiWorker_;
-
   // trajectory spreading
   TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM> trajectorySpreadingController_;
 
@@ -739,14 +738,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   size_array2_t cachedPostEventIndicesStock_;
   state_vector_array2_t cachedStateTrajectoriesStock_;
   input_vector_array2_t cachedInputTrajectoriesStock_;
-
-  // line search
-  std::mutex lineSearchResultMutex_;
-  std::atomic_size_t alphaExpNext_;
-  std::vector<bool> alphaProcessed_;
-  bool lsComputeISEs_;                                // whether lineSearch routine needs to calculate ISEs
-  scalar_t baselineTotalCost_;                        // the cost of the rollout for zero learning rate
-  linear_controller_array_t initLScontrollersStock_;  // needed for lineSearch
 
   std::vector<EigenLinearInterpolation<state_vector_t>> nominalStateFunc_;
   std::vector<EigenLinearInterpolation<input_vector_t>> nominalInputFunc_;
@@ -804,12 +795,28 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   state_vector_t SvHeuristics_;
   state_matrix_t SmHeuristics_;
 
+  // line search
+  struct LineSearchImpl {
+    bool lsComputeISEs;                                // whether lineSearch routine needs to calculate ISEs
+    scalar_t baselineTotalCost;                        // the cost of the rollout for zero learning rate
+    std::atomic<scalar_t> stepLengthStar;              // the optimal step length.
+    linear_controller_array_t initLScontrollersStock;  // needed for lineSearch
+
+    std::atomic_size_t alphaExpNext;
+    std::vector<bool> alphaProcessed;
+    std::mutex lineSearchResultMutex;
+
+  } lineSearchImpl_;
+
+  std::vector<int> startingIndicesRiccatiWorker_;
+  std::vector<int> endingIndicesRiccatiWorker_;
+
   // benchmarking
   benchmark::RepeatedTimer forwardPassTimer_;
   benchmark::RepeatedTimer linearQuadraticApproximationTimer_;
   benchmark::RepeatedTimer backwardPassTimer_;
   benchmark::RepeatedTimer computeControllerTimer_;
-  benchmark::RepeatedTimer linesearchTimer_;
+  benchmark::RepeatedTimer searchStrategyTimer_;
 };
 
 }  // namespace ocs2

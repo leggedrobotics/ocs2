@@ -157,7 +157,7 @@ class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Default destructor.
    */
-  virtual ~ILQR() = default;
+  ~ILQR() override = default;
 
   void approximateOptimalControlProblem() override;
 

@@ -54,9 +54,10 @@ TEST(exp0_gddp_test, optimum_gradient_test) {
   slqSettings.ddpSettings_.nThreads_ = 1;  // single threaded
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
   slqSettings.ddpSettings_.noStateConstraints_ = true;
-  slqSettings.ddpSettings_.minLearningRate_ = 0.0001;
   slqSettings.ddpSettings_.minRelCost_ = 5e-4;
   slqSettings.ddpSettings_.checkNumericalStability_ = false;
+  slqSettings.ddpSettings_.strategy_ = DDP_Strategy::LINE_SEARCH;
+  slqSettings.ddpSettings_.lineSearch_.minStepLength_ = 0.0001;
 
   Rollout_Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;

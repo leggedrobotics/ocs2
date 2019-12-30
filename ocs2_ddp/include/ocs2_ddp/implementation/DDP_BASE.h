@@ -923,8 +923,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
        * cost should be better than the baseline cost but learning rate should
        * be as high as possible. This is equivalent to a single core line search.
        */
-      // const bool enoughProgressCondition = lsTotalCost < (baselineTotalCost_ * (1.0 - 1e-3 * stepLength));
-      const bool armijoCondition = lsTotalCost < (baselineTotalCost_ - 1e-4 * learningRate * nominalControllerUpdateIS_);
+      // const bool progressCondition = lsTotalCost < (baselineTotalCost_ * (1.0 - 1e-3 * stepLength));
+      const bool armijoCondition = lsTotalCost < (baselineTotalCost_ - 1e-4 * stepLength * nominalControllerUpdateIS_);
       if (armijoCondition && stepLength > stepLengthStar_) {
         nominalTotalCost_ = lsTotalCost;
         stepLengthStar_ = stepLength;

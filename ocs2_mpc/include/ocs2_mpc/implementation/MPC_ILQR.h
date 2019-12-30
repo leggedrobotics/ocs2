@@ -105,12 +105,12 @@ void MPC_ILQR<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTim
   // number of iterations
   if (BASE::initRun_ /*|| ilqrPtr_->getController().at(BASE::finalActivePartitionIndex_).empty()*/) {
     ilqrPtr_->ddpSettings().maxNumIterations_ = BASE::mpcSettings_.initMaxNumIterations_;
-    ilqrPtr_->ddpSettings().maxLearningRate_ = BASE::mpcSettings_.initMaxLearningRate_;
-    ilqrPtr_->ddpSettings().minLearningRate_ = BASE::mpcSettings_.initMinLearningRate_;
+    ilqrPtr_->ddpSettings().lineSearch_.maxStepLength_ = BASE::mpcSettings_.initMaxStepLength_;
+    ilqrPtr_->ddpSettings().lineSearch_.minStepLength_ = BASE::mpcSettings_.initMinStepLength_;
   } else {
     ilqrPtr_->ddpSettings().maxNumIterations_ = BASE::mpcSettings_.runtimeMaxNumIterations_;
-    ilqrPtr_->ddpSettings().maxLearningRate_ = BASE::mpcSettings_.runtimeMaxLearningRate_;
-    ilqrPtr_->ddpSettings().minLearningRate_ = BASE::mpcSettings_.runtimeMinLearningRate_;
+    ilqrPtr_->ddpSettings().lineSearch_.maxStepLength_ = BASE::mpcSettings_.runtimeMaxStepLength_;
+    ilqrPtr_->ddpSettings().lineSearch_.minStepLength_ = BASE::mpcSettings_.runtimeMinStepLength_;
   }
 
   // use parallel Riccati solver at each call of realtime-iteration ILQR

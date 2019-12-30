@@ -41,28 +41,53 @@ namespace ocs2 {
 /**
  * This structure holds all setting parameters for the MPC class.
  */
-class MPC_Settings {
- public:
-  /**
-   * Default constructor.
-   */
-  MPC_Settings()
+struct MPC_Settings {
+  /** Number of iterations which will be used during MPC regular loop.. */
+  size_t runtimeMaxNumIterations_ = 15;
+  /** Number of iterations which will be used during MPC initial run. */
+  size_t initMaxNumIterations_ = 15;
 
-      : runtimeMaxNumIterations_(15),
-        initMaxNumIterations_(15),
-        runtimeMaxLearningRate_(1.0),
-        runtimeMinLearningRate_(1.0),
-        initMaxLearningRate_(1.0),
-        initMinLearningRate_(1.0),
-        debugPrint_(false),
-        coldStart_(false),
-        recedingHorizon_(true),
-        blockwiseMovingHorizon_(false),
-        useParallelRiccatiSolver_(false),
-        solutionTimeWindow_(-1),    // [s]
-        mpcDesiredFrequency_(-1),   // [Hz]
-        mrtDesiredFrequency_(100),  // [Hz]
-        maxTimeStep_(1e-3) {}
+  /** Maximum learning rate which will be used during MPC regular loop. */
+  double runtimeMaxStepLength_ = 1.0;
+  /** Maximum learning rate which will be used during MPC regular loop. */
+  double runtimeMinStepLength_ = 1.0;
+  /** Maximum learning rate which will be used during MPC initial run. */
+  double initMaxStepLength_ = 1.0;
+  /** Minimum learning rate which will be used during MPC initial run. */
+  double initMinStepLength_ = 1.0;
+
+  /** This value determines to initialize the SLQ with the controller from previous call
+   * (warm start) or the given operating trajectories (cold start). */
+  bool coldStart_ = false;
+  /** Either to use the receding horizon MPC or not.*/
+  bool recedingHorizon_ = true;
+  /** If true the final time of the MPC will increase by the length of a time partition
+   * instead of commonly used scheme where the final time is gradual increased. */
+  bool blockwiseMovingHorizon_ = false;
+  /** If set true, the parallel Riccati solver will be used from the first iteration of SLQ
+   * solver. */
+  bool useParallelRiccatiSolver_ = false;
+
+  /** The time window (in seconds) for retrieving the optimized output (controller and trajectory). */
+  double solutionTimeWindow_ = -1;
+
+  /** This value determines to display the log output of MPC. */
+  bool debugPrint_ = false;
+
+  /**
+   * MPC loop frequency in Hz. This setting is only used in Dummy_Loop for testing.
+   * If set to a positive number, MPC loop of test will be simulated to run by this
+   * frequency. Note that this might not be the MPC's realtime frequency.
+   */
+  double mpcDesiredFrequency_ = -1;
+  /**
+   * MRT loop frequency in Hz. This setting is only used in Dummy_Loop for testing.
+   * This should always set to a positive number which can be interpreted as the
+   * tracking controller's frequency.
+   */
+  double mrtDesiredFrequency_ = 100.0;
+
+  double maxTimeStep_ = 1e-3;
 
   /**
    * Loads the MPC settings from a given file.
@@ -71,85 +96,37 @@ class MPC_Settings {
    * @param [in] verbose: Flag to determine whether to print out the loaded settings or not
    * (The default is true).
    */
-  void loadSettings(const std::string& filename, bool verbose = true);
+  void loadSettings(const std::string& filename, bool verbose = true) {
+    std::string fieldName = "mpc";
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_info(filename, pt);
 
- public:
-  /****************
-   *** Variables **
-   ****************/
-  /** Number of iterations which will be used during MPC regular loop.. */
-  size_t runtimeMaxNumIterations_;
-  /** Number of iterations which will be used during MPC initial run. */
-  size_t initMaxNumIterations_;
-  /** Maximum learning rate which will be used during MPC regular loop. */
-  double runtimeMaxLearningRate_;
-  /** Maximum learning rate which will be used during MPC regular loop. */
-  double runtimeMinLearningRate_;
-  /** Maximum learning rate which will be used during MPC initial run. */
-  double initMaxLearningRate_;
-  /** Minimum learning rate which will be used during MPC initial run. */
-  double initMinLearningRate_;
-  /** This value determines to display the log output of MPC. */
-  bool debugPrint_;
-  /** This value determines to initialize the SLQ with the controller from previous call
-   * (warm start) or the given operating trajectories (cold start). */
-  bool coldStart_;
-  /** Either to use the receding horizon MPC or not.*/
-  bool recedingHorizon_;
-  /** If true the final time of the MPC will increase by the length of a time partition
-   * instead of commonly used scheme where the final time is gradual increased. */
-  bool blockwiseMovingHorizon_;
-  /** If set true, the parallel Riccati solver will be used from the first iteration of SLQ
-   * solver. */
-  bool useParallelRiccatiSolver_;
-  /** The time window for retrieving the optimized output (controller and trajectory). */
-  double solutionTimeWindow_;
-  /**
-   * MPC loop frequency in Hz. This setting is only used in Dummy_Loop for testing.
-   * If set to a positive number, MPC loop of test will be simulated to run by this
-   * frequency. Note that this might not be the MPC's realtime frequency.
-   */
-  double mpcDesiredFrequency_;
-  /**
-   * MRT loop frequency in Hz. This setting is only used in Dummy_Loop for testing.
-   * This should always set to a positive number which can be interpreted as the
-   * tracking controller's frequency.
-   */
-  double mrtDesiredFrequency_;
+    if (verbose) {
+      std::cerr << std::endl << " #### MPC Settings: " << std::endl;
+      std::cerr << " #### =============================================================================" << std::endl;
+    }
 
-  double maxTimeStep_;
+    loadData::loadPtreeValue(pt, runtimeMaxNumIterations_, fieldName + ".runtimeMaxNumIterations", verbose);
+    loadData::loadPtreeValue(pt, initMaxNumIterations_, fieldName + ".initMaxNumIterations", verbose);
+    loadData::loadPtreeValue(pt, runtimeMaxStepLength_, fieldName + ".runtimeMaxStepLength", verbose);
+    loadData::loadPtreeValue(pt, runtimeMinStepLength_, fieldName + ".runtimeMinStepLength", verbose);
+    loadData::loadPtreeValue(pt, initMaxStepLength_, fieldName + ".initMaxStepLength", verbose);
+    loadData::loadPtreeValue(pt, initMinStepLength_, fieldName + ".initMinStepLength", verbose);
+    loadData::loadPtreeValue(pt, debugPrint_, fieldName + ".debugPrint", verbose);
+    loadData::loadPtreeValue(pt, coldStart_, fieldName + ".coldStart", verbose);
+    loadData::loadPtreeValue(pt, recedingHorizon_, fieldName + ".recedingHorizon", verbose);
+    loadData::loadPtreeValue(pt, blockwiseMovingHorizon_, fieldName + ".blockwiseMovingHorizon", verbose);
+    loadData::loadPtreeValue(pt, useParallelRiccatiSolver_, fieldName + ".useParallelRiccatiSolver", verbose);
+    loadData::loadPtreeValue(pt, solutionTimeWindow_, fieldName + ".solutionTimeWindow", verbose);
+    loadData::loadPtreeValue(pt, mpcDesiredFrequency_, fieldName + ".mpcDesiredFrequency", verbose);
+    loadData::loadPtreeValue(pt, mrtDesiredFrequency_, fieldName + ".mrtDesiredFrequency", verbose);
+    loadData::loadPtreeValue(pt, maxTimeStep_, fieldName + ".maxTimeStep", verbose);
+
+    if (verbose) {
+      std::cerr << " #### =============================================================================" << std::endl;
+    }
+  }
 
 };  // end of MPC_Settings class
-
-inline void MPC_Settings::loadSettings(const std::string& filename, bool verbose /*= true*/) {
-  std::string fieldName = "mpc";
-  boost::property_tree::ptree pt;
-  boost::property_tree::read_info(filename, pt);
-
-  if (verbose) {
-    std::cerr << std::endl << " #### MPC Settings: " << std::endl;
-    std::cerr << " #### =============================================================================" << std::endl;
-  }
-
-  loadData::loadPtreeValue(pt, runtimeMaxNumIterations_, fieldName + ".runtimeMaxNumIterations", verbose);
-  loadData::loadPtreeValue(pt, initMaxNumIterations_, fieldName + ".initMaxNumIterations", verbose);
-  loadData::loadPtreeValue(pt, runtimeMaxLearningRate_, fieldName + ".runtimeMaxLearningRate", verbose);
-  loadData::loadPtreeValue(pt, runtimeMinLearningRate_, fieldName + ".runtimeMinLearningRate", verbose);
-  loadData::loadPtreeValue(pt, initMaxLearningRate_, fieldName + ".initMaxLearningRate", verbose);
-  loadData::loadPtreeValue(pt, initMinLearningRate_, fieldName + ".initMinLearningRate", verbose);
-  loadData::loadPtreeValue(pt, debugPrint_, fieldName + ".debugPrint", verbose);
-  loadData::loadPtreeValue(pt, coldStart_, fieldName + ".coldStart", verbose);
-  loadData::loadPtreeValue(pt, recedingHorizon_, fieldName + ".recedingHorizon", verbose);
-  loadData::loadPtreeValue(pt, blockwiseMovingHorizon_, fieldName + ".blockwiseMovingHorizon", verbose);
-  loadData::loadPtreeValue(pt, useParallelRiccatiSolver_, fieldName + ".useParallelRiccatiSolver", verbose);
-  loadData::loadPtreeValue(pt, solutionTimeWindow_, fieldName + ".solutionTimeWindow", verbose);
-  loadData::loadPtreeValue(pt, mpcDesiredFrequency_, fieldName + ".mpcDesiredFrequency", verbose);
-  loadData::loadPtreeValue(pt, mrtDesiredFrequency_, fieldName + ".mrtDesiredFrequency", verbose);
-  loadData::loadPtreeValue(pt, maxTimeStep_, fieldName + ".maxTimeStep", verbose);
-
-  if (verbose) {
-    std::cerr << " #### =============================================================================" << std::endl;
-  }
-}
 
 }  // namespace ocs2

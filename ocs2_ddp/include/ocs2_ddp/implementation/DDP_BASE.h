@@ -1840,11 +1840,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
 
   // calculate controller
   computeControllerTimer_.startTimer();
-  if (ddpSettings_.useRiccatiSolver_) {
-    calculateController();
-  } else {
-    throw std::runtime_error("useRiccatiSolver=false is not valid.");
-  }
+  calculateController();
   nominalControllerUpdateIS_ = calculateControllerUpdateIS(nominalControllersStock_);
   computeControllerTimer_.endTimer();
 
@@ -1903,11 +1899,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
 
   // calculate controller
   computeControllerTimer_.startTimer();
-  if (ddpSettings_.useRiccatiSolver_) {
-    calculateController();
-  } else {
-    throw std::runtime_error("useRiccatiSolver=false is not valid.");
-  }
+  calculateController();
   nominalControllerUpdateIS_ = calculateControllerUpdateIS(nominalControllersStock_);
   computeControllerTimer_.endTimer();
 

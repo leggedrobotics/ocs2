@@ -95,9 +95,6 @@ struct DDP_Settings {
   /** Priority of threads used in the multi-threading scheme. */
   int threadPriority_ = 99;
 
-  /** If true, DDP uses ode solver to solve the Riccati equations. Otherwise it uses matrix exponential to solve it. */
-  bool useRiccatiSolver_ = true;
-
   /** Use either the optimized control policy (true) or the optimized state-input trajectory (false). */
   bool useFeedbackPolicy_ = false;
 
@@ -163,7 +160,6 @@ struct DDP_Settings {
     loadData::loadPtreeValue(pt, minAbsConstraint1ISE_, fieldName + ".minAbsConstraint1ISE", verbose);
     loadData::loadPtreeValue(pt, minRelConstraint1ISE_, fieldName + ".minRelConstraint1ISE", verbose);
     loadData::loadPtreeValue(pt, checkNumericalStability_, fieldName + ".checkNumericalStability", verbose);
-    loadData::loadPtreeValue(pt, useRiccatiSolver_, fieldName + ".useRiccatiSolver", verbose);
     loadData::loadPtreeValue(pt, useFeedbackPolicy_, fieldName + ".useFeedbackPolicy", verbose);
     loadData::loadPtreeValue(pt, debugPrintRollout_, fieldName + ".debugPrintRollout", verbose);
     loadData::loadPtreeValue(pt, debugCaching_, fieldName + ".debugCaching", verbose);

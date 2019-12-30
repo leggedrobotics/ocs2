@@ -46,7 +46,7 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t* rolloutPtr, const
       algorithmName_(algorithmName),
       rewindCounter_(0),
       iteration_(0),
-      learningRateStar_(1.0) {
+      stepLengthStar_(1.0) {
   // Dynamics, Constraints, derivatives, and cost
   linearQuadraticApproximatorPtrStock_.clear();
   linearQuadraticApproximatorPtrStock_.reserve(ddpSettings_.nThreads_);
@@ -71,7 +71,7 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t* rolloutPtr, const
     // initialize LQ approximator
     linearQuadraticApproximatorPtrStock_.emplace_back(
         new linear_quadratic_approximator_t(*systemDerivativesPtr, *systemConstraintsPtr, *costFunctionPtr, algorithmName_.c_str(),
-                                            ddpSettings_.checkNumericalStability_, ddpSettings_.useMakePSD_));
+                                            ddpSettings_.checkNumericalStability_, ddpSettings_.lineSearch_.useMakePSD_));
 
     // initialize heuristics functions
     if (heuristicsFunctionPtr != nullptr) {
@@ -125,8 +125,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
   iteration_ = 0;
   rewindCounter_ = 0;
 
-  learningRateStar_ = 1.0;
-  maxLearningRate_ = 1.0;
+  stepLengthStar_ = 1.0;
+  maxStepLength_ = 1.0;
 
   useParallelRiccatiSolverFromInitItr_ = false;
 
@@ -614,10 +614,12 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
   heuristicsFunctionsPtrStock_[0]->getTerminalCost(sHeuristics_(0));
   heuristicsFunctionsPtrStock_[0]->getTerminalCostDerivativeState(SvHeuristics_);
   heuristicsFunctionsPtrStock_[0]->getTerminalCostSecondDerivativeState(SmHeuristics_);
-  if (ddpSettings_.useMakePSD_) {
-    LinearAlgebra::makePSD(SmHeuristics_);
-  } else {
-    LinearAlgebra::makePSD_AMI(SmHeuristics_, ddpSettings_.addedRiccatiDiagonal_);
+  if (ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH) {
+    if (ddpSettings_.lineSearch_.useMakePSD_) {
+      LinearAlgebra::makePSD(SmHeuristics_);
+    } else {
+      LinearAlgebra::makePSD_AMI(SmHeuristics_, ddpSettings_.lineSearch_.addedRiccatiDiagonal_);
+    }
   }
 }
 
@@ -635,10 +637,12 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateUnconstrainedLQWorker(size_t wor
       QvTrajectoryStock_[i][k], QmTrajectoryStock_[i][k], RvTrajectoryStock_[i][k], RmTrajectoryStock_[i][k], PmTrajectoryStock_[i][k]);
 
   // making sure that constrained Qm is PSD
-  if (ddpSettings_.useMakePSD_) {
-    LinearAlgebra::makePSD(QmTrajectoryStock_[i][k]);
-  } else {
-    LinearAlgebra::makePSD_AMI(QmTrajectoryStock_[i][k], ddpSettings_.addedRiccatiDiagonal_);
+  if (ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH) {
+    if (ddpSettings_.lineSearch_.useMakePSD_) {
+      LinearAlgebra::makePSD(QmTrajectoryStock_[i][k]);
+    } else {
+      LinearAlgebra::makePSD_AMI(QmTrajectoryStock_[i][k], ddpSettings_.lineSearch_.addedRiccatiDiagonal_);
+    }
   }
 }
 
@@ -676,10 +680,12 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateEventsLQWorker(size_t workerInde
       }
 
       // making sure that Qm remains PSD
-      if (ddpSettings_.useMakePSD_) {
-        LinearAlgebra::makePSD(QmFinalStock_[i][ke]);
-      } else {
-        LinearAlgebra::makePSD_AMI(QmFinalStock_[i][ke], ddpSettings_.addedRiccatiDiagonal_);
+      if (ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH) {
+        if (ddpSettings_.lineSearch_.useMakePSD_) {
+          LinearAlgebra::makePSD(QmFinalStock_[i][ke]);
+        } else {
+          LinearAlgebra::makePSD_AMI(QmFinalStock_[i][ke], ddpSettings_.lineSearch_.addedRiccatiDiagonal_);
+        }
       }
 
       break;
@@ -761,25 +767,27 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
 
   lsComputeISEs_ = computeISEs;
   baselineTotalCost_ = nominalTotalCost_;
-  learningRateStar_ = 0.0;                             // input correction learning rate is zero
+  stepLengthStar_ = 0.0;                               // input correction learning rate is zero
   initLScontrollersStock_ = nominalControllersStock_;  // this will serve to init the workers
 
   // if no line search
-  if (ddpSettings_.maxLearningRate_ < OCS2NumericTraits<scalar_t>::limitEpsilon()) {
+  if (ddpSettings_.lineSearch_.maxStepLength_ < OCS2NumericTraits<scalar_t>::limitEpsilon()) {
     // clear the feedforward increments
     for (size_t i = 0; i < numPartitions_; i++) {
       nominalControllersStock_[i].deltaBiasArray_.clear();
     }
     // display
     if (ddpSettings_.displayInfo_) {
-      std::cerr << "The chosen learningRate is: " << learningRateStar_ << std::endl;
+      std::cerr << "The chosen step length is: " << stepLengthStar_ << std::endl;
     }
 
     return;
   }
 
-  const auto maxNumOfLineSearches = static_cast<size_t>(
-      std::log(ddpSettings_.minLearningRate_ / ddpSettings_.maxLearningRate_) / std::log(ddpSettings_.lineSearchContractionRate_) + 1);
+  const auto maxNumOfLineSearches =
+      static_cast<size_t>(std::log(ddpSettings_.lineSearch_.minStepLength_ / ddpSettings_.lineSearch_.maxStepLength_) /
+                              std::log(ddpSettings_.lineSearch_.contractionRate_) +
+                          1);
 
   alphaExpNext_ = 0;
   alphaProcessed_ = std::vector<bool>(maxNumOfLineSearches, false);
@@ -798,7 +806,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
 
   // display
   if (ddpSettings_.displayInfo_) {
-    std::cerr << "The chosen learningRate is: " + std::to_string(learningRateStar_) << std::endl;
+    std::cerr << "The chosen step length is: " + std::to_string(stepLengthStar_) << std::endl;
   }
 }
 
@@ -842,7 +850,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::baselineRollout(bool computeISEs) {
 
   // display
   if (ddpSettings_.displayInfo_) {
-    std::cerr << "\t learningRate 0.0 \t cost: " << nominalTotalCost_ << " \t constraint ISE: " << nominalConstraint1ISE_
+    std::cerr << "\t step length 0.0 \t cost: " << nominalTotalCost_ << " \t constraint ISE: " << nominalConstraint1ISE_
               << " \t inequality penalty: " << nominalInequalityConstraintPenalty_
               << " \t inequality ISE: " << nominalInequalityConstraintISE_ << std::endl;
     std::cerr << "\t final constraint type-2:  ";
@@ -877,23 +885,23 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
 
   while (true) {
     size_t alphaExp = alphaExpNext_++;
-    scalar_t learningRate = maxLearningRate_ * std::pow(ddpSettings_.lineSearchContractionRate_, alphaExp);
+    scalar_t stepLength = maxStepLength_ * std::pow(ddpSettings_.lineSearch_.contractionRate_, alphaExp);
 
     /*
      * finish this thread's task since the learning rate is less than the minimum learning rate.
      * This means that the all the line search tasks are already processed or they are under
      * process in other threads.
      */
-    if (!numerics::almost_ge(learningRate, ddpSettings_.minLearningRate_)) {
+    if (!numerics::almost_ge(stepLength, ddpSettings_.lineSearch_.minStepLength_)) {
       break;
     }
 
     // skip if the current learning rate is less than the best candidate
-    if (learningRate < learningRateStar_) {
+    if (stepLength < stepLengthStar_) {
       // display
       if (ddpSettings_.displayInfo_) {
         std::string linesearchDisplay;
-        linesearchDisplay = "\t [Thread " + std::to_string(taskId) + "] rollout with learningRate " + std::to_string(learningRate) +
+        linesearchDisplay = "\t [Thread " + std::to_string(taskId) + "] rollout with step length " + std::to_string(stepLength) +
                             " is skipped: A larger learning rate is already found!";
         BASE::printString(linesearchDisplay);
       }
@@ -902,7 +910,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
 
     // do a line search
     lsControllersStock = initLScontrollersStock_;
-    lineSearchWorker(taskId, learningRate, lsTotalCost, lsConstraint1ISE, lsConstraint1MaxNorm, lsConstraint2ISE, lsConstraint2MaxNorm,
+    lineSearchWorker(taskId, stepLength, lsTotalCost, lsConstraint1ISE, lsConstraint1MaxNorm, lsConstraint2ISE, lsConstraint2MaxNorm,
                      lsInequalityConstraintPenalty, lsInequalityConstraintISE, lsControllersStock, lsTimeTrajectoriesStock,
                      lsPostEventIndicesStock, lsStateTrajectoriesStock, lsInputTrajectoriesStock);
 
@@ -911,14 +919,15 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
       std::lock_guard<std::mutex> lock(lineSearchResultMutex_);
 
       /*
-       * based on the "Armijo backtracking step lenght selection" policy:
+       * based on the "Armijo backtracking" step length selection policy:
        * cost should be better than the baseline cost but learning rate should
        * be as high as possible. This is equivalent to a single core line search.
        */
+      // const bool enoughProgressCondition = lsTotalCost < (baselineTotalCost_ * (1.0 - 1e-3 * stepLength));
       const bool armijoCondition = lsTotalCost < (baselineTotalCost_ - 1e-4 * learningRate * nominalControllerUpdateIS_);
-      if (armijoCondition && learningRate > learningRateStar_) {
+      if (armijoCondition && stepLength > stepLengthStar_) {
         nominalTotalCost_ = lsTotalCost;
-        learningRateStar_ = learningRate;
+        stepLengthStar_ = stepLength;
         nominalConstraint1ISE_ = lsConstraint1ISE;
         nominalConstraint1MaxNorm_ = lsConstraint1MaxNorm;
         nominalConstraint2ISE_ = lsConstraint2ISE;
@@ -963,7 +972,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t workerIndex, scalar_t learningRate, scalar_t& lsTotalCost,
+void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t workerIndex, scalar_t stepLength, scalar_t& lsTotalCost,
                                                       scalar_t& lsConstraint1ISE, scalar_t& lsConstraint1MaxNorm,
                                                       scalar_t& lsConstraint2ISE, scalar_t& lsConstraint2MaxNorm,
                                                       scalar_t& lsInequalityConstraintPenalty, scalar_t& lsInequalityConstraintISE,
@@ -974,7 +983,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t workerIndex, scalar
   // modifying uff by local increments
   for (size_t i = 0; i < numPartitions_; i++) {
     for (size_t k = 0; k < lsControllersStock[i].timeStamp_.size(); k++) {
-      lsControllersStock[i].biasArray_[k] += learningRate * lsControllersStock[i].deltaBiasArray_[k];
+      lsControllersStock[i].biasArray_[k] += stepLength * lsControllersStock[i].deltaBiasArray_[k];
     }
   }
 
@@ -1019,7 +1028,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t workerIndex, scalar
     // display
     if (ddpSettings_.displayInfo_) {
       std::string linesearchDisplay;
-      linesearchDisplay = "\t [Thread " + std::to_string(workerIndex) + "] - learningRate " + std::to_string(learningRate) +
+      linesearchDisplay = "\t [Thread " + std::to_string(workerIndex) + "] - step length " + std::to_string(stepLength) +
                           " \t cost: " + std::to_string(lsTotalCost) + " \t constraint ISE: " + std::to_string(lsConstraint1ISE) +
                           " \t inequality penalty: " + std::to_string(lsInequalityConstraintPenalty) +
                           " \t inequality ISE: " + std::to_string(lsInequalityConstraintISE) + "\n";
@@ -1040,7 +1049,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t workerIndex, scalar
   } catch (const std::exception& error) {
     lsTotalCost = std::numeric_limits<scalar_t>::max();
     if (ddpSettings_.displayInfo_) {
-      BASE::printString("\t [Thread " + std::to_string(workerIndex) + "] rollout with learningRate " + std::to_string(learningRate) +
+      BASE::printString("\t [Thread " + std::to_string(workerIndex) + "] rollout with step length " + std::to_string(stepLength) +
                         " is terminated: " + error.what());
     }
   }
@@ -1849,11 +1858,11 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
   // disable Eigen multi-threading
   Eigen::setNbThreads(1);
 
-  // finding the optimal learningRate and getting the optimal trajectories and controller
+  // finding the optimal stepLength and getting the optimal trajectories and controller
   bool computeISEs = ddpSettings_.displayInfo_ || !ddpSettings_.noStateConstraints_;
 
-  // finding the optimal learningRate
-  maxLearningRate_ = ddpSettings_.maxLearningRate_;
+  // finding the optimal stepLength
+  maxStepLength_ = ddpSettings_.lineSearch_.maxStepLength_;
   linesearchTimer_.startTimer();
   lineSearch(computeISEs);
   linesearchTimer_.endTimer();
@@ -1934,7 +1943,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
   }
 
   // infeasible learning rate adjustment scheme
-  if (!numerics::almost_ge(ddpSettings_.maxLearningRate_, ddpSettings_.minLearningRate_)) {
+  if (!numerics::almost_ge(ddpSettings_.lineSearch_.maxStepLength_, ddpSettings_.lineSearch_.minStepLength_)) {
     throw std::runtime_error("The maximum learning rate is smaller than the minimum learning rate.");
   }
 
@@ -2027,7 +2036,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
   // convergence conditions variables
   scalar_t relCost;
   scalar_t relConstraint1ISE;
-  bool isLearningRateStarZero = false;
+  bool isStepLengthStarZero = false;
   bool isCostFunctionConverged = false;
   bool isConstraint1Satisfied = false;
   bool isOptimizationConverged = false;
@@ -2065,8 +2074,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
     relConstraint1ISE = std::abs(nominalConstraint1ISE_ - constraint1ISECashed);
     isConstraint1Satisfied =
         nominalConstraint1ISE_ <= ddpSettings_.minAbsConstraint1ISE_ || relConstraint1ISE <= ddpSettings_.minRelConstraint1ISE_;
-    isLearningRateStarZero = learningRateStar_ == 0 && !isInitInternalControllerEmpty;
-    isCostFunctionConverged = relCost <= ddpSettings_.minRelCost_ || isLearningRateStarZero;
+    isStepLengthStarZero = stepLengthStar_ == 0 && !isInitInternalControllerEmpty;
+    isCostFunctionConverged = relCost <= ddpSettings_.minRelCost_ || isStepLengthStarZero;
     isOptimizationConverged = isCostFunctionConverged && isConstraint1Satisfied;
     isInitInternalControllerEmpty = false;
 
@@ -2085,9 +2094,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
   // cache the nominal trajectories before the new rollout (time, state, input, ...)
   swapNominalTrajectoriesToCache();
 
-  // finding the final optimal learningRate and getting the optimal trajectories and controller
+  // finding the final optimal stepLength and getting the optimal trajectories and controller
   bool computeISEs = !ddpSettings_.noStateConstraints_ || ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_;
-  maxLearningRate_ = ddpSettings_.maxLearningRate_;
+  maxStepLength_ = ddpSettings_.lineSearch_.maxStepLength_;
   linesearchTimer_.startTimer();
   lineSearch(computeISEs);
   linesearchTimer_.endTimer();
@@ -2103,8 +2112,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
     printRolloutInfo();
 
     if (isOptimizationConverged) {
-      if (isLearningRateStarZero) {
-        std::cerr << algorithmName_ + " successfully terminates as learningRate reduced to zero." << std::endl;
+      if (isStepLengthStarZero) {
+        std::cerr << algorithmName_ + " successfully terminates as step length reduced to zero." << std::endl;
       } else {
         std::cerr << algorithmName_ + " successfully terminates as cost relative change (relCost=" << relCost
                   << ") reached to the minimum value." << std::endl;

@@ -100,10 +100,12 @@ void ILQR<STATE_DIM, INPUT_DIM>::approximateUnconstrainedLQWorker(size_t workerI
   BASE::approximateUnconstrainedLQWorker(workerIndex, i, k);
 
   // making sure that constrained Qm is PSD
-  if (BASE::ddpSettings_.useMakePSD_) {
-    LinearAlgebra::makePSD(BASE::QmTrajectoryStock_[i][k]);
-  } else {
-    LinearAlgebra::makePSD_AMI(BASE::QmTrajectoryStock_[i][k], BASE::ddpSettings_.addedRiccatiDiagonal_);
+  if (BASE::ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH) {
+    if (BASE::ddpSettings_.lineSearch_.useMakePSD_) {
+      LinearAlgebra::makePSD(BASE::QmTrajectoryStock_[i][k]);
+    } else {
+      LinearAlgebra::makePSD_AMI(BASE::QmTrajectoryStock_[i][k], BASE::ddpSettings_.lineSearch_.addedRiccatiDiagonal_);
+    }
   }
 
   // TODO: add support for the constrained ILQR
@@ -370,10 +372,12 @@ void ILQR<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size
         input_state_matrix_t& Gm = GmTrajectoryStock_[partitionIndex][k];
 
         Hm = Rm + Bm.transpose() * BASE::SmTrajectoryStock_[partitionIndex][k + 1] * Bm;
-        if (BASE::ddpSettings_.useMakePSD_) {
-          LinearAlgebra::makePSD(Hm);
-        } else {
-          LinearAlgebra::makePSD_AMI(Hm, BASE::ddpSettings_.addedRiccatiDiagonal_);
+        if (BASE::ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH) {
+          if (BASE::ddpSettings_.lineSearch_.useMakePSD_) {
+            LinearAlgebra::makePSD(Hm);
+          } else {
+            LinearAlgebra::makePSD_AMI(Hm, BASE::ddpSettings_.lineSearch_.addedRiccatiDiagonal_);
+          }
         }
         HmInverse = Hm.ldlt().solve(input_matrix_t::Identity());
         Gm = Pm + Bm.transpose() * BASE::SmTrajectoryStock_[partitionIndex][k + 1] * Am;

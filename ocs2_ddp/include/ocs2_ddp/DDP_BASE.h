@@ -545,7 +545,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * Line search with a specific learning rate.
    *
    * @param workerIndex
-   * @param learningRate
+   * @param stepLength
    * @param lsTotalCost
    * @param lsConstraint1ISE
    * @param lsConstraint1MaxNorm
@@ -559,7 +559,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param lsStateTrajectoriesStock
    * @param lsInputTrajectoriesStock
    */
-  void lineSearchWorker(size_t workerIndex, scalar_t learningRate, scalar_t& lsTotalCost, scalar_t& lsConstraint1ISE,
+  void lineSearchWorker(size_t workerIndex, scalar_t stepLength, scalar_t& lsTotalCost, scalar_t& lsConstraint1ISE,
                         scalar_t& lsConstraint1MaxNorm, scalar_t& lsConstraint2ISE, scalar_t& lsConstraint2MaxNorm,
                         scalar_t& lsInequalityConstraintPenalty, scalar_t& lsInequalityConstraintISE,
                         linear_controller_array_t& lsControllersStock, scalar_array2_t& lsTimeTrajectoriesStock,
@@ -693,9 +693,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   size_t numPartitions_ = 0;
   scalar_array_t partitioningTimes_;
 
-  std::atomic<scalar_t> learningRateStar_;  // The optimal learning rate.
-  scalar_t maxLearningRate_ = 1.0;          // The maximum permitted learning rate
-                                            // (settings_.maxLearningRateSLQ_).
+  std::atomic<scalar_t> stepLengthStar_;  // the optimal step length.
+  scalar_t maxStepLength_ = 1.0;          // the maximum permitted step length
 
   std::vector<int> startingIndicesRiccatiWorker_;
   std::vector<int> endingIndicesRiccatiWorker_;

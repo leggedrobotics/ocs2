@@ -210,9 +210,9 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const scal
 
   convert2Matrix(allSs, Sm_, Sv_, s_);
 
-  if (useMakePSD_) {
-    LinearAlgebra::makePSD(Sm_);
-  }
+  //  if (useMakePSD_) {
+  //    LinearAlgebra::makePSD(Sm_);
+  //  }
 
   const auto indexAlpha = EigenLinearInterpolation<state_matrix_t>::timeSegment(t, timeStampPtr_);
   if (preComputeRiccatiTerms_) {

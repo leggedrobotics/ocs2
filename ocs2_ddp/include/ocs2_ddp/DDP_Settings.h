@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <boost/property_tree/ptree.hpp>
 #include <iostream>
 #include <string>
+#include <unordered_map>
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/misc/LoadData.h>
@@ -40,58 +41,139 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * This structure contains the settings for the DDP algorithm.
+ * @brief The DDP strategy enum
+ * Enum used in selecting either line search strategy or trust region strategy.
  */
-class DDP_Settings {
- public:
-  using RICCATI_INTEGRATOR_TYPE = Dimensions<0, 0>::RiccatiIntegratorType;
+enum class DDP_Strategy { LINE_SEARCH, TRUST_REGION };
+
+/**
+ * Get string name of DDP_Strategy type
+ * @param [in] strategy: DDP_Strategy type enum
+ */
+std::string toString(DDP_Strategy strategy) {
+  static const std::unordered_map<DDP_Strategy, std::string> strategyMap{{DDP_Strategy::LINE_SEARCH, "LINE_SEARCH"},
+                                                                         {DDP_Strategy::TRUST_REGION, "TRUST_REGION"}};
+  return strategyMap.at(strategy);
+}
+
+/**
+ * Get DDP_Strategy type from string name, useful for reading config file
+ * @param [in] name: DDP_Strategy name
+ */
+static DDP_Strategy fromString(std::string name) {
+  static const std::unordered_map<std::string, DDP_Strategy> strategyMap{{"LINE_SEARCH", DDP_Strategy::LINE_SEARCH},
+                                                                         {"TRUST_REGION", DDP_Strategy::TRUST_REGION}};
+  return strategyMap.at(name);
+}
+
+/**
+ * This structure contains the settings for the line search strategy.
+ */
+struct Line_Search {
+  /** Minimum step length of line-search strategy. */
+  double minStepLength_ = 0.05;
+  /** Maximum step length of line-search strategy. */
+  double maxStepLength_ = 1.0;
+  /** Line-search strategy contraction rate. */
+  double contractionRate_ = 0.5;
+  /** If true DDP makes sure that PSD matrices remain PSD which increases the numerical stability at the expense of extra computation.*/
+  bool useMakePSD_ = true;
+  /** Add diagonal term to Riccati backward pass for numerical stability. This process is only used when useMakePSD_ set to false.*/
+  double addedRiccatiDiagonal_ = 1e-5;
 
   /**
-   * Default constructor.
+   * This function loads the "Line_Search" variables from a config file. This file contains the settings for the SQL and OCS2 algorithms.
+   * Here, we use the INFO format which was created specifically for the property tree library (refer to www.goo.gl/fV3yWA).
+   * @param [in] filename: File name which contains the configuration data.
+   * @param [in] fieldName: Field name which contains the configuration data.
+   * @param [in] verbose: Flag to determine whether to print out the loaded settings or not (The default is true).
    */
-  DDP_Settings()
-      : maxNumIterations_(15),
-        minLearningRate_(0.05),
-        maxLearningRate_(1.0),
-        lineSearchContractionRate_(0.5),
-        minRelCost_(1e-3),
-        stateConstraintPenaltyCoeff_(0.0),
-        stateConstraintPenaltyBase_(1.0),
-        inequalityConstraintMu_(0.0),
-        inequalityConstraintDelta_(1e-6),
-        meritFunctionRho_(1.0),
-        constraintStepSize_(1.0),
-        displayInfo_(false),
-        displayShortSummary_(false)
+  void loadSettings(const std::string& filename, const std::string& fieldName, bool verbose = true) {
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_info(filename, pt);
+    if (verbose) {
+      std::cerr << " #### LINE_SEARCH Settings: {" << std::endl;
+    }
+    loadData::loadPtreeValue(pt, minStepLength_, fieldName + ".minStepLength", verbose);
+    loadData::loadPtreeValue(pt, maxStepLength_, fieldName + ".maxStepLength", verbose);
+    loadData::loadPtreeValue(pt, contractionRate_, fieldName + ".contractionRate", verbose);
+    loadData::loadPtreeValue(pt, useMakePSD_, fieldName + ".useMakePSD", verbose);
+    loadData::loadPtreeValue(pt, addedRiccatiDiagonal_, fieldName + ".addedRiccatiDiagonal", verbose);
+    if (verbose) {
+      std::cerr << " #### }" << std::endl;
+    }
+  }
+};
 
-        ,
-        absTolODE_(1e-9),
-        relTolODE_(1e-6),
-        maxNumStepsPerSecond_(5000),
-        minTimeStep_(1e-3),
-        minAbsConstraint1ISE_(1e-3),
-        minRelConstraint1ISE_(1e-3)
+/**
+ * This structure contains the settings for the DDP algorithm.
+ */
+struct DDP_Settings {
+  using RICCATI_INTEGRATOR_TYPE = Dimensions<0, 0>::RiccatiIntegratorType;
 
-        ,
-        simulationIsConstrained_(false),
-        noStateConstraints_(false),
-        useMakePSD_(true),
-        addedRiccatiDiagonal_(1e-5)
+  /** Maximum number of iterations of DDP. */
+  size_t maxNumIterations_ = 15;
+  /** This value determines the termination condition based on the minimum relative changes of the cost. */
+  double minRelCost_ = 1e-3;
+  /** The penalty function coefficient, \f$\alpha\f$, for state-only constraints. \f$ p(i) = \alpha a^i \f$ */
+  double stateConstraintPenaltyCoeff_ = 0.0;
+  /** The penalty function base, \f$ a \f$, for state-only constraints. \f$ p(i) = \alpha a^i \f$ */
+  double stateConstraintPenaltyBase_ = 1.0;
+  /** Scaling factor, \f$\mu\f$,  for the inequality constraints barrier */
+  double inequalityConstraintMu_ = 0.0;
+  /** Threshold parameter, \f$\delta\f$, where the relaxed log barrier function changes from log to quadratic */
+  double inequalityConstraintDelta_ = 1e-6;
+  /** merit function coefficient. */
+  double meritFunctionRho_ = 1.0;
+  /** Constant step size for type-1 constraints. */
+  double constraintStepSize_ = 1.0;
+  /** This value determines to display the log output DDP. */
+  bool displayInfo_ = false;
+  /** This value determines to display the a summary log of DDP. */
+  bool displayShortSummary_ = false;
 
-        ,
-        nThreads_(1),
-        threadPriority_(99),
-        checkNumericalStability_(true),
-        useRiccatiSolver_(true)
+  /** This value determines the absolute tolerance error for ode solvers. */
+  double absTolODE_ = 1e-9;
+  /** This value determines the relative tolerance error for ode solvers. */
+  double relTolODE_ = 1e-6;
+  /** This value determines the maximum number of integration points per a second for ode solvers. */
+  size_t maxNumStepsPerSecond_ = 1e+4;
+  /** The minimum integration time step */
+  double minTimeStep_ = 1e-3;
+  /** This value determines the maximum permitted absolute ISE (Integral of Square Error) for constrained type-1.*/
+  double minAbsConstraint1ISE_ = 1e-3;
+  /** This value determines the maximum permitted relative ISE (Integral of Square Error) for constrained type-1.*/
+  double minRelConstraint1ISE_ = 1e-3;
 
-        ,
-        useFeedbackPolicy_(false)
+  /** Skips calculation of the error correction term (Sve) if the constrained simulation is used for forward simulation.*/
+  bool simulationIsConstrained_ = false;
 
-        ,
-        debugPrintRollout_(false),
-        debugCaching_(false)
+  /** Set true, if a problem does not have state-only constraints. This significantly decreases the runtime of the algorithm. */
+  bool noStateConstraints_ = false;
 
-  {}
+  /** Check the numerical stability of the algorithms for debugging purpose. */
+  bool checkNumericalStability_ = true;
+
+  /** Number of threads used in the multi-threading scheme. */
+  size_t nThreads_ = 1;
+  /** Priority of threads used in the multi-threading scheme. */
+  int threadPriority_ = 99;
+
+  /** If true, DDP uses ode solver to solve the Riccati equations. Otherwise it uses matrix exponential to solve it. */
+  bool useRiccatiSolver_ = true;
+
+  /** Use either the optimized control policy (true) or the optimized state-input trajectory (false). */
+  bool useFeedbackPolicy_ = false;
+
+  /** Printing rollout trajectory for debugging. */
+  bool debugPrintRollout_ = false;
+  /** Debugs the cached nominal trajectories. */
+  bool debugCaching_ = false;
+
+  /** Determines the strategy for solving the subproblem. There are two choices line-search strategy and trust-region strategy. */
+  DDP_Strategy strategy_ = DDP_Strategy::LINE_SEARCH;
+  /** The line-search strategy settings. */
+  Line_Search lineSearch_;
 
   /**
    * This function loads the "DDP_Settings" variables from a config file. This file contains the settings for the SQL and OCS2 algorithms.
@@ -113,127 +195,60 @@ class DDP_Settings {
    * @param [in] fieldName: Field name which contains the configuration data.
    * @param [in] verbose: Flag to determine whether to print out the loaded settings or not (The default is true).
    */
-  void loadSettings(const std::string& filename, const std::string& fieldName, bool verbose = true);
+  void loadSettings(const std::string& filename, const std::string& fieldName, bool verbose = true) {
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_info(filename, pt);
 
- public:
-  /****************
-   *** Variables **
-   ****************/
+    if (verbose) {
+      std::cerr << std::endl << " #### DDP Settings: " << std::endl;
+      std::cerr << " #### =============================================================================" << std::endl;
+    }
 
-  /** Maximum number of iterations of DDP. */
-  size_t maxNumIterations_;
-  /** Minimum number of iterations of DDP. */
-  double minLearningRate_;
-  /** Maximum learning rate of line-search scheme in DDP. */
-  double maxLearningRate_;
-  /** Line-search scheme contraction rate. */
-  double lineSearchContractionRate_;
-  /** This value determines the termination condition based on the minimum relative changes of the cost. */
-  double minRelCost_;
-  /** The penalty function coefficient, \f$\alpha\f$, for state-only constraints. \f$ p(i) = \alpha a^i \f$ */
-  double stateConstraintPenaltyCoeff_;
-  /** The penalty function base, \f$ a \f$, for state-only constraints. \f$ p(i) = \alpha a^i \f$ */
-  double stateConstraintPenaltyBase_;
-  /** Scaling factor, \f$\mu\f$,  for the inequality constraints barrier */
-  double inequalityConstraintMu_;
-  /** Threshold parameter, \f$\delta\f$, where the relaxed log barrier function changes from log to quadratic */
-  double inequalityConstraintDelta_;
-  /** merit function coefficient. */
-  double meritFunctionRho_;
-  /** Constant step size for type-1 constraints. */
-  double constraintStepSize_;
-  /** This value determines to display the log output DDP. */
-  bool displayInfo_;
-  /** This value determines to display the a summary log of DDP. */
-  bool displayShortSummary_;
+    loadData::loadPtreeValue(pt, nThreads_, fieldName + ".nThreads", verbose);
+    loadData::loadPtreeValue(pt, threadPriority_, fieldName + ".threadPriority", verbose);
+    loadData::loadPtreeValue(pt, maxNumIterations_, fieldName + ".maxNumIterations", verbose);
+    loadData::loadPtreeValue(pt, minRelCost_, fieldName + ".minRelCost", verbose);
+    loadData::loadPtreeValue(pt, stateConstraintPenaltyCoeff_, fieldName + ".stateConstraintPenaltyCoeff", verbose);
+    loadData::loadPtreeValue(pt, stateConstraintPenaltyBase_, fieldName + ".stateConstraintPenaltyBase", verbose);
+    loadData::loadPtreeValue(pt, inequalityConstraintMu_, fieldName + ".inequalityConstraintMu", verbose);
+    loadData::loadPtreeValue(pt, inequalityConstraintDelta_, fieldName + ".inequalityConstraintDelta", verbose);
+    loadData::loadPtreeValue(pt, meritFunctionRho_, fieldName + ".meritFunctionRho", verbose);
+    loadData::loadPtreeValue(pt, constraintStepSize_, fieldName + ".constraintStepSize", verbose);
+    loadData::loadPtreeValue(pt, displayInfo_, fieldName + ".displayInfo", verbose);
+    loadData::loadPtreeValue(pt, displayShortSummary_, fieldName + ".displayShortSummary", verbose);
+    loadData::loadPtreeValue(pt, absTolODE_, fieldName + ".AbsTolODE", verbose);
+    loadData::loadPtreeValue(pt, relTolODE_, fieldName + ".RelTolODE", verbose);
+    loadData::loadPtreeValue(pt, maxNumStepsPerSecond_, fieldName + ".maxNumStepsPerSecond", verbose);
+    loadData::loadPtreeValue(pt, minTimeStep_, fieldName + ".minTimeStep", verbose);
+    loadData::loadPtreeValue(pt, simulationIsConstrained_, fieldName + ".simulationIsConstrained", verbose);
+    loadData::loadPtreeValue(pt, noStateConstraints_, fieldName + ".noStateConstraints", verbose);
+    loadData::loadPtreeValue(pt, minAbsConstraint1ISE_, fieldName + ".minAbsConstraint1ISE", verbose);
+    loadData::loadPtreeValue(pt, minRelConstraint1ISE_, fieldName + ".minRelConstraint1ISE", verbose);
+    loadData::loadPtreeValue(pt, checkNumericalStability_, fieldName + ".checkNumericalStability", verbose);
+    loadData::loadPtreeValue(pt, useRiccatiSolver_, fieldName + ".useRiccatiSolver", verbose);
+    loadData::loadPtreeValue(pt, useFeedbackPolicy_, fieldName + ".useFeedbackPolicy", verbose);
+    loadData::loadPtreeValue(pt, debugPrintRollout_, fieldName + ".debugPrintRollout", verbose);
+    loadData::loadPtreeValue(pt, debugCaching_, fieldName + ".debugCaching", verbose);
 
-  /** This value determines the absolute tolerance error for ode solvers. */
-  double absTolODE_;
-  /** This value determines the relative tolerance error for ode solvers. */
-  double relTolODE_;
-  /** This value determines the maximum number of integration points per a second for ode solvers. */
-  size_t maxNumStepsPerSecond_;
-  /** The minimum integration time step */
-  double minTimeStep_;
-  /** This value determines the maximum permitted absolute ISE (Integral of Square Error) for constrained type-1.*/
-  double minAbsConstraint1ISE_;
-  /** This value determines the maximum permitted relative ISE (Integral of Square Error) for constrained type-1.*/
-  double minRelConstraint1ISE_;
+    std::string strategyName = toString(strategy_);
+    loadData::loadPtreeValue(pt, strategyName, fieldName + ".strategy", verbose);
+    strategy_ = fromString(strategyName);
 
-  /** Skips calculation of the error correction term (Sve) if the constrained simulation is used for forward simulation.*/
-  bool simulationIsConstrained_;
+    switch (strategy_) {
+      case DDP_Strategy::LINE_SEARCH: {
+        lineSearch_.loadSettings(filename, fieldName + ".lineSearch", verbose);
+        break;
+      }
+      case DDP_Strategy::TRUST_REGION: {
+        break;
+      }
+    }
 
-  /** Set true, if a problem does not have state-only constraints. This significantly decreases the runtime of the algorithm. */
-  bool noStateConstraints_;
-
-  /** If true DDP makes sure that PSD matrices remain PSD which increases the numerical stability at the expense of extra computation.*/
-  bool useMakePSD_;
-  /** Add diagonal term to Riccati backward pass for numerical stability. This process is only used when useMakePSD_ set to false.*/
-  double addedRiccatiDiagonal_;
-
-  /** Check the numerical stability of the algorithms for debugging purpose. */
-  bool checkNumericalStability_;
-
-  /** Number of threads used in the multi-threading scheme. */
-  size_t nThreads_;
-  /** Priority of threads used in the multi-threading scheme. */
-  int threadPriority_;
-
-  /** If true, DDP uses ode solver to solve the Riccati equations. Otherwise it uses matrix exponential to solve it. */
-  bool useRiccatiSolver_;
-
-  /** Use either the optimized control policy (true) or the optimized state-input trajectory (false). */
-  bool useFeedbackPolicy_;
-
-  /** Printing rollout trajectory for debugging. */
-  bool debugPrintRollout_;
-  /** Debugs the cached nominal trajectories. */
-  bool debugCaching_;
+    if (verbose) {
+      std::cerr << " #### =============================================================================" << std::endl;
+    }
+  }
 
 };  // end of DDP_Settings class
-
-inline void DDP_Settings::loadSettings(const std::string& filename, const std::string& fieldName, bool verbose /*= true*/) {
-  boost::property_tree::ptree pt;
-  boost::property_tree::read_info(filename, pt);
-
-  if (verbose) {
-    std::cerr << std::endl << " #### DDP Settings: " << std::endl;
-    std::cerr << " #### =============================================================================" << std::endl;
-  }
-
-  loadData::loadPtreeValue(pt, nThreads_, fieldName + ".nThreads", verbose);
-  loadData::loadPtreeValue(pt, threadPriority_, fieldName + ".threadPriority", verbose);
-  loadData::loadPtreeValue(pt, maxNumIterations_, fieldName + ".maxNumIterations", verbose);
-  loadData::loadPtreeValue(pt, minLearningRate_, fieldName + ".minLearningRate", verbose);
-  loadData::loadPtreeValue(pt, maxLearningRate_, fieldName + ".maxLearningRate", verbose);
-  loadData::loadPtreeValue(pt, minRelCost_, fieldName + ".minRelCost", verbose);
-  loadData::loadPtreeValue(pt, stateConstraintPenaltyCoeff_, fieldName + ".stateConstraintPenaltyCoeff", verbose);
-  loadData::loadPtreeValue(pt, stateConstraintPenaltyBase_, fieldName + ".stateConstraintPenaltyBase", verbose);
-  loadData::loadPtreeValue(pt, inequalityConstraintMu_, fieldName + ".inequalityConstraintMu", verbose);
-  loadData::loadPtreeValue(pt, inequalityConstraintDelta_, fieldName + ".inequalityConstraintDelta", verbose);
-  loadData::loadPtreeValue(pt, meritFunctionRho_, fieldName + ".meritFunctionRho", verbose);
-  loadData::loadPtreeValue(pt, constraintStepSize_, fieldName + ".constraintStepSize", verbose);
-  loadData::loadPtreeValue(pt, displayInfo_, fieldName + ".displayInfo", verbose);
-  loadData::loadPtreeValue(pt, displayShortSummary_, fieldName + ".displayShortSummary", verbose);
-  loadData::loadPtreeValue(pt, absTolODE_, fieldName + ".AbsTolODE", verbose);
-  loadData::loadPtreeValue(pt, relTolODE_, fieldName + ".RelTolODE", verbose);
-  loadData::loadPtreeValue(pt, maxNumStepsPerSecond_, fieldName + ".maxNumStepsPerSecond", verbose);
-  loadData::loadPtreeValue(pt, minTimeStep_, fieldName + ".minTimeStep", verbose);
-  loadData::loadPtreeValue(pt, simulationIsConstrained_, fieldName + ".simulationIsConstrained", verbose);
-  loadData::loadPtreeValue(pt, noStateConstraints_, fieldName + ".noStateConstraints", verbose);
-  loadData::loadPtreeValue(pt, useMakePSD_, fieldName + ".useMakePSD", verbose);
-  loadData::loadPtreeValue(pt, addedRiccatiDiagonal_, fieldName + ".addedRiccatiDiagonal", verbose);
-  loadData::loadPtreeValue(pt, minAbsConstraint1ISE_, fieldName + ".minAbsConstraint1ISE", verbose);
-  loadData::loadPtreeValue(pt, minRelConstraint1ISE_, fieldName + ".minRelConstraint1ISE", verbose);
-  loadData::loadPtreeValue(pt, checkNumericalStability_, fieldName + ".checkNumericalStability", verbose);
-  loadData::loadPtreeValue(pt, useRiccatiSolver_, fieldName + ".useRiccatiSolver", verbose);
-  loadData::loadPtreeValue(pt, useFeedbackPolicy_, fieldName + ".useFeedbackPolicy", verbose);
-  loadData::loadPtreeValue(pt, debugPrintRollout_, fieldName + ".debugPrintRollout", verbose);
-  loadData::loadPtreeValue(pt, debugCaching_, fieldName + ".debugCaching", verbose);
-
-  if (verbose) {
-    std::cerr << " #### =============================================================================" << std::endl;
-  }
-}
 
 }  // namespace ocs2

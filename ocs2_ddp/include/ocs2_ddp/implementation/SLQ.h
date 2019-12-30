@@ -62,7 +62,7 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivativ
   for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
     using riccati_equations_alloc_t = Eigen::aligned_allocator<riccati_equations_t>;
     riccatiEquationsPtrStock_.emplace_back(std::allocate_shared<riccati_equations_t, riccati_equations_alloc_t>(
-        riccati_equations_alloc_t(), BASE::ddpSettings_.useMakePSD_, settings_.preComputeRiccatiTerms_));
+        riccati_equations_alloc_t(), BASE::ddpSettings_.lineSearch_.useMakePSD_, settings_.preComputeRiccatiTerms_));
 
     using error_equation_alloc_t = Eigen::aligned_allocator<error_equation_t>;
     errorEquationPtrStock_.emplace_back(std::allocate_shared<error_equation_t, error_equation_alloc_t>(error_equation_alloc_t()));
@@ -305,10 +305,12 @@ void SLQ<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t workerInde
   }
 
   // making sure that constrained Qm is PSD
-  if (BASE::ddpSettings_.useMakePSD_) {
-    LinearAlgebra::makePSD(QmConstrainedTrajectoryStock_[i][k]);
-  } else {
-    LinearAlgebra::makePSD_AMI(QmConstrainedTrajectoryStock_[i][k], BASE::ddpSettings_.addedRiccatiDiagonal_);
+  if (BASE::ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH) {
+    if (BASE::ddpSettings_.lineSearch_.useMakePSD_) {
+      LinearAlgebra::makePSD(QmConstrainedTrajectoryStock_[i][k]);
+    } else {
+      LinearAlgebra::makePSD_AMI(QmConstrainedTrajectoryStock_[i][k], BASE::ddpSettings_.lineSearch_.addedRiccatiDiagonal_);
+    }
   }
 }
 

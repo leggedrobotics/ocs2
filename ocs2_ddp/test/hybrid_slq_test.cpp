@@ -51,6 +51,7 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 1e5;
   slqSettings.ddpSettings_.useFeedbackPolicy_ = true;
   slqSettings.ddpSettings_.debugPrintRollout_ = false;
+  slqSettings.ddpSettings_.strategy_ = DDP_Strategy::LINE_SEARCH;
 
   Rollout_Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;

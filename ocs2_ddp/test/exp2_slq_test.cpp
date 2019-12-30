@@ -54,9 +54,10 @@ TEST(exp2_slq_test, DISABLED_exp2_slq_test) {
   slqSettings.ddpSettings_.constraintStepSize_ = 0.1;
   slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
   slqSettings.ddpSettings_.nThreads_ = 1;  // single threaded
-  slqSettings.ddpSettings_.useMakePSD_ = true;
   slqSettings.ddpSettings_.noStateConstraints_ = true;
   slqSettings.ddpSettings_.checkNumericalStability_ = true;
+  slqSettings.ddpSettings_.strategy_ = DDP_Strategy::LINE_SEARCH;
+  slqSettings.ddpSettings_.lineSearch_.minStepLength_ = 0.0001;
 
   // switching times
   std::vector<double> eventTimes{0.2, 1.2};

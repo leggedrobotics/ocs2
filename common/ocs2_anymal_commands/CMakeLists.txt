@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   ocs2_comm_interfaces
   ocs2_robotic_tools
   ocs2_switched_model_interface
+  ocs2_scp_integration
 )
 
 ## Eigen3
@@ -37,6 +38,7 @@ catkin_package(
     ocs2_comm_interfaces
     ocs2_robotic_tools
     ocs2_switched_model_interface
+    ocs2_scp_integration
 
   DEPENDS
     Boost
@@ -92,7 +94,7 @@ target_link_libraries(gait_command_node
 add_executable(trajectory_command_node
   src/AnymalTrajectoryCommand.cpp
 )
-add_dependencies(target_command_node_velocity
+add_dependencies(trajectory_command_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
@@ -108,10 +110,10 @@ install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 install(TARGETS
-            trajectory_command_node
             target_command_node
             target_command_node_velocity
             gait_command_node
+            trajectory_command_node
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY config

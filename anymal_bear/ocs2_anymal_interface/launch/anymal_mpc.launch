@@ -7,7 +7,7 @@
     </group>
 
     <node pkg="ocs2_anymal_interface" type="anymal_mpc_node" name="anymal_mpc_node"
-          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal -- "/>
+          output="screen" args="$(arg task_name)" launch-prefix=""/>
 
     <node pkg="ocs2_anymal_interface" type="dummy_mrt_node" name="dummy_mrt_node"
           output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
@@ -15,9 +15,9 @@
     <node pkg="ocs2_anymal_commands" type="trajectory_command_node" name="trajectory_command_node"
           output="screen" launch-prefix="gnome-terminal --"/>
 
-    <node pkg="ocs2_anymal_commands" type="gait_command_node" name="gait_command_node"
-          output="screen" launch-prefix="gnome-terminal --"/>
+    <!-- <node pkg="ocs2_anymal_commands" type="gait_command_node" name="gait_command_node" -->
+    <!--       output="screen" launch&#45;prefix="gnome&#45;terminal &#45;&#45;"/> -->
+    <!-- <node pkg="ocs2_anymal_commands" type="target_command_node" name="target_command_node" */ -->
+    <!--        output="screen" launch&#45;prefix="gnome&#45;terminal &#45;&#45;"/> -->
 
-    <node pkg="ocs2_anymal_commands" type="target_command_node" name="target_command_node"
-          output="screen" launch-prefix="gnome-terminal --"/>
 </launch>

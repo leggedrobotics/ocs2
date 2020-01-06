@@ -10,47 +10,55 @@
 
 #include <ros/package.h>
 
+#include <ocs2_scp_integration/implementation/ScpTrajectoryControl.hpp>
 #include <ocs2_core/misc/LoadData.h>
-#include "ocs2_anymal_commands/Trajectories_Keyboard_Quadruped.h"
 
 int main(int argc, char* argv[]) {
-  // std::string filename = ros::package::getPath("ocs2_anymal_commands") + "/config/targetCommand.info";
-  // boost::property_tree::ptree pt;
-  // boost::property_tree::read_info(filename, pt);
+  using scalar_t = double;
+  std::string trajectoriesFile = ros::package::getPath("ocs2_scp_integration") + "/config/trajectories.info";
+  std::cerr << "Loading trajectories file: " << trajectoriesFile << std::endl;
 
-  const auto targetDisplacementVelocity = ("targetDisplacementVelocity");
-  const auto targetRotationVelocity = ("targetRotationVelocity");
+  // Load the initial state
+  std::string defaultTargetFile = ros::package::getPath("ocs2_anymal_commands") + "/config/targetCommand.info";
 
-  const auto initZHeight = ("comHeight");
-  Eigen::Matrix<double, 12, 1> initJoints; // "defaultJointState"
-  ocs2::loadData::loadEigenMatrix(filename, "defaultJointState", initJoints);
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(defaultTargetFile, pt);
 
-  switched_model::TargetTrajectories_Keyboard_Quadruped<double, 24, 24>
-    targetPoseCommand( argc, argv, "anymal", initZHeight, initJoints, targetDisplacementVelocity, targetRotationVelocity);
+  const auto targetDisplacementVelocity = pt.get<scalar_t>("targetDisplacementVelocity");
+  const auto targetRotationVelocity = pt.get<scalar_t>("targetRotationVelocity");
+  const scalar_t initZHeight = pt.get<scalar_t>("comHeight");
 
-  using quadrupedKeyboard = switched_model::TargetTrajectories_Keyboard_Quadruped<double, 24, 24>;
-  auto command_mode = quadrupedKeyboard::COMMAND_MODE::VELOCITY;
+  Eigen::Matrix<scalar_t, switched_model::JOINT_COORDINATE_SIZE, 1> initJoints;
+  ocs2::loadData::loadEigenMatrix(defaultTargetFile, "defaultJointState", initJoints);
 
-
-  quadrupedKeyboard::scalar_array_t command_limits =
-      quadrupedKeyboard::scalar_array_t{2.0, 2.0, 0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0, 40.0, 40.0, 360.0};
-
-  quadrupedKeyboard targetPoseCommand(argc, argv, "anymal", initZHeight, initJoints, targetDisplacementVelocity, targetRotationVelocity,
-                                      command_limits, command_mode);
+  // Set the initial state with the target trajectories keyboard interface
+  /* TargetPoseCommand */
+  //TODO(oharley): may have to inline, could be useful for resetting after a trajectory
+  // switched_model::TargetTrajectories_Keyboard_Quadruped<double, 24, 24>
+  // targetPoseCommand( argc, argv, "anymal", initZHeight, initJoints, targetDisplacementVelocity, targetRotationVelocity);
+  //
+  // const std::string commadMsg = "Enter XYZ displacement and RollPitchYaw for the robot, separated by spaces";
+  // targetPoseCommand.getKeyboardCommand(commadMsg);
 
 /* ModeSequence Command */
-  switched_model::ModeSequence_Keyboard_Quadruped<double> modeSequenceCommand(gaitFile, "anymal", true);
-  modeSequenceCommand.launchNodes(argc, argv);
-  modeSequenceCommand.getKeyboardCommand();
+  // switched_model::ModeSequence_Keyboard_Quadruped<double> modeSequenceCommand(gaitFile, "anymal", true);
+  // modeSequenceCommand.launchNodes(argc, argv);
+  // modeSequenceCommand.getKeyboardCommand();
+
+/* Trajectory Command */
+  switched_model::ScpTrajectoryControl<scalar_t>
+    trajectoryCommand( argc, argv, "anymal", trajectoriesFile, initZHeight, initJoints, false);
+
 
   /************************************************************************************************
   *                                         launch node                                          *
   ************************************************************************************************/
 
-  trajectoryPoseCommand.launchNodes();
+  //ModeSequencCommand seems to take argc, and argv, the rest do not
+  trajectoryCommand.launchNodes(argc, argv);
 
-  const std::string commandMsg = "Enter trajectory number:";
-  trajectoryPoseCommand.getKeyboardCommand(commandMsg);
+  const std::string commandMsg = "Enter trajectory number, for the list of available trajectories enter 'list'";
+  trajectoryCommand.getKeyboardCommand(commandMsg);
 
   // Successful exit
   return 0;

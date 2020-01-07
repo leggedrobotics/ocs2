@@ -98,7 +98,6 @@ class MPC_ROS_Interface {
   using input_state_matrix_t = typename mpc_t::input_state_matrix_t;
   using input_state_matrix_array_t = typename mpc_t::input_state_matrix_array_t;
 
-  using cost_desired_trajectories_t = typename mpc_t::cost_desired_trajectories_t;
   using mode_sequence_template_t = typename mpc_t::mode_sequence_template_t;
 
   using system_observation_t = SystemObservation<STATE_DIM, INPUT_DIM>;
@@ -125,7 +124,7 @@ class MPC_ROS_Interface {
    * @param [in] mpc: The underlying MPC class to be used.
    * @param [in] robotName: The robot's name.
    */
-  explicit MPC_ROS_Interface(mpc_t& mpc, const std::string& robotName = "robot");
+  explicit MPC_ROS_Interface(mpc_t& mpc, std::string robotName = "robot");
 
   /**
    * Destructor.
@@ -142,7 +141,7 @@ class MPC_ROS_Interface {
    *
    * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
    */
-  virtual void reset(const cost_desired_trajectories_t& initCostDesiredTrajectories);
+  virtual void reset(const CostDesiredTrajectories& initCostDesiredTrajectories);
 
   /**
    * Set all modules that need to be synchronized with the mpc. Must be called before launchNodes.
@@ -313,7 +312,7 @@ class MPC_ROS_Interface {
 
   std::mutex costDesiredTrajectoriesBufferMutex_;
   std::atomic_bool costDesiredTrajectoriesBufferUpdated_;
-  cost_desired_trajectories_t costDesiredTrajectoriesBuffer_;
+  CostDesiredTrajectories costDesiredTrajectoriesBuffer_;
 };
 
 }  // namespace ocs2

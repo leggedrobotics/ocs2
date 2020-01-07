@@ -33,9 +33,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::MPC_ROS_Interface(mpc_t& mpc, const std::string& robotName /*= "robot"*/)
+MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::MPC_ROS_Interface(mpc_t& mpc, std::string robotName /*= "robot"*/)
     : mpc_(mpc),
-      robotName_(robotName),
+      robotName_(std::move(robotName)),
       currentPrimalSolution_(new primal_solution_t()),
       primalSolutionBuffer_(new primal_solution_t()),
       currentCommand_(new command_data_t()),
@@ -82,7 +82,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::sigintHandler(int sig) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::reset(const cost_desired_trajectories_t& initCostDesiredTrajectories) {
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::reset(const CostDesiredTrajectories& initCostDesiredTrajectories) {
   std::lock_guard<std::mutex> resetLock(resetMutex_);
 
   mpc_.reset();
@@ -105,7 +105,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::reset(const cost_desired_trajector
 template <size_t STATE_DIM, size_t INPUT_DIM>
 bool MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_msgs::reset::Response& res) {
   if (static_cast<bool>(req.reset)) {
-    cost_desired_trajectories_t initCostDesiredTrajectories;
+    CostDesiredTrajectories initCostDesiredTrajectories;
     RosMsgConversions<STATE_DIM, INPUT_DIM>::readTargetTrajectoriesMsg(req.targetTrajectories, initCostDesiredTrajectories);
     reset(initCostDesiredTrajectories);
 

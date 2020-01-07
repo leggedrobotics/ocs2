@@ -73,7 +73,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::sigintHandler(int sig) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const cost_desired_trajectories_t& initCostDesiredTrajectories) {
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) {
   this->policyReceivedEver_ = false;
 
   ocs2_msgs::reset resetSrv;

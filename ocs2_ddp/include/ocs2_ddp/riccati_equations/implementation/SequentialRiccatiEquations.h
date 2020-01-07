@@ -36,16 +36,15 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int STATE_DIM, int INPUT_DIM>
-SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::SequentialRiccatiEquationsNormalized(bool useMakePSD,
-                                                                                                 bool preComputeRiccatiTerms)
+SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::SequentialRiccatiEquations(bool useMakePSD, bool preComputeRiccatiTerms)
     : useMakePSD_(useMakePSD), preComputeRiccatiTerms_(preComputeRiccatiTerms) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int STATE_DIM, int INPUT_DIM>
-void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::convert2Vector(const state_matrix_t& Sm, const state_vector_t& Sv,
-                                                                                const eigen_scalar_t& s, s_vector_t& allSs) {
+void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::convert2Vector(const state_matrix_t& Sm, const state_vector_t& Sv,
+                                                                      const eigen_scalar_t& s, s_vector_t& allSs) {
   /* Sm is symmetric. Here, we only extract the upper triangular part and
    * transcribe it in column-wise fashion into allSs*/
   size_t count = 0;  // count the total number of scalar entries covered
@@ -72,8 +71,8 @@ void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::convert2Vector(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int STATE_DIM, int INPUT_DIM>
-void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::convert2Matrix(const s_vector_t& allSs, state_matrix_t& Sm,
-                                                                                state_vector_t& Sv, eigen_scalar_t& s) {
+void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::convert2Matrix(const s_vector_t& allSs, state_matrix_t& Sm, state_vector_t& Sv,
+                                                                      eigen_scalar_t& s) {
   /* Sm is symmetric. Here, we map the first entries from allSs onto the
    * upper triangular part of the symmetric matrix*/
   size_t count = 0;
@@ -97,7 +96,7 @@ void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::convert2Matrix(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int STATE_DIM, int INPUT_DIM>
-void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::setData(
+void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(
     const scalar_array_t* timeStampPtr, const state_matrix_array_t* AmPtr, const state_input_matrix_array_t* BmPtr,
     const eigen_scalar_array_t* qPtr, const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr,
     const input_vector_array_t* RvPtr, const dynamic_matrix_array_t* RinvCholPtr, const input_state_matrix_array_t* PmPtr,
@@ -126,6 +125,16 @@ void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::setData(
     eventTimes_.push_back((*timeStampPtr)[postEventIndex - 1]);
   }
 
+  // saving array pointers
+  timeStampPtr_ = timeStampPtr;
+  AmPtr_ = AmPtr;
+  BmPtr_ = BmPtr;
+  qPtr_ = qPtr;
+  QvPtr_ = QvPtr;
+  QmPtr_ = QmPtr;
+  RvPtr_ = RvPtr;
+  RinvCholPtr_ = RinvCholPtr;
+  PmPtr_ = PmPtr;
   qFinalPtr_ = qFinalPtr;
   QvFinalPtr_ = QvFinalPtr;
   QmFinalPtr_ = QmFinalPtr;
@@ -161,23 +170,6 @@ void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::setData(
       Qm_minus_P_Rinv_P_array_[i].noalias() -= PmT_RinvChol * PmT_RinvChol.transpose();
       Qv_minus_P_Rinv_Rv_array_[i].noalias() -= PmT_RinvChol * RinvCholT_Rv_array_[i];
     }
-
-    // Set the data to the interpolator (array pointer would be the same, but time pointer might change)
-    Qm_minus_P_Rinv_P_func_.setData(timeStampPtr, &Qm_minus_P_Rinv_P_array_);
-    Qv_minus_P_Rinv_Rv_func_.setData(timeStampPtr, &Qv_minus_P_Rinv_Rv_array_);
-    q_minus_half_Rv_Rinv_Rv_func_.setData(timeStampPtr, &q_minus_half_Rv_Rinv_Rv_array_);
-    AmT_minus_P_Rinv_B_func_.setData(timeStampPtr, &AmT_minus_P_Rinv_B_array_);
-    B_RinvChol_func_.setData(timeStampPtr, &B_RinvChol_array_);
-    RinvCholT_Rv_func_.setData(timeStampPtr, &RinvCholT_Rv_array_);
-  } else {  // if not preComputeRiccatiTerms_
-    QmFunc_.setData(timeStampPtr, QmPtr);
-    QvFunc_.setData(timeStampPtr, QvPtr);
-    qFunc_.setData(timeStampPtr, qPtr);
-    AmFunc_.setData(timeStampPtr, AmPtr);
-    BmFunc_.setData(timeStampPtr, BmPtr);
-    RinvChol_Func_.setData(timeStampPtr, RinvCholPtr);
-    PmFunc_.setData(timeStampPtr, PmPtr);
-    RvFunc_.setData(timeStampPtr, RvPtr);
   }
 }
 
@@ -185,8 +177,7 @@ void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::setData(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int STATE_DIM, int INPUT_DIM>
-void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::computeJumpMap(const scalar_t& z, const s_vector_t& state,
-                                                                                s_vector_t& mappedState) {
+void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::computeJumpMap(const scalar_t& z, const s_vector_t& state, s_vector_t& mappedState) {
   scalar_t time = -z;
 
   // epsilon is set to include times past event times which have been artificially increased in the rollout
@@ -202,8 +193,7 @@ void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::computeJumpMap(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int STATE_DIM, int INPUT_DIM>
-void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::computeFlowMap(const scalar_t& z, const s_vector_t& allSs,
-                                                                                s_vector_t& derivatives) {
+void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const scalar_t& z, const s_vector_t& allSs, s_vector_t& derivatives) {
   /*note: according to some discussions on stackoverflow, it does not buy
    * computation time if multiplications with symmetric matrices are executed
    * using selfadjointView(). Doing the full multiplication seems to be faster
@@ -224,13 +214,14 @@ void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::computeFlowMap(
     LinearAlgebra::makePSD(Sm_);
   }
 
+  const auto indexAlpha = EigenLinearInterpolation<state_matrix_t>::timeSegment(t, timeStampPtr_);
   if (preComputeRiccatiTerms_) {
-    const auto indexAlpha = Qm_minus_P_Rinv_P_func_.interpolate(t, Qm_);
-    Qv_minus_P_Rinv_Rv_func_.interpolate(indexAlpha, Qv_);
-    q_minus_half_Rv_Rinv_Rv_func_.interpolate(indexAlpha, q_);
-    AmT_minus_P_Rinv_B_func_.interpolate(indexAlpha, AmT_minus_P_Rinv_Bm_);
-    RinvCholT_Rv_func_.interpolate(indexAlpha, RinvCholT_Rv_);
-    B_RinvChol_func_.interpolate(indexAlpha, B_RinvChol_);
+    EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, Qm_, &Qm_minus_P_Rinv_P_array_);
+    EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Qv_, &Qv_minus_P_Rinv_Rv_array_);
+    EigenLinearInterpolation<eigen_scalar_t>::interpolate(indexAlpha, q_, &q_minus_half_Rv_Rinv_Rv_array_);
+    EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, AmT_minus_P_Rinv_Bm_, &AmT_minus_P_Rinv_B_array_);
+    EigenLinearInterpolation<dynamic_vector_t>::interpolate(indexAlpha, RinvCholT_Rv_, &RinvCholT_Rv_array_);
+    EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, B_RinvChol_, &B_RinvChol_array_);
 
     // dSmdt,  Qm_ used instead of temporary
     AmT_Sm_.noalias() = AmT_minus_P_Rinv_Bm_ * Sm_;
@@ -246,14 +237,14 @@ void SequentialRiccatiEquationsNormalized<STATE_DIM, INPUT_DIM>::computeFlowMap(
     // dsdt,   q_ used instead of temporary
     q_.noalias() -= 0.5 * RinvCholT_Rv_.transpose() * RinvCholT_Rv_;
   } else {
-    const auto indexAlpha = QmFunc_.interpolate(t, Qm_);
-    QvFunc_.interpolate(indexAlpha, Qv_);
-    qFunc_.interpolate(indexAlpha, q_);
-    AmFunc_.interpolate(indexAlpha, Am_);
-    BmFunc_.interpolate(indexAlpha, Bm_);
-    RinvChol_Func_.interpolate(indexAlpha, RinvChol_);
-    PmFunc_.interpolate(indexAlpha, Pm_);
-    RvFunc_.interpolate(indexAlpha, Rv_);
+    EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, Qm_, QmPtr_);
+    EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Qv_, QvPtr_);
+    EigenLinearInterpolation<eigen_scalar_t>::interpolate(indexAlpha, q_, qPtr_);
+    EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, Am_, AmPtr_);
+    EigenLinearInterpolation<state_input_matrix_t>::interpolate(indexAlpha, Bm_, BmPtr_);
+    EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, RinvChol_, RinvCholPtr_);
+    EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, Pm_, PmPtr_);
+    EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, Rv_, RvPtr_);
 
     Pm_.noalias() += Bm_.transpose() * Sm_;  // ! Pm is changed to avoid an extra temporary
     SmT_B_RinvChol_.noalias() = RinvChol_.transpose() * Pm_;

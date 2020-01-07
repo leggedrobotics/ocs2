@@ -63,9 +63,6 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::reset() {
   policyUpdated_ = false;
   policyUpdatedBuffer_ = false;
 
-  mpcLinInterpolateState_.setZero();
-  mpcLinInterpolateInput_.setZero();
-
   partitioningTimesUpdate(0.0, partitioningTimes_);
   partitioningTimesUpdate(0.0, partitioningTimesBuffer_);
 }
@@ -91,7 +88,8 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::evaluatePolicy(scalar_t currentTime, const 
   }
 
   mpcInput = currentPrimalSolution_->controllerPtr_->computeInput(currentTime, currentState);
-  mpcLinInterpolateState_.interpolate(currentTime, mpcState);
+  EigenLinearInterpolation<state_vector_t>::interpolate(currentTime, mpcState, &currentPrimalSolution_->timeTrajectory_,
+                                                        &currentPrimalSolution_->stateTrajectory_);
 
   size_t index = findActiveSubsystemFnc_(currentTime);
   subsystem = logicMachinePtr_->getLogicRulesPtr()->subsystemsSequence().at(index);
@@ -152,8 +150,6 @@ bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicy() {
   policyUpdated_ = policyUpdatedBuffer_;
   currentCommand_.swap(commandBuffer_);
   currentPrimalSolution_.swap(primalSolutionBuffer_);
-  mpcLinInterpolateState_.setData(&currentPrimalSolution_->timeTrajectory_, &currentPrimalSolution_->stateTrajectory_);
-  mpcLinInterpolateInput_.setData(&currentPrimalSolution_->timeTrajectory_, &currentPrimalSolution_->inputTrajectory_);
   partitioningTimes_.swap(partitioningTimesBuffer_);
 
   // update logic rules

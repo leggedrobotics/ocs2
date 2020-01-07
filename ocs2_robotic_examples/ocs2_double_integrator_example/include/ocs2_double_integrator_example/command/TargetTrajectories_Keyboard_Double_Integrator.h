@@ -52,7 +52,6 @@ class TargetTrajectories_Keyboard_Double_Integrator final : public ocs2::TargetT
   using scalar_array_t = typename BASE::scalar_array_t;
   using dynamic_vector_t = typename BASE::dynamic_vector_t;
   using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
-  using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
 
   /**
    * Constructor.

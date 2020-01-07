@@ -114,7 +114,6 @@ class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::linear_controller_t;
 
   using typename BASE::constraint_base_t;
-  using typename BASE::cost_desired_trajectories_t;
   using typename BASE::cost_function_base_t;
   using typename BASE::derivatives_base_t;
   using typename BASE::event_handler_t;

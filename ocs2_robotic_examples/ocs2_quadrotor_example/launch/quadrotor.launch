@@ -7,7 +7,7 @@
     </group>
 
     <node pkg="ocs2_quadrotor_example" type="quadrotor_mpc" name="quadrotor_mpc"
-          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
+          output="screen" args="$(arg task_name)" launch-prefix=""/>
 
     <node pkg="ocs2_quadrotor_example" type="quadrotor_dummy_test" name="quadrotor_dummy_test"
           output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>

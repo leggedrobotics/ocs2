@@ -60,7 +60,7 @@ if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target " ${PROJECT_NAME}_lintTarget)
   add_clang_tooling(
     TARGETS ${PROJECT_NAME}_lintTarget
-    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
 )
@@ -87,3 +87,11 @@ install(DIRECTORY test/include/${PROJECT_NAME}/
 ## $ catkin run_tests --no-deps --this
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_oc
+
+catkin_add_gtest(test_StateRollOut
+   test/test_StateRollOut.cpp
+)
+target_link_libraries(test_StateRollOut
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+)

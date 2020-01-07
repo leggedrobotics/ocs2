@@ -37,12 +37,12 @@ class Task : TaskBase {
  private:
   friend class ThreadPool;
 
-  Task(Functor taskFunction) : packaged_task_(taskFunction) {}
-  ~Task() override{};
-  void operator()(int id) override { packaged_task_(id); }
+  explicit Task(Functor taskFunction) : packagedTask_(taskFunction) {}
+  ~Task() override = default;
+  void operator()(int id) override { packagedTask_(id); }
 
   using ReturnType = typename std::result_of<Functor(int)>::type;
-  std::packaged_task<ReturnType(int)> packaged_task_;
+  std::packaged_task<ReturnType(int)> packagedTask_;
 };
 
 /**
@@ -58,7 +58,7 @@ class ThreadPool {
    *
    * @param [in] nThreads: Number of threads to launch in the pool
    */
-  ThreadPool(size_t nThreads = 1, int priority = 0);
+  explicit ThreadPool(size_t nThreads = 1, int priority = 0);
 
   /**
    * Destructor
@@ -186,12 +186,12 @@ std::future<typename std::result_of<Functor(int)>::type> ThreadPool::run(Functor
   int taskId;
   std::future<T> future;
 
-  Task<Functor>* task = new Task<Functor>(taskFunction);
-  future = task->packaged_task_.get_future();
+  auto task = new Task<Functor>(taskFunction);
+  future = task->packagedTask_.get_future();
 
   std::shared_ptr<TaskBase> task_shared(static_cast<TaskBase*>(task));
 
-  if (workerThreads_.size() > 0) {
+  if (!workerThreads_.empty()) {
     taskId = runTask(std::move(task_shared));
   } else {
     taskId = nextTaskId_++;
@@ -220,12 +220,12 @@ std::future<typename std::result_of<Functor(int)>::type> ThreadPool::runAfter(in
   int taskId;
   std::future<T> future;
 
-  Task<Functor>* task = new Task<Functor>(taskFunction);
-  future = task->packaged_task_.get_future();
+  auto task = new Task<Functor>(taskFunction);
+  future = task->packagedTask_.get_future();
 
   std::shared_ptr<TaskBase> task_shared(static_cast<TaskBase*>(task));
 
-  if (workerThreads_.size() > 0) {
+  if (!workerThreads_.empty()) {
     taskId = runTaskWithDependency(std::move(task_shared), runAfterId);
   } else {
     taskId = nextTaskId_++;

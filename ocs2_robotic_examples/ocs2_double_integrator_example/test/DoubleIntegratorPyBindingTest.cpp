@@ -10,12 +10,11 @@ TEST(DoubleIntegratorTest, pyBindings) {
   using state_vector_array_t = bindings_t::state_vector_array_t;
   using input_vector_array_t = bindings_t::input_vector_array_t;
   using input_state_matrix_array_t = bindings_t::input_state_matrix_array_t;
-  using cost_desired_trajectories_t = bindings_t::cost_desired_trajectories_t;
   using input_state_matrix_t = bindings_t::input_state_matrix_t;
 
   bindings_t bindings("mpc", false);
 
-  auto costDesiredTraj = cost_desired_trajectories_t();
+  ocs2::CostDesiredTrajectories costDesiredTraj;
   bindings.setTargetTrajectories(costDesiredTraj);
 
   auto state = state_vector_t::Zero();

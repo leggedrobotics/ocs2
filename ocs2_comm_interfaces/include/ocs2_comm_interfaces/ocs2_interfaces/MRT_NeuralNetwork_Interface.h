@@ -41,7 +41,7 @@ class MRT_NeuralNetwork_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> 
 
   virtual ~MRT_NeuralNetwork_Interface() = default;
 
-  void resetMpcNode(const CostDesiredTrajectories<scalar_t>& initCostDesiredTrajectories) override {}
+  void resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) override {}
 
   void setCurrentObservation(const SystemObservation<STATE_DIM, INPUT_DIM>& observation) override {}
 

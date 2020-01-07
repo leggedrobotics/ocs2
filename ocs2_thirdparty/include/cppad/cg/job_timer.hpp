@@ -169,7 +169,7 @@ public:
  */
 class JobListener {
 public:
-    typedef std::chrono::steady_clock::duration duration;
+    using duration = std::chrono::steady_clock::duration;
 
     virtual void jobStarted(const std::vector<Job>& job) = 0;
 
@@ -183,7 +183,7 @@ public:
 class JobTimer : public JobTypeHolder<> {
 protected:
     /**
-     * Whether or not to print progress information to the standard 
+     * Whether or not to print progress information to the standard
      * output
      */
     bool _verbose;
@@ -193,7 +193,7 @@ private:
      */
     std::vector<Job> _jobs;
     /**
-     * 
+     *
      */
     size_t _maxLineWidth;
     /**
@@ -201,19 +201,19 @@ private:
      */
     size_t _indent;
     /**
-     * 
+     *
      */
     std::ostringstream _os;
     /**
-     * 
+     *
      */
     std::string _action;
     /**
-     * 
+     *
      */
     std::string _actionEnd;
     /**
-     * 
+     *
      */
     std::set<JobListener*> _listeners;
 public:
@@ -242,7 +242,7 @@ public:
 
     /**
      * Provides the number of currently running jobs
-     * 
+     *
      * @return the number of running jobs
      */
     inline size_t getJobCount() const {

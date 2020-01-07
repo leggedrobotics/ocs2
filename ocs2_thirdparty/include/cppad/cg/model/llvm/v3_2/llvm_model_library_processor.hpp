@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2013 Ciengis
+ *    Copyright (C) 2019 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -28,6 +29,7 @@ namespace cg {
 template<class Base>
 class LlvmModelLibraryProcessor : public LlvmBaseModelLibraryProcessor<Base> {
 protected:
+    const std::string _version;
     std::vector<std::string> _includePaths;
     std::unique_ptr<llvm::Linker> _linker;
     std::unique_ptr<llvm::LLVMContext> _context;
@@ -38,10 +40,17 @@ public:
      * @param modelLibraryHelper
      */
     LlvmModelLibraryProcessor(ModelLibraryCSourceGen<Base>& modelLibraryHelper) :
-            LlvmBaseModelLibraryProcessor<Base>(modelLibraryHelper) {
+            LlvmBaseModelLibraryProcessor<Base>(modelLibraryHelper),
+            _version("3.2") {
     }
 
-    virtual ~LlvmModelLibraryProcessor() {
+    virtual ~LlvmModelLibraryProcessor() = default;
+
+    /**
+     * @return The version of LLVM (and Clang).
+     */
+    inline const std::string& getVersion() const {
+        return _version;
     }
 
     inline void setIncludePaths(const std::vector<std::string>& includePaths) {
@@ -52,7 +61,7 @@ public:
         return _includePaths;
     }
 
-    LlvmModelLibrary<Base>* create() {
+    std::unique_ptr<LlvmModelLibrary<Base>> create() {
         // backup output format so that it can be restored
         OStreamConfigRestore coutb(std::cout);
 
@@ -79,14 +88,14 @@ public:
 
         llvm::InitializeNativeTarget();
 
-        LlvmModelLibrary3_2<Base>* lib = new LlvmModelLibrary3_2<Base>(_linker->releaseModule(), _context.release());
+        std::unique_ptr<LlvmModelLibrary<Base>> lib (new LlvmModelLibrary3_2<Base>(_linker->releaseModule(), _context.release()));
 
         this->modelLibraryHelper_->finishedJob();
 
         return lib;
     }
 
-    static inline LlvmModelLibrary<Base>* create(ModelLibraryCSourceGen<Base>& modelLibraryHelper) {
+    static inline std::unique_ptr<LlvmModelLibrary<Base>> create(ModelLibraryCSourceGen<Base>& modelLibraryHelper) {
         LlvmModelLibraryProcessor<Base> p(modelLibraryHelper);
         return p.create();
     }

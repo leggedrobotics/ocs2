@@ -21,20 +21,20 @@ namespace cg {
 /**
  * Helper class to analyze the operation graph and generate source code
  * for several languages
- * 
+ *
  * @author Joao Leal
  */
 template<class Base>
 class CodeHandler {
     friend class CodeHandlerVectorSync<Base>;
 public:
-    typedef OperationPathNode<Base> PathNode;
-    typedef std::vector<PathNode> SourceCodePath;
-    typedef std::vector<ScopePathElement<Base> > ScopePath;
-    typedef OperationNode<Base> Node;
-    typedef Argument<Base> Arg;
-    typedef CG<Base> CGB;
-    typedef unsigned short ScopeIDType;
+    using PathNode = OperationPathNode<Base>;
+    using SourceCodePath = std::vector<PathNode>;
+    using ScopePath = std::vector<ScopePathElement<Base> >;
+    using Node = OperationNode<Base>;
+    using Arg = Argument<Base>;
+    using CGB = CG<Base>;
+    using ScopeIDType = unsigned short;
 protected:
     struct LoopData; // forward declaration
 
@@ -52,7 +52,7 @@ protected:
     // the independent variables
     std::vector<Node *> _independentVariables;
     // the current dependent variables
-    ArrayWrapper<CGB>* _dependents;
+    ArrayView<CGB>* _dependents;
     /**
      * nodes managed by this code handler which include all
      * all OperationNodes created by CG<Base> objects
@@ -76,7 +76,7 @@ protected:
      */
     CodeHandlerVector<Base, size_t> _evaluationOrder;
     /**
-     * the last index in the evaluation order for which an operation node 
+     * the last index in the evaluation order for which an operation node
      * is taken as an argument of another operation node.
      * (zero means that the node was never used)
      */
@@ -86,12 +86,18 @@ protected:
      */
     CodeHandlerVector<Base, size_t> _totalUseCount;
     /**
+     * The number of operations used in the expression that directly assign the value
+     * to a (temporary/dependent) variable.
+     * Operations used to compute other temporary variables are not considered.
+     */
+    CodeHandlerVector<Base, size_t> _operationCount;
+    /**
      * Provides the variable ID that was altered/assigned to operation nodes.
      * Zero means that no variable is assigned.
      */
     CodeHandlerVector<Base, size_t> _varId;
     /**
-     * the order for the variable creation in the source code 
+     * the order for the variable creation in the source code
      */
     std::vector<Node*> _variableOrder;
     /**
@@ -99,7 +105,7 @@ protected:
      */
     std::vector<std::set<Node*>> _variableDependencies;
     /**
-     * the order for the variable creation in the source code 
+     * the order for the variable creation in the source code
      * (each level represents a different variable scope)
      */
     std::vector<std::vector<Node*> > _scopedVariableOrder;
@@ -112,19 +118,15 @@ protected:
      */
     std::map<size_t, CGAbstractAtomicFun<Base>*> _atomicFunctions;
     /**
-     * already used atomic function names (may contain names which were 
+     * already used atomic function names (may contain names which were
      * used by previous calls to this/other CondeHandlers)
      */
     std::map<std::string, size_t> _atomicFunctionName2Index;
     /**
-     * the order of the atomic functions (may contain names which were 
+     * the order of the atomic functions (may contain names which were
      * used by previous calls to this/other CondeHandlers)
      */
     std::vector<std::string>* _atomicFunctionsOrder;
-    /**
-     * 
-     */
-    std::map<size_t, size_t> _atomicFunctionId2Index;
     /**
      * the maximum forward mode order each atomic function is called
      * (-1 means forward mode not used)
@@ -149,14 +151,10 @@ protected:
     std::list<std::pair<Node*, Node* > > _alteredNodes;
     // the language used for source code generation
     Language<Base>* _lang;
-    /**
-     * information sent to the language
-     */
-    std::unique_ptr<LanguageGenerationData<Base> > _info;
     // the lowest ID used for temporary variables
     size_t _minTemporaryVarID;
     /**
-     * whether or not the dependent variables should be zeroed before 
+     * whether or not the dependent variables should be zeroed before
      * executing the operation graph
      */
     bool _zeroDependents;
@@ -199,6 +197,12 @@ public:
      */
     inline bool isReuseVariableIDs() const;
 
+    /**
+     * Marks the provided variables as being independent variables.
+     *
+     * @param variables the vector of variables that will become independent
+     *                  variables.
+     */
     template<class VectorCG>
     inline void makeVariables(VectorCG& variables) {
         for (size_t i = 0; i < variables.size(); i++) {
@@ -206,10 +210,28 @@ public:
         }
     }
 
+    /**
+     * Marks the provided variables as being independent variables.
+     *
+     * @param variables the vector of variables that will become independent
+     *                  variables.
+     */
     inline void makeVariables(std::vector<AD<CGB> >& variables);
 
+    /**
+     * Marks the provided variable as being an independent variable.
+     *
+     * @param variables the variable that will become an independent
+     *                  variables.
+     */
     inline void makeVariable(AD<CGB>& variable);
 
+    /**
+     * Marks the provided variable as being an independent variable.
+     *
+     * @param variables the variable that will become an independent
+     *                  variables.
+     */
     inline void makeVariable(CGB& variable);
 
     /**
@@ -243,7 +265,7 @@ public:
     /**
      * Determines whether or not the dependent variables will be set to zero
      * before executing the operation graph
-     * 
+     *
      * @return true if the dependents will be zeroed
      */
     inline bool isZeroDependents() const;
@@ -251,7 +273,7 @@ public:
     /**
      * Defines whether or not the dependent variables should be set to zero
      * before executing the operation graph
-     * 
+     *
      * @param true if the dependents should be zeroed
      */
     inline void setZeroDependents(bool zeroDependents);
@@ -266,24 +288,24 @@ public:
 
     /**
      * Provides the name used by an atomic function with a given ID.
-     * 
+     *
      * @param id the atomic function ID.
-     * @return a pointer to the atomic function name if it was registered
-     *         or nullptr otherwise
+     * @return the atomic function name if it was registered 
+     *         or an empty string otherwise.
      */
-    inline const std::string* getAtomicFunctionName(size_t id) const;
+    inline std::string getAtomicFunctionName(size_t id) const;
 
     /**
      * Provides a map with all the currently registered atomic functions.
-     * 
-     * @return a map with the atomic function ID as key and the atomic 
+     *
+     * @return a map with the atomic function ID as key and the atomic
      *         function as value
      */
     inline const std::map<size_t, CGAbstractAtomicFun<Base>* >& getAtomicFunctions() const;
 
     /**
      * Provides the maximum forward mode order used by all atomic functions
-     * in the last call to ::generateCode 
+     * in the last call to ::generateCode
      * (-1 means forward mode not used).
      */
     const std::vector<int>& getExternalFuncMaxForwardOrder() const;
@@ -297,7 +319,7 @@ public:
 
     /**
      * Provides the name used by a loop atomic function with a given ID.
-     * 
+     *
      * @param id the atomic function ID.
      * @return a pointer to the atomic loop function name if it was
      *         registered or nullptr otherwise
@@ -311,7 +333,7 @@ public:
      *************************************************************************/
     /**
      * Finds occurrences of a source code fragment in an operation graph.
-     * 
+     *
      * @param root the operation graph where to search
      * @param target the source code fragment to find in root
      * @param max the maximum number of occurrences of code to find in root
@@ -327,7 +349,7 @@ public:
     inline BidirGraph<Base> findPathGraph(Node& root,
                                           Node& target,
                                           size_t& bifurcations,
-                                          size_t maxBifurcations = std::numeric_limits<size_t>::max());
+                                          size_t maxBifurcations = (std::numeric_limits<size_t>::max)());
 
     /**************************************************************************
      *                       Source code generation
@@ -335,12 +357,12 @@ public:
 
     /**
      * Creates the source code from the operations registered so far.
-     * 
+     *
      * @param out The output stream where the source code is to be printed.
      * @param lang The targeted language.
      * @param dependent The dependent variables for which the source code
-     *                  should be generated. By defining this vector the 
-     *                  number of operations in the source code can be 
+     *                  should be generated. By defining this vector the
+     *                  number of operations in the source code can be
      *                  reduced and thus providing a more optimized code.
      * @param nameGen Provides the rules for variable name creation.
      */
@@ -358,18 +380,18 @@ public:
 
     virtual void generateCode(std::ostream& out,
                               Language<Base>& lang,
-                              ArrayWrapper<CGB>& dependent,
+                              ArrayView<CGB>& dependent,
                               VariableNameGenerator<Base>& nameGen,
                               const std::string& jobName = "source");
 
     /**
      * Creates the source code from the operations registered so far.
-     * 
+     *
      * @param out The output stream where the source code is to be printed.
      * @param lang The targeted language.
      * @param dependent The dependent variables for which the source code
-     *                  should be generated. By defining this vector the 
-     *                  number of operations in the source code can be 
+     *                  should be generated. By defining this vector the
+     *                  number of operations in the source code can be
      *                  reduced and thus providing a more optimized code.
      * @param nameGen Provides the rules for variable name creation.
      * @param atomicFunctions The order of the atomic functions.
@@ -390,7 +412,7 @@ public:
 
     virtual void generateCode(std::ostream& out,
                               Language<Base>& lang,
-                              ArrayWrapper<CGB>& dependent,
+                              ArrayView<CGB>& dependent,
                               VariableNameGenerator<Base>& nameGen,
                               std::vector<std::string>& atomicFunctions,
                               const std::string& jobName = "source");
@@ -544,13 +566,13 @@ public:
      * Eliminates an independent variable by substitution using the provided
      * dependent variable which is assumed to be a residual of an equation.
      * If successful the model will contain one less independent variable.
-     * 
+     *
      * @param indep The independent variable to eliminate.
      * @param dep The dependent variable representing a residual
      * @param removeFromIndeps Whether or not to immediately remove the
      *                         independent variable from the list of
      *                         independents in the model. The substitution
-     *                         operation can only be reversed if the 
+     *                         operation can only be reversed if the
      *                         variable is not removed.
      * @throws CGException if the dependent variable does not belong to this handler
      */
@@ -563,10 +585,10 @@ public:
                                       bool removeFromIndeps = true);
 
     /**
-     * Reverts a substitution of an independent variable that has not been 
+     * Reverts a substitution of an independent variable that has not been
      * removed from the list of independents yet.
      * Warning: it does not recover any custom name assigned to the variable.
-     * 
+     *
      * @param indep The independent variable
      * @throws CGException if the dependent variable does not belong to this handler
      */
@@ -576,7 +598,7 @@ public:
      * Finalizes the substitution of an independent variable by eliminating
      * it from the list of independents. After this operation the variable
      * substitution cannot be undone.
-     * 
+     *
      * @param indep The independent variable
      * @throws CGException if the dependent variable is not an not an alias or it does not belong to this handler
      */
@@ -585,7 +607,7 @@ public:
     /**
      * Adds an operation node to the list of nodes to be deleted when this
      * handler is destroyed.
-     * 
+     *
      * @param code The operation node to be managed.
      * @return true if the node was successfully added to the list or
      *         false if it had already been previously added.
@@ -628,7 +650,7 @@ protected:
     /**
      * Determines the depth of the first different scope from scope paths of
      * two scopes
-     * 
+     *
      * @param color1 scope color 1
      * @param color2 scope color 2
      * @return the depth of the first different scope
@@ -649,7 +671,7 @@ protected:
     /**
      * Removes cyclic dependencies when 'ifs' are merged together.
      * Relative variable order must have already been defined.
-     * 
+     *
      * @param node the node being visited
      * @param scope the scope where the cyclic dependency could appear (or scopes inside it)
      * @param endIf the dependency to remove
@@ -667,28 +689,28 @@ protected:
     virtual void registerAtomicFunction(CGAbstractAtomicFun<Base>& atomic);
 
     /***********************************************************************
-     * 
+     *
      **********************************************************************/
     virtual void checkVariableCreation(Node& code);
 
     inline void addToEvaluationQueue(Node& arg);
 
-    inline void reduceTemporaryVariables(ArrayWrapper<CGB>& dependent);
+    inline void reduceTemporaryVariables(ArrayView<CGB>& dependent);
 
     /**
      * Change operation order so that the total number of temporary variables is
      * reduced.
      * @param dependent The vector of dependent variable values
      */
-    inline void reorderOperations(ArrayWrapper<CGB>& dependent);
+    inline void reorderOperations(ArrayView<CGB>& dependent);
 
     inline void reorderOperation(Node& node);
 
     /**
      * Determine the highest location in the evaluation queue of temporary
      * variables used by an operation node in the same scope.
-     * @return the highest location of the temporary variables or 
-     *         the location of node itself if it doesn't use any temporary 
+     * @return the highest location of the temporary variables or
+     *         the location of node itself if it doesn't use any temporary
      *         variable (in the same scope)
      */
     inline size_t findLastTemporaryLocation(Node& node);
@@ -699,7 +721,7 @@ protected:
     /**
      * Determines when each temporary variable is last used in the
      * evaluation order
-     * 
+     *
      * @param node The current node for which the number of usages is to be to determined
      */
     inline void determineLastTempVarUsage(Node& node);
@@ -844,7 +866,7 @@ protected:
 
         /**
          * Provides the name used by a loop atomic function with a given ID.
-         * 
+         *
          * @param id the atomic function ID.
          * @return a pointer to the atomic loop function name if it was
          *         registered, nullptr otherwise

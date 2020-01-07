@@ -79,8 +79,8 @@ void CppAdInterface<scalar_t>::createModels(ApproximationOrder approximationOrde
   }
 
   // Compile and store the library
-  dynamicLib_.reset(libraryProcessor.createDynamicLibrary(gccCompiler));
-  model_.reset(dynamicLib_->model(modelName_));
+  dynamicLib_ = libraryProcessor.createDynamicLibrary(gccCompiler);
+  model_ = dynamicLib_->model(modelName_);
 
   setSparsityNonzeros();
 
@@ -102,7 +102,7 @@ void CppAdInterface<scalar_t>::loadModels(bool verbose) {
     std::cerr << "Loading Shared Library: " << libraryName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION << std::endl;
   }
   dynamicLib_.reset(new CppAD::cg::LinuxDynamicLib<scalar_t>(libraryName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION));
-  model_.reset(dynamicLib_->model(modelName_));
+  model_ = dynamicLib_->model(modelName_);
 
   setSparsityNonzeros();
 }
@@ -130,7 +130,7 @@ typename CppAdInterface<scalar_t>::dynamic_vector_t CppAdInterface<scalar_t>::ge
 
   dynamic_vector_t functionValue(rangeDim_);
 
-  model_->ForwardZero(xp.data(), xp.size(), functionValue.data(), functionValue.size());
+  model_->ForwardZero(xp, functionValue);
   assert(functionValue.allFinite());
   return functionValue;
 }
@@ -144,12 +144,14 @@ typename CppAdInterface<scalar_t>::dynamic_matrix_t CppAdInterface<scalar_t>::ge
   // Concatenate input
   dynamic_vector_t xp(variableDim_ + parameterDim_);
   xp << x, p;
+  CppAD::cg::ArrayView<scalar_t> xpArrayView(xp.data(), xp.size());
 
   std::vector<scalar_t> sparseJacobian(nnzJacobian_);
+  CppAD::cg::ArrayView<scalar_t> sparseJacobianArrayView(sparseJacobian);
   size_t const* rows;
   size_t const* cols;
   // Call this particular SparseJacobian. Other CppAd functions allocate internal vectors that are incompatible with multithreading.
-  model_->SparseJacobian(xp.data(), xp.size(), sparseJacobian.data(), &rows, &cols, nnzJacobian_);
+  model_->SparseJacobian(xpArrayView, sparseJacobianArrayView, &rows, &cols);
 
   // Write sparse elements into Eigen type. Only jacobian w.r.t. variables was requested, so cols should not contain elements corresponding
   // to parameters. Write to rowMajor type because sparsity is specified as row major.
@@ -184,12 +186,17 @@ typename CppAdInterface<scalar_t>::dynamic_matrix_t CppAdInterface<scalar_t>::ge
   // Concatenate input
   dynamic_vector_t xp(variableDim_ + parameterDim_);
   xp << x, p;
+  CppAD::cg::ArrayView<const scalar_t> xpArrayView(xp.data(), xp.size());
 
   std::vector<scalar_t> sparseHessian(nnzHessian_);
+  CppAD::cg::ArrayView<scalar_t> sparseHessianArrayView(sparseHessian);
   size_t const* rows;
   size_t const* cols;
+
+  CppAD::cg::ArrayView<const scalar_t> wArrayView(w.data(), w.size());
+
   // Call this particular SparseHessian. Other CppAd functions allocate internal vectors that are incompatible with multithreading.
-  model_->SparseHessian(xp.data(), xp.size(), w.data(), w.size(), sparseHessian.data(), &rows, &cols, nnzHessian_);
+  model_->SparseHessian(xpArrayView, wArrayView, sparseHessianArrayView, &rows, &cols);
 
   // Fills upper triangular sparsity of hessian w.r.t variables. Write to rowMajor type because sparsity is specified as row major.
   dynamic_rowMajor_matrix_t hessian = dynamic_rowMajor_matrix_t::Zero(variableDim_, variableDim_);

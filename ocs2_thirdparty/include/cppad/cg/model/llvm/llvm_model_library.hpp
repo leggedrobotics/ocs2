@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2013 Ciengis
+ *    Copyright (C) 2018 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -23,7 +24,7 @@ class LlvmModel;
 
 /**
  * Abstract class used to load JIT'ed models by LLVM
- * 
+ *
  * @author Joao Leal
  */
 template<class Base>
@@ -31,24 +32,28 @@ class LlvmModelLibrary : public FunctorModelLibrary<Base> {
 protected:
     std::set<LlvmModel<Base>*> _models;
 public:
-    virtual LlvmModel<Base>* model(const std::string& modelName) override {
-        typename std::set<std::string>::const_iterator it = this->_modelNames.find(modelName);
-        if (it == this->_modelNames.end()) {
-            return nullptr;
-        }
-        LlvmModel<Base>* m = new LlvmModel<Base> (this, modelName);
-        _models.insert(m);
-        return m;
-    }
-
     inline virtual ~LlvmModelLibrary() {
         // do not call clean-up here
         // cleanUp() must be called by the subclass (before destruction of the execution engine...)
     }
 
-protected:
-    inline LlvmModelLibrary() {
+    virtual std::unique_ptr<LlvmModel<Base>> modelLlvm(const std::string& modelName) {
+        std::unique_ptr<LlvmModel<Base>> m;
+        typename std::set<std::string>::const_iterator it = this->_modelNames.find(modelName);
+        if (it == this->_modelNames.end()) {
+            return m;
+        }
+        m.reset(new LlvmModel<Base> (this, modelName));
+        _models.insert(m.get());
+        return m;
     }
+
+    std::unique_ptr<FunctorGenericModel<Base>> modelFunctor(const std::string& modelName) override final {
+        return std::unique_ptr<FunctorGenericModel<Base>>(modelLlvm(modelName).release());
+    }
+
+protected:
+    inline LlvmModelLibrary() = default;
 
     inline void cleanUp() {
         for (LlvmModel<Base>* model : _models) {

@@ -1,29 +1,28 @@
-// $Id$
 # ifndef CPPAD_CORE_ATANH_HPP
 # define CPPAD_CORE_ATANH_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*
 -------------------------------------------------------------------------------
 $begin atanh$$
 $spell
-	atanh
-	const
-	Vec
-	std
-	cmath
-	CppAD
-	tanh
+    atanh
+    const
+    Vec
+    std
+    cmath
+    CppAD
+    tanh
 $$
 $section The Inverse Hyperbolic Tangent Function: atanh$$
 
@@ -55,12 +54,11 @@ to compute this function.
 
 $head Example$$
 $children%
-	example/atanh.cpp
+    example/general/atanh.cpp
 %$$
 The file
 $cref atanh.cpp$$
 contains an example and test of this function.
-It returns true if it succeeds and false otherwise.
 
 $end
 -------------------------------------------------------------------------------
@@ -73,22 +71,22 @@ namespace CppAD {
 
 template <class Type>
 Type atanh_template(const Type &x)
-{	return CppAD::log( (Type(1) + x) / (Type(1) - x) ) / Type(2);
+{   return CppAD::log( (Type(1) + x) / (Type(1) - x) ) / Type(2);
 }
 
 inline float atanh(const float &x)
-{	return atanh_template(x); }
+{   return atanh_template(x); }
 
 inline double atanh(const double &x)
-{	return atanh_template(x); }
+{   return atanh_template(x); }
 
 template <class Base>
-inline AD<Base> atanh(const AD<Base> &x)
-{	return atanh_template(x); }
+AD<Base> atanh(const AD<Base> &x)
+{   return atanh_template(x); }
 
 template <class Base>
-inline AD<Base> atanh(const VecAD_reference<Base> &x)
-{	return atanh_template( x.ADBase() ); }
+AD<Base> atanh(const VecAD_reference<Base> &x)
+{   return atanh_template( x.ADBase() ); }
 
 
 } // END CppAD namespace

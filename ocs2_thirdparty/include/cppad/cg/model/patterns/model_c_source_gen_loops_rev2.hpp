@@ -523,7 +523,8 @@ void ModelCSourceGen<Base>::prepareSparseReverseTwoWithLoops(const std::map<size
                 }
 
                 LanguageC<Base> langC(_baseTypeName);
-                langC.setMaxAssigmentsPerFunction(_maxAssignPerFunc, &_sources);
+                langC.setMaxAssignmentsPerFunction(_maxAssignPerFunc, &_sources);
+                langC.setMaxOperationsPerAssignment(_maxOperationsPerAssignment);
                 langC.setParameterPrecision(_parameterPrecision);
                 _cache.str("");
                 _cache << _name << "_" << FUNCTION_SPARSE_REVERSE_TWO << "_noloop_indep" << j;
@@ -616,7 +617,7 @@ std::vector<std::pair<CG<Base>, IndexPattern*> > generateReverseTwoGroupOps(Code
     using namespace std;
     using namespace CppAD::cg::loops;
 
-    typedef CG<Base> CGBase;
+    using CGBase = CG<Base>;
 
     IndexOperationNode<Base>& iterationIndexOp = *info.iterationIndexOp;
 

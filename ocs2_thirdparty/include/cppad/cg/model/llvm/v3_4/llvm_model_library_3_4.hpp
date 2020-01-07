@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2013 Ciengis
+ *    Copyright (C) 2018 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -22,7 +23,7 @@ template<class Base> class LlvmModel;
 
 /**
  * Class used to load JIT'ed models by LLVM 3.4
- * 
+ *
  * @author Joao Leal
  */
 template<class Base>
@@ -57,7 +58,7 @@ public:
         _fpm->doInitialization();
 
         /**
-         * 
+         *
          */
         this->validate();
     }
@@ -95,7 +96,7 @@ public:
          */
     }
 
-    virtual void* loadFunction(const std::string& functionName, bool required = true) override {
+    void* loadFunction(const std::string& functionName, bool required = true) override {
         llvm::Function* func = _module->getFunction(functionName);
         if (func == nullptr) {
             if (required)

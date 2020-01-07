@@ -21,7 +21,7 @@ namespace cg {
 template<class Base>
 class ScopePathElement {
 public:
-    typedef typename CodeHandler<Base>::ScopeIDType ScopeIDType;
+    using ScopeIDType = typename CodeHandler<Base>::ScopeIDType;
 public:
     // the color/index associated with the scope
     ScopeIDType color;

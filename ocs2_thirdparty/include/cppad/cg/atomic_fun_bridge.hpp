@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2013 Ciengis
+ *    Copyright (C) 2018 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -23,14 +24,14 @@ namespace cg {
  * type.
  * This class can be useful when a CppAD::ADFun<CppAD::cg::CG> is going to
  * be used to create a compiled model library but has not been compiled yet.
- * 
+ *
  * @author Joao Leal
  */
 template <class Base>
 class CGAtomicFunBridge : public CGAbstractAtomicFun<Base> {
 public:
-    typedef CppAD::cg::CG<Base> CGB;
-    typedef CppAD::AD<CGB> ADCGD;
+    using CGB = CppAD::cg::CG<Base>;
+    using ADCGD = CppAD::AD<CGB>;
 protected:
     ADFun<CGB>& fun_;
     bool cacheSparsities_;
@@ -41,14 +42,14 @@ public:
 
     /**
      * Creates a new atomic function wrapper.
-     * 
+     *
      * @param name The atomic function name
      * @param fun The atomic function to be wrapped
      * @param standAlone Whether or not forward and reverse function calls
-     *                   do not require the Taylor coefficients for the 
+     *                   do not require the Taylor coefficients for the
      *                   dependent variables (ty) and the previous
      *                   evaluation of other forward/reverse modes.
-     * @param cacheSparsities Whether or not to cache information related 
+     * @param cacheSparsities Whether or not to cache information related
      *                        with sparsity evaluation.
      */
     CGAtomicFunBridge(const std::string& name,
@@ -63,6 +64,8 @@ public:
 
     CGAtomicFunBridge(const CGAtomicFunBridge& orig) = delete;
     CGAtomicFunBridge& operator=(const CGAtomicFunBridge& rhs) = delete;
+
+    virtual ~CGAtomicFunBridge() = default;
 
     template <class ADVector>
     void operator()(const ADVector& ax, ADVector& ay, size_t id = 0) {
@@ -93,9 +96,16 @@ public:
         custom_hess_ = CustomPosition(n, n, elements);
     }
 
-    virtual bool for_sparse_jac(size_t q,
-                                const CppAD::vector<std::set<size_t> >& r,
-                                CppAD::vector<std::set<size_t> >& s) {
+    bool for_sparse_jac(size_t q,
+                        const CppAD::vector<std::set<size_t> >& r,
+                        CppAD::vector<std::set<size_t> >& s,
+                        const CppAD::vector<CGB>& x) override {
+        return for_sparse_jac(q, r, s);
+    }
+
+    bool for_sparse_jac(size_t q,
+                        const CppAD::vector<std::set<size_t> >& r,
+                        CppAD::vector<std::set<size_t> >& s) override {
         using CppAD::vector;
 
         if (cacheSparsities_ || custom_jac_.isFilterDefined()) {
@@ -118,9 +128,16 @@ public:
         return true;
     }
 
-    virtual bool rev_sparse_jac(size_t q,
-                                const CppAD::vector<std::set<size_t> >& rt,
-                                CppAD::vector<std::set<size_t> >& st) {
+    bool rev_sparse_jac(size_t q,
+                        const CppAD::vector<std::set<size_t> >& rt,
+                        CppAD::vector<std::set<size_t> >& st,
+                        const CppAD::vector<CGB>& x) override {
+        return rev_sparse_jac(q, rt, st);
+    }
+
+    bool rev_sparse_jac(size_t q,
+                        const CppAD::vector<std::set<size_t> >& rt,
+                        CppAD::vector<std::set<size_t> >& st) override {
         using CppAD::vector;
 
         if (cacheSparsities_ || custom_jac_.isFilterDefined()) {
@@ -141,13 +158,24 @@ public:
         return true;
     }
 
-    virtual bool rev_sparse_hes(const CppAD::vector<bool>& vx,
-                                const CppAD::vector<bool>& s,
-                                CppAD::vector<bool>& t,
-                                size_t q,
-                                const CppAD::vector<std::set<size_t> >& r,
-                                const CppAD::vector<std::set<size_t> >& u,
-                                CppAD::vector<std::set<size_t> >& v) {
+    bool rev_sparse_hes(const CppAD::vector<bool>& vx,
+                        const CppAD::vector<bool>& s,
+                        CppAD::vector<bool>& t,
+                        size_t q,
+                        const CppAD::vector<std::set<size_t> >& r,
+                        const CppAD::vector<std::set<size_t> >& u,
+                        CppAD::vector<std::set<size_t> >& v,
+                        const CppAD::vector<CGB>& x) override {
+        return rev_sparse_hes(vx, s, t, q, r, u, v);
+    }
+
+    bool rev_sparse_hes(const CppAD::vector<bool>& vx,
+                        const CppAD::vector<bool>& s,
+                        CppAD::vector<bool>& t,
+                        size_t q,
+                        const CppAD::vector<std::set<size_t> >& r,
+                        const CppAD::vector<std::set<size_t> >& u,
+                        CppAD::vector<std::set<size_t> >& v) override {
         using CppAD::vector;
 
         if (cacheSparsities_ || custom_jac_.isFilterDefined() || custom_hess_.isFilterDefined()) {
@@ -232,7 +260,7 @@ public:
 
             for (size_t i = 0; i < n; i++) {
                 for (size_t j : a[i]) {
-                    CPPAD_ASSERT_UNKNOWN(j < q);
+                    CPPAD_ASSERT_UNKNOWN(j < q)
                     v[i].insert(j);
                 }
             }
@@ -243,20 +271,18 @@ public:
         return true;
     }
 
-    virtual ~CGAtomicFunBridge() {
-    }
-
 protected:
 
-    virtual void zeroOrderDependency(const CppAD::vector<bool>& vx,
-                                     CppAD::vector<bool>& vy) {
+    void zeroOrderDependency(const CppAD::vector<bool>& vx,
+                             CppAD::vector<bool>& vy,
+                             const CppAD::vector<CGB>& x) override {
         CppAD::cg::zeroOrderDependency(fun_, vx, vy);
     }
 
-    virtual bool atomicForward(size_t q,
-                               size_t p,
-                               const CppAD::vector<Base>& tx,
-                               CppAD::vector<Base>& ty) {
+    bool atomicForward(size_t q,
+                       size_t p,
+                       const CppAD::vector<Base>& tx,
+                       CppAD::vector<Base>& ty) override {
         using CppAD::vector;
 
         vector<CGB> txcg(tx.size());
@@ -270,11 +296,11 @@ protected:
         return true;
     }
 
-    virtual bool atomicReverse(size_t p,
-                               const CppAD::vector<Base>& tx,
-                               const CppAD::vector<Base>& ty,
-                               CppAD::vector<Base>& px,
-                               const CppAD::vector<Base>& py) {
+    bool atomicReverse(size_t p,
+                       const CppAD::vector<Base>& tx,
+                       const CppAD::vector<Base>& ty,
+                       CppAD::vector<Base>& px,
+                       const CppAD::vector<Base>& py) override {
         using CppAD::vector;
 
         vector<CGB> txcg(tx.size());
@@ -296,7 +322,7 @@ private:
 
     static void toCG(const CppAD::vector<Base>& from,
                      CppAD::vector<CGB>& to) {
-        CPPAD_ASSERT_UNKNOWN(from.size() == to.size());
+        CPPAD_ASSERT_UNKNOWN(from.size() == to.size())
 
         for (size_t i = 0; i < from.size(); i++) {
             to[i] = from[i];
@@ -305,7 +331,7 @@ private:
 
     static void fromCG(const CppAD::vector<CGB>& from,
                        CppAD::vector<Base>& to) {
-        CPPAD_ASSERT_UNKNOWN(from.size() == to.size());
+        CPPAD_ASSERT_UNKNOWN(from.size() == to.size())
 
         for (size_t i = 0; i < from.size(); i++) {
             CPPADCG_ASSERT_KNOWN(from[i].isValueDefined(), "No value defined")

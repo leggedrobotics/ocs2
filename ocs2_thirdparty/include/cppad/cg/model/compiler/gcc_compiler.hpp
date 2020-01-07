@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2012 Ciengis
+ *    Copyright (C) 2018 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -20,7 +21,7 @@ namespace cg {
 
 /**
  * C compiler class used to create a dynamic library
- * 
+ *
  * @author Joao Leal
  */
 template<class Base>
@@ -41,13 +42,18 @@ public:
 
     /**
      * Creates a dynamic library from a set of object files
-     * 
+     *
      * @param library the path to the dynamic library to be created
      */
-    virtual void buildDynamic(const std::string& library,
-                              JobTimer* timer = nullptr) override {
+    void buildDynamic(const std::string& library,
+                      JobTimer* timer = nullptr) override {
 
-        std::string linkerFlags = "-Wl,-soname," + system::filenameFromPath(library);
+#if CPPAD_CG_SYSTEM_APPLE
+        std::string linkerName = "-install_name";
+#elif CPPAD_CG_SYSTEM_LINUX
+        std::string linkerName = "-soname";
+#endif
+        std::string linkerFlags = "-Wl," + linkerName + "," + system::filenameFromPath(library);
         for (size_t i = 0; i < this->_linkFlags.size(); i++)
             linkerFlags += "," + this->_linkFlags[i];
 
@@ -73,20 +79,19 @@ public:
         }
     }
 
-    virtual ~GccCompiler() {
-    }
+    virtual ~GccCompiler() = default;
 
 protected:
 
     /**
      * Compiles a single source file into an object file
-     * 
+     *
      * @param source the content of the source file
      * @param output the compiled output file name (the object file path)
      */
-    virtual void compileSource(const std::string& source,
-                               const std::string& output,
-                               bool posIndepCode) override {
+    void compileSource(const std::string& source,
+                       const std::string& output,
+                       bool posIndepCode) override {
         std::vector<std::string> args;
         args.push_back("-x");
         args.push_back("c"); // C source files
@@ -102,9 +107,9 @@ protected:
         system::callExecutable(this->_path, args, nullptr, &source);
     }
 
-    virtual void compileFile(const std::string& path,
-                             const std::string& output,
-                             bool posIndepCode) override {
+    void compileFile(const std::string& path,
+                     const std::string& output,
+                     bool posIndepCode) override {
         std::vector<std::string> args;
         args.push_back("-x");
         args.push_back("c"); // C source files

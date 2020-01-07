@@ -27,8 +27,8 @@ public:
     unsigned short count; // number of times to be added to that location
 
     inline HessianElement() :
-        location(std::numeric_limits<size_t>::max()),
-        row(std::numeric_limits<size_t>::max()),
+        location((std::numeric_limits<size_t>::max)()),
+        row((std::numeric_limits<size_t>::max)()),
         count(0) {
     }
 
@@ -92,7 +92,19 @@ void ModelCSourceGen<Base>::analyseSparseHessianWithLoops(const std::vector<size
         loopHessInfol.noLoopEvalHessTempsSparsity.resize(_funNoLoops != nullptr ? n : 0);
     }
 
-    /** 
+    auto flipIndices = [&](const std::vector<set<size_t> >& groupHess,
+                           size_t tape1,
+                           size_t tape2) {
+        return useSymmetry && tape1 > tape2 && groupHess[tape2].find(tape1) != groupHess[tape2].end();
+    };
+
+    auto flipIndices2 = [&](const std::vector<set<size_t> >& groupHess,
+                            size_t tape1,
+                            size_t tape2) {
+        return useSymmetry && groupHess[tape2].find(tape1) != groupHess[tape2].end();
+    };
+
+    /**
      * Load locations in the compressed Hessian
      * d      d y_i
      * d x_j2 d x_j1
@@ -152,7 +164,9 @@ void ModelCSourceGen<Base>::analyseSparseHessianWithLoops(const std::vector<size
                         size_t tape1 = itPairs.first;
                         size_t tape2 = itPairs.second;
                         pairss tape;
-                        if (useSymmetry && tape1 > tape2 && groupHess[tape2].find(tape1) != groupHess[tape2].end()) {
+
+                        bool flip = flipIndices(groupHess, tape1, tape2);
+                        if (flip) {
                             tape = pairss(tape2, tape1); // work the symmetry
                         } else {
                             tape = itPairs;
@@ -183,7 +197,7 @@ void ModelCSourceGen<Base>::analyseSparseHessianWithLoops(const std::vector<size
 
                         for (size_t tapeJ1 : tapeJ1s) {
 
-                            bool flip = useSymmetry && groupHess[posJ2->tape].find(tapeJ1) != groupHess[posJ2->tape].end();
+                            bool flip = flipIndices2(groupHess, tapeJ1, posJ2->tape);
 
                             std::vector<HessianElement>* positions;
                             if (flip) {
@@ -404,7 +418,7 @@ void ModelCSourceGen<Base>::analyseSparseHessianWithLoops(const std::vector<size
                             for (size_t iteration : iterations) {
                                 std::vector<HessianElement>* positions = nullptr;
 
-                                bool flip = useSymmetry && groupHess[tapeJ2].find(posK1->tape) != groupHess[tapeJ2].end();
+                                bool flip = flipIndices2(groupHess, posK1->tape, tapeJ2);
                                 if (flip) {
                                     if (!used) {
                                         pairss pos(tapeJ2, j1);
@@ -529,8 +543,11 @@ inline void addContribution(std::vector<std::pair<CG<Base>, IndexPattern*> >& in
                             size_t& hessLE,
                             const std::pair<CG<Base>, IndexPattern*>& val) {
     if (!val.first.isIdenticalZero()) {
-        if (indexedLoopResults.size() == hessLE) {
-            indexedLoopResults.resize(3 * hessLE / 2 + 1);
+        if (indexedLoopResults.size() <= hessLE) {
+            if (indexedLoopResults.capacity() <= hessLE) {
+                indexedLoopResults.reserve(3 * hessLE / 2 + 1);
+            }
+            indexedLoopResults.resize(hessLE + 1);
         }
         indexedLoopResults[hessLE++] = val;
     }
@@ -538,12 +555,12 @@ inline void addContribution(std::vector<std::pair<CG<Base>, IndexPattern*> >& in
 
 template<class Base>
 std::vector<CG<Base> > ModelCSourceGen<Base>::prepareSparseHessianWithLoops(CodeHandler<Base>& handler,
-                                                                              std::vector<CGBase>& x,
-                                                                              std::vector<CGBase>& w,
-                                                                              const std::vector<size_t>& lowerHessRows,
-                                                                              const std::vector<size_t>& lowerHessCols,
-                                                                              const std::vector<size_t>& lowerHessOrder,
-                                                                              const std::map<size_t, size_t>& duplicates) {
+                                                                            std::vector<CGBase>& x,
+                                                                            std::vector<CGBase>& w,
+                                                                            const std::vector<size_t>& lowerHessRows,
+                                                                            const std::vector<size_t>& lowerHessCols,
+                                                                            const std::vector<size_t>& lowerHessOrder,
+                                                                            const std::map<size_t, size_t>& duplicates) {
     using namespace std;
     using namespace CppAD::cg::loops;
 
@@ -630,7 +647,8 @@ std::vector<CG<Base> > ModelCSourceGen<Base>::prepareSparseHessianWithLoops(Code
         _cache.str("");
         startingJob("'" + jobName + "'", JobTimer::GRAPH);
 
-        info.evalLoopModelJacobianHessian(false);
+        bool individualColoring = lModel.isContainsAtomics();
+        info.evalLoopModelJacobianHessian(individualColoring);
 
         finishedJob();
     }
@@ -1088,7 +1106,7 @@ inline void generateLoopForJacHes(ADFun<CG<Base> >& fun,
                                   bool individualColoring) {
     using namespace std;
 
-    typedef CG<Base> CGB;
+    using CGB = CG<Base>;
 
     size_t m = fun.Range();
     size_t n = fun.Domain();
@@ -1163,7 +1181,7 @@ inline void generateLoopForJacHes(ADFun<CG<Base> >& fun,
 
         //transpose
         std::vector<set<size_t> > jacEvalSparsityT(n);
-        transposePattern(jacEvalSparsity, jacEvalSparsityT);
+        addTransMatrixSparsity(jacEvalSparsity, jacEvalSparsityT);
 
         std::vector<CGB> tx1v(n);
 

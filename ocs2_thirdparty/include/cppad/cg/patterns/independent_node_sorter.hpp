@@ -30,7 +30,7 @@ public:
      * @return true if the first node goes before the second node
      */
     bool operator()(const OperationNode<Base>* node1,
-            const OperationNode<Base>* node2) {
+                    const OperationNode<Base>* node2) const {
         CPPADCG_ASSERT_UNKNOWN(node1 == nullptr || node1->getInfo().size() == 1);
         CPPADCG_ASSERT_UNKNOWN(node2 == nullptr || node2->getInfo().size() == 1);
         CPPADCG_ASSERT_UNKNOWN(node1 == nullptr || node1->getOperationType() == CGOpCode::Inv);

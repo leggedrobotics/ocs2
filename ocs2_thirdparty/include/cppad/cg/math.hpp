@@ -62,6 +62,36 @@ inline cg::CG<Base> log10(const cg::CG<Base> &x) {
     return CppAD::log(x) / CppAD::log(Base(10));
 }
 
+namespace cg  {
+  
+  using CppAD::abs;
+  using CppAD::fabs;
+  using CppAD::acos;
+  using CppAD::asin;
+  using CppAD::atan;
+  using CppAD::cos;
+  using CppAD::cosh;
+  using CppAD::exp;
+  using CppAD::log;
+  using CppAD::sin;
+  using CppAD::sinh;
+  using CppAD::asin;
+  using CppAD::sqrt;
+  using CppAD::tan;
+  using CppAD::tanh;
+  
+#if CPPAD_USE_CPLUSPLUS_2011
+  using CppAD::erf;
+  using CppAD::asinh;
+  using CppAD::acosh;
+  using CppAD::atanh;
+  using CppAD::expm1;
+  using CppAD::log1p;
+#endif
+  
+  using CppAD::log10;
+
+} // END cg namespace
 } // END CppAD namespace
 
 #endif

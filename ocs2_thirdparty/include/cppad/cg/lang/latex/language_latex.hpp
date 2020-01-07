@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2014 Ciengis
+ *    Copyright (C) 2018 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -20,16 +21,16 @@ namespace cg {
 
 /**
  * Generates code for the Latex language.
- * It creates a generic implementation using custom latex environments which 
+ * It creates a generic implementation using custom latex environments which
  * must be implemented by the user.
- * 
+ *
  * @author Joao Leal
  */
 template<class Base>
 class LanguageLatex : public Language<Base> {
 public:
-    typedef OperationNode<Base> Node;
-    typedef Argument<Base> Arg;
+    using Node = OperationNode<Base>;
+    using Arg = Argument<Base>;
 protected:
     static const std::string _C_STATIC_INDEX_ARRAY;
     static const std::string _C_SPARSE_INDEX_ARRAY;
@@ -105,7 +106,7 @@ protected:
     // (some IDs may be the same as the independent variables when dep = indep)
     std::map<size_t, size_t> _dependentIDs;
     // the dependent variable vector
-    const ArrayWrapper<CG<Base> >* _dependent;
+    const ArrayView<CG<Base> >* _dependent;
     // the temporary variables that may require a declaration
     std::map<size_t, Node*> _temporary;
     // whether or not to ignore assignment of constant zero values to dependent variables
@@ -202,7 +203,7 @@ public:
 
     /**
      * Defines the Latex environment for each variable.
-     * 
+     *
      * @param begin a string creating the environment
      * @param end a string terminating the environment
      */
@@ -228,7 +229,7 @@ public:
 
     /**
      * Defines the Latex environment for each dependent variable.
-     * 
+     *
      * @param begin a string creating the environment
      * @param end a string terminating the environment
      */
@@ -254,7 +255,7 @@ public:
 
     /**
      * Defines the Latex environment for each independent variable.
-     * 
+     *
      * @param begin a string creating the environment
      * @param end a string terminating the environment
      */
@@ -280,7 +281,7 @@ public:
 
     /**
      * Defines the Latex environment for each equation.
-     * 
+     *
      * @param begin a string creating the environment (e.g. "$", "\\begin{algomathdisplay}", "\\[")
      * @param end a string terminating the environment (e.g. "$\\;", "\\end{algomathdisplay}\\;", "\\]\\;")
      */
@@ -306,7 +307,7 @@ public:
 
     /**
      * Defines the Latex environment for each algorithm line.
-     * 
+     *
      * @param begin a string creating the environment
      * @param end a string terminating the environment
      */
@@ -333,7 +334,7 @@ public:
     /**
      * Defines the Latex environment for each equation block which can contain
      * multiple equation lines with the same indentation.
-     * 
+     *
      * @param begin a string creating the environment
      * @param end a string terminating the environment
      */
@@ -361,7 +362,7 @@ public:
 
     /**
      * Defines the Latex environment for each algorithm file.
-     * 
+     *
      * @param begin a string creating the environment
      * @param end a string terminating the environment
      */
@@ -387,7 +388,7 @@ public:
 
     /**
      * Defines the Latex environment for each for loop.
-     * 
+     *
      * @param begin a string creating the environment
      * @param end a string terminating the environment
      */
@@ -413,7 +414,7 @@ public:
 
     /**
      * Defines the Latex environment for each condition.
-     * 
+     *
      * @param begin a string creating the environment
      * @param end a string terminating the environment
      */
@@ -439,7 +440,7 @@ public:
 
     /**
      * Defines the Latex environment for each If.
-     * 
+     *
      * @param begin a string creating the environment
      * @param end a string terminating the environment
      */
@@ -465,7 +466,7 @@ public:
 
     /**
      * Defines the Latex environment for each else if.
-     * 
+     *
      * @param begin a string creating the environment
      * @param end a string terminating the environment
      */
@@ -491,7 +492,7 @@ public:
 
     /**
      * Defines the Latex environment for each else.
-     * 
+     *
      * @param begin a string creating the environment
      * @param end a string terminating the environment
      */
@@ -518,7 +519,7 @@ public:
     /**
      * Provides the maximum precision used to print constant values in the
      * generated source code
-     * 
+     *
      * @return the maximum number of digits
      */
     virtual size_t getParameterPrecision() const {
@@ -528,7 +529,7 @@ public:
     /**
      * Defines the maximum precision used to print constant values in the
      * generated source code
-     * 
+     *
      * @param p the maximum number of digits
      */
     virtual void setParameterPrecision(size_t p) {
@@ -628,7 +629,7 @@ public:
                 out << index << " == " << min;
             } else if (min == 0) {
                 out << index << " \\le " << max;
-            } else if (max == std::numeric_limits<size_t>::max()) {
+            } else if (max == (std::numeric_limits<size_t>::max)()) {
                 out << min << " \\le " << index;
             } else {
                 if (infoSize != 2)
@@ -646,7 +647,7 @@ public:
     }
 
     /***************************************************************************
-     * 
+     *
      **************************************************************************/
 
     inline void printStaticIndexArray(std::ostringstream& os,
@@ -680,8 +681,8 @@ public:
      **************************************************************************/
 protected:
 
-    virtual void generateSourceCode(std::ostream& out,
-                                    const std::unique_ptr<LanguageGenerationData<Base> >& info) override {
+    void generateSourceCode(std::ostream& out,
+                            std::unique_ptr<LanguageGenerationData<Base> > info) override {
 
         const bool multiFile = _maxAssignmentsPerFile > 0 && _sources != nullptr;
 
@@ -701,7 +702,7 @@ protected:
         _dependent = &info->dependent;
         _nameGen = &info->nameGen;
         _minTemporaryVarID = info->minTemporaryVarID;
-        const ArrayWrapper<CG<Base> >& dependent = info->dependent;
+        const ArrayView<CG<Base> >& dependent = info->dependent;
         const std::vector<Node*>& variableOrder = info->variableOrder;
 
         _tmpArrayValues.resize(_nameGen->getMaxTemporaryArrayVariableID());
@@ -882,7 +883,7 @@ protected:
             }
         }
 
-        // constant dependent variables 
+        // constant dependent variables
         bool commentWritten = false;
         for (size_t i = 0; i < dependent.size(); i++) {
             if (dependent[i].isParameter()) {
@@ -1057,8 +1058,9 @@ protected:
         _ss.str("");
     }
 
-    virtual bool createsNewVariable(const Node& var,
-                                    size_t totalUseCount) const override {
+    bool createsNewVariable(const Node& var,
+                            size_t totalUseCount,
+                            size_t opCount) const override {
         CGOpCode op = var.getOperationType();
         if (totalUseCount > 1) {
             return op != CGOpCode::ArrayElement && op != CGOpCode::Index && op != CGOpCode::IndexDeclaration && op != CGOpCode::Tmp;
@@ -1102,9 +1104,9 @@ protected:
     /**
      * Whether or not this operation assign its expression to a variable by
      * itself.
-     * 
+     *
      * @param var the operation node
-     * @return 
+     * @return
      */
     virtual bool directlyAssignsVariable(const Node& var) const {
         CGOpCode op = var.getOperationType();
@@ -1125,7 +1127,7 @@ protected:
                 op == CGOpCode::IndexDeclaration;
     }
 
-    virtual bool requiresVariableArgument(enum CGOpCode op, size_t argIndex) const override {
+    bool requiresVariableArgument(enum CGOpCode op, size_t argIndex) const override {
         return op == CGOpCode::CondResult;
     }
 
@@ -1185,7 +1187,7 @@ protected:
         return *var.getName();
     }
 
-    virtual bool requiresVariableDependencies() const override {
+    bool requiresVariableDependencies() const override {
         return false;
     }
 
@@ -1828,7 +1830,7 @@ protected:
 
         checkEquationEnvEnd();
 
-        _code << _forStart << "{$" << jj << _assignStr << "0$ to $" << lastIt << "$}" << _endline;
+        _code << _forStart << "{$" << jj << "\\in \\left[0, " << lastIt << "\\right]$}" << _endline;
         _indentationLevel++;
     }
 
@@ -1934,7 +1936,7 @@ protected:
 
     virtual void printElseIf(Node& node) {
         /**
-         * the first argument is the condition, the second argument is the 
+         * the first argument is the condition, the second argument is the
          * if start node, the following arguments are assignments in the
          * previous if branch
          */
@@ -2076,7 +2078,8 @@ protected:
                 return _COMP_OP_NE;
 
             default:
-                CPPAD_ASSERT_UNKNOWN(0);
+                CPPAD_ASSERT_UNKNOWN(0)
+                break;
         }
         throw CGException("Invalid comparison operator code"); // should never get here
     }

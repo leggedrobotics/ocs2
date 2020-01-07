@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2012 Ciengis
+ *    Copyright (C) 2018 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -31,11 +32,11 @@ namespace cg {
  */
 template<class Base>
 class DummyDerivatives : public DaeIndexReduction<Base> {
-    typedef CG<Base> CGBase;
-    typedef AD<CGBase> ADCG;
-    typedef Eigen::Matrix<Base, Eigen::Dynamic, 1> VectorB;
-    typedef Eigen::Matrix<std::complex<Base>, Eigen::Dynamic, 1> VectorCB;
-    typedef Eigen::Matrix<Base, Eigen::Dynamic, Eigen::Dynamic> MatrixB;
+    using CGBase = CG<Base>;
+    using ADCG = AD<CGBase>;
+    using VectorB = Eigen::Matrix<Base, Eigen::Dynamic, 1>;
+    using VectorCB = Eigen::Matrix<std::complex<Base>, Eigen::Dynamic, 1>;
+    using MatrixB = Eigen::Matrix<Base, Eigen::Dynamic, Eigen::Dynamic>;
 protected:
     /**
      * Method used to identify the structural index
@@ -57,7 +58,7 @@ protected:
      * new index reduced model
      */
     std::unique_ptr<ADFun<CGBase> > reducedFun_;
-    /** 
+    /**
      * Jacobian sparsity pattern of the reduced system
      * (in the original variable order)
      */
@@ -90,15 +91,19 @@ protected:
      */
     bool reorder_;
     /**
-     * 
+     *
      */
     bool avoidConvertAlg2DifVars_;
+    /**
+     * Avoid using these variables as dummy derivatives
+     */
+    std::set<std::string> avoidAsDummy_;
 public:
 
     /**
      * Creates the DAE index reduction algorithm that implements the dummy
      * derivatives method.
-     * 
+     *
      * @param idxIdentify A structural index reduction method that identifies
      *                    which variables and equations need to be
      *                    differentiated
@@ -130,16 +135,33 @@ public:
         }
     }
 
+    inline virtual ~DummyDerivatives() {
+    }
+
+    /**
+     * Whether or not to avoid converting algebraic variables to differential
+     * variables.
+     * When algebraic variables should not be converted to differential
+     * variables, derivatives for variables which where initially algebraic
+     * are selected first as dummy derivatives.
+     */
     inline bool isAvoidConvertAlg2DifVars() const {
         return avoidConvertAlg2DifVars_;
     }
 
+    /**
+     * Defines whether or not to avoid converting algebraic variables to
+     * differential variables.
+     * When algebraic variables should not be converted to differential
+     * variables, derivatives for variables which where initially algebraic
+     * are selected first as dummy derivatives
+     */
     inline void setAvoidConvertAlg2DifVars(bool avoid) {
         avoidConvertAlg2DifVars_ = avoid;
     }
 
     /**
-     * Whether or not to attempt to generate a semi-explicit DAE by performing 
+     * Whether or not to attempt to generate a semi-explicit DAE by performing
      * algebraic manipulations.
      */
     inline bool isGenerateSemiExplicitDae() const {
@@ -147,9 +169,10 @@ public:
     }
 
     /**
-     * Whether or not to attempt to generate a semi-explicit DAE by performing 
+     * Whether or not to attempt to generate a semi-explicit DAE by performing
      * algebraic manipulations.
-     * Warning: The algebraic manipulations may fail to solve equations relative
+     *
+     * @warning: The algebraic manipulations may fail to solve equations relative
      * to the time derivatives.
      */
     inline void setGenerateSemiExplicitDae(bool generateSemiExplicitDae) {
@@ -157,7 +180,7 @@ public:
     }
 
     /**
-     * Whether or not the total number of equations is to be reduced  by 
+     * Whether or not the total number of equations is to be reduced  by
      * performing variable substitutions.
      */
     inline bool isReduceEquations() const {
@@ -165,7 +188,7 @@ public:
     }
 
     /**
-     * Whether or not to attempt to reduce the total number of equations by 
+     * Whether or not to attempt to reduce the total number of equations by
      * performing variable substitutions.
      */
     inline void setReduceEquations(bool reduceEquations) {
@@ -190,8 +213,31 @@ public:
         reorder_ = reorder;
     }
 
-    virtual inline std::unique_ptr<ADFun<CG<Base>>> reduceIndex(std::vector<DaeVarInfo>& newVarInfo,
-                                                                std::vector<DaeEquationInfo>& newEqInfo) override {
+    /**
+     * Define a set of variables which should not be selected as dummy
+     * derivatives (algebraic variables).
+     * These variables can still be selected as dummy derivatives when
+     * there is no other option.
+     *
+     * @param avoidAsDummy a set of variable names which should not be selected
+     *                     as dummy derivatives
+     */
+    inline void setAvoidVarsAsDummies(const std::set<std::string>& avoidAsDummy) {
+        avoidAsDummy_ = avoidAsDummy;
+    }
+
+    /**
+     * Which variables should not be selected as dummy derivatives (algebraic
+     * variables).
+     * These variables can still be selected as dummy derivatives when
+     * there is no other option.
+     */
+    inline const std::set<std::string>& getAvoidVarsAsDummies() const {
+        return avoidAsDummy_;
+    }
+
+    inline std::unique_ptr<ADFun<CG<Base>>> reduceIndex(std::vector<DaeVarInfo>& newVarInfo,
+                                                        std::vector<DaeEquationInfo>& newEqInfo) override {
 
         /**
          * Variable information for the reduced
@@ -246,11 +292,8 @@ public:
         return std::unique_ptr<ADFun<CG<Base>>>(reducedFun_.release());
     }
 
-    inline virtual ~DummyDerivatives() {
-    }
-
 protected:
-    
+
     using DaeIndexReduction<Base>::log;
 
     virtual inline void addDummyDerivatives(const std::vector<DaeVarInfo>& varInfo,
@@ -374,7 +417,7 @@ protected:
 
     /**
      * Attempts to reduce the number of equations by variable substitution.
-     * 
+     *
      * @param newVarInfo Variable information of the resulting model
      * @return The new DAE reduced model with (possibly) less equations and
      *         variables
@@ -415,7 +458,7 @@ protected:
         }
 
         /**
-         * maps the equations indexes of the reduced model to the new 
+         * maps the equations indexes of the reduced model to the new
          * equation indexes in the model with less equations and variables
          * (removed equations have negative indexes)
          */
@@ -425,7 +468,7 @@ protected:
         }
 
         /**
-         * maps the variables indexes in the tape of the reduced model to 
+         * maps the variables indexes in the tape of the reduced model to
          * the  new tape indexes in the model with less equations and
          * variables (removed variables have negative indexes)
          */
@@ -443,7 +486,7 @@ protected:
 
         if (this->verbosity_ >= Verbosity::High)
             log() << "Reducing total number of equations by symbolic manipulation:" << std::endl;
-        
+
         for (Vnode<Base>* dummy : dummyD_) {
 
             /**
@@ -540,7 +583,7 @@ protected:
         }
 
         /**
-         * Implement the model after after the reduction of equations and 
+         * Implement the model after after the reduction of equations and
          * variables by substitution
          */
         std::unique_ptr<ADFun<CGBase> > shortFun(generateReorderedModel(handler, res0,
@@ -557,10 +600,10 @@ protected:
 
     /**
      * Attempts to generate a semi-explicit DAE.
-     * 
+     *
      * @param reorder place all the differential equations and variables
      *                together
-     * @param differentialEqs 
+     * @param differentialEqs
      * @return The new semi-explicit DAE model with less variables (without
      *         the time derivative variables)
      * @throws CGException on failure
@@ -788,8 +831,8 @@ protected:
                         } while (assigned > 0);
 
                         /**
-                         * assign dummy derivatives that can only be solved by a single 
-                         * equation 
+                         * assign dummy derivatives that can only be solved by a single
+                         * equation
                          */
                         assigned = 0;
                         for (Vnode<Base>* j : dummyVariables) {
@@ -806,7 +849,7 @@ protected:
                     } while (assigned > 0);
 
                     /**
-                     * assign equations that can only be used to solve for 
+                     * assign equations that can only be used to solve for
                      * a single variable
                      */
                     assigned = 0;
@@ -1219,7 +1262,7 @@ protected:
 
         /**
          * the model must be called with the handler order
-         * 
+         *
          * removed variables using substitution are taken out from the list
          * of independent variables in the handler
          */
@@ -1358,9 +1401,10 @@ protected:
         }
 
         /**
-         * Determine the columns that must be removed
+         * Determine the columns/variables that must be removed
          */
         std::set<size_t> excludeCols;
+        std::set<size_t> avoidCols;
         for (size_t j = 0; j < vars.size(); j++) {
             Vnode<Base>* jj = vars[j];
             bool notZero = false;
@@ -1375,66 +1419,103 @@ protected:
             if (!notZero) {
                 // all zeros: must not choose this column/variable
                 excludeCols.insert(j);
+            } else if (avoidAsDummy_.find(vars[j]->name()) != avoidAsDummy_.end()) {
+                // avoid using this column/variable if there are other alternatives
+                avoidCols.insert(j);
             }
+        }
+
+        if (eqs.size() <= vars.size() - (excludeCols.size() + avoidCols.size())) {
+            // there might be sufficient alternatives to avoid using the columns/variables disabled by the user
+            excludeCols.insert(avoidCols.begin(), avoidCols.end());
+        } else {
+            if (this->verbosity_ >= Verbosity::Low)
+                log() << "Must use variables defined to be avoided by the user!\n";
         }
 
         std::vector<Vnode<Base>* > varsLocal;
-        varsLocal.reserve(vars.size() - excludeCols.size());
-        for (size_t j = 0; j < vars.size(); j++) {
-            if (excludeCols.find(j) == excludeCols.end()) {
-                varsLocal.push_back(vars[j]);
-            }
-        }
 
+        Eigen::ColPivHouseholderQR<MatrixB> qr;
 
-        work.setZero(eqs.size(), varsLocal.size());
-
-        // determine the rows that only contain a single nonzero (a single column)
-        for (size_t i = 0; i < eqs.size(); i++) {
-            Enode<Base>* ii = eqs[i];
-            for (size_t j = 0; j < varsLocal.size(); j++) {
-                Vnode<Base>* jj = varsLocal[j];
-                Base val = jacobian_.coeff(ii->index() - diffEqStart_, jj->index() - diffVarStart_);
-                if (val != Base(0.0)) {
-                    work(i, j) = val;
+        auto orderColumns = [&]() {
+            varsLocal.reserve(vars.size() - excludeCols.size());
+            for (size_t j = 0; j < vars.size(); j++) {
+                if (excludeCols.find(j) == excludeCols.end()) {
+                    varsLocal.push_back(vars[j]);
                 }
             }
+
+
+            work.setZero(eqs.size(), varsLocal.size());
+
+            // determine the rows that only contain a single nonzero (a single column)
+            for (size_t i = 0; i < eqs.size(); i++) {
+                Enode<Base>* ii = eqs[i];
+                for (size_t j = 0; j < varsLocal.size(); j++) {
+                    const Vnode<Base>* jj = varsLocal[j];
+                    Base val = jacobian_.coeff(ii->index() - diffEqStart_, jj->index() - diffVarStart_);
+                    if (val != Base(0.0)) {
+                        work(i, j) = val;
+                    }
+                }
+            }
+
+            if (this->verbosity_ >= Verbosity::High)
+                log() << "subset Jac:\n" << work << "\n";
+
+            qr.compute(work);
+
+            if (qr.info() != Eigen::Success) {
+                throw CGException("Failed to select dummy derivatives! "
+                                  "QR decomposition of a submatrix of the Jacobian failed!");
+            } else if (qr.rank() < work.rows()) {
+                throw CGException("Failed to select dummy derivatives! "
+                                  "The resulting system is probably singular for the provided data.");
+            }
+
+            using PermutationMatrix = typename Eigen::ColPivHouseholderQR<MatrixB>::PermutationType;
+            using Indices = typename PermutationMatrix::IndicesType;
+
+            const PermutationMatrix& p = qr.colsPermutation();
+            const Indices& indices = p.indices();
+
+            if (this->verbosity_ >= Verbosity::High) {
+                log() << "## matrix Q:\n";
+                MatrixB q = qr.matrixQ();
+                log() << q << "\n";
+                log() << "## matrix R:\n";
+                MatrixB r = qr.matrixR().template triangularView<Eigen::Upper>();
+                log() << r << "\n";
+                log() << "## matrix P: " << indices.transpose() << "\n";
+            }
+
+            if (indices.size() < work.rows()) {
+                throw CGException("Failed to select dummy derivatives! "
+                                  "The resulting system is probably singular for the provided data.");
+            }
+        };
+
+        try {
+            orderColumns();
+        } catch (const CGException& ex) {
+            if (avoidCols.empty()) {
+                throw;
+            }
+
+            if (this->verbosity_ >= Verbosity::Low)
+                log() << "Failed to determine dummy derivatives without the variables defined to be avoided by the user\n";
+
+            // try again with the variables selected to be avoided by the user
+            for (size_t j : avoidCols)
+                excludeCols.erase(j);
+
+            varsLocal.clear();
+
+            orderColumns();
         }
 
-        if (this->verbosity_ >= Verbosity::High)
-            log() << "subset Jac:\n" << work << "\n";
-
-        Eigen::ColPivHouseholderQR<MatrixB> qr(work);
-        qr.compute(work);
-
-        if(qr.info() != Eigen::Success) {
-            throw CGException("Failed to select dummy derivatives! "
-                              "QR decomposition of a submatrix of the Jacobian failed!");
-        } else if (qr.rank() < work.rows()) {
-            throw CGException("Failed to select dummy derivatives! "
-                              "The resulting system is probably singular for the provided data.");
-        }
-        
-        typedef typename Eigen::ColPivHouseholderQR<MatrixB>::PermutationType PermutationMatrix;
-        typedef typename PermutationMatrix::IndicesType Indices;
-
-        const PermutationMatrix& p = qr.colsPermutation();
-        const Indices& indices = p.indices();
-        
-        if (this->verbosity_ >= Verbosity::High) {
-            log() << "## matrix Q:\n";
-            MatrixB q = qr.matrixQ();
-            log() << q << "\n";
-            log() << "## matrix R:\n";
-            MatrixB r = qr.matrixR().template triangularView<Eigen::Upper>();
-            log() << r << "\n";
-            log() << "## matrix P: " << indices.transpose() << "\n";
-        }
-        
-        if (indices.size() < work.rows()) {
-            throw CGException("Failed to select dummy derivatives! "
-                              "The resulting system is probably singular for the provided data.");
-        }
+        const auto& p = qr.colsPermutation();
+        const auto& indices = p.indices();
 
         std::vector<Vnode<Base>* > newDummies;
         if (avoidConvertAlg2DifVars_) {

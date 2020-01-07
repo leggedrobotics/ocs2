@@ -1,33 +1,31 @@
-// $Id$
 # ifndef CPPAD_CORE_DISCRETE_HPP
 # define CPPAD_CORE_DISCRETE_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*
 $begin Discrete$$
 $spell
-	retaping
-	namespace
-	std
-	Eq
-	Cpp
-	const
-	inline
-	Geq
+    retaping
+    namespace
+    std
+    Eq
+    Cpp
+    const
+    inline
+    Geq
 $$
 
 $section Discrete AD Functions$$
-$mindex CPPAD_DISCRETE_FUNCTION$$
 
 
 $head Syntax$$
@@ -67,7 +65,7 @@ where the argument has type $codei%AD<%Base%>%$$.
 $head x$$
 The argument $icode x$$ has prototype
 $codei%
-	const %Base%& %x%
+    const %Base%& %x%
 %$$
 It is the value at which the user provided version of $icode name$$
 is to be evaluated.
@@ -75,14 +73,14 @@ is to be evaluated.
 $head y$$
 The result $icode y$$ has prototype
 $codei%
-	%Base% %y%
+    %Base% %y%
 %$$
 It is the return value for the user provided version of $icode name$$.
 
 $head ax$$
 The argument $icode ax$$ has prototype
 $codei%
-	const AD<%Base%>& %ax%
+    const AD<%Base%>& %ax%
 %$$
 It is the value at which the CppAD provided version of $icode name$$
 is to be evaluated.
@@ -90,7 +88,7 @@ is to be evaluated.
 $head ay$$
 The result $icode ay$$ has prototype
 $codei%
-	AD<%Base%> %ay%
+    AD<%Base%> %ay%
 %$$
 It is the return value for the CppAD provided version of $icode name$$.
 
@@ -98,7 +96,7 @@ It is the return value for the CppAD provided version of $icode name$$.
 $head Create AD Version$$
 The preprocessor macro invocation
 $codei%
-	CPPAD_DISCRETE_FUNCTION(%Base%, %name%)
+    CPPAD_DISCRETE_FUNCTION(%Base%, %name%)
 %$$
 defines the $codei%AD<%Base%>%$$ version of $icode name$$.
 This can be with in a namespace (not the $code CppAD$$ namespace)
@@ -120,16 +118,16 @@ All the derivatives of $icode name$$ will be evaluated as zero.
 $head Parallel Mode$$
 The first call to
 $codei%
-	%ay% = %name%(%ax%)
+    %ay% = %name%(%ax%)
 %$$
 must not be in $cref/parallel/ta_in_parallel/$$ execution mode.
 
 
 $head Example$$
 $children%
-	example/tape_index.cpp%
-	example/interp_onetape.cpp%
-	example/interp_retape.cpp
+    example/general/tape_index.cpp%
+    example/general/interp_onetape.cpp%
+    example/general/interp_retape.cpp
 %$$
 The file
 $cref tape_index.cpp$$
@@ -166,7 +164,7 @@ user define discrete functions
 /*!
 \def CPPAD_DISCRETE_FUNCTION(Base, name)
 Defines the function <code>name(ax, ay)</code>
-where \c ax and \c ay are vectors with <code>AD<Base></code> elements.
+where ax and ay are vectors with <code>AD<Base></code> elements.
 
 \par Base
 is the base type for the discrete function.
@@ -193,110 +191,149 @@ the CPPAD_DISCRETE_FUNCTION macro; see static object in that macro.
 */
 template <class Base>
 class discrete {
-	/// parallel_ad needs to call List to initialize static
-	template <class Type>
-	friend void parallel_ad(void);
+    /// parallel_ad needs to call List to initialize static
+    template <class Type>
+    friend void parallel_ad(void);
 
-	/// type for the user routine that computes function values
-	typedef Base (*F) (const Base& x);
+    /// type for the user routine that computes function values
+    typedef Base (*F) (const Base& x);
 private:
-	/// name of this user defined function
-	const std::string name_;
-	/// user's implementation of the function for Base operations
-	const F              f_;
-	/// index of this objec in the vector of all objects for this class
-	const size_t     index_;
+    /// name of this user defined function
+    const std::string name_;
+    /// user's implementation of the function for Base operations
+    const F              f_;
+    /// index of this objec in the vector of all objects for this class
+    const size_t     index_;
 
-	/*!
-	List of all objects in this class.
+    /*!
+    List of all objects in this class.
 
-	If we use CppAD::vector for this vector, it will appear that
-	there is a memory leak because this list is not distroyed before
-	thread_alloc::free_available(thread) is called by the testing routines.
-	*/
-	static std::vector<discrete *>& List(void)
-	{	CPPAD_ASSERT_FIRST_CALL_NOT_PARALLEL;
-		static std::vector<discrete *> list;
-		return list;
-	}
+    If we use CppAD::vector for this vector, it will appear that
+    there is a memory leak because this list is not distroyed before
+    thread_alloc::free_available(thread) is called by the testing routines.
+    */
+    static std::vector<discrete *>& List(void)
+    {   CPPAD_ASSERT_FIRST_CALL_NOT_PARALLEL;
+        static std::vector<discrete *> list;
+        return list;
+    }
 public:
-	/*!
-	Constructor called for each invocation of CPPAD_DISCRETE_FUNCTION.
+    /*!
+    Constructor called for each invocation of CPPAD_DISCRETE_FUNCTION.
 
-	Put this object in the list of all objects for this class and set
-	the constant private data name_, f_, and index_.
+    Put this object in the list of all objects for this class and set
+    the constant private data name_, f_, and index_.
 
-	\param Name
-	is the user's name for this discrete function.
+    \param Name
+    is the user's name for this discrete function.
 
-	\param f
-	user routine that implements this function for \c Base class.
+    \param f
+    user routine that implements this function for Base class.
 
-	\par
-	This constructor can ont be used in parallel mode because it changes
-	the static object \c List.
-	*/
-	discrete(const char* Name, F f) :
-	name_(Name)
-	, f_(f)
-	, index_( List().size() )
-	{
-		CPPAD_ASSERT_KNOWN(
-			! thread_alloc::in_parallel() ,
-			"discrete: First call the function *Name is in parallel mode."
-		);
-		List().push_back(this);
-	}
+    \par
+    This constructor can ont be used in parallel mode because it changes
+    the static object List.
+    */
+    discrete(const char* Name, F f) :
+    name_(Name)
+    , f_(f)
+    , index_( List().size() )
+    {
+        CPPAD_ASSERT_KNOWN(
+            ! thread_alloc::in_parallel() ,
+            "discrete: First call the function *Name is in parallel mode."
+        );
+        List().push_back(this);
+    }
 
-	/*!
-	Implement the user call to <code>ay = name(ax)</code>.
+    /*!
+    Implement the user call to <code>ay = name(ax)</code>.
 
-	\param ax
-	is the argument for this call.
+    \param ax
+    is the argument for this call.
 
-	\return
-	the return value is called \c ay above.
-	*/
-	AD<Base> ad(const AD<Base> &ax) const
-	{	AD<Base> ay;
+    \return
+    the return value is called ay above.
+    */
+    AD<Base> ad(const AD<Base> &ax) const
+    {
+        CPPAD_ASSERT_KNOWN(
+            size_t( std::numeric_limits<addr_t>::max() ) >= index_,
+            "discrete: cppad_tape_addr_type maximum not large enough"
+        );
+        //
+        AD<Base> ay;
+        ay.value_ = f_(ax.value_);
+        //
+        // check if there is a recording in progress
+        local::ADTape<Base>* tape = AD<Base>::tape_ptr();
+        if( tape == CPPAD_NULL )
+            return ay;
+        //
+        // check if argument is a constant parameter
+        if( ax.tape_id_ != tape->id_ )
+            return ay;
+        //
+        if( ax.ad_type_ == dynamic_enum )
+        {
+            // tape dynamic paramter operation
+            ay.taddr_   = tape->Rec_.put_dyn_par(
+                ay.value_, local::dis_dyn, addr_t(index_), ax.taddr_
+            );
+            ay.tape_id_  = ax.tape_id_;
+            ay.ad_type_  = dynamic_enum;
 
-		ay.value_ = f_(ax.value_);
-		if( Variable(ax) )
-		{	local::ADTape<Base> *tape = ax.tape_this();
-			CPPAD_ASSERT_UNKNOWN( local::NumRes(local::DisOp) == 1 );
-			CPPAD_ASSERT_UNKNOWN( local::NumArg(local::DisOp) == 2 );
+            // make result a dynamic parameter
+            ay.tape_id_    = tape->id_;
+            ay.ad_type_    = dynamic_enum;
 
-			// put operand addresses in the tape
-			tape->Rec_.PutArg(index_, ax.taddr_);
-			// put operator in the tape
-			ay.taddr_ = tape->Rec_.PutOp(local::DisOp);
-			// make result a variable
-			ay.tape_id_    = tape->id_;
+            CPPAD_ASSERT_UNKNOWN( Dynamic(ay) );
+        }
+        else if( ax.ad_type_ == variable_enum )
+        {
+            CPPAD_ASSERT_UNKNOWN( local::NumRes(local::DisOp) == 1 );
+            CPPAD_ASSERT_UNKNOWN( local::NumArg(local::DisOp) == 2 );
 
-			CPPAD_ASSERT_UNKNOWN( Variable(ay) );
-		}
-		return ay;
-	}
+            // put operand addresses in the tape
+            CPPAD_ASSERT_KNOWN(
+                size_t( std::numeric_limits<addr_t>::max() ) >= index_,
+                "discrete: cppad_tape_addr_type maximum not large enough"
+            );
+            tape->Rec_.PutArg(addr_t(index_), ax.taddr_);
+            // put operator in the tape
+            ay.taddr_ = tape->Rec_.PutOp(local::DisOp);
+            // make result a variable
+            ay.tape_id_    = tape->id_;
+            ay.ad_type_    = variable_enum;
 
-	/// Name corresponding to a discrete object
-	static const char* name(size_t index)
-	{	return List()[index]->name_.c_str(); }
+            CPPAD_ASSERT_UNKNOWN( Variable(ay) );
+        }
+        else
+        {   // other types not yet being used and should have this tape id
+            CPPAD_ASSERT_UNKNOWN(false);
+        }
+        return ay;
+    }
 
-	/*!
-	Link from forward mode sweep to users routine
+    /// Name corresponding to a discrete object
+    static const char* name(size_t index)
+    {   return List()[index]->name_.c_str(); }
 
-	\param index
-	index for this function in the list of all discrete object
+    /*!
+    Link from forward mode sweep to users routine
 
-	\param x
-	argument value at which to evaluate this function
-	*/
-	static Base eval(size_t index, const Base& x)
-	{
-		CPPAD_ASSERT_UNKNOWN(index < List().size() );
+    \param index
+    index for this function in the list of all discrete object
 
-		return List()[index]->f_(x);
-	}
+    \param x
+    argument value at which to evaluate this function
+    */
+    static Base eval(size_t index, const Base& x)
+    {
+        CPPAD_ASSERT_UNKNOWN(index < List().size() );
+
+        return List()[index]->f_(x);
+    }
 };
 
 } // END_CPPAD_NAMESPACE

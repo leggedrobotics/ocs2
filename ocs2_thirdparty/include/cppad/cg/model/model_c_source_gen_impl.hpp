@@ -16,7 +16,6 @@
  */
 
 #include <typeinfo>
-#include <memory>
 
 namespace CppAD {
 namespace cg {
@@ -198,7 +197,12 @@ void ModelCSourceGen<Base>::generateInfoSource() {
     std::unique_ptr<VariableNameGenerator<Base> > nameGen(createVariableNameGenerator());
 
     _cache.str("");
-    _cache << "void " << funcName << "(const char** baseName, unsigned long* m, unsigned long* n, unsigned int* indCount, unsigned int* depCount) {\n"
+    LanguageC<Base>::printFunctionDeclaration(_cache, "void", funcName, {"const char** baseName",
+                                                                         "unsigned long* m",
+                                                                         "unsigned long* n",
+                                                                         "unsigned int* indCount",
+                                                                         "unsigned int* depCount"});
+    _cache << " {\n"
             "   *baseName = \"" << _baseTypeName << "  " << localBaseName << "\";\n"
             "   *m = " << _fun.Range() << ";\n"
             "   *n = " << _fun.Domain() << ";\n"
@@ -214,10 +218,12 @@ void ModelCSourceGen<Base>::generateAtomicFuncNames() {
     std::string funcName = _name + "_" + FUNCTION_ATOMIC_FUNC_NAMES;
     size_t n = _atomicFunctions.size();
     _cache.str("");
-    _cache << "void " << funcName << "(const char*** names, unsigned long* n) {\n"
+    LanguageC<Base>::printFunctionDeclaration(_cache, "void", funcName, {"const char*** names",
+                                                                         "unsigned long* n"});
+    _cache << " {\n"
             "   static const char* atomic[" << n << "] = {";
     for (size_t i = 0; i < n; i++) {
-        if (i > 0)_cache << ", ";
+        if (i > 0) _cache << ", ";
         _cache << "\"" << _atomicFunctions[i] << "\"";
     }
     _cache << "};\n"
@@ -233,17 +239,17 @@ bool ModelCSourceGen<Base>::isAtomicsUsed() {
     if (_zeroEvaluated) {
         return _atomicFunctions.size() > 0;
     } else {
-        return !getAtomicsIndeps().empty();
+        return !getAtomicsInfo().empty();
     }
 }
 
 template<class Base>
-const std::map<size_t, std::set<size_t> >& ModelCSourceGen<Base>::getAtomicsIndeps() {
-    if (_atomicsIndeps == nullptr) {
+const std::map<size_t, AtomicUseInfo<Base> >& ModelCSourceGen<Base>::getAtomicsInfo() {
+    if (_atomicsInfo == nullptr) {
         AtomicDependencyLocator<Base> adl(_fun);
-        _atomicsIndeps = new std::map<size_t, std::set<size_t> >(adl.findAtomicsUsage());
+        _atomicsInfo = new std::map<size_t, AtomicUseInfo<Base> >(adl.findAtomicsUsage());
     }
-    return *_atomicsIndeps;
+    return *_atomicsInfo;
 }
 
 template<class Base>
@@ -253,7 +259,7 @@ std::vector<typename ModelCSourceGen<Base>::Color> ModelCSourceGen<Base>::colorB
 
     /**
      * try not match the columns of each row to a color which did not have
-     * those columns yet 
+     * those columns yet
      */
     size_t c_used = 0;
     for (size_t i = 0; i < sparsity.size(); i++) {
@@ -314,6 +320,7 @@ void ModelCSourceGen<Base>::generateGlobalDirectionalFunctionSource(const std::s
      */
     LanguageC<Base> langC(_baseTypeName);
     std::string argsDcl = langC.generateDefaultFunctionArgumentsDcl();
+    std::vector<std::string> argsDcl2 = langC.generateDefaultFunctionArgumentsDcl2();
     std::string args = langC.generateDefaultFunctionArguments();
 
     _cache.str("");
@@ -324,8 +331,8 @@ void ModelCSourceGen<Base>::generateGlobalDirectionalFunctionSource(const std::s
     _cache << LanguageC<Base>::ATOMICFUN_STRUCT_DEFINITION << "\n\n";
     generateFunctionDeclarationSource(_cache, model_function, suffix, elements, argsDcl);
     _cache << "\n";
-    _cache << "int " << model_function << "("
-            "unsigned long pos, " << argsDcl << ") {\n"
+    LanguageC<Base>::printFunctionDeclaration(_cache, "int", model_function, {"unsigned long pos"}, argsDcl2);
+    _cache << " {\n"
             "   switch(pos) {\n";
     for (const auto& it : elements) {
         // the size of each sparsity row
@@ -365,9 +372,9 @@ void ModelCSourceGen<Base>::generateFunctionDeclarationSource(std::ostringstream
 template<class Base>
 void ModelCSourceGen<Base>::generateSparsity1DSource(const std::string& function,
                                                      const std::vector<size_t>& sparsity) {
-    _cache << "void " << function << "("
-            "unsigned long const** sparsity,"
-            " unsigned long* nnz) {\n";
+    LanguageC<Base>::printFunctionDeclaration(_cache, "void", function, {"unsigned long const** sparsity",
+                                                                         "unsigned long* nnz"});
+    _cache << " {\n";
 
     // the size of each sparsity row
     _cache << "   ";
@@ -386,10 +393,10 @@ void ModelCSourceGen<Base>::generateSparsity2DSource(const std::string& function
 
     CPPADCG_ASSERT_UNKNOWN(rows.size() == cols.size());
 
-    _cache << "void " << function << "("
-            "unsigned long const** row,"
-            " unsigned long const** col,"
-            " unsigned long* nnz) {\n";
+    LanguageC<Base>::printFunctionDeclaration(_cache, "void", function, {"unsigned long const** row",
+                                                                         "unsigned long const** col",
+                                                                         "unsigned long* nnz"});
+    _cache << " {\n";
 
     // the size of each sparsity row
     _cache << "   ";
@@ -407,18 +414,25 @@ void ModelCSourceGen<Base>::generateSparsity2DSource(const std::string& function
 template<class Base>
 void ModelCSourceGen<Base>::generateSparsity2DSource2(const std::string& function,
                                                       const std::vector<LocalSparsityInfo>& sparsities) {
-    _cache << "void " << function << "("
-            "unsigned long i,"
-            "unsigned long const** row,"
-            " unsigned long const** col,"
-            " unsigned long* nnz) {\n";
+    LanguageC<Base>::printFunctionDeclaration(_cache, "void", function, {"unsigned long i",
+                                                                         "unsigned long const** row",
+                                                                         "unsigned long const** col",
+                                                                         "unsigned long* nnz"});
+    _cache << " {\n";
 
     std::ostringstream os;
+
+    std::vector<size_t> nnzs(sparsities.size());
+
+    long long int maxNnzIndex = -1;
 
     for (size_t i = 0; i < sparsities.size(); i++) {
         const std::vector<size_t>& rows = sparsities[i].rows;
         const std::vector<size_t>& cols = sparsities[i].cols;
         CPPADCG_ASSERT_UNKNOWN(rows.size() == cols.size());
+
+        nnzs[i] = rows.size();
+
         if (!rows.empty()) {
             os.str("");
             os << "rows" << i;
@@ -429,62 +443,120 @@ void ModelCSourceGen<Base>::generateSparsity2DSource2(const std::string& functio
             os << "cols" << i;
             _cache << "   ";
             LanguageC<Base>::printStaticIndexArray(_cache, os.str(), cols);
+
+            maxNnzIndex = i;
         }
     }
 
-    _cache << "   switch(i) {\n";
-    for (size_t i = 0; i < sparsities.size(); i++) {
-        // the size of each sparsity
-        if (!sparsities[i].rows.empty()) {
-            _cache << "   case " << i << ":\n"
-                    "      *row = rows" << i << ";\n"
-                    "      *col = cols" << i << ";\n"
-                    "      *nnz = " << sparsities[i].rows.size() << ";\n"
-                    "      break;\n";
+    maxNnzIndex++;
+    nnzs.resize(maxNnzIndex);
+
+    auto makeArrayOfArrays = [&, this](const std::string& name) {
+        _cache << "   static " << LanguageC<Base>::U_INDEX_TYPE << " const * const " << name << "[" << maxNnzIndex
+               << "] = {";
+        for (size_t i = 0; i < size_t(maxNnzIndex); i++) {
+            if (i > 0) {
+                _cache << ", ";
+            }
+            if (sparsities[i].rows.empty()) {
+                _cache << "0";
+            } else {
+                _cache << name << i;
+            }
         }
+        _cache << "};\n";
+    };
+
+    if (maxNnzIndex > 0) {
+        makeArrayOfArrays("rows");
+        makeArrayOfArrays("cols");
+
+        _cache << "   ";
+        LanguageC<Base>::printStaticIndexArray(_cache, "nnzs", nnzs);
+
+        _cache << "\n";
+
+        _cache << "   if(i < " << maxNnzIndex << ") {\n"
+                "      *row = rows[i];\n"
+                "      *col = cols[i];\n"
+                "      *nnz = nnzs[i];\n"
+                "   } else {\n"
+                "      *row = 0;\n"
+                "      *col = 0;\n"
+                "      *nnz = 0;\n"
+                "   }\n";
+    } else {
+        _cache << "   *row = 0;\n"
+                "   *col = 0;\n"
+                "   *nnz = 0;\n";
     }
 
-    _cache << "   default:\n"
-            "      *row = 0;\n"
-            "      *col = 0;\n"
-            "      *nnz = 0;\n"
-            "   break;\n"
-            "   };\n"
-            "}\n";
+    _cache << "}\n";
 }
 
 template<class Base>
 void ModelCSourceGen<Base>::generateSparsity1DSource2(const std::string& function,
                                                       const std::map<size_t, std::vector<size_t> >& elements) {
+    LanguageC<Base>::printFunctionDeclaration(_cache, "void", function, {"unsigned long pos",
+                                                                         "unsigned long const** elements",
+                                                                         "unsigned long* nnz"});
+    _cache << " {\n";
 
-    _cache << "void " << function << "("
-            "unsigned long pos,"
-            " unsigned long const** elements,"
-            " unsigned long* nnz) {\n";
+    std::vector<size_t> nnzs(elements.empty()? 0: elements.rbegin()->first + 1);
+
+    long long int maxNnzIndex = -1;
 
     for (const auto& it : elements) {
         // the size of each sparsity row
         const std::vector<size_t>& els = it.second;
-        _cache << "   ";
-        std::ostringstream os;
-        os << "elements" << it.first;
-        LanguageC<Base>::printStaticIndexArray(_cache, os.str(), els);
+        if (!els.empty()) {
+            _cache << "   ";
+            std::ostringstream os;
+            os << "els" << it.first;
+            LanguageC<Base>::printStaticIndexArray(_cache, os.str(), els);
+
+            maxNnzIndex = it.first;
+            nnzs[it.first] = els.size();
+        }
     }
 
-    _cache << "   switch(pos) {\n";
-    for (const auto& it : elements) {
-        // the size of each sparsity row
-        _cache << "   case " << it.first << ":\n"
-                "      *elements = elements" << it.first << ";\n"
-                "      *nnz = " << it.second.size() << ";\n"
-                "      break;\n";
+    maxNnzIndex++;
+    nnzs.resize(maxNnzIndex);
+
+    if (maxNnzIndex > 0) {
+        _cache << "   static " << LanguageC<Base>::U_INDEX_TYPE << " const * const els[" << maxNnzIndex << "] = {";
+        auto it = elements.begin();
+        for (size_t i = 0; i < size_t(maxNnzIndex); i++) {
+            if (i > 0) {
+                _cache << ", ";
+            }
+            if (it == elements.end() || i != it->first) {
+                _cache << "0";
+            } else {
+                _cache << "els" << i;
+                ++it;
+            }
+        }
+        _cache << "};\n";
+
+        _cache << "   ";
+        LanguageC<Base>::printStaticIndexArray(_cache, "nnzs", nnzs);
+
+        _cache << "\n";
+
+        _cache << "   if(pos < " << maxNnzIndex << ") {\n"
+                "      *elements = els[pos];\n"
+                "      *nnz = nnzs[pos];\n"
+                "   } else {\n"
+                "      *elements = 0;\n"
+                "      *nnz = 0;\n"
+                "   }\n";
+    } else {
+        _cache << "   *elements = 0;\n"
+                "   *nnz = 0;\n";
     }
-    _cache << "   default:\n"
-            "      *elements = 0;\n"
-            "      *nnz = 0;\n"
-            "   break;\n"
-            "   };\n"
-            "}\n";
+
+    _cache << "}\n";
 }
 
 template<class Base>
@@ -514,17 +586,17 @@ inline std::vector<std::set<size_t> > ModelCSourceGen<Base>::determineOrderByCol
                                                                                  const std::vector<size_t>& colElements,
                                                                                  const std::vector<size_t>& userRows,
                                                                                  const std::vector<size_t>& userCols) {
-        std::vector<std::set<size_t> > userLocationCol(colElements.size());
+    std::vector<std::set<size_t> > userLocationCol(colElements.size());
 
-        for (size_t er = 0; er < colElements.size(); er++) {
-            size_t row = colElements[er];
-            for (size_t e = 0; e < userRows.size(); e++) {
-                if (userRows[e] == row && userCols[e] == col) {
-                    userLocationCol[er].insert(e);
-                    break;
-                }
+    for (size_t er = 0; er < colElements.size(); er++) {
+        size_t row = colElements[er];
+        for (size_t e = 0; e < userRows.size(); e++) {
+            if (userRows[e] == row && userCols[e] == col) {
+                userLocationCol[er].insert(e);
+                break;
             }
         }
+    }
 
     return userLocationCol;
 }
@@ -744,7 +816,7 @@ inline void ModelCSourceGen<Base>::finishedJob() {
 }
 
 /**
- * 
+ *
  * Specializations
  */
 template<>

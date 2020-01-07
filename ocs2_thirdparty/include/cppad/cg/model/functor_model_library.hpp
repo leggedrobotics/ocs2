@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2013 Ciengis
+ *    Copyright (C) 2018 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -20,7 +21,7 @@ namespace cg {
 
 /**
  * Abstract class used to load models
- * 
+ *
  * @author Joao Leal
  */
 template<class Base>
@@ -43,7 +44,7 @@ protected:
     unsigned int (*_getThreadPoolNumberOfTimeMeas)();
 public:
 
-    virtual std::set<std::string> getModelNames() override {
+    std::set<std::string> getModelNames() override {
         return _modelNames;
     }
 
@@ -51,16 +52,20 @@ public:
      * Creates a new FunctorGenericModel object that can be used to evaluate
      * the model.
      * This object must be released by the user!
-     * 
+     *
      * @param modelName The model name.
-     * @return The model object (must be released by the user) or nullptr if 
-     *         no model exists with the provided name 
+     * @return The model object or nullptr if no model exists with the provided
+     *         name.
      */
-    virtual FunctorGenericModel<Base>* model(const std::string& modelName) = 0;
+    virtual std::unique_ptr<FunctorGenericModel<Base>> modelFunctor(const std::string& modelName) = 0;
+
+    std::unique_ptr<GenericModel<Base>> model(const std::string& modelName) override final {
+        return std::unique_ptr<GenericModel<Base>> (modelFunctor(modelName).release());
+    }
 
     /**
      * Provides the API version used to create the model library.
-     * 
+     *
      * @return the API version
      */
     virtual unsigned long getAPIVersion() {
@@ -69,11 +74,11 @@ public:
 
     /**
      * Provides a pointer to a function in the model library.
-     * 
+     *
      * @param functionName The name of the function in the dynamic library
      * @param required Whether or not the function symbol must exist in the
      *                 library. If the function is required and does not
-     *                 exist then the CppAD error handler is called, if it 
+     *                 exist then the CppAD error handler is called, if it
      *                 is not required and it does not exist then nullptr is
      *                 return.
      * @return A pointer to the function symbol in the dynamic library if it
@@ -83,86 +88,85 @@ public:
     virtual void* loadFunction(const std::string& functionName,
                                bool required = true) = 0;
 
-    virtual void setThreadPoolDisabled(bool disabled) override {
+    void setThreadPoolDisabled(bool disabled) override {
         if(_setThreadPoolDisabled != nullptr) {
             (*_setThreadPoolDisabled)(disabled);
         }
     }
 
-    virtual bool isThreadPoolDisabled() const {
+    virtual bool isThreadPoolDisabled() const override {
         if(_isThreadPoolDisabled != nullptr) {
             return bool((*_isThreadPoolDisabled)());
         }
         return true;
     }
 
-    virtual unsigned int getThreadNumber() const override {
+    unsigned int getThreadNumber() const override {
         if (_getThreads != nullptr) {
             return (*_getThreads)();
         }
         return 1;
     }
 
-    virtual void setThreadNumber(unsigned int n) override {
+    void setThreadNumber(unsigned int n) override {
         if (_setThreads != nullptr) {
             (*_setThreads)(n);
         }
     }
 
-    virtual ThreadPoolScheduleStrategy getThreadPoolSchedulerStrategy() const override {
+    ThreadPoolScheduleStrategy getThreadPoolSchedulerStrategy() const override {
         if (_getSchedulerStrategy != nullptr) {
             return ThreadPoolScheduleStrategy((*_getSchedulerStrategy)());
         }
         return ThreadPoolScheduleStrategy::DYNAMIC;
     }
 
-    virtual void setThreadPoolSchedulerStrategy(ThreadPoolScheduleStrategy s) override {
+    void setThreadPoolSchedulerStrategy(ThreadPoolScheduleStrategy s) override {
         if (_setSchedulerStrategy != nullptr) {
             (*_setSchedulerStrategy)(int(s));
         }
     }
 
-    virtual void setThreadPoolVerbose(bool v) override {
+    void setThreadPoolVerbose(bool v) override {
         if (_setThreadPoolVerbose != nullptr) {
             (*_setThreadPoolVerbose)(int(v));
         }
     }
 
-    virtual bool isThreadPoolVerbose() const override {
+    bool isThreadPoolVerbose() const override {
         if (_isThreadPoolVerbose != nullptr) {
             return bool((*_isThreadPoolVerbose)());
         }
         return false;
     }
 
-    virtual void setThreadPoolGuidedMaxWork(float v) override {
+    void setThreadPoolGuidedMaxWork(float v) override {
         if (_setThreadPoolGuidedMaxWork != nullptr) {
             (*_setThreadPoolGuidedMaxWork)(v);
         }
     }
 
-    virtual float getThreadPoolGuidedMaxWork() const override {
+    float getThreadPoolGuidedMaxWork() const override {
         if (_getThreadPoolGuidedMaxWork != nullptr) {
             return (*_getThreadPoolGuidedMaxWork)();
         }
         return 1.0;
     }
 
-    virtual void setThreadPoolNumberOfTimeMeas(unsigned int n) override {
+    void setThreadPoolNumberOfTimeMeas(unsigned int n) override {
         if (_setThreadPoolNumberOfTimeMeas != nullptr) {
             (*_setThreadPoolNumberOfTimeMeas)(n);
         }
     }
 
-    virtual unsigned int getThreadPoolNumberOfTimeMeas() const override {
+    unsigned int getThreadPoolNumberOfTimeMeas() const override {
         if (_getThreadPoolNumberOfTimeMeas != nullptr) {
             return (*_getThreadPoolNumberOfTimeMeas)();
         }
         return 0;
     }
 
-    inline virtual ~FunctorModelLibrary() {
-    }
+    inline virtual ~FunctorModelLibrary() = default;
 
 protected:
     FunctorModelLibrary() :

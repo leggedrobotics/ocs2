@@ -1,0 +1,4 @@
+CPPAD version:
+repository: https://github.com/coin-or/CppAD/tree/stable/20190200
+tag: 20190200.5
+commit_hash: 6d82707ef4847d4cb3bf27a4671918ee618512fd

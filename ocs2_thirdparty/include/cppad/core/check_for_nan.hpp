@@ -1,26 +1,25 @@
-// $Id$
 # ifndef CPPAD_CORE_CHECK_FOR_NAN_HPP
 # define CPPAD_CORE_CHECK_FOR_NAN_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 /*
 $begin check_for_nan$$
 $spell
-	std
-	vec
-	Cpp
-	const
-	bool
-	newline
+    std
+    vec
+    Cpp
+    const
+    bool
+    newline
 $$
 $section Check an ADFun Object For Nan Results$$
 
@@ -42,19 +41,19 @@ $head f$$
 For the syntax where $icode b$$ is an argument,
 $icode f$$ has prototype
 $codei%
-	ADFun<%Base%> %f%
+    ADFun<%Base%> %f%
 %$$
 (see $codei%ADFun<%Base%>%$$ $cref/constructor/FunConstruct/$$).
 For the syntax where $icode b$$ is the result,
 $icode f$$ has prototype
 $codei%
-	const ADFun<%Base%> %f%
+    const ADFun<%Base%> %f%
 %$$
 
 $head b$$
 This argument or result has prototype
 $codei%
-	bool %b%
+    bool %b%
 %$$
 Future calls to $icode%f%.Forward%$$ will (will not) check for $code nan$$.
 depending on if $icode b$$ is true (false).
@@ -98,7 +97,7 @@ values that result in a $code nan$$.
 $subhead vec$$
 This argument has prototype
 $codei%
-	CppAD::vector<%Base%>& %vec%
+    CppAD::vector<%Base%>& %vec%
 %$$
 It size must be equal to the corresponding value of
 $cref/vector_size/check_for_nan/Error Message/vector_size/$$
@@ -114,7 +113,7 @@ $icode Base$$.)
 $subhead file$$
 This argument has prototype
 $codei%
-	const std::string& %file%
+    const std::string& %file%
 %$$
 It must be the value of
 $cref/file_name/check_for_nan/Error Message/file_name/$$
@@ -122,12 +121,11 @@ in the corresponding error message.
 
 $head Example$$
 $children%
-	example/check_for_nan.cpp
+    example/general/check_for_nan.cpp
 %$$
 The file
 $cref check_for_nan.cpp$$
 contains an example and test of these operations.
-It returns true if it succeeds and false otherwise.
 
 $end
 */
@@ -150,48 +148,91 @@ $end
 
 namespace CppAD { // BEGIN_CPPAD_NAMESPACE
 
+/*!
+Set check_for_nan
+
+\param value
+new value for this flag.
+*/
+template <class Base, class RecBase>
+void ADFun<Base,RecBase>::check_for_nan(bool value)
+{   check_for_nan_ = value; }
+
+/*!
+Get check_for_nan
+
+\return
+current value of check_for_nan_.
+*/
+template <class Base, class RecBase>
+bool ADFun<Base,RecBase>::check_for_nan(void) const
+{   return check_for_nan_; }
+
+/*!
+Stores a vector in a file when nans occur.
+
+\param vec [in]
+is the vector that is stored.
+
+\param [out] file_name
+is the file where the vector is stored
+*/
 template <class Base>
 void put_check_for_nan(const CppAD::vector<Base>& vec, std::string& file_name)
 {
-	size_t char_size       = sizeof(Base) * vec.size();
-	const char* char_ptr   = reinterpret_cast<const char*>( vec.data() );
+    size_t char_size = sizeof(Base) * vec.size();
+    // 2DO: add vec.data() to C11 tests and use it when C11 true
+    // const char* char_ptr   = reinterpret_cast<const char*>( vec.data() );
+    const char* char_ptr   = reinterpret_cast<const char*>( &vec[0] );
+
 # if CPPAD_HAS_MKSTEMP
-	char pattern[] = "/tmp/fileXXXXXX";
-	int fd = mkstemp(pattern);
-	file_name = pattern;
-	write(fd, char_ptr, char_size);
-	close(fd);
+    char pattern[] = "/tmp/fileXXXXXX";
+    int fd = mkstemp(pattern);
+    file_name = pattern;
+    write(fd, char_ptr, char_size);
+    close(fd);
 # else
 # if CPPAD_HAS_TMPNAM_S
-		std::vector<char> name(L_tmpnam_s);
-		if( tmpnam_s( name.data(), L_tmpnam_s ) != 0 )
-		{	CPPAD_ASSERT_KNOWN(
-				false,
-				"Cannot create a temporary file name"
-			);
-		}
-		file_name = name.data();
+        std::vector<char> name(L_tmpnam_s);
+        // if( tmpnam_s( name.data(), L_tmpnam_s ) != 0 )
+        if( tmpnam_s( &name[0], L_tmpnam_s ) != 0 )
+        {   CPPAD_ASSERT_KNOWN(
+                false,
+                "Cannot create a temporary file name"
+            );
+        }
+        // file_name = name.data();
+        file_name = &name[0];
 # else
-		file_name = tmpnam( CPPAD_NULL );
+        file_name = tmpnam( CPPAD_NULL );
 # endif
-	std::fstream file_out(file_name.c_str(), std::ios::out|std::ios::binary );
-	file_out.write(char_ptr, char_size);
-	file_out.close();
+    std::fstream file_out(file_name.c_str(), std::ios::out|std::ios::binary );
+    file_out.write(char_ptr, char_size);
+    file_out.close();
 # endif
-	return;
+    return;
 }
 
+/*!
+Gets a vector that was stored by put_check_for_nan.
+
+\param vec [out]
+is the vector that is stored.
+
+\param file_name [in]
+is the file where the vector is stored
+*/
 template <class Base>
 void get_check_for_nan(CppAD::vector<Base>& vec, const std::string& file_name)
-{	//
-	size_t n = vec.size();
-	size_t char_size = sizeof(Base) * n;
-	char* char_ptr   = reinterpret_cast<char*>( vec.data() );
-	//
-	std::fstream file_in(file_name.c_str(), std::ios::in|std::ios::binary );
-	file_in.read(char_ptr, char_size);
-	//
-	return;
+{   //
+    std::streamsize char_size = std::streamsize( sizeof(Base) * vec.size() );
+    // char* char_ptr   = reinterpret_cast<char*>( vec.data() );
+    char* char_ptr   = reinterpret_cast<char*>( &vec[0] );
+    //
+    std::fstream file_in(file_name.c_str(), std::ios::in|std::ios::binary );
+    file_in.read(char_ptr, char_size);
+    //
+    return;
 }
 
 } // END_CPPAD_NAMESPACE

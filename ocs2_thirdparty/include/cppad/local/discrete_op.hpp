@@ -1,20 +1,19 @@
-// $Id: discrete_op.hpp 3757 2015-11-30 12:03:07Z bradbell $
-# ifndef CPPAD_DISCRETE_OP_HPP
-# define CPPAD_DISCRETE_OP_HPP
-
+# ifndef CPPAD_LOCAL_DISCRETE_OP_HPP
+# define CPPAD_LOCAL_DISCRETE_OP_HPP
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-15 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 
-namespace CppAD { // BEGIN_CPPAD_NAMESPACE
+namespace CppAD { namespace local { // BEGIN_CPPAD_LOCAL_NAMESPACE
 /*!
 \file discrete_op.hpp
 Forward mode for z = f(x) where f is piecewise constant.
@@ -26,15 +25,15 @@ forward mode Taylor coefficient for result of op = DisOp.
 
 The C++ source code corresponding to this operation is
 \verbatim
-	z = f(x)
+    z = f(x)
 \endverbatim
 where f is a piecewise constant function (and it's derivative is always
 calculated as zero).
 
 \tparam Base
 base type for the operator; i.e., this operation was recorded
-using AD< \a Base > and computations by this routine are done using type
-\a Base .
+using AD< Base > and computations by this routine are done using type
+ Base .
 
 \param p
 is the lowest order Taylor coefficient that will be calculated.
@@ -48,18 +47,18 @@ that will be calculated (except for order zero wich only has one direction).
 
 \param i_z
 variable index corresponding to the result for this operation;
-i.e. the row index in \a taylor corresponding to z.
+i.e. the row index in taylor corresponding to z.
 
 \param arg
-\a arg[0]
+ arg[0]
 \n
 is the index, in the order of the discrete functions defined by the user,
 for this discrete function.
 \n
 \n
-\a arg[1]
+ arg[1]
 variable index corresponding to the argument for this operator;
-i.e. the row index in \a taylor corresponding to x.
+i.e. the row index in taylor corresponding to x.
 
 \param cap_order
 maximum number of orders that will fit in the taylor array.
@@ -88,35 +87,35 @@ is the k-th order Taylor coefficient corresponding to z
 \li 0 < r
 */
 template <class Base>
-inline void forward_dis_op(
-	size_t        p           ,
-	size_t        q           ,
-	size_t        r           ,
-	size_t        i_z         ,
-	const addr_t* arg         ,
-	size_t        cap_order   ,
-	Base*         taylor      )
+void forward_dis_op(
+    size_t        p           ,
+    size_t        q           ,
+    size_t        r           ,
+    size_t        i_z         ,
+    const addr_t* arg         ,
+    size_t        cap_order   ,
+    Base*         taylor      )
 {
-	// check assumptions
-	CPPAD_ASSERT_UNKNOWN( NumArg(DisOp) == 2 );
-	CPPAD_ASSERT_UNKNOWN( NumRes(DisOp) == 1 );
-	CPPAD_ASSERT_UNKNOWN( q < cap_order );
-	CPPAD_ASSERT_UNKNOWN( 0 < r );
+    // check assumptions
+    CPPAD_ASSERT_UNKNOWN( NumArg(DisOp) == 2 );
+    CPPAD_ASSERT_UNKNOWN( NumRes(DisOp) == 1 );
+    CPPAD_ASSERT_UNKNOWN( q < cap_order );
+    CPPAD_ASSERT_UNKNOWN( 0 < r );
 
-	// Taylor coefficients corresponding to argument and result
-	size_t num_taylor_per_var = (cap_order-1) * r + 1;
-	Base* x = taylor + arg[1] * num_taylor_per_var;
-	Base* z = taylor +    i_z * num_taylor_per_var;
+    // Taylor coefficients corresponding to argument and result
+    size_t num_taylor_per_var = (cap_order-1) * r + 1;
+    Base* x = taylor + size_t(arg[1]) * num_taylor_per_var;
+    Base* z = taylor +    i_z * num_taylor_per_var;
 
-	if( p == 0 )
-	{	z[0]  = discrete<Base>::eval(arg[0], x[0]);
-		p++;
-	}
-	for(size_t ell = 0; ell < r; ell++)
-		for(size_t k = p; k <= q; k++)
-			z[ (k-1) * r + 1 + ell ] = Base(0);
+    if( p == 0 )
+    {   z[0]  = discrete<Base>::eval(size_t(arg[0]), x[0]);
+        p++;
+    }
+    for(size_t ell = 0; ell < r; ell++)
+        for(size_t k = p; k <= q; k++)
+            z[ (k-1) * r + 1 + ell ] = Base(0.0);
 }
 
 
-} // END_CPPAD_NAMESPACE
+} } // END_CPPAD_LOCAL_NAMESPACE
 # endif

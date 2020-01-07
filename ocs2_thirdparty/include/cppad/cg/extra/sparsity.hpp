@@ -1,5 +1,5 @@
-#ifndef CPPAD_EXTRA_SPARSITY_INCLUDED
-#define CPPAD_EXTRA_SPARSITY_INCLUDED
+#ifndef CPPAD_CG_SPARSITY_INCLUDED
+#define CPPAD_CG_SPARSITY_INCLUDED
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2012 Ciengis

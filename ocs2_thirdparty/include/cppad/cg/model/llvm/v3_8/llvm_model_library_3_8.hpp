@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2016 Ciengis
+ *    Copyright (C) 2018 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -22,28 +23,27 @@ template<class Base> class LlvmModel;
 
 /**
  * Class used to load JIT'ed models by LLVM 3.8
- * 
+ *
  * @author Joao Leal
  */
 template<class Base>
 class LlvmModelLibrary3_8 : public LlvmModelLibrary<Base> {
 protected:
     llvm::Module* _module; // owned by _executionEngine
-    std::unique_ptr<llvm::LLVMContext> _context;
+    std::shared_ptr<llvm::LLVMContext> _context;
     std::unique_ptr<llvm::ExecutionEngine> _executionEngine;
     std::unique_ptr<llvm::legacy::FunctionPassManager> _fpm;
 public:
 
-    LlvmModelLibrary3_8(llvm::Module* module,
-                        llvm::LLVMContext* context) :
-        _module(module),
+    LlvmModelLibrary3_8(std::unique_ptr<llvm::Module> module,
+                        std::shared_ptr<llvm::LLVMContext> context) :
+        _module(module.get()),
         _context(context) {
         using namespace llvm;
 
         // Create the JIT.  This takes ownership of the module.
-        std::unique_ptr<llvm::Module> m(_module);
         std::string errStr;
-        _executionEngine.reset(EngineBuilder(std::move(m))
+        _executionEngine.reset(EngineBuilder(std::move(module))
                                .setErrorStr(&errStr)
                                .setEngineKind(EngineKind::JIT)
 #ifndef NDEBUG
@@ -62,7 +62,7 @@ public:
         _fpm->doInitialization();
 
         /**
-         * 
+         *
          */
         this->validate();
     }
@@ -84,7 +84,7 @@ public:
         //_fpm.add(new DataLayoutPass());
     }
 
-    virtual void* loadFunction(const std::string& functionName, bool required = true) override {
+    void* loadFunction(const std::string& functionName, bool required = true) override {
         llvm::Function* func = _module->getFunction(functionName);
         if (func == nullptr) {
             if (required)

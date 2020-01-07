@@ -157,7 +157,7 @@ public:
             }
         }
 
-        size_t bestStart = std::numeric_limits<size_t>::max();
+        size_t bestStart = (std::numeric_limits<size_t>::max)();
         if (itBestFit != _freeArrayStartSpace.rend()) {
             /**
              * Use available space
@@ -199,7 +199,7 @@ public:
                 }
             }
 
-            if (bestStart == std::numeric_limits<size_t>::max()) {
+            if (bestStart == (std::numeric_limits<size_t>::max)()) {
                 // brand new space
                 size_t id = _idArrayCount;
                 _idArrayCount += arraySize;

@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2016 Ciengis
+ *    Copyright (C) 2018 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -63,18 +64,18 @@ protected:
 
 /**
  * A vector for data associated with operation nodes managed by a code handler.
- * 
+ *
  * @author Joao Leal
  */
 template<class Base, class T>
 class CodeHandlerVector : public CodeHandlerVectorSync<Base> {
 public:
-    typedef typename std::vector<T>::iterator iterator;
-    typedef typename std::vector<T>::const_iterator const_iterator;
-    typedef typename std::vector<T>::const_reverse_iterator const_reverse_iterator;
-    typedef typename std::vector<T>::reverse_iterator reverse_iterator;
-    typedef typename std::vector<T>::reference reference;
-    typedef typename std::vector<T>::const_reference const_reference;
+    using iterator = typename std::vector<T>::iterator;
+    using const_iterator = typename std::vector<T>::const_iterator;
+    using const_reverse_iterator = typename std::vector<T>::const_reverse_iterator;
+    using reverse_iterator = typename std::vector<T>::reverse_iterator;
+    using reference = typename std::vector<T>::reference;
+    using const_reference = typename std::vector<T>::const_reference;
 private:
     /**
      * data vector
@@ -104,10 +105,10 @@ public:
     }
 
     inline void adjustSize(const OperationNode<Base>& node) {
-        CPPADCG_ASSERT_UNKNOWN(node.getCodeHandler() == this->handler_);
+        CPPADCG_ASSERT_UNKNOWN(node.getCodeHandler() == this->handler_)
 
         size_t p = node.getHandlerPosition();
-        if (p == std::numeric_limits<size_t>::max())
+        if (p == (std::numeric_limits<size_t>::max)())
             throw CGException("An operation node is not managed by this code handler");
 
         if (p >= data_.size())
@@ -115,35 +116,35 @@ public:
     }
 
     inline reference get(const OperationNode<Base>& node) {
-        CPPADCG_ASSERT_UNKNOWN(node.getCodeHandler() == this->handler_);
+        CPPADCG_ASSERT_UNKNOWN(node.getCodeHandler() == this->handler_)
 
         size_t p = node.getHandlerPosition();
-        if (p == std::numeric_limits<size_t>::max())
+        if (p == (std::numeric_limits<size_t>::max)())
             throw CGException("An operation node is not managed by this code handler");
-        CPPADCG_ASSERT_UNKNOWN(p < data_.size());
+        CPPADCG_ASSERT_UNKNOWN(p < data_.size())
 
         return data_[p];
     }
 
     inline const_reference get(const OperationNode<Base>& node) const {
-        CPPADCG_ASSERT_UNKNOWN(node.getCodeHandler() == this->handler_);
+        CPPADCG_ASSERT_UNKNOWN(node.getCodeHandler() == this->handler_)
 
         size_t p = node.getHandlerPosition();
-        if (p == std::numeric_limits<size_t>::max())
+        if (p == (std::numeric_limits<size_t>::max)())
             throw CGException("An operation node is not managed by this code handler");
-        CPPADCG_ASSERT_UNKNOWN(p < data_.size());
+        CPPADCG_ASSERT_UNKNOWN(p < data_.size())
 
         return data_[p];
     }
 
     inline void set(const OperationNode<Base>& node,
                     const T& val) {
-        CPPADCG_ASSERT_UNKNOWN(node.getCodeHandler() == this->handler_);
+        CPPADCG_ASSERT_UNKNOWN(node.getCodeHandler() == this->handler_)
 
         size_t p = node.getHandlerPosition();
-        if (p == std::numeric_limits<size_t>::max())
+        if (p == (std::numeric_limits<size_t>::max)())
             throw CGException("An operation node is not managed by this code handler");
-        CPPADCG_ASSERT_UNKNOWN(p < data_.size());
+        CPPADCG_ASSERT_UNKNOWN(p < data_.size())
 
         data_[node.getHandlerPosition()] = val;
     }
@@ -211,10 +212,10 @@ public:
     }
 protected:
 
-    virtual void nodesErased(size_t start,
-                             size_t end) override {
+    void nodesErased(size_t start,
+                     size_t end) override {
         if (start < data_.size()) {
-            end = std::min(end, data_.size());
+            end = std::min<size_t>(end, data_.size());
             data_.erase(data_.begin() + start, data_.begin() + end);
         }
     }

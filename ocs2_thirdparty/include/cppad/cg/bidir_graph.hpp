@@ -21,8 +21,8 @@ namespace cg {
 template<class Base>
 class PathNodeEdges {
 public:
-    typedef OperationNode<Base> Node;
-    typedef OperationPathNode<Base> Path;
+    using Node = OperationNode<Base>;
+    using Path = OperationPathNode<Base>;
 public:
     std::vector<size_t> arguments;
     std::vector<Path> usage; // parent node and argument index in that node
@@ -34,8 +34,8 @@ public:
 template<class Base>
 class BidirGraph {
 public:
-    typedef OperationNode<Base> Node;
-    typedef typename CodeHandler<Base>::SourceCodePath SourceCodePath;
+    using Node = OperationNode<Base>;
+    using SourceCodePath = typename CodeHandler<Base>::SourceCodePath;
 private:
     std::map<Node*, PathNodeEdges<Base> > graph_;
 public:

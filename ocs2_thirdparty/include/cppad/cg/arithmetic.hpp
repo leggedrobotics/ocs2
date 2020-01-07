@@ -188,43 +188,60 @@ inline CG<Base> operator*(const CG<Base>& left, const Base& right) {
 /*******************************************************************************
  *                        Operations with other types
  ******************************************************************************/
+
 template<class Base, class T>
-inline CG<Base> operator+(const T& left, const CG<Base>& right) {
+inline
+typename std::enable_if<std::is_constructible<Base, const T&>::value, CG<Base> >::type
+operator+(const T& left, const CG<Base>& right) {
     return CG<Base>(Base(left)) + right;
 }
 
 template<class Base, class T>
-inline CG<Base> operator+(const CG<Base>& left, const T& right) {
+inline
+typename std::enable_if<std::is_constructible<Base, const T&>::value, CG<Base> >::type
+operator+(const CG<Base>& left, const T& right) {
     return left + CG<Base>(Base(right));
 }
 
 template<class Base, class T>
-inline CG<Base> operator-(const T& left, const CG<Base>& right) {
+inline
+typename std::enable_if<std::is_constructible<Base, const T&>::value, CG<Base> >::type
+operator-(const T& left, const CG<Base>& right) {
     return CG<Base>(Base(left)) - right;
 }
 
 template<class Base, class T>
-inline CG<Base> operator-(const CG<Base>& left, const T& right) {
+inline
+typename std::enable_if<std::is_constructible<Base, const T&>::value, CG<Base> >::type
+operator-(const CG<Base>& left, const T& right) {
     return left - CG<Base>(Base(right));
 }
 
 template<class Base, class T>
-inline CG<Base> operator/(const T& left, const CG<Base>& right) {
+inline
+typename std::enable_if<std::is_constructible<Base, const T&>::value, CG<Base> >::type
+operator/(const T& left, const CG<Base>& right) {
     return CG<Base>(Base(left)) / right;
 }
 
 template<class Base, class T>
-inline CG<Base> operator/(const CG<Base>& left, const T& right) {
+inline
+typename std::enable_if<std::is_constructible<Base, const T&>::value, CG<Base> >::type
+operator/(const CG<Base>& left, const T& right) {
     return left / CG<Base>(Base(right));
 }
 
 template<class Base, class T>
-inline CG<Base> operator*(const T& left, const CG<Base>& right) {
+inline
+typename std::enable_if<std::is_constructible<Base, const T&>::value, CG<Base> >::type
+operator*(const T& left, const CG<Base>& right) {
     return CG<Base>(Base(left)) * right;
 }
 
 template<class Base, class T>
-inline CG<Base> operator*(const CG<Base>& left, const T& right) {
+inline
+typename std::enable_if<std::is_constructible<Base, const T&>::value, CG<Base> >::type
+operator*(const CG<Base>& left, const T& right) {
     return left * CG<Base>(Base(right));
 }
 

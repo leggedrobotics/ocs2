@@ -1,32 +1,30 @@
-// $Id$
 # ifndef CPPAD_CORE_NEAR_EQUAL_EXT_HPP
 # define CPPAD_CORE_NEAR_EQUAL_EXT_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 /*
 $begin NearEqualExt$$
 $spell
-	cout
-	endl
-	Microsoft
-	std
-	Cpp
-	namespace
-	const
-	bool
+    cout
+    endl
+    Microsoft
+    std
+    Cpp
+    namespace
+    const
+    bool
 $$
 
 $section Compare AD and Base Objects for Nearly Equal$$
-$mindex NearEqual with$$
 
 
 $head Syntax$$
@@ -45,47 +43,47 @@ $head x$$
 The arguments $icode x$$
 has one of the following possible prototypes:
 $codei%
-	const %Type%                     &%x%
-	const AD<%Type%>                 &%x%
-	const AD< std::complex<%Type%> > &%x%
+    const %Type%                     &%x%
+    const AD<%Type%>                 &%x%
+    const AD< std::complex<%Type%> > &%x%
 %$$
 
 $head y$$
 The arguments $icode y$$
 has one of the following possible prototypes:
 $codei%
-	const %Type%                     &%y%
-	const AD<%Type%>                 &%y%
-	const AD< std::complex<%Type%> > &%x%
+    const %Type%                     &%y%
+    const AD<%Type%>                 &%y%
+    const AD< std::complex<%Type%> > &%x%
 %$$
 
 
 $head r$$
 The relative error criteria $icode r$$ has prototype
 $codei%
-	const %Type% &%r%
+    const %Type% &%r%
 %$$
 It must be greater than or equal to zero.
 The relative error condition is defined as:
 $latex \[
-	\frac{ | x - y | } { |x| + |y| } \leq r
+    \frac{ | x - y | } { |x| + |y| } \leq r
 \] $$
 
 $head a$$
 The absolute error criteria $icode a$$ has prototype
 $codei%
-	const %Type% &%a%
+    const %Type% &%a%
 %$$
 It must be greater than or equal to zero.
 The absolute error condition is defined as:
 $latex \[
-	| x - y | \leq a
+    | x - y | \leq a
 \] $$
 
 $head b$$
 The return value $icode b$$ has prototype
 $codei%
-	bool %b%
+    bool %b%
 %$$
 If either $icode x$$ or $icode y$$ is infinite or not a number,
 the return value is false.
@@ -102,9 +100,9 @@ If $icode a$$ and $icode b$$ have type $icode Type$$,
 the following operation must be defined
 $table
 $bold Operation$$     $cnext
-	$bold Description$$ $rnext
+    $bold Description$$ $rnext
 $icode%a% <= %b%$$  $cnext
-	less that or equal operator (returns a $code bool$$ object)
+    less that or equal operator (returns a $code bool$$ object)
 $tend
 
 $head Operation Sequence$$
@@ -116,7 +114,7 @@ $cref/operation sequence/glossary/Operation/Sequence/$$.
 
 $head Example$$
 $children%
-	example/near_equal_ext.cpp
+    example/general/near_equal_ext.cpp
 %$$
 The file $cref near_equal_ext.cpp$$ contains an example
 and test of this extension of $cref NearEqual$$.
@@ -134,54 +132,54 @@ template <class Base>
 CPPAD_INLINE_FRIEND_TEMPLATE_FUNCTION
 bool NearEqual(
 const AD<Base> &x, const AD<Base> &y, const Base &r, const Base &a)
-{	return NearEqual(x.value_, y.value_, r, a);
+{   return NearEqual(x.value_, y.value_, r, a);
 }
 
 template <class Base>
 CPPAD_INLINE_FRIEND_TEMPLATE_FUNCTION
 bool NearEqual(
 const Base &x, const AD<Base> &y, const Base &r, const Base &a)
-{	return NearEqual(x, y.value_, r, a);
+{   return NearEqual(x, y.value_, r, a);
 }
 
 template <class Base>
 CPPAD_INLINE_FRIEND_TEMPLATE_FUNCTION
 bool NearEqual(
 const AD<Base> &x, const Base &y, const Base &r, const Base &a)
-{	return NearEqual(x.value_, y, r, a);
+{   return NearEqual(x.value_, y, r, a);
 }
 
 // fold into AD type and then use cases above
 template <class Base>
 CPPAD_INLINE_FRIEND_TEMPLATE_FUNCTION
 bool NearEqual(
-	const VecAD_reference<Base> &x, const VecAD_reference<Base> &y,
-	const Base &r, const Base &a)
-{	return NearEqual(x.ADBase(), y.ADBase(), r, a);
+    const VecAD_reference<Base> &x, const VecAD_reference<Base> &y,
+    const Base &r, const Base &a)
+{   return NearEqual(x.ADBase(), y.ADBase(), r, a);
 }
 template <class Base>
 CPPAD_INLINE_FRIEND_TEMPLATE_FUNCTION
 bool NearEqual(const VecAD_reference<Base> &x, const AD<Base> &y,
-	const Base &r, const Base &a)
-{	return NearEqual(x.ADBase(), y, r, a);
+    const Base &r, const Base &a)
+{   return NearEqual(x.ADBase(), y, r, a);
 }
 template <class Base>
 CPPAD_INLINE_FRIEND_TEMPLATE_FUNCTION
 bool NearEqual(const VecAD_reference<Base> &x, const Base &y,
-	const Base &r, const Base &a)
-{	return NearEqual(x.ADBase(), y, r, a);
+    const Base &r, const Base &a)
+{   return NearEqual(x.ADBase(), y, r, a);
 }
 template <class Base>
 CPPAD_INLINE_FRIEND_TEMPLATE_FUNCTION
 bool NearEqual(const AD<Base> &x, const VecAD_reference<Base> &y,
-	const Base &r, const Base &a)
-{	return NearEqual(x, y.ADBase(), r, a);
+    const Base &r, const Base &a)
+{   return NearEqual(x, y.ADBase(), r, a);
 }
 template <class Base>
 CPPAD_INLINE_FRIEND_TEMPLATE_FUNCTION
 bool NearEqual(const Base &x, const VecAD_reference<Base> &y,
-	const Base &r, const Base &a)
-{	return NearEqual(x, y.ADBase(), r, a);
+    const Base &r, const Base &a)
+{   return NearEqual(x, y.ADBase(), r, a);
 }
 
 } // END CppAD namespace

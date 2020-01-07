@@ -1,38 +1,27 @@
-// $Id: configure.hpp.in 3760 2015-12-01 04:12:28Z bradbell $
 # ifndef CPPAD_CONFIGURE_HPP
 # define CPPAD_CONFIGURE_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-15 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
-
-/*
-$begin configure$$
-$spell
-	CppAD
-$$
-
-$section Configuration Preprocessor Symbols Used by CppAD$$
-
-$head Preprocessor Symbols$$
-All of the preprocessor symbols used by CppAD begin with
-$code CPPAD_$$
-(there are some deprecated symbols that begin with $code CppAD$$).
-
-$end
-*/
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*!
  \file configure.hpp
 Replacement for config.h so that all preprocessor symbols begin with CPPAD_
 */
+
+/*!
+\def CPPAD_COMPILER_HAS_CONVERSION_WARN
+is the compiler a variant of g++ and has conversion warnings
+*/
+# define CPPAD_COMPILER_HAS_CONVERSION_WARN 1
 
 /*!
 \def CPPAD_DISABLE_SOME_MICROSOFT_COMPILER_WARNINGS
@@ -58,10 +47,10 @@ compiler flags request C++11 features and the install procedure
 determined that all the necessary features are avaiable.
 */
 # if     _MSC_VER
-# define    CPPAD_USE_CPLUSPLUS_2011 0
+# define    CPPAD_USE_CPLUSPLUS_2011 1
 # else   //
 # if         __cplusplus >= 201100
-# define         CPPAD_USE_CPLUSPLUS_2011 0
+# define         CPPAD_USE_CPLUSPLUS_2011 1
 # else       //
 # define         CPPAD_USE_CPLUSPLUS_2011 0
 # endif      //
@@ -71,7 +60,13 @@ determined that all the necessary features are avaiable.
 \def CPPAD_PACKAGE_STRING
 cppad-yyyymmdd as a C string where yyyy is year, mm is month, and dd is day.
 */
-# define CPPAD_PACKAGE_STRING "cppad-20160000.1"
+# define CPPAD_PACKAGE_STRING "cppad-20190200.5"
+
+/*!
+def CPPAD_HAS_ADOLC
+Was a adolc_prefix specified on the cmake command line.
+*/
+# define CPPAD_HAS_ADOLC 0
 
 /*!
 def CPPAD_HAS_COLPACK
@@ -80,19 +75,22 @@ Was a colpack_prefix specified on the cmake command line.
 # define CPPAD_HAS_COLPACK 0
 
 /*!
-def CPPAD_INTERNAL_SPARSE_SET
-is the internal representation used for sparse vectors of std::set<size_t>
-either sparse_set or sparse_list).
+def CPPAD_HAS_EIGEN
+Was a eigen_prefix specified on the cmake command line.
 */
-# define CPPAD_INTERNAL_SPARSE_SET sparse_list
+# define CPPAD_HAS_EIGEN 0
+
+/*!
+def CPPAD_HAS_IPOPT
+Was a ipopt_prefix specified on the cmake command line.
+*/
+# define CPPAD_HAS_IPOPT 0
 
 /*!
 \def CPPAD_DEPRECATED
-If this symbol is one, an implicit constor of AD<Base> is defined
-where the argument has any type.
-Otherwise this constructor is explicit.
+This symbol is not currently being used.
 */
-# define CPPAD_DEPRECATED 0
+# define CPPAD_DEPRECATED 
 
 /*!
 \def CPPAD_BOOSTVECTOR
@@ -139,23 +137,16 @@ Otherwise, this smybol should be zero.
 # define CPPAD_HAS_GETTIMEOFDAY 1
 
 /*!
-\def CPPAD_SIZE_T_NOT_UNSIGNED_INT
-If this symbol is zero, the type size_t is the same as the type unsigned int,
-otherwise this symbol is one.
-*/
-# define CPPAD_SIZE_T_NOT_UNSIGNED_INT 1
-
-/*!
 \def CPPAD_TAPE_ADDR_TYPE
 Is the type used to store address on the tape. If not size_t, then
 <code>sizeof(CPPAD_TAPE_ADDR_TYPE) <= sizeof( size_t )</code>
 to conserve memory.
-This type must support \c std::numeric_limits,
-the \c <= operator,
-and conversion to \c size_t.
+This type must support std::numeric_limits,
+the <= operator,
+and conversion to size_t.
 Make sure that the type chosen returns true for is_pod<CPPAD_TAPE_ADDR_TYPE>
 in pod_vector.hpp.
-This type is later defined as \c addr_t in the CppAD namespace.
+This type is later defined as addr_t in the CppAD namespace.
 */
 # define CPPAD_TAPE_ADDR_TYPE unsigned int
 
@@ -164,12 +155,12 @@ This type is later defined as \c addr_t in the CppAD namespace.
 Is the type used to store tape identifiers. If not size_t, then
 <code>sizeof(CPPAD_TAPE_ID_TYPE) <= sizeof( size_t )</code>
 to conserve memory.
-This type must support \c std::numeric_limits,
-the \c <= operator,
-and conversion to \c size_t.
+This type must support std::numeric_limits,
+the <= operator,
+and conversion to size_t.
 Make sure that the type chosen returns true for is_pod<CPPAD_TAPE_ID_TYPE>
 in pod_vector.hpp.
-This type is later defined as \c tape_id_t in the CppAD namespace.
+This type is later defined as tape_id_t in the CppAD namespace.
 */
 # define CPPAD_TAPE_ID_TYPE unsigned int
 

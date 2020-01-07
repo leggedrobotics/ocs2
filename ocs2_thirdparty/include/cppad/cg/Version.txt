@@ -1,0 +1,3 @@
+CPPAD Codegen version:
+repository: https://github.com/joaoleal/CppADCodeGen
+commit_hash: f3680f154c32f269123e6eea1531bb9030ad40ba

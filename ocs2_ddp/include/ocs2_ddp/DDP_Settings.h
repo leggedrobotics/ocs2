@@ -103,12 +103,12 @@ struct DDP_Settings {
   /** Debugs the cached nominal trajectories. */
   bool debugCaching_ = false;
 
-  /** Determines the strategy for solving the subproblem. There are two choices line-search strategy and trust-region strategy. */
+  /** Determines the strategy for solving the subproblem. There are two choices line-search strategy and levenberg_marquardt strategy. */
   DDP_Strategy strategy_ = DDP_Strategy::LINE_SEARCH;
   /** The line-search strategy settings. */
   Line_Search lineSearch_;
-  /** The trust-region strategy settings. */
-  Trust_Region trustRegion_;
+  /** The levenberg_marquardt strategy settings. */
+  Levenberg_Marquardt levenbergMarquardt_;
 
   /**
    * This function loads the "DDP_Settings" variables from a config file. This file contains the settings for the SQL and OCS2 algorithms.
@@ -164,17 +164,17 @@ struct DDP_Settings {
     loadData::loadPtreeValue(pt, debugPrintRollout_, fieldName + ".debugPrintRollout", verbose);
     loadData::loadPtreeValue(pt, debugCaching_, fieldName + ".debugCaching", verbose);
 
-    std::string strategyName = toString(strategy_);
+    std::string strategyName = ddp_strategy::toString(strategy_);
     loadData::loadPtreeValue(pt, strategyName, fieldName + ".strategy", verbose);
-    strategy_ = fromString(strategyName);
+    strategy_ = ddp_strategy::fromString(strategyName);
 
     switch (strategy_) {
       case DDP_Strategy::LINE_SEARCH: {
         lineSearch_.loadSettings(filename, fieldName + ".lineSearch", verbose);
         break;
       }
-      case DDP_Strategy::TRUST_REGION: {
-        trustRegion_.loadSettings(filename, fieldName + ".trustRegion", verbose);
+      case DDP_Strategy::LEVENBERG_MARQUARDT: {
+        levenbergMarquardt_.loadSettings(filename, fieldName + ".levenbergMarquardt", verbose);
         break;
       }
     }

@@ -36,23 +36,28 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <unordered_map>
 
 #include <ocs2_core/Dimensions.h>
+#include <ocs2_core/OCS2NumericTraits.h>
 #include <ocs2_core/misc/LoadData.h>
 
 namespace ocs2 {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 /**
  * @brief The DDP strategy enum
- * Enum used in selecting either line search strategy or trust region strategy.
+ * Enum used in selecting either LINE_SEARCH, LEVENBERG_MARQUARDT, or TRUST_REGION strategies.
  */
-enum class DDP_Strategy { LINE_SEARCH, TRUST_REGION };
+enum class DDP_Strategy { LINE_SEARCH, LEVENBERG_MARQUARDT };
 
+namespace ddp_strategy {
 /**
  * Get string name of DDP_Strategy type
  * @param [in] strategy: DDP_Strategy type enum
  */
 std::string toString(DDP_Strategy strategy) {
   static const std::unordered_map<DDP_Strategy, std::string> strategyMap{{DDP_Strategy::LINE_SEARCH, "LINE_SEARCH"},
-                                                                         {DDP_Strategy::TRUST_REGION, "TRUST_REGION"}};
+                                                                         {DDP_Strategy::LEVENBERG_MARQUARDT, "LEVENBERG_MARQUARDT"}};
   return strategyMap.at(strategy);
 }
 
@@ -62,12 +67,53 @@ std::string toString(DDP_Strategy strategy) {
  */
 DDP_Strategy fromString(std::string name) {
   static const std::unordered_map<std::string, DDP_Strategy> strategyMap{{"LINE_SEARCH", DDP_Strategy::LINE_SEARCH},
-                                                                         {"TRUST_REGION", DDP_Strategy::TRUST_REGION}};
+                                                                         {"LEVENBERG_MARQUARDT", DDP_Strategy::LEVENBERG_MARQUARDT}};
   return strategyMap.at(name);
+}
+}  // namespace ddp_strategy
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+/**
+ * @brief The DDP strategy enum
+ * Enum used in selecting either DIAGONAL_SHIFT, CHOLESKY_MODIFICATION, EIGENVALUE_MODIFICATION, or GERSHGORIN_MODIFICATION strategies.
+ */
+enum class Hessian_Correction { DIAGONAL_SHIFT, CHOLESKY_MODIFICATION, EIGENVALUE_MODIFICATION, GERSHGORIN_MODIFICATION };
+
+namespace hessian_correction {
+/**
+ * Get string name of Hessian_Correction type
+ * @param [in] strategy: Hessian_Correction type enum
+ */
+std::string toString(Hessian_Correction strategy) {
+  static const std::unordered_map<Hessian_Correction, std::string> strategyMap{
+      {Hessian_Correction::DIAGONAL_SHIFT, "DIAGONAL_SHIFT"},
+      {Hessian_Correction::CHOLESKY_MODIFICATION, "CHOLESKY_MODIFICATION"},
+      {Hessian_Correction::EIGENVALUE_MODIFICATION, "EIGENVALUE_MODIFICATION"},
+      {Hessian_Correction::GERSHGORIN_MODIFICATION, "GERSHGORIN_MODIFICATION"}};
+  return strategyMap.at(strategy);
 }
 
 /**
- * This structure contains the settings for the line search strategy.
+ * Get Hessian_Correction type from string name, useful for reading config file
+ * @param [in] name: Hessian_Correction name
+ */
+Hessian_Correction fromString(std::string name) {
+  static const std::unordered_map<std::string, Hessian_Correction> strategyMap{
+      {"DIAGONAL_SHIFT", Hessian_Correction::DIAGONAL_SHIFT},
+      {"CHOLESKY_MODIFICATION", Hessian_Correction::CHOLESKY_MODIFICATION},
+      {"EIGENVALUE_MODIFICATION", Hessian_Correction::EIGENVALUE_MODIFICATION},
+      {"GERSHGORIN_MODIFICATION", Hessian_Correction::GERSHGORIN_MODIFICATION}};
+  return strategyMap.at(name);
+}
+}  // namespace hessian_correction
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+/**
+ * This structure contains the settings for the Line-Search strategy.
  */
 struct Line_Search {
   /** Minimum step length of line-search strategy. */
@@ -76,10 +122,12 @@ struct Line_Search {
   double maxStepLength_ = 1.0;
   /** Line-search strategy contraction rate. */
   double contractionRate_ = 0.5;
-  /** If true DDP makes sure that PSD matrices remain PSD which increases the numerical stability at the expense of extra computation.*/
-  bool useMakePSD_ = true;
-  /** Add diagonal term to Riccati backward pass for numerical stability. This process is only used when useMakePSD_ set to false.*/
-  double addedRiccatiDiagonal_ = 1e-5;
+  /** Armijo coefficient, c defined as f(u + a*p) < f(u) + c*a dfdu.dot(p)  */
+  double armijoCoefficient_ = 1e-4;
+  /** The Hessian correction strategy. */
+  Hessian_Correction hessianCorrectionStrategy_ = Hessian_Correction::DIAGONAL_SHIFT;
+  /** The multiple used for correcting the Hessian for numerical stability of the Riccati backward pass.*/
+  double hessianCorrectionMultiple_ = OCS2NumericTraits<double>::limitEpsilon();
 
   /**
    * This function loads the "Line_Search" variables from a config file.
@@ -97,22 +145,40 @@ struct Line_Search {
     loadData::loadPtreeValue(pt, minStepLength_, fieldName + ".minStepLength", verbose);
     loadData::loadPtreeValue(pt, maxStepLength_, fieldName + ".maxStepLength", verbose);
     loadData::loadPtreeValue(pt, contractionRate_, fieldName + ".contractionRate", verbose);
-    loadData::loadPtreeValue(pt, useMakePSD_, fieldName + ".useMakePSD", verbose);
-    loadData::loadPtreeValue(pt, addedRiccatiDiagonal_, fieldName + ".addedRiccatiDiagonal", verbose);
+    loadData::loadPtreeValue(pt, armijoCoefficient_, fieldName + ".armijoCoefficient", verbose);
+
+    std::string hessianCorrectionStrategyName = hessian_correction::toString(hessianCorrectionStrategy_);
+    loadData::loadPtreeValue(pt, hessianCorrectionStrategyName, fieldName + ".hessianCorrectionStrategy", verbose);
+    hessianCorrectionStrategy_ = hessian_correction::fromString(hessianCorrectionStrategyName);
+
+    loadData::loadPtreeValue(pt, hessianCorrectionMultiple_, fieldName + ".hessianCorrectionMultiple", verbose);
+
     if (verbose) {
       std::cerr << " #### }" << std::endl;
     }
   }
 };  // end of Line_Search
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 /**
- * This structure contains the settings for the trust region strategy.
+ * This structure contains the settings for the Levenberg-Marquardt strategy.
  */
-struct Trust_Region {
-  /** M. */
+struct Levenberg_Marquardt {
+  /** Minimum pho (the ratio between actual reduction and predicted reduction) to accept the iteration's solution.
+   * minAcceptedPho_ should be [0, 0.25);
+   * */
+  double minAcceptedPho_ = 0.25;
+  /** The default ratio of geometric progression for Riccati multiple. */
+  double riccatiMultipleDefaultRatio_ = 2.0;
+  /** The default scalar-factor of geometric progression for Riccati multiple. */
+  double riccatiMultipleDefaultFactor_ = 1e-6;
+  /** Maximum number of successive rejections of the iteration's solution. */
+  size_t maxNumSuccessiveRejections_ = 5;
 
   /**
-   * This function loads the "Trust_Region" variables from a config file.
+   * This function loads the "Levenberg_Marquardt" variables from a config file.
    * Here, we use the INFO format which was created specifically for the property tree library (refer to www.goo.gl/fV3yWA).
    * @param [in] filename: File name which contains the configuration data.
    * @param [in] fieldName: Field name which contains the configuration data.
@@ -122,12 +188,16 @@ struct Trust_Region {
     boost::property_tree::ptree pt;
     boost::property_tree::read_info(filename, pt);
     if (verbose) {
-      std::cerr << " #### TRUST_REGION Settings: {" << std::endl;
+      std::cerr << " #### LEVENBERG_MARQUARDT Settings: {" << std::endl;
     }
+    loadData::loadPtreeValue(pt, minAcceptedPho_, fieldName + ".minAcceptedPho", verbose);
+    loadData::loadPtreeValue(pt, riccatiMultipleDefaultRatio_, fieldName + ".riccatiMultipleDefaultRatio", verbose);
+    loadData::loadPtreeValue(pt, riccatiMultipleDefaultFactor_, fieldName + ".riccatiMultipleDefaultFactor", verbose);
+    loadData::loadPtreeValue(pt, maxNumSuccessiveRejections_, fieldName + ".maxNumSuccessiveRejections", verbose);
     if (verbose) {
       std::cerr << " #### }" << std::endl;
     }
   }
-};  // end of Line_Search
+};  // end of Levenberg_Marquardt
 
 }  // namespace ocs2

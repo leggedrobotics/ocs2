@@ -24,30 +24,16 @@ int main(int argc, char* argv[]) {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(defaultTargetFile, pt);
 
-  const auto targetDisplacementVelocity = pt.get<scalar_t>("targetDisplacementVelocity");
-  const auto targetRotationVelocity = pt.get<scalar_t>("targetRotationVelocity");
-  const scalar_t initZHeight = pt.get<scalar_t>("comHeight");
+  const auto defaultDisplacementVelocity = pt.get<scalar_t>("targetDisplacementVelocity");
+  const auto defaultRotationVelocity = pt.get<scalar_t>("targetRotationVelocity");
+  const scalar_t initCOMHeight = pt.get<scalar_t>("comHeight");
 
   Eigen::Matrix<scalar_t, switched_model::JOINT_COORDINATE_SIZE, 1> initJoints;
   ocs2::loadData::loadEigenMatrix(defaultTargetFile, "defaultJointState", initJoints);
 
-  // Set the initial state with the target trajectories keyboard interface
-  /* TargetPoseCommand */
-  //TODO(oharley): may have to inline, could be useful for resetting after a trajectory
-  // switched_model::TargetTrajectories_Keyboard_Quadruped<double, 24, 24>
-  // targetPoseCommand( argc, argv, "anymal", initZHeight, initJoints, targetDisplacementVelocity, targetRotationVelocity);
-  //
-  // const std::string commadMsg = "Enter XYZ displacement and RollPitchYaw for the robot, separated by spaces";
-  // targetPoseCommand.getKeyboardCommand(commadMsg);
-
-/* ModeSequence Command */
-  // switched_model::ModeSequence_Keyboard_Quadruped<double> modeSequenceCommand(gaitFile, "anymal", true);
-  // modeSequenceCommand.launchNodes(argc, argv);
-  // modeSequenceCommand.getKeyboardCommand();
-
 /* Trajectory Command */
   switched_model::ScpTrajectoryControl<scalar_t>
-    trajectoryCommand( argc, argv, "anymal", trajectoriesFile, initZHeight, initJoints, false);
+    trajectoryCommand( argc, argv, "anymal", trajectoriesFile, initCOMHeight, initJoints, defaultRotationVelocity, defaultDisplacementVelocity, true);
 
 
   /************************************************************************************************

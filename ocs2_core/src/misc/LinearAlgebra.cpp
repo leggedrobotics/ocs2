@@ -32,19 +32,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace LinearAlgebra {
 
-bool makePSD(Eigen::MatrixXd& squareMatrix) {
-  if (squareMatrix.rows() != squareMatrix.cols()) {
-    throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
-  }
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void makePsdEigenvalue(Eigen::MatrixXd& squareMatrix, double minEigenvalue) {
+  assert(squareMatrix.rows() == squareMatrix.cols());
 
   Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eig(squareMatrix, Eigen::EigenvaluesOnly);
   Eigen::VectorXd lambda = eig.eigenvalues();
 
   bool hasNegativeEigenValue = false;
   for (size_t j = 0; j < lambda.size(); j++) {
-    if (lambda(j) < OCS2NumericTraits<double>::limitEpsilon()) {
+    if (lambda(j) < minEigenvalue) {
       hasNegativeEigenValue = true;
-      lambda(j) = OCS2NumericTraits<double>::limitEpsilon();
+      lambda(j) = minEigenvalue;
     }
   }
 
@@ -54,10 +55,43 @@ bool makePSD(Eigen::MatrixXd& squareMatrix) {
   } else {
     squareMatrix = 0.5 * (squareMatrix + squareMatrix.transpose()).eval();
   }
-
-  return hasNegativeEigenValue;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void makePsdCholesky(Eigen::MatrixXd& A, double minEigenvalue) {
+  using scalar_t = typename Eigen::internal::traits<Eigen::MatrixXd>::Scalar;
+  using dense_matrix_t = Eigen::MatrixXd;
+  using sparse_matrix_t = Eigen::SparseMatrix<scalar_t>;
+
+  assert(A.rows() == A.cols());
+
+  // set the minimum eigenvalue
+  A.diagonal().array() -= minEigenvalue;
+
+  // S P' (A + E) P S = L L'
+  sparse_matrix_t squareMatrix = 0.5 * A.sparseView();
+  A.transposeInPlace();
+  squareMatrix += 0.5 * A.sparseView();
+  Eigen::IncompleteCholesky<scalar_t> incompleteCholesky(squareMatrix);
+  // P' A P = M M'
+  sparse_matrix_t M = (incompleteCholesky.scalingS().asDiagonal().inverse() * incompleteCholesky.matrixL());
+  // L L' = P M M' P'
+  sparse_matrix_t LmTwisted;
+  LmTwisted.template selfadjointView<Eigen::Lower>() =
+      M.template selfadjointView<Eigen::Lower>().twistedBy(incompleteCholesky.permutationP());
+  dense_matrix_t L = dense_matrix_t(LmTwisted);
+  // A = L L'
+  A = L * L.transpose();
+
+  // correction for the minimum eigenvalue
+  A.diagonal().array() += minEigenvalue;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void computeConstraintProjection(const Eigen::MatrixXd& D, const Eigen::MatrixXd& RinvChol, Eigen::MatrixXd& Ddagger,
                                  Eigen::MatrixXd& DdaggerT_R_Ddagger_Chol, Eigen::MatrixXd& RinvConstrainedChol) {
   const auto numConstraints = D.rows();
@@ -86,10 +120,16 @@ void computeConstraintProjection(const Eigen::MatrixXd& D, const Eigen::MatrixXd
   RinvConstrainedChol.noalias() = RinvChol * QRof_RinvCholT_DmT_Qu;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 int rank(const Eigen::MatrixXd& A) {
   return A.colPivHouseholderQr().rank();
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 Eigen::VectorXcd eigenvalues(const Eigen::MatrixXd& A) {
   return A.eigenvalues();
 }

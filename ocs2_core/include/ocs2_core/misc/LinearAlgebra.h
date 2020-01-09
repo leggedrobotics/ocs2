@@ -30,48 +30,90 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <Eigen/Dense>
+#include <Eigen/IterativeLinearSolvers>
 
 #include "ocs2_core/OCS2NumericTraits.h"
 
 namespace ocs2 {
 namespace LinearAlgebra {
 
+// forward declarations
+void makePsdEigenvalue(Eigen::MatrixXd& squareMatrix, double minEigenvalue);
+
+void makePsdCholesky(Eigen::MatrixXd& A, double minEigenvalue);
+
+void computeConstraintProjection(const Eigen::MatrixXd& D, const Eigen::MatrixXd& RinvChol, Eigen::MatrixXd& Ddagger,
+                                 Eigen::MatrixXd& DdaggerT_R_Ddagger_Chol, Eigen::MatrixXd& RinvConstrainedChol);
+
+int rank(const Eigen::MatrixXd& A);
+
+Eigen::VectorXcd eigenvalues(const Eigen::MatrixXd& A);
+
 /**
- * Makes the input matrix PSD.
+ * Makes the input matrix PSD using a eigenvalue decomposition.
  *
  * @tparam Derived type.
  * @param squareMatrix: The matrix to become PSD.
- * @return true if the matrix had negative eigen values.
+ * @param [in] minEigenvalue: minimum eigenvalue.
  */
-bool makePSD(Eigen::MatrixXd& squareMatrix);
-
 template <typename Derived>
-bool makePSD(Eigen::MatrixBase<Derived>& squareMatrix) {
-  bool hasNegativeEigenValue;
-
+void makePsdEigenvalue(Eigen::MatrixBase<Derived>& squareMatrix, double minEigenvalue = OCS2NumericTraits<double>::limitEpsilon()) {
   Eigen::MatrixXd mat = squareMatrix;
-  hasNegativeEigenValue = makePSD(mat);
+  makePsdEigenvalue(mat, minEigenvalue);
   squareMatrix = mat;
-
-  return hasNegativeEigenValue;
 }
 
 /**
- * Attempts to make the input matrix PSD by Adding a Multiple of the Identity (AMI).
- * Note that there is no guarantee that resulting matrix is PSD.
+ * Makes the input matrix PSD based on Gershgorin circle theorem. If the input matrix is positive definite and diagonally dominant,
+ * the method will not modify the matrix.
+ *
+ * How it works:
+ * Assume that the Ri is the sum of the absolute values of the non-diagonal entries in the i-th row (Gershgorin radius).
+ * This methods updates the diagonal elements as Aii = max(Aii, minEigenvalue + Ri).
+ *
+ * To understand this update rule note that the Gershgorin radius (Ri) of the new matrix is the same as original one.
+ * Now if we use the Gershgorin circle theorem we have:
+ * | lambda - max(Aii, minEigenvalue + Ri) | < Ri ==> max(Aii, minEigenvalue + Ri) - Ri < lambda < max(Aii, minEigenvalue + Ri) + Ri
+ * Two cases are possible:
+ * (1) Aii < minEigenvalue + Ri ==> minEigenvalue < lambda < minEigenvalue + 2 Ri
+ * (2) Aii > minEigenvalue + Ri ==> minEigenvalue < Aii - Ri < lambda < Aii + Ri
  *
  * @tparam Derived type.
- * @param [in] multiple: An initial guess for the multiple to be added.
  * @param squareMatrix: The matrix to become PSD.
- * @return true if the matrix had negative eigen values.
+ * @param [in] minEigenvalue: minimum eigenvalue.
  */
 template <typename Derived>
-bool makePSD_AMI(Eigen::MatrixBase<Derived>& squareMatrix, double multiple = OCS2NumericTraits<double>::limitEpsilon()) {
-  const auto minDiagonalElement = squareMatrix.diagonal().minCoeff();
-  if (minDiagonalElement < OCS2NumericTraits<double>::limitEpsilon()) {
-    multiple -= minDiagonalElement;
-    squareMatrix.diagonal().array() += multiple;
+void makePsdGershgorin(Eigen::MatrixBase<Derived>& squareMatrix, double minEigenvalue = OCS2NumericTraits<double>::limitEpsilon()) {
+  assert(squareMatrix.rows() == squareMatrix.cols());
+  squareMatrix = 0.5 * (squareMatrix + squareMatrix.transpose()).eval();
+  for (size_t i = 0; i < squareMatrix.rows(); i++) {
+    // Gershgorin radius: since the matrix is symmetric we use column sum instead of row sum
+    auto Ri = squareMatrix.col(i).cwiseAbs().sum() - std::abs(squareMatrix(i, i));
+    squareMatrix(i, i) = std::max(squareMatrix(i, i), Ri + minEigenvalue);
   }
+}
+
+/**
+ * Makes the input matrix PSD based on modified Cholesky decomposition.
+ *
+ * S P' (A + E) P S = L L'
+ * where P is a permutation matrix, E is a diagonal perturbation matrix, L is unit lower triangular, and D is diagonal.
+ * If A is sufficiently positive definite, then the perturbation matrix E will be zero and this method is equivalent to
+ * the pivoted Cholesky algorithm. For indefinite matrices, the perturbation matrix E is computed to ensure that A + E
+ * is positive definite and well conditioned.
+ *
+ * References : C-J. Lin and J. J. Moré, Incomplete Cholesky Factorizations with Limited memory, SIAM J. Sci. Comput.
+ * 21(1), pp. 24-45, 1999
+ *
+ * @tparam Derived type.
+ * @param A: The matrix to become PSD.
+ * @param [in] minEigenvalue: minimum eigenvalue.
+ */
+template <typename Derived>
+void makePsdCholesky(Eigen::MatrixBase<Derived>& A, double minEigenvalue = OCS2NumericTraits<double>::limitEpsilon()) {
+  Eigen::MatrixXd mat = A;
+  makePsdCholesky(mat, minEigenvalue);
+  A = mat;
 }
 
 /**
@@ -100,9 +142,6 @@ void computeLinvTLinv(const Derived& A, Derived& LinvT) {
  * @param [out] DdaggerT_R_Ddagger_Chol: Cholesky decomposition of DdaggerT_R_Ddagger
  * @param [out] RinvConstrainedChol: Decomposition of inv(R)^T * (I-Ddagger*D)^T * R * (I-Ddagger*D) * inv(R)
  */
-void computeConstraintProjection(const Eigen::MatrixXd& D, const Eigen::MatrixXd& RinvChol, Eigen::MatrixXd& Ddagger,
-                                 Eigen::MatrixXd& DdaggerT_R_Ddagger_Chol, Eigen::MatrixXd& RinvConstrainedChol);
-
 template <typename DerivedInputMatrix>
 void computeConstraintProjection(const Eigen::MatrixXd& D, const DerivedInputMatrix& RinvChol, Eigen::MatrixXd& Ddagger,
                                  Eigen::MatrixXd& DdaggerT_R_Ddagger_Chol, Eigen::MatrixXd& RinvConstrainedChol) {
@@ -114,8 +153,6 @@ void computeConstraintProjection(const Eigen::MatrixXd& D, const DerivedInputMat
  * @param [in] A: Matrix
  * @return rank of A
  */
-int rank(const Eigen::MatrixXd& A);
-
 template <typename Derived>
 int rank(const Derived& A) {
   return rank(Eigen::MatrixXd(A));
@@ -126,8 +163,6 @@ int rank(const Derived& A) {
  * @param [in] A: Matrix
  * @return Vector of complex eigenvalues
  */
-Eigen::VectorXcd eigenvalues(const Eigen::MatrixXd& A);
-
 template <typename Derived>
 Eigen::VectorXcd eigenvalues(const Derived& A) {
   return eigenvalues(Eigen::MatrixXd(A));

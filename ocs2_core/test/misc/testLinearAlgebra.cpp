@@ -1,5 +1,3 @@
-
-
 #include <gtest/gtest.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 #include "ocs2_core/misc/randomMatrices.h"
@@ -65,6 +63,59 @@ TEST(constraintProjection, checkAgainstFullComputations)
   Eigen::MatrixXd nullspaceProjection = Eigen::MatrixXd::Identity(n, n) - Ddagger_check * D;
   Eigen::MatrixXd RinvConstrained_check = Rinv.transpose() * nullspaceProjection.transpose() * R * nullspaceProjection * Rinv;
   ASSERT_LT( (RinvConstrained - RinvConstrained_check).array().abs().maxCoeff() , tol );
+}
+
+TEST(makePsdGershgorin, makePsdGershgorin)
+{
+  const size_t n = 10; // matrix size
+  const double tol = 1e-9; // Coefficient-wise tolerance
+  using matrix_t = Eigen::Matrix<double, n, n>;
+
+  // a random, symmetric, and diagonally dominant matrix
+  matrix_t ddMat = generateSPDmatrix<matrix_t>();
+  matrix_t ddMatCorr = ddMat;
+  makePsdGershgorin(ddMatCorr);
+  ASSERT_TRUE(ddMat.isApprox(ddMatCorr, tol));
+
+  // non-definite matrix
+  auto lambdaMin = ddMat.selfadjointView<Eigen::Lower>().eigenvalues().minCoeff();
+  matrix_t ndMat = ddMat - (lambdaMin + 1e-2) * matrix_t::Identity();
+  matrix_t ndMatCorr = ndMat;
+  const double minDesiredEigenvalue = 1e-3;
+  makePsdGershgorin(ndMatCorr, minDesiredEigenvalue);
+  Eigen::VectorXd lambda = ndMat.selfadjointView<Eigen::Lower>().eigenvalues();
+  Eigen::VectorXd lambdaCorr = ndMatCorr.selfadjointView<Eigen::Lower>().eigenvalues();
+  std::cerr << "MakePSD Gershgorin:" << std::endl;
+  std::cerr << "eigenvalues            " << lambda.transpose() << std::endl;
+  std::cerr << "eigenvalues corrected: " << lambdaCorr.transpose() << std::endl;
+  ASSERT_GE(lambdaCorr.minCoeff(), minDesiredEigenvalue);
+}
+
+TEST(makePsdCholesky, makePsdCholesky)
+{
+  const size_t n = 10; // matrix size
+  const double tol = 1e-9; // Coefficient-wise tolerance
+  using matrix_t = Eigen::Matrix<double, n, n>;
+
+  // PSD matrix check
+  // some random symmetric matrix
+  matrix_t psdMat = generateSPDmatrix<matrix_t>();
+  matrix_t psdMatCorr = psdMat;
+  makePsdCholesky(psdMatCorr, 0.0);
+  ASSERT_TRUE(psdMat.isApprox(psdMatCorr, tol));
+
+  // non-definite matrix
+  auto lambdaMin = psdMat.selfadjointView<Eigen::Lower>().eigenvalues().minCoeff();
+  matrix_t ndMat = psdMat - (lambdaMin + 1e-2) * matrix_t::Identity();
+  matrix_t ndMatCorr = ndMat;
+  const double minDesiredEigenvalue = 1e-1;
+  makePsdCholesky(ndMatCorr, minDesiredEigenvalue);
+  Eigen::VectorXd lambda = ndMat.selfadjointView<Eigen::Lower>().eigenvalues();
+  Eigen::VectorXd lambdaCorr = ndMatCorr.selfadjointView<Eigen::Lower>().eigenvalues();
+  std::cerr << "MakePSD Cholesky: " << std::endl;
+  std::cerr << "eigenvalues            " << lambda.transpose() << std::endl;
+  std::cerr << "eigenvalues corrected: " << lambdaCorr.transpose() << std::endl;
+  ASSERT_GE(lambdaCorr.minCoeff(), minDesiredEigenvalue);
 }
 
 int main(int argc, char** argv)

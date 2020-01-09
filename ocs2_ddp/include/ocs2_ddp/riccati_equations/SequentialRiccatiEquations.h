@@ -93,7 +93,7 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
   /**
    * Constructor.
    */
-  SequentialRiccatiEquations(bool useMakePSD, bool preComputeRiccatiTerms = true);
+  SequentialRiccatiEquations(bool preComputeRiccatiTerms = true);
 
   /**
    * Default destructor.
@@ -159,7 +159,6 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
   void computeFlowMap(const scalar_t& z, const s_vector_t& allSs, s_vector_t& derivatives) override;
 
  private:
-  bool useMakePSD_;
   bool preComputeRiccatiTerms_;
 
   // array pointers
@@ -176,7 +175,6 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
   // Arrays to store precomputation
   state_matrix_array_t Qm_minus_P_Rinv_P_array_;
   state_vector_array_t Qv_minus_P_Rinv_Rv_array_;
-  eigen_scalar_array_t q_minus_half_Rv_Rinv_Rv_array_;
   state_matrix_array_t AmT_minus_P_Rinv_B_array_;
   dynamic_matrix_array_t B_RinvChol_array_;
   dynamic_vector_array_t RinvCholT_Rv_array_;

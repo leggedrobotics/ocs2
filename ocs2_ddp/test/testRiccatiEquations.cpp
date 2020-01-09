@@ -83,12 +83,11 @@ class RiccatiInitializer {
 TEST(testRiccatiEquations, compareImplementations) {
   constexpr int STATE_DIM = 48;
   constexpr int INPUT_DIM = 10;
-  constexpr bool makePSD = false;
 
   using riccati_t = ocs2::SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>;
 
-  riccati_t riccatiEquationPrecompute(makePSD, true);
-  riccati_t riccatiEquationNoPrecompute(makePSD, false);
+  riccati_t riccatiEquationPrecompute(true);
+  riccati_t riccatiEquationNoPrecompute(false);
 
   RiccatiInitializer<riccati_t> ri(STATE_DIM, INPUT_DIM);
   ri.initialize(riccatiEquationPrecompute);
@@ -105,14 +104,13 @@ TEST(testRiccatiEquations, compareImplementations) {
 }
 
 TEST(testRiccatiEquations, compareFixedAndDynamicSizedImplementation) {
-  constexpr bool makePSD = false;
   constexpr bool precompute = false;
 
   const int input_dim = 10;
   const int state_dim = 48;
 
   using riccati_static_t = ocs2::SequentialRiccatiEquations<state_dim, input_dim>;
-  riccati_static_t riccati_static(makePSD, precompute);
+  riccati_static_t riccati_static(precompute);
   srand(42);
   RiccatiInitializer<riccati_static_t> ris(state_dim, input_dim);
   ris.initialize(riccati_static);
@@ -123,7 +121,7 @@ TEST(testRiccatiEquations, compareFixedAndDynamicSizedImplementation) {
   riccati_static.computeFlowMap(0.6, S_static, dSdz_static);
 
   using riccati_dynamic_t = ocs2::SequentialRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;
-  riccati_dynamic_t riccati_dynamic(makePSD, precompute);
+  riccati_dynamic_t riccati_dynamic(precompute);
   srand(42);
   RiccatiInitializer<riccati_dynamic_t> rid(state_dim, input_dim);
   rid.initialize(riccati_dynamic);

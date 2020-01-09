@@ -36,8 +36,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int STATE_DIM, int INPUT_DIM>
-SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::SequentialRiccatiEquations(bool useMakePSD, bool preComputeRiccatiTerms)
-    : useMakePSD_(useMakePSD), preComputeRiccatiTerms_(preComputeRiccatiTerms) {}
+SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::SequentialRiccatiEquations(bool preComputeRiccatiTerms)
+    : preComputeRiccatiTerms_(preComputeRiccatiTerms) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -121,7 +121,7 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(
 
   eventTimes_.clear();
   eventTimes_.reserve(postEventIndicesPtr->size());
-  for (const size_t& postEventIndex : *postEventIndicesPtr) {
+  for (const auto& postEventIndex : *postEventIndicesPtr) {
     eventTimes_.push_back((*timeStampPtr)[postEventIndex - 1]);
   }
 
@@ -152,7 +152,6 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(
     // These terms are initialized by copying the cost function terms and substracting the rest inside the loop below
     Qm_minus_P_Rinv_P_array_ = *QmPtr;
     Qv_minus_P_Rinv_Rv_array_ = *QvPtr;
-    q_minus_half_Rv_Rinv_Rv_array_ = *qPtr;
 
     // Precompute all terms for all interpolation nodes
     dynamic_matrix_t PmT_RinvChol;
@@ -210,15 +209,11 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const scal
 
   convert2Matrix(allSs, Sm_, Sv_, s_);
 
-  //  if (useMakePSD_) {
-  //    LinearAlgebra::makePSD(Sm_);
-  //  }
-
   const auto indexAlpha = EigenLinearInterpolation<state_matrix_t>::timeSegment(t, timeStampPtr_);
   if (preComputeRiccatiTerms_) {
     EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, Qm_, &Qm_minus_P_Rinv_P_array_);
     EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Qv_, &Qv_minus_P_Rinv_Rv_array_);
-    EigenLinearInterpolation<eigen_scalar_t>::interpolate(indexAlpha, q_, &q_minus_half_Rv_Rinv_Rv_array_);
+    EigenLinearInterpolation<eigen_scalar_t>::interpolate(indexAlpha, q_, qPtr_);
     EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, AmT_minus_P_Rinv_Bm_, &AmT_minus_P_Rinv_B_array_);
     EigenLinearInterpolation<dynamic_vector_t>::interpolate(indexAlpha, RinvCholT_Rv_, &RinvCholT_Rv_array_);
     EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, B_RinvChol_, &B_RinvChol_array_);

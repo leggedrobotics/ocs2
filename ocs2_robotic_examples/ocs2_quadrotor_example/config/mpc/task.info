@@ -33,46 +33,46 @@ ilqr
 {
     ddp
     {
-        maxNumIterations                 10     ; 50
-        minRelCost                       0.1    ; 0.01
-        stateConstraintPenaltyCoeff      100.0
-        stateConstraintPenaltyBase       1.1
-        meritFunctionRho                 50.0
-        constraintStepSize               1.0    ; 1.0
-        displayInfo                      0
-        displayShortSummary              1
+        maxNumIterations               10
+        minRelCost                     0.1
+        stateConstraintPenaltyCoeff    100.0
+        stateConstraintPenaltyBase     1.1
+        meritFunctionRho               50.0
+        constraintStepSize             1.0
+        displayInfo                    0
+        displayShortSummary            1
 
-        AbsTolODE                        2e-5    ;1e-5  ;1e-6
-        RelTolODE                        1e-3    ;1e-3  ;1e-4
-        minTimeStep                      1e-3
-        maxNumStepsPerSecond             50000
-        simulationIsConstrained          0
-        noStateConstraints               1
-        minAbsConstraint1ISE             5e-3
-        minRelConstraint1ISE             5e-6
-        checkNumericalStability          0
+        AbsTolODE                      2e-5
+        RelTolODE                      1e-3
+        minTimeStep                    1e-3
+        maxNumStepsPerSecond           50000
+        simulationIsConstrained        0
+        noStateConstraints             1
+        minAbsConstraint1ISE           5e-3
+        minRelConstraint1ISE           5e-6
+        checkNumericalStability        0
 
-        nThreads                         1
+        nThreads                       1
 
-        useFeedbackPolicy                0
+        useFeedbackPolicy              0
         
         strategy                       LINE_SEARCH
         lineSearch
         {
             minStepLength              1.0
             maxStepLength              1.0
-            useMakePSD                 0
-            addedRiccatiDiagonal       1e-3
+            hessianCorrectionStrategy  EIGENVALUE_MODIFICATION
+            hessianCorrectionMultiple  1e-3
         }
     }
 
     rollout
     {
-        AbsTolODE                        2e-5    ;1e-5  ;1e-6
-        RelTolODE                        1e-3    ;1e-3  ;1e-4
-        minTimeStep                      1e-3
-        maxNumStepsPerSecond             50000
-        checkNumericalStability          0
+        AbsTolODE                      2e-5    ;1e-5  ;1e-6
+        RelTolODE                      1e-3    ;1e-3  ;1e-4
+        minTimeStep                    1e-3
+        maxNumStepsPerSecond           50000
+        checkNumericalStability        0
     }
 }
 

@@ -73,8 +73,8 @@ slq
         {
             minStepLength              1.0
             maxStepLength              1.0
-            useMakePSD                 0
-            addedRiccatiDiagonal       1e-3
+            hessianCorrectionStrategy  DIAGONAL_SHIFT
+            hessianCorrectionMultiple  1e-3
         }
     }
 

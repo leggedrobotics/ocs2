@@ -64,14 +64,14 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   slqSettings.ddpSettings_.checkNumericalStability_ = true;
   slqSettings.ddpSettings_.absTolODE_ = 1e-10;
   slqSettings.ddpSettings_.relTolODE_ = 1e-7;
-  slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 1e7;
+  slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
   slqSettings.ddpSettings_.useFeedbackPolicy_ = true;
   slqSettings.ddpSettings_.debugPrintRollout_ = false;
 
   ocs2::Rollout_Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;
   rolloutSettings.relTolODE_ = 1e-7;
-  rolloutSettings.maxNumStepsPerSecond_ = 1e7;
+  rolloutSettings.maxNumStepsPerSecond_ = 10000;
   rolloutSettings.maxSingleEventIterations_ = 5;
   rolloutSettings.useTrajectorySpreadingController_ = true;
 
@@ -173,7 +173,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
     // Display output
     // format: idx;time;x[0];xref[0];x[1];xref[1];u;uref
     if (outputSolution) {
-      int idx = solutionST.stateTrajectory_[i][2];
+      auto idx = static_cast<int>(solutionST.stateTrajectory_[i][2]);
 
       input_vector_t uRef = reference.getInput(solutionST.timeTrajectory_[i]);
       state_vector_t xRef = reference.getState(idx, solutionST.timeTrajectory_[i]);

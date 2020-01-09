@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#ifndef CART_POLE_COST_OCS2_H_
-#define CART_POLE_COST_OCS2_H_
+#pragma once
 
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/logic/rules/NullLogicRules.h>
@@ -85,5 +84,3 @@ class CartPoleCost final : public QuadraticCostFunction<cartpole::STATE_DIM_, ca
 
 }  // namespace cartpole
 }  // namespace ocs2
-
-#endif  // CART_POLE_COST_OCS2_H_

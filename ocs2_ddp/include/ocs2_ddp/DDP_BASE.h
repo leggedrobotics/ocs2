@@ -48,7 +48,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/Rollout_Settings.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
-#include <ocs2_ddp/DDP_Settings.h>
+#include "ocs2_ddp/DDP_Settings.h"
+#include "ocs2_ddp/riccati_equations/RiccatiModification.h"
 
 namespace ocs2 {
 
@@ -342,9 +343,9 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   scalar_t calculateControllerUpdateIS(const linear_controller_array_t& controllersStock) const;
 
   /**
-   * Trust Region strategy.
+   * Levenberg Marquardt strategy.
    */
-  void trustRegion();
+  void levenbergMarquardt();
 
   /**
    * Line search on the feedforward parts of the controller. It uses the
@@ -513,7 +514,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] i: Time partition index.
    * @param [in] k: Time index in the partition.
    */
-  virtual void approximateUnconstrainedLQWorker(size_t workerIndex, size_t i, size_t k);
+  void approximateUnconstrainedLQWorker(size_t workerIndex, size_t i, size_t k);
 
   /**
    * Calculates an LQ approximate of the event times process.
@@ -524,6 +525,29 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] stateConstraintPenalty: State-only constraint penalty.
    */
   virtual void approximateEventsLQWorker(size_t workerIndex, size_t i, size_t k, scalar_t stateConstraintPenalty);
+
+  /**
+   * Computes the Riccati modification based on the strategy.
+   */
+  void computeRiccatiModificationTerms();
+
+  /**
+   * Computes the Riccati modification for the given partition and time index.
+   *
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] i: Time partition index.
+   * @param [in] k: Time index in the partition.
+   */
+  virtual void computeRiccatiModificationTermsWorker(size_t workerIndex, size_t i, size_t k) = 0;
+
+  /**
+   * Shifts the Hessian based on the strategy defined by Line_Search::hessianCorrectionStrategy_.
+   *
+   * @tparam Derived type.
+   * @param matrix: The Hessian matrix.
+   */
+  template <typename Derived>
+  void shiftHessian(Eigen::MatrixBase<Derived>& matrix);
 
   /**
    * Calculates controller at a given partition and a node.
@@ -726,6 +750,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   scalar_t nominalControllerUpdateIS_ = 0.0;
   linear_controller_array_t nominalControllersStock_;
+  bool isInitInternalControllerEmpty_;
 
   scalar_array2_t nominalTimeTrajectoriesStock_;
   size_array2_t nominalPostEventIndicesStock_;
@@ -734,6 +759,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   // Used for caching the nominal trajectories for which the LQ problem is
   // constructed and solved before terminating run()
+  scalar_t cachedControllerUpdateIS_ = 0.0;
+  linear_controller_array_t cachedControllersStock_;
   scalar_array2_t cachedTimeTrajectoriesStock_;
   size_array2_t cachedPostEventIndicesStock_;
   state_vector_array2_t cachedStateTrajectoriesStock_;
@@ -776,6 +803,10 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   state_vector_array2_t QvFinalStock_;
   state_matrix_array2_t QmFinalStock_;
 
+  //
+  input_matrix_array2_t RmInverseTrajectoryStock_;
+  input_matrix_array2_t RmCholeskyUpperTrajectoryStock_;
+
   // Riccati solution coefficients
   scalar_array2_t SsTimeTrajectoryStock_;
   scalar_array2_t SsNormalizedTimeTrajectoryStock_;
@@ -795,7 +826,10 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   state_vector_t SvHeuristics_;
   state_matrix_t SmHeuristics_;
 
-  // line search
+  // Riccati modification
+  typename RiccatiModification<STATE_DIM, INPUT_DIM>::array_t riccatiModificationStock_;
+
+  // Line-Search
   struct LineSearchImpl {
     bool lsComputeISEs;                                // whether lineSearch routine needs to calculate ISEs
     scalar_t baselineTotalCost;                        // the cost of the rollout for zero learning rate
@@ -807,6 +841,15 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     std::mutex lineSearchResultMutex;
 
   } lineSearchImpl_;
+
+  // Levenberg-Marquardt
+  struct LevenbergMarquardtImpl {
+    scalar_t pho = 1.0;                           // the ratio between actual reduction and predicted reduction
+    scalar_t riccatiMultiple = 0.0;               // the Riccati multiple for Tikhonov regularization.
+    scalar_t riccatiMultipleAdaptiveRatio = 1.0;  // the adaptive ratio of geometric progression for Riccati multiple.
+    size_t numSuccessiveRejections = 0;           // the number of successive rejections of solution.
+
+  } levenbergMarquardtImpl_;
 
   std::vector<int> startingIndicesRiccatiWorker_;
   std::vector<int> endingIndicesRiccatiWorker_;

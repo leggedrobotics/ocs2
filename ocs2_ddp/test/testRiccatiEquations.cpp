@@ -18,6 +18,7 @@ class RiccatiInitializer {
 
   using scalar_array_t = typename riccati_t::scalar_array_t;
   using state_matrix_array_t = typename riccati_t::state_matrix_array_t;
+  using input_matrix_array_t = typename riccati_t::input_matrix_array_t;
   using state_input_matrix_array_t = typename riccati_t::state_input_matrix_array_t;
   using eigen_scalar_array_t = typename riccati_t::eigen_scalar_array_t;
   using state_vector_array_t = typename riccati_t::state_vector_array_t;
@@ -25,6 +26,8 @@ class RiccatiInitializer {
   using dynamic_matrix_array_t = typename riccati_t::dynamic_matrix_array_t;
   using input_state_matrix_array_t = typename riccati_t::input_state_matrix_array_t;
   using size_array_t = typename riccati_t::size_array_t;
+
+  using riccati_modification_t = typename riccati_t::riccati_modification_t;
 
   state_matrix_t A;
   state_input_matrix_t B;
@@ -35,6 +38,11 @@ class RiccatiInitializer {
   input_state_matrix_t P;
   input_matrix_t R;
   input_matrix_t RinvChol_;
+  input_matrix_t RmCholeskyUpper;
+
+  state_matrix_t deltaQm;
+  input_matrix_t deltaRm;
+  input_state_matrix_t deltaPm;
 
   std::unique_ptr<scalar_array_t> timeStamp;
   std::unique_ptr<state_matrix_array_t> Am;
@@ -51,6 +59,8 @@ class RiccatiInitializer {
   state_vector_array_t QvFinal;
   state_matrix_array_t QmFinal;
 
+  riccati_modification_t riccatiModification;
+
   RiccatiInitializer(const int state_dim, const int input_dim) {
     A = state_matrix_t::Random(state_dim, state_dim);
     B = state_input_matrix_t::Random(state_dim, input_dim);
@@ -61,7 +71,11 @@ class RiccatiInitializer {
     P = input_state_matrix_t::Random(input_dim, state_dim);
     R = ocs2::LinearAlgebra::generateSPDmatrix<input_matrix_t>(input_dim);
     RinvChol_.resize(input_dim, input_dim);
-    ocs2::LinearAlgebra::computeLinvTLinv(R, RinvChol_);
+    ocs2::LinearAlgebra::computeLinvTLinv(R, RmCholeskyUpper, RinvChol_);
+
+    deltaQm.setZero(state_dim, state_dim);
+    deltaRm.setZero(input_dim, input_dim);
+    deltaPm.setZero(input_dim, state_dim);
 
     timeStamp = std::unique_ptr<scalar_array_t>(new scalar_array_t({0.0, 1.0}));
     Am = std::unique_ptr<state_matrix_array_t>(new state_matrix_array_t({A, A}));
@@ -72,11 +86,15 @@ class RiccatiInitializer {
     Rv = std::unique_ptr<input_vector_array_t>(new input_vector_array_t({rv, rv}));
     RinvChol = std::unique_ptr<dynamic_matrix_array_t>(new dynamic_matrix_array_t({RinvChol_, RinvChol_}));
     Pm = std::unique_ptr<input_state_matrix_array_t>(new input_state_matrix_array_t({P, P}));
+
+    riccatiModification.deltaQmTrajectory_ = state_matrix_array_t({deltaQm, deltaQm});
+    riccatiModification.deltaRmTrajectory_ = input_matrix_array_t({deltaRm, deltaRm});
+    riccatiModification.deltaPmTrajectory_ = input_state_matrix_array_t({deltaPm, deltaPm});
   }
 
   void initialize(riccati_t& riccati) {
     riccati.setData(timeStamp.get(), Am.get(), Bm.get(), q.get(), Qv.get(), Qm.get(), Rv.get(), RinvChol.get(), Pm.get(),
-                    &eventsPastTheEndIndeces, &qFinal, &QvFinal, &QmFinal);
+                    &eventsPastTheEndIndeces, &qFinal, &QvFinal, &QmFinal, &riccatiModification);
   }
 };
 

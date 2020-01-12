@@ -177,11 +177,21 @@ class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
 
   void approximateLQWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
 
-  void approximateUnconstrainedLQWorker(size_t workerIndex, size_t i, size_t k) override;
+  void computeRiccatiModificationTermsWorker(size_t workerIndex, size_t i, size_t k) override;
 
   void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
 
   void riccatiSolverTask() override;
+
+  /**
+   * Modify the unconstrained LQ coefficients to constrained ones.
+   *
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] i: Time partition index.
+   * @param [in] k: Time index in the partition.
+   * @param [in] stateConstraintPenalty: State-only constraint penalty.
+   */
+  void approximateConstrainedLQWorker(size_t workerIndex, size_t i, size_t k, scalar_t stateConstraintPenalty);
 
   /**
    * Calculates the discrete-time LQ approximation from the continuous-time LQ approximation.
@@ -224,10 +234,8 @@ class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   input_state_matrix_array2_t PmDtimeTrajectoryStock_;
   input_matrix_array2_t RmInverseDtimeTrajectoryStock_;
 
-  input_matrix_array2_t HmTrajectoryStock_;
-  input_matrix_array2_t HmInverseTrajectoryStock_;
-  input_state_matrix_array2_t GmTrajectoryStock_;
-  input_vector_array2_t GvTrajectoryStock_;
+  input_vector_array2_t LvTrajectoryStock_;
+  input_state_matrix_array2_t LmTrajectoryStock_;
 };
 
 }  // namespace ocs2

@@ -68,9 +68,10 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t* rolloutPtr, const
         new operating_trajectorie_rollout_t(*operatingTrajectoriesPtr, rolloutPtr->settings()));
 
     // initialize LQ approximator
+    bool makePsdWillBePerformedLater = ddpSettings_.lineSearch_.hessianCorrectionStrategy_ != Hessian_Correction::DIAGONAL_SHIFT;
     linearQuadraticApproximatorPtrStock_.emplace_back(
         new linear_quadratic_approximator_t(*systemDerivativesPtr, *systemConstraintsPtr, *costFunctionPtr, algorithmName_.c_str(),
-                                            ddpSettings_.checkNumericalStability_, ddpSettings_.lineSearch_.useMakePSD_));
+                                            ddpSettings_.checkNumericalStability_, makePsdWillBePerformedLater));
 
     // initialize heuristics functions
     if (heuristicsFunctionPtr != nullptr) {
@@ -124,6 +125,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
   iteration_ = 0;
   rewindCounter_ = 0;
 
+  // reset Levenberg_Marquardt variables
+  levenbergMarquardtImpl_ = LevenbergMarquardtImpl();
+
   useParallelRiccatiSolverFromInitItr_ = false;
 
   for (size_t i = 0; i < numPartitions_; i++) {
@@ -134,6 +138,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
     nominalStateTrajectoriesStock_[i].clear();
     nominalInputTrajectoriesStock_[i].clear();
 
+    cachedControllersStock_[i].clear();
     cachedTimeTrajectoriesStock_[i].clear();
     cachedPostEventIndicesStock_[i].clear();
     cachedStateTrajectoriesStock_[i].clear();
@@ -564,6 +569,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
     RmTrajectoryStock_[i].resize(N);
     PmTrajectoryStock_[i].resize(N);
 
+    RmInverseTrajectoryStock_[i].resize(N);
+    RmCholeskyUpperTrajectoryStock_[i].resize(N);
+
     // event times LQ variables
     size_t NE = nominalPostEventIndicesStock_[i].size();
 
@@ -610,13 +618,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
   heuristicsFunctionsPtrStock_[0]->getTerminalCost(sHeuristics_(0));
   heuristicsFunctionsPtrStock_[0]->getTerminalCostDerivativeState(SvHeuristics_);
   heuristicsFunctionsPtrStock_[0]->getTerminalCostSecondDerivativeState(SmHeuristics_);
-  if (ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH) {
-    if (ddpSettings_.lineSearch_.useMakePSD_) {
-      LinearAlgebra::makePSD(SmHeuristics_);
-    } else {
-      LinearAlgebra::makePSD_AMI(SmHeuristics_, ddpSettings_.lineSearch_.addedRiccatiDiagonal_);
-    }
-  }
 }
 
 /******************************************************************************************************/
@@ -631,15 +632,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateUnconstrainedLQWorker(size_t wor
       ncIneqTrajectoriesStock_[i][k], hTrajectoryStock_[i][k], dhdxTrajectoryStock_[i][k], dhduTrajectoryStock_[i][k],
       ddhdxdxTrajectoryStock_[i][k], ddhduduTrajectoryStock_[i][k], ddhdudxTrajectoryStock_[i][k], qTrajectoryStock_[i][k],
       QvTrajectoryStock_[i][k], QmTrajectoryStock_[i][k], RvTrajectoryStock_[i][k], RmTrajectoryStock_[i][k], PmTrajectoryStock_[i][k]);
-
-  // making sure that constrained Qm is PSD
-  if (ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH) {
-    if (ddpSettings_.lineSearch_.useMakePSD_) {
-      LinearAlgebra::makePSD(QmTrajectoryStock_[i][k]);
-    } else {
-      LinearAlgebra::makePSD_AMI(QmTrajectoryStock_[i][k], ddpSettings_.lineSearch_.addedRiccatiDiagonal_);
-    }
-  }
 }
 
 /******************************************************************************************************/
@@ -675,18 +667,76 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateEventsLQWorker(size_t workerInde
         QmFinalStock_[i][ke] += stateConstraintPenalty * FmFinalStock_[i][ke].topRows(nc2).transpose() * FmFinalStock_[i][ke].topRows(nc2);
       }
 
-      // making sure that Qm remains PSD
-      if (ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH) {
-        if (ddpSettings_.lineSearch_.useMakePSD_) {
-          LinearAlgebra::makePSD(QmFinalStock_[i][ke]);
-        } else {
-          LinearAlgebra::makePSD_AMI(QmFinalStock_[i][ke], ddpSettings_.lineSearch_.addedRiccatiDiagonal_);
-        }
-      }
-
       break;
     }
   }  // end of ke loop
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::computeRiccatiModificationTerms() {
+  // intermediate
+  for (size_t i = 0; i < numPartitions_; i++) {
+    auto N = nominalTimeTrajectoriesStock_[i].size();
+    riccatiModificationStock_[i].resize(N);
+
+    if (N > 0) {
+      // perform the computeRiccatiModificationTerms for partition i
+      nextTimeIndex_ = 0;
+      nextTaskId_ = 0;
+      std::function<void(void)> task = [this, i] {
+        int N = nominalTimeTrajectoriesStock_[i].size();
+        int timeIndex;
+        size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+
+        // get next time index is atomic
+        while ((timeIndex = nextTimeIndex_++) < N) {
+          // execute computeRiccatiModificationTerms for the given partition and time node index
+          computeRiccatiModificationTermsWorker(taskId, i, timeIndex);
+        }
+      };
+      runParallel(task, ddpSettings_.nThreads_);
+    }
+  }  // end of i loop
+
+  // final and heuristics
+  if (ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH) {
+    for (size_t i = 0; i < numPartitions_; i++) {
+      for (auto& QmFinal : QmFinalStock_[i]) {
+        shiftHessian(QmFinal);
+      }
+    }  // end of i loop
+
+    shiftHessian(SmHeuristics_);
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+template <typename Derived>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::shiftHessian(Eigen::MatrixBase<Derived>& matrix) {
+  switch (ddpSettings_.lineSearch_.hessianCorrectionStrategy_) {
+    case Hessian_Correction::DIAGONAL_SHIFT: {
+      matrix.diagonal().array() += ddpSettings_.lineSearch_.hessianCorrectionMultiple_;
+      break;
+    }
+    case Hessian_Correction::CHOLESKY_MODIFICATION: {
+      LinearAlgebra::makePsdCholesky(matrix, ddpSettings_.lineSearch_.hessianCorrectionMultiple_);
+      break;
+    }
+    case Hessian_Correction::EIGENVALUE_MODIFICATION: {
+      LinearAlgebra::makePsdEigenvalue(matrix, ddpSettings_.lineSearch_.hessianCorrectionMultiple_);
+      break;
+    }
+    case Hessian_Correction::GERSHGORIN_MODIFICATION: {
+      LinearAlgebra::makePsdGershgorin(matrix, ddpSettings_.lineSearch_.hessianCorrectionMultiple_);
+      break;
+    }
+  }
 }
 
 /******************************************************************************************************/
@@ -765,9 +815,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
   } else if (ddpSettings_.lineSearch_.maxStepLength_ < ddpSettings_.lineSearch_.minStepLength_) {
     maxNumOfLineSearches = 0;
   } else {
-    maxNumOfLineSearches = static_cast<size_t>(std::log(ddpSettings_.lineSearch_.minStepLength_ / ddpSettings_.lineSearch_.maxStepLength_) /
-                                                   std::log(ddpSettings_.lineSearch_.contractionRate_) +
-                                               1);
+    const auto ratio =
+        (ddpSettings_.lineSearch_.minStepLength_ + OCS2NumericTraits<scalar_t>::limitEpsilon()) / ddpSettings_.lineSearch_.maxStepLength_;
+    maxNumOfLineSearches = static_cast<size_t>(std::log(ratio) / std::log(ddpSettings_.lineSearch_.contractionRate_) + 1);
   }
 
   // perform a rollout while the input correction for the state-input equality constraint is considered.
@@ -912,8 +962,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
        * cost should be better than the baseline cost but learning rate should
        * be as high as possible. This is equivalent to a single core line search.
        */
-      // const bool progressCondition = lsTotalCost < (lineSearchImpl_.baselineTotalCost * (1.0 - 1e-3 * stepLength));
-      const bool armijoCondition = lsTotalCost < (lineSearchImpl_.baselineTotalCost - 1e-4 * stepLength * nominalControllerUpdateIS_);
+      const bool progressCondition = lsTotalCost < (lineSearchImpl_.baselineTotalCost * (1.0 - 1e-3 * stepLength));
+      const bool armijoCondition = lsTotalCost < (lineSearchImpl_.baselineTotalCost -
+                                                  ddpSettings_.lineSearch_.armijoCoefficient_ * stepLength * nominalControllerUpdateIS_);
       if (armijoCondition && stepLength > lineSearchImpl_.stepLengthStar) {
         nominalTotalCost_ = lsTotalCost;
         lineSearchImpl_.stepLengthStar = stepLength;
@@ -970,9 +1021,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t workerIndex, scalar
                                                       state_vector_array2_t& lsStateTrajectoriesStock,
                                                       input_vector_array2_t& lsInputTrajectoriesStock) {
   // modifying uff by local increments
-  for (size_t i = 0; i < numPartitions_; i++) {
-    for (size_t k = 0; k < lsControllersStock[i].timeStamp_.size(); k++) {
-      lsControllersStock[i].biasArray_[k] += stepLength * lsControllersStock[i].deltaBiasArray_[k];
+  for (auto& controller : lsControllersStock) {
+    for (size_t k = 0; k < controller.size(); k++) {
+      controller.biasArray_[k] += stepLength * controller.deltaBiasArray_[k];
     }
   }
 
@@ -1048,18 +1099,135 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t workerIndex, scalar
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::trustRegion() {
-  // revitalize all integrators
-  event_handler_t::deactivateKillIntegration();
+void DDP_BASE<STATE_DIM, INPUT_DIM>::levenbergMarquardt() {
+  // levenberg marquardt forward simulation's variables
+  scalar_t lvTotalCost;
+  scalar_t lvConstraint1ISE, lvConstraint2ISE, lvInequalityConstraintPenalty, lvInequalityConstraintISE;
+  scalar_t lvConstraint1MaxNorm, lvConstraint2MaxNorm;
+  scalar_array2_t lvTimeTrajectoriesStock(numPartitions_);
+  size_array2_t lvPostEventIndicesStock(numPartitions_);
+  state_vector_array2_t lvStateTrajectoriesStock(numPartitions_);
+  input_vector_array2_t lvInputTrajectoriesStock(numPartitions_);
 
-  // clear the feedforward increments
-  for (auto& controller : nominalControllersStock_) {
-    controller.deltaBiasArray_.clear();
+  // do a full step rollout
+  const size_t taskId = 0;
+  const scalar_t stepLength = isInitInternalControllerEmpty_ ? 0.0 : 1.0;
+  lineSearchWorker(taskId, stepLength, lvTotalCost, lvConstraint1ISE, lvConstraint1MaxNorm, lvConstraint2ISE, lvConstraint2MaxNorm,
+                   lvInequalityConstraintPenalty, lvInequalityConstraintISE, nominalControllersStock_, lvTimeTrajectoriesStock,
+                   lvPostEventIndicesStock, lvStateTrajectoriesStock, lvInputTrajectoriesStock);
+
+  // alias for the Levenberg_Marquardt settings
+  const auto& lvSettings = ddpSettings_.levenbergMarquardt_;
+
+  // compute pho (the ratio between actual reduction and predicted reduction)
+  const auto predictedCost = sTrajectoryStock_[initActivePartition_].front()(0);
+  auto actualReduction = nominalTotalCost_ - lvTotalCost;
+  auto predictedReduction = nominalTotalCost_ - predictedCost;
+  if (std::abs(actualReduction) < 1e-3 * std::abs(nominalTotalCost_)) {
+    levenbergMarquardtImpl_.pho = 1.0;
+  } else {
+    levenbergMarquardtImpl_.pho = actualReduction / predictedReduction;
   }
 
   // display
   if (ddpSettings_.displayInfo_) {
-    std::cerr << "The chosen step length is: " + std::to_string(lineSearchImpl_.stepLengthStar) << std::endl;
+    // std::cerr << "Previous Cost: " << nominalTotalCost_ << ",   Actual Cost: " << lvTotalCost << ",  Predicted Cost: " << predictedCost
+    //          << std::endl;
+    std::cerr << "Actual Reduction: " << actualReduction << ",   Predicted Reduction: " << predictedReduction << std::endl;
+  }
+
+  // adjust riccatiMultipleAdaptiveRatio and riccatiMultiple
+  if (levenbergMarquardtImpl_.pho < 0.25) {
+    // increase riccatiMultipleAdaptiveRatio
+    levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio =
+        std::max(1.0, levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio) * lvSettings.riccatiMultipleDefaultRatio_;
+
+    // increase riccatiMultiple
+    auto riccatiMultipleTemp = levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio * levenbergMarquardtImpl_.riccatiMultiple;
+    if (riccatiMultipleTemp > lvSettings.riccatiMultipleDefaultFactor_) {
+      levenbergMarquardtImpl_.riccatiMultiple = riccatiMultipleTemp;
+    } else {
+      levenbergMarquardtImpl_.riccatiMultiple = lvSettings.riccatiMultipleDefaultFactor_;
+    }
+
+  } else if (levenbergMarquardtImpl_.pho > 0.75) {
+    // decrease riccatiMultipleAdaptiveRatio
+    levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio =
+        std::min(1.0, levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio) / lvSettings.riccatiMultipleDefaultRatio_;
+
+    // decrease riccatiMultiple
+    auto riccatiMultipleTemp = levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio * levenbergMarquardtImpl_.riccatiMultiple;
+    if (riccatiMultipleTemp > lvSettings.riccatiMultipleDefaultFactor_) {
+      levenbergMarquardtImpl_.riccatiMultiple = riccatiMultipleTemp;
+    } else {
+      levenbergMarquardtImpl_.riccatiMultiple = 0.0;
+    }
+  } else {
+    levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio = 1.0;
+    // levenbergMarquardtImpl_.riccatiMultiple will not change.
+  }
+
+  // accept or reject the step and modify numSuccessiveRejections
+  if (levenbergMarquardtImpl_.pho >= lvSettings.minAcceptedPho_ || isInitInternalControllerEmpty_ || true) {
+    // accept the solution
+    levenbergMarquardtImpl_.numSuccessiveRejections = 0;
+
+    // update nominal trajectories
+    nominalTotalCost_ = lvTotalCost;
+    nominalConstraint1ISE_ = lvConstraint1ISE;
+    nominalConstraint1MaxNorm_ = lvConstraint1MaxNorm;
+    nominalConstraint2ISE_ = lvConstraint2ISE;
+    nominalConstraint2MaxNorm_ = lvConstraint2MaxNorm;
+    nominalInequalityConstraintPenalty_ = lvInequalityConstraintPenalty;
+    nominalInequalityConstraintISE_ = lvInequalityConstraintISE;
+
+    nominalTimeTrajectoriesStock_.swap(lvTimeTrajectoriesStock);
+    nominalPostEventIndicesStock_.swap(lvPostEventIndicesStock);
+    nominalStateTrajectoriesStock_.swap(lvStateTrajectoriesStock);
+    nominalInputTrajectoriesStock_.swap(lvInputTrajectoriesStock);
+    // update nominal controller: just clear the feedforward increments
+    for (auto& controller : nominalControllersStock_) {
+      controller.deltaBiasArray_.clear();
+    }
+
+  } else {
+    // reject the solution
+    ++levenbergMarquardtImpl_.numSuccessiveRejections;
+
+    // swap back the cached nominal trajectories
+    swapNominalTrajectoriesToCache();
+    // update nominal controller
+    std::swap(nominalControllerUpdateIS_, cachedControllerUpdateIS_);
+    nominalControllersStock_.swap(cachedControllersStock_);
+  }
+
+  // display
+  if (ddpSettings_.displayInfo_) {
+    std::string levenbergMarquardtDisplay;
+    if (levenbergMarquardtImpl_.numSuccessiveRejections == 0) {
+      levenbergMarquardtDisplay = "The step is accepted with pho: " + std::to_string(levenbergMarquardtImpl_.pho) + ". ";
+    } else {
+      levenbergMarquardtDisplay = "The step is rejected with pho: " + std::to_string(levenbergMarquardtImpl_.pho) + " (" +
+                                  std::to_string(levenbergMarquardtImpl_.numSuccessiveRejections) + " out of " +
+                                  std::to_string(lvSettings.maxNumSuccessiveRejections_) + "). ";
+    }
+
+    if (numerics::almost_eq(levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio, 1.0)) {
+      levenbergMarquardtDisplay += "The Riccati multiple is kept constant: ";
+    } else if (levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio < 1.0) {
+      levenbergMarquardtDisplay += "The Riccati multiple is decreased to: ";
+    } else {
+      levenbergMarquardtDisplay += "The Riccati multiple is increased to: ";
+    }
+    levenbergMarquardtDisplay += std::to_string(levenbergMarquardtImpl_.riccatiMultiple) +
+                                 ", with ratio: " + std::to_string(levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio) + ".";
+
+    BASE::printString(levenbergMarquardtDisplay);
+  }
+
+  // max accepted number of successive rejections
+  if (levenbergMarquardtImpl_.numSuccessiveRejections > lvSettings.maxNumSuccessiveRejections_) {
+    throw std::runtime_error("The maximum number of successive solution rejections has been reached!");
   }
 }
 
@@ -1725,6 +1893,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   nominalStateTrajectoriesStock_.resize(numPartitions);
   nominalInputTrajectoriesStock_.resize(numPartitions);
 
+  cachedControllersStock_.resize(numPartitions);
   cachedTimeTrajectoriesStock_.resize(numPartitions);
   cachedPostEventIndicesStock_.resize(numPartitions);
   cachedStateTrajectoriesStock_.resize(numPartitions);
@@ -1746,6 +1915,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   SvTrajectoryStock_.resize(numPartitions);
   SveTrajectoryStock_.resize(numPartitions);
   SmTrajectoryStock_.resize(numPartitions);
+
+  riccatiModificationStock_.resize(numPartitions);
 
   /*
    * approximate LQ variables
@@ -1782,6 +1953,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   RvTrajectoryStock_.resize(numPartitions);
   RmTrajectoryStock_.resize(numPartitions);
   PmTrajectoryStock_.resize(numPartitions);
+
+  RmInverseTrajectoryStock_.resize(numPartitions);
+  RmCholeskyUpperTrajectoryStock_.resize(numPartitions);
 }
 
 /******************************************************************************************************/
@@ -1812,7 +1986,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
 
   // to check convergence of the main loop, we need to compute the total cost and ISEs
   bool computePerformanceIndex = ddpSettings_.displayInfo_ || ddpSettings_.maxNumIterations_ > 1;
-  if (computePerformanceIndex) {
+  if (computePerformanceIndex || ddpSettings_.strategy_ == DDP_Strategy::LEVENBERG_MARQUARDT) {
     // calculate rollout constraint type-1 ISE
     nominalConstraint1MaxNorm_ =
         calculateConstraintISE(nominalTimeTrajectoriesStock_, nc1TrajectoriesStock_, EvTrajectoryStock_, nominalConstraint1ISE_);
@@ -1835,11 +2009,16 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
 
   // solve Riccati equations
   backwardPassTimer_.startTimer();
+  computeRiccatiModificationTerms();
   avgTimeStepBP_ = solveSequentialRiccatiEquations(SmHeuristics_, SvHeuristics_, sHeuristics_);
   backwardPassTimer_.endTimer();
 
   // calculate controller
   computeControllerTimer_.startTimer();
+  // cache controller
+  std::swap(cachedControllerUpdateIS_, nominalControllerUpdateIS_);
+  cachedControllersStock_.swap(nominalControllersStock_);
+  // update nominal controller
   calculateController();
   nominalControllerUpdateIS_ = calculateControllerUpdateIS(nominalControllersStock_);
   computeControllerTimer_.endTimer();
@@ -1869,7 +2048,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
   searchStrategyTimer_.startTimer();
   switch (ddpSettings_.strategy_) {  // clang-format off
     case DDP_Strategy::LINE_SEARCH: { lineSearch(computeISEs); break; }
-    case DDP_Strategy::TRUST_REGION: { trustRegion(); break; }
+    case DDP_Strategy::LEVENBERG_MARQUARDT: { levenbergMarquardt(); break; }
   }  // clang-format on
   searchStrategyTimer_.endTimer();
 
@@ -1894,11 +2073,16 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
 
   // solve Riccati equations
   backwardPassTimer_.startTimer();
+  computeRiccatiModificationTerms();
   avgTimeStepBP_ = solveSequentialRiccatiEquations(SmHeuristics_, SvHeuristics_, sHeuristics_);
   backwardPassTimer_.endTimer();
 
   // calculate controller
   computeControllerTimer_.startTimer();
+  // cache controller
+  std::swap(cachedControllerUpdateIS_, nominalControllerUpdateIS_);
+  cachedControllersStock_.swap(nominalControllersStock_);
+  // update nominal controller
   calculateController();
   nominalControllerUpdateIS_ = calculateControllerUpdateIS(nominalControllersStock_);
   computeControllerTimer_.endTimer();
@@ -2015,9 +2199,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
   iterationISE2_.clear();
 
   // check if after the truncation the internal controller is empty
-  bool isInitInternalControllerEmpty = false;
-  for (const linear_controller_t& controller : nominalControllersStock_) {
-    isInitInternalControllerEmpty = isInitInternalControllerEmpty || controller.empty();
+  isInitInternalControllerEmpty_ = false;
+  for (const auto& controller : nominalControllersStock_) {
+    isInitInternalControllerEmpty_ = isInitInternalControllerEmpty_ || controller.empty();
   }
 
   // display
@@ -2036,12 +2220,11 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
   iterationISE2_.push_back((Eigen::VectorXd(1) << nominalConstraint2ISE_).finished());
 
   // convergence conditions variables
-  scalar_t relCost;
-  scalar_t relConstraint1ISE;
-  bool isStepLengthStarZero = false;
-  bool isCostFunctionConverged = false;
-  bool isConstraint1Satisfied = false;
   bool isOptimizationConverged = false;
+  bool isCostFunctionConverged = false;
+  bool isStepLengthStarZero = false;
+  scalar_t relCost = 2.0 * ddpSettings_.minRelCost_;
+  scalar_t relConstraint1ISE = 2.0 * ddpSettings_.minRelConstraint1ISE_;
 
   // DDP main loop
   while (iteration_ + 1 < ddpSettings_.maxNumIterations_ && !isOptimizationConverged) {
@@ -2072,15 +2255,27 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
     iterationISE2_.push_back((Eigen::VectorXd(1) << nominalConstraint2ISE_).finished());
 
     // loop break variables
+    isCostFunctionConverged = false;
+    isStepLengthStarZero = false;
     relCost = std::abs(nominalTotalCost_ - costCashed);
+    switch (ddpSettings_.strategy_) {
+      case DDP_Strategy::LINE_SEARCH: {
+        isStepLengthStarZero = numerics::almost_eq(lineSearchImpl_.stepLengthStar.load(), 0.0) && !isInitInternalControllerEmpty_;
+        isCostFunctionConverged = relCost <= ddpSettings_.minRelCost_;
+        break;
+      }
+      case DDP_Strategy::LEVENBERG_MARQUARDT: {
+        if (levenbergMarquardtImpl_.numSuccessiveRejections == 0 && !isInitInternalControllerEmpty_) {
+          isCostFunctionConverged = relCost <= ddpSettings_.minRelCost_;
+        }
+        break;
+      }
+    }
     relConstraint1ISE = std::abs(nominalConstraint1ISE_ - constraint1ISECashed);
-    isConstraint1Satisfied =
+    bool isConstraint1Satisfied =
         nominalConstraint1ISE_ <= ddpSettings_.minAbsConstraint1ISE_ || relConstraint1ISE <= ddpSettings_.minRelConstraint1ISE_;
-    isStepLengthStarZero = ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH &&
-                           numerics::almost_eq(lineSearchImpl_.stepLengthStar.load(), 0.0) && !isInitInternalControllerEmpty;
-    isCostFunctionConverged = relCost <= ddpSettings_.minRelCost_ || isStepLengthStarZero;
-    isOptimizationConverged = isCostFunctionConverged && isConstraint1Satisfied;
-    isInitInternalControllerEmpty = false;
+    isOptimizationConverged = (isCostFunctionConverged || isStepLengthStarZero) && isConstraint1Satisfied;
+    isInitInternalControllerEmpty_ = false;
 
   }  // end of while loop
 
@@ -2102,7 +2297,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
   searchStrategyTimer_.startTimer();
   switch (ddpSettings_.strategy_) {  // clang-format off
     case DDP_Strategy::LINE_SEARCH: { lineSearch(computeISEs); break; }
-    case DDP_Strategy::TRUST_REGION: { trustRegion(); break; }
+    case DDP_Strategy::LEVENBERG_MARQUARDT: { levenbergMarquardt(); break; }
   }  // clang-format on
   searchStrategyTimer_.endTimer();
 
@@ -2119,7 +2314,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
     if (isOptimizationConverged) {
       if (isStepLengthStarZero) {
         std::cerr << algorithmName_ + " successfully terminates as step length reduced to zero." << std::endl;
-      } else {
+      }
+      if (isCostFunctionConverged) {
         std::cerr << algorithmName_ + " successfully terminates as cost relative change (relCost=" << relCost
                   << ") reached to the minimum value." << std::endl;
       }

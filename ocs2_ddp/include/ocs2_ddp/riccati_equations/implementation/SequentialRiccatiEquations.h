@@ -101,7 +101,7 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(
     const eigen_scalar_array_t* qPtr, const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr,
     const input_vector_array_t* RvPtr, const dynamic_matrix_array_t* RinvCholPtr, const input_state_matrix_array_t* PmPtr,
     const size_array_t* postEventIndicesPtr, const eigen_scalar_array_t* qFinalPtr, const state_vector_array_t* QvFinalPtr,
-    const state_matrix_array_t* QmFinalPtr) {
+    const state_matrix_array_t* QmFinalPtr, const riccati_modification_t* riccatiModificationPtr) {
   BASE::resetNumFunctionCalls();
 
   const int state_dim = (*BmPtr)[0].rows();
@@ -139,6 +139,8 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(
   QvFinalPtr_ = QvFinalPtr;
   QmFinalPtr_ = QmFinalPtr;
 
+  riccatiModificationPtr_ = riccatiModificationPtr;
+
   if (preComputeRiccatiTerms_) {
     // Initialize all arrays that will store the precomputation
     const size_t N = AmPtr->size();
@@ -166,7 +168,7 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(
       AmT_minus_P_Rinv_B_array_[i].noalias() -= PmT_RinvChol * B_RinvChol_array_[i].transpose();
 
       // Modify the constraints in place
-      Qm_minus_P_Rinv_P_array_[i].noalias() -= PmT_RinvChol * PmT_RinvChol.transpose();
+      Qm_minus_P_Rinv_P_array_[i].noalias() += riccatiModificationPtr_->deltaQmTrajectory_[i] - PmT_RinvChol * PmT_RinvChol.transpose();
       Qv_minus_P_Rinv_Rv_array_[i].noalias() -= PmT_RinvChol * RinvCholT_Rv_array_[i];
     }
   }
@@ -241,6 +243,10 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const scal
     EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, Pm_, PmPtr_);
     EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, Rv_, RvPtr_);
 
+    EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, deltaQm_, &riccatiModificationPtr_->deltaQmTrajectory_);
+    EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, deltaRm_, &riccatiModificationPtr_->deltaRmTrajectory_);
+    EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, deltaPm_, &riccatiModificationPtr_->deltaPmTrajectory_);
+
     Pm_.noalias() += Bm_.transpose() * Sm_;  // ! Pm is changed to avoid an extra temporary
     SmT_B_RinvChol_.noalias() = RinvChol_.transpose() * Pm_;
     Rv_.noalias() += Bm_.transpose() * Sv_;  // ! Rv is changed to avoid an extra temporary
@@ -249,7 +255,7 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const scal
     AmT_Sm_.noalias() = Am_.transpose() * Sm_.transpose();
 
     // dSmdt,  Qm_ used instead of temporary
-    Qm_ += AmT_Sm_ + AmT_Sm_.transpose();
+    Qm_ += deltaQm_ + AmT_Sm_ + AmT_Sm_.transpose();
     Qm_.noalias() -= SmT_B_RinvChol_.transpose() * SmT_B_RinvChol_;
 
     // dSvdt,  Qv_ used instead of temporary

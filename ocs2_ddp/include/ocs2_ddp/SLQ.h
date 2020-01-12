@@ -177,6 +177,8 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
 
   void approximateLQWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
 
+  void computeRiccatiModificationTermsWorker(size_t workerIndex, size_t i, size_t k) override;
+
   void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
 
   void riccatiSolverTask() override;
@@ -276,7 +278,6 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   input_vector_array2_t EvProjectedTrajectoryStock_;        // DmDager * Ev
   input_state_matrix_array2_t CmProjectedTrajectoryStock_;  // DmDager * Cm
   input_matrix_array2_t DmProjectedTrajectoryStock_;        // DmDager * Dm
-  input_matrix_array2_t RmInverseTrajectoryStock_;
 
   std::vector<std::shared_ptr<riccati_equations_t>> riccatiEquationsPtrStock_;
   std::vector<std::shared_ptr<SystemEventHandler<riccati_equations_t::S_DIM_>>> riccatiEventPtrStock_;

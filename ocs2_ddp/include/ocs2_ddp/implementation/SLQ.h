@@ -61,8 +61,9 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivativ
 
   for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
     using riccati_equations_alloc_t = Eigen::aligned_allocator<riccati_equations_t>;
-    riccatiEquationsPtrStock_.emplace_back(std::allocate_shared<riccati_equations_t, riccati_equations_alloc_t>(
-        riccati_equations_alloc_t(), BASE::ddpSettings_.lineSearch_.useMakePSD_, settings_.preComputeRiccatiTerms_));
+    bool preComputeRiccatiTerms_ = settings_.preComputeRiccatiTerms_ && (BASE::ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH);
+    riccatiEquationsPtrStock_.emplace_back(
+        std::allocate_shared<riccati_equations_t, riccati_equations_alloc_t>(riccati_equations_alloc_t(), preComputeRiccatiTerms_));
 
     using error_equation_alloc_t = Eigen::aligned_allocator<error_equation_t>;
     errorEquationPtrStock_.emplace_back(std::allocate_shared<error_equation_t, error_equation_alloc_t>(error_equation_alloc_t()));
@@ -121,7 +122,6 @@ void SLQ<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
     EvProjectedTrajectoryStock_[i].resize(N);
     CmProjectedTrajectoryStock_[i].resize(N);
     DmProjectedTrajectoryStock_[i].resize(N);
-    RmInverseTrajectoryStock_[i].resize(N);
     RmInvConstrainedCholTrajectoryStock_[i].resize(N);
   }  // end of i loop
 
@@ -250,8 +250,8 @@ void SLQ<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t workerInde
   // Compute R inverse after inequalities are added to the cost
   // Compute it through the cholesky decomposition as we can reuse the factorization later on
   input_matrix_t RinvChol;
-  LinearAlgebra::computeLinvTLinv(BASE::RmTrajectoryStock_[i][k], RinvChol);
-  RmInverseTrajectoryStock_[i][k].noalias() = RinvChol * RinvChol.transpose();
+  LinearAlgebra::computeLinvTLinv(BASE::RmTrajectoryStock_[i][k], BASE::RmCholeskyUpperTrajectoryStock_[i][k], RinvChol);
+  BASE::RmInverseTrajectoryStock_[i][k].noalias() = RinvChol * RinvChol.transpose();
 
   // constraint type 1 coefficients
   const auto nc1 = BASE::nc1TrajectoriesStock_[i][k];
@@ -302,15 +302,6 @@ void SLQ<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t workerInde
     // Qv constrained
     QvConstrainedTrajectoryStock_[i][k] = BASE::QvTrajectoryStock_[i][k];
     QvConstrainedTrajectoryStock_[i][k].noalias() -= CmProjectedTrajectoryStock_[i][k].transpose() * BASE::RvTrajectoryStock_[i][k];
-  }
-
-  // making sure that constrained Qm is PSD
-  if (BASE::ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH) {
-    if (BASE::ddpSettings_.lineSearch_.useMakePSD_) {
-      LinearAlgebra::makePSD(QmConstrainedTrajectoryStock_[i][k]);
-    } else {
-      LinearAlgebra::makePSD_AMI(QmConstrainedTrajectoryStock_[i][k], BASE::ddpSettings_.lineSearch_.addedRiccatiDiagonal_);
-    }
   }
 }
 
@@ -365,6 +356,35 @@ void SLQ<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t time,
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ<STATE_DIM, INPUT_DIM>::computeRiccatiModificationTermsWorker(size_t workerIndex, size_t i, size_t k) {
+  switch (BASE::ddpSettings_.strategy_) {
+    case DDP_Strategy::LINE_SEARCH: {
+      auto& Qm = BASE::QmTrajectoryStock_[i][k];
+      auto& Pm = BASE::PmTrajectoryStock_[i][k];
+      auto& Rinv = BASE::RmInverseTrajectoryStock_[i][k];
+      state_matrix_t Q_minus_PTRinvP = Qm - (Pm.transpose() * Rinv) * Pm;
+      BASE::riccatiModificationStock_[i].deltaQmTrajectory_[k] = Q_minus_PTRinvP;
+      BASE::shiftHessian(BASE::riccatiModificationStock_[i].deltaQmTrajectory_[k]);
+      BASE::riccatiModificationStock_[i].deltaQmTrajectory_[k] -= Q_minus_PTRinvP;
+      BASE::riccatiModificationStock_[i].deltaRmTrajectory_[k].setZero(INPUT_DIM, INPUT_DIM);
+      BASE::riccatiModificationStock_[i].deltaPmTrajectory_[k].setZero(INPUT_DIM, STATE_DIM);
+      break;
+    }
+    case DDP_Strategy::LEVENBERG_MARQUARDT: {
+      const auto& Am = BASE::AmTrajectoryStock_[i][k];
+      const auto& Bm = BASE::BmTrajectoryStock_[i][k];
+      BASE::riccatiModificationStock_[i].deltaQmTrajectory_[k].setZero(STATE_DIM, STATE_DIM);
+      BASE::riccatiModificationStock_[i].deltaRmTrajectory_[k] = BASE::levenbergMarquardtImpl_.riccatiMultiple * Bm.transpose() * Bm;
+      BASE::riccatiModificationStock_[i].deltaPmTrajectory_[k] = BASE::levenbergMarquardtImpl_.riccatiMultiple * Bm.transpose() * Am;
+      break;
+    }
+  }  // end of switch-case
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQ<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) {
   const auto i = partitionIndex;
   const auto k = timeIndex;
@@ -388,7 +408,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, si
   EigenLinearInterpolation<state_input_matrix_t>::interpolate(indexAlpha, Bm, &(BASE::BmTrajectoryStock_[i]));
   EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, Pm, &(BASE::PmTrajectoryStock_[i]));
   EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, Rv, &(BASE::RvTrajectoryStock_[i]));
-  EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, RmInverse, &(RmInverseTrajectoryStock_[i]));
+  EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, RmInverse, &(BASE::RmInverseTrajectoryStock_[i]));
   EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, EvProjected, &(EvProjectedTrajectoryStock_[i]));
   EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, CmProjected, &(CmProjectedTrajectoryStock_[i]));
   EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, DmProjected, &(DmProjectedTrajectoryStock_[i]));
@@ -404,7 +424,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, si
 
   input_matrix_t DmNullProjection = input_matrix_t::Identity() - DmProjected;
 
-  // Feedback gains K
+  // Feedback gains
   BASE::nominalControllersStock_[i].gainArray_[k] = -CmProjected;
   BASE::nominalControllersStock_[i].gainArray_[k].noalias() -= DmNullProjection * Lm;
 
@@ -579,7 +599,6 @@ void SLQ<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   CmProjectedTrajectoryStock_.resize(numPartitions);
   DmProjectedTrajectoryStock_.resize(numPartitions);
   RmInvConstrainedCholTrajectoryStock_.resize(numPartitions);
-  RmInverseTrajectoryStock_.resize(numPartitions);
 }
 
 /******************************************************************************************************/
@@ -596,7 +615,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size_
       &QmConstrainedTrajectoryStock_[partitionIndex], &BASE::RvTrajectoryStock_[partitionIndex],
       &RmInvConstrainedCholTrajectoryStock_[partitionIndex], &BASE::PmTrajectoryStock_[partitionIndex],
       &BASE::nominalPostEventIndicesStock_[partitionIndex], &BASE::qFinalStock_[partitionIndex], &BASE::QvFinalStock_[partitionIndex],
-      &BASE::QmFinalStock_[partitionIndex]);
+      &BASE::QmFinalStock_[partitionIndex], &BASE::riccatiModificationStock_[partitionIndex]);
 
   // Const partition containers
   const auto& nominalTimeTrajectory = BASE::nominalTimeTrajectoriesStock_[partitionIndex];
@@ -777,7 +796,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::errorRiccatiEquationWorker(size_t workerIndex, s
   const auto& AmTrajectory = AmConstrainedTrajectoryStock_[partitionIndex];
   const auto& RmInvCholTrajectory = RmInvConstrainedCholTrajectoryStock_[partitionIndex];
   const auto& RmTrajectory = BASE::RmTrajectoryStock_[partitionIndex];
-  const auto& RmInvTrajectory = RmInverseTrajectoryStock_[partitionIndex];
+  const auto& RmInvTrajectory = BASE::RmInverseTrajectoryStock_[partitionIndex];
   const auto& EvTrajectory = EvProjectedTrajectoryStock_[partitionIndex];
   const auto& CmTrajectory = CmProjectedTrajectoryStock_[partitionIndex];
 

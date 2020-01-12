@@ -37,6 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/OdeBase.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
+#include "ocs2_ddp/riccati_equations/RiccatiModification.h"
+
 namespace ocs2 {
 
 /**
@@ -86,6 +88,8 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
   using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
   using dynamic_matrix_array_t = typename DIMENSIONS::dynamic_matrix_array_t;
   using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
+
+  using riccati_modification_t = RiccatiModification<STATE_DIM, INPUT_DIM>;
 
   using s_vector_t = Eigen::Matrix<scalar_t, S_DIM_, 1>;
   using s_vector_array_t = std::vector<s_vector_t, Eigen::aligned_allocator<s_vector_t> >;
@@ -138,7 +142,8 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
                const eigen_scalar_array_t* qPtr, const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr,
                const input_vector_array_t* RvPtr, const dynamic_matrix_array_t* RinvCholPtr, const input_state_matrix_array_t* PmPtr,
                const size_array_t* eventsPastTheEndIndecesPtr, const eigen_scalar_array_t* qFinalPtr,
-               const state_vector_array_t* QvFinalPtr, const state_matrix_array_t* QmFinalPtr);
+               const state_vector_array_t* QvFinalPtr, const state_matrix_array_t* QmFinalPtr,
+               const riccati_modification_t* riccatiModificationPtr);
 
   /**
    * Riccati jump map at switching moments
@@ -197,10 +202,16 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
   dynamic_matrix_t RinvChol_;
   input_state_matrix_t Pm_;
 
+  state_matrix_t deltaQm_;
+  input_matrix_t deltaRm_;
+  input_state_matrix_t deltaPm_;
+
   scalar_array_t eventTimes_;
   const eigen_scalar_array_t* qFinalPtr_;
   const state_vector_array_t* QvFinalPtr_;
   const state_matrix_array_t* QmFinalPtr_;
+
+  const riccati_modification_t* riccatiModificationPtr_;
 };
 
 extern template class SequentialRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;

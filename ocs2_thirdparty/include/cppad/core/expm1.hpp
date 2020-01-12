@@ -1,29 +1,28 @@
-// $Id$
 # ifndef CPPAD_CORE_EXPM1_HPP
 # define CPPAD_CORE_EXPM1_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*
 -------------------------------------------------------------------------------
 $begin expm1$$
 $spell
-	exp
-	expm1
-	const
-	Vec
-	std
-	cmath
-	CppAD
+    exp
+    expm1
+    const
+    Vec
+    std
+    cmath
+    CppAD
 $$
 $section The Exponential Function Minus One: expm1$$
 
@@ -55,12 +54,11 @@ to compute this function.
 
 $head Example$$
 $children%
-	example/expm1.cpp
+    example/general/expm1.cpp
 %$$
 The file
 $cref expm1.cpp$$
 contains an example and test of this function.
-It returns true if it succeeds and false otherwise.
 
 $end
 -------------------------------------------------------------------------------
@@ -73,22 +71,22 @@ namespace CppAD {
 
 template <class Type>
 Type expm1_template(const Type &x)
-{	return CppAD::exp(x) - Type(1);
+{   return CppAD::exp(x) - Type(1);
 }
 
 inline float expm1(const float &x)
-{	return expm1_template(x); }
+{   return expm1_template(x); }
 
 inline double expm1(const double &x)
-{	return expm1_template(x); }
+{   return expm1_template(x); }
 
 template <class Base>
-inline AD<Base> expm1(const AD<Base> &x)
-{	return expm1_template(x); }
+AD<Base> expm1(const AD<Base> &x)
+{   return expm1_template(x); }
 
 template <class Base>
-inline AD<Base> expm1(const VecAD_reference<Base> &x)
-{	return expm1_template( x.ADBase() ); }
+AD<Base> expm1(const VecAD_reference<Base> &x)
+{   return expm1_template( x.ADBase() ); }
 
 
 } // END CppAD namespace

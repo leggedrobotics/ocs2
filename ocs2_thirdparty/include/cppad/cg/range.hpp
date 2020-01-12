@@ -89,7 +89,7 @@ inline void combineOverlapingIterationRanges(std::vector<size_t>& iterRegions,
         const std::pair<size_t, size_t>& curr = sorted[i]; // interval to be added
         std::pair<size_t, size_t>& top = result.back();
 
-        if (top.second == std::numeric_limits<size_t>::max()) // avoid overflow
+        if (top.second == (std::numeric_limits<size_t>::max)()) // avoid overflow
             break; // done, nothing can be added
 
         // if current interval is not overlapping with stack top,
@@ -123,7 +123,7 @@ inline std::vector<size_t> invertIterationRanges(const std::vector<size_t>& iter
     std::vector<size_t> inverted;
     if (iterRegions.empty()) {
         inverted.resize(2);
-        inverted[1] = std::numeric_limits<size_t>::max();
+        inverted[1] = (std::numeric_limits<size_t>::max)();
         return inverted;
     }
 
@@ -141,9 +141,9 @@ inline std::vector<size_t> invertIterationRanges(const std::vector<size_t>& iter
         inverted.push_back(iterRegions[i] - 1);
     }
 
-    if (iterRegions.back() != std::numeric_limits<size_t>::max()) {
+    if (iterRegions.back() != (std::numeric_limits<size_t>::max)()) {
         inverted.push_back(iterRegions.back() + 1);
-        inverted.push_back(std::numeric_limits<size_t>::max());
+        inverted.push_back((std::numeric_limits<size_t>::max)());
     }
 
     return inverted;

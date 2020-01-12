@@ -154,6 +154,12 @@ raisim::HeightMap* RaisimRollout<STATE_DIM, INPUT_DIM>::generateTerrain(raisim::
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
+void RaisimRollout<STATE_DIM, INPUT_DIM>::setTerrain(const raisim::HeightMap& heightMap) {
+  deleteGroundPlane();
+  heightMap_ = world_.addHeightMap(&heightMap);
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
 void RaisimRollout<STATE_DIM, INPUT_DIM>::deleteGroundPlane() {
   if (ground_) {
     world_.removeObject(ground_);

@@ -1,27 +1,26 @@
-// $Id: uniform_01.hpp 3757 2015-11-30 12:03:07Z bradbell $
-# ifndef CPPAD_UNIFORM_01_HPP
-# define CPPAD_UNIFORM_01_HPP
-
+# ifndef CPPAD_SPEED_UNIFORM_01_HPP
+# define CPPAD_SPEED_UNIFORM_01_HPP
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-15 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 /*
 $begin uniform_01$$
 $spell
-	CppAD
-	cppad.hpp
-	namespace
+    CppAD
+    namespace
+    cppad
+    hpp
 $$
 
 $section Simulate a [0,1] Uniform Random Variate$$
-$mindex uniform_01$$
 
 
 $head Syntax$$
@@ -39,14 +38,11 @@ The template function $code uniform_01$$ is defined in the $code CppAD$$
 namespace by including
 the file $code cppad/speed/uniform_01.hpp$$
 (relative to the CppAD distribution directory).
-It is only intended for example and testing purposes,
-so it is not automatically included by
-$cref/cppad.hpp/cppad/$$.
 
 $head seed$$
 The argument $icode seed$$ has prototype
 $codei%
-	size_t %seed%
+    size_t %seed%
 %$$
 It specifies a seed
 for the uniform random number generator.
@@ -54,14 +50,14 @@ for the uniform random number generator.
 $head n$$
 The argument $icode n$$ has prototype
 $codei%
-	size_t %n%
+    size_t %n%
 %$$
 It specifies the number of elements in the random vector $icode x$$.
 
 $head x$$
 The argument $icode x$$ has prototype
 $codei%
-	%Vector% &%x%
+    %Vector% &%x%
 %$$.
 The input value of the elements of $icode x$$ does not matter.
 Upon return, the elements of $icode x$$ are set to values
@@ -71,14 +67,14 @@ $head Vector$$
 If $icode y$$ is a $code double$$ value,
 the object $icode x$$ must support the syntax
 $codei%
-	%x%[%i%] = %y%
+    %x%[%i%] = %y%
 %$$
 where $icode i$$ has type $code size_t$$ with value less than
 or equal $latex n-1$$.
 This is the only requirement of the type $icode Vector$$.
 
 $children%
-	omh/uniform_01_hpp.omh
+    omh/uniform_01_hpp.omh
 %$$
 
 $head Source Code$$
@@ -93,15 +89,15 @@ $end
 # include <cstdlib>
 
 namespace CppAD {
-	inline void uniform_01(size_t seed)
-	{	std::srand( (unsigned int) seed); }
+    inline void uniform_01(size_t seed)
+    {   std::srand( (unsigned int) seed); }
 
-	template <class Vector>
-	void uniform_01(size_t n, Vector &x)
-	{	static double factor = 1. / double(RAND_MAX);
-		while(n--)
-			x[n] = std::rand() * factor;
-	}
+    template <class Vector>
+    void uniform_01(size_t n, Vector &x)
+    {   static double factor = 1. / double(RAND_MAX);
+        while(n--)
+            x[n] = std::rand() * factor;
+    }
 }
 // END C++
 # endif

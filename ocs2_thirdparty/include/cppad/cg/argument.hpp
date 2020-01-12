@@ -24,24 +24,22 @@ class OperationNode;
 /**
  * An argument used by an operation which can be either a constant value
  * or the result of another operation
- * 
+ *
  * @author Joao Leal
  */
 template<class Base>
 class Argument {
 private:
     OperationNode<Base>* operation_;
-    Base* parameter_;
+    std::unique_ptr<Base> parameter_;
 public:
 
     inline Argument() :
-        operation_(nullptr),
-        parameter_(nullptr) {
+        operation_(nullptr) {
     }
 
     inline Argument(OperationNode<Base>& operation) :
-        operation_(&operation),
-        parameter_(nullptr) {
+        operation_(&operation) {
     }
 
     inline Argument(const Base& parameter) :
@@ -54,36 +52,50 @@ public:
         parameter_(orig.parameter_ != nullptr ? new Base(*orig.parameter_) : nullptr) {
     }
 
+    inline Argument(Argument&& orig) :
+            operation_(orig.operation_),
+            parameter_(std::move(orig.parameter_)) {
+    }
+
     inline Argument& operator=(const Argument& rhs) {
         if (&rhs == this) {
             return *this;
         }
         if (rhs.operation_ != nullptr) {
             operation_ = rhs.operation_;
-            delete parameter_;
-            parameter_ = nullptr;
+            parameter_.reset();
         } else {
             operation_ = nullptr;
             if (parameter_ != nullptr) {
                 *parameter_ = *rhs.parameter_;
             } else {
-                parameter_ = new Base(*rhs.parameter_);
+                parameter_.reset(new Base(*rhs.parameter_)); // to replace with parameter_ = std::make_unique once c++14 is used
             }
         }
         return *this;
     }
+
+    inline Argument& operator=(Argument&& rhs) {
+        assert(this != &rhs);
+
+        operation_ = rhs.operation_;
+
+        // steal the parameter
+        parameter_ = std::move(rhs.parameter_);
+
+        return *this;
+    }
+
+    virtual ~Argument() = default;
 
     inline OperationNode<Base>* getOperation() const {
         return operation_;
     }
 
     inline Base* getParameter() const {
-        return parameter_;
+        return parameter_.get();
     }
 
-    virtual ~Argument() {
-        delete parameter_;
-    }
 };
 
 } // END cg namespace

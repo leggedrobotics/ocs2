@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
+#include <ocs2_core/control/StateBasedLinearController.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/integration/StateTriggeredEventHandler.h>
@@ -68,6 +69,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
   using ode_solver_t = IntegratorBase<STATE_DIM>;
 
+  using trajectory_spreading_controller_t = stateBasedLinearController<STATE_DIM, INPUT_DIM>;
   /**
    * Constructor.
    *
@@ -127,7 +129,13 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     }
 
     // set controller
-    systemDynamicsPtr_->setController(controller);
+    trajectory_spreading_controller_t trajectorySpreadingController;
+    if (this->settings().useTrajectorySpreadingController_) {
+      trajectorySpreadingController.setController(controller);
+      systemDynamicsPtr_->setController(&trajectorySpreadingController);
+    } else {
+      systemDynamicsPtr_->setController(controller);
+    }
 
     // reset function calls counter
     systemDynamicsPtr_->resetNumFunctionCalls();
@@ -248,12 +256,6 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
     // check for the numerical stability
     this->checkNumericalStability(controller, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
-
-    if (false) {
-      std::cerr << "###########" << std::endl;
-      std::cerr << "Rollout finished after " << numTotalIterations << " iterations." << std::endl;
-      std::cerr << "###########" << std::endl;
-    }
 
     return stateTrajectory.back();
   }  // end of function

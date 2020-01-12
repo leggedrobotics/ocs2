@@ -1,43 +1,41 @@
-// $Id$
 # ifndef CPPAD_CORE_COND_EXP_HPP
 # define CPPAD_CORE_COND_EXP_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*
 -------------------------------------------------------------------------------
 $begin CondExp$$
 $spell
-	Atan2
-	CondExp
-	Taylor
-	std
-	Cpp
-	namespace
-	inline
-	const
-	abs
-	Rel
-	bool
-	Lt
-	Le
-	Eq
-	Ge
-	Gt
+    Atan2
+    CondExp
+    Taylor
+    std
+    Cpp
+    namespace
+    inline
+    const
+    abs
+    Rel
+    bool
+    Lt
+    Le
+    Eq
+    Ge
+    Gt
 $$
 
 
 $section AD Conditional Expressions$$
-$mindex assign$$
 
 $head Syntax$$
 $icode%result% = CondExp%Rel%(%left%, %right%, %if_true%, %if_false%)%$$
@@ -49,15 +47,16 @@ as part of an AD of $icode Base$$
 $cref/operation sequence/glossary/Operation/Sequence/$$,
 the conditional result
 $codei%
-	if( %left% %Cop% %right% )
-		%result% = %if_true%
-	else	%result% = %if_false%
+    if( %left% %Cop% %right% )
+        %result% = %if_true%
+    else
+        %result% = %if_false%
 %$$
 The relational $icode Rel$$ and comparison operator $icode Cop$$
 above have the following correspondence:
 $codei%
-	%Rel%   Lt   Le   Eq   Ge   Gt
-	%Cop%    <   <=   ==   >=   >
+    %Rel%   Lt   Le   Eq   Ge   Gt
+    %Cop%    <   <=   ==   >=   >
 %$$
 If $icode f$$ is the $cref ADFun$$ object corresponding to the
 AD operation sequence,
@@ -85,35 +84,35 @@ $codei%AD<%Base%>%$$.
 $head left$$
 The argument $icode left$$ has prototype
 $codei%
-	const %Type%& %left%
+    const %Type%& %left%
 %$$
 It specifies the value for the left side of the comparison operator.
 
 $head right$$
 The argument $icode right$$ has prototype
 $codei%
-	const %Type%& %right%
+    const %Type%& %right%
 %$$
 It specifies the value for the right side of the comparison operator.
 
 $head if_true$$
 The argument $icode if_true$$ has prototype
 $codei%
-	const %Type%& %if_true%
+    const %Type%& %if_true%
 %$$
 It specifies the return value if the result of the comparison is true.
 
 $head if_false$$
 The argument $icode if_false$$ has prototype
 $codei%
-	const %Type%& %if_false%
+    const %Type%& %if_false%
 %$$
 It specifies the return value if the result of the comparison is false.
 
 $head result$$
 The $icode result$$ has prototype
 $codei%
-	%Type%& %if_false%
+    %Type%& %if_false%
 %$$
 
 $head Optimize$$
@@ -130,11 +129,11 @@ as well as forward and reverse derivatives calculations.
 $head Deprecate 2005-08-07$$
 Previous versions of CppAD used
 $codei%
-	CondExp(%flag%, %if_true%, %if_false%)
+    CondExp(%flag%, %if_true%, %if_false%)
 %$$
 for the same meaning as
 $codei%
-	CondExpGt(%flag%, %Type%(0), %if_true%, %if_false%)
+    CondExpGt(%flag%, %Type%(0), %if_true%, %if_false%)
 %$$
 Use of $code CondExp$$ is deprecated, but continues to be supported.
 
@@ -150,20 +149,17 @@ $head Example$$
 
 $head Test$$
 $children%
-	example/cond_exp.cpp
+    example/general/cond_exp.cpp
 %$$
 The file
 $cref cond_exp.cpp$$
 contains an example and test of this function.
-It returns true if it succeeds and false otherwise.
 
 $head Atan2$$
 The following implementation of the
 AD $cref atan2$$ function is a more complex
 example of using conditional expressions:
-$code
-$srcfile%cppad/core/atan2.hpp%0%BEGIN CondExp%// END CondExp%$$
-$$
+$srcfile%include/cppad/core/atan2.hpp%0%BEGIN CondExp%// END CondExp%$$
 
 
 $end
@@ -173,165 +169,90 @@ $end
 namespace CppAD {
 
 template <class Base>
-CPPAD_INLINE_FRIEND_TEMPLATE_FUNCTION
 AD<Base> CondExpOp(
-	enum  CompareOp cop       ,
-	const AD<Base> &left      ,
-	const AD<Base> &right     ,
-	const AD<Base> &if_true   ,
-	const AD<Base> &if_false  )
+    enum  CompareOp cop       ,
+    const AD<Base> &left      ,
+    const AD<Base> &right     ,
+    const AD<Base> &if_true   ,
+    const AD<Base> &if_false  )
 {
-	AD<Base> returnValue;
-	CPPAD_ASSERT_UNKNOWN( Parameter(returnValue) );
+    AD<Base> result;
+    CPPAD_ASSERT_UNKNOWN( Parameter(result) );
 
-	// check first case where do not need to tape
-	if( IdenticalPar(left) & IdenticalPar(right) )
-	{	switch( cop )
-		{
-			case CompareLt:
-			if( left.value_ < right.value_ )
-				returnValue = if_true;
-			else	returnValue = if_false;
-			break;
+    // check first case where do not need to tape
+    if( IdenticalCon(left) & IdenticalCon(right) )
+    {   switch( cop )
+        {
+            case CompareLt:
+            if( left.value_ < right.value_ )
+                result = if_true;
+            else
+                result = if_false;
+            break;
 
-			case CompareLe:
-			if( left.value_ <= right.value_ )
-				returnValue = if_true;
-			else	returnValue = if_false;
-			break;
+            case CompareLe:
+            if( left.value_ <= right.value_ )
+                result = if_true;
+            else
+                result = if_false;
+            break;
 
-			case CompareEq:
-			if( left.value_ == right.value_ )
-				returnValue = if_true;
-			else	returnValue = if_false;
-			break;
+            case CompareEq:
+            if( left.value_ == right.value_ )
+                result = if_true;
+            else
+                result = if_false;
+            break;
 
-			case CompareGe:
-			if( left.value_ >= right.value_ )
-				returnValue = if_true;
-			else	returnValue = if_false;
-			break;
+            case CompareGe:
+            if( left.value_ >= right.value_ )
+                result = if_true;
+            else
+                result = if_false;
+            break;
 
-			case CompareGt:
-			if( left.value_ > right.value_ )
-				returnValue = if_true;
-			else	returnValue = if_false;
-			break;
+            case CompareGt:
+            if( left.value_ > right.value_ )
+                result = if_true;
+            else
+                result = if_false;
+            break;
 
-			default:
-			CPPAD_ASSERT_UNKNOWN(0);
-			returnValue = if_true;
-		}
-		return returnValue;
-	}
+            default:
+            CPPAD_ASSERT_UNKNOWN(0);
+            result = if_true;
+        }
+        return result;
+    }
 
-	// must use CondExp incase Base is an AD type and recording
-	returnValue.value_ = CondExpOp(cop,
-		left.value_, right.value_, if_true.value_, if_false.value_);
+    // must use CondExp incase Base is an AD type and recording
+    result.value_ = CondExpOp(cop,
+        left.value_, right.value_, if_true.value_, if_false.value_);
 
-	local::ADTape<Base> *tape = CPPAD_NULL;
-	if( Variable(left) )
-		tape = left.tape_this();
-	if( Variable(right) )
-		tape = right.tape_this();
-	if( Variable(if_true) )
-		tape = if_true.tape_this();
-	if( Variable(if_false) )
-		tape = if_false.tape_this();
+    local::ADTape<Base> *tape = AD<Base>::tape_ptr();
 
-	// add this operation to the tape
-	if( tape != CPPAD_NULL )
-		tape->RecordCondExp(cop,
-			returnValue, left, right, if_true, if_false);
+    // add this operation to the tape
+    if( tape != CPPAD_NULL ) tape->Rec_.cond_exp(
+            tape->id_, cop, result, left, right, if_true, if_false
+    );
 
-	return returnValue;
-}
-
-// --- RecordCondExp(cop, returnValue, left, right, if_true, if_false) -----
-
-/// All these operations are done in \c Rec_, so we should move this
-/// routine to <tt>recorder<Base></tt>.
-template <class Base>
-void local::ADTape<Base>::RecordCondExp(
-	enum CompareOp  cop         ,
-	AD<Base>       &returnValue ,
-	const AD<Base> &left        ,
-	const AD<Base> &right       ,
-	const AD<Base> &if_true     ,
-	const AD<Base> &if_false    )
-{	size_t   ind0, ind1, ind2, ind3, ind4, ind5;
-	size_t   returnValue_taddr;
-
-	// taddr_ of this variable
-	CPPAD_ASSERT_UNKNOWN( NumRes(CExpOp) == 1 );
-	returnValue_taddr = Rec_.PutOp(CExpOp);
-
-	// ind[0] = cop
-	ind0 = addr_t( cop );
-
-	// ind[1] = base 2 represenation of the value
-	// [Var(left), Var(right), Var(if_true), Var(if_false)]
-	ind1 = 0;
-
-	// Make sure returnValue is in the list of variables and set its taddr
-	if( Parameter(returnValue) )
-		returnValue.make_variable(id_, returnValue_taddr );
-	else	returnValue.taddr_ = returnValue_taddr;
-
-	// ind[2] = left address
-	if( Parameter(left) )
-		ind2 = Rec_.PutPar(left.value_);
-	else
-	{	ind1 += 1;
-		ind2 = left.taddr_;
-	}
-
-	// ind[3] = right address
-	if( Parameter(right) )
-		ind3 = Rec_.PutPar(right.value_);
-	else
-	{	ind1 += 2;
-		ind3 = right.taddr_;
-	}
-
-	// ind[4] = if_true address
-	if( Parameter(if_true) )
-		ind4 = Rec_.PutPar(if_true.value_);
-	else
-	{	ind1 += 4;
-		ind4 = if_true.taddr_;
-	}
-
-	// ind[5] =  if_false address
-	if( Parameter(if_false) )
-		ind5 = Rec_.PutPar(if_false.value_);
-	else
-	{	ind1 += 8;
-		ind5 = if_false.taddr_;
-	}
-
-	CPPAD_ASSERT_UNKNOWN( NumArg(CExpOp) == 6 );
-	CPPAD_ASSERT_UNKNOWN( ind1 > 0 );
-	Rec_.PutArg(ind0, ind1, ind2, ind3, ind4, ind5);
-
-	// check that returnValue is a dependent variable
-	CPPAD_ASSERT_UNKNOWN( Variable(returnValue) );
+    return result;
 }
 
 // ------------ CondExpOp(left, right, if_true, if_false) ----------------
 
 # define CPPAD_COND_EXP(Name)                                        \
-	template <class Base>                                           \
-	CPPAD_INLINE_FRIEND_TEMPLATE_FUNCTION                           \
-	AD<Base> CondExp##Name(                                         \
-		const AD<Base> &left      ,                                \
-		const AD<Base> &right     ,                                \
-		const AD<Base> &if_true   ,                                \
-		const AD<Base> &if_false  )                                \
-	{                                                               \
-		return CondExpOp(Compare##Name,                            \
-			left, right, if_true, if_false);                      \
-	}
+    template <class Base>                                           \
+    CPPAD_INLINE_FRIEND_TEMPLATE_FUNCTION                           \
+    AD<Base> CondExp##Name(                                         \
+        const AD<Base> &left      ,                                \
+        const AD<Base> &right     ,                                \
+        const AD<Base> &if_true   ,                                \
+        const AD<Base> &if_false  )                                \
+    {                                                               \
+        return CondExpOp(Compare##Name,                            \
+            left, right, if_true, if_false);                      \
+    }
 
 // AD<Base>
 CPPAD_COND_EXP(Lt)
@@ -342,11 +263,11 @@ CPPAD_COND_EXP(Gt)
 template <class Base>
 CPPAD_INLINE_FRIEND_TEMPLATE_FUNCTION
 AD<Base> CondExp(
-	const AD<Base> &flag      ,
-	const AD<Base> &if_true   ,
-	const AD<Base> &if_false  )
+    const AD<Base> &flag      ,
+    const AD<Base> &if_true   ,
+    const AD<Base> &if_false  )
 {
-	return CondExpOp(CompareGt, flag, AD<Base>(0), if_true, if_false);
+    return CondExpOp(CompareGt, flag, AD<Base>(0), if_true, if_false);
 }
 
 # undef CPPAD_COND_EXP

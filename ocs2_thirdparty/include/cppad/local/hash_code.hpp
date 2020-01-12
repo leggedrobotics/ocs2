@@ -1,31 +1,24 @@
-// $Id: hash_code.hpp 3757 2015-11-30 12:03:07Z bradbell $
-# ifndef CPPAD_HASH_CODE_HPP
-# define CPPAD_HASH_CODE_HPP
-
+# ifndef CPPAD_LOCAL_HASH_CODE_HPP
+# define CPPAD_LOCAL_HASH_CODE_HPP
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-15 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
-
-namespace CppAD { // BEGIN_CPPAD_NAMESPACE
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
+# include <cppad/core/base_hash.hpp>
 /*!
-\file hash_code.hpp
+\file local/hash_code.hpp
 CppAD hashing utility.
 */
 
-/*!
-\def CPPAD_HASH_TABLE_SIZE
-the codes retruned by hash_code are between zero and CPPAD_HASH_TABLE_SIZE
-minus one.
-*/
-# define CPPAD_HASH_TABLE_SIZE 10000
 
+namespace CppAD { namespace local { // BEGIN_CPPAD_LOCAL_NAMESPACE
 /*!
 General purpose hash code for an arbitrary value.
 
@@ -37,37 +30,41 @@ not pointed to by the object.
 
 \param value
 the value that we are generating a hash code for.
+All of the fields in value should have been set before the hash code
+is computed (otherwise undefined values are used).
 
 \return
 is a hash code that is between zero and CPPAD_HASH_TABLE_SIZE - 1.
 
 \par Checked Assertions
-\li \c std::numeric_limits<unsigned short>::max() >= CPPAD_HASH_TABLE_SIZE
-\li \c sizeof(value) is even
-\li \c sizeof(unsigned short)  == 2
+\li std::numeric_limits<unsigned short>::max() >= CPPAD_HASH_TABLE_SIZE
+\li sizeof(value) is even
+\li sizeof(unsigned short)  == 2
 */
-
 template <class Value>
-unsigned short hash_code(const Value& value)
-{	CPPAD_ASSERT_UNKNOWN(
-		std::numeric_limits<unsigned short>::max()
-		>=
-		CPPAD_HASH_TABLE_SIZE
-	);
-	CPPAD_ASSERT_UNKNOWN( sizeof(unsigned short) == 2 );
-	CPPAD_ASSERT_UNKNOWN( sizeof(value) % 2  == 0 );
-	#
-	const unsigned short* v
-	         = reinterpret_cast<const unsigned short*>(& value);
-	#
-	size_t i = sizeof(value) / 2 - 1;
-	#
-	unsigned short code = v[i];
-	#
-	while(i--)
-		code += v[i];
-
-	return code % CPPAD_HASH_TABLE_SIZE;
+unsigned short local_hash_code(const Value& value)
+{   CPPAD_ASSERT_UNKNOWN(
+        std::numeric_limits<unsigned short>::max()
+        >=
+        CPPAD_HASH_TABLE_SIZE
+    );
+    CPPAD_ASSERT_UNKNOWN( sizeof(unsigned short) == 2 );
+    CPPAD_ASSERT_UNKNOWN( sizeof(value) % 2  == 0 );
+    //
+    const unsigned short* v
+             = reinterpret_cast<const unsigned short*>(& value);
+    //
+    size_t i = sizeof(value) / 2 - 1;
+    //
+    size_t sum = v[i];
+    //
+    while(i--)
+        sum += v[i];
+    //
+    unsigned short code = static_cast<unsigned short>(
+        sum % CPPAD_HASH_TABLE_SIZE
+    );
+    return code;
 }
 
 /*!
@@ -95,159 +92,152 @@ DisOp
 AddvvOp, DivvvOp, MulvvOp, PowvvOp, SubvvOp, ZmulvvOp
 
 \param arg
-is a vector of length \c NumArg(op) or 2 (which ever is smaller),
+is a vector of length NumArg(op) or 2 (which ever is smaller),
 containing the corresponding argument indices for this operator.
 
 \param npar
 is the number of parameters corresponding to this operation sequence.
 
 \param par
-is a vector of length \a npar containing the parameters
+is a vector of length npar containing the parameters
 for this operation sequence; i.e.,
-given a parameter index of \c i, the corresponding parameter value is
-\a par[i].
+given a parameter index of i, the corresponding parameter value is
+ par[i].
 
 
 \return
 is a hash code that is between zero and CPPAD_HASH_TABLE_SIZE - 1.
 
 \par Checked Assertions
-\c op must be one of the operators specified above. In addition,
-\li \c std::numeric_limits<unsigned short>::max() >= CPPAD_HASH_TABLE_SIZE
-\li \c sizeof(size_t) is even
-\li \c sizeof(Base) is even
-\li \c sizeof(unsigned short)  == 2
-\li \c size_t(op) < size_t(NumberOp) <= CPPAD_HASH_TABLE_SIZE
+ op must be one of the operators specified above. In addition,
+\li std::numeric_limits<unsigned short>::max() >= CPPAD_HASH_TABLE_SIZE
+\li sizeof(size_t) is even
+\li sizeof(Base) is even
+\li sizeof(unsigned short)  == 2
+\li size_t(op) < size_t(NumberOp) <= CPPAD_HASH_TABLE_SIZE
 \li if the j-th argument for this operation is a parameter, arg[j] < npar.
 */
 
 template <class Base>
-unsigned short hash_code(
-	OpCode        op      ,
-	const addr_t* arg     ,
-	size_t npar           ,
-	const Base* par       )
-{	CPPAD_ASSERT_UNKNOWN(
-		std::numeric_limits<unsigned short>::max()
-		>=
-		CPPAD_HASH_TABLE_SIZE
-	);
-	CPPAD_ASSERT_UNKNOWN( size_t (op) < size_t(NumberOp) );
-	CPPAD_ASSERT_UNKNOWN( sizeof(unsigned short) == 2 );
-	CPPAD_ASSERT_UNKNOWN( sizeof(addr_t) % 2  == 0 );
-	CPPAD_ASSERT_UNKNOWN( sizeof(Base) % 2  == 0 );
-	unsigned short op_fac = static_cast<unsigned short> (
-		CPPAD_HASH_TABLE_SIZE / static_cast<unsigned short>(NumberOp)
-	);
-	CPPAD_ASSERT_UNKNOWN( op_fac > 0 );
+unsigned short local_hash_code(
+    OpCode        op      ,
+    const addr_t* arg     ,
+    size_t        npar    ,
+    const Base*   par     )
+{   CPPAD_ASSERT_UNKNOWN(
+        std::numeric_limits<unsigned short>::max()
+        >=
+        CPPAD_HASH_TABLE_SIZE
+    );
+    CPPAD_ASSERT_UNKNOWN( size_t (op) < size_t(NumberOp) );
+    CPPAD_ASSERT_UNKNOWN( sizeof(unsigned short) == 2 );
+    CPPAD_ASSERT_UNKNOWN( sizeof(addr_t) % 2  == 0 );
+    CPPAD_ASSERT_UNKNOWN( sizeof(Base) % 2  == 0 );
+    unsigned short op_fac = static_cast<unsigned short> (
+        CPPAD_HASH_TABLE_SIZE / static_cast<unsigned short>(NumberOp)
+    );
+    CPPAD_ASSERT_UNKNOWN( op_fac > 0 );
 
-	// number of shorts per addr_t value
-	size_t short_addr_t   = sizeof(addr_t) / 2;
+    // number of shorts per addr_t value
+    size_t short_addr_t   = sizeof(addr_t) / 2;
 
-	// number of shorts per Base value
-	size_t short_base     = sizeof(Base) /  2;
+    // initialize with value that separates operators as much as possible
+    unsigned short code = static_cast<unsigned short>(
+        static_cast<unsigned short>(op) * op_fac
+    );
 
-	// initialize with value that separates operators as much as possible
-	unsigned short code = static_cast<unsigned short>(
-		static_cast<unsigned short>(op) * op_fac
-	);
+    // now code in the operands
+    size_t i;
+    const unsigned short* v;
 
-	// now code in the operands
-	size_t i;
-	const unsigned short* v;
+    // first argument
+    switch(op)
+    {   // Binary operators where first arugment is a parameter.
+        // Code parameters by value instead of
+        // by index for two reasons. One, it gives better separation.
+        // Two, different indices can be same parameter value.
+        case AddpvOp:
+        case DivpvOp:
+        case MulpvOp:
+        case PowpvOp:
+        case SubpvOp:
+        case ZmulpvOp:
+        CPPAD_ASSERT_UNKNOWN( NumArg(op) == 2 );
+        code += hash_code( par[arg[0]] );
+        //
+        v = reinterpret_cast<const unsigned short*>(arg + 1);
+        i = short_addr_t;
+        while(i--)
+            code += v[i];
+        break;
 
-	// first argument
-	switch(op)
-	{	// Binary operators where first arugment is a parameter.
-		// Code parameters by value instead of
-		// by index for two reasons. One, it gives better separation.
-		// Two, different indices can be same parameter value.
-		case AddpvOp:
-		case DivpvOp:
-		case MulpvOp:
-		case PowpvOp:
-		case SubpvOp:
-		case ZmulpvOp:
-		CPPAD_ASSERT_UNKNOWN( NumArg(op) == 2 );
-		v = reinterpret_cast<const unsigned short*>(par + arg[0]);
-		i = short_base;
-		while(i--)
-			code += v[i];
-		v = reinterpret_cast<const unsigned short*>(arg + 1);
-		i = short_addr_t;
-		while(i--)
-			code += v[i];
-		break;
+        // Binary operator where first argument is an index and
+        // second is a variable (same as both variables).
+        case DisOp:
 
-		// Binary operator where first argument is an index and
-		// second is a variable (same as both variables).
-		case DisOp:
+        // Binary operators where both arguments are variables
+        case AddvvOp:
+        case DivvvOp:
+        case MulvvOp:
+        case PowvvOp:
+        case SubvvOp:
+        case ZmulvvOp:
+        CPPAD_ASSERT_UNKNOWN( NumArg(op) == 2 );
+        v = reinterpret_cast<const unsigned short*>(arg + 0);
+        i = 2 * short_addr_t;
+        while(i--)
+            code += v[i];
+        break;
 
-		// Binary operators where both arguments are variables
-		case AddvvOp:
-		case DivvvOp:
-		case MulvvOp:
-		case PowvvOp:
-		case SubvvOp:
-		case ZmulvvOp:
-		CPPAD_ASSERT_UNKNOWN( NumArg(op) == 2 );
-		v = reinterpret_cast<const unsigned short*>(arg + 0);
-		i = 2 * short_addr_t;
-		while(i--)
-			code += v[i];
-		break;
+        // Binary operators where second arugment is a parameter.
+        case DivvpOp:
+        case PowvpOp:
+        case SubvpOp:
+        case ZmulvpOp:
+        CPPAD_ASSERT_UNKNOWN( NumArg(op) == 2 );
+        v = reinterpret_cast<const unsigned short*>(arg + 0);
+        i = short_addr_t;
+        while(i--)
+            code += v[i];
+        code += hash_code( par[arg[1]] );
+        break;
 
-		// Binary operators where second arugment is a parameter.
-		case DivvpOp:
-		case PowvpOp:
-		case SubvpOp:
-		case ZmulvpOp:
-		CPPAD_ASSERT_UNKNOWN( NumArg(op) == 2 );
-		v = reinterpret_cast<const unsigned short*>(arg + 0);
-		i = short_addr_t;
-		while(i--)
-			code += v[i];
-		v = reinterpret_cast<const unsigned short*>(par + arg[1]);
-		i = short_base;
-		while(i--)
-			code += v[i];
-		break;
+        // Unary operators
+        case AbsOp:
+        case AcosOp:
+        case AcoshOp:
+        case AsinOp:
+        case AsinhOp:
+        case AtanOp:
+        case AtanhOp:
+        case CosOp:
+        case CoshOp:
+        case ErfOp:
+        case ExpOp:
+        case Expm1Op:
+        case LogOp:
+        case Log1pOp:
+        case SignOp:
+        case SinOp:
+        case SinhOp:
+        case SqrtOp:
+        case TanOp:
+        case TanhOp:
+        CPPAD_ASSERT_UNKNOWN( NumArg(op) == 1 || op == ErfOp );
+        v = reinterpret_cast<const unsigned short*>(arg + 0);
+        i = short_addr_t;
+        while(i--)
+            code += v[i];
+        break;
 
-		// Unary operators
-		case AbsOp:
-		case AcosOp:
-		case AcoshOp:
-		case AsinOp:
-		case AsinhOp:
-		case AtanOp:
-		case AtanhOp:
-		case CosOp:
-		case CoshOp:
-		case ErfOp:
-		case ExpOp:
-		case Expm1Op:
-		case LogOp:
-		case Log1pOp:
-		case SignOp:
-		case SinOp:
-		case SinhOp:
-		case SqrtOp:
-		case TanOp:
-		case TanhOp:
-		CPPAD_ASSERT_UNKNOWN( NumArg(op) == 1 || op == ErfOp );
-		v = reinterpret_cast<const unsigned short*>(arg + 0);
-		i = short_addr_t;
-		while(i--)
-			code += v[i];
-		break;
+        // should have been one of he cases above
+        default:
+        CPPAD_ASSERT_UNKNOWN(false);
+    }
 
-		// should have been one of he cases above
-		default:
-		CPPAD_ASSERT_UNKNOWN(false);
-	}
-
-	return code % CPPAD_HASH_TABLE_SIZE;
+    return code % CPPAD_HASH_TABLE_SIZE;
 }
 
-} // END_CPPAD_NAMESPACE
+} } // END_CPPAD_LOCAL_NAMESPACE
+
 # endif

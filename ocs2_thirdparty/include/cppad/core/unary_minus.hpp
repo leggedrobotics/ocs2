@@ -1,29 +1,27 @@
-// $Id$
 # ifndef CPPAD_CORE_UNARY_MINUS_HPP
 # define CPPAD_CORE_UNARY_MINUS_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*
 $begin UnaryMinus$$
 $spell
-	Vec
-	const
-	inline
+    Vec
+    const
+    inline
 $$
 
 
 $section AD Unary Minus Operator$$
-$mindex -$$
 
 $head Syntax$$
 
@@ -40,14 +38,14 @@ the operand is a $code const$$ $icode Base$$ object.
 $head x$$
 The operand $icode x$$ has one of the following prototypes
 $codei%
-	const AD<%Base%>               &%x%
-	const VecAD<%Base%>::reference &%x%
+    const AD<%Base%>               &%x%
+    const VecAD<%Base%>::reference &%x%
 %$$
 
 $head y$$
 The result $icode y$$ has type
 $codei%
-	AD<%Base%> %y%
+    AD<%Base%> %y%
 %$$
 It is equal to the negative of the operand $icode x$$.
 
@@ -62,12 +60,12 @@ $head Derivative$$
 If $latex f$$ is a
 $cref/Base function/glossary/Base Function/$$,
 $latex \[
-	\D{[ - f(x) ]}{x} = - \D{f(x)}{x}
+    \D{[ - f(x) ]}{x} = - \D{f(x)}{x}
 \] $$
 
 $head Example$$
 $children%
-	example/unary_minus.cpp
+    example/general/unary_minus.cpp
 %$$
 The file
 $cref unary_minus.cpp$$
@@ -82,20 +80,18 @@ namespace CppAD {
 
 // Broken g++ compiler inhibits declaring unary minus a member or friend
 template <class Base>
-inline AD<Base> AD<Base>::operator - (void) const
-{	// should make a more efficient version by adding unary minus to
-	// Operator.h (some day)
-	AD<Base> result(0);
-
-	result  -= *this;
-
-	return result;
+AD<Base> AD<Base>::operator - (void) const
+{   // 2DO: make a more efficient by adding unary minus to op_code.h (some day)
+    //
+    AD<Base> result(0);
+    result  -= *this;
+    return result;
 }
 
 
 template <class Base>
-inline AD<Base> operator - (const VecAD_reference<Base> &right)
-{	return - right.ADBase(); }
+AD<Base> operator - (const VecAD_reference<Base> &right)
+{   return - right.ADBase(); }
 
 }
 //  END CppAD namespace

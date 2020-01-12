@@ -19,15 +19,15 @@ namespace CppAD {
 namespace cg {
 
 /**
- * Contains some utility methods for atomic functions
+ * Contains some utility methods for atomic functions for the type CG
  * 
  * @author Joao Leal
  */
 template <class Base>
 class BaseAbstractAtomicFun : public atomic_base<CppAD::cg::CG<Base> > {
 public:
-    typedef CppAD::cg::CG<Base> CGB;
-    typedef Argument<Base> Arg;
+    using CGB = CppAD::cg::CG<Base>;
+    using Arg = Argument<Base>;
 protected:
 
     /**
@@ -44,7 +44,9 @@ protected:
 public:
 
     template <class ADVector>
-    void operator()(const ADVector& ax, ADVector& ay, size_t id = 0) {
+    void operator()(const ADVector& ax,
+                    ADVector& ay,
+                    size_t id = 0) {
         this->atomic_base<CGB>::operator()(ax, ay, id);
     }
 

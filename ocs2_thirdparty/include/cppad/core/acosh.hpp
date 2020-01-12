@@ -1,28 +1,27 @@
-// $Id$
 # ifndef CPPAD_CORE_ACOSH_HPP
 # define CPPAD_CORE_ACOSH_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*
 -------------------------------------------------------------------------------
 $begin acosh$$
 $spell
-	acosh
-	const
-	Vec
-	std
-	cmath
-	CppAD
+    acosh
+    const
+    Vec
+    std
+    cmath
+    CppAD
 $$
 $section The Inverse Hyperbolic Cosine Function: acosh$$
 
@@ -54,12 +53,11 @@ to compute this function.
 
 $head Example$$
 $children%
-	example/acosh.cpp
+    example/general/acosh.cpp
 %$$
 The file
 $cref acosh.cpp$$
 contains an example and test of this function.
-It returns true if it succeeds and false otherwise.
 
 $end
 -------------------------------------------------------------------------------
@@ -72,22 +70,22 @@ namespace CppAD {
 
 template <class Type>
 Type acosh_template(const Type &x)
-{	return CppAD::log( x + CppAD::sqrt( x * x - Type(1) ) );
+{   return CppAD::log( x + CppAD::sqrt( x * x - Type(1) ) );
 }
 
 inline float acosh(const float &x)
-{	return acosh_template(x); }
+{   return acosh_template(x); }
 
 inline double acosh(const double &x)
-{	return acosh_template(x); }
+{   return acosh_template(x); }
 
 template <class Base>
-inline AD<Base> acosh(const AD<Base> &x)
-{	return acosh_template(x); }
+AD<Base> acosh(const AD<Base> &x)
+{   return acosh_template(x); }
 
 template <class Base>
-inline AD<Base> acosh(const VecAD_reference<Base> &x)
-{	return acosh_template( x.ADBase() ); }
+AD<Base> acosh(const VecAD_reference<Base> &x)
+{   return acosh_template( x.ADBase() ); }
 
 
 } // END CppAD namespace

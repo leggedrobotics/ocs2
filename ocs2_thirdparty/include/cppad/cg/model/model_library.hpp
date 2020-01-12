@@ -28,7 +28,7 @@ class ModelLibrary {
 public:
     /**
      * Provides the model names in the dynamic library.
-     * 
+     *
      * @return the model names
      */
     virtual std::set<std::string> getModelNames() = 0;
@@ -36,13 +36,12 @@ public:
     /**
      * Creates a new GenericModel object that can be used to evaluate the
      * model.
-     * This object must be released by the user!
-     * 
+     *
      * @param modelName The model name.
-     * @return The model object (must be released by the user) or nullptr if 
-     *         no model exists with the provided name 
+     * @return The model object or nullptr if no model exists with the provided
+     *         name.
      */
-    virtual GenericModel<Base>* model(const std::string& modelName) = 0;
+    virtual std::unique_ptr<GenericModel<Base>> model(const std::string& modelName) = 0;
 
     /**
      * Defines whether or not to disable multithreaded model evaluations.
@@ -113,7 +112,7 @@ public:
     /**
      * Defines the number of time measurements taken by each computational
      * task during multithreaded model evaluations. This is used to schedule
-     * work accross threads. The higher the value the more accurate the
+     * work across threads. The higher the value the more accurate the
      * time estimations are but it requires additional calls to retrieve times.
      * This value is only used by the models if they were compiled with
      * multithreading support.

@@ -29,8 +29,8 @@ namespace cg {
 template<class Base>
 class BipartiteGraph {
 protected:
-    typedef CppAD::cg::CG<Base> CGBase;
-    typedef CppAD::AD<CGBase> ADCG;
+    using CGBase = CppAD::cg::CG<Base>;
+    using ADCG = CppAD::AD<CGBase>;
 protected:
     /**
      * The original model
@@ -68,7 +68,7 @@ public:
 
     /**
      * Creates the bipartite graph.
-     * 
+     *
      * @param fun The DAE model
      * @param varInfo DAE model variable classification
      * @param eqName Equation names (it can be an empty vector)
@@ -308,7 +308,7 @@ public:
 
     /**
      * Provides the structural index after this graph has been reduced.
-     * 
+     *
      * @return the DAE differentiation index.
      */
     inline size_t getStructuralIndex() const {
@@ -483,7 +483,7 @@ public:
      * Adds edges to a new equation resulting from the differentiation
      * of another assuming the new equation differential contains
      * all variables present in the original equation and their time
-     * derivatives (not exactly correct but it works because the 
+     * derivatives (not exactly correct but it works because the
      * potentially extra variables are removed later in the Pantelides method).
      *
      * An example with incorrectly added variables would be the dirty
@@ -491,7 +491,7 @@ public:
      *   x1 + x2 == 0
      * wich include the variables [x1, dx1dt, x2, dx2dt] although it should
      * only be [dx1dt, dx2dt].
-     * 
+     *
      * @param i equation node to differentiate
      * @throws CGException
      */
@@ -672,7 +672,7 @@ public:
             reverseTimeDiff(*reducedFun, equations, dep, timeTapeIndex);
 
             /**
-             * reconstruct the new system of equations 
+             * reconstruct the new system of equations
              */
             vector<ADCG> indep2;
             vector<ADCG> indepNew;
@@ -775,10 +775,10 @@ public:
 
     /**
      * Introduces a dependency with respect to time in the provided variables.
-     * 
-     * @param indepOrig  The variables without time dependency 
+     *
+     * @param indepOrig  The variables without time dependency
      *                    (in the original variable order).
-     * @return The new variables with the time dependency 
+     * @return The new variables with the time dependency
      *          (in the original variable order).
      */
     inline std::vector<CppAD::AD<CG<Base> > > prepareTimeDependentVariables(const std::vector<ADCG>& indepOrig,
@@ -787,7 +787,7 @@ public:
         CPPADCG_ASSERT_UNKNOWN(timeTapeIndex < indepOrig.size());
 
         using std::vector;
-        typedef CppAD::AD<CGBase> ADCGBase;
+        using ADCGBase = CppAD::AD<CGBase>;
 
         vector<ADCGBase> indepOut(indepOrig.size());
         vector<ADCGBase> ax(3); // function inputs
@@ -821,7 +821,7 @@ public:
 
     /**
      * Prints out a DAE model to the standard output.
-     * 
+     *
      * @param fun  The taped model
      */
     inline void printModel(std::ostream& out,
@@ -847,7 +847,7 @@ public:
 
     /**
      * Prints out a DAE model to the standard output.
-     * 
+     *
      * @param fun  The taped model
      * @param indepNames  The independent variable names
      * @param depNames  The dependent variable names

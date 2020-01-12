@@ -24,9 +24,9 @@ class vector;
 
 namespace loops {
 
-typedef std::pair<size_t, size_t> SizeN1stIt;
+using SizeN1stIt = std::pair<size_t, size_t>;
 
-typedef std::pair<size_t, size_t> pairss;
+using pairss = std::pair<size_t, size_t>;
 
 class JacobianWithLoopsRowInfo;
 

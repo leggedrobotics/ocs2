@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2016 Ciengis
+ *    Copyright (C) 2019 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -41,8 +42,8 @@ template<class Base>
 inline void printModel(ADFun<CG<Base> >& fun,
                        const std::vector<std::string>& depNames,
                        const std::vector<std::string>& indepNames) {
-    CPPADCG_ASSERT_UNKNOWN(depNames.size() <= fun.Range());
-    CPPADCG_ASSERT_UNKNOWN(indepNames.size() <= fun.Domain());
+    CPPADCG_ASSERT_UNKNOWN(depNames.size() <= fun.Range())
+    CPPADCG_ASSERT_UNKNOWN(indepNames.size() <= fun.Domain())
 
     CodeHandler<Base> handler;
 

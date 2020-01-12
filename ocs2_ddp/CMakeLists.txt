@@ -42,13 +42,14 @@ catkin_package(
 
 include_directories(
   include
+  test/include
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
 
 add_library(${PROJECT_NAME}_dynamic_size
-  src/SequentialRiccatiEquationsNormalized.cpp
+  src/SequentialRiccatiEquations.cpp
 )
 target_link_libraries(${PROJECT_NAME}_dynamic_size
   ${catkin_LIBRARIES}
@@ -150,6 +151,16 @@ catkin_add_gtest(exp1_ilqr_test
   test/exp1_ilqr_test.cpp
 )
 target_link_libraries(exp1_ilqr_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+catkin_add_gtest(bouncing_mass_test
+  test/bouncingmass/BouncingMass.cpp
+  test/bouncingmass/OverallReference.cpp
+  test/bouncingmass/Reference.cpp
+)
+target_link_libraries(bouncing_mass_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )

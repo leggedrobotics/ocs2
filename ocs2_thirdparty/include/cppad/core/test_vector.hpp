@@ -1,37 +1,36 @@
-// $Id$
 # ifndef CPPAD_CORE_TEST_VECTOR_HPP
 # define CPPAD_CORE_TEST_VECTOR_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*
 $begin test_vector$$
 $spell
-	ifdef
-	undef
-	Microsofts
-	CppADvector
-	hpp
-	std
-	endif
-	ublas
-	Dir
-	valarray
-	stdvector
+    autotools
+    ifdef
+    undef
+    Microsofts
+    CppADvector
+    hpp
+    std
+    endif
+    ublas
+    Dir
+    valarray
+    stdvector
 $$
 
 
 $section Choosing The Vector Testing Template Class$$
-$mindex CPPAD_TEST_VECTOR test$$
 
 $head Deprecated 2012-07-03$$
 The $code CPPAD_TEST_VECTOR$$ macro has been deprecated,
@@ -73,7 +72,7 @@ $srccode%cpp% */
 # endif
 /* %$$
 If you specify $code --with-eigenvector$$ on the
-$cref/configure/auto_tools/Configure/$$ command line,
+$cref/configure/autotools/Configure/$$ command line,
 $code CPPAD_EIGENVECTOR$$ is true.
 This vector type cannot be supported by $code CPPAD_TEST_VECTOR$$
 (use $cref/CPPAD_TESTVECTOR/testvector/$$ for this support)
@@ -88,7 +87,7 @@ $srccode%cpp% */
 
 $head std::vector$$
 If you specify $code --with-stdvector$$ on the
-$cref/configure/auto_tools/Configure/$$
+$cref/configure/autotools/Configure/$$
 command line during CppAD installation,
 $code CPPAD_STDVECTOR$$ is true
 and $code CPPAD_TEST_VECTOR$$ is defined by the following source code

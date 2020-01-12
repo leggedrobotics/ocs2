@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2013 Ciengis
+ *    Copyright (C) 2018 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -37,11 +38,11 @@ public:
         return sections_;
     }
 
-    inline virtual IndexPatternType getType() const override {
+    inline IndexPatternType getType() const override {
         return IndexPatternType::Sectioned;
     }
 
-    inline virtual void getSubIndexes(std::set<IndexPattern*>& indexes) const override {
+    inline void getSubIndexes(std::set<IndexPattern*>& indexes) const override {
         for (const auto& it : sections_) {
             indexes.insert(it.second);
             it.second->getSubIndexes(indexes);
@@ -119,13 +120,13 @@ public:
 
     static inline std::map<size_t, IndexPattern*> detectLinearSections(const std::map<size_t, size_t>& x2y,
                                                                        size_t maxCount = 0) {
-        typedef std::map<size_t, size_t>::const_iterator c_iter;
+        using c_iter = std::map<size_t, size_t>::const_iterator;
 
         SmartMapValuePointer<size_t, IndexPattern> linearSections;
 
         LinearIndexPattern* prevPattern = nullptr;
         c_iter prevStart = x2y.begin();
-        
+
         c_iter pStart = x2y.begin();
         while (pStart != x2y.end()) {
             c_iter pNextSection = x2y.end();
@@ -177,7 +178,7 @@ public:
                     --prevBack; // the values at the end of the previous section
                     if (prevPattern->evaluate(prevBack->first) != b)
                         break; // no
-                    
+
                     // yes
                     --pStart;
                     xStart = pStart->first;

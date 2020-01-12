@@ -114,7 +114,8 @@ void ModelCSourceGen<Base>::generateSparseForwardOneSourcesWithAtomics(const std
         finishedJob();
 
         LanguageC<Base> langC(_baseTypeName);
-        langC.setMaxAssigmentsPerFunction(_maxAssignPerFunc, &_sources);
+        langC.setMaxAssignmentsPerFunction(_maxAssignPerFunc, &_sources);
+        langC.setMaxOperationsPerAssignment(_maxOperationsPerAssignment);
         langC.setParameterPrecision(_parameterPrecision);
         _cache.str("");
         _cache << _name << "_" << FUNCTION_SPARSE_FORWARD_ONE << "_indep" << j;
@@ -200,7 +201,8 @@ void ModelCSourceGen<Base>::generateSparseForwardOneSourcesNoAtomics(const std::
         const std::string subJobName = _cache.str();
 
         LanguageC<Base> langC(_baseTypeName);
-        langC.setMaxAssigmentsPerFunction(_maxAssignPerFunc, &_sources);
+        langC.setMaxAssignmentsPerFunction(_maxAssignPerFunc, &_sources);
+        langC.setMaxOperationsPerAssignment(_maxOperationsPerAssignment);
         langC.setParameterPrecision(_parameterPrecision);
         _cache.str("");
         _cache << _name << "_" << FUNCTION_SPARSE_FORWARD_ONE << "_indep" << j;
@@ -232,33 +234,43 @@ void ModelCSourceGen<Base>::generateForwardOneSources() {
     _cache << "#include <stdlib.h>\n"
             << LanguageC<Base>::ATOMICFUN_STRUCT_DEFINITION << "\n"
             "\n"
-            "void " << _name << "_" << FUNCTION_SPARSE_FORWARD_ONE << "(unsigned long pos, " << argsDcl << ");\n"
+            "int " << _name << "_" << FUNCTION_SPARSE_FORWARD_ONE << "(unsigned long pos, " << argsDcl << ");\n"
             "void " << _name << "_" << FUNCTION_FORWARD_ONE_SPARSITY << "(unsigned long pos, unsigned long const** elements, unsigned long* nnz);\n"
-            "\n"
-            "int " << model_function << "("
-            << _baseTypeName << " const tx[], "
-            << _baseTypeName << " ty[], "
-            << langC.generateArgumentAtomicDcl() << ") {\n"
+            "\n";
+    LanguageC<Base>::printFunctionDeclaration(_cache, "int", model_function, {_baseTypeName + " const tx[]",
+                                                                              _baseTypeName + " ty[]",
+                                                                              langC.generateArgumentAtomicDcl()});
+    _cache << " {\n"
             "   unsigned long ePos, ej, i, j, nnz, nnzMax;\n"
             "   unsigned long const* pos;\n"
             "   unsigned long* txPos;\n"
+            "   unsigned long* txPosTmp;\n"
             "   unsigned long nnzTx;\n"
             "   " << _baseTypeName << " const * in[2];\n"
             "   " << _baseTypeName << "* out[1];\n"
             "   " << _baseTypeName << " x[" << n << "];\n"
             "   " << _baseTypeName << "* compressed;\n"
+            "   int ret;\n"
             "\n"
             "   txPos = 0;\n"
             "   nnzTx = 0;\n"
             "   nnzMax = 0;\n"
             "   for (j = 0; j < " << n << "; j++) {\n"
             "      if (tx[j * 2 + 1] != 0.0) {\n"
-            "         nnzTx++;\n"
-            "         txPos = (unsigned long*) realloc(txPos, nnzTx * sizeof(unsigned long));\n"
-            "         txPos[nnzTx - 1] = j;\n"
             "         " << _name << "_" << FUNCTION_FORWARD_ONE_SPARSITY << "(j, &pos, &nnz);\n"
-            "         if(nnz > nnzMax)\n"
+            "         if (nnz > nnzMax)\n"
             "            nnzMax = nnz;\n"
+            "         else if (nnz == 0)\n"
+            "            continue;\n"
+            "         nnzTx++;\n"
+            "         txPosTmp = (unsigned long*) realloc(txPos, nnzTx * sizeof(unsigned long));\n"
+            "         if (txPosTmp != NULL) {\n"
+            "            txPos = txPosTmp;\n"
+            "         } else {\n"
+            "            free(txPos);\n"
+            "            return -1; // failure to allocate memory\n"
+            "         }\n"
+            "         txPos[nnzTx - 1] = j;\n"
             "      }\n"
             "   }\n"
             "   for (i = 0; i < " << m << "; i++) {\n"
@@ -287,7 +299,13 @@ void ModelCSourceGen<Base>::generateForwardOneSources() {
                 "         compressed[ePos] = 0;\n"
                 "\n";
     }
-    _cache << "      " << _name << "_" << FUNCTION_SPARSE_FORWARD_ONE << "(j, " << args << ");\n"
+    _cache << "      ret = " << _name << "_" << FUNCTION_SPARSE_FORWARD_ONE << "(j, " << args << ");\n"
+            "\n"
+            "      if (ret != 0) {\n"
+            "         free(compressed);\n"
+            "         free(txPos);\n"
+            "         return ret;\n"
+            "      }\n"
             "\n"
             "      for (ePos = 0; ePos < nnz; ePos++) {\n"
             "         ty[pos[ePos] * 2 + 1] += compressed[ePos];\n"

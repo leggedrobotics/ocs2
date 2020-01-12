@@ -30,7 +30,7 @@ inline void CodeHandler<Base>::substituteIndependent(OperationNode<Base>& indep,
                                                      OperationNode<Base>& dep,
                                                      bool removeFromIndependents) {
     using std::vector;
-    typedef CG<Base> CGBase;
+    using CGBase = CG<Base>;
 
     //check if the independent variable belongs to this handler
     size_t indepIndex = getIndependentVariableIndex(indep);

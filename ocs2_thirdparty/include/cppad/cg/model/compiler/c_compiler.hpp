@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2012 Ciengis
+ *    Copyright (C) 2018 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -20,7 +21,7 @@ namespace cg {
 
 /**
  * C compiler class used to create a dynamic library
- * 
+ *
  * @author Joao Leal
  */
 template<class Base>
@@ -30,7 +31,7 @@ public:
     /**
      * Provides the path to a temporary folder that should not exist
      * (it will be deleted after the dynamic library is created)
-     * 
+     *
      * @return path to a temporary folder.
      */
     virtual const std::string& getTemporaryFolder() const = 0;
@@ -38,7 +39,7 @@ public:
     /**
      * Defines the path to a temporary folder that should not exist
      * (it will be deleted after the dynamic library is created)
-     * 
+     *
      * @param tmpFolder path to a temporary folder.
      */
     virtual void setTemporaryFolder(const std::string& tmpFolder) = 0;
@@ -50,7 +51,7 @@ public:
     /**
      * Provides the path to a folder where the source files should be created
      * when the option to save files to disk is active.
-     * 
+     *
      * @return path to a folder.
      */
     virtual const std::string& getSourcesFolder() const = 0;
@@ -58,7 +59,7 @@ public:
     /**
      * Defines the path to a folder where the source files should be created
      * when the option to save files to disk is active.
-     * 
+     *
      * @param srcFolder path to the folder.
      */
     virtual void setSourcesFolder(const std::string& srcFolder) = 0;
@@ -73,7 +74,7 @@ public:
 
     /**
      * Compiles the provided C source code.
-     * 
+     *
      * @param sources maps the names to the content of the source files
      * @param posIndepCode whether or not to create position-independent
      *                     code for dynamic linking
@@ -84,7 +85,7 @@ public:
 
     /**
      * Creates a dynamic library from the previously compiled object files
-     * 
+     *
      * @param library the path to the dynamic library to be created
      */
     virtual void buildDynamic(const std::string& library,
@@ -96,8 +97,7 @@ public:
      */
     virtual void cleanup() = 0;
 
-    inline virtual ~CCompiler() {
-    }
+    inline virtual ~CCompiler() = default;
 
 };
 

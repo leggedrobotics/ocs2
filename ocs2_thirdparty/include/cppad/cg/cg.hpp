@@ -22,7 +22,7 @@ namespace cg {
  * The base data type used to create models.
  * It can represent either the result of a symbolic operation or a constant
  * parameter value.
- * 
+ *
  * @author Joao Leal
  */
 template<class Base>
@@ -37,7 +37,7 @@ private:
      * A constant value which must be defined for parameters.
      * Its definition is optional for variables.
      */
-    Base* value_;
+    std::unique_ptr<Base> value_;
 
 public:
     /**
@@ -47,7 +47,7 @@ public:
 
     /**
      * Creates a variable resulting from the evaluation this node
-     * 
+     *
      * @param node The operation node.
      */
     inline CG(OperationNode<Base>& node);
@@ -58,9 +58,19 @@ public:
     inline CG(const CG<Base>& orig);
 
     /**
-     * Assignment operator
+     * Move constructor
+     */
+    inline CG(CG<Base>&& orig);
+
+    /**
+     * Copy assignment operator
      */
     inline CG& operator=(const CG<Base>& rhs);
+
+    /**
+     * Move assignment operator
+     */
+    inline CG& operator=(CG<Base>&& rhs);
 
     /**
      * Creates a parameter with the provided value
@@ -76,8 +86,11 @@ public:
      */
     inline CG& operator=(const Base& rhs);
 
+    // destructor
+    virtual ~CG();
+
     /**
-     * @return The code handler that owns the OperationNode when it is a 
+     * @return The code handler that owns the OperationNode when it is a
      *         variable, null when it is a parameter.
      */
     inline CodeHandler<Base>* getCodeHandler() const;
@@ -150,29 +163,25 @@ public:
     // unary operators
     inline CG<Base> operator+() const;
     inline CG<Base> operator-() const;
-
-    // creating an argument out of this node
-    inline Argument<Base> argument() const;
-
-
-    // destructor
-    virtual ~CG();
 protected:
     /**
-     * Creates a variable/parameter from an existing argument 
-     * 
-     * @param arg An argument that may be a parameter or a variable. 
+     * Creates a variable/parameter from an existing argument
+     *
+     * @param arg An argument that may be a parameter or a variable.
      *            (the node is assumed to already be managed by the handler)
      */
     inline CG(const Argument<Base>& arg);
 
     //
     inline void makeParameter(const Base& b);
-    
+
     inline void makeVariable(OperationNode<Base>& operation);
-    
+
     inline void makeVariable(OperationNode<Base>& operation,
                              std::unique_ptr<Base>& value);
+
+    // creating an argument out of this node
+    inline Argument<Base> argument() const;
 
     /***************************************************************************
      *                               friends
@@ -190,19 +199,6 @@ protected:
     friend CG<Base> CppAD::cg::operator- <Base>(const CG<Base>& left, const CG<Base>& right);
     friend CG<Base> CppAD::cg::operator* <Base>(const CG<Base>& left, const CG<Base>& right);
     friend CG<Base> CppAD::cg::operator/ <Base>(const CG<Base>& left, const CG<Base>& right);
-
-    /**
-     * comparison operators are not used to create code
-     */
-    friend bool operator< <Base> (const CG<Base>& left, const CG<Base>& right);
-    friend bool operator<= <Base> (const CG<Base>& left, const CG<Base>& right);
-    friend bool operator> <Base> (const CG<Base>& left, const CG<Base>& right);
-    friend bool operator>= <Base> (const CG<Base>& left, const CG<Base>& right);
-    friend bool operator== <Base> (const CG<Base>& left, const CG<Base>& right);
-    friend bool operator!= <Base> (const CG<Base>& left, const CG<Base>& right);
-
-    // comparison with double (required by CppAD SparseHessian)
-    friend bool operator!= <Base>(const CG<Base>& left, double right);
 
     /**
      * order determining functions
@@ -236,6 +232,7 @@ protected:
      */
     friend CG<Base> pow<Base>(const CG<Base> &x, const CG<Base> &y);
     friend CG<Base> abs<Base>(const CG<Base>& var);
+    friend CG<Base> fabs<Base>(const CG<Base>& var);
     friend CG<Base> acos<Base>(const CG<Base>& var);
     friend CG<Base> asin<Base>(const CG<Base>& var);
     friend CG<Base> atan<Base>(const CG<Base>& var);

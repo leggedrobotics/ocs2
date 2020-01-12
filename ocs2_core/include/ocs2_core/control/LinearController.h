@@ -30,7 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "ocs2_core/control/ControllerBase.h"
-
 #include "ocs2_core/misc/LinearInterpolation.h"
 
 namespace ocs2 {
@@ -49,6 +48,7 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
   using dimensions_t = Dimensions<STATE_DIM, INPUT_DIM>;
   using scalar_t = typename dimensions_t::scalar_t;
   using scalar_array_t = typename dimensions_t::scalar_array_t;
+  using size_array_t = typename dimensions_t::size_array_t;
   using float_array_t = typename Base::float_array_t;
   using state_vector_t = typename dimensions_t::state_vector_t;
   using input_vector_t = typename dimensions_t::input_vector_t;
@@ -266,6 +266,32 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
    */
   void getBias(scalar_t time, input_vector_t& bias) const {
     EigenLinearInterpolation<input_vector_t>::interpolate(time, bias, &timeStamp_, &biasArray_);
+  }
+
+  scalar_array_t controllerEventTimes() const override {
+    // simple controller case
+    if (timeStamp_.size() < 2) {
+      return scalar_array_t(0);
+    }
+
+    scalar_array_t eventTimes{0.0};
+    scalar_t lastevent = timeStamp_.front();
+    for (int i = 0; i < timeStamp_.size() - 1; i++) {
+      bool eventDetected = timeStamp_[i + 1] - timeStamp_[i] < 2.0 * OCS2NumericTraits<scalar_t>::weakEpsilon();
+      const bool sufficientTimeSinceEvent = timeStamp_[i] - lastevent > 2.0 * OCS2NumericTraits<scalar_t>::weakEpsilon();
+
+      if (eventDetected && sufficientTimeSinceEvent) {  // push back event when event is detected
+        eventTimes.push_back(timeStamp_[i]);
+        lastevent = eventTimes.back();
+      } else if (eventDetected) {
+        // if event is detected to close to the last event, it is assumed that the earlier event was not an event
+        // but was due to the refining steps taken in event detection
+        // The last "detected event" is the time the event took place
+        eventTimes.back() = timeStamp_[i];
+        lastevent = eventTimes.back();
+      }
+    }
+    return eventTimes;
   }
 
  public:

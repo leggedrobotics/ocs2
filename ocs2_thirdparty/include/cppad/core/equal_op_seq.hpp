@@ -1,30 +1,28 @@
-// $Id$
 # ifndef CPPAD_CORE_EQUAL_OP_SEQ_HPP
 # define CPPAD_CORE_EQUAL_OP_SEQ_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*
 ------------------------------------------------------------------------------
 $begin EqualOpSeq$$
 $spell
-	Op
-	const
-	bool
+    Op
+    const
+    bool
 $$
 
 
 $section Check if Two Value are Identically Equal$$
-$mindex EqualOpSeq operation sequence$$
 
 $head Syntax$$
 $icode%b% = EqualOpSeq(%x%, %y%)%$$
@@ -46,7 +44,7 @@ $cref/independent variables/glossary/Tape/Independent Variable/$$
 by the same operation sequence.
 After the assignment
 $codei%
-	%y% = %x%
+    %y% = %x%
 %$$
 these two AD objects would not only have equal values,
 but would also correspond to the same operation sequence.
@@ -54,19 +52,19 @@ but would also correspond to the same operation sequence.
 $head x$$
 The argument $icode x$$ has prototype
 $codei%
-	const AD<%Base%> &%x%
+    const AD<%Base%> &%x%
 %$$
 
 $head y$$
 The argument $icode y$$ has prototype
 $codei%
-	const AD<%Base%> &%y%
+    const AD<%Base%> &%y%
 %$$
 
 $head b$$
 The result $icode b$$ has prototype
 $codei%
-	bool %b%
+    bool %b%
 %$$
 The result is true if and only if one of the following cases holds:
 
@@ -86,12 +84,11 @@ $lend
 
 $head Example$$
 $children%
-	example/equal_op_seq.cpp
+    example/general/equal_op_seq.cpp
 %$$
 The file
 $cref equal_op_seq.cpp$$
 contains an example and test of $code EqualOpSeq$$.
-It returns true if it succeeds and false otherwise.
 
 
 $end
@@ -100,20 +97,21 @@ $end
 
 
 namespace CppAD {
-	template <class Base>
-	CPPAD_INLINE_FRIEND_TEMPLATE_FUNCTION
-	bool EqualOpSeq(const AD<Base> &x, const AD<Base> &y)
-	{
-		if( Parameter(x) )
-		{	if( Parameter(y) )
-				return EqualOpSeq(x.value_, y.value_);
-			else	return false;
-		}
-		else if( Parameter(y) )
-			return false;
+    template <class Base>
+    CPPAD_INLINE_FRIEND_TEMPLATE_FUNCTION
+    bool EqualOpSeq(const AD<Base> &x, const AD<Base> &y)
+    {
+        if( Parameter(x) )
+        {   if( Parameter(y) )
+                return EqualOpSeq(x.value_, y.value_);
+            else
+                return false;
+        }
+        else if( Parameter(y) )
+            return false;
 
-		return (x.taddr_ == y.taddr_);
-	}
+        return (x.taddr_ == y.taddr_);
+    }
 
 }
 

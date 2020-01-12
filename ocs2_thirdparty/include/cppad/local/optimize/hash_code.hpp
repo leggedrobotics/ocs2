@@ -1,17 +1,16 @@
-// $Id$
 # ifndef CPPAD_LOCAL_OPTIMIZE_HASH_CODE_HPP
 # define CPPAD_LOCAL_OPTIMIZE_HASH_CODE_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 /*!
 \file local/optimize/hash_code.hpp
 CppAD hashing utility.
@@ -28,8 +27,7 @@ Specialized hash code for a CppAD operator and its arguments
 is the operator that we are computing a hash code for.
 
 \param num_arg
-number of elements of arg to include in the hash code
-(num_arg <= 2).
+number of elements of arg to include in the hash code.
 
 \param arg
 is a vector of length num_arg
@@ -40,17 +38,15 @@ is a hash code that is between zero and CPPAD_HASH_TABLE_SIZE - 1.
 */
 
 inline size_t optimize_hash_code(
-	OpCode        op      ,
-	size_t        num_arg ,
-	const addr_t* arg     )
+    opcode_t      op      ,
+    size_t        num_arg ,
+    const addr_t* arg     )
 {
-	//
-	CPPAD_ASSERT_UNKNOWN(num_arg <= 2 );
-	size_t sum = size_t(arg[0]) + size_t(op);
-	if( 1 < num_arg )
-		sum += size_t(arg[1]);
-	//
-	return sum % CPPAD_HASH_TABLE_SIZE;
+    size_t sum = size_t(op);
+    for(size_t i = 0; i < num_arg; i++)
+        sum += size_t(arg[i]);
+    //
+    return sum % CPPAD_HASH_TABLE_SIZE;
 }
 
 } } } // END_CPPAD_LOCAL_OPTIMIZE_NAMESPACE

@@ -1,53 +1,51 @@
-// $Id: ode_err_control.hpp 3766 2015-12-08 23:12:56Z bradbell $
-# ifndef CPPAD_ODE_ERR_CONTROL_HPP
-# define CPPAD_ODE_ERR_CONTROL_HPP
-
+# ifndef CPPAD_UTILITY_ODE_ERR_CONTROL_HPP
+# define CPPAD_UTILITY_ODE_ERR_CONTROL_HPP
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-15 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*
 $begin OdeErrControl$$
 $spell
-	cppad.hpp
-	nstep
-	maxabs
-	exp
-	scur
-	CppAD
-	xf
-	tf
-	xi
-	smin
-	smax
-	eabs
-	erel
-	ef
-	ta
-	tb
-	xa
-	xb
-	const
-	eb
+    cppad.hpp
+    nstep
+    maxabs
+    exp
+    scur
+    CppAD
+    xf
+    tf
+    xi
+    smin
+    smax
+    eabs
+    erel
+    ef
+    ta
+    tb
+    xa
+    xb
+    const
+    eb
 $$
 
 
 
 $section An Error Controller for ODE Solvers$$
-$mindex OdeErrControl differential equation$$
 
 $head Syntax$$
 $codei%# include <cppad/utility/ode_err_control.hpp>
 %$$
 $icode%xf% = OdeErrControl(%method%, %ti%, %tf%, %xi%,
-	%smin%, %smax%, %scur%, %eabs%, %erel%, %ef% , %maxabs%, %nstep% )%$$
+    %smin%, %smax%, %scur%, %eabs%, %erel%, %ef% , %maxabs%, %nstep% )%$$
 
 
 $head Description$$
@@ -57,8 +55,8 @@ We define $latex X : [ti , tf] \rightarrow \B{R}^n$$ by
 the following initial value problem:
 $latex \[
 \begin{array}{rcl}
-	X(ti)  & = & xi    \\
-	X'(t)  & = & F[t , X(t)]
+    X(ti)  & = & xi    \\
+    X'(t)  & = & F[t , X(t)]
 \end{array}
 \] $$
 The routine $code OdeErrControl$$ can be used to adjust the step size
@@ -78,7 +76,7 @@ $cref/Vector/OdeErrControl/Vector/$$ are documented below.
 $head xf$$
 The return value $icode xf$$ has the prototype
 $codei%
-	%Vector% %xf%
+    %Vector% %xf%
 %$$
 (see description of $cref/Vector/OdeErrControl/Vector/$$ below).
 and the size of $icode xf$$ is equal to $icode n$$.
@@ -89,7 +87,7 @@ $head Method$$
 The class $icode Method$$
 and the object $icode method$$ satisfy the following syntax
 $codei%
-	%Method% &%method%
+    %Method% &%method%
 %$$
 The object $icode method$$ must support $code step$$ and
 $code order$$ member functions defined below:
@@ -97,7 +95,7 @@ $code order$$ member functions defined below:
 $subhead step$$
 The syntax
 $codei%
-	%method%.step(%ta%, %tb%, %xa%, %xb%, %eb%)
+    %method%.step(%ta%, %tb%, %xa%, %xb%, %eb%)
 %$$
 executes one step of the integration method.
 $codei%
@@ -106,7 +104,7 @@ $codei%
 %$$
 The argument $icode ta$$ has prototype
 $codei%
-	const %Scalar% &%ta%
+    const %Scalar% &%ta%
 %$$
 It specifies the initial time for this step in the
 ODE integration.
@@ -117,7 +115,7 @@ $codei%
 %$$
 The argument $icode tb$$ has prototype
 $codei%
-	const %Scalar% &%tb%
+    const %Scalar% &%tb%
 %$$
 It specifies the final time for this step in the
 ODE integration.
@@ -127,7 +125,7 @@ $codei%
 %$$
 The argument $icode xa$$ has prototype
 $codei%
-	const %Vector% &%xa%
+    const %Vector% &%xa%
 %$$
 and size $icode n$$.
 It specifies the value of $latex X(ta)$$.
@@ -138,7 +136,7 @@ $codei%
 %$$
 The argument value $icode xb$$ has prototype
 $codei%
-	%Vector% &%xb%
+    %Vector% &%xb%
 %$$
 and size $icode n$$.
 The input value of its elements does not matter.
@@ -150,7 +148,7 @@ $codei%
 %$$
 The argument value $icode eb$$ has prototype
 $codei%
-	%Vector% &%eb%
+    %Vector% &%eb%
 %$$
 and size $icode n$$.
 The input value of its elements does not matter.
@@ -173,12 +171,12 @@ $subhead order$$
 If $icode m$$ is $code size_t$$,
 the object $icode method$$ must also support the following syntax
 $codei%
-	%m% = %method%.order()
+    %m% = %method%.order()
 %$$
 The return value $icode m$$ is the order of the error estimate;
 i.e., there is a constant K such that if $latex ti \leq ta \leq tb \leq tf$$,
 $latex \[
-	| eb(tb) | \leq K | tb - ta |^m
+    | eb(tb) | \leq K | tb - ta |^m
 \] $$
 where $icode ta$$, $icode tb$$, and $icode eb$$ are as in
 $icode%method%.step(%ta%, %tb%, %xa%, %xb%, %eb%)%$$
@@ -187,7 +185,7 @@ $icode%method%.step(%ta%, %tb%, %xa%, %xb%, %eb%)%$$
 $head ti$$
 The argument $icode ti$$ has prototype
 $codei%
-	const %Scalar% &%ti%
+    const %Scalar% &%ti%
 %$$
 It specifies the initial time for the integration of
 the differential equation.
@@ -196,7 +194,7 @@ the differential equation.
 $head tf$$
 The argument $icode tf$$ has prototype
 $codei%
-	const %Scalar% &%tf%
+    const %Scalar% &%tf%
 %$$
 It specifies the final time for the integration of
 the differential equation.
@@ -204,7 +202,7 @@ the differential equation.
 $head xi$$
 The argument $icode xi$$ has prototype
 $codei%
-	const %Vector% &%xi%
+    const %Vector% &%xi%
 %$$
 and size $icode n$$.
 It specifies value of $latex X(ti)$$.
@@ -212,7 +210,7 @@ It specifies value of $latex X(ti)$$.
 $head smin$$
 The argument $icode smin$$ has prototype
 $codei%
-	const %Scalar% &%smin%
+    const %Scalar% &%smin%
 %$$
 The step size during a call to $icode method$$ is defined as
 the corresponding value of $latex tb - ta$$.
@@ -226,7 +224,7 @@ as small as $latex smin / 2$$.
 $head smax$$
 The argument $icode smax$$ has prototype
 $codei%
-	const %Scalar% &%smax%
+    const %Scalar% &%smax%
 %$$
 It specifies the maximum step size to use during the integration;
 i.e., the maximum value for $latex tb - ta$$ in a call to $icode method$$.
@@ -235,7 +233,7 @@ The value of $icode smax$$ must be greater than or equal $icode smin$$.
 $head scur$$
 The argument $icode scur$$ has prototype
 $codei%
-	%Scalar% &%scur%
+    %Scalar% &%scur%
 %$$
 The value of $icode scur$$ is the suggested next step size,
 based on error criteria, to try in the next call to $icode method$$.
@@ -247,7 +245,7 @@ in a subsequent call to $code OdeErrControl$$ (where $icode ta = tf$$).
 $head eabs$$
 The argument $icode eabs$$ has prototype
 $codei%
-	const %Vector% &%eabs%
+    const %Vector% &%eabs%
 %$$
 and size $icode n$$.
 Each of the elements of $icode eabs$$ must be
@@ -261,7 +259,7 @@ below).
 $head erel$$
 The argument $icode erel$$ has prototype
 $codei%
-	const %Scalar% &%erel%
+    const %Scalar% &%erel%
 %$$
 and is greater than or equal zero.
 It specifies a bound for the relative
@@ -273,7 +271,7 @@ below).
 $head ef$$
 The argument value $icode ef$$ has prototype
 $codei%
-	%Vector% &%ef%
+    %Vector% &%ef%
 %$$
 and size $icode n$$.
 The input value of its elements does not matter.
@@ -281,7 +279,7 @@ On output,
 it contains an estimated bound for the
 absolute error in the approximation $icode xf$$; i.e.,
 $latex \[
-	ef_i > | X( tf )_i - xf_i |
+    ef_i > | X( tf )_i - xf_i |
 \] $$
 If on output $icode ef$$ contains not a number $code nan$$,
 see the discussion of $cref/step/OdeErrControl/Method/Nan/$$.
@@ -290,7 +288,7 @@ $head maxabs$$
 The argument $icode maxabs$$ is optional in the call to $code OdeErrControl$$.
 If it is present, it has the prototype
 $codei%
-	%Vector% &%maxabs%
+    %Vector% &%maxabs%
 %$$
 and size $icode n$$.
 The input value of its elements does not matter.
@@ -298,16 +296,16 @@ On output,
 it contains an estimate for the
 maximum absolute value of $latex X(t)$$; i.e.,
 $latex \[
-	maxabs[i] \approx \max \left\{
-		| X( t )_i | \; : \;  t \in [ti, tf]
-	\right\}
+    maxabs[i] \approx \max \left\{
+        | X( t )_i | \; : \;  t \in [ti, tf]
+    \right\}
 \] $$
 
 $head nstep$$
 The argument $icode nstep$$ is optional in the call to $code OdeErrControl$$.
 If it is present, it has the prototype
 $codei%
-	%size_t% &%nstep%
+    %size_t% &%nstep%
 %$$
 Its input value does not matter and its output value
 is the number of calls to $icode%method%.step%$$
@@ -352,17 +350,17 @@ $icode Scalar$$ objects $icode a$$ and $icode b$$:
 $table
 $bold Operation$$ $cnext $bold Description$$  $rnext
 $icode%a% <= %b%$$ $cnext
-	returns true (false) if $icode a$$ is less than or equal
-	(greater than) $icode b$$.
+    returns true (false) if $icode a$$ is less than or equal
+    (greater than) $icode b$$.
 $rnext
 $icode%a% == %b%$$ $cnext
-	returns true (false) if $icode a$$ is equal to $icode b$$.
+    returns true (false) if $icode a$$ is equal to $icode b$$.
 $rnext
 $codei%log(%a%)%$$ $cnext
-	returns a $icode Scalar$$ equal to the logarithm of $icode a$$
+    returns a $icode Scalar$$ equal to the logarithm of $icode a$$
 $rnext
 $codei%exp(%a%)%$$ $cnext
-	returns a $icode Scalar$$ equal to the exponential of $icode a$$
+    returns a $icode Scalar$$ equal to the exponential of $icode a$$
 $tend
 
 
@@ -374,8 +372,8 @@ if this is not the case.
 
 $head Example$$
 $children%
-	example/ode_err_control.cpp%
-	example/ode_err_maxabs.cpp
+    example/utility/ode_err_control.cpp%
+    example/utility/ode_err_maxabs.cpp
 %$$
 The files
 $cref ode_err_control.cpp$$
@@ -393,11 +391,11 @@ Given the value of $latex e(s)$$, a step of size $latex \lambda s$$
 would be ok provided that
 $latex \[
 \begin{array}{rcl}
-	a  & \geq & e( \lambda s ) (tf - ti) / ( \lambda s ) \\
-	a  & \geq & K \lambda^m s^m (tf - ti) / ( \lambda s ) \\
-	a  & \geq & \lambda^{m-1} s^{m-1} (tf - ti) e(s) / s^m \\
-	a  & \geq & \lambda^{m-1} (tf - ti) e(s) / s           \\
-	\lambda^{m-1} & \leq & \frac{a}{e(s)} \frac{s}{tf - ti}
+    a  & \geq & e( \lambda s ) (tf - ti) / ( \lambda s ) \\
+    a  & \geq & K \lambda^m s^m (tf - ti) / ( \lambda s ) \\
+    a  & \geq & \lambda^{m-1} s^{m-1} (tf - ti) e(s) / s^m \\
+    a  & \geq & \lambda^{m-1} (tf - ti) e(s) / s           \\
+    \lambda^{m-1} & \leq & \frac{a}{e(s)} \frac{s}{tf - ti}
 \end{array}
 \] $$
 Thus if the right hand side of the last inequality is greater
@@ -414,181 +412,185 @@ $end
 // link exp and log for float and double
 # include <cppad/base_require.hpp>
 
-# include <cppad/local/cppad_assert.hpp>
+# include <cppad/core/cppad_assert.hpp>
 # include <cppad/utility/check_simple_vector.hpp>
 # include <cppad/utility/nan.hpp>
 
 namespace CppAD { // Begin CppAD namespace
 
-template <typename Scalar, typename Vector, typename Method>
+template <class Scalar, class Vector, class Method>
 Vector OdeErrControl(
-	Method          &method,
-	const Scalar    &ti    ,
-	const Scalar    &tf    ,
-	const Vector    &xi    ,
-	const Scalar    &smin  ,
-	const Scalar    &smax  ,
-	Scalar          &scur  ,
-	const Vector    &eabs  ,
-	const Scalar    &erel  ,
-	Vector          &ef    ,
-	Vector          &maxabs,
-	size_t          &nstep )
+    Method          &method,
+    const Scalar    &ti    ,
+    const Scalar    &tf    ,
+    const Vector    &xi    ,
+    const Scalar    &smin  ,
+    const Scalar    &smax  ,
+    Scalar          &scur  ,
+    const Vector    &eabs  ,
+    const Scalar    &erel  ,
+    Vector          &ef    ,
+    Vector          &maxabs,
+    size_t          &nstep )
 {
-	// check simple vector class specifications
-	CheckSimpleVector<Scalar, Vector>();
+    // check simple vector class specifications
+    CheckSimpleVector<Scalar, Vector>();
 
-	size_t n = size_t(xi.size());
+    size_t n = size_t(xi.size());
 
-	CPPAD_ASSERT_KNOWN(
-		smin <= smax,
-		"Error in OdeErrControl: smin > smax"
-	);
-	CPPAD_ASSERT_KNOWN(
-		size_t(eabs.size()) == n,
-		"Error in OdeErrControl: size of eabs is not equal to n"
-	);
-	CPPAD_ASSERT_KNOWN(
-		size_t(maxabs.size()) == n,
-		"Error in OdeErrControl: size of maxabs is not equal to n"
-	);
-	size_t m = method.order();
-	CPPAD_ASSERT_KNOWN(
-		m > 1,
-		"Error in OdeErrControl: m is less than or equal one"
-	);
+    CPPAD_ASSERT_KNOWN(
+        smin <= smax,
+        "Error in OdeErrControl: smin > smax"
+    );
+    CPPAD_ASSERT_KNOWN(
+        size_t(eabs.size()) == n,
+        "Error in OdeErrControl: size of eabs is not equal to n"
+    );
+    CPPAD_ASSERT_KNOWN(
+        size_t(maxabs.size()) == n,
+        "Error in OdeErrControl: size of maxabs is not equal to n"
+    );
+    size_t m = method.order();
+    CPPAD_ASSERT_KNOWN(
+        m > 1,
+        "Error in OdeErrControl: m is less than or equal one"
+    );
 
-	bool    ok;
-	bool    minimum_step;
-	size_t  i;
-	Vector xa(n), xb(n), eb(n), nan_vec(n);
+    bool    ok;
+    bool    minimum_step;
+    size_t  i;
+    Vector xa(n), xb(n), eb(n), nan_vec(n);
 
-	// initialization
-	Scalar zero(0);
-	Scalar one(1);
-	Scalar two(2);
-	Scalar three(3);
-	Scalar m1(m-1);
-	Scalar ta = ti;
-	for(i = 0; i < n; i++)
-	{	nan_vec[i] = nan(zero);
-		ef[i]      = zero;
-		xa[i]      = xi[i];
-		if( zero <= xi[i] )
-			maxabs[i] = xi[i];
-		else	maxabs[i] = - xi[i];
+    // initialization
+    Scalar zero(0.0);
+    Scalar one(1.0);
+    Scalar two(2.0);
+    Scalar three(3.0);
+    Scalar m1(double(m-1));
+    Scalar ta = ti;
+    for(i = 0; i < n; i++)
+    {   nan_vec[i] = nan(zero);
+        ef[i]      = zero;
+        xa[i]      = xi[i];
+        if( zero <= xi[i] )
+            maxabs[i] = xi[i];
+        else
+            maxabs[i] = - xi[i];
 
-	}
-	nstep = 0;
+    }
+    nstep = 0;
 
-	Scalar tb, step, lambda, axbi, a, r, root;
-	while( ! (ta == tf) )
-	{	// start with value suggested by error criteria
-		step = scur;
+    Scalar tb, step, lambda, axbi, a, r, root;
+    while( ! (ta == tf) )
+    {   // start with value suggested by error criteria
+        step = scur;
 
-		// check maximum
-		if( smax <= step )
-			step = smax;
+        // check maximum
+        if( smax <= step )
+            step = smax;
 
-		// check minimum
-		minimum_step = step <= smin;
-		if( minimum_step )
-			step = smin;
+        // check minimum
+        minimum_step = step <= smin;
+        if( minimum_step )
+            step = smin;
 
-		// check if near the end
-		if( tf <= ta + step * three / two )
-			tb = tf;
-		else	tb = ta + step;
+        // check if near the end
+        if( tf <= ta + step * three / two )
+            tb = tf;
+        else
+            tb = ta + step;
 
-		// try using this step size
-		nstep++;
-		method.step(ta, tb, xa, xb, eb);
-		step = tb - ta;
+        // try using this step size
+        nstep++;
+        method.step(ta, tb, xa, xb, eb);
+        step = tb - ta;
 
-		// check if this steps error estimate is ok
-		ok = ! (hasnan(xb) || hasnan(eb));
-		if( (! ok) && minimum_step )
-		{	ef = nan_vec;
-			return nan_vec;
-		}
+        // check if this steps error estimate is ok
+        ok = ! (hasnan(xb) || hasnan(eb));
+        if( (! ok) && minimum_step )
+        {   ef = nan_vec;
+            return nan_vec;
+        }
 
-		// compute value of lambda for this step
-		lambda = Scalar(10) * scur / step;
-		for(i = 0; i < n; i++)
-		{	if( zero <= xb[i] )
-				axbi = xb[i];
-			else	axbi = - xb[i];
-			a    = eabs[i] + erel * axbi;
-			if( ! (eb[i] == zero) )
-			{	r = ( a / eb[i] ) * step / (tf - ti);
-				root = exp( log(r) / m1 );
-				if( root <= lambda )
-					lambda = root;
-			}
-		}
-		if( ok && ( one <= lambda || step <= smin * three / two) )
-		{	// this step is within error limits or
-			// close to the minimum size
-			ta = tb;
-			for(i = 0; i < n; i++)
-			{	xa[i] = xb[i];
-				ef[i] = ef[i] + eb[i];
-				if( zero <= xb[i] )
-					axbi = xb[i];
-				else	axbi = - xb[i];
-				if( axbi > maxabs[i] )
-					maxabs[i] = axbi;
-			}
-		}
-		if( ! ok )
-		{	// decrease step an see if method will work this time
-			scur = step / two;
-		}
-		else if( ! (ta == tf) )
-		{	// step suggested by the error criteria is not used
-			// on the last step because it may be very small.
-			scur = lambda * step / two;
-		}
-	}
-	return xa;
+        // compute value of lambda for this step
+        lambda = Scalar(10) * scur / step;
+        for(i = 0; i < n; i++)
+        {   if( zero <= xb[i] )
+                axbi = xb[i];
+            else
+                axbi = - xb[i];
+            a    = eabs[i] + erel * axbi;
+            if( ! (eb[i] == zero) )
+            {   r = ( a / eb[i] ) * step / (tf - ti);
+                root = exp( log(r) / m1 );
+                if( root <= lambda )
+                    lambda = root;
+            }
+        }
+        if( ok && ( one <= lambda || step <= smin * three / two) )
+        {   // this step is within error limits or
+            // close to the minimum size
+            ta = tb;
+            for(i = 0; i < n; i++)
+            {   xa[i] = xb[i];
+                ef[i] = ef[i] + eb[i];
+                if( zero <= xb[i] )
+                    axbi = xb[i];
+                else
+                    axbi = - xb[i];
+                if( axbi > maxabs[i] )
+                    maxabs[i] = axbi;
+            }
+        }
+        if( ! ok )
+        {   // decrease step an see if method will work this time
+            scur = step / two;
+        }
+        else if( ! (ta == tf) )
+        {   // step suggested by the error criteria is not used
+            // on the last step because it may be very small.
+            scur = lambda * step / two;
+        }
+    }
+    return xa;
 }
 
-template <typename Scalar, typename Vector, typename Method>
+template <class Scalar, class Vector, class Method>
 Vector OdeErrControl(
-	Method          &method,
-	const Scalar    &ti    ,
-	const Scalar    &tf    ,
-	const Vector    &xi    ,
-	const Scalar    &smin  ,
-	const Scalar    &smax  ,
-	Scalar          &scur  ,
-	const Vector    &eabs  ,
-	const Scalar    &erel  ,
-	Vector          &ef    )
-{	Vector maxabs(xi.size());
-	size_t nstep;
-	return OdeErrControl(
-	method, ti, tf, xi, smin, smax, scur, eabs, erel, ef, maxabs, nstep
-	);
+    Method          &method,
+    const Scalar    &ti    ,
+    const Scalar    &tf    ,
+    const Vector    &xi    ,
+    const Scalar    &smin  ,
+    const Scalar    &smax  ,
+    Scalar          &scur  ,
+    const Vector    &eabs  ,
+    const Scalar    &erel  ,
+    Vector          &ef    )
+{   Vector maxabs(xi.size());
+    size_t nstep;
+    return OdeErrControl(
+    method, ti, tf, xi, smin, smax, scur, eabs, erel, ef, maxabs, nstep
+    );
 }
 
-template <typename Scalar, typename Vector, typename Method>
+template <class Scalar, class Vector, class Method>
 Vector OdeErrControl(
-	Method          &method,
-	const Scalar    &ti    ,
-	const Scalar    &tf    ,
-	const Vector    &xi    ,
-	const Scalar    &smin  ,
-	const Scalar    &smax  ,
-	Scalar          &scur  ,
-	const Vector    &eabs  ,
-	const Scalar    &erel  ,
-	Vector          &ef    ,
-	Vector          &maxabs)
-{	size_t nstep;
-	return OdeErrControl(
-	method, ti, tf, xi, smin, smax, scur, eabs, erel, ef, maxabs, nstep
-	);
+    Method          &method,
+    const Scalar    &ti    ,
+    const Scalar    &tf    ,
+    const Vector    &xi    ,
+    const Scalar    &smin  ,
+    const Scalar    &smax  ,
+    Scalar          &scur  ,
+    const Vector    &eabs  ,
+    const Scalar    &erel  ,
+    Vector          &ef    ,
+    Vector          &maxabs)
+{   size_t nstep;
+    return OdeErrControl(
+    method, ti, tf, xi, smin, smax, scur, eabs, erel, ef, maxabs, nstep
+    );
 }
 
 } // End CppAD namespace

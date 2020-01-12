@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2013 Ciengis
+ *    Copyright (C) 2018 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -32,7 +33,9 @@ public:
         CPPADCG_ASSERT_UNKNOWN(!indexes_.empty());
     }
 
-    inline virtual IndexPatternType getType() const override {
+    inline virtual ~Random2DIndexPattern() = default;
+
+    inline IndexPatternType getType() const override {
         return IndexPatternType::Random2D;
     }
 
@@ -40,8 +43,6 @@ public:
         return indexes_;
     }
 
-    inline virtual ~Random2DIndexPattern() {
-    }
 };
 
 } // END cg namespace

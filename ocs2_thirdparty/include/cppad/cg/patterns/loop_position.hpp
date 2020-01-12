@@ -27,8 +27,8 @@ public:
     size_t original;
 
     inline LoopPosition() :
-        tape(std::numeric_limits<size_t>::max()),
-        original(std::numeric_limits<size_t>::max()) {
+        tape((std::numeric_limits<size_t>::max)()),
+        original((std::numeric_limits<size_t>::max)()) {
     }
 
     /**

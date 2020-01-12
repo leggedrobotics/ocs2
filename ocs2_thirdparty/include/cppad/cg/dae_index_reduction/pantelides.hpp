@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2012 Ciengis
+ *    Copyright (C) 2018 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -27,8 +28,8 @@ namespace cg {
 template<class Base>
 class Pantelides : public DaeStructuralIndexReduction<Base> {
 protected:
-    typedef CppAD::cg::CG<Base> CGBase;
-    typedef CppAD::AD<CGBase> ADCG;
+    using CGBase = CppAD::cg::CG<Base>;
+    using ADCG = CppAD::AD<CGBase>;
 protected:
     // avoids having to type this->graph_
     using DaeStructuralIndexReduction<Base>::graph_;
@@ -41,9 +42,9 @@ protected:
 public:
 
     /**
-     * Creates the DAE index reduction algorithm that implements the 
+     * Creates the DAE index reduction algorithm that implements the
      * Pantelides method.
-     * 
+     *
      * @param fun The original model (potentially high index)
      * @param varInfo The DAE system variable information (in the same order
      *                as in the tape)
@@ -65,8 +66,7 @@ public:
 
     Pantelides& operator=(const Pantelides& p) = delete;
 
-    virtual ~Pantelides() {
-    }
+    virtual ~Pantelides() = default;
 
     AugmentPath<Base>& getAugmentPath() const {
         return *augmentPath_;
@@ -76,8 +76,8 @@ public:
         augmentPath_ = &a;
     }
 
-    virtual inline std::unique_ptr<ADFun<CG<Base>>> reduceIndex(std::vector<DaeVarInfo>& newVarInfo,
-                                                                std::vector<DaeEquationInfo>& equationInfo) override {
+    inline std::unique_ptr<ADFun<CG<Base>>> reduceIndex(std::vector<DaeVarInfo>& newVarInfo,
+                                                        std::vector<DaeEquationInfo>& equationInfo) override {
         if (reduced_)
             throw CGException("reduceIndex() can only be called once!");
 
@@ -105,7 +105,7 @@ protected:
     using DaeStructuralIndexReduction<Base>::log;
 
     /**
-     * 
+     *
      */
     inline void detectSubset2Dif() {
         auto& vnodes = graph_.variables();

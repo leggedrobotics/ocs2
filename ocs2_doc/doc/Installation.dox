@@ -18,7 +18,7 @@ library versions as provided in the package sources.
  - `catkin-pkg` package for python 2 (and 3, if python3 bindings are required). Install with `pip install catkin-pkg`
 
 \subsection ocs2_doc_dep_optinal Optional Dependencies
- - [Raisim](https://github.com/leggedrobotics/raisimLib) simulator can be used as a provider for rollouts.
+ - [Raisim](https://github.com/leggedrobotics/raisimLib) simulator can be used as a provider for rollouts. The corresponding `ocs2_raisim` package additionally requires the [`grid_map_msgs`](https://github.com/ANYbotics/grid_map) catkin package, which may be installed with `sudo apt install ros-melodic-grid-map-msgs`.
  - [RaisimOgre](https://github.com/leggedrobotics/raisimOgre) Visualizer for Raisim. Can be used for debugging purposes to see if conversions between OCS2 and Raisim are correct.
 
 \section ocs2_doc_install Installation

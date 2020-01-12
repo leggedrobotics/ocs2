@@ -1,24 +1,23 @@
-// $Id$
 # ifndef CPPAD_CORE_STANDARD_MATH_HPP
 # define CPPAD_CORE_STANDARD_MATH_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*
 $begin unary_standard_math$$
 $spell
-	const
-	VecAD
-	fabs
+    const
+    VecAD
+    fabs
 $$
 
 $section The Unary Standard Math Functions$$
@@ -36,42 +35,42 @@ If $icode Base$$ satisfies the
 $cref/base type requirements/base_require/$$
 and argument $icode x$$ has prototype
 $codei%
-	const %Base%& %x%
+    const %Base%& %x%
 %$$
 then the result $icode y$$ has prototype
 $codei%
-	%Base% %y%
+    %Base% %y%
 %$$
 
 $subhead AD<Base>$$
 If the argument $icode x$$ has prototype
 $codei%
-	const AD<%Base%>& %x%
+    const AD<%Base%>& %x%
 %$$
 then the result $icode y$$ has prototype
 $codei%
-	AD<%Base%> %y%
+    AD<%Base%> %y%
 %$$
 
 $subhead VecAD<Base>$$
 If the argument $icode x$$ has prototype
 $codei%
-	const VecAD<%Base%>::reference& %x%
+    const VecAD<%Base%>::reference& %x%
 %$$
 then the result $icode y$$ has prototype
 $codei%
-	AD<%Base%> %y%
+    AD<%Base%> %y%
 %$$
 
-$children%cppad/core/std_math_98.hpp
-	%cppad/core/abs.hpp
-	%cppad/core/acosh.hpp
-	%cppad/core/asinh.hpp
-	%cppad/core/atanh.hpp
-	%cppad/core/erf.hpp
-	%cppad/core/expm1.hpp
-	%cppad/core/log1p.hpp
-	%cppad/core/sign.hpp
+$children%include/cppad/core/std_math_98.hpp
+    %include/cppad/core/abs.hpp
+    %include/cppad/core/acosh.hpp
+    %include/cppad/core/asinh.hpp
+    %include/cppad/core/atanh.hpp
+    %include/cppad/core/erf.hpp
+    %include/cppad/core/expm1.hpp
+    %include/cppad/core/log1p.hpp
+    %include/cppad/core/sign.hpp
 %$$
 
 $head fun$$
@@ -112,16 +111,15 @@ $end
 # include <cppad/core/expm1.hpp>
 # include <cppad/core/log1p.hpp>
 # include <cppad/core/sign.hpp>
-# include <cppad/core/sign.hpp>
 
 /*
 $begin binary_math$$
 
 $section The Binary Math Functions$$
 
-$childtable%cppad/core/atan2.hpp
-	%cppad/core/pow.hpp
-	%cppad/core/azmul.hpp
+$childtable%include/cppad/core/atan2.hpp
+    %include/cppad/core/pow.hpp
+    %include/cppad/core/azmul.hpp
 %$$
 
 $end

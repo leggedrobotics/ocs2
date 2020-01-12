@@ -49,7 +49,7 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}_dynamic_size
-  src/SequentialRiccatiEquationsNormalized.cpp
+  src/SequentialRiccatiEquations.cpp
 )
 target_link_libraries(${PROJECT_NAME}_dynamic_size
   ${catkin_LIBRARIES}

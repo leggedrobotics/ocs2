@@ -51,19 +51,19 @@ slq
         noStateConstraints           1
         minAbsConstraint1ISE         5e-3
         minRelConstraint1ISE         5e-6
-        checkNumericalStability      0
+        checkNumericalStability      1
 
         nThreads                     1
 
         useFeedbackPolicy            0
         
-        strategy                       LINE_SEARCH
+        strategy                     LINE_SEARCH
         lineSearch
         {
-            minStepLength              1.0
-            maxStepLength              1.0
-            useMakePSD                 1
-            addedRiccatiDiagonal       1e-3
+          minStepLength              1.0
+          maxStepLength              1.0
+          hessianCorrectionStrategy  EIGENVALUE_MODIFICATION
+          hessianCorrectionMultiple  1e-6
         }
     }
 
@@ -139,4 +139,3 @@ x_final
    (2,0)  0.0  ; theta_dot
    (3,0)  0.0  ; x_dot
 }
-

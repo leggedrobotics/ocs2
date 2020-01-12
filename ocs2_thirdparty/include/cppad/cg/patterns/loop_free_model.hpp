@@ -21,15 +21,15 @@ namespace cg {
 /**
  * Altered model without the loop equations and with extra dependents
  * for the non-indexed temporary variables used by loops
- * 
+ *
  * @author Joao Leal
  */
 template <class Base>
 class LoopFreeModel {
 public:
-    typedef CppAD::cg::CG<Base> CGB;
-    typedef Argument<Base> Arg;
-    typedef std::vector<std::set<size_t> > VectorSet;
+    using CGB = CppAD::cg::CG<Base>;
+    using Arg = Argument<Base>;
+    using VectorSet = std::vector<std::set<size_t> >;
 protected:
     /**
      * The tape
@@ -46,7 +46,7 @@ protected:
     VectorSet jacTapeSparsity_;
     bool jacSparsity_;
     /**
-     * Hessian sparsity pattern for equations used to determine the 
+     * Hessian sparsity pattern for equations used to determine the
      * temporaries (ignores the the original model equations)
      */
     VectorSet hessTapeTempSparsity_;
@@ -61,7 +61,7 @@ public:
 
     /**
      * Creates a model for the non-indexed operations
-     * 
+     *
      * @param fun
      * @param dependentOrigIndexes
      */
@@ -161,13 +161,13 @@ public:
 
     /**
      * Creates conditional nodes for temporary variables
-     * 
+     *
      * @param handler source code handler
      * @param iterations the iterations where the value should be evaluated
      * @param iterCount the number of iteration of the loop
      * @param value the value determined inside the loop
      * @param iterationIndexOp the iteration index operation for this loop
-     * @return 
+     * @return
      */
     inline CG<Base> createConditionalOperation(CodeHandler<Base>& handler,
                                                const std::set<size_t>& iterations,
@@ -188,7 +188,7 @@ public:
                 return value;
 
             /**
-             * must create a conditional element so that this 
+             * must create a conditional element so that this
              * contribution is only evaluated at the relevant iterations
              */
             OperationNode<Base>* tmpDclVar = handler.makeNode(CGOpCode::TmpDcl);
@@ -222,14 +222,14 @@ public:
     /**
      * Determines the Hessian for the temporary variables only used by
      * each loop
-     * 
+     *
      * @param loopHessInfo
      * @param x the independent variables
      * @param temps
      * @param noLoopEvalJacSparsity
      * @param individualColoring
      * @param iterationIndexOp
-     * @return 
+     * @return
      */
     inline std::map<size_t, std::map<size_t, CGB> > calculateJacobianHessianUsedByLoops(CodeHandler<Base>& handler,
                                                                                         std::map<LoopModel<Base>*, loops::HessianWithLoopsInfo<Base> >& loopHessInfo,
@@ -372,7 +372,7 @@ public:
 
             CppAD::sparse_hessian_work work; // temporary structure for CPPAD
             // "cppad.symmetric" may have missing values for functions using
-            // atomic functions which only provide half of the elements 
+            // atomic functions which only provide half of the elements
             // (some values could be zeroed)
             work.color_method = "cppad.general";
             fun_->SparseHessian(x, wNoLoop, hessTapeOrigEqSparsity_, row, col, hessNoLoop, work);

@@ -24,9 +24,9 @@ namespace cg {
 template <class Base>
 class IterEquationGroup {
 public:
-    typedef CppAD::cg::CG<Base> CGB;
-    typedef Argument<Base> Arg;
-    typedef std::pair<size_t, size_t> pairss;
+    using CGB = CppAD::cg::CG<Base>;
+    using Arg = Argument<Base>;
+    using pairss = std::pair<size_t, size_t>;
 private:
     static const std::vector<std::set<pairss> > EMPTYVECTORSETSS;
     static const std::vector<std::set<size_t> > EMPTYVECTORSETS;
@@ -34,7 +34,7 @@ private:
 public:
     /// iteration group index/ID
     size_t index;
-    /// equations indexes in tape of the loop model 
+    /// equations indexes in tape of the loop model
     std::set<size_t> tapeI;
     /// iterations which only have these equations defined
     std::set<size_t> iterations;
@@ -74,7 +74,7 @@ private:
 public:
 
     inline IterEquationGroup() :
-        index(std::numeric_limits<size_t>::max()), // not really required
+        index((std::numeric_limits<size_t>::max)()), // not really required
         model(nullptr),
         hessSparsity_(false) {
     }
@@ -179,10 +179,10 @@ public:
     }
 
     /**
-     * 
+     *
      * @param origJ1
      * @param origJ2
-     * @return maps each iteration to the pair of tape indexes present in 
+     * @return maps each iteration to the pair of tape indexes present in
      *         the Hessian
      */
     inline const std::vector<std::set<pairss> >& getHessianIndexedIndexedTapeIndexes(size_t origJ1,

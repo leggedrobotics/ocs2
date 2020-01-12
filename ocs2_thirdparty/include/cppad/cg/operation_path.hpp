@@ -36,7 +36,7 @@ inline bool findPathGraph(BidirGraph<Base>& foundGraph,
                           OperationNode<Base>& root,
                           OperationNode<Base>& target,
                           size_t& bifurcations,
-                          size_t maxBifurcations = std::numeric_limits<size_t>::max()) {
+                          size_t maxBifurcations = (std::numeric_limits<size_t>::max)()) {
     if (bifurcations >= maxBifurcations) {
         return false;
     }

@@ -123,9 +123,6 @@ public:
 
         size_t nEqGroups = equationGroups.size();
 
-        vector<std::set<size_t> > empty;
-        vector<std::map<size_t, CG<Base> > > emptyJac;
-
         for (size_t g = 0; g < nEqGroups; g++) {
             const IterEquationGroup<Base>& group = eqGroups[g];
 
@@ -141,8 +138,8 @@ public:
 
             generateLoopForJacHes(fun, x, vw, y,
                                   model->getJacobianSparsity(),
-                                  g == 0 ? evalJacSparsity : empty,
-                                  g == 0 ? dyiDzk : emptyJac,
+                                  evalJacSparsity,
+                                  dyiDzk,
                                   model->getHessianSparsity(),
                                   equationGroups[g].evalHessSparsity,
                                   vhess,

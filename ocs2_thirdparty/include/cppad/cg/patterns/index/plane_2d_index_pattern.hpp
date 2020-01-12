@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2013 Ciengis
+ *    Copyright (C) 2018 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -21,8 +22,8 @@ namespace cg {
 /**
  * A plane index pattern (2D) defined by two index patterns for each index
  * coordinate
- * 
- * z = f1(x) + f2(y) 
+ *
+ * z = f1(x) + f2(y)
  */
 class Plane2DIndexPattern : public IndexPattern {
 protected:
@@ -50,11 +51,11 @@ public:
         return pattern2_;
     }
 
-    inline virtual IndexPatternType getType() const override {
+    inline IndexPatternType getType() const override {
         return IndexPatternType::Plane2D;
     }
 
-    inline virtual void getSubIndexes(std::set<IndexPattern*>& indexes) const override {
+    inline void getSubIndexes(std::set<IndexPattern*>& indexes) const override {
         if (pattern1_ != nullptr) {
             indexes.insert(pattern1_);
             pattern1_->getSubIndexes(indexes);

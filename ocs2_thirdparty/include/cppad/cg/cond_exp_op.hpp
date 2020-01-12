@@ -33,6 +33,8 @@ inline bool isSameExpression(const cg::CG<Base>& trueCase,
 
 /**
  * Get the code handler out of some CG objects
+ *
+ * @throws cg::CGException
  */
 template<class Base>
 inline cg::CodeHandler<Base>* findCodeHandler(const cg::CG<Base>& left,
@@ -40,7 +42,7 @@ inline cg::CodeHandler<Base>* findCodeHandler(const cg::CG<Base>& left,
                                               const cg::CG<Base>& trueCase,
                                               const cg::CG<Base>& falseCase) {
     cg::CodeHandler<Base>* handler;
-    
+
     cg::CodeHandler<Base>* lh = left.getCodeHandler();
     cg::CodeHandler<Base>* rh = right.getCodeHandler();
     cg::CodeHandler<Base>* th = trueCase.getCodeHandler();
@@ -55,7 +57,7 @@ inline cg::CodeHandler<Base>* findCodeHandler(const cg::CG<Base>& left,
     } else if (!falseCase.isParameter()) {
         handler = fh;
     } else {
-        CPPAD_ASSERT_UNKNOWN(0);
+        CPPAD_ASSERT_UNKNOWN(0)
         throw cg::CGException("Unexpected error!");
     }
 
@@ -228,7 +230,7 @@ inline cg::CG<Base> CondExpOp(enum CompareOp cop,
             return CondExpGt(left, right, trueCase, falseCase);
 
         default:
-            CPPAD_ASSERT_UNKNOWN(0);
+            CPPAD_ASSERT_UNKNOWN(0)
             return trueCase;
     }
 }

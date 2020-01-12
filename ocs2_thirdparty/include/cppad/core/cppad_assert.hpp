@@ -1,17 +1,16 @@
-// $Id$
 # ifndef CPPAD_CORE_CPPAD_ASSERT_HPP
 # define CPPAD_CORE_CPPAD_ASSERT_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*!
 \file cppad_assert.hpp
@@ -22,15 +21,14 @@ Define the CppAD error checking macros (all of which begin with CPPAD_ASSERT_)
 -------------------------------------------------------------------------------
 $begin cppad_assert$$
 $spell
-	CppAD
-	exp
-	const
-	bool
+    CppAD
+    exp
+    const
+    bool
 $$
 
 
 $section CppAD Assertions During Execution$$
-$mindex assert macro CPPAD_ASSERT_KNOWN CPPAD_ASSERT_UNKNOWN$$
 
 $head Syntax$$
 $codei%CPPAD_ASSERT_KNOWN(%exp%, %msg%)
@@ -76,7 +74,7 @@ This expression may be execute any number of times
 $head Msg$$
 The argument $icode msg$$ has prototype
 $codei%
-	const char *%msg%
+    const char *%msg%
 %$$
 and contains a $code '\0'$$ terminated character string.
 This string is a description of the error
@@ -97,40 +95,40 @@ $end
 
 /*!
 \def CPPAD_ASSERT_KNOWN(exp, msg)
-Check that \a exp is true, if not print \a msg and terminate execution.
+Check that exp is true, if not print msg and terminate execution.
 
-The C++ expression \a exp is expected to be true.
+The C++ expression exp is expected to be true.
 If it is false,
-the CppAD use has made an error that is described by \a msg.
-If the preprocessor symbol \a NDEBUG is not defined,
-and \a exp is false,
+the CppAD use has made an error that is described by msg.
+If the preprocessor symbol NDEBUG is not defined,
+and exp is false,
 this macro will report the source code line number at
 which this expected result occurred.
-In addition, it will print the specified error message \a msg.
+In addition, it will print the specified error message msg.
 */
 # ifdef NDEBUG
 # define CPPAD_ASSERT_KNOWN(exp, msg)  // do nothing
 # else
 # define CPPAD_ASSERT_KNOWN(exp, msg)           \
-{	if( ! ( exp ) )                         \
-	CppAD::ErrorHandler::Call(              \
-		true       ,                    \
-		__LINE__   ,                    \
-		__FILE__   ,                    \
-		#exp       ,                    \
-		msg        );                   \
+{   if( ! ( exp ) )                         \
+    CppAD::ErrorHandler::Call(              \
+        true       ,                    \
+        __LINE__   ,                    \
+        __FILE__   ,                    \
+        #exp       ,                    \
+        msg        );                   \
 }
 # endif
 
 /*!
 \def CPPAD_ASSERT_UNKNOWN(exp)
-Check that \a exp is true, if not terminate execution.
+Check that exp is true, if not terminate execution.
 
-The C++ expression \a exp is expected to be true.
+The C++ expression exp is expected to be true.
 If it is false,
 CppAD has detected an error but does not know the cause of the error.
-If the preprocessor symbol \a NDEBUG is not defined,
-and \a exp is false,
+If the preprocessor symbol NDEBUG is not defined,
+and exp is false,
 this macro will report the source code line number at
 which this expected result occurred.
 */
@@ -138,37 +136,37 @@ which this expected result occurred.
 # define CPPAD_ASSERT_UNKNOWN(exp)      // do nothing
 # else
 # define CPPAD_ASSERT_UNKNOWN(exp)              \
-{	if( ! ( exp ) )                         \
-	CppAD::ErrorHandler::Call(              \
-		false      ,                    \
-		__LINE__   ,                    \
-		__FILE__   ,                    \
-		#exp       ,                    \
-		""         );                   \
+{   if( ! ( exp ) )                         \
+    CppAD::ErrorHandler::Call(              \
+        false      ,                    \
+        __LINE__   ,                    \
+        __FILE__   ,                    \
+        #exp       ,                    \
+        ""         );                   \
 }
 # endif
 
 /*!
 \def CPPAD_ASSERT_NARG_NRES(op, n_arg, n_res)
-Check that operator \a op has the specified number of of arguments and results.
+Check that operator op has the specified number of of arguments and results.
 
-If \a NDEBUG is not defined and either the number of arguments
+If NDEBUG is not defined and either the number of arguments
 or the number of results are not as expected,
 execution is terminated and the source code line number is reported.
 */
 # define CPPAD_ASSERT_NARG_NRES(op, n_arg, n_res)   \
-	CPPAD_ASSERT_UNKNOWN( NumArg(op) == n_arg ) \
-	CPPAD_ASSERT_UNKNOWN( NumRes(op) == n_res )
+    CPPAD_ASSERT_UNKNOWN( NumArg(op) == n_arg ) \
+    CPPAD_ASSERT_UNKNOWN( NumRes(op) == n_res )
 
 /*!
 \def CPPAD_ASSERT_FIRST_CALL_NOT_PARALLEL
 Check that the first call to a routine is not during parallel execution mode.
 
-If \c NDEBUG is defined, this macro has no effect
-(not even the definition of (\c assert_first_call).
+If NDEBUG is defined, this macro has no effect
+(not even the definition of (assert_first_call).
 Otherwise, the variable
 \code
-	static bool assert_first_call
+    static bool assert_first_call
 \endcode
 is defined and if the first call is executed in parallel mode,
 execution is terminated and the source code line number is reported.
@@ -177,29 +175,14 @@ execution is terminated and the source code line number is reported.
 # define CPPAD_ASSERT_FIRST_CALL_NOT_PARALLEL
 # else
 # define CPPAD_ASSERT_FIRST_CALL_NOT_PARALLEL                           \
-	static bool assert_first_call = true;                              \
-	if( assert_first_call )                                            \
-	{	CPPAD_ASSERT_KNOWN(                                           \
-		! (CppAD::thread_alloc::in_parallel() ),                      \
-		"In parallel mode and parallel_setup has not been called."    \
-		);                                                            \
-		assert_first_call = false;                                    \
-	}
-# endif
-
-/*!
-\def CPPAD_ASSERT_ARG_BEFORE_RESULT
-Check that operator arguments come before result.
-
-If \c NDEBUG is defined, this macro has no effect,
-otherwise it calls the function assert_arg_before_result.
-*/
-# ifdef NDEBUG
-# define CPPAD_ASSERT_ARG_BEFORE_RESULT(op, arg, result)
-# else
-# define CPPAD_ASSERT_ARG_BEFORE_RESULT(op, arg, result) \
-	assert_arg_before_result(op, arg, result)
-
+    static bool assert_first_call = true;                              \
+    if( assert_first_call )                                            \
+    {   CPPAD_ASSERT_KNOWN(                                           \
+        ! (CppAD::thread_alloc::in_parallel() ),                      \
+        "In parallel mode and parallel_setup has not been called."    \
+        );                                                            \
+        assert_first_call = false;                                    \
+    }
 # endif
 
 # endif

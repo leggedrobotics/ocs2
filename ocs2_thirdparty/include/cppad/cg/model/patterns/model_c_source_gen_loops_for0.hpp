@@ -23,12 +23,15 @@ namespace cg {
  **************************************************************************/
 
 template<class Base>
-std::vector<CG<Base> > ModelCSourceGen<Base>::prepareForward0WithLoops(CodeHandler<Base>& handler,
-                                                                       const std::vector<CGBase>& x) {
+std::vector<CG<Base> > prepareGraphForward0WithLoops(CodeHandler<Base>& handler,
+                                                     size_t m, /// range
+                                                     const std::vector<CG<Base>>& x, /// independent variables
+                                                     LoopFreeModel<Base>* funNoLoops, /// possibly null
+                                                     const std::set<LoopModel<Base>*>& loopTapes) {
     using namespace std;
     using namespace loops;
 
-    size_t m = _fun.Range();
+    using CGBase = CG<Base>;
 
     std::vector<CGBase> y(m);
 
@@ -38,10 +41,10 @@ std::vector<CG<Base> > ModelCSourceGen<Base>::prepareForward0WithLoops(CodeHandl
     /**
      * original equations outside the loops 
      */
-    if (_funNoLoops != nullptr) {
-        const std::vector<size_t>& origEq = _funNoLoops->getOrigDependentIndexes();
+    if (funNoLoops != nullptr) {
+        const std::vector<size_t>& origEq = funNoLoops->getOrigDependentIndexes();
 
-        std::vector<CGBase> depNL = _funNoLoops->getTape().Forward(0, x);
+        std::vector<CGBase> depNL = funNoLoops->getTape().Forward(0, x);
 
         // original equations
         for (size_t e = 0; e < origEq.size(); e++) {
@@ -58,7 +61,7 @@ std::vector<CG<Base> > ModelCSourceGen<Base>::prepareForward0WithLoops(CodeHandl
      */
     OperationNode<Base>* iterationIndexDcl = handler.makeIndexDclrNode(LoopModel<Base>::ITERATION_INDEX_NAME);
 
-    for (LoopModel<Base>* itl : _loopTapes) {
+    for (LoopModel<Base>* itl : loopTapes) {
         LoopModel<Base>& lModel = *itl;
         size_t nIterations = lModel.getIterationCount();
         const std::vector<std::vector<LoopPosition> >& dependents = lModel.getDependentIndexes();
@@ -125,6 +128,12 @@ std::vector<CG<Base> > ModelCSourceGen<Base>::prepareForward0WithLoops(CodeHandl
     }
 
     return y;
+}
+
+template<class Base>
+std::vector<CG<Base> > ModelCSourceGen<Base>::prepareForward0WithLoops(CodeHandler<Base>& handler,
+                                                                       const std::vector<CGBase>& x) {
+    return prepareGraphForward0WithLoops(handler, _fun.Range(), x, _funNoLoops, _loopTapes);
 }
 
 } // END cg namespace

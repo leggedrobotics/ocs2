@@ -45,10 +45,8 @@ class CartPoleParameters {
   /**
    * Constructor.
    */
-  explicit CartPoleParameters(SCALAR_T cartMass = 1.0, SCALAR_T poleMass = 1.0, SCALAR_T poleLength = 1.0, SCALAR_T poleWidth = 0.05,
-                              SCALAR_T gravity = 9.8)
-
-      : cartMass_(cartMass), poleMass_(poleMass), poleLength_(poleLength), poleWidth_(poleWidth), gravity_(gravity) {
+  explicit CartPoleParameters(SCALAR_T cartMass = 1.0, SCALAR_T poleMass = 1.0, SCALAR_T poleLength = 1.0, SCALAR_T gravity = 9.8)
+      : cartMass_(cartMass), poleMass_(poleMass), poleLength_(poleLength), gravity_(gravity) {
     computeInertiaTerms();
   }
 
@@ -65,7 +63,6 @@ class CartPoleParameters {
     std::cerr << "cartMass:   " << cartMass_ << std::endl;
     std::cerr << "poleMass:   " << poleMass_ << std::endl;
     std::cerr << "poleLength: " << poleLength_ << std::endl;
-    std::cerr << "poleWidth:  " << poleWidth_ << std::endl;
     std::cerr << "poleMoi:    " << poleMoi_ << std::endl;
     std::cerr << "gravity:    " << gravity_ << std::endl;
   }
@@ -118,17 +115,6 @@ class CartPoleParameters {
     }
 
     try {
-      poleWidth_ = pt.get<SCALAR_T>("CartPoleParameters.poleWidth");
-      if (verbose) {
-        std::cerr << " #### poleWidth ........ " << poleWidth_ << std::endl;
-      }
-    } catch (const std::exception& e) {
-      if (verbose) {
-        std::cerr << " #### poleWidth ........ " << poleWidth_ << "\t(default)" << std::endl;
-      }
-    }
-
-    try {
       gravity_ = pt.get<SCALAR_T>("CartPoleParameters.gravity");
       if (verbose) {
         std::cerr << " #### gravity .......... " << gravity_ << std::endl;
@@ -147,7 +133,6 @@ class CartPoleParameters {
   SCALAR_T cartMass_;        // [kg]
   SCALAR_T poleMass_;        // [kg]
   SCALAR_T poleLength_;      // [m]
-  SCALAR_T poleWidth_;       // [m]
   SCALAR_T poleHalfLength_;  // [m]
   SCALAR_T poleMoi_;         // [kg*m^2]
   SCALAR_T poleSteinerMoi_;  // [kg*m^2]
@@ -156,8 +141,8 @@ class CartPoleParameters {
  private:
   void computeInertiaTerms() {
     poleHalfLength_ = poleLength_ / 2.0;
-    poleMoi_ = 1.0 / 12.0 * poleMass_ * (poleWidth_ * poleWidth_ + poleLength_ * poleLength_);
-    poleSteinerMoi_ = poleMoi_ + poleMass_ * poleHalfLength_ * poleHalfLength_;
+    poleMoi_ = 1.0 / 12.0 * poleMass_ * (poleLength_ * poleLength_);
+    poleSteinerMoi_ = poleMoi_ + poleMass_ * (poleHalfLength_ * poleHalfLength_);
   }
 };
 

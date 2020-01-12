@@ -1,29 +1,27 @@
-// $Id$
 # ifndef CPPAD_CORE_OMP_MAX_THREAD_HPP
 # define CPPAD_CORE_OMP_MAX_THREAD_HPP
-
 /* --------------------------------------------------------------------------
 CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 /*
 $begin omp_max_thread$$
 $spell
-	alloc
-	num
-	omp
-	OpenMp
-	CppAD
+    alloc
+    num
+    omp
+    OpenMp
+    CppAD
 $$
 
 $section OpenMP Parallel Setup$$
-$mindex omp_max_thread$$
 
 $head Deprecated 2011-06-23$$
 Use $cref/thread_alloc::parallel_setup/ta_parallel_setup/$$
@@ -46,7 +44,7 @@ $codei%AD<%Base%>%$$ class and thread pair.
 $head number$$
 The argument $icode number$$ has prototype
 $codei%
-	size_t %number%
+    size_t %number%
 %$$
 It must be greater than zero and specifies the maximum number of
 OpenMp threads that will be active at one time.
@@ -78,16 +76,16 @@ template <class Base>
 void AD<Base>::omp_max_thread(size_t number)
 {
 # ifdef _OPENMP
-	thread_alloc::parallel_setup(
-		number, omp_alloc::in_parallel, omp_alloc::get_thread_num
-	);
+    thread_alloc::parallel_setup(
+        number, omp_alloc::in_parallel, omp_alloc::get_thread_num
+    );
 # else
-	CPPAD_ASSERT_KNOWN(
-		number == 1,
-		"omp_max_thread: number > 1 and _OPENMP is not defined"
-	);
+    CPPAD_ASSERT_KNOWN(
+        number == 1,
+        "omp_max_thread: number > 1 and _OPENMP is not defined"
+    );
 # endif
-	parallel_ad<Base>();
+    parallel_ad<Base>();
 }
 
 } // END CppAD namespace

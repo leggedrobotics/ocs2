@@ -38,17 +38,34 @@ namespace ocs2 {
 /**
  * Compute the quaternion distance measure
  *
- * @param [in] eeQuaternion: measured end effector quaternion.
- * @param [in] commandQuaternion: desired end effector quaternion.
+ * @param [in] q: measured end effector quaternion.
+ * @param [in] qRef: desired end effector quaternion.
  * @return A 3x1 vector representing the quaternion distance.
- * In particular, if Qd and Qe are the desired and the measured end-effector quaternions,
- * the measured and desired frames are aligned if this vector is 0.
+ * In particular, if Qd and Qe are the desired and the measured end-effector
+ * quaternions, the measured and desired frames are aligned if this vector is 0.
  */
 template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 3, 1> quaternionDistance(const Eigen::Quaternion<SCALAR_T>& eeQuaternion,
-                                                 const Eigen::Quaternion<SCALAR_T>& commandQuaternion) {
-  return eeQuaternion.w() * commandQuaternion.vec() - commandQuaternion.w() * eeQuaternion.vec() -
-         commandQuaternion.vec().cross(eeQuaternion.vec());
+Eigen::Matrix<SCALAR_T, 3, 1> quaternionDistance(const Eigen::Quaternion<SCALAR_T>& q, const Eigen::Quaternion<SCALAR_T>& qRef) {
+  return q.w() * qRef.vec() - qRef.w() * q.vec() + q.vec().cross(qRef.vec());
+}
+
+/**
+ * Compute the quaternion distance measure jacobian
+ *
+ * @param [in] q: measured end effector quaternion.
+ * @param [in] qRef: desired end effector quaternion.
+ * @return A 3x4 matrix representing the quaternion distance jacobian.
+ * The columns are the partial derivatives of [q.x, q.y, q,z, qw] (default Eigen order)
+ */
+template <typename SCALAR_T>
+Eigen::Matrix<SCALAR_T, 3, 4> quaternionDistanceJacobian(const Eigen::Quaternion<SCALAR_T>& q, const Eigen::Quaternion<SCALAR_T>& qRef) {
+  Eigen::Matrix<SCALAR_T, 3, 4> jacobian;
+  // clang-format off
+  jacobian << -qRef.w(), qRef.z(), -qRef.y(), qRef.x(),
+              -qRef.z(), -qRef.w(), qRef.x(), qRef.y(),
+              qRef.y(), -qRef.x(), -qRef.w(), qRef.z();
+  // clang-format on
+  return jacobian;
 }
 
 /**

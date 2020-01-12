@@ -61,3 +61,21 @@ install(DIRECTORY
             include/${PROJECT_NAME}/
         DESTINATION
             ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+
+#############
+## Testing ##
+#############
+## Info ==============================
+## to run tests, cd package folder and run
+## $ catkin build -DCMAKE_BUILD_TYPE=RelWithDebInfo --this
+## $ catkin run_tests --no-deps --this
+## to see the summary of unit test results run
+## $ catkin_test_results ../../../build/ocs2_robotic_tools
+
+catkin_add_gtest(rotation_transform_tests
+        test/common/TestRotationTransforms.cpp
+        )
+target_link_libraries(rotation_transform_tests
+        ${catkin_LIBRARIES}
+        ${Boost_LIBRARIES}
+        )

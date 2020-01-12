@@ -1,26 +1,26 @@
-// $Id$
 # ifndef CPPAD_CORE_EPSILON_HPP
 # define CPPAD_CORE_EPSILON_HPP
 /* --------------------------------------------------------------------------
 CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*
 ------------------------------------------------------------------------------
 $begin epsilon$$
 $spell
-	std
-	eps
-	CppAD
-	namespace
-	const
+    std
+    eps
+    CppAD
+    namespace
+    const
 $$
 
 $section Machine Epsilon For AD Types$$
@@ -43,7 +43,7 @@ or it can be $icode Base$$ for any $codei%AD<%Base%>%$$ type.
 $head eps$$
 The result $icode eps$$ has prototype
 $codei%
-	%Float% eps
+    %Float% eps
 %$$
 
 $end
@@ -52,9 +52,9 @@ $end
 
 namespace CppAD {
 
-	template <class Type>
-	inline Type epsilon(void)
-	{	return Type ( numeric_limits<Type>::epsilon() ); }
+    template <class Type>
+    inline Type epsilon(void)
+    {   return Type ( numeric_limits<Type>::epsilon() ); }
 
 }
 # endif

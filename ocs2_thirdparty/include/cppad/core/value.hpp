@@ -1,28 +1,26 @@
-// $Id$
 # ifndef CPPAD_CORE_VALUE_HPP
 # define CPPAD_CORE_VALUE_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*
 $begin Value$$
 $spell
-	const
+    const
 $$
 
 
 
 $section Convert From an AD Type to its Base Type$$
-$mindex Value$$
 
 $head Syntax$$
 $icode%b% = Value(%x%)%$$
@@ -38,13 +36,13 @@ $cref/base type/glossary/Base Type/$$.
 $head x$$
 The argument $icode x$$ has prototype
 $codei%
-	const AD<%Base%> &%x%
+    const AD<%Base%> &%x%
 %$$
 
 $head b$$
 The return value $icode b$$ has prototype
 $codei%
-	%Base% %b%
+    %Base% %b%
 %$$
 
 $head Operation Sequence$$
@@ -55,17 +53,15 @@ AD of $icode Base$$
 $cref/operation sequence/glossary/Operation/Sequence/$$.
 
 $head Restriction$$
-If the argument $icode x$$ is a
-$cref/variable/glossary/Variable/$$ its dependency information
-would not be included in the $code Value$$ result (see above).
-For this reason,
-the argument $icode x$$ must be a $cref/parameter/glossary/Parameter/$$; i.e.,
-it cannot depend on the current
-$cref/independent variables/glossary/Tape/Independent Variable/$$.
+The argument $icode x$$ must not be a
+$cref/variable/glossary/Variable/$$ or
+$cref/dynamic/glossary/Parameter/Dynamic/$$ parameter
+because its dependency information
+would not be included in the $code Value$$ result $icode b$$.
 
 $head Example$$
 $children%
-	example/value.cpp
+    example/general/value.cpp
 %$$
 The file
 $cref value.cpp$$
@@ -81,17 +77,15 @@ namespace CppAD {
 template <class Base>
 CPPAD_INLINE_FRIEND_TEMPLATE_FUNCTION
 Base Value(const AD<Base> &x)
-{	Base result;
-
-	CPPAD_ASSERT_KNOWN(
-		Parameter(x) ,
-		"Value: argument is a variable (not a parameter)"
-	);
-
-
-	result = x.value_;
-
-	return result;
+{   Base result;
+    //
+    CPPAD_ASSERT_KNOWN(
+        ! ( Variable(x) | Dynamic(x) ) ,
+        "Value: argument is a variable or dynamic parameter"
+    );
+    //
+    result = x.value_;
+    return result;
 }
 
 }

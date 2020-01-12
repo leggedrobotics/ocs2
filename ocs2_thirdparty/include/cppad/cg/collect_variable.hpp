@@ -15,7 +15,7 @@
  * Author: Joao Leal
  */
 
-#include <cppad/cg/evaluator_solve.hpp>
+#include <cppad/cg/evaluator/evaluator_solve.hpp>
 #include <cppad/cg/lang/dot/dot.hpp>
 
 namespace CppAD {

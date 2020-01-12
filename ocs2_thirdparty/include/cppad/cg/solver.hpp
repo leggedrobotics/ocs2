@@ -15,7 +15,7 @@
  * Author: Joao Leal
  */
 
-#include <cppad/cg/evaluator_solve.hpp>
+#include <cppad/cg/evaluator/evaluator_solve.hpp>
 #include <cppad/cg/lang/dot/dot.hpp>
 
 namespace CppAD {
@@ -30,7 +30,7 @@ inline CG<Base> CodeHandler<Base>::solveFor(OperationNode<Base>& expression,
     if (&expression == &var)
         return CG<Base>(var);
 
-    size_t bifurcations = std::numeric_limits<size_t>::max(); // so that it is possible to enter the loop
+    size_t bifurcations = (std::numeric_limits<size_t>::max)(); // so that it is possible to enter the loop
 
     std::vector<SourceCodePath> paths;
     BidirGraph<Base> foundGraph;
@@ -69,6 +69,9 @@ inline CG<Base> CodeHandler<Base>::solveFor(OperationNode<Base>& expression,
 
             CG<Base> expression2 = collectVariable(*root, paths[0], paths[1], bifPos);
             root = expression2.getOperationNode();
+            if (root == nullptr) {
+                throw CGException("It is not possible to solve the expression for the requested variable: the variable disappears after symbolic manipulations (e.g., y=x-x).");
+            }
         }
     }
 

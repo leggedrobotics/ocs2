@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2015 Ciengis
+ *    Copyright (C) 2019 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -28,32 +29,50 @@ namespace cg {
 template<class Base>
 class LlvmModelLibraryProcessor : public LlvmBaseModelLibraryProcessor<Base> {
 protected:
+    const std::string _version;
     std::vector<std::string> _includePaths;
+    std::shared_ptr<llvm::LLVMContext> _context; // should be deleted after _linker and _module (it must come first)
     std::unique_ptr<llvm::Linker> _linker;
-    std::unique_ptr<llvm::LLVMContext> _context;
     std::unique_ptr<llvm::Module> _module;
 public:
 
     /**
      * 
-     * @param modelLibraryHelper
+     * @param librarySourceGen
      */
-    LlvmModelLibraryProcessor(ModelLibraryCSourceGen<Base>& modelLibraryHelper) :
-            LlvmBaseModelLibraryProcessor<Base>(modelLibraryHelper) {
+    LlvmModelLibraryProcessor(ModelLibraryCSourceGen<Base>& librarySourceGen) :
+            LlvmBaseModelLibraryProcessor<Base>(librarySourceGen),
+            _version("3.6") {
     }
 
-    virtual ~LlvmModelLibraryProcessor() {
+    virtual ~LlvmModelLibraryProcessor() = default;
+
+    /**
+     * @return The version of LLVM (and Clang).
+     */
+    inline const std::string& getVersion() const {
+        return _version;
     }
 
+    /**
+     * Define additional header paths.
+     */
     inline void setIncludePaths(const std::vector<std::string>& includePaths) {
         _includePaths = includePaths;
     }
 
+    /**
+     * User defined header paths.
+     */
     inline const std::vector<std::string>& getIncludePaths() const {
         return _includePaths;
     }
 
-    LlvmModelLibrary<Base>* create() {
+    /**
+     *
+     * @return a model library
+     */
+    std::unique_ptr<LlvmModelLibrary<Base>> create() {
         // backup output format so that it can be restored
         OStreamConfigRestore coutb(std::cout);
 
@@ -61,6 +80,7 @@ public:
 
         this->modelLibraryHelper_->startingJob("", JobTimer::JIT_MODEL_LIBRARY);
 
+        llvm::InitializeAllTargetMCs();
         llvm::InitializeAllTargets();
         llvm::InitializeAllAsmPrinters();
 
@@ -80,14 +100,88 @@ public:
 
         llvm::InitializeNativeTarget();
 
-        LlvmModelLibrary3_6<Base>* lib = new LlvmModelLibrary3_6<Base>(_module.release(), _context.release());
+        std::unique_ptr<LlvmModelLibrary<Base>> lib(new LlvmModelLibrary3_6<Base>(std::move(_module), _context));
 
         this->modelLibraryHelper_->finishedJob();
 
         return lib;
     }
 
-    static inline LlvmModelLibrary<Base>* create(ModelLibraryCSourceGen<Base>& modelLibraryHelper) {
+    /**
+    *
+    * @param clang  the external compiler
+    * @return  a model library
+    */
+    std::unique_ptr<LlvmModelLibrary<Base>> create(ClangCompiler<Base>& clang) {
+        using namespace llvm;
+
+        // backup output format so that it can be restored
+        OStreamConfigRestore coutb(std::cout);
+
+        _linker.release();
+
+        std::unique_ptr<LlvmModelLibrary<Base>> lib;
+
+        this->modelLibraryHelper_->startingJob("", JobTimer::JIT_MODEL_LIBRARY);
+
+        try {
+            /**
+             * generate bit code
+             */
+            const std::set<std::string>& bcFiles = this->createBitCode(clang, "3.6");
+
+            /**
+             * Load bit code and create a single module
+             */
+            llvm::InitializeAllTargets();
+            llvm::InitializeAllAsmPrinters();
+
+            _context.reset(new llvm::LLVMContext());
+
+            std::unique_ptr<Module> linkerModule;
+
+            for (const std::string& itbc : bcFiles) {
+                // load bitcode file
+
+                ErrorOr<std::unique_ptr<MemoryBuffer>> buffer = MemoryBuffer::getFile(itbc);
+                if (buffer.get() == nullptr) {
+                    throw CGException(buffer.getError().message());
+                }
+
+                // create the module
+                ErrorOr<Module*> module = llvm::parseBitcodeFile(buffer.get()->getMemBufferRef(), *_context.get());
+                if (module.get() == nullptr) {
+                    throw CGException(module.getError().message());
+                }
+
+                // link modules together
+                if (_linker.get() == nullptr) {
+                    linkerModule.reset(module.get());
+                    _linker.reset(new llvm::Linker(linkerModule.get())); // module not destroyed
+                } else {
+                    if (_linker->linkInModule(module.get())) { // module destroyed
+                        throw CGException("Failed to link");
+                    }
+                }
+            }
+
+            llvm::InitializeNativeTarget();
+
+            // voila
+            lib.reset(new LlvmModelLibrary3_6<Base>(std::move(linkerModule), _context));
+
+        } catch (...) {
+            clang.cleanup();
+            throw;
+        }
+        clang.cleanup();
+
+        this->modelLibraryHelper_->finishedJob();
+
+        return lib;
+    }
+
+    static inline std::unique_ptr<LlvmModelLibrary<Base>> create(ModelLibraryCSourceGen<Base>& modelLibraryHelper) {
         LlvmModelLibraryProcessor<Base> p(modelLibraryHelper);
         return p.create();
     }

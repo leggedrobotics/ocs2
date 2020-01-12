@@ -441,7 +441,7 @@ std::vector<size_t> createIndexConditionExpression(const std::set<size_t>& itera
                     info.push_back(minNew->first);
 
                 if (max->first == maxIter)
-                    info.push_back(std::numeric_limits<size_t>::max());
+                    info.push_back((std::numeric_limits<size_t>::max)());
                 else
                     info.push_back(maxNew->first);
             }
@@ -929,8 +929,10 @@ void printForRevUsageFunction(std::ostringstream& out,
     LanguageC<Base> langC(baseTypeName);
     string loopFArgs = "inLocal, outLocal, " + langC.getArgumentAtomic();
     string argsDcl = langC.generateDefaultFunctionArgumentsDcl();
+    std::vector<std::string> argsDcl2 = langC.generateDefaultFunctionArgumentsDcl2();
 
-    out << "void " << modelFunction << "(" << argsDcl << ") {\n";
+    LanguageC<Base>::printFunctionDeclaration(out, "void", modelFunction, argsDcl2);
+    out << " {\n";
 
     /**
      * Find random index patterns
@@ -1192,6 +1194,7 @@ std::string generateGlobalForRevWithLoopsFunctionSource(const std::map<size_t, s
      */
     LanguageC<Base> langC(baseTypeName);
     string argsDcl = langC.generateDefaultFunctionArgumentsDcl();
+    std::vector<string> argsDcl2 = langC.generateDefaultFunctionArgumentsDcl2();
     string args = langC.generateDefaultFunctionArguments();
     string noLoopFunc = functionName + "_noloop_" + suffix;
 
@@ -1201,8 +1204,8 @@ std::string generateGlobalForRevWithLoopsFunctionSource(const std::map<size_t, s
     ModelCSourceGen<Base>::generateFunctionDeclarationSource(out, functionName, "noloop_" + suffix, nonLoopElements, argsDcl);
     generateFunctionDeclarationSourceLoopForRev(out, langC, modelName, "j", loopGroups, generateLocalFunctionName);
     out << "\n";
-    out << "int " << functionName <<
-            "(unsigned long pos, " << argsDcl << ") {\n"
+    LanguageC<Base>::printFunctionDeclaration(out, "int", functionName, {"unsigned long pos"}, argsDcl2);
+    out << " {\n"
             "   \n"
             "   switch(pos) {\n";
 

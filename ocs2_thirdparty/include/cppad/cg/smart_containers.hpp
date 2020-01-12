@@ -25,10 +25,10 @@ namespace cg {
 template<class Base>
 class SmartVectorPointer {
 public:
-    typedef typename std::vector<Base*>::iterator iterator;
-    typedef typename std::vector<Base*>::const_iterator const_iterator;
-    typedef typename std::vector<Base*>::reverse_iterator reverse_iterator;
-    typedef typename std::vector<Base*>::const_reverse_iterator const_reverse_iterator;
+    using iterator = typename std::vector<Base*>::iterator;
+    using const_iterator = typename std::vector<Base*>::const_iterator;
+    using reverse_iterator = typename std::vector<Base*>::reverse_iterator;
+    using const_reverse_iterator = typename std::vector<Base*>::const_reverse_iterator;
     std::vector<Base*> v;
 
     inline SmartVectorPointer() {
@@ -118,7 +118,7 @@ public:
 template<class Base>
 class SmartSetPointer {
 public:
-    typedef typename std::set<Base*>::iterator iterator;
+    using iterator = typename std::set<Base*>::iterator;
     std::set<Base*> s;
 
     inline SmartSetPointer() {
@@ -177,8 +177,8 @@ public:
 template<class Base>
 class SmartListPointer {
 public:
-    typedef typename std::list<Base*>::iterator iterator;
-    typedef typename std::list<Base*>::const_iterator const_iterator;
+    using iterator = typename std::list<Base*>::iterator;
+    using const_iterator = typename std::list<Base*>::const_iterator;
     std::list<Base*> l;
 
     inline SmartListPointer() {
@@ -245,10 +245,10 @@ public:
 template<class Key, class Value>
 class SmartMapValuePointer {
 public:
-    typedef typename std::map<Key, Value*>::iterator iterator;
-    typedef typename std::map<Key, Value*>::const_iterator const_iterator;
-    typedef typename std::map<Key, Value*>::reverse_iterator reverse_iterator;
-    typedef typename std::map<Key, Value*>::const_reverse_iterator const_reverse_iterator;
+    using iterator = typename std::map<Key, Value*>::iterator;
+    using const_iterator = typename std::map<Key, Value*>::const_iterator;
+    using reverse_iterator = typename std::map<Key, Value*>::reverse_iterator;
+    using const_reverse_iterator = typename std::map<Key, Value*>::const_reverse_iterator;
     std::map<Key, Value*> m;
 
     inline size_t size() const {

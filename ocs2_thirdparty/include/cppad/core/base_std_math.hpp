@@ -1,40 +1,39 @@
-// $Id$
 # ifndef CPPAD_CORE_BASE_STD_MATH_HPP
 # define CPPAD_CORE_BASE_STD_MATH_HPP
-
 /* --------------------------------------------------------------------------
 CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*
 $begin base_std_math$$
 $spell
-	expm1
-	atanh
-	acosh
-	asinh
-	inline
-	fabs
-	isnan
-	alloc
-	std
-	acos
-	asin
-	atan
-	cos
-	exp
-	sqrt
-	const
-	CppAD
-	namespace
-	erf
+    expm1
+    atanh
+    acosh
+    asinh
+    inline
+    fabs
+    isnan
+    alloc
+    std
+    acos
+    asin
+    atan
+    cos
+    exp
+    sqrt
+    const
+    CppAD
+    namespace
+    erf
 $$
 
 $section Base Type Requirements for Standard Math Functions$$
@@ -65,8 +64,8 @@ $icode%y% = tan(%x%)%$$  $cnext tangent
 $tend
 where the arguments and return value have the prototypes
 $codei%
-	const %Base%& %x%
-	%Base%        %y%
+    const %Base%& %x%
+    %Base%        %y%
 %$$
 For example,
 $cref/base_alloc/base_alloc.hpp/Unary Standard Math/$$,
@@ -75,11 +74,11 @@ $cref/base_alloc/base_alloc.hpp/Unary Standard Math/$$,
 $head CPPAD_STANDARD_MATH_UNARY$$
 The macro invocation, within the CppAD namespace,
 $codei%
-	CPPAD_STANDARD_MATH_UNARY(%Base%, %Fun%)
+    CPPAD_STANDARD_MATH_UNARY(%Base%, %Fun%)
 %$$
 defines the syntax
 $codei%
-	%y% = CppAD::%Fun%(%x%)
+    %y% = CppAD::%Fun%(%x%)
 %$$
 This macro uses the functions $codei%std::%Fun%$$ which
 must be defined and have the same prototype as $codei%CppAD::%Fun%$$.
@@ -104,21 +103,21 @@ $icode%y% = log1p(%x%)%$$  $cnext logarithm of one plus x
 $tend
 where the arguments and return value have the prototypes
 $codei%
-	const %Base%& %x%
-	%Base%        %y%
+    const %Base%& %x%
+    %Base%        %y%
 %$$
 
 $head sign$$
 The type $icode Base$$ must support the syntax
 $codei%
-	%y% = CppAD::sign(%x%)
+    %y% = CppAD::sign(%x%)
 %$$
 which computes
 $latex \[
 y = \left\{ \begin{array}{ll}
-	+1 & {\rm if} \; x > 0 \\
-	 0 & {\rm if} \; x = 0 \\
-	-1 & {\rm if} \; x < 0
+    +1 & {\rm if} \; x > 0 \\
+     0 & {\rm if} \; x = 0 \\
+    -1 & {\rm if} \; x < 0
 \end{array} \right.
 \] $$
 where $icode x$$ and $icode y$$ have the same prototype as above.
@@ -131,17 +130,17 @@ $cref/complex invalid unary math/base_complex.hpp/Invalid Unary Math/$$.
 $head pow$$
 The type $icode Base$$ must support the syntax
 $codei%
-	%z% = CppAD::pow(%x%, %y%)
+    %z% = CppAD::pow(%x%, %y%)
 %$$
 which computes $latex z = x^y$$.
 The arguments $icode x$$ and $icode y$$ have prototypes
 $codei%
-	const %Base%& %x%
-	const %Base%& %y%
+    const %Base%& %x%
+    const %Base%& %y%
 %$$
 and the return value $icode z$$ has prototype
 $codei%
-	%Base% %z%
+    %Base% %z%
 %$$
 For example, see
 $cref/base_alloc/base_alloc.hpp/pow/$$.
@@ -172,14 +171,14 @@ Defintions that aid meeting Base type requirements for standard math functions.
 \def CPPAD_STANDARD_MATH_UNARY(Type, Fun)
 This macro defines the function
 \verbatim
-	y = CppAD:Fun(x)
+    y = CppAD:Fun(x)
 \endverbatim
-where the argument \c x and return value \c y have type \c Type
+where the argument x and return value y have type Type
 using the corresponding function <code>std::Fun</code>.
 */
 # define CPPAD_STANDARD_MATH_UNARY(Type, Fun) \
-	inline Type Fun(const Type& x)            \
-	{	return std::Fun(x); }
+    inline Type Fun(const Type& x)            \
+    {   return std::Fun(x); }
 
 } // END_CPPAD_NAMESPACE
 

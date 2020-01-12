@@ -52,7 +52,8 @@ void ModelCSourceGen<Base>::generateJacobianSource() {
     finishedJob();
 
     LanguageC<Base> langC(_baseTypeName);
-    langC.setMaxAssigmentsPerFunction(_maxAssignPerFunc, &_sources);
+    langC.setMaxAssignmentsPerFunction(_maxAssignPerFunc, &_sources);
+    langC.setMaxOperationsPerAssignment(_maxOperationsPerAssignment);
     langC.setParameterPrecision(_parameterPrecision);
     langC.setGenerateFunction(_name + "_" + FUNCTION_JACOBIAN);
 
@@ -135,7 +136,8 @@ void ModelCSourceGen<Base>::generateSparseJacobianSource(bool forward) {
     finishedJob();
 
     LanguageC<Base> langC(_baseTypeName);
-    langC.setMaxAssigmentsPerFunction(_maxAssignPerFunc, &_sources);
+    langC.setMaxAssignmentsPerFunction(_maxAssignPerFunc, &_sources);
+    langC.setMaxOperationsPerAssignment(_maxOperationsPerAssignment);
     langC.setParameterPrecision(_parameterPrecision);
     langC.setGenerateFunction(_name + "_" + FUNCTION_SPARSE_JACOBIAN);
 
@@ -257,23 +259,25 @@ std::string ModelCSourceGen<Base>::generateSparseJacobianForRevSingleThreadSourc
     
     LanguageC<Base> langC(_baseTypeName);
     std::string argsDcl = langC.generateDefaultFunctionArgumentsDcl();
+    std::vector<std::string> argsDcl2 = langC.generateDefaultFunctionArgumentsDcl2();
 
     _cache.str("");
     _cache << "#include <stdlib.h>\n"
             "\n"
            << LanguageC<Base>::ATOMICFUN_STRUCT_DEFINITION << "\n\n";
     generateFunctionDeclarationSource(_cache, functionRevFor, revForSuffix, jacInfo, argsDcl);
-    _cache << "\n"
-            "void " << functionName << "(" << argsDcl << ") {\n"
-                   "   " << _baseTypeName << " const * inLocal[2];\n"
-                   "   " << _baseTypeName << " inLocal1 = 1;\n"
-                   "   " << _baseTypeName << " * outLocal[1];\n"
-                   "   " << _baseTypeName << " compressed[" << maxCompressedSize << "];\n"
-                   "   " << _baseTypeName << " * jac = out[0];\n"
-                   "\n"
-                   "   inLocal[0] = in[0];\n"
-                   "   inLocal[1] = &inLocal1;\n"
-                   "   outLocal[0] = compressed;\n";
+    _cache << "\n";
+    LanguageC<Base>::printFunctionDeclaration(_cache, "void", functionName, argsDcl2);
+    _cache << " {\n"
+              "   " << _baseTypeName << " const * inLocal[2];\n"
+              "   " << _baseTypeName << " inLocal1 = 1;\n"
+              "   " << _baseTypeName << " * outLocal[1];\n"
+              "   " << _baseTypeName << " compressed[" << maxCompressedSize << "];\n"
+              "   " << _baseTypeName << " * jac = out[0];\n"
+              "\n"
+              "   inLocal[0] = in[0];\n"
+              "   inLocal[1] = &inLocal1;\n"
+              "   outLocal[0] = compressed;\n";
 
     langC.setArgumentIn("inLocal");
     langC.setArgumentOut("outLocal");
@@ -322,6 +326,7 @@ std::string ModelCSourceGen<Base>::generateSparseJacobianForRevMultiThreadSource
                                                                                  MultiThreadingType multiThreadingType) {
     LanguageC<Base> langC(_baseTypeName);
     std::string argsDcl = langC.generateDefaultFunctionArgumentsDcl();
+    std::vector<std::string> argsDcl2 = langC.generateDefaultFunctionArgumentsDcl2();
 
     _cache.str("");
     _cache << "#include <stdlib.h>\n"
@@ -347,7 +352,9 @@ std::string ModelCSourceGen<Base>::generateSparseJacobianForRevMultiThreadSource
             continue;
         }
 
-        _cache << "void " << functionRevFor << "_" << revForSuffix << index << "_wrap(" << argsDcl << ") {\n"
+        std::string functionNameWrap = functionRevFor + "_" + revForSuffix + std::to_string(index) + "_wrap";
+        LanguageC<Base>::printFunctionDeclaration(_cache, "void", functionNameWrap, argsDcl2);
+        _cache << " {\n"
                 "   " << _baseTypeName << " const * inLocal[2];\n"
                         "   " << _baseTypeName << " inLocal1 = 1;\n"
                         "   " << _baseTypeName << " * outLocal[1];\n"

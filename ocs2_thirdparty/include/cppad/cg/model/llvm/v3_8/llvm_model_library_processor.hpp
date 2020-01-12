@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2016 Ciengis
+ *    Copyright (C) 2019 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -28,27 +29,42 @@ namespace cg {
 template<class Base>
 class LlvmModelLibraryProcessor : public LlvmBaseModelLibraryProcessor<Base> {
 protected:
+    const std::string _version;
     std::vector<std::string> _includePaths;
+    std::shared_ptr<llvm::LLVMContext> _context; // should be deleted after _linker and _module (it must come first)
     std::unique_ptr<llvm::Linker> _linker;
-    std::unique_ptr<llvm::LLVMContext> _context;
     std::unique_ptr<llvm::Module> _module;
 public:
 
     /**
-     * 
-     * @param modelLibraryHelper
+     * Creates a LLVM model library processor.
+     *
+     * @param librarySourceGen
      */
-    LlvmModelLibraryProcessor(ModelLibraryCSourceGen<Base>& modelLibraryHelper) :
-            LlvmBaseModelLibraryProcessor<Base>(modelLibraryHelper) {
+    LlvmModelLibraryProcessor(ModelLibraryCSourceGen<Base>& librarySourceGen) :
+            LlvmBaseModelLibraryProcessor<Base>(librarySourceGen),
+            _version("3.8") {
     }
 
-    virtual ~LlvmModelLibraryProcessor() {
+    virtual ~LlvmModelLibraryProcessor() = default;
+
+    /**
+     * @return The version of LLVM (and Clang).
+     */
+    inline const std::string& getVersion() const {
+        return _version;
     }
 
+    /**
+     * Define additional header paths.
+     */
     inline void setIncludePaths(const std::vector<std::string>& includePaths) {
         _includePaths = includePaths;
     }
 
+    /**
+     * User defined header paths.
+     */
     inline const std::vector<std::string>& getIncludePaths() const {
         return _includePaths;
     }
@@ -57,7 +73,7 @@ public:
      *
      * @return a model library
      */
-    LlvmModelLibrary<Base>* create() {
+    std::unique_ptr<LlvmModelLibrary<Base>> create() {
 #if 0
         llvm::sys::Path clangPath = llvm::sys::Program::FindProgramByName("clang");
         // Arguments to pass to the clang driver:
@@ -84,6 +100,7 @@ public:
 
         this->modelLibraryHelper_->startingJob("", JobTimer::JIT_MODEL_LIBRARY);
 
+        llvm::InitializeAllTargetMCs();
         llvm::InitializeAllTargets();
         llvm::InitializeAllAsmPrinters();
 
@@ -103,7 +120,7 @@ public:
 
         llvm::InitializeNativeTarget();
 
-        LlvmModelLibrary3_8<Base>* lib = new LlvmModelLibrary3_8<Base>(_module.release(), _context.release());
+        std::unique_ptr<LlvmModelLibrary<Base>> lib(new LlvmModelLibrary3_8<Base>(std::move(_module), _context));
 
         this->modelLibraryHelper_->finishedJob();
 
@@ -115,7 +132,7 @@ public:
      * @param clang  the external compiler
      * @return  a model library
      */
-    LlvmModelLibrary<Base>* create(ClangCompiler<Base>& clang) {
+    std::unique_ptr<LlvmModelLibrary<Base>> create(ClangCompiler<Base>& clang) {
         using namespace llvm;
 
         // backup output format so that it can be restored
@@ -123,11 +140,10 @@ public:
 
         _linker.release();
 
-        LlvmModelLibrary3_8<Base>* lib = nullptr;
+        std::unique_ptr<LlvmModelLibrary<Base>> lib;
 
         this->modelLibraryHelper_->startingJob("", JobTimer::JIT_MODEL_LIBRARY);
 
-        const std::map<std::string, ModelCSourceGen<Base>*>& models = this->modelLibraryHelper_->getModels();
         try {
             /**
              * generate bit code
@@ -172,7 +188,7 @@ public:
             llvm::InitializeNativeTarget();
 
             // voila
-            lib = new LlvmModelLibrary3_8<Base>(linkerModule.release(), _context.release());
+            lib.reset(new LlvmModelLibrary3_8<Base>(std::move(linkerModule), _context));
 
         } catch (...) {
             clang.cleanup();
@@ -185,7 +201,7 @@ public:
         return lib;
     }
 
-    static inline LlvmModelLibrary<Base>* create(ModelLibraryCSourceGen<Base>& modelLibraryHelper) {
+    static inline std::unique_ptr<LlvmModelLibrary<Base>> create(ModelLibraryCSourceGen<Base>& modelLibraryHelper) {
         LlvmModelLibraryProcessor<Base> p(modelLibraryHelper);
         return p.create();
     }

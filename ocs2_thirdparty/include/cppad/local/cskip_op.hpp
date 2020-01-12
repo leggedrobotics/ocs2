@@ -1,19 +1,18 @@
-// $Id: cskip_op.hpp 3757 2015-11-30 12:03:07Z bradbell $
-# ifndef CPPAD_CSKIP_OP_HPP
-# define CPPAD_CSKIP_OP_HPP
-
+# ifndef CPPAD_LOCAL_CSKIP_OP_HPP
+# define CPPAD_LOCAL_CSKIP_OP_HPP
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-15 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
-namespace CppAD { // BEGIN_CPPAD_NAMESPACE
+namespace CppAD { namespace local { // BEGIN_CPPAD_LOCAL_NAMESPACE
 /*!
 \file cskip_op.hpp
 Zero order forward mode set which operations to skip.
@@ -42,43 +41,43 @@ less than or equal this value.
 
 \param arg [in]
 \n
-\a arg[0]
+ arg[0]
 is static cast to size_t from the enum type
 \verbatim
-	enum CompareOp {
-		CompareLt,
-		CompareLe,
-		CompareEq,
-		CompareGe,
-		CompareGt,
-		CompareNe
-	}
+    enum CompareOp {
+        CompareLt,
+        CompareLe,
+        CompareEq,
+        CompareGe,
+        CompareGt,
+        CompareNe
+    }
 \endverbatim
 for this operation.
 Note that arg[0] cannot be equal to CompareNe.
 \n
 \n
-\a arg[1] & 1
+ arg[1] & 1
 \n
 If this is zero, left is an AD<Base> parameter.
 Otherwise it is an AD<Base> variable.
 \n
 \n
-\a arg[1] & 2
+ arg[1] & 2
 \n
 If this is zero, right is an AD<Base> parameter.
 Otherwise it is an AD<Base> variable.
 \n
-\a arg[2]
+ arg[2]
 is the index corresponding to left in comparision.
 \n
-\a arg[3]
+ arg[3]
 is the index corresponding to right in comparision.
 \n
-\a arg[4]
+ arg[4]
 is the number of operations to skip if the comparision result is true.
 \n
-\a arg[5]
+ arg[5]
 is the number of operations to skip if the comparision result is false.
 \n
 <tt>arg[5+i]</tt>
@@ -105,10 +104,10 @@ number of columns in the matrix containing the Taylor coefficients.
 
 \param taylor [in]
 If left is an AD<Base> variable,
-<code>taylor [ arg[2] * cap_order + 0 ]</code>
+<code>taylor [ size_t(arg[2]) * cap_order + 0 ]</code>
 is the zeroth order Taylor coefficient corresponding to left.
 If right is an AD<Base> variable,
-<code>taylor [ arg[3] * cap_order + 0 ]</code>
+<code>taylor [ size_t(arg[3]) * cap_order + 0 ]</code>
 is the zeroth order Taylor coefficient corresponding to right.
 
 \param cskip_op [in,out]
@@ -117,83 +116,84 @@ unecessary and can be skipped.
 This is both an input and an output.
 */
 template <class Base>
-inline void forward_cskip_op_0(
-	size_t               i_z            ,
-	const addr_t*        arg            ,
-	size_t               num_par        ,
-	const Base*          parameter      ,
-	size_t               cap_order      ,
-	Base*                taylor         ,
-	bool*                cskip_op       )
+void forward_cskip_op_0(
+    size_t               i_z            ,
+    const addr_t*        arg            ,
+    size_t               num_par        ,
+    const Base*          parameter      ,
+    size_t               cap_order      ,
+    Base*                taylor         ,
+    bool*                cskip_op       )
 {
-	CPPAD_ASSERT_UNKNOWN( size_t(arg[0]) < size_t(CompareNe) );
-	CPPAD_ASSERT_UNKNOWN( arg[1] != 0 );
+    CPPAD_ASSERT_UNKNOWN( size_t(arg[0]) < size_t(CompareNe) );
+    CPPAD_ASSERT_UNKNOWN( arg[1] != 0 );
 
-	Base left, right;
-	if( arg[1] & 1 )
-	{	// If varialbe arg[2] <= i_z, it has already been computed,
-		// but it will be skipped for higher orders.
-		left = taylor[ arg[2] * cap_order + 0 ];
-	}
-	else
-	{	CPPAD_ASSERT_UNKNOWN( size_t(arg[2]) < num_par );
-		left = parameter[ arg[2] ];
-	}
-	if( arg[1] & 2 )
-	{	// If varialbe arg[3] <= i_z, it has already been computed,
-		// but it will be skipped for higher orders.
-		right = taylor[ arg[3] * cap_order + 0 ];
-	}
-	else
-	{	CPPAD_ASSERT_UNKNOWN( size_t(arg[3]) < num_par );
-		right = parameter[ arg[3] ];
-	}
-	bool ok_to_skip = IdenticalPar(left) & IdenticalPar(right);
-	if( ! ok_to_skip )
-		return;
+    Base left, right;
+    if( arg[1] & 1 )
+    {   // If variable arg[2] <= i_z, it has already been computed,
+        // but it will be skipped for higher orders.
+        CPPAD_ASSERT_UNKNOWN( size_t(arg[2]) <= i_z );
+        left = taylor[ size_t(arg[2]) * cap_order + 0 ];
+    }
+    else
+    {   CPPAD_ASSERT_UNKNOWN( size_t(arg[2]) < num_par );
+        left = parameter[ arg[2] ];
+    }
+    if( arg[1] & 2 )
+    {   // If variable arg[3] <= i_z, it has already been computed,
+        // but it will be skipped for higher orders.
+        CPPAD_ASSERT_UNKNOWN( size_t(arg[3]) <= i_z );
+        right = taylor[ size_t(arg[3]) * cap_order + 0 ];
+    }
+    else
+    {   CPPAD_ASSERT_UNKNOWN( size_t(arg[3]) < num_par );
+        right = parameter[ arg[3] ];
+    }
+    bool ok_to_skip = IdenticalCon(left) & IdenticalCon(right);
+    if( ! ok_to_skip )
+        return;
 
-	// initialize to avoid compiler warning
-	bool true_case = false;
-	Base diff      = left - right;
-	switch( CompareOp( arg[0] ) )
-	{
-		case CompareLt:
-		true_case = LessThanZero(diff);
-		break;
+    // initialize to avoid compiler warning
+    bool true_case = false;
+    Base diff      = left - right;
+    switch( CompareOp( arg[0] ) )
+    {
+        case CompareLt:
+        true_case = LessThanZero(diff);
+        break;
 
-		case CompareLe:
-		true_case = LessThanOrZero(diff);
-		break;
+        case CompareLe:
+        true_case = LessThanOrZero(diff);
+        break;
 
-		case CompareEq:
-		true_case = IdenticalZero(diff);
-		break;
+        case CompareEq:
+        true_case = IdenticalZero(diff);
+        break;
 
-		case CompareGe:
-		true_case = GreaterThanOrZero(diff);
-		break;
+        case CompareGe:
+        true_case = GreaterThanOrZero(diff);
+        break;
 
-		case CompareGt:
-		true_case = GreaterThanZero(diff);
-		break;
+        case CompareGt:
+        true_case = GreaterThanZero(diff);
+        break;
 
-		case CompareNe:
-		true_case = ! IdenticalZero(diff);
-		break;
+        case CompareNe:
+        true_case = ! IdenticalZero(diff);
+        break;
 
-		default:
-		CPPAD_ASSERT_UNKNOWN(false);
-	}
-	if( true_case )
-	{	for(size_t i = 0; i < size_t(arg[4]); i++)
-			cskip_op[ arg[6+i] ] = true;
-	}
-	else
-	{	for(size_t i = 0; i < size_t(arg[5]); i++)
-			cskip_op[ arg[6+arg[4]+i] ] = true;
-	}
-	return;
+        default:
+        CPPAD_ASSERT_UNKNOWN(false);
+    }
+    if( true_case )
+    {   for(addr_t i = 0; i < arg[4]; i++)
+            cskip_op[ arg[6+i] ] = true;
+    }
+    else
+    {   for(addr_t i = 0; i < arg[5]; i++)
+            cskip_op[ arg[6+arg[4]+i] ] = true;
+    }
+    return;
 }
-} // END_CPPAD_NAMESPACE
+} } // END_CPPAD_LOCAL_NAMESPACE
 # endif
-

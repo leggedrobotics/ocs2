@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2012 Ciengis
+ *    Copyright (C) 2019 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -16,9 +17,10 @@
  */
 
 // --------------------------------------------------------------------------
-// System routines that can be used by rest of CppAD with out including 
+// System routines that can be used by rest of CppAD with out including
 
 #include <algorithm>
+#include <array>
 #include <assert.h>
 #include <cstddef>
 #include <errno.h>
@@ -29,6 +31,8 @@
 #include <limits>
 #include <list>
 #include <map>
+#include <memory>
+#include <valarray>
 #include <vector>
 #include <deque>
 #include <forward_list>
@@ -42,11 +46,18 @@
 #include <string.h>
 #include <chrono>
 #include <thread>
+#include <functional>
 
 // ---------------------------------------------------------------------------
 // operating system detection
 #ifndef CPPAD_CG_SYSTEM_LINUX
 #   if defined(__linux__) || defined(__linux) || defined(linux)
+#       define CPPAD_CG_SYSTEM_LINUX 1
+#   endif
+#endif
+#ifndef CPPAD_CG_SYSTEM_APPLE
+#   if defined(__APPLE__)
+#       define CPPAD_CG_SYSTEM_APPLE 1
 #       define CPPAD_CG_SYSTEM_LINUX 1
 #   endif
 #endif
@@ -75,7 +86,7 @@
 // some utilities
 #include <cppad/cg/smart_containers.hpp>
 #include <cppad/cg/ostream_config_restore.hpp>
-#include <cppad/cg/array_wrapper.hpp>
+#include <cppad/cg/array_view.hpp>
 
 // ---------------------------------------------------------------------------
 // indexes
@@ -93,6 +104,7 @@
 #include <cppad/cg/debug.hpp>
 #include <cppad/cg/argument.hpp>
 #include <cppad/cg/operation_node.hpp>
+#include <cppad/cg/operation_stack.hpp>
 #include <cppad/cg/nodes/index_operation_node.hpp>
 #include <cppad/cg/nodes/index_assign_operation_node.hpp>
 #include <cppad/cg/nodes/loop_start_operation_node.hpp>
@@ -107,6 +119,7 @@
 #include <cppad/cg/variable_name_generator.hpp>
 #include <cppad/cg/job_timer.hpp>
 #include <cppad/cg/lang/language.hpp>
+#include <cppad/cg/lang/lang_stream_stack.hpp>
 #include <cppad/cg/scope_path_element.hpp>
 #include <cppad/cg/array_id_compresser.hpp>
 #include <cppad/cg/patterns/loop_position.hpp>
@@ -143,10 +156,10 @@
 // ---------------------------------------------------------------------------
 // additional utilities
 #include <cppad/cg/util.hpp>
-#include <cppad/cg/evaluator.hpp>
-#include <cppad/cg/evaluator_ad.hpp>
-#include <cppad/cg/evaluator_adcg.hpp>
-#include <cppad/cg/evaluator_cg.hpp>
+#include <cppad/cg/evaluator/evaluator.hpp>
+#include <cppad/cg/evaluator/evaluator_ad.hpp>
+#include <cppad/cg/evaluator/evaluator_adcg.hpp>
+#include <cppad/cg/evaluator/evaluator_cg.hpp>
 #include <cppad/cg/operation_path_node.hpp>
 #include <cppad/cg/operation_path.hpp>
 #include <cppad/cg/solver.hpp>

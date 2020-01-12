@@ -1,23 +1,22 @@
-// $Id$
 # ifndef CPPAD_CORE_LOG1P_HPP
 # define CPPAD_CORE_LOG1P_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*
 -------------------------------------------------------------------------------
 $begin log1p$$
 $spell
-	CppAD
+    CppAD
 $$
 
 $section The Logarithm of One Plus Argument: log1p$$
@@ -50,12 +49,11 @@ to compute this function.
 
 $head Example$$
 $children%
-	example/log1p.cpp
+    example/general/log1p.cpp
 %$$
 The file
 $cref log1p.cpp$$
 contains an example and test of this function.
-It returns true if it succeeds and false otherwise.
 
 $end
 -------------------------------------------------------------------------------
@@ -68,22 +66,22 @@ namespace CppAD {
 
 template <class Type>
 Type log1p_template(const Type &x)
-{	return CppAD::log(Type(1) + x);
+{   return CppAD::log(Type(1) + x);
 }
 
 inline float log1p(const float &x)
-{	return log1p_template(x); }
+{   return log1p_template(x); }
 
 inline double log1p(const double &x)
-{	return log1p_template(x); }
+{   return log1p_template(x); }
 
 template <class Base>
-inline AD<Base> log1p(const AD<Base> &x)
-{	return log1p_template(x); }
+AD<Base> log1p(const AD<Base> &x)
+{   return log1p_template(x); }
 
 template <class Base>
-inline AD<Base> log1p(const VecAD_reference<Base> &x)
-{	return log1p_template( x.ADBase() ); }
+AD<Base> log1p(const VecAD_reference<Base> &x)
+{   return log1p_template( x.ADBase() ); }
 
 
 } // END CppAD namespace

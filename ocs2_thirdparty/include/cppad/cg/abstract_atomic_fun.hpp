@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2013 Ciengis
+ *    Copyright (C) 2018 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -20,16 +21,24 @@ namespace cg {
 
 /**
  * An atomic function for source code generation
- * 
+ *
  * @author Joao Leal
  */
 template <class Base>
 class CGAbstractAtomicFun : public BaseAbstractAtomicFun<Base> {
 public:
-    typedef CppAD::cg::CG<Base> CGB;
-    typedef Argument<Base> Arg;
+    using CGB = CppAD::cg::CG<Base>;
+    using Arg = Argument<Base>;
 protected:
+    /**
+     * A unique identifier for this atomic function type
+     */
     const size_t id_;
+    /**
+     * Whether or not forward and reverse function calls do not require the
+     * Taylor coefficients for the dependent variables (ty) and any previous
+     * evaluation of other forward/reverse modes.
+     */
     bool standAlone_;
 
 protected:
@@ -37,48 +46,71 @@ protected:
     /**
      * Creates a new atomic function that is responsible for defining the
      * dependencies to calls of a user atomic function.
-     * 
+     *
      * @param name The atomic function name.
      * @param standAlone Whether or not forward and reverse function calls
-     *                   do not require the Taylor coefficients for the 
+     *                   do not require the Taylor coefficients for the
      *                   dependent variables (ty) and any previous
-     *                   evaluation of other forward/reverse modes. 
+     *                   evaluation of other forward/reverse modes.
      */
-    CGAbstractAtomicFun(const std::string& name, bool standAlone = false) :
+    CGAbstractAtomicFun(const std::string& name,
+                        bool standAlone = false) :
         BaseAbstractAtomicFun<Base>(name),
-        id_(createNewId()),
+        id_(createNewAtomicFunctionID()),
         standAlone_(standAlone) {
         CPPADCG_ASSERT_KNOWN(!name.empty(), "The atomic function name cannot be empty");
         this->option(CppAD::atomic_base<CGB>::set_sparsity_enum);
     }
 
 public:
+    virtual ~CGAbstractAtomicFun() {
+    }
 
     template <class ADVector>
-    void operator()(const ADVector& ax, ADVector& ay, size_t id = 0) {
+    void operator()(const ADVector& ax,
+                    ADVector& ay,
+                    size_t id = 0) {
         this->BaseAbstractAtomicFun<Base>::operator()(ax, ay, id);
     }
 
     /**
      * Provides a unique identifier for this atomic function type.
-     * 
+     *
      * @return a unique identifier ID
      */
-    size_t getId() const {
+    inline size_t getId() const {
         return id_;
     }
 
-    virtual bool forward(size_t q,
-                         size_t p,
-                         const CppAD::vector<bool>& vx,
-                         CppAD::vector<bool>& vy,
-                         const CppAD::vector<CGB>& tx,
-                         CppAD::vector<CGB>& ty) override {
+    /**
+     * Whether or not forward and reverse function calls do not require the
+     * Taylor coefficients for the dependent variables (ty) and any previous
+     * evaluation of other forward/reverse modes.
+     */
+    inline bool isStandAlone() const {
+        return standAlone_;
+    }
+
+    bool forward(size_t q,
+                 size_t p,
+                 const CppAD::vector<bool>& vx,
+                 CppAD::vector<bool>& vy,
+                 const CppAD::vector<CGB>& tx,
+                 CppAD::vector<CGB>& ty) override {
         using CppAD::vector;
 
+        CppAD::vector<CGB> x;
+
         bool valuesDefined = BaseAbstractAtomicFun<Base>::isValuesDefined(tx);
-        if (vx.size() > 0)
-            zeroOrderDependency(vx, vy);
+        if (vx.size() > 0) {
+            size_t n = vx.size();
+            x.resize(n);
+            for (size_t j = 0; j < n; j++) {
+                x[j] = tx[j * (p + 1)];
+            }
+
+            zeroOrderDependency(vx, vy, x);
+        }
 
         bool allParameters = BaseAbstractAtomicFun<Base>::isParameters(tx);
         if (allParameters) {
@@ -112,7 +144,17 @@ public:
                     r[j].insert(0);
             }
             vector<std::set<size_t> > s(m);
-            this->for_sparse_jac(1, r, s);
+
+            if(x.size() == 0) {
+                x.resize(n);
+                for (size_t j = 0; j < n; j++) {
+                    x[j] = tx[j * (p + 1)];
+                }
+            }
+
+            bool good = this->for_sparse_jac(1, r, s, x);
+            if (!good)
+                return false;
 
             vyLocal.resize(ty.size());
             for (size_t i = 0; i < vyLocal.size(); i++) {
@@ -188,11 +230,11 @@ public:
         return true;
     }
 
-    virtual bool reverse(size_t p,
-                         const CppAD::vector<CGB>& tx,
-                         const CppAD::vector<CGB>& ty,
-                         CppAD::vector<CGB>& px,
-                         const CppAD::vector<CGB>& py) override {
+    bool reverse(size_t p,
+                 const CppAD::vector<CGB>& tx,
+                 const CppAD::vector<CGB>& ty,
+                 CppAD::vector<CGB>& px,
+                 const CppAD::vector<CGB>& py) override {
         using CppAD::vector;
 
         bool allParameters = BaseAbstractAtomicFun<Base>::isParameters(tx);
@@ -231,14 +273,23 @@ public:
         size_t m = ty.size() / p1;
         size_t n = tx.size() / p1;
 
-        vector< std::set<size_t> > rt(m);
+        vector<std::set<size_t> > rt(m);
         for (size_t i = 0; i < m; i++) {
             if (!py[i * p1].isIdenticalZero()) {
                 rt[i].insert(0);
             }
         }
-        vector< std::set<size_t> > st(n);
-        this->rev_sparse_jac(1, rt, st);
+
+        CppAD::vector<CGB> x(n);
+        for (size_t j = 0; j < n; j++) {
+            x[j] = tx[j * p1];
+        }
+
+        vector<std::set<size_t> > st(n);
+        bool good = this->rev_sparse_jac(1, rt, st, x);
+        if (!good) {
+            return false;
+        }
 
         for (size_t j = 0; j < n; j++) {
             vxLocal[j * p1 + p] = st[j].size() > 0;
@@ -252,9 +303,9 @@ public:
             vector<bool> vx(n);
             vector<bool> s(m);
             vector<bool> t(n);
-            vector< std::set<size_t> > r(n);
-            vector< std::set<size_t> > u(m);
-            vector< std::set<size_t> > v(n);
+            vector<std::set<size_t> > r(n);
+            vector<std::set<size_t> > u(m);
+            vector<std::set<size_t> > v(n);
 
             for (size_t j = 0; j < n; j++) {
                 vx[j] = !tx[j * p1].isParameter();
@@ -266,7 +317,7 @@ public:
                 s[i] = !py[i * p1 + 1].isIdenticalZero();
             }
 
-            this->rev_sparse_hes(vx, s, t, 1, r, u, v);
+            this->rev_sparse_hes(vx, s, t, 1, r, u, v, x);
 
             for (size_t j = 0; j < n; j++) {
                 vxLocal[j * p1 + p - 1] = v[j].size() > 0;
@@ -350,7 +401,7 @@ public:
             for (size_t j = 0; j < n; j++) {
                 size_t pos = j * p1 + k;
                 if (vxLocal[pos]) {
-                    px[pos] = CGB(*handler->makeNode(CGOpCode::ArrayElement,{j}, {*pxArray[k], *atomicOp}));
+                    px[pos] = CGB(*handler->makeNode(CGOpCode::ArrayElement, {j}, {*pxArray[k], *atomicOp}));
                     if (valuesDefined) {
                         px[pos].setValue(pxb[pos]);
                     }
@@ -365,25 +416,106 @@ public:
         return true;
     }
 
-    virtual ~CGAbstractAtomicFun() {
+    inline virtual CppAD::vector<std::set<size_t>> jacobianForwardSparsitySet(size_t m,
+                                                                              const CppAD::vector<CGB>& x) {
+        size_t n = x.size();
+
+        CppAD::vector<std::set<size_t>> r(n); // identity matrix
+        for (size_t i = 0; i < n; i++)
+            r[i].insert(i);
+
+        CppAD::vector<std::set<size_t> > s(m);
+        bool good = this->for_sparse_jac(n, r, s, x);
+        if (!good)
+            throw CGException("Failed to compute jacobian sparsity pattern for atomic function '", this->afun_name(), "'");
+
+        return s;
+    }
+
+    inline virtual CppAD::vector<std::set<size_t>> jacobianReverseSparsitySet(size_t m,
+                                                                              const CppAD::vector<CGB>& x) {
+        size_t n = x.size();
+
+        CppAD::vector<std::set<size_t> > rt(m);  // identity matrix
+        for (size_t i = 0; i < m; i++)
+            rt[i].insert(i);
+
+        CppAD::vector<std::set<size_t> > st(n);
+        bool good = this->rev_sparse_jac(m, rt, st, x);
+        if (!good)
+            throw CGException("Failed to compute jacobian sparsity pattern for atomic function '", this->afun_name(), "'");
+
+        CppAD::vector<std::set<size_t>> s = transposePattern(st, n, m);
+
+        return s;
+    }
+
+    inline virtual CppAD::vector<std::set<size_t>> hessianSparsitySet(size_t m,
+                                                                      const CppAD::vector<CGB>& x) {
+        CppAD::vector<bool> s(m);
+        for (size_t i = 0; i < m; ++i)
+            s[i] = true;
+
+        return hessianSparsitySet(s, x);
+    }
+
+    inline virtual CppAD::vector<std::set<size_t>> hessianSparsitySet(const CppAD::vector<bool>& s,
+                                                                      const CppAD::vector<CGB>& x) {
+        size_t n = x.size();
+        size_t m = s.size();
+
+        /**
+         * Determine the sparsity pattern p for Hessian of w^T F
+         */
+        CppAD::vector<std::set<size_t>> r(n); // identity matrix
+        for (size_t j = 0; j < n; j++)
+            r[j].insert(j);
+
+        CppAD::vector<bool> vx(n); // which x's are variables
+        for (size_t i = 0; i < n; ++i)
+            vx[i] = true;
+
+        CppAD::vector<bool> t(n);
+        for (size_t i = 0; i < n; ++i)
+            t[i] = false;
+
+        const CppAD::vector<std::set<size_t> > u(m); // empty
+        CppAD::vector<std::set<size_t> > v(n);
+
+        bool good = this->rev_sparse_hes(vx, s, t, n, r, u, v, x);
+        if (!good)
+            throw CGException("Failed to compute Hessian sparsity pattern for atomic function '", this->afun_name(), "'");
+
+        return v;
+    }
+
+    /**
+     * Uses an internal counter to produce IDs for atomic functions.
+     */
+    static size_t createNewAtomicFunctionID() {
+        CPPAD_ASSERT_FIRST_CALL_NOT_PARALLEL;
+        static size_t count = 0;
+        count++;
+        return count;
     }
 
 protected:
 
     virtual void zeroOrderDependency(const CppAD::vector<bool>& vx,
-                                     CppAD::vector<bool>& vy) = 0;
+                                     CppAD::vector<bool>& vy,
+                                     const CppAD::vector<CGB>& x) = 0;
 
     /**
      * Used to evaluate function values and forward mode function values and
      * derivatives.
-     * 
+     *
      * @param q Lowest order for this forward mode calculation.
      * @param p Highest order for this forward mode calculation.
      * @param vx If size not zero, which components of \c x are variables
      * @param vy If size not zero, which components of \c y are variables
      * @param tx Taylor coefficients corresponding to \c x for this
      *           calculation
-     * @param ty Taylor coefficient corresponding to \c y for this 
+     * @param ty Taylor coefficient corresponding to \c y for this
      *           calculation
      * @return true on success, false otherwise
      */
@@ -393,11 +525,11 @@ protected:
                                CppAD::vector<Base>& ty) = 0;
     /**
      * Used to evaluate reverse mode function derivatives.
-     * 
+     *
      * @param p Highest order for this forward mode calculation.
      * @param tx Taylor coefficients corresponding to \c x for this
      *           calculation
-     * @param ty Taylor coefficient corresponding to \c y for this 
+     * @param ty Taylor coefficient corresponding to \c y for this
      *           calculation
      * @param px Partials w.r.t. the \c x Taylor coefficients.
      * @param py Partials w.r.t. the \c y Taylor coefficients
@@ -449,13 +581,6 @@ private:
         }
 
         return atomicReverse(p, txb, tyb, pxb, pyb);
-    }
-
-    static size_t createNewId() {
-        CPPAD_ASSERT_FIRST_CALL_NOT_PARALLEL;
-        static size_t count = 0;
-        count++;
-        return count;
     }
 
 };

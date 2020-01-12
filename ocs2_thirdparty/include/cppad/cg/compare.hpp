@@ -19,7 +19,7 @@ namespace CppAD {
 namespace cg {
 
 template<class Base>
-inline bool operator ==(const CG<Base> &left, const CG<Base> &right) {
+inline bool operator ==(const CG<Base>& left, const CG<Base>& right) {
     if (left.isParameter() && right.isParameter()) {
         return left.getValue() == right.getValue();
     } else if (left.isParameter() || right.isParameter()) {
@@ -30,7 +30,7 @@ inline bool operator ==(const CG<Base> &left, const CG<Base> &right) {
 }
 
 template<class Base>
-inline bool operator !=(const CG<Base> &left, const CG<Base> &right) {
+inline bool operator !=(const CG<Base>& left, const CG<Base>& right) {
     if (left.isParameter() && right.isParameter()) {
         return left.getValue() != right.getValue();
     } else if (left.isParameter() || right.isParameter()) {
@@ -56,7 +56,44 @@ CPPAD_CG_OPERATOR(<)
 CPPAD_CG_OPERATOR( <=)
 
 template<class Base>
-inline bool operator !=(const CG<Base> &left, double right) {
+inline bool operator==(const CG<Base>& left, const Base& right) {
+    if (left.isParameter()) {
+        return left.getValue() == right;
+    } else {
+        return false;
+    }
+}
+
+template<class Base>
+inline bool operator==(const Base& left, const CG<Base>& right) {
+    if (right.isParameter()) {
+        return left == right.getValue();
+    } else {
+        return false;
+    }
+}
+
+template<class Base>
+inline bool operator!=(const CG<Base>& left, Base right) {
+    if (left.isParameter()) {
+        return left.getValue() != right;
+    } else {
+        return true;
+    }
+}
+
+template<class Base>
+inline bool operator!=(const Base& left, const CG<Base>& right) {
+    if (right.isParameter()) {
+        return left != right.getValue();
+    } else {
+        return true;
+    }
+}
+
+// comparison with double (required by CppAD SparseHessian)
+template<class Base>
+inline bool operator!=(const CG<Base> &left, double right) {
     if (left.isParameter()) {
         return left.getValue() != right;
     } else {

@@ -1,23 +1,22 @@
-// $Id: op.hpp 3757 2015-11-30 12:03:07Z bradbell $
-# ifndef CPPAD_OP_HPP
-# define CPPAD_OP_HPP
-
+# ifndef CPPAD_LOCAL_OP_HPP
+# define CPPAD_LOCAL_OP_HPP
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-15 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 // used by the sparse operators
-# include <cppad/local/sparse_pattern.hpp>
+# include <cppad/local/sparse_internal.hpp>
 
 // operations
-# include <cppad/local/std_math_98.hpp>
+# include <cppad/core/std_math_98.hpp>
 # include <cppad/local/abs_op.hpp>
 # include <cppad/local/add_op.hpp>
 # include <cppad/local/acos_op.hpp>

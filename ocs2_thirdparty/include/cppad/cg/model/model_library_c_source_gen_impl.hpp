@@ -21,7 +21,7 @@ namespace CppAD {
 namespace cg {
 
 template<class Base>
-const unsigned long ModelLibraryCSourceGen<Base>::API_VERSION = 6;
+const unsigned long ModelLibraryCSourceGen<Base>::API_VERSION = 7;
 
 template<class Base>
 const std::string ModelLibraryCSourceGen<Base>::FUNCTION_VERSION = "cppad_cg_version";
@@ -146,7 +146,9 @@ void ModelLibraryCSourceGen<Base>::generateVersionSource(std::map<std::string, s
 template<class Base>
 void ModelLibraryCSourceGen<Base>::generateModelsSource(std::map<std::string, std::string>& sources) {
     _cache.str("");
-    _cache << "void " << FUNCTION_MODELS << "(char const *const** names, int* count) {\n"
+    LanguageC<Base>::printFunctionDeclaration(_cache, "void", FUNCTION_MODELS, {"char const *const** names",
+                                                                                "int* count"});
+    _cache << " {\n"
             "   static const char* const models[] = {\n";
 
     for (auto it = _models.begin(); it != _models.end(); ++it) {

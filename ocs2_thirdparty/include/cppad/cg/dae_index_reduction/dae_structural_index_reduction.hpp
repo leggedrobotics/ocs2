@@ -28,8 +28,8 @@ namespace cg {
 template<class Base>
 class DaeStructuralIndexReduction : public DaeIndexReduction<Base> {
 protected:
-    typedef CppAD::cg::CG<Base> CGBase;
-    typedef CppAD::AD<CGBase> ADCG;
+    using CGBase = CppAD::cg::CG<Base>;
+    using ADCG = CppAD::AD<CGBase>;
 protected:
     //
     BipartiteGraph<Base> graph_;

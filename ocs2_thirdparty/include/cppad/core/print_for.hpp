@@ -1,45 +1,43 @@
-// $Id$
 # ifndef CPPAD_CORE_PRINT_FOR_HPP
 # define CPPAD_CORE_PRINT_FOR_HPP
-
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*
 $begin PrintFor$$
 $spell
-	pos
-	var
-	VecAD
-	std
-	cout
-	const
+    pos
+    var
+    VecAD
+    std
+    cout
+    const
 $$
 
 
 $section Printing AD Values During Forward Mode$$
-$mindex print text output debug$$
 
 $head Syntax$$
 $icode%f%.Forward(0, %x%)
 %$$
-$codei%PrintFor(%before%, %var%)
+$codei%PrintFor(%before%, %value%)
 %$$
-$codei%PrintFor(%pos%, %before%, %var%, %after%)
+$codei%PrintFor(%pos%, %before%, %value%, %after%)
 %$$
 
 $head Purpose$$
 The $cref/zero order forward/forward_zero/$$ mode command
 $codei%
-	%f%.Forward(0, %x%)
+    %f%.Forward(0, %x%)
 %$$
 assigns the
 $cref/independent variable/glossary/Tape/Independent Variable/$$ vector
@@ -58,8 +56,8 @@ for this operation, are documented in $cref Forward$$.
 $head pos$$
 If present, the argument $icode pos$$ has one of the following prototypes
 $codei%
-	const AD<%Base%>&               %pos%
-	const VecAD<%Base%>::reference& %pos%
+    const AD<%Base%>&               %pos%
+    const VecAD<%Base%>::reference& %pos%
 %$$
 In this case
 the text and $icode var$$ will be printed if and only if
@@ -68,31 +66,32 @@ $icode pos$$ is not greater than zero and a finite number.
 $head before$$
 The argument $icode before$$ has prototype
 $codei%
-	const char* %before%
+    const char* %before%
 %$$
 This text is written to $code std::cout$$ before $icode var$$.
 
-$head var$$
-The argument $icode var$$ has one of the following prototypes
+$head value$$
+The argument $icode value$$ has one of the following prototypes
 $codei%
-	const AD<%Base%>&               %var%
-	const VecAD<%Base%>::reference& %var%
+    const AD<%Base%>&               %var%
+    const VecAD<%Base%>::reference& %var%
 %$$
-The value of $icode var$$, that corresponds to $icode x$$,
+The value of $icode value$$, that corresponds to $icode x$$,
 is written to $code std::cout$$ during the execution of
 $codei%
-	%f%.Forward(0, %x%)
+    %f%.Forward(0, %x%)
 %$$
-Note that $icode var$$ may be a
+Note that $icode value$$ may be a
 $cref/variable/glossary/Variable/$$ or
 $cref/parameter/glossary/Parameter/$$.
-(A parameters value does not depend on the value of
-the independent variable vector $icode x$$.)
+If a parameter is
+$cref/dynamic/glossary/Parameter/Dynamic/$$ its value
+will depend on the previous call to $cref new_dynamic$$.
 
 $head after$$
 The argument $icode after$$ has prototype
 $codei%
-	const char* %after%
+    const char* %after%
 %$$
 This text is written to $code std::cout$$ after $icode var$$.
 
@@ -114,8 +113,8 @@ code is executed.
 
 $head Example$$
 $children%
-	print_for/print_for.cpp%
-	example/print_for.cpp
+    example/print_for/print_for.cpp%
+    example/general/print_for.cpp
 %$$
 The program
 $cref print_for_cout.cpp$$
@@ -134,87 +133,87 @@ $end
 # include <cstring>
 
 namespace CppAD {
-	template <class Base>
-	void PrintFor(const AD<Base>& pos,
-		const char *before, const AD<Base>& var, const char* after)
-	{	CPPAD_ASSERT_NARG_NRES(local::PriOp, 5, 0);
+    template <class Base>
+    void PrintFor(const AD<Base>& pos,
+        const char *before, const AD<Base>& var, const char* after)
+    {   CPPAD_ASSERT_NARG_NRES(local::PriOp, 5, 0);
 
-		// check for case where we are not recording operations
-		local::ADTape<Base>* tape = AD<Base>::tape_ptr();
-		if( tape == CPPAD_NULL )
-			return;
+        // check for case where we are not recording operations
+        local::ADTape<Base>* tape = AD<Base>::tape_ptr();
+        if( tape == CPPAD_NULL )
+            return;
 
-		CPPAD_ASSERT_KNOWN(
-			std::strlen(before) <= 1000 ,
-			"PrintFor: length of before is greater than 1000 characters"
-		);
-		CPPAD_ASSERT_KNOWN(
-			std::strlen(after) <= 1000 ,
-			"PrintFor: length of after is greater than 1000 characters"
-		);
-		size_t ind0, ind1, ind2, ind3, ind4;
+        CPPAD_ASSERT_KNOWN(
+            std::strlen(before) <= 1000 ,
+            "PrintFor: length of before is greater than 1000 characters"
+        );
+        CPPAD_ASSERT_KNOWN(
+            std::strlen(after) <= 1000 ,
+            "PrintFor: length of after is greater than 1000 characters"
+        );
+        addr_t arg0, arg1, arg2, arg3, arg4;
 
-		// ind[0] = base 2 representation of the value [Var(pos), Var(var)]
-		ind0 = 0;
+        // arg[0] = base 2 representation of the value [Var(pos), Var(var)]
+        arg0 = 0;
 
-		// ind[1] = address for pos
-		if( Parameter(pos) )
-			ind1  = tape->Rec_.PutPar(pos.value_);
-		else
-		{	ind0 += 1;
-			ind1  = pos.taddr_;
-		}
+        // arg[1] = address for pos
+        if( Parameter(pos) )
+            arg1  = tape->Rec_.put_con_par(pos.value_);
+        else
+        {   arg0 += 1;
+            arg1  = pos.taddr_;
+        }
 
-		// ind[2] = address of before
-		ind2 = tape->Rec_.PutTxt(before);
+        // arg[2] = address of before
+        arg2 = tape->Rec_.PutTxt(before);
 
-		// ind[3] = address for var
-		if( Parameter(var) )
-			ind3  = tape->Rec_.PutPar(var.value_);
-		else
-		{	ind0 += 2;
-			ind3  = var.taddr_;
-		}
+        // arg[3] = address for var
+        if( Parameter(var) )
+            arg3  = tape->Rec_.put_con_par(var.value_);
+        else
+        {   arg0 += 2;
+            arg3  = var.taddr_;
+        }
 
-		// ind[4] = address of after
-		ind4 = tape->Rec_.PutTxt(after);
+        // arg[4] = address of after
+        arg4 = tape->Rec_.PutTxt(after);
 
-		// put the operator in the tape
-		tape->Rec_.PutArg(ind0, ind1, ind2, ind3, ind4);
-		tape->Rec_.PutOp(local::PriOp);
-	}
-	// Fold all other cases into the case above
-	template <class Base>
-	void PrintFor(const char* before, const AD<Base>& var)
-	{	PrintFor(AD<Base>(0), before, var, "" ); }
-	//
-	template <class Base>
-	void PrintFor(const char* before, const VecAD_reference<Base>& var)
-	{	PrintFor(AD<Base>(0), before, var.ADBase(), "" ); }
-	//
-	template <class Base>
-	void PrintFor(
-		const VecAD_reference<Base>& pos    ,
-		const char                  *before ,
-		const VecAD_reference<Base>& var    ,
-		const char                  *after  )
-	{	PrintFor(pos.ADBase(), before, var.ADBase(), after); }
-	//
-	template <class Base>
-	void PrintFor(
-		const VecAD_reference<Base>& pos    ,
-		const char                  *before ,
-		const AD<Base>&              var    ,
-		const char                  *after  )
-	{	PrintFor(pos.ADBase(), before, var, after); }
-	//
-	template <class Base>
-	void PrintFor(
-		const AD<Base>&              pos    ,
-		const char                  *before ,
-		const VecAD_reference<Base>& var    ,
-		const char                  *after  )
-	{	PrintFor(pos, before, var.ADBase(), after); }
+        // put the operator in the tape
+        tape->Rec_.PutArg(arg0, arg1, arg2, arg3, arg4);
+        tape->Rec_.PutOp(local::PriOp);
+    }
+    // Fold all other cases into the case above
+    template <class Base>
+    void PrintFor(const char* before, const AD<Base>& var)
+    {   PrintFor(AD<Base>(0), before, var, "" ); }
+    //
+    template <class Base>
+    void PrintFor(const char* before, const VecAD_reference<Base>& var)
+    {   PrintFor(AD<Base>(0), before, var.ADBase(), "" ); }
+    //
+    template <class Base>
+    void PrintFor(
+        const VecAD_reference<Base>& pos    ,
+        const char                  *before ,
+        const VecAD_reference<Base>& var    ,
+        const char                  *after  )
+    {   PrintFor(pos.ADBase(), before, var.ADBase(), after); }
+    //
+    template <class Base>
+    void PrintFor(
+        const VecAD_reference<Base>& pos    ,
+        const char                  *before ,
+        const AD<Base>&              var    ,
+        const char                  *after  )
+    {   PrintFor(pos.ADBase(), before, var, after); }
+    //
+    template <class Base>
+    void PrintFor(
+        const AD<Base>&              pos    ,
+        const char                  *before ,
+        const VecAD_reference<Base>& var    ,
+        const char                  *after  )
+    {   PrintFor(pos, before, var.ADBase(), after); }
 }
 
 # endif

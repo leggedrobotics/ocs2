@@ -226,7 +226,7 @@ inline size_t LanguageMathML<Base>::printArrayCreationUsingLoop(size_t startPos,
                                       new LinearIndexPattern(0, 1, 1, 0));
 
             std::unique_ptr<OperationNode<Base>> op2(OperationNode<Base>::makeTemporaryNode(CGOpCode::LoopIndexedIndep, refOp.getInfo(), refOp.getArguments()));
-            op2->getInfo()[1] = std::numeric_limits<size_t>::max(); // just to be safe (this would be the index pattern id in the handler)
+            op2->getInfo()[1] = (std::numeric_limits<size_t>::max)(); // just to be safe (this would be the index pattern id in the handler)
             op2->getArguments().push_back(_info->auxIterationIndexOp);
 
             arrayAssign << _nameGen->generateIndexedIndependent(*op2, 0, p2dip);

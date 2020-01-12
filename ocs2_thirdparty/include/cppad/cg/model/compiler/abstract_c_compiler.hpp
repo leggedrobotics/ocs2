@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2012 Ciengis
+ *    Copyright (C) 2018 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -19,9 +20,9 @@ namespace CppAD {
 namespace cg {
 
 /**
- * Default implementation of a C compiler class used to create 
+ * Default implementation of a C compiler class used to create
  * dynamic and static libraries
- * 
+ *
  * @author Joao Leal
  */
 template<class Base>
@@ -29,7 +30,7 @@ class AbstractCCompiler : public CCompiler<Base> {
 protected:
     std::string _path; // the path to the gcc executable
     std::string _tmpFolder;
-    std::string _sourcesFolder; //  path where source files are save
+    std::string _sourcesFolder; // path where source files are saved
     std::set<std::string> _ofiles; // compiled object files
     std::set<std::string> _sfiles; // compiled source files
     std::vector<std::string> _compileFlags;
@@ -58,35 +59,35 @@ public:
         _path = path;
     }
 
-    virtual const std::string& getTemporaryFolder() const override {
+    const std::string& getTemporaryFolder() const override {
         return _tmpFolder;
     }
 
-    virtual void setTemporaryFolder(const std::string& tmpFolder) override {
+    void setTemporaryFolder(const std::string& tmpFolder) override {
         _tmpFolder = tmpFolder;
     }
-    
-    virtual bool isSaveToDiskFirst() const override {
+
+    bool isSaveToDiskFirst() const override {
         return _saveToDiskFirst;
     }
 
-    virtual void setSaveToDiskFirst(bool saveToDiskFirst) override {
+    void setSaveToDiskFirst(bool saveToDiskFirst) override {
         _saveToDiskFirst = saveToDiskFirst;
     }
 
-    virtual const std::string& getSourcesFolder() const override {
+    const std::string& getSourcesFolder() const override {
         return _sourcesFolder;
     }
 
-    virtual void setSourcesFolder(const std::string& srcFolder) override {
+    void setSourcesFolder(const std::string& srcFolder) override {
         _sourcesFolder = srcFolder;
     }
 
-    virtual const std::set<std::string>& getObjectFiles() const override {
+    const std::set<std::string>& getObjectFiles() const override {
         return _ofiles;
     }
 
-    virtual const std::set<std::string>& getSourceFiles() const override {
+    const std::set<std::string>& getSourceFiles() const override {
         return _sfiles;
     }
 
@@ -126,25 +127,25 @@ public:
         _compileLibFlags.push_back(compileLibFlag);
     }
 
-    virtual bool isVerbose() const override {
+    bool isVerbose() const override {
         return _verbose;
     }
 
-    virtual void setVerbose(bool verbose) override {
+    void setVerbose(bool verbose) override {
         _verbose = verbose;
     }
 
     /**
      * Compiles the provided C source code.
-     * 
+     *
      * @param library the path of the dynamic library to be created
      * @param sources maps the names to the content of the source files
      * @param posIndepCode whether or not to create position-independent
      *                     code for dynamic linking
      */
-    virtual void compileSources(const std::map<std::string, std::string>& sources,
-                                bool posIndepCode,
-                                JobTimer* timer = nullptr) override {
+    void compileSources(const std::map<std::string, std::string>& sources,
+                        bool posIndepCode,
+                        JobTimer* timer = nullptr) override {
         compileSources(sources, posIndepCode, timer, ".o", _ofiles);
     }
 
@@ -166,7 +167,7 @@ public:
         for (it = sources.begin(); it != sources.end(); ++it) {
             _sfiles.insert(it->first);
             std::string file = system::createPath(this->_tmpFolder, it->first + outputExtension);
-            maxsize = std::max(maxsize, file.size());
+            maxsize = std::max<size_t>(maxsize, file.size());
         }
 
         size_t countWidth = std::ceil(std::log10(sources.size()));
@@ -244,13 +245,13 @@ public:
 
     /**
      * Creates a dynamic library from a set of object files
-     * 
+     *
      * @param library the path to the dynamic library to be created
      */
     virtual void buildDynamic(const std::string& library,
                               JobTimer* timer = nullptr) override = 0;
 
-    virtual void cleanup() override {
+    void cleanup() override {
         // clean up;
         for (const std::string& it : _ofiles) {
             if (remove(it.c_str()) != 0)
@@ -270,7 +271,7 @@ protected:
 
     /**
      * Compiles a single source file into an object file.
-     * 
+     *
      * @param source the content of the source file
      * @param output the compiled output file name (the object file path)
      */
@@ -280,7 +281,7 @@ protected:
 
     /**
      * Compiles a single source file into an object file.
-     * 
+     *
      * @param path the path to the source file
      * @param output the compiled output file name (the object file path)
      */

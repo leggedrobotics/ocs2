@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2012 Ciengis
+ *    Copyright (C) 2019 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -30,15 +31,15 @@ public:
 
 /**
  * Generates C source code for a model.
- * 
+ *
  * @author Joao Leal
  */
 template<class Base>
 class ModelCSourceGen {
-    typedef CppAD::cg::CG<Base> CGBase;
-    typedef CppAD::AD<CGBase> ADCG;
-    typedef std::vector<std::set<size_t> > SparsitySetType;
-    typedef std::pair<size_t, size_t> TapeVarType; // tape independent -> reference orig independent (temporaries only)
+    using CGBase = CppAD::cg::CG<Base>;
+    using ADCG = CppAD::AD<CGBase>;
+    using SparsitySetType = std::vector<std::set<size_t> >;
+    using TapeVarType = std::pair<size_t, size_t>; // tape independent -> reference orig independent (temporaries only)
 public:
     static const std::string FUNCTION_FORWAD_ZERO;
     static const std::string FUNCTION_JACOBIAN;
@@ -79,7 +80,7 @@ protected:
             defined(true),
             row(r),
             col(c) {
-            CPPADCG_ASSERT_KNOWN(r.size() == c.size(), "The number of row indexes must be the same as the number of column indexes.");
+            CPPADCG_ASSERT_KNOWN(r.size() == c.size(), "The number of row indexes must be the same as the number of column indexes.")
         }
 
         template<class VectorSet>
@@ -161,7 +162,7 @@ protected:
      */
     size_t _parameterPrecision;
     /**
-     * Typical values of the independent vector 
+     * Typical values of the independent vector
      */
     std::vector<Base> _x;
     /**
@@ -204,12 +205,12 @@ protected:
     bool _sparseHessianReusesRev2;
     JacobianADMode _jacMode;
     /**
-     * Custom Jacobian element indexes 
+     * Custom Jacobian element indexes
      */
     Position _custom_jac;
     LocalSparsityInfo _jacSparsity;
     /**
-     * Custom Hessian element indexes 
+     * Custom Hessian element indexes
      */
     Position _custom_hess;
     LocalSparsityInfo _hessSparsity;
@@ -222,10 +223,9 @@ protected:
      */
     std::vector<std::string> _atomicFunctions;
     /**
-     * Maps each atomic function ID to the independent variable indexes 
-     * which affect a call of that atomic function
+     * Maps each atomic function ID to information regarding how the atomic function is used
      */
-    std::map<size_t, std::set<size_t> >* _atomicsIndeps;
+    std::map<size_t, AtomicUseInfo<Base> >* _atomicsInfo;
     /**
      * A string cache for code generation
      */
@@ -235,7 +235,11 @@ protected:
      */
     size_t _maxAssignPerFunc;
     /**
-     * 
+     * the maximum number of operations per variable assignment
+     */
+    size_t _maxOperationsPerAssignment;
+    /**
+     *
      */
     std::vector<std::set<size_t> > _relatedDepCandidates;
     /**
@@ -269,7 +273,7 @@ protected:
      */
     std::map<size_t, std::set<size_t> > _nonLoopRev2Elements;
     /**
-     * 
+     *
      */
     JobTimer* _jobTimer;
     /**
@@ -280,16 +284,16 @@ public:
 
     /**
      * Creates a new C language compilation helper for a model
-     * 
+     *
      * @param fun The ADFun with the taped model (should only be deleted
      *            after this object)
      * @param model The model name (must be a valid C function name)
      */
     ModelCSourceGen(ADFun<CppAD::cg::CG<Base> >& fun,
-                    const std::string& model) :
+                    std::string model) :
         _fun(fun),
         _funNoLoops(nullptr),
-        _name(model),
+        _name(std::move(model)),
         _baseTypeName(ModelCSourceGen<Base>::baseTypeName()),
         _parameterPrecision(std::numeric_limits<Base>::digits10),
         _multiThreading(true),
@@ -306,8 +310,9 @@ public:
         _sparseJacobianReusesOne(true),
         _sparseHessianReusesRev2(true),
         _jacMode(JacobianADMode::Automatic),
-        _atomicsIndeps(nullptr),
+        _atomicsInfo(nullptr),
         _maxAssignPerFunc(20000),
+        _maxOperationsPerAssignment(1000),
         _jobTimer(nullptr) {
 
         CPPADCG_ASSERT_KNOWN(!_name.empty(), "Model name cannot be empty");
@@ -329,25 +334,25 @@ public:
 
     /**
      * Provides the model name which should be a valid C function name.
-     * 
-     * @return the model name 
+     *
+     * @return the model name
      */
     inline const std::string& getName() const {
         return _name;
     }
 
     /**
-     * Defines typical values for the independent variable vector. These 
+     * Defines typical values for the independent variable vector. These
      * values can be useful when there is a need to call atomic functions,
      * since they may allow to reduce some operations.
-     * 
+     *
      * @param x The typical values. An empty vector removes the currently
      *          defined values.
      */
     template<class VectorBase>
     inline void setTypicalIndependentValues(const VectorBase& x) {
         CPPAD_ASSERT_KNOWN(x.size() == 0 || x.size() == _fun.Domain(),
-                           "Invalid independent variable vector size");
+                           "Invalid independent variable vector size")
         _x.resize(x.size());
         for (size_t i = 0; i < x.size(); i++) {
             _x[i] = x[i];
@@ -365,7 +370,7 @@ public:
     /**
      * Provides the maximum precision used to print constant values in the
      * generated source code
-     * 
+     *
      * @return the maximum number of digits
      */
     virtual size_t getParameterPrecision() const {
@@ -375,7 +380,7 @@ public:
     /**
      * Defines the maximum precision used to print constant values in the
      * generated source code.
-     * 
+     *
      * @param p the maximum number of digits
      */
     virtual void setParameterPrecision(size_t p) {
@@ -426,7 +431,7 @@ public:
     /**
      * Determines whether or not to generate source-code for a function
      * that evaluates a dense Hessian.
-     * 
+     *
      * @return true if source-code for a dense Hessian should be created,
      *         false otherwise
      */
@@ -437,7 +442,7 @@ public:
     /**
      * Defines whether or not to generate source-code for a function
      * that evaluates a dense Hessian.
-     * 
+     *
      * @param create true if source-code for a dense Hessian should be
      *               created, false otherwise
      */
@@ -448,7 +453,7 @@ public:
     /**
      * Provides the Automatic Differentiation mode used to generate the
      * source code for the Jacobian
-     * 
+     *
      * @return the Automatic Differentiation mode
      */
     inline JacobianADMode getJacobianADMode() const {
@@ -458,7 +463,7 @@ public:
     /**
      * Defines the Automatic Differentiation mode used to generate the
      * source code for the Jacobian
-     * 
+     *
      * @param mode the Automatic Differentiation mode
      */
     inline void setJacobianADMode(JacobianADMode mode) {
@@ -468,7 +473,7 @@ public:
     /**
      * Determines whether or not to generate source-code for a function
      * that evaluates a dense Jacobian.
-     * 
+     *
      * @return true if source-code for a dense Jacobian should be created,
      *         false otherwise
      */
@@ -479,7 +484,7 @@ public:
     /**
      * Defines whether or not to generate source-code for a function
      * that evaluates a dense Jacobian.
-     * 
+     *
      * @param create true if source-code for a dense Jacobian should be
      *               created, false otherwise
      */
@@ -498,10 +503,10 @@ public:
      * sparse hessian since Hessian symmetry will not be exploited. To
      * improve performance one can request only the upper or lower elements
      * of the hessian using setCustomSparseHessianElements().
-     * 
+     *
      * @see setCustomSparseHessianElements()
      * @see setSparseHessianReusesRev2()
-     * 
+     *
      * @return true if source-code for a sparse Hessian should be created,
      *         false otherwise
      */
@@ -520,10 +525,10 @@ public:
      * sparse hessian since Hessian symmetry will not be exploited. To
      * improve performance one can request only the upper or lower elements
      * of the hessian using setCustomSparseHessianElements().
-     * 
+     *
      * @see setCustomSparseHessianElements()
      * @see setSparseHessianReusesRev2()
-     * 
+     *
      * @param create true if source-code for a sparse Hessian should be
      *               created, false otherwise
      */
@@ -558,12 +563,12 @@ public:
     }
 
     /**
-     * Determines whether or not to generate source-code for a function that 
+     * Determines whether or not to generate source-code for a function that
      * provides the Hessian sparsity pattern for each equation/dependent,
      * when the sparse hessian creation is enabled.
      * Even if this flag is set to false the function can still be generated
      * if the second-order reverse mode is enabled.
-     * 
+     *
      * @return true if source-code for a Hessians sparsities patterns should
      *         be created, false otherwise
      */
@@ -572,12 +577,12 @@ public:
     }
 
     /**
-     * Defines whether or not to generate source-code for a function that 
+     * Defines whether or not to generate source-code for a function that
      * provides the Hessian sparsity pattern for each equation/dependent,
      * when the sparse hessian creation is enabled.
      * Even if this flag is set to false the function can still be generated
      * if the second-order reverse mode is enabled.
-     * 
+     *
      * @param create true if source-code for a Hessians sparsities should be
      *               created, false otherwise
      */
@@ -587,7 +592,7 @@ public:
 
     /**
      * Determines whether or not to generate source-code for a function
-     * that evaluates a sparse Jacobian. If ReverseOne or ForwardOne 
+     * that evaluates a sparse Jacobian. If ReverseOne or ForwardOne
      * functions are enabled, then the sparse Jacobian evaluation might
      * use those functions.
      * Enabling the generation of individuals functions for reverse-mode
@@ -595,7 +600,7 @@ public:
      * the parse Jacobian.
 
      * @see setCustomSparseJacobianElements()
-     * 
+     *
      * @return true if source-code for a sparse Jacobian should be created,
      *         false otherwise
      */
@@ -605,7 +610,7 @@ public:
 
     /**
      * Defines whether or not to generate source-code for a function
-     * that evaluates a sparse Jacobian. If ReverseOne or ForwardOne 
+     * that evaluates a sparse Jacobian. If ReverseOne or ForwardOne
      * functions are enabled, then the sparse Jacobian evaluation might
      * use those functions.
      * Enabling the generation of individuals functions for reverse-mode
@@ -613,7 +618,7 @@ public:
      * the parse Jacobian.
 
      * @see setCustomSparseJacobianElements()
-     * 
+     *
      * @param create true if source-code for a sparse Jacobian should be
      *               created, false otherwise
      */
@@ -653,7 +658,7 @@ public:
     /**
      * Determines whether or not to generate source-code for a function
      * that evaluates the original model.
-     * 
+     *
      * @return true if source-code for the original model should be created,
      *         false otherwise
      */
@@ -664,8 +669,8 @@ public:
     /**
      * Defines whether or not to generate source-code for a function
      * that evaluates the original model.
-     * 
-     * @return create true if source-code for the original model should be
+     *
+     * @param create true if source-code for the original model should be
      *                created, false otherwise
      */
     inline void setCreateForwardZero(bool create) {
@@ -680,9 +685,9 @@ public:
      * Enabling the generation of individuals functions for forward-mode
      * might have a small negative impact on the performance of the evaluation
      * of the sparse Jacobian (if forward mode is selected).
-     * 
+     *
      * @see isCreateSparseJacobian()
-     * 
+     *
      * @return true if the generation of the source for first-order forward
      *         mode is enabled, false otherwise.
      */
@@ -698,10 +703,10 @@ public:
      * Enabling the generation of individuals functions for forward-mode
      * might have a small negative impact on the performance of the evaluation
      * of the sparse Jacobian (if forward-mode is selected).
-     * 
+     *
      * @see setCreateSparseJacobian()
-     * 
-     * @param create true if the generation of the source for first-order 
+     *
+     * @param create true if the generation of the source for first-order
      *               forward mode is enabled, false otherwise.
      */
     inline void setCreateForwardOne(bool create) {
@@ -716,9 +721,9 @@ public:
      * Enabling the generation of individuals functions for reverse-mode
      * might have a small negative impact on the performance of the evaluation
      * of the sparse Jacobian (if reverse-mode is selected).
-     * 
+     *
      * @see isCreateSparseJacobian()
-     * 
+     *
      * @return true if the generation of the source for first-order reverse
      *         mode is enabled, false otherwise.
      */
@@ -734,11 +739,11 @@ public:
      * Enabling the generation of individuals functions for reverse-mode
      * might have a small negative impact on the performance of the evaluation
      * of the sparse Jacobian (if reverse-mode is selected).
-     * 
+     *
      * @see setCreateSparseJacobian()
-     * 
-     * @return true if the generation of the source for first-order reverse
-     *         mode is enabled, false otherwise.
+     *
+     * @param create true if the source for first-order reverse mode functions
+     *               should be generated, false otherwise.
      */
     inline void setCreateReverseOne(bool create) {
         _reverseOne = create;
@@ -752,10 +757,10 @@ public:
      * Enabling the generation of individuals functions for reverse-mode
      * can have a negative impact on the performance of the evaluation of the
      * sparse hessian.
-     * 
+     *
      * Warning: only the values for px[j * (k+1)] will be defined, since
      *          px[j * (k+1) + 1] is not used during the hessian evaluation.
-     * 
+     *
      * @return true if the generation of the source for second-order reverse
      *         mode is enabled, false otherwise.
      */
@@ -764,19 +769,19 @@ public:
     }
 
     /**
-     * Defines whether or not to enable the generation of the source-code 
+     * Defines whether or not to enable the generation of the source-code
      * for the second-order reverse mode that is used for the evaluation
      * of the hessian when the model is used through a user defined atomic
      * AD function.
      * Enabling the generation of individuals functions for reverse-mode
      * can have a negative impact on the performance of the evaluation of the
-     * hessian. To improve performance one can request only the upper or 
+     * hessian. To improve performance one can request only the upper or
      * lower elements of the hessian using setCustomSparseHessianElements()
      * and later only request those elements through the outer model (ADFun).
-     * 
+     *
      * Warning: only the values for px[j * (k+1)] will be defined, since
      *          px[j * (k+1) + 1] is not used during the hessian evaluation.
-     * 
+     *
      * @param create true to enable the generation of the source for
      *               second-order reverse mode, false otherwise.
      */
@@ -784,37 +789,116 @@ public:
         _reverseTwo = create;
     }
 
+    /**
+     * Specifies a user defined Jacobian sparsity to be computed.
+     * The elements can be provided in any order as long as they are a subset
+     * of the full Jacobian sparsity pattern.
+     *
+     * @param row The indices of the equations/dependents for the sparsity
+     *            pattern in the order they will be provided
+     * @param col The indices of the independent variables for the sparsity
+     *            pattern in the order they will be provided
+     */
     inline void setCustomSparseJacobianElements(const std::vector<size_t>& row,
                                                 const std::vector<size_t>& col) {
         _custom_jac = Position(row, col);
     }
 
+    /**
+     * Specifies a user defined Jacobian sparsity to be computed.
+     * The elements must be a subset of the full Jacobian sparsity pattern.
+     *
+     * @tparam VectorSet A vector of sets
+     * @param elements The indices of the independent variables (defined in a
+     *                 set) for each equation/dependent variable (the vector
+     *                 must not be larger than the number dependent variables).
+     */
     template<class VectorSet>
     inline void setCustomSparseJacobianElements(const VectorSet& elements) {
         _custom_jac = Position(elements);
     }
 
+    /**
+     * Specifies a user defined Hessian sparsity to be computed.
+     * This can be used, for instance, to request only half of the Hessian
+     * to be computed due to its symmetry.
+     * The elements can be provided in any order as long as they are a subset
+     * of the full Hessian sparsity pattern.
+     *
+     * @param row The row indices of the independent variables for the sparsity
+     *            pattern in the order they will be provided
+     * @param col The column indices of the independent variables for the
+     *            sparsity pattern in the order they will be provided
+     */
     inline void setCustomSparseHessianElements(const std::vector<size_t>& row,
                                                const std::vector<size_t>& col) {
         _custom_hess = Position(row, col);
     }
 
+    /**
+     * Specifies a user defined Hessian sparsity to be computed.
+     * This can be used, for instance, to request only half of the Hessian
+     * to be computed due to its symmetry.
+     * The elements must be a subset of the full Hessian sparsity pattern.
+     *
+     * @tparam VectorSet A vector of sets
+     * @param elements The indices of the independent variables for the sparsity
+     *                 pattern (the vector must not be larger than the number
+     *                 independent variables).
+     */
     template<class VectorSet>
     inline void setCustomSparseHessianElements(const VectorSet& elements) {
         _custom_hess = Position(elements);
     }
 
+    /**
+     * The maximum number of assignment per generated function.
+     * Zero means it is disabled (no limit).
+     * Note that it is not possible to split some function (e.g., containing loops) and, therefore, this
+     * limit can be violated.
+     *
+     * @return The maximum number of assignments per file/function
+     */
     inline size_t getMaxAssignmentsPerFunc() const {
         return _maxAssignPerFunc;
     }
 
+    /**
+     * Sets the maximum number of assignment per generated function.
+     * Zero means it is disabled (no limit).
+     * By setting a limit, it is possible to reduce the compiler workload by having multiple file/function
+     * instead of a very large one.
+     * Note that it is not possible to split some function (e.g., containing loops) and, therefore, this
+     * limit can be violated.
+     *
+     * @param maxAssignPerFunc The maximum number of assignments per file/function
+     */
     inline void setMaxAssignmentsPerFunc(size_t maxAssignPerFunc) {
         _maxAssignPerFunc = maxAssignPerFunc;
     }
 
+    /**
+     * The maximum number of operations per variable assignment.
+     *
+     * @return The maximum number of operations per variable assignment
+     */
+    inline size_t getMaxOperationsPerAssignment() const {
+        return _maxOperationsPerAssignment;
+    }
+
+    /**
+     * Defines the maximum number of operations per variable assignment.
+     * Defining a limit can reduce the memory required for compilation of the source code.
+     *
+     * @param maxOperationsPerAssignment  The maximum number of operations per variable assignment.
+     */
+    inline void setMaxOperationsPerAssignment(size_t maxOperationsPerAssignment) {
+        _maxOperationsPerAssignment = maxOperationsPerAssignment;
+    }
+
     inline virtual ~ModelCSourceGen() {
         delete _funNoLoops;
-        delete _atomicsIndeps;
+        delete _atomicsInfo;
 
         for (LoopModel<Base>* it : _loopTapes) {
             delete it;
@@ -852,7 +936,7 @@ protected:
 
     virtual bool isAtomicsUsed();
 
-    virtual const std::map<size_t, std::set<size_t> >& getAtomicsIndeps();
+    virtual const std::map<size_t, AtomicUseInfo<Base> >& getAtomicsInfo();
 
     /***********************************************************************
      * zero order (the original model)
@@ -895,21 +979,21 @@ protected:
                                                                       MultiThreadingType multiThreadingType);
     /**
      * Generates a sparse Jacobian using loops.
-     * 
-     * The original model is split into two models: 
+     *
+     * The original model is split into two models:
      *   - one for the repeated equations
      * \f[ y_i = f(x_{l(j)}, x_v, z_k) \f]
-     *   - and another for the equations which do not belong in a loop and the 
+     *   - and another for the equations which do not belong in a loop and the
      *   non-indexed temporary variables (\f$z\f$) used by \f$f\f$.
      * \f[ z_k = g_k(x_v) \f]
-     * 
+     *
      * The jacobian elements for the equations in loops are evaluated as:
-     * \f[ \frac{\mathrm{d} y_i}{\mathrm{d} x_v} = 
+     * \f[ \frac{\mathrm{d} y_i}{\mathrm{d} x_v} =
      *        \sum_k \left( \frac{\partial f_i}{\partial z_k} \frac{\partial z_k}{\partial x_v} \right) +
      *        \sum_j \left( \frac{\partial f_i}{\partial x_{l(j)}} \frac{\partial x_{l(j)}}{\partial x_v} \right) +
-     *        \frac{\partial f_i}{\partial x_v} 
+     *        \frac{\partial f_i}{\partial x_v}
      * \f]
-     * 
+     *
      * @param handler The operation graph handler
      * @param indVars The independent variables
      * @return the operation graph for the compressed jacobin with loops
@@ -1000,23 +1084,23 @@ protected:
      */
     /**
      * Generates a sparse Hessian using loops.
-     * 
-     * The original model is split into two models: 
+     *
+     * The original model is split into two models:
      *   - one for the repeated equations
      * \f[ y_i = f(x_{l(j)}, x_v, z_k) \f]
-     *   - and another for the equations which do not belong in a loop and 
+     *   - and another for the equations which do not belong in a loop and
      *     the non-indexed temporary variables (\f$z\f$) used by \f$f\f$.
      * \f[ z_k = g_k(x_v) \f]
-     * 
+     *
      * The Hessian elements for the equations in loops are evaluated as:
-     * \f[ \frac{\mathrm{d}^2 y_i}{\partial x_w \partial x_v} = 
-     *        \sum_k \left( \frac{\partial^2 f_i}{\partial x_w \partial z_k} \frac{\partial z_k}{\partial x_v} + 
+     * \f[ \frac{\mathrm{d}^2 y_i}{\partial x_w \partial x_v} =
+     *        \sum_k \left( \frac{\partial^2 f_i}{\partial x_w \partial z_k} \frac{\partial z_k}{\partial x_v} +
      *                      \frac{\partial f_i}{\partial z_k} \frac{\partial^2 z_k}{\partial x_w \partial x_v}
      *               \right) +
      *        \sum_j \left( \frac{\partial^2 f_i}{\partial x_w \partial x_{l(j)}} \frac{\partial x_{l(j)}}{\partial x_v} \right) +
-     *        \frac{\partial^2 f_i}{\partial x_w \partial x_v} 
+     *        \frac{\partial^2 f_i}{\partial x_w \partial x_v}
      * \f]
-     * 
+     *
      * @param handler The operation graph handler
      * @param indVars The independent variables
      * @return the operation graph for the compressed jacobin with loops
@@ -1152,7 +1236,7 @@ protected:
     /**
      * Determines groups of rows from a sparsity pattern which do not share
      * the same columns
-     * 
+     *
      * @param columns the column indexes of interest (all others are ignored);
      *                an empty set means all columns
      * @param sparsity The sparsity pattern to color
@@ -1216,7 +1300,7 @@ protected:
                                    size_t size);
 
     /**
-     * 
+     *
      */
     inline void startingJob(const std::string& jobName,
                             const JobType& type = JobTypeHolder<>::DEFAULT);

@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2012 Ciengis
+ *    Copyright (C) 2018 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -23,7 +24,7 @@ namespace cg {
  * reverse mode calculations.
  * The independent variables are considered to have been registered first,
  * followed by a first level of additional variables and then a second.
- * 
+ *
  * @author Joao Leal
  */
 template<class Base>
@@ -51,59 +52,61 @@ public:
         _minLevel2ID(_minLevel1ID + n1),
         _level2Name("py2") {
 
-        CPPADCG_ASSERT_KNOWN(_nameGen != nullptr, "The name generator must not be null");
+        CPPADCG_ASSERT_KNOWN(_nameGen != nullptr, "The name generator must not be null")
 
         initialize();
     }
 
     LangCDefaultReverse2VarNameGenerator(VariableNameGenerator<Base>* nameGen,
                                          size_t n,
-                                         const std::string& level1Name,
+                                         std::string level1Name,
                                          size_t n1,
-                                         const std::string& level2Name) :
+                                         std::string level2Name) :
         _nameGen(nameGen),
         _minLevel1ID(n + 1),
-        _level1Name(level1Name),
+        _level1Name(std::move(level1Name)),
         _minLevel2ID(_minLevel1ID + n1),
-        _level2Name(level2Name) {
+        _level2Name(std::move(level2Name)) {
 
-        CPPADCG_ASSERT_KNOWN(_nameGen != nullptr, "The name generator must not be null");
-        CPPADCG_ASSERT_KNOWN(_level1Name.size() > 0, "The name for the first level must not be empty");
-        CPPADCG_ASSERT_KNOWN(_level2Name.size() > 0, "The name for the second level must not be empty");
+        CPPADCG_ASSERT_KNOWN(_nameGen != nullptr, "The name generator must not be null")
+        CPPADCG_ASSERT_KNOWN(_level1Name.size() > 0, "The name for the first level must not be empty")
+        CPPADCG_ASSERT_KNOWN(_level2Name.size() > 0, "The name for the second level must not be empty")
 
         initialize();
     }
 
-    virtual const std::vector<FuncArgument>& getDependent() const override {
+    inline virtual ~LangCDefaultReverse2VarNameGenerator() = default;
+
+    const std::vector<FuncArgument>& getDependent() const override {
         return _nameGen->getDependent();
     }
 
-    virtual const std::vector<FuncArgument>& getTemporary() const override {
+    const std::vector<FuncArgument>& getTemporary() const override {
         return _nameGen->getTemporary();
     }
 
-    virtual size_t getMinTemporaryVariableID() const override {
+    size_t getMinTemporaryVariableID() const override {
         return _nameGen->getMinTemporaryVariableID();
     }
 
-    virtual size_t getMaxTemporaryVariableID() const override {
+    size_t getMaxTemporaryVariableID() const override {
         return _nameGen->getMaxTemporaryVariableID();
     }
 
-    virtual size_t getMaxTemporaryArrayVariableID() const override {
+    size_t getMaxTemporaryArrayVariableID() const override {
         return _nameGen->getMaxTemporaryArrayVariableID();
     }
 
-    virtual size_t getMaxTemporarySparseArrayVariableID() const override {
+    size_t getMaxTemporarySparseArrayVariableID() const override {
         return _nameGen->getMaxTemporarySparseArrayVariableID();
     }
 
-    virtual std::string generateDependent(size_t index) override {
+    std::string generateDependent(size_t index) override {
         return _nameGen->generateDependent(index);
     }
 
-    virtual std::string generateIndependent(const OperationNode<Base>& independent,
-                                            size_t id) override {
+    std::string generateIndependent(const OperationNode<Base>& independent,
+                                    size_t id) override {
         if (id < _minLevel1ID) {
             return _nameGen->generateIndependent(independent, id);
         } else {
@@ -118,46 +121,46 @@ public:
         }
     }
 
-    virtual std::string generateTemporary(const OperationNode<Base>& variable,
-                                          size_t id) override {
+    std::string generateTemporary(const OperationNode<Base>& variable,
+                                  size_t id) override {
         return _nameGen->generateTemporary(variable, id);
     }
 
-    virtual std::string generateTemporaryArray(const OperationNode<Base>& variable,
-                                               size_t id) override {
+    std::string generateTemporaryArray(const OperationNode<Base>& variable,
+                                       size_t id) override {
         return _nameGen->generateTemporaryArray(variable, id);
     }
 
-    virtual std::string generateTemporarySparseArray(const OperationNode<Base>& variable,
-                                                     size_t id) override {
+    std::string generateTemporarySparseArray(const OperationNode<Base>& variable,
+                                             size_t id) override {
         return _nameGen->generateTemporarySparseArray(variable, id);
     }
 
-    virtual std::string generateIndexedDependent(const OperationNode<Base>& var,
-                                                 size_t id,
-                                                 const IndexPattern& ip) override {
+    std::string generateIndexedDependent(const OperationNode<Base>& var,
+                                         size_t id,
+                                         const IndexPattern& ip) override {
         return _nameGen->generateIndexedDependent(var, id, ip);
     }
 
-    virtual std::string generateIndexedIndependent(const OperationNode<Base>& independent,
-                                                   size_t id,
-                                                   const IndexPattern& ip) override {
+    std::string generateIndexedIndependent(const OperationNode<Base>& independent,
+                                           size_t id,
+                                           const IndexPattern& ip) override {
         size_t varType = independent.getInfo()[0];
         if (varType == 0) {
             return _nameGen->generateIndexedIndependent(independent, id, ip);
         } else {
             size_t nIndex = independent.getArguments().size();
 
-            CPPADCG_ASSERT_KNOWN(independent.getOperationType() == CGOpCode::LoopIndexedIndep, "Invalid node type");
-            CPPADCG_ASSERT_KNOWN(nIndex > 0, "Invalid number of arguments");
+            CPPADCG_ASSERT_KNOWN(independent.getOperationType() == CGOpCode::LoopIndexedIndep, "Invalid node type")
+            CPPADCG_ASSERT_KNOWN(nIndex > 0, "Invalid number of arguments")
 
             _ss.clear();
             _ss.str("");
 
             std::vector<const OperationNode<Base>*> indices(nIndex);
             for (size_t i = 0; i < nIndex; ++i) {// typically there is only one index but there may be more
-                CPPADCG_ASSERT_KNOWN(independent.getArguments()[i].getOperation() != nullptr, "Invalid argument");
-                CPPADCG_ASSERT_KNOWN(independent.getArguments()[i].getOperation()->getOperationType() == CGOpCode::Index, "Invalid argument");
+                CPPADCG_ASSERT_KNOWN(independent.getArguments()[i].getOperation() != nullptr, "Invalid argument")
+                CPPADCG_ASSERT_KNOWN(independent.getArguments()[i].getOperation()->getOperationType() == CGOpCode::Index, "Invalid argument")
                 indices[i] = &static_cast<const IndexOperationNode<Base>&> (*independent.getArguments()[i].getOperation()).getIndex();
             }
 
@@ -171,8 +174,8 @@ public:
 
     }
 
-    virtual const std::string& getIndependentArrayName(const OperationNode<Base>& indep,
-                                                       size_t id) override {
+    const std::string& getIndependentArrayName(const OperationNode<Base>& indep,
+                                               size_t id) override {
         if (id < _minLevel1ID)
             return _nameGen->getIndependentArrayName(indep, id);
         else if (id < _minLevel2ID)
@@ -181,8 +184,8 @@ public:
             return _level2Name;
     }
 
-    virtual size_t getIndependentArrayIndex(const OperationNode<Base>& indep,
-                                            size_t id) override {
+    size_t getIndependentArrayIndex(const OperationNode<Base>& indep,
+                                    size_t id) override {
         if (id < _minLevel1ID)
             return _nameGen->getIndependentArrayIndex(indep, id);
         else if (id < _minLevel2ID)
@@ -191,10 +194,10 @@ public:
             return id - _minLevel2ID;
     }
 
-    virtual bool isConsecutiveInIndepArray(const OperationNode<Base>& indepFirst,
-                                           size_t id1,
-                                           const OperationNode<Base>& indepSecond,
-                                           size_t id2) override {
+    bool isConsecutiveInIndepArray(const OperationNode<Base>& indepFirst,
+                                   size_t id1,
+                                   const OperationNode<Base>& indepSecond,
+                                   size_t id2) override {
         if ((id1 < _minLevel1ID) != (id2 < _minLevel1ID))
             return false;
 
@@ -207,10 +210,10 @@ public:
         return id1 + 1 == id2;
     }
 
-    virtual bool isInSameIndependentArray(const OperationNode<Base>& indep1,
-                                          size_t id1,
-                                          const OperationNode<Base>& indep2,
-                                          size_t id2) override {
+    bool isInSameIndependentArray(const OperationNode<Base>& indep1,
+                                  size_t id1,
+                                  const OperationNode<Base>& indep2,
+                                  size_t id2) override {
         size_t l1;
         if (indep1.getOperationType() == CGOpCode::Inv) {
             l1 = id1 < _minLevel1ID ? 0 : (id1 < _minLevel2ID ? 1 : 2);
@@ -228,38 +231,35 @@ public:
         return l1 == l2;
     }
 
-    virtual const std::string& getTemporaryVarArrayName(const OperationNode<Base>& var,
-                                                        size_t id) override {
+    const std::string& getTemporaryVarArrayName(const OperationNode<Base>& var,
+                                                size_t id) override {
         return _nameGen->getTemporaryVarArrayName(var, id);
     }
 
-    virtual size_t getTemporaryVarArrayIndex(const OperationNode<Base>& var,
-                                             size_t id) override {
+    size_t getTemporaryVarArrayIndex(const OperationNode<Base>& var,
+                                     size_t id) override {
         return _nameGen->getTemporaryVarArrayIndex(var, id);
     }
 
-    virtual bool isConsecutiveInTemporaryVarArray(const OperationNode<Base>& varFirst,
-                                                  size_t idFirst,
-                                                  const OperationNode<Base>& varSecond,
-                                                  size_t idSecond) override {
+    bool isConsecutiveInTemporaryVarArray(const OperationNode<Base>& varFirst,
+                                          size_t idFirst,
+                                          const OperationNode<Base>& varSecond,
+                                          size_t idSecond) override {
         return _nameGen->isConsecutiveInTemporaryVarArray(varFirst, idFirst, varSecond, idSecond);
     }
 
-    virtual bool isInSameTemporaryVarArray(const OperationNode<Base>& var1,
-                                           size_t id1,
-                                           const OperationNode<Base>& var2,
-                                           size_t id2) override {
+    bool isInSameTemporaryVarArray(const OperationNode<Base>& var1,
+                                   size_t id1,
+                                   const OperationNode<Base>& var2,
+                                   size_t id2) override {
         return _nameGen->isInSameTemporaryVarArray(var1, id1, var2, id2);
     }
 
-    virtual void setTemporaryVariableID(size_t minTempID,
-                                        size_t maxTempID,
-                                        size_t maxTempArrayID,
-                                        size_t maxTempSparseArrayID) override {
+    void setTemporaryVariableID(size_t minTempID,
+                                size_t maxTempID,
+                                size_t maxTempArrayID,
+                                size_t maxTempSparseArrayID) override {
         _nameGen->setTemporaryVariableID(minTempID, maxTempID, maxTempArrayID, maxTempSparseArrayID);
-    }
-
-    inline virtual ~LangCDefaultReverse2VarNameGenerator() {
     }
 
 private:

@@ -56,18 +56,18 @@ struct LangCAtomicFun {
     void* libModel;
 
     int (*forward)(void* libModel,
-            int atomicIndex,
-            int q,
-            int p,
-            const Array tx[],
-            Array* ty);
+                   int atomicIndex,
+                   int q,
+                   int p,
+                   const Array tx[],
+                   Array* ty);
 
     int (*reverse)(void* libModel,
-            int atomicIndex,
-            int p,
-            const Array tx[],
-            Array* px,
-            const Array py[]);
+                   int atomicIndex,
+                   int p,
+                   const Array tx[],
+                   Array* px,
+                   const Array py[]);
 };
 
 }

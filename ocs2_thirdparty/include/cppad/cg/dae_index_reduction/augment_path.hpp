@@ -29,8 +29,8 @@ namespace cg {
 template<class Base>
 class AugmentPath {
 protected:
-    typedef CppAD::cg::CG<Base> CGBase;
-    typedef CppAD::AD<CGBase> ADCG;
+    using CGBase = CppAD::cg::CG<Base>;
+    using ADCG = CppAD::AD<CGBase>;
 protected:
     SimpleLogger defaultLogger_;
     // logger

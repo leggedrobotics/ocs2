@@ -1,44 +1,43 @@
-// $Id: time_test.hpp 3766 2015-12-08 23:12:56Z bradbell $
-# ifndef CPPAD_TIME_TEST_HPP
-# define CPPAD_TIME_TEST_HPP
-
+# ifndef CPPAD_UTILITY_TIME_TEST_HPP
+# define CPPAD_UTILITY_TIME_TEST_HPP
 /* --------------------------------------------------------------------------
-CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-15 Bradley M. Bell
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
 
-CppAD is distributed under multiple licenses. This distribution is under
-the terms of the
-                    Eclipse Public License Version 1.0.
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
 
-A copy of this license is included in the COPYING file of this distribution.
-Please visit http://www.coin-or.org/CppAD/ for information on other licenses.
--------------------------------------------------------------------------- */
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
 
 /*
 $begin time_test$$
 $spell
-	gettimeofday
-	vec
-	cppad.hpp
-	Microsoft
-	namespace
-	std
-	const
-	cout
-	ctime
-	ifdef
-	const
-	endif
-	cpp
+    gettimeofday
+    vec
+    cppad.hpp
+    Microsoft
+    namespace
+    std
+    const
+    cout
+    ctime
+    ifdef
+    const
+    endif
+    cpp
 $$
 
 
 $section Determine Amount of Time to Execute a Test$$
-$mindex time_test speed$$
 
 $head Syntax$$
 $codei%# include <cppad/utility/time_test.hpp>
 %$$
-$icode%time% = time_test(%test%, %time_min%)%$$
+$icode%time% = time_test(%test%, %time_min%)
+%$$
 $icode%time% = time_test(%test%, %time_min%, %test_size%)%$$
 
 $head Purpose$$
@@ -72,12 +71,12 @@ or function object.
 In the case where $icode test_size$$ is not present,
 $icode test$$ supports the syntax
 $codei%
-	%test%(%repeat%)
+    %test%(%repeat%)
 %$$
 In the case where $icode test_size$$ is present,
 $icode test$$ supports the syntax
 $codei%
-	%test%(%size%, %repeat%)
+    %test%(%size%, %repeat%)
 %$$
 In either case, the return value for $icode test$$ is $code void$$.
 
@@ -85,21 +84,21 @@ $subhead size$$
 If the argument $icode size$$ is present,
 it has prototype
 $codei%
-	size_t %size%
+    size_t %size%
 %$$
 and is equal to the $icode test_size$$ argument to $code time_test$$.
 
 $subhead repeat$$
 The $icode test$$ argument $icode repeat$$ has prototype
 $codei%
-	size_t %repeat%
+    size_t %repeat%
 %$$
 It will be equal to the $icode size$$ argument to $code time_test$$.
 
 $head time_min$$
 The argument $icode time_min$$ has prototype
 $codei%
-	double %time_min%
+    double %time_min%
 %$$
 It specifies the minimum amount of time in seconds
 that the $icode test$$ routine should take.
@@ -109,14 +108,14 @@ until this amount of execution time (or more) is reached.
 $head test_size$$
 This argument has prototype
 $codei%
-	size_t %test_size%
+    size_t %test_size%
 %$$
 It specifies the $icode size$$ argument to $icode test$$.
 
 $head time$$
 The return value $icode time$$ has prototype
 $codei%
-	double %time%
+    double %time%
 %$$
 and is the number of wall clock seconds that it took
 to execute $icode test$$ divided by the value used for $icode repeat$$.
@@ -126,8 +125,8 @@ The routine $cref elapsed_seconds$$ will be used to determine the
 amount of time it took to execute the test.
 
 $children%
-	cppad/utility/elapsed_seconds.hpp%
-	speed/example/time_test.cpp
+    include/cppad/utility/elapsed_seconds.hpp%
+    speed/example/time_test.cpp
 %$$
 $head Example$$
 The routine $cref time_test.cpp$$ is an example and test
@@ -160,30 +159,30 @@ type that supports the same syntax.
 
 \param test
 The function, or function object, that supports the operation
-<code>test(repeat)</code> where \c repeat is the number of times
+<code>test(repeat)</code> where repeat is the number of times
 to repeat the tests operaiton that is being timed.
 
 \param time_min
-is the minimum amount of time that \c test should take to preform
+is the minimum amount of time that test should take to preform
 the repetitions of the operation being timed.
 */
 template <class Test>
 double time_test(Test test, double time_min )
 {
 # if CPPAD_EXTRA_RUN_BEFORE_TIMING
-	test(1);
+    test(1);
 # endif
-	size_t repeat = 0;
-	double s0     = elapsed_seconds();
-	double s1     = s0;
-	while( s1 - s0 < time_min )
-	{	repeat = std::max(size_t(1), 2 * repeat);
-		s0     = elapsed_seconds();
-		test(repeat);
-		s1     = elapsed_seconds();
-	}
-	double time = (s1 - s0) / double(repeat);
-	return time;
+    size_t repeat = 0;
+    double s0     = elapsed_seconds();
+    double s1     = s0;
+    while( s1 - s0 < time_min )
+    {   repeat = std::max(size_t(1), 2 * repeat);
+        s0     = elapsed_seconds();
+        test(repeat);
+        s1     = elapsed_seconds();
+    }
+    double time = (s1 - s0) / double(repeat);
+    return time;
 }
 
 /*!
@@ -196,34 +195,34 @@ type that supports the same syntax.
 \param test
 The function, or function object, that supports the operation
 <code>test(size, repeat)</code> where
-\c is the size for this test and
-\c repeat is the number of times
+ is the size for this test and
+ repeat is the number of times
 to repeat the tests operaiton that is being timed.
 
 \param time_min
-is the minimum amount of time that \c test should take to preform
+is the minimum amount of time that test should take to preform
 the repetitions of the operation being timed.
 
 \param test_size
-will be used for the value of \c size in the call to \c test.
+will be used for the value of size in the call to test.
 */
 template <class Test>
 double time_test(Test test, double time_min, size_t test_size)
 {
 # if CPPAD_EXTRA_RUN_BEFORE_TIMING
-	test(test_size, 1);
+    test(test_size, 1);
 # endif
-	size_t repeat = 0;
-	double s0     = elapsed_seconds();
-	double s1     = s0;
-	while( s1 - s0 < time_min )
-	{	repeat = std::max(size_t(1), 2 * repeat);
-		s0     = elapsed_seconds();
-		test(test_size, repeat);
-		s1     = elapsed_seconds();
-	}
-	double time = (s1 - s0) / double(repeat);
-	return time;
+    size_t repeat = 0;
+    double s0     = elapsed_seconds();
+    double s1     = s0;
+    while( s1 - s0 < time_min )
+    {   repeat = std::max(size_t(1), 2 * repeat);
+        s0     = elapsed_seconds();
+        test(test_size, repeat);
+        s1     = elapsed_seconds();
+    }
+    double time = (s1 - s0) / double(repeat);
+    return time;
 }
 
 } // END_CPPAD_NAMESPACE

@@ -3,6 +3,7 @@
 /* --------------------------------------------------------------------------
  *  CppADCodeGen: C++ Algorithmic Differentiation with Source Code Generation:
  *    Copyright (C) 2015 Ciengis
+ *    Copyright (C) 2019 Joao Leal
  *
  *  CppADCodeGen is distributed under multiple licenses:
  *
@@ -19,18 +20,18 @@ namespace CppAD {
 namespace cg {
 
 template<class Base>
-void LanguageC<Base>::printLoopIndexedDep(OperationNode<Base>& node) {
-    CPPADCG_ASSERT_KNOWN(node.getArguments().size() >= 1, "Invalid number of arguments for loop indexed dependent operation");
+void LanguageC<Base>::pushLoopIndexedDep(OperationNode <Base>& node) {
+    CPPADCG_ASSERT_KNOWN(node.getArguments().size() >= 1, "Invalid number of arguments for loop indexed dependent operation")
 
     // LoopIndexedDep
-    print(node.getArguments()[0]);
+    push(node.getArguments()[0]);
 }
 
 template<class Base>
 size_t LanguageC<Base>::printLoopIndexDeps(const std::vector<OperationNode<Base>*>& variableOrder,
                                            size_t pos) {
-    CPPADCG_ASSERT_KNOWN(pos < variableOrder.size(), "Invalid number of arguments for array creation operation");
-    CPPADCG_ASSERT_KNOWN(variableOrder[pos]->getOperationType() == CGOpCode::LoopIndexedDep, "Invalid operation type");
+    CPPADCG_ASSERT_KNOWN(pos < variableOrder.size(), "Invalid number of arguments for array creation operation")
+    CPPADCG_ASSERT_KNOWN(variableOrder[pos]->getOperationType() == CGOpCode::LoopIndexedDep, "Invalid operation type")
 
     const size_t vSize = variableOrder.size();
 
@@ -44,7 +45,7 @@ size_t LanguageC<Base>::printLoopIndexDeps(const std::vector<OperationNode<Base>
 
         if (newI == i) {
             // individual element assignment
-            printAssigment(*variableOrder[i]);
+            printAssignment(*variableOrder[i]);
         } else {
             i = newI;
         }
@@ -56,8 +57,8 @@ size_t LanguageC<Base>::printLoopIndexDeps(const std::vector<OperationNode<Base>
 template<class Base>
 inline size_t LanguageC<Base>::printLoopIndexedDepsUsingLoop(const std::vector<OperationNode<Base>*>& variableOrder,
                                                              size_t starti) {
-    CPPADCG_ASSERT_KNOWN(variableOrder[starti] != nullptr, "Invalid node");
-    CPPADCG_ASSERT_KNOWN(variableOrder[starti]->getOperationType() == CGOpCode::LoopIndexedDep, "Invalid operation type");
+    CPPADCG_ASSERT_KNOWN(variableOrder[starti] != nullptr, "Invalid node")
+    CPPADCG_ASSERT_KNOWN(variableOrder[starti]->getOperationType() == CGOpCode::LoopIndexedDep, "Invalid operation type")
 
     const size_t vSize = variableOrder.size();
 
@@ -140,7 +141,7 @@ inline size_t LanguageC<Base>::printLoopIndexedDepsUsingLoop(const std::vector<O
     }
 
     std::unique_ptr<OperationNode<Base>> op2(OperationNode<Base>::makeTemporaryNode(CGOpCode::LoopIndexedDep, ref.getInfo(), ref.getArguments()));
-    op2->getInfo()[1] = std::numeric_limits<size_t>::max(); // just to be safe (this would be the index pattern id in the handler)
+    op2->getInfo()[1] = (std::numeric_limits<size_t>::max)(); // just to be safe (this would be the index pattern id in the handler)
     op2->getArguments().push_back(_info->auxIterationIndexOp);
 
     std::ostringstream rightAssign;
@@ -151,14 +152,14 @@ inline size_t LanguageC<Base>::printLoopIndexedDepsUsingLoop(const std::vector<O
      * print the loop
      */
     size_t depVarCount = i - starti;
-    _code << _indentation << "for(i = 0; i < " << depVarCount << "; i++) ";
-    _code << rightAssign.str() << " ";
+    _streamStack << _indentation << "for(i = 0; i < " << depVarCount << "; i++) ";
+    _streamStack << rightAssign.str() << " ";
     if (refAssignOrAdd == 1) {
-        _code << "+=";
+        _streamStack << "+=";
     } else {
-        _code << _depAssignOperation;
+        _streamStack << _depAssignOperation;
     }
-    _code << " ";
+    _streamStack << " ";
 
     std::string arrayName;
     if (refArray->getOperationType() == CGOpCode::ArrayCreation)
@@ -166,7 +167,7 @@ inline size_t LanguageC<Base>::printLoopIndexedDepsUsingLoop(const std::vector<O
     else
         arrayName = _nameGen->generateTemporarySparseArray(*refArray, getVariableID(*refArray));
 
-    _code << "(" << arrayName << ")[i + " << startArrayIndex << "];\n";
+    _streamStack << "(" << arrayName << ")[i + " << startArrayIndex << "];\n";
 
     return i - 1;
 }

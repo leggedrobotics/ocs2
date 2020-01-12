@@ -20,9 +20,9 @@ namespace cg {
 
 template<class VectorSizeT>
 IndexPattern* IndexPattern::detect(const VectorSizeT& x2y) {
-    CPPADCG_ASSERT_UNKNOWN(x2y.size() > 0);
+    CPPADCG_ASSERT_UNKNOWN(x2y.size() > 0)
 
-    size_t maxCount = std::min(std::max(3ul, x2y.size() / 4), 8ul);
+    size_t maxCount = std::min<size_t>(std::max<size_t>(3ul, x2y.size() / 4), 8ul);
     std::map<size_t, IndexPattern*> linearSections = SectionedIndexPattern::detectLinearSections(x2y, maxCount);
 
     if (linearSections.size() == 1) {
@@ -36,9 +36,9 @@ IndexPattern* IndexPattern::detect(const VectorSizeT& x2y) {
 }
 
 IndexPattern* IndexPattern::detect(const std::map<size_t, size_t>& x2y) {
-    CPPADCG_ASSERT_UNKNOWN(!x2y.empty());
+    CPPADCG_ASSERT_UNKNOWN(!x2y.empty())
 
-    size_t maxCount = std::min(std::max(3ul, x2y.size() / 4), 8ul);
+    size_t maxCount = std::min<size_t>(std::max<size_t>(3ul, x2y.size() / 4), 8ul);
     std::map<size_t, IndexPattern*> linearSections = SectionedIndexPattern::detectLinearSections(x2y, maxCount);
 
     if (linearSections.size() == 1) {
@@ -52,7 +52,7 @@ IndexPattern* IndexPattern::detect(const std::map<size_t, size_t>& x2y) {
 
 inline bool IndexPattern::isConstant(const IndexPattern& ip) {
     if (ip.getType() == IndexPatternType::Linear) {
-        const LinearIndexPattern& lip = static_cast<const LinearIndexPattern&> (ip);
+        const auto& lip = static_cast<const LinearIndexPattern&> (ip);
         return lip.getLinearSlopeDy() == 0;
     }
     return false;

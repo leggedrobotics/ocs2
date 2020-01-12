@@ -44,14 +44,14 @@ public:
     /**
      * Creates a new helper class for the generation of dynamic libraries
      * using the C language.
-     * 
-     * @param modelLibraryHelper
+     *
+     * @param modelLibGen
      * @param libraryName The path of the dynamic library to be created 
      *                    (without the extension)
      */
-    inline DynamicModelLibraryProcessor(ModelLibraryCSourceGen<Base>& modelLibraryHelper,
+    inline DynamicModelLibraryProcessor(ModelLibraryCSourceGen<Base>& modelLibGen,
                                         const std::string& libraryName = "cppad_cg_model") :
-        ModelLibraryProcessor<Base>(modelLibraryHelper),
+        ModelLibraryProcessor<Base>(modelLibGen),
         _libraryName(libraryName),
         _customLibExtension(nullptr) {
     }
@@ -115,8 +115,8 @@ public:
      * @param loadLib Whether or not to load the dynamic library
      * @return The dynamic library if loadLib is true, nullptr otherwise
      */
-    DynamicLib<Base>* createDynamicLibrary(CCompiler<Base>& compiler,
-                                           bool loadLib = true) {
+    std::unique_ptr<DynamicLib<Base>> createDynamicLibrary(CCompiler<Base>& compiler,
+                                                           bool loadLib = true) {
         // backup output format so that it can be restored
         OStreamConfigRestore coutb(std::cout);
 
@@ -157,7 +157,7 @@ public:
         if (loadLib)
             return loadDynamicLibrary();
         else
-            return nullptr;
+            return std::unique_ptr<DynamicLib<Base>>(nullptr);
     }
 
     /**
@@ -217,7 +217,7 @@ public:
 
 protected:
 
-    virtual DynamicLib<Base>* loadDynamicLibrary();
+    virtual std::unique_ptr<DynamicLib<Base>> loadDynamicLibrary();
 
 };
 

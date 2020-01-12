@@ -13,9 +13,9 @@ TEST(LLTofInverse, checkAgainstFullInverse)
   // Some random symmetric positive definite matrix
   using Matrix_t = Eigen::Matrix<double, n, n>;
   Matrix_t A = generateSPDmatrix<Matrix_t>();
-  Matrix_t LinvT;
+  Matrix_t U, LinvT;
 
-  computeLinvTLinv(A, LinvT);
+  computeLinvTLinv(A, U, LinvT);
 
   Matrix_t Ainv = A.inverse();
   Matrix_t Ainv_constructed = LinvT * LinvT.transpose();
@@ -37,8 +37,8 @@ TEST(constraintProjection, checkAgainstFullComputations)
   Matrix_t R = generateSPDmatrix<Matrix_t>();
 
   // Inverse of R
-  Matrix_t RinvChol;
-  computeLinvTLinv(R, RinvChol);
+  Matrix_t U, RinvChol;
+  computeLinvTLinv(R, U, RinvChol);
   Matrix_t Rinv = RinvChol * RinvChol.transpose();
 
   // Compute constraint projection terms, this is what we are testing in this unit test

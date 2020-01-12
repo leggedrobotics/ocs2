@@ -123,13 +123,15 @@ void makePsdCholesky(Eigen::MatrixBase<Derived>& A, double minEigenvalue = OCS2N
  * inv(L^T) = inv(U)
  * @tparam Derived type.
  * @param [in] A: A symmetric square positive definite matrix
+ * @param [in] U: UUT of A matrix.
  * @param [out] LinvT: LT_L decomposition of inv(A), upper-triangular
  */
 template <typename Derived>
-void computeLinvTLinv(const Derived& A, Derived& LinvT) {
+void computeLinvTLinv(const Derived& A, Derived& U, Derived& LinvT) {
   // L is lower triangular, U is upper triangular --> inv(L^T) = inv(U) is upper triangular
   Eigen::LLT<Derived> lltOfA(A);
   LinvT.setIdentity();
+  U = lltOfA.matrixU();
   lltOfA.matrixU().solveInPlace(LinvT);
 }
 

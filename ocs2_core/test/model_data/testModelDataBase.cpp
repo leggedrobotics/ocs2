@@ -16,8 +16,8 @@ TEST(testModelDataBase, testModelDataLinearInterpolation) {
 	double t = 2.0 * i;
 	timeArray[i] = t;
 	modelDataBaseArray[i].time_ = t;
-	modelDataBaseArray[i].flowMap_ = Eigen::Vector3d::Ones() * t;
-	modelDataBaseArray[i].flowMapStateDerivative_ = Eigen::Matrix3d::Ones() * t;
+	modelDataBaseArray[i].dynamics_ = Eigen::Vector3d::Ones() * t;
+	modelDataBaseArray[i].dynamicsStateDerivative_ = Eigen::Matrix3d::Ones() * t;
   }
 
   double time = 5.0;
@@ -28,10 +28,10 @@ TEST(testModelDataBase, testModelDataLinearInterpolation) {
   ModelData::LinearInterpolation::interpolate(indexAlpha, enquiryScalar, &modelDataBaseArray, ModelData::time);
   // dynamic vector
   Eigen::VectorXd enquiryVector;
-  ModelData::LinearInterpolation::interpolate(indexAlpha, enquiryVector, &modelDataBaseArray, ModelData::flowMap);
+  ModelData::LinearInterpolation::interpolate(indexAlpha, enquiryVector, &modelDataBaseArray, ModelData::dynamics);
   // dynamic matrix
   Eigen::MatrixXd enquiryMatrix;
-  ModelData::LinearInterpolation::interpolate<Eigen::MatrixXd>(indexAlpha, enquiryMatrix, &modelDataBaseArray, ModelData::flowMapStateDerivative);
+  ModelData::LinearInterpolation::interpolate<Eigen::MatrixXd>(indexAlpha, enquiryMatrix, &modelDataBaseArray, ModelData::dynamicsStateDerivative);
 
   ASSERT_TRUE(enquiryScalar == time);
   ASSERT_TRUE(enquiryVector.isApprox(Eigen::Vector3d::Ones()*time));

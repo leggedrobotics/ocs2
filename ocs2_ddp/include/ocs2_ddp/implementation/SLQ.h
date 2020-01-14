@@ -57,7 +57,8 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivativ
 
   IntegratorType integratorType = settings_.RiccatiIntegratorType_;
   if (integratorType != IntegratorType::ODE45 && integratorType != IntegratorType::BULIRSCH_STOER) {
-    throw(std::runtime_error("Unsupported Riccati equation integrator type: " + toString(settings_.RiccatiIntegratorType_)));
+    throw(
+        std::runtime_error("Unsupported Riccati equation integrator type: " + integrator_type::toString(settings_.RiccatiIntegratorType_)));
   }
 
   for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
@@ -199,7 +200,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t workerInde
     EvProjectedTrajectoryStock_[i][k].setZero();
     CmProjectedTrajectoryStock_[i][k].setZero();
     DmProjectedTrajectoryStock_[i][k].setZero();
-    AmConstrainedTrajectoryStock_[i][k] = BASE::modelDataTrajectoriesStock_[i][k].flowMapStateDerivative_;
+    AmConstrainedTrajectoryStock_[i][k] = BASE::modelDataTrajectoriesStock_[i][k].dynamicsStateDerivative_;
     QmConstrainedTrajectoryStock_[i][k] = BASE::modelDataTrajectoriesStock_[i][k].costStateSecondDerivative_;
     QvConstrainedTrajectoryStock_[i][k] = BASE::modelDataTrajectoriesStock_[i][k].costStateDerivative_;
     RmInvConstrainedCholTrajectoryStock_[i][k] = RinvChol;
@@ -227,9 +228,9 @@ void SLQ<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t workerInde
     DmProjectedTrajectoryStock_[i][k].noalias() = DmDager * Dm;
 
     // Am constrained
-    AmConstrainedTrajectoryStock_[i][k] = BASE::modelDataTrajectoriesStock_[i][k].flowMapStateDerivative_;
+    AmConstrainedTrajectoryStock_[i][k] = BASE::modelDataTrajectoriesStock_[i][k].dynamicsStateDerivative_;
     AmConstrainedTrajectoryStock_[i][k].noalias() -=
-        BASE::modelDataTrajectoriesStock_[i][k].flowMapInputDerivative_ * CmProjectedTrajectoryStock_[i][k];
+        BASE::modelDataTrajectoriesStock_[i][k].dynamicsInputDerivative_ * CmProjectedTrajectoryStock_[i][k];
 
     // Qm constrained
     state_matrix_t PmTransDmDagerCm =
@@ -266,7 +267,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t time,
 
   dynamic_matrix_t Bm;
   ModelData::LinearInterpolation::interpolate(indexAlpha, Bm, &BASE::modelDataTrajectoriesStock_[activeSubsystem],
-                                              ModelData::flowMapInputDerivative);
+                                              ModelData::dynamicsInputDerivative);
 
   dynamic_matrix_t Pm;
   ModelData::LinearInterpolation::interpolate(indexAlpha, Pm, &BASE::modelDataTrajectoriesStock_[activeSubsystem],
@@ -329,7 +330,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, si
   EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, nominalState, &(BASE::nominalStateTrajectoriesStock_[i]));
   EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, nominalInput, &(BASE::nominalInputTrajectoriesStock_[i]));
 
-  ModelData::LinearInterpolation::interpolate(indexAlpha, Bm, &BASE::modelDataTrajectoriesStock_[i], ModelData::flowMapInputDerivative);
+  ModelData::LinearInterpolation::interpolate(indexAlpha, Bm, &BASE::modelDataTrajectoriesStock_[i], ModelData::dynamicsInputDerivative);
   ModelData::LinearInterpolation::interpolate(indexAlpha, Pm, &BASE::modelDataTrajectoriesStock_[i], ModelData::costInputStateDerivative);
   ModelData::LinearInterpolation::interpolate(indexAlpha, Rv, &BASE::modelDataTrajectoriesStock_[i], ModelData::costInputDerivative);
   EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, RmInverse, &(RmInverseTrajectoryStock_[i]));
@@ -742,7 +743,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::errorRiccatiEquationWorker(size_t workerIndex, s
   input_vector_t RmEv;
   for (int k = nominalTimeSize - 1; k >= 0; k--) {
     const auto& Pm = BASE::modelDataTrajectoriesStock_[partitionIndex][k].costInputStateDerivative_;
-    const auto& Bm = BASE::modelDataTrajectoriesStock_[partitionIndex][k].flowMapInputDerivative_;
+    const auto& Bm = BASE::modelDataTrajectoriesStock_[partitionIndex][k].dynamicsInputDerivative_;
     const auto& Am = AmConstrainedTrajectoryStock_[partitionIndex][k];
     const auto& RmInvChol = RmInvConstrainedCholTrajectoryStock_[partitionIndex][k];
     const auto& RmInv = RmInverseTrajectoryStock_[partitionIndex][k];

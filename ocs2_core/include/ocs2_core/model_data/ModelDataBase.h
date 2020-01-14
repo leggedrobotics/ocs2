@@ -1,3 +1,32 @@
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
 #pragma once
 
 #include <Eigen/Dense>
@@ -59,9 +88,9 @@ struct ModelDataBase {
   virtual void display() {
     std::cerr << std::endl;
     std::cerr << "time: " << time_ << "\n";
-    std::cerr << "Flow Map: " << flowMap_.transpose() << "\n";
-    std::cerr << "Flow Map State Derivative: " << flowMapStateDerivative_ << "\n";
-    std::cerr << "Flow Map Input Derivative: " << flowMapInputDerivative_ << "\n";
+    std::cerr << "Dynamics: " << dynamics_.transpose() << "\n";
+    std::cerr << "Dynamics State Derivative: " << dynamicsStateDerivative_ << "\n";
+    std::cerr << "Dynamics Input Derivative: " << dynamicsInputDerivative_ << "\n";
 
     std::cerr << "Cost: " << cost_ << "\n";
     std::cerr << "Cost State Derivative: " << costStateDerivative_ << "\n";
@@ -84,11 +113,11 @@ struct ModelDataBase {
     assert(inputDim_ == inputDim);
 
     // dynamics flow map
-    assert(flowMap_.size() == stateDim);
-    assert(flowMapStateDerivative_.rows() == stateDim);
-    assert(flowMapStateDerivative_.cols() == stateDim);
-    assert(flowMapInputDerivative_.rows() == stateDim);
-    assert(flowMapInputDerivative_.cols() == inputDim);
+    assert(dynamics_.size() == stateDim);
+    assert(dynamicsStateDerivative_.rows() == stateDim);
+    assert(dynamicsStateDerivative_.cols() == stateDim);
+    assert(dynamicsInputDerivative_.rows() == stateDim);
+    assert(dynamicsInputDerivative_.cols() == inputDim);
 
     // cost
     assert(costStateDerivative_.size() == stateDim);
@@ -185,14 +214,10 @@ struct ModelDataBase {
   int stateDim_;
   int inputDim_;
 
-  // dynamics flow
-  dynamic_vector_t flowMap_;
-  dynamic_matrix_t flowMapStateDerivative_;
-  dynamic_matrix_t flowMapInputDerivative_;
-
-  dynamic_vector_t jumpMap_;
-  dynamic_matrix_t jumpMapStateDerivative_;
-  dynamic_matrix_t jumpMapInputDerivative_;
+  // dynamics
+  dynamic_vector_t dynamics_;
+  dynamic_matrix_t dynamicsStateDerivative_;
+  dynamic_matrix_t dynamicsInputDerivative_;
 
   // cost
   scalar_t cost_;

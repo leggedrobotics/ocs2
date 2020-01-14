@@ -141,8 +141,8 @@ class LinearQuadraticApproximator {
     state_matrix_t Am;
     state_input_matrix_t Bm;
     approximateDynamics(time, state, input, Am, Bm);
-    modelData.flowMapStateDerivative_ = Am;
-    modelData.flowMapInputDerivative_ = Bm;
+    modelData.dynamicsStateDerivative_ = Am;
+    modelData.dynamicsInputDerivative_ = Bm;
 
     // constraints
     size_t ncEqStateInput;

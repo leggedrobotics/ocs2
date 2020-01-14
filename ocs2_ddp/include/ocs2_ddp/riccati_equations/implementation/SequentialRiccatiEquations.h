@@ -107,8 +107,8 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(const scalar_arra
   BASE::resetNumFunctionCalls();
 
   // TODO fix
-  const int state_dim = modelDataPtr->front().flowMapInputDerivative_.rows();
-  const int input_dim = modelDataPtr->front().flowMapInputDerivative_.cols();
+  const int state_dim = modelDataPtr->front().dynamicsInputDerivative_.rows();
+  const int input_dim = modelDataPtr->front().dynamicsInputDerivative_.cols();
 
   // Initialize members with proper dimensions for Eigen::Dynamic sized matrices.
   Sm_.resize(state_dim, state_dim);
@@ -158,7 +158,7 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(const scalar_arra
     dynamic_matrix_t PmT_RinvChol;
     for (size_t i = 0; i < N; i++) {
       // Emplace back on first touch of the array in this loop
-      B_RinvChol_array_.emplace_back((*modelDataPtr)[i].flowMapInputDerivative_ * (*RinvCholPtr)[i]);
+      B_RinvChol_array_.emplace_back((*modelDataPtr)[i].dynamicsInputDerivative_ * (*RinvCholPtr)[i]);
       RinvCholT_Rv_array_.emplace_back((*RinvCholPtr)[i].transpose() * (*modelDataPtr)[i].costInputDerivative_);
       AmT_minus_P_Rinv_B_array_.emplace_back((*AmPtr)[i].transpose());
 
@@ -238,7 +238,7 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const scal
     // dsdt,   q_ used instead of temporary
     q_ -= 0.5 * RinvCholT_Rv_.dot(RinvCholT_Rv_);
   } else {
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Bm_, modelDataPtr_, ModelData::flowMapInputDerivative);
+    ModelData::LinearInterpolation::interpolate(indexAlpha, Bm_, modelDataPtr_, ModelData::dynamicsInputDerivative);
     ModelData::LinearInterpolation::interpolate(indexAlpha, q_, modelDataPtr_, ModelData::cost);
     ModelData::LinearInterpolation::interpolate(indexAlpha, Rv_, modelDataPtr_, ModelData::costInputDerivative);
     ModelData::LinearInterpolation::interpolate(indexAlpha, Pm_, modelDataPtr_, ModelData::costInputStateDerivative);

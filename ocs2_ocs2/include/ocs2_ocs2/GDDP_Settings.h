@@ -160,9 +160,9 @@ inline void GDDP_Settings::loadSettings(const std::string& filename, const std::
   loadData::loadPtreeValue(pt, nThreads_, fieldName + ".nThreads", verbose);
   loadData::loadPtreeValue(pt, useNominalTimeForBackwardPass_, fieldName + ".useNominalTimeForBackwardPass", verbose);
 
-  std::string integratorName = toString(riccatiIntegratorType_);  // keep default
+  std::string integratorName = integrator_type::toString(riccatiIntegratorType_);  // keep default
   loadData::loadPtreeValue(pt, integratorName, fieldName + ".RiccatiIntegratorType", verbose);
-  riccatiIntegratorType_ = fromString(integratorName);
+  riccatiIntegratorType_ = integrator_type::fromString(integratorName);
 
   loadData::loadPtreeValue(pt, absTolODE_, fieldName + ".AbsTolODE", verbose);
   loadData::loadPtreeValue(pt, relTolODE_, fieldName + ".RelTolODE", verbose);

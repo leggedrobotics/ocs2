@@ -112,9 +112,9 @@ inline void SLQ_Settings::loadSettings(const std::string& filename, const std::s
   loadData::loadPtreeValue(pt, useNominalTimeForBackwardPass_, fieldName + ".useNominalTimeForBackwardPass", verbose);
   loadData::loadPtreeValue(pt, preComputeRiccatiTerms_, fieldName + ".preComputeRiccatiTerms", verbose);
 
-  std::string integratorName = toString(RiccatiIntegratorType_);  // keep default
+  std::string integratorName = integrator_type::toString(RiccatiIntegratorType_);  // keep default
   loadData::loadPtreeValue(pt, integratorName, fieldName + ".RiccatiIntegratorType", verbose);
-  RiccatiIntegratorType_ = fromString(integratorName);
+  RiccatiIntegratorType_ = integrator_type::fromString(integratorName);
 
   loadData::loadPtreeValue(pt, adams_integrator_dt_, fieldName + ".adams_integrator_dt", verbose);
 

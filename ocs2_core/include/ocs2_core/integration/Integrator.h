@@ -51,6 +51,8 @@ namespace ocs2 {
  */
 enum class IntegratorType { EULER, ODE45, ADAMS_BASHFORTH, BULIRSCH_STOER, MODIFIED_MIDPOINT, RK4, RK5_VARIABLE, ADAMS_BASHFORTH_MOULTON };
 
+namespace integrator_type {
+
 /**
  * Get string name of integrator type
  * @param [in] integratorType: Integrator type enum
@@ -86,6 +88,8 @@ static IntegratorType fromString(const std::string& name) {
 
   return integratorMap.at(name);
 }
+
+}  // namespace integrator_type
 
 /**
  * Create Integrator of given type.

@@ -108,7 +108,7 @@ TEST(time_rollout_test, time_rollout_test) {
   for (const auto& modelData : modelDataTrajectory) {
     ASSERT_EQ(modelData.stateDim_, stateTrajectory.front().rows());
     ASSERT_EQ(modelData.inputDim_, inputTrajectory.front().rows());
-    ASSERT_EQ(modelData.flowMap_.rows(), stateTrajectory.front().rows());
+    ASSERT_EQ(modelData.dynamics_.rows(), stateTrajectory.front().rows());
   }
 }
 

@@ -55,7 +55,7 @@ std::unique_ptr<IntegratorBase<STATE_DIM>> newIntegrator(IntegratorType integrat
       return std::unique_ptr<IntegratorBase<STATE_DIM>>(new IntegratorAdamsBashforthMoulton<STATE_DIM, 1>(eventHandlerPtr));
 #endif
     default:
-      throw std::runtime_error("Integrator of type " + toString(integratorType) + " not supported.");
+      throw std::runtime_error("Integrator of type " + integrator_type::toString(integratorType) + " not supported.");
   }
 }
 

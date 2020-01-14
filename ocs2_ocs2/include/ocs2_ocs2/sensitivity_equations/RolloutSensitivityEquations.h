@@ -124,11 +124,11 @@ class RolloutSensitivityEquations final : public ControlledSystemBase<STATE_DIM,
                       state_vector_t& derivative) override {
     const auto indexAlpha = LinearInterpolation<scalar_t>::timeSegment(t, timeTrajectoryPtr_);
 
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Am_, modelDataPtr_, ModelData::flowMapStateDerivative);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Bm_, modelDataPtr_, ModelData::flowMapInputDerivative);
+    ModelData::LinearInterpolation::interpolate(indexAlpha, Am_, modelDataPtr_, ModelData::dynamicsStateDerivative);
+    ModelData::LinearInterpolation::interpolate(indexAlpha, Bm_, modelDataPtr_, ModelData::dynamicsInputDerivative);
 
     if (!numerics::almost_eq(multiplier_, 0.0)) {
-      ModelData::LinearInterpolation::interpolate(indexAlpha, Fv_, modelDataPtr_, ModelData::flowMap);
+      ModelData::LinearInterpolation::interpolate(indexAlpha, Fv_, modelDataPtr_, ModelData::dynamics);
       derivative = Am_ * nabla_x + Bm_ * nabla_u + multiplier_ * Fv_;
     } else {
       derivative = Am_ * nabla_x + Bm_ * nabla_u;

@@ -132,9 +132,9 @@ class BvpSensitivityEquations final : public OdeBase<STATE_DIM> {
     const scalar_t t = -z;
     auto indexAlpha = LinearInterpolation<scalar_t>::timeSegment(t, timeStampPtr_);
 
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Fv_, modelDataPtr_, ModelData::flowMap);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Am_, modelDataPtr_, ModelData::flowMapStateDerivative);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Bm_, modelDataPtr_, ModelData::flowMapInputDerivative);
+    ModelData::LinearInterpolation::interpolate(indexAlpha, Fv_, modelDataPtr_, ModelData::dynamics);
+    ModelData::LinearInterpolation::interpolate(indexAlpha, Am_, modelDataPtr_, ModelData::dynamicsStateDerivative);
+    ModelData::LinearInterpolation::interpolate(indexAlpha, Bm_, modelDataPtr_, ModelData::dynamicsInputDerivative);
     ModelData::LinearInterpolation::interpolate(indexAlpha, Qv_, modelDataPtr_, ModelData::costStateDerivative);
     ModelData::LinearInterpolation::interpolate(indexAlpha, Cm_, modelDataPtr_, ModelData::stateInputEqConstrStateDerivative);
     auto nc1 = (*modelDataPtr_)[indexAlpha.first].numStateInputEqConstr_;

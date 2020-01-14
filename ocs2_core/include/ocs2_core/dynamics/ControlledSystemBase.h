@@ -124,7 +124,7 @@ class ControlledSystemBase : public OdeBase<STATE_DIM> {
     }
     auto* modelDataPtr = this->nextModelDataPtrIterator()->get();
     computeFlowMap(t, x, u, modelDataPtr);
-    dxdt = modelDataPtr->flowMap_;
+    dxdt = modelDataPtr->dynamics_;
     ++this->nextModelDataPtrIterator();
   }
 
@@ -142,7 +142,7 @@ class ControlledSystemBase : public OdeBase<STATE_DIM> {
     dataPtr->inputDim_ = INPUT_DIM;
     state_vector_t dxdt;
     computeFlowMap(t, x, u, dxdt);
-    dataPtr->flowMap_ = dxdt;
+    dataPtr->dynamics_ = dxdt;
   }
 
   /**

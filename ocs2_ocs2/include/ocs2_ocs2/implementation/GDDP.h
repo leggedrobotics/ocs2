@@ -56,7 +56,7 @@ GDDP<STATE_DIM, INPUT_DIM>::GDDP(const GDDP_Settings& gddpSettings /*= GDDP_Sett
 
   IntegratorType integratorType = gddpSettings_.riccatiIntegratorType_;
   if (integratorType != IntegratorType::ODE45 && integratorType != IntegratorType::BULIRSCH_STOER) {
-    throw(std::runtime_error("Unsupported Riccati equation integrator type: " + toString(integratorType)));
+    throw(std::runtime_error("Unsupported Riccati equation integrator type: " + integrator_type::toString(integratorType)));
   }
 
   for (size_t i = 0; i < gddpSettings_.nThreads_; i++) {
@@ -170,7 +170,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateNominalRolloutLagrangeMultiplier(const
     lagrangeTrajectoriesStock[i].resize(N);
     for (size_t k = 0; k < N; k++) {
       const auto& nc1 = dataCollectorPtr_->modelDataTrajectoriesStock_[i][k].numStateInputEqConstr_;
-      const auto& Bm = dataCollectorPtr_->modelDataTrajectoriesStock_[i][k].flowMapInputDerivative_;
+      const auto& Bm = dataCollectorPtr_->modelDataTrajectoriesStock_[i][k].dynamicsInputDerivative_;
       const auto& Rv = dataCollectorPtr_->modelDataTrajectoriesStock_[i][k].costInputDerivative_;
       const auto& Rm = dataCollectorPtr_->modelDataTrajectoriesStock_[i][k].costInputSecondDerivative_;
       const auto& EvProjected = dataCollectorPtr_->EvProjectedTrajectoriesStock_[i][k];
@@ -751,7 +751,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateLQSensitivityControllerForward(size_t 
       // Bm
       dynamic_matrix_t Bm;
       ModelData::LinearInterpolation::interpolate(indexAlpha, Bm, &dataCollectorPtr_->modelDataTrajectoriesStock_[i],
-                                                  ModelData::flowMapInputDerivative);
+                                                  ModelData::dynamicsInputDerivative);
       // RmInverse
       input_matrix_t RmInverse;
       EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, RmInverse, &dataCollectorPtr_->RmInverseTrajectoriesStock_[i]);
@@ -795,7 +795,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateBVPSensitivityControllerForward(size_t
       // Bm
       dynamic_matrix_t Bm;
       ModelData::LinearInterpolation::interpolate(indexAlpha, Bm, &(dataCollectorPtr_->modelDataTrajectoriesStock_[i]),
-                                                  ModelData::flowMapInputDerivative);
+                                                  ModelData::dynamicsInputDerivative);
       // RmInverse
       input_matrix_t RmInverse;
       EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, RmInverse, &dataCollectorPtr_->RmInverseTrajectoriesStock_[i]);

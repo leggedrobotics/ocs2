@@ -65,8 +65,8 @@ class RiccatiInitializer {
     RinvChol_.resize(input_dim, input_dim);
     ocs2::LinearAlgebra::computeLinvTLinv(R, RinvChol_);
 
-    modelDataBase.flowMapStateDerivative_ = A;
-    modelDataBase.flowMapInputDerivative_ = B;
+    modelDataBase.dynamicsStateDerivative_ = A;
+    modelDataBase.dynamicsInputDerivative_ = B;
     modelDataBase.cost_ = q_;
     modelDataBase.costStateDerivative_ = qv;
     modelDataBase.costStateSecondDerivative_ = Q;

@@ -151,9 +151,9 @@ TEST(IntegrationTest, model_data_test) {
   Observer<2> observer(&stateTrajectory, &timeTrajectory, &modelDataTrajectory);
   integrator.integrate_adaptive(*sys, observer, x0, 0.0, 10.0);
 
-  Eigen::Vector2d flowMap;
-  sys->systemFunction()(x0, flowMap, timeTrajectory.front());
-  EXPECT_TRUE(modelDataTrajectory.front().flowMap_.isApprox(flowMap, 1e-3));
+  Eigen::Vector2d dynamics;
+  sys->systemFunction()(x0, dynamics, timeTrajectory.front());
+  EXPECT_TRUE(modelDataTrajectory.front().dynamics_.isApprox(dynamics, 1e-3));
 
   EXPECT_EQ(modelDataTrajectory.size(), stateTrajectory.size())
       << "MESSAGE: ModelData trajectory size is not equal to state trajectory size!";

@@ -122,9 +122,10 @@ void ILQR<STATE_DIM, INPUT_DIM>::discreteLQWorker(size_t workerIndex, size_t i, 
   /*
    * linearize system dynamics
    */
-  discreteModelDataTrajectoriesStock_[i][k].flowMapStateDerivative_ =
-      BASE::modelDataTrajectoriesStock_[i][k].flowMapStateDerivative_ * dt + dynamic_matrix_t::Identity(STATE_DIM, STATE_DIM);
-  discreteModelDataTrajectoriesStock_[i][k].flowMapInputDerivative_ = BASE::modelDataTrajectoriesStock_[i][k].flowMapInputDerivative_ * dt;
+  discreteModelDataTrajectoriesStock_[i][k].dynamicsStateDerivative_ =
+      BASE::modelDataTrajectoriesStock_[i][k].dynamicsStateDerivative_ * dt + dynamic_matrix_t::Identity(STATE_DIM, STATE_DIM);
+  discreteModelDataTrajectoriesStock_[i][k].dynamicsInputDerivative_ =
+      BASE::modelDataTrajectoriesStock_[i][k].dynamicsInputDerivative_ * dt;
 
   /*
    * quadratic approximation to the cost function
@@ -337,7 +338,7 @@ void ILQR<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size
      */
     const size_t finalIndex = endTimeItr - 1;
     // note that these are the continuous time coefficients
-    const auto& Bmc = BASE::modelDataTrajectoriesStock_[partitionIndex][finalIndex].flowMapInputDerivative_;
+    const auto& Bmc = BASE::modelDataTrajectoriesStock_[partitionIndex][finalIndex].dynamicsInputDerivative_;
     const auto& Rvc = BASE::modelDataTrajectoriesStock_[partitionIndex][finalIndex].costInputDerivative_;
     const auto& Rmc = BASE::modelDataTrajectoriesStock_[partitionIndex][finalIndex].costInputSecondDerivative_;
     const auto& Pmc = BASE::modelDataTrajectoriesStock_[partitionIndex][finalIndex].costInputStateDerivative_;
@@ -355,8 +356,8 @@ void ILQR<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size
     // solve Riccati equations if interval length is not zero
     if (beginTimeItr < endTimeItr - 1) {
       for (int k = endTimeItr - 2; k >= beginTimeItr; k--) {
-        const auto& Am = discreteModelDataTrajectoriesStock_[partitionIndex][k].flowMapStateDerivative_;
-        const auto& Bm = discreteModelDataTrajectoriesStock_[partitionIndex][k].flowMapInputDerivative_;
+        const auto& Am = discreteModelDataTrajectoriesStock_[partitionIndex][k].dynamicsStateDerivative_;
+        const auto& Bm = discreteModelDataTrajectoriesStock_[partitionIndex][k].dynamicsInputDerivative_;
         const auto& q = discreteModelDataTrajectoriesStock_[partitionIndex][k].cost_;
         const auto& Qv = discreteModelDataTrajectoriesStock_[partitionIndex][k].costStateDerivative_;
         const auto& Qm = discreteModelDataTrajectoriesStock_[partitionIndex][k].costStateSecondDerivative_;

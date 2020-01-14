@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_core/misc/LinearInterpolation.h"
 #include "ocs2_core/model_data/ModelDataBase.h"
 
-// Declares an access function of name FIELD (e.g., time, flowMap)
+// Declares an access function of name FIELD (e.g., time, dynamics, ...)
 #define CREATE_INTERPOLATION_ACCESS_FUNCTION(FIELD)                                                             \
   inline auto FIELD(const ocs2::ModelDataBase::array_t::size_type ind, const ocs2::ModelDataBase::array_t* vec) \
       ->const decltype((*vec)[ind].FIELD##_)& {                                                                 \
@@ -48,9 +48,9 @@ using LinearInterpolation = ocs2::LinearInterpolation<ModelDataBase, Eigen::alig
 CREATE_INTERPOLATION_ACCESS_FUNCTION(time)
 
 // dynamics flow
-CREATE_INTERPOLATION_ACCESS_FUNCTION(flowMap)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(flowMapStateDerivative)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(flowMapInputDerivative)
+CREATE_INTERPOLATION_ACCESS_FUNCTION(dynamics)
+CREATE_INTERPOLATION_ACCESS_FUNCTION(dynamicsStateDerivative)
+CREATE_INTERPOLATION_ACCESS_FUNCTION(dynamicsInputDerivative)
 
 // cost
 CREATE_INTERPOLATION_ACCESS_FUNCTION(cost)

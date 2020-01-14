@@ -97,7 +97,7 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
   /**
    * Constructor.
    */
-  SequentialRiccatiEquations(bool preComputeRiccatiTerms = true);
+  explicit SequentialRiccatiEquations(bool preComputeRiccatiTerms = true);
 
   /**
    * Default destructor.

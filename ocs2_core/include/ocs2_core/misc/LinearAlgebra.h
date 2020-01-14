@@ -130,7 +130,7 @@ template <typename Derived>
 void computeLinvTLinv(const Derived& A, Derived& U, Derived& LinvT) {
   // L is lower triangular, U is upper triangular --> inv(L^T) = inv(U) is upper triangular
   Eigen::LLT<Derived> lltOfA(A);
-  LinvT.setIdentity();
+  LinvT.setIdentity(A.rows(), A.cols());  // for dynamic size matrices
   U = lltOfA.matrixU();
   lltOfA.matrixU().solveInPlace(LinvT);
 }

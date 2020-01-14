@@ -62,7 +62,8 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivativ
   }
 
   for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
-    errorEquationPtrStock_.emplace_back(new error_equation_t);;
+    errorEquationPtrStock_.emplace_back(new error_equation_t);
+    ;
     bool preComputeRiccatiTerms_ = settings_.preComputeRiccatiTerms_ && (BASE::ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH);
     riccatiEquationsPtrStock_.emplace_back(new riccati_equations_t(preComputeRiccatiTerms_));
 
@@ -104,125 +105,64 @@ void SLQ<STATE_DIM, INPUT_DIM>::approximateLQWorker(size_t workerIndex, size_t p
   // unconstrained LQ problem
   BASE::approximateUnconstrainedLQWorker(workerIndex, partitionIndex, timeIndex);
 
-  const scalar_t stateConstraintPenalty =
-      BASE::ddpSettings_.stateConstraintPenaltyCoeff_ * pow(BASE::ddpSettings_.stateConstraintPenaltyBase_, BASE::iteration_);
+  // augment the cost function
+  BASE::augmentCostWorker(workerIndex, BASE::modelDataTrajectoriesStock_[partitionIndex][timeIndex]);
 
-  // modify the unconstrained LQ coefficients to constrained ones
-  approximateConstrainedLQWorker(workerIndex, partitionIndex, timeIndex, stateConstraintPenalty);
+  // Compute R inverse after inequalities are added to the cost
+  // Compute it through the cholesky decomposition as we can reuse the factorization later on
+  dynamic_matrix_t RinvChol, DdaggerT_R_Ddagger_Chol;
+  LinearAlgebra::computeLinvTLinv(BASE::modelDataTrajectoriesStock_[partitionIndex][timeIndex].costInputSecondDerivative_,
+                                  BASE::RmCholeskyUpperTrajectoryStock_[partitionIndex][timeIndex], RinvChol);
+  BASE::RmInverseTrajectoryStock_[partitionIndex][timeIndex].noalias() = RinvChol * RinvChol.transpose();
+
+  const auto nc1 = BASE::modelDataTrajectoriesStock_[partitionIndex][timeIndex].numStateInputEqConstr_;
+  dynamic_matrix_t DmDager;
+  if (nc1 == 0) {
+    DmDagerTrajectoryStock_[partitionIndex][timeIndex].setZero();
+    RmInvConstrainedCholTrajectoryStock_[partitionIndex][timeIndex] = RinvChol;
+  } else {
+    const auto& Dm = BASE::modelDataTrajectoriesStock_[partitionIndex][timeIndex].stateInputEqConstrInputDerivative_;
+    // check numerics
+    if (BASE::ddpSettings_.checkNumericalStability_) {
+      if (LinearAlgebra::rank(Dm) != nc1) {
+        BASE::printString(">>> WARNING: The state-input constraints are rank deficient (at time " +
+                          std::to_string(BASE::nominalTimeTrajectoriesStock_[partitionIndex][timeIndex]) + ")!");
+      }
+    }
+    // Constraint projectors are obtained at once
+    ocs2::LinearAlgebra::computeConstraintProjection(Dm, RinvChol, DmDager, DdaggerT_R_Ddagger_Chol,
+                                                     RmInvConstrainedCholTrajectoryStock_[partitionIndex][timeIndex]);
+    // projection
+    DmDagerTrajectoryStock_[partitionIndex][timeIndex].leftCols(nc1) = DmDager;
+  }
+
+  // project unconstrained LQ coefficients to constrained ones
+  projectLQWorker(workerIndex, partitionIndex, timeIndex, DmDager, DdaggerT_R_Ddagger_Chol);
 
   // calculate an LQ approximate of the event times process.
-  BASE::approximateEventsLQWorker(workerIndex, partitionIndex, timeIndex, stateConstraintPenalty);
+  BASE::approximateEventsLQWorker(workerIndex, partitionIndex, timeIndex);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t workerIndex, size_t i, size_t k, scalar_t stateConstraintPenalty) {
-  // state equality constraint (type 2) coefficients
-  if (BASE::modelDataTrajectoriesStock_[i][k].numStateEqConstr_ > 0) {
-    const dynamic_vector_t& Hv = BASE::modelDataTrajectoriesStock_[i][k].stateEqConstr_;
-    const dynamic_matrix_t& Fm = BASE::modelDataTrajectoriesStock_[i][k].stateEqConstrStateDerivative_;
-    BASE::modelDataTrajectoriesStock_[i][k].cost_ += 0.5 * stateConstraintPenalty * Hv.transpose() * Hv;
-    BASE::modelDataTrajectoriesStock_[i][k].costStateDerivative_ += stateConstraintPenalty * Fm.transpose() * Hv;
-    BASE::modelDataTrajectoriesStock_[i][k].costStateSecondDerivative_ += stateConstraintPenalty * Fm.transpose() * Fm;
-  }
-
-  // inequality constraints
-  if (BASE::modelDataTrajectoriesStock_[i][k].numIneqConstr_ > 0) {
-    scalar_t p;
-    state_vector_t dpdx;
-    input_vector_t dpdu;
-    state_matrix_t ddpdxdx;
-    input_matrix_t ddpdudu;
-    input_state_matrix_t ddpdudx;
-    BASE::penaltyPtrStock_[workerIndex]->getPenaltyCost(BASE::modelDataTrajectoriesStock_[i][k].ineqConstr_, p);
-    BASE::penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeState(
-        BASE::modelDataTrajectoriesStock_[i][k].ineqConstr_, BASE::modelDataTrajectoriesStock_[i][k].ineqConstrStateDerivative_, dpdx);
-    BASE::penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInput(
-        BASE::modelDataTrajectoriesStock_[i][k].ineqConstr_, BASE::modelDataTrajectoriesStock_[i][k].ineqConstrInputDerivative_, dpdu);
-    BASE::penaltyPtrStock_[workerIndex]->getPenaltyCostSecondDerivativeState(
-        BASE::modelDataTrajectoriesStock_[i][k].ineqConstr_, BASE::modelDataTrajectoriesStock_[i][k].ineqConstrStateDerivative_,
-        BASE::modelDataTrajectoriesStock_[i][k].ineqConstrStateSecondDerivative_, ddpdxdx);
-    BASE::penaltyPtrStock_[workerIndex]->getPenaltyCostSecondDerivativeInput(
-        BASE::modelDataTrajectoriesStock_[i][k].ineqConstr_, BASE::modelDataTrajectoriesStock_[i][k].ineqConstrInputDerivative_,
-        BASE::modelDataTrajectoriesStock_[i][k].ineqConstrInputSecondDerivative_, ddpdudu);
-    BASE::penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInputState(
-        BASE::modelDataTrajectoriesStock_[i][k].ineqConstr_, BASE::modelDataTrajectoriesStock_[i][k].ineqConstrStateDerivative_,
-        BASE::modelDataTrajectoriesStock_[i][k].ineqConstrInputDerivative_,
-        BASE::modelDataTrajectoriesStock_[i][k].ineqConstrInputStateDerivative_, ddpdudx);
-    BASE::modelDataTrajectoriesStock_[i][k].cost_ += p;
-    BASE::modelDataTrajectoriesStock_[i][k].costStateDerivative_ += dpdx;
-    BASE::modelDataTrajectoriesStock_[i][k].costStateSecondDerivative_ += ddpdxdx;
-    BASE::modelDataTrajectoriesStock_[i][k].costInputDerivative_ += dpdu;
-    BASE::modelDataTrajectoriesStock_[i][k].costInputSecondDerivative_ += ddpdudu;
-    BASE::modelDataTrajectoriesStock_[i][k].costInputStateDerivative_ += ddpdudx;
-
-    // checking the numerical stability again
-    if (BASE::ddpSettings_.checkNumericalStability_) {
-      try {
-        auto errorDescription = BASE::modelDataTrajectoriesStock_[i][k].checkCostProperties();
-        if (!errorDescription.empty()) {
-          throw std::runtime_error(errorDescription);
-        }
-      } catch (const std::exception& error) {
-        std::cerr << "After adding inequality constraint penalty" << std::endl;
-        std::cerr << "what(): " << error.what() << " at time " << BASE::nominalTimeTrajectoriesStock_[i][k] << " [sec]." << std::endl;
-        std::cerr << "x: " << BASE::nominalStateTrajectoriesStock_[i][k].transpose() << std::endl;
-        std::cerr << "u: " << BASE::nominalInputTrajectoriesStock_[i][k].transpose() << std::endl;
-        std::cerr << "q: " << BASE::modelDataTrajectoriesStock_[i][k].cost_ << std::endl;
-        std::cerr << "Qv: " << BASE::modelDataTrajectoriesStock_[i][k].costStateDerivative_.transpose() << std::endl;
-        std::cerr << "Qm: \n" << BASE::modelDataTrajectoriesStock_[i][k].costStateSecondDerivative_ << std::endl;
-        std::cerr << "Qm eigenvalues : "
-                  << LinearAlgebra::eigenvalues(BASE::modelDataTrajectoriesStock_[i][k].costStateSecondDerivative_).transpose()
-                  << std::endl;
-        std::cerr << "Rv: " << BASE::modelDataTrajectoriesStock_[i][k].costInputDerivative_.transpose() << std::endl;
-        std::cerr << "Rm: \n" << BASE::modelDataTrajectoriesStock_[i][k].costInputSecondDerivative_ << std::endl;
-        std::cerr << "Rm eigenvalues : "
-                  << LinearAlgebra::eigenvalues(BASE::modelDataTrajectoriesStock_[i][k].costInputSecondDerivative_).transpose()
-                  << std::endl;
-        std::cerr << "Pm: \n" << BASE::modelDataTrajectoriesStock_[i][k].costInputStateDerivative_ << std::endl;
-        throw;
-      }
-    }
-  }
-
-  // Compute R inverse after inequalities are added to the cost
-  // Compute it through the cholesky decomposition as we can reuse the factorization later on
-  dynamic_matrix_t RinvChol;
-  LinearAlgebra::computeLinvTLinv(BASE::modelDataTrajectoriesStock_[i][k].costInputSecondDerivative_, BASE::RmCholeskyUpperTrajectoryStock_[i][k], RinvChol);
-  BASE::RmInverseTrajectoryStock_[i][k].noalias() = RinvChol * RinvChol.transpose();
-
+void SLQ<STATE_DIM, INPUT_DIM>::projectLQWorker(size_t workerIndex, size_t i, size_t k, const dynamic_matrix_t& DmDager,
+                                                const dynamic_matrix_t& DdaggerT_R_Ddagger_Chol) {
   // constraint type 1 coefficients
   const auto nc1 = BASE::modelDataTrajectoriesStock_[i][k].numStateInputEqConstr_;
   if (nc1 == 0) {
-    DmDagerTrajectoryStock_[i][k].setZero();
     EvProjectedTrajectoryStock_[i][k].setZero();
     CmProjectedTrajectoryStock_[i][k].setZero();
     DmProjectedTrajectoryStock_[i][k].setZero();
     AmConstrainedTrajectoryStock_[i][k] = BASE::modelDataTrajectoriesStock_[i][k].dynamicsStateDerivative_;
     QmConstrainedTrajectoryStock_[i][k] = BASE::modelDataTrajectoriesStock_[i][k].costStateSecondDerivative_;
     QvConstrainedTrajectoryStock_[i][k] = BASE::modelDataTrajectoriesStock_[i][k].costStateDerivative_;
-    RmInvConstrainedCholTrajectoryStock_[i][k] = RinvChol;
   } else {
-    const dynamic_matrix_t& Cm = BASE::modelDataTrajectoriesStock_[i][k].stateInputEqConstrStateDerivative_;
-    const dynamic_matrix_t& Dm = BASE::modelDataTrajectoriesStock_[i][k].stateInputEqConstrInputDerivative_;
-
-    // check numerical stability_
-    if (BASE::ddpSettings_.checkNumericalStability_) {
-      if (LinearAlgebra::rank(Dm) != nc1) {
-        BASE::printString(">>> WARNING: The state-input constraints are rank deficient (at time " +
-                          std::to_string(BASE::nominalTimeTrajectoriesStock_[i][k]) + ")!");
-      }
-    }
-
-    // Constraint projectors are obtained at once
-    dynamic_matrix_t DmDager, DdaggerT_R_Ddagger_Chol;
-    ocs2::LinearAlgebra::computeConstraintProjection(Dm, RinvChol, DmDager, DdaggerT_R_Ddagger_Chol,
-                                                     RmInvConstrainedCholTrajectoryStock_[i][k]);
+    const auto& Cm = BASE::modelDataTrajectoriesStock_[i][k].stateInputEqConstrStateDerivative_;
+    const auto& Dm = BASE::modelDataTrajectoriesStock_[i][k].stateInputEqConstrInputDerivative_;
 
     // Projected Constraints
-    DmDagerTrajectoryStock_[i][k].leftCols(nc1) = DmDager;
     EvProjectedTrajectoryStock_[i][k].noalias() = DmDager * BASE::modelDataTrajectoriesStock_[i][k].stateInputEqConstr_;
     CmProjectedTrajectoryStock_[i][k].noalias() = DmDager * Cm;
     DmProjectedTrajectoryStock_[i][k].noalias() = DmDager * Dm;

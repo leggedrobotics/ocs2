@@ -184,14 +184,14 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   void riccatiSolverTask() override;
 
   /**
-   * Modify the unconstrained LQ coefficients to constrained ones.
+   * Projects the unconstrained LQ coefficients to constrained ones.
    *
    * @param [in] workerIndex: Working agent index.
    * @param [in] i: Time partition index.
    * @param [in] k: Time index in the partition.
-   * @param [in] stateConstraintPenalty: State-only constraint penalty.
    */
-  void approximateConstrainedLQWorker(size_t workerIndex, size_t i, size_t k, scalar_t stateConstraintPenalty);
+  void projectLQWorker(size_t workerIndex, size_t i, size_t k, const dynamic_matrix_t& DmDager,
+                       const dynamic_matrix_t& DdaggerT_R_Ddagger_Chol);
 
   /**
    * Solves a set of Riccati equations and type_1 constraints error correction compensation for the partition in the given index.

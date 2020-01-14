@@ -500,9 +500,16 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] workerIndex: Working agent index.
    * @param [in] i: Time partition index.
    * @param [in] k: Time index in the partition.
-   * @param [in] stateConstraintPenalty: State-only constraint penalty.
    */
-  virtual void approximateEventsLQWorker(size_t workerIndex, size_t i, size_t k, scalar_t stateConstraintPenalty);
+  virtual void approximateEventsLQWorker(size_t workerIndex, size_t i, size_t k);
+
+  /**
+   * Augments the cost function.
+   *
+   * @param [in] workerIndex: Working agent index.
+   * @param modelData: The model data.
+   */
+  void augmentCostWorker(size_t workerIndex, ModelDataBase& modelData);
 
   /**
    * Computes the Riccati modification based on the strategy.
@@ -712,7 +719,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   size_array2_t cachedPostEventIndicesStock_;
   state_vector_array2_t cachedStateTrajectoriesStock_;
   input_vector_array2_t cachedInputTrajectoriesStock_;
-
 
   // model data trajectory
   ModelDataBase::array2_t modelDataTrajectoriesStock_;

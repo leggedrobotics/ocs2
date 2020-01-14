@@ -97,13 +97,11 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::convert2Matrix(const s_ve
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int STATE_DIM, int INPUT_DIM>
-void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(const scalar_array_t* timeStampPtr,
-                                                               const ModelDataBase::array_t* modelDataPtr,
-                                                               const state_matrix_array_t* AmPtr, const state_vector_array_t* QvPtr,
-                                                               const state_matrix_array_t* QmPtr, const dynamic_matrix_array_t* RinvCholPtr,
-                                                               const size_array_t* postEventIndicesPtr, const scalar_array_t* qFinalPtr,
-                                                               const state_vector_array_t* QvFinalPtr, const state_matrix_array_t* QmFinalPtr,
-															   const riccati_modification_t* riccatiModificationPtr) {
+void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(
+    const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* modelDataPtr, const state_matrix_array_t* AmPtr,
+    const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr, const dynamic_matrix_array_t* RinvCholPtr,
+    const size_array_t* postEventIndicesPtr, const scalar_array_t* qFinalPtr, const state_vector_array_t* QvFinalPtr,
+    const state_matrix_array_t* QmFinalPtr, const riccati_modification_t* riccatiModificationPtr) {
   BASE::resetNumFunctionCalls();
 
   // TODO fix

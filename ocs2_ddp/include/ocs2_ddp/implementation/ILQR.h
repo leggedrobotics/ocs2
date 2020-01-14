@@ -74,6 +74,9 @@ void ILQR<STATE_DIM, INPUT_DIM>::approximateLQWorker(size_t workerIndex, size_t 
   // discretize LQ problem
   discreteLQWorker(workerIndex, partitionIndex, timeIndex);
 
+  // augment the cost function
+  BASE::augmentCostWorker(workerIndex, discreteModelDataTrajectoriesStock_[partitionIndex][timeIndex]);
+
   // Compute R inverse after inequalities are added to the cost
   // Compute it through the Cholesky decomposition as we can reuse the factorization later on
   dynamic_matrix_t RinvChol;
@@ -82,21 +85,18 @@ void ILQR<STATE_DIM, INPUT_DIM>::approximateLQWorker(size_t workerIndex, size_t 
   LinearAlgebra::computeLinvTLinv(Rm, RmCholeskyUpper, RinvChol);
   BASE::RmInverseTrajectoryStock_[partitionIndex][timeIndex].noalias() = RinvChol * RinvChol.transpose();
 
-  const scalar_t stateConstraintPenalty =
-      BASE::ddpSettings_.stateConstraintPenaltyCoeff_ * pow(BASE::ddpSettings_.stateConstraintPenaltyBase_, BASE::iteration_);
-
-  // modify the unconstrained LQ coefficients to constrained ones
-  approximateConstrainedLQWorker(workerIndex, partitionIndex, timeIndex, stateConstraintPenalty);
+  // project unconstrained LQ coefficients to constrained ones
+  projectLQWorker(workerIndex, partitionIndex, timeIndex);
 
   // calculate an LQ approximate of the event times process.
-  BASE::approximateEventsLQWorker(workerIndex, partitionIndex, timeIndex, stateConstraintPenalty);
+  BASE::approximateEventsLQWorker(workerIndex, partitionIndex, timeIndex);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t workerIndex, size_t i, size_t k, scalar_t stateConstraintPenalty) {
+void ILQR<STATE_DIM, INPUT_DIM>::projectLQWorker(size_t workerIndex, size_t i, size_t k) {
   // TODO: add support for the constrained ILQR
   if (BASE::modelDataTrajectoriesStock_[i][k].numStateEqConstr_ != 0) {
     throw std::runtime_error("We currently only support unconstrained ILQR.");
@@ -408,8 +408,7 @@ void ILQR<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size
         input_vector_t Gv_plus_half_HmLv = Gv + 0.5 * Hm * Lv;
         input_state_matrix_t Gm_plus_half_HmLm = Gm + 0.5 * Hm * Lm;
 
-        BASE::sTrajectoryStock_[partitionIndex][k] =
-            q + BASE::sTrajectoryStock_[partitionIndex][k + 1] + Lv.dot(Gv_plus_half_HmLv);
+        BASE::sTrajectoryStock_[partitionIndex][k] = q + BASE::sTrajectoryStock_[partitionIndex][k + 1] + Lv.dot(Gv_plus_half_HmLv);
         BASE::SvTrajectoryStock_[partitionIndex][k].noalias() = Qv + Am.transpose() * BASE::SvTrajectoryStock_[partitionIndex][k + 1] +
                                                                 Lm.transpose() * Gv_plus_half_HmLv + Gm_plus_half_HmLm.transpose() * Lv;
         BASE::SmTrajectoryStock_[partitionIndex][k].noalias() = QmCorrected +

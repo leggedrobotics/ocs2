@@ -643,7 +643,10 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateUnconstrainedLQWorker(size_t wor
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateEventsLQWorker(size_t workerIndex, size_t i, size_t k, scalar_t stateConstraintPenalty) {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateEventsLQWorker(size_t workerIndex, size_t i, size_t k) {
+  // state-only equality penalty
+  const auto stateConstraintPenalty = ddpSettings_.stateConstraintPenaltyCoeff_ * pow(ddpSettings_.stateConstraintPenaltyBase_, iteration_);
+
   // if a switch took place calculate switch related variables
   size_t NE = nominalPostEventIndicesStock_[i].size();
   for (size_t ke = 0; ke < NE; ke++) {
@@ -675,6 +678,58 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateEventsLQWorker(size_t workerInde
       break;
     }
   }  // end of ke loop
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::augmentCostWorker(size_t workerIndex, ModelDataBase& modelData) {
+  // state-only equality penalty
+  const auto stateConstraintPenalty = ddpSettings_.stateConstraintPenaltyCoeff_ * pow(ddpSettings_.stateConstraintPenaltyBase_, iteration_);
+
+  // state equality constraint (type 2) coefficients
+  if (modelData.numStateEqConstr_ > 0) {
+    const dynamic_vector_t& Hv = modelData.stateEqConstr_;
+    const dynamic_matrix_t& Fm = modelData.stateEqConstrStateDerivative_;
+    modelData.cost_ += 0.5 * stateConstraintPenalty * Hv.transpose() * Hv;
+    modelData.costStateDerivative_ += stateConstraintPenalty * Fm.transpose() * Hv;
+    modelData.costStateSecondDerivative_ += stateConstraintPenalty * Fm.transpose() * Fm;
+  }
+
+  // inequality constraints
+  if (modelData.numIneqConstr_ > 0) {
+    scalar_t p;
+    state_vector_t dpdx;
+    input_vector_t dpdu;
+    state_matrix_t ddpdxdx;
+    input_matrix_t ddpdudu;
+    input_state_matrix_t ddpdudx;
+    penaltyPtrStock_[workerIndex]->getPenaltyCost(modelData.ineqConstr_, p);
+    penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeState(modelData.ineqConstr_, modelData.ineqConstrStateDerivative_, dpdx);
+    penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInput(modelData.ineqConstr_, modelData.ineqConstrInputDerivative_, dpdu);
+    penaltyPtrStock_[workerIndex]->getPenaltyCostSecondDerivativeState(modelData.ineqConstr_, modelData.ineqConstrStateDerivative_,
+                                                                       modelData.ineqConstrStateSecondDerivative_, ddpdxdx);
+    penaltyPtrStock_[workerIndex]->getPenaltyCostSecondDerivativeInput(modelData.ineqConstr_, modelData.ineqConstrInputDerivative_,
+                                                                       modelData.ineqConstrInputSecondDerivative_, ddpdudu);
+    penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInputState(modelData.ineqConstr_, modelData.ineqConstrStateDerivative_,
+                                                                      modelData.ineqConstrInputDerivative_,
+                                                                      modelData.ineqConstrInputStateDerivative_, ddpdudx);
+    modelData.cost_ += p;
+    modelData.costStateDerivative_ += dpdx;
+    modelData.costStateSecondDerivative_ += ddpdxdx;
+    modelData.costInputDerivative_ += dpdu;
+    modelData.costInputSecondDerivative_ += ddpdudu;
+    modelData.costInputStateDerivative_ += ddpdudx;
+
+    // checking the numerical stability again
+    if (ddpSettings_.checkNumericalStability_) {
+      auto errorDescription = modelData.checkCostProperties();
+      if (!errorDescription.empty()) {
+        throw std::runtime_error(errorDescription);
+      }
+    }
+  }
 }
 
 /******************************************************************************************************/
@@ -821,7 +876,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearch() {
     maxNumOfLineSearches = 0;
   } else {
     const auto ratio = ddpSettings_.lineSearch_.minStepLength_ / ddpSettings_.lineSearch_.maxStepLength_;
-    maxNumOfLineSearches = static_cast<size_t>(std::log(ratio + OCS2NumericTraits<scalar_t>::limitEpsilon()) / std::log(ddpSettings_.lineSearch_.contractionRate_) + 1);
+    maxNumOfLineSearches = static_cast<size_t>(
+        std::log(ratio + OCS2NumericTraits<scalar_t>::limitEpsilon()) / std::log(ddpSettings_.lineSearch_.contractionRate_) + 1);
   }
 
   // perform a rollout while the input correction for the state-input equality constraint is considered.
@@ -950,7 +1006,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
        */
       const bool progressCondition = totalCost < (lineSearchImpl_.baselineTotalCost * (1.0 - 1e-3 * stepLength));
       const bool armijoCondition = totalCost < (lineSearchImpl_.baselineTotalCost -
-                                                  ddpSettings_.lineSearch_.armijoCoefficient_ * stepLength * nominalControllerUpdateIS_);
+                                                ddpSettings_.lineSearch_.armijoCoefficient_ * stepLength * nominalControllerUpdateIS_);
       if (armijoCondition && stepLength > lineSearchImpl_.stepLengthStar) {
         nominalTotalCost_ = totalCost;
         lineSearchImpl_.stepLengthStar = stepLength;
@@ -1074,8 +1130,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::levenbergMarquardt() {
   // do a full step rollout
   const scalar_t stepLength = isInitInternalControllerEmpty_ ? 0.0 : 1.0;
   lineSearchWorker(taskId, stepLength, totalCost, stateInputEqConstraintISE, stateEqConstraintISE, stateEqFinalConstraintISE,
-                   inequalityConstraintPenalty, inequalityConstraintISE, nominalControllersStock_, timeTrajectoriesStock, postEventIndicesStock,
-                   stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock);
+                   inequalityConstraintPenalty, inequalityConstraintISE, nominalControllersStock_, timeTrajectoriesStock,
+                   postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock);
 
   // alias for the Levenberg_Marquardt settings
   const auto& lvSettings = ddpSettings_.levenbergMarquardt_;

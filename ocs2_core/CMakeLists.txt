@@ -248,10 +248,10 @@ target_link_libraries(test_lookup
 )
 
 catkin_add_gtest(derivative_checker_unittest
-        test/dynamics/testSystemDynamicsLinearizer.cpp
+  test/dynamics/testSystemDynamicsLinearizer.cpp
 )
 target_link_libraries(derivative_checker_unittest
-        ${catkin_LIBRARIES}
+  ${catkin_LIBRARIES}
 )
 
 catkin_add_gtest(test_ThreadPool
@@ -265,10 +265,17 @@ target_link_libraries(test_ThreadPool
 )
 
 catkin_add_gtest(test_CostFunctionLinearCombination
-        test/cost/testCostFunctionLinearCombination.cpp
-        )
+  test/cost/testCostFunctionLinearCombination.cpp
+)
 target_link_libraries(test_CostFunctionLinearCombination
-        ${Boost_LIBRARIES}
-        ${catkin_LIBRARIES}
-        gtest_main
-        )
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(test_ModelDataBase
+  test/model_data/testModelDataBase.cpp
+)
+target_link_libraries(test_ModelDataBase
+  ${catkin_LIBRARIES}
+)

@@ -34,7 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <string>
 
-#include <ocs2_core/Dimensions.h>
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/misc/LoadData.h>
 
@@ -47,8 +46,6 @@ namespace ocs2 {
  */
 class Rollout_Settings {
  public:
-  using RICCATI_INTEGRATOR_TYPE = Dimensions<0, 0>::RiccatiIntegratorType;
-
   /**
    * Constructor with all settings as arguments.
    *
@@ -144,14 +141,14 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, const st
   loadData::loadPtreeValue(pt, maxNumStepsPerSecond_, fieldName + ".maxNumStepsPerSecond", verbose);
   loadData::loadPtreeValue(pt, minTimeStep_, fieldName + ".minTimeStep", verbose);
 
-  auto tmp = static_cast<int>(integratorType_);
-  loadData::loadPtreeValue(pt, tmp, fieldName + ".integratorType", verbose);
-  integratorType_ = static_cast<IntegratorType>(tmp);
+  auto integratorName = integrator_type::toString(integratorType_);  // keep default
+  loadData::loadPtreeValue(pt, integratorName, fieldName + ".integratorType", verbose);
+  integratorType_ = integrator_type::fromString(integratorName);
 
   loadData::loadPtreeValue(pt, checkNumericalStability_, fieldName + ".checkNumericalStability", verbose);
   loadData::loadPtreeValue(pt, reconstructInputTrajectory_, fieldName + ".reconstructInputTrajectory", verbose);
 
-  tmp = static_cast<int>(rootFindingAlgorithm_);
+  auto tmp = static_cast<int>(rootFindingAlgorithm_);  // keep default
   loadData::loadPtreeValue(pt, tmp, fieldName + ".rootFindingAlgorithm", verbose);
   rootFindingAlgorithm_ = static_cast<RootFinderType>(tmp);
 

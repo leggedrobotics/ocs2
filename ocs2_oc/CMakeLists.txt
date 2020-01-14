@@ -88,6 +88,14 @@ install(DIRECTORY test/include/${PROJECT_NAME}/
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_oc
 
+catkin_add_gtest(test_time_triggered_rollout
+   test/time_rollout_test.cpp
+)
+target_link_libraries(test_time_triggered_rollout
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+)
+
 catkin_add_gtest(state_triggered_rollout_test
   test/state_triggered_rollout_test.cpp
 )

@@ -105,7 +105,7 @@ pathIntegral
   rollout_settings
   {
     minTimeStep 0.01; will be used as time step in PI
-    integratorType 0; must be Euler (0) for PI to function
+    integratorType EULER; must be Euler (0) for PI to function
     checkNumericalStability 0
     reconstructInputTrajectory false; must be false for PI to function
   }

@@ -59,7 +59,7 @@ TEST(exp2_slq_test, DISABLED_exp2_slq_test) {
   slqSettings.ddpSettings_.strategy_ = DDP_Strategy::LINE_SEARCH;
   slqSettings.ddpSettings_.lineSearch_.minStepLength_ = 0.0001;
 
-  // switching times
+  // event times
   std::vector<double> eventTimes{0.2, 1.2};
   std::vector<size_t> subsystemsSequence{0, 1, 2};
   std::shared_ptr<EXP2_LogicRules> logicRules(new EXP2_LogicRules(eventTimes, subsystemsSequence));

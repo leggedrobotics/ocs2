@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/Numerics.h>
+#include <ocs2_core/model_data/ModelDataLinearInterpolation.h>
 
 namespace ocs2 {
 
@@ -67,6 +68,8 @@ class RolloutSensitivityEquations final : public ControlledSystemBase<STATE_DIM,
   using state_input_matrix_array_t = typename DIMENSIONS::state_input_matrix_array_t;
   using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
   using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
+  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+  using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
 
   using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
 
@@ -92,15 +95,11 @@ class RolloutSensitivityEquations final : public ControlledSystemBase<STATE_DIM,
   /**
    * Sets Data
    */
-  void setData(const scalar_array_t* timeTrajectoryPtr, const state_matrix_array_t* AmTrajectoryPtr,
-               const state_input_matrix_array_t* BmTrajectoryPtr, const state_vector_array_t* flowMapTrajectoryPtr,
+  void setData(const scalar_array_t* timeTrajectoryPtr, const ModelDataBase::array_t* modelDataPtr,
                const scalar_array_t* sensitivityControllerTimePtr, const input_vector_array_t* sensitivityControllerFeedforwardPtr,
                const input_state_matrix_array_t* sensitivityControllerFeedbackPtr) {
     timeTrajectoryPtr_ = timeTrajectoryPtr;
-    AmTrajectoryPtr_ = AmTrajectoryPtr;
-    BmTrajectoryPtr_ = BmTrajectoryPtr;
-    flowMapTrajectoryPtr_ = flowMapTrajectoryPtr;
-
+    modelDataPtr_ = modelDataPtr;
     linearController_.setController(*sensitivityControllerTimePtr, *sensitivityControllerFeedforwardPtr, *sensitivityControllerFeedbackPtr);
     this->setController(&linearController_);
   }
@@ -123,12 +122,14 @@ class RolloutSensitivityEquations final : public ControlledSystemBase<STATE_DIM,
    */
   void computeFlowMap(const scalar_t& t, const state_vector_t& nabla_x, const input_vector_t& nabla_u,
                       state_vector_t& derivative) override {
-    auto indexAlpha = EigenLinearInterpolation<state_matrix_t>::interpolate(t, Am_, timeTrajectoryPtr_, AmTrajectoryPtr_);
-    EigenLinearInterpolation<state_input_matrix_t>::interpolate(indexAlpha, Bm_, BmTrajectoryPtr_);
+    const auto indexAlpha = LinearInterpolation<scalar_t>::timeSegment(t, timeTrajectoryPtr_);
+
+    ModelData::LinearInterpolation::interpolate(indexAlpha, Am_, modelDataPtr_, ModelData::dynamicsStateDerivative);
+    ModelData::LinearInterpolation::interpolate(indexAlpha, Bm_, modelDataPtr_, ModelData::dynamicsInputDerivative);
 
     if (!numerics::almost_eq(multiplier_, 0.0)) {
-      EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, flowMap_, flowMapTrajectoryPtr_);
-      derivative = Am_ * nabla_x + Bm_ * nabla_u + multiplier_ * flowMap_;
+      ModelData::LinearInterpolation::interpolate(indexAlpha, Fv_, modelDataPtr_, ModelData::dynamics);
+      derivative = Am_ * nabla_x + Bm_ * nabla_u + multiplier_ * Fv_;
     } else {
       derivative = Am_ * nabla_x + Bm_ * nabla_u;
     }
@@ -136,16 +137,13 @@ class RolloutSensitivityEquations final : public ControlledSystemBase<STATE_DIM,
 
  protected:
   scalar_t multiplier_ = 0.0;
+  const scalar_array_t* timeTrajectoryPtr_;
+  const ModelDataBase::array_t* modelDataPtr_;
   linear_controller_t linearController_;
 
-  const scalar_array_t* timeTrajectoryPtr_;
-  const state_matrix_array_t* AmTrajectoryPtr_;
-  const state_input_matrix_array_t* BmTrajectoryPtr_;
-  const state_vector_array_t* flowMapTrajectoryPtr_;
-
-  state_matrix_t Am_;
-  state_input_matrix_t Bm_;
-  state_vector_t flowMap_;
+  dynamic_vector_t Fv_;
+  dynamic_matrix_t Am_;
+  dynamic_matrix_t Bm_;
 };
 
 }  // namespace ocs2

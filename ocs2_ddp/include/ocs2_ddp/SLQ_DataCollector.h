@@ -62,9 +62,6 @@ class SLQ_DataCollector {
   using scalar_array_t = typename slq_t::scalar_array_t;
   using scalar_array2_t = typename slq_t::scalar_array2_t;
   using scalar_array3_t = typename slq_t::scalar_array3_t;
-  using eigen_scalar_t = typename slq_t::eigen_scalar_t;
-  using eigen_scalar_array_t = typename slq_t::eigen_scalar_array_t;
-  using eigen_scalar_array2_t = typename slq_t::eigen_scalar_array2_t;
   using state_vector_t = typename slq_t::state_vector_t;
   using state_vector_array_t = typename slq_t::state_vector_array_t;
   using state_vector_array2_t = typename slq_t::state_vector_array2_t;
@@ -158,39 +155,17 @@ class SLQ_DataCollector {
   state_vector_array2_t nominalStateTrajectoriesStock_;
   input_vector_array2_t nominalInputTrajectoriesStock_;
 
-  state_matrix_array2_t AmTrajectoriesStock_;
-  state_input_matrix_array2_t BmTrajectoriesStock_;
+  // model data trajectory
+  ModelDataBase::array2_t modelDataTrajectoriesStock_;
 
-  size_array2_t nc1TrajectoriesStock_;  // nc1: Number of the Type-1  active constraints
-  constraint1_vector_array2_t EvTrajectoriesStock_;
-  constraint1_state_matrix_array2_t CmTrajectoriesStock_;
-  constraint1_input_matrix_array2_t DmTrajectoriesStock_;
-
-  size_array2_t nc2TrajectoriesStock_;  // nc2: Number of the Type-2 active constraints
-  constraint2_vector_array2_t HvTrajectoriesStock_;
-  constraint2_state_matrix_array2_t FmTrajectoriesStock_;
-  std::vector<size_array_t> nc2FinalStock_;
+  // terminal LQ coefficients
+  size_array2_t nc2FinalStock_;
   constraint2_vector_array2_t HvFinalStock_;
   constraint2_state_matrix_array2_t FmFinalStock_;
 
-  size_array2_t ncIneqTrajectoriesStock_;  // ncIneq: Number of inequality constraints
-  scalar_array3_t hTrajectoryStock_;
-  state_vector_array3_t dhdxTrajectoryStock_;
-  state_matrix_array3_t ddhdxdxTrajectoryStock_;
-  input_vector_array3_t dhduTrajectoryStock_;
-  input_matrix_array3_t ddhduduTrajectoryStock_;
-  input_state_matrix_array3_t ddhdudxTrajectoryStock_;
-
-  eigen_scalar_array2_t qFinalStock_;
+  scalar_array2_t qFinalStock_;
   state_vector_array2_t QvFinalStock_;
   state_matrix_array2_t QmFinalStock_;
-
-  eigen_scalar_array2_t qTrajectoriesStock_;
-  state_vector_array2_t QvTrajectoriesStock_;
-  state_matrix_array2_t QmTrajectoriesStock_;
-  input_vector_array2_t RvTrajectoriesStock_;
-  input_matrix_array2_t RmTrajectoriesStock_;
-  input_state_matrix_array2_t PmTrajectoriesStock_;
 
   input_matrix_array2_t RmInverseTrajectoriesStock_;
   state_matrix_array2_t AmConstrainedTrajectoriesStock_;
@@ -203,22 +178,21 @@ class SLQ_DataCollector {
   input_matrix_array2_t DmProjectedTrajectoriesStock_;        // DmDager * Dm
 
   // terminal cost which is interpreted as the Heuristic function
-  eigen_scalar_t sHeuristics_;
+  scalar_t sHeuristics_;
   state_vector_t SvHeuristics_;
   state_matrix_t SmHeuristics_;
 
   scalar_array2_t SsTimeTrajectoriesStock_;
   scalar_array2_t SsNormalizedTimeTrajectoriesStock_;
   size_array2_t SsNormalizedEventsPastTheEndIndecesStock_;
-  state_matrix_array2_t SmTrajectoriesStock_;
-  state_vector_array2_t SvTrajectoriesStock_;
+  scalar_array2_t sTrajectoriesStock_;
   state_vector_array2_t SveTrajectoriesStock_;
-  eigen_scalar_array2_t sTrajectoriesStock_;
+  state_vector_array2_t SvTrajectoriesStock_;
+  state_matrix_array2_t SmTrajectoriesStock_;
 
   /******************
    * SLQ missing variables
    ******************/
-  state_vector_array2_t nominalFlowMapTrajectoriesStock_;
   constraint1_vector_array3_t EvDevEventTimesTrajectoriesStockSet_;     // state-input constraint derivative w.r.t. event times
   input_vector_array3_t EvDevEventTimesProjectedTrajectoriesStockSet_;  // DmDager * EvDevEventTimes
 
@@ -231,20 +205,6 @@ class SLQ_DataCollector {
    * @return True if number of partitions is changed.
    */
   void resizeDataContainer(const size_t& numPartitions);
-
-  /**
-   * Calculates the time derivatives of the nominal state trajectory.
-   *
-   * @param [in] constSlqPtr: A pointer to the SLQ instance.
-   * @param [in] timeTrajectoriesStock: The time trajectory stamp.
-   * @param [in] stateTrajectoriesStock: The state trajectory.
-   * @param [in] inputTrajectoriesStock: The control input trajectory.
-   * @param [out] flowMapTrajectoriesStock: An array of the time
-   * derivatives of the nominal state trajectory.
-   */
-  void calculateFlowMap(const slq_t* constSlqPtr, const std::vector<scalar_array_t>& timeTrajectoriesStock,
-                        const state_vector_array2_t& stateTrajectoriesStock, const input_vector_array2_t& inputTrajectoriesStock,
-                        state_vector_array2_t& flowMapTrajectoriesStock);
 
   /**
    * Calculates sensitivity of the state-input constraints to event times.

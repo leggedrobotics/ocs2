@@ -23,7 +23,7 @@ templateSwitchingTimes
 slq
 {
     useNominalTimeForBackwardPass  0
-    RiccatiIntegratorType          1        ; ODE45 = 1, ADAMS_BASHFORTH = 2, BULIRSCH_STOER = 3, ADAMS_BASHFORTH_MOULTON = 4
+    RiccatiIntegratorType          ODE45  ; ODE45, ADAMS_BASHFORTH, BULIRSCH_STOER, ADAMS_BASHFORTH_MOULTON
     adams_integrator_dt            0.01
     preComputeRiccatiTerms         0
 
@@ -121,7 +121,7 @@ pathIntegral
   rollout_settings
   {
     minTimeStep 0.01; will be used as time step in PI
-    integratorType 0; must be Euler (0) for PI to function
+    integratorType EULER; must be Euler (0) for PI to function
     checkNumericalStability 0
     reconstructInputTrajectory false; must be false for PI to function
   }

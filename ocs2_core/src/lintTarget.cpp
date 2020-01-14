@@ -41,7 +41,6 @@
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 
 // Integration
-#include <ocs2_core/integration/EventHandlerBase.h>
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/integration/IntegratorBase.h>
 #include <ocs2_core/integration/Observer.h>
@@ -68,6 +67,9 @@
 #include <ocs2_core/misc/Lookup.h>
 #include <ocs2_core/misc/SetThreadPriority.h>
 #include <ocs2_core/misc/randomMatrices.h>
+
+// model_data
+#include <ocs2_core/model_data/ModelDataBase.h>
 
 // dummy target for clang toolchain
 int main() {

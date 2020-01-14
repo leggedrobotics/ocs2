@@ -66,10 +66,10 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   rolloutSettings.relTolODE_ = 1e-7;
   rolloutSettings.maxNumStepsPerSecond_ = 10000;
 
-  // switching times
-  std::vector<double> switchingTimes{0.1897};
+  // event times
+  std::vector<double> eventTimes{0.1897};
   std::vector<size_t> subsystemsSequence{0, 1};
-  std::shared_ptr<EXP0_LogicRules> logicRules(new EXP0_LogicRules(switchingTimes, subsystemsSequence));
+  std::shared_ptr<EXP0_LogicRules> logicRules(new EXP0_LogicRules(eventTimes, subsystemsSequence));
 
   double startTime = 0.0;
   double finalTime = 2.0;
@@ -77,7 +77,7 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   // partitioning times
   std::vector<double> partitioningTimes;
   partitioningTimes.push_back(startTime);
-  partitioningTimes.push_back(switchingTimes[0]);
+  partitioningTimes.push_back(eventTimes[0]);
   partitioningTimes.push_back(finalTime);
 
   EXP0_System::state_vector_t initState(0.0, 2.0);

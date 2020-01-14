@@ -106,7 +106,8 @@ void RaisimRollout<STATE_DIM, INPUT_DIM>::setPdGains(const Eigen::VectorXd& pGai
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename RaisimRollout<STATE_DIM, INPUT_DIM>::state_vector_t RaisimRollout<STATE_DIM, INPUT_DIM>::runImpl(
     time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller, scalar_array_t& timeTrajectory,
-    size_array_t& postEventIndicesStock, state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory) {
+    size_array_t& postEventIndicesStock, state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory,
+    ModelDataBase::array_t* modelDataTrajectoryPtr) {
   assert(controller != nullptr);
 
   world_.setTimeStep(this->settings().minTimeStep_);

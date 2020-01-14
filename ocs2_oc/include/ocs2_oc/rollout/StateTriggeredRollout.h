@@ -35,7 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/integration/StateTriggeredEventHandler.h>
-#include <ocs2_core/integration/SystemEventHandler.h>
 
 #include "ocs2_oc/rollout/RolloutBase.h"
 #include "ocs2_oc/rollout/RootFinder.h"
@@ -66,10 +65,9 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
   using time_interval_array_t = typename BASE::time_interval_array_t;
   using dynamic_vector_t = typename BASE::dynamic_vector_t;
 
-  using event_handler_t = SystemEventHandler<STATE_DIM>;
   using state_triggered_event_handler_t = StateTriggeredEventHandler<STATE_DIM>;
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
-  using ode_base_t = IntegratorBase<STATE_DIM>;
+  using ode_solver_t = IntegratorBase<STATE_DIM>;
 
   using trajectory_spreading_controller_t = stateBasedLinearController<STATE_DIM, INPUT_DIM>;
   /**
@@ -83,7 +81,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
         systemDynamicsPtr_(systemDynamics.clone()),
         systemEventHandlersPtr_(new state_triggered_event_handler_t(this->settings().minTimeStep_)) {
     // construct dynamicsIntegratorsPtr
-    constructDynamicsIntegrator(this->settings().integratorType_);
+    dynamicsIntegratorPtr_ = std::move(newIntegrator<STATE_DIM>(this->settings().integratorType_, systemEventHandlersPtr_));
   }
 
   /**
@@ -107,7 +105,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
  protected:
   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
                          scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
-                         input_vector_array_t& inputTrajectory) override {
+                         input_vector_array_t& inputTrajectory, ModelDataBase::array_t* modelDataTrajectoryPtr) override {
     if (!controller) {
       throw std::runtime_error("The input controller is not set.");
     }
@@ -125,6 +123,10 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     inputTrajectory.reserve(maxNumSteps + 1);
     eventsPastTheEndIndeces.clear();
     eventsPastTheEndIndeces.reserve(maxNumSteps);
+    if (modelDataTrajectoryPtr) {
+      modelDataTrajectoryPtr->clear();
+      modelDataTrajectoryPtr->reserve(maxNumSteps + 1);
+    }
 
     // set controller
     trajectory_spreading_controller_t trajectorySpreadingController;
@@ -158,8 +160,9 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     while (true) {  // keeps looping until end time condition is fulfilled, after which the loop is broken
       bool triggered = false;
       try {
-        dynamicsIntegratorPtr_->integrate(x0, t0, t1, stateTrajectory, timeTrajectory, this->settings().minTimeStep_,
-                                          this->settings().absTolODE_, this->settings().relTolODE_, maxNumSteps, true);
+        Observer<STATE_DIM> observer(&stateTrajectory, &timeTrajectory, modelDataTrajectoryPtr);  // concatenate trajectory
+        dynamicsIntegratorPtr_->integrate_adaptive(*systemDynamicsPtr_, observer, x0, t0, t1, this->settings().minTimeStep_,
+                                                   this->settings().absTolODE_, this->settings().relTolODE_, maxNumSteps);
       } catch (const size_t& e) {
         eventID = e;
         triggered = true;
@@ -184,6 +187,9 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       if (triggered && !accuracyCondition) {
         stateTrajectory.pop_back();
         timeTrajectory.pop_back();
+        if (modelDataTrajectoryPtr) {
+          modelDataTrajectoryPtr->pop_back();
+        }
       }
       triggered = false;
 
@@ -239,6 +245,9 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
         stateTrajectory.pop_back();
         timeTrajectory.pop_back();
         inputTrajectory.pop_back();
+        if (modelDataTrajectoryPtr) {
+          modelDataTrajectoryPtr->pop_back();
+        }
         k_u--;
       }
       singleEventIterations++;
@@ -251,64 +260,12 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     return stateTrajectory.back();
   }  // end of function
 
-  /**
-   * Constructs dynamicsIntegratorPtr_ based on the integratorType.
-   *
-   * @param [in] integratorType: Integrator type.
-   */
-  void constructDynamicsIntegrator(IntegratorType integratorType) {
-    switch (integratorType) {
-      case (IntegratorType::EULER): {
-        dynamicsIntegratorPtr_.reset(new IntegratorEuler<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
-        break;
-      }
-      case (IntegratorType::MODIFIED_MIDPOINT): {
-        dynamicsIntegratorPtr_.reset(new IntegratorModifiedMidpoint<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
-        break;
-      }
-      case (IntegratorType::RK4): {
-        dynamicsIntegratorPtr_.reset(new IntegratorRK4<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
-        break;
-      }
-      case (IntegratorType::RK5_VARIABLE): {
-        dynamicsIntegratorPtr_.reset(new IntegratorRK5Variable<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
-        break;
-      }
-      case (IntegratorType::ODE45): {
-        dynamicsIntegratorPtr_.reset(new ODE45<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
-        break;
-      }
-      case (IntegratorType::ADAMS_BASHFORTH): {
-        const size_t numberSteps = 1;
-        dynamicsIntegratorPtr_.reset(new IntegratorAdamsBashforth<STATE_DIM, numberSteps>(systemDynamicsPtr_, systemEventHandlersPtr_));
-        break;
-      }
-      case (IntegratorType::BULIRSCH_STOER): {
-        dynamicsIntegratorPtr_.reset(new IntegratorBulirschStoer<STATE_DIM>(systemDynamicsPtr_, systemEventHandlersPtr_));
-        break;
-      }
-#if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 55)
-      case (IntegratorType::ADAMS_BASHFORTH_MOULTON): {
-        const size_t numberSteps = 1;  // maximum is 8
-        dynamicsIntegratorPtr_.reset(
-            new IntegratorAdamsBashforthMoulton<STATE_DIM, numberSteps>(systemDynamicsPtr_, systemEventHandlersPtr_));
-        break;
-      }
-#endif
-      default: {
-        throw std::runtime_error("Integrator of type " +
-                                 std::to_string(static_cast<std::underlying_type<IntegratorType>::type>(integratorType)) +
-                                 " is not supported in StateTriggeredRollout.");
-      }
-    }
-  }
-
  private:
-  std::shared_ptr<controlled_system_base_t> systemDynamicsPtr_;
+  std::unique_ptr<controlled_system_base_t> systemDynamicsPtr_;
 
   std::shared_ptr<state_triggered_event_handler_t> systemEventHandlersPtr_;
 
-  std::unique_ptr<ode_base_t> dynamicsIntegratorPtr_;
+  std::unique_ptr<ode_solver_t> dynamicsIntegratorPtr_;
 };
 
 }  // namespace ocs2

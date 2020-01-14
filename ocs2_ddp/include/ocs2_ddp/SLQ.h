@@ -204,7 +204,7 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] SveFinal: The final Sve for the current Riccati equation.
    */
   void constrainedRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal,
-                                         const state_vector_t& SvFinal, const eigen_scalar_t& sFinal, const state_vector_t& SveFinal);
+                                         const state_vector_t& SvFinal, const scalar_t& sFinal, const state_vector_t& SveFinal);
   /**
    * Solves a set of Riccati equations for the partition in the given index.
    *
@@ -215,7 +215,7 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] sFinal: The final s for Riccati equation.
    */
   void riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
-                              const eigen_scalar_t& sFinal);
+                              const scalar_t& sFinal);
 
   /**
    * Type_1 constraints error correction compensation which solves a set of error Riccati equations for the partition in the given index.
@@ -280,11 +280,9 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   input_matrix_array2_t DmProjectedTrajectoryStock_;        // DmDager * Dm
 
   std::vector<std::shared_ptr<riccati_equations_t>> riccatiEquationsPtrStock_;
-  std::vector<std::shared_ptr<SystemEventHandler<riccati_equations_t::S_DIM_>>> riccatiEventPtrStock_;
-  std::vector<std::shared_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>> riccatiIntegratorPtrStock_;
+  std::vector<std::unique_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>> riccatiIntegratorPtrStock_;
   std::vector<std::shared_ptr<error_equation_t>> errorEquationPtrStock_;
-  std::vector<std::shared_ptr<SystemEventHandler<STATE_DIM>>> errorEventPtrStock_;
-  std::vector<std::shared_ptr<IntegratorBase<STATE_DIM>>> errorIntegratorPtrStock_;
+  std::vector<std::unique_ptr<IntegratorBase<STATE_DIM>>> errorIntegratorPtrStock_;
 };
 
 }  // namespace ocs2

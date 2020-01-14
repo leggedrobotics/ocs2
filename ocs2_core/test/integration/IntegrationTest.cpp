@@ -165,12 +165,12 @@ TEST(IntegrationTest, model_data_test) {
 }
 
 TEST(IntegrationTest, integratorType_from_string) {
-  IntegratorType type = fromString("ODE45");
+  IntegratorType type = integrator_type::fromString("ODE45");
   EXPECT_EQ(type, IntegratorType::ODE45);
 }
 
 TEST(IntegrationTest, integratorType_to_string) {
-  std::string name = toString(IntegratorType::ODE45);
+  std::string name = integrator_type::toString(IntegratorType::ODE45);
   EXPECT_EQ(name, "ODE45");
 }
 

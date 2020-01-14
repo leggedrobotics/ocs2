@@ -100,7 +100,7 @@ class BvpSensitivityErrorEquations final : public OdeBase<STATE_DIM> {
    * Sets Data
    */
   void setData(const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* modelDataPtr, const state_matrix_array_t* AmConstrainedPtr,
-               const input_state_matrix_array_t* CmProjectedPtr, const input_matrix_array_t* RmInversePtr,
+               const input_state_matrix_array_t* CmProjectedPtr, const dynamic_matrix_array_t* RmInversePtr,
                const dynamic_matrix_array_t* RinvCholPtr, const input_vector_array_t* EvDevProjectedPtr,
                const scalar_array_t* SmTimeStampPtr, const state_matrix_array_t* SmPtr) {
     timeStampPtr_ = timeStampPtr;
@@ -133,7 +133,7 @@ class BvpSensitivityErrorEquations final : public OdeBase<STATE_DIM> {
 
     EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, AmConstrained_, AmConstrainedPtr_);
     EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, CmProjected_, CmProjectedPtr_);
-    EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, RmInverse_, RmInversePtr_);
+    EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, RmInverse_, RmInversePtr_);
     EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, RinvChol_, RinvCholPtr_);
     EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, EvDevProjected_, EvDevProjectedPtr_);
 
@@ -154,7 +154,7 @@ class BvpSensitivityErrorEquations final : public OdeBase<STATE_DIM> {
   const ModelDataBase::array_t* modelDataPtr_;
   const state_matrix_array_t* AmConstrainedPtr_;
   const input_state_matrix_array_t* CmProjectedPtr_;
-  const input_matrix_array_t* RmInversePtr_;
+  const dynamic_matrix_array_t* RmInversePtr_;
   const dynamic_matrix_array_t* RinvCholPtr_;
   const input_vector_array_t* EvDevProjectedPtr_;
   const scalar_array_t* SmTimeStampPtr_;
@@ -165,7 +165,7 @@ class BvpSensitivityErrorEquations final : public OdeBase<STATE_DIM> {
   dynamic_matrix_t Pm_;
   state_matrix_t AmConstrained_;
   input_state_matrix_t CmProjected_;
-  input_matrix_t RmInverse_;
+  dynamic_matrix_t RmInverse_;
   dynamic_matrix_t RinvChol_;
   input_vector_t EvDevProjected_;
   state_matrix_t Sm_;

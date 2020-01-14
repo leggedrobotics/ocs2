@@ -167,7 +167,7 @@ class SLQ_DataCollector {
   state_vector_array2_t QvFinalStock_;
   state_matrix_array2_t QmFinalStock_;
 
-  input_matrix_array2_t RmInverseTrajectoriesStock_;
+  dynamic_matrix_array2_t RmInverseTrajectoriesStock_;
   state_matrix_array2_t AmConstrainedTrajectoriesStock_;
   state_matrix_array2_t QmConstrainedTrajectoriesStock_;
   state_vector_array2_t QvConstrainedTrajectoriesStock_;

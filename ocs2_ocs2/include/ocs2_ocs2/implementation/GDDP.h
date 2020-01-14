@@ -753,8 +753,8 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateLQSensitivityControllerForward(size_t 
       ModelData::LinearInterpolation::interpolate(indexAlpha, Bm, &dataCollectorPtr_->modelDataTrajectoriesStock_[i],
                                                   ModelData::dynamicsInputDerivative);
       // RmInverse
-      input_matrix_t RmInverse;
-      EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, RmInverse, &dataCollectorPtr_->RmInverseTrajectoriesStock_[i]);
+      dynamic_matrix_t RmInverse;
+      EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, RmInverse, &dataCollectorPtr_->RmInverseTrajectoriesStock_[i]);
       // nablaRv
       input_vector_t nablaRv;
       EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, nablaRv, &nablaRvTrajectoriesStockSet_[eventTimeIndex][i]);
@@ -797,8 +797,8 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateBVPSensitivityControllerForward(size_t
       ModelData::LinearInterpolation::interpolate(indexAlpha, Bm, &(dataCollectorPtr_->modelDataTrajectoriesStock_[i]),
                                                   ModelData::dynamicsInputDerivative);
       // RmInverse
-      input_matrix_t RmInverse;
-      EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, RmInverse, &dataCollectorPtr_->RmInverseTrajectoriesStock_[i]);
+      dynamic_matrix_t RmInverse;
+      EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, RmInverse, &dataCollectorPtr_->RmInverseTrajectoriesStock_[i]);
       // DmProjected
       input_matrix_t DmProjected;
       EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, DmProjected, &dataCollectorPtr_->DmProjectedTrajectoriesStock_[i]);

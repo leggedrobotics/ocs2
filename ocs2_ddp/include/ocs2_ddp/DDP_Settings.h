@@ -45,8 +45,6 @@ namespace ocs2 {
  * This structure contains the settings for the DDP algorithm.
  */
 struct DDP_Settings {
-  using RICCATI_INTEGRATOR_TYPE = Dimensions<0, 0>::RiccatiIntegratorType;
-
   /** Maximum number of iterations of DDP. */
   size_t maxNumIterations_ = 15;
   /** This value determines the termination condition based on the minimum relative changes of the cost. */

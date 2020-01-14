@@ -102,8 +102,8 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(const scalar_arra
                                                                const state_matrix_array_t* AmPtr, const state_vector_array_t* QvPtr,
                                                                const state_matrix_array_t* QmPtr, const dynamic_matrix_array_t* RinvCholPtr,
                                                                const size_array_t* postEventIndicesPtr, const scalar_array_t* qFinalPtr,
-                                                               const state_vector_array_t* QvFinalPtr,
-                                                               const state_matrix_array_t* QmFinalPtr) {
+                                                               const state_vector_array_t* QvFinalPtr, const state_matrix_array_t* QmFinalPtr,
+															   const riccati_modification_t* riccatiModificationPtr) {
   BASE::resetNumFunctionCalls();
 
   // TODO fix
@@ -154,7 +154,6 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(const scalar_arra
     // These terms are initialized by copying the cost function terms and substracting the rest inside the loop below
     Qm_minus_P_Rinv_P_array_ = *QmPtr;
     Qv_minus_P_Rinv_Rv_array_ = *QvPtr;
-    q_minus_half_Rv_Rinv_Rv_array_ = *qPtr;
 
     // Precompute all terms for all interpolation nodes
     dynamic_matrix_t PmT_RinvChol;
@@ -216,7 +215,7 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const scal
   if (preComputeRiccatiTerms_) {
     EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, Qm_, &Qm_minus_P_Rinv_P_array_);
     EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Qv_, &Qv_minus_P_Rinv_Rv_array_);
-    LinearInterpolation<scalar_t>::interpolate(indexAlpha, q_, qPtr_);
+    ModelData::LinearInterpolation::interpolate(indexAlpha, q_, modelDataPtr_, ModelData::cost);
     EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, AmT_minus_P_Rinv_Bm_, &AmT_minus_P_Rinv_B_array_);
     EigenLinearInterpolation<dynamic_vector_t>::interpolate(indexAlpha, RinvCholT_Rv_, &RinvCholT_Rv_array_);
     EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, B_RinvChol_, &B_RinvChol_array_);
@@ -265,7 +264,7 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const scal
     Qv_.noalias() -= SmT_B_RinvChol_.transpose() * RinvCholT_Rv_;
 
     // dsdt,   q_ used instead of temporary
-    q_.noalias() -= 0.5 * RinvCholT_Rv_.transpose() * RinvCholT_Rv_;
+    q_ -= 0.5 * RinvCholT_Rv_.dot(RinvCholT_Rv_);
   }
 
   // TODO FIx this

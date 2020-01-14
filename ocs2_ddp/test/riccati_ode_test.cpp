@@ -106,7 +106,7 @@ class RiccatiInitializer {
 
   void initialize(riccati_t& riccati) {
     riccati.setData(timeStamp.get(), modelDataBaseArray.get(), Am.get(), Qv.get(), Qm.get(), RinvChol.get(), &eventsPastTheEndIndeces,
-                    &qFinal, &QvFinal, &QmFinal);
+                    &qFinal, &QvFinal, &QmFinal, &riccatiModification);
   }
 };
 

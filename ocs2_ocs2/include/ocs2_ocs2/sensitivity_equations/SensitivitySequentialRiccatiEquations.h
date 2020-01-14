@@ -76,6 +76,7 @@ class SensitivitySequentialRiccatiEquations final : public OdeBase<STATE_DIM*(ST
   using state_input_matrix_array_t = typename DIMENSIONS::state_input_matrix_array_t;
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
   using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
+  using dynamic_matrix_array_t = typename DIMENSIONS::dynamic_matrix_array_t;
 
   using s_vector_t = Eigen::Matrix<scalar_t, S_DIM_, 1>;
   using s_vector_array_t = std::vector<s_vector_t, Eigen::aligned_allocator<s_vector_t> >;
@@ -160,7 +161,7 @@ class SensitivitySequentialRiccatiEquations final : public OdeBase<STATE_DIM*(ST
    */
   void setData(const scalar_t& learningRate, const scalar_array_t* SsTimePtr, const state_matrix_array_t* SmPtr,
                const state_vector_array_t* SvPtr, const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* modelDataPtr,
-               const input_matrix_array_t* RmInversePtr, const scalar_array_t* nablaqPtr, const state_vector_array_t* nablaQvPtr,
+               const dynamic_matrix_array_t* RmInversePtr, const scalar_array_t* nablaqPtr, const state_vector_array_t* nablaQvPtr,
                const input_vector_array_t* nablaRvPtr) {
     alpha_ = learningRate;
 
@@ -211,7 +212,7 @@ class SensitivitySequentialRiccatiEquations final : public OdeBase<STATE_DIM*(ST
     ModelData::LinearInterpolation::interpolate(indexAlpha, Qm_, modelDataPtr_, ModelData::costStateSecondDerivative);
     ModelData::LinearInterpolation::interpolate(indexAlpha, Rm_, modelDataPtr_, ModelData::costInputSecondDerivative);
     ModelData::LinearInterpolation::interpolate(indexAlpha, Pm_, modelDataPtr_, ModelData::costInputStateDerivative);
-    EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, invRm_, RmInversePtr_);
+    EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, invRm_, RmInversePtr_);
     LinearInterpolation<scalar_t>::interpolate(indexAlpha, nabla_q_, nablaqPtr_);
     EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, nabla_Qv_, nablaQvPtr_);
     EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, nabla_Rv_, nablaRvPtr_);
@@ -259,7 +260,7 @@ class SensitivitySequentialRiccatiEquations final : public OdeBase<STATE_DIM*(ST
   const state_vector_array_t* SvPtr_;
   const scalar_array_t* timeStampPtr_;
   const ModelDataBase::array_t* modelDataPtr_;
-  const input_matrix_array_t* RmInversePtr_;
+  const dynamic_matrix_array_t* RmInversePtr_;
   const scalar_array_t* nablaqPtr_;
   const state_vector_array_t* nablaQvPtr_;
   const input_vector_array_t* nablaRvPtr_;
@@ -277,7 +278,7 @@ class SensitivitySequentialRiccatiEquations final : public OdeBase<STATE_DIM*(ST
   dynamic_matrix_t Qm_;
   dynamic_matrix_t Rm_;
   dynamic_matrix_t Pm_;
-  input_matrix_t invRm_;
+  dynamic_matrix_t invRm_;
   scalar_t nabla_q_;
   state_vector_t nabla_Qv_;
   input_vector_t nabla_Rv_;

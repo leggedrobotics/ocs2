@@ -76,8 +76,8 @@ void ILQR<STATE_DIM, INPUT_DIM>::approximateLQWorker(size_t workerIndex, size_t 
 
   // Compute R inverse after inequalities are added to the cost
   // Compute it through the Cholesky decomposition as we can reuse the factorization later on
-  input_matrix_t RinvChol;
-  const auto& Rm = RmDtimeTrajectoryStock_[partitionIndex][timeIndex];
+  dynamic_matrix_t RinvChol;
+  const auto& Rm = discreteModelDataTrajectoriesStock_[partitionIndex][timeIndex].costInputSecondDerivative_;
   auto& RmCholeskyUpper = BASE::RmCholeskyUpperTrajectoryStock_[partitionIndex][timeIndex];
   LinearAlgebra::computeLinvTLinv(Rm, RmCholeskyUpper, RinvChol);
   BASE::RmInverseTrajectoryStock_[partitionIndex][timeIndex].noalias() = RinvChol * RinvChol.transpose();
@@ -174,8 +174,8 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void ILQR<STATE_DIM, INPUT_DIM>::computeRiccatiModificationTermsWorker(size_t workerIndex, size_t i, size_t k) {
   switch (BASE::ddpSettings_.strategy_) {
     case DDP_Strategy::LINE_SEARCH: {
-      auto& Qm = QmDtimeTrajectoryStock_[i][k];
-      auto& Pm = PmDtimeTrajectoryStock_[i][k];
+      auto& Qm = discreteModelDataTrajectoriesStock_[i][k].costStateSecondDerivative_;
+      auto& Pm = discreteModelDataTrajectoriesStock_[i][k].costInputStateDerivative_;
       auto& Rinv = RmInverseDtimeTrajectoryStock_[i][k];
       state_matrix_t Q_minus_PTRinvP = Qm - (Pm.transpose() * Rinv) * Pm;
       BASE::riccatiModificationStock_[i].deltaQmTrajectory_[k] = Q_minus_PTRinvP;
@@ -186,8 +186,8 @@ void ILQR<STATE_DIM, INPUT_DIM>::computeRiccatiModificationTermsWorker(size_t wo
       break;
     }
     case DDP_Strategy::LEVENBERG_MARQUARDT: {
-      const auto& Am = AmDtimeTrajectoryStock_[i][k];
-      const auto& Bm = BmDtimeTrajectoryStock_[i][k];
+      const auto& Am = discreteModelDataTrajectoriesStock_[i][k].dynamicsStateDerivative_;
+      const auto& Bm = discreteModelDataTrajectoriesStock_[i][k].dynamicsInputDerivative_;
       BASE::riccatiModificationStock_[i].deltaQmTrajectory_[k].setZero(STATE_DIM, STATE_DIM);
       BASE::riccatiModificationStock_[i].deltaRmTrajectory_[k] = BASE::levenbergMarquardtImpl_.riccatiMultiple * Bm.transpose() * Bm;
       BASE::riccatiModificationStock_[i].deltaPmTrajectory_[k] = BASE::levenbergMarquardtImpl_.riccatiMultiple * Bm.transpose() * Am;
@@ -408,8 +408,8 @@ void ILQR<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size
         input_vector_t Gv_plus_half_HmLv = Gv + 0.5 * Hm * Lv;
         input_state_matrix_t Gm_plus_half_HmLm = Gm + 0.5 * Hm * Lm;
 
-        BASE::sTrajectoryStock_[partitionIndex][k].noalias() =
-            q + BASE::sTrajectoryStock_[partitionIndex][k + 1] + Lv.transpose() * Gv_plus_half_HmLv;
+        BASE::sTrajectoryStock_[partitionIndex][k] =
+            q + BASE::sTrajectoryStock_[partitionIndex][k + 1] + Lv.dot(Gv_plus_half_HmLv);
         BASE::SvTrajectoryStock_[partitionIndex][k].noalias() = Qv + Am.transpose() * BASE::SvTrajectoryStock_[partitionIndex][k + 1] +
                                                                 Lm.transpose() * Gv_plus_half_HmLv + Gm_plus_half_HmLm.transpose() * Lv;
         BASE::SmTrajectoryStock_[partitionIndex][k].noalias() = QmCorrected +

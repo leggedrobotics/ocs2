@@ -550,7 +550,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * Line search with a specific learning rate.
    *
    * @param [in] workerIndex
-   * @param [in] learningRate
+   * @param [in] stepLength
    * @param [out] totalCost
    * @param [out] stateInputEqConstraintISE
    * @param [out] stateEqConstraintISE
@@ -564,7 +564,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [out] inputTrajectoriesStock
    * @param [out] modelDataTrajectoriesStock
    */
-  void lineSearchWorker(size_t workerIndex, scalar_t learningRate, scalar_t& totalCost, scalar_t& stateInputEqConstraintISE,
+  void lineSearchWorker(size_t workerIndex, scalar_t stepLength, scalar_t& totalCost, scalar_t& stateInputEqConstraintISE,
                         scalar_t& stateEqConstraintISE, scalar_t& stateEqFinalConstraintISE, scalar_t& inequalityConstraintPenalty,
                         scalar_t& inequalityConstraintISE, linear_controller_array_t& controllersStock,
                         scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
@@ -726,8 +726,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   state_matrix_array2_t QmFinalStock_;
 
   //
-  input_matrix_array2_t RmInverseTrajectoryStock_;
-  input_matrix_array2_t RmCholeskyUpperTrajectoryStock_;
+  dynamic_matrix_array2_t RmInverseTrajectoryStock_;
+  dynamic_matrix_array2_t RmCholeskyUpperTrajectoryStock_;
 
   // Riccati solution coefficients
   scalar_array2_t SsTimeTrajectoryStock_;
@@ -753,10 +753,9 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   // Line-Search
   struct LineSearchImpl {
-    bool lsComputeISEs;                                // whether lineSearch routine needs to calculate ISEs
-    scalar_t baselineTotalCost;                        // the cost of the rollout for zero learning rate
-    std::atomic<scalar_t> stepLengthStar;              // the optimal step length.
-    linear_controller_array_t initLScontrollersStock;  // needed for lineSearch
+    scalar_t baselineTotalCost;                      // the cost of the rollout for zero learning rate
+    std::atomic<scalar_t> stepLengthStar;            // the optimal step length.
+    linear_controller_array_t initControllersStock;  // needed for lineSearch
 
     std::atomic_size_t alphaExpNext;
     std::vector<bool> alphaProcessed;

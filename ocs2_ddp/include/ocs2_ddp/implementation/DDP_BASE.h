@@ -812,7 +812,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearch() {
   // number of line search iterations (the if statements order is important)
   size_t maxNumOfLineSearches = 0;
   if (numerics::almost_eq(ddpSettings_.lineSearch_.minStepLength_, ddpSettings_.lineSearch_.maxStepLength_)) {
@@ -820,19 +820,17 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
   } else if (ddpSettings_.lineSearch_.maxStepLength_ < ddpSettings_.lineSearch_.minStepLength_) {
     maxNumOfLineSearches = 0;
   } else {
-    const auto ratio =
-        (ddpSettings_.lineSearch_.minStepLength_ + OCS2NumericTraits<scalar_t>::limitEpsilon()) / ddpSettings_.lineSearch_.maxStepLength_;
-    maxNumOfLineSearches = static_cast<size_t>(std::log(ratio) / std::log(ddpSettings_.lineSearch_.contractionRate_) + 1);
+    const auto ratio = ddpSettings_.lineSearch_.minStepLength_ / ddpSettings_.lineSearch_.maxStepLength_;
+    maxNumOfLineSearches = static_cast<size_t>(std::log(ratio + OCS2NumericTraits<scalar_t>::limitEpsilon()) / std::log(ddpSettings_.lineSearch_.contractionRate_) + 1);
   }
 
   // perform a rollout while the input correction for the state-input equality constraint is considered.
   baselineRollout();
 
   // initialize lineSearchImpl
-  lineSearchImpl_.lsComputeISEs = computeISEs;
   lineSearchImpl_.baselineTotalCost = nominalTotalCost_;
   lineSearchImpl_.stepLengthStar = 0.0;
-  lineSearchImpl_.initLScontrollersStock = nominalControllersStock_;  // this will serve to init the workers
+  lineSearchImpl_.initControllersStock = nominalControllersStock_;  // this will serve to init the workers
   lineSearchImpl_.alphaExpNext = 0;
   lineSearchImpl_.alphaProcessed = std::vector<bool>(maxNumOfLineSearches, false);
 
@@ -879,7 +877,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::baselineRollout() {
   // display
   if (ddpSettings_.displayInfo_) {
     std::string linesearchDisplay;
-    linesearchDisplay = " \t [Thread " + std::to_string(threadId) + "] - learningRate 0.0" +
+    linesearchDisplay = " \t [Thread " + std::to_string(threadId) + "] - step length 0.0" +
                         " \t cost: " + std::to_string(nominalTotalCost_) +
                         " \t state-input equality constraint ISE: " + std::to_string(stateInputEqConstraintISE_) +
                         " \t state equality constraint ISE: " + std::to_string(stateEqConstraintISE_) +
@@ -936,10 +934,10 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
     }
 
     // do a line search
-    lsControllersStock = lineSearchImpl_.initLScontrollersStock;
-    lineSearchWorker(taskId, stepLength, lsTotalCost, lsConstraint1ISE, lsConstraint1MaxNorm, lsConstraint2ISE, lsConstraint2MaxNorm,
-                     lsInequalityConstraintPenalty, lsInequalityConstraintISE, lsControllersStock, lsTimeTrajectoriesStock,
-                     lsPostEventIndicesStock, lsStateTrajectoriesStock, lsInputTrajectoriesStock);
+    controllersStock = lineSearchImpl_.initControllersStock;
+    lineSearchWorker(taskId, stepLength, totalCost, stateInputEqConstraintISE, stateEqConstraintISE, stateEqFinalConstraintISE,
+                     inequalityConstraintPenalty, inequalityConstraintISE, controllersStock, timeTrajectoriesStock, postEventIndicesStock,
+                     stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock);
 
     bool terminateLinesearchTasks = false;
     {
@@ -950,24 +948,24 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
        * cost should be better than the baseline cost but learning rate should
        * be as high as possible. This is equivalent to a single core line search.
        */
-      const bool progressCondition = lsTotalCost < (lineSearchImpl_.baselineTotalCost * (1.0 - 1e-3 * stepLength));
-      const bool armijoCondition = lsTotalCost < (lineSearchImpl_.baselineTotalCost -
+      const bool progressCondition = totalCost < (lineSearchImpl_.baselineTotalCost * (1.0 - 1e-3 * stepLength));
+      const bool armijoCondition = totalCost < (lineSearchImpl_.baselineTotalCost -
                                                   ddpSettings_.lineSearch_.armijoCoefficient_ * stepLength * nominalControllerUpdateIS_);
       if (armijoCondition && stepLength > lineSearchImpl_.stepLengthStar) {
-        nominalTotalCost_ = lsTotalCost;
+        nominalTotalCost_ = totalCost;
         lineSearchImpl_.stepLengthStar = stepLength;
-        nominalConstraint1ISE_ = lsConstraint1ISE;
-        nominalConstraint1MaxNorm_ = lsConstraint1MaxNorm;
-        nominalConstraint2ISE_ = lsConstraint2ISE;
-        nominalConstraint2MaxNorm_ = lsConstraint2MaxNorm;
-        nominalInequalityConstraintPenalty_ = lsInequalityConstraintPenalty;
-        nominalInequalityConstraintISE_ = lsInequalityConstraintISE;
+        stateInputEqConstraintISE_ = stateInputEqConstraintISE;
+        stateEqConstraintISE_ = stateEqConstraintISE;
+        stateEqFinalConstraintISE_ = stateEqFinalConstraintISE;
+        inequalityConstraintPenalty_ = inequalityConstraintPenalty;
+        inequalityConstraintISE_ = inequalityConstraintISE;
 
-        nominalControllersStock_.swap(lsControllersStock);
-        nominalTimeTrajectoriesStock_.swap(lsTimeTrajectoriesStock);
-        nominalPostEventIndicesStock_.swap(lsPostEventIndicesStock);
-        nominalStateTrajectoriesStock_.swap(lsStateTrajectoriesStock);
-        nominalInputTrajectoriesStock_.swap(lsInputTrajectoriesStock);
+        nominalControllersStock_.swap(controllersStock);
+        nominalTimeTrajectoriesStock_.swap(timeTrajectoriesStock);
+        nominalPostEventIndicesStock_.swap(postEventIndicesStock);
+        nominalStateTrajectoriesStock_.swap(stateTrajectoriesStock);
+        nominalInputTrajectoriesStock_.swap(inputTrajectoriesStock);
+        modelDataTrajectoriesStock_.swap(modelDataTrajectoriesStock);
 
         // whether to stop all other thread.
         terminateLinesearchTasks = true;
@@ -1009,7 +1007,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t workerIndex, scalar
                                                       input_vector_array2_t& inputTrajectoriesStock,
                                                       ModelDataBase::array2_t& modelDataTrajectoriesStock) {
   // modifying uff by local increments
-  for (auto& controller : lsControllersStock) {
+  for (auto& controller : controllersStock) {
     for (size_t k = 0; k < controller.size(); k++) {
       controller.biasArray_[k] += stepLength * controller.deltaBiasArray_[k];
     }
@@ -1027,6 +1025,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t workerIndex, scalar
     // calculate rollout cost
     totalCost =
         calculateRolloutCost(timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock, workerIndex);
+
     // calculates rollout merit
     totalCost = calculateRolloutMerit(totalCost, stateInputEqConstraintISE, stateEqConstraintISE, stateEqFinalConstraintISE,
                                       inequalityConstraintPenalty);
@@ -1059,28 +1058,31 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t workerIndex, scalar
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::levenbergMarquardt() {
-  // levenberg marquardt forward simulation's variables
-  scalar_t lvTotalCost;
-  scalar_t lvConstraint1ISE, lvConstraint2ISE, lvInequalityConstraintPenalty, lvInequalityConstraintISE;
-  scalar_t lvConstraint1MaxNorm, lvConstraint2MaxNorm;
-  scalar_array2_t lvTimeTrajectoriesStock(numPartitions_);
-  size_array2_t lvPostEventIndicesStock(numPartitions_);
-  state_vector_array2_t lvStateTrajectoriesStock(numPartitions_);
-  input_vector_array2_t lvInputTrajectoriesStock(numPartitions_);
+  const size_t taskId = 0;
+
+  // local evenberg marquardt forward simulation's variables
+  scalar_t totalCost;
+  scalar_t stateInputEqConstraintISE;
+  scalar_t stateEqConstraintISE, stateEqFinalConstraintISE;
+  scalar_t inequalityConstraintPenalty, inequalityConstraintISE;
+  scalar_array2_t timeTrajectoriesStock(numPartitions_);
+  size_array2_t postEventIndicesStock(numPartitions_);
+  state_vector_array2_t stateTrajectoriesStock(numPartitions_);
+  input_vector_array2_t inputTrajectoriesStock(numPartitions_);
+  ModelDataBase::array2_t modelDataTrajectoriesStock(numPartitions_);
 
   // do a full step rollout
-  const size_t taskId = 0;
   const scalar_t stepLength = isInitInternalControllerEmpty_ ? 0.0 : 1.0;
-  lineSearchWorker(taskId, stepLength, lvTotalCost, lvConstraint1ISE, lvConstraint1MaxNorm, lvConstraint2ISE, lvConstraint2MaxNorm,
-                   lvInequalityConstraintPenalty, lvInequalityConstraintISE, nominalControllersStock_, lvTimeTrajectoriesStock,
-                   lvPostEventIndicesStock, lvStateTrajectoriesStock, lvInputTrajectoriesStock);
+  lineSearchWorker(taskId, stepLength, totalCost, stateInputEqConstraintISE, stateEqConstraintISE, stateEqFinalConstraintISE,
+                   inequalityConstraintPenalty, inequalityConstraintISE, nominalControllersStock_, timeTrajectoriesStock, postEventIndicesStock,
+                   stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock);
 
   // alias for the Levenberg_Marquardt settings
   const auto& lvSettings = ddpSettings_.levenbergMarquardt_;
 
   // compute pho (the ratio between actual reduction and predicted reduction)
-  const auto predictedCost = sTrajectoryStock_[initActivePartition_].front()(0);
-  auto actualReduction = nominalTotalCost_ - lvTotalCost;
+  const auto predictedCost = sTrajectoryStock_[initActivePartition_].front();
+  auto actualReduction = nominalTotalCost_ - totalCost;
   auto predictedReduction = nominalTotalCost_ - predictedCost;
   if (std::abs(actualReduction) < 1e-3 * std::abs(nominalTotalCost_)) {
     levenbergMarquardtImpl_.pho = 1.0;
@@ -1090,7 +1092,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::levenbergMarquardt() {
 
   // display
   if (ddpSettings_.displayInfo_) {
-    // std::cerr << "Previous Cost: " << nominalTotalCost_ << ",   Actual Cost: " << lvTotalCost << ",  Predicted Cost: " << predictedCost
+    // std::cerr << "Previous Cost: " << nominalTotalCost_ << ",   Actual Cost: " << totalCost << ",  Predicted Cost: " << predictedCost
     //          << std::endl;
     std::cerr << "Actual Reduction: " << actualReduction << ",   Predicted Reduction: " << predictedReduction << std::endl;
   }
@@ -1132,18 +1134,19 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::levenbergMarquardt() {
     levenbergMarquardtImpl_.numSuccessiveRejections = 0;
 
     // update nominal trajectories
-    nominalTotalCost_ = lvTotalCost;
-    nominalConstraint1ISE_ = lvConstraint1ISE;
-    nominalConstraint1MaxNorm_ = lvConstraint1MaxNorm;
-    nominalConstraint2ISE_ = lvConstraint2ISE;
-    nominalConstraint2MaxNorm_ = lvConstraint2MaxNorm;
-    nominalInequalityConstraintPenalty_ = lvInequalityConstraintPenalty;
-    nominalInequalityConstraintISE_ = lvInequalityConstraintISE;
+    nominalTotalCost_ = totalCost;
+    lineSearchImpl_.stepLengthStar = stepLength;
+    stateInputEqConstraintISE_ = stateInputEqConstraintISE;
+    stateEqConstraintISE_ = stateEqConstraintISE;
+    stateEqFinalConstraintISE_ = stateEqFinalConstraintISE;
+    inequalityConstraintPenalty_ = inequalityConstraintPenalty;
+    inequalityConstraintISE_ = inequalityConstraintISE;
 
-    nominalTimeTrajectoriesStock_.swap(lvTimeTrajectoriesStock);
-    nominalPostEventIndicesStock_.swap(lvPostEventIndicesStock);
-    nominalStateTrajectoriesStock_.swap(lvStateTrajectoriesStock);
-    nominalInputTrajectoriesStock_.swap(lvInputTrajectoriesStock);
+    nominalTimeTrajectoriesStock_.swap(timeTrajectoriesStock);
+    nominalPostEventIndicesStock_.swap(postEventIndicesStock);
+    nominalStateTrajectoriesStock_.swap(stateTrajectoriesStock);
+    nominalInputTrajectoriesStock_.swap(inputTrajectoriesStock);
+    modelDataTrajectoriesStock_.swap(modelDataTrajectoriesStock);
     // update nominal controller: just clear the feedforward increments
     for (auto& controller : nominalControllersStock_) {
       controller.deltaBiasArray_.clear();
@@ -1925,7 +1928,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
   // finding the optimal stepLength
   searchStrategyTimer_.startTimer();
   switch (ddpSettings_.strategy_) {  // clang-format off
-    case DDP_Strategy::LINE_SEARCH: { lineSearch(computeISEs); break; }
+    case DDP_Strategy::LINE_SEARCH: { lineSearch(); break; }
     case DDP_Strategy::LEVENBERG_MARQUARDT: { levenbergMarquardt(); break; }
   }  // clang-format on
   searchStrategyTimer_.endTimer();
@@ -2138,10 +2141,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
     relConstraint1ISE = std::abs(stateInputEqConstraintISE_ - cachedStateInputEqConstraintISE);
     bool isConstraint1Satisfied =
         stateInputEqConstraintISE_ <= ddpSettings_.minAbsConstraint1ISE_ || relConstraint1ISE <= ddpSettings_.minRelConstraint1ISE_;
-    isLearningRateStarZero = learningRateStar_ == 0 && !isInitInternalControllerEmpty;
-    isCostFunctionConverged = relCost <= ddpSettings_.minRelCost_ || isLearningRateStarZero;
-    isOptimizationConverged = isCostFunctionConverged && isConstraint1Satisfied;
-    isInitInternalControllerEmpty = false;
+    isOptimizationConverged = (isCostFunctionConverged || isStepLengthStarZero) && isConstraint1Satisfied;
+    isInitInternalControllerEmpty_ = false;
 
   }  // end of while loop
 
@@ -2159,10 +2160,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
   swapNominalTrajectoriesToCache();
 
   // finding the final optimal stepLength and getting the optimal trajectories and controller
-  bool computeISEs = !ddpSettings_.noStateConstraints_ || ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_;
   searchStrategyTimer_.startTimer();
   switch (ddpSettings_.strategy_) {  // clang-format off
-    case DDP_Strategy::LINE_SEARCH: { lineSearch(computeISEs); break; }
+    case DDP_Strategy::LINE_SEARCH: { lineSearch(); break; }
     case DDP_Strategy::LEVENBERG_MARQUARDT: { levenbergMarquardt(); break; }
   }  // clang-format on
   searchStrategyTimer_.endTimer();

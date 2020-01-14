@@ -137,8 +137,7 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
   void setData(const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* modelDataPtr, const state_matrix_array_t* AmPtr,
                const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr, const dynamic_matrix_array_t* RinvCholPtr,
                const size_array_t* eventsPastTheEndIndecesPtr, const scalar_array_t* qFinalPtr, const state_vector_array_t* QvFinalPtr,
-               const state_matrix_array_t* QmFinalPtr,
-               const riccati_modification_t* riccatiModificationPtr);
+               const state_matrix_array_t* QmFinalPtr, const riccati_modification_t* riccatiModificationPtr);
 
   /**
    * Riccati jump map at switching moments

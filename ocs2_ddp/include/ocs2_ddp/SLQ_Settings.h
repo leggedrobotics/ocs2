@@ -46,14 +46,12 @@ namespace ocs2 {
  * This structure contains the settings for the SLQ algorithm.
  */
 struct SLQ_Settings {
-  using RICCATI_INTEGRATOR_TYPE = Dimensions<0, 0>::RiccatiIntegratorType;
-
   /** If true, SLQ solves the backward path over the nominal time trajectory. */
   bool useNominalTimeForBackwardPass_ = false;
   /** If true, terms of the Riccati equation will be precomputed before interpolation in the flowmap */
   bool preComputeRiccatiTerms_ = true;
   /** Riccati integrator type. */
-  size_t RiccatiIntegratorType_ = RICCATI_INTEGRATOR_TYPE::ODE45;
+  IntegratorType RiccatiIntegratorType_ = IntegratorType::ODE45;
   /** Adams integrator's time step. */
   double adams_integrator_dt_ = 1e-3;
 
@@ -93,9 +91,8 @@ struct SLQ_Settings {
 
     loadData::loadPtreeValue(pt, useNominalTimeForBackwardPass_, fieldName + ".useNominalTimeForBackwardPass", verbose);
     loadData::loadPtreeValue(pt, preComputeRiccatiTerms_, fieldName + ".preComputeRiccatiTerms", verbose);
-    loadData::loadPtreeValue(pt, RiccatiIntegratorType_, fieldName + ".RiccatiIntegratorType", verbose);
 
-    std::string integratorName = integrator_type::toString(RiccatiIntegratorType_);  // keep default
+    auto integratorName = integrator_type::toString(RiccatiIntegratorType_);  // keep default
     loadData::loadPtreeValue(pt, integratorName, fieldName + ".RiccatiIntegratorType", verbose);
     RiccatiIntegratorType_ = integrator_type::fromString(integratorName);
 

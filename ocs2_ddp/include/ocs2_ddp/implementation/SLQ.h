@@ -64,7 +64,7 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivativ
   for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
     errorEquationPtrStock_.emplace_back(new error_equation_t);;
     bool preComputeRiccatiTerms_ = settings_.preComputeRiccatiTerms_ && (BASE::ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH);
-    riccatiEquationsPtrStock_.emplace_back(new riccati_equations_t(BASE::ddpSettings_.useMakePSD_, preComputeRiccatiTerms_));
+    riccatiEquationsPtrStock_.emplace_back(new riccati_equations_t(preComputeRiccatiTerms_));
 
     errorIntegratorPtrStock_.emplace_back(newIntegrator<STATE_DIM>(integratorType));
     riccatiIntegratorPtrStock_.emplace_back(newIntegrator<riccati_equations_t::S_DIM_>(integratorType));
@@ -245,11 +245,6 @@ void SLQ<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t workerInde
     QvConstrainedTrajectoryStock_[i][k].noalias() -=
         CmProjectedTrajectoryStock_[i][k].transpose() * BASE::modelDataTrajectoriesStock_[i][k].costInputDerivative_;
   }
-
-  // making sure that constrained Qm is PSD
-  if (BASE::ddpSettings_.useMakePSD_) {
-    LinearAlgebra::makePSD(QmConstrainedTrajectoryStock_[i][k]);
-  }
 }
 
 /******************************************************************************************************/
@@ -320,7 +315,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, si
   dynamic_matrix_t Bm;
   dynamic_matrix_t Pm;
   dynamic_vector_t Rv;
-  input_matrix_t RmInverse;
+  dynamic_matrix_t RmInverse;
   input_vector_t EvProjected;
   input_state_matrix_t CmProjected;
   input_matrix_t DmProjected;
@@ -333,7 +328,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, si
   ModelData::LinearInterpolation::interpolate(indexAlpha, Bm, &BASE::modelDataTrajectoriesStock_[i], ModelData::dynamicsInputDerivative);
   ModelData::LinearInterpolation::interpolate(indexAlpha, Pm, &BASE::modelDataTrajectoriesStock_[i], ModelData::costInputStateDerivative);
   ModelData::LinearInterpolation::interpolate(indexAlpha, Rv, &BASE::modelDataTrajectoriesStock_[i], ModelData::costInputDerivative);
-  EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, RmInverse, &(RmInverseTrajectoryStock_[i]));
+  EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, RmInverse, &(BASE::RmInverseTrajectoryStock_[i]));
   EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, EvProjected, &(EvProjectedTrajectoryStock_[i]));
   EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, CmProjected, &(CmProjectedTrajectoryStock_[i]));
   EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, DmProjected, &(DmProjectedTrajectoryStock_[i]));
@@ -371,6 +366,35 @@ void SLQ<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, si
       std::cerr << "what(): " << error.what() << " at time " << BASE::nominalControllersStock_[i].timeStamp_[k] << " [sec]." << std::endl;
     }
   }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void SLQ<STATE_DIM, INPUT_DIM>::computeRiccatiModificationTermsWorker(size_t workerIndex, size_t i, size_t k) {
+  switch (BASE::ddpSettings_.strategy_) {
+    case DDP_Strategy::LINE_SEARCH: {
+      auto& Qm = BASE::modelDataTrajectoriesStock_[i][k].costStateSecondDerivative_;
+      auto& Pm = BASE::modelDataTrajectoriesStock_[i][k].costInputStateDerivative_;
+      auto& Rinv = BASE::RmInverseTrajectoryStock_[i][k];
+      state_matrix_t Q_minus_PTRinvP = Qm - (Pm.transpose() * Rinv) * Pm;
+      BASE::riccatiModificationStock_[i].deltaQmTrajectory_[k] = Q_minus_PTRinvP;
+      BASE::shiftHessian(BASE::riccatiModificationStock_[i].deltaQmTrajectory_[k]);
+      BASE::riccatiModificationStock_[i].deltaQmTrajectory_[k] -= Q_minus_PTRinvP;
+      BASE::riccatiModificationStock_[i].deltaRmTrajectory_[k].setZero(INPUT_DIM, INPUT_DIM);
+      BASE::riccatiModificationStock_[i].deltaPmTrajectory_[k].setZero(INPUT_DIM, STATE_DIM);
+      break;
+    }
+    case DDP_Strategy::LEVENBERG_MARQUARDT: {
+      const auto& Am = BASE::modelDataTrajectoriesStock_[i][k].dynamicsStateDerivative_;
+      const auto& Bm = BASE::modelDataTrajectoriesStock_[i][k].dynamicsInputDerivative_;
+      BASE::riccatiModificationStock_[i].deltaQmTrajectory_[k].setZero(STATE_DIM, STATE_DIM);
+      BASE::riccatiModificationStock_[i].deltaRmTrajectory_[k] = BASE::levenbergMarquardtImpl_.riccatiMultiple * Bm.transpose() * Bm;
+      BASE::riccatiModificationStock_[i].deltaPmTrajectory_[k] = BASE::levenbergMarquardtImpl_.riccatiMultiple * Bm.transpose() * Am;
+      break;
+    }
+  }  // end of switch-case
 }
 
 /******************************************************************************************************/
@@ -524,7 +548,6 @@ void SLQ<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   CmProjectedTrajectoryStock_.resize(numPartitions);
   DmProjectedTrajectoryStock_.resize(numPartitions);
   RmInvConstrainedCholTrajectoryStock_.resize(numPartitions);
-  RmInverseTrajectoryStock_.resize(numPartitions);
 }
 
 /******************************************************************************************************/
@@ -746,7 +769,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::errorRiccatiEquationWorker(size_t workerIndex, s
     const auto& Bm = BASE::modelDataTrajectoriesStock_[partitionIndex][k].dynamicsInputDerivative_;
     const auto& Am = AmConstrainedTrajectoryStock_[partitionIndex][k];
     const auto& RmInvChol = RmInvConstrainedCholTrajectoryStock_[partitionIndex][k];
-    const auto& RmInv = RmInverseTrajectoryStock_[partitionIndex][k];
+    const auto& RmInv = BASE::RmInverseTrajectoryStock_[partitionIndex][k];
     const auto& Rm = BASE::modelDataTrajectoriesStock_[partitionIndex][k].costInputSecondDerivative_;
     const auto& Ev = EvProjectedTrajectoryStock_[partitionIndex][k];
     const auto& Cm = CmProjectedTrajectoryStock_[partitionIndex][k];
@@ -754,15 +777,14 @@ void SLQ<STATE_DIM, INPUT_DIM>::errorRiccatiEquationWorker(size_t workerIndex, s
     // Sm
     EigenLinearInterpolation<state_matrix_t>::interpolate(nominalTimeTrajectory[k], Sm, &SsTimeTrajectory, &SmTrajectory);
     // Lm
-    Lm = PmTrajectory[k];
-    Lm.noalias() += BmTrajectory[k].transpose() * Sm;
+    Lm = Pm + Bm.transpose() * Sm;
 
-    GmTrajectory[k] = AmTrajectory[k];
-    GmTrajectory[k].noalias() -= (BmTrajectory[k] * RmInvCholTrajectory[k]) * (RmInvCholTrajectory[k].transpose() * Lm);
+    GmTrajectory[k] = Am;
+    GmTrajectory[k].noalias() -= (Bm * RmInvChol) * (RmInvChol.transpose() * Lm);
 
-    RmEv.noalias() = RmTrajectory[k] * EvTrajectory[k];
-    GvTrajectory[k].noalias() = CmTrajectory[k].transpose() * RmEv;
-    GvTrajectory[k].noalias() -= Lm.transpose() * (RmInvTrajectory[k].transpose() * RmEv);
+    RmEv.noalias() = Rm * Ev;
+    GvTrajectory[k].noalias() = Cm.transpose() * RmEv;
+    GvTrajectory[k].noalias() -= Lm.transpose() * (RmInv.transpose() * RmEv);
   }  // end of k loop
 
   // set data for error equations

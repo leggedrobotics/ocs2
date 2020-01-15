@@ -38,6 +38,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace cartpole {
 
+/**
+ * CartPole dynamics.
+ * refer to: https://pdfs.semanticscholar.org/f95b/9d4cc0814034f2e601cb91fcd70b2e806420.pdf
+ */
 class CartPoleSytemDynamics : public SystemDynamicsBaseAD<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, 1> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -66,13 +70,13 @@ class CartPoleSytemDynamics : public SystemDynamicsBaseAD<cartpole::STATE_DIM_, 
 
     // Inertia tensor
     Eigen::Matrix<ad_scalar_t, 2, 2> I;
-    I << static_cast<ad_scalar_t>(param_.poleSteinerMoi_), static_cast<ad_scalar_t>(-param_.poleMass_ * param_.poleHalfLength_ * cosTheta),
-        static_cast<ad_scalar_t>(-param_.poleMass_ * param_.poleHalfLength_ * cosTheta),
+    I << static_cast<ad_scalar_t>(param_.poleSteinerMoi_), static_cast<ad_scalar_t>(param_.poleMass_ * param_.poleHalfLength_ * cosTheta),
+        static_cast<ad_scalar_t>(param_.poleMass_ * param_.poleHalfLength_ * cosTheta),
         static_cast<ad_scalar_t>(param_.cartMass_ + param_.poleMass_);
 
     // RHS
     Eigen::Matrix<ad_scalar_t, 2, 1> rhs(param_.poleMass_ * param_.poleHalfLength_ * param_.gravity_ * sinTheta,
-                                         input(0) - param_.poleMass_ * param_.poleHalfLength_ * pow(state(2), 2) * sinTheta);
+                                         input(0) + param_.poleMass_ * param_.poleHalfLength_ * pow(state(2), 2) * sinTheta);
 
     // dxdt
     stateDerivative(0) = state(2);

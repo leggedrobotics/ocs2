@@ -247,4 +247,4 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase<STATE_DIM, INPUT_
 
 }  // namespace ocs2
 
-#include "implementation/QuadraticCostFunctionBaseAD.h"
+#include "implementation/QuadraticGaussNewtonCostBaseAD.h"

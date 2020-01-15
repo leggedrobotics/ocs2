@@ -416,11 +416,11 @@ void GDDP<STATE_DIM, INPUT_DIM>::approximateNominalLQPSensitivity2EventTime(
       if (postEventIndexItr != dataCollectorPtr_->nominalPostEventIndicesStock_[i].end() && k + 1 == *postEventIndexItr) {
         const size_t eventIndex = postEventIndexItr - dataCollectorPtr_->nominalPostEventIndicesStock_[i].begin();
         const size_t timeIndex = *postEventIndexItr - 1;
-        const auto& Qv = dataCollectorPtr_->QvFinalStock_[i][eventIndex];
-        const auto& Qm = dataCollectorPtr_->QmFinalStock_[i][eventIndex];
+        const auto& QvFinal = dataCollectorPtr_->modelDataEventTimesStock_[i][eventIndex].costStateDerivative_;
+        const auto& QmFinal = dataCollectorPtr_->modelDataEventTimesStock_[i][eventIndex].costStateSecondDerivative_;
 
-        nablaqFinalStock[i][eventIndex] = Qv.dot(sensitivityStateTrajectoriesStock[i][timeIndex]);
-        nablaQvFinalStock[i][eventIndex] = Qm * sensitivityStateTrajectoriesStock[i][timeIndex];
+        nablaqFinalStock[i][eventIndex] = QvFinal.dot(sensitivityStateTrajectoriesStock[i][timeIndex]);
+        nablaQvFinalStock[i][eventIndex] = QmFinal * sensitivityStateTrajectoriesStock[i][timeIndex];
 
         postEventIndexItr++;
       }
@@ -903,9 +903,10 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateCostDerivative(size_t workerIndex, con
         }  // end of k loop
       }
 
-      // terminal cost sensitivity at switching times
+      // cost sensitivity at switching times
       if (j < NE) {
-        costDerivative += sensitivityStateTrajectoriesStock[i].back().dot(dataCollectorPtr_->QvFinalStock_[i][j]);
+        const auto& QvFinal = dataCollectorPtr_->modelDataEventTimesStock_[i][j].costStateDerivative_;
+        costDerivative += sensitivityStateTrajectoriesStock[i].back().dot(QvFinal);
       }
     }  // end of j loop
 

@@ -158,14 +158,8 @@ class SLQ_DataCollector {
   // model data trajectory
   ModelDataBase::array2_t modelDataTrajectoriesStock_;
 
-  // terminal LQ coefficients
-  size_array2_t nc2FinalStock_;
-  constraint2_vector_array2_t HvFinalStock_;
-  constraint2_state_matrix_array2_t FmFinalStock_;
-
-  scalar_array2_t qFinalStock_;
-  state_vector_array2_t QvFinalStock_;
-  state_matrix_array2_t QmFinalStock_;
+  // event times model data
+  ModelDataBase::array2_t modelDataEventTimesStock_;
 
   dynamic_matrix_array2_t RmInverseTrajectoriesStock_;
   state_matrix_array2_t AmConstrainedTrajectoriesStock_;

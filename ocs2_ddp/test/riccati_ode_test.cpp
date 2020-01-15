@@ -54,12 +54,10 @@ class RiccatiInitializer {
   std::unique_ptr<input_vector_array_t> Rv;
   std::unique_ptr<dynamic_matrix_array_t> RinvChol;
   std::unique_ptr<input_state_matrix_array_t> Pm;
-  std::unique_ptr<ocs2::ModelDataBase::array_t> modelDataBaseArray;
+  std::unique_ptr<ocs2::ModelDataBase::array_t> modelDataTrajectory;
 
   size_array_t eventsPastTheEndIndeces;
-  scalar_array_t qFinal;
-  state_vector_array_t QvFinal;
-  state_matrix_array_t QmFinal;
+  std::unique_ptr<ocs2::ModelDataBase::array_t> modelDataEventTimesArray;
 
   riccati_modification_t riccatiModification;
 
@@ -97,7 +95,8 @@ class RiccatiInitializer {
     Rv = std::unique_ptr<input_vector_array_t>(new input_vector_array_t({rv, rv}));
     RinvChol = std::unique_ptr<dynamic_matrix_array_t>(new dynamic_matrix_array_t({RinvChol_, RinvChol_}));
     Pm = std::unique_ptr<input_state_matrix_array_t>(new input_state_matrix_array_t({P, P}));
-    modelDataBaseArray = std::unique_ptr<ocs2::ModelDataBase::array_t>(new ocs2::ModelDataBase::array_t({modelDataBase, modelDataBase}));
+    modelDataTrajectory = std::unique_ptr<ocs2::ModelDataBase::array_t>(new ocs2::ModelDataBase::array_t({modelDataBase, modelDataBase}));
+    modelDataEventTimesArray = std::unique_ptr<ocs2::ModelDataBase::array_t>(new ocs2::ModelDataBase::array_t);
 
     riccatiModification.deltaQmTrajectory_ = state_matrix_array_t({deltaQm, deltaQm});
     riccatiModification.deltaRmTrajectory_ = input_matrix_array_t({deltaRm, deltaRm});
@@ -105,8 +104,8 @@ class RiccatiInitializer {
   }
 
   void initialize(riccati_t& riccati) {
-    riccati.setData(timeStamp.get(), modelDataBaseArray.get(), Am.get(), Qv.get(), Qm.get(), RinvChol.get(), &eventsPastTheEndIndeces,
-                    &qFinal, &QvFinal, &QmFinal, &riccatiModification);
+    riccati.setData(timeStamp.get(), modelDataTrajectory.get(), Am.get(), Qv.get(), Qm.get(), RinvChol.get(), &eventsPastTheEndIndeces,
+                    modelDataEventTimesArray.get(), &riccatiModification);
   }
 };
 

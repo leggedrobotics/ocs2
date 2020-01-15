@@ -91,14 +91,8 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::collect(const slq_t* constSlqPtr) 
   // model data trajectory
   modelDataTrajectoriesStock_.swap(slqPtr->cachedModelDataTrajectoriesStock_);
 
-  // terminal LQ coefficients
-  nc2FinalStock_.swap(slqPtr->nc2FinalStock_);
-  HvFinalStock_.swap(slqPtr->HvFinalStock_);
-  FmFinalStock_.swap(slqPtr->FmFinalStock_);
-
-  qFinalStock_.swap(slqPtr->qFinalStock_);
-  QvFinalStock_.swap(slqPtr->QvFinalStock_);
-  QmFinalStock_.swap(slqPtr->QmFinalStock_);
+  // event times model data
+  modelDataEventTimesStock_.swap(slqPtr->cachedModelDataEventTimesStock_);
 
   // constrained projected variables
   RmInverseTrajectoriesStock_.swap(slqPtr->RmInverseTrajectoryStock_);
@@ -220,14 +214,8 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::resizeDataContainer(const size_t& 
   // model data trajectory
   modelDataTrajectoriesStock_.resize(numPartitions);
 
-  // terminal LQ coefficients
-  nc2FinalStock_.resize(numPartitions);
-  HvFinalStock_.resize(numPartitions);
-  FmFinalStock_.resize(numPartitions);
-
-  qFinalStock_.resize(numPartitions);
-  QvFinalStock_.resize(numPartitions);
-  QmFinalStock_.resize(numPartitions);
+  // event times model data
+  modelDataEventTimesStock_.resize(numPartitions);
 
   // constrained projected variables
   RmInverseTrajectoriesStock_.resize(numPartitions);

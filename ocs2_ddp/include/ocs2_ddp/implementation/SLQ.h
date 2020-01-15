@@ -138,9 +138,6 @@ void SLQ<STATE_DIM, INPUT_DIM>::approximateLQWorker(size_t workerIndex, size_t p
 
   // project unconstrained LQ coefficients to constrained ones
   projectLQWorker(workerIndex, partitionIndex, timeIndex, DmDager, DdaggerT_R_Ddagger_Chol);
-
-  // calculate an LQ approximate of the event times process.
-  BASE::approximateEventsLQWorker(workerIndex, partitionIndex, timeIndex);
 }
 
 /******************************************************************************************************/
@@ -502,8 +499,8 @@ void SLQ<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size_
       &BASE::nominalTimeTrajectoriesStock_[partitionIndex], &BASE::modelDataTrajectoriesStock_[partitionIndex],
       &AmConstrainedTrajectoryStock_[partitionIndex], &QvConstrainedTrajectoryStock_[partitionIndex],
       &QmConstrainedTrajectoryStock_[partitionIndex], &RmInvConstrainedCholTrajectoryStock_[partitionIndex],
-      &BASE::nominalPostEventIndicesStock_[partitionIndex], &BASE::qFinalStock_[partitionIndex], &BASE::QvFinalStock_[partitionIndex],
-      &BASE::QmFinalStock_[partitionIndex], &BASE::riccatiModificationStock_[partitionIndex]);
+      &BASE::nominalPostEventIndicesStock_[partitionIndex], &BASE::modelDataEventTimesStock_[partitionIndex],
+      &BASE::riccatiModificationStock_[partitionIndex]);
 
   // Const partition containers
   const auto& nominalTimeTrajectory = BASE::nominalTimeTrajectoriesStock_[partitionIndex];

@@ -124,7 +124,7 @@ class DerivativesBase {
    *
    * @param [out] dg: \f$ \frac{\partial g}{\partial t} \f$ matrix.
    */
-  virtual void getJumpMapDerivativeTime(state_vector_t& dg) { dg.setZero(); }
+  virtual void getJumpMapDerivativeTime(state_vector_t& dg) { dg.setZero(STATE_DIM); }
 
   /**
    * Get the G matrix at a given operating point for the linearized system jump map.
@@ -132,7 +132,7 @@ class DerivativesBase {
    *
    * @param [out] G: \f$ G \f$ matrix.
    */
-  virtual void getJumpMapDerivativeState(state_matrix_t& G) { G.setIdentity(); }
+  virtual void getJumpMapDerivativeState(state_matrix_t& G) { G.setIdentity(STATE_DIM, STATE_DIM); }
 
   /**
    * Get the G matrix at a given operating point for the linearized system jump map.
@@ -140,7 +140,7 @@ class DerivativesBase {
    *
    * @param [out] G: \f$ G \f$ matrix.
    */
-  virtual void getJumpMapDerivativeInput(state_input_matrix_t& H) { H.setIdentity(); }
+  virtual void getJumpMapDerivativeInput(state_input_matrix_t& H) { H.setZero(STATE_DIM, INPUT_DIM); }
 
   /**
    * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.

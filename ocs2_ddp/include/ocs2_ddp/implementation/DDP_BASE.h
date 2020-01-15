@@ -143,7 +143,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
     cachedPostEventIndicesStock_[i].clear();
     cachedStateTrajectoriesStock_[i].clear();
     cachedInputTrajectoriesStock_[i].clear();
-    cachedModelDataTrajectoriesStock_.clear();
+    cachedModelDataTrajectoriesStock_[i].clear();
+    cachedModelDataEventTimesStock_[i].clear();
 
     // for Riccati equation parallel computation
     SmFinalStock_[i] = state_matrix_t::Zero();
@@ -581,19 +582,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
     RmInverseTrajectoryStock_[i].resize(N);
     RmCholeskyUpperTrajectoryStock_[i].resize(N);
 
-    // event times LQ variables
-    size_t NE = nominalPostEventIndicesStock_[i].size();
-
-    // final state equality constraints at event times
-    nc2FinalStock_[i].resize(NE);
-    HvFinalStock_[i].resize(NE);
-    FmFinalStock_[i].resize(NE);
-
-    // final cost at event times
-    qFinalStock_[i].resize(NE);
-    QvFinalStock_[i].resize(NE);
-    QmFinalStock_[i].resize(NE);
-
+    // intermediate times
     if (N > 0) {
       for (size_t j = 0; j < ddpSettings_.nThreads_; j++) {
         // set desired trajectories
@@ -604,14 +593,38 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
       nextTimeIndex_ = 0;
       nextTaskId_ = 0;
       std::function<void(void)> task = [this, i] {
-        int N = nominalTimeTrajectoriesStock_[i].size();
         int timeIndex;
         size_t taskId = nextTaskId_++;  // assign task ID (atomic)
 
         // get next time index is atomic
-        while ((timeIndex = nextTimeIndex_++) < N) {
+        while ((timeIndex = nextTimeIndex_++) < nominalTimeTrajectoriesStock_[i].size()) {
           // execute approximateLQ for the given partition and time node index
           approximateLQWorker(taskId, i, timeIndex);
+        }
+      };
+      runParallel(task, ddpSettings_.nThreads_);
+    }
+
+    // event times
+    size_t NE = nominalPostEventIndicesStock_[i].size();
+    modelDataEventTimesStock_[i].resize(NE);
+    if (NE > 0) {
+      // perform the approximateEventsLQWorker for partition i
+      nextTimeIndex_ = 0;
+      nextTaskId_ = 0;
+      std::function<void(void)> task = [this, i] {
+        int timeIndex;
+        size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+
+        // get next time index is atomic
+        while ((timeIndex = nextTimeIndex_++) < nominalPostEventIndicesStock_[i].size()) {
+          // execute approximateLQ for the given partition and time index
+          const size_t k = nominalPostEventIndicesStock_[i][timeIndex] - 1;
+          linearQuadraticApproximatorPtrStock_[taskId]->approximateUnconstrainedLQProblemAtEventTime(
+              nominalTimeTrajectoriesStock_[i][k], nominalStateTrajectoriesStock_[i][k], nominalInputTrajectoriesStock_[i][k],
+              modelDataEventTimesStock_[i][timeIndex]);
+          // augment cost
+          augmentCostWorker(taskId, modelDataEventTimesStock_[i][timeIndex]);
         }
       };
       runParallel(task, ddpSettings_.nThreads_);
@@ -637,47 +650,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateUnconstrainedLQWorker(size_t wor
   linearQuadraticApproximatorPtrStock_[workerIndex]->approximateUnconstrainedLQProblem(
       nominalTimeTrajectoriesStock_[i][k], nominalStateTrajectoriesStock_[i][k], nominalInputTrajectoriesStock_[i][k],
       modelDataTrajectoriesStock_[i][k]);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateEventsLQWorker(size_t workerIndex, size_t i, size_t k) {
-  // state-only equality penalty
-  const auto stateConstraintPenalty = ddpSettings_.stateConstraintPenaltyCoeff_ * pow(ddpSettings_.stateConstraintPenaltyBase_, iteration_);
-
-  // if a switch took place calculate switch related variables
-  size_t NE = nominalPostEventIndicesStock_[i].size();
-  for (size_t ke = 0; ke < NE; ke++) {
-    if (nominalPostEventIndicesStock_[i][ke] == k + 1) {
-      linearQuadraticApproximatorPtrStock_[workerIndex]->approximateUnconstrainedLQProblemAtEventTime(
-          nominalTimeTrajectoriesStock_[i][k], nominalStateTrajectoriesStock_[i][k], nominalInputTrajectoriesStock_[i][k]);
-
-      // Final state-only equality constraint
-      nc2FinalStock_[i][ke] = linearQuadraticApproximatorPtrStock_[workerIndex]->ncFinalEqStateOnly_;
-      HvFinalStock_[i][ke].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->HvFinal_);
-      FmFinalStock_[i][ke].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->FmFinal_);
-
-      // Final cost
-      qFinalStock_[i][ke] = linearQuadraticApproximatorPtrStock_[workerIndex]->qFinal_;
-      QvFinalStock_[i][ke].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->QvFinal_);
-      QmFinalStock_[i][ke].swap(linearQuadraticApproximatorPtrStock_[workerIndex]->QmFinal_);
-
-      /*
-       * Modify the unconstrained LQ coefficients to constrained ones
-       */
-      // final constraint type 2 coefficients
-      auto nc2 = nc2FinalStock_[i][ke];
-      if (nc2 > 0) {
-        qFinalStock_[i][ke] += 0.5 * stateConstraintPenalty * HvFinalStock_[i][ke].head(nc2).dot(HvFinalStock_[i][ke].head(nc2));
-        QvFinalStock_[i][ke] += stateConstraintPenalty * FmFinalStock_[i][ke].topRows(nc2).transpose() * HvFinalStock_[i][ke].head(nc2);
-        QmFinalStock_[i][ke] += stateConstraintPenalty * FmFinalStock_[i][ke].topRows(nc2).transpose() * FmFinalStock_[i][ke].topRows(nc2);
-      }
-
-      break;
-    }
-  }  // end of ke loop
 }
 
 /******************************************************************************************************/
@@ -759,16 +731,26 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::computeRiccatiModificationTerms() {
       };
       runParallel(task, ddpSettings_.nThreads_);
     }
+
+    if (ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH && nominalPostEventIndicesStock_[i].size() > 0) {
+      // perform the shiftHessian for partition i
+      nextTimeIndex_ = 0;
+      nextTaskId_ = 0;
+      std::function<void(void)> task = [this, i] {
+        int timeIndex;
+        size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+
+        // get next time index is atomic
+        while ((timeIndex = nextTimeIndex_++) < nominalPostEventIndicesStock_[i].size()) {
+          shiftHessian(modelDataEventTimesStock_[i][timeIndex].costStateSecondDerivative_);
+        }
+      };
+      runParallel(task, ddpSettings_.nThreads_);
+    }
   }  // end of i loop
 
-  // final and heuristics
+  // heuristics
   if (ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH) {
-    for (size_t i = 0; i < numPartitions_; i++) {
-      for (auto& QmFinal : QmFinalStock_[i]) {
-        shiftHessian(QmFinal);
-      }
-    }  // end of i loop
-
     shiftHessian(SmHeuristics_);
   }
 }
@@ -1410,6 +1392,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::swapNominalTrajectoriesToCache() {
   cachedStateTrajectoriesStock_.swap(nominalStateTrajectoriesStock_);
   cachedInputTrajectoriesStock_.swap(nominalInputTrajectoriesStock_);
   cachedModelDataTrajectoriesStock_.swap(modelDataTrajectoriesStock_);
+  cachedModelDataEventTimesStock_.swap(modelDataEventTimesStock_);
 }
 
 /******************************************************************************************************/
@@ -1879,20 +1862,16 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   riccatiModificationStock_.resize(numPartitions);
 
   /*
-   * model data
+   * intermediate model data
    */
   modelDataTrajectoriesStock_.resize(numPartitions);
   cachedModelDataTrajectoriesStock_.resize(numPartitions);
 
   /*
-   * final LQ approximate variables
+   * event times model data
    */
-  nc2FinalStock_.resize(numPartitions);
-  HvFinalStock_.resize(numPartitions);
-  FmFinalStock_.resize(numPartitions);
-  qFinalStock_.resize(numPartitions);
-  QvFinalStock_.resize(numPartitions);
-  QmFinalStock_.resize(numPartitions);
+  modelDataEventTimesStock_.resize(numPartitions);
+  cachedModelDataEventTimesStock_.resize(numPartitions);
 
   RmInverseTrajectoryStock_.resize(numPartitions);
   RmCholeskyUpperTrajectoryStock_.resize(numPartitions);

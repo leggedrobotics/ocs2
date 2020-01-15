@@ -136,8 +136,8 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
    */
   void setData(const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* modelDataPtr, const state_matrix_array_t* AmPtr,
                const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr, const dynamic_matrix_array_t* RinvCholPtr,
-               const size_array_t* eventsPastTheEndIndecesPtr, const scalar_array_t* qFinalPtr, const state_vector_array_t* QvFinalPtr,
-               const state_matrix_array_t* QmFinalPtr, const riccati_modification_t* riccatiModificationPtr);
+               const size_array_t* eventsPastTheEndIndecesPtr, const ModelDataBase::array_t* modelDataEventTimesPtr,
+               const riccati_modification_t* riccatiModificationPtr);
 
   /**
    * Riccati jump map at switching moments
@@ -168,6 +168,11 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
   const state_matrix_array_t* QmPtr_;
   const dynamic_matrix_array_t* RinvCholPtr_;
 
+  scalar_array_t eventTimes_;
+  const ModelDataBase::array_t* modelDataEventTimesPtr_;
+
+  const riccati_modification_t* riccatiModificationPtr_;
+
   // Arrays to store precomputation
   state_matrix_array_t Qm_minus_P_Rinv_P_array_;
   state_vector_array_t Qv_minus_P_Rinv_Rv_array_;
@@ -197,13 +202,6 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
   state_matrix_t deltaQm_;
   input_matrix_t deltaRm_;
   input_state_matrix_t deltaPm_;
-
-  scalar_array_t eventTimes_;
-  const scalar_array_t* qFinalPtr_;
-  const state_vector_array_t* QvFinalPtr_;
-  const state_matrix_array_t* QmFinalPtr_;
-
-  const riccati_modification_t* riccatiModificationPtr_;
 };
 
 extern template class SequentialRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;

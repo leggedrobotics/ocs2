@@ -87,9 +87,6 @@ void ILQR<STATE_DIM, INPUT_DIM>::approximateLQWorker(size_t workerIndex, size_t 
 
   // project unconstrained LQ coefficients to constrained ones
   projectLQWorker(workerIndex, partitionIndex, timeIndex);
-
-  // calculate an LQ approximate of the event times process.
-  BASE::approximateEventsLQWorker(workerIndex, partitionIndex, timeIndex);
 }
 
 /******************************************************************************************************/
@@ -418,9 +415,12 @@ void ILQR<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size
     }
 
     if (i > 0) {
-      sFinalTemp = BASE::sTrajectoryStock_[partitionIndex][beginTimeItr] + BASE::qFinalStock_[partitionIndex][i - 1];
-      SvFinalTemp = BASE::SvTrajectoryStock_[partitionIndex][beginTimeItr] + BASE::QvFinalStock_[partitionIndex][i - 1];
-      SmFinalTemp = BASE::SmTrajectoryStock_[partitionIndex][beginTimeItr] + BASE::QmFinalStock_[partitionIndex][i - 1];
+      const auto& qFinal = BASE::modelDataEventTimesStock_[partitionIndex][i - 1].cost_;
+      const auto& QvFinal = BASE::modelDataEventTimesStock_[partitionIndex][i - 1].costStateDerivative_;
+      const auto& QmFinal = BASE::modelDataEventTimesStock_[partitionIndex][i - 1].costStateSecondDerivative_;
+      sFinalTemp = BASE::sTrajectoryStock_[partitionIndex][beginTimeItr] + qFinal;
+      SvFinalTemp = BASE::SvTrajectoryStock_[partitionIndex][beginTimeItr] + QvFinal;
+      SmFinalTemp = BASE::SmTrajectoryStock_[partitionIndex][beginTimeItr] + QmFinal;
     }
 
   }  // end of i loop

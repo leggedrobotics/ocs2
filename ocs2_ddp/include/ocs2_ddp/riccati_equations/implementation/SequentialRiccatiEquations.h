@@ -97,14 +97,16 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::convert2Matrix(const s_ve
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int STATE_DIM, int INPUT_DIM>
-void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(
-    const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* modelDataPtr, const state_matrix_array_t* AmPtr,
-    const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr, const dynamic_matrix_array_t* RinvCholPtr,
-    const size_array_t* postEventIndicesPtr, const scalar_array_t* qFinalPtr, const state_vector_array_t* QvFinalPtr,
-    const state_matrix_array_t* QmFinalPtr, const riccati_modification_t* riccatiModificationPtr) {
+void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(const scalar_array_t* timeStampPtr,
+                                                               const ModelDataBase::array_t* modelDataPtr,
+                                                               const state_matrix_array_t* AmPtr, const state_vector_array_t* QvPtr,
+                                                               const state_matrix_array_t* QmPtr, const dynamic_matrix_array_t* RinvCholPtr,
+                                                               const size_array_t* postEventIndicesPtr,
+                                                               const ModelDataBase::array_t* modelDataEventTimesPtr,
+                                                               const riccati_modification_t* riccatiModificationPtr) {
   BASE::resetNumFunctionCalls();
 
-  // TODO fix
+  // TODO fix this
   const int state_dim = modelDataPtr->front().dynamicsInputDerivative_.rows();
   const int input_dim = modelDataPtr->front().dynamicsInputDerivative_.cols();
 
@@ -125,6 +127,7 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(
   for (const auto& postEventIndex : *postEventIndicesPtr) {
     eventTimes_.push_back((*timeStampPtr)[postEventIndex - 1]);
   }
+  modelDataEventTimesPtr_ = modelDataEventTimesPtr;
 
   // saving array pointers
   timeStampPtr_ = timeStampPtr;
@@ -133,9 +136,6 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(
   QvPtr_ = QvPtr;
   QmPtr_ = QmPtr;
   RinvCholPtr_ = RinvCholPtr;
-  qFinalPtr_ = qFinalPtr;
-  QvFinalPtr_ = QvFinalPtr;
-  QmFinalPtr_ = QmFinalPtr;
 
   riccatiModificationPtr_ = riccatiModificationPtr;
 
@@ -182,8 +182,12 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::computeJumpMap(const scal
   // epsilon is set to include times past event times which have been artificially increased in the rollout
   size_t index = lookup::findFirstIndexWithinTol(eventTimes_, time, 1e-5);
 
+  // TODO fix this
   s_vector_t allSsJump;
-  convert2Vector((*QmFinalPtr_)[index], (*QvFinalPtr_)[index], (*qFinalPtr_)[index], allSsJump);
+  const auto& qFinal = (*modelDataEventTimesPtr_)[index].cost_;
+  const state_vector_t QvFinal = (*modelDataEventTimesPtr_)[index].costStateDerivative_;
+  const state_matrix_t QmFinal = (*modelDataEventTimesPtr_)[index].costStateSecondDerivative_;
+  convert2Vector(QmFinal, QvFinal, qFinal, allSsJump);
 
   mappedState = state + allSsJump;
 }

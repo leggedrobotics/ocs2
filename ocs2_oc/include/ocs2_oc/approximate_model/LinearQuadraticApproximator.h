@@ -132,7 +132,7 @@ class LinearQuadraticApproximator {
    *
    * @param [in] time: The current time.
    * @param [in] state: The current state.
-   * @param [in] input: The current input .
+   * @param [in] input: The current input.
    * @param [out] modelData: The output data model.
    */
   void approximateUnconstrainedLQProblem(const scalar_t& time, const state_vector_t& state, const input_vector_t& input,
@@ -207,31 +207,62 @@ class LinearQuadraticApproximator {
    *
    * @param [in] time: The current time.
    * @param [in] state: The current state.
-   * @param [in] input: The current input .
+   * @param [in] input: The current input.
+   * @param [out] modelData: The output data model.
    */
-  void approximateUnconstrainedLQProblemAtEventTime(const scalar_t& time, const state_vector_t& state, const input_vector_t& input) {
-    systemConstraintsPtr_->setCurrentStateAndControl(time, state, input);
+  void approximateUnconstrainedLQProblemAtEventTime(const scalar_t& time, const state_vector_t& state, const input_vector_t& input,
+                                                    ModelDataBase& modelData) {
+    // constraints
+    systemDerivativesPtr_->setCurrentStateAndControl(time, state, input);
+    state_matrix_t Gm;
+    systemDerivativesPtr_->getJumpMapDerivativeState(Gm);
+    state_input_matrix_t Hm;
+    systemDerivativesPtr_->getJumpMapDerivativeInput(Hm);
+    modelData.dynamics_.setZero(STATE_DIM);
+    modelData.dynamicsStateDerivative_ = Gm;
+    modelData.dynamicsInputDerivative_ = Hm;
+
+    // constraints
     systemConstraintsPtr_->setCurrentStateAndControl(time, state, input);
 
-    // Final state-only equality constraint
-    ncFinalEqStateOnly_ = systemConstraintsPtr_->numStateOnlyFinalConstraint(time);
+    // final state-only equality constraint
+    modelData.numStateEqConstr_ = systemConstraintsPtr_->numStateOnlyFinalConstraint(time);
 
-    if (ncFinalEqStateOnly_ > INPUT_DIM) {
-      throw std::runtime_error(
-          "Number of active final type-2 constraints should be "
-          "less-equal to the number of input dimension.");
+    if (modelData.numStateEqConstr_ > INPUT_DIM) {
+      throw std::runtime_error("Number of active final type-2 constraints should be less-equal to the number of input dimension.");
     }
 
     // if final constraint type 2 is active
-    if (ncFinalEqStateOnly_ > 0) {
-      systemConstraintsPtr_->getFinalConstraint2(HvFinal_);
-      systemConstraintsPtr_->getFinalConstraint2DerivativesState(FmFinal_);
+    if (modelData.numStateEqConstr_ > 0) {
+      constraint2_vector_t HvFinal;
+      constraint2_state_matrix_t FmFinal;
+      systemConstraintsPtr_->getFinalConstraint2(HvFinal);
+      systemConstraintsPtr_->getFinalConstraint2DerivativesState(FmFinal);
+      modelData.stateEqConstr_ = HvFinal;
+      modelData.stateEqConstrStateDerivative_ = FmFinal;
     }
 
-    // Final cost
-    costFunctionPtr_->getTerminalCost(qFinal_);
-    costFunctionPtr_->getTerminalCostDerivativeState(QvFinal_);
-    costFunctionPtr_->getTerminalCostSecondDerivativeState(QmFinal_);
+    // final state-input equality constraint
+    modelData.numStateInputEqConstr_ = 0;
+
+    // final inequality constraint
+    modelData.numIneqConstr_ = 0;
+
+    // final cost
+    // constraints
+    costFunctionPtr_->setCurrentStateAndControl(time, state, input);
+    scalar_t qFinal;
+    costFunctionPtr_->getTerminalCost(qFinal);
+    state_vector_t QvFinal;
+    costFunctionPtr_->getTerminalCostDerivativeState(QvFinal);
+    state_matrix_t QmFinal;
+    costFunctionPtr_->getTerminalCostSecondDerivativeState(QmFinal);
+    modelData.cost_ = qFinal;
+    modelData.costStateDerivative_ = QvFinal;
+    modelData.costStateSecondDerivative_ = QmFinal;
+    modelData.costInputDerivative_.setZero(INPUT_DIM);
+    modelData.costInputStateDerivative_.setZero(INPUT_DIM, STATE_DIM);
+    modelData.costInputSecondDerivative_.setZero(INPUT_DIM, INPUT_DIM);
   }
 
   /**
@@ -435,15 +466,6 @@ class LinearQuadraticApproximator {
       }
     }
   }
-
- public:
-  size_t ncFinalEqStateOnly_;
-  constraint2_vector_t HvFinal_;
-  constraint2_state_matrix_t FmFinal_;
-
-  scalar_t qFinal_;
-  state_vector_t QvFinal_;
-  state_matrix_t QmFinal_;
 
  private:
   std::unique_ptr<derivatives_base_t> systemDerivativesPtr_;

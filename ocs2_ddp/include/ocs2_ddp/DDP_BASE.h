@@ -495,15 +495,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void approximateUnconstrainedLQWorker(size_t workerIndex, size_t i, size_t k);
 
   /**
-   * Calculates an LQ approximate of the event times process.
-   *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] i: Time partition index.
-   * @param [in] k: Time index in the partition.
-   */
-  virtual void approximateEventsLQWorker(size_t workerIndex, size_t i, size_t k);
-
-  /**
    * Augments the cost function.
    *
    * @param [in] workerIndex: Working agent index.
@@ -720,16 +711,13 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   state_vector_array2_t cachedStateTrajectoriesStock_;
   input_vector_array2_t cachedInputTrajectoriesStock_;
 
-  // model data trajectory
+  // intermediate model data trajectory
   ModelDataBase::array2_t modelDataTrajectoriesStock_;
   ModelDataBase::array2_t cachedModelDataTrajectoriesStock_;
 
-  size_array2_t nc2FinalStock_;
-  constraint2_vector_array2_t HvFinalStock_;
-  constraint2_state_matrix_array2_t FmFinalStock_;
-  scalar_array2_t qFinalStock_;
-  state_vector_array2_t QvFinalStock_;
-  state_matrix_array2_t QmFinalStock_;
+  // event times model data
+  ModelDataBase::array2_t modelDataEventTimesStock_;
+  ModelDataBase::array2_t cachedModelDataEventTimesStock_;
 
   //
   dynamic_matrix_array2_t RmInverseTrajectoryStock_;

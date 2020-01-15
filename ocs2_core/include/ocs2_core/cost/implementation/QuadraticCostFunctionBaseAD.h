@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/cost/QuadraticCostFunctionBaseAD.h>
+#include <ocs2_core/cost/QuadraticGaussNewtonCostBaseAD.h>
 
 namespace ocs2 {
 
@@ -35,7 +35,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::QuadraticCostFunctionBaseAD()
+QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::QuadraticGaussNewtonCostBaseAD()
     : BASE(),
       intermediateDerivativesComputed_(false),
       intermediateCostValuesComputed_(false),
@@ -46,8 +46,8 @@ QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINA
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::QuadraticCostFunctionBaseAD(
-    const QuadraticCostFunctionBaseAD& rhs)
+QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::QuadraticGaussNewtonCostBaseAD(
+    const QuadraticGaussNewtonCostBaseAD& rhs)
     : BASE(rhs),
       intermediateADInterfacePtr_(new ad_interface_t(*rhs.intermediateADInterfacePtr_)),
       terminalADInterfacePtr_(new ad_interface_t(*rhs.terminalADInterfacePtr_)),
@@ -60,7 +60,7 @@ QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINA
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::initialize(const std::string& modelName,
+void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::initialize(const std::string& modelName,
                                                                                                              const std::string& modelFolder,
                                                                                                              bool recompileLibraries,
                                                                                                              bool verbose) {
@@ -76,7 +76,7 @@ void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TE
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::setCurrentStateAndControl(
+void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::setCurrentStateAndControl(
     const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
   BASE::setCurrentStateAndControl(t, x, u);
 
@@ -95,7 +95,7 @@ void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TE
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCost(scalar_t& L) {
+void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCost(scalar_t& L) {
   if (!intermediateCostValuesComputed_) {
     intermediateCostValues_ = intermediateADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, intermediateParameters_);
     intermediateCostValuesComputed_ = true;
@@ -107,7 +107,7 @@ void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TE
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCostDerivativeTime(
+void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCostDerivativeTime(
     scalar_t& dLdt) {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
@@ -124,7 +124,7 @@ void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TE
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCostDerivativeState(
+void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCostDerivativeState(
     state_vector_t& dLdx) {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
@@ -141,7 +141,7 @@ void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TE
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCostSecondDerivativeState(
+void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCostSecondDerivativeState(
     state_matrix_t& dLdxx) {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
@@ -159,7 +159,7 @@ void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TE
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCostDerivativeInput(
+void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCostDerivativeInput(
     input_vector_t& dLdu) {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
@@ -176,7 +176,7 @@ void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TE
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCostSecondDerivativeInput(
+void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCostSecondDerivativeInput(
     input_matrix_t& dLduu) {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
@@ -194,7 +194,7 @@ void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TE
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCostDerivativeInputState(
+void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCostDerivativeInputState(
     input_state_matrix_t& dLdux) {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
@@ -208,7 +208,7 @@ void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TE
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getTerminalCost(scalar_t& Phi) {
+void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getTerminalCost(scalar_t& Phi) {
   if (terminalCostValuesComputed_) {
     terminalCostValues_ = terminalADInterfacePtr_->getFunctionValue(tapedTimeState_, terminalParameters_);
     terminalCostValuesComputed_ = true;
@@ -220,7 +220,7 @@ void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TE
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getTerminalCostDerivativeTime(
+void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getTerminalCostDerivativeTime(
     scalar_t& dPhidt) {
   if (!terminalDerivativesComputed_) {
     terminalJacobian_ = terminalADInterfacePtr_->getJacobian(tapedTimeState_, terminalParameters_);
@@ -237,7 +237,7 @@ void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TE
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getTerminalCostDerivativeState(
+void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getTerminalCostDerivativeState(
     state_vector_t& dPhidx) {
   if (!terminalDerivativesComputed_) {
     terminalJacobian_ = terminalADInterfacePtr_->getJacobian(tapedTimeState_, terminalParameters_);
@@ -254,7 +254,7 @@ void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TE
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getTerminalCostSecondDerivativeState(
+void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getTerminalCostSecondDerivativeState(
     state_matrix_t& dPhidxx) {
   if (!terminalDerivativesComputed_) {
     terminalJacobian_ = terminalADInterfacePtr_->getJacobian(tapedTimeState_, terminalParameters_);
@@ -272,7 +272,7 @@ void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TE
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::setADInterfaces(
+void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::setADInterfaces(
     const std::string& modelName, const std::string& modelFolder) {
   auto intermediateCostAd = [this](const ad_dynamic_vector_t& x, const ad_dynamic_vector_t& p, ad_dynamic_vector_t& y) {
     auto time = x(0);
@@ -302,7 +302,7 @@ void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TE
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::createModels(bool verbose) {
+void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::createModels(bool verbose) {
   intermediateADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::First, verbose);
   terminalADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::First, verbose);
 }
@@ -311,7 +311,7 @@ void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TE
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-void QuadraticCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::loadModelsIfAvailable(bool verbose) {
+void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::loadModelsIfAvailable(bool verbose) {
   intermediateADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::First, verbose);
   terminalADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::First, verbose);
 }

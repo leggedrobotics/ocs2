@@ -117,27 +117,27 @@ class QuadraticCostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM
   void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                   bool verbose = true);
 
-  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) final;
+  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u);
 
-  void getIntermediateCost(scalar_t& L) final;
+  void getIntermediateCost(scalar_t& L);
 
-  void getIntermediateCostDerivativeTime(scalar_t& dLdt) final;
+  void getIntermediateCostDerivativeTime(scalar_t& dLdt);
 
-  void getIntermediateCostDerivativeState(state_vector_t& dLdx) final;
+  void getIntermediateCostDerivativeState(state_vector_t& dLdx);
 
   void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) override;
 
-  void getIntermediateCostDerivativeInput(input_vector_t& dLdu) final;
+  void getIntermediateCostDerivativeInput(input_vector_t& dLdu);
 
   void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) override;
 
   void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) override;
 
-  void getTerminalCost(scalar_t& Phi) final;
+  void getTerminalCost(scalar_t& Phi);
 
-  void getTerminalCostDerivativeTime(scalar_t& dPhidt) final;
+  void getTerminalCostDerivativeTime(scalar_t& dPhidt);
 
-  void getTerminalCostDerivativeState(state_vector_t& dPhidx) final;
+  void getTerminalCostDerivativeState(state_vector_t& dPhidx);
 
   void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override;
 

@@ -60,10 +60,8 @@ QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERM
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::initialize(const std::string& modelName,
-                                                                                                             const std::string& modelFolder,
-                                                                                                             bool recompileLibraries,
-                                                                                                             bool verbose) {
+void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::initialize(
+    const std::string& modelName, const std::string& modelFolder, bool recompileLibraries, bool verbose) {
   setADInterfaces(modelName, modelFolder);
   if (recompileLibraries) {
     createModels(verbose);
@@ -141,8 +139,8 @@ void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM,
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCostSecondDerivativeState(
-    state_matrix_t& dLdxx) {
+void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM,
+                                    TERMINAL_COST_DIM>::getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateDerivativesComputed_ = true;
@@ -176,8 +174,8 @@ void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM,
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCostSecondDerivativeInput(
-    input_matrix_t& dLduu) {
+void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM,
+                                    TERMINAL_COST_DIM>::getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateDerivativesComputed_ = true;
@@ -194,8 +192,8 @@ void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM,
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCostDerivativeInputState(
-    input_state_matrix_t& dLdux) {
+void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM,
+                                    TERMINAL_COST_DIM>::getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateDerivativesComputed_ = true;

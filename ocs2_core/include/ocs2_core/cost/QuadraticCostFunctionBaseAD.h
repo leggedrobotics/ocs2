@@ -36,10 +36,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * Cost Function Base with Algorithmic Differentiation (i.e. Auto Differentiation).
+ *
+ * Quadratic Cost Function Base with Algorithmic Differentiation (i.e. Auto Differentiation).
+ *
+ * The intermediate cost term and the final cost term have the following form:
+ * - \f$ L = 0.5(f(x,u,t))' (f(x,u,t)) \f$
+ * - \f$ \Phi = 0.5(g(x,t))' (g(x,t)) \f$.
+ *
+ * The user provides implementations for f and g. The Jacobians of f and g are computed by auto differentiation.
+ * This costfunction approximates the Hessians of L and \Phi by applying the chain rule and neglecting the terms
+ * with hessians of f and g. Hess_{L} and H_{\Phi} are therefore guaranteed to be at least positive semidefinite.
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
+ * @tparam INTERMEDIATE_COST_DIM dim(image(f))
+ * @tparam TERMINAL_COST_DIM dim(image(g))
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
 class QuadraticCostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
@@ -164,26 +175,30 @@ class QuadraticCostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM
   virtual size_t getNumTerminalParameters() const { return 0; }
 
   /**
-   * Interface method to the intermediate cost function. This method must be implemented by the derived class.
+   * Interface method to the cost term f such that the intermediate cost is
+   * L = 0.5(f(x,u,t))' (f(x,u,t)).
+   * This method must be implemented by the derived class.
    *
    * @tparam scalar type. All the floating point operations should be with this type.
    * @param [in] time: time.
    * @param [in] state: state vector.
    * @param [in] input: input vector.
    * @param [in] parameters: parameter vector.
-   * @param [out] costValue: cost value.
+   * @param [out] costValue: costValues = f(x,u,t).
    */
   virtual void intermediateCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
                                         const ad_dynamic_vector_t& parameters, ad_intermediate_cost_vector_t& costValues) const = 0;
 
   /**
-   * Interface method to the terminal cost function. This method can be implemented by the derived class.
+   * Interface method to the cost term g such that the intermediate cost is
+   * \Phi = 0.5(g(x,t))' (g(x,t))
+   * This method may be implemented by the derived class.
    *
    * @tparam scalar type. All the floating point operations should be with this type.
    * @param [in] time: time.
    * @param [in] state: state vector.
    * @param [in] parameters: parameter vector.
-   * @param [out] costValue: cost value.
+   * @param [out] costValue: costValues = g(x,t).
    */
   virtual void terminalCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& parameters,
                                     ad_terminal_cost_vector_t& costValues) const {

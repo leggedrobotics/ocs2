@@ -53,7 +53,7 @@ namespace ocs2 {
  * @tparam TERMINAL_COST_DIM dim(image(g))
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-class QuadraticCostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
+class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -93,17 +93,17 @@ class QuadraticCostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM
    * Default constructor
    *
    */
-  explicit QuadraticCostFunctionBaseAD();
+  explicit QuadraticGaussNewtonCostBaseAD();
 
   /**
    * Copy constructor
    */
-  QuadraticCostFunctionBaseAD(const QuadraticCostFunctionBaseAD& rhs);
+  QuadraticGaussNewtonCostBaseAD(const QuadraticGaussNewtonCostBaseAD& rhs);
 
   /**
    * Default destructor
    */
-  virtual ~QuadraticCostFunctionBaseAD() = default;
+  virtual ~QuadraticGaussNewtonCostBaseAD() = default;
 
   /**
    * Initializes model libraries
@@ -247,4 +247,4 @@ class QuadraticCostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM
 
 }  // namespace ocs2
 
-#include "implementation/QuadraticCostFunctionBaseAD.h"
+#include "implementation/QuadraticGaussNewtonCostBaseAD.h"

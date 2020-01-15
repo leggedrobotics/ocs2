@@ -15,6 +15,7 @@ class RiccatiInitializer {
   using state_vector_t = typename riccati_t::state_vector_t;
   using input_vector_t = typename riccati_t::input_vector_t;
   using dynamic_vector_t = typename riccati_t::dynamic_vector_t;
+  using dynamic_matrix_t = typename riccati_t::dynamic_matrix_t;
 
   using scalar_t = typename riccati_t::scalar_t;
   using scalar_array_t = typename riccati_t::scalar_array_t;
@@ -29,83 +30,45 @@ class RiccatiInitializer {
 
   using riccati_modification_t = typename riccati_t::riccati_modification_t;
 
-  state_matrix_t A;
-  state_input_matrix_t B;
-  scalar_t q_;
-  state_vector_t qv;
-  state_matrix_t Q;
-  input_vector_t rv;
-  input_state_matrix_t P;
-  input_matrix_t R;
-  input_matrix_t RinvChol_;
-  input_matrix_t RmCholeskyUpper;
-  ocs2::ModelDataBase modelDataBase;
-
-  state_matrix_t deltaQm;
-  input_matrix_t deltaRm;
-  input_state_matrix_t deltaPm;
-
-  std::unique_ptr<scalar_array_t> timeStamp;
-  std::unique_ptr<state_matrix_array_t> Am;
-  std::unique_ptr<state_input_matrix_array_t> Bm;
-  std::unique_ptr<scalar_array_t> q;
-  std::unique_ptr<state_vector_array_t> Qv;
-  std::unique_ptr<state_matrix_array_t> Qm;
-  std::unique_ptr<input_vector_array_t> Rv;
-  std::unique_ptr<dynamic_matrix_array_t> RinvChol;
-  std::unique_ptr<input_state_matrix_array_t> Pm;
-  std::unique_ptr<ocs2::ModelDataBase::array_t> modelDataTrajectory;
+  scalar_array_t timeStamp;
+  dynamic_matrix_array_t RinvChol;
+  ocs2::ModelDataBase::array_t modelDataTrajectory;
 
   size_array_t eventsPastTheEndIndeces;
-  std::unique_ptr<ocs2::ModelDataBase::array_t> modelDataEventTimesArray;
+  ocs2::ModelDataBase::array_t modelDataEventTimesArray;
 
   riccati_modification_t riccatiModification;
 
   RiccatiInitializer(const int state_dim, const int input_dim) {
-    A = state_matrix_t::Random(state_dim, state_dim);
-    B = state_input_matrix_t::Random(state_dim, input_dim);
-    q_ = dynamic_vector_t::Random(1)(0);
-    qv = state_vector_t::Random(state_dim);
-    Q = ocs2::LinearAlgebra::generateSPDmatrix<state_matrix_t>(state_dim);
-    rv = input_vector_t::Random(input_dim);
-    P = input_state_matrix_t::Random(input_dim, state_dim);
-    R = ocs2::LinearAlgebra::generateSPDmatrix<input_matrix_t>(input_dim);
-    RinvChol_.resize(input_dim, input_dim);
-    ocs2::LinearAlgebra::computeLinvTLinv(R, RmCholeskyUpper, RinvChol_);
+    timeStamp = scalar_array_t{0.0, 1.0};
 
-    deltaQm.setZero(state_dim, state_dim);
-    deltaRm.setZero(input_dim, input_dim);
-    deltaPm.setZero(input_dim, state_dim);
+    ocs2::ModelDataBase modelDataBase;
+    modelDataBase.dynamicsStateDerivative_ = state_matrix_t::Random(state_dim, state_dim);
+    modelDataBase.dynamicsInputDerivative_ = state_input_matrix_t::Random(state_dim, input_dim);
+    modelDataBase.cost_ = dynamic_vector_t::Random(1)(0);
+    modelDataBase.costStateDerivative_ = state_vector_t::Random(state_dim);
+    modelDataBase.costStateSecondDerivative_ = ocs2::LinearAlgebra::generateSPDmatrix<state_matrix_t>(state_dim);
+    modelDataBase.costInputDerivative_ = input_vector_t::Random(input_dim);
+    modelDataBase.costInputSecondDerivative_ = ocs2::LinearAlgebra::generateSPDmatrix<input_matrix_t>(input_dim);
+    modelDataBase.costInputStateDerivative_ = input_state_matrix_t::Random(input_dim, state_dim);
 
-    modelDataBase.dynamicsStateDerivative_ = A;
-    modelDataBase.dynamicsInputDerivative_ = B;
-    modelDataBase.cost_ = q_;
-    modelDataBase.costStateDerivative_ = qv;
-    modelDataBase.costStateSecondDerivative_ = Q;
-    modelDataBase.costInputDerivative_ = rv;
-    modelDataBase.costInputSecondDerivative_ = R;
-    modelDataBase.costInputStateDerivative_ = P;
+    modelDataTrajectory = ocs2::ModelDataBase::array_t{modelDataBase, modelDataBase};
 
-    timeStamp = std::unique_ptr<scalar_array_t>(new scalar_array_t({0.0, 1.0}));
-    Am = std::unique_ptr<state_matrix_array_t>(new state_matrix_array_t({A, A}));
-    Bm = std::unique_ptr<state_input_matrix_array_t>(new state_input_matrix_array_t({B, B}));
-    q = std::unique_ptr<scalar_array_t>(new scalar_array_t({q_, q_}));
-    Qv = std::unique_ptr<state_vector_array_t>(new state_vector_array_t({qv, qv}));
-    Qm = std::unique_ptr<state_matrix_array_t>(new state_matrix_array_t({Q, Q}));
-    Rv = std::unique_ptr<input_vector_array_t>(new input_vector_array_t({rv, rv}));
-    RinvChol = std::unique_ptr<dynamic_matrix_array_t>(new dynamic_matrix_array_t({RinvChol_, RinvChol_}));
-    Pm = std::unique_ptr<input_state_matrix_array_t>(new input_state_matrix_array_t({P, P}));
-    modelDataTrajectory = std::unique_ptr<ocs2::ModelDataBase::array_t>(new ocs2::ModelDataBase::array_t({modelDataBase, modelDataBase}));
-    modelDataEventTimesArray = std::unique_ptr<ocs2::ModelDataBase::array_t>(new ocs2::ModelDataBase::array_t);
+    dynamic_matrix_t RinvCholDyn, RmCholeskyUpper;
+    ocs2::LinearAlgebra::computeLinvTLinv(modelDataBase.costInputSecondDerivative_, RmCholeskyUpper, RinvCholDyn);
+    RinvChol = dynamic_matrix_array_t{RinvCholDyn, RinvCholDyn};
 
-    riccatiModification.deltaQmTrajectory_ = state_matrix_array_t({deltaQm, deltaQm});
-    riccatiModification.deltaRmTrajectory_ = input_matrix_array_t({deltaRm, deltaRm});
-    riccatiModification.deltaPmTrajectory_ = input_state_matrix_array_t({deltaPm, deltaPm});
+    const auto deltaQm = state_matrix_t::Zero(state_dim, state_dim);
+    const auto deltaRm = input_matrix_t::Zero(input_dim, input_dim);
+    const auto deltaPm = input_state_matrix_t::Zero(input_dim, state_dim);
+    riccatiModification.deltaQmTrajectory_ = state_matrix_array_t{deltaQm, deltaQm};
+    riccatiModification.deltaRmTrajectory_ = input_matrix_array_t{deltaRm, deltaRm};
+    riccatiModification.deltaPmTrajectory_ = input_state_matrix_array_t{deltaPm, deltaPm};
   }
 
   void initialize(riccati_t& riccati) {
-    riccati.setData(timeStamp.get(), modelDataTrajectory.get(), Am.get(), Qv.get(), Qm.get(), RinvChol.get(), &eventsPastTheEndIndeces,
-                    modelDataEventTimesArray.get(), &riccatiModification);
+    riccati.setData(&timeStamp, &modelDataTrajectory, &modelDataTrajectory, &RinvChol, &eventsPastTheEndIndeces, &modelDataEventTimesArray,
+                    &riccatiModification);
   }
 };
 

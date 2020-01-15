@@ -184,15 +184,6 @@ class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   void riccatiSolverTask() override;
 
   /**
-   * Projects the unconstrained LQ coefficients to constrained ones.
-   *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] i: Time partition index.
-   * @param [in] k: Time index in the partition.
-   */
-  void projectLQWorker(size_t workerIndex, size_t i, size_t k);
-
-  /**
    * Calculates the discrete-time LQ approximation from the continuous-time LQ approximation.
    *
    * @param [in] workerIndex: Working agent index.

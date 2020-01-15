@@ -81,15 +81,8 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQ<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
   for (size_t i = 0; i < BASE::numPartitions_; i++) {
     size_t N = BASE::nominalTimeTrajectoriesStock_[i].size();
-    // resizing the new variables containers
-    // for constraints
+    // resizing the new variables containers for constraints
     DmDagerTrajectoryStock_[i].resize(N);
-    AmConstrainedTrajectoryStock_[i].resize(N);
-    QmConstrainedTrajectoryStock_[i].resize(N);
-    QvConstrainedTrajectoryStock_[i].resize(N);
-    EvProjectedTrajectoryStock_[i].resize(N);
-    CmProjectedTrajectoryStock_[i].resize(N);
-    DmProjectedTrajectoryStock_[i].resize(N);
     RmInvConstrainedCholTrajectoryStock_[i].resize(N);
   }  // end of i loop
 
@@ -136,52 +129,9 @@ void SLQ<STATE_DIM, INPUT_DIM>::approximateLQWorker(size_t workerIndex, size_t p
     DmDagerTrajectoryStock_[partitionIndex][timeIndex].leftCols(nc1) = DmDager;
   }
 
-  // project unconstrained LQ coefficients to constrained ones
-  projectLQWorker(workerIndex, partitionIndex, timeIndex, DmDager, DdaggerT_R_Ddagger_Chol);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::projectLQWorker(size_t workerIndex, size_t i, size_t k, const dynamic_matrix_t& DmDager,
-                                                const dynamic_matrix_t& DdaggerT_R_Ddagger_Chol) {
-  // constraint type 1 coefficients
-  const auto nc1 = BASE::modelDataTrajectoriesStock_[i][k].numStateInputEqConstr_;
-  if (nc1 == 0) {
-    EvProjectedTrajectoryStock_[i][k].setZero();
-    CmProjectedTrajectoryStock_[i][k].setZero();
-    DmProjectedTrajectoryStock_[i][k].setZero();
-    AmConstrainedTrajectoryStock_[i][k] = BASE::modelDataTrajectoriesStock_[i][k].dynamicsStateDerivative_;
-    QmConstrainedTrajectoryStock_[i][k] = BASE::modelDataTrajectoriesStock_[i][k].costStateSecondDerivative_;
-    QvConstrainedTrajectoryStock_[i][k] = BASE::modelDataTrajectoriesStock_[i][k].costStateDerivative_;
-  } else {
-    const auto& Cm = BASE::modelDataTrajectoriesStock_[i][k].stateInputEqConstrStateDerivative_;
-    const auto& Dm = BASE::modelDataTrajectoriesStock_[i][k].stateInputEqConstrInputDerivative_;
-
-    // Projected Constraints
-    EvProjectedTrajectoryStock_[i][k].noalias() = DmDager * BASE::modelDataTrajectoriesStock_[i][k].stateInputEqConstr_;
-    CmProjectedTrajectoryStock_[i][k].noalias() = DmDager * Cm;
-    DmProjectedTrajectoryStock_[i][k].noalias() = DmDager * Dm;
-
-    // Am constrained
-    AmConstrainedTrajectoryStock_[i][k] = BASE::modelDataTrajectoriesStock_[i][k].dynamicsStateDerivative_;
-    AmConstrainedTrajectoryStock_[i][k].noalias() -=
-        BASE::modelDataTrajectoriesStock_[i][k].dynamicsInputDerivative_ * CmProjectedTrajectoryStock_[i][k];
-
-    // Qm constrained
-    state_matrix_t PmTransDmDagerCm =
-        BASE::modelDataTrajectoriesStock_[i][k].costInputStateDerivative_.transpose() * CmProjectedTrajectoryStock_[i][k];
-    QmConstrainedTrajectoryStock_[i][k] =
-        BASE::modelDataTrajectoriesStock_[i][k].costStateSecondDerivative_ - PmTransDmDagerCm - PmTransDmDagerCm.transpose();
-    dynamic_matrix_t Cm_RProjected_Cm_Chol = DdaggerT_R_Ddagger_Chol.transpose() * Cm;
-    QmConstrainedTrajectoryStock_[i][k].noalias() += Cm_RProjected_Cm_Chol.transpose() * Cm_RProjected_Cm_Chol;
-
-    // Qv constrained
-    QvConstrainedTrajectoryStock_[i][k] = BASE::modelDataTrajectoriesStock_[i][k].costStateDerivative_;
-    QvConstrainedTrajectoryStock_[i][k].noalias() -=
-        CmProjectedTrajectoryStock_[i][k].transpose() * BASE::modelDataTrajectoriesStock_[i][k].costInputDerivative_;
-  }
+  // project LQ coefficients to constrained ones
+  BASE::projectLQWorker(BASE::modelDataTrajectoriesStock_[partitionIndex][timeIndex], DmDager, DdaggerT_R_Ddagger_Chol,
+                        BASE::projectedModelDataTrajectoriesStock_[partitionIndex][timeIndex]);
 }
 
 /******************************************************************************************************/
@@ -213,11 +163,13 @@ void SLQ<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t time,
   ModelData::LinearInterpolation::interpolate(indexAlpha, Rm, &BASE::modelDataTrajectoriesStock_[activeSubsystem],
                                               ModelData::costInputSecondDerivative);
 
-  input_vector_t EvProjected;
-  EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, EvProjected, &EvProjectedTrajectoryStock_[activeSubsystem]);
+  dynamic_vector_t EvProjected;
+  ModelData::LinearInterpolation::interpolate(indexAlpha, EvProjected, &BASE::projectedModelDataTrajectoriesStock_[activeSubsystem],
+                                              ModelData::stateInputEqConstr);
 
-  input_state_matrix_t CmProjected;
-  EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, CmProjected, &CmProjectedTrajectoryStock_[activeSubsystem]);
+  dynamic_matrix_t CmProjected;
+  ModelData::LinearInterpolation::interpolate(indexAlpha, CmProjected, &BASE::projectedModelDataTrajectoriesStock_[activeSubsystem],
+                                              ModelData::stateInputEqConstrStateDerivative);
 
   input_constraint1_matrix_t DmDager;
   EigenLinearInterpolation<input_constraint1_matrix_t>::interpolate(indexAlpha, DmDager, &DmDagerTrajectoryStock_[activeSubsystem]);
@@ -253,9 +205,9 @@ void SLQ<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, si
   dynamic_matrix_t Pm;
   dynamic_vector_t Rv;
   dynamic_matrix_t RmInverse;
-  input_vector_t EvProjected;
-  input_state_matrix_t CmProjected;
-  input_matrix_t DmProjected;
+  dynamic_vector_t EvProjected;
+  dynamic_matrix_t CmProjected;
+  dynamic_matrix_t DmProjected;
 
   // interpolate
   const auto indexAlpha = EigenLinearInterpolation<state_vector_t>::timeSegment(time, &(BASE::nominalTimeTrajectoriesStock_[i]));
@@ -266,9 +218,13 @@ void SLQ<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, si
   ModelData::LinearInterpolation::interpolate(indexAlpha, Pm, &BASE::modelDataTrajectoriesStock_[i], ModelData::costInputStateDerivative);
   ModelData::LinearInterpolation::interpolate(indexAlpha, Rv, &BASE::modelDataTrajectoriesStock_[i], ModelData::costInputDerivative);
   EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, RmInverse, &(BASE::RmInverseTrajectoryStock_[i]));
-  EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, EvProjected, &(EvProjectedTrajectoryStock_[i]));
-  EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, CmProjected, &(CmProjectedTrajectoryStock_[i]));
-  EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, DmProjected, &(DmProjectedTrajectoryStock_[i]));
+
+  ModelData::LinearInterpolation::interpolate(indexAlpha, EvProjected, &BASE::projectedModelDataTrajectoriesStock_[i],
+                                              ModelData::stateInputEqConstr);
+  ModelData::LinearInterpolation::interpolate(indexAlpha, CmProjected, &BASE::projectedModelDataTrajectoriesStock_[i],
+                                              ModelData::stateInputEqConstrStateDerivative);
+  ModelData::LinearInterpolation::interpolate(indexAlpha, DmProjected, &BASE::projectedModelDataTrajectoriesStock_[i],
+                                              ModelData::stateInputEqConstrInputDerivative);
 
   // Lm
   Pm.noalias() += Bm.transpose() * BASE::SmTrajectoryStock_[i][k];  // avoid temporary in the product
@@ -478,12 +434,6 @@ void SLQ<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
 
   // constraint type 1 coefficients
   DmDagerTrajectoryStock_.resize(numPartitions);
-  AmConstrainedTrajectoryStock_.resize(numPartitions);
-  QmConstrainedTrajectoryStock_.resize(numPartitions);
-  QvConstrainedTrajectoryStock_.resize(numPartitions);
-  EvProjectedTrajectoryStock_.resize(numPartitions);
-  CmProjectedTrajectoryStock_.resize(numPartitions);
-  DmProjectedTrajectoryStock_.resize(numPartitions);
   RmInvConstrainedCholTrajectoryStock_.resize(numPartitions);
 }
 
@@ -497,8 +447,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size_
   riccatiEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
   riccatiEquationsPtrStock_[workerIndex]->setData(
       &BASE::nominalTimeTrajectoriesStock_[partitionIndex], &BASE::modelDataTrajectoriesStock_[partitionIndex],
-      &AmConstrainedTrajectoryStock_[partitionIndex], &QvConstrainedTrajectoryStock_[partitionIndex],
-      &QmConstrainedTrajectoryStock_[partitionIndex], &RmInvConstrainedCholTrajectoryStock_[partitionIndex],
+      &BASE::projectedModelDataTrajectoriesStock_[partitionIndex], &RmInvConstrainedCholTrajectoryStock_[partitionIndex],
       &BASE::nominalPostEventIndicesStock_[partitionIndex], &BASE::modelDataEventTimesStock_[partitionIndex],
       &BASE::riccatiModificationStock_[partitionIndex]);
 
@@ -704,12 +653,12 @@ void SLQ<STATE_DIM, INPUT_DIM>::errorRiccatiEquationWorker(size_t workerIndex, s
   for (int k = nominalTimeSize - 1; k >= 0; k--) {
     const auto& Pm = BASE::modelDataTrajectoriesStock_[partitionIndex][k].costInputStateDerivative_;
     const auto& Bm = BASE::modelDataTrajectoriesStock_[partitionIndex][k].dynamicsInputDerivative_;
-    const auto& Am = AmConstrainedTrajectoryStock_[partitionIndex][k];
+    const auto& Rm = BASE::modelDataTrajectoriesStock_[partitionIndex][k].costInputSecondDerivative_;
     const auto& RmInvChol = RmInvConstrainedCholTrajectoryStock_[partitionIndex][k];
     const auto& RmInv = BASE::RmInverseTrajectoryStock_[partitionIndex][k];
-    const auto& Rm = BASE::modelDataTrajectoriesStock_[partitionIndex][k].costInputSecondDerivative_;
-    const auto& Ev = EvProjectedTrajectoryStock_[partitionIndex][k];
-    const auto& Cm = CmProjectedTrajectoryStock_[partitionIndex][k];
+    const auto& Am = BASE::projectedModelDataTrajectoriesStock_[partitionIndex][k].dynamicsStateDerivative_;
+    const auto& Ev = BASE::projectedModelDataTrajectoriesStock_[partitionIndex][k].stateInputEqConstr_;
+    const auto& Cm = BASE::projectedModelDataTrajectoriesStock_[partitionIndex][k].stateInputEqConstrStateDerivative_;
 
     // Sm
     EigenLinearInterpolation<state_matrix_t>::interpolate(nominalTimeTrajectory[k], Sm, &SsTimeTrajectory, &SmTrajectory);

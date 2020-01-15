@@ -85,25 +85,8 @@ void ILQR<STATE_DIM, INPUT_DIM>::approximateLQWorker(size_t workerIndex, size_t 
   LinearAlgebra::computeLinvTLinv(Rm, RmCholeskyUpper, RinvChol);
   BASE::RmInverseTrajectoryStock_[partitionIndex][timeIndex].noalias() = RinvChol * RinvChol.transpose();
 
-  // project unconstrained LQ coefficients to constrained ones
-  projectLQWorker(workerIndex, partitionIndex, timeIndex);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::projectLQWorker(size_t workerIndex, size_t i, size_t k) {
-  // TODO: add support for the constrained ILQR
-  if (BASE::modelDataTrajectoriesStock_[i][k].numStateEqConstr_ != 0) {
-    throw std::runtime_error("We currently only support unconstrained ILQR.");
-  }
-  if (BASE::modelDataTrajectoriesStock_[i][k].numStateInputEqConstr_ != 0) {
-    throw std::runtime_error("We currently only support unconstrained ILQR.");
-  }
-  if (BASE::modelDataTrajectoriesStock_[i][k].numIneqConstr_ != 0) {
-    throw std::runtime_error("We currently only support unconstrained ILQR.");
-  }
+  // project LQ coefficients to constrained ones
+  // BASE::projectLQWorker(workerIndex, partitionIndex, timeIndex);
 }
 
 /******************************************************************************************************/

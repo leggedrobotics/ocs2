@@ -94,16 +94,13 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::collect(const slq_t* constSlqPtr) 
   // event times model data
   modelDataEventTimesStock_.swap(slqPtr->cachedModelDataEventTimesStock_);
 
+  // projected model data trajectory
+  projectedModelDataTrajectoriesStock_.swap(slqPtr->cachedProjectedModelDataTrajectoriesStock_);
+
   // constrained projected variables
   RmInverseTrajectoriesStock_.swap(slqPtr->RmInverseTrajectoryStock_);
-  AmConstrainedTrajectoriesStock_.swap(slqPtr->AmConstrainedTrajectoryStock_);
-  QmConstrainedTrajectoriesStock_.swap(slqPtr->QmConstrainedTrajectoryStock_);
-  QvConstrainedTrajectoriesStock_.swap(slqPtr->QvConstrainedTrajectoryStock_);
   RmInvConstrainedCholTrajectoryStock_.swap(slqPtr->RmInvConstrainedCholTrajectoryStock_);
   DmDagerTrajectoriesStock_.swap(slqPtr->DmDagerTrajectoryStock_);
-  EvProjectedTrajectoriesStock_.swap(slqPtr->EvProjectedTrajectoryStock_);
-  CmProjectedTrajectoriesStock_.swap(slqPtr->CmProjectedTrajectoryStock_);
-  DmProjectedTrajectoriesStock_.swap(slqPtr->DmProjectedTrajectoryStock_);
 
   // terminal cost which is interpreted as the Heuristic function
   sHeuristics_ = slqPtr->sHeuristics_;
@@ -217,16 +214,13 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::resizeDataContainer(const size_t& 
   // event times model data
   modelDataEventTimesStock_.resize(numPartitions);
 
+  // projected model data trajectory
+  projectedModelDataTrajectoriesStock_.resize(numPartitions);
+
   // constrained projected variables
   RmInverseTrajectoriesStock_.resize(numPartitions);
-  AmConstrainedTrajectoriesStock_.resize(numPartitions);
-  QmConstrainedTrajectoriesStock_.resize(numPartitions);
-  QvConstrainedTrajectoriesStock_.resize(numPartitions);
   RmInvConstrainedCholTrajectoryStock_.resize(numPartitions);
   DmDagerTrajectoriesStock_.resize(numPartitions);
-  EvProjectedTrajectoriesStock_.resize(numPartitions);
-  CmProjectedTrajectoriesStock_.resize(numPartitions);
-  DmProjectedTrajectoriesStock_.resize(numPartitions);
 
   // Riccati coefficients
   SsTimeTrajectoriesStock_.resize(numPartitions);

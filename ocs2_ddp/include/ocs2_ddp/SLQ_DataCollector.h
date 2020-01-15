@@ -161,15 +161,12 @@ class SLQ_DataCollector {
   // event times model data
   ModelDataBase::array2_t modelDataEventTimesStock_;
 
+  // projected model data trajectory
+  ModelDataBase::array2_t projectedModelDataTrajectoriesStock_;
+
   dynamic_matrix_array2_t RmInverseTrajectoriesStock_;
-  state_matrix_array2_t AmConstrainedTrajectoriesStock_;
-  state_matrix_array2_t QmConstrainedTrajectoriesStock_;
-  state_vector_array2_t QvConstrainedTrajectoriesStock_;
   dynamic_matrix_array2_t RmInvConstrainedCholTrajectoryStock_;
   input_constraint1_matrix_array2_t DmDagerTrajectoriesStock_;
-  input_vector_array2_t EvProjectedTrajectoriesStock_;        // DmDager * Ev
-  input_state_matrix_array2_t CmProjectedTrajectoriesStock_;  // DmDager * Cm
-  input_matrix_array2_t DmProjectedTrajectoriesStock_;        // DmDager * Dm
 
   // terminal cost which is interpreted as the Heuristic function
   scalar_t sHeuristics_;

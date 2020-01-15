@@ -127,6 +127,8 @@ class GDDP {
   using constraint2_state_matrix_array_t = typename DIMENSIONS::constraint2_state_matrix_array_t;
   using constraint2_state_matrix_array2_t = typename DIMENSIONS::constraint2_state_matrix_array2_t;
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+  using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
+  using dynamic_vector_array2_t = typename DIMENSIONS::dynamic_vector_array2_t;
   using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
   using dynamic_input_matrix_t = typename DIMENSIONS::dynamic_input_matrix_t;
 
@@ -229,7 +231,7 @@ class GDDP {
    * @param [out] lagrangeTrajectoriesStock: lagrangeMultiplier value over the given trajectory
    */
   void calculateNominalRolloutLagrangeMultiplier(const scalar_array2_t& timeTrajectoriesStock,
-                                                 constraint1_vector_array2_t& lagrangeTrajectoriesStock);
+                                                 dynamic_vector_array2_t& lagrangeTrajectoriesStock);
 
   /**
    * Computes the equivalent system formulation multiplier. which is
@@ -395,7 +397,7 @@ class GDDP {
    * SLQ missing variables
    ******************/
   state_vector_array2_t nominalCostateTrajectoriesStock_;
-  constraint1_vector_array2_t nominalLagrangianTrajectoriesStock_;
+  dynamic_vector_array2_t nominalLagrangianTrajectoriesStock_;
 
   std::vector<std::shared_ptr<bvp_sensitivity_equations_t>> bvpSensitivityEquationsPtrStock_;
   std::vector<std::unique_ptr<IntegratorBase<STATE_DIM>>> bvpSensitivityIntegratorsPtrStock_;

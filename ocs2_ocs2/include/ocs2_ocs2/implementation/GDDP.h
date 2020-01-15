@@ -156,7 +156,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateRolloutCostate(const std::vector<scala
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GDDP<STATE_DIM, INPUT_DIM>::calculateNominalRolloutLagrangeMultiplier(const scalar_array2_t& timeTrajectoriesStock,
-                                                                           constraint1_vector_array2_t& lagrangeTrajectoriesStock) {
+                                                                           dynamic_vector_array2_t& lagrangeTrajectoriesStock) {
   lagrangeTrajectoriesStock.resize(numPartitions_);
 
   for (size_t i = 0; i < numPartitions_; i++) {
@@ -173,12 +173,11 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateNominalRolloutLagrangeMultiplier(const
       const auto& Bm = dataCollectorPtr_->modelDataTrajectoriesStock_[i][k].dynamicsInputDerivative_;
       const auto& Rv = dataCollectorPtr_->modelDataTrajectoriesStock_[i][k].costInputDerivative_;
       const auto& Rm = dataCollectorPtr_->modelDataTrajectoriesStock_[i][k].costInputSecondDerivative_;
-      const auto& EvProjected = dataCollectorPtr_->EvProjectedTrajectoriesStock_[i][k];
+      const auto& EvProjected = dataCollectorPtr_->projectedModelDataTrajectoriesStock_[i][k].stateInputEqConstr_;
       const auto& DmDager = dataCollectorPtr_->DmDagerTrajectoriesStock_[i][k];
       const auto& costate = nominalCostateTrajectoriesStock_[i][k];
 
-      lagrangeTrajectoriesStock[i][k].head(nc1) = DmDager.leftCols(nc1).transpose() * (Rm * EvProjected - Rv - Bm.transpose() * costate);
-      lagrangeTrajectoriesStock[i][k].tail(DIMENSIONS::MAX_CONSTRAINT1_DIM_ - nc1).setZero();
+      lagrangeTrajectoriesStock[i][k] = DmDager.leftCols(nc1).transpose() * (Rm * EvProjected - Rv - Bm.transpose() * costate);
     }  // end of k loop
   }    // end of i loop
 }
@@ -595,17 +594,16 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(size_t workerIndex, const s
     bvpSensitivityEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
     bvpSensitivityEquationsPtrStock_[workerIndex]->setData(
         &dataCollectorPtr_->nominalTimeTrajectoriesStock_[i], &dataCollectorPtr_->modelDataTrajectoriesStock_[i],
-        &dataCollectorPtr_->AmConstrainedTrajectoriesStock_[i], &dataCollectorPtr_->CmProjectedTrajectoriesStock_[i],
-        &nominalCostateTrajectoriesStock_[i], &nominalLagrangianTrajectoriesStock_[i],
-        &dataCollectorPtr_->optimizedControllersStock_[i].timeStamp_, &dataCollectorPtr_->optimizedControllersStock_[i].gainArray_,
-        &dataCollectorPtr_->SmTrajectoriesStock_[i]);
+        &dataCollectorPtr_->projectedModelDataTrajectoriesStock_[i], &nominalCostateTrajectoriesStock_[i],
+        &nominalLagrangianTrajectoriesStock_[i], &dataCollectorPtr_->optimizedControllersStock_[i].timeStamp_,
+        &dataCollectorPtr_->optimizedControllersStock_[i].gainArray_, &dataCollectorPtr_->SmTrajectoriesStock_[i]);
 
     // set data for Riccati error equations
     bvpSensitivityErrorEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
     bvpSensitivityErrorEquationsPtrStock_[workerIndex]->setData(
         &dataCollectorPtr_->nominalTimeTrajectoriesStock_[i], &dataCollectorPtr_->modelDataTrajectoriesStock_[i],
-        &dataCollectorPtr_->AmConstrainedTrajectoriesStock_[i], &dataCollectorPtr_->CmProjectedTrajectoriesStock_[i],
-        &dataCollectorPtr_->RmInverseTrajectoriesStock_[i], &dataCollectorPtr_->RmInvConstrainedCholTrajectoryStock_[i],
+        &dataCollectorPtr_->projectedModelDataTrajectoriesStock_[i], &dataCollectorPtr_->RmInverseTrajectoriesStock_[i],
+        &dataCollectorPtr_->RmInvConstrainedCholTrajectoryStock_[i],
         &dataCollectorPtr_->EvDevEventTimesProjectedTrajectoriesStockSet_[eventTimeIndex][i],
         &dataCollectorPtr_->SsTimeTrajectoriesStock_[i], &dataCollectorPtr_->SmTrajectoriesStock_[i]);
 
@@ -800,8 +798,9 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateBVPSensitivityControllerForward(size_t
       dynamic_matrix_t RmInverse;
       EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, RmInverse, &dataCollectorPtr_->RmInverseTrajectoriesStock_[i]);
       // DmProjected
-      input_matrix_t DmProjected;
-      EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, DmProjected, &dataCollectorPtr_->DmProjectedTrajectoriesStock_[i]);
+      dynamic_matrix_t DmProjected;
+      ModelData::LinearInterpolation::interpolate(indexAlpha, DmProjected, &(dataCollectorPtr_->projectedModelDataTrajectoriesStock_[i]),
+                                                  ModelData::stateInputEqConstrInputDerivative);
       // EvDevEventTimesProjected
       input_vector_t EvDevEventTimeProjected;
       EigenLinearInterpolation<input_vector_t>::interpolate(

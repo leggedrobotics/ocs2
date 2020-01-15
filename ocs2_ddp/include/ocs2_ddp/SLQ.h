@@ -184,16 +184,6 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   void riccatiSolverTask() override;
 
   /**
-   * Projects the unconstrained LQ coefficients to constrained ones.
-   *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] i: Time partition index.
-   * @param [in] k: Time index in the partition.
-   */
-  void projectLQWorker(size_t workerIndex, size_t i, size_t k, const dynamic_matrix_t& DmDager,
-                       const dynamic_matrix_t& DdaggerT_R_Ddagger_Chol);
-
-  /**
    * Solves a set of Riccati equations and type_1 constraints error correction compensation for the partition in the given index.
    *
    * @param [in] workerIndex: Working agent index.
@@ -270,14 +260,8 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   // parallel Riccati solver
   std::mutex riccatiSolverDataMutex_;
 
-  state_matrix_array2_t AmConstrainedTrajectoryStock_;
-  state_matrix_array2_t QmConstrainedTrajectoryStock_;
-  state_vector_array2_t QvConstrainedTrajectoryStock_;
   dynamic_matrix_array2_t RmInvConstrainedCholTrajectoryStock_;
   input_constraint1_matrix_array2_t DmDagerTrajectoryStock_;
-  input_vector_array2_t EvProjectedTrajectoryStock_;        // DmDager * Ev
-  input_state_matrix_array2_t CmProjectedTrajectoryStock_;  // DmDager * Cm
-  input_matrix_array2_t DmProjectedTrajectoryStock_;        // DmDager * Dm
 
   std::vector<std::shared_ptr<riccati_equations_t>> riccatiEquationsPtrStock_;
   std::vector<std::unique_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>> riccatiIntegratorPtrStock_;

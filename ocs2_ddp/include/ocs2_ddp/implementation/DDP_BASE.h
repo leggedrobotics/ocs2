@@ -582,6 +582,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
     RmInverseTrajectoryStock_[i].resize(N);
     RmCholeskyUpperTrajectoryStock_[i].resize(N);
 
+    projectedModelDataTrajectoriesStock_[i].resize(N);
+    cachedProjectedModelDataTrajectoriesStock_[i].resize(N);
+
     // intermediate times
     if (N > 0) {
       for (size_t j = 0; j < ddpSettings_.nThreads_; j++) {
@@ -701,6 +704,56 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::augmentCostWorker(size_t workerIndex, Model
         throw std::runtime_error(errorDescription);
       }
     }
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::projectLQWorker(const ModelDataBase& modelData, const dynamic_matrix_t& DmDager,
+                                                     const dynamic_matrix_t& DdaggerT_R_Ddagger_Chol, ModelDataBase& projectedModelData) {
+  // initialization
+  projectedModelData.time_ = modelData.time_;
+  projectedModelData.numIneqConstr_ = 0;
+  projectedModelData.numStateEqConstr_ = 0;
+  projectedModelData.numStateInputEqConstr_ = INPUT_DIM;
+
+  // constraint type 1 coefficients
+  const auto nc1 = modelData.numStateInputEqConstr_;
+  if (nc1 == 0) {
+    projectedModelData.stateInputEqConstr_.setZero(INPUT_DIM);
+    projectedModelData.stateInputEqConstrStateDerivative_.setZero(INPUT_DIM, STATE_DIM);
+    projectedModelData.stateInputEqConstrInputDerivative_.setZero(INPUT_DIM, INPUT_DIM);
+    projectedModelData.dynamicsStateDerivative_ = modelData.dynamicsStateDerivative_;
+    projectedModelData.costStateDerivative_ = modelData.costStateDerivative_;
+    projectedModelData.costStateSecondDerivative_ = modelData.costStateSecondDerivative_;
+  } else {
+    const auto& Ev = modelData.stateInputEqConstr_;
+    const auto& Cm = modelData.stateInputEqConstrStateDerivative_;
+    const auto& Dm = modelData.stateInputEqConstrInputDerivative_;
+
+    // projected state-input equality constraints
+    projectedModelData.stateInputEqConstr_.noalias() = DmDager * Ev;
+    projectedModelData.stateInputEqConstrStateDerivative_.noalias() = DmDager * Cm;
+    projectedModelData.stateInputEqConstrInputDerivative_.noalias() = DmDager * Dm;
+
+    // Am constrained
+    projectedModelData.dynamicsStateDerivative_ = modelData.dynamicsStateDerivative_;
+    projectedModelData.dynamicsStateDerivative_.noalias() -=
+        modelData.dynamicsInputDerivative_ * projectedModelData.stateInputEqConstrStateDerivative_;
+
+    // Qm constrained
+    dynamic_matrix_t PmTransDmDagerCm =
+        modelData.costInputStateDerivative_.transpose() * projectedModelData.stateInputEqConstrStateDerivative_;
+    projectedModelData.costStateSecondDerivative_ = modelData.costStateSecondDerivative_ - PmTransDmDagerCm - PmTransDmDagerCm.transpose();
+    dynamic_matrix_t Cm_RProjected_Cm_Chol = DdaggerT_R_Ddagger_Chol.transpose() * Cm;
+    projectedModelData.costStateSecondDerivative_.noalias() += Cm_RProjected_Cm_Chol.transpose() * Cm_RProjected_Cm_Chol;
+
+    // Qv constrained
+    projectedModelData.costStateDerivative_ = modelData.costStateDerivative_;
+    projectedModelData.costStateDerivative_.noalias() -=
+        projectedModelData.stateInputEqConstrStateDerivative_.transpose() * modelData.costInputDerivative_;
   }
 }
 
@@ -1393,6 +1446,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::swapNominalTrajectoriesToCache() {
   cachedInputTrajectoriesStock_.swap(nominalInputTrajectoriesStock_);
   cachedModelDataTrajectoriesStock_.swap(modelDataTrajectoriesStock_);
   cachedModelDataEventTimesStock_.swap(modelDataEventTimesStock_);
+  cachedProjectedModelDataTrajectoriesStock_.swap(projectedModelDataTrajectoriesStock_);
 }
 
 /******************************************************************************************************/
@@ -1872,6 +1926,12 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
    */
   modelDataEventTimesStock_.resize(numPartitions);
   cachedModelDataEventTimesStock_.resize(numPartitions);
+
+  /*
+   * projected intermediate model data
+   */
+  projectedModelDataTrajectoriesStock_.resize(numPartitions);
+  cachedProjectedModelDataTrajectoriesStock_.resize(numPartitions);
 
   RmInverseTrajectoryStock_.resize(numPartitions);
   RmCholeskyUpperTrajectoryStock_.resize(numPartitions);

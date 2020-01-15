@@ -74,6 +74,7 @@ class BvpSensitivityEquations final : public OdeBase<STATE_DIM> {
   using constraint1_state_matrix_t = typename DIMENSIONS::constraint1_state_matrix_t;
   using constraint1_state_matrix_array_t = typename DIMENSIONS::constraint1_state_matrix_array_t;
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+  using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
   using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
 
   /**
@@ -96,14 +97,13 @@ class BvpSensitivityEquations final : public OdeBase<STATE_DIM> {
   /**
    * Sets Data
    */
-  void setData(const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* modelDataPtr, const state_matrix_array_t* AmConstrainedPtr,
-               const input_state_matrix_array_t* CmProjectedPtr, const state_vector_array_t* costatePtr,
-               const constraint1_vector_array_t* lagrangianPtr, const scalar_array_t* controllerTimeStampPtr,
+  void setData(const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* modelDataPtr,
+               const ModelDataBase::array_t* projectedModelDataPtr, const state_vector_array_t* costatePtr,
+               const dynamic_vector_array_t* lagrangianPtr, const scalar_array_t* controllerTimeStampPtr,
                const input_state_matrix_array_t* KmConstrainedPtr, const state_matrix_array_t* SmPtr) {
     timeStampPtr_ = timeStampPtr;
     modelDataPtr_ = modelDataPtr;
-    AmConstrainedPtr_ = AmConstrainedPtr;
-    CmProjectedPtr_ = CmProjectedPtr;
+    projectedModelDataPtr_ = projectedModelDataPtr;
     costatePtr_ = costatePtr;
     lagrangianPtr_ = lagrangianPtr;
     controllerTimeStampPtr_ = controllerTimeStampPtr;
@@ -137,12 +137,13 @@ class BvpSensitivityEquations final : public OdeBase<STATE_DIM> {
     ModelData::LinearInterpolation::interpolate(indexAlpha, Bm_, modelDataPtr_, ModelData::dynamicsInputDerivative);
     ModelData::LinearInterpolation::interpolate(indexAlpha, Qv_, modelDataPtr_, ModelData::costStateDerivative);
     ModelData::LinearInterpolation::interpolate(indexAlpha, Cm_, modelDataPtr_, ModelData::stateInputEqConstrStateDerivative);
-    auto nc1 = (*modelDataPtr_)[indexAlpha.first].numStateInputEqConstr_;
 
-    EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, AmConstrained_, AmConstrainedPtr_);
-    EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, CmProjected_, CmProjectedPtr_);
+    ModelData::LinearInterpolation::interpolate(indexAlpha, AmConstrained_, projectedModelDataPtr_, ModelData::dynamicsStateDerivative);
+    ModelData::LinearInterpolation::interpolate(indexAlpha, CmProjected_, projectedModelDataPtr_,
+                                                ModelData::stateInputEqConstrStateDerivative);
+
     EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, costate_, costatePtr_);
-    EigenLinearInterpolation<constraint1_vector_t>::interpolate(indexAlpha, lagrangian_, lagrangianPtr_);
+    EigenLinearInterpolation<dynamic_vector_t>::interpolate(indexAlpha, lagrangian_, lagrangianPtr_);
 
     indexAlpha = LinearInterpolation<scalar_t>::timeSegment(t, controllerTimeStampPtr_);
     EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, KmConstrained_, KmConstrainedPtr_);
@@ -151,7 +152,7 @@ class BvpSensitivityEquations final : public OdeBase<STATE_DIM> {
     // here we have used RmConstrained = (I-DmConstrained).transpose() * Rm
     // and Km = -(I-DmConstrained) \tilde{L} - CmProjected_
     dMvdz = (AmConstrained_ + Bm_ * (CmProjected_ + KmConstrained_)).transpose() * Mv +
-            multiplier_ * (Qv_ + Am_.transpose() * costate_ + Cm_.topRows(nc1).transpose() * lagrangian_.head(nc1) + Sm_ * Fv_);
+            multiplier_ * (Qv_ + Am_.transpose() * costate_ + Cm_.transpose() * lagrangian_ + Sm_ * Fv_);
   }
 
  private:
@@ -159,10 +160,9 @@ class BvpSensitivityEquations final : public OdeBase<STATE_DIM> {
 
   const scalar_array_t* timeStampPtr_;
   const ModelDataBase::array_t* modelDataPtr_;
-  const state_matrix_array_t* AmConstrainedPtr_;
-  const input_state_matrix_array_t* CmProjectedPtr_;
+  const ModelDataBase::array_t* projectedModelDataPtr_;
   const state_vector_array_t* costatePtr_;
-  const constraint1_vector_array_t* lagrangianPtr_;
+  const dynamic_vector_array_t* lagrangianPtr_;
   const scalar_array_t* controllerTimeStampPtr_;
   const input_state_matrix_array_t* KmConstrainedPtr_;
   const state_matrix_array_t* SmPtr_;
@@ -172,10 +172,10 @@ class BvpSensitivityEquations final : public OdeBase<STATE_DIM> {
   dynamic_matrix_t Bm_;
   dynamic_vector_t Qv_;
   dynamic_matrix_t Cm_;
-  state_matrix_t AmConstrained_;
-  input_state_matrix_t CmProjected_;
+  dynamic_matrix_t AmConstrained_;
+  dynamic_matrix_t CmProjected_;
   state_vector_t costate_;
-  constraint1_vector_t lagrangian_;
+  dynamic_vector_t lagrangian_;
   input_state_matrix_t KmConstrained_;
   state_matrix_t Sm_;
 };

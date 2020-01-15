@@ -134,8 +134,8 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
    * @param [in] RmInversePtr: A pointer to the trajectory of \f$ R_m^{-1}(t) \f$ .
    * @param [in] RmPtr: A pointer to the trajectory of \f$ R_m(t) \f$ .
    */
-  void setData(const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* modelDataPtr, const state_matrix_array_t* AmPtr,
-               const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr, const dynamic_matrix_array_t* RinvCholPtr,
+  void setData(const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* modelDataPtr,
+               const ModelDataBase::array_t* projectedModelDataPtr, const dynamic_matrix_array_t* RinvCholPtr,
                const size_array_t* eventsPastTheEndIndecesPtr, const ModelDataBase::array_t* modelDataEventTimesPtr,
                const riccati_modification_t* riccatiModificationPtr);
 
@@ -163,9 +163,7 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
   // array pointers
   const scalar_array_t* timeStampPtr_;
   const ModelDataBase::array_t* modelDataPtr_;
-  const state_matrix_array_t* AmPtr_;
-  const state_vector_array_t* QvPtr_;
-  const state_matrix_array_t* QmPtr_;
+  const ModelDataBase::array_t* projectedModelDataPtr_;
   const dynamic_matrix_array_t* RinvCholPtr_;
 
   scalar_array_t eventTimes_;
@@ -174,8 +172,8 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
   const riccati_modification_t* riccatiModificationPtr_;
 
   // Arrays to store precomputation
-  state_matrix_array_t Qm_minus_P_Rinv_P_array_;
-  state_vector_array_t Qv_minus_P_Rinv_Rv_array_;
+  dynamic_matrix_array_t Qm_minus_P_Rinv_P_array_;
+  dynamic_vector_array_t Qv_minus_P_Rinv_Rv_array_;
   dynamic_matrix_array_t AmT_minus_P_Rinv_B_array_;
   dynamic_matrix_array_t B_RinvChol_array_;
   dynamic_vector_array_t RinvCholT_Rv_array_;
@@ -185,15 +183,15 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
   state_vector_t Sv_;
   scalar_t s_;
 
-  state_matrix_t Qm_;
-  state_vector_t Qv_;
+  dynamic_matrix_t Qm_;
+  dynamic_vector_t Qv_;
   scalar_t q_;
   dynamic_matrix_t AmT_minus_P_Rinv_Bm_;
   dynamic_matrix_t B_RinvChol_;
   dynamic_vector_t RinvCholT_Rv_;
   dynamic_matrix_t SmT_B_RinvChol_;
   state_matrix_t AmT_Sm_;
-  state_matrix_t Am_;
+  dynamic_matrix_t Am_;
   dynamic_matrix_t Bm_;
   dynamic_vector_t Rv_;
   dynamic_matrix_t RinvChol_;

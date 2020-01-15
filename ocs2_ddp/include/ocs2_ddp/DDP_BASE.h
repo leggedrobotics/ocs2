@@ -503,6 +503,17 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void augmentCostWorker(size_t workerIndex, ModelDataBase& modelData);
 
   /**
+   * Projects the unconstrained LQ coefficients to constrained ones.
+   *
+   * @param [in] modelData:
+   * @param [in] DmDager:
+   * @param [in] DdaggerT_R_Ddagger_Chol:
+   * @param [out] projectedModelData:
+   */
+  static void projectLQWorker(const ModelDataBase& modelData, const dynamic_matrix_t& DmDager,
+                              const dynamic_matrix_t& DdaggerT_R_Ddagger_Chol, ModelDataBase& projectedModelData);
+
+  /**
    * Computes the Riccati modification based on the strategy.
    */
   void computeRiccatiModificationTerms();
@@ -683,7 +694,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   scalar_t inequalityConstraintPenalty_;
   scalar_t inequalityConstraintISE_;
 
-  // Forward pass and backward pass average time step
+  // forward pass and backward pass average time step
   scalar_t avgTimeStepFP_;
   scalar_t avgTimeStepBP_;
 
@@ -702,7 +713,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   state_vector_array2_t nominalStateTrajectoriesStock_;
   input_vector_array2_t nominalInputTrajectoriesStock_;
 
-  // Used for caching the nominal trajectories for which the LQ problem is
+  // used for caching the nominal trajectories for which the LQ problem is
   // constructed and solved before terminating run()
   scalar_t cachedControllerUpdateIS_ = 0.0;
   linear_controller_array_t cachedControllersStock_;
@@ -718,6 +729,10 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   // event times model data
   ModelDataBase::array2_t modelDataEventTimesStock_;
   ModelDataBase::array2_t cachedModelDataEventTimesStock_;
+
+  // projected model data trajectory
+  ModelDataBase::array2_t projectedModelDataTrajectoriesStock_;
+  ModelDataBase::array2_t cachedProjectedModelDataTrajectoriesStock_;
 
   //
   dynamic_matrix_array2_t RmInverseTrajectoryStock_;

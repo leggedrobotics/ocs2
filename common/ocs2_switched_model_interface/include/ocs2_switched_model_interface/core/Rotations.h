@@ -90,4 +90,53 @@ Eigen::Matrix<SCALAR_T, 3, 3> angularVelocitiesToEulerAngleDerivativesMatrix(con
   return M;
 }
 
+/*! \brief Returns a unique Euler angles rotation with angles in [-pi,pi),[-pi/2,pi/2),[-pi,pi).
+ *  \note Taken from https://github.com/ANYbotics/kindr/blob/0b159ec60b710706656b70148211ed04573fbfda/include/kindr/rotations/EulerAnglesXyz.hpp
+ *  \param [in,out] eulerAngles to be scaled as necessary
+ */
+template <typename SCALAR_T>
+void makeEulerAnglesUnique(Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
+  SCALAR_T tol = 1e-9;
+
+  if (eulerAngles.y() < -M_PI / 2 - tol) {
+    if (eulerAngles.x() < 0) {
+      eulerAngles.x() = eulerAngles.x() + M_PI;
+    } else {
+      eulerAngles.x() = eulerAngles.x() - M_PI;
+    }
+
+    eulerAngles.y() = -(eulerAngles.y() + M_PI);
+
+    if (eulerAngles.z() < 0) {
+      eulerAngles.z() = eulerAngles.z() + M_PI;
+    } else {
+      eulerAngles.z() = eulerAngles.z() - M_PI;
+    }
+  } else if (-M_PI / 2 - tol <= eulerAngles.y() && eulerAngles.y() <= -M_PI / 2 + tol) {
+    eulerAngles.x() -= eulerAngles.z();
+    eulerAngles.z() = 0;
+  } else if (-M_PI / 2 + tol < eulerAngles.y() && eulerAngles.y() < M_PI / 2 - tol) {
+    // ok
+  } else if (M_PI / 2 - tol <= eulerAngles.y() && eulerAngles.y() <= M_PI / 2 + tol) {
+    // todo: M_PI/2 should not be in range, other formula?
+    eulerAngles.x() += eulerAngles.z();
+    eulerAngles.z() = 0;
+  } else  // M_PI/2 + tol < eulerAngles.y()
+  {
+    if (eulerAngles.x() < 0) {
+      eulerAngles.x() = eulerAngles.x() + M_PI;
+    } else {
+      eulerAngles.x() = eulerAngles.x() - M_PI;
+    }
+
+    eulerAngles.y() = -(eulerAngles.y() - M_PI);
+
+    if (eulerAngles.z() < 0) {
+      eulerAngles.z() = eulerAngles.z() + M_PI;
+    } else {
+      eulerAngles.z() = eulerAngles.z() - M_PI;
+    }
+  }
+}
+
 }  // namespace switched_model

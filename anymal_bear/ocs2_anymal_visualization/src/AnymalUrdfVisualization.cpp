@@ -1,5 +1,3 @@
-
-
 #include <ros/ros.h>
 
 #include <xpp_states/endeffector_mappings.h>
@@ -14,6 +12,7 @@ int main(int argc, char* argv[]) {
   ros::NodeHandle nh;
 
   const std::string joint_topic = "xpp/joint_anymal_des";
+  const std::string joint_topic_traj = "xpp/joint_anymal_des_traj";
   std::string urdf_param = "ocs2_anymal_bear_description";
 
   std::string urdf;
@@ -45,6 +44,7 @@ int main(int argc, char* argv[]) {
   joint_names.at(n_j * quad::RH + HFE) = "RH_HFE";
   joint_names.at(n_j * quad::RH + KFE) = "RH_KFE";
 
+  UrdfVisualizer anymal_traj(urdf_param, joint_names, "base", "world", joint_topic_traj, "anymal_traj");
   UrdfVisualizer anymal_desired(urdf_param, joint_names, "base", "world", joint_topic, "anymal_des");
   UrdfVisualizer anymal_current(urdf_param, joint_names, "base", "world", joint_topic, "anymal_curr");
 

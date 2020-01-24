@@ -168,32 +168,32 @@ struct ModelDataBase {
     std::string errorDescription;
 
     if (cost_ != cost_) {
-      errorDescription += "Intermediate cost is is not finite.";
+      errorDescription += "Intermediate cost is not finite.";
     }
     if (!costStateDerivative_.allFinite()) {
-      errorDescription += "Intermediate cost first derivative w.r.t. state is is not finite.";
+      errorDescription += "Intermediate cost first derivative w.r.t. state is not finite.";
     }
     if (!costStateSecondDerivative_.allFinite()) {
-      errorDescription += "Intermediate cost second derivative w.r.t. state is is not finite.";
+      errorDescription += "Intermediate cost second derivative w.r.t. state is not finite.";
     }
     if (!costStateSecondDerivative_.isApprox(costStateSecondDerivative_.transpose())) {
-      errorDescription += "Intermediate cost second derivative w.r.t. state is is not self-adjoint.";
+      errorDescription += "Intermediate cost second derivative w.r.t. state is not self-adjoint.";
     }
     if (LinearAlgebra::eigenvalues(costStateSecondDerivative_).real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
       errorDescription += "Q matrix is not positive semi-definite. It's smallest eigenvalue is " +
                           std::to_string(LinearAlgebra::eigenvalues(costStateSecondDerivative_).real().minCoeff()) + ".";
     }
     if (!costInputDerivative_.allFinite()) {
-      errorDescription += "Intermediate cost first derivative w.r.t. input is is not finite.";
+      errorDescription += "Intermediate cost first derivative w.r.t. input is not finite.";
     }
     if (!costInputSecondDerivative_.allFinite()) {
-      errorDescription += "Intermediate cost second derivative w.r.t. input is is not finite.";
+      errorDescription += "Intermediate cost second derivative w.r.t. input is not finite.";
     }
     if (!costInputSecondDerivative_.isApprox(costInputSecondDerivative_.transpose())) {
-      errorDescription += "Intermediate cost second derivative w.r.t. input is is not self-adjoint.";
+      errorDescription += "Intermediate cost second derivative w.r.t. input is not self-adjoint.";
     }
     if (!costInputStateDerivative_.allFinite()) {
-      errorDescription += "Intermediate cost second derivative w.r.t. input-state is is not finite.";
+      errorDescription += "Intermediate cost second derivative w.r.t. input-state is not finite.";
     }
     if (costInputSecondDerivative_.ldlt().rcond() < Eigen::NumTraits<scalar_t>::epsilon()) {
       errorDescription += "R matrix is not invertible. It's reciprocal condition number is " +
@@ -202,6 +202,80 @@ struct ModelDataBase {
     if (LinearAlgebra::eigenvalues(costInputSecondDerivative_).real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon()) {
       errorDescription += "R matrix is not positive definite. It's smallest eigenvalue is " +
                           std::to_string(LinearAlgebra::eigenvalues(costInputSecondDerivative_).real().minCoeff()) + ".";
+    }
+
+    return errorDescription;
+  }
+
+  /**
+   * Checks the numerical properties of the dynamics derivatives.
+   * @return The description of the error. If there was no error it would be empty;
+   */
+  std::string checkDynamicsDerivativsProperties() const {
+    std::string errorDescription;
+
+    if (!dynamicsStateDerivative_.allFinite()) {
+      errorDescription += "Dynamics derivative w.r.t. state is not finite.";
+    }
+    if (!dynamicsInputDerivative_.allFinite()) {
+      errorDescription += "Dynamics derivative w.r.t. input is not finite.";
+    }
+
+    return errorDescription;
+  }
+
+  /**
+   * Checks the numerical properties of the constraint functions and derivatives.
+   * @return The description of the error. If there was no error it would be empty;
+   */
+  std::string checkConstraintProperties() const {
+    std::string errorDescription;
+
+    if (numStateInputEqConstr_ > 0) {
+      if (!stateInputEqConstr_.head(numStateInputEqConstr_).allFinite()) {
+        errorDescription += "Input-state constraint is not finite.";
+      }
+      if (!stateInputEqConstrStateDerivative_.topRows(numStateInputEqConstr_).allFinite()) {
+        errorDescription += "Input-state constraint derivative w.r.t. state is not finite.";
+      }
+      if (!stateInputEqConstrInputDerivative_.topRows(numStateInputEqConstr_).allFinite()) {
+        errorDescription += "Input-state constraint derivative w.r.t. input is not finite.";
+      }
+      size_t DmRank = LinearAlgebra::rank(stateInputEqConstrInputDerivative_.topRows(numStateInputEqConstr_));
+      if (DmRank != numStateInputEqConstr_) {
+        errorDescription += "Input-state constraint derivative w.r.t. input is not full-row rank. It's rank is " + std::to_string(DmRank) +
+                            " while the expected rank is " + std::to_string(numStateInputEqConstr_) + ".";
+      }
+    }
+
+    if (numStateEqConstr_ > 0) {
+      if (!stateEqConstr_.head(numStateEqConstr_).allFinite()) {
+        errorDescription += "State-only constraint is not finite.";
+      }
+      if (!stateEqConstrStateDerivative_.topRows(numStateEqConstr_).allFinite()) {
+        errorDescription += "State-only constraint derivative w.r.t. state is not finite.";
+      }
+    }
+
+    for (size_t i = 0; i < numIneqConstr_; i++) {
+      if (ineqConstr_[i] != ineqConstr_[i]) {
+        errorDescription += "Inequality constraint " + std::to_string(i) + " is not finite.";
+      }
+      if (!ineqConstrStateDerivative_[i].allFinite()) {
+        errorDescription += "Inequality constraint " + std::to_string(i) + " derivative w.r.t. state is not finite.";
+      }
+      if (!ineqConstrInputDerivative_[i].allFinite()) {
+        errorDescription += "Inequality constraint " + std::to_string(i) + " derivative w.r.t. input is not finite.";
+      }
+      if (!ineqConstrStateSecondDerivative_[i].allFinite()) {
+        errorDescription += "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. state is not finite.";
+      }
+      if (!ineqConstrInputSecondDerivative_[i].allFinite()) {
+        errorDescription += "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. state is not finite.";
+      }
+      if (!ineqConstrInputStateDerivative_[i].allFinite()) {
+        errorDescription += "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. input-state is not finite.";
+      }
     }
 
     return errorDescription;

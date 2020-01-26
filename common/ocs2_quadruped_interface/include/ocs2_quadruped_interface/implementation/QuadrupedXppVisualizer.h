@@ -1,14 +1,58 @@
 //
 // Created by rgrandia on 13.02.19.
 //
+#include <ocs2_core/Dimensions.h>
 
+#include <geometry_msgs/PoseArray.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <eigen_conversions/eigen_msg.h>
 
 #include "ocs2_quadruped_interface/QuadrupedXppVisualizer.h"
 #include "ocs2_switched_model_interface/core/Rotations.h"
 
 namespace switched_model {
+
+  template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+    inline void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::
+  setRobotStateCartesianEEValues(
+      const vector_3d_array_t& o_feetPosition,
+      const vector_3d_array_t& o_feetVelocity,
+      const vector_3d_array_t& o_feetAcceleration,
+      const vector_3d_array_t& o_feetForce,
+      xpp_msgs::RobotStateCartesian& rstcm)
+  {
+    rstcm.ee_motion.resize(NUM_CONTACT_POINTS);
+    rstcm.ee_forces.resize(NUM_CONTACT_POINTS);
+    rstcm.ee_contact.resize(NUM_CONTACT_POINTS);
+    for (size_t ee = 0; ee < NUM_CONTACT_POINTS; ++ee) {
+      tf::pointEigenToMsg(o_feetPosition[ee],      rstcm.ee_motion[ee].pos);
+      tf::vectorEigenToMsg(o_feetVelocity[ee],     rstcm.ee_motion[ee].vel);
+      tf::vectorEigenToMsg(o_feetAcceleration[ee], rstcm.ee_motion[ee].acc);
+      tf::vectorEigenToMsg(o_feetForce[ee],        rstcm.ee_forces[ee]);
+      /* Check if the forces are 0 */
+      rstcm.ee_contact[ee] = o_feetForce[ee].isZero(0);
+    }
+  }
+
+  template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+    inline void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::
+    setRobotStateCartesianEEValues(
+        const state_vector_t& state,
+        const input_vector_t& input,
+        xpp_msgs::RobotStateCartesian& rstcm)
+      {
+        vector_3d_array_t o_feetPosition, o_feetVelocity, o_feetAcceleration, o_feetForce;
+        computeFeetState(state, input, o_feetPosition, o_feetVelocity, o_feetForce);
+        for (size_t ee=0; ee < NUM_CONTACT_POINTS; ++ee) { o_feetAcceleration[ee].setZero(); /* TODO(oharley): set to 0 since we don't have these, or just leave? */ }
+        setRobotStateCartesianEEValues(
+            o_feetPosition,
+            o_feetVelocity,
+            o_feetAcceleration,
+            o_feetForce,
+            rstcm);
+      }
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::launchVisualizerNode(int argc, char** argv) {
@@ -16,11 +60,20 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::launchVisua
   signal(SIGINT, QuadrupedXppVisualizer::sigintHandler);
 
   ros::NodeHandle n;
-  visualizationPublisher_ = n.advertise<xpp_msgs::RobotStateCartesian>(xpp_msgs::robot_state_desired, 1);
-  visualizationJointPublisher_ = n.advertise<xpp_msgs::RobotStateJoint>("xpp/joint_anymal_des", 1);
-  costDesiredPublisher_ = n.advertise<visualization_msgs::Marker>("desiredBaseTrajectory", 100);
-  stateOptimizedPublisher_ = n.advertise<visualization_msgs::Marker>("optimizedBaseTrajectory", 100);
-  feetOptimizedPublisher_ = n.advertise<visualization_msgs::MarkerArray>("optimizedFeetTrajectories", 100);
+
+  visualizationPublisher_      = visualizers::xppStateDesTopicMap.advertise(n, 1);
+  visualizationJointPublisher_ = visualizers::xppJointDesTopicMap.advertise(n, 1);
+  // costDesiredPublisher_ = n.advertise<visualization_msgs::Marker>("desiredBaseTrajectory", 100);
+
+  comTracePublisher_         = visualizers::comTraceTopicMap.advertise(n, 100);
+  feetTracePublisher_          = visualizers::feetTraceTopicMap.advertise(n, 100);
+  poseTrajPublisher_          = visualizers::posesTargetTopicMap.advertise(n,1);
+
+
+  // visualizationPublisher_ = n.advertise<xpp_msgs::RobotStateCartesian>(xpp_msgs::robot_state_desired, 1);
+  // visualizationJointPublisher_ = n.advertise<xpp_msgs::RobotStateJoint>("xpp/joint_anymal_des", 1);
+  // comTracePublisher_ = n.advertise<visualization_msgs::Marker>("optimizedBaseTrajectory", 100);
+  // feetTracePublisher_ = n.advertise<visualization_msgs::MarkerArray>("optimizedFeetTrajectories", 100);
 
   ROS_INFO_STREAM("Waiting for visualization subscriber ...");
   while (ros::ok() && visualizationPublisher_.getNumSubscribers() == 0) {
@@ -108,27 +161,7 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishXppV
 
   robotStateCartesianMsg.time_from_start = ros::Duration(time);
 
-  constexpr int numEE = 4;
-  robotStateCartesianMsg.ee_motion.resize(numEE);
-  robotStateCartesianMsg.ee_forces.resize(numEE);
-  robotStateCartesianMsg.ee_contact.resize(numEE);
-  for (size_t ee_k = 0; ee_k < numEE; ee_k++) {
-    robotStateCartesianMsg.ee_motion[ee_k].pos.x = feetPosition[ee_k](0);
-    robotStateCartesianMsg.ee_motion[ee_k].pos.y = feetPosition[ee_k](1);
-    robotStateCartesianMsg.ee_motion[ee_k].pos.z = feetPosition[ee_k](2);
-
-    robotStateCartesianMsg.ee_motion[ee_k].vel.x = feetVelocity[ee_k](0);
-    robotStateCartesianMsg.ee_motion[ee_k].vel.y = feetVelocity[ee_k](1);
-    robotStateCartesianMsg.ee_motion[ee_k].vel.z = feetVelocity[ee_k](2);
-
-    robotStateCartesianMsg.ee_motion[ee_k].acc.x = feetAcceleration[ee_k](0);
-    robotStateCartesianMsg.ee_motion[ee_k].acc.y = feetAcceleration[ee_k](1);
-    robotStateCartesianMsg.ee_motion[ee_k].acc.z = feetAcceleration[ee_k](2);
-
-    robotStateCartesianMsg.ee_forces[ee_k].x = feetForce[ee_k](0);
-    robotStateCartesianMsg.ee_forces[ee_k].y = feetForce[ee_k](1);
-    robotStateCartesianMsg.ee_forces[ee_k].z = feetForce[ee_k](2);
-  }
+  setRobotStateCartesianEEValues(feetPosition, feetVelocity, feetAcceleration, feetForce, robotStateCartesianMsg);
 
   if (save_rosbag_) {
     const auto stamp = ros::Time(startTime_.toSec() + time);
@@ -187,67 +220,103 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::sigintHandl
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishDesiredTrajectory(
     scalar_t startTime, const cost_desired_trajectories_t& costDesiredTrajectory) {
-  // Message header
-  visualization_msgs::Marker msg;
-  msg.header.frame_id = "world";
-  msg.id = 0;
-  msg.type = visualization_msgs::Marker::LINE_STRIP;
-  msg.frame_locked = true;
-  msg.scale.x = 0.005;  // used for line width
-  msg.color.g = 1.0;
-  msg.color.a = 1.0;
-  auto& robotStateCartesianMsgs = msg.points;
 
   // Set up state interpolator
   auto& timeTrajectory = costDesiredTrajectory.desiredTimeTrajectory();
   auto& stateTrajectory = costDesiredTrajectory.desiredStateTrajectory();
   ocs2::EigenLinearInterpolation<typename cost_desired_trajectories_t::dynamic_vector_t> stateFunc(&timeTrajectory, &stateTrajectory);
 
-  // Evaluation times
-  double dt = 0.1;
-  double endTime = timeTrajectory.back();
-  double t = std::min(startTime, endTime);
+  // Prepare Messages
+  decltype(visualizers::comTraceTopicMap)::msg_t comMarker;
+  decltype(visualizers::feetTraceTopicMap)::msg_t footMarkerMsg;
+  decltype(visualizers::posesTargetTopicMap)::msg_t poseMsg;
 
-  while (t <= endTime) {
-    Eigen::VectorXd state;
-    stateFunc.interpolate(t, state);
-    geometry_msgs::Point comPosition;
-    comPosition.x = state[3];
-    comPosition.y = state[4];
-    comPosition.z = state[5];
-    robotStateCartesianMsgs.push_back(comPosition);
-    t = (t == endTime) ? endTime + dt : std::min(t + dt, endTime);  // make sure endTime is always published, but only once
-  }
-
-  costDesiredPublisher_.publish(msg);
-}
-
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishOptimizedStateTrajectory(
-    const scalar_array_t& mpcTimeTrajectory, const state_vector_array_t& mpcStateTrajectory) {
   // Message header
-  visualization_msgs::Marker msg;
-  msg.header.frame_id = "world";
-  msg.id = 0;
-  msg.type = visualization_msgs::Marker::LINE_STRIP;
-  msg.frame_locked = true;
-  msg.scale.x = 0.005;  // used for line width
-  msg.color.r = 1.0;
-  msg.color.a = 1.0;
-  auto& robotStateCartesianMsgs = msg.points;
+  poseMsg.header.frame_id = "world";
+  comMarker.header.frame_id = "world";
+  comMarker.id = 0;
+  comMarker.type = visualization_msgs::Marker::LINE_STRIP;
+  comMarker.frame_locked = true;
+  comMarker.scale.x = 0.005;  // used for line width
+  comMarker.color.r = 1.0;
+  comMarker.color.a = 1.0;
 
-  // Array message header
-  visualization_msgs::MarkerArray arrayMsg;
-  for (int i = 0; i < 4; i++) {
+  // Foot Array message headers
+  for (size_t ee = 0; ee < NUM_CONTACT_POINTS; ++ee) {
     visualization_msgs::Marker footMsg;
     footMsg.header.frame_id = "world";
-    footMsg.id = i;
+    footMsg.id = ee;
     footMsg.type = visualization_msgs::Marker::LINE_STRIP;
     footMsg.frame_locked = true;
     footMsg.scale.x = 0.005;  // used for line width
     footMsg.color.b = 1.0;
     footMsg.color.a = 1.0;
-    arrayMsg.markers.push_back(footMsg);
+    footMarkerMsg.markers.push_back(footMsg);
+  }
+
+  // Evaluation times
+  double dt = 0.1;
+  double endTime = timeTrajectory.back();
+  double t = std::min(startTime, endTime);
+  geometry_msgs::Point comPosition;
+  vector_3d_array_t o_feetPosition, o_feetVelocity, o_feetForce;
+  for (; t < endTime; t=std::min(t+dt, endTime)){
+    Eigen::VectorXd state;
+    stateFunc.interpolate(t, state);
+    // geometry_msgs::Point comPosition;
+    // tf::pointEigenToMsg(state.template segment<3>(3), comPosition);
+    comPosition.x = state[3];
+    comPosition.y = state[4];
+    comPosition.z = state[5];
+
+    computeFeetState(state, input_vector_t::Zero(), o_feetPosition, o_feetVelocity, o_feetForce);
+    comMarker.points.push_back(comPosition);
+    for (int ee = 0; ee < NUM_CONTACT_POINTS; ++ee) {
+      geometry_msgs::Point footPosition;
+      tf::pointEigenToMsg(o_feetPosition[ee], footPosition);
+      footMarkerMsg.markers[ee].points.push_back(footPosition);
+    }
+  }
+  const auto q_world_base = quaternionBaseToOrigin<scalar_t>(stateTrajectory.back().template head<3>());
+  auto &orientation = poseMsg.pose.orientation;
+  tf::quaternionEigenToMsg(q_world_base, orientation);
+
+  poseMsg.pose.position = comPosition; //the final position
+
+  comTracePublisher_.publish(comMarker);
+  feetTracePublisher_.publish(footMarkerMsg);
+  poseTrajPublisher_.publish(poseMsg);
+}
+
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishOptimizedStateTrajectory(
+    const scalar_array_t& mpcTimeTrajectory, const state_vector_array_t& mpcStateTrajectory) {
+
+  decltype(visualizers::comTraceTopicMap)::msg_t comMarker;
+  decltype(visualizers::feetTraceTopicMap)::msg_t footMarkerMsg;
+  decltype(visualizers::posesTargetTopicMap)::msg_t poseMsg;
+
+  // Message header
+  poseMsg.header.frame_id = "world";
+  comMarker.header.frame_id = "world";
+  comMarker.id = 0;
+  comMarker.type = visualization_msgs::Marker::LINE_STRIP;
+  comMarker.frame_locked = true;
+  comMarker.scale.x = 0.005;  // used for line width
+  comMarker.color.r = 1.0;
+  comMarker.color.a = 1.0;
+
+  // Foot Array message headers
+  for (size_t ee = 0; ee < NUM_CONTACT_POINTS; ++ee) {
+    visualization_msgs::Marker footMsg;
+    footMsg.header.frame_id = "world";
+    footMsg.id = ee;
+    footMsg.type = visualization_msgs::Marker::LINE_STRIP;
+    footMsg.frame_locked = true;
+    footMsg.scale.x = 0.005;  // used for line width
+    footMsg.color.b = 1.0;
+    footMsg.color.a = 1.0;
+    footMarkerMsg.markers.push_back(footMsg);
   }
 
   // Set up state interpolator
@@ -265,14 +334,14 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishOpti
   double endTime = mpcTimeTrajectory.back();
   double t = std::min(startTime, endTime);
 
-  while (t <= endTime) {
+    for (; t < endTime; t=std::min(t+dt, endTime)){
     state_vector_t state;
     stateFunc.interpolate(t, state);
     geometry_msgs::Point comPosition;
     comPosition.x = state[3];
     comPosition.y = state[4];
     comPosition.z = state[5];
-    robotStateCartesianMsgs.push_back(comPosition);
+    comMarker.points.push_back(comPosition);
 
     computeFeetState(state, input_vector_t::Zero(), o_feetPositionRef, o_feetVelocityRef, o_feetForceRef);
     for (int i = 0; i < 4; i++) {
@@ -280,14 +349,13 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishOpti
       footPosition.x = o_feetPositionRef[i][0];
       footPosition.y = o_feetPositionRef[i][1];
       footPosition.z = o_feetPositionRef[i][2];
-      arrayMsg.markers[i].points.push_back(footPosition);
+      footMarkerMsg.markers[i].points.push_back(footPosition);
     }
-
-    t = (t == endTime) ? endTime + dt : std::min(t + dt, endTime);  // make sure endTime is always published, but only once
   }
 
-  stateOptimizedPublisher_.publish(msg);
-  feetOptimizedPublisher_.publish(arrayMsg);
+  comTracePublisher_.publish(comMarker);
+  feetTracePublisher_.publish(footMarkerMsg);
+  poseTrajPublisher_.publish(poseMsg);
 }
 
 }  // namespace switched_model

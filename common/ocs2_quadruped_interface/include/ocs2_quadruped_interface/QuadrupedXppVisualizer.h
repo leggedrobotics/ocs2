@@ -5,6 +5,7 @@
 #ifndef QUADRUPEDXPPVISUALIZER_OCS2_H
 #define QUADRUPEDXPPVISUALIZER_OCS2_H
 
+#include <string>
 #include <ros/ros.h>
 #include <rosbag/bag.h>
 
@@ -17,12 +18,62 @@
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_quadruped_interface/OCS2QuadrupedInterface.h>
 
+#include <geometry_msgs/PoseArray.h>
+#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
+#include <geometry_msgs/PoseStamped.h>
+
+
 namespace switched_model {
+
+  namespace visualizers {
+
+  template <typename M>
+    struct PublisherMapping{
+      typedef M msg_t;
+      const std::string topicName;
+      ros::Publisher&& advertise(ros::NodeHandle& n, size_t rate) const {return std::move<ros::Publisher>(n.advertise<msg_t>(topicName, rate));};
+      PublisherMapping(const std::string topicName): topicName(topicName){};
+    };
+  // the desired state that comes from the optimizer
+  // xpp_msgs::RobotStateCartesian
+  inline const auto xppStateDesTopicName = xpp_msgs::robot_state_desired;
+  // const auto xppStateTopicName = xpp_msgs::robot_state_desired.substr(xpp_msgs::robot_state_desired.find_first_not_of("/"));
+
+  // desired joint state (equivalent to desired cartesian state)
+  // inline const auto xppJointDesTopicName = xpp_msgs::joint_desired;
+  // const auto xppJointDesTopicName = xpp_msgs::joint_desired.substr(xpp_msgs::joint_desired.find_first_not_of("/")); //stripped leading slash('/')
+  inline const std::string xppJointDesTopicName = "xpp/joint_anymal_des";
+
+  const auto rosTopicMap = PublisherMapping<visualization_msgs::Marker>("xpp/desiredTrajectoryVisuals"); //TODO(name?)
+  const auto xppStateDesTopicMap = PublisherMapping<xpp_msgs::RobotStateCartesian>(xppStateDesTopicName);
+  const auto xppJointDesTopicMap = PublisherMapping<xpp_msgs::RobotStateJoint>(xppJointDesTopicName);
+
+  inline const std::string comTraceTopicName   = "baseTrajectory"; //desiredBaseTrajectory
+  inline const std::string feetTraceTopicName    = "feetTrajectories";
+  inline const std::string posesTargetTopicName  = "poseTargets";
+  const auto comTraceTopicMap = PublisherMapping<visualization_msgs::Marker>(comTraceTopicName);
+  const auto feetTraceTopicMap = PublisherMapping<visualization_msgs::MarkerArray>(feetTraceTopicName);
+  const auto posesTargetTopicMap = PublisherMapping<geometry_msgs::PoseStamped>(feetTraceTopicName);
+
+  inline static const std::string xppJointTrajTopicName = xppJointDesTopicName + "_traj";
+  // constexpr std::string xppStateTrajTopicName = xppStateDesTopicName + "_traj";
+
+  inline static const std::string xppStateTrajTopicName = xpp_msgs::robot_trajectory_desired.substr(xpp_msgs::robot_trajectory_desired.find_first_not_of("/"));
+  // constexpr std::string xppJointTrajTopicName = xpp_msgs::NO JOINT TRAJ DEFI;NED
+
+  inline static const std::string rosVisualizationTrajTopicName = "anymal_trajectory"; // "xpp/desiredTrajectoryVisuals"
+
+  inline static const auto rosTrajTopicMap = PublisherMapping<geometry_msgs::PoseArray>(rosVisualizationTrajTopicName);
+  inline static const auto xppStateTrajTopicMap = PublisherMapping<xpp_msgs::RobotStateCartesianTrajectory>(xppStateTrajTopicName);
+  inline static const auto xppJointTrajTopicMap = PublisherMapping<xpp_msgs::RobotStateJoint>(xppJointTrajTopicName); //TODO(oharley) array msg type?
+  }
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 class QuadrupedXppVisualizer {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 
   using quadruped_interface_t = OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>;
   using quadruped_interface_ptr_t = typename quadruped_interface_t::Ptr;
@@ -118,12 +169,23 @@ class QuadrupedXppVisualizer {
   ros::Publisher visualizationPublisher_;
   ros::Publisher visualizationJointPublisher_;
   ros::Publisher costDesiredPublisher_;
-  ros::Publisher stateOptimizedPublisher_;
-  ros::Publisher feetOptimizedPublisher_;
+
+  ros::Publisher comTracePublisher_;
+  ros::Publisher feetTracePublisher_;
+  ros::Publisher poseTrajPublisher_;
+
   ros::Time startTime_;
 
   rosbag::Bag bag_;
   xpp_msgs::RobotStateCartesianTrajectory robotStateCartesianTrajectoryMsg_;
+
+  /**************************************************************************************************/
+    inline void setRobotStateCartesianEEValues( const state_vector_t& state, const input_vector_t& input, xpp_msgs::RobotStateCartesian& rstcm);
+    inline void setRobotStateCartesianEEValues( const vector_3d_array_t& o_feetPosition,
+        const vector_3d_array_t& o_feetVelocity,
+        const vector_3d_array_t& o_feetAcceleration,
+        const vector_3d_array_t& o_feetForce,
+        xpp_msgs::RobotStateCartesian& rstcm);
 };
 
 }  // namespace switched_model

@@ -26,7 +26,7 @@ if(USE_PYBIND_PYTHON_3)
 endif(USE_PYBIND_PYTHON_3)
 find_package(pybind11 QUIET)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -ffast-math -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++17 -Wfatal-errors -ffast-math -fPIC")
 
 ###################################
 ## catkin specific configuration ##

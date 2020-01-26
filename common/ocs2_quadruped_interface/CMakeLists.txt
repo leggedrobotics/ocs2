@@ -9,6 +9,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_comm_interfaces
   ocs2_robotic_tools
   ocs2_switched_model_interface
+  eigen_conversions
   rosbag
   roscpp
   xpp_msgs
@@ -24,7 +25,7 @@ find_package(Boost REQUIRED COMPONENTS
   filesystem
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -ffast-math")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++17 -Wfatal-errors -ffast-math")
 
 ###################################
 ## catkin specific configuration ##

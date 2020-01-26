@@ -54,7 +54,7 @@ namespace switched_model {
   inline const std::string posesTargetTopicName  = "poseTargets";
   const auto comTraceTopicMap = PublisherMapping<visualization_msgs::Marker>(comTraceTopicName);
   const auto feetTraceTopicMap = PublisherMapping<visualization_msgs::MarkerArray>(feetTraceTopicName);
-  const auto posesTargetTopicMap = PublisherMapping<geometry_msgs::PoseStamped>(feetTraceTopicName);
+  const auto posesTargetTopicMap = PublisherMapping<geometry_msgs::PoseStamped>(posesTargetTopicName);
 
   inline static const std::string xppJointTrajTopicName = xppJointDesTopicName + "_traj";
   // constexpr std::string xppStateTrajTopicName = xppStateDesTopicName + "_traj";

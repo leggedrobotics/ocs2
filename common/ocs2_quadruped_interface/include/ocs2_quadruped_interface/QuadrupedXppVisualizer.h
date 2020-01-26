@@ -32,10 +32,10 @@ namespace switched_model {
     struct PublisherMapping{
       typedef M msg_t;
       const std::string topicName;
-      ros::Publisher&& advertise(ros::NodeHandle& n, size_t rate) const {return std::move<ros::Publisher>(n.advertise<msg_t>(topicName, rate));};
+      ros::Publisher advertise(ros::NodeHandle& n, size_t rate) const {return n.advertise<msg_t>(topicName, rate);};
       PublisherMapping(const std::string topicName): topicName(topicName){};
     };
-  // the desired state that comes from the optimizer
+
   // xpp_msgs::RobotStateCartesian
   inline const auto xppStateDesTopicName = xpp_msgs::robot_state_desired;
   // const auto xppStateTopicName = xpp_msgs::robot_state_desired.substr(xpp_msgs::robot_state_desired.find_first_not_of("/"));

@@ -229,16 +229,18 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishDesi
   // Prepare Messages
   decltype(visualizers::comTraceTopicMap)::msg_t comMarker;
   decltype(visualizers::feetTraceTopicMap)::msg_t footMarkerMsg;
-  decltype(visualizers::posesTargetTopicMap)::msg_t poseMsg;
+  decltype(visualizers::posesTargetTopicMap)::msg_t poseArray;
 
   // Message header
-  poseMsg.header.frame_id = "world";
+  poseArray.header.frame_id = "world";
+  // poseArray.header.time = ros::Duration(startTime); //TODO(oharley)
+
   comMarker.header.frame_id = "world";
   comMarker.id = 0;
   comMarker.type = visualization_msgs::Marker::LINE_STRIP;
   comMarker.frame_locked = true;
   comMarker.scale.x = 0.005;  // used for line width
-  comMarker.color.r = 1.0;
+  comMarker.color.r = 0.7;
   comMarker.color.a = 1.0;
 
   // Foot Array message headers
@@ -249,18 +251,18 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishDesi
     footMsg.type = visualization_msgs::Marker::LINE_STRIP;
     footMsg.frame_locked = true;
     footMsg.scale.x = 0.005;  // used for line width
-    footMsg.color.b = 1.0;
+    footMsg.color.b = 0.7;
     footMsg.color.a = 1.0;
     footMarkerMsg.markers.push_back(footMsg);
   }
 
   // Evaluation times
   double dt = 0.1;
-  double endTime = timeTrajectory.back();
-  double t = std::min(startTime, endTime);
-  geometry_msgs::Point comPosition;
+  double t = std::min(startTime, timeTrajectory.back());
   vector_3d_array_t o_feetPosition, o_feetVelocity, o_feetForce;
+
   for (; t < endTime; t=std::min(t+dt, endTime)){
+  geometry_msgs::Point comPosition;
     Eigen::VectorXd state;
     stateFunc.interpolate(t, state);
     // geometry_msgs::Point comPosition;
@@ -277,15 +279,18 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishDesi
       footMarkerMsg.markers[ee].points.push_back(footPosition);
     }
   }
-  const auto q_world_base = quaternionBaseToOrigin<scalar_t>(stateTrajectory.back().template head<3>());
-  auto &orientation = poseMsg.pose.orientation;
-  tf::quaternionEigenToMsg(q_world_base, orientation);
 
-  poseMsg.pose.position = comPosition; //the final position
+  for (auto i=0; i<timeTrajectory.size(); ++i) {
+    geometry_msgs::Pose poseMsg;
+    const auto q_world_base = quaternionBaseToOrigin<scalar_t>(stateTrajectory[i].template head<3>());
+    tf::quaternionEigenToMsg(q_world_base, poseMsg.pose.orientation);
+    poseMsg.position = stateTrajectory[i].template segment<3>(3);
+    poseArray.poses.push_back(poseMsg);
+  }
 
   comTracePublisher_.publish(comMarker);
   feetTracePublisher_.publish(footMarkerMsg);
-  poseTrajPublisher_.publish(poseMsg);
+  poseTrajPublisher_.publish(poseArray);
 }
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
@@ -294,10 +299,10 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishOpti
 
   decltype(visualizers::comTraceTopicMap)::msg_t comMarker;
   decltype(visualizers::feetTraceTopicMap)::msg_t footMarkerMsg;
-  decltype(visualizers::posesTargetTopicMap)::msg_t poseMsg;
+  decltype(visualizers::posesTargetTopicMap)::msg_t poseArray;
 
   // Message header
-  poseMsg.header.frame_id = "world";
+  poseArray.header.frame_id = "world";
   comMarker.header.frame_id = "world";
   comMarker.id = 0;
   comMarker.type = visualization_msgs::Marker::LINE_STRIP;
@@ -334,8 +339,8 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishOpti
   double endTime = mpcTimeTrajectory.back();
   double t = std::min(startTime, endTime);
 
-    for (; t < endTime; t=std::min(t+dt, endTime)){
-    state_vector_t state;
+  state_vector_t state;
+  for (; t < endTime; t=std::min(t+dt, endTime)){
     stateFunc.interpolate(t, state);
     geometry_msgs::Point comPosition;
     comPosition.x = state[3];
@@ -352,10 +357,15 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishOpti
       footMarkerMsg.markers[i].points.push_back(footPosition);
     }
   }
+  const auto q_world_base = quaternionBaseToOrigin<scalar_t>(state.template head<3>());
+  geometry_msgs::Pose poseMsg;
+  tf::quaternionEigenToMsg(q_world_base, poseMsg.pose.orientation);
+  poseMsg.position = comMarker.points.back();
+  poseArray.poses.push_back(poseMsg);
 
   comTracePublisher_.publish(comMarker);
   feetTracePublisher_.publish(footMarkerMsg);
-  poseTrajPublisher_.publish(poseMsg);
+  poseTrajPublisher_.publish(poseArray);
 }
 
 }  // namespace switched_model

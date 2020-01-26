@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
   ros::NodeHandle nh;
 
   const std::string joint_topic = "xpp/joint_anymal_des";
-  const std::string joint_topic_traj = "xpp/joint_anymal_des_traj";
+  const std::string joint_topic_traj = "xpp/joint_anymal_traj";
   std::string urdf_param = "ocs2_anymal_bear_description";
 
   std::string urdf;

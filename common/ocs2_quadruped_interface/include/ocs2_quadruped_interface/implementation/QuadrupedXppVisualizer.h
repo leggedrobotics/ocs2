@@ -63,17 +63,13 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::launchVisua
 
   visualizationPublisher_      = visualizers::xppStateDesTopicMap.advertise(n, 1);
   visualizationJointPublisher_ = visualizers::xppJointDesTopicMap.advertise(n, 1);
-  // costDesiredPublisher_ = n.advertise<visualization_msgs::Marker>("desiredBaseTrajectory", 100);
 
   comTracePublisher_         = visualizers::comTraceTopicMap.advertise(n, 100);
   feetTracePublisher_          = visualizers::feetTraceTopicMap.advertise(n, 100);
   poseTrajPublisher_          = visualizers::posesTargetTopicMap.advertise(n,1);
 
-
-  // visualizationPublisher_ = n.advertise<xpp_msgs::RobotStateCartesian>(xpp_msgs::robot_state_desired, 1);
-  // visualizationJointPublisher_ = n.advertise<xpp_msgs::RobotStateJoint>("xpp/joint_anymal_des", 1);
-  // comTracePublisher_ = n.advertise<visualization_msgs::Marker>("optimizedBaseTrajectory", 100);
-  // feetTracePublisher_ = n.advertise<visualization_msgs::MarkerArray>("optimizedFeetTrajectories", 100);
+  costsVisualizationPublisher_     = visualizers::xppStateTrajTopicMap.advertise(n, 1);
+  costsVisualizationJointPublisher_ = visualizers::xppJointTrajTopicMap.advertise(n, 1);
 
   ROS_INFO_STREAM("Waiting for visualization subscriber ...");
   while (ros::ok() && visualizationPublisher_.getNumSubscribers() == 0) {
@@ -125,6 +121,56 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishTraj
     if ((frame_duration - elapsed_seconds) > 0.0) {
       ros::Duration(frame_duration - elapsed_seconds).sleep();
     }
+  }
+}
+
+template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishXppCostsVisualizer(
+    const scalar_t& time, const cost_desired_trajectories_t& costDesiredTrajectories)
+{
+
+  auto& timeTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
+
+  for (int i = 0; i < timeTrajectory.size(); ++i) {
+    auto& state = costDesiredTrajectories.desiredStateTrajectory()[i];
+    // construct the message
+    xpp_msgs::RobotStateCartesian robotStateCartesianMsg;
+
+    const Eigen::Quaternion<scalar_t> q_world_base = quaternionBaseToOrigin<scalar_t>(state.template head<3>());
+    tf::quaternionEigenToMsg(q_world_base, robotStateCartesianMsg.base.pose.orientation);
+    tf::pointEigenToMsg(state.template segment<3>(3));
+    tf::vectorEigenToMsg(robotStateCartesianMsg.base.twist.angular, state.template segment<3>(6));
+    tf::vectorEigenToMsg(robotStateCartesianMsg.base.twist.linear, state.template segment<3>(9));
+
+    robotStateCartesianMsg.time_from_start = ros::Duration(time);
+
+    auto& input = costDesiredTrajectories.desiredStateTrajectory()[i];
+    setRobotStateCartesianEEValues(state, input, robotStateCartesianMsg);
+
+// if (save_rosbag_) {
+//   const auto stamp = ros::Time(startTime_.toSec() + time);
+//   try {
+//     bag_.write("xpp/state_des", stamp, robotStateCartesianMsg);
+//   } catch (const rosbag::BagException& err) {
+//     std::cerr << "Error writing rosbag message: " << err.what() << std::endl;
+//   }
+//
+//   robotStateCartesianTrajectoryMsg_.points.push_back(robotStateCartesianMsg);
+// }
+
+// Joint space message
+    //TODO(Oharley)
+    xpp_msgs::RobotStateJoint robotStateJointMsg;
+    robotStateJointMsg.time_from_start = robotStateCartesianMsg.time_from_start;
+    robotStateJointMsg.base = robotStateCartesianMsg.base;
+    robotStateJointMsg.ee_contact = robotStateCartesianMsg.ee_contact;
+    const auto jointAngles = state.template segment<12>(6);
+    robotStateJointMsg.joint_state.position = std::vector<double>(jointAngles.data(), jointAngles.data() + jointAngles.size());
+    // Attention: Not filling joint velocities or torques
+
+    // Publish
+    costsVisualizationPublisher_.publish(robotStateCartesianMsg);
+    costsVisualizationJointPublisher_.publish(robotStateJointMsg);
   }
 }
 
@@ -258,7 +304,8 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishDesi
 
   // Evaluation times
   double dt = 0.1;
-  double t = std::min(startTime, timeTrajectory.back());
+  auto endTime = timeTrajectory.back();
+  double t = std::min(startTime, endTime);
   vector_3d_array_t o_feetPosition, o_feetVelocity, o_feetForce;
 
   for (; t < endTime; t=std::min(t+dt, endTime)){
@@ -283,8 +330,8 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishDesi
   for (auto i=0; i<timeTrajectory.size(); ++i) {
     geometry_msgs::Pose poseMsg;
     const auto q_world_base = quaternionBaseToOrigin<scalar_t>(stateTrajectory[i].template head<3>());
-    tf::quaternionEigenToMsg(q_world_base, poseMsg.pose.orientation);
-    poseMsg.position = stateTrajectory[i].template segment<3>(3);
+    tf::quaternionEigenToMsg(q_world_base, poseMsg.orientation);
+    tf::pointEigenToMsg(stateTrajectory[i].template segment<3>(3), poseMsg.position);
     poseArray.poses.push_back(poseMsg);
   }
 
@@ -359,7 +406,7 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishOpti
   }
   const auto q_world_base = quaternionBaseToOrigin<scalar_t>(state.template head<3>());
   geometry_msgs::Pose poseMsg;
-  tf::quaternionEigenToMsg(q_world_base, poseMsg.pose.orientation);
+  tf::quaternionEigenToMsg(q_world_base, poseMsg.orientation);
   poseMsg.position = comMarker.points.back();
   poseArray.poses.push_back(poseMsg);
 

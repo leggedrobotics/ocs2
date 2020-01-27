@@ -7,6 +7,7 @@ Panels:
         - /Grid1/Offset1
         - /CartesianVisualization1
         - /CartesianVisualization1/Namespaces1
+        - /MarkerArray2
       Splitter Ratio: 0.4424239993095398
     Tree Height: 812
   - Class: rviz/Selection
@@ -304,6 +305,22 @@ Visualization Manager:
         "": true
       Queue Size: 100
       Value: true
+    - Alpha: 1
+      Arrow Length: 0.30000001192092896
+      Axes Length: 0.30000001192092896
+      Axes Radius: 0.009999999776482582
+      Class: rviz/PoseArray
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.07000000029802322
+      Head Radius: 0.029999999329447746
+      Name: PoseArray
+      Shaft Length: 0.23000000417232513
+      Shaft Radius: 0.009999999776482582
+      Shape: Arrow (Flat)
+      Topic: /poseMPC
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
@@ -332,7 +349,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 2.933271884918213
+      Distance: 5.0949883460998535
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -347,10 +364,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6531429290771484
+      Pitch: 0.6331429481506348
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 2.0679402351379395
+      Yaw: 2.7879395484924316
     Saved:
       - Angle: 3.140000104904175
         Class: rviz/TopDownOrtho
@@ -425,8 +442,6 @@ Visualization Manager:
 Window Geometry:
   "&Displays":
     collapsed: false
-  "&Tool Properties":
-    collapsed: false
   Height: 1080
   Hide Left Dock: false
   Hide Right Dock: false
@@ -434,6 +449,8 @@ Window Geometry:
   Selection:
     collapsed: false
   Time:
+    collapsed: false
+  Tool Properties:
     collapsed: false
   Views:
     collapsed: false

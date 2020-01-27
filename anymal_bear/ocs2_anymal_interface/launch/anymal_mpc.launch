@@ -14,7 +14,7 @@
 
     <node pkg="ocs2_anymal_commands" type="trajectory_command_node" name="trajectory_command_node"
           output="screen" launch-prefix="gnome-terminal -- "/>
-        <!-- output="screen" launch&#45;prefix="gnome&#45;terminal &#45;&#45; gdb &#45;ex  'set follow&#45;fork&#45;mode child' &#45;e 'break ScpToOcs2.cpp:applyInitStateToCostDesiredTrajectories' &#45;ex run &#45;&#45;args "/> -->
+        <!-- output="screen" launch&#45;prefix="gnome&#45;terminal &#45;&#45; gdb &#45;ex  'set follow&#45;fork&#45;mode child' &#45;ex run &#45;&#45;args "/> -->
 
     <node pkg="ocs2_anymal_commands" type="gait_command_node" name="gait_command_node"
           output="screen" launch-prefix="gnome-terminal --"/>

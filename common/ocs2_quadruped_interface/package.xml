@@ -25,5 +25,6 @@
   <depend>rosbag</depend>
   <depend>roscpp</depend>
   <depend>xpp_msgs</depend>
+  <depend>std_srvs</depend>
 
 </package>

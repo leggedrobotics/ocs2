@@ -13,6 +13,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   rosbag
   roscpp
   xpp_msgs
+  std_srvs
 )
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}

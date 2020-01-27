@@ -18,6 +18,7 @@
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_quadruped_interface/OCS2QuadrupedInterface.h>
 
+#include <std_srvs/Empty.h>
 #include <geometry_msgs/PoseArray.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -28,10 +29,17 @@ namespace switched_model {
 
   namespace visualizers {
 
+    /**
+     * Ros Service to visualise the cost desired trajectories.
+     */
+    int triggerPublishingCostTrajectories(int argc, char** argv);
+    inline const std::string costsPublishServiceName {"VisualiseCostDesiredTrajectories"};
+
   template <typename M>
     struct PublisherMapping{
       typedef M msg_t;
       const std::string topicName;
+      ros::Publisher advertise(ros::NodeHandle& n, size_t rate, bool latch) const {return n.advertise<msg_t>(topicName, rate, latch);};
       ros::Publisher advertise(ros::NodeHandle& n, size_t rate) const {return n.advertise<msg_t>(topicName, rate);};
       PublisherMapping(const std::string topicName): topicName(topicName){};
     };
@@ -48,12 +56,20 @@ namespace switched_model {
   const auto xppStateDesTopicMap = PublisherMapping<xpp_msgs::RobotStateCartesian>(xppStateDesTopicName);
   const auto xppJointDesTopicMap = PublisherMapping<xpp_msgs::RobotStateJoint>(xppJointDesTopicName);
 
-  inline const std::string comTraceTopicName   = "baseTrajectory"; //desiredBaseTrajectory
+  inline const std::string comTraceTopicName     = "baseTrajectory"; //desiredBaseTrajectory
   inline const std::string feetTraceTopicName    = "feetTrajectories";
   inline const std::string posesTargetTopicName  = "poseTargets";
-  const auto comTraceTopicMap = PublisherMapping<visualization_msgs::Marker>(comTraceTopicName);
-  const auto feetTraceTopicMap = PublisherMapping<visualization_msgs::MarkerArray>(feetTraceTopicName);
-  const auto posesTargetTopicMap = PublisherMapping<geometry_msgs::PoseArray>(posesTargetTopicName);
+
+  inline const std::string comMPCTraceTopicName  = "baseMPCTrajectory"; //desiredBaseTrajectory
+  inline const std::string feetMPCTraceTopicName = "feetMPCTrajectories";
+  inline const std::string posesMPCTopicName     = "poseMPC";
+
+  const auto comMPCTraceTopicMap  = PublisherMapping<visualization_msgs::Marker>(comMPCTraceTopicName);
+  const auto feetMPCTraceTopicMap = PublisherMapping<visualization_msgs::MarkerArray>(feetMPCTraceTopicName);
+  const auto comTraceTopicMap     = PublisherMapping<visualization_msgs::Marker>(comTraceTopicName);
+  const auto feetTraceTopicMap    = PublisherMapping<visualization_msgs::MarkerArray>(feetTraceTopicName);
+  const auto posesTargetTopicMap  = PublisherMapping<geometry_msgs::PoseArray>(posesTargetTopicName);
+  const auto posesMPCTopicMap     = PublisherMapping<geometry_msgs::PoseArray>(posesMPCTopicName);
 
   /***************************************************************************************************/
   // CostTrajectories Messages for visuals and plotting
@@ -75,6 +91,7 @@ class QuadrupedXppVisualizer {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 
+  using quadruped_xpp_visualizer_t = QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>;
   using quadruped_interface_t = OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>;
   using quadruped_interface_ptr_t = typename quadruped_interface_t::Ptr;
   using rbd_state_vector_t = typename quadruped_interface_t::rbd_state_vector_t;
@@ -89,6 +106,12 @@ class QuadrupedXppVisualizer {
   using system_observation_array_t = std::vector<system_observation_t, Eigen::aligned_allocator<system_observation_t>>;
   using vector_3d_t = Eigen::Matrix<scalar_t, 3, 1>;
   using vector_3d_array_t = std::array<vector_3d_t, 4>;
+
+  enum PublisherIds {
+    COSTTRAJECTORIES = 0,
+    MPC = 1,
+    MPC_FEET_POSES_OFFSET=NUM_CONTACT_POINTS
+  };
 
   QuadrupedXppVisualizer(const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr, const std::string& robotName = "robot",
                          bool save_rosbag = false)
@@ -119,6 +142,12 @@ class QuadrupedXppVisualizer {
    * @param [in] argv: command line inputs' value.
    */
   void launchVisualizerNode(int argc, char* argv[]);
+
+  // /**
+  //  * Ros Service to visualise the cost desired trajectories.
+  //  */
+  // static bool costsPublishServiceCallback(std_srvs::Empty::Request &req, std_srvs::Empty::Response &response);
+
 
   /**
    * Visualizes the current observation.
@@ -168,6 +197,7 @@ class QuadrupedXppVisualizer {
   std::string robotName_;
   std::string rosbagFile_;
 
+  ros::ServiceServer visualsCDTsClient_;
   ros::Publisher visualizationPublisher_;
   ros::Publisher visualizationJointPublisher_;
 
@@ -176,6 +206,10 @@ class QuadrupedXppVisualizer {
   ros::Publisher comTracePublisher_;
   ros::Publisher feetTracePublisher_;
   ros::Publisher poseTrajPublisher_;
+
+  ros::Publisher comMPCTracePublisher_;
+  ros::Publisher feetMPCTracePublisher_;
+  ros::Publisher poseMPCPublisher_;
 
   ros::Publisher costsVisualizationPublisher_;
   ros::Publisher costsVisualizationJointPublisher_;

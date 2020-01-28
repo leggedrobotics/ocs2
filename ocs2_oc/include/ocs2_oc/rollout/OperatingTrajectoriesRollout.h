@@ -120,6 +120,7 @@ class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
         (*modelDataTrajectoryPtr)[i].stateDim_ = STATE_DIM;
         (*modelDataTrajectoryPtr)[i].inputDim_ = INPUT_DIM;
         (*modelDataTrajectoryPtr)[i].dynamics_.setZero(STATE_DIM);
+        (*modelDataTrajectoryPtr)[i].dynamicsBias_.setZero(STATE_DIM);
       }  // end of i loop
     }
 

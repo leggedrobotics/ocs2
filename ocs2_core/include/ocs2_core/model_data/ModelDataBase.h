@@ -89,16 +89,16 @@ struct ModelDataBase {
     std::cerr << std::endl;
     std::cerr << "time: " << time_ << "\n";
     std::cerr << "Dynamics: " << dynamics_.transpose() << "\n";
-    std::cerr << "Dynamics State Derivative: " << dynamicsStateDerivative_ << "\n";
-    std::cerr << "Dynamics Input Derivative: " << dynamicsInputDerivative_ << "\n";
+    std::cerr << "dynamicsBias: " << dynamicsBias_.transpose() << "\n";
+    std::cerr << "Dynamics State Derivative:\n" << dynamicsStateDerivative_ << "\n";
+    std::cerr << "Dynamics Input Derivative:\n" << dynamicsInputDerivative_ << "\n";
 
     std::cerr << "Cost: " << cost_ << "\n";
-    std::cerr << "Cost State Derivative: " << costStateDerivative_ << "\n";
-    std::cerr << "Cost Input Derivative: " << costInputDerivative_ << "\n";
-    std::cerr << "Cost State Second Derivative: " << costStateSecondDerivative_ << "\n";
-    std::cerr << "Cost Input Second Derivative: " << costInputSecondDerivative_ << "\n";
-    std::cerr << "Cost Input State Derivative:  " << costInputStateDerivative_ << "\n";
-    std::cerr << "Cost Input State Derivative:  " << costInputStateDerivative_ << "\n";
+    std::cerr << "Cost State Derivative: " << costStateDerivative_.transpose() << "\n";
+    std::cerr << "Cost Input Derivative: " << costInputDerivative_.transpose() << "\n";
+    std::cerr << "Cost State Second Derivative:\n" << costStateSecondDerivative_ << "\n";
+    std::cerr << "Cost Input Second Derivative:\n" << costInputSecondDerivative_ << "\n";
+    std::cerr << "Cost Input State Derivative:\n" << costInputStateDerivative_ << "\n";
     std::cerr << std::endl;
   }
 
@@ -114,6 +114,7 @@ struct ModelDataBase {
 
     // dynamics flow map
     assert(dynamics_.size() == stateDim);
+    assert(dynamicsBias_.size() == stateDim);
     assert(dynamicsStateDerivative_.rows() == stateDim);
     assert(dynamicsStateDerivative_.cols() == stateDim);
     assert(dynamicsInputDerivative_.rows() == stateDim);
@@ -216,6 +217,7 @@ struct ModelDataBase {
 
   // dynamics
   dynamic_vector_t dynamics_;
+  dynamic_vector_t dynamicsBias_;
   dynamic_matrix_t dynamicsStateDerivative_;
   dynamic_matrix_t dynamicsInputDerivative_;
 

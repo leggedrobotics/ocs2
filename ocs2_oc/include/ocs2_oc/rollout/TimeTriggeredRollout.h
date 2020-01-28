@@ -144,7 +144,10 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       if (this->settings().reconstructInputTrajectory_) {
         for (; k_u < timeTrajectory.size(); k_u++) {
           inputTrajectory.emplace_back(systemDynamicsPtr_->controllerPtr()->computeInput(timeTrajectory[k_u], stateTrajectory[k_u]));
-        }  // end of k loop
+          if (modelDataTrajectoryPtr) {
+            (*modelDataTrajectoryPtr)[k_u].dynamicsBias_.setZero(stateTrajectory[k_u].size());
+          }
+        }  // end of k_u loop
       }
 
       // a jump has taken place

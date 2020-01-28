@@ -47,8 +47,9 @@ using LinearInterpolation = ocs2::LinearInterpolation<ModelDataBase, Eigen::alig
 // time
 CREATE_INTERPOLATION_ACCESS_FUNCTION(time)
 
-// dynamics flow
+// dynamics
 CREATE_INTERPOLATION_ACCESS_FUNCTION(dynamics)
+CREATE_INTERPOLATION_ACCESS_FUNCTION(dynamicsBias)
 CREATE_INTERPOLATION_ACCESS_FUNCTION(dynamicsStateDerivative)
 CREATE_INTERPOLATION_ACCESS_FUNCTION(dynamicsInputDerivative)
 

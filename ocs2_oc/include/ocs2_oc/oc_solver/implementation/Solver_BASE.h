@@ -78,7 +78,7 @@ typename Solver_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t Solver_BASE<STATE_
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void Solver_BASE<STATE_DIM, INPUT_DIM>::printString(const std::string& text) {
+void Solver_BASE<STATE_DIM, INPUT_DIM>::printString(const std::string& text) const {
   std::lock_guard<std::mutex> outputDisplayGuard(outputDisplayGuardMutex_);
   std::cerr << text << std::endl;
 }

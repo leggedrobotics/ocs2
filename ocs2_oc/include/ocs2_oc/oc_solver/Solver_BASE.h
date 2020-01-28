@@ -76,9 +76,6 @@ class Solver_BASE {
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;
   using scalar_array2_t = typename DIMENSIONS::scalar_array2_t;
   using scalar_array3_t = typename DIMENSIONS::scalar_array3_t;
-  using eigen_scalar_t = typename DIMENSIONS::eigen_scalar_t;
-  using eigen_scalar_array_t = typename DIMENSIONS::eigen_scalar_array_t;
-  using eigen_scalar_array2_t = typename DIMENSIONS::eigen_scalar_array2_t;
   using state_vector_t = typename DIMENSIONS::state_vector_t;
   using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
   using state_vector_array2_t = typename DIMENSIONS::state_vector_array2_t;
@@ -112,9 +109,9 @@ class Solver_BASE {
   using constraint1_input_matrix_t = typename DIMENSIONS::constraint1_input_matrix_t;
   using constraint1_input_matrix_array_t = typename DIMENSIONS::constraint1_input_matrix_array_t;
   using constraint1_input_matrix_array2_t = typename DIMENSIONS::constraint1_input_matrix_array2_t;
-  using input_constraint1_matrix_t = typename DIMENSIONS::input_constraint1_matrix_t;
-  using input_constraint1_matrix_array_t = typename DIMENSIONS::input_constraint1_matrix_array_t;
-  using input_constraint1_matrix_array2_t = typename DIMENSIONS::input_constraint1_matrix_array2_t;
+  using input_dynamic_matrix_t = typename DIMENSIONS::input_dynamic_matrix_t;
+  using input_dynamic_matrix_array_t = typename DIMENSIONS::input_dynamic_matrix_array_t;
+  using input_dynamic_matrix_array2_t = typename DIMENSIONS::input_dynamic_matrix_array2_t;
   using constraint2_vector_t = typename DIMENSIONS::constraint2_vector_t;
   using constraint2_vector_array_t = typename DIMENSIONS::constraint2_vector_array_t;
   using constraint2_vector_array2_t = typename DIMENSIONS::constraint2_vector_array2_t;
@@ -122,8 +119,10 @@ class Solver_BASE {
   using constraint2_state_matrix_array_t = typename DIMENSIONS::constraint2_state_matrix_array_t;
   using constraint2_state_matrix_array2_t = typename DIMENSIONS::constraint2_state_matrix_array2_t;
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-  using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
   using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
+  using dynamic_vector_array2_t = typename DIMENSIONS::dynamic_vector_array2_t;
+  using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
+  using dynamic_matrix_array_t = typename DIMENSIONS::dynamic_matrix_array_t;
   using dynamic_matrix_array2_t = typename DIMENSIONS::dynamic_matrix_array2_t;
   using dynamic_input_matrix_t = typename DIMENSIONS::dynamic_input_matrix_t;
 
@@ -207,18 +206,7 @@ class Solver_BASE {
    * @param [out] iterationISE1: Each iteration's type-1 constraints ISE.
    * @param [out] iterationISE2: Each iteration's type-2 constraints ISE.
    */
-  virtual void getIterationsLog(eigen_scalar_array_t& iterationCost, eigen_scalar_array_t& iterationISE1,
-                                eigen_scalar_array_t& iterationISE2) const = 0;
-
-  /**
-   * Gets Iterations Log of solver
-   *
-   * @param [out] iterationCostPtr: A pointer to each iteration's cost.
-   * @param [out] iterationISE1Ptr: A pointer to each iteration's type-1 constraints ISE.
-   * @param [out] iterationISE2Ptr: A pointer to each iteration's type-2 constraints ISE.
-   */
-  virtual void getIterationsLogPtr(const eigen_scalar_array_t*& iterationCostPtr, const eigen_scalar_array_t*& iterationISE1Ptr,
-                                   const eigen_scalar_array_t*& iterationISE2Ptr) const = 0;
+  virtual void getIterationsLog(scalar_array_t& iterationCost, scalar_array_t& iterationISE1, scalar_array_t& iterationISE2) const = 0;
 
   /**
    * Gets final time of optimization
@@ -356,7 +344,7 @@ class Solver_BASE {
    *
    * @param [in] input text.
    */
-  void printString(const std::string& text);
+  void printString(const std::string& text) const;
 
  private:
   virtual void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) = 0;
@@ -368,7 +356,7 @@ class Solver_BASE {
 
   void postRun();
 
-  std::mutex outputDisplayGuardMutex_;
+  mutable std::mutex outputDisplayGuardMutex_;
   logic_rules_machine_ptr_t logicRulesMachinePtr_;
   CostDesiredTrajectories costDesiredTrajectories_;
   synchronized_module_ptr_array_t synchronizedModules_;

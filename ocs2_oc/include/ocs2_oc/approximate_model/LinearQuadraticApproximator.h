@@ -138,65 +138,13 @@ class LinearQuadraticApproximator {
   void approximateUnconstrainedLQProblem(const scalar_t& time, const state_vector_t& state, const input_vector_t& input,
                                          ModelDataBase& modelData) {
     // dynamics
-    state_matrix_t Am;
-    state_input_matrix_t Bm;
-    approximateDynamics(time, state, input, Am, Bm);
-    modelData.dynamicsStateDerivative_ = Am;
-    modelData.dynamicsInputDerivative_ = Bm;
+    approximateDynamics(time, state, input, modelData);
 
     // constraints
-    size_t ncEqStateInput;
-    constraint1_vector_t Ev;
-    constraint1_state_matrix_t Cm;
-    constraint1_input_matrix_t Dm;
-    size_t ncEqStateOnly;
-    constraint2_vector_t Hv;
-    constraint2_state_matrix_t Fm;
-    size_t ncIneq;
-    scalar_array_t h;
-    state_vector_array_t dhdx;
-    input_vector_array_t dhdu;
-    state_matrix_array_t ddhdxdx;
-    input_matrix_array_t ddhdudu;
-    input_state_matrix_array_t ddhdudx;
-    approximateConstraints(time, state, input, ncEqStateInput, Ev, Cm, Dm, ncEqStateOnly, Hv, Fm, ncIneq, h, dhdx, dhdu, ddhdxdx, ddhdudu,
-                           ddhdudx);
-    modelData.numStateInputEqConstr_ = ncEqStateInput;
-    modelData.stateInputEqConstr_ = Ev.head(ncEqStateInput);
-    modelData.stateInputEqConstrStateDerivative_ = Cm.topRows(ncEqStateInput);
-    modelData.stateInputEqConstrInputDerivative_ = Dm.topRows(ncEqStateInput);
-    modelData.numStateEqConstr_ = ncEqStateOnly;
-    modelData.stateEqConstr_ = Hv.head(ncEqStateOnly);
-    modelData.stateEqConstrStateDerivative_ = Fm.topRows(ncEqStateOnly);
-    modelData.numIneqConstr_ = ncIneq;
-    modelData.ineqConstr_ = h;
-    modelData.ineqConstrStateDerivative_.resize(ncIneq);
-    modelData.ineqConstrInputDerivative_.resize(ncIneq);
-    modelData.ineqConstrStateSecondDerivative_.resize(ncIneq);
-    modelData.ineqConstrInputSecondDerivative_.resize(ncIneq);
-    modelData.ineqConstrInputStateDerivative_.resize(ncIneq);
-    for (size_t i = 0; i < ncIneq; i++) {
-      modelData.ineqConstrStateDerivative_[i] = dhdx[i];
-      modelData.ineqConstrInputDerivative_[i] = dhdu[i];
-      modelData.ineqConstrStateSecondDerivative_[i] = ddhdxdx[i];
-      modelData.ineqConstrInputSecondDerivative_[i] = ddhdudu[i];
-      modelData.ineqConstrInputStateDerivative_[i] = ddhdudx[i];
-    }
+    approximateConstraints(time, state, input, modelData);
 
     // cost
-    scalar_t q;
-    state_vector_t Qv;
-    state_matrix_t Qm;
-    input_vector_t Rv;
-    input_matrix_t Rm;
-    input_state_matrix_t Pm;
-    approximateIntermediateCost(time, state, input, q, Qv, Qm, Rv, Rm, Pm);
-    modelData.cost_ = q;
-    modelData.costStateDerivative_ = Qv;
-    modelData.costStateSecondDerivative_ = Qm;
-    modelData.costInputDerivative_ = Rv;
-    modelData.costInputSecondDerivative_ = Rm;
-    modelData.costInputStateDerivative_ = Pm;
+    approximateIntermediateCost(time, state, input, modelData);
 
     // check dimensions
     modelData.checkSizes(STATE_DIM, INPUT_DIM);
@@ -210,7 +158,6 @@ class LinearQuadraticApproximator {
    * @param [in] input: The current input .
    */
   void approximateUnconstrainedLQProblemAtEventTime(const scalar_t& time, const state_vector_t& state, const input_vector_t& input) {
-    systemConstraintsPtr_->setCurrentStateAndControl(time, state, input);
     systemConstraintsPtr_->setCurrentStateAndControl(time, state, input);
 
     // Final state-only equality constraint
@@ -235,36 +182,35 @@ class LinearQuadraticApproximator {
   }
 
   /**
-   * Calculates linearize system dynamics.
+   * Calculates linearized system dynamics.
    *
    * @param [in] time: The current time.
    * @param [in] state: The current state.
    * @param [in] input: The current input .
+   * @param [in] modelData: Model data object.
    */
-  void approximateDynamics(const scalar_t& time, const state_vector_t& state, const input_vector_t& input, state_matrix_t& Am,
-                           state_input_matrix_t& Bm) {
-    // set data
+  void approximateDynamics(const scalar_t& time, const state_vector_t& state, const input_vector_t& input, ModelDataBase& modelData) {
+    state_matrix_t Am;
+    state_input_matrix_t Bm;
+
+    // set data & do computation
     systemDerivativesPtr_->setCurrentStateAndControl(time, state, input);
 
     // get results
     systemDerivativesPtr_->getFlowMapDerivativeState(Am);
     systemDerivativesPtr_->getFlowMapDerivativeInput(Bm);
 
+    modelData.dynamicsStateDerivative_ = Am;
+    modelData.dynamicsInputDerivative_ = Bm;
+
     // checking the numerical stability
     if (checkNumericalCharacteristics_) {
-      try {
-        if (!Am.allFinite()) {
-          throw std::runtime_error("Flow map state derivativeState is not finite.");
-        }
-        if (!Bm.allFinite()) {
-          throw std::runtime_error("Flow map input derivativeState is not finite.");
-        }
-
-      } catch (const std::exception& error) {
-        std::cerr << "what(): " << error.what() << " at time " << time << " [sec]." << std::endl;
+      std::string err = modelData.checkDynamicsDerivativsProperties();
+      if (!err.empty()) {
+        std::cerr << "what(): " << err << " at time " << time << " [sec]." << std::endl;
         std::cerr << "Am: \n" << Am << std::endl;
         std::cerr << "Bm: \n" << Bm << std::endl;
-        throw;
+        throw std::runtime_error(err);
       }
     }
   }
@@ -275,12 +221,26 @@ class LinearQuadraticApproximator {
    * @param [in] time: The current time.
    * @param [in] state: The current state.
    * @param [in] input: The current input .
+   * @param [in] modelData: Model data object.
    */
-  void approximateConstraints(const scalar_t& time, const state_vector_t& state, const input_vector_t& input, size_t& ncEqStateInput,
-                              constraint1_vector_t& Ev, constraint1_state_matrix_t& Cm, constraint1_input_matrix_t& Dm,
-                              size_t& ncEqStateOnly, constraint2_vector_t& Hv, constraint2_state_matrix_t& Fm, size_t& ncIneq,
-                              scalar_array_t& h, state_vector_array_t& dhdx, input_vector_array_t& dhdu, state_matrix_array_t& ddhdxdx,
-                              input_matrix_array_t& ddhdudu, input_state_matrix_array_t& ddhdudx) {
+  void approximateConstraints(const scalar_t& time, const state_vector_t& state, const input_vector_t& input, ModelDataBase& modelData) {
+    size_t ncEqStateInput;
+    constraint1_vector_t Ev;
+    constraint1_state_matrix_t Cm;
+    constraint1_input_matrix_t Dm;
+
+    size_t ncEqStateOnly;
+    constraint2_vector_t Hv;
+    constraint2_state_matrix_t Fm;
+
+    size_t ncIneq;
+    scalar_array_t h;
+    state_vector_array_t dhdx;
+    input_vector_array_t dhdu;
+    state_matrix_array_t ddhdxdx;
+    input_matrix_array_t ddhdudu;
+    input_state_matrix_array_t ddhdudx;
+
     // set data
     systemConstraintsPtr_->setCurrentStateAndControl(time, state, input);
 
@@ -295,6 +255,10 @@ class LinearQuadraticApproximator {
       systemConstraintsPtr_->getConstraint1DerivativesState(Cm);
       systemConstraintsPtr_->getConstraint1DerivativesControl(Dm);
     }
+    modelData.numStateInputEqConstr_ = ncEqStateInput;
+    modelData.stateInputEqConstr_ = Ev.head(ncEqStateInput);
+    modelData.stateInputEqConstrStateDerivative_ = Cm.topRows(ncEqStateInput);
+    modelData.stateInputEqConstrInputDerivative_ = Dm.topRows(ncEqStateInput);
 
     // constraint type 2
     ncEqStateOnly = systemConstraintsPtr_->numStateOnlyConstraint(time);
@@ -306,6 +270,9 @@ class LinearQuadraticApproximator {
       systemConstraintsPtr_->getConstraint2(Hv);
       systemConstraintsPtr_->getConstraint2DerivativesState(Fm);
     }
+    modelData.numStateEqConstr_ = ncEqStateOnly;
+    modelData.stateEqConstr_ = Hv.head(ncEqStateOnly);
+    modelData.stateEqConstrStateDerivative_ = Fm.topRows(ncEqStateOnly);
 
     // Inequality constraint
     ncIneq = systemConstraintsPtr_->numInequalityConstraint(time);
@@ -317,44 +284,31 @@ class LinearQuadraticApproximator {
       systemConstraintsPtr_->getInequalityConstraintSecondDerivativesInput(ddhdudu);
       systemConstraintsPtr_->getInequalityConstraintDerivativesInputState(ddhdudx);
     }
+    modelData.numIneqConstr_ = ncIneq;
+    modelData.ineqConstr_ = h;
+    modelData.ineqConstrStateDerivative_.resize(ncIneq);
+    modelData.ineqConstrInputDerivative_.resize(ncIneq);
+    modelData.ineqConstrStateSecondDerivative_.resize(ncIneq);
+    modelData.ineqConstrInputSecondDerivative_.resize(ncIneq);
+    modelData.ineqConstrInputStateDerivative_.resize(ncIneq);
+    for (size_t i = 0; i < ncIneq; i++) {
+      modelData.ineqConstrStateDerivative_[i] = dhdx[i];
+      modelData.ineqConstrInputDerivative_[i] = dhdu[i];
+      modelData.ineqConstrStateSecondDerivative_[i] = ddhdxdx[i];
+      modelData.ineqConstrInputSecondDerivative_[i] = ddhdudu[i];
+      modelData.ineqConstrInputStateDerivative_[i] = ddhdudx[i];
+    }
 
     if (checkNumericalCharacteristics_) {
-      try {
-        if (ncEqStateInput > 0) {
-          if (!Ev.head(ncEqStateInput).allFinite()) {
-            throw std::runtime_error("Input-state constraint is not finite.");
-          }
-          if (!Cm.topRows(ncEqStateInput).allFinite()) {
-            throw std::runtime_error("Input-state constraint derivative w.r.t. state is not finite.");
-          }
-          if (!Dm.topRows(ncEqStateInput).allFinite()) {
-            throw std::runtime_error("Input-state constraint derivative w.r.t. input is not finite.");
-          }
-          size_t DmRank = LinearAlgebra::rank(Dm.topRows(ncEqStateInput));
-          if (DmRank != ncEqStateInput) {
-            throw std::runtime_error(
-                "Input-state constraint derivative w.r.t. input is not full-row rank. It's rank "
-                "is " +
-                std::to_string(DmRank) + " while the expected rank is " + std::to_string(ncEqStateInput) + ".");
-          }
-        }
-        if (ncEqStateOnly > 0) {
-          if (!Hv.head(ncEqStateOnly).allFinite()) {
-            throw std::runtime_error("State-only constraint is not finite.");
-          }
-          if (!Fm.topRows(ncEqStateOnly).allFinite()) {
-            throw std::runtime_error("State-only constraint derivative w.r.t. state is not finite.");
-          }
-        }
-
-      } catch (const std::exception& error) {
-        std::cerr << "what(): " << error.what() << " at time " << time << " [sec]." << std::endl;
+      std::string err = modelData.checkConstraintProperties();
+      if (!err.empty()) {
+        std::cerr << "what(): " << err << " at time " << time << " [sec]." << std::endl;
         std::cerr << "Ev: " << Ev.head(ncEqStateInput).transpose() << std::endl;
         std::cerr << "Cm: \n" << Cm.topRows(ncEqStateInput) << std::endl;
         std::cerr << "Dm: \n" << Dm.topRows(ncEqStateInput) << std::endl;
         std::cerr << "Hv: " << Hv.head(ncEqStateOnly).transpose() << std::endl;
         std::cerr << "Fm: \n" << Fm.topRows(ncEqStateOnly) << std::endl;
-        throw;
+        throw std::runtime_error(err);
       }
     }
   }
@@ -365,10 +319,17 @@ class LinearQuadraticApproximator {
    * @param [in] time: The current time.
    * @param [in] state: The current state.
    * @param [in] input: The current input .
+   * @param [in] modelData: Model data object.
    */
-  void approximateIntermediateCost(const scalar_t& time, const state_vector_t& state, const input_vector_t& input, scalar_t& q,
-                                   state_vector_t& Qv, state_matrix_t& Qm, input_vector_t& Rv, input_matrix_t& Rm,
-                                   input_state_matrix_t& Pm) {
+  void approximateIntermediateCost(const scalar_t& time, const state_vector_t& state, const input_vector_t& input,
+                                   ModelDataBase& modelData) {
+    scalar_t q;
+    state_vector_t Qv;
+    state_matrix_t Qm;
+    input_vector_t Rv;
+    input_matrix_t Rm;
+    input_state_matrix_t Pm;
+
     // set data
     costFunctionPtr_->setCurrentStateAndControl(time, state, input);
 
@@ -380,47 +341,18 @@ class LinearQuadraticApproximator {
     costFunctionPtr_->getIntermediateCostSecondDerivativeInput(Rm);
     costFunctionPtr_->getIntermediateCostDerivativeInputState(Pm);
 
+    modelData.cost_ = q;
+    modelData.costStateDerivative_ = Qv;
+    modelData.costStateSecondDerivative_ = Qm;
+    modelData.costInputDerivative_ = Rv;
+    modelData.costInputSecondDerivative_ = Rm;
+    modelData.costInputStateDerivative_ = Pm;
+
     // checking the numerical stability
     if (checkNumericalCharacteristics_) {
-      try {
-        if (q != q) {
-          throw std::runtime_error("Intermediate cost is is not finite.");
-        }
-        if (!Qv.allFinite()) {
-          throw std::runtime_error("Intermediate cost first derivative w.r.t. state is is not finite.");
-        }
-        if (!Qm.allFinite()) {
-          throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not finite.");
-        }
-        if (!makePsdWillBePerformedLater_ && !Qm.isApprox(Qm.transpose())) {
-          throw std::runtime_error("Intermediate cost second derivative w.r.t. state is is not self-adjoint.");
-        }
-        if (!makePsdWillBePerformedLater_ && LinearAlgebra::eigenvalues(Qm).real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
-          throw std::runtime_error("Q matrix is not positive semi-definite. It's smallest eigenvalue is " +
-                                   std::to_string(LinearAlgebra::eigenvalues(Qm).real().minCoeff()) + ".");
-        }
-        if (!Rv.allFinite()) {
-          throw std::runtime_error("Intermediate cost first derivative w.r.t. input is is not finite.");
-        }
-        if (!Rm.allFinite()) {
-          throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not finite.");
-        }
-        if (!Pm.allFinite()) {
-          throw std::runtime_error("Intermediate cost second derivative w.r.t. input-state is is not finite.");
-        }
-        if (!makePsdWillBePerformedLater_ && !Rm.isApprox(Rm.transpose())) {
-          throw std::runtime_error("Intermediate cost second derivative w.r.t. input is is not self-adjoint.");
-        }
-        if (!makePsdWillBePerformedLater_ && Rm.ldlt().rcond() < Eigen::NumTraits<scalar_t>::epsilon()) {
-          throw std::runtime_error("R matrix is not invertible. It's reciprocal condition number is " + std::to_string(Rm.ldlt().rcond()) +
-                                   ".");
-        }
-        if (!makePsdWillBePerformedLater_ && LinearAlgebra::eigenvalues(Rm).real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon()) {
-          throw std::runtime_error("R matrix is not positive definite. It's smallest eigenvalue is " +
-                                   std::to_string(LinearAlgebra::eigenvalues(Rm).real().minCoeff()) + ".");
-        }
-      } catch (const std::exception& error) {
-        std::cerr << "what(): " << error.what() << " at time " << time << " [sec]." << std::endl;
+      std::string err = modelData.checkCostProperties();
+      if (!err.empty()) {
+        std::cerr << "what(): " << err << " at time " << time << " [sec]." << std::endl;
         std::cerr << "x: " << state.transpose() << std::endl;
         std::cerr << "u: " << input.transpose() << std::endl;
         std::cerr << "q: " << q << std::endl;
@@ -431,7 +363,7 @@ class LinearQuadraticApproximator {
         std::cerr << "Rm: \n" << Rm << std::endl;
         std::cerr << "Rm eigenvalues : " << LinearAlgebra::eigenvalues(Rm).transpose() << std::endl;
         std::cerr << "Pm: \n" << Pm << std::endl;
-        throw;
+        throw std::runtime_error(err);
       }
     }
   }

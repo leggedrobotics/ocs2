@@ -45,7 +45,7 @@ namespace switched_model {
         tf::vectorEigenToMsg(o_feetAcceleration[ee], rstcm.ee_motion[ee].acc);
         tf::vectorEigenToMsg(o_feetForce[ee],        rstcm.ee_forces[ee]);
         /* Check if the forces are 0 */
-        rstcm.ee_contact[ee] = o_feetForce[ee].isZero(0);
+        rstcm.ee_contact[ee] = !o_feetForce[ee].isZero(0);
       }
     }
 
@@ -80,8 +80,12 @@ namespace switched_model {
       // };
       // ros::ServiceServer visualsCDTsClient_ = n.advertiseService(visualizers::costsPublishServiceName, callback);
 
-      visualizationPublisher_      = visualizers::xppStateDesTopicMap.advertise(n, 1);
-      visualizationJointPublisher_ = visualizers::xppJointDesTopicMap.advertise(n, 1);
+      visualizationPublisher_           = visualizers::xppStateDesTopicMap.advertise(n, 1);
+      visualizationJointPublisher_      = visualizers::xppJointDesTopicMap.advertise(n, 1);
+      // costsVisualizationPublisher_      = visualizers::xppStateTrajTopicMap.advertise(n, 1, true);
+      // costsVisualizationJointPublisher_ = visualizers::xppJointTrajTopicMap.advertise(n, 1, true);
+      costsVisualizationPublisher_      = visualizers::xppStateTrajTopicMap.advertise(n, 1);
+      costsVisualizationJointPublisher_ = visualizers::xppJointTrajTopicMap.advertise(n, 1);
 
       comTracePublisher_     = visualizers::comTraceTopicMap.advertise(n, 100);
       feetTracePublisher_    = visualizers::feetTraceTopicMap.advertise(n, 100);
@@ -91,8 +95,6 @@ namespace switched_model {
       comMPCTracePublisher_  = visualizers::comMPCTraceTopicMap.advertise(n, 100);
       feetMPCTracePublisher_ = visualizers::feetMPCTraceTopicMap.advertise(n, 100);
 
-      costsVisualizationPublisher_     = visualizers::xppStateTrajTopicMap.advertise(n, 1, true);
-      costsVisualizationJointPublisher_ = visualizers::xppJointTrajTopicMap.advertise(n, 1, true);
 
       ROS_INFO_STREAM("Waiting for visualization subscriber ...");
       while (ros::ok() && visualizationPublisher_.getNumSubscribers() == 0) {
@@ -156,14 +158,17 @@ namespace switched_model {
     }
 
   template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-    void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishXppCostsVisualizer(
-        const scalar_t& time, const cost_desired_trajectories_t& costDesiredTrajectories)
+    void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishXppCostsVisualizer(const scalar_t& publishTime)
     {
 
+      auto costDesiredTrajectories = ocs2QuadrupedInterfacePtr_->getCostTrajectories();
+      // auto costDesiredTrajectories = ocs2QuadrupedInterfacePtr_.getCostDesiredTrajectories();
       auto& timeTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
+      auto N = costDesiredTrajectories.desiredStateTrajectory().size();
 
-      for (int i = 0; i < timeTrajectory.size(); ++i) {
+      for (int i = 0; i < N; ++i) {
         auto& state = costDesiredTrajectories.desiredStateTrajectory()[i];
+        auto& time = costDesiredTrajectories.desiredTimeTrajectory()[i];
         // construct the message
         xpp_msgs::RobotStateCartesian robotStateCartesianMsg;
 
@@ -174,7 +179,6 @@ namespace switched_model {
         tf::vectorEigenToMsg(robotStateCartesianMsg.base.twist.linear, state.template segment<3>(9));
 
         robotStateCartesianMsg.time_from_start = ros::Duration(time);
-
         auto& input = costDesiredTrajectories.desiredStateTrajectory()[i];
         setRobotStateCartesianEEValues(state, input, robotStateCartesianMsg);
 
@@ -295,6 +299,12 @@ namespace switched_model {
 
   template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
     void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishDesiredTrajectory(
+        scalar_t startTime) {
+      publishDesiredTrajectory( startTime, ocs2QuadrupedInterfacePtr_->getCostTrajectories());
+    }
+
+  template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+    void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishDesiredTrajectory(
         scalar_t startTime, const cost_desired_trajectories_t& costDesiredTrajectory) {
 
       // Set up state interpolator
@@ -337,8 +347,7 @@ namespace switched_model {
         footMarkerMsg.markers.push_back(footMsg);
       }
 
-      // Evaluation times
-      double dt = 0.1;
+      // Evaluation times double dt = 0.1;
       double t = std::min(startTime, endTime);
       vector_3d_array_t o_feetPosition, o_feetVelocity, o_feetForce;
 
@@ -364,9 +373,9 @@ namespace switched_model {
       // }
 
       std_msgs::ColorRGBA color;
-      color.b=1.0;
+      color.b=0.0;
       color.r=0.0;
-      color.g=0.0;
+      color.g=1.0;
       color.a=0.7;
       const auto trajectoryPartitions = timeTrajectory.size();
       const auto fracOfTrajectory = 1.0/trajectoryPartitions;
@@ -376,8 +385,8 @@ namespace switched_model {
         comMarker.points.push_back(comPosition);
 
         std_msgs::ColorRGBA fadeColor(color);
-        fadeColor.b -= 0.5*fracOfTrajectory;
-        fadeColor.g += 0.5*fracOfTrajectory;
+        fadeColor.b  += 1.0*fracOfTrajectory*i;
+        fadeColor.g  -= 1.0*fracOfTrajectory*i;
         comMarker.colors.push_back(fadeColor);
 
         computeFeetState(stateTrajectory[i],

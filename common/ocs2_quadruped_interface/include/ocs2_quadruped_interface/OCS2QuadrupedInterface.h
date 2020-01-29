@@ -284,6 +284,14 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
   void getLoadedTimeHorizon(scalar_t& timeHorizon) const;
 
   /**
+   * Gets Cost Trajectories
+   *
+   * @param [out] timeHorizon: The time horizon of the MPC.
+   */
+  cost_desired_trajectories_t getCostTrajectories() const {return costDesiredTrajectories_;};
+
+
+  /**
    * Gets SLQ settings.
    *
    * @return SLQ settings

@@ -44,17 +44,19 @@ namespace switched_model {
       PublisherMapping(const std::string topicName): topicName(topicName){};
     };
 
-  // xpp_msgs::RobotStateCartesian
-  inline const auto xppStateDesTopicName = xpp_msgs::robot_state_desired;
-  // const auto xppStateTopicName = xpp_msgs::robot_state_desired.substr(xpp_msgs::robot_state_desired.find_first_not_of("/"));
-
-  // desired joint state (equivalent to desired cartesian state)
-  // inline const auto xppJointDesTopicName = xpp_msgs::joint_desired;
-  // const auto xppJointDesTopicName = xpp_msgs::joint_desired.substr(xpp_msgs::joint_desired.find_first_not_of("/")); //stripped leading slash('/')
+  /***************************************************************************************************/
   inline const std::string xppJointDesTopicName = "xpp/joint_anymal_des";
+  inline const auto xppStateDesTopicName = xpp_msgs::robot_state_desired;
 
   const auto xppStateDesTopicMap = PublisherMapping<xpp_msgs::RobotStateCartesian>(xppStateDesTopicName);
   const auto xppJointDesTopicMap = PublisherMapping<xpp_msgs::RobotStateJoint>(xppJointDesTopicName);
+  /***************************************************************************************************/
+  inline static const std::string xppJointTrajTopicName = xppJointDesTopicName.substr(0, xppJointDesTopicName.find("des)")) + "traj";
+  inline static const std::string xppStateTrajTopicName = xppStateDesTopicName.substr(0, xppStateDesTopicName.find("des")) + "traj";
+
+  inline static const auto xppStateTrajTopicMap = PublisherMapping<xpp_msgs::RobotStateCartesian>(xppStateTrajTopicName);
+  inline static const auto xppJointTrajTopicMap = PublisherMapping<xpp_msgs::RobotStateJoint>(xppJointTrajTopicName); //TODO(oharley) array msg type?
+  /***************************************************************************************************/
 
   inline const std::string comTraceTopicName     = "baseTrajectory"; //desiredBaseTrajectory
   inline const std::string feetTraceTopicName    = "feetTrajectories";
@@ -70,19 +72,6 @@ namespace switched_model {
   const auto feetTraceTopicMap    = PublisherMapping<visualization_msgs::MarkerArray>(feetTraceTopicName);
   const auto posesTargetTopicMap  = PublisherMapping<geometry_msgs::PoseArray>(posesTargetTopicName);
   const auto posesMPCTopicMap     = PublisherMapping<geometry_msgs::PoseArray>(posesMPCTopicName);
-
-  /***************************************************************************************************/
-  // CostTrajectories Messages for visuals and plotting
-  inline static const std::string xppJointTrajTopicName = xppJointDesTopicName + "_traj";
-  // constexpr std::string xppStateTrajTopicName = xppStateDesTopicName + "_traj";
-
-  inline static const std::string xppStateTrajTopicName = xpp_msgs::robot_trajectory_desired.substr(xpp_msgs::robot_trajectory_desired.find_first_not_of("/"));
-  // constexpr std::string xppJointTrajTopicName = xpp_msgs::NO JOINT TRAJ DEFI;NED
-
-  inline static const std::string rosVisualizationTrajTopicName = "anymal_trajectory"; // "xpp/desiredTrajectoryVisuals"
-
-  inline static const auto xppStateTrajTopicMap = PublisherMapping<xpp_msgs::RobotStateCartesianTrajectory>(xppStateTrajTopicName);
-  inline static const auto xppJointTrajTopicMap = PublisherMapping<xpp_msgs::RobotStateJoint>(xppJointTrajTopicName); //TODO(oharley) array msg type?
   }
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
@@ -164,10 +153,11 @@ class QuadrupedXppVisualizer {
   void publishTrajectory(const system_observation_array_t& system_observation_array, double speed = 1.0);
 
   void publishDesiredTrajectory(scalar_t startTime, const cost_desired_trajectories_t& costDesiredTrajectory);
+  void publishDesiredTrajectory(scalar_t startTime);
 
   void publishOptimizedStateTrajectory(const scalar_array_t& mpcTimeTrajectory, const state_vector_array_t& mpcStateTrajectory);
 
-  void publishXppCostsVisualizer( const scalar_t& time, const cost_desired_trajectories_t& costDesiredTrajectories);
+  void publishXppCostsVisualizer( const scalar_t& publishTime);
 
  private:
   /**

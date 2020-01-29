@@ -5,11 +5,10 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Grid1/Offset1
-        - /CartesianVisualization1
         - /CartesianVisualization1/Namespaces1
-        - /MarkerArray2
+        - /Target COM Trajectory1
       Splitter Ratio: 0.4424239993095398
-    Tree Height: 812
+    Tree Height: 351
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -91,8 +90,8 @@ Visualization Manager:
         ee_force: true
         endeffector_pos: true
         friction_cone: true
-        gravity_force: false
-        inverted_pendulum: false
+        gravity_force: true
+        inverted_pendulum: true
         support_polygons: true
       Queue Size: 100
       Value: true
@@ -260,25 +259,9 @@ Visualization Manager:
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /baseTrajectory
-      Name: Marker
+      Name: Target COM Trajectory
       Namespaces:
-        "": true
-      Queue Size: 100
-      Value: true
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /xpp/rviz_markers
-      Name: MarkerArray
-      Namespaces:
-        "": true
-        base_pose: true
-        cop: true
-        ee_force: true
-        endeffector_pos: true
-        friction_cone: true
-        gravity_force: true
-        inverted_pendulum: true
-        support_polygons: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -290,7 +273,7 @@ Visualization Manager:
       Enabled: true
       Head Length: 0.07000000029802322
       Head Radius: 0.029999999329447746
-      Name: PoseArray
+      Name: Target Poses
       Shaft Length: 0.23000000417232513
       Shaft Radius: 0.009999999776482582
       Shape: Axes
@@ -300,7 +283,15 @@ Visualization Manager:
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /feetTrajectories
-      Name: MarkerArray
+      Name: Feet Target Trajectories
+      Namespaces:
+        "": true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /feetMPCTrajectories
+      Name: Feet Observed
       Namespaces:
         "": true
       Queue Size: 100
@@ -314,12 +305,36 @@ Visualization Manager:
       Enabled: true
       Head Length: 0.07000000029802322
       Head Radius: 0.029999999329447746
-      Name: PoseArray
+      Name: Observed Pose
       Shaft Length: 0.23000000417232513
       Shaft Radius: 0.009999999776482582
       Shape: Arrow (Flat)
       Topic: /poseMPC
       Unreliable: false
+      Value: true
+    - Alpha: 1
+      Arrow Length: 0.30000001192092896
+      Axes Length: 0.30000001192092896
+      Axes Radius: 0.009999999776482582
+      Class: rviz/PoseArray
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.07000000029802322
+      Head Radius: 0.029999999329447746
+      Name: Observed Poses
+      Shaft Length: 0.23000000417232513
+      Shaft Radius: 0.009999999776482582
+      Shape: Arrow (Flat)
+      Topic: /poseMPC
+      Unreliable: false
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /baseMPCTrajectory
+      Name: Observed Trajectory
+      Namespaces:
+        "": true
+      Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
@@ -349,25 +364,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 5.0949883460998535
+      Distance: 4.950325012207031
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.14568299055099487
-        Y: 0.2619593143463135
-        Z: 0
+        X: -0.4912991523742676
+        Y: -0.004262685775756836
+        Z: 4.76837158203125e-7
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6331429481506348
+      Pitch: 0.37314265966415405
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 2.7879395484924316
+      Yaw: 2.4779412746429443
     Saved:
       - Angle: 3.140000104904175
         Class: rviz/TopDownOrtho
@@ -440,7 +455,7 @@ Visualization Manager:
         Value: Orbit (rviz)
         Yaw: 5.114999771118164
 Window Geometry:
-  "&Displays":
+  Displays:
     collapsed: false
   Height: 1080
   Hide Left Dock: false
@@ -455,5 +470,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 960
-  X: 0
+  X: 960
   Y: 0

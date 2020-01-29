@@ -47,7 +47,7 @@ TEST(exp1_ilqr_test, exp1_ilqr_test) {
   using feedforward_controller_t = ILQR<STATE_DIM, INPUT_DIM>::feedforward_controller_t;
 
   ILQR_Settings ilqrSettings;
-  ilqrSettings.ddpSettings_.displayInfo_ = false;
+  ilqrSettings.ddpSettings_.displayInfo_ = true;
   ilqrSettings.ddpSettings_.displayShortSummary_ = true;
   ilqrSettings.ddpSettings_.absTolODE_ = 1e-10;
   ilqrSettings.ddpSettings_.relTolODE_ = 1e-7;

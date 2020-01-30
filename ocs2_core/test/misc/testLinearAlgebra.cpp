@@ -13,12 +13,12 @@ TEST(LLTofInverse, checkAgainstFullInverse)
   // Some random symmetric positive definite matrix
   using Matrix_t = Eigen::Matrix<double, n, n>;
   Matrix_t A = generateSPDmatrix<Matrix_t>();
-  Matrix_t U, LinvT;
+  Matrix_t AmInvUmUmT;
 
-  computeLinvTLinv(A, U, LinvT);
+  computeInverseMatrixUUT(A, AmInvUmUmT);
 
   Matrix_t Ainv = A.inverse();
-  Matrix_t Ainv_constructed = LinvT * LinvT.transpose();
+  Matrix_t Ainv_constructed = AmInvUmUmT * AmInvUmUmT.transpose();
 
   ASSERT_LT( (Ainv - Ainv_constructed).array().abs().maxCoeff() , tol );
 }
@@ -37,13 +37,13 @@ TEST(constraintProjection, checkAgainstFullComputations)
   Matrix_t R = generateSPDmatrix<Matrix_t>();
 
   // Inverse of R
-  Matrix_t U, RinvChol;
-  computeLinvTLinv(R, U, RinvChol);
-  Matrix_t Rinv = RinvChol * RinvChol.transpose();
+  Matrix_t RmInvUmUmT;
+  computeInverseMatrixUUT(R, RmInvUmUmT);
+  Matrix_t Rinv = RmInvUmUmT * RmInvUmUmT.transpose();
 
   // Compute constraint projection terms, this is what we are testing in this unit test
   Eigen::MatrixXd Ddagger, DdaggerT_R_Ddagger_Chol, RinvConstrainedChol;
-  computeConstraintProjection(D, RinvChol, Ddagger, DdaggerT_R_Ddagger_Chol, RinvConstrainedChol);
+  computeConstraintProjection(D, RmInvUmUmT, Ddagger, DdaggerT_R_Ddagger_Chol, RinvConstrainedChol);
 
   // Reconstruct full matrices to compare
   Eigen::MatrixXd RinvConstrained = RinvConstrainedChol * RinvConstrainedChol.transpose();

@@ -92,32 +92,31 @@ void makePsdCholesky(Eigen::MatrixXd& A, double minEigenvalue) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void computeConstraintProjection(const Eigen::MatrixXd& D, const Eigen::MatrixXd& RinvChol, Eigen::MatrixXd& Ddagger,
-                                 Eigen::MatrixXd& DdaggerT_R_Ddagger_Chol, Eigen::MatrixXd& RinvConstrainedChol) {
-  const auto numConstraints = D.rows();
-  const auto numInputs = D.cols();
+void computeConstraintProjection(const Eigen::MatrixXd& Dm, const Eigen::MatrixXd& RmInvUmUmT, Eigen::MatrixXd& DmDagger,
+                                 Eigen::MatrixXd& DmDaggerTRmDmDaggerUUT, Eigen::MatrixXd& RmInvConstrainedUUT) {
+  const auto numConstraints = Dm.rows();
+  const auto numInputs = Dm.cols();
 
   // Constraint Projectors are based on the QR decomposition
-  Eigen::HouseholderQR<Eigen::MatrixXd> QRof_RinvCholT_DmT(RinvChol.transpose() * D.transpose());
+  Eigen::HouseholderQR<Eigen::MatrixXd> QRof_RmInvUmUmTT_DmT(RmInvUmUmT.transpose() * Dm.transpose());
 
-  Eigen::MatrixXd QRof_RinvCholT_DmT_Rc =
-      QRof_RinvCholT_DmT.matrixQR().topLeftCorner(numConstraints, numConstraints).template triangularView<Eigen::Upper>();
+  Eigen::MatrixXd QRof_RmInvUmUmTT_DmT_Rc = QRof_RmInvUmUmTT_DmT.matrixQR().topRows(numConstraints).template triangularView<Eigen::Upper>();
 
   // Computes the inverse of Rc with an efficient in-place forward-backward substitution
-  // Turns out that this is equal to the cholesky decomposition of Ddagger^T * R * Ddagger after simplification
-  DdaggerT_R_Ddagger_Chol.setIdentity(numConstraints, numConstraints);
-  QRof_RinvCholT_DmT_Rc.template triangularView<Eigen::Upper>().solveInPlace(DdaggerT_R_Ddagger_Chol);
+  // Turns out that this is equal to the UUT decomposition of DmDagger^T * R * DmDagger after simplification
+  DmDaggerTRmDmDaggerUUT.setIdentity(numConstraints, numConstraints);
+  QRof_RmInvUmUmTT_DmT_Rc.template triangularView<Eigen::Upper>().solveInPlace(DmDaggerTRmDmDaggerUUT);
 
-  Eigen::MatrixXd QRof_RinvCholT_DmT_Q = QRof_RinvCholT_DmT.householderQ();
+  Eigen::MatrixXd QRof_RmInvUmUmTT_DmT_Q = QRof_RmInvUmUmTT_DmT.householderQ();
   // Auto take reference to the column view here without making a temporary
-  auto QRof_RinvCholT_DmT_Qc = QRof_RinvCholT_DmT_Q.leftCols(numConstraints);
-  auto QRof_RinvCholT_DmT_Qu = QRof_RinvCholT_DmT_Q.rightCols(numInputs - numConstraints);
+  auto QRof_RmInvUmUmTT_DmT_Qc = QRof_RmInvUmUmTT_DmT_Q.leftCols(numConstraints);
+  auto QRof_RmInvUmUmTT_DmT_Qu = QRof_RmInvUmUmTT_DmT_Q.rightCols(numInputs - numConstraints);
 
   // Compute Weighted Pseudo Inverse, brackets used to compute the smaller, right-side product first
-  Ddagger.noalias() = RinvChol * (QRof_RinvCholT_DmT_Qc * DdaggerT_R_Ddagger_Chol.transpose());
+  DmDagger.noalias() = RmInvUmUmT * (QRof_RmInvUmUmTT_DmT_Qc * DmDaggerTRmDmDaggerUUT.transpose());
 
-  // Constraint input cost cholesky decomposition
-  RinvConstrainedChol.noalias() = RinvChol * QRof_RinvCholT_DmT_Qu;
+  // Constraint input cost UUT decomposition
+  RmInvConstrainedUUT.noalias() = RmInvUmUmT * QRof_RmInvUmUmTT_DmT_Qu;
 }
 
 /******************************************************************************************************/

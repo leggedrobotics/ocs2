@@ -44,13 +44,16 @@ SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::SequentialRiccatiEquations(boo
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int STATE_DIM, int INPUT_DIM>
-void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::convert2Vector(const state_matrix_t& Sm, const state_vector_t& Sv, const scalar_t& s,
-                                                                      s_vector_t& allSs) {
+void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::convert2Vector(const dynamic_matrix_t& Sm, const dynamic_vector_t& Sv,
+                                                                      const scalar_t& s, s_vector_t& allSs) {
   /* Sm is symmetric. Here, we only extract the upper triangular part and
    * transcribe it in column-wise fashion into allSs*/
   size_t count = 0;  // count the total number of scalar entries covered
   size_t nRows = 0;
   const size_t state_dim = Sm.cols();
+
+  assert(Sm.rows() == state_dim);
+  assert(Sv.rows() == state_dim);
 
   // Ensure proper size in case of Eigen::Dynamic size.
   allSs.resize(s_vector_dim(state_dim));
@@ -97,27 +100,29 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::convert2Matrix(const s_ve
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int STATE_DIM, int INPUT_DIM>
-void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(
-    const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* modelDataPtr, const ModelDataBase::array_t* projectedModelDataPtr,
-    const dynamic_matrix_array_t* RinvCholPtr, const size_array_t* postEventIndicesPtr,
-    const ModelDataBase::array_t* modelDataEventTimesPtr, const riccati_modification_t* riccatiModificationPtr) {
+void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(const scalar_array_t* timeStampPtr,
+                                                               const ModelDataBase::array_t* projectedModelDataPtr,
+                                                               const size_array_t* postEventIndicesPtr,
+                                                               const ModelDataBase::array_t* modelDataEventTimesPtr,
+                                                               const RiccatiModificationBase::array_t* riccatiModificationPtr) {
   BASE::resetNumFunctionCalls();
 
-  // TODO fix this
-  const int state_dim = modelDataPtr->front().dynamicsInputDerivative_.rows();
-  const int input_dim = modelDataPtr->front().dynamicsInputDerivative_.cols();
+  const auto state_dim = projectedModelDataPtr->front().stateDim_;
+  const auto input_dim = projectedModelDataPtr->front().inputDim_;
 
   // Initialize members with proper dimensions for Eigen::Dynamic sized matrices.
   Sm_.resize(state_dim, state_dim);
   Sv_.resize(state_dim);
-  Qm_.resize(state_dim, state_dim);
-  Qv_.resize(state_dim);
+  dSm_.resize(state_dim, state_dim);
+  dSv_.resize(state_dim);
   AmT_minus_P_Rinv_Bm_.resize(state_dim, state_dim);
-  AmT_Sm_.resize(state_dim, state_dim);
+  Am_T_Sm_.resize(state_dim, state_dim);
   Am_.resize(state_dim, state_dim);
   Bm_.resize(state_dim, input_dim);
-  Rv_.resize(input_dim);
-  Pm_.resize(input_dim, state_dim);
+  Gv_.resize(input_dim);
+  Gm_.resize(input_dim, state_dim);
+
+  deltaQm_.resize(state_dim, state_dim);
 
   eventTimes_.clear();
   eventTimes_.reserve(postEventIndicesPtr->size());
@@ -128,19 +133,17 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(
 
   // saving array pointers
   timeStampPtr_ = timeStampPtr;
-  modelDataPtr_ = modelDataPtr;
   projectedModelDataPtr_ = projectedModelDataPtr;
-  RinvCholPtr_ = RinvCholPtr;
 
   riccatiModificationPtr_ = riccatiModificationPtr;
 
+  const int N = timeStampPtr->size();
   if (preComputeRiccatiTerms_) {
     // Initialize all arrays that will store the precomputation
-    const int N = timeStampPtr->size();
-    B_RinvChol_array_.clear();
-    B_RinvChol_array_.reserve(N);
-    RinvCholT_Rv_array_.clear();
-    RinvCholT_Rv_array_.reserve(N);
+    B_RmInvUUT_array_.clear();
+    B_RmInvUUT_array_.reserve(N);
+    RmInvUUT_T_Rv_array_.clear();
+    RmInvUUT_T_Rv_array_.reserve(N);
     AmT_minus_P_Rinv_B_array_.clear();
     AmT_minus_P_Rinv_B_array_.reserve(N);
     Qv_minus_P_Rinv_Rv_array_.clear();
@@ -149,21 +152,37 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(
     Qm_minus_P_Rinv_P_array_.reserve(N);
 
     // Precompute all terms for all interpolation nodes
-    dynamic_matrix_t PmT_RinvChol;
+    dynamic_matrix_t Pm_T_HmInvUUT;
     for (int i = 0; i < N; i++) {
+      const auto& HmInvUUT = (*riccatiModificationPtr)[i].HmInverseConstrainedLowRank_;
       // Emplace back on first touch of the array in this loop
-      B_RinvChol_array_.emplace_back((*modelDataPtr)[i].dynamicsInputDerivative_ * (*RinvCholPtr)[i]);
-      RinvCholT_Rv_array_.emplace_back((*RinvCholPtr)[i].transpose() * (*modelDataPtr)[i].costInputDerivative_);
-      AmT_minus_P_Rinv_B_array_.emplace_back((*projectedModelDataPtr_)[i].dynamicsStateDerivative_.transpose());
-      Qv_minus_P_Rinv_Rv_array_.emplace_back((*projectedModelDataPtr_)[i].costStateDerivative_);
-      Qm_minus_P_Rinv_P_array_.emplace_back((*projectedModelDataPtr_)[i].costStateSecondDerivative_);
+      B_RmInvUUT_array_.emplace_back((*projectedModelDataPtr)[i].dynamicsInputDerivative_ * HmInvUUT);
+      RmInvUUT_T_Rv_array_.emplace_back(HmInvUUT.transpose() * (*projectedModelDataPtr)[i].costInputDerivative_);
+      AmT_minus_P_Rinv_B_array_.emplace_back((*projectedModelDataPtr)[i].dynamicsStateDerivative_.transpose());
+      Qv_minus_P_Rinv_Rv_array_.emplace_back((*projectedModelDataPtr)[i].costStateDerivative_);
+      Qm_minus_P_Rinv_P_array_.emplace_back((*projectedModelDataPtr)[i].costStateSecondDerivative_ + (*riccatiModificationPtr)[i].deltaQm_);
 
       // modify AmT_minus_P_Rinv_B_array_ in place + store temporary computation
-      PmT_RinvChol.noalias() = (*modelDataPtr)[i].costInputStateDerivative_.transpose() * (*RinvCholPtr)[i];
-      AmT_minus_P_Rinv_B_array_[i].noalias() -= PmT_RinvChol * B_RinvChol_array_[i].transpose();
+      Pm_T_HmInvUUT.noalias() = (*projectedModelDataPtr)[i].costInputStateDerivative_.transpose() * HmInvUUT;
+      AmT_minus_P_Rinv_B_array_[i].noalias() -= Pm_T_HmInvUUT * B_RmInvUUT_array_[i].transpose();
 
-      Qv_minus_P_Rinv_Rv_array_[i].noalias() -= PmT_RinvChol * RinvCholT_Rv_array_[i];
-      Qm_minus_P_Rinv_P_array_[i].noalias() -= PmT_RinvChol * PmT_RinvChol.transpose();
+      Qv_minus_P_Rinv_Rv_array_[i].noalias() -= Pm_T_HmInvUUT * RmInvUUT_T_Rv_array_[i];
+      Qm_minus_P_Rinv_P_array_[i].noalias() -= Pm_T_HmInvUUT * Pm_T_HmInvUUT.transpose();
+    }
+
+  } else {
+    HmInvUUT_T_deltaPm_array_.clear();
+    HmInvUUT_T_deltaPm_array_.reserve(N);
+    HmInvUUT_T_Rm_HmInvUUT_array_.clear();
+    HmInvUUT_T_Rm_HmInvUUT_array_.reserve(N);
+    // precomputation
+    dynamic_matrix_t HmInvUUT_T_Rm;
+    for (int i = 0; i < N; i++) {
+      const auto& modelDataPtr = (*projectedModelDataPtr)[i];
+      const auto& riccatiModification = (*riccatiModificationPtr)[i];
+      HmInvUUT_T_deltaPm_array_.emplace_back(riccatiModification.HmInverseConstrainedLowRank_.transpose() * riccatiModification.deltaPm_);
+      HmInvUUT_T_Rm.noalias() = riccatiModification.HmInverseConstrainedLowRank_.transpose() * modelDataPtr.costInputSecondDerivative_;
+      HmInvUUT_T_Rm_HmInvUUT_array_.emplace_back(HmInvUUT_T_Rm * riccatiModification.HmInverseConstrainedLowRank_);
     }
   }
 }
@@ -172,20 +191,43 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int STATE_DIM, int INPUT_DIM>
-void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::computeJumpMap(const scalar_t& z, const s_vector_t& state, s_vector_t& mappedState) {
-  scalar_t time = -z;
-
+void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::computeJumpMap(const scalar_t& z, const s_vector_t& allSs,
+                                                                      s_vector_t& allSsPreEvent) {
   // epsilon is set to include times past event times which have been artificially increased in the rollout
+  scalar_t time = -z;
   size_t index = lookup::findFirstIndexWithinTol(eventTimes_, time, 1e-5);
 
-  // TODO fix this
-  s_vector_t allSsJump;
-  const auto& qFinal = (*modelDataEventTimesPtr_)[index].cost_;
-  const state_vector_t QvFinal = (*modelDataEventTimesPtr_)[index].costStateDerivative_;
-  const state_matrix_t QmFinal = (*modelDataEventTimesPtr_)[index].costStateSecondDerivative_;
-  convert2Vector(QmFinal, QvFinal, qFinal, allSsJump);
+  // jump model data
+  const auto& jumpModelData = (*modelDataEventTimesPtr_)[index];
 
-  mappedState = state + allSsJump;
+  //  s_vector_t allSsJump;
+  //  convert2Vector(jumpModelData.costStateSecondDerivative_, jumpModelData.costStateDerivative_, jumpModelData.cost_, allSsJump);
+  //
+  //  allSsPreEvent = allSs + allSsJump;
+
+  // convert to Riccati coefficients
+  convert2Matrix(allSs, Sm_, Sv_, s_);
+
+  // TODO: Fix this
+  const state_vector_t Hv = state_vector_t::Zero(STATE_DIM);                 // jumpModelData.dynamicsBias_;
+  const state_matrix_t Am = state_matrix_t::Identity(STATE_DIM, STATE_DIM);  // jumpModelData.costStateSecondDerivative_;
+
+  // Sm
+  state_matrix_t SmPreEvent = jumpModelData.costStateSecondDerivative_;
+  Am_T_Sm_.noalias() = Am.transpose() * Sm_;
+  SmPreEvent.noalias() += Am_T_Sm_ * Am;
+
+  // Sv
+  dynamic_vector_t Sv_plus_Sm_Hv = Sv_;
+  Sv_plus_Sm_Hv.noalias() += Sm_ * Hv;
+  state_vector_t SvPreEvent = jumpModelData.costStateDerivative_;
+  SvPreEvent.noalias() += Am.transpose() * Sv_plus_Sm_Hv;
+
+  // s
+  scalar_t sPreEvent = s_ + jumpModelData.cost_;
+  sPreEvent += Hv.dot(Sv_plus_Sm_Hv);
+
+  convert2Vector(SmPreEvent, SvPreEvent, sPreEvent, allSsPreEvent);
 }
 
 /******************************************************************************************************/
@@ -211,67 +253,112 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const scal
 
   const auto indexAlpha = EigenLinearInterpolation<state_matrix_t>::timeSegment(t, timeStampPtr_);
   if (preComputeRiccatiTerms_) {
-    ModelData::LinearInterpolation::interpolate(indexAlpha, q_, modelDataPtr_, ModelData::cost);
-    EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, Qm_, &Qm_minus_P_Rinv_P_array_);
-    EigenLinearInterpolation<dynamic_vector_t>::interpolate(indexAlpha, Qv_, &Qv_minus_P_Rinv_Rv_array_);
+    ModelData::LinearInterpolation::interpolate(indexAlpha, Hv_, projectedModelDataPtr_, ModelData::dynamicsBias);
+    ModelData::LinearInterpolation::interpolate(indexAlpha, ds_, projectedModelDataPtr_, ModelData::cost);
+    EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, dSm_, &Qm_minus_P_Rinv_P_array_);
+    EigenLinearInterpolation<dynamic_vector_t>::interpolate(indexAlpha, dSv_, &Qv_minus_P_Rinv_Rv_array_);
     EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, AmT_minus_P_Rinv_Bm_, &AmT_minus_P_Rinv_B_array_);
-    EigenLinearInterpolation<dynamic_vector_t>::interpolate(indexAlpha, RinvCholT_Rv_, &RinvCholT_Rv_array_);
-    EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, B_RinvChol_, &B_RinvChol_array_);
+    EigenLinearInterpolation<dynamic_vector_t>::interpolate(indexAlpha, RmInvUUT_T_Rv_, &RmInvUUT_T_Rv_array_);
+    EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, B_RmInvUUT_, &B_RmInvUUT_array_);
 
-    // dSmdt,  Qm_ used instead of temporary
-    AmT_Sm_.noalias() = AmT_minus_P_Rinv_Bm_ * Sm_;
-    Qm_ += AmT_Sm_ + AmT_Sm_.transpose();
-    SmT_B_RinvChol_.noalias() = Sm_.transpose() * B_RinvChol_;
-    Qm_.noalias() -= SmT_B_RinvChol_ * SmT_B_RinvChol_.transpose();
+    // dSmdt [TOTAL COMPLEXITY: (nx^3) + (nx^2 * nu) + (nx^2 * np)]
+    Am_T_Sm_.noalias() = AmT_minus_P_Rinv_Bm_ * Sm_;
+    dSm_ += Am_T_Sm_ + Am_T_Sm_.transpose();
+    SmT_B_RmInvUUT_.noalias() = Sm_.transpose() * B_RmInvUUT_;
+    dSm_.noalias() -= SmT_B_RmInvUUT_ * SmT_B_RmInvUUT_.transpose();
 
-    // dSvdt,  Qv_ used instead of temporary
-    Qv_.noalias() += AmT_minus_P_Rinv_Bm_ * Sv_;
-    RinvCholT_Rv_.noalias() += B_RinvChol_.transpose() * Sv_;
-    Qv_.noalias() -= SmT_B_RinvChol_ * RinvCholT_Rv_;
+    // dSvdt [TOTAL COMPLEXITY: 2*(nx^2) + 2*(nx * np)]
+    dSv_.noalias() += Sm_.transpose() * Hv_;
+    dSv_.noalias() += AmT_minus_P_Rinv_Bm_ * Sv_;
+    RmInvUUT_T_Rv_.noalias() += B_RmInvUUT_.transpose() * Sv_;
+    dSv_.noalias() -= SmT_B_RmInvUUT_ * RmInvUUT_T_Rv_;
 
-    // dsdt,   q_ used instead of temporary
-    q_ -= 0.5 * RinvCholT_Rv_.dot(RinvCholT_Rv_);
+    // dsdt [TOTAL COMPLEXITY: nx + np]
+    ds_ += Sv_.dot(Hv_);
+    ds_ -= 0.5 * RmInvUUT_T_Rv_.dot(RmInvUUT_T_Rv_);
+
   } else {
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Bm_, modelDataPtr_, ModelData::dynamicsInputDerivative);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, q_, modelDataPtr_, ModelData::cost);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Rv_, modelDataPtr_, ModelData::costInputDerivative);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Pm_, modelDataPtr_, ModelData::costInputStateDerivative);
-
+    // Hv
+    ModelData::LinearInterpolation::interpolate(indexAlpha, Hv_, projectedModelDataPtr_, ModelData::dynamicsBias);
+    // Am
     ModelData::LinearInterpolation::interpolate(indexAlpha, Am_, projectedModelDataPtr_, ModelData::dynamicsStateDerivative);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Qv_, projectedModelDataPtr_, ModelData::costStateDerivative);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Qm_, projectedModelDataPtr_, ModelData::costStateSecondDerivative);
+    // Bm
+    ModelData::LinearInterpolation::interpolate(indexAlpha, Bm_, projectedModelDataPtr_, ModelData::dynamicsInputDerivative);
+    // q
+    ModelData::LinearInterpolation::interpolate(indexAlpha, ds_, projectedModelDataPtr_, ModelData::cost);
+    // Qv
+    ModelData::LinearInterpolation::interpolate(indexAlpha, dSv_, projectedModelDataPtr_, ModelData::costStateDerivative);
+    // Qm
+    ModelData::LinearInterpolation::interpolate(indexAlpha, dSm_, projectedModelDataPtr_, ModelData::costStateSecondDerivative);
+    // Rv
+    ModelData::LinearInterpolation::interpolate(indexAlpha, Gv_, projectedModelDataPtr_, ModelData::costInputDerivative);
+    // Pm
+    ModelData::LinearInterpolation::interpolate(indexAlpha, Gm_, projectedModelDataPtr_, ModelData::costInputStateDerivative);
 
-    EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, RinvChol_, RinvCholPtr_);
+    EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, HmInvUUT_T_deltaPm_, &HmInvUUT_T_deltaPm_array_);
+    EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, HmInvUUT_T_Rm_HmInvUUT_, &HmInvUUT_T_Rm_HmInvUUT_array_);
 
-    EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, deltaQm_, &riccatiModificationPtr_->deltaQmTrajectory_);
-    EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, deltaRm_, &riccatiModificationPtr_->deltaRmTrajectory_);
-    EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, deltaPm_, &riccatiModificationPtr_->deltaPmTrajectory_);
+    RiccatiModification::LinearInterpolation::interpolate(indexAlpha, deltaQm_, riccatiModificationPtr_, RiccatiModification::deltaQm);
+    RiccatiModification::LinearInterpolation::interpolate(indexAlpha, HmInvUUT_, riccatiModificationPtr_,
+                                                          RiccatiModification::HmInverseConstrainedLowRank);
 
-    Pm_.noalias() += Bm_.transpose() * Sm_;  // ! Pm is changed to avoid an extra temporary
-    SmT_B_RinvChol_.noalias() = RinvChol_.transpose() * Pm_;
-    Rv_.noalias() += Bm_.transpose() * Sv_;  // ! Rv is changed to avoid an extra temporary
-    RinvCholT_Rv_.noalias() = RinvChol_.transpose() * Rv_;
+    /*
+     * dSmdt
+     */
+    // Am^T * Sm [COMPLEXITY: nx^3]
+    Am_T_Sm_.noalias() = Am_.transpose() * Sm_;
 
-    AmT_Sm_.noalias() = Am_.transpose() * Sm_.transpose();
+    // Gm = Pm + Bm^T Sm [COMPLEXITY: nx^2 * nu]
+    Gm_.noalias() += Bm_.transpose() * Sm_;
+    // Km = inv(Hm) * Gm = (HmInvUUT * HmInvUUT^T) * Gm = HmInvUUT * HmInvUUT_T_Gm [COMPLEXITY: nx * nu * np]
+    HmInvUUT_T_Gm_.noalias() = HmInvUUT_.transpose() * Gm_;
+    HmInvUUT_T_GmAug_ = HmInvUUT_T_Gm_ + HmInvUUT_T_deltaPm_;
 
-    // dSmdt,  Qm_ used instead of temporary
-    Qm_ += deltaQm_ + AmT_Sm_ + AmT_Sm_.transpose();
-    Qm_.noalias() -= SmT_B_RinvChol_.transpose() * SmT_B_RinvChol_;
+    // Km^T * Gm [COMPLEXITY: nx^2 * np]
+    Km_T_Gm_.noalias() = -HmInvUUT_T_GmAug_.transpose() * HmInvUUT_T_Gm_;
 
-    // dSvdt,  Qv_ used instead of temporary
-    Qv_.noalias() += Am_.transpose() * Sv_;
-    Qv_.noalias() -= SmT_B_RinvChol_.transpose() * RinvCholT_Rv_;
+    // Km^T * Rm * Km [COMPLEXITY: (nx * np^2) + (nx^2 * np)]
+    HmInvUUT_T_Rm_Km_.noalias() = -HmInvUUT_T_Rm_HmInvUUT_.transpose() * HmInvUUT_T_GmAug_;
+    Km_T_Rm_Km.noalias() = -HmInvUUT_T_Rm_Km_.transpose() * HmInvUUT_T_GmAug_;
 
-    // dsdt,   q_ used instead of temporary
-    q_ -= 0.5 * RinvCholT_Rv_.dot(RinvCholT_Rv_);
+    // dSm [TOTAL COMPLEXITY: (nx^3) + (nx^2*nu) + 2*(nx^2*np) + (nx*nu*np) + (nx*np^2)]
+    dSm_ += deltaQm_ + Am_T_Sm_ + Am_T_Sm_.transpose() + Km_T_Gm_ + Km_T_Gm_.transpose() + Km_T_Rm_Km;
+
+    /*
+     * dSvdt
+     */
+    // += Sm^T * Hv [COMPLEXITY: nx^2]
+    dSv_.noalias() += Sm_.transpose() * Hv_;
+
+    // += Am^T * Sv [COMPLEXITY: nx^2]
+    dSv_.noalias() += Am_.transpose() * Sv_;
+
+    // Gv = Rv + Bm^T Sv [COMPLEXITY: (nx * nu) + (nu * np)]
+    Gv_.noalias() += Bm_.transpose() * Sv_;
+    HmInvUUT_T_Gv_.noalias() = HmInvUUT_.transpose() * Gv_;
+
+    // (Km^T * Gv) or (Gm^T * Lv) [COMPLEXITY: nx * np]
+    Km_T_Gv_.noalias() = -HmInvUUT_T_GmAug_.transpose() * HmInvUUT_T_Gv_;
+
+    // Km^T * Rm * Lv [COMPLEXITY: (np^2) + (nx * np)]
+    HmInvUUT_T_Rm_Lv_ = -HmInvUUT_T_Rm_HmInvUUT_.transpose() * HmInvUUT_T_Gv_;
+    Km_T_Rm_Lv_ = -HmInvUUT_T_GmAug_.transpose() * HmInvUUT_T_Rm_Lv_;
+
+    // dSv [TOTAL COMPLEXITY: 2*(nx^2) + (nx*nu) + 2*(nx*np) + (nu*np) + (np^2)]
+    dSv_ += 2.0 * Km_T_Gv_ + Km_T_Rm_Lv_;
+
+    /*
+     * dsdt
+     */
+    // += Sv^T * Hv [COMPLEXITY: nx]
+    ds_ += Sv_.dot(Hv_);
+    // += Lv^T Gv [COMPLEXITY: np]
+    ds_ -= HmInvUUT_T_Gv_.dot(HmInvUUT_T_Gv_);
+    // += 0.5 Lv^T Rm Lv [COMPLEXITY: np]
+    ds_ -= 0.5 * HmInvUUT_T_Rm_Lv_.dot(HmInvUUT_T_Gv_);
   }
 
-  // TODO Fix this
-  Sm_ = Qm_;
-  Sv_ = Qv_;
-  s_ = q_;
-
-  convert2Vector(Sm_, Sv_, s_, derivatives);
+  convert2Vector(dSm_, dSv_, ds_, derivatives);
 }
 
 }  // namespace ocs2

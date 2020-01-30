@@ -34,31 +34,45 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * The struct containing Riccati equation modification terms.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
+ * The struct contains Riccati equation modification terms.
  */
-template <int STATE_DIM, int INPUT_DIM>
-struct RiccatiModification {
-  using self = RiccatiModification<STATE_DIM, INPUT_DIM>;
-  using array_t = std::vector<self, Eigen::aligned_allocator<self>>;
+struct RiccatiModificationBase {
+  using array_t = std::vector<RiccatiModificationBase, Eigen::aligned_allocator<RiccatiModificationBase>>;
+  using array2_t = std::vector<array_t, Eigen::aligned_allocator<array_t>>;
 
-  // variables
-  typename Dimensions<STATE_DIM, INPUT_DIM>::state_matrix_array_t deltaQmTrajectory_;
-  typename Dimensions<STATE_DIM, INPUT_DIM>::input_matrix_array_t deltaRmTrajectory_;
-  typename Dimensions<STATE_DIM, INPUT_DIM>::input_state_matrix_array_t deltaPmTrajectory_;
+  using scalar_t = typename Dimensions<0, 0>::scalar_t;
+  using dynamic_vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
+  using dynamic_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic>;
 
-  void resize(size_t n) {
-    deltaQmTrajectory_.resize(n);
-    deltaRmTrajectory_.resize(n);
-    deltaPmTrajectory_.resize(n);
-  }
+  scalar_t time_;
 
-  void clear() {
-    deltaQmTrajectory_.clear();
-    deltaRmTrajectory_.clear();
-    deltaPmTrajectory_.clear();
+  dynamic_matrix_t deltaQm_;
+  dynamic_matrix_t deltaRm_;
+  dynamic_matrix_t deltaPm_;
+
+  /** The right pseudo-inverse of Dm */
+  dynamic_matrix_t DmDagger_;
+
+  /** Hm is the 2nd derivative of Hamiltonian w.r.t. input. HmInverseConstrained is (I - DmDagerDm)^T inv(Hm) (I - DmDagerDm) */
+  dynamic_matrix_t HmInverseConstrained_;
+  /** HmInverseConstrainedUUT is VVT decomposition of (I - DmDagerDm) inv(Hm) with dimension n_u*(n_u-n_c)  */
+  dynamic_matrix_t HmInverseConstrainedLowRank_;
+
+  /**
+   * Displays all variables
+   */
+  virtual void display() {
+    std::cerr << std::endl;
+    std::cerr << "time: " << time_ << "\n";
+    std::cerr << "deltaQm:\n" << deltaQm_ << "\n";
+    std::cerr << "deltaRm:\n" << deltaRm_ << "\n";
+    std::cerr << "deltaPm:\n" << deltaPm_ << "\n";
+
+    std::cerr << "DmDagger:\n" << DmDagger_ << "\n";
+
+    std::cerr << "HmInverseConstrained:\n" << HmInverseConstrained_ << "\n";
+    std::cerr << "HmInverseConstrainedLowRank:\n" << HmInverseConstrainedLowRank_ << "\n";
+    std::cerr << std::endl;
   }
 };
 

@@ -169,7 +169,6 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateNominalRolloutLagrangeMultiplier(const
     size_t N = timeTrajectoriesStock[i].size();
     lagrangeTrajectoriesStock[i].resize(N);
     for (size_t k = 0; k < N; k++) {
-      const auto& nc1 = dataCollectorPtr_->modelDataTrajectoriesStock_[i][k].numStateInputEqConstr_;
       const auto& Bm = dataCollectorPtr_->modelDataTrajectoriesStock_[i][k].dynamicsInputDerivative_;
       const auto& Rv = dataCollectorPtr_->modelDataTrajectoriesStock_[i][k].costInputDerivative_;
       const auto& Rm = dataCollectorPtr_->modelDataTrajectoriesStock_[i][k].costInputSecondDerivative_;
@@ -177,7 +176,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateNominalRolloutLagrangeMultiplier(const
       const auto& DmDager = dataCollectorPtr_->DmDagerTrajectoriesStock_[i][k];
       const auto& costate = nominalCostateTrajectoriesStock_[i][k];
 
-      lagrangeTrajectoriesStock[i][k] = DmDager.leftCols(nc1).transpose() * (Rm * EvProjected - Rv - Bm.transpose() * costate);
+      lagrangeTrajectoriesStock[i][k] = DmDager.transpose() * (Rm * EvProjected - Rv - Bm.transpose() * costate);
     }  // end of k loop
   }    // end of i loop
 }

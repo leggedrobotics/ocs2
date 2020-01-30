@@ -43,6 +43,14 @@ ILQR<STATE_DIM, INPUT_DIM>::ILQR(const rollout_base_t* rolloutPtr, const derivat
     : BASE(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings.ddpSettings_,
            heuristicsFunctionPtr, "ILQR", logicRulesPtr),
       settings_(settings) {
+  // Riccati Solver
+  riccatiEquationsPtrStock_.clear();
+  riccatiEquationsPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
+
+  for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
+    riccatiEquationsPtrStock_.emplace_back(new riccati_equations_t);
+  }  // end of i loop
+
   Eigen::initParallel();
 }
 
@@ -50,86 +58,95 @@ ILQR<STATE_DIM, INPUT_DIM>::ILQR(const rollout_base_t* rolloutPtr, const derivat
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
-  for (size_t i = 0; i < BASE::numPartitions_; i++) {
-    size_t N = BASE::nominalTimeTrajectoriesStock_[i].size();
-    // resizing the new variables containers
-    discreteModelDataTrajectoriesStock_[i].resize(N);
+void ILQR<STATE_DIM, INPUT_DIM>::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
+                                                           const state_vector_array_t& stateTrajectory,
+                                                           const input_vector_array_t& inputTrajectory,
+                                                           ModelDataBase::array_t& modelDataTrajectory) {
+  BASE::nextTimeIndex_ = 0;
+  BASE::nextTaskId_ = 0;
+  std::function<void(void)> task = [&] {
+    size_t timeIndex;
+    size_t taskId = BASE::nextTaskId_++;  // assign task ID (atomic)
 
-    RmInverseDtimeTrajectoryStock_[i].resize(N);
-  }  // end of i loop
+    ModelDataBase continuousTimeModelData;
 
-  // base method should be called after the resizes
-  BASE::approximateOptimalControlProblem();
+    // get next time index is atomic
+    while ((timeIndex = BASE::nextTimeIndex_++) < timeTrajectory.size()) {
+      // execute continuous time LQ approximation for the given partition and time index
+      continuousTimeModelData = modelDataTrajectory[timeIndex];
+      BASE::linearQuadraticApproximatorPtrStock_[taskId]->approximateUnconstrainedLQProblem(
+          timeTrajectory[timeIndex], stateTrajectory[timeIndex], inputTrajectory[timeIndex], continuousTimeModelData);
+
+      // discretize LQ problem
+      scalar_t timeStep = 0.0;
+      if (timeIndex + 1 < timeTrajectory.size()) {
+        timeStep = timeTrajectory[timeIndex + 1] - timeTrajectory[timeIndex];
+      }
+
+      if (!numerics::almost_eq(timeStep, 0.0)) {
+        discreteLQWorker(taskId, timeStep, continuousTimeModelData, modelDataTrajectory[timeIndex]);
+      } else {
+        modelDataTrajectory[timeIndex] = continuousTimeModelData;
+      }
+    }
+  };
+
+  BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::approximateLQWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) {
-  // unconstrained LQ problem
-  BASE::approximateUnconstrainedLQWorker(workerIndex, partitionIndex, timeIndex);
-
-  // discretize LQ problem
-  discreteLQWorker(workerIndex, partitionIndex, timeIndex);
-
-  // augment the cost function
-  BASE::augmentCostWorker(workerIndex, discreteModelDataTrajectoriesStock_[partitionIndex][timeIndex]);
-
-  // Compute R inverse after inequalities are added to the cost
-  // Compute it through the Cholesky decomposition as we can reuse the factorization later on
-  dynamic_matrix_t RinvChol;
-  const auto& Rm = discreteModelDataTrajectoriesStock_[partitionIndex][timeIndex].costInputSecondDerivative_;
-  auto& RmCholeskyUpper = BASE::RmCholeskyUpperTrajectoryStock_[partitionIndex][timeIndex];
-  LinearAlgebra::computeLinvTLinv(Rm, RmCholeskyUpper, RinvChol);
-  BASE::RmInverseTrajectoryStock_[partitionIndex][timeIndex].noalias() = RinvChol * RinvChol.transpose();
-
-  // project LQ coefficients to constrained ones
-  // BASE::projectLQWorker(workerIndex, partitionIndex, timeIndex);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::discreteLQWorker(size_t workerIndex, size_t i, size_t k) {
-  // time step
-  scalar_t dt = 0.0;
-  if (k + 1 < BASE::nominalTimeTrajectoriesStock_[i].size()) {
-    dt = BASE::nominalTimeTrajectoriesStock_[i][k + 1] - BASE::nominalTimeTrajectoriesStock_[i][k];
-  }
-
+void ILQR<STATE_DIM, INPUT_DIM>::discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelDataBase& continuousTimeModelData,
+                                                  ModelDataBase& modelData) {
   /*
    * linearize system dynamics
    */
-  discreteModelDataTrajectoriesStock_[i][k].dynamicsStateDerivative_ =
-      BASE::modelDataTrajectoriesStock_[i][k].dynamicsStateDerivative_ * dt + dynamic_matrix_t::Identity(STATE_DIM, STATE_DIM);
-  discreteModelDataTrajectoriesStock_[i][k].dynamicsInputDerivative_ =
-      BASE::modelDataTrajectoriesStock_[i][k].dynamicsInputDerivative_ * dt;
+  modelData.dynamicsStateDerivative_ =
+      dynamic_matrix_t::Identity(STATE_DIM, STATE_DIM) + continuousTimeModelData.dynamicsStateDerivative_ * timeStep;
+  modelData.dynamicsInputDerivative_ = continuousTimeModelData.dynamicsInputDerivative_ * timeStep;
 
   /*
    * quadratic approximation to the cost function
    */
-  discreteModelDataTrajectoriesStock_[i][k].cost_ = BASE::modelDataTrajectoriesStock_[i][k].cost_ * dt;
-  discreteModelDataTrajectoriesStock_[i][k].costStateDerivative_ = BASE::modelDataTrajectoriesStock_[i][k].costStateDerivative_ * dt;
-  discreteModelDataTrajectoriesStock_[i][k].costStateSecondDerivative_ =
-      BASE::modelDataTrajectoriesStock_[i][k].costStateSecondDerivative_ * dt;
-  discreteModelDataTrajectoriesStock_[i][k].costInputDerivative_ = BASE::modelDataTrajectoriesStock_[i][k].costInputDerivative_ * dt;
-  discreteModelDataTrajectoriesStock_[i][k].costInputSecondDerivative_ =
-      BASE::modelDataTrajectoriesStock_[i][k].costInputSecondDerivative_ * dt;
-  discreteModelDataTrajectoriesStock_[i][k].costInputStateDerivative_ =
-      BASE::modelDataTrajectoriesStock_[i][k].costInputStateDerivative_ * dt;
-  RmInverseDtimeTrajectoryStock_[i][k] =
-      discreteModelDataTrajectoriesStock_[i][k].costInputSecondDerivative_.ldlt().solve(dynamic_matrix_t::Identity(INPUT_DIM, INPUT_DIM));
-}
+  modelData.cost_ = continuousTimeModelData.cost_ * timeStep;
+  modelData.costStateDerivative_ = continuousTimeModelData.costStateDerivative_ * timeStep;
+  modelData.costStateSecondDerivative_ = continuousTimeModelData.costStateSecondDerivative_ * timeStep;
+  modelData.costInputDerivative_ = continuousTimeModelData.costInputDerivative_ * timeStep;
+  modelData.costInputSecondDerivative_ = continuousTimeModelData.costInputSecondDerivative_ * timeStep;
+  modelData.costInputStateDerivative_ = continuousTimeModelData.costInputStateDerivative_ * timeStep;
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const {
-  throw std::runtime_error("Not implemented");
+  /*
+   * linearize constraints
+   */
+  // state equality constraints
+  modelData.numStateEqConstr_ = continuousTimeModelData.numStateEqConstr_;
+  modelData.stateEqConstr_ = continuousTimeModelData.stateEqConstr_;
+  modelData.stateEqConstrStateDerivative_ = continuousTimeModelData.stateEqConstrStateDerivative_;
+
+  // state-input equality constraints
+  modelData.numStateInputEqConstr_ = continuousTimeModelData.numStateInputEqConstr_;
+  modelData.stateInputEqConstr_ = continuousTimeModelData.stateInputEqConstr_;
+  modelData.stateInputEqConstrStateDerivative_ = continuousTimeModelData.stateInputEqConstrStateDerivative_;
+  modelData.stateInputEqConstrInputDerivative_ = continuousTimeModelData.stateInputEqConstrInputDerivative_;
+
+  // inequality constraints
+  modelData.numIneqConstr_ = continuousTimeModelData.numIneqConstr_;
+  modelData.ineqConstr_.resize(modelData.numIneqConstr_);
+  modelData.ineqConstrStateDerivative_.resize(modelData.numIneqConstr_);
+  modelData.ineqConstrInputDerivative_.resize(modelData.numIneqConstr_);
+  modelData.ineqConstrStateSecondDerivative_.resize(modelData.numIneqConstr_);
+  modelData.ineqConstrInputSecondDerivative_.resize(modelData.numIneqConstr_);
+  modelData.ineqConstrInputStateDerivative_.resize(modelData.numIneqConstr_);
+  for (size_t k = 0; k < modelData.numIneqConstr_; k++) {
+    modelData.ineqConstr_[k] = continuousTimeModelData.ineqConstr_[k];
+    modelData.ineqConstrStateDerivative_[k] = continuousTimeModelData.ineqConstrStateDerivative_[k];
+    modelData.ineqConstrInputDerivative_[k] = continuousTimeModelData.ineqConstrInputDerivative_[k];
+    modelData.ineqConstrStateSecondDerivative_[k] = continuousTimeModelData.ineqConstrStateSecondDerivative_[k];
+    modelData.ineqConstrInputSecondDerivative_[k] = continuousTimeModelData.ineqConstrInputSecondDerivative_[k];
+    modelData.ineqConstrInputStateDerivative_[k] = continuousTimeModelData.ineqConstrInputStateDerivative_[k];
+  }
 }
 
 /******************************************************************************************************/
@@ -149,47 +166,29 @@ void ILQR<STATE_DIM, INPUT_DIM>::calculateController() {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::computeRiccatiModificationTermsWorker(size_t workerIndex, size_t i, size_t k) {
-  switch (BASE::ddpSettings_.strategy_) {
-    case DDP_Strategy::LINE_SEARCH: {
-      auto& Qm = discreteModelDataTrajectoriesStock_[i][k].costStateSecondDerivative_;
-      auto& Pm = discreteModelDataTrajectoriesStock_[i][k].costInputStateDerivative_;
-      auto& Rinv = RmInverseDtimeTrajectoryStock_[i][k];
-      state_matrix_t Q_minus_PTRinvP = Qm - (Pm.transpose() * Rinv) * Pm;
-      BASE::riccatiModificationStock_[i].deltaQmTrajectory_[k] = Q_minus_PTRinvP;
-      BASE::shiftHessian(BASE::riccatiModificationStock_[i].deltaQmTrajectory_[k]);
-      BASE::riccatiModificationStock_[i].deltaQmTrajectory_[k] -= Q_minus_PTRinvP;
-      BASE::riccatiModificationStock_[i].deltaRmTrajectory_[k].setZero(INPUT_DIM, INPUT_DIM);
-      BASE::riccatiModificationStock_[i].deltaPmTrajectory_[k].setZero(INPUT_DIM, STATE_DIM);
-      break;
-    }
-    case DDP_Strategy::LEVENBERG_MARQUARDT: {
-      const auto& Am = discreteModelDataTrajectoriesStock_[i][k].dynamicsStateDerivative_;
-      const auto& Bm = discreteModelDataTrajectoriesStock_[i][k].dynamicsInputDerivative_;
-      BASE::riccatiModificationStock_[i].deltaQmTrajectory_[k].setZero(STATE_DIM, STATE_DIM);
-      BASE::riccatiModificationStock_[i].deltaRmTrajectory_[k] = BASE::levenbergMarquardtImpl_.riccatiMultiple * Bm.transpose() * Bm;
-      BASE::riccatiModificationStock_[i].deltaPmTrajectory_[k] = BASE::levenbergMarquardtImpl_.riccatiMultiple * Bm.transpose() * Am;
-      break;
-    }
-  }  // end of switch-case
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void ILQR<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) {
   const auto i = partitionIndex;
   const auto k = timeIndex;
 
-  const state_vector_t& nominalState = BASE::nominalStateTrajectoriesStock_[i][k];
-  const input_vector_t& nominalInput = BASE::nominalInputTrajectoriesStock_[i][k];
+  const auto& nominalState = BASE::nominalStateTrajectoriesStock_[i][k];
+  const auto& nominalInput = BASE::nominalInputTrajectoriesStock_[i][k];
 
-  BASE::nominalControllersStock_[i].gainArray_[k] = LmTrajectoryStock_[i][k];
+  const auto& EvProjected = BASE::projectedModelDataTrajectoriesStock_[i][k].stateInputEqConstr_;
+  const auto& CmProjected = BASE::projectedModelDataTrajectoriesStock_[i][k].stateInputEqConstrStateDerivative_;
+
+  const auto& HmInverseConstrained = BASE::riccatiModificationTrajectoriesStock_[i][k].HmInverseConstrained_;
+
+  // feedback gains
+  BASE::nominalControllersStock_[i].gainArray_[k] = -CmProjected;
+  BASE::nominalControllersStock_[i].gainArray_[k].noalias() -=
+      HmInverseConstrained * (GmTrajectoriesStock_[i][k] + BASE::riccatiModificationTrajectoriesStock_[i][k].deltaPm_);
+
+  // bias input
+  BASE::nominalControllersStock_[i].deltaBiasArray_[k] = -EvProjected;
+  BASE::nominalControllersStock_[i].deltaBiasArray_[k].noalias() -= HmInverseConstrained * GvTrajectoriesStock_[i][k];
   BASE::nominalControllersStock_[i].biasArray_[k] = nominalInput - BASE::nominalControllersStock_[i].gainArray_[k] * nominalState;
-  BASE::nominalControllersStock_[i].deltaBiasArray_[k] = LvTrajectoryStock_[i][k];
 
   // checking the numerical stability of the controller parameters
   if (BASE::ddpSettings_.checkNumericalStability_) {
@@ -208,98 +207,28 @@ void ILQR<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, s
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/******************************************************************************************************/
+/***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::riccatiSolverTask() {
-  size_t taskId = BASE::nextTaskId_++;  // assign task ID (atomic)
-
-  for (int i = BASE::endingIndicesRiccatiWorker_[taskId]; i >= BASE::startingIndicesRiccatiWorker_[taskId]; i--) {
-    // for inactive subsystems
-    if (i < BASE::initActivePartition_ || i > BASE::finalActivePartition_) {
-      BASE::SsTimeTrajectoryStock_[i].clear();
-      BASE::SmTrajectoryStock_[i].clear();
-      BASE::SvTrajectoryStock_[i].clear();
-      BASE::SveTrajectoryStock_[i].clear();
-      BASE::sTrajectoryStock_[i].clear();
-
-      {  // lock data
-        std::lock_guard<std::mutex> lock(riccatiSolverDataMutex_);
-
-        BASE::SmFinalStock_[i].setZero();
-        BASE::SvFinalStock_[i].setZero();
-        BASE::SveFinalStock_[i].setZero();
-        BASE::sFinalStock_[i] = 0.0;
-        BASE::xFinalStock_[i].setZero();
-      }
-
-    } else {
-      state_matrix_t SmFinal;
-      state_vector_t SvFinal;
-      state_vector_t SveFinal;
-      scalar_t sFinal;
-      state_vector_t xFinal;
-
-      {  // lock data
-        std::lock_guard<std::mutex> lock(riccatiSolverDataMutex_);
-
-        SmFinal = BASE::SmFinalStock_[i];
-        SvFinal = BASE::SvFinalStock_[i];
-        SveFinal = BASE::SveFinalStock_[i];
-        sFinal = BASE::sFinalStock_[i];
-        xFinal = BASE::xFinalStock_[i];
-      }
-
-      // modify the end subsystem final values based on the cached values for asynchronous run
-      if (i == BASE::endingIndicesRiccatiWorker_[taskId] && i < BASE::finalActivePartition_) {
-        const state_vector_t deltaState = BASE::nominalStateTrajectoriesStock_[i + 1].front() - xFinal;
-        sFinal += deltaState.dot(0.5 * SmFinal * deltaState + SvFinal);
-        SvFinal += SmFinal * deltaState;
-      }
-
-      // solve the backward pass
-      riccatiEquationsWorker(taskId, i, SmFinal, SvFinal, sFinal);
-
-      // set the final value for next Riccati equation
-      if (i > BASE::initActivePartition_) {
-        // lock data
-        std::lock_guard<std::mutex> lock(riccatiSolverDataMutex_);
-
-        BASE::SmFinalStock_[i - 1] = BASE::SmTrajectoryStock_[i].front();
-        BASE::SvFinalStock_[i - 1] = BASE::SvTrajectoryStock_[i].front();
-        // BASE::SveFinalStock_[i - 1] = BASE::SveTrajectoryStock_[i].front();
-        BASE::sFinalStock_[i - 1] = BASE::sTrajectoryStock_[i].front();
-        BASE::xFinalStock_[i - 1] = BASE::nominalStateTrajectoriesStock_[i].front();
-      }
-    }
-  }
+typename ILQR<STATE_DIM, INPUT_DIM>::scalar_t ILQR<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(const state_matrix_t& SmFinal,
+                                                                                                          const state_vector_t& SvFinal,
+                                                                                                          const scalar_t& sFinal) {
+  return BASE::solveSequentialRiccatiEquationsImpl(SmFinal, SvFinal, sFinal);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal,
-                                                        const state_vector_t& SvFinal, const scalar_t& sFinal) {
-  const size_t N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
-  const size_t NE = BASE::nominalPostEventIndicesStock_[partitionIndex].size();
+void ILQR<STATE_DIM, INPUT_DIM>::constrainedRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex,
+                                                                   const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal,
+                                                                   const scalar_t& sFinal) {
+  const int N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
+  const int NE = BASE::nominalPostEventIndicesStock_[partitionIndex].size();
 
-  const scalar_t scalingStart = BASE::partitioningTimes_[partitionIndex];
-  const scalar_t scalingFinal = BASE::partitioningTimes_[partitionIndex + 1];
-  const scalar_t scalingFactor = scalingStart - scalingFinal;  // this is negative
-
-  // normalized time
-  BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex].resize(N);
-  for (size_t k = 0; k < N; k++) {
-    BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex][N - 1 - k] =
-        (BASE::nominalTimeTrajectoriesStock_[partitionIndex][k] - scalingFinal) / scalingFactor;
-  }
-
-  // normalized event past the index
-  BASE::SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex].resize(NE);
-  for (size_t k = 0; k < NE; k++) {
-    BASE::SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex][NE - 1 - k] =
-        N - BASE::nominalPostEventIndicesStock_[partitionIndex][k];
-  }
+  // normalized time and post event indices
+  BASE::computeNormalizedTime(BASE::nominalTimeTrajectoriesStock_[partitionIndex], BASE::nominalPostEventIndicesStock_[partitionIndex],
+                              BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex],
+                              BASE::SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex]);
 
   // output containers resizing
   BASE::SsTimeTrajectoryStock_[partitionIndex] = BASE::nominalTimeTrajectoriesStock_[partitionIndex];
@@ -307,8 +236,11 @@ void ILQR<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size
   BASE::SvTrajectoryStock_[partitionIndex].resize(N);
   BASE::SmTrajectoryStock_[partitionIndex].resize(N);
 
-  LvTrajectoryStock_[partitionIndex].resize(N);
-  LmTrajectoryStock_[partitionIndex].resize(N);
+  GvTrajectoriesStock_[partitionIndex].resize(N);
+  GmTrajectoriesStock_[partitionIndex].resize(N);
+
+  BASE::riccatiModificationTrajectoriesStock_[partitionIndex].resize(N);
+  BASE::projectedModelDataTrajectoriesStock_[partitionIndex].resize(N);
 
   // terminate if the partition is not active
   if (N == 0) {
@@ -319,9 +251,8 @@ void ILQR<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size
   size_array_t SsSwitchingTimesIndices;
   SsSwitchingTimesIndices.reserve(NE + 2);
   SsSwitchingTimesIndices.push_back(0);
-  for (size_t k = 0; k < NE; k++) {
-    const auto index = BASE::nominalPostEventIndicesStock_[partitionIndex][k];
-    SsSwitchingTimesIndices.push_back(index);
+  for (int k = 0; k < NE; k++) {
+    SsSwitchingTimesIndices.push_back(BASE::nominalPostEventIndicesStock_[partitionIndex][k]);
   }
   SsSwitchingTimesIndices.push_back(N);
 
@@ -338,64 +269,57 @@ void ILQR<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size
     int endTimeItr = SsSwitchingTimesIndices[i + 1];  // similar to std::end()
 
     /*
-     * solution at final time of an interval (uses the continuous-time formulation)
+     * solve Riccati equations at final time
      */
-    const size_t finalIndex = endTimeItr - 1;
-    // note that these are the continuous time coefficients
-    const auto& Bmc = BASE::modelDataTrajectoriesStock_[partitionIndex][finalIndex].dynamicsInputDerivative_;
-    const auto& Rvc = BASE::modelDataTrajectoriesStock_[partitionIndex][finalIndex].costInputDerivative_;
-    const auto& Rmc = BASE::modelDataTrajectoriesStock_[partitionIndex][finalIndex].costInputSecondDerivative_;
-    const auto& Pmc = BASE::modelDataTrajectoriesStock_[partitionIndex][finalIndex].costInputStateDerivative_;
-    const input_matrix_t RmcInverse = Rmc.ldlt().solve(input_matrix_t::Identity());
+    BASE::sTrajectoryStock_[partitionIndex][endTimeItr - 1] = sFinal;
+    BASE::SvTrajectoryStock_[partitionIndex][endTimeItr - 1] = SvFinal;
+    BASE::SmTrajectoryStock_[partitionIndex][endTimeItr - 1] = SmFinal;
 
-    BASE::sTrajectoryStock_[partitionIndex][finalIndex] = sFinalTemp;
-    BASE::SvTrajectoryStock_[partitionIndex][finalIndex] = SvFinalTemp;
-    BASE::SmTrajectoryStock_[partitionIndex][finalIndex] = SmFinalTemp;
+    // continuous-time riccatiModification
+    dynamic_matrix_t Hm = BASE::modelDataTrajectoriesStock_[partitionIndex][endTimeItr - 1].costInputSecondDerivative_;
+    BASE::computeRiccatiModification(BASE::ddpSettings_.strategy_, Hm, BASE::modelDataTrajectoriesStock_[partitionIndex][endTimeItr - 1],
+                                     BASE::riccatiModificationTrajectoriesStock_[partitionIndex][endTimeItr - 1]);
 
-    LvTrajectoryStock_[partitionIndex][finalIndex].noalias() = -RmcInverse * (Rvc + Bmc.transpose() * SvFinalTemp);
-    LmTrajectoryStock_[partitionIndex][finalIndex].noalias() = -RmcInverse * (Pmc + Bmc.transpose() * SmFinalTemp);
+    // project LQ coefficients to constrained ones
+    BASE::projectLQ(BASE::modelDataTrajectoriesStock_[partitionIndex][endTimeItr - 1],
+                    BASE::riccatiModificationTrajectoriesStock_[partitionIndex][endTimeItr - 1].DmDagger_,
+                    BASE::projectedModelDataTrajectoriesStock_[partitionIndex][endTimeItr - 1]);
 
-    // solve Riccati equations if interval length is not zero
-    if (beginTimeItr < endTimeItr - 1) {
-      for (int k = endTimeItr - 2; k >= beginTimeItr; k--) {
-        const auto& Am = discreteModelDataTrajectoriesStock_[partitionIndex][k].dynamicsStateDerivative_;
-        const auto& Bm = discreteModelDataTrajectoriesStock_[partitionIndex][k].dynamicsInputDerivative_;
-        const auto& q = discreteModelDataTrajectoriesStock_[partitionIndex][k].cost_;
-        const auto& Qv = discreteModelDataTrajectoriesStock_[partitionIndex][k].costStateDerivative_;
-        const auto& Qm = discreteModelDataTrajectoriesStock_[partitionIndex][k].costStateSecondDerivative_;
-        const auto& Rv = discreteModelDataTrajectoriesStock_[partitionIndex][k].costInputDerivative_;
-        const auto& Rm = discreteModelDataTrajectoriesStock_[partitionIndex][k].costInputSecondDerivative_;
-        const auto& Pm = discreteModelDataTrajectoriesStock_[partitionIndex][k].costInputStateDerivative_;
+    const ModelDataBase& md = BASE::projectedModelDataTrajectoriesStock_[partitionIndex][endTimeItr - 1];
+    GvTrajectoriesStock_[partitionIndex][endTimeItr - 1] =
+        md.costInputDerivative_ + md.dynamicsInputDerivative_.transpose() * BASE::SvTrajectoryStock_[partitionIndex][endTimeItr - 1];
+    GmTrajectoriesStock_[partitionIndex][endTimeItr - 1] =
+        md.costInputStateDerivative_ + BASE::riccatiModificationTrajectoriesStock_[partitionIndex][endTimeItr - 1].deltaPm_ +
+        md.dynamicsInputDerivative_.transpose() * BASE::SmTrajectoryStock_[partitionIndex][endTimeItr - 1];
 
-        const auto& deltaQm = BASE::riccatiModificationStock_[partitionIndex].deltaQmTrajectory_[k];
-        const auto& deltaRm = BASE::riccatiModificationStock_[partitionIndex].deltaRmTrajectory_[k];
-        const auto& deltaPm = BASE::riccatiModificationStock_[partitionIndex].deltaPmTrajectory_[k];
+    /*
+     * solve Riccati equations and compute projected model data and RiccatiModification for the intermediate times
+     */
+    dynamic_matrix_t Bm_T_Sm(INPUT_DIM, STATE_DIM);
+    for (int k = endTimeItr - 2; k >= beginTimeItr; k--) {
+      const auto& modelData = BASE::modelDataTrajectoriesStock_[partitionIndex][k];
 
-        input_state_matrix_t BmT_Sm = Bm.transpose() * BASE::SmTrajectoryStock_[partitionIndex][k + 1];
-        input_vector_t Gv = Rv + Bm.transpose() * BASE::SvTrajectoryStock_[partitionIndex][k + 1];
-        input_state_matrix_t Gm = Pm + BmT_Sm * Am;
-        input_matrix_t Hm = Rm + BmT_Sm * Bm;
+      // Hm
+      Hm = modelData.costInputSecondDerivative_;
+      Bm_T_Sm.noalias() = modelData.dynamicsInputDerivative_.transpose() * BASE::SmTrajectoryStock_[partitionIndex][k + 1];
+      Hm.noalias() += Bm_T_Sm * modelData.dynamicsInputDerivative_;
 
-        state_matrix_t QmCorrected = Qm + deltaQm;
-        input_matrix_t HmCorrected = Hm + deltaRm;
-        input_state_matrix_t GmCorrected = Gm + deltaPm;
+      // riccatiModification
+      BASE::computeRiccatiModification(BASE::ddpSettings_.strategy_, Hm, modelData,
+                                       BASE::riccatiModificationTrajectoriesStock_[partitionIndex][k]);
 
-        auto& Lv = LvTrajectoryStock_[partitionIndex][k];
-        auto& Lm = LmTrajectoryStock_[partitionIndex][k];
-        input_matrix_t HmInverse = HmCorrected.ldlt().solve(input_matrix_t::Identity());
-        Lv.noalias() = -HmInverse * Gv;
-        Lm.noalias() = -HmInverse * GmCorrected;
-        input_vector_t Gv_plus_half_HmLv = Gv + 0.5 * Hm * Lv;
-        input_state_matrix_t Gm_plus_half_HmLm = Gm + 0.5 * Hm * Lm;
+      // project LQ coefficients to constrained ones
+      BASE::projectLQ(modelData, BASE::riccatiModificationTrajectoriesStock_[partitionIndex][k].DmDagger_,
+                      BASE::projectedModelDataTrajectoriesStock_[partitionIndex][k]);
 
-        BASE::sTrajectoryStock_[partitionIndex][k] = q + BASE::sTrajectoryStock_[partitionIndex][k + 1] + Lv.dot(Gv_plus_half_HmLv);
-        BASE::SvTrajectoryStock_[partitionIndex][k].noalias() = Qv + Am.transpose() * BASE::SvTrajectoryStock_[partitionIndex][k + 1] +
-                                                                Lm.transpose() * Gv_plus_half_HmLv + Gm_plus_half_HmLm.transpose() * Lv;
-        BASE::SmTrajectoryStock_[partitionIndex][k].noalias() = QmCorrected +
-                                                                Am.transpose() * BASE::SmTrajectoryStock_[partitionIndex][k + 1] * Am +
-                                                                Lm.transpose() * Gm_plus_half_HmLm + Gm_plus_half_HmLm.transpose() * Lm;
-      }
-    }
+      // compute one step of Riccati difference equations
+      riccatiEquationsPtrStock_[workerIndex]->computeMap(
+          BASE::projectedModelDataTrajectoriesStock_[partitionIndex][k], BASE::riccatiModificationTrajectoriesStock_[partitionIndex][k],
+          BASE::SmTrajectoryStock_[partitionIndex][k + 1], BASE::SvTrajectoryStock_[partitionIndex][k + 1],
+          BASE::sTrajectoryStock_[partitionIndex][k + 1], GmTrajectoriesStock_[partitionIndex][k], GvTrajectoriesStock_[partitionIndex][k],
+          BASE::SmTrajectoryStock_[partitionIndex][k], BASE::SvTrajectoryStock_[partitionIndex][k],
+          BASE::sTrajectoryStock_[partitionIndex][k]);
+    }  // end of k loop
 
     if (i > 0) {
       const auto& qFinal = BASE::modelDataEventTimesStock_[partitionIndex][i - 1].cost_;
@@ -405,43 +329,7 @@ void ILQR<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size
       SvFinalTemp = BASE::SvTrajectoryStock_[partitionIndex][beginTimeItr] + QvFinal;
       SmFinalTemp = BASE::SmTrajectoryStock_[partitionIndex][beginTimeItr] + QmFinal;
     }
-
   }  // end of i loop
-
-  // testing the numerical stability of the Riccati equations
-  if (BASE::ddpSettings_.checkNumericalStability_) {
-    for (int k = N - 1; k >= 0; k--) {
-      try {
-        if (!BASE::SmTrajectoryStock_[partitionIndex][k].allFinite()) {
-          throw std::runtime_error("Sm is unstable.");
-        }
-        if (BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
-          throw std::runtime_error("Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
-                                   std::to_string(BASE::SmTrajectoryStock_[partitionIndex][k].eigenvalues().real().minCoeff()) + ".");
-        }
-        if (!BASE::SvTrajectoryStock_[partitionIndex][k].allFinite()) {
-          throw std::runtime_error("Sv is unstable.");
-        }
-        if (BASE::sTrajectoryStock_[partitionIndex][k] != BASE::sTrajectoryStock_[partitionIndex][k]) {
-          throw std::runtime_error("s is unstable");
-        }
-      } catch (const std::exception& error) {
-        std::cerr << "what(): " << error.what() << " at time " << BASE::SsTimeTrajectoryStock_[partitionIndex][k] << " [sec]." << std::endl;
-        for (int kp = k; kp < k + 10; kp++) {
-          if (kp >= N) {
-            continue;
-          }
-          std::cerr << "Sm[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\n"
-                    << BASE::SmTrajectoryStock_[partitionIndex][kp].norm() << std::endl;
-          std::cerr << "Sv[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t"
-                    << BASE::SvTrajectoryStock_[partitionIndex][kp].transpose().norm() << std::endl;
-          std::cerr << "s[" << BASE::SsTimeTrajectoryStock_[partitionIndex][kp] << "]:\t" << BASE::sTrajectoryStock_[partitionIndex][kp]
-                    << std::endl;
-        }
-        throw;
-      }
-    }
-  }
 }
 
 /******************************************************************************************************/
@@ -459,12 +347,8 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void ILQR<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   BASE::setupOptimizer(numPartitions);
 
-  LvTrajectoryStock_.resize(numPartitions);
-  LmTrajectoryStock_.resize(numPartitions);
-
-  discreteModelDataTrajectoriesStock_.resize(numPartitions);
-
-  RmInverseDtimeTrajectoryStock_.resize(numPartitions);
+  GvTrajectoriesStock_.resize(numPartitions);
+  GmTrajectoriesStock_.resize(numPartitions);
 }
 
 }  // namespace ocs2

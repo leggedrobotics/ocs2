@@ -36,8 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/SystemEventHandler.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 
-#include <ocs2_ddp/DDP_BASE.h>
-
+#include "ocs2_ddp/DDP_BASE.h"
 #include "ocs2_ddp/SLQ_Settings.h"
 #include "ocs2_ddp/riccati_equations/SequentialErrorEquation.h"
 #include "ocs2_ddp/riccati_equations/SequentialRiccatiEquations.h"
@@ -75,14 +74,14 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::DIMENSIONS;
   using typename BASE::dynamic_input_matrix_t;
   using typename BASE::dynamic_matrix_array2_t;
+  using typename BASE::dynamic_matrix_array_t;
   using typename BASE::dynamic_matrix_t;
+  using typename BASE::dynamic_vector_array2_t;
+  using typename BASE::dynamic_vector_array_t;
   using typename BASE::dynamic_vector_t;
-  using typename BASE::eigen_scalar_array2_t;
-  using typename BASE::eigen_scalar_array_t;
-  using typename BASE::eigen_scalar_t;
-  using typename BASE::input_constraint1_matrix_array2_t;
-  using typename BASE::input_constraint1_matrix_array_t;
-  using typename BASE::input_constraint1_matrix_t;
+  using typename BASE::input_dynamic_matrix_array2_t;
+  using typename BASE::input_dynamic_matrix_array_t;
+  using typename BASE::input_dynamic_matrix_t;
   using typename BASE::input_matrix_array2_t;
   using typename BASE::input_matrix_array_t;
   using typename BASE::input_matrix_t;
@@ -161,10 +160,6 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    */
   ~SLQ() override = default;
 
-  void approximateOptimalControlProblem() override;
-
-  void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const override;
-
   /**
    * Gets a reference to the Options structure.
    *
@@ -173,28 +168,16 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   SLQ_Settings& settings();
 
  protected:
-  void setupOptimizer(size_t numPartitions) override;
-
-  void approximateLQWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
-
-  void computeRiccatiModificationTermsWorker(size_t workerIndex, size_t i, size_t k) override;
+  void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
+                                 const state_vector_array_t& stateTrajectory, const input_vector_array_t& inputTrajectory,
+                                 ModelDataBase::array_t& modelDataTrajectory) override;
 
   void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
 
-  void riccatiSolverTask() override;
+  scalar_t solveSequentialRiccatiEquations(const state_matrix_t& SmFinal, const state_vector_t& SvFinal, const scalar_t& sFinal) override;
 
-  /**
-   * Solves a set of Riccati equations and type_1 constraints error correction compensation for the partition in the given index.
-   *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
-   * @param [in] SmFinal: The final Sm for Riccati equation.
-   * @param [in] SvFinal: The final Sv for Riccati equation.
-   * @param [in] sFinal: The final s for Riccati equation.
-   * @param [in] SveFinal: The final Sve for the current Riccati equation.
-   */
-  void constrainedRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal,
-                                         const state_vector_t& SvFinal, const scalar_t& sFinal, const state_vector_t& SveFinal);
+  void constrainedRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const dynamic_matrix_t& SmFinal,
+                                         const dynamic_vector_t& SvFinal, const scalar_t& sFinal) override;
   /**
    * Solves a set of Riccati equations for the partition in the given index.
    *
@@ -204,17 +187,8 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] SvFinal: The final Sv for Riccati equation.
    * @param [in] sFinal: The final s for Riccati equation.
    */
-  void riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
+  void riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal,
                               const scalar_t& sFinal);
-
-  /**
-   * Type_1 constraints error correction compensation which solves a set of error Riccati equations for the partition in the given index.
-   *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
-   * @param [in] SveFinal: The final Sve for the current Riccati equation.
-   */
-  void errorRiccatiEquationWorker(size_t workerIndex, size_t partitionIndex, const state_vector_t& SveFinal);
 
   /**
    * Integrates the riccati equation and generates the value function at the times set in nominal Time Trajectory.
@@ -225,13 +199,13 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param nominalEventsPastTheEndIndices [in] : Indices into nominalTimeTrajectory to point to times right after event times
    * @param allSsFinal [in] : Final value of the value function.
    * @param SsNormalizedTime [out] : Time trajectory of the value function.
-   * @param SsNormalizedEventsPastTheEndIndices [out] : Indices into SsNormalizedTime to point to times right after event times
+   * @param SsNormalizedPostEventIndices [out] : Indices into SsNormalizedTime to point to times right after event times
    * @param allSsTrajectory [out] : Value function in vector format.
    */
   void integrateRiccatiEquationNominalTime(IntegratorBase<riccati_equations_t::S_DIM_>& riccatiIntegrator,
                                            riccati_equations_t& riccatiEquation, const scalar_array_t& nominalTimeTrajectory,
                                            const size_array_t& nominalEventsPastTheEndIndices, s_vector_t allSsFinal,
-                                           scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedEventsPastTheEndIndices,
+                                           scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedPostEventIndices,
                                            s_vector_array_t& allSsTrajectory);
 
   /**
@@ -243,25 +217,19 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param nominalEventsPastTheEndIndices [in] : Indices into nominalTimeTrajectory to point to times right after event times
    * @param allSsFinal [in] : Final value of the value function.
    * @param SsNormalizedTime [out] : Time trajectory of the value function.
-   * @param SsNormalizedEventsPastTheEndIndices [out] : Indices into SsNormalizedTime to point to times right after event times
+   * @param SsNormalizedPostEventIndices [out] : Indices into SsNormalizedTime to point to times right after event times
    * @param allSsTrajectory [out] : Value function in vector format.
    */
   void integrateRiccatiEquationAdaptiveTime(IntegratorBase<riccati_equations_t::S_DIM_>& riccatiIntegrator,
                                             riccati_equations_t& riccatiEquation, const scalar_array_t& nominalTimeTrajectory,
                                             const size_array_t& nominalEventsPastTheEndIndices, s_vector_t allSsFinal,
-                                            scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedEventsPastTheEndIndices,
+                                            scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedPostEventIndices,
                                             s_vector_array_t& allSsTrajectory);
 
   /****************
    *** Variables **
    ****************/
   SLQ_Settings settings_;
-
-  // parallel Riccati solver
-  std::mutex riccatiSolverDataMutex_;
-
-  dynamic_matrix_array2_t RmInvConstrainedCholTrajectoryStock_;
-  input_constraint1_matrix_array2_t DmDagerTrajectoryStock_;
 
   std::vector<std::shared_ptr<riccati_equations_t>> riccatiEquationsPtrStock_;
   std::vector<std::unique_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>> riccatiIntegratorPtrStock_;

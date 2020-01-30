@@ -46,6 +46,7 @@ TEST(exp1_slq_test, exp1_slq_test) {
   using slq_t = SLQ<STATE_DIM, INPUT_DIM>;
 
   SLQ_Settings slqSettings;
+  slqSettings.preComputeRiccatiTerms_ = false;
   slqSettings.useNominalTimeForBackwardPass_ = true;
   slqSettings.ddpSettings_.displayInfo_ = true;
   slqSettings.ddpSettings_.displayShortSummary_ = true;

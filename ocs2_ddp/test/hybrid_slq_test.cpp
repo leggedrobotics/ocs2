@@ -48,7 +48,7 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   slqSettings.ddpSettings_.checkNumericalStability_ = false;
   slqSettings.ddpSettings_.absTolODE_ = 1e-10;
   slqSettings.ddpSettings_.relTolODE_ = 1e-7;
-  slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 1e5;
+  slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
   slqSettings.ddpSettings_.useFeedbackPolicy_ = true;
   slqSettings.ddpSettings_.debugPrintRollout_ = false;
   slqSettings.ddpSettings_.strategy_ = DDP_Strategy::LINE_SEARCH;
@@ -56,7 +56,7 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   Rollout_Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;
   rolloutSettings.relTolODE_ = 1e-7;
-  rolloutSettings.maxNumStepsPerSecond_ = 1e5;
+  rolloutSettings.maxNumStepsPerSecond_ = 10000;
 
   std::vector<double> eventTimes(0);
   std::vector<size_t> subsystemsSequence{1};

@@ -38,7 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/model_data/ModelDataBase.h>
 
-#include "ocs2_ddp/riccati_equations/RiccatiModification.h"
+#include "ocs2_ddp/riccati_equations/RiccatiModificationBase.h"
+#include "ocs2_ddp/riccati_equations/RiccatiModificationInterpolation.h"
 
 namespace ocs2 {
 
@@ -88,8 +89,6 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
   using dynamic_matrix_array_t = typename DIMENSIONS::dynamic_matrix_array_t;
   using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
 
-  using riccati_modification_t = RiccatiModification<STATE_DIM, INPUT_DIM>;
-
   using s_vector_t = Eigen::Matrix<scalar_t, S_DIM_, 1>;
   using s_vector_array_t = std::vector<s_vector_t, Eigen::aligned_allocator<s_vector_t> >;
 
@@ -101,7 +100,7 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
   /**
    * Default destructor.
    */
-  ~SequentialRiccatiEquations() = default;
+  ~SequentialRiccatiEquations() override = default;
 
   /**
    * Transcribe symmetric matrix Sm, vector Sv and scalar s into a single vector.
@@ -111,7 +110,7 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
    * @param [in] s: \f$ s \f$
    * @param [out] allSs: Single vector constructed by concatenating Sm, Sv and s.
    */
-  static void convert2Vector(const state_matrix_t& Sm, const state_vector_t& Sv, const scalar_t& s, s_vector_t& allSs);
+  static void convert2Vector(const dynamic_matrix_t& Sm, const dynamic_vector_t& Sv, const scalar_t& s, s_vector_t& allSs);
 
   /**
    * Transcribes the stacked vector allSs into a symmetric matrix, Sm, a vector, Sv and a single scalar, s.
@@ -127,26 +126,23 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
    * Sets coefficients of the model.
    *
    * @param [in] timeStampPtr: A pointer to the time stamp trajectory.
-   * @param [in] ModelDataBase: A pointer to the model data trajectory.
-   * @param [in] AmPtr: A pointer to the trajectory of \f$ A_m(t) \f$ .
-   * @param [in] QvPtr: A pointer to the trajectory of \f$ Q_v(t) \f$ .
-   * @param [in] QmPtr: A pointer to the trajectory of \f$ Q_m(t) \f$ .
-   * @param [in] RmInversePtr: A pointer to the trajectory of \f$ R_m^{-1}(t) \f$ .
-   * @param [in] RmPtr: A pointer to the trajectory of \f$ R_m(t) \f$ .
+   * @param [in] projectedModelDataPtr: A pointer to the projected model data trajectory.
+   * @param [in] eventsPastTheEndIndecesPtr: A pointer to the post event indices.
+   * @param [in] modelDataEventTimesPtr: A pointer to the model data at event times.
+   * @param [in] riccatiModificationPtr: A pointer to the RiccatiModification trajectory.
    */
-  void setData(const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* modelDataPtr,
-               const ModelDataBase::array_t* projectedModelDataPtr, const dynamic_matrix_array_t* RinvCholPtr,
+  void setData(const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* projectedModelDataPtr,
                const size_array_t* eventsPastTheEndIndecesPtr, const ModelDataBase::array_t* modelDataEventTimesPtr,
-               const riccati_modification_t* riccatiModificationPtr);
+               const RiccatiModificationBase::array_t* riccatiModificationPtr);
 
   /**
    * Riccati jump map at switching moments
    *
    * @param [in] time: Normalized transition time
-   * @param [in] state: transition state
-   * @param [out] mappedState: mapped state after transition
+   * @param [in] allSs: transition state
+   * @param [out] allSsPreEvent: mapped state after transition
    */
-  void computeJumpMap(const scalar_t& z, const s_vector_t& state, s_vector_t& mappedState) override;
+  void computeJumpMap(const scalar_t& z, const s_vector_t& allSs, s_vector_t& allSsPreEvent) override;
 
   /**
    * Computes derivatives.
@@ -162,44 +158,58 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
 
   // array pointers
   const scalar_array_t* timeStampPtr_;
-  const ModelDataBase::array_t* modelDataPtr_;
   const ModelDataBase::array_t* projectedModelDataPtr_;
-  const dynamic_matrix_array_t* RinvCholPtr_;
 
   scalar_array_t eventTimes_;
   const ModelDataBase::array_t* modelDataEventTimesPtr_;
 
-  const riccati_modification_t* riccatiModificationPtr_;
+  const RiccatiModificationBase::array_t* riccatiModificationPtr_;
 
   // Arrays to store precomputation
   dynamic_matrix_array_t Qm_minus_P_Rinv_P_array_;
   dynamic_vector_array_t Qv_minus_P_Rinv_Rv_array_;
   dynamic_matrix_array_t AmT_minus_P_Rinv_B_array_;
-  dynamic_matrix_array_t B_RinvChol_array_;
-  dynamic_vector_array_t RinvCholT_Rv_array_;
+  dynamic_matrix_array_t B_RmInvUUT_array_;
+  dynamic_vector_array_t RmInvUUT_T_Rv_array_;
+  // Arrays to store no-precomputation
+  dynamic_matrix_array_t HmInvUUT_T_deltaPm_array_;
+  dynamic_matrix_array_t HmInvUUT_T_Rm_HmInvUUT_array_;
 
   // members required only in computeFlowMap()
-  state_matrix_t Sm_;
-  state_vector_t Sv_;
   scalar_t s_;
+  state_vector_t Sv_;
+  state_matrix_t Sm_;
 
-  dynamic_matrix_t Qm_;
-  dynamic_vector_t Qv_;
-  scalar_t q_;
+  scalar_t ds_;
+  dynamic_vector_t dSv_;
+  dynamic_matrix_t dSm_;
   dynamic_matrix_t AmT_minus_P_Rinv_Bm_;
-  dynamic_matrix_t B_RinvChol_;
-  dynamic_vector_t RinvCholT_Rv_;
-  dynamic_matrix_t SmT_B_RinvChol_;
-  state_matrix_t AmT_Sm_;
+  dynamic_matrix_t B_RmInvUUT_;
+  dynamic_vector_t RmInvUUT_T_Rv_;
+  dynamic_matrix_t SmT_B_RmInvUUT_;
+  dynamic_matrix_t Am_T_Sm_;
+  dynamic_vector_t Hv_;
   dynamic_matrix_t Am_;
   dynamic_matrix_t Bm_;
-  dynamic_vector_t Rv_;
-  dynamic_matrix_t RinvChol_;
-  dynamic_matrix_t Pm_;
 
-  state_matrix_t deltaQm_;
-  input_matrix_t deltaRm_;
-  input_state_matrix_t deltaPm_;
+  dynamic_matrix_t HmInvUUT_T_deltaPm_;
+  dynamic_matrix_t HmInvUUT_T_Rm_HmInvUUT_;
+
+  dynamic_matrix_t Gm_;
+  dynamic_matrix_t HmInvUUT_T_Gm_;
+  dynamic_matrix_t HmInvUUT_T_GmAug_;
+  dynamic_matrix_t Km_T_Gm_;
+  dynamic_matrix_t HmInvUUT_T_Rm_Km_;
+  dynamic_matrix_t Km_T_Rm_Km;
+
+  dynamic_vector_t Gv_;
+  dynamic_vector_t HmInvUUT_T_Gv_;
+  dynamic_vector_t Km_T_Gv_;
+  dynamic_vector_t HmInvUUT_T_Rm_Lv_;
+  dynamic_vector_t Km_T_Rm_Lv_;
+
+  dynamic_matrix_t deltaQm_;
+  dynamic_matrix_t HmInvUUT_;
 };
 
 extern template class SequentialRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;

@@ -20,3 +20,4 @@ __pycache__
 *.pyc
 *.pydevproject
 ocs2_core/test/cppad_cg/testCppADCG_generated/
+ocs2_ddp/test/ddp_test_generated/

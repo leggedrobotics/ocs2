@@ -42,8 +42,8 @@ void makePsdEigenvalue(Eigen::MatrixXd& squareMatrix, double minEigenvalue);
 
 void makePsdCholesky(Eigen::MatrixXd& A, double minEigenvalue);
 
-void computeConstraintProjection(const Eigen::MatrixXd& D, const Eigen::MatrixXd& RinvChol, Eigen::MatrixXd& Ddagger,
-                                 Eigen::MatrixXd& DdaggerT_R_Ddagger_Chol, Eigen::MatrixXd& RinvConstrainedChol);
+void computeConstraintProjection(const Eigen::MatrixXd& Dm, const Eigen::MatrixXd& RmInvUmUmT, Eigen::MatrixXd& DmDagger,
+                                 Eigen::MatrixXd& DmDaggerTRmDmDaggerUUT, Eigen::MatrixXd& RmInvConstrainedUUT);
 
 int rank(const Eigen::MatrixXd& A);
 
@@ -117,37 +117,36 @@ void makePsdCholesky(Eigen::MatrixBase<Derived>& A, double minEigenvalue = OCS2N
 }
 
 /**
- * Compute upper-triangular Cholesky decomposition of inv(A)
- * A = L * L^T = U^T * U
- * inv(A) = inv(L^T) * inv(L) = inv(U) * inv(U^T)
- * inv(L^T) = inv(U)
+ * Computes the U*U^T decomposition associated to the inverse of the input matrix, where U is an upper triangular
+ * matrix. Note that the U*U^T decomposition is different from the Cholesky decomposition (U^T*U).
+ *
  * @tparam Derived type.
- * @param [in] A: A symmetric square positive definite matrix
- * @param [in] U: UUT of A matrix.
- * @param [out] LinvT: LT_L decomposition of inv(A), upper-triangular
+ * @param [in] Am: A symmetric square positive definite matrix
+ * @param [out] AmInvUmUmT: The upper-triangular matrix associated to the UUT decomposition of inv(Am) matrix.
  */
 template <typename Derived>
-void computeLinvTLinv(const Derived& A, Derived& U, Derived& LinvT) {
-  // L is lower triangular, U is upper triangular --> inv(L^T) = inv(U) is upper triangular
-  Eigen::LLT<Derived> lltOfA(A);
-  LinvT.setIdentity(A.rows(), A.cols());  // for dynamic size matrices
-  U = lltOfA.matrixU();
-  lltOfA.matrixU().solveInPlace(LinvT);
+void computeInverseMatrixUUT(const Derived& Am, Derived& AmInvUmUmT) {
+  // Am = Lm Lm^T --> inv(Am) = inv(Lm^T) inv(Lm) where Lm^T is upper triangular
+  Eigen::LLT<Derived> lltOfA(Am);
+  AmInvUmUmT.setIdentity(Am.rows(), Am.cols());  // for dynamic size matrices
+  lltOfA.matrixU().solveInPlace(AmInvUmUmT);
 }
 
 /**
- * Computes constraint projection for linear constraints  C*x + D*u - e = 0,
- * The input cost matrix R should be already inverted and decomposed such that inv(R) = RinvChol * RinvChol^T
- * @param [in] D: A full row rank constraint matrix
- * @param [in] RinvChol: Cholesky decomposition of inv(R)
- * @param [out] Ddagger: Weighted pseudo inverse of D, Ddagger = inv(R)*D' * inv(D*inv(R)*D')
- * @param [out] DdaggerT_R_Ddagger_Chol: Cholesky decomposition of DdaggerT_R_Ddagger
- * @param [out] RinvConstrainedChol: Decomposition of inv(R)^T * (I-Ddagger*D)^T * R * (I-Ddagger*D) * inv(R)
+ * Computes constraint projection for linear constraints  C*x + D*u - e = 0, with the weighting inv(Rm)
+ * The input cost matrix Rm should be already inverted and decomposed such that inv(Rm) = RmInvUmUmT * RmInvUmUmT^T.
+ *
+ * @param [in] Dm: A full row rank constraint matrix
+ * @param [in] RmInvUmUmT: The upper-triangular matrix associated to the UUT decomposition of inv(Rm) matrix.
+ * @param [out] DmDagger: The right weighted pseudo inverse of Dm, DmDagger = inv(Rm)*Dm'*inv(Dm*inv(Rm)*Dm')
+ * @param [out] DmDaggerTRmDmDaggerUUT: The UUT decomposition of DmDagger^T * Rm * DmDagger = Um * Um^T
+ * @param [out] RmInvConstrainedUUT: The VVT decomposition of (I-DmDagger*Dm) * inv(Rm) * (I-DmDagger*Dm)^T where V is of
+ * the dimension n_u*(n_u-n_c) with n_u = Rm.rows() and n_c = Dm.rows().
  */
 template <typename DerivedInputMatrix>
-void computeConstraintProjection(const Eigen::MatrixXd& D, const DerivedInputMatrix& RinvChol, Eigen::MatrixXd& Ddagger,
-                                 Eigen::MatrixXd& DdaggerT_R_Ddagger_Chol, Eigen::MatrixXd& RinvConstrainedChol) {
-  computeConstraintProjection(D, Eigen::MatrixXd(RinvChol), Ddagger, DdaggerT_R_Ddagger_Chol, RinvConstrainedChol);
+void computeConstraintProjection(const Eigen::MatrixXd& Dm, const DerivedInputMatrix& RmInvUmUmT, Eigen::MatrixXd& DmDagger,
+                                 Eigen::MatrixXd& DmDaggerTRmDmDaggerUUT, Eigen::MatrixXd& RmInvConstrainedUUT) {
+  computeConstraintProjection(Dm, Eigen::MatrixXd(RmInvUmUmT), DmDagger, DmDaggerTRmDmDaggerUUT, RmInvConstrainedUUT);
 }
 
 /**

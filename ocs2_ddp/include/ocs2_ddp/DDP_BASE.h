@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/Numerics.h>
 #include <ocs2_core/misc/ThreadPool.h>
 #include <ocs2_core/model_data/ModelDataBase.h>
+#include <ocs2_core/model_data/ModelDataLinearInterpolation.h>
 
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
@@ -50,7 +51,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include "ocs2_ddp/DDP_Settings.h"
-#include "ocs2_ddp/riccati_equations/RiccatiModification.h"
+#include "ocs2_ddp/riccati_equations/RiccatiModificationBase.h"
+#include "ocs2_ddp/riccati_equations/RiccatiModificationInterpolation.h"
 
 namespace ocs2 {
 
@@ -84,14 +86,14 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::DIMENSIONS;
   using typename BASE::dynamic_input_matrix_t;
   using typename BASE::dynamic_matrix_array2_t;
+  using typename BASE::dynamic_matrix_array_t;
   using typename BASE::dynamic_matrix_t;
+  using typename BASE::dynamic_vector_array2_t;
   using typename BASE::dynamic_vector_array_t;
   using typename BASE::dynamic_vector_t;
-  using typename BASE::eigen_scalar_array2_t;
-  using typename BASE::eigen_scalar_array_t;
-  using typename BASE::input_constraint1_matrix_array2_t;
-  using typename BASE::input_constraint1_matrix_array_t;
-  using typename BASE::input_constraint1_matrix_t;
+  using typename BASE::input_dynamic_matrix_array2_t;
+  using typename BASE::input_dynamic_matrix_array_t;
+  using typename BASE::input_dynamic_matrix_t;
   using typename BASE::input_matrix_array2_t;
   using typename BASE::input_matrix_array3_t;
   using typename BASE::input_matrix_array_t;
@@ -183,7 +185,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Destructor.
    */
-  virtual ~DDP_BASE();
+  virtual ~DDP_BASE() override;
 
   /**
    * Resets the class to its state after construction.
@@ -302,7 +304,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * 		- quadratized intermediate cost function
    * 		- quadratized final cost
    */
-  virtual void approximateOptimalControlProblem();
+  void approximateOptimalControlProblem();
 
   /**
    * Calculates the controller. This method uses the following variables:
@@ -347,7 +349,42 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @return average time step
    */
-  virtual scalar_t solveSequentialRiccatiEquations(const state_matrix_t& SmFinal, const state_vector_t& SvFinal, const scalar_t& sFinal);
+  virtual scalar_t solveSequentialRiccatiEquations(const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
+                                                   const scalar_t& sFinal) = 0;
+
+  /**
+   * The implementation for solving Riccati equations for all the partitions.
+   *
+   * @param [in] SmFinal: The final Sm for Riccati equation.
+   * @param [in] SvFinal: The final Sv for Riccati equation.
+   * @param [in] sFinal: The final s for Riccati equation.
+   *
+   * @return average time step
+   */
+  scalar_t solveSequentialRiccatiEquationsImpl(const state_matrix_t& SmFinal, const state_vector_t& SvFinal, const scalar_t& sFinal);
+
+  /**
+   * Solves Riccati equations for the partitions assigned to the given thread.
+   */
+  void riccatiSolverTask();
+
+  /**
+   *
+   */
+  static void computeNormalizedTime(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
+                                    scalar_array_t& normalizedTimeTrajectory, size_array_t& normalizedPostEventIndices);
+
+  /**
+   * Solves a set of Riccati equations and type_1 constraints error correction compensation for the partition in the given index.
+   *
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
+   * @param [in] SmFinal: The final Sm for Riccati equation.
+   * @param [in] SvFinal: The final Sv for Riccati equation.
+   * @param [in] sFinal: The final s for Riccati equation.
+   */
+  virtual void constrainedRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const dynamic_matrix_t& SmFinal,
+                                                 const dynamic_vector_t& SvFinal, const scalar_t& sFinal) = 0;
 
   /**
    * Adjust the nominal controller based on the last changes in the logic rules.
@@ -375,11 +412,9 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   size_t getNumIterations() const override;
 
-  void getIterationsLog(eigen_scalar_array_t& iterationCost, eigen_scalar_array_t& iterationISE1,
-                        eigen_scalar_array_t& iterationISE2) const override;
+  void getIterationsLog(scalar_array_t& iterationCost, scalar_array_t& iterationISE1, scalar_array_t& iterationISE2) const override;
 
-  void getIterationsLogPtr(const eigen_scalar_array_t*& iterationCostPtr, const eigen_scalar_array_t*& iterationISE1Ptr,
-                           const eigen_scalar_array_t*& iterationISE2Ptr) const override;
+  void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const override;
 
   /**
    * Write access to ddp settings
@@ -433,16 +468,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void runParallel(std::function<void(void)> taskFunction, size_t N);
 
   /**
-   * Calculates an LQ approximate of the optimal control problem at a given
-   * partition and a node.
-   *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] partitionIndex: Time partition index.
-   * @param [in] timeIndex: Time index in the partition.
-   */
-  virtual void approximateLQWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) = 0;
-
-  /**
    * Calculates the constraint trajectories over the given trajectories.
    *
    * @param [in] workerIndex: Working agent index.
@@ -485,17 +510,20 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                                    const input_vector_array_t& inputTrajectory, scalar_t& totalCost);
 
   /**
-   * Calculates an LQ approximate of the unconstrained optimal control problem
-   * at a given partition and a node.
+   * Calculates an LQ approximate of the optimal control problem for the nodes.
    *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] i: Time partition index.
-   * @param [in] k: Time index in the partition.
+   * @param [in] timeTrajectory: The time trajectory.
+   * @param [in] postEventIndices: The post event indices.
+   * @param [in] stateTrajectory: The state trajectory.
+   * @param [in] inputTrajectory: The input trajectory.
+   * @param modelDataTrajectory: The model data trajectory.
    */
-  void approximateUnconstrainedLQWorker(size_t workerIndex, size_t i, size_t k);
+  virtual void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
+                                         const state_vector_array_t& stateTrajectory, const input_vector_array_t& inputTrajectory,
+                                         ModelDataBase::array_t& modelDataTrajectory) = 0;
 
   /**
-   * Augments the cost function.
+   * Augments the cost function for the given model data.
    *
    * @param [in] workerIndex: Working agent index.
    * @param modelData: The model data.
@@ -503,29 +531,24 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void augmentCostWorker(size_t workerIndex, ModelDataBase& modelData);
 
   /**
+   * Computes the Riccati modification based on the strategy and Hm matrix
+   *
+   * @param [in] strategy: The search strategy e.g., LINE_SEARCH
+   * @param [in] Hm: inv(Hm) defines the oblique projection for state-input equality constraints.
+   * @param [in] modelData: The data model
+   * @param [out] riccatiModification: The RiccatiModification.
+   */
+  void computeRiccatiModification(DDP_Strategy strategy, const dynamic_matrix_t& Hm, const ModelDataBase& modelData,
+                                  RiccatiModificationBase& riccatiModification) const;
+
+  /**
    * Projects the unconstrained LQ coefficients to constrained ones.
    *
-   * @param [in] modelData:
-   * @param [in] DmDager:
-   * @param [in] DdaggerT_R_Ddagger_Chol:
-   * @param [out] projectedModelData:
+   * @param [in] modelData: The model data.
+   * @param [in] DmDagger: The projection matrix to constrained subspace.
+   * @param [out] projectedModelData: The projected model data.
    */
-  static void projectLQWorker(const ModelDataBase& modelData, const dynamic_matrix_t& DmDager,
-                              const dynamic_matrix_t& DdaggerT_R_Ddagger_Chol, ModelDataBase& projectedModelData);
-
-  /**
-   * Computes the Riccati modification based on the strategy.
-   */
-  void computeRiccatiModificationTerms();
-
-  /**
-   * Computes the Riccati modification for the given partition and time index.
-   *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] i: Time partition index.
-   * @param [in] k: Time index in the partition.
-   */
-  virtual void computeRiccatiModificationTermsWorker(size_t workerIndex, size_t i, size_t k) = 0;
+  static void projectLQ(const ModelDataBase& modelData, const dynamic_matrix_t& DmDagger, ModelDataBase& projectedModelData);
 
   /**
    * Shifts the Hessian based on the strategy defined by Line_Search::hessianCorrectionStrategy_.
@@ -534,7 +557,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param matrix: The Hessian matrix.
    */
   template <typename Derived>
-  void shiftHessian(Eigen::MatrixBase<Derived>& matrix);
+  void shiftHessian(Eigen::MatrixBase<Derived>& matrix) const;
 
   /**
    * Calculates controller at a given partition and a node.
@@ -579,11 +602,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                         scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
                         state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
                         ModelDataBase::array2_t& modelDataTrajectoriesStock);
-
-  /**
-   * Solves Riccati equations for the partitions assigned to the given thread.
-   */
-  virtual void riccatiSolverTask() = 0;
 
   /**
    * Calculates state-input constraints ISE (Integral of Square Error).
@@ -683,9 +701,9 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM> trajectorySpreadingController_;
 
   std::atomic_size_t iteration_;
-  eigen_scalar_array_t iterationCost_;
-  eigen_scalar_array_t iterationISE1_;
-  eigen_scalar_array_t iterationISE2_;
+  scalar_array_t iterationCost_;
+  scalar_array_t iterationISE1_;
+  scalar_array_t iterationISE2_;
 
   scalar_t nominalTotalCost_;
   scalar_t stateInputEqConstraintISE_;
@@ -734,17 +752,12 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   ModelDataBase::array2_t projectedModelDataTrajectoriesStock_;
   ModelDataBase::array2_t cachedProjectedModelDataTrajectoriesStock_;
 
-  //
-  dynamic_matrix_array2_t RmInverseTrajectoryStock_;
-  dynamic_matrix_array2_t RmCholeskyUpperTrajectoryStock_;
-
   // Riccati solution coefficients
   scalar_array2_t SsTimeTrajectoryStock_;
   scalar_array2_t SsNormalizedTimeTrajectoryStock_;
   size_array2_t SsNormalizedEventsPastTheEndIndecesStock_;
   scalar_array2_t sTrajectoryStock_;
   state_vector_array2_t SvTrajectoryStock_;
-  state_vector_array2_t SveTrajectoryStock_;
   state_matrix_array2_t SmTrajectoryStock_;
 
   scalar_array_t sFinalStock_;
@@ -758,7 +771,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   state_matrix_t SmHeuristics_;
 
   // Riccati modification
-  typename RiccatiModification<STATE_DIM, INPUT_DIM>::array_t riccatiModificationStock_;
+  RiccatiModificationBase::array2_t riccatiModificationTrajectoriesStock_;
+  RiccatiModificationBase::array2_t cachedRiccatiModificationTrajectoriesStock_;
 
   // Line-Search
   struct LineSearchImpl {
@@ -783,6 +797,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   std::vector<int> startingIndicesRiccatiWorker_;
   std::vector<int> endingIndicesRiccatiWorker_;
+  // parallel Riccati solver
+  std::mutex riccatiSolverDataMutex_;
 
   // benchmarking
   benchmark::RepeatedTimer forwardPassTimer_;

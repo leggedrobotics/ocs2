@@ -46,6 +46,7 @@ TEST(exp0_slq_test, exp0_slq_test) {
   using slq_t = SLQ<STATE_DIM, INPUT_DIM>;
 
   SLQ_Settings slqSettings;
+  slqSettings.preComputeRiccatiTerms_ = false;
   slqSettings.useNominalTimeForBackwardPass_ = false;
   slqSettings.ddpSettings_.displayInfo_ = true;
   slqSettings.ddpSettings_.displayShortSummary_ = true;
@@ -132,8 +133,8 @@ TEST(exp0_slq_test, exp0_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // get solution
-  SLQ<STATE_DIM, INPUT_DIM>::primal_solution_t solutionST = slqST.primalSolution(finalTime);
-  SLQ<STATE_DIM, INPUT_DIM>::primal_solution_t solutionMT = slqMT.primalSolution(finalTime);
+  slq_t::primal_solution_t solutionST = slqST.primalSolution(finalTime);
+  slq_t::primal_solution_t solutionMT = slqMT.primalSolution(finalTime);
 
   // get performance indices
   double totalCostST, totalCostMT;

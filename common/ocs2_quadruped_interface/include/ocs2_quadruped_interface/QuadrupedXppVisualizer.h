@@ -17,8 +17,9 @@
 #include <ocs2_comm_interfaces/SystemObservation.h>
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_quadruped_interface/OCS2QuadrupedInterface.h>
+#include <ocs2_msgs/mpc_target_trajectories.h>
+#include <ros/callback_queue.h>
 
-#include <std_srvs/Empty.h>
 #include <geometry_msgs/PoseArray.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -51,8 +52,8 @@ namespace switched_model {
   const auto xppStateDesTopicMap = PublisherMapping<xpp_msgs::RobotStateCartesian>(xppStateDesTopicName);
   const auto xppJointDesTopicMap = PublisherMapping<xpp_msgs::RobotStateJoint>(xppJointDesTopicName);
   /***************************************************************************************************/
-  inline static const std::string xppJointTrajTopicName = xppJointDesTopicName.substr(0, xppJointDesTopicName.find("des)")) + "traj";
-  inline static const std::string xppStateTrajTopicName = xppStateDesTopicName.substr(0, xppStateDesTopicName.find("des")) + "traj";
+  inline static const std::string xppJointTrajTopicName = xppJointDesTopicName.substr(0, xppJointDesTopicName.rfind("des)")) + "target";
+  inline static const std::string xppStateTrajTopicName = xppStateDesTopicName.substr(0, xppStateDesTopicName.rfind("des")) + "target";
 
   inline static const auto xppStateTrajTopicMap = PublisherMapping<xpp_msgs::RobotStateCartesian>(xppStateTrajTopicName);
   inline static const auto xppJointTrajTopicMap = PublisherMapping<xpp_msgs::RobotStateJoint>(xppJointTrajTopicName); //TODO(oharley) array msg type?
@@ -61,16 +62,15 @@ namespace switched_model {
   inline const std::string comTraceTopicName     = "baseTrajectory"; //desiredBaseTrajectory
   inline const std::string feetTraceTopicName    = "feetTrajectories";
   inline const std::string posesTargetTopicName  = "poseTargets";
+  const auto comTraceTopicMap     = PublisherMapping<visualization_msgs::Marker>(comTraceTopicName);
+  const auto feetTraceTopicMap    = PublisherMapping<visualization_msgs::MarkerArray>(feetTraceTopicName);
+  const auto posesTargetTopicMap  = PublisherMapping<geometry_msgs::PoseArray>(posesTargetTopicName);
 
   inline const std::string comMPCTraceTopicName  = "baseMPCTrajectory"; //desiredBaseTrajectory
   inline const std::string feetMPCTraceTopicName = "feetMPCTrajectories";
   inline const std::string posesMPCTopicName     = "poseMPC";
-
   const auto comMPCTraceTopicMap  = PublisherMapping<visualization_msgs::Marker>(comMPCTraceTopicName);
   const auto feetMPCTraceTopicMap = PublisherMapping<visualization_msgs::MarkerArray>(feetMPCTraceTopicName);
-  const auto comTraceTopicMap     = PublisherMapping<visualization_msgs::Marker>(comTraceTopicName);
-  const auto feetTraceTopicMap    = PublisherMapping<visualization_msgs::MarkerArray>(feetTraceTopicName);
-  const auto posesTargetTopicMap  = PublisherMapping<geometry_msgs::PoseArray>(posesTargetTopicName);
   const auto posesMPCTopicMap     = PublisherMapping<geometry_msgs::PoseArray>(posesMPCTopicName);
   }
 
@@ -96,11 +96,6 @@ class QuadrupedXppVisualizer {
   using vector_3d_t = Eigen::Matrix<scalar_t, 3, 1>;
   using vector_3d_array_t = std::array<vector_3d_t, 4>;
 
-  enum PublisherIds {
-    COSTTRAJECTORIES = 0,
-    MPC = 1,
-    MPC_FEET_POSES_OFFSET=NUM_CONTACT_POINTS
-  };
 
   QuadrupedXppVisualizer(const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr, const std::string& robotName = "robot",
                          bool save_rosbag = false)
@@ -132,11 +127,6 @@ class QuadrupedXppVisualizer {
    */
   void launchVisualizerNode(int argc, char* argv[]);
 
-  // /**
-  //  * Ros Service to visualise the cost desired trajectories.
-  //  */
-  // static bool costsPublishServiceCallback(std_srvs::Empty::Request &req, std_srvs::Empty::Response &response);
-
 
   /**
    * Visualizes the current observation.
@@ -153,11 +143,14 @@ class QuadrupedXppVisualizer {
   void publishTrajectory(const system_observation_array_t& system_observation_array, double speed = 1.0);
 
   void publishDesiredTrajectory(scalar_t startTime, const cost_desired_trajectories_t& costDesiredTrajectory);
-  void publishDesiredTrajectory(scalar_t startTime);
 
   void publishOptimizedStateTrajectory(const scalar_array_t& mpcTimeTrajectory, const state_vector_array_t& mpcStateTrajectory);
 
-  void publishXppCostsVisualizer( const scalar_t& publishTime);
+  void publishXppCostsVisualizer(const scalar_t& publishTime, const cost_desired_trajectories_t& costDesiredTrajectory);
+  void callVisualizerQueue() { visualizerQueue_.callAvailable(); };
+
+  // void publishDesiredTrajectory(scalar_t startTime);
+  // void publishXppCostsVisualizer( const scalar_t& publishTime);
 
  private:
   /**
@@ -171,7 +164,7 @@ class QuadrupedXppVisualizer {
    * @param feetAcceleration: Feet acceleration in the origin frame.
    * @param feetForce: Contact forces acting on the feet in the origin frame.
    */
-  void publishXppVisualizer(const scalar_t& time, const base_coordinate_t& basePose, const base_coordinate_t& baseLocalVelocities,
+  void publishXppVisualizer(const scalar_t time, const base_coordinate_t& basePose, const base_coordinate_t& baseLocalVelocities,
                             const joint_coordinate_t& jointAngles,
                             const vector_3d_array_t& feetPosition, const vector_3d_array_t& feetVelocity,
                             const vector_3d_array_t& feetAcceleration, const vector_3d_array_t& feetForce);
@@ -180,6 +173,11 @@ class QuadrupedXppVisualizer {
                         vector_3d_array_t& o_feetVelocity, vector_3d_array_t& o_contactForces);
 
   static void sigintHandler(int sig);
+
+  /**
+   * Ros callback to visualise the mpc target trajectories.
+   */
+  void targetTrajectoriesCallback(const ocs2_msgs::mpc_target_trajectories &);
 
   quadruped_interface_ptr_t ocs2QuadrupedInterfacePtr_;
 
@@ -205,6 +203,8 @@ class QuadrupedXppVisualizer {
   ros::Publisher costsVisualizationJointPublisher_;
 
   ros::Time startTime_;
+  ros::Subscriber targetTrajectoriesSubscriber_;
+  ros::CallbackQueue visualizerQueue_;
 
   rosbag::Bag bag_;
   xpp_msgs::RobotStateCartesianTrajectory robotStateCartesianTrajectoryMsg_;

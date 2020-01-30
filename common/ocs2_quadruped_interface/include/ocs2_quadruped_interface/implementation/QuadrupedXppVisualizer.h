@@ -4,28 +4,19 @@
 #include "ocs2_quadruped_interface/QuadrupedXppVisualizer.h"
 
 #include <ros/ros.h>
+#include <ros/callback_queue.h>
 #include <geometry_msgs/PoseArray.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <eigen_conversions/eigen_msg.h>
-#include <std_srvs/Empty.h>
 
 #include <ocs2_core/Dimensions.h>
 #include "ocs2_switched_model_interface/core/Rotations.h"
+#include <ocs2_msgs/mpc_target_trajectories.h>
+#include "ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h"
 
 namespace switched_model {
-
-  int visualizers::triggerPublishingCostTrajectories(int argc, char** argv){
-    ros::init(argc, argv, "Trigger Visualizing Cost Desired Trajectories");
-    ros::NodeHandle n;
-    auto client = n.serviceClient<std_srvs::Empty>(visualizers::costsPublishServiceName);
-    std_srvs::Empty::Request req {};
-    std_srvs::Empty::Response res {};
-    client.call(req, res);
-    ROS_INFO("Triggered Visualizing costDesiredTrajectories.");
-    return 0;
-  }
 
   template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
     inline void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::
@@ -68,24 +59,31 @@ namespace switched_model {
     }
 
   template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+    void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::targetTrajectoriesCallback(
+        const ocs2_msgs::mpc_target_trajectories& msg)
+    {
+      std::cout << "CALLBACK TRIGGERED!!!!" << std::endl;
+      cost_desired_trajectories_t cdt;
+      ocs2::RosMsgConversions<STATE_DIM, INPUT_DIM>::readTargetTrajectoriesMsg(msg, cdt);
+      scalar_t timeNow = ros::Time::now().toSec();
+      publishXppCostsVisualizer(timeNow, cdt);
+      publishDesiredTrajectory(timeNow, cdt);
+    }
+
+  template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
     void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::launchVisualizerNode(int argc, char** argv) {
       ros::init(argc, argv, robotName_ + "_visualization_node");
       signal(SIGINT, QuadrupedXppVisualizer::sigintHandler);
 
       ros::NodeHandle n;
-      // auto callback = [this]( std_srvs::Empty::Request &req, std_srvs::Empty::Response &response) {
-      //   auto time = std::chrono::steady_clock::now();
-      //   this->publishXppCostsVisualizer(time, const ocs2QuadrupedInterfacePtr_->costDesiredTrajectories_);
-      //   return true;
-      // };
-      // ros::ServiceServer visualsCDTsClient_ = n.advertiseService(visualizers::costsPublishServiceName, callback);
+      n.setCallbackQueue(&visualizerQueue_);
 
       visualizationPublisher_           = visualizers::xppStateDesTopicMap.advertise(n, 1);
       visualizationJointPublisher_      = visualizers::xppJointDesTopicMap.advertise(n, 1);
-      // costsVisualizationPublisher_      = visualizers::xppStateTrajTopicMap.advertise(n, 1, true);
-      // costsVisualizationJointPublisher_ = visualizers::xppJointTrajTopicMap.advertise(n, 1, true);
       costsVisualizationPublisher_      = visualizers::xppStateTrajTopicMap.advertise(n, 1);
       costsVisualizationJointPublisher_ = visualizers::xppJointTrajTopicMap.advertise(n, 1);
+      // costsVisualizationPublisher_      = visualizers::xppStateTrajTopicMap.advertise(n, 1);
+      // costsVisualizationJointPublisher_ = visualizers::xppJointTrajTopicMap.advertise(n, 1);
 
       comTracePublisher_     = visualizers::comTraceTopicMap.advertise(n, 100);
       feetTracePublisher_    = visualizers::feetTraceTopicMap.advertise(n, 100);
@@ -102,20 +100,14 @@ namespace switched_model {
       }
       ROS_INFO_STREAM("Visualization subscriber is connected.");
 
+      targetTrajectoriesSubscriber_ = n.subscribe( robotName_ + "_mpc_target", 1, &quadruped_xpp_visualizer_t::targetTrajectoriesCallback, this);
+
       startTime_ = ros::Time::now();
 
       if (save_rosbag_) {
         robotStateCartesianTrajectoryMsg_.header.stamp = startTime_;
       }
     }
-
-  // template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-  // bool QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::costsPublishServiceCallback(std_srvs::Empty::Request &req, std_srvs::Empty::Response &response, 
-  //     QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM> &self){
-  //   auto time = std::chrono::steady_clock::now();
-  //   self->publishXppCostsVisualizer(time, std::copy(ocs2QuadrupedInterfacePtr_->costDesiredTrajectories_()));
-  //       return true;
-  // }
 
   template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
     void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishObservation(const system_observation_t& observation) {
@@ -157,14 +149,22 @@ namespace switched_model {
       }
     }
 
-  template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-    void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishXppCostsVisualizer(const scalar_t& publishTime)
-    {
+  // template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+  //   void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishXppCostsVisualizer(const scalar_t& publishTime)
+  //   {
+  //     const auto costDesiredTrajectories = ocs2QuadrupedInterfacePtr_->getMpc().getSolverPtr()->getCostTrajectories();
+  //     publishXppCostsVisualizer(publishTime, costDesiredTrajectories);
+  //   }
 
-      auto costDesiredTrajectories = ocs2QuadrupedInterfacePtr_->getCostTrajectories();
+  template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+    void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::
+    publishXppCostsVisualizer(const scalar_t& publishTime, const cost_desired_trajectories_t& costDesiredTrajectories)
+    {
       // auto costDesiredTrajectories = ocs2QuadrupedInterfacePtr_.getCostDesiredTrajectories();
       auto& timeTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
       auto N = costDesiredTrajectories.desiredStateTrajectory().size();
+      std::cout << "Publishing Xpp Costs trajectories. N: "  << N <<  std::endl;
+      if (!N){return;}
 
       for (int i = 0; i < N; ++i) {
         auto& state = costDesiredTrajectories.desiredStateTrajectory()[i];
@@ -174,9 +174,9 @@ namespace switched_model {
 
         const Eigen::Quaternion<scalar_t> q_world_base = quaternionBaseToOrigin<scalar_t>(state.template head<3>());
         tf::quaternionEigenToMsg(q_world_base, robotStateCartesianMsg.base.pose.orientation);
-        tf::pointEigenToMsg(state.template segment<3>(3));
-        tf::vectorEigenToMsg(robotStateCartesianMsg.base.twist.angular, state.template segment<3>(6));
-        tf::vectorEigenToMsg(robotStateCartesianMsg.base.twist.linear, state.template segment<3>(9));
+        tf::pointEigenToMsg(state.template segment<3>(3), robotStateCartesianMsg.base.pose.position);
+        tf::vectorEigenToMsg(state.template segment<3>(6), robotStateCartesianMsg.base.twist.angular);
+        tf::vectorEigenToMsg(state.template segment<3>(9), robotStateCartesianMsg.base.twist.linear);
 
         robotStateCartesianMsg.time_from_start = ros::Duration(time);
         auto& input = costDesiredTrajectories.desiredStateTrajectory()[i];
@@ -197,8 +197,9 @@ namespace switched_model {
         //TODO(Oharley)
         xpp_msgs::RobotStateJoint robotStateJointMsg;
         robotStateJointMsg.time_from_start = robotStateCartesianMsg.time_from_start;
-        robotStateJointMsg.base = robotStateCartesianMsg.base;
-        robotStateJointMsg.ee_contact = robotStateCartesianMsg.ee_contact;
+        robotStateJointMsg.base            = robotStateCartesianMsg.base;
+        robotStateJointMsg.ee_contact      = robotStateCartesianMsg.ee_contact;
+
         const auto jointAngles = state.template segment<12>(6);
         robotStateJointMsg.joint_state.position = std::vector<double>(jointAngles.data(), jointAngles.data() + jointAngles.size());
         // Attention: Not filling joint velocities or torques
@@ -211,7 +212,7 @@ namespace switched_model {
 
   template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
     void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishXppVisualizer(
-        const scalar_t& time, const base_coordinate_t& basePose, const base_coordinate_t& baseLocalVelocities,
+        const scalar_t time, const base_coordinate_t& basePose, const base_coordinate_t& baseLocalVelocities,
         const joint_coordinate_t& jointAngles, const vector_3d_array_t& feetPosition, const vector_3d_array_t& feetVelocity,
         const vector_3d_array_t& feetAcceleration, const vector_3d_array_t& feetForce) {
       const scalar_t minTimeDifference = 10e-3;
@@ -297,22 +298,26 @@ namespace switched_model {
       ::ros::shutdown();
     }
 
-  template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-    void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishDesiredTrajectory(
-        scalar_t startTime) {
-      publishDesiredTrajectory( startTime, ocs2QuadrupedInterfacePtr_->getCostTrajectories());
-    }
+  // template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
+  //   void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishDesiredTrajectory(
+  //       scalar_t startTime) { publishDesiredTrajectory( startTime, ocs2QuadrupedInterfacePtr_->getMpc().getSolverPtr()->getCostTrajectories()); }
 
   template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
     void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishDesiredTrajectory(
-        scalar_t startTime, const cost_desired_trajectories_t& costDesiredTrajectory) {
+        scalar_t startTime, const cost_desired_trajectories_t& costDesiredTrajectories) {
 
       // Set up state interpolator
-      auto& timeTrajectory = costDesiredTrajectory.desiredTimeTrajectory();
-      auto& stateTrajectory = costDesiredTrajectory.desiredStateTrajectory();
-      ocs2::EigenLinearInterpolation<typename cost_desired_trajectories_t::dynamic_vector_t> stateFunc(&timeTrajectory, &stateTrajectory);
+      auto& timeTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
+      auto& stateTrajectory = costDesiredTrajectories.desiredStateTrajectory();
+      // ocs2::EigenLinearInterpolation<typename cost_desired_trajectories_t::dynamic_vector_t> stateFunc(&timeTrajectory, &stateTrajectory);
+      auto N = timeTrajectory.size();
+      std::cout << "Publishing desired cost trajectories. N:"  << N << std::endl;
 
+      if (!N){return;}
       auto endTime = timeTrajectory.back();
+
+
+      ros::Duration displayTime = ros::Duration(timeTrajectory.front(), timeTrajectory.back())*5;
 
       // Prepare Messages
       decltype(visualizers::comTraceTopicMap)::msg_t comMarker;
@@ -320,38 +325,39 @@ namespace switched_model {
       decltype(visualizers::posesTargetTopicMap)::msg_t poseArray;
 
       // Message header
-      poseArray.header.frame_id = "world";
-      poseArray.header.stamp = ros::Time(startTime); //TODO(oharley)
-      // poseArray.header.stamp = ros::Duration(endTime);
+      comMarker.header.frame_id = poseArray.header.frame_id = "world";
+      comMarker.header.stamp  = poseArray.header.stamp = ros::Time(startTime_.toSec() + startTime); //TODO(oharley)
+      // poseArray.header.stamp = ros::Time(endTime);
 
       comMarker.header.frame_id = "world";
-      comMarker.id = PublisherIds::COSTTRAJECTORIES;
-      comMarker.type = visualization_msgs::Marker::LINE_LIST;
-      comMarker.lifetime = ros::Duration(2 * (endTime - startTime));
+      comMarker.id = 0;
+      comMarker.type = visualization_msgs::Marker::LINE_STRIP;
+      comMarker.lifetime = displayTime;
       comMarker.frame_locked = true;
       comMarker.scale.x = 0.005;  // used for line width
-      comMarker.color.r = 0.7;
-      comMarker.color.a = 1.0;
+      // comMarker.color.r = 0.7;
+      // comMarker.color.a = 1.0;
 
       // Foot Array message headers
       for (size_t ee = 0; ee < NUM_CONTACT_POINTS; ++ee) {
         visualization_msgs::Marker footMsg;
         footMsg.header.frame_id = "world";
-        footMsg.id = ee + PublisherIds::COSTTRAJECTORIES;
+        footMsg.header.stamp = ros::Time(startTime_.toSec() + startTime);
+        footMsg.id = ee + 1;
         footMsg.type = visualization_msgs::Marker::LINE_STRIP;
-        footMsg.lifetime = ros::Duration(2 * (endTime - startTime));
+        footMsg.lifetime =  displayTime;
         footMsg.frame_locked = true;
         footMsg.scale.x = 0.005;  // used for line width
-        footMsg.color.b = 0.7;
-        footMsg.color.a = 1.0;
+        // footMsg.color.b = 0.7;
+        // footMsg.color.a = 1.0;
         footMarkerMsg.markers.push_back(footMsg);
       }
 
-      // Evaluation times double dt = 0.1;
-      double t = std::min(startTime, endTime);
+      auto& inputTrajectory = costDesiredTrajectories.desiredStateTrajectory();
       vector_3d_array_t o_feetPosition, o_feetVelocity, o_feetForce;
-
-      auto& inputTrajectory = costDesiredTrajectory.desiredStateTrajectory();
+      // Evaluation times
+      // double dt = 0.1;
+      // double t = std::min(startTime, endTime);
 
       // for (; t < endTime; t=std::min(t+dt, endTime)){
       // geometry_msgs::Point comPosition;
@@ -379,7 +385,7 @@ namespace switched_model {
       color.a=0.7;
       const auto trajectoryPartitions = timeTrajectory.size();
       const auto fracOfTrajectory = 1.0/trajectoryPartitions;
-      for (auto i=1; i<timeTrajectory.size(); ++i) {
+      for (auto i=0; i<timeTrajectory.size(); ++i) {
         geometry_msgs::Point comPosition;
         tf::pointEigenToMsg(stateTrajectory[i].template segment<3>(3), comPosition);
         comMarker.points.push_back(comPosition);
@@ -403,6 +409,7 @@ namespace switched_model {
         }
 
         geometry_msgs::Pose poseMsg;
+        geometry_msgs::Quaternion qMsg;
         poseMsg.position = comPosition;
         const auto q_world_base = quaternionBaseToOrigin<scalar_t>(stateTrajectory[i].template head<3>());
         tf::quaternionEigenToMsg(q_world_base, poseMsg.orientation);
@@ -418,16 +425,22 @@ namespace switched_model {
     void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishOptimizedStateTrajectory(
         const scalar_array_t& mpcTimeTrajectory, const state_vector_array_t& mpcStateTrajectory) {
 
-      decltype(visualizers::comTraceTopicMap)::msg_t comMarker;
-      decltype(visualizers::feetTraceTopicMap)::msg_t footMarkerMsg;
-      decltype(visualizers::posesTargetTopicMap)::msg_t poseArray;
+      decltype(visualizers::comMPCTraceTopicMap)::msg_t comMarker;
+      decltype(visualizers::feetMPCTraceTopicMap)::msg_t footMarkerMsg;
+      decltype(visualizers::posesMPCTopicMap)::msg_t poseArray;
+
+      static size_t k=0;
+      const auto max_ids=1000;
+      // k = (k<max_ids) ? k+1 : 0 
+      const auto display_lifetime=5;
 
       // Message header
       poseArray.header.frame_id = "world";
       comMarker.header.frame_id = "world";
-      comMarker.id = PublisherIds::MPC;
+      comMarker.id = k;
       comMarker.type = visualization_msgs::Marker::LINE_STRIP;
       comMarker.frame_locked = true;
+      comMarker.lifetime = ros::Duration(display_lifetime);
       comMarker.scale.x = 0.005;  // used for line width
       comMarker.color.r = 1.0;
       comMarker.color.a = 1.0;
@@ -436,8 +449,9 @@ namespace switched_model {
       for (size_t ee = 0; ee < NUM_CONTACT_POINTS; ++ee) {
         visualization_msgs::Marker footMsg;
         footMsg.header.frame_id = "world";
-        footMsg.id = ee + PublisherIds::MPC_FEET_POSES_OFFSET; //offset so it doesn't colide with the costs msgs.
+        footMsg.id = ee + max_ids + 1 ;
         footMsg.type = visualization_msgs::Marker::LINE_STRIP;
+        footMsg.lifetime = ros::Duration(display_lifetime);
         footMsg.frame_locked = true;
         footMsg.scale.x = 0.005;  // used for line width
         footMsg.color.b = 1.0;
@@ -461,7 +475,7 @@ namespace switched_model {
       double t = std::min(startTime, endTime);
 
       state_vector_t state;
-      for (; t < endTime; t=std::min(t+dt, endTime)){
+      while (t<=endTime){
         stateFunc.interpolate(t, state);
         geometry_msgs::Point comPosition;
         comPosition.x = state[3];
@@ -477,7 +491,10 @@ namespace switched_model {
           footPosition.z = o_feetPositionRef[i][2];
           footMarkerMsg.markers[i].points.push_back(footPosition);
         }
+        if (t==endTime){break;}
+        t=std::min(t+dt, endTime);
       }
+
       const auto q_world_base = quaternionBaseToOrigin<scalar_t>(state.template head<3>());
       geometry_msgs::Pose poseMsg;
       tf::quaternionEigenToMsg(q_world_base, poseMsg.orientation);

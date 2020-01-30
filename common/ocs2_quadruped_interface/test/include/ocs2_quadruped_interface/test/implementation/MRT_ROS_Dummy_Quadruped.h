@@ -35,10 +35,11 @@ void MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishVis
                                                                                         const primal_solution_t& primalSolution,
                                                                                         const command_data_t& command) {
   quadrupedXppVisualizer_.publishObservation(observation);
-  // quadrupedXppVisualizer_.publishDesiredTrajectory(observation.time(), command.mpcCostDesiredTrajectories_);
-  quadrupedXppVisualizer_.publishDesiredTrajectory(observation.time());
   quadrupedXppVisualizer_.publishOptimizedStateTrajectory(primalSolution.timeTrajectory_, primalSolution.stateTrajectory_);
-  quadrupedXppVisualizer_.publishXppCostsVisualizer(observation.time());
+  quadrupedXppVisualizer_.callVisualizerQueue();
+  // quadrupedXppVisualizer_.publishDesiredTrajectory(observation.time(), command.mpcCostDesiredTrajectories_);
+  // quadrupedXppVisualizer_.publishDesiredTrajectory(observation.time());
+  // quadrupedXppVisualizer_.publishXppCostsVisualizer(observation.time());
 }
 
 }  // end of namespace switched_model

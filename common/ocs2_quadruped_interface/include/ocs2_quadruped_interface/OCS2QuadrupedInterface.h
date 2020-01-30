@@ -286,9 +286,8 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterfaceBase<STATE_DIM, INPUT_
   /**
    * Gets Cost Trajectories
    *
-   * @param [out] timeHorizon: The time horizon of the MPC.
    */
-  cost_desired_trajectories_t getCostTrajectories() const {return costDesiredTrajectories_;};
+  const cost_desired_trajectories_t& getCostTrajectories() const {return costDesiredTrajectories_;};
 
 
   /**

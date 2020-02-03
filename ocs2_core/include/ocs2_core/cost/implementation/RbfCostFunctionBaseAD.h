@@ -228,7 +228,7 @@ void RbfCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
 void RbfCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getTerminalCost(scalar_t& Phi) {
-  if (terminalCostValuesComputed_) {
+  if (!terminalCostValuesComputed_) {
     terminalCostValues_ = terminalADInterfacePtr_->getFunctionValue(tapedTimeState_, terminalParameters_);
     terminalCostValuesComputed_ = true;
   }
@@ -246,7 +246,7 @@ void RbfCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL
     terminalJacobian_ = terminalADInterfacePtr_->getJacobian(tapedTimeState_, terminalParameters_);
     terminalDerivativesComputed_ = true;
   }
-  if (terminalCostValuesComputed_) {
+  if (!terminalCostValuesComputed_) {
     terminalCostValues_ = terminalADInterfacePtr_->getFunctionValue(tapedTimeState_, terminalParameters_);
     terminalCostValuesComputed_ = true;
   }
@@ -264,7 +264,7 @@ void RbfCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL
     terminalJacobian_ = terminalADInterfacePtr_->getJacobian(tapedTimeState_, terminalParameters_);
     terminalDerivativesComputed_ = true;
   }
-  if (terminalCostValuesComputed_) {
+  if (!terminalCostValuesComputed_) {
     terminalCostValues_ = terminalADInterfacePtr_->getFunctionValue(tapedTimeState_, terminalParameters_);
     terminalCostValuesComputed_ = true;
   }
@@ -283,7 +283,7 @@ void RbfCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL
     terminalJacobian_ = terminalADInterfacePtr_->getJacobian(tapedTimeState_, terminalParameters_);
     terminalDerivativesComputed_ = true;
   }
-  if (terminalCostValuesComputed_) {
+  if (!terminalCostValuesComputed_) {
     terminalCostValues_ = terminalADInterfacePtr_->getFunctionValue(tapedTimeState_, terminalParameters_);
     terminalCostValuesComputed_ = true;
   }

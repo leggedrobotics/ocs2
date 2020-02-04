@@ -1808,16 +1808,15 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFunctionStateDerivative(scalar_t ti
   const auto indexAlpha =
       EigenLinearInterpolation<state_matrix_t>::interpolate(time, Sm, &SsTimeTrajectoryStock_[partition], &SmTrajectoryStock_[partition]);
 
-  state_vector_t Sv;
-  EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Sv, &SvTrajectoryStock_[partition]);
+  // Sv
+  EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Vx, &SvTrajectoryStock_[partition]);
 
   state_vector_t xNominal;
   EigenLinearInterpolation<state_vector_t>::interpolate(time, xNominal, &nominalTimeTrajectoriesStock_[partition],
                                                         &nominalStateTrajectoriesStock_[partition]);
 
   state_vector_t deltaX = state - xNominal;
-
-  Vx = Sm * deltaX + Sv;
+  Vx += Sm * deltaX;
 }
 
 /******************************************************************************************************/

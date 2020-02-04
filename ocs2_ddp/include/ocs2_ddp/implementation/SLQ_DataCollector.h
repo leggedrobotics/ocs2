@@ -118,8 +118,8 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::collect(const slq_t* constSlqPtr) 
 
   // state-input constraints derivatives w.r.t. to the event times
   calculateStateInputConstraintsSensitivity(constSlqPtr, nominalTimeTrajectoriesStock_, nominalStateTrajectoriesStock_,
-                                            nominalInputTrajectoriesStock_, EvDevEventTimesTrajectoriesStockSet_,
-                                            EvDevEventTimesProjectedTrajectoriesStockSet_);
+                                            nominalInputTrajectoriesStock_, EvDevEventTimesTrajectoryStockSet_,
+                                            EvDevEventTimesProjectedTrajectoryStockSet_);
 }
 
 /******************************************************************************************************/
@@ -128,18 +128,18 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::collect(const slq_t* constSlqPtr) 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::calculateStateInputConstraintsSensitivity(
     const slq_t* constSlqPtr, const std::vector<scalar_array_t>& timeTrajectoriesStock, const state_vector_array2_t& stateTrajectoriesStock,
-    const input_vector_array2_t& inputTrajectoriesStock, constraint1_vector_array3_t& EvDevEventTimesTrajectoriesStockSet,
+    const input_vector_array2_t& inputTrajectoriesStock, dynamic_vector_array3_t& EvDevEventTimesTrajectoryStockSet,
     input_vector_array3_t& EvDevEventTimesProjectedTrajectoriesStockSet) {
   auto* slqPtr = const_cast<slq_t*>(constSlqPtr);
 
   const size_t numEventTimes = constSlqPtr->getLogicRulesPtr()->getNumEventTimes();
 
   // resizing EvDev container
-  EvDevEventTimesTrajectoriesStockSet.resize(numEventTimes);
-  for (constraint1_vector_array2_t& EvDevEventTimesTrajectoriesStock : EvDevEventTimesTrajectoriesStockSet) {
-    EvDevEventTimesTrajectoriesStock.resize(constSlqPtr->numPartitions_);
+  EvDevEventTimesTrajectoryStockSet.resize(numEventTimes);
+  for (auto& EvDevEventTimesTrajectoryStock : EvDevEventTimesTrajectoryStockSet) {
+    EvDevEventTimesTrajectoryStock.resize(constSlqPtr->numPartitions_);
     for (size_t i = 0; i < constSlqPtr->numPartitions_; i++) {
-      EvDevEventTimesTrajectoriesStock[i].resize(timeTrajectoriesStock[i].size());
+      EvDevEventTimesTrajectoryStock[i].resize(timeTrajectoriesStock[i].size());
     }  // end of i loop
   }
   // resizing EvDevProjected container
@@ -159,6 +159,7 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::calculateStateInputConstraintsSens
 
       // evaluation
       constraint1_vector_array_t g1DevArray(numEventTimes);
+      auto nc1 = systemConstraintsPtr_->numStateInputConstraint(timeTrajectoriesStock[i][k]);
       systemConstraintsPtr_->getConstraint1DerivativesEventTimes(g1DevArray);
 
       // if derivatives where available
@@ -168,14 +169,14 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::calculateStateInputConstraintsSens
         }
 
         for (size_t j = 0; j < numEventTimes; j++) {
-          EvDevEventTimesTrajectoriesStockSet[j][i][k].swap(g1DevArray[j]);
+          EvDevEventTimesTrajectoryStockSet[j][i][k] = g1DevArray[j].head(nc1);
           EvDevEventTimesProjectedTrajectoriesStockSet[j][i][k] =
-              DmDagerTrajectoriesStock_[i][k] * EvDevEventTimesTrajectoriesStockSet[j][i][k];
+              DmDagerTrajectoriesStock_[i][k] * EvDevEventTimesTrajectoryStockSet[j][i][k];
         }  // end of j loop
 
       } else {
         for (size_t j = 0; j < numEventTimes; j++) {
-          EvDevEventTimesTrajectoriesStockSet[j][i][k].setZero();
+          EvDevEventTimesTrajectoryStockSet[j][i][k].setZero(nc1);
           EvDevEventTimesProjectedTrajectoriesStockSet[j][i][k].setZero();
         }  // end of j loop
       }

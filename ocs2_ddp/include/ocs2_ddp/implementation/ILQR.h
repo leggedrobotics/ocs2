@@ -178,17 +178,17 @@ void ILQR<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, s
   const auto& EvProjected = BASE::projectedModelDataTrajectoriesStock_[i][k].stateInputEqConstr_;
   const auto& CmProjected = BASE::projectedModelDataTrajectoriesStock_[i][k].stateInputEqConstrStateDerivative_;
 
-  const auto& HmInverseConstrained = BASE::riccatiModificationTrajectoriesStock_[i][k].HmInverseConstrained_;
+  const auto& HmAugInvUUT = BASE::riccatiModificationTrajectoriesStock_[i][k].HmInverseConstrainedLowRank_;
 
   // feedback gains
   BASE::nominalControllersStock_[i].gainArray_[k] = -CmProjected;
-  BASE::nominalControllersStock_[i].gainArray_[k].noalias() -=
-      HmInverseConstrained * (GmTrajectoriesStock_[i][k] + BASE::riccatiModificationTrajectoriesStock_[i][k].deltaPm_);
+  BASE::nominalControllersStock_[i].gainArray_[k].noalias() -= HmAugInvUUT * HmAugInvUUT_T_GmAug_[i][k];
 
   // bias input
+  BASE::nominalControllersStock_[i].biasArray_[k] = nominalInput;
+  BASE::nominalControllersStock_[i].biasArray_[k].noalias() -= BASE::nominalControllersStock_[i].gainArray_[k] * nominalState;
   BASE::nominalControllersStock_[i].deltaBiasArray_[k] = -EvProjected;
-  BASE::nominalControllersStock_[i].deltaBiasArray_[k].noalias() -= HmInverseConstrained * GvTrajectoriesStock_[i][k];
-  BASE::nominalControllersStock_[i].biasArray_[k] = nominalInput - BASE::nominalControllersStock_[i].gainArray_[k] * nominalState;
+  BASE::nominalControllersStock_[i].deltaBiasArray_[k].noalias() -= HmAugInvUUT * HmAugInvUUT_T_GvAug_[i][k];
 
   // checking the numerical stability of the controller parameters
   if (BASE::ddpSettings_.checkNumericalStability_) {
@@ -236,8 +236,8 @@ void ILQR<STATE_DIM, INPUT_DIM>::constrainedRiccatiEquationsWorker(size_t worker
   BASE::SvTrajectoryStock_[partitionIndex].resize(N);
   BASE::SmTrajectoryStock_[partitionIndex].resize(N);
 
-  GvTrajectoriesStock_[partitionIndex].resize(N);
-  GmTrajectoriesStock_[partitionIndex].resize(N);
+  HmAugInvUUT_T_GvAug_[partitionIndex].resize(N);
+  HmAugInvUUT_T_GmAug_[partitionIndex].resize(N);
 
   BASE::riccatiModificationTrajectoriesStock_[partitionIndex].resize(N);
   BASE::projectedModelDataTrajectoriesStock_[partitionIndex].resize(N);
@@ -285,12 +285,16 @@ void ILQR<STATE_DIM, INPUT_DIM>::constrainedRiccatiEquationsWorker(size_t worker
                     BASE::riccatiModificationTrajectoriesStock_[partitionIndex][endTimeItr - 1].DmDagger_,
                     BASE::projectedModelDataTrajectoriesStock_[partitionIndex][endTimeItr - 1]);
 
-    const ModelDataBase& md = BASE::projectedModelDataTrajectoriesStock_[partitionIndex][endTimeItr - 1];
-    GvTrajectoriesStock_[partitionIndex][endTimeItr - 1] =
-        md.costInputDerivative_ + md.dynamicsInputDerivative_.transpose() * BASE::SvTrajectoryStock_[partitionIndex][endTimeItr - 1];
-    GmTrajectoriesStock_[partitionIndex][endTimeItr - 1] =
-        md.costInputStateDerivative_ + BASE::riccatiModificationTrajectoriesStock_[partitionIndex][endTimeItr - 1].deltaPm_ +
-        md.dynamicsInputDerivative_.transpose() * BASE::SmTrajectoryStock_[partitionIndex][endTimeItr - 1];
+    const ModelDataBase& md = BASE::modelDataTrajectoriesStock_[partitionIndex][endTimeItr - 1];
+    dynamic_vector_t GvAug = md.costInputDerivative_;
+    GvAug.noalias() += md.dynamicsInputDerivative_.transpose() * BASE::SvTrajectoryStock_[partitionIndex][endTimeItr - 1];
+    HmAugInvUUT_T_GvAug_[partitionIndex][endTimeItr - 1].noalias() =
+        BASE::riccatiModificationTrajectoriesStock_[partitionIndex][endTimeItr - 1].HmInverseConstrainedLowRank_.transpose() * GvAug;
+    dynamic_matrix_t GmAug =
+        md.costInputStateDerivative_ + BASE::riccatiModificationTrajectoriesStock_[partitionIndex][endTimeItr - 1].deltaPm_;
+    GmAug.noalias() += md.dynamicsInputDerivative_.transpose() * BASE::SmTrajectoryStock_[partitionIndex][endTimeItr - 1];
+    HmAugInvUUT_T_GmAug_[partitionIndex][endTimeItr - 1].noalias() =
+        BASE::riccatiModificationTrajectoriesStock_[partitionIndex][endTimeItr - 1].HmInverseConstrainedLowRank_.transpose() * GmAug;
 
     /*
      * solve Riccati equations and compute projected model data and RiccatiModification for the intermediate times
@@ -316,7 +320,7 @@ void ILQR<STATE_DIM, INPUT_DIM>::constrainedRiccatiEquationsWorker(size_t worker
       riccatiEquationsPtrStock_[workerIndex]->computeMap(
           BASE::projectedModelDataTrajectoriesStock_[partitionIndex][k], BASE::riccatiModificationTrajectoriesStock_[partitionIndex][k],
           BASE::SmTrajectoryStock_[partitionIndex][k + 1], BASE::SvTrajectoryStock_[partitionIndex][k + 1],
-          BASE::sTrajectoryStock_[partitionIndex][k + 1], GmTrajectoriesStock_[partitionIndex][k], GvTrajectoriesStock_[partitionIndex][k],
+          BASE::sTrajectoryStock_[partitionIndex][k + 1], HmAugInvUUT_T_GmAug_[partitionIndex][k], HmAugInvUUT_T_GvAug_[partitionIndex][k],
           BASE::SmTrajectoryStock_[partitionIndex][k], BASE::SvTrajectoryStock_[partitionIndex][k],
           BASE::sTrajectoryStock_[partitionIndex][k]);
     }  // end of k loop
@@ -347,8 +351,8 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void ILQR<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   BASE::setupOptimizer(numPartitions);
 
-  GvTrajectoriesStock_.resize(numPartitions);
-  GmTrajectoriesStock_.resize(numPartitions);
+  HmAugInvUUT_T_GvAug_.resize(numPartitions);
+  HmAugInvUUT_T_GmAug_.resize(numPartitions);
 }
 
 }  // namespace ocs2

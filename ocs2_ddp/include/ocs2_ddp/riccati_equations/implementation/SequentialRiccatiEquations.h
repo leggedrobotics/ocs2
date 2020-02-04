@@ -171,8 +171,10 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(const scalar_arra
     }
 
   } else {
-    HmInvUUT_T_deltaPm_array_.clear();
-    HmInvUUT_T_deltaPm_array_.reserve(N);
+    HmInvUUT_T_deltaGv_array_.clear();
+    HmInvUUT_T_deltaGv_array_.reserve(N);
+    HmInvUUT_T_deltaGm_array_.clear();
+    HmInvUUT_T_deltaGm_array_.reserve(N);
     HmInvUUT_T_Rm_HmInvUUT_array_.clear();
     HmInvUUT_T_Rm_HmInvUUT_array_.reserve(N);
     // precomputation
@@ -180,8 +182,12 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(const scalar_arra
     for (int i = 0; i < N; i++) {
       const auto& modelDataPtr = (*projectedModelDataPtr)[i];
       const auto& riccatiModification = (*riccatiModificationPtr)[i];
-      HmInvUUT_T_deltaPm_array_.emplace_back(riccatiModification.HmInverseConstrainedLowRank_.transpose() * riccatiModification.deltaPm_);
       HmInvUUT_T_Rm.noalias() = riccatiModification.HmInverseConstrainedLowRank_.transpose() * modelDataPtr.costInputSecondDerivative_;
+
+      HmInvUUT_T_deltaGv_array_.emplace_back(HmInvUUT_T_Rm * modelDataPtr.stateInputEqConstr_);
+      HmInvUUT_T_deltaGm_array_.emplace_back(HmInvUUT_T_Rm * modelDataPtr.stateInputEqConstrStateDerivative_);
+      HmInvUUT_T_deltaGm_array_.back().noalias() +=
+          riccatiModification.HmInverseConstrainedLowRank_.transpose() * riccatiModification.deltaPm_;
       HmInvUUT_T_Rm_HmInvUUT_array_.emplace_back(HmInvUUT_T_Rm * riccatiModification.HmInverseConstrainedLowRank_);
     }
   }
@@ -261,7 +267,7 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const scal
     EigenLinearInterpolation<dynamic_vector_t>::interpolate(indexAlpha, RmInvUUT_T_Rv_, &RmInvUUT_T_Rv_array_);
     EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, B_RmInvUUT_, &B_RmInvUUT_array_);
 
-    // dSmdt [TOTAL COMPLEXITY: (nx^3) + (nx^2 * nu) + (nx^2 * np)]
+    // dSmdt [TOTAL COMPLEXITY: (nx^3) + 2(nx^2 * np)]
     Am_T_Sm_.noalias() = AmT_minus_P_Rinv_Bm_ * Sm_;
     dSm_ += Am_T_Sm_ + Am_T_Sm_.transpose();
     SmT_B_RmInvUUT_.noalias() = Sm_.transpose() * B_RmInvUUT_;
@@ -295,7 +301,8 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const scal
     // Pm
     ModelData::LinearInterpolation::interpolate(indexAlpha, Gm_, projectedModelDataPtr_, ModelData::costInputStateDerivative);
 
-    EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, HmInvUUT_T_deltaPm_, &HmInvUUT_T_deltaPm_array_);
+    EigenLinearInterpolation<dynamic_vector_t>::interpolate(indexAlpha, HmInvUUT_T_GvAug_, &HmInvUUT_T_deltaGv_array_);
+    EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, HmInvUUT_T_GmAug_, &HmInvUUT_T_deltaGm_array_);
     EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, HmInvUUT_T_Rm_HmInvUUT_, &HmInvUUT_T_Rm_HmInvUUT_array_);
 
     RiccatiModification::LinearInterpolation::interpolate(indexAlpha, deltaQm_, riccatiModificationPtr_, RiccatiModification::deltaQm);
@@ -312,17 +319,17 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const scal
     Gm_.noalias() += Bm_.transpose() * Sm_;
     // Km = inv(Hm) * Gm = (HmInvUUT * HmInvUUT^T) * Gm = HmInvUUT * HmInvUUT_T_Gm [COMPLEXITY: nx * nu * np]
     HmInvUUT_T_Gm_.noalias() = HmInvUUT_.transpose() * Gm_;
-    HmInvUUT_T_GmAug_ = HmInvUUT_T_Gm_ + HmInvUUT_T_deltaPm_;
+    HmInvUUT_T_GmAug_ += HmInvUUT_T_Gm_;
 
     // Km^T * Gm [COMPLEXITY: nx^2 * np]
     Km_T_Gm_.noalias() = -HmInvUUT_T_GmAug_.transpose() * HmInvUUT_T_Gm_;
 
     // Km^T * Rm * Km [COMPLEXITY: (nx * np^2) + (nx^2 * np)]
     HmInvUUT_T_Rm_Km_.noalias() = -HmInvUUT_T_Rm_HmInvUUT_.transpose() * HmInvUUT_T_GmAug_;
-    Km_T_Rm_Km.noalias() = -HmInvUUT_T_Rm_Km_.transpose() * HmInvUUT_T_GmAug_;
+    Km_T_Rm_Km_.noalias() = -HmInvUUT_T_GmAug_.transpose() * HmInvUUT_T_Rm_Km_;
 
     // dSm [TOTAL COMPLEXITY: (nx^3) + (nx^2*nu) + 2*(nx^2*np) + (nx*nu*np) + (nx*np^2)]
-    dSm_ += deltaQm_ + Am_T_Sm_ + Am_T_Sm_.transpose() + Km_T_Gm_ + Km_T_Gm_.transpose() + Km_T_Rm_Km;
+    dSm_ += deltaQm_ + Am_T_Sm_ + Am_T_Sm_.transpose() + Km_T_Gm_ + Km_T_Gm_.transpose() + Km_T_Rm_Km_;
 
     /*
      * dSvdt
@@ -336,16 +343,20 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const scal
     // Gv = Rv + Bm^T Sv [COMPLEXITY: (nx * nu) + (nu * np)]
     Gv_.noalias() += Bm_.transpose() * Sv_;
     HmInvUUT_T_Gv_.noalias() = HmInvUUT_.transpose() * Gv_;
+    HmInvUUT_T_GvAug_ += HmInvUUT_T_Gv_;
 
-    // (Km^T * Gv) or (Gm^T * Lv) [COMPLEXITY: nx * np]
+    // (Gm^T * Lv) [COMPLEXITY: nx * np]
+    Gm_T_Lv_.noalias() = -HmInvUUT_T_Gm_.transpose() * HmInvUUT_T_GvAug_;
+
+    // (Km^T * Gv) [COMPLEXITY: nx * np]
     Km_T_Gv_.noalias() = -HmInvUUT_T_GmAug_.transpose() * HmInvUUT_T_Gv_;
 
     // Km^T * Rm * Lv [COMPLEXITY: (np^2) + (nx * np)]
-    HmInvUUT_T_Rm_Lv_ = -HmInvUUT_T_Rm_HmInvUUT_.transpose() * HmInvUUT_T_Gv_;
-    Km_T_Rm_Lv_ = -HmInvUUT_T_GmAug_.transpose() * HmInvUUT_T_Rm_Lv_;
+    HmInvUUT_T_Rm_Lv_.noalias() = -HmInvUUT_T_Rm_HmInvUUT_.transpose() * HmInvUUT_T_GvAug_;
+    Km_T_Rm_Lv_.noalias() = -HmInvUUT_T_GmAug_.transpose() * HmInvUUT_T_Rm_Lv_;
 
-    // dSv [TOTAL COMPLEXITY: 2*(nx^2) + (nx*nu) + 2*(nx*np) + (nu*np) + (np^2)]
-    dSv_ += 2.0 * Km_T_Gv_ + Km_T_Rm_Lv_;
+    // dSv [TOTAL COMPLEXITY: 2*(nx^2) + (nx*nu) + 3*(nx*np) + (nu*np) + (np^2)]
+    dSv_ += Gm_T_Lv_ + Km_T_Gv_ + Km_T_Rm_Lv_;
 
     /*
      * dsdt
@@ -353,9 +364,9 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const scal
     // += Sv^T * Hv [COMPLEXITY: nx]
     ds_ += Sv_.dot(Hv_);
     // += Lv^T Gv [COMPLEXITY: np]
-    ds_ -= HmInvUUT_T_Gv_.dot(HmInvUUT_T_Gv_);
+    ds_ -= HmInvUUT_T_GvAug_.dot(HmInvUUT_T_Gv_);
     // += 0.5 Lv^T Rm Lv [COMPLEXITY: np]
-    ds_ -= 0.5 * HmInvUUT_T_Rm_Lv_.dot(HmInvUUT_T_Gv_);
+    ds_ -= 0.5 * HmInvUUT_T_GvAug_.dot(HmInvUUT_T_Rm_Lv_);
   }
 
   convert2Vector(dSm_, dSv_, ds_, derivatives);

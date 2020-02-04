@@ -55,6 +55,9 @@ class RiccatiInitializer {
     modelData.numIneqConstr_ = 0;
     modelData.numStateEqConstr_ = 0;
     modelData.numStateInputEqConstr_ = 0;
+    modelData.stateInputEqConstr_.setZero(input_dim);
+    modelData.stateInputEqConstrStateDerivative_.setZero(input_dim, state_dim);
+    modelData.stateInputEqConstrInputDerivative_.setZero(input_dim, input_dim);
 
     modelDataTrajectory = ocs2::ModelDataBase::array_t{modelData, modelData};
 

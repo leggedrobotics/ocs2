@@ -87,16 +87,21 @@ class SLQ_DataCollector {
   using constraint1_state_matrix_array2_t = typename slq_t::constraint1_state_matrix_array2_t;
   using constraint1_input_matrix_array_t = typename slq_t::constraint1_input_matrix_array_t;
   using constraint1_input_matrix_array2_t = typename slq_t::constraint1_input_matrix_array2_t;
-  using input_constraint1_matrix_array_t = typename slq_t::input_constraint1_matrix_array_t;
-  using input_constraint1_matrix_array2_t = typename slq_t::input_constraint1_matrix_array2_t;
+  using input_dynamic_matrix_array_t = typename slq_t::input_dynamic_matrix_array_t;
+  using input_dynamic_matrix_array2_t = typename slq_t::input_dynamic_matrix_array2_t;
   using constraint2_vector_array_t = typename slq_t::constraint2_vector_array_t;
   using constraint2_vector_array2_t = typename slq_t::constraint2_vector_array2_t;
   using constraint2_state_matrix_array_t = typename slq_t::constraint2_state_matrix_array_t;
   using constraint2_state_matrix_array2_t = typename slq_t::constraint2_state_matrix_array2_t;
+  using dynamic_vector_t = typename slq_t::dynamic_vector_t;
+  using dynamic_vector_array_t = typename slq_t::dynamic_vector_array_t;
+  using dynamic_vector_array2_t = typename slq_t::dynamic_vector_array2_t;
+  using dynamic_matrix_t = typename slq_t::dynamic_matrix_t;
+  using dynamic_matrix_array_t = typename slq_t::dynamic_matrix_array_t;
   using dynamic_matrix_array2_t = typename slq_t::dynamic_matrix_array2_t;
 
-  using constraint1_vector_array3_t = std::vector<constraint1_vector_array2_t, Eigen::aligned_allocator<constraint1_vector_array2_t>>;
-  using constraint2_vector_array3_t = std::vector<constraint2_vector_array2_t, Eigen::aligned_allocator<constraint2_vector_array2_t>>;
+  using dynamic_vector_array3_t = std::vector<dynamic_vector_array2_t, Eigen::aligned_allocator<dynamic_vector_array2_t>>;
+  using dynamic_matrix_array3_t = std::vector<dynamic_matrix_array2_t, Eigen::aligned_allocator<dynamic_matrix_array2_t>>;
 
   using derivatives_base_t = typename slq_t::derivatives_base_t;
   using constraint_base_t = typename slq_t::constraint_base_t;
@@ -166,7 +171,7 @@ class SLQ_DataCollector {
 
   dynamic_matrix_array2_t RmInverseTrajectoriesStock_;
   dynamic_matrix_array2_t RmInvConstrainedCholTrajectoryStock_;
-  input_constraint1_matrix_array2_t DmDagerTrajectoriesStock_;
+  dynamic_matrix_array2_t DmDagerTrajectoriesStock_;
 
   // terminal cost which is interpreted as the Heuristic function
   scalar_t sHeuristics_;
@@ -184,8 +189,8 @@ class SLQ_DataCollector {
   /******************
    * SLQ missing variables
    ******************/
-  constraint1_vector_array3_t EvDevEventTimesTrajectoriesStockSet_;     // state-input constraint derivative w.r.t. event times
-  input_vector_array3_t EvDevEventTimesProjectedTrajectoriesStockSet_;  // DmDager * EvDevEventTimes
+  dynamic_vector_array3_t EvDevEventTimesTrajectoryStockSet_;         // state-input constraint derivative w.r.t. event times
+  input_vector_array3_t EvDevEventTimesProjectedTrajectoryStockSet_;  // DmDager * EvDevEventTimes
 
  protected:
   /**
@@ -212,7 +217,7 @@ class SLQ_DataCollector {
   void calculateStateInputConstraintsSensitivity(const slq_t* constSlqPtr, const std::vector<scalar_array_t>& timeTrajectoriesStock,
                                                  const state_vector_array2_t& stateTrajectoriesStock,
                                                  const input_vector_array2_t& inputTrajectoriesStock,
-                                                 constraint1_vector_array3_t& EvDevEventTimesTrajectoriesStockSet,
+                                                 dynamic_vector_array3_t& EvDevEventTimesTrajectoriesStockSet,
                                                  input_vector_array3_t& EvDevEventTimesProjectedTrajectoriesStockSet);
 
  private:

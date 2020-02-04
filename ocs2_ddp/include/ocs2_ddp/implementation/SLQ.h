@@ -124,14 +124,12 @@ void SLQ<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, si
   EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, nominalInput, &(BASE::nominalInputTrajectoriesStock_[i]));
 
   // Bm
-  ModelData::LinearInterpolation::interpolate(indexAlpha, Bm, &BASE::projectedModelDataTrajectoriesStock_[i],
-                                              ModelData::dynamicsInputDerivative);
+  ModelData::LinearInterpolation::interpolate(indexAlpha, Bm, &BASE::modelDataTrajectoriesStock_[i], ModelData::dynamicsInputDerivative);
   // Pm
-  ModelData::LinearInterpolation::interpolate(indexAlpha, GmAug, &BASE::projectedModelDataTrajectoriesStock_[i],
+  ModelData::LinearInterpolation::interpolate(indexAlpha, GmAug, &BASE::modelDataTrajectoriesStock_[i],
                                               ModelData::costInputStateDerivative);
   // Rv
-  ModelData::LinearInterpolation::interpolate(indexAlpha, Gv, &BASE::projectedModelDataTrajectoriesStock_[i],
-                                              ModelData::costInputDerivative);
+  ModelData::LinearInterpolation::interpolate(indexAlpha, Gv, &BASE::modelDataTrajectoriesStock_[i], ModelData::costInputDerivative);
   // EvProjected
   ModelData::LinearInterpolation::interpolate(indexAlpha, EvProjected, &BASE::projectedModelDataTrajectoriesStock_[i],
                                               ModelData::stateInputEqConstr);

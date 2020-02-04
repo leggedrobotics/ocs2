@@ -195,8 +195,8 @@ class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    ****************/
   ILQR_Settings settings_;
 
-  dynamic_vector_array2_t GvTrajectoriesStock_;
-  dynamic_matrix_array2_t GmTrajectoriesStock_;
+  dynamic_vector_array2_t HmAugInvUUT_T_GvAug_;
+  dynamic_matrix_array2_t HmAugInvUUT_T_GmAug_;
 
   std::vector<std::shared_ptr<riccati_equations_t>> riccatiEquationsPtrStock_;
 };

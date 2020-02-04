@@ -172,7 +172,8 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
   dynamic_matrix_array_t B_RmInvUUT_array_;
   dynamic_vector_array_t RmInvUUT_T_Rv_array_;
   // Arrays to store no-precomputation
-  dynamic_matrix_array_t HmInvUUT_T_deltaPm_array_;
+  dynamic_vector_array_t HmInvUUT_T_deltaGv_array_;
+  dynamic_matrix_array_t HmInvUUT_T_deltaGm_array_;
   dynamic_matrix_array_t HmInvUUT_T_Rm_HmInvUUT_array_;
 
   // members required only in computeFlowMap()
@@ -192,7 +193,6 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
   dynamic_matrix_t Am_;
   dynamic_matrix_t Bm_;
 
-  dynamic_matrix_t HmInvUUT_T_deltaPm_;
   dynamic_matrix_t HmInvUUT_T_Rm_HmInvUUT_;
 
   dynamic_matrix_t Gm_;
@@ -200,10 +200,12 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
   dynamic_matrix_t HmInvUUT_T_GmAug_;
   dynamic_matrix_t Km_T_Gm_;
   dynamic_matrix_t HmInvUUT_T_Rm_Km_;
-  dynamic_matrix_t Km_T_Rm_Km;
+  dynamic_matrix_t Km_T_Rm_Km_;
 
   dynamic_vector_t Gv_;
   dynamic_vector_t HmInvUUT_T_Gv_;
+  dynamic_vector_t HmInvUUT_T_GvAug_;
+  dynamic_vector_t Gm_T_Lv_;
   dynamic_vector_t Km_T_Gv_;
   dynamic_vector_t HmInvUUT_T_Rm_Lv_;
   dynamic_vector_t Km_T_Rm_Lv_;

@@ -75,8 +75,8 @@ class DifferenceRiccatiEquations {
    * @param [out] derivatives: d(allSs)/dz.
    */
   void computeMap(const ModelDataBase projectedModelData, const RiccatiModificationBase& riccatiModification, const state_matrix_t& SmNext,
-                  const state_vector_t& SvNext, const scalar_t& sNext, dynamic_matrix_t& Gm, dynamic_vector_t& Gv, state_matrix_t& Sm,
-                  state_vector_t& Sv, scalar_t& s) {
+                  const state_vector_t& SvNext, const scalar_t& sNext, dynamic_matrix_t& HmAugInvUUT_T_GmAug,
+                  dynamic_vector_t& HmAugInvUUT_T_GvAug, state_matrix_t& Sm, state_vector_t& Sv, scalar_t& s) {
     const auto& HmAugInvUUT = riccatiModification.HmInverseConstrainedLowRank_;
 
     // precomputation
@@ -84,8 +84,10 @@ class DifferenceRiccatiEquations {
     Bm_T_Sm_.noalias() = projectedModelData.dynamicsInputDerivative_.transpose() * SmNext;
     Hm_.noalias() += Bm_T_Sm_ * projectedModelData.dynamicsInputDerivative_;
 
-    HmAugInvUUT_T_deltaPm_.noalias() = HmAugInvUUT.transpose() * riccatiModification.deltaPm_;
     HmAugInvUUT_T_Hm_.noalias() = HmAugInvUUT.transpose() * Hm_;
+    HmAugInvUUT_T_GvAug.noalias() = HmAugInvUUT_T_Hm_ * projectedModelData.stateInputEqConstr_;
+    HmAugInvUUT_T_GmAug.noalias() = HmAugInvUUT_T_Hm_ * projectedModelData.stateInputEqConstrStateDerivative_;
+    HmAugInvUUT_T_GmAug.noalias() += HmAugInvUUT.transpose() * riccatiModification.deltaPm_;
     HmAugInvUUT_T_Hm_HmAugInvUUT_.noalias() = HmAugInvUUT_T_Hm_ * HmAugInvUUT;
 
     // s + q
@@ -95,9 +97,9 @@ class DifferenceRiccatiEquations {
     // Qm + deltaQm
     Sm = projectedModelData.costStateSecondDerivative_ + riccatiModification.deltaQm_;
     // Rv
-    Gv = projectedModelData.costInputDerivative_;
+    Gv_ = projectedModelData.costInputDerivative_;
     // Pm
-    Gm = projectedModelData.costInputStateDerivative_;
+    Gm_ = projectedModelData.costInputStateDerivative_;
 
     /*
      * Sm
@@ -106,18 +108,18 @@ class DifferenceRiccatiEquations {
     Am_T_Sm_.noalias() = projectedModelData.dynamicsStateDerivative_.transpose() * SmNext;
     Sm.noalias() += Am_T_Sm_ * projectedModelData.dynamicsStateDerivative_;
 
-    // Gm = Pm + Bm^T Sm
-    Gm.noalias() += projectedModelData.dynamicsInputDerivative_.transpose() * Am_T_Sm_.transpose();
+    // Gm = Pm + Bm^T Sm Am
+    Gm_.noalias() += projectedModelData.dynamicsInputDerivative_.transpose() * Am_T_Sm_.transpose();
     // Km = inv(HmAug) * Gm = (HmAugInvUUT * HmAugInvUUT^T) * Gm = HmAugInvUUT * HmAugInvUUT_T_Gm_
-    HmAugInvUUT_T_Gm_.noalias() = HmAugInvUUT.transpose() * Gm;
-    HmAugInvUUT_T_GmAug_ = HmAugInvUUT_T_Gm_ + HmAugInvUUT_T_deltaPm_;
+    HmAugInvUUT_T_Gm_.noalias() = HmAugInvUUT.transpose() * Gm_;
+    HmAugInvUUT_T_GmAug += HmAugInvUUT_T_Gm_;
 
     // Km^T * Gm
-    Km_T_Gm_.noalias() = -HmAugInvUUT_T_GmAug_.transpose() * HmAugInvUUT_T_Gm_;
+    Km_T_Gm_.noalias() = -HmAugInvUUT_T_GmAug.transpose() * HmAugInvUUT_T_Gm_;
 
     // Km^T * Hm * Km
-    HmAugInvUUT_T_Hm_Km_.noalias() = -HmAugInvUUT_T_Hm_HmAugInvUUT_.transpose() * HmAugInvUUT_T_GmAug_;
-    Km_T_Hm_Km_.noalias() = -HmAugInvUUT_T_Hm_Km_.transpose() * HmAugInvUUT_T_GmAug_;
+    HmAugInvUUT_T_Hm_Km_.noalias() = -HmAugInvUUT_T_Hm_HmAugInvUUT_.transpose() * HmAugInvUUT_T_GmAug;
+    Km_T_Hm_Km_.noalias() = -HmAugInvUUT_T_Hm_Km_.transpose() * HmAugInvUUT_T_GmAug;
 
     // Sm
     Sm += Km_T_Gm_ + Km_T_Gm_.transpose() + Km_T_Hm_Km_;
@@ -133,18 +135,22 @@ class DifferenceRiccatiEquations {
     Sv.noalias() += projectedModelData.dynamicsStateDerivative_.transpose() * Sv_plus_Sm_Hv_;
 
     // Gv = Rv + Bm^T (Sv + Sm * Hv)
-    Gv.noalias() += projectedModelData.dynamicsInputDerivative_.transpose() * Sv_plus_Sm_Hv_;
-    HmAugInvUUT_T_Gv_.noalias() = HmAugInvUUT.transpose() * Gv;
+    Gv_.noalias() += projectedModelData.dynamicsInputDerivative_.transpose() * Sv_plus_Sm_Hv_;
+    HmAugInvUUT_T_Gv_.noalias() = HmAugInvUUT.transpose() * Gv_;
+    HmAugInvUUT_T_GvAug += HmAugInvUUT_T_Gv_;
 
-    // (Km^T * Gv) or (Gm^T * Lv)
-    Km_T_Gv_.noalias() = -HmAugInvUUT_T_GmAug_.transpose() * HmAugInvUUT_T_Gv_;
+    // (Gm^T * Lv)
+    Gm_T_Lv_.noalias() = -HmAugInvUUT_T_Gm_.transpose() * HmAugInvUUT_T_GvAug;
+
+    // (Km^T * Gv)
+    Km_T_Gv_.noalias() = -HmAugInvUUT_T_GmAug.transpose() * HmAugInvUUT_T_Gv_;
 
     // Km^T * Hm * Lv
-    HmAugInvUUT_T_Hm_Lv_ = -HmAugInvUUT_T_Hm_HmAugInvUUT_.transpose() * HmAugInvUUT_T_Gv_;
-    Km_T_Hm_Lv_ = -HmAugInvUUT_T_GmAug_.transpose() * HmAugInvUUT_T_Hm_Lv_;
+    HmAugInvUUT_T_Hm_Lv_ = -HmAugInvUUT_T_Hm_HmAugInvUUT_.transpose() * HmAugInvUUT_T_GvAug;
+    Km_T_Hm_Lv_ = -HmAugInvUUT_T_GmAug.transpose() * HmAugInvUUT_T_Hm_Lv_;
 
     // Sv
-    Sv += 2.0 * Km_T_Gv_ + Km_T_Hm_Lv_;
+    Sv += Gm_T_Lv_ + Km_T_Gv_ + Km_T_Hm_Lv_;
 
     /*
      * s
@@ -154,28 +160,30 @@ class DifferenceRiccatiEquations {
     // -= 0.5 Hv^T * Sm * Hv
     s -= 0.5 * projectedModelData.dynamicsBias_.dot(Sm_Hv_);
     // += Lv^T Gv
-    s -= HmAugInvUUT_T_Gv_.dot(HmAugInvUUT_T_Gv_);
+    s -= HmAugInvUUT_T_GvAug.dot(HmAugInvUUT_T_Gv_);
     // += Lv^T Hm Lv
-    s -= 0.5 * HmAugInvUUT_T_Hm_Lv_.dot(HmAugInvUUT_T_Gv_);
+    s -= 0.5 * HmAugInvUUT_T_GvAug.dot(HmAugInvUUT_T_Hm_Lv_);
   }
 
  private:
   dynamic_matrix_t Hm_;
   dynamic_matrix_t Bm_T_Sm_;
   dynamic_matrix_t Am_T_Sm_;
-  dynamic_matrix_t HmAugInvUUT_T_deltaPm_;
   dynamic_matrix_t HmAugInvUUT_T_Hm_;
   dynamic_matrix_t HmAugInvUUT_T_Hm_HmAugInvUUT_;
 
+  dynamic_matrix_t Gm_;
   dynamic_matrix_t HmAugInvUUT_T_Gm_;
-  dynamic_matrix_t HmAugInvUUT_T_GmAug_;
   dynamic_matrix_t Km_T_Gm_;
   dynamic_matrix_t HmAugInvUUT_T_Hm_Km_;
   dynamic_matrix_t Km_T_Hm_Km_;
 
   dynamic_vector_t Sm_Hv_;
   dynamic_vector_t Sv_plus_Sm_Hv_;
+
+  dynamic_vector_t Gv_;
   dynamic_vector_t HmAugInvUUT_T_Gv_;
+  dynamic_vector_t Gm_T_Lv_;
   dynamic_vector_t Km_T_Gv_;
   dynamic_vector_t HmAugInvUUT_T_Hm_Lv_;
   dynamic_vector_t Km_T_Hm_Lv_;

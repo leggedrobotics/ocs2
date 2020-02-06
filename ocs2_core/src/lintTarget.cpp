@@ -27,7 +27,7 @@
 #include <ocs2_core/cost/CostFunctionLinearCombination.h>
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/cost/QuadraticGaussNewtonCostBaseAD.h>
-#include <ocs2_core/cost/RbfCostFunctionBaseAD.h>
+#include <ocs2_core/cost/RelaxedBarrierCost.h>
 
 // Dynamics
 #include <ocs2_core/dynamics/ControlledSystemBase.h>

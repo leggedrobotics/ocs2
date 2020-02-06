@@ -43,12 +43,12 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-class RbfCostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
+class RelaxedBarrierCost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using BASE = CostFunctionBase<STATE_DIM, INPUT_DIM>;
-  using rbf_costfunction_base_ad_t = RbfCostFunctionBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>;
+  using rbf_costfunction_base_ad_t = RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>;
   using typename BASE::dynamic_vector_array_t;
   using typename BASE::dynamic_vector_t;
   using typename BASE::input_matrix_t;
@@ -84,17 +84,17 @@ class RbfCostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    * Default constructor
    *
    */
-  explicit RbfCostFunctionBaseAD(scalar_t mu, scalar_t delta);
+  explicit RelaxedBarrierCost(scalar_t mu, scalar_t delta);
 
   /**
    * Copy constructor
    */
-  RbfCostFunctionBaseAD(const RbfCostFunctionBaseAD& rhs);
+  RelaxedBarrierCost(const RelaxedBarrierCost& rhs);
 
   /**
    * Default destructor
    */
-  virtual ~RbfCostFunctionBaseAD() = default;
+  virtual ~RelaxedBarrierCost() = default;
 
   /**
    * Initializes model libraries
@@ -261,4 +261,4 @@ class RbfCostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
 
 }  // namespace ocs2
 
-#include "implementation/RbfCostFunctionBaseAD.h"
+#include "implementation/RelaxedBarrierCost.h"

@@ -37,10 +37,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * Cost Function Base with Algorithmic Differentiation (i.e. Auto Differentiation).
+ *
+ * Relaxed Barrier Soft Constraint Cost with Algorithmic Differentiation (i.e. Auto Differentiation).
+ *
+ * The intermediate cost term and the final cost term have the following form:
+ * - \f$ L = RelaxedBarrierFunction(f(x,u,t)) \f$
+ * - \f$ \Phi = RelaxedBarrierFunction(f(x,u,t)) \f$.
+ *
+ * The RelaxedBarrierFunction applies -mu*ln(z) element wise to the user provided function outputs. If z<delta
+ * the a quadratic function is applied instead. The quadratic function is parameterized such that the concatenation
+ * with -mu*ln(x) is continuously differentiable.
+ * The user provides implementations for f and g. The Jacobians of f and g are computed by auto differentiation.
+ * This costfunction approximates the Hessians of L and \Phi by applying the chain rule and neglecting the terms
+ * with hessians of f and g. Hess_{L} and H_{\Phi} are therefore guaranteed to be at least positive semidefinite.
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
+ * @tparam INTERMEDIATE_COST_DIM dim(image(f))
+ * @tparam TERMINAL_COST_DIM dim(image(g))
  */
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
 class RelaxedBarrierCost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
@@ -81,8 +95,10 @@ class RelaxedBarrierCost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
   using terminal_cost_vector_t = Eigen::Matrix<scalar_t, TERMINAL_COST_DIM, 1>;
 
   /**
-   * Default constructor
+   * Constructior
    *
+   * @param mu : scaling factor
+   * @param delta : relaxation parameter, see class description
    */
   explicit RelaxedBarrierCost(scalar_t mu, scalar_t delta);
 
@@ -134,10 +150,16 @@ class RelaxedBarrierCost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
 
  protected:
   /**
-   * Gets a user-defined cost parameters, applied to the intermediate costs
+   * Interface method to the cost term f such that the intermediate cost is
+   * - \f$ L = RelaxedBarrierFunction(f(x,u,t)) \f$
+   * This method must be implemented by the derived class.
    *
-   * @param [in] time: Current time.
-   * @return The cost function parameters at a certain time
+   * @tparam scalar type. All the floating point operations should be with this type.
+   * @param [in] time: time.
+   * @param [in] state: state vector.
+   * @param [in] input: input vector.
+   * @param [in] parameters: parameter vector.
+   * @param [out] costValue: costValues = f(x,u,t).
    */
   virtual dynamic_vector_t getIntermediateParameters(scalar_t time) const { return dynamic_vector_t(0); }
 
@@ -150,10 +172,15 @@ class RelaxedBarrierCost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
   virtual size_t getNumIntermediateParameters() const { return 0; }
 
   /**
-   * Gets a user-defined cost parameters, applied to the terminal costs
+   * Interface method to the cost term g such that the intermediate cost is
+   * - \f$ \Phi = RelaxedBarrierFunction(f(x,u,t)) \f$.
+   * This method may be implemented by the derived class.
    *
-   * @param [in] time: Current time.
-   * @return The cost function parameters at a certain time
+   * @tparam scalar type. All the floating point operations should be with this type.
+   * @param [in] time: time.
+   * @param [in] state: state vector.
+   * @param [in] parameters: parameter vector.
+   * @param [out] costValue: costValues = g(x,t).
    */
   virtual dynamic_vector_t getTerminalParameters(scalar_t time) const { return dynamic_vector_t(0); }
 

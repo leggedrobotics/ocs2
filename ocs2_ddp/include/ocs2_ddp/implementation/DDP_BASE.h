@@ -145,6 +145,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
     cachedInputTrajectoriesStock_[i].clear();
     cachedModelDataTrajectoriesStock_[i].clear();
     cachedModelDataEventTimesStock_[i].clear();
+    cachedProjectedModelDataTrajectoriesStock_[i].clear();
+    cachedRiccatiModificationTrajectoriesStock_[i].clear();
 
     // for Riccati equation parallel computation
     SmFinalStock_[i] = state_matrix_t::Zero();
@@ -560,16 +562,26 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
     const scalar_t& stateEqFinalConstraintISE, const scalar_t& inequalityConstraintPenalty) const {
   scalar_t merit = cost;
 
-  const scalar_t stateConstraintPenalty =
-      ddpSettings_.stateConstraintPenaltyCoeff_ * std::pow(ddpSettings_.stateConstraintPenaltyBase_, iteration_);
-  merit += 0.5 * stateConstraintPenalty * (stateEqConstraintISE + stateEqFinalConstraintISE);
+  merit += 0.5 * constraintPenaltyCoefficients_.stateEquality * (stateEqConstraintISE + stateEqFinalConstraintISE);
 
   merit += inequalityConstraintPenalty;
 
-  // TODO: decide for the merit function
-  //  merit += 10.0 * stateInputEqConstraintISE;
+  merit += 0.5 * constraintPenaltyCoefficients_.stateInputEquality * stateInputEqConstraintISE;
 
   return merit;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::updateConstraintPenalties(size_t iteration) {
+  // state-only equality penalty
+  constraintPenaltyCoefficients_.stateEquality =
+      ddpSettings_.stateConstraintPenaltyCoeff_ * pow(ddpSettings_.stateConstraintPenaltyBase_, iteration);
+
+  // state-input equality penalty
+  constraintPenaltyCoefficients_.stateInputEquality = 10.0;
 }
 
 /******************************************************************************************************/
@@ -658,17 +670,27 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::augmentCostWorker(size_t workerIndex, ModelDataBase& modelData) {
-  // state-only equality penalty
-  const auto stateConstraintPenalty = ddpSettings_.stateConstraintPenaltyCoeff_ * pow(ddpSettings_.stateConstraintPenaltyBase_, iteration_);
-
+void DDP_BASE<STATE_DIM, INPUT_DIM>::augmentCostWorker(size_t workerIndex, ModelDataBase& modelData) const {
   // state equality constraint (type 2) coefficients
   if (modelData.numStateEqConstr_ > 0) {
     const dynamic_vector_t& Hv = modelData.stateEqConstr_;
     const dynamic_matrix_t& Fm = modelData.stateEqConstrStateDerivative_;
-    modelData.cost_ += 0.5 * stateConstraintPenalty * Hv.transpose() * Hv;
-    modelData.costStateDerivative_ += stateConstraintPenalty * Fm.transpose() * Hv;
-    modelData.costStateSecondDerivative_ += stateConstraintPenalty * Fm.transpose() * Fm;
+    modelData.cost_ += 0.5 * constraintPenaltyCoefficients_.stateEquality * Hv.dot(Hv);
+    modelData.costStateDerivative_.noalias() += constraintPenaltyCoefficients_.stateEquality * Fm.transpose() * Hv;
+    modelData.costStateSecondDerivative_.noalias() += constraintPenaltyCoefficients_.stateEquality * Fm.transpose() * Fm;
+  }
+
+  // state-input equality constraint (type 1) coefficients
+  if (modelData.numStateInputEqConstr_ > 0) {
+    const dynamic_vector_t& Ev = modelData.stateInputEqConstr_;
+    const dynamic_matrix_t& Cm = modelData.stateInputEqConstrStateDerivative_;
+    const dynamic_matrix_t& Dm = modelData.stateInputEqConstrInputDerivative_;
+    modelData.cost_ += 0.5 * constraintPenaltyCoefficients_.stateInputEquality * Ev.dot(Ev);
+    modelData.costStateDerivative_.noalias() += constraintPenaltyCoefficients_.stateInputEquality * Cm.transpose() * Ev;
+    modelData.costInputDerivative_.noalias() += constraintPenaltyCoefficients_.stateInputEquality * Dm.transpose() * Ev;
+    modelData.costStateSecondDerivative_.noalias() += constraintPenaltyCoefficients_.stateInputEquality * Cm.transpose() * Cm;
+    modelData.costInputSecondDerivative_.noalias() += constraintPenaltyCoefficients_.stateInputEquality * Dm.transpose() * Dm;
+    modelData.costInputStateDerivative_.noalias() += constraintPenaltyCoefficients_.stateInputEquality * Dm.transpose() * Cm;
   }
 
   // inequality constraints
@@ -1011,8 +1033,19 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearch() {
         std::log(ratio + OCS2NumericTraits<scalar_t>::limitEpsilon()) / std::log(ddpSettings_.lineSearch_.contractionRate_) + 1);
   }
 
-  // perform a rollout while the input correction for the state-input equality constraint is considered.
-  baselineRollout();
+  // perform a rollout with steplength zero.
+  const size_t threadId = 0;
+  const scalar_t stepLength = 0.0;
+  scalar_t avgTimeStepFP = performFullRollout(threadId, stepLength, nominalTotalCost_, stateInputEqConstraintISE_, stateEqConstraintISE_,
+                                              stateEqFinalConstraintISE_, inequalityConstraintPenalty_, inequalityConstraintISE_,
+                                              nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_,
+                                              nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_, modelDataTrajectoriesStock_);
+  if (nominalTotalCost_ == std::numeric_limits<scalar_t>::max()) {
+    throw std::runtime_error("DDP feedback gains do not generate a stable rollout.");
+  }
+
+  // compute average time step of forward rollout
+  avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStepFP;
 
   // initialize lineSearchImpl
   lineSearchImpl_.baselineTotalCost = nominalTotalCost_;
@@ -1036,44 +1069,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearch() {
   // display
   if (ddpSettings_.displayInfo_) {
     std::cerr << "The chosen step length is: " + std::to_string(lineSearchImpl_.stepLengthStar) << std::endl;
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::baselineRollout() {
-  const size_t threadId = 0;
-
-  // perform one rollout while the input correction for the type-1 constraint is considered.
-  avgTimeStepFP_ = rolloutTrajectory(nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_,
-                                     nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_, modelDataTrajectoriesStock_, threadId);
-
-  // calculate constraint ISE
-  calculateRolloutConstraintsISE(nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_,
-                                 nominalInputTrajectoriesStock_, stateInputEqConstraintISE_, stateEqConstraintISE_,
-                                 stateEqFinalConstraintISE_, inequalityConstraintISE_, inequalityConstraintPenalty_, threadId);
-  // calculates rollout cost
-  scalar_t nominalTotalCostTemp;
-  nominalTotalCostTemp = calculateRolloutCost(nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_,
-                                              nominalInputTrajectoriesStock_, threadId);
-  // calculates rollout merit
-  nominalTotalCost_ = calculateRolloutMerit(nominalTotalCostTemp, stateInputEqConstraintISE_, stateEqConstraintISE_,
-                                            stateEqFinalConstraintISE_, inequalityConstraintPenalty_);
-
-  // display
-  if (ddpSettings_.displayInfo_) {
-    std::string linesearchDisplay;
-    linesearchDisplay = "    [Thread " + std::to_string(threadId) + "] - step length 0.0" +
-                        "    cost: " + std::to_string(nominalTotalCostTemp) + "    merit: " + std::to_string(nominalTotalCost_) + "\n" +
-                        "    state-input equality constraint ISE: " + std::to_string(stateInputEqConstraintISE_) +
-                        "    state equality constraint ISE: " + std::to_string(stateEqConstraintISE_) +
-                        "    state equality final constraint ISE: " + std::to_string(stateEqFinalConstraintISE_) +
-                        "    inequality penalty: " + std::to_string(inequalityConstraintPenalty_) +
-                        "    inequality ISE: " + std::to_string(inequalityConstraintISE_) + "\n" +
-                        "    forward pass average time step: " + std::to_string(avgTimeStepFP_ * 1e+3) + " [ms].";
-    BASE::printString(linesearchDisplay);
   }
 }
 
@@ -1123,9 +1118,10 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
 
     // do a line search
     controllersStock = lineSearchImpl_.initControllersStock;
-    lineSearchWorker(taskId, stepLength, totalCost, stateInputEqConstraintISE, stateEqConstraintISE, stateEqFinalConstraintISE,
-                     inequalityConstraintPenalty, inequalityConstraintISE, controllersStock, timeTrajectoriesStock, postEventIndicesStock,
-                     stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock);
+    scalar_t avgTimeStepFP =
+        performFullRollout(taskId, stepLength, totalCost, stateInputEqConstraintISE, stateEqConstraintISE, stateEqFinalConstraintISE,
+                           inequalityConstraintPenalty, inequalityConstraintISE, controllersStock, timeTrajectoriesStock,
+                           postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock);
 
     bool terminateLinesearchTasks = false;
     {
@@ -1186,25 +1182,26 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t workerIndex, scalar_t stepLength, scalar_t& totalCost,
-                                                      scalar_t& stateInputEqConstraintISE, scalar_t& stateEqConstraintISE,
-                                                      scalar_t& stateEqFinalConstraintISE, scalar_t& inequalityConstraintPenalty,
-                                                      scalar_t& inequalityConstraintISE, linear_controller_array_t& controllersStock,
-                                                      scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-                                                      state_vector_array2_t& stateTrajectoriesStock,
-                                                      input_vector_array2_t& inputTrajectoriesStock,
-                                                      ModelDataBase::array2_t& modelDataTrajectoriesStock) {
+typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::performFullRollout(
+    size_t workerIndex, scalar_t stepLength, scalar_t& totalCost, scalar_t& stateInputEqConstraintISE, scalar_t& stateEqConstraintISE,
+    scalar_t& stateEqFinalConstraintISE, scalar_t& inequalityConstraintPenalty, scalar_t& inequalityConstraintISE,
+    linear_controller_array_t& controllersStock, scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
+    state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
+    ModelDataBase::array2_t& modelDataTrajectoriesStock) {
   // modifying uff by local increments
-  for (auto& controller : controllersStock) {
-    for (size_t k = 0; k < controller.size(); k++) {
-      controller.biasArray_[k] += stepLength * controller.deltaBiasArray_[k];
+  if (!numerics::almost_eq(stepLength, 0.0)) {
+    for (auto& controller : controllersStock) {
+      for (size_t k = 0; k < controller.size(); k++) {
+        controller.biasArray_[k] += stepLength * controller.deltaBiasArray_[k];
+      }
     }
   }
 
+  scalar_t avgTimeStepFP = 0.0;
   try {
     // perform a rollout
-    scalar_t avgTimeStepFP = rolloutTrajectory(controllersStock, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
-                                               inputTrajectoriesStock, modelDataTrajectoriesStock, workerIndex);
+    avgTimeStepFP = rolloutTrajectory(controllersStock, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
+                                      inputTrajectoriesStock, modelDataTrajectoriesStock, workerIndex);
 
     // calculate rollout constraints
     calculateRolloutConstraintsISE(timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock,
@@ -1240,6 +1237,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t workerIndex, scalar
                         " is terminated: " + error.what());
     }
   }
+
+  return avgTimeStepFP;
 }
 
 /******************************************************************************************************/
@@ -1262,9 +1261,13 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::levenbergMarquardt() {
 
   // do a full step rollout
   const scalar_t stepLength = isInitInternalControllerEmpty_ ? 0.0 : 1.0;
-  lineSearchWorker(taskId, stepLength, totalCost, stateInputEqConstraintISE, stateEqConstraintISE, stateEqFinalConstraintISE,
-                   inequalityConstraintPenalty, inequalityConstraintISE, nominalControllersStock_, timeTrajectoriesStock,
-                   postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock);
+  scalar_t avgTimeStepFP =
+      performFullRollout(taskId, stepLength, totalCost, stateInputEqConstraintISE, stateEqConstraintISE, stateEqFinalConstraintISE,
+                         inequalityConstraintPenalty, inequalityConstraintISE, nominalControllersStock_, timeTrajectoriesStock,
+                         postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock);
+
+  // compute average time step of forward rollout
+  avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStepFP;
 
   // alias for the Levenberg_Marquardt settings
   const auto& lvSettings = ddpSettings_.levenbergMarquardt_;
@@ -2201,6 +2204,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
   // + The very first call of the algorithm where there is no previous nominal trajectories.
   correctInitcachedNominalTrajectories();
 
+  // update the constraint penalty coefficients
+  updateConstraintPenalties(iteration_);
+
   // linearizing the dynamics and quadratizing the cost function along nominal trajectories
   linearQuadraticApproximationTimer_.startTimer();
   approximateOptimalControlProblem();
@@ -2215,8 +2221,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
     // calculate rollout cost
     nominalTotalCost_ = calculateRolloutCost(nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_,
                                              nominalInputTrajectoriesStock_, 0);
-    // add penalty to cost
-    nominalTotalCost_ += inequalityConstraintPenalty_;
     // calculates rollout merit
     nominalTotalCost_ = calculateRolloutMerit(nominalTotalCost_, stateInputEqConstraintISE_, stateEqConstraintISE_,
                                               stateEqFinalConstraintISE_, inequalityConstraintPenalty_);
@@ -2268,6 +2272,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
     case DDP_Strategy::LEVENBERG_MARQUARDT: { levenbergMarquardt(); break; }
   }  // clang-format on
   searchStrategyTimer_.endTimer();
+
+  // update the constraint penalty coefficients
+  updateConstraintPenalties(iteration_);
 
   // linearizing the dynamics and quadratizing the cost function along nominal trajectories
   linearQuadraticApproximationTimer_.startTimer();

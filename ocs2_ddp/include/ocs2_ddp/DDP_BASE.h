@@ -463,18 +463,15 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] workerIndex: Working agent index.
    * @param [in] partitionIndex: Time partition index.
    * @param [in] timeTrajectory: The time trajectory stamp.
-   * @param [in] eventsPastTheEndIndeces: Indices containing past-the-end index
-   * of events trigger.
+   * @param [in] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
    * @param [in] stateTrajectory: The state trajectory.
    * @param [in] inputTrajectory: The control input trajectory.
-   * @param [out] nc1Trajectory: Trajectory containing number of active type-1
-   * constraints.
-   * @param [out] EvTrajectory: Type-1 constraints trajectory.
-   * @param [out] nc2Trajectory: Trajectory containing number of active type-2
-   * constraints.
-   * @param [out] HvTrajectory: Type-2 constraints trajectory.
-   * @param [out] nc2Finals: Number of active final type-2 constraints.
-   * @param [out] HvFinals: Final type-2 constraints.
+   * @param [out] nc1Trajectory: Trajectory containing number of active state-input equality constraints.
+   * @param [out] EvTrajectory: state-input equality constraints trajectory.
+   * @param [out] nc2Trajectory: Trajectory containing number of active state-only equality constraints.
+   * @param [out] HvTrajectory: state-only equality constraints trajectory.
+   * @param [out] nc2Finals: Number of active final state-only equality constraints.
+   * @param [out] HvFinals: Final state-only equality constraints.
    */
   virtual void calculateConstraintsWorker(size_t workerIndex, size_t partitionIndex, const scalar_array_t& timeTrajectory,
                                           const size_array_t& eventsPastTheEndIndeces, const state_vector_array_t& stateTrajectory,
@@ -513,12 +510,18 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                                          ModelDataBase::array_t& modelDataTrajectory) = 0;
 
   /**
+   * Updates the constraint penalty coefficients.
+   *
+   */
+  void updateConstraintPenalties(size_t iteration);
+
+  /**
    * Augments the cost function for the given model data.
    *
    * @param [in] workerIndex: Working agent index.
    * @param modelData: The model data.
    */
-  void augmentCostWorker(size_t workerIndex, ModelDataBase& modelData);
+  void augmentCostWorker(size_t workerIndex, ModelDataBase& modelData) const;
 
   /**
    * Takes the following steps: (1) Computes the Hessian of the Hamiltonian (i.e., Hm) (2) Based on Hm, it calculates
@@ -598,39 +601,36 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   virtual void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) = 0;
 
   /**
-   * Performs one rollout while only the input correction for the type-1 constraint is considered.
-   */
-  virtual void baselineRollout();
-
-  /**
    * Defines line search task on a thread with various learning rates and choose the largest acceptable step-size.
    */
   void lineSearchTask();
 
   /**
-   * Line search with a specific learning rate.
+   * Performs a full rollout of dynamics, cost, and constraints with a given step length.
    *
-   * @param [in] workerIndex
-   * @param [in] stepLength
-   * @param [out] totalCost
-   * @param [out] stateInputEqConstraintISE
-   * @param [out] stateEqConstraintISE
-   * @param [out] stateEqFinalConstraintISE
-   * @param [out] inequalityConstraintPenalty
-   * @param [out] inequalityConstraintISE
-   * @param [out] controllersStock
-   * @param [out] timeTrajectoriesStock
-   * @param [out] postEventIndicesStock
-   * @param [out] stateTrajectoriesStock
-   * @param [out] inputTrajectoriesStock
-   * @param [out] modelDataTrajectoriesStock
+   * @param [in] workerIndex: The index of the worker.
+   * @param [in] stepLength: The step length for which the controller is updated based on the DDP solution.
+   * @param [out] totalCost: The total cost of the rollout.
+   * @param [out] stateInputEqConstraintISE: The ISE of the state-input equality constraints along the rollout trajectory.
+   * @param [out] stateEqConstraintISE: The ISE of the state-only equality constraints along the rollout trajectory.
+   * @param [out] stateEqFinalConstraintISE: The ISE of the state-only equality constraints at event times.
+   * @param [out] inequalityConstraintPenalty: The accumulated penalty of the inequality constraints along the rollout trajectory.
+   * @param [out] inequalityConstraintISE: The ISE of the inequality constraints violation along the rollout trajectory.
+   * @param [out] controllersStock: The updated array of control policies based on the step length.
+   * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
+   * @param [out] postEventIndicesStock: Array of the post-event indices.
+   * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
+   * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
+   * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
+   *
+   * @return average time step.
    */
-  void lineSearchWorker(size_t workerIndex, scalar_t stepLength, scalar_t& totalCost, scalar_t& stateInputEqConstraintISE,
-                        scalar_t& stateEqConstraintISE, scalar_t& stateEqFinalConstraintISE, scalar_t& inequalityConstraintPenalty,
-                        scalar_t& inequalityConstraintISE, linear_controller_array_t& controllersStock,
-                        scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-                        state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
-                        ModelDataBase::array2_t& modelDataTrajectoriesStock);
+  scalar_t performFullRollout(size_t workerIndex, scalar_t stepLength, scalar_t& totalCost, scalar_t& stateInputEqConstraintISE,
+                              scalar_t& stateEqConstraintISE, scalar_t& stateEqFinalConstraintISE, scalar_t& inequalityConstraintPenalty,
+                              scalar_t& inequalityConstraintISE, linear_controller_array_t& controllersStock,
+                              scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
+                              state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
+                              ModelDataBase::array2_t& modelDataTrajectoriesStock);
 
   /**
    * Calculates state-input constraints ISE (Integral of Square Error).
@@ -822,6 +822,13 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
     size_t numSuccessiveRejections = 0;           // the number of successive rejections of solution.
 
   } levenbergMarquardtImpl_;
+
+  //
+  struct ConstraintPenaltyCoefficientsImpl {
+    scalar_t stateEquality;
+    scalar_t stateInputEquality;
+
+  } constraintPenaltyCoefficients_;
 
   std::vector<int> startingIndicesRiccatiWorker_;
   std::vector<int> endingIndicesRiccatiWorker_;

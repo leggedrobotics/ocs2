@@ -6,9 +6,8 @@
 #include <ocs2_ddp/SLQ_Settings.h>
 
 // Riccati equations
-#include <ocs2_ddp/riccati_equations/DifferenceRiccatiEquations.h>
-#include <ocs2_ddp/riccati_equations/SequentialErrorEquation.h>
-#include <ocs2_ddp/riccati_equations/SequentialRiccatiEquations.h>
+#include <ocs2_ddp/riccati_equations/ContinuousTimeRiccatiEquations.h>
+#include <ocs2_ddp/riccati_equations/DiscreteTimeRiccatiEquations.h>
 
 #include <ocs2_ddp/riccati_equations/RiccatiModificationBase.h>
 #include <ocs2_ddp/riccati_equations/RiccatiModificationInterpolation.h>

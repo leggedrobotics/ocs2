@@ -79,11 +79,8 @@ struct DDP_Settings {
   /** This value determines the maximum permitted relative ISE (Integral of Square Error) for constrained type-1.*/
   double minRelConstraint1ISE_ = 1e-3;
 
-  /** Skips calculation of the error correction term (Sve) if the constrained simulation is used for forward simulation.*/
-  bool simulationIsConstrained_ = false;
-
-  /** Set true, if a problem does not have state-only constraints. This significantly decreases the runtime of the algorithm. */
-  bool noStateConstraints_ = false;
+  /** If true, terms of the Riccati equation will be precomputed before interpolation in the flow-map */
+  bool preComputeRiccatiTerms_ = true;
 
   /** Check the numerical stability of the algorithms for debugging purpose. */
   bool checkNumericalStability_ = true;
@@ -153,8 +150,7 @@ struct DDP_Settings {
     loadData::loadPtreeValue(pt, relTolODE_, fieldName + ".RelTolODE", verbose);
     loadData::loadPtreeValue(pt, maxNumStepsPerSecond_, fieldName + ".maxNumStepsPerSecond", verbose);
     loadData::loadPtreeValue(pt, minTimeStep_, fieldName + ".minTimeStep", verbose);
-    loadData::loadPtreeValue(pt, simulationIsConstrained_, fieldName + ".simulationIsConstrained", verbose);
-    loadData::loadPtreeValue(pt, noStateConstraints_, fieldName + ".noStateConstraints", verbose);
+    loadData::loadPtreeValue(pt, preComputeRiccatiTerms_, fieldName + ".preComputeRiccatiTerms", verbose);
     loadData::loadPtreeValue(pt, minAbsConstraint1ISE_, fieldName + ".minAbsConstraint1ISE", verbose);
     loadData::loadPtreeValue(pt, minRelConstraint1ISE_, fieldName + ".minRelConstraint1ISE", verbose);
     loadData::loadPtreeValue(pt, checkNumericalStability_, fieldName + ".checkNumericalStability", verbose);

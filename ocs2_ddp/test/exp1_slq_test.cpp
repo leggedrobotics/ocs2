@@ -46,13 +46,12 @@ TEST(exp1_slq_test, exp1_slq_test) {
   using slq_t = SLQ<STATE_DIM, INPUT_DIM>;
 
   SLQ_Settings slqSettings;
-  slqSettings.preComputeRiccatiTerms_ = false;
   slqSettings.useNominalTimeForBackwardPass_ = true;
+  slqSettings.ddpSettings_.preComputeRiccatiTerms_ = false;
   slqSettings.ddpSettings_.displayInfo_ = true;
   slqSettings.ddpSettings_.displayShortSummary_ = true;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
-  slqSettings.ddpSettings_.noStateConstraints_ = true;
   slqSettings.ddpSettings_.checkNumericalStability_ = false;
   slqSettings.ddpSettings_.absTolODE_ = 1e-10;
   slqSettings.ddpSettings_.relTolODE_ = 1e-7;

@@ -46,15 +46,14 @@ TEST(exp0_slq_test, exp0_slq_test) {
   using slq_t = SLQ<STATE_DIM, INPUT_DIM>;
 
   SLQ_Settings slqSettings;
-  slqSettings.preComputeRiccatiTerms_ = false;
   slqSettings.useNominalTimeForBackwardPass_ = false;
+  slqSettings.ddpSettings_.preComputeRiccatiTerms_ = true;
   slqSettings.ddpSettings_.displayInfo_ = true;
   slqSettings.ddpSettings_.displayShortSummary_ = true;
   slqSettings.ddpSettings_.absTolODE_ = 1e-10;
   slqSettings.ddpSettings_.relTolODE_ = 1e-7;
   slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
-  slqSettings.ddpSettings_.noStateConstraints_ = true;
   slqSettings.ddpSettings_.minRelCost_ = 5e-4;
   slqSettings.ddpSettings_.checkNumericalStability_ = false;
   slqSettings.ddpSettings_.useFeedbackPolicy_ = true;
@@ -146,7 +145,7 @@ TEST(exp0_slq_test, exp0_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
-  const double expectedCost = 9.7667;
+  const double expectedCost = 9.766;
   ASSERT_LT(fabs(totalCostST - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_) << "MESSAGE: SLQ failed in the EXP0's cost test!";
   ASSERT_LT(fabs(totalCostMT - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_) << "MESSAGE: SLQ failed in the EXP1's cost test!";
 
@@ -181,7 +180,6 @@ TEST(exp0_slq_test, caching_test) {
   slqSettings.ddpSettings_.relTolODE_ = 1e-7;
   slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
   slqSettings.ddpSettings_.maxNumIterations_ = 1;
-  slqSettings.ddpSettings_.noStateConstraints_ = true;
   slqSettings.ddpSettings_.minRelCost_ = 5e-4;
   slqSettings.ddpSettings_.checkNumericalStability_ = false;
   slqSettings.ddpSettings_.useFeedbackPolicy_ = true;

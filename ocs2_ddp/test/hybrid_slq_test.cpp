@@ -41,7 +41,6 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   slqSettings.ddpSettings_.displayShortSummary_ = true;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
   slqSettings.ddpSettings_.nThreads_ = 1;
-  slqSettings.ddpSettings_.noStateConstraints_ = false;
   slqSettings.ddpSettings_.stateConstraintPenaltyCoeff_ = 1.0;
   slqSettings.ddpSettings_.inequalityConstraintMu_ = 0.1;
   slqSettings.ddpSettings_.inequalityConstraintDelta_ = 1e-6;

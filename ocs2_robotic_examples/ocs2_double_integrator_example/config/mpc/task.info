@@ -44,15 +44,15 @@ slq
         meritFunctionRho             50.0
         constraintStepSize           1.0     ; 1.0
         displayInfo                  0
-        displayShortSummary          0
+        displayShortSummary          1
         debugPrintRollout            0
+
+        preComputeRiccatiTerms       1
 
         AbsTolODE                    1e-9 ;1e-5 ;1e-6
         RelTolODE                    1e-6 ;1e-3 ;1e-4
         minTimeStep                  1e-3
         maxNumStepsPerSecond         50000
-        simulationIsConstrained      0
-        noStateConstraints           1
         minAbsConstraint1ISE         5e-3
         minRelConstraint1ISE         5e-6
         checkNumericalStability      1

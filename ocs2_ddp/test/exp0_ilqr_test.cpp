@@ -53,7 +53,6 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   ilqrSettings.ddpSettings_.relTolODE_ = 1e-7;
   ilqrSettings.ddpSettings_.maxNumStepsPerSecond_ = 1000000;
   ilqrSettings.ddpSettings_.maxNumIterations_ = 30;
-  ilqrSettings.ddpSettings_.noStateConstraints_ = true;
   ilqrSettings.ddpSettings_.minRelCost_ = 5e-4;
   ilqrSettings.ddpSettings_.checkNumericalStability_ = false;
   ilqrSettings.ddpSettings_.useFeedbackPolicy_ = true;
@@ -145,7 +144,7 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
-  const double expectedCost = 9.7667;
+  const double expectedCost = 9.766;
   ASSERT_LT(fabs(totalCost_st - expectedCost), 10 * ilqrSettings.ddpSettings_.minRelCost_)
       << "MESSAGE: ILQR_ST failed in the EXP0's cost test!";
   ASSERT_LT(fabs(totalCost_mt - expectedCost), 10 * ilqrSettings.ddpSettings_.minRelCost_)

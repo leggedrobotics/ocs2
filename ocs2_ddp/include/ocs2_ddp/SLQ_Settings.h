@@ -48,8 +48,6 @@ namespace ocs2 {
 struct SLQ_Settings {
   /** If true, SLQ solves the backward path over the nominal time trajectory. */
   bool useNominalTimeForBackwardPass_ = false;
-  /** If true, terms of the Riccati equation will be precomputed before interpolation in the flow-map */
-  bool preComputeRiccatiTerms_ = true;
   /** Riccati integrator type. */
   IntegratorType RiccatiIntegratorType_ = IntegratorType::ODE45;
 
@@ -88,7 +86,6 @@ struct SLQ_Settings {
     }
 
     loadData::loadPtreeValue(pt, useNominalTimeForBackwardPass_, fieldName + ".useNominalTimeForBackwardPass", verbose);
-    loadData::loadPtreeValue(pt, preComputeRiccatiTerms_, fieldName + ".preComputeRiccatiTerms", verbose);
 
     auto integratorName = integrator_type::toString(RiccatiIntegratorType_);  // keep default
     loadData::loadPtreeValue(pt, integratorName, fieldName + ".RiccatiIntegratorType", verbose);

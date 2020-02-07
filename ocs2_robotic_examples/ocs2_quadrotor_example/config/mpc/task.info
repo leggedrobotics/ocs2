@@ -42,12 +42,12 @@ ilqr
         displayInfo                    0
         displayShortSummary            1
 
+        preComputeRiccatiTerms         1
+
         AbsTolODE                      2e-5
         RelTolODE                      1e-3
         minTimeStep                    1e-3
         maxNumStepsPerSecond           50000
-        simulationIsConstrained        0
-        noStateConstraints             1
         minAbsConstraint1ISE           5e-3
         minRelConstraint1ISE           5e-6
         checkNumericalStability        0

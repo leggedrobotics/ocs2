@@ -39,16 +39,15 @@ slq
         stateConstraintPenaltyBase   1.1
         meritFunctionRho             50.0
         constraintStepSize           1.0    ; 1.0
-        displayInfo                  1
-        displayShortSummary          0
+        displayInfo                  0
+        displayShortSummary          1
 
+        preComputeRiccatiTerms       1
 
         AbsTolODE                    1e-9
         RelTolODE                    1e-6
         minTimeStep                  1e-3
         maxNumStepsPerSecond         100000
-        simulationIsConstrained      0
-        noStateConstraints           1
         minAbsConstraint1ISE         5e-3
         minRelConstraint1ISE         5e-6
         checkNumericalStability      1

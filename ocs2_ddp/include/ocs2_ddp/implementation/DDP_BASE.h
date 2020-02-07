@@ -33,7 +33,7 @@ namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                          const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
@@ -89,7 +89,7 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t* rolloutPtr, const
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 DDP_BASE<STATE_DIM, INPUT_DIM>::~DDP_BASE() {
   auto forwardPassTotal = forwardPassTimer_.getTotalInMilliseconds();
@@ -119,7 +119,7 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::~DDP_BASE() {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
   iteration_ = 0;
@@ -165,7 +165,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::rolloutTrajectory(
     linear_controller_array_t& controllersStock, scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
@@ -325,7 +325,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateConstraintsWorker(
     size_t workerIndex, size_t partitionIndex, const scalar_array_t& timeTrajectory, const size_array_t& eventsPastTheEndIndeces,
@@ -404,7 +404,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateConstraintsWorker(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutConstraints(
     const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
@@ -439,7 +439,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutConstraints(
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutConstraintsISE(const scalar_array2_t& timeTrajectoriesStock,
                                                                     const size_array2_t& postEventIndicesStock,
@@ -480,7 +480,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutConstraintsISE(const scalar
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateCostWorker(size_t workerIndex, size_t partitionIndex, const scalar_array_t& timeTrajectory,
                                                          const size_array_t& eventsPastTheEndIndeces,
@@ -525,7 +525,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateCostWorker(size_t workerIndex, siz
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutCost(
     const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
@@ -555,7 +555,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutMerit(
     const scalar_t& cost, const scalar_t& stateInputEqConstraintISE, const scalar_t& stateEqConstraintISE,
@@ -573,7 +573,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::updateConstraintPenalties(size_t iteration) {
   // state-only equality penalty
@@ -586,7 +586,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::updateConstraintPenalties(size_t iteration)
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
   for (size_t i = 0; i < numPartitions_; i++) {
@@ -731,7 +731,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::augmentCostWorker(size_t workerIndex, Model
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::computeProjectionAndRiccatiModification(DDP_Strategy strategy, const ModelDataBase& modelData,
                                                                              const dynamic_matrix_t& Sm, ModelDataBase& projectedModelData,
@@ -954,7 +954,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::shiftHessian(Eigen::MatrixBase<Derived>& ma
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
   for (size_t i = 0; i < numPartitions_; i++) {
@@ -995,7 +995,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateController() {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::calculateControllerUpdateIS(
     const linear_controller_array_t& controllersStock) const {
@@ -1180,7 +1180,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::performFullRollout(
     size_t workerIndex, scalar_t stepLength, scalar_t& totalCost, scalar_t& stateInputEqConstraintISE, scalar_t& stateEqConstraintISE,
@@ -1387,7 +1387,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::levenbergMarquardt() {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquationsImpl(
     const state_matrix_t& SmFinal, const state_vector_t& SvFinal, const scalar_t& sFinal) {
@@ -1542,7 +1542,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::computeNormalizedTime(const scalar_array_t&
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::calculateConstraintISE(
     const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& nc1TrajectoriesStock,
@@ -1585,7 +1585,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::calculateInequalityConstraintPenalty(
     const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& ncIneqTrajectoriesStock, const scalar_array3_t& hTrajectoriesStock,
@@ -1633,7 +1633,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateControllerUpdateMaxNorm(scalar_t& maxDeltaUffNorm, scalar_t& maxDeltaUeeNorm) {
   maxDeltaUffNorm = 0.0;
@@ -1658,7 +1658,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateControllerUpdateMaxNorm(scalar_t& 
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::swapNominalTrajectoriesToCache() {
   cachedTimeTrajectoriesStock_.swap(nominalTimeTrajectoriesStock_);
@@ -1673,7 +1673,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::swapNominalTrajectoriesToCache() {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::correctInitcachedNominalTrajectories() {
   // for each partition
@@ -1747,7 +1747,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::correctInitcachedNominalTrajectories() {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 template <typename Data_T, class Alloc>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::correctcachedTrajectoryTail(std::pair<int, scalar_t> timeSegment,
@@ -1766,7 +1766,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::correctcachedTrajectoryTail(std::pair<int, 
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::printRolloutInfo() {
   std::cerr << "optimization cost:          " << nominalTotalCost_ << std::endl;
@@ -1781,7 +1781,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::printRolloutInfo() {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::adjustController(const scalar_array_t& newEventTimes, const scalar_array_t& controllerEventTimes) {
   // adjust the nominal controllerStock using trajectory spreading
@@ -1841,7 +1841,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFunctionStateDerivative(scalar_t ti
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::useParallelRiccatiSolverFromInitItr(bool flag) {
   useParallelRiccatiSolverFromInitItr_ = flag;
@@ -1849,7 +1849,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::useParallelRiccatiSolverFromInitItr(bool fl
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::getPerformanceIndeces(scalar_t& costFunction, scalar_t& constraint1ISE,
                                                            scalar_t& constraint2ISE) const {
@@ -1860,7 +1860,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getPerformanceIndeces(scalar_t& costFunctio
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 size_t DDP_BASE<STATE_DIM, INPUT_DIM>::getNumIterations() const {
   return iteration_;
@@ -1868,7 +1868,7 @@ size_t DDP_BASE<STATE_DIM, INPUT_DIM>::getNumIterations() const {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::getIterationsLog(scalar_array_t& iterationCost, scalar_array_t& iterationISE1,
                                                       scalar_array_t& iterationISE2) const {
@@ -1879,7 +1879,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getIterationsLog(scalar_array_t& iterationC
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 DDP_Settings& DDP_BASE<STATE_DIM, INPUT_DIM>::ddpSettings() {
   return ddpSettings_;
@@ -1940,7 +1940,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t 
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 const DDP_Settings& DDP_BASE<STATE_DIM, INPUT_DIM>::ddpSettings() const {
   return ddpSettings_;
@@ -1948,7 +1948,7 @@ const DDP_Settings& DDP_BASE<STATE_DIM, INPUT_DIM>::ddpSettings() const {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::getPrimalSolution(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const {
   // total number of nodes
@@ -2010,7 +2010,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getPrimalSolution(scalar_t finalTime, prima
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::getFinalTime() const {
   return finalTime_;
@@ -2018,7 +2018,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 const typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_array_t& DDP_BASE<STATE_DIM, INPUT_DIM>::getPartitioningTimes() const {
   return partitioningTimes_;
@@ -2026,7 +2026,7 @@ const typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_array_t& DDP_BASE<STATE_DI
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::rewindOptimizer(size_t firstIndex) {
   // No rewind is needed
@@ -2061,7 +2061,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::rewindOptimizer(size_t firstIndex) {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 const unsigned long long int& DDP_BASE<STATE_DIM, INPUT_DIM>::getRewindCounter() const {
   return rewindCounter_;
@@ -2069,7 +2069,7 @@ const unsigned long long int& DDP_BASE<STATE_DIM, INPUT_DIM>::getRewindCounter()
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::distributeWork() {
   const int N = ddpSettings_.nThreads_;
@@ -2111,7 +2111,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::distributeWork() {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runParallel(std::function<void(void)> taskFunction, size_t N) {
   threadPool_.runParallel([&](int) { taskFunction(); }, N);
@@ -2119,7 +2119,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runParallel(std::function<void(void)> taskF
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   if (numPartitions == 0) {
@@ -2184,7 +2184,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
   // disable Eigen multi-threading
@@ -2259,7 +2259,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
   // disable Eigen multi-threading
@@ -2308,7 +2308,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
                                              const scalar_array_t& partitioningTimes) {
@@ -2326,7 +2326,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
                                              const scalar_array_t& partitioningTimes, const controller_ptr_array_t& controllersPtrStock) {

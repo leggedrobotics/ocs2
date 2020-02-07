@@ -95,12 +95,30 @@ class RelaxedBarrierCost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
   using terminal_cost_vector_t = Eigen::Matrix<scalar_t, TERMINAL_COST_DIM, 1>;
 
   /**
+   * Configuration object
+   *
+   * mu : scaling factor
+   * delta: relaxation parameter, see class description
+   */
+  struct Config {
+    scalar_t mu;
+    scalar_t delta;
+  };
+
+  /**
    * Constructior
    *
-   * @param mu : scaling factor
-   * @param delta : relaxation parameter, see class description
+   * @param Config : configuration object containing mu and delta
    */
-  explicit RelaxedBarrierCost(scalar_t mu, scalar_t delta);
+  explicit RelaxedBarrierCost(Config config);
+
+  /**
+   * Constructior
+   *
+   * @param Config : arrays with configuration objects containing mu and delta for each intermediate and terminal constraint
+   */
+  explicit RelaxedBarrierCost(std::array<Config, INTERMEDIATE_COST_DIM> intermediateConfig,
+                              std::array<Config, TERMINAL_COST_DIM> terminalConfig);
 
   /**
    * Copy constructor
@@ -239,27 +257,27 @@ class RelaxedBarrierCost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    */
   void loadModelsIfAvailable(bool verbose);
 
-  scalar_t getPenaltyFunctionValue(scalar_t h) const {
-    if (h > delta_) {
-      return -mu_ * log(h);
+  scalar_t getPenaltyFunctionValue(scalar_t h, scalar_t mu, scalar_t delta) const {
+    if (h > delta) {
+      return -mu * log(h);
     } else {
-      return mu_ * (-log(delta_) + scalar_t(0.5) * pow((h - 2.0 * delta_) / delta_, 2.0) - scalar_t(0.5));
+      return mu * (-log(delta) + scalar_t(0.5) * pow((h - 2.0 * delta) / delta, 2.0) - scalar_t(0.5));
     };
   };
 
-  scalar_t getPenaltyFunctionDerivative(scalar_t h) const {
-    if (h > delta_) {
-      return -mu_ / h;
+  scalar_t getPenaltyFunctionDerivative(scalar_t h, scalar_t mu, scalar_t delta) const {
+    if (h > delta) {
+      return -mu / h;
     } else {
-      return mu_ * ((h - 2.0 * delta_) / (delta_ * delta_));
+      return mu * ((h - 2.0 * delta) / (delta * delta));
     };
   };
 
-  scalar_t getPenaltyFunctionSecondDerivative(scalar_t h) const {
-    if (h > delta_) {
-      return mu_ / (h * h);
+  scalar_t getPenaltyFunctionSecondDerivative(scalar_t h, scalar_t mu, scalar_t delta) const {
+    if (h > delta) {
+      return mu / (h * h);
     } else {
-      return mu_ / (delta_ * delta_);
+      return mu / (delta * delta);
     };
   };
 
@@ -282,8 +300,8 @@ class RelaxedBarrierCost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
   dynamic_vector_t terminalParameters_;
   timeState_vector_t tapedTimeState_;
 
-  scalar_t mu_;
-  scalar_t delta_;
+  std::array<Config, INTERMEDIATE_COST_DIM> intermediateConfig_;
+  std::array<Config, TERMINAL_COST_DIM> terminalConfig_;
 };
 
 }  // namespace ocs2

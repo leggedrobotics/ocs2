@@ -35,14 +35,31 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::RelaxedBarrierCost(scalar_t mu, scalar_t delta)
+RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::RelaxedBarrierCost(Config config)
     : BASE(),
       intermediateDerivativesComputed_(false),
       intermediateCostValuesComputed_(false),
       terminalDerivativesComputed_(false),
       terminalCostValuesComputed_(false),
-      mu_(mu),
-      delta_(delta) {}
+      intermediateConfig_(),
+      terminalConfig_() {
+  std::fill(intermediateConfig_.begin(), intermediateConfig_.end(), config);
+  std::fill(terminalConfig_.begin(), terminalConfig_.end(), config);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
+RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::RelaxedBarrierCost(
+    std::array<Config, INTERMEDIATE_COST_DIM> intermediateConfig, std::array<Config, TERMINAL_COST_DIM> terminalConfig)
+    : BASE(),
+      intermediateDerivativesComputed_(false),
+      intermediateCostValuesComputed_(false),
+      terminalDerivativesComputed_(false),
+      terminalCostValuesComputed_(false),
+      intermediateConfig_(std::move(intermediateConfig)),
+      terminalConfig_(std::move(terminalConfig)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -56,8 +73,8 @@ RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DI
       intermediateCostValuesComputed_(false),
       terminalDerivativesComputed_(false),
       terminalCostValuesComputed_(false),
-      mu_(rhs.mu_),
-      delta_(rhs.delta_) {}
+      intermediateConfig_(rhs.intermediateConfig_),
+      terminalConfig_(rhs.terminalConfig_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -98,12 +115,18 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
 void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCost(scalar_t& L) {
+  L = 0;
+  if (INTERMEDIATE_COST_DIM == 0) {
+    return;
+  }
+
   if (!intermediateCostValuesComputed_) {
     intermediateCostValues_ = intermediateADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, intermediateParameters_);
     intermediateCostValuesComputed_ = true;
   }
-  auto penalityFct = std::bind(&rbf_costfunction_base_ad_t::getPenaltyFunctionValue, this, std::placeholders::_1);
-  L = intermediateCostValues_.unaryExpr(penalityFct).sum();
+  for (int i = 0; i < INTERMEDIATE_COST_DIM; i++) {
+    L += getPenaltyFunctionValue(intermediateCostValues_[i], intermediateConfig_[i].mu, intermediateConfig_[i].delta);
+  }
 }
 
 /******************************************************************************************************/
@@ -111,6 +134,11 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
 void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCostDerivativeTime(scalar_t& dLdt) {
+  if (INTERMEDIATE_COST_DIM == 0) {
+    dLdt = 0;
+    return;
+  }
+
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateDerivativesComputed_ = true;
@@ -119,8 +147,13 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
     intermediateCostValues_ = intermediateADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, intermediateParameters_);
     intermediateCostValuesComputed_ = true;
   }
-  auto penalityFctDerivative = std::bind(&rbf_costfunction_base_ad_t::getPenaltyFunctionDerivative, this, std::placeholders::_1);
-  dLdt = intermediateCostValues_.unaryExpr(penalityFctDerivative).transpose() * intermediateJacobian_.col(0);
+
+  Eigen::Matrix<scalar_t, INTERMEDIATE_COST_DIM, 1> penalityFctDerivative;
+  for (int i = 0; i < INTERMEDIATE_COST_DIM; i++) {
+    penalityFctDerivative(i) =
+        getPenaltyFunctionDerivative(intermediateCostValues_[i], intermediateConfig_[i].mu, intermediateConfig_[i].delta);
+  }
+  dLdt = penalityFctDerivative.dot(intermediateJacobian_.col(0));
 }
 
 /******************************************************************************************************/
@@ -129,6 +162,11 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
 void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCostDerivativeState(
     state_vector_t& dLdx) {
+  if (INTERMEDIATE_COST_DIM == 0) {
+    dLdx.setZero();
+    return;
+  }
+
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateDerivativesComputed_ = true;
@@ -137,9 +175,13 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
     intermediateCostValues_ = intermediateADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, intermediateParameters_);
     intermediateCostValuesComputed_ = true;
   }
-  auto penalityFctDerivative = std::bind(&rbf_costfunction_base_ad_t::getPenaltyFunctionDerivative, this, std::placeholders::_1);
-  dLdx = intermediateJacobian_.template block<INTERMEDIATE_COST_DIM, STATE_DIM>(0, 1).transpose() *
-         intermediateCostValues_.unaryExpr(penalityFctDerivative);
+
+  Eigen::Matrix<scalar_t, INTERMEDIATE_COST_DIM, 1> penalityFctDerivative;
+  for (int i = 0; i < INTERMEDIATE_COST_DIM; i++) {
+    penalityFctDerivative(i) =
+        getPenaltyFunctionDerivative(intermediateCostValues_[i], intermediateConfig_[i].mu, intermediateConfig_[i].delta);
+  }
+  dLdx = intermediateJacobian_.template block<INTERMEDIATE_COST_DIM, STATE_DIM>(0, 1).transpose() * penalityFctDerivative;
 }
 
 /******************************************************************************************************/
@@ -148,6 +190,11 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
 void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCostSecondDerivativeState(
     state_matrix_t& dLdxx) {
+  if (INTERMEDIATE_COST_DIM == 0) {
+    dLdxx.setZero();
+    return;
+  }
+
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateDerivativesComputed_ = true;
@@ -156,11 +203,14 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
     intermediateCostValues_ = intermediateADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, intermediateParameters_);
     intermediateCostValuesComputed_ = true;
   }
-  auto penalityFctSecondDerivative =
-      std::bind(&rbf_costfunction_base_ad_t::getPenaltyFunctionSecondDerivative, this, std::placeholders::_1);
+
+  Eigen::Matrix<scalar_t, INTERMEDIATE_COST_DIM, 1> penalityFctSecondDerivative;
+  for (int i = 0; i < INTERMEDIATE_COST_DIM; i++) {
+    penalityFctSecondDerivative(i) =
+        getPenaltyFunctionSecondDerivative(intermediateCostValues_[i], intermediateConfig_[i].mu, intermediateConfig_[i].delta);
+  }
   dLdxx = intermediateJacobian_.template block<INTERMEDIATE_COST_DIM, STATE_DIM>(0, 1).transpose() *
-          intermediateCostValues_.unaryExpr(penalityFctSecondDerivative).asDiagonal() *
-          intermediateJacobian_.template block<INTERMEDIATE_COST_DIM, STATE_DIM>(0, 1);
+          penalityFctSecondDerivative.asDiagonal() * intermediateJacobian_.template block<INTERMEDIATE_COST_DIM, STATE_DIM>(0, 1);
 }
 
 /******************************************************************************************************/
@@ -169,6 +219,11 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
 void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCostDerivativeInput(
     input_vector_t& dLdu) {
+  if (INTERMEDIATE_COST_DIM == 0) {
+    dLdu.setZero();
+    return;
+  }
+
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateDerivativesComputed_ = true;
@@ -177,9 +232,13 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
     intermediateCostValues_ = intermediateADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, intermediateParameters_);
     intermediateCostValuesComputed_ = true;
   }
-  auto penalityFctDerivative = std::bind(&rbf_costfunction_base_ad_t::getPenaltyFunctionDerivative, this, std::placeholders::_1);
-  dLdu = intermediateJacobian_.template block<INTERMEDIATE_COST_DIM, INPUT_DIM>(0, 1 + STATE_DIM).transpose() *
-         intermediateCostValues_.unaryExpr(penalityFctDerivative);
+
+  Eigen::Matrix<scalar_t, INTERMEDIATE_COST_DIM, 1> penalityFctDerivative;
+  for (int i = 0; i < INTERMEDIATE_COST_DIM; i++) {
+    penalityFctDerivative(i) =
+        getPenaltyFunctionDerivative(intermediateCostValues_[i], intermediateConfig_[i].mu, intermediateConfig_[i].delta);
+  }
+  dLdu = intermediateJacobian_.template block<INTERMEDIATE_COST_DIM, INPUT_DIM>(0, 1 + STATE_DIM).transpose() * penalityFctDerivative;
 }
 
 /******************************************************************************************************/
@@ -188,6 +247,11 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
 void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCostSecondDerivativeInput(
     input_matrix_t& dLduu) {
+  if (INTERMEDIATE_COST_DIM == 0) {
+    dLduu.setZero();
+    return;
+  }
+
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateDerivativesComputed_ = true;
@@ -196,10 +260,14 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
     intermediateCostValues_ = intermediateADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, intermediateParameters_);
     intermediateCostValuesComputed_ = true;
   }
-  auto penalityFctSecondDerivative =
-      std::bind(&rbf_costfunction_base_ad_t::getPenaltyFunctionSecondDerivative, this, std::placeholders::_1);
+
+  Eigen::Matrix<scalar_t, INTERMEDIATE_COST_DIM, 1> penalityFctSecondDerivative;
+  for (int i = 0; i < INTERMEDIATE_COST_DIM; i++) {
+    penalityFctSecondDerivative(i) =
+        getPenaltyFunctionSecondDerivative(intermediateCostValues_[i], intermediateConfig_[i].mu, intermediateConfig_[i].delta);
+  }
   dLduu = intermediateJacobian_.template block<INTERMEDIATE_COST_DIM, INPUT_DIM>(0, 1 + STATE_DIM).transpose() *
-          intermediateCostValues_.unaryExpr(penalityFctSecondDerivative).asDiagonal() *
+          penalityFctSecondDerivative.asDiagonal() *
           intermediateJacobian_.template block<INTERMEDIATE_COST_DIM, INPUT_DIM>(0, 1 + STATE_DIM);
 }
 
@@ -209,15 +277,23 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
 void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getIntermediateCostDerivativeInputState(
     input_state_matrix_t& dLdux) {
+  if (INTERMEDIATE_COST_DIM == 0) {
+    dLdux.setZero();
+    return;
+  }
+
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateDerivativesComputed_ = true;
   }
-  auto penalityFctSecondDerivative =
-      std::bind(&rbf_costfunction_base_ad_t::getPenaltyFunctionSecondDerivative, this, std::placeholders::_1);
+
+  Eigen::Matrix<scalar_t, INTERMEDIATE_COST_DIM, 1> penalityFctSecondDerivative;
+  for (int i = 0; i < INTERMEDIATE_COST_DIM; i++) {
+    penalityFctSecondDerivative(i) =
+        getPenaltyFunctionSecondDerivative(intermediateCostValues_[i], intermediateConfig_[i].mu, intermediateConfig_[i].delta);
+  }
   dLdux = intermediateJacobian_.template block<INTERMEDIATE_COST_DIM, INPUT_DIM>(0, 1 + STATE_DIM).transpose() *
-          intermediateCostValues_.unaryExpr(penalityFctSecondDerivative).asDiagonal() *
-          intermediateJacobian_.template block<INTERMEDIATE_COST_DIM, STATE_DIM>(0, 1);
+          penalityFctSecondDerivative.asDiagonal() * intermediateJacobian_.template block<INTERMEDIATE_COST_DIM, STATE_DIM>(0, 1);
 }
 
 /******************************************************************************************************/
@@ -225,12 +301,19 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
 void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getTerminalCost(scalar_t& Phi) {
+  Phi = 0;
+  if (TERMINAL_COST_DIM == 0) {
+    return;
+  }
+
   if (!terminalCostValuesComputed_) {
     terminalCostValues_ = terminalADInterfacePtr_->getFunctionValue(tapedTimeState_, terminalParameters_);
     terminalCostValuesComputed_ = true;
   }
-  auto penalityFct = std::bind(&rbf_costfunction_base_ad_t::getPenaltyFunctionValue, this, std::placeholders::_1);
-  Phi = terminalCostValues_.unaryExpr(penalityFct).sum();
+
+  for (int i = 0; i < TERMINAL_COST_DIM; i++) {
+    Phi += getPenaltyFunctionValue(terminalCostValues_[i], terminalConfig_[i].mu, terminalConfig_[i].delta);
+  }
 }
 
 /******************************************************************************************************/
@@ -238,6 +321,11 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
 void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getTerminalCostDerivativeTime(scalar_t& dPhidt) {
+  if (TERMINAL_COST_DIM == 0) {
+    dPhidt = 0;
+    return;
+  }
+
   if (!terminalDerivativesComputed_) {
     terminalJacobian_ = terminalADInterfacePtr_->getJacobian(tapedTimeState_, terminalParameters_);
     terminalDerivativesComputed_ = true;
@@ -246,8 +334,12 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
     terminalCostValues_ = terminalADInterfacePtr_->getFunctionValue(tapedTimeState_, terminalParameters_);
     terminalCostValuesComputed_ = true;
   }
-  auto penalityFctDerivative = std::bind(&rbf_costfunction_base_ad_t::getPenaltyFunctionDerivative, this, std::placeholders::_1);
-  dPhidt = terminalCostValues_.unaryExpr(penalityFctDerivative).transpose() * terminalJacobian_.col(0);
+
+  Eigen::Matrix<scalar_t, TERMINAL_COST_DIM, 1> penalityFctDerivative;
+  for (int i = 0; i < TERMINAL_COST_DIM; i++) {
+    penalityFctDerivative(i) = getPenaltyFunctionDerivative(terminalCostValues_[i], terminalConfig_[i].mu, terminalConfig_[i].delta);
+  }
+  dPhidt = penalityFctDerivative.transpose() * terminalJacobian_.col(0);
 }
 
 /******************************************************************************************************/
@@ -256,6 +348,11 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
 void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getTerminalCostDerivativeState(
     state_vector_t& dPhidx) {
+  if (TERMINAL_COST_DIM == 0) {
+    dPhidx.setZero();
+    return;
+  }
+
   if (!terminalDerivativesComputed_) {
     terminalJacobian_ = terminalADInterfacePtr_->getJacobian(tapedTimeState_, terminalParameters_);
     terminalDerivativesComputed_ = true;
@@ -264,9 +361,12 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
     terminalCostValues_ = terminalADInterfacePtr_->getFunctionValue(tapedTimeState_, terminalParameters_);
     terminalCostValuesComputed_ = true;
   }
-  auto penalityFctDerivative = std::bind(&rbf_costfunction_base_ad_t::getPenaltyFunctionDerivative, this, std::placeholders::_1);
-  dPhidx = terminalJacobian_.template block<TERMINAL_COST_DIM, STATE_DIM>(0, 1).transpose() *
-           terminalCostValues_.unaryExpr(penalityFctDerivative);
+
+  Eigen::Matrix<scalar_t, TERMINAL_COST_DIM, 1> penalityFctDerivative;
+  for (int i = 0; i < TERMINAL_COST_DIM; i++) {
+    penalityFctDerivative(i) = getPenaltyFunctionDerivative(terminalCostValues_[i], terminalConfig_[i].mu, terminalConfig_[i].delta);
+  }
+  dPhidx = terminalJacobian_.template block<TERMINAL_COST_DIM, STATE_DIM>(0, 1).transpose() * penalityFctDerivative;
 }
 
 /******************************************************************************************************/
@@ -275,6 +375,11 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
 void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>::getTerminalCostSecondDerivativeState(
     state_matrix_t& dPhidxx) {
+  if (TERMINAL_COST_DIM == 0) {
+    dPhidxx.setZero();
+    return;
+  }
+
   if (!terminalDerivativesComputed_) {
     terminalJacobian_ = terminalADInterfacePtr_->getJacobian(tapedTimeState_, terminalParameters_);
     terminalDerivativesComputed_ = true;
@@ -283,10 +388,13 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
     terminalCostValues_ = terminalADInterfacePtr_->getFunctionValue(tapedTimeState_, terminalParameters_);
     terminalCostValuesComputed_ = true;
   }
-  auto penalityFctSecondDerivative =
-      std::bind(&rbf_costfunction_base_ad_t::getPenaltyFunctionSecondDerivative, this, std::placeholders::_1);
-  dPhidxx = terminalJacobian_.template block<TERMINAL_COST_DIM, STATE_DIM>(0, 1).transpose() *
-            terminalCostValues_.unaryExpr(penalityFctSecondDerivative).asDiagonal() *
+
+  Eigen::Matrix<scalar_t, TERMINAL_COST_DIM, 1> penalityFctSecondDerivative;
+  for (int i = 0; i < TERMINAL_COST_DIM; i++) {
+    penalityFctSecondDerivative(i) =
+        getPenaltyFunctionSecondDerivative(terminalCostValues_[i], terminalConfig_[i].mu, terminalConfig_[i].delta);
+  }
+  dPhidxx = terminalJacobian_.template block<TERMINAL_COST_DIM, STATE_DIM>(0, 1).transpose() * penalityFctSecondDerivative.asDiagonal() *
             terminalJacobian_.template block<TERMINAL_COST_DIM, STATE_DIM>(0, 1);
 }
 

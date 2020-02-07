@@ -44,17 +44,14 @@ namespace RiccatiModification {
 
 using LinearInterpolation = ocs2::LinearInterpolation<RiccatiModificationBase, Eigen::aligned_allocator<RiccatiModificationBase>>;
 
-// time
 CREATE_INTERPOLATION_ACCESS_FUNCTION(time)
 
 CREATE_INTERPOLATION_ACCESS_FUNCTION(deltaQm)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(deltaPm)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(deltaRm)
+CREATE_INTERPOLATION_ACCESS_FUNCTION(deltaGm)
+CREATE_INTERPOLATION_ACCESS_FUNCTION(deltaGv)
 
-CREATE_INTERPOLATION_ACCESS_FUNCTION(DmDagger)
-
-CREATE_INTERPOLATION_ACCESS_FUNCTION(HmInverseConstrained)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(HmInverseConstrainedLowRank)
+CREATE_INTERPOLATION_ACCESS_FUNCTION(constraintRangeProjector)
+CREATE_INTERPOLATION_ACCESS_FUNCTION(constraintNullProjector)
 
 }  // namespace RiccatiModification
 }  // namespace ocs2

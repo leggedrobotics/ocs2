@@ -49,7 +49,8 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}_dynamic_size
-  src/SequentialRiccatiEquations.cpp
+  src/ContinuousTimeRiccatiEquations.cpp
+  src/DiscreteTimeRiccatiEquations.cpp
 )
 target_link_libraries(${PROJECT_NAME}_dynamic_size
   ${catkin_LIBRARIES}
@@ -112,14 +113,6 @@ target_link_libraries(exp1_slq_test
   ${Boost_LIBRARIES}
 )
 
-catkin_add_gtest(exp2_slq_test
-  test/exp2_slq_test.cpp
-)
-target_link_libraries(exp2_slq_test
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
-
 catkin_add_gtest(riccati_ode_test
   test/riccati_ode_test.cpp
 )
@@ -164,3 +157,19 @@ target_link_libraries(bouncing_mass_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+
+#add_executable(circular_kinematics_ilqr_test
+#  test/circular_kinematics_ilqr_test.cpp
+#)
+#target_link_libraries(circular_kinematics_ilqr_test
+#  ${catkin_LIBRARIES}
+#  ${Boost_LIBRARIES}
+#)
+#
+#add_executable(circular_kinematics_slq_test
+#  test/circular_kinematics_slq_test.cpp
+#)
+#target_link_libraries(circular_kinematics_slq_test
+#  ${catkin_LIBRARIES}
+#  ${Boost_LIBRARIES}
+#)

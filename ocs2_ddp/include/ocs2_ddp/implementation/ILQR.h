@@ -48,7 +48,8 @@ ILQR<STATE_DIM, INPUT_DIM>::ILQR(const rollout_base_t* rolloutPtr, const derivat
   riccatiEquationsPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 
   for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
-    riccatiEquationsPtrStock_.emplace_back(new riccati_equations_t);
+    bool preComputeRiccatiTerms = BASE::ddpSettings_.preComputeRiccatiTerms_ && (BASE::ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH);
+    riccatiEquationsPtrStock_.emplace_back(new riccati_equations_t(preComputeRiccatiTerms));
   }  // end of i loop
 
   Eigen::initParallel();
@@ -178,17 +179,17 @@ void ILQR<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, s
   const auto& EvProjected = BASE::projectedModelDataTrajectoriesStock_[i][k].stateInputEqConstr_;
   const auto& CmProjected = BASE::projectedModelDataTrajectoriesStock_[i][k].stateInputEqConstrStateDerivative_;
 
-  const auto& HmAugInvUUT = BASE::riccatiModificationTrajectoriesStock_[i][k].HmInverseConstrainedLowRank_;
+  const auto& Qu = BASE::riccatiModificationTrajectoriesStock_[i][k].constraintNullProjector_;
 
   // feedback gains
   BASE::nominalControllersStock_[i].gainArray_[k] = -CmProjected;
-  BASE::nominalControllersStock_[i].gainArray_[k].noalias() -= HmAugInvUUT * HmAugInvUUT_T_GmAug_[i][k];
+  BASE::nominalControllersStock_[i].gainArray_[k].noalias() += Qu * projectedKmTrajectoryStock_[i][k];
 
   // bias input
   BASE::nominalControllersStock_[i].biasArray_[k] = nominalInput;
   BASE::nominalControllersStock_[i].biasArray_[k].noalias() -= BASE::nominalControllersStock_[i].gainArray_[k] * nominalState;
   BASE::nominalControllersStock_[i].deltaBiasArray_[k] = -EvProjected;
-  BASE::nominalControllersStock_[i].deltaBiasArray_[k].noalias() -= HmAugInvUUT * HmAugInvUUT_T_GvAug_[i][k];
+  BASE::nominalControllersStock_[i].deltaBiasArray_[k].noalias() += Qu * projectedLvTrajectoryStock_[i][k];
 
   // checking the numerical stability of the controller parameters
   if (BASE::ddpSettings_.checkNumericalStability_) {
@@ -219,9 +220,29 @@ typename ILQR<STATE_DIM, INPUT_DIM>::scalar_t ILQR<STATE_DIM, INPUT_DIM>::solveS
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::constrainedRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex,
-                                                                   const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal,
-                                                                   const scalar_t& sFinal) {
+typename ILQR<STATE_DIM, INPUT_DIM>::dynamic_matrix_t ILQR<STATE_DIM, INPUT_DIM>::computeHamiltonianHessian(
+    DDP_Strategy strategy, const ModelDataBase& modelData, const state_matrix_t& Sm) const {
+  const auto& Bm = modelData.dynamicsInputDerivative_;
+  const auto& Rm = modelData.costInputSecondDerivative_;
+  dynamic_matrix_t BmTransSm;
+  switch (strategy) {
+    case DDP_Strategy::LINE_SEARCH: {
+      return (Rm + Bm.transpose() * Sm * Bm);
+    }
+    case DDP_Strategy::LEVENBERG_MARQUARDT: {
+      auto SmPlus = Sm;
+      SmPlus.diagonal() += BASE::levenbergMarquardtImpl_.riccatiMultiple * dynamic_vector_t::Ones(STATE_DIM);
+      return (Rm + Bm.transpose() * SmPlus * Bm);
+    }
+  }  // end of switch-case
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ILQR<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const dynamic_matrix_t& SmFinal,
+                                                        const dynamic_vector_t& SvFinal, const scalar_t& sFinal) {
   const int N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
   const int NE = BASE::nominalPostEventIndicesStock_[partitionIndex].size();
 
@@ -236,8 +257,8 @@ void ILQR<STATE_DIM, INPUT_DIM>::constrainedRiccatiEquationsWorker(size_t worker
   BASE::SvTrajectoryStock_[partitionIndex].resize(N);
   BASE::SmTrajectoryStock_[partitionIndex].resize(N);
 
-  HmAugInvUUT_T_GvAug_[partitionIndex].resize(N);
-  HmAugInvUUT_T_GmAug_[partitionIndex].resize(N);
+  projectedLvTrajectoryStock_[partitionIndex].resize(N);
+  projectedKmTrajectoryStock_[partitionIndex].resize(N);
 
   BASE::riccatiModificationTrajectoriesStock_[partitionIndex].resize(N);
   BASE::projectedModelDataTrajectoriesStock_[partitionIndex].resize(N);
@@ -275,54 +296,45 @@ void ILQR<STATE_DIM, INPUT_DIM>::constrainedRiccatiEquationsWorker(size_t worker
     BASE::SvTrajectoryStock_[partitionIndex][endTimeItr - 1] = SvFinal;
     BASE::SmTrajectoryStock_[partitionIndex][endTimeItr - 1] = SmFinal;
 
-    // continuous-time riccatiModification
-    dynamic_matrix_t Hm = BASE::modelDataTrajectoriesStock_[partitionIndex][endTimeItr - 1].costInputSecondDerivative_;
-    BASE::computeRiccatiModification(BASE::ddpSettings_.strategy_, Hm, BASE::modelDataTrajectoriesStock_[partitionIndex][endTimeItr - 1],
-                                     BASE::riccatiModificationTrajectoriesStock_[partitionIndex][endTimeItr - 1]);
+    // continuous-time for final step
+    const auto& modelDataFinal = BASE::modelDataTrajectoriesStock_[partitionIndex][endTimeItr - 1];
+    auto& riccatiModificationFinal = BASE::riccatiModificationTrajectoriesStock_[partitionIndex][endTimeItr - 1];
+    auto& projectedModelDataFinal = BASE::projectedModelDataTrajectoriesStock_[partitionIndex][endTimeItr - 1];
+    auto& projectedLvFinal = projectedLvTrajectoryStock_[partitionIndex][endTimeItr - 1];
+    auto& projectedKmFinal = projectedKmTrajectoryStock_[partitionIndex][endTimeItr - 1];
 
-    // project LQ coefficients to constrained ones
-    BASE::projectLQ(BASE::modelDataTrajectoriesStock_[partitionIndex][endTimeItr - 1],
-                    BASE::riccatiModificationTrajectoriesStock_[partitionIndex][endTimeItr - 1].DmDagger_,
-                    BASE::projectedModelDataTrajectoriesStock_[partitionIndex][endTimeItr - 1]);
+    const auto SmDummy = dynamic_matrix_t::Zero(modelDataFinal.stateDim_, modelDataFinal.stateDim_);
+    BASE::computeProjectionAndRiccatiModification(BASE::ddpSettings_.strategy_, modelDataFinal, SmDummy, projectedModelDataFinal,
+                                                  riccatiModificationFinal);
 
-    const ModelDataBase& md = BASE::modelDataTrajectoriesStock_[partitionIndex][endTimeItr - 1];
-    dynamic_vector_t GvAug = md.costInputDerivative_;
-    GvAug.noalias() += md.dynamicsInputDerivative_.transpose() * BASE::SvTrajectoryStock_[partitionIndex][endTimeItr - 1];
-    HmAugInvUUT_T_GvAug_[partitionIndex][endTimeItr - 1].noalias() =
-        BASE::riccatiModificationTrajectoriesStock_[partitionIndex][endTimeItr - 1].HmInverseConstrainedLowRank_.transpose() * GvAug;
-    dynamic_matrix_t GmAug =
-        md.costInputStateDerivative_ + BASE::riccatiModificationTrajectoriesStock_[partitionIndex][endTimeItr - 1].deltaPm_;
-    GmAug.noalias() += md.dynamicsInputDerivative_.transpose() * BASE::SmTrajectoryStock_[partitionIndex][endTimeItr - 1];
-    HmAugInvUUT_T_GmAug_[partitionIndex][endTimeItr - 1].noalias() =
-        BASE::riccatiModificationTrajectoriesStock_[partitionIndex][endTimeItr - 1].HmInverseConstrainedLowRank_.transpose() * GmAug;
+    // projected feedforward
+    projectedLvFinal = -projectedModelDataFinal.costInputDerivative_ - riccatiModificationFinal.deltaGv_;
+    projectedLvFinal.noalias() -=
+        projectedModelDataFinal.dynamicsInputDerivative_.transpose() * BASE::SvTrajectoryStock_[partitionIndex][endTimeItr - 1];
+
+    // projected feedback
+    projectedKmFinal = -projectedModelDataFinal.costInputStateDerivative_ - riccatiModificationFinal.deltaGm_;
+    projectedKmFinal.noalias() -=
+        projectedModelDataFinal.dynamicsInputDerivative_.transpose() * BASE::SmTrajectoryStock_[partitionIndex][endTimeItr - 1];
 
     /*
      * solve Riccati equations and compute projected model data and RiccatiModification for the intermediate times
      */
     dynamic_matrix_t Bm_T_Sm(INPUT_DIM, STATE_DIM);
     for (int k = endTimeItr - 2; k >= beginTimeItr; k--) {
-      const auto& modelData = BASE::modelDataTrajectoriesStock_[partitionIndex][k];
-
-      // Hm
-      Hm = modelData.costInputSecondDerivative_;
-      Bm_T_Sm.noalias() = modelData.dynamicsInputDerivative_.transpose() * BASE::SmTrajectoryStock_[partitionIndex][k + 1];
-      Hm.noalias() += Bm_T_Sm * modelData.dynamicsInputDerivative_;
-
-      // riccatiModification
-      BASE::computeRiccatiModification(BASE::ddpSettings_.strategy_, Hm, modelData,
-                                       BASE::riccatiModificationTrajectoriesStock_[partitionIndex][k]);
-
-      // project LQ coefficients to constrained ones
-      BASE::projectLQ(modelData, BASE::riccatiModificationTrajectoriesStock_[partitionIndex][k].DmDagger_,
-                      BASE::projectedModelDataTrajectoriesStock_[partitionIndex][k]);
+      // project
+      BASE::computeProjectionAndRiccatiModification(BASE::ddpSettings_.strategy_, BASE::modelDataTrajectoriesStock_[partitionIndex][k],
+                                                    BASE::SmTrajectoryStock_[partitionIndex][k + 1],
+                                                    BASE::projectedModelDataTrajectoriesStock_[partitionIndex][k],
+                                                    BASE::riccatiModificationTrajectoriesStock_[partitionIndex][k]);
 
       // compute one step of Riccati difference equations
       riccatiEquationsPtrStock_[workerIndex]->computeMap(
           BASE::projectedModelDataTrajectoriesStock_[partitionIndex][k], BASE::riccatiModificationTrajectoriesStock_[partitionIndex][k],
           BASE::SmTrajectoryStock_[partitionIndex][k + 1], BASE::SvTrajectoryStock_[partitionIndex][k + 1],
-          BASE::sTrajectoryStock_[partitionIndex][k + 1], HmAugInvUUT_T_GmAug_[partitionIndex][k], HmAugInvUUT_T_GvAug_[partitionIndex][k],
-          BASE::SmTrajectoryStock_[partitionIndex][k], BASE::SvTrajectoryStock_[partitionIndex][k],
-          BASE::sTrajectoryStock_[partitionIndex][k]);
+          BASE::sTrajectoryStock_[partitionIndex][k + 1], projectedKmTrajectoryStock_[partitionIndex][k],
+          projectedLvTrajectoryStock_[partitionIndex][k], BASE::SmTrajectoryStock_[partitionIndex][k],
+          BASE::SvTrajectoryStock_[partitionIndex][k], BASE::sTrajectoryStock_[partitionIndex][k]);
     }  // end of k loop
 
     if (i > 0) {
@@ -351,8 +363,8 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void ILQR<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   BASE::setupOptimizer(numPartitions);
 
-  HmAugInvUUT_T_GvAug_.resize(numPartitions);
-  HmAugInvUUT_T_GmAug_.resize(numPartitions);
+  projectedLvTrajectoryStock_.resize(numPartitions);
+  projectedKmTrajectoryStock_.resize(numPartitions);
 }
 
 }  // namespace ocs2

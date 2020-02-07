@@ -29,10 +29,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_ddp/DDP_BASE.h>
-
+#include "ocs2_ddp/DDP_BASE.h"
 #include "ocs2_ddp/ILQR_Settings.h"
-#include "ocs2_ddp/riccati_equations/DifferenceRiccatiEquations.h"
+#include "ocs2_ddp/riccati_equations/DiscreteTimeRiccatiEquations.h"
 
 namespace ocs2 {
 
@@ -122,7 +121,7 @@ class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::penalty_base_t;
   using typename BASE::rollout_base_t;
 
-  using riccati_equations_t = DifferenceRiccatiEquations<STATE_DIM, INPUT_DIM>;
+  using riccati_equations_t = DiscreteTimeRiccatiEquations<STATE_DIM, INPUT_DIM>;
 
   //	/**
   //	 * class for collecting ILQR data
@@ -178,6 +177,9 @@ class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
 
   scalar_t solveSequentialRiccatiEquations(const state_matrix_t& SmFinal, const state_vector_t& SvFinal, const scalar_t& sFinal) override;
 
+  dynamic_matrix_t computeHamiltonianHessian(DDP_Strategy strategy, const ModelDataBase& modelData,
+                                             const state_matrix_t& Sm) const override;
+
   /**
    * Calculates the discrete-time LQ approximation from the continuous-time LQ approximation.
    *
@@ -187,16 +189,16 @@ class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    */
   void discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelDataBase& continuousTimeModelData, ModelDataBase& modelData);
 
-  void constrainedRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const dynamic_matrix_t& SmFinal,
-                                         const dynamic_vector_t& SvFinal, const scalar_t& sFinal) override;
+  void riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal,
+                              const scalar_t& sFinal) override;
 
   /****************
    *** Variables **
    ****************/
   ILQR_Settings settings_;
 
-  dynamic_vector_array2_t HmAugInvUUT_T_GvAug_;
-  dynamic_matrix_array2_t HmAugInvUUT_T_GmAug_;
+  dynamic_matrix_array2_t projectedKmTrajectoryStock_;  // projected feedback
+  dynamic_vector_array2_t projectedLvTrajectoryStock_;  // projected feedforward
 
   std::vector<std::shared_ptr<riccati_equations_t>> riccatiEquationsPtrStock_;
 };

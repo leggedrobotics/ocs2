@@ -46,14 +46,10 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivativ
            heuristicsFunctionPtr, "SLQ", std::move(logicRulesPtr)),
       settings_(settings) {
   // Riccati Solver
-  errorEquationPtrStock_.clear();
-  errorEquationPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
   riccatiEquationsPtrStock_.clear();
   riccatiEquationsPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
   riccatiIntegratorPtrStock_.clear();
   riccatiIntegratorPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
-  errorIntegratorPtrStock_.clear();
-  errorIntegratorPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 
   IntegratorType integratorType = settings_.RiccatiIntegratorType_;
   if (integratorType != IntegratorType::ODE45 && integratorType != IntegratorType::BULIRSCH_STOER) {
@@ -62,11 +58,8 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivativ
   }
 
   for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
-    errorEquationPtrStock_.emplace_back(new error_equation_t);
-    bool preComputeRiccatiTerms_ = settings_.preComputeRiccatiTerms_ && (BASE::ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH);
-    riccatiEquationsPtrStock_.emplace_back(new riccati_equations_t(preComputeRiccatiTerms_));
-
-    errorIntegratorPtrStock_.emplace_back(newIntegrator<STATE_DIM>(integratorType));
+    bool preComputeRiccatiTerms = BASE::ddpSettings_.preComputeRiccatiTerms_ && (BASE::ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH);
+    riccatiEquationsPtrStock_.emplace_back(new riccati_equations_t(preComputeRiccatiTerms));
     riccatiIntegratorPtrStock_.emplace_back(newIntegrator<riccati_equations_t::S_DIM_>(integratorType));
   }  // end of i loop
 
@@ -110,54 +103,66 @@ void SLQ<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, si
   // local variables
   state_vector_t nominalState;
   input_vector_t nominalInput;
-  dynamic_matrix_t Bm;
-  dynamic_matrix_t GmAug;
-  dynamic_vector_t Gv;
-  dynamic_matrix_t deltaPm;
-  dynamic_matrix_t HmInverseConstrained;
-  dynamic_vector_t EvProjected;
+
+  dynamic_matrix_t projectedBm;
+  dynamic_matrix_t projectedPm;
+  dynamic_vector_t projectedRv;
+
+  dynamic_matrix_t projectedKm;  // projected feedback
+  dynamic_vector_t projectedLv;  // projected feedforward
+
+  dynamic_matrix_t Qu;  // projector
   dynamic_matrix_t CmProjected;
+  dynamic_vector_t EvProjected;
 
   // interpolate
   const auto indexAlpha = EigenLinearInterpolation<state_vector_t>::timeSegment(time, &(BASE::nominalTimeTrajectoriesStock_[i]));
   EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, nominalState, &(BASE::nominalStateTrajectoriesStock_[i]));
   EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, nominalInput, &(BASE::nominalInputTrajectoriesStock_[i]));
 
-  // Bm
-  ModelData::LinearInterpolation::interpolate(indexAlpha, Bm, &BASE::modelDataTrajectoriesStock_[i], ModelData::dynamicsInputDerivative);
-  // Pm
-  ModelData::LinearInterpolation::interpolate(indexAlpha, GmAug, &BASE::modelDataTrajectoriesStock_[i],
+  // BmProjected
+  ModelData::LinearInterpolation::interpolate(indexAlpha, projectedBm, &BASE::projectedModelDataTrajectoriesStock_[i],
+                                              ModelData::dynamicsInputDerivative);
+  // PmProjected
+  ModelData::LinearInterpolation::interpolate(indexAlpha, projectedPm, &BASE::projectedModelDataTrajectoriesStock_[i],
                                               ModelData::costInputStateDerivative);
-  // Rv
-  ModelData::LinearInterpolation::interpolate(indexAlpha, Gv, &BASE::modelDataTrajectoriesStock_[i], ModelData::costInputDerivative);
+  // RvProjected
+  ModelData::LinearInterpolation::interpolate(indexAlpha, projectedRv, &BASE::projectedModelDataTrajectoriesStock_[i],
+                                              ModelData::costInputDerivative);
   // EvProjected
   ModelData::LinearInterpolation::interpolate(indexAlpha, EvProjected, &BASE::projectedModelDataTrajectoriesStock_[i],
                                               ModelData::stateInputEqConstr);
   // CmProjected
   ModelData::LinearInterpolation::interpolate(indexAlpha, CmProjected, &BASE::projectedModelDataTrajectoriesStock_[i],
                                               ModelData::stateInputEqConstrStateDerivative);
-  // deltaPm
-  RiccatiModification::LinearInterpolation::interpolate(indexAlpha, deltaPm, &BASE::riccatiModificationTrajectoriesStock_[i],
-                                                        RiccatiModification::deltaPm);
-  // inv(HmAug)
-  RiccatiModification::LinearInterpolation::interpolate(indexAlpha, HmInverseConstrained, &BASE::riccatiModificationTrajectoriesStock_[i],
-                                                        RiccatiModification::HmInverseConstrained);
 
-  // Gm
-  GmAug += deltaPm;
-  GmAug.noalias() += Bm.transpose() * BASE::SmTrajectoryStock_[i][k];  // avoid temporary in the product
-  // Gv
-  Gv.noalias() += Bm.transpose() * BASE::SvTrajectoryStock_[i][k];  // avoid temporary in the product
+  // Qu
+  RiccatiModification::LinearInterpolation::interpolate(indexAlpha, Qu, &BASE::riccatiModificationTrajectoriesStock_[i],
+                                                        RiccatiModification::constraintNullProjector);
+  // deltaGm
+  RiccatiModification::LinearInterpolation::interpolate(indexAlpha, projectedKm, &BASE::riccatiModificationTrajectoriesStock_[i],
+                                                        RiccatiModification::deltaGm);
+  // deltaGv
+  RiccatiModification::LinearInterpolation::interpolate(indexAlpha, projectedLv, &BASE::riccatiModificationTrajectoriesStock_[i],
+                                                        RiccatiModification::deltaGv);
+
+  // projectedKm = projectedPm + projectedBm^t * Sm
+  projectedKm = -(projectedKm + projectedPm);
+  projectedKm.noalias() -= projectedBm.transpose() * BASE::SmTrajectoryStock_[i][k];
+
+  // projectedLv = projectedRv + projectedBm^t * Sv
+  projectedLv = -(projectedLv + projectedRv);
+  projectedLv.noalias() -= projectedBm.transpose() * BASE::SvTrajectoryStock_[i][k];
 
   // feedback gains
   BASE::nominalControllersStock_[i].gainArray_[k] = -CmProjected;
-  BASE::nominalControllersStock_[i].gainArray_[k].noalias() -= HmInverseConstrained * GmAug;
+  BASE::nominalControllersStock_[i].gainArray_[k].noalias() += Qu * projectedKm;
 
   // bias input
   BASE::nominalControllersStock_[i].biasArray_[k] = nominalInput;
   BASE::nominalControllersStock_[i].biasArray_[k].noalias() -= BASE::nominalControllersStock_[i].gainArray_[k] * nominalState;
   BASE::nominalControllersStock_[i].deltaBiasArray_[k] = -EvProjected;
-  BASE::nominalControllersStock_[i].deltaBiasArray_[k].noalias() -= HmInverseConstrained * Gv;
+  BASE::nominalControllersStock_[i].deltaBiasArray_[k].noalias() += Qu * projectedLv;
 
   // checking the numerical stability of the controller parameters
   if (BASE::ddpSettings_.checkNumericalStability_) {
@@ -197,18 +202,13 @@ typename SLQ<STATE_DIM, INPUT_DIM>::scalar_t SLQ<STATE_DIM, INPUT_DIM>::solveSeq
         int N = BASE::nominalTimeTrajectoriesStock_[i].size();
         int timeIndex;
         size_t taskId = BASE::nextTaskId_++;  // assign task ID (atomic)
+        const auto SmDummy = dynamic_matrix_t::Zero(STATE_DIM, STATE_DIM);
 
         // get next time index is atomic
         while ((timeIndex = BASE::nextTimeIndex_++) < N) {
-          auto& modelData = BASE::modelDataTrajectoriesStock_[i][timeIndex];
-          auto& riccatiModification = BASE::riccatiModificationTrajectoriesStock_[i][timeIndex];
-          auto& projectedModelData = BASE::projectedModelDataTrajectoriesStock_[i][timeIndex];
-
-          const auto& Hm = modelData.costInputSecondDerivative_;
-          BASE::computeRiccatiModification(BASE::ddpSettings_.strategy_, Hm, modelData, riccatiModification);
-
-          // project LQ coefficients to constrained ones
-          BASE::projectLQ(modelData, riccatiModification.DmDagger_, projectedModelData);
+          BASE::computeProjectionAndRiccatiModification(BASE::ddpSettings_.strategy_, BASE::modelDataTrajectoriesStock_[i][timeIndex],
+                                                        SmDummy, BASE::projectedModelDataTrajectoriesStock_[i][timeIndex],
+                                                        BASE::riccatiModificationTrajectoriesStock_[i][timeIndex]);
         }
       };
       BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
@@ -222,14 +222,21 @@ typename SLQ<STATE_DIM, INPUT_DIM>::scalar_t SLQ<STATE_DIM, INPUT_DIM>::solveSeq
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::constrainedRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex,
-                                                                  const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal,
-                                                                  const scalar_t& sFinal) {
-  // solve Sm, Sv, s
-  riccatiEquationsWorker(workerIndex, partitionIndex, SmFinal, SvFinal, sFinal);
-
-  // Solve Sve
-  // errorRiccatiEquationWorker(workerIndex, partitionIndex, SveFinal);
+typename SLQ<STATE_DIM, INPUT_DIM>::dynamic_matrix_t SLQ<STATE_DIM, INPUT_DIM>::computeHamiltonianHessian(DDP_Strategy strategy,
+                                                                                                          const ModelDataBase& modelData,
+                                                                                                          const state_matrix_t& Sm) const {
+  const auto& Bm = modelData.dynamicsInputDerivative_;
+  const auto& Rm = modelData.costInputSecondDerivative_;
+  switch (strategy) {
+    case DDP_Strategy::LINE_SEARCH: {
+      return Rm;
+    }
+    case DDP_Strategy::LEVENBERG_MARQUARDT: {
+      auto HmAug = Rm;
+      HmAug.noalias() += BASE::levenbergMarquardtImpl_.riccatiMultiple * Bm.transpose() * Bm;
+      return HmAug;
+    }
+  }  // end of switch-case
 }
 
 /******************************************************************************************************/

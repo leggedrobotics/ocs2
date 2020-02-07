@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 #include <ocs2_core/misc/Benchmark.h>
+#include <ocs2_core/misc/LinearAlgebra.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/Numerics.h>
 #include <ocs2_core/misc/ThreadPool.h>
@@ -369,12 +370,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void riccatiSolverTask();
 
   /**
-   *
-   */
-  static void computeNormalizedTime(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
-                                    scalar_array_t& normalizedTimeTrajectory, size_array_t& normalizedPostEventIndices);
-
-  /**
    * Solves a set of Riccati equations and type_1 constraints error correction compensation for the partition in the given index.
    *
    * @param [in] workerIndex: Working agent index.
@@ -383,8 +378,19 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] SvFinal: The final Sv for Riccati equation.
    * @param [in] sFinal: The final s for Riccati equation.
    */
-  virtual void constrainedRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const dynamic_matrix_t& SmFinal,
-                                                 const dynamic_vector_t& SvFinal, const scalar_t& sFinal) = 0;
+  virtual void riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const dynamic_matrix_t& SmFinal,
+                                      const dynamic_vector_t& SvFinal, const scalar_t& sFinal) = 0;
+
+  /**
+   * Computes the normalized time for Riccati backward pass.
+   *
+   * @param [in] timeTrajectory: The time trajectory.
+   * @param [in] postEventIndices: The post event indices.
+   * @param [out] normalizedTimeTrajectory: The reversed and negated timeTrajectory.
+   * @param [out] strategy: The corresponding post event indices of normalizedTimeTrajectory.
+   */
+  static void computeNormalizedTime(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
+                                    scalar_array_t& normalizedTimeTrajectory, size_array_t& normalizedPostEventIndices);
 
   /**
    * Adjust the nominal controller based on the last changes in the logic rules.
@@ -531,24 +537,63 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void augmentCostWorker(size_t workerIndex, ModelDataBase& modelData);
 
   /**
-   * Computes the Riccati modification based on the strategy and Hm matrix
+   * Takes the following steps: (1) Computes the Hessian of the Hamiltonian (i.e., Hm) (2) Based on Hm, it calculates
+   * the range space and the null space projections of the input-state equality constraints. (3) Based on these two
+   * projections, defines the projected LQ model. (4) Finally, defines the Riccati equation modifiers based on the
+   * search strategy.
+   *
+   * @param [in] strategy: The search strategy e.g., LINE_SEARCH.
+   * @param [in] modelData: The model data.
+   * @param [in] Sm: The Riccati matrix.
+   * @param [out] projectedModelData: The projected model data.
+   * @param [out] riccatiModification: The Riccati equation modifier.
+   */
+  void computeProjectionAndRiccatiModification(DDP_Strategy strategy, const ModelDataBase& modelData, const dynamic_matrix_t& Sm,
+                                               ModelDataBase& projectedModelData, RiccatiModificationBase& riccatiModification) const;
+
+  /**
+   * Computes Hessian of the Hamiltonian.
+   *
+   * @param [in] strategy: The search strategy e.g., LINE_SEARCH.
+   * @param [in] modelData: The model data.
+   * @param [in] Sm: The Riccati matrix.
+   * @return The Hessian matrix of the Hamiltonian.
+   */
+  virtual dynamic_matrix_t computeHamiltonianHessian(DDP_Strategy strategy, const ModelDataBase& modelData,
+                                                     const state_matrix_t& Sm) const = 0;
+
+  /**
+   *
+   * @param [in] Hm: inv(Hm) defines the oblique projection for state-input equality constraints.
+   * @param [in] Dm: The derivative of the state-input constraints w.r.t. input.
+   * @param [out] constraintRangeProjector: The projection matrix to the constrained subspace.
+   * @param [out] constraintNullProjector: The projection matrix to the null space of constrained.
+   */
+  void computeProjections(const dynamic_matrix_t& Hm, const dynamic_matrix_t& Dm, dynamic_matrix_t& constraintRangeProjector,
+                          dynamic_matrix_t& constraintNullProjector) const;
+
+  /**
+   * Computes the Riccati modification based on the strategy.
    *
    * @param [in] strategy: The search strategy e.g., LINE_SEARCH
-   * @param [in] Hm: inv(Hm) defines the oblique projection for state-input equality constraints.
-   * @param [in] modelData: The data model
-   * @param [out] riccatiModification: The RiccatiModification.
+   * @param [in] projectedModelData: The projected data model
+   * @param [out] deltaQm: The Riccati modifier to cost 2nd derivative w.r.t. state.
+   * @param [out] deltaGv: The Riccati modifier to cost derivative w.r.t. input.
+   * @param [out] deltaGm: The Riccati modifier to cost input-state derivative.
    */
-  void computeRiccatiModification(DDP_Strategy strategy, const dynamic_matrix_t& Hm, const ModelDataBase& modelData,
-                                  RiccatiModificationBase& riccatiModification) const;
+  void computeRiccatiModification(DDP_Strategy strategy, const ModelDataBase& projectedModelData, dynamic_matrix_t& deltaQm,
+                                  dynamic_vector_t& deltaGv, dynamic_matrix_t& deltaGm) const;
 
   /**
    * Projects the unconstrained LQ coefficients to constrained ones.
    *
    * @param [in] modelData: The model data.
-   * @param [in] DmDagger: The projection matrix to constrained subspace.
+   * @param [in] constraintRangeProjector: The projection matrix to the constrained subspace.
+   * @param [in] constraintNullProjector: The projection matrix to the null space of constrained.
    * @param [out] projectedModelData: The projected model data.
    */
-  static void projectLQ(const ModelDataBase& modelData, const dynamic_matrix_t& DmDagger, ModelDataBase& projectedModelData);
+  void projectLQ(const ModelDataBase& modelData, const dynamic_matrix_t& constraintRangeProjector,
+                 const dynamic_matrix_t& constraintNullProjector, ModelDataBase& projectedModelData) const;
 
   /**
    * Shifts the Hessian based on the strategy defined by Line_Search::hessianCorrectionStrategy_.
@@ -752,6 +797,10 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   ModelDataBase::array2_t projectedModelDataTrajectoriesStock_;
   ModelDataBase::array2_t cachedProjectedModelDataTrajectoriesStock_;
 
+  // Riccati modification
+  RiccatiModificationBase::array2_t riccatiModificationTrajectoriesStock_;
+  RiccatiModificationBase::array2_t cachedRiccatiModificationTrajectoriesStock_;
+
   // Riccati solution coefficients
   scalar_array2_t SsTimeTrajectoryStock_;
   scalar_array2_t SsNormalizedTimeTrajectoryStock_;
@@ -762,17 +811,12 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   scalar_array_t sFinalStock_;
   state_vector_array_t SvFinalStock_;
-  state_vector_array_t SveFinalStock_;
   state_matrix_array_t SmFinalStock_;
   state_vector_array_t xFinalStock_;
 
   scalar_t sHeuristics_;
   state_vector_t SvHeuristics_;
   state_matrix_t SmHeuristics_;
-
-  // Riccati modification
-  RiccatiModificationBase::array2_t riccatiModificationTrajectoriesStock_;
-  RiccatiModificationBase::array2_t cachedRiccatiModificationTrajectoriesStock_;
 
   // Line-Search
   struct LineSearchImpl {

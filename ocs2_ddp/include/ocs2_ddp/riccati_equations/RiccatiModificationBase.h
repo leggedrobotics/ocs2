@@ -47,16 +47,13 @@ struct RiccatiModificationBase {
   scalar_t time_;
 
   dynamic_matrix_t deltaQm_;
-  dynamic_matrix_t deltaRm_;
-  dynamic_matrix_t deltaPm_;
+  dynamic_matrix_t deltaGm_;
+  dynamic_vector_t deltaGv_;
 
   /** The right pseudo-inverse of Dm */
-  dynamic_matrix_t DmDagger_;
-
-  /** Hm is the 2nd derivative of Hamiltonian w.r.t. input. HmInverseConstrained is (I - DmDagerDm)^T inv(Hm) (I - DmDagerDm) */
-  dynamic_matrix_t HmInverseConstrained_;
-  /** HmInverseConstrainedUUT is VVT decomposition of (I - DmDagerDm) inv(Hm) with dimension n_u*(n_u-n_c)  */
-  dynamic_matrix_t HmInverseConstrainedLowRank_;
+  dynamic_matrix_t constraintRangeProjector_;
+  /** DmNull inv(DmNull^T * Hm * DmNull) * DmNull^T = (I - invHm * Dm^T * inv(Dm * invHm * Dm^T) * Dm) * invHm */
+  dynamic_matrix_t constraintNullProjector_;
 
   /**
    * Displays all variables
@@ -65,13 +62,11 @@ struct RiccatiModificationBase {
     std::cerr << std::endl;
     std::cerr << "time: " << time_ << "\n";
     std::cerr << "deltaQm:\n" << deltaQm_ << "\n";
-    std::cerr << "deltaRm:\n" << deltaRm_ << "\n";
-    std::cerr << "deltaPm:\n" << deltaPm_ << "\n";
+    std::cerr << "deltaRm:\n" << deltaGm_ << "\n";
+    std::cerr << "deltaPm:\n" << deltaGv_.transpose() << "\n";
 
-    std::cerr << "DmDagger:\n" << DmDagger_ << "\n";
-
-    std::cerr << "HmInverseConstrained:\n" << HmInverseConstrained_ << "\n";
-    std::cerr << "HmInverseConstrainedLowRank:\n" << HmInverseConstrainedLowRank_ << "\n";
+    std::cerr << "constraintRangeProjector:\n" << constraintRangeProjector_ << "\n";
+    std::cerr << "constraintNullProjector: \n" << constraintNullProjector_ << "\n";
     std::cerr << std::endl;
   }
 };

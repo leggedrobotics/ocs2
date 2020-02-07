@@ -1,36 +1,53 @@
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
+#include <memory>
 
 #include <gtest/gtest.h>
+
 #include <ocs2_core/misc/LinearAlgebra.h>
 #include <ocs2_core/misc/randomMatrices.h>
-#include <ocs2_ddp/riccati_equations/SequentialRiccatiEquations.h>
-#include <memory>
+#include <ocs2_ddp/riccati_equations/ContinuousTimeRiccatiEquations.h>
 
 template <typename riccati_t>
 class RiccatiInitializer {
  public:
+  using scalar_t = typename riccati_t::scalar_t;
+  using size_array_t = typename riccati_t::size_array_t;
+  using scalar_array_t = typename riccati_t::scalar_array_t;
   using state_matrix_t = typename riccati_t::state_matrix_t;
-  using input_matrix_t = typename riccati_t::input_matrix_t;
-  using state_input_matrix_t = typename riccati_t::state_input_matrix_t;
-  using input_state_matrix_t = typename riccati_t::input_state_matrix_t;
   using state_vector_t = typename riccati_t::state_vector_t;
-  using input_vector_t = typename riccati_t::input_vector_t;
   using dynamic_vector_t = typename riccati_t::dynamic_vector_t;
   using dynamic_matrix_t = typename riccati_t::dynamic_matrix_t;
 
-  using scalar_t = typename riccati_t::scalar_t;
-  using scalar_array_t = typename riccati_t::scalar_array_t;
-  using state_matrix_array_t = typename riccati_t::state_matrix_array_t;
-  using input_matrix_array_t = typename riccati_t::input_matrix_array_t;
-  using state_input_matrix_array_t = typename riccati_t::state_input_matrix_array_t;
-  using state_vector_array_t = typename riccati_t::state_vector_array_t;
-  using input_vector_array_t = typename riccati_t::input_vector_array_t;
-  using dynamic_matrix_array_t = typename riccati_t::dynamic_matrix_array_t;
-  using input_state_matrix_array_t = typename riccati_t::input_state_matrix_array_t;
-  using size_array_t = typename riccati_t::size_array_t;
-
   scalar_array_t timeStamp;
-  dynamic_matrix_array_t RinvChol;
-  ocs2::ModelDataBase::array_t modelDataTrajectory;
+  ocs2::ModelDataBase::array_t projectedModelDataTrajectory;
 
   size_array_t eventsPastTheEndIndeces;
   ocs2::ModelDataBase::array_t modelDataEventTimesArray;
@@ -40,40 +57,42 @@ class RiccatiInitializer {
   RiccatiInitializer(const int state_dim, const int input_dim) {
     timeStamp = scalar_array_t{0.0, 1.0};
 
-    ocs2::ModelDataBase modelData;
-    modelData.stateDim_ = state_dim;
-    modelData.inputDim_ = input_dim;
-    modelData.dynamicsBias_ = state_vector_t::Random(state_dim);
-    modelData.dynamicsStateDerivative_ = state_matrix_t::Random(state_dim, state_dim);
-    modelData.dynamicsInputDerivative_ = state_input_matrix_t::Random(state_dim, input_dim);
-    modelData.cost_ = dynamic_vector_t::Random(1)(0);
-    modelData.costStateDerivative_ = state_vector_t::Random(state_dim);
-    modelData.costStateSecondDerivative_ = ocs2::LinearAlgebra::generateSPDmatrix<state_matrix_t>(state_dim);
-    modelData.costInputDerivative_ = input_vector_t::Random(input_dim);
-    modelData.costInputSecondDerivative_ = ocs2::LinearAlgebra::generateSPDmatrix<input_matrix_t>(input_dim);
-    modelData.costInputStateDerivative_ = input_state_matrix_t::Random(input_dim, state_dim);
-    modelData.numIneqConstr_ = 0;
-    modelData.numStateEqConstr_ = 0;
-    modelData.numStateInputEqConstr_ = 0;
-    modelData.stateInputEqConstr_.setZero(input_dim);
-    modelData.stateInputEqConstrStateDerivative_.setZero(input_dim, state_dim);
-    modelData.stateInputEqConstrInputDerivative_.setZero(input_dim, input_dim);
+    ocs2::ModelDataBase projectedModelData;
+    projectedModelData.stateDim_ = state_dim;
+    projectedModelData.inputDim_ = input_dim;
+    projectedModelData.dynamicsBias_ = dynamic_vector_t::Random(state_dim);
+    projectedModelData.dynamicsStateDerivative_ = dynamic_matrix_t::Random(state_dim, state_dim);
+    projectedModelData.dynamicsInputDerivative_ = dynamic_matrix_t::Random(state_dim, input_dim);
+    projectedModelData.cost_ = dynamic_vector_t::Random(1)(0);
+    projectedModelData.costStateDerivative_ = dynamic_vector_t::Random(state_dim);
+    projectedModelData.costStateSecondDerivative_ = ocs2::LinearAlgebra::generateSPDmatrix<dynamic_matrix_t>(state_dim);
+    projectedModelData.costInputDerivative_ = dynamic_vector_t::Random(input_dim);
+    projectedModelData.costInputSecondDerivative_.setIdentity(
+        input_dim, input_dim);  // Important: It is identity since it is a projected projectedModelData!
+    projectedModelData.costInputStateDerivative_ = dynamic_matrix_t::Random(input_dim, state_dim);
+    projectedModelData.numIneqConstr_ = 0;
+    projectedModelData.numStateEqConstr_ = 0;
+    projectedModelData.numStateInputEqConstr_ = input_dim;
+    projectedModelData.stateInputEqConstr_.setZero(input_dim);
+    projectedModelData.stateInputEqConstrStateDerivative_.setZero(input_dim, state_dim);
+    projectedModelData.stateInputEqConstrInputDerivative_.setZero(input_dim, input_dim);
 
-    modelDataTrajectory = ocs2::ModelDataBase::array_t{modelData, modelData};
+    projectedModelDataTrajectory = ocs2::ModelDataBase::array_t{projectedModelData, projectedModelData};
 
     ocs2::RiccatiModificationBase riccatiModification;
-    riccatiModification.deltaQm_ = 0.1 * ocs2::LinearAlgebra::generateSPDmatrix<state_matrix_t>(state_dim);
-    riccatiModification.deltaRm_ = input_matrix_t::Zero(input_dim, input_dim);
-    riccatiModification.deltaPm_ = input_state_matrix_t::Zero(input_dim, state_dim);
-    ocs2::LinearAlgebra::computeInverseMatrixUUT(modelData.costInputSecondDerivative_, riccatiModification.HmInverseConstrainedLowRank_);
-    riccatiModification.HmInverseConstrained_ =
-        riccatiModification.HmInverseConstrainedLowRank_ * riccatiModification.HmInverseConstrainedLowRank_.transpose();
+    riccatiModification.deltaQm_ = 0.1 * ocs2::LinearAlgebra::generateSPDmatrix<dynamic_matrix_t>(state_dim);
+    riccatiModification.deltaGv_ = dynamic_vector_t::Zero(input_dim);
+    riccatiModification.deltaGm_ = dynamic_matrix_t::Zero(input_dim, state_dim);
+    riccatiModification.constraintRangeProjector_.setZero(input_dim, 0);
+    ocs2::LinearAlgebra::computeInverseMatrixUUT(projectedModelData.costInputSecondDerivative_,
+                                                 riccatiModification.constraintNullProjector_);
 
     riccatiModificationTrajectory = ocs2::RiccatiModificationBase::array_t{riccatiModification, riccatiModification};
   }
 
   void initialize(riccati_t& riccati) {
-    riccati.setData(&timeStamp, &modelDataTrajectory, &eventsPastTheEndIndeces, &modelDataEventTimesArray, &riccatiModificationTrajectory);
+    riccati.setData(&timeStamp, &projectedModelDataTrajectory, &eventsPastTheEndIndeces, &modelDataEventTimesArray,
+                    &riccatiModificationTrajectory);
   }
 };
 
@@ -81,7 +100,7 @@ TEST(riccati_ode_test, compareImplementations) {
   constexpr int STATE_DIM = 48;
   constexpr int INPUT_DIM = 10;
 
-  using riccati_t = ocs2::SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>;
+  using riccati_t = ocs2::ContinuousTimeRiccatiEquations<STATE_DIM, INPUT_DIM>;
 
   riccati_t riccatiEquationPrecompute(true);
   riccati_t riccatiEquationNoPrecompute(false);
@@ -104,7 +123,7 @@ TEST(riccati_ode_test, compareFixedAndDynamicSizedImplementation) {
   const int input_dim = 10;
   const int state_dim = 48;
 
-  using riccati_static_t = ocs2::SequentialRiccatiEquations<state_dim, input_dim>;
+  using riccati_static_t = ocs2::ContinuousTimeRiccatiEquations<state_dim, input_dim>;
   riccati_static_t riccati_static(precompute);
   srand(42);  // necessary to define a similar problem as dynamic case
   RiccatiInitializer<riccati_static_t> ris(state_dim, input_dim);
@@ -114,7 +133,7 @@ TEST(riccati_ode_test, compareFixedAndDynamicSizedImplementation) {
   riccati_static_t::s_vector_t dSdz_static;
   riccati_static.computeFlowMap(0.6, S_static, dSdz_static);
 
-  using riccati_dynamic_t = ocs2::SequentialRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;
+  using riccati_dynamic_t = ocs2::ContinuousTimeRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;
   riccati_dynamic_t riccati_dynamic(precompute);
   srand(42);  // necessary to define a similar problem as static case
   RiccatiInitializer<riccati_dynamic_t> rid(state_dim, input_dim);
@@ -129,7 +148,7 @@ TEST(riccati_ode_test, compareFixedAndDynamicSizedImplementation) {
 
 TEST(riccati_ode_test, testFlattenSMatrix) {
   const int state_dim = 4;
-  using riccati_t = ocs2::SequentialRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;
+  using riccati_t = ocs2::ContinuousTimeRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;
 
   riccati_t::s_vector_t allSs, allSs_expect;
   riccati_t::state_matrix_t Sm;
@@ -157,7 +176,7 @@ TEST(riccati_ode_test, testFlattenSMatrix) {
 TEST(riccati_ode_test, testFlattenAndUnflattenSMatrix) {
   const int input_dim = 10;
   const int state_dim = 48;
-  using riccati_t = ocs2::SequentialRiccatiEquations<state_dim, input_dim>;
+  using riccati_t = ocs2::ContinuousTimeRiccatiEquations<state_dim, input_dim>;
 
   riccati_t::s_vector_t allSs;
   riccati_t::state_matrix_t Sm, Sm_out;
@@ -179,7 +198,7 @@ TEST(riccati_ode_test, testFlattenAndUnflattenSMatrix) {
 
 TEST(riccati_ode_test, testFlattenAndUnflattenSMatrixDynamic) {
   const int state_dim = 42;
-  using riccati_t = ocs2::SequentialRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;
+  using riccati_t = ocs2::ContinuousTimeRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;
 
   riccati_t::s_vector_t allSs;
   riccati_t::state_matrix_t Sm, Sm_out;

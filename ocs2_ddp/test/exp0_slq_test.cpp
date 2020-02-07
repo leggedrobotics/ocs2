@@ -55,7 +55,7 @@ TEST(exp0_slq_test, exp0_slq_test) {
   slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
   slqSettings.ddpSettings_.minRelCost_ = 5e-4;
-  slqSettings.ddpSettings_.checkNumericalStability_ = false;
+  slqSettings.ddpSettings_.checkNumericalStability_ = true;
   slqSettings.ddpSettings_.useFeedbackPolicy_ = true;
   slqSettings.ddpSettings_.debugPrintRollout_ = false;
   slqSettings.ddpSettings_.strategy_ = DDP_Strategy::LINE_SEARCH;
@@ -181,7 +181,7 @@ TEST(exp0_slq_test, caching_test) {
   slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
   slqSettings.ddpSettings_.maxNumIterations_ = 1;
   slqSettings.ddpSettings_.minRelCost_ = 5e-4;
-  slqSettings.ddpSettings_.checkNumericalStability_ = false;
+  slqSettings.ddpSettings_.checkNumericalStability_ = true;
   slqSettings.ddpSettings_.useFeedbackPolicy_ = true;
   slqSettings.ddpSettings_.debugPrintRollout_ = false;
   slqSettings.ddpSettings_.debugCaching_ = true;  // for this test, debugCaching_ should be active

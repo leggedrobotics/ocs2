@@ -29,17 +29,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <atomic>
-#include <exception>
-
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/integration/SystemEventHandler.h>
-#include <ocs2_core/misc/LinearAlgebra.h>
 
 #include "ocs2_ddp/DDP_BASE.h"
 #include "ocs2_ddp/SLQ_Settings.h"
-#include "ocs2_ddp/riccati_equations/SequentialErrorEquation.h"
-#include "ocs2_ddp/riccati_equations/SequentialRiccatiEquations.h"
+#include "ocs2_ddp/riccati_equations/ContinuousTimeRiccatiEquations.h"
 
 namespace ocs2 {
 
@@ -120,8 +115,7 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::operating_trajectories_base_t;
   using typename BASE::rollout_base_t;
 
-  using riccati_equations_t = SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>;
-  using error_equation_t = SequentialErrorEquation<STATE_DIM, INPUT_DIM>;
+  using riccati_equations_t = ContinuousTimeRiccatiEquations<STATE_DIM, INPUT_DIM>;
   using s_vector_t = typename riccati_equations_t::s_vector_t;
   using s_vector_array_t = typename riccati_equations_t::s_vector_array_t;
 
@@ -176,19 +170,11 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
 
   scalar_t solveSequentialRiccatiEquations(const state_matrix_t& SmFinal, const state_vector_t& SvFinal, const scalar_t& sFinal) override;
 
-  void constrainedRiccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const dynamic_matrix_t& SmFinal,
-                                         const dynamic_vector_t& SvFinal, const scalar_t& sFinal) override;
-  /**
-   * Solves a set of Riccati equations for the partition in the given index.
-   *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
-   * @param [in] SmFinal: The final Sm for Riccati equation.
-   * @param [in] SvFinal: The final Sv for Riccati equation.
-   * @param [in] sFinal: The final s for Riccati equation.
-   */
+  dynamic_matrix_t computeHamiltonianHessian(DDP_Strategy strategy, const ModelDataBase& modelData,
+                                             const state_matrix_t& Sm) const override;
+
   void riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal,
-                              const scalar_t& sFinal);
+                              const scalar_t& sFinal) override;
 
   /**
    * Integrates the riccati equation and generates the value function at the times set in nominal Time Trajectory.
@@ -233,8 +219,6 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
 
   std::vector<std::shared_ptr<riccati_equations_t>> riccatiEquationsPtrStock_;
   std::vector<std::unique_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>> riccatiIntegratorPtrStock_;
-  std::vector<std::shared_ptr<error_equation_t>> errorEquationPtrStock_;
-  std::vector<std::unique_ptr<IntegratorBase<STATE_DIM>>> errorIntegratorPtrStock_;
 };
 
 }  // namespace ocs2

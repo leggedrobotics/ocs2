@@ -54,7 +54,7 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   ilqrSettings.ddpSettings_.maxNumStepsPerSecond_ = 1000000;
   ilqrSettings.ddpSettings_.maxNumIterations_ = 30;
   ilqrSettings.ddpSettings_.minRelCost_ = 5e-4;
-  ilqrSettings.ddpSettings_.checkNumericalStability_ = false;
+  ilqrSettings.ddpSettings_.checkNumericalStability_ = true;
   ilqrSettings.ddpSettings_.useFeedbackPolicy_ = true;
   ilqrSettings.ddpSettings_.debugPrintRollout_ = false;
   ilqrSettings.ddpSettings_.strategy_ = DDP_Strategy::LINE_SEARCH;

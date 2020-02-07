@@ -149,7 +149,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
     // for Riccati equation parallel computation
     SmFinalStock_[i] = state_matrix_t::Zero();
     SvFinalStock_[i] = state_vector_t::Zero();
-    SveFinalStock_[i] = state_vector_t::Zero();
     sFinalStock_[i] = 0.0;
     xFinalStock_[i] = state_vector_t::Zero();
   }  // end of i loop
@@ -711,160 +710,182 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::augmentCostWorker(size_t workerIndex, Model
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::computeRiccatiModification(DDP_Strategy strategy, const dynamic_matrix_t& Hm,
-                                                                const ModelDataBase& modelData,
-                                                                RiccatiModificationBase& riccatiModification) const {
-  // UUT decomposition of inv(Hm)
-  dynamic_matrix_t HmInvUmUmT;
+void DDP_BASE<STATE_DIM, INPUT_DIM>::computeProjectionAndRiccatiModification(DDP_Strategy strategy, const ModelDataBase& modelData,
+                                                                             const dynamic_matrix_t& Sm, ModelDataBase& projectedModelData,
+                                                                             RiccatiModificationBase& riccatiModification) const {
+  // compute the Hamiltonian's Hessian
+  const auto HmAug = computeHamiltonianHessian(strategy, modelData, Sm);
 
+  // compute projectors
   riccatiModification.time_ = modelData.time_;
+  computeProjections(HmAug, modelData.stateInputEqConstrInputDerivative_, riccatiModification.constraintRangeProjector_,
+                     riccatiModification.constraintNullProjector_);
 
-  switch (strategy) {
-    case DDP_Strategy::LINE_SEARCH: {
-      const auto& Qm = modelData.costStateSecondDerivative_;
-      const auto& Pm = modelData.costInputStateDerivative_;
+  // project LQ
+  projectLQ(modelData, riccatiModification.constraintRangeProjector_, riccatiModification.constraintNullProjector_, projectedModelData);
 
-      // UUT decomposition of inv(Hm=Rm)
-      LinearAlgebra::computeInverseMatrixUUT(Hm, HmInvUmUmT);
-
-      // delta_Qm
-      dynamic_matrix_t HmInvUmUmT_Pm = HmInvUmUmT.transpose() * Pm;
-      dynamic_matrix_t Q_minus_PTRinvP = Qm;
-      Q_minus_PTRinvP.noalias() -= HmInvUmUmT_Pm.transpose() * HmInvUmUmT_Pm;
-      riccatiModification.deltaQm_ = Q_minus_PTRinvP;
-      shiftHessian(riccatiModification.deltaQm_);
-      riccatiModification.deltaQm_ -= Q_minus_PTRinvP;
-
-      // deltaRm, deltaPm
-      riccatiModification.deltaRm_.setZero(INPUT_DIM, INPUT_DIM);
-      riccatiModification.deltaPm_.setZero(INPUT_DIM, STATE_DIM);
-
-      break;
-    }
-    case DDP_Strategy::LEVENBERG_MARQUARDT: {
-      const auto& Am = modelData.dynamicsStateDerivative_;
-      const auto& Bm = modelData.dynamicsInputDerivative_;
-
-      // deltaQm, deltaRm, deltaPm
-      riccatiModification.deltaQm_ = 1e-6 * dynamic_matrix_t::Identity(STATE_DIM, STATE_DIM);
-      riccatiModification.deltaRm_ = levenbergMarquardtImpl_.riccatiMultiple * Bm.transpose() * Bm;
-      riccatiModification.deltaPm_ = levenbergMarquardtImpl_.riccatiMultiple * Bm.transpose() * Am;
-
-      // augment Hm
-      dynamic_matrix_t HmAugmented = Hm + riccatiModification.deltaRm_;
-
-      // UUT decomposition of inv(HmAugmented)
-      LinearAlgebra::computeInverseMatrixUUT(HmAugmented, HmInvUmUmT);
-
-      break;
-    }
-  }  // end of switch-case
-
-  // compute DmDagger, DmDaggerTHmDmDaggerUUT, HmInverseConstrainedLowRank
-  const auto& Dm = modelData.stateInputEqConstrInputDerivative_;
-  if (Dm.rows() == 0) {
-    riccatiModification.DmDagger_.setZero(INPUT_DIM, 0);
-    riccatiModification.HmInverseConstrainedLowRank_ = HmInvUmUmT;
-
-  } else {
-    // check numerics
-    if (ddpSettings_.checkNumericalStability_) {
-      if (LinearAlgebra::rank(Dm) != Dm.rows()) {
-        std::string msg = ">>> WARNING: The state-input constraints are rank deficient (at time " + std::to_string(modelData.time_) + ")!";
-        BASE::printString(msg);
-      }
-    }
-    // constraint projectors are obtained at once
-    dynamic_matrix_t DmDaggerTHmDmDaggerUUT;
-    ocs2::LinearAlgebra::computeConstraintProjection(Dm, HmInvUmUmT, riccatiModification.DmDagger_, DmDaggerTHmDmDaggerUUT,
-                                                     riccatiModification.HmInverseConstrainedLowRank_);
-  }
-
-  // compute HmInverseConstrained
-  riccatiModification.HmInverseConstrained_ =
-      riccatiModification.HmInverseConstrainedLowRank_ * riccatiModification.HmInverseConstrainedLowRank_.transpose();
+  // compute deltaQm, deltaGv, deltaGm
+  computeRiccatiModification(strategy, projectedModelData, riccatiModification.deltaQm_, riccatiModification.deltaGv_,
+                             riccatiModification.deltaGm_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::projectLQ(const ModelDataBase& modelData, const dynamic_matrix_t& DmDagger,
-                                               ModelDataBase& projectedModelData) {
-  // initialization
+void DDP_BASE<STATE_DIM, INPUT_DIM>::computeProjections(const dynamic_matrix_t& Hm, const dynamic_matrix_t& Dm,
+                                                        dynamic_matrix_t& constraintRangeProjector,
+                                                        dynamic_matrix_t& constraintNullProjector) const {
+  // UUT decomposition of inv(Hm)
+  dynamic_matrix_t HmInvUmUmT;
+  LinearAlgebra::computeInverseMatrixUUT(Hm, HmInvUmUmT);
+
+  // compute DmDagger, DmDaggerTHmDmDaggerUUT, HmInverseConstrainedLowRank
+  if (Dm.rows() == 0) {
+    constraintRangeProjector.setZero(INPUT_DIM, 0);
+    constraintNullProjector = HmInvUmUmT;
+
+  } else {
+    // check numerics
+    if (ddpSettings_.checkNumericalStability_) {
+      if (LinearAlgebra::rank(Dm) != Dm.rows()) {
+        std::string msg = ">>> WARNING: The state-input constraints are rank deficient!";
+        BASE::printString(msg);
+      }
+    }
+    // constraint projectors are obtained at once
+    dynamic_matrix_t DmDaggerTHmDmDaggerUUT;
+    ocs2::LinearAlgebra::computeConstraintProjection(Dm, HmInvUmUmT, constraintRangeProjector, DmDaggerTHmDmDaggerUUT,
+                                                     constraintNullProjector);
+  }
+
+  // check
+  if (ddpSettings_.checkNumericalStability_) {
+    dynamic_matrix_t HmProjected = constraintNullProjector.transpose() * Hm * constraintNullProjector;
+    const int nullSpaceDim = Hm.rows() - Dm.rows();
+    if (!HmProjected.isApprox(dynamic_matrix_t::Identity(nullSpaceDim, nullSpaceDim))) {
+      std::cerr << "HmProjected:\n" << HmProjected << std::endl;
+      throw std::runtime_error("HmProjected should be identity!");
+    }
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::computeRiccatiModification(DDP_Strategy strategy, const ModelDataBase& projectedModelData,
+                                                                dynamic_matrix_t& deltaQm, dynamic_vector_t& deltaGv,
+                                                                dynamic_matrix_t& deltaGm) const {
+  switch (strategy) {
+    case DDP_Strategy::LINE_SEARCH: {
+      const auto& QmProjected = projectedModelData.costStateSecondDerivative_;
+      const auto& PmProjected = projectedModelData.costInputStateDerivative_;
+
+      // Q_minus_PTRinvP
+      dynamic_matrix_t Q_minus_PTRinvP = QmProjected;
+      Q_minus_PTRinvP.noalias() -= PmProjected.transpose() * PmProjected;
+
+      // deltaQm
+      deltaQm = Q_minus_PTRinvP;
+      shiftHessian(deltaQm);
+      deltaQm -= Q_minus_PTRinvP;
+
+      // deltaGv, deltaGm
+      const auto projectedInputDim = projectedModelData.dynamicsInputDerivative_.cols();
+      deltaGv.setZero(projectedInputDim, 1);
+      deltaGm.setZero(projectedInputDim, projectedModelData.stateDim_);
+
+      break;
+    }
+    case DDP_Strategy::LEVENBERG_MARQUARDT: {
+      const auto& HvProjected = projectedModelData.dynamicsBias_;
+      const auto& AmProjected = projectedModelData.dynamicsStateDerivative_;
+      const auto& BmProjected = projectedModelData.dynamicsInputDerivative_;
+
+      // deltaQm, deltaRm, deltaPm
+      deltaQm = 1e-6 * dynamic_matrix_t::Identity(projectedModelData.stateDim_, projectedModelData.stateDim_);
+      deltaGv.noalias() = levenbergMarquardtImpl_.riccatiMultiple * BmProjected.transpose() * HvProjected;
+      deltaGm.noalias() = levenbergMarquardtImpl_.riccatiMultiple * BmProjected.transpose() * AmProjected;
+
+      break;
+    }
+  }  // end of switch-case
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::projectLQ(const ModelDataBase& modelData, const dynamic_matrix_t& constraintRangeProjector,
+                                               const dynamic_matrix_t& constraintNullProjector, ModelDataBase& projectedModelData) const {
+  // dimensions and time
   projectedModelData.time_ = modelData.time_;
   projectedModelData.stateDim_ = modelData.stateDim_;
-  projectedModelData.inputDim_ = modelData.inputDim_;
+  projectedModelData.inputDim_ = modelData.inputDim_ - modelData.numStateInputEqConstr_;
+
+  // dynamics
   projectedModelData.dynamics_ = modelData.dynamics_;
+  projectedModelData.dynamicsBias_ = modelData.dynamicsBias_;
+  projectedModelData.dynamicsStateDerivative_ = modelData.dynamicsStateDerivative_;
+  projectedModelData.dynamicsInputDerivative_.noalias() = modelData.dynamicsInputDerivative_ * constraintNullProjector;
+
+  // cost
+  projectedModelData.cost_ = modelData.cost_;
+  projectedModelData.costStateDerivative_ = modelData.costStateDerivative_;
+  projectedModelData.costStateSecondDerivative_ = modelData.costStateSecondDerivative_;
+  projectedModelData.costInputSecondDerivative_ =
+      constraintNullProjector.transpose() * modelData.costInputSecondDerivative_ * constraintNullProjector;
+
+  // constraints
   projectedModelData.numIneqConstr_ = 0;
   projectedModelData.numStateEqConstr_ = 0;
   projectedModelData.numStateInputEqConstr_ = INPUT_DIM;
 
-  // constraint type 1 coefficients
   if (modelData.numStateInputEqConstr_ == 0) {
     // projected state-input equality constraints
     projectedModelData.stateInputEqConstr_.setZero(INPUT_DIM);
     projectedModelData.stateInputEqConstrStateDerivative_.setZero(INPUT_DIM, STATE_DIM);
     projectedModelData.stateInputEqConstrInputDerivative_.setZero(INPUT_DIM, INPUT_DIM);
-    // dynamics bias
-    projectedModelData.dynamicsBias_ = modelData.dynamicsBias_;
-    // Am constrained
-    projectedModelData.dynamicsStateDerivative_ = modelData.dynamicsStateDerivative_;
-    // Bm constrained
-    projectedModelData.dynamicsInputDerivative_ = modelData.dynamicsInputDerivative_;
-    // Qm constrained
-    projectedModelData.costStateSecondDerivative_ = modelData.costStateSecondDerivative_;
-    // Pm constrained
-    projectedModelData.costInputStateDerivative_ = modelData.costInputStateDerivative_;
-    // Rm constrained
-    projectedModelData.costInputSecondDerivative_ = modelData.costInputSecondDerivative_;
-    // Qv constrained
-    projectedModelData.costStateDerivative_ = modelData.costStateDerivative_;
-    // Rv constrained
-    projectedModelData.costInputDerivative_ = modelData.costInputDerivative_;
-    // q constrained
-    projectedModelData.cost_ = modelData.cost_;
+    // cost
+    projectedModelData.costInputDerivative_.noalias() = constraintNullProjector.transpose() * modelData.costInputDerivative_;
+    projectedModelData.costInputStateDerivative_.noalias() = constraintNullProjector.transpose() * modelData.costInputStateDerivative_;
 
   } else {
     /* projected state-input equality constraints */
-    projectedModelData.stateInputEqConstr_.noalias() = DmDagger * modelData.stateInputEqConstr_;
-    projectedModelData.stateInputEqConstrStateDerivative_.noalias() = DmDagger * modelData.stateInputEqConstrStateDerivative_;
-    projectedModelData.stateInputEqConstrInputDerivative_.noalias() = DmDagger * modelData.stateInputEqConstrInputDerivative_;
+    projectedModelData.stateInputEqConstr_.noalias() = constraintRangeProjector * modelData.stateInputEqConstr_;
+    projectedModelData.stateInputEqConstrStateDerivative_.noalias() =
+        constraintRangeProjector * modelData.stateInputEqConstrStateDerivative_;
+    projectedModelData.stateInputEqConstrInputDerivative_.noalias() =
+        constraintRangeProjector * modelData.stateInputEqConstrInputDerivative_;
 
-    /* dynamics bias */
-    projectedModelData.dynamicsBias_ = modelData.dynamicsBias_;
-    // -= BmDmDaggerEv
+    // Hv -= BmDmDaggerEv
     projectedModelData.dynamicsBias_.noalias() -= modelData.dynamicsInputDerivative_ * projectedModelData.stateInputEqConstr_;
 
-    /* Am constrained */
-    projectedModelData.dynamicsStateDerivative_ = modelData.dynamicsStateDerivative_;
-    // -= BmDmDaggerCm
+    // Am -= BmDmDaggerCm
     projectedModelData.dynamicsStateDerivative_.noalias() -=
         modelData.dynamicsInputDerivative_ * projectedModelData.stateInputEqConstrStateDerivative_;
 
-    /* Bm constrained */
-    projectedModelData.dynamicsInputDerivative_ = modelData.dynamicsInputDerivative_;
-
-    /* common pre-computations */
+    // common pre-computations
     dynamic_vector_t RmDmDaggerEv = modelData.costInputSecondDerivative_ * projectedModelData.stateInputEqConstr_;
     dynamic_matrix_t RmDmDaggerCm = modelData.costInputSecondDerivative_ * projectedModelData.stateInputEqConstrStateDerivative_;
 
-    /* Qm constrained */
+    // Rv constrained
+    projectedModelData.costInputDerivative_ = constraintNullProjector.transpose() * (modelData.costInputDerivative_ - RmDmDaggerEv);
+
+    // Pm constrained
+    projectedModelData.costInputStateDerivative_ =
+        constraintNullProjector.transpose() * (modelData.costInputStateDerivative_ - RmDmDaggerCm);
+
+    // Qm constrained
     dynamic_matrix_t PmTransDmDaggerCm =
         modelData.costInputStateDerivative_.transpose() * projectedModelData.stateInputEqConstrStateDerivative_;
-    projectedModelData.costStateSecondDerivative_ =
-        modelData.costStateSecondDerivative_ - PmTransDmDaggerCm - PmTransDmDaggerCm.transpose();
+    projectedModelData.costStateSecondDerivative_ -= PmTransDmDaggerCm + PmTransDmDaggerCm.transpose();
+    // += DmDaggerCm_Trans_Rm_DmDaggerCm
     projectedModelData.costStateSecondDerivative_.noalias() +=
         projectedModelData.stateInputEqConstrStateDerivative_.transpose() * RmDmDaggerCm;
 
-    /* Pm constrained */
-    projectedModelData.costInputStateDerivative_ = modelData.costInputStateDerivative_ - RmDmDaggerCm;
-
-    /* Rm constrained */
-    projectedModelData.costInputSecondDerivative_ = modelData.costInputSecondDerivative_;
-
-    /* Qv constrained */
-    projectedModelData.costStateDerivative_ = modelData.costStateDerivative_;
+    // Qv  constrained
     // -= PmTransDmDaggerEv
     projectedModelData.costStateDerivative_.noalias() -=
         modelData.costInputStateDerivative_.transpose() * projectedModelData.stateInputEqConstr_;
@@ -874,11 +895,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::projectLQ(const ModelDataBase& modelData, c
     // += RmDmDaggerCm_Trans_DmDaggerEv
     projectedModelData.costStateDerivative_.noalias() += RmDmDaggerCm.transpose() * projectedModelData.stateInputEqConstr_;
 
-    /* Rv constrained */
-    projectedModelData.costInputDerivative_ = modelData.costInputDerivative_ - RmDmDaggerEv;
-
-    /* q constrained */
-    projectedModelData.cost_ = modelData.cost_;
+    // q constrained
     // -= Rv_Trans_DmDaggerEv
     projectedModelData.cost_ -= modelData.costInputDerivative_.dot(projectedModelData.stateInputEqConstr_);
     // += 0.5 DmDaggerEv_Trans_RmDmDaggerEv
@@ -1372,7 +1389,6 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
     const state_matrix_t& SmFinal, const state_vector_t& SvFinal, const scalar_t& sFinal) {
   SmFinalStock_[finalActivePartition_] = SmFinal;
   SvFinalStock_[finalActivePartition_] = SvFinal;
-  SveFinalStock_[finalActivePartition_].setZero();
   sFinalStock_[finalActivePartition_] = sFinal;
 
   // solve it sequentially for the first time when useParallelRiccatiSolverFromInitItr_ is false
@@ -1481,7 +1497,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::riccatiSolverTask() {
       }
 
       // solve the backward pass
-      constrainedRiccatiEquationsWorker(taskId, i, SmFinal, SvFinal, sFinal);
+      riccatiEquationsWorker(taskId, i, SmFinal, SvFinal, sFinal);
 
       // set the final value for next Riccati equation
       if (i > initActivePartition_) {
@@ -1904,7 +1920,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t 
 
   dynamic_matrix_t DmDagger;
   RiccatiModification::LinearInterpolation::interpolate(indexAlpha, DmDagger, &riccatiModificationTrajectoriesStock_[activeSubsystem],
-                                                        RiccatiModification::DmDagger);
+                                                        RiccatiModification::constraintRangeProjector);
 
   state_vector_t costate;
   getValueFunctionStateDerivative(time, state, costate);
@@ -2027,14 +2043,12 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::rewindOptimizer(size_t firstIndex) {
       nominalControllersStock_[i].swap(nominalControllersStock_[firstIndex + i]);
       SmFinalStock_[i] = SmFinalStock_[firstIndex + i];
       SvFinalStock_[i] = SvFinalStock_[firstIndex + i];
-      SveFinalStock_[i] = SveFinalStock_[firstIndex + i];
       sFinalStock_[i] = sFinalStock_[firstIndex + i];
       xFinalStock_[i] = xFinalStock_[firstIndex + i];
     } else {
       nominalControllersStock_[i].clear();
       SmFinalStock_[i].setZero();
       SvFinalStock_[i].setZero();
-      SveFinalStock_[i].setZero();
       sFinalStock_[i] = 0.0;
       xFinalStock_[i].setZero();
     }
@@ -2129,7 +2143,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
    */
   SmFinalStock_ = state_matrix_array_t(numPartitions, state_matrix_t::Zero());
   SvFinalStock_ = state_vector_array_t(numPartitions, state_vector_t::Zero());
-  SveFinalStock_ = state_vector_array_t(numPartitions, state_vector_t::Zero());
   sFinalStock_ = scalar_array_t(numPartitions, 0.0);
   xFinalStock_ = state_vector_array_t(numPartitions, state_vector_t::Zero());
 

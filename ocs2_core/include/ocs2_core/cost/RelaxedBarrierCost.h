@@ -257,27 +257,27 @@ class RelaxedBarrierCost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    */
   void loadModelsIfAvailable(bool verbose);
 
-  scalar_t getPenaltyFunctionValue(scalar_t h, scalar_t mu, scalar_t delta) const {
-    if (h > delta) {
-      return -mu * log(h);
+  scalar_t getPenaltyFunctionValue(scalar_t h, const Config& config) const {
+    if (h > config.delta) {
+      return -config.mu * log(h);
     } else {
-      return mu * (-log(delta) + scalar_t(0.5) * pow((h - 2.0 * delta) / delta, 2.0) - scalar_t(0.5));
+      return config.mu * (-log(config.delta) + scalar_t(0.5) * pow((h - 2.0 * config.delta) / config.delta, 2.0) - scalar_t(0.5));
     };
   };
 
-  scalar_t getPenaltyFunctionDerivative(scalar_t h, scalar_t mu, scalar_t delta) const {
-    if (h > delta) {
-      return -mu / h;
+  scalar_t getPenaltyFunctionDerivative(scalar_t h, const Config& config) const {
+    if (h > config.delta) {
+      return -config.mu / h;
     } else {
-      return mu * ((h - 2.0 * delta) / (delta * delta));
+      return config.mu * ((h - 2.0 * config.delta) / (config.delta * config.delta));
     };
   };
 
-  scalar_t getPenaltyFunctionSecondDerivative(scalar_t h, scalar_t mu, scalar_t delta) const {
-    if (h > delta) {
-      return mu / (h * h);
+  scalar_t getPenaltyFunctionSecondDerivative(scalar_t h, const Config& config) const {
+    if (h > config.delta) {
+      return config.mu / (h * h);
     } else {
-      return mu / (delta * delta);
+      return config.mu / (config.delta * config.delta);
     };
   };
 

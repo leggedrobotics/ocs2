@@ -125,7 +125,7 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
     intermediateCostValuesComputed_ = true;
   }
   for (int i = 0; i < INTERMEDIATE_COST_DIM; i++) {
-    L += getPenaltyFunctionValue(intermediateCostValues_[i], intermediateConfig_[i].mu, intermediateConfig_[i].delta);
+    L += getPenaltyFunctionValue(intermediateCostValues_[i], intermediateConfig_[i]);
   }
 }
 
@@ -150,8 +150,7 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
 
   Eigen::Matrix<scalar_t, INTERMEDIATE_COST_DIM, 1> penalityFctDerivative;
   for (int i = 0; i < INTERMEDIATE_COST_DIM; i++) {
-    penalityFctDerivative(i) =
-        getPenaltyFunctionDerivative(intermediateCostValues_[i], intermediateConfig_[i].mu, intermediateConfig_[i].delta);
+    penalityFctDerivative(i) = getPenaltyFunctionDerivative(intermediateCostValues_[i], intermediateConfig_[i]);
   }
   dLdt = penalityFctDerivative.dot(intermediateJacobian_.col(0));
 }
@@ -178,8 +177,7 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
 
   Eigen::Matrix<scalar_t, INTERMEDIATE_COST_DIM, 1> penalityFctDerivative;
   for (int i = 0; i < INTERMEDIATE_COST_DIM; i++) {
-    penalityFctDerivative(i) =
-        getPenaltyFunctionDerivative(intermediateCostValues_[i], intermediateConfig_[i].mu, intermediateConfig_[i].delta);
+    penalityFctDerivative(i) = getPenaltyFunctionDerivative(intermediateCostValues_[i], intermediateConfig_[i]);
   }
   dLdx = intermediateJacobian_.template block<INTERMEDIATE_COST_DIM, STATE_DIM>(0, 1).transpose() * penalityFctDerivative;
 }
@@ -206,8 +204,7 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
 
   Eigen::Matrix<scalar_t, INTERMEDIATE_COST_DIM, 1> penalityFctSecondDerivative;
   for (int i = 0; i < INTERMEDIATE_COST_DIM; i++) {
-    penalityFctSecondDerivative(i) =
-        getPenaltyFunctionSecondDerivative(intermediateCostValues_[i], intermediateConfig_[i].mu, intermediateConfig_[i].delta);
+    penalityFctSecondDerivative(i) = getPenaltyFunctionSecondDerivative(intermediateCostValues_[i], intermediateConfig_[i]);
   }
   dLdxx = intermediateJacobian_.template block<INTERMEDIATE_COST_DIM, STATE_DIM>(0, 1).transpose() *
           penalityFctSecondDerivative.asDiagonal() * intermediateJacobian_.template block<INTERMEDIATE_COST_DIM, STATE_DIM>(0, 1);
@@ -235,8 +232,7 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
 
   Eigen::Matrix<scalar_t, INTERMEDIATE_COST_DIM, 1> penalityFctDerivative;
   for (int i = 0; i < INTERMEDIATE_COST_DIM; i++) {
-    penalityFctDerivative(i) =
-        getPenaltyFunctionDerivative(intermediateCostValues_[i], intermediateConfig_[i].mu, intermediateConfig_[i].delta);
+    penalityFctDerivative(i) = getPenaltyFunctionDerivative(intermediateCostValues_[i], intermediateConfig_[i]);
   }
   dLdu = intermediateJacobian_.template block<INTERMEDIATE_COST_DIM, INPUT_DIM>(0, 1 + STATE_DIM).transpose() * penalityFctDerivative;
 }
@@ -263,8 +259,7 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
 
   Eigen::Matrix<scalar_t, INTERMEDIATE_COST_DIM, 1> penalityFctSecondDerivative;
   for (int i = 0; i < INTERMEDIATE_COST_DIM; i++) {
-    penalityFctSecondDerivative(i) =
-        getPenaltyFunctionSecondDerivative(intermediateCostValues_[i], intermediateConfig_[i].mu, intermediateConfig_[i].delta);
+    penalityFctSecondDerivative(i) = getPenaltyFunctionSecondDerivative(intermediateCostValues_[i], intermediateConfig_[i]);
   }
   dLduu = intermediateJacobian_.template block<INTERMEDIATE_COST_DIM, INPUT_DIM>(0, 1 + STATE_DIM).transpose() *
           penalityFctSecondDerivative.asDiagonal() *
@@ -289,8 +284,7 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
 
   Eigen::Matrix<scalar_t, INTERMEDIATE_COST_DIM, 1> penalityFctSecondDerivative;
   for (int i = 0; i < INTERMEDIATE_COST_DIM; i++) {
-    penalityFctSecondDerivative(i) =
-        getPenaltyFunctionSecondDerivative(intermediateCostValues_[i], intermediateConfig_[i].mu, intermediateConfig_[i].delta);
+    penalityFctSecondDerivative(i) = getPenaltyFunctionSecondDerivative(intermediateCostValues_[i], intermediateConfig_[i]);
   }
   dLdux = intermediateJacobian_.template block<INTERMEDIATE_COST_DIM, INPUT_DIM>(0, 1 + STATE_DIM).transpose() *
           penalityFctSecondDerivative.asDiagonal() * intermediateJacobian_.template block<INTERMEDIATE_COST_DIM, STATE_DIM>(0, 1);
@@ -312,7 +306,7 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
   }
 
   for (int i = 0; i < TERMINAL_COST_DIM; i++) {
-    Phi += getPenaltyFunctionValue(terminalCostValues_[i], terminalConfig_[i].mu, terminalConfig_[i].delta);
+    Phi += getPenaltyFunctionValue(terminalCostValues_[i], terminalConfig_[i]);
   }
 }
 
@@ -337,7 +331,7 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
 
   Eigen::Matrix<scalar_t, TERMINAL_COST_DIM, 1> penalityFctDerivative;
   for (int i = 0; i < TERMINAL_COST_DIM; i++) {
-    penalityFctDerivative(i) = getPenaltyFunctionDerivative(terminalCostValues_[i], terminalConfig_[i].mu, terminalConfig_[i].delta);
+    penalityFctDerivative(i) = getPenaltyFunctionDerivative(terminalCostValues_[i], terminalConfig_[i]);
   }
   dPhidt = penalityFctDerivative.transpose() * terminalJacobian_.col(0);
 }
@@ -364,7 +358,7 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
 
   Eigen::Matrix<scalar_t, TERMINAL_COST_DIM, 1> penalityFctDerivative;
   for (int i = 0; i < TERMINAL_COST_DIM; i++) {
-    penalityFctDerivative(i) = getPenaltyFunctionDerivative(terminalCostValues_[i], terminalConfig_[i].mu, terminalConfig_[i].delta);
+    penalityFctDerivative(i) = getPenaltyFunctionDerivative(terminalCostValues_[i], terminalConfig_[i]);
   }
   dPhidx = terminalJacobian_.template block<TERMINAL_COST_DIM, STATE_DIM>(0, 1).transpose() * penalityFctDerivative;
 }
@@ -391,8 +385,7 @@ void RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_CO
 
   Eigen::Matrix<scalar_t, TERMINAL_COST_DIM, 1> penalityFctSecondDerivative;
   for (int i = 0; i < TERMINAL_COST_DIM; i++) {
-    penalityFctSecondDerivative(i) =
-        getPenaltyFunctionSecondDerivative(terminalCostValues_[i], terminalConfig_[i].mu, terminalConfig_[i].delta);
+    penalityFctSecondDerivative(i) = getPenaltyFunctionSecondDerivative(terminalCostValues_[i], terminalConfig_[i]);
   }
   dPhidxx = terminalJacobian_.template block<TERMINAL_COST_DIM, STATE_DIM>(0, 1).transpose() * penalityFctSecondDerivative.asDiagonal() *
             terminalJacobian_.template block<TERMINAL_COST_DIM, STATE_DIM>(0, 1);

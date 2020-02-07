@@ -30,9 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
-#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
-
-#include "ocs2_core/cost/CostFunctionBase.h"
+#include <ocs2_core/cost/CostFunctionBase.h>
 
 namespace ocs2 {
 

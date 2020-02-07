@@ -48,7 +48,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/Lookup.h>
 
-#include <ocs2_ddp/SLQ_DataCollector.h>
+#include <ocs2_ddp/DDP_DataCollector.h>
 
 #include "ocs2_ocs2/GDDP_Settings.h"
 #include "ocs2_ocs2/sensitivity_equations/BvpSensitivityEquations.h"

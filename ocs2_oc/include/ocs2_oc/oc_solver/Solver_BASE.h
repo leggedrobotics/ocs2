@@ -87,7 +87,6 @@ class Solver_BASE {
   using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
   using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
   using input_state_matrix_array2_t = typename DIMENSIONS::input_state_matrix_array2_t;
-  using input_state_matrix_array3_t = typename DIMENSIONS::input_state_matrix_array3_t;
   using state_matrix_t = typename DIMENSIONS::state_matrix_t;
   using state_matrix_array_t = typename DIMENSIONS::state_matrix_array_t;
   using state_matrix_array2_t = typename DIMENSIONS::state_matrix_array2_t;
@@ -99,7 +98,6 @@ class Solver_BASE {
   using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
   using state_input_matrix_array_t = typename DIMENSIONS::state_input_matrix_array_t;
   using state_input_matrix_array2_t = typename DIMENSIONS::state_input_matrix_array2_t;
-  using state_input_matrix_array3_t = typename DIMENSIONS::state_input_matrix_array3_t;
   using constraint1_vector_t = typename DIMENSIONS::constraint1_vector_t;
   using constraint1_vector_array_t = typename DIMENSIONS::constraint1_vector_array_t;
   using constraint1_vector_array2_t = typename DIMENSIONS::constraint1_vector_array2_t;
@@ -121,10 +119,11 @@ class Solver_BASE {
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
   using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
   using dynamic_vector_array2_t = typename DIMENSIONS::dynamic_vector_array2_t;
+  using dynamic_vector_array3_t = typename DIMENSIONS::dynamic_vector_array3_t;
   using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
   using dynamic_matrix_array_t = typename DIMENSIONS::dynamic_matrix_array_t;
   using dynamic_matrix_array2_t = typename DIMENSIONS::dynamic_matrix_array2_t;
-  using dynamic_input_matrix_t = typename DIMENSIONS::dynamic_input_matrix_t;
+  using dynamic_matrix_array3_t = typename DIMENSIONS::dynamic_matrix_array3_t;
 
   using primal_solution_t = PrimalSolution<STATE_DIM, INPUT_DIM>;
 

@@ -29,89 +29,62 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Dense>
-#include <vector>
-
-#include <ocs2_ddp/SLQ.h>
-#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+#include "ocs2_ddp/DDP_BASE.h"
+#include "ocs2_oc/rollout/TimeTriggeredRollout.h"
 
 namespace ocs2 {
 
 /**
- * Collects the required data from SLQ instance. It uses swap method wherever it is possible.
+ * Collects the required data from DDP instance. It uses swap method wherever it is possible.
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class SLQ_DataCollector {
+class DDP_DataCollector {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using slq_t = SLQ<STATE_DIM, INPUT_DIM>;
+  using ddp_t = DDP_BASE<STATE_DIM, INPUT_DIM>;
 
-  using Ptr = std::shared_ptr<SLQ_DataCollector<STATE_DIM, INPUT_DIM>>;
+  using Ptr = std::shared_ptr<DDP_DataCollector<STATE_DIM, INPUT_DIM>>;
 
-  using controller_t = typename slq_t::controller_t;
-  using controller_ptr_array_t = typename slq_t::controller_ptr_array_t;
-  using linear_controller_t = typename slq_t::linear_controller_t;
-  using linear_controller_array_t = typename slq_t::linear_controller_array_t;
-  using size_array_t = typename slq_t::size_array_t;
-  using size_array2_t = typename slq_t::size_array2_t;
-  using scalar_t = typename slq_t::scalar_t;
-  using scalar_array_t = typename slq_t::scalar_array_t;
-  using scalar_array2_t = typename slq_t::scalar_array2_t;
-  using scalar_array3_t = typename slq_t::scalar_array3_t;
-  using state_vector_t = typename slq_t::state_vector_t;
-  using state_vector_array_t = typename slq_t::state_vector_array_t;
-  using state_vector_array2_t = typename slq_t::state_vector_array2_t;
-  using state_vector_array3_t = typename slq_t::state_vector_array3_t;
-  using input_vector_array_t = typename slq_t::input_vector_array_t;
-  using input_vector_array2_t = typename slq_t::input_vector_array2_t;
-  using input_vector_array3_t = typename slq_t::input_vector_array3_t;
-  using input_state_matrix_array_t = typename slq_t::input_state_matrix_array_t;
-  using input_state_matrix_array2_t = typename slq_t::input_state_matrix_array2_t;
-  using input_state_matrix_array3_t = typename slq_t::input_state_matrix_array3_t;
-  using state_matrix_array_t = typename slq_t::state_matrix_array_t;
-  using state_matrix_t = typename slq_t::state_matrix_t;
-  using state_matrix_array2_t = typename slq_t::state_matrix_array2_t;
-  using state_matrix_array3_t = typename slq_t::state_matrix_array3_t;
-  using input_matrix_array_t = typename slq_t::input_matrix_array_t;
-  using input_matrix_array2_t = typename slq_t::input_matrix_array2_t;
-  using input_matrix_array3_t = typename slq_t::input_matrix_array3_t;
-  using state_input_matrix_array_t = typename slq_t::state_input_matrix_array_t;
-  using state_input_matrix_array2_t = typename slq_t::state_input_matrix_array2_t;
-  using constraint1_vector_array_t = typename slq_t::constraint1_vector_array_t;
-  using constraint1_vector_array2_t = typename slq_t::constraint1_vector_array2_t;
-  using constraint1_state_matrix_array_t = typename slq_t::constraint1_state_matrix_array_t;
-  using constraint1_state_matrix_array2_t = typename slq_t::constraint1_state_matrix_array2_t;
-  using constraint1_input_matrix_array_t = typename slq_t::constraint1_input_matrix_array_t;
-  using constraint1_input_matrix_array2_t = typename slq_t::constraint1_input_matrix_array2_t;
-  using input_dynamic_matrix_array_t = typename slq_t::input_dynamic_matrix_array_t;
-  using input_dynamic_matrix_array2_t = typename slq_t::input_dynamic_matrix_array2_t;
-  using constraint2_vector_array_t = typename slq_t::constraint2_vector_array_t;
-  using constraint2_vector_array2_t = typename slq_t::constraint2_vector_array2_t;
-  using constraint2_state_matrix_array_t = typename slq_t::constraint2_state_matrix_array_t;
-  using constraint2_state_matrix_array2_t = typename slq_t::constraint2_state_matrix_array2_t;
-  using dynamic_vector_t = typename slq_t::dynamic_vector_t;
-  using dynamic_vector_array_t = typename slq_t::dynamic_vector_array_t;
-  using dynamic_vector_array2_t = typename slq_t::dynamic_vector_array2_t;
-  using dynamic_matrix_t = typename slq_t::dynamic_matrix_t;
-  using dynamic_matrix_array_t = typename slq_t::dynamic_matrix_array_t;
-  using dynamic_matrix_array2_t = typename slq_t::dynamic_matrix_array2_t;
+  using controller_t = typename ddp_t::controller_t;
+  using controller_ptr_array_t = typename ddp_t::controller_ptr_array_t;
+  using linear_controller_t = typename ddp_t::linear_controller_t;
+  using linear_controller_array_t = typename ddp_t::linear_controller_array_t;
+  using size_array_t = typename ddp_t::size_array_t;
+  using size_array2_t = typename ddp_t::size_array2_t;
+  using scalar_t = typename ddp_t::scalar_t;
+  using scalar_array_t = typename ddp_t::scalar_array_t;
+  using scalar_array2_t = typename ddp_t::scalar_array2_t;
+  using scalar_array3_t = typename ddp_t::scalar_array3_t;
+  using state_vector_t = typename ddp_t::state_vector_t;
+  using state_vector_array_t = typename ddp_t::state_vector_array_t;
+  using state_vector_array2_t = typename ddp_t::state_vector_array2_t;
+  using input_vector_array_t = typename ddp_t::input_vector_array_t;
+  using input_vector_array2_t = typename ddp_t::input_vector_array2_t;
+  using state_matrix_array_t = typename ddp_t::state_matrix_array_t;
+  using state_matrix_t = typename ddp_t::state_matrix_t;
+  using state_matrix_array2_t = typename ddp_t::state_matrix_array2_t;
+  using dynamic_vector_t = typename ddp_t::dynamic_vector_t;
+  using dynamic_vector_array_t = typename ddp_t::dynamic_vector_array_t;
+  using dynamic_vector_array2_t = typename ddp_t::dynamic_vector_array2_t;
+  using dynamic_vector_array3_t = typename ddp_t::dynamic_vector_array3_t;
+  using dynamic_matrix_t = typename ddp_t::dynamic_matrix_t;
+  using dynamic_matrix_array_t = typename ddp_t::dynamic_matrix_array_t;
+  using dynamic_matrix_array2_t = typename ddp_t::dynamic_matrix_array2_t;
+  using dynamic_matrix_array3_t = typename ddp_t::dynamic_matrix_array3_t;
 
-  using dynamic_vector_array3_t = std::vector<dynamic_vector_array2_t, Eigen::aligned_allocator<dynamic_vector_array2_t>>;
-  using dynamic_matrix_array3_t = std::vector<dynamic_matrix_array2_t, Eigen::aligned_allocator<dynamic_matrix_array2_t>>;
-
-  using derivatives_base_t = typename slq_t::derivatives_base_t;
-  using constraint_base_t = typename slq_t::constraint_base_t;
-  using cost_function_base_t = typename slq_t::cost_function_base_t;
-  using rollout_base_t = typename slq_t::rollout_base_t;
+  using derivatives_base_t = typename ddp_t::derivatives_base_t;
+  using constraint_base_t = typename ddp_t::constraint_base_t;
+  using cost_function_base_t = typename ddp_t::cost_function_base_t;
+  using rollout_base_t = typename ddp_t::rollout_base_t;
 
   /**
    * Default constructor.
    */
-  SLQ_DataCollector() = default;
+  DDP_DataCollector() = default;
 
   /**
    * Constructor.
@@ -121,23 +94,23 @@ class SLQ_DataCollector {
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
    * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
    */
-  SLQ_DataCollector(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
+  DDP_DataCollector(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                     const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr);
 
   /**
    * Default destructor.
    */
-  ~SLQ_DataCollector() = default;
+  ~DDP_DataCollector() = default;
 
   /**
-   * Collects the required data from SLQ instance. It uses swap method wherever it is possible.
+   * Collects the required data from DDP instance. It uses swap method wherever it is possible.
    *
-   * @param constSlqPtr: A pointer to the SLQ instance.
+   * @param constDdpPtr: A pointer to the DDP instance.
    */
-  void collect(const slq_t* constSlqPtr);
+  void collect(const ddp_t* constDdpPtr);
 
   /******************
-   * SLQ variables image
+   * DDP variables image
    ******************/
   scalar_t initTime_;
   scalar_t finalTime_;
@@ -169,9 +142,13 @@ class SLQ_DataCollector {
   // projected model data trajectory
   ModelDataBase::array2_t projectedModelDataTrajectoriesStock_;
 
-  dynamic_matrix_array2_t RmInverseTrajectoriesStock_;
-  dynamic_matrix_array2_t RmInvConstrainedCholTrajectoryStock_;
-  dynamic_matrix_array2_t DmDagerTrajectoriesStock_;
+  // Riccati modification
+  RiccatiModificationBase::array2_t riccatiModificationTrajectoriesStock_;
+
+  // TODO: delete this
+  //  dynamic_matrix_array2_t RmInverseTrajectoriesStock_;
+  //  dynamic_matrix_array2_t RmInvConstrainedCholTrajectoryStock_;
+  //  dynamic_matrix_array2_t DmDagerTrajectoriesStock_;
 
   // terminal cost which is interpreted as the Heuristic function
   scalar_t sHeuristics_;
@@ -182,15 +159,14 @@ class SLQ_DataCollector {
   scalar_array2_t SsNormalizedTimeTrajectoriesStock_;
   size_array2_t SsNormalizedEventsPastTheEndIndecesStock_;
   scalar_array2_t sTrajectoriesStock_;
-  state_vector_array2_t SveTrajectoriesStock_;
   state_vector_array2_t SvTrajectoriesStock_;
   state_matrix_array2_t SmTrajectoriesStock_;
 
   /******************
-   * SLQ missing variables
+   * DDP missing variables
    ******************/
-  dynamic_vector_array3_t EvDevEventTimesTrajectoryStockSet_;         // state-input constraint derivative w.r.t. event times
-  input_vector_array3_t EvDevEventTimesProjectedTrajectoryStockSet_;  // DmDager * EvDevEventTimes
+  dynamic_vector_array3_t EvDevEventTimesTrajectoryStockSet_;           // state-input constraint derivative w.r.t. event times
+  dynamic_vector_array3_t EvDevEventTimesProjectedTrajectoryStockSet_;  // DmDager * EvDevEventTimes
 
  protected:
   /**
@@ -205,7 +181,7 @@ class SLQ_DataCollector {
   /**
    * Calculates sensitivity of the state-input constraints to event times.
    *
-   * @param [in] constSlqPtr: A pointer to the SLQ instance.
+   * @param [in] constDdpPtr: A pointer to the DDP instance.
    * @param [in] timeTrajectoriesStock: The time trajectory stamp.
    * @param [in] stateTrajectoriesStock: The state trajectory.
    * @param [in] inputTrajectoriesStock: The control input trajectory.
@@ -214,11 +190,11 @@ class SLQ_DataCollector {
    * @param [out] EvDevEventTimesProjectedTrajectoriesStockSet: The projected sensitivity of the state-input constraints to the event times,
    * Defined as (DmDager * EvDevEventTimes).
    */
-  void calculateStateInputConstraintsSensitivity(const slq_t* constSlqPtr, const std::vector<scalar_array_t>& timeTrajectoriesStock,
+  void calculateStateInputConstraintsSensitivity(const ddp_t* constDdpPtr, const std::vector<scalar_array_t>& timeTrajectoriesStock,
                                                  const state_vector_array2_t& stateTrajectoriesStock,
                                                  const input_vector_array2_t& inputTrajectoriesStock,
                                                  dynamic_vector_array3_t& EvDevEventTimesTrajectoriesStockSet,
-                                                 input_vector_array3_t& EvDevEventTimesProjectedTrajectoriesStockSet);
+                                                 dynamic_vector_array3_t& EvDevEventTimesProjectedTrajectoriesStockSet);
 
  private:
   std::unique_ptr<rollout_base_t> rolloutPtr_;
@@ -229,4 +205,4 @@ class SLQ_DataCollector {
 
 }  // namespace ocs2
 
-#include "implementation/SLQ_DataCollector.h"
+#include "implementation/DDP_DataCollector.h"

@@ -33,7 +33,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-SLQ_DataCollector<STATE_DIM, INPUT_DIM>::SLQ_DataCollector(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
+DDP_DataCollector<STATE_DIM, INPUT_DIM>::DDP_DataCollector(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                                            const constraint_base_t* systemConstraintsPtr,
                                                            const cost_function_base_t* costFunctionPtr)
 
@@ -46,78 +46,75 @@ SLQ_DataCollector<STATE_DIM, INPUT_DIM>::SLQ_DataCollector(const rollout_base_t*
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::collect(const slq_t* constSlqPtr) {
-  auto* slqPtr = const_cast<slq_t*>(constSlqPtr);
+void DDP_DataCollector<STATE_DIM, INPUT_DIM>::collect(const ddp_t* constDdpPtr) {
+  auto* ddpPtr = const_cast<ddp_t*>(constDdpPtr);
 
   /*
    * Data which should be copied
    */
   // initial time and state plus final time
-  initTime_ = slqPtr->initTime_;
-  finalTime_ = slqPtr->finalTime_;
-  initState_ = slqPtr->initState_;
+  initTime_ = ddpPtr->initTime_;
+  finalTime_ = ddpPtr->finalTime_;
+  initState_ = ddpPtr->initState_;
 
   // active partitions range: [initActivePartition_, finalActivePartition_]
-  initActivePartition_ = slqPtr->initActivePartition_;
-  finalActivePartition_ = slqPtr->finalActivePartition_;
+  initActivePartition_ = ddpPtr->initActivePartition_;
+  finalActivePartition_ = ddpPtr->finalActivePartition_;
 
   // data resizing
-  bool numPartitionsChanged = numPartitions_ != slqPtr->numPartitions_;
+  bool numPartitionsChanged = numPartitions_ != ddpPtr->numPartitions_;
   if (numPartitionsChanged) {
-    resizeDataContainer(slqPtr->numPartitions_);
+    resizeDataContainer(ddpPtr->numPartitions_);
   }
 
-  numPartitions_ = slqPtr->numPartitions_;
-  partitioningTimes_ = slqPtr->partitioningTimes_;
+  numPartitions_ = ddpPtr->numPartitions_;
+  partitioningTimes_ = ddpPtr->partitioningTimes_;
 
-  rewindCounter_ = slqPtr->rewindCounter_;
+  rewindCounter_ = ddpPtr->rewindCounter_;
 
-  eventTimes_ = slqPtr->getLogicRulesPtr()->eventTimes();
-  // subsystemsSequence_ = slqPtr->getLogicRulesPtr()->subsystemsSequence();
+  eventTimes_ = ddpPtr->getLogicRulesPtr()->eventTimes();
+  // subsystemsSequence_ = ddpPtr->getLogicRulesPtr()->subsystemsSequence();
 
   // optimized controller
-  optimizedControllersStock_ = slqPtr->nominalControllersStock_;
+  optimizedControllersStock_ = ddpPtr->nominalControllersStock_;
 
   // nominal trajectories (LQ approximation is around the cached trajectories)
-  nominalPostEventIndicesStock_ = slqPtr->cachedPostEventIndicesStock_;
-  nominalTimeTrajectoriesStock_ = slqPtr->cachedTimeTrajectoriesStock_;
-  nominalStateTrajectoriesStock_ = slqPtr->cachedStateTrajectoriesStock_;
-  nominalInputTrajectoriesStock_ = slqPtr->cachedInputTrajectoriesStock_;
+  nominalPostEventIndicesStock_ = ddpPtr->cachedPostEventIndicesStock_;
+  nominalTimeTrajectoriesStock_ = ddpPtr->cachedTimeTrajectoriesStock_;
+  nominalStateTrajectoriesStock_ = ddpPtr->cachedStateTrajectoriesStock_;
+  nominalInputTrajectoriesStock_ = ddpPtr->cachedInputTrajectoriesStock_;
 
   /*
    * Data which can be swapped. Note that these variables should have correct size.
    * Otherwise use setOptimizer() to construct them with correct size
    */
   // model data trajectory
-  modelDataTrajectoriesStock_.swap(slqPtr->cachedModelDataTrajectoriesStock_);
+  modelDataTrajectoriesStock_.swap(ddpPtr->cachedModelDataTrajectoriesStock_);
 
   // event times model data
-  modelDataEventTimesStock_.swap(slqPtr->cachedModelDataEventTimesStock_);
+  modelDataEventTimesStock_.swap(ddpPtr->cachedModelDataEventTimesStock_);
 
   // projected model data trajectory
-  projectedModelDataTrajectoriesStock_.swap(slqPtr->cachedProjectedModelDataTrajectoriesStock_);
+  projectedModelDataTrajectoriesStock_.swap(ddpPtr->cachedProjectedModelDataTrajectoriesStock_);
 
-  // constrained projected variables
-  RmInverseTrajectoriesStock_.swap(slqPtr->RmInverseTrajectoryStock_);
-  RmInvConstrainedCholTrajectoryStock_.swap(slqPtr->RmInvConstrainedCholTrajectoryStock_);
-  DmDagerTrajectoriesStock_.swap(slqPtr->DmDagerTrajectoryStock_);
+  // Riccati modification
+  riccatiModificationTrajectoriesStock_.swap(ddpPtr->cachedRiccatiModificationTrajectoriesStock_);
 
   // terminal cost which is interpreted as the Heuristic function
-  sHeuristics_ = slqPtr->sHeuristics_;
-  SvHeuristics_.swap(slqPtr->SvHeuristics_);
-  SmHeuristics_.swap(slqPtr->SmHeuristics_);
+  sHeuristics_ = ddpPtr->sHeuristics_;
+  SvHeuristics_.swap(ddpPtr->SvHeuristics_);
+  SmHeuristics_.swap(ddpPtr->SmHeuristics_);
 
   // Riccati coefficients
-  SsTimeTrajectoriesStock_.swap(slqPtr->SsTimeTrajectoryStock_);
-  SsNormalizedTimeTrajectoriesStock_.swap(slqPtr->SsNormalizedTimeTrajectoryStock_);
-  SsNormalizedEventsPastTheEndIndecesStock_.swap(slqPtr->SsNormalizedEventsPastTheEndIndecesStock_);
-  SmTrajectoriesStock_.swap(slqPtr->SmTrajectoryStock_);
-  SvTrajectoriesStock_.swap(slqPtr->SvTrajectoryStock_);
-  SveTrajectoriesStock_.swap(slqPtr->SveTrajectoryStock_);
-  sTrajectoriesStock_.swap(slqPtr->sTrajectoryStock_);
+  SsTimeTrajectoriesStock_.swap(ddpPtr->SsTimeTrajectoryStock_);
+  SsNormalizedTimeTrajectoriesStock_.swap(ddpPtr->SsNormalizedTimeTrajectoryStock_);
+  SsNormalizedEventsPastTheEndIndecesStock_.swap(ddpPtr->SsNormalizedEventsPastTheEndIndecesStock_);
+  SmTrajectoriesStock_.swap(ddpPtr->SmTrajectoryStock_);
+  SvTrajectoriesStock_.swap(ddpPtr->SvTrajectoryStock_);
+  sTrajectoriesStock_.swap(ddpPtr->sTrajectoryStock_);
 
   // state-input constraints derivatives w.r.t. to the event times
-  calculateStateInputConstraintsSensitivity(constSlqPtr, nominalTimeTrajectoriesStock_, nominalStateTrajectoriesStock_,
+  calculateStateInputConstraintsSensitivity(constDdpPtr, nominalTimeTrajectoriesStock_, nominalStateTrajectoriesStock_,
                                             nominalInputTrajectoriesStock_, EvDevEventTimesTrajectoryStockSet_,
                                             EvDevEventTimesProjectedTrajectoryStockSet_);
 }
@@ -126,40 +123,40 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::collect(const slq_t* constSlqPtr) 
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::calculateStateInputConstraintsSensitivity(
-    const slq_t* constSlqPtr, const std::vector<scalar_array_t>& timeTrajectoriesStock, const state_vector_array2_t& stateTrajectoriesStock,
+void DDP_DataCollector<STATE_DIM, INPUT_DIM>::calculateStateInputConstraintsSensitivity(
+    const ddp_t* constDdpPtr, const std::vector<scalar_array_t>& timeTrajectoriesStock, const state_vector_array2_t& stateTrajectoriesStock,
     const input_vector_array2_t& inputTrajectoriesStock, dynamic_vector_array3_t& EvDevEventTimesTrajectoryStockSet,
-    input_vector_array3_t& EvDevEventTimesProjectedTrajectoriesStockSet) {
-  auto* slqPtr = const_cast<slq_t*>(constSlqPtr);
+    dynamic_vector_array3_t& EvDevEventTimesProjectedTrajectoriesStockSet) {
+  auto* ddpPtr = const_cast<ddp_t*>(constDdpPtr);
 
-  const size_t numEventTimes = constSlqPtr->getLogicRulesPtr()->getNumEventTimes();
+  const size_t numEventTimes = constDdpPtr->getLogicRulesPtr()->getNumEventTimes();
 
   // resizing EvDev container
   EvDevEventTimesTrajectoryStockSet.resize(numEventTimes);
   for (auto& EvDevEventTimesTrajectoryStock : EvDevEventTimesTrajectoryStockSet) {
-    EvDevEventTimesTrajectoryStock.resize(constSlqPtr->numPartitions_);
-    for (size_t i = 0; i < constSlqPtr->numPartitions_; i++) {
+    EvDevEventTimesTrajectoryStock.resize(constDdpPtr->numPartitions_);
+    for (size_t i = 0; i < constDdpPtr->numPartitions_; i++) {
       EvDevEventTimesTrajectoryStock[i].resize(timeTrajectoriesStock[i].size());
     }  // end of i loop
   }
   // resizing EvDevProjected container
   EvDevEventTimesProjectedTrajectoriesStockSet.resize(numEventTimes);
-  for (input_vector_array2_t& EvDevEventTimesProjectedTrajectoriesStock : EvDevEventTimesProjectedTrajectoriesStockSet) {
-    EvDevEventTimesProjectedTrajectoriesStock.resize(constSlqPtr->numPartitions_);
-    for (size_t i = 0; i < constSlqPtr->numPartitions_; i++) {
+  for (auto& EvDevEventTimesProjectedTrajectoriesStock : EvDevEventTimesProjectedTrajectoriesStockSet) {
+    EvDevEventTimesProjectedTrajectoriesStock.resize(constDdpPtr->numPartitions_);
+    for (size_t i = 0; i < constDdpPtr->numPartitions_; i++) {
       EvDevEventTimesProjectedTrajectoriesStock[i].resize(timeTrajectoriesStock[i].size());
     }  // end of i loop
   }
 
-  for (size_t i = 0; i < constSlqPtr->numPartitions_; i++) {
+  for (size_t i = 0; i < constDdpPtr->numPartitions_; i++) {
     for (size_t k = 0; k < timeTrajectoriesStock[i].size(); k++) {
       // set
       systemConstraintsPtr_->setCurrentStateAndControl(timeTrajectoriesStock[i][k], stateTrajectoriesStock[i][k],
                                                        inputTrajectoriesStock[i][k]);
 
       // evaluation
-      constraint1_vector_array_t g1DevArray(numEventTimes);
-      auto nc1 = systemConstraintsPtr_->numStateInputConstraint(timeTrajectoriesStock[i][k]);
+      typename ddp_t::constraint1_vector_array_t g1DevArray(numEventTimes);
+      const auto nc1 = systemConstraintsPtr_->numStateInputConstraint(timeTrajectoriesStock[i][k]);
       systemConstraintsPtr_->getConstraint1DerivativesEventTimes(g1DevArray);
 
       // if derivatives where available
@@ -171,7 +168,7 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::calculateStateInputConstraintsSens
         for (size_t j = 0; j < numEventTimes; j++) {
           EvDevEventTimesTrajectoryStockSet[j][i][k] = g1DevArray[j].head(nc1);
           EvDevEventTimesProjectedTrajectoriesStockSet[j][i][k] =
-              DmDagerTrajectoriesStock_[i][k] * EvDevEventTimesTrajectoryStockSet[j][i][k];
+              riccatiModificationTrajectoriesStock_[i][k].constraintRangeProjector_ * EvDevEventTimesTrajectoryStockSet[j][i][k];
         }  // end of j loop
 
       } else {
@@ -188,7 +185,7 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::calculateStateInputConstraintsSens
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::resizeDataContainer(const size_t& numPartitions) {
+void DDP_DataCollector<STATE_DIM, INPUT_DIM>::resizeDataContainer(const size_t& numPartitions) {
   if (numPartitions == 0) {
     throw std::runtime_error("The number of Partitions cannot be zero!");
   }
@@ -218,10 +215,8 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::resizeDataContainer(const size_t& 
   // projected model data trajectory
   projectedModelDataTrajectoriesStock_.resize(numPartitions);
 
-  // constrained projected variables
-  RmInverseTrajectoriesStock_.resize(numPartitions);
-  RmInvConstrainedCholTrajectoryStock_.resize(numPartitions);
-  DmDagerTrajectoriesStock_.resize(numPartitions);
+  // Riccati modification
+  riccatiModificationTrajectoriesStock_.resize(numPartitions);
 
   // Riccati coefficients
   SsTimeTrajectoriesStock_.resize(numPartitions);
@@ -229,7 +224,6 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::resizeDataContainer(const size_t& 
   SsNormalizedEventsPastTheEndIndecesStock_.resize(numPartitions);
   SmTrajectoriesStock_.resize(numPartitions);
   SvTrajectoriesStock_.resize(numPartitions);
-  SveTrajectoriesStock_.resize(numPartitions);
   sTrajectoriesStock_.resize(numPartitions);
 }
 

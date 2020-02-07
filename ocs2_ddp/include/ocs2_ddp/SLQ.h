@@ -51,38 +51,16 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
 
   using BASE = DDP_BASE<STATE_DIM, INPUT_DIM>;
 
-  using typename BASE::constraint1_input_matrix_array2_t;
-  using typename BASE::constraint1_input_matrix_array_t;
-  using typename BASE::constraint1_input_matrix_t;
-  using typename BASE::constraint1_state_matrix_array2_t;
-  using typename BASE::constraint1_state_matrix_array_t;
-  using typename BASE::constraint1_state_matrix_t;
-  using typename BASE::constraint1_vector_array2_t;
-  using typename BASE::constraint1_vector_array_t;
-  using typename BASE::constraint1_vector_t;
-  using typename BASE::constraint2_state_matrix_array2_t;
-  using typename BASE::constraint2_state_matrix_array_t;
-  using typename BASE::constraint2_state_matrix_t;
-  using typename BASE::constraint2_vector_array2_t;
-  using typename BASE::constraint2_vector_array_t;
-  using typename BASE::constraint2_vector_t;
   using typename BASE::DIMENSIONS;
-  using typename BASE::dynamic_input_matrix_t;
   using typename BASE::dynamic_matrix_array2_t;
   using typename BASE::dynamic_matrix_array_t;
   using typename BASE::dynamic_matrix_t;
   using typename BASE::dynamic_vector_array2_t;
   using typename BASE::dynamic_vector_array_t;
   using typename BASE::dynamic_vector_t;
-  using typename BASE::input_dynamic_matrix_array2_t;
-  using typename BASE::input_dynamic_matrix_array_t;
-  using typename BASE::input_dynamic_matrix_t;
   using typename BASE::input_matrix_array2_t;
   using typename BASE::input_matrix_array_t;
   using typename BASE::input_matrix_t;
-  using typename BASE::input_state_matrix_array2_t;
-  using typename BASE::input_state_matrix_array_t;
-  using typename BASE::input_state_matrix_t;
   using typename BASE::input_vector_array2_t;
   using typename BASE::input_vector_array_t;
   using typename BASE::input_vector_t;
@@ -91,9 +69,6 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::scalar_t;
   using typename BASE::size_array2_t;
   using typename BASE::size_array_t;
-  using typename BASE::state_input_matrix_array2_t;
-  using typename BASE::state_input_matrix_array_t;
-  using typename BASE::state_input_matrix_t;
   using typename BASE::state_matrix_array2_t;
   using typename BASE::state_matrix_array_t;
   using typename BASE::state_matrix_t;

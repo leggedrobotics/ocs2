@@ -143,6 +143,8 @@ class Dimensions {
   using dynamic_vector_array_t = std::vector<dynamic_vector_t, Eigen::aligned_allocator<dynamic_vector_t>>;
   /** Array of dynamic vector's trajectory type. */
   using dynamic_vector_array2_t = std::vector<dynamic_vector_array_t, Eigen::aligned_allocator<dynamic_vector_array_t>>;
+  /** Array of arrays of dynamic vector's trajectory type. */
+  using dynamic_vector_array3_t = std::vector<dynamic_vector_array2_t, Eigen::aligned_allocator<dynamic_vector_array2_t>>;
 
   /** Dynamic-size matrix type. */
   using dynamic_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic>;
@@ -150,6 +152,8 @@ class Dimensions {
   using dynamic_matrix_array_t = std::vector<dynamic_matrix_t, Eigen::aligned_allocator<dynamic_matrix_t>>;
   /** Array of dynamic matrix's trajectory type. */
   using dynamic_matrix_array2_t = std::vector<dynamic_matrix_array_t, Eigen::aligned_allocator<dynamic_matrix_array_t>>;
+  /** Array of arrays of dynamic matrix's trajectory type. */
+  using dynamic_matrix_array3_t = std::vector<dynamic_matrix_array2_t, Eigen::aligned_allocator<dynamic_matrix_array2_t>>;
 
   /** Dynamic-size by n_x matrix type. */
   using dynamic_state_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, STATE_DIM>;

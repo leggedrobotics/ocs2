@@ -673,6 +673,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::augmentCostWorker(size_t workerIndex, Model
 
   // inequality constraints
   if (modelData.numIneqConstr_ > 0) {
+    // TODO: fix this
     scalar_t p;
     state_vector_t dpdx;
     input_vector_t dpdu;
@@ -1926,7 +1927,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t 
   getValueFunctionStateDerivative(time, state, costate);
 
   state_vector_t deltaX = state - xNominal;
-  dynamic_input_matrix_t DmDaggerTransRm = DmDagger.transpose() * Rm;
+  dynamic_matrix_t DmDaggerTransRm = DmDagger.transpose() * Rm;
 
   nu = DmDaggerTransRm * (CmProjected * deltaX + EvProjected) - DmDagger.transpose() * (Pm * deltaX + Bm.transpose() * costate + Rv);
 

@@ -93,4 +93,3 @@ class RobotInterface {
 
 }  // namespace ocs2
 
-//#include "implementation/RobotInterfaceBase.h"

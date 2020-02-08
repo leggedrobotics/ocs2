@@ -79,9 +79,10 @@ class PythonInterface {
   /**
    * @brief initializes the class. This must happen before any other method is called
    * @note init is not called in the constructor because it internally calls pure virtual initRobotInterface
-   * @param[in] taskFileFolder path of settings file
+   * @param[in] robotInterface : The Python interface takes clones of the cost, dynamics, and constraints
+   * @param[in] mpcPtr : The Python interface takes ownership of the mpcPtr
    */
-  void init(const std::string& taskFileFolder);
+  void init(const RobotInterfaceBase<STATE_DIM, INPUT_DIM>& robotInterface, std::unique_ptr<MPC_BASE<STATE_DIM, INPUT_DIM>> mpcPtr);
 
   /**
    * @brief resets MPC to its original state
@@ -245,14 +246,7 @@ class PythonInterface {
     throw std::runtime_error("PythonInterface::visualizeTrajectory must be implemented by robot-specific derived class.");
   }
 
- protected:
-  /**
-   * @brief initRobotInterface Must be implemented by a derived class to instantiate
-   * the robot-specific robotInterface_
-   * @param taskFileFolder folder for config files
-   */
-  virtual void initRobotInterface(const std::string& taskFileFolder) = 0;
-
+ private:
   /**
    * @brief runMpcAsync: Worker thread used in asynchronous mode
    */
@@ -260,7 +254,7 @@ class PythonInterface {
 
   // Member variables
  protected:
-  std::unique_ptr<RobotInterfaceBase<STATE_DIM, INPUT_DIM>> robotInterface_;
+  std::unique_ptr<MPC_BASE<STATE_DIM, INPUT_DIM>> mpcPtr_;
   std::unique_ptr<MPC_MRT_Interface<STATE_DIM, INPUT_DIM>> mpcMrtInterface_;
 
   std::unique_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM>> dynamics_;

@@ -43,7 +43,8 @@ int main(int argc, char** argv) {
   ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
 
   // Launch MPC ROS node
-  MPC_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> mpcNode(ballbotInterface.getMpc(), "ballbot");
+  auto mpcPtr = ballbotInterface.getMpc();
+  MPC_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> mpcNode(*mpcPtr, "ballbot");
   mpcNode.launchNodes(argc, argv);
 
   // Successful exit

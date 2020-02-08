@@ -7,7 +7,7 @@
     </group>
 
     <node pkg="ocs2_ballbot_example" type="ballbot_mpc" name="ballbot_mpc"
-          output="screen" args="$(arg task_name)" launch-prefix=""/>
+          output="screen" args="$(arg task_name)" launch-prefix="valgrind"/>
 
     <node pkg="ocs2_ballbot_example" type="ballbot_dummy_test" name="ballbot_dummy_test"
           output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>

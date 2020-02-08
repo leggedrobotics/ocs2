@@ -23,7 +23,7 @@ TEST(BallbotIntegrationTest, createDummyMRT) {
 
   // Initialize dummy
   ballbot::MRT_ROS_Dummy_Ballbot::system_observation_t initObservation;
-  ballbotInterface.getInitialState(initObservation.state());
+  initObservation.state() = ballbotInterface.getInitialState();
 
   ASSERT_TRUE(true);
 }
@@ -33,7 +33,8 @@ TEST(BallbotIntegrationTest, createMPC) {
   ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
 
   // Launch MPC ROS node
-  MPC_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> mpcNode(ballbotInterface.getMpc(), "ballbot");
+  auto mpcPtr = ballbotInterface.getMpc();
+  MPC_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> mpcNode(*mpcPtr, "ballbot");
 
   ASSERT_TRUE(true);
 }

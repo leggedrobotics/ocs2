@@ -61,6 +61,8 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
   using BASE = RobotInterfaceBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
   using dim_t = Dimensions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
+  using scalar_t = dim_t::scalar_t;
+  using state_vector_t = dim_t::state_vector_t;
   using ballbotConstraint_t = ConstraintBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
   using ballbotOperatingPoint_t = SystemOperatingPoint<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
@@ -80,16 +82,16 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
    */
   ~BallbotInterface() = default;
 
-  void setupOptimizer(const std::string& taskFile) override;
-
   /**
    * Gets SLQ settings.
    *
    * @return SLQ settings
    */
-  SLQ_Settings& slqSettings();
+  const state_vector_t& getInitialState() { return initialState_; }
+  SLQ_Settings& slqSettings() { return slqSettings_; }
+  MPC_Settings& mpcSettings() { return mpcSettings_; }
 
-  mpc_t& getMpc() override { return *mpcPtr_; }
+  std::unique_ptr<mpc_t> getMpc();
 
   const BallbotSystemDynamics& getDynamics() const override { return *ballbotSystemDynamicsPtr_; }
 
@@ -105,7 +107,7 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
    *
    * @param [in] taskFile: Task's file full path.
    */
-  void loadSettings(const std::string& taskFile) override;
+  void loadSettings(const std::string& taskFile);
 
   /**************
    * Variables
@@ -114,7 +116,7 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
   std::string libraryFolder_;
 
   SLQ_Settings slqSettings_;
-  std::unique_ptr<mpc_t> mpcPtr_;
+  MPC_Settings mpcSettings_;
 
   std::unique_ptr<rollout_base_t> ddpBallbotRolloutPtr_;
 
@@ -133,6 +135,7 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
 
   size_t numPartitions_ = 0;
   dim_t::scalar_array_t partitioningTimes_;
+  dim_t::state_vector_t initialState_;
 };
 
 }  // namespace ballbot

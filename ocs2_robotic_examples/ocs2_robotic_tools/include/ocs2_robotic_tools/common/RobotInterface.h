@@ -46,7 +46,7 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class RobotInterfaceBase {
+class RobotInterface {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -58,7 +58,7 @@ class RobotInterfaceBase {
   /**
    * Destructor
    */
-  virtual ~RobotInterfaceBase() = default;
+  virtual ~RobotInterface() = default;
 
   /**
    * @brief getLogicRulesPtr

@@ -42,7 +42,7 @@ void PythonInterface<STATE_DIM, INPUT_DIM>::reset(CostDesiredTrajectories target
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void PythonInterface<STATE_DIM, INPUT_DIM>::init(const RobotInterfaceBase<STATE_DIM, INPUT_DIM>& robotInterface,
+void PythonInterface<STATE_DIM, INPUT_DIM>::init(const RobotInterface<STATE_DIM, INPUT_DIM>& robotInterface,
                                                  std::unique_ptr<MPC_BASE<STATE_DIM, INPUT_DIM>> mpcPtr) {
   if (!mpcPtr) {
     throw std::runtime_error("[PythonInterface] Mpc pointer must be initialized before passing to the Python interface.");

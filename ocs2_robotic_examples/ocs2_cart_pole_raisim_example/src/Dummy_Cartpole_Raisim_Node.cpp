@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
 
   // initial state
   ocs2::SystemObservation<STATE_DIM_, INPUT_DIM_> initObservation;
-  cartPoleInterface.getInitialState(initObservation.state());
+  initObservation.state() = cartPoleInterface.getInitialState();
 
   // initial command
   ocs2::CostDesiredTrajectories initCostDesiredTrajectories(2);

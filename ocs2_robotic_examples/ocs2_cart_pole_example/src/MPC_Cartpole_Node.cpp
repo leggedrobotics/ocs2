@@ -41,7 +41,8 @@ int main(int argc, char** argv) {
   ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFileFolderName);
 
   // Launch MPC ROS node
-  ocs2::MPC_ROS_Interface<ocs2::cartpole::STATE_DIM_, ocs2::cartpole::INPUT_DIM_> mpcNode(cartPoleInterface.getMpc(), "cartpole");
+  auto mpcPtr = cartPoleInterface.getMpc();
+  ocs2::MPC_ROS_Interface<ocs2::cartpole::STATE_DIM_, ocs2::cartpole::INPUT_DIM_> mpcNode(*mpcPtr, "cartpole");
   mpcNode.launchNodes(argc, argv);
 
   return 0;

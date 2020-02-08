@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
-#include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
+#include <ocs2_robotic_tools/common/RobotInterface.h>
 
 // Ballbot
 #include "ocs2_ballbot_example/cost/BallbotCost.h"
@@ -54,15 +54,13 @@ namespace ballbot {
  * BallbotInterface class
  * General interface for mpc implementation on the ballbot model
  */
-class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> {
+class BallbotInterface final : public RobotInterface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = RobotInterfaceBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
+  using BASE = RobotInterface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
   using dim_t = Dimensions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
-  using scalar_t = dim_t::scalar_t;
-  using state_vector_t = dim_t::state_vector_t;
   using ballbotConstraint_t = ConstraintBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
   using ballbotOperatingPoint_t = SystemOperatingPoint<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
@@ -80,14 +78,9 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
   /**
    * Destructor
    */
-  ~BallbotInterface() = default;
+  ~BallbotInterface() override = default;
 
-  /**
-   * Gets SLQ settings.
-   *
-   * @return SLQ settings
-   */
-  const state_vector_t& getInitialState() { return initialState_; }
+  const dim_t::state_vector_t& getInitialState() { return initialState_; }
   SLQ_Settings& slqSettings() { return slqSettings_; }
   MPC_Settings& mpcSettings() { return mpcSettings_; }
 

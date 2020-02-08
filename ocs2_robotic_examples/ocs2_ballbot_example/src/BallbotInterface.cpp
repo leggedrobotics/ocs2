@@ -110,7 +110,7 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   /*
    * Time partitioning which defines the time horizon and the number of data partitioning
    */
-  scalar_t timeHorizon;
+  dim_t::scalar_t timeHorizon;
   ocs2::loadData::loadPartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
 }
 

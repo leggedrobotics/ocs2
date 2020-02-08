@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
-#include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
+#include <ocs2_robotic_tools/common/RobotInterface.h>
 
 namespace ocs2 {
 
@@ -82,7 +82,7 @@ class PythonInterface {
    * @param[in] robotInterface : The Python interface takes clones of the cost, dynamics, and constraints
    * @param[in] mpcPtr : The Python interface takes ownership of the mpcPtr
    */
-  void init(const RobotInterfaceBase<STATE_DIM, INPUT_DIM>& robotInterface, std::unique_ptr<MPC_BASE<STATE_DIM, INPUT_DIM>> mpcPtr);
+  void init(const RobotInterface<STATE_DIM, INPUT_DIM>& robotInterface, std::unique_ptr<MPC_BASE<STATE_DIM, INPUT_DIM>> mpcPtr);
 
   /**
    * @brief resets MPC to its original state

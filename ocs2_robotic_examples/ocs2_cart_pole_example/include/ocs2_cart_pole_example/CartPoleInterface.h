@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_mpc/MPC_SLQ.h>
-#include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
+#include <ocs2_robotic_tools/common/RobotInterface.h>
 
 // CartPole
 #include "ocs2_cart_pole_example/CartPoleParameters.h"
@@ -52,11 +52,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace cartpole {
 
-class CartPoleInterface final : public RobotInterfaceBase<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> {
+class CartPoleInterface final : public RobotInterface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = RobotInterfaceBase<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
+  using BASE = RobotInterface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
 
   using dim_t = Dimensions<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
   using CartPoleConstraint = ConstraintBase<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
@@ -77,18 +77,13 @@ class CartPoleInterface final : public RobotInterfaceBase<cartpole::STATE_DIM_, 
   /**
    * Destructor
    */
-  ~CartPoleInterface() = default;
+  ~CartPoleInterface() override = default;
 
-  void setupOptimizer(const std::string& taskFile) override;
+  const dim_t::state_vector_t& getInitialState() { return initialState_; }
+  SLQ_Settings& slqSettings() { return slqSettings_; };
+  MPC_Settings& mpcSettings() { return mpcSettings_; };
 
-  /**
-   * Gets SLQ settings.
-   *
-   * @return SLQ settings
-   */
-  SLQ_Settings& slqSettings();
-
-  mpc_t& getMpc() override { return *mpcPtr_; }
+  std::unique_ptr<mpc_t> getMpc();
 
   const CartPoleSytemDynamics& getDynamics() const override { return *cartPoleSystemDynamicsPtr_; }
 
@@ -104,7 +99,7 @@ class CartPoleInterface final : public RobotInterfaceBase<cartpole::STATE_DIM_, 
    *
    * @param [in] taskFile: Task's file full path.
    */
-  void loadSettings(const std::string& taskFile) override;
+  void loadSettings(const std::string& taskFile);
 
   /**************
    * Variables
@@ -113,7 +108,7 @@ class CartPoleInterface final : public RobotInterfaceBase<cartpole::STATE_DIM_, 
   std::string libraryFolder_;
 
   SLQ_Settings slqSettings_;
-  std::unique_ptr<mpc_t> mpcPtr_;
+  MPC_Settings mpcSettings_;
 
   std::unique_ptr<rollout_base_t> ddpCartPoleRolloutPtr_;
 
@@ -132,6 +127,7 @@ class CartPoleInterface final : public RobotInterfaceBase<cartpole::STATE_DIM_, 
 
   size_t numPartitions_ = 0;
   dim_t::scalar_array_t partitioningTimes_;
+  dim_t::state_vector_t initialState_;
 };
 
 }  // namespace cartpole

@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
 
   // initial state
   quadrotor::MRT_ROS_Dummy_Quadrotor::system_observation_t initObservation;
-  quadrotorInterface.getInitialState(initObservation.state());
+  initObservation.state() = quadrotorInterface.getInitialState();
 
   // initial command
   CostDesiredTrajectories initCostDesiredTrajectories;

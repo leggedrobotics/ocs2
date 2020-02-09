@@ -92,4 +92,3 @@ class RobotInterface {
 };
 
 }  // namespace ocs2
-

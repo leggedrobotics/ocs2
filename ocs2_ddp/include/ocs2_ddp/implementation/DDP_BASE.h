@@ -737,12 +737,12 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::computeProjectionAndRiccatiModification(DDP
                                                                              const dynamic_matrix_t& Sm, ModelDataBase& projectedModelData,
                                                                              RiccatiModificationBase& riccatiModification) const {
   // compute the Hamiltonian's Hessian
-  const auto HmAug = computeHamiltonianHessian(strategy, modelData, Sm);
+  riccatiModification.time_ = modelData.time_;
+  riccatiModification.hamiltonianHessian_ = computeHamiltonianHessian(strategy, modelData, Sm);
 
   // compute projectors
-  riccatiModification.time_ = modelData.time_;
-  computeProjections(HmAug, modelData.stateInputEqConstrInputDerivative_, riccatiModification.constraintRangeProjector_,
-                     riccatiModification.constraintNullProjector_);
+  computeProjections(riccatiModification.hamiltonianHessian_, modelData.stateInputEqConstrInputDerivative_,
+                     riccatiModification.constraintRangeProjector_, riccatiModification.constraintNullProjector_);
 
   // project LQ
   projectLQ(modelData, riccatiModification.constraintRangeProjector_, riccatiModification.constraintNullProjector_, projectedModelData);
@@ -1910,10 +1910,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t 
   ModelData::LinearInterpolation::interpolate(indexAlpha, Rv, &modelDataTrajectoriesStock_[activeSubsystem],
                                               ModelData::costInputDerivative);
 
-  dynamic_matrix_t Rm;
-  ModelData::LinearInterpolation::interpolate(indexAlpha, Rm, &modelDataTrajectoriesStock_[activeSubsystem],
-                                              ModelData::costInputSecondDerivative);
-
   dynamic_vector_t EvProjected;
   ModelData::LinearInterpolation::interpolate(indexAlpha, EvProjected, &projectedModelDataTrajectoriesStock_[activeSubsystem],
                                               ModelData::stateInputEqConstr);
@@ -1921,6 +1917,10 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t 
   dynamic_matrix_t CmProjected;
   ModelData::LinearInterpolation::interpolate(indexAlpha, CmProjected, &projectedModelDataTrajectoriesStock_[activeSubsystem],
                                               ModelData::stateInputEqConstrStateDerivative);
+
+  dynamic_matrix_t Hm;
+  RiccatiModification::LinearInterpolation::interpolate(indexAlpha, Hm, &riccatiModificationTrajectoriesStock_[activeSubsystem],
+                                                        RiccatiModification::hamiltonianHessian);
 
   dynamic_matrix_t DmDagger;
   RiccatiModification::LinearInterpolation::interpolate(indexAlpha, DmDagger, &riccatiModificationTrajectoriesStock_[activeSubsystem],
@@ -1930,12 +1930,12 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t 
   getValueFunctionStateDerivative(time, state, costate);
 
   state_vector_t deltaX = state - xNominal;
-  dynamic_matrix_t DmDaggerTransRm = DmDagger.transpose() * Rm;
+  dynamic_matrix_t DmDaggerTransHm = DmDagger.transpose() * Hm;
 
-  nu = DmDaggerTransRm * (CmProjected * deltaX + EvProjected) - DmDagger.transpose() * (Pm * deltaX + Bm.transpose() * costate + Rv);
+  nu = DmDaggerTransHm * (CmProjected * deltaX + EvProjected) - DmDagger.transpose() * (Rv + Pm * deltaX + Bm.transpose() * costate);
 
   //  alternative computation
-  //  nu = DmDagger.transpose() * (Rm * DmDagger.transpose() * CmProjected * deltaX - Rv - Bm.transpose() * costate);
+  //  nu = DmDagger.transpose() * (Hm * DmDagger.transpose() * CmProjected * deltaX - Rv - Bm.transpose() * costate);
 }
 
 /******************************************************************************************************/

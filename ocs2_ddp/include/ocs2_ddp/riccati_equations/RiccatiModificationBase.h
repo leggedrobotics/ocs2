@@ -50,9 +50,11 @@ struct RiccatiModificationBase {
   dynamic_matrix_t deltaGm_;
   dynamic_vector_t deltaGv_;
 
-  /** The right pseudo-inverse of Dm */
+  /** The Hessian matrix of the Hamiltonian, \f$Hm\f$. */
+  dynamic_matrix_t hamiltonianHessian_;
+  /** The right pseudo-inverse of \f$Dm\f$ */
   dynamic_matrix_t constraintRangeProjector_;
-  /** DmNull inv(DmNull^T * Hm * DmNull) * DmNull^T = (I - invHm * Dm^T * inv(Dm * invHm * Dm^T) * Dm) * invHm */
+  /** \f$DmNull inv(DmNull^T * Hm * DmNull) * DmNull^T = (I - invHm * Dm^T * inv(Dm * invHm * Dm^T) * Dm) * invHm\f$ */
   dynamic_matrix_t constraintNullProjector_;
 
   /**

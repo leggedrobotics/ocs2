@@ -57,8 +57,7 @@ void testFunction() {
   ilqrSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
   ilqrSettings.ddpSettings_.maxNumIterations_ = 150;
   ilqrSettings.ddpSettings_.minRelCost_ = 1e-3;
-  ilqrSettings.ddpSettings_.minAbsConstraint1ISE_ = 1e-5;
-  ilqrSettings.ddpSettings_.minRelConstraint1ISE_ = 1e-7;
+  ilqrSettings.ddpSettings_.constraintTolerance_ = 1e-5;
   ilqrSettings.ddpSettings_.constraintPenaltyInitialValue_ = 2.0;
   ilqrSettings.ddpSettings_.constraintPenaltyIncreaseRate_ = 2.0;
   ilqrSettings.ddpSettings_.strategy_ = DDP_Strategy::LINE_SEARCH;

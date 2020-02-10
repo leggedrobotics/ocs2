@@ -589,11 +589,11 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::initializeAugmentedLagrangianParameters() {
 
   // state-only equality
   constraintPenaltyCoefficients_.stateEqualityPenaltyCoeff = ddpSettings_.constraintPenaltyInitialValue_;
-  constraintPenaltyCoefficients_.stateEqualityPenaltyTol = ddpSettings_.minAbsConstraint1ISE_;
+  constraintPenaltyCoefficients_.stateEqualityPenaltyTol = ddpSettings_.constraintTolerance_;
 
   // final state-only equality
   constraintPenaltyCoefficients_.stateEqualityFinalPenaltyCoeff = ddpSettings_.constraintPenaltyInitialValue_;
-  constraintPenaltyCoefficients_.stateEqualityFinalPenaltyTol = ddpSettings_.minAbsConstraint1ISE_;
+  constraintPenaltyCoefficients_.stateEqualityFinalPenaltyTol = ddpSettings_.constraintTolerance_;
 
   // state-input equality
   constraintPenaltyCoefficients_.stateInputEqualityPenaltyCoeff = ddpSettings_.constraintPenaltyInitialValue_;
@@ -608,15 +608,15 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::updateConstraintPenalties(scalar_t stateEqConstraintISE, scalar_t stateEqFinalConstraintISE,
                                                                scalar_t stateInputEqConstraintISE) {
   // state-only equality penalty
-  if (stateEqConstraintISE > ddpSettings_.minAbsConstraint1ISE_) {
+  if (stateEqConstraintISE > ddpSettings_.constraintTolerance_) {
     constraintPenaltyCoefficients_.stateEqualityPenaltyCoeff *= ddpSettings_.constraintPenaltyIncreaseRate_;
-    constraintPenaltyCoefficients_.stateEqualityPenaltyTol = ddpSettings_.minAbsConstraint1ISE_;
+    constraintPenaltyCoefficients_.stateEqualityPenaltyTol = ddpSettings_.constraintTolerance_;
   }
 
   // final state-only equality
-  if (stateEqFinalConstraintISE > ddpSettings_.minAbsConstraint1ISE_) {
+  if (stateEqFinalConstraintISE > ddpSettings_.constraintTolerance_) {
     constraintPenaltyCoefficients_.stateEqualityFinalPenaltyCoeff *= ddpSettings_.constraintPenaltyIncreaseRate_;
-    constraintPenaltyCoefficients_.stateEqualityFinalPenaltyTol = ddpSettings_.minAbsConstraint1ISE_;
+    constraintPenaltyCoefficients_.stateEqualityFinalPenaltyTol = ddpSettings_.constraintTolerance_;
   }
 
   // state-input equality penalty
@@ -631,7 +631,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::updateConstraintPenalties(scalar_t stateEqC
         std::pow(constraintPenaltyCoefficients_.stateInputEqualityPenaltyCoeff, 0.1);
   }
   constraintPenaltyCoefficients_.stateInputEqualityPenaltyTol =
-      std::max(constraintPenaltyCoefficients_.stateInputEqualityPenaltyTol, ddpSettings_.minAbsConstraint1ISE_);
+      std::max(constraintPenaltyCoefficients_.stateInputEqualityPenaltyTol, ddpSettings_.constraintTolerance_);
 
   // display
   if (ddpSettings_.displayInfo_) {
@@ -2508,8 +2508,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
   bool isOptimizationConverged = false;
   bool isCostFunctionConverged = false;
   bool isStepLengthStarZero = false;
+  bool isConstraintsSatisfied = false;
   scalar_t relCost = 2.0 * ddpSettings_.minRelCost_;
-  scalar_t relConstraint1ISE = 2.0 * ddpSettings_.minRelConstraint1ISE_;
 
   // DDP main loop
   while (iteration_ + 1 < ddpSettings_.maxNumIterations_ && !isOptimizationConverged) {
@@ -2527,6 +2527,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
 
     scalar_t cachedCost = nominalTotalCost_;
     scalar_t cachedStateInputEqConstraintISE = stateInputEqConstraintISE_;
+    scalar_t cachedInequalityConstraintPenalty = inequalityConstraintPenalty_;
 
     // cache the nominal trajectories before the new rollout (time, state, input, ...)
     swapNominalTrajectoriesToCache();
@@ -2541,7 +2542,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
     // loop break variables
     isCostFunctionConverged = false;
     isStepLengthStarZero = false;
-    relCost = std::abs(nominalTotalCost_ - cachedCost);
+    relCost = std::abs(nominalTotalCost_ + inequalityConstraintPenalty_ - cachedCost - cachedInequalityConstraintPenalty);
     switch (ddpSettings_.strategy_) {
       case DDP_Strategy::LINE_SEARCH: {
         isStepLengthStarZero = numerics::almost_eq(lineSearchImpl_.stepLengthStar.load(), 0.0) && !isInitInternalControllerEmpty_;
@@ -2555,10 +2556,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
         break;
       }
     }
-    relConstraint1ISE = std::abs(stateInputEqConstraintISE_ - cachedStateInputEqConstraintISE);
-    bool isConstraint1Satisfied =
-        stateInputEqConstraintISE_ <= ddpSettings_.minAbsConstraint1ISE_ || relConstraint1ISE <= ddpSettings_.minRelConstraint1ISE_;
-    isOptimizationConverged = (isCostFunctionConverged || isStepLengthStarZero) && isConstraint1Satisfied;
+    isConstraintsSatisfied = stateInputEqConstraintISE_ <= ddpSettings_.constraintTolerance_;
+    isOptimizationConverged = (isCostFunctionConverged || isStepLengthStarZero) && isConstraintsSatisfied;
     isInitInternalControllerEmpty_ = false;
 
   }  // end of while loop
@@ -2601,12 +2600,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
         std::cerr << algorithmName_ + " successfully terminates as cost relative change (relCost=" << relCost
                   << ") reached to the minimum value." << std::endl;
       }
-
-      if (stateInputEqConstraintISE_ <= ddpSettings_.minAbsConstraint1ISE_) {
+      if (isConstraintsSatisfied) {
         std::cerr << "State-input equality constraint absolute ISE (absConstraint1ISE=" << stateInputEqConstraintISE_
-                  << ") reached to its minimum value." << std::endl;
-      } else {
-        std::cerr << "State-input equality constraint relative ISE (relConstraint1ISE=" << relConstraint1ISE
                   << ") reached to its minimum value." << std::endl;
       }
     } else {

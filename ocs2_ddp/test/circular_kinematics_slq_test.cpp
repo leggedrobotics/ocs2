@@ -60,8 +60,7 @@ void testFunction(int numCores) {
   slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
   slqSettings.ddpSettings_.maxNumIterations_ = 150;
   slqSettings.ddpSettings_.minRelCost_ = 1e-3;
-  slqSettings.ddpSettings_.minAbsConstraint1ISE_ = 1e-5;
-  slqSettings.ddpSettings_.minRelConstraint1ISE_ = 1e-7;
+  slqSettings.ddpSettings_.constraintTolerance_ = 1e-5;
   slqSettings.ddpSettings_.constraintPenaltyInitialValue_ = 2.0;
   slqSettings.ddpSettings_.constraintPenaltyIncreaseRate_ = 2.0;
   slqSettings.ddpSettings_.strategy_ = DDP_Strategy::LINE_SEARCH;

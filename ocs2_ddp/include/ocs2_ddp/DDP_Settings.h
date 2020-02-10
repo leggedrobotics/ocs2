@@ -54,11 +54,8 @@ struct DDP_Settings {
   size_t maxNumIterations_ = 15;
   /** This value determines the termination condition based on the minimum relative changes of the cost. */
   double minRelCost_ = 1e-3;
-  /** The initial coefficient of the quadratic penalty function in augmented Lagrangian method. It should be greater than one. */
-  /** This value determines the maximum permitted absolute ISE (Integral of Square Error) for constrained type-1.*/
-  double minAbsConstraint1ISE_ = 1e-3;
-  /** This value determines the maximum permitted relative ISE (Integral of Square Error) for constrained type-1.*/
-  double minRelConstraint1ISE_ = 1e-3;
+  /** This value determines the tolerance of constraint's ISE (Integral of Square Error). */
+  double constraintTolerance_ = 1e-3;
 
   /** This value determines to display the log output DDP. */
   bool displayInfo_ = false;
@@ -80,6 +77,7 @@ struct DDP_Settings {
   /** The minimum integration time step */
   double minTimeStep_ = 1e-3;
 
+  /** The initial coefficient of the quadratic penalty function in augmented Lagrangian method. It should be greater than one. */
   double constraintPenaltyInitialValue_ = 2.0;
   /** The rate that the coefficient of the quadratic penalty function in augmented Lagrangian method grows. It should be greater than
    * one. */
@@ -136,8 +134,7 @@ struct DDP_Settings {
 
     loadData::loadPtreeValue(pt, maxNumIterations_, fieldName + ".maxNumIterations", verbose);
     loadData::loadPtreeValue(pt, minRelCost_, fieldName + ".minRelCost", verbose);
-    loadData::loadPtreeValue(pt, minAbsConstraint1ISE_, fieldName + ".minAbsConstraint1ISE", verbose);
-    loadData::loadPtreeValue(pt, minRelConstraint1ISE_, fieldName + ".minRelConstraint1ISE", verbose);
+    loadData::loadPtreeValue(pt, constraintTolerance_, fieldName + ".constraintTolerance", verbose);
 
     loadData::loadPtreeValue(pt, displayInfo_, fieldName + ".displayInfo", verbose);
     loadData::loadPtreeValue(pt, displayShortSummary_, fieldName + ".displayShortSummary", verbose);

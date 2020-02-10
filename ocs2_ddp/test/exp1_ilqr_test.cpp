@@ -152,15 +152,15 @@ TEST(exp1_ilqr_test, exp1_ilqr_test) {
       << "MESSAGE: ILQR_MT failed in the EXP1's cost test!";
 
   const double expectedISE1 = 0.0;
-  ASSERT_LT(fabs(constraint1ISE_st - expectedISE1), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
+  ASSERT_LT(fabs(constraint1ISE_st - expectedISE1), 10 * ilqrSettings.ddpSettings_.constraintTolerance_)
       << "MESSAGE: ILQR_ST failed in the EXP1's type-1 constraint ISE test!";
-  ASSERT_LT(fabs(constraint1ISE_mt - expectedISE1), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
+  ASSERT_LT(fabs(constraint1ISE_mt - expectedISE1), 10 * ilqrSettings.ddpSettings_.constraintTolerance_)
       << "MESSAGE: ILQR_MT failed in the EXP1's type-1 constraint ISE test!";
 
   const double expectedISE2 = 0.0;
-  ASSERT_LT(fabs(constraint2ISE_st - expectedISE2), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
+  ASSERT_LT(fabs(constraint2ISE_st - expectedISE2), 10 * ilqrSettings.ddpSettings_.constraintTolerance_)
       << "MESSAGE: ILQR_ST failed in the EXP1's type-2 constraint ISE test!";
-  ASSERT_LT(fabs(constraint2ISE_mt - expectedISE2), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
+  ASSERT_LT(fabs(constraint2ISE_mt - expectedISE2), 10 * ilqrSettings.ddpSettings_.constraintTolerance_)
       << "MESSAGE: ILQR_MT failed in the EXP1's type-2 constraint ISE test!";
 
   double ctrlFinalTime;

@@ -147,7 +147,7 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   double constraint1ISE;
   double constraint2ISE;
   slqST.getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
-  EXPECT_LT(std::fabs(costFunction - 18.90), 10.0 * slqSettings.ddpSettings_.minRelCost_);
+  EXPECT_LT(std::fabs(costFunction - 20.08), 10.0 * slqSettings.ddpSettings_.minRelCost_);
 }
 
 int main(int argc, char** argv) {

@@ -202,7 +202,7 @@ typename SLQ<STATE_DIM, INPUT_DIM>::scalar_t SLQ<STATE_DIM, INPUT_DIM>::solveSeq
         int N = BASE::nominalTimeTrajectoriesStock_[i].size();
         int timeIndex;
         size_t taskId = BASE::nextTaskId_++;  // assign task ID (atomic)
-        const auto SmDummy = dynamic_matrix_t::Zero(STATE_DIM, STATE_DIM);
+        const auto SmDummy = dynamic_matrix_t::Zero(0, 0);
 
         // get next time index is atomic
         while ((timeIndex = BASE::nextTimeIndex_++) < N) {
@@ -222,9 +222,8 @@ typename SLQ<STATE_DIM, INPUT_DIM>::scalar_t SLQ<STATE_DIM, INPUT_DIM>::solveSeq
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-typename SLQ<STATE_DIM, INPUT_DIM>::dynamic_matrix_t SLQ<STATE_DIM, INPUT_DIM>::computeHamiltonianHessian(DDP_Strategy strategy,
-                                                                                                          const ModelDataBase& modelData,
-                                                                                                          const state_matrix_t& Sm) const {
+typename SLQ<STATE_DIM, INPUT_DIM>::dynamic_matrix_t SLQ<STATE_DIM, INPUT_DIM>::computeHamiltonianHessian(
+    DDP_Strategy strategy, const ModelDataBase& modelData, const dynamic_matrix_t& Sm) const {
   const auto& Bm = modelData.dynamicsInputDerivative_;
   const auto& Rm = modelData.costInputSecondDerivative_;
   switch (strategy) {

@@ -45,59 +45,55 @@ namespace ocs2 {
  * This structure contains the settings for the DDP algorithm.
  */
 struct DDP_Settings {
+  /** Number of threads used in the multi-threading scheme. */
+  size_t nThreads_ = 1;
+  /** Priority of threads used in the multi-threading scheme. */
+  int threadPriority_ = 99;
+
   /** Maximum number of iterations of DDP. */
   size_t maxNumIterations_ = 15;
   /** This value determines the termination condition based on the minimum relative changes of the cost. */
   double minRelCost_ = 1e-3;
   /** The initial coefficient of the quadratic penalty function in augmented Lagrangian method. It should be greater than one. */
-  double constraintPenaltyInitialValue_ = 2.0;
-  /** The rate for which the coefficient of the quadratic penalty function in augmented Lagrangian method grows. It should be greater than
-   * one. */
-  double constraintPenaltyIncreaseRate_ = 2.0;
-  /** Scaling factor, \f$\mu\f$,  for the inequality constraints barrier */
-  double inequalityConstraintMu_ = 0.0;
-  /** Threshold parameter, \f$\delta\f$, where the relaxed log barrier function changes from log to quadratic */
-  double inequalityConstraintDelta_ = 1e-6;
-  /** merit function coefficient. */
-  double meritFunctionRho_ = 1.0;
-  /** Constant step size for type-1 constraints. */
-  double constraintStepSize_ = 1.0;
+  /** This value determines the maximum permitted absolute ISE (Integral of Square Error) for constrained type-1.*/
+  double minAbsConstraint1ISE_ = 1e-3;
+  /** This value determines the maximum permitted relative ISE (Integral of Square Error) for constrained type-1.*/
+  double minRelConstraint1ISE_ = 1e-3;
+
   /** This value determines to display the log output DDP. */
   bool displayInfo_ = false;
   /** This value determines to display the a summary log of DDP. */
   bool displayShortSummary_ = false;
+  /** Check the numerical stability of the algorithms for debugging purpose. */
+  bool checkNumericalStability_ = true;
+  /** Printing rollout trajectory for debugging. */
+  bool debugPrintRollout_ = false;
+  /** Debugs the cached nominal trajectories. */
+  bool debugCaching_ = false;
 
   /** This value determines the absolute tolerance error for ode solvers. */
   double absTolODE_ = 1e-9;
   /** This value determines the relative tolerance error for ode solvers. */
   double relTolODE_ = 1e-6;
   /** This value determines the maximum number of integration points per a second for ode solvers. */
-  size_t maxNumStepsPerSecond_ = 1e+4;
+  size_t maxNumStepsPerSecond_ = 10000;
   /** The minimum integration time step */
   double minTimeStep_ = 1e-3;
-  /** This value determines the maximum permitted absolute ISE (Integral of Square Error) for constrained type-1.*/
-  double minAbsConstraint1ISE_ = 1e-3;
-  /** This value determines the maximum permitted relative ISE (Integral of Square Error) for constrained type-1.*/
-  double minRelConstraint1ISE_ = 1e-3;
+
+  double constraintPenaltyInitialValue_ = 2.0;
+  /** The rate that the coefficient of the quadratic penalty function in augmented Lagrangian method grows. It should be greater than
+   * one. */
+  double constraintPenaltyIncreaseRate_ = 2.0;
+  /** Scaling factor, \f$\mu\f$,  for the inequality constraints barrier */
+  double inequalityConstraintMu_ = 0.0;
+  /** Threshold parameter, \f$\delta\f$, where the relaxed log barrier function changes from log to quadratic */
+  double inequalityConstraintDelta_ = 1e-6;
 
   /** If true, terms of the Riccati equation will be precomputed before interpolation in the flow-map */
   bool preComputeRiccatiTerms_ = true;
 
-  /** Check the numerical stability of the algorithms for debugging purpose. */
-  bool checkNumericalStability_ = true;
-
-  /** Number of threads used in the multi-threading scheme. */
-  size_t nThreads_ = 1;
-  /** Priority of threads used in the multi-threading scheme. */
-  int threadPriority_ = 99;
-
   /** Use either the optimized control policy (true) or the optimized state-input trajectory (false). */
   bool useFeedbackPolicy_ = false;
-
-  /** Printing rollout trajectory for debugging. */
-  bool debugPrintRollout_ = false;
-  /** Debugs the cached nominal trajectories. */
-  bool debugCaching_ = false;
 
   /** Determines the strategy for solving the subproblem. There are two choices line-search strategy and levenberg_marquardt strategy. */
   DDP_Strategy strategy_ = DDP_Strategy::LINE_SEARCH;
@@ -137,27 +133,31 @@ struct DDP_Settings {
 
     loadData::loadPtreeValue(pt, nThreads_, fieldName + ".nThreads", verbose);
     loadData::loadPtreeValue(pt, threadPriority_, fieldName + ".threadPriority", verbose);
+
     loadData::loadPtreeValue(pt, maxNumIterations_, fieldName + ".maxNumIterations", verbose);
     loadData::loadPtreeValue(pt, minRelCost_, fieldName + ".minRelCost", verbose);
-    loadData::loadPtreeValue(pt, constraintPenaltyInitialValue_, fieldName + ".constraintPenaltyInitialValue", verbose);
-    loadData::loadPtreeValue(pt, constraintPenaltyIncreaseRate_, fieldName + ".constraintPenaltyIncreaseRate", verbose);
-    loadData::loadPtreeValue(pt, inequalityConstraintMu_, fieldName + ".inequalityConstraintMu", verbose);
-    loadData::loadPtreeValue(pt, inequalityConstraintDelta_, fieldName + ".inequalityConstraintDelta", verbose);
-    loadData::loadPtreeValue(pt, meritFunctionRho_, fieldName + ".meritFunctionRho", verbose);
-    loadData::loadPtreeValue(pt, constraintStepSize_, fieldName + ".constraintStepSize", verbose);
+    loadData::loadPtreeValue(pt, minAbsConstraint1ISE_, fieldName + ".minAbsConstraint1ISE", verbose);
+    loadData::loadPtreeValue(pt, minRelConstraint1ISE_, fieldName + ".minRelConstraint1ISE", verbose);
+
     loadData::loadPtreeValue(pt, displayInfo_, fieldName + ".displayInfo", verbose);
     loadData::loadPtreeValue(pt, displayShortSummary_, fieldName + ".displayShortSummary", verbose);
+    loadData::loadPtreeValue(pt, checkNumericalStability_, fieldName + ".checkNumericalStability", verbose);
+    loadData::loadPtreeValue(pt, debugPrintRollout_, fieldName + ".debugPrintRollout", verbose);
+    loadData::loadPtreeValue(pt, debugCaching_, fieldName + ".debugCaching", verbose);
+
     loadData::loadPtreeValue(pt, absTolODE_, fieldName + ".AbsTolODE", verbose);
     loadData::loadPtreeValue(pt, relTolODE_, fieldName + ".RelTolODE", verbose);
     loadData::loadPtreeValue(pt, maxNumStepsPerSecond_, fieldName + ".maxNumStepsPerSecond", verbose);
     loadData::loadPtreeValue(pt, minTimeStep_, fieldName + ".minTimeStep", verbose);
+
+    loadData::loadPtreeValue(pt, constraintPenaltyInitialValue_, fieldName + ".constraintPenaltyInitialValue", verbose);
+    loadData::loadPtreeValue(pt, constraintPenaltyIncreaseRate_, fieldName + ".constraintPenaltyIncreaseRate", verbose);
+    loadData::loadPtreeValue(pt, inequalityConstraintMu_, fieldName + ".inequalityConstraintMu", verbose);
+    loadData::loadPtreeValue(pt, inequalityConstraintDelta_, fieldName + ".inequalityConstraintDelta", verbose);
+
     loadData::loadPtreeValue(pt, preComputeRiccatiTerms_, fieldName + ".preComputeRiccatiTerms", verbose);
-    loadData::loadPtreeValue(pt, minAbsConstraint1ISE_, fieldName + ".minAbsConstraint1ISE", verbose);
-    loadData::loadPtreeValue(pt, minRelConstraint1ISE_, fieldName + ".minRelConstraint1ISE", verbose);
-    loadData::loadPtreeValue(pt, checkNumericalStability_, fieldName + ".checkNumericalStability", verbose);
+
     loadData::loadPtreeValue(pt, useFeedbackPolicy_, fieldName + ".useFeedbackPolicy", verbose);
-    loadData::loadPtreeValue(pt, debugPrintRollout_, fieldName + ".debugPrintRollout", verbose);
-    loadData::loadPtreeValue(pt, debugCaching_, fieldName + ".debugCaching", verbose);
 
     std::string strategyName = ddp_strategy::toString(strategy_);
     loadData::loadPtreeValue(pt, strategyName, fieldName + ".strategy", verbose);

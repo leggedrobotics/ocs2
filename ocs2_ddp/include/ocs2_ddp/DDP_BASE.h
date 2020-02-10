@@ -557,7 +557,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @return The Hessian matrix of the Hamiltonian.
    */
   virtual dynamic_matrix_t computeHamiltonianHessian(DDP_Strategy strategy, const ModelDataBase& modelData,
-                                                     const state_matrix_t& Sm) const = 0;
+                                                     const dynamic_matrix_t& Sm) const = 0;
 
   /**
    *
@@ -620,6 +620,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @param [in] workerIndex: The index of the worker.
    * @param [in] stepLength: The step length for which the controller is updated based on the DDP solution.
+   * @param [out] merit: The merit value of the rollout.
    * @param [out] totalCost: The total cost of the rollout.
    * @param [out] stateInputEqConstraintISE: The ISE of the state-input equality constraints along the rollout trajectory.
    * @param [out] stateEqConstraintISE: The ISE of the state-only equality constraints along the rollout trajectory.
@@ -635,12 +636,12 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @return average time step.
    */
-  scalar_t performFullRollout(size_t workerIndex, scalar_t stepLength, scalar_t& totalCost, scalar_t& stateInputEqConstraintISE,
-                              scalar_t& stateEqConstraintISE, scalar_t& stateEqFinalConstraintISE, scalar_t& inequalityConstraintPenalty,
-                              scalar_t& inequalityConstraintISE, linear_controller_array_t& controllersStock,
-                              scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-                              state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
-                              ModelDataBase::array2_t& modelDataTrajectoriesStock);
+  scalar_t performFullRollout(size_t workerIndex, scalar_t stepLength, scalar_t& merit, scalar_t& totalCost,
+                              scalar_t& stateInputEqConstraintISE, scalar_t& stateEqConstraintISE, scalar_t& stateEqFinalConstraintISE,
+                              scalar_t& inequalityConstraintPenalty, scalar_t& inequalityConstraintISE,
+                              linear_controller_array_t& controllersStock, scalar_array2_t& timeTrajectoriesStock,
+                              size_array2_t& postEventIndicesStock, state_vector_array2_t& stateTrajectoriesStock,
+                              input_vector_array2_t& inputTrajectoriesStock, ModelDataBase::array2_t& modelDataTrajectoriesStock);
 
   /**
    * Calculates state-input constraints ISE (Integral of Square Error).
@@ -744,6 +745,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   scalar_array_t iterationISE1_;
   scalar_array_t iterationISE2_;
 
+  scalar_t nominalMerit_;
   scalar_t nominalTotalCost_;
   scalar_t stateEqConstraintISE_;
   scalar_t stateEqFinalConstraintISE_;
@@ -814,7 +816,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   // Line-Search
   struct LineSearchImpl {
-    scalar_t baselineTotalCost;                      // the cost of the rollout for zero learning rate
+    scalar_t baselineMerit;                          // the merit of the rollout for zero learning rate
     std::atomic<scalar_t> stepLengthStar;            // the optimal step length.
     linear_controller_array_t initControllersStock;  // needed for lineSearch
 

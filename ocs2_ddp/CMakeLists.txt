@@ -68,8 +68,8 @@ if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target " ${PROJECT_NAME}_lintTarget)
   add_clang_tooling(
     TARGETS ${PROJECT_NAME}_lintTarget ${PROJECT_NAME}_dynamic_size
-    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test
-    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_ddp
+    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_ddp
     CF_WERROR
 )
 endif(cmake_clang_tools_FOUND)
@@ -158,18 +158,18 @@ target_link_libraries(bouncing_mass_test
   ${Boost_LIBRARIES}
 )
 
-#add_executable(circular_kinematics_ilqr_test
-#  test/circular_kinematics_ilqr_test.cpp
-#)
-#target_link_libraries(circular_kinematics_ilqr_test
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#)
-#
-#add_executable(circular_kinematics_slq_test
-#  test/circular_kinematics_slq_test.cpp
-#)
-#target_link_libraries(circular_kinematics_slq_test
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES}
-#)
+add_executable(circular_kinematics_ilqr_test
+  test/circular_kinematics_ilqr_test.cpp
+)
+target_link_libraries(circular_kinematics_ilqr_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+add_executable(circular_kinematics_slq_test
+  test/circular_kinematics_slq_test.cpp
+)
+target_link_libraries(circular_kinematics_slq_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)

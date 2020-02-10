@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <boost/filesystem.hpp>
 
-#include <ocs2_ddp/ILQR.h>
+#include <ocs2_ddp/SLQ.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/test/circular_kinematics.h>
 
@@ -43,28 +43,31 @@ using namespace ocs2;
 
 enum { STATE_DIM = 2, INPUT_DIM = 2 };
 
-// TEST(exp0_ilqr_test, exp0_ilqr_test) {
-void testFunction() {
-  using ilqr_t = ILQR<STATE_DIM, INPUT_DIM>;
+// TEST(exp0_slq_test, exp0_slq_test) {
+void testFunction(int numCores) {
+  using slq_t = SLQ<STATE_DIM, INPUT_DIM>;
 
-  ILQR_Settings ilqrSettings;
-  ilqrSettings.ddpSettings_.displayInfo_ = true;
-  ilqrSettings.ddpSettings_.displayShortSummary_ = true;
-  ilqrSettings.ddpSettings_.checkNumericalStability_ = false;
-  ilqrSettings.ddpSettings_.debugPrintRollout_ = false;
-  ilqrSettings.ddpSettings_.absTolODE_ = 1e-9;
-  ilqrSettings.ddpSettings_.relTolODE_ = 1e-7;
-  ilqrSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
-  ilqrSettings.ddpSettings_.maxNumIterations_ = 150;
-  ilqrSettings.ddpSettings_.minRelCost_ = 1e-3;
-  ilqrSettings.ddpSettings_.minAbsConstraint1ISE_ = 1e-5;
-  ilqrSettings.ddpSettings_.minRelConstraint1ISE_ = 1e-7;
-  ilqrSettings.ddpSettings_.constraintPenaltyInitialValue_ = 2.0;
-  ilqrSettings.ddpSettings_.constraintPenaltyIncreaseRate_ = 2.0;
-  ilqrSettings.ddpSettings_.strategy_ = DDP_Strategy::LINE_SEARCH;
-  ilqrSettings.ddpSettings_.lineSearch_.minStepLength_ = 0.01;
-  ilqrSettings.ddpSettings_.lineSearch_.hessianCorrectionStrategy_ = Hessian_Correction::CHOLESKY_MODIFICATION;
-  ilqrSettings.ddpSettings_.lineSearch_.hessianCorrectionMultiple_ = 1e-3;
+  SLQ_Settings slqSettings;
+  slqSettings.useNominalTimeForBackwardPass_ = true;
+  slqSettings.ddpSettings_.preComputeRiccatiTerms_ = false;
+  slqSettings.RiccatiIntegratorType_ = IntegratorType::ODE45;
+  slqSettings.ddpSettings_.displayInfo_ = true;
+  slqSettings.ddpSettings_.displayShortSummary_ = true;
+  slqSettings.ddpSettings_.checkNumericalStability_ = false;
+  slqSettings.ddpSettings_.debugPrintRollout_ = false;
+  slqSettings.ddpSettings_.absTolODE_ = 1e-9;
+  slqSettings.ddpSettings_.relTolODE_ = 1e-7;
+  slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
+  slqSettings.ddpSettings_.maxNumIterations_ = 150;
+  slqSettings.ddpSettings_.minRelCost_ = 1e-3;
+  slqSettings.ddpSettings_.minAbsConstraint1ISE_ = 1e-5;
+  slqSettings.ddpSettings_.minRelConstraint1ISE_ = 1e-7;
+  slqSettings.ddpSettings_.constraintPenaltyInitialValue_ = 2.0;
+  slqSettings.ddpSettings_.constraintPenaltyIncreaseRate_ = 2.0;
+  slqSettings.ddpSettings_.strategy_ = DDP_Strategy::LINE_SEARCH;
+  slqSettings.ddpSettings_.lineSearch_.minStepLength_ = 0.01;
+  slqSettings.ddpSettings_.lineSearch_.hessianCorrectionStrategy_ = Hessian_Correction::CHOLESKY_MODIFICATION;
+  slqSettings.ddpSettings_.lineSearch_.hessianCorrectionMultiple_ = 1e-3;
 
   Rollout_Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-9;
@@ -108,40 +111,41 @@ void testFunction() {
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
-  // ILQR - single-thread version
-  ilqrSettings.ddpSettings_.nThreads_ = 1;
-  ilqr_t ilqrST(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ilqrSettings);
+  // SLQ - single-thread version
+  slqSettings.ddpSettings_.nThreads_ = 1;
+  slq_t slqST(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
 
-  // ILQR - multi-thread version
-  ilqrSettings.ddpSettings_.nThreads_ = 3;
-  ilqrSettings.ddpSettings_.displayInfo_ = false;
-  ilqr_t ilqrMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ilqrSettings);
+  // SLQ - multi-thread version
+  slqSettings.ddpSettings_.nThreads_ = 3;
+  slqSettings.ddpSettings_.displayInfo_ = false;
+  slq_t slqMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
+  slqMT.useParallelRiccatiSolverFromInitItr(false);
 
-  // run single core ILQR
-  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_) {
-    std::cerr << "\n>>> single-core ILQR" << std::endl;
+  // run single core SLQ
+  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {
+    std::cerr << "\n>>> single-core SLQ" << std::endl;
   }
-  ilqrST.run(startTime, initState, finalTime, partitioningTimes);
+  slqST.run(startTime, initState, finalTime, partitioningTimes);
 
-  // run multi-core ILQR
-  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_) {
-    std::cerr << "\n>>> multi-core ILQR" << std::endl;
+  // run multi-core SLQ
+  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {
+    std::cerr << "\n>>> multi-core SLQ" << std::endl;
   }
-  ilqrMT.run(startTime, initState, finalTime, partitioningTimes);
+  slqMT.run(startTime, initState, finalTime, partitioningTimes);
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
   // get solution
-  ilqr_t::primal_solution_t solutionST = ilqrST.primalSolution(finalTime);
-  ilqr_t::primal_solution_t solutionMT = ilqrMT.primalSolution(finalTime);
+  slq_t::primal_solution_t solutionST = slqST.primalSolution(finalTime);
+  slq_t::primal_solution_t solutionMT = slqMT.primalSolution(finalTime);
 
   // get performance indices
   double totalCostST, totalCostMT;
   double constraint1ISE_ST, constraint1ISE_MT;
   double constraint2ISE_ST, constraint2ISE_MT;
-  ilqrST.getPerformanceIndeces(totalCostST, constraint1ISE_ST, constraint2ISE_ST);
-  ilqrMT.getPerformanceIndeces(totalCostMT, constraint1ISE_MT, constraint2ISE_MT);
+  slqST.getPerformanceIndeces(totalCostST, constraint1ISE_ST, constraint2ISE_ST);
+  slqMT.getPerformanceIndeces(totalCostMT, constraint1ISE_MT, constraint2ISE_MT);
 
   /******************************************************************************************************/
   /******************************************************************************************************/
@@ -151,5 +155,6 @@ void testFunction() {
 int main(int argc, char** argv) {
   //  testing::InitGoogleTest(&argc, argv);
   //  return RUN_ALL_TESTS();
-  testFunction();
+  int numCores = strtol(argv[1], NULL, 10);
+  testFunction(numCores);
 }

@@ -221,7 +221,7 @@ typename ILQR<STATE_DIM, INPUT_DIM>::scalar_t ILQR<STATE_DIM, INPUT_DIM>::solveS
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename ILQR<STATE_DIM, INPUT_DIM>::dynamic_matrix_t ILQR<STATE_DIM, INPUT_DIM>::computeHamiltonianHessian(
-    DDP_Strategy strategy, const ModelDataBase& modelData, const state_matrix_t& Sm) const {
+    DDP_Strategy strategy, const ModelDataBase& modelData, const dynamic_matrix_t& Sm) const {
   const auto& Bm = modelData.dynamicsInputDerivative_;
   const auto& Rm = modelData.costInputSecondDerivative_;
   dynamic_matrix_t BmTransSm;

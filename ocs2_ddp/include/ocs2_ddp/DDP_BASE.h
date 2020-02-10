@@ -510,18 +510,28 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                                          ModelDataBase::array_t& modelDataTrajectory) = 0;
 
   /**
-   * Updates the constraint penalty coefficients.
-   *
+   * Initialize Augmented Lagrangian parameters.
    */
-  void updateConstraintPenalties(size_t iteration);
+  void initializeAugmentedLagrangianParameters();
+
+  /**
+   * Updates the constraint penalty coefficients.
+   * @param [in] stateEqConstraintISE: ISE of the intermediate state-only equality constraints.
+   * @param [in] stateEqFinalConstraintISE: ISE of the state-only equality constraints at event times.
+   * @param [in] stateInputEqConstraintISE: ISE of the intermediate state-input equality constraints.
+   */
+  void updateConstraintPenalties(scalar_t stateEqConstraintISE, scalar_t stateEqFinalConstraintISE, scalar_t stateInputEqConstraintISE);
 
   /**
    * Augments the cost function for the given model data.
    *
    * @param [in] workerIndex: Working agent index.
+   * @param [in] stateEqualityPenaltyCoeff: The state-only equality penalty coefficient of the Augmented Lagrangian method.
+   * @param [in] stateInputEqualityPenaltyCoeff: The state-input equality penalty coefficient of the Augmented Lagrangian method.
    * @param modelData: The model data.
    */
-  void augmentCostWorker(size_t workerIndex, ModelDataBase& modelData) const;
+  void augmentCostWorker(size_t workerIndex, scalar_t stateEqualityPenaltyCoeff, scalar_t stateInputEqualityPenaltyCoeff,
+                         ModelDataBase& modelData) const;
 
   /**
    * Takes the following steps: (1) Computes the Hessian of the Hamiltonian (i.e., Hm) (2) Based on Hm, it calculates
@@ -735,9 +745,9 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   scalar_array_t iterationISE2_;
 
   scalar_t nominalTotalCost_;
-  scalar_t stateInputEqConstraintISE_;
   scalar_t stateEqConstraintISE_;
   scalar_t stateEqFinalConstraintISE_;
+  scalar_t stateInputEqConstraintISE_;
   scalar_t inequalityConstraintPenalty_;
   scalar_t inequalityConstraintISE_;
 
@@ -825,8 +835,14 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   //
   struct ConstraintPenaltyCoefficientsImpl {
-    scalar_t stateEquality;
-    scalar_t stateInputEquality;
+    scalar_t stateEqualityPenaltyTol;
+    scalar_t stateEqualityPenaltyCoeff;
+
+    scalar_t stateEqualityFinalPenaltyTol;
+    scalar_t stateEqualityFinalPenaltyCoeff;
+
+    scalar_t stateInputEqualityPenaltyTol;
+    scalar_t stateInputEqualityPenaltyCoeff;
 
   } constraintPenaltyCoefficients_;
 

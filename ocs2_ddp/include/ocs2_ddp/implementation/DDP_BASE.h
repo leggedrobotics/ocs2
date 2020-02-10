@@ -85,6 +85,9 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t* rolloutPtr, const
         new RelaxedBarrierPenalty<STATE_DIM, INPUT_DIM>(ddpSettings_.inequalityConstraintMu_, ddpSettings_.inequalityConstraintDelta_)));
 
   }  // end of i loop
+
+  // initialize Augmented Lagrangian parameters
+  initializeAugmentedLagrangianParameters();
 }
 
 /******************************************************************************************************/
@@ -127,6 +130,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
 
   // reset Levenberg_Marquardt variables
   levenbergMarquardtImpl_ = LevenbergMarquardtImpl();
+
+  // initialize Augmented Lagrangian parameters
+  initializeAugmentedLagrangianParameters();
 
   useParallelRiccatiSolverFromInitItr_ = false;
 
@@ -562,11 +568,13 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
     const scalar_t& stateEqFinalConstraintISE, const scalar_t& inequalityConstraintPenalty) const {
   scalar_t merit = cost;
 
-  merit += 0.5 * constraintPenaltyCoefficients_.stateEquality * (stateEqConstraintISE + stateEqFinalConstraintISE);
+  merit += constraintPenaltyCoefficients_.stateEqualityPenaltyCoeff * std::sqrt(stateEqConstraintISE);
+
+  merit += constraintPenaltyCoefficients_.stateEqualityFinalPenaltyCoeff * std::sqrt(stateEqFinalConstraintISE);
+
+  merit += constraintPenaltyCoefficients_.stateInputEqualityPenaltyCoeff * std::sqrt(stateInputEqConstraintISE);
 
   merit += inequalityConstraintPenalty;
-
-  merit += 0.5 * constraintPenaltyCoefficients_.stateInputEquality * stateInputEqConstraintISE;
 
   return merit;
 }
@@ -575,13 +583,73 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::updateConstraintPenalties(size_t iteration) {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::initializeAugmentedLagrangianParameters() {
+  assert(ddpSettings_.constraintPenaltyInitialValue_ > 1.0);
+  assert(ddpSettings_.constraintPenaltyIncreaseRate_ > 1.0);
+
+  // state-only equality
+  constraintPenaltyCoefficients_.stateEqualityPenaltyCoeff = ddpSettings_.constraintPenaltyInitialValue_;
+  constraintPenaltyCoefficients_.stateEqualityPenaltyTol = ddpSettings_.minAbsConstraint1ISE_;
+
+  // final state-only equality
+  constraintPenaltyCoefficients_.stateEqualityFinalPenaltyCoeff = ddpSettings_.constraintPenaltyInitialValue_;
+  constraintPenaltyCoefficients_.stateEqualityFinalPenaltyTol = ddpSettings_.minAbsConstraint1ISE_;
+
+  // state-input equality
+  constraintPenaltyCoefficients_.stateInputEqualityPenaltyCoeff = ddpSettings_.constraintPenaltyInitialValue_;
+  constraintPenaltyCoefficients_.stateInputEqualityPenaltyTol =
+      1.0 / std::pow(constraintPenaltyCoefficients_.stateInputEqualityPenaltyCoeff, 0.1);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void DDP_BASE<STATE_DIM, INPUT_DIM>::updateConstraintPenalties(scalar_t stateEqConstraintISE, scalar_t stateEqFinalConstraintISE,
+                                                               scalar_t stateInputEqConstraintISE) {
   // state-only equality penalty
-  constraintPenaltyCoefficients_.stateEquality =
-      ddpSettings_.stateConstraintPenaltyCoeff_ * pow(ddpSettings_.stateConstraintPenaltyBase_, iteration);
+  if (stateEqConstraintISE > ddpSettings_.minAbsConstraint1ISE_) {
+    constraintPenaltyCoefficients_.stateEqualityPenaltyCoeff *= ddpSettings_.constraintPenaltyIncreaseRate_;
+    constraintPenaltyCoefficients_.stateEqualityPenaltyTol = ddpSettings_.minAbsConstraint1ISE_;
+  }
+
+  // final state-only equality
+  if (stateEqFinalConstraintISE > ddpSettings_.minAbsConstraint1ISE_) {
+    constraintPenaltyCoefficients_.stateEqualityFinalPenaltyCoeff *= ddpSettings_.constraintPenaltyIncreaseRate_;
+    constraintPenaltyCoefficients_.stateEqualityFinalPenaltyTol = ddpSettings_.minAbsConstraint1ISE_;
+  }
 
   // state-input equality penalty
-  constraintPenaltyCoefficients_.stateInputEquality = 10.0;
+  if (stateInputEqConstraintISE < constraintPenaltyCoefficients_.stateInputEqualityPenaltyTol) {
+    // tighten tolerance
+    constraintPenaltyCoefficients_.stateInputEqualityPenaltyTol /=
+        std::pow(constraintPenaltyCoefficients_.stateInputEqualityPenaltyCoeff, 0.9);
+  } else {
+    // tighten tolerance & increase penalty
+    constraintPenaltyCoefficients_.stateInputEqualityPenaltyCoeff *= ddpSettings_.constraintPenaltyIncreaseRate_;
+    constraintPenaltyCoefficients_.stateInputEqualityPenaltyTol /=
+        std::pow(constraintPenaltyCoefficients_.stateInputEqualityPenaltyCoeff, 0.1);
+  }
+  constraintPenaltyCoefficients_.stateInputEqualityPenaltyTol =
+      std::max(constraintPenaltyCoefficients_.stateInputEqualityPenaltyTol, ddpSettings_.minAbsConstraint1ISE_);
+
+  // display
+  if (ddpSettings_.displayInfo_) {
+    std::string displayText = "Augmented Lagrangian Penalty Parameters:\n";
+
+    displayText += "    State Equality:      ";
+    displayText += "    Penalty Tolerance: " + std::to_string(constraintPenaltyCoefficients_.stateEqualityPenaltyTol);
+    displayText += "    Penalty Coefficient: " + std::to_string(constraintPenaltyCoefficients_.stateEqualityPenaltyCoeff) + '\n';
+
+    displayText += "    Final State Equality:";
+    displayText += "    Penalty Tolerance: " + std::to_string(constraintPenaltyCoefficients_.stateEqualityFinalPenaltyTol);
+    displayText += "    Penalty Coefficient: " + std::to_string(constraintPenaltyCoefficients_.stateEqualityFinalPenaltyCoeff) + '\n';
+
+    displayText += "    State-Input Equality:";
+    displayText += "    Penalty Tolerance: " + std::to_string(constraintPenaltyCoefficients_.stateInputEqualityPenaltyTol);
+    displayText += "    Penalty Coefficient: " + std::to_string(constraintPenaltyCoefficients_.stateInputEqualityPenaltyCoeff) + ".";
+    BASE::printString(displayText);
+  }
 }
 
 /******************************************************************************************************/
@@ -613,7 +681,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
         // get next time index is atomic
         while ((timeIndex = nextTimeIndex_++) < nominalTimeTrajectoriesStock_[i].size()) {
           // augment cost
-          augmentCostWorker(taskId, modelDataTrajectoriesStock_[i][timeIndex]);
+          augmentCostWorker(taskId, constraintPenaltyCoefficients_.stateEqualityPenaltyCoeff, 0.0,
+                            modelDataTrajectoriesStock_[i][timeIndex]);
         }
       };
       runParallel(task, ddpSettings_.nThreads_);
@@ -641,7 +710,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
               nominalTimeTrajectoriesStock_[i][k], nominalStateTrajectoriesStock_[i][k], nominalInputTrajectoriesStock_[i][k],
               modelDataEventTimesStock_[i][timeIndex]);
           // augment cost
-          augmentCostWorker(taskId, modelDataEventTimesStock_[i][timeIndex]);
+          augmentCostWorker(taskId, constraintPenaltyCoefficients_.stateEqualityFinalPenaltyCoeff, 0.0,
+                            modelDataEventTimesStock_[i][timeIndex]);
           // shift Hessian
           shiftHessian(modelDataEventTimesStock_[i][timeIndex].costStateSecondDerivative_);
         }
@@ -670,27 +740,28 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::augmentCostWorker(size_t workerIndex, ModelDataBase& modelData) const {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::augmentCostWorker(size_t workerIndex, scalar_t stateEqualityPenaltyCoeff,
+                                                       scalar_t stateInputEqualityPenaltyCoeff, ModelDataBase& modelData) const {
   // state equality constraint (type 2) coefficients
   if (modelData.numStateEqConstr_ > 0) {
     const dynamic_vector_t& Hv = modelData.stateEqConstr_;
     const dynamic_matrix_t& Fm = modelData.stateEqConstrStateDerivative_;
-    modelData.cost_ += 0.5 * constraintPenaltyCoefficients_.stateEquality * Hv.dot(Hv);
-    modelData.costStateDerivative_.noalias() += constraintPenaltyCoefficients_.stateEquality * Fm.transpose() * Hv;
-    modelData.costStateSecondDerivative_.noalias() += constraintPenaltyCoefficients_.stateEquality * Fm.transpose() * Fm;
+    modelData.cost_ += 0.5 * stateEqualityPenaltyCoeff * Hv.dot(Hv);
+    modelData.costStateDerivative_.noalias() += stateEqualityPenaltyCoeff * Fm.transpose() * Hv;
+    modelData.costStateSecondDerivative_.noalias() += stateEqualityPenaltyCoeff * Fm.transpose() * Fm;
   }
 
   // state-input equality constraint (type 1) coefficients
-  if (modelData.numStateInputEqConstr_ > 0) {
+  if (modelData.numStateInputEqConstr_ > 0 && !numerics::almost_eq(stateInputEqualityPenaltyCoeff, 0.0)) {
     const dynamic_vector_t& Ev = modelData.stateInputEqConstr_;
     const dynamic_matrix_t& Cm = modelData.stateInputEqConstrStateDerivative_;
     const dynamic_matrix_t& Dm = modelData.stateInputEqConstrInputDerivative_;
-    modelData.cost_ += 0.5 * constraintPenaltyCoefficients_.stateInputEquality * Ev.dot(Ev);
-    modelData.costStateDerivative_.noalias() += constraintPenaltyCoefficients_.stateInputEquality * Cm.transpose() * Ev;
-    modelData.costInputDerivative_.noalias() += constraintPenaltyCoefficients_.stateInputEquality * Dm.transpose() * Ev;
-    modelData.costStateSecondDerivative_.noalias() += constraintPenaltyCoefficients_.stateInputEquality * Cm.transpose() * Cm;
-    modelData.costInputSecondDerivative_.noalias() += constraintPenaltyCoefficients_.stateInputEquality * Dm.transpose() * Dm;
-    modelData.costInputStateDerivative_.noalias() += constraintPenaltyCoefficients_.stateInputEquality * Dm.transpose() * Cm;
+    modelData.cost_ += 0.5 * stateInputEqualityPenaltyCoeff * Ev.dot(Ev);
+    modelData.costStateDerivative_.noalias() += stateInputEqualityPenaltyCoeff * Cm.transpose() * Ev;
+    modelData.costInputDerivative_.noalias() += stateInputEqualityPenaltyCoeff * Dm.transpose() * Ev;
+    modelData.costStateSecondDerivative_.noalias() += stateInputEqualityPenaltyCoeff * Cm.transpose() * Cm;
+    modelData.costInputSecondDerivative_.noalias() += stateInputEqualityPenaltyCoeff * Dm.transpose() * Dm;
+    modelData.costInputStateDerivative_.noalias() += stateInputEqualityPenaltyCoeff * Dm.transpose() * Cm;
   }
 
   // inequality constraints
@@ -2205,7 +2276,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
   correctInitcachedNominalTrajectories();
 
   // update the constraint penalty coefficients
-  updateConstraintPenalties(iteration_);
+  updateConstraintPenalties(0.0, 0.0, 0.0);
 
   // linearizing the dynamics and quadratizing the cost function along nominal trajectories
   linearQuadraticApproximationTimer_.startTimer();
@@ -2274,7 +2345,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
   searchStrategyTimer_.endTimer();
 
   // update the constraint penalty coefficients
-  updateConstraintPenalties(iteration_);
+  updateConstraintPenalties(stateEqConstraintISE_, stateEqFinalConstraintISE_, stateInputEqConstraintISE_);
 
   // linearizing the dynamics and quadratizing the cost function along nominal trajectories
   linearQuadraticApproximationTimer_.startTimer();
@@ -2510,7 +2581,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
   // display
   if (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-    std::cerr << "++++++++++++++ " + algorithmName_ + " solver is terminated ++++++++++++++" << std::endl;
+    std::cerr << "++++++++++++++ " + algorithmName_ + " solver has terminated +++++++++++++" << std::endl;
     std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
     std::cerr << "Time Period:                [" << initTime_ << " ," << finalTime_ << "]" << std::endl;
     std::cerr << "Number of Iterations:       " << iteration_ + 1 << " out of " << ddpSettings_.maxNumIterations_ << std::endl;

@@ -49,10 +49,11 @@ struct DDP_Settings {
   size_t maxNumIterations_ = 15;
   /** This value determines the termination condition based on the minimum relative changes of the cost. */
   double minRelCost_ = 1e-3;
-  /** The penalty function coefficient, \f$\alpha\f$, for state-only constraints. \f$ p(i) = \alpha a^i \f$ */
-  double stateConstraintPenaltyCoeff_ = 0.0;
-  /** The penalty function base, \f$ a \f$, for state-only constraints. \f$ p(i) = \alpha a^i \f$ */
-  double stateConstraintPenaltyBase_ = 1.0;
+  /** The initial coefficient of the quadratic penalty function in augmented Lagrangian method. It should be greater than one. */
+  double constraintPenaltyInitialValue_ = 2.0;
+  /** The rate for which the coefficient of the quadratic penalty function in augmented Lagrangian method grows. It should be greater than
+   * one. */
+  double constraintPenaltyIncreaseRate_ = 2.0;
   /** Scaling factor, \f$\mu\f$,  for the inequality constraints barrier */
   double inequalityConstraintMu_ = 0.0;
   /** Threshold parameter, \f$\delta\f$, where the relaxed log barrier function changes from log to quadratic */
@@ -138,8 +139,8 @@ struct DDP_Settings {
     loadData::loadPtreeValue(pt, threadPriority_, fieldName + ".threadPriority", verbose);
     loadData::loadPtreeValue(pt, maxNumIterations_, fieldName + ".maxNumIterations", verbose);
     loadData::loadPtreeValue(pt, minRelCost_, fieldName + ".minRelCost", verbose);
-    loadData::loadPtreeValue(pt, stateConstraintPenaltyCoeff_, fieldName + ".stateConstraintPenaltyCoeff", verbose);
-    loadData::loadPtreeValue(pt, stateConstraintPenaltyBase_, fieldName + ".stateConstraintPenaltyBase", verbose);
+    loadData::loadPtreeValue(pt, constraintPenaltyInitialValue_, fieldName + ".constraintPenaltyInitialValue", verbose);
+    loadData::loadPtreeValue(pt, constraintPenaltyIncreaseRate_, fieldName + ".constraintPenaltyIncreaseRate", verbose);
     loadData::loadPtreeValue(pt, inequalityConstraintMu_, fieldName + ".inequalityConstraintMu", verbose);
     loadData::loadPtreeValue(pt, inequalityConstraintDelta_, fieldName + ".inequalityConstraintDelta", verbose);
     loadData::loadPtreeValue(pt, meritFunctionRho_, fieldName + ".meritFunctionRho", verbose);

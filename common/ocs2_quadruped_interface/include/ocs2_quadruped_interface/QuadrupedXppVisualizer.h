@@ -52,11 +52,11 @@ namespace switched_model {
   const auto xppStateDesTopicMap = PublisherMapping<xpp_msgs::RobotStateCartesian>(xppStateDesTopicName);
   const auto xppJointDesTopicMap = PublisherMapping<xpp_msgs::RobotStateJoint>(xppJointDesTopicName);
   /***************************************************************************************************/
-  inline static const std::string xppJointTrajTopicName = xppJointDesTopicName.substr(0, xppJointDesTopicName.rfind("des)")) + "target";
-  inline static const std::string xppStateTrajTopicName = xppStateDesTopicName.substr(0, xppStateDesTopicName.rfind("des")) + "target";
+  inline static const std::string xppStateTrajTopicName = xppStateDesTopicName.substr(0, xppStateDesTopicName.find("des")) + "traj";
+  inline static const std::string xppJointTrajTopicName = xppJointDesTopicName.substr(0, xppJointDesTopicName.find("des")) + "traj";
 
   inline static const auto xppStateTrajTopicMap = PublisherMapping<xpp_msgs::RobotStateCartesian>(xppStateTrajTopicName);
-  inline static const auto xppJointTrajTopicMap = PublisherMapping<xpp_msgs::RobotStateJoint>(xppJointTrajTopicName); //TODO(oharley) array msg type?
+  inline static const auto xppJointTrajTopicMap = PublisherMapping<xpp_msgs::RobotStateJoint>(xppJointTrajTopicName);
   /***************************************************************************************************/
 
   inline const std::string comTraceTopicName     = "baseTrajectory"; //desiredBaseTrajectory

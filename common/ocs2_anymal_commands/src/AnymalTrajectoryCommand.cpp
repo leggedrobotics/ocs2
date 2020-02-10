@@ -35,10 +35,6 @@ int main(int argc, char* argv[]) {
 /* Trajectory Command */
   switched_model::ScpTrajectoryControl<scalar_t>
     trajectoryCommand( argc, argv, "anymal", trajectoriesFile, initCOMHeight, initJoints, defaultRotationVelocity, defaultDisplacementVelocity, true);
-  // using trajectory_t = decltype(trajectoryCommand)::trajectory_t;
-  // using hook_t = decltype(trajectoryCommand)::hook_t;
-  // hook_t hook = [](const trajectory_t& t){ switched_model::visualizers::triggerPublishingCostTrajectories(0, nullptr); };
-  // trajectoryCommand.addHook(hook);
 
   /************************************************************************************************
   *                                         launch node                                          *

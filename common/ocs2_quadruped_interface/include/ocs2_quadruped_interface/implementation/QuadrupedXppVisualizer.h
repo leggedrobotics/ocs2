@@ -62,7 +62,6 @@ namespace switched_model {
     void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::targetTrajectoriesCallback(
         const ocs2_msgs::mpc_target_trajectories& msg)
     {
-      std::cout << "CALLBACK TRIGGERED!!!!" << std::endl;
       cost_desired_trajectories_t cdt;
       ocs2::RosMsgConversions<STATE_DIM, INPUT_DIM>::readTargetTrajectoriesMsg(msg, cdt);
       scalar_t timeNow = ros::Time::now().toSec();
@@ -80,8 +79,8 @@ namespace switched_model {
 
       visualizationPublisher_           = visualizers::xppStateDesTopicMap.advertise(n, 1);
       visualizationJointPublisher_      = visualizers::xppJointDesTopicMap.advertise(n, 1);
-      costsVisualizationPublisher_      = visualizers::xppStateTrajTopicMap.advertise(n, 1);
-      costsVisualizationJointPublisher_ = visualizers::xppJointTrajTopicMap.advertise(n, 1);
+      costsVisualizationPublisher_      = visualizers::xppStateTrajTopicMap.advertise(n, 1, true);
+      costsVisualizationJointPublisher_ = visualizers::xppJointTrajTopicMap.advertise(n, 1, true);
       // costsVisualizationPublisher_      = visualizers::xppStateTrajTopicMap.advertise(n, 1);
       // costsVisualizationJointPublisher_ = visualizers::xppJointTrajTopicMap.advertise(n, 1);
 
@@ -161,14 +160,13 @@ namespace switched_model {
     publishXppCostsVisualizer(const scalar_t& publishTime, const cost_desired_trajectories_t& costDesiredTrajectories)
     {
       // auto costDesiredTrajectories = ocs2QuadrupedInterfacePtr_.getCostDesiredTrajectories();
-      auto& timeTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
       auto N = costDesiredTrajectories.desiredStateTrajectory().size();
       std::cout << "Publishing Xpp Costs trajectories. N: "  << N <<  std::endl;
       if (!N){return;}
 
       for (int i = 0; i < N; ++i) {
         auto& state = costDesiredTrajectories.desiredStateTrajectory()[i];
-        auto& time = costDesiredTrajectories.desiredTimeTrajectory()[i];
+        auto time = costDesiredTrajectories.desiredTimeTrajectory()[i];
         // construct the message
         xpp_msgs::RobotStateCartesian robotStateCartesianMsg;
 
@@ -200,8 +198,12 @@ namespace switched_model {
         robotStateJointMsg.base            = robotStateCartesianMsg.base;
         robotStateJointMsg.ee_contact      = robotStateCartesianMsg.ee_contact;
 
-        const auto jointAngles = state.template segment<12>(6);
-        robotStateJointMsg.joint_state.position = std::vector<double>(jointAngles.data(), jointAngles.data() + jointAngles.size());
+        const auto jointAngles = state.template segment<JOINT_COORDINATE_SIZE>(12);
+        robotStateJointMsg.joint_state.position = std::vector<scalar_t>(JOINT_COORDINATE_SIZE);
+        for (auto j=0;j<JOINT_COORDINATE_SIZE; ++j){
+          robotStateJointMsg.joint_state.position[j] = jointAngles[j];
+        }
+        std::cout << "\nJointmsg @ " << robotStateJointMsg.time_from_start << " : "<< jointAngles;
         // Attention: Not filling joint velocities or torques
 
         // Publish

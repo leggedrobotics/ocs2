@@ -14,8 +14,6 @@ class AnymalBearPyBindings final : public ocs2::PythonInterface<AnymalBearInterf
 
   AnymalBearPyBindings(const std::string& taskFileFolder, bool async = false);
 
-  void initRobotInterface(const std::string& taskFileFolder) override;
-
   void visualizeTrajectory(const scalar_array_t& t, const state_vector_array_t& x, const input_vector_array_t& u, double speed) override;
 
  protected:

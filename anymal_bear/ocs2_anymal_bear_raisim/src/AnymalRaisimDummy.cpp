@@ -50,38 +50,26 @@ int main(int argc, char* argv[]) {
 
   anymal_mrt->initRollout(&simRollout);
 
-  switched_model::MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE> mrt_dummy_loop(anymal_interface, *anymal_mrt,
-                                                                           anymal_interface->mpcSettings().mrtDesiredFrequency_, "anymal",
+  // Visualizer
+  std::unique_ptr<switched_model::QuadrupedXppVisualizer<12>> visualizer(new switched_model::QuadrupedXppVisualizer<12>(
+      anymal_interface->getKinematicModel(), anymal_interface->getComModel(), "anymal", true));
+
+  // Dummy MRT
+  switched_model::MRT_ROS_Dummy_Quadruped<JOINT_COORD_SIZE> mrt_dummy_loop(std::move(visualizer), *anymal_mrt,
+                                                                           anymal_interface->mpcSettings().mrtDesiredFrequency_,
                                                                            anymal_interface->mpcSettings().mpcDesiredFrequency_);
 
   mrt_dummy_loop.launchNodes(argc, argv);
 
   // initial state
-  interface_t::rbd_state_vector_t initRbdState;
-  anymal_interface->getLoadedInitialState(initRbdState);
   mrt_t::system_observation_t initObservation;
   initObservation.time() = 0.0;
-  anymal_interface->computeSwitchedModelState(initRbdState, initObservation.state());
+  initObservation.state() = anymal_interface->getInitialState();
   initObservation.input().setZero();
   initObservation.subsystem() = 15;
 
   // initial command
-  ocs2::CostDesiredTrajectories initCostDesiredTrajectories;
-
-  // time
-  auto& timeTrajectory = initCostDesiredTrajectories.desiredTimeTrajectory();
-  timeTrajectory.resize(1);
-  timeTrajectory[0] = 0.0;
-
-  // State
-  auto& stateTrajectory = initCostDesiredTrajectories.desiredStateTrajectory();
-  stateTrajectory.resize(1);
-  stateTrajectory[0] = initObservation.state();
-
-  // Input
-  auto& inputTrajectory = initCostDesiredTrajectories.desiredInputTrajectory();
-  inputTrajectory.resize(1);
-  inputTrajectory[0] = initObservation.input();
+  ocs2::CostDesiredTrajectories initCostDesiredTrajectories({0.0}, {initObservation.state()}, {initObservation.input()});
 
   mrt_dummy_loop.run(initObservation, initCostDesiredTrajectories);
 

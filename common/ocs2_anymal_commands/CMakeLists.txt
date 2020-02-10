@@ -15,7 +15,7 @@ find_package(Boost REQUIRED COMPONENTS
   filesystem
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -ffast-math -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -fPIC")
 
 ###################################
 ## catkin specific configuration ##

@@ -13,12 +13,15 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MRT_ROS_Quadruped(const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr,
-                                                                             const std::string& robotName /*robot*/)
+MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::MRT_ROS_Quadruped(
+    std::shared_ptr<quadruped_interface_t> ocs2QuadrupedInterfacePtr, std::string robotName)
 
-    : BASE(robotName), ocs2QuadrupedInterfacePtr_(ocs2QuadrupedInterfacePtr), modelSettings_(ocs2QuadrupedInterfacePtr->modelSettings()) {
+    : BASE(std::move(robotName)),
+      ocs2QuadrupedInterfacePtr_(std::move(ocs2QuadrupedInterfacePtr)),
+      switchedModelStateEstimator_(ocs2QuadrupedInterfacePtr_->getComModel()),
+      modelSettings_(ocs2QuadrupedInterfacePtr_->modelSettings()) {
   // take a copy of the logic rules to make sure we don't share it with the MPC node
-  logic_rules_mrt_.reset(new logic_rules_t(dynamic_cast<logic_rules_t&>(*ocs2QuadrupedInterfacePtr->getLogicRulesPtr())));
+  logic_rules_mrt_.reset(new logic_rules_t(dynamic_cast<logic_rules_t&>(*ocs2QuadrupedInterfacePtr_->getLogicRulesPtr())));
 
   // share logic rules with the Base
   BASE::setLogicRules(logic_rules_mrt_);
@@ -245,10 +248,10 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeFeetState
                                                                                  vector_3d_array_t& o_feetPosition,
                                                                                  vector_3d_array_t& o_feetVelocity,
                                                                                  vector_3d_array_t& o_contactForces) {
-  base_coordinate_t comPose = state.template head<6>();
-  base_coordinate_t comLocalVelocities = state.template segment<6>(6);
-  joint_coordinate_t qJoints = state.template segment<JOINT_COORD_SIZE>(12);
-  joint_coordinate_t dqJoints = input.template segment<JOINT_COORD_SIZE>(12);
+  base_coordinate_t comPose = getComPose(state);
+  base_coordinate_t comLocalVelocities = getComLocalVelocities(state);
+  joint_coordinate_t qJoints = getJointPositions(state);
+  joint_coordinate_t dqJoints = getJointVelocities(input);
 
   base_coordinate_t basePose = ocs2QuadrupedInterfacePtr_->getComModel().calculateBasePose(comPose);
   base_coordinate_t baseLocalVelocities = ocs2QuadrupedInterfacePtr_->getComModel().calculateBaseLocalVelocities(comLocalVelocities);
@@ -320,8 +323,30 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::evaluatePolicy(
     }
   }
 
-  // calculate CoM pose, velocity, and acceleration in the origin frame.
-  ocs2QuadrupedInterfacePtr_->computeComStateInOrigin(stateRef, inputRef, o_comPoseRef, o_comVelocityRef, o_comAccelerationRef);
+  // calculate CoM velocity in CoM frame.
+  const auto comLocalVelocities = getComLocalVelocities(stateRef);
+
+  // compute CoM local acceleration about CoM frame
+  base_coordinate_t comLocalAcceleration;
+  com_state_t comStateDerivative = ComKinoSystemDynamicsAd::computeComStateDerivative(
+      ocs2QuadrupedInterfacePtr_->getComModel(), ocs2QuadrupedInterfacePtr_->getKinematicModel(),
+      stateRef.template head<switched_model::STATE_DIM>(), inputRef.template head<switched_model::INPUT_DIM>());
+  // CoM acceleration about CoM frame
+  comLocalAcceleration = comStateDerivative.template tail<6>();
+
+  // CoM pose in the origin frame
+  o_comPoseRef = getComPose(stateRef);
+
+  // Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
+  Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin<scalar_t>(getOrientation(o_comPoseRef));
+
+  // CoM velocity in the origin frame
+  o_comVelocityRef.template head<3>() = o_R_b * getAngularVelocity(comLocalVelocities);
+  o_comVelocityRef.template tail<3>() = o_R_b * getLinearVelocity(comLocalVelocities);
+
+  // CoM acceleration in the origin frame
+  o_comAccelerationRef.template head<3>() = o_R_b * comLocalAcceleration.template head<3>();
+  o_comAccelerationRef.template tail<3>() = o_R_b * comLocalAcceleration.template tail<3>();
 }
 
 /******************************************************************************************************/
@@ -332,53 +357,10 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::rolloutPolicy(
     const scalar_t& time, const state_vector_t& state, vector_3d_array_t& o_feetPositionRef, vector_3d_array_t& o_feetVelocityRef,
     vector_3d_array_t& o_feetAccelerationRef, base_coordinate_t& o_comPoseRef, base_coordinate_t& o_comVelocityRef,
     base_coordinate_t& o_comAccelerationRef, contact_flag_t& stanceLegs) {
-  // optimal switched model state and input
-  state_vector_t stateRef;
-  input_vector_t inputRef;
-  size_t subsystem;
-  BASE::evaluatePolicy(time, state, stateRef, inputRef, subsystem);
-  const auto index = logic_rules_mrt_->getEventTimeCount(time);
-  logic_rules_mrt_->getMotionPhaseLogics(index, stanceLegs, feetZPlanPtr_);
-
-  // computes swing phase progress
-  computeSwingPhaseProgress(index, stanceLegs, time, swingPhaseProgress_);
-
-  if (!ocs2QuadrupedInterfacePtr_->modelSettings().useFeetTrajectoryFiltering_) {
-    // calculates nominal position, velocity, and contact forces of the feet in the origin frame.
-    // This also updates the kinematic model.
-    vector_3d_array_t o_contactForces;
-    computeFeetState(stateRef, inputRef, o_feetPositionRef, o_feetVelocityRef, o_contactForces);
-
-    // Look one dt ahead to obtain acceleration
-    const scalar_t dt = 1.0 / ocs2QuadrupedInterfacePtr_->modelSettings().feetFilterFrequency_;
-    state_vector_t stateRef_ahead;
-    input_vector_t inputRef_ahead;
-    size_t subsystem_ahead;
-    BASE::rolloutPolicy(time, state, dt, stateRef_ahead, inputRef_ahead, subsystem_ahead);
-    vector_3d_array_t o_feetPositionRef_ahead, o_feetVelocityRef_ahead;
-    vector_3d_array_t o_contactForces_ahead;
-    computeFeetState(stateRef_ahead, inputRef_ahead, o_feetPositionRef_ahead, o_feetVelocityRef_ahead, o_contactForces_ahead);
-
-    for (size_t j = 0; j < 4; j++) {
-      o_feetAccelerationRef[j] = (o_feetVelocityRef_ahead[j] - o_feetVelocityRef[j]) / dt;
-    }
-
-  } else {
-    // filter swing leg trajectory
-    for (size_t j = 0; j < 4; j++) {
-      o_feetPositionRef[j] << feetXPlanPtrStock_[index][j]->evaluateSplinePosition(time),
-          feetYPlanPtrStock_[index][j]->evaluateSplinePosition(time), feetZPlanPtr_[j]->calculatePosition(time);
-
-      o_feetVelocityRef[j] << feetXPlanPtrStock_[index][j]->evaluateSplineVelocity(time),
-          feetYPlanPtrStock_[index][j]->evaluateSplineVelocity(time), feetZPlanPtr_[j]->calculateVelocity(time);
-
-      o_feetAccelerationRef[j] << feetXPlanPtrStock_[index][j]->evaluateSplineAcceleration(time),
-          feetYPlanPtrStock_[index][j]->evaluateSplineAcceleration(time), feetZPlanPtr_[j]->calculateAcceleration(time);
-    }
-  }
-
-  // calculate CoM pose, velocity, and acceleration in the origin frame.
-  ocs2QuadrupedInterfacePtr_->computeComStateInOrigin(stateRef, inputRef, o_comPoseRef, o_comVelocityRef, o_comAccelerationRef);
+  // FIX ME: For some reason the implementation was a 1-1 copy of evaluate policy. Removed code duplication for now, but there should be a
+  // difference.
+  evaluatePolicy(time, state, o_feetPositionRef, o_feetVelocityRef, o_feetAccelerationRef, o_comPoseRef, o_comVelocityRef,
+                 o_comAccelerationRef, stanceLegs);
 }
 
 /******************************************************************************************************/
@@ -422,7 +404,7 @@ void MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeSwingPhas
     const auto swingStartTime = eventTimes[swingStartIndex];
     const auto swingFinalTime = eventTimes[swingFinalIndex];
 
-    if (stanceLegs[j] == 0) {
+    if (!stanceLegs[j]) {
       swingPhaseProgress[j] = (time - swingStartTime) / (swingFinalTime - swingStartTime);
     } else {
       swingPhaseProgress[j] = 0.0;
@@ -443,10 +425,10 @@ bool MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::updateNodes(cons
   // time
   currentObservation.time() = time;
   // state
-  ocs2QuadrupedInterfacePtr_->computeSwitchedModelState(rbdState, currentObservation.state());
+  currentObservation.state() = switchedModelStateEstimator_.estimateComkinoModelState(rbdState);
   // input
   currentObservation.input().template segment<12>(0).setZero();
-  currentObservation.input().template segment<JOINT_COORD_SIZE>(12) = rbdState.template tail<JOINT_COORD_SIZE>();
+  currentObservation.input().template segment<JOINT_COORD_SIZE>(12) = getJointVelocities(rbdState);
   // mode
   currentObservation.subsystem() = switched_model::stanceLeg2ModeNumber(contactFlag);
 

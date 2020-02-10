@@ -16,34 +16,24 @@ namespace anymal {
 /******************************************************************************************************/
 AnymalBearInterface::AnymalBearInterface(const std::string& pathToConfigFolder)
     : BASE(AnymalKinematics(), AnymalCom(), pathToConfigFolder) {
-  // set up optimizers
-  setupOptimizer(logicRulesPtr_, &defaultModeSequenceTemplate_, slqPtr_, mpcPtr_);
+  dynamicsPtr_.reset(new system_dynamics_t(AnymalKinematicsAd(), AnymalComAd(), modelSettings_.recompileLibraries_));
+  dynamicsDerivativesPtr_.reset(dynamicsPtr_->clone());
+  constraintsPtr_.reset(new constraint_t(AnymalKinematicsAd(), AnymalComAd(), logicRulesPtr_, modelSettings_));
+  costFunctionPtr_.reset(new cost_function_t(AnymalCom(), logicRulesPtr_, Q_, R_, QFinal_));
+  operatingPointsPtr_.reset(new operating_point_t(AnymalCom(), logicRulesPtr_));
+  timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, rolloutSettings_));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void AnymalBearInterface::setupOptimizer(const logic_rules_ptr_t& logicRulesPtr, const mode_sequence_template_t* modeSequenceTemplatePtr,
-                                         slq_ptr_t& slqPtr, mpc_ptr_t& mpcPtr) {
-  dynamicsPtr_.reset(new system_dynamics_t(AnymalKinematicsAd(), AnymalComAd(), modelSettings_.recompileLibraries_));
-  dynamicsDerivativesPtr_.reset(dynamicsPtr_->clone());
-  constraintsPtr_.reset(new constraint_t(AnymalKinematicsAd(), AnymalComAd(), logicRulesPtr, modelSettings_));
-  costFunctionPtr_.reset(new cost_function_t(AnymalCom(), logicRulesPtr, Q_, R_, QFinal_));
-  operatingPointsPtr_.reset(new operating_point_t(AnymalCom(), logicRulesPtr));
-  timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, rolloutSettings_));
-
-  // SLQ
-  slqPtr.reset(new slq_t(timeTriggeredRolloutPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(), costFunctionPtr_.get(),
-                         operatingPointsPtr_.get(), slqSettings_, logicRulesPtr));
-
-  // MPC
+std::unique_ptr<AnymalBearInterface::mpc_t> AnymalBearInterface::getMpc() const {
   if (!modelSettings_.gaitOptimization_) {
-    mpcPtr.reset(new mpc_t(timeTriggeredRolloutPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(), costFunctionPtr_.get(),
-                           operatingPointsPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_, logicRulesPtr,
-                           modeSequenceTemplatePtr));
-
+    return std::unique_ptr<mpc_t>(
+        new mpc_t(timeTriggeredRolloutPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(), costFunctionPtr_.get(),
+                  operatingPointsPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_, logicRulesPtr_, &defaultModeSequenceTemplate_));
   } else {
-    throw std::runtime_error("mpc_ocs2 not configured");
+    throw std::runtime_error("mpc_ocs2 not configured, set gait optimization to 0");
   }
 }
 

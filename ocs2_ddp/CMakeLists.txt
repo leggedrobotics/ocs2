@@ -158,7 +158,7 @@ target_link_libraries(bouncing_mass_test
   ${Boost_LIBRARIES}
 )
 
-add_executable(circular_kinematics_ilqr_test
+catkin_add_gtest(circular_kinematics_ilqr_test
   test/circular_kinematics_ilqr_test.cpp
 )
 target_link_libraries(circular_kinematics_ilqr_test
@@ -166,7 +166,7 @@ target_link_libraries(circular_kinematics_ilqr_test
   ${Boost_LIBRARIES}
 )
 
-add_executable(circular_kinematics_slq_test
+catkin_add_gtest(circular_kinematics_slq_test
   test/circular_kinematics_slq_test.cpp
 )
 target_link_libraries(circular_kinematics_slq_test

@@ -43,8 +43,7 @@ using namespace ocs2;
 
 enum { STATE_DIM = 2, INPUT_DIM = 2 };
 
-// TEST(exp0_slq_test, exp0_slq_test) {
-void testFunction(int numCores) {
+TEST(circular_kinematics_slq_test, circular_kinematics_slq_test) {
   using slq_t = SLQ<STATE_DIM, INPUT_DIM>;
 
   SLQ_Settings slqSettings;
@@ -149,11 +148,20 @@ void testFunction(int numCores) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
+  const double expectedCost = 0.1;
+  ASSERT_LT(totalCostST - expectedCost, 0.0)
+      << "MESSAGE: single-threaded SLQ failed in the Circular_Kinematics's cost test!";
+  ASSERT_LT(totalCostMT - expectedCost, 0.0)
+      << "MESSAGE: multi-threaded SLQ failed in the Circular_Kinematics's cost test!";
+
+  const double expectedISE1 = 0.0;
+  ASSERT_LT(fabs(constraint1ISE_ST - expectedISE1), slqSettings.ddpSettings_.constraintTolerance_)
+      << "MESSAGE: single-threaded SLQ failed in the Circular_Kinematics's type-1 constraint ISE test!";
+  ASSERT_LT(fabs(constraint1ISE_MT - expectedISE1), slqSettings.ddpSettings_.constraintTolerance_)
+      << "MESSAGE: multi-threaded SLQ failed in the Circular_Kinematics's type-1 constraint ISE test!";
 }
 
 int main(int argc, char** argv) {
-  //  testing::InitGoogleTest(&argc, argv);
-  //  return RUN_ALL_TESTS();
-  int numCores = strtol(argv[1], NULL, 10);
-  testFunction(numCores);
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

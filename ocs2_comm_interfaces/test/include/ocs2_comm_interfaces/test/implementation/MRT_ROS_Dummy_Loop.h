@@ -144,8 +144,10 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(const system_observation_t& i
       std::cout << ">>> Observation is published at " << time << std::endl;
     }
 
-    // Visualization
-    publishVisualizer(observation_, mrt_.getPolicy(), mrt_.getCommand());
+    // Update observers
+    for (auto& observer : observers_){
+      observer->update(observation_, mrt_.getPolicy(), mrt_.getCommand());
+    }
 
     rosRate.sleep();
   }  // end of while loop

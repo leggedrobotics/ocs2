@@ -31,6 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h"
 
+#include "DummyObserver.h"
+
 namespace ocs2 {
 
 /**
@@ -60,6 +62,8 @@ class MRT_ROS_Dummy_Loop {
   using input_state_matrix_array_t = typename mrt_t::input_state_matrix_array_t;
 
   using system_observation_t = typename mrt_t::system_observation_t;
+
+  using observer_t = DummyObserver<STATE_DIM, INPUT_DIM>;
 
   /**
    * Constructor.
@@ -93,6 +97,10 @@ class MRT_ROS_Dummy_Loop {
    */
   void run(const system_observation_t& initObservation, const CostDesiredTrajectories& initCostDesiredTrajectories);
 
+  void subscribeObservers(const std::vector<std::shared_ptr<observer_t>>& observers) {
+    observers_ = observers;
+  }
+
  protected:
   /**
    * A user-defined function which modifies the observation before publishing.
@@ -109,15 +117,6 @@ class MRT_ROS_Dummy_Loop {
    */
   virtual void launchVisualizerNode(int argc, char* argv[]) {}
 
-  /**
-   * Visualizes the current observation.
-   *
-   * @param [in] observation: The current observation.
-   * @param [in] primalSolution: The primal problem's solution.
-   * @param [in] command: Contains costdesired trajectory and init observation.
-   */
-  virtual void publishVisualizer(const system_observation_t& observation, const primal_solution_t& primalSolution, const command_data_t& command) {}
-
  protected:
   /*
    * Variables
@@ -129,6 +128,7 @@ class MRT_ROS_Dummy_Loop {
   bool realtimeLoop_;
 
   system_observation_t observation_;
+  std::vector<std::shared_ptr<observer_t>> observers_;
 };
 
 }  // namespace ocs2

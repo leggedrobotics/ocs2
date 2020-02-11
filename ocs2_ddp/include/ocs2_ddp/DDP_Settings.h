@@ -93,6 +93,9 @@ struct DDP_Settings {
   /** Use either the optimized control policy (true) or the optimized state-input trajectory (false). */
   bool useFeedbackPolicy_ = false;
 
+  /** The risk sensitivity coefficient for risk aware DDP. */
+  double riskSensitiveCoeff_ = 0.0;
+
   /** Determines the strategy for solving the subproblem. There are two choices line-search strategy and levenberg_marquardt strategy. */
   DDP_Strategy strategy_ = DDP_Strategy::LINE_SEARCH;
   /** The line-search strategy settings. */
@@ -155,6 +158,8 @@ struct DDP_Settings {
     loadData::loadPtreeValue(pt, preComputeRiccatiTerms_, fieldName + ".preComputeRiccatiTerms", verbose);
 
     loadData::loadPtreeValue(pt, useFeedbackPolicy_, fieldName + ".useFeedbackPolicy", verbose);
+
+    loadData::loadPtreeValue(pt, riskSensitiveCoeff_, fieldName + ".riskSensitiveCoeff", verbose);
 
     std::string strategyName = ddp_strategy::toString(strategy_);
     loadData::loadPtreeValue(pt, strategyName, fieldName + ".strategy", verbose);

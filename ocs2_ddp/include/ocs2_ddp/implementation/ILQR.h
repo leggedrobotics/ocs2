@@ -49,7 +49,9 @@ ILQR<STATE_DIM, INPUT_DIM>::ILQR(const rollout_base_t* rolloutPtr, const derivat
 
   for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
     bool preComputeRiccatiTerms = BASE::ddpSettings_.preComputeRiccatiTerms_ && (BASE::ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH);
-    riccatiEquationsPtrStock_.emplace_back(new riccati_equations_t(preComputeRiccatiTerms));
+    bool isRiskSensitive = !numerics::almost_eq(BASE::ddpSettings_.riskSensitiveCoeff_, 0.0);
+    riccatiEquationsPtrStock_.emplace_back(new riccati_equations_t(preComputeRiccatiTerms, isRiskSensitive));
+    riccatiEquationsPtrStock_.back()->setRiskSensitiveCoefficient(BASE::ddpSettings_.riskSensitiveCoeff_);
   }  // end of i loop
 
   Eigen::initParallel();

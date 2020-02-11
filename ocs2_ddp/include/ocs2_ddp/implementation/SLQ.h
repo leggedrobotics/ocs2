@@ -59,7 +59,9 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivativ
 
   for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
     bool preComputeRiccatiTerms = BASE::ddpSettings_.preComputeRiccatiTerms_ && (BASE::ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH);
-    riccatiEquationsPtrStock_.emplace_back(new riccati_equations_t(preComputeRiccatiTerms));
+    bool isRiskSensitive = !numerics::almost_eq(BASE::ddpSettings_.riskSensitiveCoeff_, 0.0);
+    riccatiEquationsPtrStock_.emplace_back(new riccati_equations_t(preComputeRiccatiTerms, isRiskSensitive));
+    riccatiEquationsPtrStock_.back()->setRiskSensitiveCoefficient(BASE::ddpSettings_.riskSensitiveCoeff_);
     riccatiIntegratorPtrStock_.emplace_back(newIntegrator<riccati_equations_t::S_DIM_>(integratorType));
   }  // end of i loop
 

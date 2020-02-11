@@ -67,9 +67,10 @@ class DerivativesBase {
   using constraint1_state_matrix_t = typename DIMENSIONS::constraint1_state_matrix_t;
   using constraint1_input_matrix_t = typename DIMENSIONS::constraint1_input_matrix_t;
   using constraint2_state_matrix_t = typename DIMENSIONS::constraint2_state_matrix_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
   using dynamic_state_matrix_t = typename DIMENSIONS::dynamic_state_matrix_t;
   using dynamic_input_matrix_t = typename DIMENSIONS::dynamic_input_matrix_t;
+  using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
+  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
 
   /**
    * Default constructor
@@ -166,6 +167,13 @@ class DerivativesBase {
   virtual void getGuardSurfacesDerivativeInput(dynamic_input_matrix_t& D_u_gamma) {
     D_u_gamma = dynamic_input_matrix_t::Zero(1, INPUT_DIM);
   }
+
+  /**
+   * Get at a given operating point the covariance of the dynamics.
+   *
+   * @param [out] dynamicsCovariance: The covariance of the dynamics.
+   */
+  virtual void getDynamicsCovariance(dynamic_matrix_t& dynamicsCovariance) { dynamicsCovariance.setZero(0, 0); }
 
   /**
    * Returns pointer to the class.

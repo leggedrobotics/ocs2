@@ -224,6 +224,7 @@ class LinearQuadraticApproximator {
     // get results
     systemDerivativesPtr_->getFlowMapDerivativeState(Am);
     systemDerivativesPtr_->getFlowMapDerivativeInput(Bm);
+    systemDerivativesPtr_->getDynamicsCovariance(modelData.dynamicsCovariance_);
 
     modelData.dynamicsStateDerivative_ = Am;
     modelData.dynamicsInputDerivative_ = Bm;

@@ -92,6 +92,7 @@ struct ModelDataBase {
     std::cerr << "dynamicsBias: " << dynamicsBias_.transpose() << "\n";
     std::cerr << "Dynamics State Derivative:\n" << dynamicsStateDerivative_ << "\n";
     std::cerr << "Dynamics Input Derivative:\n" << dynamicsInputDerivative_ << "\n";
+    std::cerr << "Dynamics Covariance:\n" << dynamicsCovariance_ << "\n";
 
     std::cerr << "Cost: " << cost_ << "\n";
     std::cerr << "Cost State Derivative: " << costStateDerivative_.transpose() << "\n";
@@ -294,6 +295,8 @@ struct ModelDataBase {
   dynamic_vector_t dynamicsBias_;
   dynamic_matrix_t dynamicsStateDerivative_;
   dynamic_matrix_t dynamicsInputDerivative_;
+
+  dynamic_matrix_t dynamicsCovariance_;
 
   // cost
   scalar_t cost_;

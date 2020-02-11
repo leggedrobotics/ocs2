@@ -155,30 +155,55 @@ class LinearQuadraticApproximator {
    *
    * @param [in] time: The current time.
    * @param [in] state: The current state.
-   * @param [in] input: The current input .
+   * @param [in] input: The current input.
+   * @param [out] modelData: The output data model.
    */
-  void approximateUnconstrainedLQProblemAtEventTime(const scalar_t& time, const state_vector_t& state, const input_vector_t& input) {
-    systemConstraintsPtr_->setCurrentStateAndControl(time, state, input);
+  void approximateUnconstrainedLQProblemAtEventTime(const scalar_t& time, const state_vector_t& state, const input_vector_t& input,
+                                                    ModelDataBase& modelData) {
+    // TODO: get rid of these
+    state_matrix_t Gm;
+    state_input_matrix_t Hm;
+    constraint2_vector_t HvFinal;
+    constraint2_state_matrix_t FmFinal;
+    state_vector_t QvFinal;
+    state_matrix_t QmFinal;
+
+    // Jump map
+    systemDerivativesPtr_->setCurrentStateAndControl(time, state, input);
+
+    // get results
+    systemDerivativesPtr_->getJumpMapDerivativeState(Gm);
+    systemDerivativesPtr_->getJumpMapDerivativeInput(Hm);
+
+    modelData.dynamicsStateDerivative_ = Gm;
+    modelData.dynamicsInputDerivative_ = Hm;
 
     // Final state-only equality constraint
-    ncFinalEqStateOnly_ = systemConstraintsPtr_->numStateOnlyFinalConstraint(time);
-
-    if (ncFinalEqStateOnly_ > INPUT_DIM) {
-      throw std::runtime_error(
-          "Number of active final type-2 constraints should be "
-          "less-equal to the number of input dimension.");
-    }
+    systemConstraintsPtr_->setCurrentStateAndControl(time, state, input);
 
     // if final constraint type 2 is active
-    if (ncFinalEqStateOnly_ > 0) {
-      systemConstraintsPtr_->getFinalConstraint2(HvFinal_);
-      systemConstraintsPtr_->getFinalConstraint2DerivativesState(FmFinal_);
+    size_t ncFinalEqStateOnly = systemConstraintsPtr_->numStateOnlyFinalConstraint(time);
+    if (ncFinalEqStateOnly > 0) {
+      systemConstraintsPtr_->getFinalConstraint2(HvFinal);
+      systemConstraintsPtr_->getFinalConstraint2DerivativesState(FmFinal);
     }
+    modelData.numIneqConstr_ = 0;          // no inequality constraint
+    modelData.numStateInputEqConstr_ = 0;  // no state-input equality constraint
+    modelData.numStateEqConstr_ = ncFinalEqStateOnly;
+    modelData.stateEqConstr_ = HvFinal.head(ncFinalEqStateOnly);
+    modelData.stateEqConstrStateDerivative_ = FmFinal.topRows(ncFinalEqStateOnly);
 
     // Final cost
-    costFunctionPtr_->getTerminalCost(qFinal_);
-    costFunctionPtr_->getTerminalCostDerivativeState(QvFinal_);
-    costFunctionPtr_->getTerminalCostSecondDerivativeState(QmFinal_);
+    costFunctionPtr_->setCurrentStateAndControl(time, state, input);
+    costFunctionPtr_->getTerminalCost(modelData.cost_);
+    costFunctionPtr_->getTerminalCostDerivativeState(QvFinal);
+    costFunctionPtr_->getTerminalCostSecondDerivativeState(QmFinal);
+
+    modelData.costStateDerivative_ = QvFinal;
+    modelData.costStateSecondDerivative_ = QmFinal;
+    modelData.costInputDerivative_.setZero(INPUT_DIM);
+    modelData.costInputSecondDerivative_.setZero(INPUT_DIM, INPUT_DIM);
+    modelData.costInputStateDerivative_.setZero(INPUT_DIM, STATE_DIM);
   }
 
   /**
@@ -367,15 +392,6 @@ class LinearQuadraticApproximator {
       }
     }
   }
-
- public:
-  size_t ncFinalEqStateOnly_;
-  constraint2_vector_t HvFinal_;
-  constraint2_state_matrix_t FmFinal_;
-
-  scalar_t qFinal_;
-  state_vector_t QvFinal_;
-  state_matrix_t QmFinal_;
 
  private:
   std::unique_ptr<derivatives_base_t> systemDerivativesPtr_;

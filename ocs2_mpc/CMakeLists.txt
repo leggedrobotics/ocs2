@@ -5,7 +5,7 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   ocs2_core
   ocs2_ddp
-  ocs2_ocs2
+#  ocs2_ocs2
 )
 find_package(Boost REQUIRED COMPONENTS
   system
@@ -28,7 +28,7 @@ catkin_package(
   CATKIN_DEPENDS
     ocs2_core
     ocs2_ddp
-    ocs2_ocs2
+#    ocs2_ocs2
   DEPENDS
     Boost
 )
@@ -76,11 +76,11 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## Testing ##
 #############
 
-catkin_add_gtest(testMPC_OCS2
-  test/testMPC_OCS2.cpp
-)
-target_link_libraries(testMPC_OCS2
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
+#catkin_add_gtest(testMPC_OCS2
+#  test/testMPC_OCS2.cpp
+#)
+#target_link_libraries(testMPC_OCS2
+#  ${catkin_LIBRARIES}
+#  ${Boost_LIBRARIES}
+#)
 

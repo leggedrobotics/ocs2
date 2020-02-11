@@ -28,32 +28,32 @@ templateSwitchingTimes
 {
 }
 
-; SLQ settings
+; ILQR settings
 ilqr
 {
     ddp
     {
+        nThreads                       1
+        
         maxNumIterations               10
         minRelCost                     0.1
-        stateConstraintPenaltyCoeff    100.0
-        stateConstraintPenaltyBase     1.1
-        meritFunctionRho               50.0
-        constraintStepSize             1.0
+        constraintTolerance            1e-3
+        
         displayInfo                    0
         displayShortSummary            1
-
-        preComputeRiccatiTerms         1
+        debugPrintRollout              0
+        checkNumericalStability        0
 
         AbsTolODE                      2e-5
         RelTolODE                      1e-3
         minTimeStep                    1e-3
-        maxNumStepsPerSecond           50000
-        minAbsConstraint1ISE           5e-3
-        minRelConstraint1ISE           5e-6
-        checkNumericalStability        0
-
-        nThreads                       1
-
+        maxNumStepsPerSecond           100000
+        
+        inequalityConstraintMu         100.0
+        inequalityConstraintDelta      1.1
+        
+        preComputeRiccatiTerms         1
+        
         useFeedbackPolicy              0
         
         strategy                       LINE_SEARCH
@@ -68,10 +68,10 @@ ilqr
 
     rollout
     {
-        AbsTolODE                      2e-5    ;1e-5  ;1e-6
-        RelTolODE                      1e-3    ;1e-3  ;1e-4
+        AbsTolODE                      2e-5
+        RelTolODE                      1e-3
         minTimeStep                    1e-3
-        maxNumStepsPerSecond           50000
+        maxNumStepsPerSecond           100000
         checkNumericalStability        0
     }
 }

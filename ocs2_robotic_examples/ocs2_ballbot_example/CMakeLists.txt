@@ -12,7 +12,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
     visualization_msgs
     ocs2_core
     ocs2_ddp
-    ocs2_ocs2
     ocs2_mpc
     ocs2_comm_interfaces
     ocs2_robotic_tools

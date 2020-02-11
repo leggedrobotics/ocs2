@@ -95,13 +95,6 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   using s_vector_array_t = typename riccati_equations_t::s_vector_array_t;
 
   /**
-   * class for collecting SLQ data
-   */
-  template <size_t OTHER_STATE_DIM, size_t OTHER_INPUT_DIM>
-  friend class SLQ_DataCollector;
-
- public:
-  /**
    * Default constructor.
    */
   SLQ() = default;

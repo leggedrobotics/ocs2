@@ -7,7 +7,7 @@
     </group>
 
     <node pkg="ocs2_double_integrator_example" type="double_integrator_mpc" name="double_integrator_mpc"
-          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal -- gdb -ex run --args"/>
+          output="screen" args="$(arg task_name)" launch-prefix=""/>
 
     <node pkg="ocs2_double_integrator_example" type="double_integrator_dummy_test" name="double_integrator_dummy_test"
           output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>

@@ -25,41 +25,30 @@ slq
     RiccatiIntegratorType       ODE45 ; ODE45, ADAMS_BASHFORTH, BULIRSCH_STOER, ADAMS_BASHFORTH_MOULTON
     adams_integrator_dt         0.01
 
-    warmStartGSLQ                1
-    useLQForDerivatives          0
-    displayGradientDescent       0
-    tolGradientDescent           1e-2
-    acceptableTolGradientDescent 1e-2
-    maxIterationGradientDescent  5
-    minLearningRateNLP           0.05
-    maxLearningRateNLP           0.6
-    useAscendingLineSearchNLP    1
-
     ddp
     {
-        maxNumIterations             10      ; 50
-        minRelCost                   0.1     ; 0.01
-        stateConstraintPenaltyCoeff  100.0
-        stateConstraintPenaltyBase   1.1
-        meritFunctionRho             50.0
-        constraintStepSize           1.0     ; 1.0
+        nThreads                     1
+        
+        maxNumIterations             10
+        minRelCost                   0.1
+        constraintTolerance          1e-3
+        
         displayInfo                  0
         displayShortSummary          1
         debugPrintRollout            0
+        checkNumericalStability      1
+        
+        AbsTolODE                    1e-9
+        RelTolODE                    1e-6
+        minTimeStep                  1e-3
+        maxNumStepsPerSecond         100000
+        
+        inequalityConstraintMu       100.0
+        inequalityConstraintDelta    1.1
 
         preComputeRiccatiTerms       1
 
-        AbsTolODE                    1e-9 ;1e-5 ;1e-6
-        RelTolODE                    1e-6 ;1e-3 ;1e-4
-        minTimeStep                  1e-3
-        maxNumStepsPerSecond         50000
-        minAbsConstraint1ISE         5e-3
-        minRelConstraint1ISE         5e-6
-        checkNumericalStability      1
-
-        nThreads                    1
-
-        useFeedbackPolicy           1
+        useFeedbackPolicy            1
         
         strategy                       LINE_SEARCH
         lineSearch
@@ -73,10 +62,10 @@ slq
 
     rollout
     {
-        AbsTolODE                    1e-9 ;1e-5 ;1e-6
-        RelTolODE                    1e-6 ;1e-3 ;1e-4
+        AbsTolODE                    1e-9
+        RelTolODE                    1e-6
         minTimeStep                  1e-3
-        maxNumStepsPerSecond         50000
+        maxNumStepsPerSecond         100000
         checkNumericalStability      1
     }
 }

@@ -8,7 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
    roslib
    ocs2_core
    ocs2_ddp
-   ocs2_ocs2
    ocs2_mpc
    ocs2_comm_interfaces
    ocs2_robotic_tools
@@ -38,7 +37,6 @@ catkin_package(
   CATKIN_DEPENDS
     ocs2_core
     ocs2_ddp
-    ocs2_ocs2
     ocs2_mpc
     ocs2_comm_interfaces
     ocs2_robotic_tools

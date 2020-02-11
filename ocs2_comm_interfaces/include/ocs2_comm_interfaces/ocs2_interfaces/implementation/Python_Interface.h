@@ -378,7 +378,7 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::dynamic_vector_t PythonInterface
   input_matrix_t R = getIntermediateCostSecondDerivativeInput(t, x, zero_u);
   input_vector_t r = getIntermediateCostDerivativeInput(t, x, zero_u);
   input_matrix_t RinvChol;
-  LinearAlgebra::computeLinvTLinv(R, RinvChol);
+  LinearAlgebra::computeInverseMatrixUUT(R, RinvChol);
   dynamic_matrix_t DmDager, DdaggerT_R_Ddagger_Chol, RmInvConstrainedChol;
   ocs2::LinearAlgebra::computeConstraintProjection(Dm, RinvChol, DmDager, DdaggerT_R_Ddagger_Chol, RmInvConstrainedChol);
 

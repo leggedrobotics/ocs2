@@ -138,6 +138,12 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using logic_rules_machine_ptr_t = typename logic_rules_machine_t::Ptr;
 
   /**
+   * class for collecting SLQ data
+   */
+  template <size_t OTHER_STATE_DIM, size_t OTHER_INPUT_DIM>
+  friend class DDP_DataCollector;
+
+  /**
    * Default constructor.
    */
   DDP_BASE() = default;

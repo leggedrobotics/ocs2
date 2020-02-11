@@ -20,8 +20,9 @@ namespace ocs2 {
     using command_data_t = CommandData<STATE_DIM, INPUT_DIM>;
     using system_observation_t = SystemObservation<STATE_DIM, INPUT_DIM>;
 
-    virtual void update(const system_observation_t& observation, const primal_solution_t& primalSolution, const command_data_t& command) = 0;
+    virtual ~DummyObserver() = default;
 
+    virtual void update(const system_observation_t& observation, const primal_solution_t& primalSolution, const command_data_t& command) = 0;
 
   };
 }

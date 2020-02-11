@@ -73,15 +73,6 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::set() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::sigintHandler(int sig) {
-  ROS_INFO_STREAM("Shutting MPC node.");
-  ::ros::shutdown();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::reset(const CostDesiredTrajectories& initCostDesiredTrajectories) {
   std::lock_guard<std::mutex> resetLock(resetMutex_);
 
@@ -123,16 +114,6 @@ bool MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::resetMpcCallback(ocs2_msgs::reset:
   }
 
   return true;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publishDummy() {
-  ocs2_msgs::dummy msg;
-  msg.ping = 1;
-  dummyPublisher_.publish(msg);
 }
 
 /******************************************************************************************************/
@@ -403,33 +384,6 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::shutdownNode() {
 
   // shutdown publishers
   mpcPolicyPublisher_.shutdown();
-  dummyPublisher_.shutdown();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::initializeNode(int argc, char* argv[]) {
-  if (!nodeHandlerPtr_) {
-    // display
-    ROS_INFO_STREAM("MPC node is setting up ...");
-
-    // setup ROS
-    ::ros::init(argc, argv, robotName_ + "_mpc", ::ros::init_options::NoSigintHandler);
-    signal(SIGINT, MPC_ROS_Interface::sigintHandler);
-
-    // node handle
-    nodeHandlerPtr_.reset(new ros::NodeHandle);
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-std::shared_ptr<ros::NodeHandle>& MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::nodeHandlePtr() {
-  return nodeHandlerPtr_;
 }
 
 /******************************************************************************************************/
@@ -457,33 +411,29 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::spin() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::launchNodes(int argc, char* argv[]) {
-  // initialize node
-  initializeNode(argc, argv);
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::launchNodes(ros::NodeHandle& n) {
+  ROS_INFO_STREAM("MPC node is setting up ...");
 
   // Observation subscriber
-  mpcObservationSubscriber_ = nodeHandlerPtr_->subscribe(robotName_ + "_mpc_observation", 1, &MPC_ROS_Interface::mpcObservationCallback,
-                                                         this, ::ros::TransportHints().udp());
+  mpcObservationSubscriber_ =
+      n.subscribe(robotName_ + "_mpc_observation", 1, &MPC_ROS_Interface::mpcObservationCallback, this, ::ros::TransportHints().udp());
 
   // Goal subscriber
-  mpcTargetTrajectoriesSubscriber_ = nodeHandlerPtr_->subscribe(
-      robotName_ + "_mpc_target", 1, &MPC_ROS_Interface::mpcTargetTrajectoriesCallback, this, ::ros::TransportHints().tcpNoDelay());
+  mpcTargetTrajectoriesSubscriber_ = n.subscribe(robotName_ + "_mpc_target", 1, &MPC_ROS_Interface::mpcTargetTrajectoriesCallback, this,
+                                                 ::ros::TransportHints().tcpNoDelay());
 
   // Logic rules template subscriber
-  mpcModeSequenceSubscriber_ = nodeHandlerPtr_->subscribe(robotName_ + "_mpc_mode_sequence", 1, &MPC_ROS_Interface::mpcModeSequenceCallback,
-                                                          this, ::ros::TransportHints().udp());
+  mpcModeSequenceSubscriber_ =
+      n.subscribe(robotName_ + "_mpc_mode_sequence", 1, &MPC_ROS_Interface::mpcModeSequenceCallback, this, ::ros::TransportHints().udp());
 
   // SLQ-MPC publisher
-  mpcPolicyPublisher_ = nodeHandlerPtr_->advertise<ocs2_msgs::mpc_flattened_controller>(robotName_ + "_mpc_policy", 1, true);
-
-  // dummy publisher
-  dummyPublisher_ = nodeHandlerPtr_->advertise<ocs2_msgs::dummy>("ping", 1, true);
+  mpcPolicyPublisher_ = n.advertise<ocs2_msgs::mpc_flattened_controller>(robotName_ + "_mpc_policy", 1, true);
 
   // MPC reset service server
-  mpcResetServiceServer_ = nodeHandlerPtr_->advertiseService(robotName_ + "_mpc_reset", &MPC_ROS_Interface::resetMpcCallback, this);
+  mpcResetServiceServer_ = n.advertiseService(robotName_ + "_mpc_reset", &MPC_ROS_Interface::resetMpcCallback, this);
 
   for (auto& module : synchronizedRosModules_) {
-    module->subscribe(*nodeHandlerPtr_);
+    module->subscribe(n);
   }
 
   // display

@@ -74,20 +74,12 @@ class MRT_ROS_Dummy_Loop {
    * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
    * will be simulated to run by this frequency. Note that this might not be the MPC's real-time frequency.
    */
-  MRT_ROS_Dummy_Loop(mrt_t& mrt, scalar_t mrtDesiredFrequency = 100, scalar_t mpcDesiredFrequency = -1);
+  MRT_ROS_Dummy_Loop(mrt_t& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency = -1);
 
   /**
    * Destructor.
    */
   virtual ~MRT_ROS_Dummy_Loop() = default;
-
-  /**
-   * Initializes the MRT node and visualization node.
-   *
-   * @param [in] argc: command line number of inputs.
-   * @param [in] argv: command line inputs' value.
-   */
-  void launchNodes(int argc, char* argv[]);
 
   /**
    * Runs the dummy MRT loop.
@@ -109,18 +101,7 @@ class MRT_ROS_Dummy_Loop {
    */
   virtual void modifyObservation(system_observation_t& observation) {}
 
-  /**
-   * Launches the visualization node
-   *
-   * @param [in] argc: command line number of inputs.
-   * @param [in] argv: command line inputs' value.
-   */
-  virtual void launchVisualizerNode(int argc, char* argv[]) {}
-
- protected:
-  /*
-   * Variables
-   */
+ private:
   mrt_t& mrt_;
   scalar_t mrtDesiredFrequency_;
   scalar_t mpcDesiredFrequency_;

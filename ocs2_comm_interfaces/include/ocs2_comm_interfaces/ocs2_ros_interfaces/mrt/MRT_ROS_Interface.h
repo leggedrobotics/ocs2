@@ -129,34 +129,13 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   void spinMRT();
 
   /**
-   * Launches the ROS nodes to communicate with the MPC node.
-   *
-   * @param [in] argc: Command line number of arguments.
-   * @param [in] argv: Command line vector of arguments.
+   * Launches the ROS publishers and subscribers to communicate with the MPC node.
    */
-  void launchNodes(int argc, char* argv[]);
-
-  /**
-   *  Gets the node handle pointer to the MRT node,
-   *  Use this to add subscribers to the custom MRT callback queue
-   */
-  ::ros::NodeHandlePtr& nodeHandle();
+  void launchNodes(ros::NodeHandle& n);
 
   void setCurrentObservation(const system_observation_t& currentObservation) override;
 
- protected:
-  /**
-   * Signal handler
-   *
-   * @param sig: signal
-   */
-  static void sigintHandler(int sig);
-
-  /**
-   * Dummy publisher for network debugging.
-   */
-  void publishDummy();
-
+ private:
   /**
    * Callback method to receive the MPC policy as well as the mode sequence.
    * It only updates the policy variables with suffix (*Buffer_) variables.
@@ -170,13 +149,12 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    */
   void publisherWorkerThread();
 
- protected:
+ private:
   std::string robotName_;
 
   ::ros::NodeHandlePtr mrtRosNodeHandlePtr_;
 
   // Publishers and subscribers
-  ::ros::Publisher dummyPublisher_;
   ::ros::Publisher mpcObservationPublisher_;
   ::ros::Subscriber mpcPolicySubscriber_;
   ::ros::ServiceClient mpcResetServiceClient_;

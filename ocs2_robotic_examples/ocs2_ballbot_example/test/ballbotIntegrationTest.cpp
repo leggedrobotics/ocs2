@@ -6,7 +6,7 @@
 
 #include "ocs2_ballbot_example/BallbotInterface.h"
 #include "ocs2_ballbot_example/definitions.h"
-#include "ocs2_ballbot_example/ros_comm/MRT_ROS_Dummy_Ballbot.h"
+#include "ocs2_ballbot_example/ros_comm/BallbotDummyVisualization.h"
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h"
 
 using namespace ocs2;

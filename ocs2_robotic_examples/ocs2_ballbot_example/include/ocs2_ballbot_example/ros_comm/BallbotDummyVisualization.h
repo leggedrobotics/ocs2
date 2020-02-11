@@ -27,34 +27,36 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+#pragma once
 
-#include "ocs2_ballbot_example/BallbotInterface.h"
+#include <robot_state_publisher/robot_state_publisher.h>
+#include <tf/transform_broadcaster.h>
 
-using namespace ocs2;
+#include <ocs2_comm_interfaces/test/DummyObserver.h>
+#include "ocs2_ballbot_example/definitions.h"
 
-int main(int argc, char** argv) {
-  const std::string robotName = "ballbot";
-  using interface_t = ballbot::BallbotInterface;
+namespace ocs2 {
+namespace ballbot {
 
-  // task file
-  if (argc <= 1) {
-    throw std::runtime_error("No task file specified. Aborting.");
-  }
-  std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+class BallbotDummyVisualization final : public DummyObserver<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  // Initialize ros node
-  ros::init(argc, argv, robotName + "_mrt");
-  ros::NodeHandle n;
+  using BASE = DummyObserver<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
-  // ballbotInterface
-  interface_t ballbotInterface(taskFileFolderName);
+  BallbotDummyVisualization(ros::NodeHandle& n) { launchVisualizerNode(n); }
 
-  // Launch MPC ROS node
-  auto mpcPtr = ballbotInterface.getMpc();
-  MPC_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> mpcNode(*mpcPtr, "ballbot");
-  mpcNode.launchNodes(n);
+  ~BallbotDummyVisualization() override = default;
 
-  // Successful exit
-  return 0;
-}
+  void update(const system_observation_t& observation, const primal_solution_t& policy, const command_data_t& command) override;
+
+ private:
+  void launchVisualizerNode(ros::NodeHandle& n);
+
+  ros::Publisher visualizationPublisher_;
+  std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
+  std::unique_ptr<tf::TransformBroadcaster> tfBroadcasterPtr_;
+};
+
+}  // namespace ballbot
+}  // namespace ocs2

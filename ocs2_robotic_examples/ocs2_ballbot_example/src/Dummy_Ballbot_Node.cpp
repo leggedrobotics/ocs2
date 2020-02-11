@@ -28,33 +28,49 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
+#include <ocs2_comm_interfaces/test/MRT_ROS_Dummy_Loop.h>
 
 #include "ocs2_ballbot_example/BallbotInterface.h"
 #include "ocs2_ballbot_example/definitions.h"
-#include "ocs2_ballbot_example/ros_comm/MRT_ROS_Dummy_Ballbot.h"
+#include "ocs2_ballbot_example/ros_comm/BallbotDummyVisualization.h"
 
 using namespace ocs2;
 
 int main(int argc, char** argv) {
+  const std::string robotName = "ballbot";
+  using interface_t = ballbot::BallbotInterface;
+  using vis_t = ballbot::BallbotDummyVisualization;
+  using mrt_t = MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
+  using dummy_t = MRT_ROS_Dummy_Loop<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
+  using observation_t = SystemObservation<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
+
   // task file
   if (argc <= 1) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
   std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
+  // Initialize ros node
+  ros::init(argc, argv, robotName + "_mrt");
+  ros::NodeHandle n;
+
   // ballbotInterface
-  ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
+  interface_t ballbotInterface(taskFileFolderName);
+
+  // MRT
+  mrt_t mrt(robotName);
+  mrt.initRollout(&ballbotInterface.getRollout());
+  mrt.launchNodes(n);
+
+  // Visualization
+  std::shared_ptr<vis_t> ballbotDummyVisualization(new vis_t(n));
 
   // Dummy ballbot
-  MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> mrt("ballbot");
-  mrt.initRollout(&ballbotInterface.getRollout());
-  ballbot::MRT_ROS_Dummy_Ballbot dummyBallbot(mrt, ballbotInterface.mpcSettings().mrtDesiredFrequency_,
-                                              ballbotInterface.mpcSettings().mpcDesiredFrequency_);
-
-  dummyBallbot.launchNodes(argc, argv);
+  dummy_t dummyBallbot(mrt, ballbotInterface.mpcSettings().mrtDesiredFrequency_, ballbotInterface.mpcSettings().mpcDesiredFrequency_);
+  dummyBallbot.subscribeObservers({ballbotDummyVisualization});
 
   // initial state
-  ballbot::MRT_ROS_Dummy_Ballbot::system_observation_t initObservation;
+  observation_t initObservation;
   initObservation.state() = ballbotInterface.getInitialState();
 
   // initial command
@@ -63,7 +79,7 @@ int main(int argc, char** argv) {
   initCostDesiredTrajectories.desiredStateTrajectory().push_back(initObservation.state());
   initCostDesiredTrajectories.desiredInputTrajectory().push_back(initObservation.input());
 
-  // run dummy
+  // Run dummy (loops while ros is ok)
   dummyBallbot.run(initObservation, initCostDesiredTrajectories);
 
   // Successful exit

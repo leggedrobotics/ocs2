@@ -33,7 +33,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Loop(mrt_t& mrt, scalar_t mrtDesiredFrequency /*= 100*/,
+MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Loop(mrt_t& mrt, scalar_t mrtDesiredFrequency,
                                                              scalar_t mpcDesiredFrequency /*= -1*/)
     : mrt_(mrt),
       mrtDesiredFrequency_(mrtDesiredFrequency),
@@ -47,15 +47,6 @@ MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Loop(mrt_t& mrt, scalar_
   if (mpcDesiredFrequency_ > 0) {
     ROS_WARN_STREAM("MPC loop is not realtime! For realtime setting, set mpcDesiredFrequency to any negative number.");
   }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::launchNodes(int argc, char* argv[]) {
-  mrt_.launchNodes(argc, argv);
-  launchVisualizerNode(argc, argv);
 }
 
 /******************************************************************************************************/
@@ -149,6 +140,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(const system_observation_t& i
       observer->update(observation_, mrt_.getPolicy(), mrt_.getCommand());
     }
 
+    ros::spinOnce();
     rosRate.sleep();
   }  // end of while loop
 }

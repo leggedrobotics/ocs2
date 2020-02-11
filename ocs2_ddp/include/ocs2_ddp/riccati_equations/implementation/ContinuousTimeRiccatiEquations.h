@@ -38,8 +38,16 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int STATE_DIM, int INPUT_DIM>
-ContinuousTimeRiccatiEquations<STATE_DIM, INPUT_DIM>::ContinuousTimeRiccatiEquations(bool reducedFormRiccati)
-    : reducedFormRiccati_(reducedFormRiccati) {}
+ContinuousTimeRiccatiEquations<STATE_DIM, INPUT_DIM>::ContinuousTimeRiccatiEquations(bool reducedFormRiccati, bool isRiskSensitive)
+    : reducedFormRiccati_(reducedFormRiccati), isRiskSensitive_(isRiskSensitive) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <int STATE_DIM, int INPUT_DIM>
+void ContinuousTimeRiccatiEquations<STATE_DIM, INPUT_DIM>::setRiskSensitiveCoefficient(scalar_t riskSensitiveCoeff) {
+  riskSensitiveCoeff_ = riskSensitiveCoeff;
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -176,19 +184,35 @@ void ContinuousTimeRiccatiEquations<STATE_DIM, INPUT_DIM>::computeJumpMap(const 
 template <int STATE_DIM, int INPUT_DIM>
 void ContinuousTimeRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const scalar_t& z, const s_vector_t& allSs,
                                                                           s_vector_t& derivatives) {
+  BASE::numFunctionCalls_++;
+
+  // index
+  const scalar_t t = -z;  // denormalized time
+  const auto indexAlpha = EigenLinearInterpolation<state_matrix_t>::timeSegment(t, timeStampPtr_);
+
+  convert2Matrix(allSs, Sm_, Sv_, s_);
+  if (isRiskSensitive_) {
+    computeFlowMapILEG(indexAlpha, Sm_, Sv_, s_, dSm_, dSv_, ds_);
+  } else {
+    computeFlowMapSLQ(indexAlpha, Sm_, Sv_, s_, dSm_, dSv_, ds_);
+  }
+
+  convert2Vector(dSm_, dSv_, ds_, derivatives);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <int STATE_DIM, int INPUT_DIM>
+void ContinuousTimeRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMapSLQ(std::pair<int, scalar_t> indexAlpha, const state_matrix_t& Sm,
+                                                                             const state_vector_t& Sv, const scalar_t& s,
+                                                                             dynamic_matrix_t& dSm, dynamic_vector_t& dSv, scalar_t& ds) {
   /* note: according to some discussions on stackoverflow, it does not buy
    * computation time if multiplications with symmetric matrices are executed
    * using selfadjointView(). Doing the full multiplication seems to be faster
    * because of vectorization
    */
-  BASE::numFunctionCalls_++;
 
-  // denormalized time
-  const scalar_t t = -z;
-  convert2Matrix(allSs, Sm_, Sv_, s_);
-
-  // index
-  const auto indexAlpha = EigenLinearInterpolation<state_matrix_t>::timeSegment(t, timeStampPtr_);
   // Hv
   ModelData::LinearInterpolation::interpolate(indexAlpha, projectedHv_, projectedModelDataPtr_, ModelData::dynamicsBias);
   // Am
@@ -196,11 +220,11 @@ void ContinuousTimeRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const 
   // Bm
   ModelData::LinearInterpolation::interpolate(indexAlpha, projectedBm_, projectedModelDataPtr_, ModelData::dynamicsInputDerivative);
   // q
-  ModelData::LinearInterpolation::interpolate(indexAlpha, ds_, projectedModelDataPtr_, ModelData::cost);
+  ModelData::LinearInterpolation::interpolate(indexAlpha, ds, projectedModelDataPtr_, ModelData::cost);
   // Qv
-  ModelData::LinearInterpolation::interpolate(indexAlpha, dSv_, projectedModelDataPtr_, ModelData::costStateDerivative);
+  ModelData::LinearInterpolation::interpolate(indexAlpha, dSv, projectedModelDataPtr_, ModelData::costStateDerivative);
   // Qm
-  ModelData::LinearInterpolation::interpolate(indexAlpha, dSm_, projectedModelDataPtr_, ModelData::costStateSecondDerivative);
+  ModelData::LinearInterpolation::interpolate(indexAlpha, dSm, projectedModelDataPtr_, ModelData::costStateSecondDerivative);
   // Rv
   ModelData::LinearInterpolation::interpolate(indexAlpha, projectedGv_, projectedModelDataPtr_, ModelData::costInputDerivative);
   // Pm
@@ -213,10 +237,10 @@ void ContinuousTimeRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const 
   RiccatiModification::LinearInterpolation::interpolate(indexAlpha, projectedLv_, riccatiModificationPtr_, RiccatiModification::deltaGv);
 
   // projectedGm = projectedPm + projectedBm^T * Sm [COMPLEXITY: nx^2 * np]
-  projectedGm_.noalias() += projectedBm_.transpose() * Sm_;
+  projectedGm_.noalias() += projectedBm_.transpose() * Sm;
 
   // projectedGv = projectedRv + projectedBm^T * Sv [COMPLEXITY: nx * np]
-  projectedGv_.noalias() += projectedBm_.transpose() * Sv_;
+  projectedGv_.noalias() += projectedBm_.transpose() * Sv;
 
   // projected feedback
   projectedKm_ = -(projectedGm_ + projectedKm_);
@@ -225,7 +249,7 @@ void ContinuousTimeRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const 
 
   // precomputation
   // [COMPLEXITY: nx^3 + nx^2 * np]
-  SmTrans_projectedAm_.noalias() = Sm_.transpose() * projectedAm_;
+  SmTrans_projectedAm_.noalias() = Sm.transpose() * projectedAm_;
   projectedKm_T_projectedGm_.noalias() = projectedKm_.transpose() * projectedGm_;
   if (!reducedFormRiccati_) {
     // Rm
@@ -245,15 +269,15 @@ void ContinuousTimeRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const 
    *   [TOTAL COMPLEXITY: (nx^3) + 3(nx^2 * np) + (nx * np^2)]
    */
   // += deltaQm + Sm^T * Am + Am^T * Sm
-  dSm_ += deltaQm_ + SmTrans_projectedAm_ + SmTrans_projectedAm_.transpose();
+  dSm += deltaQm_ + SmTrans_projectedAm_ + SmTrans_projectedAm_.transpose();
   if (reducedFormRiccati_) {
     // += Km^T * Gm-
-    dSm_ += projectedKm_T_projectedGm_;
+    dSm += projectedKm_T_projectedGm_;
   } else {
     // += Km^T * Gm + Gm^T * Km
-    dSm_ += projectedKm_T_projectedGm_ + projectedKm_T_projectedGm_.transpose();
+    dSm += projectedKm_T_projectedGm_ + projectedKm_T_projectedGm_.transpose();
     // += Km^T * Hm * Km
-    dSm_.noalias() += projectedKm_.transpose() * projectedRm_projectedKm_;
+    dSm.noalias() += projectedKm_.transpose() * projectedRm_projectedKm_;
   }
 
   /*
@@ -265,19 +289,19 @@ void ContinuousTimeRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const 
    *   [TOTAL COMPLEXITY: 2*(nx^2) + 3(nx * np)]
    */
   // += Sm * Hv
-  dSv_.noalias() += Sm_.transpose() * projectedHv_;
+  dSv.noalias() += Sm.transpose() * projectedHv_;
   // += Am^T * Sv
-  dSv_.noalias() += projectedAm_.transpose() * Sv_;
+  dSv.noalias() += projectedAm_.transpose() * Sv;
   if (reducedFormRiccati_) {
     // += Gm^T * Lv
-    dSv_.noalias() += projectedGm_.transpose() * projectedLv_;
+    dSv.noalias() += projectedGm_.transpose() * projectedLv_;
   } else {
     // += Gm^T * Lv
-    dSv_.noalias() += projectedGm_.transpose() * projectedLv_;
+    dSv.noalias() += projectedGm_.transpose() * projectedLv_;
     // += Km^T * Gv
-    dSv_.noalias() += projectedKm_.transpose() * projectedGv_;
+    dSv.noalias() += projectedKm_.transpose() * projectedGv_;
     // Km^T * Hm * Lv
-    dSv_.noalias() += projectedRm_projectedKm_.transpose() * projectedLv_;
+    dSv.noalias() += projectedRm_projectedKm_.transpose() * projectedLv_;
   }
 
   /*
@@ -288,18 +312,36 @@ void ContinuousTimeRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const 
    *   [TOTAL COMPLEXITY: nx + 2np + np^2]
    */
   // += Hv^T * Sv
-  ds_ += projectedHv_.dot(Sv_);
+  ds += projectedHv_.dot(Sv);
   if (reducedFormRiccati_) {
     // += 0.5 Lv^T Gv
-    ds_ += 0.5 * projectedLv_.dot(projectedGv_);
+    ds += 0.5 * projectedLv_.dot(projectedGv_);
   } else {
     // += Lv^T Gv
-    ds_ += projectedLv_.dot(projectedGv_);
+    ds += projectedLv_.dot(projectedGv_);
     // += 0.5 Lv^T Hm Lv
-    ds_ += 0.5 * projectedLv_.dot(projectedRm_projectedLv_);
+    ds += 0.5 * projectedLv_.dot(projectedRm_projectedLv_);
   }
+}
 
-  convert2Vector(dSm_, dSv_, ds_, derivatives);
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <int STATE_DIM, int INPUT_DIM>
+void ContinuousTimeRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMapILEG(std::pair<int, scalar_t> indexAlpha, const state_matrix_t& Sm,
+                                                                              const state_vector_t& Sv, const scalar_t& s,
+                                                                              dynamic_matrix_t& dSm, dynamic_vector_t& dSv, scalar_t& ds) {
+  computeFlowMapSLQ(indexAlpha, Sm, Sv, s, dSm, dSv, ds);
+
+  // Sigma
+  ModelData::LinearInterpolation::interpolate(indexAlpha, dynamicsCovariance_, projectedModelDataPtr_, ModelData::dynamicsCovariance);
+
+  Sigma_Sv_.noalias() = dynamicsCovariance_ * Sv;
+  Sigma_Sm_.noalias() = dynamicsCovariance_ * Sm;
+
+  dSm.noalias() += riskSensitiveCoeff_ * Sm.transpose() * Sigma_Sm_;
+  dSv.noalias() += riskSensitiveCoeff_ * Sigma_Sm_.transpose() * Sv;
+  ds += 0.5 * Sigma_Sm_.trace() + 0.5 * riskSensitiveCoeff_ * Sv.dot(Sigma_Sv_);
 }
 
 }  // namespace ocs2

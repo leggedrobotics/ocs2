@@ -33,8 +33,16 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <int STATE_DIM, int INPUT_DIM>
-DiscreteTimeRiccatiEquations<STATE_DIM, INPUT_DIM>::DiscreteTimeRiccatiEquations(bool reducedFormRiccati)
-    : reducedFormRiccati_(reducedFormRiccati) {}
+DiscreteTimeRiccatiEquations<STATE_DIM, INPUT_DIM>::DiscreteTimeRiccatiEquations(bool reducedFormRiccati, bool isRiskSensitive)
+    : reducedFormRiccati_(reducedFormRiccati), isRiskSensitive_(isRiskSensitive) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <int STATE_DIM, int INPUT_DIM>
+void DiscreteTimeRiccatiEquations<STATE_DIM, INPUT_DIM>::setRiskSensitiveCoefficient(scalar_t riskSensitiveCoeff) {
+  riskSensitiveCoeff_ = riskSensitiveCoeff;
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -46,6 +54,23 @@ void DiscreteTimeRiccatiEquations<STATE_DIM, INPUT_DIM>::computeMap(const ModelD
                                                                     const scalar_t& sNext, dynamic_matrix_t& projectedKm,
                                                                     dynamic_vector_t& projectedLv, state_matrix_t& Sm, state_vector_t& Sv,
                                                                     scalar_t& s) {
+  if (isRiskSensitive_) {
+    computeMapILEG(projectedModelData, riccatiModification, SmNext, SvNext, sNext, projectedKm, projectedLv, Sm, Sv, s);
+  } else {
+    computeMapILQR(projectedModelData, riccatiModification, SmNext, SvNext, sNext, projectedKm, projectedLv, Sm, Sv, s);
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <int STATE_DIM, int INPUT_DIM>
+void DiscreteTimeRiccatiEquations<STATE_DIM, INPUT_DIM>::computeMapILQR(const ModelDataBase projectedModelData,
+                                                                        const RiccatiModificationBase& riccatiModification,
+                                                                        const state_matrix_t& SmNext, const state_vector_t& SvNext,
+                                                                        const scalar_t& sNext, dynamic_matrix_t& projectedKm,
+                                                                        dynamic_vector_t& projectedLv, state_matrix_t& Sm,
+                                                                        state_vector_t& Sv, scalar_t& s) {
   // precomputation (1)
   Sm_projectedHv_.noalias() = SmNext * projectedModelData.dynamicsBias_;
   Sm_projectedAm_.noalias() = SmNext * projectedModelData.dynamicsStateDerivative_;
@@ -130,6 +155,34 @@ void DiscreteTimeRiccatiEquations<STATE_DIM, INPUT_DIM>::computeMap(const ModelD
     // += 0.5 Lv^T Hm Lv
     s += 0.5 * projectedLv.dot(projectedHm_projectedLv_);
   }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <int STATE_DIM, int INPUT_DIM>
+void DiscreteTimeRiccatiEquations<STATE_DIM, INPUT_DIM>::computeMapILEG(const ModelDataBase projectedModelData,
+                                                                        const RiccatiModificationBase& riccatiModification,
+                                                                        const state_matrix_t& SmNext, const state_vector_t& SvNext,
+                                                                        const scalar_t& sNext, dynamic_matrix_t& projectedKm,
+                                                                        dynamic_vector_t& projectedLv, state_matrix_t& Sm,
+                                                                        state_vector_t& Sv, scalar_t& s) {
+  Sigma_Sv_.noalias() = projectedModelData.dynamicsCovariance_ * SvNext;
+  I_minus_Sm_Sigma_.setIdentity(projectedModelData.stateDim_, projectedModelData.stateDim_);
+  I_minus_Sm_Sigma_.noalias() -= SmNext * projectedModelData.dynamicsCovariance_;
+
+  Eigen::LDLT<state_matrix_t> ldltSm(I_minus_Sm_Sigma_);
+  scalar_t det_I_minus_Sm_Sigma_ = ldltSm.vectorD().array().log().sum();
+
+  inv_I_minus_Sm_Sigma_.setIdentity(projectedModelData.stateDim_, projectedModelData.stateDim_);
+  ldltSm.solveInPlace(inv_I_minus_Sm_Sigma_);
+
+  SmNextStochastic_.noalias() = inv_I_minus_Sm_Sigma_ * SmNext;
+  SvNextStochastic_.noalias() = inv_I_minus_Sm_Sigma_ * SvNext;
+  sNextStochastic_ = sNext + riskSensitiveCoeff_ * Sv.dot(Sigma_Sv_) - 0.5 / riskSensitiveCoeff_ * det_I_minus_Sm_Sigma_;
+
+  computeMapILQR(projectedModelData, riccatiModification, SmNextStochastic_, SvNextStochastic_, sNextStochastic_, projectedKm, projectedLv,
+                 Sm, Sv, s);
 }
 
 }  // namespace ocs2

@@ -94,13 +94,19 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<s_vector_dim(STATE_D
 
   /**
    * Constructor.
+   *
    */
-  explicit ContinuousTimeRiccatiEquations(bool reducedFormRiccati);
+  explicit ContinuousTimeRiccatiEquations(bool reducedFormRiccati, bool isRiskSensitive = false);
 
   /**
    * Default destructor.
    */
   ~ContinuousTimeRiccatiEquations() override = default;
+
+  /**
+   * Sets risk-sensitive coefficient.
+   */
+  void setRiskSensitiveCoefficient(scalar_t riskSensitiveCoeff);
 
   /**
    * Transcribe symmetric matrix Sm, vector Sv and scalar s into a single vector.
@@ -153,8 +159,39 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<s_vector_dim(STATE_D
    */
   void computeFlowMap(const scalar_t& z, const s_vector_t& allSs, s_vector_t& derivatives) override;
 
+ protected:
+  /**
+   * Computes the Riccati equations for SLQ problem.
+   *
+   * @param [in] indexAlpha: The index and interpolation coefficient (alpha) pair.
+   * @param [in] Sm: The current Riccati matrix.
+   * @param [in] Sv: The current Riccati vector.
+   * @param [in] s: The current Riccati scalar.
+   * @param [out] dSm: The time derivative of the Riccati matrix.
+   * @param [out] dSv: The time derivative of the  Riccati vector.
+   * @param [out] ds: The time derivative of the  Riccati scalar.
+   */
+  void computeFlowMapSLQ(std::pair<int, scalar_t> indexAlpha, const state_matrix_t& Sm, const state_vector_t& Sv, const scalar_t& s,
+                         dynamic_matrix_t& dSm, dynamic_vector_t& dSv, scalar_t& ds);
+
+  /**
+   * Computes the Riccati equations for ILEG problem.
+   *
+   * @param [in] indexAlpha: The index and interpolation coefficient (alpha) pair.
+   * @param [in] Sm: The current Riccati matrix.
+   * @param [in] Sv: The current Riccati vector.
+   * @param [in] s: The current Riccati scalar.
+   * @param [out] dSm: The time derivative of the Riccati matrix.
+   * @param [out] dSv: The time derivative of the  Riccati vector.
+   * @param [out] ds: The time derivative of the  Riccati scalar.
+   */
+  void computeFlowMapILEG(std::pair<int, scalar_t> indexAlpha, const state_matrix_t& Sm, const state_vector_t& Sv, const scalar_t& s,
+                          dynamic_matrix_t& dSm, dynamic_vector_t& dSv, scalar_t& ds);
+
  private:
   bool reducedFormRiccati_;
+  bool isRiskSensitive_;
+  scalar_t riskSensitiveCoeff_ = 0.0;
 
   // array pointers
   const scalar_array_t* timeStampPtr_;
@@ -175,6 +212,7 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<s_vector_dim(STATE_D
   dynamic_matrix_t projectedAm_;
   dynamic_matrix_t projectedBm_;
   dynamic_matrix_t projectedRm_;
+  dynamic_matrix_t dynamicsCovariance_;
 
   dynamic_matrix_t deltaQm_;
 
@@ -188,6 +226,9 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<s_vector_dim(STATE_D
   dynamic_matrix_t projectedKm_T_projectedGm_;
   dynamic_matrix_t projectedRm_projectedKm_;
   dynamic_vector_t projectedRm_projectedLv_;
+
+  dynamic_vector_t Sigma_Sv_;
+  dynamic_matrix_t Sigma_Sm_;
 };
 
 extern template class ContinuousTimeRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;

@@ -60,12 +60,17 @@ class DiscreteTimeRiccatiEquations {
   /**
    * Constructor.
    */
-  DiscreteTimeRiccatiEquations(bool reducedFormRiccati);
+  explicit DiscreteTimeRiccatiEquations(bool reducedFormRiccati, bool isRiskSensitive = false);
 
   /**
    * Default destructor.
    */
   ~DiscreteTimeRiccatiEquations() = default;
+
+  /**
+   * Sets risk-sensitive coefficient.
+   */
+  void setRiskSensitiveCoefficient(scalar_t riskSensitiveCoeff);
 
   /**
    * Computes one step Riccati difference equations.
@@ -85,8 +90,47 @@ class DiscreteTimeRiccatiEquations {
                   const state_vector_t& SvNext, const scalar_t& sNext, dynamic_matrix_t& projectedKm, dynamic_vector_t& projectedLv,
                   state_matrix_t& Sm, state_vector_t& Sv, scalar_t& s);
 
+ protected:
+  /**
+   * Computes one step Riccati difference equations for ILQR formulation.
+   *
+   * @param [in] projectedModelData: The projected model data.
+   * @param [in] riccatiModification: The RiccatiModification.
+   * @param [in] SmNext: The Riccati matrix of the next time step.
+   * @param [in] SvNext: The Riccati vector of the next time step.
+   * @param [in] sNext: The Riccati scalar of the next time step.
+   * @param [out] projectedKm: The projected feedback controller.
+   * @param [out] projectedLv: The projected feedforward controller.
+   * @param [out] Sm: The current Riccati matrix.
+   * @param [out] Sv: The current Riccati vector.
+   * @param [out] s: The current Riccati scalar.
+   */
+  void computeMapILQR(const ModelDataBase projectedModelData, const RiccatiModificationBase& riccatiModification,
+                      const state_matrix_t& SmNext, const state_vector_t& SvNext, const scalar_t& sNext, dynamic_matrix_t& projectedKm,
+                      dynamic_vector_t& projectedLv, state_matrix_t& Sm, state_vector_t& Sv, scalar_t& s);
+
+  /**
+   * Computes one step Riccati difference equations for ILEG formulation.
+   *
+   * @param [in] projectedModelData: The projected model data.
+   * @param [in] riccatiModification: The RiccatiModification.
+   * @param [in] SmNext: The Riccati matrix of the next time step.
+   * @param [in] SvNext: The Riccati vector of the next time step.
+   * @param [in] sNext: The Riccati scalar of the next time step.
+   * @param [out] projectedKm: The projected feedback controller.
+   * @param [out] projectedLv: The projected feedforward controller.
+   * @param [out] Sm: The current Riccati matrix.
+   * @param [out] Sv: The current Riccati vector.
+   * @param [out] s: The current Riccati scalar.
+   */
+  void computeMapILEG(const ModelDataBase projectedModelData, const RiccatiModificationBase& riccatiModification,
+                      const state_matrix_t& SmNext, const state_vector_t& SvNext, const scalar_t& sNext, dynamic_matrix_t& projectedKm,
+                      dynamic_vector_t& projectedLv, state_matrix_t& Sm, state_vector_t& Sv, scalar_t& s);
+
  private:
   bool reducedFormRiccati_;
+  bool isRiskSensitive_;
+  scalar_t riskSensitiveCoeff_ = 0.0;
 
   dynamic_vector_t Sm_projectedHv_;
   dynamic_matrix_t Sm_projectedAm_;
@@ -100,6 +144,13 @@ class DiscreteTimeRiccatiEquations {
   dynamic_matrix_t projectedKm_T_projectedGm_;
   dynamic_matrix_t projectedHm_projectedKm_;
   dynamic_vector_t projectedHm_projectedLv_;
+
+  dynamic_vector_t Sigma_Sv_;
+  state_matrix_t I_minus_Sm_Sigma_;
+  state_matrix_t inv_I_minus_Sm_Sigma_;
+  scalar_t sNextStochastic_;
+  state_vector_t SvNextStochastic_;
+  state_matrix_t SmNextStochastic_;
 };
 
 extern template class DiscreteTimeRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;

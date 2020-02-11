@@ -61,7 +61,7 @@ class Observer {
    * @param timeTrajectoryPtr: A pinter to an time trajectory container to store resulting time trajectory.
    */
   explicit Observer(state_vector_array_t* stateTrajectoryPtr = nullptr, scalar_array_t* timeTrajectoryPtr = nullptr)
-      : initialCall_(false), timeTrajectoryPtr_(timeTrajectoryPtr), stateTrajectoryPtr_(stateTrajectoryPtr) {}
+      : timeTrajectoryPtr_(timeTrajectoryPtr), stateTrajectoryPtr_(stateTrajectoryPtr) {}
 
   /**
    * Default destructor.

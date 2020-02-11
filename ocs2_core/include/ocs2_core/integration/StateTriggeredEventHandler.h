@@ -43,13 +43,9 @@ class StateTriggeredEventHandler final : public SystemEventHandler<STATE_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Ptr = std::shared_ptr<StateTriggeredEventHandler<STATE_DIM>>;
-
   using BASE = SystemEventHandler<STATE_DIM>;
   using typename BASE::dynamic_vector_t;
-  using typename BASE::scalar_array_t;
   using typename BASE::scalar_t;
-  using typename BASE::state_vector_array_t;
   using typename BASE::state_vector_t;
 
   using typename BASE::system_t;
@@ -59,8 +55,7 @@ class StateTriggeredEventHandler final : public SystemEventHandler<STATE_DIM> {
    *
    * @param [in] minEventTimeDifference: Minimum accepted time difference between two consecutive events.
    */
-  explicit StateTriggeredEventHandler(scalar_t minEventTimeDifference)
-      : BASE(), systemEventHandlerTriggered_(false), triggeredEventSurface_(0), minEventTimeDifference_(std::move(minEventTimeDifference)) {
+  explicit StateTriggeredEventHandler(scalar_t minEventTimeDifference) : BASE(), minEventTimeDifference_(minEventTimeDifference) {
     reset();
   }
 
@@ -70,12 +65,35 @@ class StateTriggeredEventHandler final : public SystemEventHandler<STATE_DIM> {
   ~StateTriggeredEventHandler() override = default;
 
   /**
-   * Resets the class.
+   * Checks whether an event is activated. If true, the method should also return
+   * a "Non-Negative" ID which indicates the a unique ID for the active events.
+   *
+   * @param [in] system: System dynamics
+   * @param [in] time: The current time.
+   * @param [in] state: The current state vector.
+   * @param [out] eventID: A non-negative unique ID for the active events..
+   * @return Whether an event is active.
    */
-  void reset() override {
-    BASE::reset();
-    lastEventTriggeredTime_ = std::numeric_limits<scalar_t>::lowest();
-    guardSurfacesValuesPrevious_.setZero(0);
+  bool checkEvent(system_t& system, scalar_t time, const state_vector_t& state, size_t& eventID) override {
+    // StateTriggered event
+    system.computeGuardSurfaces(time, state, guardSurfacesValuesCurrent_);
+
+    bool eventTriggered = false;
+    if (time - lastEventTriggeredTime_ > minEventTimeDifference_) {
+      for (size_t i = 0; i < guardSurfacesValuesPrevious_.size(); i++) {
+        if (guardSurfacesValuesCurrent_(i) <= 0 && guardSurfacesValuesPrevious_(i) > 0) {
+          eventTriggered = true;
+          eventID = i;
+        }
+      }
+    }
+
+    // update guard surfaces if event is not triggered
+    if (!eventTriggered) {
+      guardSurfacesValuesPrevious_ = guardSurfacesValuesCurrent_;
+    }
+
+    return eventTriggered;
   }
 
   /**
@@ -85,7 +103,7 @@ class StateTriggeredEventHandler final : public SystemEventHandler<STATE_DIM> {
    * @param [in] lastGuardSurfacesValues: The value of the guard functions at lastEventTriggeredTime.
    */
   void setLastEvent(scalar_t lastEventTriggeredTime, const dynamic_vector_t& lastGuardSurfacesValues) {
-    lastEventTriggeredTime_ = std::move(lastEventTriggeredTime);
+    lastEventTriggeredTime_ = lastEventTriggeredTime;
     guardSurfacesValuesPrevious_ = lastGuardSurfacesValues;
   }
 
@@ -104,63 +122,16 @@ class StateTriggeredEventHandler final : public SystemEventHandler<STATE_DIM> {
   scalar_t getminEventTimeDifference() const { return minEventTimeDifference_; }
 
   /**
-   * Checks if an event is activated.
-   *
-   * @param [in] state: Current state vector.
-   * @param [in] time: Current time.
-   * @return boolean:
+   * Resets the class.
    */
-  bool checkEvent(const state_vector_t& state, const scalar_t& time) override {
-    // SystemEventHandler event
-    systemEventHandlerTriggered_ = BASE::checkEvent(state, time);
-    if (systemEventHandlerTriggered_) {
-      return true;
-    }
-
-    // StateTriggered event
-    BASE::systemPtr_->computeGuardSurfaces(time, state, guardSurfacesValuesCurrent_);
-
-    bool eventTriggered = false;
-    if (time - lastEventTriggeredTime_ > minEventTimeDifference_) {
-      for (size_t i = 0; i < guardSurfacesValuesPrevious_.size(); i++) {
-        if (guardSurfacesValuesCurrent_(i) <= 0 && guardSurfacesValuesPrevious_(i) > 0) {
-          eventTriggered = true;
-          triggeredEventSurface_ = i;
-        }
-      }
-    }
-
-    if (!eventTriggered) {
-      guardSurfacesValuesPrevious_ = guardSurfacesValuesCurrent_;
-    }
-
-    return eventTriggered;
-  }
-
-  /**
-   * The operation should be performed if an event is activated. The method gets references to the time and state
-   * trajectories. The current time and state are the last elements of their respective container.
-   * The method should also return a "Non-Negative" ID which indicates the a unique ID for the active events.
-   * Note that will the negative return values are reserved to handle internal events for the program.
-   *
-   * @param [out] stateTrajectory: The state trajectory which contains the current state vector as its last element.
-   * @param [out] timeTrajectory: The time trajectory which contains the current time as its last element.
-   * @return A non-negative unique ID for the active events.
-   */
-  int handleEvent(state_vector_array_t& stateTrajectory, scalar_array_t& timeTrajectory) override {
-    // SystemEventHandler event
-    if (systemEventHandlerTriggered_) {
-      return BASE::handleEvent(stateTrajectory, timeTrajectory);
-    }
-    // StateTriggered event
-    return triggeredEventSurface_;
+  void reset() override {
+    BASE::reset();
+    lastEventTriggeredTime_ = std::numeric_limits<scalar_t>::lowest();
+    guardSurfacesValuesPrevious_.setZero(0);
   }
 
  protected:
-  bool systemEventHandlerTriggered_;
-  size_t triggeredEventSurface_;
   scalar_t minEventTimeDifference_;
-
   dynamic_vector_t guardSurfacesValuesCurrent_;
   dynamic_vector_t guardSurfacesValuesPrevious_;  // memory
   scalar_t lastEventTriggeredTime_;               // memory

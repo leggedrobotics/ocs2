@@ -13,5 +13,6 @@
   <build_depend>cmake_clang_tools</build_depend>
 
   <depend>ocs2_core</depend>
+  <exec_depend>ocs2_anymal_switched_model</exec_depend>
 
 </package>

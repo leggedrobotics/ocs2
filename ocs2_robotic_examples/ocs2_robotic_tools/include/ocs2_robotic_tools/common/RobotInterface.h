@@ -42,6 +42,9 @@ namespace ocs2 {
 /**
  * This class implements an interface class to all the robotic examples.
  *
+ * The lifetime of the returned objects is tied to the lifetime of the robot interface.
+ * The exposed objects are not thread-safe and should be cloned to get an exclusive copy.
+ *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
  */

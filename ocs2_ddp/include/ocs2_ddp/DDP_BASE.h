@@ -392,7 +392,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   scalar_t getValueFunction(scalar_t time, const state_vector_t& state) const override;
 
-  void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx) const override;
+  void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, dynamic_vector_t& Vx) const override;
 
   /**
    * Upon activation in the multi-thread DDP class (DDP_MT), the parallelization
@@ -808,17 +808,17 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   scalar_array2_t SsNormalizedTimeTrajectoryStock_;
   size_array2_t SsNormalizedEventsPastTheEndIndecesStock_;
   scalar_array2_t sTrajectoryStock_;
-  state_vector_array2_t SvTrajectoryStock_;
-  state_matrix_array2_t SmTrajectoryStock_;
+  dynamic_vector_array2_t SvTrajectoryStock_;
+  dynamic_matrix_array2_t SmTrajectoryStock_;
 
   scalar_array_t sFinalStock_;
-  state_vector_array_t SvFinalStock_;
-  state_matrix_array_t SmFinalStock_;
+  dynamic_vector_array_t SvFinalStock_;
+  dynamic_matrix_array_t SmFinalStock_;
   state_vector_array_t xFinalStock_;
 
   scalar_t sHeuristics_;
-  state_vector_t SvHeuristics_;
-  state_matrix_t SmHeuristics_;
+  dynamic_vector_t SvHeuristics_;
+  dynamic_matrix_t SmHeuristics_;
 
   // Line-Search
   struct LineSearchImpl {

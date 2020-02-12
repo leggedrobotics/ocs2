@@ -35,16 +35,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/randomMatrices.h>
 #include <ocs2_ddp/riccati_equations/ContinuousTimeRiccatiEquations.h>
 
-template <typename riccati_t>
 class RiccatiInitializer {
  public:
-  using scalar_t = typename riccati_t::scalar_t;
-  using size_array_t = typename riccati_t::size_array_t;
-  using scalar_array_t = typename riccati_t::scalar_array_t;
-  using state_matrix_t = typename riccati_t::state_matrix_t;
-  using state_vector_t = typename riccati_t::state_vector_t;
-  using dynamic_vector_t = typename riccati_t::dynamic_vector_t;
-  using dynamic_matrix_t = typename riccati_t::dynamic_matrix_t;
+  using riccati_t = ocs2::ContinuousTimeRiccatiEquations;
+  using scalar_t = riccati_t::scalar_t;
+  using size_array_t = riccati_t::size_array_t;
+  using scalar_array_t = riccati_t::scalar_array_t;
+  using dynamic_vector_t = riccati_t::dynamic_vector_t;
+  using dynamic_matrix_t = riccati_t::dynamic_matrix_t;
 
   scalar_array_t timeStamp;
   ocs2::ModelDataBase::array_t projectedModelDataTrajectory;
@@ -100,58 +98,29 @@ TEST(riccati_ode_test, compareImplementations) {
   constexpr int STATE_DIM = 48;
   constexpr int INPUT_DIM = 10;
 
-  using riccati_t = ocs2::ContinuousTimeRiccatiEquations<STATE_DIM, INPUT_DIM>;
+  using riccati_t = ocs2::ContinuousTimeRiccatiEquations;
 
   riccati_t riccatiEquationPrecompute(true);
   riccati_t riccatiEquationNoPrecompute(false);
 
-  RiccatiInitializer<riccati_t> ri(STATE_DIM, INPUT_DIM);
+  RiccatiInitializer ri(STATE_DIM, INPUT_DIM);
   ri.initialize(riccatiEquationPrecompute);
   ri.initialize(riccatiEquationNoPrecompute);
 
-  riccati_t::s_vector_t S = riccati_t::s_vector_t::Random();
-  riccati_t::s_vector_t dSdz_precompute, dSdz_noPrecompute;
+  riccati_t::dynamic_vector_t S = riccati_t::dynamic_vector_t::Random(ocs2::s_vector_dim(STATE_DIM));
+  riccati_t::dynamic_vector_t dSdz_precompute, dSdz_noPrecompute;
   riccatiEquationPrecompute.computeFlowMap(0.6, S, dSdz_precompute);
   riccatiEquationNoPrecompute.computeFlowMap(0.6, S, dSdz_noPrecompute);
 
   EXPECT_LE((dSdz_precompute - dSdz_noPrecompute).array().abs().maxCoeff(), 1e-9);
 }
 
-TEST(riccati_ode_test, compareFixedAndDynamicSizedImplementation) {
-  constexpr bool precompute = false;
-
-  const int input_dim = 10;
-  const int state_dim = 48;
-
-  using riccati_static_t = ocs2::ContinuousTimeRiccatiEquations<state_dim, input_dim>;
-  riccati_static_t riccati_static(precompute);
-  srand(42);  // necessary to define a similar problem as dynamic case
-  RiccatiInitializer<riccati_static_t> ris(state_dim, input_dim);
-  ris.initialize(riccati_static);
-
-  riccati_static_t::s_vector_t S_static = riccati_static_t::s_vector_t::Random();
-  riccati_static_t::s_vector_t dSdz_static;
-  riccati_static.computeFlowMap(0.6, S_static, dSdz_static);
-
-  using riccati_dynamic_t = ocs2::ContinuousTimeRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;
-  riccati_dynamic_t riccati_dynamic(precompute);
-  srand(42);  // necessary to define a similar problem as static case
-  RiccatiInitializer<riccati_dynamic_t> rid(state_dim, input_dim);
-  rid.initialize(riccati_dynamic);
-
-  riccati_dynamic_t::s_vector_t S = S_static;
-  riccati_dynamic_t::s_vector_t dSdz;
-  riccati_dynamic.computeFlowMap(0.6, S, dSdz);
-
-  EXPECT_LE((dSdz - dSdz_static).array().abs().maxCoeff(), 1e-9);
-}
-
 TEST(riccati_ode_test, testFlattenSMatrix) {
   const int state_dim = 4;
-  using riccati_t = ocs2::ContinuousTimeRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;
+  using riccati_t = ocs2::ContinuousTimeRiccatiEquations;
 
-  riccati_t::s_vector_t allSs, allSs_expect;
-  riccati_t::state_matrix_t Sm;
+  riccati_t::dynamic_vector_t allSs, allSs_expect;
+  riccati_t::dynamic_matrix_t Sm;
   riccati_t::state_vector_t Sv;
   riccati_t::scalar_t s;
 
@@ -173,35 +142,12 @@ TEST(riccati_ode_test, testFlattenSMatrix) {
   EXPECT_EQ(allSs, allSs_expect);
 }
 
-TEST(riccati_ode_test, testFlattenAndUnflattenSMatrix) {
-  const int input_dim = 10;
-  const int state_dim = 48;
-  using riccati_t = ocs2::ContinuousTimeRiccatiEquations<state_dim, input_dim>;
-
-  riccati_t::s_vector_t allSs;
-  riccati_t::state_matrix_t Sm, Sm_out;
-  riccati_t::state_vector_t Sv, Sv_out;
-  riccati_t::scalar_t s, s_out;
-
-  Sm.setRandom();
-  Sm = (Sm + Sm.transpose()).eval();
-  Sv.setRandom();
-  s = riccati_t::dynamic_vector_t::Random(1)(0);
-
-  riccati_t::convert2Vector(Sm, Sv, s, allSs);
-  riccati_t::convert2Matrix(allSs, Sm_out, Sv_out, s_out);
-
-  EXPECT_EQ(Sm, Sm_out);
-  EXPECT_EQ(Sv, Sv_out);
-  EXPECT_EQ(s, s_out);
-}
-
-TEST(riccati_ode_test, testFlattenAndUnflattenSMatrixDynamic) {
+TEST(riccati_ode_test, testFlattenAndUnflatten) {
   const int state_dim = 42;
-  using riccati_t = ocs2::ContinuousTimeRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;
+  using riccati_t = ocs2::ContinuousTimeRiccatiEquations;
 
-  riccati_t::s_vector_t allSs;
-  riccati_t::state_matrix_t Sm, Sm_out;
+  riccati_t::dynamic_vector_t allSs;
+  riccati_t::dynamic_matrix_t Sm, Sm_out;
   riccati_t::state_vector_t Sv, Sv_out;
   riccati_t::scalar_t s, s_out;
 

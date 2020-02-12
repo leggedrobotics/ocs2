@@ -729,9 +729,15 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
   heuristicsFunctionsPtrStock_[0]->setCurrentStateAndControl(nominalTimeTrajectoriesStock_[finalActivePartition_].back(),
                                                              nominalStateTrajectoriesStock_[finalActivePartition_].back(),
                                                              nominalInputTrajectoriesStock_[finalActivePartition_].back());
+
+  // TODO: avoid temps
+  state_vector_t SvHeuristicsTemp;
+  state_matrix_t SmHeuristicsTemp;
   heuristicsFunctionsPtrStock_[0]->getTerminalCost(sHeuristics_);
-  heuristicsFunctionsPtrStock_[0]->getTerminalCostDerivativeState(SvHeuristics_);
-  heuristicsFunctionsPtrStock_[0]->getTerminalCostSecondDerivativeState(SmHeuristics_);
+  heuristicsFunctionsPtrStock_[0]->getTerminalCostDerivativeState(SvHeuristicsTemp);
+  heuristicsFunctionsPtrStock_[0]->getTerminalCostSecondDerivativeState(SmHeuristicsTemp);
+  SvHeuristics_ = SvHeuristicsTemp;
+  SmHeuristics_ = SmHeuristicsTemp;
   // shift Hessian
   shiftHessian(SmHeuristics_);
 }
@@ -1873,12 +1879,12 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
                                                                                                    const state_vector_t& state) const {
   const auto partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
-  state_matrix_t Sm;
+  dynamic_matrix_t Sm;
   const auto indexAlpha =
-      EigenLinearInterpolation<state_matrix_t>::interpolate(time, Sm, &SsTimeTrajectoryStock_[partition], &SmTrajectoryStock_[partition]);
+      EigenLinearInterpolation<dynamic_matrix_t>::interpolate(time, Sm, &SsTimeTrajectoryStock_[partition], &SmTrajectoryStock_[partition]);
 
-  state_vector_t Sv;
-  EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Sv, &SvTrajectoryStock_[partition]);
+  dynamic_vector_t Sv;
+  EigenLinearInterpolation<dynamic_vector_t>::interpolate(indexAlpha, Sv, &SvTrajectoryStock_[partition]);
 
   scalar_t s;
   LinearInterpolation<scalar_t>::interpolate(indexAlpha, s, &sTrajectoryStock_[partition]);
@@ -1887,7 +1893,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
   EigenLinearInterpolation<state_vector_t>::interpolate(time, xNominal, &nominalTimeTrajectoriesStock_[partition],
                                                         &nominalStateTrajectoriesStock_[partition]);
 
-  state_vector_t deltaX = state - xNominal;
+  dynamic_vector_t deltaX = state - xNominal;
 
   return s + deltaX.dot(Sv) + 0.5 * deltaX.dot(Sm * deltaX);
 }
@@ -1896,21 +1902,22 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx) const {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state,
+                                                                     dynamic_vector_t& Vx) const {
   const auto partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
-  state_matrix_t Sm;
+  dynamic_matrix_t Sm;
   const auto indexAlpha =
-      EigenLinearInterpolation<state_matrix_t>::interpolate(time, Sm, &SsTimeTrajectoryStock_[partition], &SmTrajectoryStock_[partition]);
+      EigenLinearInterpolation<dynamic_matrix_t>::interpolate(time, Sm, &SsTimeTrajectoryStock_[partition], &SmTrajectoryStock_[partition]);
 
   // Sv
-  EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Vx, &SvTrajectoryStock_[partition]);
+  EigenLinearInterpolation<dynamic_vector_t>::interpolate(indexAlpha, Vx, &SvTrajectoryStock_[partition]);
 
   state_vector_t xNominal;
   EigenLinearInterpolation<state_vector_t>::interpolate(time, xNominal, &nominalTimeTrajectoriesStock_[partition],
                                                         &nominalStateTrajectoriesStock_[partition]);
 
-  state_vector_t deltaX = state - xNominal;
+  dynamic_vector_t deltaX = state - xNominal;
   Vx += Sm * deltaX;
 }
 
@@ -2001,10 +2008,10 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t 
   RiccatiModification::LinearInterpolation::interpolate(indexAlpha, DmDagger, &riccatiModificationTrajectoriesStock_[activeSubsystem],
                                                         RiccatiModification::constraintRangeProjector);
 
-  state_vector_t costate;
+  dynamic_vector_t costate;
   getValueFunctionStateDerivative(time, state, costate);
 
-  state_vector_t deltaX = state - xNominal;
+  dynamic_vector_t deltaX = state - xNominal;
   dynamic_matrix_t DmDaggerTransHm = DmDagger.transpose() * Hm;
 
   nu = DmDaggerTransHm * (CmProjected * deltaX + EvProjected) - DmDagger.transpose() * (Rv + Pm * deltaX + Bm.transpose() * costate);
@@ -2220,8 +2227,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   /*
    * Riccati solver variables and controller update
    */
-  SmFinalStock_ = state_matrix_array_t(numPartitions, state_matrix_t::Zero());
-  SvFinalStock_ = state_vector_array_t(numPartitions, state_vector_t::Zero());
+  SmFinalStock_ = dynamic_matrix_array_t(numPartitions, dynamic_matrix_t::Zero(STATE_DIM, STATE_DIM));
+  SvFinalStock_ = dynamic_vector_array_t(numPartitions, dynamic_vector_t::Zero(STATE_DIM));
   sFinalStock_ = scalar_array_t(numPartitions, 0.0);
   xFinalStock_ = state_vector_array_t(numPartitions, state_vector_t::Zero());
 

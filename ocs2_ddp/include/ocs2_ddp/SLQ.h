@@ -90,9 +90,7 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::operating_trajectories_base_t;
   using typename BASE::rollout_base_t;
 
-  using riccati_equations_t = ContinuousTimeRiccatiEquations<STATE_DIM, INPUT_DIM>;
-  using s_vector_t = typename riccati_equations_t::s_vector_t;
-  using s_vector_array_t = typename riccati_equations_t::s_vector_array_t;
+  using riccati_equations_t = ContinuousTimeRiccatiEquations;
 
   /**
    * Default constructor.
@@ -156,11 +154,10 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param SsNormalizedPostEventIndices [out] : Indices into SsNormalizedTime to point to times right after event times
    * @param allSsTrajectory [out] : Value function in vector format.
    */
-  void integrateRiccatiEquationNominalTime(IntegratorBase<riccati_equations_t::S_DIM_>& riccatiIntegrator,
-                                           riccati_equations_t& riccatiEquation, const scalar_array_t& nominalTimeTrajectory,
-                                           const size_array_t& nominalEventsPastTheEndIndices, s_vector_t allSsFinal,
-                                           scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedPostEventIndices,
-                                           s_vector_array_t& allSsTrajectory);
+  void integrateRiccatiEquationNominalTime(IntegratorBase<Eigen::Dynamic>& riccatiIntegrator, riccati_equations_t& riccatiEquation,
+                                           const scalar_array_t& nominalTimeTrajectory, const size_array_t& nominalEventsPastTheEndIndices,
+                                           dynamic_vector_t allSsFinal, scalar_array_t& SsNormalizedTime,
+                                           size_array_t& SsNormalizedPostEventIndices, dynamic_vector_array_t& allSsTrajectory);
 
   /**
    * Integrates the riccati equation and freely selects the time nodes for the value function.
@@ -174,11 +171,10 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param SsNormalizedPostEventIndices [out] : Indices into SsNormalizedTime to point to times right after event times
    * @param allSsTrajectory [out] : Value function in vector format.
    */
-  void integrateRiccatiEquationAdaptiveTime(IntegratorBase<riccati_equations_t::S_DIM_>& riccatiIntegrator,
-                                            riccati_equations_t& riccatiEquation, const scalar_array_t& nominalTimeTrajectory,
-                                            const size_array_t& nominalEventsPastTheEndIndices, s_vector_t allSsFinal,
-                                            scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedPostEventIndices,
-                                            s_vector_array_t& allSsTrajectory);
+  void integrateRiccatiEquationAdaptiveTime(IntegratorBase<Eigen::Dynamic>& riccatiIntegrator, riccati_equations_t& riccatiEquation,
+                                            const scalar_array_t& nominalTimeTrajectory, const size_array_t& nominalEventsPastTheEndIndices,
+                                            dynamic_vector_t allSsFinal, scalar_array_t& SsNormalizedTime,
+                                            size_array_t& SsNormalizedPostEventIndices, dynamic_vector_array_t& allSsTrajectory);
 
   /****************
    *** Variables **
@@ -186,7 +182,7 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   SLQ_Settings settings_;
 
   std::vector<std::shared_ptr<riccati_equations_t>> riccatiEquationsPtrStock_;
-  std::vector<std::unique_ptr<IntegratorBase<riccati_equations_t::S_DIM_>>> riccatiIntegratorPtrStock_;
+  std::vector<std::unique_ptr<IntegratorBase<Eigen::Dynamic>>> riccatiIntegratorPtrStock_;
 };
 
 }  // namespace ocs2

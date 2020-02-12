@@ -313,7 +313,7 @@ class Solver_BASE {
    * @param [in] state: The inquiry state.
    * @param [out] Vx: value function at the inquiry time and state.
    */
-  virtual void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx) const = 0;
+  virtual void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, dynamic_vector_t& Vx) const = 0;
 
   /**
    * Calculates the Lagrange multiplier of the state-input equality constraints at the given time and state.

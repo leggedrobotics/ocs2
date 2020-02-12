@@ -62,7 +62,7 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivativ
     bool isRiskSensitive = !numerics::almost_eq(BASE::ddpSettings_.riskSensitiveCoeff_, 0.0);
     riccatiEquationsPtrStock_.emplace_back(new riccati_equations_t(preComputeRiccatiTerms, isRiskSensitive));
     riccatiEquationsPtrStock_.back()->setRiskSensitiveCoefficient(BASE::ddpSettings_.riskSensitiveCoeff_);
-    riccatiIntegratorPtrStock_.emplace_back(newIntegrator<riccati_equations_t::S_DIM_>(integratorType));
+    riccatiIntegratorPtrStock_.emplace_back(newIntegrator<Eigen::Dynamic>(integratorType));
   }  // end of i loop
 
   Eigen::initParallel();
@@ -274,7 +274,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size_
   auto& sTrajectory = BASE::sTrajectoryStock_[partitionIndex];
 
   // Convert final value of value function in vector format
-  s_vector_t allSsFinal;
+  dynamic_vector_t allSsFinal;
   riccati_equations_t::convert2Vector(SmFinal, SvFinal, sFinal, allSsFinal);
 
   // Clear output containers
@@ -291,7 +291,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size_
    *  if true: the integration will produce the same time nodes set in nominalTime (=resulting from the forward pass),
    *  if false: the SsNormalized time is a result of adaptive integration.
    */
-  s_vector_array_t allSsTrajectory;
+  dynamic_vector_array_t allSsTrajectory;
   if (settings_.useNominalTimeForBackwardPass_) {
     integrateRiccatiEquationNominalTime(*riccatiIntegratorPtrStock_[workerIndex], *riccatiEquationsPtrStock_[workerIndex],
                                         nominalTimeTrajectory, nominalEventsPastTheEndIndices, std::move(allSsFinal), SsNormalizedTime,
@@ -329,9 +329,9 @@ void SLQ<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size_
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQ<STATE_DIM, INPUT_DIM>::integrateRiccatiEquationNominalTime(
-    IntegratorBase<riccati_equations_t::S_DIM_>& riccatiIntegrator, riccati_equations_t& riccatiEquation,
-    const scalar_array_t& nominalTimeTrajectory, const size_array_t& nominalEventsPastTheEndIndices, s_vector_t allSsFinal,
-    scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedPostEventIndices, s_vector_array_t& allSsTrajectory) {
+    IntegratorBase<Eigen::Dynamic>& riccatiIntegrator, riccati_equations_t& riccatiEquation, const scalar_array_t& nominalTimeTrajectory,
+    const size_array_t& nominalEventsPastTheEndIndices, dynamic_vector_t allSsFinal, scalar_array_t& SsNormalizedTime,
+    size_array_t& SsNormalizedPostEventIndices, dynamic_vector_array_t& allSsTrajectory) {
   // Extract sizes
   const int nominalTimeSize = nominalTimeTrajectory.size();
   const int numEvents = nominalEventsPastTheEndIndices.size();
@@ -357,7 +357,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::integrateRiccatiEquationNominalTime(
     typename scalar_array_t::const_iterator beginTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i];
     typename scalar_array_t::const_iterator endTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i + 1];
 
-    Observer<riccati_equations_t::S_DIM_> observer(&allSsTrajectory);
+    Observer<Eigen::Dynamic> observer(&allSsTrajectory);
     // solve Riccati equations
     riccatiIntegrator.integrate_times(riccatiEquation, observer, allSsFinal, beginTimeItr, endTimeItr, BASE::ddpSettings_.minTimeStep_,
                                       BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps);
@@ -378,9 +378,9 @@ void SLQ<STATE_DIM, INPUT_DIM>::integrateRiccatiEquationNominalTime(
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQ<STATE_DIM, INPUT_DIM>::integrateRiccatiEquationAdaptiveTime(
-    IntegratorBase<riccati_equations_t::S_DIM_>& riccatiIntegrator, riccati_equations_t& riccatiEquation,
-    const scalar_array_t& nominalTimeTrajectory, const size_array_t& nominalEventsPastTheEndIndices, s_vector_t allSsFinal,
-    scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedPostEventIndices, s_vector_array_t& allSsTrajectory) {
+    IntegratorBase<Eigen::Dynamic>& riccatiIntegrator, riccati_equations_t& riccatiEquation, const scalar_array_t& nominalTimeTrajectory,
+    const size_array_t& nominalEventsPastTheEndIndices, dynamic_vector_t allSsFinal, scalar_array_t& SsNormalizedTime,
+    size_array_t& SsNormalizedPostEventIndices, dynamic_vector_array_t& allSsTrajectory) {
   // Extract sizes
   const int nominalTimeSize = nominalTimeTrajectory.size();
   const int numEvents = nominalEventsPastTheEndIndices.size();
@@ -405,7 +405,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::integrateRiccatiEquationAdaptiveTime(
     scalar_t beginTime = SsNormalizedSwitchingTimes[i];
     scalar_t endTime = SsNormalizedSwitchingTimes[i + 1];
 
-    Observer<riccati_equations_t::S_DIM_> observer(&allSsTrajectory, &SsNormalizedTime);
+    Observer<Eigen::Dynamic> observer(&allSsTrajectory, &SsNormalizedTime);
     // solve Riccati equations
     riccatiIntegrator.integrate_adaptive(riccatiEquation, observer, allSsFinal, beginTime, endTime, BASE::ddpSettings_.minTimeStep_,
                                          BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps);

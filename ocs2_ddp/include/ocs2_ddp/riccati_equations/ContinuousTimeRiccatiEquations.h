@@ -43,6 +43,47 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
+ * Data cache for continuous-time Riccati equation
+ */
+struct ContinuousTimeRiccatiData {
+  using DIMENSIONS = Dimensions<Eigen::Dynamic, Eigen::Dynamic>;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+  using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
+
+  scalar_t s_;
+  dynamic_vector_t Sv_;
+  dynamic_matrix_t Sm_;
+
+  scalar_t ds_;
+  dynamic_vector_t dSv_;
+  dynamic_matrix_t dSm_;
+
+  dynamic_vector_t projectedHv_;
+  dynamic_matrix_t projectedAm_;
+  dynamic_matrix_t projectedBm_;
+  dynamic_matrix_t projectedRm_;
+  dynamic_matrix_t dynamicsCovariance_;
+
+  dynamic_matrix_t deltaQm_;
+
+  dynamic_matrix_t projectedGm_;
+  dynamic_vector_t projectedGv_;
+
+  dynamic_matrix_t projectedKm_;
+  dynamic_vector_t projectedLv_;
+
+  dynamic_matrix_t SmTrans_projectedAm_;
+  dynamic_matrix_t projectedKm_T_projectedGm_;
+  dynamic_matrix_t projectedRm_projectedKm_;
+  dynamic_vector_t projectedRm_projectedLv_;
+
+  // risk sensitive data
+  dynamic_vector_t Sigma_Sv_;
+  dynamic_matrix_t Sigma_Sm_;
+};
+
+/**
  * Helper function to define the s vector dimension, also supports dynamic size -1.
  *
  * @param [in] state_dim: Dimension of the state space.
@@ -66,31 +107,21 @@ static constexpr int riccati_matrix_dim(int flattened_dim) {
 
 /**
  * This class implements the Riccati differential equations for SLQ problem.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <int STATE_DIM, int INPUT_DIM>
-class ContinuousTimeRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)> {
+class ContinuousTimeRiccatiEquations final : public OdeBase<Eigen::Dynamic> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  static constexpr int S_DIM_ = s_vector_dim(STATE_DIM);
-  using BASE = OdeBase<S_DIM_>;
+  using BASE = OdeBase<Eigen::Dynamic>;
 
-  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
+  using DIMENSIONS = Dimensions<Eigen::Dynamic, Eigen::Dynamic>;
   using scalar_t = typename DIMENSIONS::scalar_t;
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;
   using size_array_t = typename DIMENSIONS::size_array_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using state_matrix_t = typename DIMENSIONS::state_matrix_t;
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
   using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
   using dynamic_matrix_array_t = typename DIMENSIONS::dynamic_matrix_array_t;
   using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
-
-  using s_vector_t = Eigen::Matrix<scalar_t, S_DIM_, 1>;
-  using s_vector_array_t = std::vector<s_vector_t, Eigen::aligned_allocator<s_vector_t> >;
 
   /**
    * Constructor.
@@ -116,7 +147,7 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<s_vector_dim(STATE_D
    * @param [in] s: \f$ s \f$
    * @param [out] allSs: Single vector constructed by concatenating Sm, Sv and s.
    */
-  static void convert2Vector(const dynamic_matrix_t& Sm, const dynamic_vector_t& Sv, const scalar_t& s, s_vector_t& allSs);
+  static void convert2Vector(const dynamic_matrix_t& Sm, const dynamic_vector_t& Sv, const scalar_t& s, dynamic_vector_t& allSs);
 
   /**
    * Transcribes the stacked vector allSs into a symmetric matrix, Sm, a vector, Sv and a single scalar, s.
@@ -126,7 +157,7 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<s_vector_dim(STATE_D
    * @param [out] Sv: \f$ S_v \f$
    * @param [out] s: \f$ s \f$
    */
-  static void convert2Matrix(const s_vector_t& allSs, state_matrix_t& Sm, state_vector_t& Sv, scalar_t& s);
+  static void convert2Matrix(const dynamic_vector_t& allSs, dynamic_matrix_t& Sm, dynamic_vector_t& Sv, scalar_t& s);
 
   /**
    * Sets coefficients of the model.
@@ -148,7 +179,7 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<s_vector_dim(STATE_D
    * @param [in] allSs: A flattened vector constructed by concatenating Sm, Sv and s.
    * @param [out] allSsPreEvent: mapped flattened state after transition.
    */
-  void computeJumpMap(const scalar_t& z, const s_vector_t& allSs, s_vector_t& allSsPreEvent) override;
+  void computeJumpMap(const scalar_t& z, const dynamic_vector_t& allSs, dynamic_vector_t& allSsPreEvent) override;
 
   /**
    * Computes derivatives.
@@ -157,7 +188,7 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<s_vector_dim(STATE_D
    * @param [in] allSs: A flattened vector constructed by concatenating Sm, Sv and s.
    * @param [out] derivatives: d(allSs)/dz.
    */
-  void computeFlowMap(const scalar_t& z, const s_vector_t& allSs, s_vector_t& derivatives) override;
+  void computeFlowMap(const scalar_t& z, const dynamic_vector_t& allSs, dynamic_vector_t& derivatives) override;
 
  protected:
   /**
@@ -167,12 +198,13 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<s_vector_dim(STATE_D
    * @param [in] Sm: The current Riccati matrix.
    * @param [in] Sv: The current Riccati vector.
    * @param [in] s: The current Riccati scalar.
+   * @param [out] creCache: The continuous-time Riccati equation cache date.
    * @param [out] dSm: The time derivative of the Riccati matrix.
    * @param [out] dSv: The time derivative of the  Riccati vector.
    * @param [out] ds: The time derivative of the  Riccati scalar.
    */
-  void computeFlowMapSLQ(std::pair<int, scalar_t> indexAlpha, const state_matrix_t& Sm, const state_vector_t& Sv, const scalar_t& s,
-                         dynamic_matrix_t& dSm, dynamic_vector_t& dSv, scalar_t& ds);
+  void computeFlowMapSLQ(std::pair<int, scalar_t> indexAlpha, const dynamic_matrix_t& Sm, const dynamic_vector_t& Sv, const scalar_t& s,
+                         ContinuousTimeRiccatiData& creCache, dynamic_matrix_t& dSm, dynamic_vector_t& dSv, scalar_t& ds) const;
 
   /**
    * Computes the Riccati equations for ILEG problem.
@@ -181,12 +213,13 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<s_vector_dim(STATE_D
    * @param [in] Sm: The current Riccati matrix.
    * @param [in] Sv: The current Riccati vector.
    * @param [in] s: The current Riccati scalar.
+   * @param [out] creCache: The continuous-time Riccati equation cache date.
    * @param [out] dSm: The time derivative of the Riccati matrix.
    * @param [out] dSv: The time derivative of the  Riccati vector.
    * @param [out] ds: The time derivative of the  Riccati scalar.
    */
-  void computeFlowMapILEG(std::pair<int, scalar_t> indexAlpha, const state_matrix_t& Sm, const state_vector_t& Sv, const scalar_t& s,
-                          dynamic_matrix_t& dSm, dynamic_vector_t& dSv, scalar_t& ds);
+  void computeFlowMapILEG(std::pair<int, scalar_t> indexAlpha, const dynamic_matrix_t& Sm, const dynamic_vector_t& Sv, const scalar_t& s,
+                          ContinuousTimeRiccatiData& creCache, dynamic_matrix_t& dSm, dynamic_vector_t& dSv, scalar_t& ds) const;
 
  private:
   bool reducedFormRiccati_;
@@ -200,39 +233,7 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<s_vector_dim(STATE_D
   const RiccatiModificationBase::array_t* riccatiModificationPtr_;
   scalar_array_t eventTimes_;
 
-  scalar_t s_;
-  state_vector_t Sv_;
-  state_matrix_t Sm_;
-
-  scalar_t ds_;
-  dynamic_vector_t dSv_;
-  dynamic_matrix_t dSm_;
-
-  dynamic_vector_t projectedHv_;
-  dynamic_matrix_t projectedAm_;
-  dynamic_matrix_t projectedBm_;
-  dynamic_matrix_t projectedRm_;
-  dynamic_matrix_t dynamicsCovariance_;
-
-  dynamic_matrix_t deltaQm_;
-
-  dynamic_matrix_t projectedGm_;
-  dynamic_vector_t projectedGv_;
-
-  dynamic_matrix_t projectedKm_;
-  dynamic_vector_t projectedLv_;
-
-  dynamic_matrix_t SmTrans_projectedAm_;
-  dynamic_matrix_t projectedKm_T_projectedGm_;
-  dynamic_matrix_t projectedRm_projectedKm_;
-  dynamic_vector_t projectedRm_projectedLv_;
-
-  dynamic_vector_t Sigma_Sv_;
-  dynamic_matrix_t Sigma_Sm_;
+  ContinuousTimeRiccatiData continuousTimeRiccatiData_;
 };
 
-extern template class ContinuousTimeRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;
-
 }  // namespace ocs2
-
-#include <ocs2_ddp/riccati_equations/implementation/ContinuousTimeRiccatiEquations.h>

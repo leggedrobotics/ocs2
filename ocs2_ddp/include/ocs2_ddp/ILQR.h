@@ -92,7 +92,7 @@ class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::penalty_base_t;
   using typename BASE::rollout_base_t;
 
-  using riccati_equations_t = DiscreteTimeRiccatiEquations<STATE_DIM, INPUT_DIM>;
+  using riccati_equations_t = DiscreteTimeRiccatiEquations;
 
   //	/**
   //	 * class for collecting ILQR data
@@ -171,7 +171,7 @@ class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   dynamic_matrix_array2_t projectedKmTrajectoryStock_;  // projected feedback
   dynamic_vector_array2_t projectedLvTrajectoryStock_;  // projected feedforward
 
-  std::vector<std::shared_ptr<riccati_equations_t>> riccatiEquationsPtrStock_;
+  std::vector<std::unique_ptr<riccati_equations_t>> riccatiEquationsPtrStock_;
 };
 
 }  // namespace ocs2

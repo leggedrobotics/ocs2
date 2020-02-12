@@ -152,15 +152,15 @@ class DDP_DataCollector {
 
   // terminal cost which is interpreted as the Heuristic function
   scalar_t sHeuristics_;
-  state_vector_t SvHeuristics_;
-  state_matrix_t SmHeuristics_;
+  dynamic_vector_t SvHeuristics_;
+  dynamic_matrix_t SmHeuristics_;
 
   scalar_array2_t SsTimeTrajectoriesStock_;
   scalar_array2_t SsNormalizedTimeTrajectoriesStock_;
   size_array2_t SsNormalizedEventsPastTheEndIndecesStock_;
   scalar_array2_t sTrajectoriesStock_;
-  state_vector_array2_t SvTrajectoriesStock_;
-  state_matrix_array2_t SmTrajectoriesStock_;
+  dynamic_vector_array2_t SvTrajectoriesStock_;
+  dynamic_matrix_array2_t SmTrajectoriesStock_;
 
   /******************
    * DDP missing variables

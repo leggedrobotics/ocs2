@@ -1,3 +1,5 @@
+#pragma once
+
 #include <ocs2_cart_pole_example/definitions.h>
 #include <ocs2_core/Dimensions.h>
 

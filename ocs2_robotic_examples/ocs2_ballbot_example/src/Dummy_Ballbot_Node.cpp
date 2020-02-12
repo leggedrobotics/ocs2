@@ -34,15 +34,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_ballbot_example/definitions.h"
 #include "ocs2_ballbot_example/ros_comm/BallbotDummyVisualization.h"
 
-using namespace ocs2;
-
 int main(int argc, char** argv) {
   const std::string robotName = "ballbot";
-  using interface_t = ballbot::BallbotInterface;
-  using vis_t = ballbot::BallbotDummyVisualization;
-  using mrt_t = MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
-  using dummy_t = MRT_ROS_Dummy_Loop<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
-  using observation_t = SystemObservation<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
+  using interface_t = ocs2::ballbot::BallbotInterface;
+  using vis_t = ocs2::ballbot::BallbotDummyVisualization;
+  using mrt_t = ocs2::MRT_ROS_Interface<ocs2::ballbot::STATE_DIM_, ocs2::ballbot::INPUT_DIM_>;
+  using dummy_t = ocs2::MRT_ROS_Dummy_Loop<ocs2::ballbot::STATE_DIM_, ocs2::ballbot::INPUT_DIM_>;
 
   // task file
   if (argc <= 1) {
@@ -70,14 +67,11 @@ int main(int argc, char** argv) {
   dummyBallbot.subscribeObservers({ballbotDummyVisualization});
 
   // initial state
-  observation_t initObservation;
+  mrt_t::system_observation_t initObservation;
   initObservation.state() = ballbotInterface.getInitialState();
 
   // initial command
-  CostDesiredTrajectories initCostDesiredTrajectories;
-  initCostDesiredTrajectories.desiredTimeTrajectory().push_back(initObservation.time());
-  initCostDesiredTrajectories.desiredStateTrajectory().push_back(initObservation.state());
-  initCostDesiredTrajectories.desiredInputTrajectory().push_back(initObservation.input());
+  ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time()}, {initObservation.state()}, {initObservation.input()});
 
   // Run dummy (loops while ros is ok)
   dummyBallbot.run(initObservation, initCostDesiredTrajectories);

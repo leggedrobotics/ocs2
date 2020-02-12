@@ -29,32 +29,31 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <robot_state_publisher/robot_state_publisher.h>
-#include <tf/transform_broadcaster.h>
+#include <ros/ros.h>
+#include <sensor_msgs/JointState.h>
 
 #include <ocs2_comm_interfaces/test/DummyObserver.h>
-#include "ocs2_ballbot_example/definitions.h"
+
+#include "ocs2_cart_pole_example/definitions.h"
 
 namespace ocs2 {
-namespace ballbot {
+namespace cartpole {
 
-class BallbotDummyVisualization final : public DummyObserver<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> {
+class CartpoleDummyVisualization : public DummyObserver<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  explicit BallbotDummyVisualization(ros::NodeHandle& n) { launchVisualizerNode(n); }
+  explicit CartpoleDummyVisualization(ros::NodeHandle& n) { launchVisualizerNode(n); }
 
-  ~BallbotDummyVisualization() override = default;
+  ~CartpoleDummyVisualization() override = default;
 
   void update(const system_observation_t& observation, const primal_solution_t& policy, const command_data_t& command) override;
 
  private:
   void launchVisualizerNode(ros::NodeHandle& n);
 
-  ros::Publisher visualizationPublisher_;
-  std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
-  std::unique_ptr<tf::TransformBroadcaster> tfBroadcasterPtr_;
+  ros::Publisher jointPublisher_;
 };
 
-}  // namespace ballbot
+}  // namespace cartpole
 }  // namespace ocs2

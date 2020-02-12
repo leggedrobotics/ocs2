@@ -31,11 +31,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ballbot_example/BallbotInterface.h"
 
-using namespace ocs2;
-
 int main(int argc, char** argv) {
   const std::string robotName = "ballbot";
-  using interface_t = ballbot::BallbotInterface;
+  using interface_t = ocs2::ballbot::BallbotInterface;
+  using mpc_ros_t = ocs2::MPC_ROS_Interface<ocs2::ballbot::STATE_DIM_, ocs2::ballbot::INPUT_DIM_>;
 
   // task file
   if (argc <= 1) {
@@ -44,15 +43,15 @@ int main(int argc, char** argv) {
   std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
   // Initialize ros node
-  ros::init(argc, argv, robotName + "_mrt");
+  ros::init(argc, argv, robotName + "_mpc");
   ros::NodeHandle n;
 
-  // ballbotInterface
+  // Robot interface
   interface_t ballbotInterface(taskFileFolderName);
 
   // Launch MPC ROS node
   auto mpcPtr = ballbotInterface.getMpc();
-  MPC_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> mpcNode(*mpcPtr, "ballbot");
+  mpc_ros_t mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(n);
 
   // Successful exit

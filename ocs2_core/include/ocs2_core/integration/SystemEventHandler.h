@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/StdVector>
 #include <exception>
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include <ocs2_core/Dimensions.h>
@@ -84,10 +85,9 @@ class SystemEventHandler {
    * @param [in] system: System dynamics
    * @param [in] time: The current time.
    * @param [in] state: The current state vector.
-   * @param [out] eventID: A non-negative unique ID for the active events..
-   * @return Whether an event is active.
+   * @return pair of event flag and eventID
    */
-  virtual bool checkEvent(system_t& system, scalar_t time, const state_vector_t& state, size_t& eventID) { return false; }
+  virtual std::pair<bool, size_t> checkEvent(system_t& system, scalar_t time, const state_vector_t& state) { return {false, 0}; }
 
   /**
    * The operation should be performed if an event is activated.
@@ -115,7 +115,9 @@ class SystemEventHandler {
 
     // derived class events
     size_t eventID;
-    if (checkEvent(system, time, state, eventID)) {
+    bool event;
+    std::tie(event, eventID) = this->checkEvent(system, time, state);
+    if (event) {
       throw eventID;
     }
   }

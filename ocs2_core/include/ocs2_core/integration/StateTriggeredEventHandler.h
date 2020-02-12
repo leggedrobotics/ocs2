@@ -71,10 +71,11 @@ class StateTriggeredEventHandler final : public SystemEventHandler<STATE_DIM> {
    * @param [in] system: System dynamics
    * @param [in] time: The current time.
    * @param [in] state: The current state vector.
-   * @param [out] eventID: A non-negative unique ID for the active events..
-   * @return Whether an event is active.
+   * @return pair of event flag and eventID
    */
-  bool checkEvent(system_t& system, scalar_t time, const state_vector_t& state, size_t& eventID) override {
+  std::pair<bool, size_t> checkEvent(system_t& system, scalar_t time, const state_vector_t& state) override {
+    size_t eventID = 0;
+
     // StateTriggered event
     system.computeGuardSurfaces(time, state, guardSurfacesValuesCurrent_);
 
@@ -93,7 +94,7 @@ class StateTriggeredEventHandler final : public SystemEventHandler<STATE_DIM> {
       guardSurfacesValuesPrevious_ = guardSurfacesValuesCurrent_;
     }
 
-    return eventTriggered;
+    return {eventTriggered, eventID};
   }
 
   /**

@@ -75,18 +75,6 @@ target_link_libraries(${PROJECT_NAME}
 )
 #set_property(TARGET ocs2_anymal_bear_interface PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-add_executable(${PROJECT_NAME}_planning
-        src/planning.cpp
-        )
-add_dependencies(${PROJECT_NAME}_planning
-        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-        ${catkin_EXPORTED_TARGETS}
-        )
-target_link_libraries(${PROJECT_NAME}_planning
-        ${PROJECT_NAME}
-        ${catkin_LIBRARIES}
-        )
-
 add_executable(${PROJECT_NAME}_mpc_node
         src/AnymalBearMpcNode.cpp
 )

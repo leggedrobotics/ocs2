@@ -22,7 +22,7 @@ if(USE_PYBIND_PYTHON_3)
 endif(USE_PYBIND_PYTHON_3)
 find_package(pybind11 QUIET)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -fPIC")
 
 ###################################
 ## catkin specific configuration ##
@@ -74,6 +74,18 @@ target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 #set_property(TARGET ocs2_anymal_bear_interface PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+add_executable(${PROJECT_NAME}_planning
+        src/planning.cpp
+        )
+add_dependencies(${PROJECT_NAME}_planning
+        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(${PROJECT_NAME}_planning
+        ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        )
 
 add_executable(${PROJECT_NAME}_mpc_node
         src/AnymalBearMpcNode.cpp
@@ -156,6 +168,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 install(TARGETS
+            ${PROJECT_NAME}_planning
             ${PROJECT_NAME}_mpc_node
             ${PROJECT_NAME}_dummy_mrt_node
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

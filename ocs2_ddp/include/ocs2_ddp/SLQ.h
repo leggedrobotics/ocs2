@@ -134,7 +134,8 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
 
   void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
 
-  scalar_t solveSequentialRiccatiEquations(const state_matrix_t& SmFinal, const state_vector_t& SvFinal, const scalar_t& sFinal) override;
+  scalar_t solveSequentialRiccatiEquations(const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal,
+                                           const scalar_t& sFinal) override;
 
   dynamic_matrix_t computeHamiltonianHessian(DDP_Strategy strategy, const ModelDataBase& modelData,
                                              const dynamic_matrix_t& Sm) const override;

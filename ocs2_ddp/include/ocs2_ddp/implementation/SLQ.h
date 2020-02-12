@@ -185,8 +185,8 @@ void SLQ<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, si
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-typename SLQ<STATE_DIM, INPUT_DIM>::scalar_t SLQ<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(const state_matrix_t& SmFinal,
-                                                                                                        const state_vector_t& SvFinal,
+typename SLQ<STATE_DIM, INPUT_DIM>::scalar_t SLQ<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(const dynamic_matrix_t& SmFinal,
+                                                                                                        const dynamic_vector_t& SvFinal,
                                                                                                         const scalar_t& sFinal) {
   // fully compute the riccatiModifications and projected modelData
   for (size_t i = 0; i < BASE::numPartitions_; i++) {

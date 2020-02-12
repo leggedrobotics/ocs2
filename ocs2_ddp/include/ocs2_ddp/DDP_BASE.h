@@ -84,13 +84,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::dynamic_vector_array3_t;
   using typename BASE::dynamic_vector_array_t;
   using typename BASE::dynamic_vector_t;
-  using typename BASE::input_matrix_array2_t;
-  using typename BASE::input_matrix_array3_t;
-  using typename BASE::input_matrix_array_t;
-  using typename BASE::input_matrix_t;
-  using typename BASE::input_state_matrix_array2_t;
-  using typename BASE::input_state_matrix_array_t;
-  using typename BASE::input_state_matrix_t;
   using typename BASE::input_vector_array2_t;
   using typename BASE::input_vector_array3_t;
   using typename BASE::input_vector_array_t;
@@ -101,10 +94,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::scalar_t;
   using typename BASE::size_array2_t;
   using typename BASE::size_array_t;
-  using typename BASE::state_matrix_array2_t;
-  using typename BASE::state_matrix_array3_t;
-  using typename BASE::state_matrix_array_t;
-  using typename BASE::state_matrix_t;
   using typename BASE::state_vector_array2_t;
   using typename BASE::state_vector_array3_t;
   using typename BASE::state_vector_array_t;
@@ -340,7 +329,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @return average time step
    */
-  virtual scalar_t solveSequentialRiccatiEquations(const state_matrix_t& SmFinal, const state_vector_t& SvFinal,
+  virtual scalar_t solveSequentialRiccatiEquations(const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal,
                                                    const scalar_t& sFinal) = 0;
 
   /**
@@ -352,7 +341,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @return average time step
    */
-  scalar_t solveSequentialRiccatiEquationsImpl(const state_matrix_t& SmFinal, const state_vector_t& SvFinal, const scalar_t& sFinal);
+  scalar_t solveSequentialRiccatiEquationsImpl(const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal, const scalar_t& sFinal);
 
   /**
    * Solves Riccati equations for the partitions assigned to the given thread.

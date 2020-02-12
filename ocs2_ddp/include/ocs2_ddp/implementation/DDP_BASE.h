@@ -153,12 +153,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
     cachedModelDataEventTimesStock_[i].clear();
     cachedProjectedModelDataTrajectoriesStock_[i].clear();
     cachedRiccatiModificationTrajectoriesStock_[i].clear();
-
-    // for Riccati equation parallel computation
-    SmFinalStock_[i] = state_matrix_t::Zero();
-    SvFinalStock_[i] = state_vector_t::Zero();
-    sFinalStock_[i] = 0.0;
-    xFinalStock_[i] = state_vector_t::Zero();
   }  // end of i loop
 
   // reset timers
@@ -731,8 +725,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
                                                              nominalInputTrajectoriesStock_[finalActivePartition_].back());
 
   // TODO: avoid temps
-  state_vector_t SvHeuristicsTemp;
-  state_matrix_t SmHeuristicsTemp;
+  typename BASE::state_vector_t SvHeuristicsTemp;
+  typename BASE::state_matrix_t SmHeuristicsTemp;
   heuristicsFunctionsPtrStock_[0]->getTerminalCost(sHeuristics_);
   heuristicsFunctionsPtrStock_[0]->getTerminalCostDerivativeState(SvHeuristicsTemp);
   heuristicsFunctionsPtrStock_[0]->getTerminalCostSecondDerivativeState(SmHeuristicsTemp);
@@ -776,9 +770,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::augmentCostWorker(size_t workerIndex, scala
     scalar_t p;
     state_vector_t dpdx;
     input_vector_t dpdu;
-    state_matrix_t ddpdxdx;
-    input_matrix_t ddpdudu;
-    input_state_matrix_t ddpdudx;
+    typename BASE::state_matrix_t ddpdxdx;
+    typename BASE::input_matrix_t ddpdudu;
+    typename BASE::input_state_matrix_t ddpdudx;
     penaltyPtrStock_[workerIndex]->getPenaltyCost(modelData.ineqConstr_, p);
     penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeState(modelData.ineqConstr_, modelData.ineqConstrStateDerivative_, dpdx);
     penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInput(modelData.ineqConstr_, modelData.ineqConstrInputDerivative_, dpdu);
@@ -1471,7 +1465,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::levenbergMarquardt() {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquationsImpl(
-    const state_matrix_t& SmFinal, const state_vector_t& SvFinal, const scalar_t& sFinal) {
+    const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal, const scalar_t& sFinal) {
   SmFinalStock_[finalActivePartition_] = SmFinal;
   SvFinalStock_[finalActivePartition_] = SvFinal;
   sFinalStock_[finalActivePartition_] = sFinal;
@@ -1549,15 +1543,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::riccatiSolverTask() {
       SmTrajectoryStock_[i].clear();
       SvTrajectoryStock_[i].clear();
       sTrajectoryStock_[i].clear();
-
-      {  // lock data
-        std::lock_guard<std::mutex> lock(riccatiSolverDataMutex_);
-
-        SmFinalStock_[i].setZero();
-        SvFinalStock_[i].setZero();
-        sFinalStock_[i] = 0.0;
-        xFinalStock_[i].setZero();
-      }
 
     } else {
       dynamic_matrix_t SmFinal;
@@ -2227,10 +2212,10 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
   /*
    * Riccati solver variables and controller update
    */
-  SmFinalStock_ = dynamic_matrix_array_t(numPartitions, dynamic_matrix_t::Zero(STATE_DIM, STATE_DIM));
-  SvFinalStock_ = dynamic_vector_array_t(numPartitions, dynamic_vector_t::Zero(STATE_DIM));
-  sFinalStock_ = scalar_array_t(numPartitions, 0.0);
-  xFinalStock_ = state_vector_array_t(numPartitions, state_vector_t::Zero());
+  SmFinalStock_ = dynamic_matrix_array_t(numPartitions);
+  SvFinalStock_ = dynamic_vector_array_t(numPartitions);
+  sFinalStock_ = scalar_array_t(numPartitions);
+  xFinalStock_ = state_vector_array_t(numPartitions);
 
   SsTimeTrajectoryStock_.resize(numPartitions);
   SsNormalizedTimeTrajectoryStock_.resize(numPartitions);

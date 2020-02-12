@@ -212,8 +212,8 @@ void ILQR<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, s
 /******************************************************************************************************/
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-typename ILQR<STATE_DIM, INPUT_DIM>::scalar_t ILQR<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(const state_matrix_t& SmFinal,
-                                                                                                          const state_vector_t& SvFinal,
+typename ILQR<STATE_DIM, INPUT_DIM>::scalar_t ILQR<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(const dynamic_matrix_t& SmFinal,
+                                                                                                          const dynamic_vector_t& SvFinal,
                                                                                                           const scalar_t& sFinal) {
   return BASE::solveSequentialRiccatiEquationsImpl(SmFinal, SvFinal, sFinal);
 }

@@ -27,8 +27,8 @@ INCLUDE_DIRS
     include
     ${EIGEN3_INCLUDE_DIRS}
 LIBRARIES
-    anymal_loopshaping_asConstraint
-    anymal_loopshaping_replaceInput
+#    anymal_loopshaping_asConstraint
+#    anymal_loopshaping_replaceInput
 CATKIN_DEPENDS
     roslib
     ocs2_anymal_bear_switched_model
@@ -51,115 +51,115 @@ include_directories(
 ##################
 ## asConstraint ##
 ##################
-# Declare a library
-add_library(${PROJECT_NAME}_asConstraint
-        src/asConstraint/definitions.cpp)
-add_dependencies(${PROJECT_NAME}_asConstraint
-        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-        ${catkin_EXPORTED_TARGETS}
-        )
-target_link_libraries(${PROJECT_NAME}_asConstraint
-        ${catkin_LIBRARIES}
-        glpk
-        )
-
-# Declare a C++ Executable
-add_executable(${PROJECT_NAME}_asConstraint_mpc_node
-        src/asConstraint/mpc_node.cpp
-        )
-add_dependencies(${PROJECT_NAME}_asConstraint_mpc_node
-        ${PROJECT_NAME}_asConstraint
-        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-        ${catkin_EXPORTED_TARGETS}
-        )
-target_link_libraries(${PROJECT_NAME}_asConstraint_mpc_node
-        ${PROJECT_NAME}_asConstraint
-        ${catkin_LIBRARIES}
-        glpk
-        )
-
-add_executable(${PROJECT_NAME}_asConstraint_planning
-        src/asConstraint/planning.cpp
-        )
-add_dependencies(${PROJECT_NAME}_asConstraint_planning
-        ${PROJECT_NAME}_asConstraint
-        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-        ${catkin_EXPORTED_TARGETS}
-        )
-target_link_libraries(${PROJECT_NAME}_asConstraint_planning
-        ${PROJECT_NAME}_asConstraint
-        ${catkin_LIBRARIES}
-        )
-
-add_executable(${PROJECT_NAME}_asConstraint_dummy
-        src/asConstraint/dummy.cpp
-        )
-add_dependencies(${PROJECT_NAME}_asConstraint_dummy
-        ${PROJECT_NAME}_asConstraint
-        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-        ${catkin_EXPORTED_TARGETS}
-        )
-target_link_libraries(${PROJECT_NAME}_asConstraint_dummy
-        ${PROJECT_NAME}_asConstraint
-        ${catkin_LIBRARIES}
-        glpk
-        )
+## Declare a library
+#add_library(${PROJECT_NAME}_asConstraint
+#        src/asConstraint/definitions.cpp)
+#add_dependencies(${PROJECT_NAME}_asConstraint
+#        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+#        ${catkin_EXPORTED_TARGETS}
+#        )
+#target_link_libraries(${PROJECT_NAME}_asConstraint
+#        ${catkin_LIBRARIES}
+#        glpk
+#        )
+#
+## Declare a C++ Executable
+#add_executable(${PROJECT_NAME}_asConstraint_mpc_node
+#        src/asConstraint/mpc_node.cpp
+#        )
+#add_dependencies(${PROJECT_NAME}_asConstraint_mpc_node
+#        ${PROJECT_NAME}_asConstraint
+#        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+#        ${catkin_EXPORTED_TARGETS}
+#        )
+#target_link_libraries(${PROJECT_NAME}_asConstraint_mpc_node
+#        ${PROJECT_NAME}_asConstraint
+#        ${catkin_LIBRARIES}
+#        glpk
+#        )
+#
+#add_executable(${PROJECT_NAME}_asConstraint_planning
+#        src/asConstraint/planning.cpp
+#        )
+#add_dependencies(${PROJECT_NAME}_asConstraint_planning
+#        ${PROJECT_NAME}_asConstraint
+#        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+#        ${catkin_EXPORTED_TARGETS}
+#        )
+#target_link_libraries(${PROJECT_NAME}_asConstraint_planning
+#        ${PROJECT_NAME}_asConstraint
+#        ${catkin_LIBRARIES}
+#        )
+#
+#add_executable(${PROJECT_NAME}_asConstraint_dummy
+#        src/asConstraint/dummy.cpp
+#        )
+#add_dependencies(${PROJECT_NAME}_asConstraint_dummy
+#        ${PROJECT_NAME}_asConstraint
+#        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+#        ${catkin_EXPORTED_TARGETS}
+#        )
+#target_link_libraries(${PROJECT_NAME}_asConstraint_dummy
+#        ${PROJECT_NAME}_asConstraint
+#        ${catkin_LIBRARIES}
+#        glpk
+#        )
 
 ##################
 ## replaceInput ##
 ##################
-add_library(${PROJECT_NAME}_replaceInput
-        src/replaceInput/definitions.cpp)
-add_dependencies(${PROJECT_NAME}_replaceInput
-        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-        ${catkin_EXPORTED_TARGETS}
-        )
-target_link_libraries(${PROJECT_NAME}_replaceInput
-        ${catkin_LIBRARIES}
-        glpk
-        )
-
-# Declare a C++ Executable
-add_executable(${PROJECT_NAME}_replaceInput_mpc_node
-        src/replaceInput/mpc_node.cpp
-        )
-add_dependencies(${PROJECT_NAME}_replaceInput_mpc_node
-        ${PROJECT_NAME}_replaceInput
-        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-        ${catkin_EXPORTED_TARGETS}
-        )
-target_link_libraries(${PROJECT_NAME}_replaceInput_mpc_node
-        ${PROJECT_NAME}_replaceInput
-        ${catkin_LIBRARIES}
-        glpk
-        )
-
-add_executable(${PROJECT_NAME}_replaceInput_planning
-        src/replaceInput/planning.cpp
-        )
-add_dependencies(${PROJECT_NAME}_replaceInput_planning
-        ${PROJECT_NAME}_replaceInput
-        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-        ${catkin_EXPORTED_TARGETS}
-        )
-target_link_libraries(${PROJECT_NAME}_replaceInput_planning
-        ${PROJECT_NAME}_replaceInput
-        ${catkin_LIBRARIES}
-        )
-
-add_executable(${PROJECT_NAME}_replaceInput_dummy
-        src/replaceInput/dummy.cpp
-        )
-add_dependencies(${PROJECT_NAME}_replaceInput_dummy
-        ${PROJECT_NAME}_replaceInput
-        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-        ${catkin_EXPORTED_TARGETS}
-        )
-target_link_libraries(${PROJECT_NAME}_replaceInput_dummy
-        ${PROJECT_NAME}_replaceInput
-        ${catkin_LIBRARIES}
-        glpk
-        )
+#add_library(${PROJECT_NAME}_replaceInput
+#        src/replaceInput/definitions.cpp)
+#add_dependencies(${PROJECT_NAME}_replaceInput
+#        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+#        ${catkin_EXPORTED_TARGETS}
+#        )
+#target_link_libraries(${PROJECT_NAME}_replaceInput
+#        ${catkin_LIBRARIES}
+#        glpk
+#        )
+#
+## Declare a C++ Executable
+#add_executable(${PROJECT_NAME}_replaceInput_mpc_node
+#        src/replaceInput/mpc_node.cpp
+#        )
+#add_dependencies(${PROJECT_NAME}_replaceInput_mpc_node
+#        ${PROJECT_NAME}_replaceInput
+#        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+#        ${catkin_EXPORTED_TARGETS}
+#        )
+#target_link_libraries(${PROJECT_NAME}_replaceInput_mpc_node
+#        ${PROJECT_NAME}_replaceInput
+#        ${catkin_LIBRARIES}
+#        glpk
+#        )
+#
+#add_executable(${PROJECT_NAME}_replaceInput_planning
+#        src/replaceInput/planning.cpp
+#        )
+#add_dependencies(${PROJECT_NAME}_replaceInput_planning
+#        ${PROJECT_NAME}_replaceInput
+#        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+#        ${catkin_EXPORTED_TARGETS}
+#        )
+#target_link_libraries(${PROJECT_NAME}_replaceInput_planning
+#        ${PROJECT_NAME}_replaceInput
+#        ${catkin_LIBRARIES}
+#        )
+#
+#add_executable(${PROJECT_NAME}_replaceInput_dummy
+#        src/replaceInput/dummy.cpp
+#        )
+#add_dependencies(${PROJECT_NAME}_replaceInput_dummy
+#        ${PROJECT_NAME}_replaceInput
+#        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+#        ${catkin_EXPORTED_TARGETS}
+#        )
+#target_link_libraries(${PROJECT_NAME}_replaceInput_dummy
+#        ${PROJECT_NAME}_replaceInput
+#        ${catkin_LIBRARIES}
+#        glpk
+#        )
 
 
 #############

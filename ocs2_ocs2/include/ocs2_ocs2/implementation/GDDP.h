@@ -56,7 +56,7 @@ GDDP<STATE_DIM, INPUT_DIM>::GDDP(const GDDP_Settings& gddpSettings /*= GDDP_Sett
 
   IntegratorType integratorType = gddpSettings_.riccatiIntegratorType_;
   if (integratorType != IntegratorType::ODE45 && integratorType != IntegratorType::BULIRSCH_STOER) {
-    throw(std::runtime_error("Unsupported Riccati equation integrator type: " + toString(integratorType)));
+    throw(std::runtime_error("Unsupported Riccati equation integrator type: " + integrator_type::toString(integratorType)));
   }
 
   for (size_t i = 0; i < gddpSettings_.nThreads_; i++) {

@@ -57,7 +57,8 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivativ
 
   IntegratorType integratorType = settings_.RiccatiIntegratorType_;
   if (integratorType != IntegratorType::ODE45 && integratorType != IntegratorType::BULIRSCH_STOER) {
-    throw(std::runtime_error("Unsupported Riccati equation integrator type: " + toString(settings_.RiccatiIntegratorType_)));
+    throw(
+        std::runtime_error("Unsupported Riccati equation integrator type: " + integrator_type::toString(settings_.RiccatiIntegratorType_)));
   }
 
   for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {

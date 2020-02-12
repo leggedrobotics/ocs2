@@ -31,10 +31,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <limits>
 
-#include "ocs2_core/Dimensions.h"
-#include "ocs2_core/integration/Observer.h"
-#include "ocs2_core/integration/OdeBase.h"
-#include "ocs2_core/integration/SystemEventHandler.h"
+#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/integration/Observer.h>
+#include <ocs2_core/integration/OdeBase.h>
+#include <ocs2_core/integration/SystemEventHandler.h>
 
 namespace ocs2 {
 
@@ -63,7 +63,7 @@ class IntegratorBase {
   explicit IntegratorBase(std::shared_ptr<SystemEventHandler<STATE_DIM>> eventHandlerPtr = nullptr)
       : eventHandlerPtr_(std::move(eventHandlerPtr)) {
     if (!eventHandlerPtr_) {
-      eventHandlerPtr_ = std::shared_ptr<SystemEventHandler<STATE_DIM>>(new SystemEventHandler<STATE_DIM>());
+      eventHandlerPtr_ = std::make_shared<SystemEventHandler<STATE_DIM>>();
     }
   }
 

@@ -74,7 +74,7 @@ class Observer {
    * @param [in] state: Current state.
    * @param [in] time: Current time.
    */
-  void observe(OdeBase<STATE_DIM>& system, const state_vector_t& state, const scalar_t& time) {
+  void observe(OdeBase<STATE_DIM>& system, const state_vector_t& state, const scalar_t time) {
     // Store data
     if (stateTrajectoryPtr_) {
       stateTrajectoryPtr_->push_back(state);

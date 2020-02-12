@@ -141,9 +141,9 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, const st
   loadData::loadPtreeValue(pt, maxNumStepsPerSecond_, fieldName + ".maxNumStepsPerSecond", verbose);
   loadData::loadPtreeValue(pt, minTimeStep_, fieldName + ".minTimeStep", verbose);
 
-  auto integratorName = toString(integratorType_);  // keep default
+  auto integratorName = integrator_type::toString(integratorType_);  // keep default
   loadData::loadPtreeValue(pt, integratorName, fieldName + ".integratorType", verbose);
-  integratorType_ = fromString(integratorName);
+  integratorType_ = integrator_type::fromString(integratorName);
 
   loadData::loadPtreeValue(pt, checkNumericalStability_, fieldName + ".checkNumericalStability", verbose);
   loadData::loadPtreeValue(pt, reconstructInputTrajectory_, fieldName + ".reconstructInputTrajectory", verbose);

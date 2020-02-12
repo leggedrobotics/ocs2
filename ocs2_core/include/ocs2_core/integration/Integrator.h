@@ -34,14 +34,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdexcept>
 #include <string>
 #include <type_traits>
-#include <unordered_map>
 
 #include <boost/numeric/odeint.hpp>
 
-#include "ocs2_core/OCS2NumericTraits.h"
-#include "ocs2_core/integration/IntegratorBase.h"
-#include "ocs2_core/integration/eigenIntegration.h"
-#include "ocs2_core/integration/steppers.h"
+#include <ocs2_core/OCS2NumericTraits.h>
+#include <ocs2_core/integration/IntegratorBase.h>
+#include <ocs2_core/integration/eigenIntegration.h>
+#include <ocs2_core/integration/steppers.h>
 
 namespace ocs2 {
 
@@ -51,41 +50,21 @@ namespace ocs2 {
  */
 enum class IntegratorType { EULER, ODE45, ADAMS_BASHFORTH, BULIRSCH_STOER, MODIFIED_MIDPOINT, RK4, RK5_VARIABLE, ADAMS_BASHFORTH_MOULTON };
 
+namespace integrator_type {
+
 /**
  * Get string name of integrator type
  * @param [in] integratorType: Integrator type enum
  */
-static std::string toString(IntegratorType integratorType) {
-  static const std::unordered_map<IntegratorType, std::string> integratorMap = {
-      {IntegratorType::EULER, "EULER"},
-      {IntegratorType::ODE45, "ODE45"},
-      {IntegratorType::ADAMS_BASHFORTH, "ADAMS_BASHFORTH"},
-      {IntegratorType::BULIRSCH_STOER, "BULIRSCH_STOER"},
-      {IntegratorType::MODIFIED_MIDPOINT, "MODIFIED_MIDPOINT"},
-      {IntegratorType::RK4, "RK4"},
-      {IntegratorType::RK5_VARIABLE, "RK5_VARIABLE"},
-      {IntegratorType::ADAMS_BASHFORTH_MOULTON, "ADAMS_BASHFORTH_MOULTON"}};
-
-  return integratorMap.at(integratorType);
-}
+std::string toString(IntegratorType integratorType);
 
 /**
  * Get integrator type from string name, useful for reading config file
  * @param [in] name: Integrator name
  */
-static IntegratorType fromString(const std::string& name) {
-  static const std::unordered_map<std::string, IntegratorType> integratorMap = {
-      {"EULER", IntegratorType::EULER},
-      {"ODE45", IntegratorType::ODE45},
-      {"ADAMS_BASHFORTH", IntegratorType::ADAMS_BASHFORTH},
-      {"BULIRSCH_STOER", IntegratorType::BULIRSCH_STOER},
-      {"MODIFIED_MIDPOINT", IntegratorType::MODIFIED_MIDPOINT},
-      {"RK4", IntegratorType::RK4},
-      {"RK5_VARIABLE", IntegratorType::RK5_VARIABLE},
-      {"ADAMS_BASHFORTH_MOULTON", IntegratorType::ADAMS_BASHFORTH_MOULTON}};
+IntegratorType fromString(const std::string& name);
 
-  return integratorMap.at(name);
-}
+}  // namespace integrator_type
 
 /**
  * Create Integrator of given type.
@@ -93,7 +72,6 @@ static IntegratorType fromString(const std::string& name) {
  * @tparam STATE_DIM: Dimension of the state space.
  *
  * @param [in] integratorType: The integrator type.
- * @param [in] system: The system dynamics.
  * @param [in] eventHandler: The integration event function.
  */
 template <int STATE_DIM>
@@ -128,6 +106,7 @@ class Integrator final : public IntegratorBase<STATE_DIM> {
    */
   ~Integrator() override = default;
 
+ private:
   /**
    * Equidistant integration based on initial and final time as well as step length.
    *

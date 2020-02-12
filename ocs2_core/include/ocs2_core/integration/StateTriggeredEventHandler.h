@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_core/integration/SystemEventHandler.h"
+#include <ocs2_core/integration/SystemEventHandler.h>
 
 namespace ocs2 {
 

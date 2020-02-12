@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.0)
-project(ocs2_core) 
+project(ocs2_core)
 
-find_package(catkin REQUIRED COMPONENTS 
+find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   ocs2_thirdparty
-) 
-find_package(Boost REQUIRED COMPONENTS 
+)
+find_package(Boost REQUIRED COMPONENTS
   system
-  filesystem 
+  filesystem
 )
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -23,16 +23,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 ###################################
 
 catkin_package(
-  INCLUDE_DIRS 
+  INCLUDE_DIRS
     include
     ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
     ${PROJECT_NAME}_logic
     ${PROJECT_NAME}_cppad_interface
     ${PROJECT_NAME}_misc
+    ${PROJECT_NAME}_integration
   CATKIN_DEPENDS
     ocs2_thirdparty
-  DEPENDS 
+  DEPENDS
     Boost
 )
 
@@ -72,6 +73,10 @@ target_link_libraries(${PROJECT_NAME}_lintTarget
   ${Boost_LIBRARIES}
 )
 
+add_library(${PROJECT_NAME}_integration
+  src/integration/Integrator.cpp
+)
+
 #########################
 ###   CLANG TOOLING   ###
 #########################
@@ -79,7 +84,11 @@ find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target " ${PROJECT_NAME}_lintTarget)
   add_clang_tooling(
-    TARGETS ${PROJECT_NAME}_lintTarget ${PROJECT_NAME}_logic ${PROJECT_NAME}_cppad_interface
+    TARGETS
+      ${PROJECT_NAME}_lintTarget
+      ${PROJECT_NAME}_logic
+      ${PROJECT_NAME}_cppad_interface
+      ${PROJECT_NAME}_integration
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
     CF_WERROR
@@ -90,10 +99,15 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS ${PROJECT_NAME}_logic ${PROJECT_NAME}_cppad_interface ${PROJECT_NAME}_misc
-        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+install(
+  TARGETS
+    ${PROJECT_NAME}_logic
+    ${PROJECT_NAME}_cppad_interface
+    ${PROJECT_NAME}_misc
+    ${PROJECT_NAME}_integration
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(DIRECTORY include/${PROJECT_NAME}/
@@ -113,6 +127,7 @@ catkin_add_gtest(integration_unittest
   test/integration/IntegrationTest.cpp
 )
 target_link_libraries(integration_unittest
+  ${PROJECT_NAME}_integration
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   gtest_main

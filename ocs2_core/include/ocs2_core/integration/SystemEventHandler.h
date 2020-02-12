@@ -35,8 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 #include <vector>
 
-#include "ocs2_core/Dimensions.h"
-#include "ocs2_core/integration/OdeBase.h"
+#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/integration/OdeBase.h>
 
 namespace ocs2 {
 

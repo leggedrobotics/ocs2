@@ -62,7 +62,7 @@ class IntegratorBase {
    */
   explicit IntegratorBase(std::shared_ptr<SystemEventHandler<STATE_DIM>> eventHandlerPtr = nullptr)
       : eventHandlerPtr_(std::move(eventHandlerPtr)) {
-    if (!eventHandlerPtr_) {
+    if (eventHandlerPtr_ == nullptr) {
       eventHandlerPtr_ = std::make_shared<SystemEventHandler<STATE_DIM>>();
     }
   }

@@ -76,10 +76,10 @@ class Observer {
    */
   void observe(OdeBase<STATE_DIM>& system, const state_vector_t& state, const scalar_t time) {
     // Store data
-    if (stateTrajectoryPtr_) {
+    if (stateTrajectoryPtr_ != nullptr) {
       stateTrajectoryPtr_->push_back(state);
     }
-    if (timeTrajectoryPtr_) {
+    if (timeTrajectoryPtr_ != nullptr) {
       timeTrajectoryPtr_->push_back(time);
     }
   }

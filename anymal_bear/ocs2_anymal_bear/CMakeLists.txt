@@ -156,7 +156,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 install(TARGETS
-            ${PROJECT_NAME}_planning
             ${PROJECT_NAME}_mpc_node
             ${PROJECT_NAME}_dummy_mrt_node
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

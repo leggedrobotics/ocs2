@@ -78,8 +78,9 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
 
       // Lateral Constraint
       _o_eeVelConSettings.A.resize(2, 3);
-      const auto o_R_e = static_cast<KinematicsModelBase<scalar_t>>(*adKinematicModelPtr_).footOrientationInOriginFrame(footIdx, getComPose(x), getJointPositions(x));
-      auto o_eeVelLateral = o_R_e.cast<scalar_t>().col(2).template head<2>().eval(); // X,Y components
+      const auto o_R_e_ad_t = adKinematicModelPtr_->footOrientationInOriginFrame(footIdx, getComPose(x), getJointPositions(x));
+      o_R_e = 
+      auto o_eeVelLateral = o_R_e.col(2).template head<2>().eval(); // X,Y components
       _o_eeVelConSettings.A.template block<1,2>(0,0) = o_eeVelLateral;
       _o_eeVelConSettings.A(0,2) = 0;
       _o_eeVelConSettings.A.bottomRows<1>() << 0, 0, 1; // Up(Z) constraint

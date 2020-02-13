@@ -45,7 +45,7 @@ matrix3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footOrientationInOriginFram
     const base_coordinate_s_t<SCALAR_T> basePose,
     const joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   matrix3_s_t<SCALAR_T> o_R_b = rotationMatrixBaseToOrigin<SCALAR_T>(getOrientation(basePose));
-  return o_R_b * footOrientationRelativeToBase(footIndex, jointPositions);
+  return o_R_b * footOrientationRelativeToBaseFrame(footIndex, jointPositions);
 }
 /******************************************************************************************************/
 /******************************************************************************************************/

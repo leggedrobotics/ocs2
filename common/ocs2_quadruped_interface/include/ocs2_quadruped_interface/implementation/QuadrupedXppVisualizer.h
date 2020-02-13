@@ -11,28 +11,18 @@
 namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::launchVisualizerNode(int argc, char** argv) {
-  ros::init(argc, argv, robotName_ + "_visualization_node");
-  signal(SIGINT, QuadrupedXppVisualizer::sigintHandler);
-
-  ros::NodeHandle n;
+void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::launchVisualizerNode(ros::NodeHandle& n) {
   visualizationPublisher_ = n.advertise<xpp_msgs::RobotStateCartesian>(xpp_msgs::robot_state_desired, 1);
   visualizationJointPublisher_ = n.advertise<xpp_msgs::RobotStateJoint>("xpp/joint_anymal_des", 1);
-  costDesiredPublisher_ = n.advertise<visualization_msgs::Marker>("desiredBaseTrajectory", 100);
-  stateOptimizedPublisher_ = n.advertise<visualization_msgs::Marker>("optimizedBaseTrajectory", 100);
-  feetOptimizedPublisher_ = n.advertise<visualization_msgs::MarkerArray>("optimizedFeetTrajectories", 100);
+  costDesiredPublisher_ = n.advertise<visualization_msgs::Marker>("desiredBaseTrajectory", 1);
+  stateOptimizedPublisher_ = n.advertise<visualization_msgs::Marker>("optimizedBaseTrajectory", 1);
+  feetOptimizedPublisher_ = n.advertise<visualization_msgs::MarkerArray>("optimizedFeetTrajectories", 1);
 
   ROS_INFO_STREAM("Waiting for visualization subscriber ...");
   while (ros::ok() && visualizationPublisher_.getNumSubscribers() == 0) {
     ros::Rate(100).sleep();
   }
   ROS_INFO_STREAM("Visualization subscriber is connected.");
-
-  startTime_ = ros::Time::now();
-
-  if (save_rosbag_) {
-    robotStateCartesianTrajectoryMsg_.header.stamp = startTime_;
-  }
 }
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
@@ -60,8 +50,8 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishObse
     o_feetForceRef[i] = observation.input().template segment<3>(3 * i);
   }
 
-  publishXppVisualizer(observation.time(), basePose, baseLocalVelocities, qJoints,
-                       o_feetPositionRef, o_feetVelocityRef, o_feetAccelerationRef, o_feetForceRef);
+  publishXppVisualizer(observation.time(), basePose, baseLocalVelocities, qJoints, o_feetPositionRef, o_feetVelocityRef,
+                       o_feetAccelerationRef, o_feetForceRef);
 }
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
@@ -136,17 +126,6 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishXppV
     robotStateCartesianMsg.ee_forces[ee_k].z = feetForce[ee_k](2);
   }
 
-  if (save_rosbag_) {
-    const auto stamp = ros::Time(startTime_.toSec() + time);
-    try {
-      bag_.write("xpp/state_des", stamp, robotStateCartesianMsg);
-    } catch (const rosbag::BagException& err) {
-      std::cerr << "Error writing rosbag message: " << err.what() << std::endl;
-    }
-
-    robotStateCartesianTrajectoryMsg_.points.push_back(robotStateCartesianMsg);
-  }
-
   // Joint space message
   xpp_msgs::RobotStateJoint robotStateJointMsg;
   robotStateJointMsg.time_from_start = robotStateCartesianMsg.time_from_start;
@@ -181,12 +160,6 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeFeet
     o_feetVelocity[i] = kinematicModelPtr_->footVelocityInOriginFrame(i, basePose, baseLocalVelocities, qJoints, dqJoints);
     o_contactForces[i] = o_R_b * input.template segment<3>(3 * i);
   }
-}
-
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::sigintHandler(int sig) {
-  ROS_INFO_STREAM("Shutting MRT node.");
-  ::ros::shutdown();
 }
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>

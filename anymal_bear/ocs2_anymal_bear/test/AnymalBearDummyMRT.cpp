@@ -5,46 +5,55 @@
  *      Author: farbod
  */
 
-#include <iostream>
-#include <string>
-
 #include <ros/package.h>
 
-#include <ocs2_quadruped_interface/MRT_ROS_Quadruped.h>
-#include <ocs2_quadruped_interface/test/MRT_ROS_Dummy_Quadruped.h>
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
+#include <ocs2_comm_interfaces/test/MRT_ROS_Dummy_Loop.h>
+
+#include <ocs2_quadruped_interface/QuadrupedXppVisualizer.h>
 
 #include "ocs2_anymal_bear/AnymalBearInterface.h"
 
-using namespace anymal;
-using namespace switched_model;
-
 int main(int argc, char* argv[]) {
+  static constexpr size_t STATE_DIM = 24;
+  static constexpr size_t INPUT_DIM = 24;
+  static constexpr size_t JOINT_DIM = 12;
   const std::string robotName = "anymal";
+  using interface_t = anymal::AnymalBearInterface;
+  using vis_t = switched_model::QuadrupedXppVisualizer<JOINT_DIM>;
+  using mrt_t = ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
+  using dummy_t = ocs2::MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>;
 
   if (argc <= 1) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
-  std::string taskFolder = ros::package::getPath("ocs2_anymal_bear") + "/config/" + std::string(argv[1]);
+  std::string taskFolder = ros::package::getPath("ocs2_anymal_bear") + "/config/" +
+                           std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
   std::cerr << "Loading task file from: " << taskFolder << std::endl;
 
-  std::shared_ptr<AnymalBearInterface> anymalBearInterface(new AnymalBearInterface(taskFolder));
-  MRT_ROS_Quadruped<12> mrt(anymalBearInterface, robotName);
+  // Initialize ros node
+  ros::init(argc, argv, robotName + "_mrt");
+  ros::NodeHandle n;
 
-  // Visualizer
-  std::unique_ptr<QuadrupedXppVisualizer<12>> visualizer(
-      new QuadrupedXppVisualizer<12>(anymalBearInterface->getKinematicModel(), anymalBearInterface->getComModel(), robotName, false));
+  // robot interface
+  interface_t anymalBearInterface(taskFolder);
+
+  // MRT
+  mrt_t mrt(robotName);
+  mrt.initRollout(&anymalBearInterface.getRollout());
+  mrt.launchNodes(n);
+
+  // Visualization
+  std::shared_ptr<vis_t> visualizer(new vis_t(anymalBearInterface.getKinematicModel(), anymalBearInterface.getComModel(), robotName, n));
 
   // Dummy MRT
-  MRT_ROS_Dummy_Quadruped<12> dummySimulator(std::move(visualizer), mrt, anymalBearInterface->mpcSettings().mrtDesiredFrequency_,
-                                             anymalBearInterface->mpcSettings().mpcDesiredFrequency_);
-
-  dummySimulator.launchNodes(argc, argv);
+  dummy_t dummySimulator(mrt, anymalBearInterface.mpcSettings().mrtDesiredFrequency_,
+                         anymalBearInterface.mpcSettings().mpcDesiredFrequency_);
+  dummySimulator.subscribeObservers({visualizer});
 
   // initial state
-  MRT_ROS_Dummy_Quadruped<12>::system_observation_t initObservation;
-  initObservation.time() = 0.0;
-  initObservation.state() = anymalBearInterface->getInitialState();
-  initObservation.input().setZero();
+  mrt_t::system_observation_t initObservation;
+  initObservation.state() = anymalBearInterface.getInitialState();
   initObservation.subsystem() = 15;
 
   // initial command
@@ -52,4 +61,6 @@ int main(int argc, char* argv[]) {
 
   // run dummy
   dummySimulator.run(initObservation, initCostDesiredTrajectories);
+
+  return 0;
 }

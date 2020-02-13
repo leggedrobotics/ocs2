@@ -5,28 +5,39 @@
  *      Author: farbod
  */
 
-#include <iostream>
-#include <string>
-
 #include <ros/package.h>
 
-#include <ocs2_quadruped_interface/MPC_ROS_Quadruped.h>
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 
 #include "ocs2_anymal_bear/AnymalBearInterface.h"
 
 int main(int argc, char* argv[]) {
+  static constexpr size_t STATE_DIM = 24;
+  static constexpr size_t INPUT_DIM = 24;
+  static constexpr size_t JOINT_DIM = 12;
+  const std::string robotName = "anymal";
+  using interface_t = anymal::AnymalBearInterface;
+  using mpc_ros_t = ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM>;
+
   // task file
   if (argc <= 1) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
-  std::string taskFolder = ros::package::getPath("ocs2_anymal_bear") + "/config/" + std::string(argv[1]);
+  std::string taskFolder = ros::package::getPath("ocs2_anymal_bear") + "/config/" +
+                           std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
   std::cerr << "Loading task file from: " << taskFolder << std::endl;
+
+  // Initialize ros node
+  ros::init(argc, argv, robotName + "_mpc");
+  ros::NodeHandle n;
 
   // Set up interface
   anymal::AnymalBearInterface anymalInterface(taskFolder);
 
   // launch MPC nodes
   auto mpcPtr = anymalInterface.getMpc();
-  switched_model::MPC_ROS_Quadruped<12> ocs2AnymalMPC(*mpcPtr, "anymal");
-  ocs2AnymalMPC.launchNodes(argc, argv);
+  mpc_ros_t mpcNode(*mpcPtr, robotName);
+  mpcNode.launchNodes(n);
+
+  return 0;
 }

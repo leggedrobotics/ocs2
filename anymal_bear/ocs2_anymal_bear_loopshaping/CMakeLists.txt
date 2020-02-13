@@ -7,7 +7,7 @@ project(ocs2_anymal_bear_loopshaping)
 find_package(catkin REQUIRED COMPONENTS
         roslib
         ocs2_anymal_bear_switched_model
-        ocs2_quadruped_augmented_interface
+        ocs2_quadruped_interface
         )
 
 ## Eigen3
@@ -27,12 +27,11 @@ INCLUDE_DIRS
     include
     ${EIGEN3_INCLUDE_DIRS}
 LIBRARIES
-#    anymal_loopshaping_asConstraint
-#    anymal_loopshaping_replaceInput
+    ${PROJECT_NAME}
 CATKIN_DEPENDS
     roslib
     ocs2_anymal_bear_switched_model
-    ocs2_quadruped_augmented_interface
+    ocs2_quadruped_interface
 DEPENDS
     Boost
 )
@@ -47,130 +46,42 @@ include_directories(
         ${catkin_INCLUDE_DIRS}
 )
 
+# Declare a C++ library
+add_library(${PROJECT_NAME}
+        src/AnymalBearLoopshapingInterface.cpp
+        )
+add_dependencies(${PROJECT_NAME}
+        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        )
 
-##################
-## asConstraint ##
-##################
-## Declare a library
-#add_library(${PROJECT_NAME}_asConstraint
-#        src/asConstraint/definitions.cpp)
-#add_dependencies(${PROJECT_NAME}_asConstraint
-#        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-#        ${catkin_EXPORTED_TARGETS}
-#        )
-#target_link_libraries(${PROJECT_NAME}_asConstraint
-#        ${catkin_LIBRARIES}
-#        glpk
-#        )
-#
-## Declare a C++ Executable
-#add_executable(${PROJECT_NAME}_asConstraint_mpc_node
-#        src/asConstraint/mpc_node.cpp
-#        )
-#add_dependencies(${PROJECT_NAME}_asConstraint_mpc_node
-#        ${PROJECT_NAME}_asConstraint
-#        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-#        ${catkin_EXPORTED_TARGETS}
-#        )
-#target_link_libraries(${PROJECT_NAME}_asConstraint_mpc_node
-#        ${PROJECT_NAME}_asConstraint
-#        ${catkin_LIBRARIES}
-#        glpk
-#        )
-#
-#add_executable(${PROJECT_NAME}_asConstraint_planning
-#        src/asConstraint/planning.cpp
-#        )
-#add_dependencies(${PROJECT_NAME}_asConstraint_planning
-#        ${PROJECT_NAME}_asConstraint
-#        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-#        ${catkin_EXPORTED_TARGETS}
-#        )
-#target_link_libraries(${PROJECT_NAME}_asConstraint_planning
-#        ${PROJECT_NAME}_asConstraint
-#        ${catkin_LIBRARIES}
-#        )
-#
-#add_executable(${PROJECT_NAME}_asConstraint_dummy
-#        src/asConstraint/dummy.cpp
-#        )
-#add_dependencies(${PROJECT_NAME}_asConstraint_dummy
-#        ${PROJECT_NAME}_asConstraint
-#        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-#        ${catkin_EXPORTED_TARGETS}
-#        )
-#target_link_libraries(${PROJECT_NAME}_asConstraint_dummy
-#        ${PROJECT_NAME}_asConstraint
-#        ${catkin_LIBRARIES}
-#        glpk
-#        )
+add_executable(${PROJECT_NAME}_mpc_node
+        src/AnymalBearLoopshapingMpcNode.cpp
+        )
+add_dependencies(${PROJECT_NAME}_mpc_node
+        ${PROJECT_NAME}
+        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(${PROJECT_NAME}_mpc_node
+        ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        )
 
-##################
-## replaceInput ##
-##################
-#add_library(${PROJECT_NAME}_replaceInput
-#        src/replaceInput/definitions.cpp)
-#add_dependencies(${PROJECT_NAME}_replaceInput
-#        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-#        ${catkin_EXPORTED_TARGETS}
-#        )
-#target_link_libraries(${PROJECT_NAME}_replaceInput
-#        ${catkin_LIBRARIES}
-#        glpk
-#        )
-#
-## Declare a C++ Executable
-#add_executable(${PROJECT_NAME}_replaceInput_mpc_node
-#        src/replaceInput/mpc_node.cpp
-#        )
-#add_dependencies(${PROJECT_NAME}_replaceInput_mpc_node
-#        ${PROJECT_NAME}_replaceInput
-#        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-#        ${catkin_EXPORTED_TARGETS}
-#        )
-#target_link_libraries(${PROJECT_NAME}_replaceInput_mpc_node
-#        ${PROJECT_NAME}_replaceInput
-#        ${catkin_LIBRARIES}
-#        glpk
-#        )
-#
-#add_executable(${PROJECT_NAME}_replaceInput_planning
-#        src/replaceInput/planning.cpp
-#        )
-#add_dependencies(${PROJECT_NAME}_replaceInput_planning
-#        ${PROJECT_NAME}_replaceInput
-#        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-#        ${catkin_EXPORTED_TARGETS}
-#        )
-#target_link_libraries(${PROJECT_NAME}_replaceInput_planning
-#        ${PROJECT_NAME}_replaceInput
-#        ${catkin_LIBRARIES}
-#        )
-#
-#add_executable(${PROJECT_NAME}_replaceInput_dummy
-#        src/replaceInput/dummy.cpp
-#        )
-#add_dependencies(${PROJECT_NAME}_replaceInput_dummy
-#        ${PROJECT_NAME}_replaceInput
-#        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-#        ${catkin_EXPORTED_TARGETS}
-#        )
-#target_link_libraries(${PROJECT_NAME}_replaceInput_dummy
-#        ${PROJECT_NAME}_replaceInput
-#        ${catkin_LIBRARIES}
-#        glpk
-#        )
+add_executable(${PROJECT_NAME}_dummy_mrt_node
+        src/AnymalBearLoopshapingDummyMrt.cpp
+        src/AnymalBearLoopshapingVisualization.cpp
+        )
+add_dependencies(${PROJECT_NAME}_dummy_mrt_node
+        ${PROJECT_NAME}
+        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(${PROJECT_NAME}_dummy_mrt_node
+        ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        )
 
-
-#############
-## Testing ##
-#############
-
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_ocs2_anymal_interface.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)

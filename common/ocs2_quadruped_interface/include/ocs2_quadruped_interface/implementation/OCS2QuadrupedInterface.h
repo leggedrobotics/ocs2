@@ -56,7 +56,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
   Eigen::Matrix<scalar_t, rbd_state_dim_, 1> initRbdState;
   ocs2::loadData::loadEigenMatrix(pathToConfigFile, "initialRobotState", initRbdState);
   SwitchedModelStateEstimator switchedModelStateEstimator(*comModelPtr_);
-  initialState_ = switchedModelStateEstimator.estimateComkinoModelState(initRbdState);
+  initialState_.template head<12 + JOINT_COORD_SIZE>() = switchedModelStateEstimator.estimateComkinoModelState(initRbdState);
 
   // cost function components
   ocs2::loadData::loadEigenMatrix(pathToConfigFile, "Q", Q_);
@@ -70,10 +70,6 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
     J_allFeet.block<3, 12>(3 * leg, 0) = J_thisfoot.bottomRows<3>();
   }
   R_.template block<12, 12>(12, 12) = (J_allFeet.transpose() * R_.template block<12, 12>(12, 12) * J_allFeet).eval();
-
-  if (INPUT_DIM == 4 * JOINT_COORD_SIZE) {
-    R_.template block<12, 12>(36, 36) = (J_allFeet.transpose() * R_.template block<12, 12>(36, 36) * J_allFeet).eval();
-  }
 
   // load the mode sequence template
   std::cerr << std::endl;

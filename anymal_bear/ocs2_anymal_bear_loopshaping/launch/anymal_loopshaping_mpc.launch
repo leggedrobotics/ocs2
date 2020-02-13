@@ -3,13 +3,13 @@
     <arg name="task_name"  default="mpc_augmented"/>
 
     <group if="$(arg rviz)">
-      <include file="$(find ocs2_anymal_visualization)/launch/visualization.launch"/>
+      <include file="$(find ocs2_anymal_bear_visualization)/launch/visualization.launch"/>
     </group>
 
-    <node pkg="ocs2_anymal_bear_loopshaping" type="ocs2_anymal_bear_loopshaping_asConstraint_mpc_node" name="ocs2_anymal_bear_loopshaping_asConstraint_mpc_node"
+    <node pkg="ocs2_anymal_bear_loopshaping" type="ocs2_anymal_bear_loopshaping_mpc_node" name="ocs2_anymal_bear_loopshaping_mpc_node"
           output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal -- "/>
 
-    <node pkg="ocs2_anymal_bear_loopshaping" type="ocs2_anymal_bear_loopshaping_asConstraint_dummy" name="ocs2_anymal_bear_loopshaping_asConstraint_dummy"
+    <node pkg="ocs2_anymal_bear_loopshaping" type="ocs2_anymal_bear_loopshaping_dummy_mrt_node" name="ocs2_anymal_bear_loopshaping_dummy_mrt_node"
           output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal -- "/>
 
     <node pkg="ocs2_anymal_commands" type="gait_command_node" name="gait_command_node"

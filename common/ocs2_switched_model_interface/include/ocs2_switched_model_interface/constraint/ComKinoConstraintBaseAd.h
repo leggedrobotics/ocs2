@@ -13,8 +13,17 @@
 namespace switched_model {
 
 class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM> {
+
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+  // using switched_model::FeetNames;
+  // using switched_model::FeetEnum;
+  enum Feet { LF=static_cast<size_t>(switched_model::FeetEnum::LF),
+              RF=static_cast<size_t>(switched_model::FeetEnum::RF),
+              LH=static_cast<size_t>(switched_model::FeetEnum::LH),
+              RH=static_cast<size_t>(switched_model::FeetEnum::RH)
+  };
 
   using logic_rules_t = SwitchedModelLogicRulesBase;
   using foot_cpg_t = typename logic_rules_t::foot_cpg_t;
@@ -51,24 +60,9 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
   using QuadraticConstraintApproximation_t = ocs2::QuadraticConstraintApproximation<STATE_DIM, INPUT_DIM>;
   using ConstraintTerm_t = ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM>;
 
-  // Enumeration and naming
-  enum class FeetEnum { LF, RF, LH, RH };
-  const std::array<std::string, 4> feetNames{"LF", "RF", "LH", "RH"};
 
   ComKinoConstraintBaseAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-                          std::shared_ptr<const logic_rules_t> logicRulesPtr, const ModelSettings& options = ModelSettings())
-      : Base(),
-        adKinematicModelPtr_(adKinematicModel.clone()),
-        adComModelPtr_(adComModel.clone()),
-        logicRulesPtr_(std::move(logicRulesPtr)),
-        options_(options),
-        inequalityConstraintsComputed_(false),
-        stateInputConstraintsComputed_(false) {
-    if (!logicRulesPtr_) {
-      throw std::runtime_error("[ComKinoConstraintBaseAD] logicRules cannot be a nullptr");
-    }
-    initializeConstraintTerms();
-  }
+                          std::shared_ptr<const logic_rules_t> logicRulesPtr, const ModelSettings& options = ModelSettings());
 
   ComKinoConstraintBaseAd(const ComKinoConstraintBaseAd& rhs)
       : Base(rhs),
@@ -84,9 +78,9 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
   /**
    * Initialize Constraint Terms
    */
-  void initializeConstraintTerms();
+  virtual void initializeConstraintTerms();
 
-  ~ComKinoConstraintBaseAd() override = default;
+  virtual ~ComKinoConstraintBaseAd() = default;
 
   ComKinoConstraintBaseAd* clone() const override;
 
@@ -125,7 +119,7 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
    */
   void getStanceLegs(contact_flag_t& stanceLegs);
 
- private:
+ protected:
   // State input equality constraints
   ConstraintCollection_t equalityStateInputConstraintCollection_;
   bool stateInputConstraintsComputed_;

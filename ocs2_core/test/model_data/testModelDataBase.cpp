@@ -10,7 +10,7 @@ TEST(testModelDataBase, testModelDataLinearInterpolation) {
   // create data
   const size_t N = 10;
   std::vector<double> timeArray(N);
-  ModelDataBase::array_t modelDataBaseArray(N);
+  std::vector<ModelDataBase, Eigen::aligned_allocator<ModelDataBase>> modelDataBaseArray(N);
 
   for (size_t i = 0; i < N; i++) {
 	double t = 2.0 * i;
@@ -22,16 +22,16 @@ TEST(testModelDataBase, testModelDataLinearInterpolation) {
 
   double time = 5.0;
   // get (index, alpha) pair
-  const auto indexAlpha = ModelData::LinearInterpolation::timeSegment(time, &timeArray);
+  const auto indexAlpha = ModelData::timeSegment(time, &timeArray);
   // scalar
   double enquiryScalar;
-  ModelData::LinearInterpolation::interpolate(indexAlpha, enquiryScalar, &modelDataBaseArray, ModelData::time);
+  ModelData::interpolate(indexAlpha, enquiryScalar, &modelDataBaseArray, ModelData::time);
   // dynamic vector
   Eigen::VectorXd enquiryVector;
-  ModelData::LinearInterpolation::interpolate(indexAlpha, enquiryVector, &modelDataBaseArray, ModelData::dynamics);
+  ModelData::interpolate(indexAlpha, enquiryVector, &modelDataBaseArray, ModelData::dynamics);
   // dynamic matrix
   Eigen::MatrixXd enquiryMatrix;
-  ModelData::LinearInterpolation::interpolate<Eigen::MatrixXd>(indexAlpha, enquiryMatrix, &modelDataBaseArray, ModelData::dynamicsStateDerivative);
+  ModelData::interpolate(indexAlpha, enquiryMatrix, &modelDataBaseArray, ModelData::dynamicsStateDerivative);
 
   ASSERT_TRUE(enquiryScalar == time);
   ASSERT_TRUE(enquiryVector.isApprox(Eigen::Vector3d::Ones()*time));

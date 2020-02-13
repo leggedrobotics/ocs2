@@ -259,36 +259,31 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void SLQ<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const {
   const auto activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(BASE::partitioningTimes_, time);
 
-  const auto indexAlpha =
-      EigenLinearInterpolation<state_vector_t>::timeSegment(time, &BASE::nominalTimeTrajectoriesStock_[activeSubsystem]);
+  const auto indexAlpha = LinearInterpolation::timeSegment(time, &BASE::nominalTimeTrajectoriesStock_[activeSubsystem]);
 
   state_vector_t xNominal;
-  EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, xNominal, &BASE::nominalStateTrajectoriesStock_[activeSubsystem]);
+  LinearInterpolation::interpolate(indexAlpha, xNominal, &BASE::nominalStateTrajectoriesStock_[activeSubsystem]);
 
   dynamic_matrix_t Bm;
-  ModelData::LinearInterpolation::interpolate(indexAlpha, Bm, &BASE::modelDataTrajectoriesStock_[activeSubsystem],
-                                              ModelData::dynamicsInputDerivative);
+  ModelData::interpolate(indexAlpha, Bm, &BASE::modelDataTrajectoriesStock_[activeSubsystem], ModelData::dynamicsInputDerivative);
 
   dynamic_matrix_t Pm;
-  ModelData::LinearInterpolation::interpolate(indexAlpha, Pm, &BASE::modelDataTrajectoriesStock_[activeSubsystem],
-                                              ModelData::costInputStateDerivative);
+  ModelData::interpolate(indexAlpha, Pm, &BASE::modelDataTrajectoriesStock_[activeSubsystem], ModelData::costInputStateDerivative);
 
   dynamic_vector_t Rv;
-  ModelData::LinearInterpolation::interpolate(indexAlpha, Rv, &BASE::modelDataTrajectoriesStock_[activeSubsystem],
-                                              ModelData::costInputDerivative);
+  ModelData::interpolate(indexAlpha, Rv, &BASE::modelDataTrajectoriesStock_[activeSubsystem], ModelData::costInputDerivative);
 
   dynamic_matrix_t Rm;
-  ModelData::LinearInterpolation::interpolate(indexAlpha, Rm, &BASE::modelDataTrajectoriesStock_[activeSubsystem],
-                                              ModelData::costInputSecondDerivative);
+  ModelData::interpolate(indexAlpha, Rm, &BASE::modelDataTrajectoriesStock_[activeSubsystem], ModelData::costInputSecondDerivative);
 
   input_vector_t EvProjected;
-  EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, EvProjected, &EvProjectedTrajectoryStock_[activeSubsystem]);
+  LinearInterpolation::interpolate(indexAlpha, EvProjected, &EvProjectedTrajectoryStock_[activeSubsystem]);
 
   input_state_matrix_t CmProjected;
-  EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, CmProjected, &CmProjectedTrajectoryStock_[activeSubsystem]);
+  LinearInterpolation::interpolate(indexAlpha, CmProjected, &CmProjectedTrajectoryStock_[activeSubsystem]);
 
   input_constraint1_matrix_t DmDager;
-  EigenLinearInterpolation<input_constraint1_matrix_t>::interpolate(indexAlpha, DmDager, &DmDagerTrajectoryStock_[activeSubsystem]);
+  LinearInterpolation::interpolate(indexAlpha, DmDager, &DmDagerTrajectoryStock_[activeSubsystem]);
 
   state_vector_t costate;
   BASE::getValueFunctionStateDerivative(time, state, costate);
@@ -326,17 +321,17 @@ void SLQ<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, si
   input_matrix_t DmProjected;
 
   // interpolate
-  const auto indexAlpha = EigenLinearInterpolation<state_vector_t>::timeSegment(time, &(BASE::nominalTimeTrajectoriesStock_[i]));
-  EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, nominalState, &(BASE::nominalStateTrajectoriesStock_[i]));
-  EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, nominalInput, &(BASE::nominalInputTrajectoriesStock_[i]));
+  const auto indexAlpha = LinearInterpolation::timeSegment(time, &(BASE::nominalTimeTrajectoriesStock_[i]));
+  LinearInterpolation::interpolate(indexAlpha, nominalState, &(BASE::nominalStateTrajectoriesStock_[i]));
+  LinearInterpolation::interpolate(indexAlpha, nominalInput, &(BASE::nominalInputTrajectoriesStock_[i]));
 
-  ModelData::LinearInterpolation::interpolate(indexAlpha, Bm, &BASE::modelDataTrajectoriesStock_[i], ModelData::dynamicsInputDerivative);
-  ModelData::LinearInterpolation::interpolate(indexAlpha, Pm, &BASE::modelDataTrajectoriesStock_[i], ModelData::costInputStateDerivative);
-  ModelData::LinearInterpolation::interpolate(indexAlpha, Rv, &BASE::modelDataTrajectoriesStock_[i], ModelData::costInputDerivative);
-  EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, RmInverse, &(RmInverseTrajectoryStock_[i]));
-  EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, EvProjected, &(EvProjectedTrajectoryStock_[i]));
-  EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, CmProjected, &(CmProjectedTrajectoryStock_[i]));
-  EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, DmProjected, &(DmProjectedTrajectoryStock_[i]));
+  ModelData::interpolate(indexAlpha, Bm, &BASE::modelDataTrajectoriesStock_[i], ModelData::dynamicsInputDerivative);
+  ModelData::interpolate(indexAlpha, Pm, &BASE::modelDataTrajectoriesStock_[i], ModelData::costInputStateDerivative);
+  ModelData::interpolate(indexAlpha, Rv, &BASE::modelDataTrajectoriesStock_[i], ModelData::costInputDerivative);
+  LinearInterpolation::interpolate(indexAlpha, RmInverse, &(RmInverseTrajectoryStock_[i]));
+  LinearInterpolation::interpolate(indexAlpha, EvProjected, &(EvProjectedTrajectoryStock_[i]));
+  LinearInterpolation::interpolate(indexAlpha, CmProjected, &(CmProjectedTrajectoryStock_[i]));
+  LinearInterpolation::interpolate(indexAlpha, DmProjected, &(DmProjectedTrajectoryStock_[i]));
 
   // Lm
   Pm.noalias() += Bm.transpose() * BASE::SmTrajectoryStock_[i][k];  // avoid temporary in the product
@@ -752,7 +747,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::errorRiccatiEquationWorker(size_t workerIndex, s
     const auto& Cm = CmProjectedTrajectoryStock_[partitionIndex][k];
 
     // Sm
-    EigenLinearInterpolation<state_matrix_t>::interpolate(nominalTimeTrajectory[k], Sm, &SsTimeTrajectory, &SmTrajectory);
+    LinearInterpolation::interpolate(nominalTimeTrajectory[k], Sm, &SsTimeTrajectory, &SmTrajectory);
     // Lm
     Lm = Pm;
     Lm.noalias() += Bm.transpose() * Sm;

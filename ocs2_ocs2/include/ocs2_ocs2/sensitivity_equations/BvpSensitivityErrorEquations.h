@@ -125,19 +125,19 @@ class BvpSensitivityErrorEquations final : public OdeBase<STATE_DIM> {
 
     // denormalized time
     const scalar_t t = -z;
-    auto indexAlpha = LinearInterpolation<scalar_t>::timeSegment(t, timeStampPtr_);
+    auto indexAlpha = LinearInterpolation::timeSegment(t, timeStampPtr_);
 
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Bm_, modelDataPtr_, ModelData::dynamicsInputDerivative);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Rm_, modelDataPtr_, ModelData::costInputSecondDerivative);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Pm_, modelDataPtr_, ModelData::costInputStateDerivative);
+    ModelData::interpolate(indexAlpha, Bm_, modelDataPtr_, ModelData::dynamicsInputDerivative);
+    ModelData::interpolate(indexAlpha, Rm_, modelDataPtr_, ModelData::costInputSecondDerivative);
+    ModelData::interpolate(indexAlpha, Pm_, modelDataPtr_, ModelData::costInputStateDerivative);
 
-    EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, AmConstrained_, AmConstrainedPtr_);
-    EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, CmProjected_, CmProjectedPtr_);
-    EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, RmInverse_, RmInversePtr_);
-    EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, RinvChol_, RinvCholPtr_);
-    EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, EvDevProjected_, EvDevProjectedPtr_);
+    LinearInterpolation::interpolate(indexAlpha, AmConstrained_, AmConstrainedPtr_);
+    LinearInterpolation::interpolate(indexAlpha, CmProjected_, CmProjectedPtr_);
+    LinearInterpolation::interpolate(indexAlpha, RmInverse_, RmInversePtr_);
+    LinearInterpolation::interpolate(indexAlpha, RinvChol_, RinvCholPtr_);
+    LinearInterpolation::interpolate(indexAlpha, EvDevProjected_, EvDevProjectedPtr_);
 
-    EigenLinearInterpolation<state_matrix_t>::interpolate(t, Sm_, SmTimeStampPtr_, SmPtr_);
+    LinearInterpolation::interpolate(t, Sm_, SmTimeStampPtr_, SmPtr_);
 
     // Lm
     // TODO: Double check if equations are correct after change to cholesky decomposition approach

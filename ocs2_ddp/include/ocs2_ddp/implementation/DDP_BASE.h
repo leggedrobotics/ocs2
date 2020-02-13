@@ -1114,11 +1114,11 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateControllerUpdateMaxNorm(scalar_t& 
       maxDeltaUffNorm = std::max(maxDeltaUffNorm, nominalControllersStock_[i].deltaBiasArray_[k].norm());
 
       const auto& time = nominalControllersStock_[i].timeStamp_[k];
-      const auto indexAlpha = EigenLinearInterpolation<state_vector_t>::timeSegment(time, &(nominalTimeTrajectoriesStock_[i]));
+      const auto indexAlpha = LinearInterpolation::timeSegment(time, &(nominalTimeTrajectoriesStock_[i]));
       state_vector_t nominalState;
-      EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, nominalState, &(nominalStateTrajectoriesStock_[i]));
+      LinearInterpolation::interpolate(indexAlpha, nominalState, &(nominalStateTrajectoriesStock_[i]));
       input_vector_t nominalInput;
-      EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, nominalInput, &(nominalInputTrajectoriesStock_[i]));
+      LinearInterpolation::interpolate(indexAlpha, nominalInput, &(nominalInputTrajectoriesStock_[i]));
       input_vector_t deltaUee =
           nominalInput - nominalControllersStock_[i].gainArray_[k] * nominalState - nominalControllersStock_[i].biasArray_[k];
       maxDeltaUeeNorm = std::max(maxDeltaUeeNorm, deltaUee.norm());
@@ -1155,7 +1155,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::correctInitcachedNominalTrajectories() {
     } else if (cachedTimeTrajectoriesStock_[i].back() < nominalTimeTrajectoriesStock_[i].back()) {
       // find the time segment
       const scalar_t finalTime = cachedTimeTrajectoriesStock_[i].back() + OCS2NumericTraits<scalar_t>::weakEpsilon();
-      const auto timeSegment = LinearInterpolation<scalar_t>::timeSegment(finalTime, &nominalTimeTrajectoriesStock_[i]);
+      const auto timeSegment = LinearInterpolation::timeSegment(finalTime, &nominalTimeTrajectoriesStock_[i]);
 
       // post event index
       const int sizeBeforeCorrection = cachedTimeTrajectoriesStock_[i].size();
@@ -1175,17 +1175,16 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::correctInitcachedNominalTrajectories() {
       // debugging checks for the added tail
       if (ddpSettings_.debugCaching_) {
         for (int k = timeSegment.first + 1; k < nominalTimeTrajectoriesStock_[i].size(); k++) {
-          auto indexAlpha =
-              LinearInterpolation<scalar_t>::timeSegment(nominalTimeTrajectoriesStock_[i][k], &cachedTimeTrajectoriesStock_[i]);
+          auto indexAlpha = LinearInterpolation::timeSegment(nominalTimeTrajectoriesStock_[i][k], &cachedTimeTrajectoriesStock_[i]);
 
           state_vector_t stateCached;
-          EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, stateCached, &cachedStateTrajectoriesStock_[i]);
+          LinearInterpolation::interpolate(indexAlpha, stateCached, &cachedStateTrajectoriesStock_[i]);
           if (!stateCached.isApprox(nominalStateTrajectoriesStock_[i][k])) {
             throw std::runtime_error("The tail of the cached state trajectory is not correctly set.");
           }
 
           input_vector_t inputCached;
-          EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, inputCached, &cachedInputTrajectoriesStock_[i]);
+          LinearInterpolation::interpolate(indexAlpha, inputCached, &cachedInputTrajectoriesStock_[i]);
           if (!inputCached.isApprox(nominalInputTrajectoriesStock_[i][k])) {
             throw std::runtime_error("The tail of the cached input trajectory is not correctly set.");
           }
@@ -1223,7 +1222,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::correctcachedTrajectoryTail(std::pair<int, 
                                                                  std::vector<Data_T, Alloc>& cachedTrajectory) {
   // adding the fist cashed value
   Data_T firstCachedValue;
-  LinearInterpolation<Data_T, Alloc>::interpolate(timeSegment, firstCachedValue, &currentTrajectory);
+  LinearInterpolation::interpolate(timeSegment, firstCachedValue, &currentTrajectory);
   cachedTrajectory.emplace_back(firstCachedValue);
 
   // Concatenate the rest
@@ -1267,25 +1266,23 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
   const auto partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
   state_matrix_t Sm;
-  const auto indexAlpha =
-      EigenLinearInterpolation<state_matrix_t>::interpolate(time, Sm, &SsTimeTrajectoryStock_[partition], &SmTrajectoryStock_[partition]);
+  const auto indexAlpha = LinearInterpolation::interpolate(time, Sm, &SsTimeTrajectoryStock_[partition], &SmTrajectoryStock_[partition]);
 
   state_vector_t Sv;
-  EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Sv, &SvTrajectoryStock_[partition]);
+  LinearInterpolation::interpolate(indexAlpha, Sv, &SvTrajectoryStock_[partition]);
 
   state_vector_t Sve;
   if (SveTrajectoryStock_[partition].empty()) {
     Sve.setZero();
   } else {
-    EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Sve, &SveTrajectoryStock_[partition]);
+    LinearInterpolation::interpolate(indexAlpha, Sve, &SveTrajectoryStock_[partition]);
   }
 
   scalar_t s;
-  LinearInterpolation<scalar_t>::interpolate(indexAlpha, s, &sTrajectoryStock_[partition]);
+  LinearInterpolation::interpolate(indexAlpha, s, &sTrajectoryStock_[partition]);
 
   state_vector_t xNominal;
-  EigenLinearInterpolation<state_vector_t>::interpolate(time, xNominal, &nominalTimeTrajectoriesStock_[partition],
-                                                        &nominalStateTrajectoriesStock_[partition]);
+  LinearInterpolation::interpolate(time, xNominal, &nominalTimeTrajectoriesStock_[partition], &nominalStateTrajectoriesStock_[partition]);
 
   state_vector_t deltaX = state - xNominal;
 
@@ -1300,22 +1297,20 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getValueFunctionStateDerivative(scalar_t ti
   const auto partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
   state_matrix_t Sm;
-  const auto indexAlpha =
-      EigenLinearInterpolation<state_matrix_t>::interpolate(time, Sm, &SsTimeTrajectoryStock_[partition], &SmTrajectoryStock_[partition]);
+  const auto indexAlpha = LinearInterpolation::interpolate(time, Sm, &SsTimeTrajectoryStock_[partition], &SmTrajectoryStock_[partition]);
 
   state_vector_t Sv;
-  EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Sv, &SvTrajectoryStock_[partition]);
+  LinearInterpolation::interpolate(indexAlpha, Sv, &SvTrajectoryStock_[partition]);
 
   state_vector_t Sve;
   if (SveTrajectoryStock_[partition].empty()) {
     Sve.setZero();
   } else {
-    EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Sve, &SveTrajectoryStock_[partition]);
+    LinearInterpolation::interpolate(indexAlpha, Sve, &SveTrajectoryStock_[partition]);
   }
 
   state_vector_t xNominal;
-  EigenLinearInterpolation<state_vector_t>::interpolate(time, xNominal, &nominalTimeTrajectoriesStock_[partition],
-                                                        &nominalStateTrajectoriesStock_[partition]);
+  LinearInterpolation::interpolate(time, xNominal, &nominalTimeTrajectoriesStock_[partition], &nominalStateTrajectoriesStock_[partition]);
 
   state_vector_t deltaX = state - xNominal;
 

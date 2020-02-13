@@ -215,14 +215,14 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const scal
     LinearAlgebra::makePSD(Sm_);
   }
 
-  const auto indexAlpha = EigenLinearInterpolation<state_matrix_t>::timeSegment(t, timeStampPtr_);
+  const auto indexAlpha = LinearInterpolation::timeSegment(t, timeStampPtr_);
   if (preComputeRiccatiTerms_) {
-    LinearInterpolation<scalar_t>::interpolate(indexAlpha, q_, &q_minus_half_Rv_Rinv_Rv_array_);
-    EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, Qm_, &Qm_minus_P_Rinv_P_array_);
-    EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Qv_, &Qv_minus_P_Rinv_Rv_array_);
-    EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, AmT_minus_P_Rinv_Bm_, &AmT_minus_P_Rinv_B_array_);
-    EigenLinearInterpolation<dynamic_vector_t>::interpolate(indexAlpha, RinvCholT_Rv_, &RinvCholT_Rv_array_);
-    EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, B_RinvChol_, &B_RinvChol_array_);
+    LinearInterpolation::interpolate(indexAlpha, q_, &q_minus_half_Rv_Rinv_Rv_array_);
+    LinearInterpolation::interpolate(indexAlpha, Qm_, &Qm_minus_P_Rinv_P_array_);
+    LinearInterpolation::interpolate(indexAlpha, Qv_, &Qv_minus_P_Rinv_Rv_array_);
+    LinearInterpolation::interpolate(indexAlpha, AmT_minus_P_Rinv_Bm_, &AmT_minus_P_Rinv_B_array_);
+    LinearInterpolation::interpolate(indexAlpha, RinvCholT_Rv_, &RinvCholT_Rv_array_);
+    LinearInterpolation::interpolate(indexAlpha, B_RinvChol_, &B_RinvChol_array_);
 
     // dSmdt,  Qm_ used instead of temporary
     AmT_Sm_.noalias() = AmT_minus_P_Rinv_Bm_ * Sm_;
@@ -238,15 +238,15 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const scal
     // dsdt,   q_ used instead of temporary
     q_ -= 0.5 * RinvCholT_Rv_.dot(RinvCholT_Rv_);
   } else {
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Bm_, modelDataPtr_, ModelData::dynamicsInputDerivative);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, q_, modelDataPtr_, ModelData::cost);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Rv_, modelDataPtr_, ModelData::costInputDerivative);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Pm_, modelDataPtr_, ModelData::costInputStateDerivative);
+    ModelData::interpolate(indexAlpha, Bm_, modelDataPtr_, ModelData::dynamicsInputDerivative);
+    ModelData::interpolate(indexAlpha, q_, modelDataPtr_, ModelData::cost);
+    ModelData::interpolate(indexAlpha, Rv_, modelDataPtr_, ModelData::costInputDerivative);
+    ModelData::interpolate(indexAlpha, Pm_, modelDataPtr_, ModelData::costInputStateDerivative);
 
-    EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, Qm_, QmPtr_);
-    EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Qv_, QvPtr_);
-    EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, Am_, AmPtr_);
-    EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, RinvChol_, RinvCholPtr_);
+    LinearInterpolation::interpolate(indexAlpha, Qm_, QmPtr_);
+    LinearInterpolation::interpolate(indexAlpha, Qv_, QvPtr_);
+    LinearInterpolation::interpolate(indexAlpha, Am_, AmPtr_);
+    LinearInterpolation::interpolate(indexAlpha, RinvChol_, RinvCholPtr_);
 
     Pm_.noalias() += Bm_.transpose() * Sm_;  // ! Pm is changed to avoid an extra temporary
     SmT_B_RinvChol_.noalias() = RinvChol_.transpose() * Pm_;

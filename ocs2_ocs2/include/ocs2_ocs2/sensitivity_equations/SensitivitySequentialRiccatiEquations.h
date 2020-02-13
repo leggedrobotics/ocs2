@@ -198,23 +198,23 @@ class SensitivitySequentialRiccatiEquations final : public OdeBase<STATE_DIM*(ST
 
     convert2Matrix(allSs, nabla_Sm_, nabla_Sv_, nabla_s_);
 
-    auto indexAlpha = LinearInterpolation<scalar_t>::timeSegment(t, SsTimePtr_);
-    EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, Sv_, SvPtr_);
-    EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, Sm_, SmPtr_);
+    auto indexAlpha = LinearInterpolation::timeSegment(t, SsTimePtr_);
+    LinearInterpolation::interpolate(indexAlpha, Sv_, SvPtr_);
+    LinearInterpolation::interpolate(indexAlpha, Sm_, SmPtr_);
 
-    indexAlpha = LinearInterpolation<scalar_t>::timeSegment(t, timeStampPtr_);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Am_, modelDataPtr_, ModelData::dynamicsStateDerivative);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Bm_, modelDataPtr_, ModelData::dynamicsInputDerivative);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, q_, modelDataPtr_, ModelData::cost);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Qv_, modelDataPtr_, ModelData::costStateDerivative);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Rv_, modelDataPtr_, ModelData::costInputDerivative);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Qm_, modelDataPtr_, ModelData::costStateSecondDerivative);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Rm_, modelDataPtr_, ModelData::costInputSecondDerivative);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Pm_, modelDataPtr_, ModelData::costInputStateDerivative);
-    EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, invRm_, RmInversePtr_);
-    LinearInterpolation<scalar_t>::interpolate(indexAlpha, nabla_q_, nablaqPtr_);
-    EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, nabla_Qv_, nablaQvPtr_);
-    EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, nabla_Rv_, nablaRvPtr_);
+    indexAlpha = LinearInterpolation::timeSegment(t, timeStampPtr_);
+    ModelData::interpolate(indexAlpha, Am_, modelDataPtr_, ModelData::dynamicsStateDerivative);
+    ModelData::interpolate(indexAlpha, Bm_, modelDataPtr_, ModelData::dynamicsInputDerivative);
+    ModelData::interpolate(indexAlpha, q_, modelDataPtr_, ModelData::cost);
+    ModelData::interpolate(indexAlpha, Qv_, modelDataPtr_, ModelData::costStateDerivative);
+    ModelData::interpolate(indexAlpha, Rv_, modelDataPtr_, ModelData::costInputDerivative);
+    ModelData::interpolate(indexAlpha, Qm_, modelDataPtr_, ModelData::costStateSecondDerivative);
+    ModelData::interpolate(indexAlpha, Rm_, modelDataPtr_, ModelData::costInputSecondDerivative);
+    ModelData::interpolate(indexAlpha, Pm_, modelDataPtr_, ModelData::costInputStateDerivative);
+    LinearInterpolation::interpolate(indexAlpha, invRm_, RmInversePtr_);
+    LinearInterpolation::interpolate(indexAlpha, nabla_q_, nablaqPtr_);
+    LinearInterpolation::interpolate(indexAlpha, nabla_Qv_, nablaQvPtr_);
+    LinearInterpolation::interpolate(indexAlpha, nabla_Rv_, nablaRvPtr_);
 
     Lv_ = invRm_ * (Rv_ + Bm_.transpose() * Sv_);
     Lm_ = invRm_ * (Pm_ + Bm_.transpose() * Sm_);

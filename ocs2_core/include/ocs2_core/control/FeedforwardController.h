@@ -148,7 +148,7 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM> 
 
   input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
     input_vector_t uff;
-    EigenLinearInterpolation<input_vector_t>::interpolate(t, uff, &timeStamp_, &uffArray_);
+    LinearInterpolation::interpolate(t, uff, &timeStamp_, &uffArray_);
     return uff;
   }
 
@@ -168,7 +168,7 @@ class FeedforwardController final : public ControllerBase<STATE_DIM, INPUT_DIM> 
 
   void flattenSingle(scalar_t time, float_array_t& flatArray) const {
     input_vector_t uff;
-    EigenLinearInterpolation<input_vector_t>::interpolate(time, uff, &timeStamp_, &uffArray_);
+    LinearInterpolation::interpolate(time, uff, &timeStamp_, &uffArray_);
 
     flatArray = std::move(float_array_t(uff.data(), uff.data() + INPUT_DIM));
   }

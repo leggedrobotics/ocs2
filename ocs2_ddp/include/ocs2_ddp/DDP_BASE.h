@@ -69,12 +69,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using BASE = Solver_BASE<STATE_DIM, INPUT_DIM>;
 
-  using typename BASE::constraint1_vector_array2_t;
-  using typename BASE::constraint1_vector_array_t;
-  using typename BASE::constraint1_vector_t;
-  using typename BASE::constraint2_vector_array2_t;
-  using typename BASE::constraint2_vector_array_t;
-  using typename BASE::constraint2_vector_t;
   using typename BASE::DIMENSIONS;
   using typename BASE::dynamic_matrix_array2_t;
   using typename BASE::dynamic_matrix_array3_t;
@@ -183,47 +177,14 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
    * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
    * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
-   * @param [in] threadId: Working thread (default is 0).
+   * @param [in] workerIndex: Working thread (default is 0).
    *
    * @return average time step.
    */
   scalar_t rolloutTrajectory(linear_controller_array_t& controllersStock, scalar_array2_t& timeTrajectoriesStock,
                              size_array2_t& postEventIndicesStock, state_vector_array2_t& stateTrajectoriesStock,
                              input_vector_array2_t& inputTrajectoriesStock, ModelDataBase::array2_t& modelDataTrajectoriesStock,
-                             size_t threadId = 0);
-
-  /**
-   * Calculates a rollout constraints. It uses the given rollout trajectories
-   * and calculate the constraints.
-   *
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the
-   * output time trajectory stamp.
-   * @param [in] postEventIndicesStock: Array of the post-event indices.
-   * @param [in] stateTrajectoriesStock: Array of trajectories containing the
-   * output state trajectory.
-   * @param [in] inputTrajectoriesStock: Array of trajectories containing the
-   * output control input trajectory.
-   * @param [out] nc1TrajectoriesStock: Array of trajectories containing the
-   * number of the active state-input constraints.
-   * @param [out] EvTrajectoryStock: Array of trajectories containing the value
-   * of the state-input constraints (if the rollout is constrained the value is
-   * always zero otherwise it is nonzero).
-   * @param [out] nc2TrajectoriesStock: Array of trajectories containing the
-   * number of the active state-only constraints.
-   * @param [out] HvTrajectoryStock: Array of trajectories containing the value
-   * of the state-only constraints.
-   * @param [out] nc2FinalStock: Array containing the number of the active final
-   * state-only constraints.
-   * @param [out] HvFinalStock: Array containing the value of the final
-   * state-only constraints.
-   * @param [in] threadId: Working thread (default is 0).
-   */
-  void calculateRolloutConstraints(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
-                                   const state_vector_array2_t& stateTrajectoriesStock, const input_vector_array2_t& inputTrajectoriesStock,
-                                   size_array2_t& nc1TrajectoriesStock, constraint1_vector_array2_t& EvTrajectoryStock,
-                                   size_array2_t& nc2TrajectoriesStock, constraint2_vector_array2_t& HvTrajectoryStock,
-                                   size_array2_t& ncIneqTrajectoriesStock, scalar_array3_t& hTrajectoryStock, size_array2_t& nc2FinalStock,
-                                   constraint2_vector_array2_t& HvFinalStock, size_t threadId = 0);
+                             size_t workerIndex = 0);
 
   /**
    * Calculates constraints ISE (Integral of Square Error).
@@ -237,6 +198,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [out] stateEqFinalConstraintISE: The final state equality constraints ISE.
    * @param [out] inequalityConstraintISE: The inequality constraints ISE.
    * @param [out] inequalityConstraintPenalty: The inequality constraints penalty.
+   * @param [in] workerIndex: Working thread (default is 0).
+   *
    * @return maximum norm of the constraints.
    */
   void calculateRolloutConstraintsISE(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
@@ -246,18 +209,19 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                                       scalar_t& inequalityConstraintISE, scalar_t& inequalityConstraintPenalty, size_t workerIndex = 0);
 
   /**
-   * Calculates cost of a rollout.
+   * Calculates cost of the rollout.
    *
    * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
    * @param [in] postEventIndicesStock: Array of the post-event indices.
    * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
    * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
-   * @param [in] threadId: Working thread.
+   * @param [in] workerIndex: Working thread (default is 0).
+   *
    * @return The total cost of the rollout.
    */
   scalar_t calculateRolloutCost(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
                                 const state_vector_array2_t& stateTrajectoriesStock, const input_vector_array2_t& inputTrajectoriesStock,
-                                size_t threadId);
+                                size_t workerIndex = 0);
 
   /**
    * Calculates cost of a merit.
@@ -453,45 +417,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void runParallel(std::function<void(void)> taskFunction, size_t N);
 
   /**
-   * Calculates the constraint trajectories over the given trajectories.
-   *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] partitionIndex: Time partition index.
-   * @param [in] timeTrajectory: The time trajectory stamp.
-   * @param [in] eventsPastTheEndIndeces: Indices containing past-the-end index of events trigger.
-   * @param [in] stateTrajectory: The state trajectory.
-   * @param [in] inputTrajectory: The control input trajectory.
-   * @param [out] nc1Trajectory: Trajectory containing number of active state-input equality constraints.
-   * @param [out] EvTrajectory: state-input equality constraints trajectory.
-   * @param [out] nc2Trajectory: Trajectory containing number of active state-only equality constraints.
-   * @param [out] HvTrajectory: state-only equality constraints trajectory.
-   * @param [out] nc2Finals: Number of active final state-only equality constraints.
-   * @param [out] HvFinals: Final state-only equality constraints.
-   */
-  virtual void calculateConstraintsWorker(size_t workerIndex, size_t partitionIndex, const scalar_array_t& timeTrajectory,
-                                          const size_array_t& eventsPastTheEndIndeces, const state_vector_array_t& stateTrajectory,
-                                          const input_vector_array_t& inputTrajectory, size_array_t& nc1Trajectory,
-                                          constraint1_vector_array_t& EvTrajectory, size_array_t& nc2Trajectory,
-                                          constraint2_vector_array_t& HvTrajectory, size_array_t& ncIneqTrajectory,
-                                          scalar_array2_t& hTrajectory, size_array_t& nc2Finals, constraint2_vector_array_t& HvFinals);
-
-  /**
-   * Calculates the total cost for the given trajectories.
-   *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] partitionIndex: Time partition index.
-   * @param [in] timeTrajectory: The time trajectory stamp.
-   * @param [in] eventsPastTheEndIndeces: Indices containing past-the-end index
-   * of events trigger.
-   * @param [in] stateTrajectory: The state trajectory.
-   * @param [in] inputTrajectory: The control input trajectory.
-   * @param [out] totalCost: The total cost.
-   */
-  virtual void calculateCostWorker(size_t workerIndex, size_t partitionIndex, const scalar_array_t& timeTrajectory,
-                                   const size_array_t& eventsPastTheEndIndeces, const state_vector_array_t& stateTrajectory,
-                                   const input_vector_array_t& inputTrajectory, scalar_t& totalCost);
-
-  /**
    * Calculates an LQ approximate of the optimal control problem for the nodes.
    *
    * @param [in] timeTrajectory: The time trajectory.
@@ -639,27 +564,13 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                               input_vector_array2_t& inputTrajectoriesStock, ModelDataBase::array2_t& modelDataTrajectoriesStock);
 
   /**
-   * Calculates state-input constraints ISE (Integral of Square Error).
+   * Calculates the trapezoidal rule integration of a curve.
    *
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp.
-   * @param [in] nc1TrajectoriesStock: Array of trajectories containing the number of the active constraints.
-   * @param [in] EvTrajectoriesStock: Array of trajectories containing the value of the constraints.
-   * @return The constraints ISE.
+   * @param [in] timeTrajectory: The time trajectory stamp.
+   * @param [in] valueTrajectory: The values of the curve for the given time trajectory.
+   * @return The integral of the curve.
    */
-  scalar_t calculateConstraintISE(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& nc1TrajectoriesStock,
-                                  const constraint1_vector_array2_t& EvTrajectoriesStock) const;
-
-  /**
-   * Calculate integrated penalty from inequality constraints.
-   *
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp.
-   * @param [in] ncIneqTrajectoriesStock: Array of trajectories containing the number of inequalityConstraints
-   * @param [in] hTrajectoriesStock: Array of trajectories containing the value of the inequality constraints.
-   * @param [in] penaltyPtrStock: Array of penalty function pointers.
-   * @return constraintPenalty: The inequality constraints penalty.
-   */
-  scalar_t calculateInequalityConstraintPenalty(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& ncIneqTrajectoriesStock,
-                                                const scalar_array3_t& hTrajectoriesStock, scalar_t& inequalityISE, size_t workerIndex = 0);
+  scalar_t trapezoidalIntegration(const scalar_array_t& timeTrajectory, const scalar_array_t& valueTrajectory) const;
 
   /**
    * Calculates max feedforward update norm and max type-1 error update norm.

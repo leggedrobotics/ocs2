@@ -1070,7 +1070,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::runSweepingBVPMethod() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GDDP<STATE_DIM, INPUT_DIM>::run(const scalar_array_t& eventTimes, const slq_data_collector_t* dataCollectorPtr) {
+void GDDP<STATE_DIM, INPUT_DIM>::run(const scalar_array_t& eventTimes, const ddp_data_collector_t* dataCollectorPtr) {
   // display
   if (gddpSettings_.displayInfo_) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;

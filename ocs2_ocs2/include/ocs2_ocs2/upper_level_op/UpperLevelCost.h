@@ -29,8 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_ddp/DDP_DataCollector.h>
 #include <ocs2_ddp/SLQ.h>
-#include <ocs2_ddp/SLQ_DataCollector.h>
 
 #include <ocs2_frank_wolfe/NLP_Cost.h>
 
@@ -56,7 +56,7 @@ class UpperLevelCost final : public NLP_Cost {
 
   using gddp_t = GDDP<STATE_DIM, INPUT_DIM>;
   using slq_t = SLQ<STATE_DIM, INPUT_DIM>;
-  using slq_data_collector_t = SLQ_DataCollector<STATE_DIM, INPUT_DIM>;
+  using ddp_data_collector_t = DDP_DataCollector<STATE_DIM, INPUT_DIM>;
 
   using state_vector_t = typename slq_t::state_vector_t;
   using derivatives_base_t = typename slq_t::derivatives_base_t;
@@ -85,7 +85,7 @@ class UpperLevelCost final : public NLP_Cost {
                  bool display = false, const GDDP_Settings& gddpSettings = GDDP_Settings())
       : slqPtr_(new slq_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings,
                           logicRulesPtr, heuristicsFunctionPtr)),
-        slqDataCollectorPtr_(new slq_data_collector_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr)),
+        slqDataCollectorPtr_(new ddp_data_collector_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr)),
         gddpPtr_(new gddp_t(gddpSettings)),
         display_(display) {}
 
@@ -175,7 +175,7 @@ class UpperLevelCost final : public NLP_Cost {
 
  private:
   std::unique_ptr<slq_t> slqPtr_;
-  std::unique_ptr<slq_data_collector_t> slqDataCollectorPtr_;
+  std::unique_ptr<ddp_data_collector_t> slqDataCollectorPtr_;
   std::unique_ptr<gddp_t> gddpPtr_;
   bool display_;
 

@@ -69,7 +69,7 @@ class GDDP {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using slq_data_collector_t = SLQ_DataCollector<STATE_DIM, INPUT_DIM>;
+  using ddp_data_collector_t = DDP_DataCollector<STATE_DIM, INPUT_DIM>;
 
   using bvp_sensitivity_equations_t = BvpSensitivityEquations<STATE_DIM, INPUT_DIM>;
   using bvp_sensitivity_error_equations_t = BvpSensitivityErrorEquations<STATE_DIM, INPUT_DIM>;
@@ -184,7 +184,7 @@ class GDDP {
    * @param [in] eventTimes: The event times vector.
    * @param [in] dataCollectorPtr: A constant pointer to SLQ data collector which already collected the SLQ variables.
    */
-  void run(const scalar_array_t& eventTimes, const slq_data_collector_t* dataCollectorPtr);
+  void run(const scalar_array_t& eventTimes, const ddp_data_collector_t* dataCollectorPtr);
 
  protected:
   /**
@@ -391,7 +391,7 @@ class GDDP {
   /******************
    * SLQ data collector
    ******************/
-  const slq_data_collector_t* dataCollectorPtr_;
+  const ddp_data_collector_t* dataCollectorPtr_;
 
   /******************
    * SLQ missing variables

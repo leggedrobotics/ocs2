@@ -85,3 +85,24 @@ target_link_libraries(${PROJECT_NAME}_dummy_mrt_node
         ${catkin_LIBRARIES}
         )
 
+#############
+## Install ##
+#############
+
+install(TARGETS ${PROJECT_NAME}
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        )
+
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+
+install(TARGETS
+        ${PROJECT_NAME}_mpc_node
+        ${PROJECT_NAME}_dummy_mrt_node
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+install(DIRECTORY config launch
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+        )

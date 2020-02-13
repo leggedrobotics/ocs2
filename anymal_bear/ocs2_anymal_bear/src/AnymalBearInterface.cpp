@@ -27,11 +27,19 @@ AnymalBearInterface::AnymalBearInterface(const std::string& pathToConfigFolder)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+std::unique_ptr<AnymalBearInterface::slq_t> AnymalBearInterface::getSlq() const {
+  return std::unique_ptr<slq_t>(new slq_t(timeTriggeredRolloutPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
+                                          costFunctionPtr_.get(), operatingPointsPtr_.get(), slqSettings_, logicRulesPtr_));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 std::unique_ptr<AnymalBearInterface::mpc_t> AnymalBearInterface::getMpc() const {
   if (!modelSettings_.gaitOptimization_) {
-    return std::unique_ptr<mpc_t>(
-        new mpc_t(timeTriggeredRolloutPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(), costFunctionPtr_.get(),
-                  operatingPointsPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_, logicRulesPtr_, &defaultModeSequenceTemplate_));
+    return std::unique_ptr<mpc_t>(new mpc_t(timeTriggeredRolloutPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
+                                            costFunctionPtr_.get(), operatingPointsPtr_.get(), partitioningTimes_, slqSettings_,
+                                            mpcSettings_, logicRulesPtr_, &defaultModeSequenceTemplate_));
   } else {
     throw std::runtime_error("mpc_ocs2 not configured, set gait optimization to 0");
   }

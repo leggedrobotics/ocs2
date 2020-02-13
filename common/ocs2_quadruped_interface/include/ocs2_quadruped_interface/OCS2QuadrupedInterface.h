@@ -55,6 +55,7 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM>
   using mode_sequence_template_t = ocs2::ModeSequenceTemplate<scalar_t>;
 
   using mpc_t = ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>;
+  using slq_t = ocs2::SLQ<STATE_DIM, INPUT_DIM>;
 
   /**
    *
@@ -80,9 +81,13 @@ class OCS2QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM>
   /** Gets center of mass model */
   const com_model_t& getComModel() const { return *comModelPtr_; };
 
+  /** Constructs an SLQ object */
+  virtual std::unique_ptr<slq_t> getSlq() const = 0;
+
   /** Constructs an MPC object */
   virtual std::unique_ptr<mpc_t> getMpc() const = 0;
 
+  /** Gets the loaded initial state */
   const state_vector_t& getInitialState() const { return initialState_; }
 
   /** Access to model settings */

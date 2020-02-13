@@ -21,7 +21,6 @@ class AnymalBearInterface final : public switched_model::OCS2QuadrupedInterface<
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using BASE = switched_model::OCS2QuadrupedInterface<12>;
-  using BASE::mpc_t;
 
   using system_dynamics_t = switched_model::ComKinoSystemDynamicsAd;
   using system_dynamics_derivative_t = switched_model::ComKinoSystemDynamicsAd;
@@ -32,6 +31,8 @@ class AnymalBearInterface final : public switched_model::OCS2QuadrupedInterface<
   explicit AnymalBearInterface(const std::string& pathToConfigFolder);
 
   ~AnymalBearInterface() override = default;
+
+  std::unique_ptr<slq_t> getSlq() const override;
 
   std::unique_ptr<mpc_t> getMpc() const override;
 

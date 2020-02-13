@@ -1035,10 +1035,11 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearch() {
   // perform a rollout with steplength zero.
   const size_t threadId = 0;
   const scalar_t stepLength = 0.0;
-  scalar_t avgTimeStepFP = performFullRollout(
-      threadId, stepLength, nominalMerit_, nominalTotalCost_, stateInputEqConstraintISE_, stateEqConstraintISE_, stateEqFinalConstraintISE_,
-      inequalityConstraintPenalty_, inequalityConstraintISE_, nominalControllersStock_, nominalTimeTrajectoriesStock_,
-      nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_, modelDataTrajectoriesStock_);
+  scalar_t avgTimeStepFP =
+      performFullRollout(threadId, stepLength, nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_,
+                         nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_, modelDataTrajectoriesStock_, nominalMerit_,
+                         nominalTotalCost_, stateInputEqConstraintISE_, stateEqConstraintISE_, stateEqFinalConstraintISE_,
+                         inequalityConstraintPenalty_, inequalityConstraintISE_);
   if (nominalMerit_ == std::numeric_limits<scalar_t>::max()) {
     throw std::runtime_error("DDP feedback gains do not generate a stable rollout.");
   }
@@ -1119,9 +1120,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
     // do a line search
     controllersStock = lineSearchImpl_.initControllersStock;
     scalar_t avgTimeStepFP =
-        performFullRollout(taskId, stepLength, merit, totalCost, stateInputEqConstraintISE, stateEqConstraintISE, stateEqFinalConstraintISE,
-                           inequalityConstraintPenalty, inequalityConstraintISE, controllersStock, timeTrajectoriesStock,
-                           postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock);
+        performFullRollout(taskId, stepLength, controllersStock, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
+                           inputTrajectoriesStock, modelDataTrajectoriesStock, merit, totalCost, stateInputEqConstraintISE,
+                           stateEqConstraintISE, stateEqFinalConstraintISE, inequalityConstraintPenalty, inequalityConstraintISE);
 
     bool terminateLinesearchTasks = false;
     {
@@ -1184,11 +1185,11 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>::performFullRollout(
-    size_t workerIndex, scalar_t stepLength, scalar_t& merit, scalar_t& totalCost, scalar_t& stateInputEqConstraintISE,
-    scalar_t& stateEqConstraintISE, scalar_t& stateEqFinalConstraintISE, scalar_t& inequalityConstraintPenalty,
-    scalar_t& inequalityConstraintISE, linear_controller_array_t& controllersStock, scalar_array2_t& timeTrajectoriesStock,
+    size_t workerIndex, scalar_t stepLength, linear_controller_array_t& controllersStock, scalar_array2_t& timeTrajectoriesStock,
     size_array2_t& postEventIndicesStock, state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
-    ModelDataBase::array2_t& modelDataTrajectoriesStock) {
+    ModelDataBase::array2_t& modelDataTrajectoriesStock, scalar_t& merit, scalar_t& totalCost, scalar_t& stateInputEqConstraintISE,
+    scalar_t& stateEqConstraintISE, scalar_t& stateEqFinalConstraintISE, scalar_t& inequalityConstraintPenalty,
+    scalar_t& inequalityConstraintISE) {
   // modifying uff by local increments
   if (!numerics::almost_eq(stepLength, 0.0)) {
     for (auto& controller : controllersStock) {
@@ -1264,9 +1265,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::levenbergMarquardt() {
   // do a full step rollout
   const scalar_t stepLength = isInitInternalControllerEmpty_ ? 0.0 : 1.0;
   scalar_t avgTimeStepFP =
-      performFullRollout(taskId, stepLength, merit, totalCost, stateInputEqConstraintISE, stateEqConstraintISE, stateEqFinalConstraintISE,
-                         inequalityConstraintPenalty, inequalityConstraintISE, nominalControllersStock_, timeTrajectoriesStock,
-                         postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock);
+      performFullRollout(taskId, stepLength, nominalControllersStock_, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
+                         inputTrajectoriesStock, modelDataTrajectoriesStock, merit, totalCost, stateInputEqConstraintISE,
+                         stateEqConstraintISE, stateEqFinalConstraintISE, inequalityConstraintPenalty, inequalityConstraintISE);
 
   // compute average time step of forward rollout
   avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStepFP;
@@ -2120,8 +2121,14 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
 
   // initial controller rollout
   forwardPassTimer_.startTimer();
-  avgTimeStepFP_ = rolloutTrajectory(nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_,
-                                     nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_, modelDataTrajectoriesStock_);
+  const size_t threadId = 0;
+  const scalar_t stepLength = 0.0;
+  avgTimeStepFP_ =
+      performFullRollout(threadId, stepLength, nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_,
+                         nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_, modelDataTrajectoriesStock_, nominalMerit_,
+                         nominalTotalCost_, stateInputEqConstraintISE_, stateEqConstraintISE_, stateEqFinalConstraintISE_,
+                         inequalityConstraintPenalty_, inequalityConstraintISE_);
+
   forwardPassTimer_.endTimer();
 
   // This is necessary for:
@@ -2135,27 +2142,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
   // linearizing the dynamics and quadratizing the cost function along nominal trajectories
   linearQuadraticApproximationTimer_.startTimer();
   approximateOptimalControlProblem();
-
-  // to check convergence of the main loop, we need to compute the total cost and ISEs
-  bool computePerformanceIndex = ddpSettings_.displayInfo_ || ddpSettings_.maxNumIterations_ > 1;
-  if (computePerformanceIndex) {
-    // calculate rollout constraint
-    calculateRolloutConstraintsISE(nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_,
-                                   nominalInputTrajectoriesStock_, stateInputEqConstraintISE_, stateEqConstraintISE_,
-                                   stateEqFinalConstraintISE_, inequalityConstraintISE_, inequalityConstraintPenalty_);
-    // calculate rollout cost
-    nominalTotalCost_ = calculateRolloutCost(nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_,
-                                             nominalInputTrajectoriesStock_);
-    // calculates rollout merit
-    nominalMerit_ = calculateRolloutMerit(nominalTotalCost_, stateInputEqConstraintISE_, stateEqConstraintISE_, stateEqFinalConstraintISE_,
-                                          inequalityConstraintPenalty_);
-  } else {
-    nominalMerit_ = 0.0;
-    nominalTotalCost_ = 0.0;
-    stateInputEqConstraintISE_ = 0.0;
-    stateEqConstraintISE_ = 0.0;
-    stateEqFinalConstraintISE_ = 0.0;
-  }
   linearQuadraticApproximationTimer_.endTimer();
 
   // solve Riccati equations

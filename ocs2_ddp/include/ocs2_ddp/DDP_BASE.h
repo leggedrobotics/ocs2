@@ -540,6 +540,12 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @param [in] workerIndex: The index of the worker.
    * @param [in] stepLength: The step length for which the controller is updated based on the DDP solution.
+   * @param [out] controllersStock: The updated array of control policies based on the step length.
+   * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
+   * @param [out] postEventIndicesStock: Array of the post-event indices.
+   * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
+   * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
+   * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
    * @param [out] merit: The merit value of the rollout.
    * @param [out] totalCost: The total cost of the rollout.
    * @param [out] stateInputEqConstraintISE: The ISE of the state-input equality constraints along the rollout trajectory.
@@ -547,21 +553,15 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [out] stateEqFinalConstraintISE: The ISE of the state-only equality constraints at event times.
    * @param [out] inequalityConstraintPenalty: The accumulated penalty of the inequality constraints along the rollout trajectory.
    * @param [out] inequalityConstraintISE: The ISE of the inequality constraints violation along the rollout trajectory.
-   * @param [out] controllersStock: The updated array of control policies based on the step length.
-   * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   * @param [out] postEventIndicesStock: Array of the post-event indices.
-   * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-   * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
    *
    * @return average time step.
    */
-  scalar_t performFullRollout(size_t workerIndex, scalar_t stepLength, scalar_t& merit, scalar_t& totalCost,
+  scalar_t performFullRollout(size_t workerIndex, scalar_t stepLength, linear_controller_array_t& controllersStock,
+                              scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
+                              state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
+                              ModelDataBase::array2_t& modelDataTrajectoriesStock, scalar_t& merit, scalar_t& totalCost,
                               scalar_t& stateInputEqConstraintISE, scalar_t& stateEqConstraintISE, scalar_t& stateEqFinalConstraintISE,
-                              scalar_t& inequalityConstraintPenalty, scalar_t& inequalityConstraintISE,
-                              linear_controller_array_t& controllersStock, scalar_array2_t& timeTrajectoriesStock,
-                              size_array2_t& postEventIndicesStock, state_vector_array2_t& stateTrajectoriesStock,
-                              input_vector_array2_t& inputTrajectoriesStock, ModelDataBase::array2_t& modelDataTrajectoriesStock);
+                              scalar_t& inequalityConstraintPenalty, scalar_t& inequalityConstraintISE);
 
   /**
    * Calculates the trapezoidal rule integration of a curve.

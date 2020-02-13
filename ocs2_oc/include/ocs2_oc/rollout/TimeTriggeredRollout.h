@@ -131,6 +131,9 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     // reset function calls counter
     systemDynamicsPtr_->resetNumFunctionCalls();
 
+    // reset the event class
+    systemEventHandlersPtr_->reset();
+
     state_vector_t beginState = initState;
     int k_u = 0;  // control input iterator
     for (int i = 0; i < numSubsystems; i++) {

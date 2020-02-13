@@ -37,7 +37,16 @@ vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footPositionInOriginFrame(s
   vector3_s_t<SCALAR_T> b_baseToFoot = positionBaseToFootInBaseFrame(footIndex, jointPositions);
   return o_R_b * b_baseToFoot + o_basePosition;
 }
-
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR_T>
+matrix3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footOrientationInOriginFrame(size_t footIndex,
+    const base_coordinate_s_t<SCALAR_T> basePose,
+    const joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
+  matrix3_s_t<SCALAR_T> o_R_b = rotationMatrixBaseToOrigin<SCALAR_T>(getOrientation(basePose));
+  return o_R_b * footOrientationRelativeToBase(footIndex, jointPositions);
+}
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/

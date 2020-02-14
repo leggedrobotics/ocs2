@@ -40,8 +40,6 @@ model_settings
   eps 	2e-4
   eta 	1e+2
 
-  torqueMixingFactor            0.0
-
   gaitOptimization              0
 
   recompileLibraries            1
@@ -362,20 +360,5 @@ Q_final
   (22,22) 0.0    ; RH_HFE
   (23,23) 0.0    ; RH_KFE
 
-}
-
-
-; Robot final CoM pose
-CoM_final_pose
-{
-   ; orientation
-   (0,0) 0.0     ; x
-   (1,0) 0.0     ; y
-   (2,0) 0.0     ; z
-
-   ; position
-   (3,0) 2.0      ; x ;1.0
-   (4,0) 0.0      ; y
-   (5,0) 0.0 	  ; z
 }
 

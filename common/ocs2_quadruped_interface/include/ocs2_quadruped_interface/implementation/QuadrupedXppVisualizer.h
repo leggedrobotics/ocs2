@@ -48,15 +48,19 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishObse
   }
 
   // compute RBD state
-  rbd_state_vector_t rbdState;
-  ocs2QuadrupedInterfacePtr_->computeRbdModelState(observation.state(), observation.input(), rbdState);
+  base_coordinate_t comPose = getComPose(observation.state());
+  base_coordinate_t comLocalVelocities = getComLocalVelocities(observation.state());
+  joint_coordinate_t qJoints = getJointPositions(observation.state());
+
+  base_coordinate_t basePose = comModelPtr_->calculateBasePose(comPose);
+  base_coordinate_t baseLocalVelocities = comModelPtr_->calculateBaseLocalVelocities(comLocalVelocities);
 
   // contact forces
   for (size_t i = 0; i < 4; i++) {
     o_feetForceRef[i] = observation.input().template segment<3>(3 * i);
   }
 
-  publishXppVisualizer(observation.time(), rbdState.template head<6>(), rbdState.template segment<6>(18), rbdState.template segment<12>(6),
+  publishXppVisualizer(observation.time(), basePose, baseLocalVelocities, qJoints,
                        o_feetPositionRef, o_feetVelocityRef, o_feetAccelerationRef, o_feetForceRef);
 }
 
@@ -83,7 +87,9 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishXppV
   const scalar_t minTimeDifference = 10e-3;
 
   static scalar_t lastTime = 0.0;
-  if (time - lastTime < minTimeDifference) return;
+  if (time - lastTime < minTimeDifference) {
+    return;
+  }
 
   lastTime = time;
 
@@ -160,20 +166,19 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeFeet
                                                                                       vector_3d_array_t& o_feetPosition,
                                                                                       vector_3d_array_t& o_feetVelocity,
                                                                                       vector_3d_array_t& o_contactForces) {
-  base_coordinate_t comPose = state.template head<6>();
-  base_coordinate_t comLocalVelocities = state.template segment<6>(6);
-  joint_coordinate_t qJoints = state.template segment<JOINT_COORD_SIZE>(12);
-  joint_coordinate_t dqJoints = input.template segment<JOINT_COORD_SIZE>(12);
+  base_coordinate_t comPose = getComPose(state);
+  base_coordinate_t comLocalVelocities = getComLocalVelocities(state);
+  joint_coordinate_t qJoints = getJointPositions(state);
+  joint_coordinate_t dqJoints = getJointVelocities(input);
 
-  base_coordinate_t basePose = ocs2QuadrupedInterfacePtr_->getComModel().calculateBasePose(comPose);
-  base_coordinate_t baseLocalVelocities = ocs2QuadrupedInterfacePtr_->getComModel().calculateBaseLocalVelocities(comLocalVelocities);
+  base_coordinate_t basePose = comModelPtr_->calculateBasePose(comPose);
+  base_coordinate_t baseLocalVelocities = comModelPtr_->calculateBaseLocalVelocities(comLocalVelocities);
 
   Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin<scalar_t>(state.template head<3>());
 
   for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
-    o_feetPosition[i] = ocs2QuadrupedInterfacePtr_->getKinematicModel().footPositionInOriginFrame(i, basePose, qJoints);
-    o_feetVelocity[i] =
-        ocs2QuadrupedInterfacePtr_->getKinematicModel().footVelocityInOriginFrame(i, basePose, baseLocalVelocities, qJoints, dqJoints);
+    o_feetPosition[i] = kinematicModelPtr_->footPositionInOriginFrame(i, basePose, qJoints);
+    o_feetVelocity[i] = kinematicModelPtr_->footVelocityInOriginFrame(i, basePose, baseLocalVelocities, qJoints, dqJoints);
     o_contactForces[i] = o_R_b * input.template segment<3>(3 * i);
   }
 }

@@ -20,8 +20,6 @@ class AnymalBearInterface final : public switched_model::OCS2QuadrupedInterface<
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Ptr = std::shared_ptr<AnymalBearInterface>;
-
   using BASE = switched_model::OCS2QuadrupedInterface<12>;
 
   using system_dynamics_t = switched_model::ComKinoSystemDynamicsAd;
@@ -34,8 +32,9 @@ class AnymalBearInterface final : public switched_model::OCS2QuadrupedInterface<
 
   ~AnymalBearInterface() override = default;
 
-  void setupOptimizer(const logic_rules_ptr_t& logicRulesPtr, const mode_sequence_template_t* modeSequenceTemplatePtr, slq_ptr_t& slqPtr,
-                      mpc_ptr_t& mpcPtr) override;
+  std::unique_ptr<slq_t> getSlq() const override;
+
+  std::unique_ptr<mpc_t> getMpc() const override;
 
   const system_dynamics_t& getDynamics() const override { return *dynamicsPtr_; }
 

@@ -5,17 +5,16 @@
  *      Author: farbod
  */
 
-#ifndef MRT_ROS_QUADRUPED_H_
-#define MRT_ROS_QUADRUPED_H_
+#pragma once
 
 #include <array>
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 #include <ocs2_core/control/ControllerType.h>
 
+#include <ocs2_switched_model_interface/foot_planner/CubicSpline.h>
 #include <ocs2_switched_model_interface/foot_planner/FeetZDirectionPlanner.h>
 #include <ocs2_switched_model_interface/foot_planner/cpg/SplineCPG.h>
-#include <ocs2_switched_model_interface/foot_planner/CubicSpline.h>
 #include <ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h>
 
 #include "ocs2_quadruped_interface/OCS2QuadrupedInterface.h"
@@ -27,27 +26,25 @@ class MRT_ROS_Quadruped : public ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Ptr = std::shared_ptr<MRT_ROS_Quadruped<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>>;
+  static constexpr auto rbd_state_dim_ = 12 + 2 * JOINT_COORD_SIZE;
 
   using quadruped_interface_t = OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>;
-  using quadruped_interface_ptr_t = typename quadruped_interface_t::Ptr;
-  using rbd_state_vector_t = typename quadruped_interface_t::rbd_state_vector_t;
-
-  enum { rbd_state_dim_ = quadruped_interface_t::rbd_state_dim_ };
 
   using BASE = ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
   using typename BASE::command_data_t;
-  using typename BASE::primal_solution_t;
-  using typename BASE::system_observation_t;
   using typename BASE::controller_t;
-  using typename BASE::scalar_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::size_array_t;
-  using typename BASE::state_vector_t;
-  using typename BASE::state_vector_array_t;
-  using typename BASE::input_vector_t;
-  using typename BASE::input_vector_array_t;
   using typename BASE::input_state_matrix_array_t;
+  using typename BASE::input_vector_array_t;
+  using typename BASE::input_vector_t;
+  using typename BASE::primal_solution_t;
+  using typename BASE::scalar_array_t;
+  using typename BASE::scalar_t;
+  using typename BASE::size_array_t;
+  using typename BASE::state_vector_array_t;
+  using typename BASE::state_vector_t;
+  using typename BASE::system_observation_t;
+
+  using rbd_state_vector_t = Eigen::Matrix<scalar_t, rbd_state_dim_, 1>;
 
   using feet_z_planner_t = FeetZDirectionPlanner<scalar_t, SplineCPG<scalar_t>>;
   using feet_z_planner_ptr_t = typename feet_z_planner_t::Ptr;
@@ -70,12 +67,12 @@ class MRT_ROS_Quadruped : public ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM> {
    * @param [in] ocs2QuadrupedInterfacePtr: A shared pointer to the quadruped interface class.
    * @param [in] robotName: The name's of the robot.
    */
-  MRT_ROS_Quadruped(const quadruped_interface_ptr_t& ocs2QuadrupedInterfacePtr, const std::string& robotName = "robot");
+  MRT_ROS_Quadruped(std::shared_ptr<quadruped_interface_t> ocs2QuadrupedInterfacePtr, std::string robotName);
 
   /**
    * Destructor
    */
-  virtual ~MRT_ROS_Quadruped() = default;
+  ~MRT_ROS_Quadruped() override = default;
 
   using BASE::evaluatePolicy;
   using BASE::rolloutPolicy;
@@ -191,7 +188,8 @@ class MRT_ROS_Quadruped : public ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM> {
   /*
    * Variables
    */
-  quadruped_interface_ptr_t ocs2QuadrupedInterfacePtr_;
+  std::shared_ptr<quadruped_interface_t> ocs2QuadrupedInterfacePtr_;
+  SwitchedModelStateEstimator switchedModelStateEstimator_;
   logic_rules_ptr_t logic_rules_mrt_;
 
   ModelSettings modelSettings_;
@@ -210,5 +208,3 @@ class MRT_ROS_Quadruped : public ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM> {
 }  // end of namespace switched_model
 
 #include "implementation/MRT_ROS_Quadruped.h"
-
-#endif /* MRT_ROS_QUADRUPED_H_ */

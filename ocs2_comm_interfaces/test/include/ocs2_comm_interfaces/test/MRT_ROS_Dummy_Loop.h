@@ -47,21 +47,11 @@ class MRT_ROS_Dummy_Loop {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using mrt_t = MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
+  using system_observation_t = typename mrt_t::system_observation_t;
   using primal_solution_t = typename mrt_t::primal_solution_t;
   using command_data_t = typename mrt_t::command_data_t;
-
-  using controller_t = typename mrt_t::controller_t;
   using scalar_t = typename mrt_t::scalar_t;
-  using scalar_array_t = typename mrt_t::scalar_array_t;
-  using size_array_t = typename mrt_t::size_array_t;
   using state_vector_t = typename mrt_t::state_vector_t;
-  using state_vector_array_t = typename mrt_t::state_vector_array_t;
-  using input_vector_t = typename mrt_t::input_vector_t;
-  using input_vector_array_t = typename mrt_t::input_vector_array_t;
-  using input_state_matrix_t = typename mrt_t::input_state_matrix_t;
-  using input_state_matrix_array_t = typename mrt_t::input_state_matrix_array_t;
-
-  using system_observation_t = typename mrt_t::system_observation_t;
 
   using observer_t = DummyObserver<STATE_DIM, INPUT_DIM>;
 
@@ -89,9 +79,13 @@ class MRT_ROS_Dummy_Loop {
    */
   void run(const system_observation_t& initObservation, const CostDesiredTrajectories& initCostDesiredTrajectories);
 
-  void subscribeObservers(const std::vector<std::shared_ptr<observer_t>>& observers) {
-    observers_ = observers;
-  }
+  /**
+   * Subscribe a set of observers to the dummy loop. Observers are updated in the provided order at the end of each timestep.
+   * The previous list of observers is overwritten.
+   *
+   * @param observers : vector of observers.
+   */
+  void subscribeObservers(const std::vector<std::shared_ptr<observer_t>>& observers) { observers_ = observers; }
 
  protected:
   /**

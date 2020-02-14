@@ -11,6 +11,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <build_depend>cmake_clang_tools</build_depend>
+  <exec_depend>ocs2_anymal_switched_model</exec_depend>
 
   <depend>ocs2_core</depend>
 

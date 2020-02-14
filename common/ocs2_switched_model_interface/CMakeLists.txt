@@ -7,6 +7,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
 )
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
+  ocs2_anymal_switched_model
 )
 
 # Generate compile_commands.json for clang tools
@@ -28,6 +29,7 @@ catkin_package(
 		${PROJECT_NAME}
 	CATKIN_DEPENDS
 		${CATKIN_PACKAGE_DEPENDENCIES}
+		ocs2_anymal_switched_model
 #	DEPENDS
 )
 
@@ -59,6 +61,7 @@ add_dependencies(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
 		${catkin_LIBRARIES}
+		ocs2_anymal_switched_model
 		dl
 		)
 

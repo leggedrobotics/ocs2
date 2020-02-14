@@ -57,6 +57,20 @@ TEST_F(SwitchedModelTests, ComDynamics) {
   std::cout << "comInertiaDefault:\n" << comDynamics_.comInertia() << std::endl;
 }
 
+TEST_F(SwitchedModelTests, EndeffectorOrientation) {
+  switched_model::joint_coordinate_t qJoints;
+  qJoints.setZero();
+
+  const auto basePose = getBasePose<scalar_t>(x)
+  Eigen::Matrix3d baseOrientation =  rotationMatrixOriginToBaseFrame(basePose);
+  std::cout << "\nBase orientation" << switched_model::FeetNames[footIdx] << ":" << std::endl;
+    for (int footIdx = 0; footIdx < NUM_CONTACT_POINTS; footIdx++) {
+        std::cout << "\nFoot orientation" << switched_model::FeetNames[footIdx] << ":" << std::endl;
+        const auto o_R_e = kinematics_->footOrientationInOriginFrame(footIdx, basePose, qJoints);
+        EXPECT_PRED2([](const Eigen::Matrix3d  &lhs, const Eigen::Matrix3d rhs) {return lhs.isApprox(rhs, 1e-8);}, o_R_e, baseOrientation);
+}
+
+
 /// Run all the tests that were declared with TEST()
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);

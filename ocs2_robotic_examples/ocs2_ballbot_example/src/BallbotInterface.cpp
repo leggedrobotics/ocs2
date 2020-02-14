@@ -45,9 +45,6 @@ BallbotInterface::BallbotInterface(const std::string& taskFileFolderName) {
 
   // load setting from loading file
   loadSettings(taskFile_);
-
-  // MPC
-  setupOptimizer(taskFile_);
 }
 
 /******************************************************************************************************/
@@ -57,7 +54,7 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   /*
    * Default initial condition
    */
-  loadInitialState(taskFile, initialState_);
+  loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
 
   /*
    * SLQ-MPC settings
@@ -113,23 +110,17 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   /*
    * Time partitioning which defines the time horizon and the number of data partitioning
    */
-  scalar_t timeHorizon;
-  definePartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
+  dim_t::scalar_t timeHorizon;
+  ocs2::loadData::loadPartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void BallbotInterface::setupOptimizer(const std::string& taskFile) {
-  mpcPtr_.reset(new mpc_t(ddpBallbotRolloutPtr_.get(), ballbotSystemDynamicsPtr_.get(), ballbotConstraintPtr_.get(), ballbotCostPtr_.get(),
-                          ballbotOperatingPointPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-SLQ_Settings& BallbotInterface::slqSettings() {
-  return slqSettings_;
+std::unique_ptr<BallbotInterface::mpc_t> BallbotInterface::getMpc() {
+  return std::unique_ptr<mpc_t>(new mpc_t(ddpBallbotRolloutPtr_.get(), ballbotSystemDynamicsPtr_.get(), ballbotConstraintPtr_.get(),
+                                          ballbotCostPtr_.get(), ballbotOperatingPointPtr_.get(), partitioningTimes_, slqSettings_,
+                                          mpcSettings_));
 }
 
 }  // namespace ballbot

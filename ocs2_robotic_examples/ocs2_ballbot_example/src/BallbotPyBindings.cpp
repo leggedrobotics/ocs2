@@ -5,11 +5,8 @@ namespace ocs2 {
 namespace ballbot {
 
 BallbotPyBindings::BallbotPyBindings(const std::string& taskFileFolder, bool async) : Base(async) {
-  init(taskFileFolder);
-}
-
-void BallbotPyBindings::initRobotInterface(const std::string& taskFileFolder) {
-  robotInterface_.reset(new BallbotInterface(taskFileFolder));
+  BallbotInterface ballbotInterface(taskFileFolder);
+  init(ballbotInterface, ballbotInterface.getMpc());
 }
 
 }  // namespace ballbot

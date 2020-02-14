@@ -183,6 +183,31 @@ inline void loadStdVector(const std::string& filename, const std::string& topicN
   }
 }
 
+template <typename scalar_t>
+void loadPartitioningTimes(const std::string& taskFile, scalar_t& timeHorizon, size_t& numPartitions,
+                           std::vector<scalar_t>& partitioningTimes, bool verbose /*= false*/) {
+  loadData::loadCppDataType(taskFile, "mpcTimeHorizon.timehorizon", timeHorizon);
+  loadData::loadCppDataType(taskFile, "mpcTimeHorizon.numPartitions", numPartitions);
+
+  if (verbose) {
+    std::cerr << "Time Horizon Settings: " << std::endl;
+    std::cerr << "=====================================" << std::endl;
+    std::cerr << "Time Horizon .................. " << timeHorizon << std::endl;
+    std::cerr << "Number of Partitions .......... " << numPartitions << std::endl << std::endl;
+  }
+
+  if (numPartitions == 0) {
+    throw std::runtime_error("mpcTimeHorizon field is not defined.");
+  }
+
+  partitioningTimes.resize(numPartitions + 1);
+  partitioningTimes[0] = 0.0;
+  for (size_t i = 0; i < numPartitions; i++) {
+    partitioningTimes[i + 1] = partitioningTimes[i] + timeHorizon / numPartitions;
+  }
+  partitioningTimes[numPartitions] = timeHorizon;
+}
+
 }  // namespace loadData
 }  // namespace ocs2
 

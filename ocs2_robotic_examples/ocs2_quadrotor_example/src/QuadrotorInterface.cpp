@@ -45,9 +45,6 @@ QuadrotorInterface::QuadrotorInterface(const std::string& taskFileFolderName) {
 
   // load setting from loading file
   loadSettings(taskFile_);
-
-  // MPC
-  setupOptimizer(taskFile_);
 }
 
 /******************************************************************************************************/
@@ -57,7 +54,7 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Default initial condition
    */
-  loadInitialState(taskFile, initialState_);
+  loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
 
   /*
    * Solver settings
@@ -110,23 +107,24 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Initialization
    */
-  initialInput_ = dim_t::input_vector_t::Zero();
-  initialInput_(0) = quadrotorParameters.quadrotorMass_ * quadrotorParameters.gravity_;
-  quadrotorOperatingPointPtr_.reset(new QuadrotorOperatingPoint(initialState_, initialInput_));
+  dim_t::input_vector_t initialInput = dim_t::input_vector_t::Zero();
+  initialInput(0) = quadrotorParameters.quadrotorMass_ * quadrotorParameters.gravity_;
+  quadrotorOperatingPointPtr_.reset(new QuadrotorOperatingPoint(initialState_, initialInput));
 
   /*
    * Time partitioning which defines the time horizon and the number of data partitioning
    */
-  scalar_t timeHorizon;
-  definePartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
+  dim_t::scalar_t timeHorizon;
+  ocs2::loadData::loadPartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void QuadrotorInterface::setupOptimizer(const std::string& taskFile) {
-  mpcPtr_.reset(new mpc_t(ddpQuadrotorRolloutPtr_.get(), quadrotorDynamicsDerivativesPtr_.get(), quadrotorConstraintPtr_.get(),
-                          quadrotorCostPtr_.get(), quadrotorOperatingPointPtr_.get(), partitioningTimes_, ilqrSettings_, mpcSettings_));
+std::unique_ptr<QuadrotorInterface::mpc_t> QuadrotorInterface::getMpc() {
+  return std::unique_ptr<mpc_t>(new mpc_t(ddpQuadrotorRolloutPtr_.get(), quadrotorDynamicsDerivativesPtr_.get(),
+                                          quadrotorConstraintPtr_.get(), quadrotorCostPtr_.get(), quadrotorOperatingPointPtr_.get(),
+                                          partitioningTimes_, ilqrSettings_, mpcSettings_));
 }
 
 }  // namespace quadrotor

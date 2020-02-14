@@ -40,8 +40,6 @@ class BallbotPyBindings final : public PythonInterface<ballbot::STATE_DIM_, ball
   using Base = PythonInterface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
   BallbotPyBindings(const std::string& taskFileFolder, bool async = false);
-
-  void initRobotInterface(const std::string& taskFileFolder) override;
 };
 
 }  // namespace ballbot

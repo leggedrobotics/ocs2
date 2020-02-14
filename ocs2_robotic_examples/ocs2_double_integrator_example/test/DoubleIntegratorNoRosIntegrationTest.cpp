@@ -6,18 +6,19 @@
 using namespace ocs2;
 using namespace double_integrator;
 using dim_t = ocs2::Dimensions<STATE_DIM_, INPUT_DIM_>;
-typedef MPC_MRT_Interface<dim_t::STATE_DIM_, dim_t::INPUT_DIM_> mpc_t;
+using mpc_t = MPC_MRT_Interface<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
 
 TEST(DoubleIntegratorIntegrationTest, synchronousTracking) {
   std::string taskFileFolderName = "mpc";
   DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
-  mpc_t mpcInterface(doubleIntegratorInterface.getMpc());
+  auto mpcPtr = doubleIntegratorInterface.getMpc();
+  mpc_t mpcInterface(*mpcPtr);
 
   double time = 1234.5;  // start from a random time
 
   // initialize observation:
   mpc_t::system_observation_t observation;
-  doubleIntegratorInterface.getInitialState(observation.state());
+  observation.state() = doubleIntegratorInterface.getInitialState();
   observation.time() = time;
 
   mpcInterface.setCurrentObservation(observation);
@@ -69,12 +70,13 @@ TEST(DoubleIntegratorIntegrationTest, asynchronousTracking) {
   std::string taskFileFolderName = "mpc";
 
   DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
-  mpc_t mpcInterface(doubleIntegratorInterface.getMpc());
+  auto mpcPtr = doubleIntegratorInterface.getMpc();
+  mpc_t mpcInterface(*mpcPtr);
 
   double time = 1234.5;  // start from a random time
 
   mpc_t::state_vector_t initialState;
-  doubleIntegratorInterface.getInitialState(initialState);
+  initialState = doubleIntegratorInterface.getInitialState();
 
   // initialize reference:
   CostDesiredTrajectories costDesiredTrajectories;

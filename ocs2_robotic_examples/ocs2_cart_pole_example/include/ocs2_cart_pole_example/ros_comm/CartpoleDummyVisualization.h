@@ -41,7 +41,6 @@ namespace cartpole {
 
 class CartpoleDummyVisualization : public DummyObserver<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   explicit CartpoleDummyVisualization(ros::NodeHandle& n) { launchVisualizerNode(n); }
 

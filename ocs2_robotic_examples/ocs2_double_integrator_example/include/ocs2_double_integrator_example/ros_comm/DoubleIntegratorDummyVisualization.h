@@ -41,7 +41,6 @@ namespace double_integrator {
 
 class DoubleIntegratorDummyVisualization final : public DummyObserver<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   explicit DoubleIntegratorDummyVisualization(ros::NodeHandle& n) { launchVisualizerNode(n); }
 

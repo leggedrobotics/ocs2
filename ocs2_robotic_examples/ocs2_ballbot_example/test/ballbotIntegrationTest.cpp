@@ -24,8 +24,6 @@ TEST(BallbotIntegrationTest, createDummyMRT) {
   // Initialize dummy
   ocs2::MRT_ROS_Dummy_Loop<ocs2::ballbot::STATE_DIM_, ocs2::ballbot::INPUT_DIM_>::system_observation_t initObservation;
   initObservation.state() = ballbotInterface.getInitialState();
-
-  ASSERT_TRUE(true);
 }
 
 TEST(BallbotIntegrationTest, createMPC) {
@@ -35,8 +33,6 @@ TEST(BallbotIntegrationTest, createMPC) {
   // Create MPC ROS node
   auto mpcPtr = ballbotInterface.getMpc();
   MPC_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> mpcNode(*mpcPtr, "ballbot");
-
-  ASSERT_TRUE(true);
 }
 
 int main(int argc, char** argv) {

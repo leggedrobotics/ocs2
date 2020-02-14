@@ -40,7 +40,6 @@ namespace quadrotor {
 
 class QuadrotorDummyVisualization final : public DummyObserver<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   explicit QuadrotorDummyVisualization(ros::NodeHandle& n) { launchVisualizerNode(n); }
 

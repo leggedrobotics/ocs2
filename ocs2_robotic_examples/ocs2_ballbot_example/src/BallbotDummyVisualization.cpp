@@ -53,23 +53,16 @@ void BallbotDummyVisualization::update(const system_observation_t& observation, 
   tfBroadcasterPtr_->sendTransform(command_frame_transform);
 
   // publish joints transforms
-  std::map<std::string, double> jointPositions;
-  // initialize jointPositions to be used by the robot state publisher
-  jointPositions.insert(std::pair<std::string, double>("jball_x", observation.state()(0)));
-  jointPositions.insert(std::pair<std::string, double>("jball_y", observation.state()(1)));
-  jointPositions.insert(std::pair<std::string, double>("jbase_z", observation.state()(2)));
-  jointPositions.insert(std::pair<std::string, double>("jbase_y", observation.state()(3)));
-  jointPositions.insert(std::pair<std::string, double>("jbase_x", observation.state()(4)));
+  std::map<std::string, double> jointPositions{{"jball_x", observation.state()(0)},
+                                               {"jball_y", observation.state()(1)},
+                                               {"jbase_z", observation.state()(2)},
+                                               {"jbase_y", observation.state()(3)},
+                                               {"jbase_x", observation.state()(4)}};
   robotStatePublisherPtr_->publishTransforms(jointPositions, timeMsg, "");
 }
 
 void BallbotDummyVisualization::launchVisualizerNode(ros::NodeHandle& n) {
   visualizationPublisher_ = n.advertise<visualization_msgs::MarkerArray>("ballbot_vis", 10);
-  ROS_INFO_STREAM("Waiting for visualization subscriber ...");
-  while (ros::ok() && visualizationPublisher_.getNumSubscribers() == 0) {
-    ros::Rate(100).sleep();
-  }
-  ROS_INFO_STREAM("Visualization subscriber is connected.");
 
   // load a kdl-tree from the urdf robot description and initialize the robot state publisher
   std::string urdfName = "robot_description";

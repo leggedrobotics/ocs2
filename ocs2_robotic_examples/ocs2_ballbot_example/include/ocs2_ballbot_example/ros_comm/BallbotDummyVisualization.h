@@ -40,7 +40,6 @@ namespace ballbot {
 
 class BallbotDummyVisualization final : public DummyObserver<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   explicit BallbotDummyVisualization(ros::NodeHandle& n) { launchVisualizerNode(n); }
 

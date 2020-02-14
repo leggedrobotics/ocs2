@@ -277,14 +277,14 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::spinMRT() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::launchNodes(ros::NodeHandle& n) {
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::launchNodes(ros::NodeHandle& nodeHandle) {
   this->reset();
 
   // display
   ROS_INFO_STREAM("MRT node is setting up ...");
 
   // Observation publisher
-  mpcObservationPublisher_ = n.advertise<ocs2_msgs::mpc_observation>(robotName_ + "_mpc_observation", 1);
+  mpcObservationPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_observation>(robotName_ + "_mpc_observation", 1);
 
   // SLQ-MPC subscriber
   auto ops = ros::SubscribeOptions::create<ocs2_msgs::mpc_flattened_controller>(
@@ -295,10 +295,10 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::launchNodes(ros::NodeHandle& n) {
       &mrtCallbackQueue_                                                                  // pointer to callback queue object
   );
   ops.transport_hints = mrtTransportHints_;
-  mpcPolicySubscriber_ = n.subscribe(ops);
+  mpcPolicySubscriber_ = nodeHandle.subscribe(ops);
 
   // MPC reset service client
-  mpcResetServiceClient_ = n.serviceClient<ocs2_msgs::reset>(robotName_ + "_mpc_reset");
+  mpcResetServiceClient_ = nodeHandle.serviceClient<ocs2_msgs::reset>(robotName_ + "_mpc_reset");
 
   // display
 #ifdef PUBLISH_THREAD

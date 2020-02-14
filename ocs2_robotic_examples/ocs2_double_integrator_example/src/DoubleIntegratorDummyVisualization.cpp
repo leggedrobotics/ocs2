@@ -7,8 +7,8 @@
 namespace ocs2 {
 namespace double_integrator {
 
-void DoubleIntegratorDummyVisualization::launchVisualizerNode(ros::NodeHandle& n) {
-  jointPublisher_ = n.advertise<sensor_msgs::JointState>("joint_states", 1);
+void DoubleIntegratorDummyVisualization::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
+  jointPublisher_ = nodeHandle.advertise<sensor_msgs::JointState>("joint_states", 1);
 }
 
 void DoubleIntegratorDummyVisualization::update(const system_observation_t& observation, const primal_solution_t& policy,

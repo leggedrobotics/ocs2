@@ -27,8 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
-#include <ocs2_comm_interfaces/test/MRT_ROS_Dummy_Loop.h>
 
 #include "ocs2_quadrotor_example/QuadrotorInterface.h"
 #include "ocs2_quadrotor_example/definitions.h"
@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
 
   // Initialize ros node
   ros::init(argc, argv, robotName + "_mrt");
-  ros::NodeHandle n;
+  ros::NodeHandle nodeHandle;
 
   // Robot interface
   interface_t quadrotorInterface(taskFileFolderName);
@@ -59,10 +59,10 @@ int main(int argc, char** argv) {
   // MRT
   mrt_t mrt(robotName);
   mrt.initRollout(&quadrotorInterface.getRollout());
-  mrt.launchNodes(n);
+  mrt.launchNodes(nodeHandle);
 
   // Visualization
-  std::shared_ptr<vis_t> quadrotorDummyVisualization(new vis_t(n));
+  std::shared_ptr<vis_t> quadrotorDummyVisualization(new vis_t());
 
   // Dummy loop
   dummy_t dummyQuadrotor(mrt, quadrotorInterface.mpcSettings().mrtDesiredFrequency_, quadrotorInterface.mpcSettings().mpcDesiredFrequency_);

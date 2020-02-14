@@ -32,7 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <robot_state_publisher/robot_state_publisher.h>
 #include <tf/transform_broadcaster.h>
 
-#include <ocs2_comm_interfaces/test/DummyObserver.h>
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/DummyObserver.h>
+
 #include "ocs2_ballbot_example/definitions.h"
 
 namespace ocs2 {
@@ -40,19 +41,17 @@ namespace ballbot {
 
 class BallbotDummyVisualization final : public DummyObserver<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> {
  public:
-
-  explicit BallbotDummyVisualization(ros::NodeHandle& n) { launchVisualizerNode(n); }
+  explicit BallbotDummyVisualization(ros::NodeHandle& nodeHandle) { launchVisualizerNode(nodeHandle); }
 
   ~BallbotDummyVisualization() override = default;
 
   void update(const system_observation_t& observation, const primal_solution_t& policy, const command_data_t& command) override;
 
  private:
-  void launchVisualizerNode(ros::NodeHandle& n);
+  void launchVisualizerNode(ros::NodeHandle& nodeHandle);
 
-  ros::Publisher visualizationPublisher_;
   std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
-  std::unique_ptr<tf::TransformBroadcaster> tfBroadcasterPtr_;
+  tf::TransformBroadcaster tfBroadcaster_;
 };
 
 }  // namespace ballbot

@@ -48,7 +48,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // MPC messages
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h>
-#include <ocs2_msgs/dummy.h>
 #include <ocs2_msgs/mpc_flattened_controller.h>
 #include <ocs2_msgs/reset.h>
 
@@ -130,8 +129,9 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
 
   /**
    * Launches the ROS publishers and subscribers to communicate with the MPC node.
+   * @param nodeHandle
    */
-  void launchNodes(ros::NodeHandle& n);
+  void launchNodes(ros::NodeHandle& nodeHandle);
 
   void setCurrentObservation(const system_observation_t& currentObservation) override;
 
@@ -151,8 +151,6 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
 
  private:
   std::string robotName_;
-
-  ::ros::NodeHandlePtr mrtRosNodeHandlePtr_;
 
   // Publishers and subscribers
   ::ros::Publisher mpcObservationPublisher_;

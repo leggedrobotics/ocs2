@@ -53,7 +53,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/oc_data/PrimalSolution.h>
 
 // MPC messages
-#include <ocs2_msgs/dummy.h>
 #include <ocs2_msgs/mode_sequence.h>
 #include <ocs2_msgs/mpc_flattened_controller.h>
 #include <ocs2_msgs/mpc_observation.h>

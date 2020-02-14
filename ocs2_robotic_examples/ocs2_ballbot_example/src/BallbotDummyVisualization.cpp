@@ -5,7 +5,6 @@
 #include <tf/tf.h>
 #include <urdf/model.h>
 #include <visualization_msgs/Marker.h>
-#include <visualization_msgs/MarkerArray.h>
 #include <kdl_parser/kdl_parser.hpp>
 
 #include "ocs2_ballbot_example/ros_comm/BallbotDummyVisualization.h"
@@ -30,7 +29,7 @@ void BallbotDummyVisualization::update(const system_observation_t& observation, 
   world_transform.transform.rotation.y = 0.0;
   world_transform.transform.rotation.z = 0.0;
   world_transform.transform.rotation.w = 1.0;
-  tfBroadcasterPtr_->sendTransform(world_transform);
+  tfBroadcaster_.sendTransform(world_transform);
 
   // publish command transform
   const Eigen::Vector3d desiredPositionWorldToTarget = Eigen::Vector3d(costDesiredTrajectories.desiredStateTrajectory().back()(0),
@@ -50,7 +49,7 @@ void BallbotDummyVisualization::update(const system_observation_t& observation, 
   command_frame_transform.transform.rotation.x = desiredQuaternionBaseToWorld.x();
   command_frame_transform.transform.rotation.y = desiredQuaternionBaseToWorld.y();
   command_frame_transform.transform.rotation.z = desiredQuaternionBaseToWorld.z();
-  tfBroadcasterPtr_->sendTransform(command_frame_transform);
+  tfBroadcaster_.sendTransform(command_frame_transform);
 
   // publish joints transforms
   std::map<std::string, double> jointPositions{{"jball_x", observation.state()(0)},
@@ -61,13 +60,13 @@ void BallbotDummyVisualization::update(const system_observation_t& observation, 
   robotStatePublisherPtr_->publishTransforms(jointPositions, timeMsg, "");
 }
 
-void BallbotDummyVisualization::launchVisualizerNode(ros::NodeHandle& n) {
-  visualizationPublisher_ = n.advertise<visualization_msgs::MarkerArray>("ballbot_vis", 10);
-
+void BallbotDummyVisualization::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
   // load a kdl-tree from the urdf robot description and initialize the robot state publisher
   std::string urdfName = "robot_description";
   urdf::Model model;
-  if (!model.initParam(urdfName)) ROS_ERROR("URDF model load was NOT successful");
+  if (!model.initParam(urdfName)) {
+    ROS_ERROR("URDF model load was NOT successful");
+  }
   KDL::Tree tree;
   if (!kdl_parser::treeFromUrdfModel(model, tree)) {
     ROS_ERROR("Failed to extract kdl tree from xml robot description");
@@ -75,7 +74,6 @@ void BallbotDummyVisualization::launchVisualizerNode(ros::NodeHandle& n) {
 
   robotStatePublisherPtr_.reset(new robot_state_publisher::RobotStatePublisher(tree));
   robotStatePublisherPtr_->publishFixedTransforms("", true);
-  tfBroadcasterPtr_.reset(new tf::TransformBroadcaster);
 }
 
 }  // namespace ballbot

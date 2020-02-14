@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
 
   // Initialize ros node
   ros::init(argc, argv, robotName + "_mpc");
-  ros::NodeHandle n;
+  ros::NodeHandle nodeHandle;
 
   // Robot interface
   interface_t doubleIntegratorInterface(taskFileFolderName);
@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
   // Launch MPC ROS node
   auto mpcPtr = doubleIntegratorInterface.getMpc();
   mpc_ros_t mpcNode(*mpcPtr, robotName);
-  mpcNode.launchNodes(n);
+  mpcNode.launchNodes(nodeHandle);
 
   // Successful exit
   return 0;

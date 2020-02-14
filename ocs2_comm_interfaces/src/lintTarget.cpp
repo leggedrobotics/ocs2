@@ -15,8 +15,8 @@
 
 // MRT
 #include <ocs2_comm_interfaces/ocs2_interfaces/MPC_MRT_Interface.h>
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
-#include <ocs2_comm_interfaces/test/MRT_ROS_Dummy_Loop.h>
 
 // dummy target for clang toolchain
 int main() {

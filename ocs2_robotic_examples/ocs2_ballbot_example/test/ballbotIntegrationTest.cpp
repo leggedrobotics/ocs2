@@ -3,8 +3,7 @@
 #include <gtest/gtest.h>
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
-#include <ocs2_comm_interfaces/test/MRT_ROS_Dummy_Loop.h>
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 
 #include "ocs2_ballbot_example/BallbotInterface.h"
 #include "ocs2_ballbot_example/definitions.h"

@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <tf/transform_broadcaster.h>
 
-#include <ocs2_comm_interfaces/test/DummyObserver.h>
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/DummyObserver.h>
 
 #include "ocs2_quadrotor_example/definitions.h"
 
@@ -40,17 +40,12 @@ namespace quadrotor {
 
 class QuadrotorDummyVisualization final : public DummyObserver<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> {
  public:
-
-  explicit QuadrotorDummyVisualization(ros::NodeHandle& n) { launchVisualizerNode(n); }
-
   ~QuadrotorDummyVisualization() override = default;
 
   void update(const system_observation_t& observation, const primal_solution_t& policy, const command_data_t& command) override;
 
  private:
-  void launchVisualizerNode(ros::NodeHandle& n);
-
-  std::unique_ptr<tf::TransformBroadcaster> tfBroadcasterPtr_;
+  tf::TransformBroadcaster tfBroadcaster_;
 };
 
 }  // namespace quadrotor

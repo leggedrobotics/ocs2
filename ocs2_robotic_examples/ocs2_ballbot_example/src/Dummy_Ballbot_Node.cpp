@@ -27,8 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
-#include <ocs2_comm_interfaces/test/MRT_ROS_Dummy_Loop.h>
 
 #include "ocs2_ballbot_example/BallbotInterface.h"
 #include "ocs2_ballbot_example/definitions.h"
@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
 
   // Initialize ros node
   ros::init(argc, argv, robotName + "_mrt");
-  ros::NodeHandle n;
+  ros::NodeHandle nodeHandle;
 
   // ballbotInterface
   interface_t ballbotInterface(taskFileFolderName);
@@ -57,10 +57,10 @@ int main(int argc, char** argv) {
   // MRT
   mrt_t mrt(robotName);
   mrt.initRollout(&ballbotInterface.getRollout());
-  mrt.launchNodes(n);
+  mrt.launchNodes(nodeHandle);
 
   // Visualization
-  std::shared_ptr<vis_t> ballbotDummyVisualization(new vis_t(n));
+  std::shared_ptr<vis_t> ballbotDummyVisualization(new vis_t(nodeHandle));
 
   // Dummy ballbot
   dummy_t dummyBallbot(mrt, ballbotInterface.mpcSettings().mrtDesiredFrequency_, ballbotInterface.mpcSettings().mpcDesiredFrequency_);

@@ -1,7 +1,7 @@
 #include <ros/package.h>
 
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
-#include <ocs2_comm_interfaces/test/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_raisim/RaisimRollout.h>
 
 #include <ocs2_cart_pole_example/CartPoleInterface.h>
@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
 
   // Initialize ros node
   ros::init(argc, argv, robotName + "_mrt");
-  ros::NodeHandle n;
+  ros::NodeHandle nodeHandle;
 
   // Robot interface
   interface_t cartPoleInterface(taskFileFolderName);
@@ -38,10 +38,10 @@ int main(int argc, char* argv[]) {
   // MRT
   mrt_t mrt(robotName);
   mrt.initRollout(simRollout.get());
-  mrt.launchNodes(n);
+  mrt.launchNodes(nodeHandle);
 
   // Visualization
-  std::shared_ptr<vis_t> cartpoleDummyVisualization(new vis_t(n));
+  std::shared_ptr<vis_t> cartpoleDummyVisualization(new vis_t(nodeHandle));
 
   // Dummy loop
   dummy_t dummyCartpole(mrt, cartPoleInterface.mpcSettings().mrtDesiredFrequency_, cartPoleInterface.mpcSettings().mpcDesiredFrequency_);

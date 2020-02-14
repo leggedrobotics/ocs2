@@ -20,8 +20,8 @@ void CartpoleDummyVisualization::update(const system_observation_t& observation,
   jointPublisher_.publish(joint_state);
 }
 
-void CartpoleDummyVisualization::launchVisualizerNode(ros::NodeHandle& n) {
-  jointPublisher_ = n.advertise<sensor_msgs::JointState>("joint_states", 1);
+void CartpoleDummyVisualization::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
+  jointPublisher_ = nodeHandle.advertise<sensor_msgs::JointState>("joint_states", 1);
 }
 
 }  // namespace cartpole

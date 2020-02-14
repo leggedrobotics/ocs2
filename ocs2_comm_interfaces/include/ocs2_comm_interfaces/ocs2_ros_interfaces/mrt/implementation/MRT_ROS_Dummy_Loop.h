@@ -55,7 +55,7 @@ MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Loop(mrt_t& mrt, scalar_
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(const system_observation_t& initObservation,
                                                    const CostDesiredTrajectories& initCostDesiredTrajectories) {
-  ::ros::Rate rosRate(mrtDesiredFrequency_);  // in Hz
+  ros::WallRate rosRate(mrtDesiredFrequency_);  // in Hz
 
   // time step
   const scalar_t timeStep = (1.0 / mrtDesiredFrequency_);
@@ -136,7 +136,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(const system_observation_t& i
     }
 
     // Update observers
-    for (auto& observer : observers_){
+    for (auto& observer : observers_) {
       observer->update(observation_, mrt_.getPolicy(), mrt_.getCommand());
     }
 

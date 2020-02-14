@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
 
   // initial state and command
   ocs2::ballbot::MRT_ROS_Dummy_Ballbot::system_observation_t initObservation;
-  interface.getInitialState(initObservation.state());
+  initObservation.state() = interface.getInitialState();
 
   ocs2::CostDesiredTrajectories initCostDesiredTrajectories;
   initCostDesiredTrajectories.desiredTimeTrajectory().push_back(initObservation.time());

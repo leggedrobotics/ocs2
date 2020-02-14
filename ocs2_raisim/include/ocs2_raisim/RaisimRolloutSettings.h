@@ -115,7 +115,7 @@ inline void RaisimRolloutSettings::loadSettings(const std::string& filename, con
   loadData::loadPtreeValue(pt, setSimulatorStateOnRolloutRunOnce_, raisimFieldName + ".setSimulatorStateOnRolloutRunOnce", verbose);
   loadData::loadPtreeValue(pt, controlDecimation_, raisimFieldName + ".controlDecimation", verbose);
   loadData::loadStdVector(filename, raisimFieldName + ".orderedJointNames", orderedJointNames_, verbose);
-  int controlModeInt;
+  int controlModeInt = static_cast<int>(controlMode_);  // save default
   loadData::loadPtreeValue(pt, controlModeInt, raisimFieldName + ".controlMode", verbose);
   controlMode_ = static_cast<raisim::ControlMode::Type>(controlModeInt);
 

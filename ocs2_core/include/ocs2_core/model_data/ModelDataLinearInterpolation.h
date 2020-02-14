@@ -33,9 +33,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_core/model_data/ModelDataBase.h"
 
 // Declares an access function of name FIELD (e.g., time, dynamics, ...)
-#define CREATE_INTERPOLATION_ACCESS_FUNCTION(FIELD)                                                                     \
-  inline auto FIELD(const ocs2::ModelDataBase::array_t* vec, const size_t ind)->const decltype((*vec)[ind].FIELD##_)& { \
-    return (*vec)[ind].FIELD##_;                                                                                        \
+#define CREATE_INTERPOLATION_ACCESS_FUNCTION(FIELD)                                                               \
+  inline auto FIELD(const ocs2::ModelDataBase::array_t* vec, size_t ind)->const decltype((*vec)[ind].FIELD##_)& { \
+    return (*vec)[ind].FIELD##_;                                                                                  \
   }
 
 namespace ocs2 {

@@ -34,8 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
 #include <functional>
-#include <memory>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include "ocs2_core/Dimensions.h"
@@ -45,16 +45,13 @@ namespace ocs2 {
 namespace LinearInterpolation {
 
 using scalar_t = Dimensions<0, 0>::scalar_t;
-using dynamic_vector_t = Dimensions<0, 0>::dynamic_vector_t;
-using dynamic_matrix_t = Dimensions<0, 0>::dynamic_matrix_t;
-
 using index_alpha_t = std::pair<int, scalar_t>;
 
 /**
  * Helper comparison function for non-Eigen types.
  */
 template <typename T>
-typename std::enable_if<!std::is_base_of<Eigen::EigenBase<T>, T>::value, bool>::type compareSizes(const T& lhs, const T& rhs) {
+constexpr typename std::enable_if<!std::is_base_of<Eigen::EigenBase<T>, T>::value, bool>::type compareSizes(const T& lhs, const T& rhs) {
   return true;
 }
 

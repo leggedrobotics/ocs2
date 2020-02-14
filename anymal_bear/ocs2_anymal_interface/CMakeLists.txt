@@ -1,12 +1,15 @@
 cmake_minimum_required(VERSION 3.0)
 project(ocs2_anymal_interface)
 
+set(CATKIN_PACKAGE_DEPENDENCIES
+  ocs2_anymal_switched_model
+  ocs2_quadruped_interface
+  )
 
 find_package(catkin REQUIRED COMPONENTS
   roslib
-  ocs2_anymal_switched_model
-  ocs2_quadruped_interface
-  ocs2_scp_integration
+  ${CATKIN_PACKAGE_DEPENDENCIES}
+  # ocs2_scp_integration
   )
 
 ## Eigen3
@@ -44,8 +47,9 @@ catkin_package(
     ocs2_anymal_interface
 
   CATKIN_DEPENDS
-    ocs2_anymal_switched_model
-    ocs2_quadruped_interface
+  ${CATKIN_PACKAGE_DEPENDENCIES}
+    # ocs2_anymal_switched_model
+    # ocs2_quadruped_interface
 
   DEPENDS
     Boost

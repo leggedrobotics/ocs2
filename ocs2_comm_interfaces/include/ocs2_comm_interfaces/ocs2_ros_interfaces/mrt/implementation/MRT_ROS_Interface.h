@@ -288,11 +288,11 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::launchNodes(ros::NodeHandle& n) {
 
   // SLQ-MPC subscriber
   auto ops = ros::SubscribeOptions::create<ocs2_msgs::mpc_flattened_controller>(
-      robotName_ + "_mpc_policy",                                    // topic name
-      1,                                                             // queue length
-      boost::bind(&MRT_ROS_Interface::mpcPolicyCallback, this, _1),  // callback
-      ros::VoidConstPtr(),                                           // tracked object
-      &mrtCallbackQueue_                                             // pointer to callback queue object
+      robotName_ + "_mpc_policy",                                                         // topic name
+      1,                                                                                  // queue length
+      boost::bind(&MRT_ROS_Interface::mpcPolicyCallback, this, boost::placeholders::_1),  // callback
+      ros::VoidConstPtr(),                                                                // tracked object
+      &mrtCallbackQueue_                                                                  // pointer to callback queue object
   );
   ops.transport_hints = mrtTransportHints_;
   mpcPolicySubscriber_ = n.subscribe(ops);

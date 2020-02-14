@@ -50,6 +50,10 @@ catkin_package(
     ${EIGEN3_INCLUDE_DIRS}
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
+  LIBRARIES
+    ballbot_SLQ
+    ocs2_ballbot_dynamics
+    ocs2_ballbot
   DEPENDS
     Boost
 )

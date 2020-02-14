@@ -70,6 +70,16 @@ class RaisimRolloutSettings {
         dGains_(dGains) {}
 
   /**
+   * @brief Constructor taking directly a settings file for initialization
+   * @param fileName The name of the .info file
+   * @param fieldName The name of the raisim settings inside the file
+   * @param verbose Whether or not to print the loaded settings
+   */
+  explicit RaisimRolloutSettings(const std::string& fileName, const std::string& fieldName, bool verbose = true) : RaisimRolloutSettings() {
+    loadSettings(fileName, fieldName, verbose);
+  }
+
+  /**
    * @brief Load settings from a configuration file. Missing fields will remain at the default values.
    * @param[in] filename File name which contains the configuration data
    * @param[in] fieldName Field name which contains the configuration data

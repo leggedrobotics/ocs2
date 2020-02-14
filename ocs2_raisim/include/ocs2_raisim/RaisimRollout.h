@@ -108,7 +108,7 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
   raisim::HeightMap* generateTerrain(raisim::TerrainProperties properties = raisim::TerrainProperties());
 
   /**
-   * @brief Replaces the default glat ground plane with the given heightMap
+   * @brief Replaces the default flat ground plane with the given heightMap
    * @param[in] heightMap The new terrain
    */
   void setTerrain(const raisim::HeightMap& heightMap);

@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -26,21 +26,40 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
+#include <unordered_map>
 
-#pragma once
-
-#include <ocs2_comm_interfaces/ocs2_interfaces/Python_Interface.h>
-#include <ocs2_quadrotor_example/definitions.h>
+#include <ocs2_core/integration/Integrator.h>
 
 namespace ocs2 {
-namespace quadrotor {
+namespace integrator_type {
 
-class QuadrotorPyBindings final : public PythonInterface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> {
- public:
-  using Base = PythonInterface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
+std::string toString(IntegratorType integratorType) {
+  static const std::unordered_map<IntegratorType, std::string> integratorMap = {
+      {IntegratorType::EULER, "EULER"},
+      {IntegratorType::ODE45, "ODE45"},
+      {IntegratorType::ADAMS_BASHFORTH, "ADAMS_BASHFORTH"},
+      {IntegratorType::BULIRSCH_STOER, "BULIRSCH_STOER"},
+      {IntegratorType::MODIFIED_MIDPOINT, "MODIFIED_MIDPOINT"},
+      {IntegratorType::RK4, "RK4"},
+      {IntegratorType::RK5_VARIABLE, "RK5_VARIABLE"},
+      {IntegratorType::ADAMS_BASHFORTH_MOULTON, "ADAMS_BASHFORTH_MOULTON"}};
 
-  QuadrotorPyBindings(const std::string& taskFileFolder, bool async = false);
-};
+  return integratorMap.at(integratorType);
+}
 
-}  // namespace quadrotor
+IntegratorType fromString(const std::string& name) {
+  static const std::unordered_map<std::string, IntegratorType> integratorMap = {
+      {"EULER", IntegratorType::EULER},
+      {"ODE45", IntegratorType::ODE45},
+      {"ADAMS_BASHFORTH", IntegratorType::ADAMS_BASHFORTH},
+      {"BULIRSCH_STOER", IntegratorType::BULIRSCH_STOER},
+      {"MODIFIED_MIDPOINT", IntegratorType::MODIFIED_MIDPOINT},
+      {"RK4", IntegratorType::RK4},
+      {"RK5_VARIABLE", IntegratorType::RK5_VARIABLE},
+      {"ADAMS_BASHFORTH_MOULTON", IntegratorType::ADAMS_BASHFORTH_MOULTON}};
+
+  return integratorMap.at(name);
+}
+
+}  // namespace integrator_type
 }  // namespace ocs2

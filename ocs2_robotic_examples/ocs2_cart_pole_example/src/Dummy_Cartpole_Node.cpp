@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
 
   // initial state
   mrt_t::system_observation_t initObservation;
-  cartPoleInterface.getInitialState(initObservation.state());
+  initObservation.state() = cartPoleInterface.getInitialState();
 
   // initial command
   ocs2::CostDesiredTrajectories initCostDesiredTrajectories;

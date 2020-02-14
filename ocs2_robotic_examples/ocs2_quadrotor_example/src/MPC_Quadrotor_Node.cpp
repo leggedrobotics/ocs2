@@ -42,7 +42,8 @@ int main(int argc, char** argv) {
   quadrotor::QuadrotorInterface quadrotorInterface(taskFileFolderName);
 
   // Launch MPC ROS node
-  MPC_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> mpcNode(quadrotorInterface.getMpc(), "quadrotor");
+  auto mpcPtr = quadrotorInterface.getMpc();
+  MPC_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> mpcNode(*mpcPtr, "quadrotor");
   mpcNode.launchNodes(argc, argv);
 
   // Successful exit

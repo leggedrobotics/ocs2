@@ -45,9 +45,6 @@ CartPoleInterface::CartPoleInterface(const std::string& taskFileFolderName) {
 
   // load setting from loading file
   loadSettings(taskFile_);
-
-  // MPC
-  setupOptimizer(taskFile_);
 }
 
 /******************************************************************************************************/
@@ -57,7 +54,7 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   /*
    * Default initial condition
    */
-  loadInitialState(taskFile, initialState_);
+  loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
 
   /*
    * SLQ-MPC settings
@@ -116,23 +113,17 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   /*
    * Time partitioning which defines the time horizon and the number of data partitioning
    */
-  scalar_t timeHorizon;
-  definePartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
+  dim_t::scalar_t timeHorizon;
+  ocs2::loadData::loadPartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CartPoleInterface::setupOptimizer(const std::string& taskFile) {
-  mpcPtr_.reset(new mpc_t(ddpCartPoleRolloutPtr_.get(), cartPoleSystemDynamicsPtr_.get(), cartPoleConstraintPtr_.get(),
-                          cartPoleCostPtr_.get(), cartPoleOperatingPointPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-SLQ_Settings& CartPoleInterface::slqSettings() {
-  return slqSettings_;
+std::unique_ptr<CartPoleInterface::mpc_t> CartPoleInterface::getMpc() {
+  return std::unique_ptr<mpc_t>(new mpc_t(ddpCartPoleRolloutPtr_.get(), cartPoleSystemDynamicsPtr_.get(), cartPoleConstraintPtr_.get(),
+                                          cartPoleCostPtr_.get(), cartPoleOperatingPointPtr_.get(), partitioningTimes_, slqSettings_,
+                                          mpcSettings_));
 }
 
 }  // namespace cartpole

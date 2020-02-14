@@ -50,11 +50,14 @@ class OdeBase {
   using scalar_t = typename DIMENSIONS::scalar_t;
   using state_vector_t = typename DIMENSIONS::state_vector_t;
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+  using system_func_t = std::function<void(const state_vector_t& x, state_vector_t& dxdt, scalar_t t)>;
 
   /**
-   * Default constructor
+   * Constructor
    */
-  OdeBase() : numFunctionCalls_(0) {}
+  OdeBase() : numFunctionCalls_(0) {
+    systemFunction_ = [this](const state_vector_t& x, state_vector_t& dxdt, scalar_t t) { computeFlowMap(t, x, dxdt); };
+  }
 
   /**
    * Default destructor
@@ -67,11 +70,16 @@ class OdeBase {
   OdeBase(const OdeBase& rhs) : numFunctionCalls_(0) {}
 
   /**
+   * Get a system function callback that calls computeFlowMap for integration.
+   */
+  system_func_t systemFunction() { return systemFunction_; }
+
+  /**
    * Gets the number of function calls.
    *
    * @return size_t: number of function calls
    */
-  int getNumFunctionCalls() { return numFunctionCalls_; }
+  int getNumFunctionCalls() const { return numFunctionCalls_; }
 
   /**
    * Resets the number of function calls to zero.
@@ -109,6 +117,7 @@ class OdeBase {
 
  protected:
   int numFunctionCalls_;
+  system_func_t systemFunction_;
 };
 
 }  // namespace ocs2

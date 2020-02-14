@@ -60,18 +60,6 @@ class Dimensions {
     MAX_CONSTRAINT2_DIM_ = INPUT_DIM
   };
 
-  /**
-   * Riccati integrator type.
-   */
-  enum RiccatiIntegratorType {
-    /** ode45 type. */
-    ODE45 = 1,
-    /** adams-bashforth type. */
-    ADAMS_BASHFORTH = 2,
-    /** bulirch-store type. */
-    BULIRSCH_STOER = 3
-  };
-
   /** size_t trajectory type. */
   using size_array_t = std::vector<size_t>;
   /** Array of size_t trajectory type. */

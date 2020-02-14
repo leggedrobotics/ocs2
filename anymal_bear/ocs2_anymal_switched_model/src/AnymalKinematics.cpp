@@ -25,7 +25,8 @@ AnymalKinematics<SCALAR_T>* AnymalKinematics<SCALAR_T>::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-switched_model::matrix3_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::footOrientationRelativeToBaseFrame( size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
+switched_model::matrix3_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::footOrientationRelativeToBaseFrame(
+    size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
 
   switch (footIndex) {

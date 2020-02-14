@@ -2,7 +2,7 @@
 
 // Constraints
 #include "ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h"
-#include "ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraintInBase.h"
+#include "ocs2_switched_model_interface/constraint/EndEffectorVelocityHeadingConstraint.h"
 #include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
 #include "ocs2_switched_model_interface/constraint/ZeroForceConstraint.h"
 
@@ -31,6 +31,9 @@ void ComKinoConstraintBaseAd::initializeConstraintTerms() {
     // Velocity Constraint
     auto _o_endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityConstraint(
         footIdx, EndEffectorVelocityConstraintSettings(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
+    // EE Heading Velocity Constraint
+    auto _o_endEffectorVelocityHeadingConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityHeadingConstraint(
+          footIdx, EndEffectorVelocityHeadingConstraintSettings(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
 
     // Inequalities
     inequalityConstraintCollection_.add(std::move(frictionCone), footName + "_FrictionCone");
@@ -38,6 +41,7 @@ void ComKinoConstraintBaseAd::initializeConstraintTerms() {
     // State input equalities
     equalityStateInputConstraintCollection_.add(std::move(zeroForceConstraint), footName + "_ZeroForce");
     equalityStateInputConstraintCollection_.add(std::move(_o_endEffectorVelocityConstraint), footName + "_o_EEVel");
+    equalityStateInputConstraintCollection_.add(std::move(_o_endEffectorVelocityHeadingConstraint), footName + "_o_EEVelHeading");
   }
 }
 
@@ -66,31 +70,33 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
     // Active foot placement for stance legs
     auto _o_EEVelConstraint =
         equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityConstraint>(footName + "_o_EEVel");
+    // Rolling Heading Velocity constraint for stance legs
+    auto _o_EEVelHeadingConstraint =
+      equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityConstraint>(footName + "_o_EEVelHeading");
 
     EndEffectorVelocityConstraintSettings _o_eeVelConSettings;
-
-    _o_EEVelConstraint->setActivity(true);
+    EndEffectorVelocityHeadingConstraintSettings _o_eeVelHeadingConSettings;
 
     if (stanceLegs_[footIdx]) {
-      // in stance: y,z velocitys are zero
-      _o_eeVelConSettings.b.resize(2);
-      _o_eeVelConSettings.b << 0, 0;
-
-      // Lateral Constraint
-      _o_eeVelConSettings.A.resize(2, 3);
-      const matrix3_s_t<scalar_t> o_R_e = adKinematicModelPtr_->footOrientationInOriginFrame(footIdx, getComPose(x), getJointPositions(x));
-      auto o_eeVelLateral = o_R_e.col(2).template head<2>().eval(); // X,Y components
-      _o_eeVelConSettings.A.template block<1,2>(0,0) = o_eeVelLateral;
-      _o_eeVelConSettings.A(0,2) = 0;
-      _o_eeVelConSettings.A.bottomRows<1>() << 0, 0, 1; // Up(Z) constraint
+      // EE velocities in lateral and upward directions (y,z) in EE frame are zero.
+      // In origin frame their projected values (in x,y plane) cancel, and z==0
+      _o_eeVelHeadingConSettings.b.resize(3);
+      _o_eeVelHeadingConSettings.b << 0, 0, 0;
+      _o_eeVelHeadingConSettings.A.resize(3,3);
+      _o_eeVelHeadingConSettings.A << 0, 1, 0,\
+                                     -1, 0, 0,\
+                                      0, 0, 1;
+      _o_EEVelHeadingConstraint->configure(_o_eeVelHeadingConSettings);
+      _o_EEVelHeadingConstraint->setActivity(true);
     } else {  // in swing: z-velocity is provided
+      //TODO(oharley) this could be made 'smarter'
       _o_eeVelConSettings.b.resize(1);
       _o_eeVelConSettings.A.resize(1, 3);
-      //TODO(oharley) this could be made 'smarter'
       _o_eeVelConSettings.b << -zDirectionRefsPtr_[footIdx]->calculateVelocity(Base::t_);
       _o_eeVelConSettings.A << 0, 0, 1;
+      _o_EEVelConstraint->configure(_o_eeVelConSettings);
+      _o_EEVelConstraint->setActivity(true);
     }
-    _o_EEVelConstraint->configure(_o_eeVelConSettings);
   }
 }
 

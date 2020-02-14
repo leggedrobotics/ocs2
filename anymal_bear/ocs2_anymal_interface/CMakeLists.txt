@@ -4,12 +4,12 @@ project(ocs2_anymal_interface)
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_anymal_switched_model
   ocs2_quadruped_interface
-  )
+  ocs2_scp_integration
+)
 
 find_package(catkin REQUIRED COMPONENTS
   roslib
   ${CATKIN_PACKAGE_DEPENDENCIES}
-  # ocs2_scp_integration
   )
 
 ## Eigen3
@@ -48,8 +48,6 @@ catkin_package(
 
   CATKIN_DEPENDS
   ${CATKIN_PACKAGE_DEPENDENCIES}
-    # ocs2_anymal_switched_model
-    # ocs2_quadruped_interface
 
   DEPENDS
     Boost

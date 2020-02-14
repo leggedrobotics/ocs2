@@ -31,9 +31,12 @@ class AnymalKinematics final : public switched_model::KinematicsModelBase<SCALAR
   switched_model::vector3_s_t<SCALAR_T> positionBaseToFootInBaseFrame(
       size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const override;
 
+
   joint_jacobian_t baseToFootJacobianInBaseFrame(size_t footIndex,
                                                  const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const override;
-  switched_model::matrix3_s_t<SCALAR_T> fr_base_X_fr_FOOT( size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
+
+  switched_model::matrix3_s_t<SCALAR_T> footOrientationRelativeToBaseFrame(
+      size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
 };
 
 }  // namespace tpl

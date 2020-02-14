@@ -74,14 +74,13 @@ class ControlledSystemBase : public OdeBase<STATE_DIM> {
 
   /**
    * Constructor.
-   * @param [in] modelData: The model data which will be used for storing outputs.
    */
-  explicit ControlledSystemBase(const ModelDataBase& modelData = ModelDataBase()) : BASE(modelData), controllerPtr_(nullptr) {}
+  ControlledSystemBase() : controllerPtr_(nullptr) {}
 
   /**
    * Copy constructor.
    */
-  ControlledSystemBase(const ControlledSystemBase& rhs) : ControlledSystemBase() { setController(rhs.controllerPtr()); }
+  ControlledSystemBase(const ControlledSystemBase& rhs) { setController(rhs.controllerPtr()); }
 
   /**
    * Default destructor.
@@ -117,15 +116,9 @@ class ControlledSystemBase : public OdeBase<STATE_DIM> {
   void computeFlowMap(const scalar_t& t, const state_vector_t& x, state_vector_t& dxdt) final {
     BASE::numFunctionCalls_++;
     input_vector_t u = controllerPtr_->computeInput(t, x);
-
-    if (this->nextModelDataPtrIterator() == this->endModelDataPtrIterator()) {
-      this->resizeInternalModelDataPtrArray();
-      //      std::cerr << "WARNNINGS: The reserved size for recording model data is not enough." << std::endl;
-    }
-    auto* modelDataPtr = this->nextModelDataPtrIterator()->get();
-    computeFlowMap(t, x, u, modelDataPtr);
-    dxdt = modelDataPtr->dynamics_;
-    ++this->nextModelDataPtrIterator();
+    ModelDataBase& modelData = this->modelDataEmplaceBack();
+    computeFlowMap(t, x, u, &modelData);
+    dxdt = modelData.dynamics_;
   }
 
   /**

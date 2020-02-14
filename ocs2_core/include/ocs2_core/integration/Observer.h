@@ -90,25 +90,25 @@ class Observer {
       timeTrajectoryPtr_->push_back(time);
     }
 
-    // extract model data
+    // extract cached model data
     if (modelDataTrajectoryPtr_) {
       // check for initial call
-      if (system.nextModelDataPtrIterator() == system.beginModelDataPtrIterator()) {
+      if (system.endModelDataIterator() == system.beginModelDataIterator()) {
         // since the flow map has not been called so far, call it once.
-        state_vector_t flowMap;
-        system.computeFlowMap(time, state, flowMap);
+        // Note: This is a workaround for boost::odeint() as it calls observer() before flowMap()
+        state_vector_t dxdt;
+        system.computeFlowMap(time, state, dxdt);
       }
-      // get model data from current time step
-      while (system.nextModelDataPtrIterator() != system.beginModelDataPtrIterator()) {
-        --system.nextModelDataPtrIterator();
-        model_data_t* modelDataPtr = system.nextModelDataPtrIterator()->get();
-        if (numerics::almost_eq(modelDataPtr->time_, time)) {
-          modelDataTrajectoryPtr_->emplace_back(*modelDataPtr);
+      // get model data from current time step, search starting from most recent cache entry
+      model_data_array_t::iterator modelData_i = system.endModelDataIterator();
+      while (modelData_i != system.beginModelDataIterator()) {
+        --modelData_i;
+        if (numerics::almost_eq(modelData_i->time_, time)) {
+          modelDataTrajectoryPtr_->emplace_back(*modelData_i);
           break;
         }
       }
-      // reset modelDataPtrArray write position
-      system.nextModelDataPtrIterator() = system.beginModelDataPtrIterator();
+      system.clearModelDataArray();
     }
   }
 

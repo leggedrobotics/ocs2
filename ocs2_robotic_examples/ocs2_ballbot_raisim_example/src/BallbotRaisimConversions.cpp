@@ -8,6 +8,7 @@ namespace ballbot {
 // todo: Check against
 // https://bitbucket.org/leggedrobotics/rezero_base/src/master/rezero_base_mpc_control/balance_controller/include/balance_controller/ConversionsOcs2.hpp
 void makeEulerAnglesUnique(Eigen::Vector3d& eulerAngles) {
+  // code taken from kindr
   double tol = 1e-9;
 
   if (eulerAngles.y() < -M_PI / 2 - tol) {
@@ -59,7 +60,7 @@ BallbotRaisimConversions::BallbotRaisimConversions() {
 }
 
 Eigen::Vector3d BallbotRaisimConversions::ballCenterInWorld(const Eigen::VectorXd& q) const {
-  const Eigen::Vector3d r_base_ball_inBase = (Eigen::Vector3d() << 0, 0, -distanceBaseToBallCenter_).finished();
+  const Eigen::Vector3d r_base_ball_inBase{0, 0, -distanceBaseToBallCenter_};
 
   const Eigen::Vector3d r_world_base_inWorld = q.head<3>();
   const Eigen::Quaterniond q_world_base(q(3), q(4), q(5), q(6));
@@ -75,7 +76,7 @@ Eigen::Vector3d BallbotRaisimConversions::angularVelocityInWorldToEulerAngleDeri
   const double syaw = sin(eulerAngles(0));
   const double spitch = sin(eulerAngles(1));
 
-  assert(abs(cyaw) > 1e-8);  // test for singularity in debug mode
+  assert(abs(cpitch) > 1e-8);  // test for singularity in debug mode
 
   Eigen::Matrix3d transform;
   transform << cyaw * spitch / cpitch, spitch * syaw / cpitch, 1,  // clang-format off
@@ -96,7 +97,7 @@ Eigen::Vector3d BallbotRaisimConversions::eulerAngleDerivativesToAngularVelocity
   Eigen::Matrix3d transform;
   transform << 0, -syaw, cpitch * cyaw,  // clang-format off
                0,  cyaw, cpitch * syaw,
-               1,     0, -spitch;  // clang-format on
+               1,     0,       -spitch;  // clang-format on
 
   return transform * eulerAnglesTimeDerivative;
 }
@@ -104,9 +105,9 @@ Eigen::Vector3d BallbotRaisimConversions::eulerAngleDerivativesToAngularVelocity
 std::pair<Eigen::VectorXd, Eigen::VectorXd> BallbotRaisimConversions::stateToRaisimGenCoordGenVel(const state_vector_t& state,
                                                                                                   const input_vector_t&) const {
   // assume ball is on the ground
-  const Eigen::Vector3d r_world_ball_inWorld = (Eigen::Vector3d() << state(0), state(1), ballRadius_).finished();
-  const Eigen::Vector3d r_base_ball_inBase = (Eigen::Vector3d() << 0, 0, -distanceBaseToBallCenter_).finished();
-  const Eigen::Vector3d v_ball_inWorld = (Eigen::Vector3d() << state(5), state(6), 0.0).finished();
+  const Eigen::Vector3d r_world_ball_inWorld{state(0), state(1), ballRadius_};
+  const Eigen::Vector3d r_base_ball_inBase{0, 0, -distanceBaseToBallCenter_};
+  const Eigen::Vector3d v_ball_inWorld{state(5), state(6), 0.0};
   const Eigen::Vector3d omega_base_inWorld = eulerAngleDerivativesToAngularVelocityInWorld(state.segment<3>(2), state.tail<3>());
   const Eigen::Quaterniond q_world_base = Eigen::AngleAxisd(state(2), Eigen::Vector3d::UnitZ()) *
                                           Eigen::AngleAxisd(state(3), Eigen::Vector3d::UnitY()) *
@@ -136,8 +137,7 @@ auto BallbotRaisimConversions::raisimGenCoordGenVelToState(const Eigen::VectorXd
   const auto r_world_ball_inWorld = ballCenterInWorld(q);
   const Eigen::Quaterniond q_world_base(q(3), q(4), q(5), q(6));  // w x y z
 
-  Eigen::Vector3d r_base_ball_inBase;
-  r_base_ball_inBase << 0, 0, -distanceBaseToBallCenter_;
+  const Eigen::Vector3d r_base_ball_inBase{0, 0, -distanceBaseToBallCenter_};
 
   const Eigen::Vector3d omega_base_inWorld = dq.segment<3>(3);
   Eigen::Vector3d eulerAngles = q_world_base.toRotationMatrix().eulerAngles(2, 1, 0);
@@ -153,14 +153,15 @@ auto BallbotRaisimConversions::raisimGenCoordGenVelToState(const Eigen::VectorXd
 }
 
 Eigen::VectorXd BallbotRaisimConversions::inputToRaisimGeneralizedForce(double, const input_vector_t& input, const state_vector_t&,
-                                                                        const Eigen::VectorXd&, const Eigen::VectorXd&) const {
+                                                                        const Eigen::VectorXd& q, const Eigen::VectorXd&) const {
   const double geometricFactor = ballRadius_ / omniWheelRadius_;
   const Eigen::Matrix3d torqueTransformationMatrixWheelsToBase =
       geometricFactor * sqrt(2.0) / 2.0 *
       (Eigen::Matrix3d() << 1.0, -0.5, -0.5, 0.0, sqrt(3) / 2.0, -sqrt(3) / 2.0, -1.0, -1.0, -1.0).finished();
+  const Eigen::Quaterniond q_world_base(q(3), q(4), q(5), q(6));  // w x y z
 
   Eigen::VectorXd raisimGeneralizedForce(Eigen::VectorXd::Zero(6 + 3));
-  raisimGeneralizedForce.tail<3>() = -torqueTransformationMatrixWheelsToBase * input;
+  raisimGeneralizedForce.tail<3>() = q_world_base * (-torqueTransformationMatrixWheelsToBase) * input;
   return raisimGeneralizedForce;
 }
 

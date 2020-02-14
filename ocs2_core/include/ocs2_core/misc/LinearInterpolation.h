@@ -51,7 +51,7 @@ using index_alpha_t = std::pair<int, scalar_t>;
  * Helper comparison function for non-Eigen types.
  */
 template <typename T>
-constexpr typename std::enable_if<!std::is_base_of<Eigen::EigenBase<T>, T>::value, bool>::type compareSizes(const T& lhs, const T& rhs) {
+constexpr typename std::enable_if<!std::is_base_of<Eigen::EigenBase<T>, T>::value, bool>::type areSameSize(const T& lhs, const T& rhs) {
   return true;
 }
 
@@ -59,7 +59,7 @@ constexpr typename std::enable_if<!std::is_base_of<Eigen::EigenBase<T>, T>::valu
  * Helper comparison function for Eigen-Type.
  */
 template <typename Derived>
-bool compareSizes(const Eigen::EigenBase<Derived>& lhs, const Eigen::EigenBase<Derived>& rhs) {
+bool areSameSize(const Eigen::EigenBase<Derived>& lhs, const Eigen::EigenBase<Derived>& rhs) {
   return lhs.rows() == rhs.rows() && lhs.cols() == rhs.cols();
 }
 
@@ -130,7 +130,7 @@ void interpolate(index_alpha_t indexAlpha, Field_T& enquiryData, const std::vect
       scalar_t alpha = indexAlpha.second;
       auto& lhs = accessFun(dataPtr, index);
       auto& rhs = accessFun(dataPtr, index + 1);
-      if (compareSizes(rhs, lhs)) {
+      if (areSameSize(rhs, lhs)) {
         enquiryData = alpha * lhs + (scalar_t(1.0) - alpha) * rhs;
       } else {
         enquiryData = (alpha > 0.5) ? lhs : rhs;

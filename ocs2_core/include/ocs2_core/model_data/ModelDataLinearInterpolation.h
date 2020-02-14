@@ -32,7 +32,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_core/misc/LinearInterpolation.h"
 #include "ocs2_core/model_data/ModelDataBase.h"
 
-// Declares an access function of name FIELD (e.g., time, dynamics, ...)
+/*
+ * @file
+ * The linear interpolation of costInputStateDerivative, Pm, at index-alpha pair given modelDataTrajectory can
+ * be computed as:
+ *
+ * ModelData::interpolate(indexAlpha, Pm, *modelDataTrajectory, ModelData::costInputStateDerivative);
+ */
+
+/*
+ * Declares an access function of name FIELD such as time, dynamics, dynamicsBias, ...
+ * For example the signature of function for dynamics is:
+ * const dynamic_vector_t& dynamics(const ocs2::ModelDataBase::array_t* vec, size_t n) {
+ *   return (*vec)[n].dynamic_;
+ * }
+ */
 #define CREATE_INTERPOLATION_ACCESS_FUNCTION(FIELD)                                                               \
   inline auto FIELD(const ocs2::ModelDataBase::array_t* vec, size_t ind)->const decltype((*vec)[ind].FIELD##_)& { \
     return (*vec)[ind].FIELD##_;                                                                                  \

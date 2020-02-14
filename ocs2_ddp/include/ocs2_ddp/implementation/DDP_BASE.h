@@ -142,7 +142,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
     cachedPostEventIndicesStock_[i].clear();
     cachedStateTrajectoriesStock_[i].clear();
     cachedInputTrajectoriesStock_[i].clear();
-    cachedModelDataTrajectoriesStock_.clear();
+    cachedModelDataTrajectoriesStock_[i].clear();
 
     // for Riccati equation parallel computation
     SmFinalStock_[i] = state_matrix_t::Zero();

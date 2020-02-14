@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/StdVector>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -45,8 +46,6 @@ namespace ocs2 {
  * The base class for model data.
  */
 struct ModelDataBase {
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
   using scalar_t = typename Dimensions<0, 0>::scalar_t;
   using dynamic_vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
   using dynamic_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic>;
@@ -56,52 +55,20 @@ struct ModelDataBase {
   using dynamic_vector_array_t = typename Dimensions<0, 0>::dynamic_vector_array_t;
   using dynamic_matrix_array_t = typename Dimensions<0, 0>::dynamic_matrix_array_t;
 
-  using self_t = ModelDataBase;
-  using array_t = std::vector<self_t, Eigen::aligned_allocator<self_t>>;
-  using array2_t = std::vector<array_t, Eigen::aligned_allocator<array_t>>;
-
-  /**
-   * Default constructor.
-   */
-  ModelDataBase() = default;
-
-  /**
-   * Default destructor.
-   */
-  virtual ~ModelDataBase() = default;
-
-  /**
-   * Copy constructor.
-   */
-  ModelDataBase(const ModelDataBase& rhs) = default;
+  using array_t = std::vector<ModelDataBase>;
+  using array2_t = std::vector<array_t>;
 
   /**
    * Creates a deep copy of the object.
    * @warning Cloning implies that the caller takes ownership and deletes the created object.
    * @return Pointer to a new instance.
    */
-  virtual ModelDataBase* clone() const { return new self_t(*this); }
+  virtual ModelDataBase* clone() const;
 
   /**
    * Displays all variables
    */
-  virtual void display() {
-    std::cerr << std::endl;
-    std::cerr << "time: " << time_ << "\n";
-    std::cerr << "Dynamics: " << dynamics_.transpose() << "\n";
-    std::cerr << "dynamicsBias: " << dynamicsBias_.transpose() << "\n";
-    std::cerr << "Dynamics State Derivative:\n" << dynamicsStateDerivative_ << "\n";
-    std::cerr << "Dynamics Input Derivative:\n" << dynamicsInputDerivative_ << "\n";
-    std::cerr << "Dynamics Covariance:\n" << dynamicsCovariance_ << "\n";
-
-    std::cerr << "Cost: " << cost_ << "\n";
-    std::cerr << "Cost State Derivative: " << costStateDerivative_.transpose() << "\n";
-    std::cerr << "Cost Input Derivative: " << costInputDerivative_.transpose() << "\n";
-    std::cerr << "Cost State Second Derivative:\n" << costStateSecondDerivative_ << "\n";
-    std::cerr << "Cost Input Second Derivative:\n" << costInputSecondDerivative_ << "\n";
-    std::cerr << "Cost Input State Derivative:\n" << costInputStateDerivative_ << "\n";
-    std::cerr << std::endl;
-  }
+  virtual void display() const;
 
   /**
    * Checks whether the size of the member variables matches the state and input dimension.
@@ -109,179 +76,25 @@ struct ModelDataBase {
    * @param [in] stateDim: The dimension of the state vector.
    * @param [in] inputDim: The dimension of the input vecotr.
    */
-  void checkSizes(int stateDim, int inputDim) const {
-    assert(stateDim_ == stateDim);
-    assert(inputDim_ == inputDim);
-
-    // dynamics flow map
-    assert(dynamics_.size() == stateDim);
-    assert(dynamicsBias_.size() == stateDim);
-    assert(dynamicsStateDerivative_.rows() == stateDim);
-    assert(dynamicsStateDerivative_.cols() == stateDim);
-    assert(dynamicsInputDerivative_.rows() == stateDim);
-    assert(dynamicsInputDerivative_.cols() == inputDim);
-
-    // cost
-    assert(costStateDerivative_.size() == stateDim);
-    assert(costStateSecondDerivative_.rows() == stateDim);
-    assert(costStateSecondDerivative_.cols() == stateDim);
-    assert(costInputDerivative_.size() == inputDim);
-    assert(costInputSecondDerivative_.rows() == inputDim);
-    assert(costInputSecondDerivative_.cols() == inputDim);
-    assert(costInputStateDerivative_.rows() == inputDim);
-    assert(costInputStateDerivative_.cols() == stateDim);
-
-    // state equality constraints
-    assert(stateEqConstr_.size() == numStateEqConstr_);
-    assert(stateEqConstrStateDerivative_.rows() == stateEqConstr_.size());
-    assert(stateEqConstrStateDerivative_.cols() == stateDim);
-
-    // state-input equality constraints
-    assert(stateInputEqConstr_.size() == numStateInputEqConstr_);
-    assert(stateInputEqConstrStateDerivative_.rows() == stateInputEqConstr_.size());
-    assert(stateInputEqConstrStateDerivative_.cols() == stateDim);
-    assert(stateInputEqConstrInputDerivative_.rows() == stateInputEqConstr_.size());
-    assert(stateInputEqConstrInputDerivative_.cols() == inputDim);
-
-    // inequality constraints
-    assert(ineqConstr_.size() == numIneqConstr_);
-    assert(ineqConstrStateDerivative_.size() == ineqConstr_.size());
-    assert(ineqConstrInputDerivative_.size() == ineqConstr_.size());
-    assert(ineqConstrStateSecondDerivative_.size() == ineqConstr_.size());
-    assert(ineqConstrInputSecondDerivative_.size() == ineqConstr_.size());
-    assert(ineqConstrInputStateDerivative_.size() == ineqConstr_.size());
-    for (int i = 0; i < ineqConstr_.size(); i++) {
-      assert(ineqConstrStateDerivative_[i].size() == stateDim);
-      assert(ineqConstrInputDerivative_[i].size() == inputDim);
-      assert(ineqConstrStateSecondDerivative_[i].rows() == stateDim);
-      assert(ineqConstrStateSecondDerivative_[i].cols() == stateDim);
-      assert(ineqConstrInputSecondDerivative_[i].rows() == inputDim);
-      assert(ineqConstrInputSecondDerivative_[i].cols() == inputDim);
-      assert(ineqConstrInputStateDerivative_[i].rows() == inputDim);
-      assert(ineqConstrInputStateDerivative_[i].cols() == stateDim);
-    }  // end of i loop
-  }
+  void checkSizes(int stateDim, int inputDim) const;
 
   /**
    * Checks the numerical properties of the cost function and its derivatives.
    * @return The description of the error. If there was no error it would be empty;
    */
-  std::string checkCostProperties() const {
-    std::string errorDescription;
-
-    if (cost_ != cost_) {
-      errorDescription += "Intermediate cost is not finite.";
-    }
-    if (!costStateDerivative_.allFinite()) {
-      errorDescription += "Intermediate cost first derivative w.r.t. state is not finite.";
-    }
-    if (!costStateSecondDerivative_.allFinite()) {
-      errorDescription += "Intermediate cost second derivative w.r.t. state is not finite.";
-    }
-    if (!costStateSecondDerivative_.isApprox(costStateSecondDerivative_.transpose())) {
-      errorDescription += "Intermediate cost second derivative w.r.t. state is not self-adjoint.";
-    }
-    if (LinearAlgebra::eigenvalues(costStateSecondDerivative_).real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
-      errorDescription += "Q matrix is not positive semi-definite. It's smallest eigenvalue is " +
-                          std::to_string(LinearAlgebra::eigenvalues(costStateSecondDerivative_).real().minCoeff()) + ".";
-    }
-    if (!costInputDerivative_.allFinite()) {
-      errorDescription += "Intermediate cost first derivative w.r.t. input is not finite.";
-    }
-    if (!costInputSecondDerivative_.allFinite()) {
-      errorDescription += "Intermediate cost second derivative w.r.t. input is not finite.";
-    }
-    if (!costInputSecondDerivative_.isApprox(costInputSecondDerivative_.transpose())) {
-      errorDescription += "Intermediate cost second derivative w.r.t. input is not self-adjoint.";
-    }
-    if (!costInputStateDerivative_.allFinite()) {
-      errorDescription += "Intermediate cost second derivative w.r.t. input-state is not finite.";
-    }
-    if (costInputSecondDerivative_.ldlt().rcond() < Eigen::NumTraits<scalar_t>::epsilon()) {
-      errorDescription += "R matrix is not invertible. It's reciprocal condition number is " +
-                          std::to_string(costInputSecondDerivative_.ldlt().rcond()) + ".";
-    }
-    if (LinearAlgebra::eigenvalues(costInputSecondDerivative_).real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon()) {
-      errorDescription += "R matrix is not positive definite. It's smallest eigenvalue is " +
-                          std::to_string(LinearAlgebra::eigenvalues(costInputSecondDerivative_).real().minCoeff()) + ".";
-    }
-
-    return errorDescription;
-  }
+  std::string checkCostProperties() const;
 
   /**
    * Checks the numerical properties of the dynamics derivatives.
    * @return The description of the error. If there was no error it would be empty;
    */
-  std::string checkDynamicsDerivativsProperties() const {
-    std::string errorDescription;
-
-    if (!dynamicsStateDerivative_.allFinite()) {
-      errorDescription += "Dynamics derivative w.r.t. state is not finite.";
-    }
-    if (!dynamicsInputDerivative_.allFinite()) {
-      errorDescription += "Dynamics derivative w.r.t. input is not finite.";
-    }
-
-    return errorDescription;
-  }
+  std::string checkDynamicsDerivativsProperties() const;
 
   /**
    * Checks the numerical properties of the constraint functions and derivatives.
    * @return The description of the error. If there was no error it would be empty;
    */
-  std::string checkConstraintProperties() const {
-    std::string errorDescription;
-
-    if (numStateInputEqConstr_ > 0) {
-      if (!stateInputEqConstr_.head(numStateInputEqConstr_).allFinite()) {
-        errorDescription += "Input-state constraint is not finite.";
-      }
-      if (!stateInputEqConstrStateDerivative_.topRows(numStateInputEqConstr_).allFinite()) {
-        errorDescription += "Input-state constraint derivative w.r.t. state is not finite.";
-      }
-      if (!stateInputEqConstrInputDerivative_.topRows(numStateInputEqConstr_).allFinite()) {
-        errorDescription += "Input-state constraint derivative w.r.t. input is not finite.";
-      }
-      size_t DmRank = LinearAlgebra::rank(stateInputEqConstrInputDerivative_.topRows(numStateInputEqConstr_));
-      if (DmRank != numStateInputEqConstr_) {
-        errorDescription += "Input-state constraint derivative w.r.t. input is not full-row rank. It's rank is " + std::to_string(DmRank) +
-                            " while the expected rank is " + std::to_string(numStateInputEqConstr_) + ".";
-      }
-    }
-
-    if (numStateEqConstr_ > 0) {
-      if (!stateEqConstr_.head(numStateEqConstr_).allFinite()) {
-        errorDescription += "State-only constraint is not finite.";
-      }
-      if (!stateEqConstrStateDerivative_.topRows(numStateEqConstr_).allFinite()) {
-        errorDescription += "State-only constraint derivative w.r.t. state is not finite.";
-      }
-    }
-
-    for (size_t i = 0; i < numIneqConstr_; i++) {
-      if (ineqConstr_[i] != ineqConstr_[i]) {
-        errorDescription += "Inequality constraint " + std::to_string(i) + " is not finite.";
-      }
-      if (!ineqConstrStateDerivative_[i].allFinite()) {
-        errorDescription += "Inequality constraint " + std::to_string(i) + " derivative w.r.t. state is not finite.";
-      }
-      if (!ineqConstrInputDerivative_[i].allFinite()) {
-        errorDescription += "Inequality constraint " + std::to_string(i) + " derivative w.r.t. input is not finite.";
-      }
-      if (!ineqConstrStateSecondDerivative_[i].allFinite()) {
-        errorDescription += "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. state is not finite.";
-      }
-      if (!ineqConstrInputSecondDerivative_[i].allFinite()) {
-        errorDescription += "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. state is not finite.";
-      }
-      if (!ineqConstrInputStateDerivative_[i].allFinite()) {
-        errorDescription += "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. input-state is not finite.";
-      }
-    }
-
-    return errorDescription;
-  }
+  std::string checkConstraintProperties() const;
 
   /**
    * Variables

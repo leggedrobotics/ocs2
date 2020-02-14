@@ -54,48 +54,21 @@ GDDP<STATE_DIM, INPUT_DIM>::GDDP(const GDDP_Settings& gddpSettings /*= GDDP_Sett
   riccatiSensitivityIntegratorsPtrStock_.clear();
   riccatiSensitivityIntegratorsPtrStock_.reserve(gddpSettings_.nThreads_);
 
+  IntegratorType integratorType = gddpSettings_.riccatiIntegratorType_;
+  if (integratorType != IntegratorType::ODE45 && integratorType != IntegratorType::BULIRSCH_STOER) {
+    throw(std::runtime_error("Unsupported Riccati equation integrator type: " + integrator_type::toString(integratorType)));
+  }
+
   for (size_t i = 0; i < gddpSettings_.nThreads_; i++) {
     bvpSensitivityEquationsPtrStock_.emplace_back(new bvp_sensitivity_equations_t);
     bvpSensitivityErrorEquationsPtrStock_.emplace_back(new bvp_sensitivity_error_equations_t);
     rolloutSensitivityEquationsPtrStock_.emplace_back(new rollout_sensitivity_equations_t);
     riccatiSensitivityEquationsPtrStock_.emplace_back(new riccati_sensitivity_equations_t);
 
-    switch (gddpSettings_.riccatiIntegratorType_) {
-      case DIMENSIONS::RiccatiIntegratorType::ODE45: {
-        bvpSensitivityIntegratorsPtrStock_.emplace_back(new ODE45<STATE_DIM>(bvpSensitivityEquationsPtrStock_.back()));
-
-        bvpSensitivityErrorIntegratorsPtrStock_.emplace_back(new ODE45<STATE_DIM>(bvpSensitivityErrorEquationsPtrStock_.back()));
-
-        rolloutSensitivityIntegratorsPtrStock_.emplace_back(new ODE45<STATE_DIM>(rolloutSensitivityEquationsPtrStock_.back()));
-
-        riccatiSensitivityIntegratorsPtrStock_.emplace_back(
-            new ODE45<riccati_sensitivity_equations_t::S_DIM_>(riccatiSensitivityEquationsPtrStock_.back()));
-
-        break;
-      }
-      /* note: this case is not yet working. It would most likely work if we had an adaptive time adams-bashforth integrator */
-      case DIMENSIONS::RiccatiIntegratorType::ADAMS_BASHFORTH: {
-        throw std::runtime_error("This ADAMS_BASHFORTH is not implemented for Riccati Integrator.");
-        break;
-      }
-      case DIMENSIONS::RiccatiIntegratorType::BULIRSCH_STOER: {
-        bvpSensitivityIntegratorsPtrStock_.emplace_back(new IntegratorBulirschStoer<STATE_DIM>(bvpSensitivityEquationsPtrStock_.back()));
-
-        bvpSensitivityErrorIntegratorsPtrStock_.emplace_back(
-            new IntegratorBulirschStoer<STATE_DIM>(bvpSensitivityErrorEquationsPtrStock_.back()));
-
-        rolloutSensitivityIntegratorsPtrStock_.emplace_back(
-            new IntegratorBulirschStoer<STATE_DIM>(rolloutSensitivityEquationsPtrStock_.back()));
-
-        riccatiSensitivityIntegratorsPtrStock_.emplace_back(
-            new IntegratorBulirschStoer<riccati_sensitivity_equations_t::S_DIM_>(riccatiSensitivityEquationsPtrStock_.back()));
-
-        break;
-      }
-      default:
-        throw(std::runtime_error("Riccati equations integrator type specified wrongly."));
-    }
-
+    bvpSensitivityIntegratorsPtrStock_.emplace_back(newIntegrator<STATE_DIM>(integratorType));
+    bvpSensitivityErrorIntegratorsPtrStock_.emplace_back(newIntegrator<STATE_DIM>(integratorType));
+    rolloutSensitivityIntegratorsPtrStock_.emplace_back(newIntegrator<STATE_DIM>(integratorType));
+    riccatiSensitivityIntegratorsPtrStock_.emplace_back(newIntegrator<riccati_sensitivity_equations_t::S_DIM_>(integratorType));
   }  // end of i loop
 }
 
@@ -363,10 +336,12 @@ void GDDP<STATE_DIM, INPUT_DIM>::propagateRolloutSensitivity(size_t workerIndex,
         computeEquivalentSystemMultiplier(eventTimeIndex, activeSubsystem, multiplier);
         rolloutSensitivityEquationsPtrStock_[workerIndex]->setMultiplier(multiplier);
 
+        Observer<STATE_DIM> observer(&sensitivityStateTrajectoriesStock[i]);  // concat trajectory
+
         // solve sensitivity ODE
-        rolloutSensitivityIntegratorsPtrStock_[workerIndex]->integrate(
-            nabla_xInit, beginTimeItr, endTimeItr, sensitivityStateTrajectoriesStock[i], gddpSettings_.minTimeStep_,
-            gddpSettings_.absTolODE_, gddpSettings_.relTolODE_, maxNumSteps, true);
+        rolloutSensitivityIntegratorsPtrStock_[workerIndex]->integrate_times(
+            *rolloutSensitivityEquationsPtrStock_[workerIndex], observer, nabla_xInit, beginTimeItr, endTimeItr, gddpSettings_.minTimeStep_,
+            gddpSettings_.absTolODE_, gddpSettings_.relTolODE_, maxNumSteps);
 
         // compute input sensitivity
         for (; k_u < sensitivityStateTrajectoriesStock[i].size(); k_u++) {
@@ -552,10 +527,12 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityRiccatiEquations(
       computeEquivalentSystemMultiplier(eventTimeIndex, activeSubsystem, multiplier);
       riccatiSensitivityEquationsPtrStock_[workerIndex]->setMultiplier(multiplier);
 
+      Observer<riccati_sensitivity_equations_t::S_DIM_> observer(&allSsTrajectory);  // concatenate trajectory
+
       // solve Riccati sensitivity equations
-      riccatiSensitivityIntegratorsPtrStock_[workerIndex]->integrate(SsFinal, beginTimeItr, endTimeItr, allSsTrajectory,
-                                                                     gddpSettings_.minTimeStep_, gddpSettings_.absTolODE_,
-                                                                     gddpSettings_.relTolODE_, maxNumSteps, true);
+      riccatiSensitivityIntegratorsPtrStock_[workerIndex]->integrate_times(*riccatiSensitivityEquationsPtrStock_[workerIndex], observer,
+                                                                           SsFinal, beginTimeItr, endTimeItr, gddpSettings_.minTimeStep_,
+                                                                           gddpSettings_.absTolODE_, gddpSettings_.relTolODE_, maxNumSteps);
 
       // final value of the next subsystem
       if (j < NE) {
@@ -678,15 +655,17 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(size_t workerIndex, const s
       computeEquivalentSystemMultiplier(eventTimeIndex, activeSubsystem, multiplier);
       bvpSensitivityEquationsPtrStock_[workerIndex]->setMultiplier(multiplier);
 
+      Observer<STATE_DIM> rMvObserver(&rMvTrajectory);  // concatenate trajectory
       // solve Riccati equations for Mv
-      bvpSensitivityIntegratorsPtrStock_[workerIndex]->integrate(MvFinalInternal, beginTimeItr, endTimeItr, rMvTrajectory,
-                                                                 gddpSettings_.minTimeStep_, gddpSettings_.absTolODE_,
-                                                                 gddpSettings_.relTolODE_, maxNumSteps, true);
+      bvpSensitivityIntegratorsPtrStock_[workerIndex]->integrate_times(
+          *bvpSensitivityEquationsPtrStock_[workerIndex], rMvObserver, MvFinalInternal, beginTimeItr, endTimeItr,
+          gddpSettings_.minTimeStep_, gddpSettings_.absTolODE_, gddpSettings_.relTolODE_, maxNumSteps);
 
+      Observer<STATE_DIM> rMveObserver(&rMveTrajectory);  // concatenate trajectory
       // solve Riccati equations for Mve
-      bvpSensitivityErrorIntegratorsPtrStock_[workerIndex]->integrate(MveFinalInternal, beginTimeItr, endTimeItr, rMveTrajectory,
-                                                                      gddpSettings_.minTimeStep_, gddpSettings_.absTolODE_,
-                                                                      gddpSettings_.relTolODE_, maxNumSteps, true);
+      bvpSensitivityErrorIntegratorsPtrStock_[workerIndex]->integrate_times(
+          *bvpSensitivityErrorEquationsPtrStock_[workerIndex], rMveObserver, MveFinalInternal, beginTimeItr, endTimeItr,
+          gddpSettings_.minTimeStep_, gddpSettings_.absTolODE_, gddpSettings_.relTolODE_, maxNumSteps);
 
       // final value of the next subsystem
       if (j < NE) {

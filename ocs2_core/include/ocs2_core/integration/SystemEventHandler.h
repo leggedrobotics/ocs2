@@ -27,16 +27,17 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SYSTEMEVENTHANDLER_OCS2_H_
-#define SYSTEMEVENTHANDLER_OCS2_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
-#include <limits>
+#include <exception>
 #include <memory>
+#include <utility>
 #include <vector>
 
-#include "ocs2_core/integration/EventHandlerBase.h"
+#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/integration/OdeBase.h>
 
 namespace ocs2 {
 
@@ -49,53 +50,82 @@ enum sys_event_id {
 };
 
 /**
- * Specialized event handler for handling toolbox invoked events.
+ * Event handler class for ode solvers.
  *
  * @tparam STATE_DIM: Dimension of the state space.
  */
 template <int STATE_DIM>
-class SystemEventHandler : public EventHandlerBase<STATE_DIM> {
+class SystemEventHandler {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Ptr = std::shared_ptr<SystemEventHandler<STATE_DIM> >;
+  using DIMENSIONS = Dimensions<STATE_DIM, 0>;
+  using scalar_t = typename DIMENSIONS::scalar_t;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
+  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
+  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
+  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
 
-  using BASE = EventHandlerBase<STATE_DIM>;
-  using typename BASE::dynamic_vector_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::scalar_t;
-  using typename BASE::state_vector_array_t;
-  using typename BASE::state_vector_t;
+  using system_t = OdeBase<STATE_DIM>;
 
   /**
    * Default constructor
    */
-  SystemEventHandler() : maxNumSteps_(std::numeric_limits<int>::max()), eventID_(std::numeric_limits<int>::min()) {}
+  SystemEventHandler() = default;
 
   /**
    * Default destructor
    */
   virtual ~SystemEventHandler() = default;
 
-  virtual bool checkEvent(const state_vector_t& state, const scalar_t& time) override {
-    bool terminateFlag = false;
+  /**
+   * Checks whether an event is activated. If true, the method should also return
+   * a "Non-Negative" ID which indicates the a unique ID for the active events.
+   *
+   * @param [in] system: System dynamics
+   * @param [in] time: The current time.
+   * @param [in] state: The current state vector.
+   * @return pair of event flag and eventID
+   */
+  virtual std::pair<bool, size_t> checkEvent(system_t& system, scalar_t time, const state_vector_t& state) { return {false, 0}; }
 
+  /**
+   * The operation should be performed if an event is activated.
+   *
+   * @param [in] system: System dynamics
+   * @param [in] time: The current time.
+   * @param [in] state: The current state vector.
+   */
+  void handleEvent(system_t& system, scalar_t time, const state_vector_t& state) {
+    // kill integration is triggered
     if (killIntegration_) {
-      terminateFlag = true;
-      eventID_ = sys_event_id::killIntegration;
+      throw std::runtime_error("Integration terminated due to an external signal triggered by a program.");
     }
 
-    if (BASE::systemPtr_->getNumFunctionCalls() > maxNumSteps_) {
-      terminateFlag = true;
-      eventID_ = sys_event_id::maxCall;
+    // max number of function calls
+    if (system.getNumFunctionCalls() > maxNumSteps_) {
+      std::string msg = "Integration terminated since the maximum number of function calls is reached. ";
+      msg += "State at termination time " + std::to_string(time) + ":\n [";
+      for (size_t i = 0; i < state.size() - 1; i++) {
+        msg += std::to_string(state(i)) + ", ";
+      }
+      msg += std::to_string(state(state.size() - 1)) + "]\n";
+      throw std::runtime_error(msg);
     }
 
-    return terminateFlag;
+    // derived class events
+    size_t eventID;
+    bool event;
+    std::tie(event, eventID) = this->checkEvent(system, time, state);
+    if (event) {
+      throw eventID;
+    }
   }
 
-  void reset() override {}
-
-  int handleEvent(state_vector_array_t& stateTrajectory, scalar_array_t& timeTrajectory) override { return eventID_; }
+  /**
+   * Resets the class.
+   */
+  virtual void reset() {}
 
   /**
    * Sets the maximum number of integration points per a second for ode solvers.
@@ -115,14 +145,11 @@ class SystemEventHandler : public EventHandlerBase<STATE_DIM> {
   static void deactivateKillIntegration() { killIntegration_ = false; }
 
  protected:
-  static std::atomic_bool killIntegration_; /*=false*/
-  int maxNumSteps_;
-  int eventID_;
+  static std::atomic<bool> killIntegration_; /*=false*/
+  int maxNumSteps_ = std::numeric_limits<int>::max();
 };
 
 template <int STATE_DIM>
-std::atomic_bool SystemEventHandler<STATE_DIM>::killIntegration_(false);
+std::atomic<bool> SystemEventHandler<STATE_DIM>::killIntegration_(false);
 
 }  // namespace ocs2
-
-#endif /* SYSTEMEVENTHANDLER_OCS2_H_ */

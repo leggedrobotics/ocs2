@@ -46,60 +46,27 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivativ
            heuristicsFunctionPtr, "SLQ", std::move(logicRulesPtr)),
       settings_(settings) {
   // Riccati Solver
-  riccatiEquationsPtrStock_.clear();
-  riccatiEquationsPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
   errorEquationPtrStock_.clear();
   errorEquationPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
-  riccatiEventPtrStock_.clear();
-  riccatiEventPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
-  errorEventPtrStock_.clear();
-  errorEventPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
+  riccatiEquationsPtrStock_.clear();
+  riccatiEquationsPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
   riccatiIntegratorPtrStock_.clear();
   riccatiIntegratorPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
   errorIntegratorPtrStock_.clear();
   errorIntegratorPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 
+  IntegratorType integratorType = settings_.RiccatiIntegratorType_;
+  if (integratorType != IntegratorType::ODE45 && integratorType != IntegratorType::BULIRSCH_STOER) {
+    throw(
+        std::runtime_error("Unsupported Riccati equation integrator type: " + integrator_type::toString(settings_.RiccatiIntegratorType_)));
+  }
+
   for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
-    using riccati_equations_alloc_t = Eigen::aligned_allocator<riccati_equations_t>;
-    riccatiEquationsPtrStock_.emplace_back(std::allocate_shared<riccati_equations_t, riccati_equations_alloc_t>(
-        riccati_equations_alloc_t(), BASE::ddpSettings_.useMakePSD_, settings_.preComputeRiccatiTerms_));
+    errorEquationPtrStock_.emplace_back(new error_equation_t);
+    riccatiEquationsPtrStock_.emplace_back(new riccati_equations_t(BASE::ddpSettings_.useMakePSD_, settings_.preComputeRiccatiTerms_));
 
-    using error_equation_alloc_t = Eigen::aligned_allocator<error_equation_t>;
-    errorEquationPtrStock_.emplace_back(std::allocate_shared<error_equation_t, error_equation_alloc_t>(error_equation_alloc_t()));
-
-    using riccati_event_handler_t = SystemEventHandler<riccati_equations_t::S_DIM_>;
-    using riccati_event_handler_alloc_t = Eigen::aligned_allocator<riccati_event_handler_t>;
-    riccatiEventPtrStock_.emplace_back(
-        std::allocate_shared<riccati_event_handler_t, riccati_event_handler_alloc_t>(riccati_event_handler_alloc_t()));
-
-    using error_event_handler_t = SystemEventHandler<STATE_DIM>;
-    using error_event_handler_alloc_t = Eigen::aligned_allocator<error_event_handler_t>;
-    errorEventPtrStock_.emplace_back(
-        std::allocate_shared<error_event_handler_t, error_event_handler_alloc_t>(error_event_handler_alloc_t()));
-
-    switch (settings_.RiccatiIntegratorType_) {
-      case DIMENSIONS::RiccatiIntegratorType::ODE45: {
-        riccatiIntegratorPtrStock_.emplace_back(
-            new ODE45<riccati_equations_t::S_DIM_>(riccatiEquationsPtrStock_.back(), riccatiEventPtrStock_.back()));
-        errorIntegratorPtrStock_.emplace_back(new ODE45<STATE_DIM>(errorEquationPtrStock_.back(), errorEventPtrStock_.back()));
-        break;
-      }
-      /*note: this case is not yet working. It would most likely work if we had an adaptive time adams-bashforth integrator */
-      case DIMENSIONS::RiccatiIntegratorType::ADAMS_BASHFORTH: {
-        throw std::runtime_error("This ADAMS_BASHFORTH is not implemented for Riccati Integrator.");
-        break;
-      }
-      case DIMENSIONS::RiccatiIntegratorType::BULIRSCH_STOER: {
-        riccatiIntegratorPtrStock_.emplace_back(
-            new IntegratorBulirschStoer<riccati_equations_t::S_DIM_>(riccatiEquationsPtrStock_.back(), riccatiEventPtrStock_.back()));
-        errorIntegratorPtrStock_.emplace_back(
-            new IntegratorBulirschStoer<STATE_DIM>(errorEquationPtrStock_.back(), errorEventPtrStock_.back()));
-        break;
-      }
-      default:
-        throw(std::runtime_error("Riccati equation integrator type specified wrongly."));
-    }
-
+    errorIntegratorPtrStock_.emplace_back(newIntegrator<STATE_DIM>(integratorType));
+    riccatiIntegratorPtrStock_.emplace_back(newIntegrator<riccati_equations_t::S_DIM_>(integratorType));
   }  // end of i loop
 
   Eigen::initParallel();
@@ -694,9 +661,10 @@ void SLQ<STATE_DIM, INPUT_DIM>::integrateRiccatiEquationNominalTime(
     typename scalar_array_t::const_iterator beginTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i];
     typename scalar_array_t::const_iterator endTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i + 1];
 
+    Observer<riccati_equations_t::S_DIM_> observer(&allSsTrajectory);
     // solve Riccati equations
-    riccatiIntegrator.integrate(allSsFinal, beginTimeItr, endTimeItr, allSsTrajectory, BASE::ddpSettings_.minTimeStep_,
-                                BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps, true);
+    riccatiIntegrator.integrate_times(riccatiEquation, observer, allSsFinal, beginTimeItr, endTimeItr, BASE::ddpSettings_.minTimeStep_,
+                                      BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps);
 
     if (i < numEvents) {
       SsNormalizedEventsPastTheEndIndices.push_back(allSsTrajectory.size());
@@ -742,9 +710,10 @@ void SLQ<STATE_DIM, INPUT_DIM>::integrateRiccatiEquationAdaptiveTime(
     scalar_t beginTime = SsNormalizedSwitchingTimes[i];
     scalar_t endTime = SsNormalizedSwitchingTimes[i + 1];
 
+    Observer<riccati_equations_t::S_DIM_> observer(&allSsTrajectory, &SsNormalizedTime);
     // solve Riccati equations
-    riccatiIntegrator.integrate(allSsFinal, beginTime, endTime, allSsTrajectory, SsNormalizedTime, BASE::ddpSettings_.minTimeStep_,
-                                BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps, true);
+    riccatiIntegrator.integrate_adaptive(riccatiEquation, observer, allSsFinal, beginTime, endTime, BASE::ddpSettings_.minTimeStep_,
+                                         BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps);
 
     // if not the last interval which definitely does not have any event at
     // its final time (there is no even at the beginning of partition)
@@ -847,10 +816,11 @@ void SLQ<STATE_DIM, INPUT_DIM>::errorRiccatiEquationWorker(size_t workerIndex, s
     beginTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i];
     endTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i + 1];
 
+    Observer<STATE_DIM> observer(&SveTrajectory);
     // solve error Riccati equations
-    errorIntegratorPtrStock_[workerIndex]->integrate(SveFinalInternal, beginTimeItr, endTimeItr, SveTrajectory,
-                                                     BASE::ddpSettings_.minTimeStep_, BASE::ddpSettings_.absTolODE_,
-                                                     BASE::ddpSettings_.relTolODE_, maxNumSteps, true);
+    errorIntegratorPtrStock_[workerIndex]->integrate_times(*errorEquationPtrStock_[workerIndex], observer, SveFinalInternal, beginTimeItr,
+                                                           endTimeItr, BASE::ddpSettings_.minTimeStep_, BASE::ddpSettings_.absTolODE_,
+                                                           BASE::ddpSettings_.relTolODE_, maxNumSteps);
 
     if (i < numEvents) {
       errorEquationPtrStock_[workerIndex]->computeJumpMap(*endTimeItr, SveTrajectory.back(), SveFinalInternal);

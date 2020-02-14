@@ -48,23 +48,17 @@ TEST(BallbotRaisimConversions, AngularVelocitiesSelfConsistency) {
 TEST(BallbotRaisimConversions, StateConversionSelfConsistency) {
   ocs2::ballbot::BallbotRaisimConversions conversions;
 
-  for (int i = 0; i < 1; i++) {
+  for (int i = 0; i < 100; i++) {
     ocs2::ballbot::BallbotRaisimConversions::state_vector_t ocs2_state;
     ocs2::ballbot::BallbotRaisimConversions::input_vector_t dummyInput;
     ocs2_state.setRandom();
     ocs2_state *= 0.2;
     dummyInput.setRandom();
 
-    //    ocs2_state.segment<3>(2).setZero();  // zero euler angles for debugging
-    //    ocs2_state.tail<3>().setZero();      // zero angular rate for debugging
-
-    std::cout << "original ocs2 state " << ocs2_state.transpose() << "\n";
     // consistency test ocs2 -> raisim -> ocs2
     Eigen::VectorXd q, dq;
     std::tie(q, dq) = conversions.stateToRaisimGenCoordGenVel(ocs2_state, dummyInput);
-    std::cout << "converted q = " << q.transpose() << "\nconverted dq = " << dq.transpose() << "\n";
     auto ocs2_state_calc = conversions.raisimGenCoordGenVelToState(q, dq);
-    std::cout << "converted ocs2 state = " << ocs2_state_calc.transpose() << std::endl;
     EXPECT_TRUE(ocs2_state.isApprox(ocs2_state_calc));
 
     // consistency test raisim -> ocs2 -> raisim

@@ -47,7 +47,7 @@
   <joint name="ballSuspension" type="spherical">
     <parent link="base"/>
     <child link="ball"/>
-    <origin xyz="0 0 -0.6"/>
+    <origin xyz="0 0 0"/>
   </joint>
 
 </robot>

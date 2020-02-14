@@ -103,8 +103,6 @@ Eigen::Vector3d BallbotRaisimConversions::eulerAngleDerivativesToAngularVelocity
 
 std::pair<Eigen::VectorXd, Eigen::VectorXd> BallbotRaisimConversions::stateToRaisimGenCoordGenVel(const state_vector_t& state,
                                                                                                   const input_vector_t&) const {
-  std::cout << "[stateToRaisimGenCoordGenVel] state = " << state.transpose() << std::endl;
-
   // assume ball is on the ground
   const Eigen::Vector3d r_world_ball_inWorld = (Eigen::Vector3d() << state(0), state(1), ballRadius_).finished();
   const Eigen::Vector3d r_base_ball_inBase = (Eigen::Vector3d() << 0, 0, -distanceBaseToBallCenter_).finished();
@@ -134,10 +132,9 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> BallbotRaisimConversions::stateToRai
 auto BallbotRaisimConversions::raisimGenCoordGenVelToState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq) const -> state_vector_t {
   assert(q.size() == 3 + 4 + 4);
   assert(dq.size() == 3 + 3 + 3);
-  std::cout << "[raisimGenCoordGenVelToState] q = " << q.transpose() << "\ndq = " << dq.transpose() << std::endl;
 
   const auto r_world_ball_inWorld = ballCenterInWorld(q);
-  const Eigen::Quaterniond q_world_base(q(3), q(4), q(5), q(5));  // w x y z
+  const Eigen::Quaterniond q_world_base(q(3), q(4), q(5), q(6));  // w x y z
 
   Eigen::Vector3d r_base_ball_inBase;
   r_base_ball_inBase << 0, 0, -distanceBaseToBallCenter_;
@@ -155,16 +152,15 @@ auto BallbotRaisimConversions::raisimGenCoordGenVelToState(const Eigen::VectorXd
   return state;
 }
 
-Eigen::VectorXd BallbotRaisimConversions::inputToRaisimGeneralizedForce(double time, const input_vector_t& input,
-                                                                        const state_vector_t& state, const Eigen::VectorXd& q,
-                                                                        const Eigen::VectorXd& dq) const {
+Eigen::VectorXd BallbotRaisimConversions::inputToRaisimGeneralizedForce(double, const input_vector_t& input, const state_vector_t&,
+                                                                        const Eigen::VectorXd&, const Eigen::VectorXd&) const {
   const double geometricFactor = ballRadius_ / omniWheelRadius_;
   const Eigen::Matrix3d torqueTransformationMatrixWheelsToBase =
       geometricFactor * sqrt(2.0) / 2.0 *
       (Eigen::Matrix3d() << 1.0, -0.5, -0.5, 0.0, sqrt(3) / 2.0, -sqrt(3) / 2.0, -1.0, -1.0, -1.0).finished();
 
   Eigen::VectorXd raisimGeneralizedForce(Eigen::VectorXd::Zero(6 + 3));
-  raisimGeneralizedForce.tail<3>() = torqueTransformationMatrixWheelsToBase * input;
+  raisimGeneralizedForce.tail<3>() = -torqueTransformationMatrixWheelsToBase * input;
   return raisimGeneralizedForce;
 }
 

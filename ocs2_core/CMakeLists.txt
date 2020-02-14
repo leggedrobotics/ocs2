@@ -214,6 +214,7 @@ catkin_add_gtest(test_loopshapingDefinition
   test/loopshaping/testLoopshapingDefinition.cpp
 )
 target_link_libraries(test_loopshapingDefinition
+   ${PROJECT_NAME}_loopshaping
    ${Boost_LIBRARIES}
    ${catkin_LIBRARIES}
    -lstdc++fs
@@ -223,6 +224,7 @@ catkin_add_gtest(test_loopshapingDynamics
   test/loopshaping/testLoopshapingDynamics.cpp
 )
 target_link_libraries(test_loopshapingDynamics
+  ${PROJECT_NAME}_loopshaping
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   -lstdc++fs
@@ -241,6 +243,7 @@ catkin_add_gtest(test_loopshapingConstraint
   test/loopshaping/testLoopshapingConstraint.cpp
 )
 target_link_libraries(test_loopshapingConstraint
+  ${PROJECT_NAME}_loopshaping
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   -lstdc++fs

@@ -191,8 +191,6 @@ class SensitivitySequentialRiccatiEquations final : public OdeBase<STATE_DIM*(ST
    * @param [out] derivatives
    */
   void computeFlowMap(const scalar_t& z, const s_vector_t& allSs, s_vector_t& derivatives) override {
-    BASE::numFunctionCalls_++;
-
     // denormalized time
     const scalar_t t = -z;
 

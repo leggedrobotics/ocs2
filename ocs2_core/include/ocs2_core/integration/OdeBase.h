@@ -62,7 +62,10 @@ class OdeBase {
    */
   OdeBase() : numFunctionCalls_(0) {
     modelDataArray_.reserve(DEFAULT_MODEL_DATA_CACHE_SIZE);
-    systemFunction_ = [this](const state_vector_t& x, state_vector_t& dxdt, scalar_t t) { computeFlowMap(t, x, dxdt); };
+    systemFunction_ = [this](const state_vector_t& x, state_vector_t& dxdt, scalar_t t) {
+      numFunctionCalls_++;
+      computeFlowMap(t, x, dxdt);
+    };
   }
 
   /**

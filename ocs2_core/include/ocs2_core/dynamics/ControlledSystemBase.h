@@ -114,7 +114,6 @@ class ControlledSystemBase : public OdeBase<STATE_DIM> {
    * @param [out] dxdt: The state time derivative.
    */
   void computeFlowMap(const scalar_t& t, const state_vector_t& x, state_vector_t& dxdt) final {
-    BASE::numFunctionCalls_++;
     input_vector_t u = controllerPtr_->computeInput(t, x);
     ModelDataBase& modelData = this->modelDataEmplaceBack();
     modelData.time_ = t;

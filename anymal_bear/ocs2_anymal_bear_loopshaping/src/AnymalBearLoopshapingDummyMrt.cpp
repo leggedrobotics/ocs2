@@ -4,8 +4,8 @@
 
 #include <ros/package.h>
 
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
-#include <ocs2_comm_interfaces/test/MRT_ROS_Dummy_Loop.h>
 
 #include <ocs2_quadruped_interface/QuadrupedXppVisualizer.h>
 

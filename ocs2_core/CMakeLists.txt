@@ -27,10 +27,11 @@ catkin_package(
     include
     ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
-    ${PROJECT_NAME}_logic
     ${PROJECT_NAME}_cppad_interface
-    ${PROJECT_NAME}_misc
     ${PROJECT_NAME}_integration
+    ${PROJECT_NAME}_logic
+    ${PROJECT_NAME}_loopshaping
+    ${PROJECT_NAME}_misc
   CATKIN_DEPENDS
     ocs2_thirdparty
   DEPENDS
@@ -77,6 +78,11 @@ add_library(${PROJECT_NAME}_integration
   src/integration/Integrator.cpp
 )
 
+add_library(${PROJECT_NAME}_loopshaping
+  src/loopshaping/LoopshapingPropertyTree.cpp
+  src/loopshaping/LoopshapingFilter.cpp
+)
+
 #########################
 ###   CLANG TOOLING   ###
 #########################
@@ -86,9 +92,11 @@ if(cmake_clang_tools_FOUND)
   add_clang_tooling(
     TARGETS
       ${PROJECT_NAME}_lintTarget
-      ${PROJECT_NAME}_logic
       ${PROJECT_NAME}_cppad_interface
       ${PROJECT_NAME}_integration
+      ${PROJECT_NAME}_logic
+      ${PROJECT_NAME}_loopshaping
+      ${PROJECT_NAME}_misc
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
     CF_WERROR
@@ -101,10 +109,11 @@ endif(cmake_clang_tools_FOUND)
 
 install(
   TARGETS
-    ${PROJECT_NAME}_logic
-    ${PROJECT_NAME}_cppad_interface
-    ${PROJECT_NAME}_misc
-    ${PROJECT_NAME}_integration
+      ${PROJECT_NAME}_cppad_interface
+      ${PROJECT_NAME}_integration
+      ${PROJECT_NAME}_logic
+      ${PROJECT_NAME}_loopshaping
+      ${PROJECT_NAME}_misc
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -205,6 +214,7 @@ catkin_add_gtest(test_loopshapingDefinition
   test/loopshaping/testLoopshapingDefinition.cpp
 )
 target_link_libraries(test_loopshapingDefinition
+   ${PROJECT_NAME}_loopshaping
    ${Boost_LIBRARIES}
    ${catkin_LIBRARIES}
    -lstdc++fs
@@ -214,6 +224,7 @@ catkin_add_gtest(test_loopshapingDynamics
   test/loopshaping/testLoopshapingDynamics.cpp
 )
 target_link_libraries(test_loopshapingDynamics
+  ${PROJECT_NAME}_loopshaping
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   -lstdc++fs
@@ -223,6 +234,7 @@ catkin_add_gtest(test_loopshapingCost
   test/loopshaping/testLoopshapingCost.cpp
 )
 target_link_libraries(test_loopshapingCost
+  ${PROJECT_NAME}_loopshaping
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   -lstdc++fs
@@ -232,6 +244,7 @@ catkin_add_gtest(test_loopshapingConstraint
   test/loopshaping/testLoopshapingConstraint.cpp
 )
 target_link_libraries(test_loopshapingConstraint
+  ${PROJECT_NAME}_loopshaping
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   -lstdc++fs
@@ -241,6 +254,7 @@ catkin_add_gtest(test_loopshapingFilterDynamics
   test/loopshaping/testLoopshapingFilterDynamics.cpp
 )
 target_link_libraries(test_loopshapingFilterDynamics
+  ${PROJECT_NAME}_loopshaping
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   -lstdc++fs

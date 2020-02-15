@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef ODE_BASE_OCS2_H_
-#define ODE_BASE_OCS2_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <list>
@@ -61,7 +60,7 @@ class OdeBase {
   /**
    * Constructor.
    */
-  explicit OdeBase() : numFunctionCalls_(0) {
+  OdeBase() : numFunctionCalls_(0) {
     modelDataArray_.reserve(DEFAULT_MODEL_DATA_CACHE_SIZE);
     systemFunction_ = [this](const state_vector_t& x, state_vector_t& dxdt, scalar_t t) { computeFlowMap(t, x, dxdt); };
   }
@@ -157,5 +156,3 @@ class OdeBase {
 };
 
 }  // namespace ocs2
-
-#endif /* ODE_BASE_OCS2_H_ */

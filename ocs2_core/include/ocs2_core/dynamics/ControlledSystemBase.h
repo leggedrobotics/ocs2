@@ -117,25 +117,11 @@ class ControlledSystemBase : public OdeBase<STATE_DIM> {
     BASE::numFunctionCalls_++;
     input_vector_t u = controllerPtr_->computeInput(t, x);
     ModelDataBase& modelData = this->modelDataEmplaceBack();
-    computeFlowMap(t, x, u, &modelData);
-    dxdt = modelData.dynamics_;
-  }
-
-  /**
-   * Computes the flow map of a system with exogenous input.
-   *
-   * @param [in] t: The current time.
-   * @param [in] x: The current state.
-   * @param [in] u: The current input.
-   * @param [out] data: the model data.
-   */
-  virtual void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, ModelDataBase* dataPtr) {
-    dataPtr->time_ = t;
-    dataPtr->stateDim_ = STATE_DIM;
-    dataPtr->inputDim_ = INPUT_DIM;
-    state_vector_t dxdt;
+    modelData.time_ = t;
+    modelData.stateDim_ = STATE_DIM;
+    modelData.inputDim_ = INPUT_DIM;
     computeFlowMap(t, x, u, dxdt);
-    dataPtr->dynamics_ = dxdt;
+    modelData.dynamics_ = dxdt;
   }
 
   /**

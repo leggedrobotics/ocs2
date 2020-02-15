@@ -1,0 +1,11 @@
+<launch>
+
+  <arg name="description_name"      default="ocs2_anymal_croc_description"/>
+
+  <!-- Load robot description -->
+  <include file="$(find anymal_c_description)/launch/load.launch">
+    <arg name="simulation"                                     value="false"/>
+    <arg name="description_name"                               value="$(arg description_name)"/>
+  </include>
+
+</launch>

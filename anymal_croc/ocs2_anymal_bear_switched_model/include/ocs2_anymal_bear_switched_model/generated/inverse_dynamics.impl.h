@@ -26,6 +26,10 @@ iit::ANYmal::dyn::tpl::InverseDynamics<TRAIT>::InverseDynamics(IProperties& iner
         LH_SHANK_Ic(LH_SHANK_I),
         RH_SHANK_Ic(RH_SHANK_I)
 {
+#ifndef EIGEN_NO_DEBUG
+    std::cout << "Robot ANYmal, InverseDynamics<TRAIT>::InverseDynamics()" << std::endl;
+    std::cout << "Compiled with Eigen debug active" << std::endl;
+#endif
     LF_HIP_v.setZero();
     LF_THIGH_v.setZero();
     LF_SHANK_v.setZero();
@@ -251,40 +255,40 @@ void iit::ANYmal::dyn::tpl::InverseDynamics<TRAIT>::id(
     base_a = - base_Ic.inverse() * base_f;
     
     LF_HIP_a = xm->fr_LF_HIP_X_fr_base * base_a;
-    jForces(LF_HAA) = (LF_HIP_Ic.row(iit::rbd::AZ).dot(LF_HIP_a) + LF_HIP_f(iit::rbd::AZ));
+    jForces(LF_HAA) = (LF_HIP_Ic.row(iit::rbd::AZ) * LF_HIP_a + LF_HIP_f(iit::rbd::AZ));
     
     LF_THIGH_a = xm->fr_LF_THIGH_X_fr_LF_HIP * LF_HIP_a;
-    jForces(LF_HFE) = (LF_THIGH_Ic.row(iit::rbd::AZ).dot(LF_THIGH_a) + LF_THIGH_f(iit::rbd::AZ));
+    jForces(LF_HFE) = (LF_THIGH_Ic.row(iit::rbd::AZ) * LF_THIGH_a + LF_THIGH_f(iit::rbd::AZ));
     
     LF_SHANK_a = xm->fr_LF_SHANK_X_fr_LF_THIGH * LF_THIGH_a;
-    jForces(LF_KFE) = (LF_SHANK_Ic.row(iit::rbd::AZ).dot(LF_SHANK_a) + LF_SHANK_f(iit::rbd::AZ));
+    jForces(LF_KFE) = (LF_SHANK_Ic.row(iit::rbd::AZ) * LF_SHANK_a + LF_SHANK_f(iit::rbd::AZ));
     
     RF_HIP_a = xm->fr_RF_HIP_X_fr_base * base_a;
-    jForces(RF_HAA) = (RF_HIP_Ic.row(iit::rbd::AZ).dot(RF_HIP_a) + RF_HIP_f(iit::rbd::AZ));
+    jForces(RF_HAA) = (RF_HIP_Ic.row(iit::rbd::AZ) * RF_HIP_a + RF_HIP_f(iit::rbd::AZ));
     
     RF_THIGH_a = xm->fr_RF_THIGH_X_fr_RF_HIP * RF_HIP_a;
-    jForces(RF_HFE) = (RF_THIGH_Ic.row(iit::rbd::AZ).dot(RF_THIGH_a) + RF_THIGH_f(iit::rbd::AZ));
+    jForces(RF_HFE) = (RF_THIGH_Ic.row(iit::rbd::AZ) * RF_THIGH_a + RF_THIGH_f(iit::rbd::AZ));
     
     RF_SHANK_a = xm->fr_RF_SHANK_X_fr_RF_THIGH * RF_THIGH_a;
-    jForces(RF_KFE) = (RF_SHANK_Ic.row(iit::rbd::AZ).dot(RF_SHANK_a) + RF_SHANK_f(iit::rbd::AZ));
+    jForces(RF_KFE) = (RF_SHANK_Ic.row(iit::rbd::AZ) * RF_SHANK_a + RF_SHANK_f(iit::rbd::AZ));
     
     LH_HIP_a = xm->fr_LH_HIP_X_fr_base * base_a;
-    jForces(LH_HAA) = (LH_HIP_Ic.row(iit::rbd::AZ).dot(LH_HIP_a) + LH_HIP_f(iit::rbd::AZ));
+    jForces(LH_HAA) = (LH_HIP_Ic.row(iit::rbd::AZ) * LH_HIP_a + LH_HIP_f(iit::rbd::AZ));
     
     LH_THIGH_a = xm->fr_LH_THIGH_X_fr_LH_HIP * LH_HIP_a;
-    jForces(LH_HFE) = (LH_THIGH_Ic.row(iit::rbd::AZ).dot(LH_THIGH_a) + LH_THIGH_f(iit::rbd::AZ));
+    jForces(LH_HFE) = (LH_THIGH_Ic.row(iit::rbd::AZ) * LH_THIGH_a + LH_THIGH_f(iit::rbd::AZ));
     
     LH_SHANK_a = xm->fr_LH_SHANK_X_fr_LH_THIGH * LH_THIGH_a;
-    jForces(LH_KFE) = (LH_SHANK_Ic.row(iit::rbd::AZ).dot(LH_SHANK_a) + LH_SHANK_f(iit::rbd::AZ));
+    jForces(LH_KFE) = (LH_SHANK_Ic.row(iit::rbd::AZ) * LH_SHANK_a + LH_SHANK_f(iit::rbd::AZ));
     
     RH_HIP_a = xm->fr_RH_HIP_X_fr_base * base_a;
-    jForces(RH_HAA) = (RH_HIP_Ic.row(iit::rbd::AZ).dot(RH_HIP_a) + RH_HIP_f(iit::rbd::AZ));
+    jForces(RH_HAA) = (RH_HIP_Ic.row(iit::rbd::AZ) * RH_HIP_a + RH_HIP_f(iit::rbd::AZ));
     
     RH_THIGH_a = xm->fr_RH_THIGH_X_fr_RH_HIP * RH_HIP_a;
-    jForces(RH_HFE) = (RH_THIGH_Ic.row(iit::rbd::AZ).dot(RH_THIGH_a) + RH_THIGH_f(iit::rbd::AZ));
+    jForces(RH_HFE) = (RH_THIGH_Ic.row(iit::rbd::AZ) * RH_THIGH_a + RH_THIGH_f(iit::rbd::AZ));
     
     RH_SHANK_a = xm->fr_RH_SHANK_X_fr_RH_THIGH * RH_THIGH_a;
-    jForces(RH_KFE) = (RH_SHANK_Ic.row(iit::rbd::AZ).dot(RH_SHANK_a) + RH_SHANK_f(iit::rbd::AZ));
+    jForces(RH_KFE) = (RH_SHANK_Ic.row(iit::rbd::AZ) * RH_SHANK_a + RH_SHANK_f(iit::rbd::AZ));
     
 
     base_a += g;

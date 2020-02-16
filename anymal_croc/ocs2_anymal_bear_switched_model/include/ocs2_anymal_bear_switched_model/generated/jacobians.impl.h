@@ -47,14 +47,14 @@ const typename iit::ANYmal::tpl::Jacobians<TRAIT>::Type_fr_base_J_fr_LF_FOOT& ii
     (*this)(1,2) =  c_q_LF_HAA_;
     (*this)(2,1) =  s_q_LF_HAA_;
     (*this)(2,2) =  s_q_LF_HAA_;
-    (*this)(3,1) = ((((( 0.32125 *  s_q_LF_HFE_) - ( 0.1 *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((- 0.1 *  s_q_LF_HFE_) - ( 0.32125 *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) - ( 0.25 *  c_q_LF_HFE_));
-    (*this)(3,2) = (((( 0.32125 *  s_q_LF_HFE_) - ( 0.1 *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((- 0.1 *  s_q_LF_HFE_) - ( 0.32125 *  c_q_LF_HFE_)) *  c_q_LF_KFE_));
-    (*this)(4,0) = ((((((( 0.1 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.32125 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.1 *  c_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.32125 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.25 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) - ( 0.15705 *  s_q_LF_HAA_));
-    (*this)(4,1) = ((((((- 0.1 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.32125 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.1 *  s_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.32125 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) - (( 0.25 *  s_q_LF_HAA_) *  s_q_LF_HFE_));
-    (*this)(4,2) = (((((- 0.1 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.32125 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.1 *  s_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.32125 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_));
-    (*this)(5,0) = ((((((( 0.1 *  s_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.32125 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.1 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.32125 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.25 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.15705 *  c_q_LF_HAA_));
-    (*this)(5,1) = (((((( 0.1 *  c_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.32125 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.32125 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.1 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.25 *  c_q_LF_HAA_) *  s_q_LF_HFE_));
-    (*this)(5,2) = ((((( 0.1 *  c_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.32125 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.32125 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.1 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_));
+    (*this)(3,1) = ((((( 0.34182 *  s_q_LF_HFE_) - ( 0.07885 *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((- 0.07885 *  s_q_LF_HFE_) - ( 0.34182 *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) - ( 0.285 *  c_q_LF_HFE_));
+    (*this)(3,2) = (((( 0.34182 *  s_q_LF_HFE_) - ( 0.07885 *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((- 0.07885 *  s_q_LF_HFE_) - ( 0.34182 *  c_q_LF_HFE_)) *  c_q_LF_KFE_));
+    (*this)(4,0) = ((((((( 0.07885 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.34182 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.07885 *  c_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.34182 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.285 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) - ( 0.182 *  s_q_LF_HAA_));
+    (*this)(4,1) = ((((((- 0.07885 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.34182 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.07885 *  s_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.34182 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) - (( 0.285 *  s_q_LF_HAA_) *  s_q_LF_HFE_));
+    (*this)(4,2) = (((((- 0.07885 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.34182 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.07885 *  s_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.34182 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_));
+    (*this)(5,0) = ((((((( 0.07885 *  s_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.34182 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.07885 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.34182 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.285 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.182 *  c_q_LF_HAA_));
+    (*this)(5,1) = (((((( 0.07885 *  c_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.34182 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.34182 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.07885 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.285 *  c_q_LF_HAA_) *  s_q_LF_HFE_));
+    (*this)(5,2) = ((((( 0.07885 *  c_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.34182 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.34182 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.07885 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_));
     return *this;
 }
 template <typename TRAIT>
@@ -88,14 +88,14 @@ const typename iit::ANYmal::tpl::Jacobians<TRAIT>::Type_fr_base_J_fr_LH_FOOT& ii
     (*this)(1,2) =  c_q_LH_HAA_;
     (*this)(2,1) =  s_q_LH_HAA_;
     (*this)(2,2) =  s_q_LH_HAA_;
-    (*this)(3,1) = ((((( 0.32125 *  s_q_LH_HFE_) + ( 0.1 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((( 0.1 *  s_q_LH_HFE_) - ( 0.32125 *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.25 *  c_q_LH_HFE_));
-    (*this)(3,2) = (((( 0.32125 *  s_q_LH_HFE_) + ( 0.1 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((( 0.1 *  s_q_LH_HFE_) - ( 0.32125 *  c_q_LH_HFE_)) *  c_q_LH_KFE_));
-    (*this)(4,0) = (((((((- 0.32125 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.1 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.32125 *  c_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.1 *  c_q_LH_HAA_) *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.25 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) - ( 0.15705 *  s_q_LH_HAA_));
-    (*this)(4,1) = (((((( 0.1 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.32125 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((- 0.32125 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.1 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - (( 0.25 *  s_q_LH_HAA_) *  s_q_LH_HFE_));
-    (*this)(4,2) = ((((( 0.1 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.32125 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((- 0.32125 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.1 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_));
-    (*this)(5,0) = (((((((- 0.32125 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.1 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.32125 *  s_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.1 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.25 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.15705 *  c_q_LH_HAA_));
-    (*this)(5,1) = (((((( 0.32125 *  c_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.1 *  c_q_LH_HAA_) *  s_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.32125 *  c_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.1 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.25 *  c_q_LH_HAA_) *  s_q_LH_HFE_));
-    (*this)(5,2) = ((((( 0.32125 *  c_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.1 *  c_q_LH_HAA_) *  s_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.32125 *  c_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.1 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_));
+    (*this)(3,1) = ((((( 0.34182 *  s_q_LH_HFE_) + ( 0.07885 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((( 0.07885 *  s_q_LH_HFE_) - ( 0.34182 *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.285 *  c_q_LH_HFE_));
+    (*this)(3,2) = (((( 0.34182 *  s_q_LH_HFE_) + ( 0.07885 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((( 0.07885 *  s_q_LH_HFE_) - ( 0.34182 *  c_q_LH_HFE_)) *  c_q_LH_KFE_));
+    (*this)(4,0) = (((((((- 0.34182 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.07885 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.34182 *  c_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.07885 *  c_q_LH_HAA_) *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.285 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) - ( 0.182 *  s_q_LH_HAA_));
+    (*this)(4,1) = (((((( 0.07885 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.34182 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((- 0.34182 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.07885 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - (( 0.285 *  s_q_LH_HAA_) *  s_q_LH_HFE_));
+    (*this)(4,2) = ((((( 0.07885 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.34182 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((- 0.34182 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.07885 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_));
+    (*this)(5,0) = (((((((- 0.34182 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.07885 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.34182 *  s_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.07885 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.285 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.182 *  c_q_LH_HAA_));
+    (*this)(5,1) = (((((( 0.34182 *  c_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.07885 *  c_q_LH_HAA_) *  s_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.34182 *  c_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.07885 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.285 *  c_q_LH_HAA_) *  s_q_LH_HFE_));
+    (*this)(5,2) = ((((( 0.34182 *  c_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.07885 *  c_q_LH_HAA_) *  s_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.34182 *  c_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.07885 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_));
     return *this;
 }
 template <typename TRAIT>
@@ -129,14 +129,14 @@ const typename iit::ANYmal::tpl::Jacobians<TRAIT>::Type_fr_base_J_fr_RF_FOOT& ii
     (*this)(1,2) =  c_q_RF_HAA_;
     (*this)(2,1) =  s_q_RF_HAA_;
     (*this)(2,2) =  s_q_RF_HAA_;
-    (*this)(3,1) = ((((( 0.32125 *  s_q_RF_HFE_) - ( 0.1 *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((- 0.1 *  s_q_RF_HFE_) - ( 0.32125 *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) - ( 0.25 *  c_q_RF_HFE_));
-    (*this)(3,2) = (((( 0.32125 *  s_q_RF_HFE_) - ( 0.1 *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((- 0.1 *  s_q_RF_HFE_) - ( 0.32125 *  c_q_RF_HFE_)) *  c_q_RF_KFE_));
-    (*this)(4,0) = ((((((( 0.1 *  c_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.32125 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.1 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.32125 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.25 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.15705 *  s_q_RF_HAA_));
-    (*this)(4,1) = ((((((- 0.1 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.32125 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.1 *  s_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.32125 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) *  c_q_RF_KFE_)) - (( 0.25 *  s_q_RF_HAA_) *  s_q_RF_HFE_));
-    (*this)(4,2) = (((((- 0.1 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.32125 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.1 *  s_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.32125 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) *  c_q_RF_KFE_));
-    (*this)(5,0) = ((((((( 0.1 *  s_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.32125 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.1 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.32125 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.25 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.15705 *  c_q_RF_HAA_));
-    (*this)(5,1) = (((((( 0.1 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.32125 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.32125 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.1 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.25 *  c_q_RF_HAA_) *  s_q_RF_HFE_));
-    (*this)(5,2) = ((((( 0.1 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.32125 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.32125 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.1 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_));
+    (*this)(3,1) = ((((( 0.34182 *  s_q_RF_HFE_) - ( 0.07885 *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((- 0.07885 *  s_q_RF_HFE_) - ( 0.34182 *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) - ( 0.285 *  c_q_RF_HFE_));
+    (*this)(3,2) = (((( 0.34182 *  s_q_RF_HFE_) - ( 0.07885 *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((- 0.07885 *  s_q_RF_HFE_) - ( 0.34182 *  c_q_RF_HFE_)) *  c_q_RF_KFE_));
+    (*this)(4,0) = ((((((( 0.07885 *  c_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.34182 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.07885 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.34182 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.285 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.182 *  s_q_RF_HAA_));
+    (*this)(4,1) = ((((((- 0.07885 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.34182 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.07885 *  s_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.34182 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) *  c_q_RF_KFE_)) - (( 0.285 *  s_q_RF_HAA_) *  s_q_RF_HFE_));
+    (*this)(4,2) = (((((- 0.07885 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.34182 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.07885 *  s_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.34182 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) *  c_q_RF_KFE_));
+    (*this)(5,0) = ((((((( 0.07885 *  s_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.34182 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.07885 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.34182 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.285 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.182 *  c_q_RF_HAA_));
+    (*this)(5,1) = (((((( 0.07885 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.34182 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.34182 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.07885 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.285 *  c_q_RF_HAA_) *  s_q_RF_HFE_));
+    (*this)(5,2) = ((((( 0.07885 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.34182 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.34182 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.07885 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_));
     return *this;
 }
 template <typename TRAIT>
@@ -170,13 +170,13 @@ const typename iit::ANYmal::tpl::Jacobians<TRAIT>::Type_fr_base_J_fr_RH_FOOT& ii
     (*this)(1,2) =  c_q_RH_HAA_;
     (*this)(2,1) =  s_q_RH_HAA_;
     (*this)(2,2) =  s_q_RH_HAA_;
-    (*this)(3,1) = ((((( 0.32125 *  s_q_RH_HFE_) + ( 0.1 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((( 0.1 *  s_q_RH_HFE_) - ( 0.32125 *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.25 *  c_q_RH_HFE_));
-    (*this)(3,2) = (((( 0.32125 *  s_q_RH_HFE_) + ( 0.1 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((( 0.1 *  s_q_RH_HFE_) - ( 0.32125 *  c_q_RH_HFE_)) *  c_q_RH_KFE_));
-    (*this)(4,0) = (((((((- 0.32125 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.1 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.32125 *  c_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.1 *  c_q_RH_HAA_) *  s_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.25 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.15705 *  s_q_RH_HAA_));
-    (*this)(4,1) = (((((( 0.1 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.32125 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((- 0.32125 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.1 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - (( 0.25 *  s_q_RH_HAA_) *  s_q_RH_HFE_));
-    (*this)(4,2) = ((((( 0.1 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.32125 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((- 0.32125 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.1 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_));
-    (*this)(5,0) = (((((((- 0.32125 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.1 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.32125 *  s_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.1 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.25 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.15705 *  c_q_RH_HAA_));
-    (*this)(5,1) = (((((( 0.32125 *  c_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.1 *  c_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.32125 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.1 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.25 *  c_q_RH_HAA_) *  s_q_RH_HFE_));
-    (*this)(5,2) = ((((( 0.32125 *  c_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.1 *  c_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.32125 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.1 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_));
+    (*this)(3,1) = ((((( 0.34182 *  s_q_RH_HFE_) + ( 0.07885 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((( 0.07885 *  s_q_RH_HFE_) - ( 0.34182 *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.285 *  c_q_RH_HFE_));
+    (*this)(3,2) = (((( 0.34182 *  s_q_RH_HFE_) + ( 0.07885 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((( 0.07885 *  s_q_RH_HFE_) - ( 0.34182 *  c_q_RH_HFE_)) *  c_q_RH_KFE_));
+    (*this)(4,0) = (((((((- 0.34182 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.07885 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.34182 *  c_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.07885 *  c_q_RH_HAA_) *  s_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.285 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.182 *  s_q_RH_HAA_));
+    (*this)(4,1) = (((((( 0.07885 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.34182 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((- 0.34182 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.07885 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - (( 0.285 *  s_q_RH_HAA_) *  s_q_RH_HFE_));
+    (*this)(4,2) = ((((( 0.07885 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.34182 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((- 0.34182 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.07885 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_));
+    (*this)(5,0) = (((((((- 0.34182 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.07885 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.34182 *  s_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.07885 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.285 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.182 *  c_q_RH_HAA_));
+    (*this)(5,1) = (((((( 0.34182 *  c_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.07885 *  c_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.34182 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.07885 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.285 *  c_q_RH_HAA_) *  s_q_RH_HFE_));
+    (*this)(5,2) = ((((( 0.34182 *  c_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.07885 *  c_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.34182 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.07885 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_));
     return *this;
 }

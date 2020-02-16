@@ -411,29 +411,29 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::spin() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::launchNodes(ros::NodeHandle& n) {
+void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::launchNodes(ros::NodeHandle& nodeHandle) {
   ROS_INFO_STREAM("MPC node is setting up ...");
 
   // Observation subscriber
-  mpcObservationSubscriber_ =
-      n.subscribe(robotName_ + "_mpc_observation", 1, &MPC_ROS_Interface::mpcObservationCallback, this, ::ros::TransportHints().udp());
+  mpcObservationSubscriber_ = nodeHandle.subscribe(robotName_ + "_mpc_observation", 1, &MPC_ROS_Interface::mpcObservationCallback, this,
+                                                   ::ros::TransportHints().udp());
 
   // Goal subscriber
-  mpcTargetTrajectoriesSubscriber_ = n.subscribe(robotName_ + "_mpc_target", 1, &MPC_ROS_Interface::mpcTargetTrajectoriesCallback, this,
-                                                 ::ros::TransportHints().tcpNoDelay());
+  mpcTargetTrajectoriesSubscriber_ = nodeHandle.subscribe(robotName_ + "_mpc_target", 1, &MPC_ROS_Interface::mpcTargetTrajectoriesCallback,
+                                                          this, ::ros::TransportHints().tcpNoDelay());
 
   // Logic rules template subscriber
-  mpcModeSequenceSubscriber_ =
-      n.subscribe(robotName_ + "_mpc_mode_sequence", 1, &MPC_ROS_Interface::mpcModeSequenceCallback, this, ::ros::TransportHints().udp());
+  mpcModeSequenceSubscriber_ = nodeHandle.subscribe(robotName_ + "_mpc_mode_sequence", 1, &MPC_ROS_Interface::mpcModeSequenceCallback, this,
+                                                    ::ros::TransportHints().udp());
 
   // SLQ-MPC publisher
-  mpcPolicyPublisher_ = n.advertise<ocs2_msgs::mpc_flattened_controller>(robotName_ + "_mpc_policy", 1, true);
+  mpcPolicyPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_flattened_controller>(robotName_ + "_mpc_policy", 1, true);
 
   // MPC reset service server
-  mpcResetServiceServer_ = n.advertiseService(robotName_ + "_mpc_reset", &MPC_ROS_Interface::resetMpcCallback, this);
+  mpcResetServiceServer_ = nodeHandle.advertiseService(robotName_ + "_mpc_reset", &MPC_ROS_Interface::resetMpcCallback, this);
 
   for (auto& module : synchronizedRosModules_) {
-    module->subscribe(n);
+    module->subscribe(nodeHandle);
   }
 
   // display

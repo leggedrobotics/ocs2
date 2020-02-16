@@ -168,7 +168,7 @@ class MPC_ROS_Interface {
    * (4) The desired mode sequence which gets the predefined mode switches for time-triggered hybrid systems.
    * (5) All synchronized ros modules are subscribed with the same node handle
    */
-  void launchNodes(ros::NodeHandle& n);
+  void launchNodes(ros::NodeHandle& nodeHandle);
 
   /**
    * This method will be called either after the very fist call of the class or after a call to reset().

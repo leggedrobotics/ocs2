@@ -89,7 +89,7 @@ target_link_libraries(${PROJECT_NAME}_mpc_node
 )
 
 add_executable(${PROJECT_NAME}_dummy_mrt_node
-        test/AnymalBearDummyMRT.cpp
+        src/AnymalBearDummyMRT.cpp
 )
 add_dependencies(${PROJECT_NAME}_dummy_mrt_node
   ${PROJECT_NAME}

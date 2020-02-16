@@ -1,5 +1,5 @@
 /*
- * AnymalBearInterface.h
+ * AnymalCrocInterface.h
  *
  *  Created on: Sep 4, 2016
  *      Author: farbod
@@ -16,7 +16,7 @@
 
 namespace anymal {
 
-class AnymalBearInterface final : public switched_model::OCS2QuadrupedInterface<12> {
+class AnymalCrocInterface final : public switched_model::OCS2QuadrupedInterface<12> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -28,9 +28,9 @@ class AnymalBearInterface final : public switched_model::OCS2QuadrupedInterface<
   using cost_function_t = switched_model::SwitchedModelCostBase;
   using operating_point_t = switched_model::ComKinoOperatingPointsBase;
 
-  explicit AnymalBearInterface(const std::string& pathToConfigFolder);
+  explicit AnymalCrocInterface(const std::string& pathToConfigFolder);
 
-  ~AnymalBearInterface() override = default;
+  ~AnymalCrocInterface() override = default;
 
   std::unique_ptr<slq_t> getSlq() const override;
 

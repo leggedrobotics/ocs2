@@ -12,14 +12,14 @@
 
 #include <ocs2_quadruped_interface/QuadrupedXppVisualizer.h>
 
-#include "ocs2_anymal_croc/AnymalBearInterface.h"
+#include "ocs2_anymal_croc/AnymalCrocInterface.h"
 
 int main(int argc, char* argv[]) {
   static constexpr size_t STATE_DIM = 24;
   static constexpr size_t INPUT_DIM = 24;
   static constexpr size_t JOINT_DIM = 12;
   const std::string robotName = "anymal";
-  using interface_t = anymal::AnymalBearInterface;
+  using interface_t = anymal::AnymalCrocInterface;
   using vis_t = switched_model::QuadrupedXppVisualizer<JOINT_DIM>;
   using mrt_t = ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
   using dummy_t = ocs2::MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>;

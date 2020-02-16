@@ -1,11 +1,11 @@
 /*
- * AnymalBearInterface.cpp
+ * AnymalCrocInterface.cpp
  *
  *  Created on: May 11, 2017
  *      Author: farbod
  */
 
-#include "ocs2_anymal_croc/AnymalBearInterface.h"
+#include "ocs2_anymal_croc/AnymalCrocInterface.h"
 
 #include <ocs2_anymal_croc_switched_model/core/AnymalCom.h>
 #include <ocs2_anymal_croc_switched_model/core/AnymalKinematics.h>
@@ -14,7 +14,7 @@ namespace anymal {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-AnymalBearInterface::AnymalBearInterface(const std::string& pathToConfigFolder)
+AnymalCrocInterface::AnymalCrocInterface(const std::string& pathToConfigFolder)
     : BASE(AnymalKinematics(), AnymalCom(), pathToConfigFolder) {
   dynamicsPtr_.reset(new system_dynamics_t(AnymalKinematicsAd(), AnymalComAd(), modelSettings_.recompileLibraries_));
   dynamicsDerivativesPtr_.reset(dynamicsPtr_->clone());
@@ -27,7 +27,7 @@ AnymalBearInterface::AnymalBearInterface(const std::string& pathToConfigFolder)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<AnymalBearInterface::slq_t> AnymalBearInterface::getSlq() const {
+std::unique_ptr<AnymalCrocInterface::slq_t> AnymalCrocInterface::getSlq() const {
   return std::unique_ptr<slq_t>(new slq_t(timeTriggeredRolloutPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
                                           costFunctionPtr_.get(), operatingPointsPtr_.get(), slqSettings_, logicRulesPtr_));
 }
@@ -35,7 +35,7 @@ std::unique_ptr<AnymalBearInterface::slq_t> AnymalBearInterface::getSlq() const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<AnymalBearInterface::mpc_t> AnymalBearInterface::getMpc() const {
+std::unique_ptr<AnymalCrocInterface::mpc_t> AnymalCrocInterface::getMpc() const {
   if (!modelSettings_.gaitOptimization_) {
     return std::unique_ptr<mpc_t>(new mpc_t(timeTriggeredRolloutPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
                                             costFunctionPtr_.get(), operatingPointsPtr_.get(), partitioningTimes_, slqSettings_,

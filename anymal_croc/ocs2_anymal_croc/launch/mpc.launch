@@ -5,7 +5,7 @@
 
     <group if="$(arg rviz)">
       <!-- Load robot description -->
-      <include file="$(find ocs2_anymal_bear_description)/launch/load.launch">
+      <include file="$(find ocs2_anymal_croc_description)/launch/load.launch">
           <arg name="description_name"   value="$(arg description_name)"/>
       </include>
       <!-- Launch visualization -->

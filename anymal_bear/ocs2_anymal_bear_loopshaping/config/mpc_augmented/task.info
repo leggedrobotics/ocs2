@@ -74,7 +74,7 @@ slq
 
   useNominalTimeForBackwardPass 1
   preComputeRiccatiTerms        1
-  RiccatiIntegratorType         1 		; ODE45 = 1, ADAMS_BASHFORTH = 2, BULIRSCH_STOER = 3, ADAMS_BASHFORTH_MOULTON = 4
+  RiccatiIntegratorType         ODE45  ; ODE45, ADAMS_BASHFORTH, BULIRSCH_STOER, ADAMS_BASHFORTH_MOULTON
   adams_integrator_dt           0.01
 
   warmStartGSLQ                 1

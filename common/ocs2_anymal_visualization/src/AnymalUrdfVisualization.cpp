@@ -7,19 +7,25 @@
 #include <xpp_msgs/topic_names.h>
 #include <xpp_vis/urdf_visualizer.h>
 
+template<typename T>
+T getParamWithCheck(const ros::NodeHandle& nodehandle, const std::string& name) {
+  T value;
+  if (!nodehandle.getParam(name, value)) {
+    throw ros::Exception("Error reading ros parameter: " + name);
+  }
+  return value;
+}
+
 using namespace xpp;
 
 int main(int argc, char* argv[]) {
-  ros::init(argc, argv, "ocs2_anymal_bear_visualization_visualizer");
-  ros::NodeHandle nh;
+  ros::init(argc, argv, "ocs2_anymal_visualization_visualizer");
+  ros::NodeHandle nodeHandlePrivate("~");
+  ros::NodeHandle nodeHandle;
 
   const std::string joint_topic = "xpp/joint_anymal_des";
-  std::string urdf_param = "ocs2_anymal_bear_description";
 
-  std::string urdf;
-  if (!ros::param::get(urdf_param, urdf)) {
-    throw ros::Exception("Error reading ros parameter: " + urdf_param);
-  }
+  const auto descriptionName = getParamWithCheck<std::string>(nodeHandlePrivate, "description_name");
 
   // urdf joint names
   int n_ee = 4;
@@ -45,8 +51,8 @@ int main(int argc, char* argv[]) {
   joint_names.at(n_j * quad::RH + HFE) = "RH_HFE";
   joint_names.at(n_j * quad::RH + KFE) = "RH_KFE";
 
-  UrdfVisualizer anymal_desired(urdf_param, joint_names, "base", "world", joint_topic, "anymal_des");
-  UrdfVisualizer anymal_current(urdf_param, joint_names, "base", "world", joint_topic, "anymal_curr");
+  UrdfVisualizer anymal_desired(descriptionName, joint_names, "base", "world", joint_topic, "anymal_des");
+  UrdfVisualizer anymal_current(descriptionName, joint_names, "base", "world", joint_topic, "anymal_curr");
 
   ros::spin();
 

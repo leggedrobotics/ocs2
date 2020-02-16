@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(ocs2_anymal_bear_visualization)
+project(ocs2_anymal_visualization)
 
 find_package(catkin REQUIRED COMPONENTS
     roscpp

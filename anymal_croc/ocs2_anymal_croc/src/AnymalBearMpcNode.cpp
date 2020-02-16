@@ -9,7 +9,7 @@
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 
-#include "ocs2_anymal_bear/AnymalBearInterface.h"
+#include "ocs2_anymal_croc/AnymalBearInterface.h"
 
 int main(int argc, char* argv[]) {
   static constexpr size_t STATE_DIM = 24;

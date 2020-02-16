@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
   ros::init(argc, argv, "anymal_visualizer");
   ros::NodeHandle n;
 
-  interface_t anymalBearInterface(ros::package::getPath("ocs2_anymal_bear") + "/config/" + taskFileFolderName);
+  interface_t anymalBearInterface(ros::package::getPath("ocs2_anymal_croc") + "/config/" + taskFileFolderName);
 
   const std::string urdf_param = "/ocs2_anymal_bear_description";
   std::string urdf;

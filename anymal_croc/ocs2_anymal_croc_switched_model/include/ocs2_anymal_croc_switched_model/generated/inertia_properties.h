@@ -267,7 +267,7 @@ template <typename TRAIT>
 inline typename InertiaProperties<TRAIT>::Scalar InertiaProperties<TRAIT>::getTotalMass() const {
     return Scalar(25.508142)
         + Scalar(2.631) + Scalar(3.241) + Scalar(0.578)
-        + Scalar(2.631 + Scalar(3.241) + Scalar(0.578)
+        + Scalar(2.631) + Scalar(3.241) + Scalar(0.578)
         + Scalar(2.631) + Scalar(3.241) + Scalar(0.578)
         + Scalar(2.631) + Scalar(3.241) + Scalar(0.578);
 }

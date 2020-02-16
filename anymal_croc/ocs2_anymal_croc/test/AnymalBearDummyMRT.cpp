@@ -12,7 +12,7 @@
 
 #include <ocs2_quadruped_interface/QuadrupedXppVisualizer.h>
 
-#include "ocs2_anymal_bear/AnymalBearInterface.h"
+#include "ocs2_anymal_croc/AnymalBearInterface.h"
 
 int main(int argc, char* argv[]) {
   static constexpr size_t STATE_DIM = 24;

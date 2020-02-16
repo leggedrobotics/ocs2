@@ -104,7 +104,7 @@ class Observer {
       while (modelData_i != system.beginModelDataIterator()) {
         --modelData_i;
         if (numerics::almost_eq(modelData_i->time_, time)) {
-          modelDataTrajectoryPtr_->emplace_back(*modelData_i);
+          modelDataTrajectoryPtr_->emplace_back(std::move(*modelData_i));
           break;
         }
       }

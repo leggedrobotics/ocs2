@@ -114,13 +114,16 @@ class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
     // filling the model data
     if (modelDataTrajectoryPtr) {
-      modelDataTrajectoryPtr->resize(timeTrajectory.size());
+      modelDataTrajectoryPtr->clear();
+      modelDataTrajectoryPtr->reserve(timeTrajectory.size());
       for (int i = 0; i < timeTrajectory.size(); i++) {
-        (*modelDataTrajectoryPtr)[i].time_ = timeTrajectory[i];
-        (*modelDataTrajectoryPtr)[i].stateDim_ = STATE_DIM;
-        (*modelDataTrajectoryPtr)[i].inputDim_ = INPUT_DIM;
-        (*modelDataTrajectoryPtr)[i].dynamics_.setZero(STATE_DIM);
-        (*modelDataTrajectoryPtr)[i].dynamicsBias_.setZero(STATE_DIM);
+        ModelDataBase modelDataTemp;
+        modelDataTemp.time_ = timeTrajectory[i];
+        modelDataTemp.stateDim_ = STATE_DIM;
+        modelDataTemp.inputDim_ = INPUT_DIM;
+        modelDataTemp.dynamics_.setZero(STATE_DIM);
+        modelDataTemp.dynamicsBias_.setZero(STATE_DIM);
+        modelDataTrajectoryPtr->emplace_back(modelDataTemp);
       }  // end of i loop
     }
 

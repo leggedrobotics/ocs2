@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
   ros::NodeHandle nodeHandle;
 
   auto anymalInterface = anymal::getAnymalCrocInterface(taskName);
-  quadrupedDummyNode(nodeHandle, *anymalInterface);
+  quadrupedDummyNode(nodeHandle, *anymalInterface, &anymalInterface->getRollout());
 
   return 0;
 }

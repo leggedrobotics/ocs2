@@ -7,7 +7,6 @@
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
-#include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingInterface.h>
 #include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingXppVisualizer.h>
 
 namespace switched_model {
@@ -15,7 +14,6 @@ namespace switched_model {
 void quadrupedLoopshapingDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedLoopshapingInterface& quadrupedInterface) {
   static constexpr size_t STATE_DIM = 48;
   static constexpr size_t INPUT_DIM = 24;
-  static constexpr size_t JOINT_DIM = 12;
   const std::string robotName = "anymal";
   using vis_t = switched_model::QuadrupedXppVisualizer;
   using vis_wrapper_t = switched_model::QuadrupedLoopshapingXppVisualizer;
@@ -49,4 +47,4 @@ void quadrupedLoopshapingDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedL
   dummySimulator.run(initObservation, initCostDesiredTrajectories);
 }
 
-}
+}  // namespace switched_model

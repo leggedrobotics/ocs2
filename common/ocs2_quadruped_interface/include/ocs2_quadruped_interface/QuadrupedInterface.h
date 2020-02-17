@@ -17,12 +17,12 @@
 
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
+#include <ocs2_switched_model_interface/core/ComModelBase.h>
+#include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
 #include <ocs2_switched_model_interface/core/ModelSettings.h>
 #include <ocs2_switched_model_interface/core/MotionPhaseDefinition.h>
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 #include <ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h>
-#include "ocs2_switched_model_interface/core/ComModelBase.h"
-#include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
 
 #include <ocs2_switched_model_interface/constraint/ComKinoConstraintBaseAd.h>
 #include <ocs2_switched_model_interface/cost/SwitchedModelCostBase.h>
@@ -31,16 +31,11 @@
 
 namespace switched_model {
 
-class QuadrupedInterface : public ocs2::RobotInterface<24, 24> {
+class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  static constexpr auto joint_dim_ = 12;
-  static constexpr auto state_dim_ = 24;
-  static constexpr auto input_dim_ = 24;
-  static constexpr auto rbd_state_dim_ = 12 + 2 * joint_dim_;
-
-  using BASE = ocs2::RobotInterface<state_dim_, input_dim_>;
+  using BASE = ocs2::RobotInterface<STATE_DIM, INPUT_DIM>;
 
   using com_model_t = ComModelBase<double>;
   using kinematic_model_t = KinematicsModelBase<double>;
@@ -51,7 +46,7 @@ class QuadrupedInterface : public ocs2::RobotInterface<24, 24> {
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
 
-  using dimension_t = ocs2::Dimensions<state_dim_, input_dim_>;
+  using dimension_t = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
   using scalar_t = typename dimension_t::scalar_t;
   using scalar_array_t = typename dimension_t::scalar_array_t;
   using size_array_t = typename dimension_t::size_array_t;
@@ -59,13 +54,13 @@ class QuadrupedInterface : public ocs2::RobotInterface<24, 24> {
   using state_matrix_t = typename dimension_t::state_matrix_t;
   using input_matrix_t = typename dimension_t::input_matrix_t;
 
-  using rollout_base_t = ocs2::RolloutBase<state_dim_, input_dim_>;
-  using time_triggered_rollout_t = ocs2::TimeTriggeredRollout<state_dim_, input_dim_>;
+  using rollout_base_t = ocs2::RolloutBase<STATE_DIM, INPUT_DIM>;
+  using time_triggered_rollout_t = ocs2::TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
 
   using mode_sequence_template_t = ocs2::ModeSequenceTemplate<scalar_t>;
 
-  using mpc_t = ocs2::MPC_SLQ<state_dim_, input_dim_>;
-  using slq_t = ocs2::SLQ<state_dim_, input_dim_>;
+  using mpc_t = ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>;
+  using slq_t = ocs2::SLQ<STATE_DIM, INPUT_DIM>;
 
   using system_dynamics_t = switched_model::ComKinoSystemDynamicsAd;
   using system_dynamics_derivative_t = switched_model::ComKinoSystemDynamicsAd;
@@ -80,8 +75,8 @@ class QuadrupedInterface : public ocs2::RobotInterface<24, 24> {
    * @param pathToConfigFolder : Reads settings from the task.info in this folder
    */
   QuadrupedInterface(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel,
-                         const ad_com_model_t& adComModel, const std::string& pathToConfigFolder);
-  
+                     const ad_com_model_t& adComModel, const std::string& pathToConfigFolder);
+
   /**
    * Destructor
    */
@@ -167,4 +162,3 @@ class QuadrupedInterface : public ocs2::RobotInterface<24, 24> {
 };
 
 }  // end of namespace switched_model
-

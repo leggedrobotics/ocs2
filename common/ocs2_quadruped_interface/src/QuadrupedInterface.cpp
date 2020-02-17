@@ -15,11 +15,8 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel,
-                                               const ad_kinematic_model_t& adKinematicModel,
-                                               const com_model_t& comModel,
-                                               const ad_com_model_t& adComModel,
-                                               const std::string& pathToConfigFolder)
+QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
+                                       const com_model_t& comModel, const ad_com_model_t& adComModel, const std::string& pathToConfigFolder)
 
     : kinematicModelPtr_(kinematicModel.clone()),
       adKinematicModelPtr_(adKinematicModel.clone()),
@@ -59,10 +56,10 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
   std::cerr << "\b\b}" << std::endl;
 
   // initial state of the switched system
-  Eigen::Matrix<scalar_t, rbd_state_dim_, 1> initRbdState;
+  Eigen::Matrix<scalar_t, RBD_STATE_DIM, 1> initRbdState;
   ocs2::loadData::loadEigenMatrix(pathToConfigFile, "initialRobotState", initRbdState);
   SwitchedModelStateEstimator switchedModelStateEstimator(*comModelPtr_);
-  initialState_.template head<12 + joint_dim_>() = switchedModelStateEstimator.estimateComkinoModelState(initRbdState);
+  initialState_ = switchedModelStateEstimator.estimateComkinoModelState(initRbdState);
 
   // cost function components
   ocs2::loadData::loadEigenMatrix(pathToConfigFile, "Q", Q_);
@@ -82,7 +79,7 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
   mode_sequence_template_t initialModeSequenceTemplate;
   loadModeSequenceTemplate(pathToConfigFile, "initialModeSequenceTemplate", initialModeSequenceTemplate, false);
   std::cerr << std::endl;
-  if (initialModeSequenceTemplate.templateSubsystemsSequence_.size() == 0) {
+  if (initialModeSequenceTemplate.templateSubsystemsSequence_.empty()) {
     throw std::runtime_error("initialModeSequenceTemplate.templateSubsystemsSequence should have at least one entry.");
   }
   if (initialModeSequenceTemplate.templateSwitchingTimes_.size() != initialModeSequenceTemplate.templateSubsystemsSequence_.size() + 1) {
@@ -150,4 +147,4 @@ std::unique_ptr<QuadrupedInterface::mpc_t> QuadrupedInterface::getMpc() const {
   }
 }
 
-}  // end of namespace switched_model
+}  // namespace switched_model

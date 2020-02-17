@@ -10,6 +10,7 @@
 
 namespace switched_model {
 
-void quadrupedDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& quadrupedInterface);
+void quadrupedDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& quadrupedInterface,
+                        const QuadrupedInterface::rollout_base_t* rolloutPtr);
 
 }

@@ -6,14 +6,9 @@
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 
-#include <ocs2_quadruped_interface/QuadrupedInterface.h>
-
 namespace switched_model {
 
 void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& quadrupedInterface) {
-  static constexpr size_t STATE_DIM = 24;
-  static constexpr size_t INPUT_DIM = 24;
-  static constexpr size_t JOINT_DIM = 12;
   const std::string robotName = "anymal";
   using mpc_ros_t = ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM>;
 
@@ -23,4 +18,4 @@ void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& qua
   mpcNode.launchNodes(nodeHandle);
 }
 
-}
+}  // namespace switched_model

@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.0)
-project(ocs2_anymal_bear_loopshaping)
+project(ocs2_anymal_croc_loopshaping)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
     roslib
-    ocs2_anymal_bear
+    ocs2_anymal_croc
     ocs2_quadruped_loopshaping_interface
     )
 
@@ -26,7 +26,7 @@ catkin_package(
     ${PROJECT_NAME}
   CATKIN_DEPENDS
     roslib
-    ocs2_anymal_bear
+    ocs2_anymal_croc
     ocs2_quadruped_loopshaping_interface
   DEPENDS
 )
@@ -41,18 +41,18 @@ include_directories(
   ${catkin_INCLUDE_DIRS})
 
 add_library(${PROJECT_NAME}
-  src/AnymalBearLoopshapingInterface.cpp)
+  src/AnymalCrocLoopshapingInterface.cpp)
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES})
 
 add_executable(${PROJECT_NAME}_mpc_node
-  src/AnymalBearLoopshapingMpcNode.cpp)
+  src/AnymalCrocLoopshapingMpcNode.cpp)
 target_link_libraries(${PROJECT_NAME}_mpc_node
   ${PROJECT_NAME}
   ${catkin_LIBRARIES})
 
 add_executable(${PROJECT_NAME}_dummy_mrt_node
-  src/AnymalBearLoopshapingDummyMrt.cpp  )
+  src/AnymalCrocLoopshapingDummyMrt.cpp  )
 target_link_libraries(${PROJECT_NAME}_dummy_mrt_node
   ${PROJECT_NAME}
   ${catkin_LIBRARIES})

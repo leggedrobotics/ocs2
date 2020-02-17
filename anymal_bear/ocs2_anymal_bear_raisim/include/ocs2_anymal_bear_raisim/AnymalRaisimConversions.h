@@ -4,8 +4,9 @@
 #include <raisim/World.hpp>
 #include <utility>
 
-#include <ocs2_anymal_bear_switched_model/core/AnymalBearCom.h>
 #include <ocs2_core/Dimensions.h>
+#include <ocs2_switched_model_interface/core/ComModelBase.h>
+#include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
 #include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
 
 namespace anymal {
@@ -24,10 +25,14 @@ class AnymalRaisimConversions final {
   using state_vector_t = typename dim_t::state_vector_t;
   using input_vector_t = typename dim_t::input_vector_t;
 
+  using com_model_t = switched_model::ComModelBase<double>;
+  using kinematic_model_t = switched_model::KinematicsModelBase<double>;
+
   /**
    * @brief Constructor
    */
-  explicit AnymalRaisimConversions() : switchedModelStateEstimator_(AnymalCom()) {}
+  AnymalRaisimConversions(const com_model_t& comModel, const kinematic_model_t& kinematicModel)
+      : switchedModelStateEstimator_(comModel), kinematicModelPtr_(kinematicModel.clone()) {}
 
   /**
    * @brief Convert ocs2 anymal state to generalized coordinate and generalized velocity used by RAIsim
@@ -96,5 +101,6 @@ class AnymalRaisimConversions final {
 
  protected:
   const switched_model::SwitchedModelStateEstimator switchedModelStateEstimator_;  // const for thread safety
+  std::unique_ptr<const kinematic_model_t> kinematicModelPtr_;
 };
 }  // namespace anymal

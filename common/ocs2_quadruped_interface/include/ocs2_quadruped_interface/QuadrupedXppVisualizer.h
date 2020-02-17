@@ -14,28 +14,23 @@
 
 namespace switched_model {
 
-class QuadrupedXppVisualizer : public ocs2::DummyObserver<24, 24> {
+class QuadrupedXppVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  static constexpr auto joint_dim_ = 12;
-  static constexpr auto state_dim_ = 24;
-  static constexpr auto input_dim_ = 24;
-  static constexpr auto rbd_state_dim_ = 12 + 2 * joint_dim_;
-
-  using BASE = ocs2::DummyObserver<state_dim_, input_dim_>;
+  using BASE = ocs2::DummyObserver<STATE_DIM, INPUT_DIM>;
   using typename BASE::command_data_t;
   using typename BASE::primal_solution_t;
   using typename BASE::system_observation_t;
 
-  using dimension_t = ocs2::Dimensions<state_dim_, input_dim_>;
+  using dimension_t = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
   using scalar_t = typename dimension_t::scalar_t;
   using state_vector_t = typename dimension_t::state_vector_t;
   using scalar_array_t = typename dimension_t::scalar_array_t;
   using state_vector_array_t = typename dimension_t::state_vector_array_t;
   using input_vector_t = typename dimension_t::input_vector_t;
 
-  using rbd_state_vector_t = Eigen::Matrix<scalar_t, rbd_state_dim_, 1>;
+  using rbd_state_vector_t = Eigen::Matrix<scalar_t, RBD_STATE_DIM, 1>;
 
   using cost_desired_trajectories_t = ocs2::CostDesiredTrajectories;
 
@@ -103,4 +98,3 @@ class QuadrupedXppVisualizer : public ocs2::DummyObserver<24, 24> {
 };
 
 }  // namespace switched_model
-

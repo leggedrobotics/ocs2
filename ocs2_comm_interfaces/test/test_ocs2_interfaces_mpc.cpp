@@ -31,11 +31,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_comm_interfaces/ocs2_interfaces/MPC_MRT_Interface.h>
 #include <ocs2_mpc/MPC_SLQ.h>
 
-using namespace ocs2;
-
 TEST(testOcs2InterfacesMpc, instantiation) {
-  MPC_SLQ<1, 1> mpcSlq;
-  MPC_MRT_Interface<1, 1> mpcInterface(mpcSlq);
+  ocs2::MPC_SLQ<1, 1> mpcSlq;
+  ocs2::MPC_MRT_Interface<1, 1> mpcInterface(mpcSlq);
 }
 
 int main(int argc, char** argv) {

@@ -45,9 +45,6 @@ DoubleIntegratorInterface::DoubleIntegratorInterface(const std::string& taskFile
 
   // load setting from loading file
   loadSettings(taskFile_);
-
-  // MPC
-  setupOptimizer(taskFile_);
 }
 
 /******************************************************************************************************/
@@ -57,7 +54,7 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Default initial condition
    */
-  loadInitialState(taskFile, initialState_);
+  loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
 
   /*
    * SLQ-MPC settings
@@ -113,17 +110,17 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Time partitioning which defines the time horizon and the number of data partitioning
    */
-  scalar_t timeHorizon;
-  definePartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
+  dim_t::scalar_t timeHorizon;
+  ocs2::loadData::loadPartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void DoubleIntegratorInterface::setupOptimizer(const std::string& taskFile) {
-  mpcPtr_.reset(new mpc_t(ddpLinearSystemRolloutPtr_.get(), linearSystemDynamicsDerivativesPtr_.get(), linearSystemConstraintPtr_.get(),
-                          linearSystemCostPtr_.get(), linearSystemOperatingPointPtr_.get(), partitioningTimes_, slqSettings_,
-                          mpcSettings_));
+std::unique_ptr<DoubleIntegratorInterface::mpc_t> DoubleIntegratorInterface::getMpc() {
+  return std::unique_ptr<mpc_t>(new mpc_t(ddpLinearSystemRolloutPtr_.get(), linearSystemDynamicsDerivativesPtr_.get(),
+                                          linearSystemConstraintPtr_.get(), linearSystemCostPtr_.get(),
+                                          linearSystemOperatingPointPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_));
 }
 
 }  // namespace double_integrator

@@ -110,6 +110,7 @@ target_link_libraries(ballbot_mpc
 # Dummy node
 add_executable(ballbot_dummy_test
   src/Dummy_Ballbot_Node.cpp
+  src/BallbotDummyVisualization.cpp
 )
 add_dependencies(ballbot_dummy_test
   ${catkin_EXPORTED_TARGETS}

@@ -5,11 +5,8 @@ namespace ocs2 {
 namespace double_integrator {
 
 DoubleIntegratorPyBindings::DoubleIntegratorPyBindings(const std::string& taskFileFolder, bool async) : Base(async) {
-  init(taskFileFolder);
-}
-
-void DoubleIntegratorPyBindings::initRobotInterface(const std::string& taskFileFolder) {
-  robotInterface_.reset(new DoubleIntegratorInterface(taskFileFolder));
+  DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolder);
+  init(doubleIntegratorInterface, doubleIntegratorInterface.getMpc());
 }
 
 }  // namespace double_integrator

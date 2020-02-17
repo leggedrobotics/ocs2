@@ -33,7 +33,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Loop(mrt_t& mrt, scalar_t mrtDesiredFrequency /*= 100*/,
+MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Loop(mrt_t& mrt, scalar_t mrtDesiredFrequency,
                                                              scalar_t mpcDesiredFrequency /*= -1*/)
     : mrt_(mrt),
       mrtDesiredFrequency_(mrtDesiredFrequency),
@@ -53,18 +53,9 @@ MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Loop(mrt_t& mrt, scalar_
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::launchNodes(int argc, char* argv[]) {
-  mrt_.launchNodes(argc, argv);
-  launchVisualizerNode(argc, argv);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(const system_observation_t& initObservation,
                                                    const CostDesiredTrajectories& initCostDesiredTrajectories) {
-  ::ros::Rate rosRate(mrtDesiredFrequency_);  // in Hz
+  ros::WallRate rosRate(mrtDesiredFrequency_);  // in Hz
 
   // time step
   const scalar_t timeStep = (1.0 / mrtDesiredFrequency_);
@@ -144,9 +135,12 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(const system_observation_t& i
       std::cout << ">>> Observation is published at " << time << std::endl;
     }
 
-    // Visualization
-    publishVisualizer(observation_, mrt_.getPolicy(), mrt_.getCommand());
+    // Update observers
+    for (auto& observer : observers_) {
+      observer->update(observation_, mrt_.getPolicy(), mrt_.getCommand());
+    }
 
+    ros::spinOnce();
     rosRate.sleep();
   }  // end of while loop
 }

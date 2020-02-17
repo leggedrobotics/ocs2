@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef ODE_BASE_OCS2_H_
-#define ODE_BASE_OCS2_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <list>
@@ -54,18 +53,19 @@ class OdeBase {
   using state_vector_t = typename DIMENSIONS::state_vector_t;
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
   using system_func_t = std::function<void(const state_vector_t& x, state_vector_t& dxdt, scalar_t t)>;
+  using model_data_array_t = ModelDataBase::array_t;
+
+  static constexpr size_t DEFAULT_MODEL_DATA_CACHE_SIZE = 7;
 
   /**
    * Constructor.
-   * @param [in] modelData: The model data which will be used for storing outputs.
    */
-  explicit OdeBase(const ModelDataBase& modelData = ModelDataBase())
-      : numFunctionCalls_(0), defaultModelDataArraySize_(7), modelDataPtrArray_(defaultModelDataArraySize_) {
-    for (auto& modelPtr_i : modelDataPtrArray_) {
-      modelPtr_i.reset(modelData.clone());
-    }
-    nextModelDataPtrIterator() = beginModelDataPtrIterator();
-    systemFunction_ = [this](const state_vector_t& x, state_vector_t& dxdt, scalar_t t) { computeFlowMap(t, x, dxdt); };
+  OdeBase() : numFunctionCalls_(0) {
+    modelDataArray_.reserve(DEFAULT_MODEL_DATA_CACHE_SIZE);
+    systemFunction_ = [this](const state_vector_t& x, state_vector_t& dxdt, scalar_t t) {
+      numFunctionCalls_++;
+      computeFlowMap(t, x, dxdt);
+    };
   }
 
   /**
@@ -76,7 +76,7 @@ class OdeBase {
   /**
    * Default copy constructor
    */
-  OdeBase(const OdeBase& rhs) : OdeBase(*rhs.modelDataPtrArray_.front()) {}
+  OdeBase(const OdeBase& rhs) = default;
 
   /**
    * Get a system function callback that calls computeFlowMap for integration.
@@ -97,34 +97,31 @@ class OdeBase {
   void resetNumFunctionCalls() { numFunctionCalls_ = 0; }
 
   /**
-   * Returns the iterator pointing to the next free model data.
-   * @return iterator to the next free model data.
+   * Returns model data array begin() iterator
+   * @return modelDataArray_.begin()
    */
-  std::list<std::shared_ptr<ModelDataBase>>::iterator& nextModelDataPtrIterator() { return nextModelDataPtrIterator_; }
+  model_data_array_t::iterator beginModelDataIterator() { return modelDataArray_.begin(); }
 
   /**
-   * Returns the iterator to begin()
-   * @return modelDataPtrArray_.begin()
+   * Returns model data array end() iterator
+   * @return modelDataArray_.end()
    */
-  std::list<std::shared_ptr<ModelDataBase>>::iterator beginModelDataPtrIterator() { return modelDataPtrArray_.begin(); }
+  model_data_array_t::iterator endModelDataIterator() { return modelDataArray_.end(); }
 
   /**
-   * Returns the iterator to end()
-   * @return modelDataPtrArray_.end()
+   * Append model data array.
+   * @return reference to new element.
    */
-  std::list<std::shared_ptr<ModelDataBase>>::iterator endModelDataPtrIterator() { return modelDataPtrArray_.end(); }
+  ModelDataBase& modelDataEmplaceBack() {
+    modelDataArray_.emplace_back();
+    return modelDataArray_.back();
+  }
 
   /**
-   * Resizes the internal model data array.
-   *
+   * Clear model data array.
    */
-  void resizeInternalModelDataPtrArray() {
-    --nextModelDataPtrIterator_;  // since next will change
-    for (int i = 0; i < defaultModelDataArraySize_; i++) {
-      // TODO(mspieler): Better way to keep it a derived class?
-      modelDataPtrArray_.emplace_back(modelDataPtrArray_.front()->clone());
-    }
-    ++nextModelDataPtrIterator_;  // new next
+  void clearModelDataArray() {
+    modelDataArray_.clear();  // keeps allocated storage
   }
 
   /**
@@ -157,13 +154,8 @@ class OdeBase {
 
  protected:
   int numFunctionCalls_;
-
   system_func_t systemFunction_;
-  const int defaultModelDataArraySize_;
-  std::list<std::shared_ptr<ModelDataBase>> modelDataPtrArray_;
-  std::list<std::shared_ptr<ModelDataBase>>::iterator nextModelDataPtrIterator_;
+  model_data_array_t modelDataArray_;
 };
 
 }  // namespace ocs2
-
-#endif /* ODE_BASE_OCS2_H_ */

@@ -74,14 +74,13 @@ class ControlledSystemBase : public OdeBase<STATE_DIM> {
 
   /**
    * Constructor.
-   * @param [in] modelData: The model data which will be used for storing outputs.
    */
-  explicit ControlledSystemBase(const ModelDataBase& modelData = ModelDataBase()) : BASE(modelData), controllerPtr_(nullptr) {}
+  ControlledSystemBase() : controllerPtr_(nullptr) {}
 
   /**
    * Copy constructor.
    */
-  ControlledSystemBase(const ControlledSystemBase& rhs) : ControlledSystemBase() { setController(rhs.controllerPtr()); }
+  ControlledSystemBase(const ControlledSystemBase& rhs) { setController(rhs.controllerPtr()); }
 
   /**
    * Default destructor.
@@ -115,34 +114,13 @@ class ControlledSystemBase : public OdeBase<STATE_DIM> {
    * @param [out] dxdt: The state time derivative.
    */
   void computeFlowMap(const scalar_t& t, const state_vector_t& x, state_vector_t& dxdt) final {
-    BASE::numFunctionCalls_++;
     input_vector_t u = controllerPtr_->computeInput(t, x);
-
-    if (this->nextModelDataPtrIterator() == this->endModelDataPtrIterator()) {
-      this->resizeInternalModelDataPtrArray();
-      //      std::cerr << "WARNNINGS: The reserved size for recording model data is not enough." << std::endl;
-    }
-    auto* modelDataPtr = this->nextModelDataPtrIterator()->get();
-    computeFlowMap(t, x, u, modelDataPtr);
-    dxdt = modelDataPtr->dynamics_;
-    ++this->nextModelDataPtrIterator();
-  }
-
-  /**
-   * Computes the flow map of a system with exogenous input.
-   *
-   * @param [in] t: The current time.
-   * @param [in] x: The current state.
-   * @param [in] u: The current input.
-   * @param [out] data: the model data.
-   */
-  virtual void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, ModelDataBase* dataPtr) {
-    dataPtr->time_ = t;
-    dataPtr->stateDim_ = STATE_DIM;
-    dataPtr->inputDim_ = INPUT_DIM;
-    state_vector_t dxdt;
+    ModelDataBase& modelData = this->modelDataEmplaceBack();
+    modelData.time_ = t;
+    modelData.stateDim_ = STATE_DIM;
+    modelData.inputDim_ = INPUT_DIM;
     computeFlowMap(t, x, u, dxdt);
-    dataPtr->dynamics_ = dxdt;
+    modelData.dynamics_ = dxdt;
   }
 
   /**

@@ -101,8 +101,6 @@ class SequentialErrorEquation final : public OdeBase<STATE_DIM> {
    * @param [out] derivatives: d(Sve)/dz
    */
   void computeFlowMap(const scalar_t& z, const state_vector_t& Sve, state_vector_t& derivatives) {
-    BASE::numFunctionCalls_++;
-
     // normal time
     const scalar_t t = -z;
 

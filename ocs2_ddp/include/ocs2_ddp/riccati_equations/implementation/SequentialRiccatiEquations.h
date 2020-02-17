@@ -204,7 +204,6 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::computeFlowMap(const scal
    * Expressions written base on guidelines in
    * http://eigen.tuxfamily.org/dox/TopicWritingEfficientProductExpression.html
    */
-  BASE::numFunctionCalls_++;
 
   // denormalized time
   const scalar_t t = -z;

@@ -11,18 +11,12 @@
 namespace switched_model {
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::launchVisualizerNode(ros::NodeHandle& n) {
-  visualizationPublisher_ = n.advertise<xpp_msgs::RobotStateCartesian>(xpp_msgs::robot_state_desired, 1);
-  visualizationJointPublisher_ = n.advertise<xpp_msgs::RobotStateJoint>("xpp/joint_anymal_des", 1);
-  costDesiredPublisher_ = n.advertise<visualization_msgs::Marker>("desiredBaseTrajectory", 1);
-  stateOptimizedPublisher_ = n.advertise<visualization_msgs::Marker>("optimizedBaseTrajectory", 1);
-  feetOptimizedPublisher_ = n.advertise<visualization_msgs::MarkerArray>("optimizedFeetTrajectories", 1);
-
-  ROS_INFO_STREAM("Waiting for visualization subscriber ...");
-  while (ros::ok() && visualizationPublisher_.getNumSubscribers() == 0) {
-    ros::Rate(100).sleep();
-  }
-  ROS_INFO_STREAM("Visualization subscriber is connected.");
+void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
+  visualizationPublisher_ = nodeHandle.advertise<xpp_msgs::RobotStateCartesian>(xpp_msgs::robot_state_desired, 1);
+  visualizationJointPublisher_ = nodeHandle.advertise<xpp_msgs::RobotStateJoint>("xpp/joint_anymal_des", 1);
+  costDesiredPublisher_ = nodeHandle.advertise<visualization_msgs::Marker>("desiredBaseTrajectory", 1);
+  stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::Marker>("optimizedBaseTrajectory", 1);
+  feetOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("optimizedFeetTrajectories", 1);
 }
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
@@ -71,7 +65,7 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishTraj
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
 void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishXppVisualizer(
-    const scalar_t& time, const base_coordinate_t& basePose, const base_coordinate_t& baseLocalVelocities,
+    scalar_t time, const base_coordinate_t& basePose, const base_coordinate_t& baseLocalVelocities,
     const joint_coordinate_t& jointAngles, const vector_3d_array_t& feetPosition, const vector_3d_array_t& feetVelocity,
     const vector_3d_array_t& feetAcceleration, const vector_3d_array_t& feetForce) {
   const scalar_t minTimeDifference = 10e-3;

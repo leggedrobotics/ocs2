@@ -1,17 +1,17 @@
 /*
- * AnymalCom.h
+ * AnymalCrocCom.h
  *
  *  Created on: Nov, 2018
  *      Author: farbod
  */
 
-#include "ocs2_anymal_bear_switched_model/core/AnymalCom.h"
+#include "ocs2_anymal_croc_switched_model/core/AnymalCrocCom.h"
 
 #include <iit/rbd/traits/TraitSelector.h>
-#include "ocs2_anymal_bear_switched_model/generated/inertia_properties.h"
-#include "ocs2_anymal_bear_switched_model/generated/jsim.h"
-#include "ocs2_anymal_bear_switched_model/generated/miscellaneous.h"
-#include "ocs2_anymal_bear_switched_model/generated/transforms.h"
+#include "ocs2_anymal_croc_switched_model/generated/inertia_properties.h"
+#include "ocs2_anymal_croc_switched_model/generated/jsim.h"
+#include "ocs2_anymal_croc_switched_model/generated/miscellaneous.h"
+#include "ocs2_anymal_croc_switched_model/generated/transforms.h"
 
 #include "ocs2_switched_model_interface/core/Rotations.h"
 
@@ -22,7 +22,7 @@ namespace tpl {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-AnymalCom<SCALAR_T>::AnymalCom() {
+AnymalCrocCom<SCALAR_T>::AnymalCrocCom() {
   switched_model::joint_coordinate_s_t<SCALAR_T> defaultJointConfig;
   defaultJointConfig << SCALAR_T(-0.1), SCALAR_T(0.7), SCALAR_T(-1.0), SCALAR_T(0.1), SCALAR_T(0.7), SCALAR_T(-1.0), SCALAR_T(-0.1),
       SCALAR_T(-0.7), SCALAR_T(1.0), SCALAR_T(0.1), SCALAR_T(-0.7), SCALAR_T(1.0);
@@ -34,15 +34,15 @@ AnymalCom<SCALAR_T>::AnymalCom() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-AnymalCom<SCALAR_T>* AnymalCom<SCALAR_T>::clone() const {
-  return new AnymalCom<SCALAR_T>(*this);
+AnymalCrocCom<SCALAR_T>* AnymalCrocCom<SCALAR_T>::clone() const {
+  return new AnymalCrocCom<SCALAR_T>(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-void AnymalCom<SCALAR_T>::setJointConfiguration(const switched_model::joint_coordinate_s_t<SCALAR_T>& q) {
+void AnymalCrocCom<SCALAR_T>::setJointConfiguration(const switched_model::joint_coordinate_s_t<SCALAR_T>& q) {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
   iit::ANYmal::dyn::tpl::InertiaProperties<trait_t> inertiaProperties_;
   iit::ANYmal::tpl::HomogeneousTransforms<trait_t> homTransforms_;
@@ -66,5 +66,5 @@ void AnymalCom<SCALAR_T>::setJointConfiguration(const switched_model::joint_coor
 }  // end of namespace anymal
 
 // Explicit instantiation
-template class anymal::tpl::AnymalCom<double>;
-template class anymal::tpl::AnymalCom<ocs2::CppAdInterface<double>::ad_scalar_t>;
+template class anymal::tpl::AnymalCrocCom<double>;
+template class anymal::tpl::AnymalCrocCom<ocs2::CppAdInterface<double>::ad_scalar_t>;

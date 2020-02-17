@@ -4,7 +4,7 @@
 #include <raisim/World.hpp>
 #include <utility>
 
-#include <ocs2_anymal_bear_switched_model/core/AnymalCom.h>
+#include <ocs2_anymal_bear_switched_model/core/AnymalBearCom.h>
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
 

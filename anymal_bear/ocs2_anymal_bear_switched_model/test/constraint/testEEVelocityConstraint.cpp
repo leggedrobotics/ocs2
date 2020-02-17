@@ -7,8 +7,8 @@
 
 #include <ocs2_switched_model_interface/constraint/EndEffectorVelocityContraint.h>
 
-#include "ocs2_anymal_bear_switched_model/core/AnymalKinematics.h"
-#include "ocs2_anymal_bear_switched_model/core/AnymalCom.h"
+#include "ocs2_anymal_bear_switched_model/core/AnymalBearCom.h"
+#include "ocs2_anymal_bear_switched_model/core/AnymalBearKinematics.h"
 
 TEST(TestEEVelocityConstraint, evaluate){
   using TestedConstraint = switched_model::EndEffectorVelocityConstraint;

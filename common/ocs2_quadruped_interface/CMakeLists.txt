@@ -9,7 +9,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_comm_interfaces
   ocs2_robotic_tools
   ocs2_switched_model_interface
-  rosbag
   roscpp
   xpp_msgs
 )
@@ -19,10 +18,6 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## Eigen3
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-
-find_package(Boost REQUIRED COMPONENTS
-  filesystem
-)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors")
 
@@ -39,11 +34,11 @@ catkin_package(
    INCLUDE_DIRS
       include
       ${EIGEN_INCLUDE_DIRS}
-#  LIBRARIES ocs2_quadruped_interface
+   LIBRARIES
+      ${PROJECT_NAME}
    CATKIN_DEPENDS
-       ${CATKIN_PACKAGE_DEPENDENCIES}
+      ${CATKIN_PACKAGE_DEPENDENCIES}
    DEPENDS
-      Boost
 )
 
 ###########
@@ -58,6 +53,21 @@ include_directories(
   ${EIGEN_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
+
+# Declare a C++ library
+add_library(${PROJECT_NAME}
+        src/QuadrupedInterface.cpp
+        src/QuadrupedDummyNode.cpp
+        src/QuadrupedMpcNode.cpp
+        src/QuadrupedXppVisualizer.cpp
+        )
+add_dependencies(${PROJECT_NAME}
+        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        )
 
 #############
 ## Install ##

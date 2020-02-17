@@ -7,8 +7,6 @@
 
 #include <ocs2_quadruped_interface/QuadrupedXppVisualizer.h>
 
-#include <ocs2_anymal_bear/AnymalBearInterface.h>
-
 #include <ocs2_anymal_bear_raisim/AnymalRaisimConversions.h>
 
 int main(int argc, char* argv[]) {

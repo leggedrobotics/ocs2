@@ -1,0 +1,121 @@
+//
+// Created by rgrandia on 17.02.20.
+//
+
+#pragma once
+
+// Loopshaping
+#include <ocs2_core/loopshaping/Loopshaping.h>
+
+#include <ocs2_quadruped_interface/QuadrupedInterface.h>
+
+namespace switched_model {
+
+class QuadrupedLoopshapingInterface : public ocs2::RobotInterface<48, 24> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  static constexpr size_t STATE_DIM = 48;
+  static constexpr size_t INPUT_DIM = 24;
+  static constexpr size_t SYSTEM_STATE_DIM = 24;
+  static constexpr size_t SYSTEM_INPUT_DIM = 24;
+  static constexpr size_t FILTER_STATE_DIM = 24;
+  static constexpr size_t FILTER_INPUT_DIM = 24;
+
+  using system_dynamics_t =
+      ocs2::LoopshapingDynamics<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM, FILTER_INPUT_DIM>;
+  using system_dynamics_derivative_t =
+      ocs2::LoopshapingDynamicsDerivative<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM, FILTER_INPUT_DIM>;
+  using constraint_t =
+      ocs2::LoopshapingConstraint<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM, FILTER_INPUT_DIM>;
+  using operating_point_t =
+      ocs2::LoopshapingOperatingPoint<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM, FILTER_INPUT_DIM>;
+  using cost_function_t =
+      ocs2::LoopshapingCost<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM, FILTER_INPUT_DIM>;
+  using filter_dynamics_t =
+      ocs2::LoopshapingFilterDynamics<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM, FILTER_INPUT_DIM>;
+
+  using com_model_t = ComModelBase<double>;
+  using kinematic_model_t = KinematicsModelBase<double>;
+  using logic_rules_t = SwitchedModelLogicRulesBase;
+
+  using ad_base_t = CppAD::cg::CG<double>;
+  using ad_scalar_t = CppAD::AD<ad_base_t>;
+  using ad_com_model_t = ComModelBase<ad_scalar_t>;
+  using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
+
+  using dimension_t = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
+  using scalar_t = typename dimension_t::scalar_t;
+  using scalar_array_t = typename dimension_t::scalar_array_t;
+  using size_array_t = typename dimension_t::size_array_t;
+  using state_vector_t = typename dimension_t::state_vector_t;
+  using state_matrix_t = typename dimension_t::state_matrix_t;
+  using input_matrix_t = typename dimension_t::input_matrix_t;
+
+  using rollout_base_t = ocs2::RolloutBase<STATE_DIM, INPUT_DIM>;
+  using time_triggered_rollout_t = ocs2::TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
+
+  using mode_sequence_template_t = ocs2::ModeSequenceTemplate<scalar_t>;
+
+  using mpc_t = ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>;
+  using slq_t = ocs2::SLQ<STATE_DIM, INPUT_DIM>;
+
+  QuadrupedLoopshapingInterface(std::unique_ptr<QuadrupedInterface> quadrupedPtr, const std::string& pathToConfigFolder);
+
+  ~QuadrupedLoopshapingInterface() override = default;
+
+  std::shared_ptr<ocs2::LoopshapingDefinition> getLoopshapingDefinition() const { return loopshapingDefinition_; };
+
+  std::shared_ptr<ocs2::HybridLogicRules> getLogicRulesPtr() const override { return quadrupedPtr_->getLogicRulesPtr(); }
+
+  /** Gets kinematic model */
+  const kinematic_model_t& getKinematicModel() const { return quadrupedPtr_->getKinematicModel(); };
+
+  /** Gets center of mass model */
+  const com_model_t& getComModel() const { return quadrupedPtr_->getComModel(); };
+
+  /** Constructs an SLQ object */
+  std::unique_ptr<slq_t> getSlq() const;
+
+  /** Constructs an MPC object */
+  std::unique_ptr<mpc_t> getMpc() const;
+
+  /** Gets the loaded initial state */
+  const state_vector_t& getInitialState() const { return initialState_; }
+
+  /** Access to model settings */
+  const ModelSettings& modelSettings() const { return quadrupedPtr_->modelSettings(); };
+
+  /** Access to slq settings */
+  const ocs2::SLQ_Settings& slqSettings() const { return quadrupedPtr_->slqSettings(); }
+
+  /** Access to mpc settings */
+  const ocs2::MPC_Settings& mpcSettings() const { return quadrupedPtr_->mpcSettings(); }
+
+  /** Gets the rollout class */
+  const rollout_base_t& getRollout() const { return *timeTriggeredRolloutPtr_; }
+
+  const system_dynamics_t& getDynamics() const override { return *dynamicsPtr_; }
+
+  const system_dynamics_derivative_t& getDynamicsDerivatives() const override { return *dynamicsDerivativesPtr_; }
+
+  const cost_function_t& getCost() const override { return *costFunctionPtr_; }
+
+  const constraint_t* getConstraintPtr() const override { return constraintsPtr_.get(); }
+
+ private:
+  std::unique_ptr<QuadrupedInterface> quadrupedPtr_;
+  std::unique_ptr<system_dynamics_t> dynamicsPtr_;
+  std::unique_ptr<system_dynamics_derivative_t> dynamicsDerivativesPtr_;
+  std::unique_ptr<constraint_t> constraintsPtr_;
+  std::unique_ptr<cost_function_t> costFunctionPtr_;
+  std::unique_ptr<operating_point_t> operatingPointsPtr_;
+  std::unique_ptr<rollout_base_t> timeTriggeredRolloutPtr_;
+  std::unique_ptr<filter_dynamics_t> filterDynamicsPtr_;
+  std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinition_;
+
+  state_vector_t initialState_;
+  scalar_array_t partitioningTimes_;
+  mode_sequence_template_t defaultModeSequenceTemplate_;
+};
+
+}  // namespace switched_model

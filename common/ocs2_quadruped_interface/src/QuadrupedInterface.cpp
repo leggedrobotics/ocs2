@@ -1,16 +1,12 @@
-/*
- * OCS2QuadrupedInterface.h
- *
- *  Created on: Feb 14, 2018
- *      Author: farbod
- */
+//
+// Created by rgrandia on 17.02.20.
+//
 
-#include "ocs2_quadruped_interface/OCS2QuadrupedInterface.h"
+#include "ocs2_quadruped_interface/QuadrupedInterface.h"
 
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_switched_model_interface/core/Rotations.h>
 #include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
-#include <ocs2_switched_model_interface/dynamics/ComKinoSystemDynamicsAd.h>
 #include <ocs2_switched_model_interface/foot_planner/FeetZDirectionPlanner.h>
 #include <ocs2_switched_model_interface/foot_planner/cpg/SplineCPG.h>
 
@@ -19,20 +15,30 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::OCS2QuadrupedInterface(const kinematic_model_t& kinematicModel,
-                                                                                       const com_model_t& comModel,
-                                                                                       const std::string& pathToConfigFolder)
+QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel,
+                                               const ad_kinematic_model_t& adKinematicModel,
+                                               const com_model_t& comModel,
+                                               const ad_com_model_t& adComModel,
+                                               const std::string& pathToConfigFolder)
 
-    : kinematicModelPtr_(kinematicModel.clone()), comModelPtr_(comModel.clone()) {
+    : kinematicModelPtr_(kinematicModel.clone()),
+      adKinematicModelPtr_(adKinematicModel.clone()),
+      comModelPtr_(comModel.clone()),
+      adComModelPtr_(adComModel.clone()) {
   loadSettings(pathToConfigFolder + "/task.info");
+
+  dynamicsPtr_.reset(new system_dynamics_t(*adKinematicModelPtr_, *adComModelPtr_, modelSettings_.recompileLibraries_));
+  dynamicsDerivativesPtr_.reset(dynamicsPtr_->clone());
+  constraintsPtr_.reset(new constraint_t(*adKinematicModelPtr_, *adComModelPtr_, logicRulesPtr_, modelSettings_));
+  costFunctionPtr_.reset(new cost_function_t(*comModelPtr_, logicRulesPtr_, Q_, R_, QFinal_));
+  operatingPointsPtr_.reset(new operating_point_t(*comModelPtr_, logicRulesPtr_));
+  timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, rolloutSettings_));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSettings(const std::string& pathToConfigFile) {
+void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
   slqSettings_.loadSettings(pathToConfigFile, "slq", true);
   rolloutSettings_.loadSettings(pathToConfigFile, "slq.rollout");
   mpcSettings_.loadSettings(pathToConfigFile, true);
@@ -56,7 +62,7 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
   Eigen::Matrix<scalar_t, rbd_state_dim_, 1> initRbdState;
   ocs2::loadData::loadEigenMatrix(pathToConfigFile, "initialRobotState", initRbdState);
   SwitchedModelStateEstimator switchedModelStateEstimator(*comModelPtr_);
-  initialState_.template head<12 + JOINT_COORD_SIZE>() = switchedModelStateEstimator.estimateComkinoModelState(initRbdState);
+  initialState_.template head<12 + joint_dim_>() = switchedModelStateEstimator.estimateComkinoModelState(initRbdState);
 
   // cost function components
   ocs2::loadData::loadEigenMatrix(pathToConfigFile, "Q", Q_);
@@ -120,8 +126,28 @@ void OCS2QuadrupedInterface<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::loadSetting
                                                             modelSettings_.liftOffVelocity_, modelSettings_.touchDownVelocity_));
 
   logicRulesPtr_ = std::shared_ptr<logic_rules_t>(new logic_rules_t(feetZPlannerPtr, modelSettings_.phaseTransitionStanceTime_));
-
   logicRulesPtr_->setModeSequence(initSwitchingModes, initEventTimes);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::unique_ptr<QuadrupedInterface::slq_t> QuadrupedInterface::getSlq() const {
+  return std::unique_ptr<slq_t>(new slq_t(timeTriggeredRolloutPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
+                                          costFunctionPtr_.get(), operatingPointsPtr_.get(), slqSettings_, logicRulesPtr_));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::unique_ptr<QuadrupedInterface::mpc_t> QuadrupedInterface::getMpc() const {
+  if (!modelSettings_.gaitOptimization_) {
+    return std::unique_ptr<mpc_t>(new mpc_t(timeTriggeredRolloutPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
+                                            costFunctionPtr_.get(), operatingPointsPtr_.get(), partitioningTimes_, slqSettings_,
+                                            mpcSettings_, logicRulesPtr_, &defaultModeSequenceTemplate_));
+  } else {
+    throw std::runtime_error("mpc_ocs2 not configured, set gait optimization to 0");
+  }
 }
 
 }  // end of namespace switched_model

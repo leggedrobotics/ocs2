@@ -2,16 +2,21 @@
 // Created by rgrandia on 13.02.19.
 //
 
+#include "ocs2_quadruped_interface/QuadrupedXppVisualizer.h"
+
+#include <xpp_msgs/RobotStateCartesian.h>
+#include <xpp_msgs/RobotStateCartesianTrajectory.h>
+#include <xpp_msgs/RobotStateJoint.h>
+#include <xpp_msgs/topic_names.h>
+
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 
-#include "ocs2_quadruped_interface/QuadrupedXppVisualizer.h"
 #include "ocs2_switched_model_interface/core/Rotations.h"
 
 namespace switched_model {
 
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
+void QuadrupedXppVisualizer::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
   visualizationPublisher_ = nodeHandle.advertise<xpp_msgs::RobotStateCartesian>(xpp_msgs::robot_state_desired, 1);
   visualizationJointPublisher_ = nodeHandle.advertise<xpp_msgs::RobotStateJoint>("xpp/joint_anymal_des", 1);
   costDesiredPublisher_ = nodeHandle.advertise<visualization_msgs::Marker>("desiredBaseTrajectory", 1);
@@ -19,8 +24,7 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::launchVisua
   feetOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("optimizedFeetTrajectories", 1);
 }
 
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishObservation(const system_observation_t& observation) {
+void QuadrupedXppVisualizer::publishObservation(const system_observation_t& observation) {
   // compute Feet state
   vector_3d_array_t o_feetPositionRef;
   vector_3d_array_t o_feetVelocityRef;
@@ -48,9 +52,7 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishObse
                        o_feetAccelerationRef, o_feetForceRef);
 }
 
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishTrajectory(
-    const system_observation_array_t& system_observation_array, double speed) {
+void QuadrupedXppVisualizer::publishTrajectory(const system_observation_array_t& system_observation_array, double speed) {
   for (size_t k = 0; k < system_observation_array.size() - 1; k++) {
     auto start = std::chrono::steady_clock::now();
     double frame_duration = speed * (system_observation_array[k + 1].time() - system_observation_array[k].time());
@@ -63,11 +65,10 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishTraj
   }
 }
 
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishXppVisualizer(
-    scalar_t time, const base_coordinate_t& basePose, const base_coordinate_t& baseLocalVelocities,
-    const joint_coordinate_t& jointAngles, const vector_3d_array_t& feetPosition, const vector_3d_array_t& feetVelocity,
-    const vector_3d_array_t& feetAcceleration, const vector_3d_array_t& feetForce) {
+void QuadrupedXppVisualizer::publishXppVisualizer(scalar_t time, const base_coordinate_t& basePose,
+                                                  const base_coordinate_t& baseLocalVelocities, const joint_coordinate_t& jointAngles,
+                                                  const vector_3d_array_t& feetPosition, const vector_3d_array_t& feetVelocity,
+                                                  const vector_3d_array_t& feetAcceleration, const vector_3d_array_t& feetForce) {
   const scalar_t minTimeDifference = 10e-3;
 
   static scalar_t lastTime = 0.0;
@@ -133,12 +134,8 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishXppV
   visualizationJointPublisher_.publish(robotStateJointMsg);
 }
 
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeFeetState(const state_vector_t& state,
-                                                                                      const input_vector_t& input,
-                                                                                      vector_3d_array_t& o_feetPosition,
-                                                                                      vector_3d_array_t& o_feetVelocity,
-                                                                                      vector_3d_array_t& o_contactForces) {
+void QuadrupedXppVisualizer::computeFeetState(const state_vector_t& state, const input_vector_t& input, vector_3d_array_t& o_feetPosition,
+                                              vector_3d_array_t& o_feetVelocity, vector_3d_array_t& o_contactForces) {
   base_coordinate_t comPose = getComPose(state);
   base_coordinate_t comLocalVelocities = getComLocalVelocities(state);
   joint_coordinate_t qJoints = getJointPositions(state);
@@ -156,9 +153,7 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::computeFeet
   }
 }
 
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishDesiredTrajectory(
-    scalar_t startTime, const cost_desired_trajectories_t& costDesiredTrajectory) {
+void QuadrupedXppVisualizer::publishDesiredTrajectory(scalar_t startTime, const cost_desired_trajectories_t& costDesiredTrajectory) {
   // Message header
   visualization_msgs::Marker msg;
   msg.header.frame_id = "world";
@@ -194,9 +189,8 @@ void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishDesi
   costDesiredPublisher_.publish(msg);
 }
 
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>
-void QuadrupedXppVisualizer<JOINT_COORD_SIZE, STATE_DIM, INPUT_DIM>::publishOptimizedStateTrajectory(
-    const scalar_array_t& mpcTimeTrajectory, const state_vector_array_t& mpcStateTrajectory) {
+void QuadrupedXppVisualizer::publishOptimizedStateTrajectory(const scalar_array_t& mpcTimeTrajectory,
+                                                             const state_vector_array_t& mpcStateTrajectory) {
   // Message header
   visualization_msgs::Marker msg;
   msg.header.frame_id = "world";

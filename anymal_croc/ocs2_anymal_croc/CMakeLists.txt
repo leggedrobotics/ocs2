@@ -65,33 +65,33 @@ add_dependencies(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
-#set_property(TARGET ocs2_anymal_croc_interface PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 add_executable(${PROJECT_NAME}_mpc_node
         src/AnymalCrocMpcNode.cpp
-)
+        )
 add_dependencies(${PROJECT_NAME}_mpc_node
-  ${PROJECT_NAME}
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-)
+        ${PROJECT_NAME}
+        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+        ${catkin_EXPORTED_TARGETS}
+        )
 target_link_libraries(${PROJECT_NAME}_mpc_node
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+        ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        )
 
 add_executable(${PROJECT_NAME}_dummy_mrt_node
         src/AnymalCrocDummyMRT.cpp
-)
+        )
 add_dependencies(${PROJECT_NAME}_dummy_mrt_node
-  ${PROJECT_NAME}
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-)
+        ${PROJECT_NAME}
+        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+        ${catkin_EXPORTED_TARGETS}
+        )
 target_link_libraries(${PROJECT_NAME}_dummy_mrt_node
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+        ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        )
+
 
 #############
 ## Install ##
@@ -105,11 +105,6 @@ install(TARGETS ${PROJECT_NAME}
 
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
-
-install(TARGETS
-            ${PROJECT_NAME}_mpc_node
-            ${PROJECT_NAME}_dummy_mrt_node
-        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY config launch
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}

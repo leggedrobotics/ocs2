@@ -1,6 +1,5 @@
 #pragma once
 
-#include <ocs2_anymal_bear/AnymalBearInterface.h>
 #include <ocs2_comm_interfaces/ocs2_interfaces/Python_Interface.h>
 #include <ocs2_quadruped_interface/QuadrupedXppVisualizer.h>
 

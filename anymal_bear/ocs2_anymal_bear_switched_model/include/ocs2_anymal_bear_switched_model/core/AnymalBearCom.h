@@ -1,5 +1,5 @@
 /*
- * AnymalCom.h
+ * AnymalBearCom.h
  *
  *  Created on: Aug 11, 2018
  *      Author: farbod
@@ -13,21 +13,21 @@ namespace anymal {
 namespace tpl {
 
 template <typename SCALAR_T>
-class AnymalCom : public switched_model::ComModelBase<SCALAR_T> {
+class AnymalBearCom : public switched_model::ComModelBase<SCALAR_T> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /**
    * Constructor needed for initialization
    */
-  AnymalCom();
+  AnymalBearCom();
 
   /**
    * Default destructor
    */
-  ~AnymalCom() = default;
+  ~AnymalBearCom() = default;
 
-  AnymalCom<SCALAR_T>* clone() const override;
+  AnymalBearCom<SCALAR_T>* clone() const override;
 
   void setJointConfiguration(const switched_model::joint_coordinate_s_t<SCALAR_T>& q) override;
 
@@ -46,13 +46,13 @@ class AnymalCom : public switched_model::ComModelBase<SCALAR_T> {
 
 }  // namespace tpl
 
-using AnymalCom = tpl::AnymalCom<double>;
-using AnymalComAd = tpl::AnymalCom<ocs2::CppAdInterface<double>::ad_scalar_t>;
+using AnymalBearCom = tpl::AnymalBearCom<double>;
+using AnymalBearComAd = tpl::AnymalBearCom<ocs2::CppAdInterface<double>::ad_scalar_t>;
 
 }  // namespace anymal
 
 /**
  *  Explicit instantiation, for instantiation additional types, include the implementation file instead of this one.
  */
-extern template class anymal::tpl::AnymalCom<double>;
-extern template class anymal::tpl::AnymalCom<ocs2::CppAdInterface<double>::ad_scalar_t>;
+extern template class anymal::tpl::AnymalBearCom<double>;
+extern template class anymal::tpl::AnymalBearCom<ocs2::CppAdInterface<double>::ad_scalar_t>;

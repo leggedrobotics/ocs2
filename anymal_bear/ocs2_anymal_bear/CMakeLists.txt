@@ -75,43 +75,43 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 add_executable(${PROJECT_NAME}_mpc_node
-  src/AnymalBearMpcNode.cpp
-)
+        src/AnymalBearMpcNode.cpp
+        )
 add_dependencies(${PROJECT_NAME}_mpc_node
-  ${PROJECT_NAME}
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-)
+        ${PROJECT_NAME}
+        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+        ${catkin_EXPORTED_TARGETS}
+        )
 target_link_libraries(${PROJECT_NAME}_mpc_node
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+        ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        )
 
 add_executable(${PROJECT_NAME}_dummy_mrt_node
-  src/AnymalBearDummyMRT.cpp
-)
+        src/AnymalBearDummyMRT.cpp
+        )
 add_dependencies(${PROJECT_NAME}_dummy_mrt_node
-  ${PROJECT_NAME}
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-)
+        ${PROJECT_NAME}
+        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+        ${catkin_EXPORTED_TARGETS}
+        )
 target_link_libraries(${PROJECT_NAME}_dummy_mrt_node
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+        ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        )
 
 # PyBindings library (c++ side)
-add_library(${PROJECT_NAME}_PyBindings_cpp
-  src/AnymalBearPyBindings.cpp
-)
-add_dependencies(${PROJECT_NAME}_PyBindings_cpp
-  ${PROJECT_NAME}
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(${PROJECT_NAME}_PyBindings_cpp
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+#add_library(${PROJECT_NAME}_PyBindings_cpp
+#  src/AnymalBearPyBindings.cpp
+#)
+#add_dependencies(${PROJECT_NAME}_PyBindings_cpp
+#  ${PROJECT_NAME}
+#  ${catkin_EXPORTED_TARGETS}
+#)
+#target_link_libraries(${PROJECT_NAME}_PyBindings_cpp
+#  ${PROJECT_NAME}
+#  ${catkin_LIBRARIES}
+#)
 
 # Build python bindings if possible
 if(${pybind11_FOUND})
@@ -154,12 +154,7 @@ install(TARGETS ${PROJECT_NAME}
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
-install(TARGETS
-            ${PROJECT_NAME}_mpc_node
-            ${PROJECT_NAME}_dummy_mrt_node
-        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-
-install(DIRECTORY config launch
+install(DIRECTORY config
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )
 

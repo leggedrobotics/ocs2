@@ -10,11 +10,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>roslib</depend>
-  <depend>ocs2_anymal_bear_switched_model</depend>
-  <depend>ocs2_quadruped_interface</depend>
-
-  <exec_depend>ocs2_anymal_bear_description</exec_depend>
-  <exec_depend>ocs2_anymal_visualization</exec_depend>
-  <exec_depend>ocs2_anymal_commands</exec_depend>
+  <depend>ocs2_anymal_bear</depend>
+  <depend>ocs2_quadruped_loopshaping_interface</depend>
 
 </package>

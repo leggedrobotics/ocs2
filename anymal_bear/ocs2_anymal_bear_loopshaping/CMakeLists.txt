@@ -6,16 +6,12 @@ project(ocs2_anymal_bear_loopshaping)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
         roslib
-        ocs2_anymal_bear_switched_model
-        ocs2_quadruped_interface
+        ocs2_anymal_bear
+        ocs2_quadruped_loopshaping_interface
         )
 
 ## Eigen3
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-
-find_package(Boost REQUIRED COMPONENTS
-        filesystem
-        )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors")
 
@@ -30,10 +26,9 @@ LIBRARIES
     ${PROJECT_NAME}
 CATKIN_DEPENDS
     roslib
-    ocs2_anymal_bear_switched_model
-    ocs2_quadruped_interface
+    ocs2_anymal_bear
+    ocs2_quadruped_loopshaping_interface
 DEPENDS
-    Boost
 )
 
 ###########
@@ -73,7 +68,6 @@ target_link_libraries(${PROJECT_NAME}_mpc_node
 
 add_executable(${PROJECT_NAME}_dummy_mrt_node
         src/AnymalBearLoopshapingDummyMrt.cpp
-        src/AnymalBearLoopshapingVisualization.cpp
         )
 add_dependencies(${PROJECT_NAME}_dummy_mrt_node
         ${PROJECT_NAME}

@@ -5,12 +5,6 @@
 #pragma once
 
 #include <ros/ros.h>
-#include <rosbag/bag.h>
-
-#include <xpp_msgs/RobotStateCartesian.h>
-#include <xpp_msgs/RobotStateCartesianTrajectory.h>
-#include <xpp_msgs/RobotStateJoint.h>
-#include <xpp_msgs/topic_names.h>
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
@@ -20,19 +14,21 @@
 
 namespace switched_model {
 
-template <size_t JOINT_COORD_SIZE, size_t STATE_DIM = 12 + JOINT_COORD_SIZE, size_t INPUT_DIM = 12 + JOINT_COORD_SIZE>
-class QuadrupedXppVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> {
+class QuadrupedXppVisualizer : public ocs2::DummyObserver<24, 24> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  static constexpr auto rbd_state_dim_ = 12 + 2 * JOINT_COORD_SIZE;
+  static constexpr auto joint_dim_ = 12;
+  static constexpr auto state_dim_ = 24;
+  static constexpr auto input_dim_ = 24;
+  static constexpr auto rbd_state_dim_ = 12 + 2 * joint_dim_;
 
-  using BASE = ocs2::DummyObserver<STATE_DIM, INPUT_DIM>;
+  using BASE = ocs2::DummyObserver<state_dim_, input_dim_>;
   using typename BASE::command_data_t;
   using typename BASE::primal_solution_t;
   using typename BASE::system_observation_t;
 
-  using dimension_t = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
+  using dimension_t = ocs2::Dimensions<state_dim_, input_dim_>;
   using scalar_t = typename dimension_t::scalar_t;
   using state_vector_t = typename dimension_t::state_vector_t;
   using scalar_array_t = typename dimension_t::scalar_array_t;
@@ -108,4 +104,3 @@ class QuadrupedXppVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> 
 
 }  // namespace switched_model
 
-#include "implementation/QuadrupedXppVisualizer.h"

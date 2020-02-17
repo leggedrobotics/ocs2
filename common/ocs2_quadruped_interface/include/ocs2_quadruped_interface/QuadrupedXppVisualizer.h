@@ -63,7 +63,7 @@ class QuadrupedXppVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> 
     publishOptimizedStateTrajectory(primalSolution.timeTrajectory_, primalSolution.stateTrajectory_);
   }
 
-  void launchVisualizerNode(ros::NodeHandle& n);
+  void launchVisualizerNode(ros::NodeHandle& nodeHandle);
 
   void publishObservation(const system_observation_t& observation);
 
@@ -85,7 +85,7 @@ class QuadrupedXppVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> 
    * @param feetAcceleration: Feet acceleration in the origin frame.
    * @param feetForce: Contact forces acting on the feet in the origin frame.
    */
-  void publishXppVisualizer(const scalar_t& time, const base_coordinate_t& basePose, const base_coordinate_t& baseLocalVelocities,
+  void publishXppVisualizer(scalar_t time, const base_coordinate_t& basePose, const base_coordinate_t& baseLocalVelocities,
                             const joint_coordinate_t& jointAngles, const vector_3d_array_t& feetPosition,
                             const vector_3d_array_t& feetVelocity, const vector_3d_array_t& feetAcceleration,
                             const vector_3d_array_t& feetForce);

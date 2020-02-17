@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
   // initial state
   mrt_t::system_observation_t initObservation;
   initObservation.state() = anymalBearInterface.getInitialState();
-  initObservation.subsystem() = 15;
+  initObservation.subsystem() = switched_model::ModeNumber::STANCE;
 
   // initial command
   ocs2::CostDesiredTrajectories initCostDesiredTrajectories({0.0}, {initObservation.state()}, {initObservation.input()});

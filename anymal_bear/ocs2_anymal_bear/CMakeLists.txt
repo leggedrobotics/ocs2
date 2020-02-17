@@ -64,7 +64,7 @@ include_directories(
 
 # Declare a C++ library
 add_library(${PROJECT_NAME}
-        src/AnymalBearInterface.cpp
+  src/AnymalBearInterface.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
@@ -73,10 +73,9 @@ add_dependencies(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
-#set_property(TARGET ocs2_anymal_bear_interface PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 add_executable(${PROJECT_NAME}_mpc_node
-        src/AnymalBearMpcNode.cpp
+  src/AnymalBearMpcNode.cpp
 )
 add_dependencies(${PROJECT_NAME}_mpc_node
   ${PROJECT_NAME}
@@ -89,7 +88,7 @@ target_link_libraries(${PROJECT_NAME}_mpc_node
 )
 
 add_executable(${PROJECT_NAME}_dummy_mrt_node
-        src/AnymalBearDummyMRT.cpp
+  src/AnymalBearDummyMRT.cpp
 )
 add_dependencies(${PROJECT_NAME}_dummy_mrt_node
   ${PROJECT_NAME}
@@ -103,7 +102,7 @@ target_link_libraries(${PROJECT_NAME}_dummy_mrt_node
 
 # PyBindings library (c++ side)
 add_library(${PROJECT_NAME}_PyBindings_cpp
-        src/AnymalBearPyBindings.cpp
+  src/AnymalBearPyBindings.cpp
 )
 add_dependencies(${PROJECT_NAME}_PyBindings_cpp
   ${PROJECT_NAME}

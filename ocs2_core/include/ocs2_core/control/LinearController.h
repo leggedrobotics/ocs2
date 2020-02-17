@@ -130,10 +130,10 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
 
   input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
     input_vector_t uff;
-    const auto indexAlpha = EigenLinearInterpolation<input_vector_t>::interpolate(t, uff, &timeStamp_, &biasArray_);
+    const auto indexAlpha = LinearInterpolation::interpolate(t, uff, &timeStamp_, &biasArray_);
 
     input_state_matrix_t k;
-    EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, k, &gainArray_);
+    LinearInterpolation::interpolate(indexAlpha, k, &gainArray_);
 
     uff.noalias() += k * x;
     return uff;
@@ -157,10 +157,10 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
     flatArray.resize(INPUT_DIM + INPUT_DIM * STATE_DIM);
 
     input_vector_t uff;
-    const auto indexAlpha = EigenLinearInterpolation<input_vector_t>::interpolate(time, uff, &timeStamp_, &biasArray_);
+    const auto indexAlpha = LinearInterpolation::interpolate(time, uff, &timeStamp_, &biasArray_);
 
     input_state_matrix_t k;
-    EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, k, &gainArray_);
+    LinearInterpolation::interpolate(indexAlpha, k, &gainArray_);
 
     for (int i = 0; i < INPUT_DIM; i++) {  // i loops through input dim
       flatArray[i * (STATE_DIM + 1) + 0] = static_cast<float>(uff(i));
@@ -256,7 +256,7 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
    * @param[out] gain: linear feedback gain
    */
   void getFeedbackGain(scalar_t time, input_state_matrix_t& gain) const {
-    EigenLinearInterpolation<input_state_matrix_t>::interpolate(time, gain, &timeStamp_, &gainArray_);
+    LinearInterpolation::interpolate(time, gain, &timeStamp_, &gainArray_);
   }
 
   /**
@@ -264,9 +264,7 @@ class LinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
    * @param[in] time
    * @param[out] bias: the controller bias term
    */
-  void getBias(scalar_t time, input_vector_t& bias) const {
-    EigenLinearInterpolation<input_vector_t>::interpolate(time, bias, &timeStamp_, &biasArray_);
-  }
+  void getBias(scalar_t time, input_vector_t& bias) const { LinearInterpolation::interpolate(time, bias, &timeStamp_, &biasArray_); }
 
   scalar_array_t controllerEventTimes() const override {
     // simple controller case

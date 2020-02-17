@@ -38,9 +38,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_core/Dimensions.h"
 #include "ocs2_core/control/ControllerBase.h"
 #include "ocs2_core/integration/OdeBase.h"
-#include "ocs2_core/logic/machine/HybridLogicRulesMachine.h"
-#include "ocs2_core/logic/rules/HybridLogicRules.h"
-#include "ocs2_core/logic/rules/NullLogicRules.h"
 
 namespace ocs2 {
 
@@ -76,9 +73,10 @@ class ControlledSystemBase : public OdeBase<STATE_DIM> {
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
 
   /**
-   * Default constructor.
+   * Constructor.
+   * @param [in] modelData: The model data which will be used for storing outputs.
    */
-  ControlledSystemBase() : BASE(), controllerPtr_(nullptr) {}
+  explicit ControlledSystemBase(const ModelDataBase& modelData = ModelDataBase()) : BASE(modelData), controllerPtr_(nullptr) {}
 
   /**
    * Copy constructor.
@@ -103,17 +101,59 @@ class ControlledSystemBase : public OdeBase<STATE_DIM> {
   void setController(controller_t* controllerPtr) { controllerPtr_ = controllerPtr; }
 
   /**
-   * Computes derivative of the autonomous system dynamics with the given control policy.
+   * Returns the controller pointer.
    *
-   * @param [in] t: Current time.
-   * @param [in] x: Current state.
-   * @param [out] dxdt: Current state time derivative.
+   * @return A pointer to controller.
    */
-  void computeFlowMap(const scalar_t& t, const state_vector_t& x, state_vector_t& dxdt) override {
+  controller_t* controllerPtr() const { return controllerPtr_; }
+
+  /**
+   * Computes the flow map of a system.
+   *
+   * @param [in] t: The current time.
+   * @param [in] x: The current state.
+   * @param [out] dxdt: The state time derivative.
+   */
+  void computeFlowMap(const scalar_t& t, const state_vector_t& x, state_vector_t& dxdt) final {
     BASE::numFunctionCalls_++;
     input_vector_t u = controllerPtr_->computeInput(t, x);
-    computeFlowMap(t, x, u, dxdt);
+
+    if (this->nextModelDataPtrIterator() == this->endModelDataPtrIterator()) {
+      this->resizeInternalModelDataPtrArray();
+      //      std::cerr << "WARNNINGS: The reserved size for recording model data is not enough." << std::endl;
+    }
+    auto* modelDataPtr = this->nextModelDataPtrIterator()->get();
+    computeFlowMap(t, x, u, modelDataPtr);
+    dxdt = modelDataPtr->dynamics_;
+    ++this->nextModelDataPtrIterator();
   }
+
+  /**
+   * Computes the flow map of a system with exogenous input.
+   *
+   * @param [in] t: The current time.
+   * @param [in] x: The current state.
+   * @param [in] u: The current input.
+   * @param [out] data: the model data.
+   */
+  virtual void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, ModelDataBase* dataPtr) {
+    dataPtr->time_ = t;
+    dataPtr->stateDim_ = STATE_DIM;
+    dataPtr->inputDim_ = INPUT_DIM;
+    state_vector_t dxdt;
+    computeFlowMap(t, x, u, dxdt);
+    dataPtr->dynamics_ = dxdt;
+  }
+
+  /**
+   * Computes the flow map of a system with exogenous input.
+   *
+   * @param [in] t: The current time.
+   * @param [in] x: The current state.
+   * @param [in] u: The current input.
+   * @param [out] dxdt: The state time derivative.
+   */
+  virtual void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) = 0;
 
   /**
    * Returns pointer to the class.
@@ -121,23 +161,6 @@ class ControlledSystemBase : public OdeBase<STATE_DIM> {
    * @return A raw pointer to the class.
    */
   virtual ControlledSystemBase<STATE_DIM, INPUT_DIM>* clone() const = 0;
-
-  /**
-   * Computes derivative of the autonomous system dynamics.
-   *
-   * @param [in] t: Current time.
-   * @param [in] x: Current state.
-   * @param [in] u: Current input.
-   * @param [out] dxdt: Current state time derivative.
-   */
-  virtual void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) = 0;
-
-  /**
-   * Returns the controller pointer.
-   *
-   * @return A pointer to controller.
-   */
-  controller_t* controllerPtr() const { return controllerPtr_; }
 
  private:
   controller_t* controllerPtr_;  //! pointer to controller

@@ -53,11 +53,13 @@ add_library(${PROJECT_NAME}
   src/logic/machine/HybridLogicRulesMachine.cpp
   src/loopshaping/LoopshapingPropertyTree.cpp
   src/loopshaping/LoopshapingFilter.cpp
+  src/model_data/ModelDataBase.cpp
   src/misc/LinearAlgebra.cpp
   src/misc/ThreadPool.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
 )
 
 add_executable(${PROJECT_NAME}_lintTarget
@@ -257,6 +259,7 @@ catkin_add_gtest(derivative_checker_unittest
   test/dynamics/testSystemDynamicsLinearizer.cpp
 )
 target_link_libraries(derivative_checker_unittest
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 
@@ -277,4 +280,12 @@ target_link_libraries(test_CostFunctionLinearCombination
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   gtest_main
+)
+
+catkin_add_gtest(test_ModelDataBase
+  test/model_data/testModelDataBase.cpp
+)
+target_link_libraries(test_ModelDataBase
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
 )

@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/integration/OdeBase.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
+#include <ocs2_core/model_data/ModelDataLinearInterpolation.h>
 
 namespace ocs2 {
 
@@ -72,6 +73,7 @@ class BvpSensitivityErrorEquations final : public OdeBase<STATE_DIM> {
   using constraint1_vector_array_t = typename DIMENSIONS::constraint1_vector_array_t;
   using constraint1_state_matrix_t = typename DIMENSIONS::constraint1_state_matrix_t;
   using constraint1_state_matrix_array_t = typename DIMENSIONS::constraint1_state_matrix_array_t;
+  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
   using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
   using dynamic_matrix_array_t = typename DIMENSIONS::dynamic_matrix_array_t;
 
@@ -97,18 +99,14 @@ class BvpSensitivityErrorEquations final : public OdeBase<STATE_DIM> {
   /**
    * Sets Data
    */
-  void setData(const scalar_array_t* timeStampPtr, const state_input_matrix_array_t* BmPtr, const state_matrix_array_t* AmConstrainedPtr,
-               const input_state_matrix_array_t* CmProjectedPtr, const input_state_matrix_array_t* PmPtr, const input_matrix_array_t* RmPtr,
-               const input_matrix_array_t* RmInversePtr, const dynamic_matrix_array_t* RinvCholPtr,
-               const input_vector_array_t* EvDevProjectedPtr, const scalar_array_t* SmTimeStampPtr, const state_matrix_array_t* SmPtr) {
-    BASE::resetNumFunctionCalls();
-
+  void setData(const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* modelDataPtr, const state_matrix_array_t* AmConstrainedPtr,
+               const input_state_matrix_array_t* CmProjectedPtr, const input_matrix_array_t* RmInversePtr,
+               const dynamic_matrix_array_t* RinvCholPtr, const input_vector_array_t* EvDevProjectedPtr,
+               const scalar_array_t* SmTimeStampPtr, const state_matrix_array_t* SmPtr) {
     timeStampPtr_ = timeStampPtr;
-    BmPtr_ = BmPtr;
+    modelDataPtr_ = modelDataPtr;
     AmConstrainedPtr_ = AmConstrainedPtr;
     CmProjectedPtr_ = CmProjectedPtr;
-    PmPtr_ = PmPtr;
-    RmPtr_ = RmPtr;
     RmInversePtr_ = RmInversePtr;
     RinvCholPtr_ = RinvCholPtr;
     EvDevProjectedPtr_ = EvDevProjectedPtr;
@@ -127,17 +125,19 @@ class BvpSensitivityErrorEquations final : public OdeBase<STATE_DIM> {
 
     // denormalized time
     const scalar_t t = -z;
+    auto indexAlpha = LinearInterpolation::timeSegment(t, timeStampPtr_);
 
-    auto indexAlpha = EigenLinearInterpolation<state_input_matrix_t>::interpolate(t, Bm_, timeStampPtr_, BmPtr_);
-    EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, AmConstrained_, AmConstrainedPtr_);
-    EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, CmProjected_, CmProjectedPtr_);
-    EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, Pm_, PmPtr_);
-    EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, Rm_, RmPtr_);
-    EigenLinearInterpolation<input_matrix_t>::interpolate(indexAlpha, RmInverse_, RmInversePtr_);
-    EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, RinvChol_, RinvCholPtr_);
-    EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, EvDevProjected_, EvDevProjectedPtr_);
+    ModelData::interpolate(indexAlpha, Bm_, modelDataPtr_, ModelData::dynamicsInputDerivative);
+    ModelData::interpolate(indexAlpha, Rm_, modelDataPtr_, ModelData::costInputSecondDerivative);
+    ModelData::interpolate(indexAlpha, Pm_, modelDataPtr_, ModelData::costInputStateDerivative);
 
-    EigenLinearInterpolation<state_matrix_t>::interpolate(t, Sm_, SmTimeStampPtr_, SmPtr_);
+    LinearInterpolation::interpolate(indexAlpha, AmConstrained_, AmConstrainedPtr_);
+    LinearInterpolation::interpolate(indexAlpha, CmProjected_, CmProjectedPtr_);
+    LinearInterpolation::interpolate(indexAlpha, RmInverse_, RmInversePtr_);
+    LinearInterpolation::interpolate(indexAlpha, RinvChol_, RinvCholPtr_);
+    LinearInterpolation::interpolate(indexAlpha, EvDevProjected_, EvDevProjectedPtr_);
+
+    LinearInterpolation::interpolate(t, Sm_, SmTimeStampPtr_, SmPtr_);
 
     // Lm
     // TODO: Double check if equations are correct after change to cholesky decomposition approach
@@ -151,22 +151,20 @@ class BvpSensitivityErrorEquations final : public OdeBase<STATE_DIM> {
   scalar_t multiplier_ = 0.0;
 
   const scalar_array_t* timeStampPtr_;
-  const state_input_matrix_array_t* BmPtr_;
+  const ModelDataBase::array_t* modelDataPtr_;
   const state_matrix_array_t* AmConstrainedPtr_;
   const input_state_matrix_array_t* CmProjectedPtr_;
-  const input_state_matrix_array_t* PmPtr_;
-  const input_matrix_array_t* RmPtr_;
   const input_matrix_array_t* RmInversePtr_;
   const dynamic_matrix_array_t* RinvCholPtr_;
   const input_vector_array_t* EvDevProjectedPtr_;
   const scalar_array_t* SmTimeStampPtr_;
   const state_matrix_array_t* SmPtr_;
 
-  state_input_matrix_t Bm_;
+  dynamic_matrix_t Bm_;
+  dynamic_matrix_t Rm_;
+  dynamic_matrix_t Pm_;
   state_matrix_t AmConstrained_;
   input_state_matrix_t CmProjected_;
-  input_state_matrix_t Pm_;
-  input_matrix_t Rm_;
   input_matrix_t RmInverse_;
   dynamic_matrix_t RinvChol_;
   input_vector_t EvDevProjected_;

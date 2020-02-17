@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdexcept>
 #include <string>
 #include <type_traits>
+#include <unordered_map>
 
 #include <boost/numeric/odeint.hpp>
 

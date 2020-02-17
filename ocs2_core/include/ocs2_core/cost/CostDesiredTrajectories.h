@@ -99,7 +99,7 @@ class CostDesiredTrajectories {
     if (desiredTimeTrajectory_.empty() || desiredStateTrajectory_.empty()) {
       desiredState.setZero();
     } else {
-      EigenLinearInterpolation<dynamic_vector_t>::interpolate(time, desiredState, &desiredTimeTrajectory_, &desiredStateTrajectory_);
+      LinearInterpolation::interpolate(time, desiredState, &desiredTimeTrajectory_, &desiredStateTrajectory_);
     }
   }
 
@@ -107,7 +107,7 @@ class CostDesiredTrajectories {
     if (desiredTimeTrajectory_.empty() || desiredInputTrajectory_.empty()) {
       desiredInput.setZero();
     } else {
-      EigenLinearInterpolation<dynamic_vector_t>::interpolate(time, desiredInput, &desiredTimeTrajectory_, &desiredInputTrajectory_);
+      LinearInterpolation::interpolate(time, desiredInput, &desiredTimeTrajectory_, &desiredInputTrajectory_);
     }
   }
 

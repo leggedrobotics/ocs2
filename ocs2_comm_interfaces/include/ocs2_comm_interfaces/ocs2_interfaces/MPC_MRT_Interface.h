@@ -83,9 +83,6 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
 
   using system_observation_t = SystemObservation<STATE_DIM, INPUT_DIM>;
 
-  using state_linear_interpolation_t = EigenLinearInterpolation<state_vector_t>;
-  using input_linear_interpolation_t = EigenLinearInterpolation<input_vector_t>;
-
   /**
    * Constructor
    * @param [in] mpc: The underlying MPC class to be used.

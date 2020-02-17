@@ -120,6 +120,51 @@ TEST(IntegrationTest, SecondOrderSystem_AdamsBashfortMoulton) {
 
 #endif
 
+TEST(IntegrationTest, model_data_test) {
+  Eigen::Matrix2d A;
+  A << -2, -1, 1, 0;
+  Eigen::Vector2d B;
+  B << 1, 0;
+
+  typedef LinearSystemDynamics<2, 1> SecondOrderSystem;
+  ControlledSystemBase<2, 1>::Ptr sys = ControlledSystemBase<2, 1>::Ptr(new SecondOrderSystem(A, B));
+
+  SecondOrderSystem::scalar_array_t cntTimeStamp{0, 10};
+  SecondOrderSystem::input_vector_array_t uff(2, SecondOrderSystem::input_vector_t::Ones());
+  SecondOrderSystem::input_state_matrix_array_t k(2, SecondOrderSystem::input_state_matrix_t::Zero());
+
+  using controller_t = ocs2::LinearController<2, 1>;
+  auto controller = std::unique_ptr<controller_t>(new controller_t(cntTimeStamp, uff, k));
+  sys->setController(controller.get());
+
+  ODE45<2> integrator;  // integrate adaptive
+
+  std::vector<double> timeTrajectory;
+  std::vector<Eigen::Matrix<double, 2, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 2, 1>>> stateTrajectory;
+  ModelDataBase::array_t modelDataTrajectory;
+
+  Eigen::Matrix<double, 2, 1> x0;
+  x0.setZero();
+
+  // integrate adaptive
+  sys->resetNumFunctionCalls();
+
+  Observer<2> observer(&stateTrajectory, &timeTrajectory, &modelDataTrajectory);
+  integrator.integrate_adaptive(*sys, observer, x0, 0.0, 10.0);
+
+  Eigen::Vector2d dynamics;
+  sys->systemFunction()(x0, dynamics, timeTrajectory.front());
+  EXPECT_TRUE(modelDataTrajectory.front().dynamics_.isApprox(dynamics, 1e-3));
+
+  EXPECT_EQ(modelDataTrajectory.size(), stateTrajectory.size())
+      << "MESSAGE: ModelData trajectory size is not equal to state trajectory size!";
+
+  for (int i = 0; i < stateTrajectory.size(); i++) {
+    ASSERT_FLOAT_EQ(modelDataTrajectory[i].time_, timeTrajectory[i])
+        << "MESSAGE: ModelData trajectory time does not match the time trajectory!";
+  }
+}
+
 TEST(IntegrationTest, integratorType_from_string) {
   IntegratorType type = integrator_type::fromString("ODE45");
   EXPECT_EQ(type, IntegratorType::ODE45);

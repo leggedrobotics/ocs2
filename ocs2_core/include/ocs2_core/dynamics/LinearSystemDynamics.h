@@ -39,9 +39,6 @@ class LinearSystemDynamics : public SystemDynamicsBase<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Ptr = std::shared_ptr<LinearSystemDynamics<STATE_DIM, INPUT_DIM> >;
-  using ConstPtr = std::shared_ptr<const LinearSystemDynamics<STATE_DIM, INPUT_DIM> >;
-
   using BASE = SystemDynamicsBase<STATE_DIM, INPUT_DIM>;
   using typename BASE::input_vector_t;
   using typename BASE::scalar_t;
@@ -49,18 +46,15 @@ class LinearSystemDynamics : public SystemDynamicsBase<STATE_DIM, INPUT_DIM> {
   using typename BASE::state_matrix_t;
   using typename BASE::state_vector_t;
 
+  using self = LinearSystemDynamics<STATE_DIM, INPUT_DIM>;
+
   LinearSystemDynamics(const state_matrix_t& A, const state_input_matrix_t& B, const state_matrix_t& G = state_matrix_t::Zero(),
                        const state_input_matrix_t& H = state_input_matrix_t::Zero())
       : A_(A), B_(B), G_(G), H_(H) {}
 
   virtual ~LinearSystemDynamics() = default;
 
-  /**
-   * Returns pointer to the base class.
-   *
-   * @return A raw pointer to the class.
-   */
-  LinearSystemDynamics<STATE_DIM, INPUT_DIM>* clone() const override { return new LinearSystemDynamics<STATE_DIM, INPUT_DIM>(*this); }
+  self* clone() const override { return new self(*this); }
 
   void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) override {
     dxdt = A_ * x + B_ * u;

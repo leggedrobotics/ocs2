@@ -67,7 +67,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
   using state_triggered_event_handler_t = StateTriggeredEventHandler<STATE_DIM>;
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
-  using ode_base_t = IntegratorBase<STATE_DIM>;
+  using ode_solver_t = IntegratorBase<STATE_DIM>;
 
   using trajectory_spreading_controller_t = stateBasedLinearController<STATE_DIM, INPUT_DIM>;
   /**
@@ -105,7 +105,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
  protected:
   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
                          scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces, state_vector_array_t& stateTrajectory,
-                         input_vector_array_t& inputTrajectory) override {
+                         input_vector_array_t& inputTrajectory, ModelDataBase::array_t* modelDataTrajectoryPtr) override {
     if (!controller) {
       throw std::runtime_error("The input controller is not set.");
     }
@@ -123,6 +123,10 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     inputTrajectory.reserve(maxNumSteps + 1);
     eventsPastTheEndIndeces.clear();
     eventsPastTheEndIndeces.reserve(maxNumSteps);
+    if (modelDataTrajectoryPtr) {
+      modelDataTrajectoryPtr->clear();
+      modelDataTrajectoryPtr->reserve(maxNumSteps + 1);
+    }
 
     // set controller
     trajectory_spreading_controller_t trajectorySpreadingController;
@@ -156,7 +160,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     while (true) {  // keeps looping until end time condition is fulfilled, after which the loop is broken
       bool triggered = false;
       try {
-        Observer<STATE_DIM> observer(&stateTrajectory, &timeTrajectory);  // concatenate trajectory
+        Observer<STATE_DIM> observer(&stateTrajectory, &timeTrajectory, modelDataTrajectoryPtr);  // concatenate trajectory
         dynamicsIntegratorPtr_->integrate_adaptive(*systemDynamicsPtr_, observer, x0, t0, t1, this->settings().minTimeStep_,
                                                    this->settings().absTolODE_, this->settings().relTolODE_, maxNumSteps);
       } catch (const size_t& e) {
@@ -183,6 +187,9 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       if (triggered && !accuracyCondition) {
         stateTrajectory.pop_back();
         timeTrajectory.pop_back();
+        if (modelDataTrajectoryPtr) {
+          modelDataTrajectoryPtr->pop_back();
+        }
       }
       triggered = false;
 
@@ -190,7 +197,10 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       if (this->settings().reconstructInputTrajectory_) {
         for (; k_u < timeTrajectory.size(); k_u++) {
           inputTrajectory.emplace_back(systemDynamicsPtr_->controllerPtr()->computeInput(timeTrajectory[k_u], stateTrajectory[k_u]));
-        }  // end of k loop
+          if (modelDataTrajectoryPtr) {
+            (*modelDataTrajectoryPtr)[k_u].dynamicsBias_.setZero(stateTrajectory[k_u].size());
+          }
+        }  // end of k_u loop
       }
 
       // end time condition to detect end of simulation, means iteration procedure is done
@@ -238,6 +248,9 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
         stateTrajectory.pop_back();
         timeTrajectory.pop_back();
         inputTrajectory.pop_back();
+        if (modelDataTrajectoryPtr) {
+          modelDataTrajectoryPtr->pop_back();
+        }
         k_u--;
       }
       singleEventIterations++;
@@ -255,7 +268,7 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
   std::shared_ptr<state_triggered_event_handler_t> systemEventHandlersPtr_;
 
-  std::unique_ptr<ode_base_t> dynamicsIntegratorPtr_;
+  std::unique_ptr<ode_solver_t> dynamicsIntegratorPtr_;
 };
 
 }  // namespace ocs2

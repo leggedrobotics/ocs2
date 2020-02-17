@@ -230,8 +230,13 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::state_vector_t PythonInterface<S
     if (constraints_->numInequalityConstraint(t) > 0) {
       scalar_array_t h;
       constraints_->getInequalityConstraint(h);
-      state_vector_array_t dhdx;
-      constraints_->getInequalityConstraintDerivativesState(dhdx);
+      state_vector_array_t dhdxFixedSize;
+      constraints_->getInequalityConstraintDerivativesState(dhdxFixedSize);
+      // TODO: delete this
+      dynamic_vector_array_t dhdx;
+      for (int i = 0; i < dhdxFixedSize.size(); i++) {
+        dhdx[i] = dhdxFixedSize[i];
+      }
       penalty_->getPenaltyCostDerivativeState(h, dhdx, dLdx_penalty);
     }
   }
@@ -257,8 +262,13 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::input_vector_t PythonInterface<S
     if (constraints_->numInequalityConstraint(t) > 0) {
       scalar_array_t h;
       constraints_->getInequalityConstraint(h);
-      input_vector_array_t dhdu;
-      constraints_->getInequalityConstraintDerivativesInput(dhdu);
+      input_vector_array_t dhduFixedSize;
+      constraints_->getInequalityConstraintDerivativesInput(dhduFixedSize);
+      // TODO: delete this
+      dynamic_vector_array_t dhdu;
+      for (int i = 0; i < dhduFixedSize.size(); i++) {
+        dhdu[i] = dhduFixedSize[i];
+      }
       penalty_->getPenaltyCostDerivativeInput(h, dhdu, dLdu_penalty);
     }
   }
@@ -285,10 +295,17 @@ PythonInterface<STATE_DIM, INPUT_DIM>::getIntermediateCostSecondDerivativeInput(
     if (constraints_->numInequalityConstraint(t) > 0) {
       scalar_array_t h;
       constraints_->getInequalityConstraint(h);
-      input_vector_array_t dhdu;
-      constraints_->getInequalityConstraintDerivativesInput(dhdu);
-      input_matrix_array_t ddhduu;
-      constraints_->getInequalityConstraintSecondDerivativesInput(ddhduu);
+      input_vector_array_t dhduFixedSize;
+      constraints_->getInequalityConstraintDerivativesInput(dhduFixedSize);
+      input_matrix_array_t ddhduuFixedSize;
+      constraints_->getInequalityConstraintSecondDerivativesInput(ddhduuFixedSize);
+      // TODO: delete this
+      dynamic_vector_array_t dhdu;
+      dynamic_matrix_array_t ddhduu;
+      for (int i = 0; i < dhduFixedSize.size(); i++) {
+        dhdu[i] = dhduFixedSize[i];
+        ddhduu[i] = ddhduuFixedSize[i];
+      }
       penalty_->getPenaltyCostSecondDerivativeInput(h, dhdu, ddhduu, ddLduu_penalty);
     }
   }

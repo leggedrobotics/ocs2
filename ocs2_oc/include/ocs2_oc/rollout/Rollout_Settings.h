@@ -148,7 +148,7 @@ inline void Rollout_Settings::loadSettings(const std::string& filename, const st
   loadData::loadPtreeValue(pt, checkNumericalStability_, fieldName + ".checkNumericalStability", verbose);
   loadData::loadPtreeValue(pt, reconstructInputTrajectory_, fieldName + ".reconstructInputTrajectory", verbose);
 
-  int tmp = static_cast<int>(rootFindingAlgorithm_);
+  auto tmp = static_cast<int>(rootFindingAlgorithm_);  // keep default
   loadData::loadPtreeValue(pt, tmp, fieldName + ".rootFindingAlgorithm", verbose);
   rootFindingAlgorithm_ = static_cast<RootFinderType>(tmp);
 

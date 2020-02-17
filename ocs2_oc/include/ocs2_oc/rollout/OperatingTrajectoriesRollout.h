@@ -84,7 +84,7 @@ class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
  protected:
   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
                          scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, state_vector_array_t& stateTrajectory,
-                         input_vector_array_t& inputTrajectory) override {
+                         input_vector_array_t& inputTrajectory, ModelDataBase::array_t* modelDataTrajectoryPtr) override {
     const int numSubsystems = timeIntervalArray.size();
     const int numEvents = numSubsystems - 1;
 
@@ -111,6 +111,21 @@ class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
       }
 
     }  // end of i loop
+
+    // filling the model data
+    if (modelDataTrajectoryPtr) {
+      modelDataTrajectoryPtr->clear();
+      modelDataTrajectoryPtr->reserve(timeTrajectory.size());
+      for (int i = 0; i < timeTrajectory.size(); i++) {
+        ModelDataBase modelDataTemp;
+        modelDataTemp.time_ = timeTrajectory[i];
+        modelDataTemp.stateDim_ = STATE_DIM;
+        modelDataTemp.inputDim_ = INPUT_DIM;
+        modelDataTemp.dynamics_.setZero(STATE_DIM);
+        modelDataTemp.dynamicsBias_.setZero(STATE_DIM);
+        modelDataTrajectoryPtr->emplace_back(modelDataTemp);
+      }  // end of i loop
+    }
 
     return stateTrajectory.back();
   }

@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/integration/OdeBase.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
+#include <ocs2_core/model_data/ModelDataBase.h>
 
 namespace ocs2 {
 
@@ -68,8 +69,6 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
   using scalar_t = typename DIMENSIONS::scalar_t;
   using scalar_array_t = typename DIMENSIONS::scalar_array_t;
   using size_array_t = typename DIMENSIONS::size_array_t;
-  using eigen_scalar_t = typename DIMENSIONS::eigen_scalar_t;
-  using eigen_scalar_array_t = typename DIMENSIONS::eigen_scalar_array_t;
   using state_vector_t = typename DIMENSIONS::state_vector_t;
   using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
   using input_vector_t = typename DIMENSIONS::input_vector_t;
@@ -93,7 +92,7 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
   /**
    * Constructor.
    */
-  SequentialRiccatiEquations(bool useMakePSD, bool preComputeRiccatiTerms = true);
+  explicit SequentialRiccatiEquations(bool useMakePSD, bool preComputeRiccatiTerms = true);
 
   /**
    * Default destructor.
@@ -108,7 +107,7 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
    * @param [in] s: \f$ s \f$
    * @param [out] allSs: Single vector constructed by concatenating Sm, Sv and s.
    */
-  static void convert2Vector(const state_matrix_t& Sm, const state_vector_t& Sv, const eigen_scalar_t& s, s_vector_t& allSs);
+  static void convert2Vector(const state_matrix_t& Sm, const state_vector_t& Sv, const scalar_t& s, s_vector_t& allSs);
 
   /**
    * Transcribes the stacked vector allSs into a symmetric matrix, Sm, a vector, Sv and a single scalar, s.
@@ -118,27 +117,23 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
    * @param [out] Sv: \f$ S_v \f$
    * @param [out] s: \f$ s \f$
    */
-  static void convert2Matrix(const s_vector_t& allSs, state_matrix_t& Sm, state_vector_t& Sv, eigen_scalar_t& s);
+  static void convert2Matrix(const s_vector_t& allSs, state_matrix_t& Sm, state_vector_t& Sv, scalar_t& s);
 
   /**
    * Sets coefficients of the model.
    *
    * @param [in] timeStampPtr: A pointer to the time stamp trajectory.
+   * @param [in] ModelDataBase: A pointer to the model data trajectory.
    * @param [in] AmPtr: A pointer to the trajectory of \f$ A_m(t) \f$ .
-   * @param [in] BmPtr: A pointer to the trajectory of \f$ B_m(t) \f$ .
-   * @param [in] qPtr: A pointer to the trajectory of \f$ q(t) \f$ .
    * @param [in] QvPtr: A pointer to the trajectory of \f$ Q_v(t) \f$ .
    * @param [in] QmPtr: A pointer to the trajectory of \f$ Q_m(t) \f$ .
-   * @param [in] RvPtr: A pointer to the trajectory of \f$ R_v(t) \f$ .
    * @param [in] RmInversePtr: A pointer to the trajectory of \f$ R_m^{-1}(t) \f$ .
    * @param [in] RmPtr: A pointer to the trajectory of \f$ R_m(t) \f$ .
-   * @param [in] PmPtr: A pointer to the trajectory of \f$ P_m(t) \f$ .
    */
-  void setData(const scalar_array_t* timeStampPtr, const state_matrix_array_t* AmPtr, const state_input_matrix_array_t* BmPtr,
-               const eigen_scalar_array_t* qPtr, const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr,
-               const input_vector_array_t* RvPtr, const dynamic_matrix_array_t* RinvCholPtr, const input_state_matrix_array_t* PmPtr,
-               const size_array_t* eventsPastTheEndIndecesPtr, const eigen_scalar_array_t* qFinalPtr,
-               const state_vector_array_t* QvFinalPtr, const state_matrix_array_t* QmFinalPtr);
+  void setData(const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* modelDataPtr, const state_matrix_array_t* AmPtr,
+               const state_vector_array_t* QvPtr, const state_matrix_array_t* QmPtr, const dynamic_matrix_array_t* RinvCholPtr,
+               const size_array_t* eventsPastTheEndIndecesPtr, const scalar_array_t* qFinalPtr, const state_vector_array_t* QvFinalPtr,
+               const state_matrix_array_t* QmFinalPtr);
 
   /**
    * Riccati jump map at switching moments
@@ -164,43 +159,41 @@ class SequentialRiccatiEquations final : public OdeBase<s_vector_dim(STATE_DIM)>
 
   // array pointers
   const scalar_array_t* timeStampPtr_;
-  const state_matrix_array_t* QmPtr_;
-  const state_vector_array_t* QvPtr_;
-  const eigen_scalar_array_t* qPtr_;
-  const dynamic_matrix_array_t* RinvCholPtr_;
-  const input_state_matrix_array_t* PmPtr_;
-  const input_vector_array_t* RvPtr_;
+  const ModelDataBase::array_t* modelDataPtr_;
   const state_matrix_array_t* AmPtr_;
-  const state_input_matrix_array_t* BmPtr_;
+  const state_vector_array_t* QvPtr_;
+  const state_matrix_array_t* QmPtr_;
+  const dynamic_matrix_array_t* RinvCholPtr_;
 
   // Arrays to store precomputation
   state_matrix_array_t Qm_minus_P_Rinv_P_array_;
   state_vector_array_t Qv_minus_P_Rinv_Rv_array_;
-  eigen_scalar_array_t q_minus_half_Rv_Rinv_Rv_array_;
-  state_matrix_array_t AmT_minus_P_Rinv_B_array_;
+  scalar_array_t q_minus_half_Rv_Rinv_Rv_array_;
+  dynamic_matrix_array_t AmT_minus_P_Rinv_B_array_;
   dynamic_matrix_array_t B_RinvChol_array_;
   dynamic_vector_array_t RinvCholT_Rv_array_;
 
   // members required only in computeFlowMap()
   state_matrix_t Sm_;
   state_vector_t Sv_;
-  eigen_scalar_t s_;
+  scalar_t s_;
+
   state_matrix_t Qm_;
   state_vector_t Qv_;
-  eigen_scalar_t q_;
-  state_matrix_t AmT_minus_P_Rinv_Bm_;
+  scalar_t q_;
+  dynamic_matrix_t AmT_minus_P_Rinv_Bm_;
   dynamic_matrix_t B_RinvChol_;
   dynamic_vector_t RinvCholT_Rv_;
   dynamic_matrix_t SmT_B_RinvChol_;
   state_matrix_t AmT_Sm_;
   state_matrix_t Am_;
-  state_input_matrix_t Bm_;
-  input_vector_t Rv_;
+  dynamic_matrix_t Bm_;
+  dynamic_vector_t Rv_;
   dynamic_matrix_t RinvChol_;
-  input_state_matrix_t Pm_;
+  dynamic_matrix_t Pm_;
 
   scalar_array_t eventTimes_;
-  const eigen_scalar_array_t* qFinalPtr_;
+  const scalar_array_t* qFinalPtr_;
   const state_vector_array_t* QvFinalPtr_;
   const state_matrix_array_t* QmFinalPtr_;
 };

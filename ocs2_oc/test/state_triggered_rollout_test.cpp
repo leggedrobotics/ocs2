@@ -1,23 +1,25 @@
+#include <ocs2_core/Dimensions.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_oc/rollout/Rollout_Settings.h>
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
-#include "include/ocs2_oc/test/ball_dynamics_staterollout.h"
-#include "include/ocs2_oc/test/dynamics_hybrid_slq_test.h"
-#include "include/ocs2_oc/test/pendulum_dynamics_staterollout.h"
-#include "ocs2_core/Dimensions.h"
+
+#include "ocs2_oc/test/ball_dynamics_staterollout.h"
+#include "ocs2_oc/test/dynamics_hybrid_slq_test.h"
+#include "ocs2_oc/test/pendulum_dynamics_staterollout.h"
 
 #include <gtest/gtest.h>
+
 /*
- *      Test 1 for StateTriggeredRollout
- *      The system being tested is a bouncing ball system with dissipation on bouncing
+ *     Test 1 for StateTriggeredRollout
+ *     The system being tested is a bouncing ball system with dissipation on bouncing
  *
- *      Guard Surfaces are:  x_1 > 0
- *                           x_1 < 0.5
+ *     Guard Surfaces are: x_1 > 0
+ *                         x_1 < 0.5
  *
- *      The following tests are implemented and performed:
- *        - No penetration of Guard Surfaces.
- *        - Conservation of energy in between jumps.
- *        - Event times compared to accurate run of rollout.
+ *     The following tests are implemented and performed:
+ *       - No penetration of Guard Surfaces.
+ *       - Conservation of energy in between jumps.
+ *       - Event times compared to accurate run of rollout.
  */
 TEST(StateRolloutTests, rolloutTestBallDynamics) {
   using DIMENSIONS = ocs2::Dimensions<2, 1>;

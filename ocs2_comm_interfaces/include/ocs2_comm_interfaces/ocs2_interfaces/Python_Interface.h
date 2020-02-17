@@ -65,6 +65,7 @@ class PythonInterface {
   using dynamic_vector_t = typename dim_t::dynamic_vector_t;
   using dynamic_vector_array_t = typename dim_t::dynamic_vector_array_t;
   using dynamic_matrix_t = typename dim_t::dynamic_matrix_t;
+  using dynamic_matrix_array_t = typename dim_t::dynamic_matrix_array_t;
   using input_matrix_array_t = typename dim_t::input_matrix_array_t;
 
   /**

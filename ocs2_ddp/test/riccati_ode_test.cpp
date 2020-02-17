@@ -12,14 +12,14 @@ class RiccatiInitializer {
   using input_matrix_t = typename riccati_t::input_matrix_t;
   using state_input_matrix_t = typename riccati_t::state_input_matrix_t;
   using input_state_matrix_t = typename riccati_t::input_state_matrix_t;
-  using eigen_scalar_t = typename riccati_t::eigen_scalar_t;
   using state_vector_t = typename riccati_t::state_vector_t;
   using input_vector_t = typename riccati_t::input_vector_t;
+  using dynamic_vector_t = typename riccati_t::dynamic_vector_t;
 
+  using scalar_t = typename riccati_t::scalar_t;
   using scalar_array_t = typename riccati_t::scalar_array_t;
   using state_matrix_array_t = typename riccati_t::state_matrix_array_t;
   using state_input_matrix_array_t = typename riccati_t::state_input_matrix_array_t;
-  using eigen_scalar_array_t = typename riccati_t::eigen_scalar_array_t;
   using state_vector_array_t = typename riccati_t::state_vector_array_t;
   using input_vector_array_t = typename riccati_t::input_vector_array_t;
   using dynamic_matrix_array_t = typename riccati_t::dynamic_matrix_array_t;
@@ -28,33 +28,35 @@ class RiccatiInitializer {
 
   state_matrix_t A;
   state_input_matrix_t B;
-  eigen_scalar_t q_;
+  scalar_t q_;
   state_vector_t qv;
   state_matrix_t Q;
   input_vector_t rv;
   input_state_matrix_t P;
   input_matrix_t R;
   input_matrix_t RinvChol_;
+  ocs2::ModelDataBase modelDataBase;
 
   std::unique_ptr<scalar_array_t> timeStamp;
   std::unique_ptr<state_matrix_array_t> Am;
   std::unique_ptr<state_input_matrix_array_t> Bm;
-  std::unique_ptr<eigen_scalar_array_t> q;
+  std::unique_ptr<scalar_array_t> q;
   std::unique_ptr<state_vector_array_t> Qv;
   std::unique_ptr<state_matrix_array_t> Qm;
   std::unique_ptr<input_vector_array_t> Rv;
   std::unique_ptr<dynamic_matrix_array_t> RinvChol;
   std::unique_ptr<input_state_matrix_array_t> Pm;
+  std::unique_ptr<ocs2::ModelDataBase::array_t> modelDataBaseArray;
 
   size_array_t eventsPastTheEndIndeces;
-  eigen_scalar_array_t qFinal;
+  scalar_array_t qFinal;
   state_vector_array_t QvFinal;
   state_matrix_array_t QmFinal;
 
   RiccatiInitializer(const int state_dim, const int input_dim) {
     A = state_matrix_t::Random(state_dim, state_dim);
     B = state_input_matrix_t::Random(state_dim, input_dim);
-    q_ = eigen_scalar_t::Random();
+    q_ = dynamic_vector_t::Random(1)(0);
     qv = state_vector_t::Random(state_dim);
     Q = ocs2::LinearAlgebra::generateSPDmatrix<state_matrix_t>(state_dim);
     rv = input_vector_t::Random(input_dim);
@@ -63,24 +65,34 @@ class RiccatiInitializer {
     RinvChol_.resize(input_dim, input_dim);
     ocs2::LinearAlgebra::computeLinvTLinv(R, RinvChol_);
 
+    modelDataBase.dynamicsStateDerivative_ = A;
+    modelDataBase.dynamicsInputDerivative_ = B;
+    modelDataBase.cost_ = q_;
+    modelDataBase.costStateDerivative_ = qv;
+    modelDataBase.costStateSecondDerivative_ = Q;
+    modelDataBase.costInputDerivative_ = rv;
+    modelDataBase.costInputSecondDerivative_ = R;
+    modelDataBase.costInputStateDerivative_ = P;
+
     timeStamp = std::unique_ptr<scalar_array_t>(new scalar_array_t({0.0, 1.0}));
     Am = std::unique_ptr<state_matrix_array_t>(new state_matrix_array_t({A, A}));
     Bm = std::unique_ptr<state_input_matrix_array_t>(new state_input_matrix_array_t({B, B}));
-    q = std::unique_ptr<eigen_scalar_array_t>(new eigen_scalar_array_t({q_, q_}));
+    q = std::unique_ptr<scalar_array_t>(new scalar_array_t({q_, q_}));
     Qv = std::unique_ptr<state_vector_array_t>(new state_vector_array_t({qv, qv}));
     Qm = std::unique_ptr<state_matrix_array_t>(new state_matrix_array_t({Q, Q}));
     Rv = std::unique_ptr<input_vector_array_t>(new input_vector_array_t({rv, rv}));
     RinvChol = std::unique_ptr<dynamic_matrix_array_t>(new dynamic_matrix_array_t({RinvChol_, RinvChol_}));
     Pm = std::unique_ptr<input_state_matrix_array_t>(new input_state_matrix_array_t({P, P}));
+    modelDataBaseArray = std::unique_ptr<ocs2::ModelDataBase::array_t>(new ocs2::ModelDataBase::array_t({modelDataBase, modelDataBase}));
   }
 
   void initialize(riccati_t& riccati) {
-    riccati.setData(timeStamp.get(), Am.get(), Bm.get(), q.get(), Qv.get(), Qm.get(), Rv.get(), RinvChol.get(), Pm.get(),
-                    &eventsPastTheEndIndeces, &qFinal, &QvFinal, &QmFinal);
+    riccati.setData(timeStamp.get(), modelDataBaseArray.get(), Am.get(), Qv.get(), Qm.get(), RinvChol.get(), &eventsPastTheEndIndeces,
+                    &qFinal, &QvFinal, &QmFinal);
   }
 };
 
-TEST(testRiccatiEquations, compareImplementations) {
+TEST(riccati_ode_test, compareImplementations) {
   constexpr int STATE_DIM = 48;
   constexpr int INPUT_DIM = 10;
   constexpr bool makePSD = false;
@@ -104,7 +116,7 @@ TEST(testRiccatiEquations, compareImplementations) {
   EXPECT_LE((dSdz_precompute - dSdz_noPrecompute).array().abs().maxCoeff(), 1e-9);
 }
 
-TEST(testRiccatiEquations, compareFixedAndDynamicSizedImplementation) {
+TEST(riccati_ode_test, compareFixedAndDynamicSizedImplementation) {
   constexpr bool makePSD = false;
   constexpr bool precompute = false;
 
@@ -136,14 +148,14 @@ TEST(testRiccatiEquations, compareFixedAndDynamicSizedImplementation) {
   EXPECT_LE((dSdz - dSdz_static).array().abs().maxCoeff(), 1e-9);
 }
 
-TEST(testRiccatiEquations, testFlattenSMatrix) {
+TEST(riccati_ode_test, testFlattenSMatrix) {
   const int state_dim = 4;
   using riccati_t = ocs2::SequentialRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;
 
   riccati_t::s_vector_t allSs, allSs_expect;
   riccati_t::state_matrix_t Sm;
   riccati_t::state_vector_t Sv;
-  riccati_t::eigen_scalar_t s;
+  riccati_t::scalar_t s;
 
   Sm.resize(state_dim, state_dim);
   Sm << 1, 2, 4, 7,  // clang-format off
@@ -152,7 +164,7 @@ TEST(testRiccatiEquations, testFlattenSMatrix) {
         7, 8, 9, 10;  // clang-format on
   Sv.resize(state_dim);
   Sv << 11, 12, 13, 14;
-  s << 15;
+  s = 15;
 
   allSs.resize(15);
   allSs_expect.resize(15);
@@ -163,7 +175,7 @@ TEST(testRiccatiEquations, testFlattenSMatrix) {
   EXPECT_EQ(allSs, allSs_expect);
 }
 
-TEST(testRiccatiEquations, testFlattenAndUnflattenSMatrix) {
+TEST(riccati_ode_test, testFlattenAndUnflattenSMatrix) {
   const int input_dim = 10;
   const int state_dim = 48;
   using riccati_t = ocs2::SequentialRiccatiEquations<state_dim, input_dim>;
@@ -171,12 +183,12 @@ TEST(testRiccatiEquations, testFlattenAndUnflattenSMatrix) {
   riccati_t::s_vector_t allSs;
   riccati_t::state_matrix_t Sm, Sm_out;
   riccati_t::state_vector_t Sv, Sv_out;
-  riccati_t::eigen_scalar_t s, s_out;
+  riccati_t::scalar_t s, s_out;
 
   Sm.setRandom();
   Sm = (Sm + Sm.transpose()).eval();
   Sv.setRandom();
-  s.setRandom();
+  s = riccati_t::dynamic_vector_t::Random(1)(0);
 
   riccati_t::convert2Vector(Sm, Sv, s, allSs);
   riccati_t::convert2Matrix(allSs, Sm_out, Sv_out, s_out);
@@ -186,23 +198,23 @@ TEST(testRiccatiEquations, testFlattenAndUnflattenSMatrix) {
   EXPECT_EQ(s, s_out);
 }
 
-TEST(testRiccatiEquations, testFlattenAndUnflattenSMatrixDynamic) {
+TEST(riccati_ode_test, testFlattenAndUnflattenSMatrixDynamic) {
   const int state_dim = 42;
   using riccati_t = ocs2::SequentialRiccatiEquations<Eigen::Dynamic, Eigen::Dynamic>;
 
   riccati_t::s_vector_t allSs;
   riccati_t::state_matrix_t Sm, Sm_out;
   riccati_t::state_vector_t Sv, Sv_out;
-  riccati_t::eigen_scalar_t s, s_out;
+  riccati_t::scalar_t s, s_out;
 
   Sm.setRandom(state_dim, state_dim);
   Sm = (Sm + Sm.transpose()).eval();
   Sv.setRandom(state_dim);
-  s.setRandom();
+  s = riccati_t::dynamic_vector_t::Random(1)(0);
 
   Sm_out.setZero(state_dim, state_dim);
   Sv_out.setZero(state_dim);
-  s_out.setZero();
+  s_out = 0.0;
 
   riccati_t::convert2Vector(Sm, Sv, s, allSs);
   riccati_t::convert2Matrix(allSs, Sm_out, Sv_out, s_out);

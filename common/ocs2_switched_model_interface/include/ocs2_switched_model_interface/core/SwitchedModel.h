@@ -14,7 +14,7 @@ constexpr size_t GENERALIZED_COORDINATE_SIZE = BASE_COORDINATE_SIZE + JOINT_COOR
 constexpr size_t STATE_DIM = 2 * BASE_COORDINATE_SIZE + JOINT_COORDINATE_SIZE;                // 24
 constexpr size_t INPUT_DIM = 3 * NUM_CONTACT_POINTS + JOINT_COORDINATE_SIZE;                  // 24
 
-enum class FeetEnum { LF=1, RF=2, LH=3, RH=4 };
+enum class FeetEnum { LF=0, RF=1, LH=2, RH=3 };
 const std::array<std::string, NUM_CONTACT_POINTS> FeetNames{"LF", "RF", "LH", "RH"};
 using contact_flag_t = std::array<bool, NUM_CONTACT_POINTS>;
 

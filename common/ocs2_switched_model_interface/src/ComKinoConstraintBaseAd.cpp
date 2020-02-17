@@ -72,7 +72,7 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
         equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityConstraint>(footName + "_o_EEVel");
     // Rolling Heading Velocity constraint for stance legs
     auto _o_EEVelHeadingConstraint =
-      equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityConstraint>(footName + "_o_EEVelHeading");
+      equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityHeadingConstraint>(footName + "_o_EEVelHeading");
 
     EndEffectorVelocityConstraintSettings _o_eeVelConSettings;
     EndEffectorVelocityHeadingConstraintSettings _o_eeVelHeadingConSettings;

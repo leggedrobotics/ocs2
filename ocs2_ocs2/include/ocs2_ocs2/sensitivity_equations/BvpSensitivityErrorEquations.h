@@ -120,8 +120,6 @@ class BvpSensitivityErrorEquations final : public OdeBase<STATE_DIM> {
    * @param [out] dMv: mapped state after transition
    */
   void computeFlowMap(const scalar_t& z, const state_vector_t& Mve, state_vector_t& dMvedz) override {
-    BASE::numFunctionCalls_++;
-
     // denormalized time
     const scalar_t t = -z;
     auto indexAlpha = LinearInterpolation::timeSegment(t, timeStampPtr_);

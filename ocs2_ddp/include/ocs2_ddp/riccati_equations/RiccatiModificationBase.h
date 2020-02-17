@@ -37,8 +37,8 @@ namespace ocs2 {
  * The struct contains Riccati equation modification terms.
  */
 struct RiccatiModificationBase {
-  using array_t = std::vector<RiccatiModificationBase, Eigen::aligned_allocator<RiccatiModificationBase>>;
-  using array2_t = std::vector<array_t, Eigen::aligned_allocator<array_t>>;
+  using array_t = std::vector<RiccatiModificationBase>;
+  using array2_t = std::vector<array_t>;
 
   using scalar_t = typename Dimensions<0, 0>::scalar_t;
   using dynamic_vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;

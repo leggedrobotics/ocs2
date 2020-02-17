@@ -797,7 +797,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::calculateBVPSensitivityControllerForward(size_t
       // DmProjected
       dynamic_matrix_t DmProjected;
       ModelData::interpolate(indexAlpha, DmProjected, &(dataCollectorPtr_->projectedModelDataTrajectoriesStock_[i]),
-                                                  ModelData::stateInputEqConstrInputDerivative);
+                             ModelData::stateInputEqConstrInputDerivative);
       // EvDevEventTimesProjected
       input_vector_t EvDevEventTimeProjected;
       LinearInterpolation::interpolate(indexAlpha, EvDevEventTimeProjected,

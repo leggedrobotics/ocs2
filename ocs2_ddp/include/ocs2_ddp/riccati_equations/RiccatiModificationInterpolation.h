@@ -33,16 +33,46 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_ddp/riccati_equations/RiccatiModificationBase.h"
 
 // Declares an access function of name FIELD (e.g., time, DmDagger, ...)
-#define CREATE_INTERPOLATION_ACCESS_FUNCTION(FIELD)                                                                                 \
-  inline auto FIELD(const ocs2::RiccatiModificationBase::array_t::size_type ind, const ocs2::RiccatiModificationBase::array_t* vec) \
-      ->const decltype((*vec)[ind].FIELD##_)& {                                                                                     \
-    return (*vec)[ind].FIELD##_;                                                                                                    \
+#define CREATE_INTERPOLATION_ACCESS_FUNCTION(FIELD)                                                                         \
+  inline auto FIELD(const ocs2::RiccatiModificationBase::array_t* vec, size_t ind)->const decltype((*vec)[ind].FIELD##_)& { \
+    return (*vec)[ind].FIELD##_;                                                                                            \
   }
 
 namespace ocs2 {
 namespace RiccatiModification {
 
-using LinearInterpolation = ocs2::LinearInterpolation<RiccatiModificationBase, Eigen::aligned_allocator<RiccatiModificationBase>>;
+using scalar_t = ocs2::RiccatiModificationBase::scalar_t;
+using dynamic_vector_t = ocs2::RiccatiModificationBase::dynamic_vector_t;
+using dynamic_matrix_t = ocs2::RiccatiModificationBase::dynamic_matrix_t;
+
+/**
+ * Helper specialization of interpolate() of RiccatiModification array types for scalar_t subfields.
+ * Note that since partial specialization of function templates is not possible, it is not
+ * possible to write a general interpolate() function with template argument Field_T.
+ */
+inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, scalar_t& enquiryData,
+                        const ocs2::RiccatiModificationBase::array_t* dataPtr,
+                        std::function<const scalar_t&(const ocs2::RiccatiModificationBase::array_t*, size_t)> accessFun) {
+  ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataPtr, accessFun);
+}
+
+/**
+ * Helper specialization of interpolate() of RiccatiModification array types for dynamic_vector_t subfields.
+ */
+inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, dynamic_vector_t& enquiryData,
+                        const ocs2::RiccatiModificationBase::array_t* dataPtr,
+                        std::function<const dynamic_vector_t&(const ocs2::RiccatiModificationBase::array_t*, size_t)> accessFun) {
+  ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataPtr, accessFun);
+}
+
+/**
+ * Helper specialization of interpolate() of RiccatiModification array types for dynamic_matrix_t subfields.
+ */
+inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, dynamic_matrix_t& enquiryData,
+                        const ocs2::RiccatiModificationBase::array_t* dataPtr,
+                        std::function<const dynamic_matrix_t&(const ocs2::RiccatiModificationBase::array_t*, size_t)> accessFun) {
+  ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataPtr, accessFun);
+}
 
 CREATE_INTERPOLATION_ACCESS_FUNCTION(time)
 

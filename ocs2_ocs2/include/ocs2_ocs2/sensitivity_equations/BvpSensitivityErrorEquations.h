@@ -130,15 +130,14 @@ class BvpSensitivityErrorEquations final : public OdeBase<STATE_DIM> {
     ModelData::interpolate(indexAlpha, Rm_, modelDataPtr_, ModelData::costInputSecondDerivative);
     ModelData::interpolate(indexAlpha, Pm_, modelDataPtr_, ModelData::costInputStateDerivative);
 
-    ModelData::LinearInterpolation::interpolate(indexAlpha, AmConstrained_, projectedModelDataPtr_, ModelData::dynamicsStateDerivative);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, CmProjected_, projectedModelDataPtr_,
-                                                ModelData::stateInputEqConstrStateDerivative);
+    ModelData::interpolate(indexAlpha, AmConstrained_, projectedModelDataPtr_, ModelData::dynamicsStateDerivative);
+    ModelData::interpolate(indexAlpha, CmProjected_, projectedModelDataPtr_, ModelData::stateInputEqConstrStateDerivative);
 
-    EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, RmInverse_, RmInversePtr_);
-    EigenLinearInterpolation<dynamic_matrix_t>::interpolate(indexAlpha, RinvChol_, RinvCholPtr_);
-    EigenLinearInterpolation<input_vector_t>::interpolate(indexAlpha, EvDevProjected_, EvDevProjectedPtr_);
+    LinearInterpolation::interpolate(indexAlpha, RmInverse_, RmInversePtr_);
+    LinearInterpolation::interpolate(indexAlpha, RinvChol_, RinvCholPtr_);
+    LinearInterpolation::interpolate(indexAlpha, EvDevProjected_, EvDevProjectedPtr_);
 
-    EigenLinearInterpolation<state_matrix_t>::interpolate(t, Sm_, SmTimeStampPtr_, SmPtr_);
+    LinearInterpolation::interpolate(t, Sm_, SmTimeStampPtr_, SmPtr_);
 
     // Lm
     // TODO: Double check if equations are correct after change to cholesky decomposition approach

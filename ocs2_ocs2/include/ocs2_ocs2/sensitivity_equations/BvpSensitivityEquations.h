@@ -138,9 +138,8 @@ class BvpSensitivityEquations final : public OdeBase<STATE_DIM> {
     ModelData::interpolate(indexAlpha, Qv_, modelDataPtr_, ModelData::costStateDerivative);
     ModelData::interpolate(indexAlpha, Cm_, modelDataPtr_, ModelData::stateInputEqConstrStateDerivative);
 
-    ModelData::LinearInterpolation::interpolate(indexAlpha, AmConstrained_, projectedModelDataPtr_, ModelData::dynamicsStateDerivative);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, CmProjected_, projectedModelDataPtr_,
-                                                ModelData::stateInputEqConstrStateDerivative);
+    ModelData::interpolate(indexAlpha, AmConstrained_, projectedModelDataPtr_, ModelData::dynamicsStateDerivative);
+    ModelData::interpolate(indexAlpha, CmProjected_, projectedModelDataPtr_, ModelData::stateInputEqConstrStateDerivative);
 
     LinearInterpolation::interpolate(indexAlpha, costate_, costatePtr_);
     LinearInterpolation::interpolate(indexAlpha, lagrangian_, lagrangianPtr_);

@@ -180,7 +180,7 @@ void ContinuousTimeRiccatiEquations::computeFlowMap(const scalar_t& z, const dyn
 
   // index
   const scalar_t t = -z;  // denormalized time
-  const auto indexAlpha = EigenLinearInterpolation<dynamic_matrix_t>::timeSegment(t, timeStampPtr_);
+  const auto indexAlpha = LinearInterpolation::timeSegment(t, timeStampPtr_);
 
   convert2Matrix(allSs, continuousTimeRiccatiData_.Sm_, continuousTimeRiccatiData_.Sv_, continuousTimeRiccatiData_.s_);
   if (isRiskSensitive_) {
@@ -209,33 +209,27 @@ void ContinuousTimeRiccatiEquations::computeFlowMapSLQ(std::pair<int, scalar_t> 
    */
 
   // Hv
-  ModelData::LinearInterpolation::interpolate(indexAlpha, creCache.projectedHv_, projectedModelDataPtr_, ModelData::dynamicsBias);
+  ModelData::interpolate(indexAlpha, creCache.projectedHv_, projectedModelDataPtr_, ModelData::dynamicsBias);
   // Am
-  ModelData::LinearInterpolation::interpolate(indexAlpha, creCache.projectedAm_, projectedModelDataPtr_,
-                                              ModelData::dynamicsStateDerivative);
+  ModelData::interpolate(indexAlpha, creCache.projectedAm_, projectedModelDataPtr_, ModelData::dynamicsStateDerivative);
   // Bm
-  ModelData::LinearInterpolation::interpolate(indexAlpha, creCache.projectedBm_, projectedModelDataPtr_,
-                                              ModelData::dynamicsInputDerivative);
+  ModelData::interpolate(indexAlpha, creCache.projectedBm_, projectedModelDataPtr_, ModelData::dynamicsInputDerivative);
   // q
-  ModelData::LinearInterpolation::interpolate(indexAlpha, ds, projectedModelDataPtr_, ModelData::cost);
+  ModelData::interpolate(indexAlpha, ds, projectedModelDataPtr_, ModelData::cost);
   // Qv
-  ModelData::LinearInterpolation::interpolate(indexAlpha, dSv, projectedModelDataPtr_, ModelData::costStateDerivative);
+  ModelData::interpolate(indexAlpha, dSv, projectedModelDataPtr_, ModelData::costStateDerivative);
   // Qm
-  ModelData::LinearInterpolation::interpolate(indexAlpha, dSm, projectedModelDataPtr_, ModelData::costStateSecondDerivative);
+  ModelData::interpolate(indexAlpha, dSm, projectedModelDataPtr_, ModelData::costStateSecondDerivative);
   // Rv
-  ModelData::LinearInterpolation::interpolate(indexAlpha, creCache.projectedGv_, projectedModelDataPtr_, ModelData::costInputDerivative);
+  ModelData::interpolate(indexAlpha, creCache.projectedGv_, projectedModelDataPtr_, ModelData::costInputDerivative);
   // Pm
-  ModelData::LinearInterpolation::interpolate(indexAlpha, creCache.projectedGm_, projectedModelDataPtr_,
-                                              ModelData::costInputStateDerivative);
+  ModelData::interpolate(indexAlpha, creCache.projectedGm_, projectedModelDataPtr_, ModelData::costInputStateDerivative);
   // delatQm
-  RiccatiModification::LinearInterpolation::interpolate(indexAlpha, creCache.deltaQm_, riccatiModificationPtr_,
-                                                        RiccatiModification::deltaQm);
+  RiccatiModification::interpolate(indexAlpha, creCache.deltaQm_, riccatiModificationPtr_, RiccatiModification::deltaQm);
   // delatGm
-  RiccatiModification::LinearInterpolation::interpolate(indexAlpha, creCache.projectedKm_, riccatiModificationPtr_,
-                                                        RiccatiModification::deltaGm);
+  RiccatiModification::interpolate(indexAlpha, creCache.projectedKm_, riccatiModificationPtr_, RiccatiModification::deltaGm);
   // delatGv
-  RiccatiModification::LinearInterpolation::interpolate(indexAlpha, creCache.projectedLv_, riccatiModificationPtr_,
-                                                        RiccatiModification::deltaGv);
+  RiccatiModification::interpolate(indexAlpha, creCache.projectedLv_, riccatiModificationPtr_, RiccatiModification::deltaGv);
 
   // projectedGm = projectedPm + projectedBm^T * Sm [COMPLEXITY: nx^2 * np]
   creCache.projectedGm_.noalias() += creCache.projectedBm_.transpose() * Sm;
@@ -254,8 +248,7 @@ void ContinuousTimeRiccatiEquations::computeFlowMapSLQ(std::pair<int, scalar_t> 
   creCache.projectedKm_T_projectedGm_.noalias() = creCache.projectedKm_.transpose() * creCache.projectedGm_;
   if (!reducedFormRiccati_) {
     // Rm
-    ModelData::LinearInterpolation::interpolate(indexAlpha, creCache.projectedRm_, projectedModelDataPtr_,
-                                                ModelData::costInputSecondDerivative);
+    ModelData::interpolate(indexAlpha, creCache.projectedRm_, projectedModelDataPtr_, ModelData::costInputSecondDerivative);
     // [COMPLEXITY: nx * np^2]
     creCache.projectedRm_projectedKm_.noalias() = creCache.projectedRm_ * creCache.projectedKm_;
     // [COMPLEXITY: np^2]
@@ -335,8 +328,7 @@ void ContinuousTimeRiccatiEquations::computeFlowMapILEG(std::pair<int, scalar_t>
   computeFlowMapSLQ(indexAlpha, Sm, Sv, s, creCache, dSm, dSv, ds);
 
   // Sigma
-  ModelData::LinearInterpolation::interpolate(indexAlpha, creCache.dynamicsCovariance_, projectedModelDataPtr_,
-                                              ModelData::dynamicsCovariance);
+  ModelData::interpolate(indexAlpha, creCache.dynamicsCovariance_, projectedModelDataPtr_, ModelData::dynamicsCovariance);
 
   creCache.Sigma_Sv_.noalias() = creCache.dynamicsCovariance_ * Sv;
   creCache.Sigma_Sm_.noalias() = creCache.dynamicsCovariance_ * Sm;

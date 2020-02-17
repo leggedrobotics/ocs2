@@ -31,6 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h"
 
+#include "DummyObserver.h"
+
 namespace ocs2 {
 
 /**
@@ -45,21 +47,13 @@ class MRT_ROS_Dummy_Loop {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using mrt_t = MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
+  using system_observation_t = typename mrt_t::system_observation_t;
   using primal_solution_t = typename mrt_t::primal_solution_t;
   using command_data_t = typename mrt_t::command_data_t;
-
-  using controller_t = typename mrt_t::controller_t;
   using scalar_t = typename mrt_t::scalar_t;
-  using scalar_array_t = typename mrt_t::scalar_array_t;
-  using size_array_t = typename mrt_t::size_array_t;
   using state_vector_t = typename mrt_t::state_vector_t;
-  using state_vector_array_t = typename mrt_t::state_vector_array_t;
-  using input_vector_t = typename mrt_t::input_vector_t;
-  using input_vector_array_t = typename mrt_t::input_vector_array_t;
-  using input_state_matrix_t = typename mrt_t::input_state_matrix_t;
-  using input_state_matrix_array_t = typename mrt_t::input_state_matrix_array_t;
 
-  using system_observation_t = typename mrt_t::system_observation_t;
+  using observer_t = DummyObserver<STATE_DIM, INPUT_DIM>;
 
   /**
    * Constructor.
@@ -70,20 +64,12 @@ class MRT_ROS_Dummy_Loop {
    * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
    * will be simulated to run by this frequency. Note that this might not be the MPC's real-time frequency.
    */
-  MRT_ROS_Dummy_Loop(mrt_t& mrt, scalar_t mrtDesiredFrequency = 100, scalar_t mpcDesiredFrequency = -1);
+  MRT_ROS_Dummy_Loop(mrt_t& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency = -1);
 
   /**
    * Destructor.
    */
   virtual ~MRT_ROS_Dummy_Loop() = default;
-
-  /**
-   * Initializes the MRT node and visualization node.
-   *
-   * @param [in] argc: command line number of inputs.
-   * @param [in] argv: command line inputs' value.
-   */
-  void launchNodes(int argc, char* argv[]);
 
   /**
    * Runs the dummy MRT loop.
@@ -93,6 +79,14 @@ class MRT_ROS_Dummy_Loop {
    */
   void run(const system_observation_t& initObservation, const CostDesiredTrajectories& initCostDesiredTrajectories);
 
+  /**
+   * Subscribe a set of observers to the dummy loop. Observers are updated in the provided order at the end of each timestep.
+   * The previous list of observers is overwritten.
+   *
+   * @param observers : vector of observers.
+   */
+  void subscribeObservers(const std::vector<std::shared_ptr<observer_t>>& observers) { observers_ = observers; }
+
  protected:
   /**
    * A user-defined function which modifies the observation before publishing.
@@ -101,27 +95,7 @@ class MRT_ROS_Dummy_Loop {
    */
   virtual void modifyObservation(system_observation_t& observation) {}
 
-  /**
-   * Launches the visualization node
-   *
-   * @param [in] argc: command line number of inputs.
-   * @param [in] argv: command line inputs' value.
-   */
-  virtual void launchVisualizerNode(int argc, char* argv[]) {}
-
-  /**
-   * Visualizes the current observation.
-   *
-   * @param [in] observation: The current observation.
-   * @param [in] primalSolution: The primal problem's solution.
-   * @param [in] command: Contains costdesired trajectory and init observation.
-   */
-  virtual void publishVisualizer(const system_observation_t& observation, const primal_solution_t& primalSolution, const command_data_t& command) {}
-
- protected:
-  /*
-   * Variables
-   */
+ private:
   mrt_t& mrt_;
   scalar_t mrtDesiredFrequency_;
   scalar_t mpcDesiredFrequency_;
@@ -129,6 +103,7 @@ class MRT_ROS_Dummy_Loop {
   bool realtimeLoop_;
 
   system_observation_t observation_;
+  std::vector<std::shared_ptr<observer_t>> observers_;
 };
 
 }  // namespace ocs2

@@ -31,21 +31,28 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_double_integrator_example/DoubleIntegratorInterface.h"
 
-using namespace ocs2;
-
 int main(int argc, char** argv) {
+  const std::string robotName = "cartpole";
+  using interface_t = ocs2::double_integrator::DoubleIntegratorInterface;
+  using mpc_ros_t = ocs2::MPC_ROS_Interface<ocs2::double_integrator::STATE_DIM_, ocs2::double_integrator::INPUT_DIM_>;
+
   // task file
   if (argc <= 1) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
   std::string taskFileFolderName = std::string(argv[1]);
 
-  double_integrator::DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
+  // Initialize ros node
+  ros::init(argc, argv, robotName + "_mpc");
+  ros::NodeHandle nodeHandle;
+
+  // Robot interface
+  interface_t doubleIntegratorInterface(taskFileFolderName);
 
   // Launch MPC ROS node
   auto mpcPtr = doubleIntegratorInterface.getMpc();
-  MPC_ROS_Interface<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> mpcNode(*mpcPtr, "double_integrator");
-  mpcNode.launchNodes(argc, argv);
+  mpc_ros_t mpcNode(*mpcPtr, robotName);
+  mpcNode.launchNodes(nodeHandle);
 
   // Successful exit
   return 0;

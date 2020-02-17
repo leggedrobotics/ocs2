@@ -27,49 +27,54 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
 #include "ocs2_double_integrator_example/DoubleIntegratorInterface.h"
 #include "ocs2_double_integrator_example/definitions.h"
-#include "ocs2_double_integrator_example/ros_comm/MRT_ROS_Dummy_Double_Integrator.h"
-
-using namespace ocs2;
+#include "ocs2_double_integrator_example/ros_comm/DoubleIntegratorDummyVisualization.h"
 
 int main(int argc, char** argv) {
+  const std::string robotName = "double_integrator";
+  using interface_t = ocs2::double_integrator::DoubleIntegratorInterface;
+  using vis_t = ocs2::double_integrator::DoubleIntegratorDummyVisualization;
+  using mrt_t = ocs2::MRT_ROS_Interface<ocs2::double_integrator::STATE_DIM_, ocs2::double_integrator::INPUT_DIM_>;
+  using dummy_t = ocs2::MRT_ROS_Dummy_Loop<ocs2::double_integrator::STATE_DIM_, ocs2::double_integrator::INPUT_DIM_>;
+
   // task file
   if (argc <= 1) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
   std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
-  // double_integratorInterface
-  double_integrator::DoubleIntegratorInterface double_integratorInterface(taskFileFolderName);
+  // Initialize ros node
+  ros::init(argc, argv, robotName + "_mrt");
+  ros::NodeHandle nodeHandle;
 
-  using double_integrator::INPUT_DIM_;
-  using double_integrator::STATE_DIM_;
+  // Robot interface
+  interface_t doubleIntegratorInterface(taskFileFolderName);
 
-  // Dummy double_integrator
-  MRT_ROS_Interface<STATE_DIM_, INPUT_DIM_> mrt("double_integrator");
-  mrt.initRollout(&double_integratorInterface.getRollout());
-  double_integrator::MRT_ROS_Dummy_Linear_System dummyDoubleIntegrator(mrt, double_integratorInterface.mpcSettings().mrtDesiredFrequency_,
-                                                                       double_integratorInterface.mpcSettings().mpcDesiredFrequency_);
+  // MRT
+  mrt_t mrt(robotName);
+  mrt.initRollout(&doubleIntegratorInterface.getRollout());
+  mrt.launchNodes(nodeHandle);
 
-  dummyDoubleIntegrator.launchNodes(argc, argv);
+  // Visualization
+  std::shared_ptr<vis_t> doubleIntegratorDummyVisualization(new vis_t(nodeHandle));
 
-  // initialize state
-  double_integrator::MRT_ROS_Dummy_Linear_System::system_observation_t initObservation;
-  initObservation.state() = double_integratorInterface.getInitialState();
+  // Dummy loop
+  dummy_t dummyDoubleIntegrator(mrt, doubleIntegratorInterface.mpcSettings().mrtDesiredFrequency_,
+                                doubleIntegratorInterface.mpcSettings().mpcDesiredFrequency_);
+  dummyDoubleIntegrator.subscribeObservers({doubleIntegratorDummyVisualization});
+
+  // initial state
+  mrt_t::system_observation_t initObservation;
+  initObservation.state() = doubleIntegratorInterface.getInitialState();
 
   // initial command
-  CostDesiredTrajectories initCostDesiredTrajectories;
-  initCostDesiredTrajectories.desiredTimeTrajectory().resize(1);
-  initCostDesiredTrajectories.desiredTimeTrajectory().front() = 0.0;
-  initCostDesiredTrajectories.desiredStateTrajectory().resize(1);
-  initCostDesiredTrajectories.desiredStateTrajectory().front().setZero(double_integrator::STATE_DIM_);
-  initCostDesiredTrajectories.desiredInputTrajectory().resize(1);
-  initCostDesiredTrajectories.desiredInputTrajectory().front().setZero(double_integrator::INPUT_DIM_);
+  ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time()}, {initObservation.state()}, {initObservation.input()});
 
-  // run dummy
+  // Run dummy (loops while ros is ok)
   dummyDoubleIntegrator.run(initObservation, initCostDesiredTrajectories);
 
   // Successful exit

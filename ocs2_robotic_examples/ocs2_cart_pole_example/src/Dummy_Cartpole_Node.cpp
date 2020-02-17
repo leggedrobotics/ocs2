@@ -27,48 +27,53 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
 #include "ocs2_cart_pole_example/CartPoleInterface.h"
 #include "ocs2_cart_pole_example/definitions.h"
-#include "ocs2_cart_pole_example/ros_comm/MRT_ROS_Dummy_Cartpole.h"
+#include "ocs2_cart_pole_example/ros_comm/CartpoleDummyVisualization.h"
 
 int main(int argc, char** argv) {
+  const std::string robotName = "cartpole";
+  using interface_t = ocs2::cartpole::CartPoleInterface;
+  using vis_t = ocs2::cartpole::CartpoleDummyVisualization;
+  using mrt_t = ocs2::MRT_ROS_Interface<ocs2::cartpole::STATE_DIM_, ocs2::cartpole::INPUT_DIM_>;
+  using dummy_t = ocs2::MRT_ROS_Dummy_Loop<ocs2::cartpole::STATE_DIM_, ocs2::cartpole::INPUT_DIM_>;
+
   // task file
   if (argc <= 1) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
   std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
-  ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFileFolderName);
+  // Initialize ros node
+  ros::init(argc, argv, robotName + "_mrt");
+  ros::NodeHandle nodeHandle;
 
-  using ocs2::cartpole::INPUT_DIM_;
-  using ocs2::cartpole::STATE_DIM_;
-  using mrt_t = ocs2::MRT_ROS_Interface<STATE_DIM_, INPUT_DIM_>;
-  using scalar_t = mrt_t::scalar_t;
-  using system_observation_t = mrt_t::system_observation_t;
+  // Robot interface
+  interface_t cartPoleInterface(taskFileFolderName);
 
-  mrt_t mrt("cartpole");
+  // MRT
+  mrt_t mrt(robotName);
+  mrt.initRollout(&cartPoleInterface.getRollout());
+  mrt.launchNodes(nodeHandle);
 
-  // Dummy cartpole
-  ocs2::cartpole::MrtRosDummyCartpole dummyCartpole(mrt, cartPoleInterface.mpcSettings().mrtDesiredFrequency_,
-                                                    cartPoleInterface.mpcSettings().mpcDesiredFrequency_);
-  dummyCartpole.launchNodes(argc, argv);
+  // Visualization
+  std::shared_ptr<vis_t> cartpoleDummyVisualization(new vis_t(nodeHandle));
+
+  // Dummy loop
+  dummy_t dummyCartpole(mrt, cartPoleInterface.mpcSettings().mrtDesiredFrequency_, cartPoleInterface.mpcSettings().mpcDesiredFrequency_);
+  dummyCartpole.subscribeObservers({cartpoleDummyVisualization});
 
   // initial state
   mrt_t::system_observation_t initObservation;
   initObservation.state() = cartPoleInterface.getInitialState();
 
   // initial command
-  ocs2::CostDesiredTrajectories initCostDesiredTrajectories;
-  initCostDesiredTrajectories.desiredTimeTrajectory().resize(1);
-  initCostDesiredTrajectories.desiredTimeTrajectory().front() = 0.0;
-  initCostDesiredTrajectories.desiredStateTrajectory().resize(1);
-  initCostDesiredTrajectories.desiredStateTrajectory().front().setZero(STATE_DIM_);
-  initCostDesiredTrajectories.desiredInputTrajectory().resize(1);
-  initCostDesiredTrajectories.desiredInputTrajectory().front().setZero(INPUT_DIM_);
+  ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time()}, {initObservation.state()}, {initObservation.input()});
 
-  // run dummy
+  // Run dummy (loops while ros is ok)
   dummyCartpole.run(initObservation, initCostDesiredTrajectories);
 
   return 0;

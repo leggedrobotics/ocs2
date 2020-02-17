@@ -21,6 +21,7 @@
 
 namespace switched_model {
 
+// Note: this class is no longer in use. Keep it here for a while for potentially useful code snippets.
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM = 12 + JOINT_COORD_SIZE, size_t INPUT_DIM = 12 + JOINT_COORD_SIZE>
 class MRT_ROS_Quadruped : public ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM> {
  public:

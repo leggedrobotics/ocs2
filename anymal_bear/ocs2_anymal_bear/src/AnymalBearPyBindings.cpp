@@ -15,11 +15,11 @@ void AnymalBearPyBindings::visualizeTrajectory(const scalar_array_t& t, const st
                                                double speed) {
   if (!visualizer_) {
     AnymalBearInterface anymalBearInterface(taskFileFolder_);
-    visualizer_.reset(new visualizer_t(anymalBearInterface.getKinematicModel(), anymalBearInterface.getComModel(), "anymal", false));
-
     int fake_argc = 1;
     auto* fake_argv = const_cast<char*>("no_name");
-    visualizer_->launchVisualizerNode(fake_argc, &fake_argv);
+    ros::init(fake_argc, &fake_argv, "anymal_visualization_node");
+    ros::NodeHandle n;
+    visualizer_.reset(new visualizer_t(anymalBearInterface.getKinematicModel(), anymalBearInterface.getComModel(), "anymal", n));
   }
 
   assert(t.size() == x.size());

@@ -11,8 +11,6 @@ class DoubleIntegratorPyBindings final : public PythonInterface<double_integrato
   using Base = PythonInterface<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
 
   explicit DoubleIntegratorPyBindings(const std::string& taskFileFolder, bool async = false);
-
-  void initRobotInterface(const std::string& taskFileFolder) override;
 };
 
 }  // namespace double_integrator

@@ -40,8 +40,6 @@ class QuadrotorPyBindings final : public PythonInterface<quadrotor::STATE_DIM_, 
   using Base = PythonInterface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 
   QuadrotorPyBindings(const std::string& taskFileFolder, bool async = false);
-
-  void initRobotInterface(const std::string& taskFileFolder) override;
 };
 
 }  // namespace quadrotor

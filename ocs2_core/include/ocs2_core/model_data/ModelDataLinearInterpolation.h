@@ -32,17 +32,73 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_core/misc/LinearInterpolation.h"
 #include "ocs2_core/model_data/ModelDataBase.h"
 
-// Declares an access function of name FIELD (e.g., time, dynamics, ...)
-#define CREATE_INTERPOLATION_ACCESS_FUNCTION(FIELD)                                                             \
-  inline auto FIELD(const ocs2::ModelDataBase::array_t::size_type ind, const ocs2::ModelDataBase::array_t* vec) \
-      ->const decltype((*vec)[ind].FIELD##_)& {                                                                 \
-    return (*vec)[ind].FIELD##_;                                                                                \
+/*
+ * @file
+ * The linear interpolation of costInputStateDerivative, Pm, at index-alpha pair given modelDataTrajectory can
+ * be computed as:
+ *
+ * ModelData::interpolate(indexAlpha, Pm, *modelDataTrajectory, ModelData::costInputStateDerivative);
+ */
+
+/*
+ * Declares an access function of name FIELD such as time, dynamics, dynamicsBias, ...
+ * For example the signature of function for dynamics is:
+ * const dynamic_vector_t& dynamics(const ocs2::ModelDataBase::array_t* vec, size_t n) {
+ *   return (*vec)[n].dynamic_;
+ * }
+ */
+#define CREATE_INTERPOLATION_ACCESS_FUNCTION(FIELD)                                                               \
+  inline auto FIELD(const ocs2::ModelDataBase::array_t* vec, size_t ind)->const decltype((*vec)[ind].FIELD##_)& { \
+    return (*vec)[ind].FIELD##_;                                                                                  \
   }
 
 namespace ocs2 {
 namespace ModelData {
 
-using LinearInterpolation = ocs2::LinearInterpolation<ModelDataBase, Eigen::aligned_allocator<ModelDataBase>>;
+using scalar_t = ocs2::ModelDataBase::scalar_t;
+using dynamic_vector_t = ocs2::ModelDataBase::dynamic_vector_t;
+using dynamic_matrix_t = ocs2::ModelDataBase::dynamic_matrix_t;
+
+/**
+ * Helper specialization of interpolate() of ModelData array types for scalar_t subfields.
+ * Note that since partial specialization of function templates is not possible, it is not
+ * possible to write a general interpolate() function with template argument Field_T.
+ */
+inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, scalar_t& enquiryData,
+                        const ocs2::ModelDataBase::array_t* dataPtr,
+                        std::function<const scalar_t&(const ocs2::ModelDataBase::array_t*, size_t)> accessFun) {
+  ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataPtr, accessFun);
+}
+
+/**
+ * Helper specialization of interpolate() of ModelData array types for dynamic_vector_t subfields.
+ */
+inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, dynamic_vector_t& enquiryData,
+                        const ocs2::ModelDataBase::array_t* dataPtr,
+                        std::function<const dynamic_vector_t&(const ocs2::ModelDataBase::array_t*, size_t)> accessFun) {
+  ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataPtr, accessFun);
+}
+
+/**
+ * Helper specialization of interpolate() of ModelData array types for scalar_t subfields.
+ */
+inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, dynamic_matrix_t& enquiryData,
+                        const ocs2::ModelDataBase::array_t* dataPtr,
+                        std::function<const dynamic_matrix_t&(const ocs2::ModelDataBase::array_t*, size_t)> accessFun) {
+  ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataPtr, accessFun);
+}
+
+/**
+ * Re-defining the timeSegment() in ModelData namespace.
+ */
+inline ocs2::LinearInterpolation::index_alpha_t timeSegment(ocs2::LinearInterpolation::scalar_t enquiryTime,
+                                                            const std::vector<ocs2::LinearInterpolation::scalar_t>* timeArrayPtr) {
+  return ocs2::LinearInterpolation::timeSegment(enquiryTime, timeArrayPtr);
+}
+
+/**
+ * Access method for different subfields of the ModelData.
+ */
 
 // time
 CREATE_INTERPOLATION_ACCESS_FUNCTION(time)

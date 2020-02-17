@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_mpc/MPC_ILQR.h>
-#include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
+#include <ocs2_robotic_tools/common/RobotInterface.h>
 
 // Quadrotor
 #include "ocs2_quadrotor_example/QuadrotorParameters.h"
@@ -48,11 +48,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace quadrotor {
 
-class QuadrotorInterface final : public RobotInterfaceBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> {
+class QuadrotorInterface final : public RobotInterface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = RobotInterfaceBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
+  using BASE = RobotInterface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 
   using dim_t = Dimensions<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
   using QuadrotorConstraint = ConstraintBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
@@ -73,23 +73,20 @@ class QuadrotorInterface final : public RobotInterfaceBase<quadrotor::STATE_DIM_
   /**
    * Destructor
    */
-  ~QuadrotorInterface() = default;
-
-  /**
-   * setup all optimizes.
-   *
-   * @param [in] taskFile: Task's file full path.
-   */
-  void setupOptimizer(const std::string& taskFile) override;
+  ~QuadrotorInterface() override = default;
 
   /**
    * Gets ILQR settings.
    *
    * @return ILQR settings
    */
-  ILQR_Settings& ilqrSettings() { return ilqrSettings(); }
+  ILQR_Settings& ilqrSettings() { return ilqrSettings_; }
 
-  mpc_t& getMpc() override { return *mpcPtr_; }
+  const dim_t::state_vector_t& getInitialState() { return initialState_; }
+
+  MPC_Settings& mpcSettings() { return mpcSettings_; };
+
+  std::unique_ptr<mpc_t> getMpc();
 
   const QuadrotorSystemDynamics& getDynamics() const override { return *quadrotorSystemDynamicsPtr_; }
 
@@ -105,7 +102,7 @@ class QuadrotorInterface final : public RobotInterfaceBase<quadrotor::STATE_DIM_
    *
    * @param [in] taskFile: Task's file full path.
    */
-  void loadSettings(const std::string& taskFile) override;
+  void loadSettings(const std::string& taskFile);
 
   /**************
    * Variables
@@ -114,7 +111,7 @@ class QuadrotorInterface final : public RobotInterfaceBase<quadrotor::STATE_DIM_
   std::string libraryFolder_;
 
   ILQR_Settings ilqrSettings_;
-  std::unique_ptr<mpc_t> mpcPtr_;
+  MPC_Settings mpcSettings_;
 
   std::unique_ptr<rollout_base_t> ddpQuadrotorRolloutPtr_;
 
@@ -134,6 +131,7 @@ class QuadrotorInterface final : public RobotInterfaceBase<quadrotor::STATE_DIM_
 
   size_t numPartitions_ = 0;
   dim_t::scalar_array_t partitioningTimes_;
+  dim_t::state_vector_t initialState_;
 };
 
 }  // namespace quadrotor

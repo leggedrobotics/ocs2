@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
-#include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
+#include <ocs2_robotic_tools/common/RobotInterface.h>
 
 // Ballbot
 #include "ocs2_ballbot_example/cost/BallbotCost.h"
@@ -54,11 +54,11 @@ namespace ballbot {
  * BallbotInterface class
  * General interface for mpc implementation on the ballbot model
  */
-class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> {
+class BallbotInterface final : public RobotInterface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = RobotInterfaceBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
+  using BASE = RobotInterface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
   using dim_t = Dimensions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
   using ballbotConstraint_t = ConstraintBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
@@ -78,18 +78,13 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
   /**
    * Destructor
    */
-  ~BallbotInterface() = default;
+  ~BallbotInterface() override = default;
 
-  void setupOptimizer(const std::string& taskFile) override;
+  const dim_t::state_vector_t& getInitialState() { return initialState_; }
+  SLQ_Settings& slqSettings() { return slqSettings_; }
+  MPC_Settings& mpcSettings() { return mpcSettings_; }
 
-  /**
-   * Gets SLQ settings.
-   *
-   * @return SLQ settings
-   */
-  SLQ_Settings& slqSettings();
-
-  mpc_t& getMpc() override { return *mpcPtr_; }
+  std::unique_ptr<mpc_t> getMpc();
 
   const BallbotSystemDynamics& getDynamics() const override { return *ballbotSystemDynamicsPtr_; }
 
@@ -105,7 +100,7 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
    *
    * @param [in] taskFile: Task's file full path.
    */
-  void loadSettings(const std::string& taskFile) override;
+  void loadSettings(const std::string& taskFile);
 
   /**************
    * Variables
@@ -114,7 +109,7 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
   std::string libraryFolder_;
 
   SLQ_Settings slqSettings_;
-  std::unique_ptr<mpc_t> mpcPtr_;
+  MPC_Settings mpcSettings_;
 
   std::unique_ptr<rollout_base_t> ddpBallbotRolloutPtr_;
 
@@ -133,6 +128,7 @@ class BallbotInterface final : public RobotInterfaceBase<ballbot::STATE_DIM_, ba
 
   size_t numPartitions_ = 0;
   dim_t::scalar_array_t partitioningTimes_;
+  dim_t::state_vector_t initialState_;
 };
 
 }  // namespace ballbot

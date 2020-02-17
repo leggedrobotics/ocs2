@@ -26,6 +26,8 @@
 #include <ocs2_core/cost/CostFunctionBaseAD.h>
 #include <ocs2_core/cost/CostFunctionLinearCombination.h>
 #include <ocs2_core/cost/QuadraticCostFunction.h>
+#include <ocs2_core/cost/QuadraticGaussNewtonCostBaseAD.h>
+#include <ocs2_core/cost/RelaxedBarrierCost.h>
 
 // Dynamics
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
@@ -70,6 +72,7 @@
 
 // model_data
 #include <ocs2_core/model_data/ModelDataBase.h>
+#include <ocs2_core/model_data/ModelDataLinearInterpolation.h>
 
 // dummy target for clang toolchain
 int main() {

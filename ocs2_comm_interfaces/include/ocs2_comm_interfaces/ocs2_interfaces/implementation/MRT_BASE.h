@@ -88,8 +88,8 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::evaluatePolicy(scalar_t currentTime, const 
   }
 
   mpcInput = currentPrimalSolution_->controllerPtr_->computeInput(currentTime, currentState);
-  EigenLinearInterpolation<state_vector_t>::interpolate(currentTime, mpcState, &currentPrimalSolution_->timeTrajectory_,
-                                                        &currentPrimalSolution_->stateTrajectory_);
+  LinearInterpolation::interpolate(currentTime, mpcState, &currentPrimalSolution_->timeTrajectory_,
+                                   &currentPrimalSolution_->stateTrajectory_);
 
   size_t index = findActiveSubsystemFnc_(currentTime);
   subsystem = logicMachinePtr_->getLogicRulesPtr()->subsystemsSequence().at(index);

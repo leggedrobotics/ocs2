@@ -42,16 +42,20 @@ void PythonInterface<STATE_DIM, INPUT_DIM>::reset(CostDesiredTrajectories target
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void PythonInterface<STATE_DIM, INPUT_DIM>::init(const std::string& taskFileFolder) {
-  initRobotInterface(taskFileFolder);
+void PythonInterface<STATE_DIM, INPUT_DIM>::init(const RobotInterface<STATE_DIM, INPUT_DIM>& robotInterface,
+                                                 std::unique_ptr<MPC_BASE<STATE_DIM, INPUT_DIM>> mpcPtr) {
+  if (!mpcPtr) {
+    throw std::runtime_error("[PythonInterface] Mpc pointer must be initialized before passing to the Python interface.");
+  }
+  mpcPtr_ = std::move(mpcPtr);
 
-  mpcMrtInterface_.reset(new MPC_MRT_Interface<STATE_DIM, INPUT_DIM>(robotInterface_->getMpc(), robotInterface_->getLogicRulesPtr()));
+  mpcMrtInterface_.reset(new MPC_MRT_Interface<STATE_DIM, INPUT_DIM>(*mpcPtr_, robotInterface.getLogicRulesPtr()));
 
-  dynamics_.reset(robotInterface_->getDynamics().clone());
-  dynamicsDerivatives_.reset(robotInterface_->getDynamicsDerivatives().clone());
-  cost_.reset(robotInterface_->getCost().clone());
-  if (robotInterface_->getConstraintPtr()) {
-    constraints_.reset(robotInterface_->getConstraintPtr()->clone());
+  dynamics_.reset(robotInterface.getDynamics().clone());
+  dynamicsDerivatives_.reset(robotInterface.getDynamicsDerivatives().clone());
+  cost_.reset(robotInterface.getCost().clone());
+  if (robotInterface.getConstraintPtr()) {
+    constraints_.reset(robotInterface.getConstraintPtr()->clone());
   }
 
   if (run_mpc_async_) {

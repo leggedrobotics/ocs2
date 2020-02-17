@@ -130,24 +130,24 @@ class BvpSensitivityEquations final : public OdeBase<STATE_DIM> {
 
     // denormalized time
     const scalar_t t = -z;
-    auto indexAlpha = LinearInterpolation<scalar_t>::timeSegment(t, timeStampPtr_);
+    auto indexAlpha = LinearInterpolation::timeSegment(t, timeStampPtr_);
 
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Fv_, modelDataPtr_, ModelData::dynamics);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Am_, modelDataPtr_, ModelData::dynamicsStateDerivative);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Bm_, modelDataPtr_, ModelData::dynamicsInputDerivative);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Qv_, modelDataPtr_, ModelData::costStateDerivative);
-    ModelData::LinearInterpolation::interpolate(indexAlpha, Cm_, modelDataPtr_, ModelData::stateInputEqConstrStateDerivative);
+    ModelData::interpolate(indexAlpha, Fv_, modelDataPtr_, ModelData::dynamics);
+    ModelData::interpolate(indexAlpha, Am_, modelDataPtr_, ModelData::dynamicsStateDerivative);
+    ModelData::interpolate(indexAlpha, Bm_, modelDataPtr_, ModelData::dynamicsInputDerivative);
+    ModelData::interpolate(indexAlpha, Qv_, modelDataPtr_, ModelData::costStateDerivative);
+    ModelData::interpolate(indexAlpha, Cm_, modelDataPtr_, ModelData::stateInputEqConstrStateDerivative);
 
     ModelData::LinearInterpolation::interpolate(indexAlpha, AmConstrained_, projectedModelDataPtr_, ModelData::dynamicsStateDerivative);
     ModelData::LinearInterpolation::interpolate(indexAlpha, CmProjected_, projectedModelDataPtr_,
                                                 ModelData::stateInputEqConstrStateDerivative);
 
-    EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, costate_, costatePtr_);
-    EigenLinearInterpolation<dynamic_vector_t>::interpolate(indexAlpha, lagrangian_, lagrangianPtr_);
+    LinearInterpolation::interpolate(indexAlpha, costate_, costatePtr_);
+    LinearInterpolation::interpolate(indexAlpha, lagrangian_, lagrangianPtr_);
 
-    indexAlpha = LinearInterpolation<scalar_t>::timeSegment(t, controllerTimeStampPtr_);
-    EigenLinearInterpolation<input_state_matrix_t>::interpolate(indexAlpha, KmConstrained_, KmConstrainedPtr_);
-    EigenLinearInterpolation<state_matrix_t>::interpolate(indexAlpha, Sm_, SmPtr_);
+    indexAlpha = LinearInterpolation::timeSegment(t, controllerTimeStampPtr_);
+    LinearInterpolation::interpolate(indexAlpha, KmConstrained_, KmConstrainedPtr_);
+    LinearInterpolation::interpolate(indexAlpha, Sm_, SmPtr_);
 
     // here we have used RmConstrained = (I-DmConstrained).transpose() * Rm
     // and Km = -(I-DmConstrained) \tilde{L} - CmProjected_

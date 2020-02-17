@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_core/integration/SystemEventHandler.h"
+#include <ocs2_core/integration/SystemEventHandler.h>
 
 namespace ocs2 {
 
@@ -55,8 +55,7 @@ class StateTriggeredEventHandler final : public SystemEventHandler<STATE_DIM> {
    *
    * @param [in] minEventTimeDifference: Minimum accepted time difference between two consecutive events.
    */
-  explicit StateTriggeredEventHandler(scalar_t minEventTimeDifference)
-      : BASE(), minEventTimeDifference_(std::move(minEventTimeDifference)) {
+  explicit StateTriggeredEventHandler(scalar_t minEventTimeDifference) : BASE(), minEventTimeDifference_(minEventTimeDifference) {
     reset();
   }
 
@@ -65,7 +64,18 @@ class StateTriggeredEventHandler final : public SystemEventHandler<STATE_DIM> {
    */
   ~StateTriggeredEventHandler() override = default;
 
-  bool checkEvent(system_t& system, scalar_t time, const state_vector_t& state, size_t& eventID) override {
+  /**
+   * Checks whether an event is activated. If true, the method should also return
+   * a "Non-Negative" ID which indicates the a unique ID for the active events.
+   *
+   * @param [in] system: System dynamics
+   * @param [in] time: The current time.
+   * @param [in] state: The current state vector.
+   * @return pair of event flag and eventID
+   */
+  std::pair<bool, size_t> checkEvent(system_t& system, scalar_t time, const state_vector_t& state) override {
+    size_t eventID = 0;
+
     // StateTriggered event
     system.computeGuardSurfaces(time, state, guardSurfacesValuesCurrent_);
 
@@ -84,7 +94,7 @@ class StateTriggeredEventHandler final : public SystemEventHandler<STATE_DIM> {
       guardSurfacesValuesPrevious_ = guardSurfacesValuesCurrent_;
     }
 
-    return eventTriggered;
+    return {eventTriggered, eventID};
   }
 
   /**
@@ -115,7 +125,8 @@ class StateTriggeredEventHandler final : public SystemEventHandler<STATE_DIM> {
   /**
    * Resets the class.
    */
-  void reset() {
+  void reset() override {
+    BASE::reset();
     lastEventTriggeredTime_ = std::numeric_limits<scalar_t>::lowest();
     guardSurfacesValuesPrevious_.setZero(0);
   }

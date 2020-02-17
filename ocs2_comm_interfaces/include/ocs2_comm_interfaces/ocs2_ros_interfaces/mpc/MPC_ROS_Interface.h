@@ -53,7 +53,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/oc_data/PrimalSolution.h>
 
 // MPC messages
-#include <ocs2_msgs/dummy.h>
 #include <ocs2_msgs/mode_sequence.h>
 #include <ocs2_msgs/mpc_flattened_controller.h>
 #include <ocs2_msgs/mpc_observation.h>
@@ -157,21 +156,6 @@ class MPC_ROS_Interface {
   void shutdownNode();
 
   /**
-   * Initialize the ROS node.
-   *
-   * @param [in] argc: Command line number of arguments.
-   * @param [in] argv: Command line vector of arguments.
-   */
-  void initializeNode(int argc, char* argv[]);
-
-  /**
-   * Returns a shared pointer to the node handle.
-   *
-   * @return shared pointer to the node handle.
-   */
-  std::shared_ptr<ros::NodeHandle>& nodeHandlePtr();
-
-  /**
    * Spins ROS.
    */
   void spin();
@@ -182,11 +166,9 @@ class MPC_ROS_Interface {
    * (2) The observation subscriber which gets the current measured state to invoke the MPC run routine.
    * (3) The desired trajectories subscriber which gets the goal information from user.
    * (4) The desired mode sequence which gets the predefined mode switches for time-triggered hybrid systems.
-   *
-   * @param [in] argc: Command line number of arguments.
-   * @param [in] argv: Command line vector of arguments.
+   * (5) All synchronized ros modules are subscribed with the same node handle
    */
-  void launchNodes(int argc, char* argv[]);
+  void launchNodes(ros::NodeHandle& nodeHandle);
 
   /**
    * This method will be called either after the very fist call of the class or after a call to reset().
@@ -205,24 +187,12 @@ class MPC_ROS_Interface {
 
  protected:
   /**
-   * Signal handler
-   *
-   * @param sig: signal
-   */
-  static void sigintHandler(int sig);
-
-  /**
    * Callback to reset MPC.
    *
    * @param req: Service request.
    * @param res: Service response.
    */
   bool resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_msgs::reset::Response& res);
-
-  /**
-   * Dummy publisher for network debugging.
-   */
-  void publishDummy();
 
   /**
    * Creates MPC Policy message.
@@ -284,7 +254,6 @@ class MPC_ROS_Interface {
   ::ros::Subscriber mpcTargetTrajectoriesSubscriber_;
   ::ros::Subscriber mpcModeSequenceSubscriber_;
   ::ros::Publisher mpcPolicyPublisher_;
-  ::ros::Publisher dummyPublisher_;
   ::ros::ServiceServer mpcResetServiceServer_;
 
   std::unique_ptr<primal_solution_t> currentPrimalSolution_;

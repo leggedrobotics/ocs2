@@ -28,22 +28,31 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+
 #include "ocs2_quadrotor_example/QuadrotorInterface.h"
 
-using namespace ocs2;
-
 int main(int argc, char** argv) {
+  const std::string robotName = "quadrotor";
+  using interface_t = ocs2::quadrotor::QuadrotorInterface;
+  using mpc_ros_t = ocs2::MPC_ROS_Interface<ocs2::quadrotor::STATE_DIM_, ocs2::quadrotor::INPUT_DIM_>;
+
   // task file
   if (argc <= 1) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
   std::string taskFileFolderName(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
-  quadrotor::QuadrotorInterface quadrotorInterface(taskFileFolderName);
+  // Initialize ros node
+  ros::init(argc, argv, robotName + "_mpc");
+  ros::NodeHandle nodeHandle;
+
+  // Robot interface
+  interface_t quadrotorInterface(taskFileFolderName);
 
   // Launch MPC ROS node
-  MPC_ROS_Interface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> mpcNode(quadrotorInterface.getMpc(), "quadrotor");
-  mpcNode.launchNodes(argc, argv);
+  auto mpcPtr = quadrotorInterface.getMpc();
+  mpc_ros_t mpcNode(*mpcPtr, robotName);
+  mpcNode.launchNodes(nodeHandle);
 
   // Successful exit
   return 0;

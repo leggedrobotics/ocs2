@@ -64,15 +64,6 @@ MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::~MRT_ROS_Interface() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::sigintHandler(int sig) {
-  ROS_INFO_STREAM("Shutting MRT node.");
-  ::ros::shutdown();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) {
   this->policyReceivedEver_ = false;
 
@@ -87,16 +78,6 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const CostDesiredTraj
 
   mpcResetServiceClient_.call(resetSrv);
   ROS_INFO_STREAM("MPC node is reset.");
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::publishDummy() {
-  ocs2_msgs::dummy msg;
-  msg.ping = 1;
-  dummyPublisher_.publish(msg);
 }
 
 /******************************************************************************************************/
@@ -265,7 +246,6 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::shutdownNodes() {
   mpcPolicySubscriber_.shutdown();
 
   // shutdown publishers
-  dummyPublisher_.shutdown();
   mpcObservationPublisher_.shutdown();
 }
 
@@ -289,14 +269,6 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::shutdownPublisher() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-::ros::NodeHandlePtr& MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::nodeHandle() {
-  return mrtRosNodeHandlePtr_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::spinMRT() {
   mrtCallbackQueue_.callOne();
 };
@@ -305,31 +277,28 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::spinMRT() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::launchNodes(int argc, char* argv[]) {
+void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::launchNodes(ros::NodeHandle& nodeHandle) {
   this->reset();
 
   // display
   ROS_INFO_STREAM("MRT node is setting up ...");
 
-  // setup ROS
-  ::ros::init(argc, argv, robotName_ + "_mrt", ::ros::init_options::NoSigintHandler);
-  signal(SIGINT, MRT_ROS_Interface::sigintHandler);
-
-  mrtRosNodeHandlePtr_.reset(new ::ros::NodeHandle);
-  mrtRosNodeHandlePtr_->setCallbackQueue(&mrtCallbackQueue_);
-
   // Observation publisher
-  mpcObservationPublisher_ = mrtRosNodeHandlePtr_->advertise<ocs2_msgs::mpc_observation>(robotName_ + "_mpc_observation", 1);
+  mpcObservationPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_observation>(robotName_ + "_mpc_observation", 1);
 
   // SLQ-MPC subscriber
-  mpcPolicySubscriber_ =
-      mrtRosNodeHandlePtr_->subscribe(robotName_ + "_mpc_policy", 1, &MRT_ROS_Interface::mpcPolicyCallback, this, mrtTransportHints_);
-
-  // dummy publisher
-  dummyPublisher_ = mrtRosNodeHandlePtr_->advertise<ocs2_msgs::dummy>("ping", 1, true);
+  auto ops = ros::SubscribeOptions::create<ocs2_msgs::mpc_flattened_controller>(
+      robotName_ + "_mpc_policy",                                                         // topic name
+      1,                                                                                  // queue length
+      boost::bind(&MRT_ROS_Interface::mpcPolicyCallback, this, boost::placeholders::_1),  // callback
+      ros::VoidConstPtr(),                                                                // tracked object
+      &mrtCallbackQueue_                                                                  // pointer to callback queue object
+  );
+  ops.transport_hints = mrtTransportHints_;
+  mpcPolicySubscriber_ = nodeHandle.subscribe(ops);
 
   // MPC reset service client
-  mpcResetServiceClient_ = mrtRosNodeHandlePtr_->serviceClient<ocs2_msgs::reset>(robotName_ + "_mpc_reset");
+  mpcResetServiceClient_ = nodeHandle.serviceClient<ocs2_msgs::reset>(robotName_ + "_mpc_reset");
 
   // display
 #ifdef PUBLISH_THREAD

@@ -105,8 +105,6 @@ void SequentialRiccatiEquations<STATE_DIM, INPUT_DIM>::setData(const scalar_arra
                                                                const size_array_t* postEventIndicesPtr,
                                                                const ModelDataBase::array_t* modelDataEventTimesPtr,
                                                                const RiccatiModificationBase::array_t* riccatiModificationPtr) {
-  BASE::resetNumFunctionCalls();
-
   const auto state_dim = projectedModelDataPtr->front().stateDim_;
   const auto input_dim = projectedModelDataPtr->front().inputDim_;
 

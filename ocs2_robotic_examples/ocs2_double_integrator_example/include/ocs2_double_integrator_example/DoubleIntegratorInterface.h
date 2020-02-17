@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_mpc/MPC_SLQ.h>
-#include <ocs2_robotic_tools/common/RobotInterfaceBase.h>
+#include <ocs2_robotic_tools/common/RobotInterface.h>
 
 // Double Integrator
 #include "ocs2_double_integrator_example/cost/DoubleIntegratorCost.h"
@@ -52,7 +52,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace double_integrator {
 
-class DoubleIntegratorInterface final : public RobotInterfaceBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> {
+class DoubleIntegratorInterface final : public RobotInterface<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -75,23 +75,13 @@ class DoubleIntegratorInterface final : public RobotInterfaceBase<double_integra
   /**
    * Destructor
    */
-  ~DoubleIntegratorInterface() = default;
+  ~DoubleIntegratorInterface() override = default;
 
-  /**
-   * setup all optimizes.
-   *
-   * @param [in] taskFile: Task's file full path.
-   */
-  void setupOptimizer(const std::string& taskFile) final;
+  const dim_t::state_vector_t& getInitialState() { return initialState_; }
+  SLQ_Settings& slqSettings() { return slqSettings_; };
+  MPC_Settings& mpcSettings() { return mpcSettings_; };
 
-  /**
-   * Gets SLQ settings.
-   *
-   * @return SLQ settings
-   */
-  SLQ_Settings& slqSettings();
-
-  mpc_t& getMpc() override { return *mpcPtr_; }
+  std::unique_ptr<mpc_t> getMpc();
 
   const dim_t::state_vector_t& getXFinal() { return xFinal_; }
 
@@ -109,7 +99,7 @@ class DoubleIntegratorInterface final : public RobotInterfaceBase<double_integra
    *
    * @param [in] taskFile: Task's file full path.
    */
-  void loadSettings(const std::string& taskFile) override;
+  void loadSettings(const std::string& taskFile);
 
   /**************
    * Variables
@@ -118,7 +108,7 @@ class DoubleIntegratorInterface final : public RobotInterfaceBase<double_integra
   std::string libraryFolder_;
 
   SLQ_Settings slqSettings_;
-  std::unique_ptr<mpc_t> mpcPtr_;
+  MPC_Settings mpcSettings_;
 
   std::unique_ptr<rollout_base_t> ddpLinearSystemRolloutPtr_;
 
@@ -138,6 +128,7 @@ class DoubleIntegratorInterface final : public RobotInterfaceBase<double_integra
 
   size_t numPartitions_ = 0;
   dim_t::scalar_array_t partitioningTimes_;
+  dim_t::state_vector_t initialState_;
 };
 
 }  // namespace double_integrator

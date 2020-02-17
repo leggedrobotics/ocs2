@@ -29,8 +29,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-err
 ###################################
 catkin_package(
   INCLUDE_DIRS 
-    include 
-    test/include
+    include
     ${EIGEN3_INCLUDE_DIRS}
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
@@ -45,7 +44,6 @@ catkin_package(
 ## Specify additional locations of header files
 include_directories(
   include
-  test/include
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
@@ -90,7 +88,6 @@ endif(cmake_clang_tools_FOUND)
 #############
 
 install(DIRECTORY include/${PROJECT_NAME}/
-                  test/include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 #############

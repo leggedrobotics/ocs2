@@ -152,7 +152,7 @@ endif()
 
 
 # find ocs2_robotic_tools
-find_path(SOURCE_OCS2_ROBOTIC_TOOLS_DIR NAMES ocs2_robotic_tools/common/RobotInterfaceBase.h PATHS ${ocs2_robotic_tools_INCLUDE_DIRS}... NO_DEFAULT_PATH)
+find_path(SOURCE_OCS2_ROBOTIC_TOOLS_DIR NAMES ocs2_robotic_tools/common/RobotInterface.h PATHS ${ocs2_robotic_tools_INCLUDE_DIRS}... NO_DEFAULT_PATH)
 if(EXISTS "${SOURCE_OCS2_ROBOTIC_TOOLS_DIR}")
   set(SOURCE_OCS2_ROBOTIC_TOOLS_DIR "${SOURCE_OCS2_ROBOTIC_TOOLS_DIR}/ocs2_robotic_tools")
   message(STATUS "Found ocs2_robotic_tools at: ${SOURCE_OCS2_ROBOTIC_TOOLS_DIR}")

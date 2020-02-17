@@ -106,10 +106,10 @@ class SequentialErrorEquation final : public OdeBase<STATE_DIM> {
     // normal time
     const scalar_t t = -z;
 
-    const auto indexAlpha = EigenLinearInterpolation<state_matrix_t>::interpolate(t, Gm_, timeStampPtr_, GmPtr_);
+    const auto indexAlpha = LinearInterpolation::interpolate(t, Gm_, timeStampPtr_, GmPtr_);
 
     // derivatives = Gv + Gm*Sve
-    EigenLinearInterpolation<state_vector_t>::interpolate(indexAlpha, derivatives, GvPtr_);
+    LinearInterpolation::interpolate(indexAlpha, derivatives, GvPtr_);
     derivatives.noalias() += Gm_.transpose() * Sve;
   }
 

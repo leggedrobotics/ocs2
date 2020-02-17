@@ -4,11 +4,9 @@
 
 #include <gtest/gtest.h>
 
-#include <ocs2_core/loopshaping/LoopshapingDefinition.h>
+#include <boost/property_tree/info_parser.hpp>
+
 #include <ocs2_core/loopshaping/LoopshapingPropertyTree.h>
-#include <ocs2_core/loopshaping/cost/LoopshapingCost.h>
-#include <ocs2_core/loopshaping/constraint/LoopshapingConstraint.h>
-#include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <experimental/filesystem>
 
 using namespace ocs2;

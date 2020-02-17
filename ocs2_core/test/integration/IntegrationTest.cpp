@@ -31,9 +31,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <fstream>
 #include <memory>
-#include "ocs2_core/control/LinearController.h"
-#include "ocs2_core/dynamics/LinearSystemDynamics.h"
-#include "ocs2_core/integration/Integrator.h"
+
+#include <ocs2_core/control/LinearController.h>
+#include <ocs2_core/dynamics/LinearSystemDynamics.h>
+#include <ocs2_core/integration/Integrator.h>
 
 using namespace ocs2;
 
@@ -172,9 +173,4 @@ TEST(IntegrationTest, integratorType_from_string) {
 TEST(IntegrationTest, integratorType_to_string) {
   std::string name = integrator_type::toString(IntegratorType::ODE45);
   EXPECT_EQ(name, "ODE45");
-}
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

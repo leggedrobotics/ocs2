@@ -2,20 +2,28 @@
 
 #include <ocs2_ballbot_example/BallbotInterface.h>
 #include <ocs2_ballbot_example/definitions.h>
-#include <ocs2_ballbot_example/ros_comm/MRT_ROS_Dummy_Ballbot.h>
+#include <ocs2_ballbot_example/ros_comm/BallbotDummyVisualization.h>
 #include <ocs2_ballbot_raisim_example/BallbotRaisimConversions.h>
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 #include <ocs2_raisim/RaisimRollout.h>
 #include <ocs2_raisim_ros/RaisimHeightmapRosConverter.h>
 
 int main(int argc, char* argv[]) {
+  const std::string robotName = "ballbot";
+  using mrt_t = ocs2::MRT_ROS_Interface<ocs2::ballbot::STATE_DIM_, ocs2::ballbot::INPUT_DIM_>;
+  using dummy_t = ocs2::MRT_ROS_Dummy_Loop<ocs2::ballbot::STATE_DIM_, ocs2::ballbot::INPUT_DIM_>;
+  using vis_t = ocs2::ballbot::BallbotDummyVisualization;
+
   // task file
   if (argc <= 1) {
     throw std::runtime_error("No task tile specified.");
   }
   const std::string taskFileFolderName(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
-  ros::init(argc, argv, "ballbot_raisim_dummy");
+  // Init ros
+  ros::init(argc, argv, robotName + "_raisim_dummy");
+  ros::NodeHandle nodeHandle;
 
   // read urdf file
   const std::string urdfParamName = "/ocs2_ballbot_raisim_description";
@@ -41,22 +49,23 @@ int main(int argc, char* argv[]) {
   ocs2::ballbot::BallbotInterface interface(taskFileFolderName);
 
   // setup MRT
-  ocs2::MRT_ROS_Interface<ocs2::ballbot::STATE_DIM_, ocs2::ballbot::INPUT_DIM_> mrt("ballbot");
+  mrt_t mrt(robotName);
   mrt.initRollout(&simRollout);
+  mrt.launchNodes(nodeHandle);
 
-  ocs2::ballbot::MRT_ROS_Dummy_Ballbot dummyBallbot(mrt, interface.mpcSettings().mrtDesiredFrequency_,
-                                                    interface.mpcSettings().mpcDesiredFrequency_);
+  // Visualization
+  std::shared_ptr<vis_t> ballbotDummyVisualization(new vis_t(nodeHandle));
 
-  dummyBallbot.launchNodes(argc, argv);
+  // Dummy
+  dummy_t dummyBallbot(mrt, interface.mpcSettings().mrtDesiredFrequency_, interface.mpcSettings().mpcDesiredFrequency_);
+  dummyBallbot.subscribeObservers({ballbotDummyVisualization});
 
   // initial state and command
-  ocs2::ballbot::MRT_ROS_Dummy_Ballbot::system_observation_t initObservation;
+  mrt_t::system_observation_t initObservation;
   initObservation.state() = interface.getInitialState();
 
-  ocs2::CostDesiredTrajectories initCostDesiredTrajectories;
-  initCostDesiredTrajectories.desiredTimeTrajectory().push_back(initObservation.time());
-  initCostDesiredTrajectories.desiredStateTrajectory().push_back(initObservation.state());
-  initCostDesiredTrajectories.desiredInputTrajectory().push_back(initObservation.input());
+  // initial command
+  ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time()}, {initObservation.state()}, {initObservation.input()});
 
   // run dummy
   dummyBallbot.run(initObservation, initCostDesiredTrajectories);

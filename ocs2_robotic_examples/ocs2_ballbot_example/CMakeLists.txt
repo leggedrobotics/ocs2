@@ -54,6 +54,7 @@ catkin_package(
     ballbot_SLQ
     ocs2_ballbot_dynamics
     ocs2_ballbot
+    ocs2_ballbot_visualization
   DEPENDS
     Boost
 )
@@ -99,6 +100,17 @@ target_link_libraries(ocs2_ballbot
   dl
 )
 
+# Ballbot visualization
+add_library(ocs2_ballbot_visualization
+  src/BallbotDummyVisualization.cpp
+)
+add_dependencies(ocs2_ballbot_visualization
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(ocs2_ballbot_visualization
+  ${catkin_LIBRARIES}
+)
+
 # Mpc node
 add_executable(ballbot_mpc
   src/MPC_Ballbot_Node.cpp
@@ -114,13 +126,13 @@ target_link_libraries(ballbot_mpc
 # Dummy node
 add_executable(ballbot_dummy_test
   src/Dummy_Ballbot_Node.cpp
-  src/BallbotDummyVisualization.cpp
 )
 add_dependencies(ballbot_dummy_test
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(ballbot_dummy_test
   ocs2_ballbot
+  ocs2_ballbot_visualization
   ${catkin_LIBRARIES}
 )
 

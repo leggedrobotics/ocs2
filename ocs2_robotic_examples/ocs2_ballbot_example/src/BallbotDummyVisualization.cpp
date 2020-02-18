@@ -7,6 +7,7 @@
 #include <visualization_msgs/Marker.h>
 #include <kdl_parser/kdl_parser.hpp>
 
+#include <ocs2_robotic_tools/common/RotationTransforms.h>
 #include "ocs2_ballbot_example/ros_comm/BallbotDummyVisualization.h"
 
 namespace ocs2 {
@@ -34,10 +35,8 @@ void BallbotDummyVisualization::update(const system_observation_t& observation, 
   // publish command transform
   const Eigen::Vector3d desiredPositionWorldToTarget = Eigen::Vector3d(costDesiredTrajectories.desiredStateTrajectory().back()(0),
                                                                        costDesiredTrajectories.desiredStateTrajectory().back()(1), 0.0);
-  const Eigen::Quaterniond desiredQuaternionBaseToWorld =
-      Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory().back()(2), Eigen::Vector3d{0, 0, 1}} *
-      Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory().back()(3), Eigen::Vector3d{0, 1, 0}} *
-      Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory().back()(4), Eigen::Vector3d{1, 0, 0}};
+  const auto desiredQuaternionBaseToWorld =
+      getQuaternionFromEulerAnglesZyx<double>(costDesiredTrajectories.desiredStateTrajectory().back().segment<3>(2));
   geometry_msgs::TransformStamped command_frame_transform;
   command_frame_transform.header.stamp = timeMsg;
   command_frame_transform.header.frame_id = "odom";

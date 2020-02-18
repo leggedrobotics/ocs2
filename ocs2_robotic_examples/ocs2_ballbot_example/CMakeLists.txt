@@ -229,7 +229,7 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS ocs2_ballbot ballbot_SLQ ocs2_ballbot_dynamics ballbotPyBindings_cpp
+install(TARGETS ocs2_ballbot ballbot_SLQ ocs2_ballbot_dynamics ocs2_ballbot_visualization ballbotPyBindings_cpp
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

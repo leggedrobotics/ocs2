@@ -46,7 +46,23 @@ int main(int argc, char* argv[]) {
                 std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5),
       nullptr, raisimRolloutSettings, nullptr);
 
-  ocs2::ballbot::BallbotInterface interface(taskFileFolderName);
+  // Terrain
+  std::unique_ptr<ocs2::RaisimHeightmapRosConverter> heightmapPub;  // keep object alive until end of program
+  if (raisimRolloutSettings.generateTerrain_) {
+    raisim::TerrainProperties terrainProperties;
+    terrainProperties.zScale = raisimRolloutSettings.terrainRoughness_;
+    terrainProperties.seed = 1;
+    auto terrain = simRollout.generateTerrain(terrainProperties);
+
+    // ensure height at zero is zero
+    const auto heightAtZero = terrain->getHeight(0.0, 0.0);
+    for (auto& height : terrain->getHeightMap()) {
+      height -= heightAtZero;
+    }
+
+    heightmapPub.reset(new ocs2::RaisimHeightmapRosConverter());
+    heightmapPub->publishGridmap(*terrain);
+  }
 
   // setup MRT
   mrt_t mrt(robotName);
@@ -57,6 +73,7 @@ int main(int argc, char* argv[]) {
   std::shared_ptr<vis_t> ballbotDummyVisualization(new vis_t(nodeHandle));
 
   // Dummy
+  ocs2::ballbot::BallbotInterface interface(taskFileFolderName);
   dummy_t dummyBallbot(mrt, interface.mpcSettings().mrtDesiredFrequency_, interface.mpcSettings().mpcDesiredFrequency_);
   dummyBallbot.subscribeObservers({ballbotDummyVisualization});
 

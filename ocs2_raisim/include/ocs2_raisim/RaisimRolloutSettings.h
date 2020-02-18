@@ -53,13 +53,16 @@ class RaisimRolloutSettings {
    * @param[in] controlMode Whether raisim should only apply generalized forces or also use an internal PD controller
    * @param[in] pGains Gains on generalized position for the Raisim-internal PD controller (if controlMode != FORCE_AND_TORQUE)
    * @param[in] dGains Gains on generalized velocity for the Raisim-internal PD controller (if controlMode != FORCE_AND_TORQUE)
+   * @param[in] generateTerrain Whether or not uneven terrain should be used inside raisim
+   * @param[in] terrainRoughness: z scale of the raisim heightmap
    */
   explicit RaisimRolloutSettings(Rollout_Settings rolloutSettings = Rollout_Settings(), bool setSimulatorStateOnRolloutRunAlways = true,
                                  bool setSimulatorStateOnRolloutRunOnce = false, int controlDecimation = 1,
                                  std::vector<std::string> orderedJointNames = {},
                                  raisim::ControlMode::Type controlMode = raisim::ControlMode::FORCE_AND_TORQUE,
                                  const Eigen::VectorXd& pGains = Eigen::VectorXd::Zero(0),  // NOLINT(modernize-pass-by-value)
-                                 const Eigen::VectorXd& dGains = Eigen::VectorXd::Zero(0))  // NOLINT(modernize-pass-by-value)
+                                 const Eigen::VectorXd& dGains = Eigen::VectorXd::Zero(0),  // NOLINT(modernize-pass-by-value)
+                                 bool generateTerrain = false, double terrainRoughness = 1.0)
       : rolloutSettings_(std::move(rolloutSettings)),
         setSimulatorStateOnRolloutRunAlways_(setSimulatorStateOnRolloutRunAlways),
         setSimulatorStateOnRolloutRunOnce_(setSimulatorStateOnRolloutRunOnce),
@@ -67,7 +70,9 @@ class RaisimRolloutSettings {
         orderedJointNames_(std::move(orderedJointNames)),
         controlMode_(controlMode),
         pGains_(pGains),
-        dGains_(dGains) {}
+        dGains_(dGains),
+        generateTerrain_(generateTerrain),
+        terrainRoughness_(terrainRoughness) {}
 
   /**
    * @brief Constructor taking directly a settings file for initialization
@@ -97,6 +102,8 @@ class RaisimRolloutSettings {
   raisim::ControlMode::Type controlMode_;
   Eigen::VectorXd pGains_;
   Eigen::VectorXd dGains_;
+  bool generateTerrain_;
+  double terrainRoughness_;
 };
 
 inline void RaisimRolloutSettings::loadSettings(const std::string& filename, const std::string& fieldName, bool verbose) {
@@ -128,6 +135,9 @@ inline void RaisimRolloutSettings::loadSettings(const std::string& filename, con
   if (!dGainsVec.empty()) {
     dGains_ = Eigen::Map<Eigen::VectorXd>(dGainsVec.data(), dGainsVec.size());
   }
+
+  loadData::loadPtreeValue(pt, generateTerrain_, raisimFieldName + ".generateTerrain", verbose);
+  loadData::loadPtreeValue(pt, terrainRoughness_, raisimFieldName + ".terrainRoughness", verbose);
 }
 
 }  // namespace ocs2

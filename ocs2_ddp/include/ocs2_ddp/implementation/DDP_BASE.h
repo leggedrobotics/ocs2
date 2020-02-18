@@ -1342,7 +1342,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::levenbergMarquardt() {
     ++levenbergMarquardtImpl_.numSuccessiveRejections;
 
     // swap back the cached nominal trajectories
-    swapNominalTrajectoriesToCache();
+    swapDataToCache();
     // update nominal controller
     std::swap(nominalControllerUpdateIS_, cachedControllerUpdateIS_);
     nominalControllersStock_.swap(cachedControllersStock_);
@@ -1574,7 +1574,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateControllerUpdateMaxNorm(scalar_t& 
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::swapNominalTrajectoriesToCache() {
+void DDP_BASE<STATE_DIM, INPUT_DIM>::swapDataToCache() {
   cachedTimeTrajectoriesStock_.swap(nominalTimeTrajectoriesStock_);
   cachedPostEventIndicesStock_.swap(nominalPostEventIndicesStock_);
   cachedStateTrajectoriesStock_.swap(nominalStateTrajectoriesStock_);
@@ -2097,7 +2097,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
   Eigen::setNbThreads(1);
 
   // cache the nominal trajectories before the new rollout (time, state, input, ...)
-  swapNominalTrajectoriesToCache();
+  swapDataToCache();
 
   // initial controller rollout
   forwardPassTimer_.startTimer();
@@ -2346,7 +2346,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
     scalar_t cachedInequalityConstraintPenalty = inequalityConstraintPenalty_;
 
     // cache the nominal trajectories before the new rollout (time, state, input, ...)
-    swapNominalTrajectoriesToCache();
+    swapDataToCache();
 
     // run the an iteration of the DDP algorithm and update the member variables
     runIteration();
@@ -2388,7 +2388,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
   }
 
   // cache the nominal trajectories before the new rollout (time, state, input, ...)
-  swapNominalTrajectoriesToCache();
+  swapDataToCache();
 
   // finding the final optimal stepLength and getting the optimal trajectories and controller
   searchStrategyTimer_.startTimer();

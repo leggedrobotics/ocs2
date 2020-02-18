@@ -134,21 +134,14 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * Constructor
    *
    * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
-   * @param [in] systemDerivativesPtr: The system dynamics derivatives for
-   * subsystems of the system.
-   * @param [in] systemConstraintsPtr: The system constraint function and its
-   * derivatives for subsystems.
-   * @param [in] costFunctionPtr: The cost function (intermediate and terminal
-   * costs) and its derivatives for subsystems.
-   * @param [in] operatingTrajectoriesPtr: The operating trajectories of system
-   * which will be used for initialization.
-   * @param [in] ddpSettings: Structure containing the settings for the DDP
-   * algorithm.
-   * @param [in] logicRulesPtr: The logic rules used for implementing
-   * mixed-logic dynamical systems.
-   * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite
-   * time optimal control formulation. If it is not defined, we will use the
-   * terminal cost function defined in costFunctionPtr.
+   * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
+   * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
+   * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
+   * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization.
+   * @param [in] ddpSettings: Structure containing the settings for the DDP algorithm.
+   * @param [in] logicRulesPtr: The logic rules used for implementing mixed-logic dynamical systems.
+   * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation.
+   * If it is not defined, we will use the terminal cost function defined in costFunctionPtr.
    */
   DDP_BASE(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
            const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
@@ -580,16 +573,16 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void calculateControllerUpdateMaxNorm(scalar_t& maxDeltaUffNorm, scalar_t& maxDeltaUeeNorm);
 
   /**
-   * Caches the nominal trajectories.
-   */
-  void swapNominalTrajectoriesToCache();
-
-  /**
    * Display rollout info and scores.
    */
   void printRolloutInfo();
 
  private:
+  /**
+   * Caches the iteration's data.
+   */
+  void swapDataToCache();
+
   /**
    * Corrects the initial caching of the nominal trajectories.
    * This is necessary for:

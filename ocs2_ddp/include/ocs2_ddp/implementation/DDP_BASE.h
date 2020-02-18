@@ -81,8 +81,7 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t* rolloutPtr, const
     }
 
     // initialize penalty functions
-    penaltyPtrStock_.emplace_back(std::shared_ptr<PenaltyBase<STATE_DIM, INPUT_DIM>>(
-        new RelaxedBarrierPenalty<STATE_DIM, INPUT_DIM>(ddpSettings_.inequalityConstraintMu_, ddpSettings_.inequalityConstraintDelta_)));
+    penaltyPtrStock_.emplace_back(new RelaxedBarrierPenalty(ddpSettings_.inequalityConstraintMu_, ddpSettings_.inequalityConstraintDelta_));
 
   }  // end of i loop
 
@@ -381,14 +380,15 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::calculateRolloutConstraintsISE(const scalar
       stateInputEqualityNorm2Trajectory.emplace_back(Ev.head(nc1).squaredNorm());
 
       // inequality constraints
-      inequalityNorm2Trajectory.emplace_back(0.0);
-      inequalityPenaltyTrajectory.emplace_back(0.0);
       const auto ncIneq = systemConstraints.numInequalityConstraint(timeTrajectoriesStock[i][k]);
       if (ncIneq > 0) {
         scalar_array_t HvIneq;
         systemConstraints.getInequalityConstraint(HvIneq);
-        penaltyPtrStock_[workerIndex]->getPenaltyCost(HvIneq, inequalityPenaltyTrajectory.back());
-        penaltyPtrStock_[workerIndex]->getConstraintViolationSquaredNorm(HvIneq, inequalityNorm2Trajectory.back());
+        inequalityPenaltyTrajectory.emplace_back(penaltyPtrStock_[workerIndex]->getPenaltyCost(HvIneq));
+        inequalityNorm2Trajectory.emplace_back(penaltyPtrStock_[workerIndex]->getConstraintViolationSquaredNorm(HvIneq));
+      } else {
+        inequalityNorm2Trajectory.emplace_back(0.0);
+        inequalityPenaltyTrajectory.emplace_back(0.0);
       }
 
       // switching time constraints
@@ -694,29 +694,18 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::augmentCostWorker(size_t workerIndex, scala
 
   // inequality constraints
   if (modelData.numIneqConstr_ > 0) {
-    // TODO: fix this
-    scalar_t p;
-    state_vector_t dpdx;
-    input_vector_t dpdu;
-    typename BASE::state_matrix_t ddpdxdx;
-    typename BASE::input_matrix_t ddpdudu;
-    typename BASE::input_state_matrix_t ddpdudx;
-    penaltyPtrStock_[workerIndex]->getPenaltyCost(modelData.ineqConstr_, p);
-    penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeState(modelData.ineqConstr_, modelData.ineqConstrStateDerivative_, dpdx);
-    penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInput(modelData.ineqConstr_, modelData.ineqConstrInputDerivative_, dpdu);
-    penaltyPtrStock_[workerIndex]->getPenaltyCostSecondDerivativeState(modelData.ineqConstr_, modelData.ineqConstrStateDerivative_,
-                                                                       modelData.ineqConstrStateSecondDerivative_, ddpdxdx);
-    penaltyPtrStock_[workerIndex]->getPenaltyCostSecondDerivativeInput(modelData.ineqConstr_, modelData.ineqConstrInputDerivative_,
-                                                                       modelData.ineqConstrInputSecondDerivative_, ddpdudu);
-    penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInputState(modelData.ineqConstr_, modelData.ineqConstrStateDerivative_,
-                                                                      modelData.ineqConstrInputDerivative_,
-                                                                      modelData.ineqConstrInputStateDerivative_, ddpdudx);
-    modelData.cost_ += p;
-    modelData.costStateDerivative_ += dpdx;
-    modelData.costStateSecondDerivative_ += ddpdxdx;
-    modelData.costInputDerivative_ += dpdu;
-    modelData.costInputSecondDerivative_ += ddpdudu;
-    modelData.costInputStateDerivative_ += ddpdudx;
+    modelData.cost_ += penaltyPtrStock_[workerIndex]->getPenaltyCost(modelData.ineqConstr_);
+    modelData.costStateDerivative_ +=
+        penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeState(modelData.ineqConstr_, modelData.ineqConstrStateDerivative_);
+    modelData.costInputDerivative_ +=
+        penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInput(modelData.ineqConstr_, modelData.ineqConstrInputDerivative_);
+    modelData.costStateSecondDerivative_ += penaltyPtrStock_[workerIndex]->getPenaltyCostSecondDerivativeState(
+        modelData.ineqConstr_, modelData.ineqConstrStateDerivative_, modelData.ineqConstrStateSecondDerivative_);
+    modelData.costInputSecondDerivative_ += penaltyPtrStock_[workerIndex]->getPenaltyCostSecondDerivativeInput(
+        modelData.ineqConstr_, modelData.ineqConstrInputDerivative_, modelData.ineqConstrInputSecondDerivative_);
+    modelData.costInputStateDerivative_ += penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInputState(
+        modelData.ineqConstr_, modelData.ineqConstrStateDerivative_, modelData.ineqConstrInputDerivative_,
+        modelData.ineqConstrInputStateDerivative_);
 
     // checking the numerical stability again
     if (ddpSettings_.checkNumericalStability_) {

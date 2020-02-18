@@ -89,7 +89,6 @@ class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::logic_rules_machine_t;
   using typename BASE::operating_trajectorie_rollout_t;
   using typename BASE::operating_trajectories_base_t;
-  using typename BASE::penalty_base_t;
   using typename BASE::rollout_base_t;
 
   using riccati_equations_t = DiscreteTimeRiccatiEquations;

@@ -110,7 +110,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using constraint_base_t = ConstraintBase<STATE_DIM, INPUT_DIM>;
   using cost_function_base_t = CostFunctionBase<STATE_DIM, INPUT_DIM>;
   using operating_trajectories_base_t = SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM>;
-  using penalty_base_t = PenaltyBase<STATE_DIM, INPUT_DIM>;
 
   using rollout_base_t = RolloutBase<STATE_DIM, INPUT_DIM>;
   using time_triggered_rollout_t = TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
@@ -666,8 +665,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   std::vector<std::unique_ptr<rollout_base_t>> dynamicsForwardRolloutPtrStock_;
   std::vector<std::unique_ptr<rollout_base_t>> operatingTrajectoriesRolloutPtrStock_;
   std::vector<std::unique_ptr<linear_quadratic_approximator_t>> linearQuadraticApproximatorPtrStock_;
-  std::vector<typename cost_function_base_t::Ptr> heuristicsFunctionsPtrStock_;
-  std::vector<std::shared_ptr<penalty_base_t>> penaltyPtrStock_;
+  std::vector<std::unique_ptr<cost_function_base_t>> heuristicsFunctionsPtrStock_;
+  std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrStock_;
 
   scalar_t nominalControllerUpdateIS_ = 0.0;
   linear_controller_array_t nominalControllersStock_;

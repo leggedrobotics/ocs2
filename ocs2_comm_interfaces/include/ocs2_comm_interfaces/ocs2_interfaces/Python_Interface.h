@@ -266,7 +266,7 @@ class PythonInterface {
   std::unique_ptr<cost_t> cost_;
   CostDesiredTrajectories targetTrajectories_;
 
-  std::unique_ptr<PenaltyBase<STATE_DIM, INPUT_DIM>> penalty_;
+  std::unique_ptr<PenaltyBase> penalty_;
 
   // multithreading helper variables
   bool run_mpc_async_;

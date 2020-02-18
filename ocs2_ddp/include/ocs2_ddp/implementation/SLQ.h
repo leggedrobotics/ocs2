@@ -130,33 +130,25 @@ void SLQ<STATE_DIM, INPUT_DIM>::approximateConstrainedLQWorker(size_t workerInde
 
   // inequality constraints
   if (BASE::modelDataTrajectoriesStock_[i][k].numIneqConstr_ > 0) {
-    scalar_t p;
-    state_vector_t dpdx;
-    input_vector_t dpdu;
-    state_matrix_t ddpdxdx;
-    input_matrix_t ddpdudu;
-    input_state_matrix_t ddpdudx;
-    BASE::penaltyPtrStock_[workerIndex]->getPenaltyCost(BASE::modelDataTrajectoriesStock_[i][k].ineqConstr_, p);
-    BASE::penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeState(
-        BASE::modelDataTrajectoriesStock_[i][k].ineqConstr_, BASE::modelDataTrajectoriesStock_[i][k].ineqConstrStateDerivative_, dpdx);
-    BASE::penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInput(
-        BASE::modelDataTrajectoriesStock_[i][k].ineqConstr_, BASE::modelDataTrajectoriesStock_[i][k].ineqConstrInputDerivative_, dpdu);
-    BASE::penaltyPtrStock_[workerIndex]->getPenaltyCostSecondDerivativeState(
-        BASE::modelDataTrajectoriesStock_[i][k].ineqConstr_, BASE::modelDataTrajectoriesStock_[i][k].ineqConstrStateDerivative_,
-        BASE::modelDataTrajectoriesStock_[i][k].ineqConstrStateSecondDerivative_, ddpdxdx);
-    BASE::penaltyPtrStock_[workerIndex]->getPenaltyCostSecondDerivativeInput(
-        BASE::modelDataTrajectoriesStock_[i][k].ineqConstr_, BASE::modelDataTrajectoriesStock_[i][k].ineqConstrInputDerivative_,
-        BASE::modelDataTrajectoriesStock_[i][k].ineqConstrInputSecondDerivative_, ddpdudu);
-    BASE::penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInputState(
-        BASE::modelDataTrajectoriesStock_[i][k].ineqConstr_, BASE::modelDataTrajectoriesStock_[i][k].ineqConstrStateDerivative_,
-        BASE::modelDataTrajectoriesStock_[i][k].ineqConstrInputDerivative_,
-        BASE::modelDataTrajectoriesStock_[i][k].ineqConstrInputStateDerivative_, ddpdudx);
-    BASE::modelDataTrajectoriesStock_[i][k].cost_ += p;
-    BASE::modelDataTrajectoriesStock_[i][k].costStateDerivative_ += dpdx;
-    BASE::modelDataTrajectoriesStock_[i][k].costStateSecondDerivative_ += ddpdxdx;
-    BASE::modelDataTrajectoriesStock_[i][k].costInputDerivative_ += dpdu;
-    BASE::modelDataTrajectoriesStock_[i][k].costInputSecondDerivative_ += ddpdudu;
-    BASE::modelDataTrajectoriesStock_[i][k].costInputStateDerivative_ += ddpdudx;
+    BASE::modelDataTrajectoriesStock_[i][k].cost_ +=
+        BASE::penaltyPtrStock_[workerIndex]->getPenaltyCost(BASE::modelDataTrajectoriesStock_[i][k].ineqConstr_);
+    BASE::modelDataTrajectoriesStock_[i][k].costStateDerivative_ += BASE::penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeState(
+        BASE::modelDataTrajectoriesStock_[i][k].ineqConstr_, BASE::modelDataTrajectoriesStock_[i][k].ineqConstrStateDerivative_);
+    BASE::modelDataTrajectoriesStock_[i][k].costInputDerivative_ += BASE::penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInput(
+        BASE::modelDataTrajectoriesStock_[i][k].ineqConstr_, BASE::modelDataTrajectoriesStock_[i][k].ineqConstrInputDerivative_);
+    BASE::modelDataTrajectoriesStock_[i][k].costStateSecondDerivative_ +=
+        BASE::penaltyPtrStock_[workerIndex]->getPenaltyCostSecondDerivativeState(
+            BASE::modelDataTrajectoriesStock_[i][k].ineqConstr_, BASE::modelDataTrajectoriesStock_[i][k].ineqConstrStateDerivative_,
+            BASE::modelDataTrajectoriesStock_[i][k].ineqConstrStateSecondDerivative_);
+    BASE::modelDataTrajectoriesStock_[i][k].costInputSecondDerivative_ +=
+        BASE::penaltyPtrStock_[workerIndex]->getPenaltyCostSecondDerivativeInput(
+            BASE::modelDataTrajectoriesStock_[i][k].ineqConstr_, BASE::modelDataTrajectoriesStock_[i][k].ineqConstrInputDerivative_,
+            BASE::modelDataTrajectoriesStock_[i][k].ineqConstrInputSecondDerivative_);
+    BASE::modelDataTrajectoriesStock_[i][k].costInputStateDerivative_ +=
+        BASE::penaltyPtrStock_[workerIndex]->getPenaltyCostDerivativeInputState(
+            BASE::modelDataTrajectoriesStock_[i][k].ineqConstr_, BASE::modelDataTrajectoriesStock_[i][k].ineqConstrStateDerivative_,
+            BASE::modelDataTrajectoriesStock_[i][k].ineqConstrInputDerivative_,
+            BASE::modelDataTrajectoriesStock_[i][k].ineqConstrInputStateDerivative_);
 
     // checking the numerical stability again
     if (BASE::ddpSettings_.checkNumericalStability_) {

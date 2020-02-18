@@ -81,8 +81,7 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t* rolloutPtr, const
     }
 
     // initialize penalty functions
-    penaltyPtrStock_.emplace_back(std::shared_ptr<PenaltyBase<STATE_DIM, INPUT_DIM>>(
-        new RelaxedBarrierPenalty<STATE_DIM, INPUT_DIM>(ddpSettings_.inequalityConstraintMu_, ddpSettings_.inequalityConstraintDelta_)));
+    penaltyPtrStock_.emplace_back(new RelaxedBarrierPenalty(ddpSettings_.inequalityConstraintMu_, ddpSettings_.inequalityConstraintDelta_));
 
   }  // end of i loop
 }
@@ -1073,8 +1072,9 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
     for (size_t k = 0; k + 1 < timeTrajectoriesStock[i].size(); k++) {
       if (k == 0) {
         if (ncIneqTrajectoriesStock[i][0] > 0) {
-          penaltyPtrStock_[workerIndex]->getPenaltyCost(hTrajectoriesStock[i][k], currentPenalty);
-          penaltyPtrStock_[workerIndex]->getConstraintViolationSquaredNorm(hTrajectoriesStock[i][k], currentInequalityViolationSquaredNorm);
+          currentPenalty = penaltyPtrStock_[workerIndex]->getPenaltyCost(hTrajectoriesStock[i][k]);
+          currentInequalityViolationSquaredNorm =
+              penaltyPtrStock_[workerIndex]->getConstraintViolationSquaredNorm(hTrajectoriesStock[i][k]);
         } else {
           currentPenalty = 0.0;
           currentInequalityViolationSquaredNorm = 0.0;
@@ -1085,8 +1085,8 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
       }
 
       if (ncIneqTrajectoriesStock[i][k + 1] > 0) {
-        penaltyPtrStock_[workerIndex]->getPenaltyCost(hTrajectoriesStock[i][k + 1], nextPenalty);
-        penaltyPtrStock_[workerIndex]->getConstraintViolationSquaredNorm(hTrajectoriesStock[i][k + 1], nextInequalityViolationSquaredNorm);
+        nextPenalty = penaltyPtrStock_[workerIndex]->getPenaltyCost(hTrajectoriesStock[i][k + 1]);
+        nextInequalityViolationSquaredNorm = penaltyPtrStock_[workerIndex]->getConstraintViolationSquaredNorm(hTrajectoriesStock[i][k + 1]);
       } else {
         nextPenalty = 0.0;
         nextInequalityViolationSquaredNorm = 0.0;

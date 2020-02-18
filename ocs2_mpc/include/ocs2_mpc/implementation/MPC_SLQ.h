@@ -116,12 +116,12 @@ void MPC_SLQ<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTime
   // number of iterations
   if (BASE::initRun_ /*|| slqPtr_->getController().at(BASE::finalActivePartitionIndex_).empty()*/) {
     slqPtr_->ddpSettings().maxNumIterations_ = BASE::mpcSettings_.initMaxNumIterations_;
-    slqPtr_->ddpSettings().maxLearningRate_ = BASE::mpcSettings_.initMaxLearningRate_;
-    slqPtr_->ddpSettings().minLearningRate_ = BASE::mpcSettings_.initMinLearningRate_;
+    slqPtr_->ddpSettings().maxLearningRate_ = BASE::mpcSettings_.initMaxStepLength_;
+    slqPtr_->ddpSettings().minLearningRate_ = BASE::mpcSettings_.initMinStepLength_;
   } else {
     slqPtr_->ddpSettings().maxNumIterations_ = BASE::mpcSettings_.runtimeMaxNumIterations_;
-    slqPtr_->ddpSettings().maxLearningRate_ = BASE::mpcSettings_.runtimeMaxLearningRate_;
-    slqPtr_->ddpSettings().minLearningRate_ = BASE::mpcSettings_.runtimeMinLearningRate_;
+    slqPtr_->ddpSettings().maxLearningRate_ = BASE::mpcSettings_.runtimeMaxStepLength_;
+    slqPtr_->ddpSettings().minLearningRate_ = BASE::mpcSettings_.runtimeMinStepLength_;
   }
 
   // use parallel Riccati solver at each call of realtime-iteration SLQ

@@ -2,7 +2,7 @@
 
 // Constraints
 #include "ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h"
-#include "ocs2_switched_model_interface/constraint/EndEffectorVelocityHeadingConstraint.h"
+#include "ocs2_switched_model_interface/constraint/EndEffectorVelocityInFootFrameConstraint.h"
 #include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
 #include "ocs2_switched_model_interface/constraint/ZeroForceConstraint.h"
 
@@ -31,9 +31,9 @@ void ComKinoConstraintBaseAd::initializeConstraintTerms() {
     // Velocity Constraint
     auto _o_endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityConstraint(
         footIdx, EndEffectorVelocityConstraintSettings(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
-    // EE Heading Velocity Constraint
-    auto _o_endEffectorVelocityHeadingConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityHeadingConstraint(
-          footIdx, EndEffectorVelocityHeadingConstraintSettings(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
+    // EE InFootFrame Velocity Constraint
+    auto _f_endEffectorVelocityInFootFrameConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityInFootFrameConstraint(
+          footIdx, EndEffectorVelocityInFootFrameConstraintSettings(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
 
     // Inequalities
     inequalityConstraintCollection_.add(std::move(frictionCone), footName + "_FrictionCone");
@@ -41,7 +41,7 @@ void ComKinoConstraintBaseAd::initializeConstraintTerms() {
     // State input equalities
     equalityStateInputConstraintCollection_.add(std::move(zeroForceConstraint), footName + "_ZeroForce");
     equalityStateInputConstraintCollection_.add(std::move(_o_endEffectorVelocityConstraint), footName + "_o_EEVel");
-    equalityStateInputConstraintCollection_.add(std::move(_o_endEffectorVelocityHeadingConstraint), footName + "_o_EEVelHeading");
+    equalityStateInputConstraintCollection_.add(std::move(_f_endEffectorVelocityInFootFrameConstraint), footName + "_f_EEVel");
   }
 }
 
@@ -69,34 +69,37 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
 
     // Active foot placement for stance legs
     auto _o_EEVelConstraint =
-        equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityConstraint>(footName + "_o_EEVel");
-    // Rolling Heading Velocity constraint for stance legs
-    auto _o_EEVelHeadingConstraint =
-      equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityHeadingConstraint>(footName + "_o_EEVelHeading");
+      equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityConstraint>(footName + "_o_EEVel");
+    // Rolling InFootFrame Velocity constraint for stance legs
+    auto _f_EEVelInFootFrameConstraint =
+      equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityInFootFrameConstraint>(footName + "_f_EEVel");
 
     EndEffectorVelocityConstraintSettings _o_eeVelConSettings;
-    EndEffectorVelocityHeadingConstraintSettings _o_eeVelHeadingConSettings;
+    EndEffectorVelocityInFootFrameConstraintSettings _f_eeVelInFootFrameConSettings;
 
     if (stanceLegs_[footIdx]) {
-      // EE velocities in lateral and upward directions (y,z) in EE frame are zero.
-      // In origin frame their projected values (in x,y plane) cancel, and z==0
-      _o_eeVelHeadingConSettings.b.resize(3);
-      _o_eeVelHeadingConSettings.b << 0, 0, 0;
-      _o_eeVelHeadingConSettings.A.resize(3,3);
-      _o_eeVelHeadingConSettings.A << 0, 1, 0,\
-                                     -1, 0, 0,\
-                                      0, 0, 1;
-      _o_EEVelHeadingConstraint->configure(_o_eeVelHeadingConSettings);
-      _o_EEVelHeadingConstraint->setActivity(true);
+      // EE velocities in lateral direction (y) in foot frame should be zero.
+      _f_eeVelInFootFrameConSettings.b.resize(1);
+      _f_eeVelInFootFrameConSettings.b << 0;
+      _f_eeVelInFootFrameConSettings.A.resize(1, 3);
+      _f_eeVelInFootFrameConSettings.A << 0, 1, 0;
+      _f_EEVelInFootFrameConstraint->configure(_f_eeVelInFootFrameConSettings);
+      _f_EEVelInFootFrameConstraint->setActivity(true);
+      // The upwards velocity (z) in the wordl frame should be zero too.
+      _o_eeVelConSettings.b.resize(1);
+      _o_eeVelConSettings.A.resize(1, 3);
+      _o_eeVelConSettings.b << 0;
+      _o_eeVelConSettings.A << 0, 0, 1;
     } else {  // in swing: z-velocity is provided
       //TODO(oharley) this could be made 'smarter'
+      _f_EEVelInFootFrameConstraint->setActivity(false);
       _o_eeVelConSettings.b.resize(1);
       _o_eeVelConSettings.A.resize(1, 3);
       _o_eeVelConSettings.b << -zDirectionRefsPtr_[footIdx]->calculateVelocity(Base::t_);
       _o_eeVelConSettings.A << 0, 0, 1;
-      _o_EEVelConstraint->configure(_o_eeVelConSettings);
-      _o_EEVelConstraint->setActivity(true);
     }
+    _o_EEVelConstraint->configure(_o_eeVelConSettings);
+    _o_EEVelConstraint->setActivity(true);
   }
 }
 

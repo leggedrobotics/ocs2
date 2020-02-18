@@ -61,10 +61,10 @@ class KinematicsModelBase {
                                                   const joint_coordinate_s_t<SCALAR_T>& jointPositions,
                                                   const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const;
 
-  vector3_s_t<SCALAR_T> footVelocityHeadingInFootHeadingFrame(size_t footIndex, const base_coordinate_s_t<SCALAR_T> basePoseInOriginFrame,
-      const base_coordinate_s_t<SCALAR_T> baseTwistInBaseFrame,
-      const joint_coordinate_s_t<SCALAR_T>& jointPositions,
-      const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const;
+  vector3_s_t<SCALAR_T> footVelocityInFootFrame(size_t footIndex, const base_coordinate_s_t<SCALAR_T> baseTwistInBaseFrame,
+                                                const joint_coordinate_s_t<SCALAR_T>& jointPositions,
+                                                const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const;
+
 };
 
 extern template class KinematicsModelBase<double>;

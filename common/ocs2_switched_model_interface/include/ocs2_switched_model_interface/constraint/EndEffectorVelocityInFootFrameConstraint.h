@@ -12,9 +12,9 @@
 
 namespace switched_model {
 
-  struct EndEffectorVelocityHeadingConstraintSettings : switched_model::EndEffectorVelocityConstraintSettings {};
+  struct EndEffectorVelocityInFootFrameConstraintSettings : switched_model::EndEffectorVelocityConstraintSettings {};
 
-class EndEffectorVelocityHeadingConstraint : public switched_model::EndEffectorConstraint {
+class EndEffectorVelocityInFootFrameConstraint : public switched_model::EndEffectorConstraint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -38,23 +38,23 @@ class EndEffectorVelocityHeadingConstraint : public switched_model::EndEffectorC
   using typename BASE::timeStateInput_matrix_t;
 
   static constexpr ocs2::ConstraintOrder kConstraintOrder = ocs2::ConstraintOrder::Linear;
-  static const inline auto constraintPrefix_ = "EEVelocityHeadingConstraint_";
+  static const inline auto constraintPrefix_ = "EEVelocityInFootFrameConstraint_";
 
-  explicit EndEffectorVelocityHeadingConstraint(int legNumber,
-      EndEffectorVelocityHeadingConstraintSettings settings,
+  explicit EndEffectorVelocityInFootFrameConstraint(int legNumber,
+      EndEffectorVelocityInFootFrameConstraintSettings settings,
       ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel,
       bool generateModels, std::string constraintPrefix = constraintPrefix_)
     : BASE(kConstraintOrder, constraintPrefix, legNumber, std::move(settings)) {
       initializeADInterface(adComModel, adKinematicsModel, generateModels);
     };
 
-  explicit EndEffectorVelocityHeadingConstraint(int legNumber, EndEffectorVelocityHeadingConstraintSettings settings,  std::string constraintPrefix = constraintPrefix_)
+  explicit EndEffectorVelocityInFootFrameConstraint(int legNumber, EndEffectorVelocityInFootFrameConstraintSettings settings,  std::string constraintPrefix = constraintPrefix_)
     : BASE(kConstraintOrder, constraintPrefix, legNumber, std::move(settings))
     {};
 
-  EndEffectorVelocityHeadingConstraint(const EndEffectorVelocityHeadingConstraint& rhs) : BASE(rhs) {};
+  EndEffectorVelocityInFootFrameConstraint(const EndEffectorVelocityInFootFrameConstraint& rhs) : BASE(rhs) {};
 
-  EndEffectorVelocityHeadingConstraint* clone() const override { return new EndEffectorVelocityHeadingConstraint(*this); };
+  EndEffectorVelocityInFootFrameConstraint* clone() const override { return new EndEffectorVelocityInFootFrameConstraint(*this); };
 
   scalar_array_t getValue(scalar_t time, const state_vector_t& state, const input_vector_t& input) const override {
     // Assemble input
@@ -62,20 +62,20 @@ class EndEffectorVelocityHeadingConstraint : public switched_model::EndEffectorC
     tapedInput << time, state, input;
 
     // Compute constraints
-    dynamic_vector_t eeVelocityWorld = adInterface_->getFunctionValue(tapedInput);
+    dynamic_vector_t eeVelocityWorldInFoot = adInterface_->getFunctionValue(tapedInput);
 
 
     // Change to std::vector
     scalar_array_t constraintValue;
     for (int i = 0; i < settings_.A.rows(); i++) {
-      constraintValue.emplace_back(settings_.A.row(i) * eeVelocityWorld + settings_.b[i]);
+      constraintValue.emplace_back(settings_.A.row(i) * eeVelocityWorldInFoot + settings_.b[i]);
     }
     return constraintValue;
   };
 
  private:
   void adFootVelocity(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, const ad_dynamic_vector_t& tapedInput,
-                      ad_dynamic_vector_t& o_footVelocityHeading) {
+                      ad_dynamic_vector_t& f_footVelocityInFootFrame) {
     // Extract elements from taped input
     ad_scalar_t t = tapedInput(0);
     comkino_state_ad_t x = tapedInput.segment(1, STATE_DIM);
@@ -88,14 +88,8 @@ class EndEffectorVelocityHeadingConstraint : public switched_model::EndEffectorC
     const joint_coordinate_ad_t dqJoints = getJointVelocities(u);
 
     // Get base state from com state
-    const base_coordinate_ad_t basePose = adComModel.calculateBasePose(comPose);
     const base_coordinate_ad_t com_baseTwist = adComModel.calculateBaseLocalVelocities(com_comTwist);
-
-    const auto o_footVelocity = adKinematicsModel.footVelocityInOriginFrame(legNumber_, basePose, com_baseTwist, qJoints, dqJoints);
-    // Project the ee velocity onto the endEffectorHeading
-    const matrix3_s_t<ad_scalar_t> o_R_e = adKinematicsModel.footOrientationInOriginFrame(legNumber_, basePose, qJoints);
-    o_footVelocityHeading.head<2>() = o_R_e.topLeftCorner<2,2>()*o_footVelocity.head<2>();
-    o_footVelocityHeading[2] = o_footVelocity[2];
+    f_footVelocityInFootFrame = adKinematicsModel.footVelocityInFootFrame(legNumber_, com_baseTwist, qJoints, dqJoints);
   };
 
   void setAdInterface(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel) override {

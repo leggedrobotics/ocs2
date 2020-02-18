@@ -118,33 +118,12 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
   // logic rule
   using cpg_t = SplineCPG<scalar_t>;
   using feet_z_planner_t = FeetZDirectionPlanner<scalar_t, cpg_t>;
-  using feet_z_planner_ptr_t = typename feet_z_planner_t::Ptr;
+  using feet_z_planner_ptr_t = std::shared_ptr<feet_z_planner_t>;
   feet_z_planner_ptr_t feetZPlannerPtr(new feet_z_planner_t(modelSettings_.swingLegLiftOff_, 1.0 /*swingTimeScale*/,
                                                             modelSettings_.liftOffVelocity_, modelSettings_.touchDownVelocity_));
 
   logicRulesPtr_ = std::shared_ptr<logic_rules_t>(new logic_rules_t(feetZPlannerPtr, modelSettings_.phaseTransitionStanceTime_));
   logicRulesPtr_->setModeSequence(initSwitchingModes, initEventTimes);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-std::unique_ptr<QuadrupedInterface::slq_t> QuadrupedInterface::getSlq() const {
-  return std::unique_ptr<slq_t>(new slq_t(timeTriggeredRolloutPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
-                                          costFunctionPtr_.get(), operatingPointsPtr_.get(), slqSettings_, logicRulesPtr_));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-std::unique_ptr<QuadrupedInterface::mpc_t> QuadrupedInterface::getMpc() const {
-  if (!modelSettings_.gaitOptimization_) {
-    return std::unique_ptr<mpc_t>(new mpc_t(timeTriggeredRolloutPtr_.get(), dynamicsDerivativesPtr_.get(), constraintsPtr_.get(),
-                                            costFunctionPtr_.get(), operatingPointsPtr_.get(), partitioningTimes_, slqSettings_,
-                                            mpcSettings_, logicRulesPtr_, &defaultModeSequenceTemplate_));
-  } else {
-    throw std::runtime_error("mpc_ocs2 not configured, set gait optimization to 0");
-  }
 }
 
 }  // namespace switched_model

@@ -58,18 +58,16 @@ include_directories(
 
 # Declare a C++ library
 add_library(${PROJECT_NAME}
-        src/QuadrupedInterface.cpp
-        src/QuadrupedDummyNode.cpp
-        src/QuadrupedMpcNode.cpp
-        src/QuadrupedXppVisualizer.cpp
-        )
+  src/QuadrupedDummyNode.cpp
+  src/QuadrupedInterface.cpp
+  src/QuadrupedMpcNode.cpp
+  src/QuadrupedSlqMpc.cpp
+  src/QuadrupedXppVisualizer.cpp)
 add_dependencies(${PROJECT_NAME}
-        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-        ${catkin_EXPORTED_TARGETS}
-        )
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}
-        ${catkin_LIBRARIES}
-        )
+  ${catkin_LIBRARIES})
 
 #########################
 ###   CLANG TOOLING   ###

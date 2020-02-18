@@ -16,8 +16,6 @@ namespace switched_model {
 
 class QuadrupedXppVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
   using BASE = ocs2::DummyObserver<STATE_DIM, INPUT_DIM>;
   using typename BASE::command_data_t;
   using typename BASE::primal_solution_t;
@@ -41,17 +39,29 @@ class QuadrupedXppVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> 
   using com_model_t = ComModelBase<double>;
   using kinematic_model_t = KinematicsModelBase<double>;
 
-  QuadrupedXppVisualizer(const kinematic_model_t& kinematicModel, const com_model_t& comModel, std::string robotName, ros::NodeHandle& n)
-      : kinematicModelPtr_(kinematicModel.clone()), comModelPtr_(comModel.clone()), robotName_(std::move(robotName)) {
+  /**
+   *
+   * @param kinematicModel
+   * @param comModel
+   * @param n
+   * @param maxUpdateFrequency : maximum publish frequency measured in MPC time.
+   */
+  QuadrupedXppVisualizer(const kinematic_model_t& kinematicModel, const com_model_t& comModel, ros::NodeHandle& n,
+                         double maxUpdateFrequency = 50.0)
+      : kinematicModelPtr_(kinematicModel.clone()), comModelPtr_(comModel.clone()), minPublishTimeDifference_(1 / maxUpdateFrequency) {
     launchVisualizerNode(n);
   };
 
   ~QuadrupedXppVisualizer() override = default;
 
   void update(const system_observation_t& observation, const primal_solution_t& primalSolution, const command_data_t& command) override {
-    publishObservation(observation);
-    publishDesiredTrajectory(observation.time(), command.mpcCostDesiredTrajectories_);
-    publishOptimizedStateTrajectory(primalSolution.timeTrajectory_, primalSolution.stateTrajectory_);
+    static scalar_t lastTime = std::numeric_limits<scalar_t>::lowest();
+    if (observation.time() - lastTime > minPublishTimeDifference_) {
+      publishObservation(observation);
+      publishDesiredTrajectory(command.mpcCostDesiredTrajectories_);
+      publishOptimizedStateTrajectory(primalSolution.timeTrajectory_, primalSolution.stateTrajectory_);
+      lastTime = observation.time();
+    }
   }
 
   void launchVisualizerNode(ros::NodeHandle& nodeHandle);
@@ -60,7 +70,7 @@ class QuadrupedXppVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> 
 
   void publishTrajectory(const system_observation_array_t& system_observation_array, double speed = 1.0);
 
-  void publishDesiredTrajectory(scalar_t startTime, const cost_desired_trajectories_t& costDesiredTrajectory);
+  void publishDesiredTrajectory(const cost_desired_trajectories_t& costDesiredTrajectory);
 
   void publishOptimizedStateTrajectory(const scalar_array_t& mpcTimeTrajectory, const state_vector_array_t& mpcStateTrajectory);
 
@@ -87,14 +97,14 @@ class QuadrupedXppVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> 
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;
   std::unique_ptr<com_model_t> comModelPtr_;
 
-  std::string robotName_;
-
   ros::Publisher visualizationPublisher_;
   ros::Publisher visualizationJointPublisher_;
   ros::Publisher costDesiredPublisher_;
   ros::Publisher stateOptimizedPublisher_;
   ros::Publisher feetOptimizedPublisher_;
   ros::Time startTime_;
+
+  double minPublishTimeDifference_;
 };
 
 }  // namespace switched_model

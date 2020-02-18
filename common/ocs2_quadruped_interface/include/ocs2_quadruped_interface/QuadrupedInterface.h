@@ -8,9 +8,6 @@
 #pragma once
 
 #include <ocs2_ddp/SLQ_Settings.h>
-
-#include <ocs2_mpc/MPC_OCS2.h>
-#include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_mpc/MPC_Settings.h>
 
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
@@ -59,9 +56,6 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
 
   using mode_sequence_template_t = ocs2::ModeSequenceTemplate<scalar_t>;
 
-  using mpc_t = ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>;
-  using slq_t = ocs2::SLQ<STATE_DIM, INPUT_DIM>;
-
   using system_dynamics_t = switched_model::ComKinoSystemDynamicsAd;
   using system_dynamics_derivative_t = switched_model::ComKinoSystemDynamicsAd;
   using constraint_t = switched_model::ComKinoConstraintBaseAd;
@@ -85,22 +79,22 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   std::shared_ptr<ocs2::HybridLogicRules> getLogicRulesPtr() const override { return logicRulesPtr_; }
 
   /** Gets kinematic model */
-  const kinematic_model_t& getKinematicModel() const { return *kinematicModelPtr_; };
+  const kinematic_model_t& getKinematicModel() const { return *kinematicModelPtr_; }
 
   /** Gets center of mass model */
-  const com_model_t& getComModel() const { return *comModelPtr_; };
-
-  /** Constructs an SLQ object */
-  std::unique_ptr<slq_t> getSlq() const;
-
-  /** Constructs an MPC object */
-  std::unique_ptr<mpc_t> getMpc() const;
+  const com_model_t& getComModel() const { return *comModelPtr_; }
 
   /** Gets the loaded initial state */
   const state_vector_t& getInitialState() const { return initialState_; }
 
+  /** Gets the loaded initial partition times */
+  const scalar_array_t& getInitialPartitionTimes() const { return partitioningTimes_; }
+
+  /** Gets the loaded initial getInitialModeSequence */
+  const mode_sequence_template_t& getInitialModeSequence() const { return defaultModeSequenceTemplate_; }
+
   /** Access to rollout settings */
-  const ocs2::Rollout_Settings& rolloutSettings() const { return rolloutSettings_; };
+  const ocs2::Rollout_Settings& rolloutSettings() const { return rolloutSettings_; }
 
   /** Access to model settings */
   const ModelSettings& modelSettings() const { return modelSettings_; };
@@ -156,7 +150,6 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   state_matrix_t QFinal_;
 
   state_vector_t initialState_;
-
   scalar_array_t partitioningTimes_;
   mode_sequence_template_t defaultModeSequenceTemplate_;
 };

@@ -9,17 +9,13 @@
 
 #include <ocs2_quadruped_interface/QuadrupedInterface.h>
 
-namespace switched_model {
+#include <ocs2_quadruped_loopshaping_interface/LoopshapingDimensions.h>
 
-class QuadrupedLoopshapingInterface : public ocs2::RobotInterface<48, 24> {
+namespace switched_model_loopshaping {
+
+class QuadrupedLoopshapingInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  static constexpr size_t STATE_DIM = 48;
-  static constexpr size_t INPUT_DIM = 24;
-  static constexpr size_t SYSTEM_STATE_DIM = 24;
-  static constexpr size_t SYSTEM_INPUT_DIM = 24;
-  static constexpr size_t FILTER_STATE_DIM = 24;
-  static constexpr size_t FILTER_INPUT_DIM = 24;
 
   using system_dynamics_t =
       ocs2::LoopshapingDynamics<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM, FILTER_INPUT_DIM>;
@@ -34,14 +30,14 @@ class QuadrupedLoopshapingInterface : public ocs2::RobotInterface<48, 24> {
   using filter_dynamics_t =
       ocs2::LoopshapingFilterDynamics<STATE_DIM, INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM, FILTER_INPUT_DIM>;
 
-  using com_model_t = ComModelBase<double>;
-  using kinematic_model_t = KinematicsModelBase<double>;
-  using logic_rules_t = SwitchedModelLogicRulesBase;
+  using com_model_t = switched_model::ComModelBase<double>;
+  using kinematic_model_t = switched_model::KinematicsModelBase<double>;
+  using logic_rules_t = switched_model::SwitchedModelLogicRulesBase;
 
   using ad_base_t = CppAD::cg::CG<double>;
   using ad_scalar_t = CppAD::AD<ad_base_t>;
-  using ad_com_model_t = ComModelBase<ad_scalar_t>;
-  using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
+  using ad_com_model_t = switched_model::ComModelBase<ad_scalar_t>;
+  using ad_kinematic_model_t = switched_model::KinematicsModelBase<ad_scalar_t>;
 
   using dimension_t = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
   using scalar_t = typename dimension_t::scalar_t;
@@ -56,10 +52,7 @@ class QuadrupedLoopshapingInterface : public ocs2::RobotInterface<48, 24> {
 
   using mode_sequence_template_t = ocs2::ModeSequenceTemplate<scalar_t>;
 
-  using mpc_t = ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>;
-  using slq_t = ocs2::SLQ<STATE_DIM, INPUT_DIM>;
-
-  QuadrupedLoopshapingInterface(std::unique_ptr<QuadrupedInterface> quadrupedPtr, const std::string& pathToConfigFolder);
+  QuadrupedLoopshapingInterface(std::unique_ptr<switched_model::QuadrupedInterface> quadrupedPtr, const std::string& pathToConfigFolder);
 
   ~QuadrupedLoopshapingInterface() override = default;
 
@@ -73,17 +66,17 @@ class QuadrupedLoopshapingInterface : public ocs2::RobotInterface<48, 24> {
   /** Gets center of mass model */
   const com_model_t& getComModel() const { return quadrupedPtr_->getComModel(); };
 
-  /** Constructs an SLQ object */
-  std::unique_ptr<slq_t> getSlq() const;
-
-  /** Constructs an MPC object */
-  std::unique_ptr<mpc_t> getMpc() const;
-
   /** Gets the loaded initial state */
   const state_vector_t& getInitialState() const { return initialState_; }
 
+  /** Gets the loaded initial partition times */
+  const scalar_array_t& getInitialPartitionTimes() const { return quadrupedPtr_->getInitialPartitionTimes(); }
+
+  /** Gets the loaded initial getInitialModeSequence */
+  const mode_sequence_template_t& getInitialModeSequence() const { return quadrupedPtr_->getInitialModeSequence(); }
+
   /** Access to model settings */
-  const ModelSettings& modelSettings() const { return quadrupedPtr_->modelSettings(); };
+  const switched_model::ModelSettings& modelSettings() const { return quadrupedPtr_->modelSettings(); };
 
   /** Access to slq settings */
   const ocs2::SLQ_Settings& slqSettings() const { return quadrupedPtr_->slqSettings(); }
@@ -102,8 +95,10 @@ class QuadrupedLoopshapingInterface : public ocs2::RobotInterface<48, 24> {
 
   const constraint_t* getConstraintPtr() const override { return constraintsPtr_.get(); }
 
+  const operating_point_t& getOperatingPoint() const { return *operatingPointsPtr_; }
+
  private:
-  std::unique_ptr<QuadrupedInterface> quadrupedPtr_;
+  std::unique_ptr<switched_model::QuadrupedInterface> quadrupedPtr_;
   std::unique_ptr<system_dynamics_t> dynamicsPtr_;
   std::unique_ptr<system_dynamics_derivative_t> dynamicsDerivativesPtr_;
   std::unique_ptr<constraint_t> constraintsPtr_;
@@ -114,8 +109,6 @@ class QuadrupedLoopshapingInterface : public ocs2::RobotInterface<48, 24> {
   std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinition_;
 
   state_vector_t initialState_;
-  scalar_array_t partitioningTimes_;
-  mode_sequence_template_t defaultModeSequenceTemplate_;
 };
 
-}  // namespace switched_model
+}  // namespace switched_model_loopshaping

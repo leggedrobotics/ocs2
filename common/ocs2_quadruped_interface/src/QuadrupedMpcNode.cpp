@@ -6,6 +6,8 @@
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 
+#include <ocs2_quadruped_interface/QuadrupedSlqMpc.h>
+
 namespace switched_model {
 
 void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& quadrupedInterface) {
@@ -13,7 +15,7 @@ void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& qua
   using mpc_ros_t = ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM>;
 
   // launch MPC nodes
-  auto mpcPtr = quadrupedInterface.getMpc();
+  auto mpcPtr = getMpc(quadrupedInterface);
   mpc_ros_t mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(nodeHandle);
 }

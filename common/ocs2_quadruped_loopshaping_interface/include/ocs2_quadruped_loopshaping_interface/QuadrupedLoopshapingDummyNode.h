@@ -8,8 +8,8 @@
 
 #include "QuadrupedLoopshapingInterface.h"
 
-namespace switched_model {
+namespace switched_model_loopshaping {
 
 void quadrupedLoopshapingDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedLoopshapingInterface& quadrupedInterface);
 
-}
+}  // namespace switched_model_loopshaping

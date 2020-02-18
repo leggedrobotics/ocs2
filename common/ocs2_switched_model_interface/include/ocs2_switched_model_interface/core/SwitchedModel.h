@@ -6,6 +6,20 @@
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 
 namespace switched_model {
+/**
+ * Switched model definition:
+ *
+ * state = [theta, p, v, w, q (4x)]
+ * theta: EulerXYZ (3x1)
+ * p: CoM position in Origin frame (3x1)
+ * v: CoM angular velocity in Base Frame (3x1)
+ * w: CoM linear velocity in Base Frame (3x1)
+ * q: Joint angles per leg [HAA, HFE, KFE] (3x1)
+ *
+ * input = [lambda (4x), qj (4x)]
+ * lambda: Force at the EE [LF, RF, LH, RH] in Base Frame (3x1)
+ * qj: Joint velocities per leg [HAA, HFE, KFE] (3x1)
+ */
 
 constexpr size_t NUM_CONTACT_POINTS = 4;
 constexpr size_t BASE_COORDINATE_SIZE = 6;

@@ -9,14 +9,12 @@
 
 #include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingXppVisualizer.h>
 
-namespace switched_model {
+namespace switched_model_loopshaping {
 
 void quadrupedLoopshapingDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedLoopshapingInterface& quadrupedInterface) {
-  static constexpr size_t STATE_DIM = 48;
-  static constexpr size_t INPUT_DIM = 24;
   const std::string robotName = "anymal";
   using vis_t = switched_model::QuadrupedXppVisualizer;
-  using vis_wrapper_t = switched_model::QuadrupedLoopshapingXppVisualizer;
+  using vis_wrapper_t = QuadrupedLoopshapingXppVisualizer;
   using mrt_t = ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
   using dummy_t = ocs2::MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>;
 
@@ -26,10 +24,8 @@ void quadrupedLoopshapingDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedL
   mrt.launchNodes(nodeHandle);
 
   // Visualization
-  std::unique_ptr<vis_t> visualizer(
-      new vis_t(quadrupedInterface.getKinematicModel(), quadrupedInterface.getComModel(), robotName, nodeHandle));
-  std::shared_ptr<vis_wrapper_t> loopshapingVisualizer(
-      new vis_wrapper_t(quadrupedInterface.getLoopshapingDefinition(), std::move(visualizer)));
+  auto visualizer = std::make_shared<vis_t>(quadrupedInterface.getKinematicModel(), quadrupedInterface.getComModel(), nodeHandle);
+  auto loopshapingVisualizer = std::make_shared<vis_wrapper_t>(quadrupedInterface.getLoopshapingDefinition(), std::move(visualizer));
 
   // Dummy MRT
   dummy_t dummySimulator(mrt, quadrupedInterface.mpcSettings().mrtDesiredFrequency_, quadrupedInterface.mpcSettings().mpcDesiredFrequency_);
@@ -47,4 +43,4 @@ void quadrupedLoopshapingDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedL
   dummySimulator.run(initObservation, initCostDesiredTrajectories);
 }
 
-}  // namespace switched_model
+}  // namespace switched_model_loopshaping

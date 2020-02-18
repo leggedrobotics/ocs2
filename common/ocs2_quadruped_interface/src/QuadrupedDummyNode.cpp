@@ -20,14 +20,13 @@ void quadrupedDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& q
 
   // MRT
   mrt_t mrt(robotName);
-  if (rolloutPtr) {
+  if (rolloutPtr != nullptr) {
     mrt.initRollout(rolloutPtr);
   }
   mrt.launchNodes(nodeHandle);
 
   // Visualization
-  std::shared_ptr<vis_t> visualizer(
-      new vis_t(quadrupedInterface.getKinematicModel(), quadrupedInterface.getComModel(), robotName, nodeHandle));
+  auto visualizer = std::make_shared<vis_t>(quadrupedInterface.getKinematicModel(), quadrupedInterface.getComModel(), nodeHandle);
 
   // Dummy MRT
   dummy_t dummySimulator(mrt, quadrupedInterface.mpcSettings().mrtDesiredFrequency_, quadrupedInterface.mpcSettings().mpcDesiredFrequency_);

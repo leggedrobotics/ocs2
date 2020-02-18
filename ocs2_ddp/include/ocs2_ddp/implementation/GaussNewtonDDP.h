@@ -1191,7 +1191,143 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::levenbergMarquardt() {
   const size_t taskId = 0;
 
-  throw std::runtime_error("Implemented in the next PR");
+  // local evenberg marquardt forward simulation's variables
+  scalar_t merit;
+  scalar_t totalCost;
+  scalar_t stateInputEqConstraintISE;
+  scalar_t stateEqConstraintISE, stateEqFinalConstraintISE;
+  scalar_t inequalityConstraintPenalty, inequalityConstraintISE;
+  scalar_array2_t timeTrajectoriesStock(numPartitions_);
+  size_array2_t postEventIndicesStock(numPartitions_);
+  state_vector_array2_t stateTrajectoriesStock(numPartitions_);
+  input_vector_array2_t inputTrajectoriesStock(numPartitions_);
+  ModelDataBase::array2_t modelDataTrajectoriesStock(numPartitions_);
+
+  // do a full step rollout
+  const scalar_t stepLength = isInitInternalControllerEmpty_ ? 0.0 : 1.0;
+  scalar_t avgTimeStepFP =
+      performFullRollout(taskId, stepLength, nominalControllersStock_, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
+                         inputTrajectoriesStock, modelDataTrajectoriesStock, merit, totalCost, stateInputEqConstraintISE,
+                         stateEqConstraintISE, stateEqFinalConstraintISE, inequalityConstraintPenalty, inequalityConstraintISE);
+
+  // compute average time step of forward rollout
+  avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStepFP;
+
+  // alias for the Levenberg_Marquardt settings
+  const auto& lvSettings = ddpSettings_.levenbergMarquardt_;
+
+  // compute pho (the ratio between actual reduction and predicted reduction)
+  const auto predictedCost = sTrajectoryStock_[initActivePartition_].front();
+  auto actualReduction = nominalTotalCost_ - totalCost;
+  auto predictedReduction = nominalTotalCost_ - predictedCost;
+  if (std::abs(actualReduction) < 1e-3 * std::abs(nominalTotalCost_)) {
+    levenbergMarquardtImpl_.pho = 1.0;
+  } else if (actualReduction < 0.0) {
+    levenbergMarquardtImpl_.pho = 0.0;
+  } else {
+    levenbergMarquardtImpl_.pho = actualReduction / predictedReduction;
+  }
+
+  // display
+  if (ddpSettings_.displayInfo_) {
+    std::cerr << "Actual Reduction: " << actualReduction << ",   Predicted Reduction: " << predictedReduction << std::endl;
+  }
+
+  // adjust riccatiMultipleAdaptiveRatio and riccatiMultiple
+  if (levenbergMarquardtImpl_.pho < 0.25) {
+    // increase riccatiMultipleAdaptiveRatio
+    levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio =
+        std::max(1.0, levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio) * lvSettings.riccatiMultipleDefaultRatio_;
+
+    // increase riccatiMultiple
+    auto riccatiMultipleTemp = levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio * levenbergMarquardtImpl_.riccatiMultiple;
+    if (riccatiMultipleTemp > lvSettings.riccatiMultipleDefaultFactor_) {
+      levenbergMarquardtImpl_.riccatiMultiple = riccatiMultipleTemp;
+    } else {
+      levenbergMarquardtImpl_.riccatiMultiple = lvSettings.riccatiMultipleDefaultFactor_;
+    }
+
+  } else if (levenbergMarquardtImpl_.pho > 0.75) {
+    // decrease riccatiMultipleAdaptiveRatio
+    levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio =
+        std::min(1.0, levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio) / lvSettings.riccatiMultipleDefaultRatio_;
+
+    // decrease riccatiMultiple
+    auto riccatiMultipleTemp = levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio * levenbergMarquardtImpl_.riccatiMultiple;
+    if (riccatiMultipleTemp > lvSettings.riccatiMultipleDefaultFactor_) {
+      levenbergMarquardtImpl_.riccatiMultiple = riccatiMultipleTemp;
+    } else {
+      levenbergMarquardtImpl_.riccatiMultiple = 0.0;
+    }
+  } else {
+    levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio = 1.0;
+    // levenbergMarquardtImpl_.riccatiMultiple will not change.
+  }
+
+  // accept or reject the step and modify numSuccessiveRejections
+  if (levenbergMarquardtImpl_.pho >= lvSettings.minAcceptedPho_ || isInitInternalControllerEmpty_) {
+    // accept the solution
+    levenbergMarquardtImpl_.numSuccessiveRejections = 0;
+
+    // update nominal trajectories
+    nominalMerit_ = merit;
+    nominalTotalCost_ = totalCost;
+    lineSearchImpl_.stepLengthStar = stepLength;
+    stateInputEqConstraintISE_ = stateInputEqConstraintISE;
+    stateEqConstraintISE_ = stateEqConstraintISE;
+    stateEqFinalConstraintISE_ = stateEqFinalConstraintISE;
+    inequalityConstraintPenalty_ = inequalityConstraintPenalty;
+    inequalityConstraintISE_ = inequalityConstraintISE;
+
+    nominalTimeTrajectoriesStock_.swap(timeTrajectoriesStock);
+    nominalPostEventIndicesStock_.swap(postEventIndicesStock);
+    nominalStateTrajectoriesStock_.swap(stateTrajectoriesStock);
+    nominalInputTrajectoriesStock_.swap(inputTrajectoriesStock);
+    modelDataTrajectoriesStock_.swap(modelDataTrajectoriesStock);
+    // update nominal controller: just clear the feedforward increments
+    for (auto& controller : nominalControllersStock_) {
+      controller.deltaBiasArray_.clear();
+    }
+
+  } else {
+    // reject the solution
+    ++levenbergMarquardtImpl_.numSuccessiveRejections;
+
+    // swap back the cached nominal trajectories
+    swapDataToCache();
+    // update nominal controller
+    std::swap(nominalControllerUpdateIS_, cachedControllerUpdateIS_);
+    nominalControllersStock_.swap(cachedControllersStock_);
+  }
+
+  // display
+  if (ddpSettings_.displayInfo_) {
+    std::string levenbergMarquardtDisplay;
+    if (levenbergMarquardtImpl_.numSuccessiveRejections == 0) {
+      levenbergMarquardtDisplay = "The step is accepted with pho: " + std::to_string(levenbergMarquardtImpl_.pho) + ". ";
+    } else {
+      levenbergMarquardtDisplay = "The step is rejected with pho: " + std::to_string(levenbergMarquardtImpl_.pho) + " (" +
+                                  std::to_string(levenbergMarquardtImpl_.numSuccessiveRejections) + " out of " +
+                                  std::to_string(lvSettings.maxNumSuccessiveRejections_) + "). ";
+    }
+
+    if (numerics::almost_eq(levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio, 1.0)) {
+      levenbergMarquardtDisplay += "The Riccati multiple is kept constant: ";
+    } else if (levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio < 1.0) {
+      levenbergMarquardtDisplay += "The Riccati multiple is decreased to: ";
+    } else {
+      levenbergMarquardtDisplay += "The Riccati multiple is increased to: ";
+    }
+    levenbergMarquardtDisplay += std::to_string(levenbergMarquardtImpl_.riccatiMultiple) +
+                                 ", with ratio: " + std::to_string(levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio) + ".";
+
+    BASE::printString(levenbergMarquardtDisplay);
+  }
+
+  // max accepted number of successive rejections
+  if (levenbergMarquardtImpl_.numSuccessiveRejections > lvSettings.maxNumSuccessiveRejections_) {
+    throw std::runtime_error("The maximum number of successive solution rejections has been reached!");
+  }
 }
 
 /******************************************************************************************************/

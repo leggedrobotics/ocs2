@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_ddp/DDP_BASE.h>
+#include <ocs2_ddp/GaussNewtonDDP.h>
 #include <ocs2_ddp/SLQ.h>
 
 #include "ocs2_mpc/MPC_BASE.h"
@@ -75,7 +75,7 @@ class MPC_SLQ : public MPC_BASE<STATE_DIM, INPUT_DIM> {
   using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
   using linear_controller_array_t = typename linear_controller_t::array_t;
 
-  using ddp_base_t = ocs2::DDP_BASE<STATE_DIM, INPUT_DIM>;
+  using ddp_base_t = ocs2::GaussNewtonDDP<STATE_DIM, INPUT_DIM>;
 
   using slq_t = ocs2::SLQ<STATE_DIM, INPUT_DIM>;
 

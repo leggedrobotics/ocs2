@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_ddp/DDP_BASE.h"
+#include "ocs2_ddp/GaussNewtonDDP.h"
 #include "ocs2_oc/rollout/TimeTriggeredRollout.h"
 
 namespace ocs2 {
@@ -45,7 +45,7 @@ class DDP_DataCollector {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using ddp_t = DDP_BASE<STATE_DIM, INPUT_DIM>;
+  using ddp_t = GaussNewtonDDP<STATE_DIM, INPUT_DIM>;
 
   using Ptr = std::shared_ptr<DDP_DataCollector<STATE_DIM, INPUT_DIM>>;
 

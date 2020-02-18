@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_ddp/DDP_BASE.h"
+#include "ocs2_ddp/GaussNewtonDDP.h"
 #include "ocs2_ddp/ILQR_Settings.h"
 #include "ocs2_ddp/riccati_equations/DiscreteTimeRiccatiEquations.h"
 
@@ -42,11 +42,11 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
+class ILQR : public GaussNewtonDDP<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = DDP_BASE<STATE_DIM, INPUT_DIM>;
+  using BASE = GaussNewtonDDP<STATE_DIM, INPUT_DIM>;
 
   using typename BASE::DIMENSIONS;
   using typename BASE::dynamic_matrix_array2_t;
@@ -93,12 +93,6 @@ class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
 
   using riccati_equations_t = DiscreteTimeRiccatiEquations;
 
-  //	/**
-  //	 * class for collecting ILQR data
-  //	 */
-  //	template <size_t OTHER_STATE_DIM, size_t OTHER_INPUT_DIM>
-  //	friend class SLQ_DataCollector;
-
   /**
    * Default constructor.
    */
@@ -127,8 +121,6 @@ class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    */
   ~ILQR() override = default;
 
-  void calculateController() override;
-
   /**
    * Gets a reference to the Options structure.
    *
@@ -139,17 +131,22 @@ class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
  protected:
   void setupOptimizer(size_t numPartitions) override;
 
-  void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
-                                 const state_vector_array_t& stateTrajectory, const input_vector_array_t& inputTrajectory,
-                                 ModelDataBase::array_t& modelDataTrajectory) override;
-
-  void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
-
   scalar_t solveSequentialRiccatiEquations(const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal,
                                            const scalar_t& sFinal) override;
 
+  void riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal,
+                              const scalar_t& sFinal) override;
+
+  void calculateController() override;
+
+  void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
+
   dynamic_matrix_t computeHamiltonianHessian(DDP_Strategy strategy, const ModelDataBase& modelData,
                                              const dynamic_matrix_t& Sm) const override;
+
+  void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
+                                 const state_vector_array_t& stateTrajectory, const input_vector_array_t& inputTrajectory,
+                                 ModelDataBase::array_t& modelDataTrajectory) override;
 
   /**
    * Calculates the discrete-time LQ approximation from the continuous-time LQ approximation.
@@ -159,9 +156,6 @@ class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param [out] modelData: Time index in the partition.
    */
   void discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelDataBase& continuousTimeModelData, ModelDataBase& modelData);
-
-  void riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal,
-                              const scalar_t& sFinal) override;
 
   /****************
    *** Variables **

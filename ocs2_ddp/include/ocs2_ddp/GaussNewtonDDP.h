@@ -58,13 +58,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * This class is an interface class for the DDP based methods.
+ * This class is an interface class for the Gauss-Newton DDP based methods.
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
+class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using BASE = Solver_BASE<STATE_DIM, INPUT_DIM>;
@@ -128,7 +128,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Default constructor.
    */
-  DDP_BASE() = default;
+  GaussNewtonDDP() = default;
 
   /**
    * Constructor
@@ -138,25 +138,105 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
    * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
    * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization.
-   * @param [in] ddpSettings: Structure containing the settings for the DDP algorithm.
+   * @param [in] ddpSettings: Structure containing the settings for the Gauss-Newton DDP algorithm.
    * @param [in] logicRulesPtr: The logic rules used for implementing mixed-logic dynamical systems.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation.
    * If it is not defined, we will use the terminal cost function defined in costFunctionPtr.
    */
-  DDP_BASE(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
-           const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
-           const DDP_Settings& ddpSettings, const cost_function_base_t* heuristicsFunctionPtr, const char* algorithmName,
-           std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr);
+  GaussNewtonDDP(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
+                 const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
+                 const operating_trajectories_base_t* operatingTrajectoriesPtr, const DDP_Settings& ddpSettings,
+                 const cost_function_base_t* heuristicsFunctionPtr, const char* algorithmName,
+                 std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr);
 
   /**
    * Destructor.
    */
-  virtual ~DDP_BASE() override;
+  virtual ~GaussNewtonDDP() override;
+
+  void reset() override;
+
+  size_t getNumIterations() const override;
+
+  scalar_t getFinalTime() const override;
+
+  const scalar_array_t& getPartitioningTimes() const override;
+
+  void getPerformanceIndeces(scalar_t& costFunction, scalar_t& constraint1ISE, scalar_t& constraint2ISE) const override;
+
+  void getIterationsLog(scalar_array_t& iterationCost, scalar_array_t& iterationISE1, scalar_array_t& iterationISE2) const override;
+
+  void getPrimalSolution(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const final;
+
+  scalar_t getValueFunction(scalar_t time, const state_vector_t& state) const override;
+
+  void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, dynamic_vector_t& Vx) const override;
+
+  void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const override;
+
+  void rewindOptimizer(size_t firstIndex) override;
+
+  const unsigned long long int& getRewindCounter() const override;
 
   /**
-   * Resets the class to its state after construction.
+   * Write access to ddp settings
    */
-  void reset() override;
+  DDP_Settings& ddpSettings();
+
+  /**
+   * Const access to ddp settings
+   */
+  const DDP_Settings& ddpSettings() const;
+
+  /**
+   * Upon activation in the multi-thread Gauss-Newton DDP class (DDP_MT), the parallelization
+   * of the backward pass takes place from the the first iteration which
+   * normally become effective after the first iteration.
+   *
+   * @param [in] flag: If set true, the parallel Riccati solver will be used
+   * from the first iteration.
+   */
+  void useParallelRiccatiSolverFromInitItr(bool flag);
+
+  /**
+   * Computes the normalized time for Riccati backward pass.
+   *
+   * @param [in] timeTrajectory: The time trajectory.
+   * @param [in] postEventIndices: The post event indices.
+   * @param [out] normalizedTimeTrajectory: The reversed and negated timeTrajectory.
+   * @param [out] strategy: The corresponding post event indices of normalizedTimeTrajectory.
+   */
+  static void computeNormalizedTime(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
+                                    scalar_array_t& normalizedTimeTrajectory, size_array_t& normalizedPostEventIndices);
+
+  /**
+   * Adjust the nominal controller based on the last changes in the logic rules.
+   *
+   * @param [in] newEventTimes: The new event times.
+   * @param [in] controllerEventTimes: The control policy stock's event times.
+   */
+  void adjustController(const scalar_array_t& newEventTimes, const scalar_array_t& controllerEventTimes);
+
+ protected:
+  /**
+   * Sets up optimizer for different number of partitions.
+   *
+   * @param [in] numPartitions: number of partitions.
+   */
+  virtual void setupOptimizer(size_t numPartitions);
+
+  /**
+   * Distributes the sequential tasks (e.g. Riccati solver) in between threads.
+   */
+  void distributeWork();
+
+  /**
+   * Helper to run task multiple times in parallel (blocking)
+   *
+   * @param [in] taskFunction: task function
+   * @param [in] N: number of times to run taskFunction, if N = 1 it is run in the main thread
+   */
+  void runParallel(std::function<void(void)> taskFunction, size_t N);
 
   /**
    * Forward integrate the system dynamics with given controller. It uses the
@@ -177,6 +257,20 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                              size_array2_t& postEventIndicesStock, state_vector_array2_t& stateTrajectoriesStock,
                              input_vector_array2_t& inputTrajectoriesStock, ModelDataBase::array2_t& modelDataTrajectoriesStock,
                              size_t workerIndex = 0);
+
+  /**
+   * Display rollout info and scores.
+   */
+  void printRolloutInfo();
+
+  /**
+   * Calculates the trapezoidal rule integration of a curve.
+   *
+   * @param [in] timeTrajectory: The time trajectory stamp.
+   * @param [in] valueTrajectory: The values of the curve for the given time trajectory.
+   * @return The integral of the curve.
+   */
+  scalar_t trapezoidalIntegration(const scalar_array_t& timeTrajectory, const scalar_array_t& valueTrajectory) const;
 
   /**
    * Calculates constraints ISE (Integral of Square Error).
@@ -216,6 +310,48 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                                 size_t workerIndex = 0);
 
   /**
+   * Performs a full rollout of dynamics, cost, and constraints with a given step length.
+   *
+   * @param [in] workerIndex: The index of the worker.
+   * @param [in] stepLength: The step length for which the controller is updated based on the Gauss-Newton DDP solution.
+   * @param [out] controllersStock: The updated array of control policies based on the step length.
+   * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
+   * @param [out] postEventIndicesStock: Array of the post-event indices.
+   * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
+   * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
+   * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
+   * @param [out] merit: The merit value of the rollout.
+   * @param [out] totalCost: The total cost of the rollout.
+   * @param [out] stateInputEqConstraintISE: The ISE of the state-input equality constraints along the rollout trajectory.
+   * @param [out] stateEqConstraintISE: The ISE of the state-only equality constraints along the rollout trajectory.
+   * @param [out] stateEqFinalConstraintISE: The ISE of the state-only equality constraints at event times.
+   * @param [out] inequalityConstraintPenalty: The accumulated penalty of the inequality constraints along the rollout trajectory.
+   * @param [out] inequalityConstraintISE: The ISE of the inequality constraints violation along the rollout trajectory.
+   *
+   * @return average time step.
+   */
+  scalar_t performFullRollout(size_t workerIndex, scalar_t stepLength, linear_controller_array_t& controllersStock,
+                              scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
+                              state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
+                              ModelDataBase::array2_t& modelDataTrajectoriesStock, scalar_t& merit, scalar_t& totalCost,
+                              scalar_t& stateInputEqConstraintISE, scalar_t& stateEqConstraintISE, scalar_t& stateEqFinalConstraintISE,
+                              scalar_t& inequalityConstraintPenalty, scalar_t& inequalityConstraintISE);
+
+  /**
+   * Line search on the feedforward parts of the controller. It uses the
+   * following approach for line search: The constraint TYPE-1 correction term
+   * is directly added through a user defined step length (defined in
+   * settings_.constraintStepSize_). But the cost minimization term is optimized
+   * through a line-search strategy defined in ILQR settings.
+   */
+  void lineSearch();
+
+  /**
+   * Defines line search task on a thread with various learning rates and choose the largest acceptable step-size.
+   */
+  void lineSearchTask();
+
+  /**
    * Calculates cost of a merit.
    *
    * @param [in] cost: The rollout cost.
@@ -230,51 +366,9 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                                         const scalar_t& inequalityConstraintPenalty) const;
 
   /**
-   * Approximates the nonlinear problem as a linear-quadratic problem around the
-   * nominal state and control trajectories. This method updates the following
-   * variables:
-   * 	- linearized system model and constraints
-   * 	- quadratized cost function
-   * 	- as well as the constrained coefficients of
-   * 		- linearized system model
-   * 		- quadratized intermediate cost function
-   * 		- quadratized final cost
-   */
-  void approximateOptimalControlProblem();
-
-  /**
-   * Calculates the controller. This method uses the following variables:
-   * - constrained, linearized model
-   * - constrained, quadratized cost
-   *
-   * The method modifies:
-   * - nominalControllersStock_: the controller that stabilizes the system
-   * around the new nominal trajectory and improves the constraints as well as
-   * the increment to the feed-forward control input.
-   */
-  virtual void calculateController();
-
-  /**
-   * Calculates the integral of the squared (IS) norm of the controller update.
-   *
-   * @param [in] controllersStock: An array of controllers.
-   * @retuen The integral of the squared (IS) norm of the controller update.
-   */
-  scalar_t calculateControllerUpdateIS(const linear_controller_array_t& controllersStock) const;
-
-  /**
    * Levenberg Marquardt strategy.
    */
   void levenbergMarquardt();
-
-  /**
-   * Line search on the feedforward parts of the controller. It uses the
-   * following approach for line search: The constraint TYPE-1 correction term
-   * is directly added through a user defined step length (defined in
-   * settings_.constraintStepSize_). But the cost minimization term is optimized
-   * through a line-search strategy defined in ILQR settings.
-   */
-  void lineSearch();
 
   /**
    * Solves Riccati equations for all the partitions.
@@ -317,96 +411,54 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                                       const dynamic_vector_t& SvFinal, const scalar_t& sFinal) = 0;
 
   /**
-   * Computes the normalized time for Riccati backward pass.
+   * Calculates the controller. This method uses the following variables:
+   * - constrained, linearized model
+   * - constrained, quadratized cost
    *
-   * @param [in] timeTrajectory: The time trajectory.
-   * @param [in] postEventIndices: The post event indices.
-   * @param [out] normalizedTimeTrajectory: The reversed and negated timeTrajectory.
-   * @param [out] strategy: The corresponding post event indices of normalizedTimeTrajectory.
+   * The method modifies:
+   * - nominalControllersStock_: the controller that stabilizes the system
+   * around the new nominal trajectory and improves the constraints as well as
+   * the increment to the feed-forward control input.
    */
-  static void computeNormalizedTime(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
-                                    scalar_array_t& normalizedTimeTrajectory, size_array_t& normalizedPostEventIndices);
+  virtual void calculateController();
 
   /**
-   * Adjust the nominal controller based on the last changes in the logic rules.
+   * Calculates controller at a given partition and a node.
    *
-   * @param [in] newEventTimes: The new event times.
-   * @param [in] controllerEventTimes: The control policy stock's event times.
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] partitionIndex: Time partition index
+   * @param [in] timeIndex: Time index in the partition
    */
-  void adjustController(const scalar_array_t& newEventTimes, const scalar_array_t& controllerEventTimes);
-
-  scalar_t getValueFunction(scalar_t time, const state_vector_t& state) const override;
-
-  void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, dynamic_vector_t& Vx) const override;
+  virtual void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) = 0;
 
   /**
-   * Upon activation in the multi-thread DDP class (DDP_MT), the parallelization
-   * of the backward pass takes place from the the first iteration which
-   * normally become effective after the first iteration.
+   * Calculates the integral of the squared (IS) norm of the controller update.
    *
-   * @param [in] flag: If set true, the parallel Riccati solver will be used
-   * from the first iteration.
+   * @param [in] controllersStock: An array of controllers.
+   * @retuen The integral of the squared (IS) norm of the controller update.
    */
-  void useParallelRiccatiSolverFromInitItr(bool flag);
-
-  void getPerformanceIndeces(scalar_t& costFunction, scalar_t& constraint1ISE, scalar_t& constraint2ISE) const override;
-
-  size_t getNumIterations() const override;
-
-  void getIterationsLog(scalar_array_t& iterationCost, scalar_array_t& iterationISE1, scalar_array_t& iterationISE2) const override;
-
-  void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const override;
+  scalar_t calculateControllerUpdateIS(const linear_controller_array_t& controllersStock) const;
 
   /**
-   * Write access to ddp settings
-   */
-  DDP_Settings& ddpSettings();
-
-  /**
-   * Const access to ddp settings
-   */
-  const DDP_Settings& ddpSettings() const;
-
-  void getPrimalSolution(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const final;
-
-  scalar_t getFinalTime() const override;
-
-  const scalar_array_t& getPartitioningTimes() const override;
-
-  void rewindOptimizer(size_t firstIndex) override;
-
-  const unsigned long long int& getRewindCounter() const override;
-
-  /**
-   * Runs the initialization method for DDP.
-   */
-  void runInit();
-
-  /**
-   * Runs a single iteration of DDP.
-   */
-  void runIteration();
-
- protected:
-  /**
-   * Sets up optimizer for different number of partitions.
+   * Calculates max feedforward update norm and max type-1 error update norm.
    *
-   * @param [in] numPartitions: number of partitions.
+   * @param maxDeltaUffNorm: max feedforward update norm.
+   * @param maxDeltaUeeNorm: max type-1 error update norm.
    */
-  virtual void setupOptimizer(size_t numPartitions);
+  void calculateControllerUpdateMaxNorm(scalar_t& maxDeltaUffNorm, scalar_t& maxDeltaUeeNorm) const;
 
   /**
-   * Distributes the sequential tasks (e.g. Riccati solver) in between threads.
+   * Approximates the nonlinear problem as a linear-quadratic problem around the
+   * nominal state and control trajectories. This method updates the following
+   * variables:
+   * 	- linearized system model and constraints
+   * 	- quadratized cost function
+   * 	- as well as the constrained coefficients of
+   * 		- linearized system model
+   * 		- quadratized intermediate cost function
+   * 		- quadratized final cost
    */
-  void distributeWork();
-
-  /**
-   * Helper to run task multiple times in parallel (blocking)
-   *
-   * @param [in] taskFunction: task function
-   * @param [in] N: number of times to run taskFunction, if N = 1 it is run in the main thread
-   */
-  void runParallel(std::function<void(void)> taskFunction, size_t N);
+  void approximateOptimalControlProblem();
 
   /**
    * Calculates an LQ approximate of the optimal control problem for the nodes.
@@ -420,30 +472,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   virtual void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
                                          const state_vector_array_t& stateTrajectory, const input_vector_array_t& inputTrajectory,
                                          ModelDataBase::array_t& modelDataTrajectory) = 0;
-
-  /**
-   * Initialize Augmented Lagrangian parameters.
-   */
-  void initializeAugmentedLagrangianParameters();
-
-  /**
-   * Updates the constraint penalty coefficients.
-   * @param [in] stateEqConstraintISE: ISE of the intermediate state-only equality constraints.
-   * @param [in] stateEqFinalConstraintISE: ISE of the state-only equality constraints at event times.
-   * @param [in] stateInputEqConstraintISE: ISE of the intermediate state-input equality constraints.
-   */
-  void updateConstraintPenalties(scalar_t stateEqConstraintISE, scalar_t stateEqFinalConstraintISE, scalar_t stateInputEqConstraintISE);
-
-  /**
-   * Augments the cost function for the given model data.
-   *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] stateEqualityPenaltyCoeff: The state-only equality penalty coefficient of the Augmented Lagrangian method.
-   * @param [in] stateInputEqualityPenaltyCoeff: The state-input equality penalty coefficient of the Augmented Lagrangian method.
-   * @param modelData: The model data.
-   */
-  void augmentCostWorker(size_t workerIndex, scalar_t stateEqualityPenaltyCoeff, scalar_t stateInputEqualityPenaltyCoeff,
-                         ModelDataBase& modelData) const;
 
   /**
    * Takes the following steps: (1) Computes the Hessian of the Hamiltonian (i.e., Hm) (2) Based on Hm, it calculates
@@ -514,70 +542,29 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void shiftHessian(Eigen::MatrixBase<Derived>& matrix) const;
 
   /**
-   * Calculates controller at a given partition and a node.
+   * Augments the cost function for the given model data.
    *
    * @param [in] workerIndex: Working agent index.
-   * @param [in] partitionIndex: Time partition index
-   * @param [in] timeIndex: Time index in the partition
+   * @param [in] stateEqualityPenaltyCoeff: The state-only equality penalty coefficient of the Augmented Lagrangian method.
+   * @param [in] stateInputEqualityPenaltyCoeff: The state-input equality penalty coefficient of the Augmented Lagrangian method.
+   * @param modelData: The model data.
    */
-  virtual void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) = 0;
+  void augmentCostWorker(size_t workerIndex, scalar_t stateEqualityPenaltyCoeff, scalar_t stateInputEqualityPenaltyCoeff,
+                         ModelDataBase& modelData) const;
 
   /**
-   * Defines line search task on a thread with various learning rates and choose the largest acceptable step-size.
+   * Initialize the constraint penalty coefficients.
    */
-  void lineSearchTask();
+  void initializeConstraintPenalties();
 
   /**
-   * Performs a full rollout of dynamics, cost, and constraints with a given step length.
-   *
-   * @param [in] workerIndex: The index of the worker.
-   * @param [in] stepLength: The step length for which the controller is updated based on the DDP solution.
-   * @param [out] controllersStock: The updated array of control policies based on the step length.
-   * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   * @param [out] postEventIndicesStock: Array of the post-event indices.
-   * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-   * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
-   * @param [out] merit: The merit value of the rollout.
-   * @param [out] totalCost: The total cost of the rollout.
-   * @param [out] stateInputEqConstraintISE: The ISE of the state-input equality constraints along the rollout trajectory.
-   * @param [out] stateEqConstraintISE: The ISE of the state-only equality constraints along the rollout trajectory.
-   * @param [out] stateEqFinalConstraintISE: The ISE of the state-only equality constraints at event times.
-   * @param [out] inequalityConstraintPenalty: The accumulated penalty of the inequality constraints along the rollout trajectory.
-   * @param [out] inequalityConstraintISE: The ISE of the inequality constraints violation along the rollout trajectory.
-   *
-   * @return average time step.
+   * Updates the constraint penalty coefficients.
+   * @param [in] stateEqConstraintISE: ISE of the intermediate state-only equality constraints.
+   * @param [in] stateEqFinalConstraintISE: ISE of the state-only equality constraints at event times.
+   * @param [in] stateInputEqConstraintISE: ISE of the intermediate state-input equality constraints.
    */
-  scalar_t performFullRollout(size_t workerIndex, scalar_t stepLength, linear_controller_array_t& controllersStock,
-                              scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-                              state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
-                              ModelDataBase::array2_t& modelDataTrajectoriesStock, scalar_t& merit, scalar_t& totalCost,
-                              scalar_t& stateInputEqConstraintISE, scalar_t& stateEqConstraintISE, scalar_t& stateEqFinalConstraintISE,
-                              scalar_t& inequalityConstraintPenalty, scalar_t& inequalityConstraintISE);
+  void updateConstraintPenalties(scalar_t stateEqConstraintISE, scalar_t stateEqFinalConstraintISE, scalar_t stateInputEqConstraintISE);
 
-  /**
-   * Calculates the trapezoidal rule integration of a curve.
-   *
-   * @param [in] timeTrajectory: The time trajectory stamp.
-   * @param [in] valueTrajectory: The values of the curve for the given time trajectory.
-   * @return The integral of the curve.
-   */
-  scalar_t trapezoidalIntegration(const scalar_array_t& timeTrajectory, const scalar_array_t& valueTrajectory) const;
-
-  /**
-   * Calculates max feedforward update norm and max type-1 error update norm.
-   *
-   * @param maxDeltaUffNorm: max feedforward update norm.
-   * @param maxDeltaUeeNorm: max type-1 error update norm.
-   */
-  void calculateControllerUpdateMaxNorm(scalar_t& maxDeltaUffNorm, scalar_t& maxDeltaUeeNorm);
-
-  /**
-   * Display rollout info and scores.
-   */
-  void printRolloutInfo();
-
- private:
   /**
    * Caches the iteration's data.
    */
@@ -604,6 +591,17 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   template <typename Data_T, class Alloc>
   static void correctcachedTrajectoryTail(std::pair<int, scalar_t> timeSegment, const std::vector<Data_T, Alloc>& currentTrajectory,
                                           std::vector<Data_T, Alloc>& cachedTrajectory);
+
+ private:
+  /**
+   * Runs the initialization method for Gauss-Newton DDP.
+   */
+  void runInit();
+
+  /**
+   * Runs a single iteration of Gauss-Newton DDP.
+   */
+  void runIteration();
 
   void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;
 
@@ -761,4 +759,4 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
 }  // namespace ocs2
 
-#include "implementation/DDP_BASE.h"
+#include "implementation/GaussNewtonDDP.h"

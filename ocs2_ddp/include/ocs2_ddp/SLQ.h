@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/integration/SystemEventHandler.h>
 
-#include "ocs2_ddp/DDP_BASE.h"
+#include "ocs2_ddp/GaussNewtonDDP.h"
 #include "ocs2_ddp/SLQ_Settings.h"
 #include "ocs2_ddp/riccati_equations/ContinuousTimeRiccatiEquations.h"
 
@@ -45,11 +45,11 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
+class SLQ final : public GaussNewtonDDP<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = DDP_BASE<STATE_DIM, INPUT_DIM>;
+  using BASE = GaussNewtonDDP<STATE_DIM, INPUT_DIM>;
 
   using typename BASE::DIMENSIONS;
   using typename BASE::dynamic_matrix_array2_t;
@@ -128,6 +128,9 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   SLQ_Settings& settings();
 
  protected:
+  dynamic_matrix_t computeHamiltonianHessian(DDP_Strategy strategy, const ModelDataBase& modelData,
+                                             const dynamic_matrix_t& Sm) const override;
+
   void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
                                  const state_vector_array_t& stateTrajectory, const input_vector_array_t& inputTrajectory,
                                  ModelDataBase::array_t& modelDataTrajectory) override;
@@ -136,9 +139,6 @@ class SLQ final : public DDP_BASE<STATE_DIM, INPUT_DIM> {
 
   scalar_t solveSequentialRiccatiEquations(const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal,
                                            const scalar_t& sFinal) override;
-
-  dynamic_matrix_t computeHamiltonianHessian(DDP_Strategy strategy, const ModelDataBase& modelData,
-                                             const dynamic_matrix_t& Sm) const override;
 
   void riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal,
                               const scalar_t& sFinal) override;

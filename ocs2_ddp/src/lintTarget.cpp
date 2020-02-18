@@ -1,6 +1,6 @@
-#include <ocs2_ddp/DDP_BASE.h>
 #include <ocs2_ddp/DDP_DataCollector.h>
 #include <ocs2_ddp/DDP_Settings.h>
+#include <ocs2_ddp/GaussNewtonDDP.h>
 
 #include <ocs2_ddp/SLQ.h>
 #include <ocs2_ddp/SLQ_Settings.h>

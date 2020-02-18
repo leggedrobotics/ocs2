@@ -27,33 +27,26 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+#pragma once
 
-#include "ocs2_ballbot_example/BallbotInterface.h"
+#include <tf/transform_broadcaster.h>
 
-int main(int argc, char** argv) {
-  const std::string robotName = "ballbot";
-  using interface_t = ocs2::ballbot::BallbotInterface;
-  using mpc_ros_t = ocs2::MPC_ROS_Interface<ocs2::ballbot::STATE_DIM_, ocs2::ballbot::INPUT_DIM_>;
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/DummyObserver.h>
 
-  // task file
-  if (argc <= 1) {
-    throw std::runtime_error("No task file specified. Aborting.");
-  }
-  std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+#include "ocs2_quadrotor_example/definitions.h"
 
-  // Initialize ros node
-  ros::init(argc, argv, robotName + "_mpc");
-  ros::NodeHandle nodeHandle;
+namespace ocs2 {
+namespace quadrotor {
 
-  // Robot interface
-  interface_t ballbotInterface(taskFileFolderName);
+class QuadrotorDummyVisualization final : public DummyObserver<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> {
+ public:
+  ~QuadrotorDummyVisualization() override = default;
 
-  // Launch MPC ROS node
-  auto mpcPtr = ballbotInterface.getMpc();
-  mpc_ros_t mpcNode(*mpcPtr, robotName);
-  mpcNode.launchNodes(nodeHandle);
+  void update(const system_observation_t& observation, const primal_solution_t& policy, const command_data_t& command) override;
 
-  // Successful exit
-  return 0;
-}
+ private:
+  tf::TransformBroadcaster tfBroadcaster_;
+};
+
+}  // namespace quadrotor
+}  // namespace ocs2

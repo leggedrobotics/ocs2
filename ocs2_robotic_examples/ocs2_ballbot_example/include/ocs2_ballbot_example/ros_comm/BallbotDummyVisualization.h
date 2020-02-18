@@ -27,33 +27,32 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+#pragma once
 
-#include "ocs2_ballbot_example/BallbotInterface.h"
+#include <robot_state_publisher/robot_state_publisher.h>
+#include <tf/transform_broadcaster.h>
 
-int main(int argc, char** argv) {
-  const std::string robotName = "ballbot";
-  using interface_t = ocs2::ballbot::BallbotInterface;
-  using mpc_ros_t = ocs2::MPC_ROS_Interface<ocs2::ballbot::STATE_DIM_, ocs2::ballbot::INPUT_DIM_>;
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/DummyObserver.h>
 
-  // task file
-  if (argc <= 1) {
-    throw std::runtime_error("No task file specified. Aborting.");
-  }
-  std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+#include "ocs2_ballbot_example/definitions.h"
 
-  // Initialize ros node
-  ros::init(argc, argv, robotName + "_mpc");
-  ros::NodeHandle nodeHandle;
+namespace ocs2 {
+namespace ballbot {
 
-  // Robot interface
-  interface_t ballbotInterface(taskFileFolderName);
+class BallbotDummyVisualization final : public DummyObserver<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> {
+ public:
+  explicit BallbotDummyVisualization(ros::NodeHandle& nodeHandle) { launchVisualizerNode(nodeHandle); }
 
-  // Launch MPC ROS node
-  auto mpcPtr = ballbotInterface.getMpc();
-  mpc_ros_t mpcNode(*mpcPtr, robotName);
-  mpcNode.launchNodes(nodeHandle);
+  ~BallbotDummyVisualization() override = default;
 
-  // Successful exit
-  return 0;
-}
+  void update(const system_observation_t& observation, const primal_solution_t& policy, const command_data_t& command) override;
+
+ private:
+  void launchVisualizerNode(ros::NodeHandle& nodeHandle);
+
+  std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
+  tf::TransformBroadcaster tfBroadcaster_;
+};
+
+}  // namespace ballbot
+}  // namespace ocs2

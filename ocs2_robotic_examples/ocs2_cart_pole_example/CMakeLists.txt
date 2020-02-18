@@ -60,6 +60,7 @@ include_directories(
 # cartpole interface library
 add_library(cartpole_interface
   src/CartPoleInterface.cpp
+  src/CartpoleDummyVisualization.cpp
 )
 add_dependencies(cartpole_interface
   ${catkin_EXPORTED_TARGETS}

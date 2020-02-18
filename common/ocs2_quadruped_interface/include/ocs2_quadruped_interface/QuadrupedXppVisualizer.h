@@ -50,7 +50,7 @@ namespace switched_model {
 
   /***************************************************************************************************/
   inline static const std::string xppJointDesTopicName = "xpp/joint_anymal_des";
-  inline static const auto xppStateDesTopicName = "/xpp/state_des"; //xpp_msgs::robot_state_desired;
+  inline static const std::string xppStateDesTopicName = "/xpp/state_des"; //xpp_msgs::robot_state_desired;
 
   const static auto xppStateDesTopicMap = PublisherMapping<xpp_msgs::RobotStateCartesian>(xppStateDesTopicName);
   const static auto xppJointDesTopicMap = PublisherMapping<xpp_msgs::RobotStateJoint>(xppJointDesTopicName);

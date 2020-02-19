@@ -5,7 +5,6 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Grid1/Offset1
-        - /CartesianVisualization1/Namespaces1
       Splitter Ratio: 0.4424239993095398
     Tree Height: 856
   - Class: rviz/Selection
@@ -55,45 +54,6 @@ Visualization Manager:
       Plane Cell Count: 100
       Reference Frame: world
       Value: true
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /xpp/terrain
-      Name: Terrain
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
-    - Alpha: 1
-      Axes Length: 0.10000000149011612
-      Axes Radius: 0.009999999776482582
-      Class: rviz/Pose
-      Color: 255; 25; 0
-      Enabled: true
-      Head Length: 0.10000000149011612
-      Head Radius: 0.05000000074505806
-      Name: Desired Goal
-      Shaft Length: 0.30000001192092896
-      Shaft Radius: 0.019999999552965164
-      Shape: Axes
-      Topic: /xpp/goal
-      Unreliable: false
-      Value: true
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /xpp/rviz_markers
-      Name: CartesianVisualization
-      Namespaces:
-        "": true
-        base_pose: true
-        cop: true
-        ee_force: true
-        endeffector_pos: true
-        friction_cone: true
-        gravity_force: false
-        inverted_pendulum: false
-        support_polygons: true
-      Queue Size: 100
-      Value: true
     - Alpha: 0.30000001192092896
       Class: rviz/RobotModel
       Collision Enabled: false
@@ -103,12 +63,17 @@ Visualization Manager:
         Expand Joint Details: false
         Expand Link Details: false
         Expand Tree: false
-        LF_ADAPTER:
+        LF_FOOT:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        LF_FOOT:
+        LF_HAA:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LF_HFE:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -117,18 +82,29 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        LF_KFE:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
           Value: true
         LF_SHANK:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
         LF_THIGH:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        LF_hip_fixed:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        LF_shank_fixed:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
           Value: true
-        LH_ADAPTER:
+        LF_thigh_fixed:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -138,7 +114,21 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        LH_HAA:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LH_HFE:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         LH_HIP:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        LH_KFE:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -147,19 +137,36 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
         LH_THIGH:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        LH_hip_fixed:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        LH_shank_fixed:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LH_thigh_fixed:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
         Link Tree Style: Links in Alphabetic Order
-        RF_ADAPTER:
+        RF_FOOT:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        RF_FOOT:
+        RF_HAA:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RF_HFE:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -168,18 +175,29 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        RF_KFE:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
           Value: true
         RF_SHANK:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
         RF_THIGH:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        RF_hip_fixed:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        RF_shank_fixed:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
           Value: true
-        RH_ADAPTER:
+        RF_thigh_fixed:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -189,7 +207,21 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        RH_HAA:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RH_HFE:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         RH_HIP:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        RH_KFE:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -198,8 +230,20 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
         RH_THIGH:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        RH_hip_fixed:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        RH_shank_fixed:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RH_thigh_fixed:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -208,20 +252,44 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
         base_inertia:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        handle_mount_front:
+        battery:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        blackfly_front_camera:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        blackfly_front_camera_parent:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        blackfly_rear_camera:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        blackfly_rear_camera_parent:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        docking_socket:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        face_front:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        handle_mount_front_sensor_mount_axis_aligned:
+        face_rear:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         imu_link:
           Alpha: 1
           Show Axes: false
@@ -231,27 +299,99 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
-        realsense_d435_front_camera_axis_aligned:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
         realsense_d435_front_camera_parent:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        realsense_d435_front_mount:
+        realsense_d435_front_color_frame:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        realsense_d435_front_mount_tilted:
+        realsense_d435_front_color_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        realsense_d435_front_depth_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        realsense_d435_left_camera:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        realsense_d435_left_camera_parent:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        realsense_d435_left_color_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        realsense_d435_left_color_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        realsense_d435_left_depth_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        realsense_d435_rear_camera:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        realsense_d435_rear_camera_parent:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        realsense_d435_rear_color_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        realsense_d435_rear_color_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        realsense_d435_rear_depth_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        realsense_d435_right_camera:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        realsense_d435_right_camera_parent:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        realsense_d435_right_color_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        realsense_d435_right_color_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        realsense_d435_right_depth_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        shell:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-      Name: ANYmal (proprietary)
+        velodyne:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        velodyne_cage:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+      Name: "ANYmal "
       Robot Description: /ocs2_anymal_description
-      TF Prefix: anymal_des
+      TF Prefix: ""
       Update Interval: 0
       Value: true
       Visual Enabled: true
@@ -277,6 +417,17 @@ Visualization Manager:
       Name: Desired Base Trajectory
       Namespaces:
         "": true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /ocs2/current_state
+      Name: MarkerArray
+      Namespaces:
+        Center of Pressure: true
+        EE_Forces: true
+        EE_Positions: true
+        Support Polygon: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -322,10 +473,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3731428384780884
+      Pitch: 0.25314292311668396
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 2.2929322719573975
+      Yaw: 2.2729313373565674
     Saved:
       - Angle: 3.140000104904175
         Class: rviz/TopDownOrtho

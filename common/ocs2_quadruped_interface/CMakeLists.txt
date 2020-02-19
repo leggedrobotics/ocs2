@@ -10,6 +10,10 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_robotic_tools
   ocs2_switched_model_interface
   roscpp
+  tf
+  kdl_parser
+  robot_state_publisher
+  visualization_msgs
   xpp_msgs
 )
 find_package(catkin REQUIRED COMPONENTS

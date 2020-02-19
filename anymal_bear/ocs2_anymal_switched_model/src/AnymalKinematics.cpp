@@ -12,6 +12,12 @@
 namespace anymal {
 namespace tpl {
 
+enum Feet { LF=static_cast<size_t>(switched_model::FeetEnum::LF),
+            RF=static_cast<size_t>(switched_model::FeetEnum::RF),
+            LH=static_cast<size_t>(switched_model::FeetEnum::LH),
+            RH=static_cast<size_t>(switched_model::FeetEnum::RH)
+};
+
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -24,7 +30,7 @@ AnymalKinematics<SCALAR_T>* AnymalKinematics<SCALAR_T>::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-switched_model::matrix3_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::fr_base_X_fr_FOOT( size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
+switched_model::matrix3_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::footOrientationRelativeToBaseFrame( size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
 
   switch (footIndex) {
@@ -49,6 +55,7 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::fr_base_X_fr_F
              break;
   }
 }
+
 template <typename SCALAR_T>
 switched_model::vector3_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::positionBaseToFootInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {

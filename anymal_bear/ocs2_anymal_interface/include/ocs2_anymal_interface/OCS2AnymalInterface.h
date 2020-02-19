@@ -24,11 +24,11 @@ class OCS2AnymalInterface final : public switched_model::OCS2QuadrupedInterface<
 
   using BASE = switched_model::OCS2QuadrupedInterface<12>;
 
-  using system_dynamics_t = switched_model::ComKinoSystemDynamicsAd;
+  using system_dynamics_t            = switched_model::ComKinoSystemDynamicsAd;
   using system_dynamics_derivative_t = switched_model::ComKinoSystemDynamicsAd;
-  using constraint_t = switched_model::ComKinoConstraintBaseAd;
-  using cost_function_t = switched_model::SwitchedModelCostBase;
-  using operating_point_t = switched_model::ComKinoOperatingPointsBase;
+  using constraint_t                 = switched_model::ComKinoConstraintBaseAd;
+  using cost_function_t              = switched_model::SwitchedModelCostBase;
+  using operating_point_t            = switched_model::ComKinoOperatingPointsBase;
 
   explicit OCS2AnymalInterface(const std::string& pathToConfigFolder);
 

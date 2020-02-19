@@ -2,31 +2,11 @@
 
 // Constraints
 #include "ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h"
-#include "ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraintInBase.h"
+#include "ocs2_switched_model_interface/constraint/EndEffectorVelocityInFootFrameConstraint.h"
 #include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
 #include "ocs2_switched_model_interface/constraint/ZeroForceConstraint.h"
-#include <ocs2_core/automatic_differentiation/implementation/CppAdInterface.h>
-
-//forward declare hack
-namespace switched_model {
-  template <typename SCALAR_T>
-    class KinematicsModelBase;
-}
-namespace anymal{ namespace tpl {
-  // template<typename SCALAR_T>
-  // class AnymalKinematics;
-
-  template<typename SCALAR_T>
-    class AnymalKinematics : public switched_model::KinematicsModelBase<SCALAR_T>{
-      public:
-        template<typename scalar_t>
-      switched_model::matrix3_s_t<scalar_t> fr_base_X_fr_FOOT( size_t footIndex) const;
-    };
-} }
 
 namespace switched_model {
-  // using KinematicsChild_t = std::unique_ptr<anymal::tpl::AnymalKinematics<ComKinoConstraintBaseAd::ad_scalar_t>>;
-  using KinematicsChild_t = anymal::tpl::AnymalKinematics<ocs2::CppAdInterface<double>::ad_scalar_t>;
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -39,18 +19,21 @@ ComKinoConstraintBaseAd* ComKinoConstraintBaseAd::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void ComKinoConstraintBaseAd::initializeConstraintTerms() {
-  for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
-    auto footName = feetNames[i];
+  for (int footIdx = 0; footIdx < NUM_CONTACT_POINTS; footIdx++) {
+    auto footName = switched_model::FeetNames[footIdx];
 
     // Friction cone constraint
-    auto frictionCone = std::unique_ptr<ConstraintTerm_t>(new FrictionConeConstraint(options_.frictionCoefficient_, 25.0, i));
+    auto frictionCone = std::unique_ptr<ConstraintTerm_t>(new FrictionConeConstraint(options_.frictionCoefficient_, 25.0, footIdx));
 
     // EE force
-    auto zeroForceConstraint = std::unique_ptr<ConstraintTerm_t>(new ZeroForceConstraint(i));
+    auto zeroForceConstraint = std::unique_ptr<ConstraintTerm_t>(new ZeroForceConstraint(footIdx));
 
     // Velocity Constraint
     auto _o_endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityConstraint(
-        i, EndEffectorVelocityConstraintSettings(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
+        footIdx, EndEffectorVelocityConstraintSettings(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
+    // EE InFootFrame Velocity Constraint
+    auto _f_endEffectorVelocityInFootFrameConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityInFootFrameConstraint(
+          footIdx, EndEffectorVelocityInFootFrameConstraintSettings(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
 
     // Inequalities
     inequalityConstraintCollection_.add(std::move(frictionCone), footName + "_FrictionCone");
@@ -58,6 +41,7 @@ void ComKinoConstraintBaseAd::initializeConstraintTerms() {
     // State input equalities
     equalityStateInputConstraintCollection_.add(std::move(zeroForceConstraint), footName + "_ZeroForce");
     equalityStateInputConstraintCollection_.add(std::move(_o_endEffectorVelocityConstraint), footName + "_o_EEVel");
+    equalityStateInputConstraintCollection_.add(std::move(_f_endEffectorVelocityInFootFrameConstraint), footName + "_f_EEVel");
   }
 }
 
@@ -73,48 +57,48 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
   auto activeSubsystem = logicRulesPtr_->getEventTimeCount(t);
   logicRulesPtr_->getMotionPhaseLogics(activeSubsystem, stanceLegs_, zDirectionRefsPtr_);
 
-  // const base_coordinate_s_t comPose = getComPose(x);
-  const auto o_R_b = rotationMatrixBaseToOrigin(getOrientation(getComPose(x)));
-
-  for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
-    auto footName = feetNames[i];
+  for (int footIdx = 0; footIdx < NUM_CONTACT_POINTS; footIdx++) {
+    auto footName = switched_model::FeetNames[footIdx];
 
     // Active friction cone constraint for stanceLegs
-    inequalityConstraintCollection_.modifyConstraint(footName + "_FrictionCone")->setActivity(stanceLegs_[i]);
+    inequalityConstraintCollection_.modifyConstraint(footName + "_FrictionCone")->setActivity(stanceLegs_[footIdx]);
 
     // Zero forces active for swing legs
-    equalityStateInputConstraintCollection_.modifyConstraint(footName + "_ZeroForce")->setActivity(!stanceLegs_[i]);
+    equalityStateInputConstraintCollection_.modifyConstraint(footName + "_ZeroForce")->setActivity(!stanceLegs_[footIdx]);
 
     // Active foot placement for stance legs
     auto _o_EEVelConstraint =
-        equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityConstraint>(footName + "_o_EEVel");
+      equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityConstraint>(footName + "_o_EEVel");
+    // Rolling InFootFrame Velocity constraint for stance legs
+    auto _f_EEVelInFootFrameConstraint =
+      equalityStateInputConstraintCollection_.template modifyConstraint<EndEffectorVelocityInFootFrameConstraint>(footName + "_f_EEVel");
 
     EndEffectorVelocityConstraintSettings _o_eeVelConSettings;
+    EndEffectorVelocityInFootFrameConstraintSettings _f_eeVelInFootFrameConSettings;
 
-    _o_EEVelConstraint->setActivity(true);
-
-    //TODO(oharley): The static_cast a bit of a hack → this should all be subclassed or templated
-    // const auto b_R_e = rotationMatrixBaseToOrigin(static_cast<KinematicsChild_t*>(adKinematicModelPtr_.get())->fr_base_X_fr_FOOT<scalar_t>(i));
-    if (stanceLegs_[i]) {
-      // in stance: y,z velocitys are zero
-      _o_eeVelConSettings.b.resize(2);
-      _o_eeVelConSettings.b << 0, 0;
-      _o_eeVelConSettings.A.resize(2, 3);
-      // Lateral Constraint
-      const auto b_R_e = static_cast<KinematicsChild_t*>(adKinematicModelPtr_.get())->fr_base_X_fr_FOOT<scalar_t>(i);
-      auto o_eeVelLateral = (o_R_b * b_R_e).col(2).template head<2>().eval(); // X,Y components
-      _o_eeVelConSettings.A.template block<1,2>(0,0) = o_eeVelLateral;
-      _o_eeVelConSettings.A(0,2) = 0;
-      // Up(Z) constraint
-      _o_eeVelConSettings.A.bottomRows<1>() << 0, 0, 1;
-
-    } else {  // in swing: z-velocity is provided
+    if (stanceLegs_[footIdx]) {
+      // EE velocities in lateral direction (y) in foot frame should be zero.
+      _f_eeVelInFootFrameConSettings.b.resize(1);
+      _f_eeVelInFootFrameConSettings.b << 0;
+      _f_eeVelInFootFrameConSettings.A.resize(1, 3);
+      _f_eeVelInFootFrameConSettings.A << 0, 1, 0;
+      _f_EEVelInFootFrameConstraint->configure(_f_eeVelInFootFrameConSettings);
+      _f_EEVelInFootFrameConstraint->setActivity(true);
+      // The upwards velocity (z) in the wordl frame should be zero too.
       _o_eeVelConSettings.b.resize(1);
       _o_eeVelConSettings.A.resize(1, 3);
-      _o_eeVelConSettings.b << -zDirectionRefsPtr_[i]->calculateVelocity(Base::t_);
+      _o_eeVelConSettings.b << 0;
+      _o_eeVelConSettings.A << 0, 0, 1;
+    } else {  // in swing: z-velocity is provided
+      //TODO(oharley) this could be made 'smarter'
+      _f_EEVelInFootFrameConstraint->setActivity(false);
+      _o_eeVelConSettings.b.resize(1);
+      _o_eeVelConSettings.A.resize(1, 3);
+      _o_eeVelConSettings.b << -zDirectionRefsPtr_[footIdx]->calculateVelocity(Base::t_);
       _o_eeVelConSettings.A << 0, 0, 1;
     }
     _o_EEVelConstraint->configure(_o_eeVelConSettings);
+    _o_EEVelConstraint->setActivity(true);
   }
 }
 

@@ -6,7 +6,7 @@
 
     <!-- Link to other packages -->
     <tab type="user" url="@ref ocs2_core_page" title="Core Module" intro=""/>
-    <tab type="user" url="@ref ocs2_slq_page" title="SLQ Module" intro=""/>
+    <tab type="user" url="@ref ocs2_ddp_page" title="SLQ Module" intro=""/>
     <tab type="user" url="@ref ocs2_ocs2_page" title="OCS2 Module" intro=""/>
     <tab type="user" url="@ref ocs2_mpc_page" title="MPC Module" intro=""/>
     <tab type="user" url="@ref ocs2_comm_interfaces_page" title="ROS Interfaces Module" intro=""/>

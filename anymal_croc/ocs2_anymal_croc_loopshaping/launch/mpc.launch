@@ -9,7 +9,7 @@
           <arg name="description_name"   value="$(arg description_name)"/>
       </include>
       <!-- Launch visualization -->
-      <include file="$(find ocs2_anymal_visualization)/launch/visualization.launch">
+      <include file="$(find ocs2_quadruped_interface)/launch/visualization.launch">
           <arg name="description_name"   value="$(arg description_name)"/>
       </include>
     </group>

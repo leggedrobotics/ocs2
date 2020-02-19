@@ -26,6 +26,6 @@
   <depend>kdl_parser</depend>
   <depend>robot_state_publisher</depend>
   <depend>visualization_msgs</depend>
-  <depend>xpp_msgs</depend>
+  <depend>geometry_msgs</depend>
 
 </package>

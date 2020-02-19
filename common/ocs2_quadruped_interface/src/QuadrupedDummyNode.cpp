@@ -7,14 +7,14 @@
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
-#include <ocs2_quadruped_interface/QuadrupedXppVisualizer.h>
+#include <ocs2_quadruped_interface/QuadrupedVisualizer.h>
 
 namespace switched_model {
 
 void quadrupedDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& quadrupedInterface,
                         const QuadrupedInterface::rollout_base_t* rolloutPtr) {
   const std::string robotName = "anymal";
-  using vis_t = switched_model::QuadrupedXppVisualizer;
+  using vis_t = switched_model::QuadrupedVisualizer;
   using mrt_t = ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
   using dummy_t = ocs2::MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>;
 

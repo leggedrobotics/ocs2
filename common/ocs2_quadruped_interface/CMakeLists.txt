@@ -14,7 +14,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   kdl_parser
   robot_state_publisher
   visualization_msgs
-  xpp_msgs
+  geometry_msgs
 )
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
@@ -66,7 +66,7 @@ add_library(${PROJECT_NAME}
   src/QuadrupedInterface.cpp
   src/QuadrupedMpcNode.cpp
   src/QuadrupedSlqMpc.cpp
-  src/QuadrupedXppVisualizer.cpp)
+  src/QuadrupedVisualizer.cpp)
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS})

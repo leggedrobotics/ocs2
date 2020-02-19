@@ -114,6 +114,25 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
   void setTerrain(const raisim::HeightMap& heightMap);
 
   /**
+   * @brief Replaces the default flat ground plane with the given heightMap described by a png file
+   * @param[in] pngFileName Path to the png file which is loaded as the new terrain
+   * @param[in] centerX World X-coordinate corresponding to the map center
+   * @param[in] centerY World Y-coordinate corresponding to the map center
+   * @param[in] xSize Actual size of the map in X-direction [m]
+   * @param[in] ySize Actual size of the map in Y-direction [m]
+   * @param[in] heightScale Distance [m] that a single level of greyscale saturation [0 - 255] corresponds to
+   * @param[in] heightOffset Height offset of the zero level [m]
+   */
+  void setTerrain(const std::string& pngFileName, double centerX, double centerY, double xSize, double ySize, double heightScale,
+                  double heightOffset);
+
+  /**
+   * @brief Returns the heightMap, which can be read for terrain information
+   * @return Pointer to the class heightMap_ member variable
+   */
+  const raisim::HeightMap* getTerrain() const;
+
+  /**
    * @brief Save and apply P and D gain values. They only take effect if the controlMode is not FORCE_AND_TORQUE
    * @param[in] pGain: Proportional (position) gains (dim == degrees of freedom)
    * @param[in] dGain: Derivative (velocity) gains (dim == degrees of freedom)

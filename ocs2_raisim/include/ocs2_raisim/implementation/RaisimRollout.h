@@ -166,7 +166,7 @@ void RaisimRollout<STATE_DIM, INPUT_DIM>::setTerrain(const std::string& pngFileN
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-raisim::HeightMap* RaisimRollout<STATE_DIM, INPUT_DIM>::getTerrain() {
+const raisim::HeightMap* RaisimRollout<STATE_DIM, INPUT_DIM>::getTerrain() const {
   return heightMap_;
 }
 

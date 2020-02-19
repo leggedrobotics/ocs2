@@ -130,7 +130,7 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
    * @brief Returns the heightMap, which can be read for terrain information
    * @return Pointer to the class heightMap_ member variable
    */
-  raisim::HeightMap* getTerrain();
+  const raisim::HeightMap* getTerrain() const;
 
   /**
    * @brief Save and apply P and D gain values. They only take effect if the controlMode is not FORCE_AND_TORQUE

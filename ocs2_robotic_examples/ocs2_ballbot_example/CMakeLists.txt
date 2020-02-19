@@ -50,6 +50,11 @@ catkin_package(
     ${EIGEN3_INCLUDE_DIRS}
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
+  LIBRARIES
+    ballbot_SLQ
+    ocs2_ballbot_dynamics
+    ocs2_ballbot
+    ocs2_ballbot_visualization
   DEPENDS
     Boost
 )
@@ -95,6 +100,17 @@ target_link_libraries(ocs2_ballbot
   dl
 )
 
+# Ballbot visualization
+add_library(ocs2_ballbot_visualization
+  src/BallbotDummyVisualization.cpp
+)
+add_dependencies(ocs2_ballbot_visualization
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(ocs2_ballbot_visualization
+  ${catkin_LIBRARIES}
+)
+
 # Mpc node
 add_executable(ballbot_mpc
   src/MPC_Ballbot_Node.cpp
@@ -110,13 +126,13 @@ target_link_libraries(ballbot_mpc
 # Dummy node
 add_executable(ballbot_dummy_test
   src/Dummy_Ballbot_Node.cpp
-  src/BallbotDummyVisualization.cpp
 )
 add_dependencies(ballbot_dummy_test
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(ballbot_dummy_test
   ocs2_ballbot
+  ocs2_ballbot_visualization
   ${catkin_LIBRARIES}
 )
 
@@ -213,7 +229,7 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS ocs2_ballbot ballbot_SLQ ocs2_ballbot_dynamics ballbotPyBindings_cpp
+install(TARGETS ocs2_ballbot ballbot_SLQ ocs2_ballbot_dynamics ocs2_ballbot_visualization ballbotPyBindings_cpp
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

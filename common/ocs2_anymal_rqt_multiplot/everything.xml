@@ -3405,7 +3405,7 @@
                                     <type>xpp_msgs/RobotStateCartesian</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>base/twist/angular/x</field>
+                                    <field>base/pose/position/x</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>1000</absolute_maximum>

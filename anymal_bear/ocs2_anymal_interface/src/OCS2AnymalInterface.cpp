@@ -27,7 +27,7 @@ void OCS2AnymalInterface::setupOptimizer(const logic_rules_ptr_t& logicRulesPtr,
                                          slq_base_ptr_t& slqPtr, mpc_ptr_t& mpcPtr) {
   dynamicsPtr_.reset(new system_dynamics_t(AnymalKinematicsAd(), AnymalComAd(), modelSettings_.recompileLibraries_));
   dynamicsDerivativesPtr_.reset(dynamicsPtr_->clone());
-  constraintsPtr_.reset(new constraint_t(AnymalKinematics(), AnymalKinematicsAd(), AnymalComAd(), logicRulesPtr, modelSettings_));
+  constraintsPtr_.reset(new constraint_t(AnymalKinematicsAd(), AnymalComAd(), logicRulesPtr, modelSettings_));
   costFunctionPtr_.reset(new cost_function_t(AnymalCom(), logicRulesPtr, Q_, R_, QFinal_));
   operatingPointsPtr_.reset(new operating_point_t(AnymalCom(), logicRulesPtr));
   timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, rolloutSettings_));

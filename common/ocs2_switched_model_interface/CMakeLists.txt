@@ -7,7 +7,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
 )
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
-  ocs2_anymal_switched_model
 )
 
 # Generate compile_commands.json for clang tools
@@ -16,7 +15,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 ## Eigen3
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -ffast-math")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++17 -Wfatal-errors -ffast-math")
 
 ###################################
 ## catkin specific configuration ##
@@ -29,7 +28,6 @@ catkin_package(
 		${PROJECT_NAME}
 	CATKIN_DEPENDS
 		${CATKIN_PACKAGE_DEPENDENCIES}
-		ocs2_anymal_switched_model
 #	DEPENDS
 )
 
@@ -61,7 +59,6 @@ add_dependencies(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
 		${catkin_LIBRARIES}
-		ocs2_anymal_switched_model
 		dl
 		)
 

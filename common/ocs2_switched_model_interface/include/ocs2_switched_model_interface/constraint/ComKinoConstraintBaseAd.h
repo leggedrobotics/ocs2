@@ -62,7 +62,19 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
 
 
   ComKinoConstraintBaseAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-                          std::shared_ptr<const logic_rules_t> logicRulesPtr, const ModelSettings& options = ModelSettings());
+                          std::shared_ptr<const logic_rules_t> logicRulesPtr, const ModelSettings& options = ModelSettings())
+      : Base(),
+        adKinematicModelPtr_(adKinematicModel.clone()),
+        adComModelPtr_(adComModel.clone()),
+        logicRulesPtr_(std::move(logicRulesPtr)),
+        options_(options),
+        inequalityConstraintsComputed_(false),
+        stateInputConstraintsComputed_(false) {
+    if (!logicRulesPtr_) {
+      throw std::runtime_error("[ComKinoConstraintBaseAd] logicRules cannot be a nullptr");
+    }
+    initializeConstraintTerms();
+  }
 
   ComKinoConstraintBaseAd(const ComKinoConstraintBaseAd& rhs)
       : Base(rhs),
@@ -78,9 +90,9 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
   /**
    * Initialize Constraint Terms
    */
-  virtual void initializeConstraintTerms();
+  void initializeConstraintTerms();
 
-  virtual ~ComKinoConstraintBaseAd() = default;
+  ~ComKinoConstraintBaseAd() override = default;
 
   ComKinoConstraintBaseAd* clone() const override;
 
@@ -119,7 +131,7 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
    */
   void getStanceLegs(contact_flag_t& stanceLegs);
 
- protected:
+ private:
   // State input equality constraints
   ConstraintCollection_t equalityStateInputConstraintCollection_;
   bool stateInputConstraintsComputed_;

@@ -39,39 +39,42 @@ namespace switched_model {
   template <typename M>
     struct PublisherMapping{
       typedef M msg_t;
-      const std::string topicName;
-      ros::Publisher advertise(ros::NodeHandle& n, size_t rate, bool latch) const {return n.advertise<msg_t>(topicName, rate, latch);};
-      ros::Publisher advertise(ros::NodeHandle& n, size_t rate) const {return n.advertise<msg_t>(topicName, rate);};
-      PublisherMapping(const std::string topicName): topicName(topicName){};
+      const std::string topicName_;
+      ros::Publisher advertise(ros::NodeHandle& n, size_t rate, bool latch) const {return n.advertise<msg_t>(topicName_, rate, latch);};
+      ros::Publisher advertise(ros::NodeHandle& n, size_t rate) const
+      {
+        return n.advertise<msg_t>(topicName_, rate);
+      };
+      PublisherMapping(const std::string topicName): topicName_(topicName){};
     };
 
   /***************************************************************************************************/
-  inline const std::string xppJointDesTopicName = "xpp/joint_anymal_des";
-  inline const auto xppStateDesTopicName = xpp_msgs::robot_state_desired;
+  inline static const std::string xppJointDesTopicName = "xpp/joint_anymal_des";
+  inline static const std::string xppStateDesTopicName = "/xpp/state_des"; //xpp_msgs::robot_state_desired;
 
-  const auto xppStateDesTopicMap = PublisherMapping<xpp_msgs::RobotStateCartesian>(xppStateDesTopicName);
-  const auto xppJointDesTopicMap = PublisherMapping<xpp_msgs::RobotStateJoint>(xppJointDesTopicName);
+  const static auto xppStateDesTopicMap = PublisherMapping<xpp_msgs::RobotStateCartesian>(xppStateDesTopicName);
+  const static auto xppJointDesTopicMap = PublisherMapping<xpp_msgs::RobotStateJoint>(xppJointDesTopicName);
   /***************************************************************************************************/
   inline static const std::string xppStateTrajTopicName = xppStateDesTopicName.substr(0, xppStateDesTopicName.find("des")) + "traj";
   inline static const std::string xppJointTrajTopicName = xppJointDesTopicName.substr(0, xppJointDesTopicName.find("des")) + "traj";
 
-  inline static const auto xppStateTrajTopicMap = PublisherMapping<xpp_msgs::RobotStateCartesian>(xppStateTrajTopicName);
-  inline static const auto xppJointTrajTopicMap = PublisherMapping<xpp_msgs::RobotStateJoint>(xppJointTrajTopicName);
+  static const auto xppStateTrajTopicMap = PublisherMapping<xpp_msgs::RobotStateCartesian>(xppStateTrajTopicName);
+  static const auto xppJointTrajTopicMap = PublisherMapping<xpp_msgs::RobotStateJoint>(xppJointTrajTopicName);
   /***************************************************************************************************/
 
-  inline const std::string comTraceTopicName     = "baseTrajectory"; //desiredBaseTrajectory
-  inline const std::string feetTraceTopicName    = "feetTrajectories";
-  inline const std::string posesTargetTopicName  = "poseTargets";
+  inline static const std::string comTraceTopicName     = "baseTrajectory"; //desiredBaseTrajectory
+  inline static const std::string feetTraceTopicName    = "feetTrajectories";
+  inline static const std::string posesTargetTopicName  = "poseTargets";
   const auto comTraceTopicMap     = PublisherMapping<visualization_msgs::Marker>(comTraceTopicName);
   const auto feetTraceTopicMap    = PublisherMapping<visualization_msgs::MarkerArray>(feetTraceTopicName);
   const auto posesTargetTopicMap  = PublisherMapping<geometry_msgs::PoseArray>(posesTargetTopicName);
 
-  inline const std::string comMPCTraceTopicName  = "baseMPCTrajectory"; //desiredBaseTrajectory
-  inline const std::string feetMPCTraceTopicName = "feetMPCTrajectories";
-  inline const std::string posesMPCTopicName     = "poseMPC";
-  const auto comMPCTraceTopicMap  = PublisherMapping<visualization_msgs::Marker>(comMPCTraceTopicName);
-  const auto feetMPCTraceTopicMap = PublisherMapping<visualization_msgs::MarkerArray>(feetMPCTraceTopicName);
-  const auto posesMPCTopicMap     = PublisherMapping<geometry_msgs::PoseArray>(posesMPCTopicName);
+  inline static const std::string comMPCTraceTopicName  = "baseMPCTrajectory"; //desiredBaseTrajectory
+  inline static const std::string feetMPCTraceTopicName = "feetMPCTrajectories";
+  inline static const std::string posesMPCTopicName     = "poseMPC";
+  const static auto comMPCTraceTopicMap  = PublisherMapping<visualization_msgs::Marker>(comMPCTraceTopicName);
+  const static auto feetMPCTraceTopicMap = PublisherMapping<visualization_msgs::MarkerArray>(feetMPCTraceTopicName);
+  const static auto posesMPCTopicMap     = PublisherMapping<geometry_msgs::PoseArray>(posesMPCTopicName);
   }
 
 template <size_t JOINT_COORD_SIZE, size_t STATE_DIM, size_t INPUT_DIM>

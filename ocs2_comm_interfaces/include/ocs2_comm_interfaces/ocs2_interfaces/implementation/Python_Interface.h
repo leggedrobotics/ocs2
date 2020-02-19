@@ -196,20 +196,19 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 double PythonInterface<STATE_DIM, INPUT_DIM>::getIntermediateCost(double t, Eigen::Ref<const state_vector_t> x,
                                                                   Eigen::Ref<const input_vector_t> u) {
   cost_->setCurrentStateAndControl(t, x, u);
-  double L;
+  scalar_t L;
   cost_->getIntermediateCost(L);
 
-  double L_penalty = 0.0;
   if (constraints_) {
     constraints_->setCurrentStateAndControl(t, x, u);
     if (constraints_->numInequalityConstraint(t) > 0) {
       scalar_array_t h;
       constraints_->getInequalityConstraint(h);
-      L_penalty = penalty_->getPenaltyCost(h);
+      L += penalty_->getPenaltyCost(h);
     }
   }
 
-  return L + L_penalty;
+  return L;
 }
 
 /******************************************************************************************************/
@@ -221,9 +220,6 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::state_vector_t PythonInterface<S
   cost_->setCurrentStateAndControl(t, x, u);
   state_vector_t dLdx;
   cost_->getIntermediateCostDerivativeState(dLdx);
-
-  state_vector_t dLdx_penalty;
-  dLdx_penalty.setZero();
 
   if (constraints_) {
     constraints_->setCurrentStateAndControl(t, x, u);
@@ -237,11 +233,11 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::state_vector_t PythonInterface<S
       for (int i = 0; i < dhdxFixedSize.size(); i++) {
         dhdx[i] = dhdxFixedSize[i];
       }
-      dLdx_penalty = penalty_->getPenaltyCostDerivativeState(h, dhdx);
+      dLdx += penalty_->getPenaltyCostDerivativeState(h, dhdx);
     }
   }
 
-  return dLdx + dLdx_penalty;
+  return dLdx;
 }
 
 /******************************************************************************************************/
@@ -253,9 +249,6 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::input_vector_t PythonInterface<S
   cost_->setCurrentStateAndControl(t, x, u);
   input_vector_t dLdu;
   cost_->getIntermediateCostDerivativeInput(dLdu);
-
-  input_vector_t dLdu_penalty;
-  dLdu_penalty.setZero();
 
   if (constraints_) {
     constraints_->setCurrentStateAndControl(t, x, u);
@@ -269,11 +262,11 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::input_vector_t PythonInterface<S
       for (int i = 0; i < dhduFixedSize.size(); i++) {
         dhdu[i] = dhduFixedSize[i];
       }
-      dLdu_penalty = penalty_->getPenaltyCostDerivativeInput(h, dhdu);
+      dLdu += penalty_->getPenaltyCostDerivativeInput(h, dhdu);
     }
   }
 
-  return dLdu + dLdu_penalty;
+  return dLdu;
 }
 
 /******************************************************************************************************/
@@ -286,9 +279,6 @@ PythonInterface<STATE_DIM, INPUT_DIM>::getIntermediateCostSecondDerivativeInput(
   cost_->setCurrentStateAndControl(t, x, u);
   input_matrix_t ddLduu;
   cost_->getIntermediateCostSecondDerivativeInput(ddLduu);
-
-  input_matrix_t ddLduu_penalty;
-  ddLduu_penalty.setZero();
 
   if (constraints_) {
     constraints_->setCurrentStateAndControl(t, x, u);
@@ -306,11 +296,11 @@ PythonInterface<STATE_DIM, INPUT_DIM>::getIntermediateCostSecondDerivativeInput(
         dhdu[i] = dhduFixedSize[i];
         ddhduu[i] = ddhduuFixedSize[i];
       }
-      ddLduu_penalty = penalty_->getPenaltyCostSecondDerivativeInput(h, dhdu, ddhduu);
+      ddLduu += penalty_->getPenaltyCostSecondDerivativeInput(h, dhdu, ddhduu);
     }
   }
 
-  return ddLduu + ddLduu_penalty;
+  return ddLduu;
 }
 
 /******************************************************************************************************/

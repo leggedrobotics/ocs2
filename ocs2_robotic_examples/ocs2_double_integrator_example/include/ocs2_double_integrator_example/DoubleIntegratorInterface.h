@@ -93,6 +93,8 @@ class DoubleIntegratorInterface final : public RobotInterface<double_integrator:
 
   const rollout_base_t& getRollout() const { return *ddpLinearSystemRolloutPtr_; }
 
+  const DoubleIntegratorOperatingPoint& getOperatingPoints() const override { return *linearSystemOperatingPointPtr_; }
+
  protected:
   /**
    * Loads the settings from the path file.

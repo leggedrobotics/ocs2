@@ -96,6 +96,8 @@ class QuadrotorInterface final : public RobotInterface<quadrotor::STATE_DIM_, qu
 
   const rollout_base_t& getRollout() const { return *ddpQuadrotorRolloutPtr_; }
 
+  const QuadrotorOperatingPoint& getOperatingPoints() const override { return *quadrotorOperatingPointPtr_; }
+
  protected:
   /**
    * Load the settings from the path file.

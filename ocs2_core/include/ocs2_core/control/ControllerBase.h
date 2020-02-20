@@ -161,8 +161,8 @@ class ControllerBase {
    */
   virtual void display() const {}
 
-  /*
-   * Gets the event times for which the controller is designed.
+  /**
+   * @brief Gets the event times for which the controller is designed.
    * @return The event times of the controller.
    */
   virtual scalar_array_t controllerEventTimes() const {}

@@ -93,6 +93,8 @@ class CartPoleInterface final : public RobotInterface<cartpole::STATE_DIM_, cart
 
   const rollout_base_t& getRollout() const { return *ddpCartPoleRolloutPtr_; }
 
+  const CartPoleOperatingPoint& getOperatingPoints() const override { return *cartPoleOperatingPointPtr_; }
+
  protected:
   /**
    * Loads the settings from the path file.

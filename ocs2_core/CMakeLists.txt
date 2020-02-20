@@ -49,6 +49,8 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/automatic_differentation/CppAdInterface.cpp
   src/automatic_differentation/CppAdSparsity.cpp
+  src/constraint/PenaltyBase.cpp
+  src/constraint/RelaxedBarrierPenalty.cpp
   src/integration/Integrator.cpp
   src/logic/machine/HybridLogicRulesMachine.cpp
   src/loopshaping/LoopshapingPropertyTree.cpp

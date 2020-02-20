@@ -8,20 +8,20 @@
 namespace ocs2 {
 namespace LinearAlgebra {
 /**
- * Compute random symmetric positive definite (SPD) matrix
+ * Compute random, symmetric, positive definite (SPD), and diagonally dominant matrix.
  * @return random SPD matrix.
  */
 template <typename MatrixType>
 MatrixType generateSPDmatrix() {
   MatrixType A;
   A.setRandom();
-  A = 0.5 * (A + A.transpose()).eval();    // Avoid aliasing
+  A = 0.5 * (A + A.transpose()).eval();    // avoid aliasing
   A.diagonal().array() += A.rows() * 1.0;  // makes the matrix diagonally dominant
   return A;
 }
 
 /**
- * Compute random symmetric positive definite (SPD) matrix of dimension size.
+ * Compute random, symmetric, positive definite (SPD), and diagonally dominant matrix of dimension size.
  * @param [in] size: Matrix dimension.
  * @return random SPD matrix.
  */

@@ -85,7 +85,7 @@ class QuadraticCostFunctionAD : public CostFunctionBaseAD<STATE_DIM, INPUT_DIM> 
   size_t getNumTerminalParameters() const override { return STATE_DIM; };
 
   void intermediateCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                                const ad_dynamic_vector_t& parameters, ad_scalar_t& costValue) const {
+                                const ad_dynamic_vector_t& parameters, ad_scalar_t& costValue) const override {
     ad_dynamic_vector_t stateDesired = parameters.template head<STATE_DIM>();
     ad_dynamic_vector_t inputDesired = parameters.template tail<INPUT_DIM>();
     ad_dynamic_vector_t xDeviation = state - stateDesired;
@@ -97,7 +97,7 @@ class QuadraticCostFunctionAD : public CostFunctionBaseAD<STATE_DIM, INPUT_DIM> 
   }
 
   void terminalCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& parameters,
-                            ad_scalar_t& costValue) const {
+                            ad_scalar_t& costValue) const override {
     ad_dynamic_vector_t stateDesired = parameters.template head<STATE_DIM>();
     ad_dynamic_vector_t xDeviation = state - stateDesired;
     costValue = 0.5 * xDeviation.dot(QFinal_.template cast<ad_scalar_t>() * xDeviation);

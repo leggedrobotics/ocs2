@@ -66,7 +66,9 @@ add_library(${PROJECT_NAME}
   src/QuadrupedInterface.cpp
   src/QuadrupedMpcNode.cpp
   src/QuadrupedSlqMpc.cpp
-  src/QuadrupedVisualizer.cpp)
+  src/QuadrupedVisualizer.cpp
+  src/QuadrupedVisualizationColors.cpp
+  src/QuadrupedVisualizationHelpers.cpp)
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS})

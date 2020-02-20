@@ -19,7 +19,8 @@ void QuadrupedLoopshapingXppVisualizer::update(const system_observation_t& obser
   loopshapingDefinition_->getSystemInput(observation.state(), observation.input(), quadrupedObservation.input());
   quadrupedObservation.subsystem() = observation.subsystem();
 
-  quadrupedXppVisualizer_->publishObservation(quadrupedObservation);
+  const auto timeStamp = ros::Time(observation.time());
+  quadrupedXppVisualizer_->publishObservation(timeStamp, quadrupedObservation);
 }
 
 }  // namespace switched_model_loopshaping

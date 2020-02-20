@@ -395,6 +395,17 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /ocs2_anymal/currentState
+      Name: Current State
+      Namespaces:
+        Center of Pressure: true
+        EE Forces: true
+        EE Positions: true
+        Support Polygon: true
+      Queue Size: 1
+      Value: true
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /ocs2_anymal/desiredBaseTrajectory
@@ -411,17 +422,6 @@ Visualization Manager:
         CoM Trajectory: true
         EE Trajectories: true
         Future footholds: true
-      Queue Size: 1
-      Value: true
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /ocs2_anymal/currentState
-      Name: Current State
-      Namespaces:
-        Center of Pressure: true
-        EE Forces: true
-        EE Positions: true
-        Support Polygon: true
       Queue Size: 1
       Value: true
     - Alpha: 1
@@ -465,7 +465,7 @@ Visualization Manager:
       Enabled: true
       Head Length: 0.07000000029802322
       Head Radius: 0.029999999329447746
-      Name: MPC CoM Pose Trajectory
+      Name: Optimized CoM Pose Trajectory
       Shaft Length: 0.23000000417232513
       Shaft Radius: 0.009999999776482582
       Shape: Axes
@@ -515,10 +515,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.20020268857479095
+      Pitch: 0.13020269572734833
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 1.9779052734375
+      Yaw: 2.1229052543640137
     Saved:
       - Angle: 3.140000104904175
         Class: rviz/TopDownOrtho

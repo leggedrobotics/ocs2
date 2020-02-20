@@ -1,161 +1,161 @@
 template <typename TRAIT>
 iit::ANYmal::dyn::tpl::InertiaProperties<TRAIT>::InertiaProperties()
 {
-    com_base = iit::rbd::Vector3d(-0.018088844,-2.1014918E-4,0.0019263081).cast<Scalar>();
+    com_base = iit::rbd::Vector3d(-0.020278925,-2.3559271E-4,0.0027828896).cast<Scalar>();
     tensor_base.fill(
-        Scalar(25.508142),
+        Scalar(22.753315),
         com_base,
         rbd::Utils::buildInertiaTensor(
-                Scalar(0.21581423),
-                Scalar(1.8553128),
-                Scalar(1.9356725),
-                Scalar(-0.0045547215),
-                Scalar(-0.04372399),
-                Scalar(0.001628948)) );
+                Scalar(0.18331298),
+                Scalar(1.728409),
+                Scalar(1.7785226),
+                Scalar(-0.0044553317),
+                Scalar(-0.043723986),
+                Scalar(0.0016289481)) );
 
-    com_LF_HIP = iit::rbd::Vector3d(9.952248E-4,0.01605701,0.063007474).cast<Scalar>();
+    com_LF_HIP = iit::rbd::Vector3d(-0.0010103208,0.014250419,0.068031415).cast<Scalar>();
     tensor_LF_HIP.fill(
-        Scalar(2.631),
+        Scalar(1.8623549),
         com_LF_HIP,
         rbd::Utils::buildInertiaTensor(
-                Scalar(0.01691537),
-                Scalar(0.014479431),
-                Scalar(0.0053204754),
-                Scalar(-2.5228714E-5),
-                Scalar(2.1883397E-4),
-                Scalar(0.002581513)) );
+                Scalar(0.012983099),
+                Scalar(0.012171697),
+                Scalar(0.0032080302),
+                Scalar(-9.041602E-5),
+                Scalar(-6.910495E-5),
+                Scalar(0.0016106762)) );
 
-    com_LF_THIGH = iit::rbd::Vector3d(3.553805E-5,0.234335,0.015803616).cast<Scalar>();
+    com_LF_THIGH = iit::rbd::Vector3d(0.0049690404,0.2226652,0.028049987).cast<Scalar>();
     tensor_LF_THIGH.fill(
-        Scalar(3.241),
+        Scalar(2.3501198),
         com_LF_THIGH,
         rbd::Utils::buildInertiaTensor(
-                Scalar(0.21329968),
-                Scalar(0.0064454637),
-                Scalar(0.21149169),
-                Scalar(-3.4727982E-5),
-                Scalar(2.3600842E-5),
-                Scalar(0.013588932)) );
+                Scalar(0.1466014),
+                Scalar(0.0058492566),
+                Scalar(0.14499189),
+                Scalar(-2.1081958E-4),
+                Scalar(2.5706907E-4),
+                Scalar(0.016769057)) );
 
-    com_LF_SHANK = iit::rbd::Vector3d(0.05243166,0.053917024,0.017812103).cast<Scalar>();
+    com_LF_SHANK = iit::rbd::Vector3d(0.08773683,0.07102133,0.014560207).cast<Scalar>();
     tensor_LF_SHANK.fill(
-        Scalar(0.578),
+        Scalar(0.5264926),
         com_LF_SHANK,
         rbd::Utils::buildInertiaTensor(
-                Scalar(0.008518288),
-                Scalar(0.003160114),
-                Scalar(0.011083069),
-                Scalar(0.0028563053),
-                Scalar(5.249712E-4),
-                Scalar(4.983306E-4)) );
+                Scalar(0.010520823),
+                Scalar(0.0076368405),
+                Scalar(0.017700527),
+                Scalar(0.0069414484),
+                Scalar(4.3581615E-4),
+                Scalar(2.2101759E-4)) );
 
-    com_RF_HIP = iit::rbd::Vector3d(9.952248E-4,-0.01605701,0.06311905).cast<Scalar>();
+    com_RF_HIP = iit::rbd::Vector3d(-0.0010103208,-0.014250419,0.06809383).cast<Scalar>();
     tensor_RF_HIP.fill(
-        Scalar(2.631),
+        Scalar(1.8623549),
         com_RF_HIP,
         rbd::Utils::buildInertiaTensor(
-                Scalar(0.016950594),
-                Scalar(0.014514658),
-                Scalar(0.0053204754),
-                Scalar(2.5228248E-5),
-                Scalar(2.671816E-4),
-                Scalar(-0.0025431812)) );
+                Scalar(0.012997046),
+                Scalar(0.012185644),
+                Scalar(0.0032080302),
+                Scalar(9.041602E-5),
+                Scalar(-6.67173E-5),
+                Scalar(-0.0016123619)) );
 
-    com_RF_THIGH = iit::rbd::Vector3d(1.2611576E-4,0.234335,-0.015803618).cast<Scalar>();
+    com_RF_THIGH = iit::rbd::Vector3d(0.005016815,0.2226524,-0.028049987).cast<Scalar>();
     tensor_RF_THIGH.fill(
-        Scalar(3.241),
+        Scalar(2.3501198),
         com_RF_THIGH,
         rbd::Utils::buildInertiaTensor(
-                Scalar(0.21329968),
-                Scalar(0.0064454637),
-                Scalar(0.21149169),
-                Scalar(9.728495E-5),
-                Scalar(1.5318064E-5),
-                Scalar(-0.01358893)) );
+                Scalar(0.1465832),
+                Scalar(0.0058504506),
+                Scalar(0.14497489),
+                Scalar(-1.7701977E-4),
+                Scalar(-2.6058225E-4),
+                Scalar(-0.016768113)) );
 
-    com_RF_SHANK = iit::rbd::Vector3d(0.05243166,0.053917024,-0.017812103).cast<Scalar>();
+    com_RF_SHANK = iit::rbd::Vector3d(0.08773683,0.07102133,-0.014560207).cast<Scalar>();
     tensor_RF_SHANK.fill(
-        Scalar(0.578),
+        Scalar(0.5264926),
         com_RF_SHANK,
         rbd::Utils::buildInertiaTensor(
-                Scalar(0.008518288),
-                Scalar(0.0031601144),
-                Scalar(0.011083069),
-                Scalar(0.0028563053),
-                Scalar(-5.249711E-4),
-                Scalar(-4.9833005E-4)) );
+                Scalar(0.010520823),
+                Scalar(0.0076368405),
+                Scalar(0.017700527),
+                Scalar(0.0069414484),
+                Scalar(-4.3581583E-4),
+                Scalar(-2.2101695E-4)) );
 
-    com_LH_HIP = iit::rbd::Vector3d(9.952243E-4,0.01605701,-0.06311905).cast<Scalar>();
+    com_LH_HIP = iit::rbd::Vector3d(-0.0010103208,0.014250419,-0.06809383).cast<Scalar>();
     tensor_LH_HIP.fill(
-        Scalar(2.631),
+        Scalar(1.8623549),
         com_LH_HIP,
         rbd::Utils::buildInertiaTensor(
-                Scalar(0.016950592),
-                Scalar(0.014514658),
-                Scalar(0.0053204754),
-                Scalar(-2.5228132E-5),
-                Scalar(-2.6718157E-4),
-                Scalar(-0.002543181)) );
+                Scalar(0.012997045),
+                Scalar(0.012185645),
+                Scalar(0.0032080302),
+                Scalar(-9.0416055E-5),
+                Scalar(6.6717264E-5),
+                Scalar(-0.001612362)) );
 
-    com_LH_THIGH = iit::rbd::Vector3d(-1.2611576E-4,0.234335,0.015803618).cast<Scalar>();
+    com_LH_THIGH = iit::rbd::Vector3d(-0.005016815,0.2226524,0.028049987).cast<Scalar>();
     tensor_LH_THIGH.fill(
-        Scalar(3.241),
+        Scalar(2.3501198),
         com_LH_THIGH,
         rbd::Utils::buildInertiaTensor(
-                Scalar(0.21329968),
-                Scalar(0.006445464),
-                Scalar(0.21149169),
-                Scalar(-9.728511E-5),
-                Scalar(1.5317977E-5),
-                Scalar(0.013588934)) );
+                Scalar(0.14658318),
+                Scalar(0.0058504506),
+                Scalar(0.14497489),
+                Scalar(1.7701971E-4),
+                Scalar(-2.6058196E-4),
+                Scalar(0.016768115)) );
 
-    com_LH_SHANK = iit::rbd::Vector3d(-0.05243166,0.053917024,0.017812103).cast<Scalar>();
+    com_LH_SHANK = iit::rbd::Vector3d(-0.08773683,0.07102133,0.014560207).cast<Scalar>();
     tensor_LH_SHANK.fill(
-        Scalar(0.578),
+        Scalar(0.5264926),
         com_LH_SHANK,
         rbd::Utils::buildInertiaTensor(
-                Scalar(0.008518288),
-                Scalar(0.0031601144),
-                Scalar(0.011083069),
-                Scalar(-0.0028563053),
-                Scalar(-5.249711E-4),
-                Scalar(4.983305E-4)) );
+                Scalar(0.010520823),
+                Scalar(0.0076368405),
+                Scalar(0.017700527),
+                Scalar(-0.0069414484),
+                Scalar(-4.35816E-4),
+                Scalar(2.2101747E-4)) );
 
-    com_RH_HIP = iit::rbd::Vector3d(9.952243E-4,-0.01605701,-0.063007474).cast<Scalar>();
+    com_RH_HIP = iit::rbd::Vector3d(-0.0010103208,-0.014250419,-0.068031415).cast<Scalar>();
     tensor_RH_HIP.fill(
-        Scalar(2.631),
+        Scalar(1.8623549),
         com_RH_HIP,
         rbd::Utils::buildInertiaTensor(
-                Scalar(0.016915368),
-                Scalar(0.014479431),
-                Scalar(0.0053204754),
-                Scalar(2.5228597E-5),
-                Scalar(-2.1883396E-4),
-                Scalar(0.0025815128)) );
+                Scalar(0.012983098),
+                Scalar(0.012171698),
+                Scalar(0.0032080302),
+                Scalar(9.0416055E-5),
+                Scalar(6.9104884E-5),
+                Scalar(0.0016106762)) );
 
-    com_RH_THIGH = iit::rbd::Vector3d(-3.553805E-5,0.234335,-0.01580362).cast<Scalar>();
+    com_RH_THIGH = iit::rbd::Vector3d(-0.0049690404,0.2226652,-0.028049987).cast<Scalar>();
     tensor_RH_THIGH.fill(
-        Scalar(3.241),
+        Scalar(2.3501198),
         com_RH_THIGH,
         rbd::Utils::buildInertiaTensor(
-                Scalar(0.21329968),
-                Scalar(0.0064454633),
-                Scalar(0.21149169),
-                Scalar(3.472784E-5),
-                Scalar(2.3600935E-5),
-                Scalar(-0.013588931)) );
+                Scalar(0.14660141),
+                Scalar(0.0058492566),
+                Scalar(0.14499189),
+                Scalar(2.1081972E-4),
+                Scalar(2.5706922E-4),
+                Scalar(-0.016769055)) );
 
-    com_RH_SHANK = iit::rbd::Vector3d(-0.05243166,0.053917024,-0.017812103).cast<Scalar>();
+    com_RH_SHANK = iit::rbd::Vector3d(-0.08773683,0.07102133,-0.014560207).cast<Scalar>();
     tensor_RH_SHANK.fill(
-        Scalar(0.578),
+        Scalar(0.5264926),
         com_RH_SHANK,
         rbd::Utils::buildInertiaTensor(
-                Scalar(0.008518288),
-                Scalar(0.0031601144),
-                Scalar(0.011083069),
-                Scalar(-0.0028563053),
-                Scalar(5.24971E-4),
-                Scalar(-4.983299E-4)) );
+                Scalar(0.010520823),
+                Scalar(0.0076368405),
+                Scalar(0.017700527),
+                Scalar(-0.0069414484),
+                Scalar(4.3581563E-4),
+                Scalar(-2.2101676E-4)) );
 
 }
 

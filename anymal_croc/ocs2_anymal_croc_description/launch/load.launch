@@ -6,6 +6,7 @@
   <include file="$(find anymal_c_description)/launch/load.launch">
     <arg name="simulation"                                     value="false"/>
     <arg name="description_name"                               value="$(arg description_name)"/>
+    <arg name="version"                                        value="c010"/>
   </include>
 
 </launch>

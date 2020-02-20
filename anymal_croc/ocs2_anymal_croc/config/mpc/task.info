@@ -126,7 +126,7 @@ slq
 
     useRiccatiSolver              1
 
-    useFeedbackPolicy               1
+    useFeedbackPolicy             1
   }
 
   rollout

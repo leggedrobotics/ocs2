@@ -10,10 +10,6 @@ find_package(catkin REQUIRED COMPONENTS
 ## Eigen3
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-find_package(Boost REQUIRED COMPONENTS
-  filesystem
-)
-
 # Pybind11
 option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)
 if(USE_PYBIND_PYTHON_3)
@@ -37,16 +33,12 @@ catkin_package(
   INCLUDE_DIRS 
     include
     ${EIGEN_INCLUDE_DIRS}
-  
   LIBRARIES
     ${PROJECT_NAME}
-
   CATKIN_DEPENDS
     ocs2_anymal_bear_switched_model
     ocs2_quadruped_interface
-
   DEPENDS
-    Boost
 )
 
 ###########
@@ -64,41 +56,21 @@ include_directories(
 
 # Declare a C++ library
 add_library(${PROJECT_NAME}
-  src/AnymalBearInterface.cpp
-)
-add_dependencies(${PROJECT_NAME}
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-)
+  src/AnymalBearInterface.cpp)
 target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+  ${catkin_LIBRARIES})
 
 add_executable(${PROJECT_NAME}_mpc_node
-  src/AnymalBearMpcNode.cpp
-)
-add_dependencies(${PROJECT_NAME}_mpc_node
-  ${PROJECT_NAME}
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-)
+  src/AnymalBearMpcNode.cpp)
 target_link_libraries(${PROJECT_NAME}_mpc_node
   ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+  ${catkin_LIBRARIES})
 
 add_executable(${PROJECT_NAME}_dummy_mrt_node
-  src/AnymalBearDummyMRT.cpp
-)
-add_dependencies(${PROJECT_NAME}_dummy_mrt_node
-  ${PROJECT_NAME}
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-)
+  src/AnymalBearDummyMRT.cpp)
 target_link_libraries(${PROJECT_NAME}_dummy_mrt_node
   ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+  ${catkin_LIBRARIES})
 
 # PyBindings library (c++ side)
 add_library(${PROJECT_NAME}_PyBindings_cpp
@@ -154,12 +126,7 @@ install(TARGETS ${PROJECT_NAME}
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
-install(TARGETS
-            ${PROJECT_NAME}_mpc_node
-            ${PROJECT_NAME}_dummy_mrt_node
-        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-
-install(DIRECTORY config launch
+install(DIRECTORY config
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )
 

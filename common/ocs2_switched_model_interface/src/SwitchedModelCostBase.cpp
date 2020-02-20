@@ -46,7 +46,7 @@ void SwitchedModelCostBase::setCurrentStateAndControl(const scalar_t& t, const s
   logicRulesPtr_->getContactFlags(index, stanceLegs);
 
   dynamic_vector_t xNominal = state_vector_t::Zero();
-  if (BASE::costDesiredTrajectoriesPtr_) {
+  if (BASE::costDesiredTrajectoriesPtr_ != nullptr) {
     BASE::costDesiredTrajectoriesPtr_->getDesiredState(t, xNominal);
   }
   dynamic_vector_t uNominal;

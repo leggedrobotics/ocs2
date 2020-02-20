@@ -9,9 +9,12 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_comm_interfaces
   ocs2_robotic_tools
   ocs2_switched_model_interface
-  rosbag
   roscpp
-  xpp_msgs
+  tf
+  kdl_parser
+  robot_state_publisher
+  visualization_msgs
+  geometry_msgs
 )
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
@@ -20,10 +23,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## Eigen3
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-find_package(Boost REQUIRED COMPONENTS
-  filesystem
-)
-
+# Generate compile_commands.json for clang tools
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors")
 
 ###################################
@@ -39,11 +40,11 @@ catkin_package(
    INCLUDE_DIRS
       include
       ${EIGEN_INCLUDE_DIRS}
-#  LIBRARIES ocs2_quadruped_interface
+   LIBRARIES
+      ${PROJECT_NAME}
    CATKIN_DEPENDS
-       ${CATKIN_PACKAGE_DEPENDENCIES}
+      ${CATKIN_PACKAGE_DEPENDENCIES}
    DEPENDS
-      Boost
 )
 
 ###########
@@ -59,9 +60,44 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+# Declare a C++ library
+add_library(${PROJECT_NAME}
+  src/QuadrupedDummyNode.cpp
+  src/QuadrupedInterface.cpp
+  src/QuadrupedMpcNode.cpp
+  src/QuadrupedSlqMpc.cpp
+  src/QuadrupedVisualizer.cpp
+  src/QuadrupedVisualizationColors.cpp
+  src/QuadrupedVisualizationHelpers.cpp)
+add_dependencies(${PROJECT_NAME}
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES})
+
+#########################
+###   CLANG TOOLING   ###
+#########################
+find_package(cmake_clang_tools QUIET)
+if(cmake_clang_tools_FOUND)
+  message(STATUS "Run clang tooling")
+  add_clang_tooling(
+    TARGETS ${PROJECT_NAME}
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CF_WERROR
+  )
+endif(cmake_clang_tools_FOUND)
+
 #############
 ## Install ##
 #############
+
+install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  )
 
 install(DIRECTORY
             include/${PROJECT_NAME}/

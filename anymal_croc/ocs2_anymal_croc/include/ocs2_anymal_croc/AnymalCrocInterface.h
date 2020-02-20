@@ -8,6 +8,6 @@
 
 namespace anymal {
 
-std::unique_ptr<switched_model::QuadrupedInterface> getAnymalBearInterface(const std::string& taskName);
+std::unique_ptr<switched_model::QuadrupedInterface> getAnymalCrocInterface(const std::string& taskName);
 
 }  // end of namespace anymal

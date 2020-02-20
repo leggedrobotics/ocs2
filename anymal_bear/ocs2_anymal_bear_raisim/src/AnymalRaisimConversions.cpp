@@ -1,5 +1,5 @@
 #include <ocs2_anymal_bear_raisim/AnymalRaisimConversions.h>
-#include <ocs2_anymal_bear_switched_model/core/AnymalKinematics.h>
+
 #include <ocs2_anymal_bear_switched_model/generated/inverse_dynamics.h>
 #include <ocs2_anymal_bear_switched_model/generated/jsim.h>
 #include <ocs2_switched_model_interface/core/Rotations.h>
@@ -59,18 +59,16 @@ Eigen::VectorXd AnymalRaisimConversions::inputToRaisimGeneralizedForce(double, c
   const switched_model::base_coordinate_t qdBase = switched_model::getBaseLocalVelocity(ocs2RbdState);
   const switched_model::joint_coordinate_t qdJoints = switched_model::getJointVelocities(ocs2RbdState);
 
-  AnymalKinematics kinematics;
-
   // force transformed in the lowerLeg coordinate
   switched_model::base_coordinate_t extForceBase = switched_model::base_coordinate_t::Zero();
   for (int j = 0; j < 4; j++) {
-    const auto b_footPosition = kinematics.positionBaseToFootInBaseFrame(j, qJoints);
+    const auto b_footPosition = kinematicModelPtr_->positionBaseToFootInBaseFrame(j, qJoints);
     extForceBase.head<3>() += b_footPosition.cross(input.segment<3>(3 * j));
     extForceBase.tail<3>() += input.segment<3>(3 * j);
   }
   switched_model::joint_coordinate_t extForceJoint = switched_model::joint_coordinate_t::Zero();
   for (int j = 0; j < 4; j++) {
-    const auto b_footJacobian = kinematics.baseToFootJacobianInBaseFrame(j, qJoints);
+    const auto b_footJacobian = kinematicModelPtr_->baseToFootJacobianInBaseFrame(j, qJoints);
     extForceJoint += b_footJacobian.bottomRows<3>().transpose() * input.segment<3>(3 * j);
   }
 

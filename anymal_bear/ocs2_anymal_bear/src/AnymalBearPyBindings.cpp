@@ -1,25 +1,28 @@
+#include <ocs2_anymal_bear/AnymalBearInterface.h>
 #include <ocs2_anymal_bear/AnymalBearPyBindings.h>
+
+#include <ocs2_quadruped_interface/QuadrupedSlqMpc.h>
 
 namespace anymal {
 
-AnymalBearPyBindings::AnymalBearPyBindings(const std::string& taskFileFolder, bool async) : Base(async), taskFileFolder_(taskFileFolder) {
-  AnymalBearInterface anymalBearInterface(taskFileFolder);
-  init(anymalBearInterface, anymalBearInterface.getMpc());
+AnymalBearPyBindings::AnymalBearPyBindings(std::string taskFileFolder, bool async) : Base(async), taskFileFolder_(std::move(taskFileFolder)) {
+  auto anymalBearInterface = getAnymalBearInterface(taskFileFolder_);
+  init(*anymalBearInterface, switched_model::getMpc(*anymalBearInterface));
 
-  const auto slqSettings = anymalBearInterface.slqSettings();
-  penalty_.reset(new ocs2::RelaxedBarrierPenalty<24, 24>(slqSettings.ddpSettings_.inequalityConstraintMu_,
-                                                         slqSettings.ddpSettings_.inequalityConstraintDelta_));
+  const auto slqSettings = anymalBearInterface->slqSettings();
+  penalty_.reset(new ocs2::RelaxedBarrierPenalty<switched_model::STATE_DIM, switched_model::INPUT_DIM>(
+      slqSettings.ddpSettings_.inequalityConstraintMu_, slqSettings.ddpSettings_.inequalityConstraintDelta_));
 }
 
 void AnymalBearPyBindings::visualizeTrajectory(const scalar_array_t& t, const state_vector_array_t& x, const input_vector_array_t& u,
                                                double speed) {
   if (!visualizer_) {
-    AnymalBearInterface anymalBearInterface(taskFileFolder_);
+    auto anymalBearInterface = getAnymalBearInterface(taskFileFolder_);
     int fake_argc = 1;
     auto* fake_argv = const_cast<char*>("no_name");
     ros::init(fake_argc, &fake_argv, "anymal_visualization_node");
     ros::NodeHandle n;
-    visualizer_.reset(new visualizer_t(anymalBearInterface.getKinematicModel(), anymalBearInterface.getComModel(), "anymal", n));
+    visualizer_.reset(new visualizer_t(anymalBearInterface->getKinematicModel(), anymalBearInterface->getComModel(), n));
   }
 
   assert(t.size() == x.size());

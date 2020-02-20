@@ -7,7 +7,7 @@
 
 #include <ocs2_quadruped_interface/QuadrupedDummyNode.h>
 
-#include "ocs2_anymal_bear/AnymalBearInterface.h"
+#include "ocs2_anymal_croc/AnymalCrocInterface.h"
 
 int main(int argc, char* argv[]) {
   if (argc <= 1) {
@@ -16,10 +16,10 @@ int main(int argc, char* argv[]) {
   const std::string taskName(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic))
 
   // Initialize ros node
-  ros::init(argc, argv, "anymal_bear_mrt");
+  ros::init(argc, argv, "anymal_croc_mrt");
   ros::NodeHandle nodeHandle;
 
-  auto anymalInterface = anymal::getAnymalBearInterface(taskName);
+  auto anymalInterface = anymal::getAnymalCrocInterface(taskName);
   quadrupedDummyNode(nodeHandle, *anymalInterface, &anymalInterface->getRollout());
 
   return 0;

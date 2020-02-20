@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>ocs2_anymal_bear</name>
+  <name>ocs2_anymal_croc</name>
   <version>0.0.0</version>
-  <description>The ocs2_anymal_bear package</description>
+  <description>The ocs2_anymal_croc package</description>
 
   <maintainer email="farbod@todo.todo">farbod</maintainer>
 
@@ -11,10 +11,10 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>roslib</depend>
-  <depend>ocs2_anymal_bear_switched_model</depend>
+  <depend>ocs2_anymal_croc_switched_model</depend>
   <depend>ocs2_quadruped_interface</depend>
 
-  <exec_depend>ocs2_anymal_bear_description</exec_depend>
+  <exec_depend>ocs2_anymal_croc_description</exec_depend>
   <exec_depend>ocs2_anymal_commands</exec_depend>
 
 </package>

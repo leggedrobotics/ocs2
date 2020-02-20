@@ -5,7 +5,7 @@
 
     <group if="$(arg rviz)">
       <!-- Load robot description -->
-      <include file="$(find ocs2_anymal_bear_description)/launch/load.launch">
+      <include file="$(find ocs2_anymal_croc_description)/launch/load.launch">
           <arg name="description_name"   value="$(arg description_name)"/>
       </include>
       <!-- Launch visualization -->
@@ -14,10 +14,10 @@
       </include>
     </group>
 
-    <node pkg="ocs2_anymal_bear" type="ocs2_anymal_bear_mpc_node" name="ocs2_anymal_bear_mpc_node"
+    <node pkg="ocs2_anymal_croc" type="ocs2_anymal_croc_mpc_node" name="ocs2_anymal_croc_mpc_node"
           output="screen" args="$(arg task_name)" launch-prefix=""/>
 
-    <node pkg="ocs2_anymal_bear" type="ocs2_anymal_bear_dummy_mrt_node" name="ocs2_anymal_bear_dummy_mrt_node"
+    <node pkg="ocs2_anymal_croc" type="ocs2_anymal_croc_dummy_mrt_node" name="ocs2_anymal_croc_dummy_mrt_node"
           output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
 
     <node pkg="ocs2_anymal_commands" type="gait_command_node" name="gait_command_node"

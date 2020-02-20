@@ -50,9 +50,9 @@ MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE()
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE(const scalar_array_t& partitioningTimes, const MPC_Settings& mpcSettings /*= MPC_Settings()*/)
+MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE(const scalar_array_t& partitioningTimes, MPC_Settings mpcSettings /*= MPC_Settings()*/)
 
-    : mpcSettings_(mpcSettings),
+    : mpcSettings_(std::move(mpcSettings)),
       initRun_(true),
       logicRulesTemplateUpdated_(false),
       initnumPartitions_(partitioningTimes.size() - 1),

@@ -94,10 +94,10 @@ class MPC_BASE {
 
   /**
    * Constructor
-   *
+   * @param [in] partitioningTimes: Array of times to divide up the horizon
    * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
    */
-  explicit MPC_BASE(const scalar_array_t& partitioningTimes, const MPC_Settings& mpcSettings = MPC_Settings());
+  explicit MPC_BASE(const scalar_array_t& partitioningTimes, MPC_Settings mpcSettings = MPC_Settings());
 
   /**
    * destructor.

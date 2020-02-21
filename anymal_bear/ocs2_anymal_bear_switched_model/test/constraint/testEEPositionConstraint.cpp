@@ -17,8 +17,8 @@ TEST(TestEEPositionConstraint, evaluate){
   settings.A.setIdentity(3, 3);
   settings.b.setZero(3);
 
-  anymal::AnymalComAd anymalComAd;
-  anymal::AnymalKinematicsAd anymalKinematicsAd;
+  anymal::AnymalBearComAd anymalComAd;
+  anymal::AnymalBearKinematicsAd anymalKinematicsAd;
   TestedConstraint eePositionConstraint(0, settings, anymalComAd, anymalKinematicsAd, true);
 
   // evaluation point

@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
-#include <ros/package.h>
 #include <ocs2_anymal_bear_raisim/AnymalRaisimConversions.h>
+#include <ocs2_anymal_bear_switched_model/core/AnymalBearCom.h>
+#include <ocs2_anymal_bear_switched_model/core/AnymalBearKinematics.h>
+#include <ros/package.h>
 
 TEST(AnymalRaisim, Conversions) {
   constexpr size_t JOINT_COORD_SIZE = 12;
@@ -10,7 +12,9 @@ TEST(AnymalRaisim, Conversions) {
   using state_vector_t = Eigen::Matrix<double, STATE_DIM, 1>;
   using input_vector_t = Eigen::Matrix<double, INPUT_DIM, 1>;
 
-  anymal::AnymalRaisimConversions conversions;
+  anymal::AnymalBearCom anymalBearCom;
+  anymal::AnymalBearKinematics anymalBearKinematics;
+  anymal::AnymalRaisimConversions conversions(anymalBearCom, anymalBearKinematics);
 
   // consistency test ocs2 -> raisim -> ocs2
   for (int i = 0; i < 100; i++) {

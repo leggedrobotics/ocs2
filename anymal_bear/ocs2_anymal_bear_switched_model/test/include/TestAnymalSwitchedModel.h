@@ -27,8 +27,8 @@ public:
   }
 
 public:
-  AnymalKinematics kinematics_;
-  AnymalCom comDynamics_;
+  AnymalBearKinematics kinematics_;
+  AnymalBearCom comDynamics_;
 
   std::array<bool,4> stanceLegs_;
 

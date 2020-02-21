@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>ocs2_anymal_bear_loopshaping</name>
+  <name>ocs2_anymal</name>
   <version>0.0.0</version>
-  <description>ocs2_anymal_bear_loopshaping</description>
+  <description>The ocs2_anymal metapackage</description>
 
   <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
   <maintainer email="jcarius@ethz.ch">Jan Carius</maintainer>
@@ -12,8 +12,12 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <depend>roslib</depend>
-  <depend>ocs2_anymal_bear</depend>
-  <depend>ocs2_quadruped_loopshaping_interface</depend>
+  <exec_depend>ocs2_anymal_bear</exec_depend>
+  <exec_depend>ocs2_anymal_bear_raisim</exec_depend>
+  <exec_depend>ocs2_anymal_croc</exec_depend>
+
+  <export>
+    <metapackage />
+  </export>
 
 </package>

@@ -45,12 +45,12 @@ namespace ocs2 {
 class PenaltyBase {
  public:
   using DIMENSIONS = Dimensions<0, 0>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-  using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
-  using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
-  using dynamic_matrix_array_t = typename DIMENSIONS::dynamic_matrix_array_t;
+  using scalar_t = DIMENSIONS::scalar_t;
+  using scalar_array_t = DIMENSIONS::scalar_array_t;
+  using dynamic_vector_t = DIMENSIONS::dynamic_vector_t;
+  using dynamic_matrix_t = DIMENSIONS::dynamic_matrix_t;
+  using dynamic_vector_array_t = DIMENSIONS::dynamic_vector_array_t;
+  using dynamic_matrix_array_t = DIMENSIONS::dynamic_matrix_array_t;
 
   /**
    * Get the penalty cost.

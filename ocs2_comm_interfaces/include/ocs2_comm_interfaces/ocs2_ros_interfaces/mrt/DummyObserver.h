@@ -16,8 +16,6 @@ namespace ocs2 {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class DummyObserver {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
   using primal_solution_t = PrimalSolution<STATE_DIM, INPUT_DIM>;
   using command_data_t = CommandData<STATE_DIM, INPUT_DIM>;
   using system_observation_t = SystemObservation<STATE_DIM, INPUT_DIM>;

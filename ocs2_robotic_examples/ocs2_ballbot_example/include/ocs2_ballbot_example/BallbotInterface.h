@@ -94,6 +94,8 @@ class BallbotInterface final : public RobotInterface<ballbot::STATE_DIM_, ballbo
 
   const rollout_base_t& getRollout() const { return *ddpBallbotRolloutPtr_; }
 
+  const ballbotOperatingPoint_t& getOperatingPoints() const override { return *ballbotOperatingPointPtr_; }
+
  protected:
   /**
    * Load the settings from the path file.

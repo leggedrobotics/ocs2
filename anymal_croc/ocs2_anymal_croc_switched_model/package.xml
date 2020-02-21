@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>ocs2_switched_model_interface</name>
-  <version>0.0.0</version>
-  <description>The ocs2_switched_model_interface package</description>
+  <name>ocs2_anymal_croc_switched_model</name>
+  <version>0.0.1</version>
+  <description>The ocs2_anymal_croc_switched_model package</description>
 
   <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
   <maintainer email="jcarius@ethz.ch">Jan Carius</maintainer>
@@ -12,8 +12,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>cmake_clang_tools</build_depend>
-
-  <depend>ocs2_core</depend>
+  <depend>ocs2_switched_model_interface</depend>
+  <depend>ocs2_robotic_tools</depend>
 
 </package>

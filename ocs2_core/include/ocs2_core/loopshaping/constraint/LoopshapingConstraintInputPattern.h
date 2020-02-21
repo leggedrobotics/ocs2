@@ -151,7 +151,7 @@ class LoopshapingConstraintInputPattern final
   void appendConstraint1(size_t numSystemStateInputConstraints, constraint1_vector_t& e) override {
     const auto& s_filter = loopshapingDefinition_->getInputFilter();
 
-    e.template segment(numSystemStateInputConstraints, SYSTEM_INPUT_DIM) =
+    e.template segment<SYSTEM_INPUT_DIM>(numSystemStateInputConstraints) =
         s_filter.getC() * x_filter_ + s_filter.getD() * u_filter_ - u_system_;
   };
 

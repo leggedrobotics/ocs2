@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
-<package>
-  <name>ocs2_robotic_examples</name>
+<package format="2">
+  <name>ocs2_anymal</name>
   <version>0.0.0</version>
-  <description>The ocs2_robotic_examples metapackage</description>
+  <description>The ocs2_anymal metapackage</description>
 
   <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
   <maintainer email="jcarius@ethz.ch">Jan Carius</maintainer>
@@ -12,11 +12,9 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <run_depend>ocs2_ballbot_example</run_depend>
-  <run_depend>ocs2_cart_pole_example</run_depend>
-  <run_depend>ocs2_cart_pole_raisim_example</run_depend>
-  <run_depend>ocs2_double_integrator_example</run_depend>
-  <run_depend>ocs2_quadrotor_example</run_depend>
+  <exec_depend>ocs2_anymal_bear</exec_depend>
+  <exec_depend>ocs2_anymal_bear_raisim</exec_depend>
+  <exec_depend>ocs2_anymal_croc</exec_depend>
 
   <export>
     <metapackage />

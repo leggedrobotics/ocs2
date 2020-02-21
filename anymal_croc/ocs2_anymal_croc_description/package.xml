@@ -4,7 +4,9 @@
   <version>0.0.1</version>
   <description>The ocs2_anymal_croc_description package</description>
 
-  <maintainer email="farbod@todo.todo">farbod</maintainer>
+  <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
+  <maintainer email="jcarius@ethz.ch">Jan Carius</maintainer>
+  <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
 
   <license>TODO</license>
 

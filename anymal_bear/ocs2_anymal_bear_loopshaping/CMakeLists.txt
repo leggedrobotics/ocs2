@@ -13,6 +13,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## Eigen3
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
+# Generate compile_commands.json for clang tools
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors")
 
 ###################################
@@ -56,6 +59,20 @@ add_executable(${PROJECT_NAME}_dummy_mrt_node
 target_link_libraries(${PROJECT_NAME}_dummy_mrt_node
   ${PROJECT_NAME}
   ${catkin_LIBRARIES})
+
+#########################
+###   CLANG TOOLING   ###
+#########################
+find_package(cmake_clang_tools QUIET)
+if (cmake_clang_tools_FOUND)
+  message(STATUS "Run clang tooling")
+  add_clang_tooling(
+    TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_mpc_node ${PROJECT_NAME}_dummy_mrt_node
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CF_WERROR
+  )
+endif (cmake_clang_tools_FOUND)
 
 #############
 ## Install ##

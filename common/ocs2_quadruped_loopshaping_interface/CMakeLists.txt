@@ -27,13 +27,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-err
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS
-  include
-  ${EIGEN_INCLUDE_DIRS}
+    include
+    ${EIGEN_INCLUDE_DIRS}
   LIBRARIES
-  ${PROJECT_NAME}
+    ${PROJECT_NAME}
   CATKIN_DEPENDS
-  ${CATKIN_PACKAGE_DEPENDENCIES}
-  ocs2_quadruped_interface
+    ${CATKIN_PACKAGE_DEPENDENCIES}
   DEPENDS
 )
 

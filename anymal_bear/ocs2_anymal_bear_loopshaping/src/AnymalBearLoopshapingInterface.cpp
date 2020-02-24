@@ -12,7 +12,7 @@
 namespace anymal {
 
 std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAnymalBearLoopshapingInterface(const std::string& taskName) {
-  std::string taskFolder = ros::package::getPath("ocs2_anymal_bear_loopshaping") + "/config/" + taskName;
+  std::string taskFolder = getTaskFileFolderBearLoopshaping(taskName);
   std::cerr << "Loading task file from: " << taskFolder << std::endl;
 
   auto kin = AnymalBearKinematics();
@@ -25,6 +25,14 @@ std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAn
 
   return std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface>(
       new switched_model_loopshaping::QuadrupedLoopshapingInterface(std::move(quadrupedInterface), taskFolder));
+}
+
+std::string getTaskFileFolderBearLoopshaping(const std::string& taskName) {
+  std::string taskFolder = ros::package::getPath("ocs2_anymal_bear_loopshaping") + "/config/" + taskName;
+}
+
+std::string getTaskFilePathBearLoopshaping(const std::string& taskName) {
+  return getTaskFileFolderBearLoopshaping(taskName) + "/task.info";
 }
 
 }  // end of namespace anymal

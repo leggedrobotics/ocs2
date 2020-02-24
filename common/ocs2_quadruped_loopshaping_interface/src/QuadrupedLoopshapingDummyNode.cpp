@@ -11,7 +11,8 @@
 
 namespace switched_model_loopshaping {
 
-void quadrupedLoopshapingDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedLoopshapingInterface& quadrupedInterface) {
+void quadrupedLoopshapingDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedLoopshapingInterface& quadrupedInterface,
+                                   double mrtDesiredFrequency, double mpcDesiredFrequency) {
   const std::string robotName = "anymal";
   using vis_t = switched_model::QuadrupedVisualizer;
   using vis_wrapper_t = QuadrupedLoopshapingXppVisualizer;
@@ -28,7 +29,7 @@ void quadrupedLoopshapingDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedL
   auto loopshapingVisualizer = std::make_shared<vis_wrapper_t>(quadrupedInterface.getLoopshapingDefinition(), std::move(visualizer));
 
   // Dummy MRT
-  dummy_t dummySimulator(mrt, quadrupedInterface.mpcSettings().mrtDesiredFrequency_, quadrupedInterface.mpcSettings().mpcDesiredFrequency_);
+  dummy_t dummySimulator(mrt, mrtDesiredFrequency, mpcDesiredFrequency);
   dummySimulator.subscribeObservers({loopshapingVisualizer});
 
   // initial state

@@ -40,12 +40,12 @@ class QuadrupedLoopshapingInterface : public ocs2::RobotInterface<STATE_DIM, INP
   using ad_kinematic_model_t = switched_model::KinematicsModelBase<ad_scalar_t>;
 
   using dimension_t = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
-  using scalar_t = typename dimension_t::scalar_t;
-  using scalar_array_t = typename dimension_t::scalar_array_t;
-  using size_array_t = typename dimension_t::size_array_t;
-  using state_vector_t = typename dimension_t::state_vector_t;
-  using state_matrix_t = typename dimension_t::state_matrix_t;
-  using input_matrix_t = typename dimension_t::input_matrix_t;
+  using scalar_t = dimension_t::scalar_t;
+  using scalar_array_t = dimension_t::scalar_array_t;
+  using size_array_t = dimension_t::size_array_t;
+  using state_vector_t = dimension_t::state_vector_t;
+  using state_matrix_t = dimension_t::state_matrix_t;
+  using input_matrix_t = dimension_t::input_matrix_t;
 
   using rollout_base_t = ocs2::RolloutBase<STATE_DIM, INPUT_DIM>;
   using time_triggered_rollout_t = ocs2::TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
@@ -78,12 +78,6 @@ class QuadrupedLoopshapingInterface : public ocs2::RobotInterface<STATE_DIM, INP
   /** Access to model settings */
   const switched_model::ModelSettings& modelSettings() const { return quadrupedPtr_->modelSettings(); };
 
-  /** Access to slq settings */
-  const ocs2::SLQ_Settings& slqSettings() const { return quadrupedPtr_->slqSettings(); }
-
-  /** Access to mpc settings */
-  const ocs2::MPC_Settings& mpcSettings() const { return quadrupedPtr_->mpcSettings(); }
-
   /** Gets the rollout class */
   const rollout_base_t& getRollout() const { return *timeTriggeredRolloutPtr_; }
 
@@ -95,7 +89,7 @@ class QuadrupedLoopshapingInterface : public ocs2::RobotInterface<STATE_DIM, INP
 
   const constraint_t* getConstraintPtr() const override { return constraintsPtr_.get(); }
 
-  const operating_point_t& getOperatingPoint() const { return *operatingPointsPtr_; }
+  const operating_point_t& getOperatingPoints() const override { return *operatingPointsPtr_; }
 
  private:
   std::unique_ptr<switched_model::QuadrupedInterface> quadrupedPtr_;

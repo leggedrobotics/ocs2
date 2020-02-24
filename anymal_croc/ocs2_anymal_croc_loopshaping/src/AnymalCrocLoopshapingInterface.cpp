@@ -12,7 +12,7 @@
 namespace anymal {
 
 std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAnymalCrocLoopshapingInterface(const std::string& taskName) {
-  std::string taskFolder = ros::package::getPath("ocs2_anymal_croc_loopshaping") + "/config/" + taskName;
+  std::string taskFolder = getTaskFileFolderCrocLoopshaping(taskName);
   std::cerr << "Loading task file from: " << taskFolder << std::endl;
 
   auto kin = AnymalCrocKinematics();
@@ -25,6 +25,14 @@ std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAn
 
   return std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface>(
       new switched_model_loopshaping::QuadrupedLoopshapingInterface(std::move(quadrupedInterface), taskFolder));
+}
+
+std::string getTaskFileFolderCrocLoopshaping(const std::string& taskName) {
+  std::string taskFolder = ros::package::getPath("ocs2_anymal_croc_loopshaping") + "/config/" + taskName;
+}
+
+std::string getTaskFilePathCrocLoopshaping(const std::string& taskName) {
+  return getTaskFileFolderCrocLoopshaping(taskName) + "/task.info";
 }
 
 }  // end of namespace anymal

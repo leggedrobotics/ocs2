@@ -6,20 +6,20 @@
 
 namespace switched_model_loopshaping {
 
-std::unique_ptr<ocs2::SLQ<STATE_DIM, INPUT_DIM>> getSlq(const QuadrupedLoopshapingInterface& quadrupedInterface) {
+std::unique_ptr<ocs2::SLQ<STATE_DIM, INPUT_DIM>> getSlq(const QuadrupedLoopshapingInterface& quadrupedInterface,
+                                                        const ocs2::SLQ_Settings& slqSettings) {
   return std::unique_ptr<ocs2::SLQ<STATE_DIM, INPUT_DIM>>(new ocs2::SLQ<STATE_DIM, INPUT_DIM>(
       &quadrupedInterface.getRollout(), &quadrupedInterface.getDynamicsDerivatives(), quadrupedInterface.getConstraintPtr(),
-      &quadrupedInterface.getCost(), &quadrupedInterface.getOperatingPoint(), quadrupedInterface.slqSettings(),
-      quadrupedInterface.getLogicRulesPtr()));
+      &quadrupedInterface.getCost(), &quadrupedInterface.getOperatingPoints(), slqSettings, quadrupedInterface.getLogicRulesPtr()));
 }
 
-std::unique_ptr<ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>> getMpc(const QuadrupedLoopshapingInterface& quadrupedInterface) {
+std::unique_ptr<ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>> getMpc(const QuadrupedLoopshapingInterface& quadrupedInterface,
+                                                            const ocs2::MPC_Settings& mpcSettings, const ocs2::SLQ_Settings& slqSettings) {
   if (!quadrupedInterface.modelSettings().gaitOptimization_) {
     return std::unique_ptr<ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>>(new ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>(
         &quadrupedInterface.getRollout(), &quadrupedInterface.getDynamicsDerivatives(), quadrupedInterface.getConstraintPtr(),
-        &quadrupedInterface.getCost(), &quadrupedInterface.getOperatingPoint(), quadrupedInterface.getInitialPartitionTimes(),
-        quadrupedInterface.slqSettings(), quadrupedInterface.mpcSettings(), quadrupedInterface.getLogicRulesPtr(),
-        &quadrupedInterface.getInitialModeSequence()));
+        &quadrupedInterface.getCost(), &quadrupedInterface.getOperatingPoints(), quadrupedInterface.getInitialPartitionTimes(), slqSettings,
+        mpcSettings, quadrupedInterface.getLogicRulesPtr(), &quadrupedInterface.getInitialModeSequence()));
   } else {
     throw std::runtime_error("mpc_ocs2 not configured, set gait optimization to 0");
   }

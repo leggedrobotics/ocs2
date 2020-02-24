@@ -10,12 +10,13 @@
 
 namespace switched_model_loopshaping {
 
-void quadrupedLoopshapingMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedLoopshapingInterface& quadrupedInterface) {
+void quadrupedLoopshapingMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedLoopshapingInterface& quadrupedInterface,
+                                 const ocs2::MPC_Settings& mpcSettings, const ocs2::SLQ_Settings& slqSettings) {
   const std::string robotName = "anymal";
   using mpc_ros_t = ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM>;
 
   // launch MPC nodes
-  auto mpcPtr = getMpc(quadrupedInterface);
+  auto mpcPtr = getMpc(quadrupedInterface, mpcSettings, slqSettings);
   mpc_ros_t mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(nodeHandle);
 }

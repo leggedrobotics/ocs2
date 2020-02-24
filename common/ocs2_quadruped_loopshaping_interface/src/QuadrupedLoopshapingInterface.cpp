@@ -33,7 +33,7 @@ QuadrupedLoopshapingInterface::QuadrupedLoopshapingInterface(std::unique_ptr<swi
   dynamicsDerivativesPtr_ = system_dynamics_derivative_t::create(quadrupedPtr_->getDynamicsDerivatives(), loopshapingDefinition_);
   constraintsPtr_ = constraint_t::create(*quadrupedPtr_->getConstraintPtr(), loopshapingDefinition_);
   costFunctionPtr_ = cost_function_t::create(quadrupedPtr_->getCost(), loopshapingDefinition_);
-  operatingPointsPtr_.reset(new operating_point_t(quadrupedPtr_->getOperatingPoint(), loopshapingDefinition_));
+  operatingPointsPtr_.reset(new operating_point_t(quadrupedPtr_->getOperatingPoints(), loopshapingDefinition_));
 
   timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, quadrupedPtr_->rolloutSettings()));
 }

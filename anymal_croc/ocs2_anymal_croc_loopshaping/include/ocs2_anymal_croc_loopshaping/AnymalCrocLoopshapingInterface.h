@@ -10,4 +10,8 @@ namespace anymal {
 
 std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAnymalCrocLoopshapingInterface(const std::string& taskName);
 
+std::string getTaskFileFolderCrocLoopshaping(const std::string& taskName);
+
+std::string getTaskFilePathCrocLoopshaping(const std::string& taskName);
+
 }  // end of namespace anymal

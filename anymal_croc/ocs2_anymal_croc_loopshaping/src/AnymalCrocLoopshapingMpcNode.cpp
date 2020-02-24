@@ -17,7 +17,11 @@ int main(int argc, char* argv[]) {
   ros::NodeHandle nodeHandle;
 
   auto anymalInterface = anymal::getAnymalCrocLoopshapingInterface(taskName);
-  quadrupedLoopshapingMpcNode(nodeHandle, *anymalInterface);
+  ocs2::MPC_Settings mpcSettings;
+  mpcSettings.loadSettings(anymal::getTaskFilePathCrocLoopshaping(taskName));
+  ocs2::SLQ_Settings slqSettings;
+  slqSettings.loadSettings(anymal::getTaskFilePathCrocLoopshaping(taskName));
+  quadrupedLoopshapingMpcNode(nodeHandle, *anymalInterface, mpcSettings, slqSettings);
 
   return 0;
 }

@@ -10,6 +10,7 @@
 
 namespace switched_model_loopshaping {
 
-void quadrupedLoopshapingDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedLoopshapingInterface& quadrupedInterface);
+void quadrupedLoopshapingDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedLoopshapingInterface& quadrupedInterface,
+                                   double mrtDesiredFrequency, double mpcDesiredFrequency);
 
 }  // namespace switched_model_loopshaping

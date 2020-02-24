@@ -7,8 +7,8 @@
 #pragma once
 
 // model
-#include <ocs2_anymal_bear_switched_model/core/AnymalKinematics.h>
-#include <ocs2_anymal_bear_switched_model/core/AnymalCom.h>
+#include <ocs2_anymal_bear_switched_model/core/AnymalBearCom.h>
+#include <ocs2_anymal_bear_switched_model/core/AnymalBearKinematics.h>
 
 namespace anymal {
 
@@ -27,8 +27,8 @@ public:
   }
 
 public:
-  AnymalKinematics kinematics_;
-  AnymalCom comDynamics_;
+  AnymalBearKinematics kinematics_;
+  AnymalBearCom comDynamics_;
 
   std::array<bool,4> stanceLegs_;
 

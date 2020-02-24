@@ -2,7 +2,7 @@
 // Created by rgrandia on 18.09.19.
 //
 
-#include "ocs2_anymal_bear_switched_model/core/AnymalKinematics.h"
+#include "ocs2_anymal_bear_switched_model/core/AnymalBearKinematics.h"
 
 #include <iit/rbd/traits/TraitSelector.h>
 
@@ -16,15 +16,15 @@ namespace tpl {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-AnymalKinematics<SCALAR_T>* AnymalKinematics<SCALAR_T>::clone() const {
-  return new AnymalKinematics<SCALAR_T>(*this);
+AnymalBearKinematics<SCALAR_T>* AnymalBearKinematics<SCALAR_T>::clone() const {
+  return new AnymalBearKinematics<SCALAR_T>(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-switched_model::vector3_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::positionBaseToFootInBaseFrame(
+switched_model::vector3_s_t<SCALAR_T> AnymalBearKinematics<SCALAR_T>::positionBaseToFootInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
 
@@ -55,7 +55,7 @@ switched_model::vector3_s_t<SCALAR_T> AnymalKinematics<SCALAR_T>::positionBaseTo
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-typename AnymalKinematics<SCALAR_T>::joint_jacobian_t AnymalKinematics<SCALAR_T>::baseToFootJacobianInBaseFrame(
+typename AnymalBearKinematics<SCALAR_T>::joint_jacobian_t AnymalBearKinematics<SCALAR_T>::baseToFootJacobianInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
 
@@ -96,5 +96,5 @@ typename AnymalKinematics<SCALAR_T>::joint_jacobian_t AnymalKinematics<SCALAR_T>
 }  // end of namespace anymal
 
 // Explicit instantiation
-template class anymal::tpl::AnymalKinematics<double>;
-template class anymal::tpl::AnymalKinematics<ocs2::CppAdInterface<double>::ad_scalar_t>;
+template class anymal::tpl::AnymalBearKinematics<double>;
+template class anymal::tpl::AnymalBearKinematics<ocs2::CppAdInterface<double>::ad_scalar_t>;

@@ -10,8 +10,8 @@
 
 namespace switched_model {
 
-void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& quadrupedInterface, const ocs2::MpcSettings& mpcSettings,
-                      const ocs2::SlqSettings& slqSettings) {
+void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& quadrupedInterface, const ocs2::MPC_Settings& mpcSettings,
+                      const ocs2::SLQ_Settings& slqSettings) {
   const std::string robotName = "anymal";
   using mpc_ros_t = ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM>;
 

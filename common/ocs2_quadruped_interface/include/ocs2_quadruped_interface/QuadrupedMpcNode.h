@@ -6,14 +6,14 @@
 
 #include <ros/node_handle.h>
 
-#include <ocs2_ddp/SlqSettings.h>
-#include <ocs2_mpc/MpcSettings.h>
+#include <ocs2_ddp/SLQ_Settings.h>
+#include <ocs2_mpc/MPC_Settings.h>
 
 #include "QuadrupedInterface.h"
 
 namespace switched_model {
 
-void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& quadrupedInterface, const ocs2::MpcSettings& mpcSettings,
-                      const ocs2::SlqSettings& slqSettings);
+void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& quadrupedInterface, const ocs2::MPC_Settings& mpcSettings,
+                      const ocs2::SLQ_Settings& slqSettings);
 
 }

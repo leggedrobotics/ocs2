@@ -20,8 +20,10 @@ int main(int argc, char* argv[]) {
   ros::NodeHandle nodeHandle;
 
   auto anymalInterface = anymal::getAnymalCrocInterface(taskName);
-  const auto slqSettings = ocs2::loadSlqSettings(anymal::getTaskFilePathCroc(taskName));
-  const auto mpcSettings = ocs2::loadMpcSettings(anymal::getTaskFilePathCroc(taskName));
+  ocs2::MPC_Settings mpcSettings;
+  mpcSettings.loadSettings(anymal::getTaskFilePathCroc(taskName));
+  ocs2::SLQ_Settings slqSettings;
+  slqSettings.loadSettings(anymal::getTaskFilePathCroc(taskName));
   quadrupedMpcNode(nodeHandle, *anymalInterface, mpcSettings, slqSettings);
 
   return 0;

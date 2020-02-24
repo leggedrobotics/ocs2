@@ -12,14 +12,20 @@
 namespace anymal {
 
 std::unique_ptr<switched_model::QuadrupedInterface> getAnymalBearInterface(const std::string& taskName) {
-  std::string taskFolder = ros::package::getPath("ocs2_anymal_bear") + "/config/" + taskName;
-  std::cerr << "Loading task file from: " << taskFolder << std::endl;
-
+  const auto taskFolder= getTaskFileFolderBear(taskName);
   auto kin = AnymalBearKinematics();
   auto kinAd = AnymalBearKinematicsAd();
   auto com = AnymalBearCom();
   auto comAd = AnymalBearComAd();
-  return std::unique_ptr<switched_model::QuadrupedInterface>(
-      new switched_model::QuadrupedInterface(kin, kinAd, com, comAd, taskFolder));
+  return std::unique_ptr<switched_model::QuadrupedInterface>(new switched_model::QuadrupedInterface(kin, kinAd, com, comAd, taskFolder));
 }
+
+std::string getTaskFileFolderBear(const std::string& taskName) {
+  std::string taskFolder = ros::package::getPath("ocs2_anymal_bear") + "/config/" + taskName;
+}
+
+std::string getTaskFilePathBear(const std::string& taskName) {
+  return getTaskFileFolderBear(taskName) + "/task.info";
+}
+
 }  // namespace anymal

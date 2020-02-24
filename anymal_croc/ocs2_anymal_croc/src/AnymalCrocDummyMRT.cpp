@@ -7,6 +7,7 @@
 
 #include <ocs2_quadruped_interface/QuadrupedDummyNode.h>
 
+#include <ocs2_mpc/MpcSettings.h>
 #include "ocs2_anymal_croc/AnymalCrocInterface.h"
 
 int main(int argc, char* argv[]) {
@@ -20,7 +21,9 @@ int main(int argc, char* argv[]) {
   ros::NodeHandle nodeHandle;
 
   auto anymalInterface = anymal::getAnymalCrocInterface(taskName);
-  quadrupedDummyNode(nodeHandle, *anymalInterface, &anymalInterface->getRollout());
+  const auto mpcSettings = ocs2::loadMpcSettings(anymal::getTaskFilePathCroc(taskName));
+  quadrupedDummyNode(nodeHandle, *anymalInterface, &anymalInterface->getRollout(), mpcSettings.mrtDesiredFrequency_,
+                     mpcSettings.mpcDesiredFrequency_);
 
   return 0;
 }

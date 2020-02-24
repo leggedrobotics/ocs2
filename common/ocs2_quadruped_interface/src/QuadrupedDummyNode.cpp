@@ -12,7 +12,7 @@
 namespace switched_model {
 
 void quadrupedDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& quadrupedInterface,
-                        const QuadrupedInterface::rollout_base_t* rolloutPtr) {
+                        const QuadrupedInterface::rollout_base_t* rolloutPtr, double mrtDesiredFrequency, double mpcDesiredFrequency) {
   const std::string robotName = "anymal";
   using vis_t = switched_model::QuadrupedVisualizer;
   using mrt_t = ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
@@ -29,7 +29,7 @@ void quadrupedDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& q
   auto visualizer = std::make_shared<vis_t>(quadrupedInterface.getKinematicModel(), quadrupedInterface.getComModel(), nodeHandle);
 
   // Dummy MRT
-  dummy_t dummySimulator(mrt, quadrupedInterface.mpcSettings().mrtDesiredFrequency_, quadrupedInterface.mpcSettings().mpcDesiredFrequency_);
+  dummy_t dummySimulator(mrt, mrtDesiredFrequency, mpcDesiredFrequency);
   dummySimulator.subscribeObservers({visualizer});
 
   // initial state

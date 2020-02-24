@@ -18,7 +18,7 @@ TEST(Anymal, PyBindings) {
   using input_state_matrix_array_t = bindings_t::input_state_matrix_array_t;
   using cost_desired_trajectories_t = bindings_t::cost_desired_trajectories_t;
 
-  const std::string taskFile = ros::package::getPath("ocs2_anymal_bear_interface") + "/config/mpc";
+  const std::string taskFile = "mpc";
   bindings_t bindings(taskFile, false);
 
   state_vector_t initState = state_vector_t::Zero();

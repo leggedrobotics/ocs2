@@ -7,9 +7,6 @@
 
 #pragma once
 
-#include <ocs2_ddp/SLQ_Settings.h>
-#include <ocs2_mpc/MPC_Settings.h>
-
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_robotic_tools/common/RobotInterface.h>
@@ -44,12 +41,12 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
 
   using dimension_t = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
-  using scalar_t = typename dimension_t::scalar_t;
-  using scalar_array_t = typename dimension_t::scalar_array_t;
-  using size_array_t = typename dimension_t::size_array_t;
-  using state_vector_t = typename dimension_t::state_vector_t;
-  using state_matrix_t = typename dimension_t::state_matrix_t;
-  using input_matrix_t = typename dimension_t::input_matrix_t;
+  using scalar_t = dimension_t::scalar_t;
+  using scalar_array_t = dimension_t::scalar_array_t;
+  using size_array_t = dimension_t::size_array_t;
+  using state_vector_t = dimension_t::state_vector_t;
+  using state_matrix_t = dimension_t::state_matrix_t;
+  using input_matrix_t = dimension_t::input_matrix_t;
 
   using rollout_base_t = ocs2::RolloutBase<STATE_DIM, INPUT_DIM>;
   using time_triggered_rollout_t = ocs2::TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
@@ -94,16 +91,10 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   const mode_sequence_template_t& getInitialModeSequence() const { return defaultModeSequenceTemplate_; }
 
   /** Access to rollout settings */
-  const ocs2::Rollout_Settings& rolloutSettings() const { return rolloutSettings_; }
+  const ocs2::RolloutSettings& rolloutSettings() const { return rolloutSettings_; }
 
   /** Access to model settings */
   const ModelSettings& modelSettings() const { return modelSettings_; };
-
-  /** Access to slq settings */
-  const ocs2::SLQ_Settings& slqSettings() const { return slqSettings_; }
-
-  /** Access to mpc settings */
-  const ocs2::MPC_Settings& mpcSettings() const { return mpcSettings_; }
 
   /** Gets the rollout class */
   const rollout_base_t& getRollout() const { return *timeTriggeredRolloutPtr_; }
@@ -116,7 +107,7 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
 
   const constraint_t* getConstraintPtr() const override { return constraintsPtr_.get(); }
 
-  const operating_point_t& getOperatingPoint() const { return *operatingPointsPtr_; }
+  const operating_point_t& getOperatingPoints() const override { return *operatingPointsPtr_; }
 
  private:
   /**
@@ -127,9 +118,7 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   void loadSettings(const std::string& pathToConfigFile);
 
  private:
-  ocs2::SLQ_Settings slqSettings_;
-  ocs2::MPC_Settings mpcSettings_;
-  ocs2::Rollout_Settings rolloutSettings_;
+  ocs2::RolloutSettings rolloutSettings_;
   ModelSettings modelSettings_;
 
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;

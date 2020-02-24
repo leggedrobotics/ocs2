@@ -5,11 +5,13 @@
 
 namespace anymal {
 
-AnymalBearPyBindings::AnymalBearPyBindings(std::string taskFileFolder, bool async) : Base(async), taskFileFolder_(std::move(taskFileFolder)) {
-  auto anymalBearInterface = getAnymalBearInterface(taskFileFolder_);
-  init(*anymalBearInterface, switched_model::getMpc(*anymalBearInterface));
+AnymalBearPyBindings::AnymalBearPyBindings(std::string taskName, bool async) : Base(async), taskName_(std::move(taskName)) {
+  auto anymalBearInterface = getAnymalBearInterface(taskName_);
+  const auto slqSettings = ocs2::loadSlqSettings(anymal::getTaskFilePathBear(taskName_));
+  const auto mpcSettings = ocs2::loadMpcSettings(anymal::getTaskFilePathBear(taskName_));
 
-  const auto slqSettings = anymalBearInterface->slqSettings();
+  init(*anymalBearInterface, switched_model::getMpc(*anymalBearInterface, mpcSettings, slqSettings));
+
   penalty_.reset(new ocs2::RelaxedBarrierPenalty<switched_model::STATE_DIM, switched_model::INPUT_DIM>(
       slqSettings.ddpSettings_.inequalityConstraintMu_, slqSettings.ddpSettings_.inequalityConstraintDelta_));
 }
@@ -17,7 +19,7 @@ AnymalBearPyBindings::AnymalBearPyBindings(std::string taskFileFolder, bool asyn
 void AnymalBearPyBindings::visualizeTrajectory(const scalar_array_t& t, const state_vector_array_t& x, const input_vector_array_t& u,
                                                double speed) {
   if (!visualizer_) {
-    auto anymalBearInterface = getAnymalBearInterface(taskFileFolder_);
+    auto anymalBearInterface = getAnymalBearInterface(taskName_);
     int fake_argc = 1;
     auto* fake_argv = const_cast<char*>("no_name");
     ros::init(fake_argc, &fake_argv, "anymal_visualization_node");

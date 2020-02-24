@@ -10,4 +10,8 @@ namespace anymal {
 
 std::unique_ptr<switched_model::QuadrupedInterface> getAnymalCrocInterface(const std::string& taskName);
 
+std::string getTaskFileFolderCroc(const std::string& taskName);
+
+std::string getTaskFilePathCroc(const std::string& taskName);
+
 }  // end of namespace anymal

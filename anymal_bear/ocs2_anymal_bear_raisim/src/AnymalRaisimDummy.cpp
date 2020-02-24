@@ -1,6 +1,8 @@
 #include <ros/package.h>
 #include <ros/param.h>
 
+#include <ocs2_mpc/MPC_Settings.h>
+
 #include <ocs2_quadruped_interface/QuadrupedDummyNode.h>
 
 #include <ocs2_anymal_bear/AnymalBearInterface.h>
@@ -30,7 +32,6 @@ int main(int argc, char* argv[]) {
 
   // Set up Raisim rollout
   anymal::AnymalRaisimConversions conversions(anymalInterface->getComModel(), anymalInterface->getKinematicModel());
-
   ocs2::RaisimRolloutSettings raisimRolloutSettings;
   raisimRolloutSettings.loadSettings(ros::package::getPath("ocs2_anymal_bear_raisim") + "/config/raisim_rollout.info", "rollout");
 
@@ -46,7 +47,9 @@ int main(int argc, char* argv[]) {
                 std::placeholders::_3, std::placeholders::_4, std::placeholders::_5));
 
   // Run dummy loop
-  quadrupedDummyNode(nodeHandle, *anymalInterface, &simRollout);
+  ocs2::MPC_Settings mpcSettings;
+  mpcSettings.loadSettings(anymal::getTaskFilePathBear(taskName));
+  quadrupedDummyNode(nodeHandle, *anymalInterface, &simRollout, mpcSettings.mrtDesiredFrequency_, mpcSettings.mpcDesiredFrequency_);
 
   return 0;
 }

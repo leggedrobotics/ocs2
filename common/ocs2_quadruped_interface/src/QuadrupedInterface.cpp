@@ -36,10 +36,8 @@ QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, 
 /******************************************************************************************************/
 /******************************************************************************************************/
 void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
-  slqSettings_.loadSettings(pathToConfigFile, "slq", true);
   rolloutSettings_.loadSettings(pathToConfigFile, "slq.rollout");
-  mpcSettings_.loadSettings(pathToConfigFile, true);
-  modelSettings_.loadSettings(pathToConfigFile, true);
+  modelSettings_ = loadModelSettings(pathToConfigFile);
 
   std::cerr << std::endl;
 

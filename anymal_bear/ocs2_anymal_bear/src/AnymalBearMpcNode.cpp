@@ -20,7 +20,11 @@ int main(int argc, char* argv[]) {
   ros::NodeHandle nodeHandle;
 
   auto anymalInterface = anymal::getAnymalBearInterface(taskName);
-  quadrupedMpcNode(nodeHandle, *anymalInterface);
+  ocs2::MPC_Settings mpcSettings;
+  mpcSettings.loadSettings(anymal::getTaskFilePathBear(taskName));
+  ocs2::SLQ_Settings slqSettings;
+  slqSettings.loadSettings(anymal::getTaskFilePathBear(taskName));
+  quadrupedMpcNode(nodeHandle, *anymalInterface, mpcSettings, slqSettings);
 
   return 0;
 }

@@ -21,7 +21,7 @@ std::unique_ptr<switched_model::QuadrupedInterface> getAnymalBearInterface(const
 }
 
 std::string getTaskFileFolderBear(const std::string& taskName) {
-  std::string taskFolder = ros::package::getPath("ocs2_anymal_bear") + "/config/" + taskName;
+  return ros::package::getPath("ocs2_anymal_bear") + "/config/" + taskName;
 }
 
 std::string getTaskFilePathBear(const std::string& taskName) {

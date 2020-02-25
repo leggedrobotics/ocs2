@@ -7,7 +7,9 @@ rollout
   {
     setSimulatorStateOnRolloutRunAlways 0
     setSimulatorStateOnRolloutRunOnce 1
-    controlDecimation 10
+    controlDecimation 1
+    generateTerrain 1
+    terrainRoughness 4.0
 
     orderedJointNames
     {

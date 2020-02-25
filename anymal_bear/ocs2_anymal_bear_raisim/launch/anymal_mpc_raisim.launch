@@ -14,6 +14,8 @@
       </include>
     </group>
 
+    <param name="/anymal_bear_raisim_urdf" textfile="$(find ocs2_anymal_bear_raisim)/urdf/anymal_cleaned.urdf"/>
+
     <node pkg="ocs2_anymal_bear" type="ocs2_anymal_bear_mpc_node" name="anymal_mpc_node"
           output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
 

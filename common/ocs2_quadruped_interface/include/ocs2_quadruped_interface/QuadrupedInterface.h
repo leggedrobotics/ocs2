@@ -82,6 +82,7 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   const com_model_t& getComModel() const { return *comModelPtr_; }
 
   /** Gets the loaded initial state */
+  state_vector_t& getInitialState() { return initialState_; }
   const state_vector_t& getInitialState() const { return initialState_; }
 
   /** Gets the loaded initial partition times */
@@ -97,7 +98,7 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   const ModelSettings& modelSettings() const { return modelSettings_; };
 
   /** Gets the rollout class */
-  const rollout_base_t& getRollout() const { return *timeTriggeredRolloutPtr_; }
+  const time_triggered_rollout_t& getRollout() const { return *timeTriggeredRolloutPtr_; }
 
   const system_dynamics_t& getDynamics() const override { return *dynamicsPtr_; }
 
@@ -132,7 +133,7 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   std::unique_ptr<constraint_t> constraintsPtr_;
   std::unique_ptr<cost_function_t> costFunctionPtr_;
   std::unique_ptr<operating_point_t> operatingPointsPtr_;
-  std::unique_ptr<rollout_base_t> timeTriggeredRolloutPtr_;
+  std::unique_ptr<time_triggered_rollout_t> timeTriggeredRolloutPtr_;
 
   state_matrix_t Q_;
   input_matrix_t R_;

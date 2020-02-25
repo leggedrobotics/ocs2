@@ -18,6 +18,7 @@
 
   <depend>roslib</depend>
   <depend>ocs2_raisim</depend>
+  <depend>ocs2_raisim_ros</depend>
   <depend>ocs2_anymal_bear</depend>
 
 

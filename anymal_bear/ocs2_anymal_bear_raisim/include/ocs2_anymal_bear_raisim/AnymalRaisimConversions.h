@@ -13,11 +13,11 @@ namespace anymal {
 
 /**
  * @brief Conversion helpers between OCS2 and RAIsim conventions
- * @note ocs2RbdState is: rpy [0-2], eulerAngles [3-5] , qJoints [6-17], baseLocalVelocities [18-23], dqJoints [24-35]
+ * @note ocs2RbdState is: rpy [0-2], xyz [3-5] , qJoints [6-17], baseLocalVelocities [18-23], dqJoints [24-35]
  * @note Raisim q: position (x y z), quaternion (w x y z), joint positions
  * @note Raisim dq: linear vel in world, angular vel in world, joint vel
  */
-class AnymalRaisimConversions final {
+class AnymalRaisimConversions {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -48,7 +48,7 @@ class AnymalRaisimConversions final {
    * @param[in] dq the generalized velocity
    * @return the corresponding anymal RBD state
    */
-  static switched_model::rbd_state_t raisimGenCoordGenVelToRbdState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq);
+  switched_model::rbd_state_t raisimGenCoordGenVelToRbdState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq) const;
 
   /**
    * @brief Convert RAIsim generalized coordinates and velocities to ocs2 anymal state
@@ -91,15 +91,10 @@ class AnymalRaisimConversions final {
    */
   void extractModelData(double time, const raisim::ArticulatedSystem& sys);
 
-  /**
-   * @brief Scales XYZ or ZYX Euler angles to the range [-pi,pi),[-pi/2,pi/2),[-pi,pi)
-   * @note Taken from
-   * https://github.com/ANYbotics/kindr/blob/0b159ec60b710706656b70148211ed04573fbfda/include/kindr/rotations/EulerAnglesXyz.hpp
-   * @param[in,out] eulerAngles to be scaled, if necessary
-   */
-  static void makeEulerAnglesUnique(Eigen::Vector3d& eulerAngles);
+ public:
+  raisim::HeightMap const* terrain_ = nullptr;
 
- protected:
+ private:
   const switched_model::SwitchedModelStateEstimator switchedModelStateEstimator_;  // const for thread safety
   std::unique_ptr<const kinematic_model_t> kinematicModelPtr_;
 };

@@ -13,6 +13,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CATKIN_PACKAGE_DEPENDENCIES
   roslib
   ocs2_raisim
+  ocs2_raisim_ros
   ocs2_anymal_bear
 )
 
@@ -34,6 +35,8 @@ endif(USE_RAISIM_VISUALIZER)
 catkin_package(
   INCLUDE_DIRS
     include
+  LIBRARIES
+    anymal_raisim_conversions
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
 )
@@ -47,13 +50,21 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+
+add_library(anymal_raisim_conversions
+  src/AnymalRaisimConversions.cpp
+)
+target_link_libraries(anymal_raisim_conversions
+  ${catkin_LIBRARIES}
+)
+
 # Dummy node with raisim rollout
 add_executable(anymal_dummy_raisim
-  src/AnymalRaisimConversions.cpp
   src/AnymalRaisimDummy.cpp
 )
 
 target_link_libraries(anymal_dummy_raisim
+  anymal_raisim_conversions
   ${catkin_LIBRARIES}
 )
 if(USE_RAISIM_VISUALIZER)
@@ -101,9 +112,8 @@ install(DIRECTORY launch
 #############
 catkin_add_gtest(testAnymalRaisimConversions
   test/testAnymalRaisimConversions.cpp
-  src/AnymalRaisimConversions.cpp
 )
 target_link_libraries(testAnymalRaisimConversions
+  anymal_raisim_conversions
   ${catkin_LIBRARIES}
 )
-

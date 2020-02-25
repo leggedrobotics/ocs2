@@ -23,8 +23,9 @@ void AnymalBearPyBindings::visualizeTrajectory(const scalar_array_t& t, const st
   if (!visualizer_) {
     auto anymalBearInterface = getAnymalBearInterface(taskName_);
     int fake_argc = 1;
-    auto* fake_argv = const_cast<char*>("no_name");
-    ros::init(fake_argc, &fake_argv, "anymal_visualization_node");
+    char arg0[] = "no_name";
+    char* fake_argv[] = {arg0};
+    ros::init(fake_argc, fake_argv, "anymal_visualization_node");
     ros::NodeHandle n;
     visualizer_.reset(new visualizer_t(anymalBearInterface->getKinematicModel(), anymalBearInterface->getComModel(), n));
   }
@@ -32,7 +33,7 @@ void AnymalBearPyBindings::visualizeTrajectory(const scalar_array_t& t, const st
   assert(t.size() == x.size());
   visualizer_t::system_observation_array_t observations(t.size());
 
-  const bool inputProvided = u.size() > 0;
+  const bool inputProvided = !u.empty();
 
   for (int i = 0; i < t.size(); i++) {
     observations[i].time() = t[i];

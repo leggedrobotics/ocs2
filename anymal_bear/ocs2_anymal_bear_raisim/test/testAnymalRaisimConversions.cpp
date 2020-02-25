@@ -5,7 +5,6 @@
 #include <ros/package.h>
 
 TEST(AnymalRaisim, Conversions) {
-  constexpr size_t JOINT_COORD_SIZE = 12;
   constexpr size_t STATE_DIM = 24;
   constexpr size_t INPUT_DIM = 24;
 
@@ -31,9 +30,6 @@ TEST(AnymalRaisim, Conversions) {
     bool test = ocs2_state_in.isApprox(ocs2_state_out);
     EXPECT_TRUE(test);
   }
-
-  std::cout << "-----------------------------------------------------------------\n"
-            << "-----------------------------------------------------------------" << std::endl;
 
   // consistency test raisim -> ocs2 -> raisim
   for (int i = 0; i < 100; i++) {

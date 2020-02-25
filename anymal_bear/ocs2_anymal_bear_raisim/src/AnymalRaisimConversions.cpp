@@ -2,6 +2,7 @@
 
 #include <ocs2_anymal_bear_switched_model/generated/inverse_dynamics.h>
 #include <ocs2_anymal_bear_switched_model/generated/jsim.h>
+#include <ocs2_robotic_tools/common/RotationTransforms.h>
 #include <ocs2_switched_model_interface/core/Rotations.h>
 
 namespace anymal {
@@ -16,6 +17,9 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> AnymalRaisimConversions::stateToRais
 
   Eigen::VectorXd q(3 + 4 + 12);
   q << ocs2RbdState.segment<3>(3), q_world_base.w(), q_world_base.x(), q_world_base.y(), q_world_base.z(), ocs2RbdState.segment<12>(6);
+  if (terrain_ != nullptr) {
+    q(2) += terrain_->getHeight(q(0), q(1));
+  }
 
   Eigen::VectorXd dq(3 + 3 + 12);
   dq << q_world_base * ocs2RbdState.segment<3>(21), q_world_base * ocs2RbdState.segment<3>(18), ocs2RbdState.tail<12>();
@@ -23,7 +27,8 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> AnymalRaisimConversions::stateToRais
   return {q, dq};
 }
 
-switched_model::rbd_state_t AnymalRaisimConversions::raisimGenCoordGenVelToRbdState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
+switched_model::rbd_state_t AnymalRaisimConversions::raisimGenCoordGenVelToRbdState(const Eigen::VectorXd& q,
+                                                                                    const Eigen::VectorXd& dq) const {
   if (q.tail<12>().array().abs().maxCoeff() > 2.0 * M_PI   // joint position
       or dq.segment<6>(0).array().abs().maxCoeff() > 10.0  // linear/angular base velocity
       or dq.tail<12>().array().abs().maxCoeff() > 30.0     // joint velocity
@@ -36,11 +41,15 @@ switched_model::rbd_state_t AnymalRaisimConversions::raisimGenCoordGenVelToRbdSt
 
   Eigen::Quaterniond q_world_base(q(3), q(4), q(5), q(6));  // quaternion coefficients w, x, y z
   Eigen::Vector3d eulerAngles = switched_model::eulerAnglesFromQuaternionBaseToOrigin<double>(q_world_base);
-  makeEulerAnglesUnique(eulerAngles);
+  ocs2::makeEulerAnglesUnique(eulerAngles);
 
   switched_model::rbd_state_t ocs2RbdState;
   ocs2RbdState << eulerAngles, q.head<3>(), q.tail<12>(), q_world_base.inverse() * dq.segment<3>(3),
       q_world_base.inverse() * dq.segment<3>(0), dq.tail<12>();
+
+  if (terrain_ != nullptr) {
+    ocs2RbdState(5) -= terrain_->getHeight(q(0), q(1));
+  }
 
   return ocs2RbdState;
 }
@@ -115,6 +124,13 @@ Eigen::VectorXd AnymalRaisimConversions::inputToRaisimGeneralizedForce(double, c
                                                     Mm.template bottomRightCorner<12, 12>() * qddJoints + Cv.template tail<12>() +
                                                     Gv.template tail<12>() - extForceJoint;
 
+  if (ocs2rbdInput.array().abs().maxCoeff() > 100) {
+    std::stringstream ss;
+    ss << "AnymalRaisimConversions::inputToRaisimGeneralizedForce -- Raisim input unstable:"
+       << "\nocs2rbdInput = " << ocs2rbdInput.transpose() << "\nq = " << q.transpose();
+    throw std::runtime_error(ss.str());
+  }
+
   // convert to raisim input
   Eigen::Matrix<double, 18, 1> raisimInput;
   raisimInput.setZero();
@@ -136,49 +152,5 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> AnymalRaisimConversions::inputToRais
 }
 
 void AnymalRaisimConversions::extractModelData(double time, const raisim::ArticulatedSystem& sys) {}
-
-void AnymalRaisimConversions::makeEulerAnglesUnique(Eigen::Vector3d& eulerAngles) {
-  double tol = 1e-9;
-
-  if (eulerAngles.y() < -M_PI / 2 - tol) {
-    if (eulerAngles.x() < 0) {
-      eulerAngles.x() = eulerAngles.x() + M_PI;
-    } else {
-      eulerAngles.x() = eulerAngles.x() - M_PI;
-    }
-
-    eulerAngles.y() = -(eulerAngles.y() + M_PI);
-
-    if (eulerAngles.z() < 0) {
-      eulerAngles.z() = eulerAngles.z() + M_PI;
-    } else {
-      eulerAngles.z() = eulerAngles.z() - M_PI;
-    }
-  } else if (-M_PI / 2 - tol <= eulerAngles.y() && eulerAngles.y() <= -M_PI / 2 + tol) {
-    eulerAngles.x() -= eulerAngles.z();
-    eulerAngles.z() = 0;
-  } else if (-M_PI / 2 + tol < eulerAngles.y() && eulerAngles.y() < M_PI / 2 - tol) {
-    // ok
-  } else if (M_PI / 2 - tol <= eulerAngles.y() && eulerAngles.y() <= M_PI / 2 + tol) {
-    // todo: M_PI/2 should not be in range, other formula?
-    eulerAngles.x() += eulerAngles.z();
-    eulerAngles.z() = 0;
-  } else  // M_PI/2 + tol < eulerAngles.y()
-  {
-    if (eulerAngles.x() < 0) {
-      eulerAngles.x() = eulerAngles.x() + M_PI;
-    } else {
-      eulerAngles.x() = eulerAngles.x() - M_PI;
-    }
-
-    eulerAngles.y() = -(eulerAngles.y() - M_PI);
-
-    if (eulerAngles.z() < 0) {
-      eulerAngles.z() = eulerAngles.z() + M_PI;
-    } else {
-      eulerAngles.z() = eulerAngles.z() - M_PI;
-    }
-  }
-}
 
 }  // namespace anymal

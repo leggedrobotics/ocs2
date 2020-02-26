@@ -10,34 +10,12 @@
 #include <map>
 #include <memory>
 #include <vector>
-#include "ocs2_core/Dimensions.h"
 
-#include "ocs2_switched_model_interface/constraint/ConstraintCollectionView.h"
+#include <ocs2_core/Dimensions.h>
+
 #include "ocs2_switched_model_interface/constraint/ConstraintTerm.h"
 
 namespace ocs2 {
-
-/*
- *  Container keeps a vector of unique pointers
- *   - const read is provided through the observerVector
- *   - write access is provided through the modifierVector
- */
-template <typename T>
-class TermContainer {
- public:
-  void add(std::unique_ptr<T> term) {
-    termModifierVector_.emplace_back(std::move(term));
-    termObserverVector_.push_back(termModifierVector_.back().get());
-  }
-
-  const std::vector<std::unique_ptr<T>>& getModifierVector() const { return termModifierVector_; };
-  const std::vector<T const*>& getObserverVector() const { return termObserverVector_; };
-  size_t size() const { return termModifierVector_.size(); };
-
- private:
-  std::vector<std::unique_ptr<T>> termModifierVector_;
-  std::vector<T const*> termObserverVector_;
-};
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class ConstraintCollection {
@@ -46,76 +24,74 @@ class ConstraintCollection {
 
   using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
   using scalar_t = typename DIMENSIONS::scalar_t;
+  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
+  using state_vector_t = typename DIMENSIONS::state_vector_t;
+  using input_vector_t = typename DIMENSIONS::input_vector_t;
 
-  using ConstraintTerm_t = ConstraintTerm<STATE_DIM, INPUT_DIM>;
-  using ConstraintTermContainer_t = TermContainer<ConstraintTerm_t>;
-  using ConstraintCollectionView_t = ConstraintCollectionView<STATE_DIM, INPUT_DIM>;
+  using constraint_term_t = ConstraintTerm<STATE_DIM, INPUT_DIM>;
+  using LinearApproximation_t = LinearConstraintApproximation<STATE_DIM, INPUT_DIM>;
+  using LinearApproximationAsMatrices_t = LinearConstraintApproximationAsMatrices<STATE_DIM, INPUT_DIM>;
+  using QuadraticApproximation_t = QuadraticConstraintApproximation<STATE_DIM, INPUT_DIM>;
 
   ConstraintCollection() = default;
   ~ConstraintCollection() = default;
-  ConstraintCollection(const ConstraintCollection& rhs) {
-    // Loop through all constraints by name and clone into the new object
-    for (const auto& nameIndex : rhs.nameIndexMap) {
-      const auto& name = nameIndex.first;
-      add(std::unique_ptr<ConstraintTerm_t>(rhs.getConstraint(name).clone()), name);
-    }
-  }
-
   ConstraintCollection& operator=(const ConstraintCollection&) = delete;
 
   /**
-   * Add a constraint to the collection, and transfer ownership to the collection
+   * Move constructor
+   */
+  ConstraintCollection(ConstraintCollection&& rhs) noexcept;
+
+  /**
+   * Copy constructor
+   */
+  ConstraintCollection(const ConstraintCollection& rhs);
+
+  /**
+   * Adds a constraint to the collection, and transfer ownership to the collection
    * The provided name must be unique and is later used to access the constraint.
    * @param constraintTerm: Constraint to be added.
    * @param name: Name stored along with the constraint.
    */
-  void add(std::unique_ptr<ConstraintTerm_t> constraintTerm, const std::string& name) {
-    if (nameIndexMap.find(name) == nameIndexMap.end()) {
-      constraintTermContainer.add(std::move(constraintTerm));
-      nameIndexMap.insert({name, constraintTermContainer.size() - 1});
-    } else {
-      throw std::runtime_error("[ConstraintCollection::add] Constraint name already exists");
-    }
-  };
+  void add(std::string name, std::unique_ptr<constraint_term_t> constraintTerm);
 
   /**
-   * Get an interface to the constraints to extract their concatenated values and derivatives.
-   * @return Collection view on the constraints.
-   */
-  ConstraintCollectionView_t getConstraints() const { return ConstraintCollectionView_t(constraintTermContainer.getObserverVector()); };
-
-  /**
-   * Use to modify a constraint. The returned pointer is not to be stored since the ConstraintCollection contains a unique pointer to the
-   * object
-   * @tparam Derived: derived class of ConstraintTerm<STATE_DIM, INPUT_DIM> to cast to. Casts to the base class by default
+   * Use to modify a constraint. The returned pointer is not to be stored since the ConstraintCollection contains a unique
+   * pointer to the object
+   * @tparam Derived: derived class of ConstraintTerm to cast to. Casts to the base class by default
    * @param name: Name of the constraint to modify
-   * @return Pointer to the underlying constraint
+   * @return A reference to the underlying constraint
    */
-  template <typename Derived = ConstraintTerm_t>
-  Derived* modifyConstraint(std::string name) {
-    static_assert(std::is_convertible<Derived*, ConstraintTerm_t*>::value,
-                  "Template argument must derive from ConstraintTerm<STATE_DIM, INPUT_DIM>");
-
-    auto derivedPtr = dynamic_cast<Derived*>(constraintTermContainer.getModifierVector()[nameIndexMap.at(name)].get());
-    if (derivedPtr) {
-      return derivedPtr;
-    } else {
-      throw std::runtime_error("[ConstraintCollection::modifyConstraint] Could not cast to specified template argument");
-    }
-  };
+  template <typename Derived = constraint_term_t>
+  Derived& get(const std::string& name);
 
   /**
-   * Get read access to an indiviual constraint
-   * @param name: Name of the constraint
-   * @return Reference to the corresponding constraint
+   * Returns the name of the all the collected constraints.
    */
-  const ConstraintTerm_t& getConstraint(std::string name) const {
-    return *constraintTermContainer.getObserverVector()[nameIndexMap.at(name)];
-  };
+  std::vector<std::string> constraintNameList() const;
+
+  size_t getNumConstraints(scalar_t time) const;
+
+  // Gets as std::vectors
+  scalar_array_t getValue(scalar_t time, const state_vector_t& state, const input_vector_t& input) const;
+  LinearApproximation_t getLinearApproximation(scalar_t time, const state_vector_t& state, const input_vector_t& input) const;
+  QuadraticApproximation_t getQuadraticApproximation(scalar_t time, const state_vector_t& state, const input_vector_t& input) const;
+
+  // Gets as Eigen
+  Eigen::VectorXd getValueAsVector(scalar_t time, const state_vector_t& state, const input_vector_t& input) const;
+  LinearApproximationAsMatrices_t getLinearApproximationAsMatrices(scalar_t time, const state_vector_t& state,
+                                                                   const input_vector_t& input) const;
 
  private:
-  ConstraintTermContainer_t constraintTermContainer;
-  std::map<std::string, int> nameIndexMap;
+  /**
+   * Appends the vector v1 by moving v2 which allows for the efficient transfer of resources.
+   */
+  template <typename T, typename Allocator>
+  void appendVectorToVectorByMoving(std::vector<T, Allocator>& v1, std::vector<T, Allocator>& v2) const;
+
+  std::map<std::string, std::unique_ptr<constraint_term_t>> constraintTermMap_;
 };
 
 }  // namespace ocs2
+
+#include "implementation/ConstraintCollection.h"

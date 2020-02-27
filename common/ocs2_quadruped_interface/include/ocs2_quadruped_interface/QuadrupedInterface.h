@@ -100,6 +100,9 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   /** Gets the rollout class */
   const time_triggered_rollout_t& getRollout() const { return *timeTriggeredRolloutPtr_; }
 
+  /** Gets the time horizon of MPC */
+  scalar_t getTimeHorizon() const { return timeHorizon_; }
+
   const system_dynamics_t& getDynamics() const override { return *dynamicsPtr_; }
 
   const system_dynamics_derivative_t& getDynamicsDerivatives() const override { return *dynamicsDerivativesPtr_; }
@@ -119,13 +122,12 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   void loadSettings(const std::string& pathToConfigFile);
 
  private:
+  scalar_t timeHorizon_;
   ocs2::Rollout_Settings rolloutSettings_;
   ModelSettings modelSettings_;
 
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;
-  std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
   std::unique_ptr<com_model_t> comModelPtr_;
-  std::unique_ptr<ad_com_model_t> adComModelPtr_;
   std::shared_ptr<logic_rules_t> logicRulesPtr_;
 
   std::unique_ptr<system_dynamics_t> dynamicsPtr_;

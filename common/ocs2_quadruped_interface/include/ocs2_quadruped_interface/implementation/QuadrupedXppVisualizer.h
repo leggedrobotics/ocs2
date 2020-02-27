@@ -36,7 +36,8 @@ namespace switched_model {
         tf::vectorEigenToMsg(o_feetAcceleration[ee], rstcm.ee_motion[ee].acc);
         tf::vectorEigenToMsg(o_feetForce[ee],        rstcm.ee_forces[ee]);
         /* Check if the forces are 0 */
-        rstcm.ee_contact[ee] = !o_feetForce[ee].isZero(0);
+        const auto precision = 1e-6;
+        rstcm.ee_contact[ee] = o_feetForce[ee].isZero(precision);
       }
     }
 
@@ -177,7 +178,7 @@ namespace switched_model {
         tf::vectorEigenToMsg(state.template segment<3>(9), robotStateCartesianMsg.base.twist.linear);
 
         robotStateCartesianMsg.time_from_start = ros::Duration(time);
-        auto& input = costDesiredTrajectories.desiredStateTrajectory()[i];
+        auto& input = costDesiredTrajectories.desiredInputTrajectory()[i];
         setRobotStateCartesianEEValues(state, input, robotStateCartesianMsg);
 
         // if (save_rosbag_) {
@@ -285,12 +286,10 @@ namespace switched_model {
       base_coordinate_t basePose = ocs2QuadrupedInterfacePtr_->getComModel().calculateBasePose(comPose);
       base_coordinate_t baseLocalVelocities = ocs2QuadrupedInterfacePtr_->getComModel().calculateBaseLocalVelocities(comLocalVelocities);
 
-      Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin<scalar_t>(state.template head<3>());
-
       for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
         o_feetPosition[i] = ocs2QuadrupedInterfacePtr_->getKinematicModel().footPositionInOriginFrame(i, basePose, qJoints);
         o_feetVelocity[i] = ocs2QuadrupedInterfacePtr_->getKinematicModel().footVelocityInOriginFrame(i, basePose, baseLocalVelocities, qJoints, dqJoints);
-        o_contactForces[i] = o_R_b * input.template segment<3>(3 * i);
+        o_contactForces[i] = input.template segment<3>(3 * i);
       }
     }
 
@@ -355,7 +354,7 @@ namespace switched_model {
         footMarkerMsg.markers.push_back(footMsg);
       }
 
-      auto& inputTrajectory = costDesiredTrajectories.desiredStateTrajectory();
+      auto& inputTrajectory = costDesiredTrajectories.desiredInputTrajectory();
       vector_3d_array_t o_feetPosition, o_feetVelocity, o_feetForce;
       // Evaluation times
       // double dt = 0.1;

@@ -32,34 +32,34 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::MotionTransforms
     fr_base_X_fr_LF_HIP(),
     fr_LF_THIGH_X_fr_LF_HIP(),
     fr_LF_HIP_X_fr_LF_THIGH(),
-    fr_LF_SHANK_X_fr_LF_THIGH(),
-    fr_LF_THIGH_X_fr_LF_SHANK(),
-    fr_LF_WHEEL_L_X_fr_LF_SHANK(),
-    fr_LF_SHANK_X_fr_LF_WHEEL_L(),
+    fr_LF_shank_fixed_X_fr_LF_THIGH(),
+    fr_LF_THIGH_X_fr_LF_shank_fixed(),
+    fr_LF_WHEEL_L_X_fr_LF_shank_fixed(),
+    fr_LF_shank_fixed_X_fr_LF_WHEEL_L(),
     fr_RF_HIP_X_fr_base(),
     fr_base_X_fr_RF_HIP(),
     fr_RF_THIGH_X_fr_RF_HIP(),
     fr_RF_HIP_X_fr_RF_THIGH(),
-    fr_RF_SHANK_X_fr_RF_THIGH(),
-    fr_RF_THIGH_X_fr_RF_SHANK(),
-    fr_RF_WHEEL_L_X_fr_RF_SHANK(),
-    fr_RF_SHANK_X_fr_RF_WHEEL_L(),
+    fr_RF_shank_fixed_X_fr_RF_THIGH(),
+    fr_RF_THIGH_X_fr_RF_shank_fixed(),
+    fr_RF_WHEEL_L_X_fr_RF_shank_fixed(),
+    fr_RF_shank_fixed_X_fr_RF_WHEEL_L(),
     fr_LH_HIP_X_fr_base(),
     fr_base_X_fr_LH_HIP(),
     fr_LH_THIGH_X_fr_LH_HIP(),
     fr_LH_HIP_X_fr_LH_THIGH(),
-    fr_LH_SHANK_X_fr_LH_THIGH(),
-    fr_LH_THIGH_X_fr_LH_SHANK(),
-    fr_LH_WHEEL_L_X_fr_LH_SHANK(),
-    fr_LH_SHANK_X_fr_LH_WHEEL_L(),
+    fr_LH_shank_fixed_X_fr_LH_THIGH(),
+    fr_LH_THIGH_X_fr_LH_shank_fixed(),
+    fr_LH_WHEEL_L_X_fr_LH_shank_fixed(),
+    fr_LH_shank_fixed_X_fr_LH_WHEEL_L(),
     fr_RH_HIP_X_fr_base(),
     fr_base_X_fr_RH_HIP(),
     fr_RH_THIGH_X_fr_RH_HIP(),
     fr_RH_HIP_X_fr_RH_THIGH(),
-    fr_RH_SHANK_X_fr_RH_THIGH(),
-    fr_RH_THIGH_X_fr_RH_SHANK(),
-    fr_RH_WHEEL_L_X_fr_RH_SHANK(),
-    fr_RH_SHANK_X_fr_RH_WHEEL_L()
+    fr_RH_shank_fixed_X_fr_RH_THIGH(),
+    fr_RH_THIGH_X_fr_RH_shank_fixed(),
+    fr_RH_WHEEL_L_X_fr_RH_shank_fixed(),
+    fr_RH_shank_fixed_X_fr_RH_WHEEL_L()
 {
     updateParameters();
 }
@@ -99,34 +99,34 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::ForceTransforms
     fr_base_X_fr_LF_HIP(),
     fr_LF_THIGH_X_fr_LF_HIP(),
     fr_LF_HIP_X_fr_LF_THIGH(),
-    fr_LF_SHANK_X_fr_LF_THIGH(),
-    fr_LF_THIGH_X_fr_LF_SHANK(),
-    fr_LF_WHEEL_L_X_fr_LF_SHANK(),
-    fr_LF_SHANK_X_fr_LF_WHEEL_L(),
+    fr_LF_shank_fixed_X_fr_LF_THIGH(),
+    fr_LF_THIGH_X_fr_LF_shank_fixed(),
+    fr_LF_WHEEL_L_X_fr_LF_shank_fixed(),
+    fr_LF_shank_fixed_X_fr_LF_WHEEL_L(),
     fr_RF_HIP_X_fr_base(),
     fr_base_X_fr_RF_HIP(),
     fr_RF_THIGH_X_fr_RF_HIP(),
     fr_RF_HIP_X_fr_RF_THIGH(),
-    fr_RF_SHANK_X_fr_RF_THIGH(),
-    fr_RF_THIGH_X_fr_RF_SHANK(),
-    fr_RF_WHEEL_L_X_fr_RF_SHANK(),
-    fr_RF_SHANK_X_fr_RF_WHEEL_L(),
+    fr_RF_shank_fixed_X_fr_RF_THIGH(),
+    fr_RF_THIGH_X_fr_RF_shank_fixed(),
+    fr_RF_WHEEL_L_X_fr_RF_shank_fixed(),
+    fr_RF_shank_fixed_X_fr_RF_WHEEL_L(),
     fr_LH_HIP_X_fr_base(),
     fr_base_X_fr_LH_HIP(),
     fr_LH_THIGH_X_fr_LH_HIP(),
     fr_LH_HIP_X_fr_LH_THIGH(),
-    fr_LH_SHANK_X_fr_LH_THIGH(),
-    fr_LH_THIGH_X_fr_LH_SHANK(),
-    fr_LH_WHEEL_L_X_fr_LH_SHANK(),
-    fr_LH_SHANK_X_fr_LH_WHEEL_L(),
+    fr_LH_shank_fixed_X_fr_LH_THIGH(),
+    fr_LH_THIGH_X_fr_LH_shank_fixed(),
+    fr_LH_WHEEL_L_X_fr_LH_shank_fixed(),
+    fr_LH_shank_fixed_X_fr_LH_WHEEL_L(),
     fr_RH_HIP_X_fr_base(),
     fr_base_X_fr_RH_HIP(),
     fr_RH_THIGH_X_fr_RH_HIP(),
     fr_RH_HIP_X_fr_RH_THIGH(),
-    fr_RH_SHANK_X_fr_RH_THIGH(),
-    fr_RH_THIGH_X_fr_RH_SHANK(),
-    fr_RH_WHEEL_L_X_fr_RH_SHANK(),
-    fr_RH_SHANK_X_fr_RH_WHEEL_L()
+    fr_RH_shank_fixed_X_fr_RH_THIGH(),
+    fr_RH_THIGH_X_fr_RH_shank_fixed(),
+    fr_RH_WHEEL_L_X_fr_RH_shank_fixed(),
+    fr_RH_shank_fixed_X_fr_RH_WHEEL_L()
 {
     updateParameters();
 }
@@ -166,34 +166,34 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::HomogeneousTransforms
     fr_base_X_fr_LF_HIP(),
     fr_LF_THIGH_X_fr_LF_HIP(),
     fr_LF_HIP_X_fr_LF_THIGH(),
-    fr_LF_SHANK_X_fr_LF_THIGH(),
-    fr_LF_THIGH_X_fr_LF_SHANK(),
-    fr_LF_WHEEL_L_X_fr_LF_SHANK(),
-    fr_LF_SHANK_X_fr_LF_WHEEL_L(),
+    fr_LF_shank_fixed_X_fr_LF_THIGH(),
+    fr_LF_THIGH_X_fr_LF_shank_fixed(),
+    fr_LF_WHEEL_L_X_fr_LF_shank_fixed(),
+    fr_LF_shank_fixed_X_fr_LF_WHEEL_L(),
     fr_RF_HIP_X_fr_base(),
     fr_base_X_fr_RF_HIP(),
     fr_RF_THIGH_X_fr_RF_HIP(),
     fr_RF_HIP_X_fr_RF_THIGH(),
-    fr_RF_SHANK_X_fr_RF_THIGH(),
-    fr_RF_THIGH_X_fr_RF_SHANK(),
-    fr_RF_WHEEL_L_X_fr_RF_SHANK(),
-    fr_RF_SHANK_X_fr_RF_WHEEL_L(),
+    fr_RF_shank_fixed_X_fr_RF_THIGH(),
+    fr_RF_THIGH_X_fr_RF_shank_fixed(),
+    fr_RF_WHEEL_L_X_fr_RF_shank_fixed(),
+    fr_RF_shank_fixed_X_fr_RF_WHEEL_L(),
     fr_LH_HIP_X_fr_base(),
     fr_base_X_fr_LH_HIP(),
     fr_LH_THIGH_X_fr_LH_HIP(),
     fr_LH_HIP_X_fr_LH_THIGH(),
-    fr_LH_SHANK_X_fr_LH_THIGH(),
-    fr_LH_THIGH_X_fr_LH_SHANK(),
-    fr_LH_WHEEL_L_X_fr_LH_SHANK(),
-    fr_LH_SHANK_X_fr_LH_WHEEL_L(),
+    fr_LH_shank_fixed_X_fr_LH_THIGH(),
+    fr_LH_THIGH_X_fr_LH_shank_fixed(),
+    fr_LH_WHEEL_L_X_fr_LH_shank_fixed(),
+    fr_LH_shank_fixed_X_fr_LH_WHEEL_L(),
     fr_RH_HIP_X_fr_base(),
     fr_base_X_fr_RH_HIP(),
     fr_RH_THIGH_X_fr_RH_HIP(),
     fr_RH_HIP_X_fr_RH_THIGH(),
-    fr_RH_SHANK_X_fr_RH_THIGH(),
-    fr_RH_THIGH_X_fr_RH_SHANK(),
-    fr_RH_WHEEL_L_X_fr_RH_SHANK(),
-    fr_RH_SHANK_X_fr_RH_WHEEL_L()
+    fr_RH_shank_fixed_X_fr_RH_THIGH(),
+    fr_RH_THIGH_X_fr_RH_shank_fixed(),
+    fr_RH_WHEEL_L_X_fr_RH_shank_fixed(),
+    fr_RH_shank_fixed_X_fr_RH_WHEEL_L()
 {
     updateParameters();
 }
@@ -246,18 +246,18 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_base_X_fr_LF_W
     (*this)(2,2) =  s_q_LF_HAA_;
     (*this)(3,0) = ((((((( 0.104 *  c_q_LF_HAA_) +  0.18979) *  s_q_LF_HFE_) *  s_q_LF_KFE_) + ((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  c_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  c_q_LF_HFE_) *  s_q_LF_KFE_) + ((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(3,1) = ((((((( 0.104 *  c_q_LF_HAA_) +  0.18979) *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (((( 0.104 *  c_q_LF_HAA_) +  0.18979) *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((((( 0.104 *  c_q_LF_HAA_) +  0.18979) *  s_q_LF_HFE_) *  s_q_LF_KFE_) + ((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  c_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
-    (*this)(3,2) = (((((( 0.08748 *  c_q_LF_HFE_) - ( 0.248 *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((( 0.08748 *  s_q_LF_HFE_) + ( 0.248 *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.28263 *  c_q_LF_HFE_)) + ( 0.104 *  s_q_LF_HAA_));
+    (*this)(3,2) = (((((( 0.08748 *  c_q_LF_HFE_) - ( 0.2745 *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((( 0.08748 *  s_q_LF_HFE_) + ( 0.2745 *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.28263 *  c_q_LF_HFE_)) + ( 0.104 *  s_q_LF_HAA_));
     (*this)(3,3) = ((((- c_q_LF_HFE_ *  s_q_LF_KFE_) - ( s_q_LF_HFE_ *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((( c_q_LF_HFE_ *  c_q_LF_KFE_) - ( s_q_LF_HFE_ *  s_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(3,4) = (((( s_q_LF_HFE_ *  s_q_LF_KFE_) - ( c_q_LF_HFE_ *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((- c_q_LF_HFE_ *  s_q_LF_KFE_) - ( s_q_LF_HFE_ *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
-    (*this)(4,0) = (((((((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  s_q_LF_KFE_) + (((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  c_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) - ( 0.28263 *  c_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.248 *  c_q_LF_HAA_)) *  c_q_LF_WHEEL_));
-    (*this)(4,1) = (((((((( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  c_q_LF_KFE_)) + ( 0.248 *  c_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  s_q_LF_KFE_) + (((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  c_q_LF_HAA_)) *  c_q_LF_WHEEL_));
-    (*this)(4,2) = ((((((( 0.08748 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.248 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.248 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.08748 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.28263 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) - ( 0.36 *  s_q_LF_HAA_));
+    (*this)(4,0) = (((((((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  s_q_LF_KFE_) + (((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  c_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) - ( 0.28263 *  c_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.2745 *  c_q_LF_HAA_)) *  c_q_LF_WHEEL_));
+    (*this)(4,1) = (((((((( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  c_q_LF_KFE_)) + ( 0.2745 *  c_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  s_q_LF_KFE_) + (((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  c_q_LF_HAA_)) *  c_q_LF_WHEEL_));
+    (*this)(4,2) = ((((((( 0.08748 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.2745 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.2745 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.08748 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.28263 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) - ( 0.36 *  s_q_LF_HAA_));
     (*this)(4,3) = ((((( s_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((( s_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(4,4) = (((((- s_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((( s_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(4,5) =  c_q_LF_HAA_;
-    (*this)(5,0) = (((((((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  s_q_LF_KFE_) + ((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  s_q_LF_HAA_)) *  s_q_LF_WHEEL_) + (((((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (((- 0.18979 *  c_q_LF_HAA_) -  0.104) *  c_q_LF_HFE_)) - ( 0.28263 *  s_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.248 *  s_q_LF_HAA_)) *  c_q_LF_WHEEL_));
-    (*this)(5,1) = (((((((((- 0.18979 *  c_q_LF_HAA_) -  0.104) *  s_q_LF_HFE_) - (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  c_q_LF_KFE_)) + ( 0.248 *  s_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  s_q_LF_KFE_) + ((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  s_q_LF_HAA_)) *  c_q_LF_WHEEL_));
-    (*this)(5,2) = (((((((- 0.08748 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.248 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.08748 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.248 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) - (( 0.28263 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) + ( 0.36 *  c_q_LF_HAA_));
+    (*this)(5,0) = (((((((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  s_q_LF_KFE_) + ((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  s_q_LF_HAA_)) *  s_q_LF_WHEEL_) + (((((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (((- 0.18979 *  c_q_LF_HAA_) -  0.104) *  c_q_LF_HFE_)) - ( 0.28263 *  s_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.2745 *  s_q_LF_HAA_)) *  c_q_LF_WHEEL_));
+    (*this)(5,1) = (((((((((- 0.18979 *  c_q_LF_HAA_) -  0.104) *  s_q_LF_HFE_) - (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  c_q_LF_KFE_)) + ( 0.2745 *  s_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  s_q_LF_KFE_) + ((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  s_q_LF_HAA_)) *  c_q_LF_WHEEL_));
+    (*this)(5,2) = (((((((- 0.08748 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.2745 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.08748 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.2745 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) - (( 0.28263 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) + ( 0.36 *  c_q_LF_HAA_));
     (*this)(5,3) = ((((( c_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((((- c_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(5,4) = ((((( c_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (( c_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((( c_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(5,5) =  s_q_LF_HAA_;
@@ -307,20 +307,20 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_f
     (*this)(2,1) =  c_q_LF_HAA_;
     (*this)(2,2) =  s_q_LF_HAA_;
     (*this)(3,0) = ((((((( 0.104 *  c_q_LF_HAA_) +  0.18979) *  s_q_LF_HFE_) *  s_q_LF_KFE_) + ((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  c_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  c_q_LF_HFE_) *  s_q_LF_KFE_) + ((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
-    (*this)(3,1) = (((((((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  s_q_LF_KFE_) + (((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  c_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) - ( 0.28263 *  c_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.248 *  c_q_LF_HAA_)) *  c_q_LF_WHEEL_));
-    (*this)(3,2) = (((((((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  s_q_LF_KFE_) + ((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  s_q_LF_HAA_)) *  s_q_LF_WHEEL_) + (((((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (((- 0.18979 *  c_q_LF_HAA_) -  0.104) *  c_q_LF_HFE_)) - ( 0.28263 *  s_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.248 *  s_q_LF_HAA_)) *  c_q_LF_WHEEL_));
+    (*this)(3,1) = (((((((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  s_q_LF_KFE_) + (((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  c_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) - ( 0.28263 *  c_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.2745 *  c_q_LF_HAA_)) *  c_q_LF_WHEEL_));
+    (*this)(3,2) = (((((((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  s_q_LF_KFE_) + ((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  s_q_LF_HAA_)) *  s_q_LF_WHEEL_) + (((((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (((- 0.18979 *  c_q_LF_HAA_) -  0.104) *  c_q_LF_HFE_)) - ( 0.28263 *  s_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.2745 *  s_q_LF_HAA_)) *  c_q_LF_WHEEL_));
     (*this)(3,3) = ((((- c_q_LF_HFE_ *  s_q_LF_KFE_) - ( s_q_LF_HFE_ *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((( 1.0 *  c_q_LF_HFE_) *  c_q_LF_KFE_) - ( s_q_LF_HFE_ *  s_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(3,4) = (((((( 1.0 *  s_q_LF_HAA_) *  c_q_LF_HFE_) *  c_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((((( 1.0 *  s_q_LF_HAA_) *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(3,5) = (((((( 1.0 *  c_q_LF_HAA_) *  s_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((((- c_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(4,0) = ((((((( 0.104 *  c_q_LF_HAA_) +  0.18979) *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (((( 0.104 *  c_q_LF_HAA_) +  0.18979) *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((((( 0.104 *  c_q_LF_HAA_) +  0.18979) *  s_q_LF_HFE_) *  s_q_LF_KFE_) + ((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  c_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
-    (*this)(4,1) = (((((((( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  c_q_LF_KFE_)) + ( 0.248 *  c_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  s_q_LF_KFE_) + (((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  c_q_LF_HAA_)) *  c_q_LF_WHEEL_));
-    (*this)(4,2) = (((((((((- 0.18979 *  c_q_LF_HAA_) -  0.104) *  s_q_LF_HFE_) - (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  c_q_LF_KFE_)) + ( 0.248 *  s_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  s_q_LF_KFE_) + ((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  s_q_LF_HAA_)) *  c_q_LF_WHEEL_));
+    (*this)(4,1) = (((((((( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  c_q_LF_KFE_)) + ( 0.2745 *  c_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  s_q_LF_KFE_) + (((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  c_q_LF_HAA_)) *  c_q_LF_WHEEL_));
+    (*this)(4,2) = (((((((((- 0.18979 *  c_q_LF_HAA_) -  0.104) *  s_q_LF_HFE_) - (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  c_q_LF_KFE_)) + ( 0.2745 *  s_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  s_q_LF_KFE_) + ((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  s_q_LF_HAA_)) *  c_q_LF_WHEEL_));
     (*this)(4,3) = ((((( 1.0 *  s_q_LF_HFE_) *  s_q_LF_KFE_) - ( c_q_LF_HFE_ *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((- c_q_LF_HFE_ *  s_q_LF_KFE_) - ( s_q_LF_HFE_ *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(4,4) = (((((- s_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((((( 1.0 *  s_q_LF_HAA_) *  c_q_LF_HFE_) *  c_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(4,5) = (((((( 1.0 *  c_q_LF_HAA_) *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (( c_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((((( 1.0 *  c_q_LF_HAA_) *  s_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
-    (*this)(5,0) = (((((( 0.08748 *  c_q_LF_HFE_) - ( 0.248 *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((( 0.08748 *  s_q_LF_HFE_) + ( 0.248 *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.28263 *  c_q_LF_HFE_)) + ( 0.104 *  s_q_LF_HAA_));
-    (*this)(5,1) = ((((((( 0.08748 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.248 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.248 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.08748 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.28263 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) - ( 0.36 *  s_q_LF_HAA_));
-    (*this)(5,2) = (((((((- 0.08748 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.248 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.08748 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.248 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) - (( 0.28263 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) + ( 0.36 *  c_q_LF_HAA_));
+    (*this)(5,0) = (((((( 0.08748 *  c_q_LF_HFE_) - ( 0.2745 *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((( 0.08748 *  s_q_LF_HFE_) + ( 0.2745 *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.28263 *  c_q_LF_HFE_)) + ( 0.104 *  s_q_LF_HAA_));
+    (*this)(5,1) = ((((((( 0.08748 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.2745 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.2745 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.08748 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.28263 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) - ( 0.36 *  s_q_LF_HAA_));
+    (*this)(5,2) = (((((((- 0.08748 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.2745 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.08748 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.2745 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) - (( 0.28263 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) + ( 0.36 *  c_q_LF_HAA_));
     (*this)(5,4) =  c_q_LF_HAA_;
     (*this)(5,5) =  s_q_LF_HAA_;
     return *this;
@@ -370,18 +370,18 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_base_X_fr_LH_W
     (*this)(2,2) =  s_q_LH_HAA_;
     (*this)(3,0) = ((((((( 0.104 *  c_q_LH_HAA_) +  0.18979) *  s_q_LH_HFE_) *  s_q_LH_KFE_) + ((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  c_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  c_q_LH_HFE_) *  s_q_LH_KFE_) + ((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(3,1) = ((((((( 0.104 *  c_q_LH_HAA_) +  0.18979) *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (((( 0.104 *  c_q_LH_HAA_) +  0.18979) *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((((( 0.104 *  c_q_LH_HAA_) +  0.18979) *  s_q_LH_HFE_) *  s_q_LH_KFE_) + ((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  c_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
-    (*this)(3,2) = ((((((- 0.248 *  s_q_LH_HFE_) - ( 0.08748 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((( 0.248 *  c_q_LH_HFE_) - ( 0.08748 *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) + ( 0.28263 *  c_q_LH_HFE_)) + ( 0.104 *  s_q_LH_HAA_));
+    (*this)(3,2) = ((((((- 0.2745 *  s_q_LH_HFE_) - ( 0.08748 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((( 0.2745 *  c_q_LH_HFE_) - ( 0.08748 *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) + ( 0.28263 *  c_q_LH_HFE_)) + ( 0.104 *  s_q_LH_HAA_));
     (*this)(3,3) = ((((- c_q_LH_HFE_ *  s_q_LH_KFE_) - ( s_q_LH_HFE_ *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((( c_q_LH_HFE_ *  c_q_LH_KFE_) - ( s_q_LH_HFE_ *  s_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(3,4) = (((( s_q_LH_HFE_ *  s_q_LH_KFE_) - ( c_q_LH_HFE_ *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((- c_q_LH_HFE_ *  s_q_LH_KFE_) - ( s_q_LH_HFE_ *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
-    (*this)(4,0) = ((((((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  c_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) - ( 0.28263 *  c_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.248 *  c_q_LH_HAA_)) *  c_q_LH_WHEEL_));
-    (*this)(4,1) = (((((((( 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  c_q_LH_KFE_)) + ( 0.248 *  c_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  c_q_LH_HAA_)) *  c_q_LH_WHEEL_));
-    (*this)(4,2) = ((((((( 0.248 *  s_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.08748 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.248 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.08748 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.28263 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) + ( 0.36 *  s_q_LH_HAA_));
+    (*this)(4,0) = ((((((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  c_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) - ( 0.28263 *  c_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.2745 *  c_q_LH_HAA_)) *  c_q_LH_WHEEL_));
+    (*this)(4,1) = (((((((( 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  c_q_LH_KFE_)) + ( 0.2745 *  c_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  c_q_LH_HAA_)) *  c_q_LH_WHEEL_));
+    (*this)(4,2) = ((((((( 0.2745 *  s_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.08748 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.2745 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.08748 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.28263 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) + ( 0.36 *  s_q_LH_HAA_));
     (*this)(4,3) = ((((( s_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((( s_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(4,4) = (((((- s_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((( s_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(4,5) =  c_q_LH_HAA_;
-    (*this)(5,0) = ((((((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  s_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (((- 0.18979 *  c_q_LH_HAA_) -  0.104) *  c_q_LH_HFE_)) - ( 0.28263 *  s_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.248 *  s_q_LH_HAA_)) *  c_q_LH_WHEEL_));
-    (*this)(5,1) = (((((((((- 0.18979 *  c_q_LH_HAA_) -  0.104) *  s_q_LH_HFE_) + (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  c_q_LH_KFE_)) + ( 0.248 *  s_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  s_q_LH_HAA_)) *  c_q_LH_WHEEL_));
-    (*this)(5,2) = ((((((( 0.08748 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.248 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((- 0.248 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.08748 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - (( 0.28263 *  c_q_LH_HAA_) *  s_q_LH_HFE_)) - ( 0.36 *  c_q_LH_HAA_));
+    (*this)(5,0) = ((((((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  s_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (((- 0.18979 *  c_q_LH_HAA_) -  0.104) *  c_q_LH_HFE_)) - ( 0.28263 *  s_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.2745 *  s_q_LH_HAA_)) *  c_q_LH_WHEEL_));
+    (*this)(5,1) = (((((((((- 0.18979 *  c_q_LH_HAA_) -  0.104) *  s_q_LH_HFE_) + (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  c_q_LH_KFE_)) + ( 0.2745 *  s_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  s_q_LH_HAA_)) *  c_q_LH_WHEEL_));
+    (*this)(5,2) = ((((((( 0.08748 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.2745 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((- 0.2745 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.08748 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - (( 0.28263 *  c_q_LH_HAA_) *  s_q_LH_HFE_)) - ( 0.36 *  c_q_LH_HAA_));
     (*this)(5,3) = ((((( c_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((((- c_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(5,4) = ((((( c_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (( c_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((( c_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(5,5) =  s_q_LH_HAA_;
@@ -431,20 +431,20 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_f
     (*this)(2,1) =  c_q_LH_HAA_;
     (*this)(2,2) =  s_q_LH_HAA_;
     (*this)(3,0) = ((((((( 0.104 *  c_q_LH_HAA_) +  0.18979) *  s_q_LH_HFE_) *  s_q_LH_KFE_) + ((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  c_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  c_q_LH_HFE_) *  s_q_LH_KFE_) + ((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
-    (*this)(3,1) = ((((((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  c_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) - ( 0.28263 *  c_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.248 *  c_q_LH_HAA_)) *  c_q_LH_WHEEL_));
-    (*this)(3,2) = ((((((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  s_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (((- 0.18979 *  c_q_LH_HAA_) -  0.104) *  c_q_LH_HFE_)) - ( 0.28263 *  s_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.248 *  s_q_LH_HAA_)) *  c_q_LH_WHEEL_));
+    (*this)(3,1) = ((((((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  c_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) - ( 0.28263 *  c_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.2745 *  c_q_LH_HAA_)) *  c_q_LH_WHEEL_));
+    (*this)(3,2) = ((((((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  s_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (((- 0.18979 *  c_q_LH_HAA_) -  0.104) *  c_q_LH_HFE_)) - ( 0.28263 *  s_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.2745 *  s_q_LH_HAA_)) *  c_q_LH_WHEEL_));
     (*this)(3,3) = ((((- c_q_LH_HFE_ *  s_q_LH_KFE_) - ( s_q_LH_HFE_ *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((( 1.0 *  c_q_LH_HFE_) *  c_q_LH_KFE_) - ( s_q_LH_HFE_ *  s_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(3,4) = (((((( 1.0 *  s_q_LH_HAA_) *  c_q_LH_HFE_) *  c_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((((( 1.0 *  s_q_LH_HAA_) *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(3,5) = (((((( 1.0 *  c_q_LH_HAA_) *  s_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((((- c_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(4,0) = ((((((( 0.104 *  c_q_LH_HAA_) +  0.18979) *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (((( 0.104 *  c_q_LH_HAA_) +  0.18979) *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((((( 0.104 *  c_q_LH_HAA_) +  0.18979) *  s_q_LH_HFE_) *  s_q_LH_KFE_) + ((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  c_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
-    (*this)(4,1) = (((((((( 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  c_q_LH_KFE_)) + ( 0.248 *  c_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  c_q_LH_HAA_)) *  c_q_LH_WHEEL_));
-    (*this)(4,2) = (((((((((- 0.18979 *  c_q_LH_HAA_) -  0.104) *  s_q_LH_HFE_) + (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  c_q_LH_KFE_)) + ( 0.248 *  s_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  s_q_LH_HAA_)) *  c_q_LH_WHEEL_));
+    (*this)(4,1) = (((((((( 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  c_q_LH_KFE_)) + ( 0.2745 *  c_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  c_q_LH_HAA_)) *  c_q_LH_WHEEL_));
+    (*this)(4,2) = (((((((((- 0.18979 *  c_q_LH_HAA_) -  0.104) *  s_q_LH_HFE_) + (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  c_q_LH_KFE_)) + ( 0.2745 *  s_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  s_q_LH_HAA_)) *  c_q_LH_WHEEL_));
     (*this)(4,3) = ((((( 1.0 *  s_q_LH_HFE_) *  s_q_LH_KFE_) - ( c_q_LH_HFE_ *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((- c_q_LH_HFE_ *  s_q_LH_KFE_) - ( s_q_LH_HFE_ *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(4,4) = (((((- s_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((((( 1.0 *  s_q_LH_HAA_) *  c_q_LH_HFE_) *  c_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(4,5) = (((((( 1.0 *  c_q_LH_HAA_) *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (( c_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((((( 1.0 *  c_q_LH_HAA_) *  s_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
-    (*this)(5,0) = ((((((- 0.248 *  s_q_LH_HFE_) - ( 0.08748 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((( 0.248 *  c_q_LH_HFE_) - ( 0.08748 *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) + ( 0.28263 *  c_q_LH_HFE_)) + ( 0.104 *  s_q_LH_HAA_));
-    (*this)(5,1) = ((((((( 0.248 *  s_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.08748 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.248 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.08748 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.28263 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) + ( 0.36 *  s_q_LH_HAA_));
-    (*this)(5,2) = ((((((( 0.08748 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.248 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((- 0.248 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.08748 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - (( 0.28263 *  c_q_LH_HAA_) *  s_q_LH_HFE_)) - ( 0.36 *  c_q_LH_HAA_));
+    (*this)(5,0) = ((((((- 0.2745 *  s_q_LH_HFE_) - ( 0.08748 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((( 0.2745 *  c_q_LH_HFE_) - ( 0.08748 *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) + ( 0.28263 *  c_q_LH_HFE_)) + ( 0.104 *  s_q_LH_HAA_));
+    (*this)(5,1) = ((((((( 0.2745 *  s_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.08748 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.2745 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.08748 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.28263 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) + ( 0.36 *  s_q_LH_HAA_));
+    (*this)(5,2) = ((((((( 0.08748 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.2745 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((- 0.2745 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.08748 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - (( 0.28263 *  c_q_LH_HAA_) *  s_q_LH_HFE_)) - ( 0.36 *  c_q_LH_HAA_));
     (*this)(5,4) =  c_q_LH_HAA_;
     (*this)(5,5) =  s_q_LH_HAA_;
     return *this;
@@ -494,18 +494,18 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_base_X_fr_RF_W
     (*this)(2,2) =  s_q_RF_HAA_;
     (*this)(3,0) = (((((((- 0.104 *  c_q_RF_HAA_) -  0.18979) *  s_q_RF_HFE_) *  s_q_RF_KFE_) + (((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  c_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(3,1) = (((((((- 0.104 *  c_q_RF_HAA_) -  0.18979) *  c_q_RF_HFE_) *  s_q_RF_KFE_) + ((((- 0.104 *  c_q_RF_HAA_) -  0.18979) *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((((((- 0.104 *  c_q_RF_HAA_) -  0.18979) *  s_q_RF_HFE_) *  s_q_RF_KFE_) + (((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  c_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
-    (*this)(3,2) = (((((( 0.08748 *  c_q_RF_HFE_) - ( 0.248 *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + ((( 0.08748 *  s_q_RF_HFE_) + ( 0.248 *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.28263 *  c_q_RF_HFE_)) - ( 0.104 *  s_q_RF_HAA_));
+    (*this)(3,2) = (((((( 0.08748 *  c_q_RF_HFE_) - ( 0.2745 *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + ((( 0.08748 *  s_q_RF_HFE_) + ( 0.2745 *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.28263 *  c_q_RF_HFE_)) - ( 0.104 *  s_q_RF_HAA_));
     (*this)(3,3) = ((((- c_q_RF_HFE_ *  s_q_RF_KFE_) - ( s_q_RF_HFE_ *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((( c_q_RF_HFE_ *  c_q_RF_KFE_) - ( s_q_RF_HFE_ *  s_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(3,4) = (((( s_q_RF_HFE_ *  s_q_RF_KFE_) - ( c_q_RF_HFE_ *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((- c_q_RF_HFE_ *  s_q_RF_KFE_) - ( s_q_RF_HFE_ *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
-    (*this)(4,0) = (((((((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  s_q_RF_KFE_) + (((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  c_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.28263 *  c_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.248 *  c_q_RF_HAA_)) *  c_q_RF_WHEEL_));
-    (*this)(4,1) = ((((((((- 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  c_q_RF_KFE_)) + ( 0.248 *  c_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  s_q_RF_KFE_) + (((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  c_q_RF_HAA_)) *  c_q_RF_WHEEL_));
-    (*this)(4,2) = ((((((( 0.08748 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.248 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.248 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.08748 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.28263 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) - ( 0.36 *  s_q_RF_HAA_));
+    (*this)(4,0) = (((((((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  s_q_RF_KFE_) + (((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  c_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.28263 *  c_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.2745 *  c_q_RF_HAA_)) *  c_q_RF_WHEEL_));
+    (*this)(4,1) = ((((((((- 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  c_q_RF_KFE_)) + ( 0.2745 *  c_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  s_q_RF_KFE_) + (((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  c_q_RF_HAA_)) *  c_q_RF_WHEEL_));
+    (*this)(4,2) = ((((((( 0.08748 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.2745 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.2745 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.08748 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.28263 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) - ( 0.36 *  s_q_RF_HAA_));
     (*this)(4,3) = ((((( s_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((( s_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(4,4) = (((((- s_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((( s_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(4,5) =  c_q_RF_HAA_;
-    (*this)(5,0) = (((((((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  s_q_RF_KFE_) + (((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  s_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + ((( 0.18979 *  c_q_RF_HAA_) +  0.104) *  c_q_RF_HFE_)) - ( 0.28263 *  s_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.248 *  s_q_RF_HAA_)) *  c_q_RF_WHEEL_));
-    (*this)(5,1) = ((((((((( 0.18979 *  c_q_RF_HAA_) +  0.104) *  s_q_RF_HFE_) - (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  c_q_RF_KFE_)) + ( 0.248 *  s_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  s_q_RF_KFE_) + (((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  s_q_RF_HAA_)) *  c_q_RF_WHEEL_));
-    (*this)(5,2) = (((((((- 0.08748 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.248 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.08748 *  c_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.248 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) *  c_q_RF_KFE_)) - (( 0.28263 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) + ( 0.36 *  c_q_RF_HAA_));
+    (*this)(5,0) = (((((((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  s_q_RF_KFE_) + (((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  s_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + ((( 0.18979 *  c_q_RF_HAA_) +  0.104) *  c_q_RF_HFE_)) - ( 0.28263 *  s_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.2745 *  s_q_RF_HAA_)) *  c_q_RF_WHEEL_));
+    (*this)(5,1) = ((((((((( 0.18979 *  c_q_RF_HAA_) +  0.104) *  s_q_RF_HFE_) - (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  c_q_RF_KFE_)) + ( 0.2745 *  s_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  s_q_RF_KFE_) + (((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  s_q_RF_HAA_)) *  c_q_RF_WHEEL_));
+    (*this)(5,2) = (((((((- 0.08748 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.2745 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.08748 *  c_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.2745 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) *  c_q_RF_KFE_)) - (( 0.28263 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) + ( 0.36 *  c_q_RF_HAA_));
     (*this)(5,3) = ((((( c_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((((- c_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(5,4) = ((((( c_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (( c_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((( c_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(5,5) =  s_q_RF_HAA_;
@@ -555,20 +555,20 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_f
     (*this)(2,1) =  c_q_RF_HAA_;
     (*this)(2,2) =  s_q_RF_HAA_;
     (*this)(3,0) = (((((((- 0.104 *  c_q_RF_HAA_) -  0.18979) *  s_q_RF_HFE_) *  s_q_RF_KFE_) + (((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  c_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
-    (*this)(3,1) = (((((((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  s_q_RF_KFE_) + (((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  c_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.28263 *  c_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.248 *  c_q_RF_HAA_)) *  c_q_RF_WHEEL_));
-    (*this)(3,2) = (((((((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  s_q_RF_KFE_) + (((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  s_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + ((( 0.18979 *  c_q_RF_HAA_) +  0.104) *  c_q_RF_HFE_)) - ( 0.28263 *  s_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.248 *  s_q_RF_HAA_)) *  c_q_RF_WHEEL_));
+    (*this)(3,1) = (((((((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  s_q_RF_KFE_) + (((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  c_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.28263 *  c_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.2745 *  c_q_RF_HAA_)) *  c_q_RF_WHEEL_));
+    (*this)(3,2) = (((((((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  s_q_RF_KFE_) + (((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  s_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + ((( 0.18979 *  c_q_RF_HAA_) +  0.104) *  c_q_RF_HFE_)) - ( 0.28263 *  s_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.2745 *  s_q_RF_HAA_)) *  c_q_RF_WHEEL_));
     (*this)(3,3) = ((((- c_q_RF_HFE_ *  s_q_RF_KFE_) - ( s_q_RF_HFE_ *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((( 1.0 *  c_q_RF_HFE_) *  c_q_RF_KFE_) - ( s_q_RF_HFE_ *  s_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(3,4) = (((((( 1.0 *  s_q_RF_HAA_) *  c_q_RF_HFE_) *  c_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((((( 1.0 *  s_q_RF_HAA_) *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(3,5) = (((((( 1.0 *  c_q_RF_HAA_) *  s_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((((- c_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(4,0) = (((((((- 0.104 *  c_q_RF_HAA_) -  0.18979) *  c_q_RF_HFE_) *  s_q_RF_KFE_) + ((((- 0.104 *  c_q_RF_HAA_) -  0.18979) *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((((((- 0.104 *  c_q_RF_HAA_) -  0.18979) *  s_q_RF_HFE_) *  s_q_RF_KFE_) + (((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  c_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
-    (*this)(4,1) = ((((((((- 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  c_q_RF_KFE_)) + ( 0.248 *  c_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  s_q_RF_KFE_) + (((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  c_q_RF_HAA_)) *  c_q_RF_WHEEL_));
-    (*this)(4,2) = ((((((((( 0.18979 *  c_q_RF_HAA_) +  0.104) *  s_q_RF_HFE_) - (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  c_q_RF_KFE_)) + ( 0.248 *  s_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  s_q_RF_KFE_) + (((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  s_q_RF_HAA_)) *  c_q_RF_WHEEL_));
+    (*this)(4,1) = ((((((((- 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  c_q_RF_KFE_)) + ( 0.2745 *  c_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  s_q_RF_KFE_) + (((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  c_q_RF_HAA_)) *  c_q_RF_WHEEL_));
+    (*this)(4,2) = ((((((((( 0.18979 *  c_q_RF_HAA_) +  0.104) *  s_q_RF_HFE_) - (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  c_q_RF_KFE_)) + ( 0.2745 *  s_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  s_q_RF_KFE_) + (((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  s_q_RF_HAA_)) *  c_q_RF_WHEEL_));
     (*this)(4,3) = ((((( 1.0 *  s_q_RF_HFE_) *  s_q_RF_KFE_) - ( c_q_RF_HFE_ *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((- c_q_RF_HFE_ *  s_q_RF_KFE_) - ( s_q_RF_HFE_ *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(4,4) = (((((- s_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((((( 1.0 *  s_q_RF_HAA_) *  c_q_RF_HFE_) *  c_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(4,5) = (((((( 1.0 *  c_q_RF_HAA_) *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (( c_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((((( 1.0 *  c_q_RF_HAA_) *  s_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
-    (*this)(5,0) = (((((( 0.08748 *  c_q_RF_HFE_) - ( 0.248 *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + ((( 0.08748 *  s_q_RF_HFE_) + ( 0.248 *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.28263 *  c_q_RF_HFE_)) - ( 0.104 *  s_q_RF_HAA_));
-    (*this)(5,1) = ((((((( 0.08748 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.248 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.248 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.08748 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.28263 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) - ( 0.36 *  s_q_RF_HAA_));
-    (*this)(5,2) = (((((((- 0.08748 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.248 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.08748 *  c_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.248 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) *  c_q_RF_KFE_)) - (( 0.28263 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) + ( 0.36 *  c_q_RF_HAA_));
+    (*this)(5,0) = (((((( 0.08748 *  c_q_RF_HFE_) - ( 0.2745 *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + ((( 0.08748 *  s_q_RF_HFE_) + ( 0.2745 *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.28263 *  c_q_RF_HFE_)) - ( 0.104 *  s_q_RF_HAA_));
+    (*this)(5,1) = ((((((( 0.08748 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.2745 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.2745 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.08748 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.28263 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) - ( 0.36 *  s_q_RF_HAA_));
+    (*this)(5,2) = (((((((- 0.08748 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.2745 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.08748 *  c_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.2745 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) *  c_q_RF_KFE_)) - (( 0.28263 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) + ( 0.36 *  c_q_RF_HAA_));
     (*this)(5,4) =  c_q_RF_HAA_;
     (*this)(5,5) =  s_q_RF_HAA_;
     return *this;
@@ -618,18 +618,18 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_base_X_fr_RH_W
     (*this)(2,2) =  s_q_RH_HAA_;
     (*this)(3,0) = (((((((- 0.104 *  c_q_RH_HAA_) -  0.18979) *  s_q_RH_HFE_) *  s_q_RH_KFE_) + (((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  c_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(3,1) = (((((((- 0.104 *  c_q_RH_HAA_) -  0.18979) *  c_q_RH_HFE_) *  s_q_RH_KFE_) + ((((- 0.104 *  c_q_RH_HAA_) -  0.18979) *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((((((- 0.104 *  c_q_RH_HAA_) -  0.18979) *  s_q_RH_HFE_) *  s_q_RH_KFE_) + (((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  c_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
-    (*this)(3,2) = ((((((- 0.248 *  s_q_RH_HFE_) - ( 0.08748 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((( 0.248 *  c_q_RH_HFE_) - ( 0.08748 *  s_q_RH_HFE_)) *  c_q_RH_KFE_)) + ( 0.28263 *  c_q_RH_HFE_)) - ( 0.104 *  s_q_RH_HAA_));
+    (*this)(3,2) = ((((((- 0.2745 *  s_q_RH_HFE_) - ( 0.08748 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((( 0.2745 *  c_q_RH_HFE_) - ( 0.08748 *  s_q_RH_HFE_)) *  c_q_RH_KFE_)) + ( 0.28263 *  c_q_RH_HFE_)) - ( 0.104 *  s_q_RH_HAA_));
     (*this)(3,3) = ((((- c_q_RH_HFE_ *  s_q_RH_KFE_) - ( s_q_RH_HFE_ *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((( c_q_RH_HFE_ *  c_q_RH_KFE_) - ( s_q_RH_HFE_ *  s_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(3,4) = (((( s_q_RH_HFE_ *  s_q_RH_KFE_) - ( c_q_RH_HFE_ *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((- c_q_RH_HFE_ *  s_q_RH_KFE_) - ( s_q_RH_HFE_ *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
-    (*this)(4,0) = ((((((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  s_q_RH_KFE_) + (((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  c_q_RH_HAA_)) *  s_q_RH_WHEEL_) + ((((((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.28263 *  c_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.248 *  c_q_RH_HAA_)) *  c_q_RH_WHEEL_));
-    (*this)(4,1) = (((((((( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  c_q_RH_KFE_)) + ( 0.248 *  c_q_RH_HAA_)) *  s_q_RH_WHEEL_) + (((((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  s_q_RH_KFE_) + (((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  c_q_RH_HAA_)) *  c_q_RH_WHEEL_));
-    (*this)(4,2) = ((((((( 0.248 *  s_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.08748 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.248 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.08748 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.28263 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) + ( 0.36 *  s_q_RH_HAA_));
+    (*this)(4,0) = ((((((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  s_q_RH_KFE_) + (((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  c_q_RH_HAA_)) *  s_q_RH_WHEEL_) + ((((((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.28263 *  c_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.2745 *  c_q_RH_HAA_)) *  c_q_RH_WHEEL_));
+    (*this)(4,1) = (((((((( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  c_q_RH_KFE_)) + ( 0.2745 *  c_q_RH_HAA_)) *  s_q_RH_WHEEL_) + (((((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  s_q_RH_KFE_) + (((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  c_q_RH_HAA_)) *  c_q_RH_WHEEL_));
+    (*this)(4,2) = ((((((( 0.2745 *  s_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.08748 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.2745 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.08748 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.28263 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) + ( 0.36 *  s_q_RH_HAA_));
     (*this)(4,3) = ((((( s_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((( s_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(4,4) = (((((- s_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((( s_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(4,5) =  c_q_RH_HAA_;
-    (*this)(5,0) = ((((((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  s_q_RH_KFE_) + (((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  s_q_RH_HAA_)) *  s_q_RH_WHEEL_) + ((((((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + ((( 0.18979 *  c_q_RH_HAA_) +  0.104) *  c_q_RH_HFE_)) - ( 0.28263 *  s_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.248 *  s_q_RH_HAA_)) *  c_q_RH_WHEEL_));
-    (*this)(5,1) = ((((((((( 0.18979 *  c_q_RH_HAA_) +  0.104) *  s_q_RH_HFE_) + (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  c_q_RH_KFE_)) + ( 0.248 *  s_q_RH_HAA_)) *  s_q_RH_WHEEL_) + (((((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  s_q_RH_KFE_) + (((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  s_q_RH_HAA_)) *  c_q_RH_WHEEL_));
-    (*this)(5,2) = ((((((( 0.08748 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.248 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((- 0.248 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.08748 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - (( 0.28263 *  c_q_RH_HAA_) *  s_q_RH_HFE_)) - ( 0.36 *  c_q_RH_HAA_));
+    (*this)(5,0) = ((((((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  s_q_RH_KFE_) + (((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  s_q_RH_HAA_)) *  s_q_RH_WHEEL_) + ((((((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + ((( 0.18979 *  c_q_RH_HAA_) +  0.104) *  c_q_RH_HFE_)) - ( 0.28263 *  s_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.2745 *  s_q_RH_HAA_)) *  c_q_RH_WHEEL_));
+    (*this)(5,1) = ((((((((( 0.18979 *  c_q_RH_HAA_) +  0.104) *  s_q_RH_HFE_) + (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  c_q_RH_KFE_)) + ( 0.2745 *  s_q_RH_HAA_)) *  s_q_RH_WHEEL_) + (((((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  s_q_RH_KFE_) + (((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  s_q_RH_HAA_)) *  c_q_RH_WHEEL_));
+    (*this)(5,2) = ((((((( 0.08748 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.2745 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((- 0.2745 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.08748 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - (( 0.28263 *  c_q_RH_HAA_) *  s_q_RH_HFE_)) - ( 0.36 *  c_q_RH_HAA_));
     (*this)(5,3) = ((((( c_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((((- c_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(5,4) = ((((( c_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (( c_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((( c_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(5,5) =  s_q_RH_HAA_;
@@ -679,20 +679,20 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_f
     (*this)(2,1) =  c_q_RH_HAA_;
     (*this)(2,2) =  s_q_RH_HAA_;
     (*this)(3,0) = (((((((- 0.104 *  c_q_RH_HAA_) -  0.18979) *  s_q_RH_HFE_) *  s_q_RH_KFE_) + (((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  c_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
-    (*this)(3,1) = ((((((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  s_q_RH_KFE_) + (((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  c_q_RH_HAA_)) *  s_q_RH_WHEEL_) + ((((((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.28263 *  c_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.248 *  c_q_RH_HAA_)) *  c_q_RH_WHEEL_));
-    (*this)(3,2) = ((((((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  s_q_RH_KFE_) + (((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  s_q_RH_HAA_)) *  s_q_RH_WHEEL_) + ((((((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + ((( 0.18979 *  c_q_RH_HAA_) +  0.104) *  c_q_RH_HFE_)) - ( 0.28263 *  s_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.248 *  s_q_RH_HAA_)) *  c_q_RH_WHEEL_));
+    (*this)(3,1) = ((((((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  s_q_RH_KFE_) + (((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  c_q_RH_HAA_)) *  s_q_RH_WHEEL_) + ((((((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.28263 *  c_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.2745 *  c_q_RH_HAA_)) *  c_q_RH_WHEEL_));
+    (*this)(3,2) = ((((((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  s_q_RH_KFE_) + (((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  s_q_RH_HAA_)) *  s_q_RH_WHEEL_) + ((((((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + ((( 0.18979 *  c_q_RH_HAA_) +  0.104) *  c_q_RH_HFE_)) - ( 0.28263 *  s_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.2745 *  s_q_RH_HAA_)) *  c_q_RH_WHEEL_));
     (*this)(3,3) = ((((- c_q_RH_HFE_ *  s_q_RH_KFE_) - ( s_q_RH_HFE_ *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((( 1.0 *  c_q_RH_HFE_) *  c_q_RH_KFE_) - ( s_q_RH_HFE_ *  s_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(3,4) = (((((( 1.0 *  s_q_RH_HAA_) *  c_q_RH_HFE_) *  c_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((((( 1.0 *  s_q_RH_HAA_) *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(3,5) = (((((( 1.0 *  c_q_RH_HAA_) *  s_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((((- c_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(4,0) = (((((((- 0.104 *  c_q_RH_HAA_) -  0.18979) *  c_q_RH_HFE_) *  s_q_RH_KFE_) + ((((- 0.104 *  c_q_RH_HAA_) -  0.18979) *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((((((- 0.104 *  c_q_RH_HAA_) -  0.18979) *  s_q_RH_HFE_) *  s_q_RH_KFE_) + (((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  c_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
-    (*this)(4,1) = (((((((( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  c_q_RH_KFE_)) + ( 0.248 *  c_q_RH_HAA_)) *  s_q_RH_WHEEL_) + (((((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  s_q_RH_KFE_) + (((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  c_q_RH_HAA_)) *  c_q_RH_WHEEL_));
-    (*this)(4,2) = ((((((((( 0.18979 *  c_q_RH_HAA_) +  0.104) *  s_q_RH_HFE_) + (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  c_q_RH_KFE_)) + ( 0.248 *  s_q_RH_HAA_)) *  s_q_RH_WHEEL_) + (((((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  s_q_RH_KFE_) + (((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  s_q_RH_HAA_)) *  c_q_RH_WHEEL_));
+    (*this)(4,1) = (((((((( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  c_q_RH_KFE_)) + ( 0.2745 *  c_q_RH_HAA_)) *  s_q_RH_WHEEL_) + (((((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  s_q_RH_KFE_) + (((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  c_q_RH_HAA_)) *  c_q_RH_WHEEL_));
+    (*this)(4,2) = ((((((((( 0.18979 *  c_q_RH_HAA_) +  0.104) *  s_q_RH_HFE_) + (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  c_q_RH_KFE_)) + ( 0.2745 *  s_q_RH_HAA_)) *  s_q_RH_WHEEL_) + (((((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  s_q_RH_KFE_) + (((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  s_q_RH_HAA_)) *  c_q_RH_WHEEL_));
     (*this)(4,3) = ((((( 1.0 *  s_q_RH_HFE_) *  s_q_RH_KFE_) - ( c_q_RH_HFE_ *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((- c_q_RH_HFE_ *  s_q_RH_KFE_) - ( s_q_RH_HFE_ *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(4,4) = (((((- s_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((((( 1.0 *  s_q_RH_HAA_) *  c_q_RH_HFE_) *  c_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(4,5) = (((((( 1.0 *  c_q_RH_HAA_) *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (( c_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((((( 1.0 *  c_q_RH_HAA_) *  s_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
-    (*this)(5,0) = ((((((- 0.248 *  s_q_RH_HFE_) - ( 0.08748 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((( 0.248 *  c_q_RH_HFE_) - ( 0.08748 *  s_q_RH_HFE_)) *  c_q_RH_KFE_)) + ( 0.28263 *  c_q_RH_HFE_)) - ( 0.104 *  s_q_RH_HAA_));
-    (*this)(5,1) = ((((((( 0.248 *  s_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.08748 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.248 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.08748 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.28263 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) + ( 0.36 *  s_q_RH_HAA_));
-    (*this)(5,2) = ((((((( 0.08748 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.248 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((- 0.248 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.08748 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - (( 0.28263 *  c_q_RH_HAA_) *  s_q_RH_HFE_)) - ( 0.36 *  c_q_RH_HAA_));
+    (*this)(5,0) = ((((((- 0.2745 *  s_q_RH_HFE_) - ( 0.08748 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((( 0.2745 *  c_q_RH_HFE_) - ( 0.08748 *  s_q_RH_HFE_)) *  c_q_RH_KFE_)) + ( 0.28263 *  c_q_RH_HFE_)) - ( 0.104 *  s_q_RH_HAA_));
+    (*this)(5,1) = ((((((( 0.2745 *  s_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.08748 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.2745 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.08748 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.28263 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) + ( 0.36 *  s_q_RH_HAA_));
+    (*this)(5,2) = ((((((( 0.08748 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.2745 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((- 0.2745 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.08748 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - (( 0.28263 *  c_q_RH_HAA_) *  s_q_RH_HFE_)) - ( 0.36 *  c_q_RH_HAA_));
     (*this)(5,4) =  c_q_RH_HAA_;
     (*this)(5,5) =  s_q_RH_HAA_;
     return *this;
@@ -886,18 +886,18 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_base_X_fr_LF_W
     (*this)(2,2) =  s_q_LF_HAA_;
     (*this)(3,0) = (((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  c_q_LF_HFE_) *  s_q_LF_KFE_) + ((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  s_q_LF_HFE_) *  c_q_LF_KFE_));
     (*this)(3,1) = ((((( 0.104 *  c_q_LF_HAA_) +  0.18979) *  s_q_LF_HFE_) *  s_q_LF_KFE_) + ((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  c_q_LF_HFE_) *  c_q_LF_KFE_));
-    (*this)(3,2) = (((((( 0.08748 *  c_q_LF_HFE_) - ( 0.248 *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((( 0.08748 *  s_q_LF_HFE_) + ( 0.248 *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.28263 *  c_q_LF_HFE_)) + ( 0.104 *  s_q_LF_HAA_));
+    (*this)(3,2) = (((((( 0.08748 *  c_q_LF_HFE_) - ( 0.2745 *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((( 0.08748 *  s_q_LF_HFE_) + ( 0.2745 *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.28263 *  c_q_LF_HFE_)) + ( 0.104 *  s_q_LF_HAA_));
     (*this)(3,3) = (( c_q_LF_HFE_ *  c_q_LF_KFE_) - ( s_q_LF_HFE_ *  s_q_LF_KFE_));
     (*this)(3,4) = ((- c_q_LF_HFE_ *  s_q_LF_KFE_) - ( s_q_LF_HFE_ *  c_q_LF_KFE_));
-    (*this)(4,0) = (((((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) - ( 0.28263 *  c_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.248 *  c_q_LF_HAA_));
+    (*this)(4,0) = (((((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) - ( 0.28263 *  c_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.2745 *  c_q_LF_HAA_));
     (*this)(4,1) = (((((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  s_q_LF_KFE_) + (((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  c_q_LF_HAA_));
-    (*this)(4,2) = ((((((( 0.08748 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.248 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.248 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.08748 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.28263 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) - ( 0.36 *  s_q_LF_HAA_));
+    (*this)(4,2) = ((((((( 0.08748 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.2745 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.2745 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.08748 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.28263 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) - ( 0.36 *  s_q_LF_HAA_));
     (*this)(4,3) = ((( s_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_));
     (*this)(4,4) = ((( s_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_));
     (*this)(4,5) =  c_q_LF_HAA_;
-    (*this)(5,0) = ((((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (((- 0.18979 *  c_q_LF_HAA_) -  0.104) *  c_q_LF_HFE_)) - ( 0.28263 *  s_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.248 *  s_q_LF_HAA_));
+    (*this)(5,0) = ((((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (((- 0.18979 *  c_q_LF_HAA_) -  0.104) *  c_q_LF_HFE_)) - ( 0.28263 *  s_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.2745 *  s_q_LF_HAA_));
     (*this)(5,1) = (((((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  s_q_LF_KFE_) + ((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  s_q_LF_HAA_));
-    (*this)(5,2) = (((((((- 0.08748 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.248 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.08748 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.248 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) - (( 0.28263 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) + ( 0.36 *  c_q_LF_HAA_));
+    (*this)(5,2) = (((((((- 0.08748 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.2745 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.08748 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.2745 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) - (( 0.28263 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) + ( 0.36 *  c_q_LF_HAA_));
     (*this)(5,3) = (((- c_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_));
     (*this)(5,4) = ((( c_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_));
     (*this)(5,5) =  s_q_LF_HAA_;
@@ -1092,18 +1092,18 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_base_X_fr_LH_W
     (*this)(2,2) =  s_q_LH_HAA_;
     (*this)(3,0) = (((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  c_q_LH_HFE_) *  s_q_LH_KFE_) + ((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  s_q_LH_HFE_) *  c_q_LH_KFE_));
     (*this)(3,1) = ((((( 0.104 *  c_q_LH_HAA_) +  0.18979) *  s_q_LH_HFE_) *  s_q_LH_KFE_) + ((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  c_q_LH_HFE_) *  c_q_LH_KFE_));
-    (*this)(3,2) = ((((((- 0.248 *  s_q_LH_HFE_) - ( 0.08748 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((( 0.248 *  c_q_LH_HFE_) - ( 0.08748 *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) + ( 0.28263 *  c_q_LH_HFE_)) + ( 0.104 *  s_q_LH_HAA_));
+    (*this)(3,2) = ((((((- 0.2745 *  s_q_LH_HFE_) - ( 0.08748 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((( 0.2745 *  c_q_LH_HFE_) - ( 0.08748 *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) + ( 0.28263 *  c_q_LH_HFE_)) + ( 0.104 *  s_q_LH_HAA_));
     (*this)(3,3) = (( c_q_LH_HFE_ *  c_q_LH_KFE_) - ( s_q_LH_HFE_ *  s_q_LH_KFE_));
     (*this)(3,4) = ((- c_q_LH_HFE_ *  s_q_LH_KFE_) - ( s_q_LH_HFE_ *  c_q_LH_KFE_));
-    (*this)(4,0) = ((((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) - ( 0.28263 *  c_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.248 *  c_q_LH_HAA_));
+    (*this)(4,0) = ((((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) - ( 0.28263 *  c_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.2745 *  c_q_LH_HAA_));
     (*this)(4,1) = ((((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  c_q_LH_HAA_));
-    (*this)(4,2) = ((((((( 0.248 *  s_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.08748 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.248 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.08748 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.28263 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) + ( 0.36 *  s_q_LH_HAA_));
+    (*this)(4,2) = ((((((( 0.2745 *  s_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.08748 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.2745 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.08748 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.28263 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) + ( 0.36 *  s_q_LH_HAA_));
     (*this)(4,3) = ((( s_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_));
     (*this)(4,4) = ((( s_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_));
     (*this)(4,5) =  c_q_LH_HAA_;
-    (*this)(5,0) = ((((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (((- 0.18979 *  c_q_LH_HAA_) -  0.104) *  c_q_LH_HFE_)) - ( 0.28263 *  s_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.248 *  s_q_LH_HAA_));
+    (*this)(5,0) = ((((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (((- 0.18979 *  c_q_LH_HAA_) -  0.104) *  c_q_LH_HFE_)) - ( 0.28263 *  s_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.2745 *  s_q_LH_HAA_));
     (*this)(5,1) = ((((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  s_q_LH_HAA_));
-    (*this)(5,2) = ((((((( 0.08748 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.248 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((- 0.248 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.08748 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - (( 0.28263 *  c_q_LH_HAA_) *  s_q_LH_HFE_)) - ( 0.36 *  c_q_LH_HAA_));
+    (*this)(5,2) = ((((((( 0.08748 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.2745 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((- 0.2745 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.08748 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - (( 0.28263 *  c_q_LH_HAA_) *  s_q_LH_HFE_)) - ( 0.36 *  c_q_LH_HAA_));
     (*this)(5,3) = (((- c_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_));
     (*this)(5,4) = ((( c_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_));
     (*this)(5,5) =  s_q_LH_HAA_;
@@ -1298,18 +1298,18 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_base_X_fr_RF_W
     (*this)(2,2) =  s_q_RF_HAA_;
     (*this)(3,0) = ((((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  s_q_RF_HFE_) *  c_q_RF_KFE_));
     (*this)(3,1) = (((((- 0.104 *  c_q_RF_HAA_) -  0.18979) *  s_q_RF_HFE_) *  s_q_RF_KFE_) + (((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  c_q_RF_HFE_) *  c_q_RF_KFE_));
-    (*this)(3,2) = (((((( 0.08748 *  c_q_RF_HFE_) - ( 0.248 *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + ((( 0.08748 *  s_q_RF_HFE_) + ( 0.248 *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.28263 *  c_q_RF_HFE_)) - ( 0.104 *  s_q_RF_HAA_));
+    (*this)(3,2) = (((((( 0.08748 *  c_q_RF_HFE_) - ( 0.2745 *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + ((( 0.08748 *  s_q_RF_HFE_) + ( 0.2745 *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.28263 *  c_q_RF_HFE_)) - ( 0.104 *  s_q_RF_HAA_));
     (*this)(3,3) = (( c_q_RF_HFE_ *  c_q_RF_KFE_) - ( s_q_RF_HFE_ *  s_q_RF_KFE_));
     (*this)(3,4) = ((- c_q_RF_HFE_ *  s_q_RF_KFE_) - ( s_q_RF_HFE_ *  c_q_RF_KFE_));
-    (*this)(4,0) = (((((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.28263 *  c_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.248 *  c_q_RF_HAA_));
+    (*this)(4,0) = (((((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.28263 *  c_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.2745 *  c_q_RF_HAA_));
     (*this)(4,1) = (((((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  s_q_RF_KFE_) + (((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  c_q_RF_HAA_));
-    (*this)(4,2) = ((((((( 0.08748 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.248 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.248 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.08748 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.28263 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) - ( 0.36 *  s_q_RF_HAA_));
+    (*this)(4,2) = ((((((( 0.08748 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.2745 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.2745 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.08748 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.28263 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) - ( 0.36 *  s_q_RF_HAA_));
     (*this)(4,3) = ((( s_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_));
     (*this)(4,4) = ((( s_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_));
     (*this)(4,5) =  c_q_RF_HAA_;
-    (*this)(5,0) = (((((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + ((( 0.18979 *  c_q_RF_HAA_) +  0.104) *  c_q_RF_HFE_)) - ( 0.28263 *  s_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.248 *  s_q_RF_HAA_));
+    (*this)(5,0) = (((((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + ((( 0.18979 *  c_q_RF_HAA_) +  0.104) *  c_q_RF_HFE_)) - ( 0.28263 *  s_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.2745 *  s_q_RF_HAA_));
     (*this)(5,1) = (((((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  s_q_RF_KFE_) + (((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  s_q_RF_HAA_));
-    (*this)(5,2) = (((((((- 0.08748 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.248 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.08748 *  c_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.248 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) *  c_q_RF_KFE_)) - (( 0.28263 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) + ( 0.36 *  c_q_RF_HAA_));
+    (*this)(5,2) = (((((((- 0.08748 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.2745 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.08748 *  c_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.2745 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) *  c_q_RF_KFE_)) - (( 0.28263 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) + ( 0.36 *  c_q_RF_HAA_));
     (*this)(5,3) = (((- c_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_));
     (*this)(5,4) = ((( c_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_));
     (*this)(5,5) =  s_q_RF_HAA_;
@@ -1504,18 +1504,18 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_base_X_fr_RH_W
     (*this)(2,2) =  s_q_RH_HAA_;
     (*this)(3,0) = ((((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  s_q_RH_HFE_) *  c_q_RH_KFE_));
     (*this)(3,1) = (((((- 0.104 *  c_q_RH_HAA_) -  0.18979) *  s_q_RH_HFE_) *  s_q_RH_KFE_) + (((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  c_q_RH_HFE_) *  c_q_RH_KFE_));
-    (*this)(3,2) = ((((((- 0.248 *  s_q_RH_HFE_) - ( 0.08748 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((( 0.248 *  c_q_RH_HFE_) - ( 0.08748 *  s_q_RH_HFE_)) *  c_q_RH_KFE_)) + ( 0.28263 *  c_q_RH_HFE_)) - ( 0.104 *  s_q_RH_HAA_));
+    (*this)(3,2) = ((((((- 0.2745 *  s_q_RH_HFE_) - ( 0.08748 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((( 0.2745 *  c_q_RH_HFE_) - ( 0.08748 *  s_q_RH_HFE_)) *  c_q_RH_KFE_)) + ( 0.28263 *  c_q_RH_HFE_)) - ( 0.104 *  s_q_RH_HAA_));
     (*this)(3,3) = (( c_q_RH_HFE_ *  c_q_RH_KFE_) - ( s_q_RH_HFE_ *  s_q_RH_KFE_));
     (*this)(3,4) = ((- c_q_RH_HFE_ *  s_q_RH_KFE_) - ( s_q_RH_HFE_ *  c_q_RH_KFE_));
-    (*this)(4,0) = (((((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.28263 *  c_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.248 *  c_q_RH_HAA_));
+    (*this)(4,0) = (((((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.28263 *  c_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.2745 *  c_q_RH_HAA_));
     (*this)(4,1) = ((((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  s_q_RH_KFE_) + (((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  c_q_RH_HAA_));
-    (*this)(4,2) = ((((((( 0.248 *  s_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.08748 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.248 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.08748 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.28263 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) + ( 0.36 *  s_q_RH_HAA_));
+    (*this)(4,2) = ((((((( 0.2745 *  s_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.08748 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.2745 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.08748 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.28263 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) + ( 0.36 *  s_q_RH_HAA_));
     (*this)(4,3) = ((( s_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_));
     (*this)(4,4) = ((( s_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_));
     (*this)(4,5) =  c_q_RH_HAA_;
-    (*this)(5,0) = (((((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + ((( 0.18979 *  c_q_RH_HAA_) +  0.104) *  c_q_RH_HFE_)) - ( 0.28263 *  s_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.248 *  s_q_RH_HAA_));
+    (*this)(5,0) = (((((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + ((( 0.18979 *  c_q_RH_HAA_) +  0.104) *  c_q_RH_HFE_)) - ( 0.28263 *  s_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.2745 *  s_q_RH_HAA_));
     (*this)(5,1) = ((((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  s_q_RH_KFE_) + (((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  s_q_RH_HAA_));
-    (*this)(5,2) = ((((((( 0.08748 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.248 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((- 0.248 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.08748 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - (( 0.28263 *  c_q_RH_HAA_) *  s_q_RH_HFE_)) - ( 0.36 *  c_q_RH_HAA_));
+    (*this)(5,2) = ((((((( 0.08748 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.2745 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((- 0.2745 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.08748 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - (( 0.28263 *  c_q_RH_HAA_) *  s_q_RH_HFE_)) - ( 0.36 *  c_q_RH_HAA_));
     (*this)(5,3) = (((- c_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_));
     (*this)(5,4) = ((( c_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_));
     (*this)(5,5) =  s_q_RH_HAA_;
@@ -1722,7 +1722,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_HIP_X_fr_LF
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_THIGH::Type_fr_LF_SHANK_X_fr_LF_THIGH()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_THIGH::Type_fr_LF_shank_fixed_X_fr_LF_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -1748,7 +1748,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_THIGH::Type_
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_THIGH& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_THIGH& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_THIGH::update(const JState& q) {
     Scalar s_q_LF_KFE_;
     Scalar c_q_LF_KFE_;
     
@@ -1772,7 +1772,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_SHANK::Type_fr_LF_THIGH_X_fr_LF_SHANK()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_shank_fixed::Type_fr_LF_THIGH_X_fr_LF_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -1798,7 +1798,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_SHANK::Type_
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_SHANK& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_shank_fixed& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_shank_fixed::update(const JState& q) {
     Scalar s_q_LF_KFE_;
     Scalar c_q_LF_KFE_;
     
@@ -1822,7 +1822,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -1840,7 +1840,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK::Typ
     (*this)(2,5) = 0;
     (*this)(3,5) = 0;
     (*this)(4,5) = 0;
-    (*this)(5,0) = 0.248;
+    (*this)(5,0) = 0.2745;
     (*this)(5,1) = - 0.08748;
     (*this)(5,2) = 0;
     (*this)(5,3) = 0;
@@ -1848,7 +1848,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK::Typ
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed::update(const JState& q) {
     Scalar s_q_LF_WHEEL_;
     Scalar c_q_LF_WHEEL_;
     
@@ -1861,18 +1861,18 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_f
     (*this)(1,1) =  c_q_LF_WHEEL_;
     (*this)(3,0) = (- 0.0328 *  s_q_LF_WHEEL_);
     (*this)(3,1) = ( 0.0328 *  c_q_LF_WHEEL_);
-    (*this)(3,2) = (( 0.08748 *  s_q_LF_WHEEL_) - ( 0.248 *  c_q_LF_WHEEL_));
+    (*this)(3,2) = (( 0.08748 *  s_q_LF_WHEEL_) - ( 0.2745 *  c_q_LF_WHEEL_));
     (*this)(3,3) =  c_q_LF_WHEEL_;
     (*this)(3,4) =  s_q_LF_WHEEL_;
     (*this)(4,0) = (- 0.0328 *  c_q_LF_WHEEL_);
     (*this)(4,1) = (- 0.0328 *  s_q_LF_WHEEL_);
-    (*this)(4,2) = (( 0.248 *  s_q_LF_WHEEL_) + ( 0.08748 *  c_q_LF_WHEEL_));
+    (*this)(4,2) = (( 0.2745 *  s_q_LF_WHEEL_) + ( 0.08748 *  c_q_LF_WHEEL_));
     (*this)(4,3) = - s_q_LF_WHEEL_;
     (*this)(4,4) =  c_q_LF_WHEEL_;
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -1888,7 +1888,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L::Typ
     (*this)(2,3) = 0;
     (*this)(2,4) = 0;
     (*this)(2,5) = 0;
-    (*this)(3,2) = 0.248;
+    (*this)(3,2) = 0.2745;
     (*this)(3,5) = 0;
     (*this)(4,2) = - 0.08748;
     (*this)(4,5) = 0;
@@ -1898,7 +1898,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L::Typ
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L::update(const JState& q) {
     Scalar s_q_LF_WHEEL_;
     Scalar c_q_LF_WHEEL_;
     
@@ -1917,8 +1917,8 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_
     (*this)(4,1) = (- 0.0328 *  s_q_LF_WHEEL_);
     (*this)(4,3) =  s_q_LF_WHEEL_;
     (*this)(4,4) =  c_q_LF_WHEEL_;
-    (*this)(5,0) = (( 0.08748 *  s_q_LF_WHEEL_) - ( 0.248 *  c_q_LF_WHEEL_));
-    (*this)(5,1) = (( 0.248 *  s_q_LF_WHEEL_) + ( 0.08748 *  c_q_LF_WHEEL_));
+    (*this)(5,0) = (( 0.08748 *  s_q_LF_WHEEL_) - ( 0.2745 *  c_q_LF_WHEEL_));
+    (*this)(5,1) = (( 0.2745 *  s_q_LF_WHEEL_) + ( 0.08748 *  c_q_LF_WHEEL_));
     return *this;
 }
 template <typename TRAIT>
@@ -2122,7 +2122,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_HIP_X_fr_RF
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_THIGH::Type_fr_RF_SHANK_X_fr_RF_THIGH()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_THIGH::Type_fr_RF_shank_fixed_X_fr_RF_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -2148,7 +2148,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_THIGH::Type_
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_THIGH& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_THIGH& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_THIGH::update(const JState& q) {
     Scalar s_q_RF_KFE_;
     Scalar c_q_RF_KFE_;
     
@@ -2172,7 +2172,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_SHANK::Type_fr_RF_THIGH_X_fr_RF_SHANK()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_shank_fixed::Type_fr_RF_THIGH_X_fr_RF_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -2198,7 +2198,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_SHANK::Type_
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_SHANK& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_shank_fixed& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_shank_fixed::update(const JState& q) {
     Scalar s_q_RF_KFE_;
     Scalar c_q_RF_KFE_;
     
@@ -2222,7 +2222,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -2240,7 +2240,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK::Typ
     (*this)(2,5) = 0;
     (*this)(3,5) = 0;
     (*this)(4,5) = 0;
-    (*this)(5,0) = 0.248;
+    (*this)(5,0) = 0.2745;
     (*this)(5,1) = - 0.08748;
     (*this)(5,2) = 0;
     (*this)(5,3) = 0;
@@ -2248,7 +2248,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK::Typ
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed::update(const JState& q) {
     Scalar s_q_RF_WHEEL_;
     Scalar c_q_RF_WHEEL_;
     
@@ -2261,18 +2261,18 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_f
     (*this)(1,1) =  c_q_RF_WHEEL_;
     (*this)(3,0) = ( 0.0328 *  s_q_RF_WHEEL_);
     (*this)(3,1) = (- 0.0328 *  c_q_RF_WHEEL_);
-    (*this)(3,2) = (( 0.08748 *  s_q_RF_WHEEL_) - ( 0.248 *  c_q_RF_WHEEL_));
+    (*this)(3,2) = (( 0.08748 *  s_q_RF_WHEEL_) - ( 0.2745 *  c_q_RF_WHEEL_));
     (*this)(3,3) =  c_q_RF_WHEEL_;
     (*this)(3,4) =  s_q_RF_WHEEL_;
     (*this)(4,0) = ( 0.0328 *  c_q_RF_WHEEL_);
     (*this)(4,1) = ( 0.0328 *  s_q_RF_WHEEL_);
-    (*this)(4,2) = (( 0.248 *  s_q_RF_WHEEL_) + ( 0.08748 *  c_q_RF_WHEEL_));
+    (*this)(4,2) = (( 0.2745 *  s_q_RF_WHEEL_) + ( 0.08748 *  c_q_RF_WHEEL_));
     (*this)(4,3) = - s_q_RF_WHEEL_;
     (*this)(4,4) =  c_q_RF_WHEEL_;
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -2288,7 +2288,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L::Typ
     (*this)(2,3) = 0;
     (*this)(2,4) = 0;
     (*this)(2,5) = 0;
-    (*this)(3,2) = 0.248;
+    (*this)(3,2) = 0.2745;
     (*this)(3,5) = 0;
     (*this)(4,2) = - 0.08748;
     (*this)(4,5) = 0;
@@ -2298,7 +2298,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L::Typ
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L::update(const JState& q) {
     Scalar s_q_RF_WHEEL_;
     Scalar c_q_RF_WHEEL_;
     
@@ -2317,8 +2317,8 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_
     (*this)(4,1) = ( 0.0328 *  s_q_RF_WHEEL_);
     (*this)(4,3) =  s_q_RF_WHEEL_;
     (*this)(4,4) =  c_q_RF_WHEEL_;
-    (*this)(5,0) = (( 0.08748 *  s_q_RF_WHEEL_) - ( 0.248 *  c_q_RF_WHEEL_));
-    (*this)(5,1) = (( 0.248 *  s_q_RF_WHEEL_) + ( 0.08748 *  c_q_RF_WHEEL_));
+    (*this)(5,0) = (( 0.08748 *  s_q_RF_WHEEL_) - ( 0.2745 *  c_q_RF_WHEEL_));
+    (*this)(5,1) = (( 0.2745 *  s_q_RF_WHEEL_) + ( 0.08748 *  c_q_RF_WHEEL_));
     return *this;
 }
 template <typename TRAIT>
@@ -2522,7 +2522,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_HIP_X_fr_LH
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_THIGH::Type_fr_LH_SHANK_X_fr_LH_THIGH()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_THIGH::Type_fr_LH_shank_fixed_X_fr_LH_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -2548,7 +2548,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_THIGH::Type_
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_THIGH& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_THIGH& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_THIGH::update(const JState& q) {
     Scalar s_q_LH_KFE_;
     Scalar c_q_LH_KFE_;
     
@@ -2572,7 +2572,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_SHANK::Type_fr_LH_THIGH_X_fr_LH_SHANK()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_shank_fixed::Type_fr_LH_THIGH_X_fr_LH_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -2598,7 +2598,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_SHANK::Type_
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_SHANK& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_shank_fixed& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_shank_fixed::update(const JState& q) {
     Scalar s_q_LH_KFE_;
     Scalar c_q_LH_KFE_;
     
@@ -2622,7 +2622,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -2640,7 +2640,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK::Typ
     (*this)(2,5) = 0;
     (*this)(3,5) = 0;
     (*this)(4,5) = 0;
-    (*this)(5,0) = 0.248;
+    (*this)(5,0) = 0.2745;
     (*this)(5,1) = 0.08748;
     (*this)(5,2) = 0;
     (*this)(5,3) = 0;
@@ -2648,7 +2648,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK::Typ
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed::update(const JState& q) {
     Scalar s_q_LH_WHEEL_;
     Scalar c_q_LH_WHEEL_;
     
@@ -2661,18 +2661,18 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_f
     (*this)(1,1) =  c_q_LH_WHEEL_;
     (*this)(3,0) = (- 0.0328 *  s_q_LH_WHEEL_);
     (*this)(3,1) = ( 0.0328 *  c_q_LH_WHEEL_);
-    (*this)(3,2) = ((- 0.08748 *  s_q_LH_WHEEL_) - ( 0.248 *  c_q_LH_WHEEL_));
+    (*this)(3,2) = ((- 0.08748 *  s_q_LH_WHEEL_) - ( 0.2745 *  c_q_LH_WHEEL_));
     (*this)(3,3) =  c_q_LH_WHEEL_;
     (*this)(3,4) =  s_q_LH_WHEEL_;
     (*this)(4,0) = (- 0.0328 *  c_q_LH_WHEEL_);
     (*this)(4,1) = (- 0.0328 *  s_q_LH_WHEEL_);
-    (*this)(4,2) = (( 0.248 *  s_q_LH_WHEEL_) - ( 0.08748 *  c_q_LH_WHEEL_));
+    (*this)(4,2) = (( 0.2745 *  s_q_LH_WHEEL_) - ( 0.08748 *  c_q_LH_WHEEL_));
     (*this)(4,3) = - s_q_LH_WHEEL_;
     (*this)(4,4) =  c_q_LH_WHEEL_;
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -2688,7 +2688,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L::Typ
     (*this)(2,3) = 0;
     (*this)(2,4) = 0;
     (*this)(2,5) = 0;
-    (*this)(3,2) = 0.248;
+    (*this)(3,2) = 0.2745;
     (*this)(3,5) = 0;
     (*this)(4,2) = 0.08748;
     (*this)(4,5) = 0;
@@ -2698,7 +2698,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L::Typ
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L::update(const JState& q) {
     Scalar s_q_LH_WHEEL_;
     Scalar c_q_LH_WHEEL_;
     
@@ -2717,8 +2717,8 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_
     (*this)(4,1) = (- 0.0328 *  s_q_LH_WHEEL_);
     (*this)(4,3) =  s_q_LH_WHEEL_;
     (*this)(4,4) =  c_q_LH_WHEEL_;
-    (*this)(5,0) = ((- 0.08748 *  s_q_LH_WHEEL_) - ( 0.248 *  c_q_LH_WHEEL_));
-    (*this)(5,1) = (( 0.248 *  s_q_LH_WHEEL_) - ( 0.08748 *  c_q_LH_WHEEL_));
+    (*this)(5,0) = ((- 0.08748 *  s_q_LH_WHEEL_) - ( 0.2745 *  c_q_LH_WHEEL_));
+    (*this)(5,1) = (( 0.2745 *  s_q_LH_WHEEL_) - ( 0.08748 *  c_q_LH_WHEEL_));
     return *this;
 }
 template <typename TRAIT>
@@ -2922,7 +2922,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_HIP_X_fr_RH
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_THIGH::Type_fr_RH_SHANK_X_fr_RH_THIGH()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_THIGH::Type_fr_RH_shank_fixed_X_fr_RH_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -2948,7 +2948,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_THIGH::Type_
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_THIGH& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_THIGH& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_THIGH::update(const JState& q) {
     Scalar s_q_RH_KFE_;
     Scalar c_q_RH_KFE_;
     
@@ -2972,7 +2972,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_SHANK::Type_fr_RH_THIGH_X_fr_RH_SHANK()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_shank_fixed::Type_fr_RH_THIGH_X_fr_RH_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -2998,7 +2998,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_SHANK::Type_
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_SHANK& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_shank_fixed& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_shank_fixed::update(const JState& q) {
     Scalar s_q_RH_KFE_;
     Scalar c_q_RH_KFE_;
     
@@ -3022,7 +3022,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -3040,7 +3040,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK::Typ
     (*this)(2,5) = 0;
     (*this)(3,5) = 0;
     (*this)(4,5) = 0;
-    (*this)(5,0) = 0.248;
+    (*this)(5,0) = 0.2745;
     (*this)(5,1) = 0.08748;
     (*this)(5,2) = 0;
     (*this)(5,3) = 0;
@@ -3048,7 +3048,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK::Typ
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed::update(const JState& q) {
     Scalar s_q_RH_WHEEL_;
     Scalar c_q_RH_WHEEL_;
     
@@ -3061,18 +3061,18 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_f
     (*this)(1,1) =  c_q_RH_WHEEL_;
     (*this)(3,0) = ( 0.0328 *  s_q_RH_WHEEL_);
     (*this)(3,1) = (- 0.0328 *  c_q_RH_WHEEL_);
-    (*this)(3,2) = ((- 0.08748 *  s_q_RH_WHEEL_) - ( 0.248 *  c_q_RH_WHEEL_));
+    (*this)(3,2) = ((- 0.08748 *  s_q_RH_WHEEL_) - ( 0.2745 *  c_q_RH_WHEEL_));
     (*this)(3,3) =  c_q_RH_WHEEL_;
     (*this)(3,4) =  s_q_RH_WHEEL_;
     (*this)(4,0) = ( 0.0328 *  c_q_RH_WHEEL_);
     (*this)(4,1) = ( 0.0328 *  s_q_RH_WHEEL_);
-    (*this)(4,2) = (( 0.248 *  s_q_RH_WHEEL_) - ( 0.08748 *  c_q_RH_WHEEL_));
+    (*this)(4,2) = (( 0.2745 *  s_q_RH_WHEEL_) - ( 0.08748 *  c_q_RH_WHEEL_));
     (*this)(4,3) = - s_q_RH_WHEEL_;
     (*this)(4,4) =  c_q_RH_WHEEL_;
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -3088,7 +3088,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L::Typ
     (*this)(2,3) = 0;
     (*this)(2,4) = 0;
     (*this)(2,5) = 0;
-    (*this)(3,2) = 0.248;
+    (*this)(3,2) = 0.2745;
     (*this)(3,5) = 0;
     (*this)(4,2) = 0.08748;
     (*this)(4,5) = 0;
@@ -3098,7 +3098,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L::Typ
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L::update(const JState& q) {
     Scalar s_q_RH_WHEEL_;
     Scalar c_q_RH_WHEEL_;
     
@@ -3117,8 +3117,8 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_
     (*this)(4,1) = ( 0.0328 *  s_q_RH_WHEEL_);
     (*this)(4,3) =  s_q_RH_WHEEL_;
     (*this)(4,4) =  c_q_RH_WHEEL_;
-    (*this)(5,0) = ((- 0.08748 *  s_q_RH_WHEEL_) - ( 0.248 *  c_q_RH_WHEEL_));
-    (*this)(5,1) = (( 0.248 *  s_q_RH_WHEEL_) - ( 0.08748 *  c_q_RH_WHEEL_));
+    (*this)(5,0) = ((- 0.08748 *  s_q_RH_WHEEL_) - ( 0.2745 *  c_q_RH_WHEEL_));
+    (*this)(5,1) = (( 0.2745 *  s_q_RH_WHEEL_) - ( 0.08748 *  c_q_RH_WHEEL_));
     return *this;
 }
 
@@ -3161,19 +3161,19 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_base_X_fr_LF_WH
     (*this)(0,1) = (((( s_q_LF_HFE_ *  s_q_LF_KFE_) - ( c_q_LF_HFE_ *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((- c_q_LF_HFE_ *  s_q_LF_KFE_) - ( s_q_LF_HFE_ *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(0,3) = ((((((( 0.104 *  c_q_LF_HAA_) +  0.18979) *  s_q_LF_HFE_) *  s_q_LF_KFE_) + ((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  c_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  c_q_LF_HFE_) *  s_q_LF_KFE_) + ((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(0,4) = ((((((( 0.104 *  c_q_LF_HAA_) +  0.18979) *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (((( 0.104 *  c_q_LF_HAA_) +  0.18979) *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((((( 0.104 *  c_q_LF_HAA_) +  0.18979) *  s_q_LF_HFE_) *  s_q_LF_KFE_) + ((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  c_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
-    (*this)(0,5) = (((((( 0.08748 *  c_q_LF_HFE_) - ( 0.248 *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((( 0.08748 *  s_q_LF_HFE_) + ( 0.248 *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.28263 *  c_q_LF_HFE_)) + ( 0.104 *  s_q_LF_HAA_));
+    (*this)(0,5) = (((((( 0.08748 *  c_q_LF_HFE_) - ( 0.2745 *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((( 0.08748 *  s_q_LF_HFE_) + ( 0.2745 *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.28263 *  c_q_LF_HFE_)) + ( 0.104 *  s_q_LF_HAA_));
     (*this)(1,0) = ((((( s_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((( s_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(1,1) = (((((- s_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((( s_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(1,2) =  c_q_LF_HAA_;
-    (*this)(1,3) = (((((((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  s_q_LF_KFE_) + (((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  c_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) - ( 0.28263 *  c_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.248 *  c_q_LF_HAA_)) *  c_q_LF_WHEEL_));
-    (*this)(1,4) = (((((((( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  c_q_LF_KFE_)) + ( 0.248 *  c_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  s_q_LF_KFE_) + (((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  c_q_LF_HAA_)) *  c_q_LF_WHEEL_));
-    (*this)(1,5) = ((((((( 0.08748 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.248 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.248 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.08748 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.28263 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) - ( 0.36 *  s_q_LF_HAA_));
+    (*this)(1,3) = (((((((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  s_q_LF_KFE_) + (((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  c_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) - ( 0.28263 *  c_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.2745 *  c_q_LF_HAA_)) *  c_q_LF_WHEEL_));
+    (*this)(1,4) = (((((((( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  c_q_LF_KFE_)) + ( 0.2745 *  c_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  s_q_LF_KFE_) + (((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  c_q_LF_HAA_)) *  c_q_LF_WHEEL_));
+    (*this)(1,5) = ((((((( 0.08748 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.2745 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.2745 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.08748 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.28263 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) - ( 0.36 *  s_q_LF_HAA_));
     (*this)(2,0) = ((((( c_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((((- c_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(2,1) = ((((( c_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (( c_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((( c_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(2,2) =  s_q_LF_HAA_;
-    (*this)(2,3) = (((((((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  s_q_LF_KFE_) + ((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  s_q_LF_HAA_)) *  s_q_LF_WHEEL_) + (((((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (((- 0.18979 *  c_q_LF_HAA_) -  0.104) *  c_q_LF_HFE_)) - ( 0.28263 *  s_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.248 *  s_q_LF_HAA_)) *  c_q_LF_WHEEL_));
-    (*this)(2,4) = (((((((((- 0.18979 *  c_q_LF_HAA_) -  0.104) *  s_q_LF_HFE_) - (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  c_q_LF_KFE_)) + ( 0.248 *  s_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  s_q_LF_KFE_) + ((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  s_q_LF_HAA_)) *  c_q_LF_WHEEL_));
-    (*this)(2,5) = (((((((- 0.08748 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.248 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.08748 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.248 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) - (( 0.28263 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) + ( 0.36 *  c_q_LF_HAA_));
+    (*this)(2,3) = (((((((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  s_q_LF_KFE_) + ((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  s_q_LF_HAA_)) *  s_q_LF_WHEEL_) + (((((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (((- 0.18979 *  c_q_LF_HAA_) -  0.104) *  c_q_LF_HFE_)) - ( 0.28263 *  s_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.2745 *  s_q_LF_HAA_)) *  c_q_LF_WHEEL_));
+    (*this)(2,4) = (((((((((- 0.18979 *  c_q_LF_HAA_) -  0.104) *  s_q_LF_HFE_) - (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  c_q_LF_KFE_)) + ( 0.2745 *  s_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  s_q_LF_KFE_) + ((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  s_q_LF_HAA_)) *  c_q_LF_WHEEL_));
+    (*this)(2,5) = (((((((- 0.08748 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.2745 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.08748 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.2745 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) - (( 0.28263 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) + ( 0.36 *  c_q_LF_HAA_));
     (*this)(3,3) = ((((- c_q_LF_HFE_ *  s_q_LF_KFE_) - ( s_q_LF_HFE_ *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((( c_q_LF_HFE_ *  c_q_LF_KFE_) - ( s_q_LF_HFE_ *  s_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(3,4) = (((( s_q_LF_HFE_ *  s_q_LF_KFE_) - ( c_q_LF_HFE_ *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((- c_q_LF_HFE_ *  s_q_LF_KFE_) - ( s_q_LF_HFE_ *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(4,3) = ((((( s_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((( s_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
@@ -3223,19 +3223,19 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr
     (*this)(0,1) = (((((( 1.0 *  s_q_LF_HAA_) *  c_q_LF_HFE_) *  c_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((((( 1.0 *  s_q_LF_HAA_) *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(0,2) = (((((( 1.0 *  c_q_LF_HAA_) *  s_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((((- c_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(0,3) = ((((((( 0.104 *  c_q_LF_HAA_) +  0.18979) *  s_q_LF_HFE_) *  s_q_LF_KFE_) + ((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  c_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  c_q_LF_HFE_) *  s_q_LF_KFE_) + ((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
-    (*this)(0,4) = (((((((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  s_q_LF_KFE_) + (((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  c_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) - ( 0.28263 *  c_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.248 *  c_q_LF_HAA_)) *  c_q_LF_WHEEL_));
-    (*this)(0,5) = (((((((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  s_q_LF_KFE_) + ((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  s_q_LF_HAA_)) *  s_q_LF_WHEEL_) + (((((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (((- 0.18979 *  c_q_LF_HAA_) -  0.104) *  c_q_LF_HFE_)) - ( 0.28263 *  s_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.248 *  s_q_LF_HAA_)) *  c_q_LF_WHEEL_));
+    (*this)(0,4) = (((((((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  s_q_LF_KFE_) + (((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  c_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) - ( 0.28263 *  c_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.2745 *  c_q_LF_HAA_)) *  c_q_LF_WHEEL_));
+    (*this)(0,5) = (((((((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  s_q_LF_KFE_) + ((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  s_q_LF_HAA_)) *  s_q_LF_WHEEL_) + (((((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (((- 0.18979 *  c_q_LF_HAA_) -  0.104) *  c_q_LF_HFE_)) - ( 0.28263 *  s_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.2745 *  s_q_LF_HAA_)) *  c_q_LF_WHEEL_));
     (*this)(1,0) = ((((( 1.0 *  s_q_LF_HFE_) *  s_q_LF_KFE_) - ( c_q_LF_HFE_ *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((- c_q_LF_HFE_ *  s_q_LF_KFE_) - ( s_q_LF_HFE_ *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(1,1) = (((((- s_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((((( 1.0 *  s_q_LF_HAA_) *  c_q_LF_HFE_) *  c_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(1,2) = (((((( 1.0 *  c_q_LF_HAA_) *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (( c_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((((( 1.0 *  c_q_LF_HAA_) *  s_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(1,3) = ((((((( 0.104 *  c_q_LF_HAA_) +  0.18979) *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (((( 0.104 *  c_q_LF_HAA_) +  0.18979) *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((((( 0.104 *  c_q_LF_HAA_) +  0.18979) *  s_q_LF_HFE_) *  s_q_LF_KFE_) + ((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  c_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
-    (*this)(1,4) = (((((((( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  c_q_LF_KFE_)) + ( 0.248 *  c_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  s_q_LF_KFE_) + (((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  c_q_LF_HAA_)) *  c_q_LF_WHEEL_));
-    (*this)(1,5) = (((((((((- 0.18979 *  c_q_LF_HAA_) -  0.104) *  s_q_LF_HFE_) - (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  c_q_LF_KFE_)) + ( 0.248 *  s_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  s_q_LF_KFE_) + ((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  s_q_LF_HAA_)) *  c_q_LF_WHEEL_));
+    (*this)(1,4) = (((((((( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  c_q_LF_KFE_)) + ( 0.2745 *  c_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  s_q_LF_KFE_) + (((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  c_q_LF_HAA_)) *  c_q_LF_WHEEL_));
+    (*this)(1,5) = (((((((((- 0.18979 *  c_q_LF_HAA_) -  0.104) *  s_q_LF_HFE_) - (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  c_q_LF_KFE_)) + ( 0.2745 *  s_q_LF_HAA_)) *  s_q_LF_WHEEL_) + ((((((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  s_q_LF_KFE_) + ((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  s_q_LF_HAA_)) *  c_q_LF_WHEEL_));
     (*this)(2,1) =  c_q_LF_HAA_;
     (*this)(2,2) =  s_q_LF_HAA_;
-    (*this)(2,3) = (((((( 0.08748 *  c_q_LF_HFE_) - ( 0.248 *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((( 0.08748 *  s_q_LF_HFE_) + ( 0.248 *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.28263 *  c_q_LF_HFE_)) + ( 0.104 *  s_q_LF_HAA_));
-    (*this)(2,4) = ((((((( 0.08748 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.248 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.248 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.08748 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.28263 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) - ( 0.36 *  s_q_LF_HAA_));
-    (*this)(2,5) = (((((((- 0.08748 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.248 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.08748 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.248 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) - (( 0.28263 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) + ( 0.36 *  c_q_LF_HAA_));
+    (*this)(2,3) = (((((( 0.08748 *  c_q_LF_HFE_) - ( 0.2745 *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((( 0.08748 *  s_q_LF_HFE_) + ( 0.2745 *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.28263 *  c_q_LF_HFE_)) + ( 0.104 *  s_q_LF_HAA_));
+    (*this)(2,4) = ((((((( 0.08748 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.2745 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.2745 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.08748 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.28263 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) - ( 0.36 *  s_q_LF_HAA_));
+    (*this)(2,5) = (((((((- 0.08748 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.2745 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.08748 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.2745 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) - (( 0.28263 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) + ( 0.36 *  c_q_LF_HAA_));
     (*this)(3,3) = ((((- c_q_LF_HFE_ *  s_q_LF_KFE_) - ( s_q_LF_HFE_ *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((( 1.0 *  c_q_LF_HFE_) *  c_q_LF_KFE_) - ( s_q_LF_HFE_ *  s_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(3,4) = (((((( 1.0 *  s_q_LF_HAA_) *  c_q_LF_HFE_) *  c_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((((( 1.0 *  s_q_LF_HAA_) *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(3,5) = (((((( 1.0 *  c_q_LF_HAA_) *  s_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((((- c_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
@@ -3285,19 +3285,19 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_base_X_fr_LH_WH
     (*this)(0,1) = (((( s_q_LH_HFE_ *  s_q_LH_KFE_) - ( c_q_LH_HFE_ *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((- c_q_LH_HFE_ *  s_q_LH_KFE_) - ( s_q_LH_HFE_ *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(0,3) = ((((((( 0.104 *  c_q_LH_HAA_) +  0.18979) *  s_q_LH_HFE_) *  s_q_LH_KFE_) + ((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  c_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  c_q_LH_HFE_) *  s_q_LH_KFE_) + ((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(0,4) = ((((((( 0.104 *  c_q_LH_HAA_) +  0.18979) *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (((( 0.104 *  c_q_LH_HAA_) +  0.18979) *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((((( 0.104 *  c_q_LH_HAA_) +  0.18979) *  s_q_LH_HFE_) *  s_q_LH_KFE_) + ((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  c_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
-    (*this)(0,5) = ((((((- 0.248 *  s_q_LH_HFE_) - ( 0.08748 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((( 0.248 *  c_q_LH_HFE_) - ( 0.08748 *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) + ( 0.28263 *  c_q_LH_HFE_)) + ( 0.104 *  s_q_LH_HAA_));
+    (*this)(0,5) = ((((((- 0.2745 *  s_q_LH_HFE_) - ( 0.08748 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((( 0.2745 *  c_q_LH_HFE_) - ( 0.08748 *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) + ( 0.28263 *  c_q_LH_HFE_)) + ( 0.104 *  s_q_LH_HAA_));
     (*this)(1,0) = ((((( s_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((( s_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(1,1) = (((((- s_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((( s_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(1,2) =  c_q_LH_HAA_;
-    (*this)(1,3) = ((((((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  c_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) - ( 0.28263 *  c_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.248 *  c_q_LH_HAA_)) *  c_q_LH_WHEEL_));
-    (*this)(1,4) = (((((((( 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  c_q_LH_KFE_)) + ( 0.248 *  c_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  c_q_LH_HAA_)) *  c_q_LH_WHEEL_));
-    (*this)(1,5) = ((((((( 0.248 *  s_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.08748 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.248 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.08748 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.28263 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) + ( 0.36 *  s_q_LH_HAA_));
+    (*this)(1,3) = ((((((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  c_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) - ( 0.28263 *  c_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.2745 *  c_q_LH_HAA_)) *  c_q_LH_WHEEL_));
+    (*this)(1,4) = (((((((( 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  c_q_LH_KFE_)) + ( 0.2745 *  c_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  c_q_LH_HAA_)) *  c_q_LH_WHEEL_));
+    (*this)(1,5) = ((((((( 0.2745 *  s_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.08748 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.2745 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.08748 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.28263 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) + ( 0.36 *  s_q_LH_HAA_));
     (*this)(2,0) = ((((( c_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((((- c_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(2,1) = ((((( c_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (( c_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((( c_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(2,2) =  s_q_LH_HAA_;
-    (*this)(2,3) = ((((((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  s_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (((- 0.18979 *  c_q_LH_HAA_) -  0.104) *  c_q_LH_HFE_)) - ( 0.28263 *  s_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.248 *  s_q_LH_HAA_)) *  c_q_LH_WHEEL_));
-    (*this)(2,4) = (((((((((- 0.18979 *  c_q_LH_HAA_) -  0.104) *  s_q_LH_HFE_) + (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  c_q_LH_KFE_)) + ( 0.248 *  s_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  s_q_LH_HAA_)) *  c_q_LH_WHEEL_));
-    (*this)(2,5) = ((((((( 0.08748 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.248 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((- 0.248 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.08748 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - (( 0.28263 *  c_q_LH_HAA_) *  s_q_LH_HFE_)) - ( 0.36 *  c_q_LH_HAA_));
+    (*this)(2,3) = ((((((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  s_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (((- 0.18979 *  c_q_LH_HAA_) -  0.104) *  c_q_LH_HFE_)) - ( 0.28263 *  s_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.2745 *  s_q_LH_HAA_)) *  c_q_LH_WHEEL_));
+    (*this)(2,4) = (((((((((- 0.18979 *  c_q_LH_HAA_) -  0.104) *  s_q_LH_HFE_) + (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  c_q_LH_KFE_)) + ( 0.2745 *  s_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  s_q_LH_HAA_)) *  c_q_LH_WHEEL_));
+    (*this)(2,5) = ((((((( 0.08748 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.2745 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((- 0.2745 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.08748 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - (( 0.28263 *  c_q_LH_HAA_) *  s_q_LH_HFE_)) - ( 0.36 *  c_q_LH_HAA_));
     (*this)(3,3) = ((((- c_q_LH_HFE_ *  s_q_LH_KFE_) - ( s_q_LH_HFE_ *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((( c_q_LH_HFE_ *  c_q_LH_KFE_) - ( s_q_LH_HFE_ *  s_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(3,4) = (((( s_q_LH_HFE_ *  s_q_LH_KFE_) - ( c_q_LH_HFE_ *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((- c_q_LH_HFE_ *  s_q_LH_KFE_) - ( s_q_LH_HFE_ *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(4,3) = ((((( s_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((( s_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
@@ -3347,19 +3347,19 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr
     (*this)(0,1) = (((((( 1.0 *  s_q_LH_HAA_) *  c_q_LH_HFE_) *  c_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((((( 1.0 *  s_q_LH_HAA_) *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(0,2) = (((((( 1.0 *  c_q_LH_HAA_) *  s_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((((- c_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(0,3) = ((((((( 0.104 *  c_q_LH_HAA_) +  0.18979) *  s_q_LH_HFE_) *  s_q_LH_KFE_) + ((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  c_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  c_q_LH_HFE_) *  s_q_LH_KFE_) + ((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
-    (*this)(0,4) = ((((((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  c_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) - ( 0.28263 *  c_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.248 *  c_q_LH_HAA_)) *  c_q_LH_WHEEL_));
-    (*this)(0,5) = ((((((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  s_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (((- 0.18979 *  c_q_LH_HAA_) -  0.104) *  c_q_LH_HFE_)) - ( 0.28263 *  s_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.248 *  s_q_LH_HAA_)) *  c_q_LH_WHEEL_));
+    (*this)(0,4) = ((((((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  c_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) - ( 0.28263 *  c_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.2745 *  c_q_LH_HAA_)) *  c_q_LH_WHEEL_));
+    (*this)(0,5) = ((((((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  s_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (((- 0.18979 *  c_q_LH_HAA_) -  0.104) *  c_q_LH_HFE_)) - ( 0.28263 *  s_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.2745 *  s_q_LH_HAA_)) *  c_q_LH_WHEEL_));
     (*this)(1,0) = ((((( 1.0 *  s_q_LH_HFE_) *  s_q_LH_KFE_) - ( c_q_LH_HFE_ *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((- c_q_LH_HFE_ *  s_q_LH_KFE_) - ( s_q_LH_HFE_ *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(1,1) = (((((- s_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((((( 1.0 *  s_q_LH_HAA_) *  c_q_LH_HFE_) *  c_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(1,2) = (((((( 1.0 *  c_q_LH_HAA_) *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (( c_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((((( 1.0 *  c_q_LH_HAA_) *  s_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(1,3) = ((((((( 0.104 *  c_q_LH_HAA_) +  0.18979) *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (((( 0.104 *  c_q_LH_HAA_) +  0.18979) *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((((( 0.104 *  c_q_LH_HAA_) +  0.18979) *  s_q_LH_HFE_) *  s_q_LH_KFE_) + ((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  c_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
-    (*this)(1,4) = (((((((( 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  c_q_LH_KFE_)) + ( 0.248 *  c_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  c_q_LH_HAA_)) *  c_q_LH_WHEEL_));
-    (*this)(1,5) = (((((((((- 0.18979 *  c_q_LH_HAA_) -  0.104) *  s_q_LH_HFE_) + (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  c_q_LH_KFE_)) + ( 0.248 *  s_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  s_q_LH_HAA_)) *  c_q_LH_WHEEL_));
+    (*this)(1,4) = (((((((( 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  c_q_LH_KFE_)) + ( 0.2745 *  c_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  c_q_LH_HAA_)) *  c_q_LH_WHEEL_));
+    (*this)(1,5) = (((((((((- 0.18979 *  c_q_LH_HAA_) -  0.104) *  s_q_LH_HFE_) + (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  c_q_LH_KFE_)) + ( 0.2745 *  s_q_LH_HAA_)) *  s_q_LH_WHEEL_) + (((((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  s_q_LH_HAA_)) *  c_q_LH_WHEEL_));
     (*this)(2,1) =  c_q_LH_HAA_;
     (*this)(2,2) =  s_q_LH_HAA_;
-    (*this)(2,3) = ((((((- 0.248 *  s_q_LH_HFE_) - ( 0.08748 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((( 0.248 *  c_q_LH_HFE_) - ( 0.08748 *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) + ( 0.28263 *  c_q_LH_HFE_)) + ( 0.104 *  s_q_LH_HAA_));
-    (*this)(2,4) = ((((((( 0.248 *  s_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.08748 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.248 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.08748 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.28263 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) + ( 0.36 *  s_q_LH_HAA_));
-    (*this)(2,5) = ((((((( 0.08748 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.248 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((- 0.248 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.08748 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - (( 0.28263 *  c_q_LH_HAA_) *  s_q_LH_HFE_)) - ( 0.36 *  c_q_LH_HAA_));
+    (*this)(2,3) = ((((((- 0.2745 *  s_q_LH_HFE_) - ( 0.08748 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((( 0.2745 *  c_q_LH_HFE_) - ( 0.08748 *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) + ( 0.28263 *  c_q_LH_HFE_)) + ( 0.104 *  s_q_LH_HAA_));
+    (*this)(2,4) = ((((((( 0.2745 *  s_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.08748 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.2745 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.08748 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.28263 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) + ( 0.36 *  s_q_LH_HAA_));
+    (*this)(2,5) = ((((((( 0.08748 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.2745 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((- 0.2745 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.08748 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - (( 0.28263 *  c_q_LH_HAA_) *  s_q_LH_HFE_)) - ( 0.36 *  c_q_LH_HAA_));
     (*this)(3,3) = ((((- c_q_LH_HFE_ *  s_q_LH_KFE_) - ( s_q_LH_HFE_ *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((( 1.0 *  c_q_LH_HFE_) *  c_q_LH_KFE_) - ( s_q_LH_HFE_ *  s_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(3,4) = (((((( 1.0 *  s_q_LH_HAA_) *  c_q_LH_HFE_) *  c_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((((( 1.0 *  s_q_LH_HAA_) *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(3,5) = (((((( 1.0 *  c_q_LH_HAA_) *  s_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((((- c_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
@@ -3409,19 +3409,19 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_base_X_fr_RF_WH
     (*this)(0,1) = (((( s_q_RF_HFE_ *  s_q_RF_KFE_) - ( c_q_RF_HFE_ *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((- c_q_RF_HFE_ *  s_q_RF_KFE_) - ( s_q_RF_HFE_ *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(0,3) = (((((((- 0.104 *  c_q_RF_HAA_) -  0.18979) *  s_q_RF_HFE_) *  s_q_RF_KFE_) + (((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  c_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(0,4) = (((((((- 0.104 *  c_q_RF_HAA_) -  0.18979) *  c_q_RF_HFE_) *  s_q_RF_KFE_) + ((((- 0.104 *  c_q_RF_HAA_) -  0.18979) *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((((((- 0.104 *  c_q_RF_HAA_) -  0.18979) *  s_q_RF_HFE_) *  s_q_RF_KFE_) + (((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  c_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
-    (*this)(0,5) = (((((( 0.08748 *  c_q_RF_HFE_) - ( 0.248 *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + ((( 0.08748 *  s_q_RF_HFE_) + ( 0.248 *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.28263 *  c_q_RF_HFE_)) - ( 0.104 *  s_q_RF_HAA_));
+    (*this)(0,5) = (((((( 0.08748 *  c_q_RF_HFE_) - ( 0.2745 *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + ((( 0.08748 *  s_q_RF_HFE_) + ( 0.2745 *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.28263 *  c_q_RF_HFE_)) - ( 0.104 *  s_q_RF_HAA_));
     (*this)(1,0) = ((((( s_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((( s_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(1,1) = (((((- s_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((( s_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(1,2) =  c_q_RF_HAA_;
-    (*this)(1,3) = (((((((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  s_q_RF_KFE_) + (((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  c_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.28263 *  c_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.248 *  c_q_RF_HAA_)) *  c_q_RF_WHEEL_));
-    (*this)(1,4) = ((((((((- 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  c_q_RF_KFE_)) + ( 0.248 *  c_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  s_q_RF_KFE_) + (((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  c_q_RF_HAA_)) *  c_q_RF_WHEEL_));
-    (*this)(1,5) = ((((((( 0.08748 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.248 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.248 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.08748 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.28263 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) - ( 0.36 *  s_q_RF_HAA_));
+    (*this)(1,3) = (((((((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  s_q_RF_KFE_) + (((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  c_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.28263 *  c_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.2745 *  c_q_RF_HAA_)) *  c_q_RF_WHEEL_));
+    (*this)(1,4) = ((((((((- 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  c_q_RF_KFE_)) + ( 0.2745 *  c_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  s_q_RF_KFE_) + (((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  c_q_RF_HAA_)) *  c_q_RF_WHEEL_));
+    (*this)(1,5) = ((((((( 0.08748 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.2745 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.2745 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.08748 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.28263 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) - ( 0.36 *  s_q_RF_HAA_));
     (*this)(2,0) = ((((( c_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((((- c_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(2,1) = ((((( c_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (( c_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((( c_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(2,2) =  s_q_RF_HAA_;
-    (*this)(2,3) = (((((((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  s_q_RF_KFE_) + (((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  s_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + ((( 0.18979 *  c_q_RF_HAA_) +  0.104) *  c_q_RF_HFE_)) - ( 0.28263 *  s_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.248 *  s_q_RF_HAA_)) *  c_q_RF_WHEEL_));
-    (*this)(2,4) = ((((((((( 0.18979 *  c_q_RF_HAA_) +  0.104) *  s_q_RF_HFE_) - (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  c_q_RF_KFE_)) + ( 0.248 *  s_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  s_q_RF_KFE_) + (((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  s_q_RF_HAA_)) *  c_q_RF_WHEEL_));
-    (*this)(2,5) = (((((((- 0.08748 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.248 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.08748 *  c_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.248 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) *  c_q_RF_KFE_)) - (( 0.28263 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) + ( 0.36 *  c_q_RF_HAA_));
+    (*this)(2,3) = (((((((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  s_q_RF_KFE_) + (((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  s_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + ((( 0.18979 *  c_q_RF_HAA_) +  0.104) *  c_q_RF_HFE_)) - ( 0.28263 *  s_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.2745 *  s_q_RF_HAA_)) *  c_q_RF_WHEEL_));
+    (*this)(2,4) = ((((((((( 0.18979 *  c_q_RF_HAA_) +  0.104) *  s_q_RF_HFE_) - (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  c_q_RF_KFE_)) + ( 0.2745 *  s_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  s_q_RF_KFE_) + (((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  s_q_RF_HAA_)) *  c_q_RF_WHEEL_));
+    (*this)(2,5) = (((((((- 0.08748 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.2745 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.08748 *  c_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.2745 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) *  c_q_RF_KFE_)) - (( 0.28263 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) + ( 0.36 *  c_q_RF_HAA_));
     (*this)(3,3) = ((((- c_q_RF_HFE_ *  s_q_RF_KFE_) - ( s_q_RF_HFE_ *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((( c_q_RF_HFE_ *  c_q_RF_KFE_) - ( s_q_RF_HFE_ *  s_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(3,4) = (((( s_q_RF_HFE_ *  s_q_RF_KFE_) - ( c_q_RF_HFE_ *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((- c_q_RF_HFE_ *  s_q_RF_KFE_) - ( s_q_RF_HFE_ *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(4,3) = ((((( s_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((( s_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
@@ -3471,19 +3471,19 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr
     (*this)(0,1) = (((((( 1.0 *  s_q_RF_HAA_) *  c_q_RF_HFE_) *  c_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((((( 1.0 *  s_q_RF_HAA_) *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(0,2) = (((((( 1.0 *  c_q_RF_HAA_) *  s_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((((- c_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(0,3) = (((((((- 0.104 *  c_q_RF_HAA_) -  0.18979) *  s_q_RF_HFE_) *  s_q_RF_KFE_) + (((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  c_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
-    (*this)(0,4) = (((((((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  s_q_RF_KFE_) + (((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  c_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.28263 *  c_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.248 *  c_q_RF_HAA_)) *  c_q_RF_WHEEL_));
-    (*this)(0,5) = (((((((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  s_q_RF_KFE_) + (((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  s_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + ((( 0.18979 *  c_q_RF_HAA_) +  0.104) *  c_q_RF_HFE_)) - ( 0.28263 *  s_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.248 *  s_q_RF_HAA_)) *  c_q_RF_WHEEL_));
+    (*this)(0,4) = (((((((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  s_q_RF_KFE_) + (((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  c_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.28263 *  c_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.2745 *  c_q_RF_HAA_)) *  c_q_RF_WHEEL_));
+    (*this)(0,5) = (((((((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  s_q_RF_KFE_) + (((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  s_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + ((( 0.18979 *  c_q_RF_HAA_) +  0.104) *  c_q_RF_HFE_)) - ( 0.28263 *  s_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.2745 *  s_q_RF_HAA_)) *  c_q_RF_WHEEL_));
     (*this)(1,0) = ((((( 1.0 *  s_q_RF_HFE_) *  s_q_RF_KFE_) - ( c_q_RF_HFE_ *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((- c_q_RF_HFE_ *  s_q_RF_KFE_) - ( s_q_RF_HFE_ *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(1,1) = (((((- s_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((((( 1.0 *  s_q_RF_HAA_) *  c_q_RF_HFE_) *  c_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(1,2) = (((((( 1.0 *  c_q_RF_HAA_) *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (( c_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((((( 1.0 *  c_q_RF_HAA_) *  s_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(1,3) = (((((((- 0.104 *  c_q_RF_HAA_) -  0.18979) *  c_q_RF_HFE_) *  s_q_RF_KFE_) + ((((- 0.104 *  c_q_RF_HAA_) -  0.18979) *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((((((- 0.104 *  c_q_RF_HAA_) -  0.18979) *  s_q_RF_HFE_) *  s_q_RF_KFE_) + (((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  c_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
-    (*this)(1,4) = ((((((((- 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  c_q_RF_KFE_)) + ( 0.248 *  c_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  s_q_RF_KFE_) + (((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  c_q_RF_HAA_)) *  c_q_RF_WHEEL_));
-    (*this)(1,5) = ((((((((( 0.18979 *  c_q_RF_HAA_) +  0.104) *  s_q_RF_HFE_) - (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  c_q_RF_KFE_)) + ( 0.248 *  s_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  s_q_RF_KFE_) + (((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  s_q_RF_HAA_)) *  c_q_RF_WHEEL_));
+    (*this)(1,4) = ((((((((- 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  c_q_RF_KFE_)) + ( 0.2745 *  c_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  s_q_RF_KFE_) + (((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  c_q_RF_HAA_)) *  c_q_RF_WHEEL_));
+    (*this)(1,5) = ((((((((( 0.18979 *  c_q_RF_HAA_) +  0.104) *  s_q_RF_HFE_) - (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  c_q_RF_KFE_)) + ( 0.2745 *  s_q_RF_HAA_)) *  s_q_RF_WHEEL_) + ((((((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  s_q_RF_KFE_) + (((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  s_q_RF_HAA_)) *  c_q_RF_WHEEL_));
     (*this)(2,1) =  c_q_RF_HAA_;
     (*this)(2,2) =  s_q_RF_HAA_;
-    (*this)(2,3) = (((((( 0.08748 *  c_q_RF_HFE_) - ( 0.248 *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + ((( 0.08748 *  s_q_RF_HFE_) + ( 0.248 *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.28263 *  c_q_RF_HFE_)) - ( 0.104 *  s_q_RF_HAA_));
-    (*this)(2,4) = ((((((( 0.08748 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.248 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.248 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.08748 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.28263 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) - ( 0.36 *  s_q_RF_HAA_));
-    (*this)(2,5) = (((((((- 0.08748 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.248 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.08748 *  c_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.248 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) *  c_q_RF_KFE_)) - (( 0.28263 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) + ( 0.36 *  c_q_RF_HAA_));
+    (*this)(2,3) = (((((( 0.08748 *  c_q_RF_HFE_) - ( 0.2745 *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + ((( 0.08748 *  s_q_RF_HFE_) + ( 0.2745 *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.28263 *  c_q_RF_HFE_)) - ( 0.104 *  s_q_RF_HAA_));
+    (*this)(2,4) = ((((((( 0.08748 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.2745 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.2745 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.08748 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.28263 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) - ( 0.36 *  s_q_RF_HAA_));
+    (*this)(2,5) = (((((((- 0.08748 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.2745 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.08748 *  c_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.2745 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) *  c_q_RF_KFE_)) - (( 0.28263 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) + ( 0.36 *  c_q_RF_HAA_));
     (*this)(3,3) = ((((- c_q_RF_HFE_ *  s_q_RF_KFE_) - ( s_q_RF_HFE_ *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((( 1.0 *  c_q_RF_HFE_) *  c_q_RF_KFE_) - ( s_q_RF_HFE_ *  s_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(3,4) = (((((( 1.0 *  s_q_RF_HAA_) *  c_q_RF_HFE_) *  c_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((((( 1.0 *  s_q_RF_HAA_) *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(3,5) = (((((( 1.0 *  c_q_RF_HAA_) *  s_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((((- c_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
@@ -3533,19 +3533,19 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_base_X_fr_RH_WH
     (*this)(0,1) = (((( s_q_RH_HFE_ *  s_q_RH_KFE_) - ( c_q_RH_HFE_ *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((- c_q_RH_HFE_ *  s_q_RH_KFE_) - ( s_q_RH_HFE_ *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(0,3) = (((((((- 0.104 *  c_q_RH_HAA_) -  0.18979) *  s_q_RH_HFE_) *  s_q_RH_KFE_) + (((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  c_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(0,4) = (((((((- 0.104 *  c_q_RH_HAA_) -  0.18979) *  c_q_RH_HFE_) *  s_q_RH_KFE_) + ((((- 0.104 *  c_q_RH_HAA_) -  0.18979) *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((((((- 0.104 *  c_q_RH_HAA_) -  0.18979) *  s_q_RH_HFE_) *  s_q_RH_KFE_) + (((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  c_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
-    (*this)(0,5) = ((((((- 0.248 *  s_q_RH_HFE_) - ( 0.08748 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((( 0.248 *  c_q_RH_HFE_) - ( 0.08748 *  s_q_RH_HFE_)) *  c_q_RH_KFE_)) + ( 0.28263 *  c_q_RH_HFE_)) - ( 0.104 *  s_q_RH_HAA_));
+    (*this)(0,5) = ((((((- 0.2745 *  s_q_RH_HFE_) - ( 0.08748 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((( 0.2745 *  c_q_RH_HFE_) - ( 0.08748 *  s_q_RH_HFE_)) *  c_q_RH_KFE_)) + ( 0.28263 *  c_q_RH_HFE_)) - ( 0.104 *  s_q_RH_HAA_));
     (*this)(1,0) = ((((( s_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((( s_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(1,1) = (((((- s_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((( s_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(1,2) =  c_q_RH_HAA_;
-    (*this)(1,3) = ((((((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  s_q_RH_KFE_) + (((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  c_q_RH_HAA_)) *  s_q_RH_WHEEL_) + ((((((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.28263 *  c_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.248 *  c_q_RH_HAA_)) *  c_q_RH_WHEEL_));
-    (*this)(1,4) = (((((((( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  c_q_RH_KFE_)) + ( 0.248 *  c_q_RH_HAA_)) *  s_q_RH_WHEEL_) + (((((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  s_q_RH_KFE_) + (((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  c_q_RH_HAA_)) *  c_q_RH_WHEEL_));
-    (*this)(1,5) = ((((((( 0.248 *  s_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.08748 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.248 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.08748 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.28263 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) + ( 0.36 *  s_q_RH_HAA_));
+    (*this)(1,3) = ((((((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  s_q_RH_KFE_) + (((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  c_q_RH_HAA_)) *  s_q_RH_WHEEL_) + ((((((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.28263 *  c_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.2745 *  c_q_RH_HAA_)) *  c_q_RH_WHEEL_));
+    (*this)(1,4) = (((((((( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  c_q_RH_KFE_)) + ( 0.2745 *  c_q_RH_HAA_)) *  s_q_RH_WHEEL_) + (((((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  s_q_RH_KFE_) + (((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  c_q_RH_HAA_)) *  c_q_RH_WHEEL_));
+    (*this)(1,5) = ((((((( 0.2745 *  s_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.08748 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.2745 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.08748 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.28263 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) + ( 0.36 *  s_q_RH_HAA_));
     (*this)(2,0) = ((((( c_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((((- c_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(2,1) = ((((( c_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (( c_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((( c_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(2,2) =  s_q_RH_HAA_;
-    (*this)(2,3) = ((((((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  s_q_RH_KFE_) + (((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  s_q_RH_HAA_)) *  s_q_RH_WHEEL_) + ((((((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + ((( 0.18979 *  c_q_RH_HAA_) +  0.104) *  c_q_RH_HFE_)) - ( 0.28263 *  s_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.248 *  s_q_RH_HAA_)) *  c_q_RH_WHEEL_));
-    (*this)(2,4) = ((((((((( 0.18979 *  c_q_RH_HAA_) +  0.104) *  s_q_RH_HFE_) + (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  c_q_RH_KFE_)) + ( 0.248 *  s_q_RH_HAA_)) *  s_q_RH_WHEEL_) + (((((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  s_q_RH_KFE_) + (((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  s_q_RH_HAA_)) *  c_q_RH_WHEEL_));
-    (*this)(2,5) = ((((((( 0.08748 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.248 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((- 0.248 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.08748 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - (( 0.28263 *  c_q_RH_HAA_) *  s_q_RH_HFE_)) - ( 0.36 *  c_q_RH_HAA_));
+    (*this)(2,3) = ((((((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  s_q_RH_KFE_) + (((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  s_q_RH_HAA_)) *  s_q_RH_WHEEL_) + ((((((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + ((( 0.18979 *  c_q_RH_HAA_) +  0.104) *  c_q_RH_HFE_)) - ( 0.28263 *  s_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.2745 *  s_q_RH_HAA_)) *  c_q_RH_WHEEL_));
+    (*this)(2,4) = ((((((((( 0.18979 *  c_q_RH_HAA_) +  0.104) *  s_q_RH_HFE_) + (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  c_q_RH_KFE_)) + ( 0.2745 *  s_q_RH_HAA_)) *  s_q_RH_WHEEL_) + (((((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  s_q_RH_KFE_) + (((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  s_q_RH_HAA_)) *  c_q_RH_WHEEL_));
+    (*this)(2,5) = ((((((( 0.08748 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.2745 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((- 0.2745 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.08748 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - (( 0.28263 *  c_q_RH_HAA_) *  s_q_RH_HFE_)) - ( 0.36 *  c_q_RH_HAA_));
     (*this)(3,3) = ((((- c_q_RH_HFE_ *  s_q_RH_KFE_) - ( s_q_RH_HFE_ *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((( c_q_RH_HFE_ *  c_q_RH_KFE_) - ( s_q_RH_HFE_ *  s_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(3,4) = (((( s_q_RH_HFE_ *  s_q_RH_KFE_) - ( c_q_RH_HFE_ *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((- c_q_RH_HFE_ *  s_q_RH_KFE_) - ( s_q_RH_HFE_ *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(4,3) = ((((( s_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((( s_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
@@ -3595,19 +3595,19 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr
     (*this)(0,1) = (((((( 1.0 *  s_q_RH_HAA_) *  c_q_RH_HFE_) *  c_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((((( 1.0 *  s_q_RH_HAA_) *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(0,2) = (((((( 1.0 *  c_q_RH_HAA_) *  s_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((((- c_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(0,3) = (((((((- 0.104 *  c_q_RH_HAA_) -  0.18979) *  s_q_RH_HFE_) *  s_q_RH_KFE_) + (((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  c_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
-    (*this)(0,4) = ((((((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  s_q_RH_KFE_) + (((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  c_q_RH_HAA_)) *  s_q_RH_WHEEL_) + ((((((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.28263 *  c_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.248 *  c_q_RH_HAA_)) *  c_q_RH_WHEEL_));
-    (*this)(0,5) = ((((((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  s_q_RH_KFE_) + (((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  s_q_RH_HAA_)) *  s_q_RH_WHEEL_) + ((((((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + ((( 0.18979 *  c_q_RH_HAA_) +  0.104) *  c_q_RH_HFE_)) - ( 0.28263 *  s_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.248 *  s_q_RH_HAA_)) *  c_q_RH_WHEEL_));
+    (*this)(0,4) = ((((((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  s_q_RH_KFE_) + (((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  c_q_RH_HAA_)) *  s_q_RH_WHEEL_) + ((((((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.28263 *  c_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.2745 *  c_q_RH_HAA_)) *  c_q_RH_WHEEL_));
+    (*this)(0,5) = ((((((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  s_q_RH_KFE_) + (((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  s_q_RH_HAA_)) *  s_q_RH_WHEEL_) + ((((((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + ((( 0.18979 *  c_q_RH_HAA_) +  0.104) *  c_q_RH_HFE_)) - ( 0.28263 *  s_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.2745 *  s_q_RH_HAA_)) *  c_q_RH_WHEEL_));
     (*this)(1,0) = ((((( 1.0 *  s_q_RH_HFE_) *  s_q_RH_KFE_) - ( c_q_RH_HFE_ *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((- c_q_RH_HFE_ *  s_q_RH_KFE_) - ( s_q_RH_HFE_ *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(1,1) = (((((- s_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((((( 1.0 *  s_q_RH_HAA_) *  c_q_RH_HFE_) *  c_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(1,2) = (((((( 1.0 *  c_q_RH_HAA_) *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (( c_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((((( 1.0 *  c_q_RH_HAA_) *  s_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(1,3) = (((((((- 0.104 *  c_q_RH_HAA_) -  0.18979) *  c_q_RH_HFE_) *  s_q_RH_KFE_) + ((((- 0.104 *  c_q_RH_HAA_) -  0.18979) *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((((((- 0.104 *  c_q_RH_HAA_) -  0.18979) *  s_q_RH_HFE_) *  s_q_RH_KFE_) + (((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  c_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
-    (*this)(1,4) = (((((((( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  c_q_RH_KFE_)) + ( 0.248 *  c_q_RH_HAA_)) *  s_q_RH_WHEEL_) + (((((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  s_q_RH_KFE_) + (((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  c_q_RH_HAA_)) *  c_q_RH_WHEEL_));
-    (*this)(1,5) = ((((((((( 0.18979 *  c_q_RH_HAA_) +  0.104) *  s_q_RH_HFE_) + (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  c_q_RH_KFE_)) + ( 0.248 *  s_q_RH_HAA_)) *  s_q_RH_WHEEL_) + (((((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  s_q_RH_KFE_) + (((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  s_q_RH_HAA_)) *  c_q_RH_WHEEL_));
+    (*this)(1,4) = (((((((( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  c_q_RH_KFE_)) + ( 0.2745 *  c_q_RH_HAA_)) *  s_q_RH_WHEEL_) + (((((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  s_q_RH_KFE_) + (((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  c_q_RH_HAA_)) *  c_q_RH_WHEEL_));
+    (*this)(1,5) = ((((((((( 0.18979 *  c_q_RH_HAA_) +  0.104) *  s_q_RH_HFE_) + (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  c_q_RH_KFE_)) + ( 0.2745 *  s_q_RH_HAA_)) *  s_q_RH_WHEEL_) + (((((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  s_q_RH_KFE_) + (((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  s_q_RH_HAA_)) *  c_q_RH_WHEEL_));
     (*this)(2,1) =  c_q_RH_HAA_;
     (*this)(2,2) =  s_q_RH_HAA_;
-    (*this)(2,3) = ((((((- 0.248 *  s_q_RH_HFE_) - ( 0.08748 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((( 0.248 *  c_q_RH_HFE_) - ( 0.08748 *  s_q_RH_HFE_)) *  c_q_RH_KFE_)) + ( 0.28263 *  c_q_RH_HFE_)) - ( 0.104 *  s_q_RH_HAA_));
-    (*this)(2,4) = ((((((( 0.248 *  s_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.08748 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.248 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.08748 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.28263 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) + ( 0.36 *  s_q_RH_HAA_));
-    (*this)(2,5) = ((((((( 0.08748 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.248 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((- 0.248 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.08748 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - (( 0.28263 *  c_q_RH_HAA_) *  s_q_RH_HFE_)) - ( 0.36 *  c_q_RH_HAA_));
+    (*this)(2,3) = ((((((- 0.2745 *  s_q_RH_HFE_) - ( 0.08748 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((( 0.2745 *  c_q_RH_HFE_) - ( 0.08748 *  s_q_RH_HFE_)) *  c_q_RH_KFE_)) + ( 0.28263 *  c_q_RH_HFE_)) - ( 0.104 *  s_q_RH_HAA_));
+    (*this)(2,4) = ((((((( 0.2745 *  s_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.08748 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.2745 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.08748 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.28263 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) + ( 0.36 *  s_q_RH_HAA_));
+    (*this)(2,5) = ((((((( 0.08748 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.2745 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((- 0.2745 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.08748 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - (( 0.28263 *  c_q_RH_HAA_) *  s_q_RH_HFE_)) - ( 0.36 *  c_q_RH_HAA_));
     (*this)(3,3) = ((((- c_q_RH_HFE_ *  s_q_RH_KFE_) - ( s_q_RH_HFE_ *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((( 1.0 *  c_q_RH_HFE_) *  c_q_RH_KFE_) - ( s_q_RH_HFE_ *  s_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(3,4) = (((((( 1.0 *  s_q_RH_HAA_) *  c_q_RH_HFE_) *  c_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((((( 1.0 *  s_q_RH_HAA_) *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(3,5) = (((((( 1.0 *  c_q_RH_HAA_) *  s_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((((- c_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
@@ -3801,19 +3801,19 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_base_X_fr_LF_WH
     (*this)(0,1) = ((- c_q_LF_HFE_ *  s_q_LF_KFE_) - ( s_q_LF_HFE_ *  c_q_LF_KFE_));
     (*this)(0,3) = (((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  c_q_LF_HFE_) *  s_q_LF_KFE_) + ((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  s_q_LF_HFE_) *  c_q_LF_KFE_));
     (*this)(0,4) = ((((( 0.104 *  c_q_LF_HAA_) +  0.18979) *  s_q_LF_HFE_) *  s_q_LF_KFE_) + ((((- 0.104 *  c_q_LF_HAA_) -  0.18979) *  c_q_LF_HFE_) *  c_q_LF_KFE_));
-    (*this)(0,5) = (((((( 0.08748 *  c_q_LF_HFE_) - ( 0.248 *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((( 0.08748 *  s_q_LF_HFE_) + ( 0.248 *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.28263 *  c_q_LF_HFE_)) + ( 0.104 *  s_q_LF_HAA_));
+    (*this)(0,5) = (((((( 0.08748 *  c_q_LF_HFE_) - ( 0.2745 *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((( 0.08748 *  s_q_LF_HFE_) + ( 0.2745 *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.28263 *  c_q_LF_HFE_)) + ( 0.104 *  s_q_LF_HAA_));
     (*this)(1,0) = ((( s_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_));
     (*this)(1,1) = ((( s_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_));
     (*this)(1,2) =  c_q_LF_HAA_;
-    (*this)(1,3) = (((((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) - ( 0.28263 *  c_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.248 *  c_q_LF_HAA_));
+    (*this)(1,3) = (((((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) - ( 0.28263 *  c_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.2745 *  c_q_LF_HAA_));
     (*this)(1,4) = (((((((- 0.36 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.28263 *  c_q_LF_HAA_)) *  s_q_LF_KFE_) + (((( 0.36 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.18979 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  c_q_LF_HAA_));
-    (*this)(1,5) = ((((((( 0.08748 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.248 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.248 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.08748 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.28263 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) - ( 0.36 *  s_q_LF_HAA_));
+    (*this)(1,5) = ((((((( 0.08748 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.2745 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.2745 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.08748 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.28263 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) - ( 0.36 *  s_q_LF_HAA_));
     (*this)(2,0) = (((- c_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_));
     (*this)(2,1) = ((( c_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_));
     (*this)(2,2) =  s_q_LF_HAA_;
-    (*this)(2,3) = ((((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (((- 0.18979 *  c_q_LF_HAA_) -  0.104) *  c_q_LF_HFE_)) - ( 0.28263 *  s_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.248 *  s_q_LF_HAA_));
+    (*this)(2,3) = ((((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((( 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (((- 0.18979 *  c_q_LF_HAA_) -  0.104) *  c_q_LF_HFE_)) - ( 0.28263 *  s_q_LF_HAA_)) *  c_q_LF_KFE_)) - ( 0.2745 *  s_q_LF_HAA_));
     (*this)(2,4) = (((((((- 0.36 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  c_q_LF_HFE_)) + ( 0.28263 *  s_q_LF_HAA_)) *  s_q_LF_KFE_) + ((((( 0.18979 *  c_q_LF_HAA_) +  0.104) *  s_q_LF_HFE_) + (( 0.36 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + ( 0.08748 *  s_q_LF_HAA_));
-    (*this)(2,5) = (((((((- 0.08748 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.248 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.08748 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.248 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) - (( 0.28263 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) + ( 0.36 *  c_q_LF_HAA_));
+    (*this)(2,5) = (((((((- 0.08748 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.2745 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.08748 *  c_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.2745 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) - (( 0.28263 *  c_q_LF_HAA_) *  s_q_LF_HFE_)) + ( 0.36 *  c_q_LF_HAA_));
     (*this)(3,3) = (( c_q_LF_HFE_ *  c_q_LF_KFE_) - ( s_q_LF_HFE_ *  s_q_LF_KFE_));
     (*this)(3,4) = ((- c_q_LF_HFE_ *  s_q_LF_KFE_) - ( s_q_LF_HFE_ *  c_q_LF_KFE_));
     (*this)(4,3) = ((( s_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_));
@@ -4007,19 +4007,19 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_base_X_fr_LH_WH
     (*this)(0,1) = ((- c_q_LH_HFE_ *  s_q_LH_KFE_) - ( s_q_LH_HFE_ *  c_q_LH_KFE_));
     (*this)(0,3) = (((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  c_q_LH_HFE_) *  s_q_LH_KFE_) + ((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  s_q_LH_HFE_) *  c_q_LH_KFE_));
     (*this)(0,4) = ((((( 0.104 *  c_q_LH_HAA_) +  0.18979) *  s_q_LH_HFE_) *  s_q_LH_KFE_) + ((((- 0.104 *  c_q_LH_HAA_) -  0.18979) *  c_q_LH_HFE_) *  c_q_LH_KFE_));
-    (*this)(0,5) = ((((((- 0.248 *  s_q_LH_HFE_) - ( 0.08748 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((( 0.248 *  c_q_LH_HFE_) - ( 0.08748 *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) + ( 0.28263 *  c_q_LH_HFE_)) + ( 0.104 *  s_q_LH_HAA_));
+    (*this)(0,5) = ((((((- 0.2745 *  s_q_LH_HFE_) - ( 0.08748 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((( 0.2745 *  c_q_LH_HFE_) - ( 0.08748 *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) + ( 0.28263 *  c_q_LH_HFE_)) + ( 0.104 *  s_q_LH_HAA_));
     (*this)(1,0) = ((( s_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_));
     (*this)(1,1) = ((( s_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_));
     (*this)(1,2) =  c_q_LH_HAA_;
-    (*this)(1,3) = ((((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) - ( 0.28263 *  c_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.248 *  c_q_LH_HAA_));
+    (*this)(1,3) = ((((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) - ( 0.28263 *  c_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.2745 *  c_q_LH_HAA_));
     (*this)(1,4) = ((((((( 0.36 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.18979 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.28263 *  c_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((- 0.18979 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.36 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  c_q_LH_HAA_));
-    (*this)(1,5) = ((((((( 0.248 *  s_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.08748 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.248 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.08748 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.28263 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) + ( 0.36 *  s_q_LH_HAA_));
+    (*this)(1,5) = ((((((( 0.2745 *  s_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.08748 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.2745 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.08748 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.28263 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) + ( 0.36 *  s_q_LH_HAA_));
     (*this)(2,0) = (((- c_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_));
     (*this)(2,1) = ((( c_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_));
     (*this)(2,2) =  s_q_LH_HAA_;
-    (*this)(2,3) = ((((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (((- 0.18979 *  c_q_LH_HAA_) -  0.104) *  c_q_LH_HFE_)) - ( 0.28263 *  s_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.248 *  s_q_LH_HAA_));
+    (*this)(2,3) = ((((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((((- 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + (((- 0.18979 *  c_q_LH_HAA_) -  0.104) *  c_q_LH_HFE_)) - ( 0.28263 *  s_q_LH_HAA_)) *  c_q_LH_KFE_)) - ( 0.2745 *  s_q_LH_HAA_));
     (*this)(2,4) = ((((((( 0.36 *  s_q_LH_HAA_) *  s_q_LH_HFE_) + ((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  c_q_LH_HFE_)) + ( 0.28263 *  s_q_LH_HAA_)) *  s_q_LH_KFE_) + ((((( 0.18979 *  c_q_LH_HAA_) +  0.104) *  s_q_LH_HFE_) - (( 0.36 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.08748 *  s_q_LH_HAA_));
-    (*this)(2,5) = ((((((( 0.08748 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.248 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((- 0.248 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.08748 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - (( 0.28263 *  c_q_LH_HAA_) *  s_q_LH_HFE_)) - ( 0.36 *  c_q_LH_HAA_));
+    (*this)(2,5) = ((((((( 0.08748 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.2745 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((- 0.2745 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.08748 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - (( 0.28263 *  c_q_LH_HAA_) *  s_q_LH_HFE_)) - ( 0.36 *  c_q_LH_HAA_));
     (*this)(3,3) = (( c_q_LH_HFE_ *  c_q_LH_KFE_) - ( s_q_LH_HFE_ *  s_q_LH_KFE_));
     (*this)(3,4) = ((- c_q_LH_HFE_ *  s_q_LH_KFE_) - ( s_q_LH_HFE_ *  c_q_LH_KFE_));
     (*this)(4,3) = ((( s_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_));
@@ -4213,19 +4213,19 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_base_X_fr_RF_WH
     (*this)(0,1) = ((- c_q_RF_HFE_ *  s_q_RF_KFE_) - ( s_q_RF_HFE_ *  c_q_RF_KFE_));
     (*this)(0,3) = ((((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  s_q_RF_HFE_) *  c_q_RF_KFE_));
     (*this)(0,4) = (((((- 0.104 *  c_q_RF_HAA_) -  0.18979) *  s_q_RF_HFE_) *  s_q_RF_KFE_) + (((( 0.104 *  c_q_RF_HAA_) +  0.18979) *  c_q_RF_HFE_) *  c_q_RF_KFE_));
-    (*this)(0,5) = (((((( 0.08748 *  c_q_RF_HFE_) - ( 0.248 *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + ((( 0.08748 *  s_q_RF_HFE_) + ( 0.248 *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.28263 *  c_q_RF_HFE_)) - ( 0.104 *  s_q_RF_HAA_));
+    (*this)(0,5) = (((((( 0.08748 *  c_q_RF_HFE_) - ( 0.2745 *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + ((( 0.08748 *  s_q_RF_HFE_) + ( 0.2745 *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.28263 *  c_q_RF_HFE_)) - ( 0.104 *  s_q_RF_HAA_));
     (*this)(1,0) = ((( s_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_));
     (*this)(1,1) = ((( s_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_));
     (*this)(1,2) =  c_q_RF_HAA_;
-    (*this)(1,3) = (((((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.28263 *  c_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.248 *  c_q_RF_HAA_));
+    (*this)(1,3) = (((((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.28263 *  c_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.2745 *  c_q_RF_HAA_));
     (*this)(1,4) = (((((((- 0.36 *  c_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.18979 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) + ( 0.28263 *  c_q_RF_HAA_)) *  s_q_RF_KFE_) + (((( 0.18979 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.36 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  c_q_RF_HAA_));
-    (*this)(1,5) = ((((((( 0.08748 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.248 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.248 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.08748 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.28263 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) - ( 0.36 *  s_q_RF_HAA_));
+    (*this)(1,5) = ((((((( 0.08748 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.2745 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.2745 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.08748 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.28263 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) - ( 0.36 *  s_q_RF_HAA_));
     (*this)(2,0) = (((- c_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_));
     (*this)(2,1) = ((( c_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_));
     (*this)(2,2) =  s_q_RF_HAA_;
-    (*this)(2,3) = (((((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + ((( 0.18979 *  c_q_RF_HAA_) +  0.104) *  c_q_RF_HFE_)) - ( 0.28263 *  s_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.248 *  s_q_RF_HAA_));
+    (*this)(2,3) = (((((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((( 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + ((( 0.18979 *  c_q_RF_HAA_) +  0.104) *  c_q_RF_HFE_)) - ( 0.28263 *  s_q_RF_HAA_)) *  c_q_RF_KFE_)) - ( 0.2745 *  s_q_RF_HAA_));
     (*this)(2,4) = (((((((- 0.36 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  c_q_RF_HFE_)) + ( 0.28263 *  s_q_RF_HAA_)) *  s_q_RF_KFE_) + (((((- 0.18979 *  c_q_RF_HAA_) -  0.104) *  s_q_RF_HFE_) + (( 0.36 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + ( 0.08748 *  s_q_RF_HAA_));
-    (*this)(2,5) = (((((((- 0.08748 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.248 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.08748 *  c_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.248 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) *  c_q_RF_KFE_)) - (( 0.28263 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) + ( 0.36 *  c_q_RF_HAA_));
+    (*this)(2,5) = (((((((- 0.08748 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.2745 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.08748 *  c_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.2745 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) *  c_q_RF_KFE_)) - (( 0.28263 *  c_q_RF_HAA_) *  s_q_RF_HFE_)) + ( 0.36 *  c_q_RF_HAA_));
     (*this)(3,3) = (( c_q_RF_HFE_ *  c_q_RF_KFE_) - ( s_q_RF_HFE_ *  s_q_RF_KFE_));
     (*this)(3,4) = ((- c_q_RF_HFE_ *  s_q_RF_KFE_) - ( s_q_RF_HFE_ *  c_q_RF_KFE_));
     (*this)(4,3) = ((( s_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_));
@@ -4419,19 +4419,19 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_base_X_fr_RH_WH
     (*this)(0,1) = ((- c_q_RH_HFE_ *  s_q_RH_KFE_) - ( s_q_RH_HFE_ *  c_q_RH_KFE_));
     (*this)(0,3) = ((((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  s_q_RH_HFE_) *  c_q_RH_KFE_));
     (*this)(0,4) = (((((- 0.104 *  c_q_RH_HAA_) -  0.18979) *  s_q_RH_HFE_) *  s_q_RH_KFE_) + (((( 0.104 *  c_q_RH_HAA_) +  0.18979) *  c_q_RH_HFE_) *  c_q_RH_KFE_));
-    (*this)(0,5) = ((((((- 0.248 *  s_q_RH_HFE_) - ( 0.08748 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((( 0.248 *  c_q_RH_HFE_) - ( 0.08748 *  s_q_RH_HFE_)) *  c_q_RH_KFE_)) + ( 0.28263 *  c_q_RH_HFE_)) - ( 0.104 *  s_q_RH_HAA_));
+    (*this)(0,5) = ((((((- 0.2745 *  s_q_RH_HFE_) - ( 0.08748 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((( 0.2745 *  c_q_RH_HFE_) - ( 0.08748 *  s_q_RH_HFE_)) *  c_q_RH_KFE_)) + ( 0.28263 *  c_q_RH_HFE_)) - ( 0.104 *  s_q_RH_HAA_));
     (*this)(1,0) = ((( s_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_));
     (*this)(1,1) = ((( s_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_));
     (*this)(1,2) =  c_q_RH_HAA_;
-    (*this)(1,3) = (((((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.28263 *  c_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.248 *  c_q_RH_HAA_));
+    (*this)(1,3) = (((((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.28263 *  c_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.2745 *  c_q_RH_HAA_));
     (*this)(1,4) = ((((((( 0.36 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.18979 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) + ( 0.28263 *  c_q_RH_HAA_)) *  s_q_RH_KFE_) + (((( 0.18979 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.36 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  c_q_RH_HAA_));
-    (*this)(1,5) = ((((((( 0.248 *  s_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.08748 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.248 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.08748 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.28263 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) + ( 0.36 *  s_q_RH_HAA_));
+    (*this)(1,5) = ((((((( 0.2745 *  s_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.08748 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.2745 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.08748 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.28263 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) + ( 0.36 *  s_q_RH_HAA_));
     (*this)(2,0) = (((- c_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_));
     (*this)(2,1) = ((( c_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_));
     (*this)(2,2) =  s_q_RH_HAA_;
-    (*this)(2,3) = (((((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + ((( 0.18979 *  c_q_RH_HAA_) +  0.104) *  c_q_RH_HFE_)) - ( 0.28263 *  s_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.248 *  s_q_RH_HAA_));
+    (*this)(2,3) = (((((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((((- 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + ((( 0.18979 *  c_q_RH_HAA_) +  0.104) *  c_q_RH_HFE_)) - ( 0.28263 *  s_q_RH_HAA_)) *  c_q_RH_KFE_)) - ( 0.2745 *  s_q_RH_HAA_));
     (*this)(2,4) = ((((((( 0.36 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + (((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  c_q_RH_HFE_)) + ( 0.28263 *  s_q_RH_HAA_)) *  s_q_RH_KFE_) + (((((- 0.18979 *  c_q_RH_HAA_) -  0.104) *  s_q_RH_HFE_) - (( 0.36 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.08748 *  s_q_RH_HAA_));
-    (*this)(2,5) = ((((((( 0.08748 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.248 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((- 0.248 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.08748 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - (( 0.28263 *  c_q_RH_HAA_) *  s_q_RH_HFE_)) - ( 0.36 *  c_q_RH_HAA_));
+    (*this)(2,5) = ((((((( 0.08748 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.2745 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((- 0.2745 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.08748 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - (( 0.28263 *  c_q_RH_HAA_) *  s_q_RH_HFE_)) - ( 0.36 *  c_q_RH_HAA_));
     (*this)(3,3) = (( c_q_RH_HFE_ *  c_q_RH_KFE_) - ( s_q_RH_HFE_ *  s_q_RH_KFE_));
     (*this)(3,4) = ((- c_q_RH_HFE_ *  s_q_RH_KFE_) - ( s_q_RH_HFE_ *  c_q_RH_KFE_));
     (*this)(4,3) = ((( s_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_));
@@ -4643,7 +4643,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_HIP_X_fr_LF_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_THIGH::Type_fr_LF_SHANK_X_fr_LF_THIGH()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_THIGH::Type_fr_LF_shank_fixed_X_fr_LF_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -4669,7 +4669,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_THIGH::Type_f
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_THIGH& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_THIGH& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_THIGH::update(const JState& q) {
     Scalar s_q_LF_KFE_;
     Scalar c_q_LF_KFE_;
     
@@ -4693,7 +4693,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_L
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_SHANK::Type_fr_LF_THIGH_X_fr_LF_SHANK()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_shank_fixed::Type_fr_LF_THIGH_X_fr_LF_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(0,5) = 0.28263;
@@ -4719,7 +4719,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_SHANK::Type_f
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_SHANK& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_shank_fixed& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_shank_fixed::update(const JState& q) {
     Scalar s_q_LF_KFE_;
     Scalar c_q_LF_KFE_;
     
@@ -4743,14 +4743,14 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_L
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
     (*this)(2,0) = 0;
     (*this)(2,1) = 0;
     (*this)(2,2) = 1.0;
-    (*this)(2,3) = 0.248;
+    (*this)(2,3) = 0.2745;
     (*this)(2,4) = - 0.08748;
     (*this)(2,5) = 0;
     (*this)(3,0) = 0;
@@ -4769,7 +4769,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK::Type
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed::update(const JState& q) {
     Scalar s_q_LF_WHEEL_;
     Scalar c_q_LF_WHEEL_;
     
@@ -4780,12 +4780,12 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr
     (*this)(0,1) =  s_q_LF_WHEEL_;
     (*this)(0,3) = (- 0.0328 *  s_q_LF_WHEEL_);
     (*this)(0,4) = ( 0.0328 *  c_q_LF_WHEEL_);
-    (*this)(0,5) = (( 0.08748 *  s_q_LF_WHEEL_) - ( 0.248 *  c_q_LF_WHEEL_));
+    (*this)(0,5) = (( 0.08748 *  s_q_LF_WHEEL_) - ( 0.2745 *  c_q_LF_WHEEL_));
     (*this)(1,0) = - s_q_LF_WHEEL_;
     (*this)(1,1) =  c_q_LF_WHEEL_;
     (*this)(1,3) = (- 0.0328 *  c_q_LF_WHEEL_);
     (*this)(1,4) = (- 0.0328 *  s_q_LF_WHEEL_);
-    (*this)(1,5) = (( 0.248 *  s_q_LF_WHEEL_) + ( 0.08748 *  c_q_LF_WHEEL_));
+    (*this)(1,5) = (( 0.2745 *  s_q_LF_WHEEL_) + ( 0.08748 *  c_q_LF_WHEEL_));
     (*this)(3,3) =  c_q_LF_WHEEL_;
     (*this)(3,4) =  s_q_LF_WHEEL_;
     (*this)(4,3) = - s_q_LF_WHEEL_;
@@ -4793,10 +4793,10 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L()
 {
     (*this)(0,2) = 0;
-    (*this)(0,5) = 0.248;
+    (*this)(0,5) = 0.2745;
     (*this)(1,2) = 0;
     (*this)(1,5) = - 0.08748;
     (*this)(2,0) = 0;
@@ -4819,7 +4819,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L::Type
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L::update(const JState& q) {
     Scalar s_q_LF_WHEEL_;
     Scalar c_q_LF_WHEEL_;
     
@@ -4834,8 +4834,8 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_L
     (*this)(1,1) =  c_q_LF_WHEEL_;
     (*this)(1,3) = ( 0.0328 *  c_q_LF_WHEEL_);
     (*this)(1,4) = (- 0.0328 *  s_q_LF_WHEEL_);
-    (*this)(2,3) = (( 0.08748 *  s_q_LF_WHEEL_) - ( 0.248 *  c_q_LF_WHEEL_));
-    (*this)(2,4) = (( 0.248 *  s_q_LF_WHEEL_) + ( 0.08748 *  c_q_LF_WHEEL_));
+    (*this)(2,3) = (( 0.08748 *  s_q_LF_WHEEL_) - ( 0.2745 *  c_q_LF_WHEEL_));
+    (*this)(2,4) = (( 0.2745 *  s_q_LF_WHEEL_) + ( 0.08748 *  c_q_LF_WHEEL_));
     (*this)(3,3) =  c_q_LF_WHEEL_;
     (*this)(3,4) = - s_q_LF_WHEEL_;
     (*this)(4,3) =  s_q_LF_WHEEL_;
@@ -5043,7 +5043,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_HIP_X_fr_RF_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_THIGH::Type_fr_RF_SHANK_X_fr_RF_THIGH()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_THIGH::Type_fr_RF_shank_fixed_X_fr_RF_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -5069,7 +5069,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_THIGH::Type_f
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_THIGH& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_THIGH& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_THIGH::update(const JState& q) {
     Scalar s_q_RF_KFE_;
     Scalar c_q_RF_KFE_;
     
@@ -5093,7 +5093,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_R
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_SHANK::Type_fr_RF_THIGH_X_fr_RF_SHANK()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_shank_fixed::Type_fr_RF_THIGH_X_fr_RF_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(0,5) = 0.28263;
@@ -5119,7 +5119,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_SHANK::Type_f
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_SHANK& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_shank_fixed& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_shank_fixed::update(const JState& q) {
     Scalar s_q_RF_KFE_;
     Scalar c_q_RF_KFE_;
     
@@ -5143,14 +5143,14 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_R
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
     (*this)(2,0) = 0;
     (*this)(2,1) = 0;
     (*this)(2,2) = 1.0;
-    (*this)(2,3) = 0.248;
+    (*this)(2,3) = 0.2745;
     (*this)(2,4) = - 0.08748;
     (*this)(2,5) = 0;
     (*this)(3,0) = 0;
@@ -5169,7 +5169,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK::Type
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed::update(const JState& q) {
     Scalar s_q_RF_WHEEL_;
     Scalar c_q_RF_WHEEL_;
     
@@ -5180,12 +5180,12 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr
     (*this)(0,1) =  s_q_RF_WHEEL_;
     (*this)(0,3) = ( 0.0328 *  s_q_RF_WHEEL_);
     (*this)(0,4) = (- 0.0328 *  c_q_RF_WHEEL_);
-    (*this)(0,5) = (( 0.08748 *  s_q_RF_WHEEL_) - ( 0.248 *  c_q_RF_WHEEL_));
+    (*this)(0,5) = (( 0.08748 *  s_q_RF_WHEEL_) - ( 0.2745 *  c_q_RF_WHEEL_));
     (*this)(1,0) = - s_q_RF_WHEEL_;
     (*this)(1,1) =  c_q_RF_WHEEL_;
     (*this)(1,3) = ( 0.0328 *  c_q_RF_WHEEL_);
     (*this)(1,4) = ( 0.0328 *  s_q_RF_WHEEL_);
-    (*this)(1,5) = (( 0.248 *  s_q_RF_WHEEL_) + ( 0.08748 *  c_q_RF_WHEEL_));
+    (*this)(1,5) = (( 0.2745 *  s_q_RF_WHEEL_) + ( 0.08748 *  c_q_RF_WHEEL_));
     (*this)(3,3) =  c_q_RF_WHEEL_;
     (*this)(3,4) =  s_q_RF_WHEEL_;
     (*this)(4,3) = - s_q_RF_WHEEL_;
@@ -5193,10 +5193,10 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L()
 {
     (*this)(0,2) = 0;
-    (*this)(0,5) = 0.248;
+    (*this)(0,5) = 0.2745;
     (*this)(1,2) = 0;
     (*this)(1,5) = - 0.08748;
     (*this)(2,0) = 0;
@@ -5219,7 +5219,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L::Type
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L::update(const JState& q) {
     Scalar s_q_RF_WHEEL_;
     Scalar c_q_RF_WHEEL_;
     
@@ -5234,8 +5234,8 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_R
     (*this)(1,1) =  c_q_RF_WHEEL_;
     (*this)(1,3) = (- 0.0328 *  c_q_RF_WHEEL_);
     (*this)(1,4) = ( 0.0328 *  s_q_RF_WHEEL_);
-    (*this)(2,3) = (( 0.08748 *  s_q_RF_WHEEL_) - ( 0.248 *  c_q_RF_WHEEL_));
-    (*this)(2,4) = (( 0.248 *  s_q_RF_WHEEL_) + ( 0.08748 *  c_q_RF_WHEEL_));
+    (*this)(2,3) = (( 0.08748 *  s_q_RF_WHEEL_) - ( 0.2745 *  c_q_RF_WHEEL_));
+    (*this)(2,4) = (( 0.2745 *  s_q_RF_WHEEL_) + ( 0.08748 *  c_q_RF_WHEEL_));
     (*this)(3,3) =  c_q_RF_WHEEL_;
     (*this)(3,4) = - s_q_RF_WHEEL_;
     (*this)(4,3) =  s_q_RF_WHEEL_;
@@ -5443,7 +5443,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_HIP_X_fr_LH_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_THIGH::Type_fr_LH_SHANK_X_fr_LH_THIGH()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_THIGH::Type_fr_LH_shank_fixed_X_fr_LH_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -5469,7 +5469,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_THIGH::Type_f
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_THIGH& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_THIGH& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_THIGH::update(const JState& q) {
     Scalar s_q_LH_KFE_;
     Scalar c_q_LH_KFE_;
     
@@ -5493,7 +5493,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_L
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_SHANK::Type_fr_LH_THIGH_X_fr_LH_SHANK()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_shank_fixed::Type_fr_LH_THIGH_X_fr_LH_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(0,5) = 0.28263;
@@ -5519,7 +5519,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_SHANK::Type_f
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_SHANK& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_shank_fixed& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_shank_fixed::update(const JState& q) {
     Scalar s_q_LH_KFE_;
     Scalar c_q_LH_KFE_;
     
@@ -5543,14 +5543,14 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_L
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
     (*this)(2,0) = 0;
     (*this)(2,1) = 0;
     (*this)(2,2) = 1.0;
-    (*this)(2,3) = 0.248;
+    (*this)(2,3) = 0.2745;
     (*this)(2,4) = 0.08748;
     (*this)(2,5) = 0;
     (*this)(3,0) = 0;
@@ -5569,7 +5569,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK::Type
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed::update(const JState& q) {
     Scalar s_q_LH_WHEEL_;
     Scalar c_q_LH_WHEEL_;
     
@@ -5580,12 +5580,12 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr
     (*this)(0,1) =  s_q_LH_WHEEL_;
     (*this)(0,3) = (- 0.0328 *  s_q_LH_WHEEL_);
     (*this)(0,4) = ( 0.0328 *  c_q_LH_WHEEL_);
-    (*this)(0,5) = ((- 0.08748 *  s_q_LH_WHEEL_) - ( 0.248 *  c_q_LH_WHEEL_));
+    (*this)(0,5) = ((- 0.08748 *  s_q_LH_WHEEL_) - ( 0.2745 *  c_q_LH_WHEEL_));
     (*this)(1,0) = - s_q_LH_WHEEL_;
     (*this)(1,1) =  c_q_LH_WHEEL_;
     (*this)(1,3) = (- 0.0328 *  c_q_LH_WHEEL_);
     (*this)(1,4) = (- 0.0328 *  s_q_LH_WHEEL_);
-    (*this)(1,5) = (( 0.248 *  s_q_LH_WHEEL_) - ( 0.08748 *  c_q_LH_WHEEL_));
+    (*this)(1,5) = (( 0.2745 *  s_q_LH_WHEEL_) - ( 0.08748 *  c_q_LH_WHEEL_));
     (*this)(3,3) =  c_q_LH_WHEEL_;
     (*this)(3,4) =  s_q_LH_WHEEL_;
     (*this)(4,3) = - s_q_LH_WHEEL_;
@@ -5593,10 +5593,10 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L()
 {
     (*this)(0,2) = 0;
-    (*this)(0,5) = 0.248;
+    (*this)(0,5) = 0.2745;
     (*this)(1,2) = 0;
     (*this)(1,5) = 0.08748;
     (*this)(2,0) = 0;
@@ -5619,7 +5619,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L::Type
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L::update(const JState& q) {
     Scalar s_q_LH_WHEEL_;
     Scalar c_q_LH_WHEEL_;
     
@@ -5634,8 +5634,8 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_L
     (*this)(1,1) =  c_q_LH_WHEEL_;
     (*this)(1,3) = ( 0.0328 *  c_q_LH_WHEEL_);
     (*this)(1,4) = (- 0.0328 *  s_q_LH_WHEEL_);
-    (*this)(2,3) = ((- 0.08748 *  s_q_LH_WHEEL_) - ( 0.248 *  c_q_LH_WHEEL_));
-    (*this)(2,4) = (( 0.248 *  s_q_LH_WHEEL_) - ( 0.08748 *  c_q_LH_WHEEL_));
+    (*this)(2,3) = ((- 0.08748 *  s_q_LH_WHEEL_) - ( 0.2745 *  c_q_LH_WHEEL_));
+    (*this)(2,4) = (( 0.2745 *  s_q_LH_WHEEL_) - ( 0.08748 *  c_q_LH_WHEEL_));
     (*this)(3,3) =  c_q_LH_WHEEL_;
     (*this)(3,4) = - s_q_LH_WHEEL_;
     (*this)(4,3) =  s_q_LH_WHEEL_;
@@ -5843,7 +5843,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_HIP_X_fr_RH_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_THIGH::Type_fr_RH_SHANK_X_fr_RH_THIGH()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_THIGH::Type_fr_RH_shank_fixed_X_fr_RH_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -5869,7 +5869,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_THIGH::Type_f
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_THIGH& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_THIGH& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_THIGH::update(const JState& q) {
     Scalar s_q_RH_KFE_;
     Scalar c_q_RH_KFE_;
     
@@ -5893,7 +5893,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_R
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_SHANK::Type_fr_RH_THIGH_X_fr_RH_SHANK()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_shank_fixed::Type_fr_RH_THIGH_X_fr_RH_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(0,5) = 0.28263;
@@ -5919,7 +5919,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_SHANK::Type_f
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_SHANK& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_shank_fixed& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_shank_fixed::update(const JState& q) {
     Scalar s_q_RH_KFE_;
     Scalar c_q_RH_KFE_;
     
@@ -5943,14 +5943,14 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_R
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
     (*this)(2,0) = 0;
     (*this)(2,1) = 0;
     (*this)(2,2) = 1.0;
-    (*this)(2,3) = 0.248;
+    (*this)(2,3) = 0.2745;
     (*this)(2,4) = 0.08748;
     (*this)(2,5) = 0;
     (*this)(3,0) = 0;
@@ -5969,7 +5969,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK::Type
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed::update(const JState& q) {
     Scalar s_q_RH_WHEEL_;
     Scalar c_q_RH_WHEEL_;
     
@@ -5980,12 +5980,12 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr
     (*this)(0,1) =  s_q_RH_WHEEL_;
     (*this)(0,3) = ( 0.0328 *  s_q_RH_WHEEL_);
     (*this)(0,4) = (- 0.0328 *  c_q_RH_WHEEL_);
-    (*this)(0,5) = ((- 0.08748 *  s_q_RH_WHEEL_) - ( 0.248 *  c_q_RH_WHEEL_));
+    (*this)(0,5) = ((- 0.08748 *  s_q_RH_WHEEL_) - ( 0.2745 *  c_q_RH_WHEEL_));
     (*this)(1,0) = - s_q_RH_WHEEL_;
     (*this)(1,1) =  c_q_RH_WHEEL_;
     (*this)(1,3) = ( 0.0328 *  c_q_RH_WHEEL_);
     (*this)(1,4) = ( 0.0328 *  s_q_RH_WHEEL_);
-    (*this)(1,5) = (( 0.248 *  s_q_RH_WHEEL_) - ( 0.08748 *  c_q_RH_WHEEL_));
+    (*this)(1,5) = (( 0.2745 *  s_q_RH_WHEEL_) - ( 0.08748 *  c_q_RH_WHEEL_));
     (*this)(3,3) =  c_q_RH_WHEEL_;
     (*this)(3,4) =  s_q_RH_WHEEL_;
     (*this)(4,3) = - s_q_RH_WHEEL_;
@@ -5993,10 +5993,10 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L()
 {
     (*this)(0,2) = 0;
-    (*this)(0,5) = 0.248;
+    (*this)(0,5) = 0.2745;
     (*this)(1,2) = 0;
     (*this)(1,5) = 0.08748;
     (*this)(2,0) = 0;
@@ -6019,7 +6019,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L::Type
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L::update(const JState& q) {
     Scalar s_q_RH_WHEEL_;
     Scalar c_q_RH_WHEEL_;
     
@@ -6034,8 +6034,8 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_R
     (*this)(1,1) =  c_q_RH_WHEEL_;
     (*this)(1,3) = (- 0.0328 *  c_q_RH_WHEEL_);
     (*this)(1,4) = ( 0.0328 *  s_q_RH_WHEEL_);
-    (*this)(2,3) = ((- 0.08748 *  s_q_RH_WHEEL_) - ( 0.248 *  c_q_RH_WHEEL_));
-    (*this)(2,4) = (( 0.248 *  s_q_RH_WHEEL_) - ( 0.08748 *  c_q_RH_WHEEL_));
+    (*this)(2,3) = ((- 0.08748 *  s_q_RH_WHEEL_) - ( 0.2745 *  c_q_RH_WHEEL_));
+    (*this)(2,4) = (( 0.2745 *  s_q_RH_WHEEL_) - ( 0.08748 *  c_q_RH_WHEEL_));
     (*this)(3,3) =  c_q_RH_WHEEL_;
     (*this)(3,4) = - s_q_RH_WHEEL_;
     (*this)(4,3) =  s_q_RH_WHEEL_;
@@ -6074,15 +6074,15 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_base_X_fr
     
     (*this)(0,0) = ((((- c_q_LF_HFE_ *  s_q_LF_KFE_) - ( s_q_LF_HFE_ *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((( c_q_LF_HFE_ *  c_q_LF_KFE_) - ( s_q_LF_HFE_ *  s_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(0,1) = (((( s_q_LF_HFE_ *  s_q_LF_KFE_) - ( c_q_LF_HFE_ *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((- c_q_LF_HFE_ *  s_q_LF_KFE_) - ( s_q_LF_HFE_ *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
-    (*this)(0,3) = ((((((- 0.08748 *  s_q_LF_HFE_) - ( 0.248 *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + ((( 0.08748 *  c_q_LF_HFE_) - ( 0.248 *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) - ( 0.28263 *  s_q_LF_HFE_)) +  0.36);
+    (*this)(0,3) = ((((((- 0.08748 *  s_q_LF_HFE_) - ( 0.2745 *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + ((( 0.08748 *  c_q_LF_HFE_) - ( 0.2745 *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) - ( 0.28263 *  s_q_LF_HFE_)) +  0.36);
     (*this)(1,0) = ((((( s_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((( s_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(1,1) = (((((- s_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((( s_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(1,2) =  c_q_LF_HAA_;
-    (*this)(1,3) = (((((((( 0.08748 *  s_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.248 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.08748 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.248 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.28263 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.18979 *  c_q_LF_HAA_)) +  0.104);
+    (*this)(1,3) = (((((((( 0.08748 *  s_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.2745 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.08748 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.2745 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.28263 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.18979 *  c_q_LF_HAA_)) +  0.104);
     (*this)(2,0) = ((((( c_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((((- c_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(2,1) = ((((( c_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (( c_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((( c_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(2,2) =  s_q_LF_HAA_;
-    (*this)(2,3) = ((((((( 0.248 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.08748 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((- 0.08748 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.248 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) - (( 0.28263 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.18979 *  s_q_LF_HAA_));
+    (*this)(2,3) = ((((((( 0.2745 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.08748 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((- 0.08748 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.2745 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) - (( 0.28263 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.18979 *  s_q_LF_HAA_));
     return *this;
 }
 template <typename TRAIT>
@@ -6117,11 +6117,11 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_WHEEL_
     (*this)(0,0) = ((((- c_q_LF_HFE_ *  s_q_LF_KFE_) - ( s_q_LF_HFE_ *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((( 1.0 *  c_q_LF_HFE_) *  c_q_LF_KFE_) - ( s_q_LF_HFE_ *  s_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(0,1) = (((((( 1.0 *  s_q_LF_HAA_) *  c_q_LF_HFE_) *  c_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((((( 1.0 *  s_q_LF_HAA_) *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(0,2) = (((((( 1.0 *  c_q_LF_HAA_) *  s_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((((- c_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
-    (*this)(0,3) = (((((((( 0.104 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ( 0.36 *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.36 *  s_q_LF_HFE_) - (( 0.104 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) -  0.28263) *  c_q_LF_KFE_)) -  0.248) *  s_q_LF_WHEEL_) + ((((((( 0.36 *  s_q_LF_HFE_) - (( 0.104 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) -  0.28263) *  s_q_LF_KFE_) + ((((- 0.104 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - ( 0.36 *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) -  0.08748) *  c_q_LF_WHEEL_));
+    (*this)(0,3) = (((((((( 0.104 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ( 0.36 *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.36 *  s_q_LF_HFE_) - (( 0.104 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) -  0.28263) *  c_q_LF_KFE_)) -  0.2745) *  s_q_LF_WHEEL_) + ((((((( 0.36 *  s_q_LF_HFE_) - (( 0.104 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) -  0.28263) *  s_q_LF_KFE_) + ((((- 0.104 *  s_q_LF_HAA_) *  s_q_LF_HFE_) - ( 0.36 *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) -  0.08748) *  c_q_LF_WHEEL_));
     (*this)(1,0) = ((((( 1.0 *  s_q_LF_HFE_) *  s_q_LF_KFE_) - ( c_q_LF_HFE_ *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + (((- c_q_LF_HFE_ *  s_q_LF_KFE_) - ( s_q_LF_HFE_ *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(1,1) = (((((- s_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((((( 1.0 *  s_q_LF_HAA_) *  c_q_LF_HFE_) *  c_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_)) *  c_q_LF_WHEEL_));
     (*this)(1,2) = (((((( 1.0 *  c_q_LF_HAA_) *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (( c_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_)) *  s_q_LF_WHEEL_) + ((((( 1.0 *  c_q_LF_HAA_) *  s_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_)) *  c_q_LF_WHEEL_));
-    (*this)(1,3) = ((((((((- 0.36 *  s_q_LF_HFE_) + (( 0.104 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) +  0.28263) *  s_q_LF_KFE_) + (((( 0.104 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ( 0.36 *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) +  0.08748) *  s_q_LF_WHEEL_) + ((((((( 0.104 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ( 0.36 *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.36 *  s_q_LF_HFE_) - (( 0.104 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) -  0.28263) *  c_q_LF_KFE_)) -  0.248) *  c_q_LF_WHEEL_));
+    (*this)(1,3) = ((((((((- 0.36 *  s_q_LF_HFE_) + (( 0.104 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) +  0.28263) *  s_q_LF_KFE_) + (((( 0.104 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ( 0.36 *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) +  0.08748) *  s_q_LF_WHEEL_) + ((((((( 0.104 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + ( 0.36 *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.36 *  s_q_LF_HFE_) - (( 0.104 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) -  0.28263) *  c_q_LF_KFE_)) -  0.2745) *  c_q_LF_WHEEL_));
     (*this)(2,1) =  c_q_LF_HAA_;
     (*this)(2,2) =  s_q_LF_HAA_;
     (*this)(2,3) = ((- 0.104 *  c_q_LF_HAA_) -  0.18979);
@@ -6158,15 +6158,15 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_base_X_fr
     
     (*this)(0,0) = ((((- c_q_LH_HFE_ *  s_q_LH_KFE_) - ( s_q_LH_HFE_ *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((( c_q_LH_HFE_ *  c_q_LH_KFE_) - ( s_q_LH_HFE_ *  s_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(0,1) = (((( s_q_LH_HFE_ *  s_q_LH_KFE_) - ( c_q_LH_HFE_ *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((- c_q_LH_HFE_ *  s_q_LH_KFE_) - ( s_q_LH_HFE_ *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
-    (*this)(0,3) = (((((( 0.08748 *  s_q_LH_HFE_) - ( 0.248 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((- 0.248 *  s_q_LH_HFE_) - ( 0.08748 *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.28263 *  s_q_LH_HFE_)) -  0.36);
+    (*this)(0,3) = (((((( 0.08748 *  s_q_LH_HFE_) - ( 0.2745 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((- 0.2745 *  s_q_LH_HFE_) - ( 0.08748 *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.28263 *  s_q_LH_HFE_)) -  0.36);
     (*this)(1,0) = ((((( s_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((( s_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(1,1) = (((((- s_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((( s_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(1,2) =  c_q_LH_HAA_;
-    (*this)(1,3) = ((((((((- 0.248 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.08748 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.248 *  s_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.08748 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.28263 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.18979 *  c_q_LH_HAA_)) +  0.104);
+    (*this)(1,3) = ((((((((- 0.2745 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.08748 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.2745 *  s_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.08748 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.28263 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.18979 *  c_q_LH_HAA_)) +  0.104);
     (*this)(2,0) = ((((( c_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((((- c_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(2,1) = ((((( c_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (( c_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((( c_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(2,2) =  s_q_LH_HAA_;
-    (*this)(2,3) = ((((((( 0.248 *  c_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.08748 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.08748 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.248 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - (( 0.28263 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.18979 *  s_q_LH_HAA_));
+    (*this)(2,3) = ((((((( 0.2745 *  c_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.08748 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.08748 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.2745 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - (( 0.28263 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.18979 *  s_q_LH_HAA_));
     return *this;
 }
 template <typename TRAIT>
@@ -6201,11 +6201,11 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_WHEEL_
     (*this)(0,0) = ((((- c_q_LH_HFE_ *  s_q_LH_KFE_) - ( s_q_LH_HFE_ *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((( 1.0 *  c_q_LH_HFE_) *  c_q_LH_KFE_) - ( s_q_LH_HFE_ *  s_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(0,1) = (((((( 1.0 *  s_q_LH_HAA_) *  c_q_LH_HFE_) *  c_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((((( 1.0 *  s_q_LH_HAA_) *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(0,2) = (((((( 1.0 *  c_q_LH_HAA_) *  s_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((((- c_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
-    (*this)(0,3) = (((((((( 0.104 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - ( 0.36 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((- 0.36 *  s_q_LH_HFE_) - (( 0.104 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) -  0.28263) *  c_q_LH_KFE_)) -  0.248) *  s_q_LH_WHEEL_) + (((((((- 0.36 *  s_q_LH_HFE_) - (( 0.104 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) -  0.28263) *  s_q_LH_KFE_) + ((( 0.36 *  c_q_LH_HFE_) - (( 0.104 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) +  0.08748) *  c_q_LH_WHEEL_));
+    (*this)(0,3) = (((((((( 0.104 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - ( 0.36 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((- 0.36 *  s_q_LH_HFE_) - (( 0.104 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) -  0.28263) *  c_q_LH_KFE_)) -  0.2745) *  s_q_LH_WHEEL_) + (((((((- 0.36 *  s_q_LH_HFE_) - (( 0.104 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) -  0.28263) *  s_q_LH_KFE_) + ((( 0.36 *  c_q_LH_HFE_) - (( 0.104 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) +  0.08748) *  c_q_LH_WHEEL_));
     (*this)(1,0) = ((((( 1.0 *  s_q_LH_HFE_) *  s_q_LH_KFE_) - ( c_q_LH_HFE_ *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + (((- c_q_LH_HFE_ *  s_q_LH_KFE_) - ( s_q_LH_HFE_ *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(1,1) = (((((- s_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((((( 1.0 *  s_q_LH_HAA_) *  c_q_LH_HFE_) *  c_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_)) *  c_q_LH_WHEEL_));
     (*this)(1,2) = (((((( 1.0 *  c_q_LH_HAA_) *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (( c_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_)) *  s_q_LH_WHEEL_) + ((((( 1.0 *  c_q_LH_HAA_) *  s_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_)) *  c_q_LH_WHEEL_));
-    (*this)(1,3) = (((((((( 0.36 *  s_q_LH_HFE_) + (( 0.104 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) +  0.28263) *  s_q_LH_KFE_) + (((( 0.104 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - ( 0.36 *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) -  0.08748) *  s_q_LH_WHEEL_) + ((((((( 0.104 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - ( 0.36 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((- 0.36 *  s_q_LH_HFE_) - (( 0.104 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) -  0.28263) *  c_q_LH_KFE_)) -  0.248) *  c_q_LH_WHEEL_));
+    (*this)(1,3) = (((((((( 0.36 *  s_q_LH_HFE_) + (( 0.104 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) +  0.28263) *  s_q_LH_KFE_) + (((( 0.104 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - ( 0.36 *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) -  0.08748) *  s_q_LH_WHEEL_) + ((((((( 0.104 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - ( 0.36 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + ((((- 0.36 *  s_q_LH_HFE_) - (( 0.104 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) -  0.28263) *  c_q_LH_KFE_)) -  0.2745) *  c_q_LH_WHEEL_));
     (*this)(2,1) =  c_q_LH_HAA_;
     (*this)(2,2) =  s_q_LH_HAA_;
     (*this)(2,3) = ((- 0.104 *  c_q_LH_HAA_) -  0.18979);
@@ -6242,15 +6242,15 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_base_X_fr
     
     (*this)(0,0) = ((((- c_q_RF_HFE_ *  s_q_RF_KFE_) - ( s_q_RF_HFE_ *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((( c_q_RF_HFE_ *  c_q_RF_KFE_) - ( s_q_RF_HFE_ *  s_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(0,1) = (((( s_q_RF_HFE_ *  s_q_RF_KFE_) - ( c_q_RF_HFE_ *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((- c_q_RF_HFE_ *  s_q_RF_KFE_) - ( s_q_RF_HFE_ *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
-    (*this)(0,3) = ((((((- 0.08748 *  s_q_RF_HFE_) - ( 0.248 *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((( 0.08748 *  c_q_RF_HFE_) - ( 0.248 *  s_q_RF_HFE_)) *  c_q_RF_KFE_)) - ( 0.28263 *  s_q_RF_HFE_)) +  0.36);
+    (*this)(0,3) = ((((((- 0.08748 *  s_q_RF_HFE_) - ( 0.2745 *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((( 0.08748 *  c_q_RF_HFE_) - ( 0.2745 *  s_q_RF_HFE_)) *  c_q_RF_KFE_)) - ( 0.28263 *  s_q_RF_HFE_)) +  0.36);
     (*this)(1,0) = ((((( s_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((( s_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(1,1) = (((((- s_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((( s_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(1,2) =  c_q_RF_HAA_;
-    (*this)(1,3) = (((((((( 0.08748 *  s_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.248 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.08748 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.248 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.28263 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.18979 *  c_q_RF_HAA_)) -  0.104);
+    (*this)(1,3) = (((((((( 0.08748 *  s_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.2745 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.08748 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.2745 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.28263 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.18979 *  c_q_RF_HAA_)) -  0.104);
     (*this)(2,0) = ((((( c_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((((- c_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(2,1) = ((((( c_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (( c_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((( c_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(2,2) =  s_q_RF_HAA_;
-    (*this)(2,3) = ((((((( 0.248 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.08748 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((- 0.08748 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.248 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) - (( 0.28263 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.18979 *  s_q_RF_HAA_));
+    (*this)(2,3) = ((((((( 0.2745 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.08748 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((- 0.08748 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.2745 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) - (( 0.28263 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.18979 *  s_q_RF_HAA_));
     return *this;
 }
 template <typename TRAIT>
@@ -6285,11 +6285,11 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_WHEEL_
     (*this)(0,0) = ((((- c_q_RF_HFE_ *  s_q_RF_KFE_) - ( s_q_RF_HFE_ *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((( 1.0 *  c_q_RF_HFE_) *  c_q_RF_KFE_) - ( s_q_RF_HFE_ *  s_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(0,1) = (((((( 1.0 *  s_q_RF_HAA_) *  c_q_RF_HFE_) *  c_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((((( 1.0 *  s_q_RF_HAA_) *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(0,2) = (((((( 1.0 *  c_q_RF_HAA_) *  s_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((((- c_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
-    (*this)(0,3) = ((((((( 0.36 *  c_q_RF_HFE_) - (( 0.104 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.36 *  s_q_RF_HFE_) + (( 0.104 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) -  0.28263) *  c_q_RF_KFE_)) -  0.248) *  s_q_RF_WHEEL_) + ((((((( 0.36 *  s_q_RF_HFE_) + (( 0.104 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) -  0.28263) *  s_q_RF_KFE_) + (((( 0.104 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - ( 0.36 *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) -  0.08748) *  c_q_RF_WHEEL_));
+    (*this)(0,3) = ((((((( 0.36 *  c_q_RF_HFE_) - (( 0.104 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.36 *  s_q_RF_HFE_) + (( 0.104 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) -  0.28263) *  c_q_RF_KFE_)) -  0.2745) *  s_q_RF_WHEEL_) + ((((((( 0.36 *  s_q_RF_HFE_) + (( 0.104 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) -  0.28263) *  s_q_RF_KFE_) + (((( 0.104 *  s_q_RF_HAA_) *  s_q_RF_HFE_) - ( 0.36 *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) -  0.08748) *  c_q_RF_WHEEL_));
     (*this)(1,0) = ((((( 1.0 *  s_q_RF_HFE_) *  s_q_RF_KFE_) - ( c_q_RF_HFE_ *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + (((- c_q_RF_HFE_ *  s_q_RF_KFE_) - ( s_q_RF_HFE_ *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(1,1) = (((((- s_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((((( 1.0 *  s_q_RF_HAA_) *  c_q_RF_HFE_) *  c_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_)) *  c_q_RF_WHEEL_));
     (*this)(1,2) = (((((( 1.0 *  c_q_RF_HAA_) *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (( c_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_)) *  s_q_RF_WHEEL_) + ((((( 1.0 *  c_q_RF_HAA_) *  s_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_)) *  c_q_RF_WHEEL_));
-    (*this)(1,3) = ((((((((- 0.36 *  s_q_RF_HFE_) - (( 0.104 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) +  0.28263) *  s_q_RF_KFE_) + ((( 0.36 *  c_q_RF_HFE_) - (( 0.104 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) *  c_q_RF_KFE_)) +  0.08748) *  s_q_RF_WHEEL_) + (((((( 0.36 *  c_q_RF_HFE_) - (( 0.104 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.36 *  s_q_RF_HFE_) + (( 0.104 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) -  0.28263) *  c_q_RF_KFE_)) -  0.248) *  c_q_RF_WHEEL_));
+    (*this)(1,3) = ((((((((- 0.36 *  s_q_RF_HFE_) - (( 0.104 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) +  0.28263) *  s_q_RF_KFE_) + ((( 0.36 *  c_q_RF_HFE_) - (( 0.104 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) *  c_q_RF_KFE_)) +  0.08748) *  s_q_RF_WHEEL_) + (((((( 0.36 *  c_q_RF_HFE_) - (( 0.104 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.36 *  s_q_RF_HFE_) + (( 0.104 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) -  0.28263) *  c_q_RF_KFE_)) -  0.2745) *  c_q_RF_WHEEL_));
     (*this)(2,1) =  c_q_RF_HAA_;
     (*this)(2,2) =  s_q_RF_HAA_;
     (*this)(2,3) = (( 0.104 *  c_q_RF_HAA_) +  0.18979);
@@ -6326,15 +6326,15 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_base_X_fr
     
     (*this)(0,0) = ((((- c_q_RH_HFE_ *  s_q_RH_KFE_) - ( s_q_RH_HFE_ *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((( c_q_RH_HFE_ *  c_q_RH_KFE_) - ( s_q_RH_HFE_ *  s_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(0,1) = (((( s_q_RH_HFE_ *  s_q_RH_KFE_) - ( c_q_RH_HFE_ *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((- c_q_RH_HFE_ *  s_q_RH_KFE_) - ( s_q_RH_HFE_ *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
-    (*this)(0,3) = (((((( 0.08748 *  s_q_RH_HFE_) - ( 0.248 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((- 0.248 *  s_q_RH_HFE_) - ( 0.08748 *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.28263 *  s_q_RH_HFE_)) -  0.36);
+    (*this)(0,3) = (((((( 0.08748 *  s_q_RH_HFE_) - ( 0.2745 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((- 0.2745 *  s_q_RH_HFE_) - ( 0.08748 *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.28263 *  s_q_RH_HFE_)) -  0.36);
     (*this)(1,0) = ((((( s_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((( s_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(1,1) = (((((- s_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((( s_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(1,2) =  c_q_RH_HAA_;
-    (*this)(1,3) = ((((((((- 0.248 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.08748 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.248 *  s_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.08748 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.28263 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.18979 *  c_q_RH_HAA_)) -  0.104);
+    (*this)(1,3) = ((((((((- 0.2745 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.08748 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.2745 *  s_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.08748 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.28263 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.18979 *  c_q_RH_HAA_)) -  0.104);
     (*this)(2,0) = ((((( c_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((((- c_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(2,1) = ((((( c_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (( c_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((( c_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(2,2) =  s_q_RH_HAA_;
-    (*this)(2,3) = ((((((( 0.248 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.08748 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.08748 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.248 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - (( 0.28263 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.18979 *  s_q_RH_HAA_));
+    (*this)(2,3) = ((((((( 0.2745 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.08748 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.08748 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.2745 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - (( 0.28263 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.18979 *  s_q_RH_HAA_));
     return *this;
 }
 template <typename TRAIT>
@@ -6369,11 +6369,11 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_WHEEL_
     (*this)(0,0) = ((((- c_q_RH_HFE_ *  s_q_RH_KFE_) - ( s_q_RH_HFE_ *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((( 1.0 *  c_q_RH_HFE_) *  c_q_RH_KFE_) - ( s_q_RH_HFE_ *  s_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(0,1) = (((((( 1.0 *  s_q_RH_HAA_) *  c_q_RH_HFE_) *  c_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((((( 1.0 *  s_q_RH_HAA_) *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(0,2) = (((((( 1.0 *  c_q_RH_HAA_) *  s_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((((- c_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
-    (*this)(0,3) = ((((((((- 0.104 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - ( 0.36 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((- 0.36 *  s_q_RH_HFE_) + (( 0.104 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) -  0.28263) *  c_q_RH_KFE_)) -  0.248) *  s_q_RH_WHEEL_) + (((((((- 0.36 *  s_q_RH_HFE_) + (( 0.104 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) -  0.28263) *  s_q_RH_KFE_) + (((( 0.104 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + ( 0.36 *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) +  0.08748) *  c_q_RH_WHEEL_));
+    (*this)(0,3) = ((((((((- 0.104 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - ( 0.36 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((- 0.36 *  s_q_RH_HFE_) + (( 0.104 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) -  0.28263) *  c_q_RH_KFE_)) -  0.2745) *  s_q_RH_WHEEL_) + (((((((- 0.36 *  s_q_RH_HFE_) + (( 0.104 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) -  0.28263) *  s_q_RH_KFE_) + (((( 0.104 *  s_q_RH_HAA_) *  s_q_RH_HFE_) + ( 0.36 *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) +  0.08748) *  c_q_RH_WHEEL_));
     (*this)(1,0) = ((((( 1.0 *  s_q_RH_HFE_) *  s_q_RH_KFE_) - ( c_q_RH_HFE_ *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + (((- c_q_RH_HFE_ *  s_q_RH_KFE_) - ( s_q_RH_HFE_ *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(1,1) = (((((- s_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((((( 1.0 *  s_q_RH_HAA_) *  c_q_RH_HFE_) *  c_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_)) *  c_q_RH_WHEEL_));
     (*this)(1,2) = (((((( 1.0 *  c_q_RH_HAA_) *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (( c_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_)) *  s_q_RH_WHEEL_) + ((((( 1.0 *  c_q_RH_HAA_) *  s_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_)) *  c_q_RH_WHEEL_));
-    (*this)(1,3) = (((((((( 0.36 *  s_q_RH_HFE_) - (( 0.104 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) +  0.28263) *  s_q_RH_KFE_) + ((((- 0.104 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - ( 0.36 *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) -  0.08748) *  s_q_RH_WHEEL_) + (((((((- 0.104 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - ( 0.36 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((- 0.36 *  s_q_RH_HFE_) + (( 0.104 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) -  0.28263) *  c_q_RH_KFE_)) -  0.248) *  c_q_RH_WHEEL_));
+    (*this)(1,3) = (((((((( 0.36 *  s_q_RH_HFE_) - (( 0.104 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) +  0.28263) *  s_q_RH_KFE_) + ((((- 0.104 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - ( 0.36 *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) -  0.08748) *  s_q_RH_WHEEL_) + (((((((- 0.104 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - ( 0.36 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + ((((- 0.36 *  s_q_RH_HFE_) + (( 0.104 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) -  0.28263) *  c_q_RH_KFE_)) -  0.2745) *  c_q_RH_WHEEL_));
     (*this)(2,1) =  c_q_RH_HAA_;
     (*this)(2,2) =  s_q_RH_HAA_;
     (*this)(2,3) = (( 0.104 *  c_q_RH_HAA_) +  0.18979);
@@ -6494,15 +6494,15 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_base_X_fr
     
     (*this)(0,0) = (( c_q_LF_HFE_ *  c_q_LF_KFE_) - ( s_q_LF_HFE_ *  s_q_LF_KFE_));
     (*this)(0,1) = ((- c_q_LF_HFE_ *  s_q_LF_KFE_) - ( s_q_LF_HFE_ *  c_q_LF_KFE_));
-    (*this)(0,3) = ((((((- 0.08748 *  s_q_LF_HFE_) - ( 0.248 *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + ((( 0.08748 *  c_q_LF_HFE_) - ( 0.248 *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) - ( 0.28263 *  s_q_LF_HFE_)) +  0.36);
+    (*this)(0,3) = ((((((- 0.08748 *  s_q_LF_HFE_) - ( 0.2745 *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + ((( 0.08748 *  c_q_LF_HFE_) - ( 0.2745 *  s_q_LF_HFE_)) *  c_q_LF_KFE_)) - ( 0.28263 *  s_q_LF_HFE_)) +  0.36);
     (*this)(1,0) = ((( s_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) + (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_));
     (*this)(1,1) = ((( s_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_) - (( s_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_));
     (*this)(1,2) =  c_q_LF_HAA_;
-    (*this)(1,3) = (((((((( 0.08748 *  s_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.248 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.08748 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.248 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.28263 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.18979 *  c_q_LF_HAA_)) +  0.104);
+    (*this)(1,3) = (((((((( 0.08748 *  s_q_LF_HAA_) *  c_q_LF_HFE_) - (( 0.2745 *  s_q_LF_HAA_) *  s_q_LF_HFE_)) *  s_q_LF_KFE_) + (((( 0.08748 *  s_q_LF_HAA_) *  s_q_LF_HFE_) + (( 0.2745 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) + (( 0.28263 *  s_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.18979 *  c_q_LF_HAA_)) +  0.104);
     (*this)(2,0) = (((- c_q_LF_HAA_ *  c_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  s_q_LF_HFE_) *  c_q_LF_KFE_));
     (*this)(2,1) = ((( c_q_LF_HAA_ *  s_q_LF_HFE_) *  s_q_LF_KFE_) - (( c_q_LF_HAA_ *  c_q_LF_HFE_) *  c_q_LF_KFE_));
     (*this)(2,2) =  s_q_LF_HAA_;
-    (*this)(2,3) = ((((((( 0.248 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.08748 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((- 0.08748 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.248 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) - (( 0.28263 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.18979 *  s_q_LF_HAA_));
+    (*this)(2,3) = ((((((( 0.2745 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.08748 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  s_q_LF_KFE_) + ((((- 0.08748 *  c_q_LF_HAA_) *  s_q_LF_HFE_) - (( 0.2745 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) *  c_q_LF_KFE_)) - (( 0.28263 *  c_q_LF_HAA_) *  c_q_LF_HFE_)) + ( 0.18979 *  s_q_LF_HAA_));
     return *this;
 }
 template <typename TRAIT>
@@ -6620,15 +6620,15 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_base_X_fr
     
     (*this)(0,0) = (( c_q_LH_HFE_ *  c_q_LH_KFE_) - ( s_q_LH_HFE_ *  s_q_LH_KFE_));
     (*this)(0,1) = ((- c_q_LH_HFE_ *  s_q_LH_KFE_) - ( s_q_LH_HFE_ *  c_q_LH_KFE_));
-    (*this)(0,3) = (((((( 0.08748 *  s_q_LH_HFE_) - ( 0.248 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((- 0.248 *  s_q_LH_HFE_) - ( 0.08748 *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.28263 *  s_q_LH_HFE_)) -  0.36);
+    (*this)(0,3) = (((((( 0.08748 *  s_q_LH_HFE_) - ( 0.2745 *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((- 0.2745 *  s_q_LH_HFE_) - ( 0.08748 *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - ( 0.28263 *  s_q_LH_HFE_)) -  0.36);
     (*this)(1,0) = ((( s_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) + (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_));
     (*this)(1,1) = ((( s_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_) - (( s_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_));
     (*this)(1,2) =  c_q_LH_HAA_;
-    (*this)(1,3) = ((((((((- 0.248 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.08748 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.248 *  s_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.08748 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.28263 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.18979 *  c_q_LH_HAA_)) +  0.104);
+    (*this)(1,3) = ((((((((- 0.2745 *  s_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.08748 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.2745 *  s_q_LH_HAA_) *  c_q_LH_HFE_) - (( 0.08748 *  s_q_LH_HAA_) *  s_q_LH_HFE_)) *  c_q_LH_KFE_)) + (( 0.28263 *  s_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.18979 *  c_q_LH_HAA_)) +  0.104);
     (*this)(2,0) = (((- c_q_LH_HAA_ *  c_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  s_q_LH_HFE_) *  c_q_LH_KFE_));
     (*this)(2,1) = ((( c_q_LH_HAA_ *  s_q_LH_HFE_) *  s_q_LH_KFE_) - (( c_q_LH_HAA_ *  c_q_LH_HFE_) *  c_q_LH_KFE_));
     (*this)(2,2) =  s_q_LH_HAA_;
-    (*this)(2,3) = ((((((( 0.248 *  c_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.08748 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.08748 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.248 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - (( 0.28263 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.18979 *  s_q_LH_HAA_));
+    (*this)(2,3) = ((((((( 0.2745 *  c_q_LH_HAA_) *  s_q_LH_HFE_) + (( 0.08748 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  s_q_LH_KFE_) + (((( 0.08748 *  c_q_LH_HAA_) *  s_q_LH_HFE_) - (( 0.2745 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) *  c_q_LH_KFE_)) - (( 0.28263 *  c_q_LH_HAA_) *  c_q_LH_HFE_)) + ( 0.18979 *  s_q_LH_HAA_));
     return *this;
 }
 template <typename TRAIT>
@@ -6746,15 +6746,15 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_base_X_fr
     
     (*this)(0,0) = (( c_q_RF_HFE_ *  c_q_RF_KFE_) - ( s_q_RF_HFE_ *  s_q_RF_KFE_));
     (*this)(0,1) = ((- c_q_RF_HFE_ *  s_q_RF_KFE_) - ( s_q_RF_HFE_ *  c_q_RF_KFE_));
-    (*this)(0,3) = ((((((- 0.08748 *  s_q_RF_HFE_) - ( 0.248 *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((( 0.08748 *  c_q_RF_HFE_) - ( 0.248 *  s_q_RF_HFE_)) *  c_q_RF_KFE_)) - ( 0.28263 *  s_q_RF_HFE_)) +  0.36);
+    (*this)(0,3) = ((((((- 0.08748 *  s_q_RF_HFE_) - ( 0.2745 *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((( 0.08748 *  c_q_RF_HFE_) - ( 0.2745 *  s_q_RF_HFE_)) *  c_q_RF_KFE_)) - ( 0.28263 *  s_q_RF_HFE_)) +  0.36);
     (*this)(1,0) = ((( s_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) + (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_));
     (*this)(1,1) = ((( s_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_) - (( s_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_));
     (*this)(1,2) =  c_q_RF_HAA_;
-    (*this)(1,3) = (((((((( 0.08748 *  s_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.248 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.08748 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.248 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.28263 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.18979 *  c_q_RF_HAA_)) -  0.104);
+    (*this)(1,3) = (((((((( 0.08748 *  s_q_RF_HAA_) *  c_q_RF_HFE_) - (( 0.2745 *  s_q_RF_HAA_) *  s_q_RF_HFE_)) *  s_q_RF_KFE_) + (((( 0.08748 *  s_q_RF_HAA_) *  s_q_RF_HFE_) + (( 0.2745 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) + (( 0.28263 *  s_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.18979 *  c_q_RF_HAA_)) -  0.104);
     (*this)(2,0) = (((- c_q_RF_HAA_ *  c_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  s_q_RF_HFE_) *  c_q_RF_KFE_));
     (*this)(2,1) = ((( c_q_RF_HAA_ *  s_q_RF_HFE_) *  s_q_RF_KFE_) - (( c_q_RF_HAA_ *  c_q_RF_HFE_) *  c_q_RF_KFE_));
     (*this)(2,2) =  s_q_RF_HAA_;
-    (*this)(2,3) = ((((((( 0.248 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.08748 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((- 0.08748 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.248 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) - (( 0.28263 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.18979 *  s_q_RF_HAA_));
+    (*this)(2,3) = ((((((( 0.2745 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.08748 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  s_q_RF_KFE_) + ((((- 0.08748 *  c_q_RF_HAA_) *  s_q_RF_HFE_) - (( 0.2745 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) *  c_q_RF_KFE_)) - (( 0.28263 *  c_q_RF_HAA_) *  c_q_RF_HFE_)) - ( 0.18979 *  s_q_RF_HAA_));
     return *this;
 }
 template <typename TRAIT>
@@ -6872,15 +6872,15 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_base_X_fr
     
     (*this)(0,0) = (( c_q_RH_HFE_ *  c_q_RH_KFE_) - ( s_q_RH_HFE_ *  s_q_RH_KFE_));
     (*this)(0,1) = ((- c_q_RH_HFE_ *  s_q_RH_KFE_) - ( s_q_RH_HFE_ *  c_q_RH_KFE_));
-    (*this)(0,3) = (((((( 0.08748 *  s_q_RH_HFE_) - ( 0.248 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((- 0.248 *  s_q_RH_HFE_) - ( 0.08748 *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.28263 *  s_q_RH_HFE_)) -  0.36);
+    (*this)(0,3) = (((((( 0.08748 *  s_q_RH_HFE_) - ( 0.2745 *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((- 0.2745 *  s_q_RH_HFE_) - ( 0.08748 *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - ( 0.28263 *  s_q_RH_HFE_)) -  0.36);
     (*this)(1,0) = ((( s_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) + (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_));
     (*this)(1,1) = ((( s_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_) - (( s_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_));
     (*this)(1,2) =  c_q_RH_HAA_;
-    (*this)(1,3) = ((((((((- 0.248 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.08748 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.248 *  s_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.08748 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.28263 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.18979 *  c_q_RH_HAA_)) -  0.104);
+    (*this)(1,3) = ((((((((- 0.2745 *  s_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.08748 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.2745 *  s_q_RH_HAA_) *  c_q_RH_HFE_) - (( 0.08748 *  s_q_RH_HAA_) *  s_q_RH_HFE_)) *  c_q_RH_KFE_)) + (( 0.28263 *  s_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.18979 *  c_q_RH_HAA_)) -  0.104);
     (*this)(2,0) = (((- c_q_RH_HAA_ *  c_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  s_q_RH_HFE_) *  c_q_RH_KFE_));
     (*this)(2,1) = ((( c_q_RH_HAA_ *  s_q_RH_HFE_) *  s_q_RH_KFE_) - (( c_q_RH_HAA_ *  c_q_RH_HFE_) *  c_q_RH_KFE_));
     (*this)(2,2) =  s_q_RH_HAA_;
-    (*this)(2,3) = ((((((( 0.248 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.08748 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.08748 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.248 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - (( 0.28263 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.18979 *  s_q_RH_HAA_));
+    (*this)(2,3) = ((((((( 0.2745 *  c_q_RH_HAA_) *  s_q_RH_HFE_) + (( 0.08748 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  s_q_RH_KFE_) + (((( 0.08748 *  c_q_RH_HAA_) *  s_q_RH_HFE_) - (( 0.2745 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) *  c_q_RH_KFE_)) - (( 0.28263 *  c_q_RH_HAA_) *  c_q_RH_HFE_)) - ( 0.18979 *  s_q_RH_HAA_));
     return *this;
 }
 template <typename TRAIT>
@@ -7004,7 +7004,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_HIP_X_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_THIGH::Type_fr_LF_SHANK_X_fr_LF_THIGH()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_THIGH::Type_fr_LF_shank_fixed_X_fr_LF_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -7018,7 +7018,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_THIGH::
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_THIGH& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_THIGH& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_THIGH::update(const JState& q) {
     Scalar s_q_LF_KFE_;
     Scalar c_q_LF_KFE_;
     
@@ -7034,7 +7034,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_SHANK_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_SHANK::Type_fr_LF_THIGH_X_fr_LF_SHANK()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_shank_fixed::Type_fr_LF_THIGH_X_fr_LF_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -7050,7 +7050,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_SHANK::
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_SHANK& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_shank_fixed& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_shank_fixed::update(const JState& q) {
     Scalar s_q_LF_KFE_;
     Scalar c_q_LF_KFE_;
     
@@ -7064,7 +7064,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_THIGH_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -7078,7 +7078,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed::update(const JState& q) {
     Scalar s_q_LF_WHEEL_;
     Scalar c_q_LF_WHEEL_;
     
@@ -7087,19 +7087,19 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_WHEEL_
     
     (*this)(0,0) =  c_q_LF_WHEEL_;
     (*this)(0,1) =  s_q_LF_WHEEL_;
-    (*this)(0,3) = ((- 0.248 *  s_q_LF_WHEEL_) - ( 0.08748 *  c_q_LF_WHEEL_));
+    (*this)(0,3) = ((- 0.2745 *  s_q_LF_WHEEL_) - ( 0.08748 *  c_q_LF_WHEEL_));
     (*this)(1,0) = - s_q_LF_WHEEL_;
     (*this)(1,1) =  c_q_LF_WHEEL_;
-    (*this)(1,3) = (( 0.08748 *  s_q_LF_WHEEL_) - ( 0.248 *  c_q_LF_WHEEL_));
+    (*this)(1,3) = (( 0.08748 *  s_q_LF_WHEEL_) - ( 0.2745 *  c_q_LF_WHEEL_));
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0.08748;
     (*this)(1,2) = 0;
-    (*this)(1,3) = 0.248;
+    (*this)(1,3) = 0.2745;
     (*this)(2,0) = 0;
     (*this)(2,1) = 0;
     (*this)(2,2) = 1.0;
@@ -7110,7 +7110,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L::update(const JState& q) {
     Scalar s_q_LF_WHEEL_;
     Scalar c_q_LF_WHEEL_;
     
@@ -7244,7 +7244,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_HIP_X_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_THIGH::Type_fr_RF_SHANK_X_fr_RF_THIGH()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_THIGH::Type_fr_RF_shank_fixed_X_fr_RF_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -7258,7 +7258,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_THIGH::
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_THIGH& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_THIGH& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_THIGH::update(const JState& q) {
     Scalar s_q_RF_KFE_;
     Scalar c_q_RF_KFE_;
     
@@ -7274,7 +7274,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_SHANK_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_SHANK::Type_fr_RF_THIGH_X_fr_RF_SHANK()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_shank_fixed::Type_fr_RF_THIGH_X_fr_RF_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -7290,7 +7290,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_SHANK::
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_SHANK& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_shank_fixed& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_shank_fixed::update(const JState& q) {
     Scalar s_q_RF_KFE_;
     Scalar c_q_RF_KFE_;
     
@@ -7304,7 +7304,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_THIGH_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -7318,7 +7318,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed::update(const JState& q) {
     Scalar s_q_RF_WHEEL_;
     Scalar c_q_RF_WHEEL_;
     
@@ -7327,19 +7327,19 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_WHEEL_
     
     (*this)(0,0) =  c_q_RF_WHEEL_;
     (*this)(0,1) =  s_q_RF_WHEEL_;
-    (*this)(0,3) = ((- 0.248 *  s_q_RF_WHEEL_) - ( 0.08748 *  c_q_RF_WHEEL_));
+    (*this)(0,3) = ((- 0.2745 *  s_q_RF_WHEEL_) - ( 0.08748 *  c_q_RF_WHEEL_));
     (*this)(1,0) = - s_q_RF_WHEEL_;
     (*this)(1,1) =  c_q_RF_WHEEL_;
-    (*this)(1,3) = (( 0.08748 *  s_q_RF_WHEEL_) - ( 0.248 *  c_q_RF_WHEEL_));
+    (*this)(1,3) = (( 0.08748 *  s_q_RF_WHEEL_) - ( 0.2745 *  c_q_RF_WHEEL_));
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0.08748;
     (*this)(1,2) = 0;
-    (*this)(1,3) = 0.248;
+    (*this)(1,3) = 0.2745;
     (*this)(2,0) = 0;
     (*this)(2,1) = 0;
     (*this)(2,2) = 1.0;
@@ -7350,7 +7350,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L::update(const JState& q) {
     Scalar s_q_RF_WHEEL_;
     Scalar c_q_RF_WHEEL_;
     
@@ -7484,7 +7484,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_HIP_X_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_THIGH::Type_fr_LH_SHANK_X_fr_LH_THIGH()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_THIGH::Type_fr_LH_shank_fixed_X_fr_LH_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -7498,7 +7498,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_THIGH::
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_THIGH& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_THIGH& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_THIGH::update(const JState& q) {
     Scalar s_q_LH_KFE_;
     Scalar c_q_LH_KFE_;
     
@@ -7514,7 +7514,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_SHANK_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_SHANK::Type_fr_LH_THIGH_X_fr_LH_SHANK()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_shank_fixed::Type_fr_LH_THIGH_X_fr_LH_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -7530,7 +7530,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_SHANK::
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_SHANK& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_shank_fixed& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_shank_fixed::update(const JState& q) {
     Scalar s_q_LH_KFE_;
     Scalar c_q_LH_KFE_;
     
@@ -7544,7 +7544,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_THIGH_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -7558,7 +7558,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed::update(const JState& q) {
     Scalar s_q_LH_WHEEL_;
     Scalar c_q_LH_WHEEL_;
     
@@ -7567,19 +7567,19 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_WHEEL_
     
     (*this)(0,0) =  c_q_LH_WHEEL_;
     (*this)(0,1) =  s_q_LH_WHEEL_;
-    (*this)(0,3) = (( 0.08748 *  c_q_LH_WHEEL_) - ( 0.248 *  s_q_LH_WHEEL_));
+    (*this)(0,3) = (( 0.08748 *  c_q_LH_WHEEL_) - ( 0.2745 *  s_q_LH_WHEEL_));
     (*this)(1,0) = - s_q_LH_WHEEL_;
     (*this)(1,1) =  c_q_LH_WHEEL_;
-    (*this)(1,3) = ((- 0.08748 *  s_q_LH_WHEEL_) - ( 0.248 *  c_q_LH_WHEEL_));
+    (*this)(1,3) = ((- 0.08748 *  s_q_LH_WHEEL_) - ( 0.2745 *  c_q_LH_WHEEL_));
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = - 0.08748;
     (*this)(1,2) = 0;
-    (*this)(1,3) = 0.248;
+    (*this)(1,3) = 0.2745;
     (*this)(2,0) = 0;
     (*this)(2,1) = 0;
     (*this)(2,2) = 1.0;
@@ -7590,7 +7590,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L::update(const JState& q) {
     Scalar s_q_LH_WHEEL_;
     Scalar c_q_LH_WHEEL_;
     
@@ -7724,7 +7724,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_HIP_X_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_THIGH::Type_fr_RH_SHANK_X_fr_RH_THIGH()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_THIGH::Type_fr_RH_shank_fixed_X_fr_RH_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -7738,7 +7738,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_THIGH::
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_THIGH& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_THIGH& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_THIGH::update(const JState& q) {
     Scalar s_q_RH_KFE_;
     Scalar c_q_RH_KFE_;
     
@@ -7754,7 +7754,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_SHANK_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_SHANK::Type_fr_RH_THIGH_X_fr_RH_SHANK()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_shank_fixed::Type_fr_RH_THIGH_X_fr_RH_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -7770,7 +7770,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_SHANK::
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_SHANK& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_shank_fixed& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_shank_fixed::update(const JState& q) {
     Scalar s_q_RH_KFE_;
     Scalar c_q_RH_KFE_;
     
@@ -7784,7 +7784,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_THIGH_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -7798,7 +7798,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed::update(const JState& q) {
     Scalar s_q_RH_WHEEL_;
     Scalar c_q_RH_WHEEL_;
     
@@ -7807,19 +7807,19 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_WHEEL_
     
     (*this)(0,0) =  c_q_RH_WHEEL_;
     (*this)(0,1) =  s_q_RH_WHEEL_;
-    (*this)(0,3) = (( 0.08748 *  c_q_RH_WHEEL_) - ( 0.248 *  s_q_RH_WHEEL_));
+    (*this)(0,3) = (( 0.08748 *  c_q_RH_WHEEL_) - ( 0.2745 *  s_q_RH_WHEEL_));
     (*this)(1,0) = - s_q_RH_WHEEL_;
     (*this)(1,1) =  c_q_RH_WHEEL_;
-    (*this)(1,3) = ((- 0.08748 *  s_q_RH_WHEEL_) - ( 0.248 *  c_q_RH_WHEEL_));
+    (*this)(1,3) = ((- 0.08748 *  s_q_RH_WHEEL_) - ( 0.2745 *  c_q_RH_WHEEL_));
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = - 0.08748;
     (*this)(1,2) = 0;
-    (*this)(1,3) = 0.248;
+    (*this)(1,3) = 0.2745;
     (*this)(2,0) = 0;
     (*this)(2,1) = 0;
     (*this)(2,2) = 1.0;
@@ -7830,7 +7830,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L::update(const JState& q) {
     Scalar s_q_RH_WHEEL_;
     Scalar c_q_RH_WHEEL_;
     

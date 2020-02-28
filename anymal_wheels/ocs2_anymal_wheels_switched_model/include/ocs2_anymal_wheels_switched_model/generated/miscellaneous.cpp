@@ -32,11 +32,11 @@ namespace ANYmal {
       tmpSum += inertiaProps.getMass_LF_THIGH() *
               ( iit::rbd::Utils::transform(base_X_LF_HAA_chain, inertiaProps.getCOM_LF_THIGH()));
 
-      base_X_LF_HAA_chain = base_X_LF_HAA_chain * ht.fr_LF_THIGH_X_fr_LF_SHANK;
-      tmpSum += inertiaProps.getMass_LF_SHANK() *
-              ( iit::rbd::Utils::transform(base_X_LF_HAA_chain, inertiaProps.getCOM_LF_SHANK()));
+      base_X_LF_HAA_chain = base_X_LF_HAA_chain * ht.fr_LF_THIGH_X_fr_LF_shank_fixed;
+      tmpSum += inertiaProps.getMass_LF_shank_fixed() *
+              ( iit::rbd::Utils::transform(base_X_LF_HAA_chain, inertiaProps.getCOM_LF_shank_fixed()));
 
-      base_X_LF_HAA_chain = base_X_LF_HAA_chain * ht.fr_LF_SHANK_X_fr_LF_WHEEL_L;
+      base_X_LF_HAA_chain = base_X_LF_HAA_chain * ht.fr_LF_shank_fixed_X_fr_LF_WHEEL_L;
       tmpSum += inertiaProps.getMass_LF_WHEEL_L() *
               ( iit::rbd::Utils::transform(base_X_LF_HAA_chain, inertiaProps.getCOM_LF_WHEEL_L()));
 
@@ -48,11 +48,11 @@ namespace ANYmal {
       tmpSum += inertiaProps.getMass_LH_THIGH() *
               ( iit::rbd::Utils::transform(base_X_LH_HAA_chain, inertiaProps.getCOM_LH_THIGH()));
 
-      base_X_LH_HAA_chain = base_X_LH_HAA_chain * ht.fr_LH_THIGH_X_fr_LH_SHANK;
-      tmpSum += inertiaProps.getMass_LH_SHANK() *
-              ( iit::rbd::Utils::transform(base_X_LH_HAA_chain, inertiaProps.getCOM_LH_SHANK()));
+      base_X_LH_HAA_chain = base_X_LH_HAA_chain * ht.fr_LH_THIGH_X_fr_LH_shank_fixed;
+      tmpSum += inertiaProps.getMass_LH_shank_fixed() *
+              ( iit::rbd::Utils::transform(base_X_LH_HAA_chain, inertiaProps.getCOM_LH_shank_fixed()));
 
-      base_X_LH_HAA_chain = base_X_LH_HAA_chain * ht.fr_LH_SHANK_X_fr_LH_WHEEL_L;
+      base_X_LH_HAA_chain = base_X_LH_HAA_chain * ht.fr_LH_shank_fixed_X_fr_LH_WHEEL_L;
       tmpSum += inertiaProps.getMass_LH_WHEEL_L() *
               ( iit::rbd::Utils::transform(base_X_LH_HAA_chain, inertiaProps.getCOM_LH_WHEEL_L()));
 
@@ -64,11 +64,11 @@ namespace ANYmal {
       tmpSum += inertiaProps.getMass_RF_THIGH() *
               ( iit::rbd::Utils::transform(base_X_RF_HAA_chain, inertiaProps.getCOM_RF_THIGH()));
 
-      base_X_RF_HAA_chain = base_X_RF_HAA_chain * ht.fr_RF_THIGH_X_fr_RF_SHANK;
-      tmpSum += inertiaProps.getMass_RF_SHANK() *
-              ( iit::rbd::Utils::transform(base_X_RF_HAA_chain, inertiaProps.getCOM_RF_SHANK()));
+      base_X_RF_HAA_chain = base_X_RF_HAA_chain * ht.fr_RF_THIGH_X_fr_RF_shank_fixed;
+      tmpSum += inertiaProps.getMass_RF_shank_fixed() *
+              ( iit::rbd::Utils::transform(base_X_RF_HAA_chain, inertiaProps.getCOM_RF_shank_fixed()));
 
-      base_X_RF_HAA_chain = base_X_RF_HAA_chain * ht.fr_RF_SHANK_X_fr_RF_WHEEL_L;
+      base_X_RF_HAA_chain = base_X_RF_HAA_chain * ht.fr_RF_shank_fixed_X_fr_RF_WHEEL_L;
       tmpSum += inertiaProps.getMass_RF_WHEEL_L() *
               ( iit::rbd::Utils::transform(base_X_RF_HAA_chain, inertiaProps.getCOM_RF_WHEEL_L()));
 
@@ -80,11 +80,11 @@ namespace ANYmal {
       tmpSum += inertiaProps.getMass_RH_THIGH() *
               ( iit::rbd::Utils::transform(base_X_RH_HAA_chain, inertiaProps.getCOM_RH_THIGH()));
 
-      base_X_RH_HAA_chain = base_X_RH_HAA_chain * ht.fr_RH_THIGH_X_fr_RH_SHANK;
-      tmpSum += inertiaProps.getMass_RH_SHANK() *
-              ( iit::rbd::Utils::transform(base_X_RH_HAA_chain, inertiaProps.getCOM_RH_SHANK()));
+      base_X_RH_HAA_chain = base_X_RH_HAA_chain * ht.fr_RH_THIGH_X_fr_RH_shank_fixed;
+      tmpSum += inertiaProps.getMass_RH_shank_fixed() *
+              ( iit::rbd::Utils::transform(base_X_RH_HAA_chain, inertiaProps.getCOM_RH_shank_fixed()));
 
-      base_X_RH_HAA_chain = base_X_RH_HAA_chain * ht.fr_RH_SHANK_X_fr_RH_WHEEL_L;
+      base_X_RH_HAA_chain = base_X_RH_HAA_chain * ht.fr_RH_shank_fixed_X_fr_RH_WHEEL_L;
       tmpSum += inertiaProps.getMass_RH_WHEEL_L() *
               ( iit::rbd::Utils::transform(base_X_RH_HAA_chain, inertiaProps.getCOM_RH_WHEEL_L()));
 
@@ -103,17 +103,17 @@ namespace ANYmal {
       ht.fr_base_X_fr_RF_HIP(q);
       ht.fr_base_X_fr_RH_HIP(q);
       ht.fr_LF_HIP_X_fr_LF_THIGH(q);
-      ht.fr_LF_THIGH_X_fr_LF_SHANK(q);
-      ht.fr_LF_SHANK_X_fr_LF_WHEEL_L(q);
+      ht.fr_LF_THIGH_X_fr_LF_shank_fixed(q);
+      ht.fr_LF_shank_fixed_X_fr_LF_WHEEL_L(q);
       ht.fr_RF_HIP_X_fr_RF_THIGH(q);
-      ht.fr_RF_THIGH_X_fr_RF_SHANK(q);
-      ht.fr_RF_SHANK_X_fr_RF_WHEEL_L(q);
+      ht.fr_RF_THIGH_X_fr_RF_shank_fixed(q);
+      ht.fr_RF_shank_fixed_X_fr_RF_WHEEL_L(q);
       ht.fr_LH_HIP_X_fr_LH_THIGH(q);
-      ht.fr_LH_THIGH_X_fr_LH_SHANK(q);
-      ht.fr_LH_SHANK_X_fr_LH_WHEEL_L(q);
+      ht.fr_LH_THIGH_X_fr_LH_shank_fixed(q);
+      ht.fr_LH_shank_fixed_X_fr_LH_WHEEL_L(q);
       ht.fr_RH_HIP_X_fr_RH_THIGH(q);
-      ht.fr_RH_THIGH_X_fr_RH_SHANK(q);
-      ht.fr_RH_SHANK_X_fr_RH_WHEEL_L(q);
+      ht.fr_RH_THIGH_X_fr_RH_shank_fixed(q);
+      ht.fr_RH_shank_fixed_X_fr_RH_WHEEL_L(q);
 
       // The actual calculus
       return getWholeBodyCOM<SCALAR_T>(inertiaProps, ht);

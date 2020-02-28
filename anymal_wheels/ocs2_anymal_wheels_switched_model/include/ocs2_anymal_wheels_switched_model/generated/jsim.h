@@ -107,19 +107,19 @@ class JSIM : public iit::rbd::StateDependentMatrix<iit::ANYmal::tpl::JointState<
         InertiaMatrix base_Ic;
         InertiaMatrix LF_HIP_Ic;
         InertiaMatrix LF_THIGH_Ic;
-        InertiaMatrix LF_SHANK_Ic;
+        InertiaMatrix LF_shank_fixed_Ic;
         const InertiaMatrix& LF_WHEEL_L_Ic;
         InertiaMatrix RF_HIP_Ic;
         InertiaMatrix RF_THIGH_Ic;
-        InertiaMatrix RF_SHANK_Ic;
+        InertiaMatrix RF_shank_fixed_Ic;
         const InertiaMatrix& RF_WHEEL_L_Ic;
         InertiaMatrix LH_HIP_Ic;
         InertiaMatrix LH_THIGH_Ic;
-        InertiaMatrix LH_SHANK_Ic;
+        InertiaMatrix LH_shank_fixed_Ic;
         const InertiaMatrix& LH_WHEEL_L_Ic;
         InertiaMatrix RH_HIP_Ic;
         InertiaMatrix RH_THIGH_Ic;
-        InertiaMatrix RH_SHANK_Ic;
+        InertiaMatrix RH_shank_fixed_Ic;
         const InertiaMatrix& RH_WHEEL_L_Ic;
         InertiaMatrix Ic_spare;
 

@@ -17,7 +17,7 @@ ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostWrapper costF
   const auto problemDimensions = getProblemDimensions(lqApproximation);
 
   // Solve for update step
-  ContinuousTrajectory relativeSolution =
+  const auto relativeSolution =
       solveLinearQuadraticApproximation(lqApproximation, problemDimensions, linearizationTrajectory, initialState);
 
   // Take a full step: Add update to linearization

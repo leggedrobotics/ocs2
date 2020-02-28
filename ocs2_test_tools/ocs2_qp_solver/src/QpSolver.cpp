@@ -4,7 +4,7 @@
 
 #include "ocs2_qp_solver/QpSolver.h"
 
-#include <Eigen/Cholesky>
+#include <Eigen/LU>
 #include <numeric>
 
 namespace ocs2_qp_solver {

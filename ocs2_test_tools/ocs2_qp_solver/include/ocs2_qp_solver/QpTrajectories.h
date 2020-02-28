@@ -11,22 +11,30 @@ namespace ocs2_qp_solver {
 
 /** A time, state, input trajectory. The last timepoint has only a state, no input */
 struct ContinuousTrajectory {
-  std::vector<double> timeTrajectory;            // size N+1
-  std::vector<Eigen::VectorXd> stateTrajectory;  // size N+1
-  std::vector<Eigen::VectorXd> inputTrajectory;  // size N
+  /** time trajectory, size N+1 */  // NOLINTNEXTLINE
+  std::vector<double> timeTrajectory;
+  /** trajectory of state vectors, size N+1 */  // NOLINTNEXTLINE
+  std::vector<Eigen::VectorXd> stateTrajectory;
+  /** trajectory of input vectors, size N */  // NOLINTNEXTLINE
+  std::vector<Eigen::VectorXd> inputTrajectory;
 };
 
 /** Reference to a point along a trajectory. Does not own the state-input data. */
 struct TrajectoryRef {
-  double t_;
-  const Eigen::VectorXd& x_;
-  const Eigen::VectorXd& u_;
+  /** time */  // NOLINTNEXTLINE
+  double t;
+  /** state */  // NOLINTNEXTLINE
+  const Eigen::VectorXd& x;
+  /** input */  // NOLINTNEXTLINE
+  const Eigen::VectorXd& u;
 };
 
 /** Reference to the state at a point along a trajectory. Does not own the state data. */
 struct StateTrajectoryRef {
-  double t_;
-  const Eigen::VectorXd& x_;
+  /** time */  // NOLINTNEXTLINE
+  double t;
+  /** state */  // NOLINTNEXTLINE
+  const Eigen::VectorXd& x;
 };
 
 /** Adds state and inputs of two trajectories, time is not added. */

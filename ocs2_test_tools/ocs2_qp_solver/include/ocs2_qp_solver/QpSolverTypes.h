@@ -22,7 +22,7 @@ struct QuadraticCost {
   Eigen::MatrixXd R;
   /** First derivative of the cost w.r.t input */  // NOLINTNEXTLINE
   Eigen::VectorXd q;
-  /** First derivative of the cost w.r.t input */  // NOLINTNEXTLINE
+  /** First derivative of the cost w.r.t state */  // NOLINTNEXTLINE
   Eigen::VectorXd r;
   /** Constant cost term */  // NOLINTNEXTLINE
   double c = 0.;

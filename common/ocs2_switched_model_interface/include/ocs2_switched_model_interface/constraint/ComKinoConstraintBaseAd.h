@@ -16,6 +16,8 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+  using Base = ocs2::ConstraintBase<STATE_DIM, INPUT_DIM>;
+
   using logic_rules_t = SwitchedModelLogicRulesBase;
   using foot_cpg_t = typename logic_rules_t::foot_cpg_t;
 
@@ -23,28 +25,6 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
   using ad_scalar_t = CppAD::AD<ad_base_t>;
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
-
-  using Base = ocs2::ConstraintBase<STATE_DIM, INPUT_DIM>;
-  using typename Base::constraint1_input_matrix_t;
-  using typename Base::constraint1_state_matrix_t;
-  using typename Base::constraint1_vector_array_t;
-  using typename Base::constraint1_vector_t;
-  using typename Base::constraint2_state_matrix_t;
-  using typename Base::constraint2_vector_array_t;
-  using typename Base::constraint2_vector_t;
-  using typename Base::input_matrix_array_t;
-  using typename Base::input_matrix_t;
-  using typename Base::input_state_matrix_array_t;
-  using typename Base::input_state_matrix_t;
-  using typename Base::input_vector_array_t;
-  using typename Base::input_vector_t;
-  using typename Base::scalar_array_t;
-  using typename Base::scalar_t;
-  using typename Base::state_input_matrix_t;
-  using typename Base::state_matrix_array_t;
-  using typename Base::state_matrix_t;
-  using typename Base::state_vector_array_t;
-  using typename Base::state_vector_t;
 
   using ConstraintCollection_t = ocs2::ConstraintCollection<STATE_DIM, INPUT_DIM>;
   using LinearConstraintApproximationAsMatrices_t = ocs2::LinearConstraintApproximationAsMatrices<STATE_DIM, INPUT_DIM>;
@@ -126,12 +106,12 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
   void getStanceLegs(contact_flag_t& stanceLegs);
 
  private:
-  // State input equality constraints
+  // state input equality constraints
   ConstraintCollection_t equalityStateInputConstraintCollection_;
   bool stateInputConstraintsComputed_;
   LinearConstraintApproximationAsMatrices_t linearStateInputConstraintApproximation_;
 
-  // Inequality constraints
+  // inequality constraints
   ConstraintCollection_t inequalityConstraintCollection_;
   bool inequalityConstraintsComputed_;
   QuadraticConstraintApproximation_t quadraticInequalityConstraintApproximation_;

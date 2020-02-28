@@ -37,16 +37,11 @@ include_directories(
 
 # Declare a C++ library
 add_library(${PROJECT_NAME}
-  src/Ocs2QpSolver.cpp
-  src/QpDiscreteTranscription.cpp
-  src/QpSolver.cpp
-  src/QpTrajectories.cpp
   src/wrappers/CostWrapper.cpp
   src/wrappers/SystemWrapper.cpp
   )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
-  gtest_main
   )
 
 #########################
@@ -61,6 +56,7 @@ if(cmake_clang_tools_FOUND)
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
+    CT_WERROR
   )
 endif(cmake_clang_tools_FOUND)
 
@@ -84,10 +80,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 catkin_add_gtest(${PROJECT_NAME}_testWrappers
   test/testCostWrapper.cpp
-  test/testDiscreteTranscription.cpp
   test/testSystemWrapper.cpp
-  test/testOcs2QpSolver.cpp
-  test/testQpSolver.cpp
   test/testMain.cpp
   )
 target_link_libraries(${PROJECT_NAME}_testWrappers

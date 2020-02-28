@@ -31,22 +31,28 @@ switched_model::vector3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::position
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
 
+  switched_model::vector3_s_t<SCALAR_T> wheelOffset;
+  wheelOffset.x() = 0;
+  wheelOffset.y() = 0;
+  wheelOffset.z() = -wheelRadius_;
+  const auto q = getExtendedJointCoordinates(jointPositions);
+
   switch (footIndex) {
     case LF: {
       typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL_L fr_trunk_X_fr_LF_foot_;
-      return fr_trunk_X_fr_LF_foot_(jointPositions).template topRightCorner<3, 1>();
+      return fr_trunk_X_fr_LF_foot_(q).template topRightCorner<3, 1>() + wheelOffset;
     }
     case RF: {
       typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_WHEEL_L fr_trunk_X_fr_RF_foot_;
-      return fr_trunk_X_fr_RF_foot_(jointPositions).template topRightCorner<3, 1>();
+      return fr_trunk_X_fr_RF_foot_(q).template topRightCorner<3, 1>() + wheelOffset;
     }
     case LH: {
       typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_WHEEL_L fr_trunk_X_fr_LH_foot_;
-      return fr_trunk_X_fr_LH_foot_(jointPositions).template topRightCorner<3, 1>();
+      return fr_trunk_X_fr_LH_foot_(q).template topRightCorner<3, 1>() + wheelOffset;
     }
     case RH: {
       typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_WHEEL_L fr_trunk_X_fr_RH_foot_;
-      return fr_trunk_X_fr_RH_foot_(jointPositions).template topRightCorner<3, 1>();
+      return fr_trunk_X_fr_RH_foot_(q).template topRightCorner<3, 1>() + wheelOffset;
     }
     default:
       std::runtime_error("Not defined foot index.");
@@ -65,25 +71,27 @@ typename AnymalWheelsKinematics<SCALAR_T>::joint_jacobian_t AnymalWheelsKinemati
   joint_jacobian_t footJacobian;
   footJacobian.setZero();
 
+  const auto q = getExtendedJointCoordinates(jointPositions);
+
   switch (footIndex) {
     case LF: {
       typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LF_WHEEL_L fr_trunk_J_fr_LF_foot_;
-      footJacobian.template block<6, 4>(0, 0) = fr_trunk_J_fr_LF_foot_(jointPositions);
+      footJacobian.template block<6, 3>(0, 0) = fr_trunk_J_fr_LF_foot_(q).template leftCols<3>();
       break;
     }
     case RF: {
       typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RF_WHEEL_L fr_trunk_J_fr_RF_foot_;
-      footJacobian.template block<6, 4>(0, 4) = fr_trunk_J_fr_RF_foot_(jointPositions);
+      footJacobian.template block<6, 3>(0, 3) = fr_trunk_J_fr_RF_foot_(q).template leftCols<3>();
       break;
     }
     case LH: {
       typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LH_WHEEL_L fr_trunk_J_fr_LH_foot_;
-      footJacobian.template block<6, 4>(0, 8) = fr_trunk_J_fr_LH_foot_(jointPositions);
+      footJacobian.template block<6, 3>(0, 6) = fr_trunk_J_fr_LH_foot_(q).template leftCols<3>();
       break;
     }
     case RH: {
       typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RH_WHEEL_L fr_trunk_J_fr_RH_foot_;
-      footJacobian.template block<6, 4>(0, 12) = fr_trunk_J_fr_RH_foot_(jointPositions);
+      footJacobian.template block<6, 3>(0, 9) = fr_trunk_J_fr_RH_foot_(q).template leftCols<3>();
       break;
     }
     default: {

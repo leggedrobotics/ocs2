@@ -24,8 +24,8 @@ namespace tpl {
 template <typename SCALAR_T>
 AnymalWheelsCom<SCALAR_T>::AnymalWheelsCom() {
   switched_model::joint_coordinate_s_t<SCALAR_T> defaultJointConfig;
-  defaultJointConfig << SCALAR_T(-0.1), SCALAR_T(0.7), SCALAR_T(-1.0), SCALAR_T(0.0), SCALAR_T(0.1), SCALAR_T(0.7), SCALAR_T(-1.0), SCALAR_T(0.0), SCALAR_T(-0.1),
-      SCALAR_T(-0.7), SCALAR_T(1.0), SCALAR_T(0.0), SCALAR_T(0.1), SCALAR_T(-0.7), SCALAR_T(1.0), SCALAR_T(0.0);
+  defaultJointConfig << SCALAR_T(-0.1), SCALAR_T(0.7), SCALAR_T(-1.0), SCALAR_T(0.1), SCALAR_T(0.7), SCALAR_T(-1.0), SCALAR_T(-0.1),
+      SCALAR_T(-0.7), SCALAR_T(1.0), SCALAR_T(0.1), SCALAR_T(-0.7), SCALAR_T(1.0);
 
   setJointConfiguration(defaultJointConfig);
 }
@@ -49,8 +49,9 @@ void AnymalWheelsCom<SCALAR_T>::setJointConfiguration(const switched_model::join
   iit::ANYmal::tpl::ForceTransforms<trait_t> forceTransforms_;
   iit::ANYmal::dyn::tpl::JSIM<trait_t> jointSpaceInertiaMatrix_(inertiaProperties_, forceTransforms_);
 
-  jointSpaceInertiaMatrix_.update(q);
-  comPositionBaseFrame_ = iit::ANYmal::getWholeBodyCOM(inertiaProperties_, q, homTransforms_);
+  const auto qExtended = getExtendedJointCoordinates(q);
+  jointSpaceInertiaMatrix_.update(qExtended);
+  comPositionBaseFrame_ = iit::ANYmal::getWholeBodyCOM(inertiaProperties_, qExtended, homTransforms_);
 
   comInertia_ = jointSpaceInertiaMatrix_.getWholeBodyInertia();
   SCALAR_T mass = comInertia_(5, 5);

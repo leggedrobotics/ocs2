@@ -4,7 +4,7 @@
   <version>0.0.0</version>
   <description>The ocs2_anymal_wheels package</description>
 
-  <maintainer email="markob@ethz.ch">Marko Bjelonic</maintainer>
+  <maintainer email="farbod@todo.todo">farbod</maintainer>
 
   <license>TODO</license>
 
@@ -15,7 +15,6 @@
   <depend>ocs2_quadruped_interface</depend>
 
   <exec_depend>ocs2_anymal_wheels_description</exec_depend>
-  <exec_depend>ocs2_anymal_wheels_visualization</exec_depend>
   <exec_depend>ocs2_anymal_commands</exec_depend>
 
 </package>

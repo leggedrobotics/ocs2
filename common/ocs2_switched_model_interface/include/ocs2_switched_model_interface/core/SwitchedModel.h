@@ -23,7 +23,7 @@ namespace switched_model {
 
 constexpr size_t NUM_CONTACT_POINTS = 4;
 constexpr size_t BASE_COORDINATE_SIZE = 6;
-constexpr size_t JOINT_COORDINATE_SIZE = 16;
+constexpr size_t JOINT_COORDINATE_SIZE = 12;
 constexpr size_t GENERALIZED_COORDINATE_SIZE = BASE_COORDINATE_SIZE + JOINT_COORDINATE_SIZE;  // 18
 constexpr size_t RBD_STATE_DIM = 2 * GENERALIZED_COORDINATE_SIZE;                             // 36
 constexpr size_t STATE_DIM = 2 * BASE_COORDINATE_SIZE + JOINT_COORDINATE_SIZE;                // 24

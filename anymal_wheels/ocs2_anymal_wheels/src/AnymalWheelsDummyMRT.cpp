@@ -1,12 +1,13 @@
 /*
- * AnymalMPC.cpp
+ * DummyMRT.cpp
  *
- *  Created on: Apr 15, 2018
+ *  Created on: Apr 10, 2018
  *      Author: farbod
  */
 
-#include <ocs2_quadruped_interface/QuadrupedMpcNode.h>
+#include <ocs2_quadruped_interface/QuadrupedDummyNode.h>
 
+#include <ocs2_mpc/MPC_Settings.h>
 #include "ocs2_anymal_wheels/AnymalWheelsInterface.h"
 
 int main(int argc, char* argv[]) {
@@ -16,15 +17,14 @@ int main(int argc, char* argv[]) {
   const std::string taskName(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic))
 
   // Initialize ros node
-  ros::init(argc, argv, "anymal_wheels_mpc");
+  ros::init(argc, argv, "anymal_wheels_mrt");
   ros::NodeHandle nodeHandle;
 
   auto anymalInterface = anymal::getAnymalWheelsInterface(taskName);
   ocs2::MPC_Settings mpcSettings;
   mpcSettings.loadSettings(anymal::getTaskFilePathWheels(taskName));
-  ocs2::SLQ_Settings slqSettings;
-  slqSettings.loadSettings(anymal::getTaskFilePathWheels(taskName));
-  quadrupedMpcNode(nodeHandle, *anymalInterface, mpcSettings, slqSettings);
+  quadrupedDummyNode(nodeHandle, *anymalInterface, &anymalInterface->getRollout(), mpcSettings.mrtDesiredFrequency_,
+                     mpcSettings.mpcDesiredFrequency_);
 
   return 0;
 }

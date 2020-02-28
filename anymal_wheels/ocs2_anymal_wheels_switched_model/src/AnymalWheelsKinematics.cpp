@@ -81,27 +81,42 @@ typename AnymalWheelsKinematics<SCALAR_T>::joint_jacobian_t AnymalWheelsKinemati
   joint_jacobian_t footJacobian;
   footJacobian.setZero();
 
+  Eigen::Matrix<SCALAR_T, 6, 3> wheelOffsetJacobian;
+  wheelOffsetJacobian.setZero();
+
   const auto q = getExtendedJointCoordinates(jointPositions);
 
   switch (footIndex) {
     case LF: {
+      SCALAR_T haa = jointPositions(0);
+      wheelOffsetJacobian(4, 0) = wheelRadius_ * cos(haa);
+      wheelOffsetJacobian(5, 0) = wheelRadius_ * sin(haa);
       typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LF_WHEEL_L fr_trunk_J_fr_LF_foot_;
-      footJacobian.template block<6, 3>(0, 0) = fr_trunk_J_fr_LF_foot_(q).template leftCols<3>();
+      footJacobian.template block<6, 3>(0, 0) = fr_trunk_J_fr_LF_foot_(q).template leftCols<3>() + wheelOffsetJacobian;
       break;
     }
     case RF: {
+      SCALAR_T haa = jointPositions(3);
+      wheelOffsetJacobian(4, 0) = wheelRadius_ * cos(haa);
+      wheelOffsetJacobian(5, 0) = wheelRadius_ * sin(haa);
       typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RF_WHEEL_L fr_trunk_J_fr_RF_foot_;
-      footJacobian.template block<6, 3>(0, 3) = fr_trunk_J_fr_RF_foot_(q).template leftCols<3>();
+      footJacobian.template block<6, 3>(0, 3) = fr_trunk_J_fr_RF_foot_(q).template leftCols<3>() + wheelOffsetJacobian;
       break;
     }
     case LH: {
+      SCALAR_T haa = jointPositions(6);
+      wheelOffsetJacobian(4, 0) = wheelRadius_ * cos(haa);
+      wheelOffsetJacobian(5, 0) = wheelRadius_ * sin(haa);
       typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LH_WHEEL_L fr_trunk_J_fr_LH_foot_;
-      footJacobian.template block<6, 3>(0, 6) = fr_trunk_J_fr_LH_foot_(q).template leftCols<3>();
+      footJacobian.template block<6, 3>(0, 6) = fr_trunk_J_fr_LH_foot_(q).template leftCols<3>() + wheelOffsetJacobian;
       break;
     }
     case RH: {
+      SCALAR_T haa = jointPositions(9);
+      wheelOffsetJacobian(4, 0) = wheelRadius_ * cos(haa);
+      wheelOffsetJacobian(5, 0) = wheelRadius_ * sin(haa);
       typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RH_WHEEL_L fr_trunk_J_fr_RH_foot_;
-      footJacobian.template block<6, 3>(0, 9) = fr_trunk_J_fr_RH_foot_(q).template leftCols<3>();
+      footJacobian.template block<6, 3>(0, 9) = fr_trunk_J_fr_RH_foot_(q).template leftCols<3>() + wheelOffsetJacobian;
       break;
     }
     default: {

@@ -31,36 +31,28 @@ switched_model::vector3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::position
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
 
+  SCALAR_T haa = jointPositions(footIndex * 3);  // HAA angle for the requested leg
   switched_model::vector3_s_t<SCALAR_T> wheelOffset;
   wheelOffset.x() = 0;
+  wheelOffset.y() = wheelRadius_ * sin(haa);
+  wheelOffset.z() = -wheelRadius_ * cos(haa);
+
   const auto q = getExtendedJointCoordinates(jointPositions);
 
   switch (footIndex) {
     case LF: {
-      SCALAR_T haa = jointPositions(0);
-      wheelOffset.y() = wheelRadius_ * sin(haa);
-      wheelOffset.z() = -wheelRadius_ * cos(haa);
       typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL_L fr_trunk_X_fr_LF_foot_;
       return fr_trunk_X_fr_LF_foot_(q).template topRightCorner<3, 1>() + wheelOffset;
     }
     case RF: {
-      SCALAR_T haa = jointPositions(3);
-      wheelOffset.y() = wheelRadius_ * sin(haa);
-      wheelOffset.z() = -wheelRadius_ * cos(haa);
       typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_WHEEL_L fr_trunk_X_fr_RF_foot_;
       return fr_trunk_X_fr_RF_foot_(q).template topRightCorner<3, 1>() + wheelOffset;
     }
     case LH: {
-      SCALAR_T haa = jointPositions(6);
-      wheelOffset.y() = wheelRadius_ * sin(haa);
-      wheelOffset.z() = -wheelRadius_ * cos(haa);
       typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_WHEEL_L fr_trunk_X_fr_LH_foot_;
       return fr_trunk_X_fr_LH_foot_(q).template topRightCorner<3, 1>() + wheelOffset;
     }
     case RH: {
-      SCALAR_T haa = jointPositions(9);
-      wheelOffset.y() = wheelRadius_ * sin(haa);
-      wheelOffset.z() = -wheelRadius_ * cos(haa);
       typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_WHEEL_L fr_trunk_X_fr_RH_foot_;
       return fr_trunk_X_fr_RH_foot_(q).template topRightCorner<3, 1>() + wheelOffset;
     }
@@ -84,37 +76,29 @@ typename AnymalWheelsKinematics<SCALAR_T>::joint_jacobian_t AnymalWheelsKinemati
   Eigen::Matrix<SCALAR_T, 6, 3> wheelOffsetJacobian;
   wheelOffsetJacobian.setZero();
 
+  SCALAR_T haa = jointPositions(footIndex * 3);  // HAA angle for the requested leg
+  wheelOffsetJacobian(4, 0) = wheelRadius_ * cos(haa);
+  wheelOffsetJacobian(5, 0) = wheelRadius_ * sin(haa);
+
   const auto q = getExtendedJointCoordinates(jointPositions);
 
   switch (footIndex) {
     case LF: {
-      SCALAR_T haa = jointPositions(0);
-      wheelOffsetJacobian(4, 0) = wheelRadius_ * cos(haa);
-      wheelOffsetJacobian(5, 0) = wheelRadius_ * sin(haa);
       typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LF_WHEEL_L fr_trunk_J_fr_LF_foot_;
       footJacobian.template block<6, 3>(0, 0) = fr_trunk_J_fr_LF_foot_(q).template leftCols<3>() + wheelOffsetJacobian;
       break;
     }
     case RF: {
-      SCALAR_T haa = jointPositions(3);
-      wheelOffsetJacobian(4, 0) = wheelRadius_ * cos(haa);
-      wheelOffsetJacobian(5, 0) = wheelRadius_ * sin(haa);
       typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RF_WHEEL_L fr_trunk_J_fr_RF_foot_;
       footJacobian.template block<6, 3>(0, 3) = fr_trunk_J_fr_RF_foot_(q).template leftCols<3>() + wheelOffsetJacobian;
       break;
     }
     case LH: {
-      SCALAR_T haa = jointPositions(6);
-      wheelOffsetJacobian(4, 0) = wheelRadius_ * cos(haa);
-      wheelOffsetJacobian(5, 0) = wheelRadius_ * sin(haa);
       typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LH_WHEEL_L fr_trunk_J_fr_LH_foot_;
       footJacobian.template block<6, 3>(0, 6) = fr_trunk_J_fr_LH_foot_(q).template leftCols<3>() + wheelOffsetJacobian;
       break;
     }
     case RH: {
-      SCALAR_T haa = jointPositions(9);
-      wheelOffsetJacobian(4, 0) = wheelRadius_ * cos(haa);
-      wheelOffsetJacobian(5, 0) = wheelRadius_ * sin(haa);
       typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RH_WHEEL_L fr_trunk_J_fr_RH_foot_;
       footJacobian.template block<6, 3>(0, 9) = fr_trunk_J_fr_RH_foot_(q).template leftCols<3>() + wheelOffsetJacobian;
       break;

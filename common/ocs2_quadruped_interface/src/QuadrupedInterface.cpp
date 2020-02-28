@@ -18,15 +18,12 @@ namespace switched_model {
 QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
                                        const com_model_t& comModel, const ad_com_model_t& adComModel, const std::string& pathToConfigFolder)
 
-    : kinematicModelPtr_(kinematicModel.clone()),
-      adKinematicModelPtr_(adKinematicModel.clone()),
-      comModelPtr_(comModel.clone()),
-      adComModelPtr_(adComModel.clone()) {
+    : kinematicModelPtr_(kinematicModel.clone()), comModelPtr_(comModel.clone()) {
   loadSettings(pathToConfigFolder + "/task.info");
 
-  dynamicsPtr_.reset(new system_dynamics_t(*adKinematicModelPtr_, *adComModelPtr_, modelSettings_.recompileLibraries_));
+  dynamicsPtr_.reset(new system_dynamics_t(adKinematicModel, adComModel, modelSettings_.recompileLibraries_));
   dynamicsDerivativesPtr_.reset(dynamicsPtr_->clone());
-  constraintsPtr_.reset(new constraint_t(*adKinematicModelPtr_, *adComModelPtr_, logicRulesPtr_, modelSettings_));
+  constraintsPtr_.reset(new constraint_t(adKinematicModel, adComModel, logicRulesPtr_, modelSettings_));
   costFunctionPtr_.reset(new cost_function_t(*comModelPtr_, logicRulesPtr_, Q_, R_, QFinal_));
   operatingPointsPtr_.reset(new operating_point_t(*comModelPtr_, logicRulesPtr_));
   timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, rolloutSettings_));
@@ -42,9 +39,8 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
   std::cerr << std::endl;
 
   // partitioning times
-  scalar_t timeHorizon;
   size_t numPartitions;
-  ocs2::loadData::loadPartitioningTimes(pathToConfigFile, timeHorizon, numPartitions, partitioningTimes_, true);
+  ocs2::loadData::loadPartitioningTimes(pathToConfigFile, timeHorizon_, numPartitions, partitioningTimes_, true);
 
   // display
   std::cerr << "Time Partition: {";

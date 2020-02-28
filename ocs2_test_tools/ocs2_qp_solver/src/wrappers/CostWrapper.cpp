@@ -37,4 +37,4 @@ QuadraticCost CostWrapper::getTerminalQuadraticApproximation(double t, const Eig
   return quadraticCost;
 }
 
-}
+}  // namespace ocs2_qp_solver

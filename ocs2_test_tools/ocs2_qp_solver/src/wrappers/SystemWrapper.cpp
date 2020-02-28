@@ -19,4 +19,4 @@ LinearDynamics SystemWrapper::getLinearApproximation(double t, const Eigen::Vect
   return linearDynamics;
 }
 
-}
+}  // namespace ocs2_qp_solver

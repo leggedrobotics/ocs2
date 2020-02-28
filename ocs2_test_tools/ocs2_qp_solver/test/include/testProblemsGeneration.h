@@ -5,7 +5,6 @@
 #pragma once
 
 #include "ocs2_qp_solver/QpSolverTypes.h"
-#include "ocs2_qp_solver/QpTrajectories.h"
 
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
@@ -51,22 +50,6 @@ std::unique_ptr<ocs2::LinearSystemDynamics<STATE_DIM, INPUT_DIM>> getOcs2Dynamic
       new ocs2::LinearSystemDynamics<STATE_DIM, INPUT_DIM>(dynamics.A, dynamics.B));
 }
 
-inline ContinuousTrajectory getRandomTrajectory(int N, int n, int m) {
-  ContinuousTrajectory trajectory;
-  double t = 0.0;
-  for (int k = 0; k < N; ++k) {
-    t += std::rand() / static_cast<double>(RAND_MAX);
-    trajectory.timeTrajectory.push_back(t);  // some nonconstant time spacing
-    trajectory.inputTrajectory.emplace_back(Eigen::VectorXd::Random(m));
-    trajectory.stateTrajectory.emplace_back(Eigen::VectorXd::Random(n));
-  }
-  // Terminal
-  t += std::rand() / static_cast<double>(RAND_MAX);
-  trajectory.timeTrajectory.push_back(t);
-  trajectory.stateTrajectory.emplace_back(Eigen::VectorXd::Random(n));
-  return trajectory;
-}
-
 inline std::vector<LinearQuadraticStage> generateRandomProblem(const ProblemDimensions& problemDimensions) {
   const auto N = problemDimensions.numStages;
   std::vector<LinearQuadraticStage> lqProblem;
@@ -108,20 +91,6 @@ inline bool isEqual(const std::vector<Eigen::VectorXd>& v0, const std::vector<Ei
   return (v0.size() == v1.size()) &&
          std::equal(v0.begin(), v0.end(), v1.begin(),
                     [tol](const Eigen::VectorXd& lhs, const Eigen::VectorXd& rhs) { return isEqual(lhs, rhs, tol); });
-};
-
-/**
- * Prints trajectory as formatted string:
- * [0]  :  v[0][0], .. v[0][j]
- * [i]  :  v[i][0], .. v[i][j]
- */
-inline std::string print(const std::vector<Eigen::VectorXd>& v) {
-  Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", "", ";");
-  std::stringstream out;
-  for (int k = 0; k < v.size(); k++) {
-    out << "[" << k << "] \t: " << v[k].format(CommaInitFmt) << "\n";
-  }
-  return out.str();
-};
+}
 
 }  // namespace ocs2_qp_solver

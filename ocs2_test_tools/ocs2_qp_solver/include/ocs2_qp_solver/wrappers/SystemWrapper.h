@@ -19,7 +19,7 @@ class SystemWrapper {
  public:
   /** templated constructor to accept cost function of any size */
   template <size_t STATE_DIM, size_t INPUT_DIM>
-  SystemWrapper(const ocs2::SystemDynamicsBase<STATE_DIM, INPUT_DIM>& systemDynamics)
+  SystemWrapper(const ocs2::SystemDynamicsBase<STATE_DIM, INPUT_DIM>& systemDynamics)  // NOLINT(google-explicit-constructor)
       : p_(new SystemHandle<STATE_DIM, INPUT_DIM>(systemDynamics)) {}
 
   /** Copy operations clone the underlying handle and system dynamics */

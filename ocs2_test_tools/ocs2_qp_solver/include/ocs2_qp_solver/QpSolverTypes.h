@@ -14,12 +14,18 @@ namespace ocs2_qp_solver {
  * x, and u are in relative coordinates when representing a quadratic approximation
  */
 struct QuadraticCost {
+  /** Second derivative of the cost w.r.t state */  // NOLINTNEXTLINE
   Eigen::MatrixXd Q;
+  /** Second derivative of the cost w.r.t input (lhs) and state (rhs) */  // NOLINTNEXTLINE
   Eigen::MatrixXd P;
+  /** Second derivative of the cost w.r.t input */  // NOLINTNEXTLINE
   Eigen::MatrixXd R;
+  /** First derivative of the cost w.r.t input */  // NOLINTNEXTLINE
   Eigen::VectorXd q;
+  /** First derivative of the cost w.r.t input */  // NOLINTNEXTLINE
   Eigen::VectorXd r;
-  double c;
+  /** Constant cost term */  // NOLINTNEXTLINE
+  double c = 0.;
 };
 
 /**
@@ -27,37 +33,12 @@ struct QuadraticCost {
  * x, and u (on the rhs) are in relative coordinates when representing a linear approximation
  */
 struct LinearDynamics {
+  /** Derivative of the flowmap w.r.t state */  // NOLINTNEXTLINE
   Eigen::MatrixXd A;
+  /** Derivative of the flowmap w.r.t input */  // NOLINTNEXTLINE
   Eigen::MatrixXd B;
+  /** Flowmap bias */  // NOLINTNEXTLINE
   Eigen::VectorXd b;
-};
-
-/** Defines the quadratic cost and  linear dynamics at a give stage */
-struct LinearQuadraticStage {
-  QuadraticCost cost;
-  LinearDynamics dynamics;
-
-  LinearQuadraticStage() = default;
-  LinearQuadraticStage(QuadraticCost c, LinearDynamics d) : cost(std::move(c)), dynamics(std::move(d)) {}
-};
-
-/**
- * Defines dimensions of the linear quadratic optimal control problem
- * Each stage can have a different amount of states and inputs
- */
-struct ProblemDimensions {
-  int numStages;               // N
-  std::vector<int> numStates;  // size N+1
-  std::vector<int> numInputs;  // size N
-
-  ProblemDimensions() = default;
-  /**
-   * Constructor for constant size state and inputs
-   * @param N : number of stages
-   * @param nx : number of states for all stages
-   * @param nu : number of inputs for all stages
-   */
-  ProblemDimensions(int N, int nx, int nu) : numStages(N), numStates(N + 1, nx), numInputs(N, nu) {}
 };
 
 }  // namespace ocs2_qp_solver

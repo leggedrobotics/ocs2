@@ -19,7 +19,8 @@ class CostWrapper {
  public:
   /** templated constructor to accept cost function of any size */
   template <size_t STATE_DIM, size_t INPUT_DIM>
-  CostWrapper(const ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM>& costFunction) : p_(new CostHandle<STATE_DIM, INPUT_DIM>(costFunction)) {}
+  CostWrapper(const ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM>& costFunction)  // NOLINT(google-explicit-constructor)
+      : p_(new CostHandle<STATE_DIM, INPUT_DIM>(costFunction)) {}
 
   /** Copy operations clone the underlying handle and cost */
   CostWrapper(const CostWrapper& other) : p_(other.p_->clone()) {}

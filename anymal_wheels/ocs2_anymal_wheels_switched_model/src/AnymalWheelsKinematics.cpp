@@ -33,24 +33,34 @@ switched_model::vector3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::position
 
   switched_model::vector3_s_t<SCALAR_T> wheelOffset;
   wheelOffset.x() = 0;
-  wheelOffset.y() = 0;
-  wheelOffset.z() = -wheelRadius_;
   const auto q = getExtendedJointCoordinates(jointPositions);
 
   switch (footIndex) {
     case LF: {
+      SCALAR_T haa = jointPositions(0);
+      wheelOffset.y() = wheelRadius_ * sin(haa);
+      wheelOffset.z() = -wheelRadius_ * cos(haa);
       typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL_L fr_trunk_X_fr_LF_foot_;
       return fr_trunk_X_fr_LF_foot_(q).template topRightCorner<3, 1>() + wheelOffset;
     }
     case RF: {
+      SCALAR_T haa = jointPositions(3);
+      wheelOffset.y() = wheelRadius_ * sin(haa);
+      wheelOffset.z() = -wheelRadius_ * cos(haa);
       typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_WHEEL_L fr_trunk_X_fr_RF_foot_;
       return fr_trunk_X_fr_RF_foot_(q).template topRightCorner<3, 1>() + wheelOffset;
     }
     case LH: {
+      SCALAR_T haa = jointPositions(6);
+      wheelOffset.y() = wheelRadius_ * sin(haa);
+      wheelOffset.z() = -wheelRadius_ * cos(haa);
       typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_WHEEL_L fr_trunk_X_fr_LH_foot_;
       return fr_trunk_X_fr_LH_foot_(q).template topRightCorner<3, 1>() + wheelOffset;
     }
     case RH: {
+      SCALAR_T haa = jointPositions(9);
+      wheelOffset.y() = wheelRadius_ * sin(haa);
+      wheelOffset.z() = -wheelRadius_ * cos(haa);
       typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_WHEEL_L fr_trunk_X_fr_RH_foot_;
       return fr_trunk_X_fr_RH_foot_(q).template topRightCorner<3, 1>() + wheelOffset;
     }

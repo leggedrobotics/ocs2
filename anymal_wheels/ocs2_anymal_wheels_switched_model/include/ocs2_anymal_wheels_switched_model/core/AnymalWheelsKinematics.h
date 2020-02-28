@@ -14,7 +14,7 @@ namespace tpl {
 
 template <typename SCALAR_T>
 class AnymalWheelsKinematics final : public switched_model::KinematicsModelBase<SCALAR_T> {
-  const SCALAR_T wheelRadius_ = SCALAR_T(0.0);  // [m]
+  const SCALAR_T wheelRadius_ = SCALAR_T(0.095);  // [m]
 
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

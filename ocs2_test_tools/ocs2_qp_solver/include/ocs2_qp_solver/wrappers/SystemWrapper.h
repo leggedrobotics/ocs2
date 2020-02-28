@@ -17,7 +17,7 @@ namespace ocs2_qp_solver {
  */
 class SystemWrapper {
  public:
-  /** templated constructor to accept cost function of any size */
+  /** Templated constructor to accept system dynamics of any size */
   template <size_t STATE_DIM, size_t INPUT_DIM>
   SystemWrapper(const ocs2::SystemDynamicsBase<STATE_DIM, INPUT_DIM>& systemDynamics)  // NOLINT(google-explicit-constructor)
       : p_(new SystemHandle<STATE_DIM, INPUT_DIM>(systemDynamics)) {}
@@ -33,7 +33,7 @@ class SystemWrapper {
   SystemWrapper(SystemWrapper&&) noexcept = default;
   SystemWrapper& operator=(SystemWrapper&&) noexcept = default;
 
-  /** system dynamics interface */
+  /** System dynamics interface */
   Eigen::VectorXd getFlowMap(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u);
   LinearDynamics getLinearApproximation(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u);
 
@@ -47,10 +47,10 @@ class SystemWrapper {
     virtual Eigen::MatrixXd flowMapDerivativeState() = 0;
     virtual Eigen::MatrixXd flowMapDerivativeInput() = 0;
   };
-  /** Only data member: contains a polymorphic handle that wraps the cost function */
+  /** Only data member: contains a polymorphic handle that wraps the system dynamics function */
   std::unique_ptr<SystemHandleBase> p_;
 
-  /** templated handle, containing the pointer to the actually passed cost function */
+  /** Templated handle, containing the pointer to the actually passed system dynamics function */
   template <size_t STATE_DIM, size_t INPUT_DIM>
   struct SystemHandle : public SystemHandleBase {
     // declare const size types

@@ -32,16 +32,16 @@ TEST_F(SwitchedModelTests, Kinematics) {
   Eigen::Vector3d footPosition_RH = kinematics_.positionBaseToFootInBaseFrame(3, qJoints);
   std::cout << "Foot position RH:\n" << footPosition_RH << std::endl;
 
-  Eigen::Matrix<double, 6, 16> footJacobian_LF = kinematics_.baseToFootJacobianInBaseFrame(0, qJoints);
+  Eigen::Matrix<double, 6, 12> footJacobian_LF = kinematics_.baseToFootJacobianInBaseFrame(0, qJoints);
   std::cout << "Foot jacobian LF:\n" << footJacobian_LF << std::endl;
 
-  Eigen::Matrix<double, 6, 16> footJacobian_RF = kinematics_.baseToFootJacobianInBaseFrame(1, qJoints);
+  Eigen::Matrix<double, 6, 12> footJacobian_RF = kinematics_.baseToFootJacobianInBaseFrame(1, qJoints);
   std::cout << "Foot jacobian RF:\n" << footJacobian_RF << std::endl;
 
-  Eigen::Matrix<double, 6, 16> footJacobian_LH = kinematics_.baseToFootJacobianInBaseFrame(2, qJoints);
+  Eigen::Matrix<double, 6, 12> footJacobian_LH = kinematics_.baseToFootJacobianInBaseFrame(2, qJoints);
   std::cout << "Foot jacobian LH:\n" << footJacobian_LH << std::endl;
 
-  Eigen::Matrix<double, 6, 16> footJacobian_RH = kinematics_.baseToFootJacobianInBaseFrame(3, qJoints);
+  Eigen::Matrix<double, 6, 12> footJacobian_RH = kinematics_.baseToFootJacobianInBaseFrame(3, qJoints);
   std::cout << "Foot jacobian RH:\n" << footJacobian_RH << std::endl;
 }
 

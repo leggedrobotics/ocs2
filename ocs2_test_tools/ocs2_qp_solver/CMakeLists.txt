@@ -26,7 +26,6 @@ catkin_package(
   CATKIN_DEPENDS
     ocs2_core
   DEPENDS
-    gtest_main
 )
 
 include_directories(
@@ -81,7 +80,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
 catkin_add_gtest(${PROJECT_NAME}_testWrappers
   test/testCostWrapper.cpp
   test/testSystemWrapper.cpp
-  test/testMain.cpp
   )
 target_link_libraries(${PROJECT_NAME}_testWrappers
   ${PROJECT_NAME}

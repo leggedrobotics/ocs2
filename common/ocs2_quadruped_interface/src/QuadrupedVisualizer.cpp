@@ -21,12 +21,12 @@
 namespace switched_model {
 
 void QuadrupedVisualizer::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
-  costDesiredPublisher_ = nodeHandle.advertise<visualization_msgs::Marker>("ocs2_anymal/desiredBaseTrajectory", 1);
-  costDesiredPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("ocs2_anymal/desiredPoseTrajectory", 1);
-  stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("ocs2_anymal/optimizedStateTrajectory", 1);
-  stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("ocs2_anymal/optimizedPoseTrajectory", 1);
-  currentStatePublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("ocs2_anymal/currentState", 1);
-  currentPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("ocs2_anymal/currentPose", 1);
+  costDesiredPublisher_ = nodeHandle.advertise<visualization_msgs::Marker>("/ocs2_anymal/desiredBaseTrajectory", 1);
+  costDesiredPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/desiredPoseTrajectory", 1);
+  stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/ocs2_anymal/optimizedStateTrajectory", 1);
+  stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/optimizedPoseTrajectory", 1);
+  currentStatePublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/ocs2_anymal/currentState", 1);
+  currentPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/currentPose", 1);
 
   // Load URDF model
   urdf::Model urdfModel;

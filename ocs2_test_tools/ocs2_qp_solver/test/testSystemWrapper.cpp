@@ -8,7 +8,7 @@
 
 #include "testProblemsGeneration.h"
 
-class SystemWrapperTest : public ::testing::Test {
+class SystemWrapperTest : public testing::Test {
  protected:
   static constexpr size_t STATE_DIM = 3;
   static constexpr size_t INPUT_DIM = 2;

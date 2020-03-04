@@ -50,25 +50,6 @@ std::unique_ptr<ocs2::LinearSystemDynamics<STATE_DIM, INPUT_DIM>> getOcs2Dynamic
       new ocs2::LinearSystemDynamics<STATE_DIM, INPUT_DIM>(dynamics.A, dynamics.B));
 }
 
-inline std::vector<LinearQuadraticStage> generateRandomProblem(const ProblemDimensions& problemDimensions) {
-  const auto N = problemDimensions.numStages;
-  std::vector<LinearQuadraticStage> lqProblem;
-  lqProblem.reserve(N);
-
-  for (int k = 0; k < N; ++k) {
-    const auto nx_k = problemDimensions.numStates[k];
-    const auto nu_k = problemDimensions.numInputs[k];
-    lqProblem.emplace_back(getRandomCost(nx_k, nu_k), getRandomDynamics(nx_k, nu_k));
-  }
-
-  // Terminal Cost
-  LinearQuadraticStage lq_stage;
-  const auto nx_N = problemDimensions.numStates[N];
-  lqProblem.emplace_back(getRandomCost(nx_N, 0), LinearDynamics());
-
-  return lqProblem;
-}
-
 /**
  * Compares to Eigen vectors on equality.
  * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().

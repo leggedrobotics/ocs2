@@ -52,26 +52,4 @@ struct LinearQuadraticStage {
   LinearQuadraticStage(QuadraticCost c, LinearDynamics d) : cost(std::move(c)), dynamics(std::move(d)) {}
 };
 
-/**
- * Defines dimensions of the linear quadratic optimal control problem
- * Each stage can have a different amount of states and inputs
- */
-struct ProblemDimensions {
-  /** Number of time steps N */  // NOLINTNEXTLINE
-  int numStages;
-  /** Number of states at each point in time, size N+1 */  // NOLINTNEXTLINE
-  std::vector<int> numStates;
-  /** Number of inputs at each point in time, size N */  // NOLINTNEXTLINE
-  std::vector<int> numInputs;
-
-  explicit ProblemDimensions(int N) : ProblemDimensions(N, 0, 0) {}
-  /**
-   * Constructor for constant size state and inputs
-   * @param N : number of stages
-   * @param nx : number of states for all stages
-   * @param nu : number of inputs for all stages
-   */
-  ProblemDimensions(int N, int nx, int nu) : numStages(N), numStates(N + 1, nx), numInputs(N, nu) {}
-};
-
 }  // namespace ocs2_qp_solver

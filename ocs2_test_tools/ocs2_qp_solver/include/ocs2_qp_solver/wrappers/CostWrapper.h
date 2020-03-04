@@ -8,7 +8,8 @@
 
 #include <ocs2_qp_solver/QpSolverTypes.h>
 
-namespace ocs2_qp_solver {
+namespace ocs2 {
+namespace qp_solver {
 
 /**
  * Wrapper class that wraps a CostFunctionBase of any size and provides a dynamic size interface.
@@ -35,9 +36,9 @@ class CostWrapper {
 
   /** Cost interface */
   double getCost(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u);
-  QuadraticCost getQuadraticApproximation(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u);
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u);
   double getTerminalCost(double t, const Eigen::VectorXd& x);
-  QuadraticCost getTerminalQuadraticApproximation(double t, const Eigen::VectorXd& x);
+  ScalarFunctionQuadraticApproximation getTerminalQuadraticApproximation(double t, const Eigen::VectorXd& x);
 
  private:
   /** Base class for a handle, virtualizes the access to the templated cost function */
@@ -85,51 +86,52 @@ class CostWrapper {
       hp_->setCurrentStateAndControl(t, x, input_vector_t::Zero());
     }
     double getCost() override {
-      scalar_t L;
-      hp_->getIntermediateCost(L);
-      return L;
+      scalar_t f;
+      hp_->getIntermediateCost(f);
+      return f;
     }
     Eigen::VectorXd getCostDerivativeState() override {
-      state_vector_t dLdx;
-      hp_->getIntermediateCostDerivativeState(dLdx);
-      return dLdx;
+      state_vector_t dfdx;
+      hp_->getIntermediateCostDerivativeState(dfdx);
+      return dfdx;
     }
     Eigen::VectorXd getCostDerivativeInput() override {
-      input_vector_t dLdu;
-      hp_->getIntermediateCostDerivativeInput(dLdu);
-      return dLdu;
+      input_vector_t dfdu;
+      hp_->getIntermediateCostDerivativeInput(dfdu);
+      return dfdu;
     }
     Eigen::MatrixXd getCostSecondDerivativeState() override {
-      state_matrix_t dLdxx;
-      hp_->getIntermediateCostSecondDerivativeState(dLdxx);
-      return dLdxx;
+      state_matrix_t dfdxx;
+      hp_->getIntermediateCostSecondDerivativeState(dfdxx);
+      return dfdxx;
     }
     Eigen::MatrixXd getCostSecondDerivativeInput() override {
-      input_matrix_t dLduu;
-      hp_->getIntermediateCostSecondDerivativeInput(dLduu);
-      return dLduu;
+      input_matrix_t dfduu;
+      hp_->getIntermediateCostSecondDerivativeInput(dfduu);
+      return dfduu;
     }
     Eigen::MatrixXd getCostDerivativeInputState() override {
-      input_state_matrix_t dLdux;
-      hp_->getIntermediateCostDerivativeInputState(dLdux);
-      return dLdux;
+      input_state_matrix_t dfdux;
+      hp_->getIntermediateCostDerivativeInputState(dfdux);
+      return dfdux;
     };
     double getTerminalCost() override {
-      scalar_t L;
-      hp_->getTerminalCost(L);
-      return L;
+      scalar_t f;
+      hp_->getTerminalCost(f);
+      return f;
     };
     Eigen::VectorXd getTerminalCostDerivativeState() override {
-      state_vector_t dLdx;
-      hp_->getTerminalCostDerivativeState(dLdx);
-      return dLdx;
+      state_vector_t dfdx;
+      hp_->getTerminalCostDerivativeState(dfdx);
+      return dfdx;
     };
     Eigen::MatrixXd getTerminalCostSecondDerivativeState() override {
-      state_matrix_t dLdxx;
-      hp_->getTerminalCostSecondDerivativeState(dLdxx);
-      return dLdxx;
+      state_matrix_t dfdxx;
+      hp_->getTerminalCostSecondDerivativeState(dfdxx);
+      return dfdxx;
     };
   };
 };
 
-}  // namespace ocs2_qp_solver
+}  // namespace qp_solver
+}  // namespace ocs2

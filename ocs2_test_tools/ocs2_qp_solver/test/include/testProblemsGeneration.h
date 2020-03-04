@@ -9,45 +9,46 @@
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 
-namespace ocs2_qp_solver {
+namespace ocs2 {
+namespace qp_solver {
 
 /** Get random positive definite costs of n states and m inputs */
-inline QuadraticCost getRandomCost(int n, int m) {
+inline ScalarFunctionQuadraticApproximation getRandomCost(int n, int m) {
   Eigen::MatrixXd QPPR = Eigen::MatrixXd::Random(n + m, n + m);
   QPPR = QPPR.transpose() * QPPR;
-  QuadraticCost cost;
-  cost.Q = QPPR.topLeftCorner(n, n);
-  cost.P = QPPR.bottomLeftCorner(m, n);
-  cost.R = QPPR.bottomRightCorner(m, m);
-  cost.q = Eigen::VectorXd::Random(n);
-  cost.r = Eigen::VectorXd::Random(m);
-  cost.c = std::rand() / static_cast<double>(RAND_MAX);
+  ScalarFunctionQuadraticApproximation cost;
+  cost.dfdxx = QPPR.topLeftCorner(n, n);
+  cost.dfdux = QPPR.bottomLeftCorner(m, n);
+  cost.dfduu = QPPR.bottomRightCorner(m, m);
+  cost.dfdx = Eigen::VectorXd::Random(n);
+  cost.dfdu = Eigen::VectorXd::Random(m);
+  cost.f = std::rand() / static_cast<double>(RAND_MAX);
   return cost;
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-std::unique_ptr<ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM>> getOcs2Cost(const QuadraticCost& costMat,
-                                                                               const QuadraticCost& costFinalMat,
+std::unique_ptr<ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM>> getOcs2Cost(const ScalarFunctionQuadraticApproximation& costMat,
+                                                                               const ScalarFunctionQuadraticApproximation& costFinalMat,
                                                                                const Eigen::VectorXd& xNominalIntermediate,
                                                                                const Eigen::VectorXd& uNominalIntermediate,
                                                                                const Eigen::VectorXd& xNominalFinal) {
   return std::unique_ptr<ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM>>(new ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM>(
-      costMat.Q, costMat.R, xNominalIntermediate, uNominalIntermediate, costFinalMat.Q, xNominalFinal, costMat.P));
+      costMat.dfdxx, costMat.dfduu, xNominalIntermediate, uNominalIntermediate, costFinalMat.dfdxx, xNominalFinal, costMat.dfdux));
 }
 
 /** Get random linear dynamics of n states and m inputs */
-inline LinearDynamics getRandomDynamics(int n, int m) {
-  LinearDynamics dynamics;
-  dynamics.A = Eigen::MatrixXd::Random(n, n);
-  dynamics.B = Eigen::MatrixXd::Random(n, m);
-  dynamics.b = Eigen::VectorXd::Random(n);
+inline VectorFunctionLinearApproximation getRandomDynamics(int n, int m) {
+  VectorFunctionLinearApproximation dynamics;
+  dynamics.dfdx = Eigen::MatrixXd::Random(n, n);
+  dynamics.dfdu = Eigen::MatrixXd::Random(n, m);
+  dynamics.f = Eigen::VectorXd::Random(n);
   return dynamics;
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-std::unique_ptr<ocs2::LinearSystemDynamics<STATE_DIM, INPUT_DIM>> getOcs2Dynamics(const LinearDynamics& dynamics) {
+std::unique_ptr<ocs2::LinearSystemDynamics<STATE_DIM, INPUT_DIM>> getOcs2Dynamics(const VectorFunctionLinearApproximation& dynamics) {
   return std::unique_ptr<ocs2::LinearSystemDynamics<STATE_DIM, INPUT_DIM>>(
-      new ocs2::LinearSystemDynamics<STATE_DIM, INPUT_DIM>(dynamics.A, dynamics.B));
+      new ocs2::LinearSystemDynamics<STATE_DIM, INPUT_DIM>(dynamics.dfdx, dynamics.dfdu));
 }
 
 /**
@@ -74,4 +75,5 @@ inline bool isEqual(const std::vector<Eigen::VectorXd>& v0, const std::vector<Ei
                     [tol](const Eigen::VectorXd& lhs, const Eigen::VectorXd& rhs) { return isEqual(lhs, rhs, tol); });
 }
 
-}  // namespace ocs2_qp_solver
+}  // namespace qp_solver
+}  // namespace ocs2

@@ -4,19 +4,21 @@
 
 #include "ocs2_qp_solver/wrappers/SystemWrapper.h"
 
-namespace ocs2_qp_solver {
+namespace ocs2 {
+namespace qp_solver {
 
 Eigen::VectorXd SystemWrapper::getFlowMap(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u) {
   return p_->flowMap(t, x, u);
 }
 
-LinearDynamics SystemWrapper::getLinearApproximation(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u) {
-  LinearDynamics linearDynamics;
+VectorFunctionLinearApproximation SystemWrapper::getLinearApproximation(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u) {
+  VectorFunctionLinearApproximation linearDynamics;
   p_->setCurrentStateAndControl(t, x, u);
-  linearDynamics.b = p_->flowMap(t, x, u);
-  linearDynamics.A = p_->flowMapDerivativeState();
-  linearDynamics.B = p_->flowMapDerivativeInput();
+  linearDynamics.dfdx = p_->flowMapDerivativeState();
+  linearDynamics.dfdu = p_->flowMapDerivativeInput();
+  linearDynamics.f = p_->flowMap(t, x, u);
   return linearDynamics;
 }
 
-}  // namespace ocs2_qp_solver
+}  // namespace qp_solver
+}  // namespace ocs2

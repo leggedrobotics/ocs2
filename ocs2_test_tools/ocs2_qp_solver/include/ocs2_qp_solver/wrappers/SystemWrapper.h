@@ -8,7 +8,8 @@
 
 #include <ocs2_qp_solver/QpSolverTypes.h>
 
-namespace ocs2_qp_solver {
+namespace ocs2 {
+namespace qp_solver {
 
 /**
  * Wrapper class that wraps a SystemDynamicsBase of any size and provides a dynamic size interface.
@@ -35,7 +36,7 @@ class SystemWrapper {
 
   /** System dynamics interface */
   Eigen::VectorXd getFlowMap(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u);
-  LinearDynamics getLinearApproximation(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u);
+  VectorFunctionLinearApproximation getLinearApproximation(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u);
 
  private:
   /** Base class for a handle, virtualizes the access to the templated system dynamics*/
@@ -77,16 +78,17 @@ class SystemWrapper {
       return dxdt;
     }
     Eigen::MatrixXd flowMapDerivativeState() override {
-      state_matrix_t A;
-      hp_->getFlowMapDerivativeState(A);
-      return A;
+      state_matrix_t dfdx;
+      hp_->getFlowMapDerivativeState(dfdx);
+      return dfdx;
     }
     Eigen::MatrixXd flowMapDerivativeInput() override {
-      state_input_matrix_t B;
-      hp_->getFlowMapDerivativeInput(B);
-      return B;
+      state_input_matrix_t dfdu;
+      hp_->getFlowMapDerivativeInput(dfdu);
+      return dfdu;
     }
   };
 };
 
-}  // namespace ocs2_qp_solver
+}  // namespace qp_solver
+}  // namespace ocs2

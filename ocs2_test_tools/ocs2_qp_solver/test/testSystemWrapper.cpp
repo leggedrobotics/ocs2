@@ -22,8 +22,8 @@ class SystemWrapperTest : public ::testing::Test {
   SystemWrapperTest() {
     // Construct random system
     srand(0);
-    system = ocs2_qp_solver::getOcs2Dynamics<STATE_DIM, INPUT_DIM>(ocs2_qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
-    systemWrapper.reset(new ocs2_qp_solver::SystemWrapper(*system));
+    system = ocs2::qp_solver::getOcs2Dynamics<STATE_DIM, INPUT_DIM>(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
+    systemWrapper.reset(new ocs2::qp_solver::SystemWrapper(*system));
 
     // Setpoint
     t = 0.42;
@@ -37,7 +37,7 @@ class SystemWrapperTest : public ::testing::Test {
   double t;
   state_vector_t x;
   input_vector_t u;
-  std::unique_ptr<ocs2_qp_solver::SystemWrapper> systemWrapper;
+  std::unique_ptr<ocs2::qp_solver::SystemWrapper> systemWrapper;
   std::unique_ptr<SystemDynamics_t> system;
 };
 
@@ -69,10 +69,10 @@ TEST_F(SystemWrapperTest, flowMapLinearApproximation) {
   system.reset();  // Destroy the cost function after evaluation
 
   const auto linearApproximation = systemWrapper->getLinearApproximation(t, x, u);
-  const auto A = linearApproximation.A;
-  const auto B = linearApproximation.B;
-  const auto b = linearApproximation.b;
-  Eigen::VectorXd dxdt_wrapped_approximation = A * dx + B * du + b;
+  const auto& dfdx = linearApproximation.dfdx;
+  const auto& dfdu = linearApproximation.dfdu;
+  const auto& f = linearApproximation.f;
+  Eigen::VectorXd dxdt_wrapped_approximation = dfdx * dx + dfdu * du + f;
 
   ASSERT_TRUE(dxdt_true.isApprox(dxdt_wrapped_approximation));
 }

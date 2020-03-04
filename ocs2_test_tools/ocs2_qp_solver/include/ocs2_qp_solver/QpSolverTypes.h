@@ -7,49 +7,50 @@
 #include <Eigen/Dense>
 #include <vector>
 
-namespace ocs2_qp_solver {
+namespace ocs2 {
+namespace qp_solver {
 
 /**
- * Defines the quadratic cost  1/2 x' Q x + u' P x + 1/2 u' R u + q' x + r' u + c
- * x, and u are in relative coordinates when representing a quadratic approximation
+ * Defines the quadratic approximation f(x,u) = 1/2 dx' dfdxx dx + du' dfdux dx + 1/2 du' dfduu du + dfdx' dx + dfdu' du + f
  */
-struct QuadraticCost {
-  /** Second derivative of the cost w.r.t state */  // NOLINTNEXTLINE
-  Eigen::MatrixXd Q;
-  /** Second derivative of the cost w.r.t input (lhs) and state (rhs) */  // NOLINTNEXTLINE
-  Eigen::MatrixXd P;
-  /** Second derivative of the cost w.r.t input */  // NOLINTNEXTLINE
-  Eigen::MatrixXd R;
-  /** First derivative of the cost w.r.t state */  // NOLINTNEXTLINE
-  Eigen::VectorXd q;
-  /** First derivative of the cost w.r.t input */  // NOLINTNEXTLINE
-  Eigen::VectorXd r;
-  /** Constant cost term */  // NOLINTNEXTLINE
-  double c = 0.;
+struct ScalarFunctionQuadraticApproximation {
+  /** Second derivative w.r.t state */
+  Eigen::MatrixXd dfdxx;
+  /** Second derivative w.r.t input (lhs) and state (rhs) */
+  Eigen::MatrixXd dfdux;
+  /** Second derivative w.r.t input */
+  Eigen::MatrixXd dfduu;
+  /** First derivative w.r.t state */
+  Eigen::VectorXd dfdx;
+  /** First derivative w.r.t input */
+  Eigen::VectorXd dfdu;
+  /** Constant term */
+  double f = 0.;
 };
 
 /**
- * Defines the linear dynamics (continuous: dxdt = A x + B u + b) or (discrete: x[k+1] = A x[k] + B x[k] + b)
- * x, and u (on the rhs) are in relative coordinates when representing a linear approximation
+ * Defines the linear model of a vector function f(x,u) = dfdx * dx + dfdu * du + df
  */
-struct LinearDynamics {
-  /** Derivative of the flowmap w.r.t state */  // NOLINTNEXTLINE
-  Eigen::MatrixXd A;
-  /** Derivative of the flowmap w.r.t input */  // NOLINTNEXTLINE
-  Eigen::MatrixXd B;
-  /** Flowmap bias */  // NOLINTNEXTLINE
-  Eigen::VectorXd b;
+struct VectorFunctionLinearApproximation {
+  /** Derivative w.r.t state */
+  Eigen::MatrixXd dfdx;
+  /** Derivative w.r.t input */
+  Eigen::MatrixXd dfdu;
+  /** Constant term */
+  Eigen::VectorXd f;
 };
 
 /** Defines the quadratic cost and  linear dynamics at a give stage */
 struct LinearQuadraticStage {
-  /** Quadratic approximation of the cost */  // NOLINTNEXTLINE
-  QuadraticCost cost;
-  /** Linear approximation of the dynamics */  // NOLINTNEXTLINE
-  LinearDynamics dynamics;
+  /** Quadratic approximation of the cost */
+  ScalarFunctionQuadraticApproximation cost;
+  /** Linear approximation of the dynamics */
+  VectorFunctionLinearApproximation dynamics;
 
   LinearQuadraticStage() = default;
-  LinearQuadraticStage(QuadraticCost c, LinearDynamics d) : cost(std::move(c)), dynamics(std::move(d)) {}
+  LinearQuadraticStage(ScalarFunctionQuadraticApproximation c, VectorFunctionLinearApproximation d)
+      : cost(std::move(c)), dynamics(std::move(d)) {}
 };
 
-}  // namespace ocs2_qp_solver
+}  // namespace qp_solver
+}  // namespace ocs2

@@ -23,21 +23,31 @@ class CostWrapper {
   CostWrapper(const ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM>& costFunction)  // NOLINT(google-explicit-constructor)
       : p_(new CostHandle<STATE_DIM, INPUT_DIM>(costFunction)) {}
 
-  /** Copy operations clone the underlying handle and cost */
+  /** Copy constructor clones the underlying handle and cost */
   CostWrapper(const CostWrapper& other) : p_(other.p_->clone()) {}
+
+  /** Copy constructor clones the underlying handle and cost */
   CostWrapper& operator=(const CostWrapper& other) {
     *this = CostWrapper(other);
     return *this;
   }
 
-  /** Move operations move the handle */
+  /** Move constructor moves the cost */
   CostWrapper(CostWrapper&&) noexcept = default;
+
+  /** Move assignments moves the cost */
   CostWrapper& operator=(CostWrapper&&) noexcept = default;
 
-  /** Cost interface */
+  /** Evaluate the cost */
   double getCost(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u);
+
+  /** Gets the cost approximation */
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u);
+
+  /** Evaluate the terminal cost */
   double getTerminalCost(double t, const Eigen::VectorXd& x);
+
+  /** Gets the terminal cost approximation */
   ScalarFunctionQuadraticApproximation getTerminalQuadraticApproximation(double t, const Eigen::VectorXd& x);
 
  private:

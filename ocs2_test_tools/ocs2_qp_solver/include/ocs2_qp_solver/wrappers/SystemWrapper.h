@@ -23,19 +23,25 @@ class SystemWrapper {
   SystemWrapper(const ocs2::SystemDynamicsBase<STATE_DIM, INPUT_DIM>& systemDynamics)  // NOLINT(google-explicit-constructor)
       : p_(new SystemHandle<STATE_DIM, INPUT_DIM>(systemDynamics)) {}
 
-  /** Copy operations clone the underlying handle and system dynamics */
+  /** Copy constructor clones the underlying system dynamics */
   SystemWrapper(const SystemWrapper& other) : p_(other.p_->clone()) {}
+
+  /** Copy assignment clones the underlying system dynamics */
   SystemWrapper& operator=(const SystemWrapper& other) {
     *this = SystemWrapper(other);
     return *this;
   }
 
-  /** Move operations move the handle */
+  /** Move constructor moves the system */
   SystemWrapper(SystemWrapper&&) noexcept = default;
+
+  /** Move assignment moves the system */
   SystemWrapper& operator=(SystemWrapper&&) noexcept = default;
 
-  /** System dynamics interface */
+  /** Evaluates the flowmap */
   Eigen::VectorXd getFlowMap(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u);
+
+  /** Gets linear approximation */
   VectorFunctionLinearApproximation getLinearApproximation(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u);
 
  private:

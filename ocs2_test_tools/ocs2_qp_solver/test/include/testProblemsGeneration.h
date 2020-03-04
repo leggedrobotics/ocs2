@@ -27,13 +27,13 @@ inline ScalarFunctionQuadraticApproximation getRandomCost(int n, int m) {
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
-std::unique_ptr<ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM>> getOcs2Cost(const ScalarFunctionQuadraticApproximation& costMat,
-                                                                               const ScalarFunctionQuadraticApproximation& costFinalMat,
+std::unique_ptr<ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM>> getOcs2Cost(const ScalarFunctionQuadraticApproximation& cost,
+                                                                               const ScalarFunctionQuadraticApproximation& costFinal,
                                                                                const Eigen::VectorXd& xNominalIntermediate,
                                                                                const Eigen::VectorXd& uNominalIntermediate,
                                                                                const Eigen::VectorXd& xNominalFinal) {
   return std::unique_ptr<ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM>>(new ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM>(
-      costMat.dfdxx, costMat.dfduu, xNominalIntermediate, uNominalIntermediate, costFinalMat.dfdxx, xNominalFinal, costMat.dfdux));
+      cost.dfdxx, cost.dfduu, xNominalIntermediate, uNominalIntermediate, costFinal.dfdxx, xNominalFinal, cost.dfdux));
 }
 
 /** Get random linear dynamics of n states and m inputs */

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(ocs2_anymal_bear_description)
+project(ocs2_anymal_wheels_description)
 
 find_package(catkin REQUIRED COMPONENTS
 )

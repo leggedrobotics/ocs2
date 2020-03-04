@@ -24,6 +24,7 @@ std::unique_ptr<switched_model::QuadrupedInterface> getAnymalCrocInterface(const
 
 std::string getTaskFileFolderCroc(const std::string& taskName) {
   std::string taskFolder = ros::package::getPath("ocs2_anymal_croc") + "/config/" + taskName;
+  return taskFolder;
 }
 
 std::string getTaskFilePathCroc(const std::string& taskName) {

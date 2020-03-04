@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(ocs2_anymal_bear_switched_model)
+project(ocs2_anymal_wheels_switched_model)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -48,8 +48,8 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
-        src/AnymalBearCom.cpp
-        src/AnymalBearKinematics.cpp
+  src/AnymalWheelsCom.cpp
+  src/AnymalWheelsKinematics.cpp
 )
 
 add_dependencies(${PROJECT_NAME}
@@ -82,7 +82,7 @@ install(DIRECTORY
 
 # Build unit tests
 catkin_add_gtest(${PROJECT_NAME}_switched_model_test
-        test/TestAnymalSwitchedModel.cpp
+        test/TestAnymalWheelsSwitchedModel.cpp
         )
 
 add_dependencies(${PROJECT_NAME}_switched_model_test ${catkin_EXPORTED_TARGETS})

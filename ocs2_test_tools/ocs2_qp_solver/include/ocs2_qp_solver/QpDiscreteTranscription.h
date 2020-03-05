@@ -27,7 +27,7 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper co
  * Extracts the problem state and input dimensions from the formed linear quadratic approximation
  * Looks at the size of the A and B matrices in the dynamics.
  */
-ProblemDimensions getProblemDimensions(std::vector<LinearQuadraticStage> linearQuadraticApproximation);
+ProblemDimensions getProblemDimensions(const std::vector<LinearQuadraticStage>& linearQuadraticApproximation);
 
 /**
  * Constructs the discrete quadratic cost and linear dynamics between the given start and end conditions

@@ -24,7 +24,7 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper co
   return lqp;
 }
 
-ProblemDimensions getProblemDimensions(std::vector<LinearQuadraticStage> linearQuadraticApproximation) {
+ProblemDimensions getProblemDimensions(const std::vector<LinearQuadraticStage>& linearQuadraticApproximation) {
   // State and input dimensions are derived from the sizes of the dynamics matrices.
   const int N = linearQuadraticApproximation.size() - 1;
   ProblemDimensions dims(N);

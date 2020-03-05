@@ -25,6 +25,13 @@ class KinematicsModelBase {
   using geometric_jacobian_t = Eigen::Matrix<SCALAR_T, 6, GENERALIZED_COORDINATE_SIZE>;
   using joint_jacobian_t = Eigen::Matrix<SCALAR_T, 6, JOINT_COORDINATE_SIZE>;
 
+  enum Feet {
+    LF=static_cast<int>(switched_model::FeetEnum::LF),
+    RF=static_cast<int>(switched_model::FeetEnum::RF),
+    LH=static_cast<int>(switched_model::FeetEnum::LH),
+    RH=static_cast<int>(switched_model::FeetEnum::RH)
+  };
+
   KinematicsModelBase() = default;
 
   virtual ~KinematicsModelBase() = default;

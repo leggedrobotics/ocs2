@@ -10,15 +10,18 @@
 
 #include <ocs2_switched_model_interface/core/Rotations.h>
 
-namespace switched_model {
+namespace switched_model { namespace constraints {
 
-struct EndEffectorVelocityConstraintSettings : switched_model::EndEffectorConstraintSettings {};
+  struct EndEffectorVelocityConstraintSettings : public constraints::EndEffectorConstraintSettings {
+    EndEffectorVelocityConstraintSettings() = default;
+    EndEffectorVelocityConstraintSettings(size_t rows, size_t cols) : constraints::EndEffectorConstraintSettings(rows, cols) {};
+  };
 
-class EndEffectorVelocityConstraint : public switched_model::EndEffectorConstraint {
+class EndEffectorVelocityConstraint : public constraints::EndEffectorConstraint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = switched_model::EndEffectorConstraint;
+  using BASE = EndEffectorConstraint;
   using typename BASE::ad_com_model_t;
   using typename BASE::ad_dynamic_vector_t;
   using typename BASE::ad_interface_t;
@@ -64,8 +67,9 @@ class EndEffectorVelocityConstraint : public switched_model::EndEffectorConstrai
 
     // Change to std::vector
     scalar_array_t constraintValue;
-    for (int i = 0; i < settings_.A.rows(); i++) {
-      constraintValue.emplace_back(settings_.A.row(i) * eeVelocityWorld + settings_.b[i]);
+    Eigen::VectorXd values = settings_.A() * eeVelocityWorld + settings_.b();
+    for (int i = 0; i < settings_.b().rows(); i++) {
+      constraintValue.emplace_back(values[i]);
     }
     return constraintValue;
   };
@@ -100,4 +104,6 @@ class EndEffectorVelocityConstraint : public switched_model::EndEffectorConstrai
     adInterface_.reset(new ad_interface_t(adfunc, BASE::range_dim_, BASE::domain_dim_, libName_, libFolder_));
   };
 };
+
+}  // namespace constraints
 }  // namespace switched_model

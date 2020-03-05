@@ -15,7 +15,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 ## Eigen3
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++17 -Wfatal-errors -ffast-math")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++17 -Wfatal-errors")
 
 ###################################
 ## catkin specific configuration ##
@@ -42,10 +42,11 @@ include_directories(
 
 add_library(${PROJECT_NAME}
 		src/ComKinoConstraintBaseAd.cpp
+		src/ComKinoConstraintImplAd.cpp
 		src/ComKinoSystemDynamicsAd.cpp
 		src/SwitchedModelCostBase.cpp
 		src/ComKinoOperatingPointsBase.cpp
-        src/SwitchedModelStateEstimator.cpp
+		src/SwitchedModelStateEstimator.cpp
 		src/SwitchedModelLogicRulesBase.cpp
 		src/KinematicsModelBase.cpp
 		src/ComModelBase.cpp

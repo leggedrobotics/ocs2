@@ -6,15 +6,30 @@
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 
 namespace switched_model {
+/**
+ * Switched model definition:
+ *
+ * state = [theta, p, v, w, q (4x)]
+ * theta: EulerXYZ (3x1)
+ * p: CoM position in Origin frame (3x1)
+ * v: CoM angular velocity in Base Frame (3x1)
+ * w: CoM linear velocity in Base Frame (3x1)
+ * q: Joint angles per leg [HAA, HFE, KFE] (3x1)
+ *
+ * input = [lambda (4x), qj (4x)]
+ * lambda: Force at the EE [LF, RF, LH, RH] in Base Frame (3x1)
+ * qj: Joint velocities per leg [HAA, HFE, KFE] (3x1)
+ */
 
 constexpr size_t NUM_CONTACT_POINTS = 4;
 constexpr size_t BASE_COORDINATE_SIZE = 6;
 constexpr size_t JOINT_COORDINATE_SIZE = 12;
 constexpr size_t GENERALIZED_COORDINATE_SIZE = BASE_COORDINATE_SIZE + JOINT_COORDINATE_SIZE;  // 18
+constexpr size_t RBD_STATE_DIM = 2 * GENERALIZED_COORDINATE_SIZE;                             // 36
 constexpr size_t STATE_DIM = 2 * BASE_COORDINATE_SIZE + JOINT_COORDINATE_SIZE;                // 24
 constexpr size_t INPUT_DIM = 3 * NUM_CONTACT_POINTS + JOINT_COORDINATE_SIZE;                  // 24
 
-enum class FeetEnum { LF=0, RF=1, LH=2, RH=3 };
+enum class FeetEnum : int { LF=0, RF=1, LH=2, RH=3 };
 const std::array<std::string, NUM_CONTACT_POINTS> FeetNames{"LF", "RF", "LH", "RH"};
 
 using contact_flag_t = std::array<bool, NUM_CONTACT_POINTS>;

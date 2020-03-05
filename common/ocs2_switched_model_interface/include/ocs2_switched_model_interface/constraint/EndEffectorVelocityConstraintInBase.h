@@ -11,9 +11,9 @@
 
 #include <ocs2_switched_model_interface/core/Rotations.h>
 
-namespace switched_model {
+namespace switched_model { namespace constraints {
 
-class EndEffectorVelocityConstraintInBase : public switched_model::EndEffectorVelocityConstraint {
+class EndEffectorVelocityConstraintInBase : public constraints::EndEffectorVelocityConstraint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -79,4 +79,5 @@ class EndEffectorVelocityConstraintInBase : public switched_model::EndEffectorVe
     adInterface_.reset(new ad_interface_t(adfunc, BASE::range_dim_, BASE::domain_dim_, libName_, libFolder_));
   };
 };
+}  // namespace constraints
 }  // namespace switched_model

@@ -7,6 +7,7 @@
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 
 namespace switched_model {
+namespace constraints {
 
 /**
  * Implements the constraint h(t,x,u) >= 0
@@ -111,6 +112,7 @@ class FrictionConeConstraint final : public ocs2::ConstraintTerm<STATE_DIM, INPU
   int legNumber_;
 };
 
+}  // namespace constraints
 }  // namespace switched_model
 
 #endif  // OCS2_CTRL_FRICTIONCONECONSTRAINT_H

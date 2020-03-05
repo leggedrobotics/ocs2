@@ -10,11 +10,15 @@
 
 #include <ocs2_switched_model_interface/core/Rotations.h>
 
-namespace switched_model {
+namespace switched_model { namespace constraints {
 
-struct EndEffectorPositionConstraintSettings : switched_model::EndEffectorConstraintSettings {};
+  struct EndEffectorPositionConstraintSettings : constraints::EndEffectorConstraintSettings {
+    EndEffectorPositionConstraintSettings() = default;
+    EndEffectorPositionConstraintSettings(size_t rows, size_t cols) : constraints::EndEffectorConstraintSettings(rows, cols) {};
 
-class EndEffectorPositionConstraint : public switched_model::EndEffectorConstraint {
+  };
+
+class EndEffectorPositionConstraint : public EndEffectorConstraint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -97,4 +101,6 @@ class EndEffectorPositionConstraint : public switched_model::EndEffectorConstrai
     adInterface_.reset(new ad_interface_t(adfunc, BASE::range_dim_, BASE::domain_dim_, libName_, libFolder_));
   };
 };
+
+} //namespace constraints
 }  // namespace switched_model

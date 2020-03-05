@@ -45,9 +45,11 @@ void SwitchedModelCostBase::setCurrentStateAndControl(const scalar_t& t, const s
   size_t index = logicRulesPtr_->getEventTimeCount(t);
   logicRulesPtr_->getContactFlags(index, stanceLegs);
 
-  dynamic_vector_t xNominal;
+  dynamic_vector_t xNominal = state_vector_t::Zero();
+  if (BASE::costDesiredTrajectoriesPtr_ != nullptr) {
+    BASE::costDesiredTrajectoriesPtr_->getDesiredState(t, xNominal);
+  }
   dynamic_vector_t uNominal;
-  BASE::xNominalFunc_.interpolate(t, xNominal);
   inputFromContactFlags(stanceLegs, uNominal);
 
   BASE::setCurrentStateAndControl(t, x, u, xNominal, uNominal, xNominal);

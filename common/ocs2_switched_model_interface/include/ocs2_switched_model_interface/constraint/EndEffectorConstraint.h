@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Eigen/Core>
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_switched_model_interface/constraint/ConstraintTerm.h>
 
@@ -7,14 +8,26 @@
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
 
-namespace switched_model {
+namespace switched_model { namespace constraints {
 
 struct EndEffectorConstraintSettings {
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  // Constraints are  A * v_base + b
-  Eigen::MatrixXd A;
-  Eigen::VectorXd b;
+  // Constraints are described by A() * v_base + b()
+
+  private:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    Eigen::MatrixXd data;
+
+  public:
+    Eigen::Ref<Eigen::VectorXd> b() { return data.rightCols<1>(); };
+    Eigen::Ref<Eigen::MatrixXd> A() { return data.leftCols(data.cols() - 1); };
+    const Eigen::Ref<const Eigen::VectorXd> b() const { return data.rightCols<1>(); };
+    const Eigen::Ref<const Eigen::MatrixXd> A() const { return data.leftCols(data.cols() - 1); };
+    void resize(size_t rows, size_t cols) { data.resize(rows, cols+1); };
+
+    EndEffectorConstraintSettings() = default;
+    EndEffectorConstraintSettings(size_t rows, size_t cols){ resize(rows, cols); };
 };
+
 
 class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> {
  public:
@@ -99,7 +112,7 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
 
 
   }
-  size_t getNumConstraints(scalar_t time) const override { return settings_.A.rows(); };
+  size_t getNumConstraints(scalar_t time) const override { return settings_.A().rows(); };
 
   // virtual scalar_array_t getValue(scalar_t time, const state_vector_t& state, const input_vector_t& input) const = 0;
 
@@ -119,9 +132,9 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
     // Convert to output format
     LinearApproximation_t linearApproximation;
     linearApproximation.constraintValues = getValue(time, state, input);
-    for (int i = 0; i < settings_.A.rows(); i++) {
-      linearApproximation.derivativeState.emplace_back(settings_.A.row(i) * dhdx);
-      linearApproximation.derivativeInput.emplace_back(settings_.A.row(i) * dhdu);
+    for (int i = 0; i < settings_.A().rows(); i++) {
+      linearApproximation.derivativeState.emplace_back(settings_.A().row(i) * dhdx);
+      linearApproximation.derivativeInput.emplace_back(settings_.A().row(i) * dhdu);
     }
     return linearApproximation;
   }
@@ -138,8 +151,8 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
     quadraticApproximation.constraintValues = std::move(linearApproximation.constraintValues);
     quadraticApproximation.derivativeState = std::move(linearApproximation.derivativeState);
     quadraticApproximation.derivativeInput = std::move(linearApproximation.derivativeInput);
-    for (int i = 0; i < settings_.A.rows(); i++) {
-      timeStateInput_matrix_t weightedHessian = adInterface_->getHessian(settings_.A.row(i), tapedInput);
+    for (int i = 0; i < settings_.A().rows(); i++) {
+      timeStateInput_matrix_t weightedHessian = adInterface_->getHessian(settings_.A().row(i), tapedInput);
 
       quadraticApproximation.secondDerivativesState.emplace_back(weightedHessian.block(1, 1, STATE_DIM, STATE_DIM));
       quadraticApproximation.secondDerivativesInput.emplace_back(weightedHessian.block(1 + STATE_DIM, 1 + STATE_DIM, INPUT_DIM, INPUT_DIM));
@@ -170,4 +183,5 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
 private:
   bool isAdInterfaceIntialized_;
 };
+}  // namespace constraints
 }  // namespace switched_model

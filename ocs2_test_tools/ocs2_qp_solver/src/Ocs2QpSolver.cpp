@@ -13,7 +13,7 @@ ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostWrapper costF
                                                                const ContinuousTrajectory& linearizationTrajectory,
                                                                const Eigen::VectorXd& initialState) {
   // Approximate
-  const auto lqApproximation = getLinearQuadraticApproximation(std::move(costFunction), std::move(systemDynamics), linearizationTrajectory);
+  const auto lqApproximation = getLinearQuadraticApproximation(costFunction, systemDynamics, linearizationTrajectory);
   const auto problemDimensions = getProblemDimensions(lqApproximation);
 
   // Solve for update step

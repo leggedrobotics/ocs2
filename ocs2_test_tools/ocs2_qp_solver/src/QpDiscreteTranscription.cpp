@@ -6,7 +6,7 @@
 
 namespace ocs2_qp_solver {
 
-std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper cost, SystemWrapper system,
+std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& cost, SystemWrapper& system,
                                                                   const ContinuousTrajectory& linearizationTrajectory) {
   auto& t = linearizationTrajectory.timeTrajectory;
   auto& x = linearizationTrajectory.stateTrajectory;

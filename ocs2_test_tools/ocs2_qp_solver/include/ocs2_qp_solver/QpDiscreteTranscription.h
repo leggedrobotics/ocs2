@@ -20,7 +20,7 @@ namespace ocs2_qp_solver {
  * @param linearizationTrajectory : time, state and input trajectory to make the linear quadratic approximation around
  * @return vector of discrete cost and dynamics at each node.
  */
-std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper cost, SystemWrapper system,
+std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& cost, SystemWrapper& system,
                                                                   const ContinuousTrajectory& linearizationTrajectory);
 
 /**

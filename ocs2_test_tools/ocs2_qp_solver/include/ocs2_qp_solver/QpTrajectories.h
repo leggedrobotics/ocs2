@@ -7,7 +7,8 @@
 #include <Eigen/Dense>
 #include <vector>
 
-namespace ocs2_qp_solver {
+namespace ocs2 {
+namespace qp_solver {
 
 /** A time, state, input trajectory. The last timepoint has only a state, no input */
 struct ContinuousTrajectory {
@@ -40,4 +41,5 @@ struct StateTrajectoryRef {
 /** Adds state and inputs of two trajectories, time is not added. */
 ContinuousTrajectory add(const ContinuousTrajectory& t0, const ContinuousTrajectory& t1);
 
-}  // namespace ocs2_qp_solver
+}  // namespace qp_solver
+}  // namespace ocs2

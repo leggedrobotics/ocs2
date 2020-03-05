@@ -7,7 +7,8 @@
 #include <Eigen/LU>
 #include <numeric>
 
-namespace ocs2_qp_solver {
+namespace ocs2 {
+namespace qp_solver {
 
 ContinuousTrajectory solveLinearQuadraticApproximation(const std::vector<LinearQuadraticStage>& lqApproximation,
                                                        const ProblemDimensions& problemDimensions,
@@ -153,4 +154,5 @@ std::pair<std::vector<Eigen::VectorXd>, std::vector<Eigen::VectorXd>> getStateAn
   return {stateTrajectory, inputTrajectory};
 }
 
-}  // namespace ocs2_qp_solver
+}  // namespace qp_solver
+}  // namespace ocs2

@@ -4,7 +4,8 @@
 
 #include "ocs2_qp_solver/QpDiscreteTranscription.h"
 
-namespace ocs2_qp_solver {
+namespace ocs2 {
+namespace qp_solver {
 
 std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& cost, SystemWrapper& system,
                                                                   const ContinuousTrajectory& linearizationTrajectory) {
@@ -24,18 +25,20 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& c
   return lqp;
 }
 
-ProblemDimensions getProblemDimensions(const std::vector<LinearQuadraticStage>& linearQuadraticApproximation) {
-  // State and input dimensions are derived from the sizes of the dynamics matrices.
+std::pair<std::vector<int>, std::vector<int>> getNumStatesAndInputs(const std::vector<LinearQuadraticStage>& linearQuadraticApproximation) {
   const int N = linearQuadraticApproximation.size() - 1;
-  ProblemDimensions dims(N);
+  std::vector<int> numStates;
+  std::vector<int> numInputs;
+  numStates.reserve(N+1);
+  numInputs.reserve(N);
 
   for (int k = 0; k < N; ++k) {
-    dims.numStates[k] = linearQuadraticApproximation[k].dynamics.A.cols();
-    dims.numInputs[k] = linearQuadraticApproximation[k].dynamics.B.cols();
+    numStates.push_back(linearQuadraticApproximation[k].dynamics.dfdx.cols());
+    numInputs.push_back(linearQuadraticApproximation[k].dynamics.dfdu.cols());
   }
-  dims.numStates[N] = linearQuadraticApproximation[N - 1].dynamics.A.rows();
+  numStates.push_back(linearQuadraticApproximation[N - 1].dynamics.dfdx.rows());
 
-  return dims;
+  return {numStates, numInputs};
 }
 
 LinearQuadraticStage discretizeStage(CostWrapper& cost, SystemWrapper& system, TrajectoryRef start, StateTrajectoryRef end) {
@@ -81,4 +84,5 @@ LinearDynamics discretizeDynamics(SystemWrapper& system, TrajectoryRef start, do
   return discreteDynamics;
 }
 
-}  // namespace ocs2_qp_solver
+}  // namespace qp_solver
+}  // namespace ocs2

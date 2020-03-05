@@ -7,7 +7,8 @@
 #include "ocs2_qp_solver/QpSolverTypes.h"
 #include "ocs2_qp_solver/QpTrajectories.h"
 
-namespace ocs2_qp_solver {
+namespace ocs2 {
+namespace qp_solver {
 
 /**
  * Solves the discretized linear quadratic optimal control problem by constructing a dense QP and inverting the full KKT system.
@@ -79,4 +80,5 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> solveDenseQp(const std::pair<Eigen::
 std::pair<std::vector<Eigen::VectorXd>, std::vector<Eigen::VectorXd>> getStateAndInputTrajectory(const ProblemDimensions& dims,
                                                                                                  const Eigen::VectorXd& w);
 
-}  // namespace ocs2_qp_solver
+}  // namespace qp_solver
+}  // namespace ocs2

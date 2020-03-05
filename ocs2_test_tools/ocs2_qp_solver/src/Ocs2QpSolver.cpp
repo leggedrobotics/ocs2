@@ -7,7 +7,8 @@
 #include "ocs2_qp_solver/QpDiscreteTranscription.h"
 #include "ocs2_qp_solver/QpSolver.h"
 
-namespace ocs2_qp_solver {
+namespace ocs2 {
+namespace qp_solver {
 
 ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostWrapper costFunction, SystemWrapper systemDynamics,
                                                                const ContinuousTrajectory& linearizationTrajectory,
@@ -24,4 +25,5 @@ ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostWrapper costF
   return add(linearizationTrajectory, relativeSolution);
 }
 
-}  // namespace ocs2_qp_solver
+}  // namespace qp_solver
+}  // namespace ocs2

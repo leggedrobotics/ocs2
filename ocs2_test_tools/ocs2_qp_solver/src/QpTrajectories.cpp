@@ -4,7 +4,8 @@
 
 #include "ocs2_qp_solver/QpTrajectories.h"
 
-namespace ocs2_qp_solver {
+namespace ocs2 {
+namespace qp_solver {
 
 ContinuousTrajectory add(const ContinuousTrajectory& t0, const ContinuousTrajectory& t1) {
   const auto N = t0.timeTrajectory.size() - 1;
@@ -21,4 +22,5 @@ ContinuousTrajectory add(const ContinuousTrajectory& t0, const ContinuousTraject
   return sum;
 }
 
-}  // namespace ocs2_qp_solver
+}  // namespace qp_solver
+}  // namespace ocs2

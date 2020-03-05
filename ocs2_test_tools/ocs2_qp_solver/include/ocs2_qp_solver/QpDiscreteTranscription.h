@@ -9,7 +9,8 @@
 #include "ocs2_qp_solver/wrappers/CostWrapper.h"
 #include "ocs2_qp_solver/wrappers/SystemWrapper.h"
 
-namespace ocs2_qp_solver {
+namespace ocs2 {
+namespace qp_solver {
 
 /**
  * Generates a discrete time control problem with quadratic costs and affine dynamics.
@@ -24,10 +25,11 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& c
                                                                   const ContinuousTrajectory& linearizationTrajectory);
 
 /**
- * Extracts the problem state and input dimensions from the formed linear quadratic approximation
- * Looks at the size of the A and B matrices in the dynamics.
+ * Extracts the problem state and inputs dimensions from the a linear quadratic approximation
+ * Looks at the size of the flowmap derivatives of the dynamics.
+ * @return { numStatesPerStage, numInputsPerStage }
  */
-ProblemDimensions getProblemDimensions(const std::vector<LinearQuadraticStage>& linearQuadraticApproximation);
+std::pair<std::vector<int>, std::vector<int>> getNumStatesAndInputs(const std::vector<LinearQuadraticStage>& linearQuadraticApproximation);
 
 /**
  * Constructs the discrete quadratic cost and linear dynamics between the given start and end conditions
@@ -58,4 +60,5 @@ QuadraticCost discretizeCost(CostWrapper& cost, TrajectoryRef start, double dt);
  */
 LinearDynamics discretizeDynamics(SystemWrapper& system, TrajectoryRef start, double dt);
 
-}  // namespace ocs2_qp_solver
+}  // namespace qp_solver
+}  // namespace ocs2

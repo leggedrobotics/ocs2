@@ -9,7 +9,8 @@
 #include "ocs2_qp_solver/wrappers/CostWrapper.h"
 #include "ocs2_qp_solver/wrappers/SystemWrapper.h"
 
-namespace ocs2_qp_solver {
+namespace ocs2 {
+namespace qp_solver {
 
 /**
  * Solves a discrete time linear quadratic control problem around a provided linearization trajectory.
@@ -25,4 +26,5 @@ ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostWrapper costF
                                                                const ContinuousTrajectory& linearizationTrajectory,
                                                                const Eigen::VectorXd& initialState);
 
-}  // namespace ocs2_qp_solver
+}  // namespace qp_solver
+}  // namespace ocs2

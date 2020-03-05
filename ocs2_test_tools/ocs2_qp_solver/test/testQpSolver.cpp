@@ -7,48 +7,44 @@
 #include "ocs2_qp_solver/QpSolver.h"
 #include "testProblemsGeneration.h"
 
-TEST(qpSolver, lqproblem) {
-  // Set up problem
-  ocs2_qp_solver::ProblemDimensions problemSize(5, 3, 2);
-  srand(0);
-  const auto lqProblem = generateRandomProblem(problemSize);
-  Eigen::VectorXd x0 = Eigen::VectorXd::Random(problemSize.numStates[0]);
+class QpSolverTest : public testing::Test {
+ protected:
+  static constexpr int N_ = 5;
+  static constexpr int nx_ = 3;
+  static constexpr int nu_ = 2;
+  static constexpr int numDecisionVariables = N_ * (nx_ + nu_) + nx_;
+  static constexpr int numConstraints = (N_ + 1) * nx_;
 
-  // Construct QP
-  const auto Hg = ocs2_qp_solver::getCostMatrices(problemSize, lqProblem);
-  const auto Ab = ocs2_qp_solver::getConstraintMatrices(problemSize, lqProblem, x0);
+  QpSolverTest() {
+    srand(0);
+    lqProblem = ocs2::qp_solver::generateRandomProblem(N_, nx_, nu_);
+    x0 = Eigen::VectorXd::Random(nx_);
 
-  // Solve QP
-  const auto xl = ocs2_qp_solver::solveDenseQp(Hg, Ab);
+    cost = ocs2::qp_solver::getCostMatrices(lqProblem, numDecisionVariables);
+    constraints = ocs2::qp_solver::getConstraintMatrices(lqProblem, x0, numConstraints, numDecisionVariables);
+    std::tie(primalSolution, dualSolution) = ocs2::qp_solver::solveDenseQp(cost, constraints);
+  }
 
-  // Check constraint satisfaction
-  const Eigen::VectorXd constraintViolation = Ab.first * xl.first - Ab.second;
-  ASSERT_LE(constraintViolation.norm(), 1e-6);
+  std::vector<ocs2::qp_solver::LinearQuadraticStage> lqProblem;
+  Eigen::VectorXd x0;
+  ocs2::qp_solver::ScalarFunctionQuadraticApproximation cost;
+  ocs2::qp_solver::VectorFunctionLinearApproximation constraints;
+  Eigen::VectorXd primalSolution;
+  Eigen::VectorXd dualSolution;
+};
 
-  // Check first order optimality
-  const Eigen::VectorXd firstOrderOptimality = Hg.first * xl.first + Hg.second + Ab.first.transpose() * xl.second;
-  ASSERT_LE(firstOrderOptimality.norm(), 1e-6);
+TEST_F(QpSolverTest, constraintSatisfaction) {
+  ASSERT_TRUE(constraints.f.isApprox(-constraints.dfdx * primalSolution));
 }
 
-TEST(qpSolver, costMatrix) {
-  // Set up problem
-  ocs2_qp_solver::ProblemDimensions problemSize(5, 3, 2);
-  srand(0);
-  const auto lqProblem = generateRandomProblem(problemSize);
-
-  // Construct cost matrix
-  const auto Hg = ocs2_qp_solver::getCostMatrices(problemSize, lqProblem);
-  ASSERT_TRUE(Hg.first.fullPivLu().rank() == Hg.first.rows());
+TEST_F(QpSolverTest, firstOrderOptimality) {
+  ASSERT_TRUE(cost.dfdx.isApprox(-cost.dfdxx * primalSolution - constraints.dfdx.transpose() * dualSolution));
 }
 
-TEST(qpSolver, constraintMatrix) {
-  // Set up problem
-  ocs2_qp_solver::ProblemDimensions problemSize(5, 3, 2);
-  srand(0);
-  const auto lqProblem = generateRandomProblem(problemSize);
-  Eigen::VectorXd x0 = Eigen::VectorXd::Random(problemSize.numStates[0]);
+TEST_F(QpSolverTest, costMatrixFullRank) {
+  ASSERT_TRUE(cost.dfdxx.fullPivLu().rank() == cost.dfdxx.rows());
+}
 
-  // Construct cost matrix
-  const auto Ab = ocs2_qp_solver::getConstraintMatrices(problemSize, lqProblem, x0);
-  ASSERT_TRUE(Ab.first.fullPivLu().rank() == Ab.first.rows());
+TEST_F(QpSolverTest, constraintMatrixFullRank) {
+  ASSERT_TRUE(constraints.dfdx.fullPivLu().rank() == constraints.dfdx.rows());
 }

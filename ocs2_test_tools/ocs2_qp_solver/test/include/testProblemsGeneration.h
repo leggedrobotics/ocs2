@@ -97,21 +97,16 @@ inline ContinuousTrajectory getRandomTrajectory(int N, int n, int m) {
   return trajectory;
 }
 
-inline std::vector<LinearQuadraticStage> generateRandomProblem(const ProblemDimensions& problemDimensions) {
-  const auto N = problemDimensions.numStages;
+inline std::vector<LinearQuadraticStage> generateRandomProblem(int N, int nx, int nu) {
   std::vector<LinearQuadraticStage> lqProblem;
   lqProblem.reserve(N);
 
   for (int k = 0; k < N; ++k) {
-    const auto nx_k = problemDimensions.numStates[k];
-    const auto nu_k = problemDimensions.numInputs[k];
-    lqProblem.emplace_back(getRandomCost(nx_k, nu_k), getRandomDynamics(nx_k, nu_k));
+    lqProblem.emplace_back(getRandomCost(nx, nu), getRandomDynamics(nx, nu));
   }
 
   // Terminal Cost
-  LinearQuadraticStage lq_stage;
-  const auto nx_N = problemDimensions.numStates[N];
-  lqProblem.emplace_back(getRandomCost(nx_N, 0), LinearDynamics());
+  lqProblem.emplace_back(getRandomCost(nx, 0), VectorFunctionLinearApproximation());
 
   return lqProblem;
 }

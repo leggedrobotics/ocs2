@@ -25,13 +25,6 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& c
                                                                   const ContinuousTrajectory& linearizationTrajectory);
 
 /**
- * Extracts the problem state and inputs dimensions from the a linear quadratic approximation
- * Looks at the size of the flowmap derivatives of the dynamics.
- * @return { numStatesPerStage, numInputsPerStage }
- */
-std::pair<std::vector<int>, std::vector<int>> getNumStatesAndInputs(const std::vector<LinearQuadraticStage>& linearQuadraticApproximation);
-
-/**
  * Constructs the discrete quadratic cost and linear dynamics between the given start and end conditions
  *
  * @param cost : continuous cost
@@ -49,16 +42,16 @@ LinearQuadraticStage discretizeStage(CostWrapper& cost, SystemWrapper& system, T
  * @param dt : duration of the interval
  * @return Quadratic approximation of the accumulated costs
  */
-QuadraticCost discretizeCost(CostWrapper& cost, TrajectoryRef start, double dt);
+ScalarFunctionQuadraticApproximation discretizeCost(CostWrapper& cost, TrajectoryRef start, double dt);
 
 /**
  * Computes the discrete dynamics from a start condition over a dt interval
  * @param system : continuous system
  * @param start : linearization point at the start of the interval
  * @param dt : duration of the interval
- * @return
+ * @return Linear approximation of the discrete dynamcis
  */
-LinearDynamics discretizeDynamics(SystemWrapper& system, TrajectoryRef start, double dt);
+VectorFunctionLinearApproximation discretizeDynamics(SystemWrapper& system, TrajectoryRef start, double dt);
 
 }  // namespace qp_solver
 }  // namespace ocs2

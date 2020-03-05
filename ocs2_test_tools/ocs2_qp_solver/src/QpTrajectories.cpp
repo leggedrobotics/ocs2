@@ -8,7 +8,7 @@ namespace ocs2 {
 namespace qp_solver {
 
 ContinuousTrajectory add(const ContinuousTrajectory& t0, const ContinuousTrajectory& t1) {
-  const auto N = t0.timeTrajectory.size() - 1;
+  const int N = t0.timeTrajectory.size() - 1;
   ContinuousTrajectory sum;
   sum.timeTrajectory = t0.timeTrajectory;
   sum.inputTrajectory.reserve(N);

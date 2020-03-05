@@ -15,11 +15,9 @@ ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostWrapper costF
                                                                const Eigen::VectorXd& initialState) {
   // Approximate
   const auto lqApproximation = getLinearQuadraticApproximation(costFunction, systemDynamics, linearizationTrajectory);
-  const auto problemDimensions = getProblemDimensions(lqApproximation);
 
   // Solve for update step
-  const auto relativeSolution =
-      solveLinearQuadraticApproximation(lqApproximation, problemDimensions, linearizationTrajectory, initialState);
+  const auto relativeSolution = solveLinearQuadraticApproximation(lqApproximation, linearizationTrajectory, initialState);
 
   // Take a full step: Add update to linearization
   return add(linearizationTrajectory, relativeSolution);

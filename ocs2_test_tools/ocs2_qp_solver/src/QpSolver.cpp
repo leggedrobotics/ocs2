@@ -10,127 +10,157 @@
 namespace ocs2 {
 namespace qp_solver {
 
+/**
+ * Extracts the problem state and inputs dimensions from a linear quadratic approximation
+ * Looks at the size of the flowmap derivatives of the dynamics.
+ * @return { numStatesPerStage, numInputsPerStage }
+ */
+std::pair<std::vector<int>, std::vector<int>> getNumStatesAndInputs(const std::vector<LinearQuadraticStage>& linearQuadraticApproximation) {
+  const int N = linearQuadraticApproximation.size() - 1;
+  std::vector<int> numStates;
+  std::vector<int> numInputs;
+  numStates.reserve(N + 1);
+  numInputs.reserve(N);
+
+  for (int k = 0; k < N; ++k) {
+    numStates.push_back(linearQuadraticApproximation[k].dynamics.dfdx.cols());
+    numInputs.push_back(linearQuadraticApproximation[k].dynamics.dfdu.cols());
+  }
+  numStates.push_back(linearQuadraticApproximation[N - 1].dynamics.dfdx.rows());
+
+  return {numStates, numInputs};
+}
+
+/** Counts the number of decision variables in the QP */
+int getNumDecisionVariables(const std::vector<int>& numStates, const std::vector<int>& numInputs) {
+  int totalNumberOfStates = std::accumulate(numStates.begin(), numStates.end(), 0);
+  int totalNumberOfInputs = std::accumulate(numInputs.begin(), numInputs.end(), 0);
+  return totalNumberOfStates + totalNumberOfInputs;
+}
+
+/** Counts the number of constraints in the QP */
+int getNumConstraints(const std::vector<int>& numStates) {
+  // Each stage constrains x_{k+1} states, adding the x_0 constraint, all states are constrained exactly once.
+  return std::accumulate(numStates.begin(), numStates.end(), 0);
+}
+
 ContinuousTrajectory solveLinearQuadraticApproximation(const std::vector<LinearQuadraticStage>& lqApproximation,
-                                                       const ProblemDimensions& problemDimensions,
                                                        const ContinuousTrajectory& linearizationTrajectory,
                                                        const Eigen::VectorXd& initialState) {
+  // Extract sizes
+  std::vector<int> numStates;
+  std::vector<int> numInputs;
+  std::tie(numStates, numInputs) = getNumStatesAndInputs(lqApproximation);
+  const int numDecisionVariables = getNumDecisionVariables(numStates, numInputs);
+  const int numConstraints = getNumConstraints(numStates);
+
   // Construct QP
-  const auto constraints =
-      getConstraintMatrices(problemDimensions, lqApproximation, initialState - linearizationTrajectory.stateTrajectory.front());
-  const auto costs = getCostMatrices(problemDimensions, lqApproximation);
+  const auto constraints = getConstraintMatrices(lqApproximation, initialState - linearizationTrajectory.stateTrajectory.front(),
+                                                 numConstraints, numDecisionVariables);
+  const auto costs = getCostMatrices(lqApproximation, numDecisionVariables);
 
   // Solve
   const auto primalDualSolution = solveDenseQp(costs, constraints);
 
   // Extract solution
-  ContinuousTrajectory relativeSolution;
-  relativeSolution.timeTrajectory = linearizationTrajectory.timeTrajectory;
-  std::tie(relativeSolution.stateTrajectory, relativeSolution.inputTrajectory) =
-      getStateAndInputTrajectory(problemDimensions, primalDualSolution.first);
-  return relativeSolution;
+  ContinuousTrajectory deltaSolution;
+  deltaSolution.timeTrajectory = linearizationTrajectory.timeTrajectory;
+  std::tie(deltaSolution.stateTrajectory, deltaSolution.inputTrajectory) =
+      getStateAndInputTrajectory(numStates, numInputs, primalDualSolution.first);
+  return deltaSolution;
 }
 
-int getNumDecisionVariables(const ProblemDimensions& problemDimensions) {
-  int totalNumberOfStates = std::accumulate(problemDimensions.numStates.begin(), problemDimensions.numStates.end(), 0);
-  int totalNumberOfInputs = std::accumulate(problemDimensions.numInputs.begin(), problemDimensions.numInputs.end(), 0);
-  return totalNumberOfStates + totalNumberOfInputs;
-}
-
-int getNumConstraints(const ProblemDimensions& problemDimensions) {
-  // Each stage constrains x_{k+1} states, adding the x_0 constraint, all states are constrained exactly once.
-  return std::accumulate(problemDimensions.numStates.begin(), problemDimensions.numStates.end(), 0);
-}
-
-std::pair<Eigen::MatrixXd, Eigen::VectorXd> getConstraintMatrices(const ProblemDimensions& dims,
-                                                                  const std::vector<LinearQuadraticStage>& lqp,
-                                                                  const Eigen::VectorXd& dx0) {
-  const auto N = dims.numStages;
+VectorFunctionLinearApproximation getConstraintMatrices(const std::vector<LinearQuadraticStage>& lqp, const Eigen::VectorXd& dx0,
+                                                        int numConstraints, int numDecisionVariables) {
+  const int N = lqp.size() - 1;
 
   // Preallocate full constraint matrix
-  const int m = getNumConstraints(dims);
-  const int n = getNumDecisionVariables(dims);
-  Eigen::MatrixXd A = Eigen::MatrixXd::Zero(m, n);
-  Eigen::VectorXd b = Eigen::VectorXd::Zero(m);
+  VectorFunctionLinearApproximation constraints;
+  auto& A = constraints.dfdx;
+  auto& b = constraints.f;
+  A.setZero(numConstraints, numDecisionVariables);
+  b.setZero(numConstraints);
 
   // Initial state constraint
-  const int nx_0 = dims.numStates[0];
+  const int nx_0 = dx0.size();
   A.topLeftCorner(nx_0, nx_0).setIdentity();
-  b.topRows(nx_0) << dx0;
+  b.topRows(nx_0) << -dx0;
 
   int currRow = nx_0;
   int currCol = 0;
   for (int k = 0; k < N; ++k) {
-    const auto nu_k = dims.numInputs[k];
-    const auto nx_k = dims.numStates[k];
-    const auto nx_Next = dims.numStates[k + 1];
     const auto& dynamics_k = lqp[k].dynamics;
+    const int nu_k = dynamics_k.dfdu.cols();
+    const int nx_k = dynamics_k.dfdx.cols();
+    const int nx_Next = dynamics_k.dfdx.rows();
 
     // Add [A, B, -I]
-    A.block(currRow, currCol, nx_Next, nx_k + nu_k + nx_Next) << dynamics_k.A, dynamics_k.B, -Eigen::MatrixXd::Identity(nx_Next, nx_Next);
-    // Add [-b]
-    b.segment(currRow, nx_Next) << -dynamics_k.b;
+    A.block(currRow, currCol, nx_Next, nx_k + nu_k + nx_Next) << dynamics_k.dfdx, dynamics_k.dfdu,
+        -Eigen::MatrixXd::Identity(nx_Next, nx_Next);
+    // Add [b]
+    b.segment(currRow, nx_Next) << dynamics_k.f;
 
     currRow += nx_Next;
     currCol += nx_k + nu_k;
   }
 
-  return {A, b};
+  return constraints;
 }
 
-std::pair<Eigen::MatrixXd, Eigen::VectorXd> getCostMatrices(const ProblemDimensions& dims, const std::vector<LinearQuadraticStage>& lqp) {
-  const auto N = dims.numStages;
+ScalarFunctionQuadraticApproximation getCostMatrices(const std::vector<LinearQuadraticStage>& lqp, int numDecisionVariables) {
+  const int N = lqp.size() - 1;
 
-  // Preallocate full Cost matrix
-  const int n = getNumDecisionVariables(dims);
-  Eigen::MatrixXd H = Eigen::MatrixXd::Zero(n, n);
-  Eigen::VectorXd g(n);
+  // Preallocate full Cost matrices
+  ScalarFunctionQuadraticApproximation qpCost;
+  auto& H = qpCost.dfdxx;
+  auto& g = qpCost.dfdx;
+  H.setZero(numDecisionVariables, numDecisionVariables);
+  g.setZero(numDecisionVariables);
 
   int currRow = 0;
   for (int k = 0; k < N; ++k) {
-    const auto nx_k = dims.numStates[k];
-    const auto nu_k = dims.numInputs[k];
     const auto& cost_k = lqp[k].cost;
+    const int nx_k = cost_k.dfdux.cols();
+    const int nu_k = cost_k.dfdux.rows();
 
     // Add [ Q, P'
     //       P, R ]
-    H.block(currRow, currRow, nx_k + nu_k, nx_k + nu_k) << cost_k.Q, cost_k.P.transpose(), cost_k.P, cost_k.R;
-    // Add [q, r]
-    g.segment(currRow, nx_k + nu_k) << cost_k.q, cost_k.r;
+    H.block(currRow, currRow, nx_k + nu_k, nx_k + nu_k) << cost_k.dfdxx, cost_k.dfdux.transpose(), cost_k.dfdux, cost_k.dfduu;
+    // Add [ q, r]
+    g.segment(currRow, nx_k + nu_k) << cost_k.dfdx, cost_k.dfdu;
 
     currRow += nx_k + nu_k;
   }
 
   // Terminal cost
-  const auto nx_N = dims.numStates[N];
-  H.block(currRow, currRow, nx_N, nx_N) << lqp[N].cost.Q;
-  g.segment(currRow, nx_N) << lqp[N].cost.q;
+  const auto& cost_N = lqp[N].cost;
+  const int nx_N = cost_N.dfdx.size();
+  H.block(currRow, currRow, nx_N, nx_N) << cost_N.dfdxx;
+  g.segment(currRow, nx_N) << cost_N.dfdx;
 
-  return {H, g};
+  return qpCost;
 }
 
-std::pair<Eigen::VectorXd, Eigen::VectorXd> solveDenseQp(const std::pair<Eigen::MatrixXd, Eigen::VectorXd>& Hg,
-                                                         const std::pair<Eigen::MatrixXd, Eigen::VectorXd>& Ab) {
-  const auto& H = Hg.first;
-  const auto& g = Hg.second;
-  const auto& A = Ab.first;
-  const auto& b = Ab.second;
-  const int m = A.rows();
-  const int n = H.cols();
+std::pair<Eigen::VectorXd, Eigen::VectorXd> solveDenseQp(const ScalarFunctionQuadraticApproximation& cost,
+                                                         const VectorFunctionLinearApproximation& constraints) {
+  const int m = constraints.dfdx.rows();
+  const int n = constraints.dfdx.cols();
 
   // Assemble KKT condition
   Eigen::MatrixXd kktMatrix(n + m, n + m);
   Eigen::VectorXd kktRhs(n + m);
-  kktMatrix << H, A.transpose(), A, Eigen::MatrixXd::Zero(m, m);
-  kktRhs << -g, b;
+  kktMatrix << cost.dfdxx, constraints.dfdx.transpose(), constraints.dfdx, Eigen::MatrixXd::Zero(m, m);
+  kktRhs << -cost.dfdx, -constraints.f;
 
   assert(kktMatrix.fullPivLu().rank() == n + m);  // prerequisite for the LU factorization, and the solution would be non-unique.
   Eigen::VectorXd sol = kktMatrix.lu().solve(kktRhs);
   return {sol.head(n), sol.tail(m)};
 }
 
-std::pair<std::vector<Eigen::VectorXd>, std::vector<Eigen::VectorXd>> getStateAndInputTrajectory(const ProblemDimensions& dims,
+std::pair<std::vector<Eigen::VectorXd>, std::vector<Eigen::VectorXd>> getStateAndInputTrajectory(const std::vector<int>& numStates,
+                                                                                                 const std::vector<int>& numInputs,
                                                                                                  const Eigen::VectorXd& w) {
-  const auto N = dims.numStages;
+  const int N = numInputs.size();
 
   std::vector<Eigen::VectorXd> stateTrajectory;
   std::vector<Eigen::VectorXd> inputTrajectory;
@@ -140,16 +170,16 @@ std::pair<std::vector<Eigen::VectorXd>, std::vector<Eigen::VectorXd>> getStateAn
   int index = 0;
   for (int k = 0; k < N; ++k) {
     // x[k]
-    stateTrajectory.emplace_back(w.segment(index, dims.numStates[k]));
-    index += dims.numStates[k];
+    stateTrajectory.emplace_back(w.segment(index, numStates[k]));
+    index += numStates[k];
 
     // u[k]
-    inputTrajectory.emplace_back(w.segment(index, dims.numInputs[k]));
-    index += dims.numInputs[k];
+    inputTrajectory.emplace_back(w.segment(index, numInputs[k]));
+    index += numInputs[k];
   }
 
   // x[N]
-  stateTrajectory.emplace_back(w.segment(index, dims.numStates[N]));
+  stateTrajectory.emplace_back(w.segment(index, numStates[N]));
 
   return {stateTrajectory, inputTrajectory};
 }

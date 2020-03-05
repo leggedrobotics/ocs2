@@ -15,33 +15,32 @@ namespace qp_solver {
  * The decision vector is defined as w = [dx[0], du[0], dx[1],  du[1], ..., dx[N]]
  *
  * @param lqApproximation : vector of stage-wise discrete quadratic cost and linear dynamics
- * @param problemDimensions : state and input sizes of the problem
  * @param linearizationTrajectory : trajectory the lqApproximation was made around.
  * @param initialState : initial state (in absolute coordinates)
  * @return trajectory of state and inputs (in relative coordinates), .i.e. dx(t), du(t)
  */
 ContinuousTrajectory solveLinearQuadraticApproximation(const std::vector<LinearQuadraticStage>& lqApproximation,
-                                                       const ProblemDimensions& problemDimensions,
                                                        const ContinuousTrajectory& linearizationTrajectory,
                                                        const Eigen::VectorXd& initialState);
 
 /**
- * Constructs the matrix of stacked dynamic constraints A w = b
+ * Constructs the matrix of stacked dynamic constraints A w + b = 0
  *
  * A = [ I  *
  *       A  B -I  *
  *       *  *  A  B -I  *
  *       *  *  *  *  A  B -I ]
  *
- * b = [x0; -b[0]; ... -b[N-1]]
+ * b = [x0; b[0]; ... b[N-1]]
  *
- * @param dims : dimensions of the linear quadratic problem.
  * @param lqp : linear quadratic problem.
  * @param dx0 : initial state deviation from the linearization.
- * @return {A, b}
+ * @param numConstraints : number of rows in A
+ * @param numDecisionVariables : size of w
+ * @return linear constraints in w
  */
-std::pair<Eigen::MatrixXd, Eigen::VectorXd> getConstraintMatrices(const ProblemDimensions& dims,
-                                                                  const std::vector<LinearQuadraticStage>& lqp, const Eigen::VectorXd& dx0);
+VectorFunctionLinearApproximation getConstraintMatrices(const std::vector<LinearQuadraticStage>& lqp, const Eigen::VectorXd& dx0,
+                                                        int numConstraints, int numDecisionVariables);
 
 /**
  * Constructs a matrix of stacked cost functions  1/2 w' H w + g' w
@@ -53,31 +52,33 @@ std::pair<Eigen::MatrixXd, Eigen::VectorXd> getConstraintMatrices(const ProblemD
  *
  * g = [q[0]; r[0]; q[1]; r[1]; ... ]
  *
- * @param dims
  * @param lqp
- * @return {H, g}
+ * @param numDecisionVariables : size of w
+ * @return quadratic cost function in w
  */
-std::pair<Eigen::MatrixXd, Eigen::VectorXd> getCostMatrices(const ProblemDimensions& dims, const std::vector<LinearQuadraticStage>& lqp);
+ScalarFunctionQuadraticApproximation getCostMatrices(const std::vector<LinearQuadraticStage>& lqp, int numDecisionVariables);
 
 /**
  * Solves the equality constrained QP
  * min_w  1/2 w' H w + g' w
- *   s.t. A w = b
+ *   s.t. A w + b = 0
  *
- *   Assumes H is postive definite, rows of A are linearly independent.
+ *   Assumes H is positive definite, rows of A are linearly independent.
  *
  * @return {w, lambda} at the solution, where lambda are the lagrange multipliers
  */
-std::pair<Eigen::VectorXd, Eigen::VectorXd> solveDenseQp(const std::pair<Eigen::MatrixXd, Eigen::VectorXd>& Hg,
-                                                         const std::pair<Eigen::MatrixXd, Eigen::VectorXd>& Ab);
+std::pair<Eigen::VectorXd, Eigen::VectorXd> solveDenseQp(const ScalarFunctionQuadraticApproximation& cost,
+                                                         const VectorFunctionLinearApproximation& constraints);
 
 /**
  * Reconstructs the optimal state and input trajectory recursively based on the full qp solution vector
- * @param dims : problem dimensions
+ * @param numStates : number of states per stage
+ * @param numInputs : number of inputs per stage
  * @param w : full qp solution vector
  * @return { state_trajectory, input_trajectory }
  */
-std::pair<std::vector<Eigen::VectorXd>, std::vector<Eigen::VectorXd>> getStateAndInputTrajectory(const ProblemDimensions& dims,
+std::pair<std::vector<Eigen::VectorXd>, std::vector<Eigen::VectorXd>> getStateAndInputTrajectory(const std::vector<int>& numStates,
+                                                                                                 const std::vector<int>& numInputs,
                                                                                                  const Eigen::VectorXd& w);
 
 }  // namespace qp_solver

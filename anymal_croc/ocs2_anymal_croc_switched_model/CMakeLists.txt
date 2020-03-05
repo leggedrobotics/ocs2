@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.0)
 project(ocs2_anymal_croc_switched_model)
 
 ## Find catkin macros and libraries

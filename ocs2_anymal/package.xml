@@ -14,7 +14,7 @@
 
   <exec_depend>ocs2_anymal_bear</exec_depend>
   <exec_depend>ocs2_anymal_bear_loopshaping</exec_depend>
-  <!-- <exec_depend>ocs2_anymal_bear_raisim</exec_depend> -->
+  <exec_depend>ocs2_anymal_bear_raisim</exec_depend>
   <exec_depend>ocs2_anymal_croc</exec_depend>
   <exec_depend>ocs2_anymal_croc_loopshaping</exec_depend>
   <exec_depend>ocs2_anymal_wheels</exec_depend>

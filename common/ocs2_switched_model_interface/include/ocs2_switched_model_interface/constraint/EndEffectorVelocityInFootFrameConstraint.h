@@ -13,10 +13,11 @@
 namespace switched_model {
 namespace constraints {
 
-  struct EndEffectorVelocityInFootFrameConstraintSettings : public constraints::EndEffectorVelocityConstraintSettings {
-    EndEffectorVelocityInFootFrameConstraintSettings() = default;
-    EndEffectorVelocityInFootFrameConstraintSettings(size_t rows, size_t cols) : constraints::EndEffectorVelocityConstraintSettings(rows, cols) {};
-  };
+struct EndEffectorVelocityInFootFrameConstraintSettings : public constraints::EndEffectorVelocityConstraintSettings {
+  EndEffectorVelocityInFootFrameConstraintSettings() = default;
+  EndEffectorVelocityInFootFrameConstraintSettings(size_t rows, size_t cols)
+      : constraints::EndEffectorVelocityConstraintSettings(rows, cols){};
+};
 
 class EndEffectorVelocityInFootFrameConstraint : public constraints::EndEffectorConstraint {
  public:
@@ -44,19 +45,18 @@ class EndEffectorVelocityInFootFrameConstraint : public constraints::EndEffector
   static constexpr ocs2::ConstraintOrder kConstraintOrder = ocs2::ConstraintOrder::Linear;
   static const inline auto constraintPrefix_ = "EEVelocityInFootFrameConstraint_";
 
-  explicit EndEffectorVelocityInFootFrameConstraint(int legNumber,
-      EndEffectorVelocityInFootFrameConstraintSettings settings,
-      ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel,
-      bool generateModels, std::string constraintPrefix = constraintPrefix_)
-    : BASE(kConstraintOrder, constraintPrefix, legNumber, std::move(settings)) {
-      initializeADInterface(adComModel, adKinematicsModel, generateModels);
-    };
+  explicit EndEffectorVelocityInFootFrameConstraint(int legNumber, EndEffectorVelocityInFootFrameConstraintSettings settings,
+                                                    ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel,
+                                                    bool generateModels, std::string constraintPrefix = constraintPrefix_)
+      : BASE(kConstraintOrder, constraintPrefix, legNumber, std::move(settings)) {
+    initializeADInterface(adComModel, adKinematicsModel, generateModels);
+  };
 
-  explicit EndEffectorVelocityInFootFrameConstraint(int legNumber, EndEffectorVelocityInFootFrameConstraintSettings settings,  std::string constraintPrefix = constraintPrefix_)
-    : BASE(kConstraintOrder, constraintPrefix, legNumber, std::move(settings))
-    {};
+  explicit EndEffectorVelocityInFootFrameConstraint(int legNumber, EndEffectorVelocityInFootFrameConstraintSettings settings,
+                                                    std::string constraintPrefix = constraintPrefix_)
+      : BASE(kConstraintOrder, constraintPrefix, legNumber, std::move(settings)){};
 
-  EndEffectorVelocityInFootFrameConstraint(const EndEffectorVelocityInFootFrameConstraint& rhs) : BASE(rhs) {};
+  EndEffectorVelocityInFootFrameConstraint(const EndEffectorVelocityInFootFrameConstraint& rhs) : BASE(rhs){};
 
   EndEffectorVelocityInFootFrameConstraint* clone() const override { return new EndEffectorVelocityInFootFrameConstraint(*this); };
 
@@ -68,12 +68,10 @@ class EndEffectorVelocityInFootFrameConstraint : public constraints::EndEffector
     // Compute constraints
     dynamic_vector_t eeVelocityWorldInFoot = adInterface_->getFunctionValue(tapedInput);
 
-
     // Change to std::vector
     scalar_array_t constraintValue;
     Eigen::VectorXd values = settings_.A() * eeVelocityWorldInFoot + settings_.b();
-    for (int i = 0; i < settings_.b().rows(); i++)
-      constraintValue.emplace_back(values[i]);
+    for (int i = 0; i < settings_.b().rows(); i++) constraintValue.emplace_back(values[i]);
     return constraintValue;
   };
 

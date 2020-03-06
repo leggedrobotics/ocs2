@@ -11,7 +11,8 @@
 
 #include <ocs2_switched_model_interface/core/Rotations.h>
 
-namespace switched_model { namespace constraints {
+namespace switched_model {
+namespace constraints {
 
 class EndEffectorVelocityConstraintInBase : public constraints::EndEffectorVelocityConstraint {
  public:
@@ -36,19 +37,16 @@ class EndEffectorVelocityConstraintInBase : public constraints::EndEffectorVeloc
   using typename BASE::state_vector_t;
   using typename BASE::timeStateInput_matrix_t;
 
-  
-
   explicit EndEffectorVelocityConstraintInBase(int legNumber, EndEffectorVelocityConstraintSettings settings, ad_com_model_t& adComModel,
-                                             ad_kinematic_model_t& adKinematicsModel, bool generateModels,
-                                             std::string constraintPrefix = "b_EEVelocityConstraint_")
-    : BASE(legNumber, std::move(settings), constraintPrefix) {
-      initializeADInterface(adComModel, adKinematicsModel, generateModels);
-    }
+                                               ad_kinematic_model_t& adKinematicsModel, bool generateModels,
+                                               std::string constraintPrefix = "b_EEVelocityConstraint_")
+      : BASE(legNumber, std::move(settings), constraintPrefix) {
+    initializeADInterface(adComModel, adKinematicsModel, generateModels);
+  }
 
   EndEffectorVelocityConstraintInBase(const EndEffectorVelocityConstraintInBase& rhs) : BASE(rhs) {}
 
-  EndEffectorVelocityConstraintInBase* clone() const override { return new
-  EndEffectorVelocityConstraintInBase(*this); }
+  EndEffectorVelocityConstraintInBase* clone() const override { return new EndEffectorVelocityConstraintInBase(*this); }
 
  private:
   void adFootVelocity(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, const ad_dynamic_vector_t& tapedInput,

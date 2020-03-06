@@ -91,8 +91,9 @@ Eigen::Matrix<SCALAR_T, 3, 3> angularVelocitiesToEulerAngleDerivativesMatrix(con
 }
 
 /*! \brief Returns a unique Euler angles rotation with angles in [-pi,pi),[-pi/2,pi/2),[-pi,pi).
- *  \note Taken from https://github.com/ANYbotics/kindr/blob/0b159ec60b710706656b70148211ed04573fbfda/include/kindr/rotations/EulerAnglesXyz.hpp
- *  \param [in,out] eulerAngles to be scaled as necessary
+ *  \note Taken from
+ * https://github.com/ANYbotics/kindr/blob/0b159ec60b710706656b70148211ed04573fbfda/include/kindr/rotations/EulerAnglesXyz.hpp \param
+ * [in,out] eulerAngles to be scaled as necessary
  */
 template <typename SCALAR_T>
 void makeEulerAnglesUnique(Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {

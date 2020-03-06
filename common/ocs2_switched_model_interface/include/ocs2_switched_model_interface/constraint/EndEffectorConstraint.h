@@ -1,33 +1,33 @@
 #pragma once
 
-#include <Eigen/Core>
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_switched_model_interface/constraint/ConstraintTerm.h>
+#include <Eigen/Core>
 
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
 
-namespace switched_model { namespace constraints {
+namespace switched_model {
+namespace constraints {
 
 struct EndEffectorConstraintSettings {
   // Constraints are described by A() * v_base + b()
 
-  private:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    Eigen::MatrixXd data;
+ private:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  Eigen::MatrixXd data;
 
-  public:
-    Eigen::Ref<Eigen::VectorXd> b() { return data.rightCols<1>(); };
-    Eigen::Ref<Eigen::MatrixXd> A() { return data.leftCols(data.cols() - 1); };
-    const Eigen::Ref<const Eigen::VectorXd> b() const { return data.rightCols<1>(); };
-    const Eigen::Ref<const Eigen::MatrixXd> A() const { return data.leftCols(data.cols() - 1); };
-    void resize(size_t rows, size_t cols) { data.resize(rows, cols+1); };
+ public:
+  Eigen::Ref<Eigen::VectorXd> b() { return data.rightCols<1>(); };
+  Eigen::Ref<Eigen::MatrixXd> A() { return data.leftCols(data.cols() - 1); };
+  const Eigen::Ref<const Eigen::VectorXd> b() const { return data.rightCols<1>(); };
+  const Eigen::Ref<const Eigen::MatrixXd> A() const { return data.leftCols(data.cols() - 1); };
+  void resize(size_t rows, size_t cols) { data.resize(rows, cols + 1); };
 
-    EndEffectorConstraintSettings() = default;
-    EndEffectorConstraintSettings(size_t rows, size_t cols){ resize(rows, cols); };
+  EndEffectorConstraintSettings() = default;
+  EndEffectorConstraintSettings(size_t rows, size_t cols) { resize(rows, cols); };
 };
-
 
 class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> {
  public:
@@ -71,10 +71,7 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
         legNumber_{legNumber},
         settings_{std::move(settings)},
         libName_{eeConstraintName + std::to_string(legNumber_)},
-        libFolder_{std::string{libFolderDir},
-        isAdInterfaceIntialized_=false
-        }
-  {}
+        libFolder_{std::string{libFolderDir}, isAdInterfaceIntialized_ = false} {}
 
   EndEffectorConstraint(const EndEffectorConstraint& rhs)
       : BASE(rhs),
@@ -109,8 +106,6 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
         }
         break;
     }
-
-
   }
   size_t getNumConstraints(scalar_t time) const override { return settings_.A().rows(); };
 
@@ -180,7 +175,8 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
   std::string libName_;
   std::string libFolder_;
   std::unique_ptr<ad_interface_t> adInterface_;
-private:
+
+ private:
   bool isAdInterfaceIntialized_;
 };
 }  // namespace constraints

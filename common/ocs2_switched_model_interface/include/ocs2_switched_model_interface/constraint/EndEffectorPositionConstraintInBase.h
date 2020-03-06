@@ -14,7 +14,7 @@
 namespace switched_model {
 namespace constraints {
 
-class EndEffectorPositionConstraintInBase : public constraints::EndEffectorPositionConstraint{
+class EndEffectorPositionConstraintInBase : public constraints::EndEffectorPositionConstraint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -37,16 +37,14 @@ class EndEffectorPositionConstraintInBase : public constraints::EndEffectorPosit
   using typename BASE::state_vector_t;
   using typename BASE::timeStateInput_matrix_t;
 
-
   explicit EndEffectorPositionConstraintInBase(int legNumber, EndEffectorPositionConstraintSettings settings, ad_com_model_t& adComModel,
-                                             ad_kinematic_model_t& adKinematicsModel, bool generateModels,
-                                             std::string constraintPrefix = "b_EEPositionConstraint_")
+                                               ad_kinematic_model_t& adKinematicsModel, bool generateModels,
+                                               std::string constraintPrefix = "b_EEPositionConstraint_")
       : BASE(legNumber, std::move(settings), adComModel, adKinematicsModel, generateModels, constraintPrefix) {}
 
   EndEffectorPositionConstraintInBase(const EndEffectorPositionConstraintInBase& rhs) : BASE(rhs) {}
 
-  EndEffectorPositionConstraintInBase* clone() const override { return new
-  EndEffectorPositionConstraintInBase(*this); }
+  EndEffectorPositionConstraintInBase* clone() const override { return new EndEffectorPositionConstraintInBase(*this); }
 
  private:
   void adFootPosition(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, const ad_dynamic_vector_t& tapedInput,
@@ -75,4 +73,4 @@ class EndEffectorPositionConstraintInBase : public constraints::EndEffectorPosit
     };
   };
 }  // namespace constraints
-}  // namespace switched_model
+}  // namespace constraints

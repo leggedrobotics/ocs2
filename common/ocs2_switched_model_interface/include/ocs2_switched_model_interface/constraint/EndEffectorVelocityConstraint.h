@@ -10,12 +10,13 @@
 
 #include <ocs2_switched_model_interface/core/Rotations.h>
 
-namespace switched_model { namespace constraints {
+namespace switched_model {
+namespace constraints {
 
-  struct EndEffectorVelocityConstraintSettings : public constraints::EndEffectorConstraintSettings {
-    EndEffectorVelocityConstraintSettings() = default;
-    EndEffectorVelocityConstraintSettings(size_t rows, size_t cols) : constraints::EndEffectorConstraintSettings(rows, cols) {};
-  };
+struct EndEffectorVelocityConstraintSettings : public constraints::EndEffectorConstraintSettings {
+  EndEffectorVelocityConstraintSettings() = default;
+  EndEffectorVelocityConstraintSettings(size_t rows, size_t cols) : constraints::EndEffectorConstraintSettings(rows, cols){};
+};
 
 class EndEffectorVelocityConstraint : public constraints::EndEffectorConstraint {
  public:
@@ -45,13 +46,13 @@ class EndEffectorVelocityConstraint : public constraints::EndEffectorConstraint 
   explicit EndEffectorVelocityConstraint(int legNumber, EndEffectorVelocityConstraintSettings settings, ad_com_model_t& adComModel,
                                          ad_kinematic_model_t& adKinematicsModel, bool generateModels,
                                          std::string constraintPrefix = "EEVelocityConstraint_")
-    : BASE(kConstraintOrder, constraintPrefix, legNumber, std::move(settings)) {
-      initializeADInterface(adComModel, adKinematicsModel, generateModels);
-    }
+      : BASE(kConstraintOrder, constraintPrefix, legNumber, std::move(settings)) {
+    initializeADInterface(adComModel, adKinematicsModel, generateModels);
+  }
 
-  explicit EndEffectorVelocityConstraint(int legNumber, EndEffectorVelocityConstraintSettings settings,  std::string constraintPrefix = "EEVelocityConstraint_")
-    : BASE(kConstraintOrder, constraintPrefix, legNumber, std::move(settings))
-    {}
+  explicit EndEffectorVelocityConstraint(int legNumber, EndEffectorVelocityConstraintSettings settings,
+                                         std::string constraintPrefix = "EEVelocityConstraint_")
+      : BASE(kConstraintOrder, constraintPrefix, legNumber, std::move(settings)) {}
 
   EndEffectorVelocityConstraint(const EndEffectorVelocityConstraint& rhs) : BASE(rhs) {}
 

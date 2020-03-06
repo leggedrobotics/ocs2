@@ -10,13 +10,13 @@
 
 #include <ocs2_switched_model_interface/core/Rotations.h>
 
-namespace switched_model { namespace constraints {
+namespace switched_model {
+namespace constraints {
 
-  struct EndEffectorPositionConstraintSettings : constraints::EndEffectorConstraintSettings {
-    EndEffectorPositionConstraintSettings() = default;
-    EndEffectorPositionConstraintSettings(size_t rows, size_t cols) : constraints::EndEffectorConstraintSettings(rows, cols) {};
-
-  };
+struct EndEffectorPositionConstraintSettings : constraints::EndEffectorConstraintSettings {
+  EndEffectorPositionConstraintSettings() = default;
+  EndEffectorPositionConstraintSettings(size_t rows, size_t cols) : constraints::EndEffectorConstraintSettings(rows, cols){};
+};
 
 class EndEffectorPositionConstraint : public EndEffectorConstraint {
  public:
@@ -41,18 +41,18 @@ class EndEffectorPositionConstraint : public EndEffectorConstraint {
   using typename BASE::state_vector_t;
   using typename BASE::timeStateInput_matrix_t;
 
-
   static constexpr ocs2::ConstraintOrder kConstraintOrder = ocs2::ConstraintOrder::Quadratic;
 
   explicit EndEffectorPositionConstraint(int legNumber, EndEffectorPositionConstraintSettings settings, ad_com_model_t& adComModel,
-                                         ad_kinematic_model_t& adKinematicsModel, bool generateModels, std::string constraintPrefix = "EEPositionConstraint_")
-    : BASE(kConstraintOrder, constraintPrefix, legNumber, std::move(settings)) {
-      initializeADInterface(adComModel, adKinematicsModel, generateModels);
-    }
+                                         ad_kinematic_model_t& adKinematicsModel, bool generateModels,
+                                         std::string constraintPrefix = "EEPositionConstraint_")
+      : BASE(kConstraintOrder, constraintPrefix, legNumber, std::move(settings)) {
+    initializeADInterface(adComModel, adKinematicsModel, generateModels);
+  }
 
-  explicit EndEffectorPositionConstraint(int legNumber, EndEffectorPositionConstraintSettings settings,  std::string constraintPrefix = "EEPositionConstraint_")
-    : BASE(kConstraintOrder, constraintPrefix, legNumber, std::move(settings))
-    {}
+  explicit EndEffectorPositionConstraint(int legNumber, EndEffectorPositionConstraintSettings settings,
+                                         std::string constraintPrefix = "EEPositionConstraint_")
+      : BASE(kConstraintOrder, constraintPrefix, legNumber, std::move(settings)) {}
 
   EndEffectorPositionConstraint(const EndEffectorPositionConstraint& rhs) : BASE(rhs) {}
 
@@ -102,5 +102,5 @@ class EndEffectorPositionConstraint : public EndEffectorConstraint {
   };
 };
 
-} //namespace constraints
+}  // namespace constraints
 }  // namespace switched_model

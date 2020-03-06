@@ -13,14 +13,14 @@
 namespace switched_model {
 
 class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM> {
-
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  enum Feet { LF=static_cast<size_t>(switched_model::FeetEnum::LF),
-              RF=static_cast<size_t>(switched_model::FeetEnum::RF),
-              LH=static_cast<size_t>(switched_model::FeetEnum::LH),
-              RH=static_cast<size_t>(switched_model::FeetEnum::RH)
+  enum Feet {
+    LF = static_cast<size_t>(switched_model::FeetEnum::LF),
+    RF = static_cast<size_t>(switched_model::FeetEnum::RF),
+    LH = static_cast<size_t>(switched_model::FeetEnum::LH),
+    RH = static_cast<size_t>(switched_model::FeetEnum::RH)
   };
 
   using Base = ocs2::ConstraintBase<STATE_DIM, INPUT_DIM>;
@@ -38,21 +38,20 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
   using ConstraintTerm_t = ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM>;
   using ModelSettings_t = switched_model::ModelSettings;
 
-
   ComKinoConstraintBaseAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-      std::shared_ptr<const logic_rules_t> logicRulesPtr, const ModelSettings& options = ModelSettings(),
-      bool inequalityConstrainstComputed=false, bool stateInputConstraintsComputed=false)
-    : Base(),
-    adKinematicModelPtr_(adKinematicModel.clone()),
-    adComModelPtr_(adComModel.clone()),
-    logicRulesPtr_(std::move(logicRulesPtr)),
-    options_(options),
-    inequalityConstraintsComputed_(inequalityConstrainstComputed),
-    stateInputConstraintsComputed_(stateInputConstraintsComputed) {
-      if (!logicRulesPtr_) {
-        throw std::runtime_error("[ComKinoConstraintBaseAd] logicRules cannot be a nullptr");
-      }
+                          std::shared_ptr<const logic_rules_t> logicRulesPtr, const ModelSettings& options = ModelSettings(),
+                          bool inequalityConstrainstComputed = false, bool stateInputConstraintsComputed = false)
+      : Base(),
+        adKinematicModelPtr_(adKinematicModel.clone()),
+        adComModelPtr_(adComModel.clone()),
+        logicRulesPtr_(std::move(logicRulesPtr)),
+        options_(options),
+        inequalityConstraintsComputed_(inequalityConstrainstComputed),
+        stateInputConstraintsComputed_(stateInputConstraintsComputed) {
+    if (!logicRulesPtr_) {
+      throw std::runtime_error("[ComKinoConstraintBaseAd] logicRules cannot be a nullptr");
     }
+  }
 
   ComKinoConstraintBaseAd(const ComKinoConstraintBaseAd& rhs)
       : Base(rhs),
@@ -67,18 +66,16 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
 
   /** Methods to override in derived classes */
 
-   /** Initialize Constraint Terms */
-  virtual void initializeConstraintTerms()  = 0;
+  /** Initialize Constraint Terms */
+  virtual void initializeConstraintTerms() = 0;
 
-   /** Set the Constraint terms from the state and controls */
+  /** Set the Constraint terms from the state and controls */
   virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
 
   virtual ComKinoConstraintBaseAd* clone() const override = 0;
 
-
   /** General Anymal switched_model  */
   virtual ~ComKinoConstraintBaseAd() override = default;
-
 
   size_t numStateInputConstraint(const scalar_t& time) override;
   void getConstraint1(constraint1_vector_t& e) override;

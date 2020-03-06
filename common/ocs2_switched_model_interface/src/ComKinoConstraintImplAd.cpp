@@ -4,12 +4,11 @@
 
 namespace switched_model {
 
-  ComKinoConstraintImplAd::ComKinoConstraintImplAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-      std::shared_ptr<const logic_rules_t> logicRulesPtr, const ModelSettings& options
-      ) : Base(adKinematicModel, adComModel, logicRulesPtr, options, false, false)
-  {
-    initializeConstraintTerms();
-  }
+ComKinoConstraintImplAd::ComKinoConstraintImplAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
+                                                 std::shared_ptr<const logic_rules_t> logicRulesPtr, const ModelSettings& options)
+    : Base(adKinematicModel, adComModel, logicRulesPtr, options, false, false) {
+  initializeConstraintTerms();
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -68,14 +67,14 @@ void ComKinoConstraintImplAd::setCurrentStateAndControl(const scalar_t& t, const
     // Active foot placement for stance legs
     auto& EEVelConstraint = equalityStateInputConstraintCollection_.get<EndEffectorVelocityConstraint_t>(footName + "_EEVel");
     EEVelConstraint.setActivity(true);
-    EndEffectorVelocityConstraintSettings_t eeVelConSettings(3,3);
+    EndEffectorVelocityConstraintSettings_t eeVelConSettings(3, 3);
     if (stanceLegs_[footIdx]) {  // in stance: All velocity equal to zero
       eeVelConSettings.b();
       eeVelConSettings.A();
       eeVelConSettings.b() = Eigen::Vector3d::Zero();
       eeVelConSettings.A() = Eigen::Matrix3d::Identity();
     } else {  // in swing: z-velocity is provided
-      eeVelConSettings.resize(1,3);
+      eeVelConSettings.resize(1, 3);
       eeVelConSettings.b();
       eeVelConSettings.A();
       eeVelConSettings.b() << -zDirectionRefsPtr_[footIdx]->calculateVelocity(Base::t_);
@@ -85,4 +84,4 @@ void ComKinoConstraintImplAd::setCurrentStateAndControl(const scalar_t& t, const
   }
 }
 
-}
+}  // namespace switched_model

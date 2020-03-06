@@ -26,10 +26,10 @@ class KinematicsModelBase {
   using joint_jacobian_t = Eigen::Matrix<SCALAR_T, 6, JOINT_COORDINATE_SIZE>;
 
   enum Feet {
-    LF=static_cast<int>(switched_model::FeetEnum::LF),
-    RF=static_cast<int>(switched_model::FeetEnum::RF),
-    LH=static_cast<int>(switched_model::FeetEnum::LH),
-    RH=static_cast<int>(switched_model::FeetEnum::RH)
+    LF = static_cast<int>(switched_model::FeetEnum::LF),
+    RF = static_cast<int>(switched_model::FeetEnum::RF),
+    LH = static_cast<int>(switched_model::FeetEnum::LH),
+    RH = static_cast<int>(switched_model::FeetEnum::RH)
   };
 
   KinematicsModelBase() = default;
@@ -52,9 +52,11 @@ class KinematicsModelBase {
 
   virtual joint_jacobian_t baseToFootJacobianInBaseFrame(size_t footIndex, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const = 0;
 
-  virtual matrix3_s_t<SCALAR_T> footOrientationRelativeToBaseFrame(size_t footIndex, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const = 0;
+  virtual matrix3_s_t<SCALAR_T> footOrientationRelativeToBaseFrame(size_t footIndex,
+                                                                   const joint_coordinate_s_t<SCALAR_T>& jointPositions) const = 0;
 
-  matrix3_s_t<SCALAR_T> footOrientationInOriginFrame(size_t footIndex, const base_coordinate_s_t<SCALAR_T> basePose, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
+  matrix3_s_t<SCALAR_T> footOrientationInOriginFrame(size_t footIndex, const base_coordinate_s_t<SCALAR_T> basePose,
+                                                     const joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
 
   vector3_s_t<SCALAR_T> footVelocityRelativeToBaseInBaseFrame(size_t footIndex, const joint_coordinate_s_t<SCALAR_T>& jointPositions,
                                                               const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const;
@@ -71,7 +73,6 @@ class KinematicsModelBase {
   vector3_s_t<SCALAR_T> footVelocityInFootFrame(size_t footIndex, const base_coordinate_s_t<SCALAR_T> baseTwistInBaseFrame,
                                                 const joint_coordinate_s_t<SCALAR_T>& jointPositions,
                                                 const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const;
-
 };
 
 extern template class KinematicsModelBase<double>;

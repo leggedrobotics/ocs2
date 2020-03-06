@@ -1,6 +1,5 @@
 #include "ocs2_switched_model_interface/constraint/ComKinoConstraintBaseAd.h"
 
-
 namespace switched_model {
 
 /******************************************************************************************************/
@@ -9,7 +8,6 @@ namespace switched_model {
 void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
   Base::setCurrentStateAndControl(t, x, u);
 };
-
 
 /******************************************************************************************************/
 /******************************************************************************************************/

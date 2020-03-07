@@ -69,16 +69,12 @@ add_library(${PROJECT_NAME}
   src/QuadrupedSlqMpc.cpp
   src/QuadrupedVisualizer.cpp
   src/QuadrupedVisualizationColors.cpp
-  src/QuadrupedVisualizationHelpers.cpp
-  )
-
+  src/QuadrupedVisualizationHelpers.cpp)
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-  )
+  ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  )
+  ${catkin_LIBRARIES})
 
 #########################
 ###   CLANG TOOLING   ###

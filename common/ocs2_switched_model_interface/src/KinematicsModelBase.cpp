@@ -37,9 +37,10 @@ vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footPositionInOriginFrame(s
   vector3_s_t<SCALAR_T> b_baseToFoot = positionBaseToFootInBaseFrame(footIndex, jointPositions);
   return o_R_b * b_baseToFoot + o_basePosition;
 }
-///******************************************************************************************************/
-///******************************************************************************************************/
-///******************************************************************************************************/
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename SCALAR_T>
 matrix3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footOrientationInOriginFrame(
     size_t footIndex, const base_coordinate_s_t<SCALAR_T> basePose, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
@@ -47,9 +48,9 @@ matrix3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footOrientationInOriginFram
   return o_R_b * footOrientationRelativeToBaseFrame(footIndex, jointPositions);
 }
 
-///******************************************************************************************************/
-///******************************************************************************************************/
-///******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename SCALAR_T>
 std::array<vector3_s_t<SCALAR_T>, NUM_CONTACT_POINTS> KinematicsModelBase<SCALAR_T>::feetPositionsInOriginFrame(
     const base_coordinate_s_t<SCALAR_T> basePoseInOriginFrame, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const {

@@ -31,19 +31,12 @@ QuadrupedInterfaceImpl::QuadrupedInterfaceImpl(const kinematic_model_t& kinemati
 /******************************************************************************************************/
 QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
                                        const com_model_t& comModel, const ad_com_model_t& adComModel, const std::string& pathToConfigFolder)
+
     : kinematicModelPtr_(kinematicModel.clone()), comModelPtr_(comModel.clone()) {
   loadSettings(pathToConfigFolder + "/task.info");
 
   dynamicsPtr_.reset(new system_dynamics_t(adKinematicModel, adComModel, modelSettings_.recompileLibraries_));
   dynamicsDerivativesPtr_.reset(dynamicsPtr_->clone());
-
-  // TODO(oharley): are the below calls order dependent? if not, can uncomment, and remove from derived constructors
-  /*
-   * constraintsPtr_.reset(new ComKinoConstraintImplAd(adKinematicModel, adComModel, logicRulesPtr_, modelSettings_));
-   * costFunctionPtr_.reset(new cost_function_t(*comModelPtr_, logicRulesPtr_, Q_, R_, QFinal_));
-   * operatingPointsPtr_.reset(new operating_point_t(*comModelPtr_, logicRulesPtr_));
-   * timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, rolloutSettings_));
-   */
 }
 
 /******************************************************************************************************/

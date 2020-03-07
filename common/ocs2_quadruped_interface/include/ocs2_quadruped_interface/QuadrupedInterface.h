@@ -59,16 +59,14 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   using cost_function_t = switched_model::SwitchedModelCostBase;
   using operating_point_t = switched_model::ComKinoOperatingPointsBase;
 
-
   /**
    *
    * @param kinematicModel
    * @param comModel
-   * @param comKinoConstraintAd
    * @param pathToConfigFolder : Reads settings from the task.info in this folder
    */
   QuadrupedInterface(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel,
-      const ad_com_model_t& adComModel, const std::string& pathToConfigFolder);
+                     const ad_com_model_t& adComModel, const std::string& pathToConfigFolder);
 
   /**
    * Destructor
@@ -131,9 +129,10 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;
   std::unique_ptr<com_model_t> comModelPtr_;
   std::shared_ptr<logic_rules_t> logicRulesPtr_;
-  std::unique_ptr<constraint_t> constraintsPtr_;
+
   std::unique_ptr<system_dynamics_t> dynamicsPtr_;
   std::unique_ptr<system_dynamics_derivative_t> dynamicsDerivativesPtr_;
+  std::unique_ptr<constraint_t> constraintsPtr_;
   std::unique_ptr<cost_function_t> costFunctionPtr_;
   std::unique_ptr<operating_point_t> operatingPointsPtr_;
   std::unique_ptr<time_triggered_rollout_t> timeTriggeredRolloutPtr_;
@@ -146,13 +145,12 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   state_vector_t initialState_;
   scalar_array_t partitioningTimes_;
   mode_sequence_template_t defaultModeSequenceTemplate_;
-}; /* QuadrupedInterface */
+};
 
 class QuadrupedInterfaceImpl : public QuadrupedInterface {
   public:
     QuadrupedInterfaceImpl(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
         const com_model_t& comModel, const ad_com_model_t& adComModel, const std::string& pathToConfigFolder);
-}; /* QuadrupedInterfaceImpl */
-
+};
 
 }  // end of namespace switched_model

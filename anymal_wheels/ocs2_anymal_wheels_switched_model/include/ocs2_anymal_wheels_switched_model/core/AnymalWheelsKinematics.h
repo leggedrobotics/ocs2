@@ -21,12 +21,8 @@ class AnymalWheelsKinematics final : public switched_model::KinematicsModelBase<
 
   typedef switched_model::KinematicsModelBase<SCALAR_T> BASE;
   using typename BASE::joint_jacobian_t;
-  enum Feet {
-    LF=static_cast<int>(switched_model::FeetEnum::LF),
-    RF=static_cast<int>(switched_model::FeetEnum::RF),
-    LH=static_cast<int>(switched_model::FeetEnum::LH),
-    RH=static_cast<int>(switched_model::FeetEnum::RH)
-  };
+
+  enum { LF = 0, RF = 1, LH = 2, RH = 3 };
 
   AnymalWheelsKinematics() = default;
 
@@ -44,10 +40,20 @@ class AnymalWheelsKinematics final : public switched_model::KinematicsModelBase<
 
  private:
   // Includes wheel joints
-
   using extended_joint_coordinate_t = Eigen::Matrix<SCALAR_T, switched_model::JOINT_COORDINATE_SIZE + 4, 1>;
-  extended_joint_coordinate_t getExtendedJointCoordinates(const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
 
+  extended_joint_coordinate_t getExtendedJointCoordinates(const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
+    extended_joint_coordinate_t extendedJointCoordinate;
+    extendedJointCoordinate.template segment<3>(0) = jointPositions.template segment<3>(0);
+    extendedJointCoordinate(3) = SCALAR_T(0.0);
+    extendedJointCoordinate.template segment<3>(4) = jointPositions.template segment<3>(3);
+    extendedJointCoordinate(7) = SCALAR_T(0.0);
+    extendedJointCoordinate.template segment<3>(8) = jointPositions.template segment<3>(6);
+    extendedJointCoordinate(11) = SCALAR_T(0.0);
+    extendedJointCoordinate.template segment<3>(12) = jointPositions.template segment<3>(9);
+    extendedJointCoordinate(15) = SCALAR_T(0.0);
+    return extendedJointCoordinate;
+  }
 };
 
 }  // namespace tpl

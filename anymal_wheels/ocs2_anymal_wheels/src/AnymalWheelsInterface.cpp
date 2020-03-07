@@ -31,10 +31,10 @@ std::unique_ptr<switched_model::QuadrupedInterface> getAnymalWheelsInterface(con
   std::string taskFolder = getTaskFileFolderWheels(taskName);
   std::cerr << "Loading task file from: " << taskFolder << std::endl;
 
-  AnymalWheelsKinematics kin{};
-  AnymalWheelsKinematicsAd kinAd{};
-  AnymalWheelsCom com{};
-  AnymalWheelsComAd comAd{};
+  auto kin = AnymalWheelsKinematics();
+  auto kinAd = AnymalWheelsKinematicsAd();
+  auto com = AnymalWheelsCom();
+  auto comAd = AnymalWheelsComAd();
   return std::unique_ptr<switched_model::QuadrupedInterface>(new switched_model::WheeledQuadrupedInterface(kin, kinAd, com, comAd, taskFolder));
 }
 

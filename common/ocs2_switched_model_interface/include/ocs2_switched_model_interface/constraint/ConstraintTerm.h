@@ -71,7 +71,7 @@ class ConstraintTerm {
   using LinearApproximation_t = LinearConstraintApproximation<STATE_DIM, INPUT_DIM>;
   using QuadraticApproximation_t = QuadraticConstraintApproximation<STATE_DIM, INPUT_DIM>;
 
-  explicit ConstraintTerm(ConstraintOrder order) : order_(order), active_(true){};
+  explicit ConstraintTerm(ConstraintOrder oder) : order_(oder), active_(true){};
   virtual ~ConstraintTerm() = default;
   virtual ConstraintTerm* clone() const = 0;
 

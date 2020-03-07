@@ -14,7 +14,7 @@
 namespace switched_model {
 namespace constraints {
 
-class EndEffectorVelocityConstraintInBase : public constraints::EndEffectorVelocityConstraint {
+class EndEffectorVelocityConstraintInBase : public EndEffectorVelocityConstraint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

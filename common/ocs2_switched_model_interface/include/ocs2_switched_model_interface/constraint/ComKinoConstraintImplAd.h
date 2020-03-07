@@ -26,12 +26,12 @@ class ComKinoConstraintImplAd : public ComKinoConstraintBaseAd {
   using ConstraintTerm_t = Base::ConstraintTerm_t;
 
   /* Constraint Terms */
-  using FrictionConeConstraint_t = constraints::FrictionConeConstraint;
-  using ZeroForceConstraint_t = constraints::ZeroForceConstraint;
-  using EndEffectorVelocityConstraint_t = constraints::EndEffectorVelocityConstraint;
+  using FrictionConeConstraint_t = FrictionConeConstraint;
+  using ZeroForceConstraint_t = ZeroForceConstraint;
+  using EndEffectorVelocityConstraint_t = EndEffectorVelocityConstraint;
 
   /* Constraint Settings */
-  using EndEffectorVelocityConstraintSettings_t = constraints::EndEffectorVelocityConstraintSettings;
+  using EndEffectorVelocityConstraintSettings_t = EndEffectorVelocityConstraintSettings;
 
   ComKinoConstraintImplAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
                           std::shared_ptr<const logic_rules_t> logicRulesPtr, const ModelSettings& options = ModelSettings());

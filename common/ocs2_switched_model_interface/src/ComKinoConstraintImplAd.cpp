@@ -22,7 +22,7 @@ ComKinoConstraintImplAd* ComKinoConstraintImplAd::clone() const {
 /******************************************************************************************************/
 void ComKinoConstraintImplAd::initializeConstraintTerms() {
   for (int footIdx = 0; footIdx < NUM_CONTACT_POINTS; footIdx++) {
-    auto footName = switched_model::FeetNames[footIdx];
+    auto footName = feetNames[footIdx];
 
     // Friction cone constraint
     auto frictionCone = std::unique_ptr<ConstraintTerm_t>(new FrictionConeConstraint_t(options_.frictionCoefficient_, 25.0, footIdx));
@@ -56,7 +56,7 @@ void ComKinoConstraintImplAd::setCurrentStateAndControl(const scalar_t& t, const
   logicRulesPtr_->getMotionPhaseLogics(activeSubsystem, stanceLegs_, zDirectionRefsPtr_);
 
   for (int footIdx = 0; footIdx < NUM_CONTACT_POINTS; footIdx++) {
-    auto footName = switched_model::FeetNames[footIdx];
+    auto footName = feetNames[footIdx];
 
     // Active friction cone constraint for stanceLegs
     inequalityConstraintCollection_.get(footName + "_FrictionCone").setActivity(stanceLegs_[footIdx]);

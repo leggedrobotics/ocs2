@@ -16,7 +16,7 @@ namespace switched_model
       const com_model_t& comModel, const ad_com_model_t& adComModel, const std::string& pathToConfigFolder
     ) : Base(kinematicModel, adKinematicModel, comModel,  adComModel, pathToConfigFolder)
     {
-      constraintsPtr_.reset(new anymal::AnymalWheelsComKinoConstraintAd(adKinematicModel, adComModel, logicRulesPtr_, modelSettings_));
+      constraintsPtr_.reset(new AnymalWheelsComKinoConstraintAd(adKinematicModel, adComModel, logicRulesPtr_, modelSettings_));
       costFunctionPtr_.reset(new cost_function_t(*comModelPtr_, logicRulesPtr_, Q_, R_, QFinal_));
       operatingPointsPtr_.reset(new operating_point_t(*comModelPtr_, logicRulesPtr_));
       timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, rolloutSettings_));

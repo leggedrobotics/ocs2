@@ -101,4 +101,5 @@ class EndEffectorPositionConstraint : public EndEffectorConstraint {
     adInterface_.reset(new ad_interface_t(adfunc, BASE::range_dim_, BASE::domain_dim_, libName_, libFolder_));
   };
 };
+
 }  // namespace switched_model

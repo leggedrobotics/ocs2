@@ -57,7 +57,7 @@ switched_model::vector3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::position
       return fr_trunk_X_fr_RH_foot_(q).template topRightCorner<3, 1>() + wheelOffset;
     }
     default:
-      std::runtime_error("Not defined foot index.");
+      std::runtime_error("Undefined endeffector index.");
       break;
   }
 }
@@ -104,12 +104,62 @@ typename AnymalWheelsKinematics<SCALAR_T>::joint_jacobian_t AnymalWheelsKinemati
       break;
     }
     default: {
-      std::runtime_error("Not defined foot index.");
+      std::runtime_error("Undefined endeffector index.");
       break;
     }
   }
 
   return footJacobian;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+
+template <typename SCALAR_T>
+switched_model::matrix3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::footOrientationRelativeToBaseFrame( size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
+  using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
+
+  const auto q = getExtendedJointCoordinates(jointPositions);
+  switch (footIndex) {
+    case LF: {
+               typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL_L fr_base_X_fr_LF_foot_;
+               return fr_base_X_fr_LF_foot_(q).template topLeftCorner<3,3>();
+             }
+    case RF: {
+               typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_WHEEL_L fr_base_X_fr_RF_foot_;
+               return fr_base_X_fr_RF_foot_(q).template topLeftCorner<3,3>();
+             }
+    case LH: {
+               typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_WHEEL_L fr_base_X_fr_LH_foot_;
+               return fr_base_X_fr_LH_foot_(q).template topLeftCorner<3,3>();
+             }
+    case RH: {
+               typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_WHEEL_L fr_base_X_fr_RH_foot_;
+               return fr_base_X_fr_RH_foot_(q).template topLeftCorner<3,3>();
+             }
+    default:
+             std::runtime_error("Undefined endeffector index.");
+             break;
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+
+template <typename SCALAR_T>
+typename AnymalWheelsKinematics<SCALAR_T>::extended_joint_coordinate_t AnymalWheelsKinematics<SCALAR_T>::getExtendedJointCoordinates(const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
+  typename AnymalWheelsKinematics<SCALAR_T>::extended_joint_coordinate_t extendedJointCoordinate;
+  extendedJointCoordinate.template segment<3>(0) = jointPositions.template segment<3>(0);
+  extendedJointCoordinate(3) = SCALAR_T(0.0);
+  extendedJointCoordinate.template segment<3>(4) = jointPositions.template segment<3>(3);
+  extendedJointCoordinate(7) = SCALAR_T(0.0);
+  extendedJointCoordinate.template segment<3>(8) = jointPositions.template segment<3>(6);
+  extendedJointCoordinate(11) = SCALAR_T(0.0);
+  extendedJointCoordinate.template segment<3>(12) = jointPositions.template segment<3>(9);
+  extendedJointCoordinate(15) = SCALAR_T(0.0);
+  return extendedJointCoordinate;
 }
 
 }  // namespace tpl

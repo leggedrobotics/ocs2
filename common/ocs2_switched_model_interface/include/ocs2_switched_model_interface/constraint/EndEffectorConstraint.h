@@ -110,7 +110,8 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
 
   // virtual scalar_array_t getValue(scalar_t time, const state_vector_t& state, const input_vector_t& input) const = 0;
 
-  virtual LinearApproximation_t getLinearApproximation(scalar_t time, const state_vector_t& state, const input_vector_t& input) const override {
+  virtual LinearApproximation_t getLinearApproximation(scalar_t time, const state_vector_t& state,
+                                                       const input_vector_t& input) const override {
     // Assemble input
     dynamic_vector_t tapedInput(1 + STATE_DIM + INPUT_DIM);
     tapedInput << time, state, input;
@@ -125,9 +126,9 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
     // Convert to output format
     LinearApproximation_t linearApproximation;
     linearApproximation.constraintValues = getValue(time, state, input);
-    for (int i = 0; i < settings_.A.rows(); i++) {
-      linearApproximation.derivativeState.emplace_back(settings_.A.row(i) * dhdx);
-      linearApproximation.derivativeInput.emplace_back(settings_.A.row(i) * dhdu);
+    for (int i = 0; i < settings_.A().rows(); i++) {
+      linearApproximation.derivativeState.emplace_back(settings_.A().row(i) * dhdx);
+      linearApproximation.derivativeInput.emplace_back(settings_.A().row(i) * dhdu);
     }
     return linearApproximation;
   }
@@ -144,8 +145,8 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
     quadraticApproximation.constraintValues = std::move(linearApproximation.constraintValues);
     quadraticApproximation.derivativeState = std::move(linearApproximation.derivativeState);
     quadraticApproximation.derivativeInput = std::move(linearApproximation.derivativeInput);
-    for (int i = 0; i < settings_.A.rows(); i++) {
-      timeStateInput_matrix_t weightedHessian = adInterface_->getHessian(settings_.A.row(i), tapedInput);
+    for (int i = 0; i < settings_.A().rows(); i++) {
+      timeStateInput_matrix_t weightedHessian = adInterface_->getHessian(settings_.A().row(i), tapedInput);
 
       quadraticApproximation.secondDerivativesState.emplace_back(weightedHessian.block(1, 1, STATE_DIM, STATE_DIM));
       quadraticApproximation.secondDerivativesInput.emplace_back(weightedHessian.block(1 + STATE_DIM, 1 + STATE_DIM, INPUT_DIM, INPUT_DIM));
@@ -177,4 +178,5 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
  private:
   bool isAdInterfaceIntialized_;
 };
+
 }  // namespace switched_model

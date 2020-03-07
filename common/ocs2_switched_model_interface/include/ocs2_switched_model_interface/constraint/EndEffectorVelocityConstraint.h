@@ -4,21 +4,20 @@
 #include <ocs2_switched_model_interface/constraint/ConstraintTerm.h>
 #include <ocs2_switched_model_interface/constraint/EndEffectorConstraint.h>
 
-#include <ocs2_switched_model_interface/core/SwitchedModel.h>
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
+#include <ocs2_switched_model_interface/core/SwitchedModel.h>
 
 #include <ocs2_switched_model_interface/core/Rotations.h>
 
 namespace switched_model {
-namespace constraints {
 
-struct EndEffectorVelocityConstraintSettings : public constraints::EndEffectorConstraintSettings {
+struct EndEffectorVelocityConstraintSettings : public EndEffectorConstraintSettings {
   EndEffectorVelocityConstraintSettings() = default;
-  EndEffectorVelocityConstraintSettings(size_t rows, size_t cols) : constraints::EndEffectorConstraintSettings(rows, cols){};
+  EndEffectorVelocityConstraintSettings(size_t rows, size_t cols) : EndEffectorConstraintSettings(rows, cols){};
 };
 
-class EndEffectorVelocityConstraint : public constraints::EndEffectorConstraint {
+class EndEffectorVelocityConstraint : public EndEffectorConstraint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -106,5 +105,4 @@ class EndEffectorVelocityConstraint : public constraints::EndEffectorConstraint 
   };
 };
 
-}  // namespace constraints
 }  // namespace switched_model

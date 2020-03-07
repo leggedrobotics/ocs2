@@ -1,9 +1,9 @@
-#include "ocs2_anymal_wheels_switched_model/constraint/AnymalWheelsComKinoConstraintAd.h"
+#include <ocs2_anymal_wheels_switched_model/constraint/AnymalWheelsComKinoConstraintAd.h>
 
-namespace anymal {
+namespace switched_model {
 
 AnymalWheelsComKinoConstraintAd::AnymalWheelsComKinoConstraintAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-    std::shared_ptr<const logic_rules_t> logicRulesPtr, const ModelSettings_t& options) 
+    std::shared_ptr<const logic_rules_t> logicRulesPtr, const ModelSettings& options)
   : Base(adKinematicModel, adComModel, logicRulesPtr, options, false, false)
 {
   initializeConstraintTerms();
@@ -20,8 +20,8 @@ AnymalWheelsComKinoConstraintAd* AnymalWheelsComKinoConstraintAd::clone() const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 void AnymalWheelsComKinoConstraintAd::initializeConstraintTerms() {
-  for (int footIdx = 0; footIdx < switched_model::NUM_CONTACT_POINTS; footIdx++) {
-    auto footName = switched_model::FeetNames[footIdx];
+  for (int footIdx = 0; footIdx < NUM_CONTACT_POINTS; footIdx++) {
+    auto footName = feetNames[footIdx];
 
     // Friction cone constraint
     auto frictionCone = std::unique_ptr<ConstraintTerm_t>(new FrictionConeConstraint_t(options_.frictionCoefficient_, 25.0, footIdx));
@@ -59,7 +59,7 @@ void AnymalWheelsComKinoConstraintAd::setCurrentStateAndControl(const scalar_t& 
   logicRulesPtr_->getMotionPhaseLogics(activeSubsystem, stanceLegs_, zDirectionRefsPtr_);
 
   for (int footIdx = 0; footIdx < NUM_CONTACT_POINTS; footIdx++) {
-    auto footName = switched_model::FeetNames[footIdx];
+    auto footName = feetNames[footIdx];
 
     // Active friction cone constraint for stanceLegs
     inequalityConstraintCollection_.get(footName + "_FrictionCone").setActivity(stanceLegs_[footIdx]);

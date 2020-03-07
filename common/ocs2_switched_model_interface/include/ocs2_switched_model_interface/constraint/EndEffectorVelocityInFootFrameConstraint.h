@@ -11,15 +11,13 @@
 #include <ocs2_switched_model_interface/core/Rotations.h>
 
 namespace switched_model {
-namespace constraints {
 
-struct EndEffectorVelocityInFootFrameConstraintSettings : public constraints::EndEffectorVelocityConstraintSettings {
+struct EndEffectorVelocityInFootFrameConstraintSettings : public EndEffectorVelocityConstraintSettings {
   EndEffectorVelocityInFootFrameConstraintSettings() = default;
-  EndEffectorVelocityInFootFrameConstraintSettings(size_t rows, size_t cols)
-      : constraints::EndEffectorVelocityConstraintSettings(rows, cols){};
+  EndEffectorVelocityInFootFrameConstraintSettings(size_t rows, size_t cols) : EndEffectorVelocityConstraintSettings(rows, cols){};
 };
 
-class EndEffectorVelocityInFootFrameConstraint : public constraints::EndEffectorConstraint {
+class EndEffectorVelocityInFootFrameConstraint : public EndEffectorConstraint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -103,5 +101,4 @@ class EndEffectorVelocityInFootFrameConstraint : public constraints::EndEffector
     adInterface_.reset(new ad_interface_t(adfunc, BASE::range_dim_, BASE::domain_dim_, libName_, libFolder_));
   };
 };
-}  // namespace constraints
 }  // namespace switched_model

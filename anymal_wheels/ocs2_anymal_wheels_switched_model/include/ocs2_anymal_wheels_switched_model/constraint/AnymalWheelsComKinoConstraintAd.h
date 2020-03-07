@@ -6,11 +6,11 @@
 #include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
 #include "ocs2_switched_model_interface/constraint/ZeroForceConstraint.h"
 
-namespace anymal {
+namespace switched_model {
 
   using switched_model::NUM_CONTACT_POINTS;
 
-class AnymalWheelsComKinoConstraintAd : public switched_model::ComKinoConstraintBaseAd {
+class AnymalWheelsComKinoConstraintAd : public ComKinoConstraintBaseAd {
 
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -29,21 +29,20 @@ class AnymalWheelsComKinoConstraintAd : public switched_model::ComKinoConstraint
   using Base::LinearConstraintApproximationAsMatrices_t;
   using Base::QuadraticConstraintApproximation_t;
   using Base::ConstraintTerm_t;
-  using Base::ModelSettings_t;
 
   /* Constraint Terms */
-  using FrictionConeConstraint_t = switched_model::constraints::FrictionConeConstraint;
-  using ZeroForceConstraint_t = switched_model::constraints::ZeroForceConstraint;
-  using EndEffectorVelocityConstraint_t = switched_model::constraints::EndEffectorVelocityConstraint;
-  using EndEffectorVelocityInFootFrameConstraint_t = switched_model::constraints::EndEffectorVelocityInFootFrameConstraint;
+  using FrictionConeConstraint_t = switched_model::FrictionConeConstraint;
+  using ZeroForceConstraint_t = switched_model::ZeroForceConstraint;
+  using EndEffectorVelocityConstraint_t = switched_model::EndEffectorVelocityConstraint;
+  using EndEffectorVelocityInFootFrameConstraint_t = switched_model::EndEffectorVelocityInFootFrameConstraint;
 
   /* Settings */
-  using EndEffectorVelocityConstraintSettings_t = switched_model::constraints::EndEffectorVelocityConstraintSettings;
-  using EndEffectorVelocityInFootFrameConstraintSettings_t = switched_model::constraints::EndEffectorVelocityInFootFrameConstraintSettings;
+  using EndEffectorVelocityConstraintSettings_t = switched_model::EndEffectorVelocityConstraintSettings;
+  using EndEffectorVelocityInFootFrameConstraintSettings_t = switched_model::EndEffectorVelocityInFootFrameConstraintSettings;
 
 
   AnymalWheelsComKinoConstraintAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-                          std::shared_ptr<const logic_rules_t> logicRulesPtr, const ModelSettings_t& options = ModelSettings_t()
+                          std::shared_ptr<const logic_rules_t> logicRulesPtr, const ModelSettings& options = ModelSettings()
                           );
 
   AnymalWheelsComKinoConstraintAd* clone() const override;
@@ -58,4 +57,4 @@ class AnymalWheelsComKinoConstraintAd : public switched_model::ComKinoConstraint
 
 };
 
-}  // end of namespace anymal
+}  // end of namespace switched_model

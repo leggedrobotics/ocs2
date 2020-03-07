@@ -14,7 +14,7 @@
 namespace switched_model {
 namespace constraints {
 
-class EndEffectorPositionConstraintInBase : public constraints::EndEffectorPositionConstraint {
+class EndEffectorPositionConstraintInBase : public EndEffectorPositionConstraint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

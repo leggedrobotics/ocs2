@@ -7,11 +7,6 @@ find_package(catkin REQUIRED COMPONENTS
   ocs2_quadruped_interface
 )
 
-# find_package(catkin REQUIRED COMPONENTS
-#   roslib
-#   ${CATKIN_PACKAGE_DEPENDENCIES}
-#   )
-
 ## Eigen3
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
@@ -26,7 +21,7 @@ find_package(pybind11 QUIET)
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++17 -Wfatal-errors -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -fPIC")
 
 ###################################
 ## catkin specific configuration ##
@@ -41,14 +36,11 @@ catkin_package(
   INCLUDE_DIRS 
     include
     ${EIGEN_INCLUDE_DIRS}
-
   LIBRARIES
     ${PROJECT_NAME}
-
   CATKIN_DEPENDS
-    ocs2_quadruped_interface
     ocs2_anymal_bear_switched_model
-
+    ocs2_quadruped_interface
   DEPENDS
 )
 
@@ -68,39 +60,20 @@ include_directories(
 # Declare a C++ library
 add_library(${PROJECT_NAME}
   src/AnymalBearInterface.cpp)
-
-add_dependencies(${PROJECT_NAME}
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-  )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES})
 
 add_executable(${PROJECT_NAME}_mpc_node
-  src/AnymalBearMpcNode.cpp
-  )
-add_dependencies(${PROJECT_NAME}_mpc_node
-  ${PROJECT_NAME}
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-  )
+  src/AnymalBearMpcNode.cpp)
 target_link_libraries(${PROJECT_NAME}_mpc_node
   ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  )
+  ${catkin_LIBRARIES})
 
 add_executable(${PROJECT_NAME}_dummy_mrt_node
-        src/AnymalBearDummyMRT.cpp
-        )
-add_dependencies(${PROJECT_NAME}_dummy_mrt_node
-        ${PROJECT_NAME}
-        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-        ${catkin_EXPORTED_TARGETS}
-        )
+  src/AnymalBearDummyMRT.cpp)
 target_link_libraries(${PROJECT_NAME}_dummy_mrt_node
-        ${PROJECT_NAME}
-        ${catkin_LIBRARIES}
-        )
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES})
 
 # PyBindings library (c++ side)
 add_library(${PROJECT_NAME}_PyBindings_cpp

@@ -12,44 +12,12 @@
 namespace anymal {
 namespace tpl {
 
-
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
 AnymalBearKinematics<SCALAR_T>* AnymalBearKinematics<SCALAR_T>::clone() const {
   return new AnymalBearKinematics<SCALAR_T>(*this);
-}
-
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-switched_model::matrix3_s_t<SCALAR_T> AnymalBearKinematics<SCALAR_T>::footOrientationRelativeToBaseFrame( size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
-  using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
-
-  switch (footIndex) {
-    case LF: {
-               typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_FOOT fr_base_X_fr_LF_foot_;
-               return fr_base_X_fr_LF_foot_(jointPositions).template topLeftCorner<3,3>();
-             }
-    case RF: {
-               typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_FOOT fr_base_X_fr_RF_foot_;
-               return fr_base_X_fr_RF_foot_(jointPositions).template topLeftCorner<3,3>();
-             }
-    case LH: {
-               typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_FOOT fr_base_X_fr_LH_foot_;
-               return fr_base_X_fr_LH_foot_(jointPositions).template topLeftCorner<3,3>();
-             }
-    case RH: {
-               typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_FOOT fr_base_X_fr_RH_foot_;
-               return fr_base_X_fr_RH_foot_(jointPositions).template topLeftCorner<3,3>();
-             }
-    default:
-             std::runtime_error("Undefined foot index.");
-             break;
-  }
 }
 
 /******************************************************************************************************/

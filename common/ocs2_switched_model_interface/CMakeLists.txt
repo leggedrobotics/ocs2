@@ -46,7 +46,7 @@ add_library(${PROJECT_NAME}
 		src/ComKinoSystemDynamicsAd.cpp
 		src/SwitchedModelCostBase.cpp
 		src/ComKinoOperatingPointsBase.cpp
-		src/SwitchedModelStateEstimator.cpp
+    src/SwitchedModelStateEstimator.cpp
 		src/SwitchedModelLogicRulesBase.cpp
 		src/KinematicsModelBase.cpp
 		src/ComModelBase.cpp

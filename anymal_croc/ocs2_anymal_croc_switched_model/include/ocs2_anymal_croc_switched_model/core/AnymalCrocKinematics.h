@@ -19,11 +19,8 @@ class AnymalCrocKinematics final : public switched_model::KinematicsModelBase<SC
 
   typedef switched_model::KinematicsModelBase<SCALAR_T> BASE;
   using typename BASE::joint_jacobian_t;
-  enum Feet { LF=static_cast<int>(switched_model::FeetEnum::LF),
-              RF=static_cast<int>(switched_model::FeetEnum::RF),
-              LH=static_cast<int>(switched_model::FeetEnum::LH),
-              RH=static_cast<int>(switched_model::FeetEnum::RH)
-  };
+
+  enum { LF = 0, RF = 1, LH = 2, RH = 3 };
 
   AnymalCrocKinematics() = default;
 
@@ -36,8 +33,6 @@ class AnymalCrocKinematics final : public switched_model::KinematicsModelBase<SC
 
   joint_jacobian_t baseToFootJacobianInBaseFrame(size_t footIndex,
                                                  const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const override;
-  switched_model::matrix3_s_t<SCALAR_T> footOrientationRelativeToBaseFrame( size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const override;
-
 };
 
 }  // namespace tpl

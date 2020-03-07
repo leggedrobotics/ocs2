@@ -5,7 +5,6 @@
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 
 namespace switched_model {
-namespace constraints {
 
 class ZeroForceConstraint final : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> {
  public:
@@ -56,5 +55,4 @@ class ZeroForceConstraint final : public ocs2::ConstraintTerm<STATE_DIM, INPUT_D
   int legNumber_;
 };
 
-}  // namespace constraints
 }  // namespace switched_model

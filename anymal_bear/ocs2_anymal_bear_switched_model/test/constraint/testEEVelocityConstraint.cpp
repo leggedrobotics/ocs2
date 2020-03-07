@@ -5,7 +5,7 @@
 
 #include <gtest/gtest.h>
 
-#include <ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h>
+#include <ocs2_switched_model_interface/constraint/EndEffectorVelocityContraint.h>
 
 #include "ocs2_anymal_bear_switched_model/core/AnymalBearCom.h"
 #include "ocs2_anymal_bear_switched_model/core/AnymalBearKinematics.h"

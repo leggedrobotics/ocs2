@@ -19,7 +19,7 @@ std::unique_ptr<switched_model::QuadrupedInterface> getAnymalCrocInterface(const
   auto kinAd = AnymalCrocKinematicsAd();
   auto com = AnymalCrocCom();
   auto comAd = AnymalCrocComAd();
-  return std::unique_ptr<switched_model::QuadrupedInterface>(new switched_model::QuadrupedInterfaceImpl(kin, kinAd, com, comAd, taskFolder));
+  return std::unique_ptr<switched_model::QuadrupedInterface>(new switched_model::QuadrupedInterface(kin, kinAd, com, comAd, taskFolder));
 }
 
 std::string getTaskFileFolderCroc(const std::string& taskName) {

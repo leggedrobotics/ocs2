@@ -79,7 +79,7 @@ class ConstraintTerm {
   void setActivity(bool activity) { active_ = activity; };
 
   // Observers
-  ConstraintOrder getOrder() const { return order_; };
+  constexpr ConstraintOrder getOrder() const { return order_; };
   bool isActive() const { return active_; };
 
   // Evaluate the constraint

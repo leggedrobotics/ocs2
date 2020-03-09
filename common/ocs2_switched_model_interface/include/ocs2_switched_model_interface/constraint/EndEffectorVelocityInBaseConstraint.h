@@ -1,16 +1,15 @@
 #pragma once
 
 #include <ocs2_switched_model_interface/constraint/EndEffectorConstraint.h>
+#include <ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h>
 
 namespace switched_model {
 
-using EndEffectorVelocityConstraintSettings = EndEffectorConstraintSettings;
-
-class EndEffectorVelocityConstraint : public EndEffectorConstraint<EndEffectorVelocityConstraint> {
+class EndEffectorVelocityInBaseConstraint : public EndEffectorConstraint<EndEffectorVelocityInBaseConstraint> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = EndEffectorConstraint<EndEffectorVelocityConstraint>;
+  using BASE = switched_model::EndEffectorConstraint<EndEffectorVelocityInBaseConstraint>;
   using typename BASE::ad_com_model_t;
   using typename BASE::ad_dynamic_vector_t;
   using typename BASE::ad_interface_t;
@@ -29,16 +28,15 @@ class EndEffectorVelocityConstraint : public EndEffectorConstraint<EndEffectorVe
   using typename BASE::state_vector_t;
   using typename BASE::timeStateInput_matrix_t;
 
-  explicit EndEffectorVelocityConstraint(int legNumber, EndEffectorVelocityConstraintSettings settings, ad_com_model_t& adComModel,
-                                         ad_kinematic_model_t& adKinematicsModel, bool generateModels = true,
-                                         std::string constraintPrefix = "EEVelocityConstraint_")
+  explicit EndEffectorVelocityInBaseConstraint(int legNumber, EndEffectorVelocityConstraintSettings settings, ad_com_model_t& adComModel,
+                                               ad_kinematic_model_t& adKinematicsModel, bool generateModels = true,
+                                               std::string constraintPrefix = "b_EEVelocityConstraint_")
       : BASE(kConstraintOrder, std::move(constraintPrefix), legNumber, std::move(settings), adComModel, adKinematicsModel, generateModels) {
   }
 
-  /* Copy Constructors */
-  EndEffectorVelocityConstraint(const EndEffectorVelocityConstraint& rhs) : BASE(rhs){};
+  EndEffectorVelocityInBaseConstraint(const EndEffectorVelocityInBaseConstraint& rhs) : BASE(rhs) {}
 
-  EndEffectorVelocityConstraint* clone() const override { return new EndEffectorVelocityConstraint(*this); };
+  EndEffectorVelocityInBaseConstraint* clone() const override { return new EndEffectorVelocityInBaseConstraint(*this); }
 
  private:
   friend BASE;
@@ -56,13 +54,9 @@ class EndEffectorVelocityConstraint : public EndEffectorConstraint<EndEffectorVe
     const joint_coordinate_ad_t dqJoints = getJointVelocities(u);
 
     // Get base state from com state
-    const base_coordinate_ad_t basePose = adComModel.calculateBasePose(comPose);
     const base_coordinate_ad_t com_baseTwist = adComModel.calculateBaseLocalVelocities(com_comTwist);
 
-    o_footVelocity = adKinematicsModel.footVelocityInOriginFrame(this->legNumber_, basePose, com_baseTwist, qJoints, dqJoints);
+    o_footVelocity = adKinematicsModel.footVelocityInBaseFrame(this->legNumber_, com_baseTwist, qJoints, dqJoints);
   }
-
-  static constexpr ocs2::ConstraintOrder kConstraintOrder = ocs2::ConstraintOrder::Linear;
 };
-
 }  // namespace switched_model

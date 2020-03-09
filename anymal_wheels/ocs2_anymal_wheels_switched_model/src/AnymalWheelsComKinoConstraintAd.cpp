@@ -2,10 +2,11 @@
 
 namespace switched_model {
 
-AnymalWheelsComKinoConstraintAd::AnymalWheelsComKinoConstraintAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-    std::shared_ptr<const logic_rules_t> logicRulesPtr, const ModelSettings& options)
-  : Base(adKinematicModel, adComModel, logicRulesPtr, options, false, false)
-{
+AnymalWheelsComKinoConstraintAd::AnymalWheelsComKinoConstraintAd(const ad_kinematic_model_t& adKinematicModel,
+                                                                 const ad_com_model_t& adComModel,
+                                                                 std::shared_ptr<const logic_rules_t> logicRulesPtr,
+                                                                 const ModelSettings& options)
+    : Base(adKinematicModel, adComModel, logicRulesPtr, options, false, false) {
   initializeConstraintTerms();
 }
 
@@ -33,8 +34,9 @@ void AnymalWheelsComKinoConstraintAd::initializeConstraintTerms() {
     auto _o_endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityConstraint_t(
         footIdx, EndEffectorVelocityConstraintSettings_t(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
     // EE InFootFrame Velocity Constraint
-    auto _f_endEffectorVelocityInFootFrameConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityInFootFrameConstraint_t(
-          footIdx, EndEffectorVelocityInFootFrameConstraintSettings_t(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
+    auto _f_endEffectorVelocityInFootFrameConstraint = std::unique_ptr<ConstraintTerm_t>(
+        new EndEffectorVelocityInFootFrameConstraint_t(footIdx, EndEffectorVelocityInFootFrameConstraintSettings_t(), *adComModelPtr_,
+                                                       *adKinematicModelPtr_, options_.recompileLibraries_));
 
     // Inequalities
     inequalityConstraintCollection_.add(footName + "_FrictionCone", std::move(frictionCone));
@@ -68,17 +70,16 @@ void AnymalWheelsComKinoConstraintAd::setCurrentStateAndControl(const scalar_t& 
     equalityStateInputConstraintCollection_.get(footName + "_ZeroForce").setActivity(!stanceLegs_[footIdx]);
 
     // Active foot placement for stance legs
-    auto _o_EEVelConstraint =
-      equalityStateInputConstraintCollection_.template get<EndEffectorVelocityConstraint_t>(footName + "_o_EEVel");
-    EndEffectorVelocityConstraintSettings_t _o_eeVelConSettings(1,3);
+    auto _o_EEVelConstraint = equalityStateInputConstraintCollection_.template get<EndEffectorVelocityConstraint_t>(footName + "_o_EEVel");
+    EndEffectorVelocityConstraintSettings_t _o_eeVelConSettings(1, 3);
 
     // Rolling InFootFrame Velocity constraint for stance legs
     auto _f_EEVelInFootFrameConstraint =
-      equalityStateInputConstraintCollection_.template get<EndEffectorVelocityInFootFrameConstraint_t>(footName + "_f_EEVel");
+        equalityStateInputConstraintCollection_.template get<EndEffectorVelocityInFootFrameConstraint_t>(footName + "_f_EEVel");
 
     if (stanceLegs_[footIdx]) {
       // EE velocities in lateral direction (y) in foot frame should be zero.
-      EndEffectorVelocityInFootFrameConstraintSettings_t _f_eeVelInFootFrameConSettings(1,3);
+      EndEffectorVelocityInFootFrameConstraintSettings_t _f_eeVelInFootFrameConSettings(1, 3);
       _f_eeVelInFootFrameConSettings.b() << 0;
       _f_eeVelInFootFrameConSettings.A() << 0, 1, 0;
       _f_EEVelInFootFrameConstraint.configure(_f_eeVelInFootFrameConSettings);
@@ -95,6 +96,5 @@ void AnymalWheelsComKinoConstraintAd::setCurrentStateAndControl(const scalar_t& 
     _o_EEVelConstraint.setActivity(true);
   }
 }
-
 
 }  // end of namespace switched_model

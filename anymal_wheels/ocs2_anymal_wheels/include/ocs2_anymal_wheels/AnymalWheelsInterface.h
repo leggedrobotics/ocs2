@@ -9,14 +9,14 @@
 namespace switched_model {
 
 class WheeledQuadrupedInterface : public switched_model::QuadrupedInterface {
-  public:
-    using Base = switched_model::QuadrupedInterface;
-    WheeledQuadrupedInterface(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
-        const com_model_t& comModel, const ad_com_model_t& adComModel, const std::string& pathToConfigFolder);
+ public:
+  using Base = switched_model::QuadrupedInterface;
+  WheeledQuadrupedInterface(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
+                            const com_model_t& comModel, const ad_com_model_t& adComModel, const std::string& pathToConfigFolder);
 
 }; /* WheeledQuadrupedInterface */
 
-} /* switched_model */
+}  // namespace switched_model
 
 namespace anymal {
 

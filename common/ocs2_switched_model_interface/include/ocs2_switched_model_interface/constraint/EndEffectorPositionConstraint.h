@@ -14,11 +14,7 @@
 
 namespace switched_model {
 
-struct EndEffectorPositionConstraintSettings : EndEffectorConstraintSettings {
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EndEffectorPositionConstraintSettings() = default;
-  EndEffectorPositionConstraintSettings(size_t rows, size_t cols) : EndEffectorConstraintSettings(rows, cols){};
-};
+using EndEffectorPositionConstraintSettings = EndEffectorConstraintSettings;
 
 class EndEffectorPositionConstraint : public EndEffectorConstraint {
  public:
@@ -68,8 +64,8 @@ class EndEffectorPositionConstraint : public EndEffectorConstraint {
 
     // Change to std::vector
     scalar_array_t constraintValue;
-    for (int i = 0; i < settings_.A.rows(); i++) {
-      constraintValue.emplace_back(settings_.A.row(i) * eePositionWorld + settings_.b[i]);
+    for (int i = 0; i < settings_.A().rows(); i++) {
+      constraintValue.emplace_back(settings_.A().row(i) * eePositionWorld + settings_.b()[i]);
     }
     return constraintValue;
   };

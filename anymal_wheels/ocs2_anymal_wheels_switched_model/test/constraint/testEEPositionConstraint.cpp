@@ -16,8 +16,8 @@ TEST(TestEEPositionConstraint, evaluate){
   using TestedConstraint = switched_model::EndEffectorPositionConstraint;
 
   switched_model::EndEffectorPositionConstraintSettings settings;
-  settings.A.setIdentity(3, 3);
-  settings.b.setZero(3);
+  settings.A().setIdentity(3, 3);
+  settings.b().setZero();
 
   anymal::AnymalWheelsComAd anymalComAd;
   anymal::AnymalWheelsKinematicsAd anymalKinematicsAd;

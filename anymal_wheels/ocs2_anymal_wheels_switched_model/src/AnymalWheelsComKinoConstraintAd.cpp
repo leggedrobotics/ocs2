@@ -70,11 +70,11 @@ void AnymalWheelsComKinoConstraintAd::setCurrentStateAndControl(const scalar_t& 
     // Active foot placement for stance legs
     auto _o_EEVelConstraint =
       equalityStateInputConstraintCollection_.template get<EndEffectorVelocityConstraint_t>(footName + "_o_EEVel");
+    EndEffectorVelocityConstraintSettings_t _o_eeVelConSettings(1,3);
+
     // Rolling InFootFrame Velocity constraint for stance legs
     auto _f_EEVelInFootFrameConstraint =
       equalityStateInputConstraintCollection_.template get<EndEffectorVelocityInFootFrameConstraint_t>(footName + "_f_EEVel");
-
-    EndEffectorVelocityConstraintSettings_t _o_eeVelConSettings(1,3);
 
     if (stanceLegs_[footIdx]) {
       // EE velocities in lateral direction (y) in foot frame should be zero.
@@ -83,11 +83,10 @@ void AnymalWheelsComKinoConstraintAd::setCurrentStateAndControl(const scalar_t& 
       _f_eeVelInFootFrameConSettings.A() << 0, 1, 0;
       _f_EEVelInFootFrameConstraint.configure(_f_eeVelInFootFrameConSettings);
       _f_EEVelInFootFrameConstraint.setActivity(true);
-      // The upwards velocity (z) in the wordl frame should be zero too.
+      // The upwards velocity (z) in the world frame should be zero too.
       _o_eeVelConSettings.b() << 0;
       _o_eeVelConSettings.A() << 0, 0, 1;
     } else {  // in swing: z-velocity is provided
-      //TODO(oharley) this could be made 'smarter'
       _f_EEVelInFootFrameConstraint.setActivity(false);
       _o_eeVelConSettings.b() << -zDirectionRefsPtr_[footIdx]->calculateVelocity(Base::t_);
       _o_eeVelConSettings.A() << 0, 0, 1;

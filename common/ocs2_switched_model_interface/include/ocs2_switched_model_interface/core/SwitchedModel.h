@@ -30,6 +30,7 @@ constexpr size_t STATE_DIM = 2 * BASE_COORDINATE_SIZE + JOINT_COORDINATE_SIZE;  
 constexpr size_t INPUT_DIM = 3 * NUM_CONTACT_POINTS + JOINT_COORDINATE_SIZE;                  // 24
 
 enum class FeetEnum { LF, RF, LH, RH };
+const std::array<std::string, 4> feetNames{"LF", "RF", "LH", "RH"};
 using contact_flag_t = std::array<bool, NUM_CONTACT_POINTS>;
 
 template <typename scalar_t>

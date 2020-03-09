@@ -5,17 +5,17 @@
 
 #include <gtest/gtest.h>
 
-#include <ocs2_switched_model_interface/constraint/EndEffectorVelocityContraint.h>
-
+#include "ocs2_switched_model_interface/constraint/EndEffectorVelocityInFootFrameConstraint.h"
+#include "ocs2_anymal_wheels_switched_model/constraint/AnymalWheelsComKinoConstraintAd.h"
 #include "ocs2_anymal_wheels_switched_model/core/AnymalWheelsKinematics.h"
 #include "ocs2_anymal_wheels_switched_model/core/AnymalWheelsCom.h"
 
 TEST(TestEEVelocityConstraint, evaluate){
-  using TestedConstraint = switched_model::EndEffectorVelocityConstraint;
+  using TestedConstraint = switched_model::EndEffectorVelocityInFootFrameConstraint;
 
-  switched_model::EndEffectorVelocityConstraintSettings settings;
-  settings.A.setIdentity(3, 3);
-  settings.b.setZero(3);
+  switched_model::EndEffectorVelocityInFootFrameConstraintSettings settings;
+  settings.A().setIdentity(3, 3);
+  settings.b().setZero();
 
   anymal::AnymalWheelsComAd anymalComAd;
   anymal::AnymalWheelsKinematicsAd anymalKinematicsAd;

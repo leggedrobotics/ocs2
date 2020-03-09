@@ -12,10 +12,7 @@
 
 namespace switched_model {
 
-struct EndEffectorVelocityConstraintSettings : public EndEffectorConstraintSettings {
-  EndEffectorVelocityConstraintSettings() = default;
-  EndEffectorVelocityConstraintSettings(size_t rows, size_t cols) : EndEffectorConstraintSettings(rows, cols){};
-};
+using EndEffectorVelocityConstraintSettings = EndEffectorConstraintSettings;
 
 class EndEffectorVelocityConstraint : public EndEffectorConstraint {
  public:
@@ -68,7 +65,7 @@ class EndEffectorVelocityConstraint : public EndEffectorConstraint {
     // Change to std::vector
     scalar_array_t constraintValue;
     Eigen::VectorXd values = settings_.A() * eeVelocityWorld + settings_.b();
-    for (int i = 0; i < settings_.b().rows(); i++) {
+    for (int i = 0; i < settings_.A().rows(); i++) {
       constraintValue.emplace_back(values[i]);
     }
     return constraintValue;

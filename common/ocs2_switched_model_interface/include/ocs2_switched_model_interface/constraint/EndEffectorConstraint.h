@@ -80,7 +80,7 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
         libFolder_(rhs.libFolder_),
         adInterface_(new ad_interface_t(*rhs.adInterface_)) {}
 
-  // virtual EndEffectorConstraint* clone() const override { return new EndEffectorConstraint(*this); }
+  // EndEffectorConstraint* clone() const override { return new EndEffectorConstraint(*this); }
 
   virtual void configure(const EndEffectorConstraintSettings& settings) { settings_ = settings; };
 

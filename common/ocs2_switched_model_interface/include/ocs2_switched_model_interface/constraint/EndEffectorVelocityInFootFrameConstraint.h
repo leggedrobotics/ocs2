@@ -2,7 +2,8 @@
 
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_switched_model_interface/constraint/ConstraintTerm.h>
-#include <ocs2_switched_model_interface/constraint/EndEffectorConstraint.h>
+#include <ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h>
+//#include <ocs2_switched_model_interface/constraint/EndEffectorConstraint.h>
 
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 #include "ocs2_switched_model_interface/core/ComModelBase.h"

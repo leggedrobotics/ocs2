@@ -33,7 +33,6 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
 
   // Enumeration and naming
   enum class FeetEnum { LF, RF, LH, RH };
-  const std::array<std::string, 4> feetNames{"LF", "RF", "LH", "RH"};
 
   ComKinoConstraintBaseAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
                           std::shared_ptr<const logic_rules_t> logicRulesPtr, const ModelSettings& options = ModelSettings(),

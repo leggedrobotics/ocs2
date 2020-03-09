@@ -29,48 +29,27 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/Dimensions.h>
+#include <iostream>
+
+#include "ocs2_ddp/riccati_equations/RiccatiModification.h"
 
 namespace ocs2 {
+namespace riccati_modification {
 
 /**
- * The struct contains Riccati equation modification terms.
+ * Displays all variables
  */
-struct RiccatiModificationBase {
-  using array_t = std::vector<RiccatiModificationBase>;
-  using array2_t = std::vector<array_t>;
+void display(const Data& data) {
+  std::cerr << std::endl;
+  std::cerr << "time: " << data.time_ << "\n";
+  std::cerr << "deltaQm:\n" << data.deltaQm_ << "\n";
+  std::cerr << "deltaRm:\n" << data.deltaGm_ << "\n";
+  std::cerr << "deltaPm:\n" << data.deltaGv_.transpose() << "\n";
 
-  using scalar_t = typename Dimensions<0, 0>::scalar_t;
-  using dynamic_vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
-  using dynamic_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic>;
+  std::cerr << "constraintRangeProjector:\n" << data.constraintRangeProjector_ << "\n";
+  std::cerr << "constraintNullProjector: \n" << data.constraintNullProjector_ << "\n";
+  std::cerr << std::endl;
+}
 
-  scalar_t time_;
-
-  dynamic_matrix_t deltaQm_;
-  dynamic_matrix_t deltaGm_;
-  dynamic_vector_t deltaGv_;
-
-  /** The Hessian matrix of the Hamiltonian, \f$Hm\f$. */
-  dynamic_matrix_t hamiltonianHessian_;
-  /** The right pseudo-inverse of \f$Dm\f$ */
-  dynamic_matrix_t constraintRangeProjector_;
-  /** \f$DmNull inv(DmNull^T * Hm * DmNull) * DmNull^T = (I - invHm * Dm^T * inv(Dm * invHm * Dm^T) * Dm) * invHm\f$ */
-  dynamic_matrix_t constraintNullProjector_;
-
-  /**
-   * Displays all variables
-   */
-  virtual void display() {
-    std::cerr << std::endl;
-    std::cerr << "time: " << time_ << "\n";
-    std::cerr << "deltaQm:\n" << deltaQm_ << "\n";
-    std::cerr << "deltaRm:\n" << deltaGm_ << "\n";
-    std::cerr << "deltaPm:\n" << deltaGv_.transpose() << "\n";
-
-    std::cerr << "constraintRangeProjector:\n" << constraintRangeProjector_ << "\n";
-    std::cerr << "constraintNullProjector: \n" << constraintNullProjector_ << "\n";
-    std::cerr << std::endl;
-  }
-};
-
+}  // namespace riccati_modification
 }  // namespace ocs2

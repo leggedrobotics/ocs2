@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
+#include <ocs2_core/integration/TrapezoidalIntegration.h>
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
@@ -52,7 +53,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include "ocs2_ddp/DDP_Settings.h"
-#include "ocs2_ddp/riccati_equations/RiccatiModificationBase.h"
+#include "ocs2_ddp/HessianCorrection.h"
+#include "ocs2_ddp/riccati_equations/RiccatiModification.h"
 #include "ocs2_ddp/riccati_equations/RiccatiModificationInterpolation.h"
 
 namespace ocs2 {
@@ -119,16 +121,43 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using logic_rules_machine_t = HybridLogicRulesMachine;
   using logic_rules_machine_ptr_t = typename logic_rules_machine_t::Ptr;
 
+  using performance_index_t = PerformanceIndex<scalar_t>;
+
+  // Line-Search
+  struct LineSearchModule {
+    scalar_t baselineMerit;                          // the merit of the rollout for zero learning rate
+    std::atomic<scalar_t> stepLengthStar;            // the optimal step length.
+    linear_controller_array_t initControllersStock;  // needed for lineSearch
+
+    std::atomic_size_t alphaExpNext;
+    std::vector<bool> alphaProcessed;
+    std::mutex lineSearchResultMutex;
+  };
+
+  // Levenberg-Marquardt
+  struct LevenbergMarquardtModule {
+    scalar_t pho = 1.0;                           // the ratio between actual reduction and predicted reduction
+    scalar_t riccatiMultiple = 0.0;               // the Riccati multiple for Tikhonov regularization.
+    scalar_t riccatiMultipleAdaptiveRatio = 1.0;  // the adaptive ratio of geometric progression for Riccati multiple.
+    size_t numSuccessiveRejections = 0;           // the number of successive rejections of solution.
+  };
+
+  struct ConstraintPenaltyCoefficients {
+    scalar_t stateEqualityPenaltyTol;
+    scalar_t stateEqualityPenaltyCoeff;
+
+    scalar_t stateEqualityFinalPenaltyTol;
+    scalar_t stateEqualityFinalPenaltyCoeff;
+
+    scalar_t stateInputEqualityPenaltyTol;
+    scalar_t stateInputEqualityPenaltyCoeff;
+  };
+
   /**
    * class for collecting SLQ data
    */
   template <size_t OTHER_STATE_DIM, size_t OTHER_INPUT_DIM>
   friend class DDP_DataCollector;
-
-  /**
-   * Default constructor.
-   */
-  GaussNewtonDDP() = default;
 
   /**
    * Constructor
@@ -139,9 +168,10 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
    * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization.
    * @param [in] ddpSettings: Structure containing the settings for the Gauss-Newton DDP algorithm.
-   * @param [in] logicRulesPtr: The logic rules used for implementing mixed-logic dynamical systems.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation.
    * If it is not defined, we will use the terminal cost function defined in costFunctionPtr.
+   * @param [in] algorithmName: It should be either SLQ ot ILQR.
+   * @param [in] logicRulesPtr: The logic rules used for implementing mixed-logic dynamical systems.
    */
   GaussNewtonDDP(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                  const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
@@ -162,9 +192,9 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   const scalar_array_t& getPartitioningTimes() const override;
 
-  void getPerformanceIndeces(scalar_t& costFunction, scalar_t& constraint1ISE, scalar_t& constraint2ISE) const override;
+  performance_index_t getPerformanceIndeces() const override;
 
-  void getIterationsLog(scalar_array_t& iterationCost, scalar_array_t& iterationISE1, scalar_array_t& iterationISE2) const override;
+  std::vector<performance_index_t> getIterationsLog() const override;
 
   void getPrimalSolution(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const final;
 
@@ -204,7 +234,7 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] timeTrajectory: The time trajectory.
    * @param [in] postEventIndices: The post event indices.
    * @param [out] normalizedTimeTrajectory: The reversed and negated timeTrajectory.
-   * @param [out] strategy: The corresponding post event indices of normalizedTimeTrajectory.
+   * @param [out] normalizedPostEventIndices: The corresponding post event indices of normalizedTimeTrajectory.
    */
   static void computeNormalizedTime(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
                                     scalar_array_t& normalizedTimeTrajectory, size_array_t& normalizedPostEventIndices);
@@ -261,16 +291,7 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Display rollout info and scores.
    */
-  void printRolloutInfo();
-
-  /**
-   * Calculates the trapezoidal rule integration of a curve.
-   *
-   * @param [in] timeTrajectory: The time trajectory stamp.
-   * @param [in] valueTrajectory: The values of the curve for the given time trajectory.
-   * @return The integral of the curve.
-   */
-  scalar_t trapezoidalIntegration(const scalar_array_t& timeTrajectory, const scalar_array_t& valueTrajectory) const;
+  void printRolloutInfo() const;
 
   /**
    * Calculates constraints ISE (Integral of Square Error).
@@ -320,55 +341,39 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
    * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
    * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
-   * @param [out] merit: The merit value of the rollout.
-   * @param [out] totalCost: The total cost of the rollout.
-   * @param [out] stateInputEqConstraintISE: The ISE of the state-input equality constraints along the rollout trajectory.
-   * @param [out] stateEqConstraintISE: The ISE of the state-only equality constraints along the rollout trajectory.
-   * @param [out] stateEqFinalConstraintISE: The ISE of the state-only equality constraints at event times.
-   * @param [out] inequalityConstraintPenalty: The accumulated penalty of the inequality constraints along the rollout trajectory.
-   * @param [out] inequalityConstraintISE: The ISE of the inequality constraints violation along the rollout trajectory.
+   * @param [out] performanceIndex: The cost, merit function and ISEs of constraints for the trajectory.
    *
    * @return average time step.
    */
   scalar_t performFullRollout(size_t workerIndex, scalar_t stepLength, linear_controller_array_t& controllersStock,
                               scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
                               state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
-                              ModelDataBase::array2_t& modelDataTrajectoriesStock, scalar_t& merit, scalar_t& totalCost,
-                              scalar_t& stateInputEqConstraintISE, scalar_t& stateEqConstraintISE, scalar_t& stateEqFinalConstraintISE,
-                              scalar_t& inequalityConstraintPenalty, scalar_t& inequalityConstraintISE);
+                              ModelDataBase::array2_t& modelDataTrajectoriesStock, performance_index_t& performanceIndex);
 
   /**
-   * Line search on the feedforward parts of the controller. It uses the
-   * following approach for line search: The constraint TYPE-1 correction term
-   * is directly added through a user defined step length (defined in
-   * settings_.constraintStepSize_). But the cost minimization term is optimized
-   * through a line-search strategy defined in ILQR settings.
+   * Line search on the feedforward parts of the controller. It chooses the largest acceptable step-size.
+   * The class computes the nominal controller and the nominal trajectories as well the corresponding performance indices.
    */
-  void lineSearch();
+  void lineSearch(LineSearchModule& lineSearchModule);
 
   /**
    * Defines line search task on a thread with various learning rates and choose the largest acceptable step-size.
+   * The class computes the nominal controller and the nominal trajectories as well the corresponding performance indices.
    */
-  void lineSearchTask();
+  void lineSearchTask(LineSearchModule& lineSearchModule);
 
   /**
-   * Calculates cost of a merit.
+   * Calculates the merit function based on the performance index .
    *
-   * @param [in] cost: The rollout cost.
-   * @param [in] stateInputEqConstraintISE: The state-input equality constraints ISE.
-   * @param [in] stateEqConstraintISE: The state-only equality constraints ISE.
-   * @param [in] stateEqFinalConstraintISE: The final state equality constraints ISE.
-   * @param [in] inequalityConstraintPenalty: The inequality constraints penalty.
-   * @return Merit value.
+   * @param The performance index which includes the merit, cost, and ISEs of constraints.
    */
-  inline scalar_t calculateRolloutMerit(const scalar_t& cost, const scalar_t& stateInputEqConstraintISE,
-                                        const scalar_t& stateEqConstraintISE, const scalar_t& stateEqFinalConstraintISE,
-                                        const scalar_t& inequalityConstraintPenalty) const;
+  void calculateRolloutMerit(performance_index_t& performanceIndex) const;
 
   /**
    * Levenberg Marquardt strategy.
+   * The class computes the nominal controller and the nominal trajectories as well the corresponding performance indices.
    */
-  void levenbergMarquardt();
+  void levenbergMarquardt(LevenbergMarquardtModule& levenbergMarquardtModule);
 
   /**
    * Solves Riccati equations for all the partitions.
@@ -485,8 +490,8 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [out] projectedModelData: The projected model data.
    * @param [out] riccatiModification: The Riccati equation modifier.
    */
-  void computeProjectionAndRiccatiModification(DDP_Strategy strategy, const ModelDataBase& modelData, const dynamic_matrix_t& Sm,
-                                               ModelDataBase& projectedModelData, RiccatiModificationBase& riccatiModification) const;
+  void computeProjectionAndRiccatiModification(ddp_strategy::type strategy, const ModelDataBase& modelData, const dynamic_matrix_t& Sm,
+                                               ModelDataBase& projectedModelData, riccati_modification::Data& riccatiModification) const;
 
   /**
    * Computes Hessian of the Hamiltonian.
@@ -496,7 +501,7 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] Sm: The Riccati matrix.
    * @return The Hessian matrix of the Hamiltonian.
    */
-  virtual dynamic_matrix_t computeHamiltonianHessian(DDP_Strategy strategy, const ModelDataBase& modelData,
+  virtual dynamic_matrix_t computeHamiltonianHessian(ddp_strategy::type strategy, const ModelDataBase& modelData,
                                                      const dynamic_matrix_t& Sm) const = 0;
 
   /**
@@ -518,7 +523,7 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [out] deltaGv: The Riccati modifier to cost derivative w.r.t. input.
    * @param [out] deltaGm: The Riccati modifier to cost input-state derivative.
    */
-  void computeRiccatiModification(DDP_Strategy strategy, const ModelDataBase& projectedModelData, dynamic_matrix_t& deltaQm,
+  void computeRiccatiModification(ddp_strategy::type strategy, const ModelDataBase& projectedModelData, dynamic_matrix_t& deltaQm,
                                   dynamic_vector_t& deltaGv, dynamic_matrix_t& deltaGm) const;
 
   /**
@@ -535,11 +540,9 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Shifts the Hessian based on the strategy defined by Line_Search::hessianCorrectionStrategy_.
    *
-   * @tparam Derived type.
    * @param matrix: The Hessian matrix.
    */
-  template <typename Derived>
-  void shiftHessian(Eigen::MatrixBase<Derived>& matrix) const;
+  void shiftHessian(dynamic_matrix_t& matrix) const;
 
   /**
    * Augments the cost function for the given model data.
@@ -637,17 +640,10 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM> trajectorySpreadingController_;
 
   std::atomic_size_t iteration_;
-  scalar_array_t iterationCost_;
-  scalar_array_t iterationISE1_;
-  scalar_array_t iterationISE2_;
 
-  scalar_t nominalMerit_;
-  scalar_t nominalTotalCost_;
-  scalar_t stateEqConstraintISE_;
-  scalar_t stateEqFinalConstraintISE_;
-  scalar_t stateInputEqConstraintISE_;
-  scalar_t inequalityConstraintPenalty_;
-  scalar_t inequalityConstraintISE_;
+  performance_index_t performanceIndex_;
+
+  std::vector<performance_index_t> performanceIndexHistory_;
 
   // forward pass and backward pass average time step
   scalar_t avgTimeStepFP_;
@@ -690,8 +686,8 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   ModelDataBase::array2_t cachedProjectedModelDataTrajectoriesStock_;
 
   // Riccati modification
-  RiccatiModificationBase::array2_t riccatiModificationTrajectoriesStock_;
-  RiccatiModificationBase::array2_t cachedRiccatiModificationTrajectoriesStock_;
+  riccati_modification::Data::array2_t riccatiModificationTrajectoriesStock_;
+  riccati_modification::Data::array2_t cachedRiccatiModificationTrajectoriesStock_;
 
   // Riccati solution coefficients
   scalar_array2_t SsTimeTrajectoryStock_;
@@ -711,38 +707,12 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   dynamic_matrix_t SmHeuristics_;
 
   // Line-Search
-  struct LineSearchImpl {
-    scalar_t baselineMerit;                          // the merit of the rollout for zero learning rate
-    std::atomic<scalar_t> stepLengthStar;            // the optimal step length.
-    linear_controller_array_t initControllersStock;  // needed for lineSearch
-
-    std::atomic_size_t alphaExpNext;
-    std::vector<bool> alphaProcessed;
-    std::mutex lineSearchResultMutex;
-
-  } lineSearchImpl_;
+  LineSearchModule lineSearchModule_;
 
   // Levenberg-Marquardt
-  struct LevenbergMarquardtImpl {
-    scalar_t pho = 1.0;                           // the ratio between actual reduction and predicted reduction
-    scalar_t riccatiMultiple = 0.0;               // the Riccati multiple for Tikhonov regularization.
-    scalar_t riccatiMultipleAdaptiveRatio = 1.0;  // the adaptive ratio of geometric progression for Riccati multiple.
-    size_t numSuccessiveRejections = 0;           // the number of successive rejections of solution.
+  LevenbergMarquardtModule levenbergMarquardtModule_;
 
-  } levenbergMarquardtImpl_;
-
-  //
-  struct ConstraintPenaltyCoefficientsImpl {
-    scalar_t stateEqualityPenaltyTol;
-    scalar_t stateEqualityPenaltyCoeff;
-
-    scalar_t stateEqualityFinalPenaltyTol;
-    scalar_t stateEqualityFinalPenaltyCoeff;
-
-    scalar_t stateInputEqualityPenaltyTol;
-    scalar_t stateInputEqualityPenaltyCoeff;
-
-  } constraintPenaltyCoefficients_;
+  ConstraintPenaltyCoefficients constraintPenaltyCoefficients_;
 
   std::vector<int> startingIndicesRiccatiWorker_;
   std::vector<int> endingIndicesRiccatiWorker_;

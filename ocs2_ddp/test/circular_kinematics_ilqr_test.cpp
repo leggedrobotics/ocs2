@@ -59,9 +59,9 @@ TEST(circular_kinematics_ilqr_test, circular_kinematics_ilqr_test) {
   ilqrSettings.ddpSettings_.constraintTolerance_ = 1e-5;
   ilqrSettings.ddpSettings_.constraintPenaltyInitialValue_ = 2.0;
   ilqrSettings.ddpSettings_.constraintPenaltyIncreaseRate_ = 2.0;
-  ilqrSettings.ddpSettings_.strategy_ = DDP_Strategy::LINE_SEARCH;
+  ilqrSettings.ddpSettings_.strategy_ = ddp_strategy::type::LINE_SEARCH;
   ilqrSettings.ddpSettings_.lineSearch_.minStepLength_ = 0.01;
-  ilqrSettings.ddpSettings_.lineSearch_.hessianCorrectionStrategy_ = Hessian_Correction::CHOLESKY_MODIFICATION;
+  ilqrSettings.ddpSettings_.lineSearch_.hessianCorrectionStrategy_ = hessian_correction::Strategy::CHOLESKY_MODIFICATION;
   ilqrSettings.ddpSettings_.lineSearch_.hessianCorrectionMultiple_ = 1e-3;
 
   Rollout_Settings rolloutSettings;
@@ -135,25 +135,22 @@ TEST(circular_kinematics_ilqr_test, circular_kinematics_ilqr_test) {
   ilqr_t::primal_solution_t solutionMT = ilqrMT.primalSolution(finalTime);
 
   // get performance indices
-  double totalCostST, totalCostMT;
-  double constraint1ISE_ST, constraint1ISE_MT;
-  double constraint2ISE_ST, constraint2ISE_MT;
-  ilqrST.getPerformanceIndeces(totalCostST, constraint1ISE_ST, constraint2ISE_ST);
-  ilqrMT.getPerformanceIndeces(totalCostMT, constraint1ISE_MT, constraint2ISE_MT);
+  auto performanceIndecesST = ilqrST.getPerformanceIndeces();
+  auto performanceIndecesMT = ilqrMT.getPerformanceIndeces();
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
   const double expectedCost = 0.1;
-  ASSERT_LT(totalCostST - expectedCost, 0.0)
+  ASSERT_LT(performanceIndecesST.totalCost - expectedCost, 0.0)
       << "MESSAGE: single-threaded SLQ failed in the Circular_Kinematics's cost test!";
-  ASSERT_LT(totalCostMT - expectedCost, 0.0)
+  ASSERT_LT(performanceIndecesMT.totalCost - expectedCost, 0.0)
       << "MESSAGE: multi-threaded SLQ failed in the Circular_Kinematics's cost test!";
 
   const double expectedISE1 = 0.0;
-  ASSERT_LT(fabs(constraint1ISE_ST - expectedISE1), ilqrSettings.ddpSettings_.constraintTolerance_)
+  ASSERT_LT(fabs(performanceIndecesST.stateInputEqConstraintISE - expectedISE1), ilqrSettings.ddpSettings_.constraintTolerance_)
       << "MESSAGE: single-threaded SLQ failed in the Circular_Kinematics's type-1 constraint ISE test!";
-  ASSERT_LT(fabs(constraint1ISE_MT - expectedISE1), ilqrSettings.ddpSettings_.constraintTolerance_)
+  ASSERT_LT(fabs(performanceIndecesMT.stateInputEqConstraintISE - expectedISE1), ilqrSettings.ddpSettings_.constraintTolerance_)
       << "MESSAGE: multi-threaded SLQ failed in the Circular_Kinematics's type-1 constraint ISE test!";
 }
 

@@ -47,7 +47,7 @@ void DiscreteTimeRiccatiEquations::setRiskSensitiveCoefficient(scalar_t riskSens
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void DiscreteTimeRiccatiEquations::computeMap(const ModelDataBase projectedModelData, const RiccatiModificationBase& riccatiModification,
+void DiscreteTimeRiccatiEquations::computeMap(const ModelDataBase projectedModelData, const riccati_modification::Data& riccatiModification,
                                               const dynamic_matrix_t& SmNext, const dynamic_vector_t& SvNext, const scalar_t& sNext,
                                               dynamic_matrix_t& projectedKm, dynamic_vector_t& projectedLv, dynamic_matrix_t& Sm,
                                               dynamic_vector_t& Sv, scalar_t& s) {
@@ -64,7 +64,7 @@ void DiscreteTimeRiccatiEquations::computeMap(const ModelDataBase projectedModel
 /******************************************************************************************************/
 /******************************************************************************************************/
 void DiscreteTimeRiccatiEquations::computeMapILQR(const ModelDataBase projectedModelData,
-                                                  const RiccatiModificationBase& riccatiModification, const dynamic_matrix_t& SmNext,
+                                                  const riccati_modification::Data& riccatiModification, const dynamic_matrix_t& SmNext,
                                                   const dynamic_vector_t& SvNext, const scalar_t& sNext, DiscreteTimeRiccatiData& dreCache,
                                                   dynamic_matrix_t& projectedKm, dynamic_vector_t& projectedLv, dynamic_matrix_t& Sm,
                                                   dynamic_vector_t& Sv, scalar_t& s) const {
@@ -158,7 +158,7 @@ void DiscreteTimeRiccatiEquations::computeMapILQR(const ModelDataBase projectedM
 /******************************************************************************************************/
 /******************************************************************************************************/
 void DiscreteTimeRiccatiEquations::computeMapILEG(const ModelDataBase projectedModelData,
-                                                  const RiccatiModificationBase& riccatiModification, const dynamic_matrix_t& SmNext,
+                                                  const riccati_modification::Data& riccatiModification, const dynamic_matrix_t& SmNext,
                                                   const dynamic_vector_t& SvNext, const scalar_t& sNext, DiscreteTimeRiccatiData& dreCache,
                                                   dynamic_matrix_t& projectedKm, dynamic_vector_t& projectedLv, dynamic_matrix_t& Sm,
                                                   dynamic_vector_t& Sv, scalar_t& s) const {

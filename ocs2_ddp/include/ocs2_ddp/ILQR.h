@@ -94,11 +94,6 @@ class ILQR : public GaussNewtonDDP<STATE_DIM, INPUT_DIM> {
   using riccati_equations_t = DiscreteTimeRiccatiEquations;
 
   /**
-   * Default constructor.
-   */
-  ILQR() = default;
-
-  /**
    * Constructor
    *
    * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
@@ -141,7 +136,7 @@ class ILQR : public GaussNewtonDDP<STATE_DIM, INPUT_DIM> {
 
   void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
 
-  dynamic_matrix_t computeHamiltonianHessian(DDP_Strategy strategy, const ModelDataBase& modelData,
+  dynamic_matrix_t computeHamiltonianHessian(ddp_strategy::type strategy, const ModelDataBase& modelData,
                                              const dynamic_matrix_t& Sm) const override;
 
   void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,

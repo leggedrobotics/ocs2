@@ -114,7 +114,7 @@ void ContinuousTimeRiccatiEquations::convert2Matrix(const dynamic_vector_t& allS
 /******************************************************************************************************/
 void ContinuousTimeRiccatiEquations::setData(const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* projectedModelDataPtr,
                                              const size_array_t* postEventIndicesPtr, const ModelDataBase::array_t* modelDataEventTimesPtr,
-                                             const RiccatiModificationBase::array_t* riccatiModificationPtr) {
+                                             const riccati_modification::Data::array_t* riccatiModificationPtr) {
   BASE::resetNumFunctionCalls();
 
   // saving array pointers
@@ -225,11 +225,11 @@ void ContinuousTimeRiccatiEquations::computeFlowMapSLQ(std::pair<int, scalar_t> 
   // Pm
   ModelData::interpolate(indexAlpha, creCache.projectedGm_, projectedModelDataPtr_, ModelData::costInputStateDerivative);
   // delatQm
-  RiccatiModification::interpolate(indexAlpha, creCache.deltaQm_, riccatiModificationPtr_, RiccatiModification::deltaQm);
+  riccati_modification::interpolate(indexAlpha, creCache.deltaQm_, riccatiModificationPtr_, riccati_modification::deltaQm);
   // delatGm
-  RiccatiModification::interpolate(indexAlpha, creCache.projectedKm_, riccatiModificationPtr_, RiccatiModification::deltaGm);
+  riccati_modification::interpolate(indexAlpha, creCache.projectedKm_, riccatiModificationPtr_, riccati_modification::deltaGm);
   // delatGv
-  RiccatiModification::interpolate(indexAlpha, creCache.projectedLv_, riccatiModificationPtr_, RiccatiModification::deltaGv);
+  riccati_modification::interpolate(indexAlpha, creCache.projectedLv_, riccatiModificationPtr_, riccati_modification::deltaGv);
 
   // projectedGm = projectedPm + projectedBm^T * Sm [COMPLEXITY: nx^2 * np]
   creCache.projectedGm_.noalias() += creCache.projectedBm_.transpose() * Sm;

@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/misc/LoadData.h>
 
-#include "ocs2_ddp/Strategy_Settings.h"
+#include "ocs2_ddp/StrategySettings.h"
 
 namespace ocs2 {
 
@@ -97,11 +97,11 @@ struct DDP_Settings {
   double riskSensitiveCoeff_ = 0.0;
 
   /** Determines the strategy for solving the subproblem. There are two choices line-search strategy and levenberg_marquardt strategy. */
-  DDP_Strategy strategy_ = DDP_Strategy::LINE_SEARCH;
+  ddp_strategy::type strategy_ = ddp_strategy::type::LINE_SEARCH;
   /** The line-search strategy settings. */
-  Line_Search lineSearch_;
+  line_search::Settings lineSearch_;
   /** The levenberg_marquardt strategy settings. */
-  Levenberg_Marquardt levenbergMarquardt_;
+  levenberg_marquardt::Settings levenbergMarquardt_;
 
   /**
    * This function loads the "DDP_Settings" variables from a config file. This file contains the settings for the SQL and OCS2 algorithms.
@@ -166,12 +166,12 @@ struct DDP_Settings {
     strategy_ = ddp_strategy::fromString(strategyName);
 
     switch (strategy_) {
-      case DDP_Strategy::LINE_SEARCH: {
-        lineSearch_.loadSettings(filename, fieldName + ".lineSearch", verbose);
+      case ddp_strategy::type::LINE_SEARCH: {
+        lineSearch_ = line_search::load(filename, fieldName + ".lineSearch", verbose);
         break;
       }
-      case DDP_Strategy::LEVENBERG_MARQUARDT: {
-        levenbergMarquardt_.loadSettings(filename, fieldName + ".levenbergMarquardt", verbose);
+      case ddp_strategy::type::LEVENBERG_MARQUARDT: {
+        levenbergMarquardt_ = levenberg_marquardt::load(filename, fieldName + ".levenbergMarquardt", verbose);
         break;
       }
     }

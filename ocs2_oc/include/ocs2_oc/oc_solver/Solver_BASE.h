@@ -57,6 +57,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+// Performance index for a rollout
+template <typename SCALAR_T>
+struct PerformanceIndex {
+  SCALAR_T merit;
+  SCALAR_T totalCost;
+  SCALAR_T stateEqConstraintISE;
+  SCALAR_T stateEqFinalConstraintISE;
+  SCALAR_T stateInputEqConstraintISE;
+  SCALAR_T inequalityConstraintISE;
+  SCALAR_T inequalityConstraintPenalty;
+};
+
 /**
  * This class is an interface class for the single-thread and multi-thread SLQ.
  *
@@ -183,13 +195,11 @@ class Solver_BASE {
   void setSynchronizedModules(const synchronized_module_ptr_array_t& synchronizedModules) { synchronizedModules_ = synchronizedModules; };
 
   /**
-   * Gets the cost function and ISEs of the type-1 and type-2 constraints at the initial time.
+   * Returns the cost, merit function and ISEs of constraints for the latest optimized trajectory.
    *
-   * @param [out] costFunction: cost function value
-   * @param [out] constraint1ISE: type-1 constraint ISE.
-   * @param [out] constraint1ISE: type-2 constraint ISE.
+   * @return PerformanceIndex of the last optimized trajectory.
    */
-  virtual void getPerformanceIndeces(scalar_t& costFunction, scalar_t& constraint1ISE, scalar_t& constraint2ISE) const = 0;
+  virtual PerformanceIndex<scalar_t> getPerformanceIndeces() const = 0;
 
   /**
    * Gets number of iterations.
@@ -199,13 +209,11 @@ class Solver_BASE {
   virtual size_t getNumIterations() const = 0;
 
   /**
-   * Gets iterations Log of the solver.
+   * Returns the history of the cost, merit function and ISEs of constraints for the iterations os the optimized trajectory.
    *
-   * @param [out] iterationCost: Each iteration's cost.
-   * @param [out] iterationISE1: Each iteration's type-1 constraints ISE.
-   * @param [out] iterationISE2: Each iteration's type-2 constraints ISE.
+   * @return An array of PerformanceIndices.
    */
-  virtual void getIterationsLog(scalar_array_t& iterationCost, scalar_array_t& iterationISE1, scalar_array_t& iterationISE2) const = 0;
+  virtual std::vector<PerformanceIndex<scalar_t>> getIterationsLog() const = 0;
 
   /**
    * Gets final time of optimization

@@ -57,7 +57,7 @@ TEST(exp1_ilqr_test, exp1_ilqr_test) {
   ilqrSettings.ddpSettings_.checkNumericalStability_ = true;
   ilqrSettings.ddpSettings_.useFeedbackPolicy_ = false;
   ilqrSettings.ddpSettings_.debugPrintRollout_ = false;
-  ilqrSettings.ddpSettings_.strategy_ = DDP_Strategy::LINE_SEARCH;
+  ilqrSettings.ddpSettings_.strategy_ = ddp_strategy::type::LINE_SEARCH;
   ilqrSettings.ddpSettings_.lineSearch_.minStepLength_ = 0.0001;
 
   Rollout_Settings rolloutSettings;
@@ -136,32 +136,29 @@ TEST(exp1_ilqr_test, exp1_ilqr_test) {
   ILQR<STATE_DIM, INPUT_DIM>::primal_solution_t solutionMT = ilqrMT.primalSolution(finalTime);
 
   // get performance indices
-  double totalCost_st, totalCost_mt;
-  double constraint1ISE_st, constraint1ISE_mt;
-  double constraint2ISE_st, constraint2ISE_mt;
-  ilqrST.getPerformanceIndeces(totalCost_st, constraint1ISE_st, constraint2ISE_st);
-  ilqrMT.getPerformanceIndeces(totalCost_mt, constraint1ISE_mt, constraint2ISE_mt);
+  auto performanceIndecesST = ilqrST.getPerformanceIndeces();
+  auto performanceIndecesMT = ilqrMT.getPerformanceIndeces();
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
   const double expectedCost = 5.4399;
-  ASSERT_LT(fabs(totalCost_st - expectedCost), 10 * ilqrSettings.ddpSettings_.minRelCost_)
-      << "MESSAGE: ILQR_ST failed in the EXP1's cost test!";
-  ASSERT_LT(fabs(totalCost_mt - expectedCost), 10 * ilqrSettings.ddpSettings_.minRelCost_)
-      << "MESSAGE: ILQR_MT failed in the EXP1's cost test!";
+  ASSERT_LT(fabs(performanceIndecesST.totalCost - expectedCost), 10 * ilqrSettings.ddpSettings_.minRelCost_)
+      << "MESSAGE: single-threaded ILQR failed in the EXP1's cost test!";
+  ASSERT_LT(fabs(performanceIndecesMT.totalCost - expectedCost), 10 * ilqrSettings.ddpSettings_.minRelCost_)
+      << "MESSAGE: multi-threaded ILQR failed in the EXP1's cost test!";
 
   const double expectedISE1 = 0.0;
-  ASSERT_LT(fabs(constraint1ISE_st - expectedISE1), 10 * ilqrSettings.ddpSettings_.constraintTolerance_)
-      << "MESSAGE: ILQR_ST failed in the EXP1's type-1 constraint ISE test!";
-  ASSERT_LT(fabs(constraint1ISE_mt - expectedISE1), 10 * ilqrSettings.ddpSettings_.constraintTolerance_)
-      << "MESSAGE: ILQR_MT failed in the EXP1's type-1 constraint ISE test!";
+  ASSERT_LT(fabs(performanceIndecesST.stateInputEqConstraintISE - expectedISE1), 10 * ilqrSettings.ddpSettings_.constraintTolerance_)
+      << "MESSAGE: single-threaded ILQR failed in the EXP1's type-1 constraint ISE test!";
+  ASSERT_LT(fabs(performanceIndecesMT.stateInputEqConstraintISE - expectedISE1), 10 * ilqrSettings.ddpSettings_.constraintTolerance_)
+      << "MESSAGE: multi-threaded ILQR failed in the EXP1's type-1 constraint ISE test!";
 
   const double expectedISE2 = 0.0;
-  ASSERT_LT(fabs(constraint2ISE_st - expectedISE2), 10 * ilqrSettings.ddpSettings_.constraintTolerance_)
-      << "MESSAGE: ILQR_ST failed in the EXP1's type-2 constraint ISE test!";
-  ASSERT_LT(fabs(constraint2ISE_mt - expectedISE2), 10 * ilqrSettings.ddpSettings_.constraintTolerance_)
-      << "MESSAGE: ILQR_MT failed in the EXP1's type-2 constraint ISE test!";
+  ASSERT_LT(fabs(performanceIndecesST.stateEqConstraintISE - expectedISE2), 10 * ilqrSettings.ddpSettings_.constraintTolerance_)
+      << "MESSAGE: single-threaded ILQR failed in the EXP1's type-2 constraint ISE test!";
+  ASSERT_LT(fabs(performanceIndecesMT.stateEqConstraintISE - expectedISE2), 10 * ilqrSettings.ddpSettings_.constraintTolerance_)
+      << "MESSAGE: multi-threaded ILQR failed in the EXP1's type-2 constraint ISE test!";
 
   double ctrlFinalTime;
   if (ilqrSettings.ddpSettings_.useFeedbackPolicy_) {

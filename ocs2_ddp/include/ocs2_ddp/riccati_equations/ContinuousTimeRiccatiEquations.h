@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/model_data/ModelDataBase.h>
 
-#include "ocs2_ddp/riccati_equations/RiccatiModificationBase.h"
+#include "ocs2_ddp/riccati_equations/RiccatiModification.h"
 
 namespace ocs2 {
 
@@ -126,6 +126,9 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<Eigen::Dynamic> {
   /**
    * Constructor.
    *
+   * @param [in] reducedFormRiccati: The reduced form of the Riccati equation is yield by assuming that Hessein of
+   * the Hamiltonian is positive definite. In this case, the computation of Riccati equation is more efficient.
+   * @param [in] isRiskSensitive: Neither the risk sensitive variant is used or not.
    */
   explicit ContinuousTimeRiccatiEquations(bool reducedFormRiccati, bool isRiskSensitive = false);
 
@@ -170,7 +173,7 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<Eigen::Dynamic> {
    */
   void setData(const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* projectedModelDataPtr,
                const size_array_t* eventsPastTheEndIndecesPtr, const ModelDataBase::array_t* modelDataEventTimesPtr,
-               const RiccatiModificationBase::array_t* riccatiModificationPtr);
+               const riccati_modification::Data::array_t* riccatiModificationPtr);
 
   /**
    * Riccati jump map at switching moments
@@ -190,7 +193,7 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<Eigen::Dynamic> {
    */
   void computeFlowMap(const scalar_t& z, const dynamic_vector_t& allSs, dynamic_vector_t& derivatives) override;
 
- protected:
+ private:
   /**
    * Computes the Riccati equations for SLQ problem.
    *
@@ -230,7 +233,7 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<Eigen::Dynamic> {
   const scalar_array_t* timeStampPtr_;
   const ModelDataBase::array_t* projectedModelDataPtr_;
   const ModelDataBase::array_t* modelDataEventTimesPtr_;
-  const RiccatiModificationBase::array_t* riccatiModificationPtr_;
+  const riccati_modification::Data::array_t* riccatiModificationPtr_;
   scalar_array_t eventTimes_;
 
   ContinuousTimeRiccatiData continuousTimeRiccatiData_;

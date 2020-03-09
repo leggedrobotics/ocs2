@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/model_data/ModelDataBase.h>
 
-#include "ocs2_ddp/riccati_equations/RiccatiModificationBase.h"
+#include "ocs2_ddp/riccati_equations/RiccatiModification.h"
 
 namespace ocs2 {
 
@@ -84,6 +84,10 @@ class DiscreteTimeRiccatiEquations {
 
   /**
    * Constructor.
+   *
+   * @param [in] reducedFormRiccati: The reduced form of the Riccati equation is yield by assuming that Hessein of
+   * the Hamiltonian is positive definite. In this case, the computation of Riccati equation is more efficient.
+   * @param [in] isRiskSensitive: Neither the risk sensitive variant is used or not.
    */
   explicit DiscreteTimeRiccatiEquations(bool reducedFormRiccati, bool isRiskSensitive = false);
 
@@ -111,11 +115,11 @@ class DiscreteTimeRiccatiEquations {
    * @param [out] Sv: The current Riccati vector.
    * @param [out] s: The current Riccati scalar.
    */
-  void computeMap(const ModelDataBase projectedModelData, const RiccatiModificationBase& riccatiModification,
+  void computeMap(const ModelDataBase projectedModelData, const riccati_modification::Data& riccatiModification,
                   const dynamic_matrix_t& SmNext, const dynamic_vector_t& SvNext, const scalar_t& sNext, dynamic_matrix_t& projectedKm,
                   dynamic_vector_t& projectedLv, dynamic_matrix_t& Sm, dynamic_vector_t& Sv, scalar_t& s);
 
- protected:
+ private:
   /**
    * Computes one step Riccati difference equations for ILQR formulation.
    *
@@ -131,7 +135,7 @@ class DiscreteTimeRiccatiEquations {
    * @param [out] Sv: The current Riccati vector.
    * @param [out] s: The current Riccati scalar.
    */
-  void computeMapILQR(const ModelDataBase projectedModelData, const RiccatiModificationBase& riccatiModification,
+  void computeMapILQR(const ModelDataBase projectedModelData, const riccati_modification::Data& riccatiModification,
                       const dynamic_matrix_t& SmNext, const dynamic_vector_t& SvNext, const scalar_t& sNext,
                       DiscreteTimeRiccatiData& dreCache, dynamic_matrix_t& projectedKm, dynamic_vector_t& projectedLv, dynamic_matrix_t& Sm,
                       dynamic_vector_t& Sv, scalar_t& s) const;
@@ -151,7 +155,7 @@ class DiscreteTimeRiccatiEquations {
    * @param [out] Sv: The current Riccati vector.
    * @param [out] s: The current Riccati scalar.
    */
-  void computeMapILEG(const ModelDataBase projectedModelData, const RiccatiModificationBase& riccatiModification,
+  void computeMapILEG(const ModelDataBase projectedModelData, const riccati_modification::Data& riccatiModification,
                       const dynamic_matrix_t& SmNext, const dynamic_vector_t& SvNext, const scalar_t& sNext,
                       DiscreteTimeRiccatiData& dreCache, dynamic_matrix_t& projectedKm, dynamic_vector_t& projectedLv, dynamic_matrix_t& Sm,
                       dynamic_vector_t& Sv, scalar_t& s) const;

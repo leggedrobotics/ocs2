@@ -58,7 +58,7 @@ TEST(exp0_slq_test, exp0_slq_test) {
   slqSettings.ddpSettings_.checkNumericalStability_ = true;
   slqSettings.ddpSettings_.useFeedbackPolicy_ = true;
   slqSettings.ddpSettings_.debugPrintRollout_ = false;
-  slqSettings.ddpSettings_.strategy_ = DDP_Strategy::LINE_SEARCH;
+  slqSettings.ddpSettings_.strategy_ = ddp_strategy::type::LINE_SEARCH;
   slqSettings.ddpSettings_.lineSearch_.minStepLength_ = 0.0001;
 
   Rollout_Settings rolloutSettings;
@@ -136,30 +136,29 @@ TEST(exp0_slq_test, exp0_slq_test) {
   slq_t::primal_solution_t solutionMT = slqMT.primalSolution(finalTime);
 
   // get performance indices
-  double totalCostST, totalCostMT;
-  double constraint1ISE_ST, constraint1ISE_MT;
-  double constraint2ISE_ST, constraint2ISE_MT;
-  slqST.getPerformanceIndeces(totalCostST, constraint1ISE_ST, constraint2ISE_ST);
-  slqMT.getPerformanceIndeces(totalCostMT, constraint1ISE_MT, constraint2ISE_MT);
+  auto performanceIndecesST = slqST.getPerformanceIndeces();
+  auto performanceIndecesMT = slqMT.getPerformanceIndeces();
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
   const double expectedCost = 9.766;
-  ASSERT_LT(fabs(totalCostST - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_) << "MESSAGE: SLQ failed in the EXP0's cost test!";
-  ASSERT_LT(fabs(totalCostMT - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_) << "MESSAGE: SLQ failed in the EXP1's cost test!";
+  ASSERT_LT(fabs(performanceIndecesST.totalCost - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_)
+      << "MESSAGE: single-threaded SLQ failed in the EXP1's cost test!";
+  ASSERT_LT(fabs(performanceIndecesMT.totalCost - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_)
+      << "MESSAGE: multi-threaded SLQ failed in the EXP1's cost test!";
 
   const double expectedISE1 = 0.0;
-  ASSERT_LT(fabs(constraint1ISE_ST - expectedISE1), 10 * slqSettings.ddpSettings_.constraintTolerance_)
-      << "MESSAGE: SLQ failed in the EXP0's type-1 constraint ISE test!";
-  ASSERT_LT(fabs(constraint1ISE_MT - expectedISE1), 10 * slqSettings.ddpSettings_.constraintTolerance_)
-      << "MESSAGE: SLQ failed in the EXP1's type-1 constraint ISE test!";
+  ASSERT_LT(fabs(performanceIndecesST.stateInputEqConstraintISE - expectedISE1), 10 * slqSettings.ddpSettings_.constraintTolerance_)
+      << "MESSAGE: single-threaded SLQ failed in the EXP1's type-1 constraint ISE test!";
+  ASSERT_LT(fabs(performanceIndecesMT.stateInputEqConstraintISE - expectedISE1), 10 * slqSettings.ddpSettings_.constraintTolerance_)
+      << "MESSAGE: multi-threaded SLQ failed in the EXP1's type-1 constraint ISE test!";
 
   const double expectedISE2 = 0.0;
-  ASSERT_LT(fabs(constraint2ISE_ST - expectedISE2), 10 * slqSettings.ddpSettings_.constraintTolerance_)
-      << "MESSAGE: SLQ failed in the EXP0's type-2 constraint ISE test!";
-  ASSERT_LT(fabs(constraint2ISE_MT - expectedISE2), 10 * slqSettings.ddpSettings_.constraintTolerance_)
-      << "MESSAGE: SLQ failed in the EXP1's type-2 constraint ISE test!";
+  ASSERT_LT(fabs(performanceIndecesST.stateEqConstraintISE - expectedISE2), 10 * slqSettings.ddpSettings_.constraintTolerance_)
+      << "MESSAGE: single-threaded SLQ failed in the EXP1's type-2 constraint ISE test!";
+  ASSERT_LT(fabs(performanceIndecesMT.stateEqConstraintISE - expectedISE2), 10 * slqSettings.ddpSettings_.constraintTolerance_)
+      << "MESSAGE: multi-threaded SLQ failed in the EXP1's type-2 constraint ISE test!";
 
   double ctrlFinalTime;
   if (slqSettings.ddpSettings_.useFeedbackPolicy_) {
@@ -186,7 +185,7 @@ TEST(exp0_slq_test, caching_test) {
   slqSettings.ddpSettings_.debugPrintRollout_ = false;
   slqSettings.ddpSettings_.debugCaching_ = true;  // for this test, debugCaching_ should be active
   slqSettings.ddpSettings_.nThreads_ = 1;         // single threaded
-  slqSettings.ddpSettings_.strategy_ = DDP_Strategy::LINE_SEARCH;
+  slqSettings.ddpSettings_.strategy_ = ddp_strategy::type::LINE_SEARCH;
   slqSettings.ddpSettings_.lineSearch_.minStepLength_ = 0.0001;
 
   Rollout_Settings rolloutSettings;

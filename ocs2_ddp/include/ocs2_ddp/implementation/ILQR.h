@@ -48,7 +48,8 @@ ILQR<STATE_DIM, INPUT_DIM>::ILQR(const rollout_base_t* rolloutPtr, const derivat
   riccatiEquationsPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
 
   for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
-    bool preComputeRiccatiTerms = BASE::ddpSettings_.preComputeRiccatiTerms_ && (BASE::ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH);
+    bool preComputeRiccatiTerms =
+        BASE::ddpSettings_.preComputeRiccatiTerms_ && (BASE::ddpSettings_.strategy_ == ddp_strategy::type::LINE_SEARCH);
     bool isRiskSensitive = !numerics::almost_eq(BASE::ddpSettings_.riskSensitiveCoeff_, 0.0);
     riccatiEquationsPtrStock_.emplace_back(new riccati_equations_t(preComputeRiccatiTerms, isRiskSensitive));
     riccatiEquationsPtrStock_.back()->setRiskSensitiveCoefficient(BASE::ddpSettings_.riskSensitiveCoeff_);
@@ -136,20 +137,12 @@ void ILQR<STATE_DIM, INPUT_DIM>::discreteLQWorker(size_t workerIndex, scalar_t t
 
   // inequality constraints
   modelData.numIneqConstr_ = continuousTimeModelData.numIneqConstr_;
-  modelData.ineqConstr_.resize(modelData.numIneqConstr_);
-  modelData.ineqConstrStateDerivative_.resize(modelData.numIneqConstr_);
-  modelData.ineqConstrInputDerivative_.resize(modelData.numIneqConstr_);
-  modelData.ineqConstrStateSecondDerivative_.resize(modelData.numIneqConstr_);
-  modelData.ineqConstrInputSecondDerivative_.resize(modelData.numIneqConstr_);
-  modelData.ineqConstrInputStateDerivative_.resize(modelData.numIneqConstr_);
-  for (size_t k = 0; k < modelData.numIneqConstr_; k++) {
-    modelData.ineqConstr_[k] = continuousTimeModelData.ineqConstr_[k];
-    modelData.ineqConstrStateDerivative_[k] = continuousTimeModelData.ineqConstrStateDerivative_[k];
-    modelData.ineqConstrInputDerivative_[k] = continuousTimeModelData.ineqConstrInputDerivative_[k];
-    modelData.ineqConstrStateSecondDerivative_[k] = continuousTimeModelData.ineqConstrStateSecondDerivative_[k];
-    modelData.ineqConstrInputSecondDerivative_[k] = continuousTimeModelData.ineqConstrInputSecondDerivative_[k];
-    modelData.ineqConstrInputStateDerivative_[k] = continuousTimeModelData.ineqConstrInputStateDerivative_[k];
-  }
+  modelData.ineqConstr_ = continuousTimeModelData.ineqConstr_;
+  modelData.ineqConstrStateDerivative_ = continuousTimeModelData.ineqConstrStateDerivative_;
+  modelData.ineqConstrInputDerivative_ = continuousTimeModelData.ineqConstrInputDerivative_;
+  modelData.ineqConstrStateSecondDerivative_ = continuousTimeModelData.ineqConstrStateSecondDerivative_;
+  modelData.ineqConstrInputSecondDerivative_ = continuousTimeModelData.ineqConstrInputSecondDerivative_;
+  modelData.ineqConstrInputStateDerivative_ = continuousTimeModelData.ineqConstrInputStateDerivative_;
 }
 
 /******************************************************************************************************/
@@ -223,17 +216,16 @@ typename ILQR<STATE_DIM, INPUT_DIM>::scalar_t ILQR<STATE_DIM, INPUT_DIM>::solveS
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename ILQR<STATE_DIM, INPUT_DIM>::dynamic_matrix_t ILQR<STATE_DIM, INPUT_DIM>::computeHamiltonianHessian(
-    DDP_Strategy strategy, const ModelDataBase& modelData, const dynamic_matrix_t& Sm) const {
+    ddp_strategy::type strategy, const ModelDataBase& modelData, const dynamic_matrix_t& Sm) const {
   const auto& Bm = modelData.dynamicsInputDerivative_;
   const auto& Rm = modelData.costInputSecondDerivative_;
-  dynamic_matrix_t BmTransSm;
   switch (strategy) {
-    case DDP_Strategy::LINE_SEARCH: {
+    case ddp_strategy::type::LINE_SEARCH: {
       return (Rm + Bm.transpose() * Sm * Bm);
     }
-    case DDP_Strategy::LEVENBERG_MARQUARDT: {
+    case ddp_strategy::type::LEVENBERG_MARQUARDT: {
       auto SmPlus = Sm;
-      SmPlus.diagonal() += BASE::levenbergMarquardtImpl_.riccatiMultiple * dynamic_vector_t::Ones(STATE_DIM);
+      SmPlus.diagonal() += BASE::levenbergMarquardtModule_.riccatiMultiple * dynamic_vector_t::Ones(STATE_DIM);
       return (Rm + Bm.transpose() * SmPlus * Bm);
     }
   }  // end of switch-case

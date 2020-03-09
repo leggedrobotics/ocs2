@@ -93,11 +93,6 @@ class SLQ final : public GaussNewtonDDP<STATE_DIM, INPUT_DIM> {
   using riccati_equations_t = ContinuousTimeRiccatiEquations;
 
   /**
-   * Default constructor.
-   */
-  SLQ() = default;
-
-  /**
    * Constructor
    *
    * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
@@ -128,7 +123,7 @@ class SLQ final : public GaussNewtonDDP<STATE_DIM, INPUT_DIM> {
   SLQ_Settings& settings();
 
  protected:
-  dynamic_matrix_t computeHamiltonianHessian(DDP_Strategy strategy, const ModelDataBase& modelData,
+  dynamic_matrix_t computeHamiltonianHessian(ddp_strategy::type strategy, const ModelDataBase& modelData,
                                              const dynamic_matrix_t& Sm) const override;
 
   void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,

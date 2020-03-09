@@ -58,7 +58,8 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivativ
   }
 
   for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
-    bool preComputeRiccatiTerms = BASE::ddpSettings_.preComputeRiccatiTerms_ && (BASE::ddpSettings_.strategy_ == DDP_Strategy::LINE_SEARCH);
+    bool preComputeRiccatiTerms =
+        BASE::ddpSettings_.preComputeRiccatiTerms_ && (BASE::ddpSettings_.strategy_ == ddp_strategy::type::LINE_SEARCH);
     bool isRiskSensitive = !numerics::almost_eq(BASE::ddpSettings_.riskSensitiveCoeff_, 0.0);
     riccatiEquationsPtrStock_.emplace_back(new riccati_equations_t(preComputeRiccatiTerms, isRiskSensitive));
     riccatiEquationsPtrStock_.back()->setRiskSensitiveCoefficient(BASE::ddpSettings_.riskSensitiveCoeff_);
@@ -135,12 +136,14 @@ void SLQ<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, si
                          ModelData::stateInputEqConstrStateDerivative);
 
   // Qu
-  RiccatiModification::interpolate(indexAlpha, Qu, &BASE::riccatiModificationTrajectoriesStock_[i],
-                                   RiccatiModification::constraintNullProjector);
+  riccati_modification::interpolate(indexAlpha, Qu, &BASE::riccatiModificationTrajectoriesStock_[i],
+                                    riccati_modification::constraintNullProjector);
   // deltaGm
-  RiccatiModification::interpolate(indexAlpha, projectedKm, &BASE::riccatiModificationTrajectoriesStock_[i], RiccatiModification::deltaGm);
+  riccati_modification::interpolate(indexAlpha, projectedKm, &BASE::riccatiModificationTrajectoriesStock_[i],
+                                    riccati_modification::deltaGm);
   // deltaGv
-  RiccatiModification::interpolate(indexAlpha, projectedLv, &BASE::riccatiModificationTrajectoriesStock_[i], RiccatiModification::deltaGv);
+  riccati_modification::interpolate(indexAlpha, projectedLv, &BASE::riccatiModificationTrajectoriesStock_[i],
+                                    riccati_modification::deltaGv);
 
   // projectedKm = projectedPm + projectedBm^t * Sm
   projectedKm = -(projectedKm + projectedPm);
@@ -219,16 +222,16 @@ typename SLQ<STATE_DIM, INPUT_DIM>::scalar_t SLQ<STATE_DIM, INPUT_DIM>::solveSeq
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 typename SLQ<STATE_DIM, INPUT_DIM>::dynamic_matrix_t SLQ<STATE_DIM, INPUT_DIM>::computeHamiltonianHessian(
-    DDP_Strategy strategy, const ModelDataBase& modelData, const dynamic_matrix_t& Sm) const {
+    ddp_strategy::type strategy, const ModelDataBase& modelData, const dynamic_matrix_t& Sm) const {
   const auto& Bm = modelData.dynamicsInputDerivative_;
   const auto& Rm = modelData.costInputSecondDerivative_;
   switch (strategy) {
-    case DDP_Strategy::LINE_SEARCH: {
+    case ddp_strategy::type::LINE_SEARCH: {
       return Rm;
     }
-    case DDP_Strategy::LEVENBERG_MARQUARDT: {
+    case ddp_strategy::type::LEVENBERG_MARQUARDT: {
       auto HmAug = Rm;
-      HmAug.noalias() += BASE::levenbergMarquardtImpl_.riccatiMultiple * Bm.transpose() * Bm;
+      HmAug.noalias() += BASE::levenbergMarquardtModule_.riccatiMultiple * Bm.transpose() * Bm;
       return HmAug;
     }
   }  // end of switch-case

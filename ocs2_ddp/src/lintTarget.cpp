@@ -12,7 +12,7 @@
 #include <ocs2_ddp/riccati_equations/ContinuousTimeRiccatiEquations.h>
 #include <ocs2_ddp/riccati_equations/DiscreteTimeRiccatiEquations.h>
 
-#include <ocs2_ddp/riccati_equations/RiccatiModificationBase.h>
+#include <ocs2_ddp/riccati_equations/RiccatiModification.h>
 #include <ocs2_ddp/riccati_equations/RiccatiModificationInterpolation.h>
 
 // dummy target for clang toolchain

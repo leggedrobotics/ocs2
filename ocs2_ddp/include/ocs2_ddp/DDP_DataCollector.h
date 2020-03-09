@@ -143,7 +143,7 @@ class DDP_DataCollector {
   ModelDataBase::array2_t projectedModelDataTrajectoriesStock_;
 
   // Riccati modification
-  RiccatiModificationBase::array2_t riccatiModificationTrajectoriesStock_;
+  riccati_modification::Data::array2_t riccatiModificationTrajectoriesStock_;
 
   // TODO: delete this
   //  dynamic_matrix_array2_t RmInverseTrajectoriesStock_;

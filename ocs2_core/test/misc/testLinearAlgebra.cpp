@@ -116,6 +116,28 @@ TEST(makePsdCholesky, makePsdCholesky)
   std::cerr << "eigenvalues            " << lambda.transpose() << std::endl;
   std::cerr << "eigenvalues corrected: " << lambdaCorr.transpose() << std::endl;
   ASSERT_GE(lambdaCorr.minCoeff(), minDesiredEigenvalue);
+
+  // zero matrix
+  matrix_t zeroMat = matrix_t::Zero();
+  makePsdCholesky(zeroMat, minDesiredEigenvalue);
+  Eigen::VectorXd lambdaZeroMat = zeroMat.selfadjointView<Eigen::Lower>().eigenvalues();
+  ASSERT_GE(lambdaZeroMat.minCoeff(), minDesiredEigenvalue);
+
+  // sparse matrix
+  Eigen::VectorXd vec = Eigen::VectorXd::Random(n);
+  vec = vec.unaryExpr([](double x) {return std::max(x, 0.0);});
+  std::cerr << "Sparse vec:\n" << vec << std::endl;
+  matrix_t sparseMat = vec * vec.transpose() - minDesiredEigenvalue * matrix_t::Identity();
+  Eigen::VectorXd lambdaSparseMat = sparseMat.selfadjointView<Eigen::Lower>().eigenvalues();
+  makePsdCholesky(sparseMat, minDesiredEigenvalue);
+  Eigen::VectorXd lambdaSparseMatCorr = sparseMat.selfadjointView<Eigen::Lower>().eigenvalues();
+
+  std::cerr << "MakePSD Cholesky Sparse Matrix: " << std::endl;
+  std::cerr << "Sparse Matrix:\n" << sparseMat << std::endl;
+  std::cerr << "Sparse Matrix eigenvalues            " << lambdaSparseMat.transpose() << std::endl;
+  std::cerr << "Sparse Matrix eigenvalues corrected: " << lambdaSparseMatCorr.transpose() << std::endl;
+
+  ASSERT_GE(lambdaSparseMatCorr.minCoeff(), minDesiredEigenvalue);
 }
 
 int main(int argc, char** argv)

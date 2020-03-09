@@ -49,7 +49,7 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
   slqSettings.ddpSettings_.useFeedbackPolicy_ = true;
   slqSettings.ddpSettings_.debugPrintRollout_ = false;
-  slqSettings.ddpSettings_.strategy_ = DDP_Strategy::LINE_SEARCH;
+  slqSettings.ddpSettings_.strategy_ = ddp_strategy::type::LINE_SEARCH;
 
   Rollout_Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;
@@ -143,11 +143,8 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
     }
   }
   // Test 3: Check of cost function
-  double costFunction;
-  double constraint1ISE;
-  double constraint2ISE;
-  slqST.getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
-  EXPECT_LT(std::fabs(costFunction - 20.08), 10.0 * slqSettings.ddpSettings_.minRelCost_);
+  auto performanceIndecesST = slqST.getPerformanceIndeces();
+  EXPECT_LT(std::fabs(performanceIndecesST.totalCost - 20.08), 10.0 * slqSettings.ddpSettings_.minRelCost_);
 }
 
 int main(int argc, char** argv) {

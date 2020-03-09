@@ -256,17 +256,113 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   virtual void setupOptimizer(size_t numPartitions);
 
   /**
-   * Distributes the sequential tasks (e.g. Riccati solver) in between threads.
-   */
-  void distributeWork();
-
-  /**
    * Helper to run task multiple times in parallel (blocking)
    *
    * @param [in] taskFunction: task function
    * @param [in] N: number of times to run taskFunction, if N = 1 it is run in the main thread
    */
   void runParallel(std::function<void(void)> taskFunction, size_t N);
+
+  /**
+   * Takes the following steps: (1) Computes the Hessian of the Hamiltonian (i.e., Hm) (2) Based on Hm, it calculates
+   * the range space and the null space projections of the input-state equality constraints. (3) Based on these two
+   * projections, defines the projected LQ model. (4) Finally, defines the Riccati equation modifiers based on the
+   * search strategy.
+   *
+   * @param [in] strategy: The search strategy e.g., LINE_SEARCH.
+   * @param [in] modelData: The model data.
+   * @param [in] Sm: The Riccati matrix.
+   * @param [out] projectedModelData: The projected model data.
+   * @param [out] riccatiModification: The Riccati equation modifier.
+   */
+  void computeProjectionAndRiccatiModification(ddp_strategy::type strategy, const ModelDataBase& modelData, const dynamic_matrix_t& Sm,
+                                               ModelDataBase& projectedModelData, riccati_modification::Data& riccatiModification) const;
+
+  /**
+   * Computes Hessian of the Hamiltonian.
+   *
+   * @param [in] strategy: The search strategy e.g., LINE_SEARCH.
+   * @param [in] modelData: The model data.
+   * @param [in] Sm: The Riccati matrix.
+   * @return The Hessian matrix of the Hamiltonian.
+   */
+  virtual dynamic_matrix_t computeHamiltonianHessian(ddp_strategy::type strategy, const ModelDataBase& modelData,
+                                                     const dynamic_matrix_t& Sm) const = 0;
+
+  /**
+   * Calculates an LQ approximate of the optimal control problem for the nodes.
+   *
+   * @param [in] timeTrajectory: The time trajectory.
+   * @param [in] postEventIndices: The post event indices.
+   * @param [in] stateTrajectory: The state trajectory.
+   * @param [in] inputTrajectory: The input trajectory.
+   * @param modelDataTrajectory: The model data trajectory.
+   */
+  virtual void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
+                                         const state_vector_array_t& stateTrajectory, const input_vector_array_t& inputTrajectory,
+                                         ModelDataBase::array_t& modelDataTrajectory) = 0;
+
+  /**
+   * Calculates the controller. This method uses the following variables:
+   * - constrained, linearized model
+   * - constrained, quadratized cost
+   *
+   * The method modifies:
+   * - nominalControllersStock_: the controller that stabilizes the system
+   * around the new nominal trajectory and improves the constraints as well as
+   * the increment to the feed-forward control input.
+   */
+  virtual void calculateController();
+
+  /**
+   * Calculates controller at a given partition and a node.
+   *
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] partitionIndex: Time partition index
+   * @param [in] timeIndex: Time index in the partition
+   */
+  virtual void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) = 0;
+
+  /**
+   * Solves Riccati equations for all the partitions.
+   *
+   * @param [in] SmFinal: The final Sm for Riccati equation.
+   * @param [in] SvFinal: The final Sv for Riccati equation.
+   * @param [in] sFinal: The final s for Riccati equation.
+   *
+   * @return average time step
+   */
+  virtual scalar_t solveSequentialRiccatiEquations(const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal,
+                                                   const scalar_t& sFinal) = 0;
+
+  /**
+   * The implementation for solving Riccati equations for all the partitions.
+   *
+   * @param [in] SmFinal: The final Sm for Riccati equation.
+   * @param [in] SvFinal: The final Sv for Riccati equation.
+   * @param [in] sFinal: The final s for Riccati equation.
+   *
+   * @return average time step
+   */
+  scalar_t solveSequentialRiccatiEquationsImpl(const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal, const scalar_t& sFinal);
+
+  /**
+   * Solves a set of Riccati equations and type_1 constraints error correction compensation for the partition in the given index.
+   *
+   * @param [in] workerIndex: Working agent index.
+   * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
+   * @param [in] SmFinal: The final Sm for Riccati equation.
+   * @param [in] SvFinal: The final Sv for Riccati equation.
+   * @param [in] sFinal: The final s for Riccati equation.
+   */
+  virtual void riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const dynamic_matrix_t& SmFinal,
+                                      const dynamic_vector_t& SvFinal, const scalar_t& sFinal) = 0;
+
+ private:
+  /**
+   * Distributes the sequential tasks (e.g. Riccati solver) in between threads.
+   */
+  void distributeWork();
 
   /**
    * Forward integrate the system dynamics with given controller. It uses the
@@ -376,65 +472,9 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   void levenbergMarquardt(LevenbergMarquardtModule& levenbergMarquardtModule);
 
   /**
-   * Solves Riccati equations for all the partitions.
-   *
-   * @param [in] SmFinal: The final Sm for Riccati equation.
-   * @param [in] SvFinal: The final Sv for Riccati equation.
-   * @param [in] sFinal: The final s for Riccati equation.
-   *
-   * @return average time step
-   */
-  virtual scalar_t solveSequentialRiccatiEquations(const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal,
-                                                   const scalar_t& sFinal) = 0;
-
-  /**
-   * The implementation for solving Riccati equations for all the partitions.
-   *
-   * @param [in] SmFinal: The final Sm for Riccati equation.
-   * @param [in] SvFinal: The final Sv for Riccati equation.
-   * @param [in] sFinal: The final s for Riccati equation.
-   *
-   * @return average time step
-   */
-  scalar_t solveSequentialRiccatiEquationsImpl(const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal, const scalar_t& sFinal);
-
-  /**
    * Solves Riccati equations for the partitions assigned to the given thread.
    */
   void riccatiSolverTask();
-
-  /**
-   * Solves a set of Riccati equations and type_1 constraints error correction compensation for the partition in the given index.
-   *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
-   * @param [in] SmFinal: The final Sm for Riccati equation.
-   * @param [in] SvFinal: The final Sv for Riccati equation.
-   * @param [in] sFinal: The final s for Riccati equation.
-   */
-  virtual void riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const dynamic_matrix_t& SmFinal,
-                                      const dynamic_vector_t& SvFinal, const scalar_t& sFinal) = 0;
-
-  /**
-   * Calculates the controller. This method uses the following variables:
-   * - constrained, linearized model
-   * - constrained, quadratized cost
-   *
-   * The method modifies:
-   * - nominalControllersStock_: the controller that stabilizes the system
-   * around the new nominal trajectory and improves the constraints as well as
-   * the increment to the feed-forward control input.
-   */
-  virtual void calculateController();
-
-  /**
-   * Calculates controller at a given partition and a node.
-   *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] partitionIndex: Time partition index
-   * @param [in] timeIndex: Time index in the partition
-   */
-  virtual void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) = 0;
 
   /**
    * Calculates the integral of the squared (IS) norm of the controller update.
@@ -464,45 +504,6 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * 		- quadratized final cost
    */
   void approximateOptimalControlProblem();
-
-  /**
-   * Calculates an LQ approximate of the optimal control problem for the nodes.
-   *
-   * @param [in] timeTrajectory: The time trajectory.
-   * @param [in] postEventIndices: The post event indices.
-   * @param [in] stateTrajectory: The state trajectory.
-   * @param [in] inputTrajectory: The input trajectory.
-   * @param modelDataTrajectory: The model data trajectory.
-   */
-  virtual void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
-                                         const state_vector_array_t& stateTrajectory, const input_vector_array_t& inputTrajectory,
-                                         ModelDataBase::array_t& modelDataTrajectory) = 0;
-
-  /**
-   * Takes the following steps: (1) Computes the Hessian of the Hamiltonian (i.e., Hm) (2) Based on Hm, it calculates
-   * the range space and the null space projections of the input-state equality constraints. (3) Based on these two
-   * projections, defines the projected LQ model. (4) Finally, defines the Riccati equation modifiers based on the
-   * search strategy.
-   *
-   * @param [in] strategy: The search strategy e.g., LINE_SEARCH.
-   * @param [in] modelData: The model data.
-   * @param [in] Sm: The Riccati matrix.
-   * @param [out] projectedModelData: The projected model data.
-   * @param [out] riccatiModification: The Riccati equation modifier.
-   */
-  void computeProjectionAndRiccatiModification(ddp_strategy::type strategy, const ModelDataBase& modelData, const dynamic_matrix_t& Sm,
-                                               ModelDataBase& projectedModelData, riccati_modification::Data& riccatiModification) const;
-
-  /**
-   * Computes Hessian of the Hamiltonian.
-   *
-   * @param [in] strategy: The search strategy e.g., LINE_SEARCH.
-   * @param [in] modelData: The model data.
-   * @param [in] Sm: The Riccati matrix.
-   * @return The Hessian matrix of the Hamiltonian.
-   */
-  virtual dynamic_matrix_t computeHamiltonianHessian(ddp_strategy::type strategy, const ModelDataBase& modelData,
-                                                     const dynamic_matrix_t& Sm) const = 0;
 
   /**
    *
@@ -595,7 +596,6 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   static void correctcachedTrajectoryTail(std::pair<int, scalar_t> timeSegment, const std::vector<Data_T, Alloc>& currentTrajectory,
                                           std::vector<Data_T, Alloc>& cachedTrajectory);
 
- private:
   /**
    * Runs the initialization method for Gauss-Newton DDP.
    */
@@ -612,7 +612,6 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                const controller_ptr_array_t& controllersPtrStock) override;
 
  protected:
-  // Variables
   DDP_Settings ddpSettings_;
 
   ThreadPool threadPool_;
@@ -620,12 +619,6 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   // multi-threading helper variables
   std::atomic_size_t nextTaskId_;
   std::atomic_size_t nextTimeIndex_;
-
-  std::string algorithmName_;
-
-  unsigned long long int rewindCounter_;
-
-  bool useParallelRiccatiSolverFromInitItr_ = false;
 
   scalar_t initTime_;
   scalar_t finalTime_;
@@ -635,6 +628,50 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   size_t finalActivePartition_;
   size_t numPartitions_ = 0;
   scalar_array_t partitioningTimes_;
+
+  std::vector<std::unique_ptr<linear_quadratic_approximator_t>> linearQuadraticApproximatorPtrStock_;
+
+  // optimized controller
+  linear_controller_array_t nominalControllersStock_;
+
+  // optimized trajectories
+  scalar_array2_t nominalTimeTrajectoriesStock_;
+  size_array2_t nominalPostEventIndicesStock_;
+  state_vector_array2_t nominalStateTrajectoriesStock_;
+  input_vector_array2_t nominalInputTrajectoriesStock_;
+
+  // intermediate model data trajectory
+  ModelDataBase::array2_t modelDataTrajectoriesStock_;
+
+  // event times model data
+  ModelDataBase::array2_t modelDataEventTimesStock_;
+
+  // projected model data trajectory
+  ModelDataBase::array2_t projectedModelDataTrajectoriesStock_;
+
+  // Riccati modification
+  riccati_modification::Data::array2_t riccatiModificationTrajectoriesStock_;
+
+  // Riccati solution coefficients
+  scalar_array2_t SsTimeTrajectoryStock_;
+  scalar_array2_t SsNormalizedTimeTrajectoryStock_;
+  size_array2_t SsNormalizedEventsPastTheEndIndecesStock_;
+  scalar_array2_t sTrajectoryStock_;
+  dynamic_vector_array2_t SvTrajectoryStock_;
+  dynamic_matrix_array2_t SmTrajectoryStock_;
+
+  // Line-Search
+  LineSearchModule lineSearchModule_;
+
+  // Levenberg-Marquardt
+  LevenbergMarquardtModule levenbergMarquardtModule_;
+
+ private:
+  std::string algorithmName_;
+
+  unsigned long long int rewindCounter_;
+
+  bool useParallelRiccatiSolverFromInitItr_ = false;
 
   // trajectory spreading
   TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM> trajectorySpreadingController_;
@@ -651,18 +688,11 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   std::vector<std::unique_ptr<rollout_base_t>> dynamicsForwardRolloutPtrStock_;
   std::vector<std::unique_ptr<rollout_base_t>> operatingTrajectoriesRolloutPtrStock_;
-  std::vector<std::unique_ptr<linear_quadratic_approximator_t>> linearQuadraticApproximatorPtrStock_;
   std::vector<std::unique_ptr<cost_function_base_t>> heuristicsFunctionsPtrStock_;
   std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrStock_;
 
   scalar_t nominalControllerUpdateIS_ = 0.0;
-  linear_controller_array_t nominalControllersStock_;
   bool isInitInternalControllerEmpty_;
-
-  scalar_array2_t nominalTimeTrajectoriesStock_;
-  size_array2_t nominalPostEventIndicesStock_;
-  state_vector_array2_t nominalStateTrajectoriesStock_;
-  input_vector_array2_t nominalInputTrajectoriesStock_;
 
   // used for caching the nominal trajectories for which the LQ problem is
   // constructed and solved before terminating run()
@@ -673,29 +703,10 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   state_vector_array2_t cachedStateTrajectoriesStock_;
   input_vector_array2_t cachedInputTrajectoriesStock_;
 
-  // intermediate model data trajectory
-  ModelDataBase::array2_t modelDataTrajectoriesStock_;
   ModelDataBase::array2_t cachedModelDataTrajectoriesStock_;
-
-  // event times model data
-  ModelDataBase::array2_t modelDataEventTimesStock_;
   ModelDataBase::array2_t cachedModelDataEventTimesStock_;
-
-  // projected model data trajectory
-  ModelDataBase::array2_t projectedModelDataTrajectoriesStock_;
   ModelDataBase::array2_t cachedProjectedModelDataTrajectoriesStock_;
-
-  // Riccati modification
-  riccati_modification::Data::array2_t riccatiModificationTrajectoriesStock_;
   riccati_modification::Data::array2_t cachedRiccatiModificationTrajectoriesStock_;
-
-  // Riccati solution coefficients
-  scalar_array2_t SsTimeTrajectoryStock_;
-  scalar_array2_t SsNormalizedTimeTrajectoryStock_;
-  size_array2_t SsNormalizedEventsPastTheEndIndecesStock_;
-  scalar_array2_t sTrajectoryStock_;
-  dynamic_vector_array2_t SvTrajectoryStock_;
-  dynamic_matrix_array2_t SmTrajectoryStock_;
 
   scalar_array_t sFinalStock_;
   dynamic_vector_array_t SvFinalStock_;
@@ -705,12 +716,6 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   scalar_t sHeuristics_;
   dynamic_vector_t SvHeuristics_;
   dynamic_matrix_t SmHeuristics_;
-
-  // Line-Search
-  LineSearchModule lineSearchModule_;
-
-  // Levenberg-Marquardt
-  LevenbergMarquardtModule levenbergMarquardtModule_;
 
   ConstraintPenaltyCoefficients constraintPenaltyCoefficients_;
 

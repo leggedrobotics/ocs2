@@ -10,7 +10,7 @@ namespace ocs2 {
 
 ModeSchedule::ModeSchedule(std::vector<scalar_t> eventTimes, std::vector<size_t> modeSequence)
     : eventTimes_(std::move(eventTimes)), modeSequence_(std::move(modeSequence)) {
-  assert(eventTimes_.size() == modeSequence.size() - 1);
+  assert(eventTimes_.size() == modeSequence_.size() - 1);
 }
 
 std::string display(const ModeSchedule& modeSchedule) {

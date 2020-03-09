@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
+#include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 #include <ocs2_core/logic/rules/HybridLogicRules.h>
 
 namespace ocs2 {
@@ -57,6 +58,7 @@ class RobotInterface {
   using dynamics_derivatives_t = DerivativesBase<STATE_DIM, INPUT_DIM>;
   using cost_t = CostFunctionBase<STATE_DIM, INPUT_DIM>;
   using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM>;
+  using operating_point_t = SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM>;
 
   /**
    * Destructor
@@ -92,6 +94,12 @@ class RobotInterface {
    * @return pointer to internal constraint object. Can be nullptr in case of zero constraints
    */
   virtual const constraint_t* getConstraintPtr() const { return nullptr; }
+
+  /**
+   * @brief getOperatingPoints
+   * @return reference to the internal operating point
+   */
+  virtual const operating_point_t& getOperatingPoints() const = 0;
 };
 
 }  // namespace ocs2

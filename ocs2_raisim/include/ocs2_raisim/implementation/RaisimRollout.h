@@ -160,6 +160,18 @@ void RaisimRollout<STATE_DIM, INPUT_DIM>::setTerrain(const raisim::HeightMap& he
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
+void RaisimRollout<STATE_DIM, INPUT_DIM>::setTerrain(const std::string& pngFileName, double centerX, double centerY, double xSize,
+                                                     double ySize, double heightScale, double heightOffset) {
+  deleteGroundPlane();
+  heightMap_ = world_.addHeightMap(pngFileName, centerX, centerY, xSize, ySize, heightScale, heightOffset);
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
+const raisim::HeightMap* RaisimRollout<STATE_DIM, INPUT_DIM>::getTerrain() const {
+  return heightMap_;
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
 void RaisimRollout<STATE_DIM, INPUT_DIM>::deleteGroundPlane() {
   if (ground_) {
     world_.removeObject(ground_);

@@ -21,6 +21,7 @@ grid_map_msgs::GridMapPtr RaisimHeightmapRosConverter::convertHeightmapToGridmap
 
   gridMapMsg->info.pose.position.x = heightMap.getCenterX();
   gridMapMsg->info.pose.position.y = heightMap.getCenterY();
+  gridMapMsg->info.pose.orientation.w = 1.0;
 
   gridMapMsg->layers.emplace_back("elevation");
   std_msgs::Float32MultiArray dataArray;

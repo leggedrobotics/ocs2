@@ -138,9 +138,7 @@ int main(int argc, char** argv) {
   /*
    * Perforce index
    */
-  dim_t::scalar_t totalCostST;
-  dim_t::scalar_t constraint1ISE_ST, constraint2ISE_ST;
-  slqST.getPerformanceIndeces(totalCostST, constraint1ISE_ST, constraint2ISE_ST);
+  auto performanceIndeces = slqST.getPerformanceIndeces();
 
   return 0;
 }

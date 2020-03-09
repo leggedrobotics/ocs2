@@ -13,10 +13,7 @@
 
 namespace switched_model {
 
-struct EndEffectorVelocityInFootFrameConstraintSettings : public EndEffectorVelocityConstraintSettings {
-  EndEffectorVelocityInFootFrameConstraintSettings() = default;
-  EndEffectorVelocityInFootFrameConstraintSettings(size_t rows, size_t cols) : EndEffectorVelocityConstraintSettings(rows, cols){};
-};
+using EndEffectorVelocityInFootFrameConstraintSettings = EndEffectorVelocityConstraintSettings;
 
 class EndEffectorVelocityInFootFrameConstraint : public EndEffectorConstraint {
  public:

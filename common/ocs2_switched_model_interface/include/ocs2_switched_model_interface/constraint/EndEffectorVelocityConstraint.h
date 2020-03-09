@@ -12,10 +12,7 @@
 
 namespace switched_model {
 
-struct EndEffectorVelocityConstraintSettings : public EndEffectorConstraintSettings {
-  EndEffectorVelocityConstraintSettings() = default;
-  EndEffectorVelocityConstraintSettings(size_t rows, size_t cols) : EndEffectorConstraintSettings(rows, cols){};
-};
+using EndEffectorVelocityConstraintSettings = EndEffectorConstraintSettings;
 
 class EndEffectorVelocityConstraint : public EndEffectorConstraint {
  public:

@@ -35,17 +35,6 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-Solver_BASE<STATE_DIM, INPUT_DIM>::Solver_BASE(std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr */) {
-  if (!logicRulesPtr) {
-    logicRulesPtr.reset(new NullLogicRules());
-  }
-  logicRulesMachinePtr_.reset(new logic_rules_machine_t(std::move(logicRulesPtr)));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
 void Solver_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
                                             const scalar_array_t& partitioningTimes) {
   preRun(initTime, initState, finalTime);
@@ -89,7 +78,7 @@ void Solver_BASE<STATE_DIM, INPUT_DIM>::printString(const std::string& text) {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void Solver_BASE<STATE_DIM, INPUT_DIM>::preRun(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime) {
   for (auto& module : synchronizedModules_) {
-    module->preSolverRun(initTime, finalTime, initState, costDesiredTrajectories_, getLogicRulesPtr());
+    module->preSolverRun(initTime, finalTime, initState, costDesiredTrajectories_, modeSchedule_);
   }
 }
 

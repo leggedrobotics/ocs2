@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/logic/rules/HybridLogicRules.h>
+#include <ocs2_core/logic/rules/NullLogicRules.h>
 #include <ocs2_core/misc/Benchmark.h>
 
 #include "ocs2_mpc/MPC_Settings.h"
@@ -90,14 +91,15 @@ class MPC_BASE {
   /**
    * Default constructor.
    */
-  MPC_BASE();
+  explicit MPC_BASE(std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr);
 
   /**
    * Constructor
    * @param [in] partitioningTimes: Array of times to divide up the horizon
    * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
    */
-  explicit MPC_BASE(const scalar_array_t& partitioningTimes, MPC_Settings mpcSettings = MPC_Settings());
+  explicit MPC_BASE(const scalar_array_t& partitioningTimes, MPC_Settings mpcSettings = MPC_Settings(),
+                    std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr);
 
   /**
    * destructor.
@@ -173,7 +175,7 @@ class MPC_BASE {
    *
    * @return a constant pointer to the logic rules.
    */
-  virtual const HybridLogicRules* getLogicRulesPtr() const;
+  const HybridLogicRules* getLogicRulesPtr() const { return logicRulesPtr_.get(); };
 
   /**
    * Sets a new logicRules template.
@@ -238,6 +240,8 @@ class MPC_BASE {
   size_t finalActivePartitionIndex_;
 
   scalar_t lastControlDesignTime_;
+
+  std::shared_ptr<HybridLogicRules> logicRulesPtr_;
 
  private:
   solver_base_t* solverPtr_;

@@ -142,9 +142,9 @@ bool MPC_OCS2<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
         BASE::slqPtr_->adjustController(eventTimesOptimized_, BASE::slqPtr_->getLogicRulesPtr()->eventTimes());
       }
 
-      BASE::slqPtr_->getLogicRulesPtr()->eventTimes() = eventTimesOptimized_;
-      BASE::slqPtr_->getLogicRulesPtr()->update();
-      BASE::slqPtr_->getLogicRulesMachinePtr()->logicRulesUpdated();
+      this->logicRulesPtr_->eventTimes() = eventTimesOptimized_;
+      this->logicRulesPtr_->update();
+      this->getLogicRulesMachinePtr()->logicRulesUpdated();
     }
 
     // collect SLQ variables

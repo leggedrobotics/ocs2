@@ -103,7 +103,8 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   std::cout << "Starting SLQ Procedure" << std::endl;
   // SLQ
   SLQ<STATE_DIM, INPUT_DIM> slqST(&stateTriggeredRollout, &systemDerivatives, &systemConstraints, &systemCost, &operatingTrajectories,
-                                  slqSettings, logicRulesPtr);
+                                  slqSettings);
+  slqST.setModeSchedule(logicRulesPtr->getModeSchedule());
   slqST.run(startTime, initState, finalTime, partitioningTimes);
   SLQ<STATE_DIM, INPUT_DIM>::primal_solution_t solution = slqST.primalSolution(finalTime);
   std::cout << "SLQ Procedure Done" << std::endl;

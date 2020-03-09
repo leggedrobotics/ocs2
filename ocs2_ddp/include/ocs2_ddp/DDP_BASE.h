@@ -146,9 +146,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using linear_quadratic_approximator_t = LinearQuadraticApproximator<STATE_DIM, INPUT_DIM>;
   using operating_trajectorie_rollout_t = OperatingTrajectoriesRollout<STATE_DIM, INPUT_DIM>;
 
-  using logic_rules_machine_t = HybridLogicRulesMachine;
-  using logic_rules_machine_ptr_t = typename logic_rules_machine_t::Ptr;
-
   /**
    * Default constructor.
    */
@@ -168,16 +165,13 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * which will be used for initialization.
    * @param [in] ddpSettings: Structure containing the settings for the DDP
    * algorithm.
-   * @param [in] logicRulesPtr: The logic rules used for implementing
-   * mixed-logic dynamical systems.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite
    * time optimal control formulation. If it is not defined, we will use the
    * terminal cost function defined in costFunctionPtr.
    */
   DDP_BASE(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
            const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
-           const DDP_Settings& ddpSettings, const cost_function_base_t* heuristicsFunctionPtr, const char* algorithmName,
-           std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr);
+           const DDP_Settings& ddpSettings, const cost_function_base_t* heuristicsFunctionPtr, const char* algorithmName);
 
   /**
    * Destructor.

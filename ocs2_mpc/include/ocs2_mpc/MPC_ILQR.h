@@ -79,7 +79,6 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
 
   using ilqr_t = ocs2::ILQR<STATE_DIM, INPUT_DIM>;
 
-  using logic_rules_machine_t = typename ddp_base_t::logic_rules_machine_t;
   using event_handler_t = typename ddp_base_t::event_handler_t;
   using derivatives_base_t = typename ddp_base_t::derivatives_base_t;
   using constraint_base_t = typename ddp_base_t::constraint_base_t;

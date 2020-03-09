@@ -31,10 +31,10 @@ class SolverSynchronizedModule {
    * @param finalTime : Final time of the MPC horizon
    * @param currentState : State at the start of the MPC horizon
    * @param costDesiredTrajectory : User defined cost desired trajectory
-   * @param hybridLogicRules : Logic rules containing discrete event time information
+   * @param modeSchedule: Contains the discrete event time information
    */
   virtual void preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
-                            const CostDesiredTrajectories& costDesiredTrajectory, HybridLogicRules const* hybridLogicRules) = 0;
+                            const CostDesiredTrajectories& costDesiredTrajectory, const ModeSchedule& modeSchedule) = 0;
 
   /**
    * Method called right after the solver runs

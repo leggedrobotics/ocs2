@@ -62,6 +62,7 @@ class LoopshapingFilterDynamics {
 
   void setFilterState(const filter_state_vector_t& filter_state) { filter_state_ = filter_state; };
   void getFilterState(filter_state_vector_t& filter_state) const { filter_state = filter_state_; };
+  const filter_state_vector_t& getFilterState() const { return filter_state_; };
 
  private:
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;

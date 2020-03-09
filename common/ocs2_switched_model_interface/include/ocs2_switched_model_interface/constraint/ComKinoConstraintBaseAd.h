@@ -66,12 +66,12 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
   virtual void initializeConstraintTerms() = 0;
 
   /** Set the Constraint terms from the state and controls */
-  virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
+  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
 
-  virtual ComKinoConstraintBaseAd* clone() const override = 0;
+  ComKinoConstraintBaseAd* clone() const override = 0;
 
   /** General Anymal switched_model  */
-  virtual ~ComKinoConstraintBaseAd() override = default;
+  ~ComKinoConstraintBaseAd() override = default;
 
   size_t numStateInputConstraint(const scalar_t& time) override;
   void getConstraint1(constraint1_vector_t& e) override;

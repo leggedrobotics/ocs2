@@ -24,8 +24,8 @@ class Ocs2QpSolverTest : public testing::Test {
   Ocs2QpSolverTest() {
     srand(0);
     cost = ocs2::qp_solver::getOcs2Cost<STATE_DIM, INPUT_DIM>(ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
-                                                             ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM), state_vector_t::Random(),
-                                                             input_vector_t::Random(), state_vector_t::Random());
+                                                              ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
+                                                              state_vector_t::Random(), input_vector_t::Random(), state_vector_t::Random());
     system = ocs2::qp_solver::getOcs2Dynamics<STATE_DIM, INPUT_DIM>(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
     linearization = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM);
     x0 = state_vector_t::Random();

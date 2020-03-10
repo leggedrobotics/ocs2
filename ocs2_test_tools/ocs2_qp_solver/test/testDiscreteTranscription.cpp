@@ -20,9 +20,9 @@ class DiscreteTranscriptionTest : public testing::Test {
 
   DiscreteTranscriptionTest() {
     srand(0);
-    const auto cost = ocs2::qp_solver::getOcs2Cost<STATE_DIM, INPUT_DIM>(ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
-                                                             ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM), state_vector_t::Random(),
-                                                             input_vector_t::Random(), state_vector_t::Random());
+    const auto cost = ocs2::qp_solver::getOcs2Cost<STATE_DIM, INPUT_DIM>(
+        ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM), ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
+        state_vector_t::Random(), input_vector_t::Random(), state_vector_t::Random());
     costWrapper.reset(new ocs2::qp_solver::CostWrapper(*cost));
     const auto system = ocs2::qp_solver::getOcs2Dynamics<STATE_DIM, INPUT_DIM>(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
     systemWrapper.reset(new ocs2::qp_solver::SystemWrapper(*system));

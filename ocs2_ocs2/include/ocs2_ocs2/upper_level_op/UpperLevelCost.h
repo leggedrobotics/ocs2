@@ -84,10 +84,15 @@ class UpperLevelCost final : public NLP_Cost {
                  std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr, const cost_function_base_t* heuristicsFunctionPtr = nullptr,
                  bool display = false, const GDDP_Settings& gddpSettings = GDDP_Settings())
       : slqPtr_(new slq_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings,
-                          logicRulesPtr, heuristicsFunctionPtr)),
+                          heuristicsFunctionPtr)),
         slqDataCollectorPtr_(new slq_data_collector_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr)),
         gddpPtr_(new gddp_t(gddpSettings)),
-        display_(display) {}
+        display_(display) {
+    if (logicRulesPtr != nullptr) {
+      logicRulesPtr_ = std::move(logicRulesPtr);
+      slqPtr_->setModeSchedule(logicRulesPtr_->getModeSchedule());
+    }
+  }
 
   /**
    * Default destructor.
@@ -113,8 +118,8 @@ class UpperLevelCost final : public NLP_Cost {
   size_t setCurrentParameter(const dynamic_vector_t& x) override {
     // set event time
     eventTimes_ = scalar_array_t(x.data(), x.data() + x.size());
-    slqPtr_->getLogicRulesPtr()->eventTimes() = eventTimes_;
-    slqPtr_->getLogicRulesMachinePtr()->logicRulesUpdated();
+    logicRulesPtr_->eventTimes() = eventTimes_;
+    slqPtr_->setModeSchedule(logicRulesPtr_->getModeSchedule());
 
     // run SLQ
     try {
@@ -176,6 +181,7 @@ class UpperLevelCost final : public NLP_Cost {
  private:
   std::unique_ptr<slq_t> slqPtr_;
   std::unique_ptr<slq_data_collector_t> slqDataCollectorPtr_;
+  std::shared_ptr<HybridLogicRules> logicRulesPtr_;
   std::unique_ptr<gddp_t> gddpPtr_;
   bool display_;
 

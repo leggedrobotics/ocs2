@@ -48,4 +48,4 @@ std::ostream& operator<<(std::ostream& stream, const ModeSchedule& modeSchedule)
   return stream;
 }
 
-}
+}  // namespace ocs2

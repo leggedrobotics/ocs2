@@ -143,9 +143,9 @@ bool MPC_OCS2<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
       }
 
       // TODO : set eventTimesOptimized_ in the correct place
-//      this->logicRulesPtr_->eventTimes() = eventTimesOptimized_;
-//      this->logicRulesPtr_->update();
-//      this->getLogicRulesMachinePtr()->logicRulesUpdated();
+      //      this->logicRulesPtr_->eventTimes() = eventTimesOptimized_;
+      //      this->logicRulesPtr_->update();
+      //      this->getLogicRulesMachinePtr()->logicRulesUpdated();
     }
 
     // collect SLQ variables

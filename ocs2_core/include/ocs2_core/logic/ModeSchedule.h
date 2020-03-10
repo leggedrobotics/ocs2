@@ -47,12 +47,15 @@ class ModeSchedule {
   using scalar_t = typename Dimensions<0, 0>::scalar_t;
 
  public:
+  /** Default constructor for a single mode without events */
+  ModeSchedule() = default;
+
   /**
-   * Constructor for a modeschedule. The number of phases must be greater than zero (N > 0)
+   * Constructor for a ModeSchedule. The number of phases must be greater than zero (N > 0)
    * @param eventTimes : event times of size N - 1
    * @param modeSequence : mode sequence fo size N
    */
-  ModeSchedule(std::vector<scalar_t> eventTimes = {}, std::vector<size_t> modeSequence = {0});
+  ModeSchedule(std::vector<scalar_t> eventTimes, std::vector<size_t> modeSequence);
 
   /** Gets the event times */
   const std::vector<scalar_t>& eventTimes() const { return eventTimes_; }
@@ -61,8 +64,8 @@ class ModeSchedule {
   const std::vector<size_t>& modeSequence() const { return modeSequence_; }
 
  private:
-  std::vector<scalar_t> eventTimes_;
-  std::vector<size_t> modeSequence_;
+  std::vector<scalar_t> eventTimes_{};
+  std::vector<size_t> modeSequence_{0};
 };
 
 std::ostream& operator<<(std::ostream& stream, const ModeSchedule& modeSchedule);

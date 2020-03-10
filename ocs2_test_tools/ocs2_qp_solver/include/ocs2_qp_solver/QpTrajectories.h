@@ -12,29 +12,29 @@ namespace qp_solver {
 
 /** A time, state, input trajectory. The last timepoint has only a state, no input */
 struct ContinuousTrajectory {
-  /** time trajectory, size N+1 */  // NOLINTNEXTLINE
+  /** time trajectory, size N+1 */
   std::vector<double> timeTrajectory;
-  /** trajectory of state vectors, size N+1 */  // NOLINTNEXTLINE
+  /** trajectory of state vectors, size N+1 */
   std::vector<Eigen::VectorXd> stateTrajectory;
-  /** trajectory of input vectors, size N */  // NOLINTNEXTLINE
+  /** trajectory of input vectors, size N */
   std::vector<Eigen::VectorXd> inputTrajectory;
 };
 
 /** Reference to a point along a trajectory. Does not own the state-input data. */
 struct TrajectoryRef {
-  /** time */  // NOLINTNEXTLINE
+  /** time */
   double t;
-  /** state */  // NOLINTNEXTLINE
+  /** state */
   const Eigen::VectorXd& x;
-  /** input */  // NOLINTNEXTLINE
+  /** input */
   const Eigen::VectorXd& u;
 };
 
 /** Reference to the state at a point along a trajectory. Does not own the state data. */
 struct StateTrajectoryRef {
-  /** time */  // NOLINTNEXTLINE
+  /** time */
   double t;
-  /** state */  // NOLINTNEXTLINE
+  /** state */
   const Eigen::VectorXd& x;
 };
 

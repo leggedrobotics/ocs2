@@ -1955,7 +1955,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
   if (ddpSettings_.displayInfo_) {
     std::cerr << std::endl << "Rewind Counter: " << rewindCounter_ << std::endl;
     std::cerr << algorithmName_ + " solver starts from initial time " << initTime << " to final time " << finalTime << ".";
-    std::cerr << display(this->getModeSchedule());
+    std::cerr << this->getModeSchedule();
     std::cerr << std::endl;
   }
 

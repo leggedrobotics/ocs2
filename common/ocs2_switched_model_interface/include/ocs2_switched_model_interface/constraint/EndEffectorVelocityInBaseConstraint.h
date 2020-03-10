@@ -58,5 +58,6 @@ class EndEffectorVelocityInBaseConstraint : public EndEffectorConstraint<EndEffe
 
     o_footVelocity = adKinematicsModel.footVelocityInBaseFrame(this->legNumber_, com_baseTwist, qJoints, dqJoints);
   }
+  static constexpr ocs2::ConstraintOrder kConstraintOrder = ocs2::ConstraintOrder::Linear;
 };
 }  // namespace switched_model

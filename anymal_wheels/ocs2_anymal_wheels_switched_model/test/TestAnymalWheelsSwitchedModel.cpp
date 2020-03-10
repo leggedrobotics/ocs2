@@ -94,6 +94,8 @@ TEST_F(SwitchedModelTests, LF_Orientations) {
     {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_KFE tmp    ; std::cout << "\nType_fr_base_X_fr_LF_KFE    \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
     {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL tmp  ; std::cout << "\nType_fr_base_X_fr_LF_WHEEL  \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
     {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL_L tmp; std::cout << "\nType_fr_base_X_fr_LF_WHEEL_L\n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
+    {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL_L_COM tmp; std::cout << "\nType_fr_base_X_fr_LF_WHEEL_L_COM\n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
+    
     std::cout << std::endl;
   }
 }

@@ -13,19 +13,21 @@ namespace switched_model {
 struct EndEffectorConstraintSettings {
   // Constraints are described by A() * v_base + b()
 
- private:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Eigen::MatrixXd data;
-
  public:
-  Eigen::Ref<Eigen::VectorXd> b() { return data.rightCols<1>(); };
-  Eigen::Ref<Eigen::MatrixXd> A() { return data.leftCols(data.cols() - 1); };
-  const Eigen::Ref<const Eigen::VectorXd> b() const { return data.rightCols<1>(); };
-  const Eigen::Ref<const Eigen::MatrixXd> A() const { return data.leftCols(data.cols() - 1); };
-  void resize(size_t rows, size_t cols) { data.resize(rows, cols + 1); };
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+  Eigen::VectorXd b;
+  Eigen::MatrixXd A;
 
   EndEffectorConstraintSettings() = default;
-  EndEffectorConstraintSettings(size_t rows, size_t cols) { resize(rows, cols); };
+  template <size_t rows, size_t cols>
+    EndEffectorConstraintSettings() : b(Eigen::Matrix<double, rows, 1>()), A(Eigen::Matrix<double, rows, cols>()){};
+  EndEffectorConstraintSettings(size_t rows, size_t cols) : b(Eigen::VectorXd(rows)), A(Eigen::MatrixXd(rows, cols)){};
+
+
+  void resize(size_t rows, size_t cols) {
+    b.resize(rows);
+    A.resize(rows, cols);
+  };
 };
 
 template <class Derived>
@@ -111,7 +113,7 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
 
   virtual void configure(const EndEffectorConstraintSettings& settings) { settings_ = settings; };
 
-  size_t getNumConstraints(scalar_t time) const override { return settings_.A().rows(); };
+  size_t getNumConstraints(scalar_t time) const override { return settings_.A.rows(); };
 
   scalar_array_t getValue(scalar_t time, const state_vector_t& state, const input_vector_t& input) const override {
     // Assemble input
@@ -123,8 +125,8 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
 
     // Change to std::vector
     scalar_array_t constraintValue;
-    Eigen::VectorXd values = settings_.A() * funcVal + settings_.b();
-    for (int i = 0; i < settings_.A().rows(); i++) {
+    Eigen::VectorXd values = settings_.A * funcVal + settings_.b;
+    for (int i = 0; i < settings_.A.rows(); i++) {
       constraintValue.emplace_back(values[i]);
     }
     return constraintValue;
@@ -145,9 +147,9 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
     // Convert to output format
     LinearApproximation_t linearApproximation;
     linearApproximation.constraintValues = getValue(time, state, input);
-    for (int i = 0; i < settings_.A().rows(); i++) {
-      linearApproximation.derivativeState.emplace_back(settings_.A().row(i) * dhdx);
-      linearApproximation.derivativeInput.emplace_back(settings_.A().row(i) * dhdu);
+    for (int i = 0; i < settings_.A.rows(); i++) {
+      linearApproximation.derivativeState.emplace_back(settings_.A.row(i) * dhdx);
+      linearApproximation.derivativeInput.emplace_back(settings_.A.row(i) * dhdu);
     }
     return linearApproximation;
   }
@@ -164,8 +166,8 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
     quadraticApproximation.constraintValues = std::move(linearApproximation.constraintValues);
     quadraticApproximation.derivativeState = std::move(linearApproximation.derivativeState);
     quadraticApproximation.derivativeInput = std::move(linearApproximation.derivativeInput);
-    for (int i = 0; i < settings_.A().rows(); i++) {
-      timeStateInput_matrix_t weightedHessian = adInterface_->getHessian(settings_.A().row(i), tapedInput);
+    for (int i = 0; i < settings_.A.rows(); i++) {
+      timeStateInput_matrix_t weightedHessian = adInterface_->getHessian(settings_.A.row(i), tapedInput);
 
       quadraticApproximation.secondDerivativesState.emplace_back(weightedHessian.block(1, 1, STATE_DIM, STATE_DIM));
       quadraticApproximation.secondDerivativesInput.emplace_back(weightedHessian.block(1 + STATE_DIM, 1 + STATE_DIM, INPUT_DIM, INPUT_DIM));
@@ -195,6 +197,6 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
   std::string libNamePrefix_;  // needed for copy constructor
   std::string libFolder_;
   std::unique_ptr<ad_interface_t> adInterface_;
-};  // namespace switched_model
+};
 
 }  // namespace switched_model

@@ -80,17 +80,17 @@ void AnymalWheelsComKinoConstraintAd::setCurrentStateAndControl(const scalar_t& 
     if (stanceLegs_[footIdx]) {
       // EE velocities in lateral direction (y) in foot frame should be zero.
       EndEffectorVelocityInFootFrameConstraintSettings_t _f_eeVelInFootFrameConSettings(1, 3);
-      _f_eeVelInFootFrameConSettings.b() << 0;
-      _f_eeVelInFootFrameConSettings.A() << 0, 1, 0;
+      _f_eeVelInFootFrameConSettings.b << 0;
+      _f_eeVelInFootFrameConSettings.A << 0, 1, 0;
       _f_EEVelInFootFrameConstraint.configure(_f_eeVelInFootFrameConSettings);
       _f_EEVelInFootFrameConstraint.setActivity(true);
       // The upwards velocity (z) in the world frame should be zero too.
-      _o_eeVelConSettings.b() << 0;
-      _o_eeVelConSettings.A() << 0, 0, 1;
+      _o_eeVelConSettings.b << 0;
+      _o_eeVelConSettings.A << 0, 0, 1;
     } else {  // in swing: z-velocity is provided
       _f_EEVelInFootFrameConstraint.setActivity(false);
-      _o_eeVelConSettings.b() << -zDirectionRefsPtr_[footIdx]->calculateVelocity(Base::t_);
-      _o_eeVelConSettings.A() << 0, 0, 1;
+      _o_eeVelConSettings.b << -zDirectionRefsPtr_[footIdx]->calculateVelocity(Base::t_);
+      _o_eeVelConSettings.A << 0, 0, 1;
     }
     _o_EEVelConstraint.configure(_o_eeVelConSettings);
     _o_EEVelConstraint.setActivity(true);

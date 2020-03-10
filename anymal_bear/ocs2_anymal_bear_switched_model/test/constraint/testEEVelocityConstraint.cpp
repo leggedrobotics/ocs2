@@ -14,8 +14,8 @@ TEST(TestEEVelocityConstraint, evaluate){
   using TestedConstraint = switched_model::EndEffectorVelocityConstraint;
 
   switched_model::EndEffectorVelocityConstraintSettings settings;
-  settings.A().setIdentity(3, 3);
-  settings.b().setZero();
+  settings.A.setIdentity(3, 3);
+  settings.b.setZero();
 
   anymal::AnymalBearComAd anymalComAd;
   anymal::AnymalBearKinematicsAd anymalKinematicsAd;

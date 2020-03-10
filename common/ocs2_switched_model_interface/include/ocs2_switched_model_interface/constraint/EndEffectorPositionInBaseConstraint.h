@@ -56,5 +56,6 @@ class EndEffectorPositionInBaseConstraint final : public EndEffectorConstraint<E
 
     o_footPosition = adKinematicsModel.positionBaseToFootInBaseFrame(footIndex, jointPositions);
   }
+  static constexpr ocs2::ConstraintOrder kConstraintOrder = ocs2::ConstraintOrder::Linear;
 };
 }  // namespace switched_model

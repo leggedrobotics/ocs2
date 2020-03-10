@@ -95,6 +95,19 @@ target_link_libraries(${PROJECT_NAME}_dummy_mrt_node
         ${catkin_LIBRARIES}
         )
 
+add_executable(${PROJECT_NAME}_no_ros_node
+  src/AnymalCrocNoRos.cpp
+  )
+add_dependencies(${PROJECT_NAME}_no_ros_node
+  ${PROJECT_NAME}
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+  )
+target_link_libraries(${PROJECT_NAME}_no_ros_node
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  )
+
 #########################
 ###   CLANG TOOLING   ###
 #########################

@@ -1,0 +1,28 @@
+<launch>
+    <arg name="rviz"       default="true" />
+    <arg name="task_name"  default="mpc_augmented"/>
+    <arg name="description_name"      default="ocs2_anymal_description"/>
+
+    <group if="$(arg rviz)">
+      <!-- Load robot description -->
+      <include file="$(find ocs2_anymal_wheels_description)/launch/load.launch">
+          <arg name="description_name"   value="$(arg description_name)"/>
+      </include>
+      <!-- Launch visualization -->
+      <include file="$(find ocs2_quadruped_interface)/launch/visualization.launch">
+          <arg name="description_name"   value="$(arg description_name)"/>
+      </include>
+    </group>
+
+    <node pkg="ocs2_anymal_wheels_loopshaping" type="ocs2_anymal_wheels_loopshaping_mpc_node" name="ocs2_anymal_wheels_loopshaping_mpc_node"
+          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal -- "/>
+
+    <node pkg="ocs2_anymal_wheels_loopshaping" type="ocs2_anymal_wheels_loopshaping_dummy_mrt_node" name="ocs2_anymal_wheels_loopshaping_dummy_mrt_node"
+          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal -- "/>
+
+    <node pkg="ocs2_anymal_commands" type="gait_command_node" name="gait_command_node"
+          output="screen" launch-prefix="gnome-terminal --"/>
+
+    <node pkg="ocs2_anymal_commands" type="target_command_node" name="target_command_node"
+          output="screen" launch-prefix="gnome-terminal --"/>
+</launch>

@@ -1543,9 +1543,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getPrimalSolution(scalar_t finalTime, prima
         new feedforward_controller_t(primalSolutionPtr->timeTrajectory_, primalSolutionPtr->inputTrajectory_));
   }
 
-  // fill logic
-  primalSolutionPtr->eventTimes_ = this->getModeSchedule().eventTimes();
-  primalSolutionPtr->subsystemsSequence_ = this->getModeSchedule().modeSequence();
+  // fill mode schedule
+  primalSolutionPtr->modeSchedule_ = this->getModeSchedule();
 }
 
 /******************************************************************************************************/

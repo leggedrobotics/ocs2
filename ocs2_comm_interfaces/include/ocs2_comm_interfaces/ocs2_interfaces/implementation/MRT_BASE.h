@@ -153,7 +153,8 @@ bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicy() {
   partitioningTimes_.swap(partitioningTimesBuffer_);
 
   // update logic rules
-  logicMachinePtr_->getLogicRulesPtr()->setModeSequence(currentPrimalSolution_->subsystemsSequence_, currentPrimalSolution_->eventTimes_);
+  logicMachinePtr_->getLogicRulesPtr()->setModeSequence(currentPrimalSolution_->modeSchedule_.modeSequence(),
+                                                        currentPrimalSolution_->modeSchedule_.eventTimes());
   logicMachinePtr_->logicRulesUpdated();
   logicMachinePtr_->updateLogicRules(partitioningTimes_);
 

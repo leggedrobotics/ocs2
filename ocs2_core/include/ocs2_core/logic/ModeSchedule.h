@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <string>
+#include <ostream>
 #include <vector>
 
 #include <ocs2_core/Dimensions.h>
@@ -65,6 +65,6 @@ class ModeSchedule {
   std::vector<size_t> modeSequence_;
 };
 
-std::string display(const ModeSchedule& modeSchedule);
+std::ostream& operator<<(std::ostream& stream, const ModeSchedule& modeSchedule);
 
-}
+}  // namespace ocs2

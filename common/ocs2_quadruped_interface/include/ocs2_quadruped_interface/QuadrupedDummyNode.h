@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include <ros/node_handle.h>
-#include "ocs2_quadruped_interface/QuadrupedDummyNode.h"
-#include <ocs2_quadruped_interface/QuadrupedVisualizer.h>
-#include <ocs2_switched_model_interface/core/SwitchedModel.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
+#include <ocs2_quadruped_interface/QuadrupedVisualizer.h>
 #include <ocs2_switched_model_interface/core/MotionPhaseDefinition.h>
+#include <ocs2_switched_model_interface/core/SwitchedModel.h>
+#include <ros/node_handle.h>
+#include "ocs2_quadruped_interface/QuadrupedDummyNode.h"
 
 namespace switched_model {
 

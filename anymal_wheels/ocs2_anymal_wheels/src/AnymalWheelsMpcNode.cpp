@@ -11,8 +11,8 @@
 /*
  * namespace switched_model
  * {
- *   extern template void switched_model::quadrupedMpcNode<anymal::WheeledQuadrupedInterface>(ros::NodeHandle& nodeHandle, const anymal::WheeledQuadrupedInterface& quadrupedInterface, const ocs2::MPC_Settings& mpcSettings,
- *       const ocs2::SLQ_Settings& slqSettings);
+ *   extern template void switched_model::quadrupedMpcNode<anymal::WheeledQuadrupedInterface>(ros::NodeHandle& nodeHandle, const
+ * anymal::WheeledQuadrupedInterface& quadrupedInterface, const ocs2::MPC_Settings& mpcSettings, const ocs2::SLQ_Settings& slqSettings);
  * }
  */
 
@@ -21,7 +21,7 @@
  *     const ocs2::SLQ_Settings& slqSettings) {
  *   const std::string robotName = "anymal";
  *   using mpc_ros_t = ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM>;
- * 
+ *
  *   // launch MPC nodes
  *   auto mpcPtr = getMpc(quadrupedInterface, mpcSettings, slqSettings);
  *   mpc_ros_t mpcNode(*mpcPtr, robotName);

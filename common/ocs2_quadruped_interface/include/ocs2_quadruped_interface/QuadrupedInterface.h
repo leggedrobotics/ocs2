@@ -121,7 +121,6 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
    */
   void loadSettings(const std::string& pathToConfigFile);
 
- protected:
   scalar_t timeHorizon_;
   ocs2::Rollout_Settings rolloutSettings_;
   ModelSettings modelSettings_;
@@ -141,16 +140,9 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   input_matrix_t R_;
   state_matrix_t QFinal_;
 
- private:
   state_vector_t initialState_;
   scalar_array_t partitioningTimes_;
   mode_sequence_template_t defaultModeSequenceTemplate_;
-};
-
-class QuadrupedInterfaceImpl : public QuadrupedInterface {
-  public:
-    QuadrupedInterfaceImpl(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
-        const com_model_t& comModel, const ad_com_model_t& adComModel, const std::string& pathToConfigFolder);
 };
 
 }  // end of namespace switched_model

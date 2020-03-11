@@ -42,7 +42,6 @@ include_directories(
 
 add_library(${PROJECT_NAME}
 		src/ComKinoConstraintBaseAd.cpp
-		src/ComKinoConstraintImplAd.cpp
 		src/ComKinoSystemDynamicsAd.cpp
 		src/SwitchedModelCostBase.cpp
 		src/ComKinoOperatingPointsBase.cpp

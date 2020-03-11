@@ -5,26 +5,12 @@
 #include "ocs2_quadruped_interface/QuadrupedInterface.h"
 
 #include <ocs2_core/misc/LoadData.h>
-#include <ocs2_switched_model_interface/constraint/ComKinoConstraintImplAd.h>
 #include <ocs2_switched_model_interface/core/Rotations.h>
 #include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
 #include <ocs2_switched_model_interface/foot_planner/FeetZDirectionPlanner.h>
 #include <ocs2_switched_model_interface/foot_planner/cpg/SplineCPG.h>
 
 namespace switched_model {
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-QuadrupedInterfaceImpl::QuadrupedInterfaceImpl(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
-                                               const com_model_t& comModel, const ad_com_model_t& adComModel,
-                                               const std::string& pathToConfigFolder)
-    : QuadrupedInterface(kinematicModel, adKinematicModel, comModel, adComModel, pathToConfigFolder) {
-  constraintsPtr_.reset(new ComKinoConstraintImplAd(adKinematicModel, adComModel, logicRulesPtr_, modelSettings_));
-  costFunctionPtr_.reset(new cost_function_t(*comModelPtr_, logicRulesPtr_, Q_, R_, QFinal_));
-  operatingPointsPtr_.reset(new operating_point_t(*comModelPtr_, logicRulesPtr_));
-  timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, rolloutSettings_));
-}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -37,6 +23,10 @@ QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, 
 
   dynamicsPtr_.reset(new system_dynamics_t(adKinematicModel, adComModel, modelSettings_.recompileLibraries_));
   dynamicsDerivativesPtr_.reset(dynamicsPtr_->clone());
+  constraintsPtr_.reset(new constraint_t(adKinematicModel, adComModel, logicRulesPtr_, modelSettings_));
+  costFunctionPtr_.reset(new cost_function_t(*comModelPtr_, logicRulesPtr_, Q_, R_, QFinal_));
+  operatingPointsPtr_.reset(new operating_point_t(*comModelPtr_, logicRulesPtr_));
+  timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, rolloutSettings_));
 }
 
 /******************************************************************************************************/

@@ -1,13 +1,82 @@
 #include "ocs2_switched_model_interface/constraint/ComKinoConstraintBaseAd.h"
 
+// Constraints
+#include "ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h"
+#include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
+#include "ocs2_switched_model_interface/constraint/ZeroForceConstraint.h"
+
 namespace switched_model {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+ComKinoConstraintBaseAd* ComKinoConstraintBaseAd::clone() const {
+  return new ComKinoConstraintBaseAd(*this);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void ComKinoConstraintBaseAd::initializeConstraintTerms() {
+  for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
+    auto footName = feetNames[i];
+
+    // Friction cone constraint
+    auto frictionCone = std::unique_ptr<ConstraintTerm_t>(new FrictionConeConstraint(options_.frictionCoefficient_, 25.0, i));
+
+    // EE force
+    auto zeroForceConstraint = std::unique_ptr<ConstraintTerm_t>(new ZeroForceConstraint(i));
+
+    // Velocity Constraint
+    auto endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityConstraint(
+        i, EndEffectorVelocityConstraintSettings(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
+
+    // Inequalities
+    inequalityConstraintCollection_.add(footName + "_FrictionCone", std::move(frictionCone));
+
+    // State input equalities
+    equalityStateInputConstraintCollection_.add(footName + "_ZeroForce", std::move(zeroForceConstraint));
+    equalityStateInputConstraintCollection_.add(footName + "_EEVel", std::move(endEffectorVelocityConstraint));
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
+  stateInputConstraintsComputed_ = false;
+  inequalityConstraintsComputed_ = false;
+
   Base::setCurrentStateAndControl(t, x, u);
-};
+  numEventTimes_ = logicRulesPtr_->getNumEventTimes();
+  auto activeSubsystem = logicRulesPtr_->getEventTimeCount(t);
+  logicRulesPtr_->getMotionPhaseLogics(activeSubsystem, stanceLegs_, zDirectionRefsPtr_);
+
+  for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
+    auto footName = feetNames[i];
+
+    // Active friction cone constraint for stanceLegs
+    inequalityConstraintCollection_.get(footName + "_FrictionCone").setActivity(stanceLegs_[i]);
+
+    // Zero forces active for swing legs
+    equalityStateInputConstraintCollection_.get(footName + "_ZeroForce").setActivity(!stanceLegs_[i]);
+
+    // Active foot placement for stance legs
+    auto& EEVelConstraint = equalityStateInputConstraintCollection_.get<EndEffectorVelocityConstraint>(footName + "_EEVel");
+    EEVelConstraint.setActivity(true);
+    EndEffectorVelocityConstraintSettings eeVelConSettings;
+    if (stanceLegs_[i]) {  // in stance: All velocity equal to zero
+      eeVelConSettings.b = Eigen::Vector3d::Zero();
+      eeVelConSettings.A = Eigen::Matrix3d::Identity();
+    } else {  // in swing: z-velocity is provided
+      eeVelConSettings.b.resize(1);
+      eeVelConSettings.A.resize(1, 3);
+      eeVelConSettings.b << -zDirectionRefsPtr_[i]->calculateVelocity(Base::t_);
+      eeVelConSettings.A << 0, 0, 1;
+    }
+    EEVelConstraint.configure(eeVelConSettings);
+  }
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

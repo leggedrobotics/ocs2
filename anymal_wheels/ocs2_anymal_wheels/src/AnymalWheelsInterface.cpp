@@ -9,23 +9,17 @@
 #include <ocs2_anymal_wheels_switched_model/constraint/AnymalWheelsComKinoConstraintAd.h>
 #include <ocs2_anymal_wheels_switched_model/core/AnymalWheelsCom.h>
 #include <ocs2_anymal_wheels_switched_model/core/AnymalWheelsKinematics.h>
+#include <memory>
 
-namespace switched_model {
+namespace anymal {
 WheeledQuadrupedInterface::WheeledQuadrupedInterface(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
                                                      const com_model_t& comModel, const ad_com_model_t& adComModel,
                                                      const std::string& pathToConfigFolder)
     : Base(kinematicModel, adKinematicModel, comModel, adComModel, pathToConfigFolder) {
-  constraintsPtr_.reset(new AnymalWheelsComKinoConstraintAd(adKinematicModel, adComModel, logicRulesPtr_, modelSettings_));
-  costFunctionPtr_.reset(new cost_function_t(*comModelPtr_, logicRulesPtr_, Q_, R_, QFinal_));
-  operatingPointsPtr_.reset(new operating_point_t(*comModelPtr_, logicRulesPtr_));
-  timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, rolloutSettings_));
-}
+      constraintsPtr_.reset(new constraint_t(adKinematicModel, adComModel, std::static_pointer_cast<Base::logic_rules_t>(Base::getLogicRulesPtr()), Base::modelSettings()));
+    }
 
-}  // namespace switched_model
-
-namespace anymal {
-
-std::unique_ptr<switched_model::QuadrupedInterface> getAnymalWheelsInterface(const std::string& taskName) {
+std::unique_ptr<anymal::WheeledQuadrupedInterface> getAnymalWheelsInterface(const std::string& taskName) {
   std::string taskFolder = getTaskFileFolderWheels(taskName);
   std::cerr << "Loading task file from: " << taskFolder << std::endl;
 
@@ -33,8 +27,7 @@ std::unique_ptr<switched_model::QuadrupedInterface> getAnymalWheelsInterface(con
   auto kinAd = AnymalWheelsKinematicsAd();
   auto com = AnymalWheelsCom();
   auto comAd = AnymalWheelsComAd();
-  return std::unique_ptr<switched_model::QuadrupedInterface>(
-      new switched_model::WheeledQuadrupedInterface(kin, kinAd, com, comAd, taskFolder));
+  return std::unique_ptr<anymal::WheeledQuadrupedInterface>(new anymal::WheeledQuadrupedInterface(kin, kinAd, com, comAd, taskFolder));
 }
 
 std::string getTaskFileFolderWheels(const std::string& taskName) {

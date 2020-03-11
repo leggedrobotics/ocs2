@@ -62,11 +62,11 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
   using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
 
   EndEffectorConstraint(ocs2::ConstraintOrder constraintOrder, std::string eeConstraintName, int legNumber,
-                        EndEffectorConstraintSettings settings, ad_interface_t& ad_interface, bool generateModels)
+                        EndEffectorConstraintSettings settings, ad_interface_t& ad_interface, bool generateModels, bool loadModels=true)
       : BASE(constraintOrder),
+        libNamePrefix_(eeConstraintName),
         legNumber_(legNumber),
         settings_(std::move(settings)),
-        libNamePrefix_(eeConstraintName),
         libName_(eeConstraintName + std::to_string(legNumber)),
         libFolder_("/tmp/ocs2"),
         adInterface_(new ad_interface_t(ad_interface)) {
@@ -76,18 +76,18 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
     auto order = static_cast<ad_interface_t::ApproximationOrder>(constraintOrder);
     if (generateModels) {
       adInterface_->createModels(order, true);
-    } else {
+    } else if(loadModels) {
       adInterface_->loadModelsIfAvailable(order, true);
     }
   }
 
   EndEffectorConstraint(ocs2::ConstraintOrder constraintOrder, std::string eeConstraintName, int legNumber,
                         EndEffectorConstraintSettings settings, ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel,
-                        bool generateModels)
+                        bool generateModels, bool loadModels=true)
       : BASE(constraintOrder),
+        libNamePrefix_(eeConstraintName),
         legNumber_(legNumber),
         settings_(std::move(settings)),
-        libNamePrefix_(eeConstraintName),
         libName_(eeConstraintName + std::to_string(legNumber)),
         libFolder_("/tmp/ocs2") {
     setAdInterface(adComModel, adKinematicsModel);
@@ -97,14 +97,14 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
     auto order = static_cast<ad_interface_t::ApproximationOrder>(constraintOrder);
     if (generateModels) {
       adInterface_->createModels(order, true);
-    } else {
+    } else if(loadModels) {
       adInterface_->loadModelsIfAvailable(order, true);
     }
   }
 
-  //! Note: Since the constructors are based on a copy we do not or regenerate/generate the models
+  //! Note: Since the constructors are based on a copy we do not regenerate/generate the models
   EndEffectorConstraint(const EndEffectorConstraint& rhs)
-      : EndEffectorConstraint{rhs.getOrder(), rhs.libNamePrefix_, rhs.legNumber_, rhs.settings_, *rhs.adInterface_, false} {};
+    : EndEffectorConstraint{rhs.getOrder(), rhs.libNamePrefix_, rhs.legNumber_, rhs.settings_, *rhs.adInterface_, false, false} {};
 
   //! Note: Since the constructors are based on a copy we do not or regenerate/generate the models
   EndEffectorConstraint* clone() const override { return new EndEffectorConstraint(*this); }

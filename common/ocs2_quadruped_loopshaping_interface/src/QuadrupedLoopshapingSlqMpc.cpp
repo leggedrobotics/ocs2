@@ -10,7 +10,7 @@ std::unique_ptr<ocs2::SLQ<STATE_DIM, INPUT_DIM>> getSlq(const QuadrupedLoopshapi
                                                         const ocs2::SLQ_Settings& slqSettings) {
   return std::unique_ptr<ocs2::SLQ<STATE_DIM, INPUT_DIM>>(new ocs2::SLQ<STATE_DIM, INPUT_DIM>(
       &quadrupedInterface.getRollout(), &quadrupedInterface.getDynamicsDerivatives(), quadrupedInterface.getConstraintPtr(),
-      &quadrupedInterface.getCost(), &quadrupedInterface.getOperatingPoints(), slqSettings, quadrupedInterface.getLogicRulesPtr()));
+      &quadrupedInterface.getCost(), &quadrupedInterface.getOperatingPoints(), slqSettings));
 }
 
 std::unique_ptr<ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>> getMpc(const QuadrupedLoopshapingInterface& quadrupedInterface,

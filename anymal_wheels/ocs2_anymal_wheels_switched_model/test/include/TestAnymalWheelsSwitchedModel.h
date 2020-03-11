@@ -24,7 +24,21 @@ public:
 
   using scalar_t                 = double;
   using DIMS                     = ocs2::Dimensions<switched_model::STATE_DIM, switched_model::INPUT_DIM>;
-  using JointIdentifiers         = iit::ANYmal::JointIdentifiers;
+  // using JointIdentifiers         = iit::ANYmal::JointIdentifiers;
+  enum JointIdentifiers {
+    LF_HAA = 0,
+    LF_HFE,
+    LF_KFE,
+    RF_HAA,
+    RF_HFE,
+    RF_KFE,
+    LH_HAA,
+    LH_HFE,
+    LH_KFE,
+    RH_HAA,
+    RH_HFE,
+    RH_KFE,
+  };
   using FeetEnum                 = switched_model::FeetEnum;
   using state_vector_t           = DIMS::state_vector_t;
   using state_matrix_t           = DIMS::state_matrix_t;
@@ -36,9 +50,11 @@ public:
   using comkino_state_t          = switched_model::comkino_state_t;
 
   TestAnymalWheelsSwitchedModel() :
-    stanceLegs_({{true,true,true,true}})
-    {
-  }
+    stanceLegs_({{true,true,true,true}}),
+    posDist_{-20, 20}, angleDist_{0.07, M_PI-0.1},
+    randAngle {std::bind(std::ref(angleDist_), std::ref(generator_))},
+    randPos {std::bind(std::ref(posDist_), std::ref(generator_))}
+    {}
 
   void init() {
     // nothing to do yet
@@ -54,6 +70,25 @@ public:
   // std::uniform_real_distribution<scalar_t> posDist_;
   std::array<bool,4> stanceLegs_;
   std::function<bool(const Eigen::MatrixXd  &lhs, const Eigen::MatrixXd rhs)> matrixEquality_ = [](const Eigen::MatrixXd  &lhs, const Eigen::MatrixXd rhs) {return lhs.isApprox(rhs);};
+  std::uniform_real_distribution<scalar_t> posDist_;//{-20, 20};
+  std::uniform_real_distribution<scalar_t> angleDist_;//{0.07, M_PI-0.1};
+  decltype(std::bind(std::ref(angleDist_), std::ref(generator_))) randAngle;
+  decltype(std::bind(std::ref(posDist_), std::ref(generator_))) randPos;
+
+  // Includes wheel joints
+  using extended_joint_coordinate_t = Eigen::Matrix<double, switched_model::JOINT_COORDINATE_SIZE + 4, 1>;
+  extended_joint_coordinate_t getExtendedJointCoordinates(const switched_model::joint_coordinate_s_t<double>& jointPositions) const{
+    extended_joint_coordinate_t extendedJointCoordinate;
+  extendedJointCoordinate.template segment<3>(0) = jointPositions.template segment<3>(0);
+  extendedJointCoordinate(3) = (0.0);
+  extendedJointCoordinate.template segment<3>(4) = jointPositions.template segment<3>(3);
+  extendedJointCoordinate(7) = (0.0);
+  extendedJointCoordinate.template segment<3>(8) = jointPositions.template segment<3>(6);
+  extendedJointCoordinate(11) = (0.0);
+  extendedJointCoordinate.template segment<3>(12) = jointPositions.template segment<3>(9);
+  extendedJointCoordinate(15) = (0.0);
+  return extendedJointCoordinate;
+}
 
 };
 

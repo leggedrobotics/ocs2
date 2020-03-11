@@ -63,6 +63,20 @@ void AnymalWheelsCom<SCALAR_T>::setJointConfiguration(const switched_model::join
   totalMass_ = inertiaProperties_.getTotalMass();
 }
 
+template <typename SCALAR_T>
+typename AnymalWheelsCom<SCALAR_T>::extended_joint_coordinate_t AnymalWheelsCom<SCALAR_T>::getExtendedJointCoordinates(const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
+  typename AnymalWheelsCom<SCALAR_T>::extended_joint_coordinate_t extendedJointCoordinate;
+  extendedJointCoordinate.template segment<3>(0) = jointPositions.template segment<3>(0);
+  extendedJointCoordinate(3) = SCALAR_T(0.0);
+  extendedJointCoordinate.template segment<3>(4) = jointPositions.template segment<3>(3);
+  extendedJointCoordinate(7) = SCALAR_T(0.0);
+  extendedJointCoordinate.template segment<3>(8) = jointPositions.template segment<3>(6);
+  extendedJointCoordinate(11) = SCALAR_T(0.0);
+  extendedJointCoordinate.template segment<3>(12) = jointPositions.template segment<3>(9);
+  extendedJointCoordinate(15) = SCALAR_T(0.0);
+  return extendedJointCoordinate;
+}
+
 }  // namespace tpl
 }  // end of namespace anymal
 

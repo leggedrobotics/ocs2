@@ -11,13 +11,11 @@
 
 #include "ocs2_anymal_wheels_switched_model/generated/jacobians.h"
 #include "ocs2_anymal_wheels_switched_model/generated/transforms.h"
+#include "ocs2_switched_model_interface/core/SwitchedModel.h"
 
 using namespace anymal;
 
-class SwitchedModelTests : public ::testing::Test, public TestAnymalWheelsSwitchedModel {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-};
+class SwitchedModelTests : public ::testing::Test, public TestAnymalWheelsSwitchedModel { };
 
 TEST_F(SwitchedModelTests, Kinematics) {
   switched_model::joint_coordinate_t qJoints;
@@ -66,16 +64,7 @@ TEST_F(SwitchedModelTests, LF_Orientations) {
   comkino_state_t x; x.setZero();
 
 
-  std::cout << "\nqJoints:\n" << qJoints;
-  Eigen::Matrix<double, switched_model::JOINT_COORDINATE_SIZE + 4, 1> extendedJointCoordinate;
-  extendedJointCoordinate.template segment<3>(0) = qJoints.template segment<3>(0);
-  extendedJointCoordinate(3) = 0.0;
-  extendedJointCoordinate.template segment<3>(4) = qJoints.template segment<3>(3);
-  extendedJointCoordinate(7) = 0.0;
-  extendedJointCoordinate.template segment<3>(8) = qJoints.template segment<3>(6);
-  extendedJointCoordinate(11) = 0.0;
-  extendedJointCoordinate.template segment<3>(12) = qJoints.template segment<3>(9);
-  extendedJointCoordinate(15) = 0.0;
+  extended_joint_coordinate_t extendedJointCoordinate = getExtendedJointCoordinates(qJoints);
 
   std::cout << "\nqJoints:\n" << qJoints;
   std::cout << "\nextendedJointPositions:\n" << x;
@@ -105,18 +94,10 @@ TEST_F(SwitchedModelTests, EndeffectorOrientation) {
   comkino_state_t x; x.setZero();
 
 
+  extended_joint_coordinate_t extendedJointCoordinate = getExtendedJointCoordinates(qJoints);
   std::cout << "\nqJoints:\n" << qJoints;
-  Eigen::Matrix<double, switched_model::JOINT_COORDINATE_SIZE + 4, 1> extendedJointCoordinate;
-  extendedJointCoordinate.template segment<3>(0) = qJoints.template segment<3>(0);
-  extendedJointCoordinate(3) = 0.0;
-  extendedJointCoordinate.template segment<3>(4) = qJoints.template segment<3>(3);
-  extendedJointCoordinate(7) = 0.0;
-  extendedJointCoordinate.template segment<3>(8) = qJoints.template segment<3>(6);
-  extendedJointCoordinate(11) = 0.0;
-  extendedJointCoordinate.template segment<3>(12) = qJoints.template segment<3>(9);
-  extendedJointCoordinate(15) = 0.0;
-
   std::cout << "\nextendedJointPositions:\n" << extendedJointCoordinate;
+
   const base_coordinate_t basePose = comDynamics_.calculateBasePose(switched_model::getComPose(x));
   matrix3_t o_R_b = switched_model::rotationMatrixBaseToOrigin(switched_model::getOrientation(basePose));
   std::cout << "\nBasePose:\n" << basePose;
@@ -131,16 +112,41 @@ TEST_F(SwitchedModelTests, EndeffectorOrientation) {
   }
 }
 
+TEST_F(SwitchedModelTests, EndeffectorOrientationRandomBasePose) {
+  joint_coordinate_t qJoints; qJoints.setZero();
+  comkino_state_t x; x.setZero();
+  x[0] = randAngle();
+  x[1] = randAngle();
+  x[2] = randAngle();
+  x[3] = randPos();
+  x[4] = randPos();
+  x[5] = randPos();
+
+
+  extended_joint_coordinate_t extendedJointCoordinate = getExtendedJointCoordinates(qJoints);
+  std::cout << "\nqJoints:\n" << qJoints;
+  std::cout << "\nextendedJointPositions:\n" << extendedJointCoordinate;
+
+  const base_coordinate_t basePose = comDynamics_.calculateBasePose(switched_model::getComPose(x));
+  matrix3_t o_R_b = switched_model::rotationMatrixBaseToOrigin(switched_model::getOrientation(basePose));
+  std::cout << "\nBasePose:\n" << basePose;
+  std::cout << "\nBase Orientation:\n" << o_R_b;
+  for (int footIdx = 0; footIdx < switched_model::NUM_CONTACT_POINTS; footIdx++) {
+    const matrix3_t o_R_f = kinematics_.footOrientationInOriginFrame(footIdx, basePose, qJoints);
+    std::cout << "\nFOOT-" << switched_model::feetNames[footIdx];
+    std::cout << "\n\tFootOrientationRelativeToBaseFrame b_R_f:\n" << kinematics_.footOrientationRelativeToBaseFrame(footIdx, qJoints);
+    std::cout << "\n\tFoot orientation o_R_f" << ":\n" << o_R_f;
+    std::cout << std::endl;
+    EXPECT_PRED2(matrixEquality_, o_R_f, o_R_b);
+  }
+}
+
 TEST_F(SwitchedModelTests, EndeffectorAlignedYAxisRandomHFE_KFE) {
   /** Y Axis coincidence
    * 
    * With only the HFE, and KFE joints rotated, the y-axis of the foot should still be aligned with the
    * y-axis of the base, at any base pose.
    */
-  auto posDist_ = std::uniform_real_distribution<scalar_t>(-20, 20);
-  auto angleDist_ = std::uniform_real_distribution<scalar_t>(0.07, M_PI-0.1);
-  auto randAngle = std::bind(angleDist_, std::ref(generator_));
-  auto randPos = std::bind(posDist_, std::ref(generator_));
 
   comkino_state_t x; x.setZero();
   x[0] = randAngle();
@@ -150,26 +156,16 @@ TEST_F(SwitchedModelTests, EndeffectorAlignedYAxisRandomHFE_KFE) {
   x[4] = randPos();
   x[5] = randPos();
   x[switched_model::BASE_COORDINATE_SIZE*2 + JointIdentifiers::RF_HFE] = randAngle();
-  x[switched_model::BASE_COORDINATE_SIZE*2 + JointIdentifiers::RF_KFE] = randAngle();
   x[switched_model::BASE_COORDINATE_SIZE*2 + JointIdentifiers::LF_HFE] = randAngle();
-  x[switched_model::BASE_COORDINATE_SIZE*2 + JointIdentifiers::LF_KFE] = randAngle();
   x[switched_model::BASE_COORDINATE_SIZE*2 + JointIdentifiers::RH_HFE] = randAngle();
-  x[switched_model::BASE_COORDINATE_SIZE*2 + JointIdentifiers::RH_KFE] = randAngle();
   x[switched_model::BASE_COORDINATE_SIZE*2 + JointIdentifiers::LH_HFE] = randAngle();
-  x[switched_model::BASE_COORDINATE_SIZE*2 + JointIdentifiers::LH_KFE] = randAngle();
-  joint_coordinate_t qJoints = x.segment<switched_model::JOINT_COORDINATE_SIZE>(switched_model::STATE_DIM - switched_model::JOINT_COORDINATE_SIZE);
 
+  joint_coordinate_t qJoints = switched_model::getJointPositions(x);
+  extended_joint_coordinate_t extendedJointCoordinate = getExtendedJointCoordinates(qJoints);
+  ASSERT_PRED2(matrixEquality_, qJoints, x.segment(switched_model::BASE_COORDINATE_SIZE*2, switched_model::JOINT_COORDINATE_SIZE));
 
+  std::cout << "\nState:\n" << x;
   std::cout << "\nqJoints:\n" << qJoints;
-  Eigen::Matrix<double, switched_model::JOINT_COORDINATE_SIZE + 4, 1> extendedJointCoordinate;
-  extendedJointCoordinate.template segment<3>(0) = qJoints.template segment<3>(0);
-  extendedJointCoordinate(3) = 0.0;
-  extendedJointCoordinate.template segment<3>(4) = qJoints.template segment<3>(3);
-  extendedJointCoordinate(7) = 0.0;
-  extendedJointCoordinate.template segment<3>(8) = qJoints.template segment<3>(6);
-  extendedJointCoordinate(11) = 0.0;
-  extendedJointCoordinate.template segment<3>(12) = qJoints.template segment<3>(9);
-  extendedJointCoordinate(15) = 0.0;
   std::cout << "\nextendedJointPositions:\n" << extendedJointCoordinate;
 
   const base_coordinate_t basePose = comDynamics_.calculateBasePose(switched_model::getComPose(x));
@@ -194,11 +190,8 @@ TEST_F(SwitchedModelTests, EndeffectorAlignedXAxisRandomHAA) {
    * With only the HAA joints rotated, the x-axis of the foot should still be aligned with the
    * x-axis of the base, at any base pose.
    */
-  auto posDist_ = std::uniform_real_distribution<scalar_t>(-20, 20);
-  auto angleDist_ = std::uniform_real_distribution<scalar_t>(0.07, M_PI-0.1);
-  auto randAngle = std::bind(angleDist_, std::ref(generator_));
-  auto randPos = std::bind(posDist_, std::ref(generator_));
 
+  // generalized_coordinate_t x; x.setZero();
   comkino_state_t x; x.setZero();
   x[0] = randAngle();
   x[1] = randAngle();
@@ -206,22 +199,17 @@ TEST_F(SwitchedModelTests, EndeffectorAlignedXAxisRandomHAA) {
   x[3] = randPos();
   x[4] = randPos();
   x[5] = randPos();
-  x[switched_model::BASE_COORDINATE_SIZE*2 + JointIdentifiers::RF_HAA] = randAngle();
   x[switched_model::BASE_COORDINATE_SIZE*2 + JointIdentifiers::LF_HAA] = randAngle();
-  x[switched_model::BASE_COORDINATE_SIZE*2 + JointIdentifiers::RH_HAA] = randAngle();
+  x[switched_model::BASE_COORDINATE_SIZE*2 + JointIdentifiers::RF_HAA] = randAngle();
   x[switched_model::BASE_COORDINATE_SIZE*2 + JointIdentifiers::LH_HAA] = randAngle();
-  joint_coordinate_t qJoints = x.segment<switched_model::JOINT_COORDINATE_SIZE>(switched_model::STATE_DIM - switched_model::JOINT_COORDINATE_SIZE);
+  x[switched_model::BASE_COORDINATE_SIZE*2 + JointIdentifiers::RH_HAA] = randAngle();
 
+  joint_coordinate_t qJoints = switched_model::getJointPositions(x);
+  ASSERT_PRED2(matrixEquality_, qJoints, x.segment(switched_model::BASE_COORDINATE_SIZE*2, switched_model::JOINT_COORDINATE_SIZE));
+  extended_joint_coordinate_t extendedJointCoordinate = getExtendedJointCoordinates(qJoints);
+
+  std::cout << "\nState:\n" << x;
   std::cout << "\nqJoints:\n" << qJoints;
-  Eigen::Matrix<double, switched_model::JOINT_COORDINATE_SIZE + 4, 1> extendedJointCoordinate;
-  extendedJointCoordinate.template segment<3>(0) = qJoints.template segment<3>(0);
-  extendedJointCoordinate(3) = 0.0;
-  extendedJointCoordinate.template segment<3>(4) = qJoints.template segment<3>(3);
-  extendedJointCoordinate(7) = 0.0;
-  extendedJointCoordinate.template segment<3>(8) = qJoints.template segment<3>(6);
-  extendedJointCoordinate(11) = 0.0;
-  extendedJointCoordinate.template segment<3>(12) = qJoints.template segment<3>(9);
-  extendedJointCoordinate(15) = 0.0;
   std::cout << "\nextendedJointPositions:\n" << extendedJointCoordinate;
 
   const base_coordinate_t basePose = comDynamics_.calculateBasePose(switched_model::getComPose(x));
@@ -230,12 +218,35 @@ TEST_F(SwitchedModelTests, EndeffectorAlignedXAxisRandomHAA) {
   std::cout << "\nBasePose:\n" << basePose;
   std::cout << "\nBase orientation:\n" << o_R_b;
   std::cout << "\nAxis:\n" << xAxis << std::endl;
-  for (int footIdx = 0; footIdx < switched_model::NUM_CONTACT_POINTS; footIdx++) {
+  // for (int footIdx = 0; footIdx < switched_model::NUM_CONTACT_POINTS; footIdx++) {
+  for (int footIdx = 0; footIdx < 2; footIdx++) {
     const matrix3_t o_R_f = kinematics_.footOrientationInOriginFrame(footIdx, basePose, qJoints);
     std::cout << "\nFoot orientation " << switched_model::feetNames[footIdx] << ":\n" << o_R_f;
-    std::cout << "\nFootOrientationRelativeToBaseFrame:\n" << kinematics_.footOrientationRelativeToBaseFrame(footIdx, qJoints);
-    std::cout << std::endl;
+    std::cout << "\nFootOrientationRelativeToBaseFrame:\n" << kinematics_.footOrientationRelativeToBaseFrame(footIdx, qJoints) << "\n";
     EXPECT_PRED2(matrixEquality_,  o_R_f * xAxis, o_R_b * xAxis);
+  }
+  {
+    using namespace tpl;
+    using trait_t = typename iit::rbd::tpl::TraitSelector<double>::Trait;
+    // {std::cout << "\nType_fr_base_X_fr_LF_FOOT   \n" << typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_FOOT tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
+    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_HAA tmp    ; std::cout << "\nType_fr_base_X_fr_LF_HAA    \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
+    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_HAA tmp    ; std::cout << "\nType_fr_base_X_fr_RF_HAA    \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
+    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_HFE tmp    ; std::cout << "\nType_fr_base_X_fr_LF_HFE    \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
+    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_HFE tmp    ; std::cout << "\nType_fr_base_X_fr_RF_HFE    \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
+    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_HIP tmp    ; std::cout << "\nType_fr_base_X_fr_LF_HIP    \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
+    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_HIP tmp    ; std::cout << "\nType_fr_base_X_fr_RF_HIP    \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
+    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_KFE tmp    ; std::cout << "\nType_fr_base_X_fr_LF_KFE    \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
+    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_KFE tmp    ; std::cout << "\nType_fr_base_X_fr_RF_KFE    \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
+    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL tmp  ; std::cout << "\nType_fr_base_X_fr_LF_WHEEL  \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
+    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_WHEEL tmp  ; std::cout << "\nType_fr_base_X_fr_RF_WHEEL  \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
+    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL_L tmp; std::cout << "\nType_fr_base_X_fr_LF_WHEEL_L\n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
+    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_WHEEL_L tmp; std::cout << "\nType_fr_base_X_fr_RF_WHEEL_L\n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
+    {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL_L_COM tmp; std::cout << "\nType_fr_base_X_fr_LF_WHEEL_L_COM\n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
+    {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_WHEEL_L_COM tmp; std::cout << "\nType_fr_base_X_fr_RF_WHEEL_L_COM\n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
+    {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_WHEEL_L_COM tmp; std::cout << "\nType_fr_base_X_fr_LH_WHEEL_L_COM\n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
+    {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_WHEEL_L_COM tmp; std::cout << "\nType_fr_base_X_fr_RH_WHEEL_L_COM\n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
+
+    std::cout << std::endl;
   }
 }
 

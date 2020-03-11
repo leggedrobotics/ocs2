@@ -1,0 +1,45 @@
+gamma            0.9; (0, 1.0) open-interval, interpolation between default and loopshaping costs
+eliminateInputs    1;
+
+r_filter
+{
+    numFilters 0;
+}
+
+s_inv_filter
+{
+    numFilters 2;
+
+    Filter0;  Filter for forces
+    {
+        numRepeats  12;
+        numPoles    1;
+        numZeros    1;
+        DCGain      1;
+        zeros
+        {
+           (0) -20.0;
+        }
+        poles
+        {
+           (0) -100.0;
+        }
+    }
+
+    Filter1;  Filter for joint velocities
+    {
+        numRepeats  12;
+        numPoles    1;
+        numZeros    1;
+        DCGain      1;
+        zeros
+        {
+           (0) -10.0;
+        }
+        poles
+        {
+           (0) -100.0;
+        }
+    }
+}
+

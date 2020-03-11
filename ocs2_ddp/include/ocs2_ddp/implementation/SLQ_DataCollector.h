@@ -72,7 +72,7 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::collect(const slq_t* constSlqPtr) 
 
   rewindCounter_ = slqPtr->rewindCounter_;
 
-  eventTimes_ = slqPtr->getLogicRulesPtr()->eventTimes();
+  eventTimes_ = slqPtr->getModeSchedule().eventTimes();
   //	subsystemsSequence_ = slqPtr->getLogicRulesPtr()->subsystemsSequence();
 
   // optimized controller
@@ -207,7 +207,7 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::calculateStateInputConstraintsSens
     input_vector_array3_t& EvDevEventTimesProjectedTrajectoriesStockSet) {
   auto* slqPtr = const_cast<slq_t*>(constSlqPtr);
 
-  const size_t numEventTimes = constSlqPtr->getLogicRulesPtr()->getNumEventTimes();
+  const size_t numEventTimes = constSlqPtr->getModeSchedule().eventTimes().size();
 
   // resizing EvDev container
   EvDevEventTimesTrajectoriesStockSet.resize(numEventTimes);

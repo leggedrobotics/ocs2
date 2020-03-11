@@ -130,7 +130,8 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::cre
   ros_msg_conversions_t::createObservationMsg(commandData.mpcInitObservation_, mpcPolicyMsg.initObservation);
   ros_msg_conversions_t::createTargetTrajectoriesMsg(commandData.mpcCostDesiredTrajectories_, mpcPolicyMsg.planTargetTrajectories);
 
-  ros_msg_conversions_t::createModeSequenceMsg(primalSolution.eventTimes_, primalSolution.subsystemsSequence_, mpcPolicyMsg.modeSequence);
+  ros_msg_conversions_t::createModeSequenceMsg(primalSolution.modeSchedule_.eventTimes(), primalSolution.modeSchedule_.modeSequence(),
+                                               mpcPolicyMsg.modeSequence);
 
   ControllerType controllerType = primalSolution.controllerPtr_->getType();
 

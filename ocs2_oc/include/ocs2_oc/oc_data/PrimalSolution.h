@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/control/ControllerBase.h>
+#include <ocs2_core/logic/ModeSchedule.h>
 
 namespace ocs2 {
 
@@ -64,39 +65,41 @@ struct PrimalSolution {
   ~PrimalSolution() = default;
 
   /**
-   * Move constructor
-   */
-  PrimalSolution(PrimalSolution&& other) = default;
-
-  /**
    * Copy constructor
    */
   PrimalSolution(const PrimalSolution& other)
       : timeTrajectory_(other.timeTrajectory_),
         stateTrajectory_(other.stateTrajectory_),
         inputTrajectory_(other.inputTrajectory_),
-        eventTimes_(other.eventTimes_),
-        subsystemsSequence_(other.subsystemsSequence_),
+        modeSchedule_(other.modeSchedule_),
         controllerPtr_(other.controllerPtr_->clone()) {}
 
   /**
-   * Assignment operators
+   * Copy Assignment
    */
-  PrimalSolution& operator=(PrimalSolution other) noexcept {
-    timeTrajectory_.swap(other.timeTrajectory_);
-    stateTrajectory_.swap(other.stateTrajectory_);
-    inputTrajectory_.swap(other.inputTrajectory_);
-    eventTimes_.swap(other.eventTimes_);
-    subsystemsSequence_.swap(other.subsystemsSequence_);
-    controllerPtr_.swap(other.controllerPtr_);
+  PrimalSolution& operator=(const PrimalSolution& other) {
+    timeTrajectory_ = other.timeTrajectory_;
+    stateTrajectory_ = other.stateTrajectory_;
+    inputTrajectory_ = other.inputTrajectory_;
+    modeSchedule_ = other.modeSchedule_;
+    controllerPtr_.reset(other.controllerPtr_->clone());
     return *this;
   }
+
+  /**
+   * Move constructor
+   */
+  PrimalSolution(PrimalSolution&& other) noexcept = default;
+
+  /**
+   * Move Assignement
+   */
+  PrimalSolution& operator=(PrimalSolution&& other) noexcept = default;
 
   scalar_array_t timeTrajectory_;
   state_vector_array_t stateTrajectory_;
   input_vector_array_t inputTrajectory_;
-  scalar_array_t eventTimes_;
-  size_array_t subsystemsSequence_;
+  ModeSchedule modeSchedule_;
   std::unique_ptr<controller_t> controllerPtr_;
 };
 

@@ -50,31 +50,31 @@ MPC_SLQ<STATE_DIM, INPUT_DIM>::MPC_SLQ(const rollout_base_t* rolloutPtr, const d
                                        const mode_sequence_template_t* modeSequenceTemplatePtr /* = nullptr*/,
                                        const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
-    : BASE(partitioningTimes, mpcSettings) {
+    : BASE(partitioningTimes, mpcSettings, std::move(logicRulesPtr)) {
   // SLQ
 
   slqPtr_.reset(new slq_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, slqSettings,
-                          logicRulesPtr, heuristicsFunctionPtr));
+                          heuristicsFunctionPtr));
 
   // set base solver's pointer
   BASE::setBaseSolverPtr(slqPtr_.get());
 
   // set mode sequence template
   if (modeSequenceTemplatePtr) {
-    slqPtr_->getLogicRulesPtr()->setModeSequenceTemplate(*modeSequenceTemplatePtr);
+    this->logicRulesPtr_->setModeSequenceTemplate(*modeSequenceTemplatePtr);
 
     if (mpcSettings.recedingHorizon_) {
-      const scalar_array_t& eventTimes = slqPtr_->getLogicRulesPtr()->eventTimes();
+      const scalar_array_t& eventTimes = this->logicRulesPtr_->eventTimes();
       const scalar_t timeHorizon = BASE::initPartitioningTimes_.back() - BASE::initPartitioningTimes_.front();
       const scalar_t finalTime = BASE::initPartitioningTimes_.back() + timeHorizon;
 
       if (eventTimes.size() == 0) {
         const scalar_t startTime = BASE::initPartitioningTimes_.front();
-        slqPtr_->getLogicRulesPtr()->insertInternalModeSequenceTemplate(startTime, finalTime);
+        this->logicRulesPtr_->insertInternalModeSequenceTemplate(startTime, finalTime);
 
       } else if (eventTimes.back() <= finalTime) {
         const scalar_t startTime = eventTimes.back();
-        slqPtr_->getLogicRulesPtr()->insertInternalModeSequenceTemplate(startTime, finalTime);
+        this->logicRulesPtr_->insertInternalModeSequenceTemplate(startTime, finalTime);
       }
     }
   }

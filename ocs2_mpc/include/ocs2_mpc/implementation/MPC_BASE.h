@@ -33,7 +33,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE()
+MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE(std::shared_ptr<HybridLogicRules> logicRulesPtr)
 
     : initRun_(true),
       logicRulesTemplateUpdated_(false),
@@ -44,13 +44,20 @@ MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE()
       initActivePartitionIndex_(0),
       finalActivePartitionIndex_(0),
       lastControlDesignTime_(0.0),
-      solverPtr_(nullptr) {}
+      solverPtr_(nullptr) {
+  if (!logicRulesPtr) {
+    logicRulesPtr_.reset(new NullLogicRules());
+  } else {
+    logicRulesPtr_ = std::move(logicRulesPtr);
+  }
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE(const scalar_array_t& partitioningTimes, MPC_Settings mpcSettings /*= MPC_Settings()*/)
+MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE(const scalar_array_t& partitioningTimes, MPC_Settings mpcSettings /*= MPC_Settings()*/,
+                                         std::shared_ptr<HybridLogicRules> logicRulesPtr)
 
     : mpcSettings_(std::move(mpcSettings)),
       initRun_(true),
@@ -63,6 +70,12 @@ MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE(const scalar_array_t& partitioningTimes
       finalActivePartitionIndex_(0),
       lastControlDesignTime_(partitioningTimes.front()),
       solverPtr_(nullptr) {
+  if (!logicRulesPtr) {
+    logicRulesPtr_.reset(new NullLogicRules());
+  } else {
+    logicRulesPtr_ = std::move(logicRulesPtr);
+  }
+
   if (partitioningTimes.size() < 2) {
     throw std::runtime_error("There should be at least one time partition.");
   }
@@ -132,14 +145,9 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::rewind() {
   // Solver internal variables
   solverPtr_->rewindOptimizer(initnumPartitions_);
 
-  // Rewind the solver's internal logicRules. It is not necessary to call the
-  // HybridLogicRulesMachine::updateLogicRules() method, since the partitioningTimes_
-  // is updated as well the update method will be called automatically.
-  if (solverPtr_->getLogicRulesPtr()) {
-    const scalar_array_t& eventTimes = solverPtr_->getLogicRulesPtr()->eventTimes();
-    if (eventTimes.size() > 0 && eventTimes.back() <= partitioningTimes_.back()) {
-      solverPtr_->getLogicRulesPtr()->rewind(partitioningTimes_.front(), partitioningTimes_.back());
-    }
+  const scalar_array_t& eventTimes = logicRulesPtr_->eventTimes();
+  if (eventTimes.size() > 0 && eventTimes.back() <= partitioningTimes_.back()) {
+    logicRulesPtr_->rewind(partitioningTimes_.front(), partitioningTimes_.back());
   }
 }
 
@@ -254,17 +262,12 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
   // Update logicRules if new logicRulesTemplate is set
   //*****************************************************************************************
   if (logicRulesTemplateUpdated_) {
-    // set new templates
-    if (!solverPtr_->getLogicRulesPtr()) {
-      throw std::runtime_error("MPC Base: solverPtr_->getLogicRulesPtr() must not be nullptr.");
-    }
     std::lock_guard<std::mutex> lock(newLogicRulesTemplateMutex_);
-    solverPtr_->getLogicRulesPtr()->setModeSequenceTemplate(newLogicRulesTemplate_);
-    solverPtr_->getLogicRulesPtr()->insertInternalModeSequenceTemplate(finalTime, partitioningTimes_.back());
-    solverPtr_->getLogicRulesMachinePtr()->logicRulesUpdated();
-
+    logicRulesPtr_->setModeSequenceTemplate(newLogicRulesTemplate_);
+    logicRulesPtr_->insertInternalModeSequenceTemplate(finalTime, partitioningTimes_.back());
     logicRulesTemplateUpdated_ = false;
   }
+  solverPtr_->setModeSchedule(logicRulesPtr_->getModeSchedule());
 
   /******************************************************************************************
    * cost goal check
@@ -339,18 +342,6 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::getPartitioningTimes(scalar_array_t& partit
   for (size_t i = 0; i <= finalActivePartitionIndex_ + 1; i++) {
     partitioningTimes[i] = partitioningTimes_[i];
   }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-const HybridLogicRules* MPC_BASE<STATE_DIM, INPUT_DIM>::getLogicRulesPtr() const {
-  auto result = solverPtr_->getLogicRulesPtr();
-  if (!result) {
-    throw std::runtime_error("MPC Base: solverPtr_->getLogicRulesPtr() must not be nullptr.");
-  }
-  return result;
 }
 
 /******************************************************************************************************/

@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/misc/Lookup.h>
 
+#include "ocs2_core/logic/ModeSchedule.h"
 #include "ocs2_core/logic/rules/ModeSequenceTemplate.h"
 
 namespace ocs2 {
@@ -84,6 +85,9 @@ class HybridLogicRules {
    * Assignment
    */
   HybridLogicRules& operator=(const HybridLogicRules& other) = default;
+
+  /** gets the mode schedule */
+  ModeSchedule getModeSchedule() { return {eventTimes_, subsystemsSequence_}; };
 
   /**
    * Displays event information.

@@ -139,8 +139,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcPolicyCallback(const ocs2_msgs:
   auto& stateBuffer = this->primalSolutionBuffer_->stateTrajectory_;
   auto& inputBuffer = this->primalSolutionBuffer_->inputTrajectory_;
   auto& controlBuffer = this->primalSolutionBuffer_->controllerPtr_;
-  auto& eventBuffer = this->primalSolutionBuffer_->eventTimes_;
-  auto& subsystemBuffer = this->primalSolutionBuffer_->subsystemsSequence_;
+  auto& modeScheduleBuffer = this->primalSolutionBuffer_->modeSchedule_;
   auto& initObservationBuffer = this->commandBuffer_->mpcInitObservation_;
   auto& costDesiredBuffer = this->commandBuffer_->mpcCostDesiredTrajectories_;
 
@@ -150,8 +149,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcPolicyCallback(const ocs2_msgs:
     stateBuffer.clear();
     inputBuffer.clear();
     controlBuffer.reset(nullptr);
-    eventBuffer.clear();
-    subsystemBuffer.clear();
+    modeScheduleBuffer = ModeSchedule();
     initObservationBuffer = system_observation_t();
     costDesiredBuffer.clear();
 
@@ -163,7 +161,11 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcPolicyCallback(const ocs2_msgs:
 
   ros_msg_conversions_t::readObservationMsg(msg->initObservation, initObservationBuffer);
   ros_msg_conversions_t::readTargetTrajectoriesMsg(msg->planTargetTrajectories, costDesiredBuffer);
+
+  scalar_array_t eventBuffer;
+  size_array_t subsystemBuffer;
   ros_msg_conversions_t::readModeSequenceMsg(msg->modeSequence, eventBuffer, subsystemBuffer);
+  modeScheduleBuffer = ModeSchedule(std::move(eventBuffer), std::move(subsystemBuffer));
 
   this->policyUpdatedBuffer_ = msg->controllerIsUpdated;
 

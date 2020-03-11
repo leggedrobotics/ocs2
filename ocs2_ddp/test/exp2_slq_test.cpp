@@ -102,7 +102,8 @@ TEST(exp2_slq_test, DISABLED_exp2_slq_test) {
 
   // SLQ - single core version
   SLQ<STATE_DIM, INPUT_DIM> slq(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
-                                slqSettings, logicRules);
+                                slqSettings);
+  slq.setModeSchedule(logicRules->getModeSchedule());
 
   // run single core SLQ
   if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {

@@ -75,7 +75,6 @@ class MPC_OCS2 : public MPC_SLQ<STATE_DIM, INPUT_DIM> {
   using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
 
   using mode_sequence_template_t = typename BASE::mode_sequence_template_t;
-  using logic_rules_machine_t = typename BASE::logic_rules_machine_t;
   using event_handler_t = typename BASE::event_handler_t;
   using derivatives_base_t = typename BASE::derivatives_base_t;
   using constraint_base_t = typename BASE::constraint_base_t;

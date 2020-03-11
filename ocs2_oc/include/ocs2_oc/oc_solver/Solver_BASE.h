@@ -47,8 +47,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/ControllerBase.h>
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
-#include <ocs2_core/logic/rules/NullLogicRules.h>
+#include <ocs2_core/logic/ModeSchedule.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 #include <ocs2_core/misc/Numerics.h>
 
@@ -129,9 +128,6 @@ class Solver_BASE {
 
   using primal_solution_t = PrimalSolution<STATE_DIM, INPUT_DIM>;
 
-  using logic_rules_machine_t = HybridLogicRulesMachine;
-  using logic_rules_machine_ptr_t = typename logic_rules_machine_t::Ptr;
-
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
   using controller_array_t = typename controller_t::array_t;
   using controller_ptr_array_t = std::vector<controller_t*>;
@@ -140,8 +136,6 @@ class Solver_BASE {
 
   using synchronized_module_t = SolverSynchronizedModule<STATE_DIM, INPUT_DIM>;
   using synchronized_module_ptr_array_t = std::vector<std::shared_ptr<synchronized_module_t>>;
-
-  explicit Solver_BASE(std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr);
 
   /**
    * Default destructor.
@@ -235,41 +229,6 @@ class Solver_BASE {
   virtual const scalar_array_t& getPartitioningTimes() const = 0;
 
   /**
-   * Returns a pointer to the LogicRulesMachine
-   *
-   * @return a pointer to LogicRulesMachine
-   */
-  logic_rules_machine_t* getLogicRulesMachinePtr() { return logicRulesMachinePtr_.get(); }
-
-  /**
-   * Returns a pointer to the LogicRulesMachine
-   *
-   * @return a pointer to LogicRulesMachine
-   */
-  const logic_rules_machine_t* getLogicRulesMachinePtr() const { return logicRulesMachinePtr_.get(); }
-
-  /**
-   * Returns a constant pointer to the logic rules.
-   *
-   * @return a constant pointer to the logic rules.
-   */
-  const HybridLogicRules* getLogicRulesPtr() const { return logicRulesMachinePtr_->getLogicRulesPtr(); }
-
-  /**
-   * Returns a pointer to the logic rules.
-   *
-   * @return a pointer to the logic rules.
-   */
-  HybridLogicRules* getLogicRulesPtr() { return logicRulesMachinePtr_->getLogicRulesPtr(); }
-
-  /**
-   * Sets logic rules.
-   *
-   * @param logicRules
-   */
-  virtual void setLogicRules(std::shared_ptr<HybridLogicRules> logicRules) { logicRulesMachinePtr_->setLogicRules(std::move(logicRules)); }
-
-  /**
    * Gets the cost function desired trajectories.
    *
    * @param [out] costDesiredTrajectories: A pointer to the cost function desired trajectories
@@ -293,6 +252,12 @@ class Solver_BASE {
   void swapCostDesiredTrajectories(CostDesiredTrajectories& costDesiredTrajectories) {
     costDesiredTrajectories_.swap(costDesiredTrajectories);
   };
+
+  /** sets mode schedule */
+  void setModeSchedule(const ModeSchedule& modeSchedule) { modeSchedule_ = modeSchedule; }
+
+  /** gets mode schedule */
+  const ModeSchedule& getModeSchedule() const { return modeSchedule_; }
 
   /**
    * @brief Returns the optimized policy data.
@@ -369,9 +334,9 @@ class Solver_BASE {
   void postRun();
 
   std::mutex outputDisplayGuardMutex_;
-  logic_rules_machine_ptr_t logicRulesMachinePtr_;
   CostDesiredTrajectories costDesiredTrajectories_;
   synchronized_module_ptr_array_t synchronizedModules_;
+  ModeSchedule modeSchedule_;
 };
 
 }  // namespace ocs2

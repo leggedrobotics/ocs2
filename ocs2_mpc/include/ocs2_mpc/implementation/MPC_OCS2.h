@@ -135,16 +135,17 @@ bool MPC_OCS2<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
   bool ownership = slqLock.try_lock();
   if (ownership && !BASE::initRun_) {
     bool rewaindTookPlace = currentTime > 0.1 && BASE::slqPtr_->getRewindCounter() != slqDataCollectorPtr_->rewindCounter_;
-    bool modeSequenceUpdated = subsystemsSequenceOptimized_ != BASE::slqPtr_->getLogicRulesPtr()->subsystemsSequence();
+    bool modeSequenceUpdated = subsystemsSequenceOptimized_ != BASE::slqPtr_->getModeSchedule().modeSequence();
     if (!rewaindTookPlace && !modeSequenceUpdated) {
       // adjust the SLQ internal controller using trajectory spreading approach
-      if (!BASE::slqPtr_->getLogicRulesPtr()->eventTimes().empty()) {
-        BASE::slqPtr_->adjustController(eventTimesOptimized_, BASE::slqPtr_->getLogicRulesPtr()->eventTimes());
+      if (!BASE::slqPtr_->getModeSchedule().eventTimes().empty()) {
+        BASE::slqPtr_->adjustController(eventTimesOptimized_, BASE::slqPtr_->getModeSchedule().eventTimes());
       }
 
-      BASE::slqPtr_->getLogicRulesPtr()->eventTimes() = eventTimesOptimized_;
-      BASE::slqPtr_->getLogicRulesPtr()->update();
-      BASE::slqPtr_->getLogicRulesMachinePtr()->logicRulesUpdated();
+      // TODO : set eventTimesOptimized_ in the correct place
+      //      this->logicRulesPtr_->eventTimes() = eventTimesOptimized_;
+      //      this->logicRulesPtr_->update();
+      //      this->getLogicRulesMachinePtr()->logicRulesUpdated();
     }
 
     // collect SLQ variables

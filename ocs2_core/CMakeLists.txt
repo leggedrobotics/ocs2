@@ -51,6 +51,7 @@ add_library(${PROJECT_NAME}
   src/automatic_differentation/CppAdSparsity.cpp
   src/integration/Integrator.cpp
   src/logic/machine/HybridLogicRulesMachine.cpp
+  src/logic/ModeSchedule.cpp
   src/loopshaping/LoopshapingPropertyTree.cpp
   src/loopshaping/LoopshapingFilter.cpp
   src/misc/LinearAlgebra.cpp

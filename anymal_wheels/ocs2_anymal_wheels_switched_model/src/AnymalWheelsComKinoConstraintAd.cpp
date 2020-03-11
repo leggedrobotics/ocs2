@@ -52,11 +52,11 @@ void AnymalWheelsComKinoConstraintAd::setCurrentStateAndControl(const scalar_t& 
     equalityStateInputConstraintCollection_.get(footName + "_ZeroForce").setActivity(!stanceLegs_[footIdx]);
 
     // Active foot placement for stance legs
-    auto _o_EEVelConstraint = equalityStateInputConstraintCollection_.template get<EndEffectorVelocityConstraint_t>(footName + "_o_EEVel");
+    auto& _o_EEVelConstraint = equalityStateInputConstraintCollection_.template get<EndEffectorVelocityConstraint_t>(footName + "_o_EEVel");
     EndEffectorVelocityConstraintSettings_t _o_eeVelConSettings(1, 3);
 
     // Rolling InFootFrame Velocity constraint for stance legs
-    auto _f_EEVelInFootFrameConstraint =
+    auto& _f_EEVelInFootFrameConstraint =
         equalityStateInputConstraintCollection_.template get<EndEffectorVelocityInFootFrameConstraint_t>(footName + "_f_EEVel");
 
     if (stanceLegs_[footIdx]) {

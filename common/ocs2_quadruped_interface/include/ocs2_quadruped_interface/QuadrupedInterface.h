@@ -109,7 +109,9 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
 
   const cost_function_t& getCost() const override { return *costFunctionPtr_; }
 
-  const constraint_t* getConstraintPtr() const override { return constraintsPtr_.get(); }
+  const BASE::constraint_t* getConstraintPtr() const override { return constraintsPtr_.get(); }
+
+  const constraint_t* getPointFootConstraintPtr() const { return constraintsPtr_.get(); }
 
   const operating_point_t& getOperatingPoints() const override { return *operatingPointsPtr_; }
 

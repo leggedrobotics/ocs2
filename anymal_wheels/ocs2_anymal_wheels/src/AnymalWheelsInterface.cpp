@@ -16,8 +16,8 @@ WheeledQuadrupedInterface::WheeledQuadrupedInterface(const kinematic_model_t& ki
                                                      const com_model_t& comModel, const ad_com_model_t& adComModel,
                                                      const std::string& pathToConfigFolder)
     : Base(kinematicModel, adKinematicModel, comModel, adComModel, pathToConfigFolder) {
-  constraintsPtr_.reset(new constraint_t(adKinematicModel, adComModel,
-                                         std::static_pointer_cast<Base::logic_rules_t>(Base::getLogicRulesPtr()), Base::modelSettings()));
+  constraintsPtr_.reset(new wheels_constraint_t(
+      adKinematicModel, adComModel, std::static_pointer_cast<Base::logic_rules_t>(Base::getLogicRulesPtr()), Base::modelSettings()));
 }
 
 std::unique_ptr<anymal::WheeledQuadrupedInterface> getAnymalWheelsInterface(const std::string& taskName) {

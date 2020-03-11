@@ -12,7 +12,8 @@ namespace anymal {
 class WheeledQuadrupedInterface : public switched_model::QuadrupedInterface {
  public:
   using Base = switched_model::QuadrupedInterface;
-  // using wheels_constraint_t = switched_model::AnymalWheelsComKinoConstraintAd;
+  using base_constraint_t = Base::BASE::constraint_t;
+  using wheels_constraint_t = switched_model::AnymalWheelsComKinoConstraintAd;
 
   /**
    *
@@ -28,10 +29,12 @@ class WheeledQuadrupedInterface : public switched_model::QuadrupedInterface {
    */
   ~WheeledQuadrupedInterface() override = default;
 
-  const constraint_t* getConstraintPtr() const override { return constraintsPtr_.get(); }
+  const base_constraint_t* getConstraintPtr() const override { return constraintsPtr_.get(); }
+
+  const wheels_constraint_t* getWheelConstraintPtr() const { return constraintsPtr_.get(); }
 
  private:
-  std::unique_ptr<constraint_t> constraintsPtr_;
+  std::unique_ptr<wheels_constraint_t> constraintsPtr_;
 
 }; /* WheeledQuadrupedInterface */
 

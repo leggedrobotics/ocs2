@@ -11,7 +11,8 @@
 
 namespace anymal {
 
-std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAnymalWheelsLoopshapingInterface(const std::string& taskName) {
+std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAnymalWheelsLoopshapingInterface(
+    const std::string& taskName) {
   std::string taskFolder = getTaskFileFolderAnymalWheelsLoopshaping(taskName);
   std::cerr << "Loading task file from: " << taskFolder << std::endl;
 

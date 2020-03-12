@@ -48,8 +48,8 @@ void QuadrupedVisualizer::update(const system_observation_t& observation, const 
     const auto timeStamp = ros::Time(observation.time());
     publishObservation(timeStamp, observation);
     publishDesiredTrajectory(timeStamp, command.mpcCostDesiredTrajectories_);
-    publishOptimizedStateTrajectory(timeStamp, primalSolution.timeTrajectory_, primalSolution.stateTrajectory_, primalSolution.eventTimes_,
-                                    primalSolution.subsystemsSequence_);
+    publishOptimizedStateTrajectory(timeStamp, primalSolution.timeTrajectory_, primalSolution.stateTrajectory_,
+                                    primalSolution.modeSchedule_);
     lastTime = observation.time();
   }
 }
@@ -187,8 +187,8 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
 }
 
 void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, const scalar_array_t& mpcTimeTrajectory,
-                                                          const state_vector_array_t& mpcStateTrajectory, const scalar_array_t& eventTimes,
-                                                          const size_array_t& subsystemSequence) const {
+                                                          const state_vector_array_t& mpcStateTrajectory,
+                                                          const ocs2::ModeSchedule& modeSchedule) const {
   // Reserve Feet msg
   std::vector<std::vector<geometry_msgs::Point>> feetMsgs(NUM_CONTACT_POINTS);
   std::for_each(feetMsgs.begin(), feetMsgs.end(), [&](std::vector<geometry_msgs::Point>& v) { v.reserve(mpcStateTrajectory.size()); });
@@ -236,6 +236,8 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
   sphereList.type = visualization_msgs::Marker::SPHERE_LIST;
   sphereList.scale.x = footMarkerDiameter_;
   sphereList.ns = "Future footholds";
+  const auto& eventTimes = modeSchedule.eventTimes();
+  const auto& subsystemSequence = modeSchedule.modeSequence();
   const double tStart = mpcTimeTrajectory.front();
   const double tEnd = mpcTimeTrajectory.back();
   for (int p = 0; p < subsystemSequence.size(); ++p) {

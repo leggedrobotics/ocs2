@@ -73,8 +73,7 @@ class QuadrupedVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> {
   void publishDesiredTrajectory(ros::Time timeStamp, const ocs2::CostDesiredTrajectories& costDesiredTrajectory) const;
 
   void publishOptimizedStateTrajectory(ros::Time timeStamp, const scalar_array_t& mpcTimeTrajectory,
-                                       const state_vector_array_t& mpcStateTrajectory, const scalar_array_t& eventTimes,
-                                       const size_array_t& subsystemSequence) const;
+                                       const state_vector_array_t& mpcStateTrajectory, const ocs2::ModeSchedule& modeSchedule) const;
 
  private:
   void publishJointTransforms(ros::Time timeStamp, const joint_coordinate_t& jointAngles) const;

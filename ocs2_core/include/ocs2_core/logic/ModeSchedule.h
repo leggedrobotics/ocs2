@@ -33,38 +33,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 
 #include <ocs2_core/Dimensions.h>
-#include <ocs2_core/misc/Lookup.h>
 
 namespace ocs2 {
 
 /**
  * Defines a sequence of N modes, separated by N-1 event times
  */
-class ModeSchedule {
- public:
+struct ModeSchedule {
   using scalar_t = typename Dimensions<0, 0>::scalar_t;
-
-  /** Default constructor for a single mode without events */
-  ModeSchedule() = default;
 
   /**
    * Constructor for a ModeSchedule. The number of phases must be greater than zero (N > 0)
-   * @param [in] eventTimes : event times of size N - 1
-   * @param [in] modeSequence : mode sequence of size N
+   * @param [in] eventTimesInput : event times of size N - 1
+   * @param [in] modeSequenceInput : mode sequence of size N
    */
-  ModeSchedule(std::vector<scalar_t> eventTimes, std::vector<size_t> modeSequence);
-
-  /** Gets a const reference to the event times */
-  const std::vector<scalar_t>& eventTimes() const { return eventTimes_; }
-
-  /** Gets a const reference to the sequence of modes */
-  const std::vector<size_t>& modeSequence() const { return modeSequence_; }
-
-  /** Gets the event times */
-  std::vector<scalar_t>& eventTimes() { return eventTimes_; }
-
-  /** Gets the sequence of modes */
-  std::vector<size_t>& modeSequence() { return modeSequence_; }
+  ModeSchedule(std::vector<scalar_t> eventTimesInput = std::vector<scalar_t>{},
+               std::vector<size_t> modeSequenceInput = std::vector<size_t>{0});
 
   /**
    *  Returns the mode based on the query time.
@@ -80,9 +64,8 @@ class ModeSchedule {
    */
   size_t operator[](scalar_t time) const;
 
- private:
-  std::vector<scalar_t> eventTimes_{};
-  std::vector<size_t> modeSequence_{0};
+  std::vector<scalar_t> eventTimes;  // event times of size N - 1
+  std::vector<size_t> modeSequence;  // mode sequence of size N
 };
 
 std::ostream& operator<<(std::ostream& stream, const ModeSchedule& modeSchedule);

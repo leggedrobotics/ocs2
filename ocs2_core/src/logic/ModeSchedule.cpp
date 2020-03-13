@@ -27,38 +27,35 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-//
-// Created by rgrandia on 09.03.20.
-//
-
 #include "ocs2_core/logic/ModeSchedule.h"
 
 #include <ocs2_core/misc/Display.h>
+#include <ocs2_core/misc/Lookup.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ModeSchedule::ModeSchedule(std::vector<scalar_t> eventTimes, std::vector<size_t> modeSequence)
-    : eventTimes_(std::move(eventTimes)), modeSequence_(std::move(modeSequence)) {
-  assert(eventTimes_.size() + 1 == modeSequence_.size());
+ModeSchedule::ModeSchedule(std::vector<scalar_t> eventTimesInput, std::vector<size_t> modeSequenceInput)
+    : eventTimes(std::move(eventTimesInput)), modeSequence(std::move(modeSequenceInput)) {
+  assert(eventTimes.size() + 1 == modeSequence.size());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 size_t ModeSchedule::operator[](scalar_t time) const {
-  const auto ind = lookup::findIndexInTimeArray(eventTimes_, time);
-  return modeSequence_[ind];
+  const auto ind = lookup::findIndexInTimeArray(eventTimes, time);
+  return modeSequence[ind];
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::ostream& operator<<(std::ostream& stream, const ModeSchedule& modeSchedule) {
-  stream << "switching times: \t {" << toDelimitedString(modeSchedule.eventTimes()) << "}\n";
-  stream << "mode sequence: \t {" << toDelimitedString(modeSchedule.modeSequence()) << "}\n";
+  stream << "switching times: \t {" << toDelimitedString(modeSchedule.eventTimes) << "}\n";
+  stream << "mode sequence: \t {" << toDelimitedString(modeSchedule.modeSequence) << "}\n";
   return stream;
 }
 

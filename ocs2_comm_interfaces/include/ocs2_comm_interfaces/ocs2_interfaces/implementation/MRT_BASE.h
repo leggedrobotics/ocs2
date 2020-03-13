@@ -115,7 +115,7 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const s
   // perform a rollout
   if (policyUpdated_) {
     rolloutPtr_->run(currentTime, currentState, finalTime, currentPrimalSolution_->controllerPtr_.get(),
-                     currentPrimalSolution_->modeSchedule_.eventTimes(), timeTrajectory, postEventIndicesStock, stateTrajectory,
+                     currentPrimalSolution_->modeSchedule_.eventTimes, timeTrajectory, postEventIndicesStock, stateTrajectory,
                      inputTrajectory);
   } else {
     throw std::runtime_error("MRT_ROS_interface: policy should be updated before rollout.");

@@ -76,15 +76,15 @@ template <class ContainerAllocator>
 void createModeScheduleMsg(const ModeSchedule& modeSchedule, ocs2_msgs::mode_schedule_<ContainerAllocator>& modeScheduleMsg) {
   // event times
   modeScheduleMsg.eventTimes.clear();
-  modeScheduleMsg.eventTimes.reserve(modeSchedule.eventTimes().size());
-  for (const auto& ti : modeSchedule.eventTimes()) {
+  modeScheduleMsg.eventTimes.reserve(modeSchedule.eventTimes.size());
+  for (const auto& ti : modeSchedule.eventTimes) {
     modeScheduleMsg.eventTimes.push_back(ti);
   }
 
   // mode sequence
   modeScheduleMsg.modeSequence.clear();
-  modeScheduleMsg.modeSequence.reserve(modeSchedule.modeSequence().size());
-  for (const auto& si : modeSchedule.modeSequence()) {
+  modeScheduleMsg.modeSequence.reserve(modeSchedule.modeSequence.size());
+  for (const auto& si : modeSchedule.modeSequence) {
     modeScheduleMsg.modeSequence.push_back(si);
   }
 }

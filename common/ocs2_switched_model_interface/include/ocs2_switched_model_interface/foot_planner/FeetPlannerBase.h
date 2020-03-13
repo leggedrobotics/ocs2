@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "SplineCpg.h"
+#include "ocs2_core/logic/ModeSchedule.h"
 #include "ocs2_switched_model_interface/core/MotionPhaseDefinition.h"
 
 namespace switched_model {
@@ -37,12 +38,11 @@ class FeetPlannerBase {
    * Plans the CPG for the swing legs in the indexed mode.
    *
    * @param [in] index: The index of the subsystem for which the CPG should be designed.
-   * @param [in] phaseIDsStock: An array of the natural number which gives a unique ID to 2^n (e.g. for
-   * a quadruped 2^4) possible stance leg choices.
+   * @param [in] modeschedule: containing event times and subsystem definitions
    * @param [in] eventTimes: The event times.
    * @return plannedCPG: An array of the CPG class for each endeffector.
    */
-  virtual feet_cpg_ptr_t planSingleMode(size_t index, const size_array_t& phaseIDsStock, const scalar_array_t& eventTimes) = 0;
+  virtual feet_cpg_ptr_t planSingleMode(size_t index, const ocs2::ModeSchedule& modeSchedule) = 0;
 
  protected:
   /**

@@ -28,11 +28,9 @@ FeetZDirectionPlanner* FeetZDirectionPlanner::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto FeetZDirectionPlanner::planSingleMode(size_t index, const size_array_t& phaseIDsStock, const scalar_array_t& eventTimes)
-    -> feet_cpg_ptr_t {
-  if (eventTimes.size() + 1 != phaseIDsStock.size()) {
-    throw std::runtime_error("The number of switching modes should be 1 plus number of event times.");
-  }
+auto FeetZDirectionPlanner::planSingleMode(size_t index, const ocs2::ModeSchedule& modeSchedule) -> feet_cpg_ptr_t {
+  const auto& phaseIDsStock = modeSchedule.modeSequence();
+  const auto& eventTimes = modeSchedule.eventTimes();
 
   // update FeetZDirectionPlanner if a new phaseIDsStock is set
   if (phaseIDsStock_ != phaseIDsStock) {

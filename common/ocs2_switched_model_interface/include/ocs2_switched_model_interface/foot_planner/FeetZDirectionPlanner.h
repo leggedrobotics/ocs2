@@ -41,7 +41,7 @@ class FeetZDirectionPlanner : public FeetPlannerBase {
   /** clone the class */
   FeetZDirectionPlanner* clone() const override;
 
-  feet_cpg_ptr_t planSingleMode(size_t index, const size_array_t& phaseIDsStock, const scalar_array_t& eventTimes) override;
+  feet_cpg_ptr_t planSingleMode(size_t index, const ocs2::ModeSchedule& modeSchedule) override;
 
  private:
   void checkThatIndicesAreValid(int leg, int index, int startIndex, int finalIndex) const;

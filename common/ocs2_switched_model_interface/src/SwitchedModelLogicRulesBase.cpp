@@ -109,7 +109,7 @@ void SwitchedModelLogicRulesBase::getMotionPhaseLogics(const size_t& index, cont
   // plan feetReferencePtrStock_[index] if it is not yet updated
   std::lock_guard<std::mutex> lock(feetReferenceUpdateMutex_);
   if (!feetReferenceUpdatedStock_[index]) {
-    feetReferencePtrStock_[index] = feetPlannerPtr_->planSingleMode(index, subsystemsSequence(), eventTimes());
+    feetReferencePtrStock_[index] = feetPlannerPtr_->planSingleMode(index, {eventTimes(), subsystemsSequence()});
     feetReferenceUpdatedStock_[index] = true;
   }
 

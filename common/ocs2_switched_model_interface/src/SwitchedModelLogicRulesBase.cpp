@@ -5,23 +5,20 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SwitchedModelLogicRulesBase::SwitchedModelLogicRulesBase(const feet_planner_ptr_t& feetPlannerPtr,
+SwitchedModelLogicRulesBase::SwitchedModelLogicRulesBase(std::shared_ptr<feet_planner_t> feetPlannerPtr,
                                                          scalar_t phaseTransitionStanceTime /*= 0.4*/)
-
-    : BASE(),
-      feetPlannerPtr_(feetPlannerPtr),  // shallow copy: points to the same asset
+    : feetPlannerPtr_(std::move(feetPlannerPtr)),  // shallow copy: points to the same asset
       phaseTransitionStanceTime_(phaseTransitionStanceTime) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 SwitchedModelLogicRulesBase::SwitchedModelLogicRulesBase(const SwitchedModelLogicRulesBase& rhs)
-
     : BASE(rhs),
       feetPlannerPtr_(rhs.feetPlannerPtr_),
       phaseTransitionStanceTime_(rhs.phaseTransitionStanceTime_),
       contactFlagsStock_(rhs.contactFlagsStock_),
-      feetReferencePtrStock_(rhs.feetReferencePtrStock_.size()),  // shallow copy: points to the same asset
+      feetReferencePtrStock_(rhs.feetReferencePtrStock_.size()),  // no copy: reset to nullPtrs
       feetReferenceUpdatedStock_(rhs.feetReferenceUpdatedStock_.size(), false) {}
 
 /******************************************************************************************************/
@@ -53,8 +50,9 @@ SwitchedModelLogicRulesBase& SwitchedModelLogicRulesBase::operator=(const Switch
     feetPlannerPtr_ = other.feetPlannerPtr_;
     phaseTransitionStanceTime_ = other.phaseTransitionStanceTime_;
     contactFlagsStock_ = other.contactFlagsStock_;
-    feetReferencePtrStock_ = other.feetReferencePtrStock_;
-    feetReferenceUpdatedStock_ = other.feetReferenceUpdatedStock_;
+    // no copy: reset to nullPtrs
+    feetReferencePtrStock_ = std::vector<feet_cpg_ptr_t>(other.feetReferencePtrStock_.size());
+    feetReferenceUpdatedStock_ = std::vector<bool>(other.feetReferenceUpdatedStock_.size(), false);
   }
 
   return *this;
@@ -110,11 +108,9 @@ void SwitchedModelLogicRulesBase::getMotionPhaseLogics(const size_t& index, cont
 
   // plan feetReferencePtrStock_[index] if it is not yet updated
   std::lock_guard<std::mutex> lock(feetReferenceUpdateMutex_);
-  if (feetReferenceUpdatedStock_[index] == false) {
-    if (feetReferenceUpdatedStock_[index] == false) {
-      feetPlannerPtr_->planSingleMode(index, subsystemsSequence(), eventTimes(), feetReferencePtrStock_[index]);
-      feetReferenceUpdatedStock_[index] = true;
-    }
+  if (!feetReferenceUpdatedStock_[index]) {
+    feetReferencePtrStock_[index] = feetPlannerPtr_->planSingleMode(index, subsystemsSequence(), eventTimes());
+    feetReferenceUpdatedStock_[index] = true;
   }
 
   for (size_t i = 0; i < feetReferencePtrStock_[index].size(); i++) {

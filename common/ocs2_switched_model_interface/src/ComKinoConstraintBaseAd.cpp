@@ -71,7 +71,7 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
     } else {  // in swing: z-velocity is provided
       eeVelConSettings.b.resize(1);
       eeVelConSettings.A.resize(1, 3);
-      eeVelConSettings.b << -zDirectionRefsPtr_[i]->calculateVelocity(Base::t_);
+      eeVelConSettings.b << -zDirectionRefsPtr_[i]->velocity(Base::t_);
       eeVelConSettings.A << 0, 0, 1;
     }
     EEVelConstraint.configure(eeVelConSettings);

@@ -50,6 +50,10 @@ add_library(${PROJECT_NAME}
 		src/KinematicsModelBase.cpp
 		src/ComModelBase.cpp
 		src/ModelSettings.cpp
+		src/foot_planner/CubicSpline.cpp
+		src/foot_planner/SplineCpg.cpp
+		src/foot_planner/FeetPlannerBase.cpp
+		src/foot_planner/FeetZDirectionPlanner.cpp
 		)
 
 add_dependencies(${PROJECT_NAME}

@@ -13,7 +13,7 @@
 
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/foot_planner/FeetPlannerBase.h"
-#include "ocs2_switched_model_interface/foot_planner/cpg/CPG_BASE.h"
+#include "ocs2_switched_model_interface/foot_planner/SplineCpg.h"
 
 namespace switched_model {
 
@@ -30,11 +30,9 @@ class SwitchedModelLogicRulesBase : public ocs2::HybridLogicRules {
   using typename BASE::scalar_t;
   using typename BASE::size_array_t;
 
-  using foot_cpg_t = CPG_BASE<scalar_t>;
-  using feet_planner_t = FeetPlannerBase<scalar_t, foot_cpg_t>;
-  using feet_planner_ptr_t = typename feet_planner_t::Ptr;
-  using feet_cpg_ptr_t = typename feet_planner_t::feet_cpg_ptr_t;
-  using feet_cpg_const_ptr_t = typename feet_planner_t::feet_cpg_const_ptr_t;
+  using foot_cpg_t = SplineCpg;
+  using feet_planner_t = FeetPlannerBase;
+  using feet_cpg_ptr_t = FeetPlannerBase::feet_cpg_ptr_t;
 
  public:
   /**
@@ -48,7 +46,7 @@ class SwitchedModelLogicRulesBase : public ocs2::HybridLogicRules {
    * @param [in] feetPlannerPtr: A pointer to the FeetPlanner class.
    * @param [in] phaseTransitionStanceTime: The phase transition stance time.
    */
-  explicit SwitchedModelLogicRulesBase(const feet_planner_ptr_t& feetPlannerPtr, scalar_t phaseTransitionStanceTime = 0.4);
+  explicit SwitchedModelLogicRulesBase(std::shared_ptr<feet_planner_t> feetPlannerPtr, scalar_t phaseTransitionStanceTime = 0.4);
 
   /**
    * Copy constructor
@@ -142,7 +140,7 @@ class SwitchedModelLogicRulesBase : public ocs2::HybridLogicRules {
   mutable std::vector<feet_cpg_ptr_t> feetReferencePtrStock_;
   mutable std::vector<bool> feetReferenceUpdatedStock_;
 
-  feet_planner_ptr_t feetPlannerPtr_;
+  std::shared_ptr<feet_planner_t> feetPlannerPtr_;
 
   scalar_t phaseTransitionStanceTime_;
 

@@ -8,7 +8,7 @@
 #include <ocs2_switched_model_interface/core/Rotations.h>
 #include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
 #include <ocs2_switched_model_interface/foot_planner/FeetZDirectionPlanner.h>
-#include <ocs2_switched_model_interface/foot_planner/cpg/SplineCPG.h>
+#include <ocs2_switched_model_interface/foot_planner/SplineCpg.h>
 
 namespace switched_model {
 
@@ -110,11 +110,8 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
   std::cerr << std::endl;
 
   // logic rule
-  using cpg_t = SplineCPG<scalar_t>;
-  using feet_z_planner_t = FeetZDirectionPlanner<scalar_t, cpg_t>;
-  using feet_z_planner_ptr_t = std::shared_ptr<feet_z_planner_t>;
-  feet_z_planner_ptr_t feetZPlannerPtr(new feet_z_planner_t(modelSettings_.swingLegLiftOff_, 1.0 /*swingTimeScale*/,
-                                                            modelSettings_.liftOffVelocity_, modelSettings_.touchDownVelocity_));
+  auto feetZPlannerPtr = std::shared_ptr<FeetZDirectionPlanner>(new FeetZDirectionPlanner(
+      modelSettings_.swingLegLiftOff_, 1.0 /*swingTimeScale*/, modelSettings_.liftOffVelocity_, modelSettings_.touchDownVelocity_));
 
   logicRulesPtr_ = std::shared_ptr<logic_rules_t>(new logic_rules_t(feetZPlannerPtr, modelSettings_.phaseTransitionStanceTime_));
   logicRulesPtr_->setModeSequence(initSwitchingModes, initEventTimes);

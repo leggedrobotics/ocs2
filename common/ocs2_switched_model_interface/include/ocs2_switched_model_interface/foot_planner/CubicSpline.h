@@ -5,109 +5,39 @@
  *      Author: farbod
  */
 
-#ifndef CUBICSPLINE_H_
-#define CUBICSPLINE_H_
+#pragma once
 
-#include <cmath>
-#include <limits>
-#include <memory>
-#include <string>
+#include <ocs2_core/Dimensions.h>
 
 namespace switched_model {
 
-template <typename scalar_t = double>
 class CubicSpline {
+  using scalar_t = ocs2::Dimensions<0, 0>::scalar_t;
+
  public:
-  typedef std::shared_ptr<CubicSpline> Ptr;
+  struct Node {
+    scalar_t time;
+    scalar_t position;
+    scalar_t velocity;
+  };
 
-  CubicSpline() = default;
+  CubicSpline();
 
-  ~CubicSpline() = default;
+  CubicSpline(Node start, Node end);
 
-  void setConstant(const scalar_t& p0) {
-    t0_ = 0.0;
-    t1_ = 1.0;
-    dt_ = 1.0;
+  scalar_t position(scalar_t time) const;
 
-    c0_ = p0;
-    c1_ = c2_ = c3_ = 0.0;
+  scalar_t velocity(scalar_t time) const;
 
-    dev_c0_ = dev_c1_ = dev_c2_ = dev_c3_ = 0.0;
-  }
+  scalar_t acceleration(scalar_t time) const;
 
-  void set(const scalar_t& t0, const scalar_t& p0, const scalar_t& v0, const scalar_t& t1, const scalar_t& p1, const scalar_t& v1) {
-    if (t1 < t0)
-      throw std::runtime_error("The final time should not be less than the start time (" + std::to_string(t0) + "<=" + std::to_string(t1) +
-                               ").");
+  scalar_t startTimeDerivative(scalar_t t) const;
 
-    t0_ = t0;
-    t1_ = t1;
-    dt_ = t1 - t0;
-
-    scalar_t dp = p1 - p0;
-    scalar_t dv = v1 - v0;
-
-    dev_c0_ = 0.0;
-    dev_c1_ = v0;
-    dev_c2_ = -(3.0 * v0 + dv);
-    dev_c3_ = (2.0 * v0 + dv);
-
-    c0_ = dev_c0_ * dt_ + p0;
-    c1_ = dev_c1_ * dt_;
-    c2_ = dev_c2_ * dt_ + 3.0 * dp;
-    c3_ = dev_c3_ * dt_ - 2.0 * dp;
-  }
-
-  scalar_t evaluateSplinePosition(const scalar_t& time) const {
-    scalar_t tn = normalizedTime(time);
-    return c3_ * std::pow(tn, 3) + c2_ * std::pow(tn, 2) + c1_ * tn + c0_;
-  }
-
-  scalar_t evaluateSplineVelocity(const scalar_t& time) const {
-    scalar_t tn = normalizedTime(time);
-    return (3.0 * c3_ * std::pow(tn, 2) + 2.0 * c2_ * tn + c1_) / dt_;
-  }
-
-  scalar_t evaluateSplineAcceleration(const scalar_t& time) const {
-    scalar_t tn = normalizedTime(time);
-    return (6.0 * c3_ * tn + 2.0 * c2_) / std::pow(dt_, 2);
-  }
-
-  scalar_t evaluateStartTimeDerivative(const scalar_t& t) const {
-    if (dt_ > std::numeric_limits<scalar_t>::epsilon()) {
-      scalar_t tn = normalizedTime(t);
-      scalar_t dev_coff = -(dev_c3_ * std::pow(tn, 3) + dev_c2_ * std::pow(tn, 2) + dev_c1_ * tn + dev_c0_);
-
-      scalar_t dev_tn = -(t1_ - t) / std::pow(dt_, 2);
-
-      return evaluateSplineVelocity(t) * dt_ * dev_tn + dev_coff;
-    } else {
-      return 0.0;
-    }
-  }
-
-  scalar_t evaluateFinalTimeDerivative(const scalar_t& t) const {
-    if (dt_ > std::numeric_limits<scalar_t>::epsilon()) {
-      scalar_t tn = normalizedTime(t);
-      scalar_t dev_coff = (dev_c3_ * std::pow(tn, 3) + dev_c2_ * std::pow(tn, 2) + dev_c1_ * tn + dev_c0_);
-
-      scalar_t dev_tn = -(t - t0_) / std::pow(dt_, 2);
-
-      return evaluateSplineVelocity(t) * dt_ * dev_tn + dev_coff;
-    } else {
-      return 0.0;
-    }
-  }
-
- protected:
-  scalar_t normalizedTime(const scalar_t& t) const {
-    if (dt_ > std::numeric_limits<scalar_t>::epsilon())
-      return (t - t0_) / dt_;
-    else
-      return 0.0;
-  }
+  scalar_t finalTimeDerivative(scalar_t t) const;
 
  private:
+  scalar_t normalizedTime(scalar_t t) const;
+
   scalar_t t0_;
   scalar_t t1_;
   scalar_t dt_;
@@ -124,5 +54,3 @@ class CubicSpline {
 };
 
 }  // namespace switched_model
-
-#endif /* CUBICSPLINE_H_ */

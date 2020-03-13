@@ -27,44 +27,58 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_core/logic/ModeSchedule.h"
-
-#include <ocs2_core/misc/Display.h>
-#include <ocs2_core/misc/Lookup.h>
+#include "ocs2_oc/oc_solver/ModeScheduleManager.h"
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ModeSchedule::ModeSchedule(std::vector<scalar_t> eventTimesInput, std::vector<size_t> modeSequenceInput)
-    : eventTimes(std::move(eventTimesInput)), modeSequence(std::move(modeSequenceInput)) {
-  assert(eventTimes.size() + 1 == modeSequence.size());
+template <size_t STATE_DIM, size_t INPUT_DIM>
+ModeScheduleManager<STATE_DIM, INPUT_DIM>::ModeScheduleManager(ModeSchedule modeSchedule)
+    : modeSchedule_(std::move(modeSchedule)), modeScheduleBuffer_(), modeScheduleUpdated_(false) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ModeScheduleManager<STATE_DIM, INPUT_DIM>::preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+                                                             const CostDesiredTrajectories& costDesiredTrajectory) {
+  if (modeScheduleUpdated_) {
+    std::lock_guard<std::mutex> lock(modeScheduleMutex_);
+    modeScheduleUpdated_ = false;
+    swap(modeSchedule_, modeScheduleBuffer_);
+  }
+  preSolverRunImpl(initTime, finalTime, currentState, costDesiredTrajectory);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t ModeSchedule::operator[](scalar_t time) const {
-  const auto ind = lookup::findIndexInTimeArray(eventTimes, time);
-  return modeSequence[ind];
+template <size_t STATE_DIM, size_t INPUT_DIM>
+const ModeSchedule& ModeScheduleManager<STATE_DIM, INPUT_DIM>::getModeSchedule() const {
+  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
+  return modeSchedule_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void swap(ModeSchedule& lh, ModeSchedule& rh) {
-  lh.eventTimes.swap(rh.eventTimes);
-  lh.modeSequence.swap(rh.modeSequence);
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ModeScheduleManager<STATE_DIM, INPUT_DIM>::setModeSchedule(const ModeSchedule& modeSchedule) {
+  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
+  modeScheduleUpdated_ = true;
+  modeScheduleBuffer_ = modeSchedule;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::ostream& operator<<(std::ostream& stream, const ModeSchedule& modeSchedule) {
-  stream << "switching times: \t {" << toDelimitedString(modeSchedule.eventTimes) << "}\n";
-  stream << "mode sequence: \t {" << toDelimitedString(modeSchedule.modeSequence) << "}\n";
-  return stream;
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ModeScheduleManager<STATE_DIM, INPUT_DIM>::setModeSchedule(ModeSchedule&& modeSchedule) {
+  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
+  modeScheduleUpdated_ = true;
+  modeScheduleBuffer_ = std::move(modeSchedule);
 }
 
 }  // namespace ocs2

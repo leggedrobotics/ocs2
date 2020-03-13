@@ -68,6 +68,8 @@ struct ModeSchedule {
   std::vector<size_t> modeSequence;  // mode sequence of size N
 };
 
+void swap(ModeSchedule& lh, ModeSchedule& rh);
+
 std::ostream& operator<<(std::ostream& stream, const ModeSchedule& modeSchedule);
 
 }  // namespace ocs2

@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <mutex>
+
 #include <ocs2_core/logic/ModeSchedule.h>
 
 #include "ocs2_oc/oc_solver/SolverSynchronizedModule.h"
@@ -46,29 +48,58 @@ class ModeScheduleManager : public SolverSynchronizedModule<STATE_DIM, INPUT_DIM
   using typename Base::scalar_t;
   using typename Base::state_vector_t;
 
-  //! default constructor
-  explicit ModeScheduleManager(ModeSchedule modeSchedule) : modeSchedule_(std::move(modeSchedule)) {}
+  /**
+   * Constructor.
+   */
+  explicit ModeScheduleManager(ModeSchedule modeSchedule);
 
-  //! Default destructor
+  /**
+   * Default destructor.
+   */
   virtual ~ModeScheduleManager() = default;
 
-  virtual void preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
-                            const CostDesiredTrajectories& costDesiredTrajectory) {}
+  void preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+                    const CostDesiredTrajectories& costDesiredTrajectory);
 
-  virtual void postSolverRun(const primal_solution_t& primalSolution) {}
-
-  /**
-   * Returns a const reference to ModeSchedule.
-   */
-  virtual const ModeSchedule& modeSchedule() const { return modeSchedule_; }
+  void postSolverRun(const primal_solution_t& primalSolution) {}
 
   /**
-   * Returns a reference to ModeSchedule.
+   * Returns a const reference to ModeSchedule. This method is thread safe.
    */
-  virtual ModeSchedule& modeSchedule() { return modeSchedule_; }
+  const ModeSchedule& getModeSchedule() const;
+
+  /**
+   * Sets the ModeSchedule to the buffer. The buffer will move to internal ModeSchedule once preSolverRun()
+   * is called. This method is thread safe.
+   */
+  void setModeSchedule(const ModeSchedule& modeSchedule);
+
+  /**
+   * Sets the ModeSchedule to the buffer. The buffer will move to internal ModeSchedule once preSolverRun()
+   * is called. This method is thread safe.
+   */
+  void setModeSchedule(ModeSchedule&& modeSchedule);
+
+ protected:
+  /**
+   * User defined preSolverRun.
+   *
+   * @param initTime : start time of the MPC horizon
+   * @param finalTime : Final time of the MPC horizon
+   * @param currentState : State at the start of the MPC horizon
+   * @param costDesiredTrajectory : User defined cost desired trajectory
+   */
+  virtual void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+                                const CostDesiredTrajectories& costDesiredTrajectory) {}
 
  private:
   ModeSchedule modeSchedule_;
+  ModeSchedule modeScheduleBuffer_;
+
+  mutable std::mutex modeScheduleMutex_;
+  std::atomic<bool> modeScheduleUpdated_;
 };
 
 }  // namespace ocs2
+
+#include "implementation/ModeScheduleManager.h"

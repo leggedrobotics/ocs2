@@ -79,7 +79,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void Solver_BASE<STATE_DIM, INPUT_DIM>::preRun(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime) {
   if (modeScheduleManager_) {
     modeScheduleManager_->preSolverRun(initTime, finalTime, initState, costDesiredTrajectories_);
-    modeSchedule_ = modeScheduleManager_->modeSchedule();
+    modeSchedule_ = modeScheduleManager_->getModeSchedule();
   }
   for (auto& module : synchronizedModules_) {
     module->preSolverRun(initTime, finalTime, initState, costDesiredTrajectories_);

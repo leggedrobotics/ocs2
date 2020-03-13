@@ -3,9 +3,7 @@
 //
 
 #include "ocs2_quadruped_interface/QuadrupedSlqMpc.h"
-#include "ocs2_quadruped_interface/QuadrupedInterface.h"
 
-/**  Explicit instantiation of MPC and SLQ functions */
 namespace switched_model {
 
 std::unique_ptr<ocs2::SLQ<STATE_DIM, INPUT_DIM>> getSlq(const QuadrupedInterface& quadrupedInterface,

@@ -6,6 +6,7 @@
 
 #include <ros/package.h>
 
+#include <ocs2_anymal_wheels/AnymalWheelsInterface.h>
 #include <ocs2_anymal_wheels_switched_model/core/AnymalWheelsCom.h>
 #include <ocs2_anymal_wheels_switched_model/core/AnymalWheelsKinematics.h>
 
@@ -22,7 +23,7 @@ std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAn
   auto comAd = AnymalWheelsComAd();
 
   auto quadrupedInterface =
-      std::unique_ptr<switched_model::QuadrupedInterface>(new switched_model::QuadrupedInterface(kin, kinAd, com, comAd, taskFolder));
+      std::unique_ptr<anymal::WheeledQuadrupedInterface>(new anymal::WheeledQuadrupedInterface(kin, kinAd, com, comAd, taskFolder));
 
   return std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface>(
       new switched_model_loopshaping::QuadrupedLoopshapingInterface(std::move(quadrupedInterface), taskFolder));

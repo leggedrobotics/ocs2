@@ -9,31 +9,18 @@
 
 #include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_mpc/MPC_Settings.h>
-#include <ocs2_switched_model_interface/core/SwitchedModel.h>
+
+#include "ocs2_quadruped_interface/QuadrupedInterface.h"
 
 namespace switched_model {
 
 /** Constructs an SLQ object */
-template <class QuadInterface>
-std::unique_ptr<ocs2::SLQ<STATE_DIM, INPUT_DIM>> getSlq(const QuadInterface& quadrupedInterface, const ocs2::SLQ_Settings& slqSettings) {
-  return std::unique_ptr<ocs2::SLQ<STATE_DIM, INPUT_DIM>>(new ocs2::SLQ<STATE_DIM, INPUT_DIM>(
-      &quadrupedInterface.getRollout(), &quadrupedInterface.getDynamicsDerivatives(), quadrupedInterface.getConstraintPtr(),
-      &quadrupedInterface.getCost(), &quadrupedInterface.getOperatingPoints(), slqSettings, quadrupedInterface.getLogicRulesPtr()));
-}
+std::unique_ptr<ocs2::SLQ<STATE_DIM, INPUT_DIM>> getSlq(const QuadrupedInterface& quadrupedInterface,
+                                                        const ocs2::SLQ_Settings& slqSettings);
 
 /** Constructs an MPC object */
-template <class QuadInterface>
-std::unique_ptr<ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>> getMpc(const QuadInterface& quadrupedInterface, const ocs2::MPC_Settings& mpcSettings,
-                                                            const ocs2::SLQ_Settings& slqSettings) {
-  if (!quadrupedInterface.modelSettings().gaitOptimization_) {
-    return std::unique_ptr<ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>>(new ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>(
-        &quadrupedInterface.getRollout(), &quadrupedInterface.getDynamicsDerivatives(), quadrupedInterface.getConstraintPtr(),
-        &quadrupedInterface.getCost(), &quadrupedInterface.getOperatingPoints(), quadrupedInterface.getInitialPartitionTimes(), slqSettings,
-        mpcSettings, quadrupedInterface.getLogicRulesPtr(), &quadrupedInterface.getInitialModeSequence()));
-  } else {
-    throw std::runtime_error("mpc_ocs2 not configured, set gait optimization to 0");
-  }
-}
+std::unique_ptr<ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>> getMpc(const QuadrupedInterface& quadrupedInterface,
+                                                            const ocs2::MPC_Settings& mpcSettings, const ocs2::SLQ_Settings& slqSettings);
 
 }  // namespace switched_model
 

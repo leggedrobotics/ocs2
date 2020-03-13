@@ -109,7 +109,7 @@ class EXP0_System : public ControlledSystemBase<2, 1> {
   EXP0_System* clone() const final { return new EXP0_System(*this); }
 
   void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) final {
-    auto activeMode = modeScheduleManagerPtr_->getModeSchedule()[t];
+    auto activeMode = modeScheduleManagerPtr_->modeSchedule()[t];
     subsystemDynamicsPtr_[activeMode]->computeFlowMap(t, x, u, dxdt);
   }
 
@@ -173,7 +173,7 @@ class EXP0_SystemDerivative : public DerivativesBase<2, 1> {
 
   void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) final {
     Base::setCurrentStateAndControl(t, x, u);
-    activeMode_ = modeScheduleManagerPtr_->getModeSchedule()[t];
+    activeMode_ = modeScheduleManagerPtr_->modeSchedule()[t];
     subsystemDerivativesPtr_[activeMode_]->setCurrentStateAndControl(t, x, u);
   }
 
@@ -267,7 +267,7 @@ class EXP0_CostFunction : public CostFunctionBase<2, 1> {
 
   void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) final {
     Base::setCurrentStateAndControl(t, x, u);
-    activeMode_ = modeScheduleManagerPtr_->getModeSchedule()[t];
+    activeMode_ = modeScheduleManagerPtr_->modeSchedule()[t];
     subsystemCostsPtr_[activeMode_]->setCurrentStateAndControl(t, x, u);
   }
 

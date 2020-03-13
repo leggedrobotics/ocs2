@@ -54,17 +54,17 @@ class ModeSchedule {
    */
   ModeSchedule(std::vector<scalar_t> eventTimes, std::vector<size_t> modeSequence);
 
-  /** Gets the event times */
+  /** Gets a const reference to the event times */
   const std::vector<scalar_t>& eventTimes() const { return eventTimes_; }
 
-  /** Gets the sequence of modes */
+  /** Gets a const reference to the sequence of modes */
   const std::vector<size_t>& modeSequence() const { return modeSequence_; }
 
-  /** Sets the event times */
-  void setEventTimes(const std::vector<scalar_t>& eventTimes) { eventTimes_ = eventTimes; }
+  /** Gets the event times */
+  std::vector<scalar_t>& eventTimes() { return eventTimes_; }
 
-  /** Sets the sequence of modes */
-  void setModeSequence(const std::vector<size_t>& modeSequence) { modeSequence_ = modeSequence; }
+  /** Gets the sequence of modes */
+  std::vector<size_t>& modeSequence() { return modeSequence_; }
 
   /**
    *  Returns the mode based on the query time.

@@ -117,7 +117,7 @@ class UpperLevelCost final : public NLP_Cost {
   size_t setCurrentParameter(const dynamic_vector_t& x) override {
     // set event time
     eventTimes_ = scalar_array_t(x.data(), x.data() + x.size());
-    modeScheduleManagerPtr_->setEventTimes(eventTimes_);
+    modeScheduleManagerPtr_->modeSchedule().eventTimes() = eventTimes_;
 
     // run SLQ
     try {

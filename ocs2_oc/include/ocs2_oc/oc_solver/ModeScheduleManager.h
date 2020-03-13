@@ -58,15 +58,14 @@ class ModeScheduleManager : public SolverSynchronizedModule<STATE_DIM, INPUT_DIM
   virtual void postSolverRun(const primal_solution_t& primalSolution) {}
 
   /**
-   * Returns the mode schedule structure.
+   * Returns a const reference to ModeSchedule.
    */
-  virtual const ModeSchedule& getModeSchedule() const { return modeSchedule_; }
+  virtual const ModeSchedule& modeSchedule() const { return modeSchedule_; }
 
-  /** Sets the event times */
-  void setEventTimes(const std::vector<scalar_t>& eventTimes) { modeSchedule_.setEventTimes(eventTimes); }
-
-  /** Sets the sequence of modes */
-  void setModeSequence(const std::vector<size_t>& modeSequence) { modeSchedule_.setModeSequence(modeSequence); }
+  /**
+   * Returns a reference to ModeSchedule.
+   */
+  virtual ModeSchedule& modeSchedule() { return modeSchedule_; }
 
  private:
   ModeSchedule modeSchedule_;

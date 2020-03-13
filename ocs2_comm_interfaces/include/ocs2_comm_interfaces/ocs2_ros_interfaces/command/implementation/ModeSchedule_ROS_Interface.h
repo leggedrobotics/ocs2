@@ -33,55 +33,44 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-ModeSequence_ROS_Interface<SCALAR_T>::ModeSequence_ROS_Interface(std::string robotName /*= "robot"*/) : robotName_(std::move(robotName)) {}
+ModeSchedule_ROS_Interface<SCALAR_T>::ModeSchedule_ROS_Interface(std::string robotName /*= "robot"*/) : robotName_(std::move(robotName)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-ModeSequence_ROS_Interface<SCALAR_T>::~ModeSequence_ROS_Interface() {
-  shutdownNodes();
+ModeSchedule_ROS_Interface<SCALAR_T>::~ModeSchedule_ROS_Interface() {
+  mpcModeSchedulePublisher_.shutdown();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-void ModeSequence_ROS_Interface<SCALAR_T>::publishModeSequenceTemplate(const mode_sequence_template_t& modeSequenceTemplate) {
-  RosMsgConversions<0, 0>::createModeSequenceTemplateMsg(modeSequenceTemplate, modeSequenceTemplateMsg_);
-
-  mpcModeSequencePublisher_.publish(modeSequenceTemplateMsg_);
+void ModeSchedule_ROS_Interface<SCALAR_T>::publishModeSchedule(const ModeSchedule& modeSchedule) {
+  ocs2_msgs::mode_schedule modeScheduleMsg;
+  ros_msg_conversions::createModeScheduleMsg(modeSchedule, modeScheduleMsg);
+  mpcModeSchedulePublisher_.publish(modeScheduleMsg);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-void ModeSequence_ROS_Interface<SCALAR_T>::shutdownNodes() {
-  mpcModeSequencePublisher_.shutdown();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-void ModeSequence_ROS_Interface<SCALAR_T>::launchNodes(int argc, char* argv[]) {
-  // reset counters and variables
-  reset();
-
+void ModeSchedule_ROS_Interface<SCALAR_T>::launchNodes(int argc, char* argv[]) {
   // display
-  ROS_INFO_STREAM("ModeSequence node is setting up ...");
+  ROS_INFO_STREAM("ModeSchedule node is setting up ...");
 
   // setup ROS
-  ::ros::init(argc, argv, robotName_ + "_mpc_mode_sequence");
-  ::ros::NodeHandle nodeHandler;
+  ros::init(argc, argv, robotName_ + "_mpc_mode_schedule");
+  ros::NodeHandle nodeHandler;
 
-  mpcModeSequencePublisher_ = nodeHandler.advertise<ocs2_msgs::mode_sequence>(robotName_ + "_mpc_mode_sequence", 1, true);
+  mpcModeSchedulePublisher_ = nodeHandler.advertise<ocs2_msgs::mode_schedule>(robotName_ + "_mpc_mode_schedule", 1, true);
 
   ros::spinOnce();
 
   // display
-  ROS_INFO_STREAM(robotName_ + " mode sequence command node is ready.");
+  ROS_INFO_STREAM(robotName_ + " ModeSchedule command node is ready.");
 }
 
 }  // namespace ocs2

@@ -64,10 +64,11 @@ TEST(exp1_slq_test, exp1_slq_test) {
   rolloutSettings.relTolODE_ = 1e-7;
   rolloutSettings.maxNumStepsPerSecond_ = 10000;
 
-  // switching times
+  // event times
   std::vector<double> eventTimes{0.2262, 1.0176};
   std::vector<size_t> subsystemsSequence{0, 1, 2};
-  std::shared_ptr<EXP1_LogicRules> logicRules(new EXP1_LogicRules(eventTimes, subsystemsSequence));
+  std::shared_ptr<ModeScheduleManager<STATE_DIM, INPUT_DIM>> modeScheduleManagerPtr(
+      new ModeScheduleManager<STATE_DIM, INPUT_DIM>({eventTimes, subsystemsSequence}));
 
   double startTime = 0.0;
   double finalTime = 3.0;
@@ -85,17 +86,17 @@ TEST(exp1_slq_test, exp1_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // system rollout
-  EXP1_System systemDynamics(logicRules);
+  EXP1_System systemDynamics(modeScheduleManagerPtr);
   TimeTriggeredRollout<STATE_DIM, INPUT_DIM> timeTriggeredRollout(systemDynamics, rolloutSettings);
 
   // system derivatives
-  EXP1_SystemDerivative systemDerivative(logicRules);
+  EXP1_SystemDerivative systemDerivative(modeScheduleManagerPtr);
 
   // system constraints
   EXP1_SystemConstraint systemConstraint;
 
   // system cost functions
-  EXP1_CostFunction systemCostFunction(logicRules);
+  EXP1_CostFunction systemCostFunction(modeScheduleManagerPtr);
 
   // system operatingTrajectories
   Eigen::Matrix<double, STATE_DIM, 1> stateOperatingPoint = Eigen::Matrix<double, STATE_DIM, 1>::Zero();
@@ -108,12 +109,12 @@ TEST(exp1_slq_test, exp1_slq_test) {
   // SLQ - single core version
   slqSettings.ddpSettings_.nThreads_ = 1;
   slq_t slqST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
-  slqST.setModeSchedule(logicRules->getModeSchedule());
+  slqST.setModeScheduleManagers(modeScheduleManagerPtr);
 
   slqSettings.ddpSettings_.nThreads_ = 3;
   // SLQ - multi-threaded version
   slq_t slqMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
-  slqMT.setModeSchedule(logicRules->getModeSchedule());
+  slqMT.setModeScheduleManagers(modeScheduleManagerPtr);
 
   // run single-threaded SLQ
   if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {

@@ -50,7 +50,6 @@ add_library(${PROJECT_NAME}
   src/automatic_differentation/CppAdInterface.cpp
   src/automatic_differentation/CppAdSparsity.cpp
   src/integration/Integrator.cpp
-  src/logic/machine/HybridLogicRulesMachine.cpp
   src/logic/ModeSchedule.cpp
   src/loopshaping/LoopshapingPropertyTree.cpp
   src/loopshaping/LoopshapingFilter.cpp
@@ -124,15 +123,6 @@ catkin_add_gtest(interpolation_unittest
 )
 target_link_libraries(interpolation_unittest
   ${catkin_LIBRARIES}
-)
-
-catkin_add_gtest(logic_rules_machine_unittest
-  test/logic/testLogicRulesMachine.cpp
-)
-target_link_libraries(logic_rules_machine_unittest
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
 )
 
 catkin_add_gtest(cppadcg_constraint_unittest

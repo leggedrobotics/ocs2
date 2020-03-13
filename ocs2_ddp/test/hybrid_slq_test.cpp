@@ -57,11 +57,6 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   rolloutSettings.relTolODE_ = 1e-7;
   rolloutSettings.maxNumStepsPerSecond_ = 1e5;
 
-  std::vector<double> eventTimes(0);
-  std::vector<size_t> subsystemsSequence{1};
-
-  std::shared_ptr<hybridSysLogic> logicRulesPtr(new hybridSysLogic(eventTimes, subsystemsSequence));
-
   double startTime = 0.0;
   double finalTime = 5.0;
 
@@ -104,7 +99,6 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   // SLQ
   SLQ<STATE_DIM, INPUT_DIM> slqST(&stateTriggeredRollout, &systemDerivatives, &systemConstraints, &systemCost, &operatingTrajectories,
                                   slqSettings);
-  slqST.setModeSchedule(logicRulesPtr->getModeSchedule());
   slqST.run(startTime, initState, finalTime, partitioningTimes);
   SLQ<STATE_DIM, INPUT_DIM>::primal_solution_t solution = slqST.primalSolution(finalTime);
   std::cout << "SLQ Procedure Done" << std::endl;

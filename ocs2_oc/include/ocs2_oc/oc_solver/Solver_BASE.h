@@ -52,6 +52,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/Numerics.h>
 
 #include "ocs2_oc/oc_data/PrimalSolution.h"
+#include "ocs2_oc/oc_solver/ModeScheduleManager.h"
 #include "ocs2_oc/oc_solver/SolverSynchronizedModule.h"
 
 namespace ocs2 {
@@ -136,6 +137,7 @@ class Solver_BASE {
 
   using synchronized_module_t = SolverSynchronizedModule<STATE_DIM, INPUT_DIM>;
   using synchronized_module_ptr_array_t = std::vector<std::shared_ptr<synchronized_module_t>>;
+  using mode_schedule_manager_ptr_t = std::shared_ptr<ModeScheduleManager<STATE_DIM, INPUT_DIM>>;
 
   /**
    * Default destructor.
@@ -172,6 +174,11 @@ class Solver_BASE {
    */
   void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
            const controller_ptr_array_t& controllersPtrStock);
+
+  /**
+   * Set mode schedule manager. This module is updated once before and once after solving the problem.
+   */
+  void setModeScheduleManagers(const mode_schedule_manager_ptr_t& modeScheduleManager) { modeScheduleManager_ = modeScheduleManager; };
 
   /**
    * Set all modules that need to be synchronized with the solver. Each module is updated once before and once after solving the problem
@@ -253,9 +260,6 @@ class Solver_BASE {
     costDesiredTrajectories_.swap(costDesiredTrajectories);
   };
 
-  /** sets mode schedule */
-  void setModeSchedule(const ModeSchedule& modeSchedule) { modeSchedule_ = modeSchedule; }
-
   /** gets mode schedule */
   const ModeSchedule& getModeSchedule() const { return modeSchedule_; }
 
@@ -335,6 +339,7 @@ class Solver_BASE {
 
   std::mutex outputDisplayGuardMutex_;
   CostDesiredTrajectories costDesiredTrajectories_;
+  mode_schedule_manager_ptr_t modeScheduleManager_;
   synchronized_module_ptr_array_t synchronizedModules_;
   ModeSchedule modeSchedule_;
 };

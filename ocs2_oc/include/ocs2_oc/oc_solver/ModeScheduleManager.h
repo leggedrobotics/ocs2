@@ -27,58 +27,49 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef MODESEQUENCE_OCS2_H_
-#define MODESEQUENCE_OCS2_H_
+#pragma once
 
-#include <iostream>
-#include <vector>
+#include <ocs2_core/logic/ModeSchedule.h>
+
+#include "ocs2_oc/oc_solver/SolverSynchronizedModule.h"
 
 namespace ocs2 {
 
 /**
- * Mode sequence template.
- *
+ * Manages the ModeSchedule of the solver.
  */
-template <typename scalar_t = double>
-struct ModeSequenceTemplate {
-  ModeSequenceTemplate() : templateSwitchingTimes_(0), templateSubsystemsSequence_(0) {}
+template <size_t STATE_DIM, size_t INPUT_DIM>
+class ModeScheduleManager : public SolverSynchronizedModule<STATE_DIM, INPUT_DIM> {
+ public:
+  using Base = SolverSynchronizedModule<STATE_DIM, INPUT_DIM>;
+  using typename Base::primal_solution_t;
+  using typename Base::scalar_t;
+  using typename Base::state_vector_t;
+
+  //! default constructor
+  explicit ModeScheduleManager(ModeSchedule modeSchedule) : modeSchedule_(std::move(modeSchedule)) {}
+
+  //! Default destructor
+  virtual ~ModeScheduleManager() = default;
+
+  virtual void preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+                            const CostDesiredTrajectories& costDesiredTrajectory) {}
+
+  virtual void postSolverRun(const primal_solution_t& primalSolution) {}
 
   /**
-   * Defined as [t_0=0, t_1, .., t_n, t_(n+1)=T], where T is the overall duration
-   * of the template logic. t_1 to t_n are the event moments.
+   * Returns the mode schedule structure.
    */
-  std::vector<scalar_t> templateSwitchingTimes_;
+  virtual const ModeSchedule& getModeSchedule() const { return modeSchedule_; }
 
-  /**
-   * Defined as [sys_0, sys_n], are the switching systems IDs. Here sys_i is
-   * active in period [t_i, t_(i+1)]
-   */
-  std::vector<size_t> templateSubsystemsSequence_;
+  /** Sets the event times */
+  void setEventTimes(const std::vector<scalar_t>& eventTimes) { modeSchedule_.setEventTimes(eventTimes); }
 
-  /**
-   * Displays template information.
-   */
-  void display() const {
-    std::cerr << std::endl << "Template switching times:\n\t {";
-    for (auto& s : templateSwitchingTimes_) {
-      std::cerr << s << ", ";
-    }
-    if (!templateSwitchingTimes_.empty()) {
-      std::cerr << "\b\b";
-    }
-    std::cerr << "}" << std::endl;
+  /** Sets the sequence of modes */
+  void setModeSequence(const std::vector<size_t>& modeSequence) { modeSchedule_.setModeSequence(modeSequence); }
 
-    std::cerr << "Template subsystem sequence:\n\t {";
-    for (auto& s : templateSubsystemsSequence_) {
-      std::cerr << s << ", ";
-    }
-    if (!templateSubsystemsSequence_.empty()) {
-      std::cerr << "\b\b";
-    }
-    std::cerr << "}" << std::endl;
-  }
+ private:
+  ModeSchedule modeSchedule_;
 };
 
 }  // namespace ocs2
-
-#endif /* MODESEQUENCE_OCS2_H_ */

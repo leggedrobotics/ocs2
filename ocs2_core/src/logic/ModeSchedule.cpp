@@ -37,11 +37,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 ModeSchedule::ModeSchedule(std::vector<scalar_t> eventTimes, std::vector<size_t> modeSequence)
     : eventTimes_(std::move(eventTimes)), modeSequence_(std::move(modeSequence)) {
   assert(eventTimes_.size() + 1 == modeSequence_.size());
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+size_t ModeSchedule::operator[](scalar_t time) const {
+  const auto ind = lookup::findIndexInTimeArray(eventTimes_, time);
+  return modeSequence_[ind];
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 std::ostream& operator<<(std::ostream& stream, const ModeSchedule& modeSchedule) {
   stream << "switching times: \t {" << toDelimitedString(modeSchedule.eventTimes()) << "}\n";
   stream << "mode sequence: \t {" << toDelimitedString(modeSchedule.modeSequence()) << "}\n";

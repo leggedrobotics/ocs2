@@ -7,7 +7,6 @@
 
 #include "ocs2_core/Dimensions.h"
 #include "ocs2_core/cost/QuadraticCostFunction.h"
-#include "ocs2_core/logic/rules/NullLogicRules.h"
 #include "ocs2_core/loopshaping/LoopshapingDefinition.h"
 
 namespace ocs2 {

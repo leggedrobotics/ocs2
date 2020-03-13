@@ -27,16 +27,13 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-//
-// Created by rgrandia on 09.03.20.
-//
-
 #pragma once
 
 #include <ostream>
 #include <vector>
 
 #include <ocs2_core/Dimensions.h>
+#include <ocs2_core/misc/Lookup.h>
 
 namespace ocs2 {
 
@@ -44,16 +41,16 @@ namespace ocs2 {
  * Defines a sequence of N modes, separated by N-1 event times
  */
 class ModeSchedule {
+ public:
   using scalar_t = typename Dimensions<0, 0>::scalar_t;
 
- public:
   /** Default constructor for a single mode without events */
   ModeSchedule() = default;
 
   /**
    * Constructor for a ModeSchedule. The number of phases must be greater than zero (N > 0)
-   * @param eventTimes : event times of size N - 1
-   * @param modeSequence : mode sequence fo size N
+   * @param [in] eventTimes : event times of size N - 1
+   * @param [in] modeSequence : mode sequence of size N
    */
   ModeSchedule(std::vector<scalar_t> eventTimes, std::vector<size_t> modeSequence);
 
@@ -62,6 +59,26 @@ class ModeSchedule {
 
   /** Gets the sequence of modes */
   const std::vector<size_t>& modeSequence() const { return modeSequence_; }
+
+  /** Sets the event times */
+  void setEventTimes(const std::vector<scalar_t>& eventTimes) { eventTimes_ = eventTimes; }
+
+  /** Sets the sequence of modes */
+  void setModeSequence(const std::vector<size_t>& modeSequence) { modeSequence_ = modeSequence; }
+
+  /**
+   *  Returns the mode based on the query time.
+   *  Events are counted as follows:
+   *      ------ | ------ | ------ | ...  ------ | ------
+   *         t[0]     t[1]     t[2]        t[n-1]
+   *  mode: m[0]    m[1]     m[2] ...     m[n-1]    m[n]
+   *
+   *  If time equal to a switch time is requested, the lower count is taken
+   *
+   *  @param [in] time: The inquiry time.
+   *  @return the associated mode for the input time.
+   */
+  size_t operator[](scalar_t time) const;
 
  private:
   std::vector<scalar_t> eventTimes_{};

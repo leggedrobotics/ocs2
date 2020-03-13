@@ -49,12 +49,10 @@ MPC_OCS2<STATE_DIM, INPUT_DIM>::MPC_OCS2(const rollout_base_t* rolloutPtr, const
                                          const scalar_array_t& partitioningTimes, const SLQ_Settings& slqSettings /*= SLQ_Settings()*/,
                                          const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/,
                                          const MPC_Settings& mpcSettings /*= MPC_Settings()*/,
-                                         std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
-                                         const mode_sequence_template_t* modeSequenceTemplatePtr /*= nullptr*/,
                                          const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
     : BASE(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, partitioningTimes,
-           slqSettings, mpcSettings, logicRulesPtr, modeSequenceTemplatePtr, heuristicsFunctionPtr),
+           slqSettings, mpcSettings, heuristicsFunctionPtr),
       gddpPtr_(new gddp_t(gddpSettings)),
       activateOCS2_(false),
       terminateOCS2_(false),

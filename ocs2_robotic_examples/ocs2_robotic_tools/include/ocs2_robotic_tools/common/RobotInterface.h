@@ -36,7 +36,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
-#include <ocs2_core/logic/rules/HybridLogicRules.h>
 
 namespace ocs2 {
 
@@ -64,12 +63,6 @@ class RobotInterface {
    * Destructor
    */
   virtual ~RobotInterface() = default;
-
-  /**
-   * @brief getLogicRulesPtr
-   * @return Pointer to the internal logic rules
-   */
-  virtual std::shared_ptr<HybridLogicRules> getLogicRulesPtr() const { return nullptr; }
 
   /**
    * @brief getDynamics

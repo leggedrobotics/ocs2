@@ -74,7 +74,6 @@ class MPC_OCS2 : public MPC_SLQ<STATE_DIM, INPUT_DIM> {
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
   using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
 
-  using mode_sequence_template_t = typename BASE::mode_sequence_template_t;
   using event_handler_t = typename BASE::event_handler_t;
   using derivatives_base_t = typename BASE::derivatives_base_t;
   using constraint_base_t = typename BASE::constraint_base_t;
@@ -100,7 +99,6 @@ class MPC_OCS2 : public MPC_SLQ<STATE_DIM, INPUT_DIM> {
    * @param [in] slqSettings: Structure containing the settings for the SLQ algorithm.
    * @param [in] gddpSettings: Structure containing the settings for the GDDP algorithm.
    * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
-   * @param [in] logicRulesPtr: The logic rules used for implementing mixed logical dynamical systems.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
@@ -108,7 +106,6 @@ class MPC_OCS2 : public MPC_SLQ<STATE_DIM, INPUT_DIM> {
            const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
            const scalar_array_t& partitioningTimes, const SLQ_Settings& slqSettings = SLQ_Settings(),
            const GDDP_Settings& gddpSettings = GDDP_Settings(), const MPC_Settings& mpcSettings = MPC_Settings(),
-           std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr, const mode_sequence_template_t* modeSequenceTemplatePtr = nullptr,
            const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
   /**

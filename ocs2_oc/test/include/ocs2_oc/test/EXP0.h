@@ -31,42 +31,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cmath>
 #include <limits>
+#include <memory>
 
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
-#include <ocs2_core/logic/rules/HybridLogicRules.h>
+
+#include <ocs2_oc/oc_solver/ModeScheduleManager.h>
 
 namespace ocs2 {
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-class EXP0_LogicRules : public HybridLogicRules {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = HybridLogicRules;
-
-  EXP0_LogicRules() = default;
-
-  ~EXP0_LogicRules() = default;
-
-  EXP0_LogicRules(scalar_array_t switchingTimes, size_array_t subsystemsSequence)
-      : BASE(std::move(switchingTimes), std::move(subsystemsSequence)) {}
-
-  void rewind(const scalar_t& lowerBoundTime, const scalar_t& upperBoundTime) final {}
-
-  void update() final {}
-
- protected:
-  void insertModeSequenceTemplate(const logic_template_type& modeSequenceTemplate, const scalar_t& startTime,
-                                  const scalar_t& finalTime) override{};
-
- private:
-};
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -121,31 +96,26 @@ class EXP0_System : public ControlledSystemBase<2, 1> {
 
   using Base = ControlledSystemBase<2, 1>;
 
-  explicit EXP0_System(std::shared_ptr<const EXP0_LogicRules> logicRulesPtr)
-      : logicRulesPtr_(std::move(logicRulesPtr)), activeSubsystem_(0), subsystemDynamicsPtr_(2) {
-    subsystemDynamicsPtr_[0] = std::allocate_shared<EXP0_Sys1, Eigen::aligned_allocator<EXP0_Sys1>>(Eigen::aligned_allocator<EXP0_Sys1>());
-    subsystemDynamicsPtr_[1] = std::allocate_shared<EXP0_Sys2, Eigen::aligned_allocator<EXP0_Sys2>>(Eigen::aligned_allocator<EXP0_Sys2>());
+  explicit EXP0_System(std::shared_ptr<ModeScheduleManager<2, 1>> modeScheduleManagerPtr)
+      : modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)), subsystemDynamicsPtr_(2) {
+    subsystemDynamicsPtr_[0].reset(new EXP0_Sys1);
+    subsystemDynamicsPtr_[1].reset(new EXP0_Sys2);
   }
 
   ~EXP0_System() override = default;
 
-  EXP0_System(const EXP0_System& other) : activeSubsystem_(other.activeSubsystem_), subsystemDynamicsPtr_(2) {
-    subsystemDynamicsPtr_[0] = Base::Ptr(other.subsystemDynamicsPtr_[0]->clone());
-    subsystemDynamicsPtr_[1] = Base::Ptr(other.subsystemDynamicsPtr_[1]->clone());
-    logicRulesPtr_ = other.logicRulesPtr_;
-  }
+  EXP0_System(const EXP0_System& other) : EXP0_System(other.modeScheduleManagerPtr_) {}
 
   EXP0_System* clone() const final { return new EXP0_System(*this); }
 
   void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) final {
-    activeSubsystem_ = logicRulesPtr_->getEventTimeCount(t);
-    subsystemDynamicsPtr_[activeSubsystem_]->computeFlowMap(t, x, u, dxdt);
+    auto activeMode = modeScheduleManagerPtr_->getModeSchedule()[t];
+    subsystemDynamicsPtr_[activeMode]->computeFlowMap(t, x, u, dxdt);
   }
 
  public:
-  int activeSubsystem_;
   std::vector<Base::Ptr> subsystemDynamicsPtr_;
-  std::shared_ptr<const EXP0_LogicRules> logicRulesPtr_;
+  std::shared_ptr<ModeScheduleManager<2, 1>> modeScheduleManagerPtr_;
 };
 
 /******************************************************************************************************/
@@ -189,40 +159,32 @@ class EXP0_SystemDerivative : public DerivativesBase<2, 1> {
 
   using Base = DerivativesBase<2, 1>;
 
-  explicit EXP0_SystemDerivative(std::shared_ptr<const EXP0_LogicRules> logicRulesPtr)
-      : logicRulesPtr_(std::move(logicRulesPtr)), activeSubsystem_(0), subsystemDerivativesPtr_(2) {
-    subsystemDerivativesPtr_[0] = std::allocate_shared<EXP0_SysDerivative1, Eigen::aligned_allocator<EXP0_SysDerivative1>>(
-        Eigen::aligned_allocator<EXP0_SysDerivative1>());
-    subsystemDerivativesPtr_[1] = std::allocate_shared<EXP0_SysDerivative2, Eigen::aligned_allocator<EXP0_SysDerivative2>>(
-        Eigen::aligned_allocator<EXP0_SysDerivative2>());
+  explicit EXP0_SystemDerivative(std::shared_ptr<ModeScheduleManager<2, 1>> modeScheduleManagerPtr)
+      : modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)), subsystemDerivativesPtr_(2) {
+    subsystemDerivativesPtr_[0].reset(new EXP0_SysDerivative1);
+    subsystemDerivativesPtr_[1].reset(new EXP0_SysDerivative2);
   }
 
-  ~EXP0_SystemDerivative() {}
+  ~EXP0_SystemDerivative() override = default;
 
-  EXP0_SystemDerivative(const EXP0_SystemDerivative& other) : activeSubsystem_(other.activeSubsystem_), subsystemDerivativesPtr_(2) {
-    subsystemDerivativesPtr_[0] = Base::Ptr(other.subsystemDerivativesPtr_[0]->clone());
-    subsystemDerivativesPtr_[1] = Base::Ptr(other.subsystemDerivativesPtr_[1]->clone());
-    logicRulesPtr_ = other.logicRulesPtr_;
-  }
+  EXP0_SystemDerivative(const EXP0_SystemDerivative& other) : EXP0_SystemDerivative(other.modeScheduleManagerPtr_) {}
 
   EXP0_SystemDerivative* clone() const final { return new EXP0_SystemDerivative(*this); }
 
   void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) final {
     Base::setCurrentStateAndControl(t, x, u);
-    activeSubsystem_ = logicRulesPtr_->getEventTimeCount(t);
-    subsystemDerivativesPtr_[activeSubsystem_]->setCurrentStateAndControl(t, x, u);
+    activeMode_ = modeScheduleManagerPtr_->getModeSchedule()[t];
+    subsystemDerivativesPtr_[activeMode_]->setCurrentStateAndControl(t, x, u);
   }
 
-  void getFlowMapDerivativeState(state_matrix_t& A) final { subsystemDerivativesPtr_[activeSubsystem_]->getFlowMapDerivativeState(A); }
+  void getFlowMapDerivativeState(state_matrix_t& A) final { subsystemDerivativesPtr_[activeMode_]->getFlowMapDerivativeState(A); }
 
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) final {
-    subsystemDerivativesPtr_[activeSubsystem_]->getFlowMapDerivativeInput(B);
-  }
+  void getFlowMapDerivativeInput(state_input_matrix_t& B) final { subsystemDerivativesPtr_[activeMode_]->getFlowMapDerivativeInput(B); }
 
  public:
-  int activeSubsystem_;
-  std::shared_ptr<const EXP0_LogicRules> logicRulesPtr_;
+  size_t activeMode_ = 0;
   std::vector<Base::Ptr> subsystemDerivativesPtr_;
+  std::shared_ptr<ModeScheduleManager<2, 1>> modeScheduleManagerPtr_;
 };
 
 /******************************************************************************************************/
@@ -291,60 +253,54 @@ class EXP0_CostFunction : public CostFunctionBase<2, 1> {
 
   using Base = CostFunctionBase<2, 1>;
 
-  explicit EXP0_CostFunction(std::shared_ptr<const EXP0_LogicRules> logicRulesPtr)
-      : logicRulesPtr_(std::move(logicRulesPtr)), activeSubsystem_(0), subsystemCostsPtr_(2) {
-    subsystemCostsPtr_[0] = std::allocate_shared<EXP0_CostFunction1, Eigen::aligned_allocator<EXP0_CostFunction1>>(
-        Eigen::aligned_allocator<EXP0_CostFunction1>());
-    subsystemCostsPtr_[1] = std::allocate_shared<EXP0_CostFunction2, Eigen::aligned_allocator<EXP0_CostFunction2>>(
-        Eigen::aligned_allocator<EXP0_CostFunction2>());
+  explicit EXP0_CostFunction(std::shared_ptr<ModeScheduleManager<2, 1>> modeScheduleManagerPtr)
+      : modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)), subsystemCostsPtr_(2) {
+    subsystemCostsPtr_[0].reset(new EXP0_CostFunction1);
+    subsystemCostsPtr_[1].reset(new EXP0_CostFunction2);
   }
 
   ~EXP0_CostFunction() {}
 
-  EXP0_CostFunction(const EXP0_CostFunction& other) : activeSubsystem_(other.activeSubsystem_), subsystemCostsPtr_(2) {
-    subsystemCostsPtr_[0] = Base::Ptr(other.subsystemCostsPtr_[0]->clone());
-    subsystemCostsPtr_[1] = Base::Ptr(other.subsystemCostsPtr_[1]->clone());
-    logicRulesPtr_ = other.logicRulesPtr_;
-  }
+  EXP0_CostFunction(const EXP0_CostFunction& other) : EXP0_CostFunction(other.modeScheduleManagerPtr_) {}
 
   EXP0_CostFunction* clone() const final { return new EXP0_CostFunction(*this); }
 
   void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) final {
     Base::setCurrentStateAndControl(t, x, u);
-    activeSubsystem_ = logicRulesPtr_->getEventTimeCount(t);
-    subsystemCostsPtr_[activeSubsystem_]->setCurrentStateAndControl(t, x, u);
+    activeMode_ = modeScheduleManagerPtr_->getModeSchedule()[t];
+    subsystemCostsPtr_[activeMode_]->setCurrentStateAndControl(t, x, u);
   }
 
-  void getIntermediateCost(scalar_t& L) final { subsystemCostsPtr_[activeSubsystem_]->getIntermediateCost(L); }
+  void getIntermediateCost(scalar_t& L) final { subsystemCostsPtr_[activeMode_]->getIntermediateCost(L); }
 
   void getIntermediateCostDerivativeState(state_vector_t& dLdx) final {
-    subsystemCostsPtr_[activeSubsystem_]->getIntermediateCostDerivativeState(dLdx);
+    subsystemCostsPtr_[activeMode_]->getIntermediateCostDerivativeState(dLdx);
   }
   void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) final {
-    subsystemCostsPtr_[activeSubsystem_]->getIntermediateCostSecondDerivativeState(dLdxx);
+    subsystemCostsPtr_[activeMode_]->getIntermediateCostSecondDerivativeState(dLdxx);
   }
   void getIntermediateCostDerivativeInput(input_vector_t& dLdu) final {
-    subsystemCostsPtr_[activeSubsystem_]->getIntermediateCostDerivativeInput(dLdu);
+    subsystemCostsPtr_[activeMode_]->getIntermediateCostDerivativeInput(dLdu);
   }
   void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) final {
-    subsystemCostsPtr_[activeSubsystem_]->getIntermediateCostSecondDerivativeInput(dLduu);
+    subsystemCostsPtr_[activeMode_]->getIntermediateCostSecondDerivativeInput(dLduu);
   }
 
   void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdxu) final {
-    subsystemCostsPtr_[activeSubsystem_]->getIntermediateCostDerivativeInputState(dLdxu);
+    subsystemCostsPtr_[activeMode_]->getIntermediateCostDerivativeInputState(dLdxu);
   }
 
-  void getTerminalCost(scalar_t& Phi) { subsystemCostsPtr_[activeSubsystem_]->getTerminalCost(Phi); }
+  void getTerminalCost(scalar_t& Phi) { subsystemCostsPtr_[activeMode_]->getTerminalCost(Phi); }
   void getTerminalCostDerivativeState(state_vector_t& dPhidx) final {
-    subsystemCostsPtr_[activeSubsystem_]->getTerminalCostDerivativeState(dPhidx);
+    subsystemCostsPtr_[activeMode_]->getTerminalCostDerivativeState(dPhidx);
   }
   void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) final {
-    subsystemCostsPtr_[activeSubsystem_]->getTerminalCostSecondDerivativeState(dPhidxx);
+    subsystemCostsPtr_[activeMode_]->getTerminalCostSecondDerivativeState(dPhidxx);
   }
 
  public:
-  int activeSubsystem_;
-  std::shared_ptr<const EXP0_LogicRules> logicRulesPtr_;
+  size_t activeMode_ = 0;
+  std::shared_ptr<ModeScheduleManager<2, 1>> modeScheduleManagerPtr_;
   std::vector<std::shared_ptr<CostFunctionBase<2, 1>>> subsystemCostsPtr_;
 };
 

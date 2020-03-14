@@ -8,11 +8,11 @@ namespace switched_model {
 
 using EndEffectorPositionConstraintSettings = EndEffectorConstraintSettings;
 
-class EndEffectorPositionConstraint : public EndEffectorConstraint<EndEffectorPositionConstraint> {
+class EndEffectorPositionConstraint : public EndEffectorConstraint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = EndEffectorConstraint<EndEffectorPositionConstraint>;
+  using BASE = EndEffectorConstraint;
   using typename BASE::ad_com_model_t;
   using typename BASE::ad_dynamic_vector_t;
   using typename BASE::ad_interface_t;
@@ -34,17 +34,16 @@ class EndEffectorPositionConstraint : public EndEffectorConstraint<EndEffectorPo
   explicit EndEffectorPositionConstraint(int legNumber, EndEffectorPositionConstraintSettings settings, ad_com_model_t& adComModel,
                                          ad_kinematic_model_t& adKinematicsModel, bool generateModels = true,
                                          std::string constraintPrefix = "EEPositionConstraint_")
-      : BASE(kConstraintOrder, std::move(constraintPrefix), legNumber, std::move(settings), adComModel, adKinematicsModel, generateModels) {
-  }
+      : BASE(kConstraintOrder, std::move(constraintPrefix), legNumber, std::move(settings), adComModel, adKinematicsModel,
+             EndEffectorPositionConstraint::adfunc, generateModels) {}
 
   EndEffectorPositionConstraint(const EndEffectorPositionConstraint& rhs) = default;
 
   EndEffectorPositionConstraint* clone() const override { return new EndEffectorPositionConstraint(*this); }
 
- private:
-  friend BASE;
-  void adfunc(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, const ad_dynamic_vector_t& tapedInput,
-              ad_dynamic_vector_t& o_footPosition) {
+ protected:
+  static void adfunc(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, int legNumber,
+                     const ad_dynamic_vector_t& tapedInput, ad_dynamic_vector_t& o_footPosition) override {
     // Extract elements from taped input
     ad_scalar_t t = tapedInput(0);
     comkino_state_ad_t x = tapedInput.segment(1, STATE_DIM);
@@ -57,6 +56,8 @@ class EndEffectorPositionConstraint : public EndEffectorConstraint<EndEffectorPo
     // Get base state from com state
     const base_coordinate_ad_t basePose = adComModel.calculateBasePose(comPose);
   };
+
+ private:
   static constexpr ocs2::ConstraintOrder kConstraintOrder = ocs2::ConstraintOrder::Linear;
 };
 }  // namespace switched_model

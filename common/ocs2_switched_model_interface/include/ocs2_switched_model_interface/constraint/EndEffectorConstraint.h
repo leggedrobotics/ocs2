@@ -3,6 +3,7 @@
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_switched_model_interface/constraint/ConstraintTerm.h>
 #include <Eigen/Core>
+#include <memory>
 
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
@@ -29,7 +30,6 @@ struct EndEffectorConstraintSettings {
   };
 };
 
-template <class Derived>
 class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -59,6 +59,25 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
   using timeStateInput_matrix_t = Eigen::Matrix<scalar_t, domain_dim_, domain_dim_>;
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
+  using adfunc_t = void (*)(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, int legNumber,
+                            const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y);
+
+  EndEffectorConstraint(ocs2::ConstraintOrder constraintOrder, std::string eeConstraintName, int legNumber,
+                        EndEffectorConstraintSettings settings, ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel,
+                        adfunc_t adfunc, bool generateModels, bool loadModels = true)
+      : BASE(constraintOrder),
+        libNamePrefix_(eeConstraintName),
+        legNumber_(legNumber),
+        settings_(std::move(settings)),
+        libName_(eeConstraintName + std::to_string(legNumber)),
+        libFolder_("/tmp/ocs2") {
+    auto diffFunc = [&](const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y) { adfunc(adComModel, adKinematicsModel, legNumber, x, y); };
+    adInterface_.reset(new ad_interface_t(diffFunc, range_dim_, domain_dim_, libName_, libFolder_));
+#if NDEBUG
+    assert(adInterface_);
+#endif
+    initAdModels(constraintOrder, generateModels, loadModels);
+  }
 
   EndEffectorConstraint(ocs2::ConstraintOrder constraintOrder, std::string eeConstraintName, int legNumber,
                         EndEffectorConstraintSettings settings, ad_interface_t& ad_interface, bool generateModels, bool loadModels = true)
@@ -72,41 +91,17 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
 #if NDEBUG
     assert(adInterface_);
 #endif
-    auto order = static_cast<ad_interface_t::ApproximationOrder>(constraintOrder);
-    if (generateModels) {
-      adInterface_->createModels(order, true);
-    } else if (loadModels) {
-      adInterface_->loadModelsIfAvailable(order, true);
-    }
+    initAdModels(constraintOrder, generateModels, loadModels);
   }
 
-  EndEffectorConstraint(ocs2::ConstraintOrder constraintOrder, std::string eeConstraintName, int legNumber,
-                        EndEffectorConstraintSettings settings, ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel,
-                        bool generateModels, bool loadModels = true)
-      : BASE(constraintOrder),
-        libNamePrefix_(eeConstraintName),
-        legNumber_(legNumber),
-        settings_(std::move(settings)),
-        libName_(eeConstraintName + std::to_string(legNumber)),
-        libFolder_("/tmp/ocs2") {
-    setAdInterface(adComModel, adKinematicsModel);
-#if NDEBUG
-    assert(adInterface_);
-#endif
-    auto order = static_cast<ad_interface_t::ApproximationOrder>(constraintOrder);
-    if (generateModels) {
-      adInterface_->createModels(order, true);
-    } else if (loadModels) {
-      adInterface_->loadModelsIfAvailable(order, true);
-    }
-  }
+  ~EndEffectorConstraint() = default;
 
   //! Note: Since the constructors are based on a copy we do not regenerate/generate the models
   EndEffectorConstraint(const EndEffectorConstraint& rhs)
       : EndEffectorConstraint{rhs.getOrder(), rhs.libNamePrefix_, rhs.legNumber_, rhs.settings_, *rhs.adInterface_, false, false} {};
 
   //! Note: Since the constructors are based on a copy we do not or regenerate/generate the models
-  EndEffectorConstraint* clone() const override { return new EndEffectorConstraint(*this); }
+  EndEffectorConstraint* clone() const override { return new EndEffectorConstraint(*this); };
 
   const ad_interface_t& getAdInterface() const { return *adInterface_; };
 
@@ -185,11 +180,13 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
   int legNumber_;
 
  private:
-  void setAdInterface(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel) {
-    auto adfunc = [this, &adComModel, &adKinematicsModel](const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y) {
-      static_cast<Derived&>(*this).adfunc(adComModel, adKinematicsModel, x, y);
-    };
-    adInterface_.reset(new ad_interface_t(adfunc, range_dim_, domain_dim_, libName_, libFolder_));
+  void initAdModels(ocs2::ConstraintOrder constraintOrder, bool generateModels, bool loadModels, bool verbose = true) {
+    auto&& order = static_cast<ad_interface_t::ApproximationOrder>(constraintOrder);
+    if (generateModels) {
+      adInterface_->createModels(order, verbose);
+    } else if (loadModels) {
+      adInterface_->loadModelsIfAvailable(order, verbose);
+    }
   };
 
   std::string libName_;

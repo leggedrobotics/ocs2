@@ -6,11 +6,11 @@ namespace switched_model {
 
 using EndEffectorVelocityConstraintSettings = EndEffectorConstraintSettings;
 
-class EndEffectorVelocityConstraint : public EndEffectorConstraint<EndEffectorVelocityConstraint> {
+class EndEffectorVelocityConstraint : public EndEffectorConstraint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = EndEffectorConstraint<EndEffectorVelocityConstraint>;
+  using BASE = EndEffectorConstraint;
   using typename BASE::ad_com_model_t;
   using typename BASE::ad_dynamic_vector_t;
   using typename BASE::ad_interface_t;
@@ -32,18 +32,20 @@ class EndEffectorVelocityConstraint : public EndEffectorConstraint<EndEffectorVe
   explicit EndEffectorVelocityConstraint(int legNumber, EndEffectorVelocityConstraintSettings settings, ad_com_model_t& adComModel,
                                          ad_kinematic_model_t& adKinematicsModel, bool generateModels = true,
                                          std::string constraintPrefix = "EEVelocityConstraint_")
-      : BASE(kConstraintOrder, std::move(constraintPrefix), legNumber, std::move(settings), adComModel, adKinematicsModel, generateModels) {
-  }
+      : BASE(kConstraintOrder, std::move(constraintPrefix), legNumber, std::move(settings), adComModel, adKinematicsModel,
+             EndEffectorVelocityConstraint::adfunc, generateModels) {}
 
   /* Copy Constructors */
-  EndEffectorVelocityConstraint(const EndEffectorVelocityConstraint& rhs) : BASE(rhs){};
+  EndEffectorVelocityConstraint(const EndEffectorVelocityConstraint& rhs) = default;
+
+  // :
+  //   EndEffectorVelocityConstraint{rhs.legNumber_, rhs,settings_, }{};
 
   EndEffectorVelocityConstraint* clone() const override { return new EndEffectorVelocityConstraint(*this); };
 
  private:
-  friend BASE;
-  void adfunc(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, const ad_dynamic_vector_t& tapedInput,
-              ad_dynamic_vector_t& o_footVelocity) {
+  static void adfunc(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, int legNumber,
+                     const ad_dynamic_vector_t& tapedInput, ad_dynamic_vector_t& o_footVelocity) {
     // Extract elements from taped input
     ad_scalar_t t = tapedInput(0);
     comkino_state_ad_t x = tapedInput.segment(1, STATE_DIM);
@@ -59,7 +61,7 @@ class EndEffectorVelocityConstraint : public EndEffectorConstraint<EndEffectorVe
     const base_coordinate_ad_t basePose = adComModel.calculateBasePose(comPose);
     const base_coordinate_ad_t com_baseTwist = adComModel.calculateBaseLocalVelocities(com_comTwist);
 
-    o_footVelocity = adKinematicsModel.footVelocityInOriginFrame(this->legNumber_, basePose, com_baseTwist, qJoints, dqJoints);
+    o_footVelocity = adKinematicsModel.footVelocityInOriginFrame(legNumber, basePose, com_baseTwist, qJoints, dqJoints);
   }
 
   static constexpr ocs2::ConstraintOrder kConstraintOrder = ocs2::ConstraintOrder::Linear;

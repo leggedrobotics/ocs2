@@ -7,14 +7,14 @@
 #pragma once
 
 // model
-#include <random>
-#include <functional>
-#include <ocs2_core/Dimensions.h>
-#include <ocs2_switched_model_interface/core/SwitchedModel.h>
 #include <ocs2_anymal_bear_switched_model/core/AnymalBearCom.h>
 #include <ocs2_anymal_bear_switched_model/core/AnymalBearKinematics.h>
-#include <ocs2_anymal_switched_model/generated/declarations.h>
+#include <ocs2_anymal_bear_switched_model/generated/declarations.h>
+#include <ocs2_core/Dimensions.h>
 #include <ocs2_switched_model_interface/core/Rotations.h>
+#include <ocs2_switched_model_interface/core/SwitchedModel.h>
+#include <functional>
+#include <random>
 
 namespace anymal {
 

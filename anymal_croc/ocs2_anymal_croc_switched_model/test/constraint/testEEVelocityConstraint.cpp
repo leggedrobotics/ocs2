@@ -2,23 +2,22 @@
 // Created by rgrandia on 19.09.19.
 //
 
-
 #include <gtest/gtest.h>
 
 #include <ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h>
 
-#include "ocs2_anymal_bear_switched_model/core/AnymalBearCom.h"
-#include "ocs2_anymal_bear_switched_model/core/AnymalBearKinematics.h"
+#include "ocs2_anymal_croc_switched_model/core/AnymalCrocCom.h"
+#include "ocs2_anymal_croc_switched_model/core/AnymalCrocKinematics.h"
 
-TEST(TestEEVelocityConstraint, evaluate){
+TEST(TestEEVelocityConstraint, evaluate) {
   using TestedConstraint = switched_model::EndEffectorVelocityConstraint;
 
   switched_model::EndEffectorVelocityConstraintSettings settings;
   settings.A.setIdentity(3, 3);
   settings.b.setZero();
 
-  anymal::AnymalBearComAd anymalComAd;
-  anymal::AnymalBearKinematicsAd anymalKinematicsAd;
+  anymal::AnymalCrocComAd anymalComAd;
+  anymal::AnymalCrocKinematicsAd anymalKinematicsAd;
   TestedConstraint eeVelocityConstraint(0, settings, anymalComAd, anymalKinematicsAd, true);
 
   // evaluation point
@@ -30,24 +29,22 @@ TEST(TestEEVelocityConstraint, evaluate){
 
   auto approximation = eeVelocityConstraint.getLinearApproximation(t, x, u);
   std::cout << "h" << std::endl;
-  for (auto h : approximation.constraintValues){
+  for (auto h : approximation.constraintValues) {
     std::cout << h << std::endl;
   }
 
   std::cout << "dhdx" << std::endl;
-  for (auto dhdx : approximation.derivativeState){
+  for (auto dhdx : approximation.derivativeState) {
     std::cout << dhdx.transpose() << std::endl;
   }
 
   std::cout << "dhdu" << std::endl;
-  for (auto dhdu : approximation.derivativeInput){
+  for (auto dhdu : approximation.derivativeInput) {
     std::cout << dhdu.transpose() << std::endl;
   }
 }
 
-
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

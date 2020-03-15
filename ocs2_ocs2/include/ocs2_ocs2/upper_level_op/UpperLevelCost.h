@@ -90,7 +90,7 @@ class UpperLevelCost final : public NLP_Cost {
         modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)),
         gddpPtr_(new gddp_t(gddpSettings)),
         display_(display) {
-    slqPtr_->setModeScheduleManagers(modeScheduleManagerPtr_);
+    slqPtr_->setModeScheduleManager(modeScheduleManagerPtr_);
   }
 
   /**

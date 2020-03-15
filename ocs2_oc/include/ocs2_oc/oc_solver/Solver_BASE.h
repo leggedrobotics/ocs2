@@ -178,7 +178,7 @@ class Solver_BASE {
   /**
    * Set mode schedule manager. This module is updated once before and once after solving the problem.
    */
-  void setModeScheduleManagers(const mode_schedule_manager_ptr_t& modeScheduleManager) { modeScheduleManager_ = modeScheduleManager; };
+  void setModeScheduleManager(mode_schedule_manager_ptr_t modeScheduleManager) { modeScheduleManager_ = std::move(modeScheduleManager); };
 
   /**
    * Set all modules that need to be synchronized with the solver. Each module is updated once before and once after solving the problem

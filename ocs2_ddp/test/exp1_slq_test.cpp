@@ -109,12 +109,12 @@ TEST(exp1_slq_test, exp1_slq_test) {
   // SLQ - single core version
   slqSettings.ddpSettings_.nThreads_ = 1;
   slq_t slqST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
-  slqST.setModeScheduleManagers(modeScheduleManagerPtr);
+  slqST.setModeScheduleManager(modeScheduleManagerPtr);
 
   slqSettings.ddpSettings_.nThreads_ = 3;
   // SLQ - multi-threaded version
   slq_t slqMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
-  slqMT.setModeScheduleManagers(modeScheduleManagerPtr);
+  slqMT.setModeScheduleManager(modeScheduleManagerPtr);
 
   // run single-threaded SLQ
   if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {

@@ -57,6 +57,14 @@ void ModeScheduleManager<STATE_DIM, INPUT_DIM>::preSolverRun(scalar_t initTime, 
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 const ModeSchedule& ModeScheduleManager<STATE_DIM, INPUT_DIM>::getModeSchedule() const {
+  return modeSchedule_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+ModeSchedule ModeScheduleManager<STATE_DIM, INPUT_DIM>::getModeScheduleImage() const {
   std::lock_guard<std::mutex> lock(modeScheduleMutex_);
   return modeSchedule_;
 }

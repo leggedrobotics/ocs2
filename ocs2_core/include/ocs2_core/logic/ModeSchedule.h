@@ -43,12 +43,16 @@ struct ModeSchedule {
   using scalar_t = typename Dimensions<0, 0>::scalar_t;
 
   /**
+   * Default constructor.
+   */
+  ModeSchedule() : ModeSchedule(std::vector<scalar_t>{}, std::vector<size_t>{0}) {}
+
+  /**
    * Constructor for a ModeSchedule. The number of phases must be greater than zero (N > 0)
    * @param [in] eventTimesInput : event times of size N - 1
    * @param [in] modeSequenceInput : mode sequence of size N
    */
-  ModeSchedule(std::vector<scalar_t> eventTimesInput = std::vector<scalar_t>{},
-               std::vector<size_t> modeSequenceInput = std::vector<size_t>{0});
+  ModeSchedule(std::vector<scalar_t> eventTimesInput, std::vector<size_t> modeSequenceInput);
 
   /**
    *  Returns the mode based on the query time.

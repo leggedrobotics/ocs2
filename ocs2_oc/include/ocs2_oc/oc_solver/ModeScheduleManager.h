@@ -64,9 +64,14 @@ class ModeScheduleManager : public SolverSynchronizedModule<STATE_DIM, INPUT_DIM
   void postSolverRun(const primal_solution_t& primalSolution) {}
 
   /**
-   * Returns a const reference to ModeSchedule. This method is thread safe.
+   * Returns a const reference to ModeSchedule. This method is NOT thread safe.
    */
   const ModeSchedule& getModeSchedule() const;
+
+  /**
+   * Returns a a copy of ModeSchedule. This method is thread safe.
+   */
+  ModeSchedule getModeScheduleImage() const;
 
   /**
    * Sets the ModeSchedule to the buffer. The buffer will move to internal ModeSchedule once preSolverRun()

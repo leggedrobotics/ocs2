@@ -117,7 +117,7 @@ TEST(exp1_gddp_test, optimum_gradient_test) {
   // SLQ - single tread version
   SLQ<STATE_DIM, INPUT_DIM> slqST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
                                   slqSettings);
-  slqST.setModeScheduleManagers(modeScheduleManagerPtr);
+  slqST.setModeScheduleManager(modeScheduleManagerPtr);
 
   // SLQ data collector
   SLQ_DataCollector<STATE_DIM, INPUT_DIM> slqDataCollector(&timeTriggeredRollout, &systemDerivative, &systemConstraint,

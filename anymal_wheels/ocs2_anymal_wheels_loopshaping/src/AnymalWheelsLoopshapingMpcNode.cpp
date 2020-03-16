@@ -3,7 +3,6 @@
 //
 
 #include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingMpcNode.h>
-
 #include "ocs2_anymal_wheels_loopshaping/AnymalWheelsLoopshapingInterface.h"
 
 int main(int argc, char* argv[]) {
@@ -13,7 +12,7 @@ int main(int argc, char* argv[]) {
   const std::string taskName(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic))
 
   // Initialize ros node
-  ros::init(argc, argv, "anymal_croc_loopshaping_mpc");
+  ros::init(argc, argv, "anymal_wheels_loopshaping_mpc");
   ros::NodeHandle nodeHandle;
 
   auto anymalInterface = anymal::getAnymalWheelsLoopshapingInterface(taskName);

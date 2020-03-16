@@ -117,6 +117,78 @@ public:
     protected:
     };
     
+    class Type_fr_base_X_fr_LF_WHEEL_L_COM : public TransformMotion<Scalar, Type_fr_base_X_fr_LF_WHEEL_L_COM>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_base_X_fr_LF_WHEEL_L_COM();
+        const Type_fr_base_X_fr_LF_WHEEL_L_COM& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_LF_WHEEL_L_COM_X_fr_base : public TransformMotion<Scalar, Type_fr_LF_WHEEL_L_COM_X_fr_base>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_LF_WHEEL_L_COM_X_fr_base();
+        const Type_fr_LF_WHEEL_L_COM_X_fr_base& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_base_X_fr_LH_WHEEL_L_COM : public TransformMotion<Scalar, Type_fr_base_X_fr_LH_WHEEL_L_COM>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_base_X_fr_LH_WHEEL_L_COM();
+        const Type_fr_base_X_fr_LH_WHEEL_L_COM& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_LH_WHEEL_L_COM_X_fr_base : public TransformMotion<Scalar, Type_fr_LH_WHEEL_L_COM_X_fr_base>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_LH_WHEEL_L_COM_X_fr_base();
+        const Type_fr_LH_WHEEL_L_COM_X_fr_base& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_base_X_fr_RF_WHEEL_L_COM : public TransformMotion<Scalar, Type_fr_base_X_fr_RF_WHEEL_L_COM>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_base_X_fr_RF_WHEEL_L_COM();
+        const Type_fr_base_X_fr_RF_WHEEL_L_COM& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_RF_WHEEL_L_COM_X_fr_base : public TransformMotion<Scalar, Type_fr_RF_WHEEL_L_COM_X_fr_base>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_RF_WHEEL_L_COM_X_fr_base();
+        const Type_fr_RF_WHEEL_L_COM_X_fr_base& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_base_X_fr_RH_WHEEL_L_COM : public TransformMotion<Scalar, Type_fr_base_X_fr_RH_WHEEL_L_COM>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_base_X_fr_RH_WHEEL_L_COM();
+        const Type_fr_base_X_fr_RH_WHEEL_L_COM& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_RH_WHEEL_L_COM_X_fr_base : public TransformMotion<Scalar, Type_fr_RH_WHEEL_L_COM_X_fr_base>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_RH_WHEEL_L_COM_X_fr_base();
+        const Type_fr_RH_WHEEL_L_COM_X_fr_base& update(const JState&);
+    protected:
+    };
+    
     class Type_fr_base_X_fr_LF_HAA : public TransformMotion<Scalar, Type_fr_base_X_fr_LF_HAA>
     {
     public:
@@ -560,6 +632,14 @@ public:
     Type_fr_RF_WHEEL_L_X_fr_base fr_RF_WHEEL_L_X_fr_base;
     Type_fr_base_X_fr_RH_WHEEL_L fr_base_X_fr_RH_WHEEL_L;
     Type_fr_RH_WHEEL_L_X_fr_base fr_RH_WHEEL_L_X_fr_base;
+    Type_fr_base_X_fr_LF_WHEEL_L_COM fr_base_X_fr_LF_WHEEL_L_COM;
+    Type_fr_LF_WHEEL_L_COM_X_fr_base fr_LF_WHEEL_L_COM_X_fr_base;
+    Type_fr_base_X_fr_LH_WHEEL_L_COM fr_base_X_fr_LH_WHEEL_L_COM;
+    Type_fr_LH_WHEEL_L_COM_X_fr_base fr_LH_WHEEL_L_COM_X_fr_base;
+    Type_fr_base_X_fr_RF_WHEEL_L_COM fr_base_X_fr_RF_WHEEL_L_COM;
+    Type_fr_RF_WHEEL_L_COM_X_fr_base fr_RF_WHEEL_L_COM_X_fr_base;
+    Type_fr_base_X_fr_RH_WHEEL_L_COM fr_base_X_fr_RH_WHEEL_L_COM;
+    Type_fr_RH_WHEEL_L_COM_X_fr_base fr_RH_WHEEL_L_COM_X_fr_base;
     Type_fr_base_X_fr_LF_HAA fr_base_X_fr_LF_HAA;
     Type_fr_base_X_fr_LF_HFE fr_base_X_fr_LF_HFE;
     Type_fr_base_X_fr_LF_KFE fr_base_X_fr_LF_KFE;
@@ -696,6 +776,78 @@ public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         Type_fr_RH_WHEEL_L_X_fr_base();
         const Type_fr_RH_WHEEL_L_X_fr_base& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_base_X_fr_LF_WHEEL_L_COM : public TransformForce<Scalar, Type_fr_base_X_fr_LF_WHEEL_L_COM>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_base_X_fr_LF_WHEEL_L_COM();
+        const Type_fr_base_X_fr_LF_WHEEL_L_COM& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_LF_WHEEL_L_COM_X_fr_base : public TransformForce<Scalar, Type_fr_LF_WHEEL_L_COM_X_fr_base>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_LF_WHEEL_L_COM_X_fr_base();
+        const Type_fr_LF_WHEEL_L_COM_X_fr_base& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_base_X_fr_LH_WHEEL_L_COM : public TransformForce<Scalar, Type_fr_base_X_fr_LH_WHEEL_L_COM>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_base_X_fr_LH_WHEEL_L_COM();
+        const Type_fr_base_X_fr_LH_WHEEL_L_COM& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_LH_WHEEL_L_COM_X_fr_base : public TransformForce<Scalar, Type_fr_LH_WHEEL_L_COM_X_fr_base>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_LH_WHEEL_L_COM_X_fr_base();
+        const Type_fr_LH_WHEEL_L_COM_X_fr_base& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_base_X_fr_RF_WHEEL_L_COM : public TransformForce<Scalar, Type_fr_base_X_fr_RF_WHEEL_L_COM>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_base_X_fr_RF_WHEEL_L_COM();
+        const Type_fr_base_X_fr_RF_WHEEL_L_COM& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_RF_WHEEL_L_COM_X_fr_base : public TransformForce<Scalar, Type_fr_RF_WHEEL_L_COM_X_fr_base>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_RF_WHEEL_L_COM_X_fr_base();
+        const Type_fr_RF_WHEEL_L_COM_X_fr_base& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_base_X_fr_RH_WHEEL_L_COM : public TransformForce<Scalar, Type_fr_base_X_fr_RH_WHEEL_L_COM>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_base_X_fr_RH_WHEEL_L_COM();
+        const Type_fr_base_X_fr_RH_WHEEL_L_COM& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_RH_WHEEL_L_COM_X_fr_base : public TransformForce<Scalar, Type_fr_RH_WHEEL_L_COM_X_fr_base>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_RH_WHEEL_L_COM_X_fr_base();
+        const Type_fr_RH_WHEEL_L_COM_X_fr_base& update(const JState&);
     protected:
     };
     
@@ -1142,6 +1294,14 @@ public:
     Type_fr_RF_WHEEL_L_X_fr_base fr_RF_WHEEL_L_X_fr_base;
     Type_fr_base_X_fr_RH_WHEEL_L fr_base_X_fr_RH_WHEEL_L;
     Type_fr_RH_WHEEL_L_X_fr_base fr_RH_WHEEL_L_X_fr_base;
+    Type_fr_base_X_fr_LF_WHEEL_L_COM fr_base_X_fr_LF_WHEEL_L_COM;
+    Type_fr_LF_WHEEL_L_COM_X_fr_base fr_LF_WHEEL_L_COM_X_fr_base;
+    Type_fr_base_X_fr_LH_WHEEL_L_COM fr_base_X_fr_LH_WHEEL_L_COM;
+    Type_fr_LH_WHEEL_L_COM_X_fr_base fr_LH_WHEEL_L_COM_X_fr_base;
+    Type_fr_base_X_fr_RF_WHEEL_L_COM fr_base_X_fr_RF_WHEEL_L_COM;
+    Type_fr_RF_WHEEL_L_COM_X_fr_base fr_RF_WHEEL_L_COM_X_fr_base;
+    Type_fr_base_X_fr_RH_WHEEL_L_COM fr_base_X_fr_RH_WHEEL_L_COM;
+    Type_fr_RH_WHEEL_L_COM_X_fr_base fr_RH_WHEEL_L_COM_X_fr_base;
     Type_fr_base_X_fr_LF_HAA fr_base_X_fr_LF_HAA;
     Type_fr_base_X_fr_LF_HFE fr_base_X_fr_LF_HFE;
     Type_fr_base_X_fr_LF_KFE fr_base_X_fr_LF_KFE;
@@ -1278,6 +1438,78 @@ public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         Type_fr_RH_WHEEL_L_X_fr_base();
         const Type_fr_RH_WHEEL_L_X_fr_base& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_base_X_fr_LF_WHEEL_L_COM : public TransformHomogeneous<Scalar, Type_fr_base_X_fr_LF_WHEEL_L_COM>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_base_X_fr_LF_WHEEL_L_COM();
+        const Type_fr_base_X_fr_LF_WHEEL_L_COM& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_LF_WHEEL_L_COM_X_fr_base : public TransformHomogeneous<Scalar, Type_fr_LF_WHEEL_L_COM_X_fr_base>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_LF_WHEEL_L_COM_X_fr_base();
+        const Type_fr_LF_WHEEL_L_COM_X_fr_base& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_base_X_fr_LH_WHEEL_L_COM : public TransformHomogeneous<Scalar, Type_fr_base_X_fr_LH_WHEEL_L_COM>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_base_X_fr_LH_WHEEL_L_COM();
+        const Type_fr_base_X_fr_LH_WHEEL_L_COM& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_LH_WHEEL_L_COM_X_fr_base : public TransformHomogeneous<Scalar, Type_fr_LH_WHEEL_L_COM_X_fr_base>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_LH_WHEEL_L_COM_X_fr_base();
+        const Type_fr_LH_WHEEL_L_COM_X_fr_base& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_base_X_fr_RF_WHEEL_L_COM : public TransformHomogeneous<Scalar, Type_fr_base_X_fr_RF_WHEEL_L_COM>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_base_X_fr_RF_WHEEL_L_COM();
+        const Type_fr_base_X_fr_RF_WHEEL_L_COM& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_RF_WHEEL_L_COM_X_fr_base : public TransformHomogeneous<Scalar, Type_fr_RF_WHEEL_L_COM_X_fr_base>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_RF_WHEEL_L_COM_X_fr_base();
+        const Type_fr_RF_WHEEL_L_COM_X_fr_base& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_base_X_fr_RH_WHEEL_L_COM : public TransformHomogeneous<Scalar, Type_fr_base_X_fr_RH_WHEEL_L_COM>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_base_X_fr_RH_WHEEL_L_COM();
+        const Type_fr_base_X_fr_RH_WHEEL_L_COM& update(const JState&);
+    protected:
+    };
+    
+    class Type_fr_RH_WHEEL_L_COM_X_fr_base : public TransformHomogeneous<Scalar, Type_fr_RH_WHEEL_L_COM_X_fr_base>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Type_fr_RH_WHEEL_L_COM_X_fr_base();
+        const Type_fr_RH_WHEEL_L_COM_X_fr_base& update(const JState&);
     protected:
     };
     
@@ -1724,6 +1956,14 @@ public:
     Type_fr_RF_WHEEL_L_X_fr_base fr_RF_WHEEL_L_X_fr_base;
     Type_fr_base_X_fr_RH_WHEEL_L fr_base_X_fr_RH_WHEEL_L;
     Type_fr_RH_WHEEL_L_X_fr_base fr_RH_WHEEL_L_X_fr_base;
+    Type_fr_base_X_fr_LF_WHEEL_L_COM fr_base_X_fr_LF_WHEEL_L_COM;
+    Type_fr_LF_WHEEL_L_COM_X_fr_base fr_LF_WHEEL_L_COM_X_fr_base;
+    Type_fr_base_X_fr_LH_WHEEL_L_COM fr_base_X_fr_LH_WHEEL_L_COM;
+    Type_fr_LH_WHEEL_L_COM_X_fr_base fr_LH_WHEEL_L_COM_X_fr_base;
+    Type_fr_base_X_fr_RF_WHEEL_L_COM fr_base_X_fr_RF_WHEEL_L_COM;
+    Type_fr_RF_WHEEL_L_COM_X_fr_base fr_RF_WHEEL_L_COM_X_fr_base;
+    Type_fr_base_X_fr_RH_WHEEL_L_COM fr_base_X_fr_RH_WHEEL_L_COM;
+    Type_fr_RH_WHEEL_L_COM_X_fr_base fr_RH_WHEEL_L_COM_X_fr_base;
     Type_fr_base_X_fr_LF_HAA fr_base_X_fr_LF_HAA;
     Type_fr_base_X_fr_LF_HFE fr_base_X_fr_LF_HFE;
     Type_fr_base_X_fr_LF_KFE fr_base_X_fr_LF_KFE;

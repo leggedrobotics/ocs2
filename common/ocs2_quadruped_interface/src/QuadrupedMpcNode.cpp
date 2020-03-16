@@ -15,8 +15,11 @@ void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& qua
   const std::string robotName = "anymal";
   using mpc_ros_t = ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM>;
 
-  // launch MPC nodes
+  // Prepare Mpc object
   auto mpcPtr = getMpc(quadrupedInterface, mpcSettings, slqSettings);
+  mpcPtr->getSolverPtr()->setSynchronizedModules(quadrupedInterface.getSynchronizedModules());
+
+  // launch MPC node
   mpc_ros_t mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(nodeHandle);
 }

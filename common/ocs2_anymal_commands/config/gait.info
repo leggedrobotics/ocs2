@@ -11,6 +11,7 @@ list
   [8] amble
   [9] lindyhop
   [10] skipping
+  [11] pawup
 }
 
 stance
@@ -238,4 +239,17 @@ skipping
     [7]     1.17
     [8]     1.20
   }
+}
+
+pawup
+{
+   templateSubsystemsSequence
+   {
+     [0]     RF_LH_RH
+   }
+   templateSwitchingTimes
+   {
+     [0]     0.0
+     [1]     2.0
+   }
 }

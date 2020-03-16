@@ -67,14 +67,19 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
     EndEffectorVelocityConstraintSettings eeVelConSettings;
     if (stanceLegs_[i]) {  // in stance: All velocity equal to zero
       eeVelConSettings.b = Eigen::Vector3d::Zero();
+      eeVelConSettings.b[2] = -swingPlannerPtr_->getZvelocityConstraint(i, t);
       eeVelConSettings.A = Eigen::Matrix3d::Identity();
     } else {  // in swing: z-velocity is provided
       eeVelConSettings.b.resize(1);
       eeVelConSettings.A.resize(1, 3);
-      eeVelConSettings.b << -zDirectionRefsPtr_[i]->velocity(Base::t_);
+      //      eeVelConSettings.b << -zDirectionRefsPtr_[i]->velocity(Base::t_);
+      eeVelConSettings.b << -swingPlannerPtr_->getZvelocityConstraint(i, t);
       eeVelConSettings.A << 0, 0, 1;
     }
     EEVelConstraint.configure(eeVelConSettings);
+
+    std::cout << "SwingPlannerConstraint: (i: " << i << ", t: " << t << "): " << swingPlannerPtr_->getZvelocityConstraint(i, t)
+              << std::endl;
   }
 }
 

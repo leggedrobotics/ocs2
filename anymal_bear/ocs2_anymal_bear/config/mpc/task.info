@@ -118,8 +118,8 @@ slq
     minRelConstraint1ISE          5e-6
     checkNumericalStability       0
 
-    useMultiThreading             1
-    nThreads                      3
+    useMultiThreading             0
+    nThreads                      1
     threadPriority                50
     debugPrintMP                  0
     lsStepsizeGreedy              1

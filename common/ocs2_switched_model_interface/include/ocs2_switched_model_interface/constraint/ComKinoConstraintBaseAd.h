@@ -8,6 +8,7 @@
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
 #include "ocs2_switched_model_interface/core/ModelSettings.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
+#include "ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h"
 #include "ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h"
 
 namespace switched_model {
@@ -36,11 +37,13 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
   const std::array<std::string, 4> feetNames{"LF", "RF", "LH", "RH"};
 
   ComKinoConstraintBaseAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-                          std::shared_ptr<const logic_rules_t> logicRulesPtr, const ModelSettings& options = ModelSettings())
+                          std::shared_ptr<const logic_rules_t> logicRulesPtr, std::shared_ptr<const SwingTrajectoryPlanner> swingPlannerPtr,
+                          const ModelSettings& options = ModelSettings())
       : Base(),
         adKinematicModelPtr_(adKinematicModel.clone()),
         adComModelPtr_(adComModel.clone()),
         logicRulesPtr_(std::move(logicRulesPtr)),
+        swingPlannerPtr_(std::move(swingPlannerPtr)),
         options_(options),
         inequalityConstraintsComputed_(false),
         stateInputConstraintsComputed_(false) {
@@ -55,6 +58,7 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
         adKinematicModelPtr_(rhs.adKinematicModelPtr_->clone()),
         adComModelPtr_(rhs.adComModelPtr_->clone()),
         logicRulesPtr_(rhs.logicRulesPtr_),
+        swingPlannerPtr_(rhs.swingPlannerPtr_),
         options_(rhs.options_),
         inequalityConstraintCollection_(rhs.inequalityConstraintCollection_),
         equalityStateInputConstraintCollection_(rhs.equalityStateInputConstraintCollection_),
@@ -123,6 +127,7 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
   std::shared_ptr<const logic_rules_t> logicRulesPtr_;
   contact_flag_t stanceLegs_;
   size_t numEventTimes_;
+  std::shared_ptr<const SwingTrajectoryPlanner> swingPlannerPtr_;
 
   std::array<const foot_cpg_t*, NUM_CONTACT_POINTS> zDirectionRefsPtr_;
 };

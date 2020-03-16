@@ -12,7 +12,7 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto FeetPlannerBase::updateFootSchedule(size_t footIndex, const size_array_t& phaseIDsStock, const bool_array_t& contactFlagStock) const
+auto FeetPlannerBase::updateFootSchedule(size_t footIndex, const size_array_t& phaseIDsStock, const bool_array_t& contactFlagStock)
     -> std::pair<int_array_t, int_array_t> {
   const size_t numPhases = phaseIDsStock.size();
 
@@ -31,7 +31,7 @@ auto FeetPlannerBase::updateFootSchedule(size_t footIndex, const size_array_t& p
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto FeetPlannerBase::extractContactFlags(const size_array_t& phaseIDsStock) const -> std::array<bool_array_t, NUM_CONTACT_POINTS> {
+auto FeetPlannerBase::extractContactFlags(const size_array_t& phaseIDsStock) -> std::array<bool_array_t, NUM_CONTACT_POINTS> {
   const size_t numPhases = phaseIDsStock.size();
 
   std::array<bool_array_t, NUM_CONTACT_POINTS> contactFlagStock;
@@ -49,7 +49,7 @@ auto FeetPlannerBase::extractContactFlags(const size_array_t& phaseIDsStock) con
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::pair<int, int> FeetPlannerBase::findIndex(size_t index, const bool_array_t& contactFlagStock) const {
+std::pair<int, int> FeetPlannerBase::findIndex(size_t index, const bool_array_t& contactFlagStock) {
   const size_t numPhases = contactFlagStock.size();
 
   // skip if it is a stance leg

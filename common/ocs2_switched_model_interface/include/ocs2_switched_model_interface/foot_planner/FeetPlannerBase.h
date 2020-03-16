@@ -44,7 +44,6 @@ class FeetPlannerBase {
    */
   virtual feet_cpg_ptr_t planSingleMode(size_t index, const ocs2::ModeSchedule& modeSchedule) = 0;
 
- protected:
   /**
    * based on the input phaseIDsStock finds the start subsystem and final subsystem of the swing
    * phases of the a foot in each subsystem.
@@ -57,17 +56,16 @@ class FeetPlannerBase {
    * @param [in] contactFlagStock: The sequence of the contact status for the requested leg.
    * @return { startTimeIndexStock, finalTimeIndexStock}
    */
-  std::pair<int_array_t, int_array_t> updateFootSchedule(size_t footIndex, const size_array_t& phaseIDsStock,
-                                                         const bool_array_t& contactFlagStock) const;
+  static std::pair<int_array_t, int_array_t> updateFootSchedule(size_t footIndex, const size_array_t& phaseIDsStock,
+                                                                const bool_array_t& contactFlagStock);
 
   /**
    * Extracts for each leg the contact sequence over the motion phase sequence.
    * @param phaseIDsStock
    * @return contactFlagStock
    */
-  std::array<bool_array_t, NUM_CONTACT_POINTS> extractContactFlags(const size_array_t& phaseIDsStock) const;
+  static std::array<bool_array_t, NUM_CONTACT_POINTS> extractContactFlags(const size_array_t& phaseIDsStock);
 
- private:
   /**
    * Finds the take-off and touch-down times indices for a specific leg.
    *
@@ -75,7 +73,7 @@ class FeetPlannerBase {
    * @param contactFlagStock
    * @return {The take-off time index for swing legs, touch-down time index for swing legs}
    */
-  std::pair<int, int> findIndex(size_t index, const bool_array_t& contactFlagStock) const;
+  static std::pair<int, int> findIndex(size_t index, const bool_array_t& contactFlagStock);
 };
 
 }  // namespace switched_model

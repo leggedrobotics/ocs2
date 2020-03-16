@@ -11,6 +11,8 @@
 
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
+#include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
+
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
 #include <ocs2_switched_model_interface/core/ModelSettings.h>
@@ -58,6 +60,7 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   using constraint_t = switched_model::ComKinoConstraintBaseAd;
   using cost_function_t = switched_model::SwitchedModelCostBase;
   using operating_point_t = switched_model::ComKinoOperatingPointsBase;
+  using solver_module_t = ocs2::SolverSynchronizedModule<STATE_DIM, INPUT_DIM>;
 
   /**
    *
@@ -113,6 +116,8 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
 
   const operating_point_t& getOperatingPoints() const override { return *operatingPointsPtr_; }
 
+  std::vector<std::shared_ptr<solver_module_t>> getSynchronizedModules() const { return solverModules_; }
+
  private:
   /**
    * Load the settings from the path file.
@@ -144,6 +149,8 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   state_vector_t initialState_;
   scalar_array_t partitioningTimes_;
   mode_sequence_template_t defaultModeSequenceTemplate_;
+
+  std::vector<std::shared_ptr<solver_module_t>> solverModules_;
 };
 
 }  // end of namespace switched_model

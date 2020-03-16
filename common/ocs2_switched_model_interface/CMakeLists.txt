@@ -4,6 +4,7 @@ project(ocs2_switched_model_interface)
 ## Catkin Dependencies
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
+	ocs2_oc
 )
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
@@ -54,6 +55,9 @@ add_library(${PROJECT_NAME}
 		src/foot_planner/SplineCpg.cpp
 		src/foot_planner/FeetPlannerBase.cpp
 		src/foot_planner/FeetZDirectionPlanner.cpp
+		src/foot_planner/SwingTrajectoryPlanner.cpp
+		src/logic/Gait.cpp
+  src/logic/GaitSchedule.cpp
 		)
 
 add_dependencies(${PROJECT_NAME}
@@ -118,3 +122,13 @@ catkin_add_gtest(test_zeroForceConstraint
 catkin_add_gtest(test_frictionConeConstraint
 		test/constraint/testFrictionConeConstraint.cpp
 		)
+
+catkin_add_gtest(test_${PROJECT_NAME}_logic
+	test/logic/testGait.cpp
+	test/logic/testGaitSwitching.cpp
+	test/logic/testGaitSchedule.cpp
+	)
+target_link_libraries(test_${PROJECT_NAME}_logic
+	${PROJECT_NAME}
+	gtest_main
+	)

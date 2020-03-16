@@ -9,6 +9,7 @@
 #include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
 #include <ocs2_switched_model_interface/foot_planner/FeetZDirectionPlanner.h>
 #include <ocs2_switched_model_interface/foot_planner/SplineCpg.h>
+#include "ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h"
 
 namespace switched_model {
 
@@ -21,9 +22,19 @@ QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, 
     : kinematicModelPtr_(kinematicModel.clone()), comModelPtr_(comModel.clone()) {
   loadSettings(pathToConfigFolder + "/task.info");
 
+  // Swing planner.
+  switched_model::SwingTrajectoryPlannerSettings settings;
+  settings.liftOffVelocity = 0.4;
+  settings.touchDownVelocity = -0.2;
+  settings.swingHeight = 0.1;
+  settings.touchdownAfterHorizon = 0.2;
+  settings.errorGain = 1.0;
+  auto swingPlanner = std::make_shared<switched_model::SwingTrajectoryPlanner>(settings, getComModel(), getKinematicModel());
+  solverModules_.push_back(swingPlanner);
+
   dynamicsPtr_.reset(new system_dynamics_t(adKinematicModel, adComModel, modelSettings_.recompileLibraries_));
   dynamicsDerivativesPtr_.reset(dynamicsPtr_->clone());
-  constraintsPtr_.reset(new constraint_t(adKinematicModel, adComModel, logicRulesPtr_, modelSettings_));
+  constraintsPtr_.reset(new constraint_t(adKinematicModel, adComModel, logicRulesPtr_, swingPlanner, modelSettings_));
   costFunctionPtr_.reset(new cost_function_t(*comModelPtr_, logicRulesPtr_, Q_, R_, QFinal_));
   operatingPointsPtr_.reset(new operating_point_t(*comModelPtr_, logicRulesPtr_));
   timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, rolloutSettings_));

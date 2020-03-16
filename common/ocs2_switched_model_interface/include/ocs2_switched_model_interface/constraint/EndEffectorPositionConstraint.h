@@ -34,14 +34,14 @@ class EndEffectorPositionConstraint : public EndEffectorConstraint {
   explicit EndEffectorPositionConstraint(int legNumber, EndEffectorPositionConstraintSettings settings, ad_com_model_t& adComModel,
                                          ad_kinematic_model_t& adKinematicsModel, bool generateModels = true,
                                          std::string constraintPrefix = "EEPositionConstraint_")
-      : BASE(kConstraintOrder, std::move(constraintPrefix), legNumber, std::move(settings), adComModel, adKinematicsModel,
+      : BASE(ocs2::ConstraintOrder::Linear, std::move(constraintPrefix), legNumber, std::move(settings), adComModel, adKinematicsModel,
              EndEffectorPositionConstraint::adfunc, generateModels) {}
 
   EndEffectorPositionConstraint(const EndEffectorPositionConstraint& rhs) = default;
 
   EndEffectorPositionConstraint* clone() const override { return new EndEffectorPositionConstraint(*this); }
 
- protected:
+ private:
   static void adfunc(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, int legNumber,
                      const ad_dynamic_vector_t& tapedInput, ad_dynamic_vector_t& o_footPosition) {
     // Extract elements from taped input
@@ -57,7 +57,5 @@ class EndEffectorPositionConstraint : public EndEffectorConstraint {
     const base_coordinate_ad_t basePose = adComModel.calculateBasePose(comPose);
   };
 
- private:
-  static constexpr ocs2::ConstraintOrder kConstraintOrder = ocs2::ConstraintOrder::Linear;
 };
 }  // namespace switched_model

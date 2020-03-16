@@ -32,8 +32,9 @@ class EndEffectorVelocityInFootFrameConstraint : public EndEffectorConstraint {
 
   explicit EndEffectorVelocityInFootFrameConstraint(int legNumber, EndEffectorVelocityInFootFrameConstraintSettings settings,
                                                     ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel,
-                                                    bool generateModels = true, std::string constraintPrefix = constraintPrefix_)
-      : BASE{kConstraintOrder,
+                                                    bool generateModels = true,
+                                                    std::string constraintPrefix = "EEVelocityInFootFrameConstraint_")
+      : BASE{ocs2::ConstraintOrder::Linear,
              std::move(constraintPrefix),
              legNumber,
              std::move(settings),
@@ -42,14 +43,7 @@ class EndEffectorVelocityInFootFrameConstraint : public EndEffectorConstraint {
              EndEffectorVelocityInFootFrameConstraint::adfunc,
              generateModels} {};
 
-  // explicit EndEffectorVelocityInFootFrameConstraint(int legNumber, EndEffectorVelocityInFootFrameConstraintSettings settings,
-  //     ad_interface_t& ad_interface, bool generateModels = true, std::string constraintPrefix = constraintPrefix_)
-  //   : BASE(kConstraintOrder, std::move(constraintPrefix), legNumber, std::move(settings), ad_interface,
-  //       generateModels){};
-
   EndEffectorVelocityInFootFrameConstraint(const EndEffectorVelocityInFootFrameConstraint& rhs) = default;
-  // EndEffectorVelocityInFootFrameConstraint(const EndEffectorVelocityInFootFrameConstraint& rhs)
-  //     : EndEffectorVelocityInFootFrameConstraint{ rhs.legNumber_, rhs.settings_, rhs.getAdInterface(), false, constraintPrefix_ };
 
   EndEffectorVelocityInFootFrameConstraint* clone() const override { return new EndEffectorVelocityInFootFrameConstraint(*this); }
 
@@ -72,7 +66,5 @@ class EndEffectorVelocityInFootFrameConstraint : public EndEffectorConstraint {
     f_footVelocityInFootFrame = adKinematicsModel.footVelocityInFootFrame(legNumber, com_baseTwist, qJoints, dqJoints);
   };
 
-  static const inline auto constraintPrefix_ = "EEVelocityInFootFrameConstraint_";
-  static constexpr ocs2::ConstraintOrder kConstraintOrder = ocs2::ConstraintOrder::Linear;
 };
 }  // namespace switched_model

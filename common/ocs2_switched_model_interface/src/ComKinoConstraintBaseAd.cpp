@@ -69,8 +69,7 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
       eeVelConSettings.b = Eigen::Vector3d::Zero();
       eeVelConSettings.A = Eigen::Matrix3d::Identity();
     } else {  // in swing: z-velocity is provided
-      eeVelConSettings.b.resize(1);
-      eeVelConSettings.A.resize(1, 3);
+      eeVelConSettings.resize(1, 3);
       eeVelConSettings.b << -zDirectionRefsPtr_[i]->calculateVelocity(Base::t_);
       eeVelConSettings.A << 0, 0, 1;
     }

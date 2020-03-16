@@ -31,7 +31,7 @@ class EndEffectorVelocityInBaseConstraint : public EndEffectorConstraint {
   explicit EndEffectorVelocityInBaseConstraint(int legNumber, EndEffectorVelocityConstraintSettings settings, ad_com_model_t& adComModel,
                                                ad_kinematic_model_t& adKinematicsModel, bool generateModels = true,
                                                std::string constraintPrefix = "b_EEVelocityConstraint_")
-      : BASE(kConstraintOrder, std::move(constraintPrefix), legNumber, std::move(settings), adComModel, adKinematicsModel,
+      : BASE(ocs2::ConstraintOrder::Linear, std::move(constraintPrefix), legNumber, std::move(settings), adComModel, adKinematicsModel,
              EndEffectorPositionInBaseConstraint::adfunc, generateModels) {}
 
   EndEffectorVelocityInBaseConstraint(const EndEffectorVelocityInBaseConstraint& rhs) = default;
@@ -57,6 +57,5 @@ class EndEffectorVelocityInBaseConstraint : public EndEffectorConstraint {
 
     o_footVelocity = adKinematicsModel.footVelocityInBaseFrame(legNumber, com_baseTwist, qJoints, dqJoints);
   }
-  static constexpr ocs2::ConstraintOrder kConstraintOrder = ocs2::ConstraintOrder::Linear;
 };
 }  // namespace switched_model

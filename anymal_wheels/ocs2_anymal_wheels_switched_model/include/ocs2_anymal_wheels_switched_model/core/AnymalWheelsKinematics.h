@@ -36,10 +36,8 @@ class AnymalWheelsKinematics final : public switched_model::KinematicsModelBase<
   joint_jacobian_t baseToFootJacobianInBaseFrame(size_t footIndex,
                                                  const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const override;
 
-  switched_model::matrix3_s_t<SCALAR_T> footOrientationRelativeToBaseFrame(
+  switched_model::matrix3_s_t<SCALAR_T> footOrientationInBaseFrame(
       size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const override;
-
-
 };
 
 }  // namespace tpl

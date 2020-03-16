@@ -97,7 +97,7 @@ typename AnymalCrocKinematics<SCALAR_T>::joint_jacobian_t AnymalCrocKinematics<S
 /******************************************************************************************************/
 
 template <typename SCALAR_T>
-switched_model::matrix3_s_t<SCALAR_T> AnymalCrocKinematics<SCALAR_T>::footOrientationRelativeToBaseFrame(
+switched_model::matrix3_s_t<SCALAR_T> AnymalCrocKinematics<SCALAR_T>::footOrientationInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
 

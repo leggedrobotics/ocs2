@@ -45,8 +45,8 @@ class KinematicsModelBase {
 
   virtual joint_jacobian_t baseToFootJacobianInBaseFrame(size_t footIndex, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const = 0;
 
-  virtual matrix3_s_t<SCALAR_T> footOrientationRelativeToBaseFrame(size_t footIndex,
-                                                                   const joint_coordinate_s_t<SCALAR_T>& jointPositions) const = 0;
+  virtual matrix3_s_t<SCALAR_T> footOrientationInBaseFrame(size_t footIndex,
+                                                           const joint_coordinate_s_t<SCALAR_T>& jointPositions) const = 0;
 
   matrix3_s_t<SCALAR_T> footOrientationInOriginFrame(size_t footIndex, const base_coordinate_s_t<SCALAR_T>& basePose,
                                                      const joint_coordinate_s_t<SCALAR_T>& jointPositions) const;

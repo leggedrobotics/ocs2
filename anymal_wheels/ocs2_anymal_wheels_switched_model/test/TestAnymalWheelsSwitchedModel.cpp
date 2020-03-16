@@ -105,7 +105,7 @@ TEST_F(SwitchedModelTests, EndeffectorOrientation) {
   for (int footIdx = 0; footIdx < switched_model::NUM_CONTACT_POINTS; footIdx++) {
     const matrix3_t o_R_f = kinematics_.footOrientationInOriginFrame(footIdx, basePose, qJoints);
     std::cout << "\nFOOT-" << switched_model::feetNames[footIdx];
-    std::cout << "\n -> FootOrientationRelativeToBaseFrame b_R_f:\n" << kinematics_.footOrientationRelativeToBaseFrame(footIdx, qJoints);
+    std::cout << "\n -> FootOrientationInBaseFrame b_R_f:\n" << kinematics_.footOrientationInBaseFrame(footIdx, qJoints);
     std::cout << "\n -> Foot orientation o_R_f" << ":\n" << o_R_f;
     std::cout << std::endl;
     EXPECT_PRED2(matrixEquality_, o_R_f, o_R_b);
@@ -134,7 +134,7 @@ TEST_F(SwitchedModelTests, EndeffectorOrientationRandomBasePose) {
   for (int footIdx = 0; footIdx < switched_model::NUM_CONTACT_POINTS; footIdx++) {
     const matrix3_t o_R_f = kinematics_.footOrientationInOriginFrame(footIdx, basePose, qJoints);
     std::cout << "\nFOOT-" << switched_model::feetNames[footIdx];
-    std::cout << "\n\tFootOrientationRelativeToBaseFrame b_R_f:\n" << kinematics_.footOrientationRelativeToBaseFrame(footIdx, qJoints);
+    std::cout << "\n\tFootOrientationInBaseFrame b_R_f:\n" << kinematics_.footOrientationInBaseFrame(footIdx, qJoints);
     std::cout << "\n\tFoot orientation o_R_f" << ":\n" << o_R_f;
     std::cout << std::endl;
     EXPECT_PRED2(matrixEquality_, o_R_f, o_R_b);
@@ -178,7 +178,7 @@ TEST_F(SwitchedModelTests, EndeffectorAlignedYAxisRandomHFE_KFE) {
     const matrix3_t o_R_f = kinematics_.footOrientationInOriginFrame(footIdx, basePose, qJoints);
     std::cout << "\n Foot-" << switched_model::feetNames[footIdx];
     std::cout << " orientation:\n" << o_R_f;
-    std::cout << "\nFootOrientationRelativeToBaseFrame:\n" << kinematics_.footOrientationRelativeToBaseFrame(footIdx, qJoints);
+    std::cout << "\nFootOrientationInBaseFrame:\n" << kinematics_.footOrientationInBaseFrame(footIdx, qJoints);
     std::cout << std::endl;
     EXPECT_PRED2(matrixEquality_, o_R_f * yAxis, o_R_b * yAxis);
   }
@@ -221,7 +221,7 @@ TEST_F(SwitchedModelTests, EndeffectorAlignedXAxisRandomHAA) {
   for (int footIdx = 0; footIdx < switched_model::NUM_CONTACT_POINTS; footIdx++) {
     const matrix3_t o_R_f = kinematics_.footOrientationInOriginFrame(footIdx, basePose, qJoints);
     std::cout << "\nFoot orientation " << switched_model::feetNames[footIdx] << ":\n" << o_R_f;
-    std::cout << "\nFootOrientationRelativeToBaseFrame:\n" << kinematics_.footOrientationRelativeToBaseFrame(footIdx, qJoints) << "\n";
+    std::cout << "\nFootOrientationInBaseFrame:\n" << kinematics_.footOrientationInBaseFrame(footIdx, qJoints) << "\n";
     EXPECT_PRED2(matrixEquality_,  o_R_f * xAxis, o_R_b * xAxis);
   }
   {

@@ -6,6 +6,7 @@
  */
 
 #include "ocs2_anymal_wheels_switched_model/core/AnymalWheelsKinematics.h"
+#include <ocs2_anymal_wheels_switched_model/core/WheelsSwitchedModel.h>
 
 #include <iit/rbd/traits/TraitSelector.h>
 
@@ -142,24 +143,6 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::footOrie
              std::runtime_error("Undefined endeffector index.");
              break;
   }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-
-template <typename SCALAR_T>
-typename AnymalWheelsKinematics<SCALAR_T>::extended_joint_coordinate_t AnymalWheelsKinematics<SCALAR_T>::getExtendedJointCoordinates(const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
-  typename AnymalWheelsKinematics<SCALAR_T>::extended_joint_coordinate_t extendedJointCoordinate;
-  extendedJointCoordinate.template segment<3>(0) = jointPositions.template segment<3>(0);
-  extendedJointCoordinate(3) = SCALAR_T(0.0);
-  extendedJointCoordinate.template segment<3>(4) = jointPositions.template segment<3>(3);
-  extendedJointCoordinate(7) = SCALAR_T(0.0);
-  extendedJointCoordinate.template segment<3>(8) = jointPositions.template segment<3>(6);
-  extendedJointCoordinate(11) = SCALAR_T(0.0);
-  extendedJointCoordinate.template segment<3>(12) = jointPositions.template segment<3>(9);
-  extendedJointCoordinate(15) = SCALAR_T(0.0);
-  return extendedJointCoordinate;
 }
 
 }  // namespace tpl

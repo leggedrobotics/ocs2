@@ -43,10 +43,6 @@ class AnymalWheelsCom : public switched_model::ComModelBase<SCALAR_T> {
   switched_model::matrix6_s_t<SCALAR_T> comInertia_;
   SCALAR_T totalMass_;
 
-  // Includes wheel joints
-  using extended_joint_coordinate_t = Eigen::Matrix<SCALAR_T, switched_model::JOINT_COORDINATE_SIZE + 4, 1>;
-
-  extended_joint_coordinate_t getExtendedJointCoordinates(const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
 };
 
 }  // namespace tpl

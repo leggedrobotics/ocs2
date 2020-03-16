@@ -39,11 +39,6 @@ class AnymalWheelsKinematics final : public switched_model::KinematicsModelBase<
   switched_model::matrix3_s_t<SCALAR_T> footOrientationRelativeToBaseFrame(
       size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const override;
 
- private:
-  // Includes wheel joints
-  using extended_joint_coordinate_t = Eigen::Matrix<SCALAR_T, switched_model::JOINT_COORDINATE_SIZE + 4, 1>;
-
-  extended_joint_coordinate_t getExtendedJointCoordinates(const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
 
 };
 

@@ -7,7 +7,7 @@
 #include <ocs2_switched_model_interface/constraint/ConstraintCollection.h>
 #include "testConstraintTerm.h"
 
-TEST(TestConstraintCollection, add){
+TEST(TestConstraintCollection, add) {
   ocs2::ConstraintCollection<3, 2> constraintCollection;
 
   // Add after construction
@@ -15,7 +15,7 @@ TEST(TestConstraintCollection, add){
   constraintCollection.add("Constraint1", std::move(constraintTerm));
 }
 
-TEST(TestConstraintCollection, numberOfConstraints){
+TEST(TestConstraintCollection, numberOfConstraints) {
   ocs2::ConstraintCollection<3, 2> constraintCollection;
 
   // Initially we have zero constraints for all types
@@ -30,7 +30,7 @@ TEST(TestConstraintCollection, numberOfConstraints){
   ASSERT_EQ(constraintCollection.getNumConstraints(0.0), addedConstraints);
 }
 
-TEST(TestConstraintCollection, activatingConstraints){
+TEST(TestConstraintCollection, activatingConstraints) {
   ocs2::ConstraintCollection<3, 2> constraintCollection;
 
   // Initially we have zero constraints for all types
@@ -50,7 +50,7 @@ TEST(TestConstraintCollection, activatingConstraints){
   ASSERT_EQ(constraintCollection.getNumConstraints(0.0), 0);
 }
 
-TEST(TestConstraintCollection, getValue_as_stdvector){
+TEST(TestConstraintCollection, getValue_as_stdvector) {
   using collection_t = ocs2::ConstraintCollection<3, 2>;
   collection_t constraintCollection;
   collection_t::scalar_array_t constraintValues;
@@ -80,7 +80,7 @@ TEST(TestConstraintCollection, getValue_as_stdvector){
   ASSERT_EQ(constraintValues[3], 2.0);
 }
 
-TEST(TestConstraintCollection, getLinearApproximation){
+TEST(TestConstraintCollection, getLinearApproximation) {
   using collection_t = ocs2::ConstraintCollection<3, 2>;
   collection_t constraintCollection;
 
@@ -113,7 +113,7 @@ TEST(TestConstraintCollection, getLinearApproximation){
   ASSERT_EQ(linearApproximation.derivativeInput[3].sum(), 2);
 }
 
-TEST(TestConstraintCollection, getQuadraticApproximation){
+TEST(TestConstraintCollection, getQuadraticApproximation) {
   using collection_t = ocs2::ConstraintCollection<3, 2>;
   collection_t constraintCollection;
 
@@ -131,15 +131,15 @@ TEST(TestConstraintCollection, getQuadraticApproximation){
   constraintCollection.add("Constraint2", std::move(constraintTerm2));
 
   auto quadraticApproximation = constraintCollection.getQuadraticApproximation(t, x, u);
-  ASSERT_EQ(quadraticApproximation.secondDerivativesState[0].sum(), 3*3);
-  ASSERT_EQ(quadraticApproximation.secondDerivativesInput[0].sum(), 2*2);
-  ASSERT_EQ(quadraticApproximation.derivativesInputState[0].sum(), 2*3);
-  ASSERT_EQ(quadraticApproximation.secondDerivativesState[1].sum(), 3*3);
-  ASSERT_EQ(quadraticApproximation.secondDerivativesInput[1].sum(), 2*2);
-  ASSERT_EQ(quadraticApproximation.derivativesInputState[1].sum(), 2*3);
+  ASSERT_EQ(quadraticApproximation.secondDerivativesState[0].sum(), 3 * 3);
+  ASSERT_EQ(quadraticApproximation.secondDerivativesInput[0].sum(), 2 * 2);
+  ASSERT_EQ(quadraticApproximation.derivativesInputState[0].sum(), 2 * 3);
+  ASSERT_EQ(quadraticApproximation.secondDerivativesState[1].sum(), 3 * 3);
+  ASSERT_EQ(quadraticApproximation.secondDerivativesInput[1].sum(), 2 * 2);
+  ASSERT_EQ(quadraticApproximation.derivativesInputState[1].sum(), 2 * 3);
 }
 
-TEST(TestConstraintCollection, getValue_as_eigenvector){
+TEST(TestConstraintCollection, getValue_as_eigenvector) {
   using collection_t = ocs2::ConstraintCollection<3, 2>;
   collection_t constraintCollection;
   Eigen::VectorXd constraintVector;
@@ -169,7 +169,7 @@ TEST(TestConstraintCollection, getValue_as_eigenvector){
   ASSERT_EQ(constraintVector[3], 2.0);
 }
 
-TEST(TestConstraintCollection, getLinearApproximationAsMatrices){
+TEST(TestConstraintCollection, getLinearApproximationAsMatrices) {
   using collection_t = ocs2::ConstraintCollection<3, 2>;
   collection_t constraintCollection;
 
@@ -195,9 +195,7 @@ TEST(TestConstraintCollection, getLinearApproximationAsMatrices){
   ASSERT_EQ(linearApproximation.derivativeInput.row(1).sum(), 2);
 }
 
-
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

@@ -63,7 +63,6 @@ class EndEffectorVelocityConstraint : public EndEffectorConstraint {
 
     o_footVelocity = adKinematicsModel.footVelocityInOriginFrame(legNumber, basePose, com_baseTwist, qJoints, dqJoints);
   }
-
 };
 
 }  // namespace switched_model

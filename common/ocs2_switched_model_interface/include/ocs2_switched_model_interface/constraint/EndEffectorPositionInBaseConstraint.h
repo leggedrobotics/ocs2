@@ -55,6 +55,5 @@ class EndEffectorPositionInBaseConstraint final : public EndEffectorConstraint {
 
     o_footPosition = adKinematicsModel.positionBaseToFootInBaseFrame(legNumber, jointPositions);
   }
-
 };
 }  // namespace switched_model

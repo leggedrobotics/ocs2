@@ -6,7 +6,7 @@
 
 #include "testConstraintTerm.h"
 
-TEST(TestConstraintTerm, Initialization){
+TEST(TestConstraintTerm, Initialization) {
   TestEmptyConstraint emptyConstraint;
   TestLinearConstraint linearConstraint;
 
@@ -14,7 +14,7 @@ TEST(TestConstraintTerm, Initialization){
   ASSERT_EQ(linearConstraint.getNumConstraints(0.0), 2);
 }
 
-TEST(TestConstraintTerm, getValue){
+TEST(TestConstraintTerm, getValue) {
   TestLinearConstraint linearConstraint;
 
   // evaluation point
@@ -29,7 +29,7 @@ TEST(TestConstraintTerm, getValue){
   ASSERT_EQ(linearValues[1], 2);
 }
 
-TEST(TestConstraintTerm, getDerivatives){
+TEST(TestConstraintTerm, getDerivatives) {
   TestLinearConstraint linearConstraint;
 
   // evaluation point
@@ -48,9 +48,7 @@ TEST(TestConstraintTerm, getDerivatives){
   ASSERT_EQ(linearApproximation.derivativeInput[1].sum(), 2);
 }
 
-
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

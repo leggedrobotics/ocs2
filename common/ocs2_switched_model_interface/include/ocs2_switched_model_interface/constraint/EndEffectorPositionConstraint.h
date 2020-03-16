@@ -56,6 +56,5 @@ class EndEffectorPositionConstraint : public EndEffectorConstraint {
     // Get base state from com state
     const base_coordinate_ad_t basePose = adComModel.calculateBasePose(comPose);
   };
-
 };
 }  // namespace switched_model

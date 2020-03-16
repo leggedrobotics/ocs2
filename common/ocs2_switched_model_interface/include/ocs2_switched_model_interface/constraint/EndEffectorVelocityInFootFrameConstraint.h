@@ -65,6 +65,5 @@ class EndEffectorVelocityInFootFrameConstraint : public EndEffectorConstraint {
     const base_coordinate_ad_t com_baseTwist = adComModel.calculateBaseLocalVelocities(com_comTwist);
     f_footVelocityInFootFrame = adKinematicsModel.footVelocityInFootFrame(legNumber, com_baseTwist, qJoints, dqJoints);
   };
-
 };
 }  // namespace switched_model

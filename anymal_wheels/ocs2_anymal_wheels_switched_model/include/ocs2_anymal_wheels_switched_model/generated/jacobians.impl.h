@@ -6,7 +6,11 @@ iit::ANYmal::tpl::Jacobians<TRAIT>::Jacobians
     fr_base_J_fr_LF_WHEEL_L(), 
     fr_base_J_fr_LH_WHEEL_L(), 
     fr_base_J_fr_RF_WHEEL_L(), 
-    fr_base_J_fr_RH_WHEEL_L()
+    fr_base_J_fr_RH_WHEEL_L(), 
+    fr_base_J_fr_LF_WHEEL_L_COM(), 
+    fr_base_J_fr_LH_WHEEL_L_COM(), 
+    fr_base_J_fr_RF_WHEEL_L_COM(), 
+    fr_base_J_fr_RH_WHEEL_L_COM()
 {
     updateParameters();
 }

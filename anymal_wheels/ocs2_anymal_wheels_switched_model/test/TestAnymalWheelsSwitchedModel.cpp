@@ -9,6 +9,7 @@
 #include "include/TestAnymalWheelsSwitchedModel.h"
 #include <iit/rbd/traits/TraitSelector.h>
 
+#include "ocs2_anymal_wheels_switched_model/core/WheelsSwitchedModel.h"
 #include "ocs2_anymal_wheels_switched_model/generated/jacobians.h"
 #include "ocs2_anymal_wheels_switched_model/generated/transforms.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
@@ -76,7 +77,6 @@ TEST_F(SwitchedModelTests, LF_Orientations) {
   {
     using namespace tpl;
     using trait_t = typename iit::rbd::tpl::TraitSelector<double>::Trait;
-    // {std::cout << "\nType_fr_base_X_fr_LF_FOOT   \n" << typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_FOOT tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
     {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_HAA tmp    ; std::cout << "\nType_fr_base_X_fr_LF_HAA    \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
     {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_HFE tmp    ; std::cout << "\nType_fr_base_X_fr_LF_HFE    \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
     {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_HIP tmp    ; std::cout << "\nType_fr_base_X_fr_LF_HIP    \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
@@ -218,8 +218,7 @@ TEST_F(SwitchedModelTests, EndeffectorAlignedXAxisRandomHAA) {
   std::cout << "\nBasePose:\n" << basePose;
   std::cout << "\nBase orientation:\n" << o_R_b;
   std::cout << "\nAxis:\n" << xAxis << std::endl;
-  // for (int footIdx = 0; footIdx < switched_model::NUM_CONTACT_POINTS; footIdx++) {
-  for (int footIdx = 0; footIdx < 2; footIdx++) {
+  for (int footIdx = 0; footIdx < switched_model::NUM_CONTACT_POINTS; footIdx++) {
     const matrix3_t o_R_f = kinematics_.footOrientationInOriginFrame(footIdx, basePose, qJoints);
     std::cout << "\nFoot orientation " << switched_model::feetNames[footIdx] << ":\n" << o_R_f;
     std::cout << "\nFootOrientationRelativeToBaseFrame:\n" << kinematics_.footOrientationRelativeToBaseFrame(footIdx, qJoints) << "\n";
@@ -228,19 +227,6 @@ TEST_F(SwitchedModelTests, EndeffectorAlignedXAxisRandomHAA) {
   {
     using namespace tpl;
     using trait_t = typename iit::rbd::tpl::TraitSelector<double>::Trait;
-    // {std::cout << "\nType_fr_base_X_fr_LF_FOOT   \n" << typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_FOOT tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
-    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_HAA tmp    ; std::cout << "\nType_fr_base_X_fr_LF_HAA    \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
-    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_HAA tmp    ; std::cout << "\nType_fr_base_X_fr_RF_HAA    \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
-    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_HFE tmp    ; std::cout << "\nType_fr_base_X_fr_LF_HFE    \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
-    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_HFE tmp    ; std::cout << "\nType_fr_base_X_fr_RF_HFE    \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
-    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_HIP tmp    ; std::cout << "\nType_fr_base_X_fr_LF_HIP    \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
-    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_HIP tmp    ; std::cout << "\nType_fr_base_X_fr_RF_HIP    \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
-    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_KFE tmp    ; std::cout << "\nType_fr_base_X_fr_LF_KFE    \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
-    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_KFE tmp    ; std::cout << "\nType_fr_base_X_fr_RF_KFE    \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
-    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL tmp  ; std::cout << "\nType_fr_base_X_fr_LF_WHEEL  \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
-    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_WHEEL tmp  ; std::cout << "\nType_fr_base_X_fr_RF_WHEEL  \n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
-    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL_L tmp; std::cout << "\nType_fr_base_X_fr_LF_WHEEL_L\n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
-    // {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_WHEEL_L tmp; std::cout << "\nType_fr_base_X_fr_RF_WHEEL_L\n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
     {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL_L_COM tmp; std::cout << "\nType_fr_base_X_fr_LF_WHEEL_L_COM\n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
     {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_WHEEL_L_COM tmp; std::cout << "\nType_fr_base_X_fr_RF_WHEEL_L_COM\n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}
     {typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_WHEEL_L_COM tmp; std::cout << "\nType_fr_base_X_fr_LH_WHEEL_L_COM\n" << tmp(extendedJointCoordinate).template topLeftCorner<3,3>();}

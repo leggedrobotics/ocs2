@@ -75,21 +75,6 @@ public:
   decltype(std::bind(std::ref(angleDist_), std::ref(generator_))) randAngle;
   decltype(std::bind(std::ref(posDist_), std::ref(generator_))) randPos;
 
-  // Includes wheel joints
-  using extended_joint_coordinate_t = Eigen::Matrix<double, switched_model::JOINT_COORDINATE_SIZE + 4, 1>;
-  extended_joint_coordinate_t getExtendedJointCoordinates(const switched_model::joint_coordinate_s_t<double>& jointPositions) const{
-    extended_joint_coordinate_t extendedJointCoordinate;
-  extendedJointCoordinate.template segment<3>(0) = jointPositions.template segment<3>(0);
-  extendedJointCoordinate(3) = (0.0);
-  extendedJointCoordinate.template segment<3>(4) = jointPositions.template segment<3>(3);
-  extendedJointCoordinate(7) = (0.0);
-  extendedJointCoordinate.template segment<3>(8) = jointPositions.template segment<3>(6);
-  extendedJointCoordinate(11) = (0.0);
-  extendedJointCoordinate.template segment<3>(12) = jointPositions.template segment<3>(9);
-  extendedJointCoordinate(15) = (0.0);
-  return extendedJointCoordinate;
-}
-
 };
 
 } // namespace anymal

@@ -71,3 +71,18 @@ TEST(TestGaitSchedule, setGaitScheduleAtTime) {
   ASSERT_DOUBLE_EQ(modeSchedule.eventTimes().back(), tInsert);
   ASSERT_EQ(modeSchedule.modeSequence().back(), 21);
 }
+
+TEST(TestGaitSchedule, setGaitScheduleAfterTime) {
+  const double t0 = 18.6;
+  const double tInsert = 20.5 + 1.0;
+
+  // Start with multi mode gait
+  GaitSchedule gaitSchedule(t0, Gait{2.0, {}, {0}});
+
+  // Set a new gait way pass the end of the current schedule
+  gaitSchedule.setGaitAfterTime(Gait{1.0, {}, {1}}, tInsert);
+  auto modeSchedule = gaitSchedule.getModeSchedule((tInsert - t0) + 1.5);
+
+  // New gait inserted at the correct time
+  ASSERT_DOUBLE_EQ(modeSchedule.eventTimes().back(), 22.6);
+}

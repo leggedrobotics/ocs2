@@ -11,8 +11,9 @@
 namespace switched_model {
 
 SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const ComModelBase<double>& comModel,
-                                               const KinematicsModelBase<double>& kinematicsModel)
-    : settings_(settings), comModel_(comModel.clone()), kinematicsModel_(kinematicsModel.clone()) {}
+                                               const KinematicsModelBase<double>& kinematicsModel,
+                                               std::shared_ptr<const ocs2::HybridLogicRules> logicRulesPtr)
+    : settings_(settings), comModel_(comModel.clone()), kinematicsModel_(kinematicsModel.clone()), logicRulesPtr_(logicRulesPtr) {}
 
 void SwingTrajectoryPlanner::preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
                                           const ocs2::CostDesiredTrajectories& costDesiredTrajectory,
@@ -20,9 +21,11 @@ void SwingTrajectoryPlanner::preSolverRun(scalar_t initTime, scalar_t finalTime,
   const auto basePose = comModel_->calculateBasePose(getComPose(currentState));
   const auto feetPositions = kinematicsModel_->feetPositionsInOriginFrame(basePose, getJointPositions(currentState));
 
-  updateLastContacts(initTime, feetPositions, modeSchedule);
-  updateFeetTrajectories(finalTime, modeSchedule);
-  updateErrorTrajectories(initTime, feetPositions, modeSchedule);
+  const auto& modeSchedule_ = logicRulesPtr_->getModeSchedule();
+  assert(modeSchedule_.eventTimes().empty() || modeSchedule_.eventTimes().front() >= initTime);
+
+  updateFeetTrajectories(initTime, finalTime, feetPositions, modeSchedule_);
+  updateErrorTrajectories(initTime, feetPositions, modeSchedule_);
 
   std::cout << "[SwingTrajectoryPlanner]\n";
   std::cout << "Last contact:\n";
@@ -34,72 +37,124 @@ void SwingTrajectoryPlanner::preSolverRun(scalar_t initTime, scalar_t finalTime,
 }
 
 SwingTrajectoryPlanner::scalar_t SwingTrajectoryPlanner::getZvelocityConstraint(size_t leg, scalar_t time) const {
-  const auto index = ocs2::lookup::findIndexInTimeArray(eventTimes_, time);
+  const auto index = ocs2::lookup::findIndexInTimeArray(feetHeightTrajectoriesEvents_[leg], time);
   const auto feedforwardVelocity = feetHeightTrajectories_[leg][index].velocity(time);
   // Feedback follows the planned trajectory s.t. de = - errorGain * e, with e = (z - z*)
   const auto feedbackVelocity = -settings_.errorGain * initialErrors_[leg] * std::exp(-settings_.errorGain * (time - initTime_));
   return feedforwardVelocity + feedbackVelocity;
 }
 
-void SwingTrajectoryPlanner::updateLastContacts(scalar_t time, const std::array<vector3_t, NUM_CONTACT_POINTS>& currentFeetPositions,
-                                                const ocs2::ModeSchedule& modeSchedule) {
-  const auto index = ocs2::lookup::findIndexInTimeArray(modeSchedule.eventTimes(), time);
-  const auto contactFlags = modeNumber2StanceLeg(modeSchedule.modeSequence()[index]);
+void SwingTrajectoryPlanner::updateFeetTrajectories(scalar_t initTime, scalar_t finalTime,
+                                                    const std::array<vector3_t, NUM_CONTACT_POINTS>& currentFeetPositions,
+                                                    const ocs2::ModeSchedule& modeSchedule) {
+  const auto terrainHeight = 0.0;
 
-  for (int leg = 0; leg < NUM_CONTACT_POINTS; leg++) {
-    if (contactFlags[leg]) {
-      lastContacts_[leg] = {time, currentFeetPositions[leg].z()};
-    }
-  }
-}
-
-void SwingTrajectoryPlanner::updateFeetTrajectories(scalar_t finalTime, const ocs2::ModeSchedule& modeSchedule) {
-  const int numPhases = modeSchedule.modeSequence().size();
-  eventTimes_ = modeSchedule.eventTimes();
+  std::cout << "ModeSchedule\n" << modeSchedule << std::endl;
 
   // Convert mode sequence to a contact flag vector per leg
   const std::array<std::vector<bool>, NUM_CONTACT_POINTS> contactSequencePerLeg =
       FeetPlannerBase::extractContactFlags(modeSchedule.modeSequence());
 
   for (int leg = 0; leg < NUM_CONTACT_POINTS; leg++) {
-    const auto& contactSequence = contactSequencePerLeg[leg];
-    const auto& terrainHeight = lastContacts_[leg].height;
+    std::cout << "Leg : " << leg << std::endl;
+
+    const auto footPhases = FeetPlannerBase::extractFootPhases(modeSchedule.eventTimes(), contactSequencePerLeg[leg]);
     auto& footTrajectory = feetHeightTrajectories_[leg];
+    auto& footTrajectoryEvents = feetHeightTrajectoriesEvents_[leg];
     footTrajectory.clear();
+    footTrajectoryEvents.clear();
 
-    for (int phase = 0; phase < numPhases; phase++) {
-      if (!contactSequence[phase]) {  // swingphase
-        // Extract event time indices
-        int liftoffIndex;
-        int touchdownIndex;
-        std::tie(liftoffIndex, touchdownIndex) = FeetPlannerBase::findIndex(phase, contactSequence);
+    // If the first phase is a stance phase, register when it leaves contact.
+    if (footPhases.front().type == FeetPlannerBase::FootPhaseType::Stance) {
+      if (std::isnan(footPhases.front().endTime)) {
+        lastContacts_[leg] = {finalTime, currentFeetPositions[leg].z()};
+      } else {
+        lastContacts_[leg] = {footPhases.front().endTime, currentFeetPositions[leg].z()};
+      }
+    }
 
-        // Determine start of swing phase
-        const auto startTime = (liftoffIndex < 0) ? lastContacts_[leg].time : eventTimes_[liftoffIndex];
-        const SplineCpg::Point startPoint{startTime, terrainHeight};
+    bool firstSwingPhase = true;
+    for (const auto& footPhase : footPhases) {
+      if (!std::isnan(footPhase.startTime) && footPhase.startTime >= finalTime) {
+        // Phase starts after horizon, not need to plan a trajectory for it.
+        break;
+      }
 
-        // Determine end of swing phase
-        const auto endPoint = [&] {
-          if (touchdownIndex + 1 < numPhases) {
-            footTrajectory.emplace_back(SplineCpg({settings_.liftOffVelocity, settings_.touchDownVelocity}));
-            return SplineCpg::Point{eventTimes_[touchdownIndex], terrainHeight};
-          } else {  // touchdown is after the current mode sequence
-            std::cout << "[SwingTrajectoryPlanner] Beyond the horizon \n";
-            std::cout << "start:\t t:" << startPoint.time << " h: " << startPoint.height << "\n";
-            std::cout << "end:\t t:" << std::max(finalTime, eventTimes_.back()) + settings_.touchdownAfterHorizon
-                      << " h: " << terrainHeight + settings_.swingHeight << std::endl;
-            footTrajectory.emplace_back(SplineCpg({settings_.liftOffVelocity, 0.0}));
-            return SplineCpg::Point{std::max(finalTime, eventTimes_.back()) + settings_.touchdownAfterHorizon,
-                                    terrainHeight + settings_.swingHeight};
+      if (footPhase.type == FeetPlannerBase::FootPhaseType::Stance) {
+        const auto startPoint = [&] {
+          SplineCpg::Point point;
+          if (std::isnan(footPhase.startTime)) {
+            point.time = initTime;
+            point.height = currentFeetPositions[leg].z();
+          } else {
+            point.time = footPhase.startTime;
+            point.height = terrainHeight;
           }
+          return point;
         }();
 
-        // Construct the swing trajectory
+        const auto endPoint = [&] {
+          SplineCpg::Point point;
+          if (std::isnan(footPhase.endTime)) {
+            point.time = finalTime;
+          } else {
+            point.time = footPhase.endTime;
+          }
+          point.height = startPoint.height;
+          return point;
+        }();
 
-        footTrajectory.back().set(startPoint, endPoint, terrainHeight + settings_.swingHeight);
-      } else {  // stancePhase
         footTrajectory.emplace_back(SplineCpg({0.0, 0.0}));
-        footTrajectory.back().set({0.0, terrainHeight}, {1.0, terrainHeight}, terrainHeight);
+        footTrajectory.back().set(startPoint, endPoint, startPoint.height);
+        footTrajectoryEvents.push_back(endPoint.time);
+
+        std::cout << "\tstance\n";
+        std::cout << "\tstart: \t t:" << startPoint.time << " h: " << startPoint.height << " v: " << 0.0 << "\n";
+        std::cout << "\tmid:   \t h: " << startPoint.height << "\n";
+        std::cout << "\tend:   \t t:" << endPoint.time << " h: " << endPoint.height << " v: " << 0.0 << "\n\n";
+      } else if (footPhase.type == FeetPlannerBase::FootPhaseType::Swing) {
+        const auto liftOff = [&] {
+          CubicSpline::Node node;
+          if (std::isnan(footPhase.startTime)) {
+            node.time = lastContacts_[leg].time;
+          } else {
+            node.time = footPhase.startTime;
+          }
+          if (firstSwingPhase) {
+            node.position = lastContacts_[leg].height;
+            firstSwingPhase = false;
+          } else {
+            node.position = terrainHeight;
+          }
+          node.velocity = settings_.liftOffVelocity;
+          return node;
+        }();
+
+        const auto touchDown = [&] {
+          CubicSpline::Node node;
+          if (std::isnan(footPhase.endTime)) {
+            node.time = finalTime + settings_.touchdownAfterHorizon;
+            node.position = terrainHeight + settings_.swingHeight;
+            node.velocity = 0.0;
+          } else {
+            node.time = footPhase.endTime;
+            node.position = terrainHeight;
+            node.velocity = settings_.touchDownVelocity;
+          }
+          return node;
+        }();
+
+        const double scaling = std::min(1.0, (touchDown.time - liftOff.time) / settings_.swingTimeScale);
+        const SplineCpg::Point startPoint{liftOff.time, liftOff.position};
+        const SplineCpg::Point endPoint{touchDown.time, touchDown.position};
+        footTrajectory.emplace_back(SplineCpg({scaling * liftOff.velocity, scaling * touchDown.velocity}));
+        footTrajectory.back().set(startPoint, endPoint, scaling * (terrainHeight + settings_.swingHeight));
+        footTrajectoryEvents.push_back(endPoint.time);
+
+        std::cout << "\tswing\n";
+        std::cout << "\tstart: \t t:" << startPoint.time << " h: " << startPoint.height << " v: " << scaling * liftOff.velocity << "\n";
+        std::cout << "\tmid:   \t h: " << scaling * (terrainHeight + settings_.swingHeight) << " scaling: " << scaling << "\n";
+        std::cout << "\tend:   \t t:" << endPoint.time << " h: " << endPoint.height << " v: " << scaling * touchDown.velocity << "\n\n";
       }
     }
   }

@@ -77,9 +77,6 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
       eeVelConSettings.A << 0, 0, 1;
     }
     EEVelConstraint.configure(eeVelConSettings);
-
-    std::cout << "SwingPlannerConstraint: (i: " << i << ", t: " << t << "): " << swingPlannerPtr_->getZvelocityConstraint(i, t)
-              << std::endl;
   }
 }
 

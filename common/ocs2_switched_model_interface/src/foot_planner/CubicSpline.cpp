@@ -58,6 +58,8 @@ CubicSpline::scalar_t CubicSpline::finalTimeDerivative(scalar_t t) const {
 }
 
 CubicSpline::scalar_t CubicSpline::normalizedTime(scalar_t t) const {
+  assert(t >= t0_);
+  assert(t <= t1_);
   return (t - t0_) / dt_;
 }
 

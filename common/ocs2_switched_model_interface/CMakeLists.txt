@@ -3,7 +3,10 @@ project(ocs2_switched_model_interface)
 
 ## Catkin Dependencies
 set(CATKIN_PACKAGE_DEPENDENCIES
+  roscpp
   ocs2_core
+  ocs2_comm_interfaces
+  ocs2_msgs
 	ocs2_oc
 )
 find_package(catkin REQUIRED COMPONENTS
@@ -57,7 +60,8 @@ add_library(${PROJECT_NAME}
 		src/foot_planner/FeetZDirectionPlanner.cpp
 		src/foot_planner/SwingTrajectoryPlanner.cpp
 		src/logic/Gait.cpp
-  src/logic/GaitSchedule.cpp
+  	src/logic/GaitSchedule.cpp
+  	src/logic/GaitReceiver.cpp
 		)
 
 add_dependencies(${PROJECT_NAME}
@@ -129,6 +133,14 @@ catkin_add_gtest(test_${PROJECT_NAME}_logic
 	test/logic/testGaitSchedule.cpp
 	)
 target_link_libraries(test_${PROJECT_NAME}_logic
+	${PROJECT_NAME}
+	gtest_main
+	)
+
+catkin_add_gtest(test_${PROJECT_NAME}_footplanner
+	test/foot_planner/testFootplannerBase.cpp
+	)
+target_link_libraries(test_${PROJECT_NAME}_footplanner
 	${PROJECT_NAME}
 	gtest_main
 	)

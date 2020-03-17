@@ -33,6 +33,12 @@ class GaitSchedule {
    * Gaits after that time are removed */
   void setGaitSequenceAtTime(const std::vector<Gait>& gaitSequence, double time);
 
+  /** Adds a gait at the first opportunity after the specified time. Does not adapt gait cycle durations */
+  void setGaitAfterTime(const Gait& gait, double time);
+
+  /** Adds a gait sequence  at the first opportunity after the specified time. Does not adapt gait cycle durations */
+  void setGaitSequenceAfterTime(const std::vector<Gait>& gaitSequence, double time);
+
   /** Gets the gaitSchedule as a mode schedule from the current time, and for the specified horizon */
   ocs2::ModeSchedule getModeSchedule(double timeHorizon) const;
 

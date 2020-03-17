@@ -53,6 +53,23 @@ void GaitSchedule::setGaitSequenceAtTime(const std::vector<Gait>& gaitSequence, 
   gaitSchedule_.insert(gaitSchedule_.end(), gaitSequence.begin(), gaitSequence.end());
 }
 
+void GaitSchedule::setGaitAfterTime(const Gait& gait, double time) {
+  setGaitSequenceAfterTime({gait}, time);
+}
+
+void GaitSchedule::setGaitSequenceAfterTime(const std::vector<Gait>& gaitSequence, double time) {
+  assert(time >= time_);
+
+  rolloutGaitScheduleTillTime(time);
+
+  double newPhase;
+  std::deque<Gait>::iterator newActiveGait;
+  std::tie(newPhase, newActiveGait) = advancePhase(phase_, time - time_, gaitSchedule_.begin(), gaitSchedule_.end());
+
+  gaitSchedule_.erase(newActiveGait + 1, gaitSchedule_.end());
+  gaitSchedule_.insert(gaitSchedule_.end(), gaitSequence.begin(), gaitSequence.end());
+}
+
 ocs2::ModeSchedule GaitSchedule::getModeSchedule(double timeHorizon) const {
   return ::switched_model::getModeSchedule(phase_, time_, timeHorizon, gaitSchedule_.begin(), gaitSchedule_.end());
 }

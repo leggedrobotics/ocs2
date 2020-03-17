@@ -28,8 +28,10 @@ QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, 
   settings.touchDownVelocity = -0.2;
   settings.swingHeight = 0.1;
   settings.touchdownAfterHorizon = 0.2;
-  settings.errorGain = 1.0;
-  auto swingPlanner = std::make_shared<switched_model::SwingTrajectoryPlanner>(settings, getComModel(), getKinematicModel());
+  settings.errorGain = 5.0;
+  settings.swingTimeScale = 0.15;
+  auto swingPlanner =
+      std::make_shared<switched_model::SwingTrajectoryPlanner>(settings, getComModel(), getKinematicModel(), logicRulesPtr_);
   solverModules_.push_back(swingPlanner);
 
   dynamicsPtr_.reset(new system_dynamics_t(adKinematicModel, adComModel, modelSettings_.recompileLibraries_));

@@ -74,6 +74,26 @@ class FeetPlannerBase {
    * @return {The take-off time index for swing legs, touch-down time index for swing legs}
    */
   static std::pair<int, int> findIndex(size_t index, const bool_array_t& contactFlagStock);
+
+  /**
+   * Find the touch-down index for a single leg
+   */
+  static int findTouchdownIndex(size_t index, const bool_array_t& contactFlagStock);
+
+  /**
+   * Find the lift-off index for a single leg
+   */
+  static int findLiftoffIndex(size_t index, const bool_array_t& contactFlagStock);
+
+  enum class FootPhaseType { Stance, Swing };
+  struct FootPhase {
+    FootPhaseType type;
+    scalar_t startTime;  // times are NaN if they cannot be identified at the boundaries
+    scalar_t endTime;
+  };
+  static std::vector<FootPhase> extractFootPhases(const std::vector<scalar_t>& eventTimes, const bool_array_t& contactFlags);
+
+  static std::vector<FootPhase> filterOutShortSwingPhases(const std::vector<FootPhase>& footPhases, scalar_t minimumSwingduration);
 };
 
 }  // namespace switched_model

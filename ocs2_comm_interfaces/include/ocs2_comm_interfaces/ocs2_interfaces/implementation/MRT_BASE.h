@@ -86,10 +86,10 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::evaluatePolicy(scalar_t currentTime, const 
   EigenLinearInterpolation<state_vector_t>::interpolate(currentTime, mpcState, &currentPrimalSolution_->timeTrajectory_,
                                                         &currentPrimalSolution_->stateTrajectory_);
 
-  mode = currentPrimalSolution_->modeSchedule_[currentTime];
+  mode = currentPrimalSolution_->modeSchedule_.modeAtTime(currentTime);
 }
 
-/******************************************************************************************************/
+/**********************************************************modeSchedule_********************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
@@ -124,7 +124,7 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const s
   mpcState = stateTrajectory.back();
   mpcInput = inputTrajectory.back();
 
-  mode = currentPrimalSolution_->modeSchedule_[finalTime];
+  mode = currentPrimalSolution_->modeSchedule_.modeAtTime(finalTime);
 }
 
 /******************************************************************************************************/

@@ -66,7 +66,7 @@ struct ModeSchedule {
    *  @param [in] time: The inquiry time.
    *  @return the associated mode for the input time.
    */
-  size_t operator[](scalar_t time) const;
+  size_t modeAtTime(scalar_t time) const;
 
   std::vector<scalar_t> eventTimes;  // event times of size N - 1
   std::vector<size_t> modeSequence;  // mode sequence of size N

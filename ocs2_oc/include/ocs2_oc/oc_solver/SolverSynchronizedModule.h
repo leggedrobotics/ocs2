@@ -20,7 +20,9 @@ class SolverSynchronizedModule {
 
   using primal_solution_t = PrimalSolution<STATE_DIM, INPUT_DIM>;
 
-  //! Default destructor
+  /**
+   * Default destructor
+   */
   virtual ~SolverSynchronizedModule() = default;
 
   /**

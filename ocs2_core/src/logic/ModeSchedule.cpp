@@ -46,7 +46,7 @@ ModeSchedule::ModeSchedule(std::vector<scalar_t> eventTimesInput, std::vector<si
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t ModeSchedule::operator[](scalar_t time) const {
+size_t ModeSchedule::modeAtTime(scalar_t time) const {
   const auto ind = lookup::findIndexInTimeArray(eventTimes, time);
   return modeSequence[ind];
 }

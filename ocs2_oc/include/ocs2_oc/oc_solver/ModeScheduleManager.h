@@ -59,9 +59,9 @@ class ModeScheduleManager : public SolverSynchronizedModule<STATE_DIM, INPUT_DIM
   virtual ~ModeScheduleManager() = default;
 
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
-                    const CostDesiredTrajectories& costDesiredTrajectory);
+                    const CostDesiredTrajectories& costDesiredTrajectory) final;
 
-  void postSolverRun(const primal_solution_t& primalSolution) {}
+  void postSolverRun(const primal_solution_t& primalSolution) final {}
 
   /**
    * Returns a const reference to ModeSchedule. This method is NOT thread safe.

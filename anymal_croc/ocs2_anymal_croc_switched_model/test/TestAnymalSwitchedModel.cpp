@@ -11,12 +11,12 @@
 
 using namespace anymal;
 
-class SwitchedModelTests : public ::testing::Test, public TestAnymalSwitchedModel {
+class AnymalCrocSwitchedModelTests : public ::testing::Test, public TestAnymalSwitchedModel {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
-TEST_F(SwitchedModelTests, Kinematics) {
+TEST_F(AnymalCrocSwitchedModelTests, Kinematics) {
   joint_coordinate_t qJoints;
   qJoints.setZero();
   std::cout << "Joint coordinate:\n" << qJoints.transpose() << std::endl;
@@ -46,7 +46,7 @@ TEST_F(SwitchedModelTests, Kinematics) {
   std::cout << "Foot jacobian RH:\n" << footJacobian_RH << std::endl;
 }
 
-TEST_F(SwitchedModelTests, ComDynamics) {
+TEST_F(AnymalCrocSwitchedModelTests, ComDynamics) {
   joint_coordinate_t joint_cor;
   joint_cor.setZero();
   std::cout << "Joint coordinates:\n" << joint_cor.transpose() << std::endl;
@@ -58,7 +58,7 @@ TEST_F(SwitchedModelTests, ComDynamics) {
   std::cout << "comInertiaDefault:\n" << comDynamics_.comInertia() << std::endl;
 }
 
-TEST_F(SwitchedModelTests, EndeffectorOrientation) {
+TEST_F(AnymalCrocSwitchedModelTests, EndeffectorOrientation) {
   joint_coordinate_t qJoints;
   qJoints.setZero();
   generalized_coordinate_t x;
@@ -76,7 +76,7 @@ TEST_F(SwitchedModelTests, EndeffectorOrientation) {
   }
 }
 
-TEST_F(SwitchedModelTests, EndeffectorAlignedYAxisRandomHFE_KFE) {
+TEST_F(AnymalCrocSwitchedModelTests, EndeffectorAlignedYAxisRandomHFE_KFE) {
   /** Y Axis coincidence
    *
    * With only the HFE, and KFE joints rotated, the y-axis of the foot should still be aligned with the
@@ -103,8 +103,7 @@ TEST_F(SwitchedModelTests, EndeffectorAlignedYAxisRandomHFE_KFE) {
   x[switched_model::BASE_COORDINATE_SIZE + JointIdentifiers::RH_KFE] = randAngle();
   x[switched_model::BASE_COORDINATE_SIZE + JointIdentifiers::LH_HFE] = randAngle();
   x[switched_model::BASE_COORDINATE_SIZE + JointIdentifiers::LH_KFE] = randAngle();
-  joint_coordinate_t qJoints =
-      x.segment<switched_model::JOINT_COORDINATE_SIZE>(switched_model::STATE_DIM - switched_model::JOINT_COORDINATE_SIZE);
+  joint_coordinate_t qJoints = switched_model::getJointPositions(x);
 
   const base_coordinate_t basePose = switched_model::getBasePose(x);
   matrix3_t o_R_b = switched_model::rotationMatrixBaseToOrigin(switched_model::getOrientation(basePose));
@@ -123,7 +122,7 @@ TEST_F(SwitchedModelTests, EndeffectorAlignedYAxisRandomHFE_KFE) {
   }
 }
 
-TEST_F(SwitchedModelTests, EndeffectorAlignedXAxisRandomHAA) {
+TEST_F(AnymalCrocSwitchedModelTests, EndeffectorAlignedXAxisRandomHAA) {
   /** X Axis coincidence
    *
    * With only the HAA joints rotated, the x-axis of the foot should still be aligned with the
@@ -146,8 +145,7 @@ TEST_F(SwitchedModelTests, EndeffectorAlignedXAxisRandomHAA) {
   x[switched_model::BASE_COORDINATE_SIZE + JointIdentifiers::LF_HAA] = randAngle();
   x[switched_model::BASE_COORDINATE_SIZE + JointIdentifiers::RH_HAA] = randAngle();
   x[switched_model::BASE_COORDINATE_SIZE + JointIdentifiers::LH_HAA] = randAngle();
-  joint_coordinate_t qJoints =
-      x.segment<switched_model::JOINT_COORDINATE_SIZE>(switched_model::STATE_DIM - switched_model::JOINT_COORDINATE_SIZE);
+  joint_coordinate_t qJoints = switched_model::getJointPositions(x);
 
   const base_coordinate_t basePose = switched_model::getBasePose(x);
   matrix3_t o_R_b = switched_model::rotationMatrixBaseToOrigin(switched_model::getOrientation(basePose));

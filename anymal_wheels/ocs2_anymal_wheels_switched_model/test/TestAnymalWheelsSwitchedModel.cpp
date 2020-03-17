@@ -16,9 +16,9 @@
 
 using namespace anymal;
 
-class SwitchedModelTests : public ::testing::Test, public TestAnymalWheelsSwitchedModel { };
+class AnymalWheelsSwitchedModel : public ::testing::Test, public TestAnymalWheelsSwitchedModel {};
 
-TEST_F(SwitchedModelTests, Kinematics) {
+TEST_F(AnymalWheelsSwitchedModel, Kinematics) {
   switched_model::joint_coordinate_t qJoints;
   qJoints.setZero();
   std::cout << "Joint coordinate:\n" << qJoints.transpose() << std::endl;
@@ -48,7 +48,7 @@ TEST_F(SwitchedModelTests, Kinematics) {
   std::cout << "Foot jacobian RH:\n" << footJacobian_RH << std::endl;
 }
 
-TEST_F(SwitchedModelTests, ComDynamics) {
+TEST_F(AnymalWheelsSwitchedModel, ComDynamics) {
   switched_model::joint_coordinate_t joint_cor;
   joint_cor.setZero();
   std::cout << "Joint coordinates:\n" << joint_cor.transpose() << std::endl;
@@ -60,7 +60,7 @@ TEST_F(SwitchedModelTests, ComDynamics) {
   std::cout << "comInertiaDefault:\n" << comDynamics_.comInertia() << std::endl;
 }
 
-TEST_F(SwitchedModelTests, LF_Orientations) {
+TEST_F(AnymalWheelsSwitchedModel, LF_Orientations) {
   joint_coordinate_t qJoints; qJoints.setZero();
   comkino_state_t x; x.setZero();
 
@@ -89,7 +89,7 @@ TEST_F(SwitchedModelTests, LF_Orientations) {
   }
 }
 
-TEST_F(SwitchedModelTests, EndeffectorOrientation) {
+TEST_F(AnymalWheelsSwitchedModel, EndeffectorOrientation) {
   joint_coordinate_t qJoints; qJoints.setZero();
   comkino_state_t x; x.setZero();
 
@@ -112,7 +112,7 @@ TEST_F(SwitchedModelTests, EndeffectorOrientation) {
   }
 }
 
-TEST_F(SwitchedModelTests, EndeffectorOrientationRandomBasePose) {
+TEST_F(AnymalWheelsSwitchedModel, EndeffectorOrientationRandomBasePose) {
   joint_coordinate_t qJoints; qJoints.setZero();
   comkino_state_t x; x.setZero();
   x[0] = randAngle();
@@ -141,7 +141,7 @@ TEST_F(SwitchedModelTests, EndeffectorOrientationRandomBasePose) {
   }
 }
 
-TEST_F(SwitchedModelTests, EndeffectorAlignedYAxisRandomHFE_KFE) {
+TEST_F(AnymalWheelsSwitchedModel, EndeffectorAlignedYAxisRandomHFE_KFE) {
   /** Y Axis coincidence
    * 
    * With only the HFE, and KFE joints rotated, the y-axis of the foot should still be aligned with the
@@ -184,7 +184,7 @@ TEST_F(SwitchedModelTests, EndeffectorAlignedYAxisRandomHFE_KFE) {
   }
 }
 
-TEST_F(SwitchedModelTests, EndeffectorAlignedXAxisRandomHAA) {
+TEST_F(AnymalWheelsSwitchedModel, EndeffectorAlignedXAxisRandomHAA) {
   /** X Axis coincidence
    * 
    * With only the HAA joints rotated, the x-axis of the foot should still be aligned with the

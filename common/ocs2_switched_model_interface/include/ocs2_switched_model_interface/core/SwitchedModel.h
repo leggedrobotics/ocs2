@@ -139,7 +139,7 @@ joint_coordinate_s_t<scalar_t> getJointPositions(const comkino_state_s_t<scalar_
 }
 
 template <typename scalar_t>
-base_coordinate_s_t<scalar_t> getJointPositions(const generalized_coordinate_s_t<scalar_t>& generalizedCoordinate) {
+joint_coordinate_s_t<scalar_t> getJointPositions(const generalized_coordinate_s_t<scalar_t>& generalizedCoordinate) {
   return generalizedCoordinate.template segment<JOINT_COORDINATE_SIZE>(BASE_COORDINATE_SIZE);
 }
 

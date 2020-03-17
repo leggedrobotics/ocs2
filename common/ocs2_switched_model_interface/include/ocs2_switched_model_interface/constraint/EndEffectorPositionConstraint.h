@@ -47,7 +47,6 @@ class EndEffectorPositionConstraint : public EndEffectorConstraint {
     // Extract elements from taped input
     ad_scalar_t t = tapedInput(0);
     comkino_state_ad_t x = tapedInput.segment(1, STATE_DIM);
-    comkino_input_ad_t u = tapedInput.segment(1 + STATE_DIM, INPUT_DIM);
 
     // Extract elements from state
     const base_coordinate_ad_t comPose = getComPose(x);
@@ -55,6 +54,7 @@ class EndEffectorPositionConstraint : public EndEffectorConstraint {
 
     // Get base state from com state
     const base_coordinate_ad_t basePose = adComModel.calculateBasePose(comPose);
+    o_footPosition = adKinematicsModel.footPositionInOriginFrame(basePose, legNumber, qJoints);
   };
 };
 }  // namespace switched_model

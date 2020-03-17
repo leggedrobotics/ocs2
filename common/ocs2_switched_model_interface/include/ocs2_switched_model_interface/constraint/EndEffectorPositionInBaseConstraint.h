@@ -40,20 +40,14 @@ class EndEffectorPositionInBaseConstraint final : public EndEffectorConstraint {
 
  private:
   static void adfunc(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, int legNumber,
-                     const ad_dynamic_vector_t& tapedInput, ad_dynamic_vector_t& o_footPosition) {
+                     const ad_dynamic_vector_t& tapedInput, ad_dynamic_vector_t& b_footPosition) {
     // Extract elements from taped input
     ad_scalar_t t = tapedInput(0);
     comkino_state_ad_t x = tapedInput.segment(1, STATE_DIM);
-    comkino_input_ad_t u = tapedInput.segment(1 + STATE_DIM, INPUT_DIM);
 
-    // Extract elements from state
-    const base_coordinate_ad_t comPose = getComPose(x);
     const joint_coordinate_ad_t qJoints = getJointPositions(x);
 
-    // Get base state from com state
-    const base_coordinate_ad_t basePose = adComModel.calculateBasePose(comPose);
-
-    o_footPosition = adKinematicsModel.positionBaseToFootInBaseFrame(legNumber, jointPositions);
+    b_footPosition = adKinematicsModel.positionBaseToFootInBaseFrame(legNumber, jointPositions);
   }
 };
 }  // namespace switched_model

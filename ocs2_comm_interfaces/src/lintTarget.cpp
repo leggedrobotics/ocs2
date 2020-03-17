@@ -3,7 +3,6 @@
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/TargetPoseCommand.h>
 
 // Command
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/command/ModeSchedule_ROS_Interface.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/command/TargetTrajectories_ROS_Interface.h>
 
 // Common

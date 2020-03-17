@@ -89,13 +89,14 @@ class ModeScheduleManager : public SolverSynchronizedModule<STATE_DIM, INPUT_DIM
   /**
    * User defined preSolverRun.
    *
-   * @param initTime : start time of the MPC horizon
-   * @param finalTime : Final time of the MPC horizon
-   * @param currentState : State at the start of the MPC horizon
-   * @param costDesiredTrajectory : User defined cost desired trajectory
+   * @param [in] initTime : start time of the MPC horizon
+   * @param [in] finalTime : Final time of the MPC horizon
+   * @param [in] currentState : State at the start of the MPC horizon
+   * @param [in] costDesiredTrajectory : User defined cost desired trajectory
+   * @param [in] modeSchedule : The current ModeSchedule
    */
   virtual void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
-                                const CostDesiredTrajectories& costDesiredTrajectory) {}
+                                const CostDesiredTrajectories& costDesiredTrajectory, ModeSchedule& modeSchedule) {}
 
  private:
   ModeSchedule modeSchedule_;

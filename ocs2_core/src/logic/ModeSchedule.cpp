@@ -39,6 +39,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 ModeSchedule::ModeSchedule(std::vector<scalar_t> eventTimesInput, std::vector<size_t> modeSequenceInput)
     : eventTimes(std::move(eventTimesInput)), modeSequence(std::move(modeSequenceInput)) {
+  assert(modeSequence.size() > 0);
   assert(eventTimes.size() + 1 == modeSequence.size());
 }
 
@@ -62,8 +63,8 @@ void swap(ModeSchedule& lh, ModeSchedule& rh) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::ostream& operator<<(std::ostream& stream, const ModeSchedule& modeSchedule) {
-  stream << "switching times: \t {" << toDelimitedString(modeSchedule.eventTimes) << "}\n";
-  stream << "mode sequence: \t {" << toDelimitedString(modeSchedule.modeSequence) << "}\n";
+  stream << "event times:   {" << toDelimitedString(modeSchedule.eventTimes) << "}\n";
+  stream << "mode sequence: {" << toDelimitedString(modeSchedule.modeSequence) << "}\n";
   return stream;
 }
 

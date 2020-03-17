@@ -44,12 +44,12 @@ ModeScheduleManager<STATE_DIM, INPUT_DIM>::ModeScheduleManager(ModeSchedule mode
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void ModeScheduleManager<STATE_DIM, INPUT_DIM>::preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
                                                              const CostDesiredTrajectories& costDesiredTrajectory) {
+  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
   if (modeScheduleUpdated_) {
-    std::lock_guard<std::mutex> lock(modeScheduleMutex_);
     modeScheduleUpdated_ = false;
     swap(modeSchedule_, modeScheduleBuffer_);
   }
-  preSolverRunImpl(initTime, finalTime, currentState, costDesiredTrajectory);
+  preSolverRunImpl(initTime, finalTime, currentState, costDesiredTrajectory, modeSchedule_);
 }
 
 /******************************************************************************************************/

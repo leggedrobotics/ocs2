@@ -48,7 +48,7 @@ struct ModeSchedule {
   ModeSchedule() : ModeSchedule(std::vector<scalar_t>{}, std::vector<size_t>{0}) {}
 
   /**
-   * Constructor for a ModeSchedule. The number of phases must be greater than zero (N > 0)
+   * Constructor for a ModeSchedule. The number of modes must be greater than zero (N > 0)
    * @param [in] eventTimesInput : event times of size N - 1
    * @param [in] modeSequenceInput : mode sequence of size N
    */

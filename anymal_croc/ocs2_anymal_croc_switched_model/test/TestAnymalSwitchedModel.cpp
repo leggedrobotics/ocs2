@@ -6,12 +6,12 @@
 
 #include <gtest/gtest.h>
 
-#include <ocs2_anymal_switched_model_interface/test/TestEvaluateConstraint.h>
 #include <ocs2_switched_model_interface/constraint/EndEffectorPositionConstraint.h>
 #include <ocs2_switched_model_interface/constraint/EndEffectorPositionInBaseConstraint.h>
 #include <ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h>
 #include <ocs2_switched_model_interface/constraint/EndEffectorVelocityInBaseConstraint.h>
 #include <ocs2_switched_model_interface/constraint/EndEffectorVelocityInFootFrameConstraint.h>
+#include <ocs2_switched_model_interface/test/TestEvaluateConstraint.h>
 #include "include/TestAnymalSwitchedModel.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 
@@ -96,11 +96,6 @@ TEST_F(AnymalCrocSwitchedModelTests, EndeffectorAlignedYAxisRandomHFE_KFE) {
    * With only the HFE, and KFE joints rotated, the y-axis of the foot should still be aligned with the
    * y-axis of the base, at any base pose.
    */
-  auto posDist_ = std::uniform_real_distribution<scalar_t>(-20, 20);
-  auto angleDist_ = std::uniform_real_distribution<scalar_t>(0.07, M_PI - 0.1);
-  auto randAngle = std::bind(angleDist_, std::ref(generator_));
-  auto randPos = std::bind(posDist_, std::ref(generator_));
-
   generalized_coordinate_t x;
   x.setZero();
   x[0] = randAngle();
@@ -142,10 +137,6 @@ TEST_F(AnymalCrocSwitchedModelTests, EndeffectorAlignedXAxisRandomHAA) {
    * With only the HAA joints rotated, the x-axis of the foot should still be aligned with the
    * x-axis of the base, at any base pose.
    */
-  auto posDist_ = std::uniform_real_distribution<scalar_t>(-20, 20);
-  auto angleDist_ = std::uniform_real_distribution<scalar_t>(0.07, M_PI - 0.1);
-  auto randAngle = std::bind(angleDist_, std::ref(generator_));
-  auto randPos = std::bind(posDist_, std::ref(generator_));
 
   generalized_coordinate_t x;
   x.setZero();

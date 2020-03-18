@@ -53,7 +53,12 @@ public:
 
   std::array<bool,4> stanceLegs_;
   std::function<bool(const Eigen::MatrixXd  &lhs, const Eigen::MatrixXd rhs)> matrixEquality_ = [](const Eigen::MatrixXd  &lhs, const Eigen::MatrixXd rhs) {return lhs.isApprox(rhs);};
-
+  std::seed_seq seed_{4, 7, 93, 8};  // WOW! SO RANDOM!
+  std::default_random_engine generator_{seed_};
+  std::uniform_real_distribution<scalar_t> posDist_;    //{-20, 20};
+  std::uniform_real_distribution<scalar_t> angleDist_;  //{0.07, M_PI-0.1};
+  decltype(std::bind(std::ref(angleDist_), std::ref(generator_))) randAngle;
+  decltype(std::bind(std::ref(posDist_), std::ref(generator_))) randPos;
 };
 
 } // namespace anymal

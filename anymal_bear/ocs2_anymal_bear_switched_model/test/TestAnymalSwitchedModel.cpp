@@ -92,11 +92,6 @@ TEST_F(AnymalBearSwitchedModelTests, EndeffectorAlignedYAxisRandomHFE_KFE) {
    * With only the HFE, and KFE joints rotated, the y-axis of the foot should still be aligned with the
    * y-axis of the base, at any base pose.
    */
-  auto posDist_ = std::uniform_real_distribution<scalar_t>(-20, 20);
-  auto angleDist_ = std::uniform_real_distribution<scalar_t>(0.07, M_PI-0.1);
-  auto randAngle = std::bind(angleDist_, std::ref(generator_));
-  auto randPos = std::bind(posDist_, std::ref(generator_));
-
   generalized_coordinate_t x; x.setZero();
   x[0] = randAngle();
   x[1] = randAngle();
@@ -132,11 +127,6 @@ TEST_F(AnymalBearSwitchedModelTests, EndeffectorAlignedXAxisRandomHAA) {
    * With only the HAA joints rotated, the x-axis of the foot should still be aligned with the
    * x-axis of the base, at any base pose.
    */
-  auto posDist_ = std::uniform_real_distribution<scalar_t>(-20, 20);
-  auto angleDist_ = std::uniform_real_distribution<scalar_t>(0.07, M_PI-0.1);
-  auto randAngle = std::bind(angleDist_, std::ref(generator_));
-  auto randPos = std::bind(posDist_, std::ref(generator_));
-
   generalized_coordinate_t x; x.setZero();
   x[0] = randAngle();
   x[1] = randAngle();

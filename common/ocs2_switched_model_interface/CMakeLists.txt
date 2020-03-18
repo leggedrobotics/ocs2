@@ -49,14 +49,13 @@ add_library(${PROJECT_NAME}
 		src/SwitchedModelCostBase.cpp
 		src/ComKinoOperatingPointsBase.cpp
     src/SwitchedModelStateEstimator.cpp
-		src/SwitchedModelLogicRulesBase.cpp
+  src/logic/GaitSchedule.cpp
 		src/KinematicsModelBase.cpp
 		src/ComModelBase.cpp
 		src/ModelSettings.cpp
 		src/foot_planner/CubicSpline.cpp
 		src/foot_planner/SplineCpg.cpp
-		src/foot_planner/FeetPlannerBase.cpp
-		src/foot_planner/FeetZDirectionPlanner.cpp
+		src/foot_planner/SwingTrajectoryPlanner.cpp
 		src/logic/ModeSequenceTemplate.cpp
 		src/logic/SwitchedModelModeScheduleManager.cpp
 		)

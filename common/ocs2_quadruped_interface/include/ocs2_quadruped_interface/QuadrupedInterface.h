@@ -8,6 +8,7 @@
 #pragma once
 
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+#include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
 
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
@@ -55,6 +56,9 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   using mode_schedule_manager_t = SwitchedModelModeScheduleManager;
   using mode_sequence_template_t = ModeSequenceTemplate;
 
+  using synchronized_module_t = ocs2::SolverSynchronizedModule<STATE_DIM, INPUT_DIM>;
+  using synchronized_module_ptr_array_t = std::vector<std::shared_ptr<synchronized_module_t>>;
+
   using system_dynamics_t = switched_model::ComKinoSystemDynamicsAd;
   using system_dynamics_derivative_t = switched_model::ComKinoSystemDynamicsAd;
   using constraint_t = switched_model::ComKinoConstraintBaseAd;
@@ -76,6 +80,8 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   ~QuadrupedInterface() override = default;
 
   std::shared_ptr<mode_schedule_manager_t> getModeScheduleManagerPtr() const { return modeScheduleManagerPtr_; }
+
+  synchronized_module_ptr_array_t getSynchronizedModules() const { return solverModules_; };
 
   /** Gets kinematic model */
   const kinematic_model_t& getKinematicModel() const { return *kinematicModelPtr_; }
@@ -131,6 +137,7 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;
   std::unique_ptr<com_model_t> comModelPtr_;
   std::shared_ptr<mode_schedule_manager_t> modeScheduleManagerPtr_;
+  synchronized_module_ptr_array_t solverModules_;
 
   std::unique_ptr<system_dynamics_t> dynamicsPtr_;
   std::unique_ptr<system_dynamics_derivative_t> dynamicsDerivativesPtr_;

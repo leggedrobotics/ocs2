@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/oc_solver/ModeScheduleManager.h>
 
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
-#include "ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h"
+#include "ocs2_switched_model_interface/logic/GaitSchedule.h"
 
 namespace switched_model {
 
@@ -43,20 +43,20 @@ class SwitchedModelModeScheduleManager : public ocs2::ModeScheduleManager<STATE_
  public:
   using Base = ocs2::ModeScheduleManager<STATE_DIM, INPUT_DIM>;
 
-  explicit SwitchedModelModeScheduleManager(ocs2::ModeSchedule modeSchedule);
+  explicit SwitchedModelModeScheduleManager(std::shared_ptr<GaitSchedule> gaitSchedulePtr);
 
   ~SwitchedModelModeScheduleManager() override = default;
 
   contact_flag_t getContactFlags(scalar_t time) const;
 
-  std::shared_ptr<SwitchedModelLogicRulesBase> getLogicRules() { return logicRulesPtr_; };
+  std::shared_ptr<GaitSchedule> getGaitSchedule() { return gaitSchedulePtr_; };
 
  private:
   void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
                         const ocs2::CostDesiredTrajectories& costDesiredTrajectory, ocs2::ModeSchedule& modeSchedule) override;
 
  private:
-  std::shared_ptr<SwitchedModelLogicRulesBase> logicRulesPtr_;
+  std::shared_ptr<GaitSchedule> gaitSchedulePtr_;
 };
 
 }  // namespace switched_model

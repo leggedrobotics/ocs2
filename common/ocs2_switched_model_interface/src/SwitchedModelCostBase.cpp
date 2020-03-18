@@ -18,7 +18,7 @@ SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel, std::s
       comModelPtr_(comModel.clone()),
       modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)) {
   if (!modeScheduleManagerPtr_) {
-    throw std::runtime_error("[SwitchedModelCostBase] logicRules cannot be a nullptr");
+    throw std::runtime_error("[SwitchedModelCostBase] Mode schedule manager cannot be a nullptr");
   }
 }
 

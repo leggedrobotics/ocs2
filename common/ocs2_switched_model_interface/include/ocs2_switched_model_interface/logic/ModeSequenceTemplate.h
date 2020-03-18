@@ -48,7 +48,7 @@ namespace switched_model {
 struct ModeSequenceTemplate {
   using scalar_t = ocs2::Dimensions<0, 0>::scalar_t;
 
-  ModeSequenceTemplate() : ModeSequenceTemplate(std::vector<scalar_t>{0, 1}, std::vector<size_t>{0}) {}
+  ModeSequenceTemplate() : ModeSequenceTemplate({0.0, 1.0}, {0}) {}
 
   /**
    * Constructor for a ModeSequenceTemplate. The number of modes must be greater than zero (N > 0)

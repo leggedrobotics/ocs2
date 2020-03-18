@@ -32,7 +32,7 @@ class QuadrupedLoopshapingInterface : public ocs2::RobotInterface<STATE_DIM, INP
 
   using com_model_t = switched_model::ComModelBase<double>;
   using kinematic_model_t = switched_model::KinematicsModelBase<double>;
-  using logic_rules_t = switched_model::SwitchedModelLogicRulesBase;
+  using logic_rules_t = switched_model::GaitSchedule;
 
   using ad_base_t = CppAD::cg::CG<double>;
   using ad_scalar_t = CppAD::AD<ad_base_t>;

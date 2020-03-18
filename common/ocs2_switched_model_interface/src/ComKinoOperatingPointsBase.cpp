@@ -8,7 +8,7 @@ ComKinoOperatingPointsBase::ComKinoOperatingPointsBase(const com_model_t& comMod
                                                        std::shared_ptr<const mode_schedule_manager_t> modeScheduleManagerPtr)
     : Base(), comModelPtr_(comModel.clone()), modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)) {
   if (!modeScheduleManagerPtr_) {
-    throw std::runtime_error("[ComKinoOperatingPointsBase] logicRules cannot be a nullptr");
+    throw std::runtime_error("[ComKinoOperatingPointsBase] Mode schedule manager cannot be a nullptr");
   }
 }
 

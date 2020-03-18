@@ -7,8 +7,7 @@
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_switched_model_interface/core/Rotations.h>
 #include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
-#include <ocs2_switched_model_interface/foot_planner/FeetZDirectionPlanner.h>
-#include <ocs2_switched_model_interface/foot_planner/SplineCpg.h>
+#include <ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h>
 
 
 namespace switched_model {
@@ -22,9 +21,18 @@ QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, 
     : kinematicModelPtr_(kinematicModel.clone()), comModelPtr_(comModel.clone()) {
   loadSettings(pathToConfigFolder + "/task.info");
 
+  SwingTrajectoryPlannerSettings swingTrajectorySettings;
+  swingTrajectorySettings.swingHeight = modelSettings_.swingLegLiftOff_;
+  swingTrajectorySettings.liftOffVelocity = modelSettings_.liftOffVelocity_;
+  swingTrajectorySettings.touchDownVelocity = modelSettings_.touchDownVelocity_;
+  swingTrajectorySettings.swingTimeScale = 1.0;
+
+  auto swingTrajectoryPlanner = std::make_shared<SwingTrajectoryPlanner>(swingTrajectorySettings, *comModelPtr_, *kinematicModelPtr_, modeScheduleManagerPtr_);
+  solverModules_.push_back(swingTrajectoryPlanner);
+
   dynamicsPtr_.reset(new system_dynamics_t(adKinematicModel, adComModel, modelSettings_.recompileLibraries_));
   dynamicsDerivativesPtr_.reset(dynamicsPtr_->clone());
-  constraintsPtr_.reset(new constraint_t(adKinematicModel, adComModel, modeScheduleManagerPtr_, modelSettings_));
+  constraintsPtr_.reset(new constraint_t(adKinematicModel, adComModel, modeScheduleManagerPtr_, swingTrajectoryPlanner, modelSettings_));
   costFunctionPtr_.reset(new cost_function_t(*comModelPtr_, modeScheduleManagerPtr_, Q_, R_, QFinal_));
   operatingPointsPtr_.reset(new operating_point_t(*comModelPtr_, modeScheduleManagerPtr_));
   timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, rolloutSettings_));
@@ -81,12 +89,8 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
   defaultModeSequenceTemplate_ = loadModeSequenceTemplate(pathToConfigFile, "defaultModeSequenceTemplate", false);
   std::cerr << "\nDefault Modes Sequence Template: \n" << defaultModeSequenceTemplate_ << std::endl;
 
-  // logic rule
-  auto feetZPlannerPtr = std::shared_ptr<FeetZDirectionPlanner>(new FeetZDirectionPlanner(
-      modelSettings_.swingLegLiftOff_, 1.0 /*swingTimeScale*/, modelSettings_.liftOffVelocity_, modelSettings_.touchDownVelocity_));
-
-  modeScheduleManagerPtr_.reset(new mode_schedule_manager_t(initModeSchedule, defaultModeSequenceTemplate_, feetZPlannerPtr,
-                                                            modelSettings_.phaseTransitionStanceTime_));
+  auto logicRules = std::make_shared<GaitSchedule>(initModeSchedule, modelSettings_.phaseTransitionStanceTime_);
+  modeScheduleManagerPtr_ = std::make_shared<SwitchedModelModeScheduleManager>(std::move(logicRules));
 }
 
 }  // namespace switched_model

@@ -12,7 +12,7 @@
 TEST(TestEEVelocityConstraint, evaluate) {
   using TestedConstraint = switched_model::EndEffectorVelocityConstraint;
 
-  switched_model::EndEffectorVelocityConstraintSettings settings;
+  switched_model::EndEffectorVelocityConstraintSettings settings(3, 3);
   settings.A.setIdentity(3, 3);
   settings.b.setZero();
 

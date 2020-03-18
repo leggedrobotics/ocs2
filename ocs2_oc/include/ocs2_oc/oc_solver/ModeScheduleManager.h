@@ -29,8 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <mutex>
 #include <atomic>
+#include <mutex>
 
 #include <ocs2_core/logic/ModeSchedule.h>
 

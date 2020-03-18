@@ -16,7 +16,7 @@ class ConstraintsFixture : public ::testing::Test {
  public:
   template <class TestedConstraint, class Settings>
   static inline void ConstraintTest() {
-    Settings settings;
+    Settings settings(3, 3);
     settings.A.setIdentity(3, 3);
     settings.b.setZero();
 

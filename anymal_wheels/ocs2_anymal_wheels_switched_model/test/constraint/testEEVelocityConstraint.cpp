@@ -13,7 +13,7 @@
 TEST(TestEEVelocityConstraint, evaluate){
   using TestedConstraint = switched_model::EndEffectorVelocityInFootFrameConstraint;
 
-  switched_model::EndEffectorVelocityInFootFrameConstraintSettings settings;
+  switched_model::EndEffectorVelocityInFootFrameConstraintSettings settings(3, 3);
   settings.A.setIdentity(3, 3);
   settings.b.setZero();
 

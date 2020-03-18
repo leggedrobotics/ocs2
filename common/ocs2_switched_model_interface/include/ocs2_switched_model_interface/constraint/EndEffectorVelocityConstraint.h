@@ -32,15 +32,11 @@ class EndEffectorVelocityConstraint : public EndEffectorConstraint {
 
   explicit EndEffectorVelocityConstraint(int legNumber, settings_t settings, ad_com_model_t& adComModel,
                                          ad_kinematic_model_t& adKinematicsModel, bool generateModels = true,
-                                         std::string constraintPrefix = "EEVelocityConstraint_")
+                                         std::string constraintPrefix = "o_EEVelocityConstraint_")
       : BASE(ocs2::ConstraintOrder::Linear, std::move(constraintPrefix), legNumber, std::move(settings), adComModel, adKinematicsModel,
              EndEffectorVelocityConstraint::adfunc, generateModels) {}
 
-  /* Copy Constructors */
   EndEffectorVelocityConstraint(const EndEffectorVelocityConstraint& rhs) = default;
-
-  // :
-  //   EndEffectorVelocityConstraint{rhs.legNumber_, rhs,settings_, }{};
 
   EndEffectorVelocityConstraint* clone() const override { return new EndEffectorVelocityConstraint(*this); };
 
@@ -63,7 +59,6 @@ class EndEffectorVelocityConstraint : public EndEffectorConstraint {
     const base_coordinate_ad_t com_baseTwist = adComModel.calculateBaseLocalVelocities(com_comTwist);
 
     o_footVelocity = adKinematicsModel.footVelocityInOriginFrame(legNumber, basePose, com_baseTwist, qJoints, dqJoints);
-  }
+  };
 };
-
 }  // namespace switched_model

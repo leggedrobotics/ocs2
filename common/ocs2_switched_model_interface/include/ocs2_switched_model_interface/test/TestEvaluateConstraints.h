@@ -30,8 +30,10 @@ int evaluateConstraint(ComModelBase<ocs2::CppAdInterface<double>::ad_scalar_t>& 
   u.setRandom();
   x.setRandom();
 
-  switch (constraint.getOrder()) {
+  auto order = constraint.getOrder();
+  switch (order) {
     case ocs2::ConstraintOrder::Quadratic: {
+      std::cout << "\nConstraintOrder: quadratic.\n";
       auto quadApprox = (constraint.getQuadraticApproximation(t, x, u));
       std::cout << "ddhdxdx" << std::endl;
       int count = 0;
@@ -69,6 +71,7 @@ int evaluateConstraint(ComModelBase<ocs2::CppAdInterface<double>::ad_scalar_t>& 
     }
       //! fallthrough on purpose
     case ocs2::ConstraintOrder::Linear: {
+      std::cout << "\nConstraintOrder: Linear.\n";
       auto linApprox = (constraint.getLinearApproximation(t, x, u));
       std::cout << "dhdx" << std::endl;
       for (auto dhdx : linApprox.derivativeState) {
@@ -84,8 +87,8 @@ int evaluateConstraint(ComModelBase<ocs2::CppAdInterface<double>::ad_scalar_t>& 
       for (auto h : linApprox.constraintValues) {
         std::cout << h << std::endl;
       }
-    } break;
-
+      break;
+    }
     default:
       throw std::runtime_error("None or No ConstraintOrder");
       break;

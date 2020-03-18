@@ -1,5 +1,4 @@
-#ifndef TESTEVALUATECONSTRAINTS_H_ER9U6KNT
-#define TESTEVALUATECONSTRAINTS_H_ER9U6KNT
+#pragma once
 
 #include <ocs2_switched_model_interface/constraint/ConstraintTerm.h>
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
@@ -97,5 +96,3 @@ int evaluateConstraint(ComModelBase<ocs2::CppAdInterface<double>::ad_scalar_t>& 
 }
 
 }  // namespace switched_model
-
-#endif /* end of include guard: TESTEVALUATECONSTRAINTS_H_ER9U6KNT */

@@ -1,5 +1,5 @@
-#ifndef WHEELSSWITCHEDMODEL_H_HLWTT2DJ
-#define WHEELSSWITCHEDMODEL_H_HLWTT2DJ
+#pragma once
+
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 #include <Eigen/Dense>
 
@@ -26,5 +26,3 @@ inline extended_joint_coordinate_s_t<SCALAR_T> getExtendedJointCoordinates(
 }
 
 }  // namespace anymal
-
-#endif /* end of include guard: WHEELSSWITCHEDMODEL_H_HLWTT2DJ */

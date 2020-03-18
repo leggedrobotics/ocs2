@@ -30,7 +30,7 @@ class ModeSequenceKeyboard {
 
  private:
   /** Gets the gait from the command line. */
-  std::string getCommandLine();
+  static std::string getCommandLine();
 
   /** Prints the list of available gaits. */
   void printGaitList(const std::vector<std::string>& gaitList) const;

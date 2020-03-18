@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <thread>
+#include <atomic>
 
 #include <ocs2_core/misc/LoadData.h>
 
@@ -56,7 +57,7 @@ std::string ModeSequenceKeyboard::getCommandLine() {
 
   // Set up a thread to read user inputs
   std::string line;
-  bool lineRead;
+  std::atomic_bool lineRead{false};
   std::thread thr([&line, &lineRead]() {
     lineRead = false;
     getline(std::cin, line);
@@ -75,7 +76,9 @@ std::string ModeSequenceKeyboard::getCommandLine() {
 
   std::istringstream stream(line);
   std::string in;
-  while (stream >> in) gaitCommand.push_back(in);
+  while (stream >> in) {
+    gaitCommand.push_back(in);
+  }
 
   if (gaitCommand.size() != 1) {
     std::cout << "WARNING: The command should be a single word." << std::endl;

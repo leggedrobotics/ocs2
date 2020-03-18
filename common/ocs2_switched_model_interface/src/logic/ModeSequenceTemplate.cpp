@@ -41,12 +41,12 @@ std::ostream& operator<<(std::ostream& stream, const ModeSequenceTemplate& modeS
 }
 
 ModeSequenceTemplate loadModeSequenceTemplate(const std::string& filename, const std::string& topicName, bool verbose) {
-  ModeSequenceTemplate modeSequenceTemplate;
+  std::vector<ModeSequenceTemplate::scalar_t> switchingTimes;
   std::vector<std::string> modeSequenceString;
 
   try {
     // switching times
-    ocs2::loadData::loadStdVector(filename, topicName + ".switchingTimes", modeSequenceTemplate.switchingTimes, verbose);
+    ocs2::loadData::loadStdVector(filename, topicName + ".switchingTimes", switchingTimes, verbose);
 
     // read the modes name
     ocs2::loadData::loadStdVector(filename, topicName + ".modeSequence", modeSequenceString, verbose);
@@ -55,11 +55,13 @@ ModeSequenceTemplate loadModeSequenceTemplate(const std::string& filename, const
   }
 
   // convert the mode name to mode enum
+  std::vector<size_t> modeSequence;
+  modeSequence.reserve(modeSequenceString.size());
   for (const auto& modeName : modeSequenceString) {
-    modeSequenceTemplate.modeSequence.push_back(string2ModeNumber(modeName));
+    modeSequence.push_back(string2ModeNumber(modeName));
   }
 
-  return modeSequenceTemplate;
+  return {switchingTimes, modeSequence};
 }
 
 ocs2_msgs::mode_schedule createModeSequenceTemplateMsg(const ModeSequenceTemplate& modeSequenceTemplate) {
@@ -70,10 +72,9 @@ ocs2_msgs::mode_schedule createModeSequenceTemplateMsg(const ModeSequenceTemplat
 }
 
 ModeSequenceTemplate readModeSequenceTemplateMsg(const ocs2_msgs::mode_schedule& modeScheduleMsg) {
-  ModeSequenceTemplate modeSequenceTemplate;
-  modeSequenceTemplate.switchingTimes.assign(modeScheduleMsg.eventTimes.begin(), modeScheduleMsg.eventTimes.end());
-  modeSequenceTemplate.modeSequence.assign(modeScheduleMsg.modeSequence.begin(), modeScheduleMsg.modeSequence.end());
-  return modeSequenceTemplate;
+  std::vector<ModeSequenceTemplate::scalar_t> switchingTimes(modeScheduleMsg.eventTimes.begin(), modeScheduleMsg.eventTimes.end());
+  std::vector<size_t> modeSequence(modeScheduleMsg.modeSequence.begin(), modeScheduleMsg.modeSequence.end());
+  return {switchingTimes, modeSequence};
 }
 
 }  // namespace switched_model

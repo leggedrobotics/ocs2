@@ -9,7 +9,7 @@
 
 #include <ocs2_core/misc/LoadData.h>
 
-#include <ocs2_msgs/mode_sequence.h>
+#include <ocs2_msgs/mode_schedule.h>
 
 namespace switched_model {
 
@@ -18,7 +18,7 @@ ModeSequenceKeyboard::ModeSequenceKeyboard(ros::NodeHandle nodeHandle, const std
   ROS_INFO_STREAM(robotName + "_mpc_mode_schedule node is setting up ...");
   ocs2::loadData::loadStdVector(gaitFile, "list", gaitList_, verbose);
 
-  modeSequenceTemplatePublisher_ = nodeHandle.advertise<ocs2_msgs::mode_sequence>(robotName + "_mpc_mode_schedule", 1, true);
+  modeSequenceTemplatePublisher_ = nodeHandle.advertise<ocs2_msgs::mode_schedule>(robotName + "_mpc_mode_schedule", 1, true);
 
   gaitMap_.clear();
   for (const auto& gaitName : gaitList_) {

@@ -10,7 +10,7 @@ namespace switched_model {
 
 GaitReceiver::GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<GaitSchedule> gaitSchedulePtr, const std::string& robotName)
     : gaitSchedulePtr_(std::move(gaitSchedulePtr)), gaitUpdated_(false) {
-  mpcModeSequenceSubscriber_ = nodeHandle.subscribe(robotName + "_mpc_mode_sequence", 1, &GaitReceiver::mpcModeSequenceCallback, this,
+  mpcModeSequenceSubscriber_ = nodeHandle.subscribe(robotName + "_mpc_mode_schedule", 1, &GaitReceiver::mpcModeSequenceCallback, this,
                                                     ::ros::TransportHints().udp());
 }
 

@@ -8,7 +8,9 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 GaitSchedule::GaitSchedule(ocs2::ModeSchedule initModeSchedule, scalar_t phaseTransitionStanceTime)
-    : modeSchedule_(std::move(initModeSchedule)), phaseTransitionStanceTime_(phaseTransitionStanceTime) {}
+    : modeSchedule_(std::move(initModeSchedule)),
+      phaseTransitionStanceTime_(phaseTransitionStanceTime),
+      modeSequenceTemplate_({0.0, 1.0}, {modeSchedule_.modeSequence.back()}) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -87,7 +89,7 @@ void GaitSchedule::tileModeSequenceTemplate(scalar_t startTime, scalar_t finalTi
     return;
   }
 
-  if (templateModeSequence.size() != templateModeSequence.size() + 1) {
+  if (templateTimes.size() != templateModeSequence.size() + 1) {
     throw std::runtime_error(
         "The number of the subsystems in the user-defined template should be equal to "
         "the number of the template switching times minus 1.");

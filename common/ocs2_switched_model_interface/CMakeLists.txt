@@ -3,7 +3,10 @@ project(ocs2_switched_model_interface)
 
 ## Catkin Dependencies
 set(CATKIN_PACKAGE_DEPENDENCIES
+  roslib
   ocs2_core
+  ocs2_msgs
+  ocs2_oc
 )
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
@@ -54,6 +57,7 @@ add_library(${PROJECT_NAME}
 		src/foot_planner/SplineCpg.cpp
 		src/foot_planner/FeetPlannerBase.cpp
 		src/foot_planner/FeetZDirectionPlanner.cpp
+		src/logic/ModeSequenceTemplate.cpp
 		)
 
 add_dependencies(${PROJECT_NAME}

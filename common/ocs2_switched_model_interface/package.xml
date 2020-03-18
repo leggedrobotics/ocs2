@@ -14,6 +14,9 @@
 
   <build_depend>cmake_clang_tools</build_depend>
 
+  <depend>roslib</depend>
   <depend>ocs2_core</depend>
+  <depend>ocs2_oc</depend>
+  <depend>ocs2_msgs</depend>
 
 </package>

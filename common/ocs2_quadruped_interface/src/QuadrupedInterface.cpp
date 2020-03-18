@@ -10,6 +10,7 @@
 #include <ocs2_switched_model_interface/foot_planner/FeetZDirectionPlanner.h>
 #include <ocs2_switched_model_interface/foot_planner/SplineCpg.h>
 
+
 namespace switched_model {
 
 /******************************************************************************************************/
@@ -23,9 +24,9 @@ QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, 
 
   dynamicsPtr_.reset(new system_dynamics_t(adKinematicModel, adComModel, modelSettings_.recompileLibraries_));
   dynamicsDerivativesPtr_.reset(dynamicsPtr_->clone());
-  constraintsPtr_.reset(new constraint_t(adKinematicModel, adComModel, logicRulesPtr_, modelSettings_));
-  costFunctionPtr_.reset(new cost_function_t(*comModelPtr_, logicRulesPtr_, Q_, R_, QFinal_));
-  operatingPointsPtr_.reset(new operating_point_t(*comModelPtr_, logicRulesPtr_));
+  constraintsPtr_.reset(new constraint_t(adKinematicModel, adComModel, modeScheduleManagerPtr_, modelSettings_));
+  costFunctionPtr_.reset(new cost_function_t(*comModelPtr_, modeScheduleManagerPtr_, Q_, R_, QFinal_));
+  operatingPointsPtr_.reset(new operating_point_t(*comModelPtr_, modeScheduleManagerPtr_));
   timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, rolloutSettings_));
 }
 
@@ -61,60 +62,31 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
   ocs2::loadData::loadEigenMatrix(pathToConfigFile, "Q_final", QFinal_);
 
   // costs over Cartesian velocities
-  Eigen::Matrix<double, 12, 12> J_allFeet;
+  Eigen::Matrix<scalar_t, 12, 12> J_allFeet;
   for (int leg = 0; leg < 4; ++leg) {
     Eigen::Matrix<double, 6, 12> J_thisfoot = kinematicModelPtr_->baseToFootJacobianInBaseFrame(leg, getJointPositions(initRbdState));
     J_allFeet.block<3, 12>(3 * leg, 0) = J_thisfoot.bottomRows<3>();
   }
-  R_.template block<12, 12>(12, 12) = (J_allFeet.transpose() * R_.template block<12, 12>(12, 12) * J_allFeet).eval();
+  R_.block<12, 12>(12, 12) = (J_allFeet.transpose() * R_.block<12, 12>(12, 12) * J_allFeet).eval();
+
+  // load init mode schedule
+  auto initialModeSequenceTemplate = loadModeSequenceTemplate(pathToConfigFile, "initialModeSequenceTemplate", false);
+  size_array_t initModesSequence = initialModeSequenceTemplate.modeSequence;
+  initModesSequence.push_back(string2ModeNumber("STANCE"));
+  scalar_array_t initEventTimes(initialModeSequenceTemplate.switchingTimes.begin() + 1, initialModeSequenceTemplate.switchingTimes.end());
+  ocs2::ModeSchedule initModeSchedule{initEventTimes, initModesSequence};
+  std::cerr << "\nInitial Modes Schedule: \n" << initModeSchedule << std::endl;
 
   // load the mode sequence template
-  std::cerr << std::endl;
-  mode_sequence_template_t initialModeSequenceTemplate;
-  loadModeSequenceTemplate(pathToConfigFile, "initialModeSequenceTemplate", initialModeSequenceTemplate, false);
-  std::cerr << std::endl;
-  if (initialModeSequenceTemplate.templateSubsystemsSequence_.empty()) {
-    throw std::runtime_error("initialModeSequenceTemplate.templateSubsystemsSequence should have at least one entry.");
-  }
-  if (initialModeSequenceTemplate.templateSwitchingTimes_.size() != initialModeSequenceTemplate.templateSubsystemsSequence_.size() + 1) {
-    throw std::runtime_error(
-        "initialModeSequenceTemplate.templateSwitchingTimes size should be 1 + "
-        "size_of(initialModeSequenceTemplate.templateSubsystemsSequence).");
-  }
-
-  size_array_t initSwitchingModes = initialModeSequenceTemplate.templateSubsystemsSequence_;
-  initSwitchingModes.push_back(string2ModeNumber("STANCE"));
-
-  auto& templateSwitchingTimes = initialModeSequenceTemplate.templateSwitchingTimes_;
-  scalar_array_t initEventTimes = scalar_array_t(templateSwitchingTimes.begin() + 1, templateSwitchingTimes.end());
-
-  // display
-  std::cerr << "Initial Switching Modes: {";
-  for (const auto& switchingMode : initSwitchingModes) {
-    std::cerr << switchingMode << ", ";
-  }
-  std::cerr << "\b\b}" << std::endl;
-  std::cerr << "Initial Event Times:     {";
-  for (const auto& switchingtime : initEventTimes) {
-    std::cerr << switchingtime << ", ";
-  }
-  if (!initEventTimes.empty()) {
-    std::cerr << "\b\b}" << std::endl;
-  } else {
-    std::cerr << "}" << std::endl;
-  }
-
-  // load the mode sequence template
-  std::cerr << std::endl;
-  loadModeSequenceTemplate(pathToConfigFile, "defaultModeSequenceTemplate", defaultModeSequenceTemplate_, true);
-  std::cerr << std::endl;
+  defaultModeSequenceTemplate_ = loadModeSequenceTemplate(pathToConfigFile, "defaultModeSequenceTemplate", false);
+  std::cerr << "\nDefault Modes Sequence Template: \n" << defaultModeSequenceTemplate_ << std::endl;
 
   // logic rule
   auto feetZPlannerPtr = std::shared_ptr<FeetZDirectionPlanner>(new FeetZDirectionPlanner(
       modelSettings_.swingLegLiftOff_, 1.0 /*swingTimeScale*/, modelSettings_.liftOffVelocity_, modelSettings_.touchDownVelocity_));
 
-  logicRulesPtr_ = std::shared_ptr<logic_rules_t>(new logic_rules_t(feetZPlannerPtr, modelSettings_.phaseTransitionStanceTime_));
-  logicRulesPtr_->setModeSequence(initSwitchingModes, initEventTimes);
+  modeScheduleManagerPtr_.reset(new mode_schedule_manager_t(initModeSchedule, defaultModeSequenceTemplate_, feetZPlannerPtr,
+                                                            modelSettings_.phaseTransitionStanceTime_));
 }
 
 }  // namespace switched_model

@@ -8,7 +8,7 @@
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
 #include "ocs2_switched_model_interface/core/ModelSettings.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
-#include "ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h"
+#include "ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h"
 
 namespace switched_model {
 
@@ -18,8 +18,8 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
 
   using Base = ocs2::ConstraintBase<STATE_DIM, INPUT_DIM>;
 
-  using logic_rules_t = SwitchedModelLogicRulesBase;
-  using foot_cpg_t = typename logic_rules_t::foot_cpg_t;
+  using mode_schedule_manager_t = SwitchedModelModeScheduleManager<STATE_DIM, INPUT_DIM>;
+  using foot_cpg_t = typename mode_schedule_manager_t::foot_cpg_t;
 
   using ad_base_t = CppAD::cg::CG<double>;
   using ad_scalar_t = CppAD::AD<ad_base_t>;
@@ -36,15 +36,15 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
   const std::array<std::string, 4> feetNames{"LF", "RF", "LH", "RH"};
 
   ComKinoConstraintBaseAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-                          std::shared_ptr<const logic_rules_t> logicRulesPtr, const ModelSettings& options = ModelSettings())
+                          std::shared_ptr<mode_schedule_manager_t> modeScheduleManagerPtr, ModelSettings options = ModelSettings())
       : Base(),
         adKinematicModelPtr_(adKinematicModel.clone()),
         adComModelPtr_(adComModel.clone()),
-        logicRulesPtr_(std::move(logicRulesPtr)),
-        options_(options),
+        modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)),
+        options_(std::move(options)),
         inequalityConstraintsComputed_(false),
         stateInputConstraintsComputed_(false) {
-    if (!logicRulesPtr_) {
+    if (!modeScheduleManagerPtr_) {
       throw std::runtime_error("[ComKinoConstraintBaseAD] logicRules cannot be a nullptr");
     }
     initializeConstraintTerms();
@@ -54,7 +54,7 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
       : Base(rhs),
         adKinematicModelPtr_(rhs.adKinematicModelPtr_->clone()),
         adComModelPtr_(rhs.adComModelPtr_->clone()),
-        logicRulesPtr_(rhs.logicRulesPtr_),
+        modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_),
         options_(rhs.options_),
         inequalityConstraintCollection_(rhs.inequalityConstraintCollection_),
         equalityStateInputConstraintCollection_(rhs.equalityStateInputConstraintCollection_),
@@ -120,11 +120,11 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
   std::unique_ptr<ad_com_model_t> adComModelPtr_;
   ModelSettings options_;
 
-  std::shared_ptr<const logic_rules_t> logicRulesPtr_;
-  contact_flag_t stanceLegs_;
   size_t numEventTimes_;
-
+  contact_flag_t stanceLegs_;
   std::array<const foot_cpg_t*, NUM_CONTACT_POINTS> zDirectionRefsPtr_;
+
+  std::shared_ptr<mode_schedule_manager_t> modeScheduleManagerPtr_;
 };
 
 }  // end of namespace switched_model

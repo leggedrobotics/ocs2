@@ -9,7 +9,9 @@
 
 #include <mutex>
 
-#include <ocs2_core/logic/rules/HybridLogicRules.h>
+#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/logic/ModeSchedule.h>
+#include <ocs2_core/misc/Lookup.h>
 
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/foot_planner/FeetPlannerBase.h"
@@ -20,25 +22,19 @@ namespace switched_model {
 /**
  * Logic rules base class
  */
-class SwitchedModelLogicRulesBase : public ocs2::HybridLogicRules {
+class SwitchedModelLogicRulesBase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = ocs2::HybridLogicRules;
-  using typename BASE::logic_template_type;
-  using typename BASE::scalar_array_t;
-  using typename BASE::scalar_t;
-  using typename BASE::size_array_t;
+  using scalar_t = ocs2::Dimensions<0, 0>::scalar_t;
+  using scalar_array_t = ocs2::Dimensions<0, 0>::scalar_array_t;
 
-  using foot_cpg_t = SplineCpg;
-  using feet_planner_t = FeetPlannerBase;
-  using feet_cpg_ptr_t = FeetPlannerBase::feet_cpg_ptr_t;
-
- public:
-  /**
-   * Default constructor
-   */
-  SwitchedModelLogicRulesBase() = default;
+  using foot_cpg_t = CPG_BASE<scalar_t>;
+  using feet_planner_t = FeetPlannerBase<scalar_t, foot_cpg_t>;
+  using feet_planner_ptr_t = std::shared_ptr<feet_planner_t>;
+  using feet_cpg_ptr_t = feet_planner_t::feet_cpg_ptr_t;
+  using feet_cpg_const_ptr_t = feet_planner_t::feet_cpg_const_ptr_t;
+  using mode_sequence_template_t = ModeSequenceTemplate<scalar_t>;
 
   /**
    * Constructor
@@ -46,7 +42,7 @@ class SwitchedModelLogicRulesBase : public ocs2::HybridLogicRules {
    * @param [in] feetPlannerPtr: A pointer to the FeetPlanner class.
    * @param [in] phaseTransitionStanceTime: The phase transition stance time.
    */
-  explicit SwitchedModelLogicRulesBase(std::shared_ptr<feet_planner_t> feetPlannerPtr, scalar_t phaseTransitionStanceTime = 0.4);
+  SwitchedModelLogicRulesBase(std::shared_ptr<feet_planner_t> feetPlannerPtr, scalar_t phaseTransitionStanceTime);
 
   /**
    * Copy constructor
@@ -56,38 +52,14 @@ class SwitchedModelLogicRulesBase : public ocs2::HybridLogicRules {
   /**
    * Destructor
    */
-  ~SwitchedModelLogicRulesBase() override = default;
-
-  /**
-   * Move assignment
-   */
-  SwitchedModelLogicRulesBase& operator=(SwitchedModelLogicRulesBase&& other);
-
-  /**
-   * Assignment
-   */
-  SwitchedModelLogicRulesBase& operator=(const SwitchedModelLogicRulesBase& other);
-
-  /**
-   * Retrieves the contact status flag sequence.
-   *
-   * @return contactFlagsStock_
-   */
-  const std::vector<contact_flag_t>& getContactFlagsSequence() const;
-
-  /**
-   * Retrieves the contact flags of the requested motion phase.
-   *
-   * @param [in] index: The requested motion phase.
-   * @param [out] contactFlags: A contact flags array which determines the stance legs.
-   */
-  void getContactFlags(const size_t& index, contact_flag_t& contactFlags) const;
+  ~SwitchedModelLogicRulesBase() = default;
 
   /**
    * Retrieves constraints information of the motion phase specified by the given index. This information
    * is sufficient to determine the active constraints of the requested motion phase.
    *
    * @param [in] index: The requested motion phase.
+   * @param [in] modeSchedule: The current ModeSchedule.
    * @param [out] contactFlags: A contact flags array which determines the stance legs.
    * @param [out] feetReferencePtr: An array of planned motion for the swing legs (note that
    * for the stance legs the behavior might not be defined).
@@ -127,24 +99,29 @@ class SwitchedModelLogicRulesBase : public ocs2::HybridLogicRules {
                                   const scalar_t& finalTime) override;
 
   /**
+   * This method can be used to reset the internal variables related to feet Z reference planner.
+   */
+  void resetFeetReferenceStock(size_t numModes);
+
+ private:
+  /**
    * Extends the switch information from lowerBoundTime to upperBoundTime based on the template mode sequence.
    *
    * @param modeSequenceTemplate: Mode sequence template which should be tiled into logic rule.
    * @param [in] startTime: The initial time from which the logicRules template should be augmented.
    * @param [in] finalTime: The final time to which the logicRules template should be augmented.
+   * @param [in] modeSequenceTemplate: Mode sequence template which should be tiled into modeSchedule.
+   * @param modeSchedule: The updated ModeSchedule.
    */
   void tileModeSequenceTemplate(const logic_template_type& modeSequenceTemplate, const scalar_t& startTime, const scalar_t& finalTime);
 
  private:
-  mutable std::mutex feetReferenceUpdateMutex_;
-  mutable std::vector<feet_cpg_ptr_t> feetReferencePtrStock_;
-  mutable std::vector<bool> feetReferenceUpdatedStock_;
+  std::mutex feetReferenceUpdateMutex_;
+  std::vector<feet_cpg_ptr_t> feetReferencePtrStock_;
+  std::vector<bool> feetReferenceUpdatedStock_;
 
   std::shared_ptr<feet_planner_t> feetPlannerPtr_;
-
   scalar_t phaseTransitionStanceTime_;
-
-  std::vector<contact_flag_t> contactFlagsStock_;
 };
 
 }  // namespace switched_model

@@ -5,111 +5,30 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SwitchedModelLogicRulesBase::SwitchedModelLogicRulesBase(std::shared_ptr<feet_planner_t> feetPlannerPtr,
-                                                         scalar_t phaseTransitionStanceTime /*= 0.4*/)
-    : feetPlannerPtr_(std::move(feetPlannerPtr)),  // shallow copy: points to the same asset
-      phaseTransitionStanceTime_(phaseTransitionStanceTime) {}
+SwitchedModelLogicRulesBase::SwitchedModelLogicRulesBase(std::shared_ptr<feet_planner_t> feetPlannerPtr, scalar_t phaseTransitionStanceTime)
+    : feetPlannerPtr_(std::move(feetPlannerPtr)), phaseTransitionStanceTime_(phaseTransitionStanceTime) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 SwitchedModelLogicRulesBase::SwitchedModelLogicRulesBase(const SwitchedModelLogicRulesBase& rhs)
-    : BASE(rhs),
-      feetPlannerPtr_(rhs.feetPlannerPtr_),
+    : feetPlannerPtr_(rhs.feetPlannerPtr_),
       phaseTransitionStanceTime_(rhs.phaseTransitionStanceTime_),
-      contactFlagsStock_(rhs.contactFlagsStock_),
-      feetReferencePtrStock_(rhs.feetReferencePtrStock_.size()),  // no copy: reset to nullPtrs
+      feetReferencePtrStock_(rhs.feetReferencePtrStock_.size()),  // shallow copy: points to the same asset
       feetReferenceUpdatedStock_(rhs.feetReferenceUpdatedStock_.size(), false) {}
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-SwitchedModelLogicRulesBase& SwitchedModelLogicRulesBase::operator=(SwitchedModelLogicRulesBase&& other) {
-  if (this != &other) {
-    // base class
-    BASE::operator=(std::move(other));
-
-    feetPlannerPtr_ = std::move(other.feetPlannerPtr_);
-    phaseTransitionStanceTime_ = std::move(other.phaseTransitionStanceTime_);
-    contactFlagsStock_ = std::move(other.contactFlagsStock_);
-    feetReferencePtrStock_ = std::move(other.feetReferencePtrStock_);
-    feetReferenceUpdatedStock_ = std::move(other.feetReferenceUpdatedStock_);
-  }
-
-  return *this;
-}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SwitchedModelLogicRulesBase& SwitchedModelLogicRulesBase::operator=(const SwitchedModelLogicRulesBase& other) {
-  if (this != &other) {
-    // base class
-    BASE::operator=(other);
-
-    feetPlannerPtr_ = other.feetPlannerPtr_;
-    phaseTransitionStanceTime_ = other.phaseTransitionStanceTime_;
-    contactFlagsStock_ = other.contactFlagsStock_;
-    // no copy: reset to nullPtrs
-    feetReferencePtrStock_ = std::vector<feet_cpg_ptr_t>(other.feetReferencePtrStock_.size());
-    feetReferenceUpdatedStock_ = std::vector<bool>(other.feetReferenceUpdatedStock_.size(), false);
-  }
-
-  return *this;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void SwitchedModelLogicRulesBase::update() {
-  const size_t numSubsystems = this->getNumSubsystems();
-
-  contactFlagsStock_.resize(numSubsystems);
-  for (size_t i = 0; i < numSubsystems; i++) {
-    contactFlagsStock_[i] = modeNumber2StanceLeg(subsystemsSequence()[i]);
-  }
-
-  std::lock_guard<std::mutex> lock(feetReferenceUpdateMutex_);
-  feetReferencePtrStock_.resize(numSubsystems);
-  feetReferenceUpdatedStock_.resize(numSubsystems);
-  for (size_t i = 0; i < numSubsystems; i++) {
-    feetReferenceUpdatedStock_[i] = false;
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-const std::vector<contact_flag_t>& SwitchedModelLogicRulesBase::getContactFlagsSequence() const {
-  return contactFlagsStock_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void SwitchedModelLogicRulesBase::getContactFlags(const size_t& index, contact_flag_t& contactFlags) const {
-  if (index >= contactFlagsStock_.size()) {
-    throw std::runtime_error("The requested index " + std::to_string(index) + " refers to an out-of-bound motion phase.");
-  }
-
-  contactFlags = contactFlagsStock_[index];
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void SwitchedModelLogicRulesBase::getMotionPhaseLogics(const size_t& index, contact_flag_t& contactFlags,
-                                                       std::array<const foot_cpg_t*, 4>& feetReferencePtr) const {
-  if (index >= contactFlagsStock_.size()) {
-    throw std::runtime_error("The requested index " + std::to_string(index) + " refers to an out-of-bound motion phase.");
-  }
-
-  contactFlags = contactFlagsStock_[index];
+void SwitchedModelLogicRulesBase::getMotionPhaseLogics(size_t index, const ocs2::ModeSchedule& modeSchedule, contact_flag_t& contactFlags,
+                                                       std::array<const foot_cpg_t*, 4>& feetReferencePtr) {
+  contactFlags = getContactFlags(index, modeSchedule);
 
   // plan feetReferencePtrStock_[index] if it is not yet updated
   std::lock_guard<std::mutex> lock(feetReferenceUpdateMutex_);
   if (!feetReferenceUpdatedStock_[index]) {
-    feetReferencePtrStock_[index] = feetPlannerPtr_->planSingleMode(index, {eventTimes(), subsystemsSequence()});
+    feetReferencePtrStock_[index] = feetPlannerPtr_->planSingleMode(index, modeSchedule);
     feetReferenceUpdatedStock_[index] = true;
   }
 

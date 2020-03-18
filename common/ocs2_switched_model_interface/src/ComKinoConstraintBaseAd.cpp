@@ -48,9 +48,8 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
   inequalityConstraintsComputed_ = false;
 
   Base::setCurrentStateAndControl(t, x, u);
-  numEventTimes_ = logicRulesPtr_->getNumEventTimes();
-  auto activeSubsystem = logicRulesPtr_->getEventTimeCount(t);
-  logicRulesPtr_->getMotionPhaseLogics(activeSubsystem, stanceLegs_, zDirectionRefsPtr_);
+  numEventTimes_ = modeScheduleManagerPtr_->getModeSchedule().eventTimes.size();
+  modeScheduleManagerPtr_->getMotionPhaseLogics(t, stanceLegs_, zDirectionRefsPtr_);
 
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
     auto footName = feetNames[i];

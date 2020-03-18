@@ -58,6 +58,7 @@ add_library(${PROJECT_NAME}
 		src/foot_planner/FeetPlannerBase.cpp
 		src/foot_planner/FeetZDirectionPlanner.cpp
 		src/logic/ModeSequenceTemplate.cpp
+		src/logic/SwitchedModelModeScheduleManager.cpp
 		)
 
 add_dependencies(${PROJECT_NAME}

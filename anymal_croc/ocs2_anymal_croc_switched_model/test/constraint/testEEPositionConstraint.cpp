@@ -4,7 +4,9 @@
 
 #include <gtest/gtest.h>
 
+#include <ocs2_switched_model_interface/constraint/ConstraintTerm.h>
 #include <ocs2_switched_model_interface/constraint/EndEffectorPositionConstraint.h>
+#include <stdexcept>
 
 #include "ocs2_anymal_croc_switched_model/core/AnymalCrocCom.h"
 #include "ocs2_anymal_croc_switched_model/core/AnymalCrocKinematics.h"
@@ -12,7 +14,7 @@
 TEST(TestEEPositionConstraint, evaluate) {
   using TestedConstraint = switched_model::EndEffectorPositionConstraint;
 
-  switched_model::EndEffectorPositionConstraintSettings settings;
+  switched_model::EndEffectorPositionConstraintSettings settings(3, 3);
   settings.A.setIdentity(3, 3);
   settings.b.setZero();
 
@@ -27,41 +29,63 @@ TEST(TestEEPositionConstraint, evaluate) {
   u.setRandom();
   x.setRandom();
 
-  auto approximation = eePositionConstraint.getQuadraticApproximation(t, x, u);
-  std::cout << "h" << std::endl;
-  for (auto h : approximation.constraintValues) {
-    std::cout << h << std::endl;
-  }
+  switch (eePositionConstraint.getOrder()) {
+    case ocs2::ConstraintOrder::Quadratic: {
+      auto quadApprox = (eePositionConstraint.getQuadraticApproximation(t, x, u));
+      std::cout << "ddhdxdx" << std::endl;
+      int count = 0;
+      for (auto ddhdxdx : quadApprox.secondDerivativesState) {
+        std::cout << "\t ddhdxdx[" << count << "]" << std::endl;
+        std::cout << ddhdxdx << std::endl;
+      }
 
-  std::cout << "dhdx" << std::endl;
-  for (auto dhdx : approximation.derivativeState) {
-    std::cout << dhdx.transpose() << std::endl;
-  }
+      std::cout << "ddhdudu" << std::endl;
+      count = 0;
+      for (auto ddhdudu : quadApprox.secondDerivativesInput) {
+        std::cout << "\t ddhdudu[" << count << "]" << std::endl;
+        std::cout << ddhdudu << std::endl;
+      }
 
-  std::cout << "dhdu" << std::endl;
-  for (auto dhdu : approximation.derivativeInput) {
-    std::cout << dhdu.transpose() << std::endl;
-  }
+      std::cout << "ddhdudx" << std::endl;
+      count = 0;
+      for (auto ddhdudx : quadApprox.derivativesInputState) {
+        std::cout << "\t ddhdudx[" << count << "]" << std::endl;
+        std::cout << ddhdudx << std::endl;
+      }
+      for (auto dhdx : quadApprox.derivativeState) {
+        std::cout << dhdx.transpose() << std::endl;
+      }
 
-  std::cout << "ddhdxdx" << std::endl;
-  int count = 0;
-  for (auto ddhdxdx : approximation.secondDerivativesState) {
-    std::cout << "\t ddhdxdx[" << count << "]" << std::endl;
-    std::cout << ddhdxdx << std::endl;
-  }
+      std::cout << "dhdu" << std::endl;
+      for (auto dhdu : quadApprox.derivativeInput) {
+        std::cout << dhdu.transpose() << std::endl;
+      }
 
-  std::cout << "ddhdudu" << std::endl;
-  count = 0;
-  for (auto ddhdudu : approximation.secondDerivativesInput) {
-    std::cout << "\t ddhdudu[" << count << "]" << std::endl;
-    std::cout << ddhdudu << std::endl;
-  }
+      std::cout << "h" << std::endl;
+      for (auto h : quadApprox.constraintValues) {
+        std::cout << h << std::endl;
+      }
+    }
 
-  std::cout << "ddhdudx" << std::endl;
-  count = 0;
-  for (auto ddhdudx : approximation.derivativesInputState) {
-    std::cout << "\t ddhdudx[" << count << "]" << std::endl;
-    std::cout << ddhdudx << std::endl;
+    case ocs2::ConstraintOrder::Linear: {
+      auto linApprox = (eePositionConstraint.getLinearApproximation(t, x, u));
+      std::cout << "dhdx" << std::endl;
+      for (auto dhdx : linApprox.derivativeState) {
+        std::cout << dhdx.transpose() << std::endl;
+      }
+
+      std::cout << "dhdu" << std::endl;
+      for (auto dhdu : linApprox.derivativeInput) {
+        std::cout << dhdu.transpose() << std::endl;
+      }
+
+      std::cout << "h" << std::endl;
+      for (auto h : linApprox.constraintValues) {
+        std::cout << h << std::endl;
+      }
+    } break;
+    default:
+      throw std::runtime_error("None or No ConstraintOrder");
   }
 }
 

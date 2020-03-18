@@ -79,6 +79,7 @@ target_link_libraries(target_command_node_velocity
 )
 
 add_executable(gait_command_node
+  src/ModeSequenceKeyboard.cpp
   src/AnymalModeSequenceCommand.cpp
 )
 add_dependencies(gait_command_node

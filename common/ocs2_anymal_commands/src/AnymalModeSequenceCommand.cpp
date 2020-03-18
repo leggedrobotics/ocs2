@@ -7,17 +7,21 @@
 
 #include <ros/package.h>
 
-#include "ocs2_anymal_commands/ModeSequence_Keyboard_Quadruped.h"
+#include "ocs2_anymal_commands/ModeSequenceKeyboard.h"
 
 int main(int argc, char* argv[]) {
+  const std::string robotName = "anymal";
   std::string gaitFile = ros::package::getPath("ocs2_anymal_commands") + "/config/gait.info";
   std::cerr << "Loading gait file: " << gaitFile << std::endl;
 
-  switched_model::ModeSequence_Keyboard_Quadruped<double> modeSequenceCommand(gaitFile, "anymal", true);
+  ros::init(argc, argv, robotName + "_mpc_mode_sequence");
+  ros::NodeHandle nodeHandle;
 
-  modeSequenceCommand.launchNodes(argc, argv);
+  switched_model::ModeSequenceKeyboard modeSequenceCommand(nodeHandle, gaitFile, robotName, true);
 
-  modeSequenceCommand.getKeyboardCommand();
+  while (ros::ok() && ros::master::check()) {
+    modeSequenceCommand.getKeyboardCommand();
+  }
 
   // Successful exit
   return 0;

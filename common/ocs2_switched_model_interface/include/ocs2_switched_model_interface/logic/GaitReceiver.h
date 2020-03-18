@@ -4,24 +4,37 @@
 
 #pragma once
 
-#include "ocs2_oc/oc_solver/SolverSynchronizedModule.h"
+#include <mutex>
+
+#include <ros/ros.h>
+
+#include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
 
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
+#include "ocs2_switched_model_interface/logic/GaitSchedule.h"
+#include "ocs2_switched_model_interface/logic/ModeSequenceTemplate.h"
 
 namespace switched_model {
 
 class GaitReceiver : public ocs2::SolverSynchronizedModule<STATE_DIM, INPUT_DIM> {
  public:
+  GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<GaitSchedule> gaitSchedulePtr, const std::string& robotName);
 
-  GaitReceiver
+  void preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+                    const ocs2::CostDesiredTrajectories& costDesiredTrajectory) override;
 
-  ~GaitReceiver() override = default;
+  void postSolverRun(const primal_solution_t& primalSolution) override{};
 
-  virtual void preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
-                            const ocs2::CostDesiredTrajectories& costDesiredTrajectory);
+ private:
+  void mpcModeSequenceCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg);
 
-  virtual void postSolverRun(const primal_solution_t& primalSolution) {};
-};
+  std::shared_ptr<GaitSchedule> gaitSchedulePtr_;
+
+  ros::Subscriber mpcModeSequenceSubscriber_;
+
+  std::mutex receivedGaitMutex_;
+  ModeSequenceTemplate receivedGait_;
+  bool gaitUpdated_;
 };
 
 }  // namespace switched_model

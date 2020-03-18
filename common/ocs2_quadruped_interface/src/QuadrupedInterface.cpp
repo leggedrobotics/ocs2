@@ -9,7 +9,6 @@
 #include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
 #include <ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h>
 
-
 namespace switched_model {
 
 /******************************************************************************************************/
@@ -27,7 +26,8 @@ QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, 
   swingTrajectorySettings.touchDownVelocity = modelSettings_.touchDownVelocity_;
   swingTrajectorySettings.swingTimeScale = 1.0;
 
-  auto swingTrajectoryPlanner = std::make_shared<SwingTrajectoryPlanner>(swingTrajectorySettings, *comModelPtr_, *kinematicModelPtr_, modeScheduleManagerPtr_);
+  auto swingTrajectoryPlanner =
+      std::make_shared<SwingTrajectoryPlanner>(swingTrajectorySettings, *comModelPtr_, *kinematicModelPtr_, modeScheduleManagerPtr_);
   solverModules_.push_back(swingTrajectoryPlanner);
 
   dynamicsPtr_.reset(new system_dynamics_t(adKinematicModel, adComModel, modelSettings_.recompileLibraries_));

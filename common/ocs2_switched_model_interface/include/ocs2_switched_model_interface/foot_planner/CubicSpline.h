@@ -47,10 +47,10 @@ class CubicSpline {
   scalar_t c2_;
   scalar_t c3_;
 
-  scalar_t dev_c0_;  // derivative w.r.t. dt_
-  scalar_t dev_c1_;  // derivative w.r.t. dt_
-  scalar_t dev_c2_;  // derivative w.r.t. dt_
-  scalar_t dev_c3_;  // derivative w.r.t. dt_
+  scalar_t dc0_;  // derivative w.r.t. dt_
+  scalar_t dc1_;  // derivative w.r.t. dt_
+  scalar_t dc2_;  // derivative w.r.t. dt_
+  scalar_t dc3_;  // derivative w.r.t. dt_
 };
 
 }  // namespace switched_model

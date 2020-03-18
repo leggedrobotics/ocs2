@@ -17,10 +17,11 @@
 namespace switched_model {
 
 struct SwingTrajectoryPlannerSettings {
-  double liftOffVelocity;
-  double touchDownVelocity;
-  double swingHeight;
-  double swingTimeScale;  // swing phases shorter than this time will be scaled down in height and velocity
+  using scalar_t = ocs2::Dimensions<0, 0>::scalar_t;
+  scalar_t liftOffVelocity;
+  scalar_t touchDownVelocity;
+  scalar_t swingHeight;
+  scalar_t swingTimeScale;  // swing phases shorter than this time will be scaled down in height and velocity
 };
 
 class SwingTrajectoryPlanner : public ocs2::SolverSynchronizedModule<STATE_DIM, INPUT_DIM> {

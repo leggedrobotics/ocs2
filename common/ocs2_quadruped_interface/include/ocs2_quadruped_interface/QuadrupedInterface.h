@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
@@ -18,8 +18,8 @@
 #include <ocs2_switched_model_interface/core/MotionPhaseDefinition.h>
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 
-#include <ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h>
 #include <ocs2_switched_model_interface/logic/ModeSequenceTemplate.h>
+#include <ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h>
 
 #include <ocs2_switched_model_interface/constraint/ComKinoConstraintBaseAd.h>
 #include <ocs2_switched_model_interface/cost/SwitchedModelCostBase.h>

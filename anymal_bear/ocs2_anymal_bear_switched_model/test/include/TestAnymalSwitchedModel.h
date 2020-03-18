@@ -35,11 +35,12 @@ public:
   using matrix3_t = switched_model::matrix3_t;
   using vector3_t = switched_model::vector3_t;
 
-
-  TestAnymalSwitchedModel() :
-    stanceLegs_({{true,true,true,true}})
-    {
-  }
+  TestAnymalSwitchedModel()
+      : stanceLegs_({{true, true, true, true}}),
+        posDist_{-20, 20},
+        angleDist_{0.07, M_PI - 0.1},
+        randAngle{std::bind(std::ref(angleDist_), std::ref(generator_))},
+        randPos{std::bind(std::ref(posDist_), std::ref(generator_))} {}
 
   void init() {
     // nothing to do yet

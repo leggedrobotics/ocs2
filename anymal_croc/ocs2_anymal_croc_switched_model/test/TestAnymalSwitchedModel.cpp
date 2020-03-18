@@ -11,7 +11,7 @@
 #include <ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h>
 #include <ocs2_switched_model_interface/constraint/EndEffectorVelocityInBaseConstraint.h>
 #include <ocs2_switched_model_interface/constraint/EndEffectorVelocityInFootFrameConstraint.h>
-#include <ocs2_switched_model_interface/test/TestEvaluateConstraint.h>
+#include <ocs2_switched_model_interface/test/TestEvaluateConstraints.h>
 #include "include/TestAnymalSwitchedModel.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 

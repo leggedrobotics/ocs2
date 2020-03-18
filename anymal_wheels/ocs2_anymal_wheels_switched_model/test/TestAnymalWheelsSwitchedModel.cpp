@@ -9,12 +9,12 @@
 #include "include/TestAnymalWheelsSwitchedModel.h"
 #include <iit/rbd/traits/TraitSelector.h>
 
-#include <ocs2_anymal_switched_model_interface/test/TestEvaluateConstraint.h>
 #include <ocs2_switched_model_interface/constraint/EndEffectorPositionConstraint.h>
 #include <ocs2_switched_model_interface/constraint/EndEffectorPositionInBaseConstraint.h>
 #include <ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h>
 #include <ocs2_switched_model_interface/constraint/EndEffectorVelocityInBaseConstraint.h>
 #include <ocs2_switched_model_interface/constraint/EndEffectorVelocityInFootFrameConstraint.h>
+#include <ocs2_switched_model_interface/test/TestEvaluateConstraints.h>
 #include "ocs2_anymal_wheels_switched_model/core/WheelsSwitchedModel.h"
 #include "ocs2_anymal_wheels_switched_model/generated/jacobians.h"
 #include "ocs2_anymal_wheels_switched_model/generated/transforms.h"

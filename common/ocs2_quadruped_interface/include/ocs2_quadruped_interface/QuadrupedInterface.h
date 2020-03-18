@@ -94,7 +94,7 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   const scalar_array_t& getInitialPartitionTimes() const { return partitioningTimes_; }
 
   /** Gets the loaded initial getInitialModeSequence */
-  const ModeSequenceTemplate& getInitialModeSequence() const { return defaultModeSequenceTemplate_; }
+  const ModeSequenceTemplate& getInitialModeSequence() const { return *defaultModeSequenceTemplate_; }
 
   /** Access to rollout settings */
   const ocs2::Rollout_Settings& rolloutSettings() const { return rolloutSettings_; }
@@ -149,7 +149,7 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
 
   state_vector_t initialState_;
   scalar_array_t partitioningTimes_;
-  ModeSequenceTemplate defaultModeSequenceTemplate_;
+  std::unique_ptr<ModeSequenceTemplate> defaultModeSequenceTemplate_;
 };
 
 }  // end of namespace switched_model

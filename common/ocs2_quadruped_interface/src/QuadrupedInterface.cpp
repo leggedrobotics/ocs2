@@ -86,8 +86,9 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
   std::cerr << "\nInitial Modes Schedule: \n" << initModeSchedule << std::endl;
 
   // load the mode sequence template
-  defaultModeSequenceTemplate_ = loadModeSequenceTemplate(pathToConfigFile, "defaultModeSequenceTemplate", false);
-  std::cerr << "\nDefault Modes Sequence Template: \n" << defaultModeSequenceTemplate_ << std::endl;
+  defaultModeSequenceTemplate_.reset(
+      new ModeSequenceTemplate(loadModeSequenceTemplate(pathToConfigFile, "defaultModeSequenceTemplate", false)));
+  std::cerr << "\nDefault Modes Sequence Template: \n" << *defaultModeSequenceTemplate_ << std::endl;
 
   auto logicRules = std::make_shared<GaitSchedule>(initModeSchedule, modelSettings_.phaseTransitionStanceTime_);
   modeScheduleManagerPtr_ = std::make_shared<SwitchedModelModeScheduleManager>(std::move(logicRules));

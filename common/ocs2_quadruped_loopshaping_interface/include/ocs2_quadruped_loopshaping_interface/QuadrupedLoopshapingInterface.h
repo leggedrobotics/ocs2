@@ -50,15 +50,15 @@ class QuadrupedLoopshapingInterface : public ocs2::RobotInterface<STATE_DIM, INP
   using rollout_base_t = ocs2::RolloutBase<STATE_DIM, INPUT_DIM>;
   using time_triggered_rollout_t = ocs2::TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
 
-  using mode_sequence_template_t = ocs2::ModeSequenceTemplate<scalar_t>;
-
   QuadrupedLoopshapingInterface(std::unique_ptr<switched_model::QuadrupedInterface> quadrupedPtr, const std::string& pathToConfigFolder);
 
   ~QuadrupedLoopshapingInterface() override = default;
 
   std::shared_ptr<ocs2::LoopshapingDefinition> getLoopshapingDefinition() const { return loopshapingDefinition_; };
 
-  std::shared_ptr<ocs2::HybridLogicRules> getLogicRulesPtr() const override { return quadrupedPtr_->getLogicRulesPtr(); }
+  std::shared_ptr<switched_model::SwitchedModelModeScheduleManager> getModeScheduleManagerPtr() const {
+    return quadrupedPtr_->getModeScheduleManagerPtr();
+  }
 
   /** Gets kinematic model */
   const kinematic_model_t& getKinematicModel() const { return quadrupedPtr_->getKinematicModel(); };
@@ -73,7 +73,7 @@ class QuadrupedLoopshapingInterface : public ocs2::RobotInterface<STATE_DIM, INP
   const scalar_array_t& getInitialPartitionTimes() const { return quadrupedPtr_->getInitialPartitionTimes(); }
 
   /** Gets the loaded initial getInitialModeSequence */
-  const mode_sequence_template_t& getInitialModeSequence() const { return quadrupedPtr_->getInitialModeSequence(); }
+  const switched_model::ModeSequenceTemplate& getInitialModeSequence() const { return quadrupedPtr_->getInitialModeSequence(); }
 
   /** Access to model settings */
   const switched_model::ModelSettings& modelSettings() const { return quadrupedPtr_->modelSettings(); };

@@ -48,6 +48,8 @@ public:
 public:
   AnymalBearKinematics kinematics_;
   AnymalBearCom comDynamics_;
+  AnymalBearComAd anymalComAd_;
+  AnymalBearKinematicsAd anymalKinematicsAd_;
 
   std::seed_seq seed_{4, 7, 93, 8}; //WOW! SO RANDOM!
   std::default_random_engine generator_{seed_};

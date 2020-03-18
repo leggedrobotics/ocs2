@@ -46,7 +46,7 @@ class SwingTrajectoryPlanner : public ocs2::SolverSynchronizedModule<STATE_DIM, 
    * @param phaseIDsStock
    * @return contactFlagStock
    */
-  std::array<std::vector<bool>, NUM_CONTACT_POINTS> extractContactFlags(const std::vector<size_t>& phaseIDsStock) const;
+  static std::array<std::vector<bool>, NUM_CONTACT_POINTS> extractContactFlags(const std::vector<size_t>& phaseIDsStock);
 
   /**
    * Finds the take-off and touch-down times indices for a specific leg.
@@ -55,7 +55,7 @@ class SwingTrajectoryPlanner : public ocs2::SolverSynchronizedModule<STATE_DIM, 
    * @param contactFlagStock
    * @return {The take-off time index for swing legs, touch-down time index for swing legs}
    */
-  std::pair<int, int> findIndex(size_t index, const std::vector<bool>& contactFlagStock) const;
+  static std::pair<int, int> findIndex(size_t index, const std::vector<bool>& contactFlagStock);
 
   /**
    * based on the input phaseIDsStock finds the start subsystem and final subsystem of the swing
@@ -69,8 +69,8 @@ class SwingTrajectoryPlanner : public ocs2::SolverSynchronizedModule<STATE_DIM, 
    * @param [in] contactFlagStock: The sequence of the contact status for the requested leg.
    * @return { startTimeIndexStock, finalTimeIndexStock}
    */
-  std::pair<std::vector<int>, std::vector<int>> updateFootSchedule(size_t footIndex, const std::vector<size_t>& phaseIDsStock,
-                                                                   const std::vector<bool>& contactFlagStock) const;
+  static std::pair<std::vector<int>, std::vector<int>> updateFootSchedule(size_t footIndex, const std::vector<size_t>& phaseIDsStock,
+                                                                          const std::vector<bool>& contactFlagStock);
 
   /**
    * Check if event time indices are valid
@@ -80,9 +80,9 @@ class SwingTrajectoryPlanner : public ocs2::SolverSynchronizedModule<STATE_DIM, 
    * @param finalIndex : touchdown event time index
    * @param phaseIDsStock : mode sequence
    */
-  void checkThatIndicesAreValid(int leg, int index, int startIndex, int finalIndex, const std::vector<size_t>& phaseIDsStock) const;
+  static void checkThatIndicesAreValid(int leg, int index, int startIndex, int finalIndex, const std::vector<size_t>& phaseIDsStock);
 
-  scalar_t swingTrajectoryScaling(scalar_t startTime, scalar_t finalTime, scalar_t swingTimeScale) const;
+  static scalar_t swingTrajectoryScaling(scalar_t startTime, scalar_t finalTime, scalar_t swingTimeScale);
 
   SwingTrajectoryPlannerSettings settings_;
 

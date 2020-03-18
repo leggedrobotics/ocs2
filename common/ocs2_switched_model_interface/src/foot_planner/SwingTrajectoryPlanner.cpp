@@ -27,6 +27,8 @@ auto SwingTrajectoryPlanner::getZvelocityConstraint(size_t leg, scalar_t time) c
 /******************************************************************************************************/
 void SwingTrajectoryPlanner::preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
                                           const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
+  const scalar_t terrainHeight = 0.0;
+
   const auto& modeSchedule = modeScheduleManagerPtr_->getModeSchedule();
   const auto& modeSequence = modeSchedule.modeSequence;
   const auto& eventTimes = modeSchedule.eventTimes;
@@ -54,16 +56,15 @@ void SwingTrajectoryPlanner::preSolverRun(scalar_t initTime, scalar_t finalTime,
         const scalar_t swingStartTime = eventTimes[swingStartIndex];
         const scalar_t swingFinalTime = eventTimes[swingFinalIndex];
 
-        const scalar_t scaledSwingHeight =
-            settings_.swingHeight * swingTrajectoryScaling(swingStartTime, swingFinalTime, settings_.swingTimeScale);
+        const scalar_t scaling = swingTrajectoryScaling(swingStartTime, swingFinalTime, settings_.swingTimeScale);
 
-        const CubicSpline::Node liftOff{swingStartTime, 0.0, settings_.liftOffVelocity};
-        const CubicSpline::Node touchDown{swingFinalTime, 0.0, settings_.touchDownVelocity};
-        feetCpg[j].reset(new SplineCpg(liftOff, scaledSwingHeight, touchDown));
+        const CubicSpline::Node liftOff{swingStartTime, terrainHeight, scaling * settings_.liftOffVelocity};
+        const CubicSpline::Node touchDown{swingFinalTime, terrainHeight, scaling * settings_.touchDownVelocity};
+        feetCpg[j].reset(new SplineCpg(liftOff, scaling * settings_.swingHeight, touchDown));
       } else {  // for a stance leg
-        const CubicSpline::Node liftOff{0.0, 0.0, 0.0};
-        const CubicSpline::Node touchDown{1.0, 0.0, 0.0};
-        feetCpg[j].reset(new SplineCpg(liftOff, 0.0, touchDown));
+        const CubicSpline::Node liftOff{0.0, terrainHeight, 0.0};
+        const CubicSpline::Node touchDown{1.0, terrainHeight, 0.0};
+        feetCpg[j].reset(new SplineCpg(liftOff, terrainHeight, touchDown));
       }
     }
     feetTrajectoriesPerModePerLeg_.push_back(std::move(feetCpg));
@@ -78,7 +79,7 @@ void SwingTrajectoryPlanner::preSolverRun(scalar_t initTime, scalar_t finalTime,
 /******************************************************************************************************/
 std::pair<std::vector<int>, std::vector<int>> SwingTrajectoryPlanner::updateFootSchedule(size_t footIndex,
                                                                                          const std::vector<size_t>& phaseIDsStock,
-                                                                                         const std::vector<bool>& contactFlagStock) const {
+                                                                                         const std::vector<bool>& contactFlagStock) {
   const size_t numPhases = phaseIDsStock.size();
 
   std::vector<int> startTimeIndexStock(numPhases, 0);
@@ -96,8 +97,7 @@ std::pair<std::vector<int>, std::vector<int>> SwingTrajectoryPlanner::updateFoot
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::array<std::vector<bool>, NUM_CONTACT_POINTS> SwingTrajectoryPlanner::extractContactFlags(
-    const std::vector<size_t>& phaseIDsStock) const {
+std::array<std::vector<bool>, NUM_CONTACT_POINTS> SwingTrajectoryPlanner::extractContactFlags(const std::vector<size_t>& phaseIDsStock) {
   const size_t numPhases = phaseIDsStock.size();
 
   std::array<std::vector<bool>, NUM_CONTACT_POINTS> contactFlagStock;
@@ -115,7 +115,7 @@ std::array<std::vector<bool>, NUM_CONTACT_POINTS> SwingTrajectoryPlanner::extrac
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::pair<int, int> SwingTrajectoryPlanner::findIndex(size_t index, const std::vector<bool>& contactFlagStock) const {
+std::pair<int, int> SwingTrajectoryPlanner::findIndex(size_t index, const std::vector<bool>& contactFlagStock) {
   const size_t numPhases = contactFlagStock.size();
 
   // skip if it is a stance leg
@@ -148,7 +148,7 @@ std::pair<int, int> SwingTrajectoryPlanner::findIndex(size_t index, const std::v
 /******************************************************************************************************/
 /******************************************************************************************************/
 void SwingTrajectoryPlanner::checkThatIndicesAreValid(int leg, int index, int startIndex, int finalIndex,
-                                                      const std::vector<size_t>& phaseIDsStock) const {
+                                                      const std::vector<size_t>& phaseIDsStock) {
   const size_t numSubsystems = phaseIDsStock.size();
   if (startIndex < 0) {
     std::cerr << "Subsystem: " << index << " out of " << numSubsystems - 1 << std::endl;
@@ -173,7 +173,7 @@ void SwingTrajectoryPlanner::checkThatIndicesAreValid(int leg, int index, int st
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto SwingTrajectoryPlanner::swingTrajectoryScaling(scalar_t startTime, scalar_t finalTime, scalar_t swingTimeScale) const -> scalar_t {
+auto SwingTrajectoryPlanner::swingTrajectoryScaling(scalar_t startTime, scalar_t finalTime, scalar_t swingTimeScale) -> scalar_t {
   return std::min(1.0, (finalTime - startTime) / swingTimeScale);
 }
 

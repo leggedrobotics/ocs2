@@ -8,8 +8,8 @@
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
 #include "ocs2_switched_model_interface/core/ModelSettings.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
-#include "ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h"
 #include "ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h"
+#include "ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h"
 
 namespace switched_model {
 

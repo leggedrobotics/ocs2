@@ -13,8 +13,7 @@ GaitSchedule::GaitSchedule(ocs2::ModeSchedule initModeSchedule, scalar_t phaseTr
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaitSchedule::insertModeSequenceTemplate(const ModeSequenceTemplate& modeSequenceTemplate, scalar_t startTime,
-                                                             scalar_t finalTime) {
+void GaitSchedule::insertModeSequenceTemplate(const ModeSequenceTemplate& modeSequenceTemplate, scalar_t startTime, scalar_t finalTime) {
   modeSequenceTemplate_ = modeSequenceTemplate;
   auto& eventTimes = modeSchedule_.eventTimes;
   auto& modeSequence = modeSchedule_.modeSequence;

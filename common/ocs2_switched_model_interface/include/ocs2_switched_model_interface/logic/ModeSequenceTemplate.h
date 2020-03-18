@@ -75,7 +75,7 @@ struct ModeSequenceTemplate {
 };
 
 /** Swap two modesequence templates */
-void swap(ModeSequenceTemplate& lh, ModeSequenceTemplate& rh) {
+inline void swap(ModeSequenceTemplate& lh, ModeSequenceTemplate& rh) {
   lh.switchingTimes.swap(rh.switchingTimes);
   lh.modeSequence.swap(rh.modeSequence);
 }

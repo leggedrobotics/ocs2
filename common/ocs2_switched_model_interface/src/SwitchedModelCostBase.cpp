@@ -12,8 +12,9 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel, std::shared_ptr<const mode_schedule_manager_t> modeScheduleManagerPtr,
-                                             const state_matrix_t& Q, const input_matrix_t& R, const state_matrix_t& QFinal)
+SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel,
+                                             std::shared_ptr<const mode_schedule_manager_t> modeScheduleManagerPtr, const state_matrix_t& Q,
+                                             const input_matrix_t& R, const state_matrix_t& QFinal)
     : BASE(Q, R, state_vector_t::Zero(), input_vector_t::Zero(), QFinal, state_vector_t::Zero()),
       comModelPtr_(comModel.clone()),
       modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)) {

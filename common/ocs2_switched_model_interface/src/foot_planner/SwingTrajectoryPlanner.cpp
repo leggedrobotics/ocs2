@@ -46,21 +46,24 @@ void SwingTrajectoryPlanner::preSolverRun(scalar_t initTime, scalar_t finalTime,
 
     for (size_t j = 0; j < NUM_CONTACT_POINTS; j++) {
       if (!eesContactFlagStocks[j][p]) {  // for a swing leg
-        feetCpg[j].reset(new SplineCpg({settings_.liftOffVelocity, settings_.touchDownVelocity}));
+
         const int swingStartIndex = startTimesIndices[j][p];
         const int swingFinalIndex = finalTimesIndices[j][p];
-        checkThatIndicesAreValid(j, p, swingStartIndex, swingFinalIndex);
+        checkThatIndicesAreValid(j, p, swingStartIndex, swingFinalIndex, modeSequence);
 
         const scalar_t swingStartTime = eventTimes[swingStartIndex];
         const scalar_t swingFinalTime = eventTimes[swingFinalIndex];
 
-        const scalar_t adaptedLiftOff =
+        const scalar_t scaledSwingHeight =
             settings_.swingHeight * swingTrajectoryScaling(swingStartTime, swingFinalTime, settings_.swingTimeScale);
 
-        feetCpg[j]->set({swingStartTime, 0.0}, {swingFinalTime, 0.0}, adaptedLiftOff);
+        const CubicSpline::Node liftOff{swingStartTime, 0.0, settings_.liftOffVelocity};
+        const CubicSpline::Node touchDown{swingFinalTime, 0.0, settings_.touchDownVelocity};
+        feetCpg[j].reset(new SplineCpg(liftOff, scaledSwingHeight, touchDown));
       } else {  // for a stance leg
-        feetCpg[j].reset(new SplineCpg({0.0, 0.0}));
-        feetCpg[j]->set({0.0, 0.0}, {1.0, 0.0}, 0.0);
+        const CubicSpline::Node liftOff{0.0, 0.0, 0.0};
+        const CubicSpline::Node touchDown{1.0, 0.0, 0.0};
+        feetCpg[j].reset(new SplineCpg(liftOff, 0.0, touchDown));
       }
     }
     feetTrajectoriesPerModePerLeg_.push_back(std::move(feetCpg));
@@ -139,6 +142,32 @@ std::pair<int, int> SwingTrajectoryPlanner::findIndex(size_t index, const std::v
   }
 
   return {startTimesIndex, finalTimesIndex};
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void SwingTrajectoryPlanner::checkThatIndicesAreValid(int leg, int index, int startIndex, int finalIndex,
+                                                      const std::vector<size_t>& phaseIDsStock) const {
+  const size_t numSubsystems = phaseIDsStock.size();
+  if (startIndex < 0) {
+    std::cerr << "Subsystem: " << index << " out of " << numSubsystems - 1 << std::endl;
+    for (size_t i = 0; i < numSubsystems; i++) {
+      std::cerr << "[" << i << "]: " << phaseIDsStock[i] << ",  ";
+    }
+    std::cerr << std::endl;
+
+    throw std::runtime_error("The time of take-off for the first swing of the EE with ID " + std::to_string(leg) + " is not defined.");
+  }
+  if (finalIndex >= numSubsystems - 1) {
+    std::cerr << "Subsystem: " << index << " out of " << numSubsystems - 1 << std::endl;
+    for (size_t i = 0; i < numSubsystems; i++) {
+      std::cerr << "[" << i << "]: " << phaseIDsStock[i] << ",  ";
+    }
+    std::cerr << std::endl;
+
+    throw std::runtime_error("The time of touch-down for the last swing of the EE with ID " + std::to_string(leg) + " is not defined.");
+  }
 }
 
 /******************************************************************************************************/

@@ -78,8 +78,9 @@ class SwingTrajectoryPlanner : public ocs2::SolverSynchronizedModule<STATE_DIM, 
    * @param index : phase index
    * @param startIndex : liftoff event time index
    * @param finalIndex : touchdown event time index
+   * @param phaseIDsStock : mode sequence
    */
-  void checkThatIndicesAreValid(int leg, int index, int startIndex, int finalIndex) const;
+  void checkThatIndicesAreValid(int leg, int index, int startIndex, int finalIndex, const std::vector<size_t>& phaseIDsStock) const;
 
   scalar_t swingTrajectoryScaling(scalar_t startTime, scalar_t finalTime, scalar_t swingTimeScale) const;
 

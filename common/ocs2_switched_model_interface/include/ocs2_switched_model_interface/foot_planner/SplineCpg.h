@@ -11,24 +11,11 @@
 
 namespace switched_model {
 
-struct SplineCpgSettings {
-  using scalar_t = ocs2::Dimensions<0, 0>::scalar_t;
-  scalar_t liftOffVelocity;
-  scalar_t touchDownVelocity;
-};
-
 class SplineCpg {
   using scalar_t = ocs2::Dimensions<0, 0>::scalar_t;
 
  public:
-  struct Point {
-    scalar_t time;
-    scalar_t height;
-  };
-
-  explicit SplineCpg(SplineCpgSettings settings);
-
-  void set(Point liftoff, Point touchdown, scalar_t midHeight);
+  SplineCpg(CubicSpline::Node liftOff, scalar_t midHeight, CubicSpline::Node touchDown);
 
   scalar_t position(scalar_t time) const;
 
@@ -41,7 +28,6 @@ class SplineCpg {
   scalar_t finalTimeDerivative(scalar_t time) const;
 
  private:
-  SplineCpgSettings settings_;
   scalar_t midTime_;
   CubicSpline leftSpline_;
   CubicSpline rightSpline_;

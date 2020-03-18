@@ -4,9 +4,10 @@
 
 namespace switched_model {
 
-ComKinoOperatingPointsBase::ComKinoOperatingPointsBase(const com_model_t& comModel, std::shared_ptr<const logic_rules_t> logicRulesPtr)
-    : Base(), comModelPtr_(comModel.clone()), logicRulesPtr_(std::move(logicRulesPtr)) {
-  if (!logicRulesPtr_) {
+ComKinoOperatingPointsBase::ComKinoOperatingPointsBase(const com_model_t& comModel,
+                                                       std::shared_ptr<const mode_schedule_manager_t> modeScheduleManagerPtr)
+    : Base(), comModelPtr_(comModel.clone()), modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)) {
+  if (!modeScheduleManagerPtr_) {
     throw std::runtime_error("[ComKinoOperatingPointsBase] logicRules cannot be a nullptr");
   }
 }
@@ -15,7 +16,7 @@ ComKinoOperatingPointsBase::ComKinoOperatingPointsBase(const com_model_t& comMod
 /******************************************************************************************************/
 /******************************************************************************************************/
 ComKinoOperatingPointsBase::ComKinoOperatingPointsBase(const ComKinoOperatingPointsBase& rhs)
-    : Base(rhs), comModelPtr_(rhs.comModelPtr_->clone()), logicRulesPtr_(rhs.logicRulesPtr_) {}
+    : Base(rhs), comModelPtr_(rhs.comModelPtr_->clone()), modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -56,12 +57,12 @@ void ComKinoOperatingPointsBase::getSystemOperatingTrajectories(const state_vect
                                                                 const scalar_t& finalTime, scalar_array_t& timeTrajectory,
                                                                 state_vector_array_t& stateTrajectory,
                                                                 input_vector_array_t& inputTrajectory, bool concatOutput /*= false*/) {
-  size_t index = logicRulesPtr_->getEventTimeCount(0.5 * (startTime + finalTime));
-  contact_flag_t contactFlags_;
-  logicRulesPtr_->getContactFlags(index, contactFlags_);
+
+  const auto midTime = 0.5 * (startTime + finalTime);
+  const contact_flag_t contactFlags = modeScheduleManagerPtr_->getContactFlags(midTime);
 
   Base::stateOperatingPoint_ = initialState;
-  computeInputOperatingPoints(contactFlags_, Base::inputOperatingPoint_);
+  computeInputOperatingPoints(contactFlags, Base::inputOperatingPoint_);
 
   if (!concatOutput) {
     timeTrajectory.clear();

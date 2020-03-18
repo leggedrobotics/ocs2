@@ -1,5 +1,3 @@
-
-
 #pragma once
 
 #include <ocs2_switched_model_interface/constraint/EndEffectorConstraint.h>
@@ -30,10 +28,11 @@ class EndEffectorPositionConstraint : public EndEffectorConstraint {
   using typename BASE::state_matrix_t;
   using typename BASE::state_vector_t;
   using typename BASE::timeStateInput_matrix_t;
+  using settings_t = EndEffectorPositionConstraintSettings;
 
-  explicit EndEffectorPositionConstraint(int legNumber, EndEffectorPositionConstraintSettings settings, ad_com_model_t& adComModel,
+  explicit EndEffectorPositionConstraint(int legNumber, settings_t settings, ad_com_model_t& adComModel,
                                          ad_kinematic_model_t& adKinematicsModel, bool generateModels = true,
-                                         std::string constraintPrefix = "EEPositionConstraint_")
+                                         std::string constraintPrefix = "o_EEPositionConstraint_")
       : BASE(ocs2::ConstraintOrder::Linear, std::move(constraintPrefix), legNumber, std::move(settings), adComModel, adKinematicsModel,
              EndEffectorPositionConstraint::adfunc, generateModels) {}
 
@@ -54,7 +53,7 @@ class EndEffectorPositionConstraint : public EndEffectorConstraint {
 
     // Get base state from com state
     const base_coordinate_ad_t basePose = adComModel.calculateBasePose(comPose);
-    o_footPosition = adKinematicsModel.footPositionInOriginFrame(basePose, legNumber, qJoints);
+    o_footPosition = adKinematicsModel.footPositionInOriginFrame(legNumber, basePose, qJoints);
   };
 };
 }  // namespace switched_model

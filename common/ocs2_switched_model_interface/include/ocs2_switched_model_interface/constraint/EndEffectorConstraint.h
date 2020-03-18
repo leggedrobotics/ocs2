@@ -41,6 +41,8 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
   using typename BASE::state_matrix_t;
   using typename BASE::state_vector_t;
 
+  using Settings_t = EndEffectorConstraintSettings;
+
   using ad_interface_t = ocs2::CppAdInterface<scalar_t>;
   using ad_scalar_t = typename ad_interface_t::ad_scalar_t;
   using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
@@ -53,9 +55,9 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
   using adfunc_t = void (*)(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, int legNumber,
                             const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y);
 
-  EndEffectorConstraint(ocs2::ConstraintOrder constraintOrder, std::string eeConstraintName, int legNumber,
-                        EndEffectorConstraintSettings settings, ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel,
-                        adfunc_t adfunc, bool generateModels, bool loadModels = true);
+  EndEffectorConstraint(ocs2::ConstraintOrder constraintOrder, std::string eeConstraintName, int legNumber, Settings_t settings,
+                        ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, adfunc_t adfunc, bool generateModels,
+                        bool loadModels = true);
 
   ~EndEffectorConstraint() = default;
 
@@ -65,7 +67,7 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
   //! Note: Since the constructors are based on a copy we do not or regenerate/generate the models
   EndEffectorConstraint* clone() const override;
 
-  void configure(const EndEffectorConstraintSettings& settings);
+  void configure(const Settings_t& settings);
 
   size_t getNumConstraints(scalar_t time) const override;
 
@@ -75,7 +77,7 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
                                                      const input_vector_t& input) const override;
 
  protected:
-  EndEffectorConstraintSettings settings_;
+  Settings_t settings_;
   int legNumber_;
 
  private:

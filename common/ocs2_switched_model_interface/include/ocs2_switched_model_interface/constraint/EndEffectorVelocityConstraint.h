@@ -28,8 +28,9 @@ class EndEffectorVelocityConstraint : public EndEffectorConstraint {
   using typename BASE::state_matrix_t;
   using typename BASE::state_vector_t;
   using typename BASE::timeStateInput_matrix_t;
+  using settings_t = EndEffectorVelocityConstraintSettings;
 
-  explicit EndEffectorVelocityConstraint(int legNumber, EndEffectorVelocityConstraintSettings settings, ad_com_model_t& adComModel,
+  explicit EndEffectorVelocityConstraint(int legNumber, settings_t settings, ad_com_model_t& adComModel,
                                          ad_kinematic_model_t& adKinematicsModel, bool generateModels = true,
                                          std::string constraintPrefix = "EEVelocityConstraint_")
       : BASE(ocs2::ConstraintOrder::Linear, std::move(constraintPrefix), legNumber, std::move(settings), adComModel, adKinematicsModel,

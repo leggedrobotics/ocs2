@@ -29,10 +29,10 @@ class EndEffectorVelocityInFootFrameConstraint : public EndEffectorConstraint {
   using typename BASE::state_matrix_t;
   using typename BASE::state_vector_t;
   using typename BASE::timeStateInput_matrix_t;
+  using settings_t = EndEffectorVelocityInFootFrameConstraintSettings;
 
-  explicit EndEffectorVelocityInFootFrameConstraint(int legNumber, EndEffectorVelocityInFootFrameConstraintSettings settings,
-                                                    ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel,
-                                                    bool generateModels = true,
+  explicit EndEffectorVelocityInFootFrameConstraint(int legNumber, settings_t settings, ad_com_model_t& adComModel,
+                                                    ad_kinematic_model_t& adKinematicsModel, bool generateModels = true,
                                                     std::string constraintPrefix = "EEVelocityInFootFrameConstraint_")
       : BASE{ocs2::ConstraintOrder::Linear,
              std::move(constraintPrefix),

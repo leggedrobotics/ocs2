@@ -78,6 +78,9 @@ EndEffectorConstraint::scalar_array_t EndEffectorConstraint::getValue(scalar_t t
 
 EndEffectorConstraint::LinearApproximation_t EndEffectorConstraint::getLinearApproximation(scalar_t time, const state_vector_t& state,
                                                                                            const input_vector_t& input) const {
+  if (getOrder() == ocs2::ConstraintOrder::None) {
+    return BASE::getLinearApproximation(time, state, input);
+  }
   // Assemble input
   dynamic_vector_t tapedInput(domain_dim_);
   tapedInput << time, state, input;
@@ -101,6 +104,9 @@ EndEffectorConstraint::LinearApproximation_t EndEffectorConstraint::getLinearApp
 
 EndEffectorConstraint::QuadraticApproximation_t EndEffectorConstraint::getQuadraticApproximation(scalar_t time, const state_vector_t& state,
                                                                                                  const input_vector_t& input) const {
+  if (getOrder() != ocs2::ConstraintOrder::Quadratic) {
+    return BASE::getQuadraticApproximation(time, state, input);
+  }
   // Assemble input
   dynamic_vector_t tapedInput(domain_dim_);
   tapedInput << time, state, input;

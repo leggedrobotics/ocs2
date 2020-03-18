@@ -5,6 +5,8 @@
 
 namespace switched_model {
 
+using EndEffectorPositionInBaseConstraintSettings = EndEffectorPositionConstraintSettings;
+
 class EndEffectorPositionInBaseConstraint final : public EndEffectorConstraint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -27,8 +29,9 @@ class EndEffectorPositionInBaseConstraint final : public EndEffectorConstraint {
   using typename BASE::state_matrix_t;
   using typename BASE::state_vector_t;
   using typename BASE::timeStateInput_matrix_t;
+  using settings_t = EndEffectorPositionInBaseConstraintSettings;
 
-  explicit EndEffectorPositionInBaseConstraint(int legNumber, EndEffectorPositionConstraintSettings settings, ad_com_model_t& adComModel,
+  explicit EndEffectorPositionInBaseConstraint(int legNumber, settings_t settings, ad_com_model_t& adComModel,
                                                ad_kinematic_model_t& adKinematicsModel, bool generateModels = true,
                                                std::string constraintPrefix = "b_EEPositionConstraint_")
       : BASE(ocs2::ConstraintOrder::Linear, std::move(constraintPrefix), legNumber, std::move(settings), adComModel, adKinematicsModel,
@@ -47,7 +50,7 @@ class EndEffectorPositionInBaseConstraint final : public EndEffectorConstraint {
 
     const joint_coordinate_ad_t qJoints = getJointPositions(x);
 
-    b_footPosition = adKinematicsModel.positionBaseToFootInBaseFrame(legNumber, jointPositions);
+    b_footPosition = adKinematicsModel.positionBaseToFootInBaseFrame(legNumber, qJoints);
   }
 };
 }  // namespace switched_model

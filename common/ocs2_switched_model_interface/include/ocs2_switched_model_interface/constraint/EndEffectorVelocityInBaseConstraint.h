@@ -27,12 +27,13 @@ class EndEffectorVelocityInBaseConstraint : public EndEffectorConstraint {
   using typename BASE::state_matrix_t;
   using typename BASE::state_vector_t;
   using typename BASE::timeStateInput_matrix_t;
+  using settings_t = EndEffectorVelocityConstraintSettings;
 
-  explicit EndEffectorVelocityInBaseConstraint(int legNumber, EndEffectorVelocityConstraintSettings settings, ad_com_model_t& adComModel,
+  explicit EndEffectorVelocityInBaseConstraint(int legNumber, settings_t settings, ad_com_model_t& adComModel,
                                                ad_kinematic_model_t& adKinematicsModel, bool generateModels = true,
                                                std::string constraintPrefix = "b_EEVelocityConstraint_")
       : BASE(ocs2::ConstraintOrder::Linear, std::move(constraintPrefix), legNumber, std::move(settings), adComModel, adKinematicsModel,
-             EndEffectorPositionInBaseConstraint::adfunc, generateModels) {}
+             EndEffectorVelocityInBaseConstraint::adfunc, generateModels) {}
 
   EndEffectorVelocityInBaseConstraint(const EndEffectorVelocityInBaseConstraint& rhs) = default;
 
@@ -40,7 +41,7 @@ class EndEffectorVelocityInBaseConstraint : public EndEffectorConstraint {
 
  private:
   static void adfunc(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, int legNumber,
-                     const ad_dynamic_vector_t& tapedInput, ad_dynamic_vector_t& f_footVelocityInFootFrame) {
+                     const ad_dynamic_vector_t& tapedInput, ad_dynamic_vector_t& b_footVelocity) {
     // Extract elements from taped input
     ad_scalar_t t = tapedInput(0);
     comkino_state_ad_t x = tapedInput.segment(1, STATE_DIM);
@@ -55,7 +56,7 @@ class EndEffectorVelocityInBaseConstraint : public EndEffectorConstraint {
     // Get base state from com state
     const base_coordinate_ad_t com_baseTwist = adComModel.calculateBaseLocalVelocities(com_comTwist);
 
-    o_footVelocity = adKinematicsModel.footVelocityInBaseFrame(legNumber, com_baseTwist, qJoints, dqJoints);
+    b_footVelocity = adKinematicsModel.footVelocityInBaseFrame(legNumber, com_baseTwist, qJoints, dqJoints);
   }
 };
 }  // namespace switched_model

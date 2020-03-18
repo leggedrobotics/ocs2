@@ -21,9 +21,8 @@ class ComKinoOperatingPointsBase : public ocs2::SystemOperatingPoint<STATE_DIM, 
   using typename Base::state_vector_t;
 
   using com_model_t = ComModelBase<double>;
-  using mode_schedule_manager_t = SwitchedModelModeScheduleManager;
 
-  ComKinoOperatingPointsBase(const com_model_t& comModel, std::shared_ptr<const mode_schedule_manager_t> modeScheduleManagerPtr);
+  ComKinoOperatingPointsBase(const com_model_t& comModel, std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr);
 
   ComKinoOperatingPointsBase(const ComKinoOperatingPointsBase& rhs);
 
@@ -39,7 +38,7 @@ class ComKinoOperatingPointsBase : public ocs2::SystemOperatingPoint<STATE_DIM, 
   void computeInputOperatingPoints(contact_flag_t contactFlags, input_vector_t& inputs);
 
   std::unique_ptr<com_model_t> comModelPtr_;
-  std::shared_ptr<const mode_schedule_manager_t> modeScheduleManagerPtr_;
+  std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
 };
 
 }  // end of namespace switched_model

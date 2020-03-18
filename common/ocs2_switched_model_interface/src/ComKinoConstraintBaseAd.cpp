@@ -8,7 +8,7 @@
 namespace switched_model {
 
 ComKinoConstraintBaseAd::ComKinoConstraintBaseAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-                                                 std::shared_ptr<const mode_schedule_manager_t> modeScheduleManagerPtr,
+                                                 std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
                                                  std::shared_ptr<const SwingTrajectoryPlanner> swingTrajectoryPlannerPtr,
                                                  ModelSettings options)
     : adKinematicModelPtr_(adKinematicModel.clone()),

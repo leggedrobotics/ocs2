@@ -19,8 +19,6 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
 
   using Base = ocs2::ConstraintBase<STATE_DIM, INPUT_DIM>;
 
-  using mode_schedule_manager_t = SwitchedModelModeScheduleManager;
-
   using ad_base_t = CppAD::cg::CG<double>;
   using ad_scalar_t = CppAD::AD<ad_base_t>;
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
@@ -36,7 +34,7 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
   const std::array<std::string, 4> feetNames{"LF", "RF", "LH", "RH"};
 
   ComKinoConstraintBaseAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-                          std::shared_ptr<const mode_schedule_manager_t> modeScheduleManagerPtr,
+                          std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
                           std::shared_ptr<const SwingTrajectoryPlanner> swingTrajectoryPlannerPtr, ModelSettings options = ModelSettings());
 
   ComKinoConstraintBaseAd(const ComKinoConstraintBaseAd& rhs);
@@ -103,7 +101,7 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
   size_t numEventTimes_;
   contact_flag_t stanceLegs_;
 
-  std::shared_ptr<const mode_schedule_manager_t> modeScheduleManagerPtr_;
+  std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
   std::shared_ptr<const SwingTrajectoryPlanner> swingTrajectoryPlannerPtr_;
 };
 

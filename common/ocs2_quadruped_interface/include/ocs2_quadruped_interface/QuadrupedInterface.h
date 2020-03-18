@@ -53,9 +53,6 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   using rollout_base_t = ocs2::RolloutBase<STATE_DIM, INPUT_DIM>;
   using time_triggered_rollout_t = ocs2::TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
 
-  using mode_schedule_manager_t = SwitchedModelModeScheduleManager;
-  using mode_sequence_template_t = ModeSequenceTemplate;
-
   using synchronized_module_t = ocs2::SolverSynchronizedModule<STATE_DIM, INPUT_DIM>;
   using synchronized_module_ptr_array_t = std::vector<std::shared_ptr<synchronized_module_t>>;
 
@@ -79,7 +76,7 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
    */
   ~QuadrupedInterface() override = default;
 
-  std::shared_ptr<mode_schedule_manager_t> getModeScheduleManagerPtr() const { return modeScheduleManagerPtr_; }
+  std::shared_ptr<SwitchedModelModeScheduleManager> getModeScheduleManagerPtr() const { return modeScheduleManagerPtr_; }
 
   synchronized_module_ptr_array_t getSynchronizedModules() const { return solverModules_; };
 
@@ -97,7 +94,7 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   const scalar_array_t& getInitialPartitionTimes() const { return partitioningTimes_; }
 
   /** Gets the loaded initial getInitialModeSequence */
-  const mode_sequence_template_t& getInitialModeSequence() const { return defaultModeSequenceTemplate_; }
+  const ModeSequenceTemplate& getInitialModeSequence() const { return defaultModeSequenceTemplate_; }
 
   /** Access to rollout settings */
   const ocs2::Rollout_Settings& rolloutSettings() const { return rolloutSettings_; }
@@ -136,7 +133,7 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
 
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;
   std::unique_ptr<com_model_t> comModelPtr_;
-  std::shared_ptr<mode_schedule_manager_t> modeScheduleManagerPtr_;
+  std::shared_ptr<SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
   synchronized_module_ptr_array_t solverModules_;
 
   std::unique_ptr<system_dynamics_t> dynamicsPtr_;
@@ -152,7 +149,7 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
 
   state_vector_t initialState_;
   scalar_array_t partitioningTimes_;
-  mode_sequence_template_t defaultModeSequenceTemplate_;
+  ModeSequenceTemplate defaultModeSequenceTemplate_;
 };
 
 }  // end of namespace switched_model

@@ -43,11 +43,9 @@ class TestAnymalSwitchedModel {
  public:
   AnymalCrocKinematics kinematics_;
   AnymalCrocCom comDynamics_;
+  AnymalCrocComAd anymalComAd_;
+  AnymalCrocKinematicsAd anymalKinematicsAd_;
 
-  std::seed_seq seed_{4, 7, 93, 8};  // WOW! SO RANDOM!
-  std::default_random_engine generator_{seed_};
-  // std::uniform_real_distribution<scalar_t> angleDist_;
-  // std::uniform_real_distribution<scalar_t> posDist_;
   std::array<bool, 4> stanceLegs_;
   std::function<bool(const Eigen::MatrixXd& lhs, const Eigen::MatrixXd rhs)> matrixEquality_ =
       [](const Eigen::MatrixXd& lhs, const Eigen::MatrixXd rhs) { return lhs.isApprox(rhs); };

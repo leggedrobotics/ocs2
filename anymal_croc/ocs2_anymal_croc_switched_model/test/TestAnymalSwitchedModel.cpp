@@ -6,15 +6,29 @@
 
 #include <gtest/gtest.h>
 
+#include <ocs2_anymal_switched_model_interface/test/TestEvaluateConstraint.h>
+#include <ocs2_switched_model_interface/constraint/EndEffectorPositionConstraint.h>
+#include <ocs2_switched_model_interface/constraint/EndEffectorPositionInBaseConstraint.h>
+#include <ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h>
+#include <ocs2_switched_model_interface/constraint/EndEffectorVelocityInBaseConstraint.h>
+#include <ocs2_switched_model_interface/constraint/EndEffectorVelocityInFootFrameConstraint.h>
 #include "include/TestAnymalSwitchedModel.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 
 using namespace anymal;
 
-class AnymalCrocSwitchedModelTests : public ::testing::Test, public TestAnymalSwitchedModel {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-};
+class AnymalCrocSwitchedModelTests : public ::testing::Test, public TestAnymalSwitchedModel {};
+
+TEST_F(AnymalCrocSwitchedModelTests, Constraints) {
+  EXPECT_NO_THROW((switched_model::evaluateConstraint<switched_model::EndEffectorPositionConstraint>(anymalComAd_, anymalKinematicsAd_)));
+  EXPECT_NO_THROW(
+      (switched_model::evaluateConstraint<switched_model::EndEffectorPositionInBaseConstraint>(anymalComAd_, anymalKinematicsAd_)));
+  EXPECT_NO_THROW((switched_model::evaluateConstraint<switched_model::EndEffectorVelocityConstraint>(anymalComAd_, anymalKinematicsAd_)));
+  EXPECT_NO_THROW(
+      (switched_model::evaluateConstraint<switched_model::EndEffectorVelocityInBaseConstraint>(anymalComAd_, anymalKinematicsAd_)));
+  EXPECT_NO_THROW(
+      (switched_model::evaluateConstraint<switched_model::EndEffectorVelocityInFootFrameConstraint>(anymalComAd_, anymalKinematicsAd_)));
+}
 
 TEST_F(AnymalCrocSwitchedModelTests, Kinematics) {
   joint_coordinate_t qJoints;

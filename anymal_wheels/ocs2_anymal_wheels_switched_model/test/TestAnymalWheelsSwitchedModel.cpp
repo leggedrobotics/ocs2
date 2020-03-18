@@ -9,6 +9,12 @@
 #include "include/TestAnymalWheelsSwitchedModel.h"
 #include <iit/rbd/traits/TraitSelector.h>
 
+#include <ocs2_anymal_switched_model_interface/test/TestEvaluateConstraint.h>
+#include <ocs2_switched_model_interface/constraint/EndEffectorPositionConstraint.h>
+#include <ocs2_switched_model_interface/constraint/EndEffectorPositionInBaseConstraint.h>
+#include <ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h>
+#include <ocs2_switched_model_interface/constraint/EndEffectorVelocityInBaseConstraint.h>
+#include <ocs2_switched_model_interface/constraint/EndEffectorVelocityInFootFrameConstraint.h>
 #include "ocs2_anymal_wheels_switched_model/core/WheelsSwitchedModel.h"
 #include "ocs2_anymal_wheels_switched_model/generated/jacobians.h"
 #include "ocs2_anymal_wheels_switched_model/generated/transforms.h"
@@ -17,6 +23,17 @@
 using namespace anymal;
 
 class AnymalWheelsSwitchedModel : public ::testing::Test, public TestAnymalWheelsSwitchedModel {};
+
+TEST_F(AnymalWheelsSwitchedModel, Constraints) {
+  EXPECT_NO_THROW((switched_model::evaluateConstraint<switched_model::EndEffectorPositionConstraint>(anymalComAd_, anymalKinematicsAd_)));
+  EXPECT_NO_THROW(
+      (switched_model::evaluateConstraint<switched_model::EndEffectorPositionInBaseConstraint>(anymalComAd_, anymalKinematicsAd_)));
+  EXPECT_NO_THROW((switched_model::evaluateConstraint<switched_model::EndEffectorVelocityConstraint>(anymalComAd_, anymalKinematicsAd_)));
+  EXPECT_NO_THROW(
+      (switched_model::evaluateConstraint<switched_model::EndEffectorVelocityInBaseConstraint>(anymalComAd_, anymalKinematicsAd_)));
+  EXPECT_NO_THROW(
+      (switched_model::evaluateConstraint<switched_model::EndEffectorVelocityInFootFrameConstraint>(anymalComAd_, anymalKinematicsAd_)));
+}
 
 TEST_F(AnymalWheelsSwitchedModel, Kinematics) {
   switched_model::joint_coordinate_t qJoints;

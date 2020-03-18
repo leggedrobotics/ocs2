@@ -17,13 +17,9 @@
 
 using namespace anymal;
 
-class AnymalBearSwitchedModelTests : public ::testing::Test, public TestAnymalSwitchedModel {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-};
+class AnymalBearSwitchedModelTests : public ::testing::Test, public TestAnymalSwitchedModel {};
 
 TEST_F(AnymalBearSwitchedModelTests, Constraints) {
-  auto& comModel_ = comDynamics_;
   EXPECT_NO_THROW((switched_model::evaluateConstraint<switched_model::EndEffectorPositionConstraint>(anymalComAd_, anymalKinematicsAd_)));
   EXPECT_NO_THROW(
       (switched_model::evaluateConstraint<switched_model::EndEffectorPositionInBaseConstraint>(anymalComAd_, anymalKinematicsAd_)));

@@ -57,7 +57,7 @@ class ModeScheduleManager : public SolverSynchronizedModule<STATE_DIM, INPUT_DIM
   /**
    * Default destructor.
    */
-  virtual ~ModeScheduleManager() = default;
+  ~ModeScheduleManager() override = default;
 
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
                     const CostDesiredTrajectories& costDesiredTrajectory) final;

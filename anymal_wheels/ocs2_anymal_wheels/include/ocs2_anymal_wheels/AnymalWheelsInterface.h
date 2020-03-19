@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include <ocs2_quadruped_interface/QuadrupedInterface.h>
+#include <ocs2_quadruped_interface/QuadrupedWheeledInterface.h>
 
 namespace anymal {
 
-std::unique_ptr<switched_model::QuadrupedInterface> getAnymalWheelsInterface(const std::string& taskName);
+std::unique_ptr<switched_model::QuadrupedWheeledInterface> getAnymalWheelsInterface(const std::string& taskName);
 
 std::string getTaskFileFolderWheels(const std::string& taskName);
 

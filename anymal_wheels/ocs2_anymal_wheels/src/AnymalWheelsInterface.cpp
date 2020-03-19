@@ -11,7 +11,7 @@
 
 namespace anymal {
 
-std::unique_ptr<switched_model::QuadrupedInterface> getAnymalWheelsInterface(const std::string& taskName) {
+std::unique_ptr<switched_model::QuadrupedWheeledInterface> getAnymalWheelsInterface(const std::string& taskName) {
   std::string taskFolder = getTaskFileFolderWheels(taskName);
   std::cerr << "Loading task file from: " << taskFolder << std::endl;
 
@@ -19,12 +19,12 @@ std::unique_ptr<switched_model::QuadrupedInterface> getAnymalWheelsInterface(con
   auto kinAd = AnymalWheelsKinematicsAd();
   auto com = AnymalWheelsCom();
   auto comAd = AnymalWheelsComAd();
-  return std::unique_ptr<switched_model::QuadrupedInterface>(new switched_model::QuadrupedInterface(kin, kinAd, com, comAd, taskFolder));
+  return std::unique_ptr<switched_model::QuadrupedWheeledInterface>(
+      new switched_model::QuadrupedWheeledInterface(kin, kinAd, com, comAd, taskFolder));
 }
 
 std::string getTaskFileFolderWheels(const std::string& taskName) {
-  std::string taskFolder = ros::package::getPath("ocs2_anymal_wheels") + "/config/" + taskName;
-  return taskFolder;
+  return ros::package::getPath("ocs2_anymal_wheels") + "/config/" + taskName;
 }
 
 std::string getTaskFilePathWheels(const std::string& taskName) {

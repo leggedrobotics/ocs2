@@ -4,6 +4,7 @@
 
 #include "ocs2_quadruped_interface/QuadrupedInterface.h"
 
+#include <ocs2_core/misc/Display.h>
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_switched_model_interface/core/Rotations.h>
 #include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
@@ -19,23 +20,30 @@ QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, 
 
     : kinematicModelPtr_(kinematicModel.clone()), comModelPtr_(comModel.clone()) {
   loadSettings(pathToConfigFolder + "/task.info");
+}
 
-  SwingTrajectoryPlannerSettings swingTrajectorySettings;
-  swingTrajectorySettings.swingHeight = modelSettings_.swingLegLiftOff_;
-  swingTrajectorySettings.liftOffVelocity = modelSettings_.liftOffVelocity_;
-  swingTrajectorySettings.touchDownVelocity = modelSettings_.touchDownVelocity_;
-  swingTrajectorySettings.swingTimeScale = 1.0;
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+auto QuadrupedInterface::loadCostMatrices(const std::string& pathToConfigFile, const kinematic_model_t& kinematicModel,
+                                          state_vector_t initialState) -> std::tuple<state_matrix_t, input_matrix_t, state_matrix_t> {
+  state_matrix_t Q;
+  input_matrix_t R;
+  state_matrix_t QFinal;
 
-  auto swingTrajectoryPlanner =
-      std::make_shared<SwingTrajectoryPlanner>(swingTrajectorySettings, *comModelPtr_, *kinematicModelPtr_, modeScheduleManagerPtr_);
-  solverModules_.push_back(swingTrajectoryPlanner);
+  // cost function components
+  ocs2::loadData::loadEigenMatrix(pathToConfigFile, "Q", Q);
+  ocs2::loadData::loadEigenMatrix(pathToConfigFile, "R", R);
+  ocs2::loadData::loadEigenMatrix(pathToConfigFile, "Q_final", QFinal);
 
-  dynamicsPtr_.reset(new system_dynamics_t(adKinematicModel, adComModel, modelSettings_.recompileLibraries_));
-  dynamicsDerivativesPtr_.reset(dynamicsPtr_->clone());
-  constraintsPtr_.reset(new constraint_t(adKinematicModel, adComModel, modeScheduleManagerPtr_, swingTrajectoryPlanner, modelSettings_));
-  costFunctionPtr_.reset(new cost_function_t(*comModelPtr_, modeScheduleManagerPtr_, Q_, R_, QFinal_));
-  operatingPointsPtr_.reset(new operating_point_t(*comModelPtr_, modeScheduleManagerPtr_));
-  timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, rolloutSettings_));
+  // costs over Cartesian velocities
+  Eigen::Matrix<scalar_t, 12, 12> J_allFeet;
+  for (int leg = 0; leg < 4; ++leg) {
+    Eigen::Matrix<double, 6, 12> J_thisfoot = kinematicModel.baseToFootJacobianInBaseFrame(leg, getJointPositions(initialState));
+    J_allFeet.block<3, 12>(3 * leg, 0) = J_thisfoot.bottomRows<3>();
+  }
+  R.block<12, 12>(12, 12) = (J_allFeet.transpose() * R.block<12, 12>(12, 12) * J_allFeet).eval();
+  return {Q, R, QFinal};
 }
 
 /******************************************************************************************************/
@@ -45,18 +53,9 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
   rolloutSettings_.loadSettings(pathToConfigFile, "slq.rollout");
   modelSettings_ = loadModelSettings(pathToConfigFile);
 
-  std::cerr << std::endl;
-
   // partitioning times
   size_t numPartitions;
   ocs2::loadData::loadPartitioningTimes(pathToConfigFile, timeHorizon_, numPartitions, partitioningTimes_, true);
-
-  // display
-  std::cerr << "Time Partition: {";
-  for (const auto& timePartition : partitioningTimes_) {
-    std::cerr << timePartition << ", ";
-  }
-  std::cerr << "\b\b}" << std::endl;
 
   // initial state of the switched system
   Eigen::Matrix<scalar_t, RBD_STATE_DIM, 1> initRbdState;
@@ -64,34 +63,24 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
   SwitchedModelStateEstimator switchedModelStateEstimator(*comModelPtr_);
   initialState_ = switchedModelStateEstimator.estimateComkinoModelState(initRbdState);
 
-  // cost function components
-  ocs2::loadData::loadEigenMatrix(pathToConfigFile, "Q", Q_);
-  ocs2::loadData::loadEigenMatrix(pathToConfigFile, "R", R_);
-  ocs2::loadData::loadEigenMatrix(pathToConfigFile, "Q_final", QFinal_);
-
-  // costs over Cartesian velocities
-  Eigen::Matrix<scalar_t, 12, 12> J_allFeet;
-  for (int leg = 0; leg < 4; ++leg) {
-    Eigen::Matrix<double, 6, 12> J_thisfoot = kinematicModelPtr_->baseToFootJacobianInBaseFrame(leg, getJointPositions(initRbdState));
-    J_allFeet.block<3, 12>(3 * leg, 0) = J_thisfoot.bottomRows<3>();
-  }
-  R_.block<12, 12>(12, 12) = (J_allFeet.transpose() * R_.block<12, 12>(12, 12) * J_allFeet).eval();
-
   // load init mode schedule
   auto initialModeSequenceTemplate = loadModeSequenceTemplate(pathToConfigFile, "initialModeSequenceTemplate", false);
   size_array_t initModesSequence = initialModeSequenceTemplate.modeSequence;
   initModesSequence.push_back(string2ModeNumber("STANCE"));
   scalar_array_t initEventTimes(initialModeSequenceTemplate.switchingTimes.begin() + 1, initialModeSequenceTemplate.switchingTimes.end());
   ocs2::ModeSchedule initModeSchedule{initEventTimes, initModesSequence};
-  std::cerr << "\nInitial Modes Schedule: \n" << initModeSchedule << std::endl;
 
   // load the mode sequence template
   defaultModeSequenceTemplate_.reset(
       new ModeSequenceTemplate(loadModeSequenceTemplate(pathToConfigFile, "defaultModeSequenceTemplate", false)));
-  std::cerr << "\nDefault Modes Sequence Template: \n" << *defaultModeSequenceTemplate_ << std::endl;
 
-  auto logicRules = std::make_shared<GaitSchedule>(initModeSchedule, modelSettings_.phaseTransitionStanceTime_);
-  modeScheduleManagerPtr_ = std::make_shared<SwitchedModelModeScheduleManager>(std::move(logicRules));
+  auto gaitSchedule = std::make_shared<GaitSchedule>(initModeSchedule, modelSettings_.phaseTransitionStanceTime_);
+  modeScheduleManagerPtr_ = std::make_shared<SwitchedModelModeScheduleManager>(std::move(gaitSchedule));
+
+  // Display
+  std::cerr << "\nTime Partition: {" << ocs2::toDelimitedString(partitioningTimes_) << "}\n";
+  std::cerr << "\nInitial Modes Schedule: \n" << initModeSchedule << std::endl;
+  std::cerr << "\nDefault Modes Sequence Template: \n" << *defaultModeSequenceTemplate_ << std::endl;
 }
 
 }  // namespace switched_model

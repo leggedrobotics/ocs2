@@ -9,6 +9,8 @@
 
 #include <ocs2_quadruped_interface/QuadrupedInterface.h>
 
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+
 #include "ocs2_quadruped_loopshaping_interface/LoopshapingDimensions.h"
 #include "ocs2_quadruped_loopshaping_interface/LoopshapingModeScheduleManager.h"
 #include "ocs2_quadruped_loopshaping_interface/LoopshapingSynchronizedModule.h"

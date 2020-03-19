@@ -4,36 +4,24 @@
 
 #include "ocs2_switched_model_interface/logic/GaitReceiver.h"
 
-#include "ocs2_core/logic/rules/ModeSequenceTemplate.h"
-
-#include "ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h"
-
 #include "ocs2_switched_model_interface/core/MotionPhaseDefinition.h"
 
 namespace switched_model {
 
-GaitReceiver::GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<ocs2::HybridLogicRules> logicRulesPtr, const std::string& robotName)
-    : logicRulesPtr_(std::move(logicRulesPtr)), gaitSchedule_(0.0, {0.5, {}, {ModeNumber::STANCE}}), gaitUpdated_(false) {
-  mpcModeSequenceSubscriber_ = nodeHandle.subscribe(robotName + "_mpc_mode_sequence", 1, &GaitReceiver::mpcModeSequenceCallback, this,
+GaitReceiver::GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<GaitSchedule> gaitSchedulePtr, const std::string& robotName)
+    : gaitSchedulePtr_(std::move(gaitSchedulePtr)), gaitUpdated_(false) {
+  mpcModeSequenceSubscriber_ = nodeHandle.subscribe(robotName + "_mpc_mode_schedule", 1, &GaitReceiver::mpcModeSequenceCallback, this,
                                                     ::ros::TransportHints().udp());
 }
 
 void GaitReceiver::preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
-                                const ocs2::CostDesiredTrajectories& costDesiredTrajectory, const ocs2::ModeSchedule& modeSchedule) {
-  const double planNtimeHorizonsAhead = 2.0;
-  {
+                                const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
     std::lock_guard<std::mutex> lock(receivedGaitMutex_);
     if (gaitUpdated_) {
       std::cout << "[GaitReceiver]: Setting new gait after time " << finalTime << std::endl;
       gaitSchedule_.setGaitAfterTime(receivedGait_, finalTime);
       gaitUpdated_ = false;
     }
-  }
-
-  gaitSchedule_.advanceToTime(initTime);
-  const auto modeSchedule_ = gaitSchedule_.getModeSchedule(planNtimeHorizonsAhead * (finalTime - initTime));
-  std::cout << "[GaitReceiver]: ModeSchedule:\n " << modeSchedule_ << std::endl;
-  logicRulesPtr_->setModeSequence(modeSchedule_.modeSequence(), modeSchedule_.eventTimes());
 }
 
 void GaitReceiver::mpcModeSequenceCallback(const ocs2_msgs::mode_sequence::ConstPtr& msg) {

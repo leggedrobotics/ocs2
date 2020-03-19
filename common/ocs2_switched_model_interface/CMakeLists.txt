@@ -5,9 +5,8 @@ project(ocs2_switched_model_interface)
 set(CATKIN_PACKAGE_DEPENDENCIES
   roscpp
   ocs2_core
-  ocs2_comm_interfaces
   ocs2_msgs
-	ocs2_oc
+  ocs2_oc
 )
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
@@ -45,24 +44,22 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
-		src/ComKinoConstraintBaseAd.cpp
-		src/ComKinoSystemDynamicsAd.cpp
-		src/SwitchedModelCostBase.cpp
-		src/ComKinoOperatingPointsBase.cpp
-    src/SwitchedModelStateEstimator.cpp
-		src/SwitchedModelLogicRulesBase.cpp
-		src/KinematicsModelBase.cpp
-		src/ComModelBase.cpp
-		src/ModelSettings.cpp
-		src/foot_planner/CubicSpline.cpp
-		src/foot_planner/SplineCpg.cpp
-		src/foot_planner/FeetPlannerBase.cpp
-		src/foot_planner/FeetZDirectionPlanner.cpp
-		src/foot_planner/SwingTrajectoryPlanner.cpp
-		src/logic/Gait.cpp
-  	src/logic/GaitSchedule.cpp
-  	src/logic/GaitReceiver.cpp
-		)
+	src/foot_planner/CubicSpline.cpp
+	src/foot_planner/SplineCpg.cpp
+	src/foot_planner/SwingTrajectoryPlanner.cpp
+	src/logic/GaitReceiver.cpp
+	src/logic/GaitSchedule.cpp
+	src/logic/ModeSequenceTemplate.cpp
+	src/logic/SwitchedModelModeScheduleManager.cpp
+	src/ComKinoConstraintBaseAd.cpp
+	src/ComKinoOperatingPointsBase.cpp
+	src/ComKinoSystemDynamicsAd.cpp
+	src/ComModelBase.cpp
+	src/KinematicsModelBase.cpp
+	src/ModelSettings.cpp
+	src/SwitchedModelCostBase.cpp
+	src/SwitchedModelStateEstimator.cpp
+	)
 
 add_dependencies(${PROJECT_NAME}
 		${${PROJECT_NAME}_EXPORTED_TARGETS}

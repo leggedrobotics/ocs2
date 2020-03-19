@@ -7,6 +7,38 @@
 
 namespace switched_model {
 
+ComKinoConstraintBaseAd::ComKinoConstraintBaseAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
+                                                 std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
+                                                 std::shared_ptr<const SwingTrajectoryPlanner> swingTrajectoryPlannerPtr,
+                                                 ModelSettings options)
+    : adKinematicModelPtr_(adKinematicModel.clone()),
+      adComModelPtr_(adComModel.clone()),
+      modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)),
+      swingTrajectoryPlannerPtr_(std::move(swingTrajectoryPlannerPtr)),
+      options_(std::move(options)),
+      inequalityConstraintsComputed_(false),
+      stateInputConstraintsComputed_(false) {
+  if (!modeScheduleManagerPtr_ || !swingTrajectoryPlannerPtr_) {
+    throw std::runtime_error("[ComKinoConstraintBaseAD] ModeScheduleManager and SwingTrajectoryPlanner cannot be a nullptr");
+  }
+  initializeConstraintTerms();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ComKinoConstraintBaseAd::ComKinoConstraintBaseAd(const ComKinoConstraintBaseAd& rhs)
+    : Base(rhs),
+      adKinematicModelPtr_(rhs.adKinematicModelPtr_->clone()),
+      adComModelPtr_(rhs.adComModelPtr_->clone()),
+      modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_),
+      swingTrajectoryPlannerPtr_(rhs.swingTrajectoryPlannerPtr_),
+      options_(rhs.options_),
+      inequalityConstraintCollection_(rhs.inequalityConstraintCollection_),
+      equalityStateInputConstraintCollection_(rhs.equalityStateInputConstraintCollection_),
+      inequalityConstraintsComputed_(false),
+      stateInputConstraintsComputed_(false) {}
+
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -48,9 +80,8 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
   inequalityConstraintsComputed_ = false;
 
   Base::setCurrentStateAndControl(t, x, u);
-  numEventTimes_ = logicRulesPtr_->getNumEventTimes();
-  auto activeSubsystem = logicRulesPtr_->getEventTimeCount(t);
-  logicRulesPtr_->getMotionPhaseLogics(activeSubsystem, stanceLegs_, zDirectionRefsPtr_);
+  numEventTimes_ = modeScheduleManagerPtr_->getModeSchedule().eventTimes.size();
+  stanceLegs_ = modeScheduleManagerPtr_->getContactFlags(t);
 
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
     auto footName = feetNames[i];
@@ -72,8 +103,7 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
     } else {  // in swing: z-velocity is provided
       eeVelConSettings.b.resize(1);
       eeVelConSettings.A.resize(1, 3);
-      //      eeVelConSettings.b << -zDirectionRefsPtr_[i]->velocity(Base::t_);
-      eeVelConSettings.b << -swingPlannerPtr_->getZvelocityConstraint(i, t);
+      eeVelConSettings.b << -swingTrajectoryPlannerPtr_->getZvelocityConstraint(i, t);
       eeVelConSettings.A << 0, 0, 1;
     }
     EEVelConstraint.configure(eeVelConSettings);

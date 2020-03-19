@@ -16,11 +16,11 @@ list
 
 stance
  {
-   templateSubsystemsSequence
+   modeSequence
    {
      [0]     STANCE
    }
-   templateSwitchingTimes
+   switchingTimes
    {
      [0]     0.0
      [1]     0.5
@@ -29,12 +29,12 @@ stance
 
 trot
  {
-   templateSubsystemsSequence
+   modeSequence
    {
      [0]     LF_RH
      [1]     RF_LH
    }
-   templateSwitchingTimes
+   switchingTimes
    {
      [0]     0.0
      [1]     0.35
@@ -44,14 +44,14 @@ trot
 
 standing_trot
 {
-  templateSubsystemsSequence
+  modeSequence
   {
     [0]     LF_RH
     [1]     STANCE
     [2]     RF_LH
     [3]     STANCE
   }
-  templateSwitchingTimes
+  switchingTimes
   {
     [0]     0.00
     [1]     0.30
@@ -63,14 +63,14 @@ standing_trot
 
 flying_trot
 {
-  templateSubsystemsSequence
+  modeSequence
   {
     [0]     LF_RH
     [1]     FLY
     [2]     RF_LH
     [3]     FLY
   }
-  templateSwitchingTimes
+  switchingTimes
   {
     [0]     0.00
     [1]     0.27
@@ -82,14 +82,14 @@ flying_trot
 
 pace
 {
-  templateSubsystemsSequence
+  modeSequence
   {
     [0]     LF_LH
     [1]     FLY
     [2]     RF_RH
     [3]     FLY
   }
-  templateSwitchingTimes
+  switchingTimes
   {
     [0]     0.0
     [1]     0.28
@@ -101,14 +101,14 @@ pace
 
 standing_pace
 {
-  templateSubsystemsSequence
+  modeSequence
   {
     [0]     LF_LH
     [1]     STANCE
     [2]     RF_RH
     [3]     STANCE
   }
-  templateSwitchingTimes
+  switchingTimes
   {
     [0]     0.0
     [1]     0.30
@@ -120,7 +120,7 @@ standing_pace
 
 dynamic_walk
 {
-  templateSubsystemsSequence
+  modeSequence
   {
     [0]     LF_RF_RH
     [1]     RF_RH
@@ -129,7 +129,7 @@ dynamic_walk
     [4]     LF_LH
     [5]     LF_LH_RH
   }
-  templateSwitchingTimes
+  switchingTimes
   {
     [0]     0.0
     [1]     0.2
@@ -143,14 +143,14 @@ dynamic_walk
 
 static_walk
 {
-  templateSubsystemsSequence
+  modeSequence
   {
     [0]     LF_RF_RH
     [1]     RF_LH_RH
     [2]     LF_RF_LH
     [3]     LF_LH_RH
   }
-  templateSwitchingTimes
+  switchingTimes
   {
     [0]     0.0
     [1]     0.3
@@ -162,14 +162,14 @@ static_walk
 
 amble
 {
-  templateSubsystemsSequence
+  modeSequence
   {
     [0]     RF_LH
     [1]     LF_LH
     [2]     LF_RH
     [3]     RF_RH
   }         
-  templateSwitchingTimes
+  switchingTimes
   {
     [0]     0.0
     [1]     0.15
@@ -181,7 +181,7 @@ amble
 
 lindyhop
 {
-  templateSubsystemsSequence
+  modeSequence
   {
     [0]     LF_RH
     [1]     STANCE
@@ -196,7 +196,7 @@ lindyhop
     [10]     RF_RH
     [11]     STANCE
   }
-  templateSwitchingTimes
+  switchingTimes
   {
     [0]     0.00 ; Step 1
     [1]     0.35 ; Stance
@@ -216,7 +216,7 @@ lindyhop
 
 skipping
 {
-  templateSubsystemsSequence
+  modeSequence
   {
     [0]     LF_RH
     [1]     FLY
@@ -227,7 +227,7 @@ skipping
     [6]     RF_LH
     [7]     FLY
   }
-  templateSwitchingTimes
+  switchingTimes
   {
     [0]     0.00
     [1]     0.27

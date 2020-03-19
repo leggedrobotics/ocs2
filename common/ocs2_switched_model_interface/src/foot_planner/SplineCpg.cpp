@@ -6,16 +6,11 @@
 
 namespace switched_model {
 
-SplineCpg::SplineCpg(SplineCpgSettings settings) : settings_(settings), midTime_(0.0) {}
-
-void SplineCpg::set(Point liftoff, Point touchdown, scalar_t midHeight) {
-  midTime_ = 0.5 * (liftoff.time + touchdown.time);
-
-  CubicSpline::Node start{liftoff.time, liftoff.height, settings_.liftOffVelocity};
-  CubicSpline::Node mid{midTime_, midHeight, 0.0};
-  CubicSpline::Node end{touchdown.time, touchdown.height, settings_.touchDownVelocity};
-  leftSpline_ = CubicSpline(start, mid);
-  rightSpline_ = CubicSpline(mid, end);
+SplineCpg::SplineCpg(CubicSpline::Node liftOff, scalar_t midHeight, CubicSpline::Node touchDown) {
+  midTime_ = 0.5 * (liftOff.time + touchDown.time);
+  CubicSpline::Node midPoint{midTime_, midHeight, 0.0};
+  leftSpline_ = CubicSpline(liftOff, midPoint);
+  rightSpline_ = CubicSpline(midPoint, touchDown);
 }
 
 SplineCpg::scalar_t SplineCpg::position(scalar_t time) const {

@@ -16,8 +16,7 @@
 
   <depend>roscpp</depend>
   <depend>ocs2_core</depend>
-  <depend>ocs2_comm_interfaces</depend>
-  <depend>ocs2_msgs</depend>
   <depend>ocs2_oc</depend>
+  <depend>ocs2_msgs</depend>
 
 </package>

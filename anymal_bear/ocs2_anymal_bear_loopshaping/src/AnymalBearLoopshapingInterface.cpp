@@ -28,7 +28,7 @@ std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAn
 }
 
 std::string getTaskFileFolderBearLoopshaping(const std::string& taskName) {
-  std::string taskFolder = ros::package::getPath("ocs2_anymal_bear_loopshaping") + "/config/" + taskName;
+  return ros::package::getPath("ocs2_anymal_bear_loopshaping") + "/config/" + taskName;
 }
 
 std::string getTaskFilePathBearLoopshaping(const std::string& taskName) {

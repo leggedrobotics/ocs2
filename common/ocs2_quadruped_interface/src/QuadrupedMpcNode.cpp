@@ -17,16 +17,14 @@ void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& qua
   const std::string robotName = "anymal";
   using mpc_ros_t = ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM>;
 
-  auto gaitReceiver = std::make_shared<switched_model::GaitReceiver>(nodeHandle, quadrupedInterface.getLogicRulesPtr(), robotName);
-
+  auto gaitReceiver =
+      std::make_shared<GaitReceiver>(nodeHandle, quadrupedInterface.getModeScheduleManagerPtr()->getGaitSchedule(), robotName);
   auto solverModules = quadrupedInterface.getSynchronizedModules();
-  solverModules.insert(solverModules.begin(), gaitReceiver);
+  solverModules.push_back(gaitReceiver);
 
-  // Prepare Mpc object
+  // launch MPC nodes
   auto mpcPtr = getMpc(quadrupedInterface, mpcSettings, slqSettings);
   mpcPtr->getSolverPtr()->setSynchronizedModules(solverModules);
-
-  // launch MPC node
   mpc_ros_t mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(nodeHandle);
 }

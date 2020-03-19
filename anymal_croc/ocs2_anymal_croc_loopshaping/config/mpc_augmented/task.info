@@ -45,11 +45,11 @@ model_settings
 
 initialModeSequenceTemplate
 {
-  templateSubsystemsSequence
+  modeSequence
   {
     [0]  STANCE
   }
-  templateSwitchingTimes
+  switchingTimes
   {
     [0]  0.0
     [1]  1.0
@@ -58,11 +58,11 @@ initialModeSequenceTemplate
 
 defaultModeSequenceTemplate
 {
-  templateSubsystemsSequence
+  modeSequence
   {
     [0]  STANCE
   }
-  templateSwitchingTimes
+  switchingTimes
   {
     [0]  0.0
     [1]  1.0

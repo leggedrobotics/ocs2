@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_robotic_tools/common/RobotInterface.h>
@@ -18,7 +19,9 @@
 #include <ocs2_switched_model_interface/core/ModelSettings.h>
 #include <ocs2_switched_model_interface/core/MotionPhaseDefinition.h>
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
-#include <ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h>
+
+#include <ocs2_switched_model_interface/logic/ModeSequenceTemplate.h>
+#include <ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h>
 
 #include <ocs2_switched_model_interface/constraint/ComKinoConstraintBaseAd.h>
 #include <ocs2_switched_model_interface/cost/SwitchedModelCostBase.h>
@@ -35,7 +38,6 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
 
   using com_model_t = ComModelBase<double>;
   using kinematic_model_t = KinematicsModelBase<double>;
-  using logic_rules_t = SwitchedModelLogicRulesBase;
 
   using ad_base_t = CppAD::cg::CG<double>;
   using ad_scalar_t = CppAD::AD<ad_base_t>;
@@ -53,7 +55,8 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   using rollout_base_t = ocs2::RolloutBase<STATE_DIM, INPUT_DIM>;
   using time_triggered_rollout_t = ocs2::TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
 
-  using mode_sequence_template_t = ocs2::ModeSequenceTemplate<scalar_t>;
+  using synchronized_module_t = ocs2::SolverSynchronizedModule<STATE_DIM, INPUT_DIM>;
+  using synchronized_module_ptr_array_t = std::vector<std::shared_ptr<synchronized_module_t>>;
 
   using system_dynamics_t = switched_model::ComKinoSystemDynamicsAd;
   using system_dynamics_derivative_t = switched_model::ComKinoSystemDynamicsAd;
@@ -76,7 +79,9 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
    */
   ~QuadrupedInterface() override = default;
 
-  std::shared_ptr<ocs2::HybridLogicRules> getLogicRulesPtr() const override { return logicRulesPtr_; }
+  std::shared_ptr<SwitchedModelModeScheduleManager> getModeScheduleManagerPtr() const { return modeScheduleManagerPtr_; }
+
+  synchronized_module_ptr_array_t getSynchronizedModules() const { return solverModules_; };
 
   /** Gets kinematic model */
   const kinematic_model_t& getKinematicModel() const { return *kinematicModelPtr_; }
@@ -92,7 +97,7 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   const scalar_array_t& getInitialPartitionTimes() const { return partitioningTimes_; }
 
   /** Gets the loaded initial getInitialModeSequence */
-  const mode_sequence_template_t& getInitialModeSequence() const { return defaultModeSequenceTemplate_; }
+  const ModeSequenceTemplate& getInitialModeSequence() const { return *defaultModeSequenceTemplate_; }
 
   /** Access to rollout settings */
   const ocs2::Rollout_Settings& rolloutSettings() const { return rolloutSettings_; }
@@ -133,7 +138,8 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
 
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;
   std::unique_ptr<com_model_t> comModelPtr_;
-  std::shared_ptr<logic_rules_t> logicRulesPtr_;
+  std::shared_ptr<SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
+  synchronized_module_ptr_array_t solverModules_;
 
   std::unique_ptr<system_dynamics_t> dynamicsPtr_;
   std::unique_ptr<system_dynamics_derivative_t> dynamicsDerivativesPtr_;
@@ -148,9 +154,7 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
 
   state_vector_t initialState_;
   scalar_array_t partitioningTimes_;
-  mode_sequence_template_t defaultModeSequenceTemplate_;
-
-  std::vector<std::shared_ptr<solver_module_t>> solverModules_;
+  std::unique_ptr<ModeSequenceTemplate> defaultModeSequenceTemplate_;
 };
 
 }  // end of namespace switched_model

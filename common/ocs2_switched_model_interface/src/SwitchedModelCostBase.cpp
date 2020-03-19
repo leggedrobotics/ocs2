@@ -12,13 +12,14 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel, std::shared_ptr<const logic_rules_t> logicRulesPtr,
+SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel,
+                                             std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
                                              const state_matrix_t& Q, const input_matrix_t& R, const state_matrix_t& QFinal)
     : BASE(Q, R, state_vector_t::Zero(), input_vector_t::Zero(), QFinal, state_vector_t::Zero()),
       comModelPtr_(comModel.clone()),
-      logicRulesPtr_(std::move(logicRulesPtr)) {
-  if (!logicRulesPtr_) {
-    throw std::runtime_error("[SwitchedModelCostBase] logicRules cannot be a nullptr");
+      modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)) {
+  if (!modeScheduleManagerPtr_) {
+    throw std::runtime_error("[SwitchedModelCostBase] Mode schedule manager cannot be a nullptr");
   }
 }
 
@@ -26,7 +27,7 @@ SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel, std::s
 /******************************************************************************************************/
 /******************************************************************************************************/
 SwitchedModelCostBase::SwitchedModelCostBase(const SwitchedModelCostBase& rhs)
-    : BASE(rhs), comModelPtr_(rhs.comModelPtr_->clone()), logicRulesPtr_(rhs.logicRulesPtr_) {}
+    : BASE(rhs), comModelPtr_(rhs.comModelPtr_->clone()), modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -41,16 +42,14 @@ SwitchedModelCostBase* SwitchedModelCostBase::clone() const {
 /******************************************************************************************************/
 void SwitchedModelCostBase::setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
   // Get stance configuration
-  contact_flag_t stanceLegs;
-  size_t index = logicRulesPtr_->getEventTimeCount(t);
-  logicRulesPtr_->getContactFlags(index, stanceLegs);
+  contact_flag_t contactFlags = modeScheduleManagerPtr_->getContactFlags(t);
 
   dynamic_vector_t xNominal = state_vector_t::Zero();
   if (BASE::costDesiredTrajectoriesPtr_ != nullptr) {
     BASE::costDesiredTrajectoriesPtr_->getDesiredState(t, xNominal);
   }
   dynamic_vector_t uNominal;
-  inputFromContactFlags(stanceLegs, uNominal);
+  inputFromContactFlags(contactFlags, uNominal);
 
   BASE::setCurrentStateAndControl(t, x, u, xNominal, uNominal, xNominal);
 }

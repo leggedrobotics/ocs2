@@ -17,15 +17,15 @@ CubicSpline::CubicSpline(Node start, Node end) {
   scalar_t dp = end.position - start.position;
   scalar_t dv = end.velocity - start.velocity;
 
-  dev_c0_ = 0.0;
-  dev_c1_ = start.velocity;
-  dev_c2_ = -(3.0 * start.velocity + dv);
-  dev_c3_ = (2.0 * start.velocity + dv);
+  dc0_ = 0.0;
+  dc1_ = start.velocity;
+  dc2_ = -(3.0 * start.velocity + dv);
+  dc3_ = (2.0 * start.velocity + dv);
 
-  c0_ = dev_c0_ * dt_ + start.position;
-  c1_ = dev_c1_ * dt_;
-  c2_ = dev_c2_ * dt_ + 3.0 * dp;
-  c3_ = dev_c3_ * dt_ - 2.0 * dp;
+  c0_ = dc0_ * dt_ + start.position;
+  c1_ = dc1_ * dt_;
+  c2_ = dc2_ * dt_ + 3.0 * dp;
+  c3_ = dc3_ * dt_ - 2.0 * dp;
 }
 
 CubicSpline::scalar_t CubicSpline::position(scalar_t time) const {
@@ -45,16 +45,16 @@ CubicSpline::scalar_t CubicSpline::acceleration(scalar_t time) const {
 
 CubicSpline::scalar_t CubicSpline::startTimeDerivative(scalar_t t) const {
   scalar_t tn = normalizedTime(t);
-  scalar_t dev_coff = -(dev_c3_ * tn * tn * tn + dev_c2_ * tn * tn + dev_c1_ * tn + dev_c0_);
-  scalar_t dev_tn = -(t1_ - t) / (dt_ * dt_);
-  return velocity(t) * dt_ * dev_tn + dev_coff;
+  scalar_t dCoff = -(dc3_ * tn * tn * tn + dc2_ * tn * tn + dc1_ * tn + dc0_);
+  scalar_t dTn = -(t1_ - t) / (dt_ * dt_);
+  return velocity(t) * dt_ * dTn + dCoff;
 }
 
 CubicSpline::scalar_t CubicSpline::finalTimeDerivative(scalar_t t) const {
   scalar_t tn = normalizedTime(t);
-  scalar_t dev_coff = (dev_c3_ * tn * tn * tn + dev_c2_ * tn * tn + dev_c1_ * tn + dev_c0_);
-  scalar_t dev_tn = -(t - t0_) / (dt_ * dt_);
-  return velocity(t) * dt_ * dev_tn + dev_coff;
+  scalar_t dCoff = (dc3_ * tn * tn * tn + dc2_ * tn * tn + dc1_ * tn + dc0_);
+  scalar_t dTn = -(t - t0_) / (dt_ * dt_);
+  return velocity(t) * dt_ * dTn + dCoff;
 }
 
 CubicSpline::scalar_t CubicSpline::normalizedTime(scalar_t t) const {

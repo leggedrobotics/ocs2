@@ -11,7 +11,7 @@
 
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
-#include "ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h"
+#include "ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h"
 
 namespace switched_model {
 
@@ -27,13 +27,11 @@ class SwitchedModelCostBase : public ocs2::QuadraticCostFunction<STATE_DIM, INPU
   using typename BASE::state_matrix_t;
   using typename BASE::state_vector_t;
 
-  using logic_rules_t = SwitchedModelLogicRulesBase;
-
   using com_model_t = ComModelBase<double>;
 
   //! Constructor
-  SwitchedModelCostBase(const com_model_t& comModel, std::shared_ptr<const logic_rules_t> logicRulesPtr, const state_matrix_t& Q,
-                        const input_matrix_t& R, const state_matrix_t& QFinal);
+  SwitchedModelCostBase(const com_model_t& comModel, std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
+                        const state_matrix_t& Q, const input_matrix_t& R, const state_matrix_t& QFinal);
 
   //! Copy constructor
   SwitchedModelCostBase(const SwitchedModelCostBase& rhs);
@@ -51,7 +49,7 @@ class SwitchedModelCostBase : public ocs2::QuadraticCostFunction<STATE_DIM, INPU
 
   std::unique_ptr<com_model_t> comModelPtr_;
 
-  std::shared_ptr<const logic_rules_t> logicRulesPtr_;
+  std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
 };
 
 }  // end of namespace switched_model

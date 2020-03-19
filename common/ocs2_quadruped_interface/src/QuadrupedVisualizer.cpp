@@ -233,8 +233,8 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
   sphereList.type = visualization_msgs::Marker::SPHERE_LIST;
   sphereList.scale.x = footMarkerDiameter_;
   sphereList.ns = "Future footholds";
-  const auto& eventTimes = modeSchedule.eventTimes();
-  const auto& subsystemSequence = modeSchedule.modeSequence();
+  const auto& eventTimes = modeSchedule.eventTimes;
+  const auto& subsystemSequence = modeSchedule.modeSequence;
   const double tStart = mpcTimeTrajectory.front();
   const double tEnd = mpcTimeTrajectory.back();
   for (int event = 0; event < eventTimes.size(); ++event) {

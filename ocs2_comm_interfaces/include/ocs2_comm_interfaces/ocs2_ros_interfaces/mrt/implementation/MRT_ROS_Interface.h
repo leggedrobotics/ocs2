@@ -148,7 +148,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcPolicyCallback(const ocs2_msgs:
     stateBuffer.clear();
     inputBuffer.clear();
     controlBuffer.reset(nullptr);
-    modeScheduleBuffer = ModeSchedule();
+    modeScheduleBuffer = ModeSchedule({}, {0});
     initObservationBuffer = system_observation_t();
     costDesiredBuffer.clear();
 

@@ -39,7 +39,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 ModeSchedule::ModeSchedule(std::vector<scalar_t> eventTimesInput, std::vector<size_t> modeSequenceInput)
     : eventTimes(std::move(eventTimesInput)), modeSequence(std::move(modeSequenceInput)) {
-  assert(modeSequence.size() > 0);
+  assert(!modeSequence.empty());
   assert(eventTimes.size() + 1 == modeSequence.size());
 }
 

@@ -9,7 +9,9 @@
 
 #include <ocs2_quadruped_interface/QuadrupedInterface.h>
 
-#include <ocs2_quadruped_loopshaping_interface/LoopshapingDimensions.h>
+#include "ocs2_quadruped_loopshaping_interface/LoopshapingDimensions.h"
+#include "ocs2_quadruped_loopshaping_interface/LoopshapingModeScheduleManager.h"
+#include "ocs2_quadruped_loopshaping_interface/LoopshapingSynchronizedModule.h"
 
 namespace switched_model_loopshaping {
 
@@ -56,9 +58,9 @@ class QuadrupedLoopshapingInterface : public ocs2::RobotInterface<STATE_DIM, INP
 
   std::shared_ptr<ocs2::LoopshapingDefinition> getLoopshapingDefinition() const { return loopshapingDefinition_; };
 
-  std::shared_ptr<switched_model::SwitchedModelModeScheduleManager> getModeScheduleManagerPtr() const {
-    return quadrupedPtr_->getModeScheduleManagerPtr();
-  }
+  std::shared_ptr<LoopshapingModeScheduleManager> getModeScheduleManagerPtr() const { return loopshapingModeScheduleManager_; }
+
+  std::shared_ptr<LoopshapingSynchronizedModule> getLoopshapingSynchronizedModule() const { return loopshapingSynchronizedModule_; };
 
   /** Gets kinematic model */
   const kinematic_model_t& getKinematicModel() const { return quadrupedPtr_->getKinematicModel(); };
@@ -101,6 +103,8 @@ class QuadrupedLoopshapingInterface : public ocs2::RobotInterface<STATE_DIM, INP
   std::unique_ptr<rollout_base_t> timeTriggeredRolloutPtr_;
   std::unique_ptr<filter_dynamics_t> filterDynamicsPtr_;
   std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinition_;
+  std::shared_ptr<LoopshapingModeScheduleManager> loopshapingModeScheduleManager_;
+  std::shared_ptr<LoopshapingSynchronizedModule> loopshapingSynchronizedModule_;
 
   state_vector_t initialState_;
 };

@@ -91,8 +91,8 @@ TEST(TestFootPlanner, filterOutShortSwingPhases) {
   ASSERT_EQ(filteredPhases[1].type, FeetPlannerBase::FootPhaseType::Swing);
   ASSERT_EQ(filteredPhases[2].type, FeetPlannerBase::FootPhaseType::Stance);
 
-  ASSERT_DOUBLE_EQ(filteredPhases[0].endTime,  0.7);
-  ASSERT_DOUBLE_EQ(filteredPhases[1].startTime,  0.7);
-  ASSERT_DOUBLE_EQ(filteredPhases[1].endTime,  1.0);
-  ASSERT_DOUBLE_EQ(filteredPhases[2].startTime,  1.0);
+  ASSERT_DOUBLE_EQ(filteredPhases[0].endTime, 0.7);
+  ASSERT_DOUBLE_EQ(filteredPhases[1].startTime, 0.7);
+  ASSERT_DOUBLE_EQ(filteredPhases[1].endTime, 1.0);
+  ASSERT_DOUBLE_EQ(filteredPhases[2].startTime, 1.0);
 }

@@ -8,7 +8,7 @@
 
 using namespace switched_model;
 
-const Gait singleModeGait = []{
+const Gait singleModeGait = [] {
   Gait gait;
   gait.duration = 0.8;
   gait.eventPhases = {};
@@ -16,7 +16,7 @@ const Gait singleModeGait = []{
   return gait;
 }();
 
-const Gait multiModeGait = []{
+const Gait multiModeGait = [] {
   Gait gait;
   gait.duration = 0.6;
   gait.eventPhases = {0.33, 0.66};
@@ -37,7 +37,7 @@ TEST(TestAdvance, withinSameGait) {
   ASSERT_EQ(nextGaitIt, gaitSchedule.begin());
 
   // Looping the gait
-  std::tie(advancedPhase, nextGaitIt) = advancePhase(phase, dt + 3* singleModeGait.duration, gaitSchedule.begin(), gaitSchedule.end());
+  std::tie(advancedPhase, nextGaitIt) = advancePhase(phase, dt + 3 * singleModeGait.duration, gaitSchedule.begin(), gaitSchedule.end());
 
   // We loose some precision while recursing over the gaits.
   ASSERT_NEAR(advancedPhase, phase + dt / singleModeGait.duration, 1e-12);
@@ -64,14 +64,14 @@ TEST(TestAdvance, transitionGait) {
   std::vector<Gait>::iterator nextGaitIt;
   std::tie(advancedPhase, nextGaitIt) = advancePhase(phase, dt, gaitSchedule.begin(), gaitSchedule.end());
 
-  ASSERT_DOUBLE_EQ((1.0-phase)*singleModeGait.duration + advancedPhase*multiModeGait.duration, dt);
+  ASSERT_DOUBLE_EQ((1.0 - phase) * singleModeGait.duration + advancedPhase * multiModeGait.duration, dt);
   ASSERT_EQ(nextGaitIt, gaitSchedule.end() - 1);
 
   // The same but, while looping the last gait
   std::tie(advancedPhase, nextGaitIt) = advancePhase(phase, dt + 3 * multiModeGait.duration, gaitSchedule.begin(), gaitSchedule.end());
 
   // We loose some precision while recursing over the gaits.
-  ASSERT_NEAR((1.0-phase)*singleModeGait.duration + advancedPhase*multiModeGait.duration, dt, 1e-12);
+  ASSERT_NEAR((1.0 - phase) * singleModeGait.duration + advancedPhase * multiModeGait.duration, dt, 1e-12);
   ASSERT_EQ(nextGaitIt, gaitSchedule.end() - 1);
 }
 
@@ -89,7 +89,8 @@ TEST(TestGetModeSchedule, gaitTransition) {
   std::vector<Gait> gaitSchedule = {singleModeGait, multiModeGait};
 
   double t0 = 0.1;
-  auto modeSchedule = getModeSchedule(0.0, t0, singleModeGait.duration + multiModeGait.duration / 2, gaitSchedule.begin(), gaitSchedule.end());
+  auto modeSchedule =
+      getModeSchedule(0.0, t0, singleModeGait.duration + multiModeGait.duration / 2, gaitSchedule.begin(), gaitSchedule.end());
   ASSERT_EQ(modeSchedule.eventTimes().size(), 2);
   ASSERT_DOUBLE_EQ(modeSchedule.eventTimes()[0], singleModeGait.duration + t0);
   ASSERT_DOUBLE_EQ(modeSchedule.eventTimes()[1], multiModeGait.eventPhases[0] * multiModeGait.duration + singleModeGait.duration + t0);

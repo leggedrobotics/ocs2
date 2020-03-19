@@ -10,6 +10,7 @@
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/foot_planner/SplineCpg.h"
+#include "ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h"
 
 namespace switched_model {
 
@@ -26,10 +27,11 @@ struct SwingTrajectoryPlannerSettings {
 class SwingTrajectoryPlanner : public ocs2::SolverSynchronizedModule<STATE_DIM, INPUT_DIM> {
  public:
   SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const ComModelBase<double>& comModel,
-                         const KinematicsModelBase<double>& kinematicsModel, std::shared_ptr<const ocs2::HybridLogicRules> logicRulesPtr);
+                         const KinematicsModelBase<double>& kinematicsModel,
+                         std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr);
 
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
-                    const ocs2::CostDesiredTrajectories& costDesiredTrajectory, const ocs2::ModeSchedule& modeSchedule) override;
+                    const ocs2::CostDesiredTrajectories& costDesiredTrajectory) override;
 
   void postSolverRun(const primal_solution_t& primalSolution) override {}
 
@@ -45,15 +47,36 @@ class SwingTrajectoryPlanner : public ocs2::SolverSynchronizedModule<STATE_DIM, 
   SwingTrajectoryPlannerSettings settings_;
   std::unique_ptr<ComModelBase<double>> comModel_;
   std::unique_ptr<KinematicsModelBase<double>> kinematicsModel_;
-  std::shared_ptr<const ocs2::HybridLogicRules> logicRulesPtr_;
+  std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
 
-  std::array<SplineCpg::Point, NUM_CONTACT_POINTS> lastContacts_;
+  struct contactHistory {
+    scalar_t time;
+    scalar_t height;
+  };
+  std::array<contactHistory, NUM_CONTACT_POINTS> lastContacts_;
   std::array<std::vector<SplineCpg>, NUM_CONTACT_POINTS> feetHeightTrajectories_;
   std::array<std::vector<scalar_t>, NUM_CONTACT_POINTS> feetHeightTrajectoriesEvents_;
 
   // Error correction
   scalar_t initTime_;
   std::array<scalar_t, NUM_CONTACT_POINTS> initialErrors_;
+
+ public:
+  /** Helper functions */
+  enum class FootPhaseType { Stance, Swing };
+  struct FootPhase {
+    FootPhaseType type;
+    scalar_t startTime;  // times are NaN if they cannot be identified at the boundaries
+    scalar_t endTime;
+  };
+  static std::vector<FootPhase> extractFootPhases(const std::vector<scalar_t>& eventTimes, const std::vector<bool>& contactFlags);
+
+  /**
+   * Extracts for each leg the contact sequence over the motion phase sequence.
+   * @param phaseIDsStock
+   * @return contactFlagStock
+   */
+  static std::array<std::vector<bool>, NUM_CONTACT_POINTS> extractContactFlags(const std::vector<size_t>& phaseIDsStock);
 };
 
 }  // namespace switched_model

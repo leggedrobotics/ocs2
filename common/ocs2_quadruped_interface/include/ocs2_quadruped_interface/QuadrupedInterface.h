@@ -121,8 +121,6 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
 
   const operating_point_t& getOperatingPoints() const override { return *operatingPointsPtr_; }
 
-  std::vector<std::shared_ptr<solver_module_t>> getSynchronizedModules() const { return solverModules_; }
-
  private:
   /**
    * Load the settings from the path file.

@@ -19,7 +19,8 @@ void SwitchedModelModeScheduleManager::preSolverRunImpl(scalar_t initTime, scala
                                                         const ocs2::CostDesiredTrajectories& costDesiredTrajectory,
                                                         ocs2::ModeSchedule& modeSchedule) {
   const auto timeHorizon = finalTime - initTime;
-  modeSchedule = gaitSchedulePtr_->getModeSchedule(initTime - timeHorizon, finalTime + timeHorizon);
+  gaitSchedulePtr_->advanceToTime(initTime);
+  modeSchedule = gaitSchedulePtr_->getModeSchedule(finalTime + timeHorizon);
 }
 
 }  // namespace switched_model

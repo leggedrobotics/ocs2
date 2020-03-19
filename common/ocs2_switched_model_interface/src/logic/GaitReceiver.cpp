@@ -5,6 +5,7 @@
 #include "ocs2_switched_model_interface/logic/GaitReceiver.h"
 
 #include "ocs2_switched_model_interface/core/MotionPhaseDefinition.h"
+#include "ocs2_switched_model_interface/logic/ModeSequenceTemplate.h"
 
 namespace switched_model {
 
@@ -19,22 +20,21 @@ void GaitReceiver::preSolverRun(scalar_t initTime, scalar_t finalTime, const sta
   std::lock_guard<std::mutex> lock(receivedGaitMutex_);
   if (gaitUpdated_) {
     std::cout << "[GaitReceiver]: Setting new gait after time " << finalTime << std::endl;
-    gaitSchedule_.setGaitAfterTime(receivedGait_, finalTime);
+    gaitSchedulePtr_->setGaitAfterTime(receivedGait_, finalTime);
     gaitUpdated_ = false;
   }
 }
 
-void GaitReceiver::mpcModeSequenceCallback(const ocs2_msgs::mode_sequence::ConstPtr& msg) {
-  ocs2::ModeSequenceTemplate<double> modeSequenceTemplate;
-  ocs2::RosMsgConversions<STATE_DIM, INPUT_DIM>::readModeSequenceTemplateMsg(*msg, modeSequenceTemplate);
+void GaitReceiver::mpcModeSequenceCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg) {
+  auto modeSequenceTemplate = readModeSequenceTemplateMsg(*msg);
   const auto receivedGait = [&] {
     Gait gait;
-    gait.duration = modeSequenceTemplate.templateSwitchingTimes_.back();
+    gait.duration = modeSequenceTemplate.switchingTimes.back();
     // Events: from time -> phase
-    std::for_each(modeSequenceTemplate.templateSwitchingTimes_.begin() + 1, modeSequenceTemplate.templateSwitchingTimes_.end() - 1,
+    std::for_each(modeSequenceTemplate.switchingTimes.begin() + 1, modeSequenceTemplate.switchingTimes.end() - 1,
                   [&](double eventTime) { gait.eventPhases.push_back(eventTime / gait.duration); });
     // Modes:
-    gait.modeSequence = modeSequenceTemplate.templateSubsystemsSequence_;
+    gait.modeSequence = modeSequenceTemplate.modeSequence;
     return gait;
   }();
 

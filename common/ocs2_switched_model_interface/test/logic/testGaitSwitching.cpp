@@ -81,8 +81,8 @@ TEST(TestGetModeSchedule, singleModeLooping) {
   auto modeSchedule = getModeSchedule(0.1, 123.0, 2.5, gaitSchedule.begin(), gaitSchedule.end());
 
   // No mode switches -> no event times
-  ASSERT_EQ(modeSchedule.eventTimes().size(), 0);
-  ASSERT_EQ(modeSchedule.modeSequence().front(), singleModeGait.modeSequence.front());
+  ASSERT_EQ(modeSchedule.eventTimes.size(), 0);
+  ASSERT_EQ(modeSchedule.modeSequence.front(), singleModeGait.modeSequence.front());
 }
 
 TEST(TestGetModeSchedule, gaitTransition) {
@@ -91,12 +91,12 @@ TEST(TestGetModeSchedule, gaitTransition) {
   double t0 = 0.1;
   auto modeSchedule =
       getModeSchedule(0.0, t0, singleModeGait.duration + multiModeGait.duration / 2, gaitSchedule.begin(), gaitSchedule.end());
-  ASSERT_EQ(modeSchedule.eventTimes().size(), 2);
-  ASSERT_DOUBLE_EQ(modeSchedule.eventTimes()[0], singleModeGait.duration + t0);
-  ASSERT_DOUBLE_EQ(modeSchedule.eventTimes()[1], multiModeGait.eventPhases[0] * multiModeGait.duration + singleModeGait.duration + t0);
-  ASSERT_EQ(modeSchedule.modeSequence()[0], 1);
-  ASSERT_EQ(modeSchedule.modeSequence()[1], 0);
-  ASSERT_EQ(modeSchedule.modeSequence()[2], 1);
+  ASSERT_EQ(modeSchedule.eventTimes.size(), 2);
+  ASSERT_DOUBLE_EQ(modeSchedule.eventTimes[0], singleModeGait.duration + t0);
+  ASSERT_DOUBLE_EQ(modeSchedule.eventTimes[1], multiModeGait.eventPhases[0] * multiModeGait.duration + singleModeGait.duration + t0);
+  ASSERT_EQ(modeSchedule.modeSequence[0], 1);
+  ASSERT_EQ(modeSchedule.modeSequence[1], 0);
+  ASSERT_EQ(modeSchedule.modeSequence[2], 1);
 }
 
 TEST(TestGetModeSchedule, doubleGaitTransition) {
@@ -107,6 +107,6 @@ TEST(TestGetModeSchedule, doubleGaitTransition) {
   const double timeHorizon = multiModeGait.duration + singleModeGait.duration + 1.5 * multiModeGait.duration;
   auto modeSchedule = getModeSchedule(0.0, t0, timeHorizon, gaitSchedule.begin(), gaitSchedule.end());
   // The switch to single mode and back has two event times. Halve the multiMode as also two event times
-  ASSERT_EQ(modeSchedule.eventTimes().size(), multiModeGait.eventPhases.size() + 2 + multiModeGait.eventPhases.size() + 2);
-  ASSERT_EQ(modeSchedule.modeSequence().back(), 1);
+  ASSERT_EQ(modeSchedule.eventTimes.size(), multiModeGait.eventPhases.size() + 2 + multiModeGait.eventPhases.size() + 2);
+  ASSERT_EQ(modeSchedule.modeSequence.back(), 1);
 }

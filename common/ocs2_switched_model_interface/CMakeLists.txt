@@ -47,6 +47,7 @@ add_library(${PROJECT_NAME}
 	src/foot_planner/CubicSpline.cpp
 	src/foot_planner/SplineCpg.cpp
 	src/foot_planner/SwingTrajectoryPlanner.cpp
+	src/logic/Gait.cpp
 	src/logic/GaitReceiver.cpp
 	src/logic/GaitSchedule.cpp
 	src/logic/ModeSequenceTemplate.cpp

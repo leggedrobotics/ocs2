@@ -8,7 +8,8 @@
 #include <vector>
 
 #include <ocs2_core/logic/ModeSchedule.h>
-#include "Gait.h"
+
+#include "ocs2_switched_model_interface/logic/Gait.h"
 
 namespace switched_model {
 

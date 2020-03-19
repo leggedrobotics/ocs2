@@ -29,7 +29,7 @@ QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, 
   settings.errorGain = 5.0;
   settings.swingTimeScale = 0.15;
   auto swingTrajectoryPlanner =
-      std::make_shared<SwingTrajectoryPlanner>(settings, getComModel(), getKinematicModel(), logicRulesPtr_);
+      std::make_shared<SwingTrajectoryPlanner>(settings, getComModel(), getKinematicModel(), getModeScheduleManagerPtr());
   solverModules_.push_back(swingTrajectoryPlanner);
 
   dynamicsPtr_.reset(new system_dynamics_t(adKinematicModel, adComModel, modelSettings_.recompileLibraries_));
@@ -92,8 +92,8 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
       new ModeSequenceTemplate(loadModeSequenceTemplate(pathToConfigFile, "defaultModeSequenceTemplate", false)));
   std::cerr << "\nDefault Modes Sequence Template: \n" << *defaultModeSequenceTemplate_ << std::endl;
 
-  auto logicRules = std::make_shared<GaitSchedule>(initModeSchedule, modelSettings_.phaseTransitionStanceTime_);
-  modeScheduleManagerPtr_ = std::make_shared<SwitchedModelModeScheduleManager>(std::move(logicRules));
+  auto gaitSchedule = std::make_shared<GaitSchedule>(0.0, Gait{{}, {ModeNumber::STANCE}});
+  modeScheduleManagerPtr_ = std::make_shared<SwitchedModelModeScheduleManager>(std::move(gaitSchedule));
 }
 
 }  // namespace switched_model

@@ -140,6 +140,11 @@ class Solver_BASE {
   using mode_schedule_manager_ptr_t = std::shared_ptr<ModeScheduleManager<STATE_DIM, INPUT_DIM>>;
 
   /**
+   * Constructor.
+   */
+  Solver_BASE() = default;
+
+  /**
    * Default destructor.
    */
   virtual ~Solver_BASE() = default;

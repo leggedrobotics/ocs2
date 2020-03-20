@@ -5,14 +5,10 @@
 #pragma once
 
 #include <ocs2_core/Dimensions.h>
+#include <ocs2_core/logic/ModeSchedule.h>
 
-#include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
-
-#include "ocs2_switched_model_interface/core/ComModelBase.h"
-#include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/foot_planner/SplineCpg.h"
-#include "ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h"
 
 namespace switched_model {
 
@@ -24,23 +20,17 @@ struct SwingTrajectoryPlannerSettings {
   scalar_t swingTimeScale;  // swing phases shorter than this time will be scaled down in height and velocity
 };
 
-class SwingTrajectoryPlanner : public ocs2::SolverSynchronizedModule<STATE_DIM, INPUT_DIM> {
+class SwingTrajectoryPlanner {
   using scalar_t = ocs2::Dimensions<0, 0>::scalar_t;
-  using com_model_t = ComModelBase<scalar_t>;
-  using kinematic_model_t = KinematicsModelBase<scalar_t>;
 
  public:
-  SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const com_model_t& comModel, const kinematic_model_t& kinematicsModel,
-                         std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr);
+  SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings);
+
+  void update(const ocs2::ModeSchedule& modeSchedule, scalar_t terrainHeight);
 
   scalar_t getZvelocityConstraint(size_t leg, scalar_t time) const;
 
   scalar_t getZpositionConstraint(size_t leg, scalar_t time) const;
-
-  void preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
-                    const ocs2::CostDesiredTrajectories& costDesiredTrajectory) override;
-
-  void postSolverRun(const primal_solution_t& primalSolution) override {}
 
  private:
   /**
@@ -71,8 +61,7 @@ class SwingTrajectoryPlanner : public ocs2::SolverSynchronizedModule<STATE_DIM, 
    * @param [in] contactFlagStock: The sequence of the contact status for the requested leg.
    * @return { startTimeIndexStock, finalTimeIndexStock}
    */
-  static std::pair<std::vector<int>, std::vector<int>> updateFootSchedule(size_t footIndex, const std::vector<size_t>& phaseIDsStock,
-                                                                          const std::vector<bool>& contactFlagStock);
+  static std::pair<std::vector<int>, std::vector<int>> updateFootSchedule(const std::vector<bool>& contactFlagStock);
 
   /**
    * Check if event time indices are valid
@@ -90,10 +79,6 @@ class SwingTrajectoryPlanner : public ocs2::SolverSynchronizedModule<STATE_DIM, 
 
   std::array<std::vector<SplineCpg>, NUM_CONTACT_POINTS> feetHeightTrajectories_;
   std::array<std::vector<scalar_t>, NUM_CONTACT_POINTS> feetHeightTrajectoriesEvents_;
-
-  std::unique_ptr<kinematic_model_t> kinematicModelPtr_;
-  std::unique_ptr<com_model_t> comModelPtr_;
-  std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
 };
 
 }  // namespace switched_model

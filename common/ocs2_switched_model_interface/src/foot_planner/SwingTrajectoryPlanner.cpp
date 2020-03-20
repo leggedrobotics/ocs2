@@ -4,15 +4,13 @@
 
 #include "ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h"
 
+#include <ocs2_core/misc/Lookup.h>
+
+#include "ocs2_switched_model_interface/core/MotionPhaseDefinition.h"
+
 namespace switched_model {
 
-SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const com_model_t& comModel,
-                                               const kinematic_model_t& kinematicsModel,
-                                               std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr)
-    : settings_(std::move(settings)),
-      comModelPtr_(comModel.clone()),
-      kinematicModelPtr_(kinematicsModel.clone()),
-      modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)) {}
+SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings) : settings_(std::move(settings)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -33,11 +31,7 @@ auto SwingTrajectoryPlanner::getZpositionConstraint(size_t leg, scalar_t time) c
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SwingTrajectoryPlanner::preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
-                                          const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
-  const scalar_t terrainHeight = 0.0;
-
-  const auto& modeSchedule = modeScheduleManagerPtr_->getModeSchedule();
+void SwingTrajectoryPlanner::update(const ocs2::ModeSchedule& modeSchedule, scalar_t terrainHeight) {
   const auto& modeSequence = modeSchedule.modeSequence;
   const auto& eventTimes = modeSchedule.eventTimes;
 
@@ -46,7 +40,7 @@ void SwingTrajectoryPlanner::preSolverRun(scalar_t initTime, scalar_t finalTime,
   std::array<std::vector<int>, NUM_CONTACT_POINTS> startTimesIndices;
   std::array<std::vector<int>, NUM_CONTACT_POINTS> finalTimesIndices;
   for (size_t leg = 0; leg < NUM_CONTACT_POINTS; leg++) {
-    std::tie(startTimesIndices[leg], finalTimesIndices[leg]) = updateFootSchedule(leg, modeSequence, eesContactFlagStocks[leg]);
+    std::tie(startTimesIndices[leg], finalTimesIndices[leg]) = updateFootSchedule(eesContactFlagStocks[leg]);
   }
 
   for (size_t j = 0; j < NUM_CONTACT_POINTS; j++) {
@@ -79,10 +73,8 @@ void SwingTrajectoryPlanner::preSolverRun(scalar_t initTime, scalar_t finalTime,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::pair<std::vector<int>, std::vector<int>> SwingTrajectoryPlanner::updateFootSchedule(size_t footIndex,
-                                                                                         const std::vector<size_t>& phaseIDsStock,
-                                                                                         const std::vector<bool>& contactFlagStock) {
-  const size_t numPhases = phaseIDsStock.size();
+std::pair<std::vector<int>, std::vector<int>> SwingTrajectoryPlanner::updateFootSchedule(const std::vector<bool>& contactFlagStock) {
+  const size_t numPhases = contactFlagStock.size();
 
   std::vector<int> startTimeIndexStock(numPhases, 0);
   std::vector<int> finalTimeIndexStock(numPhases, 0);

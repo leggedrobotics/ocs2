@@ -20,19 +20,10 @@ QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, 
     : kinematicModelPtr_(kinematicModel.clone()), comModelPtr_(comModel.clone()) {
   loadSettings(pathToConfigFolder + "/task.info");
 
-  SwingTrajectoryPlannerSettings swingTrajectorySettings;
-  swingTrajectorySettings.swingHeight = modelSettings_.swingLegLiftOff_;
-  swingTrajectorySettings.liftOffVelocity = modelSettings_.liftOffVelocity_;
-  swingTrajectorySettings.touchDownVelocity = modelSettings_.touchDownVelocity_;
-  swingTrajectorySettings.swingTimeScale = 1.0;
-
-  auto swingTrajectoryPlanner =
-      std::make_shared<SwingTrajectoryPlanner>(swingTrajectorySettings, *comModelPtr_, *kinematicModelPtr_, modeScheduleManagerPtr_);
-  solverModules_.push_back(swingTrajectoryPlanner);
-
   dynamicsPtr_.reset(new system_dynamics_t(adKinematicModel, adComModel, modelSettings_.recompileLibraries_));
   dynamicsDerivativesPtr_.reset(dynamicsPtr_->clone());
-  constraintsPtr_.reset(new constraint_t(adKinematicModel, adComModel, modeScheduleManagerPtr_, swingTrajectoryPlanner, modelSettings_));
+  constraintsPtr_.reset(new constraint_t(adKinematicModel, adComModel, modeScheduleManagerPtr_,
+                                         modeScheduleManagerPtr_->getSwingTrajectoryPlanner(), modelSettings_));
   costFunctionPtr_.reset(new cost_function_t(*comModelPtr_, modeScheduleManagerPtr_, Q_, R_, QFinal_));
   operatingPointsPtr_.reset(new operating_point_t(*comModelPtr_, modeScheduleManagerPtr_));
   timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, rolloutSettings_));
@@ -90,8 +81,20 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
       new ModeSequenceTemplate(loadModeSequenceTemplate(pathToConfigFile, "defaultModeSequenceTemplate", false)));
   std::cerr << "\nDefault Modes Sequence Template: \n" << *defaultModeSequenceTemplate_ << std::endl;
 
-  auto logicRules = std::make_shared<GaitSchedule>(initModeSchedule, modelSettings_.phaseTransitionStanceTime_);
-  modeScheduleManagerPtr_ = std::make_shared<SwitchedModelModeScheduleManager>(std::move(logicRules));
+  // Swing trajectory planner
+  SwingTrajectoryPlannerSettings swingTrajectorySettings{};
+  swingTrajectorySettings.swingHeight = modelSettings_.swingLegLiftOff_;
+  swingTrajectorySettings.liftOffVelocity = modelSettings_.liftOffVelocity_;
+  swingTrajectorySettings.touchDownVelocity = modelSettings_.touchDownVelocity_;
+  swingTrajectorySettings.swingTimeScale = modelSettings_.swingTimeScale_;
+  auto swingTrajectoryPlanner = std::make_shared<SwingTrajectoryPlanner>(swingTrajectorySettings);
+
+  // Gait Schedule
+  auto gaitSchedule =
+      std::make_shared<GaitSchedule>(initModeSchedule, *defaultModeSequenceTemplate_, modelSettings_.phaseTransitionStanceTime_);
+
+  // Mode schedule manager
+  modeScheduleManagerPtr_ = std::make_shared<SwitchedModelModeScheduleManager>(gaitSchedule, swingTrajectoryPlanner);
 }
 
 }  // namespace switched_model

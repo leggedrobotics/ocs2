@@ -42,16 +42,13 @@ std::ostream& operator<<(std::ostream& stream, const ModeSequenceTemplate& modeS
 
 ModeSequenceTemplate loadModeSequenceTemplate(const std::string& filename, const std::string& topicName, bool verbose) {
   std::vector<ModeSequenceTemplate::scalar_t> switchingTimes;
+  ocs2::loadData::loadStdVector(filename, topicName + ".switchingTimes", switchingTimes, verbose);
+
   std::vector<std::string> modeSequenceString;
+  ocs2::loadData::loadStdVector(filename, topicName + ".modeSequence", modeSequenceString, verbose);
 
-  try {
-    // switching times
-    ocs2::loadData::loadStdVector(filename, topicName + ".switchingTimes", switchingTimes, verbose);
-
-    // read the modes name
-    ocs2::loadData::loadStdVector(filename, topicName + ".modeSequence", modeSequenceString, verbose);
-  } catch (const std::exception& e) {
-    std::cerr << "WARNING: Failed to load " + topicName + "!" << std::endl;
+  if (switchingTimes.empty() || modeSequenceString.empty()) {
+    throw std::runtime_error("[loadModeSequenceTemplate] failed to load : " + topicName + " from " + filename);
   }
 
   // convert the mode name to mode enum

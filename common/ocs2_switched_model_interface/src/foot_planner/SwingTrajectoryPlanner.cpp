@@ -18,8 +18,16 @@ SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings se
 /******************************************************************************************************/
 /******************************************************************************************************/
 auto SwingTrajectoryPlanner::getZvelocityConstraint(size_t leg, scalar_t time) const -> scalar_t {
-  const auto modeIndex = ocs2::lookup::findIndexInTimeArray(eventTimes_, time);
-  return feetTrajectoriesPerModePerLeg_[modeIndex][leg]->velocity(time);
+  const auto index = ocs2::lookup::findIndexInTimeArray(feetHeightTrajectoriesEvents_[leg], time);
+  return feetHeightTrajectories_[leg][index].velocity(time);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+auto SwingTrajectoryPlanner::getZpositionConstraint(size_t leg, scalar_t time) const -> scalar_t {
+  const auto index = ocs2::lookup::findIndexInTimeArray(feetHeightTrajectoriesEvents_[leg], time);
+  return feetHeightTrajectories_[leg][index].position(time);
 }
 
 /******************************************************************************************************/
@@ -35,20 +43,17 @@ void SwingTrajectoryPlanner::preSolverRun(scalar_t initTime, scalar_t finalTime,
 
   const auto eesContactFlagStocks = extractContactFlags(modeSequence);
 
-  std::array<std::vector<int>, 4> startTimesIndices;
-  std::array<std::vector<int>, 4> finalTimesIndices;
+  std::array<std::vector<int>, NUM_CONTACT_POINTS> startTimesIndices;
+  std::array<std::vector<int>, NUM_CONTACT_POINTS> finalTimesIndices;
   for (size_t leg = 0; leg < NUM_CONTACT_POINTS; leg++) {
     std::tie(startTimesIndices[leg], finalTimesIndices[leg]) = updateFootSchedule(leg, modeSequence, eesContactFlagStocks[leg]);
   }
 
-  feetTrajectoriesPerModePerLeg_.clear();
-  feetTrajectoriesPerModePerLeg_.reserve(modeSequence.size());
-  for (int p = 0; p < modeSequence.size(); ++p) {
-    std::array<std::unique_ptr<SplineCpg>, 4> feetCpg;
-
-    for (size_t j = 0; j < NUM_CONTACT_POINTS; j++) {
+  for (size_t j = 0; j < NUM_CONTACT_POINTS; j++) {
+    feetHeightTrajectories_[j].clear();
+    feetHeightTrajectories_[j].reserve(modeSequence.size());
+    for (int p = 0; p < modeSequence.size(); ++p) {
       if (!eesContactFlagStocks[j][p]) {  // for a swing leg
-
         const int swingStartIndex = startTimesIndices[j][p];
         const int swingFinalIndex = finalTimesIndices[j][p];
         checkThatIndicesAreValid(j, p, swingStartIndex, swingFinalIndex, modeSequence);
@@ -60,18 +65,15 @@ void SwingTrajectoryPlanner::preSolverRun(scalar_t initTime, scalar_t finalTime,
 
         const CubicSpline::Node liftOff{swingStartTime, terrainHeight, scaling * settings_.liftOffVelocity};
         const CubicSpline::Node touchDown{swingFinalTime, terrainHeight, scaling * settings_.touchDownVelocity};
-        feetCpg[j].reset(new SplineCpg(liftOff, scaling * settings_.swingHeight, touchDown));
+        feetHeightTrajectories_[j].emplace_back(liftOff, scaling * settings_.swingHeight, touchDown);
       } else {  // for a stance leg
         const CubicSpline::Node liftOff{0.0, terrainHeight, 0.0};
         const CubicSpline::Node touchDown{1.0, terrainHeight, 0.0};
-        feetCpg[j].reset(new SplineCpg(liftOff, terrainHeight, touchDown));
+        feetHeightTrajectories_[j].emplace_back(liftOff, terrainHeight, touchDown);
       }
     }
-    feetTrajectoriesPerModePerLeg_.push_back(std::move(feetCpg));
+    feetHeightTrajectoriesEvents_[j] = eventTimes;
   }
-
-  // Store eventTimes
-  eventTimes_ = eventTimes;
 }
 
 /******************************************************************************************************/

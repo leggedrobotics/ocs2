@@ -35,6 +35,8 @@ class SwingTrajectoryPlanner : public ocs2::SolverSynchronizedModule<STATE_DIM, 
 
   scalar_t getZvelocityConstraint(size_t leg, scalar_t time) const;
 
+  scalar_t getZpositionConstraint(size_t leg, scalar_t time) const;
+
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
                     const ocs2::CostDesiredTrajectories& costDesiredTrajectory) override;
 
@@ -86,8 +88,8 @@ class SwingTrajectoryPlanner : public ocs2::SolverSynchronizedModule<STATE_DIM, 
 
   SwingTrajectoryPlannerSettings settings_;
 
-  std::vector<std::array<std::unique_ptr<SplineCpg>, 4>> feetTrajectoriesPerModePerLeg_;
-  std::vector<scalar_t> eventTimes_;
+  std::array<std::vector<SplineCpg>, NUM_CONTACT_POINTS> feetHeightTrajectories_;
+  std::array<std::vector<scalar_t>, NUM_CONTACT_POINTS> feetHeightTrajectoriesEvents_;
 
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;
   std::unique_ptr<com_model_t> comModelPtr_;

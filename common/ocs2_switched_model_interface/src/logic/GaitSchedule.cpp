@@ -61,12 +61,14 @@ ocs2::ModeSchedule GaitSchedule::getModeSchedule(scalar_t lowerBoundTime, scalar
     modeSequence.front() = ModeNumber::STANCE;
   }
 
+  // Start tiling at time
+  const auto tilingStartTime = eventTimes.back();
+
   // delete the last default stance phase
   eventTimes.erase(eventTimes.end() - 1, eventTimes.end());
   modeSequence.erase(modeSequence.end() - 1, modeSequence.end());
 
   // tile the template logic
-  const auto tilingStartTime = eventTimes.back();
   tileModeSequenceTemplate(tilingStartTime, upperBoundTime);
   return modeSchedule_;
 }

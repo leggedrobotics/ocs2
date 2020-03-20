@@ -4,6 +4,7 @@
 
 #include "ocs2_switched_model_interface/logic/GaitSchedule.h"
 
+#include "ocs2_switched_model_interface/core/MotionPhaseDefinition.h"
 #include "ocs2_switched_model_interface/logic/GaitSwitching.h"
 
 namespace switched_model {
@@ -86,6 +87,12 @@ void GaitSchedule::rolloutGaitScheduleTillTime(double time) {
     t += gaitIt->duration;
     ++gaitIt;
   }
+}
+
+bool isStandingDuringTimeHorizon(double timeHorizon, const GaitSchedule& gaitSchedule) {
+  const auto modeSchedule = gaitSchedule.getModeSchedule(timeHorizon);
+  return std::all_of(modeSchedule.modeSequence.begin(), modeSchedule.modeSequence.end(),
+                     [](size_t mode) { return mode == ModeNumber::STANCE; });
 }
 
 }

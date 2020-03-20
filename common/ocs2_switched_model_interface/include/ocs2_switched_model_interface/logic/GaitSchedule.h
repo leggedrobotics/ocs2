@@ -64,4 +64,6 @@ class GaitSchedule {
   std::deque<Gait> gaitSchedule_;
 };
 
+bool isStandingDuringTimeHorizon(double timeHorizon, const GaitSchedule& gaitSchedule);
+
 }  // namespace switched_model

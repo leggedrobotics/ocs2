@@ -14,8 +14,8 @@ AnymalBearPyBindings::AnymalBearPyBindings(std::string taskName, bool async) : B
 
   init(*anymalBearInterface, switched_model::getMpc(*anymalBearInterface, mpcSettings, slqSettings));
 
-  penalty_.reset(new ocs2::RelaxedBarrierPenalty<switched_model::STATE_DIM, switched_model::INPUT_DIM>(
-      slqSettings.ddpSettings_.inequalityConstraintMu_, slqSettings.ddpSettings_.inequalityConstraintDelta_));
+  penalty_.reset(new ocs2::RelaxedBarrierPenalty(slqSettings.ddpSettings_.inequalityConstraintMu_,
+                                                 slqSettings.ddpSettings_.inequalityConstraintDelta_));
 }
 
 void AnymalBearPyBindings::visualizeTrajectory(const scalar_array_t& t, const state_vector_array_t& x, const input_vector_array_t& u,

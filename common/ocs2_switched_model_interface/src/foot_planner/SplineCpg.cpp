@@ -6,12 +6,9 @@
 
 namespace switched_model {
 
-SplineCpg::SplineCpg(CubicSpline::Node liftOff, scalar_t midHeight, CubicSpline::Node touchDown) {
-  midTime_ = 0.5 * (liftOff.time + touchDown.time);
-  CubicSpline::Node midPoint{midTime_, midHeight, 0.0};
-  leftSpline_ = CubicSpline(liftOff, midPoint);
-  rightSpline_ = CubicSpline(midPoint, touchDown);
-}
+SplineCpg::SplineCpg(CubicSpline::Node liftOff, scalar_t midHeight, CubicSpline::Node touchDown)
+    : leftSpline_(liftOff, CubicSpline::Node{(liftOff.time + touchDown.time) / 2, midHeight, 0.0}),
+      rightSpline_(CubicSpline::Node{(liftOff.time + touchDown.time) / 2, midHeight, 0.0}, touchDown) {}
 
 SplineCpg::scalar_t SplineCpg::position(scalar_t time) const {
   return (time < midTime_) ? leftSpline_.position(time) : rightSpline_.position(time);

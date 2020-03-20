@@ -35,8 +35,7 @@ void GaitSchedule::insertModeSequenceTemplate(const ModeSequenceTemplate& modeSe
     phaseTransitionStanceTime = 0.0;
   }
 
-  const double magicNumber = 0.001;
-  if (phaseTransitionStanceTime > magicNumber) {
+  if (phaseTransitionStanceTime > 0.0) {
     eventTimes.push_back(startTime);
     modeSequence.push_back(ModeNumber::STANCE);
   }
@@ -62,14 +61,12 @@ ocs2::ModeSchedule GaitSchedule::getModeSchedule(scalar_t lowerBoundTime, scalar
     modeSequence.front() = ModeNumber::STANCE;
   }
 
-  // tiling start time
-  scalar_t tilingStartTime = eventTimes.back();
-
   // delete the last default stance phase
   eventTimes.erase(eventTimes.end() - 1, eventTimes.end());
   modeSequence.erase(modeSequence.end() - 1, modeSequence.end());
 
   // tile the template logic
+  const auto tilingStartTime = eventTimes.back();
   tileModeSequenceTemplate(tilingStartTime, upperBoundTime);
   return modeSchedule_;
 }
@@ -87,12 +84,6 @@ void GaitSchedule::tileModeSequenceTemplate(scalar_t startTime, scalar_t finalTi
   // If no template subsystem is defined, the last subsystem should continue for ever
   if (numTemplateSubsystems == 0) {
     return;
-  }
-
-  if (templateTimes.size() != templateModeSequence.size() + 1) {
-    throw std::runtime_error(
-        "The number of the subsystems in the user-defined template should be equal to "
-        "the number of the template switching times minus 1.");
   }
 
   if (!eventTimes.empty() && startTime <= eventTimes.back()) {

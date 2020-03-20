@@ -103,8 +103,8 @@ class ModeScheduleManager : public SolverSynchronizedModule<STATE_DIM, INPUT_DIM
   ModeSchedule modeSchedule_;
   ModeSchedule modeScheduleBuffer_;
 
+  bool modeScheduleUpdated_;
   mutable std::mutex modeScheduleMutex_;
-  std::atomic<bool> modeScheduleUpdated_;
 };
 
 }  // namespace ocs2

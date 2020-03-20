@@ -34,6 +34,7 @@ ModelSettings loadModelSettings(const std::string& filename, bool verbose) {
   ocs2::loadData::loadPtreeValue(pt, modelSettings.swingLegLiftOff_, prefix + "swingLegLiftOff", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.liftOffVelocity_, prefix + "liftOffVelocity", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.touchDownVelocity_, prefix + "touchDownVelocity", verbose);
+  ocs2::loadData::loadPtreeValue(pt, modelSettings.swingTimeScale_, prefix + "swingTimeScale", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.phaseTransitionStanceTime_, prefix + "phaseTransitionStanceTime", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.mpcGoalCommandDelay_, prefix + "mpcGoalCommandDelay", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.targetDisplacementVelocity_, prefix + "targetDisplacementVelocity", verbose);

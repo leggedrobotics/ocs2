@@ -10,14 +10,16 @@ QuadrupedWheeledInterface::QuadrupedWheeledInterface(const kinematic_model_t& ki
                                                      const com_model_t& comModel, const ad_com_model_t& adComModel,
                                                      const std::string& pathToConfigFolder)
     : QuadrupedInterface(kinematicModel, adKinematicModel, comModel, adComModel, pathToConfigFolder) {
-  SwingTrajectoryPlannerSettings swingTrajectorySettings{};
-  swingTrajectorySettings.swingHeight = modelSettings().swingLegLiftOff_;
-  swingTrajectorySettings.liftOffVelocity = modelSettings().liftOffVelocity_;
-  swingTrajectorySettings.touchDownVelocity = modelSettings().touchDownVelocity_;
-  swingTrajectorySettings.swingTimeScale = 1.0;
-
+  // Swing planner.
+  switched_model::SwingTrajectoryPlannerSettings settings{};
+  settings.liftOffVelocity = modelSettings().liftOffVelocity_;
+  settings.touchDownVelocity = modelSettings().touchDownVelocity_;
+  settings.swingHeight = modelSettings().swingLegLiftOff_;
+  settings.touchdownAfterHorizon = 0.2;
+  settings.errorGain = 5.0;
+  settings.swingTimeScale = 0.15;
   auto swingTrajectoryPlanner =
-      std::make_shared<SwingTrajectoryPlanner>(swingTrajectorySettings, getComModel(), getKinematicModel(), getModeScheduleManagerPtr());
+      std::make_shared<SwingTrajectoryPlanner>(settings, getComModel(), getKinematicModel(), getModeScheduleManagerPtr());
   solverModules_.push_back(swingTrajectoryPlanner);
 
   state_matrix_t Q;

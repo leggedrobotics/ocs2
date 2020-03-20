@@ -28,7 +28,7 @@ model_settings
   enforceTorqueConstraint       0
   torqueLimit                   40.0
 
-  swingLegLiftOff               0.25
+  swingLegLiftOff               0.10
   liftOffVelocity               0.2
   touchDownVelocity             -0.4
 

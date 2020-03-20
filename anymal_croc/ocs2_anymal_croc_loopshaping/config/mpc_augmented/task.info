@@ -28,7 +28,7 @@ model_settings
   enforceTorqueConstraint       0
   torqueLimit                   40.0
 
-  swingLegLiftOff               0.25
+  swingLegLiftOff               0.10
   liftOffVelocity               0.2
   touchDownVelocity             -0.4
 
@@ -176,7 +176,7 @@ initialRobotState
    ; position
    (3,0) 0.0     ; x
    (4,0) 0.0     ; y
-   (5,0) 0.50  ; z
+   (5,0) 0.57    ; z
 
    ; joint state
    (6,0)  -0.25; -0.2      ; LF_HAA

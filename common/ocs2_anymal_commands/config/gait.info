@@ -243,11 +243,11 @@ skipping
 
 pawup
 {
-   templateSubsystemsSequence
+   modeSequence
    {
      [0]     RF_LH_RH
    }
-   templateSwitchingTimes
+   switchingTimes
    {
      [0]     0.0
      [1]     2.0

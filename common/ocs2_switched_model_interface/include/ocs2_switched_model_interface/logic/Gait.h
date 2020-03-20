@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <ostream>
 #include <vector>
 
 namespace switched_model {
@@ -51,5 +52,8 @@ double timeLeftInGait(double phase, const Gait& gait);
 
 /** Returns the time left in the current based on the phase variable */
 double timeLeftInMode(double phase, const Gait& gait);
+
+/** Print gait */
+std::ostream& operator<<(std::ostream& stream, const Gait& gait);
 
 }  // namespace switched_model

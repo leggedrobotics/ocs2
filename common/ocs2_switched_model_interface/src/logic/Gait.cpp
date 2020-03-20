@@ -4,6 +4,8 @@
 
 #include "ocs2_switched_model_interface/logic/Gait.h"
 
+#include <ocs2_core/misc/Display.h>
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -59,6 +61,13 @@ double timeLeftInMode(double phase, const Gait& gait) {
   } else {
     return timeLeftInGait(phase, gait);
   }
+}
+
+std::ostream& operator<<(std::ostream& stream, const Gait& gait) {
+  stream << "Duration:       " << gait.duration << "\n";
+  stream << "Event phases:  {" << ocs2::toDelimitedString(gait.eventPhases) << "}\n";
+  stream << "Mode sequence: {" << ocs2::toDelimitedString(gait.modeSequence) << "}\n";
+  return stream;
 }
 
 }  // namespace switched_model

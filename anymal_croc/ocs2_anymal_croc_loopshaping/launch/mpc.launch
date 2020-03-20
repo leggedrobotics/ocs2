@@ -1,6 +1,6 @@
 <launch>
     <arg name="rviz"       default="true" />
-    <arg name="task_name"  default="mpc_augmented"/>
+    <arg name="task_name"  default="mpc"/>
     <arg name="description_name"      default="ocs2_anymal_description"/>
 
     <group if="$(arg rviz)">

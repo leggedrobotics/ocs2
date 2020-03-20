@@ -65,10 +65,10 @@ class QuadrupedLoopshapingInterface : public ocs2::RobotInterface<STATE_DIM, INP
   std::shared_ptr<LoopshapingSynchronizedModule> getLoopshapingSynchronizedModule() const { return loopshapingSynchronizedModule_; };
 
   /** Gets kinematic model */
-  const kinematic_model_t& getKinematicModel() const { return quadrupedPtr_->getKinematicModel(); };
+  const kinematic_model_t& getKinematicModel() const { return quadrupedPtr_->getKinematicModel(); }
 
   /** Gets center of mass model */
-  const com_model_t& getComModel() const { return quadrupedPtr_->getComModel(); };
+  const com_model_t& getComModel() const { return quadrupedPtr_->getComModel(); }
 
   /** Gets the loaded initial state */
   const state_vector_t& getInitialState() const { return initialState_; }

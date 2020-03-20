@@ -21,7 +21,7 @@ class GaitSchedule {
  public:
   using scalar_t = ocs2::Dimensions<0, 0>::scalar_t;
 
-  GaitSchedule(ocs2::ModeSchedule initModeSchedule, scalar_t phaseTransitionStanceTime);
+  GaitSchedule(ocs2::ModeSchedule initModeSchedule, ModeSequenceTemplate initModeSequenceTemplate, scalar_t phaseTransitionStanceTime);
 
   /**
    * @param [in] lowerBoundTime: The smallest time for which the ModeSchedule should be defined.

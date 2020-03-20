@@ -7,10 +7,11 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-GaitSchedule::GaitSchedule(ocs2::ModeSchedule initModeSchedule, scalar_t phaseTransitionStanceTime)
+GaitSchedule::GaitSchedule(ocs2::ModeSchedule initModeSchedule, ModeSequenceTemplate initModeSequenceTemplate,
+                           scalar_t phaseTransitionStanceTime)
     : modeSchedule_(std::move(initModeSchedule)),
-      phaseTransitionStanceTime_(phaseTransitionStanceTime),
-      modeSequenceTemplate_({0.0, 1.0}, {modeSchedule_.modeSequence.back()}) {}
+      modeSequenceTemplate_(std::move(initModeSequenceTemplate)),
+      phaseTransitionStanceTime_(phaseTransitionStanceTime) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

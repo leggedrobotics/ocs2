@@ -10,16 +10,6 @@ QuadrupedWheeledInterface::QuadrupedWheeledInterface(const kinematic_model_t& ki
                                                      const com_model_t& comModel, const ad_com_model_t& adComModel,
                                                      const std::string& pathToConfigFolder)
     : QuadrupedInterface(kinematicModel, adKinematicModel, comModel, adComModel, pathToConfigFolder) {
-  SwingTrajectoryPlannerSettings swingTrajectorySettings{};
-  swingTrajectorySettings.swingHeight = modelSettings().swingLegLiftOff_;
-  swingTrajectorySettings.liftOffVelocity = modelSettings().liftOffVelocity_;
-  swingTrajectorySettings.touchDownVelocity = modelSettings().touchDownVelocity_;
-  swingTrajectorySettings.swingTimeScale = 1.0;
-
-  auto swingTrajectoryPlanner =
-      std::make_shared<SwingTrajectoryPlanner>(swingTrajectorySettings, getComModel(), getKinematicModel(), getModeScheduleManagerPtr());
-  solverModules_.push_back(swingTrajectoryPlanner);
-
   state_matrix_t Q;
   input_matrix_t R;
   state_matrix_t Qfinal;
@@ -29,8 +19,8 @@ QuadrupedWheeledInterface::QuadrupedWheeledInterface(const kinematic_model_t& ki
   dynamicsPtr_.reset(new system_dynamics_t(adKinematicModel, adComModel, modelSettings().recompileLibraries_));
   dynamicsDerivativesPtr_.reset(dynamicsPtr_->clone());
   // TODO : replace with wheel quadruped constraint.
-  constraintsPtr_.reset(
-      new constraint_t(adKinematicModel, adComModel, getModeScheduleManagerPtr(), swingTrajectoryPlanner, modelSettings()));
+  constraintsPtr_.reset(new constraint_t(adKinematicModel, adComModel, getModeScheduleManagerPtr(),
+                                         getModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), modelSettings()));
   operatingPointsPtr_.reset(new operating_point_t(getComModel(), getModeScheduleManagerPtr()));
   timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, rolloutSettings()));
 }

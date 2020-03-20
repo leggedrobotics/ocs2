@@ -28,9 +28,13 @@ model_settings
   enforceTorqueConstraint       0
   torqueLimit                   40.0
 
-  swingLegLiftOff               0.25
-  liftOffVelocity               0.20
-  touchDownVelocity             -0.40
+  swing_trajectory_settings
+  {
+    liftOffVelocity             0.2
+    touchDownVelocity           -0.4
+    swingHeight                 0.1
+    swingTimeScale              0.15
+  }
 
   mpcGoalCommandDelay           0.1
 

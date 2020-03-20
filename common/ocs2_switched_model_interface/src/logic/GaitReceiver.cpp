@@ -16,10 +16,10 @@ GaitReceiver::GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<GaitSched
 
 void GaitReceiver::preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
                                 const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
-  std::lock_guard<std::mutex> lock(receivedGaitMutex_);
   if (gaitUpdated_) {
-    std::cout << "[GaitReceiver]: Setting new gait after time " << finalTime << "\n";
-    std::cout << receivedGait_;
+    std::lock_guard<std::mutex> lock(receivedGaitMutex_);
+    std::cerr << "[GaitReceiver]: Setting new gait after time " << finalTime << "\n";
+    std::cerr << receivedGait_;
     const auto timeHorizon = finalTime - initTime;
     gaitSchedulePtr_->insertModeSequenceTemplate(receivedGait_, finalTime, timeHorizon);
     gaitUpdated_ = false;

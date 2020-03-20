@@ -3,6 +3,7 @@
 #include <ocs2_oc/oc_solver/ModeScheduleManager.h>
 
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
+#include "ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h"
 #include "ocs2_switched_model_interface/logic/GaitSchedule.h"
 
 namespace switched_model {
@@ -14,13 +15,16 @@ class SwitchedModelModeScheduleManager : public ocs2::ModeScheduleManager<STATE_
  public:
   using Base = ocs2::ModeScheduleManager<STATE_DIM, INPUT_DIM>;
 
-  explicit SwitchedModelModeScheduleManager(std::shared_ptr<GaitSchedule> gaitSchedulePtr);
+  SwitchedModelModeScheduleManager(std::shared_ptr<GaitSchedule> gaitSchedulePtr,
+                                   std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr);
 
   ~SwitchedModelModeScheduleManager() override = default;
 
   contact_flag_t getContactFlags(scalar_t time) const;
 
-  std::shared_ptr<GaitSchedule> getGaitSchedule() { return gaitSchedulePtr_; };
+  const std::shared_ptr<GaitSchedule>& getGaitSchedule() { return gaitSchedulePtr_; }
+
+  const std::shared_ptr<SwingTrajectoryPlanner>& getSwingTrajectoryPlanner() { return swingTrajectoryPtr_; }
 
  private:
   void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
@@ -28,6 +32,7 @@ class SwitchedModelModeScheduleManager : public ocs2::ModeScheduleManager<STATE_
 
  private:
   std::shared_ptr<GaitSchedule> gaitSchedulePtr_;
+  std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr_;
 };
 
 }  // namespace switched_model

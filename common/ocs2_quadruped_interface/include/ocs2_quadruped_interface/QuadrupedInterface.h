@@ -18,7 +18,6 @@
 #include <ocs2_switched_model_interface/core/MotionPhaseDefinition.h>
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 
-#include <ocs2_switched_model_interface/logic/ModeSequenceTemplate.h>
 #include <ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h>
 
 namespace switched_model {
@@ -77,9 +76,6 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
 
   /** Gets the loaded initial partition times */
   const scalar_array_t& getInitialPartitionTimes() const { return partitioningTimes_; }
-
-  /** Gets the loaded initial getInitialModeSequence */
-  const ModeSequenceTemplate& getInitialModeSequence() const { return *defaultModeSequenceTemplate_; }
 
   /** Access to rollout settings */
   const ocs2::Rollout_Settings& rolloutSettings() const { return rolloutSettings_; }

@@ -58,7 +58,7 @@ void ComKinoOperatingPointsBase::getSystemOperatingTrajectories(const state_vect
                                                                 state_vector_array_t& stateTrajectory,
                                                                 input_vector_array_t& inputTrajectory, bool concatOutput /*= false*/) {
   const auto midTime = 0.5 * (startTime + finalTime);
-  const contact_flag_t contactFlags = modeScheduleManagerPtr_->getContactFlags(midTime);
+  const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(midTime);
 
   Base::stateOperatingPoint_ = initialState;
   computeInputOperatingPoints(contactFlags, Base::inputOperatingPoint_);

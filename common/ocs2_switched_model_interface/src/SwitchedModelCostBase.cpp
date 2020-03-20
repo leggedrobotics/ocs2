@@ -42,7 +42,7 @@ SwitchedModelCostBase* SwitchedModelCostBase::clone() const {
 /******************************************************************************************************/
 void SwitchedModelCostBase::setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
   // Get stance configuration
-  contact_flag_t contactFlags = modeScheduleManagerPtr_->getContactFlags(t);
+  const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(t);
 
   dynamic_vector_t xNominal = state_vector_t::Zero();
   if (BASE::costDesiredTrajectoriesPtr_ != nullptr) {

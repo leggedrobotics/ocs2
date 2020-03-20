@@ -6,9 +6,9 @@
 
 #include <ocs2_core/misc/Display.h>
 #include <ocs2_core/misc/LoadData.h>
-#include <ocs2_switched_model_interface/core/Rotations.h>
 #include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
 #include <ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h>
+#include <ocs2_switched_model_interface/logic/ModeSequenceTemplate.h>
 
 namespace switched_model {
 
@@ -63,24 +63,23 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
   SwitchedModelStateEstimator switchedModelStateEstimator(*comModelPtr_);
   initialState_ = switchedModelStateEstimator.estimateComkinoModelState(initRbdState);
 
-  // load init mode schedule
-  auto initialModeSequenceTemplate = loadModeSequenceTemplate(pathToConfigFile, "initialModeSequenceTemplate", false);
-  size_array_t initModesSequence = initialModeSequenceTemplate.modeSequence;
-  initModesSequence.push_back(string2ModeNumber("STANCE"));
-  scalar_array_t initEventTimes(initialModeSequenceTemplate.switchingTimes.begin() + 1, initialModeSequenceTemplate.switchingTimes.end());
-  ocs2::ModeSchedule initModeSchedule{initEventTimes, initModesSequence};
+  // Gait Schedule
+  const auto initModeSchedule = loadModeSchedule(pathToConfigFile, "initialModeSchedule", false);
+  const auto defaultModeSequenceTemplate = loadModeSequenceTemplate(pathToConfigFile, "defaultModeSequenceTemplate", false);
+  auto gaitSchedule =
+      std::make_shared<GaitSchedule>(initModeSchedule, defaultModeSequenceTemplate, modelSettings().phaseTransitionStanceTime_);
 
-  // load the mode sequence template
-  defaultModeSequenceTemplate_.reset(
-      new ModeSequenceTemplate(loadModeSequenceTemplate(pathToConfigFile, "defaultModeSequenceTemplate", false)));
+  // Swing trajectory planner
+  const auto swingTrajectorySettings = loadSwingTrajectorySettings(pathToConfigFile);
+  auto swingTrajectoryPlanner = std::make_shared<SwingTrajectoryPlanner>(swingTrajectorySettings);
 
-  auto gaitSchedule = std::make_shared<GaitSchedule>(initModeSchedule, modelSettings_.phaseTransitionStanceTime_);
-  modeScheduleManagerPtr_ = std::make_shared<SwitchedModelModeScheduleManager>(std::move(gaitSchedule));
+  // Mode schedule manager
+  modeScheduleManagerPtr_ = std::make_shared<SwitchedModelModeScheduleManager>(gaitSchedule, swingTrajectoryPlanner);
 
   // Display
   std::cerr << "\nTime Partition: {" << ocs2::toDelimitedString(partitioningTimes_) << "}\n";
   std::cerr << "\nInitial Modes Schedule: \n" << initModeSchedule << std::endl;
-  std::cerr << "\nDefault Modes Sequence Template: \n" << *defaultModeSequenceTemplate_ << std::endl;
+  std::cerr << "\nDefault Modes Sequence Template: \n" << defaultModeSequenceTemplate << std::endl;
 }
 
 }  // namespace switched_model

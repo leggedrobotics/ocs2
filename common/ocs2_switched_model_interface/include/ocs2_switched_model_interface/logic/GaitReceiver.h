@@ -33,8 +33,8 @@ class GaitReceiver : public ocs2::SolverSynchronizedModule<STATE_DIM, INPUT_DIM>
   ros::Subscriber mpcModeSequenceSubscriber_;
 
   std::mutex receivedGaitMutex_;
+  std::atomic_bool gaitUpdated_;
   ModeSequenceTemplate receivedGait_;
-  bool gaitUpdated_;
 };
 
 }  // namespace switched_model

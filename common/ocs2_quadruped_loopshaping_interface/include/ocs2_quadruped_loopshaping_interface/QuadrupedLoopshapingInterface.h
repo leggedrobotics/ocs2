@@ -76,9 +76,6 @@ class QuadrupedLoopshapingInterface : public ocs2::RobotInterface<STATE_DIM, INP
   /** Gets the loaded initial partition times */
   const scalar_array_t& getInitialPartitionTimes() const { return quadrupedPtr_->getInitialPartitionTimes(); }
 
-  /** Gets the loaded initial getInitialModeSequence */
-  const switched_model::ModeSequenceTemplate& getInitialModeSequence() const { return quadrupedPtr_->getInitialModeSequence(); }
-
   /** Access to model settings */
   const switched_model::ModelSettings& modelSettings() const { return quadrupedPtr_->modelSettings(); };
 

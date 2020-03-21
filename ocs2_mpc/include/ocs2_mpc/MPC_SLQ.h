@@ -70,7 +70,6 @@ class MPC_SLQ : public MPC_BASE<STATE_DIM, INPUT_DIM> {
 
   using typename BASE::controller_const_ptr_array_t;
   using typename BASE::controller_ptr_array_t;
-  using typename BASE::mode_sequence_template_t;
 
   using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
   using linear_controller_array_t = typename linear_controller_t::array_t;
@@ -89,7 +88,7 @@ class MPC_SLQ : public MPC_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Default constructor.
    */
-  MPC_SLQ();
+  MPC_SLQ() = default;
 
   /**
    * Constructor
@@ -103,15 +102,13 @@ class MPC_SLQ : public MPC_BASE<STATE_DIM, INPUT_DIM> {
    * partitioningTimes will be shifted in time automatically.
    * @param [in] slqSettings: Structure containing the settings for the SLQ algorithm.
    * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
-   * @param [in] logicRulesPtr: The logic rules used for implementing mixed logical dynamical systems.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
   MPC_SLQ(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
           const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
           const scalar_array_t& partitioningTimes, const SLQ_Settings& slqSettings = SLQ_Settings(),
-          const MPC_Settings& mpcSettings = MPC_Settings(), std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
-          const mode_sequence_template_t* modeSequenceTemplatePtr = nullptr, const cost_function_base_t* heuristicsFunctionPtr = nullptr);
+          const MPC_Settings& mpcSettings = MPC_Settings(), const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
   /**
    * Default destructor.

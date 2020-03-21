@@ -27,61 +27,66 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include "ocs2_oc/oc_solver/ModeScheduleManager.h"
+
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-ModeSequence_ROS_Interface<SCALAR_T>::ModeSequence_ROS_Interface(std::string robotName /*= "robot"*/) : robotName_(std::move(robotName)) {}
+template <size_t STATE_DIM, size_t INPUT_DIM>
+ModeScheduleManager<STATE_DIM, INPUT_DIM>::ModeScheduleManager(ModeSchedule modeSchedule)
+    : modeSchedule_(std::move(modeSchedule)), modeScheduleBuffer_(), modeScheduleUpdated_(false) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-ModeSequence_ROS_Interface<SCALAR_T>::~ModeSequence_ROS_Interface() {
-  shutdownNodes();
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ModeScheduleManager<STATE_DIM, INPUT_DIM>::preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+                                                             const CostDesiredTrajectories& costDesiredTrajectory) {
+  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
+  if (modeScheduleUpdated_) {
+    modeScheduleUpdated_ = false;
+    swap(modeSchedule_, modeScheduleBuffer_);
+  }
+  preSolverRunImpl(initTime, finalTime, currentState, costDesiredTrajectory, modeSchedule_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-void ModeSequence_ROS_Interface<SCALAR_T>::publishModeSequenceTemplate(const mode_sequence_template_t& modeSequenceTemplate) {
-  RosMsgConversions<0, 0>::createModeSequenceTemplateMsg(modeSequenceTemplate, modeSequenceTemplateMsg_);
-
-  mpcModeSequencePublisher_.publish(modeSequenceTemplateMsg_);
+template <size_t STATE_DIM, size_t INPUT_DIM>
+const ModeSchedule& ModeScheduleManager<STATE_DIM, INPUT_DIM>::getModeSchedule() const {
+  return modeSchedule_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-void ModeSequence_ROS_Interface<SCALAR_T>::shutdownNodes() {
-  mpcModeSequencePublisher_.shutdown();
+template <size_t STATE_DIM, size_t INPUT_DIM>
+ModeSchedule ModeScheduleManager<STATE_DIM, INPUT_DIM>::getModeScheduleImage() const {
+  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
+  return modeSchedule_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-void ModeSequence_ROS_Interface<SCALAR_T>::launchNodes(int argc, char* argv[]) {
-  // reset counters and variables
-  reset();
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ModeScheduleManager<STATE_DIM, INPUT_DIM>::setModeSchedule(const ModeSchedule& modeSchedule) {
+  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
+  modeScheduleUpdated_ = true;
+  modeScheduleBuffer_ = modeSchedule;
+}
 
-  // display
-  ROS_INFO_STREAM("ModeSequence node is setting up ...");
-
-  // setup ROS
-  ::ros::init(argc, argv, robotName_ + "_mpc_mode_sequence");
-  ::ros::NodeHandle nodeHandler;
-
-  mpcModeSequencePublisher_ = nodeHandler.advertise<ocs2_msgs::mode_sequence>(robotName_ + "_mpc_mode_sequence", 1, true);
-
-  ros::spinOnce();
-
-  // display
-  ROS_INFO_STREAM(robotName_ + " mode sequence command node is ready.");
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ModeScheduleManager<STATE_DIM, INPUT_DIM>::setModeSchedule(ModeSchedule&& modeSchedule) {
+  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
+  modeScheduleUpdated_ = true;
+  modeScheduleBuffer_ = std::move(modeSchedule);
 }
 
 }  // namespace ocs2

@@ -32,29 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cmath>
 
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
-#include <ocs2_core/logic/rules/HybridLogicRules.h>
 
 namespace ocs2 {
-
-class pendulum_logic final : public HybridLogicRules {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = HybridLogicRules;
-
-  pendulum_logic() = default;
-  ~pendulum_logic() override = default;
-
-  pendulum_logic(scalar_array_t switchingTimes, size_array_t sybsystemsSequence) {}
-
-  void rewind(const scalar_t& lowerBoundTime, const scalar_t& upperBoundTime) override {}
-
-  void update() override {}
-
- protected:
-  void insertModeSequenceTemplate(const logic_template_type& modeSequenceTemplate, const scalar_t& startTime,
-                                  const scalar_t& finalTime) override{};
-};
 
 class pendulum_dyn final : public ControlledSystemBase<2, 1> {
  public:

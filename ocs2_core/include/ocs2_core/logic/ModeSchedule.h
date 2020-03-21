@@ -27,10 +27,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-//
-// Created by rgrandia on 09.03.20.
-//
-
 #pragma once
 
 #include <ostream>
@@ -43,30 +39,40 @@ namespace ocs2 {
 /**
  * Defines a sequence of N modes, separated by N-1 event times
  */
-class ModeSchedule {
+struct ModeSchedule {
   using scalar_t = typename Dimensions<0, 0>::scalar_t;
 
- public:
-  /** Default constructor for a single mode without events */
-  ModeSchedule() = default;
+  /**
+   * Default constructor.
+   */
+  ModeSchedule() : ModeSchedule(std::vector<scalar_t>{}, std::vector<size_t>{0}) {}
 
   /**
-   * Constructor for a ModeSchedule. The number of phases must be greater than zero (N > 0)
-   * @param eventTimes : event times of size N - 1
-   * @param modeSequence : mode sequence fo size N
+   * Constructor for a ModeSchedule. The number of modes must be greater than zero (N > 0)
+   * @param [in] eventTimesInput : event times of size N - 1
+   * @param [in] modeSequenceInput : mode sequence of size N
    */
-  ModeSchedule(std::vector<scalar_t> eventTimes, std::vector<size_t> modeSequence);
+  ModeSchedule(std::vector<scalar_t> eventTimesInput, std::vector<size_t> modeSequenceInput);
 
-  /** Gets the event times */
-  const std::vector<scalar_t>& eventTimes() const { return eventTimes_; }
+  /**
+   *  Returns the mode based on the query time.
+   *  Events are counted as follows:
+   *      ------ | ------ | ------ | ...  ------ | ------
+   *         t[0]     t[1]     t[2]        t[n-1]
+   *  mode: m[0]    m[1]     m[2] ...     m[n-1]    m[n]
+   *
+   *  If time equal to a switch time is requested, the lower count is taken
+   *
+   *  @param [in] time: The inquiry time.
+   *  @return the associated mode for the input time.
+   */
+  size_t modeAtTime(scalar_t time) const;
 
-  /** Gets the sequence of modes */
-  const std::vector<size_t>& modeSequence() const { return modeSequence_; }
-
- private:
-  std::vector<scalar_t> eventTimes_{};
-  std::vector<size_t> modeSequence_{0};
+  std::vector<scalar_t> eventTimes;  // event times of size N - 1
+  std::vector<size_t> modeSequence;  // mode sequence of size N
 };
+
+void swap(ModeSchedule& lh, ModeSchedule& rh);
 
 std::ostream& operator<<(std::ostream& stream, const ModeSchedule& modeSchedule);
 

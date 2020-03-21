@@ -103,7 +103,7 @@ class TargetTrajectories_Keyboard_Quadrotor final : public ocs2::TargetTrajector
     ::ros::spinOnce();
     {
       std::lock_guard<std::mutex> lock(latestObservationMutex_);
-      RosMsgConversions<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>::readObservationMsg(*latestObservation_, observation);
+      ros_msg_conversions::readObservationMsg(*latestObservation_, observation);
     }
 
     // reversing the order of the position and orientation.

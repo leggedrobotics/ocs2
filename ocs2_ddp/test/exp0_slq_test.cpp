@@ -65,10 +65,11 @@ TEST(exp0_slq_test, exp0_slq_test) {
   rolloutSettings.relTolODE_ = 1e-7;
   rolloutSettings.maxNumStepsPerSecond_ = 10000;
 
-  // switching times
+  // event times
   std::vector<double> eventTimes{0.1897};
   std::vector<size_t> subsystemsSequence{0, 1};
-  std::shared_ptr<EXP0_LogicRules> logicRules(new EXP0_LogicRules(eventTimes, subsystemsSequence));
+  std::shared_ptr<ModeScheduleManager<STATE_DIM, INPUT_DIM>> modeScheduleManagerPtr(
+      new ModeScheduleManager<STATE_DIM, INPUT_DIM>({eventTimes, subsystemsSequence}));
 
   double startTime = 0.0;
   double finalTime = 2.0;
@@ -85,17 +86,17 @@ TEST(exp0_slq_test, exp0_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // system rollout
-  EXP0_System systemDynamics(logicRules);
+  EXP0_System systemDynamics(modeScheduleManagerPtr);
   TimeTriggeredRollout<STATE_DIM, INPUT_DIM> timeTriggeredRollout(systemDynamics, rolloutSettings);
 
   // system derivatives
-  EXP0_SystemDerivative systemDerivative(logicRules);
+  EXP0_SystemDerivative systemDerivative(modeScheduleManagerPtr);
 
   // system constraints
   EXP0_SystemConstraint systemConstraint;
 
   // system cost functions
-  EXP0_CostFunction systemCostFunction(logicRules);
+  EXP0_CostFunction systemCostFunction(modeScheduleManagerPtr);
 
   // system operatingTrajectories
   Eigen::Matrix<double, 2, 1> stateOperatingPoint = Eigen::Matrix<double, 2, 1>::Zero();
@@ -108,12 +109,12 @@ TEST(exp0_slq_test, exp0_slq_test) {
   // SLQ - single-thread version
   slqSettings.ddpSettings_.nThreads_ = 1;
   slq_t slqST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
-  slqST.setModeSchedule(logicRules->getModeSchedule());
+  slqST.setModeScheduleManager(modeScheduleManagerPtr);
 
   slqSettings.ddpSettings_.nThreads_ = 3;
   // SLQ - multi-thread version
   slq_t slqMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
-  slqMT.setModeSchedule(logicRules->getModeSchedule());
+  slqMT.setModeScheduleManager(modeScheduleManagerPtr);
 
   // run single core SLQ
   if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {
@@ -196,7 +197,8 @@ TEST(exp0_slq_test, caching_test) {
   // switching times
   std::vector<double> eventTimes{1.0};
   std::vector<size_t> subsystemsSequence{0, 1};
-  std::shared_ptr<EXP0_LogicRules> logicRules(new EXP0_LogicRules(eventTimes, subsystemsSequence));
+  std::shared_ptr<ModeScheduleManager<STATE_DIM, INPUT_DIM>> modeScheduleManagerPtr(
+      new ModeScheduleManager<STATE_DIM, INPUT_DIM>({eventTimes, subsystemsSequence}));
 
   // partitioning times
   std::vector<double> partitioningTimes;
@@ -211,17 +213,17 @@ TEST(exp0_slq_test, caching_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // system rollout
-  EXP0_System systemDynamics(logicRules);
+  EXP0_System systemDynamics(modeScheduleManagerPtr);
   TimeTriggeredRollout<STATE_DIM, INPUT_DIM> timeTriggeredRollout(systemDynamics, rolloutSettings);
 
   // system derivatives
-  EXP0_SystemDerivative systemDerivative(logicRules);
+  EXP0_SystemDerivative systemDerivative(modeScheduleManagerPtr);
 
   // system constraints
   EXP0_SystemConstraint systemConstraint;
 
   // system cost functions
-  EXP0_CostFunction systemCostFunction(logicRules);
+  EXP0_CostFunction systemCostFunction(modeScheduleManagerPtr);
 
   // system operatingTrajectories
   Eigen::Matrix<double, 2, 1> stateOperatingPoint = Eigen::Matrix<double, 2, 1>::Zero();
@@ -234,7 +236,7 @@ TEST(exp0_slq_test, caching_test) {
   // SLQ - single-thread version
   using slq_t = SLQ<STATE_DIM, INPUT_DIM>;
   slq_t slqST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
-  slqST.setModeSchedule(logicRules->getModeSchedule());
+  slqST.setModeScheduleManager(modeScheduleManagerPtr);
 
   /******************************************************************************************************/
   /******************************************************************************************************/

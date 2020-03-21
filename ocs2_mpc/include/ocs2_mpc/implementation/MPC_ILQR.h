@@ -33,38 +33,20 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR() : BASE() {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                          const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                          const operating_trajectories_base_t* operatingTrajectoriesPtr,
                                          const scalar_array_t& partitioningTimes, const ILQR_Settings& ilqrSettings /* = ILQR_Settings()*/,
                                          const MPC_Settings& mpcSettings /* = MPC_Settings()*/,
-                                         std::shared_ptr<HybridLogicRules> logicRulesPtr /* = nullptr*/,
-                                         const mode_sequence_template_t* modeSequenceTemplatePtr /* = nullptr*/,
                                          const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
-    : BASE(partitioningTimes, mpcSettings, std::move(logicRulesPtr)) {
+    : BASE(partitioningTimes, mpcSettings) {
   // ILQR
   ilqrPtr_.reset(new ilqr_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, ilqrSettings,
                             heuristicsFunctionPtr));
 
   // set base solver's pointer
   BASE::setBaseSolverPtr(ilqrPtr_.get());
-
-  // set mode sequence template
-  if (modeSequenceTemplatePtr) {
-    this->logicRulesPtr_->setModeSequenceTemplate(*modeSequenceTemplatePtr);
-
-    if (mpcSettings.recedingHorizon_) {
-      const scalar_t timeHorizon = BASE::initPartitioningTimes_.back() - BASE::initPartitioningTimes_.front();
-      this->logicRulesPtr_->insertInternalModeSequenceTemplate(timeHorizon, 2.0 * timeHorizon);
-    }
-  }
 }
 
 /******************************************************************************************************/

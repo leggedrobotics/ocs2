@@ -3,7 +3,6 @@
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_core/logic/rules/HybridLogicRules.h>
 
 #include "ocs2_oc/oc_data/PrimalSolution.h"
 
@@ -21,7 +20,9 @@ class SolverSynchronizedModule {
 
   using primal_solution_t = PrimalSolution<STATE_DIM, INPUT_DIM>;
 
-  //! Default destructor
+  /**
+   * Default destructor
+   */
   virtual ~SolverSynchronizedModule() = default;
 
   /**
@@ -31,10 +32,9 @@ class SolverSynchronizedModule {
    * @param finalTime : Final time of the MPC horizon
    * @param currentState : State at the start of the MPC horizon
    * @param costDesiredTrajectory : User defined cost desired trajectory
-   * @param modeSchedule: Contains the discrete event time information
    */
   virtual void preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
-                            const CostDesiredTrajectories& costDesiredTrajectory, const ModeSchedule& modeSchedule) = 0;
+                            const CostDesiredTrajectories& costDesiredTrajectory) = 0;
 
   /**
    * Method called right after the solver runs

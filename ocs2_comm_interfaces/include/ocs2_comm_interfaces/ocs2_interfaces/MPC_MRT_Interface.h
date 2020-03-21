@@ -36,7 +36,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <thread>
 
-#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_mpc/MPC_BASE.h>
 
@@ -79,8 +78,6 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   using input_state_matrix_array_t = typename mpc_t::input_state_matrix_array_t;
   using dynamic_vector_t = typename mpc_t::dynamic_vector_t;
 
-  using mode_sequence_template_t = typename mpc_t::mode_sequence_template_t;
-
   using system_observation_t = SystemObservation<STATE_DIM, INPUT_DIM>;
 
   using state_linear_interpolation_t = EigenLinearInterpolation<state_vector_t>;
@@ -89,9 +86,8 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Constructor
    * @param [in] mpc: The underlying MPC class to be used.
-   * @param [in] logicRules (optional)
    */
-  explicit MPC_MRT_Interface(mpc_t& mpc, std::shared_ptr<HybridLogicRules> logicRules = nullptr);
+  explicit MPC_MRT_Interface(mpc_t& mpc);
 
   /**
    * Destructor.
@@ -108,13 +104,6 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * @param targetTrajectories
    */
   void setTargetTrajectories(const CostDesiredTrajectories& targetTrajectories);
-
-  /**
-   * Set a new mode sequence template
-   * It is safe to set a new value while the MPC optimization is running
-   * @param [in] modeSequenceTemplate
-   */
-  void setModeSequence(const mode_sequence_template_t& modeSequenceTemplate);
 
   /**
    * Advance the mpc module for one iteration.

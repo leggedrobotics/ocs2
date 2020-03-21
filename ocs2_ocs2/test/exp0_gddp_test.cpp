@@ -72,10 +72,11 @@ TEST(exp0_gddp_test, optimum_gradient_test) {
   gddpSettings.relTolODE_ = 1e-7;
   gddpSettings.maxNumStepsPerSecond_ = 10000;
 
-  // switching times
+  // event times
   std::vector<double> optimumEventTimes{0.1897};
   std::vector<size_t> subsystemsSequence{0, 1};
-  std::shared_ptr<EXP0_LogicRules> logicRules(new EXP0_LogicRules(optimumEventTimes, subsystemsSequence));
+  std::shared_ptr<ModeScheduleManager<STATE_DIM, INPUT_DIM>> modeScheduleManagerPtr(
+      new ModeScheduleManager<STATE_DIM, INPUT_DIM>({optimumEventTimes, subsystemsSequence}));
 
   double startTime = 0.0;
   double finalTime = 2.0;
@@ -92,17 +93,17 @@ TEST(exp0_gddp_test, optimum_gradient_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // system dynamics
-  EXP0_System systemDynamics(logicRules);
+  EXP0_System systemDynamics(modeScheduleManagerPtr);
   TimeTriggeredRollout<STATE_DIM, INPUT_DIM> timeTriggeredRollout(systemDynamics, rolloutSettings);
 
   // system derivatives
-  EXP0_SystemDerivative systemDerivative(logicRules);
+  EXP0_SystemDerivative systemDerivative(modeScheduleManagerPtr);
 
   // system constraints
   EXP0_SystemConstraint systemConstraint;
 
   // system cost functions
-  EXP0_CostFunction systemCostFunction(logicRules);
+  EXP0_CostFunction systemCostFunction(modeScheduleManagerPtr);
 
   // system operatingTrajectories
   Eigen::Matrix<double, STATE_DIM, 1> stateOperatingPoint = Eigen::Matrix<double, STATE_DIM, 1>::Zero();
@@ -115,7 +116,7 @@ TEST(exp0_gddp_test, optimum_gradient_test) {
   // SLQ - single core version
   SLQ<STATE_DIM, INPUT_DIM> slqST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
                                   slqSettings);
-  slqST.setModeSchedule(logicRules->getModeSchedule());
+  slqST.setModeScheduleManager(modeScheduleManagerPtr);
 
   // SLQ data collector
   SLQ_DataCollector<STATE_DIM, INPUT_DIM> slqDataCollector(&timeTriggeredRollout, &systemDerivative, &systemConstraint,

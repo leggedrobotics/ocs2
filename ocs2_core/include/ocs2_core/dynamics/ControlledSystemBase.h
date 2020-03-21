@@ -38,9 +38,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_core/Dimensions.h"
 #include "ocs2_core/control/ControllerBase.h"
 #include "ocs2_core/integration/OdeBase.h"
-#include "ocs2_core/logic/machine/HybridLogicRulesMachine.h"
-#include "ocs2_core/logic/rules/HybridLogicRules.h"
-#include "ocs2_core/logic/rules/NullLogicRules.h"
 
 namespace ocs2 {
 

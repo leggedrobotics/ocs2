@@ -88,7 +88,7 @@ class OCS2 : public GradientDescent {
    */
   OCS2(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
        const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
-       const SLQ_Settings& settings = SLQ_Settings(), std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
+       const SLQ_Settings& settings, std::shared_ptr<ModeScheduleManager<STATE_DIM, INPUT_DIM>> modeScheduleManagerPtr,
        const cost_function_base_t* heuristicsFunctionPtr = nullptr, const GDDP_Settings& gddpSettings = GDDP_Settings(),
        const NLP_Settings& nlpSettings = NLP_Settings());
 

@@ -72,8 +72,8 @@ void DDP_DataCollector<STATE_DIM, INPUT_DIM>::collect(const ddp_t* constDdpPtr) 
 
   rewindCounter_ = ddpPtr->rewindCounter_;
 
-  eventTimes_ = ddpPtr->getLogicRulesPtr()->eventTimes();
-  // subsystemsSequence_ = ddpPtr->getLogicRulesPtr()->subsystemsSequence();
+  eventTimes_ = ddpPtr->getModeSchedule().eventTimes;
+  subsystemsSequence_ = ddpPtr->getModeSchedule().modeSequence;
 
   // optimized controller
   optimizedControllersStock_ = ddpPtr->nominalControllersStock_;
@@ -129,7 +129,7 @@ void DDP_DataCollector<STATE_DIM, INPUT_DIM>::calculateStateInputConstraintsSens
     dynamic_vector_array3_t& EvDevEventTimesProjectedTrajectoriesStockSet) {
   auto* ddpPtr = const_cast<ddp_t*>(constDdpPtr);
 
-  const size_t numEventTimes = constDdpPtr->getLogicRulesPtr()->getNumEventTimes();
+  const size_t numEventTimes = constDdpPtr->getModeSchedule().eventTimes.size();
 
   // resizing EvDev container
   EvDevEventTimesTrajectoryStockSet.resize(numEventTimes);

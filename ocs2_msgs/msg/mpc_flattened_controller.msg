@@ -13,7 +13,7 @@ mpc_target_trajectories planTargetTrajectories # target trajectory in cost funct
 mpc_state[]             stateTrajectory        # optimized state trajectory from planner
 mpc_input[]             inputTrajectory        # optimized input trajectory from planner
 float32[]               timeTrajectory         # time trajectory for stateTrajectory and inputTrajectory
-mode_sequence           modeSequence           # Optimal/Predefined MPC mode sequence
+mode_schedule           modeSchedule           # Optimal/Predefined MPC mode sequence and event times
 
 bool                    controllerIsUpdated
 

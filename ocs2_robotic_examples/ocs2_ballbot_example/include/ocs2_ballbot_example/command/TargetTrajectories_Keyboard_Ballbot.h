@@ -93,7 +93,7 @@ class TargetTrajectories_Keyboard_Ballbot final : public TargetTrajectories_Keyb
     ::ros::spinOnce();
     {
       std::lock_guard<std::mutex> lock(latestObservationMutex_);
-      RosMsgConversions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>::readObservationMsg(*latestObservation_, observation);
+      ros_msg_conversions::readObservationMsg(*latestObservation_, observation);
     }
 
     // desired state from command line (position is relative, velocity absolute)

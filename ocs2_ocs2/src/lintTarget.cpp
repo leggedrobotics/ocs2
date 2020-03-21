@@ -9,7 +9,6 @@
 #include <ocs2_ocs2/upper_level_op/UpperLevelCost.h>
 
 // ocs2_ocs2
-#include <ocs2_ocs2/EventTimeIndexer.h>
 #include <ocs2_ocs2/FrankWolfeGDDP.h>
 #include <ocs2_ocs2/GDDP.h>
 #include <ocs2_ocs2/GDDP_Settings.h>

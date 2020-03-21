@@ -147,9 +147,6 @@ TEST(StateRolloutTests, rolloutTestPendulumDynamics) {
   ocs2::Rollout_Settings rolloutSettings;
   ocs2::pendulum_dyn dynamics;
   ocs2::StateTriggeredRollout<2, 1> rollout(dynamics, rolloutSettings);
-  // Create Logic Rules
-  ocs2::pendulum_logic logic;
-  ocs2::pendulum_logic* logicRules = &logic;
   // Construct Variables for run
   // Simulation time
   scalar_t t0 = 0;
@@ -250,7 +247,6 @@ TEST(StateRolloutTests, runHybridDynamics) {
   // Create Logic Rules
   std::vector<double> eventTimes(0);
   std::vector<size_t> subsystemsSequence{1};
-  std::shared_ptr<ocs2::hybridSysLogic> logicRules(new ocs2::hybridSysLogic(eventTimes, subsystemsSequence));
   // Construct State TriggerdRollout Object
   ocs2::Rollout_Settings rolloutSettings;
   ocs2::hybridSysDynamics dynamics;

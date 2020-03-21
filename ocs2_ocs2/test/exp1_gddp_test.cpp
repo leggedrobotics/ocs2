@@ -76,7 +76,8 @@ TEST(exp1_gddp_test, optimum_gradient_test) {
   // logic rule
   std::vector<double> optimumEventTimes{0.2262, 1.0176};
   std::vector<size_t> subsystemsSequence{0, 1, 2};
-  std::shared_ptr<EXP1_LogicRules> logicRules(new EXP1_LogicRules(optimumEventTimes, subsystemsSequence));
+  std::shared_ptr<ModeScheduleManager<STATE_DIM, INPUT_DIM>> modeScheduleManagerPtr(
+      new ModeScheduleManager<STATE_DIM, INPUT_DIM>({optimumEventTimes, subsystemsSequence}));
 
   double startTime = 0.0;
   double finalTime = 3.0;
@@ -94,17 +95,17 @@ TEST(exp1_gddp_test, optimum_gradient_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // system dynamics
-  EXP1_System systemDynamics(logicRules);
+  EXP1_System systemDynamics(modeScheduleManagerPtr);
   TimeTriggeredRollout<STATE_DIM, INPUT_DIM> timeTriggeredRollout(systemDynamics, rolloutSettings);
 
   // system derivatives
-  EXP1_SystemDerivative systemDerivative(logicRules);
+  EXP1_SystemDerivative systemDerivative(modeScheduleManagerPtr);
 
   // system constraints
   EXP1_SystemConstraint systemConstraint;
 
   // system cost functions
-  EXP1_CostFunction systemCostFunction(logicRules);
+  EXP1_CostFunction systemCostFunction(modeScheduleManagerPtr);
 
   // system operatingTrajectories
   Eigen::Matrix<double, STATE_DIM, 1> stateOperatingPoint = Eigen::Matrix<double, STATE_DIM, 1>::Zero();
@@ -116,7 +117,9 @@ TEST(exp1_gddp_test, optimum_gradient_test) {
   /******************************************************************************************************/
   // SLQ - single tread version
   SLQ<STATE_DIM, INPUT_DIM> slqST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
-                                  slqSettings, logicRules);
+                                  slqSettings);
+  slqST.setModeScheduleManager(modeScheduleManagerPtr);
+
   // SLQ data collector
   SLQ_DataCollector<STATE_DIM, INPUT_DIM> slqDataCollector(&timeTriggeredRollout, &systemDerivative, &systemConstraint,
                                                            &systemCostFunction);

@@ -80,14 +80,18 @@ class UpperLevelCost final : public NLP_Cost {
    */
   UpperLevelCost(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                  const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
-                 const operating_trajectories_base_t* operatingTrajectoriesPtr, const SLQ_Settings& settings = SLQ_Settings(),
-                 std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr, const cost_function_base_t* heuristicsFunctionPtr = nullptr,
-                 bool display = false, const GDDP_Settings& gddpSettings = GDDP_Settings())
+                 const operating_trajectories_base_t* operatingTrajectoriesPtr, const SLQ_Settings& settings,
+                 std::shared_ptr<ModeScheduleManager<STATE_DIM, INPUT_DIM>> modeScheduleManagerPtr,
+                 const cost_function_base_t* heuristicsFunctionPtr = nullptr, bool display = false,
+                 const GDDP_Settings& gddpSettings = GDDP_Settings())
       : slqPtr_(new slq_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings,
-                          logicRulesPtr, heuristicsFunctionPtr)),
+                          heuristicsFunctionPtr)),
         slqDataCollectorPtr_(new ddp_data_collector_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr)),
+        modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)),
         gddpPtr_(new gddp_t(gddpSettings)),
-        display_(display) {}
+        display_(display) {
+    slqPtr_->setModeScheduleManager(modeScheduleManagerPtr_);
+  }
 
   /**
    * Default destructor.
@@ -113,8 +117,8 @@ class UpperLevelCost final : public NLP_Cost {
   size_t setCurrentParameter(const dynamic_vector_t& x) override {
     // set event time
     eventTimes_ = scalar_array_t(x.data(), x.data() + x.size());
-    slqPtr_->getLogicRulesPtr()->eventTimes() = eventTimes_;
-    slqPtr_->getLogicRulesMachinePtr()->logicRulesUpdated();
+    auto modeSequence = modeScheduleManagerPtr_->getModeSchedule().modeSequence;
+    modeScheduleManagerPtr_->setModeSchedule({eventTimes_, modeSequence});
 
     // run SLQ
     try {
@@ -176,6 +180,7 @@ class UpperLevelCost final : public NLP_Cost {
  private:
   std::unique_ptr<slq_t> slqPtr_;
   std::unique_ptr<ddp_data_collector_t> slqDataCollectorPtr_;
+  std::shared_ptr<ModeScheduleManager<STATE_DIM, INPUT_DIM>> modeScheduleManagerPtr_;
   std::unique_ptr<gddp_t> gddpPtr_;
   bool display_;
 

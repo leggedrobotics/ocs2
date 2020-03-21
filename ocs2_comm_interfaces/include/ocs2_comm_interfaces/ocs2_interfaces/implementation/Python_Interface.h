@@ -49,7 +49,7 @@ void PythonInterface<STATE_DIM, INPUT_DIM>::init(const RobotInterface<STATE_DIM,
   }
   mpcPtr_ = std::move(mpcPtr);
 
-  mpcMrtInterface_.reset(new MPC_MRT_Interface<STATE_DIM, INPUT_DIM>(*mpcPtr_, robotInterface.getLogicRulesPtr()));
+  mpcMrtInterface_.reset(new MPC_MRT_Interface<STATE_DIM, INPUT_DIM>(*mpcPtr_));
 
   dynamics_.reset(robotInterface.getDynamics().clone());
   dynamicsDerivatives_.reset(robotInterface.getDynamicsDerivatives().clone());

@@ -39,11 +39,10 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivativ
                                const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                const operating_trajectories_base_t* operatingTrajectoriesPtr,
                                const SLQ_Settings& settings /*= SLQ_Settings()*/,
-                               std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
                                const cost_function_base_t* heuristicsFunctionPtr /* = nullptr*/)
 
     : BASE(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings.ddpSettings_,
-           heuristicsFunctionPtr, "SLQ", std::move(logicRulesPtr)),
+           heuristicsFunctionPtr, "SLQ"),
       settings_(settings) {
   // Riccati Solver
   riccatiEquationsPtrStock_.clear();

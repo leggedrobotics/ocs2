@@ -39,8 +39,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/control/ControllerBase.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
-#include <ocs2_core/logic/rules/HybridLogicRules.h>
 #include <ocs2_core/misc/Benchmark.h>
 
 #include "ocs2_mpc/MPC_Settings.h"
@@ -82,8 +80,6 @@ class MPC_BASE {
   using controller_ptr_array_t = std::vector<controller_t*>;
   using controller_const_ptr_array_t = std::vector<const controller_t*>;
 
-  using mode_sequence_template_t = ModeSequenceTemplate<scalar_t>;
-
   using solver_base_t = Solver_BASE<STATE_DIM, INPUT_DIM>;
   using primal_solution_t = typename solver_base_t::primal_solution_t;
 
@@ -97,7 +93,7 @@ class MPC_BASE {
    * @param [in] partitioningTimes: Array of times to divide up the horizon
    * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
    */
-  explicit MPC_BASE(const scalar_array_t& partitioningTimes, MPC_Settings mpcSettings = MPC_Settings());
+  MPC_BASE(const scalar_array_t& partitioningTimes, MPC_Settings mpcSettings);
 
   /**
    * destructor.
@@ -169,20 +165,6 @@ class MPC_BASE {
   virtual void getPartitioningTimes(scalar_array_t& partitioningTimes) const;
 
   /**
-   * Gets a constant pointer to the logic rules.
-   *
-   * @return a constant pointer to the logic rules.
-   */
-  virtual const HybridLogicRules* getLogicRulesPtr() const;
-
-  /**
-   * Sets a new logicRules template.
-   *
-   * @param [in] newLogicRulesTemplate: New logicRules template
-   */
-  virtual void setNewLogicRulesTemplate(const mode_sequence_template_t& newLogicRulesTemplate);
-
-  /**
    * Gets the MPC settings.
    *
    * @return structure which details MPC settings
@@ -221,11 +203,6 @@ class MPC_BASE {
   MPC_Settings mpcSettings_;
 
   bool initRun_;
-
-  // user command variables
-  std::atomic<bool> logicRulesTemplateUpdated_;
-  std::mutex newLogicRulesTemplateMutex_;
-  mode_sequence_template_t newLogicRulesTemplate_;
 
   benchmark::RepeatedTimer mpcTimer_;
 

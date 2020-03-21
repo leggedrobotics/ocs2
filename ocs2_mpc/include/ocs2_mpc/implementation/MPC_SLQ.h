@@ -33,51 +33,20 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_SLQ<STATE_DIM, INPUT_DIM>::MPC_SLQ()
-
-    : BASE() {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
 MPC_SLQ<STATE_DIM, INPUT_DIM>::MPC_SLQ(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                        const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                        const operating_trajectories_base_t* operatingTrajectoriesPtr,
                                        const scalar_array_t& partitioningTimes, const SLQ_Settings& slqSettings /* = SLQ_Settings()*/,
                                        const MPC_Settings& mpcSettings /* = MPC_Settings()*/,
-                                       std::shared_ptr<HybridLogicRules> logicRulesPtr /* = nullptr*/,
-                                       const mode_sequence_template_t* modeSequenceTemplatePtr /* = nullptr*/,
                                        const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
 
     : BASE(partitioningTimes, mpcSettings) {
   // SLQ
-
   slqPtr_.reset(new slq_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, slqSettings,
-                          logicRulesPtr, heuristicsFunctionPtr));
+                          heuristicsFunctionPtr));
 
   // set base solver's pointer
   BASE::setBaseSolverPtr(slqPtr_.get());
-
-  // set mode sequence template
-  if (modeSequenceTemplatePtr) {
-    slqPtr_->getLogicRulesPtr()->setModeSequenceTemplate(*modeSequenceTemplatePtr);
-
-    if (mpcSettings.recedingHorizon_) {
-      const scalar_array_t& eventTimes = slqPtr_->getLogicRulesPtr()->eventTimes();
-      const scalar_t timeHorizon = BASE::initPartitioningTimes_.back() - BASE::initPartitioningTimes_.front();
-      const scalar_t finalTime = BASE::initPartitioningTimes_.back() + timeHorizon;
-
-      if (eventTimes.size() == 0) {
-        const scalar_t startTime = BASE::initPartitioningTimes_.front();
-        slqPtr_->getLogicRulesPtr()->insertInternalModeSequenceTemplate(startTime, finalTime);
-
-      } else if (eventTimes.back() <= finalTime) {
-        const scalar_t startTime = eventTimes.back();
-        slqPtr_->getLogicRulesPtr()->insertInternalModeSequenceTemplate(startTime, finalTime);
-      }
-    }
-  }
 }
 
 /******************************************************************************************************/

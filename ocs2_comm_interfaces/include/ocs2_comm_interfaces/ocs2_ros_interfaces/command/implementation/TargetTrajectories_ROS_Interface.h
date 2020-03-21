@@ -44,24 +44,6 @@ TargetTrajectories_ROS_Interface<SCALAR_T>::TargetTrajectories_ROS_Interface(int
 /******************************************************************************************************/
 template <typename SCALAR_T>
 TargetTrajectories_ROS_Interface<SCALAR_T>::~TargetTrajectories_ROS_Interface() {
-  shutdownNodes();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-void TargetTrajectories_ROS_Interface<SCALAR_T>::publishTargetTrajectories(const CostDesiredTrajectories& costDesiredTrajectories) {
-  RosMsgConversions<0, 0>::createTargetTrajectoriesMsg(costDesiredTrajectories, mpcTargetTrajectoriesMsg_);
-
-  mpcTargetTrajectoriesPublisher_.publish(mpcTargetTrajectoriesMsg_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-void TargetTrajectories_ROS_Interface<SCALAR_T>::shutdownNodes() {
   mpcTargetTrajectoriesPublisher_.shutdown();
 }
 
@@ -69,10 +51,17 @@ void TargetTrajectories_ROS_Interface<SCALAR_T>::shutdownNodes() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-void TargetTrajectories_ROS_Interface<SCALAR_T>::launchNodes() {
-  // reset counters and variables
-  reset();
+void TargetTrajectories_ROS_Interface<SCALAR_T>::publishTargetTrajectories(const CostDesiredTrajectories& costDesiredTrajectories) {
+  ocs2_msgs::mpc_target_trajectories mpcTargetTrajectoriesMsg;
+  ros_msg_conversions::createTargetTrajectoriesMsg(costDesiredTrajectories, mpcTargetTrajectoriesMsg);
+  mpcTargetTrajectoriesPublisher_.publish(mpcTargetTrajectoriesMsg);
+}
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR_T>
+void TargetTrajectories_ROS_Interface<SCALAR_T>::launchNodes() {
   // display
   ROS_INFO_STREAM("TargetTrajectories node is setting up ...");
 

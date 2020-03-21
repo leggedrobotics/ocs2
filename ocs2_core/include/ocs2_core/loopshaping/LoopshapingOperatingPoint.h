@@ -6,7 +6,6 @@
 #define OCS2_LOOPSHAPINGOPERATINGPOINT_H
 
 #include "ocs2_core/initialization/SystemOperatingTrajectoriesBase.h"
-#include "ocs2_core/logic/rules/NullLogicRules.h"
 #include "ocs2_core/loopshaping/LoopshapingDefinition.h"
 
 namespace ocs2 {

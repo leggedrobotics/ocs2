@@ -39,9 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/control/ControllerBase.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
-#include <ocs2_core/logic/rules/HybridLogicRules.h>
-#include <ocs2_core/logic/rules/NullLogicRules.h>
+#include <ocs2_core/logic/ModeSchedule.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
@@ -79,10 +77,9 @@ class MRT_BASE {
   using command_data_t = CommandData<STATE_DIM, INPUT_DIM>;
 
   /**
-   * @brief MRT_BASE constructor
-   * @param[in] logicRules: Optional pointer to the logic rules.
+   * Constructor
    */
-  explicit MRT_BASE(std::shared_ptr<HybridLogicRules> logicRules = nullptr);
+  MRT_BASE();
 
   /**
    * @brief Default destructor
@@ -139,10 +136,10 @@ class MRT_BASE {
    * @param [in] currentState: the query state.
    * @param [out] mpcState: the current nominal state of MPC.
    * @param [out] mpcInput: the optimized control input.
-   * @param [out] subsystem: the active subsystem.
+   * @param [out] mode: the active mode.
    */
   void evaluatePolicy(scalar_t currentTime, const state_vector_t& currentState, state_vector_t& mpcState, input_vector_t& mpcInput,
-                      size_t& subsystem);
+                      size_t& mode);
 
   /**
    * @brief Rolls out the control policy from the current time and state to get the next state and input using the MPC policy.
@@ -152,10 +149,10 @@ class MRT_BASE {
    * @param [in] timeStep: duration of the forward rollout.
    * @param [out] mpcState: the new forwarded state of MPC.
    * @param [out] mpcInput: the new control input of MPC.
-   * @param [out] subsystem: the active subsystem.
+   * @param [out] mode: the active mode.
    */
   void rolloutPolicy(scalar_t currentTime, const state_vector_t& currentState, const scalar_t& timeStep, state_vector_t& mpcState,
-                     input_vector_t& mpcInput, size_t& subsystem);
+                     input_vector_t& mpcInput, size_t& mode);
 
   /**
    * Checks the data buffer for an update of the MPC policy. If a new policy
@@ -167,17 +164,10 @@ class MRT_BASE {
   bool updatePolicy();
 
   /**
-   * Reseats the logic rules in the logic rules machine
-   *
-   * @param [in] logicRules : pointer to the shared logic rules.
-   */
-  void setLogicRules(std::shared_ptr<HybridLogicRules> logicRules);
-
-  /**
    * @brief rolloutSet: Whether or not the internal rollout object has been set
    * @return True if a rollout object is available.
    */
-  bool rolloutSet() const { return rolloutPtr_.get(); }
+  bool isRolloutSet() const { return rolloutPtr_.get(); }
 
  protected:
   /**
@@ -228,9 +218,7 @@ class MRT_BASE {
   mutable std::mutex policyBufferMutex_;  // for policy variables WITH suffix (*Buffer_)
 
   // variables needed for policy evaluation
-  std::function<size_t(scalar_t)> findActiveSubsystemFnc_;
   std::unique_ptr<rollout_base_t> rolloutPtr_;
-  HybridLogicRulesMachine::Ptr logicMachinePtr_;
 
   // variables
   scalar_array_t partitioningTimes_;

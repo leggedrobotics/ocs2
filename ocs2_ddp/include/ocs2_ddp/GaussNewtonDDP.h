@@ -118,9 +118,6 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using linear_quadratic_approximator_t = LinearQuadraticApproximator<STATE_DIM, INPUT_DIM>;
   using operating_trajectorie_rollout_t = OperatingTrajectoriesRollout<STATE_DIM, INPUT_DIM>;
 
-  using logic_rules_machine_t = HybridLogicRulesMachine;
-  using logic_rules_machine_ptr_t = typename logic_rules_machine_t::Ptr;
-
   using performance_index_t = PerformanceIndex<scalar_t>;
 
   // Line-Search
@@ -171,13 +168,11 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation.
    * If it is not defined, we will use the terminal cost function defined in costFunctionPtr.
    * @param [in] algorithmName: It should be either SLQ ot ILQR.
-   * @param [in] logicRulesPtr: The logic rules used for implementing mixed-logic dynamical systems.
    */
   GaussNewtonDDP(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                  const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                  const operating_trajectories_base_t* operatingTrajectoriesPtr, const DDP_Settings& ddpSettings,
-                 const cost_function_base_t* heuristicsFunctionPtr, const char* algorithmName,
-                 std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr);
+                 const cost_function_base_t* heuristicsFunctionPtr, const char* algorithmName);
 
   /**
    * Destructor.

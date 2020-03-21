@@ -13,7 +13,7 @@ add_message_files(
     FILES
         mpc_state.msg
         mpc_input.msg
-        mode_sequence.msg
+        mode_schedule.msg
         mpc_observation.msg
         mpc_target_trajectories.msg
         controller_data.msg

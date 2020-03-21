@@ -101,14 +101,12 @@ class SLQ final : public GaussNewtonDDP<STATE_DIM, INPUT_DIM> {
    * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
    * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of SLQ.
    * @param [in] settings: Structure containing the settings for the SLQ algorithm.
-   * @param [in] logicRulesPtr: The logic rules used for implementing mixed-logic dynamical systems.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
   SLQ(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
       const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
-      const SLQ_Settings& settings = SLQ_Settings(), std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
-      const cost_function_base_t* heuristicsFunctionPtr = nullptr);
+      const SLQ_Settings& settings = SLQ_Settings(), const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
   /**
    * Default destructor.

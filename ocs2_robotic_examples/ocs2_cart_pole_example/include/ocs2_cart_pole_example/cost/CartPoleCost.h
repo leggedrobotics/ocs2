@@ -30,7 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/cost/QuadraticCostFunction.h>
-#include <ocs2_core/logic/rules/NullLogicRules.h>
 
 #include "ocs2_cart_pole_example/CartPoleParameters.h"
 #include "ocs2_cart_pole_example/definitions.h"

@@ -37,11 +37,10 @@ ILQR<STATE_DIM, INPUT_DIM>::ILQR(const rollout_base_t* rolloutPtr, const derivat
                                  const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                  const operating_trajectories_base_t* operatingTrajectoriesPtr,
                                  const ILQR_Settings& settings /*= ILQR_Settings()*/,
-                                 std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
                                  const cost_function_base_t* heuristicsFunctionPtr /* = nullptr*/)
 
     : BASE(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings.ddpSettings_,
-           heuristicsFunctionPtr, "ILQR", logicRulesPtr),
+           heuristicsFunctionPtr, "ILQR"),
       settings_(settings) {
   // Riccati Solver
   riccatiEquationsPtrStock_.clear();

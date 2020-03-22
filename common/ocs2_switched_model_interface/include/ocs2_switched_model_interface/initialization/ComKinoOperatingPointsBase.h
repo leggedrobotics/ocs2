@@ -4,7 +4,7 @@
 
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
-#include "ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h"
+#include "ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h"
 
 namespace switched_model {
 
@@ -21,9 +21,8 @@ class ComKinoOperatingPointsBase : public ocs2::SystemOperatingPoint<STATE_DIM, 
   using typename Base::state_vector_t;
 
   using com_model_t = ComModelBase<double>;
-  using logic_rules_t = SwitchedModelLogicRulesBase;
 
-  ComKinoOperatingPointsBase(const com_model_t& comModel, std::shared_ptr<const logic_rules_t> logicRulesPtr);
+  ComKinoOperatingPointsBase(const com_model_t& comModel, std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr);
 
   ComKinoOperatingPointsBase(const ComKinoOperatingPointsBase& rhs);
 
@@ -39,7 +38,7 @@ class ComKinoOperatingPointsBase : public ocs2::SystemOperatingPoint<STATE_DIM, 
   void computeInputOperatingPoints(contact_flag_t contactFlags, input_vector_t& inputs);
 
   std::unique_ptr<com_model_t> comModelPtr_;
-  std::shared_ptr<const logic_rules_t> logicRulesPtr_;
+  std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
 };
 
 }  // end of namespace switched_model

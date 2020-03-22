@@ -6,7 +6,8 @@
 
 #include <ros/package.h>
 
-#include <ocs2_anymal_wheels/AnymalWheelsInterface.h>
+#include <ocs2_quadruped_interface/QuadrupedWheeledInterface.h>
+
 #include <ocs2_anymal_wheels_switched_model/core/AnymalWheelsCom.h>
 #include <ocs2_anymal_wheels_switched_model/core/AnymalWheelsKinematics.h>
 
@@ -22,16 +23,15 @@ std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAn
   auto com = AnymalWheelsCom();
   auto comAd = AnymalWheelsComAd();
 
-  auto quadrupedInterface =
-      std::unique_ptr<anymal::WheeledQuadrupedInterface>(new anymal::WheeledQuadrupedInterface(kin, kinAd, com, comAd, taskFolder));
+  auto quadrupedInterface = std::unique_ptr<switched_model::QuadrupedWheeledInterface>(
+      new switched_model::QuadrupedWheeledInterface(kin, kinAd, com, comAd, taskFolder));
 
   return std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface>(
       new switched_model_loopshaping::QuadrupedLoopshapingInterface(std::move(quadrupedInterface), taskFolder));
 }
 
 std::string getTaskFileFolderAnymalWheelsLoopshaping(const std::string& taskName) {
-  std::string taskFolder = ros::package::getPath("ocs2_anymal_wheels_loopshaping") + "/config/" + taskName;
-  return taskFolder;
+  return ros::package::getPath("ocs2_anymal_wheels_loopshaping") + "/config/" + taskName;
 }
 
 std::string getTaskFilePathAnymalWheelsLoopshaping(const std::string& taskName) {

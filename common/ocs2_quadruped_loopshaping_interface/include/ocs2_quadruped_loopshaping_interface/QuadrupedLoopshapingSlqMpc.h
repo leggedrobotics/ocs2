@@ -29,6 +29,6 @@ namespace ocs2 {
 extern template class MPC_BASE<switched_model_loopshaping::STATE_DIM, switched_model_loopshaping::INPUT_DIM>;
 extern template class MPC_SLQ<switched_model_loopshaping::STATE_DIM, switched_model_loopshaping::INPUT_DIM>;
 extern template class Solver_BASE<switched_model_loopshaping::STATE_DIM, switched_model_loopshaping::INPUT_DIM>;
-extern template class DDP_BASE<switched_model_loopshaping::STATE_DIM, switched_model_loopshaping::INPUT_DIM>;
+extern template class GaussNewtonDDP<switched_model_loopshaping::STATE_DIM, switched_model_loopshaping::INPUT_DIM>;
 extern template class SLQ<switched_model_loopshaping::STATE_DIM, switched_model_loopshaping::INPUT_DIM>;
 }  // namespace ocs2

@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include <ocs2_quadruped_interface/QuadrupedInterface.h>
+#include <ocs2_quadruped_interface/QuadrupedPointfootInterface.h>
 
 namespace anymal {
 
-std::unique_ptr<switched_model::QuadrupedInterface> getAnymalCrocInterface(const std::string& taskName);
+std::unique_ptr<switched_model::QuadrupedPointfootInterface> getAnymalCrocInterface(const std::string& taskName);
 
 std::string getTaskFileFolderCroc(const std::string& taskName);
 

@@ -63,7 +63,7 @@ ocs2::ModeSchedule GaitSchedule::getModeSchedule(scalar_t lowerBoundTime, scalar
   }
 
   // Start tiling at time
-  const auto tilingStartTime = eventTimes.back();
+  const auto tilingStartTime = eventTimes.empty() ? upperBoundTime : eventTimes.back();
 
   // delete the last default stance phase
   eventTimes.erase(eventTimes.end() - 1, eventTimes.end());

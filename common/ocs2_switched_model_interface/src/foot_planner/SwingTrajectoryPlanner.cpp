@@ -171,4 +171,32 @@ auto SwingTrajectoryPlanner::swingTrajectoryScaling(scalar_t startTime, scalar_t
   return std::min(1.0, (finalTime - startTime) / swingTimeScale);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& filename, bool verbose) {
+  SwingTrajectoryPlannerSettings settings{};
+
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(filename, pt);
+
+  const std::string prefix{"model_settings.swing_trajectory_settings."};
+
+  if (verbose) {
+    std::cerr << "\n #### Swing trajectory Settings:" << std::endl;
+    std::cerr << " #### ==================================================" << std::endl;
+  }
+
+  ocs2::loadData::loadPtreeValue(pt, settings.liftOffVelocity, prefix + "liftOffVelocity", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.touchDownVelocity, prefix + "touchDownVelocity", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.swingHeight, prefix + "swingHeight", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.swingTimeScale, prefix + "swingTimeScale", verbose);
+
+  if (verbose) {
+    std::cerr << " #### ==================================================" << std::endl;
+  }
+
+  return settings;
+}
+
 }  // namespace switched_model

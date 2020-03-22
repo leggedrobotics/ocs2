@@ -6,6 +6,7 @@
 #include <ocs2_msgs/mode_schedule.h>
 
 #include <ocs2_core/Dimensions.h>
+#include <ocs2_core/logic/ModeSchedule.h>
 
 #include "ocs2_switched_model_interface/core/MotionPhaseDefinition.h"
 
@@ -77,5 +78,25 @@ ModeSequenceTemplate readModeSequenceTemplateMsg(const ocs2_msgs::mode_schedule&
  * }
  */
 ModeSequenceTemplate loadModeSequenceTemplate(const std::string& filename, const std::string& topicName, bool verbose = true);
+
+/**
+ * Load a mode schedule template from file.  The schedule needs to be declared as:
+ *
+ * topicName
+ * {
+ *   modeSequence
+ *   {
+ *     [0]     mode0
+ *     [1]     mode1
+ *     [2]     mode2
+ *   }
+ *   eventTimes
+ *   {
+ *     [0]     t0
+ *     [1]     t1
+ *   }
+ * }
+ */
+ocs2::ModeSchedule loadModeSchedule(const std::string& filename, const std::string& topicName, bool verbose);
 
 }  // namespace switched_model

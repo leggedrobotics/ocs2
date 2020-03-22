@@ -7,6 +7,7 @@
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/logic/ModeSchedule.h>
 
+#include "ocs2_switched_model_interface/core/ModelSettings.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/foot_planner/SplineCpg.h"
 
@@ -14,11 +15,13 @@ namespace switched_model {
 
 struct SwingTrajectoryPlannerSettings {
   using scalar_t = ocs2::Dimensions<0, 0>::scalar_t;
-  scalar_t liftOffVelocity;
-  scalar_t touchDownVelocity;
-  scalar_t swingHeight;
-  scalar_t swingTimeScale;  // swing phases shorter than this time will be scaled down in height and velocity
+  scalar_t liftOffVelocity = 0.0;
+  scalar_t touchDownVelocity = 0.0;
+  scalar_t swingHeight = 0.1;
+  scalar_t swingTimeScale = 0.15;  // swing phases shorter than this time will be scaled down in height and velocity
 };
+
+SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& filename, bool verbose = true);
 
 class SwingTrajectoryPlanner {
   using scalar_t = ocs2::Dimensions<0, 0>::scalar_t;

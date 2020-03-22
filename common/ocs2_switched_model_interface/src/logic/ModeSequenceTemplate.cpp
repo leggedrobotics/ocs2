@@ -74,4 +74,25 @@ ModeSequenceTemplate readModeSequenceTemplateMsg(const ocs2_msgs::mode_schedule&
   return {switchingTimes, modeSequence};
 }
 
+ocs2::ModeSchedule loadModeSchedule(const std::string& filename, const std::string& topicName, bool verbose) {
+  std::vector<ModeSequenceTemplate::scalar_t> eventTimes;
+  ocs2::loadData::loadStdVector(filename, topicName + ".eventTimes", eventTimes, verbose);
+
+  std::vector<std::string> modeSequenceString;
+  ocs2::loadData::loadStdVector(filename, topicName + ".modeSequence", modeSequenceString, verbose);
+
+  if (modeSequenceString.empty()) {
+    throw std::runtime_error("[loadModeSchedule] failed to load : " + topicName + " from " + filename);
+  }
+
+  // convert the mode name to mode enum
+  std::vector<size_t> modeSequence;
+  modeSequence.reserve(modeSequenceString.size());
+  for (const auto& modeName : modeSequenceString) {
+    modeSequence.push_back(string2ModeNumber(modeName));
+  }
+
+  return {eventTimes, modeSequence};
+}
+
 }  // namespace switched_model

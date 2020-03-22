@@ -28,9 +28,13 @@ model_settings
   enforceTorqueConstraint       0
   torqueLimit                   40.0
 
-  swingLegLiftOff               0.25
-  liftOffVelocity               0.2
-  touchDownVelocity             -0.4
+  swing_trajectory_settings
+  {
+    liftOffVelocity             0.2
+    touchDownVelocity           -0.4
+    swingHeight                 0.1
+    swingTimeScale              0.15
+  }
 
   useFeetTrajectoryFiltering    0
   feetFilterFrequency           1000.0
@@ -43,16 +47,16 @@ model_settings
   gaitOptimization              0
 }
 
-initialModeSequenceTemplate
+initialModeSchedule
 {
   modeSequence
   {
     [0]  STANCE
+    [1]  STANCE
   }
-  switchingTimes
+  eventTimes
   {
-    [0]  0.0
-    [1]  1.0
+    [0]  0.5
   }
 }
 

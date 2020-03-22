@@ -13,6 +13,7 @@ struct ModelSettings {
   double swingLegLiftOff_ = 0.3;
   double liftOffVelocity_ = 0.0;
   double touchDownVelocity_ = 0.0;
+  double swingTimeScale_ = 1.0;
   double phaseTransitionStanceTime_ = 0.4;
   double mpcGoalCommandDelay_ = 0.5;
   double targetDisplacementVelocity_ = 0.5;

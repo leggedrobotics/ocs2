@@ -36,6 +36,11 @@ QuadrupedLoopshapingInterface::QuadrupedLoopshapingInterface(std::unique_ptr<swi
   operatingPointsPtr_.reset(new operating_point_t(quadrupedPtr_->getOperatingPoints(), loopshapingDefinition_));
 
   timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, quadrupedPtr_->rolloutSettings()));
+
+  loopshapingModeScheduleManager_ =
+      std::make_shared<LoopshapingModeScheduleManager>(quadrupedPtr_->getModeScheduleManagerPtr(), loopshapingDefinition_);
+  loopshapingSynchronizedModule_ =
+      std::make_shared<LoopshapingSynchronizedModule>(quadrupedPtr_->getSynchronizedModules(), loopshapingDefinition_);
 }
 
 }  // namespace switched_model_loopshaping

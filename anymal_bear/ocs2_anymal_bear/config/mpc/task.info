@@ -37,9 +37,6 @@ model_settings
   useFeetTrajectoryFiltering    0
   feetFilterFrequency           1000.0
 
-  eps 	2e-4
-  eta 	1e+2
-
   gaitOptimization              0
 
   recompileLibraries            1
@@ -47,11 +44,11 @@ model_settings
 
 initialModeSequenceTemplate
 {
-  templateSubsystemsSequence
+  modeSequence
   {
     [0]  STANCE
   }
-  templateSwitchingTimes
+  switchingTimes
   {
     [0]  0.0
     [1]  1.0
@@ -60,11 +57,11 @@ initialModeSequenceTemplate
 
 defaultModeSequenceTemplate
 {
-  templateSubsystemsSequence
+  modeSequence
   {
     [0]  STANCE
   }
-  templateSwitchingTimes
+  switchingTimes
   {
     [0]  0.0
     [1]  1.0

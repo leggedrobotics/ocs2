@@ -29,8 +29,7 @@ std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAn
 }
 
 std::string getTaskFileFolderAnymalWheelsLoopshaping(const std::string& taskName) {
-  std::string taskFolder = ros::package::getPath("ocs2_anymal_wheels_loopshaping") + "/config/" + taskName;
-  return taskFolder;
+  return ros::package::getPath("ocs2_anymal_wheels_loopshaping") + "/config/" + taskName;
 }
 
 std::string getTaskFilePathAnymalWheelsLoopshaping(const std::string& taskName) {

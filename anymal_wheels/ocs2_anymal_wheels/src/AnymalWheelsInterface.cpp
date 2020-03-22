@@ -9,6 +9,8 @@
 #include <ocs2_anymal_wheels_switched_model/core/AnymalWheelsCom.h>
 #include <ocs2_anymal_wheels_switched_model/core/AnymalWheelsKinematics.h>
 
+namespace anymal {
+
 std::unique_ptr<switched_model::QuadrupedWheeledInterface> getAnymalWheelsInterface(const std::string& taskName) {
   std::string taskFolder = getTaskFileFolderWheels(taskName);
   std::cerr << "Loading task file from: " << taskFolder << std::endl;

@@ -101,7 +101,6 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   /** Load the general quadruped settings from file. */
   void loadSettings(const std::string& pathToConfigFile);
 
- private:
   scalar_t timeHorizon_;
   ocs2::Rollout_Settings rolloutSettings_;
   ModelSettings modelSettings_;

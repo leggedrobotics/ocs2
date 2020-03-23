@@ -85,28 +85,19 @@ catkin_add_gtest(${PROJECT_NAME}_switched_model_test
         test/TestAnymalSwitchedModel.cpp
         )
 
-add_dependencies(${PROJECT_NAME}_switched_model_test ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME}_switched_model_test
+  ${catkin_EXPORTED_TARGETS})
+
+target_include_directories(${PROJECT_NAME}_switched_model_test
+  PRIVATE
+  ${catkin_INCLUDE_DIRS}
+  )
 
 target_link_libraries(${PROJECT_NAME}_switched_model_test
         ${PROJECT_NAME}
         ${catkin_LIBRARIES}
         )
 
-catkin_add_gtest(${PROJECT_NAME}_test_eeVelocityConstraint
-        test/constraint/testEEVelocityConstraint.cpp
-        )
-target_link_libraries(${PROJECT_NAME}_test_eeVelocityConstraint
-        ${PROJECT_NAME}
-        ${catkin_LIBRARIES}
-        )
-
-catkin_add_gtest(${PROJECT_NAME}_test_eePositionConstraint
-        test/constraint/testEEPositionConstraint.cpp
-        )
-target_link_libraries(${PROJECT_NAME}_test_eePositionConstraint
-        ${PROJECT_NAME}
-        ${catkin_LIBRARIES}
-        )
 
 #catkin_add_gtest(anymal_ad_switched_model_test
 #        test/TestAnymalAdSwitchedModel.cpp

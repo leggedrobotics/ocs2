@@ -79,3 +79,32 @@ install(DIRECTORY
 #############
 ## Testing ##
 #############
+
+# Build unit tests
+catkin_add_gtest(${PROJECT_NAME}_switched_model_test
+        test/TestAnymalSwitchedModel.cpp
+        )
+
+add_dependencies(${PROJECT_NAME}_switched_model_test ${catkin_EXPORTED_TARGETS})
+
+target_include_directories(${PROJECT_NAME}_switched_model_test
+  PRIVATE
+  ${catkin_INCLUDE_DIRS}
+  )
+
+target_link_libraries(${PROJECT_NAME}_switched_model_test
+        ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        )
+
+#catkin_add_gtest(anymal_ad_switched_model_test
+#        test/TestAnymalAdSwitchedModel.cpp
+#        )
+#
+#add_dependencies(anymal_ad_switched_model_test ${catkin_EXPORTED_TARGETS})
+#
+#target_link_libraries(anymal_ad_switched_model_test
+#        ${PROJECT_NAME}
+#        ${catkin_LIBRARIES}
+#        dl
+#        )

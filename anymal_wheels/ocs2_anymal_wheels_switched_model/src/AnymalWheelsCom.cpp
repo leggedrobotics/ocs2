@@ -6,6 +6,7 @@
  */
 
 #include "ocs2_anymal_wheels_switched_model/core/AnymalWheelsCom.h"
+#include <ocs2_anymal_wheels_switched_model/core/WheelsSwitchedModel.h>
 
 #include <iit/rbd/traits/TraitSelector.h>
 #include "ocs2_anymal_wheels_switched_model/generated/inertia_properties.h"

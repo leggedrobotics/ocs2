@@ -1,6 +1,6 @@
 
 
-#include <ocs2_switched_model_interface/constraint/EndEffectorVelocityContraint.h>
+#include <ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h>
 
 int main(int argc, char** argv) {
   using EndEffectorVelocityConstraint_t = switched_model::EndEffectorVelocityConstraint<3, 2>;

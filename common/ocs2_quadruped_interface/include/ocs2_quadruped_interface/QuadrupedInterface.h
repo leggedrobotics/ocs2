@@ -111,7 +111,6 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
 
   state_vector_t initialState_;
   scalar_array_t partitioningTimes_;
-  std::unique_ptr<ModeSequenceTemplate> defaultModeSequenceTemplate_;
 };
 
 }  // end of namespace switched_model

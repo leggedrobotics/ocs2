@@ -24,7 +24,7 @@ void SwitchedModelModeScheduleManager::preSolverRunImpl(scalar_t initTime, scala
   modeSchedule = gaitSchedulePtr_->getModeSchedule(finalTime + timeHorizon);
 
   const scalar_t terrainHeight = 0.0;
-  swingTrajectoryPtr_->update(modeSchedule, terrainHeight);
+  swingTrajectoryPtr_->update(initTime, finalTime, currentState, modeSchedule, terrainHeight);
 }
 
 }  // namespace switched_model

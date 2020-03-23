@@ -66,12 +66,22 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
   // Gait Schedule
   const auto initModeSchedule = loadModeSchedule(pathToConfigFile, "initialModeSchedule", false);
   const auto defaultModeSequenceTemplate = loadModeSequenceTemplate(pathToConfigFile, "defaultModeSequenceTemplate", false);
-  auto gaitSchedule =
-      std::make_shared<GaitSchedule>(initModeSchedule, defaultModeSequenceTemplate, modelSettings().phaseTransitionStanceTime_);
+  const auto defaultGait = [&] {
+    Gait gait{};
+    gait.duration = defaultModeSequenceTemplate.switchingTimes.back();
+    // Events: from time -> phase
+    std::for_each(defaultModeSequenceTemplate.switchingTimes.begin() + 1, defaultModeSequenceTemplate.switchingTimes.end() - 1,
+                  [&](double eventTime) { gait.eventPhases.push_back(eventTime / gait.duration); });
+    // Modes:
+    gait.modeSequence = defaultModeSequenceTemplate.modeSequence;
+    return gait;
+  }();
+
+  auto gaitSchedule = std::make_shared<GaitSchedule>(0.0, defaultGait);
 
   // Swing trajectory planner
   const auto swingTrajectorySettings = loadSwingTrajectorySettings(pathToConfigFile);
-  auto swingTrajectoryPlanner = std::make_shared<SwingTrajectoryPlanner>(swingTrajectorySettings);
+  auto swingTrajectoryPlanner = std::make_shared<SwingTrajectoryPlanner>(swingTrajectorySettings, getComModel(), getKinematicModel());
 
   // Mode schedule manager
   modeScheduleManagerPtr_ = std::make_shared<SwitchedModelModeScheduleManager>(gaitSchedule, swingTrajectoryPlanner);

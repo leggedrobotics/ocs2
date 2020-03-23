@@ -192,7 +192,7 @@ const typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_array_t& GaussNewton
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-auto GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getPerformanceIndeces() const -> performance_index_t {
+auto GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getPerformanceIndeces() const -> PerformanceIndex {
   return performanceIndex_;
 }
 
@@ -200,7 +200,7 @@ auto GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getPerformanceIndeces() const -> perf
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-auto GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getIterationsLog() const -> std::vector<performance_index_t> {
+auto GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getIterationsLog() const -> std::vector<PerformanceIndex> {
   return performanceIndexHistory_;
 }
 
@@ -742,12 +742,7 @@ typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::printRolloutInfo() const {
-  std::cerr << "optimization cost:          " << performanceIndex_.totalCost << std::endl;
-  std::cerr << "state-input constraint ISE: " << performanceIndex_.stateInputEqConstraintISE << std::endl;
-  std::cerr << "state constraint ISE:       " << performanceIndex_.stateEqConstraintISE << std::endl;
-  std::cerr << "state final constraint ISE: " << performanceIndex_.stateEqFinalConstraintISE << std::endl;
-  std::cerr << "inequality Penalty:         " << performanceIndex_.inequalityConstraintPenalty << std::endl;
-  std::cerr << "inequality ISE:             " << performanceIndex_.inequalityConstraintISE << std::endl;
+  std::cerr << performanceIndex_;
   std::cerr << "forward pass average time step:  " << avgTimeStepFP_ * 1e+3 << " [ms]." << std::endl;
   std::cerr << "backward pass average time step: " << avgTimeStepBP_ * 1e+3 << " [ms]." << std::endl;
 }
@@ -916,7 +911,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM, INPUT_DIM>::performFullRollout(
     size_t workerIndex, scalar_t stepLength, linear_controller_array_t& controllersStock, scalar_array2_t& timeTrajectoriesStock,
     size_array2_t& postEventIndicesStock, state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
-    ModelDataBase::array2_t& modelDataTrajectoriesStock, performance_index_t& performanceIndex) {
+    ModelDataBase::array2_t& modelDataTrajectoriesStock, PerformanceIndex& performanceIndex) {
   // modifying uff by local increments
   if (!numerics::almost_eq(stepLength, 0.0)) {
     for (auto& controller : controllersStock) {
@@ -1034,7 +1029,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::lineSearchTask(LineSearchModule& line
   size_t taskId = nextTaskId_++;  // assign task ID (atomic)
 
   // local search forward simulation's variables
-  performance_index_t performanceIndex;
+  PerformanceIndex performanceIndex;
   linear_controller_array_t controllersStock(numPartitions_);
   scalar_array2_t timeTrajectoriesStock(numPartitions_);
   size_array2_t postEventIndicesStock(numPartitions_);
@@ -1126,7 +1121,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::lineSearchTask(LineSearchModule& line
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::calculateRolloutMerit(performance_index_t& performanceIndex) const {
+void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::calculateRolloutMerit(PerformanceIndex& performanceIndex) const {
   // total cost
   performanceIndex.merit = performanceIndex.totalCost;
 

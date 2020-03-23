@@ -118,8 +118,6 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   using linear_quadratic_approximator_t = LinearQuadraticApproximator<STATE_DIM, INPUT_DIM>;
   using operating_trajectorie_rollout_t = OperatingTrajectoriesRollout<STATE_DIM, INPUT_DIM>;
 
-  using performance_index_t = PerformanceIndex<scalar_t>;
-
   // Line-Search
   struct LineSearchModule {
     scalar_t baselineMerit;                          // the merit of the rollout for zero learning rate
@@ -187,9 +185,9 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   const scalar_array_t& getPartitioningTimes() const override;
 
-  performance_index_t getPerformanceIndeces() const override;
+  PerformanceIndex getPerformanceIndeces() const override;
 
-  std::vector<performance_index_t> getIterationsLog() const override;
+  std::vector<PerformanceIndex> getIterationsLog() const override;
 
   void getPrimalSolution(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const final;
 
@@ -439,7 +437,7 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   scalar_t performFullRollout(size_t workerIndex, scalar_t stepLength, linear_controller_array_t& controllersStock,
                               scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
                               state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
-                              ModelDataBase::array2_t& modelDataTrajectoriesStock, performance_index_t& performanceIndex);
+                              ModelDataBase::array2_t& modelDataTrajectoriesStock, PerformanceIndex& performanceIndex);
 
   /**
    * Line search on the feedforward parts of the controller. It chooses the largest acceptable step-size.
@@ -458,7 +456,7 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @param The performance index which includes the merit, cost, and ISEs of constraints.
    */
-  void calculateRolloutMerit(performance_index_t& performanceIndex) const;
+  void calculateRolloutMerit(PerformanceIndex& performanceIndex) const;
 
   /**
    * Levenberg Marquardt strategy.
@@ -673,9 +671,9 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   std::atomic_size_t iteration_;
 
-  performance_index_t performanceIndex_;
+  PerformanceIndex performanceIndex_;
 
-  std::vector<performance_index_t> performanceIndexHistory_;
+  std::vector<PerformanceIndex> performanceIndexHistory_;
 
   // forward pass and backward pass average time step
   scalar_t avgTimeStepFP_;

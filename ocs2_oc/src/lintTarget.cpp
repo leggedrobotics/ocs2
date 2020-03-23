@@ -6,7 +6,10 @@
 #include <ocs2_oc/oc_data/PrimalSolution.h>
 
 // oc_solver
+#include <ocs2_oc/oc_solver/ModeScheduleManager.h>
+#include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
+#include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
 
 // rollout
 #include <ocs2_oc/rollout/OperatingTrajectoriesRollout.h>

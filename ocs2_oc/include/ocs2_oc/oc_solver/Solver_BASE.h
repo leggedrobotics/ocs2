@@ -53,21 +53,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_oc/oc_data/PrimalSolution.h"
 #include "ocs2_oc/oc_solver/ModeScheduleManager.h"
+#include "ocs2_oc/oc_solver/PerformanceIndex.h"
 #include "ocs2_oc/oc_solver/SolverSynchronizedModule.h"
 
 namespace ocs2 {
-
-// Performance index for a rollout
-template <typename SCALAR_T>
-struct PerformanceIndex {
-  SCALAR_T merit;
-  SCALAR_T totalCost;
-  SCALAR_T stateEqConstraintISE;
-  SCALAR_T stateEqFinalConstraintISE;
-  SCALAR_T stateInputEqConstraintISE;
-  SCALAR_T inequalityConstraintISE;
-  SCALAR_T inequalityConstraintPenalty;
-};
 
 /**
  * This class is an interface class for the single-thread and multi-thread SLQ.
@@ -205,7 +194,7 @@ class Solver_BASE {
    *
    * @return PerformanceIndex of the last optimized trajectory.
    */
-  virtual PerformanceIndex<scalar_t> getPerformanceIndeces() const = 0;
+  virtual PerformanceIndex getPerformanceIndeces() const = 0;
 
   /**
    * Gets number of iterations.
@@ -219,7 +208,7 @@ class Solver_BASE {
    *
    * @return An array of PerformanceIndices.
    */
-  virtual std::vector<PerformanceIndex<scalar_t>> getIterationsLog() const = 0;
+  virtual std::vector<PerformanceIndex> getIterationsLog() const = 0;
 
   /**
    * Gets final time of optimization

@@ -22,11 +22,15 @@ struct SwingTrajectoryPlannerSettings {
 
 class SwingTrajectoryPlanner {
   using scalar_t = ocs2::Dimensions<0, 0>::scalar_t;
+  using scalar_array_t = ocs2::Dimensions<0, 0>::scalar_array_t;
 
  public:
   SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings);
 
   void update(const ocs2::ModeSchedule& modeSchedule, scalar_t terrainHeight);
+
+  void update(const ocs2::ModeSchedule& modeSchedule, const std::array<scalar_array_t, NUM_CONTACT_POINTS>& liftOffHeightSequence,
+              const std::array<scalar_array_t, NUM_CONTACT_POINTS>& touchDownHeightSequence);
 
   scalar_t getZvelocityConstraint(size_t leg, scalar_t time) const;
 

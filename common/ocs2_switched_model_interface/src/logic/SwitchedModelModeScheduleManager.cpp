@@ -8,9 +8,10 @@
 
 namespace switched_model {
 
-SwitchedModelModeScheduleManager::SwitchedModelModeScheduleManager(std::shared_ptr<GaitSchedule> gaitSchedulePtr,
-                                                                   std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr)
-    : Base(ocs2::ModeSchedule()), gaitSchedulePtr_(std::move(gaitSchedulePtr)), swingTrajectoryPtr_(std::move(swingTrajectoryPtr)) {}
+SwitchedModelModeScheduleManager::SwitchedModelModeScheduleManager(GaitSchedule gaitSchedule, SwingTrajectoryPlanner swingTrajectory)
+    : Base(ocs2::ModeSchedule()),
+      gaitSchedulePtr_(std::make_shared<LockableGaitSchedule>(std::move(gaitSchedule))),
+      swingTrajectoryPtr_(std::make_shared<SwingTrajectoryPlanner>(std::move(swingTrajectory))) {}
 
 contact_flag_t SwitchedModelModeScheduleManager::getContactFlags(scalar_t time) const {
   return modeNumber2StanceLeg(this->getModeSchedule().modeAtTime(time));
@@ -20,8 +21,11 @@ void SwitchedModelModeScheduleManager::preSolverRunImpl(scalar_t initTime, scala
                                                         const ocs2::CostDesiredTrajectories& costDesiredTrajectory,
                                                         ocs2::ModeSchedule& modeSchedule) {
   const auto timeHorizon = finalTime - initTime;
-  gaitSchedulePtr_->advanceToTime(initTime);
-  modeSchedule = gaitSchedulePtr_->getModeSchedule(finalTime + timeHorizon);
+  {
+    std::lock_guard<LockableGaitSchedule> lock(*gaitSchedulePtr_);
+    gaitSchedulePtr_->advanceToTime(initTime);
+    modeSchedule = gaitSchedulePtr_->getModeSchedule(finalTime + timeHorizon);
+  }
 
   const scalar_t terrainHeight = 0.0;
   swingTrajectoryPtr_->update(initTime, finalTime, currentState, modeSchedule, terrainHeight);

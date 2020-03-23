@@ -9,7 +9,7 @@
 
 namespace switched_model {
 
-GaitReceiver::GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<GaitSchedule> gaitSchedulePtr, const std::string& robotName)
+GaitReceiver::GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<LockableGaitSchedule> gaitSchedulePtr, const std::string& robotName)
     : gaitSchedulePtr_(std::move(gaitSchedulePtr)), gaitUpdated_(false) {
   mpcModeSequenceSubscriber_ = nodeHandle.subscribe(robotName + "_mpc_mode_schedule", 1, &GaitReceiver::mpcModeSequenceCallback, this,
                                                     ::ros::TransportHints().udp());
@@ -19,6 +19,7 @@ void GaitReceiver::preSolverRun(scalar_t initTime, scalar_t finalTime, const sta
                                 const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
   if (gaitUpdated_) {
     std::lock_guard<std::mutex> lock(receivedGaitMutex_);
+    std::lock_guard<LockableGaitSchedule> gaitLock(*gaitSchedulePtr_);
     std::cout << "[GaitReceiver]: Setting new gait after time " << finalTime << std::endl;
     gaitSchedulePtr_->setGaitAfterTime(receivedGait_, finalTime);
     gaitUpdated_ = false;

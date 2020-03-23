@@ -77,14 +77,14 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
     return gait;
   }();
 
-  auto gaitSchedule = std::make_shared<GaitSchedule>(0.0, defaultGait);
+  GaitSchedule gaitSchedule{0.0, defaultGait};
 
   // Swing trajectory planner
   const auto swingTrajectorySettings = loadSwingTrajectorySettings(pathToConfigFile);
-  auto swingTrajectoryPlanner = std::make_shared<SwingTrajectoryPlanner>(swingTrajectorySettings, getComModel(), getKinematicModel());
+  SwingTrajectoryPlanner swingTrajectoryPlanner{swingTrajectorySettings, getComModel(), getKinematicModel()};
 
   // Mode schedule manager
-  modeScheduleManagerPtr_ = std::make_shared<SwitchedModelModeScheduleManager>(gaitSchedule, swingTrajectoryPlanner);
+  modeScheduleManagerPtr_ = std::make_shared<SwitchedModelModeScheduleManager>(std::move(gaitSchedule), std::move(swingTrajectoryPlanner));
 
   // Display
   std::cerr << "\nTime Partition: {" << ocs2::toDelimitedString(partitioningTimes_) << "}\n";

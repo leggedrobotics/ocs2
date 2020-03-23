@@ -57,7 +57,7 @@ add_library(${PROJECT_NAME}
   src/QuadrupedLoopshapingInterface.cpp
   src/QuadrupedLoopshapingMpcNode.cpp
   src/QuadrupedLoopshapingSlqMpc.cpp
-  src/QuadrupedLoopshapingXppVisualizer.cpp)
+  src/QuadrupedLoopshapingVisualizer.cpp)
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS})

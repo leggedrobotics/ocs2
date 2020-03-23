@@ -7,7 +7,7 @@
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
-#include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingXppVisualizer.h>
+#include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingVisualizer.h>
 
 namespace switched_model_loopshaping {
 
@@ -15,7 +15,7 @@ void quadrupedLoopshapingDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedL
                                    double mrtDesiredFrequency, double mpcDesiredFrequency) {
   const std::string robotName = "anymal";
   using vis_t = switched_model::QuadrupedVisualizer;
-  using vis_wrapper_t = QuadrupedLoopshapingXppVisualizer;
+  using vis_wrapper_t = QuadrupedLoopshapingVisualizer;
   using mrt_t = ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
   using dummy_t = ocs2::MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>;
 

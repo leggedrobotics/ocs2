@@ -50,7 +50,6 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/AnymalWheelsCom.cpp
   src/AnymalWheelsKinematics.cpp
-  src/AnymalWheelsComKinoConstraintAd.cpp
 )
 
 add_dependencies(${PROJECT_NAME}

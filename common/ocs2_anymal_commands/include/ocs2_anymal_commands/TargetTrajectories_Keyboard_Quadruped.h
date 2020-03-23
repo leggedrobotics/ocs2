@@ -5,12 +5,12 @@
  *      Author: farbod
  */
 
-#ifndef TARGETTRAJECTORIES_KEYBOARD_QUADRUPED_H_
-#define TARGETTRAJECTORIES_KEYBOARD_QUADRUPED_H_
+#pragma once
 
 #include <iomanip>
 #include <mutex>
 
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h>
 #include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
 
 namespace switched_model {
@@ -134,7 +134,7 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
     ::ros::spinOnce();
     {
       std::lock_guard<std::mutex> lock(latestObservationMutex_);
-      ocs2::RosMsgConversions<STATE_DIM, INPUT_DIM>::readObservationMsg(*latestObservation_, observation);
+      ocs2::ros_msg_conversions::readObservationMsg(*latestObservation_, observation);
     }
 
     // Convert commandline target to base desired
@@ -212,5 +212,3 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
 };
 
 }  // end of namespace switched_model
-
-#endif /* TARGETTRAJECTORIES_KEYBOARD_QUADRUPED_H_ */

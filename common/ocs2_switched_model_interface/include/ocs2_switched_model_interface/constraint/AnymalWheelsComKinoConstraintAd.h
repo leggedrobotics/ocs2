@@ -2,6 +2,7 @@
 
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
+
 #include "ocs2_switched_model_interface/constraint/ConstraintCollection.h"
 #include "ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h"
 #include "ocs2_switched_model_interface/constraint/EndEffectorVelocityInFootFrameConstraint.h"
@@ -9,7 +10,8 @@
 #include "ocs2_switched_model_interface/constraint/ZeroForceConstraint.h"
 #include "ocs2_switched_model_interface/core/ModelSettings.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
-#include "ocs2_switched_model_interface/logic/SwitchedModelLogicRulesBase.h"
+#include "ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h"
+#include "ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h"
 
 namespace switched_model {
 
@@ -18,8 +20,6 @@ class AnymalWheelsComKinoConstraintAd : public ocs2::ConstraintBase<STATE_DIM, I
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using Base = ocs2::ConstraintBase<STATE_DIM, INPUT_DIM>;
-  using logic_rules_t = SwitchedModelLogicRulesBase;
-  using foot_cpg_t = typename logic_rules_t::foot_cpg_t;
 
   using ad_base_t = CppAD::cg::CG<double>;
   using ad_scalar_t = CppAD::AD<ad_base_t>;
@@ -44,31 +44,11 @@ class AnymalWheelsComKinoConstraintAd : public ocs2::ConstraintBase<STATE_DIM, I
   enum class FeetEnum { LF, RF, LH, RH };
 
   AnymalWheelsComKinoConstraintAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-                                  std::shared_ptr<const logic_rules_t> logicRulesPtr, const ModelSettings& options = ModelSettings(),
-                                  bool inequalityConstrainstComputed = false, bool stateInputConstraintsComputed = false)
-      : Base(),
-        adKinematicModelPtr_(adKinematicModel.clone()),
-        adComModelPtr_(adComModel.clone()),
-        logicRulesPtr_(std::move(logicRulesPtr)),
-        options_(options),
-        inequalityConstraintsComputed_(inequalityConstrainstComputed),
-        stateInputConstraintsComputed_(stateInputConstraintsComputed) {
-    if (!logicRulesPtr_) {
-      throw std::runtime_error("[ComKinoConstraintBaseAD] logicRules cannot be a nullptr");
-    }
-    initializeConstraintTerms();
-  }
+                                  std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
+                                  std::shared_ptr<const SwingTrajectoryPlanner> swingTrajectoryPlannerPtr,
+                                  ModelSettings options = ModelSettings());
 
-  AnymalWheelsComKinoConstraintAd(const AnymalWheelsComKinoConstraintAd& rhs)
-      : Base(rhs),
-        adKinematicModelPtr_(rhs.adKinematicModelPtr_->clone()),
-        adComModelPtr_(rhs.adComModelPtr_->clone()),
-        logicRulesPtr_(rhs.logicRulesPtr_),
-        options_(rhs.options_),
-        inequalityConstraintCollection_(rhs.inequalityConstraintCollection_),
-        equalityStateInputConstraintCollection_(rhs.equalityStateInputConstraintCollection_),
-        inequalityConstraintsComputed_(false),
-        stateInputConstraintsComputed_(false) {}
+  AnymalWheelsComKinoConstraintAd(const AnymalWheelsComKinoConstraintAd& rhs);
 
   AnymalWheelsComKinoConstraintAd* clone() const override { return new AnymalWheelsComKinoConstraintAd(*this); }
 
@@ -130,11 +110,11 @@ class AnymalWheelsComKinoConstraintAd : public ocs2::ConstraintBase<STATE_DIM, I
   std::unique_ptr<ad_com_model_t> adComModelPtr_;
   ModelSettings options_;
 
-  std::shared_ptr<const logic_rules_t> logicRulesPtr_;
-  contact_flag_t stanceLegs_;
   size_t numEventTimes_;
+  contact_flag_t stanceLegs_;
 
-  std::array<const foot_cpg_t*, NUM_CONTACT_POINTS> zDirectionRefsPtr_;
+  std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
+  std::shared_ptr<const SwingTrajectoryPlanner> swingTrajectoryPlannerPtr_;
 };
 
 }  // end of namespace switched_model

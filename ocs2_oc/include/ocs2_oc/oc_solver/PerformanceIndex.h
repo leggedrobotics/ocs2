@@ -41,13 +41,13 @@ namespace ocs2 {
 struct PerformanceIndex {
   using scalar_t = typename Dimensions<0, 0>::scalar_t;
 
-  scalar_t merit;
-  scalar_t totalCost;
-  scalar_t stateEqConstraintISE;
-  scalar_t stateEqFinalConstraintISE;
-  scalar_t stateInputEqConstraintISE;
-  scalar_t inequalityConstraintISE;
-  scalar_t inequalityConstraintPenalty;
+  scalar_t merit = 0.0;
+  scalar_t totalCost = 0.0;
+  scalar_t stateEqConstraintISE = 0.0;
+  scalar_t stateEqFinalConstraintISE = 0.0;
+  scalar_t stateInputEqConstraintISE = 0.0;
+  scalar_t inequalityConstraintISE = 0.0;
+  scalar_t inequalityConstraintPenalty = 0.0;
 };
 
 inline std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& performanceIndex) {

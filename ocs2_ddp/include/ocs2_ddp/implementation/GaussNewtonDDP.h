@@ -2098,6 +2098,8 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const stat
   initTime_ = initTime;
   finalTime_ = finalTime;
 
+  performanceIndexHistory_.clear();
+
   // check if after the truncation the internal controller is empty
   isInitInternalControllerEmpty_ = false;
   for (const auto& controller : nominalControllersStock_) {

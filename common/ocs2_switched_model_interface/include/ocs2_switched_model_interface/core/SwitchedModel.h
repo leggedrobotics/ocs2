@@ -117,12 +117,12 @@ base_coordinate_s_t<scalar_t> getBasePose(const rbd_state_s_t<scalar_t>& rbdStat
 }
 
 template <typename scalar_t>
-vector3_s_t<scalar_t> getOrientation(base_coordinate_s_t<scalar_t> baseCoordinate) {
+vector3_s_t<scalar_t> getOrientation(const base_coordinate_s_t<scalar_t>& baseCoordinate) {
   return baseCoordinate.template head<3>();
 }
 
 template <typename scalar_t>
-vector3_s_t<scalar_t> getPositionInOrigin(base_coordinate_s_t<scalar_t> baseCoordinate) {
+vector3_s_t<scalar_t> getPositionInOrigin(const base_coordinate_s_t<scalar_t>& baseCoordinate) {
   return baseCoordinate.template tail<3>();
 }
 
@@ -137,22 +137,22 @@ base_coordinate_s_t<scalar_t> getComLocalVelocities(const comkino_state_s_t<scal
 }
 
 template <typename scalar_t>
-vector3_s_t<scalar_t> getAngularVelocity(base_coordinate_s_t<scalar_t> baseTwist) {
+vector3_s_t<scalar_t> getAngularVelocity(const base_coordinate_s_t<scalar_t>& baseTwist) {
   return baseTwist.template head<3>();
 }
 
 template <typename scalar_t>
-vector3_s_t<scalar_t> getAngularAcceleration(base_coordinate_s_t<scalar_t> baseAcceleration) {
+vector3_s_t<scalar_t> getAngularAcceleration(const base_coordinate_s_t<scalar_t>& baseAcceleration) {
   return baseAcceleration.template head<3>();
 }
 
 template <typename scalar_t>
-vector3_s_t<scalar_t> getLinearVelocity(base_coordinate_s_t<scalar_t> baseTwist) {
+vector3_s_t<scalar_t> getLinearVelocity(const base_coordinate_s_t<scalar_t>& baseTwist) {
   return baseTwist.template tail<3>();
 }
 
 template <typename scalar_t>
-vector3_s_t<scalar_t> getLinearAcceleration(base_coordinate_s_t<scalar_t> baseAcceleration) {
+vector3_s_t<scalar_t> getLinearAcceleration(const base_coordinate_s_t<scalar_t>& baseAcceleration) {
   return baseAcceleration.template tail<3>();
 }
 
@@ -182,7 +182,7 @@ joint_coordinate_s_t<scalar_t> getJointVelocities(const rbd_state_s_t<scalar_t>&
 }
 
 template <typename scalar_t>
-std::array<vector3_s_t<scalar_t>, NUM_CONTACT_POINTS> toArray(joint_coordinate_s_t<scalar_t> valuesAsVector) {
+std::array<vector3_s_t<scalar_t>, NUM_CONTACT_POINTS> toArray(const joint_coordinate_s_t<scalar_t>& valuesAsVector) {
   return {valuesAsVector.template segment<3>(0), valuesAsVector.template segment<3>(3), valuesAsVector.template segment<3>(6),
           valuesAsVector.template segment<3>(9)};
 }

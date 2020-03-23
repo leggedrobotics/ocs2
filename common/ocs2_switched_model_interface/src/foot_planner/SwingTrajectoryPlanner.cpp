@@ -11,23 +11,16 @@
 namespace switched_model {
 
 SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const ComModelBase<double>& comModel,
-                                               const KinematicsModelBase<double>& kinematicsModel,
-                                               std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr)
-    : settings_(settings),
-      comModel_(comModel.clone()),
-      kinematicsModel_(kinematicsModel.clone()),
-      modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)) {}
+                                               const KinematicsModelBase<double>& kinematicsModel)
+    : settings_(std::move(settings)), comModel_(comModel.clone()), kinematicsModel_(kinematicsModel.clone()) {}
 
-void SwingTrajectoryPlanner::preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
-                                          const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
+void SwingTrajectoryPlanner::update(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+                                    const ocs2::ModeSchedule& modeSchedule, scalar_t terrainHeight) {
   const auto basePose = comModel_->calculateBasePose(getComPose(currentState));
   const auto feetPositions = kinematicsModel_->feetPositionsInOriginFrame(basePose, getJointPositions(currentState));
 
-  const auto& modeSchedule_ = modeScheduleManagerPtr_->getModeSchedule();
-  assert(modeSchedule_.eventTimes.empty() || modeSchedule_.eventTimes.front() >= initTime);
-
-  updateFeetTrajectories(initTime, finalTime, feetPositions, modeSchedule_);
-  updateErrorTrajectories(initTime, feetPositions, modeSchedule_);
+  updateFeetTrajectories(initTime, finalTime, feetPositions, modeSchedule, terrainHeight);
+  updateErrorTrajectories(initTime, feetPositions, modeSchedule);
 
   std::cout << "[SwingTrajectoryPlanner]\n";
   std::cout << "Last contact:\n";
@@ -38,7 +31,7 @@ void SwingTrajectoryPlanner::preSolverRun(scalar_t initTime, scalar_t finalTime,
   std::cout << std::endl;
 }
 
-SwingTrajectoryPlanner::scalar_t SwingTrajectoryPlanner::getZvelocityConstraint(size_t leg, scalar_t time) const {
+auto SwingTrajectoryPlanner::getZvelocityConstraint(size_t leg, scalar_t time) const -> scalar_t {
   const auto index = ocs2::lookup::findIndexInTimeArray(feetHeightTrajectoriesEvents_[leg], time);
   const auto feedforwardVelocity = feetHeightTrajectories_[leg][index].velocity(time);
   // Feedback follows the planned trajectory s.t. de = - errorGain * e, with e = (z - z*)
@@ -46,11 +39,14 @@ SwingTrajectoryPlanner::scalar_t SwingTrajectoryPlanner::getZvelocityConstraint(
   return feedforwardVelocity + feedbackVelocity;
 }
 
+auto SwingTrajectoryPlanner::getZpositionConstraint(size_t leg, scalar_t time) const -> scalar_t {
+  const auto index = ocs2::lookup::findIndexInTimeArray(feetHeightTrajectoriesEvents_[leg], time);
+  return feetHeightTrajectories_[leg][index].position(time);
+}
+
 void SwingTrajectoryPlanner::updateFeetTrajectories(scalar_t initTime, scalar_t finalTime,
                                                     const std::array<vector3_t, NUM_CONTACT_POINTS>& currentFeetPositions,
-                                                    const ocs2::ModeSchedule& modeSchedule) {
-  const auto terrainHeight = 0.0;
-
+                                                    const ocs2::ModeSchedule& modeSchedule, scalar_t terrainHeight) {
   std::cout << "ModeSchedule\n" << modeSchedule << std::endl;
 
   // Convert mode sequence to a contact flag vector per leg
@@ -83,7 +79,7 @@ void SwingTrajectoryPlanner::updateFeetTrajectories(scalar_t initTime, scalar_t 
 
       if (footPhase.type == FootPhaseType::Stance) {
         const auto startPoint = [&] {
-          CubicSpline::Node point;
+          CubicSpline::Node point{};
           if (std::isnan(footPhase.startTime)) {
             point.time = initTime;
             point.position = currentFeetPositions[leg].z();
@@ -96,7 +92,7 @@ void SwingTrajectoryPlanner::updateFeetTrajectories(scalar_t initTime, scalar_t 
         }();
 
         const auto endPoint = [&] {
-          CubicSpline::Node point;
+          CubicSpline::Node point{};
           if (std::isnan(footPhase.endTime)) {
             point.time = finalTime;
           } else {
@@ -116,7 +112,7 @@ void SwingTrajectoryPlanner::updateFeetTrajectories(scalar_t initTime, scalar_t 
         std::cout << "\tend:   \t t:" << endPoint.time << " h: " << endPoint.position << " v: " << endPoint.velocity << "\n\n";
       } else if (footPhase.type == FootPhaseType::Swing) {
         auto liftOff = [&] {
-          CubicSpline::Node node;
+          CubicSpline::Node node{};
           if (std::isnan(footPhase.startTime)) {
             node.time = lastContacts_[leg].time;
           } else {
@@ -133,7 +129,7 @@ void SwingTrajectoryPlanner::updateFeetTrajectories(scalar_t initTime, scalar_t 
         }();
 
         auto touchDown = [&] {
-          CubicSpline::Node node;
+          CubicSpline::Node node{};
           if (std::isnan(footPhase.endTime)) {
             node.time = finalTime + settings_.touchdownAfterHorizon;
             node.position = terrainHeight + settings_.swingHeight;
@@ -182,7 +178,7 @@ std::vector<SwingTrajectoryPlanner::FootPhase> SwingTrajectoryPlanner::extractFo
   int currentPhase = 0;
   while (currentPhase < numPhases) {
     // Register start of the phase
-    FootPhase currentFootPhase;
+    FootPhase currentFootPhase{};
     currentFootPhase.type = (contactFlags[currentPhase]) ? FootPhaseType::Stance : FootPhaseType::Swing;
     currentFootPhase.startTime = (currentPhase == 0) ? std::numeric_limits<scalar_t>::quiet_NaN() : eventTimes[currentPhase - 1];
 
@@ -217,6 +213,33 @@ std::array<std::vector<bool>, NUM_CONTACT_POINTS> SwingTrajectoryPlanner::extrac
     }
   }
   return contactFlagStock;
+}
+
+SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& filename, bool verbose) {
+  SwingTrajectoryPlannerSettings settings{};
+
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(filename, pt);
+
+  const std::string prefix{"model_settings.swing_trajectory_settings."};
+
+  if (verbose) {
+    std::cerr << "\n #### Swing trajectory Settings:" << std::endl;
+    std::cerr << " #### ==================================================" << std::endl;
+  }
+
+  ocs2::loadData::loadPtreeValue(pt, settings.liftOffVelocity, prefix + "liftOffVelocity", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.touchDownVelocity, prefix + "touchDownVelocity", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.swingHeight, prefix + "swingHeight", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.touchdownAfterHorizon, prefix + "touchdownAfterHorizon", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.errorGain, prefix + "errorGain", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.swingTimeScale, prefix + "swingTimeScale", verbose);
+
+  if (verbose) {
+    std::cerr << " #### ==================================================" << std::endl;
+  }
+
+  return settings;
 }
 
 }  // namespace switched_model

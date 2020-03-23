@@ -68,6 +68,12 @@ class ComModelBase {
   base_coordinate_s_t<SCALAR_T> calculateBaseLocalVelocities(const base_coordinate_s_t<SCALAR_T>& comLocalVelocities) const;
 
   base_coordinate_s_t<SCALAR_T> calculateComLocalVelocities(const base_coordinate_s_t<SCALAR_T>& baseLocalVelocities) const;
+
+  base_coordinate_s_t<SCALAR_T> calculateBaseLocalAccelerations(const base_coordinate_s_t<SCALAR_T>& comLocalAccelerations,
+                                                                const base_coordinate_s_t<SCALAR_T>& comLocalVelocities) const;
+
+  base_coordinate_s_t<SCALAR_T> calculateComLocalAccelerations(const base_coordinate_s_t<SCALAR_T>& baseLocalAccelerations,
+                                                               const base_coordinate_s_t<SCALAR_T>& baseLocalVelocities) const;
 };
 
 extern template class ComModelBase<double>;

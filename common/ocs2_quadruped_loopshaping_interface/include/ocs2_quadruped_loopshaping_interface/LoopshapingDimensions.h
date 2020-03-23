@@ -4,7 +4,9 @@
 
 #pragma once
 
-#include <cstddef>
+#include <Eigen/Dense>
+
+#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 
 namespace switched_model_loopshaping {
 
@@ -14,5 +16,15 @@ static constexpr size_t SYSTEM_STATE_DIM = 24;
 static constexpr size_t SYSTEM_INPUT_DIM = 24;
 static constexpr size_t FILTER_STATE_DIM = 24;
 static constexpr size_t FILTER_INPUT_DIM = 24;
+
+template <typename scalar_t>
+using filter_state_s_t = Eigen::Matrix<scalar_t, FILTER_STATE_DIM, 1>;
+using filter_state_t = filter_state_s_t<double>;
+using filter_state_ad_t = filter_state_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
+
+template <typename scalar_t>
+using filter_input_s_t = Eigen::Matrix<scalar_t, FILTER_INPUT_DIM, 1>;
+using filter_input_t = filter_input_s_t<double>;
+using filter_input_ad_t = filter_input_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
 
 }  // namespace switched_model_loopshaping

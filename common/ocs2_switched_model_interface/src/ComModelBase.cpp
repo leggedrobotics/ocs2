@@ -116,11 +116,11 @@ base_coordinate_s_t<SCALAR_T> ComModelBase<SCALAR_T>::calculateBaseLocalAccelera
     const base_coordinate_s_t<SCALAR_T>& comLocalAccelerations, const base_coordinate_s_t<SCALAR_T>& comLocalVelocities) const {
   base_coordinate_s_t<SCALAR_T> baseLocalAccelerations;
 
-  // base to CoM displacement in the CoM frame
+  // get CoM to base displacement in the CoM frame
   vector3_s_t<SCALAR_T> com_base2CoM = comPositionBaseFrame();
   vector3_s_t<SCALAR_T> com_com2base = -com_base2CoM;
 
-  // local velocities and accelerations of Base (com_W_b)
+  // local velocities and accelerations of CoM (com_W_com)
   const vector3_s_t<SCALAR_T> angularVelocity = getAngularVelocity(comLocalVelocities);
   const vector3_s_t<SCALAR_T> angularAcceleration = getAngularAcceleration(comLocalAccelerations);
   baseLocalAccelerations.template head<3>() = angularAcceleration;
@@ -138,7 +138,7 @@ base_coordinate_s_t<SCALAR_T> ComModelBase<SCALAR_T>::calculateComLocalAccelerat
     const base_coordinate_s_t<SCALAR_T>& baseLocalAccelerations, const base_coordinate_s_t<SCALAR_T>& baseLocalVelocities) const {
   base_coordinate_s_t<SCALAR_T> comLocalAccelerations;
 
-  // base to CoM displacement in the CoM frame
+  // get base to CoM displacement in the CoM frame
   vector3_s_t<SCALAR_T> com_base2CoM = comPositionBaseFrame();
 
   // local velocities and accelerations of Base (com_W_b)

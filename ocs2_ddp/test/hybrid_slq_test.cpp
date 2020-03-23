@@ -139,11 +139,8 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
     }
   }
   // Test 3: Check of cost function
-  double costFunction;
-  double constraint1ISE;
-  double constraint2ISE;
-  slqST.getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
-  EXPECT_LT(std::fabs(costFunction - 18.938001), 1e-6);
+  auto performanceIndecesST = slqST.getPerformanceIndeces();
+  EXPECT_LT(std::fabs(performanceIndecesST.totalCost - 18.938001), 1e-6);
 }
 
 int main(int argc, char** argv) {

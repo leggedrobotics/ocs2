@@ -731,7 +731,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearch(bool computeISEs) {
   baselineRollout(computeISEs);
 
   lsComputeISEs_ = computeISEs;
-  baselineTotalCost_ = nominalTotalCost_;
+  baselineTotalCost_ = performanceIndex_.totalCost;
   learningRateStar_ = 0.0;                             // input correction learning rate is zero
   initLScontrollersStock_ = nominalControllersStock_;  // this will serve to init the workers
 
@@ -788,34 +788,35 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::baselineRollout(bool computeISEs) {
                                 nominalInputTrajectoriesStock_, nc1TrajectoriesStock_, EvTrajectoryStock_, nc2TrajectoriesStock_,
                                 HvTrajectoryStock_, ncIneqTrajectoriesStock_, hTrajectoryStock_, nc2FinalStock_, HvFinalStock_);
     // calculate constraint type-1 ISE and maximum norm
-    nominalConstraint1MaxNorm_ =
-        calculateConstraintISE(nominalTimeTrajectoriesStock_, nc1TrajectoriesStock_, EvTrajectoryStock_, nominalConstraint1ISE_);
+    nominalConstraint1MaxNorm_ = calculateConstraintISE(nominalTimeTrajectoriesStock_, nc1TrajectoriesStock_, EvTrajectoryStock_,
+                                                        performanceIndex_.stateInputEqConstraintISE);
     // calculates type-2 constraint ISE and maximum norm
-    nominalConstraint2MaxNorm_ =
-        calculateConstraintISE(nominalTimeTrajectoriesStock_, nc2TrajectoriesStock_, HvTrajectoryStock_, nominalConstraint2ISE_);
+    nominalConstraint2MaxNorm_ = calculateConstraintISE(nominalTimeTrajectoriesStock_, nc2TrajectoriesStock_, HvTrajectoryStock_,
+                                                        performanceIndex_.stateEqConstraintISE);
     // calculate penalty
-    nominalInequalityConstraintPenalty_ = calculateInequalityConstraintPenalty(nominalTimeTrajectoriesStock_, ncIneqTrajectoriesStock_,
-                                                                               hTrajectoryStock_, nominalInequalityConstraintISE_);
+    performanceIndex_.inequalityConstraintPenalty = calculateInequalityConstraintPenalty(
+        nominalTimeTrajectoriesStock_, ncIneqTrajectoriesStock_, hTrajectoryStock_, performanceIndex_.inequalityConstraintISE);
   } else {
     // calculate constraint type-1 ISE and maximum norm
-    nominalConstraint1ISE_ = nominalConstraint1MaxNorm_ = 0.0;
+    performanceIndex_.stateInputEqConstraintISE = nominalConstraint1MaxNorm_ = 0.0;
     // calculates type-2 constraint ISE and maximum norm
-    nominalConstraint2ISE_ = nominalConstraint2MaxNorm_ = 0.0;
+    performanceIndex_.stateEqConstraintISE = nominalConstraint2MaxNorm_ = 0.0;
     // inequality constraints
-    nominalInequalityConstraintPenalty_ = 0.0;
-    nominalInequalityConstraintISE_ = 0.0;
+    performanceIndex_.inequalityConstraintPenalty = 0.0;
+    performanceIndex_.inequalityConstraintISE = 0.0;
   }
 
   // calculates cost
   calculateRolloutCost(nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_,
-                       nominalInputTrajectoriesStock_, nominalConstraint2ISE_, nominalInequalityConstraintPenalty_, nc2FinalStock_,
-                       HvFinalStock_, nominalTotalCost_);
+                       nominalInputTrajectoriesStock_, performanceIndex_.stateEqConstraintISE,
+                       performanceIndex_.inequalityConstraintPenalty, nc2FinalStock_, HvFinalStock_, performanceIndex_.totalCost);
 
   // display
   if (ddpSettings_.displayInfo_) {
-    std::cerr << "\t learningRate 0.0 \t cost: " << nominalTotalCost_ << " \t constraint ISE: " << nominalConstraint1ISE_
-              << " \t inequality penalty: " << nominalInequalityConstraintPenalty_
-              << " \t inequality ISE: " << nominalInequalityConstraintISE_ << std::endl;
+    std::cerr << "\t learningRate 0.0 \t cost: " << performanceIndex_.totalCost
+              << " \t constraint ISE: " << performanceIndex_.stateInputEqConstraintISE
+              << " \t inequality penalty: " << performanceIndex_.inequalityConstraintPenalty
+              << " \t inequality ISE: " << performanceIndex_.inequalityConstraintISE << std::endl;
     std::cerr << "\t final constraint type-2:  ";
     size_t itr = 0;
     for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
@@ -887,14 +888,14 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
        * be as high as possible. This is equivalent to a single core line search.
        */
       if (lsTotalCost < (baselineTotalCost_ * (1 - 1e-3 * learningRate)) && learningRate > learningRateStar_) {
-        nominalTotalCost_ = lsTotalCost;
         learningRateStar_ = learningRate;
-        nominalConstraint1ISE_ = lsConstraint1ISE;
         nominalConstraint1MaxNorm_ = lsConstraint1MaxNorm;
-        nominalConstraint2ISE_ = lsConstraint2ISE;
         nominalConstraint2MaxNorm_ = lsConstraint2MaxNorm;
-        nominalInequalityConstraintPenalty_ = lsInequalityConstraintPenalty;
-        nominalInequalityConstraintISE_ = lsInequalityConstraintISE;
+        performanceIndex_.totalCost = lsTotalCost;
+        performanceIndex_.stateInputEqConstraintISE = lsConstraint1ISE;
+        performanceIndex_.stateEqConstraintISE = lsConstraint2ISE;
+        performanceIndex_.inequalityConstraintPenalty = lsInequalityConstraintPenalty;
+        performanceIndex_.inequalityConstraintISE = lsInequalityConstraintISE;
 
         nominalControllersStock_.swap(lsControllersStock);
         nominalTimeTrajectoriesStock_.swap(lsTimeTrajectoriesStock);
@@ -1325,13 +1326,13 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::correctcachedTrajectoryTail(std::pair<int, 
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::printRolloutInfo() {
-  std::cerr << "optimization cost:         " << nominalTotalCost_ << std::endl;
-  std::cerr << "constraint type-1 ISE:     " << nominalConstraint1ISE_ << std::endl;
+  std::cerr << "optimization cost:         " << performanceIndex_.totalCost << std::endl;
+  std::cerr << "constraint type-1 ISE:     " << performanceIndex_.stateInputEqConstraintISE << std::endl;
   std::cerr << "constraint type-1 MaxNorm: " << nominalConstraint1MaxNorm_ << std::endl;
-  std::cerr << "constraint type-2 ISE:     " << nominalConstraint2ISE_ << std::endl;
+  std::cerr << "constraint type-2 ISE:     " << performanceIndex_.stateEqConstraintISE << std::endl;
   std::cerr << "constraint type-2 MaxNorm: " << nominalConstraint2MaxNorm_ << std::endl;
-  std::cerr << "inequality Penalty:        " << nominalInequalityConstraintPenalty_ << std::endl;
-  std::cerr << "inequality ISE:            " << nominalInequalityConstraintISE_ << std::endl;
+  std::cerr << "inequality Penalty:        " << performanceIndex_.inequalityConstraintPenalty << std::endl;
+  std::cerr << "inequality ISE:            " << performanceIndex_.inequalityConstraintISE << std::endl;
   std::cerr << "final constraint type-2: 	 ";
   size_t itr = 0;
   for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
@@ -1430,13 +1431,10 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::useParallelRiccatiSolverFromInitItr(bool fl
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::getPerformanceIndeces(scalar_t& costFunction, scalar_t& constraint1ISE,
-                                                           scalar_t& constraint2ISE) const {
-  costFunction = nominalTotalCost_;
-  constraint1ISE = nominalConstraint1ISE_;
-  constraint2ISE = nominalConstraint2ISE_;
+auto DDP_BASE<STATE_DIM, INPUT_DIM>::getPerformanceIndeces() const -> PerformanceIndex {
+  return performanceIndex_;
 }
 
 /******************************************************************************************************/
@@ -1449,25 +1447,10 @@ size_t DDP_BASE<STATE_DIM, INPUT_DIM>::getNumIterations() const {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::getIterationsLog(eigen_scalar_array_t& iterationCost, eigen_scalar_array_t& iterationISE1,
-                                                      eigen_scalar_array_t& iterationISE2) const {
-  iterationCost = iterationCost_;
-  iterationISE1 = iterationISE1_;
-  iterationISE2 = iterationISE2_;
-}
-
 /******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_BASE<STATE_DIM, INPUT_DIM>::getIterationsLogPtr(const eigen_scalar_array_t*& iterationCostPtr,
-                                                         const eigen_scalar_array_t*& iterationISE1Ptr,
-                                                         const eigen_scalar_array_t*& iterationISE2Ptr) const {
-  iterationCostPtr = &iterationCost_;
-  iterationISE1Ptr = &iterationISE1_;
-  iterationISE2Ptr = &iterationISE2_;
+auto DDP_BASE<STATE_DIM, INPUT_DIM>::getIterationsLog() const -> std::vector<PerformanceIndex> {
+  return performanceIndexHistory_;
 }
 
 /******************************************************************************************************/
@@ -1766,22 +1749,22 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runInit() {
   bool computePerformanceIndex = ddpSettings_.displayInfo_ || ddpSettings_.maxNumIterations_ > 1;
   if (computePerformanceIndex) {
     // calculate rollout constraint type-1 ISE
-    nominalConstraint1MaxNorm_ =
-        calculateConstraintISE(nominalTimeTrajectoriesStock_, nc1TrajectoriesStock_, EvTrajectoryStock_, nominalConstraint1ISE_);
+    nominalConstraint1MaxNorm_ = calculateConstraintISE(nominalTimeTrajectoriesStock_, nc1TrajectoriesStock_, EvTrajectoryStock_,
+                                                        performanceIndex_.stateInputEqConstraintISE);
     // calculate rollout constraint type-2 ISE
     if (!ddpSettings_.noStateConstraints_) {
-      nominalConstraint2MaxNorm_ =
-          calculateConstraintISE(nominalTimeTrajectoriesStock_, nc2TrajectoriesStock_, HvTrajectoryStock_, nominalConstraint2ISE_);
+      nominalConstraint2MaxNorm_ = calculateConstraintISE(nominalTimeTrajectoriesStock_, nc2TrajectoriesStock_, HvTrajectoryStock_,
+                                                          performanceIndex_.stateEqConstraintISE);
     } else {
-      nominalConstraint2ISE_ = nominalConstraint2MaxNorm_ = 0.0;
+      performanceIndex_.stateEqConstraintISE = nominalConstraint2MaxNorm_ = 0.0;
     }
     // calculate rollout cost
     calculateRolloutCost(nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_,
-                         nominalInputTrajectoriesStock_, nominalTotalCost_);
+                         nominalInputTrajectoriesStock_, performanceIndex_.totalCost);
   } else {
-    nominalTotalCost_ = 0.0;
-    nominalConstraint1ISE_ = nominalConstraint1MaxNorm_ = 0.0;
-    nominalConstraint2ISE_ = nominalConstraint2MaxNorm_ = 0.0;
+    performanceIndex_.totalCost = 0.0;
+    performanceIndex_.stateInputEqConstraintISE = nominalConstraint1MaxNorm_ = 0.0;
+    performanceIndex_.stateEqConstraintISE = nominalConstraint2MaxNorm_ = 0.0;
   }
   linearQuadraticApproximationTimer_.endTimer();
 
@@ -1833,14 +1816,14 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runIteration() {
   // to check convergence of the main loop, we need to compute ISEs
   if (!computeISEs) {
     // calculate constraint type-1 ISE and maximum norm
-    nominalConstraint1MaxNorm_ =
-        calculateConstraintISE(nominalTimeTrajectoriesStock_, nc1TrajectoriesStock_, EvTrajectoryStock_, nominalConstraint1ISE_);
+    nominalConstraint1MaxNorm_ = calculateConstraintISE(nominalTimeTrajectoriesStock_, nc1TrajectoriesStock_, EvTrajectoryStock_,
+                                                        performanceIndex_.stateInputEqConstraintISE);
     // calculates type-2 constraint ISE and maximum norm
     if (!ddpSettings_.noStateConstraints_) {
-      nominalConstraint2MaxNorm_ =
-          calculateConstraintISE(nominalTimeTrajectoriesStock_, nc2TrajectoriesStock_, HvTrajectoryStock_, nominalConstraint2ISE_);
+      nominalConstraint2MaxNorm_ = calculateConstraintISE(nominalTimeTrajectoriesStock_, nc2TrajectoriesStock_, HvTrajectoryStock_,
+                                                          performanceIndex_.stateEqConstraintISE);
     } else {
-      nominalConstraint2ISE_ = nominalConstraint2MaxNorm_ = 0.0;
+      performanceIndex_.stateEqConstraintISE = nominalConstraint2MaxNorm_ = 0.0;
     }
   }
   linearQuadraticApproximationTimer_.endTimer();
@@ -1963,9 +1946,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
   initTime_ = initTime;
   finalTime_ = finalTime;
 
-  iterationCost_.clear();
-  iterationISE1_.clear();
-  iterationISE2_.clear();
+  performanceIndexHistory_.clear();
 
   // check if after the truncation the internal controller is empty
   bool isInitInternalControllerEmpty = false;
@@ -1984,9 +1965,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
   // run DDP initializer and update the member variables
   runInit();
 
-  iterationCost_.push_back((Eigen::VectorXd(1) << nominalTotalCost_).finished());
-  iterationISE1_.push_back((Eigen::VectorXd(1) << nominalConstraint1ISE_).finished());
-  iterationISE2_.push_back((Eigen::VectorXd(1) << nominalConstraint2ISE_).finished());
+  performanceIndexHistory_.push_back(performanceIndex_);
 
   // convergence conditions variables
   scalar_t relCost;
@@ -2011,8 +1990,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
       std::cerr << "max state-input equality constraints error update norm: " << maxDeltaUeeNorm << std::endl;
     }
 
-    scalar_t costCashed = nominalTotalCost_;
-    scalar_t constraint1ISECashed = nominalConstraint1ISE_;
+    scalar_t costCashed = performanceIndex_.totalCost;
+    scalar_t constraint1ISECashed = performanceIndex_.stateInputEqConstraintISE;
 
     // cache the nominal trajectories before the new rollout (time, state, input, ...)
     swapNominalTrajectoriesToCache();
@@ -2020,15 +1999,13 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
     // run the an iteration of the DDP algorithm and update the member variables
     runIteration();
 
-    iterationCost_.push_back((Eigen::VectorXd(1) << nominalTotalCost_).finished());
-    iterationISE1_.push_back((Eigen::VectorXd(1) << nominalConstraint1ISE_).finished());
-    iterationISE2_.push_back((Eigen::VectorXd(1) << nominalConstraint2ISE_).finished());
+    performanceIndexHistory_.push_back(performanceIndex_);
 
     // loop break variables
-    relCost = std::abs(nominalTotalCost_ - costCashed);
-    relConstraint1ISE = std::abs(nominalConstraint1ISE_ - constraint1ISECashed);
-    isConstraint1Satisfied =
-        nominalConstraint1ISE_ <= ddpSettings_.minAbsConstraint1ISE_ || relConstraint1ISE <= ddpSettings_.minRelConstraint1ISE_;
+    relCost = std::abs(performanceIndex_.totalCost - costCashed);
+    relConstraint1ISE = std::abs(performanceIndex_.stateInputEqConstraintISE - constraint1ISECashed);
+    isConstraint1Satisfied = performanceIndex_.stateInputEqConstraintISE <= ddpSettings_.minAbsConstraint1ISE_ ||
+                             relConstraint1ISE <= ddpSettings_.minRelConstraint1ISE_;
     isLearningRateStarZero = learningRateStar_ == 0 && !isInitInternalControllerEmpty;
     isCostFunctionConverged = relCost <= ddpSettings_.minRelCost_ || isLearningRateStarZero;
     isOptimizationConverged = isCostFunctionConverged && isConstraint1Satisfied;
@@ -2074,9 +2051,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
                   << ") reached to the minimum value." << std::endl;
       }
 
-      if (nominalConstraint1ISE_ <= ddpSettings_.minAbsConstraint1ISE_) {
-        std::cerr << "Type-1 constraint absolute ISE (absConstraint1ISE=" << nominalConstraint1ISE_ << ") reached to the minimum value."
-                  << std::endl;
+      if (performanceIndex_.stateInputEqConstraintISE <= ddpSettings_.minAbsConstraint1ISE_) {
+        std::cerr << "Type-1 constraint absolute ISE (absConstraint1ISE=" << performanceIndex_.stateInputEqConstraintISE
+                  << ") reached to the minimum value." << std::endl;
       } else {
         std::cerr << "Type-1 constraint relative ISE (relConstraint1ISE=" << relConstraint1ISE << ") reached to the minimum value."
                   << std::endl;

@@ -13,16 +13,16 @@
 
 namespace switched_model_loopshaping {
 
-class QuadrupedLoopshapingXppVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> {
+class QuadrupedLoopshapingVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> {
  public:
-  QuadrupedLoopshapingXppVisualizer(std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinition,
-                                    std::unique_ptr<switched_model::QuadrupedVisualizer> quadrupedXppVisualizer);
+  QuadrupedLoopshapingVisualizer(std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinition,
+                                 std::unique_ptr<switched_model::QuadrupedVisualizer> quadrupedVisualizer);
 
   void update(const system_observation_t& observation, const primal_solution_t& primalSolution, const command_data_t& command) override;
 
  private:
   std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinition_;
-  std::unique_ptr<switched_model::QuadrupedVisualizer> quadrupedXppVisualizer_;
+  std::unique_ptr<switched_model::QuadrupedVisualizer> quadrupedVisualizer_;
 };
 
 }  // namespace switched_model_loopshaping

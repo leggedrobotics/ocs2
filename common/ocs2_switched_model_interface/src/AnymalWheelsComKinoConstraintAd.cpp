@@ -38,30 +38,29 @@ AnymalWheelsComKinoConstraintAd::AnymalWheelsComKinoConstraintAd(const AnymalWhe
 /******************************************************************************************************/
 /******************************************************************************************************/
 void AnymalWheelsComKinoConstraintAd::initializeConstraintTerms() {
-  for (int footIdx = 0; footIdx < NUM_CONTACT_POINTS; footIdx++) {
-    auto footName = feetNames[footIdx];
+  for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
+    auto footName = feetNames[i];
 
     // Friction cone constraint
-    auto frictionCone = std::unique_ptr<ConstraintTerm_t>(new FrictionConeConstraint_t(options_.frictionCoefficient_, 25.0, footIdx));
+    auto frictionCone = std::unique_ptr<ConstraintTerm_t>(new FrictionConeConstraint(options_.frictionCoefficient_, 25.0, i));
 
     // EE force
-    auto zeroForceConstraint = std::unique_ptr<ConstraintTerm_t>(new ZeroForceConstraint_t(footIdx));
+    auto zeroForceConstraint = std::unique_ptr<ConstraintTerm_t>(new ZeroForceConstraint(i));
 
     // Velocity Constraint
-    auto _o_endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityConstraint_t(
-        footIdx, EndEffectorVelocityConstraintSettings_t(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
+    auto endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityConstraint_t(
+        i, EndEffectorVelocityConstraintSettings_t(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
     // EE InFootFrame Velocity Constraint
-    auto _f_endEffectorVelocityInFootFrameConstraint = std::unique_ptr<ConstraintTerm_t>(
-        new EndEffectorVelocityInFootFrameConstraint_t(footIdx, EndEffectorVelocityInFootFrameConstraintSettings_t(), *adComModelPtr_,
-                                                       *adKinematicModelPtr_, options_.recompileLibraries_));
+    auto endEffectorVelocityInFootFrameConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityInFootFrameConstraint_t(
+        i, EndEffectorVelocityInFootFrameConstraintSettings_t(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
 
     // Inequalities
     inequalityConstraintCollection_.add(footName + "_FrictionCone", std::move(frictionCone));
 
     // State input equalities
     equalityStateInputConstraintCollection_.add(footName + "_ZeroForce", std::move(zeroForceConstraint));
-    equalityStateInputConstraintCollection_.add(footName + "_o_EEVel", std::move(_o_endEffectorVelocityConstraint));
-    equalityStateInputConstraintCollection_.add(footName + "_f_EEVel", std::move(_f_endEffectorVelocityInFootFrameConstraint));
+    equalityStateInputConstraintCollection_.add(footName + "_o_EEVel", std::move(endEffectorVelocityConstraint));
+    equalityStateInputConstraintCollection_.add(footName + "_f_EEVel", std::move(endEffectorVelocityInFootFrameConstraint));
   }
 }
 
@@ -86,31 +85,32 @@ void AnymalWheelsComKinoConstraintAd::setCurrentStateAndControl(const scalar_t& 
     equalityStateInputConstraintCollection_.get(footName + "_ZeroForce").setActivity(!stanceLegs_[i]);
 
     // Active foot placement for stance legs
-    auto& EEVelConstraint = equalityStateInputConstraintCollection_.get<EndEffectorVelocityConstraint>(footName + "_EEVel");
-    EEVelConstraint.setActivity(true);
-    EndEffectorVelocityConstraintSettings eeVelConSettings;
+    auto& EEVelConstraint = equalityStateInputConstraintCollection_.get<EndEffectorVelocityConstraint>(footName + "_o_EEVel");
+    EndEffectorVelocityConstraintSettings_t eeVelConSettings(1, 3);
 
     // Rolling InFootFrame Velocity constraint for stance legs
-    auto& _f_EEVelInFootFrameConstraint =
+    auto& EEVelInFootFrameConstraint =
         equalityStateInputConstraintCollection_.template get<EndEffectorVelocityInFootFrameConstraint_t>(footName + "_f_EEVel");
 
     if (stanceLegs_[i]) {
       // EE velocities in lateral direction (y) in foot frame should be zero.
-      EndEffectorVelocityInFootFrameConstraintSettings_t _f_eeVelInFootFrameConSettings(1, 3);
-      _f_eeVelInFootFrameConSettings.b << 0;
-      _f_eeVelInFootFrameConSettings.A << 0, 1, 0;
-      _f_EEVelInFootFrameConstraint.configure(_f_eeVelInFootFrameConSettings);
-      _f_EEVelInFootFrameConstraint.setActivity(true);
+      EndEffectorVelocityInFootFrameConstraintSettings_t eeVelInFootFrameConSettings(1, 3);
+      eeVelInFootFrameConSettings.b << 0;
+      eeVelInFootFrameConSettings.A << 0, 1, 0;
+      EEVelInFootFrameConstraint.configure(eeVelInFootFrameConSettings);
+      EEVelInFootFrameConstraint.setActivity(true);
       // The upwards velocity (z) in the world frame should be zero too.
-      eeVelConSettings.b = Eigen::Vector3d::Zero();
-      eeVelConSettings.A = Eigen::Matrix3d::Identity();
+      eeVelConSettings.b << 0;
+      eeVelConSettings.A << 0, 0, 1;
     } else {  // in swing: z-velocity is provided
+      EEVelInFootFrameConstraint.setActivity(false);
       eeVelConSettings.b.resize(1);
       eeVelConSettings.A.resize(1, 3);
       eeVelConSettings.b << -swingTrajectoryPlannerPtr_->getZvelocityConstraint(i, t);
       eeVelConSettings.A << 0, 0, 1;
     }
     EEVelConstraint.configure(eeVelConSettings);
+    EEVelConstraint.setActivity(true);
   }
 }
 

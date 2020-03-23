@@ -128,6 +128,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
 
   useParallelRiccatiSolverFromInitItr_ = false;
 
+  performanceIndexHistory_.clear();
+
   for (size_t i = 0; i < numPartitions_; i++) {
     // very important, these are variables that are carried in between iterations
     nominalControllersStock_[i].clear();

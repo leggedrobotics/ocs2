@@ -21,8 +21,6 @@ class CubicSpline {
     scalar_t velocity;
   };
 
-  CubicSpline();
-
   CubicSpline(Node start, Node end);
 
   scalar_t position(scalar_t time) const;

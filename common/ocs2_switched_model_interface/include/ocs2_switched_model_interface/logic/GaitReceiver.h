@@ -8,8 +8,6 @@
 
 #include <ros/ros.h>
 
-#include <ocs2_msgs/mode_schedule.h>
-
 #include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
 
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"

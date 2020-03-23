@@ -6,8 +6,6 @@
 
 namespace switched_model {
 
-CubicSpline::CubicSpline() : CubicSpline({0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}) {}
-
 CubicSpline::CubicSpline(Node start, Node end) {
   assert(start.time < end.time);
   t0_ = start.time;

@@ -9,6 +9,10 @@
 
 namespace switched_model {
 
+struct TerrainModel {
+  double terrainHeight_;
+};
+
 /**
  * Manages the ModeSchedule for switched model.
  */
@@ -27,6 +31,8 @@ class SwitchedModelModeScheduleManager : public ocs2::ModeScheduleManager<STATE_
 
   const std::shared_ptr<SwingTrajectoryPlanner>& getSwingTrajectoryPlanner() { return swingTrajectoryPtr_; }
 
+  const std::shared_ptr<ocs2::Lockable<TerrainModel>>& getTerrainHeight() { return terrainPtr_; }
+
  private:
   void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
                         const ocs2::CostDesiredTrajectories& costDesiredTrajectory, ocs2::ModeSchedule& modeSchedule) override;
@@ -34,6 +40,7 @@ class SwitchedModelModeScheduleManager : public ocs2::ModeScheduleManager<STATE_
  private:
   std::shared_ptr<LockableGaitSchedule> gaitSchedulePtr_;
   std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr_;
+  std::shared_ptr<ocs2::Lockable<TerrainModel>> terrainPtr_;
 };
 
 }  // namespace switched_model

@@ -189,6 +189,10 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
 void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, const scalar_array_t& mpcTimeTrajectory,
                                                           const state_vector_array_t& mpcStateTrajectory,
                                                           const ocs2::ModeSchedule& modeSchedule) const {
+  if (mpcTimeTrajectory.empty() || mpcStateTrajectory.empty()) {
+    return;  // Nothing to publish
+  }
+
   // Reserve Feet msg
   std::vector<std::vector<geometry_msgs::Point>> feetMsgs(NUM_CONTACT_POINTS);
   std::for_each(feetMsgs.begin(), feetMsgs.end(), [&](std::vector<geometry_msgs::Point>& v) { v.reserve(mpcStateTrajectory.size()); });

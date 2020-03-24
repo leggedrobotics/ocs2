@@ -41,12 +41,19 @@ namespace ocs2 {
 struct PerformanceIndex {
   using scalar_t = typename Dimensions<0, 0>::scalar_t;
 
+  /** The merit function of a rollout. */
   scalar_t merit = 0.0;
+  /** The total cost of a rollout. */
   scalar_t totalCost = 0.0;
+  /** The integral of squared error for intermediate state-only equality constraints. */
   scalar_t stateEqConstraintISE = 0.0;
-  scalar_t stateEqFinalConstraintISE = 0.0;
+  /** The sum of squared error for intermediate state-only equality constraints. */
+  scalar_t stateEqFinalConstraintSSE = 0.0;
+  /** The integral of squared error for intermediate state-input equality constraints. */
   scalar_t stateInputEqConstraintISE = 0.0;
+  /** The integral of squared error for intermediate inequality constraints violation. */
   scalar_t inequalityConstraintISE = 0.0;
+  /** The total penalty of the intermediate inequality constraints violation. */
   scalar_t inequalityConstraintPenalty = 0.0;
 };
 
@@ -54,7 +61,7 @@ inline std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& pe
   stream << "rollout merit: " << performanceIndex.merit << '\n';
   stream << "rollout cost:  " << performanceIndex.totalCost << '\n';
   stream << "state equality constraints ISE:       " << performanceIndex.stateEqConstraintISE << '\n';
-  stream << "state equality final constraints ISE: " << performanceIndex.stateEqFinalConstraintISE << '\n';
+  stream << "state equality final constraints SSE: " << performanceIndex.stateEqFinalConstraintSSE << '\n';
   stream << "state-input equality constraints ISE: " << performanceIndex.stateInputEqConstraintISE << '\n';
   stream << "inequality constraints ISE:           " << performanceIndex.inequalityConstraintISE << '\n';
   stream << "inequality constraints penalty:       " << performanceIndex.inequalityConstraintPenalty << '\n';

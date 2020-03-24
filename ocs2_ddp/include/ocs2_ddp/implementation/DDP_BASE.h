@@ -816,9 +816,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::baselineRollout(bool computeISEs) {
   // display
   if (ddpSettings_.displayInfo_) {
     std::cerr << "\t learningRate 0.0 \t cost: " << performanceIndex_.totalCost
-              << " \t constraint ISE: " << performanceIndex_.stateInputEqConstraintISE
-              << " \t inequality penalty: " << performanceIndex_.inequalityConstraintPenalty
-              << " \t inequality ISE: " << performanceIndex_.inequalityConstraintISE << std::endl;
+              << "\t constraint ISE: " << performanceIndex_.stateInputEqConstraintISE
+              << "\t inequality penalty: " << performanceIndex_.inequalityConstraintPenalty
+              << "\t inequality ISE: " << performanceIndex_.inequalityConstraintISE << '\n';
     std::cerr << "\t final constraint type-2:  ";
     size_t itr = 0;
     for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
@@ -827,8 +827,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::baselineRollout(bool computeISEs) {
         itr++;
       }
     }
-    std::cerr << std::endl;
-    std::cerr << "\t forward pass average time step: " << avgTimeStepFP_ * 1e+3 << " [ms]." << std::endl;
+    std::cerr << "\n\t forward pass average time step: " << avgTimeStepFP_ * 1e+3 << " [ms].\n";
   }
 }
 
@@ -993,9 +992,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t workerIndex, scalar
     if (ddpSettings_.displayInfo_) {
       std::string linesearchDisplay;
       linesearchDisplay = "\t [Thread " + std::to_string(workerIndex) + "] - learningRate " + std::to_string(learningRate) +
-                          " \t cost: " + std::to_string(lsTotalCost) + " \t constraint ISE: " + std::to_string(lsConstraint1ISE) +
-                          " \t inequality penalty: " + std::to_string(lsInequalityConstraintPenalty) +
-                          " \t inequality ISE: " + std::to_string(lsInequalityConstraintISE) + "\n";
+                          "\t cost: " + std::to_string(lsTotalCost) + " \t constraint ISE: " + std::to_string(lsConstraint1ISE) +
+                          "\t inequality penalty: " + std::to_string(lsInequalityConstraintPenalty) +
+                          "\t inequality ISE: " + std::to_string(lsInequalityConstraintISE) + "\n";
       linesearchDisplay += "\t final constraint type-2:   ";
       for (size_t i = 0; i < numPartitions_; i++) {
         linesearchDisplay += "[" + std::to_string(i) + "]: ";
@@ -1328,14 +1327,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::correctcachedTrajectoryTail(std::pair<int, 
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::printRolloutInfo() {
-  std::cerr << "optimization cost:         " << performanceIndex_.totalCost << std::endl;
-  std::cerr << "constraint type-1 ISE:     " << performanceIndex_.stateInputEqConstraintISE << std::endl;
-  std::cerr << "constraint type-1 MaxNorm: " << nominalConstraint1MaxNorm_ << std::endl;
-  std::cerr << "constraint type-2 ISE:     " << performanceIndex_.stateEqConstraintISE << std::endl;
-  std::cerr << "constraint type-2 MaxNorm: " << nominalConstraint2MaxNorm_ << std::endl;
-  std::cerr << "inequality Penalty:        " << performanceIndex_.inequalityConstraintPenalty << std::endl;
-  std::cerr << "inequality ISE:            " << performanceIndex_.inequalityConstraintISE << std::endl;
-  std::cerr << "final constraint type-2: 	 ";
+  std::cerr << performanceIndex_;
+  std::cerr << "final constraint type-2:   ";
   size_t itr = 0;
   for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
     for (size_t k = 0; k < nc2FinalStock_[i].size(); k++) {
@@ -1343,9 +1336,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::printRolloutInfo() {
       itr++;
     }
   }
-  std::cerr << std::endl;
-  std::cerr << "forward pass average time step:  " << avgTimeStepFP_ * 1e+3 << " [ms]." << std::endl;
-  std::cerr << "backward pass average time step: " << avgTimeStepBP_ * 1e+3 << " [ms]." << std::endl;
+  std::cerr << "\nforward pass average time step:  " << avgTimeStepFP_ * 1e+3 << " [ms].";
+  std::cerr << "\nbackward pass average time step: " << avgTimeStepBP_ * 1e+3 << " [ms].\n";
 }
 
 /******************************************************************************************************/
@@ -1435,7 +1427,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::useParallelRiccatiSolverFromInitItr(bool fl
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-auto DDP_BASE<STATE_DIM, INPUT_DIM>::getPerformanceIndeces() const -> PerformanceIndex {
+const PerformanceIndex& DDP_BASE<STATE_DIM, INPUT_DIM>::getPerformanceIndeces() const {
   return performanceIndex_;
 }
 
@@ -1451,7 +1443,7 @@ size_t DDP_BASE<STATE_DIM, INPUT_DIM>::getNumIterations() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-auto DDP_BASE<STATE_DIM, INPUT_DIM>::getIterationsLog() const -> std::vector<PerformanceIndex> {
+const std::vector<PerformanceIndex>& DDP_BASE<STATE_DIM, INPUT_DIM>::getIterationsLog() const {
   return performanceIndexHistory_;
 }
 

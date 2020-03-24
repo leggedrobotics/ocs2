@@ -373,11 +373,11 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   void useParallelRiccatiSolverFromInitItr(bool flag);
 
-  virtual PerformanceIndex getPerformanceIndeces() const override;
+  const PerformanceIndex& getPerformanceIndeces() const override;
 
   size_t getNumIterations() const override;
 
-  std::vector<PerformanceIndex> getIterationsLog() const override;
+  const std::vector<PerformanceIndex>& getIterationsLog() const override;
 
   /**
    * Write access to ddp settings

@@ -38,6 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <chrono>
 #include <cstddef>
 #include <future>
+#include <iomanip>
+#include <iostream>
 #include <mutex>
 #include <numeric>
 #include <type_traits>
@@ -196,7 +198,7 @@ class Solver_BASE {
    *
    * @return PerformanceIndex of the last optimized trajectory.
    */
-  virtual PerformanceIndex getPerformanceIndeces() const = 0;
+  virtual const PerformanceIndex& getPerformanceIndeces() const = 0;
 
   /**
    * Gets number of iterations.
@@ -210,7 +212,7 @@ class Solver_BASE {
    *
    * @return An array of PerformanceIndices.
    */
-  virtual std::vector<PerformanceIndex> getIterationsLog() const = 0;
+  virtual const std::vector<PerformanceIndex>& getIterationsLog() const = 0;
 
   /**
    * Gets final time of optimization

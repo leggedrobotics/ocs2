@@ -38,9 +38,6 @@ model_settings
 
   mpcGoalCommandDelay           0.1
 
-  useFeetTrajectoryFiltering    0
-  feetFilterFrequency           1000.0
-
   gaitOptimization              0
 
   recompileLibraries            1

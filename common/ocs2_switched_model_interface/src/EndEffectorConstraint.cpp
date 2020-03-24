@@ -22,6 +22,10 @@ void EndEffectorConstraintSettings::resize(size_t rows, size_t cols) {
 /****************************************************************************************************/
 /****************************************************************************************************/
 
+// Static member definition
+constexpr size_t EndEffectorConstraint::domain_dim_;
+constexpr size_t EndEffectorConstraint::range_dim_;
+
 EndEffectorConstraint::EndEffectorConstraint(ocs2::ConstraintOrder constraintOrder, std::string eeConstraintName, int legNumber,
                                              EndEffectorConstraintSettings settings, ad_com_model_t& adComModel,
                                              ad_kinematic_model_t& adKinematicsModel, adfunc_t adfunc, bool generateModels, bool loadModels)

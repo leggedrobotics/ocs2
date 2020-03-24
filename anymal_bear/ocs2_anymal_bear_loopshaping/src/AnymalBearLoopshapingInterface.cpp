@@ -6,6 +6,8 @@
 
 #include <ros/package.h>
 
+#include <ocs2_quadruped_interface/QuadrupedPointfootInterface.h>
+
 #include <ocs2_anymal_bear_switched_model/core/AnymalBearCom.h>
 #include <ocs2_anymal_bear_switched_model/core/AnymalBearKinematics.h>
 
@@ -20,8 +22,8 @@ std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAn
   auto com = AnymalBearCom();
   auto comAd = AnymalBearComAd();
 
-  auto quadrupedInterface =
-      std::unique_ptr<switched_model::QuadrupedInterface>(new switched_model::QuadrupedInterface(kin, kinAd, com, comAd, taskFolder));
+  auto quadrupedInterface = std::unique_ptr<switched_model::QuadrupedPointfootInterface>(
+      new switched_model::QuadrupedPointfootInterface(kin, kinAd, com, comAd, taskFolder));
 
   return std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface>(
       new switched_model_loopshaping::QuadrupedLoopshapingInterface(std::move(quadrupedInterface), taskFolder));

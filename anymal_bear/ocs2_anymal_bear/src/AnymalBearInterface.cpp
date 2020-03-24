@@ -11,13 +11,14 @@
 
 namespace anymal {
 
-std::unique_ptr<switched_model::QuadrupedInterface> getAnymalBearInterface(const std::string& taskName) {
+std::unique_ptr<switched_model::QuadrupedPointfootInterface> getAnymalBearInterface(const std::string& taskName) {
   const auto taskFolder = getTaskFileFolderBear(taskName);
   auto kin = AnymalBearKinematics();
   auto kinAd = AnymalBearKinematicsAd();
   auto com = AnymalBearCom();
   auto comAd = AnymalBearComAd();
-  return std::unique_ptr<switched_model::QuadrupedInterface>(new switched_model::QuadrupedInterface(kin, kinAd, com, comAd, taskFolder));
+  return std::unique_ptr<switched_model::QuadrupedPointfootInterface>(
+      new switched_model::QuadrupedPointfootInterface(kin, kinAd, com, comAd, taskFolder));
 }
 
 std::string getTaskFileFolderBear(const std::string& taskName) {

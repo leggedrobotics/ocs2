@@ -21,9 +21,13 @@ model_settings
   enforceTorqueConstraint       0
   torqueLimit                   40.0
 
-  swingLegLiftOff               0.25
-  liftOffVelocity               0.20
-  touchDownVelocity             -0.40
+  swing_trajectory_settings
+  {
+    liftOffVelocity             0.2
+    touchDownVelocity           -0.4
+    swingHeight                 0.1
+    swingTimeScale              0.15
+  }
 
   mpcGoalCommandDelay           0.1
 
@@ -32,16 +36,16 @@ model_settings
   recompileLibraries            1
 }
 
-initialModeSequenceTemplate
+initialModeSchedule
 {
   modeSequence
   {
     [0]  STANCE
+    [1]  STANCE
   }
-  switchingTimes
+  eventTimes
   {
-    [0]  0.0
-    [1]  1.0
+    [0]  0.5
   }
 }
 

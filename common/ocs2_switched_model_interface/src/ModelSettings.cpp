@@ -31,10 +31,6 @@ ModelSettings loadModelSettings(const std::string& filename, bool verbose) {
   ocs2::loadData::loadPtreeValue(pt, modelSettings.contactForceWeight_, prefix + "contactForceWeight", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.zDirectionPositionWeight_, prefix + "zDirectionPositionWeight", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.zDirectionVelocityWeight_, prefix + "zDirectionVelocityWeight", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.swingLegLiftOff_, prefix + "swingLegLiftOff", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.liftOffVelocity_, prefix + "liftOffVelocity", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.touchDownVelocity_, prefix + "touchDownVelocity", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.swingTimeScale_, prefix + "swingTimeScale", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.phaseTransitionStanceTime_, prefix + "phaseTransitionStanceTime", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.mpcGoalCommandDelay_, prefix + "mpcGoalCommandDelay", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.targetDisplacementVelocity_, prefix + "targetDisplacementVelocity", verbose);
@@ -47,8 +43,6 @@ ModelSettings loadModelSettings(const std::string& filename, bool verbose) {
   ocs2::loadData::loadPtreeValue(pt, modelSettings.enforceTorqueConstraint_, prefix + "enforceTorqueConstraint", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.torqueLimit_, prefix + "torqueLimit", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.recompileLibraries_, prefix + "recompileLibraries", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.eps_, prefix + "eps", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.eta_, prefix + "eta", verbose);
 
   if (verbose) {
     std::cerr << " #### ================================================ ####" << std::endl;

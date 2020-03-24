@@ -32,6 +32,20 @@ auto SwingTrajectoryPlanner::getZpositionConstraint(size_t leg, scalar_t time) c
 /******************************************************************************************************/
 /******************************************************************************************************/
 void SwingTrajectoryPlanner::update(const ocs2::ModeSchedule& modeSchedule, scalar_t terrainHeight) {
+  const scalar_array_t terrainHeightSequence(modeSchedule.modeSequence.size(), terrainHeight);
+  std::array<scalar_array_t, NUM_CONTACT_POINTS> liftOffHeightSequence;
+  liftOffHeightSequence.fill(terrainHeightSequence);
+  std::array<scalar_array_t, NUM_CONTACT_POINTS> touchDownHeightSequence;
+  touchDownHeightSequence.fill(terrainHeightSequence);
+  update(modeSchedule, liftOffHeightSequence, touchDownHeightSequence);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void SwingTrajectoryPlanner::update(const ocs2::ModeSchedule& modeSchedule,
+                                    const std::array<scalar_array_t, NUM_CONTACT_POINTS>& liftOffHeightSequence,
+                                    const std::array<scalar_array_t, NUM_CONTACT_POINTS>& touchDownHeightSequence) {
   const auto& modeSequence = modeSchedule.modeSequence;
   const auto& eventTimes = modeSchedule.eventTimes;
 
@@ -57,13 +71,14 @@ void SwingTrajectoryPlanner::update(const ocs2::ModeSchedule& modeSchedule, scal
 
         const scalar_t scaling = swingTrajectoryScaling(swingStartTime, swingFinalTime, settings_.swingTimeScale);
 
-        const CubicSpline::Node liftOff{swingStartTime, terrainHeight, scaling * settings_.liftOffVelocity};
-        const CubicSpline::Node touchDown{swingFinalTime, terrainHeight, scaling * settings_.touchDownVelocity};
-        feetHeightTrajectories_[j].emplace_back(liftOff, scaling * settings_.swingHeight, touchDown);
+        const CubicSpline::Node liftOff{swingStartTime, liftOffHeightSequence[j][p], scaling * settings_.liftOffVelocity};
+        const CubicSpline::Node touchDown{swingFinalTime, touchDownHeightSequence[j][p], scaling * settings_.touchDownVelocity};
+        const scalar_t midHeight = std::min(liftOffHeightSequence[j][p], touchDownHeightSequence[j][p]) + scaling * settings_.swingHeight;
+        feetHeightTrajectories_[j].emplace_back(liftOff, midHeight, touchDown);
       } else {  // for a stance leg
-        const CubicSpline::Node liftOff{0.0, terrainHeight, 0.0};
-        const CubicSpline::Node touchDown{1.0, terrainHeight, 0.0};
-        feetHeightTrajectories_[j].emplace_back(liftOff, terrainHeight, touchDown);
+        const CubicSpline::Node liftOff{0.0, liftOffHeightSequence[j][p], 0.0};
+        const CubicSpline::Node touchDown{1.0, liftOffHeightSequence[j][p], 0.0};
+        feetHeightTrajectories_[j].emplace_back(liftOff, liftOffHeightSequence[j][p], touchDown);
       }
     }
     feetHeightTrajectoriesEvents_[j] = eventTimes;
@@ -169,6 +184,34 @@ void SwingTrajectoryPlanner::checkThatIndicesAreValid(int leg, int index, int st
 /******************************************************************************************************/
 auto SwingTrajectoryPlanner::swingTrajectoryScaling(scalar_t startTime, scalar_t finalTime, scalar_t swingTimeScale) -> scalar_t {
   return std::min(1.0, (finalTime - startTime) / swingTimeScale);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& filename, bool verbose) {
+  SwingTrajectoryPlannerSettings settings{};
+
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(filename, pt);
+
+  const std::string prefix{"model_settings.swing_trajectory_settings."};
+
+  if (verbose) {
+    std::cerr << "\n #### Swing trajectory Settings:" << std::endl;
+    std::cerr << " #### ==================================================" << std::endl;
+  }
+
+  ocs2::loadData::loadPtreeValue(pt, settings.liftOffVelocity, prefix + "liftOffVelocity", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.touchDownVelocity, prefix + "touchDownVelocity", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.swingHeight, prefix + "swingHeight", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.swingTimeScale, prefix + "swingTimeScale", verbose);
+
+  if (verbose) {
+    std::cerr << " #### ==================================================" << std::endl;
+  }
+
+  return settings;
 }
 
 }  // namespace switched_model

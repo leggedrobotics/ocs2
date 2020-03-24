@@ -28,5 +28,4 @@ void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& qua
   mpc_ros_t mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(nodeHandle);
 }
-
 }  // namespace switched_model

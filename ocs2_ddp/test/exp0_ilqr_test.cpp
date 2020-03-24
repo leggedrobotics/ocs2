@@ -138,31 +138,28 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   ILQR<STATE_DIM, INPUT_DIM>::primal_solution_t solutionMT = ilqrMT.primalSolution(finalTime);
 
   // get performance indices
-  double totalCost_st, totalCost_mt;
-  double constraint1ISE_st, constraint1ISE_mt;
-  double constraint2ISE_st, constraint2ISE_mt;
-  ilqrST.getPerformanceIndeces(totalCost_st, constraint1ISE_st, constraint2ISE_st);
-  ilqrMT.getPerformanceIndeces(totalCost_mt, constraint1ISE_mt, constraint2ISE_mt);
+  auto performanceIndecesST = ilqrST.getPerformanceIndeces();
+  auto performanceIndecesMT = ilqrMT.getPerformanceIndeces();
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
   const double expectedCost = 9.7667;
-  ASSERT_LT(fabs(totalCost_st - expectedCost), 10 * ilqrSettings.ddpSettings_.minRelCost_)
+  ASSERT_LT(fabs(performanceIndecesST.totalCost - expectedCost), 10 * ilqrSettings.ddpSettings_.minRelCost_)
       << "MESSAGE: ILQR_ST failed in the EXP0's cost test!";
-  ASSERT_LT(fabs(totalCost_mt - expectedCost), 10 * ilqrSettings.ddpSettings_.minRelCost_)
+  ASSERT_LT(fabs(performanceIndecesMT.totalCost - expectedCost), 10 * ilqrSettings.ddpSettings_.minRelCost_)
       << "MESSAGE: ILQR_MT failed in the EXP1's cost test!";
 
   const double expectedISE1 = 0.0;
-  ASSERT_LT(fabs(constraint1ISE_st - expectedISE1), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
+  ASSERT_LT(fabs(performanceIndecesST.stateInputEqConstraintISE - expectedISE1), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
       << "MESSAGE: ILQR_ST failed in the EXP0's type-1 constraint ISE test!";
-  ASSERT_LT(fabs(constraint1ISE_mt - expectedISE1), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
+  ASSERT_LT(fabs(performanceIndecesMT.stateInputEqConstraintISE - expectedISE1), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
       << "MESSAGE: ILQR_MT failed in the EXP1's type-1 constraint ISE test!";
 
   const double expectedISE2 = 0.0;
-  ASSERT_LT(fabs(constraint2ISE_st - expectedISE2), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
+  ASSERT_LT(fabs(performanceIndecesST.stateEqConstraintISE - expectedISE2), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
       << "MESSAGE: ILQR_ST failed in the EXP0's type-2 constraint ISE test!";
-  ASSERT_LT(fabs(constraint2ISE_mt - expectedISE2), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
+  ASSERT_LT(fabs(performanceIndecesMT.stateEqConstraintISE - expectedISE2), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
       << "MESSAGE: ILQR_MT failed in the EXP1's type-2 constraint ISE test!";
 
   double ctrlFinalTime;

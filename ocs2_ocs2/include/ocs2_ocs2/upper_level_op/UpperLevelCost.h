@@ -130,11 +130,12 @@ class UpperLevelCost final : public NLP_Cost {
     }
 
     // get the cost and constraints ISE
-    slqPtr_->getPerformanceIndeces(cost_, constraintISE1_, constraintISE2_);
+    performanceIndex_ = slqPtr_->getPerformanceIndeces();
 
     // display
     if (display_) {
-      std::cerr << "\t     constraintISE1: " << constraintISE1_ << "\t     constraintISE2: " << constraintISE2_
+      std::cerr << "\t     state equality constraints ISE:       " << performanceIndex_.stateEqConstraintISE
+                << "\t     state-input equality constraints ISE: " << performanceIndex_.stateInputEqConstraintISE
                 << "\t#Iterations: " << slqPtr_->getNumIterations() << std::endl;
     }
 
@@ -142,15 +143,15 @@ class UpperLevelCost final : public NLP_Cost {
     slqDataCollectorPtr_->collect(slqPtr_.get());
 
     // status is false if the constraints ISE is higher than minAbsConstraint1RMSE_
-    bool status1 = (constraintISE1_ <= slqPtr_->ddpSettings().minAbsConstraint1ISE_) ? true : false;
-    bool status2 = (constraintISE2_ <= slqPtr_->ddpSettings().minAbsConstraint1ISE_) ? true : false;
+    bool status1 = (performanceIndex_.stateInputEqConstraintISE <= slqPtr_->ddpSettings().minAbsConstraint1ISE_) ? true : false;
+    bool status2 = (performanceIndex_.stateEqConstraintISE <= slqPtr_->ddpSettings().minAbsConstraint1ISE_) ? true : false;
 
     status_ = status1 && status2;
     return 0;
   }
 
   bool getCost(size_t id, scalar_t& f) override {
-    f = cost_;
+    f = performanceIndex_.totalCost;
     return status_;
   }
 
@@ -192,9 +193,7 @@ class UpperLevelCost final : public NLP_Cost {
   scalar_array_t eventTimes_;
 
   bool status_;
-  scalar_t cost_;
-  scalar_t constraintISE1_;
-  scalar_t constraintISE2_;
+  PerformanceIndex performanceIndex_;
 };
 
 }  // namespace ocs2

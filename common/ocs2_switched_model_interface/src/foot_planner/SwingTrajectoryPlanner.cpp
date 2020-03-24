@@ -10,8 +10,8 @@
 
 namespace switched_model {
 
-SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const ComModelBase<double>& comModel,
-                                               const KinematicsModelBase<double>& kinematicsModel)
+SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const ComModelBase<scalar_t>& comModel,
+                                               const KinematicsModelBase<scalar_t>& kinematicsModel)
     : settings_(std::move(settings)), comModel_(comModel.clone()), kinematicsModel_(kinematicsModel.clone()) {}
 
 void SwingTrajectoryPlanner::update(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState,
@@ -146,10 +146,10 @@ void SwingTrajectoryPlanner::updateFeetTrajectories(scalar_t initTime, scalar_t 
           return node;
         }();
 
-        const double scaling = std::min(1.0, (touchDown.time - liftOff.time) / settings_.swingTimeScale);
+        const scalar_t scaling = std::min(1.0, (touchDown.time - liftOff.time) / settings_.swingTimeScale);
         liftOff.velocity *= scaling;
         touchDown.velocity *= scaling;
-        double midHeight = scaling * (terrainHeight + settings_.swingHeight);
+        scalar_t midHeight = scaling * (terrainHeight + settings_.swingHeight);
 
         footTrajectory.emplace_back(liftOff, midHeight, touchDown);
         footTrajectoryEvents.push_back(touchDown.time);

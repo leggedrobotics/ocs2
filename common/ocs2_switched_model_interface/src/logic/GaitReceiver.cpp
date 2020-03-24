@@ -33,7 +33,7 @@ void GaitReceiver::mpcModeSequenceCallback(const ocs2_msgs::mode_schedule::Const
     gait.duration = modeSequenceTemplate.switchingTimes.back();
     // Events: from time -> phase
     std::for_each(modeSequenceTemplate.switchingTimes.begin() + 1, modeSequenceTemplate.switchingTimes.end() - 1,
-                  [&](double eventTime) { gait.eventPhases.push_back(eventTime / gait.duration); });
+                  [&](scalar_t eventTime) { gait.eventPhases.push_back(eventTime / gait.duration); });
     // Modes:
     gait.modeSequence = modeSequenceTemplate.modeSequence;
     return gait;

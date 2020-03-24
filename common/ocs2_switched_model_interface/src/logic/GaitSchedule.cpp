@@ -9,12 +9,12 @@
 
 namespace switched_model {
 
-GaitSchedule::GaitSchedule(double time, Gait gait) : time_(time), phase_(0.0), gaitSchedule_{std::move(gait)} {}
+GaitSchedule::GaitSchedule(scalar_t time, Gait gait) : time_(time), phase_(0.0), gaitSchedule_{std::move(gait)} {}
 
-void GaitSchedule::advanceToTime(double time) {
+void GaitSchedule::advanceToTime(scalar_t time) {
   assert(time >= time_);
 
-  const double dt = time - time_;
+  const scalar_t dt = time - time_;
   std::deque<Gait>::iterator newActiveGait;
   std::tie(phase_, newActiveGait) = advancePhase(phase_, dt, gaitSchedule_.begin(), gaitSchedule_.end());
   time_ = time;
@@ -34,16 +34,16 @@ void GaitSchedule::setGaitSequenceAfterCurrentGait(const std::vector<Gait>& gait
   gaitSchedule_.insert(gaitSchedule_.end(), gaitSequence.begin(), gaitSequence.end());
 }
 
-void GaitSchedule::setGaitAtTime(const Gait& gait, double time) {
+void GaitSchedule::setGaitAtTime(const Gait& gait, scalar_t time) {
   setGaitSequenceAtTime({gait}, time);
 }
 
-void GaitSchedule::setGaitSequenceAtTime(const std::vector<Gait>& gaitSequence, double time) {
+void GaitSchedule::setGaitSequenceAtTime(const std::vector<Gait>& gaitSequence, scalar_t time) {
   assert(time >= time_);
 
   rolloutGaitScheduleTillTime(time);
 
-  double newPhase;
+  scalar_t newPhase;
   std::deque<Gait>::iterator newActiveGait;
   std::tie(newPhase, newActiveGait) = advancePhase(phase_, time - time_, gaitSchedule_.begin(), gaitSchedule_.end());
 
@@ -54,16 +54,16 @@ void GaitSchedule::setGaitSequenceAtTime(const std::vector<Gait>& gaitSequence, 
   gaitSchedule_.insert(gaitSchedule_.end(), gaitSequence.begin(), gaitSequence.end());
 }
 
-void GaitSchedule::setGaitAfterTime(const Gait& gait, double time) {
+void GaitSchedule::setGaitAfterTime(const Gait& gait, scalar_t time) {
   setGaitSequenceAfterTime({gait}, time);
 }
 
-void GaitSchedule::setGaitSequenceAfterTime(const std::vector<Gait>& gaitSequence, double time) {
+void GaitSchedule::setGaitSequenceAfterTime(const std::vector<Gait>& gaitSequence, scalar_t time) {
   assert(time >= time_);
 
   rolloutGaitScheduleTillTime(time);
 
-  double newPhase;
+  scalar_t newPhase;
   std::deque<Gait>::iterator newActiveGait;
   std::tie(newPhase, newActiveGait) = advancePhase(phase_, time - time_, gaitSchedule_.begin(), gaitSchedule_.end());
 
@@ -71,12 +71,12 @@ void GaitSchedule::setGaitSequenceAfterTime(const std::vector<Gait>& gaitSequenc
   gaitSchedule_.insert(gaitSchedule_.end(), gaitSequence.begin(), gaitSequence.end());
 }
 
-ocs2::ModeSchedule GaitSchedule::getModeSchedule(double timeHorizon) const {
+ocs2::ModeSchedule GaitSchedule::getModeSchedule(scalar_t timeHorizon) const {
   return ::switched_model::getModeSchedule(phase_, time_, timeHorizon, gaitSchedule_.begin(), gaitSchedule_.end());
 }
 
-void GaitSchedule::rolloutGaitScheduleTillTime(double time) {
-  double t = time_;
+void GaitSchedule::rolloutGaitScheduleTillTime(scalar_t time) {
+  scalar_t t = time_;
   auto gaitIt = gaitSchedule_.begin();
   while (t < time) {
     if (gaitIt == gaitSchedule_.end()) {
@@ -89,7 +89,7 @@ void GaitSchedule::rolloutGaitScheduleTillTime(double time) {
   }
 }
 
-bool isStandingDuringTimeHorizon(double timeHorizon, const GaitSchedule& gaitSchedule) {
+bool isStandingDuringTimeHorizon(scalar_t timeHorizon, const GaitSchedule& gaitSchedule) {
   const auto modeSchedule = gaitSchedule.getModeSchedule(timeHorizon);
   return std::all_of(modeSchedule.modeSequence.begin(), modeSchedule.modeSequence.end(),
                      [](size_t mode) { return mode == ModeNumber::STANCE; });

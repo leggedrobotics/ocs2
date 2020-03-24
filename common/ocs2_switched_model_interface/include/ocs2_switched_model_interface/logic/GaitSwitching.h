@@ -6,6 +6,7 @@
 
 #include <ocs2_core/logic/ModeSchedule.h>
 
+#include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/logic/Gait.h"
 
 namespace switched_model {
@@ -39,18 +40,18 @@ GaitIt nextGait(GaitIt currentGait, GaitIt pastTheEndGait) {
  * @return {phase in new gait, iterator to newly active gait.
  */
 template <typename GaitIt>
-std::pair<double, GaitIt> advancePhase(double phase, double dt, GaitIt currentGait, GaitIt pastTheEndGait) {
+std::pair<scalar_t, GaitIt> advancePhase(scalar_t phase, scalar_t dt, GaitIt currentGait, GaitIt pastTheEndGait) {
   assert(isValidPhase(phase));
   assert(dt >= 0);
 
   // Phase change within current gait
-  double dphase = dt / currentGait->duration;
+  scalar_t dphase = dt / currentGait->duration;
 
   if (phase + dphase < 1.0) {  // Advance within current gait
     phase += dphase;
     return {phase, currentGait};
   } else {  // Advance to next gait
-    const double dtRemaining = dt - timeLeftInGait(phase, *currentGait);
+    const scalar_t dtRemaining = dt - timeLeftInGait(phase, *currentGait);
     const GaitIt nexGait = nextGait(currentGait, pastTheEndGait);
     // Recurse by setting the phase to the beginning of the next phase
     return advancePhase(0.0, dtRemaining, nexGait, pastTheEndGait);
@@ -58,17 +59,17 @@ std::pair<double, GaitIt> advancePhase(double phase, double dt, GaitIt currentGa
 }
 
 template <typename GaitIt>
-ocs2::ModeSchedule getModeSchedule(double phase, double t0, double timeHorizon, GaitIt currentGait, GaitIt pastTheEndGait) {
+ocs2::ModeSchedule getModeSchedule(scalar_t phase, scalar_t t0, scalar_t timeHorizon, GaitIt currentGait, GaitIt pastTheEndGait) {
   assert(isValidPhase(phase));
 
   // Initialize with the current mode
-  std::vector<double> evenTimes = {};
+  std::vector<scalar_t> evenTimes = {};
   std::vector<size_t> modeSchedule = {getModeFromPhase(phase, *currentGait)};
 
-  const double tend = t0 + timeHorizon;
-  double t = t0;
+  const scalar_t tend = t0 + timeHorizon;
+  scalar_t t = t0;
   while (t < tend) {
-    double dt = timeLeftInMode(phase, *currentGait);
+    scalar_t dt = timeLeftInMode(phase, *currentGait);
     t += dt;
     if (t < tend) {  // Next event is within horizon: Add the event time and advance the phase to that event
       std::tie(phase, currentGait) = advancePhase(phase, dt, currentGait, pastTheEndGait);

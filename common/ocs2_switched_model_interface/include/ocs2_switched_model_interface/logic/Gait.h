@@ -7,6 +7,8 @@
 #include <ostream>
 #include <vector>
 
+#include "ocs2_switched_model_interface/core/SwitchedModel.h"
+
 namespace switched_model {
 
 /**
@@ -19,9 +21,9 @@ namespace switched_model {
  */
 struct Gait {
   /** time for one gait cycle*/
-  double duration;
+  scalar_t duration;
   /** points in (0.0, 1.0) along the gait cycle where the contact mode changes, size N-1 */
-  std::vector<double> eventPhases;
+  std::vector<scalar_t> eventPhases;
   /** sequence of contact modes, size: N */
   std::vector<size_t> modeSequence;
 };
@@ -36,22 +38,22 @@ struct Gait {
 bool isValidGait(const Gait& gait);
 
 /** Check is if the phase is in [0.0, 1.0) */
-bool isValidPhase(double phase);
+bool isValidPhase(scalar_t phase);
 
 /** Wraps a phase to [0.0, 1.0) */
-double wrapPhase(double phase);
+scalar_t wrapPhase(scalar_t phase);
 
 /** The modes are selected with a closed-open interval: [ ) */
-int getModeIndexFromPhase(double phase, const Gait& gait);
+int getModeIndexFromPhase(scalar_t phase, const Gait& gait);
 
 /** Gets the active mode from the phase variable */
-size_t getModeFromPhase(double phase, const Gait& gait);
+size_t getModeFromPhase(scalar_t phase, const Gait& gait);
 
 /** Returns the time left in the gait based on the phase variable */
-double timeLeftInGait(double phase, const Gait& gait);
+scalar_t timeLeftInGait(scalar_t phase, const Gait& gait);
 
 /** Returns the time left in the current based on the phase variable */
-double timeLeftInMode(double phase, const Gait& gait);
+scalar_t timeLeftInMode(scalar_t phase, const Gait& gait);
 
 /** Print gait */
 std::ostream& operator<<(std::ostream& stream, const Gait& gait);

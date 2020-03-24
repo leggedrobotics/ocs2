@@ -10,7 +10,7 @@
 namespace switched_model {
 
 struct TerrainModel {
-  double terrainHeight_;
+  scalar_t terrainHeight_;
 };
 
 /**

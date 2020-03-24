@@ -27,12 +27,10 @@ SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& fi
 
 class SwingTrajectoryPlanner {
  public:
-  using state_vector_t = ocs2::Dimensions<STATE_DIM, INPUT_DIM>::state_vector_t;
+  SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const ComModelBase<scalar_t>& comModel,
+                         const KinematicsModelBase<scalar_t>& kinematicsModel);
 
-  SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const ComModelBase<double>& comModel,
-                         const KinematicsModelBase<double>& kinematicsModel);
-
-  void update(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState, const ocs2::ModeSchedule& modeSchedule,
+  void update(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState, const ocs2::ModeSchedule& modeSchedule,
               scalar_t terrainHeight);
 
   void update(const ocs2::ModeSchedule& modeSchedule, const std::array<scalar_array_t, NUM_CONTACT_POINTS>& liftOffHeightSequence,
@@ -50,8 +48,8 @@ class SwingTrajectoryPlanner {
                                const ocs2::ModeSchedule& modeSchedule);
 
   SwingTrajectoryPlannerSettings settings_;
-  std::unique_ptr<ComModelBase<double>> comModel_;
-  std::unique_ptr<KinematicsModelBase<double>> kinematicsModel_;
+  std::unique_ptr<ComModelBase<scalar_t>> comModel_;
+  std::unique_ptr<KinematicsModelBase<scalar_t>> kinematicsModel_;
 
   struct contactHistory {
     scalar_t time;

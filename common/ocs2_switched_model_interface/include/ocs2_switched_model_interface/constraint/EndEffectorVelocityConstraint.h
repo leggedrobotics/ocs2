@@ -4,9 +4,9 @@
 
 namespace switched_model {
 
-using EndEffectorPositionConstraintSettings = EndEffectorConstraintSettings;
+using EndEffectorVelocityConstraintSettings = EndEffectorConstraintSettings;
 
-class EndEffectorPositionConstraint : public EndEffectorConstraint {
+class EndEffectorVelocityConstraint : public EndEffectorConstraint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -28,32 +28,37 @@ class EndEffectorPositionConstraint : public EndEffectorConstraint {
   using typename BASE::state_matrix_t;
   using typename BASE::state_vector_t;
   using typename BASE::timeStateInput_matrix_t;
-  using settings_t = EndEffectorPositionConstraintSettings;
+  using settings_t = EndEffectorVelocityConstraintSettings;
 
-  explicit EndEffectorPositionConstraint(int legNumber, settings_t settings, ad_com_model_t& adComModel,
+  explicit EndEffectorVelocityConstraint(int legNumber, settings_t settings, ad_com_model_t& adComModel,
                                          ad_kinematic_model_t& adKinematicsModel, bool generateModels = true,
-                                         std::string constraintPrefix = "o_EEPositionConstraint_")
+                                         std::string constraintPrefix = "o_EEVelocityConstraint_")
       : BASE(ocs2::ConstraintOrder::Linear, std::move(constraintPrefix), legNumber, std::move(settings), adComModel, adKinematicsModel,
-             EndEffectorPositionConstraint::adfunc, generateModels) {}
+             EndEffectorVelocityConstraint::adfunc, generateModels) {}
 
-  EndEffectorPositionConstraint(const EndEffectorPositionConstraint& rhs) = default;
+  EndEffectorVelocityConstraint(const EndEffectorVelocityConstraint& rhs) = default;
 
-  EndEffectorPositionConstraint* clone() const override { return new EndEffectorPositionConstraint(*this); }
+  EndEffectorVelocityConstraint* clone() const override { return new EndEffectorVelocityConstraint(*this); };
 
  private:
   static void adfunc(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, int legNumber,
-                     const ad_dynamic_vector_t& tapedInput, ad_dynamic_vector_t& o_footPosition) {
+                     const ad_dynamic_vector_t& tapedInput, ad_dynamic_vector_t& o_footVelocity) {
     // Extract elements from taped input
     ad_scalar_t t = tapedInput(0);
     comkino_state_ad_t x = tapedInput.segment(1, STATE_DIM);
+    comkino_input_ad_t u = tapedInput.segment(1 + STATE_DIM, INPUT_DIM);
 
     // Extract elements from state
     const base_coordinate_ad_t comPose = getComPose(x);
+    const base_coordinate_ad_t com_comTwist = getComLocalVelocities(x);
     const joint_coordinate_ad_t qJoints = getJointPositions(x);
+    const joint_coordinate_ad_t dqJoints = getJointVelocities(u);
 
     // Get base state from com state
     const base_coordinate_ad_t basePose = adComModel.calculateBasePose(comPose);
-    o_footPosition = adKinematicsModel.footPositionInOriginFrame(legNumber, basePose, qJoints);
+    const base_coordinate_ad_t com_baseTwist = adComModel.calculateBaseLocalVelocities(com_comTwist);
+
+    o_footVelocity = adKinematicsModel.footVelocityInOriginFrame(legNumber, basePose, com_baseTwist, qJoints, dqJoints);
   };
 };
 }  // namespace switched_model

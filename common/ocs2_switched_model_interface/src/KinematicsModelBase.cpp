@@ -29,7 +29,7 @@ std::array<vector3_s_t<SCALAR_T>, NUM_CONTACT_POINTS> KinematicsModelBase<SCALAR
 /******************************************************************************************************/
 template <typename SCALAR_T>
 vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footPositionInOriginFrame(size_t footIndex,
-                                                                               const base_coordinate_s_t<SCALAR_T> basePose,
+                                                                               const base_coordinate_s_t<SCALAR_T>& basePose,
                                                                                const joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   matrix3_s_t<SCALAR_T> o_R_b = rotationMatrixBaseToOrigin<SCALAR_T>(getOrientation(basePose));
   vector3_s_t<SCALAR_T> o_basePosition = getPositionInOrigin(basePose);
@@ -42,8 +42,18 @@ vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footPositionInOriginFrame(s
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
+matrix3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footOrientationInOriginFrame(
+    size_t footIndex, const base_coordinate_s_t<SCALAR_T>& basePose, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
+  matrix3_s_t<SCALAR_T> o_R_b = rotationMatrixBaseToOrigin<SCALAR_T>(getOrientation(basePose));
+  return o_R_b * footOrientationInBaseFrame(footIndex, jointPositions);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR_T>
 std::array<vector3_s_t<SCALAR_T>, NUM_CONTACT_POINTS> KinematicsModelBase<SCALAR_T>::feetPositionsInOriginFrame(
-    const base_coordinate_s_t<SCALAR_T> basePoseInOriginFrame, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
+    const base_coordinate_s_t<SCALAR_T>& basePoseInOriginFrame, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   matrix3_s_t<SCALAR_T> o_R_b = rotationMatrixBaseToOrigin<SCALAR_T>(getOrientation(basePoseInOriginFrame));
   vector3_s_t<SCALAR_T> o_basePosition = getPositionInOrigin(basePoseInOriginFrame);
 
@@ -70,7 +80,7 @@ vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footVelocityRelativeToBaseI
 ///******************************************************************************************************/
 template <typename SCALAR_T>
 vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footVelocityInBaseFrame(size_t footIndex,
-                                                                             const base_coordinate_s_t<SCALAR_T> baseTwistInBaseFrame,
+                                                                             const base_coordinate_s_t<SCALAR_T>& baseTwistInBaseFrame,
                                                                              const joint_coordinate_s_t<SCALAR_T>& jointPositions,
                                                                              const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const {
   vector3_s_t<SCALAR_T> b_footRelativeVelocity = footVelocityRelativeToBaseInBaseFrame(footIndex, jointPositions, jointVelocities);
@@ -83,7 +93,7 @@ vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footVelocityInBaseFrame(siz
 ///******************************************************************************************************/
 template <typename SCALAR_T>
 vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footVelocityInOriginFrame(
-    size_t footIndex, const base_coordinate_s_t<SCALAR_T> basePoseInOriginFrame, const base_coordinate_s_t<SCALAR_T> baseTwistInBaseFrame,
+    size_t footIndex, const base_coordinate_s_t<SCALAR_T>& basePoseInOriginFrame, const base_coordinate_s_t<SCALAR_T>& baseTwistInBaseFrame,
     const joint_coordinate_s_t<SCALAR_T>& jointPositions, const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const {
   vector3_s_t<SCALAR_T> b_footVelocity = footVelocityInBaseFrame(footIndex, baseTwistInBaseFrame, jointPositions, jointVelocities);
   matrix3_s_t<SCALAR_T> o_R_b = rotationMatrixBaseToOrigin<SCALAR_T>(getOrientation(basePoseInOriginFrame));
@@ -94,8 +104,21 @@ vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footVelocityInOriginFrame(
 ///******************************************************************************************************/
 ///******************************************************************************************************/
 template <typename SCALAR_T>
+vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footVelocityInFootFrame(size_t footIndex,
+                                                                             const base_coordinate_s_t<SCALAR_T>& baseTwistInBaseFrame,
+                                                                             const joint_coordinate_s_t<SCALAR_T>& jointPositions,
+                                                                             const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const {
+  vector3_s_t<SCALAR_T> b_footVelocity = footVelocityInBaseFrame(footIndex, baseTwistInBaseFrame, jointPositions, jointVelocities);
+  matrix3_s_t<SCALAR_T> foot_R_b = footOrientationInBaseFrame(footIndex, jointPositions).transpose();
+  return foot_R_b * b_footVelocity;
+}
+
+///******************************************************************************************************/
+///******************************************************************************************************/
+///******************************************************************************************************/
+template <typename SCALAR_T>
 std::array<vector3_s_t<SCALAR_T>, NUM_CONTACT_POINTS> KinematicsModelBase<SCALAR_T>::feetVelocitiesInOriginFrame(
-    const base_coordinate_s_t<SCALAR_T> basePoseInOriginFrame, const base_coordinate_s_t<SCALAR_T> baseTwistInBaseFrame,
+    const base_coordinate_s_t<SCALAR_T>& basePoseInOriginFrame, const base_coordinate_s_t<SCALAR_T>& baseTwistInBaseFrame,
     const joint_coordinate_s_t<SCALAR_T>& jointPositions, const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const {
   matrix3_s_t<SCALAR_T> o_R_b = rotationMatrixBaseToOrigin<SCALAR_T>(getOrientation(basePoseInOriginFrame));
   vector3_s_t<SCALAR_T> o_basePosition = getPositionInOrigin(basePoseInOriginFrame);

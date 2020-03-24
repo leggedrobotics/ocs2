@@ -17,9 +17,9 @@
 
 using namespace anymal;
 
-class AnymalBearSwitchedModelTests : public ::testing::Test, public TestAnymalSwitchedModel {};
+class AnymalCrocSwitchedModelTests : public ::testing::Test, public TestAnymalSwitchedModel {};
 
-TEST_F(AnymalBearSwitchedModelTests, Constraints) {
+TEST_F(AnymalCrocSwitchedModelTests, Constraints) {
   EXPECT_NO_THROW((switched_model::evaluateConstraint<switched_model::EndEffectorPositionConstraint>(anymalComAd_, anymalKinematicsAd_)));
   EXPECT_NO_THROW(
       (switched_model::evaluateConstraint<switched_model::EndEffectorPositionInBaseConstraint>(anymalComAd_, anymalKinematicsAd_)));
@@ -30,7 +30,7 @@ TEST_F(AnymalBearSwitchedModelTests, Constraints) {
       (switched_model::evaluateConstraint<switched_model::EndEffectorVelocityInFootFrameConstraint>(anymalComAd_, anymalKinematicsAd_)));
 }
 
-TEST_F(AnymalBearSwitchedModelTests, Kinematics) {
+TEST_F(AnymalCrocSwitchedModelTests, Kinematics) {
   joint_coordinate_t qJoints;
   qJoints.setZero();
   std::cout << "Joint coordinate:\n" << qJoints.transpose() << std::endl;
@@ -60,7 +60,7 @@ TEST_F(AnymalBearSwitchedModelTests, Kinematics) {
   std::cout << "Foot jacobian RH:\n" << footJacobian_RH << std::endl;
 }
 
-TEST_F(AnymalBearSwitchedModelTests, ComDynamics) {
+TEST_F(AnymalCrocSwitchedModelTests, ComDynamics) {
   joint_coordinate_t joint_cor;
   joint_cor.setZero();
   std::cout << "Joint coordinates:\n" << joint_cor.transpose() << std::endl;
@@ -72,13 +72,17 @@ TEST_F(AnymalBearSwitchedModelTests, ComDynamics) {
   std::cout << "comInertiaDefault:\n" << comDynamics_.comInertia() << std::endl;
 }
 
-TEST_F(AnymalBearSwitchedModelTests, EndeffectorOrientation) {
-  joint_coordinate_t qJoints; qJoints.setZero();
-  generalized_coordinate_t x; x.setZero();
+TEST_F(AnymalCrocSwitchedModelTests, EndeffectorOrientation) {
+  joint_coordinate_t qJoints;
+  qJoints.setZero();
+  generalized_coordinate_t x;
+  x.setZero();
 
   const base_coordinate_t basePose = switched_model::getBasePose(x);
   matrix3_t o_R_b = switched_model::rotationMatrixBaseToOrigin(switched_model::getOrientation(basePose));
-  std::cout << "\nBase orientation:" << ":" << std::endl << o_R_b;
+  std::cout << "\nBase orientation:"
+            << ":" << std::endl
+            << o_R_b;
   for (int footIdx = 0; footIdx < switched_model::NUM_CONTACT_POINTS; footIdx++) {
     const matrix3_t o_R_f = kinematics_.footOrientationInOriginFrame(footIdx, basePose, qJoints);
     std::cout << "\nFoot orientation" << switched_model::feetNames[footIdx] << ":" << std::endl << o_R_f;
@@ -86,13 +90,14 @@ TEST_F(AnymalBearSwitchedModelTests, EndeffectorOrientation) {
   }
 }
 
-TEST_F(AnymalBearSwitchedModelTests, EndeffectorAlignedYAxisRandomHFE_KFE) {
+TEST_F(AnymalCrocSwitchedModelTests, EndeffectorAlignedYAxisRandomHFE_KFE) {
   /** Y Axis coincidence
-   * 
+   *
    * With only the HFE, and KFE joints rotated, the y-axis of the foot should still be aligned with the
    * y-axis of the base, at any base pose.
    */
-  generalized_coordinate_t x; x.setZero();
+  generalized_coordinate_t x;
+  x.setZero();
   x[0] = randAngle();
   x[1] = randAngle();
   x[2] = randAngle();
@@ -111,9 +116,14 @@ TEST_F(AnymalBearSwitchedModelTests, EndeffectorAlignedYAxisRandomHFE_KFE) {
 
   const base_coordinate_t basePose = switched_model::getBasePose(x);
   matrix3_t o_R_b = switched_model::rotationMatrixBaseToOrigin(switched_model::getOrientation(basePose));
-  vector3_t yAxis; yAxis << 0, 1, 0;
-  std::cout << "\nBase orientation:" << ":" << std::endl << o_R_b;
-  std::cout << "\nAxis:" << ":" << std::endl << yAxis;
+  vector3_t yAxis;
+  yAxis << 0, 1, 0;
+  std::cout << "\nBase orientation:"
+            << ":" << std::endl
+            << o_R_b;
+  std::cout << "\nAxis:"
+            << ":" << std::endl
+            << yAxis;
   for (int footIdx = 0; footIdx < switched_model::NUM_CONTACT_POINTS; footIdx++) {
     const matrix3_t o_R_f = kinematics_.footOrientationInOriginFrame(footIdx, basePose, qJoints);
     std::cout << "\nFoot orientation" << switched_model::feetNames[footIdx] << ":" << std::endl << o_R_f << std::endl;
@@ -121,13 +131,15 @@ TEST_F(AnymalBearSwitchedModelTests, EndeffectorAlignedYAxisRandomHFE_KFE) {
   }
 }
 
-TEST_F(AnymalBearSwitchedModelTests, EndeffectorAlignedXAxisRandomHAA) {
+TEST_F(AnymalCrocSwitchedModelTests, EndeffectorAlignedXAxisRandomHAA) {
   /** X Axis coincidence
-   * 
+   *
    * With only the HAA joints rotated, the x-axis of the foot should still be aligned with the
    * x-axis of the base, at any base pose.
    */
-  generalized_coordinate_t x; x.setZero();
+
+  generalized_coordinate_t x;
+  x.setZero();
   x[0] = randAngle();
   x[1] = randAngle();
   x[2] = randAngle();
@@ -142,13 +154,18 @@ TEST_F(AnymalBearSwitchedModelTests, EndeffectorAlignedXAxisRandomHAA) {
 
   const base_coordinate_t basePose = switched_model::getBasePose(x);
   matrix3_t o_R_b = switched_model::rotationMatrixBaseToOrigin(switched_model::getOrientation(basePose));
-  vector3_t xAxis; xAxis << 1, 0, 0;
-  std::cout << "\nBase orientation:" << ":" << std::endl << o_R_b;
-  std::cout << "\nAxis:" << ":" << std::endl << xAxis;
+  vector3_t xAxis;
+  xAxis << 1, 0, 0;
+  std::cout << "\nBase orientation:"
+            << ":" << std::endl
+            << o_R_b;
+  std::cout << "\nAxis:"
+            << ":" << std::endl
+            << xAxis;
   for (int footIdx = 0; footIdx < switched_model::NUM_CONTACT_POINTS; footIdx++) {
     const matrix3_t o_R_f = kinematics_.footOrientationInOriginFrame(footIdx, basePose, qJoints);
     std::cout << "\nFoot orientation" << switched_model::feetNames[footIdx] << ":" << std::endl << o_R_f << std::endl;
-    EXPECT_PRED2(matrixEquality_,  o_R_f * xAxis, o_R_b * xAxis);
+    EXPECT_PRED2(matrixEquality_, o_R_f * xAxis, o_R_b * xAxis);
   }
 }
 

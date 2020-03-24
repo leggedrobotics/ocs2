@@ -37,28 +37,38 @@ class KinematicsModelBase {
   std::array<vector3_s_t<SCALAR_T>, NUM_CONTACT_POINTS> positionBaseToFeetInBaseFrame(
       const joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
 
-  vector3_s_t<SCALAR_T> footPositionInOriginFrame(size_t footIndex, const base_coordinate_s_t<SCALAR_T> basePoseInOriginFrame,
+  vector3_s_t<SCALAR_T> footPositionInOriginFrame(size_t footIndex, const base_coordinate_s_t<SCALAR_T>& basePoseInOriginFrame,
                                                   const joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
 
   std::array<vector3_s_t<SCALAR_T>, NUM_CONTACT_POINTS> feetPositionsInOriginFrame(
-      const base_coordinate_s_t<SCALAR_T> basePose, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
+      const base_coordinate_s_t<SCALAR_T>& basePose, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
 
   virtual joint_jacobian_t baseToFootJacobianInBaseFrame(size_t footIndex, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const = 0;
+
+  virtual matrix3_s_t<SCALAR_T> footOrientationInBaseFrame(size_t footIndex,
+                                                           const joint_coordinate_s_t<SCALAR_T>& jointPositions) const = 0;
+
+  matrix3_s_t<SCALAR_T> footOrientationInOriginFrame(size_t footIndex, const base_coordinate_s_t<SCALAR_T>& basePose,
+                                                     const joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
 
   vector3_s_t<SCALAR_T> footVelocityRelativeToBaseInBaseFrame(size_t footIndex, const joint_coordinate_s_t<SCALAR_T>& jointPositions,
                                                               const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const;
 
-  vector3_s_t<SCALAR_T> footVelocityInBaseFrame(size_t footIndex, const base_coordinate_s_t<SCALAR_T> baseTwistInBaseFrame,
+  vector3_s_t<SCALAR_T> footVelocityInBaseFrame(size_t footIndex, const base_coordinate_s_t<SCALAR_T>& baseTwistInBaseFrame,
                                                 const joint_coordinate_s_t<SCALAR_T>& jointPositions,
                                                 const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const;
 
-  vector3_s_t<SCALAR_T> footVelocityInOriginFrame(size_t footIndex, const base_coordinate_s_t<SCALAR_T> basePoseInOriginFrame,
-                                                  const base_coordinate_s_t<SCALAR_T> baseTwistInBaseFrame,
+  vector3_s_t<SCALAR_T> footVelocityInOriginFrame(size_t footIndex, const base_coordinate_s_t<SCALAR_T>& basePoseInOriginFrame,
+                                                  const base_coordinate_s_t<SCALAR_T>& baseTwistInBaseFrame,
                                                   const joint_coordinate_s_t<SCALAR_T>& jointPositions,
                                                   const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const;
 
+  vector3_s_t<SCALAR_T> footVelocityInFootFrame(size_t footIndex, const base_coordinate_s_t<SCALAR_T>& baseTwistInBaseFrame,
+                                                const joint_coordinate_s_t<SCALAR_T>& jointPositions,
+                                                const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const;
+
   std::array<vector3_s_t<SCALAR_T>, NUM_CONTACT_POINTS> feetVelocitiesInOriginFrame(
-      const base_coordinate_s_t<SCALAR_T> basePoseInOriginFrame, const base_coordinate_s_t<SCALAR_T> baseTwistInBaseFrame,
+      const base_coordinate_s_t<SCALAR_T>& basePoseInOriginFrame, const base_coordinate_s_t<SCALAR_T>& baseTwistInBaseFrame,
       const joint_coordinate_s_t<SCALAR_T>& jointPositions, const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const;
 };
 

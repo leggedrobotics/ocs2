@@ -1,16 +1,17 @@
 #pragma once
 
 #include <ocs2_switched_model_interface/constraint/EndEffectorConstraint.h>
+#include <ocs2_switched_model_interface/constraint/EndEffectorPositionConstraint.h>
 
 namespace switched_model {
 
-using EndEffectorPositionConstraintSettings = EndEffectorConstraintSettings;
+using EndEffectorPositionInBaseConstraintSettings = EndEffectorPositionConstraintSettings;
 
-class EndEffectorPositionConstraint : public EndEffectorConstraint {
+class EndEffectorPositionInBaseConstraint final : public EndEffectorConstraint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = EndEffectorConstraint;
+  using BASE = switched_model::EndEffectorConstraint;
   using typename BASE::ad_com_model_t;
   using typename BASE::ad_dynamic_vector_t;
   using typename BASE::ad_interface_t;
@@ -28,32 +29,28 @@ class EndEffectorPositionConstraint : public EndEffectorConstraint {
   using typename BASE::state_matrix_t;
   using typename BASE::state_vector_t;
   using typename BASE::timeStateInput_matrix_t;
-  using settings_t = EndEffectorPositionConstraintSettings;
+  using settings_t = EndEffectorPositionInBaseConstraintSettings;
 
-  explicit EndEffectorPositionConstraint(int legNumber, settings_t settings, ad_com_model_t& adComModel,
-                                         ad_kinematic_model_t& adKinematicsModel, bool generateModels = true,
-                                         std::string constraintPrefix = "o_EEPositionConstraint_")
+  explicit EndEffectorPositionInBaseConstraint(int legNumber, settings_t settings, ad_com_model_t& adComModel,
+                                               ad_kinematic_model_t& adKinematicsModel, bool generateModels = true,
+                                               std::string constraintPrefix = "b_EEPositionConstraint_")
       : BASE(ocs2::ConstraintOrder::Linear, std::move(constraintPrefix), legNumber, std::move(settings), adComModel, adKinematicsModel,
-             EndEffectorPositionConstraint::adfunc, generateModels) {}
+             EndEffectorPositionInBaseConstraint::adfunc, generateModels) {}
 
-  EndEffectorPositionConstraint(const EndEffectorPositionConstraint& rhs) = default;
+  EndEffectorPositionInBaseConstraint(const EndEffectorPositionInBaseConstraint& rhs) = default;
 
-  EndEffectorPositionConstraint* clone() const override { return new EndEffectorPositionConstraint(*this); }
+  EndEffectorPositionInBaseConstraint* clone() const override { return new EndEffectorPositionInBaseConstraint(*this); }
 
  private:
   static void adfunc(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, int legNumber,
-                     const ad_dynamic_vector_t& tapedInput, ad_dynamic_vector_t& o_footPosition) {
+                     const ad_dynamic_vector_t& tapedInput, ad_dynamic_vector_t& b_footPosition) {
     // Extract elements from taped input
     ad_scalar_t t = tapedInput(0);
     comkino_state_ad_t x = tapedInput.segment(1, STATE_DIM);
 
-    // Extract elements from state
-    const base_coordinate_ad_t comPose = getComPose(x);
     const joint_coordinate_ad_t qJoints = getJointPositions(x);
 
-    // Get base state from com state
-    const base_coordinate_ad_t basePose = adComModel.calculateBasePose(comPose);
-    o_footPosition = adKinematicsModel.footPositionInOriginFrame(legNumber, basePose, qJoints);
-  };
+    b_footPosition = adKinematicsModel.positionBaseToFootInBaseFrame(legNumber, qJoints);
+  }
 };
 }  // namespace switched_model

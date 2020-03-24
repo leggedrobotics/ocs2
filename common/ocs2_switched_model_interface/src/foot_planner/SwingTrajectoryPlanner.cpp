@@ -31,6 +31,10 @@ void SwingTrajectoryPlanner::update(scalar_t initTime, scalar_t finalTime, const
   std::cout << std::endl;
 }
 
+void SwingTrajectoryPlanner::update(const ocs2::ModeSchedule& modeSchedule,
+                                    const std::array<scalar_array_t, NUM_CONTACT_POINTS>& liftOffHeightSequence,
+                                    const std::array<scalar_array_t, NUM_CONTACT_POINTS>& touchDownHeightSequence) {}
+
 auto SwingTrajectoryPlanner::getZvelocityConstraint(size_t leg, scalar_t time) const -> scalar_t {
   const auto index = ocs2::lookup::findIndexInTimeArray(feetHeightTrajectoriesEvents_[leg], time);
   const auto feedforwardVelocity = feetHeightTrajectories_[leg][index].velocity(time);

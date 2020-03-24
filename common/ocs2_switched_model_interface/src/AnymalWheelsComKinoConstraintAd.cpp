@@ -1,16 +1,11 @@
-#include "ocs2_switched_model_interface/constraint/ComKinoConstraintBaseAd.h"
-
-// Constraints
-#include "ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h"
-#include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
-#include "ocs2_switched_model_interface/constraint/ZeroForceConstraint.h"
+#include <ocs2_switched_model_interface/constraint/AnymalWheelsComKinoConstraintAd.h>
 
 namespace switched_model {
 
-ComKinoConstraintBaseAd::ComKinoConstraintBaseAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-                                                 std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
-                                                 std::shared_ptr<const SwingTrajectoryPlanner> swingTrajectoryPlannerPtr,
-                                                 ModelSettings options)
+AnymalWheelsComKinoConstraintAd::AnymalWheelsComKinoConstraintAd(
+    const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
+    std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
+    std::shared_ptr<const SwingTrajectoryPlanner> swingTrajectoryPlannerPtr, ModelSettings options)
     : adKinematicModelPtr_(adKinematicModel.clone()),
       adComModelPtr_(adComModel.clone()),
       modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)),
@@ -27,7 +22,7 @@ ComKinoConstraintBaseAd::ComKinoConstraintBaseAd(const ad_kinematic_model_t& adK
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ComKinoConstraintBaseAd::ComKinoConstraintBaseAd(const ComKinoConstraintBaseAd& rhs)
+AnymalWheelsComKinoConstraintAd::AnymalWheelsComKinoConstraintAd(const AnymalWheelsComKinoConstraintAd& rhs)
     : Base(rhs),
       adKinematicModelPtr_(rhs.adKinematicModelPtr_->clone()),
       adComModelPtr_(rhs.adComModelPtr_->clone()),
@@ -42,14 +37,7 @@ ComKinoConstraintBaseAd::ComKinoConstraintBaseAd(const ComKinoConstraintBaseAd& 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ComKinoConstraintBaseAd* ComKinoConstraintBaseAd::clone() const {
-  return new ComKinoConstraintBaseAd(*this);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ComKinoConstraintBaseAd::initializeConstraintTerms() {
+void AnymalWheelsComKinoConstraintAd::initializeConstraintTerms() {
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
     auto footName = feetNames[i];
 
@@ -60,22 +48,26 @@ void ComKinoConstraintBaseAd::initializeConstraintTerms() {
     auto zeroForceConstraint = std::unique_ptr<ConstraintTerm_t>(new ZeroForceConstraint(i));
 
     // Velocity Constraint
-    auto endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityConstraint(
-        i, EndEffectorVelocityConstraintSettings(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
+    auto endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityConstraint_t(
+        i, EndEffectorVelocityConstraintSettings_t(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
+    // EE InFootFrame Velocity Constraint
+    auto endEffectorVelocityInFootFrameConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityInFootFrameConstraint_t(
+        i, EndEffectorVelocityInFootFrameConstraintSettings_t(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
 
     // Inequalities
     inequalityConstraintCollection_.add(footName + "_FrictionCone", std::move(frictionCone));
 
     // State input equalities
     equalityStateInputConstraintCollection_.add(footName + "_ZeroForce", std::move(zeroForceConstraint));
-    equalityStateInputConstraintCollection_.add(footName + "_EEVel", std::move(endEffectorVelocityConstraint));
+    equalityStateInputConstraintCollection_.add(footName + "_o_EEVel", std::move(endEffectorVelocityConstraint));
+    equalityStateInputConstraintCollection_.add(footName + "_f_EEVel", std::move(endEffectorVelocityInFootFrameConstraint));
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
+void AnymalWheelsComKinoConstraintAd::setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
   stateInputConstraintsComputed_ = false;
   inequalityConstraintsComputed_ = false;
 
@@ -93,34 +85,46 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
     equalityStateInputConstraintCollection_.get(footName + "_ZeroForce").setActivity(!stanceLegs_[i]);
 
     // Active foot placement for stance legs
-    auto& EEVelConstraint = equalityStateInputConstraintCollection_.get<EndEffectorVelocityConstraint>(footName + "_EEVel");
-    EEVelConstraint.setActivity(true);
-    EndEffectorVelocityConstraintSettings eeVelConSettings;
-    if (stanceLegs_[i]) {  // in stance: All velocity equal to zero
-      eeVelConSettings.b = Eigen::Vector3d::Zero();
-      eeVelConSettings.b[2] = -swingTrajectoryPlannerPtr_->getZvelocityConstraint(i, t);
-      eeVelConSettings.A = Eigen::Matrix3d::Identity();
+    auto& EEVelConstraint = equalityStateInputConstraintCollection_.get<EndEffectorVelocityConstraint>(footName + "_o_EEVel");
+    EndEffectorVelocityConstraintSettings_t eeVelConSettings(1, 3);
+
+    // Rolling InFootFrame Velocity constraint for stance legs
+    auto& EEVelInFootFrameConstraint =
+        equalityStateInputConstraintCollection_.template get<EndEffectorVelocityInFootFrameConstraint_t>(footName + "_f_EEVel");
+
+    if (stanceLegs_[i]) {
+      // EE velocities in lateral direction (y) in foot frame should be zero.
+      EndEffectorVelocityInFootFrameConstraintSettings_t eeVelInFootFrameConSettings(1, 3);
+      eeVelInFootFrameConSettings.b << 0;
+      eeVelInFootFrameConSettings.A << 0, 1, 0;
+      EEVelInFootFrameConstraint.configure(eeVelInFootFrameConSettings);
+      EEVelInFootFrameConstraint.setActivity(true);
+      // The upwards velocity (z) in the world frame should be zero too.
+      eeVelConSettings.b << 0;
+      eeVelConSettings.A << 0, 0, 1;
     } else {  // in swing: z-velocity is provided
+      EEVelInFootFrameConstraint.setActivity(false);
       eeVelConSettings.b.resize(1);
       eeVelConSettings.A.resize(1, 3);
       eeVelConSettings.b << -swingTrajectoryPlannerPtr_->getZvelocityConstraint(i, t);
       eeVelConSettings.A << 0, 0, 1;
     }
     EEVelConstraint.configure(eeVelConSettings);
+    EEVelConstraint.setActivity(true);
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t ComKinoConstraintBaseAd::numStateInputConstraint(const scalar_t& time) {
+size_t AnymalWheelsComKinoConstraintAd::numStateInputConstraint(const scalar_t& time) {
   return equalityStateInputConstraintCollection_.getNumConstraints(time);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::getConstraint1(constraint1_vector_t& e) {
+void AnymalWheelsComKinoConstraintAd::getConstraint1(constraint1_vector_t& e) {
   size_t numConstraints = numStateInputConstraint(Base::t_);
   e.head(numConstraints) = equalityStateInputConstraintCollection_.getValueAsVector(Base::t_, Base::x_, Base::u_);
 }
@@ -128,45 +132,45 @@ void ComKinoConstraintBaseAd::getConstraint1(constraint1_vector_t& e) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::getConstraint2(constraint2_vector_t& h) {}
+void AnymalWheelsComKinoConstraintAd::getConstraint2(constraint2_vector_t& h) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t ComKinoConstraintBaseAd::numStateOnlyConstraint(const scalar_t& time) {
+size_t AnymalWheelsComKinoConstraintAd::numStateOnlyConstraint(const scalar_t& time) {
   return 0;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::getInequalityConstraint(scalar_array_t& h) {
+void AnymalWheelsComKinoConstraintAd::getInequalityConstraint(scalar_array_t& h) {
   h = inequalityConstraintCollection_.getValue(Base::t_, Base::x_, Base::u_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t ComKinoConstraintBaseAd::numInequalityConstraint(const scalar_t& time) {
+size_t AnymalWheelsComKinoConstraintAd::numInequalityConstraint(const scalar_t& time) {
   return inequalityConstraintCollection_.getNumConstraints(time);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::getFinalConstraint2(constraint2_vector_t& h_f) {}
+void AnymalWheelsComKinoConstraintAd::getFinalConstraint2(constraint2_vector_t& h_f) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t ComKinoConstraintBaseAd::numStateOnlyFinalConstraint(const scalar_t& time) {
+size_t AnymalWheelsComKinoConstraintAd::numStateOnlyFinalConstraint(const scalar_t& time) {
   return 0;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::getConstraint1DerivativesState(constraint1_state_matrix_t& C) {
+void AnymalWheelsComKinoConstraintAd::getConstraint1DerivativesState(constraint1_state_matrix_t& C) {
   if (!stateInputConstraintsComputed_) {
     linearStateInputConstraintApproximation_ =
         equalityStateInputConstraintCollection_.getLinearApproximationAsMatrices(Base::t_, Base::x_, Base::u_);
@@ -179,7 +183,7 @@ void ComKinoConstraintBaseAd::getConstraint1DerivativesState(constraint1_state_m
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::getConstraint1DerivativesControl(constraint1_input_matrix_t& D) {
+void AnymalWheelsComKinoConstraintAd::getConstraint1DerivativesControl(constraint1_input_matrix_t& D) {
   if (!stateInputConstraintsComputed_) {
     linearStateInputConstraintApproximation_ =
         equalityStateInputConstraintCollection_.getLinearApproximationAsMatrices(Base::t_, Base::x_, Base::u_);
@@ -192,7 +196,7 @@ void ComKinoConstraintBaseAd::getConstraint1DerivativesControl(constraint1_input
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::getConstraint1DerivativesEventTimes(constraint1_vector_array_t& g1DevArray) {
+void AnymalWheelsComKinoConstraintAd::getConstraint1DerivativesEventTimes(constraint1_vector_array_t& g1DevArray) {
   // set all to zero
   g1DevArray.resize(numEventTimes_);
   for (constraint1_vector_t& g1Dev : g1DevArray) {
@@ -203,12 +207,12 @@ void ComKinoConstraintBaseAd::getConstraint1DerivativesEventTimes(constraint1_ve
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::getConstraint2DerivativesState(constraint2_state_matrix_t& F) {}
+void AnymalWheelsComKinoConstraintAd::getConstraint2DerivativesState(constraint2_state_matrix_t& F) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::getInequalityConstraintDerivativesState(state_vector_array_t& dhdx) {
+void AnymalWheelsComKinoConstraintAd::getInequalityConstraintDerivativesState(state_vector_array_t& dhdx) {
   if (!inequalityConstraintsComputed_) {
     quadraticInequalityConstraintApproximation_ = inequalityConstraintCollection_.getQuadraticApproximation(Base::t_, Base::x_, Base::u_);
     inequalityConstraintsComputed_ = true;
@@ -219,7 +223,8 @@ void ComKinoConstraintBaseAd::getInequalityConstraintDerivativesState(state_vect
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::getInequalityConstraintDerivativesInput(switched_model::ComKinoConstraintBaseAd::input_vector_array_t& dhdu) {
+void AnymalWheelsComKinoConstraintAd::getInequalityConstraintDerivativesInput(
+    switched_model::AnymalWheelsComKinoConstraintAd::input_vector_array_t& dhdu) {
   if (!inequalityConstraintsComputed_) {
     quadraticInequalityConstraintApproximation_ = inequalityConstraintCollection_.getQuadraticApproximation(Base::t_, Base::x_, Base::u_);
     inequalityConstraintsComputed_ = true;
@@ -230,8 +235,8 @@ void ComKinoConstraintBaseAd::getInequalityConstraintDerivativesInput(switched_m
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::getInequalityConstraintSecondDerivativesState(
-    switched_model::ComKinoConstraintBaseAd::state_matrix_array_t& ddhdxdx) {
+void AnymalWheelsComKinoConstraintAd::getInequalityConstraintSecondDerivativesState(
+    switched_model::AnymalWheelsComKinoConstraintAd::state_matrix_array_t& ddhdxdx) {
   if (!inequalityConstraintsComputed_) {
     quadraticInequalityConstraintApproximation_ = inequalityConstraintCollection_.getQuadraticApproximation(Base::t_, Base::x_, Base::u_);
     inequalityConstraintsComputed_ = true;
@@ -242,8 +247,8 @@ void ComKinoConstraintBaseAd::getInequalityConstraintSecondDerivativesState(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::getInequalityConstraintSecondDerivativesInput(
-    switched_model::ComKinoConstraintBaseAd::input_matrix_array_t& ddhdudu) {
+void AnymalWheelsComKinoConstraintAd::getInequalityConstraintSecondDerivativesInput(
+    switched_model::AnymalWheelsComKinoConstraintAd::input_matrix_array_t& ddhdudu) {
   if (!inequalityConstraintsComputed_) {
     quadraticInequalityConstraintApproximation_ = inequalityConstraintCollection_.getQuadraticApproximation(Base::t_, Base::x_, Base::u_);
     inequalityConstraintsComputed_ = true;
@@ -254,8 +259,8 @@ void ComKinoConstraintBaseAd::getInequalityConstraintSecondDerivativesInput(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::getInequalityConstraintDerivativesInputState(
-    switched_model::ComKinoConstraintBaseAd::input_state_matrix_array_t& ddhdudx) {
+void AnymalWheelsComKinoConstraintAd::getInequalityConstraintDerivativesInputState(
+    switched_model::AnymalWheelsComKinoConstraintAd::input_state_matrix_array_t& ddhdudx) {
   if (!inequalityConstraintsComputed_) {
     quadraticInequalityConstraintApproximation_ = inequalityConstraintCollection_.getQuadraticApproximation(Base::t_, Base::x_, Base::u_);
     inequalityConstraintsComputed_ = true;
@@ -266,20 +271,21 @@ void ComKinoConstraintBaseAd::getInequalityConstraintDerivativesInputState(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F) {}
+void AnymalWheelsComKinoConstraintAd::getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::setStanceLegs(const contact_flag_t& stanceLegs) {
+void AnymalWheelsComKinoConstraintAd::setStanceLegs(const contact_flag_t& stanceLegs) {
   stanceLegs_ = stanceLegs;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::getStanceLegs(contact_flag_t& stanceLegs) {
+void AnymalWheelsComKinoConstraintAd::getStanceLegs(contact_flag_t& stanceLegs) {
   stanceLegs = stanceLegs_;
 }
 
-}  // end of namespace switched_model
+}  // namespace switched_model
+// end of namespace switched_model

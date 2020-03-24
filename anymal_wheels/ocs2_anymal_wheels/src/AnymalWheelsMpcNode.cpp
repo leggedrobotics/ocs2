@@ -6,7 +6,6 @@
  */
 
 #include <ocs2_quadruped_interface/QuadrupedMpcNode.h>
-
 #include "ocs2_anymal_wheels/AnymalWheelsInterface.h"
 
 int main(int argc, char* argv[]) {

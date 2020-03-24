@@ -6,7 +6,8 @@
 
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
-#include <ocs2_switched_model_interface/constraint/ComKinoConstraintBaseAd.h>
+#include <ocs2_switched_model_interface/constraint/AnymalWheelsComKinoConstraintAd.h>
+
 #include <ocs2_switched_model_interface/cost/SwitchedModelCostBase.h>
 #include <ocs2_switched_model_interface/dynamics/ComKinoSystemDynamicsAd.h>
 #include <ocs2_switched_model_interface/initialization/ComKinoOperatingPointsBase.h>
@@ -19,7 +20,7 @@ class QuadrupedWheeledInterface : public QuadrupedInterface {
  public:
   using system_dynamics_t = switched_model::ComKinoSystemDynamicsAd;
   using system_dynamics_derivative_t = switched_model::ComKinoSystemDynamicsAd;
-  using constraint_t = switched_model::ComKinoConstraintBaseAd;
+  using constraint_t = switched_model::AnymalWheelsComKinoConstraintAd;
   using cost_function_t = switched_model::SwitchedModelCostBase;
   using operating_point_t = switched_model::ComKinoOperatingPointsBase;
   using time_triggered_rollout_t = ocs2::TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;

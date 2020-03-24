@@ -805,20 +805,17 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::baselineRollout() {
 
   // display
   if (ddpSettings_.displayInfo_) {
-    std::cerr << "\t learningRate 0.0 \t merit: " << performanceIndex_.merit
-              << "\t learningRate 0.0 \t cost:  " << performanceIndex_.totalCost
-              << "\t constraint ISE: " << performanceIndex_.stateInputEqConstraintISE
-              << "\t inequality penalty: " << performanceIndex_.inequalityConstraintPenalty
-              << "\t inequality ISE: " << performanceIndex_.inequalityConstraintISE << '\n';
-    std::cerr << "\t final constraint type-2:  ";
-    size_t itr = 0;
+    std::stringstream linesearchDisplay;
+    linesearchDisplay << "    [Thread 0] - learningRate 0.0" << '\n';
+    linesearchDisplay << std::setw(4) << performanceIndex_ << '\n';
+    linesearchDisplay << "    final state constraints norm: ";
     for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
       for (size_t k = 0; k < nc2FinalStock_[i].size(); k++) {
-        std::cerr << "[" << itr << "]: " << HvFinalStock_[i][k].head(nc2FinalStock_[i][k]).transpose() << ",  ";
-        itr++;
+        linesearchDisplay << HvFinalStock_[i][k].head(nc2FinalStock_[i][k]).norm() << ",  ";
       }
     }
-    std::cerr << "\n\t forward pass average time step: " << avgTimeStepFP_ * 1e+3 << " [ms].\n";
+    linesearchDisplay << "\n    forward pass average time step: " << avgTimeStepFP_ * 1e+3 << " [ms].\n";
+    BASE::printString(linesearchDisplay.str());
   }
 }
 
@@ -856,7 +853,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
       // display
       if (ddpSettings_.displayInfo_) {
         std::string linesearchDisplay;
-        linesearchDisplay = "\t [Thread " + std::to_string(taskId) + "] rollout with learningRate " + std::to_string(learningRate) +
+        linesearchDisplay = "    [Thread " + std::to_string(taskId) + "] rollout with learningRate " + std::to_string(learningRate) +
                             " is skipped: A larger learning rate is already found!";
         BASE::printString(linesearchDisplay);
       }
@@ -908,7 +905,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
     if (terminateLinesearchTasks) {
       event_handler_t::activateKillIntegration();  // kill all integrators
       if (ddpSettings_.displayInfo_) {
-        BASE::printString("\t LS: interrupt other rollout's integrations.");
+        BASE::printString("    LS: interrupt other rollout's integrations.");
       }
       break;
     }
@@ -970,32 +967,24 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchWorker(size_t workerIndex, scalar
 
     // display
     if (ddpSettings_.displayInfo_) {
-      std::string linesearchDisplay;
-      linesearchDisplay = "\t [Thread " + std::to_string(workerIndex) + "] - learningRate " + std::to_string(learningRate) +
-                          "\t merit: " + std::to_string(lsPerformanceIndex.merit) +
-                          "\t cost: " + std::to_string(lsPerformanceIndex.totalCost) +
-                          "\t constraint ISE: " + std::to_string(lsPerformanceIndex.stateInputEqConstraintISE) +
-                          "\t inequality penalty: " + std::to_string(lsPerformanceIndex.inequalityConstraintPenalty) +
-                          "\t inequality ISE: " + std::to_string(lsPerformanceIndex.inequalityConstraintISE) + "\n";
-      linesearchDisplay += "\t final constraint type-2:   ";
-      for (size_t i = 0; i < numPartitions_; i++) {
-        linesearchDisplay += "[" + std::to_string(i) + "]: ";
-        for (size_t j = 0; j < lsNc2FinalStock[i].size(); j++) {
-          for (size_t m = 0; m < lsNc2FinalStock[i][j]; m++) {
-            linesearchDisplay += std::to_string(lsHvFinalStock[i][j](m)) + ", ";
-          }
+      std::stringstream linesearchDisplay;
+      linesearchDisplay << "    [Thread " << workerIndex << "] - learningRate " << learningRate << '\n';
+      linesearchDisplay << std::setw(4) << lsPerformanceIndex << '\n';
+      linesearchDisplay << "    final state constraints norm: ";
+      for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
+        for (size_t k = 0; k < lsNc2FinalStock[i].size(); k++) {
+          linesearchDisplay << lsHvFinalStock[i][k].head(lsNc2FinalStock[i][k]).norm() << ",  ";
         }
-        linesearchDisplay += "  ";
-      }  // end of i loop
-      linesearchDisplay += "\n\t forward pass average time step: " + std::to_string(avgTimeStepFP * 1e+3) + " [ms].";
-      BASE::printString(linesearchDisplay);
+      }
+      linesearchDisplay << "\n    forward pass average time step: " << avgTimeStepFP * 1e+3 << " [ms].\n";
+      BASE::printString(linesearchDisplay.str());
     }
 
   } catch (const std::exception& error) {
     lsPerformanceIndex.merit = std::numeric_limits<scalar_t>::max();
     lsPerformanceIndex.totalCost = std::numeric_limits<scalar_t>::max();
     if (ddpSettings_.displayInfo_) {
-      BASE::printString("\t [Thread " + std::to_string(workerIndex) + "] rollout with learningRate " + std::to_string(learningRate) +
+      BASE::printString("    [Thread " + std::to_string(workerIndex) + "] rollout with learningRate " + std::to_string(learningRate) +
                         " is terminated: " + error.what());
     }
   }
@@ -1310,7 +1299,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::correctcachedTrajectoryTail(std::pair<int, 
 /***************************************************************************************************** */
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void DDP_BASE<STATE_DIM, INPUT_DIM>::printRolloutInfo() {
-  std::cerr << performanceIndex_;
+  std::cerr << performanceIndex_ << '\n';
   std::cerr << "final constraint type-2:   ";
   size_t itr = 0;
   for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {

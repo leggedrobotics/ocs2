@@ -15,7 +15,7 @@ SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings se
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto SwingTrajectoryPlanner::getZvelocityConstraint(size_t leg, scalar_t time) const -> scalar_t {
+scalar_t SwingTrajectoryPlanner::getZvelocityConstraint(size_t leg, scalar_t time) const {
   const auto index = ocs2::lookup::findIndexInTimeArray(feetHeightTrajectoriesEvents_[leg], time);
   return feetHeightTrajectories_[leg][index].velocity(time);
 }
@@ -23,7 +23,7 @@ auto SwingTrajectoryPlanner::getZvelocityConstraint(size_t leg, scalar_t time) c
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto SwingTrajectoryPlanner::getZpositionConstraint(size_t leg, scalar_t time) const -> scalar_t {
+scalar_t SwingTrajectoryPlanner::getZpositionConstraint(size_t leg, scalar_t time) const {
   const auto index = ocs2::lookup::findIndexInTimeArray(feetHeightTrajectoriesEvents_[leg], time);
   return feetHeightTrajectories_[leg][index].position(time);
 }
@@ -182,7 +182,7 @@ void SwingTrajectoryPlanner::checkThatIndicesAreValid(int leg, int index, int st
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto SwingTrajectoryPlanner::swingTrajectoryScaling(scalar_t startTime, scalar_t finalTime, scalar_t swingTimeScale) -> scalar_t {
+scalar_t SwingTrajectoryPlanner::swingTrajectoryScaling(scalar_t startTime, scalar_t finalTime, scalar_t swingTimeScale) {
   return std::min(1.0, (finalTime - startTime) / swingTimeScale);
 }
 

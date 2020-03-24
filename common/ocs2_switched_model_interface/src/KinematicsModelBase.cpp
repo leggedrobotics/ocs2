@@ -113,7 +113,7 @@ vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footVelocityInFootFrame(siz
   return foot_R_b * b_footVelocity;
 }
 
-template class KinematicsModelBase<double>;
-template class KinematicsModelBase<ocs2::CppAdInterface<double>::ad_scalar_t>;
+template class KinematicsModelBase<scalar_t>;
+template class KinematicsModelBase<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
 
 }  // end of namespace switched_model

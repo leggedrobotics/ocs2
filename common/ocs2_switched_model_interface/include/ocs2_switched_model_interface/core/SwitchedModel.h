@@ -3,6 +3,7 @@
 #include <Eigen/Dense>
 #include <array>
 
+#include <ocs2_core/Types.h>
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 
 namespace switched_model {
@@ -42,147 +43,151 @@ constexpr size_t RBD_STATE_DIM = 2 * GENERALIZED_COORDINATE_SIZE;               
 constexpr size_t STATE_DIM = 2 * BASE_COORDINATE_SIZE + JOINT_COORDINATE_SIZE;                // 24
 constexpr size_t INPUT_DIM = 3 * NUM_CONTACT_POINTS + JOINT_COORDINATE_SIZE;                  // 24
 
+/* Import ocs2 types into the switched_model namespace */
+using ocs2::scalar_array_t;
+using ocs2::scalar_t;
+
 enum class FeetEnum { LF, RF, LH, RH };
 const std::array<std::string, 4> feetNames{"LF", "RF", "LH", "RH"};
 using contact_flag_t = std::array<bool, NUM_CONTACT_POINTS>;
 
-template <typename scalar_t>
-using vector3_s_t = Eigen::Matrix<scalar_t, 3, 1>;
-using vector3_t = vector3_s_t<double>;
-using vector3_ad_t = vector3_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
+template <typename SCALAR_T>
+using vector3_s_t = Eigen::Matrix<SCALAR_T, 3, 1>;
+using vector3_t = vector3_s_t<scalar_t>;
+using vector3_ad_t = vector3_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
 
-template <typename scalar_t>
-using matrix3_s_t = Eigen::Matrix<scalar_t, 3, 3>;
-using matrix3_t = matrix3_s_t<double>;
-using matrix3_ad_t = matrix3_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
+template <typename SCALAR_T>
+using matrix3_s_t = Eigen::Matrix<SCALAR_T, 3, 3>;
+using matrix3_t = matrix3_s_t<scalar_t>;
+using matrix3_ad_t = matrix3_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
 
-template <typename scalar_t>
-using vector6_s_t = Eigen::Matrix<scalar_t, 6, 1>;
-using vector6_t = vector6_s_t<double>;
-using vector6_ad_t = vector6_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
+template <typename SCALAR_T>
+using vector6_s_t = Eigen::Matrix<SCALAR_T, 6, 1>;
+using vector6_t = vector6_s_t<scalar_t>;
+using vector6_ad_t = vector6_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
 
-template <typename scalar_t>
-using matrix6_s_t = Eigen::Matrix<scalar_t, 6, 6>;
-using matrix6_t = matrix6_s_t<double>;
-using matrix6_ad_t = matrix6_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
+template <typename SCALAR_T>
+using matrix6_s_t = Eigen::Matrix<SCALAR_T, 6, 6>;
+using matrix6_t = matrix6_s_t<scalar_t>;
+using matrix6_ad_t = matrix6_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
 
-template <typename scalar_t>
-using base_coordinate_s_t = Eigen::Matrix<scalar_t, BASE_COORDINATE_SIZE, 1>;
-using base_coordinate_t = base_coordinate_s_t<double>;
-using base_coordinate_ad_t = base_coordinate_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
+template <typename SCALAR_T>
+using base_coordinate_s_t = Eigen::Matrix<SCALAR_T, BASE_COORDINATE_SIZE, 1>;
+using base_coordinate_t = base_coordinate_s_t<scalar_t>;
+using base_coordinate_ad_t = base_coordinate_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
 
-template <typename scalar_t>
-using joint_coordinate_s_t = Eigen::Matrix<scalar_t, JOINT_COORDINATE_SIZE, 1>;
-using joint_coordinate_t = joint_coordinate_s_t<double>;
-using joint_coordinate_ad_t = joint_coordinate_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
+template <typename SCALAR_T>
+using joint_coordinate_s_t = Eigen::Matrix<SCALAR_T, JOINT_COORDINATE_SIZE, 1>;
+using joint_coordinate_t = joint_coordinate_s_t<scalar_t>;
+using joint_coordinate_ad_t = joint_coordinate_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
 
-template <typename scalar_t>
-using generalized_coordinate_s_t = Eigen::Matrix<scalar_t, GENERALIZED_COORDINATE_SIZE, 1>;
-using generalized_coordinate_t = generalized_coordinate_s_t<double>;
-using generalized_coordinate_ad_t = generalized_coordinate_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
+template <typename SCALAR_T>
+using generalized_coordinate_s_t = Eigen::Matrix<SCALAR_T, GENERALIZED_COORDINATE_SIZE, 1>;
+using generalized_coordinate_t = generalized_coordinate_s_t<scalar_t>;
+using generalized_coordinate_ad_t = generalized_coordinate_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
 
-template <typename scalar_t>
-using com_state_s_t = Eigen::Matrix<scalar_t, 2 * BASE_COORDINATE_SIZE, 1>;
-using com_state_t = com_state_s_t<double>;
-using com_state_ad_t = com_state_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
+template <typename SCALAR_T>
+using com_state_s_t = Eigen::Matrix<SCALAR_T, 2 * BASE_COORDINATE_SIZE, 1>;
+using com_state_t = com_state_s_t<scalar_t>;
+using com_state_ad_t = com_state_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
 
-template <typename scalar_t>
-using comkino_state_s_t = Eigen::Matrix<scalar_t, STATE_DIM, 1>;
-using comkino_state_t = comkino_state_s_t<double>;
-using comkino_state_ad_t = comkino_state_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
+template <typename SCALAR_T>
+using comkino_state_s_t = Eigen::Matrix<SCALAR_T, STATE_DIM, 1>;
+using comkino_state_t = comkino_state_s_t<scalar_t>;
+using comkino_state_ad_t = comkino_state_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
 
-template <typename scalar_t>
-using comkino_input_s_t = Eigen::Matrix<scalar_t, INPUT_DIM, 1>;
-using comkino_input_t = comkino_input_s_t<double>;
-using comkino_input_ad_t = comkino_input_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
+template <typename SCALAR_T>
+using comkino_input_s_t = Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>;
+using comkino_input_t = comkino_input_s_t<scalar_t>;
+using comkino_input_ad_t = comkino_input_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
 
-template <typename scalar_t>
-using rbd_state_s_t = Eigen::Matrix<scalar_t, 2 * GENERALIZED_COORDINATE_SIZE, 1>;
-using rbd_state_t = rbd_state_s_t<double>;
-using rbd_state_ad_t = rbd_state_s_t<ocs2::CppAdInterface<double>::ad_scalar_t>;
+template <typename SCALAR_T>
+using rbd_state_s_t = Eigen::Matrix<SCALAR_T, 2 * GENERALIZED_COORDINATE_SIZE, 1>;
+using rbd_state_t = rbd_state_s_t<scalar_t>;
+using rbd_state_ad_t = rbd_state_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
 
-template <typename scalar_t>
-base_coordinate_s_t<scalar_t> getComPose(const comkino_state_s_t<scalar_t>& comkinoState) {
+template <typename SCALAR_T>
+base_coordinate_s_t<SCALAR_T> getComPose(const comkino_state_s_t<SCALAR_T>& comkinoState) {
   return comkinoState.template head<BASE_COORDINATE_SIZE>();
 }
 
-template <typename scalar_t>
-base_coordinate_s_t<scalar_t> getBasePose(const generalized_coordinate_s_t<scalar_t>& generalizedCoordinate) {
+template <typename SCALAR_T>
+base_coordinate_s_t<SCALAR_T> getBasePose(const generalized_coordinate_s_t<SCALAR_T>& generalizedCoordinate) {
   return generalizedCoordinate.template head<BASE_COORDINATE_SIZE>();
 }
 
-template <typename scalar_t>
-base_coordinate_s_t<scalar_t> getBasePose(const rbd_state_s_t<scalar_t>& rbdState) {
+template <typename SCALAR_T>
+base_coordinate_s_t<SCALAR_T> getBasePose(const rbd_state_s_t<SCALAR_T>& rbdState) {
   return rbdState.template head<BASE_COORDINATE_SIZE>();
 }
 
-template <typename scalar_t>
-vector3_s_t<scalar_t> getOrientation(const base_coordinate_s_t<scalar_t>& baseCoordinate) {
+template <typename SCALAR_T>
+vector3_s_t<SCALAR_T> getOrientation(const base_coordinate_s_t<SCALAR_T>& baseCoordinate) {
   return baseCoordinate.template head<3>();
 }
 
-template <typename scalar_t>
-vector3_s_t<scalar_t> getPositionInOrigin(const base_coordinate_s_t<scalar_t>& baseCoordinate) {
+template <typename SCALAR_T>
+vector3_s_t<SCALAR_T> getPositionInOrigin(const base_coordinate_s_t<SCALAR_T>& baseCoordinate) {
   return baseCoordinate.template tail<3>();
 }
 
-template <typename scalar_t>
-base_coordinate_s_t<scalar_t> getBaseLocalVelocity(const rbd_state_s_t<scalar_t>& rbdState) {
+template <typename SCALAR_T>
+base_coordinate_s_t<SCALAR_T> getBaseLocalVelocity(const rbd_state_s_t<SCALAR_T>& rbdState) {
   return rbdState.template segment<BASE_COORDINATE_SIZE>(GENERALIZED_COORDINATE_SIZE);
 }
 
-template <typename scalar_t>
-base_coordinate_s_t<scalar_t> getComLocalVelocities(const comkino_state_s_t<scalar_t>& comkinoState) {
+template <typename SCALAR_T>
+base_coordinate_s_t<SCALAR_T> getComLocalVelocities(const comkino_state_s_t<SCALAR_T>& comkinoState) {
   return comkinoState.template segment<BASE_COORDINATE_SIZE>(BASE_COORDINATE_SIZE);
 }
 
-template <typename scalar_t>
-vector3_s_t<scalar_t> getAngularVelocity(const base_coordinate_s_t<scalar_t>& baseTwist) {
+template <typename SCALAR_T>
+vector3_s_t<SCALAR_T> getAngularVelocity(const base_coordinate_s_t<SCALAR_T>& baseTwist) {
   return baseTwist.template head<3>();
 }
 
-template <typename scalar_t>
-vector3_s_t<scalar_t> getAngularAcceleration(const base_coordinate_s_t<scalar_t>& baseAcceleration) {
+template <typename SCALAR_T>
+vector3_s_t<SCALAR_T> getAngularAcceleration(const base_coordinate_s_t<SCALAR_T>& baseAcceleration) {
   return baseAcceleration.template head<3>();
 }
 
-template <typename scalar_t>
-vector3_s_t<scalar_t> getLinearVelocity(const base_coordinate_s_t<scalar_t>& baseTwist) {
+template <typename SCALAR_T>
+vector3_s_t<SCALAR_T> getLinearVelocity(const base_coordinate_s_t<SCALAR_T>& baseTwist) {
   return baseTwist.template tail<3>();
 }
 
-template <typename scalar_t>
-vector3_s_t<scalar_t> getLinearAcceleration(const base_coordinate_s_t<scalar_t>& baseAcceleration) {
+template <typename SCALAR_T>
+vector3_s_t<SCALAR_T> getLinearAcceleration(const base_coordinate_s_t<SCALAR_T>& baseAcceleration) {
   return baseAcceleration.template tail<3>();
 }
 
-template <typename scalar_t>
-joint_coordinate_s_t<scalar_t> getJointPositions(const comkino_state_s_t<scalar_t>& comkinoState) {
+template <typename SCALAR_T>
+joint_coordinate_s_t<SCALAR_T> getJointPositions(const comkino_state_s_t<SCALAR_T>& comkinoState) {
   return comkinoState.template segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE);
 }
 
-template <typename scalar_t>
-joint_coordinate_s_t<scalar_t> getJointPositions(const generalized_coordinate_s_t<scalar_t>& generalizedCoordinate) {
+template <typename SCALAR_T>
+joint_coordinate_s_t<SCALAR_T> getJointPositions(const generalized_coordinate_s_t<SCALAR_T>& generalizedCoordinate) {
   return generalizedCoordinate.template segment<JOINT_COORDINATE_SIZE>(BASE_COORDINATE_SIZE);
 }
 
-template <typename scalar_t>
-joint_coordinate_s_t<scalar_t> getJointPositions(const rbd_state_s_t<scalar_t>& rbdState) {
+template <typename SCALAR_T>
+joint_coordinate_s_t<SCALAR_T> getJointPositions(const rbd_state_s_t<SCALAR_T>& rbdState) {
   return rbdState.template segment<JOINT_COORDINATE_SIZE>(BASE_COORDINATE_SIZE);
 }
 
-template <typename scalar_t>
-joint_coordinate_s_t<scalar_t> getJointVelocities(const comkino_input_s_t<scalar_t>& comkinoInput) {
+template <typename SCALAR_T>
+joint_coordinate_s_t<SCALAR_T> getJointVelocities(const comkino_input_s_t<SCALAR_T>& comkinoInput) {
   return comkinoInput.template segment<JOINT_COORDINATE_SIZE>(NUM_CONTACT_POINTS * 3);
 }
 
-template <typename scalar_t>
-joint_coordinate_s_t<scalar_t> getJointVelocities(const rbd_state_s_t<scalar_t>& rbdState) {
+template <typename SCALAR_T>
+joint_coordinate_s_t<SCALAR_T> getJointVelocities(const rbd_state_s_t<SCALAR_T>& rbdState) {
   return rbdState.template segment<JOINT_COORDINATE_SIZE>(GENERALIZED_COORDINATE_SIZE + BASE_COORDINATE_SIZE);
 }
 
-template <typename scalar_t>
-std::array<vector3_s_t<scalar_t>, NUM_CONTACT_POINTS> toArray(const joint_coordinate_s_t<scalar_t>& valuesAsVector) {
+template <typename SCALAR_T>
+std::array<vector3_s_t<SCALAR_T>, NUM_CONTACT_POINTS> toArray(const joint_coordinate_s_t<SCALAR_T>& valuesAsVector) {
   return {valuesAsVector.template segment<3>(0), valuesAsVector.template segment<3>(3), valuesAsVector.template segment<3>(6),
           valuesAsVector.template segment<3>(9)};
 }

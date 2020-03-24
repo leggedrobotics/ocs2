@@ -75,8 +75,8 @@ size_t ConstraintCollection<STATE_DIM, INPUT_DIM>::getNumConstraints(scalar_t ti
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-auto ConstraintCollection<STATE_DIM, INPUT_DIM>::getValue(scalar_t time, const state_vector_t& state, const input_vector_t& input) const
-    -> scalar_array_t {
+scalar_array_t ConstraintCollection<STATE_DIM, INPUT_DIM>::getValue(scalar_t time, const state_vector_t& state,
+                                                                    const input_vector_t& input) const {
   scalar_array_t constraintValues;
   constraintValues.reserve(getNumConstraints(time));
 

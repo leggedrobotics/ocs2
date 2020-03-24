@@ -7,13 +7,11 @@
 
 #pragma once
 
-#include <ocs2_core/Dimensions.h>
+#include "ocs2_switched_model_interface/core/SwitchedModel.h"
 
 namespace switched_model {
 
 class CubicSpline {
-  using scalar_t = ocs2::Dimensions<0, 0>::scalar_t;
-
  public:
   struct Node {
     scalar_t time;

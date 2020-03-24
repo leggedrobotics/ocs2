@@ -15,7 +15,6 @@ enum class ConstraintOrder { None, Linear, Quadratic };
 template <size_t STATE_DIM, size_t INPUT_DIM>
 struct LinearConstraintApproximation {
   using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
   using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
   using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
 
@@ -39,7 +38,6 @@ struct LinearConstraintApproximationAsMatrices {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 struct QuadraticConstraintApproximation {
   using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
   using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
   using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
   using state_matrix_array_t = typename DIMENSIONS::state_matrix_array_t;
@@ -60,8 +58,6 @@ class ConstraintTerm {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
   using state_vector_t = typename DIMENSIONS::state_vector_t;
   using input_vector_t = typename DIMENSIONS::input_vector_t;
   using state_matrix_t = typename DIMENSIONS::state_matrix_t;

@@ -72,7 +72,7 @@ class KinematicsModelBase {
       const joint_coordinate_s_t<SCALAR_T>& jointPositions, const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const;
 };
 
-extern template class KinematicsModelBase<double>;
-extern template class KinematicsModelBase<ocs2::CppAdInterface<double>::ad_scalar_t>;
+extern template class KinematicsModelBase<scalar_t>;
+extern template class KinematicsModelBase<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
 
 }  // end of namespace switched_model

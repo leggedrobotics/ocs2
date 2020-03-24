@@ -23,11 +23,10 @@ class SwitchedModelCostBase : public ocs2::QuadraticCostFunction<STATE_DIM, INPU
   using typename BASE::dynamic_vector_t;
   using typename BASE::input_matrix_t;
   using typename BASE::input_vector_t;
-  using typename BASE::scalar_t;
   using typename BASE::state_matrix_t;
   using typename BASE::state_vector_t;
 
-  using com_model_t = ComModelBase<double>;
+  using com_model_t = ComModelBase<scalar_t>;
 
   //! Constructor
   SwitchedModelCostBase(const com_model_t& comModel, std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,

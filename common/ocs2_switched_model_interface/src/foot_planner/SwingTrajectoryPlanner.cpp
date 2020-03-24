@@ -14,7 +14,7 @@ SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings se
                                                const KinematicsModelBase<double>& kinematicsModel)
     : settings_(std::move(settings)), comModel_(comModel.clone()), kinematicsModel_(kinematicsModel.clone()) {}
 
-void SwingTrajectoryPlanner::update(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+void SwingTrajectoryPlanner::update(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState,
                                     const ocs2::ModeSchedule& modeSchedule, scalar_t terrainHeight) {
   const auto basePose = comModel_->calculateBasePose(getComPose(currentState));
   const auto feetPositions = kinematicsModel_->feetPositionsInOriginFrame(basePose, getJointPositions(currentState));

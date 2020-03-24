@@ -16,9 +16,7 @@ namespace switched_model {
 
 class SwitchedModelStateEstimator {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using com_model_t = ComModelBase<double>;
+  using com_model_t = ComModelBase<scalar_t>;
 
   explicit SwitchedModelStateEstimator(const com_model_t& comModel);
 

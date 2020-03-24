@@ -76,7 +76,7 @@ class ComModelBase {
                                                                const base_coordinate_s_t<SCALAR_T>& baseLocalVelocities) const;
 };
 
-extern template class ComModelBase<double>;
-extern template class ComModelBase<ocs2::CppAdInterface<double>::ad_scalar_t>;
+extern template class ComModelBase<scalar_t>;
+extern template class ComModelBase<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
 
 }  // end of namespace switched_model

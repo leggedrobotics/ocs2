@@ -14,7 +14,6 @@
 namespace switched_model {
 
 struct SwingTrajectoryPlannerSettings {
-  using scalar_t = ocs2::Dimensions<0, 0>::scalar_t;
   scalar_t liftOffVelocity = 0.0;
   scalar_t touchDownVelocity = 0.0;
   scalar_t swingHeight = 0.1;
@@ -28,8 +27,6 @@ SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& fi
 
 class SwingTrajectoryPlanner {
  public:
-  using scalar_t = ocs2::Dimensions<STATE_DIM, INPUT_DIM>::scalar_t;
-  using scalar_array_t = ocs2::Dimensions<0, 0>::scalar_array_t;
   using state_vector_t = ocs2::Dimensions<STATE_DIM, INPUT_DIM>::state_vector_t;
 
   SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const ComModelBase<double>& comModel,

@@ -14,8 +14,6 @@ struct ModelSettings {
   double mpcGoalCommandDelay_ = 0.5;
   double targetDisplacementVelocity_ = 0.5;
   double targetRotationVelocity_ = 0.3;
-  bool useFeetTrajectoryFiltering_ = true;
-  double feetFilterFrequency_ = 50.0;
   bool gaitOptimization_ = false;
   bool enforceFrictionConeConstraint_ = false;
   double frictionCoefficient_ = 1.0;

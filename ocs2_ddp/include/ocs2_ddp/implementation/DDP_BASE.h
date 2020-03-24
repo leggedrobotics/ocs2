@@ -1947,7 +1947,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
       std::cerr << "max state-input equality constraints error update norm: " << maxDeltaUeeNorm << std::endl;
     }
 
-    auto costCached = performanceIndex_.merit;
+    auto meritCached = performanceIndex_.merit;
     auto constraint1ISECached = performanceIndex_.stateInputEqConstraintISE;
 
     // cache the nominal trajectories before the new rollout (time, state, input, ...)
@@ -1959,7 +1959,7 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
     performanceIndexHistory_.push_back(performanceIndex_);
 
     // loop break variables
-    relCost = std::abs(performanceIndex_.merit - costCached);
+    relCost = std::abs(performanceIndex_.merit - meritCached);
     relConstraint1ISE = std::abs(performanceIndex_.stateInputEqConstraintISE - constraint1ISECached);
     isConstraint1Satisfied = performanceIndex_.stateInputEqConstraintISE <= ddpSettings_.minAbsConstraint1ISE_ ||
                              relConstraint1ISE <= ddpSettings_.minRelConstraint1ISE_;

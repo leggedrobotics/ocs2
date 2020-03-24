@@ -38,6 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <chrono>
 #include <cstddef>
 #include <future>
+#include <iomanip>
+#include <iostream>
 #include <mutex>
 #include <numeric>
 #include <type_traits>
@@ -53,6 +55,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_oc/oc_data/PrimalSolution.h"
 #include "ocs2_oc/oc_solver/ModeScheduleManager.h"
+#include "ocs2_oc/oc_solver/PerformanceIndex.h"
 #include "ocs2_oc/oc_solver/SolverSynchronizedModule.h"
 
 namespace ocs2 {
@@ -191,13 +194,11 @@ class Solver_BASE {
   void setSynchronizedModules(const synchronized_module_ptr_array_t& synchronizedModules) { synchronizedModules_ = synchronizedModules; };
 
   /**
-   * Gets the cost function and ISEs of the type-1 and type-2 constraints at the initial time.
+   * Returns the cost, merit function and ISEs of constraints for the latest optimized trajectory.
    *
-   * @param [out] costFunction: cost function value
-   * @param [out] constraint1ISE: type-1 constraint ISE.
-   * @param [out] constraint1ISE: type-2 constraint ISE.
+   * @return PerformanceIndex of the last optimized trajectory.
    */
-  virtual void getPerformanceIndeces(scalar_t& costFunction, scalar_t& constraint1ISE, scalar_t& constraint2ISE) const = 0;
+  virtual const PerformanceIndex& getPerformanceIndeces() const = 0;
 
   /**
    * Gets number of iterations.
@@ -207,24 +208,11 @@ class Solver_BASE {
   virtual size_t getNumIterations() const = 0;
 
   /**
-   * Gets iterations Log of the solver.
+   * Returns the history of the cost, merit function and ISEs of constraints for the iterations os the optimized trajectory.
    *
-   * @param [out] iterationCost: Each iteration's cost.
-   * @param [out] iterationISE1: Each iteration's type-1 constraints ISE.
-   * @param [out] iterationISE2: Each iteration's type-2 constraints ISE.
+   * @return An array of PerformanceIndices.
    */
-  virtual void getIterationsLog(eigen_scalar_array_t& iterationCost, eigen_scalar_array_t& iterationISE1,
-                                eigen_scalar_array_t& iterationISE2) const = 0;
-
-  /**
-   * Gets Iterations Log of solver
-   *
-   * @param [out] iterationCostPtr: A pointer to each iteration's cost.
-   * @param [out] iterationISE1Ptr: A pointer to each iteration's type-1 constraints ISE.
-   * @param [out] iterationISE2Ptr: A pointer to each iteration's type-2 constraints ISE.
-   */
-  virtual void getIterationsLogPtr(const eigen_scalar_array_t*& iterationCostPtr, const eigen_scalar_array_t*& iterationISE1Ptr,
-                                   const eigen_scalar_array_t*& iterationISE2Ptr) const = 0;
+  virtual const std::vector<PerformanceIndex>& getIterationsLog() const = 0;
 
   /**
    * Gets final time of optimization

@@ -373,15 +373,11 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   void useParallelRiccatiSolverFromInitItr(bool flag);
 
-  void getPerformanceIndeces(scalar_t& costFunction, scalar_t& constraint1ISE, scalar_t& constraint2ISE) const override;
+  const PerformanceIndex& getPerformanceIndeces() const override;
 
   size_t getNumIterations() const override;
 
-  void getIterationsLog(eigen_scalar_array_t& iterationCost, eigen_scalar_array_t& iterationISE1,
-                        eigen_scalar_array_t& iterationISE2) const override;
-
-  void getIterationsLogPtr(const eigen_scalar_array_t*& iterationCostPtr, const eigen_scalar_array_t*& iterationISE1Ptr,
-                           const eigen_scalar_array_t*& iterationISE2Ptr) const override;
+  const std::vector<PerformanceIndex>& getIterationsLog() const override;
 
   /**
    * Write access to ddp settings
@@ -690,17 +686,12 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM> trajectorySpreadingController_;
 
   std::atomic_size_t iteration_;
-  eigen_scalar_array_t iterationCost_;
-  eigen_scalar_array_t iterationISE1_;
-  eigen_scalar_array_t iterationISE2_;
 
-  scalar_t nominalTotalCost_;
-  scalar_t nominalConstraint1ISE_;
   scalar_t nominalConstraint1MaxNorm_;
-  scalar_t nominalConstraint2ISE_;
   scalar_t nominalConstraint2MaxNorm_;
-  scalar_t nominalInequalityConstraintPenalty_;
-  scalar_t nominalInequalityConstraintISE_;
+
+  PerformanceIndex performanceIndex_;
+  std::vector<PerformanceIndex> performanceIndexHistory_;
 
   // Forward pass and backward pass average time step
   scalar_t avgTimeStepFP_;

@@ -71,8 +71,6 @@ class DDP_Settings {
         minRelConstraint1ISE_(1e-3)
 
         ,
-        simulationIsConstrained_(false),
-        noStateConstraints_(false),
         useMakePSD_(true),
         addedRiccatiDiagonal_(1e-5)
 
@@ -158,12 +156,6 @@ class DDP_Settings {
   /** This value determines the maximum permitted relative ISE (Integral of Square Error) for constrained type-1.*/
   double minRelConstraint1ISE_;
 
-  /** Skips calculation of the error correction term (Sve) if the constrained simulation is used for forward simulation.*/
-  bool simulationIsConstrained_;
-
-  /** Set true, if a problem does not have state-only constraints. This significantly decreases the runtime of the algorithm. */
-  bool noStateConstraints_;
-
   /** If true DDP makes sure that PSD matrices remain PSD which increases the numerical stability at the expense of extra computation.*/
   bool useMakePSD_;
   /** Add diagonal term to Riccati backward pass for numerical stability. This process is only used when useMakePSD_ set to false.*/
@@ -217,8 +209,6 @@ inline void DDP_Settings::loadSettings(const std::string& filename, const std::s
   loadData::loadPtreeValue(pt, relTolODE_, fieldName + ".RelTolODE", verbose);
   loadData::loadPtreeValue(pt, maxNumStepsPerSecond_, fieldName + ".maxNumStepsPerSecond", verbose);
   loadData::loadPtreeValue(pt, minTimeStep_, fieldName + ".minTimeStep", verbose);
-  loadData::loadPtreeValue(pt, simulationIsConstrained_, fieldName + ".simulationIsConstrained", verbose);
-  loadData::loadPtreeValue(pt, noStateConstraints_, fieldName + ".noStateConstraints", verbose);
   loadData::loadPtreeValue(pt, useMakePSD_, fieldName + ".useMakePSD", verbose);
   loadData::loadPtreeValue(pt, addedRiccatiDiagonal_, fieldName + ".addedRiccatiDiagonal", verbose);
   loadData::loadPtreeValue(pt, minAbsConstraint1ISE_, fieldName + ".minAbsConstraint1ISE", verbose);

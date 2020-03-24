@@ -53,7 +53,6 @@ TEST(exp1_ilqr_test, exp1_ilqr_test) {
   ilqrSettings.ddpSettings_.relTolODE_ = 1e-7;
   ilqrSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
   ilqrSettings.ddpSettings_.maxNumIterations_ = 30;
-  ilqrSettings.ddpSettings_.noStateConstraints_ = true;
   ilqrSettings.ddpSettings_.minLearningRate_ = 0.0001;
   ilqrSettings.ddpSettings_.minRelCost_ = 5e-4;
   ilqrSettings.ddpSettings_.checkNumericalStability_ = false;

@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ostream>
 
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 
@@ -39,8 +39,6 @@ namespace ocs2 {
  * Defines the performance indices for a rollout
  */
 struct PerformanceIndex {
-  using scalar_t = typename Dimensions<0, 0>::scalar_t;
-
   /** The merit function of a rollout. */
   scalar_t merit = 0.0;
   /** The total cost of a rollout. */

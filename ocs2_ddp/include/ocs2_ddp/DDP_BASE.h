@@ -240,13 +240,10 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Calculates cost of a rollout.
    *
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the
-   * time trajectory stamp of a rollout.
+   * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
    * @param [in] postEventIndicesStock: Array of the post-event indices.
-   * @param [in] stateTrajectoriesStock: Array of trajectories containing the
-   * state trajectory of a rollout.
-   * @param [in] inputTrajectoriesStock: Array of trajectories containing the
-   * control input trajectory of a rollout.
+   * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
+   * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
    * @param [in] threadId: Working thread (default is 0).
    * @return totalCost: The total cost of the rollout.
    */
@@ -255,11 +252,11 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
                                 size_t threadId = 0);
 
   /**
-   * Calculates the merit function with is cost function penalty for state-only constraints of a rollout.
+   * Calculates the merit function as a function of cost, inequality constraints penalty, and ISE of state equality constraints.
    *
    * @param [in] nc2FinalStock: Array containing the number of the active final state-only constraints.
    * @param [in] HvFinalStock: Array containing the value of the final state-only constraints.
-   * @param [in] performanceIndex: The performence index of the rollout.
+   * @param [in] performanceIndex: The performance index of the rollout.
    * @param [in] threadId: Working thread (default is 0).
    */
   void calculateRolloutMerit(const size_array2_t& nc2FinalStock, const constraint2_vector_array2_t& HvFinalStock,

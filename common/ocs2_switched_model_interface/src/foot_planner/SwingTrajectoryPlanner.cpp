@@ -22,13 +22,13 @@ void SwingTrajectoryPlanner::update(scalar_t initTime, scalar_t finalTime, const
   updateFeetTrajectories(initTime, finalTime, feetPositions, modeSchedule, terrainHeight);
   updateErrorTrajectories(initTime, feetPositions, modeSchedule);
 
-  std::cout << "[SwingTrajectoryPlanner]\n";
-  std::cout << "Last contact:\n";
-  std::cout << "0:\t t:" << lastContacts_[0].time << " h: " << lastContacts_[0].height << "\n";
-  std::cout << "1:\t t:" << lastContacts_[1].time << " h: " << lastContacts_[1].height << "\n";
-  std::cout << "2:\t t:" << lastContacts_[2].time << " h: " << lastContacts_[2].height << "\n";
-  std::cout << "3:\t t:" << lastContacts_[3].time << " h: " << lastContacts_[3].height << "\n";
-  std::cout << std::endl;
+  //  std::cout << "[SwingTrajectoryPlanner]\n";
+  //  std::cout << "Last contact:\n";
+  //  std::cout << "0:\t t:" << lastContacts_[0].time << " h: " << lastContacts_[0].height << "\n";
+  //  std::cout << "1:\t t:" << lastContacts_[1].time << " h: " << lastContacts_[1].height << "\n";
+  //  std::cout << "2:\t t:" << lastContacts_[2].time << " h: " << lastContacts_[2].height << "\n";
+  //  std::cout << "3:\t t:" << lastContacts_[3].time << " h: " << lastContacts_[3].height << "\n";
+  //  std::cout << std::endl;
 }
 
 void SwingTrajectoryPlanner::update(const ocs2::ModeSchedule& modeSchedule,
@@ -51,13 +51,13 @@ auto SwingTrajectoryPlanner::getZpositionConstraint(size_t leg, scalar_t time) c
 void SwingTrajectoryPlanner::updateFeetTrajectories(scalar_t initTime, scalar_t finalTime,
                                                     const std::array<vector3_t, NUM_CONTACT_POINTS>& currentFeetPositions,
                                                     const ocs2::ModeSchedule& modeSchedule, scalar_t terrainHeight) {
-  std::cout << "ModeSchedule\n" << modeSchedule << std::endl;
+  //  std::cout << "ModeSchedule\n" << modeSchedule << std::endl;
 
   // Convert mode sequence to a contact flag vector per leg
   const std::array<std::vector<bool>, NUM_CONTACT_POINTS> contactSequencePerLeg = extractContactFlags(modeSchedule.modeSequence);
 
   for (int leg = 0; leg < NUM_CONTACT_POINTS; leg++) {
-    std::cout << "Leg : " << leg << std::endl;
+    //    std::cout << "Leg : " << leg << std::endl;
 
     const auto footPhases = extractFootPhases(modeSchedule.eventTimes, contactSequencePerLeg[leg]);
     auto& footTrajectory = feetHeightTrajectories_[leg];
@@ -110,10 +110,10 @@ void SwingTrajectoryPlanner::updateFeetTrajectories(scalar_t initTime, scalar_t 
         footTrajectory.emplace_back(startPoint, startPoint.position, endPoint);
         footTrajectoryEvents.push_back(endPoint.time);
 
-        std::cout << "\tstance\n";
-        std::cout << "\tstart: \t t:" << startPoint.time << " h: " << startPoint.position << " v: " << startPoint.velocity << "\n";
-        std::cout << "\tmid:   \t h: " << startPoint.position << "\n";
-        std::cout << "\tend:   \t t:" << endPoint.time << " h: " << endPoint.position << " v: " << endPoint.velocity << "\n\n";
+        //        std::cout << "\tstance\n";
+        //        std::cout << "\tstart: \t t:" << startPoint.time << " h: " << startPoint.position << " v: " << startPoint.velocity <<
+        //        "\n"; std::cout << "\tmid:   \t h: " << startPoint.position << "\n"; std::cout << "\tend:   \t t:" << endPoint.time << "
+        //        h: " << endPoint.position << " v: " << endPoint.velocity << "\n\n";
       } else if (footPhase.type == FootPhaseType::Swing) {
         auto liftOff = [&] {
           CubicSpline::Node node{};
@@ -154,10 +154,10 @@ void SwingTrajectoryPlanner::updateFeetTrajectories(scalar_t initTime, scalar_t 
         footTrajectory.emplace_back(liftOff, midHeight, touchDown);
         footTrajectoryEvents.push_back(touchDown.time);
 
-        std::cout << "\tswing\n";
-        std::cout << "\tstart: \t t:" << liftOff.time << " h: " << liftOff.position << " v: " << liftOff.velocity << "\n";
-        std::cout << "\tmid:   \t h: " << midHeight << " scaling: " << scaling << "\n";
-        std::cout << "\tend:   \t t:" << touchDown.time << " h: " << touchDown.position << " v: " << touchDown.velocity << "\n\n";
+        //        std::cout << "\tswing\n";
+        //        std::cout << "\tstart: \t t:" << liftOff.time << " h: " << liftOff.position << " v: " << liftOff.velocity << "\n";
+        //        std::cout << "\tmid:   \t h: " << midHeight << " scaling: " << scaling << "\n";
+        //        std::cout << "\tend:   \t t:" << touchDown.time << " h: " << touchDown.position << " v: " << touchDown.velocity << "\n\n";
       }
     }
   }

@@ -72,9 +72,11 @@ class Dimensions {
   using dynamic_vector_t = ocs2::dynamic_vector_t;
   using dynamic_vector_array_t = ocs2::dynamic_vector_array_t;
   using dynamic_vector_array2_t = ocs2::dynamic_vector_array2_t;
+  using dynamic_vector_array3_t = ocs2::dynamic_vector_array3_t;
   using dynamic_matrix_t = ocs2::dynamic_matrix_t;
   using dynamic_matrix_array_t = ocs2::dynamic_matrix_array_t;
   using dynamic_matrix_array2_t = ocs2::dynamic_matrix_array2_t;
+  using dynamic_matrix_array3_t = ocs2::dynamic_matrix_array3_t;
   using eigen_scalar_t = ocs2::eigen_scalar_t;
   using eigen_scalar_array_t = ocs2::eigen_scalar_array_t;
   using eigen_scalar_array2_t = ocs2::eigen_scalar_array2_t;

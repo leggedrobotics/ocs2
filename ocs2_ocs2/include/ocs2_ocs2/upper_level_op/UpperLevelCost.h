@@ -151,7 +151,7 @@ class UpperLevelCost final : public NLP_Cost {
   }
 
   bool getCost(size_t id, scalar_t& f) override {
-    f = performanceIndex_.totalCost;
+    f = performanceIndex_.merit;
     return status_;
   }
 

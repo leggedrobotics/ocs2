@@ -55,6 +55,8 @@ using dynamic_vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
 using dynamic_vector_array_t = std::vector<dynamic_vector_t, Eigen::aligned_allocator<dynamic_vector_t>>;
 /** Array of dynamic vector's trajectory type. */
 using dynamic_vector_array2_t = std::vector<dynamic_vector_array_t, Eigen::aligned_allocator<dynamic_vector_array_t>>;
+/** Array of arrays of dynamic vector trajectory type. */
+using dynamic_vector_array3_t = std::vector<dynamic_vector_array2_t, Eigen::aligned_allocator<dynamic_vector_array2_t>>;
 
 /** Dynamic-size matrix type. */
 using dynamic_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic>;
@@ -62,6 +64,8 @@ using dynamic_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic>
 using dynamic_matrix_array_t = std::vector<dynamic_matrix_t, Eigen::aligned_allocator<dynamic_matrix_t>>;
 /** Array of dynamic matrix's trajectory type. */
 using dynamic_matrix_array2_t = std::vector<dynamic_matrix_array_t, Eigen::aligned_allocator<dynamic_matrix_array_t>>;
+/** Array of arrays of dynamic matrix trajectory type. */
+using dynamic_matrix_array3_t = std::vector<dynamic_matrix_array2_t, Eigen::aligned_allocator<dynamic_matrix_array2_t>>;
 
 /** Eigen scalar type. */
 using eigen_scalar_t = Eigen::Matrix<scalar_t, 1, 1>;

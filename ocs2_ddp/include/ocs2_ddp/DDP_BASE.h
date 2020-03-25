@@ -240,46 +240,27 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Calculates cost of a rollout.
    *
-   * @param [in] threadId: Working thread.
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the
-   * time trajectory stamp of a rollout.
+   * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
    * @param [in] postEventIndicesStock: Array of the post-event indices.
-   * @param [in] stateTrajectoriesStock: Array of trajectories containing the
-   * state trajectory of a rollout.
-   * @param [in] inputTrajectoriesStock: Array of trajectories containing the
-   * control input trajectory of a rollout.
-   * @param [out] totalCost: The total cost of the rollout.
+   * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
+   * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
    * @param [in] threadId: Working thread (default is 0).
+   * @return totalCost: The total cost of the rollout.
    */
-  void calculateRolloutCost(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
-                            const state_vector_array2_t& stateTrajectoriesStock, const input_vector_array2_t& inputTrajectoriesStock,
-                            scalar_t& totalCost, size_t threadId = 0);
+  scalar_t calculateRolloutCost(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
+                                const state_vector_array2_t& stateTrajectoriesStock, const input_vector_array2_t& inputTrajectoriesStock,
+                                size_t threadId = 0);
 
   /**
-   * Calculates the cost function plus penalty for state-only constraints of a
-   * rollout.
+   * Calculates the merit function as a function of cost, inequality constraints penalty, and ISE of state equality constraints.
    *
-   * @param [in] threadId: Working thread.
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the
-   * time trajectory stamp of a rollout.
-   * @param [in] postEventIndicesStock: Array of the post-event indices.
-   * @param [in] stateTrajectoriesStock: Array of trajectories containing the
-   * state trajectory of a rollout.
-   * @param [in] inputTrajectoriesStock: Array of trajectories containing the
-   * control input trajectory of a rollout.
-   * @param [in] constraint2ISE: Type-2 constraint's ISE (Integral Squared
-   * Error).
-   * @param [in] nc2FinalStock: Array containing the number of the active final
-   * state-only constraints.
-   * @param [in] HvFinalStock: Array containing the value of the final
-   * state-only constraints.
-   * @param [out] totalCost: The total cost plus state-only constraints penalty.
+   * @param [in] nc2FinalStock: Array containing the number of the active final state-only constraints.
+   * @param [in] HvFinalStock: Array containing the value of the final state-only constraints.
+   * @param [in] performanceIndex: The performance index of the rollout.
    * @param [in] threadId: Working thread (default is 0).
    */
-  void calculateRolloutCost(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
-                            const state_vector_array2_t& stateTrajectoriesStock, const input_vector_array2_t& inputTrajectoriesStock,
-                            scalar_t constraint2ISE, scalar_t inequalityConstraintPenalty, const size_array2_t& nc2FinalStock,
-                            const constraint2_vector_array2_t& HvFinalStock, scalar_t& totalCost, size_t threadId = 0);
+  void calculateRolloutMerit(const size_array2_t& nc2FinalStock, const constraint2_vector_array2_t& HvFinalStock,
+                             PerformanceIndex& performanceIndex, size_t threadId = 0) const;
 
   /**
    * Approximates the nonlinear problem as a linear-quadratic problem around the
@@ -333,11 +314,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * is directly added through a user defined stepSize (defined in
    * settings_.constraintStepSize_). But the cost minimization term is optimized
    * through a line-search strategy defined in ILQR settings.
-   *
-   * @param [in] computeISEs: Whether lineSearch needs to calculate ISEs indices
-   * for type_1 and type-2 constraints.
    */
-  virtual void lineSearch(bool computeISEs);
+  virtual void lineSearch();
 
   /**
    * Solves Riccati equations for all the partitions.
@@ -476,11 +454,11 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * of events trigger.
    * @param [in] stateTrajectory: The state trajectory.
    * @param [in] inputTrajectory: The control input trajectory.
-   * @param [out] totalCost: The total cost.
+   * @return totalCost: The total cost.
    */
-  virtual void calculateCostWorker(size_t workerIndex, size_t partitionIndex, const scalar_array_t& timeTrajectory,
-                                   const size_array_t& eventsPastTheEndIndeces, const state_vector_array_t& stateTrajectory,
-                                   const input_vector_array_t& inputTrajectory, scalar_t& totalCost);
+  scalar_t calculateCostWorker(size_t workerIndex, size_t partitionIndex, const scalar_array_t& timeTrajectory,
+                               const size_array_t& eventsPastTheEndIndeces, const state_vector_array_t& stateTrajectory,
+                               const input_vector_array_t& inputTrajectory);
 
   /**
    * Calculates an LQ approximate of the unconstrained optimal control problem
@@ -513,10 +491,8 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   /**
    * Performs one rollout while only the input correction for the type-1 constraint is considered.
-   *
-   * @param [in] computeISEs: Whether needs to calculate ISEs indices for type_1 and type-2 constraints.
    */
-  virtual void baselineRollout(bool computeISEs);
+  virtual void baselineRollout();
 
   /**
    * Defines line search task on a thread with various learning rates and choose the largest acceptable step-size.
@@ -528,25 +504,19 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @param workerIndex
    * @param learningRate
-   * @param lsTotalCost
-   * @param lsConstraint1ISE
+   * @param lsPerformanceIndex
    * @param lsConstraint1MaxNorm
-   * @param lsConstraint2ISE
    * @param lsConstraint2MaxNorm
-   * @param lsInequalityConstraintPenalty
-   * @param lsInequalityConstraintISE
    * @param lsControllersStock
    * @param lsTimeTrajectoriesStock
    * @param lsPostEventIndicesStock
    * @param lsStateTrajectoriesStock
    * @param lsInputTrajectoriesStock
    */
-  void lineSearchWorker(size_t workerIndex, scalar_t learningRate, scalar_t& lsTotalCost, scalar_t& lsConstraint1ISE,
-                        scalar_t& lsConstraint1MaxNorm, scalar_t& lsConstraint2ISE, scalar_t& lsConstraint2MaxNorm,
-                        scalar_t& lsInequalityConstraintPenalty, scalar_t& lsInequalityConstraintISE,
-                        linear_controller_array_t& lsControllersStock, scalar_array2_t& lsTimeTrajectoriesStock,
-                        size_array2_t& lsPostEventIndicesStock, state_vector_array2_t& lsStateTrajectoriesStock,
-                        input_vector_array2_t& lsInputTrajectoriesStock);
+  void lineSearchWorker(size_t workerIndex, scalar_t learningRate, PerformanceIndex& lsPerformanceIndex, scalar_t& lsConstraint1MaxNorm,
+                        scalar_t& lsConstraint2MaxNorm, linear_controller_array_t& lsControllersStock,
+                        scalar_array2_t& lsTimeTrajectoriesStock, size_array2_t& lsPostEventIndicesStock,
+                        state_vector_array2_t& lsStateTrajectoriesStock, input_vector_array2_t& lsInputTrajectoriesStock);
 
   /**
    * Solves Riccati equations for the partitions assigned to the given thread.
@@ -721,8 +691,7 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   std::mutex lineSearchResultMutex_;
   std::atomic_size_t alphaExpNext_;
   std::vector<bool> alphaProcessed_;
-  bool lsComputeISEs_;                                // whether lineSearch routine needs to calculate ISEs
-  scalar_t baselineTotalCost_;                        // the cost of the rollout for zero learning rate
+  scalar_t baselineMerit_;                            // the merit of the rollout for zero learning rate
   linear_controller_array_t initLScontrollersStock_;  // needed for lineSearch
 
   std::vector<EigenLinearInterpolation<state_vector_t>> nominalStateFunc_;

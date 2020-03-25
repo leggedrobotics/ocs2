@@ -41,7 +41,6 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   slqSettings.ddpSettings_.displayShortSummary_ = false;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
   slqSettings.ddpSettings_.nThreads_ = 1;
-  slqSettings.ddpSettings_.noStateConstraints_ = false;
   slqSettings.ddpSettings_.stateConstraintPenaltyCoeff_ = 1.0;
   slqSettings.ddpSettings_.inequalityConstraintMu_ = 0.1;
   slqSettings.ddpSettings_.inequalityConstraintDelta_ = 1e-6;
@@ -140,7 +139,7 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   }
   // Test 3: Check of cost function
   auto performanceIndecesST = slqST.getPerformanceIndeces();
-  EXPECT_LT(std::fabs(performanceIndecesST.totalCost - 18.938001), 1e-6);
+  EXPECT_LT(std::fabs(performanceIndecesST.merit - 18.938001), 1e-6);
 }
 
 int main(int argc, char** argv) {

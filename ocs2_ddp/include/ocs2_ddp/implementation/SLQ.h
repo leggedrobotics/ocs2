@@ -755,12 +755,6 @@ void SLQ<STATE_DIM, INPUT_DIM>::errorRiccatiEquationWorker(size_t workerIndex, s
   const int ssTimeSize = SsNormalizedTime.size();
   const int numEvents = SsNormalizedEventsPastTheEndIndices.size();
 
-  // Skip calculation of the error correction term (Sve) if the constrained simulation is used for forward simulation
-  if (BASE::ddpSettings_.simulationIsConstrained_) {
-    SveTrajectory.resize(ssTimeSize, state_vector_t::Zero());
-    return;
-  }
-
   /*
    * Calculating the coefficients of the error equation
    */

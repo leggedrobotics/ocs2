@@ -60,7 +60,6 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
   slqSettings.ddpSettings_.minRelCost_ = 1e-4;
   slqSettings.ddpSettings_.nThreads_ = 1;
-  slqSettings.ddpSettings_.noStateConstraints_ = true;
   slqSettings.ddpSettings_.checkNumericalStability_ = true;
   slqSettings.ddpSettings_.absTolODE_ = 1e-10;
   slqSettings.ddpSettings_.relTolODE_ = 1e-7;

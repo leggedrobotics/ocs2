@@ -68,7 +68,8 @@ TEST(exp1_ilqr_test, exp1_ilqr_test) {
   // event times
   std::vector<double> eventTimes{0.2262, 1.0176};
   std::vector<size_t> subsystemsSequence{0, 1, 2};
-  std::shared_ptr<EXP1_LogicRules> logicRules(new EXP1_LogicRules(eventTimes, subsystemsSequence));
+  std::shared_ptr<ModeScheduleManager<STATE_DIM, INPUT_DIM>> modeScheduleManagerPtr(
+      new ModeScheduleManager<STATE_DIM, INPUT_DIM>({eventTimes, subsystemsSequence}));
 
   double startTime = 0.0;
   double finalTime = 3.0;
@@ -86,17 +87,17 @@ TEST(exp1_ilqr_test, exp1_ilqr_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // system rollout
-  EXP1_System systemDynamics(logicRules);
+  EXP1_System systemDynamics(modeScheduleManagerPtr);
   TimeTriggeredRollout<STATE_DIM, INPUT_DIM> timeTriggeredRollout(systemDynamics, rolloutSettings);
 
   // system derivatives
-  EXP1_SystemDerivative systemDerivative(logicRules);
+  EXP1_SystemDerivative systemDerivative(modeScheduleManagerPtr);
 
   // system constraints
   EXP1_SystemConstraint systemConstraint;
 
   // system cost functions
-  EXP1_CostFunction systemCostFunction(logicRules);
+  EXP1_CostFunction systemCostFunction(modeScheduleManagerPtr);
 
   // system operatingTrajectories
   Eigen::Matrix<double, STATE_DIM, 1> stateOperatingPoint = Eigen::Matrix<double, STATE_DIM, 1>::Zero();
@@ -109,12 +110,14 @@ TEST(exp1_ilqr_test, exp1_ilqr_test) {
   // ILQR - single-threaded version
   ilqrSettings.ddpSettings_.nThreads_ = 1;
   ILQR<STATE_DIM, INPUT_DIM> ilqrST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
-                                    &operatingTrajectories, ilqrSettings, logicRules);
+                                    &operatingTrajectories, ilqrSettings);
+  ilqrST.setModeScheduleManager(modeScheduleManagerPtr);
 
   // ILQR - multi-threaded version
   ilqrSettings.ddpSettings_.nThreads_ = 3;
   ILQR<STATE_DIM, INPUT_DIM> ilqrMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
-                                    &operatingTrajectories, ilqrSettings, logicRules);
+                                    &operatingTrajectories, ilqrSettings);
+  ilqrMT.setModeScheduleManager(modeScheduleManagerPtr);
 
   // run single_threaded core ILQR
   if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_) {

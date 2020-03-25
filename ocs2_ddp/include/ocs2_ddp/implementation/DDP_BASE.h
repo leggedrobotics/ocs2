@@ -38,10 +38,8 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                                          const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                          const operating_trajectories_base_t* operatingTrajectoriesPtr, const DDP_Settings& ddpSettings,
-                                         const cost_function_base_t* heuristicsFunctionPtr, const char* algorithmName,
-                                         std::shared_ptr<HybridLogicRules> logicRulesPtr)
-    : BASE(std::move(logicRulesPtr)),
-      ddpSettings_(ddpSettings),
+                                         const cost_function_base_t* heuristicsFunctionPtr, const char* algorithmName)
+    : ddpSettings_(ddpSettings),
       threadPool_(ddpSettings.nThreads_, ddpSettings.threadPriority_),
       algorithmName_(algorithmName),
       rewindCounter_(0),
@@ -167,7 +165,7 @@ typename DDP_BASE<STATE_DIM, INPUT_DIM>::scalar_t DDP_BASE<STATE_DIM, INPUT_DIM>
     linear_controller_array_t& controllersStock, scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
     state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
     ModelDataBase::array2_t& modelDataTrajectoriesStock, size_t threadId /*= 0*/) {
-  const scalar_array_t& eventTimes = BASE::getLogicRulesMachinePtr()->getLogicRulesPtr()->eventTimes();
+  const scalar_array_t& eventTimes = this->getModeSchedule().eventTimes;
 
   if (controllersStock.size() != numPartitions_) {
     throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
@@ -1440,9 +1438,8 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::getPrimalSolution(scalar_t finalTime, prima
         new feedforward_controller_t(primalSolutionPtr->timeTrajectory_, primalSolutionPtr->inputTrajectory_));
   }
 
-  // fill logic
-  primalSolutionPtr->eventTimes_ = this->getLogicRulesPtr()->eventTimes();
-  primalSolutionPtr->subsystemsSequence_ = this->getLogicRulesPtr()->subsystemsSequence();
+  // fill mode schedule
+  primalSolutionPtr->modeSchedule_ = this->getModeSchedule();
 }
 
 /******************************************************************************************************/
@@ -1814,14 +1811,11 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vect
     }
   }
 
-  // update the logic rules in the beginning of the run routine
-  bool logicRulesModified = BASE::getLogicRulesMachinePtr()->updateLogicRules(partitioningTimes_);
-
   // display
   if (ddpSettings_.displayInfo_) {
     std::cerr << std::endl << "Rewind Counter: " << rewindCounter_ << std::endl;
     std::cerr << algorithmName_ + " solver starts from initial time " << initTime << " to final time " << finalTime << ".";
-    BASE::getLogicRulesMachinePtr()->display();
+    std::cerr << this->getModeSchedule();
     std::cerr << std::endl;
   }
 

@@ -1,0 +1,16 @@
+rollout
+{
+
+  checkNumericalStability    0
+  minTimeStep                0.005
+
+  raisim_rollout
+  {
+    setSimulatorStateOnRolloutRunAlways 0
+    setSimulatorStateOnRolloutRunOnce 1
+    controlDecimation 1
+    generateTerrain 1
+    terrainRoughness 1.5
+  }
+
+}

@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include <boost/property_tree/info_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -172,7 +173,7 @@ inline void loadStdVector(const std::string& filename, const std::string& topicN
   // display
   if (verbose) {
     if (vectorSize == 0) {
-      std::cerr << topicName << ": { }";
+      std::cerr << topicName << ": { }" << std::endl;
     } else {
       std::cerr << topicName << ": {";
       for (size_t i = 0; i < vectorSize; i++) {

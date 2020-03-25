@@ -27,58 +27,53 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef MODESEQUENCE_OCS2_H_
-#define MODESEQUENCE_OCS2_H_
+#pragma once
 
-#include <iostream>
+#include <ostream>
 #include <vector>
+
+#include <ocs2_core/Dimensions.h>
 
 namespace ocs2 {
 
 /**
- * Mode sequence template.
- *
+ * Defines a sequence of N modes, separated by N-1 event times
  */
-template <typename scalar_t = double>
-struct ModeSequenceTemplate {
-  ModeSequenceTemplate() : templateSwitchingTimes_(0), templateSubsystemsSequence_(0) {}
+struct ModeSchedule {
+  using scalar_t = typename Dimensions<0, 0>::scalar_t;
 
   /**
-   * Defined as [t_0=0, t_1, .., t_n, t_(n+1)=T], where T is the overall duration
-   * of the template logic. t_1 to t_n are the event moments.
+   * Default constructor.
    */
-  std::vector<scalar_t> templateSwitchingTimes_;
+  ModeSchedule() : ModeSchedule(std::vector<scalar_t>{}, std::vector<size_t>{0}) {}
 
   /**
-   * Defined as [sys_0, sys_n], are the switching systems IDs. Here sys_i is
-   * active in period [t_i, t_(i+1)]
+   * Constructor for a ModeSchedule. The number of modes must be greater than zero (N > 0)
+   * @param [in] eventTimesInput : event times of size N - 1
+   * @param [in] modeSequenceInput : mode sequence of size N
    */
-  std::vector<size_t> templateSubsystemsSequence_;
+  ModeSchedule(std::vector<scalar_t> eventTimesInput, std::vector<size_t> modeSequenceInput);
 
   /**
-   * Displays template information.
+   *  Returns the mode based on the query time.
+   *  Events are counted as follows:
+   *      ------ | ------ | ------ | ...  ------ | ------
+   *         t[0]     t[1]     t[2]        t[n-1]
+   *  mode: m[0]    m[1]     m[2] ...     m[n-1]    m[n]
+   *
+   *  If time equal to a switch time is requested, the lower count is taken
+   *
+   *  @param [in] time: The inquiry time.
+   *  @return the associated mode for the input time.
    */
-  void display() const {
-    std::cerr << std::endl << "Template switching times:\n\t {";
-    for (auto& s : templateSwitchingTimes_) {
-      std::cerr << s << ", ";
-    }
-    if (!templateSwitchingTimes_.empty()) {
-      std::cerr << "\b\b";
-    }
-    std::cerr << "}" << std::endl;
+  size_t modeAtTime(scalar_t time) const;
 
-    std::cerr << "Template subsystem sequence:\n\t {";
-    for (auto& s : templateSubsystemsSequence_) {
-      std::cerr << s << ", ";
-    }
-    if (!templateSubsystemsSequence_.empty()) {
-      std::cerr << "\b\b";
-    }
-    std::cerr << "}" << std::endl;
-  }
+  std::vector<scalar_t> eventTimes;  // event times of size N - 1
+  std::vector<size_t> modeSequence;  // mode sequence of size N
 };
 
-}  // namespace ocs2
+void swap(ModeSchedule& lh, ModeSchedule& rh);
 
-#endif /* MODESEQUENCE_OCS2_H_ */
+std::ostream& operator<<(std::ostream& stream, const ModeSchedule& modeSchedule);
+
+}  // namespace ocs2

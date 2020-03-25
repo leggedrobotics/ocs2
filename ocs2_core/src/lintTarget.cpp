@@ -53,9 +53,7 @@
 #include <ocs2_core/integration/steppers.h>
 
 // Logic
-#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
-#include <ocs2_core/logic/rules/HybridLogicRules.h>
-#include <ocs2_core/logic/rules/NullLogicRules.h>
+#include <ocs2_core/logic/ModeSchedule.h>
 
 // Loopshaping
 #include <ocs2_core/loopshaping/Loopshaping.h>

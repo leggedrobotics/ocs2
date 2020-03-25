@@ -29,8 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_comm_interfaces/ocs2_interfaces/MRT_BASE.h>
-
 #include <chrono>
 #include <condition_variable>
 #include <csignal>
@@ -43,13 +41,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/ros.h>
 #include <ros/transport_hints.h>
 
-#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
-#include <ocs2_core/logic/rules/NullLogicRules.h>
-
 // MPC messages
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h>
 #include <ocs2_msgs/mpc_flattened_controller.h>
 #include <ocs2_msgs/reset.h>
+
+#include <ocs2_comm_interfaces/ocs2_interfaces/MRT_BASE.h>
 
 #define PUBLISH_THREAD
 
@@ -81,7 +78,6 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
   using input_state_matrix_t = typename dim_t::input_state_matrix_t;
   using input_state_matrix_array_t = typename dim_t::input_state_matrix_array_t;
 
-  using ros_msg_conversions_t = RosMsgConversions<STATE_DIM, INPUT_DIM>;
   using rollout_base_t = RolloutBase<STATE_DIM, INPUT_DIM>;
   using time_triggered_rollout_t = TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
   using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
@@ -92,10 +88,9 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * Constructor
    *
    * @param [in] robotName: The robot's name.
-   * @param [in] logicRules: A logic rule class of derived from the hybrid logicRules base.
+   * @param [in] mrtTransportHints: ROS transmission protocol.
    */
-  explicit MRT_ROS_Interface(std::string robotName = "robot", std::shared_ptr<HybridLogicRules> logicRules = nullptr,
-                             ros::TransportHints mrtTransportHints = ::ros::TransportHints().tcpNoDelay());
+  explicit MRT_ROS_Interface(std::string robotName = "robot", ros::TransportHints mrtTransportHints = ::ros::TransportHints().tcpNoDelay());
 
   /**
    * Destructor

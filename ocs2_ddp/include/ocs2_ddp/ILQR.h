@@ -118,8 +118,6 @@ class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
   using typename BASE::derivatives_base_t;
   using typename BASE::event_handler_t;
   using typename BASE::linear_quadratic_approximator_t;
-  using typename BASE::logic_rules_machine_ptr_t;
-  using typename BASE::logic_rules_machine_t;
   using typename BASE::operating_trajectorie_rollout_t;
   using typename BASE::operating_trajectories_base_t;
   using typename BASE::rollout_base_t;
@@ -144,14 +142,12 @@ class ILQR : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
    * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of ILQR.
    * @param [in] settings: Structure containing the settings for the ILQR algorithm.
-   * @param [in] logicRulesPtr: The logic rules used for implementing mixed-logic dynamical systems.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
   ILQR(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
        const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
-       const ILQR_Settings& settings = ILQR_Settings(), std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
-       const cost_function_base_t* heuristicsFunctionPtr = nullptr);
+       const ILQR_Settings& settings = ILQR_Settings(), const cost_function_base_t* heuristicsFunctionPtr = nullptr);
 
   /**
    * Default destructor.

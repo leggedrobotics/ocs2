@@ -39,9 +39,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::MRT_ROS_Interface(
-    std::string robotName /*= "robot"*/, std::shared_ptr<HybridLogicRules> logicRules /*= nullptr*/,
-    ros::TransportHints mrtTransportHints /* = ::ros::TransportHints().tcpNoDelay()*/)
-    : Base(std::move(logicRules)), robotName_(std::move(robotName)), mrtTransportHints_(mrtTransportHints) {
+    std::string robotName /*= "robot"*/, ros::TransportHints mrtTransportHints /* = ::ros::TransportHints().tcpNoDelay()*/)
+    : Base(), robotName_(std::move(robotName)), mrtTransportHints_(mrtTransportHints) {
 // Start thread for publishing
 #ifdef PUBLISH_THREAD
   // Close old thread if it is already running
@@ -70,7 +69,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const CostDesiredTraj
   ocs2_msgs::reset resetSrv;
   resetSrv.request.reset = true;
 
-  RosMsgConversions<STATE_DIM, INPUT_DIM>::createTargetTrajectoriesMsg(initCostDesiredTrajectories, resetSrv.request.targetTrajectories);
+  ros_msg_conversions::createTargetTrajectoriesMsg(initCostDesiredTrajectories, resetSrv.request.targetTrajectories);
 
   while (!mpcResetServiceClient_.waitForExistence(ros::Duration(5.0)) && ::ros::ok() && ::ros::master::check()) {
     ROS_ERROR_STREAM("Failed to call service to reset MPC, retrying...");
@@ -90,7 +89,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::setCurrentObservation(const system
 #endif
 
   // create the message
-  ros_msg_conversions_t::createObservationMsg(currentObservation, mpcObservationMsg_);
+  ros_msg_conversions::createObservationMsg(currentObservation, mpcObservationMsg_);
 
   // publish the current observation
 #ifdef PUBLISH_THREAD
@@ -139,8 +138,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcPolicyCallback(const ocs2_msgs:
   auto& stateBuffer = this->primalSolutionBuffer_->stateTrajectory_;
   auto& inputBuffer = this->primalSolutionBuffer_->inputTrajectory_;
   auto& controlBuffer = this->primalSolutionBuffer_->controllerPtr_;
-  auto& eventBuffer = this->primalSolutionBuffer_->eventTimes_;
-  auto& subsystemBuffer = this->primalSolutionBuffer_->subsystemsSequence_;
+  auto& modeScheduleBuffer = this->primalSolutionBuffer_->modeSchedule_;
   auto& initObservationBuffer = this->commandBuffer_->mpcInitObservation_;
   auto& costDesiredBuffer = this->commandBuffer_->mpcCostDesiredTrajectories_;
 
@@ -150,8 +148,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcPolicyCallback(const ocs2_msgs:
     stateBuffer.clear();
     inputBuffer.clear();
     controlBuffer.reset(nullptr);
-    eventBuffer.clear();
-    subsystemBuffer.clear();
+    modeScheduleBuffer = ModeSchedule({}, {0});
     initObservationBuffer = system_observation_t();
     costDesiredBuffer.clear();
 
@@ -161,9 +158,9 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcPolicyCallback(const ocs2_msgs:
     return;
   }
 
-  ros_msg_conversions_t::readObservationMsg(msg->initObservation, initObservationBuffer);
-  ros_msg_conversions_t::readTargetTrajectoriesMsg(msg->planTargetTrajectories, costDesiredBuffer);
-  ros_msg_conversions_t::readModeSequenceMsg(msg->modeSequence, eventBuffer, subsystemBuffer);
+  ros_msg_conversions::readObservationMsg(msg->initObservation, initObservationBuffer);
+  ros_msg_conversions::readTargetTrajectoriesMsg(msg->planTargetTrajectories, costDesiredBuffer);
+  modeScheduleBuffer = ros_msg_conversions::readModeScheduleMsg(msg->modeSchedule);
 
   this->policyUpdatedBuffer_ = msg->controllerIsUpdated;
 

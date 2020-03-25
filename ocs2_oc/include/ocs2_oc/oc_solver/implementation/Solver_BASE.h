@@ -35,17 +35,6 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-Solver_BASE<STATE_DIM, INPUT_DIM>::Solver_BASE(std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr */) {
-  if (!logicRulesPtr) {
-    logicRulesPtr.reset(new NullLogicRules());
-  }
-  logicRulesMachinePtr_.reset(new logic_rules_machine_t(std::move(logicRulesPtr)));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
 void Solver_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
                                             const scalar_array_t& partitioningTimes) {
   preRun(initTime, initState, finalTime);
@@ -68,7 +57,7 @@ void Solver_BASE<STATE_DIM, INPUT_DIM>::run(scalar_t initTime, const state_vecto
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-typename Solver_BASE<STATE_DIM, INPUT_DIM>::primal_solution_t Solver_BASE<STATE_DIM, INPUT_DIM>::primalSolution(scalar_t finalTime) const {
+auto Solver_BASE<STATE_DIM, INPUT_DIM>::primalSolution(scalar_t finalTime) const -> primal_solution_t {
   primal_solution_t primalSolution;
   getPrimalSolution(finalTime, &primalSolution);
   return primalSolution;
@@ -88,8 +77,12 @@ void Solver_BASE<STATE_DIM, INPUT_DIM>::printString(const std::string& text) {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void Solver_BASE<STATE_DIM, INPUT_DIM>::preRun(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime) {
+  if (modeScheduleManager_) {
+    modeScheduleManager_->preSolverRun(initTime, finalTime, initState, costDesiredTrajectories_);
+    modeSchedule_ = modeScheduleManager_->getModeSchedule();
+  }
   for (auto& module : synchronizedModules_) {
-    module->preSolverRun(initTime, finalTime, initState, costDesiredTrajectories_, getLogicRulesPtr());
+    module->preSolverRun(initTime, finalTime, initState, costDesiredTrajectories_);
   }
 }
 
@@ -98,10 +91,14 @@ void Solver_BASE<STATE_DIM, INPUT_DIM>::preRun(scalar_t initTime, const state_ve
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void Solver_BASE<STATE_DIM, INPUT_DIM>::postRun() {
-  for (auto& module : synchronizedModules_) {
-    const auto& finalTime = getFinalTime();
-    const auto& solution = primalSolution(finalTime);
-    module->postSolverRun(solution);
+  if (modeScheduleManager_ || !synchronizedModules_.empty()) {
+    const auto solution = primalSolution(getFinalTime());
+    if (modeScheduleManager_) {
+      modeScheduleManager_->postSolverRun(solution);
+    }
+    for (auto& module : synchronizedModules_) {
+      module->postSolverRun(solution);
+    }
   }
 }
 

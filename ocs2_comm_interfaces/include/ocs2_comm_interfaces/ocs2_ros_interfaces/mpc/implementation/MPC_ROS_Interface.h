@@ -97,7 +97,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 bool MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_msgs::reset::Response& res) {
   if (static_cast<bool>(req.reset)) {
     CostDesiredTrajectories initCostDesiredTrajectories;
-    RosMsgConversions<STATE_DIM, INPUT_DIM>::readTargetTrajectoriesMsg(req.targetTrajectories, initCostDesiredTrajectories);
+    ros_msg_conversions::readTargetTrajectoriesMsg(req.targetTrajectories, initCostDesiredTrajectories);
     reset(initCostDesiredTrajectories);
 
     res.done = true;
@@ -127,10 +127,10 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::cre
 
   mpcPolicyMsg.controllerIsUpdated = controllerIsUpdated;
 
-  ros_msg_conversions_t::createObservationMsg(commandData.mpcInitObservation_, mpcPolicyMsg.initObservation);
-  ros_msg_conversions_t::createTargetTrajectoriesMsg(commandData.mpcCostDesiredTrajectories_, mpcPolicyMsg.planTargetTrajectories);
+  ros_msg_conversions::createObservationMsg(commandData.mpcInitObservation_, mpcPolicyMsg.initObservation);
+  ros_msg_conversions::createTargetTrajectoriesMsg(commandData.mpcCostDesiredTrajectories_, mpcPolicyMsg.planTargetTrajectories);
 
-  ros_msg_conversions_t::createModeSequenceMsg(primalSolution.eventTimes_, primalSolution.subsystemsSequence_, mpcPolicyMsg.modeSequence);
+  ros_msg_conversions::createModeScheduleMsg(primalSolution.modeSchedule_, mpcPolicyMsg.modeSchedule);
 
   ControllerType controllerType = primalSolution.controllerPtr_->getType();
 
@@ -265,7 +265,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_
 
   // current time, state, input, and subsystem
   system_observation_t currentObservation;
-  ros_msg_conversions_t::readObservationMsg(*msg, currentObservation);
+  ros_msg_conversions::readObservationMsg(*msg, currentObservation);
 
   // measure the delay in running MPC
   mpcTimer_.startTimer();
@@ -347,18 +347,8 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcTargetTrajectoriesCallback(cons
   }
 
   std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
-  RosMsgConversions<STATE_DIM, INPUT_DIM>::readTargetTrajectoriesMsg(*msg, costDesiredTrajectoriesBuffer_);
+  ros_msg_conversions::readTargetTrajectoriesMsg(*msg, costDesiredTrajectoriesBuffer_);
   costDesiredTrajectoriesBufferUpdated_ = true;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcModeSequenceCallback(const ocs2_msgs::mode_sequence::ConstPtr& msg) {
-  mode_sequence_template_t modeSequenceTemplate;
-  RosMsgConversions<STATE_DIM, INPUT_DIM>::readModeSequenceTemplateMsg(*msg, modeSequenceTemplate);
-  mpc_.setNewLogicRulesTemplate(modeSequenceTemplate);
 }
 
 /******************************************************************************************************/
@@ -422,11 +412,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::launchNodes(ros::NodeHandle& nodeH
   mpcTargetTrajectoriesSubscriber_ = nodeHandle.subscribe(robotName_ + "_mpc_target", 1, &MPC_ROS_Interface::mpcTargetTrajectoriesCallback,
                                                           this, ::ros::TransportHints().tcpNoDelay());
 
-  // Logic rules template subscriber
-  mpcModeSequenceSubscriber_ = nodeHandle.subscribe(robotName_ + "_mpc_mode_sequence", 1, &MPC_ROS_Interface::mpcModeSequenceCallback, this,
-                                                    ::ros::TransportHints().udp());
-
-  // SLQ-MPC publisher
+  // MPC publisher
   mpcPolicyPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_flattened_controller>(robotName_ + "_mpc_policy", 1, true);
 
   // MPC reset service server

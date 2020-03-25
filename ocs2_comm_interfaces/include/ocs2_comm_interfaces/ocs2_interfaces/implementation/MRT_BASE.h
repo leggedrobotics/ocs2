@@ -37,17 +37,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MRT_BASE<STATE_DIM, INPUT_DIM>::MRT_BASE(std::shared_ptr<HybridLogicRules> logicRules)
+MRT_BASE<STATE_DIM, INPUT_DIM>::MRT_BASE()
     : currentPrimalSolution_(new primal_solution_t),
       primalSolutionBuffer_(new primal_solution_t),
       currentCommand_(new command_data_t),
       commandBuffer_(new command_data_t) {
   reset();
-
-  if (!logicRules) {
-    logicRules.reset(new NullLogicRules());
-  }
-  logicMachinePtr_.reset(new HybridLogicRulesMachine(std::move(logicRules)));
 }
 
 /******************************************************************************************************/
@@ -80,7 +75,7 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::initRollout(const rollout_base_t* rolloutPt
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_BASE<STATE_DIM, INPUT_DIM>::evaluatePolicy(scalar_t currentTime, const state_vector_t& currentState, state_vector_t& mpcState,
-                                                    input_vector_t& mpcInput, size_t& subsystem) {
+                                                    input_vector_t& mpcInput, size_t& mode) {
   if (currentTime > currentPrimalSolution_->timeTrajectory_.back()) {
     std::cerr << "The requested currentTime is greater than the received plan: " + std::to_string(currentTime) + ">" +
                      std::to_string(currentPrimalSolution_->timeTrajectory_.back())
@@ -91,8 +86,7 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::evaluatePolicy(scalar_t currentTime, const 
   LinearInterpolation::interpolate(currentTime, mpcState, &currentPrimalSolution_->timeTrajectory_,
                                    &currentPrimalSolution_->stateTrajectory_);
 
-  size_t index = findActiveSubsystemFnc_(currentTime);
-  subsystem = logicMachinePtr_->getLogicRulesPtr()->subsystemsSequence().at(index);
+  mode = currentPrimalSolution_->modeSchedule_.modeAtTime(currentTime);
 }
 
 /******************************************************************************************************/
@@ -100,7 +94,7 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::evaluatePolicy(scalar_t currentTime, const 
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const state_vector_t& currentState, const scalar_t& timeStep,
-                                                   state_vector_t& mpcState, input_vector_t& mpcInput, size_t& subsystem) {
+                                                   state_vector_t& mpcState, input_vector_t& mpcInput, size_t& mode) {
   if (currentTime > currentPrimalSolution_->timeTrajectory_.back()) {
     std::cerr << "The requested currentTime is greater than the received plan: " + std::to_string(currentTime) + ">" +
                      std::to_string(currentPrimalSolution_->timeTrajectory_.back())
@@ -121,7 +115,7 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const s
   // perform a rollout
   if (policyUpdated_) {
     rolloutPtr_->run(currentTime, currentState, finalTime, currentPrimalSolution_->controllerPtr_.get(),
-                     logicMachinePtr_->getLogicRulesPtr()->eventTimes(), timeTrajectory, postEventIndicesStock, stateTrajectory,
+                     currentPrimalSolution_->modeSchedule_.eventTimes, timeTrajectory, postEventIndicesStock, stateTrajectory,
                      inputTrajectory);
   } else {
     throw std::runtime_error("MRT_ROS_interface: policy should be updated before rollout.");
@@ -130,8 +124,7 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const s
   mpcState = stateTrajectory.back();
   mpcInput = inputTrajectory.back();
 
-  size_t index = findActiveSubsystemFnc_(finalTime);
-  subsystem = logicMachinePtr_->getLogicRulesPtr()->subsystemsSequence().at(index);
+  mode = currentPrimalSolution_->modeSchedule_.modeAtTime(finalTime);
 }
 
 /******************************************************************************************************/
@@ -152,28 +145,9 @@ bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicy() {
   currentPrimalSolution_.swap(primalSolutionBuffer_);
   partitioningTimes_.swap(partitioningTimesBuffer_);
 
-  // update logic rules
-  logicMachinePtr_->getLogicRulesPtr()->setModeSequence(currentPrimalSolution_->subsystemsSequence_, currentPrimalSolution_->eventTimes_);
-  logicMachinePtr_->logicRulesUpdated();
-  logicMachinePtr_->updateLogicRules(partitioningTimes_);
-
-  // function for finding active subsystem
-  const size_t partitionIndex = 0;  // we assume only one partition
-  findActiveSubsystemFnc_ = std::move(logicMachinePtr_->getHandleToFindActiveEventCounter(partitionIndex));
-
   modifyPolicy(*currentCommand_, *currentPrimalSolution_);
 
   return true;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_BASE<STATE_DIM, INPUT_DIM>::setLogicRules(std::shared_ptr<HybridLogicRules> logicRules) {
-  std::lock_guard<std::mutex> lock(policyBufferMutex_);
-  logicMachinePtr_->setLogicRules(std::move(logicRules));
-  logicMachinePtr_->logicRulesUpdated();
 }
 
 /******************************************************************************************************/

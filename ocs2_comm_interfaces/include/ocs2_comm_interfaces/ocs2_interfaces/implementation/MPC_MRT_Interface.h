@@ -9,11 +9,13 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::MPC_MRT_Interface(mpc_t& mpc, std::shared_ptr<HybridLogicRules> logicRules)
-    : Base(std::move(logicRules)), mpc_(mpc), costDesiredTrajectoriesBufferUpdated_(false) {
+MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::MPC_MRT_Interface(mpc_t& mpc) : Base(), mpc_(mpc), costDesiredTrajectoriesBufferUpdated_(false) {
   mpcTimer_.reset();
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) {
   mpc_.reset();
@@ -38,14 +40,6 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::setCurrentObservation(const system_observation_t& currentObservation) {
   std::lock_guard<std::mutex> lock(observationMutex_);
   currentObservation_ = currentObservation;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::setModeSequence(const mode_sequence_template_t& modeSequenceTemplate) {
-  mpc_.setNewLogicRulesTemplate(modeSequenceTemplate);
 }
 
 /******************************************************************************************************/
@@ -122,7 +116,7 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observ
   this->commandBuffer_->mpcInitObservation_ = std::move(mpcInitObservation);
   this->commandBuffer_->mpcCostDesiredTrajectories_ = mpc_.getSolverPtr()->getCostDesiredTrajectories();
 
-  // logic
+  // partition
   this->partitioningTimesUpdate(startTime, this->partitioningTimesBuffer_);
 
   // allow user to modify the buffer

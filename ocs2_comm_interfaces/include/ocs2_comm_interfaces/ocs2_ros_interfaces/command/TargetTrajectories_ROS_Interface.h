@@ -73,16 +73,6 @@ class TargetTrajectories_ROS_Interface {
   virtual ~TargetTrajectories_ROS_Interface();
 
   /**
-   * Resets the class to its instantiate state.
-   */
-  virtual void reset() {}
-
-  /**
-   * ShutdownNodes publisher nodes.
-   */
-  void shutdownNodes();
-
-  /**
    * This is the main routine which launches the publisher node for MPC's
    * desired trajectories.
    */
@@ -102,9 +92,6 @@ class TargetTrajectories_ROS_Interface {
 
   // Publisher
   ::ros::Publisher mpcTargetTrajectoriesPublisher_;
-
-  // ROS messages
-  ocs2_msgs::mpc_target_trajectories mpcTargetTrajectoriesMsg_;
 };
 
 }  // namespace ocs2

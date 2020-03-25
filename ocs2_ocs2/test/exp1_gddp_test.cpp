@@ -131,8 +131,7 @@ TEST(exp1_gddp_test, optimum_gradient_test) {
   slqDataCollector.collect(&slqST);
 
   // cost
-  double costFunction, constraint1ISE, constraint2ISE;
-  slqST.getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
+  const auto performanceIndex = slqST.getPerformanceIndeces();
 
   // run GDDP using LQ
   gddp.settings().useLQForDerivatives_ = true;
@@ -151,15 +150,15 @@ TEST(exp1_gddp_test, optimum_gradient_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
-  std::cerr << "### Optimum cost is: " << costFunction << "\n";
+  std::cerr << "### Optimum cost is: " << performanceIndex.totalCost << "\n";
   std::cerr << "### Optimum event times are:            ["
             << Eigen::Map<Eigen::VectorXd>(optimumEventTimes.data(), optimumEventTimes.size()).transpose() << "]\n";
   std::cerr << "### Optimum cost derivative LQ method:  [" << costFunctionDerivative_LQ.transpose() << "]\n";
   std::cerr << "### Optimum cost derivative BVP method: [" << costFunctionDerivative_BVP.transpose() << "]\n";
 
-  ASSERT_LT(costFunctionDerivative_LQ.norm() / fabs(costFunction), 50 * slqSettings.ddpSettings_.minRelCost_ /*0.05*/)
+  ASSERT_LT(costFunctionDerivative_LQ.norm() / fabs(performanceIndex.totalCost), 50 * slqSettings.ddpSettings_.minRelCost_ /*0.05*/)
       << "MESSAGE: GDDP failed in the EXP1's cost derivative LQ test!";
-  ASSERT_LT(costFunctionDerivative_BVP.norm() / fabs(costFunction), 50 * slqSettings.ddpSettings_.minRelCost_ /*0.05*/)
+  ASSERT_LT(costFunctionDerivative_BVP.norm() / fabs(performanceIndex.totalCost), 50 * slqSettings.ddpSettings_.minRelCost_ /*0.05*/)
       << "MESSAGE: GDDP failed in the EXP1's cost derivative BVP test!";
 }
 

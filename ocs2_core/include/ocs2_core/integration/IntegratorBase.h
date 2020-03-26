@@ -61,7 +61,7 @@ class IntegratorBase {
    * @param [in] eventHandler
    */
   explicit IntegratorBase(std::shared_ptr<SystemEventHandler<STATE_DIM>> eventHandlerPtr = nullptr)
-      : eventHandlerPtr_(std::move(eventHandlerPtr)) {
+      : eventHandlerPtr_(std::move(eventHandlerPtr)), killIntegration_(std::make_shared<std::atomic_bool>(false)) {
     if (eventHandlerPtr_ == nullptr) {
       eventHandlerPtr_ = std::make_shared<SystemEventHandler<STATE_DIM>>();
     }
@@ -71,6 +71,8 @@ class IntegratorBase {
    * Default destructor
    */
   virtual ~IntegratorBase() = default;
+
+  void setKillIntegration(std::shared_ptr<std::atomic_bool> killIntegration) { killIntegration_ = std::move(killIntegration); }
 
   /**
    * Equidistant integration based on initial and final time as well as step length.
@@ -87,6 +89,7 @@ class IntegratorBase {
     eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
     observer_func_t callback = [&](const state_vector_t& x, scalar_t t) {
       observer.observe(system, x, t);
+      handleKillIntegration();
       eventHandlerPtr_->handleEvent(system, t, x);
     };
     run_integrate_const(system.systemFunction(), callback, initialState, startTime, finalTime, dt);
@@ -110,6 +113,7 @@ class IntegratorBase {
     eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
     observer_func_t callback = [&](const state_vector_t& x, scalar_t t) {
       observer.observe(system, x, t);
+      handleKillIntegration();
       eventHandlerPtr_->handleEvent(system, t, x);
     };
     run_integrate_adaptive(system.systemFunction(), callback, initialState, startTime, finalTime, dtInitial, AbsTol, RelTol);
@@ -134,6 +138,7 @@ class IntegratorBase {
     eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
     observer_func_t callback = [&](const state_vector_t& x, scalar_t t) {
       observer.observe(system, x, t);
+      handleKillIntegration();
       eventHandlerPtr_->handleEvent(system, t, x);
     };
     run_integrate_times(system.systemFunction(), callback, initialState, beginTimeItr, endTimeItr, dtInitial, AbsTol, RelTol);
@@ -151,7 +156,14 @@ class IntegratorBase {
                                    scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol) = 0;
 
  private:
+  void handleKillIntegration() {
+    if (*killIntegration_) {
+      throw std::runtime_error("Integration terminated due to an external signal triggered by a program.");
+    }
+  }
+
   std::shared_ptr<SystemEventHandler<STATE_DIM>> eventHandlerPtr_;
+  std::shared_ptr<std::atomic_bool> killIntegration_;
 };
 
 }  // namespace ocs2

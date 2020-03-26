@@ -81,6 +81,10 @@ class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
     return new OperatingTrajectoriesRollout<STATE_DIM, INPUT_DIM>(*operatingTrajectoriesPtr_, this->settings());
   }
 
+  void setKillRolloutIntegration(std::shared_ptr<std::atomic_bool> killRolloutIntegration) override {
+    throw std::runtime_error("[OperatingTrajectoriesRollout] can not be killed.");
+  }
+
  protected:
   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
                          scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, state_vector_array_t& stateTrajectory,

@@ -44,13 +44,12 @@ namespace qp_solver {
  * The decision vector is defined as w = [dx[0], du[0], dx[1],  du[1], ..., dx[N]]
  *
  * @param lqApproximation : vector of stage-wise discrete quadratic cost and linear dynamics
- * @param linearizationTrajectory : trajectory the lqApproximation was made around.
+ * @param nominalTrajectory : trajectory the lqApproximation was made around.
  * @param initialState : initial state (in absolute coordinates)
  * @return trajectory of state and inputs (in relative coordinates), .i.e. dx(t), du(t)
  */
 ContinuousTrajectory solveLinearQuadraticApproximation(const std::vector<LinearQuadraticStage>& lqApproximation,
-                                                       const ContinuousTrajectory& linearizationTrajectory,
-                                                       const Eigen::VectorXd& initialState);
+                                                       const ContinuousTrajectory& nominalTrajectory, const Eigen::VectorXd& initialState);
 
 /**
  * Constructs the matrix of stacked dynamic constraints A w + b = 0

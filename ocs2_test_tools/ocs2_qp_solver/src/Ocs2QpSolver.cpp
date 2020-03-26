@@ -40,16 +40,16 @@ namespace ocs2 {
 namespace qp_solver {
 
 ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostWrapper costFunction, SystemWrapper systemDynamics,
-                                                               const ContinuousTrajectory& linearizationTrajectory,
+                                                               const ContinuousTrajectory& nominalTrajectory,
                                                                const Eigen::VectorXd& initialState) {
   // Approximate
-  const auto lqApproximation = getLinearQuadraticApproximation(costFunction, systemDynamics, linearizationTrajectory);
+  const auto lqApproximation = getLinearQuadraticApproximation(costFunction, systemDynamics, nominalTrajectory);
 
   // Solve for update step
-  const auto relativeSolution = solveLinearQuadraticApproximation(lqApproximation, linearizationTrajectory, initialState);
+  const auto relativeSolution = solveLinearQuadraticApproximation(lqApproximation, nominalTrajectory, initialState);
 
   // Take a full step: Add update to linearization
-  return add(linearizationTrajectory, relativeSolution);
+  return add(nominalTrajectory, relativeSolution);
 }
 
 }  // namespace qp_solver

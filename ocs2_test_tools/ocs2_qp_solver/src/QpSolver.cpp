@@ -74,8 +74,7 @@ int getNumConstraints(const std::vector<int>& numStates) {
 }
 
 ContinuousTrajectory solveLinearQuadraticApproximation(const std::vector<LinearQuadraticStage>& lqApproximation,
-                                                       const ContinuousTrajectory& linearizationTrajectory,
-                                                       const Eigen::VectorXd& initialState) {
+                                                       const ContinuousTrajectory& nominalTrajectory, const Eigen::VectorXd& initialState) {
   // Extract sizes
   std::vector<int> numStates;
   std::vector<int> numInputs;
@@ -84,8 +83,8 @@ ContinuousTrajectory solveLinearQuadraticApproximation(const std::vector<LinearQ
   const int numConstraints = getNumConstraints(numStates);
 
   // Construct QP
-  const auto constraints = getConstraintMatrices(lqApproximation, initialState - linearizationTrajectory.stateTrajectory.front(),
-                                                 numConstraints, numDecisionVariables);
+  const auto constraints = getConstraintMatrices(lqApproximation, initialState - nominalTrajectory.stateTrajectory.front(), numConstraints,
+                                                 numDecisionVariables);
   const auto costs = getCostMatrices(lqApproximation, numDecisionVariables);
 
   // Solve
@@ -93,7 +92,7 @@ ContinuousTrajectory solveLinearQuadraticApproximation(const std::vector<LinearQ
 
   // Extract solution
   ContinuousTrajectory deltaSolution;
-  deltaSolution.timeTrajectory = linearizationTrajectory.timeTrajectory;
+  deltaSolution.timeTrajectory = nominalTrajectory.timeTrajectory;
   std::tie(deltaSolution.stateTrajectory, deltaSolution.inputTrajectory) =
       getStateAndInputTrajectory(numStates, numInputs, primalDualSolution.first);
   return deltaSolution;

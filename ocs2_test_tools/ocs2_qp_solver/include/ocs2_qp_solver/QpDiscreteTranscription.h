@@ -47,11 +47,11 @@ namespace qp_solver {
  *
  * @param cost : continuous cost function
  * @param system : continuous system dynamics
- * @param linearizationTrajectory : time, state and input trajectory to make the linear quadratic approximation around
+ * @param nominalTrajectory : time, state and input trajectory to make the linear quadratic approximation around
  * @return vector of discrete cost and dynamics at each node.
  */
 std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& cost, SystemWrapper& system,
-                                                                  const ContinuousTrajectory& linearizationTrajectory);
+                                                                  const ContinuousTrajectory& nominalTrajectory);
 
 /**
  * Constructs the discrete quadratic cost and linear dynamics between the given start and end conditions

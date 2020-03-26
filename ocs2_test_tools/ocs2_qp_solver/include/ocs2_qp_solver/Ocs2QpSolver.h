@@ -47,12 +47,12 @@ namespace qp_solver {
  *
  * @param cost : continuous cost function
  * @param system : continuous system dynamics
- * @param linearizationTrajectory : time, state and input trajectory to make the linear quadratic approximation around
+ * @param nominalTrajectory : time, state and input trajectory to make the linear quadratic approximation around
  * @param initialState : state at the start of the horizon.
  * @return time, state, and input solution.
  */
 ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostWrapper costFunction, SystemWrapper systemDynamics,
-                                                               const ContinuousTrajectory& linearizationTrajectory,
+                                                               const ContinuousTrajectory& nominalTrajectory,
                                                                const Eigen::VectorXd& initialState);
 
 }  // namespace qp_solver

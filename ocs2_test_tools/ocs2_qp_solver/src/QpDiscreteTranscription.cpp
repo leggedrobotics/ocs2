@@ -37,10 +37,10 @@ namespace ocs2 {
 namespace qp_solver {
 
 std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& cost, SystemWrapper& system,
-                                                                  const ContinuousTrajectory& linearizationTrajectory) {
-  auto& t = linearizationTrajectory.timeTrajectory;
-  auto& x = linearizationTrajectory.stateTrajectory;
-  auto& u = linearizationTrajectory.inputTrajectory;
+                                                                  const ContinuousTrajectory& nominalTrajectory) {
+  auto& t = nominalTrajectory.timeTrajectory;
+  auto& x = nominalTrajectory.stateTrajectory;
+  auto& u = nominalTrajectory.inputTrajectory;
   const int N = t.size() - 1;
 
   // LinearQuadraticProblem with N+1 elements. Terminal stage lqp[N].dynamics is ignored.

@@ -7,10 +7,10 @@
 namespace switched_model {
 
 template <typename Constraint>
-int evaluateConstraint(ComModelBase<ocs2::CppAdInterface<double>::ad_scalar_t>& comModel,
-                       KinematicsModelBase<ocs2::CppAdInterface<double>::ad_scalar_t>& kinModel) {
+int evaluateConstraint(ComModelBase<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>& comModel,
+                       KinematicsModelBase<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>& kinModel) {
   // Set up settings
-  using ad_base_t = CppAD::cg::CG<double>;
+  using ad_base_t = CppAD::cg::CG<scalar_t>;
   using ad_scalar_t = CppAD::AD<ad_base_t>;
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;

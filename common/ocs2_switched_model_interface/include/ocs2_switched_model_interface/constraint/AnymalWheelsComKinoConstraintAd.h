@@ -21,7 +21,7 @@ class AnymalWheelsComKinoConstraintAd : public ocs2::ConstraintBase<STATE_DIM, I
 
   using Base = ocs2::ConstraintBase<STATE_DIM, INPUT_DIM>;
 
-  using ad_base_t = CppAD::cg::CG<double>;
+  using ad_base_t = CppAD::cg::CG<scalar_t>;
   using ad_scalar_t = CppAD::AD<ad_base_t>;
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;

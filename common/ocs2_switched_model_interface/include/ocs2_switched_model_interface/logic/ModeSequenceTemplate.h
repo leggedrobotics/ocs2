@@ -5,10 +5,10 @@
 
 #include <ocs2_msgs/mode_schedule.h>
 
-#include <ocs2_core/Dimensions.h>
 #include <ocs2_core/logic/ModeSchedule.h>
 
 #include "ocs2_switched_model_interface/core/MotionPhaseDefinition.h"
+#include "ocs2_switched_model_interface/core/SwitchedModel.h"
 
 namespace switched_model {
 
@@ -18,8 +18,6 @@ namespace switched_model {
  * - modeSequence (size N), indicating the mode between the switching times.
  */
 struct ModeSequenceTemplate {
-  using scalar_t = ocs2::Dimensions<0, 0>::scalar_t;
-
   /**
    * Constructor for a ModeSequenceTemplate. The number of modes must be greater than zero (N > 0)
    * @param [in] switchingTimesInput : switching times of size N + 1

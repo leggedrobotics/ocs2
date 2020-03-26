@@ -62,8 +62,7 @@ size_t EndEffectorConstraint::getNumConstraints(scalar_t time) const {
   return settings_.A.rows();
 };
 
-EndEffectorConstraint::scalar_array_t EndEffectorConstraint::getValue(scalar_t time, const state_vector_t& state,
-                                                                      const input_vector_t& input) const {
+scalar_array_t EndEffectorConstraint::getValue(scalar_t time, const state_vector_t& state, const input_vector_t& input) const {
   // Assemble input
   dynamic_vector_t tapedInput(domain_dim_);
   tapedInput << time, state, input;

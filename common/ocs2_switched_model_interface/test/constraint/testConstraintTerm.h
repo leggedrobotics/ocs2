@@ -17,12 +17,12 @@ class TestEmptyConstraint : public ocs2::ConstraintTerm<3, 2> {
 
   TestEmptyConstraint* clone() const override { return new TestEmptyConstraint(*this); };
 
-  size_t getNumConstraints(scalar_t time) const override { return 0; };
-  scalar_array_t getValue(scalar_t time, const state_vector_t& state, const input_vector_t& input) const override {
-    return scalar_array_t();
+  size_t getNumConstraints(ocs2::scalar_t time) const override { return 0; };
+  ocs2::scalar_array_t getValue(ocs2::scalar_t time, const state_vector_t& state, const input_vector_t& input) const override {
+    return ocs2::scalar_array_t();
   };
 
-  LinearApproximation_t getLinearApproximation(scalar_t time, const state_vector_t& state, const input_vector_t& input) const override {
+  LinearApproximation_t getLinearApproximation(ocs2::scalar_t time, const state_vector_t& state, const input_vector_t& input) const override {
     return LinearApproximation_t();
   };
 };
@@ -42,16 +42,16 @@ class TestLinearConstraint : public ocs2::ConstraintTerm<3, 2> {
 
   TestLinearConstraint* clone() const override { return new TestLinearConstraint(*this); };
 
-  size_t getNumConstraints(scalar_t time) const override { return 2; };
+  size_t getNumConstraints(ocs2::scalar_t time) const override { return 2; };
 
-  scalar_array_t getValue(scalar_t time, const state_vector_t& state, const input_vector_t& input) const override {
-    scalar_array_t constraintValues(2);
+  ocs2::scalar_array_t getValue(ocs2::scalar_t time, const state_vector_t& state, const input_vector_t& input) const override {
+    ocs2::scalar_array_t constraintValues(2);
     constraintValues[0] = 1;
     constraintValues[1] = 2;
     return constraintValues;
   };
 
-  LinearApproximation_t getLinearApproximation(scalar_t time, const state_vector_t& state, const input_vector_t& input) const override {
+  LinearApproximation_t getLinearApproximation(ocs2::scalar_t time, const state_vector_t& state, const input_vector_t& input) const override {
     LinearApproximation_t linearApproximation;
     linearApproximation.constraintValues = getValue(time, state, input);
     linearApproximation.derivativeState.emplace_back(state_vector_t::Zero());
@@ -61,7 +61,7 @@ class TestLinearConstraint : public ocs2::ConstraintTerm<3, 2> {
     return linearApproximation;
   };
 
-  QuadraticApproximation_t getQuadraticApproximation(scalar_t time, const state_vector_t& state,
+  QuadraticApproximation_t getQuadraticApproximation(ocs2::scalar_t time, const state_vector_t& state,
                                                      const input_vector_t& input) const override {
     QuadraticApproximation_t quadraticApproximation;
     quadraticApproximation.constraintValues = getValue(time, state, input);

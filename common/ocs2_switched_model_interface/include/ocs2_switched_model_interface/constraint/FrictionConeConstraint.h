@@ -1,7 +1,4 @@
-
-
-#ifndef OCS2_CTRL_FRICTIONCONECONSTRAINT_H
-#define OCS2_CTRL_FRICTIONCONECONSTRAINT_H
+#pragma once
 
 #include <ocs2_switched_model_interface/constraint/ConstraintTerm.h>
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
@@ -24,12 +21,10 @@ class FrictionConeConstraint final : public ocs2::ConstraintTerm<STATE_DIM, INPU
   using typename BASE::input_vector_t;
   using typename BASE::LinearApproximation_t;
   using typename BASE::QuadraticApproximation_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::scalar_t;
   using typename BASE::state_matrix_t;
   using typename BASE::state_vector_t;
 
-  FrictionConeConstraint(double frictionCoefficient, double regularization, int legNumber)
+  FrictionConeConstraint(scalar_t frictionCoefficient, scalar_t regularization, int legNumber)
       : BASE(ocs2::ConstraintOrder::Quadratic),
         frictionCoefficient_(frictionCoefficient),
         regularization_(regularization),
@@ -106,11 +101,9 @@ class FrictionConeConstraint final : public ocs2::ConstraintTerm<STATE_DIM, INPU
     return ddhdudu;
   }
 
-  double frictionCoefficient_;
-  double regularization_;
+  scalar_t frictionCoefficient_;
+  scalar_t regularization_;
   int legNumber_;
 };
 
 }  // namespace switched_model
-
-#endif  // OCS2_CTRL_FRICTIONCONECONSTRAINT_H

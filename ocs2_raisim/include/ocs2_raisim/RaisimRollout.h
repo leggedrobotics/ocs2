@@ -100,6 +100,10 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
   RaisimRollout<STATE_DIM, INPUT_DIM>* clone() const override { return new RaisimRollout(*this); }
 
+  void setKillRolloutIntegration(std::shared_ptr<std::atomic_bool> killRolloutIntegration) override {
+    throw std::runtime_error("[RaisimRollout] can not be killed.");
+  }
+
   /**
    * @brief Replaces the default flat ground plane with a generated terrain in Raisim
    * @param properties: Terrain properties

@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ostream>
 
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 
@@ -39,8 +39,6 @@ namespace ocs2 {
  * Defines the performance indices for a rollout
  */
 struct PerformanceIndex {
-  using scalar_t = typename Dimensions<0, 0>::scalar_t;
-
   /** The merit function of a rollout. */
   scalar_t merit = 0.0;
   /** The total cost of a rollout. */
@@ -58,13 +56,25 @@ struct PerformanceIndex {
 };
 
 inline std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& performanceIndex) {
-  stream << "rollout merit: " << performanceIndex.merit << '\n';
-  stream << "rollout cost:  " << performanceIndex.totalCost << '\n';
-  stream << "state equality constraints ISE:       " << performanceIndex.stateEqConstraintISE << '\n';
-  stream << "state equality final constraints SSE: " << performanceIndex.stateEqFinalConstraintSSE << '\n';
-  stream << "state-input equality constraints ISE: " << performanceIndex.stateInputEqConstraintISE << '\n';
-  stream << "inequality constraints ISE:           " << performanceIndex.inequalityConstraintISE << '\n';
-  stream << "inequality constraints penalty:       " << performanceIndex.inequalityConstraintPenalty << '\n';
+  const size_t tabSpace = 10;
+  const auto indentation = stream.width();
+  stream << std::left;  // fill from left
+
+  stream << std::setw(indentation) << "";
+  stream << "rollout merit:                        " << std::setw(tabSpace) << performanceIndex.merit;
+  stream << "rollout cost:                         " << std::setw(tabSpace) << performanceIndex.totalCost << '\n';
+
+  stream << std::setw(indentation) << "";
+  stream << "state equality constraints ISE:       " << std::setw(tabSpace) << performanceIndex.stateEqConstraintISE;
+  stream << "state-input equality constraints ISE: " << std::setw(tabSpace) << performanceIndex.stateInputEqConstraintISE << '\n';
+
+  stream << std::setw(indentation) << "";
+  stream << "inequality constraints ISE:           " << std::setw(tabSpace) << performanceIndex.inequalityConstraintISE;
+  stream << "inequality constraints penalty:       " << std::setw(tabSpace) << performanceIndex.inequalityConstraintPenalty << '\n';
+
+  stream << std::setw(indentation) << "";
+  stream << "state equality final constraints SSE: " << std::setw(tabSpace) << performanceIndex.stateEqFinalConstraintSSE;
+
   return stream;
 }
 

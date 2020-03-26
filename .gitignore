@@ -18,3 +18,4 @@ Doxyfile
 *.tmp
 *.swp
 *.bag
+*.pyc

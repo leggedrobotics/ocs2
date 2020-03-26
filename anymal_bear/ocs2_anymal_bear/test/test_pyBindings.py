@@ -30,21 +30,21 @@ class anymal_bear_python_tests(unittest.TestCase):
 
     time = 0.0
     x = np.zeros((self.mpc.STATE_DIM, 1))
-    x[3] = 0.3     # base x
-    x[4] = 0.2     # base y
-    x[5] = 0.495   # base z
-    x[12] = -0.1   # LF_HAA
-    x[13] = 0.7
-    x[14] = -1.0
-    x[15] = 0.1
-    x[16] = 0.7
-    x[17] = -1.0
-    x[18] = -0.1
-    x[19] = -0.7
-    x[20] = 1.0
-    x[21] = 0.1
-    x[22] = -0.7
-    x[23] = 1.0    # RH_KFE
+    x[3] = 0.1     # base x
+    x[4] = 0.1     # base y
+    x[5] = 0.5163   # base z
+    x[12] = -0.25   # LF_HAA
+    x[13] = 0.6
+    x[14] = -0.85
+    x[15] = 0.25
+    x[16] = 0.6
+    x[17] = -0.85
+    x[18] = -0.25
+    x[19] = -0.6
+    x[20] = 0.85
+    x[21] = 0.25
+    x[22] = -0.6
+    x[23] = 0.85    # RH_KFE
     self.mpc.setObservation(time, x)
 
     self.mpc.advanceMpc()

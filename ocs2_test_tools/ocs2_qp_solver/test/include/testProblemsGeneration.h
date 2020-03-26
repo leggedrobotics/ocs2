@@ -115,7 +115,8 @@ inline std::vector<LinearQuadraticStage> generateRandomProblem(int N, int nx, in
  * Compares to Eigen vectors on equality.
  * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().
  */
-inline bool isEqual(const dynamic_vector_t& lhs, const dynamic_vector_t& rhs, scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
+inline bool isEqual(const dynamic_vector_t& lhs, const dynamic_vector_t& rhs,
+                    scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
   if (lhs.norm() > tol && rhs.norm() > tol) {
     return lhs.isApprox(rhs, tol);
   } else {

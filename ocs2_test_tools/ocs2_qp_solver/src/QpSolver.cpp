@@ -143,8 +143,10 @@ ScalarFunctionQuadraticApproximation getCostMatrices(const std::vector<LinearQua
   ScalarFunctionQuadraticApproximation qpCost;
   auto& H = qpCost.dfdxx;
   auto& g = qpCost.dfdx;
+  auto& c = qpCost.f;
   H.setZero(numDecisionVariables, numDecisionVariables);
   g.setZero(numDecisionVariables);
+  c = 0.0;
 
   int currRow = 0;
   for (int k = 0; k < N; ++k) {
@@ -157,6 +159,8 @@ ScalarFunctionQuadraticApproximation getCostMatrices(const std::vector<LinearQua
     H.block(currRow, currRow, nx_k + nu_k, nx_k + nu_k) << cost_k.dfdxx, cost_k.dfdux.transpose(), cost_k.dfdux, cost_k.dfduu;
     // Add [ q, r]
     g.segment(currRow, nx_k + nu_k) << cost_k.dfdx, cost_k.dfdu;
+    // Add nominal cost
+    c += cost_k.f;
 
     currRow += nx_k + nu_k;
   }
@@ -166,6 +170,7 @@ ScalarFunctionQuadraticApproximation getCostMatrices(const std::vector<LinearQua
   const int nx_N = cost_N.dfdx.size();
   H.block(currRow, currRow, nx_N, nx_N) << cost_N.dfdxx;
   g.segment(currRow, nx_N) << cost_N.dfdx;
+  c += cost_N.f;
 
   return qpCost;
 }

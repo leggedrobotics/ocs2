@@ -65,7 +65,7 @@ ContinuousTrajectory solveLinearQuadraticApproximation(const std::vector<LinearQ
  * @param dx0 : initial state deviation from the linearization.
  * @param numConstraints : number of rows in A
  * @param numDecisionVariables : size of w
- * @return linear constraints in w
+ * @return linear constraints in w, where w is the vector of decision variables
  */
 VectorFunctionLinearApproximation getConstraintMatrices(const std::vector<LinearQuadraticStage>& lqp, const dynamic_vector_t& dx0,
                                                         int numConstraints, int numDecisionVariables);
@@ -82,7 +82,7 @@ VectorFunctionLinearApproximation getConstraintMatrices(const std::vector<Linear
  *
  * @param lqp
  * @param numDecisionVariables : size of w
- * @return quadratic cost function in w
+ * @return quadratic cost function in w, where w is the vector of decision variables
  */
 ScalarFunctionQuadraticApproximation getCostMatrices(const std::vector<LinearQuadraticStage>& lqp, int numDecisionVariables);
 
@@ -93,7 +93,7 @@ ScalarFunctionQuadraticApproximation getCostMatrices(const std::vector<LinearQua
  *
  *   Assumes H is positive definite, rows of A are linearly independent.
  *
- * @return {w, lambda} at the solution, where lambda are the lagrange multipliers
+ * @return {w, lambda} at the solution, where w is the vector of decision variables, and lambda is the vector of lagrange multipliers
  */
 std::pair<dynamic_vector_t, dynamic_vector_t> solveDenseQp(const ScalarFunctionQuadraticApproximation& cost,
                                                            const VectorFunctionLinearApproximation& constraints);
@@ -102,7 +102,7 @@ std::pair<dynamic_vector_t, dynamic_vector_t> solveDenseQp(const ScalarFunctionQ
  * Reconstructs the optimal state and input trajectory recursively based on the full qp solution vector
  * @param numStates : number of states per stage
  * @param numInputs : number of inputs per stage
- * @param w : full qp solution vector
+ * @param w : the vector of decision variables
  * @return { state_trajectory, input_trajectory }
  */
 std::pair<std::vector<dynamic_vector_t>, std::vector<dynamic_vector_t>> getStateAndInputTrajectory(const std::vector<int>& numStates,

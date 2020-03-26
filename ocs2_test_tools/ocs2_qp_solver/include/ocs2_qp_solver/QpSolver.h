@@ -105,9 +105,9 @@ std::pair<dynamic_vector_t, dynamic_vector_t> solveDenseQp(const ScalarFunctionQ
  * @param w : the vector of decision variables
  * @return { state_trajectory, input_trajectory }
  */
-std::pair<std::vector<dynamic_vector_t>, std::vector<dynamic_vector_t>> getStateAndInputTrajectory(const std::vector<int>& numStates,
-                                                                                                   const std::vector<int>& numInputs,
-                                                                                                   const dynamic_vector_t& w);
+std::pair<dynamic_vector_array_t, dynamic_vector_array_t> getStateAndInputTrajectory(const std::vector<int>& numStates,
+                                                                                     const std::vector<int>& numInputs,
+                                                                                     const dynamic_vector_t& w);
 
 }  // namespace qp_solver
 }  // namespace ocs2

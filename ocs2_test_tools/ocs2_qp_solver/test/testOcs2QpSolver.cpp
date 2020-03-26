@@ -75,8 +75,8 @@ TEST_F(Ocs2QpSolverTest, knownSolutionAtOrigin) {
   // Obtain solution, with non-zero linearization
   auto zeroSolution = solveLinearQuadraticOptimalControlProblem(*zeroCost, *system, linearization, zeroX0);
 
-  std::vector<ocs2::dynamic_vector_t> allStatesZero(N + 1, ocs2::dynamic_vector_t::Zero(STATE_DIM));
-  std::vector<ocs2::dynamic_vector_t> allInputsZero(N, ocs2::dynamic_vector_t::Zero(INPUT_DIM));
+  ocs2::dynamic_vector_array_t allStatesZero(N + 1, ocs2::dynamic_vector_t::Zero(STATE_DIM));
+  ocs2::dynamic_vector_array_t allInputsZero(N, ocs2::dynamic_vector_t::Zero(INPUT_DIM));
   ASSERT_TRUE(ocs2::qp_solver::isEqual(zeroSolution.stateTrajectory, allStatesZero));
   ASSERT_TRUE(ocs2::qp_solver::isEqual(zeroSolution.inputTrajectory, allInputsZero));
 }

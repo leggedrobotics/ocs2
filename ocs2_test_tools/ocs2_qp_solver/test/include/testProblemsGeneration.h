@@ -129,7 +129,7 @@ inline bool isEqual(const dynamic_vector_t& lhs, const dynamic_vector_t& rhs,
  * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().
  * @return Vectors are of equal length and equal values.
  */
-inline bool isEqual(const std::vector<dynamic_vector_t>& v0, const std::vector<dynamic_vector_t>& v1,
+inline bool isEqual(const dynamic_vector_array_t& v0, const dynamic_vector_array_t& v1,
                     scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
   return (v0.size() == v1.size()) &&
          std::equal(v0.begin(), v0.end(), v1.begin(),

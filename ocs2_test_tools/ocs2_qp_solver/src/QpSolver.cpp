@@ -191,13 +191,13 @@ std::pair<dynamic_vector_t, dynamic_vector_t> solveDenseQp(const ScalarFunctionQ
   return {sol.head(n), sol.tail(m)};
 }
 
-std::pair<std::vector<dynamic_vector_t>, std::vector<dynamic_vector_t>> getStateAndInputTrajectory(const std::vector<int>& numStates,
-                                                                                                   const std::vector<int>& numInputs,
-                                                                                                   const dynamic_vector_t& w) {
+std::pair<dynamic_vector_array_t, dynamic_vector_array_t> getStateAndInputTrajectory(const std::vector<int>& numStates,
+                                                                                     const std::vector<int>& numInputs,
+                                                                                     const dynamic_vector_t& w) {
   const int N = numInputs.size();
 
-  std::vector<dynamic_vector_t> stateTrajectory;
-  std::vector<dynamic_vector_t> inputTrajectory;
+  dynamic_vector_array_t stateTrajectory;
+  dynamic_vector_array_t inputTrajectory;
   stateTrajectory.reserve(N + 1);
   inputTrajectory.reserve(N);
 

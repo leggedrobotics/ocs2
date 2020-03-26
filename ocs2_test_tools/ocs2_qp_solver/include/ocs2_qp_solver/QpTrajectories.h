@@ -41,11 +41,11 @@ namespace qp_solver {
 /** A time, state, input trajectory. The last timepoint has only a state, no input */
 struct ContinuousTrajectory {
   /** time trajectory, size N+1 */
-  std::vector<scalar_t> timeTrajectory;
+  scalar_array_t timeTrajectory;
   /** trajectory of state vectors, size N+1 */
-  std::vector<dynamic_vector_t> stateTrajectory;
+  dynamic_vector_array_t stateTrajectory;
   /** trajectory of input vectors, size N */
-  std::vector<dynamic_vector_t> inputTrajectory;
+  dynamic_vector_array_t inputTrajectory;
 };
 
 /** Adds state and inputs of two trajectories, time is not added. */

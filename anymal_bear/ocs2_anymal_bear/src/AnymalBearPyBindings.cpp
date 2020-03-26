@@ -8,9 +8,9 @@ namespace anymal {
 AnymalBearPyBindings::AnymalBearPyBindings(std::string taskName, bool async) : Base(async), taskName_(std::move(taskName)) {
   auto anymalBearInterface = getAnymalBearInterface(taskName_);
   ocs2::MPC_Settings mpcSettings;
-  mpcSettings.loadSettings(anymal::getTaskFilePathBear(taskName));
+  mpcSettings.loadSettings(anymal::getTaskFilePathBear(taskName_));
   ocs2::SLQ_Settings slqSettings;
-  slqSettings.loadSettings(anymal::getTaskFilePathBear(taskName));
+  slqSettings.loadSettings(anymal::getTaskFilePathBear(taskName_));
 
   init(*anymalBearInterface, switched_model::getMpc(*anymalBearInterface, mpcSettings, slqSettings));
 

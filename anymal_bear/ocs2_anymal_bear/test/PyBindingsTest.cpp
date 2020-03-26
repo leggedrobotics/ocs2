@@ -8,7 +8,7 @@
 #include <ocs2_anymal_bear/AnymalBearPyBindings.h>
 
 TEST(Anymal, PyBindings) {
-  using bindings_t = anymal::AnymalPyBindings;
+  using bindings_t = anymal::AnymalBearPyBindings;
   using state_vector_t = bindings_t::state_vector_t;
   using input_vector_t = bindings_t::input_vector_t;
   using state_matrix_array_t = bindings_t::state_matrix_array_t;
@@ -16,7 +16,6 @@ TEST(Anymal, PyBindings) {
   using state_vector_array_t = bindings_t::state_vector_array_t;
   using input_vector_array_t = bindings_t::input_vector_array_t;
   using input_state_matrix_array_t = bindings_t::input_state_matrix_array_t;
-  using cost_desired_trajectories_t = bindings_t::cost_desired_trajectories_t;
 
   const std::string taskFile = "mpc";
   bindings_t bindings(taskFile, false);
@@ -35,7 +34,7 @@ TEST(Anymal, PyBindings) {
   initState(21) = 0.1;
   initState(22) = -0.7;
   initState(23) = 1.0;  // RH_KFE
-  auto costDesiredTraj = cost_desired_trajectories_t();
+  auto costDesiredTraj = ocs2::CostDesiredTrajectories();
   costDesiredTraj.desiredTimeTrajectory().resize(1, 0.0);
 
   costDesiredTraj.desiredInputTrajectory().resize(1, input_vector_t::Zero());

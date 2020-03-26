@@ -13,6 +13,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>roslib</depend>
+  <depend>pybind11_catkin</depend>
   <depend>ocs2_anymal_bear_switched_model</depend>
   <depend>ocs2_quadruped_interface</depend>
 

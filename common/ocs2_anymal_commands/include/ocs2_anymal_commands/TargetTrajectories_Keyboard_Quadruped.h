@@ -132,9 +132,11 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
   ocs2::CostDesiredTrajectories toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) final {
     ocs2::SystemObservation<STATE_DIM, INPUT_DIM> observation;
     ::ros::spinOnce();
-    {
+    if(latestObservation_){
       std::lock_guard<std::mutex> lock(latestObservationMutex_);
       ocs2::ros_msg_conversions::readObservationMsg(*latestObservation_, observation);
+    }else{
+      std::cout<< "Did not recieve any observation from the mpc node yet. Is the mpc node running?"<<std::endl;
     }
 
     // Convert commandline target to base desired

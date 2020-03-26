@@ -27,61 +27,45 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include "ocs2_core/logic/ModeSchedule.h"
+
+#include <ocs2_core/misc/Display.h>
+#include <ocs2_core/misc/Lookup.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-ModeSequence_ROS_Interface<SCALAR_T>::ModeSequence_ROS_Interface(std::string robotName /*= "robot"*/) : robotName_(std::move(robotName)) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-ModeSequence_ROS_Interface<SCALAR_T>::~ModeSequence_ROS_Interface() {
-  shutdownNodes();
+ModeSchedule::ModeSchedule(std::vector<scalar_t> eventTimesInput, std::vector<size_t> modeSequenceInput)
+    : eventTimes(std::move(eventTimesInput)), modeSequence(std::move(modeSequenceInput)) {
+  assert(!modeSequence.empty());
+  assert(eventTimes.size() + 1 == modeSequence.size());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-void ModeSequence_ROS_Interface<SCALAR_T>::publishModeSequenceTemplate(const mode_sequence_template_t& modeSequenceTemplate) {
-  RosMsgConversions<0, 0>::createModeSequenceTemplateMsg(modeSequenceTemplate, modeSequenceTemplateMsg_);
-
-  mpcModeSequencePublisher_.publish(modeSequenceTemplateMsg_);
+size_t ModeSchedule::modeAtTime(scalar_t time) const {
+  const auto ind = lookup::findIndexInTimeArray(eventTimes, time);
+  return modeSequence[ind];
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-void ModeSequence_ROS_Interface<SCALAR_T>::shutdownNodes() {
-  mpcModeSequencePublisher_.shutdown();
+void swap(ModeSchedule& lh, ModeSchedule& rh) {
+  lh.eventTimes.swap(rh.eventTimes);
+  lh.modeSequence.swap(rh.modeSequence);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-void ModeSequence_ROS_Interface<SCALAR_T>::launchNodes(int argc, char* argv[]) {
-  // reset counters and variables
-  reset();
-
-  // display
-  ROS_INFO_STREAM("ModeSequence node is setting up ...");
-
-  // setup ROS
-  ::ros::init(argc, argv, robotName_ + "_mpc_mode_sequence");
-  ::ros::NodeHandle nodeHandler;
-
-  mpcModeSequencePublisher_ = nodeHandler.advertise<ocs2_msgs::mode_sequence>(robotName_ + "_mpc_mode_sequence", 1, true);
-
-  ros::spinOnce();
-
-  // display
-  ROS_INFO_STREAM(robotName_ + " mode sequence command node is ready.");
+std::ostream& operator<<(std::ostream& stream, const ModeSchedule& modeSchedule) {
+  stream << "event times:   {" << toDelimitedString(modeSchedule.eventTimes) << "}\n";
+  stream << "mode sequence: {" << toDelimitedString(modeSchedule.modeSequence) << "}\n";
+  return stream;
 }
 
 }  // namespace ocs2

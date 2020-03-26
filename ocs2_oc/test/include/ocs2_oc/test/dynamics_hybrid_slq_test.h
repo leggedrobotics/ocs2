@@ -34,36 +34,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
-#include <ocs2_core/logic/rules/HybridLogicRules.h>
 
 enum { STATE_DIM = 3, INPUT_DIM = 1 };
 
 namespace ocs2 {
-
-// #######################
-// ####LOGIC CLASSES######
-// #######################
-class hybridSysLogic final : public HybridLogicRules {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = HybridLogicRules;
-
-  hybridSysLogic() = default;
-
-  ~hybridSysLogic() override = default;
-
-  hybridSysLogic(scalar_array_t switchingTimes, size_array_t subsystemsSequence)
-      : BASE(std::move(switchingTimes), std::move(subsystemsSequence)) {}
-
-  void rewind(const scalar_t& lowerBoundTime, const scalar_t& upperBoundTime) override {}
-
-  void update() override {}
-
- protected:
-  void insertModeSequenceTemplate(const logic_template_type& modeSequenceTemplate, const scalar_t& startTime,
-                                  const scalar_t& finalTime) override{};
-};
 
 // #######################
 // ###DYNAMICS CLASSES####

@@ -41,7 +41,6 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   slqSettings.ddpSettings_.displayShortSummary_ = false;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
   slqSettings.ddpSettings_.nThreads_ = 1;
-  slqSettings.ddpSettings_.noStateConstraints_ = false;
   slqSettings.ddpSettings_.stateConstraintPenaltyCoeff_ = 1.0;
   slqSettings.ddpSettings_.inequalityConstraintMu_ = 0.1;
   slqSettings.ddpSettings_.inequalityConstraintDelta_ = 1e-6;
@@ -56,11 +55,6 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   rolloutSettings.absTolODE_ = 1e-10;
   rolloutSettings.relTolODE_ = 1e-7;
   rolloutSettings.maxNumStepsPerSecond_ = 1e5;
-
-  std::vector<double> eventTimes(0);
-  std::vector<size_t> subsystemsSequence{1};
-
-  std::shared_ptr<hybridSysLogic> logicRulesPtr(new hybridSysLogic(eventTimes, subsystemsSequence));
 
   double startTime = 0.0;
   double finalTime = 5.0;
@@ -103,7 +97,7 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   std::cout << "Starting SLQ Procedure" << std::endl;
   // SLQ
   SLQ<STATE_DIM, INPUT_DIM> slqST(&stateTriggeredRollout, &systemDerivatives, &systemConstraints, &systemCost, &operatingTrajectories,
-                                  slqSettings, logicRulesPtr);
+                                  slqSettings);
   slqST.run(startTime, initState, finalTime, partitioningTimes);
   SLQ<STATE_DIM, INPUT_DIM>::primal_solution_t solution = slqST.primalSolution(finalTime);
   std::cout << "SLQ Procedure Done" << std::endl;
@@ -144,11 +138,8 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
     }
   }
   // Test 3: Check of cost function
-  double costFunction;
-  double constraint1ISE;
-  double constraint2ISE;
-  slqST.getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
-  EXPECT_LT(std::fabs(costFunction - 18.938001), 1e-6);
+  auto performanceIndecesST = slqST.getPerformanceIndeces();
+  EXPECT_LT(std::fabs(performanceIndecesST.merit - 18.938001), 1e-6);
 }
 
 int main(int argc, char** argv) {

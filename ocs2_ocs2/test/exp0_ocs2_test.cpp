@@ -50,7 +50,6 @@ TEST(exp0_ocs2_test, exp0_ocs2_test) {
   slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
   slqSettings.ddpSettings_.nThreads_ = 3;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
-  slqSettings.ddpSettings_.noStateConstraints_ = true;
   slqSettings.ddpSettings_.minLearningRate_ = 0.0001;
   slqSettings.ddpSettings_.minRelCost_ = 5e-4;
   slqSettings.ddpSettings_.checkNumericalStability_ = false;
@@ -79,7 +78,8 @@ TEST(exp0_ocs2_test, exp0_ocs2_test) {
   // logic rule
   std::vector<double> initEventTimes{1.0};
   std::vector<size_t> subsystemsSequence{0, 1};
-  std::shared_ptr<EXP0_LogicRules> logicRules(new EXP0_LogicRules(initEventTimes, subsystemsSequence));
+  std::shared_ptr<ModeScheduleManager<STATE_DIM, INPUT_DIM>> modeScheduleManagerPtr(
+      new ModeScheduleManager<STATE_DIM, INPUT_DIM>({initEventTimes, subsystemsSequence}));
 
   double startTime = 0.0;
   double finalTime = 2.0;
@@ -96,17 +96,17 @@ TEST(exp0_ocs2_test, exp0_ocs2_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // system dynamics
-  EXP0_System systemDynamics(logicRules);
+  EXP0_System systemDynamics(modeScheduleManagerPtr);
   TimeTriggeredRollout<STATE_DIM, INPUT_DIM> timeTriggeredRollout(systemDynamics, rolloutSettings);
 
   // system derivatives
-  EXP0_SystemDerivative systemDerivative(logicRules);
+  EXP0_SystemDerivative systemDerivative(modeScheduleManagerPtr);
 
   // system constraints
   EXP0_SystemConstraint systemConstraint;
 
   // system cost functions
-  EXP0_CostFunction systemCostFunction(logicRules);
+  EXP0_CostFunction systemCostFunction(modeScheduleManagerPtr);
 
   // system operatingTrajectories
   Eigen::Matrix<double, STATE_DIM, 1> stateOperatingPoint = Eigen::Matrix<double, STATE_DIM, 1>::Zero();
@@ -118,7 +118,7 @@ TEST(exp0_ocs2_test, exp0_ocs2_test) {
   /******************************************************************************************************/
   // OCS2
   OCS2<STATE_DIM, INPUT_DIM> ocs2(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
-                                  slqSettings, logicRules, nullptr, gddpSettings, nlpSettings);
+                                  slqSettings, modeScheduleManagerPtr, nullptr, gddpSettings, nlpSettings);
 
   // run ocs2 using LQ method for computing the derivatives
   ocs2.gddpSettings().useLQForDerivatives_ = true;

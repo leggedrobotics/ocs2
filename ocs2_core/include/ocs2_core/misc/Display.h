@@ -27,83 +27,32 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+//
+// Created by rgrandia on 09.03.20.
+//
+
 #pragma once
 
+#include <sstream>
 #include <string>
-#include <vector>
-
-#include <ros/ros.h>
-
-#include <ocs2_core/logic/rules/HybridLogicRules.h>
-
-// MPC messages
-#include <ocs2_msgs/mode_sequence.h>
-
-#include "ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h"
 
 namespace ocs2 {
 
-/**
- * This class implements ModeSequence communication interface using ROS.
- *
- * @tparam SCALAR_T: scalar type.
- */
-template <typename SCALAR_T>
-class ModeSequence_ROS_Interface {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+/** Loops over the elements in a container and creates a delimited string */
+template <typename Container>
+std::string toDelimitedString(const Container& container, const std::string& delimiter = ", ") {
+  std::stringstream ss;
 
-  using scalar_t = SCALAR_T;
-  using mode_sequence_template_t = ModeSequenceTemplate<SCALAR_T>;
+  bool addDelimiter = false;
+  for (const auto& value : container) {
+    if (addDelimiter) {
+      ss << delimiter;
+    }
+    ss << value;
+    addDelimiter = true;
+  }
 
-  /**
-   * Constructor.
-   *
-   * @param [in] robotName: The robot's name.
-   */
-  explicit ModeSequence_ROS_Interface(std::string robotName = "robot");
-
-  /**
-   * Destructor.
-   */
-  virtual ~ModeSequence_ROS_Interface();
-
-  /**
-   * Resets the class to its instantiate state.
-   */
-  virtual void reset() {}
-
-  /**
-   * ShutdownNodes publisher nodes.
-   */
-  void shutdownNodes();
-
-  /**
-   * This is the main routine which launches the publisher node for MPC's
-   * desired trajectories.
-   *
-   * @param [in] argc: Command line number of arguments.
-   * @param [in] argv: Command line vector of arguments.
-   */
-  void launchNodes(int argc, char* argv[]);
-
-  /**
-   * Publishes the mode sequence template.
-   *
-   * @param [in] modeSequenceTemplate: The mode sequence template.
-   */
-  void publishModeSequenceTemplate(const mode_sequence_template_t& modeSequenceTemplate);
-
- protected:
-  std::string robotName_;
-
-  // Publisher
-  ::ros::Publisher mpcModeSequencePublisher_;
-
-  // ROS messages
-  ocs2_msgs::mode_sequence modeSequenceTemplateMsg_;
-};
+  return ss.str();
+}
 
 }  // namespace ocs2
-
-#include "implementation/ModeSequence_ROS_Interface.h"

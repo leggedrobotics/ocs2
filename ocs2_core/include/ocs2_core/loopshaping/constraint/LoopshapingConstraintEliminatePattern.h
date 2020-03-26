@@ -5,7 +5,6 @@
 
 #include "ocs2_core/Dimensions.h"
 #include "ocs2_core/constraint/ConstraintBase.h"
-#include "ocs2_core/logic/rules/NullLogicRules.h"
 #include "ocs2_core/loopshaping/LoopshapingDefinition.h"
 
 namespace ocs2 {

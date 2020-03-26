@@ -53,7 +53,6 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   ilqrSettings.ddpSettings_.relTolODE_ = 1e-7;
   ilqrSettings.ddpSettings_.maxNumStepsPerSecond_ = 1000000;
   ilqrSettings.ddpSettings_.maxNumIterations_ = 30;
-  ilqrSettings.ddpSettings_.noStateConstraints_ = true;
   ilqrSettings.ddpSettings_.minLearningRate_ = 0.0001;
   ilqrSettings.ddpSettings_.minRelCost_ = 5e-4;
   ilqrSettings.ddpSettings_.checkNumericalStability_ = false;
@@ -65,10 +64,11 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   rolloutSettings.relTolODE_ = 1e-7;
   rolloutSettings.maxNumStepsPerSecond_ = 10000;
 
-  // switching times
-  std::vector<double> switchingTimes{0.1897};
+  // event times
+  std::vector<double> eventTimes{0.1897};
   std::vector<size_t> subsystemsSequence{0, 1};
-  std::shared_ptr<EXP0_LogicRules> logicRules(new EXP0_LogicRules(switchingTimes, subsystemsSequence));
+  std::shared_ptr<ModeScheduleManager<STATE_DIM, INPUT_DIM>> modeScheduleManagerPtr(
+      new ModeScheduleManager<STATE_DIM, INPUT_DIM>({eventTimes, subsystemsSequence}));
 
   double startTime = 0.0;
   double finalTime = 2.0;
@@ -76,7 +76,7 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   // partitioning times
   std::vector<double> partitioningTimes;
   partitioningTimes.push_back(startTime);
-  partitioningTimes.push_back(switchingTimes[0]);
+  partitioningTimes.push_back(eventTimes[0]);
   partitioningTimes.push_back(finalTime);
 
   EXP0_System::state_vector_t initState(0.0, 2.0);
@@ -85,17 +85,17 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // system rollout
-  EXP0_System systemDynamics(logicRules);
+  EXP0_System systemDynamics(modeScheduleManagerPtr);
   TimeTriggeredRollout<STATE_DIM, INPUT_DIM> timeTriggeredRollout(systemDynamics, rolloutSettings);
 
   // system derivatives
-  EXP0_SystemDerivative systemDerivative(logicRules);
+  EXP0_SystemDerivative systemDerivative(modeScheduleManagerPtr);
 
   // system constraints
   EXP0_SystemConstraint systemConstraint;
 
   // system cost functions
-  EXP0_CostFunction systemCostFunction(logicRules);
+  EXP0_CostFunction systemCostFunction(modeScheduleManagerPtr);
 
   // system operatingTrajectories
   Eigen::Matrix<double, 2, 1> stateOperatingPoint = Eigen::Matrix<double, 2, 1>::Zero();
@@ -108,12 +108,14 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   // ILQR - single-threaded version
   ilqrSettings.ddpSettings_.nThreads_ = 1;
   ILQR<STATE_DIM, INPUT_DIM> ilqrST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
-                                    &operatingTrajectories, ilqrSettings, logicRules);
+                                    &operatingTrajectories, ilqrSettings);
+  ilqrST.setModeScheduleManager(modeScheduleManagerPtr);
 
   // ILQR - multi-threaded version
   ilqrSettings.ddpSettings_.nThreads_ = 3;
   ILQR<STATE_DIM, INPUT_DIM> ilqrMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
-                                    &operatingTrajectories, ilqrSettings, logicRules);
+                                    &operatingTrajectories, ilqrSettings);
+  ilqrMT.setModeScheduleManager(modeScheduleManagerPtr);
 
   // run single_threaded core ILQR
   if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_) {
@@ -135,31 +137,28 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   ILQR<STATE_DIM, INPUT_DIM>::primal_solution_t solutionMT = ilqrMT.primalSolution(finalTime);
 
   // get performance indices
-  double totalCost_st, totalCost_mt;
-  double constraint1ISE_st, constraint1ISE_mt;
-  double constraint2ISE_st, constraint2ISE_mt;
-  ilqrST.getPerformanceIndeces(totalCost_st, constraint1ISE_st, constraint2ISE_st);
-  ilqrMT.getPerformanceIndeces(totalCost_mt, constraint1ISE_mt, constraint2ISE_mt);
+  auto performanceIndecesST = ilqrST.getPerformanceIndeces();
+  auto performanceIndecesMT = ilqrMT.getPerformanceIndeces();
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
   const double expectedCost = 9.7667;
-  ASSERT_LT(fabs(totalCost_st - expectedCost), 10 * ilqrSettings.ddpSettings_.minRelCost_)
+  ASSERT_LT(fabs(performanceIndecesST.totalCost - expectedCost), 10 * ilqrSettings.ddpSettings_.minRelCost_)
       << "MESSAGE: ILQR_ST failed in the EXP0's cost test!";
-  ASSERT_LT(fabs(totalCost_mt - expectedCost), 10 * ilqrSettings.ddpSettings_.minRelCost_)
+  ASSERT_LT(fabs(performanceIndecesMT.totalCost - expectedCost), 10 * ilqrSettings.ddpSettings_.minRelCost_)
       << "MESSAGE: ILQR_MT failed in the EXP1's cost test!";
 
   const double expectedISE1 = 0.0;
-  ASSERT_LT(fabs(constraint1ISE_st - expectedISE1), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
+  ASSERT_LT(fabs(performanceIndecesST.stateInputEqConstraintISE - expectedISE1), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
       << "MESSAGE: ILQR_ST failed in the EXP0's type-1 constraint ISE test!";
-  ASSERT_LT(fabs(constraint1ISE_mt - expectedISE1), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
+  ASSERT_LT(fabs(performanceIndecesMT.stateInputEqConstraintISE - expectedISE1), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
       << "MESSAGE: ILQR_MT failed in the EXP1's type-1 constraint ISE test!";
 
   const double expectedISE2 = 0.0;
-  ASSERT_LT(fabs(constraint2ISE_st - expectedISE2), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
+  ASSERT_LT(fabs(performanceIndecesST.stateEqConstraintISE - expectedISE2), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
       << "MESSAGE: ILQR_ST failed in the EXP0's type-2 constraint ISE test!";
-  ASSERT_LT(fabs(constraint2ISE_mt - expectedISE2), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
+  ASSERT_LT(fabs(performanceIndecesMT.stateEqConstraintISE - expectedISE2), 10 * ilqrSettings.ddpSettings_.minRelConstraint1ISE_)
       << "MESSAGE: ILQR_MT failed in the EXP1's type-2 constraint ISE test!";
 
   double ctrlFinalTime;

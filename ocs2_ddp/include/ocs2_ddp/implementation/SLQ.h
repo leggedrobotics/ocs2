@@ -39,11 +39,10 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivativ
                                const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
                                const operating_trajectories_base_t* operatingTrajectoriesPtr,
                                const SLQ_Settings& settings /*= SLQ_Settings()*/,
-                               std::shared_ptr<HybridLogicRules> logicRulesPtr /*= nullptr*/,
                                const cost_function_base_t* heuristicsFunctionPtr /* = nullptr*/)
 
     : BASE(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings.ddpSettings_,
-           heuristicsFunctionPtr, "SLQ", std::move(logicRulesPtr)),
+           heuristicsFunctionPtr, "SLQ"),
       settings_(settings) {
   // Riccati Solver
   errorEquationPtrStock_.clear();
@@ -755,12 +754,6 @@ void SLQ<STATE_DIM, INPUT_DIM>::errorRiccatiEquationWorker(size_t workerIndex, s
   const int nominalTimeSize = nominalTimeTrajectory.size();
   const int ssTimeSize = SsNormalizedTime.size();
   const int numEvents = SsNormalizedEventsPastTheEndIndices.size();
-
-  // Skip calculation of the error correction term (Sve) if the constrained simulation is used for forward simulation
-  if (BASE::ddpSettings_.simulationIsConstrained_) {
-    SveTrajectory.resize(ssTimeSize, state_vector_t::Zero());
-    return;
-  }
 
   /*
    * Calculating the coefficients of the error equation

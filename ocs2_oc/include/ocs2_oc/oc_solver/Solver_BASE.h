@@ -38,6 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <chrono>
 #include <cstddef>
 #include <future>
+#include <iomanip>
+#include <iostream>
 #include <mutex>
 #include <numeric>
 #include <type_traits>
@@ -47,12 +49,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/ControllerBase.h>
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
-#include <ocs2_core/logic/rules/NullLogicRules.h>
+#include <ocs2_core/logic/ModeSchedule.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 #include <ocs2_core/misc/Numerics.h>
 
 #include "ocs2_oc/oc_data/PrimalSolution.h"
+#include "ocs2_oc/oc_solver/ModeScheduleManager.h"
+#include "ocs2_oc/oc_solver/PerformanceIndex.h"
 #include "ocs2_oc/oc_solver/SolverSynchronizedModule.h"
 
 namespace ocs2 {
@@ -129,9 +132,6 @@ class Solver_BASE {
 
   using primal_solution_t = PrimalSolution<STATE_DIM, INPUT_DIM>;
 
-  using logic_rules_machine_t = HybridLogicRulesMachine;
-  using logic_rules_machine_ptr_t = typename logic_rules_machine_t::Ptr;
-
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
   using controller_array_t = typename controller_t::array_t;
   using controller_ptr_array_t = std::vector<controller_t*>;
@@ -140,8 +140,12 @@ class Solver_BASE {
 
   using synchronized_module_t = SolverSynchronizedModule<STATE_DIM, INPUT_DIM>;
   using synchronized_module_ptr_array_t = std::vector<std::shared_ptr<synchronized_module_t>>;
+  using mode_schedule_manager_ptr_t = std::shared_ptr<ModeScheduleManager<STATE_DIM, INPUT_DIM>>;
 
-  explicit Solver_BASE(std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr);
+  /**
+   * Constructor.
+   */
+  Solver_BASE() = default;
 
   /**
    * Default destructor.
@@ -180,18 +184,21 @@ class Solver_BASE {
            const controller_ptr_array_t& controllersPtrStock);
 
   /**
+   * Set mode schedule manager. This module is updated once before and once after solving the problem.
+   */
+  void setModeScheduleManager(mode_schedule_manager_ptr_t modeScheduleManager) { modeScheduleManager_ = std::move(modeScheduleManager); };
+
+  /**
    * Set all modules that need to be synchronized with the solver. Each module is updated once before and once after solving the problem
    */
   void setSynchronizedModules(const synchronized_module_ptr_array_t& synchronizedModules) { synchronizedModules_ = synchronizedModules; };
 
   /**
-   * Gets the cost function and ISEs of the type-1 and type-2 constraints at the initial time.
+   * Returns the cost, merit function and ISEs of constraints for the latest optimized trajectory.
    *
-   * @param [out] costFunction: cost function value
-   * @param [out] constraint1ISE: type-1 constraint ISE.
-   * @param [out] constraint1ISE: type-2 constraint ISE.
+   * @return PerformanceIndex of the last optimized trajectory.
    */
-  virtual void getPerformanceIndeces(scalar_t& costFunction, scalar_t& constraint1ISE, scalar_t& constraint2ISE) const = 0;
+  virtual const PerformanceIndex& getPerformanceIndeces() const = 0;
 
   /**
    * Gets number of iterations.
@@ -201,24 +208,11 @@ class Solver_BASE {
   virtual size_t getNumIterations() const = 0;
 
   /**
-   * Gets iterations Log of the solver.
+   * Returns the history of the cost, merit function and ISEs of constraints for the iterations os the optimized trajectory.
    *
-   * @param [out] iterationCost: Each iteration's cost.
-   * @param [out] iterationISE1: Each iteration's type-1 constraints ISE.
-   * @param [out] iterationISE2: Each iteration's type-2 constraints ISE.
+   * @return An array of PerformanceIndices.
    */
-  virtual void getIterationsLog(eigen_scalar_array_t& iterationCost, eigen_scalar_array_t& iterationISE1,
-                                eigen_scalar_array_t& iterationISE2) const = 0;
-
-  /**
-   * Gets Iterations Log of solver
-   *
-   * @param [out] iterationCostPtr: A pointer to each iteration's cost.
-   * @param [out] iterationISE1Ptr: A pointer to each iteration's type-1 constraints ISE.
-   * @param [out] iterationISE2Ptr: A pointer to each iteration's type-2 constraints ISE.
-   */
-  virtual void getIterationsLogPtr(const eigen_scalar_array_t*& iterationCostPtr, const eigen_scalar_array_t*& iterationISE1Ptr,
-                                   const eigen_scalar_array_t*& iterationISE2Ptr) const = 0;
+  virtual const std::vector<PerformanceIndex>& getIterationsLog() const = 0;
 
   /**
    * Gets final time of optimization
@@ -233,41 +227,6 @@ class Solver_BASE {
    * @return partitioning times
    */
   virtual const scalar_array_t& getPartitioningTimes() const = 0;
-
-  /**
-   * Returns a pointer to the LogicRulesMachine
-   *
-   * @return a pointer to LogicRulesMachine
-   */
-  logic_rules_machine_t* getLogicRulesMachinePtr() { return logicRulesMachinePtr_.get(); }
-
-  /**
-   * Returns a pointer to the LogicRulesMachine
-   *
-   * @return a pointer to LogicRulesMachine
-   */
-  const logic_rules_machine_t* getLogicRulesMachinePtr() const { return logicRulesMachinePtr_.get(); }
-
-  /**
-   * Returns a constant pointer to the logic rules.
-   *
-   * @return a constant pointer to the logic rules.
-   */
-  const HybridLogicRules* getLogicRulesPtr() const { return logicRulesMachinePtr_->getLogicRulesPtr(); }
-
-  /**
-   * Returns a pointer to the logic rules.
-   *
-   * @return a pointer to the logic rules.
-   */
-  HybridLogicRules* getLogicRulesPtr() { return logicRulesMachinePtr_->getLogicRulesPtr(); }
-
-  /**
-   * Sets logic rules.
-   *
-   * @param logicRules
-   */
-  virtual void setLogicRules(std::shared_ptr<HybridLogicRules> logicRules) { logicRulesMachinePtr_->setLogicRules(std::move(logicRules)); }
 
   /**
    * Gets the cost function desired trajectories.
@@ -293,6 +252,9 @@ class Solver_BASE {
   void swapCostDesiredTrajectories(CostDesiredTrajectories& costDesiredTrajectories) {
     costDesiredTrajectories_.swap(costDesiredTrajectories);
   };
+
+  /** gets mode schedule */
+  const ModeSchedule& getModeSchedule() const { return modeSchedule_; }
 
   /**
    * @brief Returns the optimized policy data.
@@ -369,9 +331,10 @@ class Solver_BASE {
   void postRun();
 
   std::mutex outputDisplayGuardMutex_;
-  logic_rules_machine_ptr_t logicRulesMachinePtr_;
   CostDesiredTrajectories costDesiredTrajectories_;
+  mode_schedule_manager_ptr_t modeScheduleManager_;
   synchronized_module_ptr_array_t synchronizedModules_;
+  ModeSchedule modeSchedule_;
 };
 
 }  // namespace ocs2

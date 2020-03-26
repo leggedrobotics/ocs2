@@ -113,7 +113,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(const system_observation_t& i
 
     // integrate nominal dynamics if available, otherwise fake simulation
     state_vector_t stateTemp = observation_.state();
-    if (mrt_.rolloutSet()) {
+    if (mrt_.isRolloutSet()) {
       mrt_.rolloutPolicy(time, stateTemp, timeStep, observation_.state(), observation_.input(), observation_.subsystem());
     } else {
       mrt_.evaluatePolicy(time + timeStep, stateTemp, observation_.state(), observation_.input(), observation_.subsystem());

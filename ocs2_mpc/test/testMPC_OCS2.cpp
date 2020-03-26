@@ -2,7 +2,6 @@
 
 #include <gtest/gtest.h>
 #include <ocs2_mpc/MPC_OCS2.h>
-#include <ocs2_core/logic/rules/NullLogicRules.h>
 
 using namespace ocs2;
 

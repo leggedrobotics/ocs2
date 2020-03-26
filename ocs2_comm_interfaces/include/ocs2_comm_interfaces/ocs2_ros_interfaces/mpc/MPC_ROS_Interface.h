@@ -53,7 +53,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/oc_data/PrimalSolution.h>
 
 // MPC messages
-#include <ocs2_msgs/mode_sequence.h>
+#include <ocs2_msgs/mode_schedule.h>
 #include <ocs2_msgs/mpc_flattened_controller.h>
 #include <ocs2_msgs/mpc_observation.h>
 #include <ocs2_msgs/mpc_target_trajectories.h>
@@ -97,8 +97,6 @@ class MPC_ROS_Interface {
   using input_state_matrix_t = typename mpc_t::input_state_matrix_t;
   using input_state_matrix_array_t = typename mpc_t::input_state_matrix_array_t;
 
-  using mode_sequence_template_t = typename mpc_t::mode_sequence_template_t;
-
   using system_observation_t = SystemObservation<STATE_DIM, INPUT_DIM>;
 
   using primal_solution_t = PrimalSolution<STATE_DIM, INPUT_DIM>;
@@ -106,8 +104,6 @@ class MPC_ROS_Interface {
 
   using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
   using controller_ptr_array_t = std::vector<controller_t*>;
-
-  using ros_msg_conversions_t = RosMsgConversions<STATE_DIM, INPUT_DIM>;
 
   using synchronized_ros_module_t = SolverSynchronizedRosModule<STATE_DIM, INPUT_DIM>;
   using synchronized_ros_module_ptr_array_t = std::vector<std::shared_ptr<synchronized_ros_module_t>>;
@@ -232,13 +228,6 @@ class MPC_ROS_Interface {
    */
   void mpcTargetTrajectoriesCallback(const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg);
 
-  /**
-   * The callback method which receives the user-defined mode sequence message.
-   *
-   * @param [in] msg: The mode sequence message.
-   */
-  void mpcModeSequenceCallback(const ocs2_msgs::mode_sequence::ConstPtr& msg);
-
  protected:
   /*
    * Variables
@@ -252,7 +241,6 @@ class MPC_ROS_Interface {
   // Publishers and subscribers
   ::ros::Subscriber mpcObservationSubscriber_;
   ::ros::Subscriber mpcTargetTrajectoriesSubscriber_;
-  ::ros::Subscriber mpcModeSequenceSubscriber_;
   ::ros::Publisher mpcPolicyPublisher_;
   ::ros::ServiceServer mpcResetServiceServer_;
 

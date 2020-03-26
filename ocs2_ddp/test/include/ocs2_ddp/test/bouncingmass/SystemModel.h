@@ -41,7 +41,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/initialization/SystemOperatingPoint.h>
-#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
 #include <ocs2_ddp/SLQ.h>
 #include <ocs2_ddp/SLQ_Settings.h>
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
@@ -63,31 +62,6 @@ using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
 
 using scalar_array_t = typename DIMENSIONS::scalar_array_t;
 using size_array_t = typename DIMENSIONS::size_array_t;
-
-using logic_template_type = ocs2::ModeSequenceTemplate<scalar_t>;
-using logic_rules_machine_t = ocs2::HybridLogicRulesMachine;
-
-class systemLogic final : public ocs2::HybridLogicRules {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = HybridLogicRules;
-
-  systemLogic() = default;
-
-  ~systemLogic() = default;
-
-  systemLogic(scalar_array_t switchingTimes, size_array_t subsystemsSequence)
-      : BASE(std::move(switchingTimes), std::move(subsystemsSequence)) {}
-
-  void rewind(const scalar_t& lowerBoundTime, const scalar_t& upperBoundTime) final override {}
-
-  void update() final override {}
-
- protected:
-  void insertModeSequenceTemplate(const logic_template_type& modeSequenceTemplate, const scalar_t& startTime,
-                                  const scalar_t& finalTime) override{};
-};
 
 class systemDynamics final : public ocs2::ControlledSystemBase<STATE_DIM, INPUT_DIM> {
  public:

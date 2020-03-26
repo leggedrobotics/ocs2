@@ -60,7 +60,6 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
   slqSettings.ddpSettings_.minRelCost_ = 1e-4;
   slqSettings.ddpSettings_.nThreads_ = 1;
-  slqSettings.ddpSettings_.noStateConstraints_ = true;
   slqSettings.ddpSettings_.checkNumericalStability_ = true;
   slqSettings.ddpSettings_.absTolODE_ = 1e-10;
   slqSettings.ddpSettings_.relTolODE_ = 1e-7;
@@ -187,12 +186,9 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   }
 
   // Test 2: Check of cost function
-  scalar_t costFunction;
-  scalar_t constraint1ISE;
-  scalar_t constraint2ISE;
-  slq.getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
+  auto performanceIndeces = slq.getPerformanceIndeces();
   const scalar_t expectedCost = 7.188299;
-  EXPECT_LT(std::fabs(costFunction - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_);
+  EXPECT_LT(std::fabs(performanceIndeces.totalCost - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_);
 }
 
 int main(int argc, char** argv) {

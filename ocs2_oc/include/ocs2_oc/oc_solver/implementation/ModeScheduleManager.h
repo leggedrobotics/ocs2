@@ -27,92 +27,66 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include "ocs2_oc/oc_solver/ModeScheduleManager.h"
+
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
-                                         const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
-                                         const operating_trajectories_base_t* operatingTrajectoriesPtr,
-                                         const scalar_array_t& partitioningTimes, const ILQR_Settings& ilqrSettings /* = ILQR_Settings()*/,
-                                         const MPC_Settings& mpcSettings /* = MPC_Settings()*/,
-                                         const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
-
-    : BASE(partitioningTimes, mpcSettings) {
-  // ILQR
-  ilqrPtr_.reset(new ilqr_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, ilqrSettings,
-                            heuristicsFunctionPtr));
-
-  // set base solver's pointer
-  BASE::setBaseSolverPtr(ilqrPtr_.get());
-}
+ModeScheduleManager<STATE_DIM, INPUT_DIM>::ModeScheduleManager(ModeSchedule modeSchedule)
+    : modeSchedule_(std::move(modeSchedule)), modeScheduleBuffer_(), modeScheduleUpdated_(false) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-ILQR_Settings& MPC_ILQR<STATE_DIM, INPUT_DIM>::ilqrSettings() {
-  return ilqrPtr_->settings();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-typename MPC_ILQR<STATE_DIM, INPUT_DIM>::ilqr_t* MPC_ILQR<STATE_DIM, INPUT_DIM>::getSolverPtr() {
-  return ilqrPtr_.get();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename MPC_ILQR<STATE_DIM, INPUT_DIM>::ilqr_t* MPC_ILQR<STATE_DIM, INPUT_DIM>::getSolverPtr() const {
-  return ilqrPtr_.get();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ILQR<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTime, const state_vector_t& initState,
-                                                         const scalar_t& finalTime) {
-  //*****************************************************************************************
-  // updating real-time iteration settings
-  //*****************************************************************************************
-  // number of iterations
-  if (BASE::initRun_ /*|| ilqrPtr_->getController().at(BASE::finalActivePartitionIndex_).empty()*/) {
-    ilqrPtr_->ddpSettings().maxNumIterations_ = BASE::mpcSettings_.initMaxNumIterations_;
-    ilqrPtr_->ddpSettings().maxLearningRate_ = BASE::mpcSettings_.initMaxLearningRate_;
-    ilqrPtr_->ddpSettings().minLearningRate_ = BASE::mpcSettings_.initMinLearningRate_;
-  } else {
-    ilqrPtr_->ddpSettings().maxNumIterations_ = BASE::mpcSettings_.runtimeMaxNumIterations_;
-    ilqrPtr_->ddpSettings().maxLearningRate_ = BASE::mpcSettings_.runtimeMaxLearningRate_;
-    ilqrPtr_->ddpSettings().minLearningRate_ = BASE::mpcSettings_.runtimeMinLearningRate_;
+void ModeScheduleManager<STATE_DIM, INPUT_DIM>::preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+                                                             const CostDesiredTrajectories& costDesiredTrajectory) {
+  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
+  if (modeScheduleUpdated_) {
+    modeScheduleUpdated_ = false;
+    swap(modeSchedule_, modeScheduleBuffer_);
   }
+  preSolverRunImpl(initTime, finalTime, currentState, costDesiredTrajectory, modeSchedule_);
+}
 
-  // use parallel Riccati solver at each call of realtime-iteration ILQR
-  if (!BASE::initRun_) {
-    ilqrPtr_->useParallelRiccatiSolverFromInitItr(BASE::mpcSettings_.useParallelRiccatiSolver_ && BASE::mpcSettings_.recedingHorizon_);
-  } else {
-    ilqrPtr_->useParallelRiccatiSolverFromInitItr(false);
-  }
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+const ModeSchedule& ModeScheduleManager<STATE_DIM, INPUT_DIM>::getModeSchedule() const {
+  return modeSchedule_;
+}
 
-  //*****************************************************************************************
-  // calculate controller
-  //*****************************************************************************************
-  if (BASE::mpcSettings_.coldStart_ || BASE::initRun_) {
-    if (BASE::mpcSettings_.debugPrint_) {
-      std::cerr << "### Using cold initialization." << std::endl;
-    }
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+ModeSchedule ModeScheduleManager<STATE_DIM, INPUT_DIM>::getModeScheduleImage() const {
+  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
+  return modeSchedule_;
+}
 
-    ilqrPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_);
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ModeScheduleManager<STATE_DIM, INPUT_DIM>::setModeSchedule(const ModeSchedule& modeSchedule) {
+  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
+  modeScheduleUpdated_ = true;
+  modeScheduleBuffer_ = modeSchedule;
+}
 
-  } else {
-    ilqrPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_, typename ilqr_t::controller_ptr_array_t());
-  }
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void ModeScheduleManager<STATE_DIM, INPUT_DIM>::setModeSchedule(ModeSchedule&& modeSchedule) {
+  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
+  modeScheduleUpdated_ = true;
+  modeScheduleBuffer_ = std::move(modeSchedule);
 }
 
 }  // namespace ocs2

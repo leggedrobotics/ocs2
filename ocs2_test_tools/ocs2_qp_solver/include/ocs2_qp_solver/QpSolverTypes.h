@@ -33,8 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Dense>
-#include <vector>
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 namespace qp_solver {
@@ -44,17 +43,17 @@ namespace qp_solver {
  */
 struct ScalarFunctionQuadraticApproximation {
   /** Second derivative w.r.t state */
-  Eigen::MatrixXd dfdxx;
+  dynamic_matrix_t dfdxx;
   /** Second derivative w.r.t input (lhs) and state (rhs) */
-  Eigen::MatrixXd dfdux;
+  dynamic_matrix_t dfdux;
   /** Second derivative w.r.t input */
-  Eigen::MatrixXd dfduu;
+  dynamic_matrix_t dfduu;
   /** First derivative w.r.t state */
-  Eigen::VectorXd dfdx;
+  dynamic_vector_t dfdx;
   /** First derivative w.r.t input */
-  Eigen::VectorXd dfdu;
+  dynamic_vector_t dfdu;
   /** Constant term */
-  double f = 0.;
+  scalar_t f = 0.;
 };
 
 /**
@@ -62,11 +61,11 @@ struct ScalarFunctionQuadraticApproximation {
  */
 struct VectorFunctionLinearApproximation {
   /** Derivative w.r.t state */
-  Eigen::MatrixXd dfdx;
+  dynamic_matrix_t dfdx;
   /** Derivative w.r.t input */
-  Eigen::MatrixXd dfdu;
+  dynamic_matrix_t dfdu;
   /** Constant term */
-  Eigen::VectorXd f;
+  dynamic_vector_t f;
 };
 
 /** Defines the quadratic cost and  linear dynamics at a give stage */

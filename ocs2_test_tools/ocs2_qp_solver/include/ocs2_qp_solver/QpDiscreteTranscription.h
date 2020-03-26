@@ -71,7 +71,7 @@ LinearQuadraticStage discretizeStage(CostWrapper& cost, SystemWrapper& system, T
  * @param dt : duration of the interval
  * @return Quadratic approximation of the accumulated costs
  */
-ScalarFunctionQuadraticApproximation discretizeCost(CostWrapper& cost, TrajectoryRef start, double dt);
+ScalarFunctionQuadraticApproximation discretizeCost(CostWrapper& cost, TrajectoryRef start, scalar_t dt);
 
 /**
  * Computes the discrete dynamics from a start condition over a dt interval
@@ -80,7 +80,7 @@ ScalarFunctionQuadraticApproximation discretizeCost(CostWrapper& cost, Trajector
  * @param dt : duration of the interval
  * @return Linear approximation of the discrete dynamcis
  */
-VectorFunctionLinearApproximation discretizeDynamics(SystemWrapper& system, TrajectoryRef start, double dt);
+VectorFunctionLinearApproximation discretizeDynamics(SystemWrapper& system, TrajectoryRef start, scalar_t dt);
 
 }  // namespace qp_solver
 }  // namespace ocs2

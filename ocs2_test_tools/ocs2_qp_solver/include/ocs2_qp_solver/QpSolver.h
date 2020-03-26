@@ -49,7 +49,7 @@ namespace qp_solver {
  * @return trajectory of state and inputs (in relative coordinates), .i.e. dx(t), du(t)
  */
 ContinuousTrajectory solveLinearQuadraticApproximation(const std::vector<LinearQuadraticStage>& lqApproximation,
-                                                       const ContinuousTrajectory& nominalTrajectory, const Eigen::VectorXd& initialState);
+                                                       const ContinuousTrajectory& nominalTrajectory, const dynamic_vector_t& initialState);
 
 /**
  * Constructs the matrix of stacked dynamic constraints A w + b = 0
@@ -67,7 +67,7 @@ ContinuousTrajectory solveLinearQuadraticApproximation(const std::vector<LinearQ
  * @param numDecisionVariables : size of w
  * @return linear constraints in w
  */
-VectorFunctionLinearApproximation getConstraintMatrices(const std::vector<LinearQuadraticStage>& lqp, const Eigen::VectorXd& dx0,
+VectorFunctionLinearApproximation getConstraintMatrices(const std::vector<LinearQuadraticStage>& lqp, const dynamic_vector_t& dx0,
                                                         int numConstraints, int numDecisionVariables);
 
 /**
@@ -95,8 +95,8 @@ ScalarFunctionQuadraticApproximation getCostMatrices(const std::vector<LinearQua
  *
  * @return {w, lambda} at the solution, where lambda are the lagrange multipliers
  */
-std::pair<Eigen::VectorXd, Eigen::VectorXd> solveDenseQp(const ScalarFunctionQuadraticApproximation& cost,
-                                                         const VectorFunctionLinearApproximation& constraints);
+std::pair<dynamic_vector_t, dynamic_vector_t> solveDenseQp(const ScalarFunctionQuadraticApproximation& cost,
+                                                           const VectorFunctionLinearApproximation& constraints);
 
 /**
  * Reconstructs the optimal state and input trajectory recursively based on the full qp solution vector
@@ -105,9 +105,9 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> solveDenseQp(const ScalarFunctionQua
  * @param w : full qp solution vector
  * @return { state_trajectory, input_trajectory }
  */
-std::pair<std::vector<Eigen::VectorXd>, std::vector<Eigen::VectorXd>> getStateAndInputTrajectory(const std::vector<int>& numStates,
-                                                                                                 const std::vector<int>& numInputs,
-                                                                                                 const Eigen::VectorXd& w);
+std::pair<std::vector<dynamic_vector_t>, std::vector<dynamic_vector_t>> getStateAndInputTrajectory(const std::vector<int>& numStates,
+                                                                                                   const std::vector<int>& numInputs,
+                                                                                                   const dynamic_vector_t& w);
 
 }  // namespace qp_solver
 }  // namespace ocs2

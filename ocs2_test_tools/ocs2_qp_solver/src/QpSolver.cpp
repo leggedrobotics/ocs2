@@ -74,7 +74,8 @@ int getNumConstraints(const std::vector<int>& numStates) {
 }
 
 ContinuousTrajectory solveLinearQuadraticApproximation(const std::vector<LinearQuadraticStage>& lqApproximation,
-                                                       const ContinuousTrajectory& nominalTrajectory, const Eigen::VectorXd& initialState) {
+                                                       const ContinuousTrajectory& nominalTrajectory,
+                                                       const dynamic_vector_t& initialState) {
   // Extract sizes
   std::vector<int> numStates;
   std::vector<int> numInputs;
@@ -98,7 +99,7 @@ ContinuousTrajectory solveLinearQuadraticApproximation(const std::vector<LinearQ
   return deltaSolution;
 }
 
-VectorFunctionLinearApproximation getConstraintMatrices(const std::vector<LinearQuadraticStage>& lqp, const Eigen::VectorXd& dx0,
+VectorFunctionLinearApproximation getConstraintMatrices(const std::vector<LinearQuadraticStage>& lqp, const dynamic_vector_t& dx0,
                                                         int numConstraints, int numDecisionVariables) {
   const int N = lqp.size() - 1;
 
@@ -124,7 +125,7 @@ VectorFunctionLinearApproximation getConstraintMatrices(const std::vector<Linear
 
     // Add [A, B, -I]
     A.block(currRow, currCol, nx_Next, nx_k + nu_k + nx_Next) << dynamics_k.dfdx, dynamics_k.dfdu,
-        -Eigen::MatrixXd::Identity(nx_Next, nx_Next);
+        -dynamic_matrix_t::Identity(nx_Next, nx_Next);
     // Add [b]
     b.segment(currRow, nx_Next) << dynamics_k.f;
 
@@ -169,29 +170,29 @@ ScalarFunctionQuadraticApproximation getCostMatrices(const std::vector<LinearQua
   return qpCost;
 }
 
-std::pair<Eigen::VectorXd, Eigen::VectorXd> solveDenseQp(const ScalarFunctionQuadraticApproximation& cost,
-                                                         const VectorFunctionLinearApproximation& constraints) {
+std::pair<dynamic_vector_t, dynamic_vector_t> solveDenseQp(const ScalarFunctionQuadraticApproximation& cost,
+                                                           const VectorFunctionLinearApproximation& constraints) {
   const int m = constraints.dfdx.rows();
   const int n = constraints.dfdx.cols();
 
   // Assemble KKT condition
-  Eigen::MatrixXd kktMatrix(n + m, n + m);
-  Eigen::VectorXd kktRhs(n + m);
-  kktMatrix << cost.dfdxx, constraints.dfdx.transpose(), constraints.dfdx, Eigen::MatrixXd::Zero(m, m);
+  dynamic_matrix_t kktMatrix(n + m, n + m);
+  dynamic_vector_t kktRhs(n + m);
+  kktMatrix << cost.dfdxx, constraints.dfdx.transpose(), constraints.dfdx, dynamic_matrix_t::Zero(m, m);
   kktRhs << -cost.dfdx, -constraints.f;
 
   assert(kktMatrix.fullPivLu().rank() == n + m);  // prerequisite for the LU factorization, and the solution would be non-unique.
-  Eigen::VectorXd sol = kktMatrix.lu().solve(kktRhs);
+  dynamic_vector_t sol = kktMatrix.lu().solve(kktRhs);
   return {sol.head(n), sol.tail(m)};
 }
 
-std::pair<std::vector<Eigen::VectorXd>, std::vector<Eigen::VectorXd>> getStateAndInputTrajectory(const std::vector<int>& numStates,
-                                                                                                 const std::vector<int>& numInputs,
-                                                                                                 const Eigen::VectorXd& w) {
+std::pair<std::vector<dynamic_vector_t>, std::vector<dynamic_vector_t>> getStateAndInputTrajectory(const std::vector<int>& numStates,
+                                                                                                   const std::vector<int>& numInputs,
+                                                                                                   const dynamic_vector_t& w) {
   const int N = numInputs.size();
 
-  std::vector<Eigen::VectorXd> stateTrajectory;
-  std::vector<Eigen::VectorXd> inputTrajectory;
+  std::vector<dynamic_vector_t> stateTrajectory;
+  std::vector<dynamic_vector_t> inputTrajectory;
   stateTrajectory.reserve(N + 1);
   inputTrajectory.reserve(N);
 

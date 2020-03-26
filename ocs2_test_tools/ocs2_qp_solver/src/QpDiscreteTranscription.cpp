@@ -68,7 +68,7 @@ LinearQuadraticStage discretizeStage(CostWrapper& cost, SystemWrapper& system, T
   return lqStage;
 }
 
-ScalarFunctionQuadraticApproximation discretizeCost(CostWrapper& cost, TrajectoryRef start, double dt) {
+ScalarFunctionQuadraticApproximation discretizeCost(CostWrapper& cost, TrajectoryRef start, scalar_t dt) {
   // Approximates the cost accumulation of the dt interval.
   // Use Euler integration
   const auto continuousCosts = cost.getQuadraticApproximation(start.t, start.x, start.u);
@@ -82,7 +82,7 @@ ScalarFunctionQuadraticApproximation discretizeCost(CostWrapper& cost, Trajector
   return discreteCosts;
 }
 
-VectorFunctionLinearApproximation discretizeDynamics(SystemWrapper& system, TrajectoryRef start, double dt) {
+VectorFunctionLinearApproximation discretizeDynamics(SystemWrapper& system, TrajectoryRef start, scalar_t dt) {
   // Forward Euler discretization
   // x[k+1] = x[k] + dt * dxdt[k]
   // x[k+1] = (x0[k] + dx[k]) + dt * dxdt[k]

@@ -68,20 +68,20 @@ class SystemWrapper {
   SystemWrapper& operator=(SystemWrapper&&) noexcept = default;
 
   /** Evaluates the flowmap */
-  Eigen::VectorXd getFlowMap(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u);
+  dynamic_vector_t getFlowMap(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u);
 
   /** Gets linear approximation */
-  VectorFunctionLinearApproximation getLinearApproximation(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u);
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u);
 
  private:
   /** Base class for a handle, virtualizes the access to the templated system dynamics*/
   struct SystemHandleBase {
     virtual ~SystemHandleBase() = default;
     virtual std::unique_ptr<SystemHandleBase> clone() const = 0;
-    virtual void setCurrentStateAndControl(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u) = 0;
-    virtual Eigen::VectorXd flowMap(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u) = 0;
-    virtual Eigen::MatrixXd flowMapDerivativeState() = 0;
-    virtual Eigen::MatrixXd flowMapDerivativeInput() = 0;
+    virtual void setCurrentStateAndControl(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u) = 0;
+    virtual dynamic_vector_t flowMap(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u) = 0;
+    virtual dynamic_matrix_t flowMapDerivativeState() = 0;
+    virtual dynamic_matrix_t flowMapDerivativeInput() = 0;
   };
   /** Only data member: contains a polymorphic handle that wraps the system dynamics function */
   std::unique_ptr<SystemHandleBase> p_;
@@ -104,20 +104,20 @@ class SystemWrapper {
     // Pointer to the actual system dynamics
     std::unique_ptr<SystemDynamics_t> hp_;
     // All function below wrap fixed size functions to dynamic size
-    void setCurrentStateAndControl(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u) override {
+    void setCurrentStateAndControl(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u) override {
       hp_->setCurrentStateAndControl(t, x, u);
     }
-    Eigen::VectorXd flowMap(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u) override {
+    dynamic_vector_t flowMap(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u) override {
       state_vector_t dxdt;
       hp_->computeFlowMap(t, x, u, dxdt);
       return dxdt;
     }
-    Eigen::MatrixXd flowMapDerivativeState() override {
+    dynamic_matrix_t flowMapDerivativeState() override {
       state_matrix_t dfdx;
       hp_->getFlowMapDerivativeState(dfdx);
       return dfdx;
     }
-    Eigen::MatrixXd flowMapDerivativeInput() override {
+    dynamic_matrix_t flowMapDerivativeInput() override {
       state_input_matrix_t dfdu;
       hp_->getFlowMapDerivativeInput(dfdu);
       return dfdu;

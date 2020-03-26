@@ -48,7 +48,7 @@ TEST_F(Ocs2QpSolverTest, satisfiesDynamics) {
   state_vector_t x = x0;
   ocs2::qp_solver::SystemWrapper systemWrapper(*system);
   for (int k = 0; k < N; ++k) {
-    double dt = solution.timeTrajectory[k + 1] - solution.timeTrajectory[k];
+    auto dt = solution.timeTrajectory[k + 1] - solution.timeTrajectory[k];
     x += dt * systemWrapper.getFlowMap(solution.timeTrajectory[k], x, solution.inputTrajectory[k]);
     ASSERT_TRUE(x.isApprox(solution.stateTrajectory[k + 1]));
   }
@@ -75,8 +75,8 @@ TEST_F(Ocs2QpSolverTest, knownSolutionAtOrigin) {
   // Obtain solution, with non-zero linearization
   auto zeroSolution = solveLinearQuadraticOptimalControlProblem(*zeroCost, *system, linearization, zeroX0);
 
-  std::vector<Eigen::VectorXd> allStatesZero(N + 1, Eigen::VectorXd::Zero(STATE_DIM));
-  std::vector<Eigen::VectorXd> allInputsZero(N, Eigen::VectorXd::Zero(INPUT_DIM));
+  std::vector<ocs2::dynamic_vector_t> allStatesZero(N + 1, ocs2::dynamic_vector_t::Zero(STATE_DIM));
+  std::vector<ocs2::dynamic_vector_t> allInputsZero(N, ocs2::dynamic_vector_t::Zero(INPUT_DIM));
   ASSERT_TRUE(ocs2::qp_solver::isEqual(zeroSolution.stateTrajectory, allStatesZero));
   ASSERT_TRUE(ocs2::qp_solver::isEqual(zeroSolution.inputTrajectory, allInputsZero));
 }

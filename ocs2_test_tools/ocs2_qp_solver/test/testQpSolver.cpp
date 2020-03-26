@@ -18,7 +18,7 @@ class QpSolverTest : public testing::Test {
   QpSolverTest() {
     srand(0);
     lqProblem = ocs2::qp_solver::generateRandomProblem(N_, nx_, nu_);
-    x0 = Eigen::VectorXd::Random(nx_);
+    x0 = ocs2::dynamic_vector_t::Random(nx_);
 
     cost = ocs2::qp_solver::getCostMatrices(lqProblem, numDecisionVariables);
     constraints = ocs2::qp_solver::getConstraintMatrices(lqProblem, x0, numConstraints, numDecisionVariables);
@@ -26,11 +26,11 @@ class QpSolverTest : public testing::Test {
   }
 
   std::vector<ocs2::qp_solver::LinearQuadraticStage> lqProblem;
-  Eigen::VectorXd x0;
+  ocs2::dynamic_vector_t x0;
   ocs2::qp_solver::ScalarFunctionQuadraticApproximation cost;
   ocs2::qp_solver::VectorFunctionLinearApproximation constraints;
-  Eigen::VectorXd primalSolution;
-  Eigen::VectorXd dualSolution;
+  ocs2::dynamic_vector_t primalSolution;
+  ocs2::dynamic_vector_t dualSolution;
 };
 
 TEST_F(QpSolverTest, constraintSatisfaction) {

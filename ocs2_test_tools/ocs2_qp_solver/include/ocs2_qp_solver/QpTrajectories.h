@@ -33,8 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Dense>
-#include <vector>
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 namespace qp_solver {
@@ -42,29 +41,29 @@ namespace qp_solver {
 /** A time, state, input trajectory. The last timepoint has only a state, no input */
 struct ContinuousTrajectory {
   /** time trajectory, size N+1 */
-  std::vector<double> timeTrajectory;
+  std::vector<scalar_t> timeTrajectory;
   /** trajectory of state vectors, size N+1 */
-  std::vector<Eigen::VectorXd> stateTrajectory;
+  std::vector<dynamic_vector_t> stateTrajectory;
   /** trajectory of input vectors, size N */
-  std::vector<Eigen::VectorXd> inputTrajectory;
+  std::vector<dynamic_vector_t> inputTrajectory;
 };
 
 /** Reference to a point along a trajectory. Does not own the state-input data. */
 struct TrajectoryRef {
   /** time */
-  double t;
+  scalar_t t;
   /** state */
-  const Eigen::VectorXd& x;
+  const dynamic_vector_t& x;
   /** input */
-  const Eigen::VectorXd& u;
+  const dynamic_vector_t& u;
 };
 
 /** Reference to the state at a point along a trajectory. Does not own the state data. */
 struct StateTrajectoryRef {
   /** time */
-  double t;
+  scalar_t t;
   /** state */
-  const Eigen::VectorXd& x;
+  const dynamic_vector_t& x;
 };
 
 /** Adds state and inputs of two trajectories, time is not added. */

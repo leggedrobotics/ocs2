@@ -36,18 +36,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace qp_solver {
 
-ContinuousTrajectory add(const ContinuousTrajectory& t0, const ContinuousTrajectory& t1) {
-  const int N = t0.timeTrajectory.size() - 1;
-  ContinuousTrajectory sum;
-  sum.timeTrajectory = t0.timeTrajectory;
-  sum.inputTrajectory.reserve(N);
-  sum.stateTrajectory.reserve(N + 1);
+ContinuousTrajectory operator+(const ContinuousTrajectory& lhs, const ContinuousTrajectory& rhs) {
+  // Copy lhs into sum
+  ContinuousTrajectory sum(lhs);
 
-  for (int k = 0; k < N; ++k) {
-    sum.inputTrajectory.emplace_back(t0.inputTrajectory[k] + t1.inputTrajectory[k]);
-    sum.stateTrajectory.emplace_back(t0.stateTrajectory[k] + t1.stateTrajectory[k]);
+  for (int k = 0; k < sum.inputTrajectory.size(); ++k) {
+    sum.inputTrajectory[k] += rhs.inputTrajectory[k];
   }
-  sum.stateTrajectory.emplace_back(t0.stateTrajectory[N] + t1.stateTrajectory[N]);
+
+  // Sum states
+  for (int k = 0; k < sum.stateTrajectory.size(); ++k) {
+    sum.stateTrajectory[k] += rhs.stateTrajectory[k];
+  }
   return sum;
 }
 

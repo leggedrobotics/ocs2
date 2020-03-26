@@ -48,8 +48,8 @@ ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostWrapper costF
   // Solve for update step
   const auto relativeSolution = solveLinearQuadraticApproximation(lqApproximation, nominalTrajectory, initialState);
 
-  // Take a full step: Add update to linearization
-  return add(nominalTrajectory, relativeSolution);
+  // Take a full step: Add update to nominal trajectory
+  return nominalTrajectory + relativeSolution;
 }
 
 }  // namespace qp_solver

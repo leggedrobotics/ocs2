@@ -48,6 +48,9 @@ struct ContinuousTrajectory {
   std::vector<dynamic_vector_t> inputTrajectory;
 };
 
+/** Adds state and inputs of two trajectories, time is not added. */
+ContinuousTrajectory operator+(const ContinuousTrajectory& lhs, const ContinuousTrajectory& rhs);
+
 /** Reference to a point along a trajectory. Does not own the state-input data. */
 struct TrajectoryRef {
   /** time */
@@ -65,9 +68,6 @@ struct StateTrajectoryRef {
   /** state */
   const dynamic_vector_t& x;
 };
-
-/** Adds state and inputs of two trajectories, time is not added. */
-ContinuousTrajectory add(const ContinuousTrajectory& t0, const ContinuousTrajectory& t1);
 
 }  // namespace qp_solver
 }  // namespace ocs2

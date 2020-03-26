@@ -62,7 +62,7 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& c
  * @param end : linearization point at the end of the stage
  * @return discreted stage
  */
-LinearQuadraticStage discretizeStage(CostWrapper& cost, SystemWrapper& system, TrajectoryRef start, StateTrajectoryRef end);
+LinearQuadraticStage approximateStage(CostWrapper& cost, SystemWrapper& system, TrajectoryRef start, StateTrajectoryRef end);
 
 /**
  * Computes the cost integral from a start condition over a dt interval
@@ -71,7 +71,7 @@ LinearQuadraticStage discretizeStage(CostWrapper& cost, SystemWrapper& system, T
  * @param dt : duration of the interval
  * @return Quadratic approximation of the accumulated costs
  */
-ScalarFunctionQuadraticApproximation discretizeCost(CostWrapper& cost, TrajectoryRef start, scalar_t dt);
+ScalarFunctionQuadraticApproximation approximateCost(CostWrapper& cost, TrajectoryRef start, scalar_t dt);
 
 /**
  * Computes the discrete dynamics from a start condition over a dt interval
@@ -80,7 +80,7 @@ ScalarFunctionQuadraticApproximation discretizeCost(CostWrapper& cost, Trajector
  * @param dt : duration of the interval
  * @return Linear approximation of the discrete dynamcis
  */
-VectorFunctionLinearApproximation discretizeDynamics(SystemWrapper& system, TrajectoryRef start, scalar_t dt);
+VectorFunctionLinearApproximation approximateDynamics(SystemWrapper& system, TrajectoryRef start, scalar_t dt);
 
 }  // namespace qp_solver
 }  // namespace ocs2

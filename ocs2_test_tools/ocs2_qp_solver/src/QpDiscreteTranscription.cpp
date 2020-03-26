@@ -62,7 +62,8 @@ LinearQuadraticStage approximateStage(CostWrapper& cost, SystemWrapper& system, 
 
   // Linearized Dynamics after discretization: x0[k+1] + dx[k+1] = A dx[k] + B du[k] + F(x0[k], u0[k])
   lqStage.dynamics = approximateDynamics(system, start, dt);
-  // Adapt the offset to account for the defect along the linearization: dx[k+1] = A dx[k] + B du[k] + F(x0[k], u0[k]) - x0[k+1]
+  // Adapt the offset to account for discretization and the nominal trajectory :
+  // dx[k+1] = A dx[k] + B du[k] + F(x0[k], u0[k]) - x0[k+1]
   lqStage.dynamics.f -= end.x;
 
   return lqStage;

@@ -205,7 +205,7 @@ class PythonInterface {
    * @param[in] x state
    * @return value function state derivative at given t-x
    */
-  state_vector_t getValueFunctionStateDerivative(double t, Eigen::Ref<const state_vector_t> x);
+  dynamic_vector_t getValueFunctionStateDerivative(double t, Eigen::Ref<const state_vector_t> x);
 
   /**
    * @brief Access state-input constraint value

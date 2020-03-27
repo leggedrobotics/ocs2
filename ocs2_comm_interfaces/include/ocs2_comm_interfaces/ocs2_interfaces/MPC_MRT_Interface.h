@@ -122,7 +122,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] time the query time
    * @param [out] Vx partial derivative of the value function at requested time at nominal state
    */
-  void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, state_vector_t& Vx);
+  void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, dynamic_vector_t& Vx);
 
   /**
    * @brief getLinearFeedbackGain retrieves K matrix from solver

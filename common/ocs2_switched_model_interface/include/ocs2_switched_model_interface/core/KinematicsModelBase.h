@@ -34,14 +34,13 @@ class KinematicsModelBase {
   virtual vector3_s_t<SCALAR_T> positionBaseToFootInBaseFrame(size_t footIndex,
                                                               const joint_coordinate_s_t<SCALAR_T>& jointPositions) const = 0;
 
-  std::array<vector3_s_t<SCALAR_T>, NUM_CONTACT_POINTS> positionBaseToFeetInBaseFrame(
-      const joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
+  feet_array_t<vector3_s_t<SCALAR_T>> positionBaseToFeetInBaseFrame(const joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
 
   vector3_s_t<SCALAR_T> footPositionInOriginFrame(size_t footIndex, const base_coordinate_s_t<SCALAR_T>& basePoseInOriginFrame,
                                                   const joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
 
-  std::array<vector3_s_t<SCALAR_T>, NUM_CONTACT_POINTS> feetPositionsInOriginFrame(
-      const base_coordinate_s_t<SCALAR_T>& basePose, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
+  feet_array_t<vector3_s_t<SCALAR_T>> feetPositionsInOriginFrame(const base_coordinate_s_t<SCALAR_T>& basePose,
+                                                                 const joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
 
   virtual joint_jacobian_t baseToFootJacobianInBaseFrame(size_t footIndex, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const = 0;
 

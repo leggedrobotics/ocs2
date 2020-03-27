@@ -192,7 +192,7 @@ const typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_array_t& GaussNewton
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-auto GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getPerformanceIndeces() const -> PerformanceIndex {
+const PerformanceIndex& GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getPerformanceIndeces() const {
   return performanceIndex_;
 }
 
@@ -200,7 +200,7 @@ auto GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getPerformanceIndeces() const -> Perf
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-auto GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getIterationsLog() const -> std::vector<PerformanceIndex> {
+const std::vector<PerformanceIndex>& GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getIterationsLog() const {
   return performanceIndexHistory_;
 }
 
@@ -742,7 +742,7 @@ typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::printRolloutInfo() const {
-  std::cerr << performanceIndex_;
+  std::cerr << performanceIndex_ << '\n';
   std::cerr << "forward pass average time step:  " << avgTimeStepFP_ * 1e+3 << " [ms]." << std::endl;
   std::cerr << "backward pass average time step: " << avgTimeStepBP_ * 1e+3 << " [ms]." << std::endl;
 }
@@ -754,7 +754,7 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::calculateRolloutConstraintsISE(
     const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
     const state_vector_array2_t& stateTrajectoriesStock, const input_vector_array2_t& inputTrajectoriesStock,
-    scalar_t& stateInputEqConstraintISE, scalar_t& stateEqConstraintISE, scalar_t& stateEqFinalConstraintISE,
+    scalar_t& stateInputEqConstraintISE, scalar_t& stateEqConstraintISE, scalar_t& stateEqFinalConstraintSSE,
     scalar_t& inequalityConstraintISE, scalar_t& inequalityConstraintPenalty, size_t workerIndex /*= 0*/) {
   size_t maxSize = 0;
   for (size_t i = 0; i < numPartitions_; i++) {
@@ -771,7 +771,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::calculateRolloutConstraintsISE(
   stateInputEqConstraintISE = 0.0;
   inequalityConstraintPenalty = 0.0;
   inequalityConstraintISE = 0.0;
-  stateEqFinalConstraintISE = 0.0;
+  stateEqFinalConstraintSSE = 0.0;
   for (size_t i = 0; i < numPartitions_; i++) {
     stateEqualityNorm2Trajectory.clear();
     stateFinalEqualityNorm2Trajectory.clear();
@@ -839,7 +839,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::calculateRolloutConstraintsISE(
 
     // final state equality constraint's SSE
     for (size_t ke = 0; ke < postEventIndicesStock[i].size(); ke++) {
-      stateEqFinalConstraintISE += stateFinalEqualityNorm2Trajectory[ke];
+      stateEqFinalConstraintSSE += stateFinalEqualityNorm2Trajectory[ke];
     }  // end of k loop
 
   }  // end of i loop
@@ -930,7 +930,7 @@ typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM
     // calculate rollout constraints
     calculateRolloutConstraintsISE(timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock,
                                    performanceIndex.stateInputEqConstraintISE, performanceIndex.stateEqConstraintISE,
-                                   performanceIndex.stateEqFinalConstraintISE, performanceIndex.inequalityConstraintISE,
+                                   performanceIndex.stateEqFinalConstraintSSE, performanceIndex.inequalityConstraintISE,
                                    performanceIndex.inequalityConstraintPenalty, workerIndex);
     // calculate rollout cost
     performanceIndex.totalCost =
@@ -941,17 +941,11 @@ typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM
 
     // display
     if (ddpSettings_.displayInfo_) {
-      std::string linesearchDisplay;
-      linesearchDisplay = "    [Thread " + std::to_string(workerIndex) + "] - step length " + std::to_string(stepLength) +
-                          "    merit: " + std::to_string(performanceIndex.merit) +
-                          "    cost: " + std::to_string(performanceIndex.totalCost) + "\n" +
-                          "    state-input equality constraint ISE: " + std::to_string(performanceIndex.stateInputEqConstraintISE) +
-                          "    state equality constraint ISE: " + std::to_string(performanceIndex.stateEqConstraintISE) +
-                          "    state equality final constraint ISE: " + std::to_string(performanceIndex.stateEqFinalConstraintISE) +
-                          "    inequality penalty: " + std::to_string(performanceIndex.inequalityConstraintPenalty) +
-                          "    inequality ISE: " + std::to_string(performanceIndex.inequalityConstraintISE) + "\n" +
-                          "    forward pass average time step: " + std::to_string(avgTimeStepFP * 1e+3) + " [ms].";
-      BASE::printString(linesearchDisplay);
+      std::stringstream linesearchDisplay;
+      linesearchDisplay << "    [Thread " << workerIndex << "] - step length " << stepLength << '\n';
+      linesearchDisplay << std::setw(4) << performanceIndex << '\n';
+      linesearchDisplay << "    forward pass average time step: " << avgTimeStepFP * 1e+3 << " [ms].\n";
+      BASE::printString(linesearchDisplay.str());
     }
 
   } catch (const std::exception& error) {
@@ -1008,7 +1002,9 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::lineSearch(LineSearchModule& lineSear
   runParallel(task, ddpSettings_.nThreads_);
 
   // revitalize all integrators
-  event_handler_t::deactivateKillIntegration();
+  for (auto& rolloutPtr : dynamicsForwardRolloutPtrStock_) {
+    rolloutPtr->reactivateRollout();
+  }
 
   // clear the feedforward increments
   for (auto& controller : nominalControllersStock_) {
@@ -1107,7 +1103,9 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::lineSearchTask(LineSearchModule& line
 
     // kill other ongoing line search tasks
     if (terminateLinesearchTasks) {
-      event_handler_t::activateKillIntegration();  // kill all integrators
+      for (auto& rolloutPtr : dynamicsForwardRolloutPtrStock_) {
+        rolloutPtr->abortRollout();
+      }
       if (ddpSettings_.displayInfo_) {
         BASE::printString("    LS: interrupt other rollout's integrations.");
       }
@@ -1130,7 +1128,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::calculateRolloutMerit(PerformanceInde
 
   // final state-only equality constraints
   performanceIndex.merit +=
-      constraintPenaltyCoefficients_.stateEqualityFinalPenaltyCoeff * std::sqrt(performanceIndex.stateEqFinalConstraintISE);
+      constraintPenaltyCoefficients_.stateEqualityFinalPenaltyCoeff * std::sqrt(performanceIndex.stateEqFinalConstraintSSE);
 
   // intermediate state-input equality constraints
   performanceIndex.merit +=
@@ -1740,7 +1738,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::initializeConstraintPenalties() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::updateConstraintPenalties(scalar_t stateEqConstraintISE, scalar_t stateEqFinalConstraintISE,
+void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::updateConstraintPenalties(scalar_t stateEqConstraintISE, scalar_t stateEqFinalConstraintSSE,
                                                                      scalar_t stateInputEqConstraintISE) {
   // state-only equality penalty
   if (stateEqConstraintISE > ddpSettings_.constraintTolerance_) {
@@ -1749,7 +1747,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::updateConstraintPenalties(scalar_t st
   }
 
   // final state-only equality
-  if (stateEqFinalConstraintISE > ddpSettings_.constraintTolerance_) {
+  if (stateEqFinalConstraintSSE > ddpSettings_.constraintTolerance_) {
     constraintPenaltyCoefficients_.stateEqualityFinalPenaltyCoeff *= ddpSettings_.constraintPenaltyIncreaseRate_;
     constraintPenaltyCoefficients_.stateEqualityFinalPenaltyTol = ddpSettings_.constraintTolerance_;
   }
@@ -1970,7 +1968,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::runIteration() {
   searchStrategyTimer_.endTimer();
 
   // update the constraint penalty coefficients
-  updateConstraintPenalties(performanceIndex_.stateEqConstraintISE, performanceIndex_.stateEqFinalConstraintISE,
+  updateConstraintPenalties(performanceIndex_.stateEqConstraintISE, performanceIndex_.stateEqFinalConstraintSSE,
                             performanceIndex_.stateInputEqConstraintISE);
 
   // linearizing the dynamics and quadratizing the cost function along nominal trajectories
@@ -2097,6 +2095,8 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const stat
   initState_ = initState;
   initTime_ = initTime;
   finalTime_ = finalTime;
+
+  performanceIndexHistory_.clear();
 
   // check if after the truncation the internal controller is empty
   isInitInternalControllerEmpty_ = false;

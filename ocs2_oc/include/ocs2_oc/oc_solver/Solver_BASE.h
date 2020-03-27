@@ -194,7 +194,7 @@ class Solver_BASE {
    *
    * @return PerformanceIndex of the last optimized trajectory.
    */
-  virtual PerformanceIndex getPerformanceIndeces() const = 0;
+  virtual const PerformanceIndex& getPerformanceIndeces() const = 0;
 
   /**
    * Gets number of iterations.
@@ -208,7 +208,7 @@ class Solver_BASE {
    *
    * @return An array of PerformanceIndices.
    */
-  virtual std::vector<PerformanceIndex> getIterationsLog() const = 0;
+  virtual const std::vector<PerformanceIndex>& getIterationsLog() const = 0;
 
   /**
    * Gets final time of optimization

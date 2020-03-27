@@ -129,19 +129,18 @@ TEST(exp0_gddp_test, optimum_gradient_test) {
   slqDataCollector.collect(&slqST);
 
   // cost
-  double costFunction, constraint1ISE, constraint2ISE;
-  slqST.getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
+  const auto performanceIndex = slqST.getPerformanceIndeces();
 
   // run GDDP using LQ
   gddp.settings().useLQForDerivatives_ = true;
-  gddp.run(optimumEventTimes, &slqDataCollector);
+  gddp.run(&slqDataCollector);
   // cost derivative
   Eigen::Matrix<double, 1, 1> costFunctionDerivative_LQ;
   gddp.getCostFuntionDerivative(costFunctionDerivative_LQ);
 
   // run GDDP using BVP
   gddp.settings().useLQForDerivatives_ = false;
-  gddp.run(optimumEventTimes, &slqDataCollector);
+  gddp.run(&slqDataCollector);
   // cost derivative
   Eigen::Matrix<double, 1, 1> costFunctionDerivative_BVP;
   gddp.getCostFuntionDerivative(costFunctionDerivative_BVP);
@@ -149,15 +148,15 @@ TEST(exp0_gddp_test, optimum_gradient_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
-  std::cerr << "### Optimum cost is: " << costFunction << "\n";
+  std::cerr << "### Optimum cost is: " << performanceIndex.totalCost << "\n";
   std::cerr << "### Optimum event times are:            ["
             << Eigen::Map<Eigen::VectorXd>(optimumEventTimes.data(), optimumEventTimes.size()).transpose() << "]\n";
   std::cerr << "### Optimum cost derivative LQ method:  [" << costFunctionDerivative_LQ.transpose() << "]\n";
   std::cerr << "### Optimum cost derivative BVP method: [" << costFunctionDerivative_BVP.transpose() << "]\n";
 
-  ASSERT_LT(costFunctionDerivative_LQ.norm() / fabs(costFunction), 10 * slqSettings.ddpSettings_.minRelCost_)
+  ASSERT_LT(costFunctionDerivative_LQ.norm() / fabs(performanceIndex.totalCost), 10 * slqSettings.ddpSettings_.minRelCost_)
       << "MESSAGE: GDDP failed in the EXP0's cost derivative LQ test!";
-  ASSERT_LT(costFunctionDerivative_BVP.norm() / fabs(costFunction), 10 * slqSettings.ddpSettings_.minRelCost_)
+  ASSERT_LT(costFunctionDerivative_BVP.norm() / fabs(performanceIndex.totalCost), 10 * slqSettings.ddpSettings_.minRelCost_)
       << "MESSAGE: GDDP failed in the EXP0's cost derivative BVP test!";
 }
 

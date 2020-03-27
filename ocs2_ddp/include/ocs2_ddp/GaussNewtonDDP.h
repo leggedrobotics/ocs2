@@ -185,9 +185,9 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   const scalar_array_t& getPartitioningTimes() const override;
 
-  PerformanceIndex getPerformanceIndeces() const override;
+  const PerformanceIndex& getPerformanceIndeces() const override;
 
-  std::vector<PerformanceIndex> getIterationsLog() const override;
+  const std::vector<PerformanceIndex>& getIterationsLog() const override;
 
   void getPrimalSolution(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const final;
 

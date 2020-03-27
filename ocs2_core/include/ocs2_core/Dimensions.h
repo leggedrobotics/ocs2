@@ -33,6 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/StdVector>
 #include <vector>
 
+#include "ocs2_core/Types.h"
+
 namespace ocs2 {
 
 /**
@@ -60,28 +62,25 @@ class Dimensions {
     MAX_CONSTRAINT2_DIM_ = INPUT_DIM
   };
 
-  /** size_t trajectory type. */
-  using size_array_t = std::vector<size_t>;
-  /** Array of size_t trajectory type. */
-  using size_array2_t = std::vector<size_array_t>;
-
-  /** Scalar type. */
-  using scalar_t = double;
-  /** Scalar trajectory type. */
-  using scalar_array_t = std::vector<scalar_t>;
-  /** Array of scalar trajectory type. */
-  using scalar_array2_t = std::vector<scalar_array_t>;
-  /** Array of arrays of scalar trajectory type. */
-  using scalar_array3_t = std::vector<scalar_array2_t>;
-
-  /** Eigen scalar type. */
-  using eigen_scalar_t = Eigen::Matrix<scalar_t, 1, 1>;
-  /** Eigen scalar trajectory type. */
-  using eigen_scalar_array_t = std::vector<eigen_scalar_t, Eigen::aligned_allocator<eigen_scalar_t>>;
-  /** Array of eigen scalar trajectory type. */
-  using eigen_scalar_array2_t = std::vector<eigen_scalar_array_t, Eigen::aligned_allocator<eigen_scalar_array_t>>;
-  /** Array of arrays of eigen scalar trajectory type. */
-  using eigen_scalar_array3_t = std::vector<eigen_scalar_array2_t, Eigen::aligned_allocator<eigen_scalar_array2_t>>;
+  /* Forward types for backwards compatibility, use types in ocs2_core/Types.h instead */
+  using size_array_t = ocs2::size_array_t;
+  using size_array2_t = ocs2::size_array2_t;
+  using scalar_t = ocs2::scalar_t;
+  using scalar_array_t = ocs2::scalar_array_t;
+  using scalar_array2_t = ocs2::scalar_array2_t;
+  using scalar_array3_t = ocs2::scalar_array3_t;
+  using dynamic_vector_t = ocs2::dynamic_vector_t;
+  using dynamic_vector_array_t = ocs2::dynamic_vector_array_t;
+  using dynamic_vector_array2_t = ocs2::dynamic_vector_array2_t;
+  using dynamic_vector_array3_t = ocs2::dynamic_vector_array3_t;
+  using dynamic_matrix_t = ocs2::dynamic_matrix_t;
+  using dynamic_matrix_array_t = ocs2::dynamic_matrix_array_t;
+  using dynamic_matrix_array2_t = ocs2::dynamic_matrix_array2_t;
+  using dynamic_matrix_array3_t = ocs2::dynamic_matrix_array3_t;
+  using eigen_scalar_t = ocs2::eigen_scalar_t;
+  using eigen_scalar_array_t = ocs2::eigen_scalar_array_t;
+  using eigen_scalar_array2_t = ocs2::eigen_scalar_array2_t;
+  using eigen_scalar_array3_t = ocs2::eigen_scalar_array3_t;
 
   /** Fixed-size state vector type with size \f$ n_x \f$ . */
   using state_vector_t = Eigen::Matrix<scalar_t, STATE_DIM, 1>;
@@ -136,24 +135,6 @@ class Dimensions {
   using input_matrix_array2_t = std::vector<input_matrix_array_t, Eigen::aligned_allocator<input_matrix_array_t>>;
   /** Array of arrays of control input matrix trajectory type. */
   using input_matrix_array3_t = std::vector<input_matrix_array2_t, Eigen::aligned_allocator<input_matrix_array2_t>>;
-
-  /** Dynamic-size vector type. */
-  using dynamic_vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
-  /** Dynamic vector's trajectory type. */
-  using dynamic_vector_array_t = std::vector<dynamic_vector_t, Eigen::aligned_allocator<dynamic_vector_t>>;
-  /** Array of dynamic vector's trajectory type. */
-  using dynamic_vector_array2_t = std::vector<dynamic_vector_array_t, Eigen::aligned_allocator<dynamic_vector_array_t>>;
-  /** Array of arrays of dynamic vector's trajectory type. */
-  using dynamic_vector_array3_t = std::vector<dynamic_vector_array2_t, Eigen::aligned_allocator<dynamic_vector_array2_t>>;
-
-  /** Dynamic-size matrix type. */
-  using dynamic_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic>;
-  /** Dynamic matrix's trajectory type. */
-  using dynamic_matrix_array_t = std::vector<dynamic_matrix_t, Eigen::aligned_allocator<dynamic_matrix_t>>;
-  /** Array of dynamic matrix's trajectory type. */
-  using dynamic_matrix_array2_t = std::vector<dynamic_matrix_array_t, Eigen::aligned_allocator<dynamic_matrix_array_t>>;
-  /** Array of arrays of dynamic matrix's trajectory type. */
-  using dynamic_matrix_array3_t = std::vector<dynamic_matrix_array2_t, Eigen::aligned_allocator<dynamic_matrix_array2_t>>;
 
   /** Dynamic-size by n_x matrix type. */
   using dynamic_state_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, STATE_DIM>;

@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
   /*
    * Perforce index
    */
-  auto performanceIndeces = slqST.getPerformanceIndeces();
+  auto performanceIndex = slqST.getPerformanceIndeces();
 
   return 0;
 }

@@ -41,9 +41,10 @@ OCS2<STATE_DIM, INPUT_DIM>::OCS2(const rollout_base_t* rolloutPtr, const derivat
                                  const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/,
                                  const NLP_Settings& nlpSettings /*= NLP_Settings()*/)
 
-    : BASE(nlpSettings),
+    : frankWolfeGradientDescentSolver_(nlpSettings),
       ulCostPtr_(new upper_level_cost_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
-                                        settings, modeScheduleManagerPtr, heuristicsFunctionPtr, nlpSettings.displayInfo_, gddpSettings)),
+                                        settings, std::move(modeScheduleManagerPtr), heuristicsFunctionPtr, nlpSettings.displayInfo_,
+                                        gddpSettings)),
       ulConstraintsPtr_(new upper_level_constraints_t) {}
 
 /******************************************************************************************************/
@@ -66,6 +67,38 @@ SLQ_Settings& OCS2<STATE_DIM, INPUT_DIM>::slqSettings() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
+NLP_Settings& OCS2<STATE_DIM, INPUT_DIM>::nlpSettings() {
+  return frankWolfeGradientDescentSolver_.nlpSettings();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2<STATE_DIM, INPUT_DIM>::getIterationsLog(scalar_array_t& iterationCost) const {
+  frankWolfeGradientDescentSolver_.getIterationsLog(iterationCost);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2<STATE_DIM, INPUT_DIM>::getParameters(dynamic_vector_t& parameters) const {
+  frankWolfeGradientDescentSolver_.getParameters(parameters);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void OCS2<STATE_DIM, INPUT_DIM>::getCost(scalar_t& cost) const {
+  frankWolfeGradientDescentSolver_.getCost(cost);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <size_t STATE_DIM, size_t INPUT_DIM>
 void OCS2<STATE_DIM, INPUT_DIM>::run(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime,
                                      const scalar_array_t& partitioningTimes, const scalar_array_t& initEventTimes) {
   ulCostPtr_->setDDP(initTime, initState, finalTime, partitioningTimes);
@@ -76,7 +109,7 @@ void OCS2<STATE_DIM, INPUT_DIM>::run(const scalar_t& initTime, const state_vecto
 
   // run Frank-Wolfe gradient descent
   dynamic_vector_t maxGradientInverse = dynamic_vector_t::Zero(numEventTimes);
-  BASE::run(initParameters, maxGradientInverse, ulCostPtr_.get(), ulConstraintsPtr_.get());
+  frankWolfeGradientDescentSolver_.run(initParameters, maxGradientInverse, ulCostPtr_.get(), ulConstraintsPtr_.get());
 }
 
 }  // namespace ocs2

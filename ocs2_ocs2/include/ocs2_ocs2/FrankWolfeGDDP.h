@@ -75,14 +75,12 @@ class FrankWolfeGDDP : public GDDP<STATE_DIM, INPUT_DIM> {
    * Runs the GDDP to compute the gradient of the cost function w.r.t. the event times while respecting
    * the provided constraints.
    *
-   * @param [in] eventTimes: The event times vector.
    * @param [in] dcPtr: A constant pointer to SLQ data collector which already collected the SLQ variables.
    * @param [in] maxGradientInverse: descent directions element-wise maximum inverse. Note that if there is no
    * limit for a direction set associated element to zero.
    * @param [in] eventTimeConstraintPtr: A pointer to the NLP constraints for event times.
    */
-  void run(scalar_array_t eventTimes, const slq_data_collector_t* dcPtr, const dynamic_vector_t& maxGradientInverse,
-           NLP_Constraints* eventTimeConstraintPtr);
+  void run(const slq_data_collector_t* dcPtr, const dynamic_vector_t& maxGradientInverse, NLP_Constraints* eventTimeConstraintPtr);
 
  protected:
   /***********

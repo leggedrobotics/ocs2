@@ -138,7 +138,7 @@ class GDDP {
    *
    * @param [in] settings: Structure containing the settings for the GDDP algorithm.
    */
-  explicit GDDP(const GDDP_Settings& gddpSettings = GDDP_Settings());
+  explicit GDDP(GDDP_Settings gddpSettings);
 
   /**
    * Default destructor.
@@ -182,10 +182,9 @@ class GDDP {
   /**
    * Runs the GSLQ to compute the gradient of the cost function w.r.t. the event times.
    *
-   * @param [in] eventTimes: The event times vector.
    * @param [in] dcPtr: A constant pointer to SLQ data collector which already collected the SLQ variables.
    */
-  void run(const scalar_array_t& eventTimes, const slq_data_collector_t* dcPtr);
+  void run(const slq_data_collector_t* dcPtr);
 
  protected:
   /**

@@ -135,14 +135,14 @@ TEST(exp1_gddp_test, optimum_gradient_test) {
 
   // run GDDP using LQ
   gddp.settings().useLQForDerivatives_ = true;
-  gddp.run(optimumEventTimes, &slqDataCollector);
+  gddp.run(&slqDataCollector);
   // cost derivative
   Eigen::Matrix<double, 2, 1> costFunctionDerivative_LQ;
   gddp.getCostFuntionDerivative(costFunctionDerivative_LQ);
 
   // run GDDP using BVP
   gddp.settings().useLQForDerivatives_ = false;
-  gddp.run(optimumEventTimes, &slqDataCollector);
+  gddp.run(&slqDataCollector);
   // cost derivative
   Eigen::Matrix<double, 2, 1> costFunctionDerivative_BVP;
   gddp.getCostFuntionDerivative(costFunctionDerivative_BVP);

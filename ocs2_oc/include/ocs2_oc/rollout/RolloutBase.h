@@ -104,6 +104,16 @@ class RolloutBase {
   const Rollout_Settings& settings() const { return rolloutSettings_; }
 
   /**
+   * The kills the integrator inside the rollout.
+   */
+  virtual void abortRollout() {}
+
+  /**
+   * The enables the integrator inside the rollout to start again.
+   */
+  virtual void reactivateRollout() {}
+
+  /**
    * Returns pointer to the class.
    *
    * @return A raw pointer to the class.

@@ -181,10 +181,9 @@ class GDDP {
   /**
    * Runs the GSLQ to compute the gradient of the cost function w.r.t. the event times.
    *
-   * @param [in] eventTimes: The event times vector.
-   * @param [in] dataCollectorPtr: A constant pointer to SLQ data collector which already collected the SLQ variables.
+   * @param [in] dcPtr: A constant pointer to SLQ data collector which already collected the SLQ variables.
    */
-  void run(const scalar_array_t& eventTimes, const ddp_data_collector_t* dataCollectorPtr);
+  void run(const ddp_data_collector_t* dataCollectorPtr);
 
  protected:
   /**

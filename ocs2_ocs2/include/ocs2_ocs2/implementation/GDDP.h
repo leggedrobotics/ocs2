@@ -33,7 +33,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-GDDP<STATE_DIM, INPUT_DIM>::GDDP(const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/) : gddpSettings_(gddpSettings) {
+GDDP<STATE_DIM, INPUT_DIM>::GDDP(GDDP_Settings gddpSettings) : gddpSettings_(std::move(gddpSettings)) {
   bvpSensitivityEquationsPtrStock_.clear();
   bvpSensitivityEquationsPtrStock_.reserve(gddpSettings_.nThreads_);
   bvpSensitivityIntegratorsPtrStock_.clear();
@@ -1065,7 +1065,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::runSweepingBVPMethod() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void GDDP<STATE_DIM, INPUT_DIM>::run(const scalar_array_t& eventTimes, const ddp_data_collector_t* dataCollectorPtr) {
+void GDDP<STATE_DIM, INPUT_DIM>::run(const ddp_data_collector_t* dataCollectorPtr) {
   // display
   if (gddpSettings_.displayInfo_) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
@@ -1073,12 +1073,12 @@ void GDDP<STATE_DIM, INPUT_DIM>::run(const scalar_array_t& eventTimes, const ddp
     std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
   }
 
-  // event time an number of event and subsystems
-  eventTimes_ = eventTimes;
-  numEventTimes_ = eventTimes_.size();
-
   // data collector pointer
   dataCollectorPtr_ = dataCollectorPtr;
+
+  // event time an number of event and subsystems
+  eventTimes_ = dcPtr_->modeSchedule_.eventTimes;
+  numEventTimes_ = eventTimes_.size();
 
   // update sizes if number of partitions has been changed
   if (numPartitions_ != dataCollectorPtr_->numPartitions_) {

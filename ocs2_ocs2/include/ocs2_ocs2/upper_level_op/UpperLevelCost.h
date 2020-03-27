@@ -49,10 +49,6 @@ class UpperLevelCost final : public NLP_Cost {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using BASE = NLP_Cost;
-  using typename BASE::dynamic_matrix_t;
-  using typename BASE::dynamic_vector_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::scalar_t;
 
   using gddp_t = GDDP<STATE_DIM, INPUT_DIM>;
   using slq_t = SLQ<STATE_DIM, INPUT_DIM>;
@@ -83,12 +79,12 @@ class UpperLevelCost final : public NLP_Cost {
                  const operating_trajectories_base_t* operatingTrajectoriesPtr, const SLQ_Settings& settings,
                  std::shared_ptr<ModeScheduleManager<STATE_DIM, INPUT_DIM>> modeScheduleManagerPtr,
                  const cost_function_base_t* heuristicsFunctionPtr = nullptr, bool display = false,
-                 const GDDP_Settings& gddpSettings = GDDP_Settings())
+                 GDDP_Settings gddpSettings = GDDP_Settings())
       : slqPtr_(new slq_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings,
                           heuristicsFunctionPtr)),
         slqDataCollectorPtr_(new ddp_data_collector_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr)),
         modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)),
-        gddpPtr_(new gddp_t(gddpSettings)),
+        gddpPtr_(new gddp_t(std::move(gddpSettings))),
         display_(display) {
     slqPtr_->setModeScheduleManager(modeScheduleManagerPtr_);
   }
@@ -115,10 +111,10 @@ class UpperLevelCost final : public NLP_Cost {
   }
 
   size_t setCurrentParameter(const dynamic_vector_t& x) override {
-    // set event time
-    eventTimes_ = scalar_array_t(x.data(), x.data() + x.size());
-    auto modeSequence = modeScheduleManagerPtr_->getModeSchedule().modeSequence;
-    modeScheduleManagerPtr_->setModeSchedule({eventTimes_, modeSequence});
+    // set mode schedule
+    const scalar_array_t eventTimes(x.data(), x.data() + x.size());
+    const auto modeSequence = modeScheduleManagerPtr_->getModeSchedule().modeSequence;
+    modeScheduleManagerPtr_->setModeSchedule({eventTimes, modeSequence});
 
     // run SLQ
     try {
@@ -145,8 +141,8 @@ class UpperLevelCost final : public NLP_Cost {
     // status is false if the constraints ISE is higher than minAbsConstraint1RMSE_
     bool status1 = (performanceIndex_.stateInputEqConstraintISE <= slqPtr_->ddpSettings().minAbsConstraint1ISE_) ? true : false;
     bool status2 = (performanceIndex_.stateEqConstraintISE <= slqPtr_->ddpSettings().minAbsConstraint1ISE_) ? true : false;
-
     status_ = status1 && status2;
+
     return 0;
   }
 
@@ -156,7 +152,7 @@ class UpperLevelCost final : public NLP_Cost {
   }
 
   void getCostDerivative(size_t id, dynamic_vector_t& g) override {
-    gddpPtr_->run(eventTimes_, slqDataCollectorPtr_.get());
+    gddpPtr_->run(slqDataCollectorPtr_.get());
     gddpPtr_->getCostFuntionDerivative(g);
   }
 
@@ -189,8 +185,6 @@ class UpperLevelCost final : public NLP_Cost {
   state_vector_t initState_;
   scalar_t finalTime_;
   scalar_array_t partitioningTimes_;
-
-  scalar_array_t eventTimes_;
 
   bool status_;
   PerformanceIndex performanceIndex_;

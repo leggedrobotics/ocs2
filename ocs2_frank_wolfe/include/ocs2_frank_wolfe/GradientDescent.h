@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 #include <vector>
 
+#include <ocs2_core/Types.h>
 #include "ocs2_frank_wolfe/FrankWolfeDescentDirection.h"
 #include "ocs2_frank_wolfe/NLP_Constraints.h"
 #include "ocs2_frank_wolfe/NLP_Cost.h"
@@ -55,15 +56,6 @@ namespace ocs2 {
  */
 class GradientDescent {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using DIMENSIONS = Dimensions<0, 0>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using eigen_scalar_array_t = typename DIMENSIONS::eigen_scalar_array_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-  using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
-
   /**
    * Constructor.
    *
@@ -81,7 +73,7 @@ class GradientDescent {
    *
    * @param [out] cost value
    */
-  void getCost(scalar_t& cost);
+  void getCost(scalar_t& cost) const;
 
   /**
    * Gets the parameter vector.
@@ -95,7 +87,7 @@ class GradientDescent {
    *
    * @param [out] iterationCost: The cost value in each iteration.
    */
-  void getIterationsLog(eigen_scalar_array_t& iterationCost) const;
+  void getIterationsLog(scalar_array_t& iterationCost) const;
 
   /**
    * Gets a constant reference to the optimal solver's ID.
@@ -157,7 +149,7 @@ class GradientDescent {
   dynamic_vector_t optimizedGradient_;
   size_t numFuntionCall_;
 
-  eigen_scalar_array_t iterationCost_;
+  scalar_array_t iterationCost_;
 
   Eigen::IOFormat CleanFmtDisplay_;
 };

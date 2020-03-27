@@ -16,6 +16,7 @@ library versions as provided in the package sources.
 	sudo apt install libglpk-dev
 	\endcode
  - `catkin-pkg` package for python 2 (and 3, if python3 bindings are required). Install with `pip install catkin-pkg`
+ - `pybind11_catkin` ROS package, installable via `sudo apt install ros-melodic-pybind11-catkin`
 
 \subsection ocs2_doc_dep_optinal Optional Dependencies
  - [Raisim](https://github.com/leggedrobotics/raisimLib) simulator can be used as a provider for rollouts. The corresponding `ocs2_raisim` package additionally requires the [`grid_map_msgs`](https://github.com/ANYbotics/grid_map) catkin package, which may be installed with `sudo apt install ros-melodic-grid-map-msgs`.

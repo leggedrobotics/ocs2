@@ -10,6 +10,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
     kdl_parser
     robot_state_publisher
     visualization_msgs
+    pybind11_catkin
     ocs2_core
     ocs2_ddp
     ocs2_ocs2
@@ -17,6 +18,13 @@ set(CATKIN_PACKAGE_DEPENDENCIES
     ocs2_comm_interfaces
     ocs2_robotic_tools
     )
+
+# Pybind11 configuration must occur before find_package(catkin)
+option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)
+if(USE_PYBIND_PYTHON_3)
+  set(PYTHON_EXECUTABLE /usr/bin/python3)
+  set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
+endif(USE_PYBIND_PYTHON_3)
 
 find_package(catkin REQUIRED COMPONENTS
     roslib
@@ -30,13 +38,6 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-# Pybind11
-option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)
-if(USE_PYBIND_PYTHON_3)
-  set(PYTHON_EXECUTABLE /usr/bin/python3)
-  set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
-endif(USE_PYBIND_PYTHON_3)
-find_package(pybind11 QUIET)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
 
@@ -176,33 +177,31 @@ target_link_libraries(ballbotPyBindings_cpp
   ${catkin_LIBRARIES}
 )
 
-# Build python bindings if possible
-if(${pybind11_FOUND})
-  pybind11_add_module(BallbotPyBindings SHARED
-    src/pyBindModule.cpp
-  )
-  add_dependencies(BallbotPyBindings
-    ballbotPyBindings_cpp
-    ${catkin_EXPORTED_TARGETS}
-  )
-  target_link_libraries(BallbotPyBindings PRIVATE
-    ballbotPyBindings_cpp
-    ${catkin_LIBRARIES}
-  )
+# Build python bindings
+pybind11_add_module(BallbotPyBindings SHARED
+  src/pyBindModule.cpp
+)
+add_dependencies(BallbotPyBindings
+  ballbotPyBindings_cpp
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(BallbotPyBindings PRIVATE
+  ballbotPyBindings_cpp
+  ${catkin_LIBRARIES}
+)
 
-  if(USE_PYBIND_PYTHON_3)
-    # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
-    set_target_properties(BallbotPyBindings
-      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
-    )
-  else(USE_PYBIND_PYTHON_3)
-    set_target_properties(BallbotPyBindings
-        PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
-    )
-  endif(USE_PYBIND_PYTHON_3)
+if(USE_PYBIND_PYTHON_3)
+  # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
+  set_target_properties(BallbotPyBindings
+    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
+  )
+else(USE_PYBIND_PYTHON_3)
+  set_target_properties(BallbotPyBindings
+      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+  )
+endif(USE_PYBIND_PYTHON_3)
 
-  catkin_python_setup()
-endif()
+catkin_python_setup()
 
 
 #########################
@@ -245,13 +244,11 @@ install(DIRECTORY urdf launch config rviz
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-if(${pybind11_FOUND})
-  # TODO handle python2/3 case properly
-  install(TARGETS BallbotPyBindings
-    ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
-  )
-endif()
+# TODO handle python2/3 case properly
+install(TARGETS BallbotPyBindings
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+)
 
 #############
 ## Testing ##
@@ -275,3 +272,4 @@ target_link_libraries(ballbot_pybindings_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+catkin_add_nosetests(test)

@@ -240,7 +240,10 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
   visualization_msgs::Marker sphereList;
   sphereList.type = visualization_msgs::Marker::SPHERE_LIST;
   sphereList.scale.x = footMarkerDiameter_;
+  sphereList.scale.y = footMarkerDiameter_;
+  sphereList.scale.z = footMarkerDiameter_;
   sphereList.ns = "Future footholds";
+  sphereList.pose.orientation = getOrientationMsg({1., 0., 0., 0.});
   const auto& eventTimes = modeSchedule.eventTimes;
   const auto& subsystemSequence = modeSchedule.modeSequence;
   const double tStart = mpcTimeTrajectory.front();

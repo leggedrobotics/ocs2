@@ -21,7 +21,7 @@ void setVisible(visualization_msgs::Marker& marker) {
 }
 
 void setInvisible(visualization_msgs::Marker& marker) {
-  marker.color.a = 0.0;
+  marker.color.a = 0.001;  // Rviz creates a warning when a is set to 0
 }
 
 std_msgs::Header getHeaderMsg(const std::string& frame_id, const ros::Time& timeStamp) {
@@ -37,6 +37,7 @@ visualization_msgs::Marker getLineMsg(std::vector<geometry_msgs::Point>&& points
   line.scale.x = lineWidth;
   line.color = getColor(color);
   line.points = std::move(points);
+  line.pose.orientation = getOrientationMsg({1., 0., 0., 0.});
   return line;
 }
 
@@ -69,6 +70,7 @@ visualization_msgs::Marker getSphereMsg(const Eigen::Vector3d& point, Color colo
   visualization_msgs::Marker sphere;
   sphere.type = visualization_msgs::Marker::SPHERE;
   sphere.pose.position = getPointMsg(point);
+  sphere.pose.orientation = getOrientationMsg({1., 0., 0., 0.});
   sphere.scale.x = diameter;
   sphere.scale.y = diameter;
   sphere.scale.z = diameter;
@@ -85,6 +87,7 @@ visualization_msgs::Marker getArrowToPointMsg(const Eigen::Vector3d& vec, const 
   arrow.points.emplace_back(getPointMsg(point - vec));  // start point
   arrow.points.emplace_back(getPointMsg(point));        // end point
   arrow.color = getColor(color);
+  arrow.pose.orientation = getOrientationMsg({1., 0., 0., 0.});
   return arrow;
 }
 

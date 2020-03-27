@@ -137,7 +137,7 @@ class GDDP {
    *
    * @param [in] settings: Structure containing the settings for the GDDP algorithm.
    */
-  explicit GDDP(const GDDP_Settings& gddpSettings = GDDP_Settings());
+  explicit GDDP(GDDP_Settings gddpSettings);
 
   /**
    * Default destructor.

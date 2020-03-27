@@ -72,8 +72,7 @@ void DDP_DataCollector<STATE_DIM, INPUT_DIM>::collect(const ddp_t* constDdpPtr) 
 
   rewindCounter_ = ddpPtr->rewindCounter_;
 
-  eventTimes_ = ddpPtr->getModeSchedule().eventTimes;
-  subsystemsSequence_ = ddpPtr->getModeSchedule().modeSequence;
+  modeSchedule_ = ddpPtr->getModeSchedule();
 
   // optimized controller
   optimizedControllersStock_ = ddpPtr->nominalControllersStock_;

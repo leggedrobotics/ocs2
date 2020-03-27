@@ -1002,7 +1002,9 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::lineSearch(LineSearchModule& lineSear
   runParallel(task, ddpSettings_.nThreads_);
 
   // revitalize all integrators
-  event_handler_t::deactivateKillIntegration();
+  for (auto& rolloutPtr : dynamicsForwardRolloutPtrStock_) {
+    rolloutPtr->reactivateRollout();
+  }
 
   // clear the feedforward increments
   for (auto& controller : nominalControllersStock_) {
@@ -1101,7 +1103,9 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::lineSearchTask(LineSearchModule& line
 
     // kill other ongoing line search tasks
     if (terminateLinesearchTasks) {
-      event_handler_t::activateKillIntegration();  // kill all integrators
+      for (auto& rolloutPtr : dynamicsForwardRolloutPtrStock_) {
+        rolloutPtr->abortRollout();
+      }
       if (ddpSettings_.displayInfo_) {
         BASE::printString("    LS: interrupt other rollout's integrations.");
       }

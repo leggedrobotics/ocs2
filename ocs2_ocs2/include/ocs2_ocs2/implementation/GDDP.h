@@ -1077,7 +1077,7 @@ void GDDP<STATE_DIM, INPUT_DIM>::run(const ddp_data_collector_t* dataCollectorPt
   dataCollectorPtr_ = dataCollectorPtr;
 
   // event time an number of event and subsystems
-  eventTimes_ = dcPtr_->modeSchedule_.eventTimes;
+  eventTimes_ = dataCollectorPtr_->modeSchedule_.eventTimes;
   numEventTimes_ = eventTimes_.size();
 
   // update sizes if number of partitions has been changed

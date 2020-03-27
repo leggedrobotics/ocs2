@@ -15,9 +15,9 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-std::array<vector3_s_t<SCALAR_T>, NUM_CONTACT_POINTS> KinematicsModelBase<SCALAR_T>::positionBaseToFeetInBaseFrame(
+feet_array_t<vector3_s_t<SCALAR_T>> KinematicsModelBase<SCALAR_T>::positionBaseToFeetInBaseFrame(
     const joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
-  std::array<vector3_s_t<SCALAR_T>, NUM_CONTACT_POINTS> baseToFeetPositions;
+  feet_array_t<vector3_s_t<SCALAR_T>> baseToFeetPositions;
   for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
     baseToFeetPositions[i] = positionBaseToFootInBaseFrame(i, jointPositions);
   }
@@ -52,12 +52,12 @@ matrix3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footOrientationInOriginFram
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-std::array<vector3_s_t<SCALAR_T>, NUM_CONTACT_POINTS> KinematicsModelBase<SCALAR_T>::feetPositionsInOriginFrame(
+feet_array_t<vector3_s_t<SCALAR_T>> KinematicsModelBase<SCALAR_T>::feetPositionsInOriginFrame(
     const base_coordinate_s_t<SCALAR_T>& basePoseInOriginFrame, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   matrix3_s_t<SCALAR_T> o_R_b = rotationMatrixBaseToOrigin<SCALAR_T>(getOrientation(basePoseInOriginFrame));
   vector3_s_t<SCALAR_T> o_basePosition = getPositionInOrigin(basePoseInOriginFrame);
 
-  std::array<vector3_s_t<SCALAR_T>, 4> feetPositionsInOriginFrame;
+  feet_array_t<vector3_s_t<SCALAR_T>> feetPositionsInOriginFrame;
   for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
     vector3_s_t<SCALAR_T> b_baseToFoot = positionBaseToFootInBaseFrame(i, jointPositions);
     feetPositionsInOriginFrame[i] = o_R_b * b_baseToFoot + o_basePosition;
@@ -113,7 +113,7 @@ vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footVelocityInFootFrame(siz
   return foot_R_b * b_footVelocity;
 }
 
-template class KinematicsModelBase<double>;
-template class KinematicsModelBase<ocs2::CppAdInterface<double>::ad_scalar_t>;
+template class KinematicsModelBase<scalar_t>;
+template class KinematicsModelBase<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
 
 }  // end of namespace switched_model

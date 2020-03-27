@@ -12,8 +12,6 @@
 namespace switched_model {
 
 class SplineCpg {
-  using scalar_t = ocs2::Dimensions<0, 0>::scalar_t;
-
  public:
   SplineCpg(CubicSpline::Node liftOff, scalar_t midHeight, CubicSpline::Node touchDown);
 

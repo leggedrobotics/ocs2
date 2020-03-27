@@ -15,7 +15,7 @@ SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings se
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto SwingTrajectoryPlanner::getZvelocityConstraint(size_t leg, scalar_t time) const -> scalar_t {
+scalar_t SwingTrajectoryPlanner::getZvelocityConstraint(size_t leg, scalar_t time) const {
   const auto index = ocs2::lookup::findIndexInTimeArray(feetHeightTrajectoriesEvents_[leg], time);
   return feetHeightTrajectories_[leg][index].velocity(time);
 }
@@ -23,7 +23,7 @@ auto SwingTrajectoryPlanner::getZvelocityConstraint(size_t leg, scalar_t time) c
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto SwingTrajectoryPlanner::getZpositionConstraint(size_t leg, scalar_t time) const -> scalar_t {
+scalar_t SwingTrajectoryPlanner::getZpositionConstraint(size_t leg, scalar_t time) const {
   const auto index = ocs2::lookup::findIndexInTimeArray(feetHeightTrajectoriesEvents_[leg], time);
   return feetHeightTrajectories_[leg][index].position(time);
 }
@@ -33,9 +33,9 @@ auto SwingTrajectoryPlanner::getZpositionConstraint(size_t leg, scalar_t time) c
 /******************************************************************************************************/
 void SwingTrajectoryPlanner::update(const ocs2::ModeSchedule& modeSchedule, scalar_t terrainHeight) {
   const scalar_array_t terrainHeightSequence(modeSchedule.modeSequence.size(), terrainHeight);
-  std::array<scalar_array_t, NUM_CONTACT_POINTS> liftOffHeightSequence;
+  feet_array_t<scalar_array_t> liftOffHeightSequence;
   liftOffHeightSequence.fill(terrainHeightSequence);
-  std::array<scalar_array_t, NUM_CONTACT_POINTS> touchDownHeightSequence;
+  feet_array_t<scalar_array_t> touchDownHeightSequence;
   touchDownHeightSequence.fill(terrainHeightSequence);
   update(modeSchedule, liftOffHeightSequence, touchDownHeightSequence);
 }
@@ -43,16 +43,15 @@ void SwingTrajectoryPlanner::update(const ocs2::ModeSchedule& modeSchedule, scal
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SwingTrajectoryPlanner::update(const ocs2::ModeSchedule& modeSchedule,
-                                    const std::array<scalar_array_t, NUM_CONTACT_POINTS>& liftOffHeightSequence,
-                                    const std::array<scalar_array_t, NUM_CONTACT_POINTS>& touchDownHeightSequence) {
+void SwingTrajectoryPlanner::update(const ocs2::ModeSchedule& modeSchedule, const feet_array_t<scalar_array_t>& liftOffHeightSequence,
+                                    const feet_array_t<scalar_array_t>& touchDownHeightSequence) {
   const auto& modeSequence = modeSchedule.modeSequence;
   const auto& eventTimes = modeSchedule.eventTimes;
 
   const auto eesContactFlagStocks = extractContactFlags(modeSequence);
 
-  std::array<std::vector<int>, NUM_CONTACT_POINTS> startTimesIndices;
-  std::array<std::vector<int>, NUM_CONTACT_POINTS> finalTimesIndices;
+  feet_array_t<std::vector<int>> startTimesIndices;
+  feet_array_t<std::vector<int>> finalTimesIndices;
   for (size_t leg = 0; leg < NUM_CONTACT_POINTS; leg++) {
     std::tie(startTimesIndices[leg], finalTimesIndices[leg]) = updateFootSchedule(eesContactFlagStocks[leg]);
   }
@@ -106,14 +105,14 @@ std::pair<std::vector<int>, std::vector<int>> SwingTrajectoryPlanner::updateFoot
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::array<std::vector<bool>, NUM_CONTACT_POINTS> SwingTrajectoryPlanner::extractContactFlags(const std::vector<size_t>& phaseIDsStock) {
+feet_array_t<std::vector<bool>> SwingTrajectoryPlanner::extractContactFlags(const std::vector<size_t>& phaseIDsStock) {
   const size_t numPhases = phaseIDsStock.size();
 
-  std::array<std::vector<bool>, NUM_CONTACT_POINTS> contactFlagStock;
+  feet_array_t<std::vector<bool>> contactFlagStock;
   std::fill(contactFlagStock.begin(), contactFlagStock.end(), std::vector<bool>(numPhases));
 
   for (size_t i = 0; i < numPhases; i++) {
-    std::array<bool, NUM_CONTACT_POINTS> contactFlag = modeNumber2StanceLeg(phaseIDsStock[i]);
+    const auto contactFlag = modeNumber2StanceLeg(phaseIDsStock[i]);
     for (size_t j = 0; j < NUM_CONTACT_POINTS; j++) {
       contactFlagStock[j][i] = contactFlag[j];
     }
@@ -182,7 +181,7 @@ void SwingTrajectoryPlanner::checkThatIndicesAreValid(int leg, int index, int st
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto SwingTrajectoryPlanner::swingTrajectoryScaling(scalar_t startTime, scalar_t finalTime, scalar_t swingTimeScale) -> scalar_t {
+scalar_t SwingTrajectoryPlanner::swingTrajectoryScaling(scalar_t startTime, scalar_t finalTime, scalar_t swingTimeScale) {
   return std::min(1.0, (finalTime - startTime) / swingTimeScale);
 }
 

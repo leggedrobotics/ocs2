@@ -14,7 +14,6 @@
 namespace switched_model {
 
 struct SwingTrajectoryPlannerSettings {
-  using scalar_t = ocs2::Dimensions<0, 0>::scalar_t;
   scalar_t liftOffVelocity = 0.0;
   scalar_t touchDownVelocity = 0.0;
   scalar_t swingHeight = 0.1;
@@ -24,16 +23,13 @@ struct SwingTrajectoryPlannerSettings {
 SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& filename, bool verbose = true);
 
 class SwingTrajectoryPlanner {
-  using scalar_t = ocs2::Dimensions<0, 0>::scalar_t;
-  using scalar_array_t = ocs2::Dimensions<0, 0>::scalar_array_t;
-
  public:
   SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings);
 
   void update(const ocs2::ModeSchedule& modeSchedule, scalar_t terrainHeight);
 
-  void update(const ocs2::ModeSchedule& modeSchedule, const std::array<scalar_array_t, NUM_CONTACT_POINTS>& liftOffHeightSequence,
-              const std::array<scalar_array_t, NUM_CONTACT_POINTS>& touchDownHeightSequence);
+  void update(const ocs2::ModeSchedule& modeSchedule, const feet_array_t<scalar_array_t>& liftOffHeightSequence,
+              const feet_array_t<scalar_array_t>& touchDownHeightSequence);
 
   scalar_t getZvelocityConstraint(size_t leg, scalar_t time) const;
 
@@ -45,7 +41,7 @@ class SwingTrajectoryPlanner {
    * @param phaseIDsStock
    * @return contactFlagStock
    */
-  static std::array<std::vector<bool>, NUM_CONTACT_POINTS> extractContactFlags(const std::vector<size_t>& phaseIDsStock);
+  static feet_array_t<std::vector<bool>> extractContactFlags(const std::vector<size_t>& phaseIDsStock);
 
   /**
    * Finds the take-off and touch-down times indices for a specific leg.
@@ -84,8 +80,8 @@ class SwingTrajectoryPlanner {
 
   SwingTrajectoryPlannerSettings settings_;
 
-  std::array<std::vector<SplineCpg>, NUM_CONTACT_POINTS> feetHeightTrajectories_;
-  std::array<std::vector<scalar_t>, NUM_CONTACT_POINTS> feetHeightTrajectoriesEvents_;
+  feet_array_t<std::vector<SplineCpg>> feetHeightTrajectories_;
+  feet_array_t<std::vector<scalar_t>> feetHeightTrajectoriesEvents_;
 };
 
 }  // namespace switched_model

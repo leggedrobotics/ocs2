@@ -15,12 +15,10 @@ class ComKinoOperatingPointsBase : public ocs2::SystemOperatingPoint<STATE_DIM, 
   using Base = ocs2::SystemOperatingPoint<STATE_DIM, INPUT_DIM>;
   using typename Base::input_vector_array_t;
   using typename Base::input_vector_t;
-  using typename Base::scalar_array_t;
-  using typename Base::scalar_t;
   using typename Base::state_vector_array_t;
   using typename Base::state_vector_t;
 
-  using com_model_t = ComModelBase<double>;
+  using com_model_t = ComModelBase<scalar_t>;
 
   ComKinoOperatingPointsBase(const com_model_t& comModel, std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr);
 

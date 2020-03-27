@@ -19,7 +19,7 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
 
   using Base = ocs2::ConstraintBase<STATE_DIM, INPUT_DIM>;
 
-  using ad_base_t = CppAD::cg::CG<double>;
+  using ad_base_t = CppAD::cg::CG<scalar_t>;
   using ad_scalar_t = CppAD::AD<ad_base_t>;
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
@@ -28,10 +28,6 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM
   using LinearConstraintApproximationAsMatrices_t = ocs2::LinearConstraintApproximationAsMatrices<STATE_DIM, INPUT_DIM>;
   using QuadraticConstraintApproximation_t = ocs2::QuadraticConstraintApproximation<STATE_DIM, INPUT_DIM>;
   using ConstraintTerm_t = ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM>;
-
-  // Enumeration and naming
-  enum class FeetEnum { LF, RF, LH, RH };
-  const std::array<std::string, 4> feetNames{"LF", "RF", "LH", "RH"};
 
   ComKinoConstraintBaseAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
                           std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,

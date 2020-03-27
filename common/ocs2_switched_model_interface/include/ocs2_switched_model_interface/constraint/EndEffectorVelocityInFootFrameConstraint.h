@@ -24,8 +24,6 @@ class EndEffectorVelocityInFootFrameConstraint : public EndEffectorConstraint {
   using typename BASE::input_vector_t;
   using typename BASE::LinearApproximation_t;
   using typename BASE::QuadraticApproximation_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::scalar_t;
   using typename BASE::state_matrix_t;
   using typename BASE::state_vector_t;
   using typename BASE::timeStateInput_matrix_t;

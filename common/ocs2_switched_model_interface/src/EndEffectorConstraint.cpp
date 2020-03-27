@@ -22,6 +22,10 @@ void EndEffectorConstraintSettings::resize(size_t rows, size_t cols) {
 /****************************************************************************************************/
 /****************************************************************************************************/
 
+// Static member definition
+constexpr size_t EndEffectorConstraint::domain_dim_;
+constexpr size_t EndEffectorConstraint::range_dim_;
+
 EndEffectorConstraint::EndEffectorConstraint(ocs2::ConstraintOrder constraintOrder, std::string eeConstraintName, int legNumber,
                                              EndEffectorConstraintSettings settings, ad_com_model_t& adComModel,
                                              ad_kinematic_model_t& adKinematicsModel, adfunc_t adfunc, bool generateModels, bool loadModels)
@@ -58,8 +62,7 @@ size_t EndEffectorConstraint::getNumConstraints(scalar_t time) const {
   return settings_.A.rows();
 };
 
-EndEffectorConstraint::scalar_array_t EndEffectorConstraint::getValue(scalar_t time, const state_vector_t& state,
-                                                                      const input_vector_t& input) const {
+scalar_array_t EndEffectorConstraint::getValue(scalar_t time, const state_vector_t& state, const input_vector_t& input) const {
   // Assemble input
   dynamic_vector_t tapedInput(domain_dim_);
   tapedInput << time, state, input;

@@ -41,7 +41,7 @@ std::ostream& operator<<(std::ostream& stream, const ModeSequenceTemplate& modeS
 }
 
 ModeSequenceTemplate loadModeSequenceTemplate(const std::string& filename, const std::string& topicName, bool verbose) {
-  std::vector<ModeSequenceTemplate::scalar_t> switchingTimes;
+  std::vector<scalar_t> switchingTimes;
   ocs2::loadData::loadStdVector(filename, topicName + ".switchingTimes", switchingTimes, verbose);
 
   std::vector<std::string> modeSequenceString;
@@ -69,13 +69,13 @@ ocs2_msgs::mode_schedule createModeSequenceTemplateMsg(const ModeSequenceTemplat
 }
 
 ModeSequenceTemplate readModeSequenceTemplateMsg(const ocs2_msgs::mode_schedule& modeScheduleMsg) {
-  std::vector<ModeSequenceTemplate::scalar_t> switchingTimes(modeScheduleMsg.eventTimes.begin(), modeScheduleMsg.eventTimes.end());
+  std::vector<scalar_t> switchingTimes(modeScheduleMsg.eventTimes.begin(), modeScheduleMsg.eventTimes.end());
   std::vector<size_t> modeSequence(modeScheduleMsg.modeSequence.begin(), modeScheduleMsg.modeSequence.end());
   return {switchingTimes, modeSequence};
 }
 
 ocs2::ModeSchedule loadModeSchedule(const std::string& filename, const std::string& topicName, bool verbose) {
-  std::vector<ModeSequenceTemplate::scalar_t> eventTimes;
+  std::vector<scalar_t> eventTimes;
   ocs2::loadData::loadStdVector(filename, topicName + ".eventTimes", eventTimes, verbose);
 
   std::vector<std::string> modeSequenceString;

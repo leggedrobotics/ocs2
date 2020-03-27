@@ -62,8 +62,8 @@ void QuadrupedVisualizer::publishObservation(ros::Time timeStamp, const system_o
   const Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin<scalar_t>(getOrientation(comPose));
 
   // Compute cartesian state and inputs
-  vector_3d_array_t feetPosition;
-  vector_3d_array_t feetForce;
+  feet_array_t<vector3_t> feetPosition;
+  feet_array_t<vector3_t> feetForce;
   for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
     feetPosition[i] = kinematicModelPtr_->footPositionInOriginFrame(i, basePose, qJoints);
     feetForce[i] = o_R_b * observation.input().template segment<3>(3 * i);
@@ -111,7 +111,8 @@ void QuadrupedVisualizer::publishTrajectory(const system_observation_array_t& sy
 }
 
 void QuadrupedVisualizer::publishCartesianMarkers(ros::Time timeStamp, const contact_flag_t& contactFlags,
-                                                  const vector_3d_array_t& feetPosition, const vector_3d_array_t& feetForce) const {
+                                                  const feet_array_t<vector3_t>& feetPosition,
+                                                  const feet_array_t<vector3_t>& feetForce) const {
   // Reserve message
   const int numberOfCartesianMarkers = 10;
   visualization_msgs::MarkerArray markerArray;
@@ -189,6 +190,10 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
 void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, const scalar_array_t& mpcTimeTrajectory,
                                                           const state_vector_array_t& mpcStateTrajectory,
                                                           const ocs2::ModeSchedule& modeSchedule) const {
+  if (mpcTimeTrajectory.empty() || mpcStateTrajectory.empty()) {
+    return;  // Nothing to publish
+  }
+
   // Reserve Feet msg
   std::vector<std::vector<geometry_msgs::Point>> feetMsgs(NUM_CONTACT_POINTS);
   std::for_each(feetMsgs.begin(), feetMsgs.end(), [&](std::vector<geometry_msgs::Point>& v) { v.reserve(mpcStateTrajectory.size()); });
@@ -235,7 +240,10 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
   visualization_msgs::Marker sphereList;
   sphereList.type = visualization_msgs::Marker::SPHERE_LIST;
   sphereList.scale.x = footMarkerDiameter_;
+  sphereList.scale.y = footMarkerDiameter_;
+  sphereList.scale.z = footMarkerDiameter_;
   sphereList.ns = "Future footholds";
+  sphereList.pose.orientation = getOrientationMsg({1., 0., 0., 0.});
   const auto& eventTimes = modeSchedule.eventTimes;
   const auto& subsystemSequence = modeSchedule.modeSequence;
   const double tStart = mpcTimeTrajectory.front();

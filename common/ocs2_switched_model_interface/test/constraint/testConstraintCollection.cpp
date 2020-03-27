@@ -53,7 +53,7 @@ TEST(TestConstraintCollection, activatingConstraints) {
 TEST(TestConstraintCollection, getValue_as_stdvector) {
   using collection_t = ocs2::ConstraintCollection<3, 2>;
   collection_t constraintCollection;
-  collection_t::scalar_array_t constraintValues;
+  ocs2::scalar_array_t constraintValues;
 
   // evaluation point
   double t = 0.0;

@@ -18,9 +18,22 @@ void QuadrupedLoopshapingVisualizer::update(const system_observation_t& observat
   loopshapingDefinition_->getSystemInput(observation.state(), observation.input(), quadrupedObservation.input());
   quadrupedObservation.subsystem() = observation.subsystem();
 
+  const auto quadrupedStateTrajectory = [&] {
+    switched_model::QuadrupedVisualizer::state_vector_array_t quadrupedStateTrajectory{};
+    quadrupedStateTrajectory.reserve(primalSolution.stateTrajectory_.size());
+    for (const auto& loopshapingState : primalSolution.stateTrajectory_) {
+      switched_model::QuadrupedVisualizer::state_vector_t quadrupedState;
+      loopshapingDefinition_->getSystemState(loopshapingState, quadrupedState);
+      quadrupedStateTrajectory.push_back(quadrupedState);
+    }
+    return quadrupedStateTrajectory;
+  }();
+
   const auto timeStamp = ros::Time(observation.time());
   quadrupedVisualizer_->publishObservation(timeStamp, quadrupedObservation);
   quadrupedVisualizer_->publishDesiredTrajectory(timeStamp, command.mpcCostDesiredTrajectories_);
+  quadrupedVisualizer_->publishOptimizedStateTrajectory(timeStamp, primalSolution.timeTrajectory_, quadrupedStateTrajectory,
+                                                        primalSolution.modeSchedule_);
 }
 
 }  // namespace switched_model_loopshaping

@@ -104,9 +104,14 @@ class RolloutBase {
   const Rollout_Settings& settings() const { return rolloutSettings_; }
 
   /**
-   * The kill switch is passed to the integrator inside the rollout to be able to kill it externally.
+   * The kills the integrator inside the rollout.
    */
-  virtual void setKillRolloutIntegration(std::shared_ptr<std::atomic_bool> killRolloutIntegration) = 0;
+  virtual void abortRollout() {}
+
+  /**
+   * The enables the integrator inside the rollout to start again.
+   */
+  virtual void reactivateRollout() {}
 
   /**
    * Returns pointer to the class.

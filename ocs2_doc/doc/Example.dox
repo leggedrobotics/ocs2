@@ -334,16 +334,9 @@ gslq.run(optimumEventTimes, &slqDataCollector);
 An implemntation of the OCS2 algorithm for optimizing this example can be found 
 <a href="../../../ocs2_ocs2/test/exp1_ocs2_test.cpp">exp1_ocs2_test.cpp</a>.
 This class optimizes both the event times (switching times) and the continuous inputs. The OCS2 algorithm uses the 
-GSLQ algorithm for optimizing the event times and the SLQ algorithm for optimizing the continuous inputs. It is based 
+GDDP algorithm for optimizing the event times and the DDP algorithm for optimizing the continuous inputs. It is based 
 on the Frank-Wolfe gradient descent algorithm to solve the bi-level optimization. Below you see how to instantiate and
 run the OCS2 class. 
-
-\code{.cpp}
-// OCS2
-OCS2Projected<STATE_DIM, INPUT_DIM, EXP1_LogicRules> ocs2(
-		&systemDynamics, &systemDerivative,
-		&systemConstraint, &systemCostFunction,
-		&operatingTrajectories, slqSettings, &logicRules);
 
 // run ocs2 using LQ
 ocs2.run(startTime, initState, finalTime, partitioningTimes, initEventTimes);

@@ -80,7 +80,7 @@ void MPC_OCS2<STATE_DIM, INPUT_DIM>::reset() {
   std::lock_guard<std::mutex> ocs2Lock(dataCollectorMutex_);
   activateOCS2_ = false;
   eventTimesOptimized_.clear();
-  subsystemsSequenceOptimized_.clear();
+  modeSequenceOptimized_.clear();
 }
 
 /******************************************************************************************************/
@@ -109,7 +109,7 @@ void MPC_OCS2<STATE_DIM, INPUT_DIM>::runOCS2() {
       std::cerr << "### OCS2 started. " << std::endl;
     }
 
-    subsystemsSequenceOptimized_ = slqDataCollectorPtr_->modeSchedule_.modeSequence_;
+    modeSequenceOptimized_ = slqDataCollectorPtr_->modeSchedule_.modeSequence;
 
     // TODO: fix me
     //    gddpPtr_->run(slqDataCollectorPtr_.get(), eventTimesOptimized_,
@@ -134,7 +134,7 @@ bool MPC_OCS2<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
   if (ownership && !BASE::initRun_) {
     bool rewaindTookPlace = currentTime > 0.1 && BASE::slqPtr_->getRewindCounter() != slqDataCollectorPtr_->rewindCounter_;
     auto modeSchedule = BASE::slqPtr_->getModeSchedule();
-    bool modeSequenceUpdated = subsystemsSequenceOptimized_ != modeSchedule.modeSequence;
+    bool modeSequenceUpdated = modeSequenceOptimized_ != modeSchedule.modeSequence;
     if (!rewaindTookPlace && !modeSequenceUpdated) {
       // adjust the SLQ internal controller using trajectory spreading approach
       if (!modeSchedule.eventTimes.empty()) {

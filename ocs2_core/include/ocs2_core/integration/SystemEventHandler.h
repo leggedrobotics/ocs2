@@ -97,7 +97,6 @@ class SystemEventHandler {
    * @param [in] state: The current state vector.
    */
   void handleEvent(system_t& system, scalar_t time, const state_vector_t& state) {
-    // kill integration is triggered
     if (killIntegration_) {
       throw std::runtime_error("Integration terminated due to an external signal triggered by a program.");
     }
@@ -134,22 +133,11 @@ class SystemEventHandler {
    */
   void setMaxNumSteps(int maxNumSteps) { maxNumSteps_ = maxNumSteps; }
 
-  /**
-   * Activate KillIntegrationEvent.
-   */
-  static void activateKillIntegration() { killIntegration_ = true; }
-
-  /**
-   * Deactivate KillIntegrationEvent.
-   */
-  static void deactivateKillIntegration() { killIntegration_ = false; }
+ public:
+  std::atomic_bool killIntegration_ = {false};
 
  protected:
-  static std::atomic<bool> killIntegration_; /*=false*/
   int maxNumSteps_ = std::numeric_limits<int>::max();
 };
-
-template <int STATE_DIM>
-std::atomic<bool> SystemEventHandler<STATE_DIM>::killIntegration_(false);
 
 }  // namespace ocs2

@@ -761,7 +761,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearch() {
   runParallel(task, ddpSettings_.nThreads_);
 
   // revitalize all integrators
-  event_handler_t::deactivateKillIntegration();
+  for (auto& rollout : dynamicsForwardRolloutPtrStock_) {
+    rollout->reactivateRollout();
+  }
 
   // clear the feedforward increments
   for (size_t i = 0; i < numPartitions_; i++) {
@@ -903,7 +905,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
 
     // kill other ongoing line search tasks
     if (terminateLinesearchTasks) {
-      event_handler_t::activateKillIntegration();  // kill all integrators
+      for (auto& rollout : dynamicsForwardRolloutPtrStock_) {
+        rollout->abortRollout();
+      }
       if (ddpSettings_.displayInfo_) {
         BASE::printString("    LS: interrupt other rollout's integrations.");
       }

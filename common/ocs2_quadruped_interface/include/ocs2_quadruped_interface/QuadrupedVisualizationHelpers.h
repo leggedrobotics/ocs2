@@ -82,6 +82,7 @@ visualization_msgs::Marker getCenterOfPressureMarker(ForceIt firstForce, ForceIt
     setInvisible(copMarker);
   }
   copMarker.ns = "Center of Pressure";
+  copMarker.pose.orientation = getOrientationMsg({1., 0., 0., 0.});
   return copMarker;
 }
 
@@ -109,6 +110,7 @@ visualization_msgs::Marker getSupportPolygonMarker(PositionIt firstPos, Position
   lineList.scale.x = lineWidth;
   lineList.color = getColor(color);
   lineList.ns = "Support Polygon";
+  lineList.pose.orientation = getOrientationMsg({1., 0., 0., 0.});
   return lineList;
 }
 

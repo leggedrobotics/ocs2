@@ -38,14 +38,6 @@ namespace ocs2 {
  */
 class UpperLevelConstraints final : public NLP_Constraints {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = NLP_Constraints;
-  using typename BASE::dynamic_matrix_t;
-  using typename BASE::dynamic_vector_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::scalar_t;
-
   /**
    * Default constructor.
    */

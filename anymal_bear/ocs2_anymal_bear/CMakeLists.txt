@@ -1,22 +1,22 @@
 cmake_minimum_required(VERSION 3.0)
 project(ocs2_anymal_bear)
 
+# Pybind11 configuration must occur before find_package(catkin)
+option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)
+if(USE_PYBIND_PYTHON_3)
+  set(PYTHON_EXECUTABLE /usr/bin/python3)
+  set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
+endif(USE_PYBIND_PYTHON_3)
+
 find_package(catkin REQUIRED COMPONENTS
   roslib
+  pybind11_catkin
   ocs2_anymal_bear_switched_model
   ocs2_quadruped_interface
 )
 
 ## Eigen3
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-
-# Pybind11
-option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)
-if(USE_PYBIND_PYTHON_3)
-  set(PYTHON_EXECUTABLE /usr/bin/python3)
-  set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
-endif(USE_PYBIND_PYTHON_3)
-find_package(pybind11 QUIET)
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -33,7 +33,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-err
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS 
+  INCLUDE_DIRS
     include
     ${EIGEN_INCLUDE_DIRS}
   LIBRARIES
@@ -88,33 +88,31 @@ target_link_libraries(${PROJECT_NAME}_PyBindings_cpp
   ${catkin_LIBRARIES}
 )
 
-# Build python bindings if possible
-if(${pybind11_FOUND})
-  pybind11_add_module(AnymalBearPyBindings SHARED
-    src/pyBindModule.cpp
-  )
-  add_dependencies(AnymalBearPyBindings
-    ${PROJECT_NAME}_PyBindings_cpp
-    ${catkin_EXPORTED_TARGETS}
-  )
-  target_link_libraries(AnymalBearPyBindings PRIVATE
-    ${PROJECT_NAME}_PyBindings_cpp
-    ${catkin_LIBRARIES}
-  )
+# Build python bindings
+pybind11_add_module(AnymalBearPyBindings SHARED
+  src/pyBindModule.cpp
+)
+add_dependencies(AnymalBearPyBindings
+  ${PROJECT_NAME}_PyBindings_cpp
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(AnymalBearPyBindings PRIVATE
+  ${PROJECT_NAME}_PyBindings_cpp
+  ${catkin_LIBRARIES}
+)
 
-  if(USE_PYBIND_PYTHON_3)
-    # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
-    set_target_properties(AnymalBearPyBindings
-      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
-    )
-  else(USE_PYBIND_PYTHON_3)
-    set_target_properties(AnymalBearPyBindings
-        PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
-    )
-  endif(USE_PYBIND_PYTHON_3)
+if(USE_PYBIND_PYTHON_3)
+  # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
+  set_target_properties(AnymalBearPyBindings
+    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
+  )
+else(USE_PYBIND_PYTHON_3)
+  set_target_properties(AnymalBearPyBindings
+      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+  )
+endif(USE_PYBIND_PYTHON_3)
 
-  catkin_python_setup()
-endif()
+catkin_python_setup()
 
 #########################
 ###   CLANG TOOLING   ###
@@ -134,7 +132,7 @@ endif (cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_mpc_node ${PROJECT_NAME}_dummy_mrt_node ${PROJECT_NAME}_PyBindings_cpp
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -143,20 +141,26 @@ install(TARGETS ${PROJECT_NAME}
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
-install(DIRECTORY config
+install(DIRECTORY config launch
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )
+
+# TODO handle python2/3 case properly
+install(TARGETS AnymalBearPyBindings
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+)
 
 #############
 ## Testing ##
 #############
-if(${pybind11_FOUND})
-  catkin_add_gtest(${PROJECT_NAME}_pybindings_test
-    test/PyBindingsTest.cpp
-    )
-  target_link_libraries(${PROJECT_NAME}_pybindings_test
-    ${PROJECT_NAME}_PyBindings_cpp
-    ${catkin_LIBRARIES}
-    ${Boost_LIBRARIES}
-    )
-endif()
+
+catkin_add_gtest(${PROJECT_NAME}_pybindings_test
+  test/PyBindingsTest.cpp
+  )
+target_link_libraries(${PROJECT_NAME}_pybindings_test
+  ${PROJECT_NAME}_PyBindings_cpp
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  )
+catkin_add_nosetests(test)

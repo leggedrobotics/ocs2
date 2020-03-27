@@ -51,7 +51,7 @@ class TestAnymalSwitchedModel {
   AnymalCrocComAd anymalComAd_;
   AnymalCrocKinematicsAd anymalKinematicsAd_;
 
-  std::array<bool, 4> stanceLegs_;
+  switched_model::contact_flag_t stanceLegs_;
   std::function<bool(const Eigen::MatrixXd& lhs, const Eigen::MatrixXd rhs)> matrixEquality_ =
       [](const Eigen::MatrixXd& lhs, const Eigen::MatrixXd rhs) { return lhs.isApprox(rhs); };
   std::seed_seq seed_{4, 7, 93, 8};  // WOW! SO RANDOM!

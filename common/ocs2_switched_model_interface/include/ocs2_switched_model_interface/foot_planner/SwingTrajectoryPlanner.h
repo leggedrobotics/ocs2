@@ -33,18 +33,18 @@ class SwingTrajectoryPlanner {
   void update(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState, const ocs2::ModeSchedule& modeSchedule,
               scalar_t terrainHeight);
 
-  void update(const ocs2::ModeSchedule& modeSchedule, const std::array<scalar_array_t, NUM_CONTACT_POINTS>& liftOffHeightSequence,
-              const std::array<scalar_array_t, NUM_CONTACT_POINTS>& touchDownHeightSequence);
+  void update(const ocs2::ModeSchedule& modeSchedule, const feet_array_t<scalar_array_t>& liftOffHeightSequence,
+              const feet_array_t<scalar_array_t>& touchDownHeightSequence);
 
   scalar_t getZvelocityConstraint(size_t leg, scalar_t time) const;
 
   scalar_t getZpositionConstraint(size_t leg, scalar_t time) const;
 
  private:
-  void updateFeetTrajectories(scalar_t initTime, scalar_t finalTime, const std::array<vector3_t, NUM_CONTACT_POINTS>& currentFeetPositions,
+  void updateFeetTrajectories(scalar_t initTime, scalar_t finalTime, const feet_array_t<vector3_t>& currentFeetPositions,
                               const ocs2::ModeSchedule& modeSchedule, scalar_t terrainHeight);
 
-  void updateErrorTrajectories(scalar_t initTime, const std::array<vector3_t, NUM_CONTACT_POINTS>& currentFeetPositions,
+  void updateErrorTrajectories(scalar_t initTime, const feet_array_t<vector3_t>& currentFeetPositions,
                                const ocs2::ModeSchedule& modeSchedule);
 
   SwingTrajectoryPlannerSettings settings_;
@@ -61,7 +61,7 @@ class SwingTrajectoryPlanner {
 
   // Error correction
   scalar_t initTime_;
-  std::array<scalar_t, NUM_CONTACT_POINTS> initialErrors_;
+  feet_array_t<scalar_t> initialErrors_;
 
  public:
   /** Helper functions */
@@ -78,7 +78,7 @@ class SwingTrajectoryPlanner {
    * @param phaseIDsStock
    * @return contactFlagStock
    */
-  static std::array<std::vector<bool>, NUM_CONTACT_POINTS> extractContactFlags(const std::vector<size_t>& phaseIDsStock);
+  static feet_array_t<std::vector<bool>> extractContactFlags(const std::vector<size_t>& phaseIDsStock);
 };
 
 }  // namespace switched_model

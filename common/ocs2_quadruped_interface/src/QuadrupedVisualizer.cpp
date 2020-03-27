@@ -62,8 +62,8 @@ void QuadrupedVisualizer::publishObservation(ros::Time timeStamp, const system_o
   const Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin<scalar_t>(getOrientation(comPose));
 
   // Compute cartesian state and inputs
-  vector_3d_array_t feetPosition;
-  vector_3d_array_t feetForce;
+  feet_array_t<vector3_t> feetPosition;
+  feet_array_t<vector3_t> feetForce;
   for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
     feetPosition[i] = kinematicModelPtr_->footPositionInOriginFrame(i, basePose, qJoints);
     feetForce[i] = o_R_b * observation.input().template segment<3>(3 * i);
@@ -111,7 +111,8 @@ void QuadrupedVisualizer::publishTrajectory(const system_observation_array_t& sy
 }
 
 void QuadrupedVisualizer::publishCartesianMarkers(ros::Time timeStamp, const contact_flag_t& contactFlags,
-                                                  const vector_3d_array_t& feetPosition, const vector_3d_array_t& feetForce) const {
+                                                  const feet_array_t<vector3_t>& feetPosition,
+                                                  const feet_array_t<vector3_t>& feetForce) const {
   // Reserve message
   const int numberOfCartesianMarkers = 10;
   visualization_msgs::MarkerArray markerArray;

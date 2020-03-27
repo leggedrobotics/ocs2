@@ -30,8 +30,6 @@ class QuadrupedVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> {
   using dynamic_vector_t = typename dimension_t::dynamic_vector_t;
 
   using system_observation_array_t = std::vector<system_observation_t, Eigen::aligned_allocator<system_observation_t>>;
-  using vector_3d_t = Eigen::Matrix<scalar_t, 3, 1>;
-  using vector_3d_array_t = std::array<vector_3d_t, 4>;
 
   using com_model_t = ComModelBase<double>;
   using kinematic_model_t = KinematicsModelBase<double>;
@@ -44,8 +42,7 @@ class QuadrupedVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> {
   double copMarkerDiameter_ = 0.03;         // Size of the sphere at the center of pressure
   double supportPolygonLineWidth_ = 0.005;  // LineThickness for the support polygon
   double trajectoryLineWidth_ = 0.005;      // LineThickness for trajectories
-  std::array<Color, NUM_CONTACT_POINTS> feetColorMap_ = {Color::blue, Color::orange, Color::yellow,
-                                                         Color::purple};  // Colors for markers per feet
+  feet_array_t<Color> feetColorMap_ = {Color::blue, Color::orange, Color::yellow, Color::purple};  // Colors for markers per feet
 
   /**
    *
@@ -78,8 +75,8 @@ class QuadrupedVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> {
  private:
   void publishJointTransforms(ros::Time timeStamp, const joint_coordinate_t& jointAngles) const;
   void publishBaseTransform(ros::Time timeStamp, const base_coordinate_t& basePose);
-  void publishCartesianMarkers(ros::Time timeStamp, const contact_flag_t& contactFlags, const vector_3d_array_t& feetPosition,
-                               const vector_3d_array_t& feetForce) const;
+  void publishCartesianMarkers(ros::Time timeStamp, const contact_flag_t& contactFlags, const feet_array_t<vector3_t>& feetPosition,
+                               const feet_array_t<vector3_t>& feetForce) const;
   void publishCenterOfMassPose(ros::Time timeStamp, const base_coordinate_t& comPose) const;
 
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;

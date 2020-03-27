@@ -102,9 +102,9 @@ class StateTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    */
   controlled_system_base_t* systemDynamicsPtr() { return systemDynamicsPtr_.get(); }
 
-  void setKillRolloutIntegration(std::shared_ptr<std::atomic_bool> killRolloutIntegration) override {
-    dynamicsIntegratorPtr_->setKillIntegration(std::move(killRolloutIntegration));
-  }
+  void abortRollout() override { systemEventHandlersPtr_->killIntegration_ = true; }
+
+  void reactivateRollout() override { systemEventHandlersPtr_->killIntegration_ = false; }
 
  protected:
   state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,

@@ -97,6 +97,10 @@ class SystemEventHandler {
    * @param [in] state: The current state vector.
    */
   void handleEvent(system_t& system, scalar_t time, const state_vector_t& state) {
+    if (killIntegration_) {
+      throw std::runtime_error("Integration terminated due to an external signal triggered by a program.");
+    }
+
     // max number of function calls
     if (system.getNumFunctionCalls() > maxNumSteps_) {
       std::string msg = "Integration terminated since the maximum number of function calls is reached. ";
@@ -128,6 +132,9 @@ class SystemEventHandler {
    * @param [in] maxNumSteps: maximum number of integration points
    */
   void setMaxNumSteps(int maxNumSteps) { maxNumSteps_ = maxNumSteps; }
+
+ public:
+  std::atomic_bool killIntegration_ = {false};
 
  protected:
   int maxNumSteps_ = std::numeric_limits<int>::max();

@@ -667,7 +667,6 @@ class DDP_BASE : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   scalar_t avgTimeStepFP_;
   scalar_t avgTimeStepBP_;
 
-  std::shared_ptr<std::atomic_bool> killRolloutIntegration_;
   std::vector<std::unique_ptr<rollout_base_t>> dynamicsForwardRolloutPtrStock_;
   std::vector<std::unique_ptr<rollout_base_t>> operatingTrajectoriesRolloutPtrStock_;
   std::vector<std::unique_ptr<linear_quadratic_approximator_t>> linearQuadraticApproximatorPtrStock_;

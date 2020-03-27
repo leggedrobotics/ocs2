@@ -44,8 +44,7 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t* rolloutPtr, const
       algorithmName_(algorithmName),
       rewindCounter_(0),
       iteration_(0),
-      learningRateStar_(1.0),
-      killRolloutIntegration_(std::make_shared<std::atomic_bool>(false)) {
+      learningRateStar_(1.0) {
   // Dynamics, Constraints, derivatives, and cost
   linearQuadraticApproximatorPtrStock_.clear();
   linearQuadraticApproximatorPtrStock_.reserve(ddpSettings_.nThreads_);
@@ -62,7 +61,6 @@ DDP_BASE<STATE_DIM, INPUT_DIM>::DDP_BASE(const rollout_base_t* rolloutPtr, const
   for (size_t i = 0; i < ddpSettings_.nThreads_; i++) {
     // initialize rollout
     dynamicsForwardRolloutPtrStock_.emplace_back(rolloutPtr->clone());
-    dynamicsForwardRolloutPtrStock_.back()->setKillRolloutIntegration(killRolloutIntegration_);
 
     // initialize operating points
     operatingTrajectoriesRolloutPtrStock_.emplace_back(
@@ -127,7 +125,6 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::reset() {
 
   learningRateStar_ = 1.0;
   maxLearningRate_ = 1.0;
-  *killRolloutIntegration_ = false;
 
   useParallelRiccatiSolverFromInitItr_ = false;
 
@@ -764,7 +761,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearch() {
   runParallel(task, ddpSettings_.nThreads_);
 
   // revitalize all integrators
-  *killRolloutIntegration_ = false;
+  for (auto& rollout : dynamicsForwardRolloutPtrStock_) {
+    rollout->reactivateRollout();
+  }
 
   // clear the feedforward increments
   for (size_t i = 0; i < numPartitions_; i++) {
@@ -906,7 +905,9 @@ void DDP_BASE<STATE_DIM, INPUT_DIM>::lineSearchTask() {
 
     // kill other ongoing line search tasks
     if (terminateLinesearchTasks) {
-      *killRolloutIntegration_ = true;  // kill all integrators
+      for (auto& rollout : dynamicsForwardRolloutPtrStock_) {
+        rollout->abortRollout();
+      }
       if (ddpSettings_.displayInfo_) {
         BASE::printString("    LS: interrupt other rollout's integrations.");
       }

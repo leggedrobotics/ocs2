@@ -8,8 +8,8 @@
 // oc_solver
 #include <ocs2_oc/oc_solver/ModeScheduleManager.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
-#include <ocs2_oc/oc_solver/Solver_BASE.h>
 #include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
+#include <ocs2_oc/oc_solver/Solver_BASE.h>
 
 // rollout
 #include <ocs2_oc/rollout/OperatingTrajectoriesRollout.h>

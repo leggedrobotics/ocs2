@@ -231,7 +231,7 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::state_vector_t PythonInterface<S
       // TODO: delete this
       dynamic_vector_array_t dhdx;
       dhdx.reserve(dhdxFixedSize.size());
-      for (const auto& v: dhdxFixedSize) {
+      for (const auto& v : dhdxFixedSize) {
         dhdx.emplace_back(v);
       }
       dLdx += penalty_->getPenaltyCostDerivativeState(h, dhdx);
@@ -261,7 +261,7 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::input_vector_t PythonInterface<S
       // TODO: delete this
       dynamic_vector_array_t dhdu;
       dhdu.reserve(dhduFixedSize.size());
-      for (const auto& v: dhduFixedSize) {
+      for (const auto& v : dhduFixedSize) {
         dhdu.emplace_back(v);
       }
       dLdu += penalty_->getPenaltyCostDerivativeInput(h, dhdu);

@@ -65,9 +65,4 @@ TYPED_TEST(TestFixtureLoopShapingCost, testTerminalCostApproximation) {
 
   // Difference between new evaluation and approximation should be less than tol
   ASSERT_LE(std::abs(L_disturbance - L_quad_approximation), this->tol);
-};
-
-int main(int argc, char **argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

@@ -230,8 +230,9 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::state_vector_t PythonInterface<S
       constraints_->getInequalityConstraintDerivativesState(dhdxFixedSize);
       // TODO: delete this
       dynamic_vector_array_t dhdx;
-      for (int i = 0; i < dhdxFixedSize.size(); i++) {
-        dhdx[i] = dhdxFixedSize[i];
+      dhdx.reserve(dhdxFixedSize.size());
+      for (const auto& v: dhdxFixedSize) {
+        dhdx.emplace_back(v);
       }
       dLdx += penalty_->getPenaltyCostDerivativeState(h, dhdx);
     }
@@ -259,8 +260,9 @@ typename PythonInterface<STATE_DIM, INPUT_DIM>::input_vector_t PythonInterface<S
       constraints_->getInequalityConstraintDerivativesInput(dhduFixedSize);
       // TODO: delete this
       dynamic_vector_array_t dhdu;
-      for (int i = 0; i < dhduFixedSize.size(); i++) {
-        dhdu[i] = dhduFixedSize[i];
+      dhdu.reserve(dhduFixedSize.size());
+      for (const auto& v: dhduFixedSize) {
+        dhdu.emplace_back(v);
       }
       dLdu += penalty_->getPenaltyCostDerivativeInput(h, dhdu);
     }
@@ -291,10 +293,12 @@ PythonInterface<STATE_DIM, INPUT_DIM>::getIntermediateCostSecondDerivativeInput(
       constraints_->getInequalityConstraintSecondDerivativesInput(ddhduuFixedSize);
       // TODO: delete this
       dynamic_vector_array_t dhdu;
+      dhdu.reserve(dhduFixedSize.size());
       dynamic_matrix_array_t ddhduu;
+      ddhduu.reserve(dhduFixedSize.size());
       for (int i = 0; i < dhduFixedSize.size(); i++) {
-        dhdu[i] = dhduFixedSize[i];
-        ddhduu[i] = ddhduuFixedSize[i];
+        dhdu.emplace_back(dhduFixedSize[i]);
+        ddhduu.emplace_back(ddhduuFixedSize[i]);
       }
       ddLduu += penalty_->getPenaltyCostSecondDerivativeInput(h, dhdu, ddhduu);
     }

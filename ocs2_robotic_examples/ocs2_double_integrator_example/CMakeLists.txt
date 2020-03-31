@@ -33,10 +33,6 @@ if(USE_PYBIND_PYTHON_3)
 endif(USE_PYBIND_PYTHON_3)
 find_package(pybind11 QUIET)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -Wfatal-errors -Wl,--no-as-needed")
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -74,6 +70,7 @@ target_link_libraries(double_integrator_interface
   ${Boost_LIBRARIES}
   dl
 )
+target_compile_options(double_integrator_interface PUBLIC ${OCS2_CXX_FLAGS})
 
 # Mpc node
 add_executable(double_integrator_mpc
@@ -111,6 +108,7 @@ target_link_libraries(double_integrator_target
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+target_compile_options(double_integrator_target PRIVATE ${OCS2_CXX_FLAGS})
 
 # Pybindings Cpp library
 add_library(DoubleIntegratorPyBindings_Cpp

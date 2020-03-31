@@ -72,8 +72,7 @@ void SLQ_DataCollector<STATE_DIM, INPUT_DIM>::collect(const slq_t* constSlqPtr) 
 
   rewindCounter_ = slqPtr->rewindCounter_;
 
-  eventTimes_ = slqPtr->getModeSchedule().eventTimes;
-  subsystemsSequence_ = slqPtr->getModeSchedule().modeSequence;
+  modeSchedule_ = slqPtr->getModeSchedule();
 
   // optimized controller
   optimizedControllersStock_ = slqPtr->nominalControllersStock_;

@@ -154,7 +154,7 @@ class MPC_OCS2 : public MPC_SLQ<STATE_DIM, INPUT_DIM> {
   std::unique_ptr<slq_data_collector_t> slqDataCollectorPtr_;
 
   scalar_array_t eventTimesOptimized_;
-  size_array_t subsystemsSequenceOptimized_;
+  size_array_t modeSequenceOptimized_;
 };
 
 }  // namespace ocs2

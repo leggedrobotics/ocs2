@@ -50,7 +50,7 @@ using ocs2::scalar_t;
 /* Feet related declarations */
 enum class FeetEnum { LF, RF, LH, RH };
 template <typename T>
-using feet_array_t = std::array<T, NUM_CONTACT_POINTS>;  // Fixed size container fer foot
+using feet_array_t = std::array<T, NUM_CONTACT_POINTS>;  // Fixed size container per foot
 const feet_array_t<std::string> feetNames{"LF", "RF", "LH", "RH"};
 using contact_flag_t = feet_array_t<bool>;  // Contact state per foot, true = in contact, false = not in contact
 

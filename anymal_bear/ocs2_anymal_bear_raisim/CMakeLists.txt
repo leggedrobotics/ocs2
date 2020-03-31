@@ -4,11 +4,6 @@ project(ocs2_anymal_bear_raisim)
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Compile flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -Wfatal-errors -Wl,--no-as-needed")
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 # Catkin packages we depend on
 set(CATKIN_PACKAGE_DEPENDENCIES
   roslib
@@ -18,7 +13,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
 )
 
 find_package(catkin REQUIRED COMPONENTS
-    ${CATKIN_PACKAGE_DEPENDENCIES}
+  ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
 # Raisim Visualizer
@@ -50,19 +45,18 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-
 add_library(anymal_raisim_conversions
   src/AnymalRaisimConversions.cpp
 )
 target_link_libraries(anymal_raisim_conversions
   ${catkin_LIBRARIES}
 )
+target_compile_options(anymal_raisim_conversions PUBLIC ${OCS2_CXX_FLAGS})
 
 # Dummy node with raisim rollout
 add_executable(anymal_dummy_raisim
   src/AnymalRaisimDummy.cpp
 )
-
 target_link_libraries(anymal_dummy_raisim
   anymal_raisim_conversions
   ${catkin_LIBRARIES}
@@ -96,13 +90,11 @@ endif(cmake_clang_tools_FOUND)
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
-
 install(TARGETS anymal_dummy_raisim
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
-
 install(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

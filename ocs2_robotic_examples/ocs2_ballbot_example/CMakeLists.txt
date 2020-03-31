@@ -70,6 +70,7 @@ add_library(${PROJECT_NAME}
   src/BallbotInterface.cpp
   src/dynamics/BallbotSystemDynamics.cpp
   src/solvers/BallbotSLQ.cpp
+  src/BallbotDummyVisualization.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
@@ -97,7 +98,6 @@ target_compile_options(ballbot_mpc PRIVATE ${OCS2_CXX_FLAGS})
 # Dummy node
 add_executable(ballbot_dummy_test
   src/Dummy_Ballbot_Node.cpp
-  src/BallbotDummyVisualization.cpp
 )
 add_dependencies(ballbot_dummy_test
   ${catkin_EXPORTED_TARGETS}

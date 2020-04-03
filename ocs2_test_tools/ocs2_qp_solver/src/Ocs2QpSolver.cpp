@@ -45,7 +45,7 @@ ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostWrapper costF
   // Approximate
   const auto lqApproximation = getLinearQuadraticApproximation(costFunction, systemDynamics, nominalTrajectory);
 
-  // Solve for update step
+  // Solve for an update step
   ContinuousTrajectory deltaSolution;
   deltaSolution.timeTrajectory = nominalTrajectory.timeTrajectory;
   std::tie(deltaSolution.stateTrajectory, deltaSolution.inputTrajectory) =

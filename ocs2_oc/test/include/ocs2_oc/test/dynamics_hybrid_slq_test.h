@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
-#include <ocs2_core/initialization/SystemOperatingPoint.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
 
 enum { STATE_DIM = 3, INPUT_DIM = 1 };
 
@@ -381,5 +381,5 @@ class hybridSysConstraints final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
   std::vector<Base::Ptr> subsystemConstPtr_;
 };
 
-using system_op = SystemOperatingPoint<STATE_DIM, INPUT_DIM>;
+using system_op = OperatingPoints<STATE_DIM, INPUT_DIM>;
 }  // namespace ocs2

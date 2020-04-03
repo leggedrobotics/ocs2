@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SYSTEMOPERATINGTRAJECTORIESBASE_OCS2_H_
-#define SYSTEMOPERATINGTRAJECTORIESBASE_OCS2_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
@@ -50,8 +49,6 @@ class SystemOperatingTrajectoriesBase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Ptr = std::shared_ptr<SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM> >;
-  using ConstPtr = std::shared_ptr<const SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM> >;
   using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
 
   using scalar_t = typename DIMENSIONS::scalar_t;
@@ -89,16 +86,11 @@ class SystemOperatingTrajectoriesBase {
    * @param [out] timeTrajectory: Output time stamp trajectory.
    * @param [out] stateTrajectory: Output state trajectory.
    * @param [out] inputTrajectory: Output control input trajectory.
-   * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or
-   * override (default).
+   * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or override.
    */
   virtual void getSystemOperatingTrajectories(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime,
                                               scalar_array_t& timeTrajectory, state_vector_array_t& stateTrajectory,
-                                              input_vector_array_t& inputTrajectory, bool concatOutput = false) = 0;
-
- private:
+                                              input_vector_array_t& inputTrajectory, bool concatOutput) = 0;
 };
 
 }  // namespace ocs2
-
-#endif /* SYSTEMOPERATINGTRAJECTORIESBASE_OCS2_H_ */

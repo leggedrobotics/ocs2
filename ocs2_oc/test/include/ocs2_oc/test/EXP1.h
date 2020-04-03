@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
-#include <ocs2_core/initialization/SystemOperatingPoint.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
 
 #include <ocs2_oc/oc_solver/ModeScheduleManager.h>
 
@@ -361,6 +361,6 @@ class EXP1_CostFunction : public CostFunctionBase<2, 1> {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-using EXP1_SystemOperatingTrajectories = SystemOperatingPoint<2, 1>;
+using EXP1_SystemOperatingTrajectories = OperatingPoints<2, 1>;
 
 }  // namespace ocs2

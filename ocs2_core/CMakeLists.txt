@@ -108,6 +108,16 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_core
 
+catkin_add_gtest(initialization_unittest
+  test/initialization/InitializationTest.cpp
+)
+target_link_libraries(initialization_unittest
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  gtest_main
+)
+
 catkin_add_gtest(integration_unittest
   test/integration/IntegrationTest.cpp
 )

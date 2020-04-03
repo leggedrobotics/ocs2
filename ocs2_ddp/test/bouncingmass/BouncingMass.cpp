@@ -159,7 +159,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   linear_controller_t Control(timeStampArray, controllerBiasArray, controllerGainArray);
   controller_ptr_array_t controllerPtrArray = {&Control};
 
-  systemOperatingTrajectories operatingTrajectories;
+  OperatingPoints operatingTrajectories(x0, input_vector_t::Zero());
   // SLQ
   ocs2::SLQ<STATE_DIM, INPUT_DIM> slq(&stateTriggeredRollout, &systemDerivatives, &systemConstraints, &systemCost, &operatingTrajectories,
                                       slqSettings);

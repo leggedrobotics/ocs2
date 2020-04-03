@@ -29,44 +29,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/dynamics/ControlledSystemBase.h>
-#include <ocs2_core/dynamics/DerivativesBase.h>
+#include <vector>
 
 namespace ocs2 {
 
-class ballDyn : public ControlledSystemBase<2, 1> {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using Base = ControlledSystemBase<2, 1>;
-  using state_matrix_t = typename BASE::DIMENSIONS::state_matrix_t;
-  using state_input_matrix_t = typename BASE::DIMENSIONS::state_input_matrix_t;
-
-  ballDyn() = default;
-  ~ballDyn() = default;
-
-  void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) override {
-    state_matrix_t A;
-    A << 0.0, 1.0, 0.0, 0.0;
-    state_vector_t F;
-    F << 0.0, -9.81;
-
-    dxdt = A * x + F;
+template <typename SCALAR_T>
+SCALAR_T trapezoidalIntegration(const std::vector<SCALAR_T>& timeTrajectory, const std::vector<SCALAR_T>& valueTrajectory) {
+  if (timeTrajectory.size() < 2) {
+    return 0.0;
   }
+  SCALAR_T currentValue;
+  SCALAR_T areaUnderCurve = 0.0;
+  SCALAR_T previousValue = valueTrajectory.front();
+  for (size_t k = 1; k < timeTrajectory.size(); k++) {
+    currentValue = valueTrajectory[k];
+    areaUnderCurve += 0.5 * (currentValue + previousValue) * (timeTrajectory[k] - timeTrajectory[k - 1]);
+    previousValue = currentValue;
+  }  // end of k loop
 
-  void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override {
-    mappedState[0] = state[0];
-    mappedState[1] = -0.95 * state[1];
-  }
+  return areaUnderCurve;
+}
 
-  void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) override {
-    guardSurfacesValue.resize(2);
-    guardSurfacesValue[0] = state[0];
-    guardSurfacesValue[1] = -state[0] + 0.5;
-  }
-
-  ballDyn* clone() const override { return new ballDyn(*this); }
-};
 }  // namespace ocs2

@@ -93,5 +93,4 @@ target_link_libraries(${PROJECT_NAME}_testWrappers
   ${PROJECT_NAME}
   gtest_main
   )
-target_include_directories(${PROJECT_NAME}_testWrappers
-  PRIVATE test/include)
+  

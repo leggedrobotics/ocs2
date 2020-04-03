@@ -38,28 +38,28 @@ namespace ocs2 {
 namespace PerformanceIndicesRollout {
 
 template <int STATE_DIM, int INPUT_DIM>
-using cost_function_t = std::function<scalar_t(scalar_t, const Eigen::Matrix<scalar_t, STATE_DIM, 1>&, const Eigen::Matrix<scalar_t, INPUT_DIM, 1>&)>;
+using cost_function_t =
+    std::function<scalar_t(scalar_t, const Eigen::Matrix<scalar_t, STATE_DIM, 1>&, const Eigen::Matrix<scalar_t, INPUT_DIM, 1>&)>;
 
 template <int STATE_DIM, int INPUT_DIM>
-using constraint_function_t = std::function<dynamic_vector_t(scalar_t, const Eigen::Matrix<scalar_t, STATE_DIM, 1>&, const Eigen::Matrix<scalar_t, INPUT_DIM, 1>&)>;
+using constraint_function_t =
+    std::function<dynamic_vector_t(scalar_t, const Eigen::Matrix<scalar_t, STATE_DIM, 1>&, const Eigen::Matrix<scalar_t, INPUT_DIM, 1>&)>;
 
 template <int STATE_DIM, int INPUT_DIM>
 using state_vector_array_t = typename Dimensions<STATE_DIM, INPUT_DIM>::state_vector_array_t;
 template <int STATE_DIM, int INPUT_DIM>
 using input_vector_array_t = typename Dimensions<STATE_DIM, INPUT_DIM>::input_vector_array_t;
 
-
 /**
  * Computes the accumulated cost over the given trajectory.
  */
 template <int STATE_DIM, int INPUT_DIM>
-scalar_t rolloutCost(cost_function_t<STATE_DIM, INPUT_DIM> costWraper,
-                     const scalar_array_t& timeTrajectory,
+scalar_t rolloutCost(cost_function_t<STATE_DIM, INPUT_DIM> costWraper, const scalar_array_t& timeTrajectory,
                      const state_vector_array_t<STATE_DIM, INPUT_DIM>& stateTrajectory,
                      const input_vector_array_t<STATE_DIM, INPUT_DIM>& inputTrajectory) {
   const size_t N = timeTrajectory.size();
-  assert (stateTrajectory.size() == N);
-  assert (inputTrajectory.size() == N);
+  assert(stateTrajectory.size() == N);
+  assert(inputTrajectory.size() == N);
 
   scalar_array_t costTrajectory;
   costTrajectory.reserve(N);
@@ -74,13 +74,12 @@ scalar_t rolloutCost(cost_function_t<STATE_DIM, INPUT_DIM> costWraper,
  * Computes the ISE (Integral of Square Error) of constraint over the given trajectory.
  */
 template <int STATE_DIM, int INPUT_DIM>
-scalar_t rolloutConstraint(constraint_function_t<STATE_DIM, INPUT_DIM> constraintWraper,
-                           const scalar_array_t& timeTrajectory,
+scalar_t rolloutConstraint(constraint_function_t<STATE_DIM, INPUT_DIM> constraintWraper, const scalar_array_t& timeTrajectory,
                            const state_vector_array_t<STATE_DIM, INPUT_DIM>& stateTrajectory,
                            const input_vector_array_t<STATE_DIM, INPUT_DIM>& inputTrajectory) {
   const size_t N = timeTrajectory.size();
-  assert (stateTrajectory.size() == N);
-  assert (inputTrajectory.size() == N);
+  assert(stateTrajectory.size() == N);
+  assert(inputTrajectory.size() == N);
 
   scalar_array_t constraintTrajectoryISE;
   constraintTrajectoryISE.reserve(N);
@@ -94,7 +93,3 @@ scalar_t rolloutConstraint(constraint_function_t<STATE_DIM, INPUT_DIM> constrain
 
 }  // namespace PerformanceIndicesRollout
 }  // namespace ocs2
-
-
-
-

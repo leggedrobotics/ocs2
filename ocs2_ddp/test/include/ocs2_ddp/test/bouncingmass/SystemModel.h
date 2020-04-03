@@ -40,7 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 #include <ocs2_core/dynamics/DerivativesBase.h>
-#include <ocs2_core/initialization/SystemOperatingPoint.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_ddp/SLQ.h>
 #include <ocs2_ddp/SLQ_Settings.h>
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
@@ -166,4 +166,4 @@ class systemCost final : public ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM
 
 using systemConstraint = ocs2::ConstraintBase<STATE_DIM, INPUT_DIM>;
 
-using systemOperatingTrajectories = ocs2::SystemOperatingPoint<STATE_DIM, INPUT_DIM>;
+using OperatingPoints = ocs2::OperatingPoints<STATE_DIM, INPUT_DIM>;

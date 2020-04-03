@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // OCS2
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/initialization/SystemOperatingPoint.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_mpc/MPC_SLQ.h>
@@ -56,10 +56,10 @@ class DoubleIntegratorInterface final : public RobotInterface<double_integrator:
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using dim_t = ocs2::Dimensions<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
+  using dim_t = Dimensions<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
 
-  using DoubleIntegratorConstraint = ocs2::ConstraintBase<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
-  using DoubleIntegratorOperatingPoint = ocs2::SystemOperatingPoint<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
+  using DoubleIntegratorConstraint = ConstraintBase<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
+  using DoubleIntegratorOperatingPoint = OperatingPoints<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
 
   using rollout_base_t = RolloutBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
   using time_triggered_rollout_t = TimeTriggeredRollout<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
@@ -114,11 +114,11 @@ class DoubleIntegratorInterface final : public RobotInterface<double_integrator:
 
   std::unique_ptr<rollout_base_t> ddpLinearSystemRolloutPtr_;
 
-  DoubleIntegratorDynamics::Ptr linearSystemDynamicsPtr_;
-  DoubleIntegratorDynamicsDerivatives::Ptr linearSystemDynamicsDerivativesPtr_;
-  DoubleIntegratorCost::Ptr linearSystemCostPtr_;
-  DoubleIntegratorConstraint::Ptr linearSystemConstraintPtr_;
-  DoubleIntegratorOperatingPoint::Ptr linearSystemOperatingPointPtr_;
+  std::unique_ptr<DoubleIntegratorDynamics> linearSystemDynamicsPtr_;
+  std::unique_ptr<DoubleIntegratorDynamicsDerivatives> linearSystemDynamicsDerivativesPtr_;
+  std::unique_ptr<DoubleIntegratorCost> linearSystemCostPtr_;
+  std::unique_ptr<DoubleIntegratorConstraint> linearSystemConstraintPtr_;
+  std::unique_ptr<DoubleIntegratorOperatingPoint> linearSystemOperatingPointPtr_;
 
   // cost parameters
   dim_t::state_matrix_t Q_;

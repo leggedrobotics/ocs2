@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // OCS2
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/initialization/SystemOperatingPoint.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
@@ -62,7 +62,7 @@ class BallbotInterface final : public RobotInterface<ballbot::STATE_DIM_, ballbo
 
   using dim_t = Dimensions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
   using ballbotConstraint_t = ConstraintBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
-  using ballbotOperatingPoint_t = SystemOperatingPoint<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
+  using ballbotOperatingPoint_t = OperatingPoints<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
 
   using rollout_base_t = RolloutBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
   using time_triggered_rollout_t = TimeTriggeredRollout<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;

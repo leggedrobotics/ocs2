@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // OCS2
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/initialization/SystemOperatingPoint.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_mpc/MPC_ILQR.h>
@@ -56,7 +56,7 @@ class QuadrotorInterface final : public RobotInterface<quadrotor::STATE_DIM_, qu
 
   using dim_t = Dimensions<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
   using QuadrotorConstraint = ConstraintBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
-  using QuadrotorOperatingPoint = SystemOperatingPoint<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
+  using QuadrotorOperatingPoint = OperatingPoints<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
 
   using rollout_base_t = RolloutBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
   using time_triggered_rollout_t = TimeTriggeredRollout<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
@@ -117,11 +117,11 @@ class QuadrotorInterface final : public RobotInterface<quadrotor::STATE_DIM_, qu
 
   std::unique_ptr<rollout_base_t> ddpQuadrotorRolloutPtr_;
 
-  QuadrotorSystemDynamics::Ptr quadrotorSystemDynamicsPtr_;
-  QuadrotorDynamicsDerivatives::Ptr quadrotorDynamicsDerivativesPtr_;
-  QuadrotorCost::Ptr quadrotorCostPtr_;
-  QuadrotorConstraint::Ptr quadrotorConstraintPtr_;
-  QuadrotorOperatingPoint::Ptr quadrotorOperatingPointPtr_;
+  std::unique_ptr<QuadrotorSystemDynamics> quadrotorSystemDynamicsPtr_;
+  std::unique_ptr<QuadrotorDynamicsDerivatives> quadrotorDynamicsDerivativesPtr_;
+  std::unique_ptr<QuadrotorCost> quadrotorCostPtr_;
+  std::unique_ptr<QuadrotorConstraint> quadrotorConstraintPtr_;
+  std::unique_ptr<QuadrotorOperatingPoint> quadrotorOperatingPointPtr_;
 
   // cost parameters
   dim_t::state_matrix_t Q_;

@@ -81,23 +81,18 @@ std::unique_ptr<ocs2::LinearSystemDynamics<STATE_DIM, INPUT_DIM>> getOcs2Dynamic
       new ocs2::LinearSystemDynamics<STATE_DIM, INPUT_DIM>(dynamics.dfdx, dynamics.dfdu));
 }
 
-inline ContinuousTrajectory getRandomTrajectory(int N, int n, int m) {
-  ContinuousTrajectory trajectory;
-  scalar_t t = 0.0;
-  for (int k = 0; k < N; ++k) {
-    t += std::rand() / static_cast<scalar_t>(RAND_MAX);
-    trajectory.timeTrajectory.push_back(t);  // some nonconstant time spacing
-    trajectory.inputTrajectory.emplace_back(dynamic_vector_t::Random(m));
-    trajectory.stateTrajectory.emplace_back(dynamic_vector_t::Random(n));
-  }
-  // Terminal
-  t += std::rand() / static_cast<scalar_t>(RAND_MAX);
-  trajectory.timeTrajectory.push_back(t);
-  trajectory.stateTrajectory.emplace_back(dynamic_vector_t::Random(n));
+inline ContinuousTrajectory getRandomTrajectory(int N, int n, int m, scalar_t dt = 1e-3) {
+  ContinuousTrajectory trajectory = {.timeTrajectory = scalar_array_t(N+1),
+      .stateTrajectory = dynamic_vector_array_t(N+1),
+      .inputTrajectory = dynamic_vector_array_t(N)};
+  auto t = -dt;
+  std::generate(trajectory.timeTrajectory.begin(), trajectory.timeTrajectory.end(), [&t, dt] () { t += dt; return t; });
+  std::generate(trajectory.stateTrajectory.begin(), trajectory.stateTrajectory.end(), [n] () { return dynamic_vector_t::Random(n); });
+  std::generate(trajectory.inputTrajectory.begin(), trajectory.inputTrajectory.end(), [m] () { return dynamic_vector_t::Random(m); });
   return trajectory;
 }
 
-inline std::vector<LinearQuadraticStage> generateRandomProblem(int N, int nx, int nu) {
+inline std::vector<LinearQuadraticStage> generateRandomLqProblem(int N, int nx, int nu) {
   std::vector<LinearQuadraticStage> lqProblem;
   lqProblem.reserve(N);
 

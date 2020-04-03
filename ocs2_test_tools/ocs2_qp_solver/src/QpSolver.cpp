@@ -45,6 +45,10 @@ namespace qp_solver {
  * @return { numStatesPerStage, numInputsPerStage }
  */
 std::pair<std::vector<int>, std::vector<int>> getNumStatesAndInputs(const std::vector<LinearQuadraticStage>& linearQuadraticApproximation) {
+  if (linearQuadraticApproximation.empty()) {
+    return {std::vector<int>(0), std::vector<int>(0)};
+  }
+
   const int N = linearQuadraticApproximation.size() - 1;
   std::vector<int> numStates;
   std::vector<int> numInputs;
@@ -62,8 +66,8 @@ std::pair<std::vector<int>, std::vector<int>> getNumStatesAndInputs(const std::v
 
 /** Counts the number of decision variables in the QP */
 int getNumDecisionVariables(const std::vector<int>& numStates, const std::vector<int>& numInputs) {
-  int totalNumberOfStates = std::accumulate(numStates.begin(), numStates.end(), 0);
-  int totalNumberOfInputs = std::accumulate(numInputs.begin(), numInputs.end(), 0);
+  const auto totalNumberOfStates = std::accumulate(numStates.begin(), numStates.end(), 0);
+  const auto totalNumberOfInputs = std::accumulate(numInputs.begin(), numInputs.end(), 0);
   return totalNumberOfStates + totalNumberOfInputs;
 }
 
@@ -73,34 +77,32 @@ int getNumConstraints(const std::vector<int>& numStates) {
   return std::accumulate(numStates.begin(), numStates.end(), 0);
 }
 
-ContinuousTrajectory solveLinearQuadraticApproximation(const std::vector<LinearQuadraticStage>& lqApproximation,
-                                                       const ContinuousTrajectory& nominalTrajectory,
-                                                       const dynamic_vector_t& initialState) {
+std::pair<dynamic_vector_array_t, dynamic_vector_array_t> solveLinearQuadraticProblem(
+    const std::vector<LinearQuadraticStage>& lqApproximation, const dynamic_vector_t& dx0) {
   // Extract sizes
   std::vector<int> numStates;
   std::vector<int> numInputs;
   std::tie(numStates, numInputs) = getNumStatesAndInputs(lqApproximation);
-  const int numDecisionVariables = getNumDecisionVariables(numStates, numInputs);
-  const int numConstraints = getNumConstraints(numStates);
+  const auto numDecisionVariables = getNumDecisionVariables(numStates, numInputs);
+  const auto numConstraints = getNumConstraints(numStates);
 
   // Construct QP
-  const auto constraints = getConstraintMatrices(lqApproximation, initialState - nominalTrajectory.stateTrajectory.front(), numConstraints,
-                                                 numDecisionVariables);
+  const auto constraints = getConstraintMatrices(lqApproximation, dx0, numConstraints, numDecisionVariables);
   const auto costs = getCostMatrices(lqApproximation, numDecisionVariables);
 
   // Solve
   const auto primalDualSolution = solveDenseQp(costs, constraints);
 
   // Extract solution
-  ContinuousTrajectory deltaSolution;
-  deltaSolution.timeTrajectory = nominalTrajectory.timeTrajectory;
-  std::tie(deltaSolution.stateTrajectory, deltaSolution.inputTrajectory) =
-      getStateAndInputTrajectory(numStates, numInputs, primalDualSolution.first);
-  return deltaSolution;
+  return getStateAndInputTrajectory(numStates, numInputs, primalDualSolution.first);
 }
 
 VectorFunctionLinearApproximation getConstraintMatrices(const std::vector<LinearQuadraticStage>& lqp, const dynamic_vector_t& dx0,
                                                         int numConstraints, int numDecisionVariables) {
+  if (lqp.empty()) {
+    return VectorFunctionLinearApproximation();
+  }
+
   const int N = lqp.size() - 1;
 
   // Preallocate full constraint matrix
@@ -137,6 +139,10 @@ VectorFunctionLinearApproximation getConstraintMatrices(const std::vector<Linear
 }
 
 ScalarFunctionQuadraticApproximation getCostMatrices(const std::vector<LinearQuadraticStage>& lqp, int numDecisionVariables) {
+  if (lqp.empty()) {
+    return ScalarFunctionQuadraticApproximation();
+  }
+
   const int N = lqp.size() - 1;
 
   // Preallocate full Cost matrices
@@ -194,6 +200,8 @@ std::pair<dynamic_vector_t, dynamic_vector_t> solveDenseQp(const ScalarFunctionQ
 std::pair<dynamic_vector_array_t, dynamic_vector_array_t> getStateAndInputTrajectory(const std::vector<int>& numStates,
                                                                                      const std::vector<int>& numInputs,
                                                                                      const dynamic_vector_t& w) {
+  assert(numStates.size() == numInputs.size() + 1);
+
   const int N = numInputs.size();
 
   dynamic_vector_array_t stateTrajectory;

@@ -4,9 +4,8 @@
 
 #include <gtest/gtest.h>
 
-#include <ocs2_qp_solver/QpDiscreteTranscription.h>
-
-#include "testProblemsGeneration.h"
+#include "ocs2_qp_solver/QpDiscreteTranscription.h"
+#include "ocs2_qp_solver/test/testProblemsGeneration.h"
 
 class DiscreteTranscriptionTest : public testing::Test {
  protected:

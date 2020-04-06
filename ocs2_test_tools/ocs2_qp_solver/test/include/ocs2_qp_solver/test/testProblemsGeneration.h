@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_qp_solver/QpSolverTypes.h"
 #include "ocs2_qp_solver/QpTrajectories.h"
 
+#include <ocs2_core/constraint/LinearConstraint.h>
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 
@@ -81,14 +82,65 @@ std::unique_ptr<ocs2::LinearSystemDynamics<STATE_DIM, INPUT_DIM>> getOcs2Dynamic
       new ocs2::LinearSystemDynamics<STATE_DIM, INPUT_DIM>(dynamics.dfdx, dynamics.dfdu));
 }
 
+/** Get random nc linear constraints of n states, and m inputs */
+inline VectorFunctionLinearApproximation getRandomConstraints(int n, int m, int nc) {
+  VectorFunctionLinearApproximation constraints;
+  constraints.dfdx = dynamic_matrix_t::Random(nc, n);
+  constraints.dfdu = dynamic_matrix_t::Random(nc, m);
+  constraints.f = dynamic_vector_t::Random(nc);
+  return constraints;
+}
+
+template <size_t STATE_DIM, size_t INPUT_DIM>
+std::unique_ptr<ocs2::LinearConstraint<STATE_DIM, INPUT_DIM>> getOcs2Constraints(
+    const VectorFunctionLinearApproximation& stateInputConstraints, const VectorFunctionLinearApproximation& stateOnlyConstraints,
+    const VectorFunctionLinearApproximation& finalStateOnlyConstraints) {
+  using constraint_t = ocs2::LinearConstraint<STATE_DIM, INPUT_DIM>;
+
+  const auto numStateInputConstraint = stateInputConstraints.f.size();
+  typename constraint_t::constraint1_vector_t e;
+  e.head(numStateInputConstraint) = stateInputConstraints.f;
+  typename constraint_t::constraint1_state_matrix_t C;
+  C.topRows(numStateInputConstraint) = stateInputConstraints.dfdx;
+  typename constraint_t::constraint1_input_matrix_t D;
+  D.topRows(numStateInputConstraint) = stateInputConstraints.dfdu;
+
+  const auto numStateOnlyConstraint = stateOnlyConstraints.f.size();
+  typename constraint_t::constraint2_vector_t h;
+  h.head(numStateOnlyConstraint) = stateOnlyConstraints.f;
+  typename constraint_t::constraint2_state_matrix_t F;
+  F.topRows(numStateOnlyConstraint) = stateOnlyConstraints.dfdx;
+
+  const auto numStateOnlyFinalConstraint = finalStateOnlyConstraints.f.size();
+  typename constraint_t::constraint2_vector_t h_f;
+  h_f.head(numStateOnlyFinalConstraint) = finalStateOnlyConstraints.f;
+  typename constraint_t::constraint2_state_matrix_t F_f;
+  F_f.topRows(numStateOnlyFinalConstraint) = finalStateOnlyConstraints.dfdx;
+
+  const size_t numInequalityConstraint = 0;
+  typename constraint_t::scalar_array_t h0(numInequalityConstraint);
+  typename constraint_t::state_vector_array_t dhdx(numInequalityConstraint);
+  typename constraint_t::input_vector_array_t dhdu(numInequalityConstraint);
+  typename constraint_t::state_matrix_array_t ddhdxdx(numInequalityConstraint);
+  typename constraint_t::input_matrix_array_t ddhdudu(numInequalityConstraint);
+  typename constraint_t::input_state_matrix_array_t ddhdudx(numInequalityConstraint);
+
+  return std::unique_ptr<constraint_t>(new constraint_t(numStateInputConstraint, e, C, D, numStateOnlyConstraint, h, F,
+                                                        numStateOnlyFinalConstraint, h_f, F_f, numInequalityConstraint, h0, dhdx, dhdu,
+                                                        ddhdxdx, ddhdudu, ddhdudx));
+}
+
 inline ContinuousTrajectory getRandomTrajectory(int N, int n, int m, scalar_t dt = 1e-3) {
-  ContinuousTrajectory trajectory = {.timeTrajectory = scalar_array_t(N+1),
-      .stateTrajectory = dynamic_vector_array_t(N+1),
-      .inputTrajectory = dynamic_vector_array_t(N)};
+  ContinuousTrajectory trajectory = {.timeTrajectory = scalar_array_t(N + 1),
+                                     .stateTrajectory = dynamic_vector_array_t(N + 1),
+                                     .inputTrajectory = dynamic_vector_array_t(N)};
   auto t = -dt;
-  std::generate(trajectory.timeTrajectory.begin(), trajectory.timeTrajectory.end(), [&t, dt] () { t += dt; return t; });
-  std::generate(trajectory.stateTrajectory.begin(), trajectory.stateTrajectory.end(), [n] () { return dynamic_vector_t::Random(n); });
-  std::generate(trajectory.inputTrajectory.begin(), trajectory.inputTrajectory.end(), [m] () { return dynamic_vector_t::Random(m); });
+  std::generate(trajectory.timeTrajectory.begin(), trajectory.timeTrajectory.end(), [&t, dt]() {
+    t += dt;
+    return t;
+  });
+  std::generate(trajectory.stateTrajectory.begin(), trajectory.stateTrajectory.end(), [n]() { return dynamic_vector_t::Random(n); });
+  std::generate(trajectory.inputTrajectory.begin(), trajectory.inputTrajectory.end(), [m]() { return dynamic_vector_t::Random(m); });
   return trajectory;
 }
 

@@ -33,8 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include "ocs2_qp_solver/wrappers/CostWrapper.h"
 #include "ocs2_qp_solver/test/testProblemsGeneration.h"
+#include "ocs2_qp_solver/wrappers/CostWrapper.h"
 
 class CostWrapperTest : public testing::Test {
  protected:

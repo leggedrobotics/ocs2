@@ -42,6 +42,7 @@ add_library(${PROJECT_NAME}
   src/QpDiscreteTranscription.cpp
   src/QpSolver.cpp
   src/QpTrajectories.cpp
+  src/wrappers/ConstraintsWrapper.cpp
   src/wrappers/CostWrapper.cpp
   src/wrappers/SystemWrapper.cpp
   )
@@ -58,7 +59,7 @@ if(cmake_clang_tools_FOUND)
   add_clang_tooling(
     TARGETS
       ${PROJECT_NAME}
-    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
   )
@@ -87,6 +88,7 @@ install(DIRECTORY test/include/${PROJECT_NAME}/
 #############
 
 catkin_add_gtest(${PROJECT_NAME}_testWrappers
+  test/testConstraintsWrapper
   test/testCostWrapper.cpp
   test/testDiscreteTranscription.cpp
   test/testOcs2QpSolver.cpp

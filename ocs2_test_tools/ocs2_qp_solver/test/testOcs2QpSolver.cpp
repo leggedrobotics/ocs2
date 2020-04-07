@@ -26,7 +26,7 @@ class Ocs2QpSolverTest : public testing::Test {
                                                               ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
                                                               state_vector_t::Random(), input_vector_t::Random(), state_vector_t::Random());
     system = ocs2::qp_solver::getOcs2Dynamics<STATE_DIM, INPUT_DIM>(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
-    nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM);
+    nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, 1e-3);
     x0 = state_vector_t::Random();
     solution = solveLinearQuadraticOptimalControlProblem(*cost, *system, nominalTrajectory, x0);
   }
@@ -59,7 +59,7 @@ TEST_F(Ocs2QpSolverTest, satisfiesDynamics) {
 
 TEST_F(Ocs2QpSolverTest, invariantUnderLinearization) {
   // Different nominalTrajectory, with same time discretization
-  auto linearization2 = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM);
+  auto linearization2 = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, 1e-3);
   linearization2.timeTrajectory = nominalTrajectory.timeTrajectory;
 
   // Compare solutions

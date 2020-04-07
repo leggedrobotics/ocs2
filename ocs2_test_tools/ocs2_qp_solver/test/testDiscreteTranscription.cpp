@@ -12,6 +12,7 @@ class DiscreteTranscriptionTest : public testing::Test {
   static constexpr size_t N = 10;  // Trajectory length
   static constexpr size_t STATE_DIM = 3;
   static constexpr size_t INPUT_DIM = 2;
+  static constexpr ocs2::scalar_t dt = 1e-2;
   using SystemDynamics_t = ocs2::SystemDynamicsBase<STATE_DIM, INPUT_DIM>;
   using costFunction_t = ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM>;
   using input_vector_t = costFunction_t::input_vector_t;
@@ -25,7 +26,7 @@ class DiscreteTranscriptionTest : public testing::Test {
     costWrapper.reset(new ocs2::qp_solver::CostWrapper(*cost));
     const auto system = ocs2::qp_solver::getOcs2Dynamics<STATE_DIM, INPUT_DIM>(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
     systemWrapper.reset(new ocs2::qp_solver::SystemWrapper(*system));
-    linearization = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM);
+    linearization = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
     lqp = ocs2::qp_solver::getLinearQuadraticApproximation(*costWrapper, *systemWrapper, linearization);
   }
 
@@ -34,6 +35,11 @@ class DiscreteTranscriptionTest : public testing::Test {
   ocs2::qp_solver::ContinuousTrajectory linearization;
   std::vector<ocs2::qp_solver::LinearQuadraticStage> lqp;
 };
+
+constexpr size_t DiscreteTranscriptionTest::N;
+constexpr size_t DiscreteTranscriptionTest::STATE_DIM;
+constexpr size_t DiscreteTranscriptionTest::INPUT_DIM;
+constexpr ocs2::scalar_t DiscreteTranscriptionTest::dt;
 
 TEST_F(DiscreteTranscriptionTest, approximationHasCorrectSizes) {
   const auto n = STATE_DIM;
@@ -61,7 +67,7 @@ TEST_F(DiscreteTranscriptionTest, approximationHasCorrectSizes) {
 }
 
 TEST_F(DiscreteTranscriptionTest, linearizationInvariance) {
-  auto linearization2 = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM);
+  auto linearization2 = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
   linearization2.timeTrajectory = linearization.timeTrajectory;
 
   const auto lqp2 = ocs2::qp_solver::getLinearQuadraticApproximation(*costWrapper, *systemWrapper, linearization2);

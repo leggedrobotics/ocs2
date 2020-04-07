@@ -81,7 +81,7 @@ std::unique_ptr<ocs2::LinearSystemDynamics<STATE_DIM, INPUT_DIM>> getOcs2Dynamic
       new ocs2::LinearSystemDynamics<STATE_DIM, INPUT_DIM>(dynamics.dfdx, dynamics.dfdu));
 }
 
-inline ContinuousTrajectory getRandomTrajectory(int N, int n, int m, scalar_t dt = 1e-3) {
+inline ContinuousTrajectory getRandomTrajectory(int N, int n, int m, scalar_t dt) {
   ContinuousTrajectory trajectory = {.timeTrajectory = scalar_array_t(N+1),
       .stateTrajectory = dynamic_vector_array_t(N+1),
       .inputTrajectory = dynamic_vector_array_t(N)};

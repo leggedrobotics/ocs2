@@ -10,14 +10,15 @@
 class QpSolverTest : public testing::Test {
  protected:
   static constexpr int N_ = 5;
-  static constexpr int nx_ = 3;
-  static constexpr int nu_ = 2;
+  static constexpr int nx_ = 4;
+  static constexpr int nu_ = 3;
+  static constexpr int nc_ = 2;
   static constexpr int numDecisionVariables = N_ * (nx_ + nu_) + nx_;
-  static constexpr int numConstraints = (N_ + 1) * nx_;
+  static constexpr int numConstraints = (N_ + 1) * (nx_ + nc_);
 
   QpSolverTest() {
     srand(0);
-    lqProblem = ocs2::qp_solver::generateRandomLqProblem(N_, nx_, nu_);
+    lqProblem = ocs2::qp_solver::generateRandomLqProblem(N_, nx_, nu_, nc_);
     x0 = ocs2::dynamic_vector_t::Random(nx_);
 
     cost = ocs2::qp_solver::getCostMatrices(lqProblem, numDecisionVariables);
@@ -36,6 +37,7 @@ class QpSolverTest : public testing::Test {
 constexpr int QpSolverTest::N_;
 constexpr int QpSolverTest::nx_;
 constexpr int QpSolverTest::nu_;
+constexpr int QpSolverTest::nc_;
 constexpr int QpSolverTest::numDecisionVariables;
 constexpr int QpSolverTest::numConstraints;
 

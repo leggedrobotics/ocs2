@@ -37,6 +37,7 @@ namespace ocs2 {
 namespace qp_solver {
 
 std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& cost, SystemWrapper& system,
+                                                                  ConstraintsWrapper* constraintsPtr,
                                                                   const ContinuousTrajectory& nominalTrajectory) {
   if (nominalTrajectory.timeTrajectory.empty()) {
     return {};
@@ -51,14 +52,23 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& c
   std::vector<LinearQuadraticStage> lqp;
   lqp.reserve(N + 1);
   for (int k = 0; k < N; ++k) {  // Intermediate stages
-    lqp.emplace_back(approximateStage(cost, system, {t[k], x[k], u[k]}, {t[k + 1], x[k + 1]}));
+    lqp.emplace_back(approximateStage(cost, system, constraintsPtr, {t[k], x[k], u[k]}, {t[k + 1], x[k + 1]}));
   }
-  lqp.emplace_back(cost.getTerminalQuadraticApproximation(t[N], x[N]), VectorFunctionLinearApproximation());  // Terminal cost, no dynamics.
+
+  if (constraintsPtr) {
+    lqp.emplace_back(cost.getTerminalQuadraticApproximation(t[N], x[N]), VectorFunctionLinearApproximation(),
+                     constraintsPtr->getTerminalLinearApproximation(t[N], x[N]));  // Terminal cost and constraints, no dynamics.
+  } else {
+    lqp.emplace_back(
+        cost.getTerminalQuadraticApproximation(t[N], x[N]), VectorFunctionLinearApproximation(),
+        VectorFunctionLinearApproximation{.dfdx = dynamic_matrix_t(0, x[N].size())});  // Terminal cost, no dynamics and constraints.
+  }
 
   return lqp;
 }
 
-LinearQuadraticStage approximateStage(CostWrapper& cost, SystemWrapper& system, TrajectoryRef start, StateTrajectoryRef end) {
+LinearQuadraticStage approximateStage(CostWrapper& cost, SystemWrapper& system, ConstraintsWrapper* constraintsPtr, TrajectoryRef start,
+                                      StateTrajectoryRef end) {
   LinearQuadraticStage lqStage;
   auto dt = end.t - start.t;
 
@@ -69,6 +79,13 @@ LinearQuadraticStage approximateStage(CostWrapper& cost, SystemWrapper& system, 
   // Adapt the offset to account for discretization and the nominal trajectory :
   // dx[k+1] = A dx[k] + B du[k] + F(x0[k], u0[k]) - x0[k+1]
   lqStage.dynamics.f -= end.x;
+
+  if (constraintsPtr) {
+    lqStage.constraints = constraintsPtr->getLinearApproximation(start.t, start.x, start.u);
+  } else {
+    lqStage.constraints =
+        VectorFunctionLinearApproximation{.dfdx = dynamic_matrix_t(0, start.x.size()), .dfdu = dynamic_matrix_t(0, start.u.size())};
+  }
 
   return lqStage;
 }

@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_qp_solver/QpSolverTypes.h"
 #include "ocs2_qp_solver/QpTrajectories.h"
+#include "ocs2_qp_solver/wrappers/ConstraintsWrapper.h"
 #include "ocs2_qp_solver/wrappers/CostWrapper.h"
 #include "ocs2_qp_solver/wrappers/SystemWrapper.h"
 
@@ -47,10 +48,12 @@ namespace qp_solver {
  *
  * @param cost : continuous cost function
  * @param system : continuous system dynamics
+ * @param constraintsPtr : constraints. For unconstrained problems use a null pointer.
  * @param nominalTrajectory : time, state and input trajectory to make the linear quadratic approximation around
  * @return vector of discrete cost and dynamics at each node.
  */
 std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& cost, SystemWrapper& system,
+                                                                  ConstraintsWrapper* constraintsPtr,
                                                                   const ContinuousTrajectory& nominalTrajectory);
 
 /**
@@ -58,11 +61,13 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& c
  *
  * @param cost : continuous cost
  * @param system : continuous system
+ * @param constraintsPtr : constraints. For unconstrained problems use a null pointer.
  * @param start : linearization point at the start of the stage
  * @param end : linearization point at the end of the stage
  * @return discreted stage
  */
-LinearQuadraticStage approximateStage(CostWrapper& cost, SystemWrapper& system, TrajectoryRef start, StateTrajectoryRef end);
+LinearQuadraticStage approximateStage(CostWrapper& cost, SystemWrapper& system, ConstraintsWrapper* constraintsPtr, TrajectoryRef start,
+                                      StateTrajectoryRef end);
 
 /**
  * Computes the cost integral from a start condition over a dt interval

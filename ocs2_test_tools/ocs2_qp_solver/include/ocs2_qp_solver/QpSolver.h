@@ -53,12 +53,15 @@ std::pair<dynamic_vector_array_t, dynamic_vector_array_t> solveLinearQuadraticPr
 /**
  * Constructs the matrix of stacked dynamic constraints A w + b = 0
  *
- * A = [ I  *
+ * A = [-I  *
+ *       C  D  *  *
  *       A  B -I  *
+ *       *  *  C  D  *  *
  *       *  *  A  B -I  *
+ *       *  *  *  *  C  D  *
  *       *  *  *  *  A  B -I ]
  *
- * b = [x0; b[0]; ... b[N-1]]
+ * b = [x0; e[0]; b[0]; ... e[N-1]; b[N-1]; e[N]]
  *
  * @param lqp : linear quadratic problem.
  * @param dx0 : initial state deviation from the nominal trajectories.

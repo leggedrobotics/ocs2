@@ -63,6 +63,12 @@ class ConstraintsWrapper {
   /** Move assignments moves the constraint */
   ConstraintsWrapper& operator=(ConstraintsWrapper&&) noexcept = default;
 
+  /** Evaluate the initial constraint */
+  dynamic_vector_t getInitialConstraint(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u);
+
+  /** Gets the initial constraint approximation */
+  VectorFunctionLinearApproximation getInitialLinearApproximation(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u);
+
   /** Evaluate the constraint */
   dynamic_vector_t getConstraint(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u);
 
@@ -80,8 +86,9 @@ class ConstraintsWrapper {
   struct ConstraintsHandleBase {
     virtual ~ConstraintsHandleBase() = default;
     virtual std::unique_ptr<ConstraintsHandleBase> clone() const = 0;
+    virtual void setInitialStateAndControl(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u) = 0;
     virtual void setCurrentStateAndControl(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u) = 0;
-    virtual void setCurrentStateAndControl(scalar_t t, const dynamic_vector_t& x) = 0;
+    virtual void setTerminalState(scalar_t t, const dynamic_vector_t& x) = 0;
     virtual dynamic_vector_t getConstraints() = 0;
     virtual dynamic_matrix_t getConstraintsDerivativeState() = 0;
     virtual dynamic_matrix_t getConstraintsDerivativeInput() = 0;
@@ -115,12 +122,17 @@ class ConstraintsWrapper {
     size_t numStateOnlyConstraint_ = 0;
     size_t numStateOnlyFinalConstraint_ = 0;
     // All function below wrap fixed size functions to dynamic size
+    void setInitialStateAndControl(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u) override {
+      hp_->setCurrentStateAndControl(t, x, u);
+      numStateInputConstraint_ = hp_->numStateInputConstraint(t);
+      numStateOnlyConstraint_ = 0;
+    }
     void setCurrentStateAndControl(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u) override {
       hp_->setCurrentStateAndControl(t, x, u);
       numStateInputConstraint_ = hp_->numStateInputConstraint(t);
       numStateOnlyConstraint_ = hp_->numStateOnlyConstraint(t);
     }
-    void setCurrentStateAndControl(scalar_t t, const dynamic_vector_t& x) override {
+    void setTerminalState(scalar_t t, const dynamic_vector_t& x) override {
       hp_->setCurrentStateAndControl(t, x, input_vector_t::Zero());
       numStateOnlyFinalConstraint_ = hp_->numStateOnlyFinalConstraint(t);
     }

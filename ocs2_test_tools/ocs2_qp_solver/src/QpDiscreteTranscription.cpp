@@ -52,7 +52,7 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& c
   std::vector<LinearQuadraticStage> lqp;
   lqp.reserve(N + 1);
   for (int k = 0; k < N; ++k) {  // Intermediate stages
-    lqp.emplace_back(approximateStage(cost, system, constraintsPtr, {t[k], x[k], u[k]}, {t[k + 1], x[k + 1]}));
+    lqp.emplace_back(approximateStage(cost, system, constraintsPtr, {t[k], x[k], u[k]}, {t[k + 1], x[k + 1]}, k == 0));
   }
 
   if (constraintsPtr) {
@@ -68,7 +68,7 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& c
 }
 
 LinearQuadraticStage approximateStage(CostWrapper& cost, SystemWrapper& system, ConstraintsWrapper* constraintsPtr, TrajectoryRef start,
-                                      StateTrajectoryRef end) {
+                                      StateTrajectoryRef end, bool isInitialTime) {
   LinearQuadraticStage lqStage;
   auto dt = end.t - start.t;
 
@@ -81,7 +81,11 @@ LinearQuadraticStage approximateStage(CostWrapper& cost, SystemWrapper& system, 
   lqStage.dynamics.f -= end.x;
 
   if (constraintsPtr) {
-    lqStage.constraints = constraintsPtr->getLinearApproximation(start.t, start.x, start.u);
+    if (isInitialTime) {
+      lqStage.constraints = constraintsPtr->getInitialLinearApproximation(start.t, start.x, start.u);
+    } else {
+      lqStage.constraints = constraintsPtr->getLinearApproximation(start.t, start.x, start.u);
+    }
   } else {
     lqStage.constraints =
         VectorFunctionLinearApproximation{.dfdx = dynamic_matrix_t(0, start.x.size()), .dfdu = dynamic_matrix_t(0, start.u.size())};

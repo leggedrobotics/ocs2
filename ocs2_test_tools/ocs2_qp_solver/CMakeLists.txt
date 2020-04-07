@@ -90,10 +90,10 @@ install(DIRECTORY test/include/${PROJECT_NAME}/
 catkin_add_gtest(${PROJECT_NAME}_testWrappers
   test/testConstraintsWrapper
   test/testCostWrapper.cpp
-  test/testDiscreteTranscription.cpp
-  test/testOcs2QpSolver.cpp
-  test/testQpSolver.cpp
   test/testSystemWrapper.cpp
+  test/testDiscreteTranscription.cpp
+  test/testQpSolver.cpp
+  test/testOcs2QpSolver.cpp
   )
 target_link_libraries(${PROJECT_NAME}_testWrappers
   ${PROJECT_NAME}

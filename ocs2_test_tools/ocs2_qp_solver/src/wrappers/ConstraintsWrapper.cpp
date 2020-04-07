@@ -32,6 +32,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace qp_solver {
 
+dynamic_vector_t ConstraintsWrapper::getInitialConstraint(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u) {
+  p_->setInitialStateAndControl(t, x, u);
+  return p_->getConstraints();
+}
+
+VectorFunctionLinearApproximation ConstraintsWrapper::getInitialLinearApproximation(scalar_t t, const dynamic_vector_t& x,
+                                                                                    const dynamic_vector_t& u) {
+  VectorFunctionLinearApproximation linearConstraints;
+  p_->setInitialStateAndControl(t, x, u);
+  linearConstraints.dfdx = p_->getConstraintsDerivativeState();
+  linearConstraints.dfdu = p_->getConstraintsDerivativeInput();
+  linearConstraints.f = p_->getConstraints();
+  return linearConstraints;
+}
+
 dynamic_vector_t ConstraintsWrapper::getConstraint(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u) {
   p_->setCurrentStateAndControl(t, x, u);
   return p_->getConstraints();
@@ -48,13 +63,13 @@ VectorFunctionLinearApproximation ConstraintsWrapper::getLinearApproximation(sca
 }
 
 dynamic_vector_t ConstraintsWrapper::getTerminalConstraint(scalar_t t, const dynamic_vector_t& x) {
-  p_->setCurrentStateAndControl(t, x);
+  p_->setTerminalState(t, x);
   return p_->getTerminalConstraints();
 }
 
 VectorFunctionLinearApproximation ConstraintsWrapper::getTerminalLinearApproximation(scalar_t t, const dynamic_vector_t& x) {
   VectorFunctionLinearApproximation linearConstraints;
-  p_->setCurrentStateAndControl(t, x);
+  p_->setTerminalState(t, x);
   linearConstraints.dfdx = p_->getTerminalConstraintsDerivativeState();
   linearConstraints.f = p_->getTerminalConstraints();
   return linearConstraints;

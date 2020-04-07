@@ -64,10 +64,11 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& c
  * @param constraintsPtr : constraints. For unconstrained problems use a null pointer.
  * @param start : linearization point at the start of the stage
  * @param end : linearization point at the end of the stage
+ * @param isInitialTime : Whether start is an initial time points.
  * @return discreted stage
  */
 LinearQuadraticStage approximateStage(CostWrapper& cost, SystemWrapper& system, ConstraintsWrapper* constraintsPtr, TrajectoryRef start,
-                                      StateTrajectoryRef end);
+                                      StateTrajectoryRef end, bool isInitialTime);
 
 /**
  * Computes the cost integral from a start condition over a dt interval

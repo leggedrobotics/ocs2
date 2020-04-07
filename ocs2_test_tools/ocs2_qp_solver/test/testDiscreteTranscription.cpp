@@ -39,8 +39,8 @@ class DiscreteTranscriptionTest : public testing::Test {
         ocs2::qp_solver::getLinearQuadraticApproximation(*costWrapper, *systemWrapper, constraintsWrapper.get(), linearization);
   }
 
-  void checkSizes(const std::vector<ocs2::qp_solver::LinearQuadraticStage>& lqr, size_t numIntermediateConstraints,
-                  size_t numTerminalConstraints) const {
+  void checkSizes(const std::vector<ocs2::qp_solver::LinearQuadraticStage>& lqr, size_t numStateInputConstraints,
+                  size_t numStateOnlyConstraints, size_t numTerminalConstraints) const {
     ASSERT_EQ(lqr.size(), N + 1);
     for (int k = 0; k < N; ++k) {
       // Cost sizes
@@ -58,6 +58,7 @@ class DiscreteTranscriptionTest : public testing::Test {
       ASSERT_EQ(lqr[k].dynamics.dfdu.cols(), INPUT_DIM);
 
       // Constraint sizes
+      const auto numIntermediateConstraints = k == 0 ? numStateInputConstraints : numStateInputConstraints + numStateOnlyConstraints;
       ASSERT_EQ(lqr[k].constraints.f.rows(), numIntermediateConstraints);
       ASSERT_EQ(lqr[k].constraints.dfdx.rows(), numIntermediateConstraints);
       ASSERT_EQ(lqr[k].constraints.dfdx.cols(), STATE_DIM);
@@ -91,11 +92,11 @@ constexpr size_t DiscreteTranscriptionTest::numStateOnlyConstraints;
 constexpr size_t DiscreteTranscriptionTest::numFinalStateOnlyConstraints;
 
 TEST_F(DiscreteTranscriptionTest, unconstrainedLqrHasCorrectSizes) {
-  checkSizes(unconstrainedLqr, 0, 0);
+  checkSizes(unconstrainedLqr, 0, 0, 0);
 }
 
 TEST_F(DiscreteTranscriptionTest, constrainedLqrHasCorrectSizes) {
-  checkSizes(constrainedLqr, numStateInputConstraints + numStateOnlyConstraints, numFinalStateOnlyConstraints);
+  checkSizes(constrainedLqr, numStateInputConstraints, numStateOnlyConstraints, numFinalStateOnlyConstraints);
 }
 
 TEST_F(DiscreteTranscriptionTest, linearizationInvariance) {

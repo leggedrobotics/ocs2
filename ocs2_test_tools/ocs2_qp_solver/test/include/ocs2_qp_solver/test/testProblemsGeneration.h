@@ -117,17 +117,8 @@ std::unique_ptr<ocs2::LinearConstraint<STATE_DIM, INPUT_DIM>> getOcs2Constraints
   typename constraint_t::constraint2_state_matrix_t F_f;
   F_f.topRows(numStateOnlyFinalConstraint) = finalStateOnlyConstraints.dfdx;
 
-  const size_t numInequalityConstraint = 0;
-  typename constraint_t::scalar_array_t h0(numInequalityConstraint);
-  typename constraint_t::state_vector_array_t dhdx(numInequalityConstraint);
-  typename constraint_t::input_vector_array_t dhdu(numInequalityConstraint);
-  typename constraint_t::state_matrix_array_t ddhdxdx(numInequalityConstraint);
-  typename constraint_t::input_matrix_array_t ddhdudu(numInequalityConstraint);
-  typename constraint_t::input_state_matrix_array_t ddhdudx(numInequalityConstraint);
-
-  return std::unique_ptr<constraint_t>(new constraint_t(numStateInputConstraint, e, C, D, numStateOnlyConstraint, h, F,
-                                                        numStateOnlyFinalConstraint, h_f, F_f, numInequalityConstraint, h0, dhdx, dhdu,
-                                                        ddhdxdx, ddhdudu, ddhdudx));
+  return std::unique_ptr<constraint_t>(
+      new constraint_t(numStateInputConstraint, e, C, D, numStateOnlyConstraint, h, F, numStateOnlyFinalConstraint, h_f, F_f));
 }
 
 inline ContinuousTrajectory getRandomTrajectory(int N, int n, int m, scalar_t dt = 1e-3) {

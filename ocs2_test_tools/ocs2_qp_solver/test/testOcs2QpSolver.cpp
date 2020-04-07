@@ -13,10 +13,10 @@
 class Ocs2QpSolverTest : public testing::Test {
  protected:
   static constexpr size_t N = 10;  // Trajectory length
-  static constexpr size_t STATE_DIM = 4;
+  static constexpr size_t STATE_DIM = 5;
   static constexpr size_t INPUT_DIM = 3;
-  static constexpr size_t numStateInputConstraints = 2;
-  static constexpr size_t numStateOnlyConstraints = 0;
+  static constexpr size_t numStateInputConstraints = 1;
+  static constexpr size_t numStateOnlyConstraints = 1;
   static constexpr size_t numFinalStateOnlyConstraints = 2;
   static constexpr ocs2::scalar_t precision = 1e-9;
   using SystemDynamics_t = ocs2::SystemDynamicsBase<STATE_DIM, INPUT_DIM>;
@@ -81,13 +81,16 @@ TEST_F(Ocs2QpSolverTest, satisfiesDynamics) {
 
 TEST_F(Ocs2QpSolverTest, satisfiesConstraints) {
   ocs2::qp_solver::ConstraintsWrapper constraintsWrapper(*constraint);
-  for (int k = 0; k < N; ++k) {
+  const auto g0 = constraintsWrapper.getInitialConstraint(constrainedSolution.timeTrajectory[0], constrainedSolution.stateTrajectory[0],
+                                                          constrainedSolution.inputTrajectory[0]);
+  ASSERT_TRUE(g0.isZero(precision));
+  for (int k = 1; k < N; ++k) {
     const auto g = constraintsWrapper.getConstraint(constrainedSolution.timeTrajectory[k], constrainedSolution.stateTrajectory[k],
                                                     constrainedSolution.inputTrajectory[k]);
     ASSERT_TRUE(g.isZero(precision));
   }
-  const auto g_f = constraintsWrapper.getTerminalConstraint(constrainedSolution.timeTrajectory[N], constrainedSolution.stateTrajectory[N]);
-  ASSERT_TRUE(g_f.isZero(precision));
+  const auto gf = constraintsWrapper.getTerminalConstraint(constrainedSolution.timeTrajectory[N], constrainedSolution.stateTrajectory[N]);
+  ASSERT_TRUE(gf.isZero(precision));
 }
 
 TEST_F(Ocs2QpSolverTest, invariantUnderLinearization) {

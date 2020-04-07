@@ -76,6 +76,42 @@ constexpr size_t ConstraintsWrapperTest::stateInputConstraints;
 constexpr size_t ConstraintsWrapperTest::stateOnlyConstraints;
 constexpr size_t ConstraintsWrapperTest::finalStateOnlyConstraints;
 
+TEST_F(ConstraintsWrapperTest, copy) {
+  const auto g = constraintsWrapper->getConstraint(t, x, u);
+  // Copy and destroy old wrapper
+  auto wrapperClone = *constraintsWrapper;
+  constraintsWrapper.reset();
+  ASSERT_TRUE(g.isApprox(wrapperClone.getConstraint(t, x, u)));
+}
+
+TEST_F(ConstraintsWrapperTest, initalConstraintValue) {
+  constraintFunction_t::constraint1_vector_t e;
+  constraint->getConstraint1(e);
+  const auto nc1 = constraint->numStateInputConstraint(t);
+  ocs2::dynamic_vector_t g = e.head(nc1);
+  ASSERT_TRUE(g.isApprox(constraintsWrapper->getInitialConstraint(t, x, u)));
+}
+
+TEST_F(ConstraintsWrapperTest, initailLinearApproximation) {
+  // Define deviation
+  scalar_t dt = 0.24;
+  state_vector_t dx = state_vector_t::Random();
+  input_vector_t du = input_vector_t::Random();
+
+  // Constraint at deviation
+  constraint->setCurrentStateAndControl(t + dt, x + dx, u + du);
+  constraintFunction_t::constraint1_vector_t e_true;
+  constraint->getConstraint1(e_true);
+  const auto nc1 = constraint->numStateInputConstraint(t + dt);
+  ocs2::dynamic_vector_t g_true = e_true.head(nc1);
+  constraint.reset();  // Destroy the constraint function after evaluation
+
+  const auto linearApproximation = constraintsWrapper->getInitialLinearApproximation(t, x, u);
+  ocs2::dynamic_vector_t g_wrapped_approximation = linearApproximation.f + linearApproximation.dfdx * dx + linearApproximation.dfdu * du;
+
+  ASSERT_TRUE(g_true.isApprox(g_wrapped_approximation));
+}
+
 TEST_F(ConstraintsWrapperTest, intermediateConstraintValue) {
   constraintFunction_t::constraint1_vector_t e;
   constraint->getConstraint1(e);
@@ -86,14 +122,6 @@ TEST_F(ConstraintsWrapperTest, intermediateConstraintValue) {
   ocs2::dynamic_vector_t g(nc1 + nc2);
   g << e.head(nc1), h.head(nc2);
   ASSERT_TRUE(g.isApprox(constraintsWrapper->getConstraint(t, x, u)));
-}
-
-TEST_F(ConstraintsWrapperTest, intermediateConstraintValueAfterCopy) {
-  const auto g = constraintsWrapper->getConstraint(t, x, u);
-  // Copy and destroy old wrapper
-  auto wrapperClone = *constraintsWrapper;
-  constraintsWrapper.reset();
-  ASSERT_TRUE(g.isApprox(wrapperClone.getConstraint(t, x, u)));
 }
 
 TEST_F(ConstraintsWrapperTest, intermediateLinearApproximation) {

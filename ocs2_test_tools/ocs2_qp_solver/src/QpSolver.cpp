@@ -65,7 +65,7 @@ std::tuple<std::vector<int>, std::vector<int>, std::vector<int>> getNumStatesInp
     numConstraints.push_back(linearQuadraticApproximation[k].constraints.f.size());
   }
   numStates.push_back(linearQuadraticApproximation[N - 1].dynamics.dfdx.rows());
-  numConstraints.push_back(linearQuadraticApproximation[N - 1].constraints.f.size());
+  numConstraints.push_back(linearQuadraticApproximation[N].constraints.f.size());
 
   return {numStates, numInputs, numConstraints};
 }

@@ -4,12 +4,11 @@
 
 #include <gtest/gtest.h>
 
-#include "ocs2_qp_solver/Ocs2QpSolver.h"
-
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 
-#include "testProblemsGeneration.h"
+#include "ocs2_qp_solver/Ocs2QpSolver.h"
+#include "ocs2_qp_solver/test/testProblemsGeneration.h"
 
 class Ocs2QpSolverTest : public testing::Test {
  protected:
@@ -27,17 +26,21 @@ class Ocs2QpSolverTest : public testing::Test {
                                                               ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
                                                               state_vector_t::Random(), input_vector_t::Random(), state_vector_t::Random());
     system = ocs2::qp_solver::getOcs2Dynamics<STATE_DIM, INPUT_DIM>(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
-    linearization = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM);
+    nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, 1e-3);
     x0 = state_vector_t::Random();
-    solution = solveLinearQuadraticOptimalControlProblem(*cost, *system, linearization, x0);
+    solution = solveLinearQuadraticOptimalControlProblem(*cost, *system, nominalTrajectory, x0);
   }
 
   std::unique_ptr<costFunction_t> cost;
   std::unique_ptr<SystemDynamics_t> system;
-  ocs2::qp_solver::ContinuousTrajectory linearization;
+  ocs2::qp_solver::ContinuousTrajectory nominalTrajectory;
   state_vector_t x0;
   ocs2::qp_solver::ContinuousTrajectory solution;
 };
+
+constexpr size_t Ocs2QpSolverTest::N;
+constexpr size_t Ocs2QpSolverTest::STATE_DIM;
+constexpr size_t Ocs2QpSolverTest::INPUT_DIM;
 
 TEST_F(Ocs2QpSolverTest, initialCondition) {
   ASSERT_TRUE(x0.isApprox(solution.stateTrajectory.front()));
@@ -55,9 +58,9 @@ TEST_F(Ocs2QpSolverTest, satisfiesDynamics) {
 }
 
 TEST_F(Ocs2QpSolverTest, invariantUnderLinearization) {
-  // Different linearization, with same time discretization
-  auto linearization2 = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM);
-  linearization2.timeTrajectory = linearization.timeTrajectory;
+  // Different nominalTrajectory, with same time discretization
+  auto linearization2 = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, 1e-3);
+  linearization2.timeTrajectory = nominalTrajectory.timeTrajectory;
 
   // Compare solutions
   auto solution2 = solveLinearQuadraticOptimalControlProblem(*cost, *system, linearization2, x0);
@@ -72,8 +75,8 @@ TEST_F(Ocs2QpSolverTest, knownSolutionAtOrigin) {
       input_vector_t::Zero(), state_vector_t::Zero());
   const auto zeroX0 = state_vector_t::Zero();
 
-  // Obtain solution, with non-zero linearization
-  auto zeroSolution = solveLinearQuadraticOptimalControlProblem(*zeroCost, *system, linearization, zeroX0);
+  // Obtain solution, with non-zero nominalTrajectory
+  auto zeroSolution = solveLinearQuadraticOptimalControlProblem(*zeroCost, *system, nominalTrajectory, zeroX0);
 
   ocs2::dynamic_vector_array_t allStatesZero(N + 1, ocs2::dynamic_vector_t::Zero(STATE_DIM));
   ocs2::dynamic_vector_array_t allInputsZero(N, ocs2::dynamic_vector_t::Zero(INPUT_DIM));

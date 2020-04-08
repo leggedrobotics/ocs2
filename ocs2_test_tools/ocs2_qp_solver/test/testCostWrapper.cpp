@@ -34,8 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtest/gtest.h>
 
 #include "ocs2_qp_solver/wrappers/CostWrapper.h"
-
-#include "testProblemsGeneration.h"
+#include "ocs2_qp_solver/test/testProblemsGeneration.h"
 
 class CostWrapperTest : public testing::Test {
  protected:

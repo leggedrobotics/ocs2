@@ -45,11 +45,14 @@ ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostWrapper costF
   // Approximate
   const auto lqApproximation = getLinearQuadraticApproximation(costFunction, systemDynamics, nominalTrajectory);
 
-  // Solve for update step
-  const auto relativeSolution = solveLinearQuadraticApproximation(lqApproximation, nominalTrajectory, initialState);
+  // Solve for an update step
+  ContinuousTrajectory deltaSolution;
+  deltaSolution.timeTrajectory = nominalTrajectory.timeTrajectory;
+  std::tie(deltaSolution.stateTrajectory, deltaSolution.inputTrajectory) =
+      solveLinearQuadraticProblem(lqApproximation, initialState - nominalTrajectory.stateTrajectory.front());
 
   // Take a full step: Add update to nominal trajectory
-  return nominalTrajectory + relativeSolution;
+  return nominalTrajectory + deltaSolution;
 }
 
 }  // namespace qp_solver

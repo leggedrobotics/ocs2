@@ -20,6 +20,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 catkin_package(
   INCLUDE_DIRS
     include
+    test/include
     ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
    ${PROJECT_NAME}
@@ -30,6 +31,7 @@ catkin_package(
 
 include_directories(
   include
+  test/include
   ${EIGEN3_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )

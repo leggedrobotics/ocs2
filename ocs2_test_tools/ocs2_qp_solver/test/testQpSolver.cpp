@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 
 #include "ocs2_qp_solver/QpSolver.h"
-#include "testProblemsGeneration.h"
+#include "ocs2_qp_solver/test/testProblemsGeneration.h"
 
 class QpSolverTest : public testing::Test {
  protected:
@@ -17,7 +17,7 @@ class QpSolverTest : public testing::Test {
 
   QpSolverTest() {
     srand(0);
-    lqProblem = ocs2::qp_solver::generateRandomProblem(N_, nx_, nu_);
+    lqProblem = ocs2::qp_solver::generateRandomLqProblem(N_, nx_, nu_);
     x0 = ocs2::dynamic_vector_t::Random(nx_);
 
     cost = ocs2::qp_solver::getCostMatrices(lqProblem, numDecisionVariables);
@@ -32,6 +32,12 @@ class QpSolverTest : public testing::Test {
   ocs2::dynamic_vector_t primalSolution;
   ocs2::dynamic_vector_t dualSolution;
 };
+
+constexpr int QpSolverTest::N_;
+constexpr int QpSolverTest::nx_;
+constexpr int QpSolverTest::nu_;
+constexpr int QpSolverTest::numDecisionVariables;
+constexpr int QpSolverTest::numConstraints;
 
 TEST_F(QpSolverTest, constraintSatisfaction) {
   ASSERT_TRUE(constraints.f.isApprox(-constraints.dfdx * primalSolution));

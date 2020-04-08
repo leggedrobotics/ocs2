@@ -38,6 +38,10 @@ namespace qp_solver {
 
 std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& cost, SystemWrapper& system,
                                                                   const ContinuousTrajectory& nominalTrajectory) {
+  if (nominalTrajectory.timeTrajectory.empty()) {
+    return {};
+  }
+
   auto& t = nominalTrajectory.timeTrajectory;
   auto& x = nominalTrajectory.stateTrajectory;
   auto& u = nominalTrajectory.inputTrajectory;

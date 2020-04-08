@@ -75,7 +75,7 @@ class DdpCorrectnessTest : public testing::Test {
     constraint.reset(new constraintFunction_t());
 
     // system operating points
-    nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM);
+    nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, 1e-3);
     state_vector_array_t stateTrajectoryTemp(N + 1);
     std::copy(nominalTrajectory.stateTrajectory.begin(), nominalTrajectory.stateTrajectory.end(), stateTrajectoryTemp.begin());
     input_vector_array_t inputTrajectoryTemp(N);
@@ -136,6 +136,10 @@ class DdpCorrectnessTest : public testing::Test {
     return lAccum + phi;
   }
 
+  scalar_t relError(ocs2::dynamic_vector_t ddpSol, const ocs2::dynamic_vector_t& qpSol) const {
+    return (ddpSol - qpSol).norm() / ddpSol.norm();
+  }
+
   std::unique_ptr<costFunction_t> cost;
   std::unique_ptr<SystemDynamics_t> system;
   std::unique_ptr<constraintFunction_t> constraint;
@@ -175,7 +179,10 @@ TEST_F(DdpCorrectnessTest, slq_solution) {
 
   ASSERT_LT((ddpPerformanceIndeces.totalCost - qpCost), 10.0 * ddpSettings.minRelCost_) << "MESSAGE: SLQ failed in the optimal cost test!";
 
-  ASSERT_LT((ddpSolution.stateTrajectory_.back() - qpSolution.stateTrajectory.back()).norm(), solutionPrecision)
+  ASSERT_LT(relError(ddpSolution.inputTrajectory_.front(), qpSolution.inputTrajectory.front()), solutionPrecision)
+      << "MESSAGE: SLQ failed in the optimal initial input test!";
+
+  ASSERT_LT(relError(ddpSolution.stateTrajectory_.back(), qpSolution.stateTrajectory.back()), solutionPrecision)
       << "MESSAGE: SLQ failed in the optimal final state test!";
 }
 
@@ -193,7 +200,10 @@ TEST_F(DdpCorrectnessTest, ilqr_solution) {
 
   ASSERT_LT((ddpPerformanceIndeces.totalCost - qpCost), 10.0 * ddpSettings.minRelCost_) << "MESSAGE: ILQR failed in the optimal cost test!";
 
-  ASSERT_LT((ddpSolution.stateTrajectory_.back() - qpSolution.stateTrajectory.back()).norm(), solutionPrecision)
+  ASSERT_LT(relError(ddpSolution.inputTrajectory_.front(), qpSolution.inputTrajectory.front()), solutionPrecision)
+      << "MESSAGE: ILQR failed in the optimal initial input test!";
+
+  ASSERT_LT(relError(ddpSolution.stateTrajectory_.back(), qpSolution.stateTrajectory.back()), solutionPrecision)
       << "MESSAGE: ILQR failed in the optimal final state test!";
 }
 

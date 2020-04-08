@@ -27,64 +27,44 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
+#include <gtest/gtest.h>
+
+#include <algorithm>
 
 #include <ocs2_core/Types.h>
+#include <ocs2_core/integration/TrapezoidalIntegration.h>
 
-namespace ocs2 {
+TEST(TrapezoidalIntegrationTest, Rectangle) {
+  const ocs2::scalar_t width = 8.0;
+  const ocs2::scalar_t hight = 2.0;
+  const size_t numIntervals = 100;
+  const ocs2::scalar_t dx = width / numIntervals;
 
-/**
- * This class is an interface to a NLP cost.
- */
-class NLP_Cost {
- public:
-  /**
-   * Default constructor.
-   */
-  NLP_Cost() = default;
+  ocs2::scalar_array_t xTrj(numIntervals + 1, 0.0);
+  auto x = -dx;
+  std::generate(xTrj.begin(), xTrj.end(), [&x, dx]() { return (x += dx); } );
 
-  /**
-   * Default destructor.
-   */
-  virtual ~NLP_Cost() = default;
+  ocs2::scalar_array_t yTrj(numIntervals + 1, hight);
 
-  /**
-   * Sets the current parameter vector.
-   *
-   * @param [in] x: The value of parameter vector.
-   * @return id: It returns a number which identifies the cached data.
-   */
-  virtual size_t setCurrentParameter(const dynamic_vector_t& x) = 0;
+  const auto area = ocs2::trapezoidalIntegration(xTrj, yTrj);
+  ASSERT_NEAR(area, width * hight, 1e-12);
+}
 
-  /**
-   * Gets the cost value.
-   *
-   * @param [in] id: The ID of the cached data.
-   * @param [out] f: The value of the cost.
-   * @return status: whether the cost computation was successful.
-   */
-  virtual bool getCost(size_t id, scalar_t& f) = 0;
+TEST(TrapezoidalIntegrationTest, RightTriangle) {
+  const ocs2::scalar_t width = 8.0;
+  const ocs2::scalar_t hight = 2.0;
+  const size_t numIntervals = 10;
+  const ocs2::scalar_t dx = width / numIntervals;
+  const ocs2::scalar_t dy = hight / numIntervals;
 
-  /**
-   * Gets the gradient of the cost w.r.t. parameter vector.
-   *
-   * @param [in] id: The ID of the cached data.
-   * @param [out] g: The gradient of the cost.
-   */
-  virtual void getCostDerivative(size_t id, dynamic_vector_t& g) = 0;
+  ocs2::scalar_array_t xTrj(numIntervals + 1, 0.0);
+  auto x = -dx;
+  std::generate(xTrj.begin(), xTrj.end(), [&x, dx]() { return (x += dx); } );
 
-  /**
-   * Gets the Hessian of the cost w.r.t. parameter vector.
-   *
-   * @param [in] id: The ID of the cached data.
-   * @param [out] H: The Hessian of the cost.
-   */
-  virtual void getCostSecondDerivative(size_t id, dynamic_matrix_t& H) = 0;
+  ocs2::scalar_array_t yTrj(numIntervals + 1, 0.0);
+  auto y = -dy;
+  std::generate(yTrj.begin(), yTrj.end(), [&y, dy]() { return (y += dy); } );
 
-  /**
-   * Clears the cache.
-   */
-  virtual void clearCache() = 0;
-};
-
-}  // namespace ocs2
+  const auto area = ocs2::trapezoidalIntegration(xTrj, yTrj);
+  ASSERT_NEAR(area, width * hight / 2.0, 1e-12);
+}

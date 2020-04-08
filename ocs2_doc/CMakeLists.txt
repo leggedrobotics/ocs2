@@ -70,7 +70,7 @@ else()
 endif()
 
 # find ocs2_ocs2
-find_path(SOURCE_OCS2_OCS2_DIR NAMES ocs2_ocs2/OCS2Projected.h PATHS ${ocs2_ocs2_INCLUDE_DIRS}... NO_DEFAULT_PATH)
+find_path(SOURCE_OCS2_OCS2_DIR NAMES ocs2_ocs2/GDDP.h PATHS ${ocs2_ocs2_INCLUDE_DIRS}... NO_DEFAULT_PATH)
 if(EXISTS "${SOURCE_OCS2_OCS2_DIR}")
   set(SOURCE_OCS2_OCS2_DIR "${SOURCE_OCS2_OCS2_DIR}/ocs2_ocs2")
   message(STATUS "Found ocs2_ocs2 at: ${SOURCE_OCS2_OCS2_DIR}")

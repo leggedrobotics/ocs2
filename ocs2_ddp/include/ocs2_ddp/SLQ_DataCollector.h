@@ -148,8 +148,7 @@ class SLQ_DataCollector {
 
   unsigned long long int rewindCounter_;
 
-  scalar_array_t eventTimes_;
-  size_array_t subsystemsSequence_;
+  ModeSchedule modeSchedule_;
 
   linear_controller_array_t optimizedControllersStock_;
 

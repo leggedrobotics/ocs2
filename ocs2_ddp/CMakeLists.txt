@@ -18,8 +18,6 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
-
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -56,6 +54,7 @@ add_library(${PROJECT_NAME}_dynamic_size
 target_link_libraries(${PROJECT_NAME}_dynamic_size
   ${catkin_LIBRARIES}
 )
+target_compile_options(${PROJECT_NAME}_dynamic_size PUBLIC ${OCS2_CXX_FLAGS})
 
 add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp
@@ -105,6 +104,7 @@ target_link_libraries(exp0_slq_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+target_compile_options(exp0_slq_test PRIVATE ${OCS2_CXX_FLAGS})
 
 catkin_add_gtest(exp1_slq_test
   test/exp1_slq_test.cpp
@@ -113,18 +113,16 @@ target_link_libraries(exp1_slq_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+target_compile_options(exp1_slq_test PRIVATE ${OCS2_CXX_FLAGS})
 
 catkin_add_gtest(testRiccatiEquations
   test/testRiccatiEquations.cpp
 )
 target_link_libraries(testRiccatiEquations
   ${catkin_LIBRARIES}
-)
-
-target_link_libraries(testRiccatiEquations
-  ${catkin_LIBRARIES}
   ${PROJECT_NAME}_dynamic_size
 )
+target_compile_options(testRiccatiEquations PRIVATE ${OCS2_CXX_FLAGS})
 
 catkin_add_gtest(hybrid_slq_test
   test/hybrid_slq_test.cpp
@@ -133,6 +131,7 @@ target_link_libraries(hybrid_slq_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+target_compile_options(hybrid_slq_test PRIVATE ${OCS2_CXX_FLAGS})
 
 catkin_add_gtest(exp0_ilqr_test
   test/exp0_ilqr_test.cpp
@@ -141,6 +140,7 @@ target_link_libraries(exp0_ilqr_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+target_compile_options(exp0_ilqr_test PRIVATE ${OCS2_CXX_FLAGS})
 
 catkin_add_gtest(exp1_ilqr_test
   test/exp1_ilqr_test.cpp
@@ -149,6 +149,7 @@ target_link_libraries(exp1_ilqr_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+target_compile_options(exp1_ilqr_test PRIVATE ${OCS2_CXX_FLAGS})
 
 catkin_add_gtest(bouncing_mass_test
   test/bouncingmass/BouncingMass.cpp
@@ -159,6 +160,7 @@ target_link_libraries(bouncing_mass_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+target_compile_options(bouncing_mass_test PRIVATE ${OCS2_CXX_FLAGS})
 
 catkin_add_gtest(ddp_correctness_test
   test/ddpCorrectnessTest.cpp
@@ -167,3 +169,4 @@ target_link_libraries(ddp_correctness_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+target_compile_options(ddp_correctness_test PRIVATE ${OCS2_CXX_FLAGS})

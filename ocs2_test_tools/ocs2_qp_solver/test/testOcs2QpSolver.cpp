@@ -19,6 +19,7 @@ class Ocs2QpSolverTest : public testing::Test {
   static constexpr size_t numStateOnlyConstraints = 1;
   static constexpr size_t numFinalStateOnlyConstraints = 2;
   static constexpr ocs2::scalar_t precision = 1e-9;
+  static constexpr ocs2::scalar_t dt = 1e-3;
   using SystemDynamics_t = ocs2::SystemDynamicsBase<STATE_DIM, INPUT_DIM>;
   using costFunction_t = ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM>;
   using constraint_t = ocs2::ConstraintBase<STATE_DIM, INPUT_DIM>;
@@ -35,7 +36,7 @@ class Ocs2QpSolverTest : public testing::Test {
         ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints),
         ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateOnlyConstraints),
         ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numFinalStateOnlyConstraints));
-    nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM);
+    nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
     x0 = state_vector_t::Random();
     constrainedSolution = solveLinearQuadraticOptimalControlProblem(*cost, *system, *constraint, nominalTrajectory, x0);
     unconstrainedSolution = solveLinearQuadraticOptimalControlProblem(*cost, *system, nominalTrajectory, x0);
@@ -68,6 +69,7 @@ constexpr size_t Ocs2QpSolverTest::numStateInputConstraints;
 constexpr size_t Ocs2QpSolverTest::numStateOnlyConstraints;
 constexpr size_t Ocs2QpSolverTest::numFinalStateOnlyConstraints;
 constexpr ocs2::scalar_t Ocs2QpSolverTest::precision;
+constexpr ocs2::scalar_t Ocs2QpSolverTest::dt;
 
 TEST_F(Ocs2QpSolverTest, initialCondition) {
   ASSERT_TRUE(x0.isApprox(constrainedSolution.stateTrajectory.front(), precision));
@@ -95,7 +97,7 @@ TEST_F(Ocs2QpSolverTest, satisfiesConstraints) {
 
 TEST_F(Ocs2QpSolverTest, invariantUnderLinearization) {
   // Different nominalTrajectory, with same time discretization
-  auto linearization2 = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM);
+  auto linearization2 = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
   linearization2.timeTrajectory = nominalTrajectory.timeTrajectory;
 
   // Compare solutions

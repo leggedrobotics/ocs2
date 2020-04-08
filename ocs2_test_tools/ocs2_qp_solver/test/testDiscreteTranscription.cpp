@@ -15,6 +15,7 @@ class DiscreteTranscriptionTest : public testing::Test {
   static constexpr size_t numStateInputConstraints = 1;
   static constexpr size_t numStateOnlyConstraints = 1;
   static constexpr size_t numFinalStateOnlyConstraints = 1;
+  static constexpr ocs2::scalar_t dt = 1e-2;
   using SystemDynamics_t = ocs2::SystemDynamicsBase<STATE_DIM, INPUT_DIM>;
   using costFunction_t = ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM>;
   using input_vector_t = costFunction_t::input_vector_t;
@@ -33,7 +34,7 @@ class DiscreteTranscriptionTest : public testing::Test {
         ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateOnlyConstraints),
         ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numFinalStateOnlyConstraints));
     constraintsWrapper.reset(new ocs2::qp_solver::ConstraintsWrapper(*constraint));
-    linearization = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM);
+    linearization = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
     unconstrainedLqr = ocs2::qp_solver::getLinearQuadraticApproximation(*costWrapper, *systemWrapper, nullptr, linearization);
     constrainedLqr =
         ocs2::qp_solver::getLinearQuadraticApproximation(*costWrapper, *systemWrapper, constraintsWrapper.get(), linearization);
@@ -90,6 +91,7 @@ constexpr size_t DiscreteTranscriptionTest::INPUT_DIM;
 constexpr size_t DiscreteTranscriptionTest::numStateInputConstraints;
 constexpr size_t DiscreteTranscriptionTest::numStateOnlyConstraints;
 constexpr size_t DiscreteTranscriptionTest::numFinalStateOnlyConstraints;
+constexpr ocs2::scalar_t DiscreteTranscriptionTest::dt;
 
 TEST_F(DiscreteTranscriptionTest, unconstrainedLqrHasCorrectSizes) {
   checkSizes(unconstrainedLqr, 0, 0, 0);
@@ -100,7 +102,7 @@ TEST_F(DiscreteTranscriptionTest, constrainedLqrHasCorrectSizes) {
 }
 
 TEST_F(DiscreteTranscriptionTest, linearizationInvariance) {
-  auto linearization2 = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM);
+  auto linearization2 = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
   linearization2.timeTrajectory = linearization.timeTrajectory;
 
   const auto lqp2 =

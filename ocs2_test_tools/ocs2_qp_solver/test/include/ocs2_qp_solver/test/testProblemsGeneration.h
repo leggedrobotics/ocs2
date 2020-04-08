@@ -121,7 +121,7 @@ std::unique_ptr<ocs2::LinearConstraint<STATE_DIM, INPUT_DIM>> getOcs2Constraints
       new constraint_t(numStateInputConstraint, e, C, D, numStateOnlyConstraint, h, F, numStateOnlyFinalConstraint, h_f, F_f));
 }
 
-inline ContinuousTrajectory getRandomTrajectory(int N, int n, int m, scalar_t dt = 1e-3) {
+inline ContinuousTrajectory getRandomTrajectory(int N, int n, int m, scalar_t dt) {
   ContinuousTrajectory trajectory = {.timeTrajectory = scalar_array_t(N + 1),
                                      .stateTrajectory = dynamic_vector_array_t(N + 1),
                                      .inputTrajectory = dynamic_vector_array_t(N)};

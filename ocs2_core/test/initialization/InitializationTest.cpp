@@ -98,14 +98,24 @@ TEST_F(InitializationTest, Trajectory) {
   const input_vector_array_t uTraj(N, input_vector_t::Random());
   operating_points_t operatingPoints(tTraj, xTraj, uTraj);
 
-  const auto t0 = tTraj[1] - 0.5;
-  const auto tf = tTraj[10] + 0.5;
+  const size_t i_0 = 1;
+  const size_t i_f = 10;
+  const size_t length = i_f - i_0 + 1 + 2;
+  const auto t0 = tTraj[i_0] - 0.5;
+  const auto tf = tTraj[i_f] + 0.5;
   operatingPoints.getSystemOperatingTrajectories(xTraj[0], t0, tf, timeTrajectory, stateTrajectory, inputTrajectory);
 
-  ASSERT_EQ(timeTrajectory.size(), 12);
-  ASSERT_EQ(stateTrajectory.size(), 12);
-  ASSERT_EQ(inputTrajectory.size(), 12);
+  ASSERT_EQ(timeTrajectory.size(), length);
+  ASSERT_EQ(stateTrajectory.size(), length);
+  ASSERT_EQ(inputTrajectory.size(), length);
 
   ASSERT_EQ(timeTrajectory.front(), t0);
   ASSERT_EQ(timeTrajectory.back(), tf);
+
+  size_t ind = 1;
+  for (size_t i = i_0; i <= i_f; i++) {
+    ASSERT_TRUE(stateTrajectory[ind].isApprox(xTraj[i]));
+    ASSERT_TRUE(inputTrajectory[ind].isApprox(uTraj[i]));
+    ++ind;
+  }
 }

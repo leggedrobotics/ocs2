@@ -120,11 +120,9 @@ catkin_add_gtest(testRiccatiEquations
 )
 target_link_libraries(testRiccatiEquations
   ${catkin_LIBRARIES}
-)
-target_link_libraries(testRiccatiEquations
-  ${catkin_LIBRARIES}
   ${PROJECT_NAME}_dynamic_size
 )
+target_compile_options(testRiccatiEquations PRIVATE ${OCS2_CXX_FLAGS})
 
 catkin_add_gtest(hybrid_slq_test
   test/hybrid_slq_test.cpp
@@ -171,3 +169,4 @@ target_link_libraries(ddp_correctness_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+target_compile_options(ddp_correctness_test PRIVATE ${OCS2_CXX_FLAGS})

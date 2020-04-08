@@ -43,8 +43,3 @@ TEST_F(CppAdInterfaceParameterizedFixture, loadIfAvailable) {
   ASSERT_TRUE(adInterface.getHessian(0, x, p).isApprox(testHessian(0, x, p)));
   ASSERT_TRUE(adInterface.getHessian(1, x, p).isApprox(testHessian(1, x, p)));
 }
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}

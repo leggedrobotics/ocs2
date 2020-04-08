@@ -45,8 +45,3 @@ TEST(CppAdSparsity, hessianSparsity) {
   ocs2::cppad_sparsity::SparsityPattern trueSparsityDiagonal{{0, 1}, {1}, {}};
   ASSERT_EQ(sparsityDiagonal, trueSparsityDiagonal);
 }
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}

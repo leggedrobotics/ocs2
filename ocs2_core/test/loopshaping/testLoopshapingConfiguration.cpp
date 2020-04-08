@@ -27,64 +27,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
-
-#include <ocs2_core/Types.h>
+#include "testLoopshapingConstraint.h"
 
 namespace ocs2 {
-
-/**
- * This class is an interface to a NLP cost.
- */
-class NLP_Cost {
- public:
-  /**
-   * Default constructor.
-   */
-  NLP_Cost() = default;
-
-  /**
-   * Default destructor.
-   */
-  virtual ~NLP_Cost() = default;
-
-  /**
-   * Sets the current parameter vector.
-   *
-   * @param [in] x: The value of parameter vector.
-   * @return id: It returns a number which identifies the cached data.
-   */
-  virtual size_t setCurrentParameter(const dynamic_vector_t& x) = 0;
-
-  /**
-   * Gets the cost value.
-   *
-   * @param [in] id: The ID of the cached data.
-   * @param [out] f: The value of the cost.
-   * @return status: whether the cost computation was successful.
-   */
-  virtual bool getCost(size_t id, scalar_t& f) = 0;
-
-  /**
-   * Gets the gradient of the cost w.r.t. parameter vector.
-   *
-   * @param [in] id: The ID of the cached data.
-   * @param [out] g: The gradient of the cost.
-   */
-  virtual void getCostDerivative(size_t id, dynamic_vector_t& g) = 0;
-
-  /**
-   * Gets the Hessian of the cost w.r.t. parameter vector.
-   *
-   * @param [in] id: The ID of the cached data.
-   * @param [out] H: The Hessian of the cost.
-   */
-  virtual void getCostSecondDerivative(size_t id, dynamic_matrix_t& H) = 0;
-
-  /**
-   * Clears the cache.
-   */
-  virtual void clearCache() = 0;
-};
-
+const std::string TestConfiguration_r_filter::fileName = "loopshaping_r.conf";
+const std::string TestConfiguration_r_simple_filter::fileName = "loopshaping_r_simple.conf";
+const std::string TestConfiguration_r_ballbot_filter::fileName = "loopshaping_r_ballbot.conf";
+const std::string TestConfiguration_s_filter::fileName = "loopshaping_s.conf";
+const std::string TestConfiguration_s_simple_filter::fileName = "loopshaping_s_simple.conf";
+const std::string TestConfiguration_s_eliminate_filter::fileName = "loopshaping_s_eliminate.conf";
+const std::string TestConfiguration_s_simple_eliminate_filter::fileName = "loopshaping_s_simple_eliminate.conf";
 }  // namespace ocs2

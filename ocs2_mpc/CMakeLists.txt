@@ -83,4 +83,5 @@ target_link_libraries(testMPC_OCS2
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+target_compile_options(testMPC_OCS2 PRIVATE ${OCS2_CXX_FLAGS})
 

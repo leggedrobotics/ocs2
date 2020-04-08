@@ -9,14 +9,24 @@ find_package(Boost REQUIRED COMPONENTS
   system
   filesystem
 )
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+# pthread and OpenMp
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+find_package(Threads REQUIRED)
+if (Threads_FOUND) # Rename for catkin
+  set(Threads_INCLUDE_DIRS ${THREADS_PTHREADS_INCLUDE_DIR})
+  set(Threads_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
+endif (Threads_FOUND)
+find_package(OpenMP REQUIRED)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -Wfatal-errors -Wl,--no-as-needed")
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# Load ocs2 compile flags
+include(cmake/ocs2_cxx_flags.cmake)
+message(STATUS "OCS2_CXX_FLAGS: " ${OCS2_CXX_FLAGS})
 
 ###################################
 ## catkin specific configuration ##
@@ -32,6 +42,10 @@ catkin_package(
     ocs2_thirdparty
   DEPENDS
     Boost
+    OpenMP_CXX
+    Threads
+  CFG_EXTRAS
+    ocs2_cxx_flags.cmake
 )
 
 ###########
@@ -58,7 +72,10 @@ add_library(${PROJECT_NAME}
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  OpenMP::OpenMP_CXX
+  Threads::Threads
 )
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp
@@ -122,109 +139,46 @@ catkin_add_gtest(interpolation_unittest
   test/misc/testInterpolation.cpp
 )
 target_link_libraries(interpolation_unittest
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 
-catkin_add_gtest(cppadcg_constraint_unittest
+catkin_add_gtest(${PROJECT_NAME}_cppadcg
   test/cppad_cg/testCppADCG_constraint.cpp
-)
-target_link_libraries(cppadcg_constraint_unittest
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES} -lm -ldl
-)
-
-catkin_add_gtest(cppadcg_cost_unittest
   test/cppad_cg/testCppADCG_cost.cpp
-)
-target_link_libraries(cppadcg_cost_unittest
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES} -lm -ldl
-)
-
-catkin_add_gtest(cppadcg_dynamics_unittest
   test/cppad_cg/testCppADCG_dynamics.cpp
-)
-target_link_libraries(cppadcg_dynamics_unittest
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES} -lm -ldl
-)
-
-catkin_add_gtest(testSparsityHelpers
   test/cppad_cg/testSparsityHelpers.cpp
-)
-target_link_libraries(testSparsityHelpers
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  dl
-)
-
-catkin_add_gtest(testCppAdInterface
   test/cppad_cg/testCppAdInterface.cpp
 )
-target_link_libraries(testCppAdInterface
+target_link_libraries(${PROJECT_NAME}_cppadcg
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
-  dl
+  ${catkin_LIBRARIES} -lm -ldl
+  gtest_main
 )
 
 catkin_add_gtest(test_transferfunctionbase
   test/dynamics/testTransferfunctionBase.cpp
 )
 target_link_libraries(test_transferfunctionbase
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 
-catkin_add_gtest(test_loopshapingDefinition
+catkin_add_gtest(${PROJECT_NAME}_loopshaping
+  test/loopshaping/testLoopshapingConfiguration.cpp
   test/loopshaping/testLoopshapingDefinition.cpp
-)
-target_link_libraries(test_loopshapingDefinition
-   ${PROJECT_NAME}
-   ${Boost_LIBRARIES}
-   ${catkin_LIBRARIES}
-   -lstdc++fs
-)
-
-catkin_add_gtest(test_loopshapingDynamics
   test/loopshaping/testLoopshapingDynamics.cpp
-)
-target_link_libraries(test_loopshapingDynamics
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
-  -lstdc++fs
-)
-
-catkin_add_gtest(test_loopshapingCost
   test/loopshaping/testLoopshapingCost.cpp
-)
-target_link_libraries(test_loopshapingCost
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
-  -lstdc++fs
-)
-
-catkin_add_gtest(test_loopshapingConstraint
   test/loopshaping/testLoopshapingConstraint.cpp
-)
-target_link_libraries(test_loopshapingConstraint
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
-  -lstdc++fs
-)
-
-catkin_add_gtest(test_loopshapingFilterDynamics
   test/loopshaping/testLoopshapingFilterDynamics.cpp
 )
-target_link_libraries(test_loopshapingFilterDynamics
+target_link_libraries(${PROJECT_NAME}_loopshaping
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   -lstdc++fs
+  gtest_main
 )
 
 catkin_add_gtest(test_LinearAlgebra
@@ -240,6 +194,7 @@ catkin_add_gtest(test_lookup
   test/misc/testLookup.cpp
 )
 target_link_libraries(test_lookup
+  ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
 )
@@ -248,6 +203,7 @@ catkin_add_gtest(derivative_checker_unittest
   test/dynamics/testSystemDynamicsLinearizer.cpp
 )
 target_link_libraries(derivative_checker_unittest
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 
@@ -265,6 +221,7 @@ catkin_add_gtest(test_CostFunctionLinearCombination
   test/cost/testCostFunctionLinearCombination.cpp
 )
 target_link_libraries(test_CostFunctionLinearCombination
+  ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   gtest_main

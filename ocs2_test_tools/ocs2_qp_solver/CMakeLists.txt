@@ -10,9 +10,6 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -48,6 +45,7 @@ add_library(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   )
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 #########################
 ###   CLANG TOOLING   ###

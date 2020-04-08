@@ -21,17 +21,9 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -fPIC")
-
 ###################################
 ## catkin specific configuration ##
 ###################################
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if you package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS
     include
@@ -48,9 +40,6 @@ catkin_package(
 ## Build ##
 ###########
 
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
-# include_directories(include)
 include_directories(
   include
   ${EIGEN_INCLUDE_DIRS}
@@ -59,21 +48,28 @@ include_directories(
 
 # Declare a C++ library
 add_library(${PROJECT_NAME}
-  src/AnymalBearInterface.cpp)
+  src/AnymalBearInterface.cpp
+)
 target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES})
+  ${catkin_LIBRARIES}
+)
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 add_executable(${PROJECT_NAME}_mpc_node
-  src/AnymalBearMpcNode.cpp)
+  src/AnymalBearMpcNode.cpp
+)
 target_link_libraries(${PROJECT_NAME}_mpc_node
   ${PROJECT_NAME}
-  ${catkin_LIBRARIES})
+  ${catkin_LIBRARIES}
+)
 
 add_executable(${PROJECT_NAME}_dummy_mrt_node
-  src/AnymalBearDummyMRT.cpp)
+  src/AnymalBearDummyMRT.cpp
+)
 target_link_libraries(${PROJECT_NAME}_dummy_mrt_node
   ${PROJECT_NAME}
-  ${catkin_LIBRARIES})
+  ${catkin_LIBRARIES}
+)
 
 # PyBindings library (c++ side)
 add_library(${PROJECT_NAME}_PyBindings_cpp
@@ -133,17 +129,16 @@ endif (cmake_clang_tools_FOUND)
 #############
 
 install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_mpc_node ${PROJECT_NAME}_dummy_mrt_node ${PROJECT_NAME}_PyBindings_cpp
-        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-        )
-
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 install(DIRECTORY include/${PROJECT_NAME}/
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
-
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
 install(DIRECTORY config launch
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-        )
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 # TODO handle python2/3 case properly
 install(TARGETS AnymalBearPyBindings
@@ -157,10 +152,10 @@ install(TARGETS AnymalBearPyBindings
 
 catkin_add_gtest(${PROJECT_NAME}_pybindings_test
   test/PyBindingsTest.cpp
-  )
+)
 target_link_libraries(${PROJECT_NAME}_pybindings_test
   ${PROJECT_NAME}_PyBindings_cpp
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
-  )
+)
 catkin_add_nosetests(test)

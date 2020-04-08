@@ -81,7 +81,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(const system_observation_t& i
     if (mrt_.initialPolicyReceived()) {
       break;
     } else {
-      ::ros::Duration(timeStep).sleep();
+      ::ros::WallDuration(timeStep).sleep();
     }
   }
   ROS_INFO_STREAM("Initial policy has been received.");

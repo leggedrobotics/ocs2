@@ -44,9 +44,4 @@ TYPED_TEST(TestFixtureLoopShapingDynamics, evaluateDynamicsDerivative) {
 
   // Difference between new evaluation and linearization should be less than tol
   ASSERT_LE((dx_disturbance - dx_approximation).array().abs().maxCoeff(), this->tol);
-};
-
-int main(int argc, char **argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

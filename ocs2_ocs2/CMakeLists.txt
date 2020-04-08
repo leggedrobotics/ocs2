@@ -14,8 +14,6 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
-
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -93,6 +91,7 @@ target_link_libraries(exp0_gddp_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+target_compile_options(exp0_gddp_test PRIVATE ${OCS2_CXX_FLAGS})
 
 catkin_add_gtest(exp1_gddp_test
   test/exp1_gddp_test.cpp
@@ -101,6 +100,7 @@ target_link_libraries(exp1_gddp_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+target_compile_options(exp1_gddp_test PRIVATE ${OCS2_CXX_FLAGS})
 
 catkin_add_gtest(exp0_ocs2_test
   test/exp0_ocs2_test.cpp
@@ -109,6 +109,7 @@ target_link_libraries(exp0_ocs2_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+target_compile_options(exp0_ocs2_test PRIVATE ${OCS2_CXX_FLAGS})
 
 catkin_add_gtest(exp1_ocs2_test
   test/exp1_ocs2_test.cpp
@@ -117,4 +118,5 @@ target_link_libraries(exp1_ocs2_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+target_compile_options(exp1_ocs2_test PRIVATE ${OCS2_CXX_FLAGS})
 

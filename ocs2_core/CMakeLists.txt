@@ -24,10 +24,6 @@ if (Threads_FOUND) # Rename for catkin
 endif (Threads_FOUND)
 find_package(OpenMP REQUIRED)
 
-# Cpp standard version
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 # Load ocs2 compile flags
 include(cmake/ocs2_cxx_flags.cmake)
 message(STATUS "OCS2_CXX_FLAGS: " ${OCS2_CXX_FLAGS})

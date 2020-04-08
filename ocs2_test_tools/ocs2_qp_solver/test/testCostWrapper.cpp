@@ -34,8 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtest/gtest.h>
 
 #include "ocs2_qp_solver/wrappers/CostWrapper.h"
-
-#include "testProblemsGeneration.h"
+#include "ocs2_qp_solver/test/testProblemsGeneration.h"
 
 class CostWrapperTest : public testing::Test {
  protected:
@@ -63,7 +62,7 @@ class CostWrapperTest : public testing::Test {
     cost->setCurrentStateAndControl(t, x, u);
   }
 
-  double t;
+  scalar_t t;
   state_vector_t x;
   input_vector_t u;
   std::unique_ptr<ocs2::qp_solver::CostWrapper> costWrapper;
@@ -88,7 +87,7 @@ TEST_F(CostWrapperTest, intermediateCostValueAfterCopy) {
 
 TEST_F(CostWrapperTest, intermediateQuadraticApproximation) {
   // Define deviation
-  double dt = 0.24;
+  scalar_t dt = 0.24;
   state_vector_t dx = state_vector_t::Random();
   input_vector_t du = input_vector_t::Random();
 
@@ -118,7 +117,7 @@ TEST_F(CostWrapperTest, terminalCostValue) {
 
 TEST_F(CostWrapperTest, terminalQuadraticApproximation) {
   // Define deviation
-  double dt = 0.24;
+  scalar_t dt = 0.24;
   state_vector_t dx = state_vector_t::Random();
 
   // Cost at deviation

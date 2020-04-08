@@ -17,6 +17,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 catkin_package(
   INCLUDE_DIRS
     include
+    test/include
     ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
    ${PROJECT_NAME}
@@ -27,12 +28,17 @@ catkin_package(
 
 include_directories(
   include
+  test/include
   ${EIGEN3_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
 
 # Declare a C++ library
 add_library(${PROJECT_NAME}
+  src/Ocs2QpSolver.cpp
+  src/QpDiscreteTranscription.cpp
+  src/QpSolver.cpp
+  src/QpTrajectories.cpp
   src/wrappers/CostWrapper.cpp
   src/wrappers/SystemWrapper.cpp
   )
@@ -76,6 +82,9 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 catkin_add_gtest(${PROJECT_NAME}_testWrappers
   test/testCostWrapper.cpp
+  test/testDiscreteTranscription.cpp
+  test/testOcs2QpSolver.cpp
+  test/testQpSolver.cpp
   test/testSystemWrapper.cpp
   )
 target_link_libraries(${PROJECT_NAME}_testWrappers

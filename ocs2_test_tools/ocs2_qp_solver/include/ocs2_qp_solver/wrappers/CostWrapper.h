@@ -68,33 +68,33 @@ class CostWrapper {
   CostWrapper& operator=(CostWrapper&&) noexcept = default;
 
   /** Evaluate the cost */
-  double getCost(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u);
+  scalar_t getCost(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u);
 
   /** Gets the cost approximation */
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u);
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u);
 
   /** Evaluate the terminal cost */
-  double getTerminalCost(double t, const Eigen::VectorXd& x);
+  scalar_t getTerminalCost(scalar_t t, const dynamic_vector_t& x);
 
   /** Gets the terminal cost approximation */
-  ScalarFunctionQuadraticApproximation getTerminalQuadraticApproximation(double t, const Eigen::VectorXd& x);
+  ScalarFunctionQuadraticApproximation getTerminalQuadraticApproximation(scalar_t t, const dynamic_vector_t& x);
 
  private:
   /** Base class for a handle, virtualizes the access to the templated cost function */
   struct CostHandleBase {
     virtual ~CostHandleBase() = default;
     virtual std::unique_ptr<CostHandleBase> clone() const = 0;
-    virtual void setCurrentStateAndControl(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u) = 0;
-    virtual void setCurrentStateAndControl(double t, const Eigen::VectorXd& x) = 0;
-    virtual double getCost() = 0;
-    virtual Eigen::VectorXd getCostDerivativeState() = 0;
-    virtual Eigen::VectorXd getCostDerivativeInput() = 0;
-    virtual Eigen::MatrixXd getCostSecondDerivativeState() = 0;
-    virtual Eigen::MatrixXd getCostSecondDerivativeInput() = 0;
-    virtual Eigen::MatrixXd getCostDerivativeInputState() = 0;
-    virtual double getTerminalCost() = 0;
-    virtual Eigen::VectorXd getTerminalCostDerivativeState() = 0;
-    virtual Eigen::MatrixXd getTerminalCostSecondDerivativeState() = 0;
+    virtual void setCurrentStateAndControl(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u) = 0;
+    virtual void setCurrentStateAndControl(scalar_t t, const dynamic_vector_t& x) = 0;
+    virtual scalar_t getCost() = 0;
+    virtual dynamic_vector_t getCostDerivativeState() = 0;
+    virtual dynamic_vector_t getCostDerivativeInput() = 0;
+    virtual dynamic_matrix_t getCostSecondDerivativeState() = 0;
+    virtual dynamic_matrix_t getCostSecondDerivativeInput() = 0;
+    virtual dynamic_matrix_t getCostDerivativeInputState() = 0;
+    virtual scalar_t getTerminalCost() = 0;
+    virtual dynamic_vector_t getTerminalCostDerivativeState() = 0;
+    virtual dynamic_matrix_t getTerminalCostSecondDerivativeState() = 0;
   };
   /** Only data member: contains a polymorphic handle that wraps the cost function */
   std::unique_ptr<CostHandleBase> p_;
@@ -118,53 +118,53 @@ class CostWrapper {
     // Pointer to the actual cost function
     std::unique_ptr<CostFunction_t> hp_;
     // All function below wrap fixed size functions to dynamic size
-    void setCurrentStateAndControl(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& u) override {
+    void setCurrentStateAndControl(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u) override {
       hp_->setCurrentStateAndControl(t, x, u);
     }
-    void setCurrentStateAndControl(double t, const Eigen::VectorXd& x) override {
+    void setCurrentStateAndControl(scalar_t t, const dynamic_vector_t& x) override {
       hp_->setCurrentStateAndControl(t, x, input_vector_t::Zero());
     }
-    double getCost() override {
+    scalar_t getCost() override {
       scalar_t f;
       hp_->getIntermediateCost(f);
       return f;
     }
-    Eigen::VectorXd getCostDerivativeState() override {
+    dynamic_vector_t getCostDerivativeState() override {
       state_vector_t dfdx;
       hp_->getIntermediateCostDerivativeState(dfdx);
       return dfdx;
     }
-    Eigen::VectorXd getCostDerivativeInput() override {
+    dynamic_vector_t getCostDerivativeInput() override {
       input_vector_t dfdu;
       hp_->getIntermediateCostDerivativeInput(dfdu);
       return dfdu;
     }
-    Eigen::MatrixXd getCostSecondDerivativeState() override {
+    dynamic_matrix_t getCostSecondDerivativeState() override {
       state_matrix_t dfdxx;
       hp_->getIntermediateCostSecondDerivativeState(dfdxx);
       return dfdxx;
     }
-    Eigen::MatrixXd getCostSecondDerivativeInput() override {
+    dynamic_matrix_t getCostSecondDerivativeInput() override {
       input_matrix_t dfduu;
       hp_->getIntermediateCostSecondDerivativeInput(dfduu);
       return dfduu;
     }
-    Eigen::MatrixXd getCostDerivativeInputState() override {
+    dynamic_matrix_t getCostDerivativeInputState() override {
       input_state_matrix_t dfdux;
       hp_->getIntermediateCostDerivativeInputState(dfdux);
       return dfdux;
     };
-    double getTerminalCost() override {
+    scalar_t getTerminalCost() override {
       scalar_t f;
       hp_->getTerminalCost(f);
       return f;
     };
-    Eigen::VectorXd getTerminalCostDerivativeState() override {
+    dynamic_vector_t getTerminalCostDerivativeState() override {
       state_vector_t dfdx;
       hp_->getTerminalCostDerivativeState(dfdx);
       return dfdx;
     };
-    Eigen::MatrixXd getTerminalCostSecondDerivativeState() override {
+    dynamic_matrix_t getTerminalCostSecondDerivativeState() override {
       state_matrix_t dfdxx;
       hp_->getTerminalCostSecondDerivativeState(dfdxx);
       return dfdxx;

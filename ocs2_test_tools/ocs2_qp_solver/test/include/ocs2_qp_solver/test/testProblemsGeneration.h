@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "ocs2_qp_solver/QpSolverTypes.h"
+#include "ocs2_qp_solver/QpTrajectories.h"
 
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
@@ -43,24 +44,24 @@ namespace qp_solver {
 
 /** Get random positive definite costs of n states and m inputs */
 inline ScalarFunctionQuadraticApproximation getRandomCost(int n, int m) {
-  Eigen::MatrixXd QPPR = Eigen::MatrixXd::Random(n + m, n + m);
+  dynamic_matrix_t QPPR = dynamic_matrix_t::Random(n + m, n + m);
   QPPR = QPPR.transpose() * QPPR;
   ScalarFunctionQuadraticApproximation cost;
   cost.dfdxx = QPPR.topLeftCorner(n, n);
   cost.dfdux = QPPR.bottomLeftCorner(m, n);
   cost.dfduu = QPPR.bottomRightCorner(m, m);
-  cost.dfdx = Eigen::VectorXd::Random(n);
-  cost.dfdu = Eigen::VectorXd::Random(m);
-  cost.f = std::rand() / static_cast<double>(RAND_MAX);
+  cost.dfdx = dynamic_vector_t::Random(n);
+  cost.dfdu = dynamic_vector_t::Random(m);
+  cost.f = std::rand() / static_cast<scalar_t>(RAND_MAX);
   return cost;
 }
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 std::unique_ptr<ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM>> getOcs2Cost(const ScalarFunctionQuadraticApproximation& cost,
                                                                                const ScalarFunctionQuadraticApproximation& costFinal,
-                                                                               const Eigen::VectorXd& xNominalIntermediate,
-                                                                               const Eigen::VectorXd& uNominalIntermediate,
-                                                                               const Eigen::VectorXd& xNominalFinal) {
+                                                                               const dynamic_vector_t& xNominalIntermediate,
+                                                                               const dynamic_vector_t& uNominalIntermediate,
+                                                                               const dynamic_vector_t& xNominalFinal) {
   return std::unique_ptr<ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM>>(new ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM>(
       cost.dfdxx, cost.dfduu, xNominalIntermediate, uNominalIntermediate, costFinal.dfdxx, xNominalFinal, cost.dfdux));
 }
@@ -68,9 +69,9 @@ std::unique_ptr<ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM>> getOcs2Cost(c
 /** Get random linear dynamics of n states and m inputs */
 inline VectorFunctionLinearApproximation getRandomDynamics(int n, int m) {
   VectorFunctionLinearApproximation dynamics;
-  dynamics.dfdx = Eigen::MatrixXd::Random(n, n);
-  dynamics.dfdu = Eigen::MatrixXd::Random(n, m);
-  dynamics.f = Eigen::VectorXd::Random(n);
+  dynamics.dfdx = dynamic_matrix_t::Random(n, n);
+  dynamics.dfdu = dynamic_matrix_t::Random(n, m);
+  dynamics.f = dynamic_vector_t::Random(n);
   return dynamics;
 }
 
@@ -80,11 +81,37 @@ std::unique_ptr<ocs2::LinearSystemDynamics<STATE_DIM, INPUT_DIM>> getOcs2Dynamic
       new ocs2::LinearSystemDynamics<STATE_DIM, INPUT_DIM>(dynamics.dfdx, dynamics.dfdu));
 }
 
+inline ContinuousTrajectory getRandomTrajectory(int N, int n, int m, scalar_t dt) {
+  ContinuousTrajectory trajectory = {.timeTrajectory = scalar_array_t(N+1),
+      .stateTrajectory = dynamic_vector_array_t(N+1),
+      .inputTrajectory = dynamic_vector_array_t(N)};
+  auto t = -dt;
+  std::generate(trajectory.timeTrajectory.begin(), trajectory.timeTrajectory.end(), [&t, dt] () { t += dt; return t; });
+  std::generate(trajectory.stateTrajectory.begin(), trajectory.stateTrajectory.end(), [n] () { return dynamic_vector_t::Random(n); });
+  std::generate(trajectory.inputTrajectory.begin(), trajectory.inputTrajectory.end(), [m] () { return dynamic_vector_t::Random(m); });
+  return trajectory;
+}
+
+inline std::vector<LinearQuadraticStage> generateRandomLqProblem(int N, int nx, int nu) {
+  std::vector<LinearQuadraticStage> lqProblem;
+  lqProblem.reserve(N);
+
+  for (int k = 0; k < N; ++k) {
+    lqProblem.emplace_back(getRandomCost(nx, nu), getRandomDynamics(nx, nu));
+  }
+
+  // Terminal Cost
+  lqProblem.emplace_back(getRandomCost(nx, 0), VectorFunctionLinearApproximation());
+
+  return lqProblem;
+}
+
 /**
  * Compares to Eigen vectors on equality.
  * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().
  */
-inline bool isEqual(const Eigen::VectorXd& lhs, const Eigen::VectorXd& rhs, double tol = Eigen::NumTraits<double>::dummy_precision()) {
+inline bool isEqual(const dynamic_vector_t& lhs, const dynamic_vector_t& rhs,
+                    scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
   if (lhs.norm() > tol && rhs.norm() > tol) {
     return lhs.isApprox(rhs, tol);
   } else {
@@ -97,11 +124,11 @@ inline bool isEqual(const Eigen::VectorXd& lhs, const Eigen::VectorXd& rhs, doub
  * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().
  * @return Vectors are of equal length and equal values.
  */
-inline bool isEqual(const std::vector<Eigen::VectorXd>& v0, const std::vector<Eigen::VectorXd>& v1,
-                    double tol = Eigen::NumTraits<double>::dummy_precision()) {
+inline bool isEqual(const dynamic_vector_array_t& v0, const dynamic_vector_array_t& v1,
+                    scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
   return (v0.size() == v1.size()) &&
          std::equal(v0.begin(), v0.end(), v1.begin(),
-                    [tol](const Eigen::VectorXd& lhs, const Eigen::VectorXd& rhs) { return isEqual(lhs, rhs, tol); });
+                    [tol](const dynamic_vector_t& lhs, const dynamic_vector_t& rhs) { return isEqual(lhs, rhs, tol); });
 }
 
 }  // namespace qp_solver

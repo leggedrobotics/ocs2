@@ -33,52 +33,27 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/Types.h>
+#include "ocs2_qp_solver/QpSolverTypes.h"
+#include "ocs2_qp_solver/QpTrajectories.h"
+#include "ocs2_qp_solver/wrappers/CostWrapper.h"
+#include "ocs2_qp_solver/wrappers/SystemWrapper.h"
 
 namespace ocs2 {
 namespace qp_solver {
 
 /**
- * Defines the quadratic approximation f(x,u) = 1/2 dx' dfdxx dx + du' dfdux dx + 1/2 du' dfduu du + dfdx' dx + dfdu' du + f
+ * Solves a discrete time linear quadratic control problem around a provided linearization trajectory.
+ * The time horizon and discretization steps are defined by the time trajectory of the provided linearization.
+ *
+ * @param cost : continuous cost function
+ * @param system : continuous system dynamics
+ * @param nominalTrajectory : time, state and input trajectory to make the linear quadratic approximation around
+ * @param initialState : state at the start of the horizon.
+ * @return time, state, and input solution.
  */
-struct ScalarFunctionQuadraticApproximation {
-  /** Second derivative w.r.t state */
-  dynamic_matrix_t dfdxx;
-  /** Second derivative w.r.t input (lhs) and state (rhs) */
-  dynamic_matrix_t dfdux;
-  /** Second derivative w.r.t input */
-  dynamic_matrix_t dfduu;
-  /** First derivative w.r.t state */
-  dynamic_vector_t dfdx;
-  /** First derivative w.r.t input */
-  dynamic_vector_t dfdu;
-  /** Constant term */
-  scalar_t f = 0.;
-};
-
-/**
- * Defines the linear model of a vector function f(x,u) = dfdx * dx + dfdu * du + df
- */
-struct VectorFunctionLinearApproximation {
-  /** Derivative w.r.t state */
-  dynamic_matrix_t dfdx;
-  /** Derivative w.r.t input */
-  dynamic_matrix_t dfdu;
-  /** Constant term */
-  dynamic_vector_t f;
-};
-
-/** Defines the quadratic cost and  linear dynamics at a give stage */
-struct LinearQuadraticStage {
-  /** Quadratic approximation of the cost */
-  ScalarFunctionQuadraticApproximation cost;
-  /** Linear approximation of the dynamics */
-  VectorFunctionLinearApproximation dynamics;
-
-  LinearQuadraticStage() = default;
-  LinearQuadraticStage(ScalarFunctionQuadraticApproximation c, VectorFunctionLinearApproximation d)
-      : cost(std::move(c)), dynamics(std::move(d)) {}
-};
+ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostWrapper costFunction, SystemWrapper systemDynamics,
+                                                               const ContinuousTrajectory& nominalTrajectory,
+                                                               const dynamic_vector_t& initialState);
 
 }  // namespace qp_solver
 }  // namespace ocs2

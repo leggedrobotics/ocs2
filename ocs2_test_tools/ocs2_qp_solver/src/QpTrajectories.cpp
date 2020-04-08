@@ -28,57 +28,28 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 //
-// Created by rgrandia on 25.02.20.
+// Created by rgrandia on 28.02.20.
 //
 
-#pragma once
-
-#include <ocs2_core/Types.h>
+#include "ocs2_qp_solver/QpTrajectories.h"
 
 namespace ocs2 {
 namespace qp_solver {
 
-/**
- * Defines the quadratic approximation f(x,u) = 1/2 dx' dfdxx dx + du' dfdux dx + 1/2 du' dfduu du + dfdx' dx + dfdu' du + f
- */
-struct ScalarFunctionQuadraticApproximation {
-  /** Second derivative w.r.t state */
-  dynamic_matrix_t dfdxx;
-  /** Second derivative w.r.t input (lhs) and state (rhs) */
-  dynamic_matrix_t dfdux;
-  /** Second derivative w.r.t input */
-  dynamic_matrix_t dfduu;
-  /** First derivative w.r.t state */
-  dynamic_vector_t dfdx;
-  /** First derivative w.r.t input */
-  dynamic_vector_t dfdu;
-  /** Constant term */
-  scalar_t f = 0.;
-};
+ContinuousTrajectory operator+(const ContinuousTrajectory& lhs, const ContinuousTrajectory& rhs) {
+  // Copy lhs into sum
+  ContinuousTrajectory sum(lhs);
 
-/**
- * Defines the linear model of a vector function f(x,u) = dfdx * dx + dfdu * du + df
- */
-struct VectorFunctionLinearApproximation {
-  /** Derivative w.r.t state */
-  dynamic_matrix_t dfdx;
-  /** Derivative w.r.t input */
-  dynamic_matrix_t dfdu;
-  /** Constant term */
-  dynamic_vector_t f;
-};
+  for (int k = 0; k < sum.inputTrajectory.size(); ++k) {
+    sum.inputTrajectory[k] += rhs.inputTrajectory[k];
+  }
 
-/** Defines the quadratic cost and  linear dynamics at a give stage */
-struct LinearQuadraticStage {
-  /** Quadratic approximation of the cost */
-  ScalarFunctionQuadraticApproximation cost;
-  /** Linear approximation of the dynamics */
-  VectorFunctionLinearApproximation dynamics;
-
-  LinearQuadraticStage() = default;
-  LinearQuadraticStage(ScalarFunctionQuadraticApproximation c, VectorFunctionLinearApproximation d)
-      : cost(std::move(c)), dynamics(std::move(d)) {}
-};
+  // Sum states
+  for (int k = 0; k < sum.stateTrajectory.size(); ++k) {
+    sum.stateTrajectory[k] += rhs.stateTrajectory[k];
+  }
+  return sum;
+}
 
 }  // namespace qp_solver
 }  // namespace ocs2

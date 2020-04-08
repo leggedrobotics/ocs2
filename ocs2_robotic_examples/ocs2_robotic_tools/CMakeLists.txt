@@ -79,3 +79,4 @@ target_link_libraries(rotation_transform_tests
         ${catkin_LIBRARIES}
         ${Boost_LIBRARIES}
         )
+target_compile_options(rotation_transform_tests PRIVATE ${OCS2_CXX_FLAGS})

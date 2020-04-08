@@ -171,7 +171,3 @@ TEST_F(testCppADCG_dynamicsFixture, multithread_test) {
   ASSERT_TRUE(success && successClone);
 }
 
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}

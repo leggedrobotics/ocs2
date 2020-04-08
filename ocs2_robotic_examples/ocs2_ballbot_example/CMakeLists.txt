@@ -10,6 +10,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
     kdl_parser
     robot_state_publisher
     visualization_msgs
+    pybind11_catkin
     ocs2_core
     ocs2_ddp
     ocs2_ocs2
@@ -17,6 +18,13 @@ set(CATKIN_PACKAGE_DEPENDENCIES
     ocs2_comm_interfaces
     ocs2_robotic_tools
     )
+
+# Pybind11 configuration must occur before find_package(catkin)
+option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)
+if(USE_PYBIND_PYTHON_3)
+  set(PYTHON_EXECUTABLE /usr/bin/python3)
+  set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
+endif(USE_PYBIND_PYTHON_3)
 
 find_package(catkin REQUIRED COMPONENTS
     roslib
@@ -30,16 +38,6 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-# Pybind11
-option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)
-if(USE_PYBIND_PYTHON_3)
-  set(PYTHON_EXECUTABLE /usr/bin/python3)
-  set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
-endif(USE_PYBIND_PYTHON_3)
-find_package(pybind11 QUIET)
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
-
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -51,10 +49,7 @@ catkin_package(
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
   LIBRARIES
-    ballbot_SLQ
-    ocs2_ballbot_dynamics
-    ocs2_ballbot
-    ocs2_ballbot_visualization
+    ${PROJECT_NAME}
   DEPENDS
     Boost
 )
@@ -70,46 +65,22 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-# SLQ
-add_library(ballbot_SLQ
-  src/solvers/BallbotSLQ.cpp
-)
-add_dependencies(ballbot_SLQ
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(ballbot_SLQ
-  ${catkin_LIBRARIES}
-)
-
-add_library(ocs2_ballbot_dynamics
-  src/dynamics/BallbotSystemDynamics.cpp
-)
-
 # Ballbot interface library
-add_library(ocs2_ballbot
+add_library(${PROJECT_NAME}
   src/BallbotInterface.cpp
+  src/dynamics/BallbotSystemDynamics.cpp
+  src/solvers/BallbotSLQ.cpp
+  src/BallbotDummyVisualization.cpp
 )
-add_dependencies(ocs2_ballbot
+add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(ocs2_ballbot
-  ballbot_SLQ
-  ocs2_ballbot_dynamics
+target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   dl
 )
-
-# Ballbot visualization
-add_library(ocs2_ballbot_visualization
-  src/BallbotDummyVisualization.cpp
-)
-add_dependencies(ocs2_ballbot_visualization
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(ocs2_ballbot_visualization
-  ${catkin_LIBRARIES}
-)
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 # Mpc node
 add_executable(ballbot_mpc
@@ -119,9 +90,10 @@ add_dependencies(ballbot_mpc
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(ballbot_mpc
-  ocs2_ballbot
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
+target_compile_options(ballbot_mpc PRIVATE ${OCS2_CXX_FLAGS})
 
 # Dummy node
 add_executable(ballbot_dummy_test
@@ -131,10 +103,10 @@ add_dependencies(ballbot_dummy_test
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(ballbot_dummy_test
-  ocs2_ballbot
-  ocs2_ballbot_visualization
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
+target_compile_options(ballbot_dummy_test PRIVATE ${OCS2_CXX_FLAGS})
 
 # Target node
 add_executable(ballbot_target
@@ -147,6 +119,7 @@ target_link_libraries(ballbot_target
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+target_compile_options(ballbot_target PRIVATE ${OCS2_CXX_FLAGS})
         
 # Simple example
 add_executable(ballbot_simple_example
@@ -156,53 +129,51 @@ add_dependencies(ballbot_simple_example
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(ballbot_simple_example
-  ballbot_SLQ
-  ocs2_ballbot_dynamics
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   dl
 )
+target_compile_options(ballbot_simple_example PRIVATE ${OCS2_CXX_FLAGS})
 
 # Pybindings Cpp library
 add_library(ballbotPyBindings_cpp
   src/BallbotPyBindings.cpp
 )
 add_dependencies(ballbotPyBindings_cpp
-  ocs2_ballbot
+  ${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(ballbotPyBindings_cpp
-  ocs2_ballbot
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 
-# Build python bindings if possible
-if(${pybind11_FOUND})
-  pybind11_add_module(BallbotPyBindings SHARED
-    src/pyBindModule.cpp
-  )
-  add_dependencies(BallbotPyBindings
-    ballbotPyBindings_cpp
-    ${catkin_EXPORTED_TARGETS}
-  )
-  target_link_libraries(BallbotPyBindings PRIVATE
-    ballbotPyBindings_cpp
-    ${catkin_LIBRARIES}
-  )
+# Build python bindings
+pybind11_add_module(BallbotPyBindings SHARED
+  src/pyBindModule.cpp
+)
+add_dependencies(BallbotPyBindings
+  ballbotPyBindings_cpp
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(BallbotPyBindings PRIVATE
+  ballbotPyBindings_cpp
+  ${catkin_LIBRARIES}
+)
 
-  if(USE_PYBIND_PYTHON_3)
-    # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
-    set_target_properties(BallbotPyBindings
-      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
-    )
-  else(USE_PYBIND_PYTHON_3)
-    set_target_properties(BallbotPyBindings
-        PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
-    )
-  endif(USE_PYBIND_PYTHON_3)
+if(USE_PYBIND_PYTHON_3)
+  # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
+  set_target_properties(BallbotPyBindings
+    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
+  )
+else(USE_PYBIND_PYTHON_3)
+  set_target_properties(BallbotPyBindings
+      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+  )
+endif(USE_PYBIND_PYTHON_3)
 
-  catkin_python_setup()
-endif()
+catkin_python_setup()
 
 
 #########################
@@ -213,7 +184,7 @@ if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target ocs2_ballbot_example")
   add_clang_tooling(
     TARGETS
-        ocs2_ballbot
+        ${PROJECT_NAME}
         ballbot_mpc
         ballbot_dummy_test
         ballbot_target
@@ -229,7 +200,7 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS ocs2_ballbot ballbot_SLQ ocs2_ballbot_dynamics ocs2_ballbot_visualization ballbotPyBindings_cpp
+install(TARGETS ${PROJECT_NAME} ballbotPyBindings_cpp
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -245,13 +216,11 @@ install(DIRECTORY urdf launch config rviz
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-if(${pybind11_FOUND})
-  # TODO handle python2/3 case properly
-  install(TARGETS BallbotPyBindings
-    ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
-  )
-endif()
+# TODO handle python2/3 case properly
+install(TARGETS BallbotPyBindings
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+)
 
 #############
 ## Testing ##
@@ -261,11 +230,10 @@ catkin_add_gtest(ballbot_integration_test
   test/ballbotIntegrationTest.cpp
 )
 target_link_libraries(ballbot_integration_test
-  ocs2_ballbot
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
-
 
 catkin_add_gtest(ballbot_pybindings_test
   test/PyBindingsTest.cpp
@@ -275,3 +243,4 @@ target_link_libraries(ballbot_pybindings_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+catkin_add_nosetests(test)

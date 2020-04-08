@@ -22,8 +22,6 @@ find_package(Boost REQUIRED COMPONENTS filesystem)
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
 
 ###################################
 ## catkin specific configuration ##
@@ -59,6 +57,7 @@ add_dependencies(test_custom_callback_queue
 target_link_libraries(test_custom_callback_queue
   ${catkin_LIBRARIES}
 )
+target_compile_options(test_custom_callback_queue PRIVATE ${OCS2_CXX_FLAGS})
 
 add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp
@@ -119,3 +118,4 @@ target_link_libraries(ocs2_interface_mpc_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   )
+target_compile_options(ocs2_interface_mpc_test PRIVATE ${OCS2_CXX_FLAGS})

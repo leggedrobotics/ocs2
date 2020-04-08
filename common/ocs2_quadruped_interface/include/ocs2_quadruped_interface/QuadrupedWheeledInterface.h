@@ -18,6 +18,8 @@ namespace switched_model {
 
 class QuadrupedWheeledInterface : public QuadrupedInterface {
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   using system_dynamics_t = switched_model::ComKinoSystemDynamicsAd;
   using system_dynamics_derivative_t = switched_model::ComKinoSystemDynamicsAd;
   using constraint_t = switched_model::AnymalWheelsComKinoConstraintAd;

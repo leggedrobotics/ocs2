@@ -30,7 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <functional>
-#include <algorithm>
 
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
@@ -67,8 +66,6 @@ scalar_t rolloutCost(cost_wraper_t<STATE_DIM, INPUT_DIM> costWraper, const scala
   for (size_t i = 0; i < N; i++) {
     costTrajectory.push_back(costWraper(timeTrajectory[i], stateTrajectory[i], inputTrajectory[i]));
   }
-
-  std::transform();
 
   return trapezoidalIntegration(timeTrajectory, costTrajectory);
 }

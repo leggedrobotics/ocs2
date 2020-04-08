@@ -137,6 +137,7 @@ target_link_libraries(initialization_unittest
 
 catkin_add_gtest(integration_unittest
   test/integration/IntegrationTest.cpp
+  test/integration/TrapezoidalIntegrationTest.cpp
 )
 target_link_libraries(integration_unittest
   ${PROJECT_NAME}

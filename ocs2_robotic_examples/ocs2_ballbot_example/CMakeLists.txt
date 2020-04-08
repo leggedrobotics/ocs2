@@ -234,6 +234,7 @@ target_link_libraries(ballbot_integration_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+target_compile_options(ballbot_integration_test PRIVATE ${OCS2_CXX_FLAGS})
 
 catkin_add_gtest(ballbot_pybindings_test
   test/PyBindingsTest.cpp

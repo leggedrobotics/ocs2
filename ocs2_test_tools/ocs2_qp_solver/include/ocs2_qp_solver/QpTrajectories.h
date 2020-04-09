@@ -28,7 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 //
-// Created by rgrandia on 25.02.20.
+// Created by rgrandia on 28.02.20.
 //
 
 #pragma once
@@ -38,46 +38,35 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace qp_solver {
 
-/**
- * Defines the quadratic approximation f(x,u) = 1/2 dx' dfdxx dx + du' dfdux dx + 1/2 du' dfduu du + dfdx' dx + dfdu' du + f
- */
-struct ScalarFunctionQuadraticApproximation {
-  /** Second derivative w.r.t state */
-  dynamic_matrix_t dfdxx;
-  /** Second derivative w.r.t input (lhs) and state (rhs) */
-  dynamic_matrix_t dfdux;
-  /** Second derivative w.r.t input */
-  dynamic_matrix_t dfduu;
-  /** First derivative w.r.t state */
-  dynamic_vector_t dfdx;
-  /** First derivative w.r.t input */
-  dynamic_vector_t dfdu;
-  /** Constant term */
-  scalar_t f = 0.;
+/** A time, state, input trajectory. The last timepoint has only a state, no input */
+struct ContinuousTrajectory {
+  /** time trajectory, size N+1 */
+  scalar_array_t timeTrajectory;
+  /** trajectory of state vectors, size N+1 */
+  dynamic_vector_array_t stateTrajectory;
+  /** trajectory of input vectors, size N */
+  dynamic_vector_array_t inputTrajectory;
 };
 
-/**
- * Defines the linear model of a vector function f(x,u) = dfdx * dx + dfdu * du + df
- */
-struct VectorFunctionLinearApproximation {
-  /** Derivative w.r.t state */
-  dynamic_matrix_t dfdx;
-  /** Derivative w.r.t input */
-  dynamic_matrix_t dfdu;
-  /** Constant term */
-  dynamic_vector_t f;
+/** Adds state and inputs of two trajectories, time is not added. */
+ContinuousTrajectory operator+(const ContinuousTrajectory& lhs, const ContinuousTrajectory& rhs);
+
+/** Reference to a point along a trajectory. Does not own the state-input data. */
+struct TrajectoryRef {
+  /** time */
+  scalar_t t;
+  /** state */
+  const dynamic_vector_t& x;
+  /** input */
+  const dynamic_vector_t& u;
 };
 
-/** Defines the quadratic cost and  linear dynamics at a give stage */
-struct LinearQuadraticStage {
-  /** Quadratic approximation of the cost */
-  ScalarFunctionQuadraticApproximation cost;
-  /** Linear approximation of the dynamics */
-  VectorFunctionLinearApproximation dynamics;
-
-  LinearQuadraticStage() = default;
-  LinearQuadraticStage(ScalarFunctionQuadraticApproximation c, VectorFunctionLinearApproximation d)
-      : cost(std::move(c)), dynamics(std::move(d)) {}
+/** Reference to the state at a point along a trajectory. Does not own the state data. */
+struct StateTrajectoryRef {
+  /** time */
+  scalar_t t;
+  /** state */
+  const dynamic_vector_t& x;
 };
 
 }  // namespace qp_solver

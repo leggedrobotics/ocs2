@@ -31,54 +31,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Created by rgrandia on 25.02.20.
 //
 
-#pragma once
+#include "ocs2_qp_solver/Ocs2QpSolver.h"
 
-#include <ocs2_core/Types.h>
+#include "ocs2_qp_solver/QpDiscreteTranscription.h"
+#include "ocs2_qp_solver/QpSolver.h"
 
 namespace ocs2 {
 namespace qp_solver {
 
-/**
- * Defines the quadratic approximation f(x,u) = 1/2 dx' dfdxx dx + du' dfdux dx + 1/2 du' dfduu du + dfdx' dx + dfdu' du + f
- */
-struct ScalarFunctionQuadraticApproximation {
-  /** Second derivative w.r.t state */
-  dynamic_matrix_t dfdxx;
-  /** Second derivative w.r.t input (lhs) and state (rhs) */
-  dynamic_matrix_t dfdux;
-  /** Second derivative w.r.t input */
-  dynamic_matrix_t dfduu;
-  /** First derivative w.r.t state */
-  dynamic_vector_t dfdx;
-  /** First derivative w.r.t input */
-  dynamic_vector_t dfdu;
-  /** Constant term */
-  scalar_t f = 0.;
-};
+ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostWrapper costFunction, SystemWrapper systemDynamics,
+                                                               const ContinuousTrajectory& nominalTrajectory,
+                                                               const dynamic_vector_t& initialState) {
+  // Approximate
+  const auto lqApproximation = getLinearQuadraticApproximation(costFunction, systemDynamics, nominalTrajectory);
 
-/**
- * Defines the linear model of a vector function f(x,u) = dfdx * dx + dfdu * du + df
- */
-struct VectorFunctionLinearApproximation {
-  /** Derivative w.r.t state */
-  dynamic_matrix_t dfdx;
-  /** Derivative w.r.t input */
-  dynamic_matrix_t dfdu;
-  /** Constant term */
-  dynamic_vector_t f;
-};
+  // Solve for an update step
+  ContinuousTrajectory deltaSolution;
+  deltaSolution.timeTrajectory = nominalTrajectory.timeTrajectory;
+  std::tie(deltaSolution.stateTrajectory, deltaSolution.inputTrajectory) =
+      solveLinearQuadraticProblem(lqApproximation, initialState - nominalTrajectory.stateTrajectory.front());
 
-/** Defines the quadratic cost and  linear dynamics at a give stage */
-struct LinearQuadraticStage {
-  /** Quadratic approximation of the cost */
-  ScalarFunctionQuadraticApproximation cost;
-  /** Linear approximation of the dynamics */
-  VectorFunctionLinearApproximation dynamics;
-
-  LinearQuadraticStage() = default;
-  LinearQuadraticStage(ScalarFunctionQuadraticApproximation c, VectorFunctionLinearApproximation d)
-      : cost(std::move(c)), dynamics(std::move(d)) {}
-};
+  // Take a full step: Add update to nominal trajectory
+  return nominalTrajectory + deltaSolution;
+}
 
 }  // namespace qp_solver
 }  // namespace ocs2

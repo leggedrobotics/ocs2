@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   ocs2_core
   ocs2_oc
+  ocs2_qp_solver
 )
 find_package(Boost REQUIRED COMPONENTS
   system
@@ -30,6 +31,7 @@ catkin_package(
   CATKIN_DEPENDS
     ocs2_core
     ocs2_oc
+    ocs2_qp_solver
   DEPENDS
     Boost
 )
@@ -118,9 +120,6 @@ catkin_add_gtest(testRiccatiEquations
 )
 target_link_libraries(testRiccatiEquations
   ${catkin_LIBRARIES}
-)
-target_link_libraries(testRiccatiEquations
-  ${catkin_LIBRARIES}
   ${PROJECT_NAME}_dynamic_size
 )
 
@@ -161,3 +160,12 @@ target_link_libraries(bouncing_mass_test
   ${Boost_LIBRARIES}
 )
 target_compile_options(bouncing_mass_test PRIVATE ${OCS2_CXX_FLAGS})
+
+catkin_add_gtest(ddp_correctness_test
+  test/ddpCorrectnessTest.cpp
+)
+target_link_libraries(ddp_correctness_test
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+target_compile_options(ddp_correctness_test PRIVATE ${OCS2_CXX_FLAGS})

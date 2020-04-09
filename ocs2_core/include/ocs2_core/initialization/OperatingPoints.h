@@ -43,7 +43,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * This is base class for initializing the SLQ-based algorithms.
+ * This class initializes the DDP-based algorithms based on operating trajectories or single points
+ * for state and input.
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
@@ -85,7 +86,7 @@ class OperatingPoints : public SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_
 
   OperatingPoints<STATE_DIM, INPUT_DIM>* clone() const override { return new OperatingPoints(*this); }
 
-  void getSystemOperatingTrajectories(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime,
+  void getSystemOperatingTrajectories(const state_vector_t& initialState, scalar_t startTime, scalar_t finalTime,
                                       scalar_array_t& timeTrajectory, state_vector_array_t& stateTrajectory,
                                       input_vector_array_t& inputTrajectory, bool concatOutput = false) override {
     if (!concatOutput) {
@@ -117,8 +118,8 @@ class OperatingPoints : public SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_
     input_vector_t u0;
     EigenLinearInterpolation<input_vector_t>::interpolate(initIndexAlpha, u0, &inputTrajectory_);
     timeTrajectory.push_back(startTime);
-    stateTrajectory.emplace_back(x0);
-    inputTrajectory.emplace_back(u0);
+    stateTrajectory.push_back(std::move(x0));
+    inputTrajectory.push_back(std::move(u0));
 
     // if the time interval is not empty
     if (!numerics::almost_eq(startTime, finalTime)) {
@@ -133,8 +134,8 @@ class OperatingPoints : public SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_
       input_vector_t uf;
       EigenLinearInterpolation<input_vector_t>::interpolate(finalindexAlpha, uf, &inputTrajectory_);
       timeTrajectory.push_back(finalTime);
-      stateTrajectory.emplace_back(xf);
-      inputTrajectory.emplace_back(uf);
+      stateTrajectory.push_back(std::move(xf));
+      inputTrajectory.push_back(std::move(uf));
     }
   }
 

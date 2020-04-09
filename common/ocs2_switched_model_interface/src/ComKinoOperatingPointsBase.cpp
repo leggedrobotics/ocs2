@@ -16,7 +16,7 @@ ComKinoOperatingPointsBase::ComKinoOperatingPointsBase(const com_model_t& comMod
 /******************************************************************************************************/
 /******************************************************************************************************/
 ComKinoOperatingPointsBase::ComKinoOperatingPointsBase(const ComKinoOperatingPointsBase& rhs)
-    : comModelPtr_(rhs.comModelPtr_->clone()), modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_) {}
+    : Base(rhs), comModelPtr_(rhs.comModelPtr_->clone()), modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

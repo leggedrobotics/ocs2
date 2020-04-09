@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/CostFunctionBaseAD.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
-#include <ocs2_core/initialization/SystemOperatingPoint.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
 
 namespace ocs2 {
 
@@ -118,6 +118,6 @@ class CircularKinematicsConstraints final : public ConstraintBase<2, 2> {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-using CircularKinematicsSystemOperatingTrajectories = SystemOperatingPoint<2, 2>;
+using CircularKinematicsSystemOperatingTrajectories = OperatingPoints<2, 2>;
 
 }  // namespace ocs2

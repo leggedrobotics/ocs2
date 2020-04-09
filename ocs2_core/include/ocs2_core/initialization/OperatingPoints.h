@@ -110,13 +110,13 @@ class OperatingPoints : public SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_
    */
   void getSystemOperatingTrajectoriesImpl(scalar_t startTime, scalar_t finalTime, scalar_array_t& timeTrajectory,
                                           state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory) const {
-    const auto initIndexAlpha = EigenLinearInterpolation<state_vector_t>::timeSegment(startTime, &timeTrajectory_);
-    const auto finalindexAlpha = EigenLinearInterpolation<state_vector_t>::timeSegment(finalTime, &timeTrajectory_);
+    const auto initIndexAlpha = LinearInterpolation::timeSegment(startTime, &timeTrajectory_);
+    const auto finalindexAlpha = LinearInterpolation::timeSegment(finalTime, &timeTrajectory_);
 
     state_vector_t x0;
-    EigenLinearInterpolation<state_vector_t>::interpolate(initIndexAlpha, x0, &stateTrajectory_);
+    LinearInterpolation::interpolate(initIndexAlpha, x0, &stateTrajectory_);
     input_vector_t u0;
-    EigenLinearInterpolation<input_vector_t>::interpolate(initIndexAlpha, u0, &inputTrajectory_);
+    LinearInterpolation::interpolate(initIndexAlpha, u0, &inputTrajectory_);
     timeTrajectory.push_back(startTime);
     stateTrajectory.push_back(std::move(x0));
     inputTrajectory.push_back(std::move(u0));
@@ -130,9 +130,9 @@ class OperatingPoints : public SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_
       std::copy(inputTrajectory_.begin() + beginIndex, inputTrajectory_.begin() + lastIndex, std::back_inserter(inputTrajectory));
 
       state_vector_t xf;
-      EigenLinearInterpolation<state_vector_t>::interpolate(finalindexAlpha, xf, &stateTrajectory_);
+      LinearInterpolation::interpolate(finalindexAlpha, xf, &stateTrajectory_);
       input_vector_t uf;
-      EigenLinearInterpolation<input_vector_t>::interpolate(finalindexAlpha, uf, &inputTrajectory_);
+      LinearInterpolation::interpolate(finalindexAlpha, uf, &inputTrajectory_);
       timeTrajectory.push_back(finalTime);
       stateTrajectory.push_back(std::move(xf));
       inputTrajectory.push_back(std::move(uf));

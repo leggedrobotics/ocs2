@@ -277,7 +277,7 @@ void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM,
     auto state = x.template segment<STATE_DIM>(1);
     auto input = x.template segment<INPUT_DIM>(1 + STATE_DIM);
     y = ad_dynamic_vector_t(INTERMEDIATE_COST_DIM);
-    ad_intermediate_cost_vector_t yStatic;
+    ad_intermediate_cost_vector_t yStatic = ad_intermediate_cost_vector_t::Zero();
     this->intermediateCostFunction(time, state, input, p, yStatic);
     y.template head<INTERMEDIATE_COST_DIM>() = yStatic;
   };
@@ -288,7 +288,7 @@ void QuadraticGaussNewtonCostBaseAD<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM,
     auto time = x(0);
     auto state = x.template segment<STATE_DIM>(1);
     y = ad_dynamic_vector_t(TERMINAL_COST_DIM);
-    ad_terminal_cost_vector_t yStatic;
+    ad_terminal_cost_vector_t yStatic = ad_terminal_cost_vector_t::Zero();
     this->terminalCostFunction(time, state, p, yStatic);
     y.template head<TERMINAL_COST_DIM>() = yStatic;
   };

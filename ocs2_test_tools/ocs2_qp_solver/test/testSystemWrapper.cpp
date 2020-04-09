@@ -34,8 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtest/gtest.h>
 
 #include "ocs2_qp_solver/wrappers/SystemWrapper.h"
-
-#include "testProblemsGeneration.h"
+#include "ocs2_qp_solver/test/testProblemsGeneration.h"
 
 class SystemWrapperTest : public testing::Test {
  protected:
@@ -63,7 +62,7 @@ class SystemWrapperTest : public testing::Test {
     system->setCurrentStateAndControl(t, x, u);
   }
 
-  double t;
+  scalar_t t;
   state_vector_t x;
   input_vector_t u;
   std::unique_ptr<ocs2::qp_solver::SystemWrapper> systemWrapper;
@@ -88,7 +87,7 @@ TEST_F(SystemWrapperTest, flowMapAfterCopy) {
 
 TEST_F(SystemWrapperTest, flowMapLinearApproximation) {
   // Define deviation
-  double dt = 0.24;
+  scalar_t dt = 0.24;
   state_vector_t dx = state_vector_t::Random();
   input_vector_t du = input_vector_t::Random();
 
@@ -101,7 +100,7 @@ TEST_F(SystemWrapperTest, flowMapLinearApproximation) {
   const auto& dfdx = linearApproximation.dfdx;
   const auto& dfdu = linearApproximation.dfdu;
   const auto& f = linearApproximation.f;
-  Eigen::VectorXd dxdt_wrapped_approximation = dfdx * dx + dfdu * du + f;
+  ocs2::dynamic_vector_t dxdt_wrapped_approximation = dfdx * dx + dfdu * du + f;
 
   ASSERT_TRUE(dxdt_true.isApprox(dxdt_wrapped_approximation));
 }

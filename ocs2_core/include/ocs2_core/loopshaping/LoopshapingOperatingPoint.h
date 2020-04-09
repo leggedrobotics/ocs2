@@ -45,7 +45,7 @@ class LoopshapingOperatingPoint final : public SystemOperatingTrajectoriesBase<F
 
   LoopshapingOperatingPoint* clone() const override { return new LoopshapingOperatingPoint(*this); }
 
-  void getSystemOperatingTrajectories(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime,
+  void getSystemOperatingTrajectories(const state_vector_t& initialState, scalar_t startTime, scalar_t finalTime,
                                       scalar_array_t& timeTrajectory, state_vector_array_t& stateTrajectory,
                                       input_vector_array_t& inputTrajectory, bool concatOutput = false) override {
     if (!concatOutput) {

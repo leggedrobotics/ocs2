@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // OCS2
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/initialization/SystemOperatingPoint.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_mpc/MPC_SLQ.h>
@@ -60,7 +60,7 @@ class CartPoleInterface final : public RobotInterface<cartpole::STATE_DIM_, cart
 
   using dim_t = Dimensions<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
   using CartPoleConstraint = ConstraintBase<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
-  using CartPoleOperatingPoint = SystemOperatingPoint<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
+  using CartPoleOperatingPoint = OperatingPoints<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
 
   using rollout_base_t = RolloutBase<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
   using time_triggered_rollout_t = TimeTriggeredRollout<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;

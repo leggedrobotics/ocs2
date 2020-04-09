@@ -4,11 +4,6 @@ project(ocs2_ballbot_raisim_example)
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Compile flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -Wfatal-errors -Wl,--no-as-needed")
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 # Catkin packages we depend on
 set(CATKIN_PACKAGE_DEPENDENCIES
   roslib
@@ -57,6 +52,7 @@ add_library(ballbot_raisim_conversions
 target_link_libraries(ballbot_raisim_conversions
   ${catkin_LIBRARIES}
 )
+target_compile_options(ballbot_raisim_conversions PUBLIC ${OCS2_CXX_FLAGS})
 
 # Dummy node with raisim rollout
 add_executable(ballbot_dummy_raisim

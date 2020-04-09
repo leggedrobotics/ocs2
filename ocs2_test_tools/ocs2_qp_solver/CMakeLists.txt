@@ -10,9 +10,6 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -20,6 +17,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 catkin_package(
   INCLUDE_DIRS
     include
+    test/include
     ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
    ${PROJECT_NAME}
@@ -30,18 +28,24 @@ catkin_package(
 
 include_directories(
   include
+  test/include
   ${EIGEN3_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
 
 # Declare a C++ library
 add_library(${PROJECT_NAME}
+  src/Ocs2QpSolver.cpp
+  src/QpDiscreteTranscription.cpp
+  src/QpSolver.cpp
+  src/QpTrajectories.cpp
   src/wrappers/CostWrapper.cpp
   src/wrappers/SystemWrapper.cpp
   )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   )
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 #########################
 ###   CLANG TOOLING   ###
@@ -78,6 +82,9 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 catkin_add_gtest(${PROJECT_NAME}_testWrappers
   test/testCostWrapper.cpp
+  test/testDiscreteTranscription.cpp
+  test/testOcs2QpSolver.cpp
+  test/testQpSolver.cpp
   test/testSystemWrapper.cpp
   )
 target_link_libraries(${PROJECT_NAME}_testWrappers

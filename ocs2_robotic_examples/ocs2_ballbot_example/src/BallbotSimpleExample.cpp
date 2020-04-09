@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // OCS2
 #include <ocs2_core/Dimensions.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/initialization/SystemOperatingPoint.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
@@ -52,7 +52,7 @@ using namespace ballbot;
 int main(int argc, char** argv) {
   using dim_t = Dimensions<STATE_DIM_, INPUT_DIM_>;
   using ballbotConstraint_t = ConstraintBase<STATE_DIM_, INPUT_DIM_>;
-  using ballbotOperatingPoint_t = SystemOperatingPoint<STATE_DIM_, INPUT_DIM_>;
+  using ballbotOperatingPoint_t = OperatingPoints<STATE_DIM_, INPUT_DIM_>;
 
   /*
    * Setting paths

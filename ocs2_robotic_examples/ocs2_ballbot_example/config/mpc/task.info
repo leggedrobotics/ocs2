@@ -92,7 +92,7 @@ mpc
 ; ballbot interface settings
 ballbot_interface
 {
-  recompileLibraries       0    ; put this flag to 1 to force recompilation of dynamics library
+  recompileLibraries       1    ; put this flag to 1 to force recompilation of dynamics library
 }
 
 pathIntegral

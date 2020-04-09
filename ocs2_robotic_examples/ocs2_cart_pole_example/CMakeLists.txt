@@ -22,8 +22,6 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 find_package(raisim CONFIG QUIET)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
-
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -68,6 +66,7 @@ target_link_libraries(cartpole_interface
   ${Boost_LIBRARIES}
   dl
 )
+target_compile_options(cartpole_interface PUBLIC ${OCS2_CXX_FLAGS})
 
 # Mpc node
 add_executable(cartpole_mpc

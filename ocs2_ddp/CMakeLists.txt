@@ -17,8 +17,6 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
-
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -57,6 +55,7 @@ add_library(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
+target_compile_options(${PROJECT_NAME}_dynamic_size PUBLIC ${OCS2_CXX_FLAGS})
 
 add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp

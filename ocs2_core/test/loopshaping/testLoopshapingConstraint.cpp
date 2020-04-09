@@ -215,9 +215,4 @@ TYPED_TEST(TestFixtureLoopShapingConstraint, testInequalityConstraintApproximati
         + 0.5 * this->u_disturbance_.transpose() * ddhdudu[i] * this->u_disturbance_ + this->u_disturbance_.transpose() * ddhdudx[i] * this->x_disturbance_);
     ASSERT_LE(std::abs(h_disturbance[i] - h_approximation[i]), this->tol);
   }
-};
-
-int main(int argc, char **argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

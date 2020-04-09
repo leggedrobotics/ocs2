@@ -13,11 +13,6 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -Wfatal-errors -Wl,--no-as-needed")
-
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -103,3 +98,4 @@ target_link_libraries(state_triggered_rollout_test
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
 )
+target_compile_options(state_triggered_rollout_test PRIVATE ${OCS2_CXX_FLAGS})

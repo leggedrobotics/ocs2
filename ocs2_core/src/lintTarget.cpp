@@ -39,7 +39,7 @@
 #include <ocs2_core/dynamics/TransferFunctionBase.h>
 
 // Initialization
-#include <ocs2_core/initialization/SystemOperatingPoint.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 
 // Integration

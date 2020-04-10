@@ -110,10 +110,8 @@ class DdpCorrectnessTest : public testing::Test {
     ddpSettings.absTolODE_ = 1e-10;
     ddpSettings.relTolODE_ = 1e-7;
     ddpSettings.maxNumStepsPerSecond_ = 10000;
-    ddpSettings.minLearningRate_ = 0.0001;
+    ddpSettings.lineSearch_.minStepLength_ = 0.0001;
     ddpSettings.minRelCost_ = 5e-4;
-    ddpSettings.checkNumericalStability_ = false;
-    ddpSettings.debugPrintRollout_ = false;
     ddpSettings.nThreads_ = numPartitions;
     ddpSettings.maxNumIterations_ = 2 + (numPartitions - 1);  // need an extra iteration for each added time partition
     return ddpSettings;
@@ -253,11 +251,10 @@ TEST_F(DdpCorrectnessTest, ilqr_solution_multiple_partition) {
   ASSERT_LT((ddpPerformanceIndeces.totalCost - qpCost), 10.0 * settings.ddpSettings_.minRelCost_)
       << "MESSAGE: multi-threaded ILQR failed in the optimal cost test!";
 
-  // TODO: ILQR solution does not satisfy precision
-  ASSERT_LT(relError(ddpSolution.inputTrajectory_.front(), qpSolution.inputTrajectory.front()), 5.0 * solutionPrecision)
+  ASSERT_LT(relError(ddpSolution.inputTrajectory_.front(), qpSolution.inputTrajectory.front()), solutionPrecision)
       << "MESSAGE: multi-threaded ILQR failed in the optimal initial input test!";
 
-  ASSERT_LT(relError(ddpSolution.stateTrajectory_.back(), qpSolution.stateTrajectory.back()), 5.0 * solutionPrecision)
+  ASSERT_LT(relError(ddpSolution.stateTrajectory_.back(), qpSolution.stateTrajectory.back()), solutionPrecision)
       << "MESSAGE: multi-threaded ILQR failed in the optimal final state test!";
 }
 

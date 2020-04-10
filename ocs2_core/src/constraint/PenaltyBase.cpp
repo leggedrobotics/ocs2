@@ -34,7 +34,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PenaltyBase::scalar_t PenaltyBase::getPenaltyCost(const scalar_array_t& h) const {
+scalar_t PenaltyBase::getPenaltyCost(const scalar_array_t& h) const {
   scalar_t penalty = 0;
   for (const scalar_t& hi : h) {
     penalty += getPenaltyFunctionValue(hi);
@@ -45,8 +45,7 @@ PenaltyBase::scalar_t PenaltyBase::getPenaltyCost(const scalar_array_t& h) const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PenaltyBase::dynamic_vector_t PenaltyBase::getPenaltyCostDerivativeState(const scalar_array_t& h,
-                                                                         const dynamic_vector_array_t& dhdx) const {
+dynamic_vector_t PenaltyBase::getPenaltyCostDerivativeState(const scalar_array_t& h, const dynamic_vector_array_t& dhdx) const {
   const size_t numInequalityConstraints = h.size();
   if (numInequalityConstraints != dhdx.size()) {
     throw std::runtime_error("The inequality constraint should have the same size as it derivative.");
@@ -63,8 +62,7 @@ PenaltyBase::dynamic_vector_t PenaltyBase::getPenaltyCostDerivativeState(const s
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PenaltyBase::dynamic_vector_t PenaltyBase::getPenaltyCostDerivativeInput(const scalar_array_t& h,
-                                                                         const dynamic_vector_array_t& dhdu) const {
+dynamic_vector_t PenaltyBase::getPenaltyCostDerivativeInput(const scalar_array_t& h, const dynamic_vector_array_t& dhdu) const {
   const size_t numInequalityConstraints = h.size();
   if (numInequalityConstraints != dhdu.size()) {
     throw std::runtime_error("The inequality constraint should have the same size as it derivative.");
@@ -81,8 +79,8 @@ PenaltyBase::dynamic_vector_t PenaltyBase::getPenaltyCostDerivativeInput(const s
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PenaltyBase::dynamic_matrix_t PenaltyBase::getPenaltyCostSecondDerivativeState(const scalar_array_t& h, const dynamic_vector_array_t& dhdx,
-                                                                               const dynamic_matrix_array_t& ddhdxdx) const {
+dynamic_matrix_t PenaltyBase::getPenaltyCostSecondDerivativeState(const scalar_array_t& h, const dynamic_vector_array_t& dhdx,
+                                                                  const dynamic_matrix_array_t& ddhdxdx) const {
   const size_t numInequalityConstraints = h.size();
   if (numInequalityConstraints != dhdx.size() || numInequalityConstraints != ddhdxdx.size()) {
     throw std::runtime_error("The inequality constraint should have the same size as it derivative.");
@@ -100,8 +98,8 @@ PenaltyBase::dynamic_matrix_t PenaltyBase::getPenaltyCostSecondDerivativeState(c
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PenaltyBase::dynamic_matrix_t PenaltyBase::getPenaltyCostSecondDerivativeInput(const scalar_array_t& h, const dynamic_vector_array_t& dhdu,
-                                                                               const dynamic_matrix_array_t& ddhdudu) const {
+dynamic_matrix_t PenaltyBase::getPenaltyCostSecondDerivativeInput(const scalar_array_t& h, const dynamic_vector_array_t& dhdu,
+                                                                  const dynamic_matrix_array_t& ddhdudu) const {
   const size_t numInequalityConstraints = h.size();
   if (numInequalityConstraints != dhdu.size() || numInequalityConstraints != ddhdudu.size()) {
     throw std::runtime_error("The inequality constraint should have the same size as it derivative.");
@@ -119,9 +117,9 @@ PenaltyBase::dynamic_matrix_t PenaltyBase::getPenaltyCostSecondDerivativeInput(c
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PenaltyBase::dynamic_matrix_t PenaltyBase::getPenaltyCostDerivativeInputState(const scalar_array_t& h, const dynamic_vector_array_t& dhdx,
-                                                                              const dynamic_vector_array_t& dhdu,
-                                                                              const dynamic_matrix_array_t& ddhdudx) const {
+dynamic_matrix_t PenaltyBase::getPenaltyCostDerivativeInputState(const scalar_array_t& h, const dynamic_vector_array_t& dhdx,
+                                                                 const dynamic_vector_array_t& dhdu,
+                                                                 const dynamic_matrix_array_t& ddhdudx) const {
   const size_t numInequalityConstraints = h.size();
   if (numInequalityConstraints != dhdx.size() || numInequalityConstraints != dhdu.size()) {
     throw std::runtime_error("The inequality constraint should have the same size as it derivative.");
@@ -140,7 +138,7 @@ PenaltyBase::dynamic_matrix_t PenaltyBase::getPenaltyCostDerivativeInputState(co
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PenaltyBase::scalar_t PenaltyBase::getConstraintViolationSquaredNorm(const scalar_array_t& h) const {
+scalar_t PenaltyBase::getConstraintViolationSquaredNorm(const scalar_array_t& h) const {
   scalar_t squaredViolation = 0;
   for (const scalar_t& hi : h) {
     scalar_t violation = std::max(0.0, -hi);

@@ -50,8 +50,6 @@ namespace ocs2 {
  */
 class RelaxedBarrierPenalty final : public PenaltyBase {
  public:
-  using scalar_t = typename PenaltyBase::scalar_t;
-
   RelaxedBarrierPenalty(scalar_t mu, scalar_t delta) : mu_(mu), delta_(delta) {}
   virtual ~RelaxedBarrierPenalty() = default;
 

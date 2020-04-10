@@ -41,10 +41,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace riccati_modification {
 
-using scalar_t = Data::scalar_t;
-using dynamic_vector_t = Data::dynamic_vector_t;
-using dynamic_matrix_t = Data::dynamic_matrix_t;
-
 /**
  * Helper specialization of interpolate() of RiccatiModification array types for scalar_t subfields.
  * Note that since partial specialization of function templates is not possible, it is not

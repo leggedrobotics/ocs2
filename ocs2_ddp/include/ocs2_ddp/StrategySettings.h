@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 
 #include <ocs2_core/OCS2NumericTraits.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_ddp/HessianCorrection.h>
 
 namespace ocs2 {
@@ -71,17 +72,17 @@ namespace line_search {
  */
 struct Settings {
   /** Minimum step length of line-search strategy. */
-  double minStepLength_ = 0.05;
+  scalar_t minStepLength_ = 0.05;
   /** Maximum step length of line-search strategy. */
-  double maxStepLength_ = 1.0;
+  scalar_t maxStepLength_ = 1.0;
   /** Line-search strategy contraction rate. */
-  double contractionRate_ = 0.5;
+  scalar_t contractionRate_ = 0.5;
   /** Armijo coefficient, c defined as f(u + a*p) < f(u) + c*a dfdu.dot(p)  */
-  double armijoCoefficient_ = 1e-4;
+  scalar_t armijoCoefficient_ = 1e-4;
   /** The Hessian correction strategy. */
   hessian_correction::Strategy hessianCorrectionStrategy_ = hessian_correction::Strategy::DIAGONAL_SHIFT;
   /** The multiple used for correcting the Hessian for numerical stability of the Riccati backward pass.*/
-  double hessianCorrectionMultiple_ = OCS2NumericTraits<double>::limitEpsilon();
+  scalar_t hessianCorrectionMultiple_ = OCS2NumericTraits<scalar_t>::limitEpsilon();
 };  // end of Settings
 
 /**
@@ -107,11 +108,11 @@ struct Settings {
   /** Minimum pho (the ratio between actual reduction and predicted reduction) to accept the iteration's solution.
    * minAcceptedPho_ should be [0, 0.25);
    * */
-  double minAcceptedPho_ = 0.25;
+  scalar_t minAcceptedPho_ = 0.25;
   /** The default ratio of geometric progression for Riccati multiple. */
-  double riccatiMultipleDefaultRatio_ = 2.0;
+  scalar_t riccatiMultipleDefaultRatio_ = 2.0;
   /** The default scalar-factor of geometric progression for Riccati multiple. */
-  double riccatiMultipleDefaultFactor_ = 1e-6;
+  scalar_t riccatiMultipleDefaultFactor_ = 1e-6;
   /** Maximum number of successive rejections of the iteration's solution. */
   size_t maxNumSuccessiveRejections_ = 5;
 };  // end of Settings

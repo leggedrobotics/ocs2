@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <string>
 
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_core/misc/LoadData.h>
 
 #include "ocs2_ddp/StrategySettings.h"
@@ -53,9 +53,9 @@ struct DDP_Settings {
   /** Maximum number of iterations of DDP. */
   size_t maxNumIterations_ = 15;
   /** This value determines the termination condition based on the minimum relative changes of the cost. */
-  double minRelCost_ = 1e-3;
+  scalar_t minRelCost_ = 1e-3;
   /** This value determines the tolerance of constraint's ISE (Integral of Square Error). */
-  double constraintTolerance_ = 1e-3;
+  scalar_t constraintTolerance_ = 1e-3;
 
   /** This value determines to display the log output DDP. */
   bool displayInfo_ = false;
@@ -69,23 +69,23 @@ struct DDP_Settings {
   bool debugCaching_ = false;
 
   /** This value determines the absolute tolerance error for ode solvers. */
-  double absTolODE_ = 1e-9;
+  scalar_t absTolODE_ = 1e-9;
   /** This value determines the relative tolerance error for ode solvers. */
-  double relTolODE_ = 1e-6;
+  scalar_t relTolODE_ = 1e-6;
   /** This value determines the maximum number of integration points per a second for ode solvers. */
   size_t maxNumStepsPerSecond_ = 10000;
   /** The minimum integration time step */
-  double minTimeStep_ = 1e-3;
+  scalar_t minTimeStep_ = 1e-3;
 
   /** The initial coefficient of the quadratic penalty function in augmented Lagrangian method. It should be greater than one. */
-  double constraintPenaltyInitialValue_ = 2.0;
+  scalar_t constraintPenaltyInitialValue_ = 2.0;
   /** The rate that the coefficient of the quadratic penalty function in augmented Lagrangian method grows. It should be greater than
    * one. */
-  double constraintPenaltyIncreaseRate_ = 2.0;
+  scalar_t constraintPenaltyIncreaseRate_ = 2.0;
   /** Scaling factor, \f$\mu\f$,  for the inequality constraints barrier */
-  double inequalityConstraintMu_ = 0.0;
+  scalar_t inequalityConstraintMu_ = 0.0;
   /** Threshold parameter, \f$\delta\f$, where the relaxed log barrier function changes from log to quadratic */
-  double inequalityConstraintDelta_ = 1e-6;
+  scalar_t inequalityConstraintDelta_ = 1e-6;
 
   /** If true, terms of the Riccati equation will be precomputed before interpolation in the flow-map */
   bool preComputeRiccatiTerms_ = true;
@@ -94,7 +94,7 @@ struct DDP_Settings {
   bool useFeedbackPolicy_ = false;
 
   /** The risk sensitivity coefficient for risk aware DDP. */
-  double riskSensitiveCoeff_ = 0.0;
+  scalar_t riskSensitiveCoeff_ = 0.0;
 
   /** Determines the strategy for solving the subproblem. There are two choices line-search strategy and levenberg_marquardt strategy. */
   ddp_strategy::type strategy_ = ddp_strategy::type::LINE_SEARCH;

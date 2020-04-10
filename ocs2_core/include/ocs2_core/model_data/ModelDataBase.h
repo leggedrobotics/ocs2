@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <vector>
 
-#include "ocs2_core/Dimensions.h"
+#include "ocs2_core/Types.h"
 #include "ocs2_core/misc/LinearAlgebra.h"
 
 namespace ocs2 {
@@ -46,15 +46,6 @@ namespace ocs2 {
  * The base class for model data.
  */
 struct ModelDataBase {
-  using scalar_t = typename Dimensions<0, 0>::scalar_t;
-  using dynamic_vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
-  using dynamic_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic>;
-
-  using scalar_array_t = typename Dimensions<0, 0>::scalar_array_t;
-  using eigen_scalar_t = typename Dimensions<0, 0>::eigen_scalar_t;
-  using dynamic_vector_array_t = typename Dimensions<0, 0>::dynamic_vector_array_t;
-  using dynamic_matrix_array_t = typename Dimensions<0, 0>::dynamic_matrix_array_t;
-
   using array_t = std::vector<ModelDataBase>;
   using array2_t = std::vector<array_t>;
 

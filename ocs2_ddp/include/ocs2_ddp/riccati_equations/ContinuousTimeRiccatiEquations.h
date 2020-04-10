@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/StdVector>
 #include <vector>
 
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_core/integration/OdeBase.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/model_data/ModelDataBase.h>
@@ -46,11 +46,6 @@ namespace ocs2 {
  * Data cache for continuous-time Riccati equation
  */
 struct ContinuousTimeRiccatiData {
-  using DIMENSIONS = Dimensions<Eigen::Dynamic, Eigen::Dynamic>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-  using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
-
   scalar_t s_;
   dynamic_vector_t Sv_;
   dynamic_matrix_t Sm_;
@@ -113,15 +108,6 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<Eigen::Dynamic> {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using BASE = OdeBase<Eigen::Dynamic>;
-
-  using DIMENSIONS = Dimensions<Eigen::Dynamic, Eigen::Dynamic>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using size_array_t = typename DIMENSIONS::size_array_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-  using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
-  using dynamic_matrix_array_t = typename DIMENSIONS::dynamic_matrix_array_t;
-  using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
 
   /**
    * Constructor.

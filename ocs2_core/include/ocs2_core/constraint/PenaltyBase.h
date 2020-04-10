@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_core/Dimensions.h"
+#include "ocs2_core/Types.h"
 
 namespace ocs2 {
 
@@ -44,14 +44,6 @@ namespace ocs2 {
  */
 class PenaltyBase {
  public:
-  using DIMENSIONS = Dimensions<0, 0>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-  using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
-  using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
-  using dynamic_matrix_array_t = typename DIMENSIONS::dynamic_matrix_array_t;
-
   /**
    * Get the penalty cost.
    *

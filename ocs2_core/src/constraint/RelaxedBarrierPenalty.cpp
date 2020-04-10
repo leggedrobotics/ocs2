@@ -34,7 +34,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-RelaxedBarrierPenalty::scalar_t RelaxedBarrierPenalty::getPenaltyFunctionValue(scalar_t h) const {
+scalar_t RelaxedBarrierPenalty::getPenaltyFunctionValue(scalar_t h) const {
   if (h > delta_) {
     return -mu_ * log(h);
   } else {
@@ -45,7 +45,7 @@ RelaxedBarrierPenalty::scalar_t RelaxedBarrierPenalty::getPenaltyFunctionValue(s
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-RelaxedBarrierPenalty::scalar_t RelaxedBarrierPenalty::getPenaltyFunctionDerivative(scalar_t h) const {
+scalar_t RelaxedBarrierPenalty::getPenaltyFunctionDerivative(scalar_t h) const {
   if (h > delta_) {
     return -mu_ / h;
   } else {
@@ -56,7 +56,7 @@ RelaxedBarrierPenalty::scalar_t RelaxedBarrierPenalty::getPenaltyFunctionDerivat
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-RelaxedBarrierPenalty::scalar_t RelaxedBarrierPenalty::getPenaltyFunctionSecondDerivative(scalar_t h) const {
+scalar_t RelaxedBarrierPenalty::getPenaltyFunctionSecondDerivative(scalar_t h) const {
   if (h > delta_) {
     return mu_ / (h * h);
   } else {

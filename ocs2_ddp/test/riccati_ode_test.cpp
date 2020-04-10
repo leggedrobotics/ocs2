@@ -38,36 +38,31 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class RiccatiInitializer {
  public:
   using riccati_t = ocs2::ContinuousTimeRiccatiEquations;
-  using scalar_t = riccati_t::scalar_t;
-  using size_array_t = riccati_t::size_array_t;
-  using scalar_array_t = riccati_t::scalar_array_t;
-  using dynamic_vector_t = riccati_t::dynamic_vector_t;
-  using dynamic_matrix_t = riccati_t::dynamic_matrix_t;
 
-  scalar_array_t timeStamp;
+  ocs2::scalar_array_t timeStamp;
   ocs2::ModelDataBase::array_t projectedModelDataTrajectory;
 
-  size_array_t eventsPastTheEndIndeces;
+  ocs2::size_array_t eventsPastTheEndIndeces;
   ocs2::ModelDataBase::array_t modelDataEventTimesArray;
 
   ocs2::riccati_modification::Data::array_t riccatiModificationTrajectory;
 
   RiccatiInitializer(const int state_dim, const int input_dim) {
-    timeStamp = scalar_array_t{0.0, 1.0};
+    timeStamp = ocs2::scalar_array_t{0.0, 1.0};
 
     ocs2::ModelDataBase projectedModelData;
     projectedModelData.stateDim_ = state_dim;
     projectedModelData.inputDim_ = input_dim;
-    projectedModelData.dynamicsBias_ = dynamic_vector_t::Random(state_dim);
-    projectedModelData.dynamicsStateDerivative_ = dynamic_matrix_t::Random(state_dim, state_dim);
-    projectedModelData.dynamicsInputDerivative_ = dynamic_matrix_t::Random(state_dim, input_dim);
-    projectedModelData.cost_ = dynamic_vector_t::Random(1)(0);
-    projectedModelData.costStateDerivative_ = dynamic_vector_t::Random(state_dim);
-    projectedModelData.costStateSecondDerivative_ = ocs2::LinearAlgebra::generateSPDmatrix<dynamic_matrix_t>(state_dim);
-    projectedModelData.costInputDerivative_ = dynamic_vector_t::Random(input_dim);
+    projectedModelData.dynamicsBias_ = ocs2::dynamic_vector_t::Random(state_dim);
+    projectedModelData.dynamicsStateDerivative_ = ocs2::dynamic_matrix_t::Random(state_dim, state_dim);
+    projectedModelData.dynamicsInputDerivative_ = ocs2::dynamic_matrix_t::Random(state_dim, input_dim);
+    projectedModelData.cost_ = ocs2::dynamic_vector_t::Random(1)(0);
+    projectedModelData.costStateDerivative_ = ocs2::dynamic_vector_t::Random(state_dim);
+    projectedModelData.costStateSecondDerivative_ = ocs2::LinearAlgebra::generateSPDmatrix<ocs2::dynamic_matrix_t>(state_dim);
+    projectedModelData.costInputDerivative_ = ocs2::dynamic_vector_t::Random(input_dim);
     projectedModelData.costInputSecondDerivative_.setIdentity(
         input_dim, input_dim);  // Important: It is identity since it is a projected projectedModelData!
-    projectedModelData.costInputStateDerivative_ = dynamic_matrix_t::Random(input_dim, state_dim);
+    projectedModelData.costInputStateDerivative_ = ocs2::dynamic_matrix_t::Random(input_dim, state_dim);
     projectedModelData.numIneqConstr_ = 0;
     projectedModelData.numStateEqConstr_ = 0;
     projectedModelData.numStateInputEqConstr_ = input_dim;
@@ -78,9 +73,9 @@ class RiccatiInitializer {
     projectedModelDataTrajectory = ocs2::ModelDataBase::array_t{projectedModelData, projectedModelData};
 
     ocs2::riccati_modification::Data riccatiModification;
-    riccatiModification.deltaQm_ = 0.1 * ocs2::LinearAlgebra::generateSPDmatrix<dynamic_matrix_t>(state_dim);
-    riccatiModification.deltaGv_ = dynamic_vector_t::Zero(input_dim);
-    riccatiModification.deltaGm_ = dynamic_matrix_t::Zero(input_dim, state_dim);
+    riccatiModification.deltaQm_ = 0.1 * ocs2::LinearAlgebra::generateSPDmatrix<ocs2::dynamic_matrix_t>(state_dim);
+    riccatiModification.deltaGv_ = ocs2::dynamic_vector_t::Zero(input_dim);
+    riccatiModification.deltaGm_ = ocs2::dynamic_matrix_t::Zero(input_dim, state_dim);
     riccatiModification.constraintRangeProjector_.setZero(input_dim, 0);
     ocs2::LinearAlgebra::computeInverseMatrixUUT(projectedModelData.costInputSecondDerivative_,
                                                  riccatiModification.constraintNullProjector_);
@@ -107,8 +102,8 @@ TEST(riccati_ode_test, compareImplementations) {
   ri.initialize(riccatiEquationPrecompute);
   ri.initialize(riccatiEquationNoPrecompute);
 
-  riccati_t::dynamic_vector_t S = riccati_t::dynamic_vector_t::Random(ocs2::s_vector_dim(STATE_DIM));
-  riccati_t::dynamic_vector_t dSdz_precompute, dSdz_noPrecompute;
+  ocs2::dynamic_vector_t S = ocs2::dynamic_vector_t::Random(ocs2::s_vector_dim(STATE_DIM));
+  ocs2::dynamic_vector_t dSdz_precompute, dSdz_noPrecompute;
   riccatiEquationPrecompute.computeFlowMap(0.6, S, dSdz_precompute);
   riccatiEquationNoPrecompute.computeFlowMap(0.6, S, dSdz_noPrecompute);
 
@@ -119,10 +114,10 @@ TEST(riccati_ode_test, testFlattenSMatrix) {
   const int state_dim = 4;
   using riccati_t = ocs2::ContinuousTimeRiccatiEquations;
 
-  riccati_t::dynamic_vector_t allSs, allSs_expect;
-  riccati_t::dynamic_matrix_t Sm;
-  riccati_t::state_vector_t Sv;
-  riccati_t::scalar_t s;
+  ocs2::dynamic_vector_t allSs, allSs_expect;
+  ocs2::dynamic_matrix_t Sm;
+  ocs2::dynamic_vector_t Sv;
+  ocs2::scalar_t s;
 
   Sm.resize(state_dim, state_dim);
   Sm << 1, 2, 4, 7,  // clang-format off
@@ -146,15 +141,15 @@ TEST(riccati_ode_test, testFlattenAndUnflatten) {
   const int state_dim = 42;
   using riccati_t = ocs2::ContinuousTimeRiccatiEquations;
 
-  riccati_t::dynamic_vector_t allSs;
-  riccati_t::dynamic_matrix_t Sm, Sm_out;
-  riccati_t::state_vector_t Sv, Sv_out;
-  riccati_t::scalar_t s, s_out;
+  ocs2::dynamic_vector_t allSs;
+  ocs2::dynamic_matrix_t Sm, Sm_out;
+  ocs2::dynamic_vector_t Sv, Sv_out;
+  ocs2::scalar_t s, s_out;
 
   Sm.setRandom(state_dim, state_dim);
   Sm = (Sm + Sm.transpose()).eval();
   Sv.setRandom(state_dim);
-  s = riccati_t::dynamic_vector_t::Random(1)(0);
+  s = ocs2::dynamic_vector_t::Random(1)(0);
 
   Sm_out.setZero(state_dim, state_dim);
   Sv_out.setZero(state_dim);

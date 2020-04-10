@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 namespace riccati_modification {
@@ -40,10 +40,6 @@ namespace riccati_modification {
 struct Data {
   using array_t = std::vector<Data>;
   using array2_t = std::vector<array_t>;
-
-  using scalar_t = Dimensions<0, 0>::scalar_t;
-  using dynamic_vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
-  using dynamic_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic>;
 
   scalar_t time_;
 

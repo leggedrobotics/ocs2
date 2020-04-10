@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
 
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_core/model_data/ModelDataBase.h>
 
 #include "ocs2_ddp/riccati_equations/RiccatiModification.h"
@@ -43,11 +43,6 @@ namespace ocs2 {
  * Data cache for discrete-time Riccati equation
  */
 struct DiscreteTimeRiccatiData {
-  using DIMENSIONS = Dimensions<Eigen::Dynamic, Eigen::Dynamic>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-  using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
-
   dynamic_vector_t Sm_projectedHv_;
   dynamic_matrix_t Sm_projectedAm_;
   dynamic_matrix_t Sm_projectedBm_;
@@ -76,11 +71,6 @@ struct DiscreteTimeRiccatiData {
 class DiscreteTimeRiccatiEquations {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using DIMENSIONS = Dimensions<Eigen::Dynamic, Eigen::Dynamic>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-  using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
 
   /**
    * Constructor.

@@ -852,16 +852,16 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM, INPUT_DIM>::calculateRolloutCost(
     const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
     const state_vector_array2_t& stateTrajectoriesStock, const input_vector_array2_t& inputTrajectoriesStock, size_t workerIndex /*= 0*/) {
+  // set desired trajectories
+  auto& costFunction = linearQuadraticApproximatorPtrStock_[workerIndex]->costFunction();
+  costFunction.setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
+
   scalar_array_t finalCosts;
   scalar_array_t costTrajectory;
   scalar_t totalCost = 0.0;
   for (size_t i = 0; i < numPartitions_; i++) {
     finalCosts.clear();
     costTrajectory.resize(timeTrajectoriesStock[i].size());
-
-    // set desired trajectories
-    auto& costFunction = linearQuadraticApproximatorPtrStock_[workerIndex]->costFunction();
-    costFunction.setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
 
     auto eventsPastTheEndItr = postEventIndicesStock[i].begin();
     for (size_t k = 0; k < timeTrajectoriesStock[i].size(); k++) {

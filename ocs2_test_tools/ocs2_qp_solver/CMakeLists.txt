@@ -75,6 +75,10 @@ install(
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+        
+install(DIRECTORY test/include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
 
 #############
 ## Testing ##
@@ -91,5 +95,4 @@ target_link_libraries(${PROJECT_NAME}_testWrappers
   ${PROJECT_NAME}
   gtest_main
   )
-target_include_directories(${PROJECT_NAME}_testWrappers
-  PRIVATE test/include)
+  

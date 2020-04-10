@@ -15,6 +15,7 @@ class Ocs2QpSolverTest : public testing::Test {
   static constexpr size_t N = 10;  // Trajectory length
   static constexpr size_t STATE_DIM = 3;
   static constexpr size_t INPUT_DIM = 2;
+  static constexpr ocs2::scalar_t dt = 1e-3;
   using SystemDynamics_t = ocs2::SystemDynamicsBase<STATE_DIM, INPUT_DIM>;
   using costFunction_t = ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM>;
   using input_vector_t = costFunction_t::input_vector_t;
@@ -26,7 +27,7 @@ class Ocs2QpSolverTest : public testing::Test {
                                                               ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
                                                               state_vector_t::Random(), input_vector_t::Random(), state_vector_t::Random());
     system = ocs2::qp_solver::getOcs2Dynamics<STATE_DIM, INPUT_DIM>(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
-    nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, 1e-3);
+    nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
     x0 = state_vector_t::Random();
     solution = solveLinearQuadraticOptimalControlProblem(*cost, *system, nominalTrajectory, x0);
   }
@@ -41,6 +42,7 @@ class Ocs2QpSolverTest : public testing::Test {
 constexpr size_t Ocs2QpSolverTest::N;
 constexpr size_t Ocs2QpSolverTest::STATE_DIM;
 constexpr size_t Ocs2QpSolverTest::INPUT_DIM;
+constexpr ocs2::scalar_t Ocs2QpSolverTest::dt;
 
 TEST_F(Ocs2QpSolverTest, initialCondition) {
   ASSERT_TRUE(x0.isApprox(solution.stateTrajectory.front()));
@@ -59,7 +61,7 @@ TEST_F(Ocs2QpSolverTest, satisfiesDynamics) {
 
 TEST_F(Ocs2QpSolverTest, invariantUnderLinearization) {
   // Different nominalTrajectory, with same time discretization
-  auto linearization2 = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, 1e-3);
+  auto linearization2 = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
   linearization2.timeTrajectory = nominalTrajectory.timeTrajectory;
 
   // Compare solutions

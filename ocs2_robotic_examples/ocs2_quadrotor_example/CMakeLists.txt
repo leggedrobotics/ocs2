@@ -42,6 +42,8 @@ catkin_package(
     ocs2_robotic_tools
   DEPENDS
     Boost
+  LIBRARIES
+    quadrotor_interface
 )
 
 ###########

@@ -1,19 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
 project(ocs2_raisim)
-include(ExternalProject)
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-# installing raisim before find_package(raisim)
-execute_process(
-  COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/raisim_subproject/
-)
-execute_process(
-  COMMAND make
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/raisim_subproject/
-)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
@@ -24,9 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
     ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
-find_package(raisim REQUIRED
-  PATHS ${CMAKE_CURRENT_SOURCE_DIR}/raisim_subproject/raisim/install/lib/cmake/raisim
-)
+find_package(raisim REQUIRED)
 
 ###################################
 ## catkin specific configuration ##

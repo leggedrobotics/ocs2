@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * This is base class for initializing the SLQ-based algorithms.
+ * This is the base class for initializing the DDP-based algorithms.
  *
  * @tparam STATE_DIM: Dimension of the state space.
  * @tparam INPUT_DIM: Dimension of the control input space.
@@ -88,7 +88,7 @@ class SystemOperatingTrajectoriesBase {
    * @param [out] inputTrajectory: Output control input trajectory.
    * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or override.
    */
-  virtual void getSystemOperatingTrajectories(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime,
+  virtual void getSystemOperatingTrajectories(const state_vector_t& initialState, scalar_t startTime, scalar_t finalTime,
                                               scalar_array_t& timeTrajectory, state_vector_array_t& stateTrajectory,
                                               input_vector_array_t& inputTrajectory, bool concatOutput) = 0;
 };

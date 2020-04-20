@@ -87,38 +87,41 @@ class DdpCorrectnessTest : public testing::Test {
     qpSolution = ocs2::qp_solver::solveLinearQuadraticOptimalControlProblem(*cost, *system, nominalTrajectory, initState);
     qpCost = getQpCost(qpSolution);
 
-    // ddp  settings
-    ddpSettings.displayInfo_ = false;
-    ddpSettings.displayShortSummary_ = false;
-    ddpSettings.nThreads_ = 2;
-    ddpSettings.absTolODE_ = 1e-10;
-    ddpSettings.relTolODE_ = 1e-7;
-    ddpSettings.maxNumStepsPerSecond_ = 10000;
-    ddpSettings.maxNumIterations_ = 2;
-    ddpSettings.minLearningRate_ = 0.0001;
-    ddpSettings.minRelCost_ = 5e-4;
-    ddpSettings.checkNumericalStability_ = false;
-    ddpSettings.debugPrintRollout_ = false;
-
     // rollout settings
-    rolloutSettings.absTolODE_ = 1e-10;
-    rolloutSettings.relTolODE_ = 1e-7;
-    rolloutSettings.maxNumStepsPerSecond_ = 10000;
+    const ocs2::Rollout_Settings rolloutSettings = []() {
+      ocs2::Rollout_Settings rolloutSettings;
+      rolloutSettings.absTolODE_ = 1e-10;
+      rolloutSettings.relTolODE_ = 1e-7;
+      rolloutSettings.maxNumStepsPerSecond_ = 10000;
+      return rolloutSettings;
+    }();
 
     // system rollout
     rollout.reset(new rollout_t(*system, rolloutSettings));
 
     startTime = nominalTrajectory.timeTrajectory.front();
     finalTime = nominalTrajectory.timeTrajectory.back();
-    partitioningTimes.push_back(startTime);
-    partitioningTimes.push_back(finalTime);
+  }
+
+  ocs2::DDP_Settings ddpSettings(int numPartitions) const {
+    ocs2::DDP_Settings ddpSettings;
+    ddpSettings.displayInfo_ = false;
+    ddpSettings.displayShortSummary_ = false;
+    ddpSettings.absTolODE_ = 1e-10;
+    ddpSettings.relTolODE_ = 1e-7;
+    ddpSettings.maxNumStepsPerSecond_ = 10000;
+    ddpSettings.minLearningRate_ = 0.0001;
+    ddpSettings.minRelCost_ = 5e-4;
+    ddpSettings.checkNumericalStability_ = false;
+    ddpSettings.debugPrintRollout_ = false;
+    ddpSettings.nThreads_ = numPartitions;
+    ddpSettings.maxNumIterations_ = 2 + (numPartitions - 1);  // need an extra iteration for each added time partition
+    return ddpSettings;
   }
 
   scalar_t getQpCost(const ocs2::qp_solver::ContinuousTrajectory& qpSolution) const {
     auto costFunc = [this](scalar_t t, const ocs2::dynamic_vector_t& x, const ocs2::dynamic_vector_t& u) {
-      state_vector_t xFixedSize = x;
-      input_vector_t uFixedSize = u;
-      cost->setCurrentStateAndControl(t, xFixedSize, uFixedSize);
+      cost->setCurrentStateAndControl(t, x, u);
       scalar_t l;
       cost->getIntermediateCost(l);
       return l;
@@ -128,8 +131,7 @@ class DdpCorrectnessTest : public testing::Test {
     auto lAccum = ocs2::PerformanceIndicesRollout::rolloutCost<-1, -1>(costFunc, qpSolution.timeTrajectory, qpSolution.stateTrajectory,
                                                                        inputTrajectoryTemp);
 
-    state_vector_t xFixedSize = qpSolution.stateTrajectory.back();
-    cost->setCurrentStateAndControl(qpSolution.timeTrajectory.back(), xFixedSize, input_vector_t::Zero());
+    cost->setCurrentStateAndControl(qpSolution.timeTrajectory.back(), qpSolution.stateTrajectory.back(), input_vector_t::Zero());
     scalar_t phi;
     cost->getTerminalCost(phi);
 
@@ -150,13 +152,9 @@ class DdpCorrectnessTest : public testing::Test {
   scalar_t qpCost;
   ocs2::qp_solver::ContinuousTrajectory qpSolution;
 
-  ocs2::DDP_Settings ddpSettings;
-  ocs2::Rollout_Settings rolloutSettings;
-
   state_vector_t initState;
   scalar_t startTime;
   scalar_t finalTime;
-  std::vector<scalar_t> partitioningTimes;
 };
 
 constexpr size_t DdpCorrectnessTest::N;
@@ -164,12 +162,14 @@ constexpr size_t DdpCorrectnessTest::STATE_DIM;
 constexpr size_t DdpCorrectnessTest::INPUT_DIM;
 constexpr double DdpCorrectnessTest::solutionPrecision;
 
-TEST_F(DdpCorrectnessTest, slq_solution) {
+TEST_F(DdpCorrectnessTest, slq_solution_single_partition) {
   using ddp_t = ocs2::SLQ<STATE_DIM, INPUT_DIM>;
+
+  ocs2::scalar_array_t partitioningTimes{startTime, finalTime};
 
   ocs2::SLQ_Settings settings;
   settings.useNominalTimeForBackwardPass_ = false;
-  settings.ddpSettings_ = ddpSettings;
+  settings.ddpSettings_ = ddpSettings(partitioningTimes.size() - 1);
 
   // DDP
   ddp_t ddp(rollout.get(), system.get(), constraint.get(), cost.get(), operatingPoints.get(), settings);
@@ -177,7 +177,8 @@ TEST_F(DdpCorrectnessTest, slq_solution) {
   const auto ddpSolution = ddp.primalSolution(finalTime);
   const auto ddpPerformanceIndeces = ddp.getPerformanceIndeces();
 
-  ASSERT_LT((ddpPerformanceIndeces.totalCost - qpCost), 10.0 * ddpSettings.minRelCost_) << "MESSAGE: SLQ failed in the optimal cost test!";
+  ASSERT_LT((ddpPerformanceIndeces.totalCost - qpCost), 10.0 * settings.ddpSettings_.minRelCost_)
+      << "MESSAGE: SLQ failed in the optimal cost test!";
 
   ASSERT_LT(relError(ddpSolution.inputTrajectory_.front(), qpSolution.inputTrajectory.front()), solutionPrecision)
       << "MESSAGE: SLQ failed in the optimal initial input test!";
@@ -186,11 +187,14 @@ TEST_F(DdpCorrectnessTest, slq_solution) {
       << "MESSAGE: SLQ failed in the optimal final state test!";
 }
 
-TEST_F(DdpCorrectnessTest, ilqr_solution) {
-  using ddp_t = ocs2::ILQR<STATE_DIM, INPUT_DIM>;
+TEST_F(DdpCorrectnessTest, slq_solution_multiple_partition) {
+  using ddp_t = ocs2::SLQ<STATE_DIM, INPUT_DIM>;
 
-  ocs2::ILQR_Settings settings;
-  settings.ddpSettings_ = ddpSettings;
+  ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
+
+  ocs2::SLQ_Settings settings;
+  settings.useNominalTimeForBackwardPass_ = false;
+  settings.ddpSettings_ = ddpSettings(partitioningTimes.size() - 1);
 
   // DDP
   ddp_t ddp(rollout.get(), system.get(), constraint.get(), cost.get(), operatingPoints.get(), settings);
@@ -198,13 +202,63 @@ TEST_F(DdpCorrectnessTest, ilqr_solution) {
   const auto ddpSolution = ddp.primalSolution(finalTime);
   const auto ddpPerformanceIndeces = ddp.getPerformanceIndeces();
 
-  ASSERT_LT((ddpPerformanceIndeces.totalCost - qpCost), 10.0 * ddpSettings.minRelCost_) << "MESSAGE: ILQR failed in the optimal cost test!";
+  ASSERT_LT((ddpPerformanceIndeces.totalCost - qpCost), 10.0 * settings.ddpSettings_.minRelCost_)
+      << "MESSAGE: multi-threaded SLQ failed in the optimal cost test!";
+
+  ASSERT_LT(relError(ddpSolution.inputTrajectory_.front(), qpSolution.inputTrajectory.front()), solutionPrecision)
+      << "MESSAGE: multi-threaded SLQ failed in the optimal initial input test!";
+
+  ASSERT_LT(relError(ddpSolution.stateTrajectory_.back(), qpSolution.stateTrajectory.back()), solutionPrecision)
+      << "MESSAGE: multi-threaded SLQ failed in the optimal final state test!";
+}
+
+TEST_F(DdpCorrectnessTest, ilqr_solution_single_partition) {
+  using ddp_t = ocs2::ILQR<STATE_DIM, INPUT_DIM>;
+
+  ocs2::scalar_array_t partitioningTimes{startTime, finalTime};
+
+  ocs2::ILQR_Settings settings;
+  settings.ddpSettings_ = ddpSettings(partitioningTimes.size() - 1);
+
+  // DDP
+  ddp_t ddp(rollout.get(), system.get(), constraint.get(), cost.get(), operatingPoints.get(), settings);
+  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  const auto ddpSolution = ddp.primalSolution(finalTime);
+  const auto ddpPerformanceIndeces = ddp.getPerformanceIndeces();
+
+  ASSERT_LT((ddpPerformanceIndeces.totalCost - qpCost), 10.0 * settings.ddpSettings_.minRelCost_)
+      << "MESSAGE: ILQR failed in the optimal cost test!";
 
   ASSERT_LT(relError(ddpSolution.inputTrajectory_.front(), qpSolution.inputTrajectory.front()), solutionPrecision)
       << "MESSAGE: ILQR failed in the optimal initial input test!";
 
   ASSERT_LT(relError(ddpSolution.stateTrajectory_.back(), qpSolution.stateTrajectory.back()), solutionPrecision)
       << "MESSAGE: ILQR failed in the optimal final state test!";
+}
+
+TEST_F(DdpCorrectnessTest, ilqr_solution_multiple_partition) {
+  using ddp_t = ocs2::ILQR<STATE_DIM, INPUT_DIM>;
+
+  ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
+
+  ocs2::ILQR_Settings settings;
+  settings.ddpSettings_ = ddpSettings(partitioningTimes.size() - 1);
+
+  // DDP
+  ddp_t ddp(rollout.get(), system.get(), constraint.get(), cost.get(), operatingPoints.get(), settings);
+  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  const auto ddpSolution = ddp.primalSolution(finalTime);
+  const auto ddpPerformanceIndeces = ddp.getPerformanceIndeces();
+
+  ASSERT_LT((ddpPerformanceIndeces.totalCost - qpCost), 10.0 * settings.ddpSettings_.minRelCost_)
+      << "MESSAGE: multi-threaded ILQR failed in the optimal cost test!";
+
+  // TODO: ILQR solution does not satisfy precision
+  ASSERT_LT(relError(ddpSolution.inputTrajectory_.front(), qpSolution.inputTrajectory.front()), 5.0 * solutionPrecision)
+      << "MESSAGE: multi-threaded ILQR failed in the optimal initial input test!";
+
+  ASSERT_LT(relError(ddpSolution.stateTrajectory_.back(), qpSolution.stateTrajectory.back()), 5.0 * solutionPrecision)
+      << "MESSAGE: multi-threaded ILQR failed in the optimal final state test!";
 }
 
 int main(int argc, char** argv) {

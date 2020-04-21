@@ -59,9 +59,8 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& c
     lqp.emplace_back(cost.getTerminalQuadraticApproximation(t[N], x[N]), VectorFunctionLinearApproximation(),
                      constraintsPtr->getTerminalLinearApproximation(t[N], x[N]));  // Terminal cost and constraints, no dynamics.
   } else {
-    lqp.emplace_back(
-        cost.getTerminalQuadraticApproximation(t[N], x[N]), VectorFunctionLinearApproximation(),
-        VectorFunctionLinearApproximation{.dfdx = dynamic_matrix_t(0, x[N].size())});  // Terminal cost, no dynamics and constraints.
+    lqp.emplace_back(cost.getTerminalQuadraticApproximation(t[N], x[N]), VectorFunctionLinearApproximation(),
+                     VectorFunctionLinearApproximation());  // Terminal cost, no dynamics and constraints.
   }
 
   return lqp;
@@ -86,9 +85,6 @@ LinearQuadraticStage approximateStage(CostWrapper& cost, SystemWrapper& system, 
     } else {
       lqStage.constraints = constraintsPtr->getLinearApproximation(start.t, start.x, start.u);
     }
-  } else {
-    lqStage.constraints =
-        VectorFunctionLinearApproximation{.dfdx = dynamic_matrix_t(0, start.x.size()), .dfdu = dynamic_matrix_t(0, start.u.size())};
   }
 
   return lqStage;

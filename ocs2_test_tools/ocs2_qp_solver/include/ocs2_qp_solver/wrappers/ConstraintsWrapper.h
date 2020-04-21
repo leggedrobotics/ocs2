@@ -89,7 +89,7 @@ class ConstraintsWrapper {
     virtual void setInitialStateAndControl(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u) = 0;
     virtual void setCurrentStateAndControl(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u) = 0;
     virtual void setTerminalState(scalar_t t, const dynamic_vector_t& x) = 0;
-    virtual dynamic_vector_t getConstraints() = 0;
+    virtual dynamic_vector_t getConstraints() = 0;  // constraint = [StateInputConstraint; StateOnlyConstraint]
     virtual dynamic_matrix_t getConstraintsDerivativeState() = 0;
     virtual dynamic_matrix_t getConstraintsDerivativeInput() = 0;
     virtual dynamic_vector_t getTerminalConstraints() = 0;

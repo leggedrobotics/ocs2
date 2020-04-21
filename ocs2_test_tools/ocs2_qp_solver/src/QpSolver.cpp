@@ -134,12 +134,14 @@ VectorFunctionLinearApproximation getConstraintMatrices(const std::vector<Linear
     const int nx_Next = dynamics_k.dfdx.rows();
     const int nc_k = constraints_k.f.size();
 
-    // Add [C, D, 0]
-    A.block(currRow, currCol, nc_k, nx_k + nu_k) << constraints_k.dfdx, constraints_k.dfdu;
-    // Add [e]
-    b.segment(currRow, nc_k) = constraints_k.f;
+    if (nc_k > 0) {
+      // Add [C, D]
+      A.block(currRow, currCol, nc_k, nx_k + nu_k) << constraints_k.dfdx, constraints_k.dfdu;
+      // Add [e]
+      b.segment(currRow, nc_k) = constraints_k.f;
 
-    currRow += nc_k;
+      currRow += nc_k;
+    }
 
     // Add [A, B, -I]
     A.block(currRow, currCol, nx_Next, nx_k + nu_k + nx_Next) << dynamics_k.dfdx, dynamics_k.dfdu,
@@ -154,8 +156,10 @@ VectorFunctionLinearApproximation getConstraintMatrices(const std::vector<Linear
   // Final state constraint
   const auto& constraints_N = lqp[N].constraints;
   const int nc_N = constraints_N.f.size();
-  A.bottomRightCorner(nc_N, constraints_N.dfdx.cols()) = constraints_N.dfdx;
-  b.bottomRows(nc_N) = constraints_N.f;
+  if (nc_N > 0) {
+    A.bottomRightCorner(nc_N, constraints_N.dfdx.cols()) = constraints_N.dfdx;
+    b.bottomRows(nc_N) = constraints_N.f;
+  }
 
   return constraints;
 }

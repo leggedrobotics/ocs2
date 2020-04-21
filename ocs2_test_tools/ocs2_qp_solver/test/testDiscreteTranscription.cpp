@@ -62,9 +62,11 @@ class DiscreteTranscriptionTest : public testing::Test {
       const auto numIntermediateConstraints = k == 0 ? numStateInputConstraints : numStateInputConstraints + numStateOnlyConstraints;
       ASSERT_EQ(lqr[k].constraints.f.rows(), numIntermediateConstraints);
       ASSERT_EQ(lqr[k].constraints.dfdx.rows(), numIntermediateConstraints);
-      ASSERT_EQ(lqr[k].constraints.dfdx.cols(), STATE_DIM);
       ASSERT_EQ(lqr[k].constraints.dfdu.rows(), numIntermediateConstraints);
-      ASSERT_EQ(lqr[k].constraints.dfdu.cols(), INPUT_DIM);
+      if (numIntermediateConstraints > 0) {
+        ASSERT_EQ(lqr[k].constraints.dfdx.cols(), STATE_DIM);
+        ASSERT_EQ(lqr[k].constraints.dfdu.cols(), INPUT_DIM);
+      }
     }
 
     // Terminal Cost size
@@ -74,7 +76,9 @@ class DiscreteTranscriptionTest : public testing::Test {
     // Terminal Constraint size
     ASSERT_EQ(lqr[N].constraints.f.rows(), numTerminalConstraints);
     ASSERT_EQ(lqr[N].constraints.dfdx.rows(), numTerminalConstraints);
-    ASSERT_EQ(lqr[N].constraints.dfdx.cols(), STATE_DIM);
+    if (numTerminalConstraints > 0) {
+      ASSERT_EQ(lqr[N].constraints.dfdx.cols(), STATE_DIM);
+    }
   }
 
   std::unique_ptr<ocs2::qp_solver::CostWrapper> costWrapper;

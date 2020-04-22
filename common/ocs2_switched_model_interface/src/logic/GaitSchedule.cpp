@@ -76,15 +76,15 @@ ocs2::ModeSchedule GaitSchedule::getModeSchedule(scalar_t timeHorizon) const {
 }
 
 void GaitSchedule::rolloutGaitScheduleTillTime(scalar_t time) {
-  scalar_t t = time_;
+  scalar_t tGaitEnd = time_ + timeLeftInGait(getCurrentPhase(), getCurrentGait());
   auto gaitIt = gaitSchedule_.begin();
-  while (t < time) {
-    if (gaitIt == gaitSchedule_.end()) {
+  while (tGaitEnd < time) {
+    if (std::next(gaitIt) == gaitSchedule_.end()) {
       // End of the schedule reached: make the repetition of the last gait explicit
       gaitSchedule_.push_back(gaitSchedule_.back());
-      gaitIt = std::prev(gaitSchedule_.end());
+      gaitIt = std::prev(gaitSchedule_.end(), 2);  // Iterator can be invalidated after push_back, so reset set explicitly.
     }
-    t += gaitIt->duration;
+    tGaitEnd += gaitIt->duration;
     ++gaitIt;
   }
 }

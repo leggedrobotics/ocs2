@@ -86,3 +86,25 @@ TEST(TestGaitSchedule, setGaitScheduleAfterTime) {
   // New gait inserted at the correct time
   ASSERT_DOUBLE_EQ(modeSchedule.eventTimes.back(), 22.6);
 }
+
+TEST(TestGaitSchedule, setGaitScheduleAfterTimeWithNonzeroPhase) {
+  const double t0 = 0.0;
+  const double tadvance = 1.4;
+  const double tInsert = 2.4;
+
+  // Start with multi mode gait
+  GaitSchedule gaitSchedule(t0, Gait{1.0, {}, {0}});
+
+  // Advance
+  gaitSchedule.advanceToTime(tadvance);
+
+  // Set a new gait way pass the end of the current schedule
+  gaitSchedule.setGaitAfterTime(Gait{1.0, {}, {1}}, tInsert);
+
+  auto modeSchedule = gaitSchedule.getModeSchedule(2.0);
+
+  ASSERT_DOUBLE_EQ(modeSchedule.eventTimes.size(), 1);
+  ASSERT_DOUBLE_EQ(modeSchedule.eventTimes.front(), 3.0); // First insert opportunity
+  ASSERT_EQ(modeSchedule.modeSequence.front(), 0);
+  ASSERT_EQ(modeSchedule.modeSequence.back(), 1);
+}

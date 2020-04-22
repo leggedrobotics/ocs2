@@ -47,9 +47,12 @@ constexpr size_t INPUT_DIM = 3 * NUM_CONTACT_POINTS + JOINT_COORDINATE_SIZE;    
 using ocs2::scalar_array_t;
 using ocs2::scalar_t;
 
+/* Feet related declarations */
 enum class FeetEnum { LF, RF, LH, RH };
-const std::array<std::string, 4> feetNames{"LF", "RF", "LH", "RH"};
-using contact_flag_t = std::array<bool, NUM_CONTACT_POINTS>;
+template <typename T>
+using feet_array_t = std::array<T, NUM_CONTACT_POINTS>;  // Fixed size container per foot
+const feet_array_t<std::string> feetNames{"LF", "RF", "LH", "RH"};
+using contact_flag_t = feet_array_t<bool>;  // Contact state per foot, true = in contact, false = not in contact
 
 template <typename SCALAR_T>
 using vector3_s_t = Eigen::Matrix<SCALAR_T, 3, 1>;
@@ -187,7 +190,7 @@ joint_coordinate_s_t<SCALAR_T> getJointVelocities(const rbd_state_s_t<SCALAR_T>&
 }
 
 template <typename SCALAR_T>
-std::array<vector3_s_t<SCALAR_T>, NUM_CONTACT_POINTS> toArray(const joint_coordinate_s_t<SCALAR_T>& valuesAsVector) {
+feet_array_t<vector3_s_t<SCALAR_T>> toArray(const joint_coordinate_s_t<SCALAR_T>& valuesAsVector) {
   return {valuesAsVector.template segment<3>(0), valuesAsVector.template segment<3>(3), valuesAsVector.template segment<3>(6),
           valuesAsVector.template segment<3>(9)};
 }

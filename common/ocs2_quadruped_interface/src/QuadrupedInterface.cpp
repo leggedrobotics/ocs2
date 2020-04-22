@@ -18,8 +18,8 @@ namespace switched_model {
 QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
                                        const com_model_t& comModel, const ad_com_model_t& adComModel, const std::string& pathToConfigFolder)
 
-    : kinematicModelPtr_(kinematicModel.clone()), comModelPtr_(comModel.clone()) {
-  loadSettings(pathToConfigFolder + "/task.info");
+    : kinematicModelPtr_(kinematicModel.clone()), comModelPtr_(comModel.clone()), configFile_(pathToConfigFolder + "/task.info") {
+  loadSettings(configFile_);
 }
 
 /******************************************************************************************************/

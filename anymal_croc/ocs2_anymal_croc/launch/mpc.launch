@@ -15,7 +15,7 @@
     </group>
 
     <node pkg="ocs2_anymal_croc" type="ocs2_anymal_croc_mpc_node" name="ocs2_anymal_croc_mpc_node"
-          output="screen" args="$(arg task_name)" launch-prefix=""/>
+          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal -- gdb --args"/>
 
     <node pkg="ocs2_anymal_croc" type="ocs2_anymal_croc_dummy_mrt_node" name="ocs2_anymal_croc_dummy_mrt_node"
           output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>

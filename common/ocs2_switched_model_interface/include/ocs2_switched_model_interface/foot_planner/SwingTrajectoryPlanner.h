@@ -10,6 +10,7 @@
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/foot_planner/SplineCpg.h"
+#include "ocs2_switched_model_interface/terrain/TerrainPlane.h"
 
 namespace switched_model {
 
@@ -31,21 +32,23 @@ class SwingTrajectoryPlanner {
                          const KinematicsModelBase<scalar_t>& kinematicsModel);
 
   void update(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState, const ocs2::ModeSchedule& modeSchedule,
-              scalar_t terrainHeight);
+              const TerrainPlane& terrain);
 
   void update(const ocs2::ModeSchedule& modeSchedule, const feet_array_t<scalar_array_t>& liftOffHeightSequence,
               const feet_array_t<scalar_array_t>& touchDownHeightSequence);
 
-  scalar_t getZvelocityConstraint(size_t leg, scalar_t time) const;
+  const TerrainPlane& getReferenceTerrainPlane(size_t leg, scalar_t time) const;
 
-  scalar_t getZpositionConstraint(size_t leg, scalar_t time) const;
+  scalar_t getNormalDirectionVelocityConstraint(size_t leg, scalar_t time) const;
+
+  scalar_t getNormalDirectionPositionConstraint(size_t leg, scalar_t time) const;
 
  private:
   void updateFeetTrajectories(scalar_t initTime, scalar_t finalTime, const feet_array_t<vector3_t>& currentFeetPositions,
-                              const ocs2::ModeSchedule& modeSchedule, scalar_t terrainHeight);
+                              const ocs2::ModeSchedule& modeSchedule, const TerrainPlane& terrain);
 
   void updateErrorTrajectories(scalar_t initTime, const feet_array_t<vector3_t>& currentFeetPositions,
-                               const ocs2::ModeSchedule& modeSchedule);
+                               const ocs2::ModeSchedule& modeSchedule, const TerrainPlane& terrain);
 
   SwingTrajectoryPlannerSettings settings_;
   std::unique_ptr<ComModelBase<scalar_t>> comModel_;
@@ -53,11 +56,12 @@ class SwingTrajectoryPlanner {
 
   struct contactHistory {
     scalar_t time;
-    scalar_t height;
+    vector3_t position;
   };
-  std::array<contactHistory, NUM_CONTACT_POINTS> lastContacts_;
-  std::array<std::vector<SplineCpg>, NUM_CONTACT_POINTS> feetHeightTrajectories_;
-  std::array<std::vector<scalar_t>, NUM_CONTACT_POINTS> feetHeightTrajectoriesEvents_;
+  feet_array_t<contactHistory> lastContacts_;
+  feet_array_t<std::vector<SplineCpg>> feetHeightTrajectories_;
+  feet_array_t<std::vector<TerrainPlane>> targetTerrains_;  // TODO: consider merging into struct with SplineCpg
+  feet_array_t<std::vector<scalar_t>> feetHeightTrajectoriesEvents_;
 
   // Error correction
   scalar_t initTime_;

@@ -96,15 +96,17 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
     auto& EEVelConstraint = equalityStateInputConstraintCollection_.get<EndEffectorVelocityConstraint>(footName + "_EEVel");
     EEVelConstraint.setActivity(true);
     EndEffectorVelocityConstraintSettings eeVelConSettings;
+    const auto& terrainPlane = swingTrajectoryPlannerPtr_->getReferenceTerrainPlane(i, t);
+    const auto normalVelocity = swingTrajectoryPlannerPtr_->getNormalDirectionVelocityConstraint(i, t);
     if (stanceLegs_[i]) {  // in stance: All velocity equal to zero
       eeVelConSettings.b = Eigen::Vector3d::Zero();
-      eeVelConSettings.b[2] = -swingTrajectoryPlannerPtr_->getZvelocityConstraint(i, t);
-      eeVelConSettings.A = Eigen::Matrix3d::Identity();
+      eeVelConSettings.b[2] = -normalVelocity;
+      eeVelConSettings.A = terrainPlane.orientationWorldToTerrain;
     } else {  // in swing: z-velocity is provided
       eeVelConSettings.b.resize(1);
       eeVelConSettings.A.resize(1, 3);
-      eeVelConSettings.b << -swingTrajectoryPlannerPtr_->getZvelocityConstraint(i, t);
-      eeVelConSettings.A << 0, 0, 1;
+      eeVelConSettings.b << -normalVelocity;
+      eeVelConSettings.A << surfaceNormalInWorld(terrainPlane).transpose();
     }
     EEVelConstraint.configure(eeVelConSettings);
   }

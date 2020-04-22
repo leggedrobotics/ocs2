@@ -92,6 +92,9 @@ void AnymalWheelsComKinoConstraintAd::setCurrentStateAndControl(const scalar_t& 
     auto& EEVelInFootFrameConstraint =
         equalityStateInputConstraintCollection_.template get<EndEffectorVelocityInFootFrameConstraint_t>(footName + "_f_EEVel");
 
+    const auto& terrainPlane = swingTrajectoryPlannerPtr_->getReferenceTerrainPlane(i, t);
+    const auto normalVelocity = swingTrajectoryPlannerPtr_->getNormalDirectionVelocityConstraint(i, t);
+
     if (stanceLegs_[i]) {
       // EE velocities in lateral direction (y) in foot frame should be zero.
       EndEffectorVelocityInFootFrameConstraintSettings_t eeVelInFootFrameConSettings(1, 3);
@@ -100,14 +103,14 @@ void AnymalWheelsComKinoConstraintAd::setCurrentStateAndControl(const scalar_t& 
       EEVelInFootFrameConstraint.configure(eeVelInFootFrameConSettings);
       EEVelInFootFrameConstraint.setActivity(true);
       // The upwards velocity (z) in the world frame should be zero too.
-      eeVelConSettings.b << 0;
-      eeVelConSettings.A << 0, 0, 1;
+      eeVelConSettings.b << -normalVelocity;
+      eeVelConSettings.A << surfaceNormalInWorld(terrainPlane).transpose();
     } else {  // in swing: z-velocity is provided
       EEVelInFootFrameConstraint.setActivity(false);
       eeVelConSettings.b.resize(1);
       eeVelConSettings.A.resize(1, 3);
-      eeVelConSettings.b << -swingTrajectoryPlannerPtr_->getZvelocityConstraint(i, t);
-      eeVelConSettings.A << 0, 0, 1;
+      eeVelConSettings.b << -normalVelocity;
+      eeVelConSettings.A << surfaceNormalInWorld(terrainPlane).transpose();
     }
     EEVelConstraint.configure(eeVelConSettings);
     EEVelConstraint.setActivity(true);

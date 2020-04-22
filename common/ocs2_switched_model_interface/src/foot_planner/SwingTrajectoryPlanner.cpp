@@ -15,12 +15,12 @@ SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings se
     : settings_(std::move(settings)), comModel_(comModel.clone()), kinematicsModel_(kinematicsModel.clone()) {}
 
 void SwingTrajectoryPlanner::update(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState,
-                                    const ocs2::ModeSchedule& modeSchedule, scalar_t terrainHeight) {
+                                    const ocs2::ModeSchedule& modeSchedule, const TerrainPlane& terrain) {
   const auto basePose = comModel_->calculateBasePose(getComPose(currentState));
   const auto feetPositions = kinematicsModel_->feetPositionsInOriginFrame(basePose, getJointPositions(currentState));
 
-  updateFeetTrajectories(initTime, finalTime, feetPositions, modeSchedule, terrainHeight);
-  updateErrorTrajectories(initTime, feetPositions, modeSchedule);
+  updateFeetTrajectories(initTime, finalTime, feetPositions, modeSchedule, terrain);
+  updateErrorTrajectories(initTime, feetPositions, modeSchedule, terrain);
 
   //  std::cout << "[SwingTrajectoryPlanner]\n";
   //  std::cout << "Last contact:\n";
@@ -34,7 +34,12 @@ void SwingTrajectoryPlanner::update(scalar_t initTime, scalar_t finalTime, const
 void SwingTrajectoryPlanner::update(const ocs2::ModeSchedule& modeSchedule, const feet_array_t<scalar_array_t>& liftOffHeightSequence,
                                     const feet_array_t<scalar_array_t>& touchDownHeightSequence) {}
 
-auto SwingTrajectoryPlanner::getZvelocityConstraint(size_t leg, scalar_t time) const -> scalar_t {
+const TerrainPlane& SwingTrajectoryPlanner::getReferenceTerrainPlane(size_t leg, scalar_t time) const {
+  const auto index = ocs2::lookup::findIndexInTimeArray(feetHeightTrajectoriesEvents_[leg], time);
+  return targetTerrains_[leg][index];
+}
+
+scalar_t SwingTrajectoryPlanner::getNormalDirectionVelocityConstraint(size_t leg, scalar_t time) const {
   const auto index = ocs2::lookup::findIndexInTimeArray(feetHeightTrajectoriesEvents_[leg], time);
   const auto feedforwardVelocity = feetHeightTrajectories_[leg][index].velocity(time);
   // Feedback follows the planned trajectory s.t. de = - errorGain * e, with e = (z - z*)
@@ -42,14 +47,14 @@ auto SwingTrajectoryPlanner::getZvelocityConstraint(size_t leg, scalar_t time) c
   return feedforwardVelocity + feedbackVelocity;
 }
 
-auto SwingTrajectoryPlanner::getZpositionConstraint(size_t leg, scalar_t time) const -> scalar_t {
+scalar_t SwingTrajectoryPlanner::getNormalDirectionPositionConstraint(size_t leg, scalar_t time) const {
   const auto index = ocs2::lookup::findIndexInTimeArray(feetHeightTrajectoriesEvents_[leg], time);
   return feetHeightTrajectories_[leg][index].position(time);
 }
 
 void SwingTrajectoryPlanner::updateFeetTrajectories(scalar_t initTime, scalar_t finalTime,
                                                     const feet_array_t<vector3_t>& currentFeetPositions,
-                                                    const ocs2::ModeSchedule& modeSchedule, scalar_t terrainHeight) {
+                                                    const ocs2::ModeSchedule& modeSchedule, const TerrainPlane& terrain) {
   //  std::cout << "ModeSchedule\n" << modeSchedule << std::endl;
 
   // Convert mode sequence to a contact flag vector per leg
@@ -60,16 +65,18 @@ void SwingTrajectoryPlanner::updateFeetTrajectories(scalar_t initTime, scalar_t 
 
     const auto footPhases = extractFootPhases(modeSchedule.eventTimes, contactSequencePerLeg[leg]);
     auto& footTrajectory = feetHeightTrajectories_[leg];
+    auto& footTargetTerrains = targetTerrains_[leg];
     auto& footTrajectoryEvents = feetHeightTrajectoriesEvents_[leg];
     footTrajectory.clear();
+    footTargetTerrains.clear();
     footTrajectoryEvents.clear();
 
     // If the first phase is a stance phase, register when it leaves contact.
     if (footPhases.front().type == FootPhaseType::Stance) {
       if (std::isnan(footPhases.front().endTime)) {
-        lastContacts_[leg] = {finalTime, currentFeetPositions[leg].z()};
+        lastContacts_[leg] = {finalTime, currentFeetPositions[leg]};
       } else {
-        lastContacts_[leg] = {footPhases.front().endTime, currentFeetPositions[leg].z()};
+        lastContacts_[leg] = {footPhases.front().endTime, currentFeetPositions[leg]};
       }
     }
 
@@ -85,10 +92,10 @@ void SwingTrajectoryPlanner::updateFeetTrajectories(scalar_t initTime, scalar_t 
           CubicSpline::Node point{};
           if (std::isnan(footPhase.startTime)) {
             point.time = initTime;
-            point.position = currentFeetPositions[leg].z();
+            point.position = terrainDistanceFromPositionInWorld(currentFeetPositions[leg], terrain);
           } else {
             point.time = footPhase.startTime;
-            point.position = terrainHeight;
+            point.position = 0.0;
           }
           point.velocity = 0.0;
           return point;
@@ -107,6 +114,7 @@ void SwingTrajectoryPlanner::updateFeetTrajectories(scalar_t initTime, scalar_t 
         }();
 
         footTrajectory.emplace_back(startPoint, startPoint.position, endPoint);
+        footTargetTerrains.push_back(terrain);
         footTrajectoryEvents.push_back(endPoint.time);
 
         //        std::cout << "\tstance\n";
@@ -122,10 +130,10 @@ void SwingTrajectoryPlanner::updateFeetTrajectories(scalar_t initTime, scalar_t 
             node.time = footPhase.startTime;
           }
           if (firstSwingPhase) {
-            node.position = lastContacts_[leg].height;
+            node.position = terrainDistanceFromPositionInWorld(lastContacts_[leg].position, terrain);
             firstSwingPhase = false;
           } else {
-            node.position = terrainHeight;
+            node.position = 0.0;
           }
           node.velocity = settings_.liftOffVelocity;
           return node;
@@ -135,11 +143,11 @@ void SwingTrajectoryPlanner::updateFeetTrajectories(scalar_t initTime, scalar_t 
           CubicSpline::Node node{};
           if (std::isnan(footPhase.endTime)) {
             node.time = finalTime + settings_.touchdownAfterHorizon;
-            node.position = terrainHeight + settings_.swingHeight;
+            node.position = settings_.swingHeight;
             node.velocity = 0.0;
           } else {
             node.time = footPhase.endTime;
-            node.position = terrainHeight;
+            node.position = 0.0;
             node.velocity = settings_.touchDownVelocity;
           }
           return node;
@@ -148,9 +156,10 @@ void SwingTrajectoryPlanner::updateFeetTrajectories(scalar_t initTime, scalar_t 
         const scalar_t scaling = std::min(1.0, (touchDown.time - liftOff.time) / settings_.swingTimeScale);
         liftOff.velocity *= scaling;
         touchDown.velocity *= scaling;
-        scalar_t midHeight = scaling * (terrainHeight + settings_.swingHeight);
+        scalar_t midHeight = scaling * (0.5 * (liftOff.position + touchDown.position) + settings_.swingHeight);
 
         footTrajectory.emplace_back(liftOff, midHeight, touchDown);
+        footTargetTerrains.push_back(terrain);
         footTrajectoryEvents.push_back(touchDown.time);
 
         //        std::cout << "\tswing\n";
@@ -163,11 +172,12 @@ void SwingTrajectoryPlanner::updateFeetTrajectories(scalar_t initTime, scalar_t 
 }
 
 void SwingTrajectoryPlanner::updateErrorTrajectories(scalar_t initTime, const feet_array_t<vector3_t>& currentFeetPositions,
-                                                     const ocs2::ModeSchedule& modeSchedule) {
+                                                     const ocs2::ModeSchedule& modeSchedule, const TerrainPlane& terrain) {
   const auto index = ocs2::lookup::findIndexInTimeArray(modeSchedule.eventTimes, initTime);
   initTime_ = initTime;
   for (int leg = 0; leg < NUM_CONTACT_POINTS; leg++) {
-    initialErrors_[leg] = currentFeetPositions[leg].z() - feetHeightTrajectories_[leg][index].position(initTime);
+    initialErrors_[leg] =
+        terrainDistanceFromPositionInWorld(currentFeetPositions[leg], terrain) - feetHeightTrajectories_[leg][index].position(initTime);
   }
 }
 

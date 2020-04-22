@@ -50,6 +50,7 @@ add_library(${PROJECT_NAME}
 	src/logic/GaitSchedule.cpp
 	src/logic/ModeSequenceTemplate.cpp
 	src/logic/SwitchedModelModeScheduleManager.cpp
+	src/terrain/TerrainPlane.cpp
 	src/EndEffectorConstraint.cpp
 	src/ComKinoConstraintBaseAd.cpp
 	src/AnymalWheelsComKinoConstraintAd.cpp

@@ -51,7 +51,7 @@ std::pair<scalar_t, GaitIt> advancePhase(scalar_t phase, scalar_t dt, GaitIt cur
     phase += dphase;
     return {phase, currentGait};
   } else {  // Advance to next gait
-    const scalar_t dtRemaining = dt - timeLeftInGait(phase, *currentGait);
+    const scalar_t dtRemaining = std::max(dt - timeLeftInGait(phase, *currentGait), 0.0);
     const GaitIt nexGait = nextGait(currentGait, pastTheEndGait);
     // Recurse by setting the phase to the beginning of the next phase
     return advancePhase(0.0, dtRemaining, nexGait, pastTheEndGait);

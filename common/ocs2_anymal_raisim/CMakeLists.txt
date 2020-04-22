@@ -1,13 +1,15 @@
 cmake_minimum_required(VERSION 3.0)
-project(ocs2_anymal_bear_raisim)
+project(ocs2_anymal_raisim)
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Catkin packages we depend on
 set(CATKIN_PACKAGE_DEPENDENCIES
-  ocs2_anymal_bear
-  ocs2_anymal_raisim
+  roslib
+  ocs2_raisim
+  ocs2_raisim_ros
+  ocs2_quadruped_interface
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -21,11 +23,14 @@ if(USE_RAISIM_VISUALIZER)
   add_definitions(-DUSE_RAISIM_VISUALIZER)
 endif(USE_RAISIM_VISUALIZER)
 
-
 ###################################
 ## catkin specific configuration ##
 ###################################
 catkin_package(
+  INCLUDE_DIRS
+    include
+  LIBRARIES
+    ${PROJECT_NAME}
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
 )
@@ -39,20 +44,19 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-# Dummy node with raisim rollout
-add_executable(anymal_dummy_raisim
+add_library(${PROJECT_NAME}
+  src/AnymalRaisimConversions.cpp
   src/AnymalRaisimDummy.cpp
-  src/inputToRaisimGeneralizedForce.cpp
 )
-target_link_libraries(anymal_dummy_raisim
+target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 if(USE_RAISIM_VISUALIZER)
-  target_link_libraries(anymal_dummy_raisim
+  target_link_libraries(${PROJECT_NAME}
     raisim::raisimOgre
   )
 endif(USE_RAISIM_VISUALIZER)
-target_compile_options(anymal_dummy_raisim PUBLIC ${OCS2_CXX_FLAGS})
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 
 #########################
@@ -60,9 +64,9 @@ target_compile_options(anymal_dummy_raisim PUBLIC ${OCS2_CXX_FLAGS})
 #########################
 find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
-  message(STATUS "Run clang tooling for target cartpole_dummy_raisim")
+  message(STATUS "Run clang tooling for ${PROJECT_NAME}")
   add_clang_tooling(
-    TARGETS anymal_dummy_raisim
+    TARGETS ${PROJECT_NAME}
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
@@ -74,22 +78,12 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS anymal_dummy_raisim
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
+install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
-install(DIRECTORY config launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
 
-#############
-## Testing ##
-#############
-catkin_add_gtest(testAnymalRaisimConversions
-  test/testAnymalRaisimConversions.cpp
-  src/inputToRaisimGeneralizedForce.cpp
-)
-target_link_libraries(testAnymalRaisimConversions
-  ${catkin_LIBRARIES}
-)

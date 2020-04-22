@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.0)
-project(ocs2_anymal_bear_raisim)
+project(ocs2_anymal_croc_raisim)
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Catkin packages we depend on
 set(CATKIN_PACKAGE_DEPENDENCIES
-  ocs2_anymal_bear
+  ocs2_anymal_croc
   ocs2_anymal_raisim
 )
 
@@ -83,13 +83,3 @@ install(DIRECTORY config launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-#############
-## Testing ##
-#############
-catkin_add_gtest(testAnymalRaisimConversions
-  test/testAnymalRaisimConversions.cpp
-  src/inputToRaisimGeneralizedForce.cpp
-)
-target_link_libraries(testAnymalRaisimConversions
-  ${catkin_LIBRARIES}
-)

@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
-#include <ocs2_anymal_bear_raisim/AnymalRaisimConversions.h>
 #include <ocs2_anymal_bear_switched_model/core/AnymalBearCom.h>
 #include <ocs2_anymal_bear_switched_model/core/AnymalBearKinematics.h>
+#include <ocs2_anymal_raisim/AnymalRaisimConversions.h>
 #include <ros/package.h>
 
 TEST(AnymalRaisim, Conversions) {

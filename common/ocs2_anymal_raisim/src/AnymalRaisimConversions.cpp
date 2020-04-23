@@ -9,18 +9,22 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> AnymalRaisimConversions::stateToRais
                                                                                                  const input_vector_t& input) const {
   const auto ocs2RbdState =
       switchedModelStateEstimator_.estimateRbdModelState(state, input.segment<switched_model::JOINT_COORDINATE_SIZE>(12));
+  const auto basePose = switched_model::getBasePose(ocs2RbdState);
+  const auto baseTwist = switched_model::getBaseLocalVelocity(ocs2RbdState);
 
   // quaternion between world and base orientation
   const Eigen::Quaterniond q_world_base = switched_model::quaternionBaseToOrigin<double>(ocs2RbdState.head<3>());
 
   Eigen::VectorXd q(3 + 4 + 12);
-  q << ocs2RbdState.segment<3>(3), q_world_base.w(), q_world_base.x(), q_world_base.y(), q_world_base.z(), ocs2RbdState.segment<12>(6);
+  q << switched_model::getPositionInOrigin(basePose), q_world_base.w(), q_world_base.x(), q_world_base.y(), q_world_base.z(),
+      switched_model::getJointPositions(state);
   if (terrain_ != nullptr) {
     q(2) += terrain_->getHeight(q(0), q(1));
   }
 
   Eigen::VectorXd dq(3 + 3 + 12);
-  dq << q_world_base * ocs2RbdState.segment<3>(21), q_world_base * ocs2RbdState.segment<3>(18), ocs2RbdState.tail<12>();
+  dq << q_world_base * switched_model::getAngularVelocity(baseTwist), q_world_base * switched_model::getLinearVelocity(baseTwist),
+      switched_model::getJointVelocities(state);
 
   return {q, dq};
 }

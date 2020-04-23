@@ -70,7 +70,7 @@ endif(USE_RAISIM_VISUALIZER)
 #########################
 find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
-  message(STATUS "Run clang tooling for target cartpole_dummy_raisim")
+  message(STATUS "Run clang tooling for ${PROJECT_NAME}")
   add_clang_tooling(
     TARGETS anymal_dummy_raisim
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include

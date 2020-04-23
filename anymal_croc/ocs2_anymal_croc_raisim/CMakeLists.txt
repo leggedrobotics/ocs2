@@ -28,6 +28,8 @@ endif(USE_RAISIM_VISUALIZER)
 catkin_package(
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
+  LIBRARIES
+    ${PROJECT_NAME}
 )
 
 
@@ -39,20 +41,28 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+add_library(${PROJECT_NAME}
+  src/inputToRaisimGeneralizedForce.cpp
+)
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
+
+
 # Dummy node with raisim rollout
 add_executable(anymal_dummy_raisim
   src/AnymalRaisimDummy.cpp
-  src/inputToRaisimGeneralizedForce.cpp
 )
 target_link_libraries(anymal_dummy_raisim
   ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
 )
 if(USE_RAISIM_VISUALIZER)
   target_link_libraries(anymal_dummy_raisim
     raisim::raisimOgre
   )
 endif(USE_RAISIM_VISUALIZER)
-target_compile_options(anymal_dummy_raisim PUBLIC ${OCS2_CXX_FLAGS})
 
 
 #########################

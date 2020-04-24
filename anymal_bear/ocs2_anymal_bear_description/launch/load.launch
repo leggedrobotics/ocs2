@@ -2,15 +2,10 @@
 
   <arg name="description_name"      default="ocs2_anymal_bear_description"/>
 
-  <!-- Load robot description -->
-  <include file="$(find anymal_bear_rsl_description)/launch/load.launch">
-    <arg name="simulation"                                     value="false"/>
-    <arg name="description_name"                               value="$(arg description_name)"/>
-    <arg name="velodyne"                                       value="false"/>
-    <arg name="realsense"                                      value="true"/>
-    <arg name="teleop_head"                                    value="false"/>
-    <arg name="jetson"                                         value="false"/>
-    <arg name="forward_facing_vi_sensor"                       value="false"/>
+  <!-- Load URDF from file -->
+  <include file="$(find rosparam_tools)/launch/load_rosparam.launch">
+    <arg name="parameter"       value="$(arg description_name)"/>
+    <arg name="file"            value="$(find ocs2_anymal_bear_description)/urdf/cached_anymal_bear.urdf"/>
   </include>
 
 </launch>

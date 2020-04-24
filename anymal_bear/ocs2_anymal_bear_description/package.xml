@@ -11,7 +11,9 @@
   <license>TODO</license>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <exec_depend>anymal_bear_rsl_description</exec_depend>
+
+  <exec_depend>anymal_b</exec_depend>
+  <exec_depend>rosparam_tools</exec_depend>
   <exec_depend>urdf2robcogen</exec_depend>
 
 </package>

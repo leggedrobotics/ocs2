@@ -369,39 +369,39 @@ public:
     protected:
     };
     
-    class Type_fr_LF_shank_fixed_X_fr_LF_THIGH : public TransformMotion<Scalar, Type_fr_LF_shank_fixed_X_fr_LF_THIGH>
+    class Type_fr_LF_SHANK_X_fr_LF_THIGH : public TransformMotion<Scalar, Type_fr_LF_SHANK_X_fr_LF_THIGH>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LF_shank_fixed_X_fr_LF_THIGH();
-        const Type_fr_LF_shank_fixed_X_fr_LF_THIGH& update(const JState&);
+        Type_fr_LF_SHANK_X_fr_LF_THIGH();
+        const Type_fr_LF_SHANK_X_fr_LF_THIGH& update(const JState&);
     protected:
     };
     
-    class Type_fr_LF_THIGH_X_fr_LF_shank_fixed : public TransformMotion<Scalar, Type_fr_LF_THIGH_X_fr_LF_shank_fixed>
+    class Type_fr_LF_THIGH_X_fr_LF_SHANK : public TransformMotion<Scalar, Type_fr_LF_THIGH_X_fr_LF_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LF_THIGH_X_fr_LF_shank_fixed();
-        const Type_fr_LF_THIGH_X_fr_LF_shank_fixed& update(const JState&);
+        Type_fr_LF_THIGH_X_fr_LF_SHANK();
+        const Type_fr_LF_THIGH_X_fr_LF_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed : public TransformMotion<Scalar, Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed>
+    class Type_fr_LF_WHEEL_L_X_fr_LF_SHANK : public TransformMotion<Scalar, Type_fr_LF_WHEEL_L_X_fr_LF_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed();
-        const Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed& update(const JState&);
+        Type_fr_LF_WHEEL_L_X_fr_LF_SHANK();
+        const Type_fr_LF_WHEEL_L_X_fr_LF_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L : public TransformMotion<Scalar, Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L>
+    class Type_fr_LF_SHANK_X_fr_LF_WHEEL_L : public TransformMotion<Scalar, Type_fr_LF_SHANK_X_fr_LF_WHEEL_L>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L();
-        const Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L& update(const JState&);
+        Type_fr_LF_SHANK_X_fr_LF_WHEEL_L();
+        const Type_fr_LF_SHANK_X_fr_LF_WHEEL_L& update(const JState&);
     protected:
     };
     
@@ -441,39 +441,39 @@ public:
     protected:
     };
     
-    class Type_fr_RF_shank_fixed_X_fr_RF_THIGH : public TransformMotion<Scalar, Type_fr_RF_shank_fixed_X_fr_RF_THIGH>
+    class Type_fr_RF_SHANK_X_fr_RF_THIGH : public TransformMotion<Scalar, Type_fr_RF_SHANK_X_fr_RF_THIGH>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RF_shank_fixed_X_fr_RF_THIGH();
-        const Type_fr_RF_shank_fixed_X_fr_RF_THIGH& update(const JState&);
+        Type_fr_RF_SHANK_X_fr_RF_THIGH();
+        const Type_fr_RF_SHANK_X_fr_RF_THIGH& update(const JState&);
     protected:
     };
     
-    class Type_fr_RF_THIGH_X_fr_RF_shank_fixed : public TransformMotion<Scalar, Type_fr_RF_THIGH_X_fr_RF_shank_fixed>
+    class Type_fr_RF_THIGH_X_fr_RF_SHANK : public TransformMotion<Scalar, Type_fr_RF_THIGH_X_fr_RF_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RF_THIGH_X_fr_RF_shank_fixed();
-        const Type_fr_RF_THIGH_X_fr_RF_shank_fixed& update(const JState&);
+        Type_fr_RF_THIGH_X_fr_RF_SHANK();
+        const Type_fr_RF_THIGH_X_fr_RF_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed : public TransformMotion<Scalar, Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed>
+    class Type_fr_RF_WHEEL_L_X_fr_RF_SHANK : public TransformMotion<Scalar, Type_fr_RF_WHEEL_L_X_fr_RF_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed();
-        const Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed& update(const JState&);
+        Type_fr_RF_WHEEL_L_X_fr_RF_SHANK();
+        const Type_fr_RF_WHEEL_L_X_fr_RF_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L : public TransformMotion<Scalar, Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L>
+    class Type_fr_RF_SHANK_X_fr_RF_WHEEL_L : public TransformMotion<Scalar, Type_fr_RF_SHANK_X_fr_RF_WHEEL_L>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L();
-        const Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L& update(const JState&);
+        Type_fr_RF_SHANK_X_fr_RF_WHEEL_L();
+        const Type_fr_RF_SHANK_X_fr_RF_WHEEL_L& update(const JState&);
     protected:
     };
     
@@ -513,39 +513,39 @@ public:
     protected:
     };
     
-    class Type_fr_LH_shank_fixed_X_fr_LH_THIGH : public TransformMotion<Scalar, Type_fr_LH_shank_fixed_X_fr_LH_THIGH>
+    class Type_fr_LH_SHANK_X_fr_LH_THIGH : public TransformMotion<Scalar, Type_fr_LH_SHANK_X_fr_LH_THIGH>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LH_shank_fixed_X_fr_LH_THIGH();
-        const Type_fr_LH_shank_fixed_X_fr_LH_THIGH& update(const JState&);
+        Type_fr_LH_SHANK_X_fr_LH_THIGH();
+        const Type_fr_LH_SHANK_X_fr_LH_THIGH& update(const JState&);
     protected:
     };
     
-    class Type_fr_LH_THIGH_X_fr_LH_shank_fixed : public TransformMotion<Scalar, Type_fr_LH_THIGH_X_fr_LH_shank_fixed>
+    class Type_fr_LH_THIGH_X_fr_LH_SHANK : public TransformMotion<Scalar, Type_fr_LH_THIGH_X_fr_LH_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LH_THIGH_X_fr_LH_shank_fixed();
-        const Type_fr_LH_THIGH_X_fr_LH_shank_fixed& update(const JState&);
+        Type_fr_LH_THIGH_X_fr_LH_SHANK();
+        const Type_fr_LH_THIGH_X_fr_LH_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed : public TransformMotion<Scalar, Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed>
+    class Type_fr_LH_WHEEL_L_X_fr_LH_SHANK : public TransformMotion<Scalar, Type_fr_LH_WHEEL_L_X_fr_LH_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed();
-        const Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed& update(const JState&);
+        Type_fr_LH_WHEEL_L_X_fr_LH_SHANK();
+        const Type_fr_LH_WHEEL_L_X_fr_LH_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L : public TransformMotion<Scalar, Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L>
+    class Type_fr_LH_SHANK_X_fr_LH_WHEEL_L : public TransformMotion<Scalar, Type_fr_LH_SHANK_X_fr_LH_WHEEL_L>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L();
-        const Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L& update(const JState&);
+        Type_fr_LH_SHANK_X_fr_LH_WHEEL_L();
+        const Type_fr_LH_SHANK_X_fr_LH_WHEEL_L& update(const JState&);
     protected:
     };
     
@@ -585,39 +585,39 @@ public:
     protected:
     };
     
-    class Type_fr_RH_shank_fixed_X_fr_RH_THIGH : public TransformMotion<Scalar, Type_fr_RH_shank_fixed_X_fr_RH_THIGH>
+    class Type_fr_RH_SHANK_X_fr_RH_THIGH : public TransformMotion<Scalar, Type_fr_RH_SHANK_X_fr_RH_THIGH>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RH_shank_fixed_X_fr_RH_THIGH();
-        const Type_fr_RH_shank_fixed_X_fr_RH_THIGH& update(const JState&);
+        Type_fr_RH_SHANK_X_fr_RH_THIGH();
+        const Type_fr_RH_SHANK_X_fr_RH_THIGH& update(const JState&);
     protected:
     };
     
-    class Type_fr_RH_THIGH_X_fr_RH_shank_fixed : public TransformMotion<Scalar, Type_fr_RH_THIGH_X_fr_RH_shank_fixed>
+    class Type_fr_RH_THIGH_X_fr_RH_SHANK : public TransformMotion<Scalar, Type_fr_RH_THIGH_X_fr_RH_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RH_THIGH_X_fr_RH_shank_fixed();
-        const Type_fr_RH_THIGH_X_fr_RH_shank_fixed& update(const JState&);
+        Type_fr_RH_THIGH_X_fr_RH_SHANK();
+        const Type_fr_RH_THIGH_X_fr_RH_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed : public TransformMotion<Scalar, Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed>
+    class Type_fr_RH_WHEEL_L_X_fr_RH_SHANK : public TransformMotion<Scalar, Type_fr_RH_WHEEL_L_X_fr_RH_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed();
-        const Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed& update(const JState&);
+        Type_fr_RH_WHEEL_L_X_fr_RH_SHANK();
+        const Type_fr_RH_WHEEL_L_X_fr_RH_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L : public TransformMotion<Scalar, Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L>
+    class Type_fr_RH_SHANK_X_fr_RH_WHEEL_L : public TransformMotion<Scalar, Type_fr_RH_SHANK_X_fr_RH_WHEEL_L>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L();
-        const Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L& update(const JState&);
+        Type_fr_RH_SHANK_X_fr_RH_WHEEL_L();
+        const Type_fr_RH_SHANK_X_fr_RH_WHEEL_L& update(const JState&);
     protected:
     };
     
@@ -660,34 +660,34 @@ public:
     Type_fr_base_X_fr_LF_HIP fr_base_X_fr_LF_HIP;
     Type_fr_LF_THIGH_X_fr_LF_HIP fr_LF_THIGH_X_fr_LF_HIP;
     Type_fr_LF_HIP_X_fr_LF_THIGH fr_LF_HIP_X_fr_LF_THIGH;
-    Type_fr_LF_shank_fixed_X_fr_LF_THIGH fr_LF_shank_fixed_X_fr_LF_THIGH;
-    Type_fr_LF_THIGH_X_fr_LF_shank_fixed fr_LF_THIGH_X_fr_LF_shank_fixed;
-    Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed fr_LF_WHEEL_L_X_fr_LF_shank_fixed;
-    Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L fr_LF_shank_fixed_X_fr_LF_WHEEL_L;
+    Type_fr_LF_SHANK_X_fr_LF_THIGH fr_LF_SHANK_X_fr_LF_THIGH;
+    Type_fr_LF_THIGH_X_fr_LF_SHANK fr_LF_THIGH_X_fr_LF_SHANK;
+    Type_fr_LF_WHEEL_L_X_fr_LF_SHANK fr_LF_WHEEL_L_X_fr_LF_SHANK;
+    Type_fr_LF_SHANK_X_fr_LF_WHEEL_L fr_LF_SHANK_X_fr_LF_WHEEL_L;
     Type_fr_RF_HIP_X_fr_base fr_RF_HIP_X_fr_base;
     Type_fr_base_X_fr_RF_HIP fr_base_X_fr_RF_HIP;
     Type_fr_RF_THIGH_X_fr_RF_HIP fr_RF_THIGH_X_fr_RF_HIP;
     Type_fr_RF_HIP_X_fr_RF_THIGH fr_RF_HIP_X_fr_RF_THIGH;
-    Type_fr_RF_shank_fixed_X_fr_RF_THIGH fr_RF_shank_fixed_X_fr_RF_THIGH;
-    Type_fr_RF_THIGH_X_fr_RF_shank_fixed fr_RF_THIGH_X_fr_RF_shank_fixed;
-    Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed fr_RF_WHEEL_L_X_fr_RF_shank_fixed;
-    Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L fr_RF_shank_fixed_X_fr_RF_WHEEL_L;
+    Type_fr_RF_SHANK_X_fr_RF_THIGH fr_RF_SHANK_X_fr_RF_THIGH;
+    Type_fr_RF_THIGH_X_fr_RF_SHANK fr_RF_THIGH_X_fr_RF_SHANK;
+    Type_fr_RF_WHEEL_L_X_fr_RF_SHANK fr_RF_WHEEL_L_X_fr_RF_SHANK;
+    Type_fr_RF_SHANK_X_fr_RF_WHEEL_L fr_RF_SHANK_X_fr_RF_WHEEL_L;
     Type_fr_LH_HIP_X_fr_base fr_LH_HIP_X_fr_base;
     Type_fr_base_X_fr_LH_HIP fr_base_X_fr_LH_HIP;
     Type_fr_LH_THIGH_X_fr_LH_HIP fr_LH_THIGH_X_fr_LH_HIP;
     Type_fr_LH_HIP_X_fr_LH_THIGH fr_LH_HIP_X_fr_LH_THIGH;
-    Type_fr_LH_shank_fixed_X_fr_LH_THIGH fr_LH_shank_fixed_X_fr_LH_THIGH;
-    Type_fr_LH_THIGH_X_fr_LH_shank_fixed fr_LH_THIGH_X_fr_LH_shank_fixed;
-    Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed fr_LH_WHEEL_L_X_fr_LH_shank_fixed;
-    Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L fr_LH_shank_fixed_X_fr_LH_WHEEL_L;
+    Type_fr_LH_SHANK_X_fr_LH_THIGH fr_LH_SHANK_X_fr_LH_THIGH;
+    Type_fr_LH_THIGH_X_fr_LH_SHANK fr_LH_THIGH_X_fr_LH_SHANK;
+    Type_fr_LH_WHEEL_L_X_fr_LH_SHANK fr_LH_WHEEL_L_X_fr_LH_SHANK;
+    Type_fr_LH_SHANK_X_fr_LH_WHEEL_L fr_LH_SHANK_X_fr_LH_WHEEL_L;
     Type_fr_RH_HIP_X_fr_base fr_RH_HIP_X_fr_base;
     Type_fr_base_X_fr_RH_HIP fr_base_X_fr_RH_HIP;
     Type_fr_RH_THIGH_X_fr_RH_HIP fr_RH_THIGH_X_fr_RH_HIP;
     Type_fr_RH_HIP_X_fr_RH_THIGH fr_RH_HIP_X_fr_RH_THIGH;
-    Type_fr_RH_shank_fixed_X_fr_RH_THIGH fr_RH_shank_fixed_X_fr_RH_THIGH;
-    Type_fr_RH_THIGH_X_fr_RH_shank_fixed fr_RH_THIGH_X_fr_RH_shank_fixed;
-    Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed fr_RH_WHEEL_L_X_fr_RH_shank_fixed;
-    Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L fr_RH_shank_fixed_X_fr_RH_WHEEL_L;
+    Type_fr_RH_SHANK_X_fr_RH_THIGH fr_RH_SHANK_X_fr_RH_THIGH;
+    Type_fr_RH_THIGH_X_fr_RH_SHANK fr_RH_THIGH_X_fr_RH_SHANK;
+    Type_fr_RH_WHEEL_L_X_fr_RH_SHANK fr_RH_WHEEL_L_X_fr_RH_SHANK;
+    Type_fr_RH_SHANK_X_fr_RH_WHEEL_L fr_RH_SHANK_X_fr_RH_WHEEL_L;
 
 protected:
 
@@ -1031,39 +1031,39 @@ public:
     protected:
     };
     
-    class Type_fr_LF_shank_fixed_X_fr_LF_THIGH : public TransformForce<Scalar, Type_fr_LF_shank_fixed_X_fr_LF_THIGH>
+    class Type_fr_LF_SHANK_X_fr_LF_THIGH : public TransformForce<Scalar, Type_fr_LF_SHANK_X_fr_LF_THIGH>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LF_shank_fixed_X_fr_LF_THIGH();
-        const Type_fr_LF_shank_fixed_X_fr_LF_THIGH& update(const JState&);
+        Type_fr_LF_SHANK_X_fr_LF_THIGH();
+        const Type_fr_LF_SHANK_X_fr_LF_THIGH& update(const JState&);
     protected:
     };
     
-    class Type_fr_LF_THIGH_X_fr_LF_shank_fixed : public TransformForce<Scalar, Type_fr_LF_THIGH_X_fr_LF_shank_fixed>
+    class Type_fr_LF_THIGH_X_fr_LF_SHANK : public TransformForce<Scalar, Type_fr_LF_THIGH_X_fr_LF_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LF_THIGH_X_fr_LF_shank_fixed();
-        const Type_fr_LF_THIGH_X_fr_LF_shank_fixed& update(const JState&);
+        Type_fr_LF_THIGH_X_fr_LF_SHANK();
+        const Type_fr_LF_THIGH_X_fr_LF_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed : public TransformForce<Scalar, Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed>
+    class Type_fr_LF_WHEEL_L_X_fr_LF_SHANK : public TransformForce<Scalar, Type_fr_LF_WHEEL_L_X_fr_LF_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed();
-        const Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed& update(const JState&);
+        Type_fr_LF_WHEEL_L_X_fr_LF_SHANK();
+        const Type_fr_LF_WHEEL_L_X_fr_LF_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L : public TransformForce<Scalar, Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L>
+    class Type_fr_LF_SHANK_X_fr_LF_WHEEL_L : public TransformForce<Scalar, Type_fr_LF_SHANK_X_fr_LF_WHEEL_L>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L();
-        const Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L& update(const JState&);
+        Type_fr_LF_SHANK_X_fr_LF_WHEEL_L();
+        const Type_fr_LF_SHANK_X_fr_LF_WHEEL_L& update(const JState&);
     protected:
     };
     
@@ -1103,39 +1103,39 @@ public:
     protected:
     };
     
-    class Type_fr_RF_shank_fixed_X_fr_RF_THIGH : public TransformForce<Scalar, Type_fr_RF_shank_fixed_X_fr_RF_THIGH>
+    class Type_fr_RF_SHANK_X_fr_RF_THIGH : public TransformForce<Scalar, Type_fr_RF_SHANK_X_fr_RF_THIGH>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RF_shank_fixed_X_fr_RF_THIGH();
-        const Type_fr_RF_shank_fixed_X_fr_RF_THIGH& update(const JState&);
+        Type_fr_RF_SHANK_X_fr_RF_THIGH();
+        const Type_fr_RF_SHANK_X_fr_RF_THIGH& update(const JState&);
     protected:
     };
     
-    class Type_fr_RF_THIGH_X_fr_RF_shank_fixed : public TransformForce<Scalar, Type_fr_RF_THIGH_X_fr_RF_shank_fixed>
+    class Type_fr_RF_THIGH_X_fr_RF_SHANK : public TransformForce<Scalar, Type_fr_RF_THIGH_X_fr_RF_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RF_THIGH_X_fr_RF_shank_fixed();
-        const Type_fr_RF_THIGH_X_fr_RF_shank_fixed& update(const JState&);
+        Type_fr_RF_THIGH_X_fr_RF_SHANK();
+        const Type_fr_RF_THIGH_X_fr_RF_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed : public TransformForce<Scalar, Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed>
+    class Type_fr_RF_WHEEL_L_X_fr_RF_SHANK : public TransformForce<Scalar, Type_fr_RF_WHEEL_L_X_fr_RF_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed();
-        const Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed& update(const JState&);
+        Type_fr_RF_WHEEL_L_X_fr_RF_SHANK();
+        const Type_fr_RF_WHEEL_L_X_fr_RF_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L : public TransformForce<Scalar, Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L>
+    class Type_fr_RF_SHANK_X_fr_RF_WHEEL_L : public TransformForce<Scalar, Type_fr_RF_SHANK_X_fr_RF_WHEEL_L>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L();
-        const Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L& update(const JState&);
+        Type_fr_RF_SHANK_X_fr_RF_WHEEL_L();
+        const Type_fr_RF_SHANK_X_fr_RF_WHEEL_L& update(const JState&);
     protected:
     };
     
@@ -1175,39 +1175,39 @@ public:
     protected:
     };
     
-    class Type_fr_LH_shank_fixed_X_fr_LH_THIGH : public TransformForce<Scalar, Type_fr_LH_shank_fixed_X_fr_LH_THIGH>
+    class Type_fr_LH_SHANK_X_fr_LH_THIGH : public TransformForce<Scalar, Type_fr_LH_SHANK_X_fr_LH_THIGH>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LH_shank_fixed_X_fr_LH_THIGH();
-        const Type_fr_LH_shank_fixed_X_fr_LH_THIGH& update(const JState&);
+        Type_fr_LH_SHANK_X_fr_LH_THIGH();
+        const Type_fr_LH_SHANK_X_fr_LH_THIGH& update(const JState&);
     protected:
     };
     
-    class Type_fr_LH_THIGH_X_fr_LH_shank_fixed : public TransformForce<Scalar, Type_fr_LH_THIGH_X_fr_LH_shank_fixed>
+    class Type_fr_LH_THIGH_X_fr_LH_SHANK : public TransformForce<Scalar, Type_fr_LH_THIGH_X_fr_LH_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LH_THIGH_X_fr_LH_shank_fixed();
-        const Type_fr_LH_THIGH_X_fr_LH_shank_fixed& update(const JState&);
+        Type_fr_LH_THIGH_X_fr_LH_SHANK();
+        const Type_fr_LH_THIGH_X_fr_LH_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed : public TransformForce<Scalar, Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed>
+    class Type_fr_LH_WHEEL_L_X_fr_LH_SHANK : public TransformForce<Scalar, Type_fr_LH_WHEEL_L_X_fr_LH_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed();
-        const Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed& update(const JState&);
+        Type_fr_LH_WHEEL_L_X_fr_LH_SHANK();
+        const Type_fr_LH_WHEEL_L_X_fr_LH_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L : public TransformForce<Scalar, Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L>
+    class Type_fr_LH_SHANK_X_fr_LH_WHEEL_L : public TransformForce<Scalar, Type_fr_LH_SHANK_X_fr_LH_WHEEL_L>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L();
-        const Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L& update(const JState&);
+        Type_fr_LH_SHANK_X_fr_LH_WHEEL_L();
+        const Type_fr_LH_SHANK_X_fr_LH_WHEEL_L& update(const JState&);
     protected:
     };
     
@@ -1247,39 +1247,39 @@ public:
     protected:
     };
     
-    class Type_fr_RH_shank_fixed_X_fr_RH_THIGH : public TransformForce<Scalar, Type_fr_RH_shank_fixed_X_fr_RH_THIGH>
+    class Type_fr_RH_SHANK_X_fr_RH_THIGH : public TransformForce<Scalar, Type_fr_RH_SHANK_X_fr_RH_THIGH>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RH_shank_fixed_X_fr_RH_THIGH();
-        const Type_fr_RH_shank_fixed_X_fr_RH_THIGH& update(const JState&);
+        Type_fr_RH_SHANK_X_fr_RH_THIGH();
+        const Type_fr_RH_SHANK_X_fr_RH_THIGH& update(const JState&);
     protected:
     };
     
-    class Type_fr_RH_THIGH_X_fr_RH_shank_fixed : public TransformForce<Scalar, Type_fr_RH_THIGH_X_fr_RH_shank_fixed>
+    class Type_fr_RH_THIGH_X_fr_RH_SHANK : public TransformForce<Scalar, Type_fr_RH_THIGH_X_fr_RH_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RH_THIGH_X_fr_RH_shank_fixed();
-        const Type_fr_RH_THIGH_X_fr_RH_shank_fixed& update(const JState&);
+        Type_fr_RH_THIGH_X_fr_RH_SHANK();
+        const Type_fr_RH_THIGH_X_fr_RH_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed : public TransformForce<Scalar, Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed>
+    class Type_fr_RH_WHEEL_L_X_fr_RH_SHANK : public TransformForce<Scalar, Type_fr_RH_WHEEL_L_X_fr_RH_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed();
-        const Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed& update(const JState&);
+        Type_fr_RH_WHEEL_L_X_fr_RH_SHANK();
+        const Type_fr_RH_WHEEL_L_X_fr_RH_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L : public TransformForce<Scalar, Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L>
+    class Type_fr_RH_SHANK_X_fr_RH_WHEEL_L : public TransformForce<Scalar, Type_fr_RH_SHANK_X_fr_RH_WHEEL_L>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L();
-        const Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L& update(const JState&);
+        Type_fr_RH_SHANK_X_fr_RH_WHEEL_L();
+        const Type_fr_RH_SHANK_X_fr_RH_WHEEL_L& update(const JState&);
     protected:
     };
     
@@ -1322,34 +1322,34 @@ public:
     Type_fr_base_X_fr_LF_HIP fr_base_X_fr_LF_HIP;
     Type_fr_LF_THIGH_X_fr_LF_HIP fr_LF_THIGH_X_fr_LF_HIP;
     Type_fr_LF_HIP_X_fr_LF_THIGH fr_LF_HIP_X_fr_LF_THIGH;
-    Type_fr_LF_shank_fixed_X_fr_LF_THIGH fr_LF_shank_fixed_X_fr_LF_THIGH;
-    Type_fr_LF_THIGH_X_fr_LF_shank_fixed fr_LF_THIGH_X_fr_LF_shank_fixed;
-    Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed fr_LF_WHEEL_L_X_fr_LF_shank_fixed;
-    Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L fr_LF_shank_fixed_X_fr_LF_WHEEL_L;
+    Type_fr_LF_SHANK_X_fr_LF_THIGH fr_LF_SHANK_X_fr_LF_THIGH;
+    Type_fr_LF_THIGH_X_fr_LF_SHANK fr_LF_THIGH_X_fr_LF_SHANK;
+    Type_fr_LF_WHEEL_L_X_fr_LF_SHANK fr_LF_WHEEL_L_X_fr_LF_SHANK;
+    Type_fr_LF_SHANK_X_fr_LF_WHEEL_L fr_LF_SHANK_X_fr_LF_WHEEL_L;
     Type_fr_RF_HIP_X_fr_base fr_RF_HIP_X_fr_base;
     Type_fr_base_X_fr_RF_HIP fr_base_X_fr_RF_HIP;
     Type_fr_RF_THIGH_X_fr_RF_HIP fr_RF_THIGH_X_fr_RF_HIP;
     Type_fr_RF_HIP_X_fr_RF_THIGH fr_RF_HIP_X_fr_RF_THIGH;
-    Type_fr_RF_shank_fixed_X_fr_RF_THIGH fr_RF_shank_fixed_X_fr_RF_THIGH;
-    Type_fr_RF_THIGH_X_fr_RF_shank_fixed fr_RF_THIGH_X_fr_RF_shank_fixed;
-    Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed fr_RF_WHEEL_L_X_fr_RF_shank_fixed;
-    Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L fr_RF_shank_fixed_X_fr_RF_WHEEL_L;
+    Type_fr_RF_SHANK_X_fr_RF_THIGH fr_RF_SHANK_X_fr_RF_THIGH;
+    Type_fr_RF_THIGH_X_fr_RF_SHANK fr_RF_THIGH_X_fr_RF_SHANK;
+    Type_fr_RF_WHEEL_L_X_fr_RF_SHANK fr_RF_WHEEL_L_X_fr_RF_SHANK;
+    Type_fr_RF_SHANK_X_fr_RF_WHEEL_L fr_RF_SHANK_X_fr_RF_WHEEL_L;
     Type_fr_LH_HIP_X_fr_base fr_LH_HIP_X_fr_base;
     Type_fr_base_X_fr_LH_HIP fr_base_X_fr_LH_HIP;
     Type_fr_LH_THIGH_X_fr_LH_HIP fr_LH_THIGH_X_fr_LH_HIP;
     Type_fr_LH_HIP_X_fr_LH_THIGH fr_LH_HIP_X_fr_LH_THIGH;
-    Type_fr_LH_shank_fixed_X_fr_LH_THIGH fr_LH_shank_fixed_X_fr_LH_THIGH;
-    Type_fr_LH_THIGH_X_fr_LH_shank_fixed fr_LH_THIGH_X_fr_LH_shank_fixed;
-    Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed fr_LH_WHEEL_L_X_fr_LH_shank_fixed;
-    Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L fr_LH_shank_fixed_X_fr_LH_WHEEL_L;
+    Type_fr_LH_SHANK_X_fr_LH_THIGH fr_LH_SHANK_X_fr_LH_THIGH;
+    Type_fr_LH_THIGH_X_fr_LH_SHANK fr_LH_THIGH_X_fr_LH_SHANK;
+    Type_fr_LH_WHEEL_L_X_fr_LH_SHANK fr_LH_WHEEL_L_X_fr_LH_SHANK;
+    Type_fr_LH_SHANK_X_fr_LH_WHEEL_L fr_LH_SHANK_X_fr_LH_WHEEL_L;
     Type_fr_RH_HIP_X_fr_base fr_RH_HIP_X_fr_base;
     Type_fr_base_X_fr_RH_HIP fr_base_X_fr_RH_HIP;
     Type_fr_RH_THIGH_X_fr_RH_HIP fr_RH_THIGH_X_fr_RH_HIP;
     Type_fr_RH_HIP_X_fr_RH_THIGH fr_RH_HIP_X_fr_RH_THIGH;
-    Type_fr_RH_shank_fixed_X_fr_RH_THIGH fr_RH_shank_fixed_X_fr_RH_THIGH;
-    Type_fr_RH_THIGH_X_fr_RH_shank_fixed fr_RH_THIGH_X_fr_RH_shank_fixed;
-    Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed fr_RH_WHEEL_L_X_fr_RH_shank_fixed;
-    Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L fr_RH_shank_fixed_X_fr_RH_WHEEL_L;
+    Type_fr_RH_SHANK_X_fr_RH_THIGH fr_RH_SHANK_X_fr_RH_THIGH;
+    Type_fr_RH_THIGH_X_fr_RH_SHANK fr_RH_THIGH_X_fr_RH_SHANK;
+    Type_fr_RH_WHEEL_L_X_fr_RH_SHANK fr_RH_WHEEL_L_X_fr_RH_SHANK;
+    Type_fr_RH_SHANK_X_fr_RH_WHEEL_L fr_RH_SHANK_X_fr_RH_WHEEL_L;
 
 protected:
 
@@ -1693,39 +1693,39 @@ public:
     protected:
     };
     
-    class Type_fr_LF_shank_fixed_X_fr_LF_THIGH : public TransformHomogeneous<Scalar, Type_fr_LF_shank_fixed_X_fr_LF_THIGH>
+    class Type_fr_LF_SHANK_X_fr_LF_THIGH : public TransformHomogeneous<Scalar, Type_fr_LF_SHANK_X_fr_LF_THIGH>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LF_shank_fixed_X_fr_LF_THIGH();
-        const Type_fr_LF_shank_fixed_X_fr_LF_THIGH& update(const JState&);
+        Type_fr_LF_SHANK_X_fr_LF_THIGH();
+        const Type_fr_LF_SHANK_X_fr_LF_THIGH& update(const JState&);
     protected:
     };
     
-    class Type_fr_LF_THIGH_X_fr_LF_shank_fixed : public TransformHomogeneous<Scalar, Type_fr_LF_THIGH_X_fr_LF_shank_fixed>
+    class Type_fr_LF_THIGH_X_fr_LF_SHANK : public TransformHomogeneous<Scalar, Type_fr_LF_THIGH_X_fr_LF_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LF_THIGH_X_fr_LF_shank_fixed();
-        const Type_fr_LF_THIGH_X_fr_LF_shank_fixed& update(const JState&);
+        Type_fr_LF_THIGH_X_fr_LF_SHANK();
+        const Type_fr_LF_THIGH_X_fr_LF_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed : public TransformHomogeneous<Scalar, Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed>
+    class Type_fr_LF_WHEEL_L_X_fr_LF_SHANK : public TransformHomogeneous<Scalar, Type_fr_LF_WHEEL_L_X_fr_LF_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed();
-        const Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed& update(const JState&);
+        Type_fr_LF_WHEEL_L_X_fr_LF_SHANK();
+        const Type_fr_LF_WHEEL_L_X_fr_LF_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L : public TransformHomogeneous<Scalar, Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L>
+    class Type_fr_LF_SHANK_X_fr_LF_WHEEL_L : public TransformHomogeneous<Scalar, Type_fr_LF_SHANK_X_fr_LF_WHEEL_L>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L();
-        const Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L& update(const JState&);
+        Type_fr_LF_SHANK_X_fr_LF_WHEEL_L();
+        const Type_fr_LF_SHANK_X_fr_LF_WHEEL_L& update(const JState&);
     protected:
     };
     
@@ -1765,39 +1765,39 @@ public:
     protected:
     };
     
-    class Type_fr_RF_shank_fixed_X_fr_RF_THIGH : public TransformHomogeneous<Scalar, Type_fr_RF_shank_fixed_X_fr_RF_THIGH>
+    class Type_fr_RF_SHANK_X_fr_RF_THIGH : public TransformHomogeneous<Scalar, Type_fr_RF_SHANK_X_fr_RF_THIGH>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RF_shank_fixed_X_fr_RF_THIGH();
-        const Type_fr_RF_shank_fixed_X_fr_RF_THIGH& update(const JState&);
+        Type_fr_RF_SHANK_X_fr_RF_THIGH();
+        const Type_fr_RF_SHANK_X_fr_RF_THIGH& update(const JState&);
     protected:
     };
     
-    class Type_fr_RF_THIGH_X_fr_RF_shank_fixed : public TransformHomogeneous<Scalar, Type_fr_RF_THIGH_X_fr_RF_shank_fixed>
+    class Type_fr_RF_THIGH_X_fr_RF_SHANK : public TransformHomogeneous<Scalar, Type_fr_RF_THIGH_X_fr_RF_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RF_THIGH_X_fr_RF_shank_fixed();
-        const Type_fr_RF_THIGH_X_fr_RF_shank_fixed& update(const JState&);
+        Type_fr_RF_THIGH_X_fr_RF_SHANK();
+        const Type_fr_RF_THIGH_X_fr_RF_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed : public TransformHomogeneous<Scalar, Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed>
+    class Type_fr_RF_WHEEL_L_X_fr_RF_SHANK : public TransformHomogeneous<Scalar, Type_fr_RF_WHEEL_L_X_fr_RF_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed();
-        const Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed& update(const JState&);
+        Type_fr_RF_WHEEL_L_X_fr_RF_SHANK();
+        const Type_fr_RF_WHEEL_L_X_fr_RF_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L : public TransformHomogeneous<Scalar, Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L>
+    class Type_fr_RF_SHANK_X_fr_RF_WHEEL_L : public TransformHomogeneous<Scalar, Type_fr_RF_SHANK_X_fr_RF_WHEEL_L>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L();
-        const Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L& update(const JState&);
+        Type_fr_RF_SHANK_X_fr_RF_WHEEL_L();
+        const Type_fr_RF_SHANK_X_fr_RF_WHEEL_L& update(const JState&);
     protected:
     };
     
@@ -1837,39 +1837,39 @@ public:
     protected:
     };
     
-    class Type_fr_LH_shank_fixed_X_fr_LH_THIGH : public TransformHomogeneous<Scalar, Type_fr_LH_shank_fixed_X_fr_LH_THIGH>
+    class Type_fr_LH_SHANK_X_fr_LH_THIGH : public TransformHomogeneous<Scalar, Type_fr_LH_SHANK_X_fr_LH_THIGH>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LH_shank_fixed_X_fr_LH_THIGH();
-        const Type_fr_LH_shank_fixed_X_fr_LH_THIGH& update(const JState&);
+        Type_fr_LH_SHANK_X_fr_LH_THIGH();
+        const Type_fr_LH_SHANK_X_fr_LH_THIGH& update(const JState&);
     protected:
     };
     
-    class Type_fr_LH_THIGH_X_fr_LH_shank_fixed : public TransformHomogeneous<Scalar, Type_fr_LH_THIGH_X_fr_LH_shank_fixed>
+    class Type_fr_LH_THIGH_X_fr_LH_SHANK : public TransformHomogeneous<Scalar, Type_fr_LH_THIGH_X_fr_LH_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LH_THIGH_X_fr_LH_shank_fixed();
-        const Type_fr_LH_THIGH_X_fr_LH_shank_fixed& update(const JState&);
+        Type_fr_LH_THIGH_X_fr_LH_SHANK();
+        const Type_fr_LH_THIGH_X_fr_LH_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed : public TransformHomogeneous<Scalar, Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed>
+    class Type_fr_LH_WHEEL_L_X_fr_LH_SHANK : public TransformHomogeneous<Scalar, Type_fr_LH_WHEEL_L_X_fr_LH_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed();
-        const Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed& update(const JState&);
+        Type_fr_LH_WHEEL_L_X_fr_LH_SHANK();
+        const Type_fr_LH_WHEEL_L_X_fr_LH_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L : public TransformHomogeneous<Scalar, Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L>
+    class Type_fr_LH_SHANK_X_fr_LH_WHEEL_L : public TransformHomogeneous<Scalar, Type_fr_LH_SHANK_X_fr_LH_WHEEL_L>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L();
-        const Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L& update(const JState&);
+        Type_fr_LH_SHANK_X_fr_LH_WHEEL_L();
+        const Type_fr_LH_SHANK_X_fr_LH_WHEEL_L& update(const JState&);
     protected:
     };
     
@@ -1909,39 +1909,39 @@ public:
     protected:
     };
     
-    class Type_fr_RH_shank_fixed_X_fr_RH_THIGH : public TransformHomogeneous<Scalar, Type_fr_RH_shank_fixed_X_fr_RH_THIGH>
+    class Type_fr_RH_SHANK_X_fr_RH_THIGH : public TransformHomogeneous<Scalar, Type_fr_RH_SHANK_X_fr_RH_THIGH>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RH_shank_fixed_X_fr_RH_THIGH();
-        const Type_fr_RH_shank_fixed_X_fr_RH_THIGH& update(const JState&);
+        Type_fr_RH_SHANK_X_fr_RH_THIGH();
+        const Type_fr_RH_SHANK_X_fr_RH_THIGH& update(const JState&);
     protected:
     };
     
-    class Type_fr_RH_THIGH_X_fr_RH_shank_fixed : public TransformHomogeneous<Scalar, Type_fr_RH_THIGH_X_fr_RH_shank_fixed>
+    class Type_fr_RH_THIGH_X_fr_RH_SHANK : public TransformHomogeneous<Scalar, Type_fr_RH_THIGH_X_fr_RH_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RH_THIGH_X_fr_RH_shank_fixed();
-        const Type_fr_RH_THIGH_X_fr_RH_shank_fixed& update(const JState&);
+        Type_fr_RH_THIGH_X_fr_RH_SHANK();
+        const Type_fr_RH_THIGH_X_fr_RH_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed : public TransformHomogeneous<Scalar, Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed>
+    class Type_fr_RH_WHEEL_L_X_fr_RH_SHANK : public TransformHomogeneous<Scalar, Type_fr_RH_WHEEL_L_X_fr_RH_SHANK>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed();
-        const Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed& update(const JState&);
+        Type_fr_RH_WHEEL_L_X_fr_RH_SHANK();
+        const Type_fr_RH_WHEEL_L_X_fr_RH_SHANK& update(const JState&);
     protected:
     };
     
-    class Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L : public TransformHomogeneous<Scalar, Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L>
+    class Type_fr_RH_SHANK_X_fr_RH_WHEEL_L : public TransformHomogeneous<Scalar, Type_fr_RH_SHANK_X_fr_RH_WHEEL_L>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L();
-        const Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L& update(const JState&);
+        Type_fr_RH_SHANK_X_fr_RH_WHEEL_L();
+        const Type_fr_RH_SHANK_X_fr_RH_WHEEL_L& update(const JState&);
     protected:
     };
     
@@ -1984,34 +1984,34 @@ public:
     Type_fr_base_X_fr_LF_HIP fr_base_X_fr_LF_HIP;
     Type_fr_LF_THIGH_X_fr_LF_HIP fr_LF_THIGH_X_fr_LF_HIP;
     Type_fr_LF_HIP_X_fr_LF_THIGH fr_LF_HIP_X_fr_LF_THIGH;
-    Type_fr_LF_shank_fixed_X_fr_LF_THIGH fr_LF_shank_fixed_X_fr_LF_THIGH;
-    Type_fr_LF_THIGH_X_fr_LF_shank_fixed fr_LF_THIGH_X_fr_LF_shank_fixed;
-    Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed fr_LF_WHEEL_L_X_fr_LF_shank_fixed;
-    Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L fr_LF_shank_fixed_X_fr_LF_WHEEL_L;
+    Type_fr_LF_SHANK_X_fr_LF_THIGH fr_LF_SHANK_X_fr_LF_THIGH;
+    Type_fr_LF_THIGH_X_fr_LF_SHANK fr_LF_THIGH_X_fr_LF_SHANK;
+    Type_fr_LF_WHEEL_L_X_fr_LF_SHANK fr_LF_WHEEL_L_X_fr_LF_SHANK;
+    Type_fr_LF_SHANK_X_fr_LF_WHEEL_L fr_LF_SHANK_X_fr_LF_WHEEL_L;
     Type_fr_RF_HIP_X_fr_base fr_RF_HIP_X_fr_base;
     Type_fr_base_X_fr_RF_HIP fr_base_X_fr_RF_HIP;
     Type_fr_RF_THIGH_X_fr_RF_HIP fr_RF_THIGH_X_fr_RF_HIP;
     Type_fr_RF_HIP_X_fr_RF_THIGH fr_RF_HIP_X_fr_RF_THIGH;
-    Type_fr_RF_shank_fixed_X_fr_RF_THIGH fr_RF_shank_fixed_X_fr_RF_THIGH;
-    Type_fr_RF_THIGH_X_fr_RF_shank_fixed fr_RF_THIGH_X_fr_RF_shank_fixed;
-    Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed fr_RF_WHEEL_L_X_fr_RF_shank_fixed;
-    Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L fr_RF_shank_fixed_X_fr_RF_WHEEL_L;
+    Type_fr_RF_SHANK_X_fr_RF_THIGH fr_RF_SHANK_X_fr_RF_THIGH;
+    Type_fr_RF_THIGH_X_fr_RF_SHANK fr_RF_THIGH_X_fr_RF_SHANK;
+    Type_fr_RF_WHEEL_L_X_fr_RF_SHANK fr_RF_WHEEL_L_X_fr_RF_SHANK;
+    Type_fr_RF_SHANK_X_fr_RF_WHEEL_L fr_RF_SHANK_X_fr_RF_WHEEL_L;
     Type_fr_LH_HIP_X_fr_base fr_LH_HIP_X_fr_base;
     Type_fr_base_X_fr_LH_HIP fr_base_X_fr_LH_HIP;
     Type_fr_LH_THIGH_X_fr_LH_HIP fr_LH_THIGH_X_fr_LH_HIP;
     Type_fr_LH_HIP_X_fr_LH_THIGH fr_LH_HIP_X_fr_LH_THIGH;
-    Type_fr_LH_shank_fixed_X_fr_LH_THIGH fr_LH_shank_fixed_X_fr_LH_THIGH;
-    Type_fr_LH_THIGH_X_fr_LH_shank_fixed fr_LH_THIGH_X_fr_LH_shank_fixed;
-    Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed fr_LH_WHEEL_L_X_fr_LH_shank_fixed;
-    Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L fr_LH_shank_fixed_X_fr_LH_WHEEL_L;
+    Type_fr_LH_SHANK_X_fr_LH_THIGH fr_LH_SHANK_X_fr_LH_THIGH;
+    Type_fr_LH_THIGH_X_fr_LH_SHANK fr_LH_THIGH_X_fr_LH_SHANK;
+    Type_fr_LH_WHEEL_L_X_fr_LH_SHANK fr_LH_WHEEL_L_X_fr_LH_SHANK;
+    Type_fr_LH_SHANK_X_fr_LH_WHEEL_L fr_LH_SHANK_X_fr_LH_WHEEL_L;
     Type_fr_RH_HIP_X_fr_base fr_RH_HIP_X_fr_base;
     Type_fr_base_X_fr_RH_HIP fr_base_X_fr_RH_HIP;
     Type_fr_RH_THIGH_X_fr_RH_HIP fr_RH_THIGH_X_fr_RH_HIP;
     Type_fr_RH_HIP_X_fr_RH_THIGH fr_RH_HIP_X_fr_RH_THIGH;
-    Type_fr_RH_shank_fixed_X_fr_RH_THIGH fr_RH_shank_fixed_X_fr_RH_THIGH;
-    Type_fr_RH_THIGH_X_fr_RH_shank_fixed fr_RH_THIGH_X_fr_RH_shank_fixed;
-    Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed fr_RH_WHEEL_L_X_fr_RH_shank_fixed;
-    Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L fr_RH_shank_fixed_X_fr_RH_WHEEL_L;
+    Type_fr_RH_SHANK_X_fr_RH_THIGH fr_RH_SHANK_X_fr_RH_THIGH;
+    Type_fr_RH_THIGH_X_fr_RH_SHANK fr_RH_THIGH_X_fr_RH_SHANK;
+    Type_fr_RH_WHEEL_L_X_fr_RH_SHANK fr_RH_WHEEL_L_X_fr_RH_SHANK;
+    Type_fr_RH_SHANK_X_fr_RH_WHEEL_L fr_RH_SHANK_X_fr_RH_WHEEL_L;
 
 protected:
 

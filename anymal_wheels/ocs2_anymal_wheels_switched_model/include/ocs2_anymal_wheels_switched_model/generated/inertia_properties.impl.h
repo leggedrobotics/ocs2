@@ -1,17 +1,17 @@
 template <typename TRAIT>
 iit::ANYmal::dyn::tpl::InertiaProperties<TRAIT>::InertiaProperties()
 {
-    com_base = iit::rbd::Vector3d(-0.018228702,0.0067288,0.0060174423).cast<Scalar>();
+    com_base = iit::rbd::Vector3d(-0.018926594,0.0065396465,0.0075172745).cast<Scalar>();
     tensor_base.fill(
-        Scalar(25.009018),
+        Scalar(25.586298),
         com_base,
         rbd::Utils::buildInertiaTensor(
-                Scalar(0.17156827),
-                Scalar(1.6387202),
-                Scalar(1.6820173),
-                Scalar(-0.003472911),
-                Scalar(-0.040037118),
-                Scalar(0.002943181)) );
+                Scalar(0.17825624),
+                Scalar(1.7073739),
+                Scalar(1.7424951),
+                Scalar(-0.0038845614),
+                Scalar(-0.042678002),
+                Scalar(0.002850078)) );
 
     com_LF_HIP = iit::rbd::Vector3d(-0.0010103208,0.014250419,0.068031415).cast<Scalar>();
     tensor_LF_HIP.fill(
@@ -37,10 +37,10 @@ iit::ANYmal::dyn::tpl::InertiaProperties<TRAIT>::InertiaProperties()
                 Scalar(2.5706907E-4),
                 Scalar(0.016769057)) );
 
-    com_LF_shank_fixed = iit::rbd::Vector3d(0.044662513,0.030045535,0.019255718).cast<Scalar>();
-    tensor_LF_shank_fixed.fill(
+    com_LF_SHANK = iit::rbd::Vector3d(0.044662513,0.030045535,0.019255718).cast<Scalar>();
+    tensor_LF_SHANK.fill(
         Scalar(0.41052794),
-        com_LF_shank_fixed,
+        com_LF_SHANK,
         rbd::Utils::buildInertiaTensor(
                 Scalar(0.0038513276),
                 Scalar(0.002628087),
@@ -85,10 +85,10 @@ iit::ANYmal::dyn::tpl::InertiaProperties<TRAIT>::InertiaProperties()
                 Scalar(-2.6058225E-4),
                 Scalar(-0.016768113)) );
 
-    com_RF_shank_fixed = iit::rbd::Vector3d(0.044662513,0.030045537,-0.019255718).cast<Scalar>();
-    tensor_RF_shank_fixed.fill(
+    com_RF_SHANK = iit::rbd::Vector3d(0.044662513,0.030045537,-0.019255718).cast<Scalar>();
+    tensor_RF_SHANK.fill(
         Scalar(0.41052794),
-        com_RF_shank_fixed,
+        com_RF_SHANK,
         rbd::Utils::buildInertiaTensor(
                 Scalar(0.0038513276),
                 Scalar(0.002628087),
@@ -133,10 +133,10 @@ iit::ANYmal::dyn::tpl::InertiaProperties<TRAIT>::InertiaProperties()
                 Scalar(-2.6058196E-4),
                 Scalar(0.016768115)) );
 
-    com_LH_shank_fixed = iit::rbd::Vector3d(-0.044662513,0.030045535,0.019255718).cast<Scalar>();
-    tensor_LH_shank_fixed.fill(
+    com_LH_SHANK = iit::rbd::Vector3d(-0.044662513,0.030045535,0.019255718).cast<Scalar>();
+    tensor_LH_SHANK.fill(
         Scalar(0.41052794),
-        com_LH_shank_fixed,
+        com_LH_SHANK,
         rbd::Utils::buildInertiaTensor(
                 Scalar(0.0038513276),
                 Scalar(0.002628087),
@@ -181,10 +181,10 @@ iit::ANYmal::dyn::tpl::InertiaProperties<TRAIT>::InertiaProperties()
                 Scalar(2.5706922E-4),
                 Scalar(-0.016769055)) );
 
-    com_RH_shank_fixed = iit::rbd::Vector3d(-0.044662513,0.030045537,-0.019255718).cast<Scalar>();
-    tensor_RH_shank_fixed.fill(
+    com_RH_SHANK = iit::rbd::Vector3d(-0.044662513,0.030045537,-0.019255718).cast<Scalar>();
+    tensor_RH_SHANK.fill(
         Scalar(0.41052794),
-        com_RH_shank_fixed,
+        com_RH_SHANK,
         rbd::Utils::buildInertiaTensor(
                 Scalar(0.0038513276),
                 Scalar(0.002628087),

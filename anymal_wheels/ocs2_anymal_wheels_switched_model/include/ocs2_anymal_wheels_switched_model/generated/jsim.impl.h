@@ -22,20 +22,20 @@ template <typename TRAIT>
 const typename iit::ANYmal::dyn::tpl::JSIM<TRAIT>& iit::ANYmal::dyn::tpl::JSIM<TRAIT>::update(const JointState& state) {
 
     // Precomputes only once the coordinate transforms:
-    frcTransf -> fr_RH_shank_fixed_X_fr_RH_WHEEL_L(state);
-    frcTransf -> fr_RH_THIGH_X_fr_RH_shank_fixed(state);
+    frcTransf -> fr_RH_SHANK_X_fr_RH_WHEEL_L(state);
+    frcTransf -> fr_RH_THIGH_X_fr_RH_SHANK(state);
     frcTransf -> fr_RH_HIP_X_fr_RH_THIGH(state);
     frcTransf -> fr_base_X_fr_RH_HIP(state);
-    frcTransf -> fr_LH_shank_fixed_X_fr_LH_WHEEL_L(state);
-    frcTransf -> fr_LH_THIGH_X_fr_LH_shank_fixed(state);
+    frcTransf -> fr_LH_SHANK_X_fr_LH_WHEEL_L(state);
+    frcTransf -> fr_LH_THIGH_X_fr_LH_SHANK(state);
     frcTransf -> fr_LH_HIP_X_fr_LH_THIGH(state);
     frcTransf -> fr_base_X_fr_LH_HIP(state);
-    frcTransf -> fr_RF_shank_fixed_X_fr_RF_WHEEL_L(state);
-    frcTransf -> fr_RF_THIGH_X_fr_RF_shank_fixed(state);
+    frcTransf -> fr_RF_SHANK_X_fr_RF_WHEEL_L(state);
+    frcTransf -> fr_RF_THIGH_X_fr_RF_SHANK(state);
     frcTransf -> fr_RF_HIP_X_fr_RF_THIGH(state);
     frcTransf -> fr_base_X_fr_RF_HIP(state);
-    frcTransf -> fr_LF_shank_fixed_X_fr_LF_WHEEL_L(state);
-    frcTransf -> fr_LF_THIGH_X_fr_LF_shank_fixed(state);
+    frcTransf -> fr_LF_SHANK_X_fr_LF_WHEEL_L(state);
+    frcTransf -> fr_LF_THIGH_X_fr_LF_SHANK(state);
     frcTransf -> fr_LF_HIP_X_fr_LF_THIGH(state);
     frcTransf -> fr_base_X_fr_LF_HIP(state);
 
@@ -43,30 +43,30 @@ const typename iit::ANYmal::dyn::tpl::JSIM<TRAIT>& iit::ANYmal::dyn::tpl::JSIM<T
     base_Ic = linkInertias.getTensor_base();
     LF_HIP_Ic = linkInertias.getTensor_LF_HIP();
     LF_THIGH_Ic = linkInertias.getTensor_LF_THIGH();
-    LF_shank_fixed_Ic = linkInertias.getTensor_LF_shank_fixed();
+    LF_SHANK_Ic = linkInertias.getTensor_LF_SHANK();
     RF_HIP_Ic = linkInertias.getTensor_RF_HIP();
     RF_THIGH_Ic = linkInertias.getTensor_RF_THIGH();
-    RF_shank_fixed_Ic = linkInertias.getTensor_RF_shank_fixed();
+    RF_SHANK_Ic = linkInertias.getTensor_RF_SHANK();
     LH_HIP_Ic = linkInertias.getTensor_LH_HIP();
     LH_THIGH_Ic = linkInertias.getTensor_LH_THIGH();
-    LH_shank_fixed_Ic = linkInertias.getTensor_LH_shank_fixed();
+    LH_SHANK_Ic = linkInertias.getTensor_LH_SHANK();
     RH_HIP_Ic = linkInertias.getTensor_RH_HIP();
     RH_THIGH_Ic = linkInertias.getTensor_RH_THIGH();
-    RH_shank_fixed_Ic = linkInertias.getTensor_RH_shank_fixed();
+    RH_SHANK_Ic = linkInertias.getTensor_RH_SHANK();
 
     // "Bottom-up" loop to update the inertia-composite property of each link, for the current configuration
 
     // Link RH_WHEEL_L:
-    iit::rbd::transformInertia<Scalar>(RH_WHEEL_L_Ic, frcTransf -> fr_RH_shank_fixed_X_fr_RH_WHEEL_L, Ic_spare);
-    RH_shank_fixed_Ic += Ic_spare;
+    iit::rbd::transformInertia<Scalar>(RH_WHEEL_L_Ic, frcTransf -> fr_RH_SHANK_X_fr_RH_WHEEL_L, Ic_spare);
+    RH_SHANK_Ic += Ic_spare;
 
     Fcol(RH_WHEEL) = RH_WHEEL_L_Ic.col(iit::rbd::AZ);
     DATA(RH_WHEEL+6, RH_WHEEL+6) = Fcol(RH_WHEEL)(iit::rbd::AZ);
 
-    Fcol(RH_WHEEL) = frcTransf -> fr_RH_shank_fixed_X_fr_RH_WHEEL_L * Fcol(RH_WHEEL);
+    Fcol(RH_WHEEL) = frcTransf -> fr_RH_SHANK_X_fr_RH_WHEEL_L * Fcol(RH_WHEEL);
     DATA(RH_WHEEL+6, RH_KFE+6) = F(iit::rbd::AZ,RH_WHEEL);
     DATA(RH_KFE+6, RH_WHEEL+6) = DATA(RH_WHEEL+6, RH_KFE+6);
-    Fcol(RH_WHEEL) = frcTransf -> fr_RH_THIGH_X_fr_RH_shank_fixed * Fcol(RH_WHEEL);
+    Fcol(RH_WHEEL) = frcTransf -> fr_RH_THIGH_X_fr_RH_SHANK * Fcol(RH_WHEEL);
     DATA(RH_WHEEL+6, RH_HFE+6) = F(iit::rbd::AZ,RH_WHEEL);
     DATA(RH_HFE+6, RH_WHEEL+6) = DATA(RH_WHEEL+6, RH_HFE+6);
     Fcol(RH_WHEEL) = frcTransf -> fr_RH_HIP_X_fr_RH_THIGH * Fcol(RH_WHEEL);
@@ -74,14 +74,14 @@ const typename iit::ANYmal::dyn::tpl::JSIM<TRAIT>& iit::ANYmal::dyn::tpl::JSIM<T
     DATA(RH_HAA+6, RH_WHEEL+6) = DATA(RH_WHEEL+6, RH_HAA+6);
     Fcol(RH_WHEEL) = frcTransf -> fr_base_X_fr_RH_HIP * Fcol(RH_WHEEL);
 
-    // Link RH_shank_fixed:
-    iit::rbd::transformInertia<Scalar>(RH_shank_fixed_Ic, frcTransf -> fr_RH_THIGH_X_fr_RH_shank_fixed, Ic_spare);
+    // Link RH_SHANK:
+    iit::rbd::transformInertia<Scalar>(RH_SHANK_Ic, frcTransf -> fr_RH_THIGH_X_fr_RH_SHANK, Ic_spare);
     RH_THIGH_Ic += Ic_spare;
 
-    Fcol(RH_KFE) = RH_shank_fixed_Ic.col(iit::rbd::AZ);
+    Fcol(RH_KFE) = RH_SHANK_Ic.col(iit::rbd::AZ);
     DATA(RH_KFE+6, RH_KFE+6) = Fcol(RH_KFE)(iit::rbd::AZ);
 
-    Fcol(RH_KFE) = frcTransf -> fr_RH_THIGH_X_fr_RH_shank_fixed * Fcol(RH_KFE);
+    Fcol(RH_KFE) = frcTransf -> fr_RH_THIGH_X_fr_RH_SHANK * Fcol(RH_KFE);
     DATA(RH_KFE+6, RH_HFE+6) = F(iit::rbd::AZ,RH_KFE);
     DATA(RH_HFE+6, RH_KFE+6) = DATA(RH_KFE+6, RH_HFE+6);
     Fcol(RH_KFE) = frcTransf -> fr_RH_HIP_X_fr_RH_THIGH * Fcol(RH_KFE);
@@ -111,16 +111,16 @@ const typename iit::ANYmal::dyn::tpl::JSIM<TRAIT>& iit::ANYmal::dyn::tpl::JSIM<T
     Fcol(RH_HAA) = frcTransf -> fr_base_X_fr_RH_HIP * Fcol(RH_HAA);
 
     // Link LH_WHEEL_L:
-    iit::rbd::transformInertia<Scalar>(LH_WHEEL_L_Ic, frcTransf -> fr_LH_shank_fixed_X_fr_LH_WHEEL_L, Ic_spare);
-    LH_shank_fixed_Ic += Ic_spare;
+    iit::rbd::transformInertia<Scalar>(LH_WHEEL_L_Ic, frcTransf -> fr_LH_SHANK_X_fr_LH_WHEEL_L, Ic_spare);
+    LH_SHANK_Ic += Ic_spare;
 
     Fcol(LH_WHEEL) = LH_WHEEL_L_Ic.col(iit::rbd::AZ);
     DATA(LH_WHEEL+6, LH_WHEEL+6) = Fcol(LH_WHEEL)(iit::rbd::AZ);
 
-    Fcol(LH_WHEEL) = frcTransf -> fr_LH_shank_fixed_X_fr_LH_WHEEL_L * Fcol(LH_WHEEL);
+    Fcol(LH_WHEEL) = frcTransf -> fr_LH_SHANK_X_fr_LH_WHEEL_L * Fcol(LH_WHEEL);
     DATA(LH_WHEEL+6, LH_KFE+6) = F(iit::rbd::AZ,LH_WHEEL);
     DATA(LH_KFE+6, LH_WHEEL+6) = DATA(LH_WHEEL+6, LH_KFE+6);
-    Fcol(LH_WHEEL) = frcTransf -> fr_LH_THIGH_X_fr_LH_shank_fixed * Fcol(LH_WHEEL);
+    Fcol(LH_WHEEL) = frcTransf -> fr_LH_THIGH_X_fr_LH_SHANK * Fcol(LH_WHEEL);
     DATA(LH_WHEEL+6, LH_HFE+6) = F(iit::rbd::AZ,LH_WHEEL);
     DATA(LH_HFE+6, LH_WHEEL+6) = DATA(LH_WHEEL+6, LH_HFE+6);
     Fcol(LH_WHEEL) = frcTransf -> fr_LH_HIP_X_fr_LH_THIGH * Fcol(LH_WHEEL);
@@ -128,14 +128,14 @@ const typename iit::ANYmal::dyn::tpl::JSIM<TRAIT>& iit::ANYmal::dyn::tpl::JSIM<T
     DATA(LH_HAA+6, LH_WHEEL+6) = DATA(LH_WHEEL+6, LH_HAA+6);
     Fcol(LH_WHEEL) = frcTransf -> fr_base_X_fr_LH_HIP * Fcol(LH_WHEEL);
 
-    // Link LH_shank_fixed:
-    iit::rbd::transformInertia<Scalar>(LH_shank_fixed_Ic, frcTransf -> fr_LH_THIGH_X_fr_LH_shank_fixed, Ic_spare);
+    // Link LH_SHANK:
+    iit::rbd::transformInertia<Scalar>(LH_SHANK_Ic, frcTransf -> fr_LH_THIGH_X_fr_LH_SHANK, Ic_spare);
     LH_THIGH_Ic += Ic_spare;
 
-    Fcol(LH_KFE) = LH_shank_fixed_Ic.col(iit::rbd::AZ);
+    Fcol(LH_KFE) = LH_SHANK_Ic.col(iit::rbd::AZ);
     DATA(LH_KFE+6, LH_KFE+6) = Fcol(LH_KFE)(iit::rbd::AZ);
 
-    Fcol(LH_KFE) = frcTransf -> fr_LH_THIGH_X_fr_LH_shank_fixed * Fcol(LH_KFE);
+    Fcol(LH_KFE) = frcTransf -> fr_LH_THIGH_X_fr_LH_SHANK * Fcol(LH_KFE);
     DATA(LH_KFE+6, LH_HFE+6) = F(iit::rbd::AZ,LH_KFE);
     DATA(LH_HFE+6, LH_KFE+6) = DATA(LH_KFE+6, LH_HFE+6);
     Fcol(LH_KFE) = frcTransf -> fr_LH_HIP_X_fr_LH_THIGH * Fcol(LH_KFE);
@@ -165,16 +165,16 @@ const typename iit::ANYmal::dyn::tpl::JSIM<TRAIT>& iit::ANYmal::dyn::tpl::JSIM<T
     Fcol(LH_HAA) = frcTransf -> fr_base_X_fr_LH_HIP * Fcol(LH_HAA);
 
     // Link RF_WHEEL_L:
-    iit::rbd::transformInertia<Scalar>(RF_WHEEL_L_Ic, frcTransf -> fr_RF_shank_fixed_X_fr_RF_WHEEL_L, Ic_spare);
-    RF_shank_fixed_Ic += Ic_spare;
+    iit::rbd::transformInertia<Scalar>(RF_WHEEL_L_Ic, frcTransf -> fr_RF_SHANK_X_fr_RF_WHEEL_L, Ic_spare);
+    RF_SHANK_Ic += Ic_spare;
 
     Fcol(RF_WHEEL) = RF_WHEEL_L_Ic.col(iit::rbd::AZ);
     DATA(RF_WHEEL+6, RF_WHEEL+6) = Fcol(RF_WHEEL)(iit::rbd::AZ);
 
-    Fcol(RF_WHEEL) = frcTransf -> fr_RF_shank_fixed_X_fr_RF_WHEEL_L * Fcol(RF_WHEEL);
+    Fcol(RF_WHEEL) = frcTransf -> fr_RF_SHANK_X_fr_RF_WHEEL_L * Fcol(RF_WHEEL);
     DATA(RF_WHEEL+6, RF_KFE+6) = F(iit::rbd::AZ,RF_WHEEL);
     DATA(RF_KFE+6, RF_WHEEL+6) = DATA(RF_WHEEL+6, RF_KFE+6);
-    Fcol(RF_WHEEL) = frcTransf -> fr_RF_THIGH_X_fr_RF_shank_fixed * Fcol(RF_WHEEL);
+    Fcol(RF_WHEEL) = frcTransf -> fr_RF_THIGH_X_fr_RF_SHANK * Fcol(RF_WHEEL);
     DATA(RF_WHEEL+6, RF_HFE+6) = F(iit::rbd::AZ,RF_WHEEL);
     DATA(RF_HFE+6, RF_WHEEL+6) = DATA(RF_WHEEL+6, RF_HFE+6);
     Fcol(RF_WHEEL) = frcTransf -> fr_RF_HIP_X_fr_RF_THIGH * Fcol(RF_WHEEL);
@@ -182,14 +182,14 @@ const typename iit::ANYmal::dyn::tpl::JSIM<TRAIT>& iit::ANYmal::dyn::tpl::JSIM<T
     DATA(RF_HAA+6, RF_WHEEL+6) = DATA(RF_WHEEL+6, RF_HAA+6);
     Fcol(RF_WHEEL) = frcTransf -> fr_base_X_fr_RF_HIP * Fcol(RF_WHEEL);
 
-    // Link RF_shank_fixed:
-    iit::rbd::transformInertia<Scalar>(RF_shank_fixed_Ic, frcTransf -> fr_RF_THIGH_X_fr_RF_shank_fixed, Ic_spare);
+    // Link RF_SHANK:
+    iit::rbd::transformInertia<Scalar>(RF_SHANK_Ic, frcTransf -> fr_RF_THIGH_X_fr_RF_SHANK, Ic_spare);
     RF_THIGH_Ic += Ic_spare;
 
-    Fcol(RF_KFE) = RF_shank_fixed_Ic.col(iit::rbd::AZ);
+    Fcol(RF_KFE) = RF_SHANK_Ic.col(iit::rbd::AZ);
     DATA(RF_KFE+6, RF_KFE+6) = Fcol(RF_KFE)(iit::rbd::AZ);
 
-    Fcol(RF_KFE) = frcTransf -> fr_RF_THIGH_X_fr_RF_shank_fixed * Fcol(RF_KFE);
+    Fcol(RF_KFE) = frcTransf -> fr_RF_THIGH_X_fr_RF_SHANK * Fcol(RF_KFE);
     DATA(RF_KFE+6, RF_HFE+6) = F(iit::rbd::AZ,RF_KFE);
     DATA(RF_HFE+6, RF_KFE+6) = DATA(RF_KFE+6, RF_HFE+6);
     Fcol(RF_KFE) = frcTransf -> fr_RF_HIP_X_fr_RF_THIGH * Fcol(RF_KFE);
@@ -219,16 +219,16 @@ const typename iit::ANYmal::dyn::tpl::JSIM<TRAIT>& iit::ANYmal::dyn::tpl::JSIM<T
     Fcol(RF_HAA) = frcTransf -> fr_base_X_fr_RF_HIP * Fcol(RF_HAA);
 
     // Link LF_WHEEL_L:
-    iit::rbd::transformInertia<Scalar>(LF_WHEEL_L_Ic, frcTransf -> fr_LF_shank_fixed_X_fr_LF_WHEEL_L, Ic_spare);
-    LF_shank_fixed_Ic += Ic_spare;
+    iit::rbd::transformInertia<Scalar>(LF_WHEEL_L_Ic, frcTransf -> fr_LF_SHANK_X_fr_LF_WHEEL_L, Ic_spare);
+    LF_SHANK_Ic += Ic_spare;
 
     Fcol(LF_WHEEL) = LF_WHEEL_L_Ic.col(iit::rbd::AZ);
     DATA(LF_WHEEL+6, LF_WHEEL+6) = Fcol(LF_WHEEL)(iit::rbd::AZ);
 
-    Fcol(LF_WHEEL) = frcTransf -> fr_LF_shank_fixed_X_fr_LF_WHEEL_L * Fcol(LF_WHEEL);
+    Fcol(LF_WHEEL) = frcTransf -> fr_LF_SHANK_X_fr_LF_WHEEL_L * Fcol(LF_WHEEL);
     DATA(LF_WHEEL+6, LF_KFE+6) = F(iit::rbd::AZ,LF_WHEEL);
     DATA(LF_KFE+6, LF_WHEEL+6) = DATA(LF_WHEEL+6, LF_KFE+6);
-    Fcol(LF_WHEEL) = frcTransf -> fr_LF_THIGH_X_fr_LF_shank_fixed * Fcol(LF_WHEEL);
+    Fcol(LF_WHEEL) = frcTransf -> fr_LF_THIGH_X_fr_LF_SHANK * Fcol(LF_WHEEL);
     DATA(LF_WHEEL+6, LF_HFE+6) = F(iit::rbd::AZ,LF_WHEEL);
     DATA(LF_HFE+6, LF_WHEEL+6) = DATA(LF_WHEEL+6, LF_HFE+6);
     Fcol(LF_WHEEL) = frcTransf -> fr_LF_HIP_X_fr_LF_THIGH * Fcol(LF_WHEEL);
@@ -236,14 +236,14 @@ const typename iit::ANYmal::dyn::tpl::JSIM<TRAIT>& iit::ANYmal::dyn::tpl::JSIM<T
     DATA(LF_HAA+6, LF_WHEEL+6) = DATA(LF_WHEEL+6, LF_HAA+6);
     Fcol(LF_WHEEL) = frcTransf -> fr_base_X_fr_LF_HIP * Fcol(LF_WHEEL);
 
-    // Link LF_shank_fixed:
-    iit::rbd::transformInertia<Scalar>(LF_shank_fixed_Ic, frcTransf -> fr_LF_THIGH_X_fr_LF_shank_fixed, Ic_spare);
+    // Link LF_SHANK:
+    iit::rbd::transformInertia<Scalar>(LF_SHANK_Ic, frcTransf -> fr_LF_THIGH_X_fr_LF_SHANK, Ic_spare);
     LF_THIGH_Ic += Ic_spare;
 
-    Fcol(LF_KFE) = LF_shank_fixed_Ic.col(iit::rbd::AZ);
+    Fcol(LF_KFE) = LF_SHANK_Ic.col(iit::rbd::AZ);
     DATA(LF_KFE+6, LF_KFE+6) = Fcol(LF_KFE)(iit::rbd::AZ);
 
-    Fcol(LF_KFE) = frcTransf -> fr_LF_THIGH_X_fr_LF_shank_fixed * Fcol(LF_KFE);
+    Fcol(LF_KFE) = frcTransf -> fr_LF_THIGH_X_fr_LF_SHANK * Fcol(LF_KFE);
     DATA(LF_KFE+6, LF_HFE+6) = F(iit::rbd::AZ,LF_KFE);
     DATA(LF_HFE+6, LF_KFE+6) = DATA(LF_KFE+6, LF_HFE+6);
     Fcol(LF_KFE) = frcTransf -> fr_LF_HIP_X_fr_LF_THIGH * Fcol(LF_KFE);

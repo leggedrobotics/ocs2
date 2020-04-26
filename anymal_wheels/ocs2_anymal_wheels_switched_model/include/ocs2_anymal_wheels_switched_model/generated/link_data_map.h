@@ -69,19 +69,19 @@ void LinkDataMap<T>::copydata(const LinkDataMap& rhs) {
     data[BASE] = rhs[BASE];
     data[LF_HIP] = rhs[LF_HIP];
     data[LF_THIGH] = rhs[LF_THIGH];
-    data[LF_SHANK_FIXED] = rhs[LF_SHANK_FIXED];
+    data[LF_SHANK] = rhs[LF_SHANK];
     data[LF_WHEEL_L] = rhs[LF_WHEEL_L];
     data[RF_HIP] = rhs[RF_HIP];
     data[RF_THIGH] = rhs[RF_THIGH];
-    data[RF_SHANK_FIXED] = rhs[RF_SHANK_FIXED];
+    data[RF_SHANK] = rhs[RF_SHANK];
     data[RF_WHEEL_L] = rhs[RF_WHEEL_L];
     data[LH_HIP] = rhs[LH_HIP];
     data[LH_THIGH] = rhs[LH_THIGH];
-    data[LH_SHANK_FIXED] = rhs[LH_SHANK_FIXED];
+    data[LH_SHANK] = rhs[LH_SHANK];
     data[LH_WHEEL_L] = rhs[LH_WHEEL_L];
     data[RH_HIP] = rhs[RH_HIP];
     data[RH_THIGH] = rhs[RH_THIGH];
-    data[RH_SHANK_FIXED] = rhs[RH_SHANK_FIXED];
+    data[RH_SHANK] = rhs[RH_SHANK];
     data[RH_WHEEL_L] = rhs[RH_WHEEL_L];
 }
 
@@ -90,19 +90,19 @@ void LinkDataMap<T>::assigndata(const T& value) {
     data[BASE] = value;
     data[LF_HIP] = value;
     data[LF_THIGH] = value;
-    data[LF_SHANK_FIXED] = value;
+    data[LF_SHANK] = value;
     data[LF_WHEEL_L] = value;
     data[RF_HIP] = value;
     data[RF_THIGH] = value;
-    data[RF_SHANK_FIXED] = value;
+    data[RF_SHANK] = value;
     data[RF_WHEEL_L] = value;
     data[LH_HIP] = value;
     data[LH_THIGH] = value;
-    data[LH_SHANK_FIXED] = value;
+    data[LH_SHANK] = value;
     data[LH_WHEEL_L] = value;
     data[RH_HIP] = value;
     data[RH_THIGH] = value;
-    data[RH_SHANK_FIXED] = value;
+    data[RH_SHANK] = value;
     data[RH_WHEEL_L] = value;
 }
 
@@ -115,32 +115,32 @@ std::ostream& operator<<(std::ostream& out, const LinkDataMap<T>& map) {
     << map[LF_HIP]
     << "   LF_THIGH = "
     << map[LF_THIGH]
-    << "   LF_shank_fixed = "
-    << map[LF_SHANK_FIXED]
+    << "   LF_SHANK = "
+    << map[LF_SHANK]
     << "   LF_WHEEL_L = "
     << map[LF_WHEEL_L]
     << "   RF_HIP = "
     << map[RF_HIP]
     << "   RF_THIGH = "
     << map[RF_THIGH]
-    << "   RF_shank_fixed = "
-    << map[RF_SHANK_FIXED]
+    << "   RF_SHANK = "
+    << map[RF_SHANK]
     << "   RF_WHEEL_L = "
     << map[RF_WHEEL_L]
     << "   LH_HIP = "
     << map[LH_HIP]
     << "   LH_THIGH = "
     << map[LH_THIGH]
-    << "   LH_shank_fixed = "
-    << map[LH_SHANK_FIXED]
+    << "   LH_SHANK = "
+    << map[LH_SHANK]
     << "   LH_WHEEL_L = "
     << map[LH_WHEEL_L]
     << "   RH_HIP = "
     << map[RH_HIP]
     << "   RH_THIGH = "
     << map[RH_THIGH]
-    << "   RH_shank_fixed = "
-    << map[RH_SHANK_FIXED]
+    << "   RH_SHANK = "
+    << map[RH_SHANK]
     << "   RH_WHEEL_L = "
     << map[RH_WHEEL_L]
     ;

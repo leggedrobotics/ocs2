@@ -45,6 +45,8 @@ catkin_package(
     ${CATKIN_PACKAGE_DEPENDENCIES}
   DEPENDS
     Boost
+  LIBRARIES
+    double_integrator_interface
 )
 
 ###########

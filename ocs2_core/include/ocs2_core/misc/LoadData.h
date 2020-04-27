@@ -186,7 +186,7 @@ inline void loadStdVector(const std::string& filename, const std::string& topicN
 
 template <typename scalar_t>
 void loadPartitioningTimes(const std::string& taskFile, scalar_t& timeHorizon, size_t& numPartitions,
-                           std::vector<scalar_t>& partitioningTimes, bool verbose /*= false*/) {
+                           std::vector<scalar_t>& partitioningTimes, bool verbose = false) {
   loadData::loadCppDataType(taskFile, "mpcTimeHorizon.timehorizon", timeHorizon);
   loadData::loadCppDataType(taskFile, "mpcTimeHorizon.numPartitions", numPartitions);
 

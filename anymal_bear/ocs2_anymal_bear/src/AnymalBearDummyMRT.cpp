@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
   ros::init(argc, argv, "anymal_bear_mrt");
   ros::NodeHandle nodeHandle;
 
-  auto anymalInterface = anymal::getAnymalBearInterface(taskName);
+  auto anymalInterface = anymal::getAnymalBearInterface(anymal::getTaskFileFolderBear(taskName));
   ocs2::MPC_Settings mpcSettings;
   mpcSettings.loadSettings(anymal::getTaskFilePathBear(taskName));
   quadrupedDummyNode(nodeHandle, *anymalInterface, &anymalInterface->getRollout(), mpcSettings.mrtDesiredFrequency_,

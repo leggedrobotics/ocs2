@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+  <!--  This launch file saves the instantiated URDF to a file.
+        This workflow is not required when using the load_config.launch in anymal_research,
+        load_config.launch will load the urdf via the ANYbotics stack_launcher -->
+
+  <!-- Load the configuration (generates the URDF on the param server) -->
+  <include file="$(find anymal_b)/launch/load_config.launch">
+    <arg name="robot"     value="bear"/>
+  </include>
+
+  <!-- Save URDF to file -->
+  <include file="$(find rosparam_tools)/launch/save_rosparam.launch">
+    <arg name="parameter"       value="anymal_description"/>
+    <arg name="file"            value="$(find ocs2_anymal_bear_description)/urdf/cached_anymal_bear.urdf"/>
+    <arg name="trigger"         value="/config_loaded"/>
+  </include>
+
+</launch>

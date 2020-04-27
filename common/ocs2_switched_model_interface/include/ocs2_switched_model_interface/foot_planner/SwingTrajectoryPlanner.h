@@ -9,7 +9,8 @@
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
-#include "ocs2_switched_model_interface/foot_planner/SplineCpg.h"
+#include "ocs2_switched_model_interface/foot_planner/FootPhase.h"
+#include "ocs2_switched_model_interface/terrain/TerrainModel.h"
 #include "ocs2_switched_model_interface/terrain/TerrainPlane.h"
 
 namespace switched_model {
@@ -29,13 +30,10 @@ SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& fi
 class SwingTrajectoryPlanner {
  public:
   SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const ComModelBase<scalar_t>& comModel,
-                         const KinematicsModelBase<scalar_t>& kinematicsModel);
+                         const KinematicsModelBase<scalar_t>& kinematicsModel, std::shared_ptr<const TerrainModel> terrainModelPtr);
 
   void update(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState, const ocs2::ModeSchedule& modeSchedule,
               const TerrainPlane& terrain);
-
-  void update(const ocs2::ModeSchedule& modeSchedule, const feet_array_t<scalar_array_t>& liftOffHeightSequence,
-              const feet_array_t<scalar_array_t>& touchDownHeightSequence);
 
   const TerrainPlane& getReferenceTerrainPlane(size_t leg, scalar_t time) const;
 
@@ -59,30 +57,26 @@ class SwingTrajectoryPlanner {
     vector3_t position;
   };
   feet_array_t<contactHistory> lastContacts_;
-  feet_array_t<std::vector<SplineCpg>> feetHeightTrajectories_;
-  feet_array_t<std::vector<TerrainPlane>> targetTerrains_;  // TODO: consider merging into struct with SplineCpg
-  feet_array_t<std::vector<scalar_t>> feetHeightTrajectoriesEvents_;
 
-  // Error correction
-  scalar_t initTime_;
-  feet_array_t<scalar_t> initialErrors_;
+  feet_array_t<std::vector<FootPhase>> feetNormalTrajectories_;
+  feet_array_t<std::vector<scalar_t>> feetNormalTrajectoriesEvents_;
 
- public:
-  /** Helper functions */
-  enum class FootPhaseType { Stance, Swing };
-  struct FootPhase {
-    FootPhaseType type;
-    scalar_t startTime;  // times are NaN if they cannot be identified at the boundaries
-    scalar_t endTime;
-  };
-  static std::vector<FootPhase> extractFootPhases(const std::vector<scalar_t>& eventTimes, const std::vector<bool>& contactFlags);
-
-  /**
-   * Extracts for each leg the contact sequence over the motion phase sequence.
-   * @param phaseIDsStock
-   * @return contactFlagStock
-   */
-  static feet_array_t<std::vector<bool>> extractContactFlags(const std::vector<size_t>& phaseIDsStock);
+  // Terrain
+  std::shared_ptr<const TerrainModel> terrainModelPtr_;
 };
+
+/**
+ * Get {startTime, endTime} for all contact phases. Swingphases are always implied in between: endTime[i] < startTime[i+1]
+ * times are NaN if they cannot be identified at the boundaries
+ */
+std::vector<std::pair<scalar_t, scalar_t>> extractContactTimings(const std::vector<scalar_t>& eventTimes, const std::vector<bool>& contactFlags);
+
+
+/**
+ * Extracts for each leg the contact sequence over the motion phase sequence.
+ * @param modeSequence : Sequence of contact modes.
+ * @return Sequence of contact flags per leg.
+ */
+feet_array_t<std::vector<bool>> extractContactFlags(const std::vector<size_t>& modeSequence);
 
 }  // namespace switched_model

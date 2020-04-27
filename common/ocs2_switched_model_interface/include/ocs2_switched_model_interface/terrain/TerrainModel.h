@@ -4,7 +4,16 @@
 
 #pragma once
 
+#include "ocs2_switched_model_interface/core/SwitchedModel.h"
+#include "ocs2_switched_model_interface/terrain/TerrainPlane.h"
+
+namespace switched_model {
+
 class TerrainModel {
  public:
+  TerrainPlane getLocalTerrainAtPositionInWorld(const vector3_t positionInWorld) const;
+
  private:
 };
+
+}

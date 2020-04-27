@@ -11,28 +11,20 @@
 namespace switched_model {
 
 SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const ComModelBase<scalar_t>& comModel,
-                                               const KinematicsModelBase<scalar_t>& kinematicsModel)
-    : settings_(std::move(settings)), comModel_(comModel.clone()), kinematicsModel_(kinematicsModel.clone()) {}
+                                               const KinematicsModelBase<scalar_t>& kinematicsModel, std::shared_ptr<const TerrainModel> terrainModelPtr)
+    : settings_(std::move(settings)), comModel_(comModel.clone()), kinematicsModel_(kinematicsModel.clone()), terrainModelPtr_(terrainModelPtr) {}
 
 void SwingTrajectoryPlanner::update(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState,
-                                    const ocs2::ModeSchedule& modeSchedule, const TerrainPlane& terrain) {
+                                    const ocs2::CostDesiredTrajectories costDesiredTrajectories,
+                                    const ocs2::ModeSchedule& modeSchedule) {
   const auto basePose = comModel_->calculateBasePose(getComPose(currentState));
   const auto feetPositions = kinematicsModel_->feetPositionsInOriginFrame(basePose, getJointPositions(currentState));
 
-  updateFeetTrajectories(initTime, finalTime, feetPositions, modeSchedule, terrain);
-  updateErrorTrajectories(initTime, feetPositions, modeSchedule, terrain);
-
-  //  std::cout << "[SwingTrajectoryPlanner]\n";
-  //  std::cout << "Last contact:\n";
-  //  std::cout << "0:\t t:" << lastContacts_[0].time << " h: " << lastContacts_[0].height << "\n";
-  //  std::cout << "1:\t t:" << lastContacts_[1].time << " h: " << lastContacts_[1].height << "\n";
-  //  std::cout << "2:\t t:" << lastContacts_[2].time << " h: " << lastContacts_[2].height << "\n";
-  //  std::cout << "3:\t t:" << lastContacts_[3].time << " h: " << lastContacts_[3].height << "\n";
-  //  std::cout << std::endl;
+  updateFeetTrajectories(initTime, finalTime, feetPositions, modeSchedule);
+  updateErrorTrajectories(initTime, feetPositions, modeSchedule);
 }
 
-void SwingTrajectoryPlanner::update(const ocs2::ModeSchedule& modeSchedule, const feet_array_t<scalar_array_t>& liftOffHeightSequence,
-                                    const feet_array_t<scalar_array_t>& touchDownHeightSequence) {}
+
 
 const TerrainPlane& SwingTrajectoryPlanner::getReferenceTerrainPlane(size_t leg, scalar_t time) const {
   const auto index = ocs2::lookup::findIndexInTimeArray(feetHeightTrajectoriesEvents_[leg], time);
@@ -63,20 +55,20 @@ void SwingTrajectoryPlanner::updateFeetTrajectories(scalar_t initTime, scalar_t 
   for (int leg = 0; leg < NUM_CONTACT_POINTS; leg++) {
     //    std::cout << "Leg : " << leg << std::endl;
 
-    const auto footPhases = extractFootPhases(modeSchedule.eventTimes, contactSequencePerLeg[leg]);
-    auto& footTrajectory = feetHeightTrajectories_[leg];
-    auto& footTargetTerrains = targetTerrains_[leg];
-    auto& footTrajectoryEvents = feetHeightTrajectoriesEvents_[leg];
+    const auto contactTimings = extractContactTimings(modeSchedule.eventTimes, contactSequencePerLeg[leg]);
+    const auto selectTerrain
+
+    auto& footTrajectory = feetNormalTrajectories_[leg];
+    auto& footTrajectoryEvents = feetNormalTrajectoriesEvents_[leg];
     footTrajectory.clear();
-    footTargetTerrains.clear();
     footTrajectoryEvents.clear();
 
     // If the first phase is a stance phase, register when it leaves contact.
-    if (footPhases.front().type == FootPhaseType::Stance) {
-      if (std::isnan(footPhases.front().endTime)) {
+    if (std::isnan(contactTimings.front().first)) {
+      if (std::isnan(contactTimings.front().second)) {
         lastContacts_[leg] = {finalTime, currentFeetPositions[leg]};
       } else {
-        lastContacts_[leg] = {footPhases.front().endTime, currentFeetPositions[leg]};
+        lastContacts_[leg] = {contactTimings.front().second, currentFeetPositions[leg]};
       }
     }
 
@@ -171,61 +163,6 @@ void SwingTrajectoryPlanner::updateFeetTrajectories(scalar_t initTime, scalar_t 
   }
 }
 
-void SwingTrajectoryPlanner::updateErrorTrajectories(scalar_t initTime, const feet_array_t<vector3_t>& currentFeetPositions,
-                                                     const ocs2::ModeSchedule& modeSchedule, const TerrainPlane& terrain) {
-  const auto index = ocs2::lookup::findIndexInTimeArray(modeSchedule.eventTimes, initTime);
-  initTime_ = initTime;
-  for (int leg = 0; leg < NUM_CONTACT_POINTS; leg++) {
-    initialErrors_[leg] =
-        terrainDistanceFromPositionInWorld(currentFeetPositions[leg], terrain) - feetHeightTrajectories_[leg][index].position(initTime);
-  }
-}
-
-std::vector<SwingTrajectoryPlanner::FootPhase> SwingTrajectoryPlanner::extractFootPhases(const std::vector<scalar_t>& eventTimes,
-                                                                                         const std::vector<bool>& contactFlags) {
-  assert(eventTimes.size() + 1 == contactFlags.size());
-  const int numPhases = contactFlags.size();
-
-  std::vector<SwingTrajectoryPlanner::FootPhase> footPhases;
-  int currentPhase = 0;
-  while (currentPhase < numPhases) {
-    // Register start of the phase
-    FootPhase currentFootPhase{};
-    currentFootPhase.type = (contactFlags[currentPhase]) ? FootPhaseType::Stance : FootPhaseType::Swing;
-    currentFootPhase.startTime = (currentPhase == 0) ? std::numeric_limits<scalar_t>::quiet_NaN() : eventTimes[currentPhase - 1];
-
-    // Find when the phase ends
-    while (currentPhase + 1 < numPhases && contactFlags[currentPhase] == contactFlags[currentPhase + 1]) {
-      ++currentPhase;
-    }
-
-    // Register end of the phase
-    currentFootPhase.endTime = (currentPhase + 1 == numPhases) ? std::numeric_limits<scalar_t>::quiet_NaN() : eventTimes[currentPhase];
-
-    // Add to phases
-    footPhases.push_back(std::move(currentFootPhase));
-    ++currentPhase;
-  }
-  return footPhases;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-feet_array_t<std::vector<bool>> SwingTrajectoryPlanner::extractContactFlags(const std::vector<size_t>& phaseIDsStock) {
-  const size_t numPhases = phaseIDsStock.size();
-
-  feet_array_t<std::vector<bool>> contactFlagStock;
-  std::fill(contactFlagStock.begin(), contactFlagStock.end(), std::vector<bool>(numPhases));
-
-  for (size_t i = 0; i < numPhases; i++) {
-    const auto contactFlag = modeNumber2StanceLeg(phaseIDsStock[i]);
-    for (size_t j = 0; j < NUM_CONTACT_POINTS; j++) {
-      contactFlagStock[j][i] = contactFlag[j];
-    }
-  }
-  return contactFlagStock;
-}
 
 SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& filename, bool verbose) {
   SwingTrajectoryPlannerSettings settings{};
@@ -252,6 +189,46 @@ SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& fi
   }
 
   return settings;
+}
+
+std::vector<std::pair<scalar_t, scalar_t>> extractContactTimings(const std::vector<scalar_t>& eventTimes, const std::vector<bool>& contactFlags) {
+  assert(eventTimes.size() + 1 == contactFlags.size());
+  const int numPhases = contactFlags.size();
+
+  std::vector<std::pair<scalar_t, scalar_t>> contactTimings;
+  int currentPhase = 0;
+
+  while (currentPhase < numPhases) {
+    scalar_t startTime = (currentPhase == 0) ? std::numeric_limits<scalar_t>::quiet_NaN() : eventTimes[currentPhase - 1];
+
+    // Find when the contact phase ends
+    while (currentPhase + 1 < numPhases && contactFlags[currentPhase + 1]) {
+      ++currentPhase;
+    }
+
+    // Register end of the phase
+    scalar_t endTime = (currentPhase + 1 == numPhases) ? std::numeric_limits<scalar_t>::quiet_NaN() : eventTimes[currentPhase];
+
+    // Add to phases
+    contactTimings.emplace_back(startTime, endTime);
+    ++currentPhase;
+  }
+  return contactTimings;
+}
+
+feet_array_t<std::vector<bool>> extractContactFlags(const std::vector<size_t>& modeSequence) {
+  const size_t numPhases = modeSequence.size();
+
+  feet_array_t<std::vector<bool>> contactFlagStock;
+  std::fill(contactFlagStock.begin(), contactFlagStock.end(), std::vector<bool>(numPhases));
+
+  for (size_t i = 0; i < numPhases; i++) {
+    const auto contactFlag = modeNumber2StanceLeg(modeSequence[i]);
+    for (size_t j = 0; j < NUM_CONTACT_POINTS; j++) {
+      contactFlagStock[j][i] = contactFlag[j];
+    }
+  }
+  return contactFlagStock;
 }
 
 }  // namespace switched_model

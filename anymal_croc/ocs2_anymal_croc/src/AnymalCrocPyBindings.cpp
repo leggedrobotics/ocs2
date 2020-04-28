@@ -6,11 +6,11 @@
 namespace anymal {
 
 AnymalCrocPyBindings::AnymalCrocPyBindings(std::string taskName, bool async) : Base(async), taskName_(std::move(taskName)) {
-  auto anymalCrocInterface = getAnymalCrocInterface(taskName_);
+  auto anymalCrocInterface = getAnymalCrocInterface(getTaskFileFolderCroc(taskName_));
   ocs2::MPC_Settings mpcSettings;
-  mpcSettings.loadSettings(anymal::getTaskFilePathCroc(taskName_));
+  mpcSettings.loadSettings(getTaskFilePathCroc(taskName_));
   ocs2::SLQ_Settings slqSettings;
-  slqSettings.loadSettings(anymal::getTaskFilePathCroc(taskName_));
+  slqSettings.loadSettings(getTaskFilePathCroc(taskName_));
 
   init(*anymalCrocInterface, switched_model::getMpc(*anymalCrocInterface, mpcSettings, slqSettings));
 

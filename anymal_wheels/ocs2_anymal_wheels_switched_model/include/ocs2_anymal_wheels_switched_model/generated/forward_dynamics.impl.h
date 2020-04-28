@@ -13,32 +13,32 @@ iit::ANYmal::dyn::tpl::ForwardDynamics<TRAIT>::ForwardDynamics(iit::ANYmal::dyn:
     LF_HIP_c.setZero();
     LF_THIGH_v.setZero();
     LF_THIGH_c.setZero();
-    LF_shank_fixed_v.setZero();
-    LF_shank_fixed_c.setZero();
+    LF_SHANK_v.setZero();
+    LF_SHANK_c.setZero();
     LF_WHEEL_L_v.setZero();
     LF_WHEEL_L_c.setZero();
     RF_HIP_v.setZero();
     RF_HIP_c.setZero();
     RF_THIGH_v.setZero();
     RF_THIGH_c.setZero();
-    RF_shank_fixed_v.setZero();
-    RF_shank_fixed_c.setZero();
+    RF_SHANK_v.setZero();
+    RF_SHANK_c.setZero();
     RF_WHEEL_L_v.setZero();
     RF_WHEEL_L_c.setZero();
     LH_HIP_v.setZero();
     LH_HIP_c.setZero();
     LH_THIGH_v.setZero();
     LH_THIGH_c.setZero();
-    LH_shank_fixed_v.setZero();
-    LH_shank_fixed_c.setZero();
+    LH_SHANK_v.setZero();
+    LH_SHANK_c.setZero();
     LH_WHEEL_L_v.setZero();
     LH_WHEEL_L_c.setZero();
     RH_HIP_v.setZero();
     RH_HIP_c.setZero();
     RH_THIGH_v.setZero();
     RH_THIGH_c.setZero();
-    RH_shank_fixed_v.setZero();
-    RH_shank_fixed_c.setZero();
+    RH_SHANK_v.setZero();
+    RH_SHANK_c.setZero();
     RH_WHEEL_L_v.setZero();
     RH_WHEEL_L_c.setZero();
 
@@ -64,32 +64,32 @@ void iit::ANYmal::dyn::tpl::ForwardDynamics<TRAIT>::fd(
     LF_HIP_p = - fext[LF_HIP];
     LF_THIGH_AI = inertiaProps->getTensor_LF_THIGH();
     LF_THIGH_p = - fext[LF_THIGH];
-    LF_shank_fixed_AI = inertiaProps->getTensor_LF_shank_fixed();
-    LF_shank_fixed_p = - fext[LF_SHANK_FIXED];
+    LF_SHANK_AI = inertiaProps->getTensor_LF_SHANK();
+    LF_SHANK_p = - fext[LF_SHANK];
     LF_WHEEL_L_AI = inertiaProps->getTensor_LF_WHEEL_L();
     LF_WHEEL_L_p = - fext[LF_WHEEL_L];
     RF_HIP_AI = inertiaProps->getTensor_RF_HIP();
     RF_HIP_p = - fext[RF_HIP];
     RF_THIGH_AI = inertiaProps->getTensor_RF_THIGH();
     RF_THIGH_p = - fext[RF_THIGH];
-    RF_shank_fixed_AI = inertiaProps->getTensor_RF_shank_fixed();
-    RF_shank_fixed_p = - fext[RF_SHANK_FIXED];
+    RF_SHANK_AI = inertiaProps->getTensor_RF_SHANK();
+    RF_SHANK_p = - fext[RF_SHANK];
     RF_WHEEL_L_AI = inertiaProps->getTensor_RF_WHEEL_L();
     RF_WHEEL_L_p = - fext[RF_WHEEL_L];
     LH_HIP_AI = inertiaProps->getTensor_LH_HIP();
     LH_HIP_p = - fext[LH_HIP];
     LH_THIGH_AI = inertiaProps->getTensor_LH_THIGH();
     LH_THIGH_p = - fext[LH_THIGH];
-    LH_shank_fixed_AI = inertiaProps->getTensor_LH_shank_fixed();
-    LH_shank_fixed_p = - fext[LH_SHANK_FIXED];
+    LH_SHANK_AI = inertiaProps->getTensor_LH_SHANK();
+    LH_SHANK_p = - fext[LH_SHANK];
     LH_WHEEL_L_AI = inertiaProps->getTensor_LH_WHEEL_L();
     LH_WHEEL_L_p = - fext[LH_WHEEL_L];
     RH_HIP_AI = inertiaProps->getTensor_RH_HIP();
     RH_HIP_p = - fext[RH_HIP];
     RH_THIGH_AI = inertiaProps->getTensor_RH_THIGH();
     RH_THIGH_p = - fext[RH_THIGH];
-    RH_shank_fixed_AI = inertiaProps->getTensor_RH_shank_fixed();
-    RH_shank_fixed_p = - fext[RH_SHANK_FIXED];
+    RH_SHANK_AI = inertiaProps->getTensor_RH_SHANK();
+    RH_SHANK_p = - fext[RH_SHANK];
     RH_WHEEL_L_AI = inertiaProps->getTensor_RH_WHEEL_L();
     RH_WHEEL_L_p = - fext[RH_WHEEL_L];
     // ---------------------- FIRST PASS ---------------------- //
@@ -122,21 +122,21 @@ void iit::ANYmal::dyn::tpl::ForwardDynamics<TRAIT>::fd(
     //  - The bias force term:
     LF_THIGH_p += iit::rbd::vxIv(LF_THIGH_v, LF_THIGH_AI);
     
-    // + Link LF_shank_fixed
+    // + Link LF_SHANK
     //  - The spatial velocity:
-    LF_shank_fixed_v = (motionTransforms-> fr_LF_shank_fixed_X_fr_LF_THIGH) * LF_THIGH_v;
-    LF_shank_fixed_v(iit::rbd::AZ) += qd(LF_KFE);
+    LF_SHANK_v = (motionTransforms-> fr_LF_SHANK_X_fr_LF_THIGH) * LF_THIGH_v;
+    LF_SHANK_v(iit::rbd::AZ) += qd(LF_KFE);
     
     //  - The velocity-product acceleration term:
-    iit::rbd::motionCrossProductMx<Scalar>(LF_shank_fixed_v, vcross);
-    LF_shank_fixed_c = vcross.col(iit::rbd::AZ) * qd(LF_KFE);
+    iit::rbd::motionCrossProductMx<Scalar>(LF_SHANK_v, vcross);
+    LF_SHANK_c = vcross.col(iit::rbd::AZ) * qd(LF_KFE);
     
     //  - The bias force term:
-    LF_shank_fixed_p += iit::rbd::vxIv(LF_shank_fixed_v, LF_shank_fixed_AI);
+    LF_SHANK_p += iit::rbd::vxIv(LF_SHANK_v, LF_SHANK_AI);
     
     // + Link LF_WHEEL_L
     //  - The spatial velocity:
-    LF_WHEEL_L_v = (motionTransforms-> fr_LF_WHEEL_L_X_fr_LF_shank_fixed) * LF_shank_fixed_v;
+    LF_WHEEL_L_v = (motionTransforms-> fr_LF_WHEEL_L_X_fr_LF_SHANK) * LF_SHANK_v;
     LF_WHEEL_L_v(iit::rbd::AZ) += qd(LF_WHEEL);
     
     //  - The velocity-product acceleration term:
@@ -170,21 +170,21 @@ void iit::ANYmal::dyn::tpl::ForwardDynamics<TRAIT>::fd(
     //  - The bias force term:
     RF_THIGH_p += iit::rbd::vxIv(RF_THIGH_v, RF_THIGH_AI);
     
-    // + Link RF_shank_fixed
+    // + Link RF_SHANK
     //  - The spatial velocity:
-    RF_shank_fixed_v = (motionTransforms-> fr_RF_shank_fixed_X_fr_RF_THIGH) * RF_THIGH_v;
-    RF_shank_fixed_v(iit::rbd::AZ) += qd(RF_KFE);
+    RF_SHANK_v = (motionTransforms-> fr_RF_SHANK_X_fr_RF_THIGH) * RF_THIGH_v;
+    RF_SHANK_v(iit::rbd::AZ) += qd(RF_KFE);
     
     //  - The velocity-product acceleration term:
-    iit::rbd::motionCrossProductMx<Scalar>(RF_shank_fixed_v, vcross);
-    RF_shank_fixed_c = vcross.col(iit::rbd::AZ) * qd(RF_KFE);
+    iit::rbd::motionCrossProductMx<Scalar>(RF_SHANK_v, vcross);
+    RF_SHANK_c = vcross.col(iit::rbd::AZ) * qd(RF_KFE);
     
     //  - The bias force term:
-    RF_shank_fixed_p += iit::rbd::vxIv(RF_shank_fixed_v, RF_shank_fixed_AI);
+    RF_SHANK_p += iit::rbd::vxIv(RF_SHANK_v, RF_SHANK_AI);
     
     // + Link RF_WHEEL_L
     //  - The spatial velocity:
-    RF_WHEEL_L_v = (motionTransforms-> fr_RF_WHEEL_L_X_fr_RF_shank_fixed) * RF_shank_fixed_v;
+    RF_WHEEL_L_v = (motionTransforms-> fr_RF_WHEEL_L_X_fr_RF_SHANK) * RF_SHANK_v;
     RF_WHEEL_L_v(iit::rbd::AZ) += qd(RF_WHEEL);
     
     //  - The velocity-product acceleration term:
@@ -218,21 +218,21 @@ void iit::ANYmal::dyn::tpl::ForwardDynamics<TRAIT>::fd(
     //  - The bias force term:
     LH_THIGH_p += iit::rbd::vxIv(LH_THIGH_v, LH_THIGH_AI);
     
-    // + Link LH_shank_fixed
+    // + Link LH_SHANK
     //  - The spatial velocity:
-    LH_shank_fixed_v = (motionTransforms-> fr_LH_shank_fixed_X_fr_LH_THIGH) * LH_THIGH_v;
-    LH_shank_fixed_v(iit::rbd::AZ) += qd(LH_KFE);
+    LH_SHANK_v = (motionTransforms-> fr_LH_SHANK_X_fr_LH_THIGH) * LH_THIGH_v;
+    LH_SHANK_v(iit::rbd::AZ) += qd(LH_KFE);
     
     //  - The velocity-product acceleration term:
-    iit::rbd::motionCrossProductMx<Scalar>(LH_shank_fixed_v, vcross);
-    LH_shank_fixed_c = vcross.col(iit::rbd::AZ) * qd(LH_KFE);
+    iit::rbd::motionCrossProductMx<Scalar>(LH_SHANK_v, vcross);
+    LH_SHANK_c = vcross.col(iit::rbd::AZ) * qd(LH_KFE);
     
     //  - The bias force term:
-    LH_shank_fixed_p += iit::rbd::vxIv(LH_shank_fixed_v, LH_shank_fixed_AI);
+    LH_SHANK_p += iit::rbd::vxIv(LH_SHANK_v, LH_SHANK_AI);
     
     // + Link LH_WHEEL_L
     //  - The spatial velocity:
-    LH_WHEEL_L_v = (motionTransforms-> fr_LH_WHEEL_L_X_fr_LH_shank_fixed) * LH_shank_fixed_v;
+    LH_WHEEL_L_v = (motionTransforms-> fr_LH_WHEEL_L_X_fr_LH_SHANK) * LH_SHANK_v;
     LH_WHEEL_L_v(iit::rbd::AZ) += qd(LH_WHEEL);
     
     //  - The velocity-product acceleration term:
@@ -266,21 +266,21 @@ void iit::ANYmal::dyn::tpl::ForwardDynamics<TRAIT>::fd(
     //  - The bias force term:
     RH_THIGH_p += iit::rbd::vxIv(RH_THIGH_v, RH_THIGH_AI);
     
-    // + Link RH_shank_fixed
+    // + Link RH_SHANK
     //  - The spatial velocity:
-    RH_shank_fixed_v = (motionTransforms-> fr_RH_shank_fixed_X_fr_RH_THIGH) * RH_THIGH_v;
-    RH_shank_fixed_v(iit::rbd::AZ) += qd(RH_KFE);
+    RH_SHANK_v = (motionTransforms-> fr_RH_SHANK_X_fr_RH_THIGH) * RH_THIGH_v;
+    RH_SHANK_v(iit::rbd::AZ) += qd(RH_KFE);
     
     //  - The velocity-product acceleration term:
-    iit::rbd::motionCrossProductMx<Scalar>(RH_shank_fixed_v, vcross);
-    RH_shank_fixed_c = vcross.col(iit::rbd::AZ) * qd(RH_KFE);
+    iit::rbd::motionCrossProductMx<Scalar>(RH_SHANK_v, vcross);
+    RH_SHANK_c = vcross.col(iit::rbd::AZ) * qd(RH_KFE);
     
     //  - The bias force term:
-    RH_shank_fixed_p += iit::rbd::vxIv(RH_shank_fixed_v, RH_shank_fixed_AI);
+    RH_SHANK_p += iit::rbd::vxIv(RH_SHANK_v, RH_SHANK_AI);
     
     // + Link RH_WHEEL_L
     //  - The spatial velocity:
-    RH_WHEEL_L_v = (motionTransforms-> fr_RH_WHEEL_L_X_fr_RH_shank_fixed) * RH_shank_fixed_v;
+    RH_WHEEL_L_v = (motionTransforms-> fr_RH_WHEEL_L_X_fr_RH_SHANK) * RH_SHANK_v;
     RH_WHEEL_L_v(iit::rbd::AZ) += qd(RH_WHEEL);
     
     //  - The velocity-product acceleration term:
@@ -304,20 +304,20 @@ void iit::ANYmal::dyn::tpl::ForwardDynamics<TRAIT>::fd(
     
     iit::rbd::compute_Ia_revolute(RH_WHEEL_L_AI, RH_WHEEL_L_U, RH_WHEEL_L_D, Ia_r);  // same as: Ia_r = RH_WHEEL_L_AI - RH_WHEEL_L_U/RH_WHEEL_L_D * RH_WHEEL_L_U.transpose();
     pa = RH_WHEEL_L_p + Ia_r * RH_WHEEL_L_c + RH_WHEEL_L_U * RH_WHEEL_L_u/RH_WHEEL_L_D;
-    ctransform_Ia_revolute(Ia_r, motionTransforms-> fr_RH_WHEEL_L_X_fr_RH_shank_fixed, IaB);
-    RH_shank_fixed_AI += IaB;
-    RH_shank_fixed_p += (motionTransforms-> fr_RH_WHEEL_L_X_fr_RH_shank_fixed).transpose() * pa;
+    ctransform_Ia_revolute(Ia_r, motionTransforms-> fr_RH_WHEEL_L_X_fr_RH_SHANK, IaB);
+    RH_SHANK_AI += IaB;
+    RH_SHANK_p += (motionTransforms-> fr_RH_WHEEL_L_X_fr_RH_SHANK).transpose() * pa;
     
-    // + Link RH_shank_fixed
-    RH_shank_fixed_u = tau(RH_KFE) - RH_shank_fixed_p(iit::rbd::AZ);
-    RH_shank_fixed_U = RH_shank_fixed_AI.col(iit::rbd::AZ);
-    RH_shank_fixed_D = RH_shank_fixed_U(iit::rbd::AZ);
+    // + Link RH_SHANK
+    RH_SHANK_u = tau(RH_KFE) - RH_SHANK_p(iit::rbd::AZ);
+    RH_SHANK_U = RH_SHANK_AI.col(iit::rbd::AZ);
+    RH_SHANK_D = RH_SHANK_U(iit::rbd::AZ);
     
-    iit::rbd::compute_Ia_revolute(RH_shank_fixed_AI, RH_shank_fixed_U, RH_shank_fixed_D, Ia_r);  // same as: Ia_r = RH_shank_fixed_AI - RH_shank_fixed_U/RH_shank_fixed_D * RH_shank_fixed_U.transpose();
-    pa = RH_shank_fixed_p + Ia_r * RH_shank_fixed_c + RH_shank_fixed_U * RH_shank_fixed_u/RH_shank_fixed_D;
-    ctransform_Ia_revolute(Ia_r, motionTransforms-> fr_RH_shank_fixed_X_fr_RH_THIGH, IaB);
+    iit::rbd::compute_Ia_revolute(RH_SHANK_AI, RH_SHANK_U, RH_SHANK_D, Ia_r);  // same as: Ia_r = RH_SHANK_AI - RH_SHANK_U/RH_SHANK_D * RH_SHANK_U.transpose();
+    pa = RH_SHANK_p + Ia_r * RH_SHANK_c + RH_SHANK_U * RH_SHANK_u/RH_SHANK_D;
+    ctransform_Ia_revolute(Ia_r, motionTransforms-> fr_RH_SHANK_X_fr_RH_THIGH, IaB);
     RH_THIGH_AI += IaB;
-    RH_THIGH_p += (motionTransforms-> fr_RH_shank_fixed_X_fr_RH_THIGH).transpose() * pa;
+    RH_THIGH_p += (motionTransforms-> fr_RH_SHANK_X_fr_RH_THIGH).transpose() * pa;
     
     // + Link RH_THIGH
     RH_THIGH_u = tau(RH_HFE) - RH_THIGH_p(iit::rbd::AZ);
@@ -348,20 +348,20 @@ void iit::ANYmal::dyn::tpl::ForwardDynamics<TRAIT>::fd(
     
     iit::rbd::compute_Ia_revolute(LH_WHEEL_L_AI, LH_WHEEL_L_U, LH_WHEEL_L_D, Ia_r);  // same as: Ia_r = LH_WHEEL_L_AI - LH_WHEEL_L_U/LH_WHEEL_L_D * LH_WHEEL_L_U.transpose();
     pa = LH_WHEEL_L_p + Ia_r * LH_WHEEL_L_c + LH_WHEEL_L_U * LH_WHEEL_L_u/LH_WHEEL_L_D;
-    ctransform_Ia_revolute(Ia_r, motionTransforms-> fr_LH_WHEEL_L_X_fr_LH_shank_fixed, IaB);
-    LH_shank_fixed_AI += IaB;
-    LH_shank_fixed_p += (motionTransforms-> fr_LH_WHEEL_L_X_fr_LH_shank_fixed).transpose() * pa;
+    ctransform_Ia_revolute(Ia_r, motionTransforms-> fr_LH_WHEEL_L_X_fr_LH_SHANK, IaB);
+    LH_SHANK_AI += IaB;
+    LH_SHANK_p += (motionTransforms-> fr_LH_WHEEL_L_X_fr_LH_SHANK).transpose() * pa;
     
-    // + Link LH_shank_fixed
-    LH_shank_fixed_u = tau(LH_KFE) - LH_shank_fixed_p(iit::rbd::AZ);
-    LH_shank_fixed_U = LH_shank_fixed_AI.col(iit::rbd::AZ);
-    LH_shank_fixed_D = LH_shank_fixed_U(iit::rbd::AZ);
+    // + Link LH_SHANK
+    LH_SHANK_u = tau(LH_KFE) - LH_SHANK_p(iit::rbd::AZ);
+    LH_SHANK_U = LH_SHANK_AI.col(iit::rbd::AZ);
+    LH_SHANK_D = LH_SHANK_U(iit::rbd::AZ);
     
-    iit::rbd::compute_Ia_revolute(LH_shank_fixed_AI, LH_shank_fixed_U, LH_shank_fixed_D, Ia_r);  // same as: Ia_r = LH_shank_fixed_AI - LH_shank_fixed_U/LH_shank_fixed_D * LH_shank_fixed_U.transpose();
-    pa = LH_shank_fixed_p + Ia_r * LH_shank_fixed_c + LH_shank_fixed_U * LH_shank_fixed_u/LH_shank_fixed_D;
-    ctransform_Ia_revolute(Ia_r, motionTransforms-> fr_LH_shank_fixed_X_fr_LH_THIGH, IaB);
+    iit::rbd::compute_Ia_revolute(LH_SHANK_AI, LH_SHANK_U, LH_SHANK_D, Ia_r);  // same as: Ia_r = LH_SHANK_AI - LH_SHANK_U/LH_SHANK_D * LH_SHANK_U.transpose();
+    pa = LH_SHANK_p + Ia_r * LH_SHANK_c + LH_SHANK_U * LH_SHANK_u/LH_SHANK_D;
+    ctransform_Ia_revolute(Ia_r, motionTransforms-> fr_LH_SHANK_X_fr_LH_THIGH, IaB);
     LH_THIGH_AI += IaB;
-    LH_THIGH_p += (motionTransforms-> fr_LH_shank_fixed_X_fr_LH_THIGH).transpose() * pa;
+    LH_THIGH_p += (motionTransforms-> fr_LH_SHANK_X_fr_LH_THIGH).transpose() * pa;
     
     // + Link LH_THIGH
     LH_THIGH_u = tau(LH_HFE) - LH_THIGH_p(iit::rbd::AZ);
@@ -392,20 +392,20 @@ void iit::ANYmal::dyn::tpl::ForwardDynamics<TRAIT>::fd(
     
     iit::rbd::compute_Ia_revolute(RF_WHEEL_L_AI, RF_WHEEL_L_U, RF_WHEEL_L_D, Ia_r);  // same as: Ia_r = RF_WHEEL_L_AI - RF_WHEEL_L_U/RF_WHEEL_L_D * RF_WHEEL_L_U.transpose();
     pa = RF_WHEEL_L_p + Ia_r * RF_WHEEL_L_c + RF_WHEEL_L_U * RF_WHEEL_L_u/RF_WHEEL_L_D;
-    ctransform_Ia_revolute(Ia_r, motionTransforms-> fr_RF_WHEEL_L_X_fr_RF_shank_fixed, IaB);
-    RF_shank_fixed_AI += IaB;
-    RF_shank_fixed_p += (motionTransforms-> fr_RF_WHEEL_L_X_fr_RF_shank_fixed).transpose() * pa;
+    ctransform_Ia_revolute(Ia_r, motionTransforms-> fr_RF_WHEEL_L_X_fr_RF_SHANK, IaB);
+    RF_SHANK_AI += IaB;
+    RF_SHANK_p += (motionTransforms-> fr_RF_WHEEL_L_X_fr_RF_SHANK).transpose() * pa;
     
-    // + Link RF_shank_fixed
-    RF_shank_fixed_u = tau(RF_KFE) - RF_shank_fixed_p(iit::rbd::AZ);
-    RF_shank_fixed_U = RF_shank_fixed_AI.col(iit::rbd::AZ);
-    RF_shank_fixed_D = RF_shank_fixed_U(iit::rbd::AZ);
+    // + Link RF_SHANK
+    RF_SHANK_u = tau(RF_KFE) - RF_SHANK_p(iit::rbd::AZ);
+    RF_SHANK_U = RF_SHANK_AI.col(iit::rbd::AZ);
+    RF_SHANK_D = RF_SHANK_U(iit::rbd::AZ);
     
-    iit::rbd::compute_Ia_revolute(RF_shank_fixed_AI, RF_shank_fixed_U, RF_shank_fixed_D, Ia_r);  // same as: Ia_r = RF_shank_fixed_AI - RF_shank_fixed_U/RF_shank_fixed_D * RF_shank_fixed_U.transpose();
-    pa = RF_shank_fixed_p + Ia_r * RF_shank_fixed_c + RF_shank_fixed_U * RF_shank_fixed_u/RF_shank_fixed_D;
-    ctransform_Ia_revolute(Ia_r, motionTransforms-> fr_RF_shank_fixed_X_fr_RF_THIGH, IaB);
+    iit::rbd::compute_Ia_revolute(RF_SHANK_AI, RF_SHANK_U, RF_SHANK_D, Ia_r);  // same as: Ia_r = RF_SHANK_AI - RF_SHANK_U/RF_SHANK_D * RF_SHANK_U.transpose();
+    pa = RF_SHANK_p + Ia_r * RF_SHANK_c + RF_SHANK_U * RF_SHANK_u/RF_SHANK_D;
+    ctransform_Ia_revolute(Ia_r, motionTransforms-> fr_RF_SHANK_X_fr_RF_THIGH, IaB);
     RF_THIGH_AI += IaB;
-    RF_THIGH_p += (motionTransforms-> fr_RF_shank_fixed_X_fr_RF_THIGH).transpose() * pa;
+    RF_THIGH_p += (motionTransforms-> fr_RF_SHANK_X_fr_RF_THIGH).transpose() * pa;
     
     // + Link RF_THIGH
     RF_THIGH_u = tau(RF_HFE) - RF_THIGH_p(iit::rbd::AZ);
@@ -436,20 +436,20 @@ void iit::ANYmal::dyn::tpl::ForwardDynamics<TRAIT>::fd(
     
     iit::rbd::compute_Ia_revolute(LF_WHEEL_L_AI, LF_WHEEL_L_U, LF_WHEEL_L_D, Ia_r);  // same as: Ia_r = LF_WHEEL_L_AI - LF_WHEEL_L_U/LF_WHEEL_L_D * LF_WHEEL_L_U.transpose();
     pa = LF_WHEEL_L_p + Ia_r * LF_WHEEL_L_c + LF_WHEEL_L_U * LF_WHEEL_L_u/LF_WHEEL_L_D;
-    ctransform_Ia_revolute(Ia_r, motionTransforms-> fr_LF_WHEEL_L_X_fr_LF_shank_fixed, IaB);
-    LF_shank_fixed_AI += IaB;
-    LF_shank_fixed_p += (motionTransforms-> fr_LF_WHEEL_L_X_fr_LF_shank_fixed).transpose() * pa;
+    ctransform_Ia_revolute(Ia_r, motionTransforms-> fr_LF_WHEEL_L_X_fr_LF_SHANK, IaB);
+    LF_SHANK_AI += IaB;
+    LF_SHANK_p += (motionTransforms-> fr_LF_WHEEL_L_X_fr_LF_SHANK).transpose() * pa;
     
-    // + Link LF_shank_fixed
-    LF_shank_fixed_u = tau(LF_KFE) - LF_shank_fixed_p(iit::rbd::AZ);
-    LF_shank_fixed_U = LF_shank_fixed_AI.col(iit::rbd::AZ);
-    LF_shank_fixed_D = LF_shank_fixed_U(iit::rbd::AZ);
+    // + Link LF_SHANK
+    LF_SHANK_u = tau(LF_KFE) - LF_SHANK_p(iit::rbd::AZ);
+    LF_SHANK_U = LF_SHANK_AI.col(iit::rbd::AZ);
+    LF_SHANK_D = LF_SHANK_U(iit::rbd::AZ);
     
-    iit::rbd::compute_Ia_revolute(LF_shank_fixed_AI, LF_shank_fixed_U, LF_shank_fixed_D, Ia_r);  // same as: Ia_r = LF_shank_fixed_AI - LF_shank_fixed_U/LF_shank_fixed_D * LF_shank_fixed_U.transpose();
-    pa = LF_shank_fixed_p + Ia_r * LF_shank_fixed_c + LF_shank_fixed_U * LF_shank_fixed_u/LF_shank_fixed_D;
-    ctransform_Ia_revolute(Ia_r, motionTransforms-> fr_LF_shank_fixed_X_fr_LF_THIGH, IaB);
+    iit::rbd::compute_Ia_revolute(LF_SHANK_AI, LF_SHANK_U, LF_SHANK_D, Ia_r);  // same as: Ia_r = LF_SHANK_AI - LF_SHANK_U/LF_SHANK_D * LF_SHANK_U.transpose();
+    pa = LF_SHANK_p + Ia_r * LF_SHANK_c + LF_SHANK_U * LF_SHANK_u/LF_SHANK_D;
+    ctransform_Ia_revolute(Ia_r, motionTransforms-> fr_LF_SHANK_X_fr_LF_THIGH, IaB);
     LF_THIGH_AI += IaB;
-    LF_THIGH_p += (motionTransforms-> fr_LF_shank_fixed_X_fr_LF_THIGH).transpose() * pa;
+    LF_THIGH_p += (motionTransforms-> fr_LF_SHANK_X_fr_LF_THIGH).transpose() * pa;
     
     // + Link LF_THIGH
     LF_THIGH_u = tau(LF_HFE) - LF_THIGH_p(iit::rbd::AZ);
@@ -485,11 +485,11 @@ void iit::ANYmal::dyn::tpl::ForwardDynamics<TRAIT>::fd(
     qdd(LF_HFE) = (LF_THIGH_u - LF_THIGH_U.dot(LF_THIGH_a)) / LF_THIGH_D;
     LF_THIGH_a(iit::rbd::AZ) += qdd(LF_HFE);
     
-    LF_shank_fixed_a = (motionTransforms-> fr_LF_shank_fixed_X_fr_LF_THIGH) * LF_THIGH_a + LF_shank_fixed_c;
-    qdd(LF_KFE) = (LF_shank_fixed_u - LF_shank_fixed_U.dot(LF_shank_fixed_a)) / LF_shank_fixed_D;
-    LF_shank_fixed_a(iit::rbd::AZ) += qdd(LF_KFE);
+    LF_SHANK_a = (motionTransforms-> fr_LF_SHANK_X_fr_LF_THIGH) * LF_THIGH_a + LF_SHANK_c;
+    qdd(LF_KFE) = (LF_SHANK_u - LF_SHANK_U.dot(LF_SHANK_a)) / LF_SHANK_D;
+    LF_SHANK_a(iit::rbd::AZ) += qdd(LF_KFE);
     
-    LF_WHEEL_L_a = (motionTransforms-> fr_LF_WHEEL_L_X_fr_LF_shank_fixed) * LF_shank_fixed_a + LF_WHEEL_L_c;
+    LF_WHEEL_L_a = (motionTransforms-> fr_LF_WHEEL_L_X_fr_LF_SHANK) * LF_SHANK_a + LF_WHEEL_L_c;
     qdd(LF_WHEEL) = (LF_WHEEL_L_u - LF_WHEEL_L_U.dot(LF_WHEEL_L_a)) / LF_WHEEL_L_D;
     LF_WHEEL_L_a(iit::rbd::AZ) += qdd(LF_WHEEL);
     
@@ -501,11 +501,11 @@ void iit::ANYmal::dyn::tpl::ForwardDynamics<TRAIT>::fd(
     qdd(RF_HFE) = (RF_THIGH_u - RF_THIGH_U.dot(RF_THIGH_a)) / RF_THIGH_D;
     RF_THIGH_a(iit::rbd::AZ) += qdd(RF_HFE);
     
-    RF_shank_fixed_a = (motionTransforms-> fr_RF_shank_fixed_X_fr_RF_THIGH) * RF_THIGH_a + RF_shank_fixed_c;
-    qdd(RF_KFE) = (RF_shank_fixed_u - RF_shank_fixed_U.dot(RF_shank_fixed_a)) / RF_shank_fixed_D;
-    RF_shank_fixed_a(iit::rbd::AZ) += qdd(RF_KFE);
+    RF_SHANK_a = (motionTransforms-> fr_RF_SHANK_X_fr_RF_THIGH) * RF_THIGH_a + RF_SHANK_c;
+    qdd(RF_KFE) = (RF_SHANK_u - RF_SHANK_U.dot(RF_SHANK_a)) / RF_SHANK_D;
+    RF_SHANK_a(iit::rbd::AZ) += qdd(RF_KFE);
     
-    RF_WHEEL_L_a = (motionTransforms-> fr_RF_WHEEL_L_X_fr_RF_shank_fixed) * RF_shank_fixed_a + RF_WHEEL_L_c;
+    RF_WHEEL_L_a = (motionTransforms-> fr_RF_WHEEL_L_X_fr_RF_SHANK) * RF_SHANK_a + RF_WHEEL_L_c;
     qdd(RF_WHEEL) = (RF_WHEEL_L_u - RF_WHEEL_L_U.dot(RF_WHEEL_L_a)) / RF_WHEEL_L_D;
     RF_WHEEL_L_a(iit::rbd::AZ) += qdd(RF_WHEEL);
     
@@ -517,11 +517,11 @@ void iit::ANYmal::dyn::tpl::ForwardDynamics<TRAIT>::fd(
     qdd(LH_HFE) = (LH_THIGH_u - LH_THIGH_U.dot(LH_THIGH_a)) / LH_THIGH_D;
     LH_THIGH_a(iit::rbd::AZ) += qdd(LH_HFE);
     
-    LH_shank_fixed_a = (motionTransforms-> fr_LH_shank_fixed_X_fr_LH_THIGH) * LH_THIGH_a + LH_shank_fixed_c;
-    qdd(LH_KFE) = (LH_shank_fixed_u - LH_shank_fixed_U.dot(LH_shank_fixed_a)) / LH_shank_fixed_D;
-    LH_shank_fixed_a(iit::rbd::AZ) += qdd(LH_KFE);
+    LH_SHANK_a = (motionTransforms-> fr_LH_SHANK_X_fr_LH_THIGH) * LH_THIGH_a + LH_SHANK_c;
+    qdd(LH_KFE) = (LH_SHANK_u - LH_SHANK_U.dot(LH_SHANK_a)) / LH_SHANK_D;
+    LH_SHANK_a(iit::rbd::AZ) += qdd(LH_KFE);
     
-    LH_WHEEL_L_a = (motionTransforms-> fr_LH_WHEEL_L_X_fr_LH_shank_fixed) * LH_shank_fixed_a + LH_WHEEL_L_c;
+    LH_WHEEL_L_a = (motionTransforms-> fr_LH_WHEEL_L_X_fr_LH_SHANK) * LH_SHANK_a + LH_WHEEL_L_c;
     qdd(LH_WHEEL) = (LH_WHEEL_L_u - LH_WHEEL_L_U.dot(LH_WHEEL_L_a)) / LH_WHEEL_L_D;
     LH_WHEEL_L_a(iit::rbd::AZ) += qdd(LH_WHEEL);
     
@@ -533,11 +533,11 @@ void iit::ANYmal::dyn::tpl::ForwardDynamics<TRAIT>::fd(
     qdd(RH_HFE) = (RH_THIGH_u - RH_THIGH_U.dot(RH_THIGH_a)) / RH_THIGH_D;
     RH_THIGH_a(iit::rbd::AZ) += qdd(RH_HFE);
     
-    RH_shank_fixed_a = (motionTransforms-> fr_RH_shank_fixed_X_fr_RH_THIGH) * RH_THIGH_a + RH_shank_fixed_c;
-    qdd(RH_KFE) = (RH_shank_fixed_u - RH_shank_fixed_U.dot(RH_shank_fixed_a)) / RH_shank_fixed_D;
-    RH_shank_fixed_a(iit::rbd::AZ) += qdd(RH_KFE);
+    RH_SHANK_a = (motionTransforms-> fr_RH_SHANK_X_fr_RH_THIGH) * RH_THIGH_a + RH_SHANK_c;
+    qdd(RH_KFE) = (RH_SHANK_u - RH_SHANK_U.dot(RH_SHANK_a)) / RH_SHANK_D;
+    RH_SHANK_a(iit::rbd::AZ) += qdd(RH_KFE);
     
-    RH_WHEEL_L_a = (motionTransforms-> fr_RH_WHEEL_L_X_fr_RH_shank_fixed) * RH_shank_fixed_a + RH_WHEEL_L_c;
+    RH_WHEEL_L_a = (motionTransforms-> fr_RH_WHEEL_L_X_fr_RH_SHANK) * RH_SHANK_a + RH_WHEEL_L_c;
     qdd(RH_WHEEL) = (RH_WHEEL_L_u - RH_WHEEL_L_U.dot(RH_WHEEL_L_a)) / RH_WHEEL_L_D;
     RH_WHEEL_L_a(iit::rbd::AZ) += qdd(RH_WHEEL);
     

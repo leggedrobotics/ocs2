@@ -23,8 +23,8 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> AnymalRaisimConversions::stateToRais
   }
 
   Eigen::VectorXd dq(3 + 3 + 12);
-  dq << q_world_base * switched_model::getAngularVelocity(baseTwist), q_world_base * switched_model::getLinearVelocity(baseTwist),
-      switched_model::getJointVelocities(state);
+  dq << q_world_base * switched_model::getLinearVelocity(baseTwist), q_world_base * switched_model::getAngularVelocity(baseTwist),
+      switched_model::getJointVelocities(input);
 
   return {q, dq};
 }

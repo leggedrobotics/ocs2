@@ -3,10 +3,8 @@
   <arg name="description_name"      default="ocs2_anymal_croc_description"/>
 
   <!-- Load robot description -->
-  <include file="$(find anymal_c_description)/launch/load.launch">
-    <arg name="simulation"                                     value="false"/>
+  <include file="$(find anymal_croc_rsl)/launch/load_urdf.launch">
     <arg name="description_name"                               value="$(arg description_name)"/>
-    <arg name="version"                                        value="c010"/>
   </include>
 
 </launch>

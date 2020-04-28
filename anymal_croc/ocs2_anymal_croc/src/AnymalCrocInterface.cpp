@@ -11,8 +11,7 @@
 
 namespace anymal {
 
-std::unique_ptr<switched_model::QuadrupedPointfootInterface> getAnymalCrocInterface(const std::string& taskName) {
-  std::string taskFolder = getTaskFileFolderCroc(taskName);
+std::unique_ptr<switched_model::QuadrupedPointfootInterface> getAnymalCrocInterface(const std::string& taskFolder) {
   std::cerr << "Loading task file from: " << taskFolder << std::endl;
 
   auto kin = AnymalCrocKinematics();

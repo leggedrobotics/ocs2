@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
     throw ros::Exception("Error reading ros parameter: " + urdf_param);
   }
 
-  auto anymalInterface = anymal::getAnymalCrocInterface(taskName);
+  auto anymalInterface = anymal::getAnymalCrocInterface(anymal::getTaskFileFolderCroc(taskName));
 
   // load settings
   ocs2::MPC_Settings mpcSettings;

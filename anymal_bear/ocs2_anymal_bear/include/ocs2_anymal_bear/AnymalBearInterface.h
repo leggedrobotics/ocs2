@@ -8,7 +8,7 @@
 
 namespace anymal {
 
-std::unique_ptr<switched_model::QuadrupedPointfootInterface> getAnymalBearInterface(const std::string& taskName);
+std::unique_ptr<switched_model::QuadrupedPointfootInterface> getAnymalBearInterface(const std::string& taskFolder);
 
 std::string getTaskFileFolderBear(const std::string& taskName);
 

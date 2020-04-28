@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
   ros::init(argc, argv, "anymal_bear_mpc");
   ros::NodeHandle nodeHandle;
 
-  auto anymalInterface = anymal::getAnymalBearInterface(taskName);
+  auto anymalInterface = anymal::getAnymalBearInterface(anymal::getTaskFilePathBear(taskName));
   ocs2::MPC_Settings mpcSettings;
   mpcSettings.loadSettings(anymal::getTaskFilePathBear(taskName));
   ocs2::SLQ_Settings slqSettings;

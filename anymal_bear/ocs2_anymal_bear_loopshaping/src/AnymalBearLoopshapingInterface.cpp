@@ -13,8 +13,8 @@
 
 namespace anymal {
 
-std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAnymalBearLoopshapingInterface(const std::string& taskName) {
-  std::string taskFolder = getTaskFileFolderBearLoopshaping(taskName);
+std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAnymalBearLoopshapingInterface(
+    const std::string& taskFolder) {
   std::cerr << "Loading task file from: " << taskFolder << std::endl;
 
   auto kin = AnymalBearKinematics();

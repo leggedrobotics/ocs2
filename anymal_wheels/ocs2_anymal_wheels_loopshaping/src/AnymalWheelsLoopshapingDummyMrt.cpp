@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
     }
   });
 
-  auto anymalInterface = anymal::getAnymalWheelsLoopshapingInterface(taskName);
+  auto anymalInterface = anymal::getAnymalWheelsLoopshapingInterface(anymal::getTaskFileFolderAnymalWheelsLoopshaping(taskName));
   ocs2::MPC_Settings mpcSettings;
   mpcSettings.loadSettings(anymal::getTaskFilePathAnymalWheelsLoopshaping(taskName));
   quadrupedLoopshapingDummyNode(nodeHandle, *anymalInterface, mpcSettings.mrtDesiredFrequency_, mpcSettings.mpcDesiredFrequency_);

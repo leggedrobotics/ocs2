@@ -13,8 +13,8 @@
 
 namespace anymal {
 
-std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAnymalCrocLoopshapingInterface(const std::string& taskName) {
-  std::string taskFolder = getTaskFileFolderCrocLoopshaping(taskName);
+std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAnymalCrocLoopshapingInterface(
+    const std::string& taskFolder) {
   std::cerr << "Loading task file from: " << taskFolder << std::endl;
 
   auto kin = AnymalCrocKinematics();

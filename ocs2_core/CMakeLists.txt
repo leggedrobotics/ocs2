@@ -5,9 +5,19 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   ocs2_thirdparty
 )
+
+# either:
+# use static linking
+# set(Boost_USE_STATIC_LIBS ON)
+# or:
+# force all boost libraries to dynamic link
+add_definitions( -DBOOST_ALL_DYN_LINK )
+
 find_package(Boost REQUIRED COMPONENTS
   system
   filesystem
+  log_setup
+  log
 )
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
@@ -114,6 +124,7 @@ add_library(${PROJECT_NAME}
   src/model_data/ModelDataBase.cpp
   src/misc/LinearAlgebra.cpp
   src/misc/ThreadPool.cpp
+  src/misc/Log.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
@@ -307,6 +318,16 @@ catkin_add_gtest(test_ModelDataBase
 )
 target_link_libraries(test_ModelDataBase
   ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(test_Logging
+  test/misc/testLogging.cpp
+)
+target_link_libraries(test_Logging
+  ${PROJECT_NAME}
+  ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   gtest_main
 )

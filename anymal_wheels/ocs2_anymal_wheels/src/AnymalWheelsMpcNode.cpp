@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
   ros::init(argc, argv, "anymal_wheels_mpc");
   ros::NodeHandle nodeHandle;
 
-  auto anymalInterface = anymal::getAnymalWheelsInterface(taskName);
+  auto anymalInterface = anymal::getAnymalWheelsInterface(anymal::getTaskFileFolderWheels(taskName));
   ocs2::MPC_Settings mpcSettings;
   mpcSettings.loadSettings(anymal::getTaskFilePathWheels(taskName));
   ocs2::SLQ_Settings slqSettings;

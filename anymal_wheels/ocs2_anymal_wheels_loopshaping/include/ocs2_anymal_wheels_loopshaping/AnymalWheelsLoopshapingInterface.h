@@ -8,7 +8,8 @@
 
 namespace anymal {
 
-std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAnymalWheelsLoopshapingInterface(const std::string& taskName);
+std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAnymalWheelsLoopshapingInterface(
+    const std::string& taskFolder);
 
 std::string getTaskFileFolderAnymalWheelsLoopshaping(const std::string& taskName);
 

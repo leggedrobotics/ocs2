@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
   ros::init(argc, argv, "anymal_wheels_loopshaping_mpc");
   ros::NodeHandle nodeHandle;
 
-  auto anymalInterface = anymal::getAnymalWheelsLoopshapingInterface(taskName);
+  auto anymalInterface = anymal::getAnymalWheelsLoopshapingInterface(anymal::getTaskFileFolderAnymalWheelsLoopshaping(taskName));
   ocs2::MPC_Settings mpcSettings;
   mpcSettings.loadSettings(anymal::getTaskFilePathAnymalWheelsLoopshaping(taskName));
   ocs2::SLQ_Settings slqSettings;

@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
   ros::init(argc, argv, "anymal_croc_loopshaping_mpc");
   ros::NodeHandle nodeHandle;
 
-  auto anymalInterface = anymal::getAnymalCrocLoopshapingInterface(taskName);
+  auto anymalInterface = anymal::getAnymalCrocLoopshapingInterface(anymal::getTaskFileFolderCrocLoopshaping(taskName));
   ocs2::MPC_Settings mpcSettings;
   mpcSettings.loadSettings(anymal::getTaskFilePathCrocLoopshaping(taskName));
   ocs2::SLQ_Settings slqSettings;

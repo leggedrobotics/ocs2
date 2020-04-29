@@ -9,6 +9,7 @@
 #include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
 #include <ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h>
 #include <ocs2_switched_model_interface/logic/ModeSequenceTemplate.h>
+#include <ocs2_switched_model_interface/terrain/TerrainModelPlanar.h>
 
 namespace switched_model {
 
@@ -83,8 +84,13 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
   const auto swingTrajectorySettings = loadSwingTrajectorySettings(pathToConfigFile);
   SwingTrajectoryPlanner swingTrajectoryPlanner{swingTrajectorySettings, getComModel(), getKinematicModel()};
 
+  // Terrain
+  const auto loadedTerrain = loadTerrainPlane(pathToConfigFile, true);
+  std::unique_ptr<TerrainModelPlanar> terrainModel(new TerrainModelPlanar(std::move(loadedTerrain)));
+
   // Mode schedule manager
-  modeScheduleManagerPtr_ = std::make_shared<SwitchedModelModeScheduleManager>(std::move(gaitSchedule), std::move(swingTrajectoryPlanner));
+  modeScheduleManagerPtr_ = std::make_shared<SwitchedModelModeScheduleManager>(std::move(gaitSchedule), std::move(swingTrajectoryPlanner),
+                                                                               std::move(terrainModel));
 
   // Display
   std::cerr << "\nTime Partition: {" << ocs2::toDelimitedString(partitioningTimes_) << "}\n";

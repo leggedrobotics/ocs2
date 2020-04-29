@@ -48,6 +48,22 @@ model_settings
   recompileLibraries            1
 }
 
+terrainPlane
+{
+  position
+  {
+    x       0.0;
+    y       0.0;
+    z       0.0;
+  }
+  orientation
+  {
+    roll    0.15;
+    pitch   0.15;
+    yaw     0.0;
+  }
+}
+
 initialModeSchedule
 {
   modeSequence

@@ -2,6 +2,7 @@
 
 // Constraints
 #include "ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h"
+#include "ocs2_switched_model_interface/constraint/FootNormalContraint.h"
 #include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
 #include "ocs2_switched_model_interface/constraint/ZeroForceConstraint.h"
 
@@ -60,6 +61,8 @@ void ComKinoConstraintBaseAd::initializeConstraintTerms() {
     auto zeroForceConstraint = std::unique_ptr<ConstraintTerm_t>(new ZeroForceConstraint(i));
 
     // Velocity Constraint
+    auto footNormalConstraint = std::unique_ptr<ConstraintTerm_t>(
+        new FootNormalConstraint(i, FootNormalConstraintMatrix(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
     auto endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityConstraint(
         i, EndEffectorVelocityConstraintSettings(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
 
@@ -68,6 +71,7 @@ void ComKinoConstraintBaseAd::initializeConstraintTerms() {
 
     // State input equalities
     equalityStateInputConstraintCollection_.add(footName + "_ZeroForce", std::move(zeroForceConstraint));
+    equalityStateInputConstraintCollection_.add(footName + "_EENormal", std::move(footNormalConstraint));
     equalityStateInputConstraintCollection_.add(footName + "_EEVel", std::move(endEffectorVelocityConstraint));
   }
 }
@@ -92,23 +96,21 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
     // Zero forces active for swing legs
     equalityStateInputConstraintCollection_.get(footName + "_ZeroForce").setActivity(!stanceLegs_[i]);
 
-    // Active foot placement for stance legs
+    // Foot normal constraint always active
+    auto& EENormalConstraint = equalityStateInputConstraintCollection_.get<FootNormalConstraint>(footName + "_EENormal");
+    EENormalConstraint.setActivity(true);
+    const auto normalDirectionConstraint = swingTrajectoryPlannerPtr_->getNormalDirectionConstraint(i, t);
+    EENormalConstraint.configure(normalDirectionConstraint);
+
+    // Foot tangential constraints only for stanceLegs
     auto& EEVelConstraint = equalityStateInputConstraintCollection_.get<EndEffectorVelocityConstraint>(footName + "_EEVel");
-    EEVelConstraint.setActivity(true);
-    EndEffectorVelocityConstraintSettings eeVelConSettings;
-    const auto& terrainPlane = swingTrajectoryPlannerPtr_->getReferenceTerrainPlane(i, t);
-    const auto normalVelocity = swingTrajectoryPlannerPtr_->getNormalDirectionVelocityConstraint(i, t);
-    if (stanceLegs_[i]) {  // in stance: All velocity equal to zero
-      eeVelConSettings.b = Eigen::Vector3d::Zero();
-      eeVelConSettings.b[2] = -normalVelocity;
-      eeVelConSettings.A = terrainPlane.orientationWorldToTerrain;
-    } else {  // in swing: z-velocity is provided
-      eeVelConSettings.b.resize(1);
-      eeVelConSettings.A.resize(1, 3);
-      eeVelConSettings.b << -normalVelocity;
-      eeVelConSettings.A << surfaceNormalInWorld(terrainPlane).transpose();
+    EEVelConstraint.setActivity(stanceLegs_[i]);
+    if (stanceLegs_[i]) {
+      EndEffectorVelocityConstraintSettings eeVelConSettings;
+      eeVelConSettings.A = tangentialBasisFromSurfaceNormal(normalDirectionConstraint.velocityMatrix);
+      eeVelConSettings.b = Eigen::Vector2d::Zero();
+      EEVelConstraint.configure(eeVelConSettings);
     }
-    EEVelConstraint.configure(eeVelConSettings);
   }
 }
 

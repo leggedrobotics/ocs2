@@ -11,23 +11,24 @@
 namespace switched_model {
 
 /**
- * Linear constraint A_v * v + A_p * p + b = 0
+ * Linear constraint A_p * p + A_v * v + b = 0
  */
-struct FootNormalConstraint {
-  Eigen::Matrix<scalar_t, 1, 3> velocityMatrix;
+struct FootNormalConstraintMatrix {
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Eigen::Matrix<scalar_t, 1, 3> positionMatrix;
+  Eigen::Matrix<scalar_t, 1, 3> velocityMatrix;
   scalar_t constant;
 };
 
 class FootPhase {
  public:
-  virtual FootNormalConstraint getFootNormalConstraintInWorldFrame(scalar_t time, scalar_t positionGain) const = 0;
+  virtual FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time, scalar_t positionGain) const = 0;
 };
 
 class StancePhase final : public FootPhase {
  public:
   StancePhase(const TerrainPlane& stanceTerrain);
-  FootNormalConstraint getFootNormalConstraintInWorldFrame(scalar_t time, scalar_t positionGain) const override;
+  FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time, scalar_t positionGain) const override;
 
  private:
   const TerrainPlane* stanceTerrain_;
@@ -42,9 +43,12 @@ class SwingPhase final : public FootPhase {
   };
 
   SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touchDown);
-  FootNormalConstraint getFootNormalConstraintInWorldFrame(scalar_t time, scalar_t positionGain) const override;
+  FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time, scalar_t positionGain) const override;
 
  private:
+  void setFullSwing(scalar_t swingHeight);
+  void setHalveSwing(scalar_t swingHeight);
+
   scalar_t getScaling(scalar_t time) const;
 
   SwingEvent liftOff_;

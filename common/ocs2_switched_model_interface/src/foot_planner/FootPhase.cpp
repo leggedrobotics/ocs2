@@ -6,11 +6,11 @@
 
 namespace switched_model {
 
-FootNormalConstraint computeFootNormalConstraint(scalar_t feedforwardVelocity, scalar_t desiredPosition, const vector3_t& surfaceNormal,
-                                                 scalar_t positionGain) {
+FootNormalConstraintMatrix computeFootNormalConstraint(scalar_t feedforwardVelocity, scalar_t desiredPosition,
+                                                       const vector3_t& surfaceNormal, scalar_t positionGain) {
   // in surface normal direction : v_foot = v_ff - kp * (p_foot - p_des)
   // ==> (n')* v_foot + (kp* n')* p_foot - (v_ff + kp* p_des) = 0
-  FootNormalConstraint footNormalConstraint;
+  FootNormalConstraintMatrix footNormalConstraint;
   footNormalConstraint.velocityMatrix = surfaceNormal.transpose();
   footNormalConstraint.positionMatrix = positionGain * surfaceNormal.transpose();
   footNormalConstraint.constant = -(feedforwardVelocity + positionGain * desiredPosition);
@@ -19,7 +19,7 @@ FootNormalConstraint computeFootNormalConstraint(scalar_t feedforwardVelocity, s
 
 StancePhase::StancePhase(const TerrainPlane& stanceTerrain) : stanceTerrain_(&stanceTerrain) {}
 
-FootNormalConstraint StancePhase::getFootNormalConstraintInWorldFrame(scalar_t time, scalar_t positionGain) const {
+FootNormalConstraintMatrix StancePhase::getFootNormalConstraintInWorldFrame(scalar_t time, scalar_t positionGain) const {
   const scalar_t feedForwardVelocity = 0.0;
   const vector3_t surfaceNormal = surfaceNormalInWorld(*stanceTerrain_);
   const scalar_t positionRefence = surfaceNormal.dot(stanceTerrain_->positionInWorld);
@@ -27,6 +27,14 @@ FootNormalConstraint StancePhase::getFootNormalConstraintInWorldFrame(scalar_t t
 }
 
 SwingPhase::SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touchDown) : liftOff_(liftOff), touchDown_(touchDown) {
+  if (touchDown_.terrainPlane == nullptr) {
+    setHalveSwing(swingHeight);
+  } else {
+    setFullSwing(swingHeight);
+  }
+}
+
+void SwingPhase::setFullSwing(scalar_t swingHeight) {
   {  // LiftOff Motion
     const CubicSpline::Node liftOffInLiftOffFrame{liftOff_.time, 0.0, liftOff_.velocity};
 
@@ -63,19 +71,29 @@ SwingPhase::SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touc
     const scalar_t midHeightInTouchDownFrame =
         std::max(swingHeight, terrainDistanceFromPositionInWorld(liftOffClearancePointInWorld, *touchDown_.terrainPlane));
 
-    // Create spline in liftOffFrame
+    // Create spline in touchDownFrame
     touchdownMotion_.reset(new SplineCpg(liftOffInTouchDownFrame, midHeightInTouchDownFrame, touchDownInTouchDownFrame));
   }
 }
 
-FootNormalConstraint SwingPhase::getFootNormalConstraintInWorldFrame(scalar_t time, scalar_t positionGain) const {
+void SwingPhase::setHalveSwing(scalar_t swingHeight) {
+  const CubicSpline::Node liftOffInLiftOffFrame{liftOff_.time, 0.0, liftOff_.velocity};
+  const CubicSpline::Node touchDownInLiftOffFrame{touchDown_.time, swingHeight, 0.0};
+
+  // The two motions are equal and defined in the liftoff plane
+  liftOffMotion_.reset(new SplineCpg(liftOffInLiftOffFrame, swingHeight, touchDownInLiftOffFrame));
+  touchdownMotion_.reset(new SplineCpg(*liftOffMotion_));
+  touchDown_.terrainPlane = liftOff_.terrainPlane;
+}
+
+FootNormalConstraintMatrix SwingPhase::getFootNormalConstraintInWorldFrame(scalar_t time, scalar_t positionGain) const {
   const auto liftOffConstraint = computeFootNormalConstraint(liftOffMotion_->velocity(time), liftOffMotion_->position(time),
                                                              surfaceNormalInWorld(*liftOff_.terrainPlane), positionGain);
   const auto touchDownConstraint = computeFootNormalConstraint(touchdownMotion_->velocity(time), touchdownMotion_->position(time),
                                                                surfaceNormalInWorld(*touchDown_.terrainPlane), positionGain);
   const scalar_t scaling = getScaling(time);
 
-  FootNormalConstraint footNormalConstraint;
+  FootNormalConstraintMatrix footNormalConstraint;
   footNormalConstraint.velocityMatrix = (1.0 - scaling) * liftOffConstraint.velocityMatrix + scaling * touchDownConstraint.velocityMatrix;
   footNormalConstraint.positionMatrix = (1.0 - scaling) * liftOffConstraint.positionMatrix + scaling * touchDownConstraint.positionMatrix;
   footNormalConstraint.constant = (1.0 - scaling) * liftOffConstraint.constant + scaling * touchDownConstraint.constant;
@@ -86,11 +104,11 @@ scalar_t SwingPhase::getScaling(scalar_t time) const {
   // Cubic scaling from 25% till 75% of swing duration
   static const CubicSpline scalingSpline({0.25, 0.0, 0.0}, {0.75, 1.0, 0.0});
 
-  scalar_t normalizedTime = (time - liftOff_.time) / (touchDown_.time - liftOff_.time);
+  const scalar_t normalizedTime = (time - liftOff_.time) / (touchDown_.time - liftOff_.time);
   if (normalizedTime < 0.25) {
     return 0.0;
   } else if (normalizedTime < 0.75) {
-    return scalingSpline.position(time);
+    return scalingSpline.position(normalizedTime);
   } else {
     return 1.0;
   }

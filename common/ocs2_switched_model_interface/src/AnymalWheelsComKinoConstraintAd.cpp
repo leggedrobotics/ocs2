@@ -1,5 +1,7 @@
 #include <ocs2_switched_model_interface/constraint/AnymalWheelsComKinoConstraintAd.h>
 
+#include "ocs2_switched_model_interface/constraint/FootNormalContraint.h"
+
 namespace switched_model {
 
 AnymalWheelsComKinoConstraintAd::AnymalWheelsComKinoConstraintAd(
@@ -47,9 +49,9 @@ void AnymalWheelsComKinoConstraintAd::initializeConstraintTerms() {
     // EE force
     auto zeroForceConstraint = std::unique_ptr<ConstraintTerm_t>(new ZeroForceConstraint(i));
 
-    // Velocity Constraint
-    auto endEffectorVelocityConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityConstraint_t(
-        i, EndEffectorVelocityConstraintSettings_t(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
+    // Foot normal Constraint
+    auto footNormalConstraint = std::unique_ptr<ConstraintTerm_t>(
+        new FootNormalConstraint(i, FootNormalConstraintMatrix(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
     // EE InFootFrame Velocity Constraint
     auto endEffectorVelocityInFootFrameConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityInFootFrameConstraint_t(
         i, EndEffectorVelocityInFootFrameConstraintSettings_t(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
@@ -59,7 +61,7 @@ void AnymalWheelsComKinoConstraintAd::initializeConstraintTerms() {
 
     // State input equalities
     equalityStateInputConstraintCollection_.add(footName + "_ZeroForce", std::move(zeroForceConstraint));
-    equalityStateInputConstraintCollection_.add(footName + "_o_EEVel", std::move(endEffectorVelocityConstraint));
+    equalityStateInputConstraintCollection_.add(footName + "_EENormal", std::move(footNormalConstraint));
     equalityStateInputConstraintCollection_.add(footName + "_f_EEVel", std::move(endEffectorVelocityInFootFrameConstraint));
   }
 }
@@ -84,36 +86,23 @@ void AnymalWheelsComKinoConstraintAd::setCurrentStateAndControl(const scalar_t& 
     // Zero forces active for swing legs
     equalityStateInputConstraintCollection_.get(footName + "_ZeroForce").setActivity(!stanceLegs_[i]);
 
-    // Active foot placement for stance legs
-    auto& EEVelConstraint = equalityStateInputConstraintCollection_.get<EndEffectorVelocityConstraint>(footName + "_o_EEVel");
-    EndEffectorVelocityConstraintSettings_t eeVelConSettings(1, 3);
+    // Foot normal constraint always active
+    auto& EENormalConstraint = equalityStateInputConstraintCollection_.get<FootNormalConstraint>(footName + "_EENormal");
+    EENormalConstraint.setActivity(true);
+    const auto normalDirectionConstraint = swingTrajectoryPlannerPtr_->getNormalDirectionConstraint(i, t);
+    EENormalConstraint.configure(normalDirectionConstraint);
 
     // Rolling InFootFrame Velocity constraint for stance legs
     auto& EEVelInFootFrameConstraint =
         equalityStateInputConstraintCollection_.template get<EndEffectorVelocityInFootFrameConstraint_t>(footName + "_f_EEVel");
-
-    const auto& terrainPlane = swingTrajectoryPlannerPtr_->getReferenceTerrainPlane(i, t);
-    const auto normalVelocity = swingTrajectoryPlannerPtr_->getNormalDirectionVelocityConstraint(i, t);
-
+    EEVelInFootFrameConstraint.setActivity(stanceLegs_[i]);
     if (stanceLegs_[i]) {
       // EE velocities in lateral direction (y) in foot frame should be zero.
       EndEffectorVelocityInFootFrameConstraintSettings_t eeVelInFootFrameConSettings(1, 3);
       eeVelInFootFrameConSettings.b << 0;
       eeVelInFootFrameConSettings.A << 0, 1, 0;
       EEVelInFootFrameConstraint.configure(eeVelInFootFrameConSettings);
-      EEVelInFootFrameConstraint.setActivity(true);
-      // The upwards velocity (z) in the world frame should be zero too.
-      eeVelConSettings.b << -normalVelocity;
-      eeVelConSettings.A << surfaceNormalInWorld(terrainPlane).transpose();
-    } else {  // in swing: z-velocity is provided
-      EEVelInFootFrameConstraint.setActivity(false);
-      eeVelConSettings.b.resize(1);
-      eeVelConSettings.A.resize(1, 3);
-      eeVelConSettings.b << -normalVelocity;
-      eeVelConSettings.A << surfaceNormalInWorld(terrainPlane).transpose();
     }
-    EEVelConstraint.configure(eeVelConSettings);
-    EEVelConstraint.setActivity(true);
   }
 }
 

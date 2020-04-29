@@ -26,6 +26,7 @@ catkin_package(
     include
     ${EIGEN_INCLUDE_DIRS}
   LIBRARIES
+    ${PROJECT_NAME}
   CATKIN_DEPENDS
     ocs2_comm_interfaces
     ocs2_robotic_tools
@@ -44,6 +45,19 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+# Declare a C++ library
+add_library(${PROJECT_NAME}
+  src/PoseCommandToCostDesiredRos.cpp
+  )
+add_dependencies(${PROJECT_NAME}
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+  )
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  )
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
+
 # Declare a C++ Executable
 add_executable(target_command_node
   src/AnymalTargetPoseCommand.cpp
@@ -56,6 +70,18 @@ target_link_libraries(target_command_node
   ${catkin_LIBRARIES}
 )
 target_compile_options(target_command_node PRIVATE ${OCS2_CXX_FLAGS})
+
+add_executable(target_pose_node
+  src/AnymalPoseCommandNode.cpp
+  )
+add_dependencies(target_pose_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+  )
+target_link_libraries(target_pose_node
+  ${catkin_LIBRARIES}
+  )
+target_compile_options(target_pose_node PRIVATE ${OCS2_CXX_FLAGS})
 
 add_executable(target_command_node_velocity
   src/AnymalTargetVelocityCommand.cpp
@@ -89,6 +115,11 @@ target_compile_options(gait_command_node PRIVATE ${OCS2_CXX_FLAGS})
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
+install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  )
 install(TARGETS target_command_node target_command_node_velocity gait_command_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
@@ -99,3 +130,11 @@ install(DIRECTORY config
 #############
 ## Testing ##
 #############
+
+catkin_add_gtest(test_${PROJECT_NAME}_terrain
+  test/testTerrainAdaptation.cpp
+)
+target_link_libraries(test_${PROJECT_NAME}_terrain
+  ${PROJECT_NAME}
+  gtest_main
+)

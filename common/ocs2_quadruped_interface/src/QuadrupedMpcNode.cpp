@@ -9,7 +9,11 @@
 #include <ocs2_switched_model_interface/logic/GaitReceiver.h>
 #include <ocs2_switched_model_interface/terrain/TerrainPlane.h>
 
+#include <ocs2_anymal_commands/PoseCommandToCostDesiredRos.h>
+
+#include <ocs2_quadruped_interface/LocalTerrainVisualizer.h>
 #include <ocs2_quadruped_interface/QuadrupedSlqMpc.h>
+#include <ocs2_quadruped_interface/SwingPlanningVisualizer.h>
 
 namespace switched_model {
 
@@ -18,19 +22,25 @@ void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& qua
   const std::string robotName = "anymal";
   using mpc_ros_t = ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM>;
 
+  auto solverModules = quadrupedInterface.getSynchronizedModules();
+
   // Gait
   auto gaitReceiver =
       std::make_shared<GaitReceiver>(nodeHandle, quadrupedInterface.getModeScheduleManagerPtr()->getGaitSchedule(), robotName);
-  auto solverModules = quadrupedInterface.getSynchronizedModules();
   solverModules.push_back(gaitReceiver);
 
-  {  // Terrain
-    auto terrainPtr = quadrupedInterface.getModeScheduleManagerPtr()->getTerrain();
-    std::lock_guard<ocs2::Lockable<TerrainPlane>> lock(*terrainPtr);
-    const auto loadedTerrain = loadTerrainPlane(quadrupedInterface.getConfigFile(), true);
-    terrainPtr->positionInWorld = loadedTerrain.positionInWorld;
-    terrainPtr->orientationWorldToTerrain = loadedTerrain.orientationWorldToTerrain;
-  }
+  // Terrain
+  auto localTerrainVisualizer =
+      std::make_shared<LocalTerrainVisualizer>(quadrupedInterface.getModeScheduleManagerPtr()->shareTerrain(), nodeHandle);
+  solverModules.push_back(localTerrainVisualizer);
+
+  // Target Trajectories
+  PoseCommandToCostDesiredRos poseCommandToCostDesiredRos(nodeHandle, quadrupedInterface.getModeScheduleManagerPtr()->shareTerrain());
+
+  // Swing planner
+  auto swingPlanningVisualizer =
+      std::make_shared<SwingPlanningVisualizer>(quadrupedInterface.getModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), nodeHandle);
+  solverModules.push_back(swingPlanningVisualizer);
 
   // launch MPC nodes
   auto mpcPtr = getMpc(quadrupedInterface, mpcSettings, slqSettings);

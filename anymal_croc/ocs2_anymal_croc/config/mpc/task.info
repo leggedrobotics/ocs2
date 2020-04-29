@@ -53,8 +53,8 @@ terrainPlane
   }
   orientation
   {
-    roll    0.0;
-    pitch   0.15;
+    roll    0.25;
+    pitch   0.05;
     yaw     0.0;
   }
 }

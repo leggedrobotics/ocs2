@@ -11,9 +11,12 @@ namespace switched_model {
 
 class TerrainModel {
  public:
-  TerrainPlane getLocalTerrainAtPositionInWorld(const vector3_t positionInWorld) const;
+  TerrainModel() = default;
+  virtual ~TerrainModel() = default;
+  TerrainModel(const TerrainModel&) = delete;
+  TerrainModel& operator=(const TerrainModel&) = delete;
 
- private:
+  virtual TerrainPlane getLocalTerrainAtPositionInWorld(const vector3_t& positionInWorld) const = 0;
 };
 
 }

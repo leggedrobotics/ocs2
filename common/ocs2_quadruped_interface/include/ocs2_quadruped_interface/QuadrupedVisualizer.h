@@ -78,6 +78,8 @@ class QuadrupedVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> {
   void publishCartesianMarkers(ros::Time timeStamp, const contact_flag_t& contactFlags, const feet_array_t<vector3_t>& feetPosition,
                                const feet_array_t<vector3_t>& feetForce) const;
   void publishCenterOfMassPose(ros::Time timeStamp, const base_coordinate_t& comPose) const;
+  void publishEndEffectorPoses(ros::Time timeStamp, const feet_array_t<vector3_t>& feetPositions,
+                               const feet_array_t<Eigen::Quaternion>& feetOrientations) const;
 
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;
   std::unique_ptr<com_model_t> comModelPtr_;
@@ -91,6 +93,7 @@ class QuadrupedVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> {
   ros::Publisher stateOptimizedPosePublisher_;
   ros::Publisher currentStatePublisher_;
   ros::Publisher currentPosePublisher_;
+  ros::Publisher endEffectorPosesPublisher_;
 
   double minPublishTimeDifference_;
 };

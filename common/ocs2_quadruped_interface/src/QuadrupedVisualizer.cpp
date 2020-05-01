@@ -245,7 +245,7 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
     for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
       const auto o_feetPosition = kinematicModelPtr_->footPositionInOriginFrame(i, basePose, qJoints);
       geometry_msgs::Pose footPose;
-      auto&& position = getPointMsg(o_feetPosition);
+      auto position = getPointMsg(o_feetPosition);
       feetMsgs[i].emplace_back(position);
       footPose.position = position;
       footPose.orientation = getOrientationMsg(Eigen::Quaternion<scalar_t>(kinematicModelPtr_->footOrientationInOriginFrame(i, basePose, qJoints)));

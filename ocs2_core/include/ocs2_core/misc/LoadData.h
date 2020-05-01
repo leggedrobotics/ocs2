@@ -41,6 +41,33 @@ namespace ocs2 {
 namespace loadData {
 
 /**
+ * Print settings option
+ *
+ * @param[in] stream: Output stream
+ * @param[in] value: Value to be printed
+ * @param[in] name: Property field name
+ * @param[in] updated: True if the value was updated
+ * @param[in] printWidth: The aligned printout width
+ */
+template <typename T>
+static inline void printValue(std::ostream& stream, const T& value, const std::string& name, bool updated = true, long printWidth = 80) {
+  const std::string nameString = " #### '" + name + "'";
+  stream << nameString;
+
+  printWidth = std::max<long>(printWidth, nameString.size() + 15);
+  stream.width(printWidth - nameString.size());
+  const char fill = stream.fill('.');
+
+  if (updated) {
+    stream << value << '\n';
+  } else {
+    stream << value << " (default)\n";
+  }
+
+  stream.fill(fill);
+}
+
+/**
  * An auxiliary function to help loading OCS2 settings from a property tree
  *
  * @param[in] pt: Fully initialized tree object
@@ -60,23 +87,8 @@ inline void loadPtreeValue(const boost::property_tree::ptree& pt, T& value, cons
   }
 
   if (verbose) {
-    const auto lastDotPosition = name.find_last_of('.');
-
-    const std::string nameString = " #### Option loader : option '" + name.substr(lastDotPosition + 1) + "' ";
-    std::cerr << nameString;
-
-    // prepare stream
-    printWidth = std::max<long>(printWidth, nameString.size() + 15);
-    std::cerr.width(printWidth - nameString.size());
-    char fill = std::cerr.fill('.');
-
-    if (updated) {
-      std::cerr << value << std::endl;
-    } else {
-      std::cerr << value << " (default)" << std::endl;
-    }
-
-    std::cerr.fill(fill);
+    const std::string nameString = name.substr(name.find_last_of('.') + 1);
+    printValue(std::cerr, value, nameString, updated, printWidth);
   }
 }
 

@@ -202,12 +202,11 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
   comLineMsg.header = getHeaderMsg(originFrameId_, timeStamp);
   comLineMsg.id = 0;
   poseArray.header = getHeaderMsg(originFrameId_, timeStamp);
-  assignHeader(feetPosesMsgs.end(), feetPosesMsgs.end(), getHeaderMsg(originFrameId_, timeStamp));
+  assignHeader(feetPosesMsgs.begin(), feetPosesMsgs.end(), getHeaderMsg(originFrameId_, timeStamp));
 
   // Publish
   costDesiredPublisher_.publish(comLineMsg);
   costDesiredPosePublisher_.publish(poseArray);
-  costDesiredFeetPosesPublisher_.publish(feetPosesMsgs);
   for (auto& feetMsg : feetPosesMsgs) {
     costDesiredFeetPosesPublisher_.publish(feetMsg);
   }
@@ -308,7 +307,7 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
   assignHeader(markerArray.markers.begin(), markerArray.markers.end(), getHeaderMsg(originFrameId_, timeStamp));
   assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
   poseArray.header = getHeaderMsg(originFrameId_, timeStamp);
-  assignHeader(feetPosesMsgs.end(), feetPosesMsgs.end(), getHeaderMsg(originFrameId_, timeStamp));
+  assignHeader(feetPosesMsgs.begin(), feetPosesMsgs.end(), getHeaderMsg(originFrameId_, timeStamp));
 
   stateOptimizedPublisher_.publish(markerArray);
   stateOptimizedPosePublisher_.publish(poseArray);

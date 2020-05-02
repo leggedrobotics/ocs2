@@ -173,6 +173,7 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
   std::vector<geometry_msgs::PoseArray> feetPosesMsgs(stateTrajectory.size());
   std::for_each(feetPosesMsgs.begin(), feetPosesMsgs.end(), [&](geometry_msgs::PoseArray& p) { p.poses.reserve(NUM_CONTACT_POINTS); });
 
+  auto feetPoses = feetPosesMsgs.begin();
   std::for_each(stateTrajectory.begin(), stateTrajectory.end(), [&](const dynamic_vector_t& state) {
     // Construct pose msg
     const base_coordinate_t comPose = state.head(6);
@@ -191,8 +192,9 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
       geometry_msgs::Pose footPose;
       footPose.position = getPointMsg(o_feetPosition);
       footPose.orientation = getOrientationMsg(Eigen::Quaternion<scalar_t>(kinematicModelPtr_->footOrientationInOriginFrame(i, comPose, qJoints)));
-      feetPosesMsgs[i].poses.push_back(std::move(footPose));
+      feetPoses->poses.push_back(std::move(footPose));
     }
+    ++feetPoses;
   });
 
   // Headers
@@ -200,6 +202,7 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
   comLineMsg.header = getHeaderMsg(originFrameId_, timeStamp);
   comLineMsg.id = 0;
   poseArray.header = getHeaderMsg(originFrameId_, timeStamp);
+  assignHeader(feetPosesMsgs.end(), feetPosesMsgs.end(), getHeaderMsg(originFrameId_, timeStamp));
 
   // Publish
   costDesiredPublisher_.publish(comLineMsg);
@@ -229,6 +232,7 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
   poseArray.poses.reserve(mpcStateTrajectory.size());
 
   // Extract Com and Feet from state
+  auto feetPoses = feetPosesMsgs.begin();
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const state_vector_array_t::value_type& state) {
     const base_coordinate_t comPose = getComPose(state);
     const base_coordinate_t basePose = comModelPtr_->calculateBasePose(comPose);
@@ -249,8 +253,9 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
       feetMsgs[i].emplace_back(position);
       footPose.position = position;
       footPose.orientation = getOrientationMsg(Eigen::Quaternion<scalar_t>(kinematicModelPtr_->footOrientationInOriginFrame(i, basePose, qJoints)));
-      feetPosesMsgs[i].poses.push_back(std::move(footPose));
+      feetPoses->poses.push_back(std::move(footPose));
     }
+    ++feetPoses;
   });
 
   // Convert feet msgs to Array message
@@ -300,6 +305,7 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
   assignHeader(markerArray.markers.begin(), markerArray.markers.end(), getHeaderMsg(originFrameId_, timeStamp));
   assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
   poseArray.header = getHeaderMsg(originFrameId_, timeStamp);
+  assignHeader(feetPosesMsgs.end(), feetPosesMsgs.end(), getHeaderMsg(originFrameId_, timeStamp));
 
   stateOptimizedPublisher_.publish(markerArray);
   stateOptimizedPosePublisher_.publish(poseArray);

@@ -23,10 +23,10 @@ namespace switched_model {
 void QuadrupedVisualizer::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
   costDesiredPublisher_ = nodeHandle.advertise<visualization_msgs::Marker>("/ocs2_anymal/desiredBaseTrajectory", 1);
   costDesiredPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/desiredPoseTrajectory", 1);
-  costDesiredFeetPosesPublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/desiredFeetPosesTrajectory", 1);
+  costDesiredFeetPosesPublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/desiredFeetPosesTrajectory", 20);
   stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/ocs2_anymal/optimizedStateTrajectory", 1);
   stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/optimizedPoseTrajectory", 1);
-  stateOptimizedFeetPosesPublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/optimizedFeetPosesTrajectory", 1);
+  stateOptimizedFeetPosesPublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/optimizedFeetPosesTrajectory", 20);
   currentStatePublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/ocs2_anymal/currentState", 1);
   currentPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/currentPose", 1);
   currentFeetPosesPublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/currentFeetPosesTrajectory", 1);
@@ -208,6 +208,9 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
   costDesiredPublisher_.publish(comLineMsg);
   costDesiredPosePublisher_.publish(poseArray);
   costDesiredFeetPosesPublisher_.publish(feetPosesMsgs);
+  for (auto& feetMsg : feetPosesMsgs) {
+    costDesiredFeetPosesPublisher_.publish(feetMsg);
+  }
 }
 
 void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, const scalar_array_t& mpcTimeTrajectory,
@@ -309,7 +312,9 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
 
   stateOptimizedPublisher_.publish(markerArray);
   stateOptimizedPosePublisher_.publish(poseArray);
-  stateOptimizedFeetPosesPublisher_.publish(feetPosesMsgs);
+  for (auto& feetMsg : feetPosesMsgs) {
+    stateOptimizedFeetPosesPublisher_.publish(feetMsg);
+  }
 }
 
 void QuadrupedVisualizer::publishEndEffectorPoses(ros::Time timeStamp, const feet_array_t<vector3_t>& feetPositions,

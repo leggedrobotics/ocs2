@@ -187,11 +187,12 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
 
     // Fill feet msgs
     for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
-      auto qJoints  = state.tail<12>();
+      auto qJoints = state.tail<12>();
       const auto o_feetPosition = kinematicModelPtr_->footPositionInOriginFrame(i, comPose, qJoints);
       geometry_msgs::Pose footPose;
       footPose.position = getPointMsg(o_feetPosition);
-      footPose.orientation = getOrientationMsg(Eigen::Quaternion<scalar_t>(kinematicModelPtr_->footOrientationInOriginFrame(i, comPose, qJoints)));
+      footPose.orientation =
+          getOrientationMsg(Eigen::Quaternion<scalar_t>(kinematicModelPtr_->footOrientationInOriginFrame(i, comPose, qJoints)));
       feetPoses->poses.push_back(std::move(footPose));
     }
     ++feetPoses;
@@ -254,7 +255,8 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
       auto position = getPointMsg(o_feetPosition);
       feetMsgs[i].emplace_back(position);
       footPose.position = position;
-      footPose.orientation = getOrientationMsg(Eigen::Quaternion<scalar_t>(kinematicModelPtr_->footOrientationInOriginFrame(i, basePose, qJoints)));
+      footPose.orientation =
+          getOrientationMsg(Eigen::Quaternion<scalar_t>(kinematicModelPtr_->footOrientationInOriginFrame(i, basePose, qJoints)));
       feetPoses->poses.push_back(std::move(footPose));
     }
     ++feetPoses;

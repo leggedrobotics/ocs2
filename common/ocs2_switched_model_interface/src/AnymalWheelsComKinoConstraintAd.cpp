@@ -96,7 +96,7 @@ void AnymalWheelsComKinoConstraintAd::setCurrentStateAndControl(const scalar_t& 
       // EE velocities in lateral direction (y) in foot frame should be zero.
       EndEffectorVelocityInFootFrameConstraintSettings_t eeVelInFootFrameConSettings(1, 3);
       eeVelInFootFrameConSettings.b << 0;
-      eeVelInFootFrameConSettings.A << 0, 1, 0;
+      eeVelInFootFrameConSettings.A << 0, 0, 1;
       EEVelInFootFrameConstraint.configure(eeVelInFootFrameConSettings);
       EEVelInFootFrameConstraint.setActivity(true);
       // The upwards velocity (z) in the world frame should be zero too.

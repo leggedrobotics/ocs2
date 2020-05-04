@@ -23,13 +23,19 @@ namespace switched_model {
 void QuadrupedVisualizer::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
   costDesiredPublisher_ = nodeHandle.advertise<visualization_msgs::Marker>("/ocs2_anymal/desiredBaseTrajectory", 1);
   costDesiredPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/desiredPoseTrajectory", 1);
-  costDesiredFeetPosesPublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/desiredFeetPosesTrajectory", 20);
+  costDesiredFeetPosePublishers_[0] = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/desiredFeetPoseTrajectory/LF", 1);
+  costDesiredFeetPosePublishers_[1] = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/desiredFeetPoseTrajectory/RF", 1);
+  costDesiredFeetPosePublishers_[2] = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/desiredFeetPoseTrajectory/LH", 1);
+  costDesiredFeetPosePublishers_[3] = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/desiredFeetPoseTrajectory/RH", 1);
   stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/ocs2_anymal/optimizedStateTrajectory", 1);
   stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/optimizedPoseTrajectory", 1);
-  stateOptimizedFeetPosesPublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/optimizedFeetPosesTrajectory", 20);
+  stateOptimizedFeetPosePublishers_[0] = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/optimizedFeetPoseTrajectory/LF", 1);
+  stateOptimizedFeetPosePublishers_[1] = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/optimizedFeetPoseTrajectory/RF", 1);
+  stateOptimizedFeetPosePublishers_[2] = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/optimizedFeetPoseTrajectory/LH", 1);
+  stateOptimizedFeetPosePublishers_[3] = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/optimizedFeetPoseTrajectory/RH", 1);
   currentStatePublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/ocs2_anymal/currentState", 1);
   currentPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/currentPose", 1);
-  currentFeetPosesPublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/currentFeetPosesTrajectory", 1);
+  currentFeetPosesPublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/currentFeetPoses", 1);
 
   // Load URDF model
   urdf::Model urdfModel;
@@ -168,12 +174,11 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
 
   // Reserve pose array
   geometry_msgs::PoseArray poseArray;
-  geometry_msgs::PoseArray feetPoseArray;
   poseArray.poses.reserve(stateTrajectory.size());
-  std::vector<geometry_msgs::PoseArray> feetPosesMsgs(stateTrajectory.size());
-  std::for_each(feetPosesMsgs.begin(), feetPosesMsgs.end(), [&](geometry_msgs::PoseArray& p) { p.poses.reserve(NUM_CONTACT_POINTS); });
+  feet_array_t<geometry_msgs::PoseArray> feetPoseArrays;
+  std::for_each(feetPoseArrays.begin(), feetPoseArrays.end(),
+                [&](geometry_msgs::PoseArray& p) { p.poses.reserve(stateTrajectory.size()); });
 
-  auto feetPoses = feetPosesMsgs.begin();
   std::for_each(stateTrajectory.begin(), stateTrajectory.end(), [&](const dynamic_vector_t& state) {
     // Construct pose msg
     const base_coordinate_t comPose = state.head(6);
@@ -186,16 +191,16 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
     poseArray.poses.push_back(std::move(pose));
 
     // Fill feet msgs
+    const auto basePose = comModelPtr_->calculateBasePose(comPose);
     for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
       auto qJoints = state.tail<12>();
-      const auto o_feetPosition = kinematicModelPtr_->footPositionInOriginFrame(i, comPose, qJoints);
+      const auto o_feetPosition = kinematicModelPtr_->footPositionInOriginFrame(i, basePose, qJoints);
       geometry_msgs::Pose footPose;
       footPose.position = getPointMsg(o_feetPosition);
       footPose.orientation =
-          getOrientationMsg(Eigen::Quaternion<scalar_t>(kinematicModelPtr_->footOrientationInOriginFrame(i, comPose, qJoints)));
-      feetPoses->poses.push_back(std::move(footPose));
+          getOrientationMsg(Eigen::Quaternion<scalar_t>(kinematicModelPtr_->footOrientationInOriginFrame(i, basePose, qJoints)));
+      feetPoseArrays[i].poses.push_back(std::move(footPose));
     }
-    ++feetPoses;
   });
 
   // Headers
@@ -203,13 +208,13 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
   comLineMsg.header = getHeaderMsg(originFrameId_, timeStamp);
   comLineMsg.id = 0;
   poseArray.header = getHeaderMsg(originFrameId_, timeStamp);
-  assignHeader(feetPosesMsgs.begin(), feetPosesMsgs.end(), getHeaderMsg(originFrameId_, timeStamp));
+  assignHeader(feetPoseArrays.begin(), feetPoseArrays.end(), getHeaderMsg(originFrameId_, timeStamp));
 
   // Publish
   costDesiredPublisher_.publish(comLineMsg);
   costDesiredPosePublisher_.publish(poseArray);
-  for (auto& feetMsg : feetPosesMsgs) {
-    costDesiredFeetPosesPublisher_.publish(feetMsg);
+  for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
+    costDesiredFeetPosePublishers_[i].publish(feetPoseArrays[i]);
   }
 }
 
@@ -221,10 +226,10 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
   }
 
   // Reserve Feet msg
-  std::vector<std::vector<geometry_msgs::Point>> feetMsgs(NUM_CONTACT_POINTS);
+  feet_array_t<std::vector<geometry_msgs::Point>> feetMsgs;
   std::for_each(feetMsgs.begin(), feetMsgs.end(), [&](std::vector<geometry_msgs::Point>& v) { v.reserve(mpcStateTrajectory.size()); });
-  std::vector<geometry_msgs::PoseArray> feetPosesMsgs(mpcStateTrajectory.size());
-  std::for_each(feetPosesMsgs.begin(), feetPosesMsgs.end(), [&](geometry_msgs::PoseArray& p) { p.poses.reserve(NUM_CONTACT_POINTS); });
+  feet_array_t<geometry_msgs::PoseArray> feetPoseMsgs;
+  std::for_each(feetPoseMsgs.begin(), feetPoseMsgs.end(), [&](geometry_msgs::PoseArray& p) { p.poses.reserve(mpcStateTrajectory.size()); });
 
   // Reserve Com Msg
   std::vector<geometry_msgs::Point> mpcComPositionMsgs;
@@ -235,7 +240,6 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
   poseArray.poses.reserve(mpcStateTrajectory.size());
 
   // Extract Com and Feet from state
-  auto feetPoses = feetPosesMsgs.begin();
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const state_vector_array_t::value_type& state) {
     const base_coordinate_t comPose = getComPose(state);
     const base_coordinate_t basePose = comModelPtr_->calculateBasePose(comPose);
@@ -251,15 +255,14 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
     // Fill feet msgs
     for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
       const auto o_feetPosition = kinematicModelPtr_->footPositionInOriginFrame(i, basePose, qJoints);
+      const auto position = getPointMsg(o_feetPosition);
+      feetMsgs[i].push_back(position);
       geometry_msgs::Pose footPose;
-      auto position = getPointMsg(o_feetPosition);
-      feetMsgs[i].emplace_back(position);
       footPose.position = position;
       footPose.orientation =
           getOrientationMsg(Eigen::Quaternion<scalar_t>(kinematicModelPtr_->footOrientationInOriginFrame(i, basePose, qJoints)));
-      feetPoses->poses.push_back(std::move(footPose));
+      feetPoseMsgs[i].poses.push_back(std::move(footPose));
     }
-    ++feetPoses;
   });
 
   // Convert feet msgs to Array message
@@ -309,12 +312,12 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
   assignHeader(markerArray.markers.begin(), markerArray.markers.end(), getHeaderMsg(originFrameId_, timeStamp));
   assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
   poseArray.header = getHeaderMsg(originFrameId_, timeStamp);
-  assignHeader(feetPosesMsgs.begin(), feetPosesMsgs.end(), getHeaderMsg(originFrameId_, timeStamp));
+  assignHeader(feetPoseMsgs.begin(), feetPoseMsgs.end(), getHeaderMsg(originFrameId_, timeStamp));
 
   stateOptimizedPublisher_.publish(markerArray);
   stateOptimizedPosePublisher_.publish(poseArray);
-  for (auto& feetMsg : feetPosesMsgs) {
-    stateOptimizedFeetPosesPublisher_.publish(feetMsg);
+  for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
+    stateOptimizedFeetPosePublishers_[i].publish(feetPoseMsgs[i]);
   }
 }
 

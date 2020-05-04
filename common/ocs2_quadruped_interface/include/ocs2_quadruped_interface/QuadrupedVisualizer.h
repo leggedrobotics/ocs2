@@ -89,10 +89,10 @@ class QuadrupedVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> {
 
   ros::Publisher costDesiredPublisher_;
   ros::Publisher costDesiredPosePublisher_;
-  ros::Publisher costDesiredFeetPosesPublisher_;
+  feet_array_t<ros::Publisher> costDesiredFeetPosePublishers_;
   ros::Publisher stateOptimizedPublisher_;
   ros::Publisher stateOptimizedPosePublisher_;
-  ros::Publisher stateOptimizedFeetPosesPublisher_;
+  feet_array_t<ros::Publisher> stateOptimizedFeetPosePublishers_;
   ros::Publisher currentStatePublisher_;
   ros::Publisher currentPosePublisher_;
   ros::Publisher currentFeetPosesPublisher_;

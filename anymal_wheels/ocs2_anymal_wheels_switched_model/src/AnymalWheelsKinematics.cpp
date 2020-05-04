@@ -67,7 +67,7 @@ switched_model::vector3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::position
   wheelOffset.y() = wheelRadius_ * sin(haa);
   wheelOffset.z() = -wheelRadius_ * cos(haa);
 
-  return positionBaseToWheelAxisInBaseFrame(footIndex, jointPositions) + wheelOffset
+  return positionBaseToWheelAxisInBaseFrame(footIndex, jointPositions) + wheelOffset;
 }
 
 /******************************************************************************************************/

@@ -33,19 +33,19 @@ switched_model::vector3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::position
 
   switch (footIndex) {
     case LF: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL p;
+      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL_L p;
       return p(q).template topRightCorner<3, 1>();
     }
     case RF: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_WHEEL p;
+      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_WHEEL_L p;
       return p(q).template topRightCorner<3, 1>();
     }
     case LH: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_WHEEL p;
+      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_WHEEL_L p;
       return p(q).template topRightCorner<3, 1>();
     }
     case RH: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_WHEEL p;
+      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_WHEEL_L p;
       return p(q).template topRightCorner<3, 1>();
     }
     default:
@@ -60,7 +60,6 @@ switched_model::vector3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::position
 template <typename SCALAR_T>
 switched_model::vector3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::positionBaseToFootInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
-  using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
 
   SCALAR_T haa = jointPositions(footIndex * 3);  // HAA angle for the requested leg
   switched_model::vector3_s_t<SCALAR_T> wheelOffset;
@@ -68,29 +67,7 @@ switched_model::vector3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::position
   wheelOffset.y() = wheelRadius_ * sin(haa);
   wheelOffset.z() = -wheelRadius_ * cos(haa);
 
-  const auto q = getExtendedJointCoordinates(jointPositions);
-
-  switch (footIndex) {
-    case LF: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL fr_trunk_X_fr_LF_foot_;
-      return fr_trunk_X_fr_LF_foot_(q).template topRightCorner<3, 1>() + wheelOffset;
-    }
-    case RF: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_WHEEL fr_trunk_X_fr_RF_foot_;
-      return fr_trunk_X_fr_RF_foot_(q).template topRightCorner<3, 1>() + wheelOffset;
-    }
-    case LH: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_WHEEL fr_trunk_X_fr_LH_foot_;
-      return fr_trunk_X_fr_LH_foot_(q).template topRightCorner<3, 1>() + wheelOffset;
-    }
-    case RH: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_WHEEL fr_trunk_X_fr_RH_foot_;
-      return fr_trunk_X_fr_RH_foot_(q).template topRightCorner<3, 1>() + wheelOffset;
-    }
-    default:
-      std::runtime_error("Undefined endeffector index.");
-      break;
-  }
+  return positionBaseToWheelAxisInBaseFrame(footIndex, jointPositions) + wheelOffset
 }
 
 /******************************************************************************************************/
@@ -115,23 +92,23 @@ typename AnymalWheelsKinematics<SCALAR_T>::joint_jacobian_t AnymalWheelsKinemati
 
   switch (footIndex) {
     case LF: {
-      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LF_WHEEL_L fr_trunk_J_fr_LF_foot_;
-      footJacobian.template block<6, 3>(0, 0) = fr_trunk_J_fr_LF_foot_(q).template leftCols<3>() + wheelOffsetJacobian;
+      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LF_WHEEL_L fr_base_J_fr_LF_foot_;
+      footJacobian.template block<6, 3>(0, 0) = fr_base_J_fr_LF_foot_(q).template leftCols<3>() + wheelOffsetJacobian;
       break;
     }
     case RF: {
-      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RF_WHEEL_L fr_trunk_J_fr_RF_foot_;
-      footJacobian.template block<6, 3>(0, 3) = fr_trunk_J_fr_RF_foot_(q).template leftCols<3>() + wheelOffsetJacobian;
+      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RF_WHEEL_L fr_base_J_fr_RF_foot_;
+      footJacobian.template block<6, 3>(0, 3) = fr_base_J_fr_RF_foot_(q).template leftCols<3>() + wheelOffsetJacobian;
       break;
     }
     case LH: {
-      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LH_WHEEL_L fr_trunk_J_fr_LH_foot_;
-      footJacobian.template block<6, 3>(0, 6) = fr_trunk_J_fr_LH_foot_(q).template leftCols<3>() + wheelOffsetJacobian;
+      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LH_WHEEL_L fr_base_J_fr_LH_foot_;
+      footJacobian.template block<6, 3>(0, 6) = fr_base_J_fr_LH_foot_(q).template leftCols<3>() + wheelOffsetJacobian;
       break;
     }
     case RH: {
-      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RH_WHEEL_L fr_trunk_J_fr_RH_foot_;
-      footJacobian.template block<6, 3>(0, 9) = fr_trunk_J_fr_RH_foot_(q).template leftCols<3>() + wheelOffsetJacobian;
+      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RH_WHEEL_L fr_base_J_fr_RH_foot_;
+      footJacobian.template block<6, 3>(0, 9) = fr_base_J_fr_RH_foot_(q).template leftCols<3>() + wheelOffsetJacobian;
       break;
     }
     default: {
@@ -155,20 +132,20 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::footOrie
   const auto q = getExtendedJointCoordinates(jointPositions);
   switch (footIndex) {
     case LF: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL_L_COM fr_base_X_fr_LF_WHEEL_L_COM;
-      return fr_base_X_fr_LF_WHEEL(q).template topLeftCorner<3, 3>();
+      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL_L fr_base_X_fr_LF_WHEEL_L;
+      return fr_base_X_fr_LF_WHEEL_L(q).template topLeftCorner<3, 3>();
              }
     case RF: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_WHEEL_L_COM fr_base_X_fr_RF_WHEEL_L_COM;
-      return fr_base_X_fr_RF_WHEEL(q).template topLeftCorner<3, 3>();
+      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_WHEEL_L fr_base_X_fr_RF_WHEEL_L;
+      return fr_base_X_fr_RF_WHEEL_L(q).template topLeftCorner<3, 3>();
              }
     case LH: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_WHEEL_L_COM fr_base_X_fr_LH_WHEEL_L_COM;
-      return fr_base_X_fr_LH_WHEEL(q).template topLeftCorner<3, 3>();
+      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_WHEEL_L fr_base_X_fr_LH_WHEEL_L;
+      return fr_base_X_fr_LH_WHEEL_L(q).template topLeftCorner<3, 3>();
              }
     case RH: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_WHEEL_L_COM fr_base_X_fr_RH_WHEEL_L_COM;
-      return fr_base_X_fr_RH_WHEEL(q).template topLeftCorner<3, 3>();
+      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_WHEEL_L fr_base_X_fr_RH_WHEEL_L;
+      return fr_base_X_fr_RH_WHEEL_L(q).template topLeftCorner<3, 3>();
              }
     default:
              std::runtime_error("Undefined endeffector index.");

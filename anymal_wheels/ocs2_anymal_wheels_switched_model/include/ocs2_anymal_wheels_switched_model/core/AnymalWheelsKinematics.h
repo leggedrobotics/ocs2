@@ -33,6 +33,9 @@ class AnymalWheelsKinematics final : public switched_model::KinematicsModelBase<
   switched_model::vector3_s_t<SCALAR_T> positionBaseToWheelAxisInBaseFrame(
       size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
 
+  switched_model::matrix3_s_t<SCALAR_T> wheelAxisOrientationInBaseFrame(
+      size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
+
   switched_model::vector3_s_t<SCALAR_T> positionBaseToFootInBaseFrame(
       size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const override;
 

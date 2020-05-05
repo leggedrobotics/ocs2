@@ -125,7 +125,7 @@ typename AnymalWheelsKinematics<SCALAR_T>::joint_jacobian_t AnymalWheelsKinemati
 /******************************************************************************************************/
 
 template <typename SCALAR_T>
-switched_model::matrix3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::footOrientationInBaseFrame(
+switched_model::matrix3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::wheelAxisOrientationInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
 
@@ -151,6 +151,25 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::footOrie
              std::runtime_error("Undefined endeffector index.");
              break;
   }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+
+template <typename SCALAR_T>
+switched_model::matrix3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::footOrientationInBaseFrame(
+    size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
+  using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
+
+  // clang-format off
+  switched_model::matrix3_s_t<SCALAR_T> wheelAxis_R_foot;
+  wheelAxis_R_foot<< SCALAR_T(1), SCALAR_T(0), SCALAR_T(0),
+                       SCALAR_T(0), SCALAR_T(0), SCALAR_T(-1),
+                       SCALAR_T(0), SCALAR_T(1), SCALAR_T(0);
+  // clang-format on
+
+  return wheelAxisOrientationInBaseFrame(footIndex, jointPositions) * wheelAxis_R_foot;
 }
 
 }  // namespace tpl

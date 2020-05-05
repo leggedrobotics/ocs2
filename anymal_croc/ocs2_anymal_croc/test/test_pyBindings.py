@@ -30,8 +30,8 @@ class anymal_croc_python_tests(unittest.TestCase):
 
     time = 0.0
     x = np.zeros((self.mpc.STATE_DIM, 1))
-    x[3] = 0.3     # base x
-    x[4] = 0.2     # base y
+    x[3] = 0.1     # base x
+    x[4] = 0.0     # base y
     x[5] = 0.5163   # base z
     x[12] = -0.25   # LF_HAA
     x[13] = 0.6

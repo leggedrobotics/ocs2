@@ -8,7 +8,7 @@
 
 namespace anymal {
 
-std::unique_ptr<switched_model::QuadrupedPointfootInterface> getAnymalCrocInterface(const std::string& taskName);
+std::unique_ptr<switched_model::QuadrupedPointfootInterface> getAnymalCrocInterface(const std::string& taskFolder);
 
 std::string getTaskFileFolderCroc(const std::string& taskName);
 

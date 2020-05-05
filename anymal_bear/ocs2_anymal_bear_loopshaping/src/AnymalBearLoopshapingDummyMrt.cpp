@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
   ros::init(argc, argv, "anymal_bear_loopshaping_mrt");
   ros::NodeHandle nodeHandle;
 
-  auto anymalInterface = anymal::getAnymalBearLoopshapingInterface(taskName);
+  auto anymalInterface = anymal::getAnymalBearLoopshapingInterface(anymal::getTaskFileFolderBearLoopshaping(taskName));
   ocs2::MPC_Settings mpcSettings;
   mpcSettings.loadSettings(anymal::getTaskFilePathBearLoopshaping(taskName));
   quadrupedLoopshapingDummyNode(nodeHandle, *anymalInterface, mpcSettings.mrtDesiredFrequency_, mpcSettings.mpcDesiredFrequency_);

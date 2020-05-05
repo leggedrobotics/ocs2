@@ -11,8 +11,7 @@
 
 namespace anymal {
 
-std::unique_ptr<switched_model::QuadrupedWheeledInterface> getAnymalWheelsInterface(const std::string& taskName) {
-  std::string taskFolder = getTaskFileFolderWheels(taskName);
+std::unique_ptr<switched_model::QuadrupedWheeledInterface> getAnymalWheelsInterface(const std::string& taskFolder) {
   std::cerr << "Loading task file from: " << taskFolder << std::endl;
 
   auto kin = AnymalWheelsKinematics();

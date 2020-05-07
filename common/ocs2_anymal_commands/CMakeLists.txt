@@ -13,6 +13,7 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 find_package(Boost REQUIRED COMPONENTS
   filesystem
+  program_options
 )
 
 # Generate compile_commands.json for clang tools

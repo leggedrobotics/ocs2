@@ -51,8 +51,9 @@ int main(int argc, char* argv[]) {
   if (raisimRolloutSettings.generateTerrain_) {
     raisim::TerrainProperties terrainProperties;
     terrainProperties.zScale = raisimRolloutSettings.terrainRoughness_;
-    terrainProperties.seed = 1;
+    terrainProperties.seed = raisimRolloutSettings.terrainSeed_;
     auto terrain = simRollout.generateTerrain(terrainProperties);
+    conversions.terrain_ = terrain;
 
     // ensure height at zero is zero
     const auto heightAtZero = terrain->getHeight(0.0, 0.0);

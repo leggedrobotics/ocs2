@@ -6,13 +6,6 @@ find_package(catkin REQUIRED COMPONENTS
   ocs2_thirdparty
 )
 
-# either:
-# use static linking
-# set(Boost_USE_STATIC_LIBS ON)
-# or:
-# force all boost libraries to dynamic link
-add_definitions( -DBOOST_ALL_DYN_LINK )
-
 find_package(Boost REQUIRED COMPONENTS
   system
   filesystem

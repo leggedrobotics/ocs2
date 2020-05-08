@@ -8,6 +8,11 @@ list(APPEND OCS2_CXX_FLAGS
   "-Wl,--no-as-needed"
   )
 
+# Force Boost dynamic linking
+list(APPEND OCS2_CXX_FLAGS
+  "-DBOOST_ALL_DYN_LINK"
+  )
+
 # Add OpenMP flags
 if (NOT DEFINED OpenMP_CXX_FOUND)
   find_package(OpenMP REQUIRED)

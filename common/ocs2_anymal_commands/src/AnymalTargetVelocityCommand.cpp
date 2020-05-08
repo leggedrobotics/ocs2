@@ -6,7 +6,6 @@
  */
 
 #include <ros/package.h>
-#include <boost/program_options.hpp>
 
 #include <ocs2_core/misc/LoadData.h>
 
@@ -14,35 +13,18 @@
 
 int main(int argc, char* argv[]) {
   std::string filename;
-  {
-    namespace po = boost::program_options;
-    po::options_description desc{"Options"};
-    // clang-format off
-    desc.add_options()
-      ("help,h", "Help")
-      ("targetcommand,t",
-       po::value<std::string>(&filename)->default_value(
-         ros::package::getPath("ocs2_anymal_commands") + "/config/targetCommand.info"),
-         "TargetCommands file path"
-         );
-    // clang-format on
 
-    po::variables_map vm;
-    po::store(parse_command_line(argc, argv, desc), vm);
-    po::notify(vm);
-
-    if (vm.count("help")) {
-      std::cout << desc << '\n';
-      return 1;  // Fail, and exit.
-    }
-  }
+  if (argc >= 1)
+    filename = argv[1];
+  else
+    filename = ros::package::getPath("ocs2_anymal_commands") + "/config/targetCommand.info";
 
   boost::property_tree::ptree pt;
   try {
     boost::property_tree::read_info(filename, pt);
   } catch (boost::property_tree::ptree_bad_path) {
     std::cout << "Could not find/read " << filename << "." << std::endl;
-    return 2;  // Fail, and exit.
+    return 1;  // Fail, and exit.
   }
 
   const auto targetDisplacementVelocity = pt.get<double>("targetDisplacementVelocity");

@@ -1,4 +1,5 @@
 
+#include <iostream>
 #include <string>
 
 #include <boost/log/sources/record_ostream.hpp>

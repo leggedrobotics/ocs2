@@ -31,51 +31,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
-#include "ocs2_core/Dimensions.h"
+#include "ocs2_core/Types.h"
 #include "ocs2_core/cost/CostDesiredTrajectories.h"
-#include "ocs2_core/misc/LinearInterpolation.h"
 
 namespace ocs2 {
 
 /**
  * Cost Function Base.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 class CostFunctionBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  enum { state_dim_ = STATE_DIM, input_dim_ = INPUT_DIM };
-
-  using Ptr = std::shared_ptr<CostFunctionBase<STATE_DIM, INPUT_DIM> >;
-  using ConstPtr = std::shared_ptr<const CostFunctionBase<STATE_DIM, INPUT_DIM> >;
-
-  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-  using state_matrix_t = typename DIMENSIONS::state_matrix_t;
-  using input_vector_t = typename DIMENSIONS::input_vector_t;
-  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-  using input_matrix_t = typename DIMENSIONS::input_matrix_t;
-  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
-  using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-  using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
-
   /**
-   * Default constructor
+   * Constructor
    */
-  CostFunctionBase() : costDesiredTrajectoriesPtr_(nullptr) {}
+  CostFunctionBase();
 
   /**
    * Copy constructor
    */
-  CostFunctionBase(const CostFunctionBase& rhs) : CostFunctionBase() {}
+  CostFunctionBase(const CostFunctionBase& rhs);
 
   /**
    * Default destructor
@@ -87,16 +61,14 @@ class CostFunctionBase {
    *
    * @param [in] CostDesiredTrajectoriesPtr: A cost pointer to desired trajectories.
    */
-  virtual void setCostDesiredTrajectoriesPtr(const CostDesiredTrajectories* costDesiredTrajectoriesPtr) {
-    costDesiredTrajectoriesPtr_ = costDesiredTrajectoriesPtr;
-  }
+  virtual void setCostDesiredTrajectoriesPtr(const CostDesiredTrajectories* costDesiredTrajectoriesPtr);
 
   /**
    * Returns pointer to the class.
    *
    * @return A raw pointer to the class.
    */
-  virtual CostFunctionBase<STATE_DIM, INPUT_DIM>* clone() const = 0;
+  virtual CostFunctionBase* clone() const = 0;
 
   /**
    * Sets the current time, state, and control input
@@ -105,11 +77,7 @@ class CostFunctionBase {
    * @param [in] x: Current state vector
    * @param [in] u: Current input vector
    */
-  virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
-    t_ = t;
-    x_ = x;
-    u_ = u;
-  }
+  virtual void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u);
 
   /**
    * Get the intermediate cost.
@@ -123,42 +91,42 @@ class CostFunctionBase {
    *
    * @param [out] dLdt: The time derivative of intermediate cost.
    */
-  virtual void getIntermediateCostDerivativeTime(scalar_t& dLdt) { dLdt = 0; }
+  virtual void getIntermediateCostDerivativeTime(scalar_t& dLdt);
 
   /**
    * Get the state derivative of the intermediate cost.
    *
-   * @param [out] dLdx: First order derivative of the intermediate cost with respect to state vector.
+   * @param [out] dLdx: First order derivative of the intermediate cost with respect to state vector, size \f$ n_x \f$.
    */
-  virtual void getIntermediateCostDerivativeState(state_vector_t& dLdx) = 0;
+  virtual void getIntermediateCostDerivativeState(vector_t& dLdx) = 0;
 
   /**
    * Get state second order derivative of the intermediate cost.
    *
-   * @param [out] dLdxx: Second order derivative of the intermediate cost with respect to state vector.
+   * @param [out] dLdxx: Second order derivative of the intermediate cost with respect to state vector, size \f$ n_x * n_x \f$.
    */
-  virtual void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) = 0;
+  virtual void getIntermediateCostSecondDerivativeState(matrix_t& dLdxx) = 0;
 
   /**
    * Get control input derivative of the intermediate cost.
    *
-   * @param [out] dLdu: First order derivative of the intermediate cost with respect to input vector.
+   * @param [out] dLdu: First order derivative of the intermediate cost with respect to input vector, size \f$ n_u \f$.
    */
-  virtual void getIntermediateCostDerivativeInput(input_vector_t& dLdu) = 0;
+  virtual void getIntermediateCostDerivativeInput(vector_t& dLdu) = 0;
 
   /**
    * Get control input second derivative of the intermediate cost.
    *
-   * @param [out] dLduu: Second order derivative of the intermediate cost with respect to input vector.
+   * @param [out] dLduu: Second order derivative of the intermediate cost with respect to input vector, size \f$ n_u * n_u \f$.
    */
-  virtual void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) = 0;
+  virtual void getIntermediateCostSecondDerivativeInput(matrix_t& dLduu) = 0;
 
   /**
    * Get the input-state derivative of the intermediate cost.
    *
-   * @param [out] dLdux: Second order derivative of the intermediate cost with respect to input vector and state.
+   * @param [out] dLdux: Second order derivative of the intermediate cost with respect to input vector and state, size \f$ n_u * n_x \f$.
    */
-  virtual void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) = 0;
+  virtual void getIntermediateCostDerivativeInputState(matrix_t& dLdux) = 0;
 
   /**
    * Get the terminal cost.
@@ -172,21 +140,21 @@ class CostFunctionBase {
    *
    * @param [out] dPhidt: The time derivative of terminal cost.
    */
-  virtual void getTerminalCostDerivativeTime(scalar_t& dPhidt) { dPhidt = 0; }
+  virtual void getTerminalCostDerivativeTime(scalar_t& dPhidt);
 
   /**
    * Get the terminal cost state derivative of the terminal cost.
    *
-   * @param [out] dPhidx: First order final cost derivative with respect to state vector.
+   * @param [out] dPhidx: First order final cost derivative with respect to state vector, size \f$ n_x \f$.
    */
-  virtual void getTerminalCostDerivativeState(state_vector_t& dPhidx) = 0;
+  virtual void getTerminalCostDerivativeState(vector_t& dPhidx) = 0;
 
   /**
    * Get the terminal cost state second derivative of the terminal cost.
    *
-   * @param [out] dPhidxx: Second order final cost derivative with respect to state vector.
+   * @param [out] dPhidxx: Second order final cost derivative with respect to state vector, size \f$ n_x * n_x \f$.
    */
-  virtual void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) = 0;
+  virtual void getTerminalCostSecondDerivativeState(matrix_t& dPhidxx) = 0;
 
  protected:
   /*
@@ -194,9 +162,10 @@ class CostFunctionBase {
    */
   const CostDesiredTrajectories* costDesiredTrajectoriesPtr_;
 
+  // TODO(mspieler): maybe remove this state?
   scalar_t t_;
-  state_vector_t x_;
-  input_vector_t u_;
+  vector_t x_;
+  vector_t u_;
 };
 
 }  // namespace ocs2

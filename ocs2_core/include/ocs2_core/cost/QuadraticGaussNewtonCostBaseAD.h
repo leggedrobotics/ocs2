@@ -46,54 +46,18 @@ namespace ocs2 {
  * The user provides implementations for f and g. The Jacobians of f and g are computed by auto differentiation.
  * This costfunction approximates the Hessians of L and \Phi by applying the chain rule and neglecting the terms
  * with hessians of f and g. Hess_{L} and H_{\Phi} are therefore guaranteed to be at least positive semidefinite.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam INTERMEDIATE_COST_DIM dim(image(f))
- * @tparam TERMINAL_COST_DIM dim(image(g))
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
+class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = CostFunctionBase<STATE_DIM, INPUT_DIM>;
-  using typename BASE::dynamic_vector_array_t;
-  using typename BASE::dynamic_vector_t;
-  using typename BASE::input_matrix_t;
-  using typename BASE::input_state_matrix_t;
-  using typename BASE::input_vector_array_t;
-  using typename BASE::input_vector_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::scalar_t;
-  using typename BASE::state_input_matrix_t;
-  using typename BASE::state_matrix_t;
-  using typename BASE::state_vector_array_t;
-  using typename BASE::state_vector_t;
-
   using ad_interface_t = CppAdInterface<scalar_t>;
   using ad_scalar_t = typename ad_interface_t::ad_scalar_t;
   using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
-  using ad_intermediate_cost_vector_t = Eigen::Matrix<ad_scalar_t, INTERMEDIATE_COST_DIM, 1>;
-  using ad_terminal_cost_vector_t = Eigen::Matrix<ad_scalar_t, TERMINAL_COST_DIM, 1>;
-
-  using timeStateInput_vector_t = Eigen::Matrix<scalar_t, 1 + STATE_DIM + INPUT_DIM, 1>;
-  using intermediate_cost_timeStateInput_matrix_t = Eigen::Matrix<scalar_t, INTERMEDIATE_COST_DIM, 1 + STATE_DIM + INPUT_DIM>;
-  using terminal_cost_timeState_matrix_t = Eigen::Matrix<scalar_t, TERMINAL_COST_DIM, 1 + STATE_DIM>;
-  using timeStateInput_matrix_t = Eigen::Matrix<scalar_t, 1 + STATE_DIM + INPUT_DIM, 1 + STATE_DIM + INPUT_DIM>;
-
-  using timeState_vector_t = Eigen::Matrix<scalar_t, 1 + STATE_DIM, 1>;
-  using timeState_rowVector_t = Eigen::Matrix<scalar_t, 1, 1 + STATE_DIM>;
-  using timeState_matrix_t = Eigen::Matrix<scalar_t, 1 + STATE_DIM, 1 + STATE_DIM>;
-
-  using intermediate_cost_vector_t = Eigen::Matrix<scalar_t, INTERMEDIATE_COST_DIM, 1>;
-  using terminal_cost_vector_t = Eigen::Matrix<scalar_t, TERMINAL_COST_DIM, 1>;
 
   /**
    * Default constructor
    *
    */
-  explicit QuadraticGaussNewtonCostBaseAD();
+  explicit QuadraticGaussNewtonCostBaseAD(size_t state_dim, size_t input_dim, size_t intermediate_cost_dim, size_t terminal_cost_dim);
 
   /**
    * Copy constructor
@@ -117,29 +81,29 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase<STATE_DIM, INPUT_
   void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                   bool verbose = true);
 
-  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u);
+  void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) override;
 
-  void getIntermediateCost(scalar_t& L);
+  void getIntermediateCost(scalar_t& L) override;
 
-  void getIntermediateCostDerivativeTime(scalar_t& dLdt);
+  void getIntermediateCostDerivativeTime(scalar_t& dLdt) override;
 
-  void getIntermediateCostDerivativeState(state_vector_t& dLdx);
+  void getIntermediateCostDerivativeState(vector_t& dLdx) override;
 
-  void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) override;
+  void getIntermediateCostSecondDerivativeState(matrix_t& dLdxx) override;
 
-  void getIntermediateCostDerivativeInput(input_vector_t& dLdu);
+  void getIntermediateCostDerivativeInput(vector_t& dLdu) override;
 
-  void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) override;
+  void getIntermediateCostSecondDerivativeInput(matrix_t& dLduu) override;
 
-  void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) override;
+  void getIntermediateCostDerivativeInputState(matrix_t& dLdux) override;
 
-  void getTerminalCost(scalar_t& Phi);
+  void getTerminalCost(scalar_t& Phi) override;
 
-  void getTerminalCostDerivativeTime(scalar_t& dPhidt);
+  void getTerminalCostDerivativeTime(scalar_t& dPhidt) override;
 
-  void getTerminalCostDerivativeState(state_vector_t& dPhidx);
+  void getTerminalCostDerivativeState(vector_t& dPhidx) override;
 
-  void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override;
+  void getTerminalCostSecondDerivativeState(matrix_t& dPhidxx) override;
 
  protected:
   /**
@@ -148,7 +112,7 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase<STATE_DIM, INPUT_
    * @param [in] time: Current time.
    * @return The cost function parameters at a certain time
    */
-  virtual dynamic_vector_t getIntermediateParameters(scalar_t time) const { return dynamic_vector_t(0); }
+  virtual vector_t getIntermediateParameters(scalar_t time) const { return vector_t(0); }
 
   /**
    * Number of parameters for the intermediate cost function.
@@ -164,7 +128,7 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase<STATE_DIM, INPUT_
    * @param [in] time: Current time.
    * @return The cost function parameters at a certain time
    */
-  virtual dynamic_vector_t getTerminalParameters(scalar_t time) const { return dynamic_vector_t(0); }
+  virtual vector_t getTerminalParameters(scalar_t time) const { return vector_t(0); }
 
   /**
    * Number of parameters for the terminal cost function.
@@ -187,7 +151,7 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase<STATE_DIM, INPUT_
    * @param [out] costValue: costValues = f(x,u,t).
    */
   virtual void intermediateCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                                        const ad_dynamic_vector_t& parameters, ad_intermediate_cost_vector_t& costValues) const = 0;
+                                        const ad_dynamic_vector_t& parameters, ad_dynamic_vector_t& costValues) const = 0;
 
   /**
    * Interface method to the cost term g such that the intermediate cost is
@@ -201,8 +165,8 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase<STATE_DIM, INPUT_
    * @param [out] costValue: costValues = g(x,t).
    */
   virtual void terminalCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& parameters,
-                                    ad_terminal_cost_vector_t& costValues) const {
-    costValues = ad_terminal_cost_vector_t::Zero();
+                                    ad_dynamic_vector_t& costValues) const {
+    costValues = ad_dynamic_vector_t::Zero(terminal_cost_dim_);
   }
 
  private:
@@ -225,26 +189,29 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase<STATE_DIM, INPUT_
    */
   void loadModelsIfAvailable(bool verbose);
 
+  size_t state_dim_;
+  size_t input_dim_;
+  size_t intermediate_cost_dim_;
+  size_t terminal_cost_dim_;
+
   std::unique_ptr<ad_interface_t> terminalADInterfacePtr_;
   std::unique_ptr<ad_interface_t> intermediateADInterfacePtr_;
 
   // Intermediate cost
   bool intermediateCostValuesComputed_;
-  intermediate_cost_vector_t intermediateCostValues_;
+  vector_t intermediateCostValues_;
   bool intermediateDerivativesComputed_;
-  dynamic_vector_t intermediateParameters_;
-  timeStateInput_vector_t tapedTimeStateInput_;
-  intermediate_cost_timeStateInput_matrix_t intermediateJacobian_;
+  vector_t intermediateParameters_;
+  vector_t tapedTimeStateInput_;
+  matrix_t intermediateJacobian_;
 
   // Final cost
   bool terminalCostValuesComputed_;
-  terminal_cost_vector_t terminalCostValues_;
+  vector_t terminalCostValues_;
   bool terminalDerivativesComputed_;
-  dynamic_vector_t terminalParameters_;
-  timeState_vector_t tapedTimeState_;
-  terminal_cost_timeState_matrix_t terminalJacobian_;
+  vector_t terminalParameters_;
+  vector_t tapedTimeState_;
+  matrix_t terminalJacobian_;
 };
 
 }  // namespace ocs2
-
-#include "implementation/QuadraticGaussNewtonCostBaseAD.h"

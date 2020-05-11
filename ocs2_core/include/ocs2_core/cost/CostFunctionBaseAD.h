@@ -36,46 +36,18 @@ namespace ocs2 {
 
 /**
  * Cost Function Base with Algorithmic Differentiation (i.e. Auto Differentiation).
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
+class CostFunctionBaseAD : public CostFunctionBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = CostFunctionBase<STATE_DIM, INPUT_DIM>;
-  using typename BASE::dynamic_vector_array_t;
-  using typename BASE::dynamic_vector_t;
-  using typename BASE::input_matrix_t;
-  using typename BASE::input_state_matrix_t;
-  using typename BASE::input_vector_array_t;
-  using typename BASE::input_vector_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::scalar_t;
-  using typename BASE::state_input_matrix_t;
-  using typename BASE::state_matrix_t;
-  using typename BASE::state_vector_array_t;
-  using typename BASE::state_vector_t;
-
   using ad_interface_t = CppAdInterface<scalar_t>;
   using ad_scalar_t = typename ad_interface_t::ad_scalar_t;
   using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
-
-  using timeStateInput_vector_t = Eigen::Matrix<scalar_t, 1 + STATE_DIM + INPUT_DIM, 1>;
-  using timeStateInput_rowVector_t = Eigen::Matrix<scalar_t, 1, 1 + STATE_DIM + INPUT_DIM>;
-  using timeStateInput_matrix_t = Eigen::Matrix<scalar_t, 1 + STATE_DIM + INPUT_DIM, 1 + STATE_DIM + INPUT_DIM>;
-
-  using timeState_vector_t = Eigen::Matrix<scalar_t, 1 + STATE_DIM, 1>;
-  using timeState_rowVector_t = Eigen::Matrix<scalar_t, 1, 1 + STATE_DIM>;
-  using timeState_matrix_t = Eigen::Matrix<scalar_t, 1 + STATE_DIM, 1 + STATE_DIM>;
 
   /**
    * Default constructor
    *
    */
-  explicit CostFunctionBaseAD();
+  explicit CostFunctionBaseAD(size_t state_dim, size_t input_dim, size_t intermediate_cost_dim, size_t terminal_cost_dim);
 
   /**
    * Copy constructor
@@ -99,29 +71,29 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
   void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                   bool verbose = true);
 
-  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) final;
+  void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) final;
 
   void getIntermediateCost(scalar_t& L) final;
 
   void getIntermediateCostDerivativeTime(scalar_t& dLdt) final;
 
-  void getIntermediateCostDerivativeState(state_vector_t& dLdx) final;
+  void getIntermediateCostDerivativeState(vector_t& dLdx) final;
 
-  void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) override;
+  void getIntermediateCostSecondDerivativeState(matrix_t& dLdxx) final;
 
-  void getIntermediateCostDerivativeInput(input_vector_t& dLdu) final;
+  void getIntermediateCostDerivativeInput(vector_t& dLdu) final;
 
-  void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) override;
+  void getIntermediateCostSecondDerivativeInput(matrix_t& dLduu) final;
 
-  void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) override;
+  void getIntermediateCostDerivativeInputState(matrix_t& dLdux) final;
 
   void getTerminalCost(scalar_t& Phi) final;
 
   void getTerminalCostDerivativeTime(scalar_t& dPhidt) final;
 
-  void getTerminalCostDerivativeState(state_vector_t& dPhidx) final;
+  void getTerminalCostDerivativeState(vector_t& dPhidx) final;
 
-  void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override;
+  void getTerminalCostSecondDerivativeState(matrix_t& dPhidxx) final;
 
  protected:
   /**
@@ -130,7 +102,7 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    * @param [in] time: Current time.
    * @return The cost function parameters at a certain time
    */
-  virtual dynamic_vector_t getIntermediateParameters(scalar_t time) const { return dynamic_vector_t(0); }
+  virtual vector_t getIntermediateParameters(scalar_t time) const;
 
   /**
    * Number of parameters for the intermediate cost function.
@@ -138,7 +110,7 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    *
    * @return number of parameters
    */
-  virtual size_t getNumIntermediateParameters() const { return 0; }
+  virtual size_t getNumIntermediateParameters() const;
 
   /**
    * Gets a user-defined cost parameters, applied to the terminal costs
@@ -146,7 +118,7 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    * @param [in] time: Current time.
    * @return The cost function parameters at a certain time
    */
-  virtual dynamic_vector_t getTerminalParameters(scalar_t time) const { return dynamic_vector_t(0); }
+  virtual vector_t getTerminalParameters(scalar_t time) const;
 
   /**
    * Number of parameters for the terminal cost function.
@@ -154,7 +126,7 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    *
    * @return number of parameters
    */
-  virtual size_t getNumTerminalParameters() const { return 0; }
+  virtual size_t getNumTerminalParameters() const;
 
   /**
    * Interface method to the intermediate cost function. This method must be implemented by the derived class.
@@ -179,9 +151,7 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    * @param [out] costValue: cost value.
    */
   virtual void terminalCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& parameters,
-                                    ad_scalar_t& costValue) const {
-    costValue = 0;
-  }
+                                    ad_scalar_t& costValue) const;
 
  private:
   /**
@@ -206,21 +176,24 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
   std::unique_ptr<ad_interface_t> terminalADInterfacePtr_;
   std::unique_ptr<ad_interface_t> intermediateADInterfacePtr_;
 
+  size_t state_dim_;
+  size_t input_dim_;
+  size_t intermediate_cost_dim_;
+  size_t terminal_cost_dim_;
+
   // Intermediate cost
   bool intermediateDerivativesComputed_;
-  dynamic_vector_t intermediateParameters_;
-  timeStateInput_vector_t tapedTimeStateInput_;
-  timeStateInput_rowVector_t intermediateJacobian_;
-  timeStateInput_matrix_t intermediateHessian_;
+  vector_t intermediateParameters_;
+  vector_t tapedTimeStateInput_;
+  row_vector_t intermediateJacobian_;
+  matrix_t intermediateHessian_;
 
   // Final cost
   bool terminalDerivativesComputed_;
-  dynamic_vector_t terminalParameters_;
-  timeState_vector_t tapedTimeState_;
-  timeState_rowVector_t terminalJacobian_;
-  timeState_matrix_t terminalHessian_;
+  vector_t terminalParameters_;
+  vector_t tapedTimeState_;
+  row_vector_t terminalJacobian_;
+  matrix_t terminalHessian_;
 };
 
 }  // namespace ocs2
-
-#include "implementation/CostFunctionBaseAD.h"

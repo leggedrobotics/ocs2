@@ -38,13 +38,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <utility>
 #include <vector>
 
-#include "ocs2_core/Dimensions.h"
+#include "ocs2_core/Types.h"
 #include "ocs2_core/misc/Lookup.h"
 
 namespace ocs2 {
 namespace LinearInterpolation {
 
-using scalar_t = Dimensions<0, 0>::scalar_t;
 using index_alpha_t = std::pair<int, scalar_t>;
 
 /**

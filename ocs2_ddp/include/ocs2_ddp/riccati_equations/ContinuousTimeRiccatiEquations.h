@@ -105,9 +105,6 @@ static constexpr int riccati_matrix_dim(int flattened_dim) {
  */
 class ContinuousTimeRiccatiEquations final : public OdeBase<Eigen::Dynamic> {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = OdeBase<Eigen::Dynamic>;
 
   /**
    * Constructor.

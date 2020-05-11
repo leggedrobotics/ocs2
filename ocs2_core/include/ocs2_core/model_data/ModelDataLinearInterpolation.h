@@ -43,7 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*
  * Declares an access function of name FIELD such as time, dynamics, dynamicsBias, ...
  * For example the signature of function for dynamics is:
- * const dynamic_vector_t& dynamics(const ocs2::ModelDataBase::array_t* vec, size_t n) {
+ * const vector_t& dynamics(const ocs2::ModelDataBase::array_t* vec, size_t n) {
  *   return (*vec)[n].dynamic_;
  * }
  */
@@ -67,28 +67,27 @@ inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, sca
 }
 
 /**
- * Helper specialization of interpolate() of ModelData array types for dynamic_vector_t subfields.
+ * Helper specialization of interpolate() of ModelData array types for vector_t subfields.
  */
-inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, dynamic_vector_t& enquiryData,
+inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, vector_t& enquiryData,
                         const ocs2::ModelDataBase::array_t* dataPtr,
-                        std::function<const dynamic_vector_t&(const ocs2::ModelDataBase::array_t*, size_t)> accessFun) {
+                        std::function<const vector_t&(const ocs2::ModelDataBase::array_t*, size_t)> accessFun) {
   ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataPtr, accessFun);
 }
 
 /**
  * Helper specialization of interpolate() of ModelData array types for scalar_t subfields.
  */
-inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, dynamic_matrix_t& enquiryData,
+inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, matrix_t& enquiryData,
                         const ocs2::ModelDataBase::array_t* dataPtr,
-                        std::function<const dynamic_matrix_t&(const ocs2::ModelDataBase::array_t*, size_t)> accessFun) {
+                        std::function<const matrix_t&(const ocs2::ModelDataBase::array_t*, size_t)> accessFun) {
   ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataPtr, accessFun);
 }
 
 /**
  * Re-defining the timeSegment() in ModelData namespace.
  */
-inline ocs2::LinearInterpolation::index_alpha_t timeSegment(ocs2::LinearInterpolation::scalar_t enquiryTime,
-                                                            const std::vector<ocs2::LinearInterpolation::scalar_t>* timeArrayPtr) {
+inline ocs2::LinearInterpolation::index_alpha_t timeSegment(scalar_t enquiryTime, const std::vector<scalar_t>* timeArrayPtr) {
   return ocs2::LinearInterpolation::timeSegment(enquiryTime, timeArrayPtr);
 }
 

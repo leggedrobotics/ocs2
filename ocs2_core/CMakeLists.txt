@@ -63,15 +63,21 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/automatic_differentation/CppAdInterface.cpp
   src/automatic_differentation/CppAdSparsity.cpp
-  src/constraint/PenaltyBase.cpp
-  src/constraint/RelaxedBarrierPenalty.cpp
-  src/integration/Integrator.cpp
-  src/logic/ModeSchedule.cpp
-  src/loopshaping/LoopshapingPropertyTree.cpp
-  src/loopshaping/LoopshapingFilter.cpp
-  src/model_data/ModelDataBase.cpp
-  src/misc/LinearAlgebra.cpp
-  src/misc/ThreadPool.cpp
+  # src/constraint/PenaltyBase.cpp
+  # src/constraint/RelaxedBarrierPenalty.cpp
+  src/cost/CostFunctionBase.cpp
+  src/cost/CostFunctionBaseAD.cpp
+  src/cost/CostDesiredTrajectories.cpp
+  src/cost/RelaxedBarrierCost.cpp
+  src/cost/CostFunctionLinearCombination.cpp
+  src/cost/QuadraticCostFunction.cpp
+  # src/integration/Integrator.cpp
+  # src/logic/ModeSchedule.cpp
+  # src/loopshaping/LoopshapingPropertyTree.cpp
+  # src/loopshaping/LoopshapingFilter.cpp
+  # src/model_data/ModelDataBase.cpp
+  # src/misc/LinearAlgebra.cpp
+  # src/misc/ThreadPool.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
@@ -129,108 +135,108 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_core
 
-catkin_add_gtest(initialization_unittest
-  test/initialization/InitializationTest.cpp
-)
-target_link_libraries(initialization_unittest
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  gtest_main
-)
+# catkin_add_gtest(initialization_unittest
+#   test/initialization/InitializationTest.cpp
+# )
+# target_link_libraries(initialization_unittest
+#   ${PROJECT_NAME}
+#   ${catkin_LIBRARIES}
+#   ${Boost_LIBRARIES}
+#   gtest_main
+# )
 
-catkin_add_gtest(integration_unittest
-  test/integration/IntegrationTest.cpp
-  test/integration/TrapezoidalIntegrationTest.cpp
-)
-target_link_libraries(integration_unittest
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  gtest_main
-)
+# catkin_add_gtest(integration_unittest
+#   test/integration/IntegrationTest.cpp
+#   test/integration/TrapezoidalIntegrationTest.cpp
+# )
+# target_link_libraries(integration_unittest
+#   ${PROJECT_NAME}
+#   ${catkin_LIBRARIES}
+#   ${Boost_LIBRARIES}
+#   gtest_main
+# )
 
-catkin_add_gtest(interpolation_unittest
-  test/misc/testInterpolation.cpp
-)
-target_link_libraries(interpolation_unittest
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+# catkin_add_gtest(interpolation_unittest
+#   test/misc/testInterpolation.cpp
+# )
+# target_link_libraries(interpolation_unittest
+#   ${PROJECT_NAME}
+#   ${catkin_LIBRARIES}
+# )
 
-catkin_add_gtest(${PROJECT_NAME}_cppadcg
-  test/cppad_cg/testCppADCG_constraint.cpp
-  test/cppad_cg/testCppADCG_cost.cpp
-  test/cppad_cg/testCppADCG_dynamics.cpp
-  test/cppad_cg/testSparsityHelpers.cpp
-  test/cppad_cg/testCppAdInterface.cpp
-)
-target_link_libraries(${PROJECT_NAME}_cppadcg
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES} -lm -ldl
-  gtest_main
-)
+# catkin_add_gtest(${PROJECT_NAME}_cppadcg
+#   test/cppad_cg/testCppADCG_constraint.cpp
+#   test/cppad_cg/testCppADCG_cost.cpp
+#   test/cppad_cg/testCppADCG_dynamics.cpp
+#   test/cppad_cg/testSparsityHelpers.cpp
+#   test/cppad_cg/testCppAdInterface.cpp
+# )
+# target_link_libraries(${PROJECT_NAME}_cppadcg
+#   ${PROJECT_NAME}
+#   ${Boost_LIBRARIES}
+#   ${catkin_LIBRARIES} -lm -ldl
+#   gtest_main
+# )
 
-catkin_add_gtest(test_transferfunctionbase
-  test/dynamics/testTransferfunctionBase.cpp
-)
-target_link_libraries(test_transferfunctionbase
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+# catkin_add_gtest(test_transferfunctionbase
+#   test/dynamics/testTransferfunctionBase.cpp
+# )
+# target_link_libraries(test_transferfunctionbase
+#   ${PROJECT_NAME}
+#   ${catkin_LIBRARIES}
+# )
 
-catkin_add_gtest(${PROJECT_NAME}_loopshaping
-  test/loopshaping/testLoopshapingConfiguration.cpp
-  test/loopshaping/testLoopshapingDefinition.cpp
-  test/loopshaping/testLoopshapingDynamics.cpp
-  test/loopshaping/testLoopshapingCost.cpp
-  test/loopshaping/testLoopshapingConstraint.cpp
-  test/loopshaping/testLoopshapingFilterDynamics.cpp
-)
-target_link_libraries(${PROJECT_NAME}_loopshaping
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
-  -lstdc++fs
-  gtest_main
-)
+# catkin_add_gtest(${PROJECT_NAME}_loopshaping
+#   test/loopshaping/testLoopshapingConfiguration.cpp
+#   test/loopshaping/testLoopshapingDefinition.cpp
+#   test/loopshaping/testLoopshapingDynamics.cpp
+#   test/loopshaping/testLoopshapingCost.cpp
+#   test/loopshaping/testLoopshapingConstraint.cpp
+#   test/loopshaping/testLoopshapingFilterDynamics.cpp
+# )
+# target_link_libraries(${PROJECT_NAME}_loopshaping
+#   ${PROJECT_NAME}
+#   ${Boost_LIBRARIES}
+#   ${catkin_LIBRARIES}
+#   -lstdc++fs
+#   gtest_main
+# )
 
-catkin_add_gtest(test_LinearAlgebra
-  test/misc/testLinearAlgebra.cpp
-)
-target_link_libraries(test_LinearAlgebra
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
-)
+# catkin_add_gtest(test_LinearAlgebra
+#   test/misc/testLinearAlgebra.cpp
+# )
+# target_link_libraries(test_LinearAlgebra
+#   ${PROJECT_NAME}
+#   ${Boost_LIBRARIES}
+#   ${catkin_LIBRARIES}
+# )
 
-catkin_add_gtest(test_lookup
-  test/misc/testLookup.cpp
-)
-target_link_libraries(test_lookup
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
-)
+# catkin_add_gtest(test_lookup
+#   test/misc/testLookup.cpp
+# )
+# target_link_libraries(test_lookup
+#   ${PROJECT_NAME}
+#   ${Boost_LIBRARIES}
+#   ${catkin_LIBRARIES}
+# )
 
-catkin_add_gtest(derivative_checker_unittest
-  test/dynamics/testSystemDynamicsLinearizer.cpp
-)
-target_link_libraries(derivative_checker_unittest
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+# catkin_add_gtest(derivative_checker_unittest
+#   test/dynamics/testSystemDynamicsLinearizer.cpp
+# )
+# target_link_libraries(derivative_checker_unittest
+#   ${PROJECT_NAME}
+#   ${catkin_LIBRARIES}
+# )
 
-catkin_add_gtest(test_ThreadPool
-  test/misc/testThreadPool.cpp
-)
-target_link_libraries(test_ThreadPool
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
-  gtest_main
-)
+# catkin_add_gtest(test_ThreadPool
+#   test/misc/testThreadPool.cpp
+# )
+# target_link_libraries(test_ThreadPool
+#   ${PROJECT_NAME}
+#   ${Boost_LIBRARIES}
+#   ${catkin_LIBRARIES}
+#   gtest_main
+# )
 
 catkin_add_gtest(test_CostFunctionLinearCombination
   test/cost/testCostFunctionLinearCombination.cpp
@@ -242,10 +248,20 @@ target_link_libraries(test_CostFunctionLinearCombination
   gtest_main
 )
 
-catkin_add_gtest(test_ModelDataBase
-  test/model_data/testModelDataBase.cpp
+catkin_add_gtest(test_RelaxedBarrierCost
+  test/cost/testRelaxedBarrierCost.cpp
 )
-target_link_libraries(test_ModelDataBase
+target_link_libraries(test_RelaxedBarrierCost
   ${PROJECT_NAME}
+  ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
+  gtest_main
 )
+
+# catkin_add_gtest(test_ModelDataBase
+#   test/model_data/testModelDataBase.cpp
+# )
+# target_link_libraries(test_ModelDataBase
+#   ${PROJECT_NAME}
+#   ${catkin_LIBRARIES}
+# )

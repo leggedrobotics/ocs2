@@ -44,6 +44,10 @@ class SwingPhase final : public FootPhase {
 
   SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touchDown);
   FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time, scalar_t positionGain) const override;
+  const SplineCpg& getMotionInLiftOffFrame() const { return *liftOffMotion_; };
+  const TerrainPlane& getLiftOffFrame() const { return *liftOff_.terrainPlane; };
+  const SplineCpg& getMotionInTouchDownFrame() const { return *touchdownMotion_; };
+  const TerrainPlane& getTouchDownFrame() const { return *touchDown_.terrainPlane; };
 
  private:
   void setFullSwing(scalar_t swingHeight);

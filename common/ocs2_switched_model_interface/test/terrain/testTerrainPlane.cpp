@@ -40,9 +40,33 @@ TEST(TestTerrainPlane, tangentialBasisFromSurfaceNormal) {
 
   // Ortogonal
   const double tol = 1e-9;
-  ASSERT_LT(tangentialBasis.row(0).dot(surfaceNormal), tol);
-  ASSERT_LT(tangentialBasis.row(1).dot(surfaceNormal), tol);
-  ASSERT_LT(tangentialBasis.row(0).dot(tangentialBasis.row(1)), tol);
+  ASSERT_LT(std::abs(tangentialBasis.row(0).dot(surfaceNormal)), tol);
+  ASSERT_LT(std::abs(tangentialBasis.row(1).dot(surfaceNormal)), tol);
+  ASSERT_LT(std::abs(tangentialBasis.row(0).dot(tangentialBasis.row(1))), tol);
+}
+
+TEST(TestTerrainPlane, orientationWorldToTerrainFromSurfaceNormalInWorld) {
+  const vector3_t surfaceNormal = vector3_t::Random().normalized();
+
+  // Extract
+  const matrix3_t R_WtoT = orientationWorldToTerrainFromSurfaceNormalInWorld(surfaceNormal);
+  const vector3_t xAxisInWorld = R_WtoT.row(0).transpose();
+  const vector3_t yAxisInWorld = R_WtoT.row(1).transpose();
+  const vector3_t zAxisInWorld = R_WtoT.row(2).transpose();
+
+  const double tol = 1e-9;
+  ASSERT_LT(std::abs(R_WtoT.determinant() - 1.0), tol);
+
+  // z-axis is the surface normal
+  ASSERT_TRUE(zAxisInWorld.isApprox(surfaceNormal));
+
+  // Right hand coordinate system
+  ASSERT_TRUE(zAxisInWorld.cross(xAxisInWorld).isApprox(yAxisInWorld));
+
+  // Ortogonal
+  ASSERT_LT(std::abs(xAxisInWorld.dot(yAxisInWorld)), tol);
+  ASSERT_LT(std::abs(xAxisInWorld.dot(zAxisInWorld)), tol);
+  ASSERT_LT(std::abs(yAxisInWorld.dot(zAxisInWorld)), tol);
 }
 
 TEST(TestTerrainPlane, projectPositionInWorldOntoPlane) {

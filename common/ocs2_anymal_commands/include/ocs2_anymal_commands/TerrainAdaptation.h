@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <ocs2_robotic_tools/common/RotationTransforms.h>
 #include <ocs2_switched_model_interface/core/Rotations.h>
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 #include <ocs2_switched_model_interface/terrain/TerrainPlane.h>
@@ -46,6 +47,7 @@ inline vector3_t adaptDesiredOrientationToTerrain(const vector3_t& desiredEulerX
 
   // Convert back to euler angles
   vector3_t adaptedEulerXYZ = o_R_adapted.eulerAngles(0, 1, 2);
+  ocs2::makeEulerAnglesUnique(adaptedEulerXYZ);
   adaptedEulerXYZ.z() = findOrientationClostestToReference(adaptedEulerXYZ.z(), desiredEulerXYZ.z());
   return adaptedEulerXYZ;
 }

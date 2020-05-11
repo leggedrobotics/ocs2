@@ -17,6 +17,7 @@ class SwitchedModelModeScheduleManager : public ocs2::ModeScheduleManager<STATE_
  public:
   using Base = ocs2::ModeScheduleManager<STATE_DIM, INPUT_DIM>;
   using LockableGaitSchedule = ocs2::Lockable<GaitSchedule>;
+  using LockableTerrainModelPtr = ocs2::LockablePtr<TerrainModel>;
 
   SwitchedModelModeScheduleManager(GaitSchedule gaitSchedule, SwingTrajectoryPlanner swingTrajectory,
                                    std::unique_ptr<TerrainModel> terrainModel);
@@ -29,7 +30,7 @@ class SwitchedModelModeScheduleManager : public ocs2::ModeScheduleManager<STATE_
 
   const std::shared_ptr<SwingTrajectoryPlanner>& getSwingTrajectoryPlanner() { return swingTrajectoryPtr_; }
 
-  ocs2::SharedLockablePPtr<TerrainModel> shareTerrain() { return terrainPptr_; }
+  LockableTerrainModelPtr& getTerrainPtr() { return terrainPtr_; }
 
  private:
   void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
@@ -38,7 +39,7 @@ class SwitchedModelModeScheduleManager : public ocs2::ModeScheduleManager<STATE_
  private:
   std::shared_ptr<LockableGaitSchedule> gaitSchedulePtr_;
   std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr_;
-  ocs2::SharedLockablePPtr<TerrainModel> terrainPptr_;
+  LockableTerrainModelPtr terrainPtr_;
 };
 
 }  // namespace switched_model

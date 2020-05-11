@@ -20,8 +20,8 @@ class TerrainPlaneVisualizer {
  public:
   /** Visualization settings (publicly available) */
   std::string originFrameId_ = "world";  // Frame name all messages are published in
-  double planeWidth_ = 1.0;
-  double planeLength_ = 2.0;
+  double planeWidth_ = 1.5;
+  double planeLength_ = 1.5;
   double planeThickness_ = 0.005;
   double planeAlpha_ = 0.5;
 
@@ -35,7 +35,7 @@ class TerrainPlaneVisualizer {
 
 class LocalTerrainVisualizer : public ocs2::SolverSynchronizedModule<STATE_DIM, INPUT_DIM> {
  public:
-  LocalTerrainVisualizer(ocs2::SharedLockablePPtr<TerrainModel> terrainPptr, ros::NodeHandle& nodeHandle);
+  LocalTerrainVisualizer(ocs2::LockablePtr<TerrainModel>& terrainPtr, ros::NodeHandle& nodeHandle);
 
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
                     const ocs2::CostDesiredTrajectories& costDesiredTrajectory) override{};
@@ -43,7 +43,7 @@ class LocalTerrainVisualizer : public ocs2::SolverSynchronizedModule<STATE_DIM, 
   void postSolverRun(const primal_solution_t& primalSolution) override;
 
  private:
-  ocs2::SharedLockablePPtr<TerrainModel> terrainPptr_;
+  ocs2::LockablePtr<TerrainModel>* terrainPptr_;
   TerrainPlaneVisualizer planeVisualizer_;
 };
 

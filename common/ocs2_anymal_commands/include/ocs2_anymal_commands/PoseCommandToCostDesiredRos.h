@@ -18,13 +18,14 @@ namespace switched_model {
 
 class PoseCommandToCostDesiredRos {
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   scalar_t targetDisplacementVelocity;
   scalar_t targetRotationVelocity;
   scalar_t initZHeight;
   Eigen::Matrix<scalar_t, 12, 1> defaultJointState;
 
-  PoseCommandToCostDesiredRos(ros::NodeHandle& nodeHandle, ocs2::SharedLockablePPtr<TerrainModel> terrainPptr);
+  PoseCommandToCostDesiredRos(ros::NodeHandle& nodeHandle, ocs2::LockablePtr<TerrainModel>& terrainPtr);
 
   void observationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg);
 
@@ -33,7 +34,7 @@ class PoseCommandToCostDesiredRos {
  private:
   scalar_t estimeTimeToTarget(scalar_t dyaw, scalar_t dx, scalar_t dy) const;
 
-  ocs2::SharedLockablePPtr<TerrainModel> terrainPptr_;
+  ocs2::LockablePtr<TerrainModel>* terrainPptr_;
   ros::Publisher costDesiredPublisher_;
 
   ros::Subscriber observationSubscriber_;

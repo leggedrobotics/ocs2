@@ -13,7 +13,7 @@ SwitchedModelModeScheduleManager::SwitchedModelModeScheduleManager(GaitSchedule 
     : Base(ocs2::ModeSchedule()),
       gaitSchedulePtr_(std::make_shared<LockableGaitSchedule>(std::move(gaitSchedule))),
       swingTrajectoryPtr_(std::make_shared<SwingTrajectoryPlanner>(std::move(swingTrajectory))),
-      terrainPptr_(ocs2::makeSharedLockablePPtr(std::move(terrainModel))) {}
+      terrainPtr_(std::move(terrainModel)) {}
 
 contact_flag_t SwitchedModelModeScheduleManager::getContactFlags(scalar_t time) const {
   return modeNumber2StanceLeg(this->getModeSchedule().modeAtTime(time));
@@ -30,9 +30,9 @@ void SwitchedModelModeScheduleManager::preSolverRunImpl(scalar_t initTime, scala
   }
 
   {
-    std::lock_guard<decltype(*terrainPptr_)> lock(*terrainPptr_);
+    std::lock_guard<LockableTerrainModelPtr> lock(terrainPtr_);
     swingTrajectoryPtr_->update(initTime, finalTime, currentState, costDesiredTrajectory, extractContactTimingsPerLeg(modeSchedule),
-                                **terrainPptr_);
+                                *terrainPtr_);
   }
 }
 

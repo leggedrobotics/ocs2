@@ -14,7 +14,7 @@
 
 namespace switched_model {
 
-PoseCommandToCostDesiredRos::PoseCommandToCostDesiredRos(ros::NodeHandle& nodeHandle, ocs2::SharedLockablePPtr<TerrainModel> terrainPptr) : terrainPptr_(terrainPptr) {
+PoseCommandToCostDesiredRos::PoseCommandToCostDesiredRos(ros::NodeHandle& nodeHandle, ocs2::LockablePtr<TerrainModel>& terrainPtr) : terrainPptr_(&terrainPtr) {
   // Load settings
   std::string filename = ros::package::getPath("ocs2_anymal_commands") + "/config/targetCommand.info";
   boost::property_tree::ptree pt;
@@ -61,8 +61,8 @@ void PoseCommandToCostDesiredRos::commandCallback(const ocs2_msgs::mpc_state::Co
 
   // Terrain adaptation
   const auto localTerrainPlane = [&]{
-    std::lock_guard<decltype(*terrainPptr_)> lock(*terrainPptr_);
-    return terrainPptr_->get()->getLocalTerrainAtPositionInWorld(comPositionDesired);
+    std::lock_guard<ocs2::LockablePtr<TerrainModel>> lock(*terrainPptr_);
+    return (*terrainPptr_)->getLocalTerrainAtPositionInWorld(comPositionDesired);
   }();
   comPositionDesired = adaptDesiredPositionToTerrain(comPositionDesired, localTerrainPlane);
   comOrientationDesired = adaptDesiredOrientationToTerrain(comOrientationDesired, localTerrainPlane);

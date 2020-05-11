@@ -31,11 +31,11 @@ void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& qua
 
   // Terrain
   auto localTerrainVisualizer =
-      std::make_shared<LocalTerrainVisualizer>(quadrupedInterface.getModeScheduleManagerPtr()->shareTerrain(), nodeHandle);
+      std::make_shared<LocalTerrainVisualizer>(quadrupedInterface.getModeScheduleManagerPtr()->getTerrainPtr(), nodeHandle);
   solverModules.push_back(localTerrainVisualizer);
 
   // Target Trajectories
-  PoseCommandToCostDesiredRos poseCommandToCostDesiredRos(nodeHandle, quadrupedInterface.getModeScheduleManagerPtr()->shareTerrain());
+  PoseCommandToCostDesiredRos poseCommandToCostDesiredRos(nodeHandle, quadrupedInterface.getModeScheduleManagerPtr()->getTerrainPtr());
 
   // Swing planner
   auto swingPlanningVisualizer =

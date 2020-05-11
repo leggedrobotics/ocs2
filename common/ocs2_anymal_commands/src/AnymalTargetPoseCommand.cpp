@@ -5,6 +5,7 @@
  *      Author: farbod
  */
 
+#include <ros/init.h>
 #include <ros/package.h>
 
 #include <ocs2_core/misc/LoadData.h>
@@ -14,10 +15,14 @@
 int main(int argc, char* argv[]) {
   std::string filename;
 
-  if (argc >= 1)
-    filename = argv[1];
-  else
-    filename = ros::package::getPath("ocs2_anymal_commands") + "/config/targetCommand.info";
+  {
+    std::vector<std::string> programArgs{};
+    ros::removeROSArgs(argc, argv, programArgs);
+    if (programArgs.size() > 1)
+      filename = programArgs[1];
+    else
+      filename = ros::package::getPath("ocs2_anymal_commands") + "/config/targetCommand.info";
+  }
 
   boost::property_tree::ptree pt;
   try {

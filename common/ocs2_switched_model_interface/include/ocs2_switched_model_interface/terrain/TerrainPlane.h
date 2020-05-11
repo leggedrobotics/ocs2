@@ -69,6 +69,17 @@ inline vector3_t projectPositionInWorldOntoPlaneAlongGravity(const vector3_t& po
   return projectedPosition;
 }
 
+inline vector3_t projectVectorInWorldOntoPlaneAlongGravity(const vector3_t& vectorInWorld, const TerrainPlane& terrainPlane) {
+  const vector3_t surfaceNormal = surfaceNormalInWorld(terrainPlane);
+  vector3_t projectedVector = vectorInWorld;
+  // solve
+  // 1. projectedVector.x() = vectorInWorld.x();
+  // 2. projectedVector.y() = vectorInWorld.y();
+  // 3. surfaceNormal.dot(projectedVector) = 0
+  projectedVector.z() = -(vectorInWorld.x() * surfaceNormal.x() + vectorInWorld.y() * surfaceNormal.y()) / surfaceNormal.z();
+  return projectedVector;
+}
+
 TerrainPlane loadTerrainPlane(const std::string& filename, bool verbose);
 
 }  // namespace switched_model

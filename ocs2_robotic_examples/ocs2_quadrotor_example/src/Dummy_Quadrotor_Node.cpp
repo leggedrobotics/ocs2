@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
   // task file
   {
     std::vector<std::string> programArgs{};
-    ::ros::removeRosArgs(argc, argv, programArgs);
+    ::ros::removeROSArgs(argc, argv, programArgs);
     if (programArgs.size() <= 1) {
       throw std::runtime_error("No task file specified. Aborting.");
     }

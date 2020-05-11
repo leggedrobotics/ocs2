@@ -17,14 +17,12 @@ int main(int argc, char* argv[]) {
   using vis_t = ocs2::ballbot::BallbotDummyVisualization;
 
   // task file
-  {
-    std::vector<std::string> programArgs{};
-    ::ros::removeROSArgs(argc, argv, programArgs);
-    if (programArgs.size() <= 1) {
-      throw std::runtime_error("No task tile specified.");
-    }
-    const std::string taskFileFolderName(programArgs[1]);
+  std::vector<std::string> programArgs{};
+  ::ros::removeROSArgs(argc, argv, programArgs);
+  if (programArgs.size() <= 1) {
+    throw std::runtime_error("No task tile specified.");
   }
+  const std::string taskFileFolderName(programArgs[1]);
 
   // Init ros
   ros::init(argc, argv, robotName + "_raisim_dummy");

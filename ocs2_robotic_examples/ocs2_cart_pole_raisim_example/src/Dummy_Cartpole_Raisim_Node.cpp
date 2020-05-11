@@ -19,14 +19,12 @@ int main(int argc, char* argv[]) {
   using sim_rollout_t = ocs2::RaisimRollout<ocs2::cartpole::STATE_DIM_, ocs2::cartpole::INPUT_DIM_>;
 
   // task file
-  {
-    std::vector<std::string> programArgs{};
-    ::ros::removeROSArgs(argc, argv, programArgs);
-    if (programArgs.size() <= 1) {
-      throw std::runtime_error("No task file specified. Aborting.");
-    }
-    std::string taskFileFolderName = std::string(programArgs[1]);
+  std::vector<std::string> programArgs{};
+  ::ros::removeROSArgs(argc, argv, programArgs);
+  if (programArgs.size() <= 1) {
+    throw std::runtime_error("No task file specified. Aborting.");
   }
+  std::string taskFileFolderName = std::string(programArgs[1]);
 
   // Initialize ros node
   ros::init(argc, argv, robotName + "_mrt");

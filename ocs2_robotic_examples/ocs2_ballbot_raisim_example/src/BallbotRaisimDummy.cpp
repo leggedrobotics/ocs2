@@ -8,6 +8,7 @@
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 #include <ocs2_raisim/RaisimRollout.h>
 #include <ocs2_raisim_ros/RaisimHeightmapRosConverter.h>
+#include <ros/init.h>
 
 int main(int argc, char* argv[]) {
   const std::string robotName = "ballbot";
@@ -16,10 +17,14 @@ int main(int argc, char* argv[]) {
   using vis_t = ocs2::ballbot::BallbotDummyVisualization;
 
   // task file
-  if (argc <= 1) {
-    throw std::runtime_error("No task tile specified.");
+  {
+    std::vector<std::string> programArgs{};
+    ::ros::removeRosArgs(argc, argv, programArgs);
+    if (programArgs.size() <= 1) {
+      throw std::runtime_error("No task tile specified.");
+    }
+    const std::string taskFileFolderName(programArgs[1]);
   }
-  const std::string taskFileFolderName(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
   // Init ros
   ros::init(argc, argv, robotName + "_raisim_dummy");

@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
+#include <ros/init.h>
 
 #include "ocs2_cart_pole_example/CartPoleInterface.h"
 #include "ocs2_cart_pole_example/definitions.h"
@@ -42,10 +43,14 @@ int main(int argc, char** argv) {
   using dummy_t = ocs2::MRT_ROS_Dummy_Loop<ocs2::cartpole::STATE_DIM_, ocs2::cartpole::INPUT_DIM_>;
 
   // task file
-  if (argc <= 1) {
-    throw std::runtime_error("No task file specified. Aborting.");
+  {
+    std::vector<std::string> programArgs{};
+    ::ros::removeRosArgs(argc, argv, programArgs);
+    if (programArgs.size() <= 1) {
+      throw std::runtime_error("No task file specified. Aborting.");
+    }
+    std::string taskFileFolderName = std::string(programArgs[1]);
   }
-  std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
   // Initialize ros node
   ros::init(argc, argv, robotName + "_mrt");

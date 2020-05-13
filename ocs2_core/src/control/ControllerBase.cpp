@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,44 +27,15 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
-
-#include <ocs2_core/Types.h>
-#include <ocs2_core/dynamics/ControlledSystemBase.h>
-#include <ocs2_core/dynamics/DerivativesBase.h>
+#include <ocs2_core/control/ConterollerBase.h>
 
 namespace ocs2 {
 
-/**
- * The system dynamics interface.
- * The linearized system flow map is defined as: \n
- * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$ \n
- * The linearized system jump map is defined as: \n
- * \f$ x^+ = G \delta x + H \delta u \f$ \n
- */
-class SystemDynamicsBase : public DerivativesBase, public ControlledSystemBase {
- public:
-  /**
-   * Default constructor
-   */
-  SystemDynamicsBase() = default;
-
-  /**
-   * Copy constructor
-   */
-  SystemDynamicsBase(const SystemDynamicsBase& rhs) = default;
-
-  /**
-   * Default destructor
-   */
-  ~SystemDynamicsBase() override = default;
-
-  /**
-   * Returns pointer to the class.
-   *
-   * @return A raw pointer to the class.
-   */
-  virtual SystemDynamicsBase* clone() const = 0;
-};
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void ControllerBase::concatenate(const ControllerBase* otherController) {
+  concatenate(otherController, 0, otherController->size());
+}
 
 }  // namespace ocs2

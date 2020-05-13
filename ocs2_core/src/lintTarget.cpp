@@ -1,9 +1,9 @@
-// #include <ocs2_core/Dimensions.h>
-// #include <ocs2_core/OCS2NumericTraits.h>
+#include <ocs2_core/OCS2NumericTraits.h>
+#include <ocs2_core/Types.h>
 
-// // Automatic Differentation
-// #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
-// #include <ocs2_core/automatic_differentiation/CppAdSparsity.h>
+// Automatic Differentation
+#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
+#include <ocs2_core/automatic_differentiation/CppAdSparsity.h>
 
 // // Constraint
 // #include <ocs2_core/constraint/ConstraintBase.h>
@@ -12,11 +12,11 @@
 // #include <ocs2_core/constraint/PenaltyBase.h>
 // #include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 
-// // Control
-// #include <ocs2_core/control/ControllerBase.h>
+// Control
+#include <ocs2_core/control/ControllerBase.h>
 // #include <ocs2_core/control/ControllerType.h>
 // #include <ocs2_core/control/FeedforwardController.h>
-// #include <ocs2_core/control/LinearController.h>
+#include <ocs2_core/control/LinearController.h>
 // #include <ocs2_core/control/StateBasedLinearController.h>
 // #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 
@@ -29,11 +29,11 @@
 #include <ocs2_core/cost/QuadraticGaussNewtonCostBaseAD.h>
 #include <ocs2_core/cost/RelaxedBarrierCost.h>
 
-// // Dynamics
-// #include <ocs2_core/dynamics/ControlledSystemBase.h>
-// #include <ocs2_core/dynamics/DerivativesBase.h>
-// #include <ocs2_core/dynamics/LinearSystemDynamics.h>
-// #include <ocs2_core/dynamics/SystemDynamicsBase.h>
+// Dynamics
+#include <ocs2_core/dynamics/ControlledSystemBase.h>
+#include <ocs2_core/dynamics/DerivativesBase.h>
+#include <ocs2_core/dynamics/LinearSystemDynamics.h>
+#include <ocs2_core/dynamics/SystemDynamicsBase.h>
 // #include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
 // #include <ocs2_core/dynamics/SystemDynamicsLinearizer.h>
 // #include <ocs2_core/dynamics/TransferFunctionBase.h>

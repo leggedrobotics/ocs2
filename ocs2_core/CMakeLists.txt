@@ -65,12 +65,16 @@ add_library(${PROJECT_NAME}
   src/automatic_differentation/CppAdSparsity.cpp
   # src/constraint/PenaltyBase.cpp
   # src/constraint/RelaxedBarrierPenalty.cpp
+  src/control/LinearController.cpp
   src/cost/CostFunctionBase.cpp
   src/cost/CostFunctionBaseAD.cpp
   src/cost/CostDesiredTrajectories.cpp
   src/cost/RelaxedBarrierCost.cpp
   src/cost/CostFunctionLinearCombination.cpp
   src/cost/QuadraticCostFunction.cpp
+  src/dynamics/DerivativesBase.cpp
+  src/dynamics/ControlledSystemBase.cpp
+  src/dynamics/LinearSystemDynamics.cpp
   src/integration/Integrator.cpp
   src/integration/IntegratorBase.cpp
   src/integration/OdeBase.cpp
@@ -81,8 +85,8 @@ add_library(${PROJECT_NAME}
   # src/logic/ModeSchedule.cpp
   # src/loopshaping/LoopshapingPropertyTree.cpp
   # src/loopshaping/LoopshapingFilter.cpp
-  # src/model_data/ModelDataBase.cpp
-  # src/misc/LinearAlgebra.cpp
+  src/model_data/ModelDataBase.cpp
+  src/misc/LinearAlgebra.cpp
   # src/misc/ThreadPool.cpp
 )
 target_link_libraries(${PROJECT_NAME}
@@ -208,14 +212,14 @@ target_link_libraries(test_integration
 #   gtest_main
 # )
 
-# catkin_add_gtest(test_LinearAlgebra
-#   test/misc/testLinearAlgebra.cpp
-# )
-# target_link_libraries(test_LinearAlgebra
-#   ${PROJECT_NAME}
-#   ${Boost_LIBRARIES}
-#   ${catkin_LIBRARIES}
-# )
+catkin_add_gtest(test_LinearAlgebra
+  test/misc/testLinearAlgebra.cpp
+)
+target_link_libraries(test_LinearAlgebra
+  ${PROJECT_NAME}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+)
 
 # catkin_add_gtest(test_lookup
 #   test/misc/testLookup.cpp

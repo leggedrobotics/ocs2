@@ -27,58 +27,39 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef LINEARSYSTEMDYNAMICS_OCS2_H_
-#define LINEARSYSTEMDYNAMICS_OCS2_H_
+#pragma once
 
-#include "ocs2_core/dynamics/SystemDynamicsBase.h"
+#include <ocs2_core/dynamics/SystemDynamicsBase.h>
 
 namespace ocs2 {
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class LinearSystemDynamics : public SystemDynamicsBase<STATE_DIM, INPUT_DIM> {
+class LinearSystemDynamics : public SystemDynamicsBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = SystemDynamicsBase<STATE_DIM, INPUT_DIM>;
-  using typename BASE::input_vector_t;
-  using typename BASE::scalar_t;
-  using typename BASE::state_input_matrix_t;
-  using typename BASE::state_matrix_t;
-  using typename BASE::state_vector_t;
-
-  LinearSystemDynamics(const state_matrix_t& A, const state_input_matrix_t& B, const state_matrix_t& G = state_matrix_t::Zero(),
-                       const state_input_matrix_t& H = state_input_matrix_t::Zero())
-      : A_(A), B_(B), G_(G), H_(H) {}
+  LinearSystemDynamics(const matrix_t& A, const matrix_t& B, const matrix_t& G = matrix_t(), const matrix_t& H = matrix_t());
 
   virtual ~LinearSystemDynamics() = default;
 
-  LinearSystemDynamics* clone() const override { return new LinearSystemDynamics(*this); }
+  LinearSystemDynamics* clone() const override;
 
-  void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) override {
-    dxdt = A_ * x + B_ * u;
-  }
+  void computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) override;
 
-  void computeJumpMap(const scalar_t& t, const state_vector_t& x, state_vector_t& xp) override { xp = G_ * x; }
+  void computeJumpMap(const scalar_t& t, const vector_t& x, vector_t& xp) override;
 
-  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override {
-    BASE::setCurrentStateAndControl(t, x, u);
-  }
+  void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) override;
 
-  void getFlowMapDerivativeState(state_matrix_t& A) override { A = A_; }
+  void getFlowMapDerivativeState(matrix_t& A) override;
 
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B = B_; }
+  void getFlowMapDerivativeInput(matrix_t& B) override;
 
-  void getJumpMapDerivativeState(state_matrix_t& G) override { G = G_; }
+  void getJumpMapDerivativeState(matrix_t& G) override;
 
-  void getJumpMapDerivativeInput(state_input_matrix_t& H) override { H = H_; }
+  void getJumpMapDerivativeInput(matrix_t& H) override;
 
  private:
-  state_matrix_t A_;
-  state_input_matrix_t B_;
-  state_matrix_t G_;
-  state_input_matrix_t H_;
+  matrix_t A_;
+  matrix_t B_;
+  matrix_t G_;
+  matrix_t H_;
 };
 
 }  // namespace ocs2
-
-#endif /* LINEARSYSTEMDYNAMICS_OCS2_H_ */

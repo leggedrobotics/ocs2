@@ -29,16 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Dense>
-#include <Eigen/StdVector>
-#include <iostream>
-#include <memory>
-#include <sstream>
+#include <ostream>
 #include <string>
 #include <vector>
 
 #include "ocs2_core/Types.h"
-#include "ocs2_core/misc/LinearAlgebra.h"
 
 namespace ocs2 {
 
@@ -130,5 +125,7 @@ struct ModelDataBase {
   matrix_array_t ineqConstrInputSecondDerivative_;
   matrix_array_t ineqConstrInputStateDerivative_;
 };
+
+std::ostream& operator<<(std::ostream& out, const ModelDataBase& data);
 
 }  // namespace ocs2

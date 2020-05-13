@@ -42,15 +42,15 @@
 // #include <ocs2_core/initialization/OperatingPoints.h>
 // #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 
-// // Integration
-// #include <ocs2_core/integration/Integrator.h>
-// #include <ocs2_core/integration/IntegratorBase.h>
-// #include <ocs2_core/integration/Observer.h>
-// #include <ocs2_core/integration/OdeBase.h>
-// #include <ocs2_core/integration/OdeFunc.h>
-// #include <ocs2_core/integration/StateTriggeredEventHandler.h>
-// #include <ocs2_core/integration/SystemEventHandler.h>
-// #include <ocs2_core/integration/steppers.h>
+// Integration
+#include <ocs2_core/integration/Integrator.h>
+#include <ocs2_core/integration/IntegratorBase.h>
+#include <ocs2_core/integration/Observer.h>
+#include <ocs2_core/integration/OdeBase.h>
+#include <ocs2_core/integration/OdeFunc.h>
+#include <ocs2_core/integration/StateTriggeredEventHandler.h>
+#include <ocs2_core/integration/SystemEventHandler.h>
+#include <ocs2_core/integration/steppers.h>
 
 // // Logic
 // #include <ocs2_core/logic/ModeSchedule.h>

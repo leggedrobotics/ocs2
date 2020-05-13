@@ -27,49 +27,27 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <iostream>
-#include <type_traits>
+#include <ocs2_core/integration/OdeFunc.h>
 
-#include <gtest/gtest.h>
+namespace ocs2 {
 
-#include <ocs2_core/model_data/ModelDataLinearInterpolation.h>
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+OdeFunc::OdeFunc(std::function<void(const scalar_t& t, const vector_t& x, vector_t& dxdt)> flowMap) : flowMap_(std::move(flowMap)){};
 
-using namespace ocs2;
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void OdeFunc::computeFlowMap(const scalar_t& t, const vector_t& x, vector_t& dxdt) {
+  flowMap_(t, x, dxdt);
+};
 
-TEST(testModelDataBase, testModelDataLinearInterpolation) {
-  // create data
-  const size_t N = 10;
-  std::vector<double> timeArray(N);
-  ModelDataBase::array_t modelDataBaseArray(N);
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void OdeFunc::setFlowMap(std::function<void(const scalar_t& t, const vector_t& x, vector_t& dxdt)>&& flowMap) {
+  flowMap_ = flowMap;
+};
 
-  for (size_t i = 0; i < N; i++) {
-	double t = 2.0 * i;
-	timeArray[i] = t;
-	modelDataBaseArray[i].time_ = t;
-	modelDataBaseArray[i].dynamics_ = Eigen::Vector3d::Ones() * t;
-	modelDataBaseArray[i].dynamicsStateDerivative_ = Eigen::Matrix3d::Ones() * t;
-  }
-
-  double time = 5.0;
-  // get (index, alpha) pair
-  const auto indexAlpha = ModelData::timeSegment(time, &timeArray);
-  // scalar
-  double enquiryScalar;
-  ModelData::interpolate(indexAlpha, enquiryScalar, &modelDataBaseArray, ModelData::time);
-  // dynamic vector
-  Eigen::VectorXd enquiryVector;
-  ModelData::interpolate(indexAlpha, enquiryVector, &modelDataBaseArray, ModelData::dynamics);
-  // dynamic matrix
-  Eigen::MatrixXd enquiryMatrix;
-  ModelData::interpolate(indexAlpha, enquiryMatrix, &modelDataBaseArray, ModelData::dynamicsStateDerivative);
-
-  ASSERT_TRUE(enquiryScalar == time);
-  ASSERT_TRUE(enquiryVector.isApprox(Eigen::Vector3d::Ones()*time));
-  ASSERT_TRUE(enquiryMatrix.isApprox(Eigen::Matrix3d::Ones()*time));
-}
-
-TEST(testModelDataBase, testMovableCopyable) {
-  ASSERT_TRUE(std::is_copy_constructible<ModelDataBase>::value);
-  ASSERT_TRUE(std::is_move_constructible<ModelDataBase>::value);
-  ASSERT_TRUE(std::is_nothrow_move_constructible<ModelDataBase>::value);
-}
+}  // namespace ocs2

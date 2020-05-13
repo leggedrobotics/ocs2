@@ -71,7 +71,13 @@ add_library(${PROJECT_NAME}
   src/cost/RelaxedBarrierCost.cpp
   src/cost/CostFunctionLinearCombination.cpp
   src/cost/QuadraticCostFunction.cpp
-  # src/integration/Integrator.cpp
+  src/integration/Integrator.cpp
+  src/integration/IntegratorBase.cpp
+  src/integration/OdeBase.cpp
+  src/integration/OdeFunc.cpp
+  src/integration/Observer.cpp
+  src/integration/StateTriggeredEventHandler.cpp
+  src/integration/SystemEventHandler.cpp
   # src/logic/ModeSchedule.cpp
   # src/loopshaping/LoopshapingPropertyTree.cpp
   # src/loopshaping/LoopshapingFilter.cpp
@@ -145,16 +151,16 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #   gtest_main
 # )
 
-# catkin_add_gtest(integration_unittest
-#   test/integration/IntegrationTest.cpp
-#   test/integration/TrapezoidalIntegrationTest.cpp
-# )
-# target_link_libraries(integration_unittest
-#   ${PROJECT_NAME}
-#   ${catkin_LIBRARIES}
-#   ${Boost_LIBRARIES}
-#   gtest_main
-# )
+catkin_add_gtest(test_integration
+  test/integration/IntegrationTest.cpp
+  test/integration/TrapezoidalIntegrationTest.cpp
+)
+target_link_libraries(test_integration
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  gtest_main
+)
 
 # catkin_add_gtest(interpolation_unittest
 #   test/misc/testInterpolation.cpp
@@ -258,10 +264,11 @@ target_link_libraries(test_RelaxedBarrierCost
   gtest_main
 )
 
-# catkin_add_gtest(test_ModelDataBase
-#   test/model_data/testModelDataBase.cpp
-# )
-# target_link_libraries(test_ModelDataBase
-#   ${PROJECT_NAME}
-#   ${catkin_LIBRARIES}
-# )
+catkin_add_gtest(test_ModelDataBase
+  test/model_data/testModelDataBase.cpp
+)
+target_link_libraries(test_ModelDataBase
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+)

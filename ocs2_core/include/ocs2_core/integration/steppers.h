@@ -36,69 +36,58 @@ namespace ocs2 {
 /**
  * Euler stepper
  */
-template <int STATE_DIM>
-using euler_t = boost::numeric::odeint::euler<Eigen::Matrix<double, STATE_DIM, 1>, double, Eigen::Matrix<double, STATE_DIM, 1>, double,
-                                              boost::numeric::odeint::vector_space_algebra>;
+using euler_t = boost::numeric::odeint::euler<vector_t, double, vector_t, double, boost::numeric::odeint::vector_space_algebra>;
 
 /**
  * Modified_Midpoint stepper
  */
-template <int STATE_DIM>
 using modified_midpoint_t =
-    boost::numeric::odeint::modified_midpoint<Eigen::Matrix<double, STATE_DIM, 1>, double, Eigen::Matrix<double, STATE_DIM, 1>, double,
-                                              boost::numeric::odeint::vector_space_algebra>;
+    boost::numeric::odeint::modified_midpoint<vector_t, double, vector_t, double, boost::numeric::odeint::vector_space_algebra>;
 
 /**
  * 4th order Runge_Kutta stepper
  */
-template <int STATE_DIM>
 using runge_kutta_4_t =
-    boost::numeric::odeint::runge_kutta4<Eigen::Matrix<double, STATE_DIM, 1>, double, Eigen::Matrix<double, STATE_DIM, 1>, double,
-                                         boost::numeric::odeint::vector_space_algebra>;
+    boost::numeric::odeint::runge_kutta4<vector_t, double, vector_t, double, boost::numeric::odeint::vector_space_algebra>;
 
 /**
  * 5th order Runge_Kutta_Dopri stepper
  */
-template <int STATE_DIM>
 using runge_kutta_dopri5_t =
-    boost::numeric::odeint::runge_kutta_dopri5<Eigen::Matrix<double, STATE_DIM, 1>, double, Eigen::Matrix<double, STATE_DIM, 1>, double,
-                                               boost::numeric::odeint::vector_space_algebra>;
+    boost::numeric::odeint::runge_kutta_dopri5<vector_t, double, vector_t, double, boost::numeric::odeint::vector_space_algebra>;
 
 /**
  * Dense_output Runge_Kutta stepper
  */
-template <int STATE_DIM>
 using dense_runge_kutta5_t =
-    boost::numeric::odeint::dense_output_runge_kutta<boost::numeric::odeint::controlled_runge_kutta<runge_kutta_dopri5_t<STATE_DIM>>>;
+    boost::numeric::odeint::dense_output_runge_kutta<boost::numeric::odeint::controlled_runge_kutta<runge_kutta_dopri5_t>>;
 
 /**
  * Bulirsch_Stoer stepper
  */
-template <int STATE_DIM>
 using bulirsch_stoer_t =
-    boost::numeric::odeint::bulirsch_stoer<Eigen::Matrix<double, STATE_DIM, 1>, double, Eigen::Matrix<double, STATE_DIM, 1>, double,
-                                           boost::numeric::odeint::vector_space_algebra>;
+    boost::numeric::odeint::bulirsch_stoer<vector_t, double, vector_t, double, boost::numeric::odeint::vector_space_algebra>;
 
 /**
  * Adams_Bashforth stepper
  */
-template <int STATE_DIM, size_t STEPS>
-using adams_bashforth_uncontrolled_t = boost::numeric::odeint::adams_bashforth<STEPS, Eigen::Matrix<double, STATE_DIM, 1>,  // state
-                                                                               double,                               // typename value
-                                                                               Eigen::Matrix<double, STATE_DIM, 1>,  // derivative
-                                                                               double,                               // typename time
+template <size_t STEPS>
+using adams_bashforth_uncontrolled_t = boost::numeric::odeint::adams_bashforth<STEPS, vector_t,  // state
+                                                                               double,           // typename value
+                                                                               vector_t,         // derivative
+                                                                               double,           // typename time
                                                                                boost::numeric::odeint::vector_space_algebra>;
 
 /**
  * Adams-Bashforth-Moulton integrator (works only after boost 1.56)
  */
 #if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 55)
-template <int STATE_DIM, size_t STEPS>
+template <size_t STEPS>
 using adams_bashforth_moulton_uncontrolled_t =
-    boost::numeric::odeint::adams_bashforth_moulton<STEPS, Eigen::Matrix<double, STATE_DIM, 1>,  // state
-                                                    double,                                      // typename value
-                                                    Eigen::Matrix<double, STATE_DIM, 1>,         // derivative
-                                                    double,                                      // typename time
+    boost::numeric::odeint::adams_bashforth_moulton<STEPS, vector_t,  // state
+                                                    double,           // typename value
+                                                    vector_t,         // derivative
+                                                    double,           // typename time
                                                     boost::numeric::odeint::vector_space_algebra>;
 #endif
 

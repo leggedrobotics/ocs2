@@ -107,7 +107,7 @@ slq
     meritFunctionRho              50.0
     constraintStepSize            1.0
     displayInfo                   0
-    displayShortSummary           1
+    displayShortSummary           0
     debugPrintRollout             0
 
     AbsTolODE                     1e-5  ;1e-6

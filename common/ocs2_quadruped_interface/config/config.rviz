@@ -5,8 +5,9 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Grid1/Offset1
-        - /localTerrain1/Namespaces1
-        - /swing_planner1/NominalFootholds_LF1/Status1
+        - /Desired Trajectory1
+        - /Optimized Trajectory1
+        - /Current1
       Splitter Ratio: 0.7034631967544556
     Tree Height: 763
   - Class: rviz/Selection
@@ -65,7 +66,7 @@ Visualization Manager:
         Expand Joint Details: false
         Expand Link Details: false
         Expand Tree: false
-        LF_FOOT:
+        LF_ADAPTER:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -89,6 +90,11 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        LF_MOUNT:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         LF_SHANK:
           Alpha: 1
           Show Axes: false
@@ -97,6 +103,11 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        LF_WHEEL_L:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         LF_hip_fixed:
           Alpha: 1
           Show Axes: false
@@ -112,7 +123,7 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        LH_FOOT:
+        LH_ADAPTER:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -136,6 +147,11 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        LH_MOUNT:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         LH_SHANK:
           Alpha: 1
           Show Axes: false
@@ -144,6 +160,11 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        LH_WHEEL_L:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         LH_hip_fixed:
           Alpha: 1
           Show Axes: false
@@ -160,7 +181,7 @@ Visualization Manager:
           Show Trail: false
           Value: true
         Link Tree Style: Links in Alphabetic Order
-        RF_FOOT:
+        RF_ADAPTER:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -184,6 +205,11 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        RF_MOUNT:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         RF_SHANK:
           Alpha: 1
           Show Axes: false
@@ -192,6 +218,11 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        RF_WHEEL_L:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         RF_hip_fixed:
           Alpha: 1
           Show Axes: false
@@ -207,7 +238,7 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        RH_FOOT:
+        RH_ADAPTER:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -231,6 +262,11 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        RH_MOUNT:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         RH_SHANK:
           Alpha: 1
           Show Axes: false
@@ -239,6 +275,11 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        RH_WHEEL_L:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         RH_hip_fixed:
           Alpha: 1
           Show Axes: false
@@ -319,36 +360,12 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        realsense_d435_front_color_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        realsense_d435_front_color_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        realsense_d435_front_depth_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
         realsense_d435_left_camera:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
         realsense_d435_left_camera_parent:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        realsense_d435_left_color_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        realsense_d435_left_color_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        realsense_d435_left_depth_optical_frame:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -361,36 +378,12 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        realsense_d435_rear_color_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        realsense_d435_rear_color_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        realsense_d435_rear_depth_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
         realsense_d435_right_camera:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
         realsense_d435_right_camera_parent:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        realsense_d435_right_color_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        realsense_d435_right_color_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        realsense_d435_right_depth_optical_frame:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -415,82 +408,6 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /ocs2_anymal/currentState
-      Name: Current State
-      Namespaces:
-        Center of Pressure: true
-        EE Forces: true
-        EE Positions: true
-        Support Polygon: true
-      Queue Size: 1
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /ocs2_anymal/desiredBaseTrajectory
-      Name: Desired Base Trajectory
-      Namespaces:
-        {}
-      Queue Size: 1
-      Value: true
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /ocs2_anymal/optimizedStateTrajectory
-      Name: Optimized State Trajectory
-      Namespaces:
-        CoM Trajectory: true
-        EE Trajectories: true
-      Queue Size: 1
-      Value: true
-    - Alpha: 1
-      Arrow Length: 0.30000001192092896
-      Axes Length: 0.10000000149011612
-      Axes Radius: 0.009999999776482582
-      Class: rviz/PoseArray
-      Color: 255; 25; 0
-      Enabled: true
-      Head Length: 0.07000000029802322
-      Head Radius: 0.029999999329447746
-      Name: Current CoM Pose
-      Shaft Length: 0.23000000417232513
-      Shaft Radius: 0.009999999776482582
-      Shape: Axes
-      Topic: ocs2_anymal/currentPose
-      Unreliable: false
-      Value: true
-    - Alpha: 1
-      Arrow Length: 0.30000001192092896
-      Axes Length: 0.05000000074505806
-      Axes Radius: 0.009999999776482582
-      Class: rviz/PoseArray
-      Color: 255; 25; 0
-      Enabled: true
-      Head Length: 0.07000000029802322
-      Head Radius: 0.029999999329447746
-      Name: Desired CoM Pose Trajectory
-      Shaft Length: 0.23000000417232513
-      Shaft Radius: 0.009999999776482582
-      Shape: Axes
-      Topic: ocs2_anymal/desiredPoseTrajectory
-      Unreliable: false
-      Value: true
-    - Alpha: 1
-      Arrow Length: 0.30000001192092896
-      Axes Length: 0.05000000074505806
-      Axes Radius: 0.009999999776482582
-      Class: rviz/PoseArray
-      Color: 255; 25; 0
-      Enabled: true
-      Head Length: 0.07000000029802322
-      Head Radius: 0.029999999329447746
-      Name: Optimized CoM Pose Trajectory
-      Shaft Length: 0.23000000417232513
-      Shaft Radius: 0.009999999776482582
-      Shape: Axes
-      Topic: ocs2_anymal/optimizedPoseTrajectory
-      Unreliable: false
-      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Class: grid_map_rviz_plugin/GridMap
@@ -512,82 +429,247 @@ Visualization Manager:
       Unreliable: false
       Use Rainbow: true
       Value: true
-    - Class: rviz/Marker
+    - Class: rviz/Group
+      Displays:
+        - Class: rviz/Marker
+          Enabled: true
+          Marker Topic: /ocs2_anymal/desiredBaseTrajectory
+          Name: Base Position Trajectory
+          Namespaces:
+            {}
+          Queue Size: 1
+          Value: true
+        - Class: rviz/Group
+          Displays:
+            - Alpha: 1
+              Arrow Length: 0.30000001192092896
+              Axes Length: 0.05000000074505806
+              Axes Radius: 0.004999999888241291
+              Class: rviz/PoseArray
+              Color: 255; 25; 0
+              Enabled: true
+              Head Length: 0.07000000029802322
+              Head Radius: 0.029999999329447746
+              Name: LF
+              Shaft Length: 0.23000000417232513
+              Shaft Radius: 0.009999999776482582
+              Shape: Axes
+              Topic: /ocs2_anymal/desiredFeetPoseTrajectory/LF
+              Unreliable: false
+              Value: true
+            - Alpha: 1
+              Arrow Length: 0.30000001192092896
+              Axes Length: 0.05000000074505806
+              Axes Radius: 0.004999999888241291
+              Class: rviz/PoseArray
+              Color: 255; 25; 0
+              Enabled: true
+              Head Length: 0.07000000029802322
+              Head Radius: 0.029999999329447746
+              Name: LH
+              Shaft Length: 0.23000000417232513
+              Shaft Radius: 0.009999999776482582
+              Shape: Axes
+              Topic: /ocs2_anymal/desiredFeetPoseTrajectory/LH
+              Unreliable: false
+              Value: true
+            - Alpha: 1
+              Arrow Length: 0.30000001192092896
+              Axes Length: 0.05000000074505806
+              Axes Radius: 0.004999999888241291
+              Class: rviz/PoseArray
+              Color: 255; 25; 0
+              Enabled: true
+              Head Length: 0.07000000029802322
+              Head Radius: 0.029999999329447746
+              Name: RF
+              Shaft Length: 0.23000000417232513
+              Shaft Radius: 0.009999999776482582
+              Shape: Axes
+              Topic: /ocs2_anymal/desiredFeetPoseTrajectory/RF
+              Unreliable: false
+              Value: true
+            - Alpha: 1
+              Arrow Length: 0.30000001192092896
+              Axes Length: 0.05000000074505806
+              Axes Radius: 0.004999999888241291
+              Class: rviz/PoseArray
+              Color: 255; 25; 0
+              Enabled: true
+              Head Length: 0.07000000029802322
+              Head Radius: 0.029999999329447746
+              Name: RH
+              Shaft Length: 0.23000000417232513
+              Shaft Radius: 0.009999999776482582
+              Shape: Axes
+              Topic: /ocs2_anymal/desiredFeetPoseTrajectory/RH
+              Unreliable: false
+              Value: true
+          Enabled: false
+          Name: Feet Pose Trajectories
+        - Alpha: 1
+          Arrow Length: 0.30000001192092896
+          Axes Length: 0.05000000074505806
+          Axes Radius: 0.009999999776482582
+          Class: rviz/PoseArray
+          Color: 255; 25; 0
+          Enabled: true
+          Head Length: 0.07000000029802322
+          Head Radius: 0.029999999329447746
+          Name: CoM Pose Trajectory
+          Shaft Length: 0.23000000417232513
+          Shaft Radius: 0.009999999776482582
+          Shape: Axes
+          Topic: ocs2_anymal/desiredPoseTrajectory
+          Unreliable: false
+          Value: true
       Enabled: true
-      Marker Topic: /ocs2_anymal/localTerrain
-      Name: localTerrain
-      Namespaces:
-        "": true
-      Queue Size: 100
-      Value: true
+      Name: Desired Trajectory
     - Class: rviz/Group
       Displays:
         - Alpha: 1
           Arrow Length: 0.30000001192092896
           Axes Length: 0.05000000074505806
-          Axes Radius: 0.004999999888241291
+          Axes Radius: 0.009999999776482582
           Class: rviz/PoseArray
           Color: 255; 25; 0
           Enabled: true
           Head Length: 0.07000000029802322
           Head Radius: 0.029999999329447746
-          Name: NominalFootholds_LF
+          Name: CoM Pose Trajectory
           Shaft Length: 0.23000000417232513
           Shaft Radius: 0.009999999776482582
           Shape: Axes
-          Topic: /ocs2_anymal/swing_planner/nominalFootholds_LF
+          Topic: ocs2_anymal/optimizedPoseTrajectory
           Unreliable: false
           Value: true
-        - Alpha: 1
-          Arrow Length: 0.30000001192092896
-          Axes Length: 0.05000000074505806
-          Axes Radius: 0.004999999888241291
-          Class: rviz/PoseArray
-          Color: 255; 25; 0
+        - Class: rviz/MarkerArray
           Enabled: true
-          Head Length: 0.07000000029802322
-          Head Radius: 0.029999999329447746
-          Name: NominalFootholds_LH
-          Shaft Length: 0.23000000417232513
-          Shaft Radius: 0.009999999776482582
-          Shape: Axes
-          Topic: /ocs2_anymal/swing_planner/nominalFootholds_LH
-          Unreliable: false
+          Marker Topic: /ocs2_anymal/optimizedStateTrajectory
+          Name: State Trajectory
+          Namespaces:
+            CoM Trajectory: true
+            EE Trajectories: true
+            Future footholds: true
+          Queue Size: 1
           Value: true
-        - Alpha: 1
-          Arrow Length: 0.30000001192092896
-          Axes Length: 0.05000000074505806
-          Axes Radius: 0.004999999888241291
-          Class: rviz/PoseArray
-          Color: 255; 25; 0
-          Enabled: true
-          Head Length: 0.07000000029802322
-          Head Radius: 0.029999999329447746
-          Name: NominalFootholds_RF
-          Shaft Length: 0.23000000417232513
-          Shaft Radius: 0.009999999776482582
-          Shape: Axes
-          Topic: /ocs2_anymal/swing_planner/nominalFootholds_RF
-          Unreliable: false
-          Value: true
-        - Alpha: 1
-          Arrow Length: 0.30000001192092896
-          Axes Length: 0.05000000074505806
-          Axes Radius: 0.004999999888241291
-          Class: rviz/PoseArray
-          Color: 255; 25; 0
-          Enabled: true
-          Head Length: 0.07000000029802322
-          Head Radius: 0.029999999329447746
-          Name: NominalFootholds_RH
-          Shaft Length: 0.23000000417232513
-          Shaft Radius: 0.009999999776482582
-          Shape: Axes
-          Topic: /ocs2_anymal/swing_planner/nominalFootholds_RH
-          Unreliable: false
-          Value: true
+        - Class: rviz/Group
+          Displays:
+            - Alpha: 1
+              Arrow Length: 0.30000001192092896
+              Axes Length: 0.05000000074505806
+              Axes Radius: 0.004999999888241291
+              Class: rviz/PoseArray
+              Color: 255; 25; 0
+              Enabled: true
+              Head Length: 0.07000000029802322
+              Head Radius: 0.029999999329447746
+              Name: LF
+              Shaft Length: 0.23000000417232513
+              Shaft Radius: 0.009999999776482582
+              Shape: Axes
+              Topic: /ocs2_anymal/optimizedFeetPoseTrajectory/LF
+              Unreliable: false
+              Value: true
+            - Alpha: 1
+              Arrow Length: 0.30000001192092896
+              Axes Length: 0.05000000074505806
+              Axes Radius: 0.004999999888241291
+              Class: rviz/PoseArray
+              Color: 255; 25; 0
+              Enabled: true
+              Head Length: 0.07000000029802322
+              Head Radius: 0.029999999329447746
+              Name: LH
+              Shaft Length: 0.23000000417232513
+              Shaft Radius: 0.009999999776482582
+              Shape: Axes
+              Topic: /ocs2_anymal/optimizedFeetPoseTrajectory/LH
+              Unreliable: false
+              Value: true
+            - Alpha: 1
+              Arrow Length: 0.30000001192092896
+              Axes Length: 0.05000000074505806
+              Axes Radius: 0.004999999888241291
+              Class: rviz/PoseArray
+              Color: 255; 25; 0
+              Enabled: true
+              Head Length: 0.07000000029802322
+              Head Radius: 0.029999999329447746
+              Name: RF
+              Shaft Length: 0.23000000417232513
+              Shaft Radius: 0.009999999776482582
+              Shape: Axes
+              Topic: /ocs2_anymal/optimizedFeetPoseTrajectory/RF
+              Unreliable: false
+              Value: true
+            - Alpha: 1
+              Arrow Length: 0.30000001192092896
+              Axes Length: 0.05000000074505806
+              Axes Radius: 0.004999999888241291
+              Class: rviz/PoseArray
+              Color: 255; 25; 0
+              Enabled: true
+              Head Length: 0.07000000029802322
+              Head Radius: 0.029999999329447746
+              Name: RH
+              Shaft Length: 0.23000000417232513
+              Shaft Radius: 0.009999999776482582
+              Shape: Axes
+              Topic: /ocs2_anymal/optimizedFeetPoseTrajectory/RH
+              Unreliable: false
+              Value: true
+          Enabled: false
+          Name: Feet Pose Trajectories
       Enabled: true
-      Name: swing_planner
+      Name: Optimized Trajectory
+    - Class: rviz/Group
+      Displays:
+        - Alpha: 1
+          Arrow Length: 0.30000001192092896
+          Axes Length: 0.10000000149011612
+          Axes Radius: 0.009999999776482582
+          Class: rviz/PoseArray
+          Color: 255; 25; 0
+          Enabled: true
+          Head Length: 0.07000000029802322
+          Head Radius: 0.029999999329447746
+          Name: CoM Pose
+          Shaft Length: 0.23000000417232513
+          Shaft Radius: 0.009999999776482582
+          Shape: Axes
+          Topic: ocs2_anymal/currentPose
+          Unreliable: false
+          Value: true
+        - Class: rviz/MarkerArray
+          Enabled: true
+          Marker Topic: /ocs2_anymal/currentState
+          Name: State
+          Namespaces:
+            Center of Pressure: true
+            EE Forces: true
+            EE Positions: true
+            Support Polygon: true
+          Queue Size: 1
+          Value: true
+        - Alpha: 1
+          Arrow Length: 0.30000001192092896
+          Axes Length: 0.10000000149011612
+          Axes Radius: 0.009999999776482582
+          Class: rviz/PoseArray
+          Color: 255; 25; 0
+          Enabled: false
+          Head Length: 0.07000000029802322
+          Head Radius: 0.029999999329447746
+          Name: Feet Poses
+          Shaft Length: 0.23000000417232513
+          Shaft Radius: 0.009999999776482582
+          Shape: Axes
+          Topic: /ocs2_anymal/currentFeetPoses
+          Unreliable: false
+          Value: false
+      Enabled: true
+      Name: Current
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
@@ -616,25 +698,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 1.9542129039764404
+      Distance: 2.141564130783081
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.14568299055099487
-        Y: 0.2619593143463135
-        Z: 0
+        X: -0.417638897895813
+        Y: 0.23163104057312012
+        Z: -1.1920928955078125e-7
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.05020303651690483
+      Pitch: 0.2952028214931488
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 0.6097087860107422
+      Yaw: 2.0029025077819824
     Saved:
       - Angle: 3.140000104904175
         Class: rviz/TopDownOrtho

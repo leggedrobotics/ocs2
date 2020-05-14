@@ -48,6 +48,7 @@ include_directories(
 # Declare a C++ library
 add_library(${PROJECT_NAME}
   src/PoseCommandToCostDesiredRos.cpp
+  src/TerrainAdaptation.cpp
   )
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}

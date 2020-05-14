@@ -18,11 +18,11 @@ TEST(TestTerrainAdaptation, adaptDesiredOrientationToTerrain_flatTerrain) {
   TerrainPlane flatTerrain = {vector3_t::Random(), rotationMatrixOriginToBase(eulerXYZ)};
 
   vector3_t desiredEulerXYZ(0, 0, 0.0);
-  const auto adaptedEulerXYZ = adaptDesiredOrientationToTerrain(desiredEulerXYZ, flatTerrain);
+  const auto adaptedEulerXYZ = alignDesiredOrientationToTerrain(desiredEulerXYZ, flatTerrain);
   ASSERT_TRUE(desiredEulerXYZ.isApprox(adaptedEulerXYZ));
 
   vector3_t desiredEulerXYZ_multipleRotations(0, 0, 10.0);
-  const auto adaptedEulerXYZ_multipleRotations = adaptDesiredOrientationToTerrain(desiredEulerXYZ_multipleRotations, flatTerrain);
+  const auto adaptedEulerXYZ_multipleRotations = alignDesiredOrientationToTerrain(desiredEulerXYZ_multipleRotations, flatTerrain);
   ASSERT_TRUE(desiredEulerXYZ_multipleRotations.isApprox(adaptedEulerXYZ_multipleRotations));
 }
 
@@ -32,7 +32,7 @@ TEST(TestTerrainAdaptation, adaptDesiredOrientationToTerrain_randomTerrain) {
 
   {  // Zero desired angle
     const vector3_t desiredEulerXYZ(0, 0, 0.0);
-    const auto adaptedEulerXYZ = adaptDesiredOrientationToTerrain(desiredEulerXYZ, randomTerrain);
+    const auto adaptedEulerXYZ = alignDesiredOrientationToTerrain(desiredEulerXYZ, randomTerrain);
     const vector3_t adaptedXaxis = rotationMatrixBaseToOrigin(adaptedEulerXYZ).col(0);
     const vector3_t projectedAdaptedXaxis = projectPositionInWorldOntoPlaneAlongGravity(adaptedXaxis, canonicalTerrain).normalized();
     ASSERT_DOUBLE_EQ(projectedAdaptedXaxis.x(), 1.0);
@@ -41,7 +41,7 @@ TEST(TestTerrainAdaptation, adaptDesiredOrientationToTerrain_randomTerrain) {
   {  // Multi rotation desired angle
     const vector3_t desiredEulerXYZ(0, 0, 10.0);
     const vector3_t desiredXaxis = rotationMatrixBaseToOrigin(desiredEulerXYZ).col(0);
-    const auto adaptedEulerXYZ = adaptDesiredOrientationToTerrain(desiredEulerXYZ, randomTerrain);
+    const auto adaptedEulerXYZ = alignDesiredOrientationToTerrain(desiredEulerXYZ, randomTerrain);
     const vector3_t adaptedXaxis = rotationMatrixBaseToOrigin(adaptedEulerXYZ).col(0);
     const vector3_t projectedAdaptedXaxis = projectPositionInWorldOntoPlaneAlongGravity(adaptedXaxis, canonicalTerrain).normalized();
     ASSERT_TRUE(desiredXaxis.isApprox(projectedAdaptedXaxis));
@@ -51,7 +51,7 @@ TEST(TestTerrainAdaptation, adaptDesiredOrientationToTerrain_randomTerrain) {
     const vector3_t desiredEulerXYZ(0.1, 0.2, -5.0);
     const vector3_t desiredXaxis = rotationMatrixBaseToOrigin(desiredEulerXYZ).col(0);
     const vector3_t projectedDesiredXaxis = projectPositionInWorldOntoPlaneAlongGravity(desiredXaxis, canonicalTerrain).normalized();
-    const auto adaptedEulerXYZ = adaptDesiredOrientationToTerrain(desiredEulerXYZ, randomTerrain);
+    const auto adaptedEulerXYZ = alignDesiredOrientationToTerrain(desiredEulerXYZ, randomTerrain);
     const vector3_t adaptedXaxis = rotationMatrixBaseToOrigin(adaptedEulerXYZ).col(0);
     const vector3_t projectedAdaptedXaxis = projectPositionInWorldOntoPlaneAlongGravity(adaptedXaxis, canonicalTerrain).normalized();
     ASSERT_TRUE(projectedDesiredXaxis.isApprox(projectedAdaptedXaxis));
@@ -64,15 +64,9 @@ TEST(TestTerrainAdaptation, adaptDesiredOrientationToTerrain_randomTerrain) {
     const vector3_t desiredEulerXYZ(-0.000508991, -0.000493831, 0.000299875);
     const vector3_t desiredXaxis = rotationMatrixBaseToOrigin(desiredEulerXYZ).col(0);
     const vector3_t projectedDesiredXaxis = projectPositionInWorldOntoPlaneAlongGravity(desiredXaxis, canonicalTerrain).normalized();
-    const auto adaptedEulerXYZ = adaptDesiredOrientationToTerrain(desiredEulerXYZ, debugTerrain);
+    const auto adaptedEulerXYZ = alignDesiredOrientationToTerrain(desiredEulerXYZ, debugTerrain);
     const vector3_t adaptedXaxis = rotationMatrixBaseToOrigin(adaptedEulerXYZ).col(0);
     const vector3_t projectedAdaptedXaxis = projectPositionInWorldOntoPlaneAlongGravity(adaptedXaxis, canonicalTerrain).normalized();
     ASSERT_TRUE(projectedDesiredXaxis.isApprox(projectedAdaptedXaxis));
-
-    //    [Ocs2MotionPlanner::advanceOcs2Terrain] positionInWorld:
-    //    [Ocs2MotionPlanner::advanceOcs2Terrain] surfaceNormal: -8.46512e-06  2.99018e-05            1
-    //    [Ocs2MotionPlanner::advanceOcs2Terrain] basePositionDesired: -0.00807614  0.00536881    0.543053
-    //    [Ocs2MotionPlanner::advanceOcs2Terrain] baseOrientationReference:
-    //    [Ocs2MotionPlanner::advanceOcs2Terrain] baseOrientationDesired:  3.14156 -3.14158 -3.14129
   }
 }

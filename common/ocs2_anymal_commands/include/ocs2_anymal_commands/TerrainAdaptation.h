@@ -11,10 +11,10 @@
 
 namespace switched_model {
 
-inline vector3_t adaptDesiredPositionToTerrain(const vector3_t& desiredPosition, const TerrainPlane& terrainPlane) {
+inline vector3_t adaptDesiredPositionHeightToTerrain(const vector3_t& desiredPosition, const TerrainPlane& terrainPlane, const scalar_t desiredHeight) {
   // Project to plane along gravity, interpret old z as desired height offset.
   vector3_t adaptedPosition = projectPositionInWorldOntoPlaneAlongGravity(desiredPosition, terrainPlane);
-  adaptedPosition.z() += desiredPosition.z();
+  adaptedPosition.z() += desiredHeight;
   return adaptedPosition;
 }
 
@@ -25,31 +25,32 @@ inline scalar_t findOrientationClostestToReference(scalar_t yaw, scalar_t refere
   return yaw;
 }
 
-inline vector3_t adaptDesiredOrientationToTerrain(const vector3_t& desiredEulerXYZ, const TerrainPlane& terrainPlane) {
-  const matrix3_t o_R_b = rotationMatrixBaseToOrigin(desiredEulerXYZ);
-  const vector3_t xAxisInWorldDesiredOrientation = o_R_b.col(0);
-
-  TerrainPlane terrainOrientationOnly{vector3_t::Zero(), terrainPlane.orientationWorldToTerrain};
-
-  // Construct desired axis system
-  // x-Axis points in same direction as desired x axis
-  // z-Axis is the surface normal
-  const vector3_t xAxisAdaptedOrientation =
-      projectPositionInWorldOntoPlaneAlongGravity(xAxisInWorldDesiredOrientation, terrainOrientationOnly).normalized();
-  const vector3_t zAxisAdaptedOrientation = surfaceNormalInWorld(terrainOrientationOnly);
-  const vector3_t yAxisAdaptedOrientation = zAxisAdaptedOrientation.cross(xAxisAdaptedOrientation);
-
-  // Construct rotation matrix from desired axis system
-  matrix3_t o_R_adapted;
-  o_R_adapted.col(0) = xAxisAdaptedOrientation;
-  o_R_adapted.col(1) = yAxisAdaptedOrientation;
-  o_R_adapted.col(2) = zAxisAdaptedOrientation;
-
-  // Convert back to euler angles
-  vector3_t adaptedEulerXYZ = o_R_adapted.eulerAngles(0, 1, 2);
-  ocs2::makeEulerAnglesUnique(adaptedEulerXYZ);
-  adaptedEulerXYZ.z() = findOrientationClostestToReference(adaptedEulerXYZ.z(), desiredEulerXYZ.z());
-  return adaptedEulerXYZ;
+inline vector3_t eulerXYZFromRotationMatrix(const matrix3_t& orientationTargetToWorld, scalar_t referenceYaw = 0.0) {
+  vector3_t eulerXYZ = orientationTargetToWorld.eulerAngles(0, 1, 2);
+  ocs2::makeEulerAnglesUnique(eulerXYZ);
+  eulerXYZ.z() = findOrientationClostestToReference(eulerXYZ.z(), referenceYaw);
+  return eulerXYZ;
 }
+
+inline vector3_t getHeadingVectorInWorld(const vector3_t& eulerXYZ) {
+  const matrix3_t o_R_b = rotationMatrixBaseToOrigin(eulerXYZ);
+  const vector3_t xAxisInWorld = o_R_b.col(0);
+  return xAxisInWorld;
+}
+
+matrix3_t getOrientationProjectedHeadingFrameToWorld(const vector3_t& headingVector, const TerrainPlane& terrainPlane);
+
+inline TerrainPlane getProjectedHeadingFrame(const vector3_t& eulerXYZ, const TerrainPlane& terrainPlane) {
+  const vector3_t xAxisInWorld = getHeadingVectorInWorld(eulerXYZ);
+  return {terrainPlane.positionInWorld, getOrientationProjectedHeadingFrameToWorld(xAxisInWorld, terrainPlane).transpose()};
+}
+
+vector3_t alignDesiredOrientationToTerrain(const vector3_t& desiredEulerXYZ, const TerrainPlane& terrainPlane);
+
+/**
+ * Advances a position in world frame by applying an angle rotation around a given axis
+ * @return integrated eulerXYZ (continuous yaw) in world
+ */
+vector3_t advanceOrientationInWorld(const vector3_t& eulerXYZ, const vector3_t& unitRotationAxisInWorld, double angle);
 
 }  // namespace switched_model

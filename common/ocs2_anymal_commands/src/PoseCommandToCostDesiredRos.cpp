@@ -64,8 +64,8 @@ void PoseCommandToCostDesiredRos::commandCallback(const ocs2_msgs::mpc_state::Co
     std::lock_guard<ocs2::LockablePtr<TerrainModel>> lock(*terrainPptr_);
     return (*terrainPptr_)->getLocalTerrainAtPositionInWorld(comPositionDesired);
   }();
-  comPositionDesired = adaptDesiredPositionToTerrain(comPositionDesired, localTerrainPlane);
-  comOrientationDesired = adaptDesiredOrientationToTerrain(comOrientationDesired, localTerrainPlane);
+  comPositionDesired = adaptDesiredPositionHeightToTerrain(comPositionDesired, localTerrainPlane, comPositionDesired.z());
+  comOrientationDesired = alignDesiredOrientationToTerrain(comOrientationDesired, localTerrainPlane);
 
   // Trajectory to publish
   ocs2::CostDesiredTrajectories costDesiredTrajectories(2);

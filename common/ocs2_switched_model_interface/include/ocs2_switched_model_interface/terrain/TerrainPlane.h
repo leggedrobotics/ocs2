@@ -47,6 +47,10 @@ inline vector3_t positionInTerrainFrameFromPositionInWorld(const vector3_t& posi
   return terrainPlane.orientationWorldToTerrain * (positionWorld - terrainPlane.positionInWorld);
 }
 
+inline vector3_t positionInWorldFrameFromPositionInTerrain(const vector3_t& positionInTerrain, const TerrainPlane& terrainPlane) {
+  return terrainPlane.orientationWorldToTerrain.transpose() * positionInTerrain + terrainPlane.positionInWorld;
+}
+
 inline scalar_t terrainDistanceFromPositionInWorld(const vector3_t& positionWorld, const TerrainPlane& terrainPlane) {
   return positionInTerrainFrameFromPositionInWorld(positionWorld, terrainPlane).z();
 }

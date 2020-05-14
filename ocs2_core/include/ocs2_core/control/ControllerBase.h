@@ -39,7 +39,7 @@ namespace ocs2 {
  */
 class ControllerBase {
  public:
-  using float_array_t = std::vector<float>;  // TODO(mspieler): should be scalar_t?
+  using float_array_t = std::vector<float>;
   using array_t = std::vector<ControllerBase>;
 
   /**

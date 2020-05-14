@@ -27,78 +27,57 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/dynamics/LinearSystemDynamics.h>
+#include <ocs2_core/dynamics/SystemDynamicsLinearizer.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearSystemDynamics::LinearSystemDynamics(const matrix_t& A, const matrix_t& B, const matrix_t& G /*= matrix_t()*/,
-                                           const matrix_t& H /*= matrix_t()*/)
-    : SystemDynamicsBase(A.rows(), B.cols()), A_(A), B_(B), G_(G), H_(H) {
-  if (G_.size() == 0) {
-    G_ = matrix_t::Zero(stateDim_, stateDim_);
-  }
-  if (H_.size() == 0) {
-    H_ = matrix_t::Zero(stateDim_, inputDim_);
-  }
+SystemDynamicsLinearizer::SystemDynamicsLinearizer(std::shared_ptr<ControlledSystemBase> nonlinearSystemPtr,
+                                                   bool doubleSidedDerivative /*= true*/, bool isSecondOrderSystem /*= false*/)
+    : controlledSystemPtr_(std::move(nonlinearSystemPtr)),
+      doubleSidedDerivative_(doubleSidedDerivative),
+      isSecondOrderSystem_(isSecondOrderSystem) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+SystemDynamicsLinearizer::SystemDynamicsLinearizer(const SystemDynamicsLinearizer& other)
+    : controlledSystemPtr_(other.controlledSystemPtr_->clone()),
+      doubleSidedDerivative_(other.doubleSidedDerivative_),
+      isSecondOrderSystem_(other.isSecondOrderSystem_) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+SystemDynamicsLinearizer& SystemDynamicsLinearizer::operator=(const SystemDynamicsLinearizer& other) {
+  controlledSystemPtr_.reset(other.controlledSystemPtr_->clone());
+  doubleSidedDerivative_ = other.doubleSidedDerivative_;
+  isSecondOrderSystem_ = other.isSecondOrderSystem_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearSystemDynamics* LinearSystemDynamics::clone() const {
-  return new LinearSystemDynamics(*this);
+void SystemDynamicsLinearizer::getFlowMapDerivativeState(matrix_t& A) {
+  A = finiteDifferenceDerivativeState(*controlledSystemPtr_, this->t_, this->x_, this->u_, Eigen::NumTraits<scalar_t>::epsilon(),
+                                      doubleSidedDerivative_, isSecondOrderSystem_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LinearSystemDynamics::computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) {
-  dxdt = A_ * x + B_ * u;
+void SystemDynamicsLinearizer::getFlowMapDerivativeInput(matrix_t& B) {
+  B = finiteDifferenceDerivativeInput(*controlledSystemPtr_, this->t_, this->x_, this->u_, Eigen::NumTraits<scalar_t>::epsilon(),
+                                      doubleSidedDerivative_, isSecondOrderSystem_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LinearSystemDynamics::computeJumpMap(const scalar_t& t, const vector_t& x, vector_t& xp) {
-  xp = G_ * x;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void LinearSystemDynamics::setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) {
-  SystemDynamicsBase::setCurrentStateAndControl(t, x, u);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void LinearSystemDynamics::getFlowMapDerivativeState(matrix_t& A) {
-  A = A_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void LinearSystemDynamics::getFlowMapDerivativeInput(matrix_t& B) {
-  B = B_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void LinearSystemDynamics::getJumpMapDerivativeState(matrix_t& G) {
-  G = G_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void LinearSystemDynamics::getJumpMapDerivativeInput(matrix_t& H) {
-  H = H_;
+SystemDynamicsLinearizer* SystemDynamicsLinearizer::clone() const {
+  return new SystemDynamicsLinearizer(*this);
 }
 
 }  // namespace ocs2

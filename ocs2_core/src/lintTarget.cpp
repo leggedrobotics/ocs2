@@ -4,6 +4,7 @@
 // Automatic Differentation
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_core/automatic_differentiation/CppAdSparsity.h>
+#include <ocs2_core/automatic_differentiation/FiniteDifferenceMethods.h>
 
 // // Constraint
 // #include <ocs2_core/constraint/ConstraintBase.h>
@@ -34,9 +35,9 @@
 #include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
-// #include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
-// #include <ocs2_core/dynamics/SystemDynamicsLinearizer.h>
-// #include <ocs2_core/dynamics/TransferFunctionBase.h>
+#include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
+#include <ocs2_core/dynamics/SystemDynamicsLinearizer.h>
+#include <ocs2_core/dynamics/TransferFunctionBase.h>
 
 // // Initialization
 // #include <ocs2_core/initialization/OperatingPoints.h>

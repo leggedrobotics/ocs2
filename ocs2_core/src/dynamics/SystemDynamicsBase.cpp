@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,39 +27,13 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
-
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 
 namespace ocs2 {
 
-class LinearSystemDynamics : public SystemDynamicsBase {
- public:
-  LinearSystemDynamics(const matrix_t& A, const matrix_t& B, const matrix_t& G = matrix_t(), const matrix_t& H = matrix_t());
-
-  ~LinearSystemDynamics() override = default;
-
-  LinearSystemDynamics* clone() const override;
-
-  void computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) override;
-
-  void computeJumpMap(const scalar_t& t, const vector_t& x, vector_t& xp) override;
-
-  void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) override;
-
-  void getFlowMapDerivativeState(matrix_t& A) override;
-
-  void getFlowMapDerivativeInput(matrix_t& B) override;
-
-  void getJumpMapDerivativeState(matrix_t& G) override;
-
-  void getJumpMapDerivativeInput(matrix_t& H) override;
-
- private:
-  matrix_t A_;
-  matrix_t B_;
-  matrix_t G_;
-  matrix_t H_;
-};
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+SystemDynamicsBase::SystemDynamicsBase(size_t stateDim, size_t inputDim) : stateDim_(stateDim), inputDim_(inputDim) {}
 
 }  // namespace ocs2

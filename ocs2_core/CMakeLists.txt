@@ -63,6 +63,7 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/automatic_differentation/CppAdInterface.cpp
   src/automatic_differentation/CppAdSparsity.cpp
+  src/automatic_differentation/FiniteDifferenceMethods.cpp
   # src/constraint/PenaltyBase.cpp
   # src/constraint/RelaxedBarrierPenalty.cpp
   src/control/LinearController.cpp
@@ -75,6 +76,10 @@ add_library(${PROJECT_NAME}
   src/dynamics/DerivativesBase.cpp
   src/dynamics/ControlledSystemBase.cpp
   src/dynamics/LinearSystemDynamics.cpp
+  src/dynamics/SystemDynamicsBase.cpp
+  src/dynamics/SystemDynamicsBaseAD.cpp
+  src/dynamics/SystemDynamicsLinearizer.cpp
+  src/dynamics/TransferFunctionBase.cpp
   src/integration/Integrator.cpp
   src/integration/IntegratorBase.cpp
   src/integration/OdeBase.cpp
@@ -188,13 +193,14 @@ target_link_libraries(test_integration
 #   gtest_main
 # )
 
-# catkin_add_gtest(test_transferfunctionbase
-#   test/dynamics/testTransferfunctionBase.cpp
-# )
-# target_link_libraries(test_transferfunctionbase
-#   ${PROJECT_NAME}
-#   ${catkin_LIBRARIES}
-# )
+catkin_add_gtest(test_transferfunctionbase
+  test/dynamics/testTransferfunctionBase.cpp
+)
+target_link_libraries(test_transferfunctionbase
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
 
 # catkin_add_gtest(${PROJECT_NAME}_loopshaping
 #   test/loopshaping/testLoopshapingConfiguration.cpp
@@ -230,13 +236,14 @@ target_link_libraries(test_LinearAlgebra
 #   ${catkin_LIBRARIES}
 # )
 
-# catkin_add_gtest(derivative_checker_unittest
-#   test/dynamics/testSystemDynamicsLinearizer.cpp
-# )
-# target_link_libraries(derivative_checker_unittest
-#   ${PROJECT_NAME}
-#   ${catkin_LIBRARIES}
-# )
+catkin_add_gtest(derivative_checker_unittest
+  test/dynamics/testSystemDynamicsLinearizer.cpp
+)
+target_link_libraries(derivative_checker_unittest
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
 
 # catkin_add_gtest(test_ThreadPool
 #   test/misc/testThreadPool.cpp

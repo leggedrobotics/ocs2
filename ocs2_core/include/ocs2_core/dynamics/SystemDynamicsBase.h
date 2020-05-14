@@ -47,7 +47,7 @@ class SystemDynamicsBase : public DerivativesBase, public ControlledSystemBase {
   /**
    * Default constructor
    */
-  SystemDynamicsBase() = default;
+  SystemDynamicsBase(size_t stateDim_, size_t inputDim_);
 
   /**
    * Copy constructor
@@ -65,6 +65,10 @@ class SystemDynamicsBase : public DerivativesBase, public ControlledSystemBase {
    * @return A raw pointer to the class.
    */
   virtual SystemDynamicsBase* clone() const = 0;
+
+ protected:
+  size_t stateDim_;
+  size_t inputDim_;
 };
 
 }  // namespace ocs2

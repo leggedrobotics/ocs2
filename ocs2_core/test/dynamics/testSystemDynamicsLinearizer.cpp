@@ -1,18 +1,132 @@
-/*
- * testDerivativeChecker.cpp
- *
- *  Created on: 2019-06-24
- *      Author: oharley
- */
-
-#include "include/testSystemDynamicsLinearizer.h"
-#include <Eigen/Dense>
-#include "ocs2_core/automatic_differentiation/FiniteDifferenceMethods.h"
-#include "ocs2_core/dynamics/SystemDynamicsLinearizer.h"
-
 #include <gtest/gtest.h>
 
+#include <random>
+
+#include <ocs2_core/Types.h>
+#include <ocs2_core/automatic_differentiation/FiniteDifferenceMethods.h>
+#include <ocs2_core/dynamics/ControlledSystemBase.h>
+#include <ocs2_core/dynamics/DerivativesBase.h>
+#include <ocs2_core/dynamics/SystemDynamicsLinearizer.h>
+
 using namespace ocs2;
+
+static bool derivativeChecker(ControlledSystemBase& nonlinearSystem, DerivativesBase& derivatives, scalar_t eps, scalar_t tolerance,
+                              bool doubleSidedDerivative, bool isSecondOrderSystem, scalar_t t, const vector_t& x, const vector_t& u,
+                              matrix_t& A_error, matrix_t& B_error);
+
+class EXP0_System : public ControlledSystemBase {
+ public:
+  EXP0_System() = default;
+  ~EXP0_System() override = default;
+
+  void computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) {
+    Eigen::Matrix2d A;
+    A << 0.6, 1.2, -0.8, 3.4;
+    Eigen::Vector2d B;
+    B << 1, 1;
+    dxdt = A * x + B * u;
+  }
+
+  EXP0_System* clone() const final { return new EXP0_System(*this); }
+};
+
+class EXP0_SystemDerivative : public DerivativesBase {
+ public:
+  EXP0_SystemDerivative() = default;
+  ~EXP0_SystemDerivative() override = default;
+
+  void getFlowMapDerivativeState(matrix_t& A) final {
+    A.resize(2, 2);
+    A << 0.6, 1.2, -0.8, 3.4;
+  }
+  void getFlowMapDerivativeInput(matrix_t& B) final {
+    B.resize(2, 1);
+    B << 1, 1;
+  }
+
+  EXP0_SystemDerivative* clone() const final { return new EXP0_SystemDerivative(*this); }
+};
+
+/**
+ * Has incorrect linearised dynamics (A=0, B=0) but the dynamics are non-zero.
+ */
+class EXP1_SystemDerivative : public DerivativesBase {
+ public:
+  EXP1_SystemDerivative() = default;
+  ~EXP1_SystemDerivative() override = default;
+
+  void getFlowMapDerivativeState(matrix_t& A) final {
+    A.resize(2, 2);
+    A << 0, 0, 0, 0;
+  }
+  void getFlowMapDerivativeInput(matrix_t& B) final {
+    B.resize(2, 1);
+    B << 0, 0;
+  }
+
+  EXP1_SystemDerivative* clone() const final { return new EXP1_SystemDerivative(*this); }
+};
+
+/**
+ * Pendulum system, \fn$ \theta = 0 \fn$ is upright
+ */
+class EXP2_System : public ControlledSystemBase {
+ public:
+  EXP2_System() = default;
+  ~EXP2_System() override = default;
+
+  void computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) final {
+    Eigen::Vector2d Ax;
+    Ax << x(1), sin(x(0));
+    Eigen::Vector2d B;
+    B << 0, 0.1;  // just random values
+    dxdt = Ax + B * u;
+  }
+
+  EXP2_System* clone() const final { return new EXP2_System(*this); }
+};
+
+/**
+ * Pendulum system, linearised at \fn$ \theta = 0  \fn$, up and unstable
+ */
+class EXP2_SystemDerivative : public DerivativesBase {
+ public:
+  EXP2_SystemDerivative() = default;
+  ~EXP2_SystemDerivative() override = default;
+
+  //! Linearised at \fn$ \theta=0 \fn$
+  void getFlowMapDerivativeState(matrix_t& A) final {
+    A.resize(2, 2);
+    A << 0, 1, 1, 0;
+  }
+  void getFlowMapDerivativeInput(matrix_t& B) final {
+    B.resize(2, 1);
+    B << 0, 0.1;
+  }
+
+  EXP2_SystemDerivative* clone() const final { return new EXP2_SystemDerivative(*this); }
+};
+
+/**
+ * Pendulum system, linearised at \fn$ \theta = \pi  \fn$ - down / stable
+ */
+class EXP3_SystemDerivative : public DerivativesBase {
+ public:
+  EXP3_SystemDerivative() = default;
+  ~EXP3_SystemDerivative() override = default;
+
+  //! Linearised at \fn$ \theta=\pi \fn$
+  void getFlowMapDerivativeState(matrix_t& A) final {
+    A.resize(2, 2);
+    A << 0, 1, -1, 0;
+  }
+  void getFlowMapDerivativeInput(matrix_t& B) final {
+    B.resize(2, 1);
+    B << 0, 0.1;
+  }
+
+  EXP3_SystemDerivative* clone() const final { return new EXP3_SystemDerivative(*this); }
+};
 
 class SystemDynamicsLinearizerTest : public ::testing::Test {
  protected:
@@ -35,26 +149,13 @@ class SystemDynamicsLinearizerTest : public ::testing::Test {
     EXP2_SystemDerivative nonLinDerivUnstable;  //! Nonlinear system, linearised at \theta = 0
     EXP3_SystemDerivative nonLinDeriv;
     nonLinSys_ptr = std::make_shared<EXP2_System>();
-    // auto nonLinDeriv_ptr = std::make_shared<EXP2_SystemDerivative>();
-    // auto nonLinDerivUnstable_ptr = std::make_shared<EXP3_SystemDerivative>();
-
-    linDeriv0_ptr.reset(new EXP0_SystemDerivative());
-    linDeriv1_ptr.reset(new EXP1_SystemDerivative());
 
     nonLinDerivUnstable_ptr.reset(new EXP2_SystemDerivative());
     nonLinDeriv_ptr.reset(new EXP3_SystemDerivative());
-
-    /**********************************
-     *  The FiniteDifference Checker  *
-     **********************************/
-
-    // the dimensions here are <2,1> for all systems but we leave it more general
-    // linearizer = new SystemDynamicsLinearizer<EXP2_System::DIMENSIONS::DIMS::STATE_DIM_,
-    // EXP2_System::DIMENSIONS::DIMS::INPUT_DIM_>(linSys_ptr);
   }
 
-  using scalar_t = EXP0_System::scalar_t;
-  scalar_t tolerance_ = 1e-5;
+  const scalar_t tolerance_ = 1e-5;
+  const scalar_t eps_ = 1e-10;
 
   // Correct Linear sys
   EXP0_System linSys;
@@ -79,15 +180,14 @@ class SystemDynamicsLinearizerTest : public ::testing::Test {
  * Uses EXP0_System
  */
 TEST_F(SystemDynamicsLinearizerTest, testToleranceAndReturnTrue) {
-  auto state = EXP0_System::state_vector_t::Zero().eval();
-  auto input = EXP0_System::input_vector_t::Zero().eval();
-  EXP0_SystemDerivative::state_matrix_t A_error;
-  EXP0_SystemDerivative::state_input_matrix_t B_error;
+  auto state = vector_t::Zero(2);
+  auto input = vector_t::Zero(1);
+  matrix_t A_error(2, 2);
+  matrix_t B_error(2, 1);
 
-  bool ret = FiniteDifferenceMethods<EXP0_System>::derivativeChecker(*linSys_ptr, *linDeriv0_ptr, tolerance_ * tolerance_, tolerance_, true,
-                                                                     false, 0, state, input, A_error, B_error);
+  bool ret = derivativeChecker(*linSys_ptr, *linDeriv0_ptr, eps_, tolerance_, true, false, 0, state, input, A_error, B_error);
 
-  auto numeric_error = std::fmax(A_error.template lpNorm<Eigen::Infinity>(), B_error.template lpNorm<Eigen::Infinity>());
+  auto numeric_error = std::fmax(A_error.lpNorm<Eigen::Infinity>(), B_error.lpNorm<Eigen::Infinity>());
   ASSERT_TRUE((numeric_error <= tolerance_) && (ret))
       << "If the error is within the tolerance the checker should return true."
       << " tolerance: " << tolerance_ << " error: " << numeric_error << " returned: " << ret;
@@ -97,14 +197,13 @@ TEST_F(SystemDynamicsLinearizerTest, testToleranceAndReturnTrue) {
  * Uses EXP0_System but with incorrect SystemDerivative (EXP1_SystemDerivative)
  */
 TEST_F(SystemDynamicsLinearizerTest, testIncorrectLinearSystem) {
-  auto state = EXP0_System::state_vector_t::Random().eval();
-  auto input = EXP0_System::input_vector_t::Random().eval();
-  EXP1_SystemDerivative::state_matrix_t A_error;
-  EXP1_SystemDerivative::state_input_matrix_t B_error;
+  auto state = vector_t::Random(2);
+  auto input = vector_t::Random(1);
+  matrix_t A_error(2, 2);
+  matrix_t B_error(2, 1);
 
-  bool ret = FiniteDifferenceMethods<EXP0_System>::derivativeChecker(*linSys_ptr, *linDeriv1_ptr, tolerance_ * tolerance_, tolerance_, true,
-                                                                     false, 0, state, input, A_error, B_error);
-  auto numeric_error = std::fmax(A_error.template lpNorm<Eigen::Infinity>(), B_error.template lpNorm<Eigen::Infinity>());
+  bool ret = derivativeChecker(*linSys_ptr, *linDeriv1_ptr, eps_, tolerance_, true, false, 0, state, input, A_error, B_error);
+  auto numeric_error = std::fmax(A_error.lpNorm<Eigen::Infinity>(), B_error.lpNorm<Eigen::Infinity>());
   ASSERT_TRUE((numeric_error > tolerance_) && (!ret))
       << "If the error is within the tolerance the checker should return true."
       << " tolerance: " << tolerance_ << " error: " << numeric_error << " returned: " << ret;
@@ -117,23 +216,24 @@ TEST_F(SystemDynamicsLinearizerTest, testPendulumUnstable) {
   const size_t divisions = 1000;
   const scalar_t maxDeg = 180.0;
   constexpr scalar_t toRads = M_PI / 180.0;
+  const scalar_t t = 0;
+  auto u = vector_t::Random(1);
 
-  Eigen::Matrix<scalar_t, 2, divisions> testStates;
-  testStates.row(0).setLinSpaced(0, maxDeg);  // initial starting points between upright and down
-  testStates.row(0) *= toRads;
-  testStates.row(1).setZero();  // Zero initial starting velocity
-  testStates.eval();
-  auto input = EXP2_System::input_vector_t::Random().eval();
-  EXP2_SystemDerivative::state_matrix_t A_error;
-  EXP2_SystemDerivative::state_input_matrix_t B_error;
+  matrix_t testStates(2, divisions);
+  testStates.row(0).setLinSpaced(0, toRads * maxDeg);  // initial starting points between upright and down
+  testStates.row(1).setZero();                         // Zero initial starting velocity
 
-  auto checker = FiniteDifferenceMethods<EXP2_System>(nonLinSys_ptr, tolerance_ * tolerance_, tolerance_);
+  matrix_t A_error(2, 2);
+  matrix_t B_error(2, 1);
 
   for (auto i = 0; i < divisions; ++i) {
-    A_error.setZero();
-    B_error.setZero();
-    bool ret = checker.derivativeChecker(*nonLinDerivUnstable_ptr, 0, testStates.col(i), input, A_error, B_error);
-    auto numeric_error = std::fmax(A_error.template lpNorm<Eigen::Infinity>(), B_error.template lpNorm<Eigen::Infinity>());
+    A_error.setZero(2, 2);
+    B_error.setZero(2, 1);
+    bool ret = derivativeChecker(*nonLinSys_ptr, *nonLinDerivUnstable_ptr, eps_, tolerance_, true, false, t, testStates.col(i), u, A_error,
+                                 B_error);
+
+    auto numeric_error = std::fmax(A_error.lpNorm<Eigen::Infinity>(), B_error.lpNorm<Eigen::Infinity>());
+
     ASSERT_TRUE(((numeric_error <= tolerance_) && ret) || ((numeric_error > tolerance_) && !ret))
         << "If the error is within the tolerance the checker should return true."
         << " tolerance: " << tolerance_ << " error: " << numeric_error << " returned: " << ret;
@@ -164,24 +264,21 @@ TEST_F(SystemDynamicsLinearizerTest, testPendulum) {
   const size_t divisions = 1000;
   const scalar_t maxDeg = 180.0;
   constexpr scalar_t toRads = M_PI / 180.0;
+  const scalar_t t = 0;
+  auto u = vector_t::Random(1);
 
-  Eigen::Matrix<scalar_t, 2, divisions> testStates;
-  testStates.row(0).setLinSpaced(0, maxDeg);  // initial starting points between upright and down
-  testStates.row(0) *= toRads;
-  testStates.row(1).setZero();  // Zero initial starting velocity
-  testStates.eval();
-  auto input = EXP2_System::input_vector_t::Random().eval();
-  FiniteDifferenceMethods<EXP2_System>::state_matrix_t A_error;
-  FiniteDifferenceMethods<EXP2_System>::state_input_matrix_t B_error;
-  auto checker = FiniteDifferenceMethods<EXP2_System>(nonLinSys_ptr, tolerance_ * tolerance_, tolerance_);
-
-  // linearizer->setSystems(nonLinSys_ptr, nonLinDeriv_ptr);
+  matrix_t testStates(2, divisions);
+  testStates.row(0).setLinSpaced(0, toRads * maxDeg);  // initial starting points between upright and down
+  testStates.row(1).setZero();                         // Zero initial starting velocity
+  matrix_t A_error(2, 2);
+  matrix_t B_error(2, 1);
 
   for (auto i = 0; i < divisions; ++i) {
     A_error.setZero();
     B_error.setZero();
-    bool ret = checker.derivativeChecker(*nonLinDeriv_ptr, 0, testStates.col(i), input, A_error, B_error);
-    auto numeric_error = std::fmax(A_error.template lpNorm<Eigen::Infinity>(), B_error.template lpNorm<Eigen::Infinity>());
+    bool ret =
+        derivativeChecker(*nonLinSys_ptr, *nonLinDeriv_ptr, eps_, tolerance_, true, false, t, testStates.col(i), u, A_error, B_error);
+    auto numeric_error = std::fmax(A_error.lpNorm<Eigen::Infinity>(), B_error.lpNorm<Eigen::Infinity>());
     ASSERT_TRUE(((numeric_error <= tolerance_) && ret) || ((numeric_error > tolerance_) && !ret))
         << "If the error is within the tolerance the checker should return true."
         << " tolerance: " << tolerance_ << " error: " << numeric_error << " returned: " << ret;
@@ -202,7 +299,19 @@ TEST_F(SystemDynamicsLinearizerTest, testPendulum) {
   }
 }
 
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+static bool derivativeChecker(ControlledSystemBase& nonlinearSystem, DerivativesBase& derivatives, scalar_t eps, scalar_t tolerance,
+                              bool doubleSidedDerivative, bool isSecondOrderSystem, scalar_t t, const vector_t& x, const vector_t& u,
+                              matrix_t& A_error, matrix_t& B_error) {
+  matrix_t A;
+  matrix_t B;
+  derivatives.setCurrentStateAndControl(t, x, u);
+  derivatives.getFlowMapDerivativeState(A);
+  derivatives.getFlowMapDerivativeInput(B);
+
+  A_error = finiteDifferenceDerivativeState(nonlinearSystem, t, x, u, eps, doubleSidedDerivative, isSecondOrderSystem);
+  B_error = finiteDifferenceDerivativeInput(nonlinearSystem, t, x, u, eps, doubleSidedDerivative, isSecondOrderSystem);
+
+  A_error -= A;
+  B_error -= B;
+  return tolerance > std::fmax(A_error.lpNorm<Eigen::Infinity>(), B_error.lpNorm<Eigen::Infinity>());
 }

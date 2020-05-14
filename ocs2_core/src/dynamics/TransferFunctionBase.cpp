@@ -27,78 +27,130 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/dynamics/LinearSystemDynamics.h>
+#include <ocs2_core/dynamics/TransferFunctionBase.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearSystemDynamics::LinearSystemDynamics(const matrix_t& A, const matrix_t& B, const matrix_t& G /*= matrix_t()*/,
-                                           const matrix_t& H /*= matrix_t()*/)
-    : SystemDynamicsBase(A.rows(), B.cols()), A_(A), B_(B), G_(G), H_(H) {
-  if (G_.size() == 0) {
-    G_ = matrix_t::Zero(stateDim_, stateDim_);
+inline void padeApproximation(double timeDelay, vector_t& numCoefficients, vector_t& denCoefficients, size_t numZeros, size_t numPoles) {
+  numCoefficients.resize(numZeros + 1);
+  denCoefficients.resize(numPoles + 1);
+
+  if (numZeros == 0 && numPoles == 1) {
+    numCoefficients << 1.0;
+    denCoefficients << timeDelay, 1.0;
+    return;
   }
-  if (H_.size() == 0) {
-    H_ = matrix_t::Zero(stateDim_, inputDim_);
+
+  if (numZeros == 1 && numPoles == 0) {
+    numCoefficients << -timeDelay, 1.0;
+    denCoefficients << 1.0;
+    return;
   }
+
+  if (numZeros == 1 && numPoles == 1) {
+    numCoefficients << -0.5 * timeDelay, 1.0;
+    denCoefficients << 0.5 * timeDelay, 1.0;
+    return;
+  }
+
+  std::runtime_error("padeApproximation not implemented for nZeros=" + std::to_string(numZeros) + " nPoles= " + std::to_string(numPoles));
+};
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+inline vector_t multiplyPolynomials(const vector_t& p_lhs, const vector_t& p_rhs) {
+  vector_t p_result(p_lhs.size() + p_rhs.size() - 1);
+  p_result.setZero();
+  for (int i = 0; i < p_lhs.size(); i++) {
+    for (int j = 0; j < p_lhs.size(); j++) {
+      p_result(i + j) += p_lhs(i) * p_rhs(j);
+    }
+  }
+  return p_result;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearSystemDynamics* LinearSystemDynamics::clone() const {
-  return new LinearSystemDynamics(*this);
+TransferFunctionBase::TransferFunctionBase(vector_t numCoefficients, vector_t denCoefficients, double timedelay, bool balance)
+    : numCoefficients_(numCoefficients), denCoefficients_(denCoefficients), timeDelay_(timedelay), balance_(balance){};
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void TransferFunctionBase::absorbDelay(size_t numZeros, size_t numPoles) {
+  if (timeDelay_ > delayTol_) {
+    // Approximate delay
+    vector_t padeNum, padeDen;
+    ocs2::padeApproximation(timeDelay_, padeNum, padeDen, numZeros, numPoles);
+
+    // multiply approximated delay
+    numCoefficients_ = multiplyPolynomials(numCoefficients_, padeNum);
+    denCoefficients_ = multiplyPolynomials(denCoefficients_, padeDen);
+  }
+  delayAbsorbed_ = true;
+};
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void TransferFunctionBase::normalize() {
+  double scaling = denCoefficients_(0);
+  numCoefficients_ /= scaling;
+  denCoefficients_ /= scaling;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LinearSystemDynamics::computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) {
-  dxdt = A_ * x + B_ * u;
-}
+void TransferFunctionBase::getStateSpace(matrix_t& A, matrix_t& B, matrix_t& C, matrix_t& D) {
+  if (numCoefficients_.size() > denCoefficients_.size()) {
+    throw std::runtime_error("Transfer function must be proper to convert to a state space model");
+  }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void LinearSystemDynamics::computeJumpMap(const scalar_t& t, const vector_t& x, vector_t& xp) {
-  xp = G_ * x;
-}
+  // Absorb delay and normalize
+  if (!delayAbsorbed_) {  // Default approximation of time delay
+    this->absorbDelay(1, 1);
+  }
+  this->normalize();
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void LinearSystemDynamics::setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) {
-  SystemDynamicsBase::setCurrentStateAndControl(t, x, u);
-}
+  size_t numStates = denCoefficients_.size() - 1;
+  size_t numInputs = 1;
+  size_t numOutputs = 1;
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void LinearSystemDynamics::getFlowMapDerivativeState(matrix_t& A) {
-  A = A_;
-}
+  A.resize(numStates, numStates);
+  B.resize(numStates, numInputs);
+  C.resize(numOutputs, numStates);
+  D.resize(numOutputs, numInputs);
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void LinearSystemDynamics::getFlowMapDerivativeInput(matrix_t& B) {
-  B = B_;
-}
+  // prepend zeros to numerator
+  vector_t numExtended(denCoefficients_.size());
+  numExtended.setZero();
+  numExtended.tail(numCoefficients_.size()) = numCoefficients_;
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void LinearSystemDynamics::getJumpMapDerivativeState(matrix_t& G) {
-  G = G_;
-}
+  // Create strictly proper transfer function
+  D(0) = numExtended(0);
+  numExtended -= denCoefficients_ * D(0);
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void LinearSystemDynamics::getJumpMapDerivativeInput(matrix_t& H) {
-  H = H_;
+  if (numStates > 0) {
+    A << -denCoefficients_.tail(numStates).transpose(), matrix_t::Identity(numStates - 1, numStates);
+    B << 1.0, vector_t::Zero(numStates - 1);
+    C << numExtended.tail(numStates).transpose();
+
+    if (balance_) {
+      matrix_t T(numStates, numStates);
+      T.setZero();
+      T.diagonal() = denCoefficients_.tail(numStates).cwiseSqrt();
+      T(0, 0) = 1.0;
+      A = T * A.eval() * T.inverse();
+      B = T * B.eval();
+      C = C.eval() * T.inverse();
+    }
+  }
 }
 
 }  // namespace ocs2

@@ -9,10 +9,9 @@ list
   [6] dynamic_walk
   [7] static_walk
   [8] amble
-  [9] bound
-  [10] lindyhop
-  [11] skipping
-  [12] pawup
+  [9] lindyhop
+  [10] skipping
+  [11] pawup
 }
 
 stance
@@ -177,25 +176,6 @@ amble
     [2]     0.40
     [3]     0.55
     [4]     0.80
-  }
-}
-
-bound
-{
-  modeSequence
-  {
-    [0]     LH_RH
-    [1]     STANCE
-    [2]     LF_RF
-    [3]     STANCE
-  }
-  switchingTimes
-  {
-    [0]     0.00
-    [1]     0.25
-    [2]     0.35
-    [3]     0.60
-    [4]     0.70
   }
 }
 

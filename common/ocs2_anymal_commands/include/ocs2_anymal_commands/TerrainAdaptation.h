@@ -48,8 +48,8 @@ inline TerrainPlane getProjectedHeadingFrame(const vector3_t& eulerXYZ, const Te
 vector3_t alignDesiredOrientationToTerrain(const vector3_t& desiredEulerXYZ, const TerrainPlane& terrainPlane);
 
 /**
- * Advances a position in world frame by applying an angle rotation around a given axis
- * @return integrated eulerXYZ (continuous yaw) in world
+ * Advances an orientation w.r.t world frame by applying a rotation around a given axis
+ * @return integrated eulerXYZ (continuous yaw) target to world
  */
 vector3_t advanceOrientationInWorld(const vector3_t& eulerXYZ, const vector3_t& unitRotationAxisInWorld, double angle);
 

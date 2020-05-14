@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -40,23 +40,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cppad/cg.hpp>
 
 // CppAD helpers
+#include <ocs2_core/Types.h>
 #include <ocs2_core/automatic_differentiation/CppAdSparsity.h>
 
 namespace ocs2 {
 
-template <typename scalar_t>
 class CppAdInterface {
  public:
   enum class ApproximationOrder { Zero, First, Second };
 
   using ad_base_t = CppAD::cg::CG<scalar_t>;
   using ad_scalar_t = CppAD::AD<ad_base_t>;
-  using dynamic_vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
-  using dynamic_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic>;
-  using dynamic_rowMajor_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
-  using ad_dynamic_vector_t = Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, 1>;
-  using ad_function_t = std::function<void(const ad_dynamic_vector_t&, ad_dynamic_vector_t&)>;
-  using ad_parameterized_function_t = std::function<void(const ad_dynamic_vector_t&, const ad_dynamic_vector_t&, ad_dynamic_vector_t&)>;
+  using rowMajor_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+  using ad_vector_t = Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, 1>;
+  using ad_function_t = std::function<void(const ad_vector_t&, ad_vector_t&)>;
+  using ad_parameterized_function_t = std::function<void(const ad_vector_t&, const ad_vector_t&, ad_vector_t&)>;
 
   using ad_fun_t = CppAD::ADFun<ad_base_t>;
 
@@ -128,7 +126,7 @@ class CppAdInterface {
    * @param p : parameter vector of size parameterDim
    * @return y = f(x,p)
    */
-  dynamic_vector_t getFunctionValue(const dynamic_vector_t& x, const dynamic_vector_t& p = dynamic_vector_t(0)) const;
+  vector_t getFunctionValue(const vector_t& x, const vector_t& p = vector_t(0)) const;
 
   /**
    * Jacobian with gradient of each output w.r.t the variables x in the rows.
@@ -137,7 +135,7 @@ class CppAdInterface {
    * @param p : parameter vector of size parameterDim
    * @return d/dx( f(x,p) )
    */
-  dynamic_matrix_t getJacobian(const dynamic_vector_t& x, const dynamic_vector_t& p = dynamic_vector_t(0)) const;
+  matrix_t getJacobian(const vector_t& x, const vector_t& p = vector_t(0)) const;
 
   /**
    * Hessian, available per output.
@@ -147,7 +145,7 @@ class CppAdInterface {
    * @param p : parameter vector of size parameterDim
    * @return dd/dxdx( f_i(x,p) )
    */
-  dynamic_matrix_t getHessian(size_t outputIndex, const dynamic_vector_t& x, const dynamic_vector_t& p = dynamic_vector_t(0)) const;
+  matrix_t getHessian(size_t outputIndex, const vector_t& x, const vector_t& p = vector_t(0)) const;
 
   /**
    * Weighted hessian
@@ -157,7 +155,7 @@ class CppAdInterface {
    * @param p : parameter vector of size parameterDim
    * @return dd/dxdx(sum_i  w_i*f_i(x,p) )
    */
-  dynamic_matrix_t getHessian(const dynamic_vector_t& w, const dynamic_vector_t& x, const dynamic_vector_t& p = dynamic_vector_t(0)) const;
+  matrix_t getHessian(const vector_t& w, const vector_t& x, const vector_t& p = vector_t(0)) const;
 
  private:
   /**
@@ -237,8 +235,3 @@ class CppAdInterface {
 };
 
 }  // namespace ocs2
-
-/**
- *  Explicit instantiation, for instantiation additional types, include the implementation file instead of this one.
- */
-extern template class ocs2::CppAdInterface<double>;

@@ -51,9 +51,8 @@ namespace ocs2 {
  */
 class RelaxedBarrierCost : public CostFunctionBase {
  public:
-  using ad_interface_t = CppAdInterface<scalar_t>;
-  using ad_scalar_t = typename ad_interface_t::ad_scalar_t;
-  using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
+  using ad_scalar_t = typename CppAdInterface::ad_scalar_t;
+  using ad_vector_t = typename CppAdInterface::ad_vector_t;
 
   /**
    * Configuration object
@@ -180,8 +179,8 @@ class RelaxedBarrierCost : public CostFunctionBase {
    * @param [in] parameters: parameter vector.
    * @param [out] costValue: cost value.
    */
-  virtual void intermediateCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                                        const ad_dynamic_vector_t& parameters, ad_dynamic_vector_t& costValues) const = 0;
+  virtual void intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input, const ad_vector_t& parameters,
+                                        ad_vector_t& costValues) const = 0;
 
   /**
    * Interface method to the terminal cost function. This method can be implemented by the derived class.
@@ -192,8 +191,8 @@ class RelaxedBarrierCost : public CostFunctionBase {
    * @param [in] parameters: parameter vector.
    * @param [out] costValue: cost value.
    */
-  virtual void terminalCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& parameters,
-                                    ad_dynamic_vector_t& costValues) const;
+  virtual void terminalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters,
+                                    ad_vector_t& costValues) const;
 
  private:
   /**
@@ -220,8 +219,8 @@ class RelaxedBarrierCost : public CostFunctionBase {
   scalar_t getPenaltyFunctionDerivative(scalar_t h, const Config& config) const;
   scalar_t getPenaltyFunctionSecondDerivative(scalar_t h, const Config& config) const;
 
-  std::unique_ptr<ad_interface_t> terminalADInterfacePtr_;
-  std::unique_ptr<ad_interface_t> intermediateADInterfacePtr_;
+  std::unique_ptr<CppAdInterface> terminalADInterfacePtr_;
+  std::unique_ptr<CppAdInterface> intermediateADInterfacePtr_;
 
   size_t stateDim_;
   size_t inputDim_;

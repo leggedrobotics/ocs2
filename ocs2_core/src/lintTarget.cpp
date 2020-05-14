@@ -6,10 +6,10 @@
 #include <ocs2_core/automatic_differentiation/CppAdSparsity.h>
 #include <ocs2_core/automatic_differentiation/FiniteDifferenceMethods.h>
 
-// // Constraint
-// #include <ocs2_core/constraint/ConstraintBase.h>
-// #include <ocs2_core/constraint/ConstraintBaseAD.h>
-// #include <ocs2_core/constraint/LinearConstraint.h>
+// Constraint
+#include <ocs2_core/constraint/ConstraintBase.h>
+#include <ocs2_core/constraint/ConstraintBaseAD.h>
+#include <ocs2_core/constraint/LinearConstraint.h>
 // #include <ocs2_core/constraint/PenaltyBase.h>
 // #include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 

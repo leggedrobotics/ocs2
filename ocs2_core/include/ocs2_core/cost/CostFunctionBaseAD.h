@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -39,15 +39,14 @@ namespace ocs2 {
  */
 class CostFunctionBaseAD : public CostFunctionBase {
  public:
-  using ad_interface_t = CppAdInterface<scalar_t>;
-  using ad_scalar_t = typename ad_interface_t::ad_scalar_t;
-  using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
+  using ad_scalar_t = typename CppAdInterface::ad_scalar_t;
+  using ad_vector_t = typename CppAdInterface::ad_vector_t;
 
   /**
    * Default constructor
    *
    */
-  explicit CostFunctionBaseAD(size_t stateDim, size_t inputDim, size_t intermediateCostDim, size_t terminalCostDim);
+  explicit CostFunctionBaseAD(size_t stateDim, size_t inputDim);
 
   /**
    * Copy constructor
@@ -138,8 +137,8 @@ class CostFunctionBaseAD : public CostFunctionBase {
    * @param [in] parameters: parameter vector.
    * @param [out] costValue: cost value.
    */
-  virtual void intermediateCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                                        const ad_dynamic_vector_t& parameters, ad_scalar_t& costValue) const = 0;
+  virtual void intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input, const ad_vector_t& parameters,
+                                        ad_scalar_t& costValue) const = 0;
 
   /**
    * Interface method to the terminal cost function. This method can be implemented by the derived class.
@@ -150,7 +149,7 @@ class CostFunctionBaseAD : public CostFunctionBase {
    * @param [in] parameters: parameter vector.
    * @param [out] costValue: cost value.
    */
-  virtual void terminalCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& parameters,
+  virtual void terminalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters,
                                     ad_scalar_t& costValue) const;
 
  private:
@@ -173,13 +172,13 @@ class CostFunctionBaseAD : public CostFunctionBase {
    */
   void loadModelsIfAvailable(bool verbose);
 
-  std::unique_ptr<ad_interface_t> terminalADInterfacePtr_;
-  std::unique_ptr<ad_interface_t> intermediateADInterfacePtr_;
-
+ protected:
   size_t stateDim_;
   size_t inputDim_;
-  size_t intermediateCostDim_;
-  size_t terminalCostDim_;
+
+ private:
+  std::unique_ptr<CppAdInterface> terminalADInterfacePtr_;
+  std::unique_ptr<CppAdInterface> intermediateADInterfacePtr_;
 
   // Intermediate cost
   bool intermediateDerivativesComputed_;

@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,197 +27,216 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
+#include <ocs2_core/constraint/LinearConstraint.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SystemDynamicsBaseAD::SystemDynamicsBaseAD(size_t stateDim, size_t inputDim)
-    : SystemDynamicsBase(stateDim, inputDim),
-      flowJacobian_(matrix_t::Zero(stateDim_, 1 + stateDim_ + inputDim_)),
-      jumpJacobian_(matrix_t::Zero(stateDim_, 1 + stateDim_)),
-      guardJacobian_(matrix_t::Zero(1, 1 + stateDim_)) {}
+LinearConstraint::LinearConstraint(size_t stateDim, size_t inputDim)
+    : ConstraintBase(stateDim, inputDim),
+      numStateInputConstraint_(0),
+      e_(vector_t()),
+      C_(matrix_t()),
+      D_(matrix_t()),
+      numStateOnlyConstraint_(0),
+      h_(vector_t()),
+      F_(matrix_t()),
+      numStateOnlyFinalConstraint_(0),
+      h_f_(vector_t()),
+      F_f_(matrix_t()),
+      numInequalityConstraint_(0),
+      h0_(),
+      dhdx_(),
+      dhdu_(),
+      ddhdxdx_(),
+      ddhdudu_(),
+      ddhdudx_() {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SystemDynamicsBaseAD::SystemDynamicsBaseAD(const SystemDynamicsBaseAD& rhs)
-    : SystemDynamicsBase(rhs),
-      flowMapADInterfacePtr_(new CppAdInterface(*rhs.flowMapADInterfacePtr_)),
-      jumpMapADInterfacePtr_(new CppAdInterface(*rhs.jumpMapADInterfacePtr_)),
-      guardSurfacesADInterfacePtr_(new CppAdInterface(*rhs.guardSurfacesADInterfacePtr_)),
-      flowJacobian_(matrix_t::Zero(stateDim_, 1 + stateDim_ + inputDim_)),
-      jumpJacobian_(matrix_t::Zero(stateDim_, 1 + stateDim_)),
-      guardJacobian_(matrix_t::Zero(1, 1 + stateDim_)) {}
+LinearConstraint::LinearConstraint(size_t stateDim, size_t inputDim, size_t numStateInputConstraint, const vector_t& e, const matrix_t& C,
+                                   const matrix_t& D, size_t numStateOnlyConstraint, const vector_t& h, const matrix_t& F,
+                                   size_t numStateOnlyFinalConstraint, const vector_t& h_f, const matrix_t& F_f)
+    : ConstraintBase(stateDim, inputDim),
+      numStateInputConstraint_(numStateInputConstraint),
+      e_(e),
+      C_(C),
+      D_(D),
+      numStateOnlyConstraint_(numStateOnlyConstraint),
+      h_(h),
+      F_(F),
+      numStateOnlyFinalConstraint_(numStateOnlyFinalConstraint),
+      h_f_(h_f),
+      F_f_(F_f),
+      numInequalityConstraint_(0) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::initialize(const std::string& modelName, const std::string& modelFolder, bool recompileLibraries, bool verbose) {
-  setADInterfaces(modelName, modelFolder);
-  if (recompileLibraries) {
-    createModels(verbose);
-  } else {
-    loadModelsIfAvailable(verbose);
+LinearConstraint::LinearConstraint(size_t stateDim, size_t inputDim, size_t numStateInputConstraint, const vector_t& e, const matrix_t& C,
+                                   const matrix_t& D, size_t numStateOnlyConstraint, const vector_t& h, const matrix_t& F,
+                                   size_t numStateOnlyFinalConstraint, const vector_t& h_f, const matrix_t& F_f,
+                                   size_t numInequalityConstraint, const scalar_array_t& h0, const vector_array_t& dhdx,
+                                   const vector_array_t& dhdu, const matrix_array_t& ddhdxdx, const matrix_array_t& ddhdudu,
+                                   const matrix_array_t& ddhdudx)
+    : ConstraintBase(stateDim, inputDim),
+      numStateInputConstraint_(numStateInputConstraint),
+      e_(e),
+      C_(C),
+      D_(D),
+      numStateOnlyConstraint_(numStateOnlyConstraint),
+      h_(h),
+      F_(F),
+      numStateOnlyFinalConstraint_(numStateOnlyFinalConstraint),
+      h_f_(h_f),
+      F_f_(F_f),
+      numInequalityConstraint_(numInequalityConstraint),
+      h0_(h0),
+      dhdx_(dhdx),
+      dhdu_(dhdu),
+      ddhdxdx_(ddhdxdx),
+      ddhdudu_(ddhdudu),
+      ddhdudx_(ddhdudx) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+LinearConstraint* LinearConstraint::clone() const {
+  return new LinearConstraint(*this);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void LinearConstraint::getConstraint1(vector_t& g1) {
+  g1 = e_ + C_ * ConstraintBase::x_ + D_ * ConstraintBase::u_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+size_t LinearConstraint::numStateInputConstraint(const scalar_t& time) {
+  return numStateInputConstraint_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void LinearConstraint::getConstraint2(vector_t& g2) {
+  g2 = h_ + F_ * ConstraintBase::x_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+size_t LinearConstraint::numStateOnlyConstraint(const scalar_t& time) {
+  return numStateOnlyConstraint_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void LinearConstraint::getInequalityConstraint(scalar_array_t& h) {
+  h.clear();
+  for (size_t i = 0; i < numInequalityConstraint_; i++) {
+    h.emplace_back(h0_[i] + dhdx_[i].dot(ConstraintBase::x_) + dhdu_[i].dot(ConstraintBase::u_) +
+                   0.5 * ConstraintBase::x_.dot(ddhdxdx_[i] * ConstraintBase::x_) +
+                   0.5 * ConstraintBase::u_.dot(ddhdudu_[i] * ConstraintBase::u_) +
+                   ConstraintBase::u_.dot(ddhdudx_[i] * ConstraintBase::x_));
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::computeFlowMap(const scalar_t& time, const vector_t& state, const vector_t& input, vector_t& stateDerivative) {
-  vector_t tapedInput(1 + stateDim_ + inputDim_);
-  tapedInput << time, state, input;
+size_t LinearConstraint::numInequalityConstraint(const scalar_t& time) {
+  return numInequalityConstraint_;
+};
 
-  stateDerivative = flowMapADInterfacePtr_->getFunctionValue(tapedInput);
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void LinearConstraint::getFinalConstraint2(vector_t& g2Final) {
+  g2Final = h_f_ + F_f_ * ConstraintBase::x_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::computeJumpMap(const scalar_t& time, const vector_t& state, vector_t& jumpedState) {
-  vector_t tapedInput(1 + stateDim_);
-  tapedInput << time, state;
-
-  jumpedState = jumpMapADInterfacePtr_->getFunctionValue(tapedInput);
+size_t LinearConstraint::numStateOnlyFinalConstraint(const scalar_t& time) {
+  return numStateOnlyFinalConstraint_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::computeGuardSurfaces(const scalar_t& time, const vector_t& state, vector_t& guardSurfacesValue) {
-  vector_t tapedInput(1 + stateDim_);
-  tapedInput << time, state;
-
-  guardSurfacesValue = guardSurfacesADInterfacePtr_->getFunctionValue(tapedInput);
+void LinearConstraint::getConstraint1DerivativesState(matrix_t& C) {
+  C = C_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::setCurrentStateAndControl(const scalar_t& time, const vector_t& state, const vector_t& input) {
-  SystemDynamicsBase::setCurrentStateAndControl(time, state, input);
-
-  vector_t tapedTimeStateInput(1 + stateDim_ + inputDim_);
-  tapedTimeStateInput << time, state, input;
-
-  vector_t tapedTimeState(1 + stateDim_);
-  tapedTimeState << time, state;
-
-  flowJacobian_ = flowMapADInterfacePtr_->getJacobian(tapedTimeStateInput);
-  jumpJacobian_ = jumpMapADInterfacePtr_->getJacobian(tapedTimeState);
-  guardJacobian_ = guardSurfacesADInterfacePtr_->getJacobian(tapedTimeState);
+void LinearConstraint::getConstraint1DerivativesControl(matrix_t& D) {
+  D = D_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::getFlowMapDerivativeTime(vector_t& df) {
-  df = flowJacobian_.leftCols(1);
+void LinearConstraint::getConstraint2DerivativesState(matrix_t& F) {
+  F = F_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::getFlowMapDerivativeState(matrix_t& A) {
-  A = flowJacobian_.middleCols(1, stateDim_);
+void LinearConstraint::getInequalityConstraintDerivativesState(vector_array_t& dhdx) {
+  dhdx.clear();
+  for (size_t i = 0; i < numInequalityConstraint_; i++) {
+    dhdx.push_back(dhdx_[i] + ddhdxdx_[i] * ConstraintBase::x_ + ddhdudx_[i].transpose() * ConstraintBase::u_);
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::getFlowMapDerivativeInput(matrix_t& B) {
-  B = flowJacobian_.rightCols(inputDim_);
+void LinearConstraint::getInequalityConstraintDerivativesInput(vector_array_t& dhdu) {
+  dhdu.clear();
+  for (size_t i = 0; i < numInequalityConstraint_; i++) {
+    dhdu.push_back(dhdu_[i] + ddhdudu_[i] * ConstraintBase::u_ + ddhdudx_[i] * ConstraintBase::x_);
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::getJumpMapDerivativeTime(vector_t& dg) {
-  dg = jumpJacobian_.leftCols(1);
+void LinearConstraint::getInequalityConstraintSecondDerivativesState(matrix_array_t& ddhdxdx) {
+  ddhdxdx = ddhdxdx_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::getJumpMapDerivativeState(matrix_t& G) {
-  G = jumpJacobian_.rightCols(stateDim_);
+void LinearConstraint::getInequalityConstraintSecondDerivativesInput(matrix_array_t& ddhdudu) {
+  ddhdudu = ddhdudu_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::getGuardSurfacesDerivativeTime(vector_t& D_t_gamma) {
-  D_t_gamma = guardJacobian_.leftCols(1);
+void LinearConstraint::getInequalityConstraintDerivativesInputState(matrix_array_t& ddhdudx) {
+  ddhdudx = ddhdudx_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::getGuardSurfacesDerivativeState(matrix_t& D_x_gamma) {
-  D_x_gamma = guardJacobian_.rightCols(stateDim_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void SystemDynamicsBaseAD::systemJumpMap(ad_scalar_t time, const ad_vector_t& state, ad_vector_t& jumpedState) const {
-  jumpedState = state;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void SystemDynamicsBaseAD::systemGuardSurfaces(ad_scalar_t time, const ad_vector_t& state, ad_vector_t& guardSurfacesValue) const {
-  guardSurfacesValue = -ad_vector_t::Ones(1);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void SystemDynamicsBaseAD::setADInterfaces(const std::string& modelName, const std::string& modelFolder) {
-  auto tapedFlowMap = [this](const ad_vector_t& x, ad_vector_t& y) {
-    auto time = x(0);
-    auto state = x.segment(1, stateDim_);
-    auto input = x.segment(1 + stateDim_, inputDim_);
-    this->systemFlowMap(time, state, input, y);
-  };
-  flowMapADInterfacePtr_.reset(
-      new CppAdInterface(tapedFlowMap, stateDim_, 1 + stateDim_ + inputDim_, modelName + "_flow_map", modelFolder));
-
-  auto tapedJumpMap = [this](const ad_vector_t& x, ad_vector_t& y) {
-    auto time = x(0);
-    auto state = x.segment(1, stateDim_);
-    this->systemJumpMap(time, state, y);
-  };
-  jumpMapADInterfacePtr_.reset(new CppAdInterface(tapedJumpMap, stateDim_, 1 + stateDim_, modelName + "_jump_map", modelFolder));
-
-  auto tapedGuardSurfaces = [this](const ad_vector_t& x, ad_vector_t& y) {
-    auto time = x(0);
-    auto state = x.segment(1, stateDim_);
-    this->systemGuardSurfaces(time, state, y);
-  };
-  guardSurfacesADInterfacePtr_.reset(new CppAdInterface(tapedGuardSurfaces, 1, 1 + stateDim_, modelName + "_guard_surfaces", modelFolder));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void SystemDynamicsBaseAD::createModels(bool verbose) {
-  flowMapADInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
-  jumpMapADInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
-  guardSurfacesADInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void SystemDynamicsBaseAD::loadModelsIfAvailable(bool verbose) {
-  flowMapADInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
-  jumpMapADInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
-  guardSurfacesADInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
+void LinearConstraint::getFinalConstraint2DerivativesState(matrix_t& F_f) {
+  F_f = F_f_;
 }
 
 }  // namespace ocs2

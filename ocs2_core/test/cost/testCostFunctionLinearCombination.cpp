@@ -43,8 +43,8 @@ using namespace ocs2;
 
 class testCostfunctionLinearCombinationFixture : public ::testing::Test {
  public:
-  static const size_t state_dim_ = 4;
-  static const size_t input_dim_ = 2;
+  const size_t state_dim_ = 4;
+  const size_t input_dim_ = 2;
 
   using WeightedCost = CostFunctionLinearCombination::WeightedCost;
 
@@ -53,7 +53,7 @@ class testCostfunctionLinearCombinationFixture : public ::testing::Test {
   void create() {
     // Define cost parameters
     matrix_t Q = 5.0 * matrix_t::Random(state_dim_, state_dim_);
-    matrix_t R = 3.0 * matrix_t::Random(input_dim_, state_dim_);
+    matrix_t R = 3.0 * matrix_t::Random(input_dim_, input_dim_);
     matrix_t P = 2.0 * matrix_t::Random(input_dim_, state_dim_);
     vector_t xNominal = vector_t::Random(state_dim_);
     vector_t uNominal = vector_t::Random(input_dim_);

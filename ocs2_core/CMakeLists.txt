@@ -64,6 +64,9 @@ add_library(${PROJECT_NAME}
   src/automatic_differentation/CppAdInterface.cpp
   src/automatic_differentation/CppAdSparsity.cpp
   src/automatic_differentation/FiniteDifferenceMethods.cpp
+  src/constraint/ConstraintBase.cpp
+  src/constraint/ConstraintBaseAD.cpp
+  src/constraint/LinearConstraint.cpp
   # src/constraint/PenaltyBase.cpp
   # src/constraint/RelaxedBarrierPenalty.cpp
   src/control/LinearController.cpp
@@ -179,19 +182,20 @@ target_link_libraries(test_integration
 #   ${catkin_LIBRARIES}
 # )
 
-# catkin_add_gtest(${PROJECT_NAME}_cppadcg
-#   test/cppad_cg/testCppADCG_constraint.cpp
-#   test/cppad_cg/testCppADCG_cost.cpp
-#   test/cppad_cg/testCppADCG_dynamics.cpp
-#   test/cppad_cg/testSparsityHelpers.cpp
-#   test/cppad_cg/testCppAdInterface.cpp
-# )
-# target_link_libraries(${PROJECT_NAME}_cppadcg
-#   ${PROJECT_NAME}
-#   ${Boost_LIBRARIES}
-#   ${catkin_LIBRARIES} -lm -ldl
-#   gtest_main
-# )
+catkin_add_gtest(${PROJECT_NAME}_cppadcg
+  test/cppad_cg/testCppADCG_constraint.cpp
+  test/cppad_cg/testCppADCG_cost.cpp
+  test/cppad_cg/testCppADCG_dynamics.cpp
+  test/cppad_cg/testSparsityHelpers.cpp
+  test/cppad_cg/testCppAdInterface.cpp
+)
+target_link_libraries(${PROJECT_NAME}_cppadcg
+  ${PROJECT_NAME}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  -lm -ldl
+  gtest_main
+)
 
 catkin_add_gtest(test_transferfunctionbase
   test/dynamics/testTransferfunctionBase.cpp

@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -43,9 +43,8 @@ namespace ocs2 {
  */
 class SystemDynamicsBaseAD : public SystemDynamicsBase {
  public:
-  using ad_interface_t = CppAdInterface<scalar_t>;
-  using ad_scalar_t = typename ad_interface_t::ad_scalar_t;
-  using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
+  using ad_scalar_t = typename CppAdInterface::ad_scalar_t;
+  using ad_vector_t = typename CppAdInterface::ad_vector_t;
 
   SystemDynamicsBaseAD(size_t stateDim, size_t inputDim);
 
@@ -102,8 +101,7 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
    * @param [in] input: input vector.
    * @param [out] stateDerivative: state vector time derivative.
    */
-  virtual void systemFlowMap(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                             ad_dynamic_vector_t& stateDerivative) const = 0;
+  virtual void systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input, ad_vector_t& stateDerivative) const = 0;
 
   /**
    * Interface method to the state jump map of the hybrid system. This method can be implemented by the derived class.
@@ -112,7 +110,7 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
    * @param [in] state: state vector.
    * @param [out] jumpedState: jumped state.
    */
-  virtual void systemJumpMap(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& jumpedState) const;
+  virtual void systemJumpMap(ad_scalar_t time, const ad_vector_t& state, ad_vector_t& jumpedState) const;
 
   /**
    * Interface method to the guard surfaces. This method can be implemented by the derived class.
@@ -122,7 +120,7 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
    * @param [in] input: input vector
    * @param [out] guardSurfacesValue: A vector of guard surfaces values
    */
-  virtual void systemGuardSurfaces(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& guardSurfacesValue) const;
+  virtual void systemGuardSurfaces(ad_scalar_t time, const ad_vector_t& state, ad_vector_t& guardSurfacesValue) const;
 
  private:
   /**
@@ -144,9 +142,9 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
    */
   void loadModelsIfAvailable(bool verbose);
 
-  std::unique_ptr<ad_interface_t> flowMapADInterfacePtr_;
-  std::unique_ptr<ad_interface_t> jumpMapADInterfacePtr_;
-  std::unique_ptr<ad_interface_t> guardSurfacesADInterfacePtr_;
+  std::unique_ptr<CppAdInterface> flowMapADInterfacePtr_;
+  std::unique_ptr<CppAdInterface> jumpMapADInterfacePtr_;
+  std::unique_ptr<CppAdInterface> guardSurfacesADInterfacePtr_;
 
   matrix_t flowJacobian_;
   matrix_t jumpJacobian_;

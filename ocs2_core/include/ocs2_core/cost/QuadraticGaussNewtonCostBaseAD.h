@@ -49,9 +49,8 @@ namespace ocs2 {
  */
 class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
  public:
-  using ad_interface_t = CppAdInterface<scalar_t>;
-  using ad_scalar_t = typename ad_interface_t::ad_scalar_t;
-  using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
+  using ad_scalar_t = typename CppAdInterface::ad_scalar_t;
+  using ad_vector_t = typename CppAdInterface::ad_vector_t;
 
   /**
    * Default constructor
@@ -150,8 +149,8 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
    * @param [in] parameters: parameter vector.
    * @param [out] costValue: costValues = f(x,u,t).
    */
-  virtual void intermediateCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                                        const ad_dynamic_vector_t& parameters, ad_dynamic_vector_t& costValues) const = 0;
+  virtual void intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input, const ad_vector_t& parameters,
+                                        ad_vector_t& costValues) const = 0;
 
   /**
    * Interface method to the cost term g such that the intermediate cost is
@@ -164,9 +163,9 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
    * @param [in] parameters: parameter vector.
    * @param [out] costValue: costValues = g(x,t).
    */
-  virtual void terminalCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& parameters,
-                                    ad_dynamic_vector_t& costValues) const {
-    costValues = ad_dynamic_vector_t::Zero(terminalCostDim_);
+  virtual void terminalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters,
+                                    ad_vector_t& costValues) const {
+    costValues = ad_vector_t::Zero(terminalCostDim_);
   }
 
  private:
@@ -194,8 +193,8 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
   size_t intermediateCostDim_;
   size_t terminalCostDim_;
 
-  std::unique_ptr<ad_interface_t> terminalADInterfacePtr_;
-  std::unique_ptr<ad_interface_t> intermediateADInterfacePtr_;
+  std::unique_ptr<CppAdInterface> terminalADInterfacePtr_;
+  std::unique_ptr<CppAdInterface> intermediateADInterfacePtr_;
 
   // Intermediate cost
   bool intermediateCostValuesComputed_;

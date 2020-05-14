@@ -64,8 +64,8 @@ RelaxedBarrierCost::RelaxedBarrierCost(const RelaxedBarrierCost& rhs)
       inputDim_(rhs.inputDim_),
       intermediateCostDim_(rhs.intermediateCostDim_),
       terminalCostDim_(rhs.terminalCostDim_),
-      intermediateADInterfacePtr_(new ad_interface_t(*rhs.intermediateADInterfacePtr_)),
-      terminalADInterfacePtr_(new ad_interface_t(*rhs.terminalADInterfacePtr_)),
+      intermediateADInterfacePtr_(new CppAdInterface(*rhs.intermediateADInterfacePtr_)),
+      terminalADInterfacePtr_(new CppAdInterface(*rhs.terminalADInterfacePtr_)),
       intermediateDerivativesComputed_(false),
       intermediateCostValuesComputed_(false),
       terminalDerivativesComputed_(false),
@@ -395,30 +395,30 @@ size_t RelaxedBarrierCost::getNumTerminalParameters() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void RelaxedBarrierCost::terminalCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& parameters,
-                                              ad_dynamic_vector_t& costValues) const {
-  costValues = ad_dynamic_vector_t::Zero(terminalCostDim_);
+void RelaxedBarrierCost::terminalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters,
+                                              ad_vector_t& costValues) const {
+  costValues = ad_vector_t::Zero(terminalCostDim_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void RelaxedBarrierCost::setADInterfaces(const std::string& modelName, const std::string& modelFolder) {
-  auto intermediateCostAd = [this](const ad_dynamic_vector_t& x, const ad_dynamic_vector_t& p, ad_dynamic_vector_t& y) {
+  auto intermediateCostAd = [this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
     auto time = x(0);
     auto state = x.segment(1, stateDim_);
     auto input = x.tail(inputDim_);
     this->intermediateCostFunction(time, state, input, p, y);
   };
-  intermediateADInterfacePtr_.reset(new ad_interface_t(intermediateCostAd, intermediateCostDim_, 1 + stateDim_ + inputDim_,
+  intermediateADInterfacePtr_.reset(new CppAdInterface(intermediateCostAd, intermediateCostDim_, 1 + stateDim_ + inputDim_,
                                                        getNumIntermediateParameters(), modelName + "_intermediate", modelFolder));
 
-  auto terminalCostAd = [this](const ad_dynamic_vector_t& x, const ad_dynamic_vector_t& p, ad_dynamic_vector_t& y) {
+  auto terminalCostAd = [this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
     auto time = x(0);
     auto state = x.tail(stateDim_);
     this->terminalCostFunction(time, state, p, y);
   };
-  terminalADInterfacePtr_.reset(new ad_interface_t(terminalCostAd, terminalCostDim_, 1 + stateDim_, getNumTerminalParameters(),
+  terminalADInterfacePtr_.reset(new CppAdInterface(terminalCostAd, terminalCostDim_, 1 + stateDim_, getNumTerminalParameters(),
                                                    modelName + "_terminal", modelFolder));
 }
 
@@ -426,16 +426,16 @@ void RelaxedBarrierCost::setADInterfaces(const std::string& modelName, const std
 /******************************************************************************************************/
 /******************************************************************************************************/
 void RelaxedBarrierCost::createModels(bool verbose) {
-  intermediateADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::First, verbose);
-  terminalADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::First, verbose);
+  intermediateADInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
+  terminalADInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void RelaxedBarrierCost::loadModelsIfAvailable(bool verbose) {
-  intermediateADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::First, verbose);
-  terminalADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::First, verbose);
+  intermediateADInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
+  terminalADInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
 }
 
 /******************************************************************************************************/

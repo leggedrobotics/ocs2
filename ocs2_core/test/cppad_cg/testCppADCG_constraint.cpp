@@ -28,85 +28,65 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include <gtest/gtest.h>
+
 #include <boost/filesystem.hpp>
 #include <iostream>
 
+#include <ocs2_core/Types.h>
+#include <ocs2_core/constraint/LinearConstraint.h>
+
 #include "LinearConstraintAD.h"
-#include "ocs2_core/constraint/LinearConstraint.h"
+
+using namespace ocs2;
 
 class testCppADCG_constraintFixture : public ::testing::Test {
  public:
-  static const size_t state_dim_ = 8;
-  static const size_t input_dim_ = 5;
-
-  using constraint_t = ocs2::ConstraintBase<state_dim_, input_dim_>;
-  using linear_constraint_t = ocs2::LinearConstraint<state_dim_, input_dim_>;
-  using ad_linear_constraint_t = ocs2::LinearConstraintAD<state_dim_, input_dim_>;
-
-  using scalar_t = typename constraint_t::scalar_t;
-  using state_vector_t = typename constraint_t::state_vector_t;
-  using input_vector_t = typename constraint_t::input_vector_t;
-  using state_matrix_t = typename constraint_t::state_matrix_t;
-  using state_input_matrix_t = typename constraint_t::state_input_matrix_t;
-  using constraint1_vector_t = typename constraint_t::constraint1_vector_t;
-  using constraint2_vector_t = typename constraint_t::constraint2_vector_t;
-  using constraint1_state_matrix_t = typename constraint_t::constraint1_state_matrix_t;
-  using constraint1_input_matrix_t = typename constraint_t::constraint1_input_matrix_t;
-  using constraint2_state_matrix_t = typename constraint_t::constraint2_state_matrix_t;
+  const size_t stateDim_ = 8;
+  const size_t inputDim_ = 5;
 
   testCppADCG_constraintFixture() { create(); };
 
   void create() {
-    size_t numStateInputConstraint = input_dim_ - 1;
-    constraint1_vector_t e = constraint1_vector_t::Random();
-    constraint1_state_matrix_t C = constraint1_state_matrix_t::Random();
-    constraint1_input_matrix_t D = constraint1_input_matrix_t::Random();
-    size_t numStateOnlyConstraint = input_dim_ - 1;
-    constraint2_vector_t h = constraint2_vector_t::Random();
-    constraint2_state_matrix_t F = constraint2_state_matrix_t::Random();
-    size_t numStateOnlyFinalConstraint = input_dim_ - 1;
-    constraint2_vector_t h_f = constraint2_vector_t::Random();
-    constraint2_state_matrix_t F_f = constraint2_state_matrix_t::Random();
+    const size_t numStateInputConstraint = inputDim_ - 1;
+    const size_t maxNumStateInputConstraint = inputDim_;
+    vector_t e = vector_t::Random(maxNumStateInputConstraint);
+    matrix_t C = matrix_t::Random(maxNumStateInputConstraint, stateDim_);
+    matrix_t D = matrix_t::Random(maxNumStateInputConstraint, inputDim_);
+    const size_t numStateOnlyConstraint = inputDim_ - 1;
+    const size_t maxNumStateOnlyConstraint = inputDim_;
+    vector_t h = vector_t::Random(maxNumStateOnlyConstraint);
+    matrix_t F = matrix_t::Random(maxNumStateOnlyConstraint, stateDim_);
+    const size_t numStateOnlyFinalConstraint = inputDim_ - 1;
+    const size_t maxNumStateOnlyFinalConstraint = inputDim_;
+    vector_t h_f = vector_t::Random(maxNumStateOnlyFinalConstraint);
+    matrix_t F_f = matrix_t::Random(maxNumStateOnlyFinalConstraint, stateDim_);
 
-    linearConstraint_.reset(
-        new linear_constraint_t(numStateInputConstraint, e, C, D, numStateOnlyConstraint, h, F, numStateOnlyFinalConstraint, h_f, F_f));
+    linearConstraint_.reset(new LinearConstraint(stateDim_, inputDim_, numStateInputConstraint, e, C, D, numStateOnlyConstraint, h, F,
+                                                 numStateOnlyFinalConstraint, h_f, F_f));
 
-    adLinearConstraint.reset(
-        new ad_linear_constraint_t(numStateInputConstraint, e, C, D, numStateOnlyConstraint, h, F, numStateOnlyFinalConstraint, h_f, F_f));
+    adLinearConstraint.reset(new LinearConstraintAD(stateDim_, inputDim_, numStateInputConstraint, e, C, D, numStateOnlyConstraint, h, F,
+                                                    numStateOnlyFinalConstraint, h_f, F_f));
 
     boost::filesystem::path filePath(__FILE__);
     std::string libraryFolder = filePath.parent_path().generic_string() + "/testCppADCG_generated";
     adLinearConstraint->initialize("testCppADCG_constraint", libraryFolder, true, true);
   }
 
-  std::unique_ptr<linear_constraint_t> linearConstraint_;
-  std::unique_ptr<ad_linear_constraint_t> adLinearConstraint;
+  std::unique_ptr<LinearConstraint> linearConstraint_;
+  std::unique_ptr<LinearConstraintAD> adLinearConstraint;
 };
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-bool checkConstraints(const size_t numTests, ocs2::ConstraintBase<STATE_DIM, INPUT_DIM>* const constraint1,
-                      ocs2::ConstraintBase<STATE_DIM, INPUT_DIM>* const constraint2, bool& success) {
-  using constraint_t = ocs2::ConstraintBase<STATE_DIM, INPUT_DIM>;
-  using scalar_t = typename constraint_t::scalar_t;
-  using state_vector_t = typename constraint_t::state_vector_t;
-  using input_vector_t = typename constraint_t::input_vector_t;
-  using state_matrix_t = typename constraint_t::state_matrix_t;
-  using state_input_matrix_t = typename constraint_t::state_input_matrix_t;
-  using constraint1_vector_t = typename constraint_t::constraint1_vector_t;
-  using constraint2_vector_t = typename constraint_t::constraint2_vector_t;
-  using constraint1_state_matrix_t = typename constraint_t::constraint1_state_matrix_t;
-  using constraint1_input_matrix_t = typename constraint_t::constraint1_input_matrix_t;
-  using constraint2_state_matrix_t = typename constraint_t::constraint2_state_matrix_t;
-
+bool checkConstraints(const size_t numTests, ConstraintBase* const constraint1, ConstraintBase* const constraint2, bool& success,
+                      size_t stateDim_, size_t inputDim_) {
   success = true;
   const scalar_t precision = 1e-9;
 
-  state_vector_t x;
-  input_vector_t u;
+  vector_t x;
+  vector_t u;
 
   for (size_t it = 0; it < numTests; it++) {
-    x.setRandom();
-    u.setRandom();
+    x.setRandom(stateDim_);
+    u.setRandom(inputDim_);
 
     constraint1->setCurrentStateAndControl(0.0, x, u);
     constraint2->setCurrentStateAndControl(0.0, x, u);
@@ -119,7 +99,7 @@ bool checkConstraints(const size_t numTests, ocs2::ConstraintBase<STATE_DIM, INP
     size_t ad_n2 = constraint2->numStateOnlyConstraint(0.0);
     size_t ad_n2f = constraint2->numStateOnlyFinalConstraint(0.0);
 
-    constraint1_vector_t g1, ad_g1;
+    vector_t g1, ad_g1;
     constraint1->getConstraint1(g1);
     constraint2->getConstraint1(ad_g1);
     if (!g1.head(n1).isApprox(ad_g1.head(ad_n1), precision)) {
@@ -128,7 +108,7 @@ bool checkConstraints(const size_t numTests, ocs2::ConstraintBase<STATE_DIM, INP
       success = false;
     }
 
-    constraint1_vector_t g2, ad_g2;
+    vector_t g2, ad_g2;
     constraint1->getConstraint2(g2);
     constraint2->getConstraint2(ad_g2);
     if (!g2.head(n2).isApprox(ad_g2.head(ad_n2), precision)) {
@@ -137,7 +117,7 @@ bool checkConstraints(const size_t numTests, ocs2::ConstraintBase<STATE_DIM, INP
       success = false;
     }
 
-    constraint1_vector_t g2f, ad_g2f;
+    vector_t g2f, ad_g2f;
     constraint1->getFinalConstraint2(g2f);
     constraint2->getFinalConstraint2(ad_g2f);
     if (!g2f.head(n2f).isApprox(ad_g2f.head(ad_n2f), precision)) {
@@ -146,7 +126,7 @@ bool checkConstraints(const size_t numTests, ocs2::ConstraintBase<STATE_DIM, INP
       success = false;
     }
 
-    constraint1_state_matrix_t C1, ad_C1;
+    matrix_t C1, ad_C1;
     constraint1->getConstraint1DerivativesState(C1);
     constraint2->getConstraint1DerivativesState(ad_C1);
     if (!C1.topRows(n1).isApprox(ad_C1.topRows(ad_n1), precision)) {
@@ -155,7 +135,7 @@ bool checkConstraints(const size_t numTests, ocs2::ConstraintBase<STATE_DIM, INP
       success = false;
     }
 
-    constraint1_input_matrix_t D1, ad_D1;
+    matrix_t D1, ad_D1;
     constraint1->getConstraint1DerivativesControl(D1);
     constraint2->getConstraint1DerivativesControl(ad_D1);
     if (!D1.topRows(n1).isApprox(ad_D1.topRows(ad_n1), precision)) {
@@ -164,7 +144,7 @@ bool checkConstraints(const size_t numTests, ocs2::ConstraintBase<STATE_DIM, INP
       success = false;
     }
 
-    constraint2_state_matrix_t F2, ad_F2;
+    matrix_t F2, ad_F2;
     constraint1->getConstraint2DerivativesState(F2);
     constraint2->getConstraint2DerivativesState(ad_F2);
     if (!F2.topRows(n2).isApprox(ad_F2.topRows(ad_n2), precision)) {
@@ -173,7 +153,7 @@ bool checkConstraints(const size_t numTests, ocs2::ConstraintBase<STATE_DIM, INP
       success = false;
     }
 
-    constraint2_state_matrix_t F2f, ad_F2f;
+    matrix_t F2f, ad_F2f;
     constraint1->getFinalConstraint2DerivativesState(F2f);
     constraint2->getFinalConstraint2DerivativesState(ad_F2f);
     if (!F2f.topRows(n2f).isApprox(ad_F2f.topRows(ad_n2f), precision)) {
@@ -190,7 +170,7 @@ bool checkConstraints(const size_t numTests, ocs2::ConstraintBase<STATE_DIM, INP
 /******************************************************************************/
 TEST_F(testCppADCG_constraintFixture, constraint_test) {
   bool success;
-  checkConstraints(100, linearConstraint_.get(), adLinearConstraint.get(), success);
+  checkConstraints(100, linearConstraint_.get(), adLinearConstraint.get(), success, stateDim_, inputDim_);
   ASSERT_TRUE(success);
 }
 
@@ -198,9 +178,9 @@ TEST_F(testCppADCG_constraintFixture, constraint_test) {
 /******************************************************************************/
 /******************************************************************************/
 TEST_F(testCppADCG_constraintFixture, clone_test) {
-  constraint_t::Ptr ad_cloneConstraint(adLinearConstraint->clone());
+  std::unique_ptr<ConstraintBase> ad_cloneConstraint(adLinearConstraint->clone());
   bool success;
-  checkConstraints(100, linearConstraint_.get(), ad_cloneConstraint.get(), success);
+  checkConstraints(100, linearConstraint_.get(), ad_cloneConstraint.get(), success, stateDim_, inputDim_);
   ASSERT_TRUE(success);
 }
 
@@ -208,16 +188,15 @@ TEST_F(testCppADCG_constraintFixture, clone_test) {
 /******************************************************************************/
 /******************************************************************************/
 TEST_F(testCppADCG_constraintFixture, multithread_test) {
-  std::unique_ptr<constraint_t> cloneConstraint(linearConstraint_->clone());
-  std::unique_ptr<constraint_t> ad_cloneConstraint(adLinearConstraint->clone());
+  std::unique_ptr<ConstraintBase> cloneConstraint(linearConstraint_->clone());
+  std::unique_ptr<ConstraintBase> ad_cloneConstraint(adLinearConstraint->clone());
 
   bool success = false;
-  std::thread thread1(checkConstraints<state_dim_, input_dim_>, 10000, linearConstraint_.get(), adLinearConstraint.get(),
-                      std::ref(success));
+  std::thread thread1(checkConstraints, 10000, linearConstraint_.get(), adLinearConstraint.get(), std::ref(success), stateDim_, inputDim_);
 
   bool successClone = false;
-  std::thread thread2(checkConstraints<state_dim_, input_dim_>, 10000, cloneConstraint.get(), ad_cloneConstraint.get(),
-                      std::ref(successClone));
+  std::thread thread2(checkConstraints, 10000, cloneConstraint.get(), ad_cloneConstraint.get(), std::ref(successClone), stateDim_,
+                      inputDim_);
 
   if (thread1.joinable()) {
     thread1.join();
@@ -228,4 +207,3 @@ TEST_F(testCppADCG_constraintFixture, multithread_test) {
 
   ASSERT_TRUE(success && successClone);
 }
-

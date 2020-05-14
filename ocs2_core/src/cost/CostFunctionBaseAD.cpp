@@ -34,12 +34,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CostFunctionBaseAD::CostFunctionBaseAD(size_t stateDim, size_t inputDim, size_t intermediateCostDim, size_t terminalCostDim)
+CostFunctionBaseAD::CostFunctionBaseAD(size_t stateDim, size_t inputDim)
     : CostFunctionBase(),
       stateDim_(stateDim),
       inputDim_(inputDim),
-      intermediateCostDim_(intermediateCostDim),
-      terminalCostDim_(terminalCostDim),
       intermediateDerivativesComputed_(false),
       terminalDerivativesComputed_(false) {}
 
@@ -48,8 +46,10 @@ CostFunctionBaseAD::CostFunctionBaseAD(size_t stateDim, size_t inputDim, size_t 
 /******************************************************************************************************/
 CostFunctionBaseAD::CostFunctionBaseAD(const CostFunctionBaseAD& rhs)
     : CostFunctionBase(rhs),
-      intermediateADInterfacePtr_(new ad_interface_t(*rhs.intermediateADInterfacePtr_)),
-      terminalADInterfacePtr_(new ad_interface_t(*rhs.terminalADInterfacePtr_)),
+      stateDim_(rhs.stateDim_),
+      inputDim_(rhs.inputDim_),
+      intermediateADInterfacePtr_(new CppAdInterface(*rhs.intermediateADInterfacePtr_)),
+      terminalADInterfacePtr_(new CppAdInterface(*rhs.terminalADInterfacePtr_)),
       intermediateDerivativesComputed_(false),
       terminalDerivativesComputed_(false) {}
 
@@ -71,12 +71,15 @@ void CostFunctionBaseAD::initialize(const std::string& modelName, const std::str
 void CostFunctionBaseAD::setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) {
   CostFunctionBase::setCurrentStateAndControl(t, x, u);
 
+  tapedTimeState_.resize(1 + stateDim_);
   tapedTimeState_ << t, x;
+  tapedTimeStateInput_.resize(1 + stateDim_ + inputDim_);
   tapedTimeStateInput_ << t, x, u;
 
   intermediateParameters_ = getIntermediateParameters(t);
   terminalParameters_ = getTerminalParameters(t);
 
+  // TODO(mspieler): Remove caching and do all computation here, similar to ConstraintBaseAD
   intermediateDerivativesComputed_ = false;
   terminalDerivativesComputed_ = false;
 }
@@ -236,7 +239,7 @@ size_t CostFunctionBaseAD::getNumTerminalParameters() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CostFunctionBaseAD::terminalCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& parameters,
+void CostFunctionBaseAD::terminalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters,
                                               ad_scalar_t& costValue) const {
   costValue = 0;
 }
@@ -245,40 +248,40 @@ void CostFunctionBaseAD::terminalCostFunction(ad_scalar_t time, const ad_dynamic
 /******************************************************************************************************/
 /******************************************************************************************************/
 void CostFunctionBaseAD::setADInterfaces(const std::string& modelName, const std::string& modelFolder) {
-  auto intermediateCostAd = [this](const ad_dynamic_vector_t& x, const ad_dynamic_vector_t& p, ad_dynamic_vector_t& y) {
+  auto intermediateCostAd = [this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
     auto time = x(0);
     auto state = x.segment(1, stateDim_);
     auto input = x.segment(1 + stateDim_, inputDim_);
-    y = ad_dynamic_vector_t(1);
+    y = ad_vector_t(1);
     this->intermediateCostFunction(time, state, input, p, y(0));
   };
-  intermediateADInterfacePtr_.reset(new ad_interface_t(intermediateCostAd, 1, 1 + stateDim_ + inputDim_, getNumIntermediateParameters(),
+  intermediateADInterfacePtr_.reset(new CppAdInterface(intermediateCostAd, 1, 1 + stateDim_ + inputDim_, getNumIntermediateParameters(),
                                                        modelName + "_intermediate", modelFolder));
 
-  auto terminalCostAd = [this](const ad_dynamic_vector_t& x, const ad_dynamic_vector_t& p, ad_dynamic_vector_t& y) {
+  auto terminalCostAd = [this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
     auto time = x(0);
     auto state = x.segment(1, stateDim_);
-    y = ad_dynamic_vector_t(1);
+    y = ad_vector_t(1);
     this->terminalCostFunction(time, state, p, y(0));
   };
   terminalADInterfacePtr_.reset(
-      new ad_interface_t(terminalCostAd, 1, 1 + stateDim_, getNumTerminalParameters(), modelName + "_terminal", modelFolder));
+      new CppAdInterface(terminalCostAd, 1, 1 + stateDim_, getNumTerminalParameters(), modelName + "_terminal", modelFolder));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void CostFunctionBaseAD::createModels(bool verbose) {
-  intermediateADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::Second, verbose);
-  terminalADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::Second, verbose);
+  intermediateADInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::Second, verbose);
+  terminalADInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::Second, verbose);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void CostFunctionBaseAD::loadModelsIfAvailable(bool verbose) {
-  intermediateADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::Second, verbose);
-  terminalADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::Second, verbose);
+  intermediateADInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::Second, verbose);
+  terminalADInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::Second, verbose);
 }
 
 }  // namespace ocs2

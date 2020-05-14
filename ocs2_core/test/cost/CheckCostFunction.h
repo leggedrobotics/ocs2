@@ -31,8 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 
-inline void checkCostFunction(size_t numTests, ocs2::CostFunctionBase* cost1, ocs2::CostFunctionBase* cost2, bool& success,
-                              size_t state_dim, size_t input_dim) {
+inline void checkCostFunction(size_t numTests, ocs2::CostFunctionBase* cost1, ocs2::CostFunctionBase* cost2, bool& success, size_t stateDim,
+                              size_t inputDim) {
   using ocs2::matrix_t;
   using ocs2::scalar_t;
   using ocs2::vector_t;
@@ -45,8 +45,8 @@ inline void checkCostFunction(size_t numTests, ocs2::CostFunctionBase* cost1, oc
   vector_t u;
 
   for (size_t it = 0; it < numTests; it++) {
-    x.setRandom(state_dim);
-    u.setRandom(input_dim);
+    x.setRandom(stateDim);
+    u.setRandom(inputDim);
 
     cost1->setCurrentStateAndControl(0.0, x, u);
     cost2->setCurrentStateAndControl(0.0, x, u);
@@ -60,7 +60,7 @@ inline void checkCostFunction(size_t numTests, ocs2::CostFunctionBase* cost1, oc
       success = false;
     }
 
-    vector_t dLdx(state_dim), ad_dLdx(state_dim);
+    vector_t dLdx(stateDim), ad_dLdx(stateDim);
     cost1->getIntermediateCostDerivativeState(dLdx);
     cost2->getIntermediateCostDerivativeState(ad_dLdx);
     if (!dLdx.isApprox(ad_dLdx, precision)) {
@@ -69,7 +69,7 @@ inline void checkCostFunction(size_t numTests, ocs2::CostFunctionBase* cost1, oc
       success = false;
     }
 
-    matrix_t dLdxx(state_dim, state_dim), ad_dLdxx(state_dim, state_dim);
+    matrix_t dLdxx(stateDim, stateDim), ad_dLdxx(stateDim, stateDim);
     cost1->getIntermediateCostSecondDerivativeState(dLdxx);
     cost2->getIntermediateCostSecondDerivativeState(ad_dLdxx);
     if (!dLdxx.isApprox(ad_dLdxx, precision)) {
@@ -78,7 +78,7 @@ inline void checkCostFunction(size_t numTests, ocs2::CostFunctionBase* cost1, oc
       success = false;
     }
 
-    vector_t dLdu(input_dim), ad_dLdu(input_dim);
+    vector_t dLdu(inputDim), ad_dLdu(inputDim);
     cost1->getIntermediateCostDerivativeInput(dLdu);
     cost2->getIntermediateCostDerivativeInput(ad_dLdu);
     if (!dLdu.isApprox(ad_dLdu, precision)) {
@@ -87,7 +87,7 @@ inline void checkCostFunction(size_t numTests, ocs2::CostFunctionBase* cost1, oc
       success = false;
     }
 
-    matrix_t dLduu(input_dim, input_dim), ad_dLduu(input_dim, input_dim);
+    matrix_t dLduu(inputDim, inputDim), ad_dLduu(inputDim, inputDim);
     cost1->getIntermediateCostSecondDerivativeInput(dLduu);
     cost2->getIntermediateCostSecondDerivativeInput(ad_dLduu);
     if (!dLduu.isApprox(ad_dLduu, precision)) {
@@ -96,7 +96,7 @@ inline void checkCostFunction(size_t numTests, ocs2::CostFunctionBase* cost1, oc
       success = false;
     }
 
-    matrix_t dLdux(input_dim, state_dim), ad_dLdux(input_dim, state_dim);
+    matrix_t dLdux(inputDim, stateDim), ad_dLdux(inputDim, stateDim);
     cost1->getIntermediateCostDerivativeInputState(dLdux);
     cost2->getIntermediateCostDerivativeInputState(ad_dLdux);
     if (!dLdux.isApprox(ad_dLdux, precision)) {
@@ -114,7 +114,7 @@ inline void checkCostFunction(size_t numTests, ocs2::CostFunctionBase* cost1, oc
       success = false;
     }
 
-    vector_t dPhidx(state_dim), ad_dPhidx(state_dim);
+    vector_t dPhidx(stateDim), ad_dPhidx(stateDim);
     cost1->getTerminalCostDerivativeState(dPhidx);
     cost2->getTerminalCostDerivativeState(ad_dPhidx);
     if (!dPhidx.isApprox(ad_dPhidx, precision)) {
@@ -123,7 +123,7 @@ inline void checkCostFunction(size_t numTests, ocs2::CostFunctionBase* cost1, oc
       success = false;
     }
 
-    matrix_t dPhidxx(state_dim, state_dim), ad_dPhidxx(state_dim, state_dim);
+    matrix_t dPhidxx(stateDim, stateDim), ad_dPhidxx(stateDim, stateDim);
     cost1->getTerminalCostSecondDerivativeState(dPhidxx);
     cost2->getTerminalCostSecondDerivativeState(ad_dPhidxx);
     if (!dPhidxx.isApprox(ad_dPhidxx, precision)) {

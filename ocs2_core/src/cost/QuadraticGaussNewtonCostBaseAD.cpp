@@ -59,8 +59,8 @@ QuadraticGaussNewtonCostBaseAD::QuadraticGaussNewtonCostBaseAD(size_t stateDim, 
 /******************************************************************************************************/
 QuadraticGaussNewtonCostBaseAD::QuadraticGaussNewtonCostBaseAD(const QuadraticGaussNewtonCostBaseAD& rhs)
     : QuadraticGaussNewtonCostBaseAD(rhs.stateDim_, rhs.inputDim_, rhs.intermediateCostDim_, rhs.terminalCostDim_),
-      intermediateADInterfacePtr_(new ad_interface_t(*rhs.intermediateADInterfacePtr_)),
-      terminalADInterfacePtr_(new ad_interface_t(*rhs.terminalADInterfacePtr_)) {}
+      intermediateADInterfacePtr_(new CppAdInterface(*rhs.intermediateADInterfacePtr_)),
+      terminalADInterfacePtr_(new CppAdInterface(*rhs.terminalADInterfacePtr_)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -288,28 +288,28 @@ void QuadraticGaussNewtonCostBaseAD::intermediateCostFunction(ad_scalar_t time, 
 /******************************************************************************************************/
 void QuadraticGaussNewtonCostBaseAD::terminalCostFunction(ad_scalar_t time, const vector_t& state, const vector_t& parameters,
                                                           vector_t& costValues) const {
-  costValues = ad_dynamic_vector_t::Zero(terminalCostDim_);
+  costValues = ad_vector_t::Zero(terminalCostDim_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void QuadraticGaussNewtonCostBaseAD::setADInterfaces(const std::string& modelName, const std::string& modelFolder) {
-  auto intermediateCostAd = [this](const ad_dynamic_vector_t& x, const ad_dynamic_vector_t& p, ad_dynamic_vector_t& y) {
+  auto intermediateCostAd = [this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
     auto time = x(0);
     auto state = x.segment(1, stateDim_);
     auto input = x.tail(inputDim_);
     this->intermediateCostFunction(time, state, input, p, y);
   };
-  intermediateADInterfacePtr_.reset(new ad_interface_t(intermediateCostAd, intermediateCostDim_, 1 + stateDim_ + inputDim_,
+  intermediateADInterfacePtr_.reset(new CppAdInterface(intermediateCostAd, intermediateCostDim_, 1 + stateDim_ + inputDim_,
                                                        getNumIntermediateParameters(), modelName + "_intermediate", modelFolder));
 
-  auto terminalCostAd = [this](const ad_dynamic_vector_t& x, const ad_dynamic_vector_t& p, ad_dynamic_vector_t& y) {
+  auto terminalCostAd = [this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
     auto time = x(0);
     auto state = x.tail(stateDim_);
     this->terminalCostFunction(time, state, p, y);
   };
-  terminalADInterfacePtr_.reset(new ad_interface_t(terminalCostAd, terminalCostDim_, 1 + stateDim_, getNumTerminalParameters(),
+  terminalADInterfacePtr_.reset(new CppAdInterface(terminalCostAd, terminalCostDim_, 1 + stateDim_, getNumTerminalParameters(),
                                                    modelName + "_terminal", modelFolder));
 }
 
@@ -317,16 +317,16 @@ void QuadraticGaussNewtonCostBaseAD::setADInterfaces(const std::string& modelNam
 /******************************************************************************************************/
 /******************************************************************************************************/
 void QuadraticGaussNewtonCostBaseAD::createModels(bool verbose) {
-  intermediateADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::First, verbose);
-  terminalADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::First, verbose);
+  intermediateADInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
+  terminalADInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void QuadraticGaussNewtonCostBaseAD::loadModelsIfAvailable(bool verbose) {
-  intermediateADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::First, verbose);
-  terminalADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::First, verbose);
+  intermediateADInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
+  terminalADInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
 }
 
 }  // namespace ocs2

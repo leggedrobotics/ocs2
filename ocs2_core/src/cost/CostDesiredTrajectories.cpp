@@ -47,7 +47,7 @@ CostDesiredTrajectories::CostDesiredTrajectories(const scalar_array_t& desiredTi
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-CostDesiredTrajectories::CostDesiredTrajectories(const size_t& trajectorySize)
+CostDesiredTrajectories::CostDesiredTrajectories(size_t trajectorySize)
     : desiredTimeTrajectory_(trajectorySize), desiredStateTrajectory_(trajectorySize), desiredInputTrajectory_(trajectorySize) {}
 
 /******************************************************************************************************/

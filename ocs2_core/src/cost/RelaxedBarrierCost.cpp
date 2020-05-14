@@ -35,20 +35,19 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-RelaxedBarrierCost::RelaxedBarrierCost(Config config, size_t state_dim, size_t input_dim, size_t intermediate_cost_dim,
-                                       size_t terminal_cost_dim)
-    : RelaxedBarrierCost(std::vector<Config>(intermediate_cost_dim), std::vector<Config>(terminal_cost_dim), state_dim, input_dim) {}
+RelaxedBarrierCost::RelaxedBarrierCost(Config config, size_t stateDim, size_t inputDim, size_t intermediateCostDim, size_t terminalCostDim)
+    : RelaxedBarrierCost(std::vector<Config>(intermediateCostDim), std::vector<Config>(terminalCostDim), stateDim, inputDim) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-RelaxedBarrierCost::RelaxedBarrierCost(std::vector<Config> intermediateConfig, std::vector<Config> terminalConfig, size_t state_dim,
-                                       size_t input_dim)
+RelaxedBarrierCost::RelaxedBarrierCost(std::vector<Config> intermediateConfig, std::vector<Config> terminalConfig, size_t stateDim,
+                                       size_t inputDim)
     : CostFunctionBase(),
-      state_dim_(state_dim),
-      input_dim_(input_dim),
-      intermediate_cost_dim_(intermediateConfig.size()),
-      terminal_cost_dim_(terminalConfig.size()),
+      stateDim_(stateDim),
+      inputDim_(inputDim),
+      intermediateCostDim_(intermediateConfig.size()),
+      terminalCostDim_(terminalConfig.size()),
       intermediateDerivativesComputed_(false),
       intermediateCostValuesComputed_(false),
       terminalDerivativesComputed_(false),
@@ -61,10 +60,10 @@ RelaxedBarrierCost::RelaxedBarrierCost(std::vector<Config> intermediateConfig, s
 /******************************************************************************************************/
 RelaxedBarrierCost::RelaxedBarrierCost(const RelaxedBarrierCost& rhs)
     : CostFunctionBase(rhs),
-      state_dim_(rhs.state_dim_),
-      input_dim_(rhs.input_dim_),
-      intermediate_cost_dim_(rhs.intermediate_cost_dim_),
-      terminal_cost_dim_(rhs.terminal_cost_dim_),
+      stateDim_(rhs.stateDim_),
+      inputDim_(rhs.inputDim_),
+      intermediateCostDim_(rhs.intermediateCostDim_),
+      terminalCostDim_(rhs.terminalCostDim_),
       intermediateADInterfacePtr_(new ad_interface_t(*rhs.intermediateADInterfacePtr_)),
       terminalADInterfacePtr_(new ad_interface_t(*rhs.terminalADInterfacePtr_)),
       intermediateDerivativesComputed_(false),
@@ -108,7 +107,7 @@ void RelaxedBarrierCost::setCurrentStateAndControl(const scalar_t& t, const vect
 /******************************************************************************************************/
 void RelaxedBarrierCost::getIntermediateCost(scalar_t& L) {
   L = 0;
-  if (intermediate_cost_dim_ == 0) {
+  if (intermediateCostDim_ == 0) {
     return;
   }
 
@@ -116,7 +115,7 @@ void RelaxedBarrierCost::getIntermediateCost(scalar_t& L) {
     intermediateCostValues_ = intermediateADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, intermediateParameters_);
     intermediateCostValuesComputed_ = true;
   }
-  for (int i = 0; i < intermediate_cost_dim_; i++) {
+  for (int i = 0; i < intermediateCostDim_; i++) {
     L += getPenaltyFunctionValue(intermediateCostValues_[i], intermediateConfig_[i]);
   }
 }
@@ -125,7 +124,7 @@ void RelaxedBarrierCost::getIntermediateCost(scalar_t& L) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void RelaxedBarrierCost::getIntermediateCostDerivativeTime(scalar_t& dLdt) {
-  if (intermediate_cost_dim_ == 0) {
+  if (intermediateCostDim_ == 0) {
     dLdt = 0;
     return;
   }
@@ -139,8 +138,8 @@ void RelaxedBarrierCost::getIntermediateCostDerivativeTime(scalar_t& dLdt) {
     intermediateCostValuesComputed_ = true;
   }
 
-  vector_t penalityFctDerivative(intermediate_cost_dim_);
-  for (int i = 0; i < intermediate_cost_dim_; i++) {
+  vector_t penalityFctDerivative(intermediateCostDim_);
+  for (int i = 0; i < intermediateCostDim_; i++) {
     penalityFctDerivative(i) = getPenaltyFunctionDerivative(intermediateCostValues_[i], intermediateConfig_[i]);
   }
   dLdt = penalityFctDerivative.dot(intermediateJacobian_.col(0));
@@ -150,8 +149,8 @@ void RelaxedBarrierCost::getIntermediateCostDerivativeTime(scalar_t& dLdt) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void RelaxedBarrierCost::getIntermediateCostDerivativeState(vector_t& dLdx) {
-  if (intermediate_cost_dim_ == 0) {
-    dLdx = vector_t::Zero(state_dim_);
+  if (intermediateCostDim_ == 0) {
+    dLdx = vector_t::Zero(stateDim_);
     return;
   }
 
@@ -164,19 +163,19 @@ void RelaxedBarrierCost::getIntermediateCostDerivativeState(vector_t& dLdx) {
     intermediateCostValuesComputed_ = true;
   }
 
-  vector_t penalityFctDerivative(intermediate_cost_dim_);
-  for (int i = 0; i < intermediate_cost_dim_; i++) {
+  vector_t penalityFctDerivative(intermediateCostDim_);
+  for (int i = 0; i < intermediateCostDim_; i++) {
     penalityFctDerivative(i) = getPenaltyFunctionDerivative(intermediateCostValues_[i], intermediateConfig_[i]);
   }
-  dLdx = intermediateJacobian_.block(0, 1, intermediate_cost_dim_, state_dim_).transpose() * penalityFctDerivative;
+  dLdx = intermediateJacobian_.block(0, 1, intermediateCostDim_, stateDim_).transpose() * penalityFctDerivative;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void RelaxedBarrierCost::getIntermediateCostSecondDerivativeState(matrix_t& dLdxx) {
-  if (intermediate_cost_dim_ == 0) {
-    dLdxx = matrix_t::Zero(state_dim_, state_dim_);
+  if (intermediateCostDim_ == 0) {
+    dLdxx = matrix_t::Zero(stateDim_, stateDim_);
     return;
   }
 
@@ -189,20 +188,20 @@ void RelaxedBarrierCost::getIntermediateCostSecondDerivativeState(matrix_t& dLdx
     intermediateCostValuesComputed_ = true;
   }
 
-  vector_t penalityFctSecondDerivative(intermediate_cost_dim_);
-  for (int i = 0; i < intermediate_cost_dim_; i++) {
+  vector_t penalityFctSecondDerivative(intermediateCostDim_);
+  for (int i = 0; i < intermediateCostDim_; i++) {
     penalityFctSecondDerivative(i) = getPenaltyFunctionSecondDerivative(intermediateCostValues_[i], intermediateConfig_[i]);
   }
-  dLdxx = intermediateJacobian_.block(0, 1, intermediate_cost_dim_, state_dim_).transpose() * penalityFctSecondDerivative.asDiagonal() *
-          intermediateJacobian_.block(0, 1, intermediate_cost_dim_, state_dim_);
+  dLdxx = intermediateJacobian_.block(0, 1, intermediateCostDim_, stateDim_).transpose() * penalityFctSecondDerivative.asDiagonal() *
+          intermediateJacobian_.block(0, 1, intermediateCostDim_, stateDim_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void RelaxedBarrierCost::getIntermediateCostDerivativeInput(vector_t& dLdu) {
-  if (intermediate_cost_dim_ == 0) {
-    dLdu = vector_t::Zero(input_dim_);
+  if (intermediateCostDim_ == 0) {
+    dLdu = vector_t::Zero(inputDim_);
     return;
   }
 
@@ -215,19 +214,19 @@ void RelaxedBarrierCost::getIntermediateCostDerivativeInput(vector_t& dLdu) {
     intermediateCostValuesComputed_ = true;
   }
 
-  vector_t penalityFctDerivative(intermediate_cost_dim_);
-  for (int i = 0; i < intermediate_cost_dim_; i++) {
+  vector_t penalityFctDerivative(intermediateCostDim_);
+  for (int i = 0; i < intermediateCostDim_; i++) {
     penalityFctDerivative(i) = getPenaltyFunctionDerivative(intermediateCostValues_[i], intermediateConfig_[i]);
   }
-  dLdu = intermediateJacobian_.block(0, 1 + state_dim_, intermediate_cost_dim_, input_dim_).transpose() * penalityFctDerivative;
+  dLdu = intermediateJacobian_.block(0, 1 + stateDim_, intermediateCostDim_, inputDim_).transpose() * penalityFctDerivative;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void RelaxedBarrierCost::getIntermediateCostSecondDerivativeInput(matrix_t& dLduu) {
-  if (intermediate_cost_dim_ == 0) {
-    dLduu = matrix_t::Zero(input_dim_, input_dim_);
+  if (intermediateCostDim_ == 0) {
+    dLduu = matrix_t::Zero(inputDim_, inputDim_);
     return;
   }
 
@@ -240,20 +239,20 @@ void RelaxedBarrierCost::getIntermediateCostSecondDerivativeInput(matrix_t& dLdu
     intermediateCostValuesComputed_ = true;
   }
 
-  vector_t penalityFctSecondDerivative(intermediate_cost_dim_);
-  for (int i = 0; i < intermediate_cost_dim_; i++) {
+  vector_t penalityFctSecondDerivative(intermediateCostDim_);
+  for (int i = 0; i < intermediateCostDim_; i++) {
     penalityFctSecondDerivative(i) = getPenaltyFunctionSecondDerivative(intermediateCostValues_[i], intermediateConfig_[i]);
   }
-  dLduu = intermediateJacobian_.block(0, 1 + state_dim_, intermediate_cost_dim_, input_dim_).transpose() *
-          penalityFctSecondDerivative.asDiagonal() * intermediateJacobian_.block(0, 1 + state_dim_, intermediate_cost_dim_, input_dim_);
+  dLduu = intermediateJacobian_.block(0, 1 + stateDim_, intermediateCostDim_, inputDim_).transpose() *
+          penalityFctSecondDerivative.asDiagonal() * intermediateJacobian_.block(0, 1 + stateDim_, intermediateCostDim_, inputDim_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void RelaxedBarrierCost::getIntermediateCostDerivativeInputState(matrix_t& dLdux) {
-  if (intermediate_cost_dim_ == 0) {
-    dLdux = matrix_t::Zero(input_dim_, state_dim_);
+  if (intermediateCostDim_ == 0) {
+    dLdux = matrix_t::Zero(inputDim_, stateDim_);
     return;
   }
 
@@ -262,12 +261,12 @@ void RelaxedBarrierCost::getIntermediateCostDerivativeInputState(matrix_t& dLdux
     intermediateDerivativesComputed_ = true;
   }
 
-  vector_t penalityFctSecondDerivative(intermediate_cost_dim_);
-  for (int i = 0; i < intermediate_cost_dim_; i++) {
+  vector_t penalityFctSecondDerivative(intermediateCostDim_);
+  for (int i = 0; i < intermediateCostDim_; i++) {
     penalityFctSecondDerivative(i) = getPenaltyFunctionSecondDerivative(intermediateCostValues_[i], intermediateConfig_[i]);
   }
-  dLdux = intermediateJacobian_.block(0, 1 + state_dim_, intermediate_cost_dim_, input_dim_).transpose() *
-          penalityFctSecondDerivative.asDiagonal() * intermediateJacobian_.block(0, 1, intermediate_cost_dim_, state_dim_);
+  dLdux = intermediateJacobian_.block(0, 1 + stateDim_, intermediateCostDim_, inputDim_).transpose() *
+          penalityFctSecondDerivative.asDiagonal() * intermediateJacobian_.block(0, 1, intermediateCostDim_, stateDim_);
 }
 
 /******************************************************************************************************/
@@ -275,7 +274,7 @@ void RelaxedBarrierCost::getIntermediateCostDerivativeInputState(matrix_t& dLdux
 /******************************************************************************************************/
 void RelaxedBarrierCost::getTerminalCost(scalar_t& Phi) {
   Phi = 0;
-  if (terminal_cost_dim_ == 0) {
+  if (terminalCostDim_ == 0) {
     return;
   }
 
@@ -284,7 +283,7 @@ void RelaxedBarrierCost::getTerminalCost(scalar_t& Phi) {
     terminalCostValuesComputed_ = true;
   }
 
-  for (int i = 0; i < terminal_cost_dim_; i++) {
+  for (int i = 0; i < terminalCostDim_; i++) {
     Phi += getPenaltyFunctionValue(terminalCostValues_[i], terminalConfig_[i]);
   }
 }
@@ -293,7 +292,7 @@ void RelaxedBarrierCost::getTerminalCost(scalar_t& Phi) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void RelaxedBarrierCost::getTerminalCostDerivativeTime(scalar_t& dPhidt) {
-  if (terminal_cost_dim_ == 0) {
+  if (terminalCostDim_ == 0) {
     dPhidt = 0;
     return;
   }
@@ -307,8 +306,8 @@ void RelaxedBarrierCost::getTerminalCostDerivativeTime(scalar_t& dPhidt) {
     terminalCostValuesComputed_ = true;
   }
 
-  vector_t penalityFctDerivative(terminal_cost_dim_);
-  for (int i = 0; i < terminal_cost_dim_; i++) {
+  vector_t penalityFctDerivative(terminalCostDim_);
+  for (int i = 0; i < terminalCostDim_; i++) {
     penalityFctDerivative(i) = getPenaltyFunctionDerivative(terminalCostValues_[i], terminalConfig_[i]);
   }
   dPhidt = penalityFctDerivative.transpose() * terminalJacobian_.col(0);
@@ -318,8 +317,8 @@ void RelaxedBarrierCost::getTerminalCostDerivativeTime(scalar_t& dPhidt) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void RelaxedBarrierCost::getTerminalCostDerivativeState(vector_t& dPhidx) {
-  if (terminal_cost_dim_ == 0) {
-    dPhidx = vector_t::Zero(state_dim_);
+  if (terminalCostDim_ == 0) {
+    dPhidx = vector_t::Zero(stateDim_);
     return;
   }
 
@@ -332,19 +331,19 @@ void RelaxedBarrierCost::getTerminalCostDerivativeState(vector_t& dPhidx) {
     terminalCostValuesComputed_ = true;
   }
 
-  vector_t penalityFctDerivative(terminal_cost_dim_);
-  for (int i = 0; i < terminal_cost_dim_; i++) {
+  vector_t penalityFctDerivative(terminalCostDim_);
+  for (int i = 0; i < terminalCostDim_; i++) {
     penalityFctDerivative(i) = getPenaltyFunctionDerivative(terminalCostValues_[i], terminalConfig_[i]);
   }
-  dPhidx = terminalJacobian_.block(0, 1, terminal_cost_dim_, state_dim_).transpose() * penalityFctDerivative;
+  dPhidx = terminalJacobian_.block(0, 1, terminalCostDim_, stateDim_).transpose() * penalityFctDerivative;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void RelaxedBarrierCost::getTerminalCostSecondDerivativeState(matrix_t& dPhidxx) {
-  if (terminal_cost_dim_ == 0) {
-    dPhidxx = matrix_t::Zero(state_dim_, state_dim_);
+  if (terminalCostDim_ == 0) {
+    dPhidxx = matrix_t::Zero(stateDim_, stateDim_);
     return;
   }
 
@@ -357,12 +356,12 @@ void RelaxedBarrierCost::getTerminalCostSecondDerivativeState(matrix_t& dPhidxx)
     terminalCostValuesComputed_ = true;
   }
 
-  vector_t penalityFctSecondDerivative(terminal_cost_dim_);
-  for (int i = 0; i < terminal_cost_dim_; i++) {
+  vector_t penalityFctSecondDerivative(terminalCostDim_);
+  for (int i = 0; i < terminalCostDim_; i++) {
     penalityFctSecondDerivative(i) = getPenaltyFunctionSecondDerivative(terminalCostValues_[i], terminalConfig_[i]);
   }
-  dPhidxx = terminalJacobian_.block(0, 1, terminal_cost_dim_, state_dim_).transpose() * penalityFctSecondDerivative.asDiagonal() *
-            terminalJacobian_.block(0, 1, terminal_cost_dim_, state_dim_);
+  dPhidxx = terminalJacobian_.block(0, 1, terminalCostDim_, stateDim_).transpose() * penalityFctSecondDerivative.asDiagonal() *
+            terminalJacobian_.block(0, 1, terminalCostDim_, stateDim_);
 }
 
 /******************************************************************************************************/
@@ -398,7 +397,7 @@ size_t RelaxedBarrierCost::getNumTerminalParameters() const {
 /******************************************************************************************************/
 void RelaxedBarrierCost::terminalCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& parameters,
                                               ad_dynamic_vector_t& costValues) const {
-  costValues = ad_dynamic_vector_t::Zero(terminal_cost_dim_);
+  costValues = ad_dynamic_vector_t::Zero(terminalCostDim_);
 }
 
 /******************************************************************************************************/
@@ -407,19 +406,19 @@ void RelaxedBarrierCost::terminalCostFunction(ad_scalar_t time, const ad_dynamic
 void RelaxedBarrierCost::setADInterfaces(const std::string& modelName, const std::string& modelFolder) {
   auto intermediateCostAd = [this](const ad_dynamic_vector_t& x, const ad_dynamic_vector_t& p, ad_dynamic_vector_t& y) {
     auto time = x(0);
-    auto state = x.segment(1, state_dim_);
-    auto input = x.tail(input_dim_);
+    auto state = x.segment(1, stateDim_);
+    auto input = x.tail(inputDim_);
     this->intermediateCostFunction(time, state, input, p, y);
   };
-  intermediateADInterfacePtr_.reset(new ad_interface_t(intermediateCostAd, intermediate_cost_dim_, 1 + state_dim_ + input_dim_,
+  intermediateADInterfacePtr_.reset(new ad_interface_t(intermediateCostAd, intermediateCostDim_, 1 + stateDim_ + inputDim_,
                                                        getNumIntermediateParameters(), modelName + "_intermediate", modelFolder));
 
   auto terminalCostAd = [this](const ad_dynamic_vector_t& x, const ad_dynamic_vector_t& p, ad_dynamic_vector_t& y) {
     auto time = x(0);
-    auto state = x.tail(state_dim_);
+    auto state = x.tail(stateDim_);
     this->terminalCostFunction(time, state, p, y);
   };
-  terminalADInterfacePtr_.reset(new ad_interface_t(terminalCostAd, terminal_cost_dim_, 1 + state_dim_, getNumTerminalParameters(),
+  terminalADInterfacePtr_.reset(new ad_interface_t(terminalCostAd, terminalCostDim_, 1 + stateDim_, getNumTerminalParameters(),
                                                    modelName + "_terminal", modelFolder));
 }
 

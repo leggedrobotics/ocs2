@@ -204,12 +204,12 @@ void LinearController::setZero() {
   // TODO(mspieler): implement this
   throw std::runtime_error("LinearController::setZero() not implemented");
 
-  const size_t input_dim = biasArray_[0].rows();
-  const size_t state_dim = gainArray_[0].cols();
+  const size_t inputDim = biasArray_[0].rows();
+  const size_t stateDim = gainArray_[0].cols();
 
-  std::fill(biasArray_.begin(), biasArray_.end(), vector_t::Zero(input_dim));
-  std::fill(deltaBiasArray_.begin(), deltaBiasArray_.end(), vector_t::Zero(input_dim));
-  std::fill(gainArray_.begin(), gainArray_.end(), matrix_t::Zero(input_dim, state_dim));
+  std::fill(biasArray_.begin(), biasArray_.end(), vector_t::Zero(inputDim));
+  std::fill(deltaBiasArray_.begin(), deltaBiasArray_.end(), vector_t::Zero(inputDim));
+  std::fill(gainArray_.begin(), gainArray_.end(), matrix_t::Zero(inputDim, stateDim));
 }
 
 /******************************************************************************************************/

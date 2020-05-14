@@ -71,15 +71,14 @@ class RelaxedBarrierCost : public CostFunctionBase {
    *
    * @param Config : configuration object containing mu and delta
    */
-  explicit RelaxedBarrierCost(Config config, size_t state_dim, size_t input_dim, size_t intermediate_cost_dim, size_t terminal_cost_dim);
+  explicit RelaxedBarrierCost(Config config, size_t stateDim, size_t inputDim, size_t intermediateCostDim, size_t terminalCostDim);
 
   /**
    * Constructior
    *
    * @param Config : arrays with configuration objects containing mu and delta for each intermediate and terminal constraint
    */
-  explicit RelaxedBarrierCost(std::vector<Config> intermediateConfig, std::vector<Config> terminalConfig, size_t state_dim,
-                              size_t input_dim);
+  explicit RelaxedBarrierCost(std::vector<Config> intermediateConfig, std::vector<Config> terminalConfig, size_t stateDim, size_t inputDim);
 
   /**
    * Copy constructor
@@ -224,10 +223,10 @@ class RelaxedBarrierCost : public CostFunctionBase {
   std::unique_ptr<ad_interface_t> terminalADInterfacePtr_;
   std::unique_ptr<ad_interface_t> intermediateADInterfacePtr_;
 
-  size_t state_dim_;
-  size_t input_dim_;
-  size_t intermediate_cost_dim_;
-  size_t terminal_cost_dim_;
+  size_t stateDim_;
+  size_t inputDim_;
+  size_t intermediateCostDim_;
+  size_t terminalCostDim_;
 
   // Intermediate cost
   bool intermediateCostValuesComputed_;

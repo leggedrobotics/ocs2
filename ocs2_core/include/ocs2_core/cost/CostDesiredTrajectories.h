@@ -40,10 +40,10 @@ namespace ocs2 {
  */
 class CostDesiredTrajectories {
  public:
-  explicit CostDesiredTrajectories(const scalar_array_t& desiredTimeTrajectory, const vector_array_t& desiredStateTrajectory,
-                                   const vector_array_t& desiredInputTrajectory);
+  CostDesiredTrajectories(const scalar_array_t& desiredTimeTrajectory, const vector_array_t& desiredStateTrajectory,
+                          const vector_array_t& desiredInputTrajectory);
 
-  explicit CostDesiredTrajectories(const size_t& trajectorySize);
+  explicit CostDesiredTrajectories(size_t trajectorySize);
 
   ~CostDesiredTrajectories() = default;
 

@@ -57,7 +57,7 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
    * Default constructor
    *
    */
-  explicit QuadraticGaussNewtonCostBaseAD(size_t state_dim, size_t input_dim, size_t intermediate_cost_dim, size_t terminal_cost_dim);
+  explicit QuadraticGaussNewtonCostBaseAD(size_t stateDim, size_t inputDim, size_t intermediateCostDim, size_t terminalCostDim);
 
   /**
    * Copy constructor
@@ -166,7 +166,7 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
    */
   virtual void terminalCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& parameters,
                                     ad_dynamic_vector_t& costValues) const {
-    costValues = ad_dynamic_vector_t::Zero(terminal_cost_dim_);
+    costValues = ad_dynamic_vector_t::Zero(terminalCostDim_);
   }
 
  private:
@@ -189,10 +189,10 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
    */
   void loadModelsIfAvailable(bool verbose);
 
-  size_t state_dim_;
-  size_t input_dim_;
-  size_t intermediate_cost_dim_;
-  size_t terminal_cost_dim_;
+  size_t stateDim_;
+  size_t inputDim_;
+  size_t intermediateCostDim_;
+  size_t terminalCostDim_;
 
   std::unique_ptr<ad_interface_t> terminalADInterfacePtr_;
   std::unique_ptr<ad_interface_t> intermediateADInterfacePtr_;

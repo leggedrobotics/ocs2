@@ -6,8 +6,8 @@ using namespace ocs2;
 
 class MyCost : public RelaxedBarrierCost {
  public:
-  MyCost(Config config, size_t state_dim, size_t input_dim, size_t intermediate_cost_dim, size_t terminal_cost_dim)
-      : RelaxedBarrierCost(config, state_dim, input_dim, intermediate_cost_dim, terminal_cost_dim) {}
+  MyCost(Config config, size_t stateDim, size_t inputDim, size_t intermediateCostDim, size_t terminalCostDim)
+      : RelaxedBarrierCost(config, stateDim, inputDim, intermediateCostDim, terminalCostDim) {}
 
   MyCost(const MyCost& rhs) : RelaxedBarrierCost(rhs) {}
 

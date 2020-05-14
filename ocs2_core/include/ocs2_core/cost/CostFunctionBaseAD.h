@@ -47,7 +47,7 @@ class CostFunctionBaseAD : public CostFunctionBase {
    * Default constructor
    *
    */
-  explicit CostFunctionBaseAD(size_t state_dim, size_t input_dim, size_t intermediate_cost_dim, size_t terminal_cost_dim);
+  explicit CostFunctionBaseAD(size_t stateDim, size_t inputDim, size_t intermediateCostDim, size_t terminalCostDim);
 
   /**
    * Copy constructor
@@ -176,10 +176,10 @@ class CostFunctionBaseAD : public CostFunctionBase {
   std::unique_ptr<ad_interface_t> terminalADInterfacePtr_;
   std::unique_ptr<ad_interface_t> intermediateADInterfacePtr_;
 
-  size_t state_dim_;
-  size_t input_dim_;
-  size_t intermediate_cost_dim_;
-  size_t terminal_cost_dim_;
+  size_t stateDim_;
+  size_t inputDim_;
+  size_t intermediateCostDim_;
+  size_t terminalCostDim_;
 
   // Intermediate cost
   bool intermediateDerivativesComputed_;

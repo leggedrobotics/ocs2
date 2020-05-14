@@ -34,12 +34,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CostFunctionBaseAD::CostFunctionBaseAD(size_t state_dim, size_t input_dim, size_t intermediate_cost_dim, size_t terminal_cost_dim)
+CostFunctionBaseAD::CostFunctionBaseAD(size_t stateDim, size_t inputDim, size_t intermediateCostDim, size_t terminalCostDim)
     : CostFunctionBase(),
-      state_dim_(state_dim),
-      input_dim_(input_dim),
-      intermediate_cost_dim_(intermediate_cost_dim),
-      terminal_cost_dim_(terminal_cost_dim),
+      stateDim_(stateDim),
+      inputDim_(inputDim),
+      intermediateCostDim_(intermediateCostDim),
+      terminalCostDim_(terminalCostDim),
       intermediateDerivativesComputed_(false),
       terminalDerivativesComputed_(false) {}
 
@@ -110,7 +110,7 @@ void CostFunctionBaseAD::getIntermediateCostDerivativeState(vector_t& dLdx) {
     intermediateHessian_ = intermediateADInterfacePtr_->getHessian(0, tapedTimeStateInput_, intermediateParameters_);
     intermediateDerivativesComputed_ = true;
   }
-  dLdx = intermediateJacobian_.segment(1, state_dim_).transpose();
+  dLdx = intermediateJacobian_.segment(1, stateDim_).transpose();
 }
 
 /******************************************************************************************************/
@@ -122,7 +122,7 @@ void CostFunctionBaseAD::getIntermediateCostSecondDerivativeState(matrix_t& dLdx
     intermediateHessian_ = intermediateADInterfacePtr_->getHessian(0, tapedTimeStateInput_, intermediateParameters_);
     intermediateDerivativesComputed_ = true;
   }
-  dLdxx = intermediateHessian_.block(1, 1, state_dim_, state_dim_);
+  dLdxx = intermediateHessian_.block(1, 1, stateDim_, stateDim_);
 }
 
 /******************************************************************************************************/
@@ -134,7 +134,7 @@ void CostFunctionBaseAD::getIntermediateCostDerivativeInput(vector_t& dLdu) {
     intermediateHessian_ = intermediateADInterfacePtr_->getHessian(0, tapedTimeStateInput_, intermediateParameters_);
     intermediateDerivativesComputed_ = true;
   }
-  dLdu = intermediateJacobian_.segment(1 + state_dim_, input_dim_).transpose();
+  dLdu = intermediateJacobian_.segment(1 + stateDim_, inputDim_).transpose();
 }
 
 /******************************************************************************************************/
@@ -146,7 +146,7 @@ void CostFunctionBaseAD::getIntermediateCostSecondDerivativeInput(matrix_t& dLdu
     intermediateHessian_ = intermediateADInterfacePtr_->getHessian(0, tapedTimeStateInput_, intermediateParameters_);
     intermediateDerivativesComputed_ = true;
   }
-  dLduu = intermediateHessian_.block(1 + state_dim_, 1 + state_dim_, input_dim_, input_dim_);
+  dLduu = intermediateHessian_.block(1 + stateDim_, 1 + stateDim_, inputDim_, inputDim_);
 }
 
 /******************************************************************************************************/
@@ -158,7 +158,7 @@ void CostFunctionBaseAD::getIntermediateCostDerivativeInputState(matrix_t& dLdux
     intermediateHessian_ = intermediateADInterfacePtr_->getHessian(0, tapedTimeStateInput_, intermediateParameters_);
     intermediateDerivativesComputed_ = true;
   }
-  dLdux = intermediateHessian_.block(1 + state_dim_, 1, input_dim_, state_dim_);
+  dLdux = intermediateHessian_.block(1 + stateDim_, 1, inputDim_, stateDim_);
 }
 
 /******************************************************************************************************/
@@ -190,7 +190,7 @@ void CostFunctionBaseAD::getTerminalCostDerivativeState(vector_t& dPhidx) {
     terminalHessian_ = terminalADInterfacePtr_->getHessian(0, tapedTimeState_, terminalParameters_);
     terminalDerivativesComputed_ = true;
   }
-  dPhidx = terminalJacobian_.segment(1, state_dim_).transpose();
+  dPhidx = terminalJacobian_.segment(1, stateDim_).transpose();
 }
 
 /******************************************************************************************************/
@@ -202,7 +202,7 @@ void CostFunctionBaseAD::getTerminalCostSecondDerivativeState(matrix_t& dPhidxx)
     terminalHessian_ = terminalADInterfacePtr_->getHessian(0, tapedTimeState_, terminalParameters_);
     terminalDerivativesComputed_ = true;
   }
-  dPhidxx = terminalHessian_.block(1, 1, state_dim_, state_dim_);
+  dPhidxx = terminalHessian_.block(1, 1, stateDim_, stateDim_);
 }
 
 /******************************************************************************************************/
@@ -247,22 +247,22 @@ void CostFunctionBaseAD::terminalCostFunction(ad_scalar_t time, const ad_dynamic
 void CostFunctionBaseAD::setADInterfaces(const std::string& modelName, const std::string& modelFolder) {
   auto intermediateCostAd = [this](const ad_dynamic_vector_t& x, const ad_dynamic_vector_t& p, ad_dynamic_vector_t& y) {
     auto time = x(0);
-    auto state = x.segment(1, state_dim_);
-    auto input = x.segment(1 + state_dim_, input_dim_);
+    auto state = x.segment(1, stateDim_);
+    auto input = x.segment(1 + stateDim_, inputDim_);
     y = ad_dynamic_vector_t(1);
     this->intermediateCostFunction(time, state, input, p, y(0));
   };
-  intermediateADInterfacePtr_.reset(new ad_interface_t(intermediateCostAd, 1, 1 + state_dim_ + input_dim_, getNumIntermediateParameters(),
+  intermediateADInterfacePtr_.reset(new ad_interface_t(intermediateCostAd, 1, 1 + stateDim_ + inputDim_, getNumIntermediateParameters(),
                                                        modelName + "_intermediate", modelFolder));
 
   auto terminalCostAd = [this](const ad_dynamic_vector_t& x, const ad_dynamic_vector_t& p, ad_dynamic_vector_t& y) {
     auto time = x(0);
-    auto state = x.segment(1, state_dim_);
+    auto state = x.segment(1, stateDim_);
     y = ad_dynamic_vector_t(1);
     this->terminalCostFunction(time, state, p, y(0));
   };
   terminalADInterfacePtr_.reset(
-      new ad_interface_t(terminalCostAd, 1, 1 + state_dim_, getNumTerminalParameters(), modelName + "_terminal", modelFolder));
+      new ad_interface_t(terminalCostAd, 1, 1 + stateDim_, getNumTerminalParameters(), modelName + "_terminal", modelFolder));
 }
 
 /******************************************************************************************************/

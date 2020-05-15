@@ -59,8 +59,8 @@ class ConstraintBase {
   /**
    * Constructor
    *
-   * @param[in] stateDim: State vector dimension
-   * @param[in] inputDim: Input vector dimension
+   * @param [in] stateDim: State vector dimension
+   * @param [in] inputDim: Input vector dimension
    */
   explicit ConstraintBase(size_t stateDim, size_t inputDim);
 

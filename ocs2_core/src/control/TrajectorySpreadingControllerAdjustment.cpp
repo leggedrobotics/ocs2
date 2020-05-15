@@ -27,15 +27,16 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM>::findEventTimesIndices(const scalar_array_t& eventTimes,
-                                                                                          const linear_controller_array_t& controllersStock,
-                                                                                          std::vector<index_t>& eventsIndices) const {
+void TrajectorySpreadingControllerAdjustment::findEventTimesIndices(const scalar_array_t& eventTimes,
+                                                                    const std::vector<LinearController>& controllersStock,
+                                                                    std::vector<index_t>& eventsIndices) const {
   // vector of (partition, index).
   eventsIndices.clear();
   eventsIndices.resize(eventTimes.size(), index_t(undefined_, undefined_));
@@ -81,8 +82,7 @@ void TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM>::findEventTim
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-bool TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM>::isSmallerEqual(const index_t& a, const index_t& b) const {
+bool TrajectorySpreadingControllerAdjustment::isSmallerEqual(const index_t& a, const index_t& b) const {
   if (a.first < b.first) {
     return true;
   }
@@ -103,10 +103,8 @@ bool TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM>::isSmallerEqu
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM>::adjustController(const scalar_array_t& eventTimes,
-                                                                                     const scalar_array_t& controllerEventTimes,
-                                                                                     linear_controller_array_t& controllersStock) {
+void TrajectorySpreadingControllerAdjustment::adjustController(const scalar_array_t& eventTimes, const scalar_array_t& controllerEventTimes,
+                                                               std::vector<LinearController>& controllersStock) {
   const size_t numEvents = eventTimes.size();
   if (controllerEventTimes.size() != numEvents) {
     throw std::runtime_error("Number of events in controller is different from number of eventTimes.");
@@ -146,10 +144,8 @@ void TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM>::adjustContro
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-typename TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM>::index_t
-TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM>::findPreviousIndex(index_t index,
-                                                                                 const linear_controller_array_t& controllersStock) const {
+typename TrajectorySpreadingControllerAdjustment::index_t TrajectorySpreadingControllerAdjustment::findPreviousIndex(
+    index_t index, const std::vector<LinearController>& controllersStock) const {
   index_t prevIndex;
   if (index.second > 0) {
     prevIndex.first = index.first;
@@ -167,10 +163,8 @@ TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM>::findPreviousIndex
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM>::spreadController(scalar_t eventTime, index_t eventTimeIndex,
-                                                                                     index_t controlerEventTimeIndex,
-                                                                                     linear_controller_array_t& controllersStock) const {
+void TrajectorySpreadingControllerAdjustment::spreadController(scalar_t eventTime, index_t eventTimeIndex, index_t controlerEventTimeIndex,
+                                                               std::vector<LinearController>& controllersStock) const {
   // events before the controller start time
   if (eventTimeIndex == index_t(initActivePartitionIndex_, 0) || controlerEventTimeIndex == index_t(initActivePartitionIndex_, 0)) {
     return;
@@ -190,18 +184,18 @@ void TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM>::spreadContro
                          (controllersStock[eventTimeIndex.first].timeStamp_[eventTimeIndex.second] -
                           controllersStock[eventTimePrevIndex.first].timeStamp_[eventTimePrevIndex.second]);
   // feedforward part
-  input_vector_t uffCorrected;
+  vector_t uffCorrected;
   uffCorrected = (1 - alpha) * controllersStock[eventTimePrevIndex.first].biasArray_[eventTimePrevIndex.second] +
                  alpha * controllersStock[eventTimeIndex.first].biasArray_[eventTimeIndex.second];
   // feedback part
-  input_state_matrix_t kCorrected;
+  matrix_t kCorrected;
   kCorrected = (1 - alpha) * controllersStock[eventTimePrevIndex.first].gainArray_[eventTimePrevIndex.second] +
                alpha * controllersStock[eventTimeIndex.first].gainArray_[eventTimeIndex.second];
 
   index_t startIndex;
   index_t finalIndex;
-  input_vector_t uffSpread;
-  input_state_matrix_t kSpread;
+  vector_t uffSpread;
+  matrix_t kSpread;
   if (isSmallerEqual(eventTimeIndex, controlerEventTimeIndex)) {  // if the event time moved to an earlier time
     startIndex = eventTimeIndex;
     finalIndex = controlerEventTimeIndex;

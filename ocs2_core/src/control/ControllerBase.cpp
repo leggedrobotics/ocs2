@@ -27,9 +27,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/control/ConterollerBase.h>
+#include <ocs2_core/control/ControllerBase.h>
 
 namespace ocs2 {
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ControllerBase::ControllerBase(size_t stateDim, size_t inputDim) : stateDim_(stateDim), inputDim_(inputDim) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

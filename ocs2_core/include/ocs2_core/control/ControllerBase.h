@@ -43,9 +43,12 @@ class ControllerBase {
   using array_t = std::vector<ControllerBase>;
 
   /**
-   * Default constructor.
+   * Constructor.
+   *
+   * @param[in] stateDim: State vector dimension
+   * @param[in] inputDim: Input vector dimension
    */
-  ControllerBase() = default;
+  ControllerBase(size_t stateDim, size_t inputDim);
 
   /**
    * Default destructor.
@@ -145,6 +148,10 @@ class ControllerBase {
    * @return The event times of the controller.
    */
   virtual scalar_array_t controllerEventTimes() const {}
+
+ protected:
+  size_t stateDim_;
+  size_t inputDim_;
 };
 
 }  // namespace ocs2

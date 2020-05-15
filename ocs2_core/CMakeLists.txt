@@ -69,7 +69,11 @@ add_library(${PROJECT_NAME}
   src/constraint/LinearConstraint.cpp
   src/constraint/PenaltyBase.cpp
   src/constraint/RelaxedBarrierPenalty.cpp
+  src/control/ControllerBase.cpp
+  src/control/FeedforwardController.cpp
   src/control/LinearController.cpp
+  src/control/StateBasedLinearController.cpp
+  src/control/TrajectorySpreadingControllerAdjustment.cpp
   src/cost/CostFunctionBase.cpp
   src/cost/CostFunctionBaseAD.cpp
   src/cost/CostDesiredTrajectories.cpp

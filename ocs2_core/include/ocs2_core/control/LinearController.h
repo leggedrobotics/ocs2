@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -44,18 +44,26 @@ class LinearController final : public ControllerBase {
   using array_t = std::vector<LinearController>;
 
   /**
-   * @brief Default constructor leaves object uninitialized
+   * Constructor, leaves object uninitialized
+   *
+   * @param[in] stateDim: State vector dimension
+   * @param[in] inputDim: Input vector dimension
    */
-  LinearController() = default;
+  LinearController(size_t stateDim, size_t inputDim);
 
   /**
    * @brief Constructor initializes all required members of the controller.
    *
+   * @param[in] stateDim: State vector dimension
+   * @param[in] inputDim: Input vector dimension
+   * @param [in] controllerTime: Time stamp array of the controller
    * @param [in] controllerTime: Time stamp array of the controller
    * @param [in] controllerBias: The bias array.
    * @param [in] controllerGain: The feedback gain array.
    */
-  LinearController(const scalar_array_t& controllerTime, const vector_array_t& controllerBias, const matrix_array_t& controllerGain);
+  LinearController(size_t stateDim, size_t inputDim, const scalar_array_t& controllerTime, const vector_array_t& controllerBias,
+                   const matrix_array_t& controllerGain);
+
   /**
    * @brief Copy constructor
    * @param other LinearController object to copy from

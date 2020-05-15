@@ -39,10 +39,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace ocs2;
 
 void testSecondOrderSystem(IntegratorType integrator_type) {
+  const size_t stateDim = 2;
+  const size_t inputDim = 1;
+
   matrix_t A(2, 2);
   A << -2, -1,  // clang-format off
         1,  0;  // clang-format on
-  vector_t B(2);
+  matrix_t B(2, 1);
   B << 1, 0;
 
   auto sys = std::shared_ptr<ControlledSystemBase>(new LinearSystemDynamics(A, B));
@@ -55,7 +58,7 @@ void testSecondOrderSystem(IntegratorType integrator_type) {
   vector_array_t uff(2, vector_t::Ones(1));
   matrix_array_t k(2, matrix_t::Zero(1, 2));
 
-  auto controller = std::unique_ptr<LinearController>(new LinearController(cntTimeStamp, uff, k));
+  auto controller = std::unique_ptr<LinearController>(new LinearController(stateDim, inputDim, cntTimeStamp, uff, k));
 
   sys->setController(controller.get());
 
@@ -111,10 +114,13 @@ TEST(IntegrationTest, SecondOrderSystem_AdamsBashfortMoulton) {
 #endif
 
 TEST(IntegrationTest, model_data_test) {
+  const size_t stateDim = 2;
+  const size_t inputDim = 1;
+
   matrix_t A(2, 2);
   A << -2, -1,  // clang-format off
         1,  0;  // clang-format on
-  vector_t B(2);
+  matrix_t B(2, 1);
   B << 1, 0;
 
   auto sys = std::shared_ptr<ControlledSystemBase>(new LinearSystemDynamics(A, B));
@@ -126,7 +132,7 @@ TEST(IntegrationTest, model_data_test) {
   vector_array_t uff(2, vector_t::Ones(1));
   matrix_array_t k(2, matrix_t::Zero(1, 2));
 
-  auto controller = std::unique_ptr<LinearController>(new LinearController(cntTimeStamp, uff, k));
+  auto controller = std::unique_ptr<LinearController>(new LinearController(stateDim, inputDim, cntTimeStamp, uff, k));
   sys->setController(controller.get());
 
   auto integrator = newIntegrator(IntegratorType::ODE45);

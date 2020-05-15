@@ -15,11 +15,11 @@
 
 // Control
 #include <ocs2_core/control/ControllerBase.h>
-// #include <ocs2_core/control/ControllerType.h>
-// #include <ocs2_core/control/FeedforwardController.h>
+#include <ocs2_core/control/ControllerType.h>
+#include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
-// #include <ocs2_core/control/StateBasedLinearController.h>
-// #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
+#include <ocs2_core/control/StateBasedLinearController.h>
+#include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 
 // Cost
 #include <ocs2_core/cost/CostDesiredTrajectories.h>

@@ -29,30 +29,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_core/control/ControllerAdjustmentBase.h"
+#include <ocs2_core/control/ControllerAdjustmentBase.h>
 
 namespace ocs2 {
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class TrajectorySpreadingControllerAdjustment final : public ControllerAdjustmentBase<STATE_DIM, INPUT_DIM> {
+class TrajectorySpreadingControllerAdjustment final : public ControllerAdjustmentBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = ControllerAdjustmentBase<STATE_DIM, INPUT_DIM>;
-
-  using typename BASE::index_t;  // (partition, index)
-  using typename BASE::input_matrix_t;
-  using typename BASE::input_state_matrix_t;
-  using typename BASE::input_vector_array_t;
-  using typename BASE::input_vector_t;
-  using typename BASE::linear_controller_array_t;
-  using typename BASE::linear_controller_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::scalar_t;
-  using typename BASE::state_input_matrix_t;
-  using typename BASE::state_matrix_t;
-  using typename BASE::state_vector_array_t;
-  using typename BASE::state_vector_t;
+  using index_t = std::pair<int, int>;  // (partition, index)
 
   /**
    * Constructor
@@ -65,7 +48,7 @@ class TrajectorySpreadingControllerAdjustment final : public ControllerAdjustmen
   ~TrajectorySpreadingControllerAdjustment() override = default;
 
   void adjustController(const scalar_array_t& eventTimes, const scalar_array_t& controllerEventTimes,
-                        linear_controller_array_t& controllersStock) override;
+                        std::vector<LinearController>& controllersStock) override;
 
  protected:
   /**
@@ -75,7 +58,7 @@ class TrajectorySpreadingControllerAdjustment final : public ControllerAdjustmen
    * @param [in] controllersStock: Control policy.
    * @param [out] eventsIndices: event time indices in the control policy time stamp.
    */
-  void findEventTimesIndices(const scalar_array_t& eventTimes, const linear_controller_array_t& controllersStock,
+  void findEventTimesIndices(const scalar_array_t& eventTimes, const std::vector<LinearController>& controllersStock,
                              std::vector<index_t>& eventsIndices) const;
 
   /**
@@ -94,7 +77,7 @@ class TrajectorySpreadingControllerAdjustment final : public ControllerAdjustmen
    * @param [in] b: second index.
    * @return true if a <= b.
    */
-  index_t findPreviousIndex(index_t index, const linear_controller_array_t& controllersStock) const;
+  index_t findPreviousIndex(index_t index, const std::vector<LinearController>& controllersStock) const;
 
   /**
    *
@@ -104,7 +87,7 @@ class TrajectorySpreadingControllerAdjustment final : public ControllerAdjustmen
    * @param controllersStock
    */
   void spreadController(scalar_t eventTime, index_t eventTimeIndex, index_t controlerEventTimeIndex,
-                        linear_controller_array_t& controllersStock) const;
+                        std::vector<LinearController>& controllersStock) const;
 
   /***********
    * Variables
@@ -115,5 +98,3 @@ class TrajectorySpreadingControllerAdjustment final : public ControllerAdjustmen
 };
 
 }  // namespace ocs2
-
-#include "implementation/TrajectorySpreadingControllerAdjustment.h"

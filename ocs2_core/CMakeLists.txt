@@ -67,8 +67,8 @@ add_library(${PROJECT_NAME}
   src/constraint/ConstraintBase.cpp
   src/constraint/ConstraintBaseAD.cpp
   src/constraint/LinearConstraint.cpp
-  # src/constraint/PenaltyBase.cpp
-  # src/constraint/RelaxedBarrierPenalty.cpp
+  src/constraint/PenaltyBase.cpp
+  src/constraint/RelaxedBarrierPenalty.cpp
   src/control/LinearController.cpp
   src/cost/CostFunctionBase.cpp
   src/cost/CostFunctionBaseAD.cpp

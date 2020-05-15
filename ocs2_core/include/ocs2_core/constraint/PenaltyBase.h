@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_core/Types.h"
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 
@@ -60,7 +60,7 @@ class PenaltyBase {
    * @param [in] dhdx: Vector of inequality constraint derivatives with respect to state.
    * @return penaltyDerivativeState: Derivative of the penalty cost with respect to state.
    */
-  dynamic_vector_t getPenaltyCostDerivativeState(const scalar_array_t& h, const dynamic_vector_array_t& dhdx) const;
+  vector_t getPenaltyCostDerivativeState(const scalar_array_t& h, const vector_array_t& dhdx) const;
 
   /**
    * Get the derivative of the penalty cost.
@@ -70,7 +70,7 @@ class PenaltyBase {
    * @param [in] dhdu: Vector of inequality constraint derivatives with respect to input vector.
    * @return penaltyDerivativeInput: Derivative of the penalty cost with respect to input vector.
    */
-  dynamic_vector_t getPenaltyCostDerivativeInput(const scalar_array_t& h, const dynamic_vector_array_t& dhdu) const;
+  vector_t getPenaltyCostDerivativeInput(const scalar_array_t& h, const vector_array_t& dhdu) const;
 
   /**
    * Second derivative of penalty cost.
@@ -80,8 +80,7 @@ class PenaltyBase {
    * @param [in] ddhdxdx: Vector of inequality constraint second derivatives with respect to state.
    * @return penaltySecondDerivativeState: Second derivative of the penalty cost with respect to state.
    */
-  dynamic_matrix_t getPenaltyCostSecondDerivativeState(const scalar_array_t& h, const dynamic_vector_array_t& dhdx,
-                                                       const dynamic_matrix_array_t& ddhdxdx) const;
+  matrix_t getPenaltyCostSecondDerivativeState(const scalar_array_t& h, const vector_array_t& dhdx, const matrix_array_t& ddhdxdx) const;
 
   /**
    * Second derivative of penalty cost.
@@ -91,8 +90,7 @@ class PenaltyBase {
    * @param [in] ddhdudu: Vector of inequality constraint second derivatives with respect to input.
    * @return penaltySecondDerivativeInput: Second derivative of the penalty cost with respect to input.
    */
-  dynamic_matrix_t getPenaltyCostSecondDerivativeInput(const scalar_array_t& h, const dynamic_vector_array_t& dhdu,
-                                                       const dynamic_matrix_array_t& ddhdudu) const;
+  matrix_t getPenaltyCostSecondDerivativeInput(const scalar_array_t& h, const vector_array_t& dhdu, const matrix_array_t& ddhdudu) const;
 
   /**
    * Second derivative of penalty cost.
@@ -103,8 +101,8 @@ class PenaltyBase {
    * @param [in] ddhdudx: Vector of inequality constraint derivatives with respect to input and state.
    * @return penaltyDerivativeInputState: Derivative of the penalty cost with respect to input and state.
    */
-  dynamic_matrix_t getPenaltyCostDerivativeInputState(const scalar_array_t& h, const dynamic_vector_array_t& dhdx,
-                                                      const dynamic_vector_array_t& dhdu, const dynamic_matrix_array_t& ddhdudx) const;
+  matrix_t getPenaltyCostDerivativeInputState(const scalar_array_t& h, const vector_array_t& dhdx, const vector_array_t& dhdu,
+                                              const matrix_array_t& ddhdudx) const;
 
   /**
    * Computes the sum of squared constraint violation.
@@ -139,4 +137,5 @@ class PenaltyBase {
    */
   virtual scalar_t getPenaltyFunctionSecondDerivative(scalar_t h) const = 0;
 };
+
 }  // namespace ocs2

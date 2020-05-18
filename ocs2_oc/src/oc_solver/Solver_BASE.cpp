@@ -27,66 +27,78 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_oc/oc_solver/ModeScheduleManager.h"
+#include <iostream>
+#include <mutex>
+
+#include <ocs2_core/misc/LinearAlgebra.h>
+#include <ocs2_core/misc/Numerics.h>
+
+#include <ocs2_oc/oc_solver/Solver_BASE.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-ModeScheduleManager<STATE_DIM, INPUT_DIM>::ModeScheduleManager(ModeSchedule modeSchedule)
-    : modeSchedule_(std::move(modeSchedule)), modeScheduleBuffer_(), modeScheduleUpdated_(false) {}
+void Solver_BASE::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) {
+  preRun(initTime, initState, finalTime);
+  runImpl(initTime, initState, finalTime, partitioningTimes);
+  postRun();
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void ModeScheduleManager<STATE_DIM, INPUT_DIM>::preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
-                                                             const CostDesiredTrajectories& costDesiredTrajectory) {
-  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
-  if (modeScheduleUpdated_) {
-    modeScheduleUpdated_ = false;
-    swap(modeSchedule_, modeScheduleBuffer_);
+void Solver_BASE::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
+                      const std::vector<ControllerBase*>& controllersPtrStock) {
+  preRun(initTime, initState, finalTime);
+  runImpl(initTime, initState, finalTime, partitioningTimes, controllersPtrStock);
+  postRun();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+auto Solver_BASE::primalSolution(scalar_t finalTime) const -> PrimalSolution {
+  PrimalSolution primalSolution;
+  getPrimalSolution(finalTime, &primalSolution);
+  return primalSolution;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void Solver_BASE::printString(const std::string& text) const {
+  std::lock_guard<std::mutex> outputDisplayGuard(outputDisplayGuardMutex_);
+  std::cerr << text << '\n';
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void Solver_BASE::preRun(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
+  if (modeScheduleManager_) {
+    modeScheduleManager_->preSolverRun(initTime, finalTime, initState, costDesiredTrajectories_);
+    modeSchedule_ = modeScheduleManager_->getModeSchedule();
   }
-  preSolverRunImpl(initTime, finalTime, currentState, costDesiredTrajectory, modeSchedule_);
+  for (auto& module : synchronizedModules_) {
+    module->preSolverRun(initTime, finalTime, initState, costDesiredTrajectories_);
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-const ModeSchedule& ModeScheduleManager<STATE_DIM, INPUT_DIM>::getModeSchedule() const {
-  return modeSchedule_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-ModeSchedule ModeScheduleManager<STATE_DIM, INPUT_DIM>::getModeScheduleImage() const {
-  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
-  return modeSchedule_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void ModeScheduleManager<STATE_DIM, INPUT_DIM>::setModeSchedule(const ModeSchedule& modeSchedule) {
-  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
-  modeScheduleUpdated_ = true;
-  modeScheduleBuffer_ = modeSchedule;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void ModeScheduleManager<STATE_DIM, INPUT_DIM>::setModeSchedule(ModeSchedule&& modeSchedule) {
-  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
-  modeScheduleUpdated_ = true;
-  modeScheduleBuffer_ = std::move(modeSchedule);
+void Solver_BASE::postRun() {
+  if (modeScheduleManager_ || !synchronizedModules_.empty()) {
+    const auto solution = primalSolution(getFinalTime());
+    if (modeScheduleManager_) {
+      modeScheduleManager_->postSolverRun(solution);
+    }
+    for (auto& module : synchronizedModules_) {
+      module->postSolverRun(solution);
+    }
+  }
 }
 
 }  // namespace ocs2

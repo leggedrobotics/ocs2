@@ -2,13 +2,13 @@ cmake_minimum_required(VERSION 3.0)
 project(ocs2_oc)
 
 ## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS 
+find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   ocs2_core
 )
-find_package(Boost REQUIRED COMPONENTS 
+find_package(Boost REQUIRED COMPONENTS
   system
-  filesystem 
+  filesystem
 )
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
@@ -21,13 +21,13 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 ###################################
 
 catkin_package(
-  INCLUDE_DIRS 
+  INCLUDE_DIRS
     include
     test/include
     ${EIGEN3_INCLUDE_DIRS}
-  CATKIN_DEPENDS 
+  CATKIN_DEPENDS
     ocs2_core
-  DEPENDS 
+  DEPENDS
     Boost
 )
 
@@ -42,6 +42,23 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
+
+add_library(${PROJECT_NAME}
+  src/approximate_model/LinearQuadraticApproximator.cpp
+  src/oc_solver/ModeScheduleManager.cpp
+  src/oc_solver/Solver_BASE.cpp
+  src/rollout/OperatingTrajectoriesRollout.cpp
+  src/rollout/PerformanceIndicesRollout.cpp
+  src/rollout/RolloutBase.cpp
+  src/rollout/RootFinder.cpp
+  src/rollout/StateTriggeredRollout.cpp
+  src/rollout/TimeTriggeredRollout.cpp
+)
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
+
 
 add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp
@@ -68,7 +85,7 @@ endif(cmake_clang_tools_FOUND)
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
-        
+
 install(DIRECTORY test/include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
@@ -89,6 +106,8 @@ catkin_add_gtest(test_time_triggered_rollout
 target_link_libraries(test_time_triggered_rollout
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
+  gtest_main
 )
 
 catkin_add_gtest(state_triggered_rollout_test
@@ -97,5 +116,7 @@ catkin_add_gtest(state_triggered_rollout_test
 target_link_libraries(state_triggered_rollout_test
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
+  gtest_main
 )
 target_compile_options(state_triggered_rollout_test PRIVATE ${OCS2_CXX_FLAGS})

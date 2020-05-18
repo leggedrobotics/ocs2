@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
@@ -42,31 +43,30 @@ namespace ocs2 {
 // #######################
 // ###DYNAMICS CLASSES####
 // #######################
-class hybridSysDynamics1 final : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
+class hybridSysDynamics1 final : public ControlledSystemBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
   hybridSysDynamics1() = default;
   ~hybridSysDynamics1() override = default;
 
-  void computeFlowMap(const double& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) override {
-    Eigen::Matrix<double, STATE_DIM, STATE_DIM> A;
+  void computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) override {
+    Eigen::Matrix<scalar_t, STATE_DIM, STATE_DIM> A;
     A << -0.1, 0.9, 0.0, -1, -0.01, 0.0, 0.0, 0.0, 0.0;
-    Eigen::Matrix<double, STATE_DIM, INPUT_DIM> B;
+    Eigen::Matrix<scalar_t, STATE_DIM, INPUT_DIM> B;
     B << 0.0, 1.0, 0.0;
-    Eigen::Matrix<double, STATE_DIM, 1> F;
+    Eigen::Matrix<scalar_t, STATE_DIM, 1> F;
     F << 0.0, 0.0, 0.0;
 
     dxdt = A * x + B * u + F;
   }
 
-  void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override {
+  void computeJumpMap(const scalar_t& time, const vector_t& state, vector_t& mappedState) override {
+    mappedState.resize(STATE_DIM);
     mappedState[0] = state[0];
     mappedState[1] = state[1];
     mappedState[2] = 1;
   }
 
-  void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) override {
+  void computeGuardSurfaces(const scalar_t& time, const vector_t& state, vector_t& guardSurfacesValue) override {
     guardSurfacesValue.resize(2);
     guardSurfacesValue[0] = 1;
     guardSurfacesValue[1] = -state[0] * state[1];
@@ -75,31 +75,30 @@ class hybridSysDynamics1 final : public ControlledSystemBase<STATE_DIM, INPUT_DI
   hybridSysDynamics1* clone() const override { return new hybridSysDynamics1(*this); }
 };
 
-class hybridSysDynamics2 final : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
+class hybridSysDynamics2 final : public ControlledSystemBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
   hybridSysDynamics2() = default;
   ~hybridSysDynamics2() override = default;
 
-  void computeFlowMap(const double& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) override {
-    Eigen::Matrix<double, STATE_DIM, STATE_DIM> A;
+  void computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) override {
+    Eigen::Matrix<scalar_t, STATE_DIM, STATE_DIM> A;
     A << -0.0, 3.0, 0.0, -3.0, 0.0, 0.0, 0.0, 0.0, 0.0;
-    Eigen::Matrix<double, STATE_DIM, INPUT_DIM> B;
+    Eigen::Matrix<scalar_t, STATE_DIM, INPUT_DIM> B;
     B << 0.0, 1.0, 0.0;
-    Eigen::Matrix<double, STATE_DIM, 1> F;
+    Eigen::Matrix<scalar_t, STATE_DIM, 1> F;
     F << 0.0, 0.0, 0.0;
 
     dxdt = A * x + B * u + F;
   }
 
-  void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override {
+  void computeJumpMap(const scalar_t& time, const vector_t& state, vector_t& mappedState) override {
+    mappedState.resize(STATE_DIM);
     mappedState[0] = state[0];
     mappedState[1] = state[1];
     mappedState[2] = 0;
   }
 
-  void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) override {
+  void computeGuardSurfaces(const scalar_t& time, const vector_t& state, vector_t& guardSurfacesValue) override {
     guardSurfacesValue.resize(2);
     guardSurfacesValue[0] = state[0] * state[1];
     guardSurfacesValue[1] = 1;
@@ -108,11 +107,8 @@ class hybridSysDynamics2 final : public ControlledSystemBase<STATE_DIM, INPUT_DI
   hybridSysDynamics2* clone() const final { return new hybridSysDynamics2(*this); }
 };
 
-class hybridSysDynamics final : public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
+class hybridSysDynamics final : public ControlledSystemBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  using Base = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
-
   hybridSysDynamics() : subsystemDynamicsPtr_(2) {
     subsystemDynamicsPtr_[0].reset(new hybridSysDynamics1);
     subsystemDynamicsPtr_[1].reset(new hybridSysDynamics2);
@@ -127,61 +123,66 @@ class hybridSysDynamics final : public ControlledSystemBase<STATE_DIM, INPUT_DIM
     subsystemDynamicsPtr_[1].reset(other.subsystemDynamicsPtr_[1]->clone());
   }
 
-  void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) override {
+  void computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) override {
     size_t activeSubsystem = x[2];
     subsystemDynamicsPtr_[activeSubsystem]->computeFlowMap(t, x, u, dxdt);
   }
 
-  void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override {
+  void computeJumpMap(const scalar_t& time, const vector_t& state, vector_t& mappedState) override {
     size_t activeSubsystem = state[2];
     subsystemDynamicsPtr_[activeSubsystem]->computeJumpMap(time, state, mappedState);
   }
 
-  void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) override {
+  void computeGuardSurfaces(const scalar_t& time, const vector_t& state, vector_t& guardSurfacesValue) override {
     size_t activeSubsystem = state[2];
     subsystemDynamicsPtr_[activeSubsystem]->computeGuardSurfaces(time, state, guardSurfacesValue);
   }
 
  private:
-  std::vector<Base::Ptr> subsystemDynamicsPtr_;
+  std::vector<std::shared_ptr<ControlledSystemBase>> subsystemDynamicsPtr_;
 };
 
 // ############################
 // ####DERIVATIVE CLASSES######
 // ############################
-class hybridSysDerivatives1 final : public DerivativesBase<STATE_DIM, INPUT_DIM> {
+class hybridSysDerivatives1 final : public DerivativesBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
   hybridSysDerivatives1() = default;
   ~hybridSysDerivatives1() override = default;
 
-  void getFlowMapDerivativeState(state_matrix_t& A) override { A << -0.1, 0.9, 0.0, -1.0, -0.01, 0.0, 0.0, 0.0, 0.0; }
+  void getFlowMapDerivativeState(matrix_t& A) override {
+    A.resize(STATE_DIM, STATE_DIM);
+    A << -0.1, 0.9, 0.0, -1.0, -0.01, 0.0, 0.0, 0.0, 0.0;
+  }
 
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B << 0.0, 1.0, 0.0; }
+  void getFlowMapDerivativeInput(matrix_t& B) override {
+    B.resize(STATE_DIM, INPUT_DIM);
+    B << 0.0, 1.0, 0.0;
+  }
 
   hybridSysDerivatives1* clone() const override { return new hybridSysDerivatives1(*this); }
 };
 
-class hybridSysDerivatives2 final : public DerivativesBase<STATE_DIM, INPUT_DIM> {
+class hybridSysDerivatives2 final : public DerivativesBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
   hybridSysDerivatives2() = default;
   ~hybridSysDerivatives2() override = default;
 
-  void getFlowMapDerivativeState(state_matrix_t& A) override { A << -0.0, 3.0, 0.0, -3.0, 0.0, 0.0, 0.0, 0.0, 0.0; }
+  void getFlowMapDerivativeState(matrix_t& A) override {
+    A.resize(STATE_DIM, STATE_DIM);
+    A << -0.0, 3.0, 0.0, -3.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+  }
 
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B << 0.0, 1.0, 0.0; }
+  void getFlowMapDerivativeInput(matrix_t& B) override {
+    B.resize(STATE_DIM, INPUT_DIM);
+    B << 0.0, 1.0, 0.0;
+  }
 
   hybridSysDerivatives2* clone() const override { return new hybridSysDerivatives2(*this); }
 };
 
-class hybridSysDerivatives final : public DerivativesBase<STATE_DIM, INPUT_DIM> {
+class hybridSysDerivatives final : public DerivativesBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  using Base = DerivativesBase<STATE_DIM, INPUT_DIM>;
-
   hybridSysDerivatives() : activeSubsystem_(1), subsystemDerPtr_(2) {
     subsystemDerPtr_[0].reset(new hybridSysDerivatives1);
     subsystemDerPtr_[1].reset(new hybridSysDerivatives2);
@@ -196,27 +197,27 @@ class hybridSysDerivatives final : public DerivativesBase<STATE_DIM, INPUT_DIM> 
     subsystemDerPtr_[1].reset(other.subsystemDerPtr_[1]->clone());
   }
 
-  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override {
-    Base::setCurrentStateAndControl(t, x, u);
+  void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) override {
+    DerivativesBase::setCurrentStateAndControl(t, x, u);
     activeSubsystem_ = x[2];
     subsystemDerPtr_[activeSubsystem_]->setCurrentStateAndControl(t, x, u);
   }
 
-  void getFlowMapDerivativeState(state_matrix_t& A) override { subsystemDerPtr_[activeSubsystem_]->getFlowMapDerivativeState(A); }
+  void getFlowMapDerivativeState(matrix_t& A) override { subsystemDerPtr_[activeSubsystem_]->getFlowMapDerivativeState(A); }
 
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) override { subsystemDerPtr_[activeSubsystem_]->getFlowMapDerivativeInput(B); }
+  void getFlowMapDerivativeInput(matrix_t& B) override { subsystemDerPtr_[activeSubsystem_]->getFlowMapDerivativeInput(B); }
 
  private:
   int activeSubsystem_;
-  std::vector<Base::Ptr> subsystemDerPtr_;
+  std::vector<std::shared_ptr<DerivativesBase>> subsystemDerPtr_;
 };
 
 // #############################
 // #### CONSTRAINT CLASSES######
 // #############################
-class hybridSysConstraints1 final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
+class hybridSysConstraints1 final : public ConstraintBase {
  public:
-  hybridSysConstraints1() = default;
+  hybridSysConstraints1() : ConstraintBase(STATE_DIM, INPUT_DIM){};
   ~hybridSysConstraints1() = default;
 
   hybridSysConstraints1* clone() const override { return new hybridSysConstraints1(*this); }
@@ -231,49 +232,53 @@ class hybridSysConstraints1 final : public ConstraintBase<STATE_DIM, INPUT_DIM> 
 
   size_t numInequalityConstraint(const scalar_t& time) override { return 4; }
 
-  void getInequalityConstraintDerivativesState(state_vector_array_t& dhdx) override {
+  void getInequalityConstraintDerivativesState(vector_array_t& dhdx) override {
     dhdx.resize(4);
-    dhdx[0].setZero();
-    dhdx[1].setZero();
+    dhdx[0].setZero(STATE_DIM);
+    dhdx[1].setZero(STATE_DIM);
+    dhdx[2].resize(STATE_DIM);
     dhdx[2] << 1.0, 0.0, 0.0;
+    dhdx[3].resize(STATE_DIM);
     dhdx[3] << -1.0, 0.0, 0.0;
   }
 
-  void getInequalityConstraintDerivativesInput(input_vector_array_t& dhdu) override {
+  void getInequalityConstraintDerivativesInput(vector_array_t& dhdu) override {
     dhdu.resize(4);
+    dhdu[0].resize(INPUT_DIM);
     dhdu[0] << -1.0;
+    dhdu[1].resize(INPUT_DIM);
     dhdu[1] << 1.0;
-    dhdu[2] << 0.0;
-    dhdu[3] << 0.0;
+    dhdu[2].setZero(INPUT_DIM);
+    dhdu[3].setZero(INPUT_DIM);
   }
 
-  void getInequalityConstraintSecondDerivativesState(state_matrix_array_t& ddhdxdx) override {
+  void getInequalityConstraintSecondDerivativesState(matrix_array_t& ddhdxdx) override {
     ddhdxdx.resize(4);
-    ddhdxdx[0].setZero();
-    ddhdxdx[1].setZero();
-    ddhdxdx[2].setZero();
-    ddhdxdx[3].setZero();
+    ddhdxdx[0].setZero(STATE_DIM, STATE_DIM);
+    ddhdxdx[1].setZero(STATE_DIM, STATE_DIM);
+    ddhdxdx[2].setZero(STATE_DIM, STATE_DIM);
+    ddhdxdx[3].setZero(STATE_DIM, STATE_DIM);
   }
 
-  void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t& ddhdudu) override {
+  void getInequalityConstraintSecondDerivativesInput(matrix_array_t& ddhdudu) override {
     ddhdudu.resize(4);
-    ddhdudu[0].setZero();
-    ddhdudu[1].setZero();
-    ddhdudu[2].setZero();
-    ddhdudu[3].setZero();
+    ddhdudu[0].setZero(INPUT_DIM, INPUT_DIM);
+    ddhdudu[1].setZero(INPUT_DIM, INPUT_DIM);
+    ddhdudu[2].setZero(INPUT_DIM, INPUT_DIM);
+    ddhdudu[3].setZero(INPUT_DIM, INPUT_DIM);
   }
-  void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t& ddhdudx) override {
+  void getInequalityConstraintDerivativesInputState(matrix_array_t& ddhdudx) override {
     ddhdudx.resize(4);
-    ddhdudx[0].setZero();
-    ddhdudx[1].setZero();
-    ddhdudx[2].setZero();
-    ddhdudx[3].setZero();
+    ddhdudx[0].setZero(INPUT_DIM, STATE_DIM);
+    ddhdudx[1].setZero(INPUT_DIM, STATE_DIM);
+    ddhdudx[2].setZero(INPUT_DIM, STATE_DIM);
+    ddhdudx[3].setZero(INPUT_DIM, STATE_DIM);
   }
 };
 
-class hybridSysConstraints2 final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
+class hybridSysConstraints2 final : public ConstraintBase {
  public:
-  hybridSysConstraints2() = default;
+  hybridSysConstraints2() : ConstraintBase(STATE_DIM, INPUT_DIM){};
   ~hybridSysConstraints2() override = default;
 
   hybridSysConstraints2* clone() const override { return new hybridSysConstraints2(*this); }
@@ -288,62 +293,61 @@ class hybridSysConstraints2 final : public ConstraintBase<STATE_DIM, INPUT_DIM> 
 
   size_t numInequalityConstraint(const scalar_t& time) override { return 4; }
 
-  void getInequalityConstraintDerivativesState(state_vector_array_t& dhdx) override {
+  void getInequalityConstraintDerivativesState(vector_array_t& dhdx) override {
     dhdx.resize(4);
-    dhdx[0].setZero();
-    dhdx[1].setZero();
+    dhdx[0].setZero(STATE_DIM);
+    dhdx[1].setZero(STATE_DIM);
+    dhdx[2].resize(STATE_DIM);
     dhdx[2] << 1.0, 0.0, 0.0;
+    dhdx[3].resize(STATE_DIM);
     dhdx[3] << -1.0, 0.0, 0.0;
   }
 
-  void getInequalityConstraintDerivativesInput(input_vector_array_t& dhdu) override {
+  void getInequalityConstraintDerivativesInput(vector_array_t& dhdu) override {
     dhdu.resize(4);
+    dhdu[0].resize(INPUT_DIM);
     dhdu[0] << -1.0;
+    dhdu[1].resize(INPUT_DIM);
     dhdu[1] << 1.0;
-    dhdu[2] << 0.0;
-    dhdu[3] << 0.0;
+    dhdu[2].setZero(INPUT_DIM);
+    dhdu[3].setZero(INPUT_DIM);
   }
 
-  void getInequalityConstraintSecondDerivativesState(state_matrix_array_t& ddhdxdx) override {
+  void getInequalityConstraintSecondDerivativesState(matrix_array_t& ddhdxdx) override {
     ddhdxdx.resize(4);
-    ddhdxdx[0].setZero();
-    ddhdxdx[1].setZero();
-    ddhdxdx[2].setZero();
-    ddhdxdx[3].setZero();
+    ddhdxdx[0].setZero(STATE_DIM, STATE_DIM);
+    ddhdxdx[1].setZero(STATE_DIM, STATE_DIM);
+    ddhdxdx[2].setZero(STATE_DIM, STATE_DIM);
+    ddhdxdx[3].setZero(STATE_DIM, STATE_DIM);
   }
 
-  void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t& ddhdudu) override {
+  void getInequalityConstraintSecondDerivativesInput(matrix_array_t& ddhdudu) override {
     ddhdudu.resize(4);
-    ddhdudu[0].setZero();
-    ddhdudu[1].setZero();
-    ddhdudu[2].setZero();
-    ddhdudu[3].setZero();
+    ddhdudu[0].setZero(INPUT_DIM, INPUT_DIM);
+    ddhdudu[1].setZero(INPUT_DIM, INPUT_DIM);
+    ddhdudu[2].setZero(INPUT_DIM, INPUT_DIM);
+    ddhdudu[3].setZero(INPUT_DIM, INPUT_DIM);
   }
-  void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t& ddhdudx) override {
+  void getInequalityConstraintDerivativesInputState(matrix_array_t& ddhdudx) override {
     ddhdudx.resize(4);
-    ddhdudx[0].setZero();
-    ddhdudx[1].setZero();
-    ddhdudx[2].setZero();
-    ddhdudx[3].setZero();
+    ddhdudx[0].setZero(INPUT_DIM, STATE_DIM);
+    ddhdudx[1].setZero(INPUT_DIM, STATE_DIM);
+    ddhdudx[2].setZero(INPUT_DIM, STATE_DIM);
+    ddhdudx[3].setZero(INPUT_DIM, STATE_DIM);
   }
 };
 
-class hybridSysConstraints final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
+class hybridSysConstraints final : public ConstraintBase {
  public:
-  using Base = ConstraintBase<STATE_DIM, INPUT_DIM>;
-
-  hybridSysConstraints() : activeSubsystem_(1), subsystemConstPtr_(2) {
+  hybridSysConstraints() : ConstraintBase(3, 1), activeSubsystem_(1), subsystemConstPtr_(2) {
     subsystemConstPtr_[0].reset(new hybridSysConstraints1);
     subsystemConstPtr_[1].reset(new hybridSysConstraints2);
   }
 
   ~hybridSysConstraints() override = default;
 
-  virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override {
-    t_ = t;
-    x_ = x;
-    u_ = u;
-
+  virtual void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) override {
+    ConstraintBase::setCurrentStateAndControl(t, x, u);
     activeSubsystem_ = x[2];
     subsystemConstPtr_[activeSubsystem_]->setCurrentStateAndControl(t_, x_, u_);
   }
@@ -354,23 +358,23 @@ class hybridSysConstraints final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
     return subsystemConstPtr_[activeSubsystem_]->numInequalityConstraint(time);
   }
 
-  void getInequalityConstraintDerivativesState(state_vector_array_t& dhdx) override {
+  void getInequalityConstraintDerivativesState(vector_array_t& dhdx) override {
     subsystemConstPtr_[activeSubsystem_]->getInequalityConstraintDerivativesState(dhdx);
   }
 
-  void getInequalityConstraintDerivativesInput(input_vector_array_t& dhdu) override {
+  void getInequalityConstraintDerivativesInput(vector_array_t& dhdu) override {
     subsystemConstPtr_[activeSubsystem_]->getInequalityConstraintDerivativesInput(dhdu);
   }
 
-  void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t& ddhdudu) override {
+  void getInequalityConstraintSecondDerivativesInput(matrix_array_t& ddhdudu) override {
     subsystemConstPtr_[activeSubsystem_]->getInequalityConstraintSecondDerivativesInput(ddhdudu);
   }
 
-  void getInequalityConstraintSecondDerivativesState(state_matrix_array_t& ddhdxdx) override {
+  void getInequalityConstraintSecondDerivativesState(matrix_array_t& ddhdxdx) override {
     subsystemConstPtr_[activeSubsystem_]->getInequalityConstraintSecondDerivativesState(ddhdxdx);
   }
 
-  void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t& ddhdudx) override {
+  void getInequalityConstraintDerivativesInputState(matrix_array_t& ddhdudx) override {
     subsystemConstPtr_[activeSubsystem_]->getInequalityConstraintDerivativesInputState(ddhdudx);
   }
 
@@ -378,8 +382,7 @@ class hybridSysConstraints final : public ConstraintBase<STATE_DIM, INPUT_DIM> {
 
  private:
   int activeSubsystem_;
-  std::vector<Base::Ptr> subsystemConstPtr_;
+  std::vector<std::shared_ptr<ConstraintBase>> subsystemConstPtr_;
 };
 
-using system_op = OperatingPoints<STATE_DIM, INPUT_DIM>;
 }  // namespace ocs2

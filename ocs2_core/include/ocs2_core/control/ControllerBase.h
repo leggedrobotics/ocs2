@@ -149,6 +149,12 @@ class ControllerBase {
    */
   virtual scalar_array_t controllerEventTimes() const {}
 
+  /* State dimension getter */
+  size_t getStateDim() const { return stateDim_; }
+
+  /* Input dimension getter */
+  size_t getInputDim() const { return inputDim_; }
+
  protected:
   size_t stateDim_;
   size_t inputDim_;

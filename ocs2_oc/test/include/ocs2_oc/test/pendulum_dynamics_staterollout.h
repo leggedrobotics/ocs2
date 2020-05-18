@@ -35,29 +35,30 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-class pendulum_dyn final : public ControlledSystemBase<2, 1> {
+class pendulum_dyn final : public ControlledSystemBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
   pendulum_dyn() = default;
   ~pendulum_dyn() override = default;
 
-  void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) override {
-    double g = 9.81;
-    double L = 1;
+  void computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) override {
+    const double g = 9.81;
+    const double L = 1;
+    dxdt.resize(2);
     dxdt << x[1], -(g / L) * std::sin(x[0]);
   }
 
-  void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override {
+  void computeJumpMap(const scalar_t& time, const vector_t& state, vector_t& mappedState) override {
+    mappedState.resize(2);
     mappedState[0] = state[0];
     mappedState[1] = -0.9 * state[1];
   }
 
-  void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) override {
+  void computeGuardSurfaces(const scalar_t& time, const vector_t& state, vector_t& guardSurfacesValue) override {
     guardSurfacesValue.resize(1);
     guardSurfacesValue[0] = state[0];
   }
 
   pendulum_dyn* clone() const override { return new pendulum_dyn(*this); }
 };
+
 }  // namespace ocs2

@@ -39,7 +39,7 @@ class StateBasedLinearController final : public ControllerBase {
   /**
    * Default constructor.
    */
-  StateBasedLinearController() = default;
+  StateBasedLinearController(size_t stateDim, size_t inputDim) : ControllerBase(stateDim, inputDim) {}
 
   /**
    * Default destructor.

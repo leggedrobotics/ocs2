@@ -29,115 +29,26 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Dense>
-#include <Eigen/StdVector>
-#include <unsupported/Eigen/MatrixFunctions>
-
-#include <algorithm>
-#include <array>
-#include <chrono>
-#include <cstddef>
-#include <future>
-#include <mutex>
-#include <numeric>
-#include <type_traits>
+#include <memory>
 #include <vector>
 
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_core/control/ControllerBase.h>
-#include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/logic/ModeSchedule.h>
-#include <ocs2_core/misc/LinearAlgebra.h>
-#include <ocs2_core/misc/Numerics.h>
 
-#include "ocs2_oc/oc_data/PrimalSolution.h"
-#include "ocs2_oc/oc_solver/ModeScheduleManager.h"
-#include "ocs2_oc/oc_solver/PerformanceIndex.h"
-#include "ocs2_oc/oc_solver/SolverSynchronizedModule.h"
+#include <ocs2_oc/oc_data/PrimalSolution.h>
+#include <ocs2_oc/oc_solver/ModeScheduleManager.h>
+#include <ocs2_oc/oc_solver/PerformanceIndex.h>
+#include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
 
 namespace ocs2 {
 
 /**
  * This class is an interface class for the single-thread and multi-thread SLQ.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 class Solver_BASE {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
-
-  using size_array_t = typename DIMENSIONS::size_array_t;
-  using size_array2_t = typename DIMENSIONS::size_array2_t;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using scalar_array2_t = typename DIMENSIONS::scalar_array2_t;
-  using scalar_array3_t = typename DIMENSIONS::scalar_array3_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-  using state_vector_array2_t = typename DIMENSIONS::state_vector_array2_t;
-  using state_vector_array3_t = typename DIMENSIONS::state_vector_array3_t;
-  using input_vector_t = typename DIMENSIONS::input_vector_t;
-  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-  using input_vector_array2_t = typename DIMENSIONS::input_vector_array2_t;
-  using input_vector_array3_t = typename DIMENSIONS::input_vector_array3_t;
-  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
-  using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
-  using input_state_matrix_array2_t = typename DIMENSIONS::input_state_matrix_array2_t;
-  using state_matrix_t = typename DIMENSIONS::state_matrix_t;
-  using state_matrix_array_t = typename DIMENSIONS::state_matrix_array_t;
-  using state_matrix_array2_t = typename DIMENSIONS::state_matrix_array2_t;
-  using state_matrix_array3_t = typename DIMENSIONS::state_matrix_array3_t;
-  using input_matrix_t = typename DIMENSIONS::input_matrix_t;
-  using input_matrix_array_t = typename DIMENSIONS::input_matrix_array_t;
-  using input_matrix_array2_t = typename DIMENSIONS::input_matrix_array2_t;
-  using input_matrix_array3_t = typename DIMENSIONS::input_matrix_array3_t;
-  using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
-  using state_input_matrix_array_t = typename DIMENSIONS::state_input_matrix_array_t;
-  using state_input_matrix_array2_t = typename DIMENSIONS::state_input_matrix_array2_t;
-  using constraint1_vector_t = typename DIMENSIONS::constraint1_vector_t;
-  using constraint1_vector_array_t = typename DIMENSIONS::constraint1_vector_array_t;
-  using constraint1_vector_array2_t = typename DIMENSIONS::constraint1_vector_array2_t;
-  using constraint1_state_matrix_t = typename DIMENSIONS::constraint1_state_matrix_t;
-  using constraint1_state_matrix_array_t = typename DIMENSIONS::constraint1_state_matrix_array_t;
-  using constraint1_state_matrix_array2_t = typename DIMENSIONS::constraint1_state_matrix_array2_t;
-  using constraint1_input_matrix_t = typename DIMENSIONS::constraint1_input_matrix_t;
-  using constraint1_input_matrix_array_t = typename DIMENSIONS::constraint1_input_matrix_array_t;
-  using constraint1_input_matrix_array2_t = typename DIMENSIONS::constraint1_input_matrix_array2_t;
-  using input_dynamic_matrix_t = typename DIMENSIONS::input_dynamic_matrix_t;
-  using input_dynamic_matrix_array_t = typename DIMENSIONS::input_dynamic_matrix_array_t;
-  using input_dynamic_matrix_array2_t = typename DIMENSIONS::input_dynamic_matrix_array2_t;
-  using constraint2_vector_t = typename DIMENSIONS::constraint2_vector_t;
-  using constraint2_vector_array_t = typename DIMENSIONS::constraint2_vector_array_t;
-  using constraint2_vector_array2_t = typename DIMENSIONS::constraint2_vector_array2_t;
-  using constraint2_state_matrix_t = typename DIMENSIONS::constraint2_state_matrix_t;
-  using constraint2_state_matrix_array_t = typename DIMENSIONS::constraint2_state_matrix_array_t;
-  using constraint2_state_matrix_array2_t = typename DIMENSIONS::constraint2_state_matrix_array2_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-  using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
-  using dynamic_vector_array2_t = typename DIMENSIONS::dynamic_vector_array2_t;
-  using dynamic_vector_array3_t = typename DIMENSIONS::dynamic_vector_array3_t;
-  using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
-  using dynamic_matrix_array_t = typename DIMENSIONS::dynamic_matrix_array_t;
-  using dynamic_matrix_array2_t = typename DIMENSIONS::dynamic_matrix_array2_t;
-  using dynamic_matrix_array3_t = typename DIMENSIONS::dynamic_matrix_array3_t;
-
-  using primal_solution_t = PrimalSolution<STATE_DIM, INPUT_DIM>;
-
-  using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
-  using controller_array_t = typename controller_t::array_t;
-  using controller_ptr_array_t = std::vector<controller_t*>;
-  using controller_const_ptr_array_t = std::vector<const controller_t*>;
-  using feedforward_controller_t = FeedforwardController<STATE_DIM, INPUT_DIM>;
-
-  using synchronized_module_t = SolverSynchronizedModule<STATE_DIM, INPUT_DIM>;
-  using synchronized_module_ptr_array_t = std::vector<std::shared_ptr<synchronized_module_t>>;
-  using mode_schedule_manager_ptr_t = std::shared_ptr<ModeScheduleManager<STATE_DIM, INPUT_DIM>>;
-
   /**
    * Constructor.
    */
@@ -161,7 +72,7 @@ class Solver_BASE {
    * @param [in] finalTime: The final time.
    * @param [in] partitioningTimes: The partitioning times between subsystems.
    */
-  void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes);
+  void run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes);
 
   /**
    * The main routine of solver which runs the optimizer for a given initial state, initial time, final time, and
@@ -176,18 +87,22 @@ class Solver_BASE {
    * are possible: either the internal controller is already set (such as the MPC case where the warm starting option is set true) or the
    * internal controller is empty in which instead of performing a rollout the operating trajectories will be used.
    */
-  void run(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-           const controller_ptr_array_t& controllersPtrStock);
+  void run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
+           const std::vector<ControllerBase*>& controllersPtrStock);
 
   /**
    * Set mode schedule manager. This module is updated once before and once after solving the problem.
    */
-  void setModeScheduleManager(mode_schedule_manager_ptr_t modeScheduleManager) { modeScheduleManager_ = std::move(modeScheduleManager); };
+  void setModeScheduleManager(std::shared_ptr<ModeScheduleManager> modeScheduleManager) {
+    modeScheduleManager_ = std::move(modeScheduleManager);
+  };
 
   /**
    * Set all modules that need to be synchronized with the solver. Each module is updated once before and once after solving the problem
    */
-  void setSynchronizedModules(const synchronized_module_ptr_array_t& synchronizedModules) { synchronizedModules_ = synchronizedModules; };
+  void setSynchronizedModules(const std::vector<std::shared_ptr<SolverSynchronizedModule>>& synchronizedModules) {
+    synchronizedModules_ = synchronizedModules;
+  };
 
   /**
    * Returns the cost, merit function and ISEs of constraints for the latest optimized trajectory.
@@ -258,7 +173,7 @@ class Solver_BASE {
    * @param [in] finalTime: The final time.
    * @param [out] primalSolutionPtr: The primal problem's solution.
    */
-  virtual void getPrimalSolution(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const = 0;
+  virtual void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const = 0;
 
   /**
    * @brief Returns the optimized policy data.
@@ -266,7 +181,7 @@ class Solver_BASE {
    * @param [in] finalTime: The final time.
    * @return: The primal problem's solution.
    */
-  primal_solution_t primalSolution(scalar_t finalTime) const;
+  PrimalSolution primalSolution(scalar_t finalTime) const;
 
   /**
    * Calculates the value function at the given time and state.
@@ -275,7 +190,7 @@ class Solver_BASE {
    * @param [in] state: The inquiry state.
    * @return value at the inquiry time and state.
    */
-  virtual scalar_t getValueFunction(scalar_t time, const state_vector_t& state) const = 0;
+  virtual scalar_t getValueFunction(scalar_t time, const vector_t& state) const = 0;
 
   /**
    * Calculates the value function state derivative at the given time and state.
@@ -284,7 +199,7 @@ class Solver_BASE {
    * @param [in] state: The inquiry state.
    * @param [out] Vx: value function at the inquiry time and state.
    */
-  virtual void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, dynamic_vector_t& Vx) const = 0;
+  virtual void getValueFunctionStateDerivative(scalar_t time, const vector_t& state, vector_t& Vx) const = 0;
 
   /**
    * Calculates the Lagrange multiplier of the state-input equality constraints at the given time and state.
@@ -293,7 +208,7 @@ class Solver_BASE {
    * @param [in] state: The inquiry state.
    * @param [out] nu: The Lagrange multiplier of the state-input equality constraints.
    */
-  virtual void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const = 0;
+  virtual void getStateInputConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const = 0;
 
   /**
    * Rewinds optimizer internal variables.
@@ -317,22 +232,20 @@ class Solver_BASE {
   void printString(const std::string& text) const;
 
  private:
-  virtual void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) = 0;
+  virtual void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) = 0;
 
-  virtual void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-                       const controller_ptr_array_t& controllersPtrStock) = 0;
+  virtual void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
+                       const std::vector<ControllerBase*>& controllersPtrStock) = 0;
 
-  void preRun(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime);
+  void preRun(scalar_t initTime, const vector_t& initState, scalar_t finalTime);
 
   void postRun();
 
   mutable std::mutex outputDisplayGuardMutex_;
   CostDesiredTrajectories costDesiredTrajectories_;
-  mode_schedule_manager_ptr_t modeScheduleManager_;
-  synchronized_module_ptr_array_t synchronizedModules_;
+  std::shared_ptr<ModeScheduleManager> modeScheduleManager_;
+  std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModules_;
   ModeSchedule modeSchedule_;
 };
 
 }  // namespace ocs2
-
-#include "implementation/Solver_BASE.h"

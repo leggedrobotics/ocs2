@@ -61,8 +61,8 @@
 
 // Misc
 #include <ocs2_core/misc/Benchmark.h>
-#include <ocs2_core/misc/LTI_Equations.h>
-#include <ocs2_core/misc/LinearFunction.h>
+// #include <ocs2_core/misc/LTI_Equations.h>
+// #include <ocs2_core/misc/LinearFunction.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_core/misc/Lookup.h>

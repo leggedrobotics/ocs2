@@ -44,18 +44,16 @@ namespace ocs2 {
  * supposed to orbit a unite circle (defined as a constraint) with velocity of 1[m/s]
  * (defined as a cost).
  */
-class CircularKinematicsSystem final : public SystemDynamicsBase<2, 2> {
+class CircularKinematicsSystem final : public SystemDynamicsBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  CircularKinematicsSystem() = default;
+  CircularKinematicsSystem() : SystemDynamicsBase(2, 2){};
   ~CircularKinematicsSystem() override = default;
 
-  void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) override { dxdt = u; }
+  void computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) override { dxdt = u; }
 
-  void getFlowMapDerivativeState(state_matrix_t& A) override { A.setZero(); }
+  void getFlowMapDerivativeState(matrix_t& A) override { A.setZero(2, 2); }
 
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B.setIdentity(); }
+  void getFlowMapDerivativeInput(matrix_t& B) override { B.setIdentity(2, 2); }
 
   CircularKinematicsSystem* clone() const override { return new CircularKinematicsSystem(*this); }
 };
@@ -68,22 +66,20 @@ class CircularKinematicsSystem final : public SystemDynamicsBase<2, 2> {
  * supposed to orbit a unite circle (defined as a constraint) with velocity of 1[m/s]
  * (defined as a cost).
  */
-class CircularKinematicsCost final : public CostFunctionBaseAD<2, 2> {
+class CircularKinematicsCost final : public CostFunctionBaseAD {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
   CircularKinematicsCost() = default;
   ~CircularKinematicsCost() override = default;
 
   CircularKinematicsCost* clone() const override { return new CircularKinematicsCost(*this); }
 
  protected:
-  void intermediateCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                                const ad_dynamic_vector_t& parameters, ad_scalar_t& costValue) const override {
+  void intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input, const ad_vector_t& parameters,
+                                ad_scalar_t& costValue) const override {
     costValue = 0.5 * pow(state(0) * input(1) - state(1) * input(0) - 1.0, 2) + 0.005 * input.dot(input);
   }
 
-  void terminalCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& parameters,
+  void terminalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters,
                             ad_scalar_t& costValue) const override {
     costValue = 0.0;
   }
@@ -97,10 +93,8 @@ class CircularKinematicsCost final : public CostFunctionBaseAD<2, 2> {
  * supposed to orbit a unite circle (defined as a constraint) with velocity of 1[m/s]
  * (defined as a cost).
  */
-class CircularKinematicsConstraints final : public ConstraintBase<2, 2> {
+class CircularKinematicsConstraints final : public ConstraintBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
   CircularKinematicsConstraints() = default;
   ~CircularKinematicsConstraints() override = default;
 
@@ -108,16 +102,20 @@ class CircularKinematicsConstraints final : public ConstraintBase<2, 2> {
 
   size_t numStateInputConstraint(const scalar_t& time) override { return 1; }
 
-  void getConstraint1(constraint1_vector_t& e) override { e(0) = x_.dot(u_); }
+  void getConstraint1(vector_t& e) override {
+    e.resize(2);
+    e(0) = x_.dot(u_);
+  }
 
-  void getConstraint1DerivativesState(constraint1_state_matrix_t& C) override { C.topRows(1) = u_.transpose(); }
+  void getConstraint1DerivativesState(matrix_t& C) override {
+    C.resize(2, 2);
+    C.topRows(1) = u_.transpose();
+  }
 
-  void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) override { D.topRows(1) = x_.transpose(); }
+  void getConstraint1DerivativesControl(matrix_t& D) override {
+    D.resize(2, 2);
+    D.topRows(1) = x_.transpose();
+  }
 };
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-using CircularKinematicsSystemOperatingTrajectories = OperatingPoints<2, 2>;
 
 }  // namespace ocs2

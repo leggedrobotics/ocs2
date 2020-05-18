@@ -323,6 +323,8 @@ LoopshapingConstraint<FULL_STATE_DIM, FULL_INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_I
       return std::unique_ptr<LoopshapingConstraint>(
           new LoopshapingConstraintEliminatePattern<FULL_STATE_DIM, FULL_INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM,
                                                     FILTER_INPUT_DIM>(systemConstraint, std::move(loopshapingDefinition)));
+    default:
+      throw std::runtime_error("[LoopshapingConstraint::create] invalid loopshaping type");
   }
 }
 }  // namespace ocs2

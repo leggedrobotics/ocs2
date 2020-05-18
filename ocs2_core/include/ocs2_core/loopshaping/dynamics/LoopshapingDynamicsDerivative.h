@@ -182,8 +182,10 @@ LoopshapingDynamicsDerivative<FULL_STATE_DIM, FULL_INPUT_DIM, SYSTEM_STATE_DIM, 
           new LoopshapingDynamicsDerivativeEliminatePattern<FULL_STATE_DIM, FULL_INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM,
                                                             FILTER_STATE_DIM, FILTER_INPUT_DIM>(controlledSystem,
                                                                                                 std::move(loopshapingDefinition)));
+    default:
+      throw std::runtime_error("[LoopshapingDynamicsDerivative::create] invalid loopshaping type");
   }
-};
-};  // namespace ocs2
+}
+}  // namespace ocs2
 
 #endif  // OCS2_LOOPSHAPINGDYNAMICSDERIVATIVE_H

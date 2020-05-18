@@ -132,6 +132,8 @@ std::shared_ptr<LoopshapingDefinition> load(const std::string& settingsFile) {
       return std::shared_ptr<LoopshapingDefinition>(new LoopshapingDefinition(LoopshapingType::inputpattern, s_filter, gamma));
     }
   }
+
+  throw std::runtime_error("[LoopshapingDefinition] error loading loopshaping definition, no valid filter found");
 }
 
 }  // namespace loopshaping_property_tree

@@ -90,7 +90,7 @@ class LoopshapingDynamics : public ControlledSystemBase<FULL_STATE_DIM, FULL_INP
   virtual void filterFlowmap(const filter_state_vector_t& x_filter, const filter_input_vector_t& u_filter,
                              const system_input_vector_t& u_system, filter_state_vector_t& filterStateDerivative) = 0;
 };
-};  // namespace ocs2
+}  // namespace ocs2
 
 // Include classes derived from Loopshaping Dynamics to be dispatched by LoopshapingDynamics::Create
 #include "LoopshapingDynamicsEliminatePattern.h"
@@ -117,8 +117,10 @@ LoopshapingDynamics<FULL_STATE_DIM, FULL_INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INP
       return std::unique_ptr<LoopshapingDynamics>(
           new LoopshapingDynamicsEliminatePattern<FULL_STATE_DIM, FULL_INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM,
                                                   FILTER_INPUT_DIM>(controlledSystem, std::move(loopshapingDefinition)));
+    default:
+      throw std::runtime_error("[LoopshapingDynamics::create] invalid loopshaping type");
   }
-};
-};  // namespace ocs2
+}
+}  // namespace ocs2
 
 #endif  // OCS2_LOOPSHAPINGDYNAMICS_H

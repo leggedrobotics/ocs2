@@ -48,7 +48,12 @@ void GaitSchedule::setGaitSequenceAtTime(const std::vector<Gait>& gaitSequence, 
   std::tie(newPhase, newActiveGait) = advancePhase(phase_, time - time_, gaitSchedule_.begin(), gaitSchedule_.end());
 
   // Shrink the gait that is active at "time", s.t. it ends at "time"
-  newActiveGait->duration *= newPhase;
+  if (newActiveGait == gaitSchedule_.begin()) {
+    // Gait to shrink is already active. Determine new duration from the amount of time and phase left.
+    newActiveGait->duration = (time - time_) / (1.0 - phase_);
+  } else {
+    newActiveGait->duration *= newPhase;
+  }
 
   gaitSchedule_.erase(newActiveGait + 1, gaitSchedule_.end());
   gaitSchedule_.insert(gaitSchedule_.end(), gaitSequence.begin(), gaitSequence.end());

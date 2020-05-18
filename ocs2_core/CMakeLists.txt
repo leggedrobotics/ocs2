@@ -87,6 +87,7 @@ add_library(${PROJECT_NAME}
   src/dynamics/SystemDynamicsBaseAD.cpp
   src/dynamics/SystemDynamicsLinearizer.cpp
   src/dynamics/TransferFunctionBase.cpp
+  src/initialization/OperatingPoints.cpp
   src/integration/Integrator.cpp
   src/integration/IntegratorBase.cpp
   src/integration/OdeBase.cpp
@@ -157,15 +158,15 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_core
 
-# catkin_add_gtest(initialization_unittest
-#   test/initialization/InitializationTest.cpp
-# )
-# target_link_libraries(initialization_unittest
-#   ${PROJECT_NAME}
-#   ${catkin_LIBRARIES}
-#   ${Boost_LIBRARIES}
-#   gtest_main
-# )
+catkin_add_gtest(initialization_unittest
+  test/initialization/InitializationTest.cpp
+)
+target_link_libraries(initialization_unittest
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  gtest_main
+)
 
 catkin_add_gtest(test_integration
   test/integration/IntegrationTest.cpp

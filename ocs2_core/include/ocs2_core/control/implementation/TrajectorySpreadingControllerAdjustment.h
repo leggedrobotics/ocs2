@@ -85,18 +85,10 @@ template <size_t STATE_DIM, size_t INPUT_DIM>
 bool TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM>::isSmallerEqual(const index_t& a, const index_t& b) const {
   if (a.first < b.first) {
     return true;
-  }
-
-  if (a.first > b.first) {
+  } else if (a.first > b.first) {
     return false;
-  }
-
-  if (a.first == b.first) {
-    if (a.second <= b.second) {
-      return true;
-    } else {
-      return false;
-    }
+  } else {
+    return a.second <= b.second;
   }
 }
 

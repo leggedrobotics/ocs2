@@ -5,6 +5,7 @@
  *      Author: farbod
  */
 
+#include <ros/init.h>
 #include <ros/package.h>
 
 #include <ocs2_core/misc/LoadData.h>
@@ -12,10 +13,24 @@
 #include "ocs2_anymal_commands/TargetTrajectories_Keyboard_Quadruped.h"
 
 int main(int argc, char* argv[]) {
-  std::string filename = ros::package::getPath("ocs2_anymal_commands") + "/config/targetCommand.info";
+  std::string filename;
+
+  {
+    std::vector<std::string> programArgs{};
+    ros::removeROSArgs(argc, argv, programArgs);
+    if (programArgs.size() <= 1)
+      throw std::runtime_error("No task file specified. Aborting.");
+    else
+      filename = programArgs[1];
+  }
 
   boost::property_tree::ptree pt;
-  boost::property_tree::read_info(filename, pt);
+  try {
+    boost::property_tree::read_info(filename, pt);
+  } catch (boost::property_tree::ptree_bad_path) {
+    std::cout << "Could not find/read " << filename << "." << std::endl;
+    return 1;  // Fail, and exit.
+  }
 
   const auto targetDisplacementVelocity = pt.get<double>("targetDisplacementVelocity");
   const auto targetRotationVelocity = pt.get<double>("targetRotationVelocity");

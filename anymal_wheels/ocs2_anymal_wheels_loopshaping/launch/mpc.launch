@@ -2,6 +2,7 @@
     <arg name="rviz"       default="true" />
     <arg name="task_name"  default="mpc"/>
     <arg name="description_name"      default="ocs2_anymal_description"/>
+    <arg name="target_command"        default="$(find ocs2_anymal_wheels_loopshaping)/config/commands/targetCommand.info"/>
 
     <group if="$(arg rviz)">
       <!-- Load robot description -->
@@ -24,5 +25,5 @@
           output="screen" launch-prefix="gnome-terminal --"/>
 
     <node pkg="ocs2_anymal_commands" type="target_command_node" name="target_command_node"
-          output="screen" launch-prefix="gnome-terminal --"/>
+          output="screen" args="$(arg target_command)" launch-prefix="gnome-terminal --"/>
 </launch>

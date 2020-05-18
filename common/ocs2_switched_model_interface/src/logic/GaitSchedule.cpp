@@ -71,6 +71,17 @@ void GaitSchedule::setGaitSequenceAfterTime(const std::vector<Gait>& gaitSequenc
   gaitSchedule_.insert(gaitSchedule_.end(), gaitSequence.begin(), gaitSequence.end());
 }
 
+void GaitSchedule::adaptCurrentGait(
+    const std::function<Gait(scalar_t& currentPhase, Gait& currentGait, scalar_t currTime, const Gait& nextGait)>& gaitAdaptor) {
+  // Repeat the current gait if it is the last one in the schedule
+  if (std::next(gaitSchedule_.begin()) == gaitSchedule_.end()) {
+    gaitSchedule_.push_back(gaitSchedule_.back());
+  }
+
+  // Apply gait adaptation
+  gaitAdaptor(phase_, gaitSchedule_.front(), time_, gaitSchedule_[1]);
+}
+
 ocs2::ModeSchedule GaitSchedule::getModeSchedule(scalar_t timeHorizon) const {
   return ::switched_model::getModeSchedule(phase_, time_, timeHorizon, gaitSchedule_.begin(), gaitSchedule_.end());
 }

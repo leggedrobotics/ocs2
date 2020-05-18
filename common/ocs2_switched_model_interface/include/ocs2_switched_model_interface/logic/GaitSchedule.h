@@ -41,6 +41,11 @@ class GaitSchedule {
   /** Adds a gait sequence  at the first opportunity after the specified time. Does not adapt gait cycle durations */
   void setGaitSequenceAfterTime(const std::vector<Gait>& gaitSequence, scalar_t time);
 
+  /** Applies the provided function to the current gait. The function can adapt the current phase and gait. If the current gait is the last
+   * scheduled gait, it is repeated before adaptation */
+  void adaptCurrentGait(
+      const std::function<Gait(scalar_t& currentPhase, Gait& currentGait, scalar_t currTime, const Gait& nextGait)>& gaitAdaptor);
+
   /** Gets the gaitSchedule as a mode schedule from the current time, and for the specified horizon */
   ocs2::ModeSchedule getModeSchedule(scalar_t timeHorizon) const;
 

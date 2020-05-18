@@ -95,12 +95,12 @@ add_library(${PROJECT_NAME}
   src/integration/Observer.cpp
   src/integration/StateTriggeredEventHandler.cpp
   src/integration/SystemEventHandler.cpp
-  # src/logic/ModeSchedule.cpp
+  src/logic/ModeSchedule.cpp
   # src/loopshaping/LoopshapingPropertyTree.cpp
   # src/loopshaping/LoopshapingFilter.cpp
   src/model_data/ModelDataBase.cpp
   src/misc/LinearAlgebra.cpp
-  # src/misc/ThreadPool.cpp
+  src/misc/ThreadPool.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
@@ -179,13 +179,14 @@ target_link_libraries(test_integration
   gtest_main
 )
 
-# catkin_add_gtest(interpolation_unittest
-#   test/misc/testInterpolation.cpp
-# )
-# target_link_libraries(interpolation_unittest
-#   ${PROJECT_NAME}
-#   ${catkin_LIBRARIES}
-# )
+catkin_add_gtest(interpolation_unittest
+  test/misc/testInterpolation.cpp
+)
+target_link_libraries(interpolation_unittest
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
 
 catkin_add_gtest(${PROJECT_NAME}_cppadcg
   test/cppad_cg/testCppADCG_constraint.cpp
@@ -234,16 +235,18 @@ target_link_libraries(test_LinearAlgebra
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
+  gtest_main
 )
 
-# catkin_add_gtest(test_lookup
-#   test/misc/testLookup.cpp
-# )
-# target_link_libraries(test_lookup
-#   ${PROJECT_NAME}
-#   ${Boost_LIBRARIES}
-#   ${catkin_LIBRARIES}
-# )
+catkin_add_gtest(test_lookup
+  test/misc/testLookup.cpp
+)
+target_link_libraries(test_lookup
+  ${PROJECT_NAME}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
 
 catkin_add_gtest(derivative_checker_unittest
   test/dynamics/testSystemDynamicsLinearizer.cpp
@@ -254,15 +257,15 @@ target_link_libraries(derivative_checker_unittest
   gtest_main
 )
 
-# catkin_add_gtest(test_ThreadPool
-#   test/misc/testThreadPool.cpp
-# )
-# target_link_libraries(test_ThreadPool
-#   ${PROJECT_NAME}
-#   ${Boost_LIBRARIES}
-#   ${catkin_LIBRARIES}
-#   gtest_main
-# )
+catkin_add_gtest(test_ThreadPool
+  test/misc/testThreadPool.cpp
+)
+target_link_libraries(test_ThreadPool
+  ${PROJECT_NAME}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
 
 catkin_add_gtest(test_CostFunctionLinearCombination
   test/cost/testCostFunctionLinearCombination.cpp

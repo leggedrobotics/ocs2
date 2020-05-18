@@ -53,21 +53,21 @@
 #include <ocs2_core/integration/SystemEventHandler.h>
 #include <ocs2_core/integration/steppers.h>
 
-// // Logic
-// #include <ocs2_core/logic/ModeSchedule.h>
+// Logic
+#include <ocs2_core/logic/ModeSchedule.h>
 
 // // Loopshaping
 // #include <ocs2_core/loopshaping/Loopshaping.h>
 
-// // Misc
-// #include <ocs2_core/misc/Benchmark.h>
-// #include <ocs2_core/misc/LTI_Equations.h>
-// #include <ocs2_core/misc/LinearFunction.h>
+// Misc
+#include <ocs2_core/misc/Benchmark.h>
+#include <ocs2_core/misc/LTI_Equations.h>
+#include <ocs2_core/misc/LinearFunction.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
-// #include <ocs2_core/misc/LoadData.h>
-// #include <ocs2_core/misc/Lookup.h>
-// #include <ocs2_core/misc/SetThreadPriority.h>
-// #include <ocs2_core/misc/randomMatrices.h>
+#include <ocs2_core/misc/LoadData.h>
+#include <ocs2_core/misc/Lookup.h>
+#include <ocs2_core/misc/SetThreadPriority.h>
+#include <ocs2_core/misc/randomMatrices.h>
 
 // model_data
 #include <ocs2_core/model_data/ModelDataBase.h>

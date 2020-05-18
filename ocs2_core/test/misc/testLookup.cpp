@@ -129,10 +129,3 @@ TEST(testLookup, findBoundedActiveIntervalInTimeArray)
   ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArrayEmpty,  0.0));
   ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArrayEmpty,  1.0));
 }
-
-
-int main(int argc, char** argv)
-{
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}

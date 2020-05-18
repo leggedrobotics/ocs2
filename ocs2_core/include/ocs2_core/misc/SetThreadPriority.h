@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SETTHREADPRIORITY_OCS2_H_
-#define SETTHREADPRIORITY_OCS2_H_
+#pragma once
 
 #include <pthread.h>
 #include <iostream>
@@ -56,5 +55,3 @@ inline void setThreadPriority(const int priority, std::thread& thread) {
 }
 
 }  // namespace ocs2
-
-#endif /* SETTHREADPRIORITY_OCS2_H_ */

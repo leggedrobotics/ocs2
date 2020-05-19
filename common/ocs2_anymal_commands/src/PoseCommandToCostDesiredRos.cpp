@@ -14,22 +14,18 @@
 
 namespace switched_model {
 
-PoseCommandToCostDesiredRos::PoseCommandToCostDesiredRos(ros::NodeHandle& nodeHandle, ocs2::LockablePtr<TerrainModel>& terrainPtr) : terrainPptr_(&terrainPtr) {
-  // Load settings
-  std::string filename = ros::package::getPath("ocs2_anymal_commands") + "/config/targetCommand.info";
+PoseCommandToCostDesiredRos::PoseCommandToCostDesiredRos(const std::string& configFile, ros::NodeHandle& nodeHandle) : localTerrain_() {
   boost::property_tree::ptree pt;
-  boost::property_tree::read_info(filename, pt);
+  boost::property_tree::read_info(configFile, pt);
   targetDisplacementVelocity = pt.get<scalar_t>("targetDisplacementVelocity");
   targetRotationVelocity = pt.get<scalar_t>("targetRotationVelocity");
   initZHeight = pt.get<scalar_t>("comHeight");
-  ocs2::loadData::loadEigenMatrix(filename, "defaultJointState", defaultJointState);
+  ocs2::loadData::loadEigenMatrix(configFile, "defaultJointState", defaultJointState);
 
   // Setup ROS communication
   costDesiredPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_target_trajectories>("/anymal_mpc_target", 1, false);
-  observationSubscriber_ = nodeHandle.subscribe("/anymal_mpc_observation", 1,
-                                                &PoseCommandToCostDesiredRos::observationCallback, this);
-  commandSubscriber_ = nodeHandle.subscribe("/anymal_mpc_pose_command", 1,
-                                            &PoseCommandToCostDesiredRos::commandCallback, this);
+  observationSubscriber_ = nodeHandle.subscribe("/anymal_mpc_observation", 1, &PoseCommandToCostDesiredRos::observationCallback, this);
+  terrainSubscriber_ = nodeHandle.subscribe("/ocs2_anymal/localTerrain", 1, &PoseCommandToCostDesiredRos::terrainCallback, this);
 }
 
 void PoseCommandToCostDesiredRos::observationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) {
@@ -37,10 +33,8 @@ void PoseCommandToCostDesiredRos::observationCallback(const ocs2_msgs::mpc_obser
   observation_ = msg;
 }
 
-void PoseCommandToCostDesiredRos::commandCallback(const ocs2_msgs::mpc_state::ConstPtr& msg) {
+void PoseCommandToCostDesiredRos::publishCostDesiredFromCommand(const PoseCommand_t& command) {
   auto deg2rad = [](scalar_t deg) { return (deg * M_PI / 180.0); };
-
-  ocs2_msgs::mpc_state command = *msg;
 
   ocs2::SystemObservation<STATE_DIM, INPUT_DIM> observation;
   if (observation_) {
@@ -48,24 +42,23 @@ void PoseCommandToCostDesiredRos::commandCallback(const ocs2_msgs::mpc_state::Co
     ocs2::ros_msg_conversions::readObservationMsg(*observation_, observation);
   } else {
     ROS_WARN_STREAM("No observation is received from the MPC node. Make sure the MPC node is running!");
+    return;
   }
 
   // Command to desired Base
   // x, y are relative, z is relative to terrain + default offset;
-  vector3_t comPositionDesired{command.value[0] + observation.state()[3], command.value[1] + observation.state()[4], command.value[2] + initZHeight};
+  vector3_t comPositionDesired{command[0] + observation.state()[3], command[1] + observation.state()[4], command[2] + initZHeight};
   // Roll and pitch are absolute, yaw is relative
-  vector3_t comOrientationDesired{deg2rad(command.value[3]), deg2rad(command.value[4]), deg2rad(command.value[5]) + observation.state()[2]};
+  vector3_t comOrientationDesired{deg2rad(command[3]), deg2rad(command[4]), deg2rad(command[5]) + observation.state()[2]};
   const auto desiredTime =
       estimeTimeToTarget(comOrientationDesired.z() - observation.state()[2], comPositionDesired.x() - observation.state()[3],
                          comPositionDesired.y() - observation.state()[4]);
 
-  // Terrain adaptation
-  const auto localTerrainPlane = [&]{
-    std::lock_guard<ocs2::LockablePtr<TerrainModel>> lock(*terrainPptr_);
-    return (*terrainPptr_)->getLocalTerrainAtPositionInWorld(comPositionDesired);
-  }();
-  comPositionDesired = adaptDesiredPositionHeightToTerrain(comPositionDesired, localTerrainPlane, comPositionDesired.z());
-  comOrientationDesired = alignDesiredOrientationToTerrain(comOrientationDesired, localTerrainPlane);
+  {  // Terrain adaptation
+    std::lock_guard<std::mutex> lock(terrainMutex_);
+    comPositionDesired = adaptDesiredPositionHeightToTerrain(comPositionDesired, localTerrain_, comPositionDesired.z());
+    comOrientationDesired = alignDesiredOrientationToTerrain(comOrientationDesired, localTerrain_);
+  }
 
   // Trajectory to publish
   ocs2::CostDesiredTrajectories costDesiredTrajectories(2);
@@ -103,6 +96,15 @@ void PoseCommandToCostDesiredRos::commandCallback(const ocs2_msgs::mpc_state::Co
   ocs2_msgs::mpc_target_trajectories mpcTargetTrajectoriesMsg;
   ocs2::ros_msg_conversions::createTargetTrajectoriesMsg(costDesiredTrajectories, mpcTargetTrajectoriesMsg);
   costDesiredPublisher_.publish(mpcTargetTrajectoriesMsg);
+}
+
+void PoseCommandToCostDesiredRos::terrainCallback(const visualization_msgs::Marker::ConstPtr& msg) {
+  Eigen::Quaterniond orientationTerrainToWorld{msg->pose.orientation.w, msg->pose.orientation.x, msg->pose.orientation.y,
+                                               msg->pose.orientation.z};
+
+  std::lock_guard<std::mutex> lock(terrainMutex_);
+  localTerrain_.positionInWorld = {msg->pose.position.x, msg->pose.position.y, msg->pose.position.z};
+  localTerrain_.orientationWorldToTerrain = orientationTerrainToWorld.toRotationMatrix().transpose();
 }
 
 scalar_t PoseCommandToCostDesiredRos::estimeTimeToTarget(scalar_t dyaw, scalar_t dx, scalar_t dy) const {

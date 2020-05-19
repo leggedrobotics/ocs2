@@ -9,8 +9,6 @@
 #include <ocs2_switched_model_interface/logic/GaitReceiver.h>
 #include <ocs2_switched_model_interface/terrain/TerrainPlane.h>
 
-#include <ocs2_anymal_commands/PoseCommandToCostDesiredRos.h>
-
 #include <ocs2_quadruped_interface/LocalTerrainVisualizer.h>
 #include <ocs2_quadruped_interface/QuadrupedSlqMpc.h>
 #include <ocs2_quadruped_interface/SwingPlanningVisualizer.h>
@@ -33,9 +31,6 @@ void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& qua
   auto localTerrainVisualizer =
       std::make_shared<LocalTerrainVisualizer>(quadrupedInterface.getModeScheduleManagerPtr()->getTerrainPtr(), nodeHandle);
   solverModules.push_back(localTerrainVisualizer);
-
-  // Target Trajectories
-  PoseCommandToCostDesiredRos poseCommandToCostDesiredRos(nodeHandle, quadrupedInterface.getModeScheduleManagerPtr()->getTerrainPtr());
 
   // Swing planner
   auto swingPlanningVisualizer =

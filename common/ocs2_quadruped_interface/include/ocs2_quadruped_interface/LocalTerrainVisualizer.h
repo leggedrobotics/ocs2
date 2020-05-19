@@ -25,7 +25,7 @@ class TerrainPlaneVisualizer {
   double planeThickness_ = 0.005;
   double planeAlpha_ = 0.5;
 
-  TerrainPlaneVisualizer(ros::NodeHandle& nodeHandle);
+  explicit TerrainPlaneVisualizer(ros::NodeHandle& nodeHandle);
 
   void update(scalar_t time, const TerrainPlane& terrainPlane);
 

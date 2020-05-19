@@ -5,6 +5,7 @@
 #pragma once
 
 #include <ros/ros.h>
+#include <visualization_msgs/Marker.h>
 
 #include <ocs2_core/misc/Lockable.h>
 
@@ -25,21 +26,28 @@ class PoseCommandToCostDesiredRos {
   scalar_t initZHeight;
   Eigen::Matrix<scalar_t, 12, 1> defaultJointState;
 
-  PoseCommandToCostDesiredRos(ros::NodeHandle& nodeHandle, ocs2::LockablePtr<TerrainModel>& terrainPtr);
+  using PoseCommand_t = std::array<double, 6>; // [x, y, z, roll, pitch, yaw]
 
-  void observationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg);
+  PoseCommandToCostDesiredRos(const std::string& configFile, ros::NodeHandle& nodeHandle);
 
-  void commandCallback(const ocs2_msgs::mpc_state::ConstPtr& msg);
+  void publishCostDesiredFromCommand(const PoseCommand_t& command);
 
  private:
+  void observationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg);
+
+  void terrainCallback(const visualization_msgs::Marker::ConstPtr& msg);
+
   scalar_t estimeTimeToTarget(scalar_t dyaw, scalar_t dx, scalar_t dy) const;
 
-  ocs2::LockablePtr<TerrainModel>* terrainPptr_;
   ros::Publisher costDesiredPublisher_;
 
   ros::Subscriber observationSubscriber_;
   std::mutex observationMutex_;
   ocs2_msgs::mpc_observation::ConstPtr observation_;
+
+  ros::Subscriber terrainSubscriber_;
+  std::mutex terrainMutex_;
+  TerrainPlane localTerrain_;
 
   ros::Subscriber commandSubscriber_;
 };

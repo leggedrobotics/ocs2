@@ -98,10 +98,6 @@ void PoseCommandToCostDesiredRos::commandCallback(const ocs2_msgs::mpc_state::Co
   ocs2::CostDesiredTrajectories::dynamic_vector_array_t& uDesiredTrajectory = costDesiredTrajectories.desiredInputTrajectory();
   uDesiredTrajectory.resize(2);
   uDesiredTrajectory[0] = ocs2::dynamic_vector_t::Zero(INPUT_DIM);
-  uDesiredTrajectory[0][2 + 0] = 80.0;
-  uDesiredTrajectory[0][2 + 3] = 80.0;
-  uDesiredTrajectory[0][2 + 6] = 80.0;
-  uDesiredTrajectory[0][2 + 9] = 80.0;
   uDesiredTrajectory[1] = uDesiredTrajectory[0];
 
   ocs2_msgs::mpc_target_trajectories mpcTargetTrajectoriesMsg;

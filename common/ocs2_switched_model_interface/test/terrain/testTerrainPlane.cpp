@@ -23,7 +23,7 @@ TEST(TestTerrainPlane, surfaceNormal) {
   vector3_t eulerXYZ{0.0, 0.0, 0.3};
   const auto yawRotation = rotationMatrixBaseToOrigin(eulerXYZ);
 
-  TerrainPlane yawRotatedPlane{vector3_t::Zero(), yawRotation*matrix3_t::Identity()};
+  TerrainPlane yawRotatedPlane{vector3_t::Zero(), yawRotation * matrix3_t::Identity()};
 
   ASSERT_TRUE(surfaceNormalInWorld(yawRotatedPlane).isApprox(vector3_t{0.0, 0.0, 1.0}));
 }
@@ -79,7 +79,8 @@ TEST(TestTerrainPlane, projectPositionInWorldOntoPlane) {
   const auto projectedPosition = projectPositionInWorldOntoPlane(vector3_t::Random(), randomPlane);
 
   // Distance to plane
-  ASSERT_DOUBLE_EQ(terrainDistanceFromPositionInWorld(projectedPosition, randomPlane), 0.0);
+  const double tol = 1e-9;
+  ASSERT_LT(std::abs(terrainDistanceFromPositionInWorld(projectedPosition, randomPlane)), tol);
 
   // Double projection
   ASSERT_TRUE(projectPositionInWorldOntoPlane(projectedPosition, randomPlane).isApprox(projectedPosition));
@@ -96,7 +97,8 @@ TEST(TestTerrainPlane, projectPositionInWorldOntoPlaneAlongGravity_flatTerrain) 
   const vector3_t queryPosition = {1.0, 1.0, 0.0};
   const auto projectedPosition = projectPositionInWorldOntoPlaneAlongGravity(queryPosition, flatTerrain);
 
-  ASSERT_TRUE(queryPosition.isApprox(projectedPosition));
+  ASSERT_TRUE(queryPosition.head(2).isApprox(projectedPosition.head(2)));
+  ASSERT_DOUBLE_EQ(projectedPosition.z(), flatTerrain.positionInWorld.z());
 }
 
 TEST(TestTerrainPlane, projectPositionInWorldOntoPlaneAlongGravity_randomTerrain) {
@@ -115,7 +117,7 @@ TEST(TestTerrainPlane, projectPositionInWorldOntoPlaneAlongGravity_randomTerrain
 
   // Distance to plane
   const double tol = 1e-9;
-  ASSERT_LT(terrainDistanceFromPositionInWorld(projectedPosition, randomPlane), tol);
+  ASSERT_LT(std::abs(terrainDistanceFromPositionInWorld(projectedPosition, randomPlane)), tol);
 
   // Double projection
   ASSERT_TRUE(projectPositionInWorldOntoPlane(projectedPosition, randomPlane).isApprox(projectedPosition));

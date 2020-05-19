@@ -20,7 +20,7 @@ inline vector3_t adaptDesiredPositionHeightToTerrain(const vector3_t& desiredPos
 
 inline scalar_t findOrientationClostestToReference(scalar_t yaw, scalar_t reference) {
   while (std::abs(yaw - reference) > M_PI) {
-    yaw -= (yaw - reference) / std::abs(yaw - reference) * 2 * M_PI;
+    yaw -= (yaw - reference) / std::abs(yaw - reference) * 2.0 * M_PI;
   }
   return yaw;
 }

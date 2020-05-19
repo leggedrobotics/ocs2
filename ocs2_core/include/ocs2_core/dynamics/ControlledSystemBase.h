@@ -54,7 +54,7 @@ class ControlledSystemBase : public OdeBase {
   /**
    * Default destructor.
    */
-  virtual ~ControlledSystemBase() = default;
+  ~ControlledSystemBase() override = default;
 
   /**
    * Resets the internal classes.

@@ -45,6 +45,11 @@ class LinearController final : public ControllerBase {
 
   /**
    * Constructor, leaves object uninitialized
+   */
+  LinearController() : ControllerBase(0, 0) {}
+
+  /**
+   * Constructor, leaves object uninitialized
    *
    * @param[in] stateDim: State vector dimension
    * @param[in] inputDim: Input vector dimension

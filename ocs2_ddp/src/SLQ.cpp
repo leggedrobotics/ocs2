@@ -28,21 +28,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include <ocs2_ddp/SLQ.h>
+#include <ocs2_ddp/riccati_equations/RiccatiModificationInterpolation.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
-                               const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
-                               const operating_trajectories_base_t* operatingTrajectoriesPtr,
-                               const SLQ_Settings& settings /*= SLQ_Settings()*/,
-                               const cost_function_base_t* heuristicsFunctionPtr /* = nullptr*/)
+SLQ::SLQ(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const DerivativesBase* systemDerivativesPtr,
+         const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
+         const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const SLQ_Settings& settings /*= SLQ_Settings()*/,
+         const CostFunctionBase* heuristicsFunctionPtr /* = nullptr*/)
 
-    : BASE(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings.ddpSettings_,
-           heuristicsFunctionPtr, "SLQ"),
+    : BASE(stateDim, inputDim, rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
+           settings.ddpSettings_, heuristicsFunctionPtr, "SLQ"),
       settings_(settings) {
   // Riccati Solver
   riccatiEquationsPtrStock_.clear();
@@ -60,9 +59,9 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivativ
     bool preComputeRiccatiTerms =
         BASE::ddpSettings_.preComputeRiccatiTerms_ && (BASE::ddpSettings_.strategy_ == ddp_strategy::type::LINE_SEARCH);
     bool isRiskSensitive = !numerics::almost_eq(BASE::ddpSettings_.riskSensitiveCoeff_, 0.0);
-    riccatiEquationsPtrStock_.emplace_back(new riccati_equations_t(preComputeRiccatiTerms, isRiskSensitive));
+    riccatiEquationsPtrStock_.emplace_back(new ContinuousTimeRiccatiEquations(preComputeRiccatiTerms, isRiskSensitive));
     riccatiEquationsPtrStock_.back()->setRiskSensitiveCoefficient(BASE::ddpSettings_.riskSensitiveCoeff_);
-    riccatiIntegratorPtrStock_.emplace_back(newIntegrator<Eigen::Dynamic>(integratorType));
+    riccatiIntegratorPtrStock_.emplace_back(newIntegrator(integratorType));
   }  // end of i loop
 
   Eigen::initParallel();
@@ -71,11 +70,9 @@ SLQ<STATE_DIM, INPUT_DIM>::SLQ(const rollout_base_t* rolloutPtr, const derivativ
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
-                                                          const state_vector_array_t& stateTrajectory,
-                                                          const input_vector_array_t& inputTrajectory,
-                                                          ModelDataBase::array_t& modelDataTrajectory) {
+void SLQ::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
+                                    const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
+                                    ModelDataBase::array_t& modelDataTrajectory) {
   BASE::nextTimeIndex_ = 0;
   BASE::nextTaskId_ = 0;
   std::function<void(void)> task = [&] {
@@ -96,26 +93,25 @@ void SLQ<STATE_DIM, INPUT_DIM>::approximateIntermediateLQ(const scalar_array_t& 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) {
+void SLQ::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) {
   const auto i = partitionIndex;
   const auto k = timeIndex;
   const auto time = BASE::SsTimeTrajectoryStock_[i][k];
 
   // local variables
-  state_vector_t nominalState;
-  input_vector_t nominalInput;
+  vector_t nominalState;
+  vector_t nominalInput;
 
-  dynamic_matrix_t projectedBm;
-  dynamic_matrix_t projectedPm;
-  dynamic_vector_t projectedRv;
+  matrix_t projectedBm;
+  matrix_t projectedPm;
+  vector_t projectedRv;
 
-  dynamic_matrix_t projectedKm;  // projected feedback
-  dynamic_vector_t projectedLv;  // projected feedforward
+  matrix_t projectedKm;  // projected feedback
+  vector_t projectedLv;  // projected feedforward
 
-  dynamic_matrix_t Qu;  // projector
-  dynamic_matrix_t CmProjected;
-  dynamic_vector_t EvProjected;
+  matrix_t Qu;  // projector
+  matrix_t CmProjected;
+  vector_t EvProjected;
 
   // interpolate
   const auto indexAlpha = LinearInterpolation::timeSegment(time, &(BASE::nominalTimeTrajectoriesStock_[i]));
@@ -180,10 +176,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, si
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-typename SLQ<STATE_DIM, INPUT_DIM>::scalar_t SLQ<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(const dynamic_matrix_t& SmFinal,
-                                                                                                        const dynamic_vector_t& SvFinal,
-                                                                                                        const scalar_t& sFinal) {
+scalar_t SLQ::solveSequentialRiccatiEquations(const matrix_t& SmFinal, const vector_t& SvFinal, const scalar_t& sFinal) {
   // fully compute the riccatiModifications and projected modelData
   for (size_t i = 0; i < BASE::numPartitions_; i++) {
     // number of the intermediate LQ variables
@@ -200,7 +193,7 @@ typename SLQ<STATE_DIM, INPUT_DIM>::scalar_t SLQ<STATE_DIM, INPUT_DIM>::solveSeq
         int N = BASE::nominalTimeTrajectoriesStock_[i].size();
         int timeIndex;
         size_t taskId = BASE::nextTaskId_++;  // assign task ID (atomic)
-        const auto SmDummy = dynamic_matrix_t::Zero(0, 0);
+        const auto SmDummy = matrix_t::Zero(0, 0);
 
         // get next time index is atomic
         while ((timeIndex = BASE::nextTimeIndex_++) < N) {
@@ -219,9 +212,7 @@ typename SLQ<STATE_DIM, INPUT_DIM>::scalar_t SLQ<STATE_DIM, INPUT_DIM>::solveSeq
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-typename SLQ<STATE_DIM, INPUT_DIM>::dynamic_matrix_t SLQ<STATE_DIM, INPUT_DIM>::computeHamiltonianHessian(
-    ddp_strategy::type strategy, const ModelDataBase& modelData, const dynamic_matrix_t& Sm) const {
+matrix_t SLQ::computeHamiltonianHessian(ddp_strategy::type strategy, const ModelDataBase& modelData, const matrix_t& Sm) const {
   const auto& Bm = modelData.dynamicsInputDerivative_;
   const auto& Rm = modelData.costInputSecondDerivative_;
   switch (strategy) {
@@ -239,17 +230,15 @@ typename SLQ<STATE_DIM, INPUT_DIM>::dynamic_matrix_t SLQ<STATE_DIM, INPUT_DIM>::
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-SLQ_Settings& SLQ<STATE_DIM, INPUT_DIM>::settings() {
+SLQ_Settings& SLQ::settings() {
   return settings_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const dynamic_matrix_t& SmFinal,
-                                                       const dynamic_vector_t& SvFinal, const scalar_t& sFinal) {
+void SLQ::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const matrix_t& SmFinal, const vector_t& SvFinal,
+                                 const scalar_t& sFinal) {
   // set data for Riccati equations
   riccatiEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
   riccatiEquationsPtrStock_[workerIndex]->setData(
@@ -270,8 +259,8 @@ void SLQ<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size_
   auto& sTrajectory = BASE::sTrajectoryStock_[partitionIndex];
 
   // Convert final value of value function in vector format
-  dynamic_vector_t allSsFinal;
-  riccati_equations_t::convert2Vector(SmFinal, SvFinal, sFinal, allSsFinal);
+  vector_t allSsFinal;
+  ContinuousTimeRiccatiEquations::convert2Vector(SmFinal, SvFinal, sFinal, allSsFinal);
 
   // Clear output containers
   SsNormalizedTime.clear();
@@ -287,7 +276,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size_
    *  if true: the integration will produce the same time nodes set in nominalTime (=resulting from the forward pass),
    *  if false: the SsNormalized time is a result of adaptive integration.
    */
-  dynamic_vector_array_t allSsTrajectory;
+  vector_array_t allSsTrajectory;
   if (settings_.useNominalTimeForBackwardPass_) {
     integrateRiccatiEquationNominalTime(*riccatiIntegratorPtrStock_[workerIndex], *riccatiEquationsPtrStock_[workerIndex],
                                         nominalTimeTrajectory, nominalEventsPastTheEndIndices, std::move(allSsFinal), SsNormalizedTime,
@@ -306,7 +295,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size_
   sTrajectory.resize(outputN);
   for (size_t k = 0; k < outputN; k++) {
     SsTimeTrajectory[k] = -SsNormalizedTime[outputN - 1 - k];
-    riccati_equations_t::convert2Matrix(allSsTrajectory[outputN - 1 - k], SmTrajectory[k], SvTrajectory[k], sTrajectory[k]);
+    ContinuousTimeRiccatiEquations::convert2Matrix(allSsTrajectory[outputN - 1 - k], SmTrajectory[k], SvTrajectory[k], sTrajectory[k]);
   }  // end of k loop
 
   if (BASE::ddpSettings_.debugPrintRollout_) {
@@ -323,11 +312,11 @@ void SLQ<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::integrateRiccatiEquationNominalTime(
-    IntegratorBase<Eigen::Dynamic>& riccatiIntegrator, riccati_equations_t& riccatiEquation, const scalar_array_t& nominalTimeTrajectory,
-    const size_array_t& nominalEventsPastTheEndIndices, dynamic_vector_t allSsFinal, scalar_array_t& SsNormalizedTime,
-    size_array_t& SsNormalizedPostEventIndices, dynamic_vector_array_t& allSsTrajectory) {
+void SLQ::integrateRiccatiEquationNominalTime(IntegratorBase& riccatiIntegrator, ContinuousTimeRiccatiEquations& riccatiEquation,
+                                              const scalar_array_t& nominalTimeTrajectory,
+                                              const size_array_t& nominalEventsPastTheEndIndices, vector_t allSsFinal,
+                                              scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedPostEventIndices,
+                                              vector_array_t& allSsTrajectory) {
   // Extract sizes
   const int nominalTimeSize = nominalTimeTrajectory.size();
   const int numEvents = nominalEventsPastTheEndIndices.size();
@@ -350,10 +339,10 @@ void SLQ<STATE_DIM, INPUT_DIM>::integrateRiccatiEquationNominalTime(
   // integrating the Riccati equations
   allSsTrajectory.reserve(maxNumSteps);
   for (int i = 0; i <= numEvents; i++) {
-    typename scalar_array_t::const_iterator beginTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i];
-    typename scalar_array_t::const_iterator endTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i + 1];
+    scalar_array_t::const_iterator beginTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i];
+    scalar_array_t::const_iterator endTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i + 1];
 
-    Observer<Eigen::Dynamic> observer(&allSsTrajectory);
+    Observer observer(&allSsTrajectory);
     // solve Riccati equations
     riccatiIntegrator.integrate_times(riccatiEquation, observer, allSsFinal, beginTimeItr, endTimeItr, BASE::ddpSettings_.minTimeStep_,
                                       BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps);
@@ -372,11 +361,11 @@ void SLQ<STATE_DIM, INPUT_DIM>::integrateRiccatiEquationNominalTime(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void SLQ<STATE_DIM, INPUT_DIM>::integrateRiccatiEquationAdaptiveTime(
-    IntegratorBase<Eigen::Dynamic>& riccatiIntegrator, riccati_equations_t& riccatiEquation, const scalar_array_t& nominalTimeTrajectory,
-    const size_array_t& nominalEventsPastTheEndIndices, dynamic_vector_t allSsFinal, scalar_array_t& SsNormalizedTime,
-    size_array_t& SsNormalizedPostEventIndices, dynamic_vector_array_t& allSsTrajectory) {
+void SLQ::integrateRiccatiEquationAdaptiveTime(IntegratorBase& riccatiIntegrator, ContinuousTimeRiccatiEquations& riccatiEquation,
+                                               const scalar_array_t& nominalTimeTrajectory,
+                                               const size_array_t& nominalEventsPastTheEndIndices, vector_t allSsFinal,
+                                               scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedPostEventIndices,
+                                               vector_array_t& allSsTrajectory) {
   // Extract sizes
   const int nominalTimeSize = nominalTimeTrajectory.size();
   const int numEvents = nominalEventsPastTheEndIndices.size();
@@ -401,7 +390,7 @@ void SLQ<STATE_DIM, INPUT_DIM>::integrateRiccatiEquationAdaptiveTime(
     scalar_t beginTime = SsNormalizedSwitchingTimes[i];
     scalar_t endTime = SsNormalizedSwitchingTimes[i + 1];
 
-    Observer<Eigen::Dynamic> observer(&allSsTrajectory, &SsNormalizedTime);
+    Observer observer(&allSsTrajectory, &SsNormalizedTime);
     // solve Riccati equations
     riccatiIntegrator.integrate_adaptive(riccatiEquation, observer, allSsFinal, beginTime, endTime, BASE::ddpSettings_.minTimeStep_,
                                          BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps);

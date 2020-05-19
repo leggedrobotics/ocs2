@@ -50,9 +50,12 @@ class RolloutBase {
   /**
    * Default constructor.
    *
+   * @param [in] stateDim: State vector dimension
+   * @param [in] inputDim: Input vector dimension
    * @param [in] rolloutSettings: The rollout settings.
    */
-  explicit RolloutBase(Rollout_Settings rolloutSettings = Rollout_Settings()) : rolloutSettings_(std::move(rolloutSettings)) {}
+  explicit RolloutBase(size_t stateDim, size_t inputDim, Rollout_Settings rolloutSettings = Rollout_Settings())
+      : stateDim_(stateDim), inputDim_(inputDim), rolloutSettings_(std::move(rolloutSettings)) {}
 
   /**
    * Default destructor.
@@ -152,6 +155,10 @@ class RolloutBase {
    */
   void checkNumericalStability(ControllerBase* controller, const scalar_array_t& timeTrajectory, const size_array_t& postEventIndicesStock,
                                const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory) const;
+
+ protected:
+  size_t stateDim_;
+  size_t inputDim_;
 
  private:
   Rollout_Settings rolloutSettings_;

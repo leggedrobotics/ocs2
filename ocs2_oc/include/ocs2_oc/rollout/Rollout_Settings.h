@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <string>
 
+#include <ocs2_core/Types.h>
 #include <ocs2_core/integration/Integrator.h>
 #include <ocs2_core/misc/LoadData.h>
 
@@ -57,10 +58,11 @@ class Rollout_Settings {
    * @param [in] checkNumericalStability: Whether to check that the rollout is numerically stable.
    * @param [in] reconstructInputTrajectory: Whether to run controller again after integration to construct input trajectory
    */
-  explicit Rollout_Settings(double absTolODE = 1e-9, double relTolODE = 1e-6, size_t maxNumStepsPerSecond = 5000, double minTimeStep = 1e-3,
-                            IntegratorType integratorType = IntegratorType::ODE45, bool checkNumericalStability = false,
-                            bool reconstructInputTrajectory = true, RootFinderType rootFindingAlgorithm = RootFinderType::ANDERSON_BJORCK,
-                            int maxSingleEventIterations = 10, bool useTrajectorySpreadingController = false)
+  explicit Rollout_Settings(scalar_t absTolODE = 1e-9, scalar_t relTolODE = 1e-6, size_t maxNumStepsPerSecond = 5000,
+                            scalar_t minTimeStep = 1e-3, IntegratorType integratorType = IntegratorType::ODE45,
+                            bool checkNumericalStability = false, bool reconstructInputTrajectory = true,
+                            RootFinderType rootFindingAlgorithm = RootFinderType::ANDERSON_BJORCK, int maxSingleEventIterations = 10,
+                            bool useTrajectorySpreadingController = false)
       : absTolODE_(absTolODE),
         relTolODE_(relTolODE),
         maxNumStepsPerSecond_(maxNumStepsPerSecond),
@@ -99,13 +101,13 @@ class Rollout_Settings {
    *** Variables **
    ****************/
   /** This value determines the absolute tolerance error for ode solvers. */
-  double absTolODE_;
+  scalar_t absTolODE_;
   /** This value determines the relative tolerance error for ode solvers. */
-  double relTolODE_;
+  scalar_t relTolODE_;
   /** This value determines the maximum number of integration points per a second for ode solvers. */
   size_t maxNumStepsPerSecond_;
   /** The minimum integration time step */
-  double minTimeStep_;
+  scalar_t minTimeStep_;
   /** Rollout integration scheme type */
   IntegratorType integratorType_;
   /** Whether to check that the rollout is numerically stable */

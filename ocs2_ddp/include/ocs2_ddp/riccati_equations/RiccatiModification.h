@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -43,16 +43,16 @@ struct Data {
 
   scalar_t time_;
 
-  dynamic_matrix_t deltaQm_;
-  dynamic_matrix_t deltaGm_;
-  dynamic_vector_t deltaGv_;
+  matrix_t deltaQm_;
+  matrix_t deltaGm_;
+  vector_t deltaGv_;
 
   /** The Hessian matrix of the Hamiltonian, \f$Hm\f$. */
-  dynamic_matrix_t hamiltonianHessian_;
+  matrix_t hamiltonianHessian_;
   /** The right pseudo-inverse of \f$Dm\f$ */
-  dynamic_matrix_t constraintRangeProjector_;
+  matrix_t constraintRangeProjector_;
   /** \f$DmNull inv(DmNull^T * Hm * DmNull) * DmNull^T = (I - invHm * Dm^T * inv(Dm * invHm * Dm^T) * Dm) * invHm\f$ */
-  dynamic_matrix_t constraintNullProjector_;
+  matrix_t constraintNullProjector_;
 };
 
 /**

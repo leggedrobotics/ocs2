@@ -51,10 +51,10 @@ class EXP0_Sys1 : public ControlledSystemBase {
   EXP0_Sys1() = default;
   ~EXP0_Sys1() = default;
 
-  void computeFlowMap(const double& t, const Eigen::Vector2d& x, const Eigen::Matrix<double, 1, 1>& u, Eigen::Vector2d& dxdt) final {
-    Eigen::Matrix2d A(2, 2);
+  void computeFlowMap(const double& t, const vector_t& x, const vector_t& u, vector_t& dxdt) final {
+    matrix_t A(2, 2);
     A << 0.6, 1.2, -0.8, 3.4;
-    Eigen::Vector2d B(2, 1);
+    vector_t B(2, 1);
     B << 1, 1;
 
     dxdt = A * x + B * u;
@@ -71,10 +71,10 @@ class EXP0_Sys2 : public ControlledSystemBase {
   EXP0_Sys2() = default;
   ~EXP0_Sys2() = default;
 
-  void computeFlowMap(const double& t, const Eigen::Vector2d& x, const Eigen::Matrix<double, 1, 1>& u, Eigen::Vector2d& dxdt) final {
-    Eigen::Matrix2d A(2, 2);
+  void computeFlowMap(const double& t, const vector_t& x, const vector_t& u, vector_t& dxdt) final {
+    matrix_t A(2, 2);
     A << 4, 3, -1, 0;
-    Eigen::Vector2d B(2, 1);
+    vector_t B(2, 1);
     B << 2, -1;
 
     dxdt = A * x + B * u;
@@ -118,8 +118,14 @@ class EXP0_SysDerivative1 : public DerivativesBase {
   EXP0_SysDerivative1() = default;
   ~EXP0_SysDerivative1() = default;
 
-  void getFlowMapDerivativeState(matrix_t& A) final { A << 0.6, 1.2, -0.8, 3.4; }
-  void getFlowMapDerivativeInput(matrix_t& B) final { B << 1, 1; }
+  void getFlowMapDerivativeState(matrix_t& A) final {
+    A.resize(2, 2);
+    A << 0.6, 1.2, -0.8, 3.4;
+  }
+  void getFlowMapDerivativeInput(matrix_t& B) final {
+    B.resize(2, 1);
+    B << 1, 1;
+  }
 
   EXP0_SysDerivative1* clone() const final { return new EXP0_SysDerivative1(*this); }
 };
@@ -132,8 +138,14 @@ class EXP0_SysDerivative2 : public DerivativesBase {
   EXP0_SysDerivative2() = default;
   ~EXP0_SysDerivative2() = default;
 
-  void getFlowMapDerivativeState(matrix_t& A) final { A << 4, 3, -1, 0; }
-  void getFlowMapDerivativeInput(matrix_t& B) final { B << 2, -1; }
+  void getFlowMapDerivativeState(matrix_t& A) final {
+    A.resize(2, 2);
+    A << 4, 3, -1, 0;
+  }
+  void getFlowMapDerivativeInput(matrix_t& B) final {
+    B.resize(2, 1);
+    B << 2, -1;
+  }
 
   EXP0_SysDerivative2* clone() const final { return new EXP0_SysDerivative2(*this); }
 };
@@ -190,8 +202,14 @@ class EXP0_CostFunction1 : public CostFunctionBase {
     dLdx.resize(2);
     dLdx << 0.0, (x_(1) - 2.0);
   }
-  void getIntermediateCostSecondDerivativeState(matrix_t& dLdxx) final { dLdxx.resize(2, 2) dLdxx << 0.0, 0.0, 0.0, 1.0; }
-  void getIntermediateCostDerivativeInput(vector_t& dLdu) final { dLdu.resize(1) dLdu << u_; }
+  void getIntermediateCostSecondDerivativeState(matrix_t& dLdxx) final {
+    dLdxx.resize(2, 2);
+    dLdxx << 0.0, 0.0, 0.0, 1.0;
+  }
+  void getIntermediateCostDerivativeInput(vector_t& dLdu) final {
+    dLdu.resize(1);
+    dLdu << u_;
+  }
   void getIntermediateCostSecondDerivativeInput(matrix_t& dLduu) final {
     dLduu.resize(1, 1);
     dLduu << 1.0;
@@ -220,8 +238,14 @@ class EXP0_CostFunction2 : public CostFunctionBase {
     dLdx.resize(2);
     dLdx << 0.0, (x_(1) - 2.0);
   }
-  void getIntermediateCostSecondDerivativeState(matrix_t& dLdxx) final { dLdxx.resize(2, 2) dLdxx << 0.0, 0.0, 0.0, 1.0; }
-  void getIntermediateCostDerivativeInput(vector_t& dLdu) final { dLdu.resize(1) dLdu << u_; }
+  void getIntermediateCostSecondDerivativeState(matrix_t& dLdxx) final {
+    dLdxx.resize(2, 2);
+    dLdxx << 0.0, 0.0, 0.0, 1.0;
+  }
+  void getIntermediateCostDerivativeInput(vector_t& dLdu) final {
+    dLdu.resize(1);
+    dLdu << u_;
+  }
   void getIntermediateCostSecondDerivativeInput(matrix_t& dLduu) final {
     dLduu.resize(1, 1);
     dLduu << 1.0;
@@ -292,5 +316,10 @@ class EXP0_CostFunction : public CostFunctionBase {
   std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr_;
   std::vector<std::shared_ptr<CostFunctionBase>> subsystemCostsPtr_;
 };
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+using EXP0_SystemOperatingTrajectories = OperatingPoints;
 
 }  // namespace ocs2

@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 #include <ocs2_core/control/LinearController.h>
@@ -38,7 +39,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
 #include <ocs2_core/misc/Benchmark.h>
-#include <ocs2_core/misc/LinearAlgebra.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/Numerics.h>
 #include <ocs2_core/misc/ThreadPool.h>
@@ -52,77 +52,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/Rollout_Settings.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
-#include "ocs2_ddp/DDP_Settings.h"
-#include "ocs2_ddp/HessianCorrection.h"
-#include "ocs2_ddp/riccati_equations/RiccatiModification.h"
-#include "ocs2_ddp/riccati_equations/RiccatiModificationInterpolation.h"
+#include "DDP_Settings.h"
+// #include "HessianCorrection.h"
+#include "riccati_equations/RiccatiModification.h"
+// #include "riccati_equations/RiccatiModificationInterpolation.h"
 
 namespace ocs2 {
 
 /**
  * This class is an interface class for the Gauss-Newton DDP based methods.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
+class GaussNewtonDDP : public Solver_BASE {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  using BASE = Solver_BASE<STATE_DIM, INPUT_DIM>;
-
-  using typename BASE::DIMENSIONS;
-  using typename BASE::dynamic_matrix_array2_t;
-  using typename BASE::dynamic_matrix_array3_t;
-  using typename BASE::dynamic_matrix_array_t;
-  using typename BASE::dynamic_matrix_t;
-  using typename BASE::dynamic_vector_array2_t;
-  using typename BASE::dynamic_vector_array3_t;
-  using typename BASE::dynamic_vector_array_t;
-  using typename BASE::dynamic_vector_t;
-  using typename BASE::input_vector_array2_t;
-  using typename BASE::input_vector_array3_t;
-  using typename BASE::input_vector_array_t;
-  using typename BASE::input_vector_t;
-  using typename BASE::scalar_array2_t;
-  using typename BASE::scalar_array3_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::scalar_t;
-  using typename BASE::size_array2_t;
-  using typename BASE::size_array_t;
-  using typename BASE::state_vector_array2_t;
-  using typename BASE::state_vector_array3_t;
-  using typename BASE::state_vector_array_t;
-  using typename BASE::state_vector_t;
-
-  using typename BASE::controller_array_t;
-  using typename BASE::controller_const_ptr_array_t;
-  using typename BASE::controller_ptr_array_t;
-  using typename BASE::controller_t;
-  using typename BASE::feedforward_controller_t;
-  using typename BASE::primal_solution_t;
-
-  using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
-  using linear_controller_array_t = typename linear_controller_t::array_t;
-  using linear_controller_ptr_array_t = std::vector<linear_controller_t*>;
-
-  using event_handler_t = SystemEventHandler<STATE_DIM>;
-  using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
-  using derivatives_base_t = DerivativesBase<STATE_DIM, INPUT_DIM>;
-  using constraint_base_t = ConstraintBase<STATE_DIM, INPUT_DIM>;
-  using cost_function_base_t = CostFunctionBase<STATE_DIM, INPUT_DIM>;
-  using operating_trajectories_base_t = SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM>;
-
-  using rollout_base_t = RolloutBase<STATE_DIM, INPUT_DIM>;
-  using time_triggered_rollout_t = TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
-  using linear_quadratic_approximator_t = LinearQuadraticApproximator<STATE_DIM, INPUT_DIM>;
-  using operating_trajectorie_rollout_t = OperatingTrajectoriesRollout<STATE_DIM, INPUT_DIM>;
-
   // Line-Search
   struct LineSearchModule {
-    scalar_t baselineMerit;                          // the merit of the rollout for zero learning rate
-    std::atomic<scalar_t> stepLengthStar;            // the optimal step length.
-    linear_controller_array_t initControllersStock;  // needed for lineSearch
+    scalar_t baselineMerit;                              // the merit of the rollout for zero learning rate
+    std::atomic<scalar_t> stepLengthStar;                // the optimal step length.
+    std::vector<LinearController> initControllersStock;  // needed for lineSearch
 
     std::atomic_size_t alphaExpNext;
     std::vector<bool> alphaProcessed;
@@ -151,12 +97,13 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * class for collecting SLQ data
    */
-  template <size_t OTHER_STATE_DIM, size_t OTHER_INPUT_DIM>
   friend class DDP_DataCollector;
 
   /**
    * Constructor
    *
+   * @param [in] stateDim: State vector dimension
+   * @param [in] inputDim: Input vector dimension
    * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
    * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
@@ -167,10 +114,10 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * If it is not defined, we will use the terminal cost function defined in costFunctionPtr.
    * @param [in] algorithmName: It should be either SLQ ot ILQR.
    */
-  GaussNewtonDDP(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
-                 const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
-                 const operating_trajectories_base_t* operatingTrajectoriesPtr, const DDP_Settings& ddpSettings,
-                 const cost_function_base_t* heuristicsFunctionPtr, const char* algorithmName);
+  GaussNewtonDDP(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const DerivativesBase* systemDerivativesPtr,
+                 const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
+                 const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const DDP_Settings& ddpSettings,
+                 const CostFunctionBase* heuristicsFunctionPtr, const char* algorithmName);
 
   /**
    * Destructor.
@@ -189,13 +136,13 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   const std::vector<PerformanceIndex>& getIterationsLog() const override;
 
-  void getPrimalSolution(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const final;
+  void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const final;
 
-  scalar_t getValueFunction(scalar_t time, const state_vector_t& state) const override;
+  scalar_t getValueFunction(scalar_t time, const vector_t& state) const override;
 
-  void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, dynamic_vector_t& Vx) const override;
+  void getValueFunctionStateDerivative(scalar_t time, const vector_t& state, vector_t& Vx) const override;
 
-  void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const override;
+  void getStateInputConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const override;
 
   void rewindOptimizer(size_t firstIndex) override;
 
@@ -268,7 +215,7 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [out] projectedModelData: The projected model data.
    * @param [out] riccatiModification: The Riccati equation modifier.
    */
-  void computeProjectionAndRiccatiModification(ddp_strategy::type strategy, const ModelDataBase& modelData, const dynamic_matrix_t& Sm,
+  void computeProjectionAndRiccatiModification(ddp_strategy::type strategy, const ModelDataBase& modelData, const matrix_t& Sm,
                                                ModelDataBase& projectedModelData, riccati_modification::Data& riccatiModification) const;
 
   /**
@@ -279,8 +226,7 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] Sm: The Riccati matrix.
    * @return The Hessian matrix of the Hamiltonian.
    */
-  virtual dynamic_matrix_t computeHamiltonianHessian(ddp_strategy::type strategy, const ModelDataBase& modelData,
-                                                     const dynamic_matrix_t& Sm) const = 0;
+  virtual matrix_t computeHamiltonianHessian(ddp_strategy::type strategy, const ModelDataBase& modelData, const matrix_t& Sm) const = 0;
 
   /**
    * Calculates an LQ approximate of the optimal control problem for the nodes.
@@ -292,7 +238,7 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param modelDataTrajectory: The model data trajectory.
    */
   virtual void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
-                                         const state_vector_array_t& stateTrajectory, const input_vector_array_t& inputTrajectory,
+                                         const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
                                          ModelDataBase::array_t& modelDataTrajectory) = 0;
 
   /**
@@ -325,8 +271,7 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @return average time step
    */
-  virtual scalar_t solveSequentialRiccatiEquations(const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal,
-                                                   const scalar_t& sFinal) = 0;
+  virtual scalar_t solveSequentialRiccatiEquations(const matrix_t& SmFinal, const vector_t& SvFinal, const scalar_t& sFinal) = 0;
 
   /**
    * The implementation for solving Riccati equations for all the partitions.
@@ -337,7 +282,7 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @return average time step
    */
-  scalar_t solveSequentialRiccatiEquationsImpl(const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal, const scalar_t& sFinal);
+  scalar_t solveSequentialRiccatiEquationsImpl(const matrix_t& SmFinal, const vector_t& SvFinal, const scalar_t& sFinal);
 
   /**
    * Solves a set of Riccati equations and type_1 constraints error correction compensation for the partition in the given index.
@@ -348,8 +293,8 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] SvFinal: The final Sv for Riccati equation.
    * @param [in] sFinal: The final s for Riccati equation.
    */
-  virtual void riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const dynamic_matrix_t& SmFinal,
-                                      const dynamic_vector_t& SvFinal, const scalar_t& sFinal) = 0;
+  virtual void riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const matrix_t& SmFinal, const vector_t& SvFinal,
+                                      const scalar_t& sFinal) = 0;
 
  private:
   /**
@@ -372,9 +317,9 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @return average time step.
    */
-  scalar_t rolloutTrajectory(linear_controller_array_t& controllersStock, scalar_array2_t& timeTrajectoriesStock,
-                             size_array2_t& postEventIndicesStock, state_vector_array2_t& stateTrajectoriesStock,
-                             input_vector_array2_t& inputTrajectoriesStock, ModelDataBase::array2_t& modelDataTrajectoriesStock,
+  scalar_t rolloutTrajectory(std::vector<LinearController>& controllersStock, scalar_array2_t& timeTrajectoriesStock,
+                             size_array2_t& postEventIndicesStock, vector_array2_t& stateTrajectoriesStock,
+                             vector_array2_t& inputTrajectoriesStock, ModelDataBase::array2_t& modelDataTrajectoriesStock,
                              size_t workerIndex = 0);
 
   /**
@@ -399,10 +344,10 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @return maximum norm of the constraints.
    */
   void calculateRolloutConstraintsISE(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
-                                      const state_vector_array2_t& stateTrajectoriesStock,
-                                      const input_vector_array2_t& inputTrajectoriesStock, scalar_t& stateInputEqConstraintISE,
-                                      scalar_t& stateEqConstraintISE, scalar_t& stateEqFinalConstraintISE,
-                                      scalar_t& inequalityConstraintISE, scalar_t& inequalityConstraintPenalty, size_t workerIndex = 0);
+                                      const vector_array2_t& stateTrajectoriesStock, const vector_array2_t& inputTrajectoriesStock,
+                                      scalar_t& stateInputEqConstraintISE, scalar_t& stateEqConstraintISE,
+                                      scalar_t& stateEqFinalConstraintISE, scalar_t& inequalityConstraintISE,
+                                      scalar_t& inequalityConstraintPenalty, size_t workerIndex = 0);
 
   /**
    * Calculates cost of the rollout.
@@ -416,7 +361,7 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @return The total cost of the rollout.
    */
   scalar_t calculateRolloutCost(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
-                                const state_vector_array2_t& stateTrajectoriesStock, const input_vector_array2_t& inputTrajectoriesStock,
+                                const vector_array2_t& stateTrajectoriesStock, const vector_array2_t& inputTrajectoriesStock,
                                 size_t workerIndex = 0);
 
   /**
@@ -434,9 +379,9 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @return average time step.
    */
-  scalar_t performFullRollout(size_t workerIndex, scalar_t stepLength, linear_controller_array_t& controllersStock,
+  scalar_t performFullRollout(size_t workerIndex, scalar_t stepLength, std::vector<LinearController>& controllersStock,
                               scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-                              state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
+                              vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
                               ModelDataBase::array2_t& modelDataTrajectoriesStock, PerformanceIndex& performanceIndex);
 
   /**
@@ -475,7 +420,7 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] controllersStock: An array of controllers.
    * @retuen The integral of the squared (IS) norm of the controller update.
    */
-  scalar_t calculateControllerUpdateIS(const linear_controller_array_t& controllersStock) const;
+  scalar_t calculateControllerUpdateIS(const std::vector<LinearController>& controllersStock) const;
 
   /**
    * Calculates max feedforward update norm and max type-1 error update norm.
@@ -505,8 +450,8 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [out] constraintRangeProjector: The projection matrix to the constrained subspace.
    * @param [out] constraintNullProjector: The projection matrix to the null space of constrained.
    */
-  void computeProjections(const dynamic_matrix_t& Hm, const dynamic_matrix_t& Dm, dynamic_matrix_t& constraintRangeProjector,
-                          dynamic_matrix_t& constraintNullProjector) const;
+  void computeProjections(const matrix_t& Hm, const matrix_t& Dm, matrix_t& constraintRangeProjector,
+                          matrix_t& constraintNullProjector) const;
 
   /**
    * Computes the Riccati modification based on the strategy.
@@ -517,8 +462,8 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [out] deltaGv: The Riccati modifier to cost derivative w.r.t. input.
    * @param [out] deltaGm: The Riccati modifier to cost input-state derivative.
    */
-  void computeRiccatiModification(ddp_strategy::type strategy, const ModelDataBase& projectedModelData, dynamic_matrix_t& deltaQm,
-                                  dynamic_vector_t& deltaGv, dynamic_matrix_t& deltaGm) const;
+  void computeRiccatiModification(ddp_strategy::type strategy, const ModelDataBase& projectedModelData, matrix_t& deltaQm,
+                                  vector_t& deltaGv, matrix_t& deltaGm) const;
 
   /**
    * Projects the unconstrained LQ coefficients to constrained ones.
@@ -528,15 +473,15 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] constraintNullProjector: The projection matrix to the null space of constrained.
    * @param [out] projectedModelData: The projected model data.
    */
-  void projectLQ(const ModelDataBase& modelData, const dynamic_matrix_t& constraintRangeProjector,
-                 const dynamic_matrix_t& constraintNullProjector, ModelDataBase& projectedModelData) const;
+  void projectLQ(const ModelDataBase& modelData, const matrix_t& constraintRangeProjector, const matrix_t& constraintNullProjector,
+                 ModelDataBase& projectedModelData) const;
 
   /**
    * Shifts the Hessian based on the strategy defined by Line_Search::hessianCorrectionStrategy_.
    *
    * @param matrix: The Hessian matrix.
    */
-  void shiftHessian(dynamic_matrix_t& matrix) const;
+  void shiftHessian(matrix_t& matrix) const;
 
   /**
    * Augments the cost function for the given model data.
@@ -599,10 +544,10 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
    */
   void runIteration();
 
-  void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;
+  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;
 
-  void runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-               const controller_ptr_array_t& controllersPtrStock) override;
+  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
+               const std::vector<ControllerBase*>& controllersPtrStock) override;
 
  protected:
   DDP_Settings ddpSettings_;
@@ -615,23 +560,23 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
 
   scalar_t initTime_;
   scalar_t finalTime_;
-  state_vector_t initState_;
+  vector_t initState_;
 
   size_t initActivePartition_;
   size_t finalActivePartition_;
   size_t numPartitions_ = 0;
   scalar_array_t partitioningTimes_;
 
-  std::vector<std::unique_ptr<linear_quadratic_approximator_t>> linearQuadraticApproximatorPtrStock_;
+  std::vector<std::unique_ptr<LinearQuadraticApproximator>> linearQuadraticApproximatorPtrStock_;
 
   // optimized controller
-  linear_controller_array_t nominalControllersStock_;
+  std::vector<LinearController> nominalControllersStock_;
 
   // optimized trajectories
   scalar_array2_t nominalTimeTrajectoriesStock_;
   size_array2_t nominalPostEventIndicesStock_;
-  state_vector_array2_t nominalStateTrajectoriesStock_;
-  input_vector_array2_t nominalInputTrajectoriesStock_;
+  vector_array2_t nominalStateTrajectoriesStock_;
+  vector_array2_t nominalInputTrajectoriesStock_;
 
   // intermediate model data trajectory
   ModelDataBase::array2_t modelDataTrajectoriesStock_;
@@ -650,8 +595,8 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   scalar_array2_t SsNormalizedTimeTrajectoryStock_;
   size_array2_t SsNormalizedEventsPastTheEndIndecesStock_;
   scalar_array2_t sTrajectoryStock_;
-  dynamic_vector_array2_t SvTrajectoryStock_;
-  dynamic_matrix_array2_t SmTrajectoryStock_;
+  vector_array2_t SvTrajectoryStock_;
+  matrix_array2_t SmTrajectoryStock_;
 
   // Line-Search
   LineSearchModule lineSearchModule_;
@@ -667,7 +612,7 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   bool useParallelRiccatiSolverFromInitItr_ = false;
 
   // trajectory spreading
-  TrajectorySpreadingControllerAdjustment<STATE_DIM, INPUT_DIM> trajectorySpreadingController_;
+  TrajectorySpreadingControllerAdjustment trajectorySpreadingController_;
 
   std::atomic_size_t iteration_;
 
@@ -679,9 +624,9 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   scalar_t avgTimeStepFP_;
   scalar_t avgTimeStepBP_;
 
-  std::vector<std::unique_ptr<rollout_base_t>> dynamicsForwardRolloutPtrStock_;
-  std::vector<std::unique_ptr<rollout_base_t>> operatingTrajectoriesRolloutPtrStock_;
-  std::vector<std::unique_ptr<cost_function_base_t>> heuristicsFunctionsPtrStock_;
+  std::vector<std::unique_ptr<RolloutBase>> dynamicsForwardRolloutPtrStock_;
+  std::vector<std::unique_ptr<RolloutBase>> operatingTrajectoriesRolloutPtrStock_;
+  std::vector<std::unique_ptr<CostFunctionBase>> heuristicsFunctionsPtrStock_;
   std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrStock_;
 
   scalar_t nominalControllerUpdateIS_ = 0.0;
@@ -690,11 +635,11 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   // used for caching the nominal trajectories for which the LQ problem is
   // constructed and solved before terminating run()
   scalar_t cachedControllerUpdateIS_ = 0.0;
-  linear_controller_array_t cachedControllersStock_;
+  std::vector<LinearController> cachedControllersStock_;
   scalar_array2_t cachedTimeTrajectoriesStock_;
   size_array2_t cachedPostEventIndicesStock_;
-  state_vector_array2_t cachedStateTrajectoriesStock_;
-  input_vector_array2_t cachedInputTrajectoriesStock_;
+  vector_array2_t cachedStateTrajectoriesStock_;
+  vector_array2_t cachedInputTrajectoriesStock_;
 
   ModelDataBase::array2_t cachedModelDataTrajectoriesStock_;
   ModelDataBase::array2_t cachedModelDataEventTimesStock_;
@@ -702,13 +647,13 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   riccati_modification::Data::array2_t cachedRiccatiModificationTrajectoriesStock_;
 
   scalar_array_t sFinalStock_;
-  dynamic_vector_array_t SvFinalStock_;
-  dynamic_matrix_array_t SmFinalStock_;
-  state_vector_array_t xFinalStock_;
+  vector_array_t SvFinalStock_;
+  matrix_array_t SmFinalStock_;
+  vector_array_t xFinalStock_;
 
   scalar_t sHeuristics_;
-  dynamic_vector_t SvHeuristics_;
-  dynamic_matrix_t SmHeuristics_;
+  vector_t SvHeuristics_;
+  matrix_t SmHeuristics_;
 
   ConstraintPenaltyCoefficients constraintPenaltyCoefficients_;
 
@@ -725,6 +670,21 @@ class GaussNewtonDDP : public Solver_BASE<STATE_DIM, INPUT_DIM> {
   benchmark::RepeatedTimer searchStrategyTimer_;
 };
 
-}  // namespace ocs2
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename Data_T, class Alloc>
+void GaussNewtonDDP::correctcachedTrajectoryTail(std::pair<int, scalar_t> timeSegment, const std::vector<Data_T, Alloc>& currentTrajectory,
+                                                 std::vector<Data_T, Alloc>& cachedTrajectory) {
+  // adding the fist cashed value
+  Data_T firstCachedValue;
+  LinearInterpolation::interpolate(timeSegment, firstCachedValue, &currentTrajectory);
+  cachedTrajectory.emplace_back(firstCachedValue);
 
-#include "implementation/GaussNewtonDDP.h"
+  // Concatenate the rest
+  const int ignoredSizeOfNominal = timeSegment.first + 1;
+
+  cachedTrajectory.insert(cachedTrajectory.end(), currentTrajectory.begin() + ignoredSizeOfNominal, currentTrajectory.end());
+}
+
+}  // namespace ocs2

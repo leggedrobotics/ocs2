@@ -50,11 +50,14 @@ class TimeTriggeredRollout : public RolloutBase {
   /**
    * Constructor.
    *
+   * @param [in] stateDim: State vector dimension
+   * @param [in] inputDim: Input vector dimension
    * @param [in] systemDynamics: The system dynamics for forward rollout.
    * @param [in] rolloutSettings: The rollout settings.
    */
-  explicit TimeTriggeredRollout(const ControlledSystemBase& systemDynamics, Rollout_Settings rolloutSettings = Rollout_Settings())
-      : RolloutBase(std::move(rolloutSettings)),
+  explicit TimeTriggeredRollout(size_t stateDim, size_t inputDim, const ControlledSystemBase& systemDynamics,
+                                Rollout_Settings rolloutSettings = Rollout_Settings())
+      : RolloutBase(stateDim, inputDim, std::move(rolloutSettings)),
         systemDynamicsPtr_(systemDynamics.clone()),
         systemEventHandlersPtr_(new SystemEventHandler) {
     // construct dynamicsIntegratorsPtr
@@ -70,7 +73,9 @@ class TimeTriggeredRollout : public RolloutBase {
 
   TimeTriggeredRollout& operator=(const TimeTriggeredRollout&) = delete;
 
-  TimeTriggeredRollout* clone() const override { return new TimeTriggeredRollout(*systemDynamicsPtr_, this->settings()); }
+  TimeTriggeredRollout* clone() const override {
+    return new TimeTriggeredRollout(stateDim_, inputDim_, *systemDynamicsPtr_, this->settings());
+  }
 
   /**
    * Returns the underlying dynamics.

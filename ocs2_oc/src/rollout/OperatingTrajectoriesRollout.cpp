@@ -72,10 +72,10 @@ vector_t OperatingTrajectoriesRollout::runImpl(time_interval_array_t timeInterva
     for (int i = 0; i < timeTrajectory.size(); i++) {
       ModelDataBase modelDataTemp;
       modelDataTemp.time_ = timeTrajectory[i];
-      modelDataTemp.stateDim_ = controller->getStateDim();
-      modelDataTemp.inputDim_ = controller->getInputDim();
-      modelDataTemp.dynamics_.setZero(controller->getStateDim());
-      modelDataTemp.dynamicsBias_.setZero(controller->getStateDim());
+      modelDataTemp.stateDim_ = stateDim_;
+      modelDataTemp.inputDim_ = inputDim_;
+      modelDataTemp.dynamics_.setZero(stateDim_);
+      modelDataTemp.dynamicsBias_.setZero(stateDim_);
       modelDataTrajectoryPtr->emplace_back(modelDataTemp);
     }  // end of i loop
   }

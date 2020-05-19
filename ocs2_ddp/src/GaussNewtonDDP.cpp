@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,21 +27,24 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_core/control/FeedforwardController.h>
+#include <ocs2_core/misc/LinearAlgebra.h>
+
 #include <ocs2_ddp/GaussNewtonDDP.h>
+#include <ocs2_ddp/HessianCorrection.h>
+#include <ocs2_ddp/riccati_equations/RiccatiModificationInterpolation.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-GaussNewtonDDP<STATE_DIM, INPUT_DIM>::GaussNewtonDDP(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
-                                                     const constraint_base_t* systemConstraintsPtr,
-                                                     const cost_function_base_t* costFunctionPtr,
-                                                     const operating_trajectories_base_t* operatingTrajectoriesPtr,
-                                                     const DDP_Settings& ddpSettings, const cost_function_base_t* heuristicsFunctionPtr,
-                                                     const char* algorithmName)
-    : ddpSettings_(ddpSettings),
+GaussNewtonDDP::GaussNewtonDDP(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const DerivativesBase* systemDerivativesPtr,
+                               const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
+                               const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const DDP_Settings& ddpSettings,
+                               const CostFunctionBase* heuristicsFunctionPtr, const char* algorithmName)
+    : Solver_BASE(stateDim, inputDim),
+      ddpSettings_(ddpSettings),
       threadPool_(ddpSettings.nThreads_, ddpSettings.threadPriority_),
       algorithmName_(algorithmName),
       rewindCounter_(0),
@@ -65,13 +68,13 @@ GaussNewtonDDP<STATE_DIM, INPUT_DIM>::GaussNewtonDDP(const rollout_base_t* rollo
 
     // initialize operating points
     operatingTrajectoriesRolloutPtrStock_.emplace_back(
-        new operating_trajectorie_rollout_t(*operatingTrajectoriesPtr, rolloutPtr->settings()));
+        new OperatingTrajectoriesRollout(stateDim, inputDim, *operatingTrajectoriesPtr, rolloutPtr->settings()));
 
     // initialize LQ approximator
     bool makePsdWillBePerformedLater = ddpSettings_.lineSearch_.hessianCorrectionStrategy_ != hessian_correction::Strategy::DIAGONAL_SHIFT;
     linearQuadraticApproximatorPtrStock_.emplace_back(
-        new linear_quadratic_approximator_t(*systemDerivativesPtr, *systemConstraintsPtr, *costFunctionPtr, algorithmName_.c_str(),
-                                            ddpSettings_.checkNumericalStability_, makePsdWillBePerformedLater));
+        new LinearQuadraticApproximator(*systemDerivativesPtr, *systemConstraintsPtr, *costFunctionPtr, algorithmName_.c_str(),
+                                        ddpSettings_.checkNumericalStability_, makePsdWillBePerformedLater));
 
     // initialize heuristics functions
     if (heuristicsFunctionPtr != nullptr) {
@@ -92,8 +95,7 @@ GaussNewtonDDP<STATE_DIM, INPUT_DIM>::GaussNewtonDDP(const rollout_base_t* rollo
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-GaussNewtonDDP<STATE_DIM, INPUT_DIM>::~GaussNewtonDDP() {
+GaussNewtonDDP::~GaussNewtonDDP() {
   auto forwardPassTotal = forwardPassTimer_.getTotalInMilliseconds();
   auto linearQuadraticApproximationTotal = linearQuadraticApproximationTimer_.getTotalInMilliseconds();
   auto backwardPassTotal = backwardPassTimer_.getTotalInMilliseconds();
@@ -122,8 +124,7 @@ GaussNewtonDDP<STATE_DIM, INPUT_DIM>::~GaussNewtonDDP() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::reset() {
+void GaussNewtonDDP::reset() {
   iteration_ = 0;
   rewindCounter_ = 0;
 
@@ -167,48 +168,42 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-size_t GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getNumIterations() const {
+size_t GaussNewtonDDP::getNumIterations() const {
   return iteration_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getFinalTime() const {
+scalar_t GaussNewtonDDP::getFinalTime() const {
   return finalTime_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_array_t& GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getPartitioningTimes() const {
+const scalar_array_t& GaussNewtonDDP::getPartitioningTimes() const {
   return partitioningTimes_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-const PerformanceIndex& GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getPerformanceIndeces() const {
+const PerformanceIndex& GaussNewtonDDP::getPerformanceIndeces() const {
   return performanceIndex_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-const std::vector<PerformanceIndex>& GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getIterationsLog() const {
+const std::vector<PerformanceIndex>& GaussNewtonDDP::getIterationsLog() const {
   return performanceIndexHistory_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getPrimalSolution(scalar_t finalTime, primal_solution_t* primalSolutionPtr) const {
+void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const {
   // total number of nodes
   int N = 0;
   for (const scalar_array_t& timeTrajectory_i : nominalTimeTrajectoriesStock_) {
@@ -245,7 +240,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getPrimalSolution(scalar_t finalTime,
 
   // fill controller
   if (ddpSettings_.useFeedbackPolicy_) {
-    primalSolutionPtr->controllerPtr_.reset(new linear_controller_t);
+    primalSolutionPtr->controllerPtr_.reset(new LinearController(stateDim_, inputDim_));
     // concatenate controller stock into a single controller
     for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
       // break if the start time of the partition is greater than the final time
@@ -258,7 +253,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getPrimalSolution(scalar_t finalTime,
     }
   } else {
     primalSolutionPtr->controllerPtr_.reset(
-        new feedforward_controller_t(primalSolutionPtr->timeTrajectory_, primalSolutionPtr->inputTrajectory_));
+        new FeedforwardController(stateDim_, inputDim_, primalSolutionPtr->timeTrajectory_, primalSolutionPtr->inputTrajectory_));
   }
 
   // fill mode schedule
@@ -268,24 +263,22 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getPrimalSolution(scalar_t finalTime,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getValueFunction(
-    scalar_t time, const state_vector_t& state) const {
+scalar_t GaussNewtonDDP::getValueFunction(scalar_t time, const vector_t& state) const {
   const auto partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
-  dynamic_matrix_t Sm;
+  matrix_t Sm;
   const auto indexAlpha = LinearInterpolation::interpolate(time, Sm, &SsTimeTrajectoryStock_[partition], &SmTrajectoryStock_[partition]);
 
-  dynamic_vector_t Sv;
+  vector_t Sv;
   LinearInterpolation::interpolate(indexAlpha, Sv, &SvTrajectoryStock_[partition]);
 
   scalar_t s;
   LinearInterpolation::interpolate(indexAlpha, s, &sTrajectoryStock_[partition]);
 
-  state_vector_t xNominal;
+  vector_t xNominal;
   LinearInterpolation::interpolate(time, xNominal, &nominalTimeTrajectoriesStock_[partition], &nominalStateTrajectoriesStock_[partition]);
 
-  dynamic_vector_t deltaX = state - xNominal;
+  vector_t deltaX = state - xNominal;
 
   return s + deltaX.dot(Sv) + 0.5 * deltaX.dot(Sm * deltaX);
 }
@@ -293,66 +286,62 @@ typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state,
-                                                                           dynamic_vector_t& Vx) const {
+void GaussNewtonDDP::getValueFunctionStateDerivative(scalar_t time, const vector_t& state, vector_t& Vx) const {
   const auto partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
-  dynamic_matrix_t Sm;
+  matrix_t Sm;
   const auto indexAlpha = LinearInterpolation::interpolate(time, Sm, &SsTimeTrajectoryStock_[partition], &SmTrajectoryStock_[partition]);
 
   // Sv
   LinearInterpolation::interpolate(indexAlpha, Vx, &SvTrajectoryStock_[partition]);
 
-  state_vector_t xNominal;
+  vector_t xNominal;
   LinearInterpolation::interpolate(time, xNominal, &nominalTimeTrajectoriesStock_[partition], &nominalStateTrajectoriesStock_[partition]);
 
-  dynamic_vector_t deltaX = state - xNominal;
+  vector_t deltaX = state - xNominal;
   Vx += Sm * deltaX;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state,
-                                                                             dynamic_vector_t& nu) const {
+void GaussNewtonDDP::getStateInputConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const {
   const auto activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
   const auto indexAlpha = LinearInterpolation::timeSegment(time, &nominalTimeTrajectoriesStock_[activeSubsystem]);
 
-  state_vector_t xNominal;
+  vector_t xNominal;
   LinearInterpolation::interpolate(indexAlpha, xNominal, &nominalStateTrajectoriesStock_[activeSubsystem]);
 
-  dynamic_matrix_t Bm;
+  matrix_t Bm;
   ModelData::interpolate(indexAlpha, Bm, &modelDataTrajectoriesStock_[activeSubsystem], ModelData::dynamicsInputDerivative);
 
-  dynamic_matrix_t Pm;
+  matrix_t Pm;
   ModelData::interpolate(indexAlpha, Pm, &modelDataTrajectoriesStock_[activeSubsystem], ModelData::costInputStateDerivative);
 
-  dynamic_vector_t Rv;
+  vector_t Rv;
   ModelData::interpolate(indexAlpha, Rv, &modelDataTrajectoriesStock_[activeSubsystem], ModelData::costInputDerivative);
 
-  dynamic_vector_t EvProjected;
+  vector_t EvProjected;
   ModelData::interpolate(indexAlpha, EvProjected, &projectedModelDataTrajectoriesStock_[activeSubsystem], ModelData::stateInputEqConstr);
 
-  dynamic_matrix_t CmProjected;
+  matrix_t CmProjected;
   ModelData::interpolate(indexAlpha, CmProjected, &projectedModelDataTrajectoriesStock_[activeSubsystem],
                          ModelData::stateInputEqConstrStateDerivative);
 
-  dynamic_matrix_t Hm;
+  matrix_t Hm;
   riccati_modification::interpolate(indexAlpha, Hm, &riccatiModificationTrajectoriesStock_[activeSubsystem],
                                     riccati_modification::hamiltonianHessian);
 
-  dynamic_matrix_t DmDagger;
+  matrix_t DmDagger;
   riccati_modification::interpolate(indexAlpha, DmDagger, &riccatiModificationTrajectoriesStock_[activeSubsystem],
                                     riccati_modification::constraintRangeProjector);
 
-  dynamic_vector_t costate;
+  vector_t costate;
   getValueFunctionStateDerivative(time, state, costate);
 
-  dynamic_vector_t deltaX = state - xNominal;
-  dynamic_matrix_t DmDaggerTransHm = DmDagger.transpose() * Hm;
+  vector_t deltaX = state - xNominal;
+  matrix_t DmDaggerTransHm = DmDagger.transpose() * Hm;
 
   nu = DmDaggerTransHm * (CmProjected * deltaX + EvProjected) - DmDagger.transpose() * (Rv + Pm * deltaX + Bm.transpose() * costate);
 
@@ -363,8 +352,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(sca
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::rewindOptimizer(size_t firstIndex) {
+void GaussNewtonDDP::rewindOptimizer(size_t firstIndex) {
   // No rewind is needed
   if (firstIndex == 0) {
     return;
@@ -398,42 +386,36 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::rewindOptimizer(size_t firstIndex) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-const unsigned long long int& GaussNewtonDDP<STATE_DIM, INPUT_DIM>::getRewindCounter() const {
+const unsigned long long int& GaussNewtonDDP::getRewindCounter() const {
   return rewindCounter_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-DDP_Settings& GaussNewtonDDP<STATE_DIM, INPUT_DIM>::ddpSettings() {
+DDP_Settings& GaussNewtonDDP::ddpSettings() {
   return ddpSettings_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-const DDP_Settings& GaussNewtonDDP<STATE_DIM, INPUT_DIM>::ddpSettings() const {
+const DDP_Settings& GaussNewtonDDP::ddpSettings() const {
   return ddpSettings_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::useParallelRiccatiSolverFromInitItr(bool flag) {
+void GaussNewtonDDP::useParallelRiccatiSolverFromInitItr(bool flag) {
   useParallelRiccatiSolverFromInitItr_ = flag;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::computeNormalizedTime(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
-                                                                 scalar_array_t& normalizedTimeTrajectory,
-                                                                 size_array_t& normalizedPostEventIndices) {
+void GaussNewtonDDP::computeNormalizedTime(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
+                                           scalar_array_t& normalizedTimeTrajectory, size_array_t& normalizedPostEventIndices) {
   const int N = timeTrajectory.size();
   const int NE = postEventIndices.size();
 
@@ -453,9 +435,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::computeNormalizedTime(const scalar_ar
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::adjustController(const scalar_array_t& newEventTimes,
-                                                            const scalar_array_t& controllerEventTimes) {
+void GaussNewtonDDP::adjustController(const scalar_array_t& newEventTimes, const scalar_array_t& controllerEventTimes) {
   // adjust the nominal controllerStock using trajectory spreading
   if (nominalControllersStock_.size() > 0) {
     trajectorySpreadingController_.adjustController(newEventTimes, controllerEventTimes, nominalControllersStock_);
@@ -465,8 +445,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::adjustController(const scalar_array_t
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
+void GaussNewtonDDP::setupOptimizer(size_t numPartitions) {
   if (numPartitions == 0) {
     throw std::runtime_error("Number of partitions cannot be zero!");
   }
@@ -490,10 +469,10 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) 
   /*
    * Riccati solver variables and controller update
    */
-  SmFinalStock_ = dynamic_matrix_array_t(numPartitions);
-  SvFinalStock_ = dynamic_vector_array_t(numPartitions);
+  SmFinalStock_ = matrix_array_t(numPartitions);
+  SvFinalStock_ = vector_array_t(numPartitions);
   sFinalStock_ = scalar_array_t(numPartitions);
-  xFinalStock_ = state_vector_array_t(numPartitions);
+  xFinalStock_ = vector_array_t(numPartitions);
 
   SsTimeTrajectoryStock_.resize(numPartitions);
   SsNormalizedTimeTrajectoryStock_.resize(numPartitions);
@@ -530,8 +509,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::distributeWork() {
+void GaussNewtonDDP::distributeWork() {
   const int N = ddpSettings_.nThreads_;
   startingIndicesRiccatiWorker_.resize(N);
   endingIndicesRiccatiWorker_.resize(N);
@@ -572,19 +550,17 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::distributeWork() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::runParallel(std::function<void(void)> taskFunction, size_t N) {
+void GaussNewtonDDP::runParallel(std::function<void(void)> taskFunction, size_t N) {
   threadPool_.runParallel([&](int) { taskFunction(); }, N);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM, INPUT_DIM>::rolloutTrajectory(
-    linear_controller_array_t& controllersStock, scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-    state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
-    ModelDataBase::array2_t& modelDataTrajectoriesStock, size_t workerIndex /*= 0*/) {
+scalar_t GaussNewtonDDP::rolloutTrajectory(std::vector<LinearController>& controllersStock, scalar_array2_t& timeTrajectoriesStock,
+                                           size_array2_t& postEventIndicesStock, vector_array2_t& stateTrajectoriesStock,
+                                           vector_array2_t& inputTrajectoriesStock, ModelDataBase::array2_t& modelDataTrajectoriesStock,
+                                           size_t workerIndex /*= 0*/) {
   const scalar_array_t& eventTimes = this->getModeSchedule().eventTimes;
 
   if (controllersStock.size() != numPartitions_) {
@@ -641,7 +617,7 @@ typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM
   }
 
   size_t numSteps = 0;
-  state_vector_t xCurrent = initState_;
+  vector_t xCurrent = initState_;
   for (size_t i = initActivePartition_; i < finalActivePartition_ + 1; i++) {
     // Start and end of rollout segment
     const scalar_t t0 = (i == initActivePartition_) ? initTime_ : partitioningTimes_[i];
@@ -688,8 +664,8 @@ typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM
 
       scalar_array_t timeTrajectoryTail;
       size_array_t eventsPastTheEndIndecesTail;
-      state_vector_array_t stateTrajectoryTail;
-      input_vector_array_t inputTrajectoryTail;
+      vector_array_t stateTrajectoryTail;
+      vector_array_t inputTrajectoryTail;
       ModelDataBase::array_t modelDataTrajectoryTail;
       xCurrent = operatingTrajectoriesRolloutPtrStock_[workerIndex]->run(
           operatingPointsFromTo.first, xCurrent, operatingPointsFromTo.second, nullptr, eventTimes, timeTrajectoryTail,
@@ -724,7 +700,7 @@ typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM
       std::cerr << std::endl << "++++++++++++++++++++++++++++++" << std::endl;
       std::cerr << "Partition: " << i;
       std::cerr << std::endl << "++++++++++++++++++++++++++++++" << std::endl;
-      rollout_base_t::display(timeTrajectoriesStock[i], postEventIndicesStock[i], stateTrajectoriesStock[i], &inputTrajectoriesStock[i]);
+      RolloutBase::display(timeTrajectoriesStock[i], postEventIndicesStock[i], stateTrajectoriesStock[i], &inputTrajectoriesStock[i]);
     }
   }
 
@@ -740,8 +716,7 @@ typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::printRolloutInfo() const {
+void GaussNewtonDDP::printRolloutInfo() const {
   std::cerr << performanceIndex_ << '\n';
   std::cerr << "forward pass average time step:  " << avgTimeStepFP_ * 1e+3 << " [ms]." << std::endl;
   std::cerr << "backward pass average time step: " << avgTimeStepBP_ * 1e+3 << " [ms]." << std::endl;
@@ -750,12 +725,13 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::printRolloutInfo() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::calculateRolloutConstraintsISE(
-    const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
-    const state_vector_array2_t& stateTrajectoriesStock, const input_vector_array2_t& inputTrajectoriesStock,
-    scalar_t& stateInputEqConstraintISE, scalar_t& stateEqConstraintISE, scalar_t& stateEqFinalConstraintSSE,
-    scalar_t& inequalityConstraintISE, scalar_t& inequalityConstraintPenalty, size_t workerIndex /*= 0*/) {
+void GaussNewtonDDP::calculateRolloutConstraintsISE(const scalar_array2_t& timeTrajectoriesStock,
+                                                    const size_array2_t& postEventIndicesStock,
+                                                    const vector_array2_t& stateTrajectoriesStock,
+                                                    const vector_array2_t& inputTrajectoriesStock, scalar_t& stateInputEqConstraintISE,
+                                                    scalar_t& stateEqConstraintISE, scalar_t& stateEqFinalConstraintSSE,
+                                                    scalar_t& inequalityConstraintISE, scalar_t& inequalityConstraintPenalty,
+                                                    size_t workerIndex /*= 0*/) {
   size_t maxSize = 0;
   for (size_t i = 0; i < numPartitions_; i++) {
     maxSize = std::max(maxSize, timeTrajectoriesStock[i].size());
@@ -788,7 +764,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::calculateRolloutConstraintsISE(
 
       // state equality constraint
       const auto nc2 = systemConstraints.numStateOnlyConstraint(timeTrajectoriesStock[i][k]);
-      typename BASE::constraint2_vector_t Hv;
+      vector_t Hv;
       if (nc2 > 0) {
         systemConstraints.getConstraint2(Hv);
       }
@@ -796,7 +772,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::calculateRolloutConstraintsISE(
 
       // state-input equality constraint
       const auto nc1 = systemConstraints.numStateInputConstraint(timeTrajectoriesStock[i][k]);
-      typename BASE::constraint1_vector_t Ev;
+      vector_t Ev;
       if (nc1 > 0) {
         systemConstraints.getConstraint1(Ev);
       }
@@ -817,7 +793,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::calculateRolloutConstraintsISE(
       // switching time constraints
       if (eventsPastTheEndItr != postEventIndicesStock[i].end() && k + 1 == *eventsPastTheEndItr) {
         auto nc2Final = systemConstraints.numStateOnlyFinalConstraint(timeTrajectoriesStock[i][k]);
-        typename BASE::constraint2_vector_t HvFinal;
+        vector_t HvFinal;
         if (nc2Final > 0) {
           systemConstraints.getFinalConstraint2(HvFinal);
         }
@@ -848,10 +824,9 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::calculateRolloutConstraintsISE(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM, INPUT_DIM>::calculateRolloutCost(
-    const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
-    const state_vector_array2_t& stateTrajectoriesStock, const input_vector_array2_t& inputTrajectoriesStock, size_t workerIndex /*= 0*/) {
+scalar_t GaussNewtonDDP::calculateRolloutCost(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
+                                              const vector_array2_t& stateTrajectoriesStock, const vector_array2_t& inputTrajectoriesStock,
+                                              size_t workerIndex /*= 0*/) {
   // set desired trajectories
   auto& costFunction = linearQuadraticApproximatorPtrStock_[workerIndex]->costFunction();
   costFunction.setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
@@ -907,11 +882,10 @@ typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM, INPUT_DIM>::performFullRollout(
-    size_t workerIndex, scalar_t stepLength, linear_controller_array_t& controllersStock, scalar_array2_t& timeTrajectoriesStock,
-    size_array2_t& postEventIndicesStock, state_vector_array2_t& stateTrajectoriesStock, input_vector_array2_t& inputTrajectoriesStock,
-    ModelDataBase::array2_t& modelDataTrajectoriesStock, PerformanceIndex& performanceIndex) {
+scalar_t GaussNewtonDDP::performFullRollout(size_t workerIndex, scalar_t stepLength, std::vector<LinearController>& controllersStock,
+                                            scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
+                                            vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
+                                            ModelDataBase::array2_t& modelDataTrajectoriesStock, PerformanceIndex& performanceIndex) {
   // modifying uff by local increments
   if (!numerics::almost_eq(stepLength, 0.0)) {
     for (auto& controller : controllersStock) {
@@ -945,15 +919,15 @@ typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM
       linesearchDisplay << "    [Thread " << workerIndex << "] - step length " << stepLength << '\n';
       linesearchDisplay << std::setw(4) << performanceIndex << '\n';
       linesearchDisplay << "    forward pass average time step: " << avgTimeStepFP * 1e+3 << " [ms].\n";
-      BASE::printString(linesearchDisplay.str());
+      Solver_BASE::printString(linesearchDisplay.str());
     }
 
   } catch (const std::exception& error) {
     performanceIndex.merit = std::numeric_limits<scalar_t>::max();
     performanceIndex.totalCost = std::numeric_limits<scalar_t>::max();
     if (ddpSettings_.displayInfo_) {
-      BASE::printString("    [Thread " + std::to_string(workerIndex) + "] rollout with step length " + std::to_string(stepLength) +
-                        " is terminated: " + error.what());
+      Solver_BASE::printString("    [Thread " + std::to_string(workerIndex) + "] rollout with step length " + std::to_string(stepLength) +
+                               " is terminated: " + error.what());
     }
   }
 
@@ -963,8 +937,7 @@ typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::lineSearch(LineSearchModule& lineSearchModule) {
+void GaussNewtonDDP::lineSearch(LineSearchModule& lineSearchModule) {
   // number of line search iterations (the if statements order is important)
   size_t maxNumOfLineSearches = 0;
   if (numerics::almost_eq(ddpSettings_.lineSearch_.minStepLength_, ddpSettings_.lineSearch_.maxStepLength_)) {
@@ -1020,17 +993,16 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::lineSearch(LineSearchModule& lineSear
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::lineSearchTask(LineSearchModule& lineSearchModule) {
+void GaussNewtonDDP::lineSearchTask(LineSearchModule& lineSearchModule) {
   size_t taskId = nextTaskId_++;  // assign task ID (atomic)
 
   // local search forward simulation's variables
   PerformanceIndex performanceIndex;
-  linear_controller_array_t controllersStock(numPartitions_);
+  std::vector<LinearController> controllersStock(numPartitions_);
   scalar_array2_t timeTrajectoriesStock(numPartitions_);
   size_array2_t postEventIndicesStock(numPartitions_);
-  state_vector_array2_t stateTrajectoriesStock(numPartitions_);
-  input_vector_array2_t inputTrajectoriesStock(numPartitions_);
+  vector_array2_t stateTrajectoriesStock(numPartitions_);
+  vector_array2_t inputTrajectoriesStock(numPartitions_);
   ModelDataBase::array2_t modelDataTrajectoriesStock(numPartitions_);
 
   while (true) {
@@ -1053,7 +1025,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::lineSearchTask(LineSearchModule& line
         std::string linesearchDisplay;
         linesearchDisplay = "    [Thread " + std::to_string(taskId) + "] rollout with step length " + std::to_string(stepLength) +
                             " is skipped: A larger learning rate is already found!";
-        BASE::printString(linesearchDisplay);
+        Solver_BASE::printString(linesearchDisplay);
       }
       break;
     }
@@ -1107,7 +1079,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::lineSearchTask(LineSearchModule& line
         rolloutPtr->abortRollout();
       }
       if (ddpSettings_.displayInfo_) {
-        BASE::printString("    LS: interrupt other rollout's integrations.");
+        Solver_BASE::printString("    LS: interrupt other rollout's integrations.");
       }
       break;
     }
@@ -1118,8 +1090,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::lineSearchTask(LineSearchModule& line
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::calculateRolloutMerit(PerformanceIndex& performanceIndex) const {
+void GaussNewtonDDP::calculateRolloutMerit(PerformanceIndex& performanceIndex) const {
   // total cost
   performanceIndex.merit = performanceIndex.totalCost;
 
@@ -1141,8 +1112,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::calculateRolloutMerit(PerformanceInde
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::levenbergMarquardt(LevenbergMarquardtModule& levenbergMarquardtModule) {
+void GaussNewtonDDP::levenbergMarquardt(LevenbergMarquardtModule& levenbergMarquardtModule) {
   const size_t taskId = 0;
 
   throw std::runtime_error("Implemented in the next PR");
@@ -1151,9 +1121,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::levenbergMarquardt(LevenbergMarquardt
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquationsImpl(
-    const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal, const scalar_t& sFinal) {
+scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const matrix_t& SmFinal, const vector_t& SvFinal, const scalar_t& sFinal) {
   SmFinalStock_[finalActivePartition_] = SmFinal;
   SvFinalStock_[finalActivePartition_] = SvFinal;
   sFinalStock_[finalActivePartition_] = sFinal;
@@ -1218,8 +1186,7 @@ typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::riccatiSolverTask() {
+void GaussNewtonDDP::riccatiSolverTask() {
   size_t taskId = nextTaskId_++;  // assign task ID (atomic)
 
   for (int i = endingIndicesRiccatiWorker_[taskId]; i >= startingIndicesRiccatiWorker_[taskId]; i--) {
@@ -1233,10 +1200,10 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::riccatiSolverTask() {
       sTrajectoryStock_[i].clear();
 
     } else {
-      dynamic_matrix_t SmFinal;
-      dynamic_vector_t SvFinal;
+      matrix_t SmFinal;
+      vector_t SvFinal;
       scalar_t sFinal;
-      state_vector_t xFinal;
+      vector_t xFinal;
 
       {  // lock data
         std::lock_guard<std::mutex> lock(riccatiSolverDataMutex_);
@@ -1249,7 +1216,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::riccatiSolverTask() {
 
       // modify the end subsystem final values based on the cached values for asynchronous run
       if (i == endingIndicesRiccatiWorker_[taskId] && i < finalActivePartition_) {
-        const dynamic_vector_t deltaState = nominalStateTrajectoriesStock_[i + 1].front() - xFinal;
+        const vector_t deltaState = nominalStateTrajectoriesStock_[i + 1].front() - xFinal;
         sFinal += deltaState.dot(0.5 * SmFinal * deltaState + SvFinal);
         SvFinal += SmFinal * deltaState;
       }
@@ -1274,8 +1241,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::riccatiSolverTask() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::calculateController() {
+void GaussNewtonDDP::calculateController() {
   for (size_t i = 0; i < numPartitions_; i++) {
     if (i < initActivePartition_ || i > finalActivePartition_) {
       nominalControllersStock_[i].clear();
@@ -1315,9 +1281,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::calculateController() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM, INPUT_DIM>::calculateControllerUpdateIS(
-    const linear_controller_array_t& controllersStock) const {
+scalar_t GaussNewtonDDP::calculateControllerUpdateIS(const std::vector<LinearController>& controllersStock) const {
   // integrates using the trapezoidal approximation method
   scalar_t controllerUpdateIS = 0.0;
   for (const auto& controller : controllersStock) {
@@ -1338,8 +1302,7 @@ typename GaussNewtonDDP<STATE_DIM, INPUT_DIM>::scalar_t GaussNewtonDDP<STATE_DIM
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::calculateControllerUpdateMaxNorm(scalar_t& maxDeltaUffNorm, scalar_t& maxDeltaUeeNorm) const {
+void GaussNewtonDDP::calculateControllerUpdateMaxNorm(scalar_t& maxDeltaUffNorm, scalar_t& maxDeltaUeeNorm) const {
   maxDeltaUffNorm = 0.0;
   maxDeltaUeeNorm = 0.0;
   for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
@@ -1348,11 +1311,11 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::calculateControllerUpdateMaxNorm(scal
 
       const auto& time = nominalControllersStock_[i].timeStamp_[k];
       const auto indexAlpha = LinearInterpolation::timeSegment(time, &(nominalTimeTrajectoriesStock_[i]));
-      state_vector_t nominalState;
+      vector_t nominalState;
       LinearInterpolation::interpolate(indexAlpha, nominalState, &(nominalStateTrajectoriesStock_[i]));
-      input_vector_t nominalInput;
+      vector_t nominalInput;
       LinearInterpolation::interpolate(indexAlpha, nominalInput, &(nominalInputTrajectoriesStock_[i]));
-      input_vector_t deltaUee =
+      vector_t deltaUee =
           nominalInput - nominalControllersStock_[i].gainArray_[k] * nominalState - nominalControllersStock_[i].biasArray_[k];
       maxDeltaUeeNorm = std::max(maxDeltaUeeNorm, deltaUee.norm());
 
@@ -1363,8 +1326,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::calculateControllerUpdateMaxNorm(scal
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
+void GaussNewtonDDP::approximateOptimalControlProblem() {
   for (size_t i = 0; i < numPartitions_; i++) {
     /*
      * compute and augment the LQ approximation of intermediate times for the partition i
@@ -1438,14 +1400,10 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
                                                              nominalStateTrajectoriesStock_[finalActivePartition_].back(),
                                                              nominalInputTrajectoriesStock_[finalActivePartition_].back());
 
-  // TODO: avoid temps
-  typename BASE::state_vector_t SvHeuristicsTemp;
-  typename BASE::state_matrix_t SmHeuristicsTemp;
   heuristicsFunctionsPtrStock_[0]->getTerminalCost(sHeuristics_);
-  heuristicsFunctionsPtrStock_[0]->getTerminalCostDerivativeState(SvHeuristicsTemp);
-  heuristicsFunctionsPtrStock_[0]->getTerminalCostSecondDerivativeState(SmHeuristicsTemp);
-  SvHeuristics_ = SvHeuristicsTemp;
-  SmHeuristics_ = SmHeuristicsTemp;
+  heuristicsFunctionsPtrStock_[0]->getTerminalCostDerivativeState(SvHeuristics_);
+  heuristicsFunctionsPtrStock_[0]->getTerminalCostSecondDerivativeState(SmHeuristics_);
+
   // shift Hessian
   shiftHessian(SmHeuristics_);
 }
@@ -1453,12 +1411,9 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::approximateOptimalControlProblem() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::computeProjectionAndRiccatiModification(ddp_strategy::type strategy,
-                                                                                   const ModelDataBase& modelData,
-                                                                                   const dynamic_matrix_t& Sm,
-                                                                                   ModelDataBase& projectedModelData,
-                                                                                   riccati_modification::Data& riccatiModification) const {
+void GaussNewtonDDP::computeProjectionAndRiccatiModification(ddp_strategy::type strategy, const ModelDataBase& modelData,
+                                                             const matrix_t& Sm, ModelDataBase& projectedModelData,
+                                                             riccati_modification::Data& riccatiModification) const {
   // compute the Hamiltonian's Hessian
   riccatiModification.time_ = modelData.time_;
   riccatiModification.hamiltonianHessian_ = computeHamiltonianHessian(strategy, modelData, Sm);
@@ -1478,17 +1433,15 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::computeProjectionAndRiccatiModificati
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::computeProjections(const dynamic_matrix_t& Hm, const dynamic_matrix_t& Dm,
-                                                              dynamic_matrix_t& constraintRangeProjector,
-                                                              dynamic_matrix_t& constraintNullProjector) const {
+void GaussNewtonDDP::computeProjections(const matrix_t& Hm, const matrix_t& Dm, matrix_t& constraintRangeProjector,
+                                        matrix_t& constraintNullProjector) const {
   // UUT decomposition of inv(Hm)
-  dynamic_matrix_t HmInvUmUmT;
+  matrix_t HmInvUmUmT;
   LinearAlgebra::computeInverseMatrixUUT(Hm, HmInvUmUmT);
 
   // compute DmDagger, DmDaggerTHmDmDaggerUUT, HmInverseConstrainedLowRank
   if (Dm.rows() == 0) {
-    constraintRangeProjector.setZero(INPUT_DIM, 0);
+    constraintRangeProjector.setZero(inputDim_, 0);
     constraintNullProjector = HmInvUmUmT;
 
   } else {
@@ -1496,20 +1449,20 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::computeProjections(const dynamic_matr
     if (ddpSettings_.checkNumericalStability_) {
       if (LinearAlgebra::rank(Dm) != Dm.rows()) {
         std::string msg = ">>> WARNING: The state-input constraints are rank deficient!";
-        BASE::printString(msg);
+        Solver_BASE::printString(msg);
       }
     }
     // constraint projectors are obtained at once
-    dynamic_matrix_t DmDaggerTHmDmDaggerUUT;
+    matrix_t DmDaggerTHmDmDaggerUUT;
     ocs2::LinearAlgebra::computeConstraintProjection(Dm, HmInvUmUmT, constraintRangeProjector, DmDaggerTHmDmDaggerUUT,
                                                      constraintNullProjector);
   }
 
   // check
   if (ddpSettings_.checkNumericalStability_) {
-    dynamic_matrix_t HmProjected = constraintNullProjector.transpose() * Hm * constraintNullProjector;
+    matrix_t HmProjected = constraintNullProjector.transpose() * Hm * constraintNullProjector;
     const int nullSpaceDim = Hm.rows() - Dm.rows();
-    if (!HmProjected.isApprox(dynamic_matrix_t::Identity(nullSpaceDim, nullSpaceDim))) {
+    if (!HmProjected.isApprox(matrix_t::Identity(nullSpaceDim, nullSpaceDim))) {
       std::cerr << "HmProjected:\n" << HmProjected << std::endl;
       throw std::runtime_error("HmProjected should be identity!");
     }
@@ -1519,17 +1472,15 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::computeProjections(const dynamic_matr
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::computeRiccatiModification(ddp_strategy::type strategy, const ModelDataBase& projectedModelData,
-                                                                      dynamic_matrix_t& deltaQm, dynamic_vector_t& deltaGv,
-                                                                      dynamic_matrix_t& deltaGm) const {
+void GaussNewtonDDP::computeRiccatiModification(ddp_strategy::type strategy, const ModelDataBase& projectedModelData, matrix_t& deltaQm,
+                                                vector_t& deltaGv, matrix_t& deltaGm) const {
   switch (strategy) {
     case ddp_strategy::type::LINE_SEARCH: {
       const auto& QmProjected = projectedModelData.costStateSecondDerivative_;
       const auto& PmProjected = projectedModelData.costInputStateDerivative_;
 
       // Q_minus_PTRinvP
-      dynamic_matrix_t Q_minus_PTRinvP = QmProjected;
+      matrix_t Q_minus_PTRinvP = QmProjected;
       Q_minus_PTRinvP.noalias() -= PmProjected.transpose() * PmProjected;
 
       // deltaQm
@@ -1550,7 +1501,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::computeRiccatiModification(ddp_strate
       const auto& BmProjected = projectedModelData.dynamicsInputDerivative_;
 
       // deltaQm, deltaRm, deltaPm
-      deltaQm = 1e-6 * dynamic_matrix_t::Identity(projectedModelData.stateDim_, projectedModelData.stateDim_);
+      deltaQm = 1e-6 * matrix_t::Identity(projectedModelData.stateDim_, projectedModelData.stateDim_);
       deltaGv.noalias() = levenbergMarquardtModule_.riccatiMultiple * BmProjected.transpose() * HvProjected;
       deltaGm.noalias() = levenbergMarquardtModule_.riccatiMultiple * BmProjected.transpose() * AmProjected;
 
@@ -1562,10 +1513,8 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::computeRiccatiModification(ddp_strate
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::projectLQ(const ModelDataBase& modelData, const dynamic_matrix_t& constraintRangeProjector,
-                                                     const dynamic_matrix_t& constraintNullProjector,
-                                                     ModelDataBase& projectedModelData) const {
+void GaussNewtonDDP::projectLQ(const ModelDataBase& modelData, const matrix_t& constraintRangeProjector,
+                               const matrix_t& constraintNullProjector, ModelDataBase& projectedModelData) const {
   // dimensions and time
   projectedModelData.time_ = modelData.time_;
   projectedModelData.stateDim_ = modelData.stateDim_;
@@ -1587,13 +1536,13 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::projectLQ(const ModelDataBase& modelD
   // constraints
   projectedModelData.numIneqConstr_ = 0;
   projectedModelData.numStateEqConstr_ = 0;
-  projectedModelData.numStateInputEqConstr_ = INPUT_DIM;
+  projectedModelData.numStateInputEqConstr_ = modelData.inputDim_;
 
   if (modelData.numStateInputEqConstr_ == 0) {
     // projected state-input equality constraints
-    projectedModelData.stateInputEqConstr_.setZero(INPUT_DIM);
-    projectedModelData.stateInputEqConstrStateDerivative_.setZero(INPUT_DIM, STATE_DIM);
-    projectedModelData.stateInputEqConstrInputDerivative_.setZero(INPUT_DIM, INPUT_DIM);
+    projectedModelData.stateInputEqConstr_.setZero(modelData.inputDim_);
+    projectedModelData.stateInputEqConstrStateDerivative_.setZero(modelData.inputDim_, modelData.stateDim_);
+    projectedModelData.stateInputEqConstrInputDerivative_.setZero(modelData.inputDim_, modelData.inputDim_);
     // cost
     projectedModelData.costInputDerivative_.noalias() = constraintNullProjector.transpose() * modelData.costInputDerivative_;
     projectedModelData.costInputStateDerivative_.noalias() = constraintNullProjector.transpose() * modelData.costInputStateDerivative_;
@@ -1614,8 +1563,8 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::projectLQ(const ModelDataBase& modelD
         modelData.dynamicsInputDerivative_ * projectedModelData.stateInputEqConstrStateDerivative_;
 
     // common pre-computations
-    dynamic_vector_t RmDmDaggerEv = modelData.costInputSecondDerivative_ * projectedModelData.stateInputEqConstr_;
-    dynamic_matrix_t RmDmDaggerCm = modelData.costInputSecondDerivative_ * projectedModelData.stateInputEqConstrStateDerivative_;
+    vector_t RmDmDaggerEv = modelData.costInputSecondDerivative_ * projectedModelData.stateInputEqConstr_;
+    matrix_t RmDmDaggerCm = modelData.costInputSecondDerivative_ * projectedModelData.stateInputEqConstrStateDerivative_;
 
     // Rv constrained
     projectedModelData.costInputDerivative_ = constraintNullProjector.transpose() * (modelData.costInputDerivative_ - RmDmDaggerEv);
@@ -1625,8 +1574,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::projectLQ(const ModelDataBase& modelD
         constraintNullProjector.transpose() * (modelData.costInputStateDerivative_ - RmDmDaggerCm);
 
     // Qm constrained
-    dynamic_matrix_t PmTransDmDaggerCm =
-        modelData.costInputStateDerivative_.transpose() * projectedModelData.stateInputEqConstrStateDerivative_;
+    matrix_t PmTransDmDaggerCm = modelData.costInputStateDerivative_.transpose() * projectedModelData.stateInputEqConstrStateDerivative_;
     projectedModelData.costStateSecondDerivative_ -= PmTransDmDaggerCm + PmTransDmDaggerCm.transpose();
     // += DmDaggerCm_Trans_Rm_DmDaggerCm
     projectedModelData.costStateSecondDerivative_.noalias() +=
@@ -1653,8 +1601,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::projectLQ(const ModelDataBase& modelD
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::shiftHessian(dynamic_matrix_t& matrix) const {
+void GaussNewtonDDP::shiftHessian(matrix_t& matrix) const {
   hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy_, matrix,
                                    ddpSettings_.lineSearch_.hessianCorrectionMultiple_);
 }
@@ -1662,13 +1609,12 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::shiftHessian(dynamic_matrix_t& matrix
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::augmentCostWorker(size_t workerIndex, scalar_t stateEqualityPenaltyCoeff,
-                                                             scalar_t stateInputEqualityPenaltyCoeff, ModelDataBase& modelData) const {
+void GaussNewtonDDP::augmentCostWorker(size_t workerIndex, scalar_t stateEqualityPenaltyCoeff, scalar_t stateInputEqualityPenaltyCoeff,
+                                       ModelDataBase& modelData) const {
   // state equality constraint (type 2) coefficients
   if (modelData.numStateEqConstr_ > 0) {
-    const dynamic_vector_t& Hv = modelData.stateEqConstr_;
-    const dynamic_matrix_t& Fm = modelData.stateEqConstrStateDerivative_;
+    const vector_t& Hv = modelData.stateEqConstr_;
+    const matrix_t& Fm = modelData.stateEqConstrStateDerivative_;
     modelData.cost_ += 0.5 * stateEqualityPenaltyCoeff * Hv.dot(Hv);
     modelData.costStateDerivative_.noalias() += stateEqualityPenaltyCoeff * Fm.transpose() * Hv;
     modelData.costStateSecondDerivative_.noalias() += stateEqualityPenaltyCoeff * Fm.transpose() * Fm;
@@ -1676,9 +1622,9 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::augmentCostWorker(size_t workerIndex,
 
   // state-input equality constraint (type 1) coefficients
   if (modelData.numStateInputEqConstr_ > 0 && !numerics::almost_eq(stateInputEqualityPenaltyCoeff, 0.0)) {
-    const dynamic_vector_t& Ev = modelData.stateInputEqConstr_;
-    const dynamic_matrix_t& Cm = modelData.stateInputEqConstrStateDerivative_;
-    const dynamic_matrix_t& Dm = modelData.stateInputEqConstrInputDerivative_;
+    const vector_t& Ev = modelData.stateInputEqConstr_;
+    const matrix_t& Cm = modelData.stateInputEqConstrStateDerivative_;
+    const matrix_t& Dm = modelData.stateInputEqConstrInputDerivative_;
     modelData.cost_ += 0.5 * stateInputEqualityPenaltyCoeff * Ev.dot(Ev);
     modelData.costStateDerivative_.noalias() += stateInputEqualityPenaltyCoeff * Cm.transpose() * Ev;
     modelData.costInputDerivative_.noalias() += stateInputEqualityPenaltyCoeff * Dm.transpose() * Ev;
@@ -1715,8 +1661,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::augmentCostWorker(size_t workerIndex,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::initializeConstraintPenalties() {
+void GaussNewtonDDP::initializeConstraintPenalties() {
   assert(ddpSettings_.constraintPenaltyInitialValue_ > 1.0);
   assert(ddpSettings_.constraintPenaltyIncreaseRate_ > 1.0);
 
@@ -1737,9 +1682,8 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::initializeConstraintPenalties() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::updateConstraintPenalties(scalar_t stateEqConstraintISE, scalar_t stateEqFinalConstraintSSE,
-                                                                     scalar_t stateInputEqConstraintISE) {
+void GaussNewtonDDP::updateConstraintPenalties(scalar_t stateEqConstraintISE, scalar_t stateEqFinalConstraintSSE,
+                                               scalar_t stateInputEqConstraintISE) {
   // state-only equality penalty
   if (stateEqConstraintISE > ddpSettings_.constraintTolerance_) {
     constraintPenaltyCoefficients_.stateEqualityPenaltyCoeff *= ddpSettings_.constraintPenaltyIncreaseRate_;
@@ -1781,15 +1725,14 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::updateConstraintPenalties(scalar_t st
     displayText += "    State-Input Equality:";
     displayText += "    Penalty Tolerance: " + std::to_string(constraintPenaltyCoefficients_.stateInputEqualityPenaltyTol);
     displayText += "    Penalty Coefficient: " + std::to_string(constraintPenaltyCoefficients_.stateInputEqualityPenaltyCoeff) + ".";
-    BASE::printString(displayText);
+    Solver_BASE::printString(displayText);
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::swapDataToCache() {
+void GaussNewtonDDP::swapDataToCache() {
   cachedTimeTrajectoriesStock_.swap(nominalTimeTrajectoriesStock_);
   cachedPostEventIndicesStock_.swap(nominalPostEventIndicesStock_);
   cachedStateTrajectoriesStock_.swap(nominalStateTrajectoriesStock_);
@@ -1803,8 +1746,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::swapDataToCache() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::correctInitcachedNominalTrajectories() {
+void GaussNewtonDDP::correctInitcachedNominalTrajectories() {
   // for each partition
   for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
     if (cachedTimeTrajectoriesStock_[i].empty()) {
@@ -1838,13 +1780,13 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::correctInitcachedNominalTrajectories(
         for (int k = timeSegment.first + 1; k < nominalTimeTrajectoriesStock_[i].size(); k++) {
           auto indexAlpha = LinearInterpolation::timeSegment(nominalTimeTrajectoriesStock_[i][k], &cachedTimeTrajectoriesStock_[i]);
 
-          state_vector_t stateCached;
+          vector_t stateCached;
           LinearInterpolation::interpolate(indexAlpha, stateCached, &cachedStateTrajectoriesStock_[i]);
           if (!stateCached.isApprox(nominalStateTrajectoriesStock_[i][k])) {
             throw std::runtime_error("The tail of the cached state trajectory is not correctly set.");
           }
 
-          input_vector_t inputCached;
+          vector_t inputCached;
           LinearInterpolation::interpolate(indexAlpha, inputCached, &cachedInputTrajectoriesStock_[i]);
           if (!inputCached.isApprox(nominalInputTrajectoriesStock_[i][k])) {
             throw std::runtime_error("The tail of the cached input trajectory is not correctly set.");
@@ -1876,27 +1818,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::correctInitcachedNominalTrajectories(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-template <typename Data_T, class Alloc>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::correctcachedTrajectoryTail(std::pair<int, scalar_t> timeSegment,
-                                                                       const std::vector<Data_T, Alloc>& currentTrajectory,
-                                                                       std::vector<Data_T, Alloc>& cachedTrajectory) {
-  // adding the fist cashed value
-  Data_T firstCachedValue;
-  LinearInterpolation::interpolate(timeSegment, firstCachedValue, &currentTrajectory);
-  cachedTrajectory.emplace_back(firstCachedValue);
-
-  // Concatenate the rest
-  const int ignoredSizeOfNominal = timeSegment.first + 1;
-
-  cachedTrajectory.insert(cachedTrajectory.end(), currentTrajectory.begin() + ignoredSizeOfNominal, currentTrajectory.end());
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::runInit() {
+void GaussNewtonDDP::runInit() {
   // disable Eigen multi-threading
   Eigen::setNbThreads(1);
 
@@ -1954,8 +1876,7 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::runInit() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::runIteration() {
+void GaussNewtonDDP::runIteration() {
   // disable Eigen multi-threading
   Eigen::setNbThreads(1);
 
@@ -2004,13 +1925,11 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::runIteration() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
-                                                   const scalar_array_t& partitioningTimes) {
+void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) {
   const size_t numPartitions = partitioningTimes.size() - 1;
 
-  linear_controller_array_t noInitialController(numPartitions, linear_controller_t());
-  controller_ptr_array_t noInitialControllerPtrArray(numPartitions);
+  std::vector<LinearController> noInitialController(numPartitions, LinearController(stateDim_, inputDim_));
+  std::vector<ControllerBase*> noInitialControllerPtrArray(numPartitions);
   for (size_t i = 0; i < numPartitions; i++) {
     noInitialControllerPtrArray[i] = &noInitialController[i];
   }
@@ -2022,10 +1941,8 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const stat
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const state_vector_t& initState, scalar_t finalTime,
-                                                   const scalar_array_t& partitioningTimes,
-                                                   const controller_ptr_array_t& controllersPtrStock) {
+void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
+                             const std::vector<ControllerBase*>& controllersPtrStock) {
   if (ddpSettings_.displayInfo_) {
     std::cerr << std::endl;
     std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
@@ -2071,9 +1988,9 @@ void GaussNewtonDDP<STATE_DIM, INPUT_DIM>::runImpl(scalar_t initTime, const stat
 
     // ensure initial controllers are of the right type, then assign
     for (auto& controllersStock_i : controllersPtrStock) {
-      auto linearCtrlPtr = dynamic_cast<linear_controller_t*>(controllersStock_i);
+      auto linearCtrlPtr = dynamic_cast<LinearController*>(controllersStock_i);
       if (linearCtrlPtr == nullptr) {
-        throw std::runtime_error("GaussNewtonDDP::run -- controller must be a linear_controller_t.");
+        throw std::runtime_error("GaussNewtonDDP::run -- controller must be a LinearController.");
       }
       nominalControllersStock_.emplace_back(*linearCtrlPtr);
     }

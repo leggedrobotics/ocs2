@@ -44,25 +44,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace ocs2;
 
 TEST(time_rollout_test, time_rollout_test) {
-  const size_t stateDim = 2;
-  const size_t inputDim = 1;
+  const size_t nx = 2;
+  const size_t nu = 1;
   scalar_t initTime = 0.0;
   scalar_t finalTime = 10.0;
 
-  Eigen::Matrix2d A(stateDim, stateDim);
+  Eigen::Matrix2d A(nx, nx);
   A << -2, -1, 1, 0;
-  Eigen::Vector2d B(stateDim, inputDim);
+  Eigen::Vector2d B(nx, nu);
   B << 1, 0;
 
   LinearSystemDynamics systemDynamics(A, B);
 
   // controller
   scalar_array_t cntTimeStamp{initTime, finalTime};
-  vector_array_t uff(2, vector_t::Ones(inputDim));
-  matrix_array_t k(2, matrix_t::Zero(inputDim, stateDim));
-  auto controller = std::unique_ptr<LinearController>(new LinearController(stateDim, inputDim, cntTimeStamp, uff, k));
+  vector_array_t uff(2, vector_t::Ones(nu));
+  matrix_array_t k(2, matrix_t::Zero(nu, nx));
+  auto controller = std::unique_ptr<LinearController>(new LinearController(nx, nu, cntTimeStamp, uff, k));
 
-  vector_t initState = vector_t::Zero(stateDim);
+  vector_t initState = vector_t::Zero(nx);
 
   // partitioning times
   std::vector<scalar_t> partitioningTimes{0.0, 4.0, 5.0, 7.0};
@@ -80,7 +80,7 @@ TEST(time_rollout_test, time_rollout_test) {
   rolloutSettings.maxNumStepsPerSecond_ = 10000;
 
   // rollout class
-  std::unique_ptr<RolloutBase> rolloutBasePtr(new TimeTriggeredRollout(systemDynamics, rolloutSettings));
+  std::unique_ptr<RolloutBase> rolloutBasePtr(new TimeTriggeredRollout(nx, nu, systemDynamics, rolloutSettings));
 
   scalar_array_t timeTrajectory;
   size_array_t eventsPastTheEndIndeces;

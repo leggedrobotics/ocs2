@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,15 +27,15 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_ddp/DDP_DataCollector.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-DDP_DataCollector<STATE_DIM, INPUT_DIM>::DDP_DataCollector(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
-                                                           const constraint_base_t* systemConstraintsPtr,
-                                                           const cost_function_base_t* costFunctionPtr)
+DDP_DataCollector::DDP_DataCollector(const RolloutBase* rolloutPtr, const DerivativesBase* systemDerivativesPtr,
+                                     const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr)
 
     : rolloutPtr_(rolloutPtr->clone()),
       systemDerivativesPtr_(systemDerivativesPtr->clone()),
@@ -45,9 +45,9 @@ DDP_DataCollector<STATE_DIM, INPUT_DIM>::DDP_DataCollector(const rollout_base_t*
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_DataCollector<STATE_DIM, INPUT_DIM>::collect(const ddp_t* constDdpPtr) {
-  auto* ddpPtr = const_cast<ddp_t*>(constDdpPtr);
+void DDP_DataCollector::collect(const GaussNewtonDDP* constDdpPtr) {
+  // TODO(mspieler): avoid const_cast
+  auto* ddpPtr = const_cast<GaussNewtonDDP*>(constDdpPtr);
 
   /*
    * Data which should be copied
@@ -64,7 +64,7 @@ void DDP_DataCollector<STATE_DIM, INPUT_DIM>::collect(const ddp_t* constDdpPtr) 
   // data resizing
   bool numPartitionsChanged = numPartitions_ != ddpPtr->numPartitions_;
   if (numPartitionsChanged) {
-    resizeDataContainer(ddpPtr->numPartitions_);
+    resizeDataContainer(ddpPtr->numPartitions_, ddpPtr->stateDim_, ddpPtr->inputDim_);
   }
 
   numPartitions_ = ddpPtr->numPartitions_;
@@ -121,12 +121,13 @@ void DDP_DataCollector<STATE_DIM, INPUT_DIM>::collect(const ddp_t* constDdpPtr) 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_DataCollector<STATE_DIM, INPUT_DIM>::calculateStateInputConstraintsSensitivity(
-    const ddp_t* constDdpPtr, const std::vector<scalar_array_t>& timeTrajectoriesStock, const state_vector_array2_t& stateTrajectoriesStock,
-    const input_vector_array2_t& inputTrajectoriesStock, dynamic_vector_array3_t& EvDevEventTimesTrajectoryStockSet,
-    dynamic_vector_array3_t& EvDevEventTimesProjectedTrajectoriesStockSet) {
-  auto* ddpPtr = const_cast<ddp_t*>(constDdpPtr);
+void DDP_DataCollector::calculateStateInputConstraintsSensitivity(const GaussNewtonDDP* constDdpPtr,
+                                                                  const std::vector<scalar_array_t>& timeTrajectoriesStock,
+                                                                  const vector_array2_t& stateTrajectoriesStock,
+                                                                  const vector_array2_t& inputTrajectoriesStock,
+                                                                  vector_array3_t& EvDevEventTimesTrajectoryStockSet,
+                                                                  vector_array3_t& EvDevEventTimesProjectedTrajectoriesStockSet) {
+  auto* ddpPtr = const_cast<GaussNewtonDDP*>(constDdpPtr);
 
   const size_t numEventTimes = constDdpPtr->getModeSchedule().eventTimes.size();
 
@@ -154,7 +155,7 @@ void DDP_DataCollector<STATE_DIM, INPUT_DIM>::calculateStateInputConstraintsSens
                                                        inputTrajectoriesStock[i][k]);
 
       // evaluation
-      typename ddp_t::constraint1_vector_array_t g1DevArray(numEventTimes);
+      vector_array_t g1DevArray(numEventTimes);
       const auto nc1 = systemConstraintsPtr_->numStateInputConstraint(timeTrajectoriesStock[i][k]);
       systemConstraintsPtr_->getConstraint1DerivativesEventTimes(g1DevArray);
 
@@ -183,8 +184,7 @@ void DDP_DataCollector<STATE_DIM, INPUT_DIM>::calculateStateInputConstraintsSens
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void DDP_DataCollector<STATE_DIM, INPUT_DIM>::resizeDataContainer(const size_t& numPartitions) {
+void DDP_DataCollector::resizeDataContainer(size_t numPartitions, size_t stateDim, size_t inputDim) {
   if (numPartitions == 0) {
     throw std::runtime_error("The number of Partitions cannot be zero!");
   }

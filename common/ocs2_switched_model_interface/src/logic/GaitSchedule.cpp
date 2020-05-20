@@ -100,4 +100,40 @@ bool isStandingDuringTimeHorizon(scalar_t timeHorizon, const GaitSchedule& gaitS
                      [](size_t mode) { return mode == ModeNumber::STANCE; });
 }
 
+scalar_t getTimeUntilNextLiftOff(scalar_t timeHorizon, size_t legId, const GaitSchedule& gaitSchedule) {
+  const auto modeSchedule = gaitSchedule.getModeSchedule(timeHorizon);
+  scalar_t timeUntilNextLiftOff = 0.0;
+  unsigned int modeId = 0;
+  for (const auto mode : modeSchedule.modeSequence) {
+    std::array<bool, 4> stanceLegs = modeNumber2StanceLeg(mode);
+    if (!stanceLegs.at(legId)) {
+      return timeUntilNextLiftOff - gaitSchedule.getCurrentTime();
+    } else if (modeId < modeSchedule.eventTimes.size()) {
+      timeUntilNextLiftOff = modeSchedule.eventTimes.at(modeId);
+      ++modeId;
+    } else {
+      return -1.0;
+    }
+  }
 }
+
+scalar_t getTimeUntilNextTouchDown(scalar_t timeHorizon, size_t legId, const GaitSchedule& gaitSchedule) {
+  const auto modeSchedule = gaitSchedule.getModeSchedule(timeHorizon);
+  unsigned int modeId = 0;
+  for (const auto mode : modeSchedule.modeSequence) {
+    std::array<bool, 4> stanceLegs = switched_model::modeNumber2StanceLeg(mode);
+    if (!stanceLegs.at(legId)) {
+      if (modeId < modeSchedule.eventTimes.size()) {
+        return modeSchedule.eventTimes.at(modeId) - gaitSchedule.getCurrentTime();
+      } else {
+        return timeHorizon;
+      }
+    } else if (modeId < modeSchedule.eventTimes.size()) {
+      ++modeId;
+    } else {
+      return -1.0;
+    }
+  }
+}
+
+}  // namespace switched_model

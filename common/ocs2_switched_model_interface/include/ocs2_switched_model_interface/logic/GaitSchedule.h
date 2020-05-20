@@ -50,6 +50,9 @@ class GaitSchedule {
   /** Gets phase variable for the current gait */
   scalar_t getCurrentPhase() const { return phase_; }
 
+  /** Gets time variable for the current gait */
+  scalar_t getCurrentTime() const { return time_; }
+
   /** Gets the currently active mode */
   size_t getCurrentMode() const { return getModeFromPhase(getCurrentPhase(), getCurrentGait()); }
 
@@ -66,5 +69,11 @@ class GaitSchedule {
 };
 
 bool isStandingDuringTimeHorizon(scalar_t timeHorizon, const GaitSchedule& gaitSchedule);
+
+/** Returns time until next lift off of legId. Returns -1 if leg is not lifting off */
+scalar_t getTimeUntilNextLiftOff(scalar_t timeHorizon, size_t legId, const GaitSchedule& gaitSchedule);
+
+/** Returns time until next touch down of legId. Returns -1 if leg is not lifting off */
+scalar_t getTimeUntilNextTouchDown(scalar_t timeHorizon, size_t legId, const GaitSchedule& gaitSchedule);
 
 }  // namespace switched_model

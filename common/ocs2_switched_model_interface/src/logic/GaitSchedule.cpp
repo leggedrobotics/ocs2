@@ -129,7 +129,7 @@ scalar_t getTimeUntilNextTouchDown(scalar_t timeHorizon, size_t legId, const Gai
       if (modeId < modeSchedule.eventTimes.size()) {
         return modeSchedule.eventTimes.at(modeId - 1) - gaitSchedule.getCurrentTime();
       } else {
-        return timeHorizon;
+        return -1.0;
       }
     }
     ++modeId;

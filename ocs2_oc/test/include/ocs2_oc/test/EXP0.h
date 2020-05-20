@@ -317,9 +317,4 @@ class EXP0_CostFunction : public CostFunctionBase {
   std::vector<std::shared_ptr<CostFunctionBase>> subsystemCostsPtr_;
 };
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-using EXP0_SystemOperatingTrajectories = OperatingPoints;
-
 }  // namespace ocs2

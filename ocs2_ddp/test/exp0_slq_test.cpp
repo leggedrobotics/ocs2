@@ -34,9 +34,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/FeedforwardController.h>
-#include <ocs2_ddp/SLQ.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
+#include <ocs2_ddp/SLQ.h>
 #include <ocs2_oc/test/EXP0.h>
 
 using namespace ocs2;
@@ -101,7 +101,7 @@ TEST(exp0_slq_test, exp0_slq_test) {
   // system operatingTrajectories
   vector_t stateOperatingPoint = vector_t::Zero(2);
   vector_t inputOperatingPoint = vector_t::Zero(1);
-  EXP0_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
+  OperatingPoints operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
   /******************************************************************************************************/
   /******************************************************************************************************/
@@ -229,7 +229,7 @@ TEST(exp0_slq_test, caching_test) {
   // system operatingTrajectories
   vector_t stateOperatingPoint = vector_t::Zero(2);
   vector_t inputOperatingPoint = vector_t::Zero(1);
-  EXP0_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
+  OperatingPoints operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
   /******************************************************************************************************/
   /******************************************************************************************************/

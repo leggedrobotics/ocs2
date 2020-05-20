@@ -68,7 +68,7 @@ class CircularKinematicsSystem final : public SystemDynamicsBase {
  */
 class CircularKinematicsCost final : public CostFunctionBaseAD {
  public:
-  CircularKinematicsCost() = default;
+  CircularKinematicsCost() : CostFunctionBaseAD(2, 2) {}
   ~CircularKinematicsCost() override = default;
 
   CircularKinematicsCost* clone() const override { return new CircularKinematicsCost(*this); }
@@ -95,7 +95,7 @@ class CircularKinematicsCost final : public CostFunctionBaseAD {
  */
 class CircularKinematicsConstraints final : public ConstraintBase {
  public:
-  CircularKinematicsConstraints() = default;
+  CircularKinematicsConstraints() : ConstraintBase(2, 2) {}
   ~CircularKinematicsConstraints() override = default;
 
   CircularKinematicsConstraints* clone() const override { return new CircularKinematicsConstraints(*this); }

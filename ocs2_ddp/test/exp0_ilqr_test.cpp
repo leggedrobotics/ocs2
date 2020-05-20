@@ -99,7 +99,7 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   // system operatingTrajectories
   vector_t stateOperatingPoint = vector_t::Zero(2);
   vector_t inputOperatingPoint = vector_t::Zero(1);
-  EXP0_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
+  OperatingPoints operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
   /******************************************************************************************************/
   /******************************************************************************************************/

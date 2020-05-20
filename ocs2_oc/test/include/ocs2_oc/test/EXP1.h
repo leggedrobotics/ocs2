@@ -250,7 +250,7 @@ class EXP1_CostFunction1 : public CostFunctionBase {
 
   void getTerminalCost(scalar_t& Phi) { Phi = 0; }
   void getTerminalCostDerivativeState(vector_t& dPhidx) final { dPhidx.setZero(2); }
-  void getTerminalCostSecondDerivativeState(matrix_t& dPhidxx) final { dPhidxx.setZero(); }
+  void getTerminalCostSecondDerivativeState(matrix_t& dPhidxx) final { dPhidxx.setZero(2,2); }
 
   EXP1_CostFunction1* clone() const final { return new EXP1_CostFunction1(*this); };
 };

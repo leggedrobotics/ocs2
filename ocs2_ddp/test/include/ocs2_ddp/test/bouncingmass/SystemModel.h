@@ -48,41 +48,33 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ddp/test/bouncingmass/OverallReference.h"
 
-enum { STATE_DIM = 3, INPUT_DIM = 1 };
+static constexpr size_t STATE_DIM = 3;
+static constexpr size_t INPUT_DIM = 1;
 
-using DIMENSIONS = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
-using scalar_t = typename DIMENSIONS::scalar_t;
-using state_vector_t = typename DIMENSIONS::state_vector_t;
-using input_vector_t = typename DIMENSIONS::input_vector_t;
-using dynamic_vec_t = typename DIMENSIONS::dynamic_vector_t;
+using scalar_t = ocs2::scalar_t;
+using vector_t = ocs2::vector_t;
+using matrix_t = ocs2::matrix_t;
+using scalar_array_t = ocs2::scalar_array_t;
+using size_array_t = ocs2::size_array_t;
 
-using state_matrix_t = typename DIMENSIONS::state_matrix_t;
-using input_matrix_t = typename DIMENSIONS::input_matrix_t;
-using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
-
-using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-using size_array_t = typename DIMENSIONS::size_array_t;
-
-class systemDynamics final : public ocs2::ControlledSystemBase<STATE_DIM, INPUT_DIM> {
+class systemDynamics final : public ocs2::ControlledSystemBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-
   systemDynamics() = default;
   ~systemDynamics() = default;
 
-  void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) {
-    state_matrix_t A;
+  void computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) {
+    matrix_t A(STATE_DIM, STATE_DIM);
     A << 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
-    state_input_matrix_t B;
+    matrix_t B(STATE_DIM, INPUT_DIM);
     B << 0.0, 1.0, 0.0;
 
     dxdt = A * x + B * u;
   }
 
-  void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override {
+  void computeJumpMap(const scalar_t& time, const vector_t& state, vector_t& mappedState) override {
     const scalar_t e = 0.95;
 
-    state_matrix_t delta;
+    matrix_t delta(STATE_DIM, STATE_DIM);
     delta << 0.0, 0.0, 0.0, 0.0, -(1.0 + e), 0.0, 0.0, 0.0, 0.0;
     mappedState = state + delta * state;
 
@@ -91,7 +83,7 @@ class systemDynamics final : public ocs2::ControlledSystemBase<STATE_DIM, INPUT_
     }
   }
 
-  void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) {
+  void computeGuardSurfaces(const scalar_t& time, const vector_t& state, vector_t& guardSurfacesValue) {
     guardSurfacesValue.resize(1);
     guardSurfacesValue[0] = state[0];
   }
@@ -99,42 +91,47 @@ class systemDynamics final : public ocs2::ControlledSystemBase<STATE_DIM, INPUT_
   systemDynamics* clone() const final { return new systemDynamics(*this); }
 };
 
-class systemDerivative final : public ocs2::DerivativesBase<STATE_DIM, INPUT_DIM> {
+class systemDerivative final : public ocs2::DerivativesBase {
  public:
   systemDerivative() = default;
   ~systemDerivative() = default;
 
-  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& state, const input_vector_t& u) {
+  void setCurrentStateAndControl(const scalar_t& t, const vector_t& state, const vector_t& u) {
     t_ = t;
     state_ = state;
     u_ = u;
   }
 
-  void getFlowMapDerivativeState(state_matrix_t& A) { A << 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0; }
+  void getFlowMapDerivativeState(matrix_t& A) {
+    A.resize(STATE_DIM, STATE_DIM);
+    A << 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+  }
 
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) { B << 0.0, 1.0, 0.0; }
+  void getFlowMapDerivativeInput(matrix_t& B) {
+    B.resize(STATE_DIM, INPUT_DIM);
+    B << 0.0, 1.0, 0.0;
+  }
 
   systemDerivative* clone() const final { return new systemDerivative(*this); }
 
  private:
   scalar_t t_;
-  state_vector_t state_;
-  input_vector_t u_;
+  vector_t state_;
+  vector_t u_;
 };
 
-class systemCost final : public ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM> {
+class systemCost final : public ocs2::QuadraticCostFunction {
  public:
-  using BASE = ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM>;
+  using BASE = ocs2::QuadraticCostFunction;
 
-  systemCost(OverallReference ref, state_matrix_t Q, input_matrix_t R, state_matrix_t P, state_vector_t xNom, input_vector_t uNom,
-             state_vector_t xFin, scalar_t timeFinal)
+  systemCost(OverallReference ref, matrix_t Q, matrix_t R, matrix_t P, vector_t xNom, vector_t uNom, vector_t xFin, scalar_t timeFinal)
       : BASE(Q, R, xNom, uNom, P, xFin), ref_(ref), xFin_(xFin), timeFinal_(timeFinal) {}
 
   ~systemCost() = default;
 
   systemCost* clone() const final { return new systemCost(*this); }
 
-  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& state, const input_vector_t& u) {
+  void setCurrentStateAndControl(const scalar_t& t, const vector_t& state, const vector_t& u) {
     t_ = t;
     state_ = state;
     u_ = u;
@@ -153,17 +150,19 @@ class systemCost final : public ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM
 
  private:
   scalar_t t_;
-  state_vector_t state_;
-  state_vector_t stateRef_;
-  input_vector_t u_;
-  input_vector_t uRef_;
+  vector_t state_;
+  vector_t stateRef_;
+  vector_t u_;
+  vector_t uRef_;
 
-  state_vector_t xFin_;
+  vector_t xFin_;
   scalar_t timeFinal_;
 
   OverallReference ref_;
 };
 
-using systemConstraint = ocs2::ConstraintBase<STATE_DIM, INPUT_DIM>;
-
-using OperatingPoints = ocs2::OperatingPoints<STATE_DIM, INPUT_DIM>;
+class systemConstraint final : public ocs2::ConstraintBase {
+ public:
+  systemConstraint() : ocs2::ConstraintBase(STATE_DIM, INPUT_DIM) {}
+  ~systemConstraint() override = default;
+};

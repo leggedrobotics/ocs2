@@ -35,6 +35,9 @@
 TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   using namespace ocs2;
 
+  const size_t stateDim = STATE_DIM;
+  const size_t inputDim = INPUT_DIM;
+
   SLQ_Settings slqSettings;
   slqSettings.useNominalTimeForBackwardPass_ = true;
   slqSettings.ddpSettings_.displayInfo_ = true;
@@ -56,50 +59,48 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   rolloutSettings.relTolODE_ = 1e-7;
   rolloutSettings.maxNumStepsPerSecond_ = 10000;
 
-  double startTime = 0.0;
-  double finalTime = 5.0;
+  scalar_t startTime = 0.0;
+  scalar_t finalTime = 5.0;
 
-  std::vector<double> partitioningTimes;
+  std::vector<scalar_t> partitioningTimes;
   partitioningTimes.push_back(startTime);
   partitioningTimes.push_back(finalTime);
 
-  Eigen::Matrix<double, STATE_DIM, 1> initState = {0, 1, 1};
+  vector_t initState(stateDim);
+  initState << 0, 1, 1;
 
   // rollout
   hybridSysDynamics systemDynamics;
-  StateTriggeredRollout<STATE_DIM, 1> stateTriggeredRollout(systemDynamics, rolloutSettings);
+  StateTriggeredRollout stateTriggeredRollout(stateDim, inputDim, systemDynamics, rolloutSettings);
 
   // derivatives
   hybridSysDerivatives systemDerivatives;
   // constraints
   hybridSysConstraints systemConstraints;
   // cost function
-  Eigen::Matrix<double, STATE_DIM, STATE_DIM> Q;
+  matrix_t Q(stateDim, stateDim);
   Q << 50, 0, 0, 0, 50, 0, 0, 0, 0;
-  Eigen::Matrix<double, STATE_DIM, STATE_DIM> P;
+  matrix_t P(stateDim, stateDim);
   P << 50, 0, 0, 0, 50, 0, 0, 0, 0;
-  Eigen::Matrix<double, INPUT_DIM, INPUT_DIM> R;
+  matrix_t R(inputDim, inputDim);
   R << 1;
-  Eigen::Matrix<double, INPUT_DIM, STATE_DIM> crossTerm;
-  crossTerm.setZero();
-  Eigen::Matrix<double, STATE_DIM, 1> xNominal;
-  xNominal.setZero();
-  Eigen::Matrix<double, INPUT_DIM, 1> uNominal;
-  uNominal.setZero();
+  matrix_t crossTerm = matrix_t::Zero(inputDim, stateDim);
+  vector_t xNominal = vector_t::Zero(stateDim);
+  vector_t uNominal = vector_t::Zero(inputDim);
 
-  QuadraticCostFunction<STATE_DIM, INPUT_DIM> systemCost(Q, R, xNominal, uNominal, P, xNominal, crossTerm);
+  QuadraticCostFunction systemCost(Q, R, xNominal, uNominal, P, xNominal, crossTerm);
 
   // operatingTrajectories
-  Eigen::Matrix<double, STATE_DIM, 1> stateOperatingPoint = Eigen::Matrix<double, STATE_DIM, 1>::Zero();
-  Eigen::Matrix<double, INPUT_DIM, 1> inputOperatingPoint = Eigen::Matrix<double, INPUT_DIM, 1>::Zero();
-  system_op operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
+  vector_t stateOperatingPoint = vector_t::Zero(stateDim);
+  vector_t inputOperatingPoint = vector_t::Zero(inputDim);
+  OperatingPoints operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
   std::cout << "Starting SLQ Procedure" << std::endl;
   // SLQ
-  SLQ<STATE_DIM, INPUT_DIM> slqST(&stateTriggeredRollout, &systemDerivatives, &systemConstraints, &systemCost, &operatingTrajectories,
-                                  slqSettings);
-  slqST.run(startTime, initState, finalTime, partitioningTimes);
-  SLQ<STATE_DIM, INPUT_DIM>::primal_solution_t solution = slqST.primalSolution(finalTime);
+  SLQ slq(stateDim, inputDim, &stateTriggeredRollout, &systemDerivatives, &systemConstraints, &systemCost, &operatingTrajectories,
+          slqSettings);
+  slq.run(startTime, initState, finalTime, partitioningTimes);
+  auto solution = slq.primalSolution(finalTime);
   std::cout << "SLQ Procedure Done" << std::endl;
 
   if (false) {
@@ -110,13 +111,13 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
     }
   }
 
-  double cost;
+  scalar_t cost;
   for (int i = 0; i < solution.stateTrajectory_.size(); i++) {
     // Test 1 : Constraint Compliance
-    double constraint0 = -solution.inputTrajectory_[i][0] + 2;
-    double constraint1 = solution.inputTrajectory_[i][0] + 2;
-    double constraint2 = solution.stateTrajectory_[i][0] + 2;
-    double constraint3 = -solution.stateTrajectory_[i][0] + 2;
+    scalar_t constraint0 = -solution.inputTrajectory_[i][0] + 2;
+    scalar_t constraint1 = solution.inputTrajectory_[i][0] + 2;
+    scalar_t constraint2 = solution.stateTrajectory_[i][0] + 2;
+    scalar_t constraint3 = -solution.stateTrajectory_[i][0] + 2;
 
     EXPECT_GT(constraint0, 0);
     EXPECT_GT(constraint1, 0);
@@ -138,11 +139,6 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
     }
   }
   // Test 3: Check of cost function
-  auto performanceIndecesST = slqST.getPerformanceIndeces();
+  auto performanceIndecesST = slq.getPerformanceIndeces();
   EXPECT_LT(std::fabs(performanceIndecesST.totalCost - 20.08), 10.0 * slqSettings.ddpSettings_.minRelCost_);
-}
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

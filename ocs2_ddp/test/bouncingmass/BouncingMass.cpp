@@ -1,8 +1,11 @@
 #include <gtest/gtest.h>
+
 #include <iostream>
 
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
+#include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/control/StateBasedLinearController.h>
+#include <ocs2_ddp/SLQ.h>
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
 
 #include "ocs2_ddp/test/bouncingmass/OverallReference.h"
@@ -34,24 +37,12 @@
  * (2) Check of cost function compared against cost calculated during trusted run of SLQ
  */
 TEST(testStateRollOut_SLQ, BouncingMassTest) {
-  using DIMENSIONS = ocs2::Dimensions<3, 1>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using input_vector_t = typename DIMENSIONS::input_vector_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using dynamic_vector_t = Eigen::Matrix<double, Eigen::Dynamic, 1>;
-
-  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
-  using controller_t = ocs2::ControllerBase<STATE_DIM, INPUT_DIM>;
-  using linear_controller_t = ocs2::LinearController<STATE_DIM, INPUT_DIM>;
-
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-  using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
-  using dynamic_vector_array_t = std::vector<dynamic_vector_t, Eigen::aligned_allocator<dynamic_vector_t>>;
-
-  using controller_ptr_array_t = std::vector<controller_t*>;
+  using scalar_t = ocs2::scalar_t;
+  using vector_t = ocs2::vector_t;
+  using matrix_t = ocs2::matrix_t;
+  using scalar_array_t = ocs2::scalar_array_t;
+  using vector_array_t = ocs2::vector_array_t;
+  using matrix_array_t = ocs2::matrix_array_t;
 
   ocs2::SLQ_Settings slqSettings;
   slqSettings.useNominalTimeForBackwardPass_ = true;
@@ -75,23 +66,24 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   rolloutSettings.useTrajectorySpreadingController_ = true;
 
   // Parameters
-  const double startTime = 0.0;
-  const double finalTime = 2.5;
-  const state_vector_t x0 = {0.7, 0.5, 0};
+  const scalar_t startTime = 0.0;
+  const scalar_t finalTime = 2.5;
+  const vector_t x0 = Eigen::Matrix<scalar_t, 3, 1>(0.7, 0.5, 0);
+  const vector_t u0 = vector_t::Zero(INPUT_DIM);
   bool outputSolution = false;
 
   // Generation of Reference Trajectory
   const scalar_array_t trajTimes{0, 0.2, 0.8, 1.0, 1.2, 1.8, 2.0};
 
-  state_vector_t state0;  //	Intial and final state
+  vector_t state0(STATE_DIM);  //	Intial and final state
   state0 << 0.5, 0, 0;
-  state_vector_t state1;  //	Hard impact
+  vector_t state1(STATE_DIM);  //	Hard impact
   state1 << 0, -5, 0;
-  state_vector_t state2;  // 	Soft impact
+  vector_t state2(STATE_DIM);  // 	Soft impact
   state2 << 0, -1, 0;
 
   const scalar_t delta = 0.5;
-  const state_vector_array_t trajStates{state0, state1, state2, state2, state1, state2, state0};
+  const vector_array_t trajStates{state0, state1, state2, state2, state1, state2, state0};
   OverallReference reference(trajTimes, trajStates);
   reference.extendref(delta);
 
@@ -101,20 +93,22 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   systemConstraint systemConstraints;
 
   // Cost Function
-  state_matrix_t Q;
+  matrix_t Q(STATE_DIM, STATE_DIM);
   Q << 50.0, 0.0, 0.0, 0.0, 50.0, 0.0, 0.0, 0.0, 0.0;
 
-  input_matrix_t R(1);
-  state_matrix_t P;
+  matrix_t R(INPUT_DIM, INPUT_DIM);
+  R << 1.0;
+  matrix_t P(STATE_DIM, STATE_DIM);
   P << 56.63, 7.07, 0.0, 7.07, 8.01, 0.0, 0.0, 0.0, 0.0;
 
-  state_vector_t xNom = state0;
-  input_vector_t uNom(0);
-  state_vector_t xFin = state0;
+  vector_t xNom = state0;
+  vector_t uNom(INPUT_DIM);
+  uNom << 0;
+  vector_t xFin = state0;
   systemCost systemCost(reference, Q, R, P, xNom, uNom, xFin, finalTime);
 
   // Rollout Class
-  ocs2::StateTriggeredRollout<STATE_DIM, INPUT_DIM> stateTriggeredRollout(systemModel, rolloutSettings);
+  ocs2::StateTriggeredRollout stateTriggeredRollout(STATE_DIM, INPUT_DIM, systemModel, rolloutSettings);
 
   // Operating points and PartitioningTimes
   scalar_array_t partitioningTimes;
@@ -122,11 +116,12 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   partitioningTimes.push_back(finalTime);
 
   // Initial Controller
-  const input_state_matrix_t controllerGain = {25, 10, 0};
-  input_vector_t controllerBias;
+  matrix_t controllerGain(INPUT_DIM, STATE_DIM);
+  controllerGain << 25, 10, 0;
+  vector_t controllerBias;
 
-  input_state_matrix_array_t controllerGainArray;
-  input_vector_array_t controllerBiasArray;
+  matrix_array_t controllerGainArray;
+  vector_array_t controllerBiasArray;
   scalar_array_t timeStampArray;
 
   const scalar_t controllerDeltaTime = 1e-3;  // Time step for controller time array
@@ -137,7 +132,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   for (int i = 0; i < controlTimes.size() - 1; i++) {
     scalar_t timeSteps = (controlTimes[i + 1] + eps - controlTimes[i]) / controllerDeltaTime;
     scalar_t timeStamp = 0;
-    state_vector_t refState;
+    vector_t refState;
 
     for (int j = 0; j <= timeSteps; j++) {
       if (j == 0 && i < controlTimes.size() - 2) {
@@ -146,8 +141,8 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
         timeStamp = controlTimes[i] + j * controllerDeltaTime;
       }
 
-      state_vector_t refState = reference.getState(timeStamp);
-      input_vector_t refInput = reference.getInput(timeStamp);
+      vector_t refState = reference.getState(timeStamp);
+      vector_t refInput = reference.getInput(timeStamp);
       controllerBias = controllerGain * refState + refInput;
 
       timeStampArray.push_back(timeStamp);
@@ -156,15 +151,15 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
     }
   }
 
-  linear_controller_t Control(timeStampArray, controllerBiasArray, controllerGainArray);
-  controller_ptr_array_t controllerPtrArray = {&Control};
+  ocs2::LinearController Control(STATE_DIM, INPUT_DIM, timeStampArray, controllerBiasArray, controllerGainArray);
+  std::vector<ocs2::ControllerBase*> controllerPtrArray = {&Control};
 
-  OperatingPoints operatingTrajectories(x0, input_vector_t::Zero());
+  ocs2::OperatingPoints operatingTrajectories(x0, u0);
   // SLQ
-  ocs2::SLQ<STATE_DIM, INPUT_DIM> slq(&stateTriggeredRollout, &systemDerivatives, &systemConstraints, &systemCost, &operatingTrajectories,
-                                      slqSettings);
+  ocs2::SLQ slq(STATE_DIM, INPUT_DIM, &stateTriggeredRollout, &systemDerivatives, &systemConstraints, &systemCost, &operatingTrajectories,
+                slqSettings);
   slq.run(startTime, x0, finalTime, partitioningTimes, controllerPtrArray);
-  ocs2::SLQ<STATE_DIM, INPUT_DIM>::primal_solution_t solutionST = slq.primalSolution(finalTime);
+  auto solutionST = slq.primalSolution(finalTime);
 
   for (int i = 0; i < solutionST.stateTrajectory_.size(); i++) {
     // Test 1: No penetration of Guard Surfaces
@@ -174,8 +169,8 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
     if (outputSolution) {
       auto idx = static_cast<int>(solutionST.stateTrajectory_[i][2]);
 
-      input_vector_t uRef = reference.getInput(solutionST.timeTrajectory_[i]);
-      state_vector_t xRef = reference.getState(idx, solutionST.timeTrajectory_[i]);
+      vector_t uRef = reference.getInput(solutionST.timeTrajectory_[i]);
+      vector_t xRef = reference.getState(idx, solutionST.timeTrajectory_[i]);
 
       std::cerr << i << ";" << idx << ";";
       std::cerr << std::setprecision(25) << solutionST.timeTrajectory_[i];
@@ -189,9 +184,4 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   auto performanceIndeces = slq.getPerformanceIndeces();
   const scalar_t expectedCost = 7.188299;
   EXPECT_LT(std::fabs(performanceIndeces.totalCost - expectedCost), 100 * slqSettings.ddpSettings_.minRelCost_);
-}
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

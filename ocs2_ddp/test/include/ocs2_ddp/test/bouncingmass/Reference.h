@@ -30,13 +30,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <Eigen/Dense>
-#include <algorithm>
-#include <boost/numeric/odeint.hpp>
-#include <cmath>
-#include <iostream>
-#include <vector>
 
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
+
+using scalar_t = ocs2::scalar_t;
+using vector_t = ocs2::vector_t;
+using matrix_t = ocs2::matrix_t;
+using scalar_array_t = ocs2::scalar_array_t;
+using vector_array_t = ocs2::vector_array_t;
 
 /*
  * 	This class constructs, contains a section of the reference, which is contained in
@@ -46,13 +47,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * by M. Rijnen]
  */
 class Reference {
-  using DIMENSIONS = ocs2::Dimensions<3, 1>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-  using input_vector_t = typename DIMENSIONS::input_vector_t;
-
  public:
   /*
    * Constructor
@@ -67,7 +61,7 @@ class Reference {
    * @param [in] p0: First waypoint of the reference [position,velocity,acceleration]
    * @param [in] p1: Second waypoint of the reference
    */
-  Reference(scalar_t t0, scalar_t t1, state_vector_t p0, state_vector_t p1);
+  Reference(scalar_t t0, scalar_t t1, const vector_t& p0, const vector_t& p1);
 
   /*
    * Obtain reference input at the current time
@@ -75,7 +69,7 @@ class Reference {
    * @param [in] time: current time
    * @param [out] input: current reference input
    */
-  void getInput(const scalar_t time, input_vector_t& input);
+  void getInput(const scalar_t time, vector_t& input);
 
   /*
    * Obtain reference input at the current time
@@ -83,7 +77,7 @@ class Reference {
    * @param [in] time: current time
    * @return current reference input
    */
-  input_vector_t getInput(const scalar_t time);
+  vector_t getInput(const scalar_t time);
 
   /*
    * Obtain reference state at current time
@@ -91,7 +85,7 @@ class Reference {
    * @param [in] time: current time
    * @param [out] x: current reference state
    */
-  void getState(const scalar_t time, state_vector_t& x);
+  void getState(const scalar_t time, vector_t& x);
 
   /*
    * Extend the reference by integrating the input signal of the next
@@ -122,7 +116,7 @@ class Reference {
    * 	@param [in] p0: first waypoint
    * 	@param [in] p1: second waypoint
    */
-  void Create5thOrdPol(scalar_t t0, scalar_t t1, state_vector_t p0, state_vector_t p1);
+  void Create5thOrdPol(scalar_t t0, scalar_t t1, const vector_t& p0, const vector_t& p1);
 
   /*
    * 	Find the derivative of the polynomial described by a
@@ -139,14 +133,14 @@ class Reference {
    * 	@param [in]	time:	current time
    * 	@param [out] x: current state
    */
-  void interpolate_ext(scalar_t time, state_vector_t& x);
+  void interpolate_ext(scalar_t time, vector_t& x);
 
   Eigen::Matrix<scalar_t, 6, 1> polU_;
   Eigen::Matrix<scalar_t, 6, 1> polX_;
   Eigen::Matrix<scalar_t, 6, 1> polV_;
 
-  state_vector_array_t xPre_;
+  vector_array_t xPre_;
   scalar_array_t tPre_;
-  state_vector_array_t xPost_;
+  vector_array_t xPost_;
   scalar_array_t tPost_;
 };

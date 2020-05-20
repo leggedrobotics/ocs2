@@ -69,10 +69,11 @@ void LinearQuadraticApproximator::approximateUnconstrainedLQProblemAtEventTime(c
 
   // if final constraint type 2 is active
   const size_t ncFinalEqStateOnly = systemConstraintsPtr_->numStateOnlyFinalConstraint(time);
-  modelData.stateEqConstrStateDerivative_.setZero(ncFinalEqStateOnly, modelData.stateDim_);
   if (ncFinalEqStateOnly > 0) {
     systemConstraintsPtr_->getFinalConstraint2(modelData.stateEqConstr_);
     systemConstraintsPtr_->getFinalConstraint2DerivativesState(modelData.stateEqConstrStateDerivative_);
+  } else {
+    modelData.stateEqConstrStateDerivative_.setZero(ncFinalEqStateOnly, modelData.stateDim_);
   }
   modelData.numIneqConstr_ = 0;          // no inequality constraint
   modelData.numStateInputEqConstr_ = 0;  // no state-input equality constraint
@@ -131,12 +132,13 @@ void LinearQuadraticApproximator::approximateConstraints(const scalar_t& time, c
     throw std::runtime_error("Number of active type-1 constraints should be less-equal to the number of input dimension.");
   }
   // if constraint type 1 is active
-  modelData.stateInputEqConstrStateDerivative_.setZero(ncEqStateInput, modelData.stateDim_);
-  modelData.stateInputEqConstrInputDerivative_.setZero(ncEqStateInput, modelData.inputDim_);
   if (ncEqStateInput > 0) {
     systemConstraintsPtr_->getConstraint1(modelData.stateInputEqConstr_);
     systemConstraintsPtr_->getConstraint1DerivativesState(modelData.stateInputEqConstrStateDerivative_);
     systemConstraintsPtr_->getConstraint1DerivativesControl(modelData.stateInputEqConstrInputDerivative_);
+  } else {
+    modelData.stateInputEqConstrStateDerivative_.setZero(ncEqStateInput, modelData.stateDim_);
+    modelData.stateInputEqConstrInputDerivative_.setZero(ncEqStateInput, modelData.inputDim_);
   }
   modelData.numStateInputEqConstr_ = ncEqStateInput;
   // TODO(mspieler): is slicing necessary here?
@@ -150,10 +152,11 @@ void LinearQuadraticApproximator::approximateConstraints(const scalar_t& time, c
     throw std::runtime_error("Number of active type-2 constraints should be less-equal to the number of input dimension.");
   }
   // if constraint type 2 is active
-  modelData.stateEqConstrStateDerivative_.setZero(ncEqStateOnly, modelData.stateDim_);
   if (ncEqStateOnly > 0) {
     systemConstraintsPtr_->getConstraint2(modelData.stateEqConstr_);
     systemConstraintsPtr_->getConstraint2DerivativesState(modelData.stateEqConstrStateDerivative_);
+  } else {
+    modelData.stateEqConstrStateDerivative_.setZero(ncEqStateOnly, modelData.stateDim_);
   }
   modelData.numStateEqConstr_ = ncEqStateOnly;
   // TODO(mspieler): is slicing necessary here?

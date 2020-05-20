@@ -99,8 +99,8 @@ TEST(exp0_slq_test, exp0_slq_test) {
   EXP0_CostFunction systemCostFunction(modeScheduleManagerPtr);
 
   // system operatingTrajectories
-  vector_t stateOperatingPoint = Eigen::Matrix<scalar_t, 2, 1>::Zero();
-  vector_t inputOperatingPoint = Eigen::Matrix<scalar_t, 1, 1>::Zero();
+  vector_t stateOperatingPoint = vector_t::Zero(2);
+  vector_t inputOperatingPoint = vector_t::Zero(1);
   EXP0_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
   /******************************************************************************************************/
@@ -227,8 +227,8 @@ TEST(exp0_slq_test, caching_test) {
   EXP0_CostFunction systemCostFunction(modeScheduleManagerPtr);
 
   // system operatingTrajectories
-  Eigen::Matrix<scalar_t, 2, 1> stateOperatingPoint = Eigen::Matrix<scalar_t, 2, 1>::Zero();
-  Eigen::Matrix<scalar_t, 1, 1> inputOperatingPoint = Eigen::Matrix<scalar_t, 1, 1>::Zero();
+  vector_t stateOperatingPoint = vector_t::Zero(2);
+  vector_t inputOperatingPoint = vector_t::Zero(1);
   EXP0_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
   /******************************************************************************************************/
@@ -266,9 +266,4 @@ TEST(exp0_slq_test, caching_test) {
   startTime = 1.6;
   finalTime = 2.0;
   ASSERT_NO_THROW(slqST.run(startTime, initState, finalTime, partitioningTimes, std::vector<ControllerBase*>()));
-}
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

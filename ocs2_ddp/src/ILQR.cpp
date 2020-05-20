@@ -27,20 +27,20 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_ddp/ILQR.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-ILQR<STATE_DIM, INPUT_DIM>::ILQR(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
-                                 const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
-                                 const operating_trajectories_base_t* operatingTrajectoriesPtr,
-                                 const ILQR_Settings& settings /*= ILQR_Settings()*/,
-                                 const cost_function_base_t* heuristicsFunctionPtr /* = nullptr*/)
+ILQR::ILQR(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const DerivativesBase* systemDerivativesPtr,
+           const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
+           const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const ILQR_Settings& settings /*= ILQR_Settings()*/,
+           const CostFunctionBase* heuristicsFunctionPtr /* = nullptr*/)
 
-    : BASE(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings.ddpSettings_,
-           heuristicsFunctionPtr, "ILQR"),
+    : BASE(stateDim, inputDim, rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
+           settings.ddpSettings_, heuristicsFunctionPtr, "ILQR"),
       settings_(settings) {
   // Riccati Solver
   riccatiEquationsPtrStock_.clear();
@@ -50,7 +50,7 @@ ILQR<STATE_DIM, INPUT_DIM>::ILQR(const rollout_base_t* rolloutPtr, const derivat
     bool preComputeRiccatiTerms =
         BASE::ddpSettings_.preComputeRiccatiTerms_ && (BASE::ddpSettings_.strategy_ == ddp_strategy::type::LINE_SEARCH);
     bool isRiskSensitive = !numerics::almost_eq(BASE::ddpSettings_.riskSensitiveCoeff_, 0.0);
-    riccatiEquationsPtrStock_.emplace_back(new riccati_equations_t(preComputeRiccatiTerms, isRiskSensitive));
+    riccatiEquationsPtrStock_.emplace_back(new DiscreteTimeRiccatiEquations(preComputeRiccatiTerms, isRiskSensitive));
     riccatiEquationsPtrStock_.back()->setRiskSensitiveCoefficient(BASE::ddpSettings_.riskSensitiveCoeff_);
   }  // end of i loop
 
@@ -60,11 +60,9 @@ ILQR<STATE_DIM, INPUT_DIM>::ILQR(const rollout_base_t* rolloutPtr, const derivat
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
-                                                           const state_vector_array_t& stateTrajectory,
-                                                           const input_vector_array_t& inputTrajectory,
-                                                           ModelDataBase::array_t& modelDataTrajectory) {
+void ILQR::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
+                                     const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
+                                     ModelDataBase::array_t& modelDataTrajectory) {
   BASE::nextTimeIndex_ = 0;
   BASE::nextTaskId_ = 0;
   std::function<void(void)> task = [&] {
@@ -100,14 +98,12 @@ void ILQR<STATE_DIM, INPUT_DIM>::approximateIntermediateLQ(const scalar_array_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelDataBase& continuousTimeModelData,
-                                                  ModelDataBase& modelData) {
+void ILQR::discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelDataBase& continuousTimeModelData, ModelDataBase& modelData) {
   /*
    * linearize system dynamics
    */
   modelData.dynamicsStateDerivative_ =
-      dynamic_matrix_t::Identity(STATE_DIM, STATE_DIM) + continuousTimeModelData.dynamicsStateDerivative_ * timeStep;
+      matrix_t::Identity(stateDim_, stateDim_) + continuousTimeModelData.dynamicsStateDerivative_ * timeStep;
   modelData.dynamicsInputDerivative_ = continuousTimeModelData.dynamicsInputDerivative_ * timeStep;
 
   /*
@@ -147,8 +143,7 @@ void ILQR<STATE_DIM, INPUT_DIM>::discreteLQWorker(size_t workerIndex, scalar_t t
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::calculateController() {
+void ILQR::calculateController() {
   BASE::calculateController();
 
   // correcting for the last controller element of partitions
@@ -162,8 +157,7 @@ void ILQR<STATE_DIM, INPUT_DIM>::calculateController() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) {
+void ILQR::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) {
   const auto i = partitionIndex;
   const auto k = timeIndex;
 
@@ -203,19 +197,14 @@ void ILQR<STATE_DIM, INPUT_DIM>::calculateControllerWorker(size_t workerIndex, s
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-typename ILQR<STATE_DIM, INPUT_DIM>::scalar_t ILQR<STATE_DIM, INPUT_DIM>::solveSequentialRiccatiEquations(const dynamic_matrix_t& SmFinal,
-                                                                                                          const dynamic_vector_t& SvFinal,
-                                                                                                          const scalar_t& sFinal) {
+scalar_t ILQR::solveSequentialRiccatiEquations(const matrix_t& SmFinal, const vector_t& SvFinal, const scalar_t& sFinal) {
   return BASE::solveSequentialRiccatiEquationsImpl(SmFinal, SvFinal, sFinal);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-typename ILQR<STATE_DIM, INPUT_DIM>::dynamic_matrix_t ILQR<STATE_DIM, INPUT_DIM>::computeHamiltonianHessian(
-    ddp_strategy::type strategy, const ModelDataBase& modelData, const dynamic_matrix_t& Sm) const {
+matrix_t ILQR::computeHamiltonianHessian(ddp_strategy::type strategy, const ModelDataBase& modelData, const matrix_t& Sm) const {
   const auto& Bm = modelData.dynamicsInputDerivative_;
   const auto& Rm = modelData.costInputSecondDerivative_;
   switch (strategy) {
@@ -224,7 +213,7 @@ typename ILQR<STATE_DIM, INPUT_DIM>::dynamic_matrix_t ILQR<STATE_DIM, INPUT_DIM>
     }
     case ddp_strategy::type::LEVENBERG_MARQUARDT: {
       auto SmPlus = Sm;
-      SmPlus.diagonal() += BASE::levenbergMarquardtModule_.riccatiMultiple * dynamic_vector_t::Ones(STATE_DIM);
+      SmPlus.diagonal() += BASE::levenbergMarquardtModule_.riccatiMultiple * vector_t::Ones(stateDim_);
       return (Rm + Bm.transpose() * SmPlus * Bm);
     }
   }  // end of switch-case
@@ -233,9 +222,8 @@ typename ILQR<STATE_DIM, INPUT_DIM>::dynamic_matrix_t ILQR<STATE_DIM, INPUT_DIM>
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const dynamic_matrix_t& SmFinal,
-                                                        const dynamic_vector_t& SvFinal, const scalar_t& sFinal) {
+void ILQR::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const matrix_t& SmFinal, const vector_t& SvFinal,
+                                  const scalar_t& sFinal) {
   const int N = BASE::nominalTimeTrajectoriesStock_[partitionIndex].size();
   const int NE = BASE::nominalPostEventIndicesStock_[partitionIndex].size();
 
@@ -271,8 +259,8 @@ void ILQR<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size
   SsSwitchingTimesIndices.push_back(N);
 
   // final temporal values
-  state_matrix_t SmFinalTemp = SmFinal;
-  state_vector_t SvFinalTemp = SvFinal;
+  matrix_t SmFinalTemp = SmFinal;
+  vector_t SvFinalTemp = SvFinal;
   scalar_t sFinalTemp = sFinal;
 
   /*
@@ -296,7 +284,7 @@ void ILQR<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size
     auto& projectedLvFinal = projectedLvTrajectoryStock_[partitionIndex][endTimeItr - 1];
     auto& projectedKmFinal = projectedKmTrajectoryStock_[partitionIndex][endTimeItr - 1];
 
-    const auto SmDummy = dynamic_matrix_t::Zero(modelDataFinal.stateDim_, modelDataFinal.stateDim_);
+    const auto SmDummy = matrix_t::Zero(modelDataFinal.stateDim_, modelDataFinal.stateDim_);
     BASE::computeProjectionAndRiccatiModification(BASE::ddpSettings_.strategy_, modelDataFinal, SmDummy, projectedModelDataFinal,
                                                   riccatiModificationFinal);
 
@@ -313,7 +301,7 @@ void ILQR<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size
     /*
      * solve Riccati equations and compute projected model data and RiccatiModification for the intermediate times
      */
-    dynamic_matrix_t Bm_T_Sm(INPUT_DIM, STATE_DIM);
+    matrix_t Bm_T_Sm(inputDim_, stateDim_);
     for (int k = endTimeItr - 2; k >= beginTimeItr; k--) {
       // project
       BASE::computeProjectionAndRiccatiModification(BASE::ddpSettings_.strategy_, BASE::modelDataTrajectoriesStock_[partitionIndex][k],
@@ -344,16 +332,14 @@ void ILQR<STATE_DIM, INPUT_DIM>::riccatiEquationsWorker(size_t workerIndex, size
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-ILQR_Settings& ILQR<STATE_DIM, INPUT_DIM>::settings() {
+ILQR_Settings& ILQR::settings() {
   return settings_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void ILQR<STATE_DIM, INPUT_DIM>::setupOptimizer(size_t numPartitions) {
+void ILQR::setupOptimizer(size_t numPartitions) {
   BASE::setupOptimizer(numPartitions);
 
   projectedLvTrajectoryStock_.resize(numPartitions);

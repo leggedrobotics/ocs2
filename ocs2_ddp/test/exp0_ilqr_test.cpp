@@ -32,10 +32,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ctime>
 #include <iostream>
 
+#include <ocs2_core/Types.h>
+#include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_ddp/ILQR.h>
-
 #include <ocs2_oc/test/EXP0.h>
 
 using namespace ocs2;
@@ -43,9 +44,6 @@ using namespace ocs2;
 enum { STATE_DIM = 2, INPUT_DIM = 1 };
 
 TEST(exp0_ilqr_test, exp0_ilqr_test) {
-  using linear_controller_t = ILQR<STATE_DIM, INPUT_DIM>::linear_controller_t;
-  using feedforward_controller_t = ILQR<STATE_DIM, INPUT_DIM>::feedforward_controller_t;
-
   ILQR_Settings ilqrSettings;
   ilqrSettings.ddpSettings_.displayInfo_ = true;
   ilqrSettings.ddpSettings_.displayShortSummary_ = true;
@@ -66,41 +64,41 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   rolloutSettings.maxNumStepsPerSecond_ = 10000;
 
   // event times
-  std::vector<double> eventTimes{0.1897};
+  std::vector<scalar_t> eventTimes{0.1897};
   std::vector<size_t> subsystemsSequence{0, 1};
-  std::shared_ptr<ModeScheduleManager<STATE_DIM, INPUT_DIM>> modeScheduleManagerPtr(
-      new ModeScheduleManager<STATE_DIM, INPUT_DIM>({eventTimes, subsystemsSequence}));
+  std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr(new ModeScheduleManager({eventTimes, subsystemsSequence}));
 
-  double startTime = 0.0;
-  double finalTime = 2.0;
+  scalar_t startTime = 0.0;
+  scalar_t finalTime = 2.0;
 
   // partitioning times
-  std::vector<double> partitioningTimes;
+  std::vector<scalar_t> partitioningTimes;
   partitioningTimes.push_back(startTime);
   partitioningTimes.push_back(eventTimes[0]);
   partitioningTimes.push_back(finalTime);
 
-  EXP0_System::state_vector_t initState(0.0, 2.0);
+  vector_t initState(2);
+  initState << 0.0, 2.0;
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
   // system rollout
   EXP0_System systemDynamics(modeScheduleManagerPtr);
-  TimeTriggeredRollout<STATE_DIM, INPUT_DIM> timeTriggeredRollout(systemDynamics, rolloutSettings);
+  TimeTriggeredRollout timeTriggeredRollout(STATE_DIM, INPUT_DIM, systemDynamics, rolloutSettings);
 
   // system derivatives
   EXP0_SystemDerivative systemDerivative(modeScheduleManagerPtr);
 
   // system constraints
-  EXP0_SystemConstraint systemConstraint;
+  EXP0_SystemConstraint systemConstraint(STATE_DIM, INPUT_DIM);
 
   // system cost functions
   EXP0_CostFunction systemCostFunction(modeScheduleManagerPtr);
 
   // system operatingTrajectories
-  Eigen::Matrix<double, 2, 1> stateOperatingPoint = Eigen::Matrix<double, 2, 1>::Zero();
-  Eigen::Matrix<double, 1, 1> inputOperatingPoint = Eigen::Matrix<double, 1, 1>::Zero();
+  vector_t stateOperatingPoint = vector_t::Zero(2);
+  vector_t inputOperatingPoint = vector_t::Zero(1);
   EXP0_SystemOperatingTrajectories operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
   /******************************************************************************************************/
@@ -108,14 +106,14 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   /******************************************************************************************************/
   // ILQR - single-threaded version
   ilqrSettings.ddpSettings_.nThreads_ = 1;
-  ILQR<STATE_DIM, INPUT_DIM> ilqrST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
-                                    &operatingTrajectories, ilqrSettings);
+  ILQR ilqrST(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
+              &operatingTrajectories, ilqrSettings);
   ilqrST.setModeScheduleManager(modeScheduleManagerPtr);
 
   // ILQR - multi-threaded version
   ilqrSettings.ddpSettings_.nThreads_ = 3;
-  ILQR<STATE_DIM, INPUT_DIM> ilqrMT(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
-                                    &operatingTrajectories, ilqrSettings);
+  ILQR ilqrMT(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
+              &operatingTrajectories, ilqrSettings);
   ilqrMT.setModeScheduleManager(modeScheduleManagerPtr);
 
   // run single_threaded core ILQR
@@ -134,8 +132,8 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // get solution
-  ILQR<STATE_DIM, INPUT_DIM>::primal_solution_t solutionST = ilqrST.primalSolution(finalTime);
-  ILQR<STATE_DIM, INPUT_DIM>::primal_solution_t solutionMT = ilqrMT.primalSolution(finalTime);
+  PrimalSolution solutionST = ilqrST.primalSolution(finalTime);
+  PrimalSolution solutionMT = ilqrMT.primalSolution(finalTime);
 
   // get performance indices
   auto performanceIndecesST = ilqrST.getPerformanceIndeces();
@@ -144,35 +142,30 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
-  const double expectedCost = 9.766;
+  const scalar_t expectedCost = 9.766;
   ASSERT_LT(fabs(performanceIndecesST.totalCost - expectedCost), 10 * ilqrSettings.ddpSettings_.minRelCost_)
       << "MESSAGE: single-threaded ILQR failed in the EXP1's cost test!";
   ASSERT_LT(fabs(performanceIndecesMT.totalCost - expectedCost), 10 * ilqrSettings.ddpSettings_.minRelCost_)
       << "MESSAGE: multi-threaded ILQR failed in the EXP1's cost test!";
 
-  const double expectedISE1 = 0.0;
+  const scalar_t expectedISE1 = 0.0;
   ASSERT_LT(fabs(performanceIndecesST.stateInputEqConstraintISE - expectedISE1), 10 * ilqrSettings.ddpSettings_.constraintTolerance_)
       << "MESSAGE: single-threaded ILQR failed in the EXP1's type-1 constraint ISE test!";
   ASSERT_LT(fabs(performanceIndecesMT.stateInputEqConstraintISE - expectedISE1), 10 * ilqrSettings.ddpSettings_.constraintTolerance_)
       << "MESSAGE: multi-threaded ILQR failed in the EXP1's type-1 constraint ISE test!";
 
-  const double expectedISE2 = 0.0;
+  const scalar_t expectedISE2 = 0.0;
   ASSERT_LT(fabs(performanceIndecesST.stateEqConstraintISE - expectedISE2), 10 * ilqrSettings.ddpSettings_.constraintTolerance_)
       << "MESSAGE: single-threaded ILQR failed in the EXP1's type-2 constraint ISE test!";
   ASSERT_LT(fabs(performanceIndecesMT.stateEqConstraintISE - expectedISE2), 10 * ilqrSettings.ddpSettings_.constraintTolerance_)
       << "MESSAGE: multi-threaded ILQR failed in the EXP1's type-2 constraint ISE test!";
 
-  double ctrlFinalTime;
+  scalar_t ctrlFinalTime;
   if (ilqrSettings.ddpSettings_.useFeedbackPolicy_) {
-    ctrlFinalTime = dynamic_cast<linear_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
+    ctrlFinalTime = dynamic_cast<LinearController*>(solutionST.controllerPtr_.get())->timeStamp_.back();
   } else {
-    ctrlFinalTime = dynamic_cast<feedforward_controller_t*>(solutionST.controllerPtr_.get())->timeStamp_.back();
+    ctrlFinalTime = dynamic_cast<FeedforwardController*>(solutionST.controllerPtr_.get())->timeStamp_.back();
   }
   ASSERT_DOUBLE_EQ(solutionST.timeTrajectory_.back(), finalTime) << "MESSAGE: ILQR_ST failed in policy final time of trajectory!";
   ASSERT_DOUBLE_EQ(ctrlFinalTime, finalTime) << "MESSAGE: ILQR_ST failed in policy final time of controller!";
-}
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

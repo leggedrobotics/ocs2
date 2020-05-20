@@ -29,71 +29,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_ddp/GaussNewtonDDP.h"
-#include "ocs2_ddp/ILQR_Settings.h"
-#include "ocs2_ddp/riccati_equations/DiscreteTimeRiccatiEquations.h"
+#include <ocs2_core/Types.h>
+
+#include "GaussNewtonDDP.h"
+#include "ILQR_Settings.h"
+#include "riccati_equations/DiscreteTimeRiccatiEquations.h"
 
 namespace ocs2 {
 
 /**
  * This class is an interface class for the single-thread and multi-thread ILQR.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class ILQR : public GaussNewtonDDP<STATE_DIM, INPUT_DIM> {
+class ILQR : public GaussNewtonDDP {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = GaussNewtonDDP<STATE_DIM, INPUT_DIM>;
-
-  using typename BASE::DIMENSIONS;
-  using typename BASE::dynamic_matrix_array2_t;
-  using typename BASE::dynamic_matrix_array_t;
-  using typename BASE::dynamic_matrix_t;
-  using typename BASE::dynamic_vector_array2_t;
-  using typename BASE::dynamic_vector_array_t;
-  using typename BASE::dynamic_vector_t;
-  using typename BASE::input_matrix_array2_t;
-  using typename BASE::input_matrix_array_t;
-  using typename BASE::input_matrix_t;
-  using typename BASE::input_vector_array2_t;
-  using typename BASE::input_vector_array_t;
-  using typename BASE::input_vector_t;
-  using typename BASE::scalar_array2_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::scalar_t;
-  using typename BASE::size_array2_t;
-  using typename BASE::size_array_t;
-  using typename BASE::state_matrix_array2_t;
-  using typename BASE::state_matrix_array_t;
-  using typename BASE::state_matrix_t;
-  using typename BASE::state_vector_array2_t;
-  using typename BASE::state_vector_array_t;
-  using typename BASE::state_vector_t;
-
-  using typename BASE::controller_array_t;
-  using typename BASE::controller_ptr_array_t;
-  using typename BASE::controller_t;
-  using typename BASE::linear_controller_array_t;
-  using typename BASE::linear_controller_ptr_array_t;
-  using typename BASE::linear_controller_t;
-
-  using typename BASE::constraint_base_t;
-  using typename BASE::cost_function_base_t;
-  using typename BASE::derivatives_base_t;
-  using typename BASE::event_handler_t;
-  using typename BASE::linear_quadratic_approximator_t;
-  using typename BASE::operating_trajectorie_rollout_t;
-  using typename BASE::operating_trajectories_base_t;
-  using typename BASE::rollout_base_t;
-
-  using riccati_equations_t = DiscreteTimeRiccatiEquations;
-
+  using BASE = GaussNewtonDDP;
   /**
    * Constructor
    *
+   * @param [in] stateDim: State vector dimension
+   * @param [in] inputDim: Input vector dimension
    * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
    * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
@@ -103,9 +57,10 @@ class ILQR : public GaussNewtonDDP<STATE_DIM, INPUT_DIM> {
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
-  ILQR(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
-       const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
-       const ILQR_Settings& settings = ILQR_Settings(), const cost_function_base_t* heuristicsFunctionPtr = nullptr);
+  ILQR(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const DerivativesBase* systemDerivativesPtr,
+       const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
+       const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const ILQR_Settings& settings = ILQR_Settings(),
+       const CostFunctionBase* heuristicsFunctionPtr = nullptr);
 
   /**
    * Default destructor.
@@ -122,21 +77,19 @@ class ILQR : public GaussNewtonDDP<STATE_DIM, INPUT_DIM> {
  protected:
   void setupOptimizer(size_t numPartitions) override;
 
-  scalar_t solveSequentialRiccatiEquations(const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal,
-                                           const scalar_t& sFinal) override;
+  scalar_t solveSequentialRiccatiEquations(const matrix_t& SmFinal, const vector_t& SvFinal, const scalar_t& sFinal) override;
 
-  void riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const dynamic_matrix_t& SmFinal, const dynamic_vector_t& SvFinal,
+  void riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const matrix_t& SmFinal, const vector_t& SvFinal,
                               const scalar_t& sFinal) override;
 
   void calculateController() override;
 
   void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
 
-  dynamic_matrix_t computeHamiltonianHessian(ddp_strategy::type strategy, const ModelDataBase& modelData,
-                                             const dynamic_matrix_t& Sm) const override;
+  matrix_t computeHamiltonianHessian(ddp_strategy::type strategy, const ModelDataBase& modelData, const matrix_t& Sm) const override;
 
   void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
-                                 const state_vector_array_t& stateTrajectory, const input_vector_array_t& inputTrajectory,
+                                 const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
                                  ModelDataBase::array_t& modelDataTrajectory) override;
 
   /**
@@ -153,12 +106,10 @@ class ILQR : public GaussNewtonDDP<STATE_DIM, INPUT_DIM> {
    ****************/
   ILQR_Settings settings_;
 
-  dynamic_matrix_array2_t projectedKmTrajectoryStock_;  // projected feedback
-  dynamic_vector_array2_t projectedLvTrajectoryStock_;  // projected feedforward
+  matrix_array2_t projectedKmTrajectoryStock_;  // projected feedback
+  vector_array2_t projectedLvTrajectoryStock_;  // projected feedforward
 
-  std::vector<std::unique_ptr<riccati_equations_t>> riccatiEquationsPtrStock_;
+  std::vector<std::unique_ptr<DiscreteTimeRiccatiEquations>> riccatiEquationsPtrStock_;
 };
 
 }  // namespace ocs2
-
-#include "implementation/ILQR.h"

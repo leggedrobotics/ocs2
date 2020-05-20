@@ -120,20 +120,21 @@ scalar_t getTimeUntilNextLiftOff(scalar_t timeHorizon, size_t legId, const GaitS
 scalar_t getTimeUntilNextTouchDown(scalar_t timeHorizon, size_t legId, const GaitSchedule& gaitSchedule) {
   const auto modeSchedule = gaitSchedule.getModeSchedule(timeHorizon);
   unsigned int modeId = 0;
+  bool isSwinging = false;
   for (const auto mode : modeSchedule.modeSequence) {
     std::array<bool, 4> stanceLegs = switched_model::modeNumber2StanceLeg(mode);
     if (!stanceLegs.at(legId)) {
+      isSwinging = true;
+    } else if (isSwinging) {
       if (modeId < modeSchedule.eventTimes.size()) {
-        return modeSchedule.eventTimes.at(modeId) - gaitSchedule.getCurrentTime();
+        return modeSchedule.eventTimes.at(modeId - 1) - gaitSchedule.getCurrentTime();
       } else {
         return timeHorizon;
       }
-    } else if (modeId < modeSchedule.eventTimes.size()) {
-      ++modeId;
-    } else {
-      return -1.0;
     }
+    ++modeId;
   }
+  return -1.0;
 }
 
 }  // namespace switched_model

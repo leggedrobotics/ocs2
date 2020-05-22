@@ -6,12 +6,9 @@
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h"
 #include "ocs2_switched_model_interface/logic/GaitSchedule.h"
+#include "ocs2_switched_model_interface/terrain/TerrainPlane.h"
 
 namespace switched_model {
-
-struct TerrainModel {
-  scalar_t terrainHeight_;
-};
 
 /**
  * Manages the ModeSchedule for switched model.
@@ -20,8 +17,10 @@ class SwitchedModelModeScheduleManager : public ocs2::ModeScheduleManager<STATE_
  public:
   using Base = ocs2::ModeScheduleManager<STATE_DIM, INPUT_DIM>;
   using LockableGaitSchedule = ocs2::Lockable<GaitSchedule>;
+  using LockableTerrainModelPtr = ocs2::LockablePtr<TerrainModel>;
 
-  SwitchedModelModeScheduleManager(GaitSchedule gaitSchedule, SwingTrajectoryPlanner swingTrajectory);
+  SwitchedModelModeScheduleManager(GaitSchedule gaitSchedule, SwingTrajectoryPlanner swingTrajectory,
+                                   std::unique_ptr<TerrainModel> terrainModel);
 
   ~SwitchedModelModeScheduleManager() override = default;
 
@@ -31,7 +30,7 @@ class SwitchedModelModeScheduleManager : public ocs2::ModeScheduleManager<STATE_
 
   const std::shared_ptr<SwingTrajectoryPlanner>& getSwingTrajectoryPlanner() { return swingTrajectoryPtr_; }
 
-  const std::shared_ptr<ocs2::Lockable<TerrainModel>>& getTerrainHeight() { return terrainPtr_; }
+  LockableTerrainModelPtr& getTerrainPtr() { return terrainPtr_; }
 
  private:
   void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
@@ -40,7 +39,7 @@ class SwitchedModelModeScheduleManager : public ocs2::ModeScheduleManager<STATE_
  private:
   std::shared_ptr<LockableGaitSchedule> gaitSchedulePtr_;
   std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr_;
-  std::shared_ptr<ocs2::Lockable<TerrainModel>> terrainPtr_;
+  LockableTerrainModelPtr terrainPtr_;
 };
 
 }  // namespace switched_model

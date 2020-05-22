@@ -43,14 +43,19 @@ include_directories(
 
 add_library(${PROJECT_NAME}
 	src/foot_planner/CubicSpline.cpp
+	src/foot_planner/FootPhase.cpp
 	src/foot_planner/SplineCpg.cpp
 	src/foot_planner/SwingTrajectoryPlanner.cpp
 	src/logic/Gait.cpp
 	src/logic/GaitReceiver.cpp
 	src/logic/GaitSchedule.cpp
 	src/logic/ModeSequenceTemplate.cpp
+	src/logic/SingleLegLogic.cpp
 	src/logic/SwitchedModelModeScheduleManager.cpp
+	src/terrain/TerrainModelPlanar.cpp
+	src/terrain/TerrainPlane.cpp
 	src/EndEffectorConstraint.cpp
+	src/FootNormalConstraint.cpp
 	src/ComKinoConstraintBaseAd.cpp
 	src/AnymalWheelsComKinoConstraintAd.cpp
 	src/ComKinoOperatingPointsBase.cpp
@@ -133,20 +138,30 @@ target_link_libraries(test_frictionConeConstraint
 	${catkin_LIBRARIES}
 )
 
+catkin_add_gtest(test_${PROJECT_NAME}_footplanner
+	test/foot_planner/testSwingPhase.cpp
+	)
+target_link_libraries(test_${PROJECT_NAME}_footplanner
+	${PROJECT_NAME}
+	gtest_main
+	)
+
 catkin_add_gtest(test_${PROJECT_NAME}_logic
+	test/logic/testExtractContractTimings.cpp
 	test/logic/testGait.cpp
 	test/logic/testGaitSwitching.cpp
 	test/logic/testGaitSchedule.cpp
+	test/logic/testSingleLegLogic.cpp
 )
 target_link_libraries(test_${PROJECT_NAME}_logic
 	${PROJECT_NAME}
 	gtest_main
 )
 
-catkin_add_gtest(test_${PROJECT_NAME}_footplanner
-	test/foot_planner/testFootplannerBase.cpp
-)
-target_link_libraries(test_${PROJECT_NAME}_footplanner
+catkin_add_gtest(test_${PROJECT_NAME}_terrain
+	test/terrain/testTerrainPlane.cpp
+	)
+target_link_libraries(test_${PROJECT_NAME}_terrain
 	${PROJECT_NAME}
 	gtest_main
-)
+	)

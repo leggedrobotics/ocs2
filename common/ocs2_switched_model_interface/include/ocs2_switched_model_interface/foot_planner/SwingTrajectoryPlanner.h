@@ -9,7 +9,10 @@
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
-#include "ocs2_switched_model_interface/foot_planner/SplineCpg.h"
+#include "ocs2_switched_model_interface/foot_planner/FootPhase.h"
+#include "ocs2_switched_model_interface/logic/SingleLegLogic.h"
+#include "ocs2_switched_model_interface/terrain/TerrainModel.h"
+#include "ocs2_switched_model_interface/terrain/TerrainPlane.h"
 
 namespace switched_model {
 
@@ -30,55 +33,32 @@ class SwingTrajectoryPlanner {
   SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const ComModelBase<scalar_t>& comModel,
                          const KinematicsModelBase<scalar_t>& kinematicsModel);
 
-  void update(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState, const ocs2::ModeSchedule& modeSchedule,
-              scalar_t terrainHeight);
+  void update(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState,
+              const ocs2::CostDesiredTrajectories& costDesiredTrajectories,
+              const feet_array_t<std::vector<ContactTiming>>& contactTimingsPerLeg, const TerrainModel& terrainModel);
 
-  void update(const ocs2::ModeSchedule& modeSchedule, const feet_array_t<scalar_array_t>& liftOffHeightSequence,
-              const feet_array_t<scalar_array_t>& touchDownHeightSequence);
+  FootNormalConstraintMatrix getNormalDirectionConstraint(size_t leg, scalar_t time) const;
 
-  scalar_t getZvelocityConstraint(size_t leg, scalar_t time) const;
-
-  scalar_t getZpositionConstraint(size_t leg, scalar_t time) const;
+  std::vector<TerrainPlane> getNominalFootholds(size_t leg) const { return nominalFootholdsPerLeg_[leg]; }
 
  private:
-  void updateFeetTrajectories(scalar_t initTime, scalar_t finalTime, const feet_array_t<vector3_t>& currentFeetPositions,
-                              const ocs2::ModeSchedule& modeSchedule, scalar_t terrainHeight);
-
-  void updateErrorTrajectories(scalar_t initTime, const feet_array_t<vector3_t>& currentFeetPositions,
-                               const ocs2::ModeSchedule& modeSchedule);
+  void updateLastContact(int leg, scalar_t expectedLiftOff, const vector3_t& currentFootPosition, const TerrainModel& terrainModel);
+  std::pair<std::vector<scalar_t>, std::vector<std::unique_ptr<FootPhase>>> generateSwingTrajectories(
+      int leg, const std::vector<ContactTiming>& contactTimings, scalar_t finalTime) const;
+  scalar_t getSwingMotionScaling(scalar_t startTime, scalar_t endTime) const;
+  std::vector<TerrainPlane> selectNominalFootholdTerrain(int leg, const std::vector<ContactTiming>& contactTimings,
+                                                         const ocs2::CostDesiredTrajectories& costDesiredTrajectories, scalar_t finalTime,
+                                                         const TerrainModel& terrainModel) const;
 
   SwingTrajectoryPlannerSettings settings_;
   std::unique_ptr<ComModelBase<scalar_t>> comModel_;
   std::unique_ptr<KinematicsModelBase<scalar_t>> kinematicsModel_;
 
-  struct contactHistory {
-    scalar_t time;
-    scalar_t height;
-  };
-  std::array<contactHistory, NUM_CONTACT_POINTS> lastContacts_;
-  std::array<std::vector<SplineCpg>, NUM_CONTACT_POINTS> feetHeightTrajectories_;
-  std::array<std::vector<scalar_t>, NUM_CONTACT_POINTS> feetHeightTrajectoriesEvents_;
+  feet_array_t<std::pair<scalar_t, TerrainPlane>> lastContacts_;
+  feet_array_t<std::vector<std::unique_ptr<FootPhase>>> feetNormalTrajectories_;
+  feet_array_t<std::vector<scalar_t>> feetNormalTrajectoriesEvents_;
 
-  // Error correction
-  scalar_t initTime_;
-  feet_array_t<scalar_t> initialErrors_;
-
- public:
-  /** Helper functions */
-  enum class FootPhaseType { Stance, Swing };
-  struct FootPhase {
-    FootPhaseType type;
-    scalar_t startTime;  // times are NaN if they cannot be identified at the boundaries
-    scalar_t endTime;
-  };
-  static std::vector<FootPhase> extractFootPhases(const std::vector<scalar_t>& eventTimes, const std::vector<bool>& contactFlags);
-
-  /**
-   * Extracts for each leg the contact sequence over the motion phase sequence.
-   * @param phaseIDsStock
-   * @return contactFlagStock
-   */
-  static feet_array_t<std::vector<bool>> extractContactFlags(const std::vector<size_t>& phaseIDsStock);
+  feet_array_t<std::vector<TerrainPlane>> nominalFootholdsPerLeg_;
 };
 
 }  // namespace switched_model

@@ -44,8 +44,8 @@ Eigen::Quaternion<SCALAR_T> quaternionBaseToOrigin(const Eigen::Matrix<SCALAR_T,
   const auto roll = eulerAngles(0);
   const auto pitch = eulerAngles(1);
   const auto yaw = eulerAngles(2);
-  return Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX()) * Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY()) *
-         Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ());
+  return Eigen::AngleAxis<SCALAR_T>(roll, Eigen::Vector3d::UnitX()) * Eigen::AngleAxis<SCALAR_T>(pitch, Eigen::Vector3d::UnitY()) *
+         Eigen::AngleAxis<SCALAR_T>(yaw, Eigen::Vector3d::UnitZ());
 }
 
 template <typename SCALAR_T>

@@ -33,7 +33,7 @@ class ComKinoOperatingPointsBase : public ocs2::SystemOperatingTrajectoriesBase<
                                       input_vector_array_t& inputTrajectory, bool concatOutput) override;
 
  private:
-  input_vector_t computeInputOperatingPoints(contact_flag_t contactFlags) const;
+  input_vector_t computeInputOperatingPoints(const contact_flag_t& contactFlags, const state_vector_t& nominalState) const;
 
   std::unique_ptr<com_model_t> comModelPtr_;
   std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;

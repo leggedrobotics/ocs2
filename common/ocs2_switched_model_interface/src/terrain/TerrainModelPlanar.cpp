@@ -13,4 +13,4 @@ TerrainPlane TerrainModelPlanar::getLocalTerrainAtPositionInWorldAlongGravity(co
   return {projectPositionInWorldOntoPlaneAlongGravity(positionInWorld, terrainPlane_), terrainPlane_.orientationWorldToTerrain};
 }
 
-}
+}  // namespace switched_model

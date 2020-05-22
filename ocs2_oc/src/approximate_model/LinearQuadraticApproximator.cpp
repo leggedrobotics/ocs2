@@ -129,7 +129,7 @@ void LinearQuadraticApproximator::approximateConstraints(const scalar_t& time, c
   // constraint type 1
   const size_t ncEqStateInput = systemConstraintsPtr_->numStateInputConstraint(time);
   if (ncEqStateInput > input.rows()) {
-    throw std::runtime_error("Number of active type-1 constraints should be less-equal to the number of input dimension.");
+    throw std::runtime_error("Number of active state-input equality constraints should be less-equal to the input dimension.");
   }
   // if constraint type 1 is active
   if (ncEqStateInput > 0) {
@@ -137,31 +137,26 @@ void LinearQuadraticApproximator::approximateConstraints(const scalar_t& time, c
     systemConstraintsPtr_->getConstraint1DerivativesState(modelData.stateInputEqConstrStateDerivative_);
     systemConstraintsPtr_->getConstraint1DerivativesControl(modelData.stateInputEqConstrInputDerivative_);
   } else {
+    modelData.stateInputEqConstr_.setZero(ncEqStateInput);
     modelData.stateInputEqConstrStateDerivative_.setZero(ncEqStateInput, modelData.stateDim_);
     modelData.stateInputEqConstrInputDerivative_.setZero(ncEqStateInput, modelData.inputDim_);
   }
   modelData.numStateInputEqConstr_ = ncEqStateInput;
-  // TODO(mspieler): is slicing necessary here?
-  modelData.stateInputEqConstr_ = modelData.stateInputEqConstr_.head(ncEqStateInput);
-  modelData.stateInputEqConstrStateDerivative_ = modelData.stateInputEqConstrStateDerivative_.topRows(ncEqStateInput);
-  modelData.stateInputEqConstrInputDerivative_ = modelData.stateInputEqConstrInputDerivative_.topRows(ncEqStateInput);
 
   // constraint type 2
   const size_t ncEqStateOnly = systemConstraintsPtr_->numStateOnlyConstraint(time);
   if (ncEqStateOnly > input.rows()) {
-    throw std::runtime_error("Number of active type-2 constraints should be less-equal to the number of input dimension.");
+    throw std::runtime_error("Number of active state-only equality constraints should be less-equal to the input dimension.");
   }
   // if constraint type 2 is active
   if (ncEqStateOnly > 0) {
     systemConstraintsPtr_->getConstraint2(modelData.stateEqConstr_);
     systemConstraintsPtr_->getConstraint2DerivativesState(modelData.stateEqConstrStateDerivative_);
   } else {
+    modelData.stateEqConstr_.setZero(ncEqStateOnly);
     modelData.stateEqConstrStateDerivative_.setZero(ncEqStateOnly, modelData.stateDim_);
   }
   modelData.numStateEqConstr_ = ncEqStateOnly;
-  // TODO(mspieler): is slicing necessary here?
-  modelData.stateEqConstr_ = modelData.stateEqConstr_.head(ncEqStateOnly);
-  modelData.stateEqConstrStateDerivative_ = modelData.stateEqConstrStateDerivative_.topRows(ncEqStateOnly);
 
   // Inequality constraint
   const size_t ncIneq = systemConstraintsPtr_->numInequalityConstraint(time);

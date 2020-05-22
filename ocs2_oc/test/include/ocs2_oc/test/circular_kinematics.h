@@ -40,7 +40,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /**
- * This example defines an optimal control problem where a kinematically model particle is
+ * This example defines an optimal control problem where a kinematically modeled particle is
  * supposed to orbit a unite circle (defined as a constraint) with velocity of 1[m/s]
  * (defined as a cost).
  */
@@ -62,7 +62,7 @@ class CircularKinematicsSystem final : public SystemDynamicsBase {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /**
- * This example defines an optimal control problem where a kinematically model particle is
+ * This example defines an optimal control problem where a kinematically modeled particle is
  * supposed to orbit a unite circle (defined as a constraint) with velocity of 1[m/s]
  * (defined as a cost).
  */
@@ -89,7 +89,7 @@ class CircularKinematicsCost final : public CostFunctionBaseAD {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /**
- * This example defines an optimal control problem where a kinematically model particle is
+ * This example defines an optimal control problem where a kinematically modeled particle is
  * supposed to orbit a unite circle (defined as a constraint) with velocity of 1[m/s]
  * (defined as a cost).
  */
@@ -103,18 +103,18 @@ class CircularKinematicsConstraints final : public ConstraintBase {
   size_t numStateInputConstraint(const scalar_t& time) override { return 1; }
 
   void getConstraint1(vector_t& e) override {
-    e.resize(2);
+    e.resize(1);
     e(0) = x_.dot(u_);
   }
 
   void getConstraint1DerivativesState(matrix_t& C) override {
-    C.resize(2, 2);
-    C.topRows(1) = u_.transpose();
+    C.resize(1, 2);
+    C = u_.transpose();
   }
 
   void getConstraint1DerivativesControl(matrix_t& D) override {
-    D.resize(2, 2);
-    D.topRows(1) = x_.transpose();
+    D.resize(1, 2);
+    D = x_.transpose();
   }
 };
 

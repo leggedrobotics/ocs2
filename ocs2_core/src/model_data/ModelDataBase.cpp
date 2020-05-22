@@ -179,16 +179,16 @@ std::string ModelDataBase::checkConstraintProperties() const {
   std::stringstream errorDescription;
 
   if (numStateInputEqConstr_ > 0) {
-    if (!stateInputEqConstr_.head(numStateInputEqConstr_).allFinite()) {
+    if (!stateInputEqConstr_.allFinite()) {
       errorDescription << "Input-state constraint is not finite.\n";
     }
-    if (!stateInputEqConstrStateDerivative_.topRows(numStateInputEqConstr_).allFinite()) {
+    if (!stateInputEqConstrStateDerivative_.allFinite()) {
       errorDescription << "Input-state constraint derivative w.r.t. state is not finite.\n";
     }
-    if (!stateInputEqConstrInputDerivative_.topRows(numStateInputEqConstr_).allFinite()) {
+    if (!stateInputEqConstrInputDerivative_.allFinite()) {
       errorDescription << "Input-state constraint derivative w.r.t. input is not finite.\n";
     }
-    size_t DmRank = LinearAlgebra::rank(stateInputEqConstrInputDerivative_.topRows(numStateInputEqConstr_));
+    size_t DmRank = LinearAlgebra::rank(stateInputEqConstrInputDerivative_);
     if (DmRank != numStateInputEqConstr_) {
       errorDescription << "Input-state constraint derivative w.r.t. input is not full-row rank. It's rank is " + std::to_string(DmRank) +
                               " while the expected rank is " + std::to_string(numStateInputEqConstr_) + ".\n";
@@ -196,10 +196,10 @@ std::string ModelDataBase::checkConstraintProperties() const {
   }
 
   if (numStateEqConstr_ > 0) {
-    if (!stateEqConstr_.head(numStateEqConstr_).allFinite()) {
+    if (!stateEqConstr_.allFinite()) {
       errorDescription << "State-only constraint is not finite.\n";
     }
-    if (!stateEqConstrStateDerivative_.topRows(numStateEqConstr_).allFinite()) {
+    if (!stateEqConstrStateDerivative_.allFinite()) {
       errorDescription << "State-only constraint derivative w.r.t. state is not finite.\n";
     }
   }

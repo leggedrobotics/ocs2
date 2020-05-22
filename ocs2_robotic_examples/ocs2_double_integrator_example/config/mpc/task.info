@@ -95,23 +95,6 @@ mpc
 }
 
 
-pathIntegral
-{
-  gamma 0.01 ; temperature/level of noise
-  numSamples 1000 ; how many trajectories to sample
-  debugPrint 2 ; verbosity level
-  useFeedbackPolicy 0
-
-  rollout_settings
-  {
-    minTimeStep 0.01; will be used as time step in PI
-    integratorType EULER; must be Euler (0) for PI to function
-    checkNumericalStability 0
-    reconstructInputTrajectory false; must be false for PI to function
-  }
-}
-
-
 ; initial state
 initialState
 {

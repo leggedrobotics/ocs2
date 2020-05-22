@@ -145,7 +145,7 @@ inline void loadEigenMatrix(const std::string& filename, const std::string& matr
   }
 
   if (failed) {
-    std::cerr << "WARNING: Loaded least one default value in matrix: " + matrixName + "!" << std::endl;
+    std::cerr << "WARNING: Loaded at least one default value in matrix: " + matrixName + "!" << std::endl;
   }
 }
 

@@ -22,6 +22,57 @@ feet_array_t<std::vector<ContactTiming>> extractContactTimingsPerLeg(const ocs2:
   return contactTimingsPerLeg;
 }
 
+feet_array_t<scalar_t> getTimeUntilNextLiftOff(scalar_t currentTime, const ocs2::ModeSchedule& modeSchedule) {
+  feet_array_t<scalar_t> timeUntilNextLiftOffPerLeg;
+
+  // Convert mode sequence to a contact timing vector per leg.
+  const auto& contactTimingsPerLeg = extractContactTimingsPerLeg(modeSchedule);
+
+  // Extract timings per leg
+  for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
+    if (contactTimingsPerLeg[leg].empty()) {
+      timeUntilNextLiftOffPerLeg[leg] = -1.0;
+    } else if (std::isnan(contactTimingsPerLeg[leg].front().end)) {
+      timeUntilNextLiftOffPerLeg[leg] = -1.0;
+    } else {
+      timeUntilNextLiftOffPerLeg[leg] = contactTimingsPerLeg[leg].front().end - currentTime;
+    }
+  }
+
+  return timeUntilNextLiftOffPerLeg;
+}
+
+feet_array_t<scalar_t> getTimeUntilNextTouchDown(scalar_t currentTime, const ocs2::ModeSchedule& modeSchedule) {
+  feet_array_t<scalar_t> timeUntilNextTouchDownPerLeg;
+
+  // Convert mode sequence to a contact timing vector per leg.
+  auto contactTimingsPerLeg = extractContactTimingsPerLeg(modeSchedule);
+
+  // Convert mode sequence to a contact flag vector per leg
+  const auto& contactSequencePerLeg = extractContactFlags(modeSchedule.modeSequence);
+
+  // Extract timings per leg
+  for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
+    if (contactSequencePerLeg[leg].empty()) {
+      timeUntilNextTouchDownPerLeg[leg] = -1.0;
+      break;
+    }
+    if (contactSequencePerLeg[leg].front()) {
+      contactTimingsPerLeg[leg].erase(contactTimingsPerLeg[leg].begin());
+    }
+
+    if (contactTimingsPerLeg[leg].empty()) {
+      timeUntilNextTouchDownPerLeg[leg] = -1.0;
+    } else if (std::isnan(contactTimingsPerLeg[leg].front().start)) {
+      timeUntilNextTouchDownPerLeg[leg] = -1.0;
+    } else {
+      timeUntilNextTouchDownPerLeg[leg] = contactTimingsPerLeg[leg].front().start - currentTime;
+    }
+  }
+
+  return timeUntilNextTouchDownPerLeg;
+}
+
 std::vector<ContactTiming> extractContactTimings(const std::vector<scalar_t>& eventTimes, const std::vector<bool>& contactFlags) {
   assert(eventTimes.size() + 1 == contactFlags.size());
   const int numPhases = contactFlags.size();
@@ -71,4 +122,4 @@ feet_array_t<std::vector<bool>> extractContactFlags(const std::vector<size_t>& m
   return contactFlagStock;
 }
 
-}
+}  // namespace switched_model

@@ -47,6 +47,12 @@ inline bool touchesDownAtLeastOnce(const std::vector<ContactTiming>& timings) {
  */
 feet_array_t<std::vector<ContactTiming>> extractContactTimingsPerLeg(const ocs2::ModeSchedule& modeSchedule);
 
+/** Returns time until next lift off for all legs from a modeschedule. Returns -1 if leg is not lifting off */
+feet_array_t<scalar_t> getTimeUntilNextLiftOff(scalar_t currentTime, const ocs2::ModeSchedule& modeSchedule);
+
+/** Returns time until next touch down for all legs from a modeschedule. Returns -1 if leg is does not touch down */
+feet_array_t<scalar_t> getTimeUntilNextTouchDown(scalar_t currentTime, const ocs2::ModeSchedule& modeSchedule);
+
 /**
  * Get {startTime, endTime} for all contact phases. Swingphases are always implied in between: endTime[i] < startTime[i+1]
  * times are NaN if they cannot be identified at the boundaries
@@ -61,4 +67,4 @@ std::vector<ContactTiming> extractContactTimings(const std::vector<scalar_t>& ev
  */
 feet_array_t<std::vector<bool>> extractContactFlags(const std::vector<size_t>& modeSequence);
 
-}
+}  // namespace switched_model

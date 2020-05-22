@@ -70,10 +70,4 @@ class GaitSchedule {
 
 bool isStandingDuringTimeHorizon(scalar_t timeHorizon, const GaitSchedule& gaitSchedule);
 
-/** Returns time until next lift off of legId. Returns -1 if leg is not lifting off */
-scalar_t getTimeUntilNextLiftOff(scalar_t timeHorizon, size_t legId, const GaitSchedule& gaitSchedule);
-
-/** Returns time until next touch down of legId. Returns -1 if leg is not lifting off */
-scalar_t getTimeUntilNextTouchDown(scalar_t timeHorizon, size_t legId, const GaitSchedule& gaitSchedule);
-
 }  // namespace switched_model

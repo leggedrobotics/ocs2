@@ -22,7 +22,7 @@ feet_array_t<std::vector<ContactTiming>> extractContactTimingsPerLeg(const ocs2:
   return contactTimingsPerLeg;
 }
 
-feet_array_t<scalar_t> getTimeUntilNextLiftOff(scalar_t currentTime, const ocs2::ModeSchedule& modeSchedule) {
+feet_array_t<scalar_t> getTimeUntilNextLiftOffPerLeg(scalar_t currentTime, const ocs2::ModeSchedule& modeSchedule) {
   feet_array_t<scalar_t> timeUntilNextLiftOffPerLeg;
 
   // Convert mode sequence to a contact timing vector per leg.
@@ -42,7 +42,7 @@ feet_array_t<scalar_t> getTimeUntilNextLiftOff(scalar_t currentTime, const ocs2:
   return timeUntilNextLiftOffPerLeg;
 }
 
-feet_array_t<scalar_t> getTimeUntilNextTouchDown(scalar_t currentTime, const ocs2::ModeSchedule& modeSchedule) {
+feet_array_t<scalar_t> getTimeUntilNextTouchDownPerLeg(scalar_t currentTime, const ocs2::ModeSchedule& modeSchedule) {
   feet_array_t<scalar_t> timeUntilNextTouchDownPerLeg;
 
   // Convert mode sequence to a contact timing vector per leg.

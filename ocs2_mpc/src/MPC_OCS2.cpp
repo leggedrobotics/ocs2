@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,32 +27,30 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_mpc/MPC_OCS2.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_OCS2<STATE_DIM, INPUT_DIM>::MPC_OCS2()
+MPC_OCS2::MPC_OCS2()
 
-    : BASE(), gddpPtr_(new gddp_t()), activateOCS2_(false), terminateOCS2_(false) {
+    : MPC_SLQ(), gddpPtr_(new gddp_t()), activateOCS2_(false), terminateOCS2_(false) {
   workerOCS2_ = std::thread(&MPC_OCS2::runOCS2, this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_OCS2<STATE_DIM, INPUT_DIM>::MPC_OCS2(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
-                                         const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
-                                         const operating_trajectories_base_t* operatingTrajectoriesPtr,
-                                         const scalar_array_t& partitioningTimes, const SLQ_Settings& slqSettings /*= SLQ_Settings()*/,
-                                         const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/,
-                                         const MPC_Settings& mpcSettings /*= MPC_Settings()*/,
-                                         const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
+MPC_OCS2::MPC_OCS2(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const DerivativesBase* systemDerivativesPtr,
+                   const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
+                   const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const scalar_array_t& partitioningTimes,
+                   const SLQ_Settings& slqSettings /*= SLQ_Settings()*/, const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/,
+                   const MPC_Settings& mpcSettings /*= MPC_Settings()*/, const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
 
-    : BASE(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, partitioningTimes,
-           slqSettings, mpcSettings, heuristicsFunctionPtr),
+    : MPC_SLQ(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, partitioningTimes,
+              slqSettings, mpcSettings, heuristicsFunctionPtr),
       gddpPtr_(new gddp_t(gddpSettings)),
       activateOCS2_(false),
       terminateOCS2_(false),
@@ -63,8 +61,7 @@ MPC_OCS2<STATE_DIM, INPUT_DIM>::MPC_OCS2(const rollout_base_t* rolloutPtr, const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_OCS2<STATE_DIM, INPUT_DIM>::~MPC_OCS2() {
+MPC_OCS2::~MPC_OCS2() {
   terminateOCS2_ = true;
   ocs2Synchronization_.notify_all();
   workerOCS2_.join();
@@ -73,9 +70,8 @@ MPC_OCS2<STATE_DIM, INPUT_DIM>::~MPC_OCS2() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_OCS2<STATE_DIM, INPUT_DIM>::reset() {
-  BASE::reset();
+void MPC_OCS2::reset() {
+  MPC_SLQ::reset();
 
   std::lock_guard<std::mutex> ocs2Lock(dataCollectorMutex_);
   activateOCS2_ = false;
@@ -86,16 +82,14 @@ void MPC_OCS2<STATE_DIM, INPUT_DIM>::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_OCS2<STATE_DIM, INPUT_DIM>::rewind() {
-  BASE::rewind();
+void MPC_OCS2::rewind() {
+  MPC_SLQ::rewind();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_OCS2<STATE_DIM, INPUT_DIM>::runOCS2() {
+void MPC_OCS2::runOCS2() {
   while (!terminateOCS2_) {
     std::unique_lock<std::mutex> ocs2Lock(dataCollectorMutex_);
     ocs2Synchronization_.wait(ocs2Lock, [&] { return activateOCS2_ || terminateOCS2_; });
@@ -105,7 +99,7 @@ void MPC_OCS2<STATE_DIM, INPUT_DIM>::runOCS2() {
       break;
     }
 
-    if (BASE::mpcSettings_.debugPrint_) {
+    if (MPC_SLQ::mpcSettings_.debugPrint_) {
       std::cerr << "### OCS2 started. " << std::endl;
     }
 
@@ -113,9 +107,9 @@ void MPC_OCS2<STATE_DIM, INPUT_DIM>::runOCS2() {
 
     // TODO: fix me
     //    gddpPtr_->run(slqDataCollectorPtr_.get(), eventTimesOptimized_,
-    //    BASE::mpcSettings_.maxTimeStep_);
+    //    MPC_SLQ::mpcSettings_.maxTimeStep_);
 
-    if (BASE::mpcSettings_.debugPrint_) {
+    if (MPC_SLQ::mpcSettings_.debugPrint_) {
       std::cerr << "### OCS2 finished. " << std::endl;
     }
 
@@ -127,32 +121,31 @@ void MPC_OCS2<STATE_DIM, INPUT_DIM>::runOCS2() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-bool MPC_OCS2<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const state_vector_t& currentState) {
+bool MPC_OCS2::run(const scalar_t& currentTime, const state_vector_t& currentState) {
   std::unique_lock<std::mutex> slqLock(dataCollectorMutex_, std::defer_lock_t());
   bool ownership = slqLock.try_lock();
-  if (ownership && !BASE::initRun_) {
-    bool rewaindTookPlace = currentTime > 0.1 && BASE::slqPtr_->getRewindCounter() != slqDataCollectorPtr_->rewindCounter_;
-    auto modeSchedule = BASE::slqPtr_->getModeSchedule();
+  if (ownership && !MPC_SLQ::initRun_) {
+    bool rewaindTookPlace = currentTime > 0.1 && MPC_SLQ::slqPtr_->getRewindCounter() != slqDataCollectorPtr_->rewindCounter_;
+    auto modeSchedule = MPC_SLQ::slqPtr_->getModeSchedule();
     bool modeSequenceUpdated = modeSequenceOptimized_ != modeSchedule.modeSequence;
     if (!rewaindTookPlace && !modeSequenceUpdated) {
       // adjust the SLQ internal controller using trajectory spreading approach
       if (!modeSchedule.eventTimes.empty()) {
-        BASE::slqPtr_->adjustController(eventTimesOptimized_, modeSchedule.eventTimes);
+        MPC_SLQ::slqPtr_->adjustController(eventTimesOptimized_, modeSchedule.eventTimes);
       }
 
       // TODO : set eventTimesOptimized_ in the correct place
-      // BASE::slqPtr_->setModeScheduleManagers({eventTimesOptimized_, modeSchedule.modeSequence});
+      // MPC_SLQ::slqPtr_->setModeScheduleManagers({eventTimesOptimized_, modeSchedule.modeSequence});
       //      this->logicRulesPtr_->eventTimes() = eventTimesOptimized_;
       //      this->logicRulesPtr_->update();
       //      this->getLogicRulesMachinePtr()->logicRulesUpdated();
     }
 
     // collect SLQ variables
-    if (BASE::mpcSettings_.debugPrint_) {
+    if (MPC_SLQ::mpcSettings_.debugPrint_) {
       std::cerr << "### SLQ data collector triggered." << std::endl;
     }
-    slqDataCollectorPtr_->collect(BASE::slqPtr_.get());
+    slqDataCollectorPtr_->collect(MPC_SLQ::slqPtr_.get());
 
     activateOCS2_ = true;
     slqLock.unlock();
@@ -160,7 +153,7 @@ bool MPC_OCS2<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
   }
 
   // run the base method
-  bool status = BASE::run(currentTime, currentState);
+  bool status = MPC_SLQ::run(currentTime, currentState);
 
   return status;
 }

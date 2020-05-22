@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,62 +29,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_ddp/GaussNewtonDDP.h>
 #include <ocs2_ddp/ILQR.h>
 
-#include "ocs2_mpc/MPC_BASE.h"
+#include "MPC_BASE.h"
 
 namespace ocs2 {
 
 /**
  * This an MPC implementation with ILQR optimal control solver.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
+class MPC_ILQR : public MPC_BASE {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = MPC_BASE<STATE_DIM, INPUT_DIM>;
-
-  using typename BASE::DIMENSIONS;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using scalar_array2_t = typename DIMENSIONS::scalar_array2_t;
-  using size_array_t = typename DIMENSIONS::size_array_t;
-  using size_array2_t = typename DIMENSIONS::size_array2_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-  using state_vector_array2_t = typename DIMENSIONS::state_vector_array2_t;
-  using input_vector_t = typename DIMENSIONS::input_vector_t;
-  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-  using input_vector_array2_t = typename DIMENSIONS::input_vector_array2_t;
-  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
-  using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
-  using input_state_matrix_array2_t = typename DIMENSIONS::input_state_matrix_array2_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-  using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
-
-  using typename BASE::controller_const_ptr_array_t;
-  using typename BASE::controller_ptr_array_t;
-
-  using linear_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
-  using linear_controller_array_t = typename linear_controller_t::array_t;
-
-  using ddp_base_t = ocs2::GaussNewtonDDP<STATE_DIM, INPUT_DIM>;
-
-  using ilqr_t = ocs2::ILQR<STATE_DIM, INPUT_DIM>;
-
-  using event_handler_t = typename ddp_base_t::event_handler_t;
-  using derivatives_base_t = typename ddp_base_t::derivatives_base_t;
-  using constraint_base_t = typename ddp_base_t::constraint_base_t;
-  using cost_function_base_t = typename ddp_base_t::cost_function_base_t;
-  using operating_trajectories_base_t = typename ddp_base_t::operating_trajectories_base_t;
-  using rollout_base_t = typename ddp_base_t::rollout_base_t;
-
   /**
    * Default constructor.
    */
@@ -93,6 +50,8 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
   /**
    * Constructor
    *
+   * @param [in] stateDim: State vector dimension
+   * @param [in] inputDim: Input vector dimension
    * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
    * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
@@ -105,15 +64,16 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
-  MPC_ILQR(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
-           const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
-           const scalar_array_t& partitioningTimes, const ILQR_Settings& ilqrSettings = ILQR_Settings(),
-           const MPC_Settings& mpcSettings = MPC_Settings(), const cost_function_base_t* heuristicsFunctionPtr = nullptr);
+  MPC_ILQR(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const DerivativesBase* systemDerivativesPtr,
+           const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
+           const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const scalar_array_t& partitioningTimes,
+           const ILQR_Settings& ilqrSettings = ILQR_Settings(), const MPC_Settings& mpcSettings = MPC_Settings(),
+           const CostFunctionBase* heuristicsFunctionPtr = nullptr);
 
   /**
    * Default destructor.
    */
-  virtual ~MPC_ILQR() = default;
+  ~MPC_ILQR() override = default;
 
   /**
    * Gets the ILQR settings structure.
@@ -122,19 +82,17 @@ class MPC_ILQR : public MPC_BASE<STATE_DIM, INPUT_DIM> {
    */
   virtual ILQR_Settings& ilqrSettings();
 
-  ilqr_t* getSolverPtr() override;
+  ILQR* getSolverPtr() override;
 
-  const ilqr_t* getSolverPtr() const override;
+  const ILQR* getSolverPtr() const override;
 
-  void calculateController(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime) override;
+  void calculateController(const scalar_t& initTime, const vector_t& initState, const scalar_t& finalTime) override;
 
  protected:
   /***********
    * Variables
    ***********/
-  std::unique_ptr<ilqr_t> ilqrPtr_;
+  std::unique_ptr<ILQR> ilqrPtr_;
 };
 
 }  // namespace ocs2
-
-#include "implementation/MPC_ILQR.h"

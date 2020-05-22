@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,91 +27,87 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_mpc/MPC_SLQ.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_ILQR<STATE_DIM, INPUT_DIM>::MPC_ILQR(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
-                                         const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
-                                         const operating_trajectories_base_t* operatingTrajectoriesPtr,
-                                         const scalar_array_t& partitioningTimes, const ILQR_Settings& ilqrSettings /* = ILQR_Settings()*/,
-                                         const MPC_Settings& mpcSettings /* = MPC_Settings()*/,
-                                         const cost_function_base_t* heuristicsFunctionPtr /*= nullptr*/)
+MPC_SLQ::MPC_SLQ(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const DerivativesBase* systemDerivativesPtr,
+                 const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
+                 const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const scalar_array_t& partitioningTimes,
+                 const SLQ_Settings& slqSettings /* = SLQ_Settings()*/, const MPC_Settings& mpcSettings /* = MPC_Settings()*/,
+                 const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
 
-    : BASE(partitioningTimes, mpcSettings) {
-  // ILQR
-  ilqrPtr_.reset(new ilqr_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, ilqrSettings,
-                            heuristicsFunctionPtr));
+    : MPC_BASE(stateDim, inputDim, partitioningTimes, mpcSettings) {
+  // SLQ
+  slqPtr_.reset(new SLQ(stateDim, inputDim, rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr,
+                        operatingTrajectoriesPtr, slqSettings, heuristicsFunctionPtr));
 
   // set base solver's pointer
-  BASE::setBaseSolverPtr(ilqrPtr_.get());
+  MPC_BASE::setBaseSolverPtr(slqPtr_.get());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-ILQR_Settings& MPC_ILQR<STATE_DIM, INPUT_DIM>::ilqrSettings() {
-  return ilqrPtr_->settings();
+SLQ_Settings& MPC_SLQ::slqSettings() {
+  return slqPtr_->settings();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-typename MPC_ILQR<STATE_DIM, INPUT_DIM>::ilqr_t* MPC_ILQR<STATE_DIM, INPUT_DIM>::getSolverPtr() {
-  return ilqrPtr_.get();
+SLQ* MPC_SLQ::getSolverPtr() {
+  return slqPtr_.get();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-const typename MPC_ILQR<STATE_DIM, INPUT_DIM>::ilqr_t* MPC_ILQR<STATE_DIM, INPUT_DIM>::getSolverPtr() const {
-  return ilqrPtr_.get();
+const SLQ* MPC_SLQ::getSolverPtr() const {
+  return slqPtr_.get();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ILQR<STATE_DIM, INPUT_DIM>::calculateController(const scalar_t& initTime, const state_vector_t& initState,
-                                                         const scalar_t& finalTime) {
+void MPC_SLQ::calculateController(const scalar_t& initTime, const vector_t& initState, const scalar_t& finalTime) {
   //*****************************************************************************************
   // updating real-time iteration settings
   //*****************************************************************************************
   // number of iterations
-  if (BASE::initRun_ /*|| ilqrPtr_->getController().at(BASE::finalActivePartitionIndex_).empty()*/) {
-    ilqrPtr_->ddpSettings().maxNumIterations_ = BASE::mpcSettings_.initMaxNumIterations_;
-    ilqrPtr_->ddpSettings().lineSearch_.maxStepLength_ = BASE::mpcSettings_.initMaxStepLength_;
-    ilqrPtr_->ddpSettings().lineSearch_.minStepLength_ = BASE::mpcSettings_.initMinStepLength_;
+  if (MPC_BASE::initRun_ /*|| slqPtr_->getController().at(MPC_BASE::finalActivePartitionIndex_).empty()*/) {
+    slqPtr_->ddpSettings().maxNumIterations_ = MPC_BASE::mpcSettings_.initMaxNumIterations_;
+    slqPtr_->ddpSettings().lineSearch_.maxStepLength_ = MPC_BASE::mpcSettings_.initMaxStepLength_;
+    slqPtr_->ddpSettings().lineSearch_.minStepLength_ = MPC_BASE::mpcSettings_.initMinStepLength_;
   } else {
-    ilqrPtr_->ddpSettings().maxNumIterations_ = BASE::mpcSettings_.runtimeMaxNumIterations_;
-    ilqrPtr_->ddpSettings().lineSearch_.maxStepLength_ = BASE::mpcSettings_.runtimeMaxStepLength_;
-    ilqrPtr_->ddpSettings().lineSearch_.minStepLength_ = BASE::mpcSettings_.runtimeMinStepLength_;
+    slqPtr_->ddpSettings().maxNumIterations_ = MPC_BASE::mpcSettings_.runtimeMaxNumIterations_;
+    slqPtr_->ddpSettings().lineSearch_.maxStepLength_ = MPC_BASE::mpcSettings_.runtimeMaxStepLength_;
+    slqPtr_->ddpSettings().lineSearch_.minStepLength_ = MPC_BASE::mpcSettings_.runtimeMinStepLength_;
   }
 
-  // use parallel Riccati solver at each call of realtime-iteration ILQR
-  if (!BASE::initRun_) {
-    ilqrPtr_->useParallelRiccatiSolverFromInitItr(BASE::mpcSettings_.useParallelRiccatiSolver_ && BASE::mpcSettings_.recedingHorizon_);
+  // use parallel Riccati solver at each call of realtime-iteration SLQ
+  if (!MPC_BASE::initRun_) {
+    slqPtr_->useParallelRiccatiSolverFromInitItr(MPC_BASE::mpcSettings_.useParallelRiccatiSolver_ &&
+                                                 MPC_BASE::mpcSettings_.recedingHorizon_);
   } else {
-    ilqrPtr_->useParallelRiccatiSolverFromInitItr(false);
+    slqPtr_->useParallelRiccatiSolverFromInitItr(false);
   }
 
   //*****************************************************************************************
   // calculate controller
   //*****************************************************************************************
-  if (BASE::mpcSettings_.coldStart_ || BASE::initRun_) {
-    if (BASE::mpcSettings_.debugPrint_) {
+  if (MPC_BASE::mpcSettings_.coldStart_ || MPC_BASE::initRun_) {
+    if (MPC_BASE::mpcSettings_.debugPrint_) {
       std::cerr << "### Using cold initialization." << std::endl;
     }
 
-    ilqrPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_);
+    slqPtr_->run(initTime, initState, finalTime, MPC_BASE::partitioningTimes_);
 
   } else {
-    ilqrPtr_->run(initTime, initState, finalTime, BASE::partitioningTimes_, typename ilqr_t::controller_ptr_array_t());
+    slqPtr_->run(initTime, initState, finalTime, MPC_BASE::partitioningTimes_, std::vector<ControllerBase*>());
   }
 }
 

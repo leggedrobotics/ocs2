@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,15 +27,20 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_core/misc/Lookup.h>
+
+#include <ocs2_mpc/MPC_BASE.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE()
+MPC_BASE::MPC_BASE()
 
-    : initRun_(true),
+    : stateDim_(0),
+      inputDim_(0),
+      initRun_(true),
       initnumPartitions_(0),
       initPartitioningTimes_(0),
       numPartitions_(0),
@@ -48,10 +53,11 @@ MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE(const scalar_array_t& partitioningTimes, MPC_Settings mpcSettings)
+MPC_BASE::MPC_BASE(size_t stateDim, size_t inputDim, const scalar_array_t& partitioningTimes, MPC_Settings mpcSettings)
 
     : mpcSettings_(std::move(mpcSettings)),
+      stateDim_(stateDim),
+      inputDim_(inputDim),
       initRun_(true),
       initnumPartitions_(partitioningTimes.size() - 1),
       initPartitioningTimes_(partitioningTimes),
@@ -92,8 +98,7 @@ MPC_BASE<STATE_DIM, INPUT_DIM>::MPC_BASE(const scalar_array_t& partitioningTimes
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_BASE<STATE_DIM, INPUT_DIM>::reset() {
+void MPC_BASE::reset() {
   initRun_ = true;
 
   mpcTimer_.reset();
@@ -104,16 +109,14 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_BASE<STATE_DIM, INPUT_DIM>::setBaseSolverPtr(solver_base_t* solverPtr) {
+void MPC_BASE::setBaseSolverPtr(Solver_BASE* solverPtr) {
   solverPtr_ = solverPtr;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_BASE<STATE_DIM, INPUT_DIM>::rewind() {
+void MPC_BASE::rewind() {
   for (size_t i = 0; i < 2 * initnumPartitions_; i++) {
     partitioningTimes_[i] = partitioningTimes_[i + initnumPartitions_];
   }
@@ -131,9 +134,8 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::rewind() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_BASE<STATE_DIM, INPUT_DIM>::adjustmentTimeHorizon(const scalar_array_t& partitioningTimes, scalar_t& initTime, scalar_t& finalTime,
-                                                           size_t& initActivePartitionIndex, size_t& finalActivePartitionIndex) const {
+void MPC_BASE::adjustmentTimeHorizon(const scalar_array_t& partitioningTimes, scalar_t& initTime, scalar_t& finalTime,
+                                     size_t& initActivePartitionIndex, size_t& finalActivePartitionIndex) const {
   // current active subsystem
   initActivePartitionIndex = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, initTime);
 
@@ -161,8 +163,7 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::adjustmentTimeHorizon(const scalar_array_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const state_vector_t& currentState) {
+bool MPC_BASE::run(const scalar_t& currentTime, const vector_t& currentState) {
   // check if the current time exceeds the solver final limit
   if (!initRun_ && currentTime >= getFinalTime() && mpcSettings_.recedingHorizon_) {
     std::cerr << std::endl << "#####################################################";
@@ -178,8 +179,8 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
   // adjusting the partitioning times based on the initial time
   if (initRun_) {
     const scalar_t detaTime = currentTime - partitioningTimes_[initnumPartitions_];
-    for (int i = 0; i < partitioningTimes_.size(); i++) {
-      partitioningTimes_[i] += detaTime;
+    for (auto& time : partitioningTimes_) {
+      time += detaTime;
     }
   }
 
@@ -201,7 +202,7 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
   if (mpcSettings_.recedingHorizon_) {
     finalTime = currentTime + getTimeHorizon();
   } else {
-    size_t N = currentTime / getFinalTime();
+    auto N = static_cast<size_t>(currentTime / getFinalTime());
     finalTime = (N + 1) * getFinalTime();
   }
 
@@ -270,16 +271,14 @@ bool MPC_BASE<STATE_DIM, INPUT_DIM>::run(const scalar_t& currentTime, const stat
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-typename MPC_BASE<STATE_DIM, INPUT_DIM>::scalar_t MPC_BASE<STATE_DIM, INPUT_DIM>::getStartTime() const {
+scalar_t MPC_BASE::getStartTime() const {
   return lastControlDesignTime_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-typename MPC_BASE<STATE_DIM, INPUT_DIM>::scalar_t MPC_BASE<STATE_DIM, INPUT_DIM>::getFinalTime() const {
+scalar_t MPC_BASE::getFinalTime() const {
   if (mpcSettings_.recedingHorizon_) {
     return lastControlDesignTime_ + getTimeHorizon();
   } else {
@@ -290,8 +289,7 @@ typename MPC_BASE<STATE_DIM, INPUT_DIM>::scalar_t MPC_BASE<STATE_DIM, INPUT_DIM>
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-typename MPC_BASE<STATE_DIM, INPUT_DIM>::scalar_t MPC_BASE<STATE_DIM, INPUT_DIM>::getTimeHorizon() const {
+scalar_t MPC_BASE::getTimeHorizon() const {
   if (mpcSettings_.recedingHorizon_) {
     return initPartitioningTimes_.back() - initPartitioningTimes_.front();
   } else {
@@ -302,8 +300,7 @@ typename MPC_BASE<STATE_DIM, INPUT_DIM>::scalar_t MPC_BASE<STATE_DIM, INPUT_DIM>
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_BASE<STATE_DIM, INPUT_DIM>::getPartitioningTimes(scalar_array_t& partitioningTimes) const {
+void MPC_BASE::getPartitioningTimes(scalar_array_t& partitioningTimes) const {
   partitioningTimes.resize(finalActivePartitionIndex_ + 2);
   for (size_t i = 0; i <= finalActivePartitionIndex_ + 1; i++) {
     partitioningTimes[i] = partitioningTimes_[i];
@@ -313,8 +310,7 @@ void MPC_BASE<STATE_DIM, INPUT_DIM>::getPartitioningTimes(scalar_array_t& partit
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-const MPC_Settings& MPC_BASE<STATE_DIM, INPUT_DIM>::settings() const {
+const MPC_Settings& MPC_BASE::settings() const {
   return mpcSettings_;
 }
 

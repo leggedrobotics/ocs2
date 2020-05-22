@@ -27,13 +27,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/command/TargetTrajectories_ROS_Interface.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-TargetTrajectories_ROS_Interface<SCALAR_T>::TargetTrajectories_ROS_Interface(int argc, char* argv[], std::string robotName /*= "robot"*/)
+TargetTrajectories_ROS_Interface::TargetTrajectories_ROS_Interface(int argc, char* argv[], std::string robotName /*= "robot"*/)
     : robotName_(std::move(robotName)) {
   ::ros::init(argc, argv, robotName_ + "_mpc_target");
   nodeHandle_.reset(new ::ros::NodeHandle);
@@ -42,16 +43,14 @@ TargetTrajectories_ROS_Interface<SCALAR_T>::TargetTrajectories_ROS_Interface(int
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-TargetTrajectories_ROS_Interface<SCALAR_T>::~TargetTrajectories_ROS_Interface() {
+TargetTrajectories_ROS_Interface::~TargetTrajectories_ROS_Interface() {
   mpcTargetTrajectoriesPublisher_.shutdown();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-void TargetTrajectories_ROS_Interface<SCALAR_T>::publishTargetTrajectories(const CostDesiredTrajectories& costDesiredTrajectories) {
+void TargetTrajectories_ROS_Interface::publishTargetTrajectories(const CostDesiredTrajectories& costDesiredTrajectories) {
   ocs2_msgs::mpc_target_trajectories mpcTargetTrajectoriesMsg;
   ros_msg_conversions::createTargetTrajectoriesMsg(costDesiredTrajectories, mpcTargetTrajectoriesMsg);
   mpcTargetTrajectoriesPublisher_.publish(mpcTargetTrajectoriesMsg);
@@ -60,8 +59,7 @@ void TargetTrajectories_ROS_Interface<SCALAR_T>::publishTargetTrajectories(const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-void TargetTrajectories_ROS_Interface<SCALAR_T>::launchNodes() {
+void TargetTrajectories_ROS_Interface::launchNodes() {
   // display
   ROS_INFO_STREAM("TargetTrajectories node is setting up ...");
 

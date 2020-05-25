@@ -103,7 +103,7 @@ vector_t FeedforwardController::computeInput(const scalar_t& t, const vector_t& 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void FeedforwardController::flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const {
+void FeedforwardController::flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const {
   const auto timeSize = timeArray.size();
   const auto dataSize = flatArray2.size();
 
@@ -120,17 +120,17 @@ void FeedforwardController::flatten(const scalar_array_t& timeArray, const std::
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void FeedforwardController::flattenSingle(scalar_t time, float_array_t& flatArray) const {
+void FeedforwardController::flattenSingle(scalar_t time, std::vector<float>& flatArray) const {
   vector_t uff;
   LinearInterpolation::interpolate(time, uff, &timeStamp_, &uffArray_);
 
-  flatArray = std::move(float_array_t(uff.data(), uff.data() + inputDim_));
+  flatArray = std::move(std::vector<float>(uff.data(), uff.data() + inputDim_));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void FeedforwardController::unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) {
+void FeedforwardController::unFlatten(const scalar_array_t& timeArray, const std::vector<std::vector<float> const*>& flatArray2) {
   if (flatArray2[0]->size() != inputDim_) {
     throw std::runtime_error("FeedforwardController::unFlatten received array of wrong length.");
   }

@@ -39,7 +39,7 @@ namespace ocs2 {
 vector_t StateTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray, const vector_t& initState, ControllerBase* controller,
                                         scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces,
                                         vector_array_t& stateTrajectory, vector_array_t& inputTrajectory,
-                                        ModelDataBase::array_t* modelDataTrajectoryPtr) {
+                                        std::vector<ModelDataBase>* modelDataTrajectoryPtr) {
   if (!controller) {
     throw std::runtime_error("The input controller is not set.");
   }

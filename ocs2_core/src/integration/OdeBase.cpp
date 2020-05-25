@@ -66,14 +66,14 @@ void OdeBase::resetNumFunctionCalls() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ModelDataBase::array_t::iterator OdeBase::beginModelDataIterator() {
+std::vector<ModelDataBase>::iterator OdeBase::beginModelDataIterator() {
   return modelDataArray_.begin();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ModelDataBase::array_t::iterator OdeBase::endModelDataIterator() {
+std::vector<ModelDataBase>::iterator OdeBase::endModelDataIterator() {
   return modelDataArray_.end();
 }
 

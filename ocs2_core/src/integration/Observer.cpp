@@ -36,7 +36,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 Observer::Observer(vector_array_t* stateTrajectoryPtr /*= nullptr*/, scalar_array_t* timeTrajectoryPtr /*= nullptr*/,
-                   ModelDataBase::array_t* modelDataTrajectoryPtr /*= nullptr*/)
+                   std::vector<ModelDataBase>* modelDataTrajectoryPtr /*= nullptr*/)
     : timeTrajectoryPtr_(timeTrajectoryPtr), stateTrajectoryPtr_(stateTrajectoryPtr), modelDataTrajectoryPtr_(modelDataTrajectoryPtr) {}
 
 /******************************************************************************************************/
@@ -61,7 +61,7 @@ void Observer::observe(OdeBase& system, const vector_t& state, const scalar_t ti
       system.computeFlowMap(time, state, dxdt);
     }
     // get model data from current time step, search starting from most recent cache entry
-    ModelDataBase::array_t::iterator modelData_i = system.endModelDataIterator();
+    std::vector<ModelDataBase>::iterator modelData_i = system.endModelDataIterator();
     while (modelData_i != system.beginModelDataIterator()) {
       --modelData_i;
       if (numerics::almost_eq(modelData_i->time_, time)) {

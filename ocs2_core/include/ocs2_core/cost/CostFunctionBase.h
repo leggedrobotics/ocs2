@@ -162,7 +162,6 @@ class CostFunctionBase {
    */
   const CostDesiredTrajectories* costDesiredTrajectoriesPtr_;
 
-  // TODO(mspieler): maybe remove this state?
   scalar_t t_;
   vector_t x_;
   vector_t u_;

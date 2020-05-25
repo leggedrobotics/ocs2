@@ -214,7 +214,6 @@ class RelaxedBarrierCost : public CostFunctionBase {
    */
   void loadModelsIfAvailable(bool verbose);
 
-  // TODO(mspieler): crete PenaltyFunction module
   scalar_t getPenaltyFunctionValue(scalar_t h, const Config& config) const;
   scalar_t getPenaltyFunctionDerivative(scalar_t h, const Config& config) const;
   scalar_t getPenaltyFunctionSecondDerivative(scalar_t h, const Config& config) const;

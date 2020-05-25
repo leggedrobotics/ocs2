@@ -193,7 +193,7 @@ void DDP_DataCollector::resizeDataContainer(size_t numPartitions, size_t stateDi
    * Data which should be copied
    */
   // optimized controller
-  optimizedControllersStock_.resize(numPartitions);
+  optimizedControllersStock_.resize(numPartitions, LinearController(stateDim, inputDim));
 
   // nominal trajectories
   nominalTimeTrajectoriesStock_.resize(numPartitions);

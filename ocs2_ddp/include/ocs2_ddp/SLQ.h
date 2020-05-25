@@ -81,7 +81,7 @@ class SLQ final : public GaussNewtonDDP {
 
   void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
                                  const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
-                                 ModelDataBase::array_t& modelDataTrajectory) override;
+                                 std::vector<ModelDataBase>& modelDataTrajectory) override;
 
   void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
 

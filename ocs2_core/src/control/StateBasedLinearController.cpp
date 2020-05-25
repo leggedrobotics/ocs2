@@ -86,14 +86,14 @@ vector_t StateBasedLinearController::computeInput(const scalar_t& t, const vecto
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void StateBasedLinearController::flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const {
+void StateBasedLinearController::flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const {
   ctrlPtr_->flatten(timeArray, flatArray2);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void StateBasedLinearController::unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) {
+void StateBasedLinearController::unFlatten(const scalar_array_t& timeArray, const std::vector<std::vector<float> const*>& flatArray2) {
   ctrlPtr_->unFlatten(timeArray, flatArray2);
 }
 

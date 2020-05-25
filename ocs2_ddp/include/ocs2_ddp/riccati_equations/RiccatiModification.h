@@ -38,9 +38,6 @@ namespace riccati_modification {
  * The struct contains Riccati equation modification terms.
  */
 struct Data {
-  using array_t = std::vector<Data>;
-  using array2_t = std::vector<array_t>;
-
   scalar_t time_;
 
   matrix_t deltaQm_;

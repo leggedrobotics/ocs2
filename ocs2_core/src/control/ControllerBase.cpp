@@ -27,6 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <utility>
+
 #include <ocs2_core/control/ControllerBase.h>
 
 namespace ocs2 {
@@ -41,6 +43,29 @@ ControllerBase::ControllerBase(size_t stateDim, size_t inputDim) : stateDim_(sta
 /******************************************************************************************************/
 void ControllerBase::concatenate(const ControllerBase* otherController) {
   concatenate(otherController, 0, otherController->size());
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+void ControllerBase::flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const {
+  throw std::runtime_error("not implemented.");
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+void ControllerBase::unFlatten(const scalar_array_t& timeArray, const std::vector<std::vector<float> const*>& flatArray2) {
+  throw std::runtime_error("not implemented.");
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+void swap(ControllerBase& a, ControllerBase& b) noexcept {
+  using std::swap;
+  swap(a.stateDim_, b.stateDim_);
+  swap(a.inputDim_, b.inputDim_);
 }
 
 }  // namespace ocs2

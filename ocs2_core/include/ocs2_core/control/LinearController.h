@@ -41,27 +41,19 @@ namespace ocs2 {
  */
 class LinearController final : public ControllerBase {
  public:
-  using array_t = std::vector<LinearController>;
-
-  /**
-   * Constructor, leaves object uninitialized
-   */
-  LinearController() : ControllerBase(0, 0) {}
-
   /**
    * Constructor, leaves object uninitialized
    *
    * @param[in] stateDim: State vector dimension
    * @param[in] inputDim: Input vector dimension
    */
-  LinearController(size_t stateDim, size_t inputDim);
+  explicit LinearController(size_t stateDim, size_t inputDim);
 
   /**
    * @brief Constructor initializes all required members of the controller.
    *
    * @param[in] stateDim: State vector dimension
    * @param[in] inputDim: Input vector dimension
-   * @param [in] controllerTime: Time stamp array of the controller
    * @param [in] controllerTime: Time stamp array of the controller
    * @param [in] controllerBias: The bias array.
    * @param [in] controllerGain: The feedback gain array.
@@ -80,26 +72,30 @@ class LinearController final : public ControllerBase {
    * @param other LinearController object to move from
    * @todo Implement
    */
-  LinearController(LinearController&& other) = delete;
+  LinearController(LinearController&& other);
 
   /**
    * @brief Copy assignment (copy and swap idiom)
-   * @param other LinearController object to assign from
+   * @param rhs LinearController object to assign from
    */
-  LinearController& operator=(LinearController other);
+  LinearController& operator=(const LinearController& rhs);
 
   /**
    * @brief Move assignment -- not implemented for now
-   * @param other LinearController object to assign from
+   * @param rhs LinearController object to assign from
    * @todo Implement
    */
-  LinearController& operator=(LinearController&& other) = delete;
+  LinearController& operator=(LinearController&& rhs);
 
   /**
    * @brief Destructor
    */
   ~LinearController() override = default;
 
+  /**
+   * @brief Create a deep copy of the object.
+   * @return Pointer to a new instance.
+   */
   LinearController* clone() const override;
 
   /**
@@ -112,11 +108,11 @@ class LinearController final : public ControllerBase {
 
   vector_t computeInput(const scalar_t& t, const vector_t& x) override;
 
-  void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const override;
+  void flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const override;
 
-  void flattenSingle(scalar_t time, float_array_t& flatArray) const;
+  void flattenSingle(scalar_t time, std::vector<float>& flatArray) const;
 
-  void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) override;
+  void unFlatten(const scalar_array_t& timeArray, const std::vector<std::vector<float> const*>& flatArray2) override;
 
   void concatenate(const ControllerBase* nextController, int index, int length) override;
 
@@ -132,13 +128,15 @@ class LinearController final : public ControllerBase {
 
   void display() const override;
 
-  virtual void swap(LinearController& other);
+  void swap(LinearController& other);
 
   void getFeedbackGain(scalar_t time, matrix_t& gain) const;
 
   void getBias(scalar_t time, vector_t& bias) const;
 
   scalar_array_t controllerEventTimes() const override;
+
+  friend void swap(LinearController& a, LinearController& b) noexcept;
 
  public:
   scalar_array_t timeStamp_;
@@ -147,7 +145,7 @@ class LinearController final : public ControllerBase {
   matrix_array_t gainArray_;
 };
 
-void swap(LinearController& a, LinearController& b);
+void swap(LinearController& a, LinearController& b) noexcept;
 
 std::ostream& operator<<(std::ostream& out, const LinearController& controller);
 

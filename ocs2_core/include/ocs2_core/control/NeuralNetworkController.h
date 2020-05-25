@@ -52,11 +52,7 @@ class NeuralNetworkController final : public ControllerBase {
 
   input_vector_t computeInput(const scalar_t& t, const vector_t& x) override;
 
-  void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const override;
-
-  void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) override;
-
-  void concatenate(const ControllerBase* nextController) override;
+  void concatenate(const ControllerBase* otherController, int index, int length) override;
 
   ControllerType getType() const override;
 

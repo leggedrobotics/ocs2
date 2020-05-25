@@ -239,7 +239,7 @@ class GaussNewtonDDP : public Solver_BASE {
    */
   virtual void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
                                          const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
-                                         ModelDataBase::array_t& modelDataTrajectory) = 0;
+                                         std::vector<ModelDataBase>& modelDataTrajectory) = 0;
 
   /**
    * Calculates the controller. This method uses the following variables:
@@ -319,7 +319,7 @@ class GaussNewtonDDP : public Solver_BASE {
    */
   scalar_t rolloutTrajectory(std::vector<LinearController>& controllersStock, scalar_array2_t& timeTrajectoriesStock,
                              size_array2_t& postEventIndicesStock, vector_array2_t& stateTrajectoriesStock,
-                             vector_array2_t& inputTrajectoriesStock, ModelDataBase::array2_t& modelDataTrajectoriesStock,
+                             vector_array2_t& inputTrajectoriesStock, std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
                              size_t workerIndex = 0);
 
   /**
@@ -382,7 +382,7 @@ class GaussNewtonDDP : public Solver_BASE {
   scalar_t performFullRollout(size_t workerIndex, scalar_t stepLength, std::vector<LinearController>& controllersStock,
                               scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
                               vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-                              ModelDataBase::array2_t& modelDataTrajectoriesStock, PerformanceIndex& performanceIndex);
+                              std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock, PerformanceIndex& performanceIndex);
 
   /**
    * Line search on the feedforward parts of the controller. It chooses the largest acceptable step-size.
@@ -579,16 +579,16 @@ class GaussNewtonDDP : public Solver_BASE {
   vector_array2_t nominalInputTrajectoriesStock_;
 
   // intermediate model data trajectory
-  ModelDataBase::array2_t modelDataTrajectoriesStock_;
+  std::vector<std::vector<ModelDataBase>> modelDataTrajectoriesStock_;
 
   // event times model data
-  ModelDataBase::array2_t modelDataEventTimesStock_;
+  std::vector<std::vector<ModelDataBase>> modelDataEventTimesStock_;
 
   // projected model data trajectory
-  ModelDataBase::array2_t projectedModelDataTrajectoriesStock_;
+  std::vector<std::vector<ModelDataBase>> projectedModelDataTrajectoriesStock_;
 
   // Riccati modification
-  riccati_modification::Data::array2_t riccatiModificationTrajectoriesStock_;
+  std::vector<std::vector<riccati_modification::Data>> riccatiModificationTrajectoriesStock_;
 
   // Riccati solution coefficients
   scalar_array2_t SsTimeTrajectoryStock_;
@@ -641,10 +641,10 @@ class GaussNewtonDDP : public Solver_BASE {
   vector_array2_t cachedStateTrajectoriesStock_;
   vector_array2_t cachedInputTrajectoriesStock_;
 
-  ModelDataBase::array2_t cachedModelDataTrajectoriesStock_;
-  ModelDataBase::array2_t cachedModelDataEventTimesStock_;
-  ModelDataBase::array2_t cachedProjectedModelDataTrajectoriesStock_;
-  riccati_modification::Data::array2_t cachedRiccatiModificationTrajectoriesStock_;
+  std::vector<std::vector<ModelDataBase>> cachedModelDataTrajectoriesStock_;
+  std::vector<std::vector<ModelDataBase>> cachedModelDataEventTimesStock_;
+  std::vector<std::vector<ModelDataBase>> cachedProjectedModelDataTrajectoriesStock_;
+  std::vector<std::vector<riccati_modification::Data>> cachedRiccatiModificationTrajectoriesStock_;
 
   scalar_array_t sFinalStock_;
   vector_array_t SvFinalStock_;

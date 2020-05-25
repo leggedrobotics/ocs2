@@ -41,9 +41,6 @@ namespace ocs2 {
  * The base class for model data.
  */
 struct ModelDataBase {
-  using array_t = std::vector<ModelDataBase>;
-  using array2_t = std::vector<array_t>;
-
   /**
    * Creates a deep copy of the object.
    * @warning Cloning implies that the caller takes ownership and deletes the created object.

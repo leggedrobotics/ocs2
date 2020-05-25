@@ -53,7 +53,7 @@ class Observer {
    * @param modelDataTrajectoryPtr: A pinter to an model data trajectory container to store resulting model data trajectory.
    */
   explicit Observer(vector_array_t* stateTrajectoryPtr = nullptr, scalar_array_t* timeTrajectoryPtr = nullptr,
-                    ModelDataBase::array_t* modelDataTrajectoryPtr = nullptr);
+                    std::vector<ModelDataBase>* modelDataTrajectoryPtr = nullptr);
 
   /**
    * Default destructor.
@@ -71,7 +71,7 @@ class Observer {
  private:
   scalar_array_t* timeTrajectoryPtr_;
   vector_array_t* stateTrajectoryPtr_;
-  ModelDataBase::array_t* modelDataTrajectoryPtr_;
+  std::vector<ModelDataBase>* modelDataTrajectoryPtr_;
 };
 
 }  // namespace ocs2

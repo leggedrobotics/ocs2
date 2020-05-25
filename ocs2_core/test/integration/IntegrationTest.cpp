@@ -139,7 +139,7 @@ TEST(IntegrationTest, model_data_test) {
 
   scalar_array_t timeTrajectory;
   vector_array_t stateTrajectory;
-  ModelDataBase::array_t modelDataTrajectory;
+  std::vector<ModelDataBase> modelDataTrajectory;
 
   // integrate adaptive
   sys->resetNumFunctionCalls();

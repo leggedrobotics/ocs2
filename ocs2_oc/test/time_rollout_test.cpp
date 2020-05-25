@@ -86,7 +86,7 @@ TEST(time_rollout_test, time_rollout_test) {
   size_array_t eventsPastTheEndIndeces;
   vector_array_t stateTrajectory;
   vector_array_t inputTrajectory;
-  ModelDataBase::array_t modelDataTrajectory;
+  std::vector<ModelDataBase> modelDataTrajectory;
 
   size_t partitionIndex = 0;
   rolloutBasePtr->run(initTime, initState, finalTime, controller.get(), eventTimes, timeTrajectory, eventsPastTheEndIndeces,

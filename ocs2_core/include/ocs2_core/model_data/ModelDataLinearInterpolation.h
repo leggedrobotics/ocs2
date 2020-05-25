@@ -43,13 +43,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*
  * Declares an access function of name FIELD such as time, dynamics, dynamicsBias, ...
  * For example the signature of function for dynamics is:
- * const vector_t& dynamics(const ocs2::ModelDataBase::array_t* vec, size_t n) {
+ * const vector_t& dynamics(const std::vector<ocs2::ModelDataBase>* vec, size_t n) {
  *   return (*vec)[n].dynamic_;
  * }
  */
-#define CREATE_INTERPOLATION_ACCESS_FUNCTION(FIELD)                                                               \
-  inline auto FIELD(const ocs2::ModelDataBase::array_t* vec, size_t ind)->const decltype((*vec)[ind].FIELD##_)& { \
-    return (*vec)[ind].FIELD##_;                                                                                  \
+#define CREATE_INTERPOLATION_ACCESS_FUNCTION(FIELD)                                                                   \
+  inline auto FIELD(const std::vector<ocs2::ModelDataBase>* vec, size_t ind)->const decltype((*vec)[ind].FIELD##_)& { \
+    return (*vec)[ind].FIELD##_;                                                                                      \
   }
 
 namespace ocs2 {
@@ -61,8 +61,8 @@ namespace ModelData {
  * possible to write a general interpolate() function with template argument Field_T.
  */
 inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, scalar_t& enquiryData,
-                        const ocs2::ModelDataBase::array_t* dataPtr,
-                        std::function<const scalar_t&(const ocs2::ModelDataBase::array_t*, size_t)> accessFun) {
+                        const std::vector<ocs2::ModelDataBase>* dataPtr,
+                        std::function<const scalar_t&(const std::vector<ocs2::ModelDataBase>*, size_t)> accessFun) {
   ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataPtr, accessFun);
 }
 
@@ -70,8 +70,8 @@ inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, sca
  * Helper specialization of interpolate() of ModelData array types for vector_t subfields.
  */
 inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, vector_t& enquiryData,
-                        const ocs2::ModelDataBase::array_t* dataPtr,
-                        std::function<const vector_t&(const ocs2::ModelDataBase::array_t*, size_t)> accessFun) {
+                        const std::vector<ocs2::ModelDataBase>* dataPtr,
+                        std::function<const vector_t&(const std::vector<ocs2::ModelDataBase>*, size_t)> accessFun) {
   ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataPtr, accessFun);
 }
 
@@ -79,8 +79,8 @@ inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, vec
  * Helper specialization of interpolate() of ModelData array types for scalar_t subfields.
  */
 inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, matrix_t& enquiryData,
-                        const ocs2::ModelDataBase::array_t* dataPtr,
-                        std::function<const matrix_t&(const ocs2::ModelDataBase::array_t*, size_t)> accessFun) {
+                        const std::vector<ocs2::ModelDataBase>* dataPtr,
+                        std::function<const matrix_t&(const std::vector<ocs2::ModelDataBase>*, size_t)> accessFun) {
   ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataPtr, accessFun);
 }
 

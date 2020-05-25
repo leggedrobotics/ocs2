@@ -114,11 +114,11 @@ class FeedforwardController final : public ControllerBase {
 
   vector_t computeInput(const scalar_t& t, const vector_t& x) override;
 
-  void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const override;
+  void flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const override;
 
-  void flattenSingle(scalar_t time, float_array_t& flatArray) const;
+  void flattenSingle(scalar_t time, std::vector<float>& flatArray) const;
 
-  void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) override;
+  void unFlatten(const scalar_array_t& timeArray, const std::vector<std::vector<float> const*>& flatArray2) override;
 
   void concatenate(const ControllerBase* nextController, int index, int length) override;
 

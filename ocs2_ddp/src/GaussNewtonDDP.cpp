@@ -453,14 +453,14 @@ void GaussNewtonDDP::setupOptimizer(size_t numPartitions) {
   /*
    * nominal trajectories
    */
-  nominalControllersStock_.resize(numPartitions);
+  nominalControllersStock_.resize(numPartitions, LinearController(stateDim_, inputDim_));
 
   nominalTimeTrajectoriesStock_.resize(numPartitions);
   nominalPostEventIndicesStock_.resize(numPartitions);
   nominalStateTrajectoriesStock_.resize(numPartitions);
   nominalInputTrajectoriesStock_.resize(numPartitions);
 
-  cachedControllersStock_.resize(numPartitions);
+  cachedControllersStock_.resize(numPartitions, LinearController(stateDim_, inputDim_));
   cachedTimeTrajectoriesStock_.resize(numPartitions);
   cachedPostEventIndicesStock_.resize(numPartitions);
   cachedStateTrajectoriesStock_.resize(numPartitions);
@@ -559,7 +559,8 @@ void GaussNewtonDDP::runParallel(std::function<void(void)> taskFunction, size_t 
 /******************************************************************************************************/
 scalar_t GaussNewtonDDP::rolloutTrajectory(std::vector<LinearController>& controllersStock, scalar_array2_t& timeTrajectoriesStock,
                                            size_array2_t& postEventIndicesStock, vector_array2_t& stateTrajectoriesStock,
-                                           vector_array2_t& inputTrajectoriesStock, ModelDataBase::array2_t& modelDataTrajectoriesStock,
+                                           vector_array2_t& inputTrajectoriesStock,
+                                           std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
                                            size_t workerIndex /*= 0*/) {
   const scalar_array_t& eventTimes = this->getModeSchedule().eventTimes;
 
@@ -666,7 +667,7 @@ scalar_t GaussNewtonDDP::rolloutTrajectory(std::vector<LinearController>& contro
       size_array_t eventsPastTheEndIndecesTail;
       vector_array_t stateTrajectoryTail;
       vector_array_t inputTrajectoryTail;
-      ModelDataBase::array_t modelDataTrajectoryTail;
+      std::vector<ModelDataBase> modelDataTrajectoryTail;
       xCurrent = operatingTrajectoriesRolloutPtrStock_[workerIndex]->run(
           operatingPointsFromTo.first, xCurrent, operatingPointsFromTo.second, nullptr, eventTimes, timeTrajectoryTail,
           eventsPastTheEndIndecesTail, stateTrajectoryTail, inputTrajectoryTail, &modelDataTrajectoryTail);
@@ -885,7 +886,8 @@ scalar_t GaussNewtonDDP::calculateRolloutCost(const scalar_array2_t& timeTraject
 scalar_t GaussNewtonDDP::performFullRollout(size_t workerIndex, scalar_t stepLength, std::vector<LinearController>& controllersStock,
                                             scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
                                             vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-                                            ModelDataBase::array2_t& modelDataTrajectoriesStock, PerformanceIndex& performanceIndex) {
+                                            std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
+                                            PerformanceIndex& performanceIndex) {
   // modifying uff by local increments
   if (!numerics::almost_eq(stepLength, 0.0)) {
     for (auto& controller : controllersStock) {
@@ -998,12 +1000,12 @@ void GaussNewtonDDP::lineSearchTask(LineSearchModule& lineSearchModule) {
 
   // local search forward simulation's variables
   PerformanceIndex performanceIndex;
-  std::vector<LinearController> controllersStock(numPartitions_);
+  std::vector<LinearController> controllersStock(numPartitions_, LinearController(stateDim_, inputDim_));
   scalar_array2_t timeTrajectoriesStock(numPartitions_);
   size_array2_t postEventIndicesStock(numPartitions_);
   vector_array2_t stateTrajectoriesStock(numPartitions_);
   vector_array2_t inputTrajectoriesStock(numPartitions_);
-  ModelDataBase::array2_t modelDataTrajectoriesStock(numPartitions_);
+  std::vector<std::vector<ModelDataBase>> modelDataTrajectoriesStock(numPartitions_);
 
   while (true) {
     size_t alphaExp = lineSearchModule.alphaExpNext++;

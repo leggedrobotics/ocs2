@@ -153,9 +153,9 @@ class ContinuousTimeRiccatiEquations final : public OdeBase {
    * @param [in] modelDataEventTimesPtr: A pointer to the model data at event times.
    * @param [in] riccatiModificationPtr: A pointer to the RiccatiModification trajectory.
    */
-  void setData(const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* projectedModelDataPtr,
-               const size_array_t* eventsPastTheEndIndecesPtr, const ModelDataBase::array_t* modelDataEventTimesPtr,
-               const riccati_modification::Data::array_t* riccatiModificationPtr);
+  void setData(const scalar_array_t* timeStampPtr, const std::vector<ModelDataBase>* projectedModelDataPtr,
+               const size_array_t* eventsPastTheEndIndecesPtr, const std::vector<ModelDataBase>* modelDataEventTimesPtr,
+               const std::vector<riccati_modification::Data>* riccatiModificationPtr);
 
   /**
    * Riccati jump map at switching moments
@@ -213,9 +213,9 @@ class ContinuousTimeRiccatiEquations final : public OdeBase {
 
   // array pointers
   const scalar_array_t* timeStampPtr_;
-  const ModelDataBase::array_t* projectedModelDataPtr_;
-  const ModelDataBase::array_t* modelDataEventTimesPtr_;
-  const riccati_modification::Data::array_t* riccatiModificationPtr_;
+  const std::vector<ModelDataBase>* projectedModelDataPtr_;
+  const std::vector<ModelDataBase>* modelDataEventTimesPtr_;
+  const std::vector<riccati_modification::Data>* riccatiModificationPtr_;
   scalar_array_t eventTimes_;
 
   ContinuousTimeRiccatiData continuousTimeRiccatiData_;

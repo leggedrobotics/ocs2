@@ -39,9 +39,6 @@ namespace ocs2 {
  */
 class ControllerBase {
  public:
-  using float_array_t = std::vector<float>;
-  using array_t = std::vector<ControllerBase>;
-
   /**
    * Constructor.
    *
@@ -69,14 +66,14 @@ class ControllerBase {
    * @param[in] timeArray array of query times
    * @param[out] flatArray2 The array of arrays that is to be filled, i.e., the compressed controller. One array per query time
    */
-  virtual void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const = 0;
+  virtual void flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const;
 
   /**
    * @brief Restores and initializes the controller from a flattened array
    * @param[in] timeArray array of times
    * @param[in] flatArray2 The array the represents the compressed controller
    */
-  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) = 0;
+  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<std::vector<float> const*>& flatArray2);
 
   /**
    * @brief Merges this controller with another controller that comes active later in time
@@ -155,9 +152,13 @@ class ControllerBase {
   /* Input dimension getter */
   size_t getInputDim() const { return inputDim_; }
 
+  friend void swap(ControllerBase& a, ControllerBase& b) noexcept;
+
  protected:
   size_t stateDim_;
   size_t inputDim_;
 };
+
+void swap(ControllerBase& a, ControllerBase& b) noexcept;
 
 }  // namespace ocs2

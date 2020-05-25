@@ -110,9 +110,10 @@ void ContinuousTimeRiccatiEquations::convert2Matrix(const vector_t& allSs, matri
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ContinuousTimeRiccatiEquations::setData(const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* projectedModelDataPtr,
-                                             const size_array_t* postEventIndicesPtr, const ModelDataBase::array_t* modelDataEventTimesPtr,
-                                             const riccati_modification::Data::array_t* riccatiModificationPtr) {
+void ContinuousTimeRiccatiEquations::setData(const scalar_array_t* timeStampPtr, const std::vector<ModelDataBase>* projectedModelDataPtr,
+                                             const size_array_t* postEventIndicesPtr,
+                                             const std::vector<ModelDataBase>* modelDataEventTimesPtr,
+                                             const std::vector<riccati_modification::Data>* riccatiModificationPtr) {
   OdeBase::resetNumFunctionCalls();
 
   // saving array pointers

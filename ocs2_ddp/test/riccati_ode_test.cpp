@@ -40,12 +40,12 @@ class RiccatiInitializer {
   using riccati_t = ocs2::ContinuousTimeRiccatiEquations;
 
   ocs2::scalar_array_t timeStamp;
-  ocs2::ModelDataBase::array_t projectedModelDataTrajectory;
+  std::vector<ocs2::ModelDataBase> projectedModelDataTrajectory;
 
   ocs2::size_array_t eventsPastTheEndIndeces;
-  ocs2::ModelDataBase::array_t modelDataEventTimesArray;
+  std::vector<ocs2::ModelDataBase> modelDataEventTimesArray;
 
-  ocs2::riccati_modification::Data::array_t riccatiModificationTrajectory;
+  std::vector<ocs2::riccati_modification::Data> riccatiModificationTrajectory;
 
   RiccatiInitializer(const int state_dim, const int input_dim) {
     timeStamp = ocs2::scalar_array_t{0.0, 1.0};
@@ -70,7 +70,7 @@ class RiccatiInitializer {
     projectedModelData.stateInputEqConstrStateDerivative_.setZero(input_dim, state_dim);
     projectedModelData.stateInputEqConstrInputDerivative_.setZero(input_dim, input_dim);
 
-    projectedModelDataTrajectory = ocs2::ModelDataBase::array_t{projectedModelData, projectedModelData};
+    projectedModelDataTrajectory = std::vector<ocs2::ModelDataBase>{projectedModelData, projectedModelData};
 
     ocs2::riccati_modification::Data riccatiModification;
     riccatiModification.deltaQm_ = 0.1 * ocs2::LinearAlgebra::generateSPDmatrix<ocs2::matrix_t>(state_dim);
@@ -80,7 +80,7 @@ class RiccatiInitializer {
     ocs2::LinearAlgebra::computeInverseMatrixUUT(projectedModelData.costInputSecondDerivative_,
                                                  riccatiModification.constraintNullProjector_);
 
-    riccatiModificationTrajectory = ocs2::riccati_modification::Data::array_t{riccatiModification, riccatiModification};
+    riccatiModificationTrajectory = std::vector<ocs2::riccati_modification::Data>{riccatiModification, riccatiModification};
   }
 
   void initialize(riccati_t& riccati) {

@@ -28,6 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include <iostream>
+#include <utility>
 
 #include <ocs2_core/control/LinearController.h>
 
@@ -58,8 +59,24 @@ LinearController::LinearController(const LinearController& other)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearController& LinearController::operator=(LinearController other) {
-  other.swap(*this);
+LinearController::LinearController(LinearController&& other) : ControllerBase(other) {
+  ocs2::swap(other, *this);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+LinearController& LinearController::operator=(const LinearController& rhs) {
+  LinearController other(rhs);
+  ocs2::swap(other, *this);
+  return *this;
+}
+
+/*********s*********************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+LinearController& LinearController::operator=(LinearController&& rhs) {
+  ocs2::swap(rhs, *this);
   return *this;
 }
 
@@ -97,7 +114,7 @@ vector_t LinearController::computeInput(const scalar_t& t, const vector_t& x) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LinearController::flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const {
+void LinearController::flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const {
   const auto timeSize = timeArray.size();
   const auto dataSize = flatArray2.size();
 
@@ -113,7 +130,7 @@ void LinearController::flatten(const scalar_array_t& timeArray, const std::vecto
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LinearController::flattenSingle(scalar_t time, float_array_t& flatArray) const {
+void LinearController::flattenSingle(scalar_t time, std::vector<float>& flatArray) const {
   vector_t uff;
   const auto indexAlpha = LinearInterpolation::interpolate(time, uff, &timeStamp_, &biasArray_);
 
@@ -134,7 +151,7 @@ void LinearController::flattenSingle(scalar_t time, float_array_t& flatArray) co
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LinearController::unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) {
+void LinearController::unFlatten(const scalar_array_t& timeArray, const std::vector<std::vector<float> const*>& flatArray2) {
   if (flatArray2[0]->size() != inputDim_ + inputDim_ * stateDim_) {
     throw std::runtime_error("LinearController::unFlatten received array of wrong length.");
   }
@@ -226,12 +243,7 @@ void LinearController::display() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LinearController::swap(LinearController& other) {
-  using std::swap;  // enable ADL
-
-  swap(timeStamp_, other.timeStamp_);
-  swap(biasArray_, other.biasArray_);
-  swap(deltaBiasArray_, other.deltaBiasArray_);
-  swap(gainArray_, other.gainArray_);
+  ocs2::swap(*this, other);
 }
 
 /******************************************************************************************************/
@@ -280,8 +292,13 @@ scalar_array_t LinearController::controllerEventTimes() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void swap(LinearController& a, LinearController& b) {
-  a.swap(b);
+void swap(LinearController& a, LinearController& b) noexcept {
+  using std::swap;
+  swap(static_cast<ControllerBase&>(a), static_cast<ControllerBase&>(b));
+  swap(a.timeStamp_, b.timeStamp_);
+  swap(a.biasArray_, b.biasArray_);
+  swap(a.deltaBiasArray_, b.deltaBiasArray_);
+  swap(a.gainArray_, b.gainArray_);
 }
 
 /******************************************************************************************************/

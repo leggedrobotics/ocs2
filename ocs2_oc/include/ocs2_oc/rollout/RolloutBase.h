@@ -112,7 +112,8 @@ class RolloutBase {
    */
   vector_t run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, ControllerBase* controller,
                const scalar_array_t& eventTimes, scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock,
-               vector_array_t& stateTrajectory, vector_array_t& inputTrajectory, ModelDataBase::array_t* modelDataTrajectoryPtr = nullptr);
+               vector_array_t& stateTrajectory, vector_array_t& inputTrajectory,
+               std::vector<ModelDataBase>* modelDataTrajectoryPtr = nullptr);
 
   /**
    * Prints out the rollout.
@@ -143,7 +144,7 @@ class RolloutBase {
    */
   virtual vector_t runImpl(time_interval_array_t timeIntervalArray, const vector_t& initState, ControllerBase* controller,
                            scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
-                           vector_array_t& inputTrajectory, ModelDataBase::array_t* modelDataTrajectoryPtr) = 0;
+                           vector_array_t& inputTrajectory, std::vector<ModelDataBase>* modelDataTrajectoryPtr) = 0;
 
   /**
    * Checks for the numerical stability if Rollout_Settings::checkNumericalStability_ is true.

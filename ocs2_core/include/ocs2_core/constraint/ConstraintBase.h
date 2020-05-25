@@ -33,9 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-/* TODO(mspieler): Some mehtods should be renamed for consistency and readability.
- * Notably: "Constraint1" "Constraint2", ... , "Control" -> "Input" */
-
 /**
  * Base class for the constraints and its Derivatives. The linearized constraints are defined as: \n
  * Here we consider three types of constraints:

@@ -83,13 +83,13 @@ class OdeBase {
    * Returns model data array begin() iterator
    * @return modelDataArray_.begin()
    */
-  ModelDataBase::array_t::iterator beginModelDataIterator();
+  std::vector<ModelDataBase>::iterator beginModelDataIterator();
 
   /**
    * Returns model data array end() iterator
    * @return modelDataArray_.end()
    */
-  ModelDataBase::array_t::iterator endModelDataIterator();
+  std::vector<ModelDataBase>::iterator endModelDataIterator();
 
   /**
    * Append model data array.
@@ -131,7 +131,7 @@ class OdeBase {
  protected:
   int numFunctionCalls_;
   system_func_t systemFunction_;
-  ModelDataBase::array_t modelDataArray_;
+  std::vector<ModelDataBase> modelDataArray_;
 };
 
 }  // namespace ocs2

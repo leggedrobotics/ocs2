@@ -208,8 +208,8 @@ class Integrator final : public IntegratorBase {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Stepper>
-void Integrator<Stepper>::run_integrate_const(system_func_t system, observer_func_t observer, const vector_t& initialState,
-                                              scalar_t startTime, scalar_t finalTime, scalar_t dt) {
+inline void Integrator<Stepper>::run_integrate_const(system_func_t system, observer_func_t observer, const vector_t& initialState,
+                                                     scalar_t startTime, scalar_t finalTime, scalar_t dt) {
   // TODO(mspieler): initializeStepper not used, why?
   // /*
   //  * use a temporary state for initialization, the state returned by initialize is different
@@ -228,9 +228,9 @@ void Integrator<Stepper>::run_integrate_const(system_func_t system, observer_fun
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Stepper>
-void Integrator<Stepper>::run_integrate_adaptive(system_func_t system, observer_func_t observer, const vector_t& initialState,
-                                                 scalar_t startTime, scalar_t finalTime, scalar_t dtInitial, scalar_t AbsTol,
-                                                 scalar_t RelTol) {
+inline void Integrator<Stepper>::run_integrate_adaptive(system_func_t system, observer_func_t observer, const vector_t& initialState,
+                                                        scalar_t startTime, scalar_t finalTime, scalar_t dtInitial, scalar_t AbsTol,
+                                                        scalar_t RelTol) {
   vector_t internalStartState = initialState;
   integrate_adaptive_specialized<Stepper>(system, observer, internalStartState, startTime, finalTime, dtInitial, AbsTol, RelTol);
 }
@@ -239,10 +239,10 @@ void Integrator<Stepper>::run_integrate_adaptive(system_func_t system, observer_
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Stepper>
-void Integrator<Stepper>::run_integrate_times(system_func_t system, observer_func_t observer, const vector_t& initialState,
-                                              typename scalar_array_t::const_iterator beginTimeItr,
-                                              typename scalar_array_t::const_iterator endTimeItr, scalar_t dtInitial, scalar_t AbsTol,
-                                              scalar_t RelTol) {
+inline void Integrator<Stepper>::run_integrate_times(system_func_t system, observer_func_t observer, const vector_t& initialState,
+                                                     typename scalar_array_t::const_iterator beginTimeItr,
+                                                     typename scalar_array_t::const_iterator endTimeItr, scalar_t dtInitial,
+                                                     scalar_t AbsTol, scalar_t RelTol) {
   vector_t internalStartState = initialState;
   integrate_times_specialized<Stepper>(system, observer, internalStartState, beginTimeItr, endTimeItr, dtInitial, AbsTol, RelTol);
 }
@@ -252,9 +252,10 @@ void Integrator<Stepper>::run_integrate_times(system_func_t system, observer_fun
 /******************************************************************************************************/
 template <class Stepper>
 template <typename S>
-typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t>::value, void>::type Integrator<Stepper>::integrate_adaptive_specialized(
-    system_func_t system, observer_func_t observer, vector_t& initialState, scalar_t startTime, scalar_t finalTime, scalar_t dtInitial,
-    scalar_t AbsTol, scalar_t RelTol) {
+inline typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t>::value, void>::type
+Integrator<Stepper>::integrate_adaptive_specialized(system_func_t system, observer_func_t observer, vector_t& initialState,
+                                                    scalar_t startTime, scalar_t finalTime, scalar_t dtInitial, scalar_t AbsTol,
+                                                    scalar_t RelTol) {
   boost::numeric::odeint::integrate_adaptive(boost::numeric::odeint::make_controlled<S>(AbsTol, RelTol), system, initialState, startTime,
                                              finalTime, dtInitial, observer);
 }
@@ -264,9 +265,10 @@ typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t>::value, void>::typ
 /******************************************************************************************************/
 template <class Stepper>
 template <typename S>
-typename std::enable_if<!std::is_same<S, runge_kutta_dopri5_t>::value, void>::type Integrator<Stepper>::integrate_adaptive_specialized(
-    system_func_t system, observer_func_t observer, vector_t& initialState, scalar_t startTime, scalar_t finalTime, scalar_t dtInitial,
-    scalar_t AbsTol, scalar_t RelTol) {
+inline typename std::enable_if<!std::is_same<S, runge_kutta_dopri5_t>::value, void>::type
+Integrator<Stepper>::integrate_adaptive_specialized(system_func_t system, observer_func_t observer, vector_t& initialState,
+                                                    scalar_t startTime, scalar_t finalTime, scalar_t dtInitial, scalar_t AbsTol,
+                                                    scalar_t RelTol) {
   boost::numeric::odeint::integrate_adaptive(stepper_, system, initialState, startTime, finalTime, dtInitial, observer);
 }
 
@@ -275,7 +277,7 @@ typename std::enable_if<!std::is_same<S, runge_kutta_dopri5_t>::value, void>::ty
 /******************************************************************************************************/
 template <class Stepper>
 template <typename S>
-typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t>::value, void>::type Integrator<Stepper>::integrate_times_specialized(
+inline typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t>::value, void>::type Integrator<Stepper>::integrate_times_specialized(
     system_func_t system, observer_func_t observer, vector_t& initialState, typename scalar_array_t::const_iterator beginTimeItr,
     typename scalar_array_t::const_iterator endTimeItr, scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol) {
 #if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 60)
@@ -295,7 +297,7 @@ typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t>::value, void>::typ
 /******************************************************************************************************/
 template <class Stepper>
 template <typename S>
-typename std::enable_if<!std::is_same<S, runge_kutta_dopri5_t>::value, void>::type Integrator<Stepper>::integrate_times_specialized(
+inline typename std::enable_if<!std::is_same<S, runge_kutta_dopri5_t>::value, void>::type Integrator<Stepper>::integrate_times_specialized(
     system_func_t system, observer_func_t observer, vector_t& initialState, typename scalar_array_t::const_iterator beginTimeItr,
     typename scalar_array_t::const_iterator endTimeItr, scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol) {
 #if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 60)
@@ -314,7 +316,7 @@ typename std::enable_if<!std::is_same<S, runge_kutta_dopri5_t>::value, void>::ty
 /******************************************************************************************************/
 template <class Stepper>
 template <typename S>
-typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t>::value, void>::type Integrator<Stepper>::initializeStepper(
+inline typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t>::value, void>::type Integrator<Stepper>::initializeStepper(
     vector_t& initialState, scalar_t t, scalar_t dt) {
   /**do nothing, runge_kutta_5_t does not have a init method */
 }

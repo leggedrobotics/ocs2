@@ -62,7 +62,7 @@ ILQR::ILQR(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, cons
 /******************************************************************************************************/
 void ILQR::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
                                      const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
-                                     ModelDataBase::array_t& modelDataTrajectory) {
+                                     std::vector<ModelDataBase>& modelDataTrajectory) {
   BASE::nextTimeIndex_ = 0;
   BASE::nextTaskId_ = 0;
   std::function<void(void)> task = [&] {

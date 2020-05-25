@@ -41,33 +41,9 @@ namespace ocs2 {
 /**
  * PythonInterface provides a unified interface for all systems
  * to the MPC_MRT_Interface to be used for Python bindings
- *
- * @tparam STATE_DIM Dimension of the state of the system
- * @tparam INPUT_DIM Dimension of the input of the system
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 class PythonInterface {
  public:
-  using dim_t = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
-  using scalar_t = typename dim_t::scalar_t;
-  using state_vector_t = typename dim_t::state_vector_t;
-  using input_vector_t = typename dim_t::input_vector_t;
-  using scalar_array_t = typename dim_t::scalar_array_t;
-  using state_vector_array_t = typename dim_t::state_vector_array_t;
-  using input_vector_array_t = typename dim_t::input_vector_array_t;
-  using input_matrix_t = typename dim_t::input_matrix_t;
-  using state_matrix_t = typename dim_t::state_matrix_t;
-  using state_input_matrix_t = typename dim_t::state_input_matrix_t;
-  using input_state_matrix_t = typename dim_t::input_state_matrix_t;
-  using input_state_matrix_array_t = typename dim_t::input_state_matrix_array_t;
-  using state_matrix_array_t = typename dim_t::state_matrix_array_t;
-  using cost_t = CostFunctionBase<STATE_DIM, INPUT_DIM>;
-  using dynamic_vector_t = typename dim_t::dynamic_vector_t;
-  using dynamic_vector_array_t = typename dim_t::dynamic_vector_array_t;
-  using dynamic_matrix_t = typename dim_t::dynamic_matrix_t;
-  using dynamic_matrix_array_t = typename dim_t::dynamic_matrix_array_t;
-  using input_matrix_array_t = typename dim_t::input_matrix_array_t;
-
   /**
    * @brief Constructor
    * @param[in] async: Whether or not to run MPC in a separate thread
@@ -83,7 +59,7 @@ class PythonInterface {
    * @param[in] robotInterface : The Python interface takes clones of the cost, dynamics, and constraints
    * @param[in] mpcPtr : The Python interface takes ownership of the mpcPtr
    */
-  void init(const RobotInterface<STATE_DIM, INPUT_DIM>& robotInterface, std::unique_ptr<MPC_BASE<STATE_DIM, INPUT_DIM>> mpcPtr);
+  void init(const RobotInterface& robotInterface, std::unique_ptr<MPC_BASE> mpcPtr);
 
   /**
    * @brief resets MPC to its original state
@@ -96,7 +72,7 @@ class PythonInterface {
    * @param[in] t current time
    * @param[in] x current state
    */
-  void setObservation(double t, Eigen::Ref<const state_vector_t> x);
+  void setObservation(double t, Eigen::Ref<const vector_t> x);
 
   /**
    * @brief setTargetTrajectories
@@ -116,14 +92,14 @@ class PythonInterface {
    * @param[out] x state array
    * @param[out] u input array
    */
-  void getMpcSolution(scalar_array_t& t, state_vector_array_t& x, input_vector_array_t& u);
+  void getMpcSolution(scalar_array_t& t, vector_array_t& x, vector_array_t& u);
 
   /**
    * @brief Obtains feedback gain matrix, if the underlying MPC algorithm computes it
    * @param[in] t: Query time
    * @return State-feedback matrix
    */
-  input_state_matrix_t getLinearFeedbackGain(scalar_t t);
+  matrix_t getLinearFeedbackGain(scalar_t t);
 
   /**
    * @brief Access to system dynamics flow map
@@ -132,7 +108,7 @@ class PythonInterface {
    * @param[in] u input
    * @return time derivative of state (dx/dt)
    */
-  state_vector_t computeFlowMap(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
+  vector_t computeFlowMap(double t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u);
 
   /**
    * @brief Sets time, state, input for evaluation of flow map derivatives
@@ -140,19 +116,19 @@ class PythonInterface {
    * @param[in] x state
    * @param[in] u input
    */
-  void setFlowMapDerivativeStateAndControl(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
+  void setFlowMapDerivativeStateAndControl(double t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u);
 
   /**
    * @brief Access system dynamics state derivative at location set with setFlowMapDerivativeStateAndControl(...)
    * @return state deriative of flow map
    */
-  state_matrix_t computeFlowMapDerivativeState();
+  matrix_t computeFlowMapDerivativeState();
 
   /**
    * @brief Access system dynamics input derivative at location set with setFlowMapDerivativeStateAndControl(...)
    * @return input deriative of flow map
    */
-  state_input_matrix_t computeFlowMapDerivativeInput();
+  matrix_t computeFlowMapDerivativeInput();
 
   /**
    * @brief Access intermediate cost
@@ -161,7 +137,7 @@ class PythonInterface {
    * @param[in] u input
    * @return Running cost at provided t-x-u
    */
-  double getIntermediateCost(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
+  double getIntermediateCost(double t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u);
 
   /**
    * @brief Access to state derivative of intermediate cost (L)
@@ -170,7 +146,7 @@ class PythonInterface {
    * @param[in] u input
    * @return dL/dx at provided t-x-u
    */
-  state_vector_t getIntermediateCostDerivativeState(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
+  vector_t getIntermediateCostDerivativeState(double t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u);
 
   /**
    * @brief Access to input derivative of intermediate cost (L)
@@ -179,7 +155,7 @@ class PythonInterface {
    * @param[in] u input
    * @return dL/du at provided t-x-u
    */
-  input_vector_t getIntermediateCostDerivativeInput(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
+  vector_t getIntermediateCostDerivativeInput(double t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u);
 
   /**
    * @brief Access to second input derivative of intermediate cost (L)
@@ -188,7 +164,7 @@ class PythonInterface {
    * @param[in] u input
    * @return d^2L/du^2 at provided t-x-u
    */
-  input_matrix_t getIntermediateCostSecondDerivativeInput(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
+  matrix_t getIntermediateCostSecondDerivativeInput(double t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u);
 
   /**
    * @brief Access the solver's internal value function
@@ -196,7 +172,7 @@ class PythonInterface {
    * @param x query state
    * @return value function at given t-x
    */
-  double getValueFunction(double t, Eigen::Ref<const state_vector_t> x);
+  double getValueFunction(double t, Eigen::Ref<const vector_t> x);
 
   /**
    * @brief Access the solver's internal state derivative of the value function
@@ -205,7 +181,7 @@ class PythonInterface {
    * @param[in] x state
    * @return value function state derivative at given t-x
    */
-  dynamic_vector_t getValueFunctionStateDerivative(double t, Eigen::Ref<const state_vector_t> x);
+  vector_t getValueFunctionStateDerivative(double t, Eigen::Ref<const vector_t> x);
 
   /**
    * @brief Access state-input constraint value
@@ -214,7 +190,7 @@ class PythonInterface {
    * @param[in] u input
    * @return The value of the state-input constraint at given t-x-u
    */
-  dynamic_vector_t getStateInputConstraint(double t, Eigen::Ref<const state_vector_t> x, Eigen::Ref<const input_vector_t> u);
+  vector_t getStateInputConstraint(double t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u);
 
   /**
    * @brief Access to the input(control) derivative of the state-input constraint
@@ -223,8 +199,7 @@ class PythonInterface {
    * @param[in] u input
    * @return The input derivative of the state-input constraint at given t-x-u
    */
-  dynamic_matrix_t getStateInputConstraintDerivativeControl(double t, Eigen::Ref<const state_vector_t> x,
-                                                            Eigen::Ref<const input_vector_t> u);
+  matrix_t getStateInputConstraintDerivativeControl(double t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u);
 
   /**
    * @brief Access to the lagrangian multiplier of the state-input constraint
@@ -233,7 +208,7 @@ class PythonInterface {
    * @param[in] u input
    * @return The lagrangian multiplier vector at given t-x
    */
-  dynamic_vector_t getStateInputConstraintLagrangian(double t, Eigen::Ref<const state_vector_t> x);
+  vector_t getStateInputConstraintLagrangian(double t, Eigen::Ref<const vector_t> x);
 
   /**
    * @brief Visualize the time-state-input trajectory
@@ -242,8 +217,8 @@ class PythonInterface {
    * @param[in] u (Optional) Array of inputs
    * @param[in] speed (Optional) Factor compared to real time playback (>1 ==> slow motion)
    */
-  virtual void visualizeTrajectory(const scalar_array_t& t, const state_vector_array_t& x,
-                                   const input_vector_array_t& u = input_vector_array_t(), double speed = 1.0) {
+  virtual void visualizeTrajectory(const scalar_array_t& t, const vector_array_t& x, const vector_array_t& u = vector_array_t(),
+                                   double speed = 1.0) {
     throw std::runtime_error("PythonInterface::visualizeTrajectory must be implemented by robot-specific derived class.");
   }
 
@@ -255,13 +230,13 @@ class PythonInterface {
 
   // Member variables
  protected:
-  std::unique_ptr<MPC_BASE<STATE_DIM, INPUT_DIM>> mpcPtr_;
-  std::unique_ptr<MPC_MRT_Interface<STATE_DIM, INPUT_DIM>> mpcMrtInterface_;
+  std::unique_ptr<MPC_BASE> mpcPtr_;
+  std::unique_ptr<MPC_MRT_Interface> mpcMrtInterface_;
 
-  std::unique_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM>> dynamics_;
-  std::unique_ptr<DerivativesBase<STATE_DIM, INPUT_DIM>> dynamicsDerivatives_;
+  std::unique_ptr<ControlledSystemBase> dynamics_;
+  std::unique_ptr<DerivativesBase> dynamicsDerivatives_;
 
-  std::unique_ptr<ConstraintBase<STATE_DIM, INPUT_DIM>> constraints_;
+  std::unique_ptr<ConstraintBase> constraints_;
 
   std::unique_ptr<cost_t> cost_;
   CostDesiredTrajectories targetTrajectories_;
@@ -279,5 +254,3 @@ class PythonInterface {
 };
 
 }  // namespace ocs2
-
-#include "implementation/Python_Interface.h"

@@ -27,14 +27,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Loop(mrt_t& mrt, scalar_t mrtDesiredFrequency,
-                                                             scalar_t mpcDesiredFrequency /*= -1*/)
+MRT_ROS_Dummy_Loop::MRT_ROS_Dummy_Loop(MRT_ROS_Interface& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency /*= -1*/)
     : mrt_(mrt),
       mrtDesiredFrequency_(mrtDesiredFrequency),
       mpcDesiredFrequency_(mpcDesiredFrequency),
@@ -52,9 +52,7 @@ MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::MRT_ROS_Dummy_Loop(mrt_t& mrt, scalar_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(const system_observation_t& initObservation,
-                                                   const CostDesiredTrajectories& initCostDesiredTrajectories) {
+void MRT_ROS_Dummy_Loop::run(const SystemObservation& initObservation, const CostDesiredTrajectories& initCostDesiredTrajectories) {
   ros::WallRate rosRate(mrtDesiredFrequency_);  // in Hz
 
   // time step
@@ -112,7 +110,7 @@ void MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>::run(const system_observation_t& i
     std::cout << "### Current time " << time << std::endl;
 
     // integrate nominal dynamics if available, otherwise fake simulation
-    state_vector_t stateTemp = observation_.state();
+    vector_t stateTemp = observation_.state();
     if (mrt_.isRolloutSet()) {
       mrt_.rolloutPolicy(time, stateTemp, timeStep, observation_.state(), observation_.input(), observation_.subsystem());
     } else {

@@ -8,16 +8,14 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::MPC_MRT_Interface(mpc_t& mpc) : Base(), mpc_(mpc), costDesiredTrajectoriesBufferUpdated_(false) {
+MPC_MRT_Interface::MPC_MRT_Interface(MPC_BASE& mpc) : MRT_BASE(), mpc_(mpc), costDesiredTrajectoriesBufferUpdated_(false) {
   mpcTimer_.reset();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) {
+void MPC_MRT_Interface::resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) {
   mpc_.reset();
   mpcTimer_.reset();
   setTargetTrajectories(initCostDesiredTrajectories);
@@ -26,8 +24,7 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const CostDesiredTraj
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::setTargetTrajectories(const CostDesiredTrajectories& targetTrajectories) {
+void MPC_MRT_Interface::setTargetTrajectories(const CostDesiredTrajectories& targetTrajectories) {
   std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
   costDesiredTrajectoriesBuffer_ = targetTrajectories;
   costDesiredTrajectoriesBufferUpdated_ = true;
@@ -36,8 +33,7 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::setTargetTrajectories(const CostDe
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::setCurrentObservation(const system_observation_t& currentObservation) {
+void MPC_MRT_Interface::setCurrentObservation(const SystemObservation& currentObservation) {
   std::lock_guard<std::mutex> lock(observationMutex_);
   currentObservation_ = currentObservation;
 }
@@ -45,12 +41,11 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::setCurrentObservation(const system
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
+void MPC_MRT_Interface::advanceMpc() {
   // measure the delay in running MPC
   mpcTimer_.startTimer();
 
-  system_observation_t currentObservation;
+  SystemObservation currentObservation;
   {
     std::lock_guard<std::mutex> lock(observationMutex_);
     currentObservation = currentObservation_;
@@ -99,8 +94,7 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::advanceMpc() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observation_t mpcInitObservation) {
+void MPC_MRT_Interface::fillMpcOutputBuffers(SystemObservation mpcInitObservation) {
   // buffer policy mutex
   std::lock_guard<std::mutex> policyBufferLock(this->policyBufferMutex_);
 
@@ -131,9 +125,8 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observ
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K) {
-  auto controller = dynamic_cast<LinearController<STATE_DIM, INPUT_DIM>*>(this->currentPrimalSolution_->controllerPtr_.get());
+void MPC_MRT_Interface::getLinearFeedbackGain(scalar_t time, matrix_t& K) {
+  auto controller = dynamic_cast<LinearController*>(this->currentPrimalSolution_->controllerPtr_.get());
   if (!controller) {
     throw std::runtime_error("Feedback gains only available with linear controller");
   }
@@ -143,27 +136,21 @@ void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getLinearFeedbackGain(scalar_t tim
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-typename MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::scalar_t MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getValueFunction(
-    scalar_t time, const state_vector_t& state) {
+scalar_t MPC_MRT_Interface::getValueFunction(scalar_t time, const vector_t& state) {
   return mpc_.getSolverPtr()->getValueFunction(time, state);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state,
-                                                                              dynamic_vector_t& Vx) {
+void MPC_MRT_Interface::getValueFunctionStateDerivative(scalar_t time, const vector_t& state, vector_t& Vx) {
   mpc_.getSolverPtr()->getValueFunctionStateDerivative(time, state, Vx);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_MRT_Interface<STATE_DIM, INPUT_DIM>::getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state,
-                                                                                dynamic_vector_t& nu) const {
+void MPC_MRT_Interface::getStateInputConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const {
   mpc_.getSolverPtr()->getStateInputConstraintLagrangian(time, state, nu);
 }
 

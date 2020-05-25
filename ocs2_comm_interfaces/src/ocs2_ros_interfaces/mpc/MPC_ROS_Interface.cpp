@@ -27,35 +27,34 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::MPC_ROS_Interface(mpc_t& mpc, std::string robotName /*= "robot"*/)
+MPC_ROS_Interface::MPC_ROS_Interface(MPC_BASE& mpc, std::string robotName /*= "robot"*/)
     : mpc_(mpc),
       robotName_(std::move(robotName)),
-      currentPrimalSolution_(new primal_solution_t()),
-      primalSolutionBuffer_(new primal_solution_t()),
-      currentCommand_(new command_data_t()),
-      commandBuffer_(new command_data_t()) {
+      currentPrimalSolution_(new PrimalSolution()),
+      primalSolutionBuffer_(new PrimalSolution()),
+      currentCommand_(new CommandData()),
+      commandBuffer_(new CommandData()) {
   set();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::~MPC_ROS_Interface() {
+MPC_ROS_Interface::~MPC_ROS_Interface() {
   shutdownNode();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::set() {
+void MPC_ROS_Interface::set() {
   terminateThread_ = false;
   readyToPublish_ = false;
 
@@ -72,8 +71,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::set() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::reset(const CostDesiredTrajectories& initCostDesiredTrajectories) {
+void MPC_ROS_Interface::reset(const CostDesiredTrajectories& initCostDesiredTrajectories) {
   std::lock_guard<std::mutex> resetLock(resetMutex_);
 
   mpc_.reset();
@@ -93,8 +91,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::reset(const CostDesiredTrajectorie
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-bool MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_msgs::reset::Response& res) {
+bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_msgs::reset::Response& res) {
   if (static_cast<bool>(req.reset)) {
     CostDesiredTrajectories initCostDesiredTrajectories;
     ros_msg_conversions::readTargetTrajectoriesMsg(req.targetTrajectories, initCostDesiredTrajectories);
@@ -119,10 +116,8 @@ bool MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::resetMpcCallback(ocs2_msgs::reset:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::createMpcPolicyMsg(bool controllerIsUpdated,
-                                                                                                const primal_solution_t& primalSolution,
-                                                                                                const command_data_t& commandData) {
+ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(bool controllerIsUpdated, const PrimalSolution& primalSolution,
+                                                                          const CommandData& commandData) {
   ocs2_msgs::mpc_flattened_controller mpcPolicyMsg;
 
   mpcPolicyMsg.controllerIsUpdated = controllerIsUpdated;
@@ -168,8 +163,8 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::cre
   // state
   for (size_t k = 0; k < N; k++) {
     ocs2_msgs::mpc_state mpcState;
-    mpcState.value.resize(STATE_DIM);
-    for (size_t j = 0; j < STATE_DIM; j++) {
+    mpcState.value.resize(primalSolution.stateTrajectory_[k].rows());
+    for (size_t j = 0; j < primalSolution.stateTrajectory_[k].rows(); j++) {
       mpcState.value[j] = primalSolution.stateTrajectory_[k](j);
     }
     mpcPolicyMsg.stateTrajectory.emplace_back(mpcState);
@@ -178,8 +173,8 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::cre
   // input
   for (size_t k = 0; k < N; k++) {
     ocs2_msgs::mpc_input mpcInput;
-    mpcInput.value.resize(INPUT_DIM);
-    for (size_t j = 0; j < INPUT_DIM; j++) {
+    mpcInput.value.resize(primalSolution.inputTrajectory_[k].rows());
+    for (size_t j = 0; j < primalSolution.inputTrajectory_[k].rows(); j++) {
       mpcInput.value[j] = primalSolution.inputTrajectory_[k](j);
     }
     mpcPolicyMsg.inputTrajectory.emplace_back(mpcInput);
@@ -203,8 +198,7 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::cre
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publisherWorkerThread() {
+void MPC_ROS_Interface::publisherWorkerThread() {
   while (!terminateThread_) {
     std::unique_lock<std::mutex> lk(publisherMutex_);
 
@@ -234,8 +228,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::publisherWorkerThread() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observation_t mpcInitObservation) {
+void MPC_ROS_Interface::fillMpcOutputBuffers(SystemObservation mpcInitObservation) {
   // buffer policy mutex
   std::lock_guard<std::mutex> policyBufferLock(policyBufferMutex_);
 
@@ -254,8 +247,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::fillMpcOutputBuffers(system_observ
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) {
+void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) {
   std::lock_guard<std::mutex> resetLock(resetMutex_);
 
   if (!resetRequestedEver_.load()) {
@@ -264,7 +256,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_
   }
 
   // current time, state, input, and subsystem
-  system_observation_t currentObservation;
+  SystemObservation currentObservation;
   ros_msg_conversions::readObservationMsg(*msg, currentObservation);
 
   // measure the delay in running MPC
@@ -282,7 +274,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_
     costDesiredTrajectoriesBufferUpdated_ = false;
 
     if (mpc_.settings().debugPrint_) {
-      std::cerr << "### The target position is updated to " << std::endl;
+      std::cerr << "### The target position is updated to \n";
       mpc_.getSolverPtr()->getCostDesiredTrajectories().display();
     }
   }
@@ -303,22 +295,17 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_
     timeWindow = mpc_.getSolverPtr()->getFinalTime() - currentObservation.time();
   }
   if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) {
-    std::cerr << "WARNING: The solution time window might be shorter than the MPC delay!" << std::endl;
+    std::cerr << "WARNING: The solution time window might be shorter than the MPC delay!\n";
   }
 
   // display
   if (mpc_.settings().debugPrint_) {
-    std::cerr << std::endl;
-    std::cerr << "### MPC ROS runtime " << std::endl;
-    std::cerr << "###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms]." << std::endl;
-    std::cerr << "###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms]." << std::endl;
-    std::cerr << "###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+    std::cerr << '\n';
+    std::cerr << "### MPC ROS runtime\n";
+    std::cerr << "###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].\n";
+    std::cerr << "###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].\n";
+    std::cerr << "###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms].\n";
   }
-
-#ifdef PUBLISH_DUMMY
-  // publish dummy for test
-  publishDummy();
-#else
 
 #ifdef PUBLISH_THREAD
   std::unique_lock<std::mutex> lk(publisherMutex_);
@@ -331,8 +318,6 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_
   mpcPolicyPublisher_.publish(mpcPolicyMsg);
 #endif
 
-#endif
-
   // set the initialCall flag to false
   initialCall_ = false;
 }
@@ -340,8 +325,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcObservationCallback(const ocs2_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcTargetTrajectoriesCallback(const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg) {
+void MPC_ROS_Interface::mpcTargetTrajectoriesCallback(const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg) {
   if (!mpc_.settings().recedingHorizon_) {
     throw std::runtime_error("Target trajectories can only be updated in receding horizon mode.");
   }
@@ -354,8 +338,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcTargetTrajectoriesCallback(cons
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::shutdownNode() {
+void MPC_ROS_Interface::shutdownNode() {
 #ifdef PUBLISH_THREAD
   ROS_INFO_STREAM("Shutting down workers ...");
 
@@ -379,8 +362,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::shutdownNode() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::spin() {
+void MPC_ROS_Interface::spin() {
   ROS_INFO_STREAM("Start spinning now ...");
 
   try {
@@ -400,8 +382,7 @@ void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::spin() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MPC_ROS_Interface<STATE_DIM, INPUT_DIM>::launchNodes(ros::NodeHandle& nodeHandle) {
+void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) {
   ROS_INFO_STREAM("MPC node is setting up ...");
 
   // Observation subscriber

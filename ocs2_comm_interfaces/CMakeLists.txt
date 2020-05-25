@@ -26,14 +26,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 ## catkin specific configuration ##
 ###################################
 catkin_package(
-  INCLUDE_DIRS 
+  INCLUDE_DIRS
     include
     ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
     ${PROJECT_NAME}
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
-  DEPENDS 
+  DEPENDS
     Boost
 )
 
@@ -50,7 +50,13 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
+  src/ocs2_interfaces/MRT_BASE.cpp
+  src/ocs2_interfaces/MPC_MRT_Interface.cpp
+  # src/ocs2_interfaces/Python_Interface.cpp
   src/ocs2_ros_interfaces/command/TargetTrajectories_ROS_Interface.cpp
+  src/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.cpp
+  src/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.cpp
+  src/ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}

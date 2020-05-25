@@ -37,24 +37,9 @@ namespace ocs2 {
 
 /**
  * This class implements a loop to test MPC-MRT communication interface using ROS.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 class MRT_ROS_Dummy_Loop {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using mrt_t = MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
-  using system_observation_t = typename mrt_t::system_observation_t;
-  using primal_solution_t = typename mrt_t::primal_solution_t;
-  using command_data_t = typename mrt_t::command_data_t;
-  using scalar_t = typename mrt_t::scalar_t;
-  using state_vector_t = typename mrt_t::state_vector_t;
-
-  using observer_t = DummyObserver<STATE_DIM, INPUT_DIM>;
-
   /**
    * Constructor.
    *
@@ -64,7 +49,7 @@ class MRT_ROS_Dummy_Loop {
    * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
    * will be simulated to run by this frequency. Note that this might not be the MPC's real-time frequency.
    */
-  MRT_ROS_Dummy_Loop(mrt_t& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency = -1);
+  MRT_ROS_Dummy_Loop(MRT_ROS_Interface& mrt, scalar_t mrtDesiredFrequency, scalar_t mpcDesiredFrequency = -1);
 
   /**
    * Destructor.
@@ -77,7 +62,7 @@ class MRT_ROS_Dummy_Loop {
    * @param [in] initObservation: The initial observation.
    * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
    */
-  void run(const system_observation_t& initObservation, const CostDesiredTrajectories& initCostDesiredTrajectories);
+  void run(const SystemObservation& initObservation, const CostDesiredTrajectories& initCostDesiredTrajectories);
 
   /**
    * Subscribe a set of observers to the dummy loop. Observers are updated in the provided order at the end of each timestep.
@@ -85,7 +70,7 @@ class MRT_ROS_Dummy_Loop {
    *
    * @param observers : vector of observers.
    */
-  void subscribeObservers(const std::vector<std::shared_ptr<observer_t>>& observers) { observers_ = observers; }
+  void subscribeObservers(const std::vector<std::shared_ptr<DummyObserver>>& observers) { observers_ = observers; }
 
  protected:
   /**
@@ -93,19 +78,17 @@ class MRT_ROS_Dummy_Loop {
    *
    * @param [in] observation: The current observation.
    */
-  virtual void modifyObservation(system_observation_t& observation) {}
+  virtual void modifyObservation(SystemObservation& observation) {}
 
  private:
-  mrt_t& mrt_;
+  MRT_ROS_Interface& mrt_;
   scalar_t mrtDesiredFrequency_;
   scalar_t mpcDesiredFrequency_;
 
   bool realtimeLoop_;
 
-  system_observation_t observation_;
-  std::vector<std::shared_ptr<observer_t>> observers_;
+  SystemObservation observation_;
+  std::vector<std::shared_ptr<DummyObserver>> observers_;
 };
 
 }  // namespace ocs2
-
-#include "implementation/MRT_ROS_Dummy_Loop.h"

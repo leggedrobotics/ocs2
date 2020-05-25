@@ -36,20 +36,18 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-MRT_BASE<STATE_DIM, INPUT_DIM>::MRT_BASE()
-    : currentPrimalSolution_(new primal_solution_t),
-      primalSolutionBuffer_(new primal_solution_t),
-      currentCommand_(new command_data_t),
-      commandBuffer_(new command_data_t) {
+MRT_BASE::MRT_BASE()
+    : currentPrimalSolution_(new PrimalSolution),
+      primalSolutionBuffer_(new PrimalSolution),
+      currentCommand_(new CommandData),
+      commandBuffer_(new CommandData) {
   reset();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_BASE<STATE_DIM, INPUT_DIM>::reset() {
+void MRT_BASE::reset() {
   std::lock_guard<std::mutex> lock(policyBufferMutex_);
 
   policyReceivedEver_ = false;
@@ -65,17 +63,14 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_BASE<STATE_DIM, INPUT_DIM>::initRollout(const rollout_base_t* rolloutPtr) {
+void MRT_BASE::initRollout(const RolloutBase* rolloutPtr) {
   rolloutPtr_.reset(rolloutPtr->clone());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_BASE<STATE_DIM, INPUT_DIM>::evaluatePolicy(scalar_t currentTime, const state_vector_t& currentState, state_vector_t& mpcState,
-                                                    input_vector_t& mpcInput, size_t& mode) {
+void MRT_BASE::evaluatePolicy(scalar_t currentTime, const vector_t& currentState, vector_t& mpcState, vector_t& mpcInput, size_t& mode) {
   if (currentTime > currentPrimalSolution_->timeTrajectory_.back()) {
     std::cerr << "The requested currentTime is greater than the received plan: " + std::to_string(currentTime) + ">" +
                      std::to_string(currentPrimalSolution_->timeTrajectory_.back())
@@ -92,9 +87,8 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::evaluatePolicy(scalar_t currentTime, const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const state_vector_t& currentState, const scalar_t& timeStep,
-                                                   state_vector_t& mpcState, input_vector_t& mpcInput, size_t& mode) {
+void MRT_BASE::rolloutPolicy(scalar_t currentTime, const vector_t& currentState, const scalar_t& timeStep, vector_t& mpcState,
+                             vector_t& mpcInput, size_t& mode) {
   if (currentTime > currentPrimalSolution_->timeTrajectory_.back()) {
     std::cerr << "The requested currentTime is greater than the received plan: " + std::to_string(currentTime) + ">" +
                      std::to_string(currentPrimalSolution_->timeTrajectory_.back())
@@ -109,8 +103,8 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const s
   scalar_t finalTime = currentTime + timeStep;
   scalar_array_t timeTrajectory;
   size_array_t postEventIndicesStock;
-  state_vector_array_t stateTrajectory;
-  input_vector_array_t inputTrajectory;
+  vector_array_t stateTrajectory;
+  vector_array_t inputTrajectory;
 
   // perform a rollout
   if (policyUpdated_) {
@@ -130,8 +124,7 @@ void MRT_BASE<STATE_DIM, INPUT_DIM>::rolloutPolicy(scalar_t currentTime, const s
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicy() {
+bool MRT_BASE::updatePolicy() {
   std::lock_guard<std::mutex> lock(policyBufferMutex_);
 
   if (!policyUpdatedBuffer_ || !newPolicyInBuffer_) {
@@ -153,8 +146,7 @@ bool MRT_BASE<STATE_DIM, INPUT_DIM>::updatePolicy() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_BASE<STATE_DIM, INPUT_DIM>::partitioningTimesUpdate(scalar_t time, scalar_array_t& partitioningTimes) const {
+void MRT_BASE::partitioningTimesUpdate(scalar_t time, scalar_array_t& partitioningTimes) const {
   partitioningTimes.resize(2);
   partitioningTimes[0] = (policyReceivedEver_) ? initPlanObservation_.time() : time;
   partitioningTimes[1] = std::numeric_limits<scalar_t>::max();

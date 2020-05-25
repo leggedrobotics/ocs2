@@ -54,36 +54,9 @@ namespace ocs2 {
 
 /**
  * This class implements MRT (Model Reference Tracking) communication interface using ROS.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
+class MRT_ROS_Interface : public MRT_BASE {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using Base = MRT_BASE<STATE_DIM, INPUT_DIM>;
-  using typename Base::command_data_t;
-  using typename Base::primal_solution_t;
-
-  using typename Base::dim_t;
-  using scalar_t = typename dim_t::scalar_t;
-  using scalar_array_t = typename dim_t::scalar_array_t;
-  using size_array_t = typename dim_t::size_array_t;
-  using state_vector_t = typename dim_t::state_vector_t;
-  using state_vector_array_t = typename dim_t::state_vector_array_t;
-  using input_vector_t = typename dim_t::input_vector_t;
-  using input_vector_array_t = typename dim_t::input_vector_array_t;
-  using input_state_matrix_t = typename dim_t::input_state_matrix_t;
-  using input_state_matrix_array_t = typename dim_t::input_state_matrix_array_t;
-
-  using rollout_base_t = RolloutBase<STATE_DIM, INPUT_DIM>;
-  using time_triggered_rollout_t = TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
-  using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
-  using system_observation_t = SystemObservation<STATE_DIM, INPUT_DIM>;
-  using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
-
   /**
    * Constructor
    *
@@ -105,7 +78,7 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    *
    * @param [in] planObservation: The observation of the policy.
    */
-  virtual void initCall(const system_observation_t& planObservation) {}
+  virtual void initCall(const SystemObservation& planObservation) {}
 
   /**
    * Shut down the ROS nodes.
@@ -128,7 +101,7 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    */
   void launchNodes(ros::NodeHandle& nodeHandle);
 
-  void setCurrentObservation(const system_observation_t& currentObservation) override;
+  void setCurrentObservation(const SystemObservation& currentObservation) override;
 
  private:
   /**
@@ -168,5 +141,3 @@ class MRT_ROS_Interface : public MRT_BASE<STATE_DIM, INPUT_DIM> {
 };
 
 }  // namespace ocs2
-
-#include "implementation/MRT_ROS_Interface.h"

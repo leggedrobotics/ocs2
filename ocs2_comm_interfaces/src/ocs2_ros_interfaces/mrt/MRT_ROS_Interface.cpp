@@ -37,10 +37,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::MRT_ROS_Interface(
-    std::string robotName /*= "robot"*/, ros::TransportHints mrtTransportHints /* = ::ros::TransportHints().tcpNoDelay()*/)
-    : Base(), robotName_(std::move(robotName)), mrtTransportHints_(mrtTransportHints) {
+MRT_ROS_Interface::MRT_ROS_Interface(std::string robotName /*= "robot"*/,
+                                     ros::TransportHints mrtTransportHints /* = ::ros::TransportHints().tcpNoDelay()*/)
+    : MRT_BASE(), robotName_(std::move(robotName)), mrtTransportHints_(mrtTransportHints) {
 // Start thread for publishing
 #ifdef PUBLISH_THREAD
   // Close old thread if it is already running
@@ -54,16 +53,14 @@ MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::MRT_ROS_Interface(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::~MRT_ROS_Interface() {
+MRT_ROS_Interface::~MRT_ROS_Interface() {
   shutdownNodes();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) {
+void MRT_ROS_Interface::resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) {
   this->policyReceivedEver_ = false;
 
   ocs2_msgs::reset resetSrv;
@@ -82,8 +79,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::resetMpcNode(const CostDesiredTraj
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::setCurrentObservation(const system_observation_t& currentObservation) {
+void MRT_ROS_Interface::setCurrentObservation(const SystemObservation& currentObservation) {
 #ifdef PUBLISH_THREAD
   std::unique_lock<std::mutex> lk(publisherMutex_);
 #endif
@@ -104,8 +100,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::setCurrentObservation(const system
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::publisherWorkerThread() {
+void MRT_ROS_Interface::publisherWorkerThread() {
   while (!terminateThread_) {
     std::unique_lock<std::mutex> lk(publisherMutex_);
 
@@ -129,10 +124,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::publisherWorkerThread() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_controller::ConstPtr& msg) {
-  //	std::cout << "\t Plan is received at time: " << msg->initObservation.time << std::endl;
-
+void MRT_ROS_Interface::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_controller::ConstPtr& msg) {
   std::lock_guard<std::mutex> lk(this->policyBufferMutex_);
   auto& timeBuffer = this->primalSolutionBuffer_->timeTrajectory_;
   auto& stateBuffer = this->primalSolutionBuffer_->stateTrajectory_;
@@ -149,7 +141,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcPolicyCallback(const ocs2_msgs:
     inputBuffer.clear();
     controlBuffer.reset(nullptr);
     modeScheduleBuffer = ModeSchedule({}, {0});
-    initObservationBuffer = system_observation_t();
+    initObservationBuffer = SystemObservation();
     costDesiredBuffer.clear();
 
     this->policyUpdatedBuffer_ = false;
@@ -169,6 +161,10 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcPolicyCallback(const ocs2_msgs:
 
   const size_t N = msg->timeTrajectory.size();
 
+  if (N == 0) {
+    throw std::runtime_error("MRT_ROS_Interface::mpcPolicyCallback -- Controller must not be empty");
+  }
+
   timeBuffer.clear();
   timeBuffer.reserve(N);
   stateBuffer.clear();
@@ -176,24 +172,24 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcPolicyCallback(const ocs2_msgs:
   inputBuffer.clear();
   inputBuffer.reserve(N);
 
+  size_t stateDim = 0;
+  size_t inputDim = 0;
   for (size_t i = 0; i < N; i++) {
+    size_t stateDim = msg->stateTrajectory[i].value.size();
+    size_t inputDim = msg->inputTrajectory[i].value.size();
     timeBuffer.emplace_back(msg->timeTrajectory[i]);
-    stateBuffer.emplace_back(
-        Eigen::Map<const Eigen::Matrix<float, STATE_DIM, 1>>(msg->stateTrajectory[i].value.data(), STATE_DIM).template cast<scalar_t>());
-    inputBuffer.emplace_back(
-        Eigen::Map<const Eigen::Matrix<float, INPUT_DIM, 1>>(msg->inputTrajectory[i].value.data(), INPUT_DIM).template cast<scalar_t>());
+    stateBuffer.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg->stateTrajectory[i].value.data(), stateDim).cast<scalar_t>());
+    inputBuffer.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg->inputTrajectory[i].value.data(), inputDim).cast<scalar_t>());
   }  // end of i loop
 
   // instantiate the correct controller
   switch (msg->controllerType) {
     case ocs2_msgs::mpc_flattened_controller::CONTROLLER_FEEDFORWARD: {
-      using specific_controller_t = FeedforwardController<STATE_DIM, INPUT_DIM>;
-      controlBuffer.reset(new specific_controller_t());
+      controlBuffer.reset(new FeedforwardController(stateDim, inputDim));
       break;
     }
     case ocs2_msgs::mpc_flattened_controller::CONTROLLER_LINEAR: {
-      using specific_controller_t = LinearController<STATE_DIM, INPUT_DIM>;
-      controlBuffer.reset(new specific_controller_t());
+      controlBuffer.reset(new LinearController(stateDim, inputDim));
       break;
     }
     default:
@@ -228,8 +224,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::mpcPolicyCallback(const ocs2_msgs:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::shutdownNodes() {
+void MRT_ROS_Interface::shutdownNodes() {
 #ifdef PUBLISH_THREAD
   ROS_INFO_STREAM("Shutting down workers ...");
 
@@ -249,8 +244,7 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::shutdownNodes() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::shutdownPublisher() {
+void MRT_ROS_Interface::shutdownPublisher() {
   std::unique_lock<std::mutex> lk(publisherMutex_);
   terminateThread_ = true;
   lk.unlock();
@@ -265,16 +259,14 @@ void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::shutdownPublisher() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::spinMRT() {
+void MRT_ROS_Interface::spinMRT() {
   mrtCallbackQueue_.callOne();
 };
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void MRT_ROS_Interface<STATE_DIM, INPUT_DIM>::launchNodes(ros::NodeHandle& nodeHandle) {
+void MRT_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) {
   this->reset();
 
   // display

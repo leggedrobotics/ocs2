@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,12 +29,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Dense>
-#include <array>
 #include <atomic>
 #include <condition_variable>
-#include <csignal>
-#include <ctime>
+// #include <csignal>
+// #include <ctime>
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -64,50 +62,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h"
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/SolverSynchronizedRosModule.h"
 
-//#define PUBLISH_DUMMY
 #define PUBLISH_THREAD
 
 namespace ocs2 {
 
 /**
  * This class implements MPC communication interface using ROS.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 class MPC_ROS_Interface {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using Ptr = std::shared_ptr<MPC_ROS_Interface<STATE_DIM, INPUT_DIM>>;
-
-  using mpc_t = MPC_BASE<STATE_DIM, INPUT_DIM>;
-
-  using scalar_t = typename mpc_t::scalar_t;
-  using scalar_array_t = typename mpc_t::scalar_array_t;
-  using scalar_array2_t = typename mpc_t::scalar_array2_t;
-  using size_array_t = typename mpc_t::size_array_t;
-  using state_vector_t = typename mpc_t::state_vector_t;
-  using state_vector_array_t = typename mpc_t::state_vector_array_t;
-  using state_vector_array2_t = typename mpc_t::state_vector_array2_t;
-  using input_vector_t = typename mpc_t::input_vector_t;
-  using input_vector_array_t = typename mpc_t::input_vector_array_t;
-  using input_vector_array2_t = typename mpc_t::input_vector_array2_t;
-  using input_state_matrix_t = typename mpc_t::input_state_matrix_t;
-  using input_state_matrix_array_t = typename mpc_t::input_state_matrix_array_t;
-
-  using system_observation_t = SystemObservation<STATE_DIM, INPUT_DIM>;
-
-  using primal_solution_t = PrimalSolution<STATE_DIM, INPUT_DIM>;
-  using command_data_t = CommandData<STATE_DIM, INPUT_DIM>;
-
-  using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
-  using controller_ptr_array_t = std::vector<controller_t*>;
-
-  using synchronized_ros_module_t = SolverSynchronizedRosModule<STATE_DIM, INPUT_DIM>;
-  using synchronized_ros_module_ptr_array_t = std::vector<std::shared_ptr<synchronized_ros_module_t>>;
-
   /**
    * Default constructor
    */
@@ -119,7 +82,7 @@ class MPC_ROS_Interface {
    * @param [in] mpc: The underlying MPC class to be used.
    * @param [in] robotName: The robot's name.
    */
-  explicit MPC_ROS_Interface(mpc_t& mpc, std::string robotName = "robot");
+  explicit MPC_ROS_Interface(MPC_BASE& mpc, std::string robotName = "robot");
 
   /**
    * Destructor.
@@ -142,7 +105,7 @@ class MPC_ROS_Interface {
    * Set all modules that need to be synchronized with the mpc. Must be called before launchNodes.
    * This method does not add the modules to the solver
    */
-  void subscribeSynchronizedModules(const synchronized_ros_module_ptr_array_t& synchronizedRosModules) {
+  void subscribeSynchronizedModules(const std::vector<std::shared_ptr<SolverSynchronizedRosModule>>& synchronizedRosModules) {
     synchronizedRosModules_ = synchronizedRosModules;
   };
 
@@ -172,14 +135,14 @@ class MPC_ROS_Interface {
    *
    * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
    */
-  virtual void initCall(const system_observation_t& initObservation) {}
+  virtual void initCall(const SystemObservation& initObservation) {}
 
   /**
    * Provides the initial mode sequence for time-triggered hybrid systems.
    *
    * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
    */
-  virtual void initModeSequence(const system_observation_t& initObservation) {}
+  virtual void initModeSequence(const SystemObservation& initObservation) {}
 
  protected:
   /**
@@ -198,8 +161,8 @@ class MPC_ROS_Interface {
    * @param [in] commandDataPtr: The command data of the MPC.
    * @return MPC policy message.
    */
-  static ocs2_msgs::mpc_flattened_controller createMpcPolicyMsg(bool controllerIsUpdated, const primal_solution_t& primalSolution,
-                                                                const command_data_t& commandData);
+  static ocs2_msgs::mpc_flattened_controller createMpcPolicyMsg(bool controllerIsUpdated, const PrimalSolution& primalSolution,
+                                                                const CommandData& commandData);
 
   /**
    * Handles ROS publishing thread.
@@ -211,7 +174,7 @@ class MPC_ROS_Interface {
    * This method is automatically called by advanceMpc()
    * @param [in] mpcInitObservation: The observation used to run the MPC.
    */
-  void fillMpcOutputBuffers(system_observation_t mpcInitObservation);
+  void fillMpcOutputBuffers(SystemObservation mpcInitObservation);
 
   /**
    * The callback method which receives the current observation, invokes the MPC algorithm,
@@ -232,7 +195,7 @@ class MPC_ROS_Interface {
   /*
    * Variables
    */
-  mpc_t& mpc_;
+  MPC_BASE& mpc_;
 
   std::string robotName_;
 
@@ -244,14 +207,14 @@ class MPC_ROS_Interface {
   ::ros::Publisher mpcPolicyPublisher_;
   ::ros::ServiceServer mpcResetServiceServer_;
 
-  std::unique_ptr<primal_solution_t> currentPrimalSolution_;
-  std::unique_ptr<primal_solution_t> primalSolutionBuffer_;
-  std::unique_ptr<command_data_t> currentCommand_;
-  std::unique_ptr<command_data_t> commandBuffer_;
+  std::unique_ptr<PrimalSolution> currentPrimalSolution_;
+  std::unique_ptr<PrimalSolution> primalSolutionBuffer_;
+  std::unique_ptr<CommandData> currentCommand_;
+  std::unique_ptr<CommandData> commandBuffer_;
 
   mutable std::mutex policyBufferMutex_;  // for policy variables WITH suffix (*Buffer_)
 
-  synchronized_ros_module_ptr_array_t synchronizedRosModules_;
+  std::vector<std::shared_ptr<SolverSynchronizedRosModule>> synchronizedRosModules_;
 
   // multi-threading for publishers
   std::atomic_bool terminateThread_;
@@ -273,5 +236,3 @@ class MPC_ROS_Interface {
 };
 
 }  // namespace ocs2
-
-#include "implementation/MPC_ROS_Interface.h"

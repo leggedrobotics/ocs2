@@ -38,11 +38,10 @@ namespace ocs2 {
 /**
  * SolverSynchronizedRosModule adds ROS functionality to a SolverSynchronizedModule.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class SolverSynchronizedRosModule : public SolverSynchronizedModule<STATE_DIM, INPUT_DIM> {
+class SolverSynchronizedRosModule : public SolverSynchronizedModule {
  public:
   //! Default destructor
-  virtual ~SolverSynchronizedRosModule() = default;
+  ~SolverSynchronizedRosModule() override = default;
 
   //! Get node handle to subscribe to topics
   virtual void subscribe(::ros::NodeHandle& nodeHandle) = 0;

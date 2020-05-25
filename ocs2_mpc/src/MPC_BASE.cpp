@@ -36,23 +36,6 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MPC_BASE::MPC_BASE()
-
-    : stateDim_(0),
-      inputDim_(0),
-      initRun_(true),
-      initnumPartitions_(0),
-      initPartitioningTimes_(0),
-      numPartitions_(0),
-      partitioningTimes_(0),
-      initActivePartitionIndex_(0),
-      finalActivePartitionIndex_(0),
-      lastControlDesignTime_(0.0),
-      solverPtr_(nullptr) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 MPC_BASE::MPC_BASE(size_t stateDim, size_t inputDim, const scalar_array_t& partitioningTimes, MPC_Settings mpcSettings)
 
     : mpcSettings_(std::move(mpcSettings)),

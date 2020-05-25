@@ -46,11 +46,6 @@ namespace ocs2 {
 class MPC_OCS2 : public MPC_SLQ {
  public:
   /**
-   * Default constructor.
-   */
-  MPC_OCS2();
-
-  /**
    * Constructor
    *
    * @param [in] stateDim: State vector dimension

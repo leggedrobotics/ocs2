@@ -46,11 +46,6 @@ namespace ocs2 {
 class MPC_BASE {
  public:
   /**
-   * Default constructor.
-   */
-  MPC_BASE();
-
-  /**
    * Constructor
    *
    * @param [in] stateDim: State vector dimension

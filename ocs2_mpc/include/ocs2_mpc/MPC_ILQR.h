@@ -43,11 +43,6 @@ namespace ocs2 {
 class MPC_ILQR : public MPC_BASE {
  public:
   /**
-   * Default constructor.
-   */
-  MPC_ILQR() = default;
-
-  /**
    * Constructor
    *
    * @param [in] stateDim: State vector dimension

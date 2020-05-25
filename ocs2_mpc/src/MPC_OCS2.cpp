@@ -34,15 +34,6 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MPC_OCS2::MPC_OCS2()
-
-    : MPC_SLQ(), gddpPtr_(new gddp_t()), activateOCS2_(false), terminateOCS2_(false) {
-  workerOCS2_ = std::thread(&MPC_OCS2::runOCS2, this);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 MPC_OCS2::MPC_OCS2(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const DerivativesBase* systemDerivativesPtr,
                    const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
                    const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const scalar_array_t& partitioningTimes,

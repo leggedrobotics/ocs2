@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,16 +27,25 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+// #include <csignal>
+// #include <iomanip>
+#include <iostream>
+#include <thread>
+// #include <vector>
+
+#include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-TargetTrajectories_Keyboard_Interface<SCALAR_T>::TargetTrajectories_Keyboard_Interface(
+TargetTrajectories_Keyboard_Interface::TargetTrajectories_Keyboard_Interface(
     int argc, char* argv[], const std::string& robotName /*= "robot"*/, const size_t targetCommandSize /*= 0*/,
     const scalar_array_t& targetCommandLimits /*= scalar_array_t()*/)
-    : BASE(argc, argv, robotName), targetCommandSize_(targetCommandSize), targetCommandLimits_(targetCommandLimits) {
+    : ocs2::TargetTrajectories_ROS_Interface(argc, argv, robotName),
+      targetCommandSize_(targetCommandSize),
+      targetCommandLimits_(targetCommandLimits) {
   if (targetCommandLimits.size() != targetCommandSize) {
     throw std::runtime_error("Target command limits are not set properly");
   }
@@ -45,31 +54,27 @@ TargetTrajectories_Keyboard_Interface<SCALAR_T>::TargetTrajectories_Keyboard_Int
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-size_t& TargetTrajectories_Keyboard_Interface<SCALAR_T>::targetCommandSize() {
+size_t& TargetTrajectories_Keyboard_Interface::targetCommandSize() {
   return targetCommandSize_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-void TargetTrajectories_Keyboard_Interface<SCALAR_T>::toCostDesiredTimeStateInput(const scalar_array_t& commadLineTarget,
-                                                                                  scalar_t& desiredTime, dynamic_vector_t& desiredState,
-                                                                                  dynamic_vector_t& desiredInput) {
+void TargetTrajectories_Keyboard_Interface::toCostDesiredTimeStateInput(const scalar_array_t& commadLineTarget, scalar_t& desiredTime,
+                                                                        vector_t& desiredState, vector_t& desiredInput) {
   // time
   desiredTime = -1.0;
   // state
-  desiredState = Eigen::Map<const dynamic_vector_t>(commadLineTarget.data(), targetCommandSize_);
+  desiredState = Eigen::Map<const vector_t>(commadLineTarget.data(), targetCommandSize_);
   // input
-  desiredInput = dynamic_vector_t::Zero(0);
+  desiredInput = vector_t::Zero(0);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-CostDesiredTrajectories TargetTrajectories_Keyboard_Interface<SCALAR_T>::toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) {
+CostDesiredTrajectories TargetTrajectories_Keyboard_Interface::toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) {
   CostDesiredTrajectories costDesiredTrajectories(1);
   toCostDesiredTimeStateInput(commadLineTarget, costDesiredTrajectories.desiredTimeTrajectory()[0],
                               costDesiredTrajectories.desiredStateTrajectory()[0], costDesiredTrajectories.desiredInputTrajectory()[0]);
@@ -79,9 +84,7 @@ CostDesiredTrajectories TargetTrajectories_Keyboard_Interface<SCALAR_T>::toCostD
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-void TargetTrajectories_Keyboard_Interface<SCALAR_T>::getKeyboardCommand(
-    const std::string& commadMsg /*= "Enter command, separated by spaces"*/) {
+void TargetTrajectories_Keyboard_Interface::getKeyboardCommand(const std::string& commadMsg /*= "Enter command, separated by spaces"*/) {
   while (ros::ok() && ros::master::check()) {
     // get command line
     std::cout << commadMsg << ": ";
@@ -101,7 +104,7 @@ void TargetTrajectories_Keyboard_Interface<SCALAR_T>::getKeyboardCommand(
     std::cout << "\b\b]" << std::endl << std::endl;
 
     // publish cost desired trajectories
-    BASE::publishTargetTrajectories(toCostDesiredTrajectories(targetCommand_));
+    ocs2::TargetTrajectories_ROS_Interface::publishTargetTrajectories(toCostDesiredTrajectories(targetCommand_));
 
   }  // end of while loop
 }
@@ -109,8 +112,7 @@ void TargetTrajectories_Keyboard_Interface<SCALAR_T>::getKeyboardCommand(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename SCALAR_T>
-typename TargetTrajectories_Keyboard_Interface<SCALAR_T>::scalar_array_t TargetTrajectories_Keyboard_Interface<SCALAR_T>::getCommandLine() {
+scalar_array_t TargetTrajectories_Keyboard_Interface::getCommandLine() {
   scalar_array_t targetCommand(0);
 
   // Set up a thread to read user inputs

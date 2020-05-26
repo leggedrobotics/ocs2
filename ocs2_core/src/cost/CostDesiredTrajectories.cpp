@@ -92,6 +92,7 @@ void CostDesiredTrajectories::getDesiredState(scalar_t time, vector_t& desiredSt
   if (desiredTimeTrajectory_.empty() || desiredStateTrajectory_.empty()) {
     // TODO(mspieler): where do we get dimensions from? Is this even a valid state?
     // desiredState = vector_t::Zero(state_dim_);
+    throw std::runtime_error("CostDesiredTrajectories is empty.");
   } else {
     LinearInterpolation::interpolate(time, desiredState, &desiredTimeTrajectory_, &desiredStateTrajectory_);
   }
@@ -104,6 +105,7 @@ void CostDesiredTrajectories::getDesiredInput(scalar_t time, vector_t& desiredIn
   if (desiredTimeTrajectory_.empty() || desiredInputTrajectory_.empty()) {
     // TODO(mspieler): where do we get dimensions from?
     // desiredInput = vector_t::Zero(input_dim_);
+    throw std::runtime_error("CostDesiredTrajectories is empty.");
   } else {
     LinearInterpolation::interpolate(time, desiredInput, &desiredTimeTrajectory_, &desiredInputTrajectory_);
   }

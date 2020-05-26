@@ -238,7 +238,7 @@ class PythonInterface {
 
   std::unique_ptr<ConstraintBase> constraints_;
 
-  std::unique_ptr<cost_t> cost_;
+  std::unique_ptr<CostFunctionBase> cost_;
   CostDesiredTrajectories targetTrajectories_;
 
   std::unique_ptr<PenaltyBase> penalty_;

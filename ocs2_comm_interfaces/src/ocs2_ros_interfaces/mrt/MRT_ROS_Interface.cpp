@@ -175,12 +175,14 @@ void MRT_ROS_Interface::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_control
   size_t stateDim = 0;
   size_t inputDim = 0;
   for (size_t i = 0; i < N; i++) {
-    size_t stateDim = msg->stateTrajectory[i].value.size();
-    size_t inputDim = msg->inputTrajectory[i].value.size();
+    stateDim = msg->stateTrajectory[i].value.size();
+    inputDim = msg->inputTrajectory[i].value.size();
     timeBuffer.emplace_back(msg->timeTrajectory[i]);
     stateBuffer.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg->stateTrajectory[i].value.data(), stateDim).cast<scalar_t>());
     inputBuffer.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg->inputTrajectory[i].value.data(), inputDim).cast<scalar_t>());
   }  // end of i loop
+
+  assert(stateDim != 0 && inputDim != 0);
 
   // instantiate the correct controller
   switch (msg->controllerType) {

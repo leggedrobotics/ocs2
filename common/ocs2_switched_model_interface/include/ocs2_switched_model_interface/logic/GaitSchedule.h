@@ -50,6 +50,9 @@ class GaitSchedule {
   /** Gets phase variable for the current gait */
   scalar_t getCurrentPhase() const { return phase_; }
 
+  /** Gets time variable for the current gait */
+  scalar_t getCurrentTime() const { return time_; }
+
   /** Gets the currently active mode */
   size_t getCurrentMode() const { return getModeFromPhase(getCurrentPhase(), getCurrentGait()); }
 

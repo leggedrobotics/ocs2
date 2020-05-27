@@ -100,4 +100,4 @@ bool isStandingDuringTimeHorizon(scalar_t timeHorizon, const GaitSchedule& gaitS
                      [](size_t mode) { return mode == ModeNumber::STANCE; });
 }
 
-}
+}  // namespace switched_model

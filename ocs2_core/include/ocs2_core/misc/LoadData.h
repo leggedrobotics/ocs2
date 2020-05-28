@@ -114,7 +114,7 @@ inline void loadCppDataType(const std::string& filename, const std::string& data
  *
  * @param [in] filename: File name which contains the configuration data.
  * @param [in] matrixName: The key name assigned to the matrix in the config file.
- * @param [out] matrix: The loaded matrix.
+ * @param [out] matrix: The loaded matrix, must have desired size.
  */
 template <typename Derived>
 inline void loadEigenMatrix(const std::string& filename, const std::string& matrixName, Eigen::MatrixBase<Derived>& matrix) {
@@ -122,6 +122,11 @@ inline void loadEigenMatrix(const std::string& filename, const std::string& matr
 
   size_t rows = matrix.rows();
   size_t cols = matrix.cols();
+
+  // TODO(mspieler): reconsider error handling
+  if (rows == 0 || cols == 0) {
+    throw std::runtime_error("Loading empty matrix is not allowed");
+  }
 
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);

@@ -33,6 +33,8 @@ model_settings
     liftOffVelocity             0.2
     touchDownVelocity           -0.4
     swingHeight                 0.1
+    touchdownAfterHorizon       0.2
+    errorGain                   5.0
     swingTimeScale              0.15
   }
 
@@ -41,6 +43,22 @@ model_settings
   gaitOptimization              0
 
   recompileLibraries            1
+}
+
+terrainPlane
+{
+  position
+  {
+    x       0.0;
+    y       0.0;
+    z       0.0;
+  }
+  orientation
+  {
+    roll    0.0;
+    pitch   0.0;
+    yaw     0.0;
+  }
 }
 
 initialModeSchedule

@@ -72,6 +72,27 @@ TEST(TestGaitSchedule, setGaitScheduleAtTime) {
   ASSERT_EQ(modeSchedule.modeSequence.back(), 21);
 }
 
+TEST(TestGaitSchedule, setGaitScheduleAtTime_shortenCurrentGait) {
+  const double T = 1.0; // Gait repeats at t = 0.0, 1.0, 2.0
+  const double Tinsert = 0.5; // period of inserted gait
+  const double tcurr = 0.7;
+  const double tInsert = 0.9; // insert before the current gait ends
+
+  // Start with multi mode gait
+  GaitSchedule gaitSchedule(0.0, Gait{T, {0.5}, {0, 1}});
+
+  // Advance to get a non-zero current phase
+  gaitSchedule.advanceToTime(tcurr);
+
+  // Set a new gait by interrupting the current gait
+  gaitSchedule.setGaitAtTime(Gait{Tinsert, {}, {21}}, tInsert);
+  auto modeSchedule = gaitSchedule.getModeSchedule(Tinsert);
+
+  // Change happens at requested time
+  ASSERT_DOUBLE_EQ(gaitSchedule.timeLeftInCurrentGait(), tInsert - tcurr);
+  ASSERT_DOUBLE_EQ(modeSchedule.eventTimes.front(), tInsert);
+}
+
 TEST(TestGaitSchedule, setGaitScheduleAfterTime) {
   const double t0 = 18.6;
   const double tInsert = 20.5 + 1.0;

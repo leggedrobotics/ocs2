@@ -1,5 +1,7 @@
 #include "ocs2_switched_model_interface/initialization/ComKinoOperatingPointsBase.h"
 
+#include "ocs2_switched_model_interface/core/Rotations.h"
+
 #include "ocs2_switched_model_interface/core/MotionPhaseDefinition.h"
 
 namespace switched_model {
@@ -28,7 +30,8 @@ ComKinoOperatingPointsBase* ComKinoOperatingPointsBase::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto ComKinoOperatingPointsBase::computeInputOperatingPoints(contact_flag_t contactFlags) const -> input_vector_t {
+auto ComKinoOperatingPointsBase::computeInputOperatingPoints(const contact_flag_t& contactFlags, const state_vector_t& nominalState) const
+    -> input_vector_t {
   // Distribute total mass equally over active stance legs.
   input_vector_t inputs = input_vector_t::Zero();
 
@@ -42,9 +45,12 @@ auto ComKinoOperatingPointsBase::computeInputOperatingPoints(contact_flag_t cont
   }
 
   if (numStanceLegs > 0) {
+    const matrix3_t b_R_o = rotationMatrixOriginToBase(getOrientation(getComPose(nominalState)));
+    const vector3_t forceInBase = b_R_o * vector3_t{0.0, 0.0, totalMass / numStanceLegs};
+
     for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
       if (contactFlags[i]) {
-        inputs(3 * i + 2) = totalMass / numStanceLegs;
+        inputs.segment<3>(3 * i) = forceInBase;
       }
     }
   }
@@ -60,7 +66,16 @@ void ComKinoOperatingPointsBase::getSystemOperatingTrajectories(const state_vect
                                                                 input_vector_array_t& inputTrajectory, bool concatOutput) {
   const auto midTime = 0.5 * (startTime + finalTime);
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(midTime);
-  const auto inputOperatingPoint = computeInputOperatingPoints(contactFlags);
+  const state_vector_t state = [&] {
+    state_vector_t interpolatedState;
+    if (timeTrajectory.empty() || stateTrajectory.empty()) {
+      interpolatedState.setZero();
+    } else {
+      ocs2::EigenLinearInterpolation<state_vector_t>::interpolate(midTime, interpolatedState, &timeTrajectory, &stateTrajectory);
+    }
+    return interpolatedState;
+  }();
+  const auto inputOperatingPoint = computeInputOperatingPoints(contactFlags, state);
 
   if (!concatOutput) {
     timeTrajectory.clear();

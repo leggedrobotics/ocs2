@@ -44,7 +44,7 @@ class SwitchedModelCostBase : public ocs2::QuadraticCostFunction<STATE_DIM, INPU
   void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
 
  private:
-  void inputFromContactFlags(contact_flag_t contactFlags, dynamic_vector_t& inputs);
+  void inputFromContactFlags(const contact_flag_t& contactFlags, const state_vector_t& nominalState, dynamic_vector_t& inputs);
 
   std::unique_ptr<com_model_t> comModelPtr_;
 

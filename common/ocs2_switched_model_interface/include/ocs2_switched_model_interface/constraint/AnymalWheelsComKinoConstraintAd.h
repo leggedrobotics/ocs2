@@ -40,6 +40,7 @@ class AnymalWheelsComKinoConstraintAd : public ocs2::ConstraintBase<STATE_DIM, I
   /* Settings */
   using EndEffectorVelocityConstraintSettings_t = switched_model::EndEffectorVelocityConstraintSettings;
   using EndEffectorVelocityInFootFrameConstraintSettings_t = switched_model::EndEffectorVelocityInFootFrameConstraintSettings;
+
   // Enumeration and naming
   enum class FeetEnum { LF, RF, LH, RH };
 

@@ -7,6 +7,8 @@
 
 #include "ocs2_switched_model_interface/cost/SwitchedModelCostBase.h"
 
+#include "ocs2_switched_model_interface/core/Rotations.h"
+
 namespace switched_model {
 
 /******************************************************************************************************/
@@ -49,7 +51,7 @@ void SwitchedModelCostBase::setCurrentStateAndControl(const scalar_t& t, const s
     BASE::costDesiredTrajectoriesPtr_->getDesiredState(t, xNominal);
   }
   dynamic_vector_t uNominal;
-  inputFromContactFlags(contactFlags, uNominal);
+  inputFromContactFlags(contactFlags, xNominal, uNominal);
 
   BASE::setCurrentStateAndControl(t, x, u, xNominal, uNominal, xNominal);
 }
@@ -57,7 +59,8 @@ void SwitchedModelCostBase::setCurrentStateAndControl(const scalar_t& t, const s
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SwitchedModelCostBase::inputFromContactFlags(contact_flag_t contactFlags, dynamic_vector_t& inputs) {
+void SwitchedModelCostBase::inputFromContactFlags(const contact_flag_t& contactFlags, const state_vector_t& nominalState,
+                                                  dynamic_vector_t& inputs) {
   // Distribute total mass equally over active stance legs.
   inputs.setZero(INPUT_DIM);
 
@@ -71,9 +74,12 @@ void SwitchedModelCostBase::inputFromContactFlags(contact_flag_t contactFlags, d
   }
 
   if (numStanceLegs > 0) {
+    const matrix3_t b_R_o = rotationMatrixOriginToBase(getOrientation(getComPose(nominalState)));
+    const vector3_t forceInBase = b_R_o * vector3_t{0.0, 0.0, totalMass / numStanceLegs};
+
     for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
       if (contactFlags[i]) {
-        inputs(3 * i + 2) = totalMass / numStanceLegs;
+        inputs.segment<3>(3 * i) = forceInBase;
       }
     }
   }

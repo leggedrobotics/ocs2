@@ -96,10 +96,13 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
                                                                                      const kinematic_model_t& kinematicModel,
                                                                                      state_vector_t initialState);
 
+  const std::string& getConfigFile() const { return configFile_; }
+
  private:
   /** Load the general quadruped settings from file. */
   void loadSettings(const std::string& pathToConfigFile);
 
+  std::string configFile_;
   scalar_t timeHorizon_;
   ocs2::Rollout_Settings rolloutSettings_;
   ModelSettings modelSettings_;

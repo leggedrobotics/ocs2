@@ -184,22 +184,21 @@ void SystemDynamicsBaseAD::setADInterfaces(const std::string& modelName, const s
     auto input = x.segment(1 + stateDim_, inputDim_);
     this->systemFlowMap(time, state, input, y);
   };
-  flowMapADInterfacePtr_.reset(
-      new CppAdInterface(tapedFlowMap, stateDim_, 1 + stateDim_ + inputDim_, modelName + "_flow_map", modelFolder));
+  flowMapADInterfacePtr_.reset(new CppAdInterface(tapedFlowMap, 1 + stateDim_ + inputDim_, modelName + "_flow_map", modelFolder));
 
   auto tapedJumpMap = [this](const ad_vector_t& x, ad_vector_t& y) {
     auto time = x(0);
     auto state = x.segment(1, stateDim_);
     this->systemJumpMap(time, state, y);
   };
-  jumpMapADInterfacePtr_.reset(new CppAdInterface(tapedJumpMap, stateDim_, 1 + stateDim_, modelName + "_jump_map", modelFolder));
+  jumpMapADInterfacePtr_.reset(new CppAdInterface(tapedJumpMap, 1 + stateDim_, modelName + "_jump_map", modelFolder));
 
   auto tapedGuardSurfaces = [this](const ad_vector_t& x, ad_vector_t& y) {
     auto time = x(0);
     auto state = x.segment(1, stateDim_);
     this->systemGuardSurfaces(time, state, y);
   };
-  guardSurfacesADInterfacePtr_.reset(new CppAdInterface(tapedGuardSurfaces, 1, 1 + stateDim_, modelName + "_guard_surfaces", modelFolder));
+  guardSurfacesADInterfacePtr_.reset(new CppAdInterface(tapedGuardSurfaces, 1 + stateDim_, modelName + "_guard_surfaces", modelFolder));
 }
 
 /******************************************************************************************************/

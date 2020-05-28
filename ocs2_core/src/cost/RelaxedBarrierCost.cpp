@@ -91,6 +91,9 @@ void RelaxedBarrierCost::initialize(const std::string& modelName, const std::str
 void RelaxedBarrierCost::setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) {
   CostFunctionBase::setCurrentStateAndControl(t, x, u);
 
+  tapedTimeState_.resize(1 + stateDim_);
+  tapedTimeStateInput_.resize(1 + stateDim_ + inputDim_);
+
   tapedTimeState_ << t, x;
   tapedTimeStateInput_ << t, x, u;
 
@@ -410,16 +413,16 @@ void RelaxedBarrierCost::setADInterfaces(const std::string& modelName, const std
     auto input = x.tail(inputDim_);
     this->intermediateCostFunction(time, state, input, p, y);
   };
-  intermediateADInterfacePtr_.reset(new CppAdInterface(intermediateCostAd, intermediateCostDim_, 1 + stateDim_ + inputDim_,
-                                                       getNumIntermediateParameters(), modelName + "_intermediate", modelFolder));
+  intermediateADInterfacePtr_.reset(new CppAdInterface(intermediateCostAd, 1 + stateDim_ + inputDim_, getNumIntermediateParameters(),
+                                                       modelName + "_intermediate", modelFolder));
 
   auto terminalCostAd = [this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
     auto time = x(0);
     auto state = x.tail(stateDim_);
     this->terminalCostFunction(time, state, p, y);
   };
-  terminalADInterfacePtr_.reset(new CppAdInterface(terminalCostAd, terminalCostDim_, 1 + stateDim_, getNumTerminalParameters(),
-                                                   modelName + "_terminal", modelFolder));
+  terminalADInterfacePtr_.reset(
+      new CppAdInterface(terminalCostAd, 1 + stateDim_, getNumTerminalParameters(), modelName + "_terminal", modelFolder));
 }
 
 /******************************************************************************************************/

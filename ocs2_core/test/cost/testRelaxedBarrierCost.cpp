@@ -15,7 +15,9 @@ class MyCost : public RelaxedBarrierCost {
 
  protected:
   virtual void intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input, const ad_vector_t& parameters,
-                                        ad_vector_t& costValues) const override {}
+                                        ad_vector_t& costValues) const override {
+    costValues = ad_vector_t::Zero(1);
+  }
 };
 
 TEST(testRelaxedBarrierCost, canConstructCost) {

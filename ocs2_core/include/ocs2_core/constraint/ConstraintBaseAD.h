@@ -101,28 +101,27 @@ class ConstraintBaseAD : public ConstraintBase {
    * @param [in] time: time.
    * @param [in] state: state vector.
    * @param [in] input: input vector
-   * @param [out] constraintVector: constraints vector.
+   * return constraints vector.
    */
-  virtual void stateInputConstraint(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                                    ad_vector_t& constraintVector) const;
+  virtual ad_vector_t stateInputConstraint(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const;
 
   /**
    * Interface method to the state-only equality constraints. This method should be implemented by the derived class.
    *
    * @param [in] time: time.
    * @param [in] state: state vector.
-   * @param [out] constraintVector: constraint vector.
+   * return constraint vector.
    */
-  virtual void stateOnlyConstraint(ad_scalar_t time, const ad_vector_t& state, ad_vector_t& constraintVector) const;
+  virtual ad_vector_t stateOnlyConstraint(ad_scalar_t time, const ad_vector_t& state) const;
 
   /**
    * Interface method to the state-only final equality constraints. This method should be implemented by the derived class.
    *
    * @param [in] time: time.
    * @param [in] state: state vector.
-   * @param [out] constraintVector: constraint vector.
+   * return constraint vector.
    */
-  virtual void stateOnlyFinalConstraint(ad_scalar_t time, const ad_vector_t& state, ad_vector_t& constraintVector) const;
+  virtual ad_vector_t stateOnlyFinalConstraint(ad_scalar_t time, const ad_vector_t& state) const;
 
  private:
   /**

@@ -41,12 +41,12 @@ using namespace ocs2;
 
 class testCppADCG_constraintFixture : public ::testing::Test {
  public:
-  static constexpr size_t stateDim_ = 8;
-  static constexpr size_t inputDim_ = 5;
-  static constexpr size_t numStateInputConstraint_ = inputDim_ - 1;
-  static constexpr size_t numStateOnlyConstraint_ = inputDim_ - 1;
-  static constexpr size_t numStateOnlyFinalConstraint_ = inputDim_ - 1;
-  static constexpr size_t maxNumConstraint_ = inputDim_;
+  const size_t stateDim_ = 8;
+  const size_t inputDim_ = 5;
+  const size_t numStateInputConstraint_ = inputDim_ - 1;
+  const size_t numStateOnlyConstraint_ = inputDim_ - 1;
+  const size_t numStateOnlyFinalConstraint_ = inputDim_ - 1;
+  const size_t maxNumConstraint_ = inputDim_;
 
   testCppADCG_constraintFixture() { create(); };
 

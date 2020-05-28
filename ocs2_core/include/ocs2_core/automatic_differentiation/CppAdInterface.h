@@ -63,29 +63,27 @@ class CppAdInterface {
   /**
    * Constructor for parameterized functions
    *
-   * @param adFunction : parameterized function f(x,p,y)
-   * @param rangeDim : size of y
+   * @param adFunction : parameterized function y = f(x,p)
    * @param variableDim : size of x
    * @param parameterDim : size of p
    * @param modelName : Name of the library to be generated.
    * @param folderName : Folder to save library files to, either absolute of relative
    * @param compileFlags : Compilation flags for the model library.
    */
-  CppAdInterface(ad_parameterized_function_t adFunction, int rangeDim, int variableDim, int parameterDim, std::string modelName,
+  CppAdInterface(ad_parameterized_function_t adFunction, size_t variableDim, size_t parameterDim, std::string modelName,
                  std::string folderName = "/tmp/ocs2",
                  std::vector<std::string> compileFlags = {"-O3", "-march=native", "-mtune=native", "-ffast-math"});
 
   /**
    * Constructor for functions without parameters
    *
-   * @param adFunction : function f(x, y)
-   * @param rangeDim : size of y
+   * @param adFunction : function y = f(x)
    * @param variableDim : size of x
    * @param modelName : Name of the library to be generated.
    * @param folderName : Folder to save library files to, either absolute of relative
    * @param compileFlags : Compilation flags for the model library.
    */
-  CppAdInterface(ad_function_t adFunction, int rangeDim, int variableDim, std::string modelName, std::string folderName = "/tmp/ocs2",
+  CppAdInterface(ad_function_t adFunction, size_t variableDim, std::string modelName, std::string folderName = "/tmp/ocs2",
                  std::vector<std::string> compileFlags = {"-O3", "-march=native", "-mtune=native", "-ffast-math"});
 
   ~CppAdInterface() = default;
@@ -219,9 +217,9 @@ class CppAdInterface {
   std::vector<std::string> compileFlags_;
 
   // Sizes
-  int rangeDim_;
-  int variableDim_;
-  int parameterDim_;
+  size_t rangeDim_;
+  size_t variableDim_;
+  size_t parameterDim_;
   size_t nnzJacobian_;
   size_t nnzHessian_;
 

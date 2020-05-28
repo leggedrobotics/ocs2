@@ -131,23 +131,23 @@ matrix_t ConstraintBaseAD::getFinalStateEqualityConstraintDerivativesState() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBaseAD::stateInputConstraint(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                                            ad_vector_t& constraintVector) const {
-  constraintVector = ad_vector_t(0);
+ConstraintBaseAD::ad_vector_t ConstraintBaseAD::stateInputConstraint(ad_scalar_t time, const ad_vector_t& state,
+                                                                     const ad_vector_t& input) const {
+  return ad_vector_t(0);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBaseAD::stateOnlyConstraint(ad_scalar_t time, const ad_vector_t& state, ad_vector_t& constraintVector) const {
-  constraintVector = ad_vector_t(0);
+ConstraintBaseAD::ad_vector_t ConstraintBaseAD::stateOnlyConstraint(ad_scalar_t time, const ad_vector_t& state) const {
+  return ad_vector_t(0);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBaseAD::stateOnlyFinalConstraint(ad_scalar_t time, const ad_vector_t& state, ad_vector_t& constraintVector) const {
-  constraintVector = ad_vector_t(0);
+ConstraintBaseAD::ad_vector_t ConstraintBaseAD::stateOnlyFinalConstraint(ad_scalar_t time, const ad_vector_t& state) const {
+  return ad_vector_t(0);
 }
 
 /******************************************************************************************************/
@@ -158,26 +158,25 @@ void ConstraintBaseAD::setADInterfaces(const std::string& modelName, const std::
     auto time = x(0);
     auto state = x.segment(1, stateDim_);
     auto input = x.segment(1 + stateDim_, inputDim_);
-    this->stateInputConstraint(time, state, input, y);
+    y = this->stateInputConstraint(time, state, input);
   };
   stateInputADInterfacePtr_.reset(
-      new CppAdInterface(stateInputConstraintAD, inputDim_, 1 + stateDim_ + inputDim_, modelName + "_stateInput", modelFolder));
+      new CppAdInterface(stateInputConstraintAD, 1 + stateDim_ + inputDim_, modelName + "_stateInput", modelFolder));
 
   auto stateOnlyConstraintAD = [this](const ad_vector_t& x, ad_vector_t& y) {
     auto time = x(0);
     auto state = x.segment(1, stateDim_);
-    this->stateOnlyConstraint(time, state, y);
+    y = this->stateOnlyConstraint(time, state);
   };
-  stateOnlyADInterfacePtr_.reset(
-      new CppAdInterface(stateOnlyConstraintAD, inputDim_, 1 + stateDim_, modelName + "_stateOnly", modelFolder));
+  stateOnlyADInterfacePtr_.reset(new CppAdInterface(stateOnlyConstraintAD, 1 + stateDim_, modelName + "_stateOnly", modelFolder));
 
   auto stateOnlyConstraintFinalAD = [this](const ad_vector_t& x, ad_vector_t& y) {
     auto time = x(0);
     auto state = x.segment(1, stateDim_);
-    this->stateOnlyFinalConstraint(time, state, y);
+    y = this->stateOnlyFinalConstraint(time, state);
   };
   stateOnlyFinalADInterfacePtr_.reset(
-      new CppAdInterface(stateOnlyConstraintFinalAD, inputDim_, 1 + stateDim_, modelName + "_stateOnlyFinal", modelFolder));
+      new CppAdInterface(stateOnlyConstraintFinalAD, 1 + stateDim_, modelName + "_stateOnlyFinal", modelFolder));
 }
 
 /******************************************************************************************************/

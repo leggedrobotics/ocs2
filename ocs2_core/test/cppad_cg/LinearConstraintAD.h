@@ -51,17 +51,16 @@ class LinearConstraintAD : public ConstraintBaseAD {
   LinearConstraintAD* clone() const override { return new LinearConstraintAD(*this); }
 
  protected:
-  void stateInputConstraint(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                            ad_vector_t& constraintVector) const override {
-    constraintVector = e_.cast<ad_scalar_t>() + C_.cast<ad_scalar_t>() * state + D_.cast<ad_scalar_t>() * input;
+  ad_vector_t stateInputConstraint(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const override {
+    return e_.cast<ad_scalar_t>() + C_.cast<ad_scalar_t>() * state + D_.cast<ad_scalar_t>() * input;
   }
 
-  void stateOnlyConstraint(ad_scalar_t time, const ad_vector_t& state, ad_vector_t& constraintVector) const override {
-    constraintVector = h_.cast<ad_scalar_t>() + F_.cast<ad_scalar_t>() * state;
+  ad_vector_t stateOnlyConstraint(ad_scalar_t time, const ad_vector_t& state) const override {
+    return h_.cast<ad_scalar_t>() + F_.cast<ad_scalar_t>() * state;
   }
 
-  void stateOnlyFinalConstraint(ad_scalar_t time, const ad_vector_t& state, ad_vector_t& constraintVector) const override {
-    constraintVector = h_f_.cast<ad_scalar_t>() + F_f_.cast<ad_scalar_t>() * state;
+  ad_vector_t stateOnlyFinalConstraint(ad_scalar_t time, const ad_vector_t& state) const override {
+    return h_f_.cast<ad_scalar_t>() + F_f_.cast<ad_scalar_t>() * state;
   }
 
  private:

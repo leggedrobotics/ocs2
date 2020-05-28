@@ -28,6 +28,7 @@ class CommonCppAdNoParameterFixture : public ::testing::Test {
 
   static void funImpl(const ad_vector_t& x, ad_vector_t& y) {
     // the model equation
+    y.resize(1);
     y(0) = x(0) + 0.5 * x(0) * x(1) + 2.0 * x(0) * x(1) * x(2);
   }
 
@@ -92,7 +93,7 @@ class CommonCppAdParameterizedFixture : public ::testing::Test {
 
     ad_vector_t x = xp.segment(0, variableDim_);
     ad_vector_t p = xp.segment(variableDim_, parameterDim_);
-    ad_vector_t y(rangeDim_);
+    ad_vector_t y;
     funImpl(x, p, y);
 
     // create f: x -> y and stop tape recording
@@ -111,6 +112,7 @@ class CommonCppAdParameterizedFixture : public ::testing::Test {
 
   static void funImpl(const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
     // the model equation
+    y.resize(2);
     y(0) = x(0) + 0.5 * x(0) * x(1) + 2.0 * p(0) * x(1) * x(1);
     y(1) = x(0) * x(0) * x(1) / 2.0;
   }

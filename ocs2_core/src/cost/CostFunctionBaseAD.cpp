@@ -255,7 +255,7 @@ void CostFunctionBaseAD::setADInterfaces(const std::string& modelName, const std
     y = ad_vector_t(1);
     this->intermediateCostFunction(time, state, input, p, y(0));
   };
-  intermediateADInterfacePtr_.reset(new CppAdInterface(intermediateCostAd, 1, 1 + stateDim_ + inputDim_, getNumIntermediateParameters(),
+  intermediateADInterfacePtr_.reset(new CppAdInterface(intermediateCostAd, 1 + stateDim_ + inputDim_, getNumIntermediateParameters(),
                                                        modelName + "_intermediate", modelFolder));
 
   auto terminalCostAd = [this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
@@ -265,7 +265,7 @@ void CostFunctionBaseAD::setADInterfaces(const std::string& modelName, const std
     this->terminalCostFunction(time, state, p, y(0));
   };
   terminalADInterfacePtr_.reset(
-      new CppAdInterface(terminalCostAd, 1, 1 + stateDim_, getNumTerminalParameters(), modelName + "_terminal", modelFolder));
+      new CppAdInterface(terminalCostAd, 1 + stateDim_, getNumTerminalParameters(), modelName + "_terminal", modelFolder));
 }
 
 /******************************************************************************************************/

@@ -67,37 +67,37 @@ void SystemDynamicsBaseAD::initialize(const std::string& modelName, const std::s
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::computeFlowMap(const scalar_t& time, const vector_t& state, const vector_t& input, vector_t& stateDerivative) {
+vector_t SystemDynamicsBaseAD::computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) {
   vector_t tapedInput(1 + stateDim_ + inputDim_);
   tapedInput << time, state, input;
 
-  stateDerivative = flowMapADInterfacePtr_->getFunctionValue(tapedInput);
+  return flowMapADInterfacePtr_->getFunctionValue(tapedInput);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::computeJumpMap(const scalar_t& time, const vector_t& state, vector_t& jumpedState) {
+vector_t SystemDynamicsBaseAD::computeJumpMap(scalar_t time, const vector_t& state) {
   vector_t tapedInput(1 + stateDim_);
   tapedInput << time, state;
 
-  jumpedState = jumpMapADInterfacePtr_->getFunctionValue(tapedInput);
+  return jumpMapADInterfacePtr_->getFunctionValue(tapedInput);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::computeGuardSurfaces(const scalar_t& time, const vector_t& state, vector_t& guardSurfacesValue) {
+vector_t SystemDynamicsBaseAD::computeGuardSurfaces(scalar_t time, const vector_t& state) {
   vector_t tapedInput(1 + stateDim_);
   tapedInput << time, state;
 
-  guardSurfacesValue = guardSurfacesADInterfacePtr_->getFunctionValue(tapedInput);
+  return guardSurfacesADInterfacePtr_->getFunctionValue(tapedInput);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::setCurrentStateAndControl(const scalar_t& time, const vector_t& state, const vector_t& input) {
+void SystemDynamicsBaseAD::setCurrentStateAndControl(scalar_t time, const vector_t& state, const vector_t& input) {
   SystemDynamicsBase::setCurrentStateAndControl(time, state, input);
 
   vector_t tapedTimeStateInput(1 + stateDim_ + inputDim_);
@@ -114,64 +114,64 @@ void SystemDynamicsBaseAD::setCurrentStateAndControl(const scalar_t& time, const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::getFlowMapDerivativeTime(vector_t& df) {
-  df = flowJacobian_.leftCols(1);
+vector_t SystemDynamicsBaseAD::getFlowMapDerivativeTime() {
+  return flowJacobian_.leftCols(1);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::getFlowMapDerivativeState(matrix_t& A) {
-  A = flowJacobian_.middleCols(1, stateDim_);
+matrix_t SystemDynamicsBaseAD::getFlowMapDerivativeState() {
+  return flowJacobian_.middleCols(1, stateDim_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::getFlowMapDerivativeInput(matrix_t& B) {
-  B = flowJacobian_.rightCols(inputDim_);
+matrix_t SystemDynamicsBaseAD::getFlowMapDerivativeInput() {
+  return flowJacobian_.rightCols(inputDim_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::getJumpMapDerivativeTime(vector_t& dg) {
-  dg = jumpJacobian_.leftCols(1);
+vector_t SystemDynamicsBaseAD::getJumpMapDerivativeTime() {
+  return jumpJacobian_.leftCols(1);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::getJumpMapDerivativeState(matrix_t& G) {
-  G = jumpJacobian_.rightCols(stateDim_);
+matrix_t SystemDynamicsBaseAD::getJumpMapDerivativeState() {
+  return jumpJacobian_.rightCols(stateDim_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::getGuardSurfacesDerivativeTime(vector_t& D_t_gamma) {
-  D_t_gamma = guardJacobian_.leftCols(1);
+vector_t SystemDynamicsBaseAD::getGuardSurfacesDerivativeTime() {
+  return guardJacobian_.leftCols(1);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::getGuardSurfacesDerivativeState(matrix_t& D_x_gamma) {
-  D_x_gamma = guardJacobian_.rightCols(stateDim_);
+matrix_t SystemDynamicsBaseAD::getGuardSurfacesDerivativeState() {
+  return guardJacobian_.rightCols(stateDim_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::systemJumpMap(ad_scalar_t time, const ad_vector_t& state, ad_vector_t& jumpedState) const {
-  jumpedState = state;
+SystemDynamicsBaseAD::ad_vector_t SystemDynamicsBaseAD::systemJumpMap(ad_scalar_t time, const ad_vector_t& state) const {
+  return state;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::systemGuardSurfaces(ad_scalar_t time, const ad_vector_t& state, ad_vector_t& guardSurfacesValue) const {
-  guardSurfacesValue = -ad_vector_t::Ones(1);
+SystemDynamicsBaseAD::ad_vector_t SystemDynamicsBaseAD::systemGuardSurfaces(ad_scalar_t time, const ad_vector_t& state) const {
+  return -ad_vector_t::Ones(1);
 }
 
 /******************************************************************************************************/
@@ -182,21 +182,21 @@ void SystemDynamicsBaseAD::setADInterfaces(const std::string& modelName, const s
     auto time = x(0);
     auto state = x.segment(1, stateDim_);
     auto input = x.segment(1 + stateDim_, inputDim_);
-    this->systemFlowMap(time, state, input, y);
+    y = this->systemFlowMap(time, state, input);
   };
   flowMapADInterfacePtr_.reset(new CppAdInterface(tapedFlowMap, 1 + stateDim_ + inputDim_, modelName + "_flow_map", modelFolder));
 
   auto tapedJumpMap = [this](const ad_vector_t& x, ad_vector_t& y) {
     auto time = x(0);
     auto state = x.segment(1, stateDim_);
-    this->systemJumpMap(time, state, y);
+    y = this->systemJumpMap(time, state);
   };
   jumpMapADInterfacePtr_.reset(new CppAdInterface(tapedJumpMap, 1 + stateDim_, modelName + "_jump_map", modelFolder));
 
   auto tapedGuardSurfaces = [this](const ad_vector_t& x, ad_vector_t& y) {
     auto time = x(0);
     auto state = x.segment(1, stateDim_);
-    this->systemGuardSurfaces(time, state, y);
+    y = this->systemGuardSurfaces(time, state);
   };
   guardSurfacesADInterfacePtr_.reset(new CppAdInterface(tapedGuardSurfaces, 1 + stateDim_, modelName + "_guard_surfaces", modelFolder));
 }

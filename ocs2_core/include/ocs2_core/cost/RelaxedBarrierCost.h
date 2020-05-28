@@ -101,29 +101,29 @@ class RelaxedBarrierCost : public CostFunctionBase {
   void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                   bool verbose = true);
 
-  void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) final;
+  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) final;
 
-  void getIntermediateCost(scalar_t& L) override;
+  scalar_t getIntermediateCost() override;
 
-  void getIntermediateCostDerivativeTime(scalar_t& dLdt) override;
+  scalar_t getIntermediateCostDerivativeTime() override;
 
-  void getIntermediateCostDerivativeState(vector_t& dLdx) override;
+  vector_t getIntermediateCostDerivativeState() override;
 
-  void getIntermediateCostSecondDerivativeState(matrix_t& dLdxx) override;
+  matrix_t getIntermediateCostSecondDerivativeState() override;
 
-  void getIntermediateCostDerivativeInput(vector_t& dLdu) override;
+  vector_t getIntermediateCostDerivativeInput() override;
 
-  void getIntermediateCostSecondDerivativeInput(matrix_t& dLduu) override;
+  matrix_t getIntermediateCostSecondDerivativeInput() override;
 
-  void getIntermediateCostDerivativeInputState(matrix_t& dLdux) override;
+  matrix_t getIntermediateCostDerivativeInputState() override;
 
-  void getTerminalCost(scalar_t& Phi) override;
+  scalar_t getTerminalCost() override;
 
-  void getTerminalCostDerivativeTime(scalar_t& dPhidt) override;
+  scalar_t getTerminalCostDerivativeTime() override;
 
-  void getTerminalCostDerivativeState(vector_t& dPhidx) override;
+  vector_t getTerminalCostDerivativeState() override;
 
-  void getTerminalCostSecondDerivativeState(matrix_t& dPhidxx) override;
+  matrix_t getTerminalCostSecondDerivativeState() override;
 
  protected:
   /**
@@ -177,10 +177,10 @@ class RelaxedBarrierCost : public CostFunctionBase {
    * @param [in] state: state vector.
    * @param [in] input: input vector.
    * @param [in] parameters: parameter vector.
-   * @param [out] costValue: cost value.
+   * @return cost value.
    */
-  virtual void intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input, const ad_vector_t& parameters,
-                                        ad_vector_t& costValues) const = 0;
+  virtual ad_vector_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                               const ad_vector_t& parameters) const = 0;
 
   /**
    * Interface method to the terminal cost function. This method can be implemented by the derived class.
@@ -189,10 +189,9 @@ class RelaxedBarrierCost : public CostFunctionBase {
    * @param [in] time: time.
    * @param [in] state: state vector.
    * @param [in] parameters: parameter vector.
-   * @param [out] costValue: cost value.
+   * @return cost value.
    */
-  virtual void terminalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters,
-                                    ad_vector_t& costValues) const;
+  virtual ad_vector_t terminalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const;
 
  private:
   /**

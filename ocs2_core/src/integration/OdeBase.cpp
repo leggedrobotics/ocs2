@@ -38,7 +38,7 @@ OdeBase::OdeBase() : numFunctionCalls_(0) {
   modelDataArray_.reserve(DEFAULT_MODEL_DATA_CACHE_SIZE);
   systemFunction_ = [this](const vector_t& x, vector_t& dxdt, scalar_t t) {
     numFunctionCalls_++;
-    computeFlowMap(t, x, dxdt);
+    dxdt = computeFlowMap(t, x);
   };
 }
 
@@ -95,14 +95,14 @@ void OdeBase::clearModelDataArray() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void OdeBase::computeJumpMap(const scalar_t& time, const vector_t& state, vector_t& mappedState) {
-  mappedState = state;
+vector_t OdeBase::computeJumpMap(scalar_t time, const vector_t& state) {
+  return state;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void OdeBase::computeGuardSurfaces(const scalar_t& time, const vector_t& state, vector_t& guardSurfacesValue) {
-  guardSurfacesValue = -vector_t::Ones(1);
+vector_t OdeBase::computeGuardSurfaces(scalar_t time, const vector_t& state) {
+  return -vector_t::Ones(1);
 }
 }  // namespace ocs2

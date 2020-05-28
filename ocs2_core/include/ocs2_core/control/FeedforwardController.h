@@ -112,7 +112,7 @@ class FeedforwardController final : public ControllerBase {
    */
   void setController(const scalar_array_t& controllerTime, const vector_array_t& controllerFeedforward);
 
-  vector_t computeInput(const scalar_t& t, const vector_t& x) override;
+  vector_t computeInput(scalar_t t, const vector_t& x) override;
 
   void flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const override;
 

@@ -63,10 +63,10 @@ class StateBasedLinearController final : public ControllerBase {
    * @param [in] ctrlPtr: Pointer to the actual controller
    * @retrun control input vector
    */
-  static vector_t computeTrajectorySpreadingInput(const scalar_t& t, const vector_t& x, const scalar_array_t& ctrlEventTimes,
+  static vector_t computeTrajectorySpreadingInput(scalar_t t, const vector_t& x, const scalar_array_t& ctrlEventTimes,
                                                   ControllerBase* ctrlPtr);
 
-  vector_t computeInput(const scalar_t& t, const vector_t& x) override;
+  vector_t computeInput(scalar_t t, const vector_t& x) override;
 
   void flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const override;
 

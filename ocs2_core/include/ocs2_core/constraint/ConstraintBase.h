@@ -78,7 +78,7 @@ class ConstraintBase {
    * @param [in] x: Current state.
    * @param [in] u: Current input.
    */
-  virtual void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u);
+  virtual void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u);
 
   /**
    * Clones the class.

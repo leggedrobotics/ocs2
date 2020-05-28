@@ -67,11 +67,7 @@ matrix_t finiteDifferenceDerivative(std::function<vector_t(const vector_t&)> f, 
 /******************************************************************************************************/
 matrix_t finiteDifferenceDerivativeState(ControlledSystemBase& system, scalar_t t, const vector_t& x, const vector_t& u, scalar_t eps,
                                          bool doubleSidedDerivative, bool isSecondOrderSystem) {
-  auto f = [&](const vector_t& var) -> vector_t {
-    vector_t dx;
-    system.computeFlowMap(t, var, u, dx);
-    return dx;
-  };
+  auto f = [&](const vector_t& var) -> vector_t { return system.computeFlowMap(t, var, u); };
 
   matrix_t A = finiteDifferenceDerivative(f, x, eps, doubleSidedDerivative);
 
@@ -88,11 +84,7 @@ matrix_t finiteDifferenceDerivativeState(ControlledSystemBase& system, scalar_t 
 /******************************************************************************************************/
 matrix_t finiteDifferenceDerivativeInput(ControlledSystemBase& system, scalar_t t, const vector_t& x, const vector_t& u, scalar_t eps,
                                          bool doubleSidedDerivative, bool isSecondOrderSystem) {
-  auto f = [&](const vector_t& var) -> vector_t {
-    vector_t dx;
-    system.computeFlowMap(t, x, var, dx);
-    return dx;
-  };
+  auto f = [&](const vector_t& var) -> vector_t { return system.computeFlowMap(t, x, var); };
 
   matrix_t B = finiteDifferenceDerivative(f, u, eps, doubleSidedDerivative);
 

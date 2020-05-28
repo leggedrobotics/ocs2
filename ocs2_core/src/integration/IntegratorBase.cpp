@@ -44,44 +44,44 @@ IntegratorBase::IntegratorBase(std::shared_ptr<SystemEventHandler> eventHandlerP
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void IntegratorBase::integrate_const(OdeBase& system, Observer& observer, const vector_t& initialState, scalar_t startTime,
-                                     scalar_t finalTime, scalar_t dt, int maxNumSteps /*= std::numeric_limits<int>::max()*/) {
+void IntegratorBase::integrateConst(OdeBase& system, Observer& observer, const vector_t& initialState, scalar_t startTime,
+                                    scalar_t finalTime, scalar_t dt, int maxNumSteps /*= std::numeric_limits<int>::max()*/) {
   eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
   observer_func_t callback = [&](const vector_t& x, scalar_t t) {
     observer.observe(system, x, t);
     eventHandlerPtr_->handleEvent(system, t, x);
   };
-  run_integrate_const(system.systemFunction(), callback, initialState, startTime, finalTime, dt);
+  runIntegrateConst(system.systemFunction(), callback, initialState, startTime, finalTime, dt);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void IntegratorBase::integrate_adaptive(OdeBase& system, Observer& observer, const vector_t& initialState, scalar_t startTime,
-                                        scalar_t finalTime, scalar_t dtInitial /*= 0.01*/, scalar_t AbsTol /*= 1e-6*/,
-                                        scalar_t RelTol /*= 1e-3*/, int maxNumSteps /*= std::numeric_limits<int>::max()*/) {
+void IntegratorBase::integrateAdaptive(OdeBase& system, Observer& observer, const vector_t& initialState, scalar_t startTime,
+                                       scalar_t finalTime, scalar_t dtInitial /*= 0.01*/, scalar_t AbsTol /*= 1e-6*/,
+                                       scalar_t RelTol /*= 1e-3*/, int maxNumSteps /*= std::numeric_limits<int>::max()*/) {
   eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
   observer_func_t callback = [&](const vector_t& x, scalar_t t) {
     observer.observe(system, x, t);
     eventHandlerPtr_->handleEvent(system, t, x);
   };
-  run_integrate_adaptive(system.systemFunction(), callback, initialState, startTime, finalTime, dtInitial, AbsTol, RelTol);
+  runIntegrateAdaptive(system.systemFunction(), callback, initialState, startTime, finalTime, dtInitial, AbsTol, RelTol);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void IntegratorBase::integrate_times(OdeBase& system, Observer& observer, const vector_t& initialState,
-                                     typename scalar_array_t::const_iterator beginTimeItr,
-                                     typename scalar_array_t::const_iterator endTimeItr, scalar_t dtInitial /*= 0.01*/,
-                                     scalar_t AbsTol /*= 1e-6*/, scalar_t RelTol /*= 1e-3*/,
-                                     int maxNumSteps /*= std::numeric_limits<int>::max()*/) {
+void IntegratorBase::integrateTimes(OdeBase& system, Observer& observer, const vector_t& initialState,
+                                    typename scalar_array_t::const_iterator beginTimeItr,
+                                    typename scalar_array_t::const_iterator endTimeItr, scalar_t dtInitial /*= 0.01*/,
+                                    scalar_t AbsTol /*= 1e-6*/, scalar_t RelTol /*= 1e-3*/,
+                                    int maxNumSteps /*= std::numeric_limits<int>::max()*/) {
   eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
   observer_func_t callback = [&](const vector_t& x, scalar_t t) {
     observer.observe(system, x, t);
     eventHandlerPtr_->handleEvent(system, t, x);
   };
-  run_integrate_times(system.systemFunction(), callback, initialState, beginTimeItr, endTimeItr, dtInitial, AbsTol, RelTol);
+  runIntegrateTimes(system.systemFunction(), callback, initialState, beginTimeItr, endTimeItr, dtInitial, AbsTol, RelTol);
 }
 
 }  // namespace ocs2

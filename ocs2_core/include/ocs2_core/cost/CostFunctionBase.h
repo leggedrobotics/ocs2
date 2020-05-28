@@ -77,89 +77,86 @@ class CostFunctionBase {
    * @param [in] x: Current state vector
    * @param [in] u: Current input vector
    */
-  virtual void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u);
+  virtual void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u);
 
   /**
    * Get the intermediate cost.
    *
    * @param [out] L: The intermediate cost value.
    */
-  virtual void getIntermediateCost(scalar_t& L) = 0;
+  virtual scalar_t getIntermediateCost() = 0;
 
   /**
    * Get the time derivative of the intermediate cost.
    *
-   * @param [out] dLdt: The time derivative of intermediate cost.
+   * @return The time derivative of intermediate cost.
    */
-  virtual void getIntermediateCostDerivativeTime(scalar_t& dLdt);
+  virtual scalar_t getIntermediateCostDerivativeTime();
 
   /**
    * Get the state derivative of the intermediate cost.
    *
-   * @param [out] dLdx: First order derivative of the intermediate cost with respect to state vector, size \f$ n_x \f$.
+   * @return First order derivative of the intermediate cost with respect to state vector, size \f$ n_x \f$.
    */
-  virtual void getIntermediateCostDerivativeState(vector_t& dLdx) = 0;
+  virtual vector_t getIntermediateCostDerivativeState() = 0;
 
   /**
    * Get state second order derivative of the intermediate cost.
    *
-   * @param [out] dLdxx: Second order derivative of the intermediate cost with respect to state vector, size \f$ n_x * n_x \f$.
+   * @return Second order derivative of the intermediate cost with respect to state vector, size \f$ n_x * n_x \f$.
    */
-  virtual void getIntermediateCostSecondDerivativeState(matrix_t& dLdxx) = 0;
+  virtual matrix_t getIntermediateCostSecondDerivativeState() = 0;
 
   /**
    * Get control input derivative of the intermediate cost.
    *
-   * @param [out] dLdu: First order derivative of the intermediate cost with respect to input vector, size \f$ n_u \f$.
+   * @return First order derivative of the intermediate cost with respect to input vector, size \f$ n_u \f$.
    */
-  virtual void getIntermediateCostDerivativeInput(vector_t& dLdu) = 0;
+  virtual vector_t getIntermediateCostDerivativeInput() = 0;
 
   /**
    * Get control input second derivative of the intermediate cost.
    *
-   * @param [out] dLduu: Second order derivative of the intermediate cost with respect to input vector, size \f$ n_u * n_u \f$.
+   * @return Second order derivative of the intermediate cost with respect to input vector, size \f$ n_u * n_u \f$.
    */
-  virtual void getIntermediateCostSecondDerivativeInput(matrix_t& dLduu) = 0;
+  virtual matrix_t getIntermediateCostSecondDerivativeInput() = 0;
 
   /**
    * Get the input-state derivative of the intermediate cost.
    *
-   * @param [out] dLdux: Second order derivative of the intermediate cost with respect to input vector and state, size \f$ n_u * n_x \f$.
+   * @return Second order derivative of the intermediate cost with respect to input vector and state, size \f$ n_u * n_x \f$.
    */
-  virtual void getIntermediateCostDerivativeInputState(matrix_t& dLdux) = 0;
+  virtual matrix_t getIntermediateCostDerivativeInputState() = 0;
 
   /**
    * Get the terminal cost.
    *
-   * @param [out] Phi: The final cost value.
+   * @return The final cost value.
    */
-  virtual void getTerminalCost(scalar_t& Phi) = 0;
+  virtual scalar_t getTerminalCost() = 0;
 
   /**
    * Get the time derivative of terminal cost.
    *
-   * @param [out] dPhidt: The time derivative of terminal cost.
+   * @return The time derivative of terminal cost.
    */
-  virtual void getTerminalCostDerivativeTime(scalar_t& dPhidt);
+  virtual scalar_t getTerminalCostDerivativeTime();
 
   /**
    * Get the terminal cost state derivative of the terminal cost.
    *
-   * @param [out] dPhidx: First order final cost derivative with respect to state vector, size \f$ n_x \f$.
+   * @return First order final cost derivative with respect to state vector, size \f$ n_x \f$.
    */
-  virtual void getTerminalCostDerivativeState(vector_t& dPhidx) = 0;
+  virtual vector_t getTerminalCostDerivativeState() = 0;
 
   /**
    * Get the terminal cost state second derivative of the terminal cost.
    *
-   * @param [out] dPhidxx: Second order final cost derivative with respect to state vector, size \f$ n_x * n_x \f$.
+   * @return Second order final cost derivative with respect to state vector, size \f$ n_x * n_x \f$.
    */
-  virtual void getTerminalCostSecondDerivativeState(matrix_t& dPhidxx) = 0;
+  virtual matrix_t getTerminalCostSecondDerivativeState() = 0;
 
  protected:
-  /*
-   * Variables
-   */
   const CostDesiredTrajectories* costDesiredTrajectoriesPtr_;
 
   scalar_t t_;

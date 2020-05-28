@@ -94,7 +94,7 @@ void FeedforwardController::setController(const scalar_array_t& controllerTime, 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t FeedforwardController::computeInput(const scalar_t& t, const vector_t& x) {
+vector_t FeedforwardController::computeInput(scalar_t t, const vector_t& x) {
   vector_t uff;
   LinearInterpolation::interpolate(t, uff, &timeStamp_, &uffArray_);
   return uff;

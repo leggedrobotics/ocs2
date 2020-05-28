@@ -59,83 +59,83 @@ class DerivativesBase {
    * @param [in] x: Current state.
    * @param [in] u: Current input.
    */
-  virtual void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u);
+  virtual void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u);
 
   /**
    * Get partial time derivative of the system flow map.
    * \f$ \frac{\partial f}{\partial t}  \f$.
    *
-   * @param [out] df: \f$ \frac{\partial f}{\partial t} \f$ matrix, size \f$ n_x \f$.
+   * @return \f$ \frac{\partial f}{\partial t} \f$ matrix, size \f$ n_x \f$.
    */
-  virtual void getFlowMapDerivativeTime(vector_t& df);
+  virtual vector_t getFlowMapDerivativeTime();
 
   /**
    * Get the A matrix at a given operating point for the linearized system flow map.
    * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
    *
-   * @param [out] A: \f$ A(t) \f$ matrix, size \f$ n_x * n_x \f$.
+   * @return \f$ A(t) \f$ matrix, size \f$ n_x * n_x \f$.
    */
-  virtual void getFlowMapDerivativeState(matrix_t& A) = 0;
+  virtual matrix_t getFlowMapDerivativeState() = 0;
 
   /**
    * Get the B matrix at a given operating point for the linearized system flow map.
    * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
    *
-   * @param [out] B: \f$ B(t) \f$ matrix, size \f$ n_x * n_u \f$.
+   * @return \f$ B(t) \f$ matrix, size \f$ n_x * n_u \f$.
    */
-  virtual void getFlowMapDerivativeInput(matrix_t& B) = 0;
+  virtual matrix_t getFlowMapDerivativeInput() = 0;
 
   /**
    * Get partial time derivative of the system jump map.
    * \f$ \frac{\partial g}{\partial t}  \f$.
    *
-   * @param [out] dg: \f$ \frac{\partial g}{\partial t} \f$ matrix.
+   * @return \f$ \frac{\partial g}{\partial t} \f$ matrix.
    */
-  virtual void getJumpMapDerivativeTime(vector_t& dg);
+  virtual vector_t getJumpMapDerivativeTime();
 
   /**
    * Get the G matrix at a given operating point for the linearized system jump map.
    * \f$ x^+ = G \delta x + H \delta u \f$.
    *
-   * @param [out] G: \f$ G \f$ matrix, size \f$ n_x * n_x \f$.
+   * @return \f$ G \f$ matrix, size \f$ n_x * n_x \f$.
    */
-  virtual void getJumpMapDerivativeState(matrix_t& G);
+  virtual matrix_t getJumpMapDerivativeState();
 
   /**
    * Get the G matrix at a given operating point for the linearized system jump map.
    * \f$ x^+ = G \delta x + H \delta u \f$.
    *
-   * @param [out] H: \f$ H \f$ matrix, size \f$ n_x * n_u \f$.
+   * @return \f$ H \f$ matrix, size \f$ n_x * n_u \f$.
    */
-  virtual void getJumpMapDerivativeInput(matrix_t& H);
+  virtual matrix_t getJumpMapDerivativeInput();
 
   /**
    * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
    *
-   * @param [out] D_t_gamma: Derivative of the guard surfaces w.r.t. time.
+   * @return Derivative of the guard surfaces w.r.t. time.
    */
-  virtual void getGuardSurfacesDerivativeTime(vector_t& D_t_gamma);
+  virtual vector_t getGuardSurfacesDerivativeTime();
 
   /**
    * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
    *
-   * @param [out] D_x_gamma: Derivative of the guard surfaces w.r.t. state vector.
+   * @return Derivative of the guard surfaces w.r.t. state vector.
    */
-  virtual void getGuardSurfacesDerivativeState(matrix_t& D_x_gamma);
+  virtual matrix_t getGuardSurfacesDerivativeState();
 
   /**
    * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
    *
-   * @param [out] D_x_gamma: Derivative of the guard surfaces w.r.t. state vector.
+   * @return Derivative of the guard surfaces w.r.t. state vector.
    */
-  virtual void getGuardSurfacesDerivativeInput(matrix_t& D_u_gamma);
+  virtual matrix_t getGuardSurfacesDerivativeInput();
 
   /**
    * Get at a given operating point the covariance of the dynamics.
    *
-   * @param [out] dynamicsCovariance: The covariance of the dynamics.
+   * @return The covariance of the dynamics.
    */
-  virtual void getDynamicsCovariance(matrix_t& dynamicsCovariance);
+  virtual matrix_t getDynamicsCovariance();
 
   /**
    * Returns pointer to the class.

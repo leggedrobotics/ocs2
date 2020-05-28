@@ -41,19 +41,19 @@ class LinearSystemDynamics : public SystemDynamicsBase {
 
   LinearSystemDynamics* clone() const override;
 
-  void computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) override;
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) override;
 
-  void computeJumpMap(const scalar_t& t, const vector_t& x, vector_t& xp) override;
+  vector_t computeJumpMap(scalar_t t, const vector_t& x) override;
 
-  void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) override;
+  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) override;
 
-  void getFlowMapDerivativeState(matrix_t& A) override;
+  matrix_t getFlowMapDerivativeState() override;
 
-  void getFlowMapDerivativeInput(matrix_t& B) override;
+  matrix_t getFlowMapDerivativeInput() override;
 
-  void getJumpMapDerivativeState(matrix_t& G) override;
+  matrix_t getJumpMapDerivativeState() override;
 
-  void getJumpMapDerivativeInput(matrix_t& H) override;
+  matrix_t getJumpMapDerivativeInput() override;
 
  private:
   matrix_t A_;

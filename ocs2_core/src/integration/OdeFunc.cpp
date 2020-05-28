@@ -34,19 +34,19 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-OdeFunc::OdeFunc(std::function<void(const scalar_t& t, const vector_t& x, vector_t& dxdt)> flowMap) : flowMap_(std::move(flowMap)){};
+OdeFunc::OdeFunc(std::function<vector_t(scalar_t t, const vector_t& x)> flowMap) : flowMap_(std::move(flowMap)){};
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void OdeFunc::computeFlowMap(const scalar_t& t, const vector_t& x, vector_t& dxdt) {
-  flowMap_(t, x, dxdt);
+vector_t OdeFunc::computeFlowMap(scalar_t t, const vector_t& x) {
+  return flowMap_(t, x);
 };
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void OdeFunc::setFlowMap(std::function<void(const scalar_t& t, const vector_t& x, vector_t& dxdt)>&& flowMap) {
+void OdeFunc::setFlowMap(std::function<vector_t(scalar_t t, const vector_t& x)>&& flowMap) {
   flowMap_ = flowMap;
 };
 

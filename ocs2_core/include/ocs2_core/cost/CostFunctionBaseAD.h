@@ -70,29 +70,29 @@ class CostFunctionBaseAD : public CostFunctionBase {
   void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                   bool verbose = true);
 
-  void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) final;
+  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) final;
 
-  void getIntermediateCost(scalar_t& L) final;
+  scalar_t getIntermediateCost() final;
 
-  void getIntermediateCostDerivativeTime(scalar_t& dLdt) final;
+  scalar_t getIntermediateCostDerivativeTime() final;
 
-  void getIntermediateCostDerivativeState(vector_t& dLdx) final;
+  vector_t getIntermediateCostDerivativeState() final;
 
-  void getIntermediateCostSecondDerivativeState(matrix_t& dLdxx) final;
+  matrix_t getIntermediateCostSecondDerivativeState() final;
 
-  void getIntermediateCostDerivativeInput(vector_t& dLdu) final;
+  vector_t getIntermediateCostDerivativeInput() final;
 
-  void getIntermediateCostSecondDerivativeInput(matrix_t& dLduu) final;
+  matrix_t getIntermediateCostSecondDerivativeInput() final;
 
-  void getIntermediateCostDerivativeInputState(matrix_t& dLdux) final;
+  matrix_t getIntermediateCostDerivativeInputState() final;
 
-  void getTerminalCost(scalar_t& Phi) final;
+  scalar_t getTerminalCost() final;
 
-  void getTerminalCostDerivativeTime(scalar_t& dPhidt) final;
+  scalar_t getTerminalCostDerivativeTime() final;
 
-  void getTerminalCostDerivativeState(vector_t& dPhidx) final;
+  vector_t getTerminalCostDerivativeState() final;
 
-  void getTerminalCostSecondDerivativeState(matrix_t& dPhidxx) final;
+  matrix_t getTerminalCostSecondDerivativeState() final;
 
  protected:
   /**
@@ -135,10 +135,10 @@ class CostFunctionBaseAD : public CostFunctionBase {
    * @param [in] state: state vector.
    * @param [in] input: input vector.
    * @param [in] parameters: parameter vector.
-   * @param [out] costValue: cost value.
+   * @return cost value.
    */
-  virtual void intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input, const ad_vector_t& parameters,
-                                        ad_scalar_t& costValue) const = 0;
+  virtual ad_scalar_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                               const ad_vector_t& parameters) const = 0;
 
   /**
    * Interface method to the terminal cost function. This method can be implemented by the derived class.
@@ -147,10 +147,9 @@ class CostFunctionBaseAD : public CostFunctionBase {
    * @param [in] time: time.
    * @param [in] state: state vector.
    * @param [in] parameters: parameter vector.
-   * @param [out] costValue: cost value.
+   * @return cost value.
    */
-  virtual void terminalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters,
-                                    ad_scalar_t& costValue) const;
+  virtual ad_scalar_t terminalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const;
 
  private:
   /**

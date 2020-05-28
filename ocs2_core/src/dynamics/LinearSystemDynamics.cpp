@@ -55,50 +55,50 @@ LinearSystemDynamics* LinearSystemDynamics::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LinearSystemDynamics::computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) {
-  dxdt = A_ * x + B_ * u;
+vector_t LinearSystemDynamics::computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) {
+  return A_ * x + B_ * u;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LinearSystemDynamics::computeJumpMap(const scalar_t& t, const vector_t& x, vector_t& xp) {
-  xp = G_ * x;
+vector_t LinearSystemDynamics::computeJumpMap(scalar_t t, const vector_t& x) {
+  return G_ * x;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LinearSystemDynamics::setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) {
+void LinearSystemDynamics::setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) {
   SystemDynamicsBase::setCurrentStateAndControl(t, x, u);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LinearSystemDynamics::getFlowMapDerivativeState(matrix_t& A) {
-  A = A_;
+matrix_t LinearSystemDynamics::getFlowMapDerivativeState() {
+  return A_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LinearSystemDynamics::getFlowMapDerivativeInput(matrix_t& B) {
-  B = B_;
+matrix_t LinearSystemDynamics::getFlowMapDerivativeInput() {
+  return B_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LinearSystemDynamics::getJumpMapDerivativeState(matrix_t& G) {
-  G = G_;
+matrix_t LinearSystemDynamics::getJumpMapDerivativeState() {
+  return G_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LinearSystemDynamics::getJumpMapDerivativeInput(matrix_t& H) {
-  H = H_;
+matrix_t LinearSystemDynamics::getJumpMapDerivativeInput() {
+  return H_;
 }
 
 }  // namespace ocs2

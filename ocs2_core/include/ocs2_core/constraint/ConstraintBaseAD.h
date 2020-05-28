@@ -78,7 +78,7 @@ class ConstraintBaseAD : public ConstraintBase {
   void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                   bool verbose = true);
 
-  void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) final;
+  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) final;
 
   vector_t getStateInputEqualityConstraint() final;
 

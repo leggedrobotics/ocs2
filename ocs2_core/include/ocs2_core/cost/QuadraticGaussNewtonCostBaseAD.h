@@ -80,29 +80,29 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
   void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                   bool verbose = true);
 
-  void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) override;
+  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) override;
 
-  void getIntermediateCost(scalar_t& L) override;
+  scalar_t getIntermediateCost() override;
 
-  void getIntermediateCostDerivativeTime(scalar_t& dLdt) override;
+  scalar_t getIntermediateCostDerivativeTime() override;
 
-  void getIntermediateCostDerivativeState(vector_t& dLdx) override;
+  vector_t getIntermediateCostDerivativeState() override;
 
-  void getIntermediateCostSecondDerivativeState(matrix_t& dLdxx) override;
+  matrix_t getIntermediateCostSecondDerivativeState() override;
 
-  void getIntermediateCostDerivativeInput(vector_t& dLdu) override;
+  vector_t getIntermediateCostDerivativeInput() override;
 
-  void getIntermediateCostSecondDerivativeInput(matrix_t& dLduu) override;
+  matrix_t getIntermediateCostSecondDerivativeInput() override;
 
-  void getIntermediateCostDerivativeInputState(matrix_t& dLdux) override;
+  matrix_t getIntermediateCostDerivativeInputState() override;
 
-  void getTerminalCost(scalar_t& Phi) override;
+  scalar_t getTerminalCost() override;
 
-  void getTerminalCostDerivativeTime(scalar_t& dPhidt) override;
+  scalar_t getTerminalCostDerivativeTime() override;
 
-  void getTerminalCostDerivativeState(vector_t& dPhidx) override;
+  vector_t getTerminalCostDerivativeState() override;
 
-  void getTerminalCostSecondDerivativeState(matrix_t& dPhidxx) override;
+  matrix_t getTerminalCostSecondDerivativeState() override;
 
  protected:
   /**

@@ -50,7 +50,7 @@ class NeuralNetworkController final : public ControllerBase {
 
   void loadNetwork(const std::string& filePath);
 
-  input_vector_t computeInput(const scalar_t& t, const vector_t& x) override;
+  input_vector_t computeInput(scalar_t t, const vector_t& x) override;
 
   void concatenate(const ControllerBase* otherController, int index, int length) override;
 

@@ -34,7 +34,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void DerivativesBase::setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) {
+void DerivativesBase::setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) {
   t_ = t;
   x_ = x;
   u_ = u;
@@ -43,57 +43,57 @@ void DerivativesBase::setCurrentStateAndControl(const scalar_t& t, const vector_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void DerivativesBase::getFlowMapDerivativeTime(vector_t& df) {
-  df.setZero(x_.rows());
+vector_t DerivativesBase::getFlowMapDerivativeTime() {
+  return vector_t::Zero(x_.rows());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void DerivativesBase::getJumpMapDerivativeTime(vector_t& dg) {
-  dg.setZero(x_.rows());
+vector_t DerivativesBase::getJumpMapDerivativeTime() {
+  return vector_t::Zero(x_.rows());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void DerivativesBase::getJumpMapDerivativeState(matrix_t& G) {
-  G.setIdentity(x_.rows(), x_.rows());
+matrix_t DerivativesBase::getJumpMapDerivativeState() {
+  return matrix_t::Identity(x_.rows(), x_.rows());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void DerivativesBase::getJumpMapDerivativeInput(matrix_t& H) {
-  H.setZero(x_.rows(), u_.rows());
+matrix_t DerivativesBase::getJumpMapDerivativeInput() {
+  return matrix_t::Zero(x_.rows(), u_.rows());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void DerivativesBase::getGuardSurfacesDerivativeTime(vector_t& D_t_gamma) {
-  D_t_gamma = vector_t::Zero(1);
+vector_t DerivativesBase::getGuardSurfacesDerivativeTime() {
+  return vector_t::Zero(1);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void DerivativesBase::getGuardSurfacesDerivativeState(matrix_t& D_x_gamma) {
-  D_x_gamma = matrix_t::Zero(1, x_.rows());
+matrix_t DerivativesBase::getGuardSurfacesDerivativeState() {
+  return matrix_t::Zero(1, x_.rows());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void DerivativesBase::getGuardSurfacesDerivativeInput(matrix_t& D_u_gamma) {
-  D_u_gamma = matrix_t::Zero(1, u_.rows());
+matrix_t DerivativesBase::getGuardSurfacesDerivativeInput() {
+  return matrix_t::Zero(1, u_.rows());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void DerivativesBase::getDynamicsCovariance(matrix_t& dynamicsCovariance) {
-  dynamicsCovariance.setZero(0, 0);
+matrix_t DerivativesBase::getDynamicsCovariance() {
+  return matrix_t::Zero(0, 0);
 }
 
 }  // namespace ocs2

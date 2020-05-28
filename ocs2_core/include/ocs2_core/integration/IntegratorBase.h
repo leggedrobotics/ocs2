@@ -69,8 +69,8 @@ class IntegratorBase {
    * @param [in] finalTime: Final time.
    * @param [in] dt: Time step.
    */
-  void integrate_const(OdeBase& system, Observer& observer, const vector_t& initialState, scalar_t startTime, scalar_t finalTime,
-                       scalar_t dt, int maxNumSteps = std::numeric_limits<int>::max());
+  void integrateConst(OdeBase& system, Observer& observer, const vector_t& initialState, scalar_t startTime, scalar_t finalTime,
+                      scalar_t dt, int maxNumSteps = std::numeric_limits<int>::max());
 
   /**
    * Adaptive time integration based on start time and final time.
@@ -84,9 +84,9 @@ class IntegratorBase {
    * @param [in] AbsTol: The absolute tolerance error for ode solver.
    * @param [in] RelTol: The relative tolerance error for ode solver.
    */
-  void integrate_adaptive(OdeBase& system, Observer& observer, const vector_t& initialState, scalar_t startTime, scalar_t finalTime,
-                          scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3,
-                          int maxNumSteps = std::numeric_limits<int>::max());
+  void integrateAdaptive(OdeBase& system, Observer& observer, const vector_t& initialState, scalar_t startTime, scalar_t finalTime,
+                         scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3,
+                         int maxNumSteps = std::numeric_limits<int>::max());
 
   /**
    * Output integration based on a given time trajectory.
@@ -100,21 +100,21 @@ class IntegratorBase {
    * @param [in] AbsTol: The absolute tolerance error for ode solver.
    * @param [in] RelTol: The relative tolerance error for ode solver.
    */
-  void integrate_times(OdeBase& system, Observer& observer, const vector_t& initialState,
-                       typename scalar_array_t::const_iterator beginTimeItr, typename scalar_array_t::const_iterator endTimeItr,
-                       scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3,
-                       int maxNumSteps = std::numeric_limits<int>::max());
+  void integrateTimes(OdeBase& system, Observer& observer, const vector_t& initialState,
+                      typename scalar_array_t::const_iterator beginTimeItr, typename scalar_array_t::const_iterator endTimeItr,
+                      scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3,
+                      int maxNumSteps = std::numeric_limits<int>::max());
 
  protected:
-  virtual void run_integrate_const(system_func_t system, observer_func_t observer, const vector_t& initialState, scalar_t startTime,
-                                   scalar_t finalTime, scalar_t dt) = 0;
+  virtual void runIntegrateConst(system_func_t system, observer_func_t observer, const vector_t& initialState, scalar_t startTime,
+                                 scalar_t finalTime, scalar_t dt) = 0;
 
-  virtual void run_integrate_adaptive(system_func_t system, observer_func_t observer, const vector_t& initialState, scalar_t startTime,
-                                      scalar_t finalTime, scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol) = 0;
+  virtual void runIntegrateAdaptive(system_func_t system, observer_func_t observer, const vector_t& initialState, scalar_t startTime,
+                                    scalar_t finalTime, scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol) = 0;
 
-  virtual void run_integrate_times(system_func_t system, observer_func_t observer, const vector_t& initialState,
-                                   typename scalar_array_t::const_iterator beginTimeItr, typename scalar_array_t::const_iterator endTimeItr,
-                                   scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol) = 0;
+  virtual void runIntegrateTimes(system_func_t system, observer_func_t observer, const vector_t& initialState,
+                                 typename scalar_array_t::const_iterator beginTimeItr, typename scalar_array_t::const_iterator endTimeItr,
+                                 scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol) = 0;
 
  private:
   std::shared_ptr<SystemEventHandler> eventHandlerPtr_;

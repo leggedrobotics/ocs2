@@ -81,22 +81,21 @@ class QuadraticCostFunctionAD : public CostFunctionBaseAD {
 
   size_t getNumTerminalParameters() const override { return stateDim_; };
 
-  void intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input, const ad_vector_t& parameters,
-                                ad_scalar_t& costValue) const override {
+  ad_scalar_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                       const ad_vector_t& parameters) const override {
     ad_vector_t stateDesired = parameters.head(stateDim_);
     ad_vector_t inputDesired = parameters.tail(inputDim_);
     ad_vector_t xDeviation = state - stateDesired;
     ad_vector_t uDeviation = input - inputDesired;
 
-    costValue = 0.5 * xDeviation.dot(Q_.template cast<ad_scalar_t>() * xDeviation) +
-                0.5 * uDeviation.dot(R_.template cast<ad_scalar_t>() * uDeviation) + uDeviation.dot(P_.cast<ad_scalar_t>() * xDeviation);
+    return 0.5 * xDeviation.dot(Q_.template cast<ad_scalar_t>() * xDeviation) +
+           0.5 * uDeviation.dot(R_.template cast<ad_scalar_t>() * uDeviation) + uDeviation.dot(P_.cast<ad_scalar_t>() * xDeviation);
   }
 
-  void terminalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters,
-                            ad_scalar_t& costValue) const override {
+  ad_scalar_t terminalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const override {
     ad_vector_t stateDesired = parameters.head(stateDim_);
     ad_vector_t xDeviation = state - stateDesired;
-    costValue = 0.5 * xDeviation.dot(QFinal_.cast<ad_scalar_t>() * xDeviation);
+    return 0.5 * xDeviation.dot(QFinal_.cast<ad_scalar_t>() * xDeviation);
   }
 
  private:

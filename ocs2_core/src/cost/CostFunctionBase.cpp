@@ -52,7 +52,7 @@ void CostFunctionBase::setCostDesiredTrajectoriesPtr(const CostDesiredTrajectori
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CostFunctionBase::setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) {
+void CostFunctionBase::setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) {
   t_ = t;
   x_ = x;
   u_ = u;
@@ -61,15 +61,15 @@ void CostFunctionBase::setCurrentStateAndControl(const scalar_t& t, const vector
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CostFunctionBase::getIntermediateCostDerivativeTime(scalar_t& dLdt) {
-  dLdt = 0;
+scalar_t CostFunctionBase::getIntermediateCostDerivativeTime() {
+  return 0;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CostFunctionBase::getTerminalCostDerivativeTime(scalar_t& dPhidt) {
-  dPhidt = 0;
+scalar_t CostFunctionBase::getTerminalCostDerivativeTime() {
+  return 0;
 }
 
 }  // namespace ocs2

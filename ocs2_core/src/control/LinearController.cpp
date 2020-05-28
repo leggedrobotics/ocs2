@@ -100,7 +100,7 @@ void LinearController::setController(const scalar_array_t& controllerTime, const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t LinearController::computeInput(const scalar_t& t, const vector_t& x) {
+vector_t LinearController::computeInput(scalar_t t, const vector_t& x) {
   vector_t uff;
   const auto indexAlpha = LinearInterpolation::interpolate(t, uff, &timeStamp_, &biasArray_);
 

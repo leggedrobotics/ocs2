@@ -61,7 +61,7 @@ void ConstraintBaseAD::initialize(const std::string& modelName, const std::strin
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBaseAD::setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) {
+void ConstraintBaseAD::setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) {
   ConstraintBase::setCurrentStateAndControl(t, x, u);
 
   vector_t tapedTimeStateInput(1 + stateDim_ + inputDim_);

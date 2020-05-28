@@ -42,6 +42,8 @@ namespace ocs2 {
  */
 class OdeBase {
  public:
+  // TODO(mspieler): change to our convention using return by value.
+  // system interface for boost::odeint
   using system_func_t = std::function<void(const vector_t& x, vector_t& dxdt, scalar_t t)>;
 
   static constexpr size_t DEFAULT_MODEL_DATA_CACHE_SIZE = 7;
@@ -106,27 +108,27 @@ class OdeBase {
    * Computes the autonomous system dynamics.
    * @param [in] t: Current time.
    * @param [in] x: Current state.
-   * @param [out] dxdt: Current state time derivative
+   * @return Current state time derivative
    */
-  virtual void computeFlowMap(const scalar_t& t, const vector_t& x, vector_t& dxdt) = 0;
+  virtual vector_t computeFlowMap(scalar_t t, const vector_t& x) = 0;
 
   /**
    * State map at the transition time
    *
    * @param [in] time: transition time
    * @param [in] state: transition state
-   * @param [out] mappedState: mapped state after transition
+   * @return mapped state after transition
    */
-  virtual void computeJumpMap(const scalar_t& time, const vector_t& state, vector_t& mappedState);
+  virtual vector_t computeJumpMap(scalar_t time, const vector_t& state);
 
   /**
    * Interface method to the guard surfaces.
    *
    * @param [in] time: transition time
    * @param [in] state: transition state
-   * @param [out] guardSurfacesValue: An array of guard surfaces values
+   * @return An array of guard surfaces values
    */
-  virtual void computeGuardSurfaces(const scalar_t& time, const vector_t& state, vector_t& guardSurfacesValue);
+  virtual vector_t computeGuardSurfaces(scalar_t time, const vector_t& state);
 
  protected:
   int numFunctionCalls_;

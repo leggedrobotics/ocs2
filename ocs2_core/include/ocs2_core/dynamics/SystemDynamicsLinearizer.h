@@ -72,17 +72,17 @@ class SystemDynamicsLinearizer : public DerivativesBase {
    * The A matrix at a given operating point for the linearized system,
    * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
    *
-   * @param [out] A: \f$ A(t) \f$ matrix.
+   * @return \f$ A(t) \f$ matrix.
    */
-  void getFlowMapDerivativeState(matrix_t& A) override;
+  matrix_t getFlowMapDerivativeState() override;
 
   /**
    * The B matrix at a given operating point for the linearized system,
    * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
    *
-   * @param [out] B: \f$ B(t) \f$ matrix.
+   * @return \f$ B(t) \f$ matrix.
    */
-  void getFlowMapDerivativeInput(matrix_t& B) override;
+  matrix_t getFlowMapDerivativeInput() override;
 
   /**
    * Returns pointer to the class.

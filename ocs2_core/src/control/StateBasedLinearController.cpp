@@ -45,8 +45,8 @@ void StateBasedLinearController::setController(ControllerBase* ctrlPtr) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t StateBasedLinearController::computeTrajectorySpreadingInput(const scalar_t& t, const vector_t& x,
-                                                                     const scalar_array_t& ctrlEventTimes, ControllerBase* ctrlPtr) {
+vector_t StateBasedLinearController::computeTrajectorySpreadingInput(scalar_t t, const vector_t& x, const scalar_array_t& ctrlEventTimes,
+                                                                     ControllerBase* ctrlPtr) {
   size_t currentMode = x.tail(1).value();
   size_t numEvents = ctrlEventTimes.size();
 
@@ -79,7 +79,7 @@ vector_t StateBasedLinearController::computeTrajectorySpreadingInput(const scala
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t StateBasedLinearController::computeInput(const scalar_t& t, const vector_t& x) {
+vector_t StateBasedLinearController::computeInput(scalar_t t, const vector_t& x) {
   return computeTrajectorySpreadingInput(t, x, ctrlEventTimes_, ctrlPtr_);
 }
 

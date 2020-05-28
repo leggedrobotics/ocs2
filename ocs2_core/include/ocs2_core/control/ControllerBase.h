@@ -59,7 +59,7 @@ class ControllerBase {
    * @param [in] x: Current state.
    * @return Current input.
    */
-  virtual vector_t computeInput(const scalar_t& t, const vector_t& x) = 0;
+  virtual vector_t computeInput(scalar_t t, const vector_t& x) = 0;
 
   /**
    * @brief Saves the controller at given time to an array of arrays structure for ROS transmission

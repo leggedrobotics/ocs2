@@ -70,27 +70,27 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
   void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                   bool verbose = true);
 
-  void computeFlowMap(const scalar_t& time, const vector_t& state, const vector_t& input, vector_t& stateDerivative) final;
+  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) final;
 
-  void computeJumpMap(const scalar_t& time, const vector_t& state, vector_t& jumpedState) final;
+  vector_t computeJumpMap(scalar_t time, const vector_t& state) final;
 
-  void computeGuardSurfaces(const scalar_t& time, const vector_t& state, vector_t& guardSurfacesValue) final;
+  vector_t computeGuardSurfaces(scalar_t time, const vector_t& state) final;
 
-  void setCurrentStateAndControl(const scalar_t& time, const vector_t& state, const vector_t& input) final;
+  void setCurrentStateAndControl(scalar_t time, const vector_t& state, const vector_t& input) final;
 
-  void getFlowMapDerivativeTime(vector_t& df) final;
+  vector_t getFlowMapDerivativeTime() final;
 
-  void getFlowMapDerivativeState(matrix_t& A) final;
+  matrix_t getFlowMapDerivativeState() final;
 
-  void getFlowMapDerivativeInput(matrix_t& B) final;
+  matrix_t getFlowMapDerivativeInput() final;
 
-  void getJumpMapDerivativeTime(vector_t& dg) final;
+  vector_t getJumpMapDerivativeTime() final;
 
-  void getJumpMapDerivativeState(matrix_t& G) final;
+  matrix_t getJumpMapDerivativeState() final;
 
-  void getGuardSurfacesDerivativeTime(vector_t& D_t_gamma) final;
+  vector_t getGuardSurfacesDerivativeTime() final;
 
-  void getGuardSurfacesDerivativeState(matrix_t& D_x_gamma) final;
+  matrix_t getGuardSurfacesDerivativeState() final;
 
  protected:
   /**
@@ -99,18 +99,18 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
    * @param [in] time: time.
    * @param [in] state: state vector.
    * @param [in] input: input vector.
-   * @param [out] stateDerivative: state vector time derivative.
+   * @return state vector time derivative.
    */
-  virtual void systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input, ad_vector_t& stateDerivative) const = 0;
+  virtual ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const = 0;
 
   /**
    * Interface method to the state jump map of the hybrid system. This method can be implemented by the derived class.
    *
    * @param [in] time: time.
    * @param [in] state: state vector.
-   * @param [out] jumpedState: jumped state.
+   * @return jumped state.
    */
-  virtual void systemJumpMap(ad_scalar_t time, const ad_vector_t& state, ad_vector_t& jumpedState) const;
+  virtual ad_vector_t systemJumpMap(ad_scalar_t time, const ad_vector_t& state) const;
 
   /**
    * Interface method to the guard surfaces. This method can be implemented by the derived class.
@@ -118,9 +118,9 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
    * @param [in] time: time.
    * @param [in] state: state.
    * @param [in] input: input vector
-   * @param [out] guardSurfacesValue: A vector of guard surfaces values
+   * @return A vector of guard surfaces values
    */
-  virtual void systemGuardSurfaces(ad_scalar_t time, const ad_vector_t& state, ad_vector_t& guardSurfacesValue) const;
+  virtual ad_vector_t systemGuardSurfaces(ad_scalar_t time, const ad_vector_t& state) const;
 
  private:
   /**

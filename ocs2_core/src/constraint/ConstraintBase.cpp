@@ -39,7 +39,7 @@ ConstraintBase::ConstraintBase(size_t stateDim, size_t inputDim) : stateDim_(sta
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBase::setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) {
+void ConstraintBase::setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) {
   t_ = t;
   x_ = x;
   u_ = u;

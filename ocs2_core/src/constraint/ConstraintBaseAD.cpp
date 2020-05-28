@@ -82,50 +82,50 @@ void ConstraintBaseAD::setCurrentStateAndControl(const scalar_t& t, const vector
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBaseAD::getConstraint1(vector_t& e) {
-  e = stateInputValues_;
+vector_t ConstraintBaseAD::getStateInputEqualityConstraint() {
+  return stateInputValues_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBaseAD::getConstraint2(vector_t& h) {
-  h = stateOnlyValues_;
+vector_t ConstraintBaseAD::getStateEqualityConstraint() {
+  return stateOnlyValues_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBaseAD::getFinalConstraint2(vector_t& h_f) {
-  h_f = stateOnlyFinalValues_;
+vector_t ConstraintBaseAD::getFinalStateEqualityConstraint() {
+  return stateOnlyFinalValues_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBaseAD::getConstraint1DerivativesState(matrix_t& C) {
-  C = stateInputJacobian_.middleCols(1, stateDim_);
+matrix_t ConstraintBaseAD::getStateInputEqualityConstraintDerivativesState() {
+  return stateInputJacobian_.middleCols(1, stateDim_);
 }
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 
-void ConstraintBaseAD::getConstraint1DerivativesControl(matrix_t& D) {
-  D = stateInputJacobian_.rightCols(inputDim_);
+matrix_t ConstraintBaseAD::getStateInputEqualityConstraintDerivativesInput() {
+  return stateInputJacobian_.rightCols(inputDim_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBaseAD::getConstraint2DerivativesState(matrix_t& F) {
-  F = stateOnlyJacobian_.rightCols(stateDim_);
+matrix_t ConstraintBaseAD::getStateEqualityConstraintDerivativesState() {
+  return stateOnlyJacobian_.rightCols(stateDim_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBaseAD::getFinalConstraint2DerivativesState(matrix_t& F_f) {
-  F_f = stateOnlyFinalJacobian_.rightCols(stateDim_);
+matrix_t ConstraintBaseAD::getFinalStateEqualityConstraintDerivativesState() {
+  return stateOnlyFinalJacobian_.rightCols(stateDim_);
 }
 
 /******************************************************************************************************/

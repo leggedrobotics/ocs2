@@ -80,19 +80,19 @@ class ConstraintBaseAD : public ConstraintBase {
 
   void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) final;
 
-  void getConstraint1(vector_t& e) final;
+  vector_t getStateInputEqualityConstraint() final;
 
-  void getConstraint2(vector_t& h) final;
+  vector_t getStateEqualityConstraint() final;
 
-  void getFinalConstraint2(vector_t& h_f) final;
+  vector_t getFinalStateEqualityConstraint() final;
 
-  void getConstraint1DerivativesState(matrix_t& C) final;
+  matrix_t getStateInputEqualityConstraintDerivativesState() final;
 
-  void getConstraint1DerivativesControl(matrix_t& D) final;
+  matrix_t getStateInputEqualityConstraintDerivativesInput() final;
 
-  void getConstraint2DerivativesState(matrix_t& F) final;
+  matrix_t getStateEqualityConstraintDerivativesState() final;
 
-  void getFinalConstraint2DerivativesState(matrix_t& F_f) final;
+  matrix_t getFinalStateEqualityConstraintDerivativesState() final;
 
  protected:
   /**

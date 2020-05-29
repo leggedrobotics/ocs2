@@ -67,25 +67,41 @@ scalar_t timeLeftInMode(scalar_t phase, const Gait& gait) {
 feet_array_t<scalar_t> getCurrentSwingPhasePerLeg(scalar_t phase, const Gait& gait) {
   assert(isValidPhase(phase));
   assert(isValidGait(gait));
-  feet_array_t<scalar_t> swingDurationPerLeg;
+  feet_array_t<scalar_t> swingPhasePerLeg;
 
   int modeIndex = getCurrentModeIndex(phase, gait);
   const auto& stanceLegs = modeNumber2StanceLeg(gait.modeSequence[modeIndex]);
 
   for (int leg = 0; leg < switched_model::NUM_CONTACT_POINTS; ++leg) {
-    // TODO: Generalize this for cases when the swing leg goes over several modes.
     if (stanceLegs[leg]) {
-      swingDurationPerLeg[leg] = -1.0;
+      swingPhasePerLeg[leg] = -1.0;
     } else {
+      scalar_t liftOffPhase;
+      scalar_t touchDownPhase;
       if (modeIndex < gait.eventPhases.size()) {
-        swingDurationPerLeg[leg] =
-            (phase - gait.eventPhases[modeIndex - 1]) / (gait.eventPhases[modeIndex] - gait.eventPhases[modeIndex - 1]);
+        // Get touchdown index.
+        int touchDownIndex = modeIndex;
+        while (touchDownIndex < gait.eventPhases.size()) {
+          if (modeNumber2StanceLeg(gait.modeSequence[touchDownIndex + 1])[leg]) {
+            break;
+          } else {
+            touchDownIndex++;
+          }
+        }
+        liftOffPhase = gait.eventPhases[modeIndex - 1];
+        if (touchDownIndex < gait.eventPhases.size()) {
+          touchDownPhase = gait.eventPhases[touchDownIndex];
+        } else {
+          touchDownPhase = 1.0;
+        }
       } else {
-        swingDurationPerLeg[leg] = (phase - gait.eventPhases.rbegin()[1]) / (gait.eventPhases.rbegin()[0] - gait.eventPhases.rbegin()[1]);
+        liftOffPhase = gait.eventPhases.back();
+        touchDownPhase = 1.0;
       }
+      swingPhasePerLeg[leg] = (phase - liftOffPhase) / (touchDownPhase - liftOffPhase);
     }
   }
-  return swingDurationPerLeg;
+  return swingPhasePerLeg;
 }
 
 std::ostream& operator<<(std::ostream& stream, const Gait& gait) {

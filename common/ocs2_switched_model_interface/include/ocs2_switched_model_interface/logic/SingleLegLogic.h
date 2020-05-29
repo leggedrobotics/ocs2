@@ -53,10 +53,6 @@ feet_array_t<scalar_t> getTimeUntilNextLiftOffPerLeg(scalar_t currentTime, const
 /** Returns time until next touch down for all legs from a modeschedule. Returns -1 if leg is does not touch down */
 feet_array_t<scalar_t> getTimeUntilNextTouchDownPerLeg(scalar_t currentTime, const ocs2::ModeSchedule& modeSchedule);
 
-/** Returns current swing phase [0.0, 1.0) or -1.0 if standing */
-feet_array_t<scalar_t> getCurrentSwingPhasePerLeg(scalar_t currentTime, const feet_array_t<scalar_t>& swingDurationsOfCurrentGait,
-                                                  const ocs2::ModeSchedule& modeSchedule);
-
 /**
  * Get {startTime, endTime} for all contact phases. Swingphases are always implied in between: endTime[i] < startTime[i+1]
  * times are NaN if they cannot be identified at the boundaries

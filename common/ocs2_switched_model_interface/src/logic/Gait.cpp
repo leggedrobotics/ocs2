@@ -3,6 +3,7 @@
 //
 
 #include "ocs2_switched_model_interface/logic/Gait.h"
+#include "ocs2_switched_model_interface/core/MotionPhaseDefinition.h"
 
 #include <ocs2_core/misc/Display.h>
 
@@ -61,6 +62,29 @@ scalar_t timeLeftInMode(scalar_t phase, const Gait& gait) {
   } else {
     return timeLeftInGait(phase, gait);
   }
+}
+
+feet_array_t<scalar_t> getCurrentSwingPhasePerLeg(scalar_t phase, const Gait& gait) {
+  assert(isValidPhase(phase));
+  assert(isValidGait(gait));
+  feet_array_t<scalar_t> swingDurationPerLeg;
+
+  int modeIndex = getCurrentModeIndex(phase, gait);
+  const auto& stanceLegs = modeNumber2StanceLeg(gait.modeSequence[modeIndex]);
+
+  for (int leg = 0; leg < switched_model::NUM_CONTACT_POINTS; ++leg) {
+    if (stanceLegs[leg]) {
+      swingDurationPerLeg[leg] = -1.0;
+    } else {
+      if (modeIndex < gait.eventPhases.size()) {
+        swingDurationPerLeg[leg] =
+            (phase - gait.eventPhases[modeIndex - 1]) / (gait.eventPhases[modeIndex] - gait.eventPhases[modeIndex - 1]);
+      } else {
+        swingDurationPerLeg[leg] = (phase - gait.eventPhases.rbegin()[1]) / (gait.eventPhases.rbegin()[0] - gait.eventPhases.rbegin()[1]);
+      }
+    }
+  }
+  return swingDurationPerLeg;
 }
 
 std::ostream& operator<<(std::ostream& stream, const Gait& gait) {

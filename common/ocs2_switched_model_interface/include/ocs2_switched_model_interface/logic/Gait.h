@@ -55,6 +55,9 @@ scalar_t timeLeftInGait(scalar_t phase, const Gait& gait);
 /** Returns the time left in the current based on the phase variable */
 scalar_t timeLeftInMode(scalar_t phase, const Gait& gait);
 
+/** Returns current swing phase per leg [0.0, 1.0) or -1.0 if standing */
+feet_array_t<scalar_t> getCurrentSwingPhasePerLeg(scalar_t phase, const Gait& gait);
+
 /** Print gait */
 std::ostream& operator<<(std::ostream& stream, const Gait& gait);
 

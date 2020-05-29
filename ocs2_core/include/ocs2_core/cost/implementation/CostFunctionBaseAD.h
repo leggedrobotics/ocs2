@@ -44,8 +44,8 @@ CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::CostFunctionBaseAD()
 template <size_t STATE_DIM, size_t INPUT_DIM>
 CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::CostFunctionBaseAD(const CostFunctionBaseAD& rhs)
     : BASE(rhs),
-      intermediateADInterfacePtr_(new ad_interface_t(*rhs.intermediateADInterfacePtr_)),
-      terminalADInterfacePtr_(new ad_interface_t(*rhs.terminalADInterfacePtr_)),
+      intermediateADInterfacePtr_(new CppAdInterface(*rhs.intermediateADInterfacePtr_)),
+      terminalADInterfacePtr_(new CppAdInterface(*rhs.terminalADInterfacePtr_)),
       intermediateDerivativesComputed_(false),
       terminalDerivativesComputed_(false) {}
 
@@ -228,7 +228,7 @@ void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::setADInterfaces(const std::string
     y = ad_dynamic_vector_t(1);
     this->intermediateCostFunction(time, state, input, p, y(0));
   };
-  intermediateADInterfacePtr_.reset(new ad_interface_t(intermediateCostAd, 1, 1 + STATE_DIM + INPUT_DIM, getNumIntermediateParameters(),
+  intermediateADInterfacePtr_.reset(new CppAdInterface(intermediateCostAd, 1, 1 + STATE_DIM + INPUT_DIM, getNumIntermediateParameters(),
                                                        modelName + "_intermediate", modelFolder));
 
   auto terminalCostAd = [this](const ad_dynamic_vector_t& x, const ad_dynamic_vector_t& p, ad_dynamic_vector_t& y) {
@@ -238,7 +238,7 @@ void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::setADInterfaces(const std::string
     this->terminalCostFunction(time, state, p, y(0));
   };
   terminalADInterfacePtr_.reset(
-      new ad_interface_t(terminalCostAd, 1, 1 + STATE_DIM, getNumTerminalParameters(), modelName + "_terminal", modelFolder));
+      new CppAdInterface(terminalCostAd, 1, 1 + STATE_DIM, getNumTerminalParameters(), modelName + "_terminal", modelFolder));
 }
 
 /******************************************************************************************************/
@@ -246,8 +246,8 @@ void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::setADInterfaces(const std::string
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::createModels(bool verbose) {
-  intermediateADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::Second, verbose);
-  terminalADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::Second, verbose);
+  intermediateADInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::Second, verbose);
+  terminalADInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::Second, verbose);
 }
 
 /******************************************************************************************************/
@@ -255,8 +255,8 @@ void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::createModels(bool verbose) {
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
 void CostFunctionBaseAD<STATE_DIM, INPUT_DIM>::loadModelsIfAvailable(bool verbose) {
-  intermediateADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::Second, verbose);
-  terminalADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::Second, verbose);
+  intermediateADInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::Second, verbose);
+  terminalADInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::Second, verbose);
 }
 
 }  // namespace ocs2

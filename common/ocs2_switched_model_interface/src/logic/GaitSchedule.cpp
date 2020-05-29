@@ -77,7 +77,7 @@ void GaitSchedule::setGaitSequenceAfterTime(const std::vector<Gait>& gaitSequenc
 }
 
 void GaitSchedule::adaptCurrentGait(
-    const std::function<Gait(scalar_t& currentPhase, Gait& currentGait, scalar_t currTime, const Gait& nextGait)>& gaitAdaptor) {
+    const std::function<void(scalar_t& currentPhase, Gait& currentGait, scalar_t currTime, const Gait& nextGait)>& gaitAdaptor) {
   // Repeat the current gait if it is the last one in the schedule
   if (std::next(gaitSchedule_.begin()) == gaitSchedule_.end()) {
     gaitSchedule_.push_back(gaitSchedule_.back());

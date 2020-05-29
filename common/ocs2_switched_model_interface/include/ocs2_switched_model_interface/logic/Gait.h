@@ -37,6 +37,9 @@ struct Gait {
  */
 bool isValidGait(const Gait& gait);
 
+/** Get the current mode index. */
+int getCurrentModeIndex(scalar_t phase, const Gait& gait);
+
 /** Check is if the phase is in [0.0, 1.0) */
 bool isValidPhase(scalar_t phase);
 

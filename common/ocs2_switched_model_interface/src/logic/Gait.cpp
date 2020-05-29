@@ -73,6 +73,7 @@ feet_array_t<scalar_t> getCurrentSwingPhasePerLeg(scalar_t phase, const Gait& ga
   const auto& stanceLegs = modeNumber2StanceLeg(gait.modeSequence[modeIndex]);
 
   for (int leg = 0; leg < switched_model::NUM_CONTACT_POINTS; ++leg) {
+    // TODO: Generalize this for cases when the swing leg goes over several modes.
     if (stanceLegs[leg]) {
       swingDurationPerLeg[leg] = -1.0;
     } else {

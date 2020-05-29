@@ -150,6 +150,6 @@ base_coordinate_s_t<SCALAR_T> ComModelBase<SCALAR_T>::calculateComLocalAccelerat
 }
 
 template class ComModelBase<scalar_t>;
-template class ComModelBase<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
+template class ComModelBase<ocs2::CppAdInterface::ad_scalar_t>;
 
 }  // end of namespace switched_model

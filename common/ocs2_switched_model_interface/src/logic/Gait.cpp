@@ -47,6 +47,21 @@ size_t getModeFromPhase(scalar_t phase, const Gait& gait) {
   return gait.modeSequence[getCurrentModeIndex(phase, gait)];
 }
 
+int getModeIndexFromPhaseUntilNextTouchDownOfLeg(scalar_t phase, int leg, const Gait& gait) {
+  assert(isValidPhase(phase));
+  assert(isValidGait(gait));
+  int modeIndex = getCurrentModeIndex(phase, gait);
+  while (modeIndex < gait.modeSequence.size()) {
+    size_t currentMode = gait.modeSequence[modeIndex];
+    if (modeNumber2StanceLeg(currentMode)[leg]) {
+      break;
+    } else {
+      ++modeIndex;
+    }
+  }
+  return modeIndex;
+}
+
 scalar_t timeLeftInGait(scalar_t phase, const Gait& gait) {
   assert(isValidPhase(phase));
   assert(isValidGait(gait));

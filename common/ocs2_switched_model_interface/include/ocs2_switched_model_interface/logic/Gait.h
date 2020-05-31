@@ -49,8 +49,11 @@ scalar_t wrapPhase(scalar_t phase);
 /** The modes are selected with a closed-open interval: [ ) */
 int getModeIndexFromPhase(scalar_t phase, const Gait& gait);
 
-/** Gets the mode index until next touch down from the phase variable */
+/** Gets the mode index until next touch down from the phase variable and returns -1 if there is no last touch down after the phase */
 int getModeIndexFromPhaseUntilNextTouchDownOfLeg(scalar_t phase, int leg, const Gait& gait);
+
+/** Gets the mode index until last touch down from the phase variable and returns -1 if there is no last touch down before the phase. */
+int getModeIndexFromPhaseUntilLastTouchDownOfLeg(scalar_t phase, int leg, const Gait& gait);
 
 /** Gets the active mode from the phase variable */
 size_t getModeFromPhase(scalar_t phase, const Gait& gait);

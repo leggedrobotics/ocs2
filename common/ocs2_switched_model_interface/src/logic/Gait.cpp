@@ -59,6 +59,27 @@ int getModeIndexFromPhaseUntilNextTouchDownOfLeg(scalar_t phase, int leg, const 
       ++modeIndex;
     }
   }
+  if (modeIndex >= gait.modeSequence.size() - 1 && !modeNumber2StanceLeg(gait.modeSequence[modeIndex])[leg]) {
+    modeIndex = -1;
+  }
+  return modeIndex;
+}
+
+int getModeIndexFromPhaseUntilLastTouchDownOfLeg(scalar_t phase, int leg, const Gait& gait) {
+  assert(isValidPhase(phase));
+  assert(isValidGait(gait));
+  int modeIndex = getCurrentModeIndex(phase, gait);
+  while (modeIndex > 0) {
+    size_t currentMode = gait.modeSequence[modeIndex];
+    if (modeNumber2StanceLeg(currentMode)[leg]) {
+      break;
+    } else {
+      --modeIndex;
+    }
+  }
+  if (modeIndex <= 0 && !modeNumber2StanceLeg(gait.modeSequence[modeIndex])[leg]) {
+    modeIndex = -1;
+  }
   return modeIndex;
 }
 
@@ -84,34 +105,26 @@ feet_array_t<scalar_t> getCurrentSwingPhasePerLeg(scalar_t phase, const Gait& ga
   assert(isValidGait(gait));
   feet_array_t<scalar_t> swingPhasePerLeg;
 
-  int modeIndex = getCurrentModeIndex(phase, gait);
-  const auto& stanceLegs = modeNumber2StanceLeg(gait.modeSequence[modeIndex]);
+  const int currentModeIndex = getCurrentModeIndex(phase, gait);
+  const auto& stanceLegs = modeNumber2StanceLeg(gait.modeSequence[currentModeIndex]);
 
   for (int leg = 0; leg < switched_model::NUM_CONTACT_POINTS; ++leg) {
     if (stanceLegs[leg]) {
       swingPhasePerLeg[leg] = -1.0;
     } else {
+      const int modeIndexUntilNextTouchDown = getModeIndexFromPhaseUntilNextTouchDownOfLeg(phase, leg, gait);
+      const int modeIndexUntilLastTouchDown = getModeIndexFromPhaseUntilLastTouchDownOfLeg(phase, leg, gait);
       scalar_t liftOffPhase;
-      scalar_t touchDownPhase;
-      if (modeIndex < gait.eventPhases.size()) {
-        // Get touchdown index.
-        int touchDownIndex = modeIndex;
-        while (touchDownIndex < gait.eventPhases.size()) {
-          if (modeNumber2StanceLeg(gait.modeSequence[touchDownIndex + 1])[leg]) {
-            break;
-          } else {
-            touchDownIndex++;
-          }
-        }
-        liftOffPhase = gait.eventPhases[modeIndex - 1];
-        if (touchDownIndex < gait.eventPhases.size()) {
-          touchDownPhase = gait.eventPhases[touchDownIndex];
-        } else {
-          touchDownPhase = 1.0;
-        }
+      if (modeIndexUntilLastTouchDown < 0) {
+        liftOffPhase = 0.0;
       } else {
-        liftOffPhase = gait.eventPhases.back();
+        liftOffPhase = gait.eventPhases[modeIndexUntilLastTouchDown];
+      }
+      scalar_t touchDownPhase;
+      if (modeIndexUntilNextTouchDown >= gait.modeSequence.size() || modeIndexUntilNextTouchDown == -1) {
         touchDownPhase = 1.0;
+      } else {
+        touchDownPhase = gait.eventPhases[modeIndexUntilNextTouchDown - 1];
       }
       swingPhasePerLeg[leg] = (phase - liftOffPhase) / (touchDownPhase - liftOffPhase);
     }

@@ -125,5 +125,5 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalCrocKinematics<SCALAR_T>::footOrient
 }  // end of namespace anymal
 
 // Explicit instantiation
-template class anymal::tpl::AnymalCrocKinematics<double>;
-template class anymal::tpl::AnymalCrocKinematics<ocs2::CppAdInterface<double>::ad_scalar_t>;
+template class anymal::tpl::AnymalCrocKinematics<ocs2::scalar_t>;
+template class anymal::tpl::AnymalCrocKinematics<ocs2::CppAdInterface::ad_scalar_t>;

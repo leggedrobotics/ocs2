@@ -41,10 +41,9 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
 
   using Settings_t = EndEffectorConstraintSettings;
 
-  using ad_interface_t = ocs2::CppAdInterface<scalar_t>;
+  using ad_interface_t = ocs2::CppAdInterface;
   using ad_scalar_t = typename ad_interface_t::ad_scalar_t;
   using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
-  using dynamic_vector_t = typename ad_interface_t::dynamic_vector_t;
 
   using constraint_timeStateInput_matrix_t = Eigen::Matrix<scalar_t, -1, domain_dim_>;
   using timeStateInput_matrix_t = Eigen::Matrix<scalar_t, domain_dim_, domain_dim_>;

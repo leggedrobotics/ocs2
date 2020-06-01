@@ -59,9 +59,8 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
   using typename BASE::state_vector_array_t;
   using typename BASE::state_vector_t;
 
-  using ad_interface_t = CppAdInterface<scalar_t>;
-  using ad_scalar_t = typename ad_interface_t::ad_scalar_t;
-  using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
+  using ad_scalar_t = CppAdInterface::ad_scalar_t;
+  using ad_dynamic_vector_t = CppAdInterface::ad_dynamic_vector_t;
 
   using timeStateInput_vector_t = Eigen::Matrix<scalar_t, 1 + STATE_DIM + INPUT_DIM, 1>;
   using timeStateInput_rowVector_t = Eigen::Matrix<scalar_t, 1, 1 + STATE_DIM + INPUT_DIM>;
@@ -203,8 +202,8 @@ class CostFunctionBaseAD : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    */
   void loadModelsIfAvailable(bool verbose);
 
-  std::unique_ptr<ad_interface_t> terminalADInterfacePtr_;
-  std::unique_ptr<ad_interface_t> intermediateADInterfacePtr_;
+  std::unique_ptr<CppAdInterface> terminalADInterfacePtr_;
+  std::unique_ptr<CppAdInterface> intermediateADInterfacePtr_;
 
   // Intermediate cost
   bool intermediateDerivativesComputed_;

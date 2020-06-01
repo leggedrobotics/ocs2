@@ -2,19 +2,16 @@
 
 #pragma once
 
+#include <ocs2_core/Types.h>
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_core/automatic_differentiation/CppAdSparsity.h>
 #include <Eigen/Core>
 
 class CommonCppAdNoParameterFixture : public ::testing::Test {
  public:
-  using scalar_t = double;
-  using ad_base_t = CppAD::cg::CG<scalar_t>;
-  using ad_t = CppAD::AD<ad_base_t>;
-  using ad_fun_t = CppAD::ADFun<ad_base_t>;
-  using ad_dynamic_vector_t = ocs2::CppAdInterface<scalar_t>::ad_dynamic_vector_t;
-  using dynamic_vector_t = ocs2::CppAdInterface<scalar_t>::dynamic_vector_t;
-  using dynamic_matrix_t = ocs2::CppAdInterface<scalar_t>::dynamic_matrix_t;
+  using ad_dynamic_vector_t = ocs2::CppAdInterface::ad_dynamic_vector_t;
+  using dynamic_vector_t = ocs2::dynamic_vector_t;
+  using dynamic_matrix_t = ocs2::dynamic_matrix_t;
 
   const size_t variableDim_ = 3;
   const size_t rangeDim_ = 1;
@@ -27,7 +24,7 @@ class CommonCppAdNoParameterFixture : public ::testing::Test {
 
   virtual ~CommonCppAdNoParameterFixture() = default;
 
-  void create() {};
+  void create(){};
 
   static void funImpl(const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y) {
     // the model equation
@@ -69,16 +66,12 @@ class CommonCppAdNoParameterFixture : public ::testing::Test {
   void init() {}
 };
 
-
 class CommonCppAdParameterizedFixture : public ::testing::Test {
  public:
-  using scalar_t = double;
-  using ad_base_t = CppAD::cg::CG<scalar_t>;
-  using ad_t = CppAD::AD<ad_base_t>;
-  using ad_fun_t = CppAD::ADFun<ad_base_t>;
-  using ad_dynamic_vector_t = ocs2::CppAdInterface<scalar_t>::ad_dynamic_vector_t;
-  using dynamic_vector_t = ocs2::CppAdInterface<scalar_t>::dynamic_vector_t;
-  using dynamic_matrix_t = ocs2::CppAdInterface<scalar_t>::dynamic_matrix_t;
+  using ad_fun_t = ocs2::CppAdInterface::ad_fun_t;
+  using ad_dynamic_vector_t = ocs2::CppAdInterface::ad_dynamic_vector_t;
+  using dynamic_vector_t = ocs2::dynamic_vector_t;
+  using dynamic_matrix_t = ocs2::dynamic_matrix_t;
 
   const size_t variableDim_ = 2;
   const size_t rangeDim_ = 2;
@@ -144,13 +137,13 @@ class CommonCppAdParameterizedFixture : public ::testing::Test {
     dynamic_matrix_t hessian(variableDim_, variableDim_);
 
     switch (outputIndex) {
-      case 0 :
+      case 0:
         hessian(0, 0) = 0.0;
         hessian(0, 1) = 0.5;
         hessian(1, 0) = hessian(0, 1);
         hessian(1, 1) = 4.0 * p(0);
         break;
-      case 1 :
+      case 1:
         hessian(0, 0) = x(1);
         hessian(0, 1) = x(0);
         hessian(1, 0) = hessian(0, 1);

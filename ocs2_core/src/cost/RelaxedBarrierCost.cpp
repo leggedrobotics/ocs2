@@ -108,7 +108,7 @@ void RelaxedBarrierCost::setCurrentStateAndControl(scalar_t t, const vector_t& x
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t RelaxedBarrierCost::getIntermediateCost() {
+scalar_t RelaxedBarrierCost::getCost() {
   scalar_t L = 0;
   if (intermediateCostDim_ == 0) {
     return L;
@@ -127,7 +127,7 @@ scalar_t RelaxedBarrierCost::getIntermediateCost() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t RelaxedBarrierCost::getIntermediateCostDerivativeTime() {
+scalar_t RelaxedBarrierCost::getCostDerivativeTime() {
   if (intermediateCostDim_ == 0) {
     return 0;
   }
@@ -151,7 +151,7 @@ scalar_t RelaxedBarrierCost::getIntermediateCostDerivativeTime() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t RelaxedBarrierCost::getIntermediateCostDerivativeState() {
+vector_t RelaxedBarrierCost::getCostDerivativeState() {
   if (intermediateCostDim_ == 0) {
     return vector_t::Zero(stateDim_);
   }
@@ -175,7 +175,7 @@ vector_t RelaxedBarrierCost::getIntermediateCostDerivativeState() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t RelaxedBarrierCost::getIntermediateCostSecondDerivativeState() {
+matrix_t RelaxedBarrierCost::getCostSecondDerivativeState() {
   if (intermediateCostDim_ == 0) {
     return matrix_t::Zero(stateDim_, stateDim_);
   }
@@ -200,7 +200,7 @@ matrix_t RelaxedBarrierCost::getIntermediateCostSecondDerivativeState() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t RelaxedBarrierCost::getIntermediateCostDerivativeInput() {
+vector_t RelaxedBarrierCost::getCostDerivativeInput() {
   if (intermediateCostDim_ == 0) {
     return vector_t::Zero(inputDim_);
   }
@@ -224,7 +224,7 @@ vector_t RelaxedBarrierCost::getIntermediateCostDerivativeInput() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t RelaxedBarrierCost::getIntermediateCostSecondDerivativeInput() {
+matrix_t RelaxedBarrierCost::getCostSecondDerivativeInput() {
   if (intermediateCostDim_ == 0) {
     return matrix_t::Zero(inputDim_, inputDim_);
   }
@@ -249,7 +249,7 @@ matrix_t RelaxedBarrierCost::getIntermediateCostSecondDerivativeInput() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t RelaxedBarrierCost::getIntermediateCostDerivativeInputState() {
+matrix_t RelaxedBarrierCost::getCostDerivativeInputState() {
   if (intermediateCostDim_ == 0) {
     return matrix_t::Zero(inputDim_, stateDim_);
   }

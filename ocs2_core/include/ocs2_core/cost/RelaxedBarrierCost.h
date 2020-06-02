@@ -103,19 +103,19 @@ class RelaxedBarrierCost : public CostFunctionBase {
 
   void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) final;
 
-  scalar_t getIntermediateCost() override;
+  scalar_t getCost() override;
 
-  scalar_t getIntermediateCostDerivativeTime() override;
+  scalar_t getCostDerivativeTime() override;
 
-  vector_t getIntermediateCostDerivativeState() override;
+  vector_t getCostDerivativeState() override;
 
-  matrix_t getIntermediateCostSecondDerivativeState() override;
+  matrix_t getCostSecondDerivativeState() override;
 
-  vector_t getIntermediateCostDerivativeInput() override;
+  vector_t getCostDerivativeInput() override;
 
-  matrix_t getIntermediateCostSecondDerivativeInput() override;
+  matrix_t getCostSecondDerivativeInput() override;
 
-  matrix_t getIntermediateCostDerivativeInputState() override;
+  matrix_t getCostDerivativeInputState() override;
 
   scalar_t getTerminalCost() override;
 

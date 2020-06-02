@@ -81,7 +81,7 @@ void QuadraticCostFunction::setCurrentStateAndControl(scalar_t t, const vector_t
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t QuadraticCostFunction::getIntermediateCost() {
+scalar_t QuadraticCostFunction::getCost() {
   return 0.5 * xIntermediateDeviation_.dot(Q_ * xIntermediateDeviation_) + 0.5 * uIntermediateDeviation_.dot(R_ * uIntermediateDeviation_) +
          uIntermediateDeviation_.dot(P_ * xIntermediateDeviation_);
 }
@@ -89,35 +89,35 @@ scalar_t QuadraticCostFunction::getIntermediateCost() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t QuadraticCostFunction::getIntermediateCostDerivativeState() {
+vector_t QuadraticCostFunction::getCostDerivativeState() {
   return Q_ * xIntermediateDeviation_ + P_.transpose() * uIntermediateDeviation_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t QuadraticCostFunction::getIntermediateCostSecondDerivativeState() {
+matrix_t QuadraticCostFunction::getCostSecondDerivativeState() {
   return Q_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t QuadraticCostFunction::getIntermediateCostDerivativeInput() {
+vector_t QuadraticCostFunction::getCostDerivativeInput() {
   return R_ * uIntermediateDeviation_ + P_ * xIntermediateDeviation_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t QuadraticCostFunction::getIntermediateCostSecondDerivativeInput() {
+matrix_t QuadraticCostFunction::getCostSecondDerivativeInput() {
   return R_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t QuadraticCostFunction::getIntermediateCostDerivativeInputState() {
+matrix_t QuadraticCostFunction::getCostDerivativeInputState() {
   return P_;
 }
 

@@ -48,18 +48,18 @@ class CostFunctionLinearCombination : public CostFunctionBase {
   CostFunctionLinearCombination() = delete;
 
   CostFunctionLinearCombination* clone() const override;
-  scalar_t getIntermediateCost() override;
-  vector_t getIntermediateCostDerivativeState() override;
-  matrix_t getIntermediateCostSecondDerivativeState() override;
-  vector_t getIntermediateCostDerivativeInput() override;
-  matrix_t getIntermediateCostSecondDerivativeInput() override;
-  matrix_t getIntermediateCostDerivativeInputState() override;
+  scalar_t getCost() override;
+  vector_t getCostDerivativeState() override;
+  matrix_t getCostSecondDerivativeState() override;
+  vector_t getCostDerivativeInput() override;
+  matrix_t getCostSecondDerivativeInput() override;
+  matrix_t getCostDerivativeInputState() override;
   scalar_t getTerminalCost() override;
   vector_t getTerminalCostDerivativeState() override;
   matrix_t getTerminalCostSecondDerivativeState() override;
   void setCostDesiredTrajectoriesPtr(const CostDesiredTrajectories* costDesiredTrajectoriesPtr) override;
   void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) override;
-  scalar_t getIntermediateCostDerivativeTime() override;
+  scalar_t getCostDerivativeTime() override;
   scalar_t getTerminalCostDerivativeTime() override;
 
  protected:

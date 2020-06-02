@@ -95,7 +95,7 @@ void QuadraticGaussNewtonCostBaseAD::setCurrentStateAndControl(scalar_t t, const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t QuadraticGaussNewtonCostBaseAD::getIntermediateCost() {
+scalar_t QuadraticGaussNewtonCostBaseAD::getCost() {
   if (!intermediateCostValuesComputed_) {
     intermediateCostValues_ = intermediateADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, intermediateParameters_);
     intermediateCostValuesComputed_ = true;
@@ -106,7 +106,7 @@ scalar_t QuadraticGaussNewtonCostBaseAD::getIntermediateCost() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t QuadraticGaussNewtonCostBaseAD::getIntermediateCostDerivativeTime() {
+scalar_t QuadraticGaussNewtonCostBaseAD::getCostDerivativeTime() {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateDerivativesComputed_ = true;
@@ -121,7 +121,7 @@ scalar_t QuadraticGaussNewtonCostBaseAD::getIntermediateCostDerivativeTime() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t QuadraticGaussNewtonCostBaseAD::getIntermediateCostDerivativeState() {
+vector_t QuadraticGaussNewtonCostBaseAD::getCostDerivativeState() {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateDerivativesComputed_ = true;
@@ -136,7 +136,7 @@ vector_t QuadraticGaussNewtonCostBaseAD::getIntermediateCostDerivativeState() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t QuadraticGaussNewtonCostBaseAD::getIntermediateCostSecondDerivativeState() {
+matrix_t QuadraticGaussNewtonCostBaseAD::getCostSecondDerivativeState() {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateDerivativesComputed_ = true;
@@ -152,7 +152,7 @@ matrix_t QuadraticGaussNewtonCostBaseAD::getIntermediateCostSecondDerivativeStat
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t QuadraticGaussNewtonCostBaseAD::getIntermediateCostDerivativeInput() {
+vector_t QuadraticGaussNewtonCostBaseAD::getCostDerivativeInput() {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateDerivativesComputed_ = true;
@@ -167,7 +167,7 @@ vector_t QuadraticGaussNewtonCostBaseAD::getIntermediateCostDerivativeInput() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t QuadraticGaussNewtonCostBaseAD::getIntermediateCostSecondDerivativeInput() {
+matrix_t QuadraticGaussNewtonCostBaseAD::getCostSecondDerivativeInput() {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateDerivativesComputed_ = true;
@@ -183,7 +183,7 @@ matrix_t QuadraticGaussNewtonCostBaseAD::getIntermediateCostSecondDerivativeInpu
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t QuadraticGaussNewtonCostBaseAD::getIntermediateCostDerivativeInputState() {
+matrix_t QuadraticGaussNewtonCostBaseAD::getCostDerivativeInputState() {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateDerivativesComputed_ = true;

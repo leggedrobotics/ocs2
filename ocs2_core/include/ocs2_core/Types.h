@@ -79,4 +79,34 @@ using eigen_scalar_array2_t = std::vector<eigen_scalar_array_t, Eigen::aligned_a
 /** Array of arrays of eigen scalar trajectory type. */
 using eigen_scalar_array3_t = std::vector<eigen_scalar_array2_t, Eigen::aligned_allocator<eigen_scalar_array2_t>>;
 
+/**
+ * Defines the quadratic approximation f(x,u) = 1/2 dx' dfdxx dx + du' dfdux dx + 1/2 du' dfduu du + dfdx' dx + dfdu' du + f
+ */
+struct ScalarFunctionQuadraticApproximation {
+  /** Second derivative w.r.t state */
+  matrix_t dfdxx;
+  /** Second derivative w.r.t input (lhs) and state (rhs) */
+  matrix_t dfdux;
+  /** Second derivative w.r.t input */
+  matrix_t dfduu;
+  /** First derivative w.r.t state */
+  vector_t dfdx;
+  /** First derivative w.r.t input */
+  vector_t dfdu;
+  /** Constant term */
+  scalar_t f = 0.;
+};
+
+/**
+ * Defines the linear model of a vector function f(x,u) = dfdx * dx + dfdu * du + df
+ */
+struct VectorFunctionLinearApproximation {
+  /** Derivative w.r.t state */
+  matrix_t dfdx;
+  /** Derivative w.r.t input */
+  matrix_t dfdu;
+  /** Constant term */
+  vector_t f;
+};
+
 }  // namespace ocs2

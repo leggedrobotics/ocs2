@@ -36,4 +36,16 @@ namespace ocs2 {
 /******************************************************************************************************/
 SystemDynamicsBase::SystemDynamicsBase(size_t stateDim, size_t inputDim) : stateDim_(stateDim), inputDim_(inputDim) {}
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+VectorFunctionLinearApproximation SystemDynamicsBase::getLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  VectorFunctionLinearApproximation linearDynamics;
+  setCurrentStateAndControl(t, x, u);
+  linearDynamics.dfdx = getFlowMapDerivativeState();
+  linearDynamics.dfdu = getFlowMapDerivativeInput();
+  linearDynamics.f = computeFlowMap(t, x, u);
+  return linearDynamics;
+}
+
 }  // namespace ocs2

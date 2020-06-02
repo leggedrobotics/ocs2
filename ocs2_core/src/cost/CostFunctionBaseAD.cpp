@@ -87,7 +87,7 @@ void CostFunctionBaseAD::setCurrentStateAndControl(scalar_t t, const vector_t& x
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t CostFunctionBaseAD::getIntermediateCost() {
+scalar_t CostFunctionBaseAD::getCost() {
   auto costValue = intermediateADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, intermediateParameters_);
   return costValue(0);
 }
@@ -95,7 +95,7 @@ scalar_t CostFunctionBaseAD::getIntermediateCost() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t CostFunctionBaseAD::getIntermediateCostDerivativeTime() {
+scalar_t CostFunctionBaseAD::getCostDerivativeTime() {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateHessian_ = intermediateADInterfacePtr_->getHessian(0, tapedTimeStateInput_, intermediateParameters_);
@@ -107,7 +107,7 @@ scalar_t CostFunctionBaseAD::getIntermediateCostDerivativeTime() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t CostFunctionBaseAD::getIntermediateCostDerivativeState() {
+vector_t CostFunctionBaseAD::getCostDerivativeState() {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateHessian_ = intermediateADInterfacePtr_->getHessian(0, tapedTimeStateInput_, intermediateParameters_);
@@ -119,7 +119,7 @@ vector_t CostFunctionBaseAD::getIntermediateCostDerivativeState() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t CostFunctionBaseAD::getIntermediateCostSecondDerivativeState() {
+matrix_t CostFunctionBaseAD::getCostSecondDerivativeState() {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateHessian_ = intermediateADInterfacePtr_->getHessian(0, tapedTimeStateInput_, intermediateParameters_);
@@ -131,7 +131,7 @@ matrix_t CostFunctionBaseAD::getIntermediateCostSecondDerivativeState() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t CostFunctionBaseAD::getIntermediateCostDerivativeInput() {
+vector_t CostFunctionBaseAD::getCostDerivativeInput() {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateHessian_ = intermediateADInterfacePtr_->getHessian(0, tapedTimeStateInput_, intermediateParameters_);
@@ -143,7 +143,7 @@ vector_t CostFunctionBaseAD::getIntermediateCostDerivativeInput() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t CostFunctionBaseAD::getIntermediateCostSecondDerivativeInput() {
+matrix_t CostFunctionBaseAD::getCostSecondDerivativeInput() {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateHessian_ = intermediateADInterfacePtr_->getHessian(0, tapedTimeStateInput_, intermediateParameters_);
@@ -155,7 +155,7 @@ matrix_t CostFunctionBaseAD::getIntermediateCostSecondDerivativeInput() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t CostFunctionBaseAD::getIntermediateCostDerivativeInputState() {
+matrix_t CostFunctionBaseAD::getCostDerivativeInputState() {
   if (!intermediateDerivativesComputed_) {
     intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
     intermediateHessian_ = intermediateADInterfacePtr_->getHessian(0, tapedTimeStateInput_, intermediateParameters_);

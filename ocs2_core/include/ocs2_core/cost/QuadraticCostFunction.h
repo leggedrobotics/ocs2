@@ -91,42 +91,42 @@ class QuadraticCostFunction : public CostFunctionBase {
    *
    * @return The intermediate cost value.
    */
-  scalar_t getIntermediateCost() override;
+  scalar_t getCost() override;
 
   /**
    * Get the state derivative of the intermediate cost.
    *
    * @return First order derivative of the intermediate cost with respect to state vector.
    */
-  vector_t getIntermediateCostDerivativeState() override;
+  vector_t getCostDerivativeState() override;
 
   /**
    * Get state second order derivative of the intermediate cost.
    *
    * @return Second order derivative of the intermediate cost with respect to state vector.
    */
-  matrix_t getIntermediateCostSecondDerivativeState() override;
+  matrix_t getCostSecondDerivativeState() override;
 
   /**
    * Get control input derivative of the intermediate cost.
    *
    * @return First order derivative of the intermediate cost with respect to input vector.
    */
-  vector_t getIntermediateCostDerivativeInput() override;
+  vector_t getCostDerivativeInput() override;
 
   /**
    * Get control input second derivative of the intermediate cost.
    *
    * @return Second order derivative of the intermediate cost with respect to input vector.
    */
-  matrix_t getIntermediateCostSecondDerivativeInput() override;
+  matrix_t getCostSecondDerivativeInput() override;
 
   /**
    * Get the input-state derivative of the intermediate cost.
    *
    * @return Second order derivative of the intermediate cost with respect to input vector and state.
    */
-  matrix_t getIntermediateCostDerivativeInputState() override;
+  matrix_t getCostDerivativeInputState() override;
 
   /**
    * Get the terminal cost.

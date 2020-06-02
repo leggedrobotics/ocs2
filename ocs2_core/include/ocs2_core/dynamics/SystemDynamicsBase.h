@@ -66,6 +66,9 @@ class SystemDynamicsBase : public DerivativesBase, public ControlledSystemBase {
    */
   virtual SystemDynamicsBase* clone() const = 0;
 
+  /** Gets linear approximation */
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u);
+
  protected:
   size_t stateDim_;
   size_t inputDim_;

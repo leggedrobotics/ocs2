@@ -72,19 +72,19 @@ class CostFunctionBaseAD : public CostFunctionBase {
 
   void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) final;
 
-  scalar_t getIntermediateCost() final;
+  scalar_t getCost() final;
 
-  scalar_t getIntermediateCostDerivativeTime() final;
+  scalar_t getCostDerivativeTime() final;
 
-  vector_t getIntermediateCostDerivativeState() final;
+  vector_t getCostDerivativeState() final;
 
-  matrix_t getIntermediateCostSecondDerivativeState() final;
+  matrix_t getCostSecondDerivativeState() final;
 
-  vector_t getIntermediateCostDerivativeInput() final;
+  vector_t getCostDerivativeInput() final;
 
-  matrix_t getIntermediateCostSecondDerivativeInput() final;
+  matrix_t getCostSecondDerivativeInput() final;
 
-  matrix_t getIntermediateCostDerivativeInputState() final;
+  matrix_t getCostDerivativeInputState() final;
 
   scalar_t getTerminalCost() final;
 

@@ -88,6 +88,30 @@ class ConstraintBase {
   virtual ConstraintBase* clone() const;
 
   /**
+   * Gets the state-input equality constraints linear approximation.
+   */
+  VectorFunctionLinearApproximation getStateInputEqualityConstraintLinearApproximation();
+
+  /**
+   * Gets the state-only equality constraints linear approximation.
+   *
+   * @note: dfdu is left empty
+   */
+  VectorFunctionLinearApproximation getStateEqualityConstraintLinearApproximation();
+
+  /**
+   * Gets the inequality constraints quadratic approximation.
+   */
+  std::vector<ScalarFunctionQuadraticApproximation> getInequalityConstraintQuadraticApproximation();
+
+  /**
+   * Gets the final state-only equality constraints linear approximation.
+   *
+   * @note: dfdu is left empty
+   */
+  VectorFunctionLinearApproximation getFinalStateEqualityConstraintLinearApproximation();
+
+  /**
    * Computes the state-input equality constraints.
    *
    * @return The state-input equality constraints value.

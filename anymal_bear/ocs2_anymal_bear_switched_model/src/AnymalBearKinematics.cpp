@@ -126,5 +126,5 @@ typename AnymalBearKinematics<SCALAR_T>::joint_jacobian_t AnymalBearKinematics<S
 }  // end of namespace anymal
 
 // Explicit instantiation
-template class anymal::tpl::AnymalBearKinematics<double>;
-template class anymal::tpl::AnymalBearKinematics<ocs2::CppAdInterface<double>::ad_scalar_t>;
+template class anymal::tpl::AnymalBearKinematics<ocs2::scalar_t>;
+template class anymal::tpl::AnymalBearKinematics<ocs2::CppAdInterface::ad_scalar_t>;

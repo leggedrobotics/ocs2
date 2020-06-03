@@ -77,6 +77,6 @@ class ComModelBase {
 };
 
 extern template class ComModelBase<scalar_t>;
-extern template class ComModelBase<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
+extern template class ComModelBase<ocs2::CppAdInterface::ad_scalar_t>;
 
 }  // end of namespace switched_model

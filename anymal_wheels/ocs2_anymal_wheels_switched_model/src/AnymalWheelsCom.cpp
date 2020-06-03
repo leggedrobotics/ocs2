@@ -68,5 +68,5 @@ void AnymalWheelsCom<SCALAR_T>::setJointConfiguration(const switched_model::join
 }  // end of namespace anymal
 
 // Explicit instantiation
-template class anymal::tpl::AnymalWheelsCom<double>;
-template class anymal::tpl::AnymalWheelsCom<ocs2::CppAdInterface<double>::ad_scalar_t>;
+template class anymal::tpl::AnymalWheelsCom<ocs2::scalar_t>;
+template class anymal::tpl::AnymalWheelsCom<ocs2::CppAdInterface::ad_scalar_t>;

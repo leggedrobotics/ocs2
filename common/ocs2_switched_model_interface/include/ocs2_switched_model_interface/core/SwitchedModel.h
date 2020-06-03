@@ -44,6 +44,8 @@ constexpr size_t STATE_DIM = 2 * BASE_COORDINATE_SIZE + JOINT_COORDINATE_SIZE;  
 constexpr size_t INPUT_DIM = 3 * NUM_CONTACT_POINTS + JOINT_COORDINATE_SIZE;                  // 24
 
 /* Import ocs2 types into the switched_model namespace */
+using ocs2::dynamic_matrix_t;
+using ocs2::dynamic_vector_t;
 using ocs2::scalar_array_t;
 using ocs2::scalar_t;
 
@@ -57,57 +59,57 @@ using contact_flag_t = feet_array_t<bool>;  // Contact state per foot, true = in
 template <typename SCALAR_T>
 using vector3_s_t = Eigen::Matrix<SCALAR_T, 3, 1>;
 using vector3_t = vector3_s_t<scalar_t>;
-using vector3_ad_t = vector3_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
+using vector3_ad_t = vector3_s_t<ocs2::CppAdInterface::ad_scalar_t>;
 
 template <typename SCALAR_T>
 using matrix3_s_t = Eigen::Matrix<SCALAR_T, 3, 3>;
 using matrix3_t = matrix3_s_t<scalar_t>;
-using matrix3_ad_t = matrix3_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
+using matrix3_ad_t = matrix3_s_t<ocs2::CppAdInterface::ad_scalar_t>;
 
 template <typename SCALAR_T>
 using vector6_s_t = Eigen::Matrix<SCALAR_T, 6, 1>;
 using vector6_t = vector6_s_t<scalar_t>;
-using vector6_ad_t = vector6_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
+using vector6_ad_t = vector6_s_t<ocs2::CppAdInterface::ad_scalar_t>;
 
 template <typename SCALAR_T>
 using matrix6_s_t = Eigen::Matrix<SCALAR_T, 6, 6>;
 using matrix6_t = matrix6_s_t<scalar_t>;
-using matrix6_ad_t = matrix6_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
+using matrix6_ad_t = matrix6_s_t<ocs2::CppAdInterface::ad_scalar_t>;
 
 template <typename SCALAR_T>
 using base_coordinate_s_t = Eigen::Matrix<SCALAR_T, BASE_COORDINATE_SIZE, 1>;
 using base_coordinate_t = base_coordinate_s_t<scalar_t>;
-using base_coordinate_ad_t = base_coordinate_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
+using base_coordinate_ad_t = base_coordinate_s_t<ocs2::CppAdInterface::ad_scalar_t>;
 
 template <typename SCALAR_T>
 using joint_coordinate_s_t = Eigen::Matrix<SCALAR_T, JOINT_COORDINATE_SIZE, 1>;
 using joint_coordinate_t = joint_coordinate_s_t<scalar_t>;
-using joint_coordinate_ad_t = joint_coordinate_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
+using joint_coordinate_ad_t = joint_coordinate_s_t<ocs2::CppAdInterface::ad_scalar_t>;
 
 template <typename SCALAR_T>
 using generalized_coordinate_s_t = Eigen::Matrix<SCALAR_T, GENERALIZED_COORDINATE_SIZE, 1>;
 using generalized_coordinate_t = generalized_coordinate_s_t<scalar_t>;
-using generalized_coordinate_ad_t = generalized_coordinate_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
+using generalized_coordinate_ad_t = generalized_coordinate_s_t<ocs2::CppAdInterface::ad_scalar_t>;
 
 template <typename SCALAR_T>
 using com_state_s_t = Eigen::Matrix<SCALAR_T, 2 * BASE_COORDINATE_SIZE, 1>;
 using com_state_t = com_state_s_t<scalar_t>;
-using com_state_ad_t = com_state_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
+using com_state_ad_t = com_state_s_t<ocs2::CppAdInterface::ad_scalar_t>;
 
 template <typename SCALAR_T>
 using comkino_state_s_t = Eigen::Matrix<SCALAR_T, STATE_DIM, 1>;
 using comkino_state_t = comkino_state_s_t<scalar_t>;
-using comkino_state_ad_t = comkino_state_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
+using comkino_state_ad_t = comkino_state_s_t<ocs2::CppAdInterface::ad_scalar_t>;
 
 template <typename SCALAR_T>
 using comkino_input_s_t = Eigen::Matrix<SCALAR_T, INPUT_DIM, 1>;
 using comkino_input_t = comkino_input_s_t<scalar_t>;
-using comkino_input_ad_t = comkino_input_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
+using comkino_input_ad_t = comkino_input_s_t<ocs2::CppAdInterface::ad_scalar_t>;
 
 template <typename SCALAR_T>
 using rbd_state_s_t = Eigen::Matrix<SCALAR_T, 2 * GENERALIZED_COORDINATE_SIZE, 1>;
 using rbd_state_t = rbd_state_s_t<scalar_t>;
-using rbd_state_ad_t = rbd_state_s_t<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
+using rbd_state_ad_t = rbd_state_s_t<ocs2::CppAdInterface::ad_scalar_t>;
 
 template <typename SCALAR_T>
 base_coordinate_s_t<SCALAR_T> getComPose(const comkino_state_s_t<SCALAR_T>& comkinoState) {

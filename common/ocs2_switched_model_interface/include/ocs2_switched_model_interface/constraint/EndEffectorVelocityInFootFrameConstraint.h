@@ -18,7 +18,6 @@ class EndEffectorVelocityInFootFrameConstraint : public EndEffectorConstraint {
   using typename BASE::ad_kinematic_model_t;
   using typename BASE::ad_scalar_t;
   using typename BASE::constraint_timeStateInput_matrix_t;
-  using typename BASE::dynamic_vector_t;
   using typename BASE::input_matrix_t;
   using typename BASE::input_state_matrix_t;
   using typename BASE::input_vector_t;

@@ -56,11 +56,9 @@ class DoubleIntegratorCost : public QuadraticCostFunction {
 
   DoubleIntegratorCost* clone() const override { return new DoubleIntegratorCost(*this); }
 
-  void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) final {
-    vector_t xNominal = vector_t::Zero(STATE_DIM_);
-    QuadraticCostFunction::costDesiredTrajectoriesPtr_->getDesiredState(t, xNominal);
-    vector_t uNominal = vector_t::Zero(INPUT_DIM_);
-    QuadraticCostFunction::costDesiredTrajectoriesPtr_->getDesiredInput(t, uNominal);
+  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) final {
+    vector_t xNominal = QuadraticCostFunction::costDesiredTrajectoriesPtr_->getDesiredState(t);
+    vector_t uNominal = QuadraticCostFunction::costDesiredTrajectoriesPtr_->getDesiredInput(t);
 
     QuadraticCostFunction::setCurrentStateAndControl(t, x, u, xNominal, uNominal, xNominal);
   }

@@ -53,9 +53,7 @@ class DoubleIntegratorDynamics final : public ControlledSystemBase {
 
   DoubleIntegratorDynamics* clone() const override { return new DoubleIntegratorDynamics(*this); }
 
-  void computeFlowMap(const scalar_t& time, const vector_t& state, const vector_t& input, vector_t& stateDerivative) override {
-    stateDerivative = A_ * state + B_ * input;
-  }
+  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) override { return A_ * state + B_ * input; }
 
  private:
   matrix_t A_;

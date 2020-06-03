@@ -53,9 +53,9 @@ class DoubleIntegratorDynamicsDerivatives final : public DerivativesBase {
 
   DoubleIntegratorDynamicsDerivatives* clone() const override { return new DoubleIntegratorDynamicsDerivatives(*this); }
 
-  void getFlowMapDerivativeState(matrix_t& A) override { A = A_; }
+  matrix_t getFlowMapDerivativeState() override { return A_; }
 
-  void getFlowMapDerivativeInput(matrix_t& B) override { B = B_; }
+  matrix_t getFlowMapDerivativeInput() override { return B_; }
 
  private:
   matrix_t A_;

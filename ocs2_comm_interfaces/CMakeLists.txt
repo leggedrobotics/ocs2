@@ -120,23 +120,3 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## $ catkin run_tests --no-deps --this
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_comm_interfaces
-
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_ocs2_comm_interfaces.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
-
-catkin_add_gtest(ocs2_interface_mpc_test
-  test/test_ocs2_interfaces_mpc.cpp
-  )
-add_dependencies(ocs2_interface_mpc_test
-  ${catkin_EXPORTED_TARGETS}
-  )
-target_link_libraries(ocs2_interface_mpc_test
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  )
-target_compile_options(ocs2_interface_mpc_test PRIVATE ${OCS2_CXX_FLAGS})

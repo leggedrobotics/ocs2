@@ -16,7 +16,7 @@ FootNormalConstraint::FootNormalConstraint(int legNumber, FootNormalConstraintMa
   auto FootNormalAd = [&](const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y) { adfunc(adComModel, adKinematicsModel, legNumber, x, y); };
   std::string modelName{"FootNormalConstraint_" + std::to_string(legNumber)};
   std::string modelFolder{"/tmp/ocs2"};
-  adInterface_.reset(new ad_interface_t(FootNormalAd, range_dim_, domain_dim_, modelName, modelFolder));
+  adInterface_.reset(new ocs2::CppAdInterface(FootNormalAd, range_dim_, domain_dim_, modelName, modelFolder));
 
   if (generateModel) {
     adInterface_->createModels(order_, true);
@@ -26,7 +26,7 @@ FootNormalConstraint::FootNormalConstraint(int legNumber, FootNormalConstraintMa
 }
 
 FootNormalConstraint::FootNormalConstraint(const FootNormalConstraint& rhs)
-    : Base_t(constraintOrder_), settings_(rhs.settings_), adInterface_(new ad_interface_t(*rhs.adInterface_)) {}
+    : Base_t(constraintOrder_), settings_(rhs.settings_), adInterface_(new ocs2::CppAdInterface(*rhs.adInterface_)) {}
 
 FootNormalConstraint* FootNormalConstraint::clone() const {
   return new FootNormalConstraint(*this);

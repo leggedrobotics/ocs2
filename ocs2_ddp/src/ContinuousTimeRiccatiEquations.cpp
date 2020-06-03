@@ -132,7 +132,7 @@ void ContinuousTimeRiccatiEquations::setData(const scalar_array_t* timeStampPtr,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ContinuousTimeRiccatiEquations::computeJumpMap(const scalar_t& z, const vector_t& allSs, vector_t& allSsPreEvent) {
+vector_t ContinuousTimeRiccatiEquations::computeJumpMap(scalar_t z, const vector_t& allSs) {
   // epsilon is set to include times past event times which have been artificially increased in the rollout
   scalar_t time = -z;
   size_t index = lookup::findFirstIndexWithinTol(eventTimes_, time, 1e-5);
@@ -168,13 +168,15 @@ void ContinuousTimeRiccatiEquations::computeJumpMap(const scalar_t& z, const vec
   scalar_t sPreEvent = continuousTimeRiccatiData_.s_ + jumpModelData.cost_;
   sPreEvent += Hv.dot(Sv_plus_Sm_Hv);
 
+  vector_t allSsPreEvent;
   convert2Vector(SmPreEvent, SvPreEvent, sPreEvent, allSsPreEvent);
+  return allSsPreEvent;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ContinuousTimeRiccatiEquations::computeFlowMap(const scalar_t& z, const vector_t& allSs, vector_t& derivatives) {
+vector_t ContinuousTimeRiccatiEquations::computeFlowMap(scalar_t z, const vector_t& allSs) {
   OdeBase::numFunctionCalls_++;
 
   // index
@@ -192,7 +194,9 @@ void ContinuousTimeRiccatiEquations::computeFlowMap(const scalar_t& z, const vec
                       continuousTimeRiccatiData_.ds_);
   }
 
+  vector_t derivatives;
   convert2Vector(continuousTimeRiccatiData_.dSm_, continuousTimeRiccatiData_.dSv_, continuousTimeRiccatiData_.ds_, derivatives);
+  return derivatives;
 }
 
 /******************************************************************************************************/

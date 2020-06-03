@@ -49,11 +49,11 @@ class CircularKinematicsSystem final : public SystemDynamicsBase {
   CircularKinematicsSystem() : SystemDynamicsBase(2, 2){};
   ~CircularKinematicsSystem() override = default;
 
-  void computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) override { dxdt = u; }
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) override { return u; }
 
-  void getFlowMapDerivativeState(matrix_t& A) override { A.setZero(2, 2); }
+  matrix_t getFlowMapDerivativeState() override { return matrix_t::Zero(2, 2); }
 
-  void getFlowMapDerivativeInput(matrix_t& B) override { B.setIdentity(2, 2); }
+  matrix_t getFlowMapDerivativeInput() override { return matrix_t::Identity(2, 2); }
 
   CircularKinematicsSystem* clone() const override { return new CircularKinematicsSystem(*this); }
 };
@@ -74,14 +74,13 @@ class CircularKinematicsCost final : public CostFunctionBaseAD {
   CircularKinematicsCost* clone() const override { return new CircularKinematicsCost(*this); }
 
  protected:
-  void intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input, const ad_vector_t& parameters,
-                                ad_scalar_t& costValue) const override {
-    costValue = 0.5 * pow(state(0) * input(1) - state(1) * input(0) - 1.0, 2) + 0.005 * input.dot(input);
+  ad_scalar_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                       const ad_vector_t& parameters) const override {
+    return 0.5 * pow(state(0) * input(1) - state(1) * input(0) - 1.0, 2) + 0.005 * input.dot(input);
   }
 
-  void terminalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters,
-                            ad_scalar_t& costValue) const override {
-    costValue = 0.0;
+  ad_scalar_t terminalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const override {
+    return ad_scalar_t(0.0);
   }
 };
 
@@ -100,21 +99,22 @@ class CircularKinematicsConstraints final : public ConstraintBase {
 
   CircularKinematicsConstraints* clone() const override { return new CircularKinematicsConstraints(*this); }
 
-  size_t numStateInputConstraint(const scalar_t& time) override { return 1; }
-
-  void getConstraint1(vector_t& e) override {
-    e.resize(1);
+  vector_t getStateInputEqualityConstraint() override {
+    vector_t e(1);
     e(0) = x_.dot(u_);
+    return e;
   }
 
-  void getConstraint1DerivativesState(matrix_t& C) override {
-    C.resize(1, 2);
+  matrix_t getStateInputEqualityConstraintDerivativesState() override {
+    matrix_t C(1, 2);
     C = u_.transpose();
+    return C;
   }
 
-  void getConstraint1DerivativesControl(matrix_t& D) override {
-    D.resize(1, 2);
+  matrix_t getStateInputEqualityConstraintDerivativesInput() override {
+    matrix_t D(1, 2);
     D = x_.transpose();
+    return D;
   }
 };
 

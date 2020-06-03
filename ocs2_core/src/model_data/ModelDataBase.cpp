@@ -74,19 +74,16 @@ void ModelDataBase::checkSizes(int stateDim, int inputDim) const {
   assert(costInputStateDerivative_.cols() == stateDim);
 
   // state equality constraints
-  assert(stateEqConstr_.size() == numStateEqConstr_);
   assert(stateEqConstrStateDerivative_.rows() == stateEqConstr_.size());
   assert(stateEqConstrStateDerivative_.cols() == stateDim);
 
   // state-input equality constraints
-  assert(stateInputEqConstr_.size() == numStateInputEqConstr_);
   assert(stateInputEqConstrStateDerivative_.rows() == stateInputEqConstr_.size());
   assert(stateInputEqConstrStateDerivative_.cols() == stateDim);
   assert(stateInputEqConstrInputDerivative_.rows() == stateInputEqConstr_.size());
   assert(stateInputEqConstrInputDerivative_.cols() == inputDim);
 
   // inequality constraints
-  assert(ineqConstr_.size() == numIneqConstr_);
   assert(ineqConstrStateDerivative_.size() == ineqConstr_.size());
   assert(ineqConstrInputDerivative_.size() == ineqConstr_.size());
   assert(ineqConstrStateSecondDerivative_.size() == ineqConstr_.size());
@@ -178,7 +175,7 @@ std::string ModelDataBase::checkDynamicsDerivativsProperties() const {
 std::string ModelDataBase::checkConstraintProperties() const {
   std::stringstream errorDescription;
 
-  if (numStateInputEqConstr_ > 0) {
+  if (stateInputEqConstr_.rows() > 0) {
     if (!stateInputEqConstr_.allFinite()) {
       errorDescription << "Input-state constraint is not finite.\n";
     }
@@ -189,13 +186,13 @@ std::string ModelDataBase::checkConstraintProperties() const {
       errorDescription << "Input-state constraint derivative w.r.t. input is not finite.\n";
     }
     size_t DmRank = LinearAlgebra::rank(stateInputEqConstrInputDerivative_);
-    if (DmRank != numStateInputEqConstr_) {
+    if (DmRank != stateInputEqConstr_.rows()) {
       errorDescription << "Input-state constraint derivative w.r.t. input is not full-row rank. It's rank is " + std::to_string(DmRank) +
-                              " while the expected rank is " + std::to_string(numStateInputEqConstr_) + ".\n";
+                              " while the expected rank is " + std::to_string(stateInputEqConstr_.rows()) + ".\n";
     }
   }
 
-  if (numStateEqConstr_ > 0) {
+  if (stateEqConstr_.rows() > 0) {
     if (!stateEqConstr_.allFinite()) {
       errorDescription << "State-only constraint is not finite.\n";
     }
@@ -204,7 +201,7 @@ std::string ModelDataBase::checkConstraintProperties() const {
     }
   }
 
-  for (size_t i = 0; i < numIneqConstr_; i++) {
+  for (size_t i = 0; i < ineqConstr_.size(); i++) {
     if (ineqConstr_[i] != ineqConstr_[i]) {
       errorDescription << "Inequality constraint " + std::to_string(i) + " is not finite.\n";
     }
@@ -247,6 +244,7 @@ std::ostream& operator<<(std::ostream& out, const ModelDataBase& data) {
   out << "Cost Input Second Derivative:\n" << data.costInputSecondDerivative_ << '\n';
   out << "Cost Input State Derivative:\n" << data.costInputStateDerivative_ << '\n';
   out << '\n';
+  return out;
 }
 
 }  // namespace ocs2

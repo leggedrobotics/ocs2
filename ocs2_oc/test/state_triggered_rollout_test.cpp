@@ -276,10 +276,9 @@ TEST(StateRolloutTests, runHybridDynamics) {
   // Test (and display statetrajectory)
   for (int i = 0; i < timeTrajectory.size(); i++) {
     // Test 1: No Significant penetration of Guard Surface
-    vector_t currentGuardValues;
     scalar_t currentTime = timeTrajectory[i];
     vector_t currentState = stateTrajectory[i];
-    dynamics.computeGuardSurfaces(currentTime, currentState, currentGuardValues);
+    vector_t currentGuardValues = dynamics.computeGuardSurfaces(currentTime, currentState);
 
     EXPECT_GT(currentGuardValues[0], -1e-6);
     EXPECT_GT(currentGuardValues[1], -1e-6);

@@ -236,6 +236,7 @@ std::ostream& operator<<(std::ostream& out, const FeedforwardController& control
   for (int i = 0; i < controller.timeStamp_.size(); i++) {
     out << "t\t" << controller.timeStamp_[i] << "\tu\t" << controller.uffArray_[i].transpose() << '\n';
   }
+  return out;
 }
 
 }  // namespace ocs2

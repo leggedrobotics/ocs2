@@ -63,9 +63,8 @@ class RiccatiInitializer {
     projectedModelData.costInputSecondDerivative_.setIdentity(
         input_dim, input_dim);  // Important: It is identity since it is a projected projectedModelData!
     projectedModelData.costInputStateDerivative_ = ocs2::matrix_t::Random(input_dim, state_dim);
-    projectedModelData.numIneqConstr_ = 0;
-    projectedModelData.numStateEqConstr_ = 0;
-    projectedModelData.numStateInputEqConstr_ = input_dim;
+    projectedModelData.ineqConstr_.clear();
+    projectedModelData.stateEqConstr_.setZero(0);
     projectedModelData.stateInputEqConstr_.setZero(input_dim);
     projectedModelData.stateInputEqConstrStateDerivative_.setZero(input_dim, state_dim);
     projectedModelData.stateInputEqConstrInputDerivative_.setZero(input_dim, input_dim);
@@ -103,9 +102,8 @@ TEST(riccati_ode_test, compareImplementations) {
   ri.initialize(riccatiEquationNoPrecompute);
 
   ocs2::vector_t S = ocs2::vector_t::Random(ocs2::s_vector_dim(STATE_DIM));
-  ocs2::vector_t dSdz_precompute, dSdz_noPrecompute;
-  riccatiEquationPrecompute.computeFlowMap(0.6, S, dSdz_precompute);
-  riccatiEquationNoPrecompute.computeFlowMap(0.6, S, dSdz_noPrecompute);
+  ocs2::vector_t dSdz_precompute = riccatiEquationPrecompute.computeFlowMap(0.6, S);
+  ocs2::vector_t dSdz_noPrecompute = riccatiEquationNoPrecompute.computeFlowMap(0.6, S);
 
   EXPECT_LE((dSdz_precompute - dSdz_noPrecompute).array().abs().maxCoeff(), 1e-9);
 }

@@ -144,6 +144,8 @@ bool checkConstraints(const size_t numTests, ConstraintBase* const constraint1, 
     }
 
   }  // end of for loop
+
+  return success;
 }
 
 /******************************************************************************/

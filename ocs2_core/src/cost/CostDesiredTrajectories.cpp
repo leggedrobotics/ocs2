@@ -147,6 +147,7 @@ std::ostream& operator<<(std::ostream& out, const CostDesiredTrajectories& traj)
     }
 
   }  // end of i loop
+  return out;
 }
 
 /******************************************************************************************************/

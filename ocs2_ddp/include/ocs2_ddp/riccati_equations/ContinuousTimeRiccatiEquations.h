@@ -162,18 +162,18 @@ class ContinuousTimeRiccatiEquations final : public OdeBase {
    *
    * @param [in] z: Normalized transition time
    * @param [in] allSs: A flattened vector constructed by concatenating Sm, Sv and s.
-   * @param [out] allSsPreEvent: mapped flattened state after transition.
+   * @return mapped flattened state after transition.
    */
-  void computeJumpMap(const scalar_t& z, const vector_t& allSs, vector_t& allSsPreEvent) override;
+  vector_t computeJumpMap(scalar_t z, const vector_t& allSs) override;
 
   /**
    * Computes derivatives.
    *
    * @param [in] z: Normalized time.
    * @param [in] allSs: A flattened vector constructed by concatenating Sm, Sv and s.
-   * @param [out] derivatives: d(allSs)/dz.
+   * @return d(allSs)/dz.
    */
-  void computeFlowMap(const scalar_t& z, const vector_t& allSs, vector_t& derivatives) override;
+  vector_t computeFlowMap(scalar_t z, const vector_t& allSs) override;
 
  private:
   /**

@@ -311,6 +311,7 @@ std::ostream& operator<<(std::ostream& out, const LinearController& controller) 
     out << "bias: " << controller.biasArray_[k].transpose() << '\n';
     out << "gain: " << controller.gainArray_[k] << '\n';
   }
+  return out;
 }
 
 }  // namespace ocs2

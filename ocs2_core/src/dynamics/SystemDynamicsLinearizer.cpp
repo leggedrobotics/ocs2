@@ -55,6 +55,7 @@ SystemDynamicsLinearizer& SystemDynamicsLinearizer::operator=(const SystemDynami
   controlledSystemPtr_.reset(other.controlledSystemPtr_->clone());
   doubleSidedDerivative_ = other.doubleSidedDerivative_;
   isSecondOrderSystem_ = other.isSecondOrderSystem_;
+  return *this;
 }
 
 /******************************************************************************************************/

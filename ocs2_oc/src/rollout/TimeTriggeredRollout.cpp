@@ -76,9 +76,9 @@ vector_t TimeTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray, 
   for (int i = 0; i < numSubsystems; i++) {
     Observer observer(&stateTrajectory, &timeTrajectory, modelDataTrajectoryPtr);  // concatenate trajectory
     // integrate controlled system
-    dynamicsIntegratorPtr_->integrate_adaptive(*systemDynamicsPtr_, observer, beginState, timeIntervalArray[i].first,
-                                               timeIntervalArray[i].second, this->settings().minTimeStep_, this->settings().absTolODE_,
-                                               this->settings().relTolODE_, maxNumSteps);
+    dynamicsIntegratorPtr_->integrateAdaptive(*systemDynamicsPtr_, observer, beginState, timeIntervalArray[i].first,
+                                              timeIntervalArray[i].second, this->settings().minTimeStep_, this->settings().absTolODE_,
+                                              this->settings().relTolODE_, maxNumSteps);
 
     // compute control input trajectory and concatenate to inputTrajectory
     if (this->settings().reconstructInputTrajectory_) {
@@ -94,7 +94,7 @@ vector_t TimeTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray, 
     if (i < numEvents) {
       postEventIndicesStock.push_back(stateTrajectory.size());
       // jump map
-      systemDynamicsPtr_->computeJumpMap(timeTrajectory.back(), stateTrajectory.back(), beginState);
+      beginState = systemDynamicsPtr_->computeJumpMap(timeTrajectory.back(), stateTrajectory.back());
     }
   }  // end of i loop
 

@@ -95,8 +95,8 @@ vector_t StateTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray,
     bool triggered = false;
     try {
       Observer observer(&stateTrajectory, &timeTrajectory, modelDataTrajectoryPtr);  // concatenate trajectory
-      dynamicsIntegratorPtr_->integrate_adaptive(*systemDynamicsPtr_, observer, x0, t0, t1, this->settings().minTimeStep_,
-                                                 this->settings().absTolODE_, this->settings().relTolODE_, maxNumSteps);
+      dynamicsIntegratorPtr_->integrateAdaptive(*systemDynamicsPtr_, observer, x0, t0, t1, this->settings().minTimeStep_,
+                                                this->settings().absTolODE_, this->settings().relTolODE_, maxNumSteps);
     } catch (const size_t& e) {
       eventID = e;
       triggered = true;
@@ -104,8 +104,7 @@ vector_t StateTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray,
     // calculate guard surface value of last query state and time
     const scalar_t queryTime = timeTrajectory.back();
     const vector_t queryState = stateTrajectory.back();
-    vector_t guardSurfaces;
-    systemDynamicsPtr_->computeGuardSurfaces(queryTime, queryState, guardSurfaces);
+    const vector_t guardSurfaces = systemDynamicsPtr_->computeGuardSurfaces(queryTime, queryState);
     const scalar_t queryGuard = guardSurfaces[eventID];
 
     // accuracy conditions on the obtained query guard and width of time window
@@ -148,14 +147,13 @@ vector_t StateTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray,
       t0 = queryTime + OCS2NumericTraits<scalar_t>::weakEpsilon();
       t1 = finalTime;
       // compute jump
-      systemDynamicsPtr_->computeJumpMap(queryTime, queryState, x0);
+      x0 = systemDynamicsPtr_->computeJumpMap(queryTime, queryState);
 
       // append the event to array with event indices
       eventsPastTheEndIndeces.push_back(stateTrajectory.size());
 
       // determine guard surface cross value and update the eventHandler
-      vector_t guardSurfacesCross;
-      systemDynamicsPtr_->computeGuardSurfaces(t0, x0, guardSurfacesCross);
+      vector_t guardSurfacesCross = systemDynamicsPtr_->computeGuardSurfaces(t0, x0);
       // updates the last event triggering times of Event Handler
       systemEventHandlersPtr_->setLastEvent(t0, guardSurfacesCross);
 
@@ -168,8 +166,7 @@ vector_t StateTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray,
       } else {  // properly configure root-finding method to start refining
         const scalar_t& timeBefore = timeTrajectory.back();
         const vector_t& stateBefore = stateTrajectory.back();
-        vector_t guardSurfacesBefore;
-        systemDynamicsPtr_->computeGuardSurfaces(timeBefore, stateBefore, guardSurfacesBefore);
+        const vector_t guardSurfacesBefore = systemDynamicsPtr_->computeGuardSurfaces(timeBefore, stateBefore);
         const scalar_t& guardBefore = guardSurfacesBefore[eventID];
 
         rootFinder.setInitBracket(timeBefore, queryTime, guardBefore, queryGuard);

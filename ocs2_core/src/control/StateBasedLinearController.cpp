@@ -62,7 +62,7 @@ vector_t StateBasedLinearController::computeTrajectorySpreadingInput(scalar_t t,
   bool pastAllEvents = (currentMode >= numEvents - 1) && (t > tauMinus);
   const scalar_t eps = OCS2NumericTraits<scalar_t>::weakEpsilon();
 
-  if ((t > tauMinus && t < tau) || pastAllEvents) {  // normal case
+  if (pastAllEvents) {
     return ctrlPtr->computeInput(t, x);
     // return normal input signal
   } else if (t < tauMinus) {
@@ -74,6 +74,8 @@ vector_t StateBasedLinearController::computeTrajectorySpreadingInput(scalar_t t,
     return ctrlPtr->computeInput(tau - eps, x);
     // request input 1 epsilon before the designed event time
   }
+  // normal case: t > tauMinus && t < tau
+  return ctrlPtr->computeInput(t, x);
 }
 
 /******************************************************************************************************/

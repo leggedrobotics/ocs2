@@ -123,6 +123,7 @@ scalar_array_t LinearConstraint::getInequalityConstraint() {
            0.5 * ConstraintBase::x_.dot(ddhdxdx_[i] * ConstraintBase::x_) + 0.5 * ConstraintBase::u_.dot(ddhdudu_[i] * ConstraintBase::u_) +
            ConstraintBase::u_.dot(ddhdudx_[i] * ConstraintBase::x_);
   }
+  return h;
 }
 
 /******************************************************************************************************/

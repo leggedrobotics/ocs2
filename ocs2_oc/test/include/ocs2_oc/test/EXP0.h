@@ -51,13 +51,13 @@ class EXP0_Sys1 : public ControlledSystemBase {
   EXP0_Sys1() = default;
   ~EXP0_Sys1() = default;
 
-  void computeFlowMap(const double& t, const vector_t& x, const vector_t& u, vector_t& dxdt) final {
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) final {
     matrix_t A(2, 2);
     A << 0.6, 1.2, -0.8, 3.4;
     vector_t B(2, 1);
     B << 1, 1;
 
-    dxdt = A * x + B * u;
+    return A * x + B * u;
   }
 
   EXP0_Sys1* clone() const final { return new EXP0_Sys1(*this); }
@@ -71,13 +71,13 @@ class EXP0_Sys2 : public ControlledSystemBase {
   EXP0_Sys2() = default;
   ~EXP0_Sys2() = default;
 
-  void computeFlowMap(const double& t, const vector_t& x, const vector_t& u, vector_t& dxdt) final {
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) final {
     matrix_t A(2, 2);
     A << 4, 3, -1, 0;
     vector_t B(2, 1);
     B << 2, -1;
 
-    dxdt = A * x + B * u;
+    return A * x + B * u;
   }
 
   EXP0_Sys2* clone() const final { return new EXP0_Sys2(*this); }
@@ -100,9 +100,9 @@ class EXP0_System : public ControlledSystemBase {
 
   EXP0_System* clone() const final { return new EXP0_System(*this); }
 
-  void computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) final {
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) final {
     auto activeMode = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
-    subsystemDynamicsPtr_[activeMode]->computeFlowMap(t, x, u, dxdt);
+    return subsystemDynamicsPtr_[activeMode]->computeFlowMap(t, x, u);
   }
 
  public:
@@ -118,13 +118,15 @@ class EXP0_SysDerivative1 : public DerivativesBase {
   EXP0_SysDerivative1() = default;
   ~EXP0_SysDerivative1() = default;
 
-  void getFlowMapDerivativeState(matrix_t& A) final {
-    A.resize(2, 2);
+  matrix_t getFlowMapDerivativeState() final {
+    matrix_t A(2, 2);
     A << 0.6, 1.2, -0.8, 3.4;
+    return A;
   }
-  void getFlowMapDerivativeInput(matrix_t& B) final {
-    B.resize(2, 1);
+  matrix_t getFlowMapDerivativeInput() final {
+    matrix_t B(2, 1);
     B << 1, 1;
+    return B;
   }
 
   EXP0_SysDerivative1* clone() const final { return new EXP0_SysDerivative1(*this); }
@@ -138,13 +140,15 @@ class EXP0_SysDerivative2 : public DerivativesBase {
   EXP0_SysDerivative2() = default;
   ~EXP0_SysDerivative2() = default;
 
-  void getFlowMapDerivativeState(matrix_t& A) final {
-    A.resize(2, 2);
+  matrix_t getFlowMapDerivativeState() final {
+    matrix_t A(2, 2);
     A << 4, 3, -1, 0;
+    return A;
   }
-  void getFlowMapDerivativeInput(matrix_t& B) final {
-    B.resize(2, 1);
+  matrix_t getFlowMapDerivativeInput() final {
+    matrix_t B(2, 1);
     B << 2, -1;
+    return B;
   }
 
   EXP0_SysDerivative2* clone() const final { return new EXP0_SysDerivative2(*this); }
@@ -167,15 +171,15 @@ class EXP0_SystemDerivative : public DerivativesBase {
 
   EXP0_SystemDerivative* clone() const final { return new EXP0_SystemDerivative(*this); }
 
-  void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) final {
+  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) final {
     DerivativesBase::setCurrentStateAndControl(t, x, u);
     activeMode_ = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
     subsystemDerivativesPtr_[activeMode_]->setCurrentStateAndControl(t, x, u);
   }
 
-  void getFlowMapDerivativeState(matrix_t& A) final { subsystemDerivativesPtr_[activeMode_]->getFlowMapDerivativeState(A); }
+  matrix_t getFlowMapDerivativeState() final { return subsystemDerivativesPtr_[activeMode_]->getFlowMapDerivativeState(); }
 
-  void getFlowMapDerivativeInput(matrix_t& B) final { subsystemDerivativesPtr_[activeMode_]->getFlowMapDerivativeInput(B); }
+  matrix_t getFlowMapDerivativeInput() final { return subsystemDerivativesPtr_[activeMode_]->getFlowMapDerivativeInput(); }
 
  public:
   size_t activeMode_ = 0;
@@ -196,30 +200,32 @@ class EXP0_CostFunction1 : public CostFunctionBase {
   EXP0_CostFunction1() = default;
   ~EXP0_CostFunction1() = default;
 
-  void getIntermediateCost(scalar_t& L) final { L = 0.5 * (x_(1) - 2.0) * (x_(1) - 2.0) + 0.5 * u_(0) * u_(0); }
+  scalar_t getCost() final { return 0.5 * (x_(1) - 2.0) * (x_(1) - 2.0) + 0.5 * u_(0) * u_(0); }
 
-  void getIntermediateCostDerivativeState(vector_t& dLdx) final {
-    dLdx.resize(2);
+  vector_t getCostDerivativeState() final {
+    vector_t dLdx(2);
     dLdx << 0.0, (x_(1) - 2.0);
+    return dLdx;
   }
-  void getIntermediateCostSecondDerivativeState(matrix_t& dLdxx) final {
-    dLdxx.resize(2, 2);
+  matrix_t getCostSecondDerivativeState() final {
+    matrix_t dLdxx(2, 2);
     dLdxx << 0.0, 0.0, 0.0, 1.0;
+    return dLdxx;
   }
-  void getIntermediateCostDerivativeInput(vector_t& dLdu) final {
-    dLdu.resize(1);
+  vector_t getCostDerivativeInput() final {
+    vector_t dLdu(1);
     dLdu << u_;
+    return dLdu;
   }
-  void getIntermediateCostSecondDerivativeInput(matrix_t& dLduu) final {
-    dLduu.resize(1, 1);
+  matrix_t getCostSecondDerivativeInput() final {
+    matrix_t dLduu(1, 1);
     dLduu << 1.0;
+    return dLduu;
   }
-
-  void getIntermediateCostDerivativeInputState(matrix_t& dLdxu) final { dLdxu.setZero(1, 2); }
-
-  void getTerminalCost(scalar_t& Phi) final { Phi = 0; }
-  void getTerminalCostDerivativeState(vector_t& dPhidx) final { dPhidx.setZero(2); }
-  void getTerminalCostSecondDerivativeState(matrix_t& dPhidxx) final { dPhidxx.setZero(2, 2); }
+  matrix_t getCostDerivativeInputState() final { return matrix_t::Zero(1, 2); }
+  scalar_t getTerminalCost() final { return 0; }
+  vector_t getTerminalCostDerivativeState() final { return vector_t::Zero(2); }
+  matrix_t getTerminalCostSecondDerivativeState() final { return matrix_t::Zero(2, 2); }
 
   EXP0_CostFunction1* clone() const final { return new EXP0_CostFunction1(*this); };
 };
@@ -232,33 +238,41 @@ class EXP0_CostFunction2 : public CostFunctionBase {
   EXP0_CostFunction2() = default;
   ~EXP0_CostFunction2() = default;
 
-  void getIntermediateCost(scalar_t& L) final { L = 0.5 * (x_(1) - 2.0) * (x_(1) - 2.0) + 0.5 * u_(0) * u_(0); }
+  scalar_t getCost() final { return 0.5 * (x_(1) - 2.0) * (x_(1) - 2.0) + 0.5 * u_(0) * u_(0); }
 
-  void getIntermediateCostDerivativeState(vector_t& dLdx) final {
-    dLdx.resize(2);
+  vector_t getCostDerivativeState() final {
+    vector_t dLdx(2);
     dLdx << 0.0, (x_(1) - 2.0);
+    return dLdx;
   }
-  void getIntermediateCostSecondDerivativeState(matrix_t& dLdxx) final {
-    dLdxx.resize(2, 2);
+  matrix_t getCostSecondDerivativeState() final {
+    matrix_t dLdxx(2, 2);
     dLdxx << 0.0, 0.0, 0.0, 1.0;
+    return dLdxx;
   }
-  void getIntermediateCostDerivativeInput(vector_t& dLdu) final {
-    dLdu.resize(1);
+  vector_t getCostDerivativeInput() final {
+    vector_t dLdu(1);
     dLdu << u_;
+    return dLdu;
   }
-  void getIntermediateCostSecondDerivativeInput(matrix_t& dLduu) final {
-    dLduu.resize(1, 1);
+  matrix_t getCostSecondDerivativeInput() final {
+    matrix_t dLduu(1, 1);
     dLduu << 1.0;
+    return dLduu;
   }
 
-  void getIntermediateCostDerivativeInputState(matrix_t& dLdxu) final { dLdxu.setZero(1, 2); }
-
-  void getTerminalCost(scalar_t& Phi) final { Phi = 0.5 * (x_(0) - 4.0) * (x_(0) - 4.0) + 0.5 * (x_(1) - 2.0) * (x_(1) - 2.0); }
-  void getTerminalCostDerivativeState(vector_t& dPhidx) final {
-    dPhidx.resize(2);
+  matrix_t getCostDerivativeInputState() final {
+    matrix_t dLdxu;
+    dLdxu.setZero(1, 2);
+    return dLdxu;
+  }
+  scalar_t getTerminalCost() final { return 0.5 * (x_(0) - 4.0) * (x_(0) - 4.0) + 0.5 * (x_(1) - 2.0) * (x_(1) - 2.0); }
+  vector_t getTerminalCostDerivativeState() final {
+    vector_t dPhidx(2);
     dPhidx << (x_(0) - 4.0), (x_(1) - 2.0);
+    return dPhidx;
   }
-  void getTerminalCostSecondDerivativeState(matrix_t& dPhidxx) final { dPhidxx.setIdentity(2, 2); }
+  matrix_t getTerminalCostSecondDerivativeState() final { return matrix_t::Identity(2, 2); }
 
   EXP0_CostFunction2* clone() const final { return new EXP0_CostFunction2(*this); };
 };
@@ -280,36 +294,21 @@ class EXP0_CostFunction : public CostFunctionBase {
 
   EXP0_CostFunction* clone() const final { return new EXP0_CostFunction(*this); }
 
-  void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) final {
+  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) final {
     CostFunctionBase::setCurrentStateAndControl(t, x, u);
     activeMode_ = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
     subsystemCostsPtr_[activeMode_]->setCurrentStateAndControl(t, x, u);
   }
 
-  void getIntermediateCost(scalar_t& L) final { subsystemCostsPtr_[activeMode_]->getIntermediateCost(L); }
-
-  void getIntermediateCostDerivativeState(vector_t& dLdx) final {
-    subsystemCostsPtr_[activeMode_]->getIntermediateCostDerivativeState(dLdx);
-  }
-  void getIntermediateCostSecondDerivativeState(matrix_t& dLdxx) final {
-    subsystemCostsPtr_[activeMode_]->getIntermediateCostSecondDerivativeState(dLdxx);
-  }
-  void getIntermediateCostDerivativeInput(vector_t& dLdu) final {
-    subsystemCostsPtr_[activeMode_]->getIntermediateCostDerivativeInput(dLdu);
-  }
-  void getIntermediateCostSecondDerivativeInput(matrix_t& dLduu) final {
-    subsystemCostsPtr_[activeMode_]->getIntermediateCostSecondDerivativeInput(dLduu);
-  }
-
-  void getIntermediateCostDerivativeInputState(matrix_t& dLdxu) final {
-    subsystemCostsPtr_[activeMode_]->getIntermediateCostDerivativeInputState(dLdxu);
-  }
-
-  void getTerminalCost(scalar_t& Phi) { subsystemCostsPtr_[activeMode_]->getTerminalCost(Phi); }
-  void getTerminalCostDerivativeState(vector_t& dPhidx) final { subsystemCostsPtr_[activeMode_]->getTerminalCostDerivativeState(dPhidx); }
-  void getTerminalCostSecondDerivativeState(matrix_t& dPhidxx) final {
-    subsystemCostsPtr_[activeMode_]->getTerminalCostSecondDerivativeState(dPhidxx);
-  }
+  scalar_t getCost() final { return subsystemCostsPtr_[activeMode_]->getCost(); }
+  vector_t getCostDerivativeState() final { return subsystemCostsPtr_[activeMode_]->getCostDerivativeState(); }
+  matrix_t getCostSecondDerivativeState() final { return subsystemCostsPtr_[activeMode_]->getCostSecondDerivativeState(); }
+  vector_t getCostDerivativeInput() final { return subsystemCostsPtr_[activeMode_]->getCostDerivativeInput(); }
+  matrix_t getCostSecondDerivativeInput() final { return subsystemCostsPtr_[activeMode_]->getCostSecondDerivativeInput(); }
+  matrix_t getCostDerivativeInputState() final { return subsystemCostsPtr_[activeMode_]->getCostDerivativeInputState(); }
+  scalar_t getTerminalCost() { return subsystemCostsPtr_[activeMode_]->getTerminalCost(); }
+  vector_t getTerminalCostDerivativeState() final { return subsystemCostsPtr_[activeMode_]->getTerminalCostDerivativeState(); }
+  matrix_t getTerminalCostSecondDerivativeState() final { return subsystemCostsPtr_[activeMode_]->getTerminalCostSecondDerivativeState(); }
 
  public:
   size_t activeMode_ = 0;

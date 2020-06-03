@@ -62,30 +62,33 @@ class systemDynamics final : public ocs2::ControlledSystemBase {
   systemDynamics() = default;
   ~systemDynamics() = default;
 
-  void computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) {
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) {
     matrix_t A(STATE_DIM, STATE_DIM);
     A << 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
     matrix_t B(STATE_DIM, INPUT_DIM);
     B << 0.0, 1.0, 0.0;
 
-    dxdt = A * x + B * u;
+    return A * x + B * u;
   }
 
-  void computeJumpMap(const scalar_t& time, const vector_t& state, vector_t& mappedState) override {
+  vector_t computeJumpMap(scalar_t t, const vector_t& x) override {
     const scalar_t e = 0.95;
+    vector_t mappedState(STATE_DIM);
 
     matrix_t delta(STATE_DIM, STATE_DIM);
     delta << 0.0, 0.0, 0.0, 0.0, -(1.0 + e), 0.0, 0.0, 0.0, 0.0;
-    mappedState = state + delta * state;
+    mappedState = x + delta * x;
 
-    if (state[2] < 5) {
+    if (x[2] < 5) {
       mappedState[2] += 1;
     }
+    return mappedState;
   }
 
-  void computeGuardSurfaces(const scalar_t& time, const vector_t& state, vector_t& guardSurfacesValue) {
-    guardSurfacesValue.resize(1);
-    guardSurfacesValue[0] = state[0];
+  vector_t computeGuardSurfaces(scalar_t t, const vector_t& x) {
+    vector_t guardSurfaces(1);
+    guardSurfaces[0] = x[0];
+    return guardSurfaces;
   }
 
   systemDynamics* clone() const final { return new systemDynamics(*this); }
@@ -96,20 +99,22 @@ class systemDerivative final : public ocs2::DerivativesBase {
   systemDerivative() = default;
   ~systemDerivative() = default;
 
-  void setCurrentStateAndControl(const scalar_t& t, const vector_t& state, const vector_t& u) {
+  void setCurrentStateAndControl(scalar_t t, const vector_t& state, const vector_t& u) {
     t_ = t;
     state_ = state;
     u_ = u;
   }
 
-  void getFlowMapDerivativeState(matrix_t& A) {
-    A.resize(STATE_DIM, STATE_DIM);
+  matrix_t getFlowMapDerivativeState() {
+    matrix_t A(STATE_DIM, STATE_DIM);
     A << 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+    return A;
   }
 
-  void getFlowMapDerivativeInput(matrix_t& B) {
-    B.resize(STATE_DIM, INPUT_DIM);
+  matrix_t getFlowMapDerivativeInput() {
+    matrix_t B(STATE_DIM, INPUT_DIM);
     B << 0.0, 1.0, 0.0;
+    return B;
   }
 
   systemDerivative* clone() const final { return new systemDerivative(*this); }
@@ -131,7 +136,7 @@ class systemCost final : public ocs2::QuadraticCostFunction {
 
   systemCost* clone() const final { return new systemCost(*this); }
 
-  void setCurrentStateAndControl(const scalar_t& t, const vector_t& state, const vector_t& u) {
+  void setCurrentStateAndControl(scalar_t t, const vector_t& state, const vector_t& u) {
     t_ = t;
     state_ = state;
     u_ = u;

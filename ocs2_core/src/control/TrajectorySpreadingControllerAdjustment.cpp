@@ -91,12 +91,11 @@ bool TrajectorySpreadingControllerAdjustment::isSmallerEqual(const index_t& a, c
     return false;
   }
 
-  if (a.first == b.first) {
-    if (a.second <= b.second) {
-      return true;
-    } else {
-      return false;
-    }
+  // a.first == b.first
+  if (a.second <= b.second) {
+    return true;
+  } else {
+    return false;
   }
 }
 

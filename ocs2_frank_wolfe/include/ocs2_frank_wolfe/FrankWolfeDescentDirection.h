@@ -74,8 +74,8 @@ class FrankWolfeDescentDirection {
    * @param [in] nlpConstraintsPtr: A pointer to the NLP constraints.
    * @param [out] fwDescentDirection: The Frank-Wolfe descent direction at the current parameter vector.
    */
-  void run(const dynamic_vector_t& parameter, const dynamic_vector_t& gradient, const dynamic_vector_t& maxGradientInverse,
-           NLP_Constraints* nlpConstraintsPtr, dynamic_vector_t& fwDescentDirection);
+  void run(const vector_t& parameter, const vector_t& gradient, const vector_t& maxGradientInverse, NLP_Constraints* nlpConstraintsPtr,
+           vector_t& fwDescentDirection);
 
  private:
   /**
@@ -91,8 +91,7 @@ class FrankWolfeDescentDirection {
    * @param [in] maxGradientInverse: descent directions element-wise maximum inverse, \f$ e_v \f$.
    * @param [in] nlpConstraintsPtr: A pointer to the NLP constraints.
    */
-  void setupLP(const dynamic_vector_t& parameter, const dynamic_vector_t& gradient, const dynamic_vector_t& maxGradientInverse,
-               NLP_Constraints* nlpConstraintsPtr);
+  void setupLP(const vector_t& parameter, const vector_t& gradient, const vector_t& maxGradientInverse, NLP_Constraints* nlpConstraintsPtr);
 
   /***********
    * Variables

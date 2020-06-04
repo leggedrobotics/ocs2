@@ -13,8 +13,7 @@
 namespace ocs2 {
 namespace ballbot {
 
-void BallbotDummyVisualization::update(const system_observation_t& observation, const primal_solution_t& policy,
-                                       const command_data_t& command) {
+void BallbotDummyVisualization::update(const SystemObservation& observation, const PrimalSolution& policy, const CommandData& command) {
   const auto& costDesiredTrajectories = command.mpcCostDesiredTrajectories_;
 
   // publish world transform

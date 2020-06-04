@@ -33,8 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int main(int argc, char** argv) {
   const std::string robotName = "ballbot";
-  using interface_t = ocs2::ballbot::BallbotInterface;
-  using mpc_ros_t = ocs2::MPC_ROS_Interface<ocs2::ballbot::STATE_DIM_, ocs2::ballbot::INPUT_DIM_>;
 
   // task file
   if (argc <= 1) {
@@ -47,11 +45,11 @@ int main(int argc, char** argv) {
   ros::NodeHandle nodeHandle;
 
   // Robot interface
-  interface_t ballbotInterface(taskFileFolderName);
+  ocs2::ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
 
   // Launch MPC ROS node
   auto mpcPtr = ballbotInterface.getMpc();
-  mpc_ros_t mpcNode(*mpcPtr, robotName);
+  ocs2::MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(nodeHandle);
 
   // Successful exit

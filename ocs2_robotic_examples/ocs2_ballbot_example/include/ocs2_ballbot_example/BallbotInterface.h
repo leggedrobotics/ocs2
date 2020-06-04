@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,7 +25,7 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
+******************************************************************************/
 
 #pragma once
 
@@ -35,17 +35,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 
 // OCS2
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
-#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+#include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
 // Ballbot
 #include "ocs2_ballbot_example/cost/BallbotCost.h"
-#include "ocs2_ballbot_example/definitions.h"
 #include "ocs2_ballbot_example/dynamics/BallbotSystemDynamics.h"
-#include "ocs2_ballbot_example/solvers/BallbotSLQ.h"
 
 namespace ocs2 {
 namespace ballbot {
@@ -54,21 +52,8 @@ namespace ballbot {
  * BallbotInterface class
  * General interface for mpc implementation on the ballbot model
  */
-class BallbotInterface final : public RobotInterface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> {
+class BallbotInterface final : public RobotInterface {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = RobotInterface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
-
-  using dim_t = Dimensions<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
-  using ballbotConstraint_t = ConstraintBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
-  using ballbotOperatingPoint_t = OperatingPoints<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
-
-  using rollout_base_t = RolloutBase<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
-  using time_triggered_rollout_t = TimeTriggeredRollout<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
-
-  using mpc_t = MPC_SLQ<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
-
   /**
    * Constructor
    * @param [in] taskFileFolderName: The name of the folder containing task file
@@ -80,11 +65,11 @@ class BallbotInterface final : public RobotInterface<ballbot::STATE_DIM_, ballbo
    */
   ~BallbotInterface() override = default;
 
-  const dim_t::state_vector_t& getInitialState() { return initialState_; }
+  const vector_t& getInitialState() { return initialState_; }
   SLQ_Settings& slqSettings() { return slqSettings_; }
   MPC_Settings& mpcSettings() { return mpcSettings_; }
 
-  std::unique_ptr<mpc_t> getMpc();
+  std::unique_ptr<MPC_SLQ> getMpc();
 
   const BallbotSystemDynamics& getDynamics() const override { return *ballbotSystemDynamicsPtr_; }
 
@@ -92,9 +77,9 @@ class BallbotInterface final : public RobotInterface<ballbot::STATE_DIM_, ballbo
 
   const BallbotCost& getCost() const override { return *ballbotCostPtr_; }
 
-  const rollout_base_t& getRollout() const { return *ddpBallbotRolloutPtr_; }
+  const RolloutBase& getRollout() const { return *ddpBallbotRolloutPtr_; }
 
-  const ballbotOperatingPoint_t& getOperatingPoints() const override { return *ballbotOperatingPointPtr_; }
+  const OperatingPoints& getOperatingPoints() const override { return *ballbotOperatingPointPtr_; }
 
  protected:
   /**
@@ -113,24 +98,24 @@ class BallbotInterface final : public RobotInterface<ballbot::STATE_DIM_, ballbo
   SLQ_Settings slqSettings_;
   MPC_Settings mpcSettings_;
 
-  std::unique_ptr<rollout_base_t> ddpBallbotRolloutPtr_;
+  std::unique_ptr<RolloutBase> ddpBallbotRolloutPtr_;
 
   std::unique_ptr<BallbotSystemDynamics> ballbotSystemDynamicsPtr_;
   std::unique_ptr<BallbotCost> ballbotCostPtr_;
-  std::unique_ptr<ballbotConstraint_t> ballbotConstraintPtr_;
-  std::unique_ptr<ballbotOperatingPoint_t> ballbotOperatingPointPtr_;
+  std::unique_ptr<ConstraintBase> ballbotConstraintPtr_;
+  std::unique_ptr<OperatingPoints> ballbotOperatingPointPtr_;
 
   // cost parameters
-  dim_t::state_matrix_t Q_;
-  dim_t::input_matrix_t R_;
-  dim_t::state_matrix_t QFinal_;
-  dim_t::state_vector_t xFinal_;
-  dim_t::state_vector_t xNominal_;
-  dim_t::input_vector_t uNominal_;
+  matrix_t Q_;
+  matrix_t R_;
+  matrix_t QFinal_;
+  vector_t xFinal_;
+  vector_t xNominal_;
+  vector_t uNominal_;
 
   size_t numPartitions_ = 0;
-  dim_t::scalar_array_t partitioningTimes_;
-  dim_t::state_vector_t initialState_;
+  scalar_array_t partitioningTimes_;
+  vector_t initialState_;
 };
 
 }  // namespace ballbot

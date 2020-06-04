@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,10 +25,13 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
+******************************************************************************/
 
-#include "ocs2_ballbot_example/BallbotInterface.h"
 #include <ros/package.h>
+
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+#include "ocs2_ballbot_example/BallbotInterface.h"
+#include "ocs2_ballbot_example/definitions.h"
 
 namespace ocs2 {
 namespace ballbot {
@@ -36,7 +39,14 @@ namespace ballbot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-BallbotInterface::BallbotInterface(const std::string& taskFileFolderName) {
+BallbotInterface::BallbotInterface(const std::string& taskFileFolderName)
+    : Q_(STATE_DIM_, STATE_DIM_),
+      R_(INPUT_DIM_, INPUT_DIM_),
+      QFinal_(STATE_DIM_, STATE_DIM_),
+      xFinal_(STATE_DIM_),
+      xNominal_(STATE_DIM_),
+      uNominal_(INPUT_DIM_),
+      initialState_(STATE_DIM_) {
   taskFile_ = ros::package::getPath("ocs2_ballbot_example") + "/config/" + taskFileFolderName + "/task.info";
   std::cerr << "Loading task file: " << taskFile_ << std::endl;
 
@@ -77,7 +87,7 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
    */
   Rollout_Settings rolloutSettings;
   rolloutSettings.loadSettings(taskFile, "slq.rollout");
-  ddpBallbotRolloutPtr_.reset(new time_triggered_rollout_t(*ballbotSystemDynamicsPtr_, rolloutSettings));
+  ddpBallbotRolloutPtr_.reset(new TimeTriggeredRollout(STATE_DIM_, INPUT_DIM_, *ballbotSystemDynamicsPtr_, rolloutSettings));
 
   /*
    * Cost function
@@ -86,8 +96,8 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   ocs2::loadData::loadEigenMatrix(taskFile, "R", R_);
   ocs2::loadData::loadEigenMatrix(taskFile, "Q_final", QFinal_);
   ocs2::loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
-  xNominal_ = xFinal_;  // dim_t::state_vector_t::Zero();
-  uNominal_ = dim_t::input_vector_t::Zero();
+  xNominal_ = xFinal_;
+  uNominal_ = vector_t::Zero(INPUT_DIM_);
 
   std::cerr << "Q:  \n" << Q_ << std::endl;
   std::cerr << "R:  \n" << R_ << std::endl;
@@ -100,27 +110,27 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   /*
    * Constraints
    */
-  ballbotConstraintPtr_.reset(new ballbotConstraint_t);
+  ballbotConstraintPtr_.reset(new ConstraintBase(STATE_DIM_, INPUT_DIM_));
 
   /*
    * Initialization
    */
-  ballbotOperatingPointPtr_.reset(new ballbotOperatingPoint_t(initialState_, dim_t::input_vector_t::Zero()));
+  ballbotOperatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM_)));
 
   /*
    * Time partitioning which defines the time horizon and the number of data partitioning
    */
-  dim_t::scalar_t timeHorizon;
+  scalar_t timeHorizon;
   ocs2::loadData::loadPartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<BallbotInterface::mpc_t> BallbotInterface::getMpc() {
-  return std::unique_ptr<mpc_t>(new mpc_t(ddpBallbotRolloutPtr_.get(), ballbotSystemDynamicsPtr_.get(), ballbotConstraintPtr_.get(),
-                                          ballbotCostPtr_.get(), ballbotOperatingPointPtr_.get(), partitioningTimes_, slqSettings_,
-                                          mpcSettings_));
+std::unique_ptr<MPC_SLQ> BallbotInterface::getMpc() {
+  return std::unique_ptr<MPC_SLQ>(new MPC_SLQ(STATE_DIM_, INPUT_DIM_, ddpBallbotRolloutPtr_.get(), ballbotSystemDynamicsPtr_.get(),
+                                              ballbotConstraintPtr_.get(), ballbotCostPtr_.get(), ballbotOperatingPointPtr_.get(),
+                                              partitioningTimes_, slqSettings_, mpcSettings_));
 }
 
 }  // namespace ballbot

@@ -41,7 +41,7 @@ namespace qp_solver {
 
 ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostWrapper costFunction, SystemWrapper systemDynamics,
                                                                const ContinuousTrajectory& nominalTrajectory,
-                                                               const dynamic_vector_t& initialState) {
+                                                               const vector_t& initialState) {
   // Approximate
   const auto lqApproximation = getLinearQuadraticApproximation(costFunction, systemDynamics, nominalTrajectory);
 

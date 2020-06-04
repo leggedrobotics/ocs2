@@ -36,13 +36,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace qp_solver {
 
-scalar_t CostWrapper::getCost(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u) {
+scalar_t CostWrapper::getCost(scalar_t t, const vector_t& x, const vector_t& u) {
   p_->setCurrentStateAndControl(t, x, u);
   return p_->getCost();
 }
 
-ScalarFunctionQuadraticApproximation CostWrapper::getQuadraticApproximation(scalar_t t, const dynamic_vector_t& x,
-                                                                            const dynamic_vector_t& u) {
+ScalarFunctionQuadraticApproximation CostWrapper::getQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
   ScalarFunctionQuadraticApproximation quadraticCost;
   p_->setCurrentStateAndControl(t, x, u);
   quadraticCost.dfdxx = p_->getCostSecondDerivativeState();
@@ -54,14 +53,14 @@ ScalarFunctionQuadraticApproximation CostWrapper::getQuadraticApproximation(scal
   return quadraticCost;
 }
 
-scalar_t CostWrapper::getTerminalCost(scalar_t t, const dynamic_vector_t& x) {
-  p_->setCurrentStateAndControl(t, x);
+scalar_t CostWrapper::getTerminalCost(scalar_t t, const vector_t& x) {
+  p_->setCurrentStateAndControl(t, x, vector_t(0));
   return p_->getTerminalCost();
 }
 
-ScalarFunctionQuadraticApproximation CostWrapper::getTerminalQuadraticApproximation(scalar_t t, const dynamic_vector_t& x) {
+ScalarFunctionQuadraticApproximation CostWrapper::getTerminalQuadraticApproximation(scalar_t t, const vector_t& x) {
   ScalarFunctionQuadraticApproximation quadraticCost;
-  p_->setCurrentStateAndControl(t, x);
+  p_->setCurrentStateAndControl(t, x, vector_t(0));
   quadraticCost.dfdxx = p_->getTerminalCostSecondDerivativeState();
   quadraticCost.dfdx = p_->getTerminalCostDerivativeState();
   quadraticCost.f = p_->getTerminalCost();

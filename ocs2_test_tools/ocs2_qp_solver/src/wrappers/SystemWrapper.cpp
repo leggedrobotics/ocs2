@@ -36,16 +36,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace qp_solver {
 
-dynamic_vector_t SystemWrapper::getFlowMap(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u) {
-  return p_->flowMap(t, x, u);
+vector_t SystemWrapper::getFlowMap(scalar_t t, const vector_t& x, const vector_t& u) {
+  return p_->computeFlowMap(t, x, u);
 }
 
-VectorFunctionLinearApproximation SystemWrapper::getLinearApproximation(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u) {
+VectorFunctionLinearApproximation SystemWrapper::getLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
   VectorFunctionLinearApproximation linearDynamics;
   p_->setCurrentStateAndControl(t, x, u);
-  linearDynamics.dfdx = p_->flowMapDerivativeState();
-  linearDynamics.dfdu = p_->flowMapDerivativeInput();
-  linearDynamics.f = p_->flowMap(t, x, u);
+  linearDynamics.dfdx = p_->getFlowMapDerivativeState();
+  linearDynamics.dfdu = p_->getFlowMapDerivativeInput();
+  linearDynamics.f = p_->computeFlowMap(t, x, u);
   return linearDynamics;
 }
 

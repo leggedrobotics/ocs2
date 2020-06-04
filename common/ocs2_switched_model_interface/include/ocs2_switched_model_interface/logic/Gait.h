@@ -55,6 +55,9 @@ int getModeIndexFromPhaseUntilNextTouchDownOfLeg(scalar_t phase, int leg, const 
 /** Gets the mode index until last touch down from the phase variable and returns -1 if there is no last touch down before the phase. */
 int getModeIndexFromPhaseUntilLastTouchDownOfLeg(scalar_t phase, int leg, const Gait& gait);
 
+/** Adapts the mode sequence between the two mode ids of a specific leg to be in contact. */
+void setContactStateOfLegToContactBetweenModes(int startModeId, int lastModeId, int leg, Gait& gait);
+
 /** Gets the active mode from the phase variable */
 size_t getModeFromPhase(scalar_t phase, const Gait& gait);
 

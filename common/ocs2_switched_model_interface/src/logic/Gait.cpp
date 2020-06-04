@@ -83,6 +83,16 @@ int getModeIndexFromPhaseUntilLastTouchDownOfLeg(scalar_t phase, int leg, const 
   return modeIndex;
 }
 
+void setContactStateOfLegToContactBetweenModes(int startModeId, int lastModeId, int leg, Gait& gait) {
+  assert(startModeId < gait.modeSequence.size());
+  assert(lastModeId < gait.modeSequence.size());
+  for (int modeIndex = startModeId; modeIndex < lastModeId; ++modeIndex) {
+    auto stanceLegs = switched_model::modeNumber2StanceLeg(gait.modeSequence[modeIndex]);
+    stanceLegs[leg] = true;
+    gait.modeSequence[modeIndex] = switched_model::stanceLeg2ModeNumber(stanceLegs);
+  }
+}
+
 scalar_t timeLeftInGait(scalar_t phase, const Gait& gait) {
   assert(isValidPhase(phase));
   assert(isValidGait(gait));

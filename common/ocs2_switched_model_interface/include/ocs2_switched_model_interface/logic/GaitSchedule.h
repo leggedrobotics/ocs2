@@ -44,7 +44,7 @@ class GaitSchedule {
   /** Applies the provided function to the current gait. The function can adapt the current phase and gait. If the current gait is the last
    * scheduled gait, it is repeated before adaptation */
   void adaptCurrentGait(
-      const std::function<void(scalar_t& currentPhase, Gait& currentGait, scalar_t currTime, const Gait& nextGait)>& gaitAdaptor);
+      const std::function<void(scalar_t& currentPhase, Gait& currentGait, scalar_t currTime, Gait& nextGait)>& gaitAdaptor);
 
   /** Gets the gaitSchedule as a mode schedule from the current time, and for the specified horizon */
   ocs2::ModeSchedule getModeSchedule(scalar_t timeHorizon) const;

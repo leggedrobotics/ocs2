@@ -55,62 +55,6 @@ ConstraintBase* ConstraintBase::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation ConstraintBase::getStateInputEqualityConstraintLinearApproximation() {
-  VectorFunctionLinearApproximation constraints;
-  constraints.dfdx = getStateInputEqualityConstraintDerivativesState();
-  constraints.dfdu = getStateInputEqualityConstraintDerivativesInput();
-  constraints.f = getStateInputEqualityConstraint();
-  return constraints;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-VectorFunctionLinearApproximation ConstraintBase::getStateEqualityConstraintLinearApproximation() {
-  VectorFunctionLinearApproximation constraints;
-  constraints.dfdx = getStateEqualityConstraintDerivativesState();
-  constraints.f = getStateEqualityConstraint();
-  return constraints;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-std::vector<ScalarFunctionQuadraticApproximation> ConstraintBase::getInequalityConstraintQuadraticApproximation() {
-  scalar_array_t c = getInequalityConstraint();
-  vector_array_t dcdx = getInequalityConstraintDerivativesState();
-  vector_array_t dcdu = getInequalityConstraintDerivativesInput();
-  matrix_array_t dcdxx = getInequalityConstraintSecondDerivativesState();
-  matrix_array_t dcduu = getInequalityConstraintSecondDerivativesInput();
-  matrix_array_t dcdux = getInequalityConstraintDerivativesInputState();
-
-  std::vector<ScalarFunctionQuadraticApproximation> constraints;
-  constraints.reserve(c.size());
-  for (int i = 0; i < constraints.size(); i++) {
-    // TOOD(mspieler): avoid copying
-    constraints[i].f = c[i];
-    constraints[i].dfdx = dcdx[i];
-    constraints[i].dfdu = dcdu[i];
-    constraints[i].dfdxx = dcdxx[i];
-    constraints[i].dfdux = dcdux[i];
-    constraints[i].dfduu = dcduu[i];
-  }
-  return constraints;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-VectorFunctionLinearApproximation ConstraintBase::getFinalStateEqualityConstraintLinearApproximation() {
-  VectorFunctionLinearApproximation constraints;
-  constraints.dfdx = getFinalStateEqualityConstraintDerivativesState();
-  constraints.f = getFinalStateEqualityConstraint();
-  return constraints;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 vector_t ConstraintBase::getStateInputEqualityConstraint() {
   return vector_t(0);
 }

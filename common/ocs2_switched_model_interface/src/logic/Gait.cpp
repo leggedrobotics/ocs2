@@ -59,7 +59,7 @@ int getModeIndexFromPhaseUntilNextTouchDownOfLeg(scalar_t phase, int leg, const 
       ++modeIndex;
     }
   }
-  if (modeIndex >= gait.modeSequence.size() - 1 && !modeNumber2StanceLeg(gait.modeSequence[modeIndex])[leg]) {
+  if (modeIndex >= gait.modeSequence.size()) {
     modeIndex = -1;
   }
   return modeIndex;
@@ -69,7 +69,7 @@ int getModeIndexFromPhaseUntilLastTouchDownOfLeg(scalar_t phase, int leg, const 
   assert(isValidPhase(phase));
   assert(isValidGait(gait));
   int modeIndex = getCurrentModeIndex(phase, gait);
-  while (modeIndex > 0) {
+  while (modeIndex >= 0) {
     size_t currentMode = gait.modeSequence[modeIndex];
     if (modeNumber2StanceLeg(currentMode)[leg]) {
       break;
@@ -77,7 +77,7 @@ int getModeIndexFromPhaseUntilLastTouchDownOfLeg(scalar_t phase, int leg, const 
       --modeIndex;
     }
   }
-  if (modeIndex <= 0 && !modeNumber2StanceLeg(gait.modeSequence[modeIndex])[leg]) {
+  if (modeIndex < 0) {
     modeIndex = -1;
   }
   return modeIndex;
@@ -86,7 +86,7 @@ int getModeIndexFromPhaseUntilLastTouchDownOfLeg(scalar_t phase, int leg, const 
 void setContactStateOfLegToContactBetweenModes(int startModeId, int lastModeId, int leg, Gait& gait) {
   assert(startModeId < gait.modeSequence.size());
   assert(lastModeId < gait.modeSequence.size());
-  for (int modeIndex = startModeId; modeIndex < lastModeId; ++modeIndex) {
+  for (int modeIndex = startModeId; modeIndex <= lastModeId; ++modeIndex) {
     auto stanceLegs = switched_model::modeNumber2StanceLeg(gait.modeSequence[modeIndex]);
     stanceLegs[leg] = true;
     gait.modeSequence[modeIndex] = switched_model::stanceLeg2ModeNumber(stanceLegs);

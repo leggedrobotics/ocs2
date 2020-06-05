@@ -101,17 +101,6 @@ class SystemEventHandler {
       throw std::runtime_error("Integration terminated due to an external signal triggered by a program.");
     }
 
-    // max number of function calls
-    if (system.getNumFunctionCalls() > maxNumSteps_) {
-      std::string msg = "Integration terminated since the maximum number of function calls is reached. ";
-      msg += "State at termination time " + std::to_string(time) + ":\n [";
-      for (size_t i = 0; i < state.size() - 1; i++) {
-        msg += std::to_string(state(i)) + ", ";
-      }
-      msg += std::to_string(state(state.size() - 1)) + "]\n";
-      throw std::runtime_error(msg);
-    }
-
     // derived class events
     size_t eventID;
     bool event;
@@ -126,18 +115,8 @@ class SystemEventHandler {
    */
   virtual void reset() {}
 
-  /**
-   * Sets the maximum number of integration points per a second for ode solvers.
-   *
-   * @param [in] maxNumSteps: maximum number of integration points
-   */
-  void setMaxNumSteps(int maxNumSteps) { maxNumSteps_ = maxNumSteps; }
-
  public:
   std::atomic_bool killIntegration_ = {false};
-
- protected:
-  int maxNumSteps_ = std::numeric_limits<int>::max();
 };
 
 }  // namespace ocs2

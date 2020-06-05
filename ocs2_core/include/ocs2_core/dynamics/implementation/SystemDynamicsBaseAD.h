@@ -45,9 +45,9 @@ SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM, NUM_MODES>::SystemDynamicsBaseAD()
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
 SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM, NUM_MODES>::SystemDynamicsBaseAD(const SystemDynamicsBaseAD& rhs)
     : BASE(rhs),
-      flowMapADInterfacePtr_(new ad_interface_t(*rhs.flowMapADInterfacePtr_)),
-      jumpMapADInterfacePtr_(new ad_interface_t(*rhs.jumpMapADInterfacePtr_)),
-      guardSurfacesADInterfacePtr_(new ad_interface_t(*rhs.guardSurfacesADInterfacePtr_)),
+      flowMapADInterfacePtr_(new CppAdInterface(*rhs.flowMapADInterfacePtr_)),
+      jumpMapADInterfacePtr_(new CppAdInterface(*rhs.jumpMapADInterfacePtr_)),
+      guardSurfacesADInterfacePtr_(new CppAdInterface(*rhs.guardSurfacesADInterfacePtr_)),
       flowJacobian_(state_timeStateInput_matrix_t::Zero()),
       jumpJacobian_(state_timeState_matrix_t::Zero()),
       guardJacobian_(mode_timeState_matrix_t::Zero()) {}
@@ -133,14 +133,14 @@ void SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM, NUM_MODES>::setADInterfaces(cons
     this->systemFlowMap(time, state, input, y);
   };
   flowMapADInterfacePtr_.reset(
-      new ad_interface_t(tapedFlowMap, STATE_DIM, 1 + STATE_DIM + INPUT_DIM, modelName + "_flow_map", modelFolder));
+      new CppAdInterface(tapedFlowMap, STATE_DIM, 1 + STATE_DIM + INPUT_DIM, modelName + "_flow_map", modelFolder));
 
   auto tapedJumpMap = [this](const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y) {
     auto time = x(0);
     auto state = x.template segment<STATE_DIM>(1);
     this->systemJumpMap(time, state, y);
   };
-  jumpMapADInterfacePtr_.reset(new ad_interface_t(tapedJumpMap, STATE_DIM, 1 + STATE_DIM, modelName + "_jump_map", modelFolder));
+  jumpMapADInterfacePtr_.reset(new CppAdInterface(tapedJumpMap, STATE_DIM, 1 + STATE_DIM, modelName + "_jump_map", modelFolder));
 
   auto tapedGuardSurfaces = [this](const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y) {
     auto time = x(0);
@@ -148,7 +148,7 @@ void SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM, NUM_MODES>::setADInterfaces(cons
     this->systemGuardSurfaces(time, state, y);
   };
   guardSurfacesADInterfacePtr_.reset(
-      new ad_interface_t(tapedGuardSurfaces, NUM_MODES, 1 + STATE_DIM, modelName + "_guard_surfaces", modelFolder));
+      new CppAdInterface(tapedGuardSurfaces, NUM_MODES, 1 + STATE_DIM, modelName + "_guard_surfaces", modelFolder));
 }
 
 /******************************************************************************************************/
@@ -156,9 +156,9 @@ void SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM, NUM_MODES>::setADInterfaces(cons
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
 void SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM, NUM_MODES>::createModels(bool verbose) {
-  flowMapADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::First, verbose);
-  jumpMapADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::First, verbose);
-  guardSurfacesADInterfacePtr_->createModels(ad_interface_t::ApproximationOrder::First, verbose);
+  flowMapADInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
+  jumpMapADInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
+  guardSurfacesADInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
 }
 
 /******************************************************************************************************/
@@ -166,9 +166,9 @@ void SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM, NUM_MODES>::createModels(bool ve
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES>
 void SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM, NUM_MODES>::loadModelsIfAvailable(bool verbose) {
-  flowMapADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::First, verbose);
-  jumpMapADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::First, verbose);
-  guardSurfacesADInterfacePtr_->loadModelsIfAvailable(ad_interface_t::ApproximationOrder::First, verbose);
+  flowMapADInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
+  jumpMapADInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
+  guardSurfacesADInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
 }
 
 }  // namespace ocs2

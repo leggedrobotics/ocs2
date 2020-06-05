@@ -84,12 +84,11 @@ class IntegratorBase {
    */
   void integrate_const(system_t& system, observer_t& observer, const state_vector_t& initialState, scalar_t startTime, scalar_t finalTime,
                        scalar_t dt, int maxNumSteps = std::numeric_limits<int>::max()) {
-    eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
     observer_func_t callback = [&](const state_vector_t& x, scalar_t t) {
       observer.observe(system, x, t);
       eventHandlerPtr_->handleEvent(system, t, x);
     };
-    run_integrate_const(system.systemFunction(), callback, initialState, startTime, finalTime, dt);
+    run_integrate_const(systemFunction(system, maxNumSteps), callback, initialState, startTime, finalTime, dt);
   }
 
   /**
@@ -107,12 +106,11 @@ class IntegratorBase {
   void integrate_adaptive(system_t& system, observer_t& observer, const state_vector_t& initialState, scalar_t startTime,
                           scalar_t finalTime, scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3,
                           int maxNumSteps = std::numeric_limits<int>::max()) {
-    eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
     observer_func_t callback = [&](const state_vector_t& x, scalar_t t) {
       observer.observe(system, x, t);
       eventHandlerPtr_->handleEvent(system, t, x);
     };
-    run_integrate_adaptive(system.systemFunction(), callback, initialState, startTime, finalTime, dtInitial, AbsTol, RelTol);
+    run_integrate_adaptive(systemFunction(system, maxNumSteps), callback, initialState, startTime, finalTime, dtInitial, AbsTol, RelTol);
   }
 
   /**
@@ -131,15 +129,27 @@ class IntegratorBase {
                        typename scalar_array_t::const_iterator beginTimeItr, typename scalar_array_t::const_iterator endTimeItr,
                        scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3,
                        int maxNumSteps = std::numeric_limits<int>::max()) {
-    eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
     observer_func_t callback = [&](const state_vector_t& x, scalar_t t) {
       observer.observe(system, x, t);
       eventHandlerPtr_->handleEvent(system, t, x);
     };
-    run_integrate_times(system.systemFunction(), callback, initialState, beginTimeItr, endTimeItr, dtInitial, AbsTol, RelTol);
+    run_integrate_times(systemFunction(system, maxNumSteps), callback, initialState, beginTimeItr, endTimeItr, dtInitial, AbsTol, RelTol);
   }
 
  protected:
+  system_func_t systemFunction(system_t& system, int maxNumSteps) const {
+    return [&system, maxNumSteps](const state_vector_t& x, state_vector_t& dxdt, scalar_t t) {
+      system.computeFlowMap(t, x, dxdt);
+      // max number of function calls
+      if (system.getNumFunctionCalls() > maxNumSteps) {
+        std::stringstream msg;
+        msg << "Integration terminated since the maximum number of function calls is reached. State at termination time " << t << ":\n["
+            << x.transpose() << "]\n";
+        throw std::runtime_error(msg.str());
+      }
+    };
+  }
+
   virtual void run_integrate_const(system_func_t system, observer_func_t observer, const state_vector_t& initialState, scalar_t startTime,
                                    scalar_t finalTime, scalar_t dt) = 0;
 

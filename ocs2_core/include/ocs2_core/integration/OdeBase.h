@@ -52,7 +52,6 @@ class OdeBase {
   using scalar_t = typename DIMENSIONS::scalar_t;
   using state_vector_t = typename DIMENSIONS::state_vector_t;
   using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-  using system_func_t = std::function<void(const state_vector_t& x, state_vector_t& dxdt, scalar_t t)>;
   using model_data_array_t = ModelDataBase::array_t;
 
   static constexpr size_t DEFAULT_MODEL_DATA_CACHE_SIZE = 7;
@@ -60,12 +59,8 @@ class OdeBase {
   /**
    * Constructor.
    */
-  OdeBase() : numFunctionCalls_(0) {
+  OdeBase() {
     modelDataArray_.reserve(DEFAULT_MODEL_DATA_CACHE_SIZE);
-    systemFunction_ = [this](const state_vector_t& x, state_vector_t& dxdt, scalar_t t) {
-      numFunctionCalls_++;
-      computeFlowMap(t, x, dxdt);
-    };
   }
 
   /**
@@ -74,14 +69,9 @@ class OdeBase {
   virtual ~OdeBase() = default;
 
   /**
-   * Default copy constructor
+   * Copy constructor
    */
-  OdeBase(const OdeBase& rhs) = default;
-
-  /**
-   * Get a system function callback that calls computeFlowMap for integration.
-   */
-  system_func_t systemFunction() { return systemFunction_; }
+  OdeBase(const OdeBase& rhs) : numFunctionCalls_(0) {}
 
   /**
    * Gets the number of function calls.
@@ -153,8 +143,7 @@ class OdeBase {
   }
 
  protected:
-  int numFunctionCalls_;
-  system_func_t systemFunction_;
+  int numFunctionCalls_ = 0;
   model_data_array_t modelDataArray_;
 };
 

@@ -62,8 +62,3 @@ TEST(BallbotRaisimConversions, StateConversionSelfConsistency) {
     EXPECT_TRUE(dq.isApprox(dq_calc));
   }
 }
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}

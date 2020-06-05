@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -32,8 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Core>
 #include <raisim/World.hpp>
 
-#include <ocs2_ballbot_example/definitions.h>
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 namespace ballbot {
@@ -50,10 +49,6 @@ namespace ballbot {
 class BallbotRaisimConversions final {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using dim_t = Dimensions<STATE_DIM_, INPUT_DIM_>;
-  using state_vector_t = dim_t::state_vector_t;
-  using input_vector_t = dim_t::input_vector_t;
 
   //! Constructor
   BallbotRaisimConversions();
@@ -74,7 +69,7 @@ class BallbotRaisimConversions final {
    * @param[in] input ocs2 ballbot input (unused)
    * @return The pair {q, dq} consisting of raisim generlized coordinates and velocities
    */
-  std::pair<Eigen::VectorXd, Eigen::VectorXd> stateToRaisimGenCoordGenVel(const state_vector_t& state, const input_vector_t& input) const;
+  std::pair<Eigen::VectorXd, Eigen::VectorXd> stateToRaisimGenCoordGenVel(const vector_t& state, const vector_t& input) const;
 
   /**
    * @brief Convert raisim state to ocs2 state
@@ -82,7 +77,7 @@ class BallbotRaisimConversions final {
    * @param[in] dq Raisim generalized velocity
    * @return ocs2 state vector
    */
-  state_vector_t raisimGenCoordGenVelToState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq) const;
+  vector_t raisimGenCoordGenVelToState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq) const;
 
   /**
    * @brief Convert ocs2 input to raisim generalized force
@@ -93,14 +88,14 @@ class BallbotRaisimConversions final {
    * @param[in] dq Raisim generalized velocities
    * @return Vector of generalized forces for raisim
    */
-  Eigen::VectorXd inputToRaisimGeneralizedForce(double time, const input_vector_t& input, const state_vector_t& state,
-                                                const Eigen::VectorXd& q, const Eigen::VectorXd& dq) const;
+  Eigen::VectorXd inputToRaisimGeneralizedForce(double time, const vector_t& input, const vector_t& state, const Eigen::VectorXd& q,
+                                                const Eigen::VectorXd& dq) const;
 
  private:
   double ballRadius_;
   double omniWheelRadius_;
   double distanceBaseToBallCenter_;
-  Eigen::Vector3d rbaseBallInBase_;
+  vector_t rbaseBallInBase_;
 };
 
 }  // namespace ballbot

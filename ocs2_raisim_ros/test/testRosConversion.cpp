@@ -23,10 +23,3 @@ TEST(ocs2_raisim_ros, HeightmapRosConversion) {
   // Test gridMap1 against gridMap2
   ASSERT_TRUE(gridMap1->data[0].data == gridMap2->data[0].data);
 }
-
-auto main(int argc, char** argv) -> int {
-  ros::Time::init();
-
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}

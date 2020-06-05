@@ -31,14 +31,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-RaisimRollout<STATE_DIM, INPUT_DIM>::RaisimRollout(std::string urdf, state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel,
-                                                   raisim_gen_coord_gen_vel_to_state_t raisimGenCoordGenVelToState,
-                                                   input_to_raisim_generalized_force_t inputToRaisimGeneralizedForce,
-                                                   data_extraction_callback_t dataExtractionCallback,
-                                                   RaisimRolloutSettings raisimRolloutSettings,
-                                                   input_to_raisim_pd_targets_t inputToRaisimPdTargets)
-    : Base(raisimRolloutSettings.rolloutSettings_),
+RaisimRollout::RaisimRollout(size_t stateDim, size_t inputDim, std::string urdf,
+                             state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel,
+                             raisim_gen_coord_gen_vel_to_state_t raisimGenCoordGenVelToState,
+                             input_to_raisim_generalized_force_t inputToRaisimGeneralizedForce,
+                             data_extraction_callback_t dataExtractionCallback, RaisimRolloutSettings raisimRolloutSettings,
+                             input_to_raisim_pd_targets_t inputToRaisimPdTargets)
+    : RolloutBase(stateDim, inputDim, raisimRolloutSettings.rolloutSettings_),
       raisimRolloutSettings_(std::move(raisimRolloutSettings)),
       urdf_(std::move(urdf)),
       ground_(nullptr),
@@ -85,29 +84,25 @@ RaisimRollout<STATE_DIM, INPUT_DIM>::RaisimRollout(std::string urdf, state_to_ra
 #endif
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-RaisimRollout<STATE_DIM, INPUT_DIM>::RaisimRollout(const RaisimRollout& other)
-    : RaisimRollout(other.urdf_, other.stateToRaisimGenCoordGenVel_, other.raisimGenCoordGenVelToState_,
+RaisimRollout::RaisimRollout(const RaisimRollout& other)
+    : RaisimRollout(stateDim_, inputDim_, other.urdf_, other.stateToRaisimGenCoordGenVel_, other.raisimGenCoordGenVelToState_,
                     other.inputToRaisimGeneralizedForce_, other.dataExtractionCallback_, other.raisimRolloutSettings_,
                     other.inputToRaisimPdTargets_) {
-  if (other.heightMap_) {
+  if (other.heightMap_ != nullptr) {
     deleteGroundPlane();
     heightMap_ = world_.addHeightMap(other.heightMap_);
   }
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void RaisimRollout<STATE_DIM, INPUT_DIM>::setPdGains(const Eigen::VectorXd& pGain, const Eigen::VectorXd& dGain) {
+void RaisimRollout::setPdGains(const Eigen::VectorXd& pGain, const Eigen::VectorXd& dGain) {
   raisimRolloutSettings_.pGains_ = pGain;
   raisimRolloutSettings_.dGains_ = dGain;
   system_->setPdGains(pGain, dGain);
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-typename RaisimRollout<STATE_DIM, INPUT_DIM>::state_vector_t RaisimRollout<STATE_DIM, INPUT_DIM>::runImpl(
-    time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller, scalar_array_t& timeTrajectory,
-    size_array_t& postEventIndicesStock, state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory,
-    ModelDataBase::array_t* modelDataTrajectoryPtr) {
+vector_t RaisimRollout::runImpl(time_interval_array_t timeIntervalArray, const vector_t& initState, ControllerBase* controller,
+                                scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
+                                vector_array_t& inputTrajectory, std::vector<ModelDataBase>* modelDataTrajectoryPtr) {
   assert(controller != nullptr);
 
   world_.setTimeStep(this->settings().minTimeStep_);
@@ -145,35 +140,30 @@ typename RaisimRollout<STATE_DIM, INPUT_DIM>::state_vector_t RaisimRollout<STATE
   return stateTrajectory.back();
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-raisim::HeightMap* RaisimRollout<STATE_DIM, INPUT_DIM>::generateTerrain(raisim::TerrainProperties properties) {
+raisim::HeightMap* RaisimRollout::generateTerrain(raisim::TerrainProperties properties) {
   deleteGroundPlane();
 
   heightMap_ = world_.addHeightMap(0.0, 0.0, properties);
   return heightMap_;
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void RaisimRollout<STATE_DIM, INPUT_DIM>::setTerrain(const raisim::HeightMap& heightMap) {
+void RaisimRollout::setTerrain(const raisim::HeightMap& heightMap) {
   deleteGroundPlane();
   heightMap_ = world_.addHeightMap(&heightMap);
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void RaisimRollout<STATE_DIM, INPUT_DIM>::setTerrain(const std::string& pngFileName, double centerX, double centerY, double xSize,
-                                                     double ySize, double heightScale, double heightOffset) {
+void RaisimRollout::setTerrain(const std::string& pngFileName, double centerX, double centerY, double xSize, double ySize,
+                               double heightScale, double heightOffset) {
   deleteGroundPlane();
   heightMap_ = world_.addHeightMap(pngFileName, centerX, centerY, xSize, ySize, heightScale, heightOffset);
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-const raisim::HeightMap* RaisimRollout<STATE_DIM, INPUT_DIM>::getTerrain() const {
+const raisim::HeightMap* RaisimRollout::getTerrain() const {
   return heightMap_;
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void RaisimRollout<STATE_DIM, INPUT_DIM>::deleteGroundPlane() {
-  if (ground_) {
+void RaisimRollout::deleteGroundPlane() {
+  if (ground_ != nullptr) {
     world_.removeObject(ground_);
 #ifdef USE_RAISIM_VISUALIZER
     raisim::OgreVis::get()->remove(ground_);
@@ -182,10 +172,8 @@ void RaisimRollout<STATE_DIM, INPUT_DIM>::deleteGroundPlane() {
   }
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-void RaisimRollout<STATE_DIM, INPUT_DIM>::runSimulation(const time_interval_t& timeInterval, controller_t* controller,
-                                                        scalar_array_t& timeTrajectory, state_vector_array_t& stateTrajectory,
-                                                        input_vector_array_t& inputTrajectory) {
+void RaisimRollout::runSimulation(const time_interval_t& timeInterval, ControllerBase* controller, scalar_array_t& timeTrajectory,
+                                  vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
   const auto numSteps = static_cast<int>(std::ceil((timeInterval.second - timeInterval.first) / this->settings().minTimeStep_));
 
   for (int i = 0; i < numSteps; i++) {
@@ -256,7 +244,7 @@ void RaisimRollout<STATE_DIM, INPUT_DIM>::runSimulation(const time_interval_t& t
     dataExtractionCallback_(timeTrajectory.back(), *system_);
   }
 
-  input_vector_t input = controller->computeInput(timeTrajectory.back(), stateTrajectory.back());
+  vector_t input = controller->computeInput(timeTrajectory.back(), stateTrajectory.back());
   inputTrajectory.push_back(input);
 }
 

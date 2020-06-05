@@ -36,10 +36,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int main(int argc, char** argv) {
   const std::string robotName = "cartpole";
-  using interface_t = ocs2::cartpole::CartPoleInterface;
-  using vis_t = ocs2::cartpole::CartpoleDummyVisualization;
-  using mrt_t = ocs2::MRT_ROS_Interface<ocs2::cartpole::STATE_DIM_, ocs2::cartpole::INPUT_DIM_>;
-  using dummy_t = ocs2::MRT_ROS_Dummy_Loop<ocs2::cartpole::STATE_DIM_, ocs2::cartpole::INPUT_DIM_>;
 
   // task file
   if (argc <= 1) {
@@ -52,23 +48,26 @@ int main(int argc, char** argv) {
   ros::NodeHandle nodeHandle;
 
   // Robot interface
-  interface_t cartPoleInterface(taskFileFolderName);
+  ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFileFolderName);
 
   // MRT
-  mrt_t mrt(robotName);
+  ocs2::MRT_ROS_Interface mrt(robotName);
   mrt.initRollout(&cartPoleInterface.getRollout());
   mrt.launchNodes(nodeHandle);
 
   // Visualization
-  std::shared_ptr<vis_t> cartpoleDummyVisualization(new vis_t(nodeHandle));
+  auto cartpoleDummyVisualization = std::make_shared<ocs2::cartpole::CartpoleDummyVisualization>(nodeHandle);
 
   // Dummy loop
-  dummy_t dummyCartpole(mrt, cartPoleInterface.mpcSettings().mrtDesiredFrequency_, cartPoleInterface.mpcSettings().mpcDesiredFrequency_);
+  ocs2::MRT_ROS_Dummy_Loop dummyCartpole(mrt, cartPoleInterface.mpcSettings().mrtDesiredFrequency_,
+                                         cartPoleInterface.mpcSettings().mpcDesiredFrequency_);
   dummyCartpole.subscribeObservers({cartpoleDummyVisualization});
 
   // initial state
-  mrt_t::system_observation_t initObservation;
+  ocs2::SystemObservation initObservation;
   initObservation.state() = cartPoleInterface.getInitialState();
+  initObservation.input().setZero(ocs2::cartpole::INPUT_DIM_);
+  initObservation.time() = 0;
 
   // initial command
   ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time()}, {initObservation.state()}, {initObservation.input()});

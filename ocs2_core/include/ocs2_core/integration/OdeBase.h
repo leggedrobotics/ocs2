@@ -59,9 +59,7 @@ class OdeBase {
   /**
    * Constructor.
    */
-  OdeBase() {
-    modelDataArray_.reserve(DEFAULT_MODEL_DATA_CACHE_SIZE);
-  }
+  OdeBase() { modelDataArray_.reserve(DEFAULT_MODEL_DATA_CACHE_SIZE); }
 
   /**
    * Default destructor

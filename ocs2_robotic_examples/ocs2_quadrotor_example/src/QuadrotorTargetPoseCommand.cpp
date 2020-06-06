@@ -33,7 +33,7 @@ using namespace ocs2;
 using namespace quadrotor;
 
 int main(int argc, char* argv[]) {
-  TargetTrajectories_Keyboard_Quadrotor<double> targetPoseCommand(argc, argv, "quadrotor");
+  TargetTrajectories_Keyboard_Quadrotor targetPoseCommand(argc, argv, "quadrotor");
 
   targetPoseCommand.launchNodes();
 

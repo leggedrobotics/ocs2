@@ -60,6 +60,7 @@ include_directories(
 # Quadrotor interface library
 add_library(quadrotor_interface
   src/QuadrotorInterface.cpp
+  src/QuadrotorSystemDynamics.cpp
 )
 add_dependencies(quadrotor_interface
   ${catkin_EXPORTED_TARGETS}
@@ -122,32 +123,32 @@ target_link_libraries(quadrotorPyBindings_Cpp
   ${catkin_LIBRARIES}
 )
 
-if(${pybind11_FOUND})
-  pybind11_add_module(QuadrotorPyBindings SHARED
-    src/pyBindModule.cpp
-  )
-  add_dependencies(QuadrotorPyBindings
-    quadrotorPyBindings_Cpp
-    ${catkin_EXPORTED_TARGETS}
-  )
-  target_link_libraries(QuadrotorPyBindings PRIVATE
-    quadrotorPyBindings_Cpp
-    ${catkin_LIBRARIES}
-  )
+# if(${pybind11_FOUND})
+#   pybind11_add_module(QuadrotorPyBindings SHARED
+#     src/pyBindModule.cpp
+#   )
+#   add_dependencies(QuadrotorPyBindings
+#     quadrotorPyBindings_Cpp
+#     ${catkin_EXPORTED_TARGETS}
+#   )
+#   target_link_libraries(QuadrotorPyBindings PRIVATE
+#     quadrotorPyBindings_Cpp
+#     ${catkin_LIBRARIES}
+#   )
 
-  if(USE_PYBIND_PYTHON_3)
-  # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
-  set_target_properties(QuadrotorPyBindings
-    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
-  )
-  else(USE_PYBIND_PYTHON_3)
-  set_target_properties(QuadrotorPyBindings
-      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
-  )
-  endif(USE_PYBIND_PYTHON_3)
+#   if(USE_PYBIND_PYTHON_3)
+#   # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
+#   set_target_properties(QuadrotorPyBindings
+#     PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
+#   )
+#   else(USE_PYBIND_PYTHON_3)
+#   set_target_properties(QuadrotorPyBindings
+#       PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+#   )
+#   endif(USE_PYBIND_PYTHON_3)
 
-  catkin_python_setup()
-endif()
+#   catkin_python_setup()
+# endif()
 
 #########################
 ###   CLANG TOOLING   ###

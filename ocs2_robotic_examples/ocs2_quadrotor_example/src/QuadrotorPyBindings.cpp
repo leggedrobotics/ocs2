@@ -4,7 +4,7 @@
 namespace ocs2 {
 namespace quadrotor {
 
-QuadrotorPyBindings::QuadrotorPyBindings(const std::string& taskFileFolder, bool async) : Base(async) {
+QuadrotorPyBindings::QuadrotorPyBindings(const std::string& taskFileFolder, bool async) : PythonInterface(async) {
   QuadrotorInterface quadrotorInterface(taskFileFolder);
   init(quadrotorInterface, quadrotorInterface.getMpc());
 }

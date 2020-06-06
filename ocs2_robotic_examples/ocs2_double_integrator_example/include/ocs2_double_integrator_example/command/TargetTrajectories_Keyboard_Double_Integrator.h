@@ -30,7 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_robotic_tools/command/TargetPoseTransformation.h>
 #include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
 
 namespace ocs2 {

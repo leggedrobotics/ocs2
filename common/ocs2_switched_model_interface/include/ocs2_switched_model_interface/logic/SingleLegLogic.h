@@ -50,8 +50,12 @@ feet_array_t<std::vector<ContactTiming>> extractContactTimingsPerLeg(const ocs2:
 /** Returns time until next lift off for all legs from a modeschedule. Returns -1 if leg is not lifting off */
 feet_array_t<scalar_t> getTimeUntilNextLiftOffPerLeg(scalar_t currentTime, const ocs2::ModeSchedule& modeSchedule);
 
-/** Returns time until next touch down for all legs from a modeschedule. Returns -1 if leg is does not touch down */
+/** Returns time until next touch down for all legs from a modeschedule. Returns -1 if leg does not touch down */
 feet_array_t<scalar_t> getTimeUntilNextTouchDownPerLeg(scalar_t currentTime, const ocs2::ModeSchedule& modeSchedule);
+
+/** Returns swing phase for all legs from a modeschedule. Returns -1 if swing phase can not be calculated */
+feet_array_t<scalar_t> getSwingPhasePerLeg(scalar_t currentTime, feet_array_t<scalar_t> lastLiftOffTimePerLeg,
+                                           const ocs2::ModeSchedule& modeSchedule);
 
 /**
  * Get {startTime, endTime} for all contact phases. Swingphases are always implied in between: endTime[i] < startTime[i+1]

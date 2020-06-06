@@ -3,6 +3,7 @@
 //
 
 #include "ocs2_switched_model_interface/logic/Gait.h"
+#include "ocs2_switched_model_interface/core/MotionPhaseDefinition.h"
 
 #include <ocs2_core/misc/Display.h>
 
@@ -44,6 +45,52 @@ size_t getModeFromPhase(scalar_t phase, const Gait& gait) {
   assert(isValidPhase(phase));
   assert(isValidGait(gait));
   return gait.modeSequence[getCurrentModeIndex(phase, gait)];
+}
+
+int getModeIndexFromPhaseUntilNextTouchDownOfLeg(scalar_t phase, int leg, const Gait& gait) {
+  assert(isValidPhase(phase));
+  assert(isValidGait(gait));
+  int modeIndex = getCurrentModeIndex(phase, gait);
+  while (modeIndex < gait.modeSequence.size()) {
+    size_t currentMode = gait.modeSequence[modeIndex];
+    if (modeNumber2StanceLeg(currentMode)[leg]) {
+      break;
+    } else {
+      ++modeIndex;
+    }
+  }
+  if (modeIndex >= gait.modeSequence.size()) {
+    modeIndex = -1;
+  }
+  return modeIndex;
+}
+
+int getModeIndexFromPhaseUntilLastTouchDownOfLeg(scalar_t phase, int leg, const Gait& gait) {
+  assert(isValidPhase(phase));
+  assert(isValidGait(gait));
+  int modeIndex = getCurrentModeIndex(phase, gait);
+  while (modeIndex >= 0) {
+    size_t currentMode = gait.modeSequence[modeIndex];
+    if (modeNumber2StanceLeg(currentMode)[leg]) {
+      break;
+    } else {
+      --modeIndex;
+    }
+  }
+  if (modeIndex < 0) {
+    modeIndex = -1;
+  }
+  return modeIndex;
+}
+
+void setContactStateOfLegToContactBetweenModes(int startModeId, int lastModeId, int leg, Gait& gait) {
+  assert(startModeId < gait.modeSequence.size());
+  assert(lastModeId < gait.modeSequence.size());
+  for (int modeIndex = startModeId; modeIndex <= lastModeId; ++modeIndex) {
+    auto stanceLegs = switched_model::modeNumber2StanceLeg(gait.modeSequence[modeIndex]);
+    stanceLegs[leg] = true;
+    gait.modeSequence[modeIndex] = switched_model::stanceLeg2ModeNumber(stanceLegs);
+  }
 }
 
 scalar_t timeLeftInGait(scalar_t phase, const Gait& gait) {

@@ -1,0 +1,21 @@
+<package format="2">
+  <name>switched_model_msgs</name>
+  <version>0.0.1</version>
+  <description>
+    Provides ocs2_anymal_msgs
+  </description>
+  <maintainer email="oharley@student.ethz.ch">Oliver Harley</maintainer>
+  <license>TODO</license>
+
+  <author>Oliver Harley</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>std_msgs</depend>
+  <depend>ocs2_msgs</depend>
+
+  <build_depend>message_generation</build_depend>
+
+  <exec_depend>message_runtime</exec_depend>
+
+</package>

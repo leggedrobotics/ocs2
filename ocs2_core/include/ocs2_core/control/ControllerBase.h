@@ -144,7 +144,7 @@ class ControllerBase {
    * @brief Gets the event times for which the controller is designed.
    * @return The event times of the controller.
    */
-  virtual scalar_array_t controllerEventTimes() const { return scalar_array_t(0); }
+  virtual scalar_array_t controllerEventTimes() const { return {}; }
 
   /* State dimension getter */
   size_t getStateDim() const { return stateDim_; }

@@ -131,16 +131,17 @@ inline void loadEigenMatrix(const std::string& filename, const std::string& matr
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);
 
-  double scaling = pt.get<double>(matrixName + ".scaling", 1);
+  const double scaling = pt.get<double>(matrixName + ".scaling", 1.0);
+  const double defaultValue = pt.get<double>(matrixName + ".default", 0.0);
 
-  scalar_t aij;
   bool failed = false;
   for (size_t i = 0; i < rows; i++) {
     for (size_t j = 0; j < cols; j++) {
+      scalar_t aij;
       try {
         aij = pt.get<scalar_t>(matrixName + "." + "(" + std::to_string(i) + "," + std::to_string(j) + ")");
-      } catch (const std::exception& e) {
-        aij = 0;
+      } catch (const std::exception&) {
+        aij = defaultValue;
         failed = true;
       }
       matrix(i, j) = scaling * aij;
@@ -148,7 +149,7 @@ inline void loadEigenMatrix(const std::string& filename, const std::string& matr
   }
 
   if (failed) {
-    std::cerr << "WARNING: Failed to load matrix type: " + matrixName + "!" << std::endl;
+    std::cerr << "WARNING: Loaded at least one default value in matrix: " + matrixName + "!" << std::endl;
   }
 }
 

@@ -11,6 +11,7 @@ rollout
     controlDecimation 1
     generateTerrain 1
     terrainRoughness 1.5
+    terrainSeed 1
   }
 
 }

@@ -218,6 +218,8 @@ LoopshapingCost<FULL_STATE_DIM, FULL_INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_D
       return std::unique_ptr<LoopshapingCost>(
           new LoopshapingCostEliminatePattern<FULL_STATE_DIM, FULL_INPUT_DIM, SYSTEM_STATE_DIM, SYSTEM_INPUT_DIM, FILTER_STATE_DIM,
                                               FILTER_INPUT_DIM>(systemCost, std::move(loopshapingDefinition)));
+    default:
+      throw std::runtime_error("[LoopshapingCost::create] invalid loopshaping type");
   }
 }
 }  // namespace ocs2

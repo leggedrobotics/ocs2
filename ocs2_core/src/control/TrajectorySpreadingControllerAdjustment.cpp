@@ -85,17 +85,10 @@ void TrajectorySpreadingControllerAdjustment::findEventTimesIndices(const scalar
 bool TrajectorySpreadingControllerAdjustment::isSmallerEqual(const index_t& a, const index_t& b) const {
   if (a.first < b.first) {
     return true;
-  }
-
-  if (a.first > b.first) {
+  } else if (a.first > b.first) {
     return false;
-  }
-
-  // a.first == b.first
-  if (a.second <= b.second) {
-    return true;
   } else {
-    return false;
+    return a.second <= b.second;
   }
 }
 

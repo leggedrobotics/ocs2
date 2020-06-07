@@ -42,16 +42,12 @@ namespace ocs2 {
  */
 class OdeBase {
  public:
-  // TODO(mspieler): change to our convention using return by value.
-  // system interface for boost::odeint
-  using system_func_t = std::function<void(const vector_t& x, vector_t& dxdt, scalar_t t)>;
-
   static constexpr size_t DEFAULT_MODEL_DATA_CACHE_SIZE = 7;
 
   /**
    * Constructor.
    */
-  OdeBase();
+  OdeBase() { modelDataArray_.reserve(DEFAULT_MODEL_DATA_CACHE_SIZE); }
 
   /**
    * Default destructor
@@ -59,14 +55,9 @@ class OdeBase {
   virtual ~OdeBase() = default;
 
   /**
-   * Default copy constructor
+   * Copy constructor
    */
-  OdeBase(const OdeBase& rhs) = default;
-
-  /**
-   * Get a system function callback that calls computeFlowMap for integration.
-   */
-  system_func_t systemFunction();
+  OdeBase(const OdeBase& rhs) : numFunctionCalls_(0) {}
 
   /**
    * Gets the number of function calls.
@@ -131,8 +122,7 @@ class OdeBase {
   virtual vector_t computeGuardSurfaces(scalar_t time, const vector_t& state);
 
  protected:
-  int numFunctionCalls_;
-  system_func_t systemFunction_;
+  int numFunctionCalls_ = 0;
   std::vector<ModelDataBase> modelDataArray_;
 };
 

@@ -147,8 +147,7 @@ TEST(IntegrationTest, model_data_test) {
   Observer observer(&stateTrajectory, &timeTrajectory, &modelDataTrajectory);
   integrator->integrateAdaptive(*sys, observer, x0, 0.0, 10.0);
 
-  vector_t dynamics;
-  sys->systemFunction()(x0, dynamics, timeTrajectory.front());
+  vector_t dynamics = sys->computeFlowMap(timeTrajectory.front(), x0);
   EXPECT_TRUE(modelDataTrajectory.front().dynamics_.isApprox(dynamics, 1e-3));
 
   EXPECT_EQ(modelDataTrajectory.size(), stateTrajectory.size())

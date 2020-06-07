@@ -28,6 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+#include <ros/init.h>
 
 #include "ocs2_quadrotor_example/QuadrotorInterface.h"
 
@@ -35,10 +36,12 @@ int main(int argc, char** argv) {
   const std::string robotName = "quadrotor";
 
   // task file
-  if (argc <= 1) {
+  std::vector<std::string> programArgs{};
+  ::ros::removeROSArgs(argc, argv, programArgs);
+  if (programArgs.size() <= 1) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
-  std::string taskFileFolderName(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+  std::string taskFileFolderName(programArgs[1]);
 
   // Initialize ros node
   ros::init(argc, argv, robotName + "_mpc");

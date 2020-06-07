@@ -62,7 +62,7 @@ class RaisimRolloutSettings {
                                  raisim::ControlMode::Type controlMode = raisim::ControlMode::FORCE_AND_TORQUE,
                                  const Eigen::VectorXd& pGains = Eigen::VectorXd::Zero(0),  // NOLINT(modernize-pass-by-value)
                                  const Eigen::VectorXd& dGains = Eigen::VectorXd::Zero(0),  // NOLINT(modernize-pass-by-value)
-                                 bool generateTerrain = false, double terrainRoughness = 1.0)
+                                 bool generateTerrain = false, double terrainRoughness = 1.0, int terrainSeed = 1)
       : rolloutSettings_(std::move(rolloutSettings)),
         setSimulatorStateOnRolloutRunAlways_(setSimulatorStateOnRolloutRunAlways),
         setSimulatorStateOnRolloutRunOnce_(setSimulatorStateOnRolloutRunOnce),
@@ -72,7 +72,8 @@ class RaisimRolloutSettings {
         pGains_(pGains),
         dGains_(dGains),
         generateTerrain_(generateTerrain),
-        terrainRoughness_(terrainRoughness) {}
+        terrainRoughness_(terrainRoughness),
+        terrainSeed_(terrainSeed) {}
 
   /**
    * @brief Constructor taking directly a settings file for initialization
@@ -104,6 +105,7 @@ class RaisimRolloutSettings {
   Eigen::VectorXd dGains_;
   bool generateTerrain_;
   double terrainRoughness_;
+  int terrainSeed_;
 };
 
 inline void RaisimRolloutSettings::loadSettings(const std::string& filename, const std::string& fieldName, bool verbose) {
@@ -138,6 +140,7 @@ inline void RaisimRolloutSettings::loadSettings(const std::string& filename, con
 
   loadData::loadPtreeValue(pt, generateTerrain_, raisimFieldName + ".generateTerrain", verbose);
   loadData::loadPtreeValue(pt, terrainRoughness_, raisimFieldName + ".terrainRoughness", verbose);
+  loadData::loadPtreeValue(pt, terrainSeed_, raisimFieldName + ".terrainSeed", verbose);
 }
 
 }  // namespace ocs2

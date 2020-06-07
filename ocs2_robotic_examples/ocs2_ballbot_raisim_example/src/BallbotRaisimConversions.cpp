@@ -55,7 +55,8 @@ Eigen::Vector3d BallbotRaisimConversions::ballCenterInWorld(const Eigen::VectorX
 std::pair<Eigen::VectorXd, Eigen::VectorXd> BallbotRaisimConversions::stateToRaisimGenCoordGenVel(const vector_t& state,
                                                                                                   const vector_t&) const {
   // assume ball is on the ground
-  const Eigen::Vector3d r_world_ball_inWorld{state(0), state(1), ballRadius_};
+  const double terrainHeight = (terrain_ == nullptr) ? 0.0 : terrain_->getHeight(state(0), state(1));
+  const Eigen::Vector3d r_world_ball_inWorld{state(0), state(1), ballRadius_ + terrainHeight};
   const Eigen::Vector3d v_ball_inWorld{state(5), state(6), 0.0};
   const Eigen::Vector3d omega_base_inWorld = eulerAngleZyxDerivativesToAngularVelocityInWorld<double>(state.segment<3>(2), state.tail<3>());
   const Eigen::Quaterniond q_world_base = getQuaternionFromEulerAnglesZyx<double>(state.segment<3>(2));
@@ -80,6 +81,9 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> BallbotRaisimConversions::stateToRai
 auto BallbotRaisimConversions::raisimGenCoordGenVelToState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq) const -> vector_t {
   assert(q.size() == 3 + 4 + 4);
   assert(dq.size() == 3 + 3 + 3);
+  if (dq.head<6>().cwiseAbs().maxCoeff() > 100.0) {
+    throw std::runtime_error("BallbotRaisimConversions::raisimGenCoordGenVelToState: Body velocity diverged");
+  }
 
   const auto r_world_ball_inWorld = ballCenterInWorld(q);
   const Eigen::Quaterniond q_world_base(q(3), q(4), q(5), q(6));  // w x y z
@@ -87,6 +91,9 @@ auto BallbotRaisimConversions::raisimGenCoordGenVelToState(const Eigen::VectorXd
   const Eigen::Vector3d omega_base_inWorld = dq.segment<3>(3);
   Eigen::Vector3d eulerAngles = q_world_base.toRotationMatrix().eulerAngles(2, 1, 0);
   makeEulerAnglesUnique<double>(eulerAngles);
+  if (eulerAngles.tail<2>().cwiseAbs().maxCoeff() > M_PI / 2) {
+    throw std::runtime_error("BallbotRaisimConversions::raisimGenCoordGenVelToState: pitch or roll diverged");
+  }
 
   vector_t state(ocs2::ballbot::STATE_DIM_);
   state(0) = r_world_ball_inWorld(0);  // ball x

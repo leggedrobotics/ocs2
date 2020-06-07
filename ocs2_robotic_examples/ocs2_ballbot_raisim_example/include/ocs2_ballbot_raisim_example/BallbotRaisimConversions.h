@@ -91,6 +91,9 @@ class BallbotRaisimConversions final {
   Eigen::VectorXd inputToRaisimGeneralizedForce(double time, const vector_t& input, const vector_t& state, const Eigen::VectorXd& q,
                                                 const Eigen::VectorXd& dq) const;
 
+ public:
+  raisim::HeightMap const* terrain_ = nullptr;
+
  private:
   double ballRadius_;
   double omniWheelRadius_;

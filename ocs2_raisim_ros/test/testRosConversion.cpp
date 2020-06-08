@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <ocs2_raisim_ros/RaisimHeightmapRosConverter.h>
 
-TEST(ocs2_raisim_ros, HeightmapRosConversion) {
+TEST(ocs2_raisim_ros, DISABLED_HeightmapRosConversion) {
   const raisim::TerrainProperties terrainProperties;
   constexpr double centerX = 0.2;
   constexpr double centerY = -2.1;

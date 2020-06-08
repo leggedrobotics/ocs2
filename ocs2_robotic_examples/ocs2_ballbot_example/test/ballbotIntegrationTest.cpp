@@ -21,8 +21,10 @@ TEST(BallbotIntegrationTest, createDummyMRT) {
                                   ballbotInterface.mpcSettings().mpcDesiredFrequency_);
 
   // Initialize dummy
-  MRT_ROS_Dummy_Loop::system_observation_t initObservation;
+  SystemObservation initObservation;
   initObservation.state() = ballbotInterface.getInitialState();
+  initObservation.input().setZero(ocs2::ballbot::INPUT_DIM_);
+  initObservation.time() = 0;
 }
 
 TEST(BallbotIntegrationTest, createMPC) {

@@ -48,12 +48,10 @@ namespace ballbot {
  */
 class BallbotRaisimConversions final {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  //! Constructor
+  /** Constructor */
   BallbotRaisimConversions();
 
-  //! Default destructor
+  /** Default destructor */
   ~BallbotRaisimConversions() = default;
 
   /**

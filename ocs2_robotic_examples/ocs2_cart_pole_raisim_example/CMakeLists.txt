@@ -87,5 +87,6 @@ catkin_add_gtest(cartpole_raisim_rollout
 )
 target_link_libraries(cartpole_raisim_rollout
   ${catkin_LIBRARIES}
+  gtest_main
 )
 target_compile_options(cartpole_raisim_rollout PRIVATE ${OCS2_CXX_FLAGS})

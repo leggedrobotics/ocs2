@@ -5,21 +5,12 @@
 
 namespace ocs2 {
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class MRT_NeuralNetwork_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
+class MRT_NeuralNetwork_Interface final : public MRT_BASE {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Base = MRT_BASE<STATE_DIM, INPUT_DIM>;
-  using dim_t = Dimensions<STATE_DIM, INPUT_DIM>;
-  using size_array_t = typename dim_t::size_array_t;
-  using scalar_t = typename dim_t::scalar_t;
-  using scalar_array_t = typename dim_t::scalar_array_t;
-  using state_vector_t = typename dim_t::state_vector_t;
-  using state_vector_array_t = typename dim_t::state_vector_array_t;
-  using input_vector_t = typename dim_t::input_vector_t;
-  using input_vector_array_t = typename dim_t::input_vector_array_t;
-  using controller_t = NeuralNetworkController<STATE_DIM, INPUT_DIM>;
+  using Base = MRT_BASE;
+  using controller_t = NeuralNetworkController;
   using state_in_transform_fct_t = typename controller_t::state_in_transform_fct_t;
   using control_out_transform_fct_t = typename controller_t::control_out_transform_fct_t;
 
@@ -43,7 +34,7 @@ class MRT_NeuralNetwork_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> 
 
   void resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) override {}
 
-  void setCurrentObservation(const SystemObservation<STATE_DIM, INPUT_DIM>& observation) override {}
+  void setCurrentObservation(const SystemObservation& observation) override {}
 
   bool updatePolicyImpl() override { return true; }
 };

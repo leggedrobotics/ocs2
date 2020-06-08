@@ -1,10 +1,12 @@
+#pragma once
+
 #include <ocs2_switched_model_interface/logic/Gait.h>
 #include <ocs2_switched_model_interface/logic/GaitSchedule.h>
 #include <ocs2_switched_model_ros_interfaces/RosMsgConversions.h>
-#include <switched_model_msgs/Gait.h>
-#include <switched_model_msgs/GaitSequence.h>
-#include <switched_model_msgs/ScheduledGait.h>
-#include <switched_model_msgs/TrajectoryRequest.h>
+#include <switched_model_msgs/gait.h>
+#include <switched_model_msgs/gait_sequence.h>
+#include <switched_model_msgs/scheduled_gait.h>
+#include <switched_model_msgs/trajectory_request.h>
 
 namespace switched_model {
 namespace ros_msg_conversions {

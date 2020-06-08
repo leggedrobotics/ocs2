@@ -7,14 +7,16 @@ find_package(catkin REQUIRED
   COMPONENTS message_generation std_msgs ocs2_msgs)
 
 # Declare the message files to be built
-add_message_files(FILES
+add_message_files(DIRECTORY msg
+  FILES
   gait.msg
   gait_sequence.msg
   scheduled_gait.msg
   )
 
 # Declare the service files to be built
-add_service_files(FILES
+add_service_files(DIRECTORY srv
+  FILES
   trajectory_request.srv
 )
 

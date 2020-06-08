@@ -134,18 +134,18 @@ target_link_libraries(ballbot_simple_example
 )
 target_compile_options(ballbot_simple_example PRIVATE ${OCS2_CXX_FLAGS})
 
-# Pybindings Cpp library
-add_library(ballbotPyBindings_cpp
-  src/BallbotPyBindings.cpp
-)
-add_dependencies(ballbotPyBindings_cpp
-  ${PROJECT_NAME}
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(ballbotPyBindings_cpp
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+# # Pybindings Cpp library
+# add_library(ballbotPyBindings_cpp
+#   src/BallbotPyBindings.cpp
+# )
+# add_dependencies(ballbotPyBindings_cpp
+#   ${PROJECT_NAME}
+#   ${catkin_EXPORTED_TARGETS}
+# )
+# target_link_libraries(ballbotPyBindings_cpp
+#   ${PROJECT_NAME}
+#   ${catkin_LIBRARIES}
+# )
 
 # Build python bindings
 # pybind11_add_module(BallbotPyBindings SHARED
@@ -186,7 +186,7 @@ if(cmake_clang_tools_FOUND)
         ballbot_mpc
         ballbot_dummy_test
         ballbot_target
-        ballbotPyBindings_cpp
+        # ballbotPyBindings_cpp
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_EXCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/generated
@@ -198,7 +198,8 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS ${PROJECT_NAME} ballbotPyBindings_cpp
+install(TARGETS ${PROJECT_NAME}
+  # ballbotPyBindings_cpp
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -234,13 +235,13 @@ target_link_libraries(ballbot_integration_test
   gtest_main
 )
 
-catkin_add_gtest(ballbot_pybindings_test
-  test/PyBindingsTest.cpp
-)
-target_link_libraries(ballbot_pybindings_test
-  ballbotPyBindings_cpp
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  gtest_main
-)
-catkin_add_nosetests(test)
+# catkin_add_gtest(ballbot_pybindings_test
+#   test/PyBindingsTest.cpp
+# )
+# target_link_libraries(ballbot_pybindings_test
+#   ballbotPyBindings_cpp
+#   ${catkin_LIBRARIES}
+#   ${Boost_LIBRARIES}
+#   gtest_main
+# )
+# catkin_add_nosetests(test)

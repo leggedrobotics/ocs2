@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>ocs2_quadrotor_example</name>
   <version>0.0.0</version>
   <description>The ocs2_quadrotor_example package</description>
@@ -12,16 +12,13 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>roslib</build_depend>
-  <build_depend>tf</build_depend>
-  <build_depend>ocs2_mpc</build_depend>
-  <build_depend>ocs2_comm_interfaces</build_depend>
-  <build_depend>ocs2_robotic_tools</build_depend>
+  <depend>roslib</depend>
+  <depend>tf</depend>
+  <depend>pybind11_catkin</depend>
 
-  <run_depend>roslib</run_depend>
-  <run_depend>tf</run_depend>
-  <run_depend>ocs2_mpc</run_depend>
-  <run_depend>ocs2_comm_interfaces</run_depend>
-  <run_depend>ocs2_robotic_tools</run_depend>
+  <depend>ocs2_mpc</depend>
+  <depend>ocs2_comm_interfaces</depend>
+  <depend>ocs2_robotic_tools</depend>
+  <depend>ocs2_python_interface</depend>
 
 </package>

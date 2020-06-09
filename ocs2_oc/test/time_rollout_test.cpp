@@ -80,7 +80,7 @@ TEST(time_rollout_test, time_rollout_test) {
   rolloutSettings.maxNumStepsPerSecond_ = 10000;
 
   // rollout class
-  std::unique_ptr<RolloutBase> rolloutBasePtr(new TimeTriggeredRollout(nx, nu, systemDynamics, rolloutSettings));
+  std::unique_ptr<RolloutBase> rolloutBasePtr(new TimeTriggeredRollout(systemDynamics, rolloutSettings));
 
   scalar_array_t timeTrajectory;
   size_array_t eventsPastTheEndIndeces;

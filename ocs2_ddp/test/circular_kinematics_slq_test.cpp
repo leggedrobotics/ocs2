@@ -87,7 +87,7 @@ TEST(circular_kinematics_slq_test, circular_kinematics_slq_test) {
   /******************************************************************************************************/
   // system rollout and system derivatives
   CircularKinematicsSystem systemDynamics;
-  TimeTriggeredRollout timeTriggeredRollout(STATE_DIM, INPUT_DIM, systemDynamics, rolloutSettings);
+  TimeTriggeredRollout timeTriggeredRollout(systemDynamics, rolloutSettings);
 
   // cost functions
   CircularKinematicsCost systemCostFunction;
@@ -107,12 +107,14 @@ TEST(circular_kinematics_slq_test, circular_kinematics_slq_test) {
   /******************************************************************************************************/
   // SLQ - single-thread version
   slqSettings.ddpSettings_.nThreads_ = 1;
-  SLQ slqST(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
+  SLQ slqST(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories,
+            slqSettings);
 
   // SLQ - multi-thread version
   slqSettings.ddpSettings_.nThreads_ = 3;
   slqSettings.ddpSettings_.displayInfo_ = false;
-  SLQ slqMT(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
+  SLQ slqMT(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories,
+            slqSettings);
   slqMT.useParallelRiccatiSolverFromInitItr(false);
 
   // run single core SLQ
@@ -150,6 +152,6 @@ TEST(circular_kinematics_slq_test, circular_kinematics_slq_test) {
   const scalar_t expectedISE1 = 0.0;
   ASSERT_LT(fabs(performanceIndecesST.stateInputEqConstraintISE - expectedISE1), slqSettings.ddpSettings_.constraintTolerance_)
       << "MESSAGE: single-threaded SLQ failed in the Circular_Kinematics's type-1 constraint ISE test!";
-  ASSERT_LT(fabs(performanceIndecesMT.stateInputEqConstraintISE  - expectedISE1), slqSettings.ddpSettings_.constraintTolerance_)
+  ASSERT_LT(fabs(performanceIndecesMT.stateInputEqConstraintISE - expectedISE1), slqSettings.ddpSettings_.constraintTolerance_)
       << "MESSAGE: multi-threaded SLQ failed in the Circular_Kinematics's type-1 constraint ISE test!";
 }

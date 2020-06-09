@@ -35,7 +35,7 @@ namespace ocs2 {
 
 class TransferFunctionBase {
  public:
-  TransferFunctionBase(vector_t numCoefficients, vector_t denCoefficients, double timedelay = 0.0, bool balance = true);
+  TransferFunctionBase(vector_t numCoefficients, vector_t denCoefficients, scalar_t timedelay = 0.0, bool balance = true);
 
   void absorbDelay(size_t numZeros, size_t numPoles);
 
@@ -46,14 +46,14 @@ class TransferFunctionBase {
  private:
   vector_t numCoefficients_;
   vector_t denCoefficients_;
-  double timeDelay_;
-  const double delayTol_ = 1e-6;
+  scalar_t timeDelay_;
+  const scalar_t delayTol_ = 1e-6;
   bool delayAbsorbed_ = false;
   bool balance_;
 };
 
 inline void tf2ss(vector_t numCoefficients, vector_t denCoefficients, matrix_t& A, matrix_t& B, matrix_t& C, matrix_t& D,
-                  double timeDelay = 0.0, bool balance = true) {
+                  scalar_t timeDelay = 0.0, bool balance = true) {
   TransferFunctionBase tf(numCoefficients, denCoefficients, timeDelay, balance);
   tf.getStateSpace(A, B, C, D);
 }

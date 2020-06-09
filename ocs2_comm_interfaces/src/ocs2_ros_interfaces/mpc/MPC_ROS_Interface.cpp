@@ -156,8 +156,8 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(bool c
   mpcPolicyMsg.data.reserve(N);
 
   // time
-  for (size_t k = 0; k < N; k++) {
-    mpcPolicyMsg.timeTrajectory.emplace_back(primalSolution.timeTrajectory_[k]);
+  for (auto t : primalSolution.timeTrajectory_) {
+    mpcPolicyMsg.timeTrajectory.emplace_back(t);
   }  // end of k loop
 
   // state
@@ -184,11 +184,11 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(bool c
   scalar_array_t timeTrajectoryTruncated;
   std::vector<std::vector<float>*> policyMsgDataPointers;
   policyMsgDataPointers.reserve(N);
-  for (size_t k = 0; k < N; k++) {
+  for (auto t : primalSolution.timeTrajectory_) {
     mpcPolicyMsg.data.emplace_back(ocs2_msgs::controller_data());
 
     policyMsgDataPointers.push_back(&mpcPolicyMsg.data.back().data);
-    timeTrajectoryTruncated.push_back(primalSolution.timeTrajectory_[k]);
+    timeTrajectoryTruncated.push_back(t);
   }  // end of k loop
   primalSolution.controllerPtr_->flatten(timeTrajectoryTruncated, policyMsgDataPointers);
 

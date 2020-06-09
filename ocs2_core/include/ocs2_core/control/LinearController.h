@@ -47,7 +47,7 @@ class LinearController final : public ControllerBase {
    * @param[in] stateDim: State vector dimension
    * @param[in] inputDim: Input vector dimension
    */
-  explicit LinearController(size_t stateDim, size_t inputDim);
+  LinearController(size_t stateDim, size_t inputDim);
 
   /**
    * @brief Constructor initializes all required members of the controller.
@@ -127,8 +127,6 @@ class LinearController final : public ControllerBase {
   bool empty() const override;
 
   void display() const override;
-
-  void swap(LinearController& other);
 
   void getFeedbackGain(scalar_t time, matrix_t& gain) const;
 

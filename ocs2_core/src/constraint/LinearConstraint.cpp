@@ -35,62 +35,42 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 LinearConstraint::LinearConstraint(size_t stateDim, size_t inputDim)
-    : ConstraintBase(stateDim, inputDim),
-      e_(vector_t(0)),
-      C_(matrix_t(0, stateDim)),
-      D_(matrix_t(0, inputDim)),
-      h_(vector_t(0)),
-      F_(matrix_t(0, stateDim)),
-      h_f_(vector_t(0)),
-      F_f_(matrix_t(0, stateDim)),
-      h0_(0),
-      dhdx_(0),
-      dhdu_(0),
-      ddhdxdx_(0),
-      ddhdudu_(0),
-      ddhdudx_(0) {}
+    : ConstraintBase(stateDim, inputDim), e_(0), C_(0, stateDim), D_(0, inputDim), h_(0), F_(0, stateDim), h_f_(0), F_f_(0, stateDim) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearConstraint::LinearConstraint(size_t stateDim, size_t inputDim, const vector_t& e, const matrix_t& C, const matrix_t& D,
-                                   const vector_t& h, const matrix_t& F, const vector_t& h_f, const matrix_t& F_f)
+LinearConstraint::LinearConstraint(size_t stateDim, size_t inputDim, vector_t e, matrix_t C, matrix_t D, vector_t h, matrix_t F,
+                                   vector_t h_f, matrix_t F_f)
     : ConstraintBase(stateDim, inputDim),
-      e_(e),
-      C_(C),
-      D_(D),
-      h_(h),
-      F_(F),
-      h_f_(h_f),
-      F_f_(F_f),
-      h0_(0),
-      dhdx_(0),
-      dhdu_(0),
-      ddhdxdx_(0),
-      ddhdudu_(0),
-      ddhdudx_(0) {}
+      e_(std::move(e)),
+      C_(std::move(C)),
+      D_(std::move(D)),
+      h_(std::move(h)),
+      F_(std::move(F)),
+      h_f_(std::move(h_f)),
+      F_f_(std::move(F_f)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearConstraint::LinearConstraint(size_t stateDim, size_t inputDim, const vector_t& e, const matrix_t& C, const matrix_t& D,
-                                   const vector_t& h, const matrix_t& F, const vector_t& h_f, const matrix_t& F_f, const scalar_array_t& h0,
-                                   const vector_array_t& dhdx, const vector_array_t& dhdu, const matrix_array_t& ddhdxdx,
-                                   const matrix_array_t& ddhdudu, const matrix_array_t& ddhdudx)
+LinearConstraint::LinearConstraint(size_t stateDim, size_t inputDim, vector_t e, matrix_t C, matrix_t D, vector_t h, matrix_t F,
+                                   vector_t h_f, matrix_t F_f, scalar_array_t h0, vector_array_t dhdx, vector_array_t dhdu,
+                                   matrix_array_t ddhdxdx, matrix_array_t ddhdudu, matrix_array_t ddhdudx)
     : ConstraintBase(stateDim, inputDim),
-      e_(e),
-      C_(C),
-      D_(D),
-      h_(h),
-      F_(F),
-      h_f_(h_f),
-      F_f_(F_f),
-      h0_(h0),
-      dhdx_(dhdx),
-      dhdu_(dhdu),
-      ddhdxdx_(ddhdxdx),
-      ddhdudu_(ddhdudu),
-      ddhdudx_(ddhdudx) {}
+      e_(std::move(e)),
+      C_(std::move(C)),
+      D_(std::move(D)),
+      h_(std::move(h)),
+      F_(std::move(F)),
+      h_f_(std::move(h_f)),
+      F_f_(std::move(F_f)),
+      h0_(std::move(h0)),
+      dhdx_(std::move(dhdx)),
+      dhdu_(std::move(dhdu)),
+      ddhdxdx_(std::move(ddhdxdx)),
+      ddhdudu_(std::move(ddhdudu)),
+      ddhdudx_(std::move(ddhdudx)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

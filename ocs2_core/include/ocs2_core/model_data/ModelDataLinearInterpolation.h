@@ -87,7 +87,7 @@ inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, mat
 /**
  * Re-defining the timeSegment() in ModelData namespace.
  */
-inline ocs2::LinearInterpolation::index_alpha_t timeSegment(scalar_t enquiryTime, const std::vector<scalar_t>* timeArrayPtr) {
+inline ocs2::LinearInterpolation::index_alpha_t timeSegment(scalar_t enquiryTime, const scalar_array_t* timeArrayPtr) {
   return ocs2::LinearInterpolation::timeSegment(enquiryTime, timeArrayPtr);
 }
 

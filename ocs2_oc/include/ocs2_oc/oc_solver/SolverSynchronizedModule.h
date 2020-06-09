@@ -48,7 +48,7 @@ class SolverSynchronizedModule {
 
   /**
    * Method called right before the solver runs
-   *s
+   *
    * @param initTime : start time of the MPC horizon
    * @param finalTime : Final time of the MPC horizon
    * @param currentState : State at the start of the MPC horizon

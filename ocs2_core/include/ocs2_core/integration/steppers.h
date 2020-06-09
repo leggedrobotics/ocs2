@@ -31,30 +31,32 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <boost/numeric/odeint.hpp>
 
+#include <ocs2_core/Types.h>
+
 namespace ocs2 {
 
 /**
  * Euler stepper
  */
-using euler_t = boost::numeric::odeint::euler<vector_t, double, vector_t, double, boost::numeric::odeint::vector_space_algebra>;
+using euler_t = boost::numeric::odeint::euler<vector_t, scalar_t, vector_t, scalar_t, boost::numeric::odeint::vector_space_algebra>;
 
 /**
  * Modified_Midpoint stepper
  */
 using modified_midpoint_t =
-    boost::numeric::odeint::modified_midpoint<vector_t, double, vector_t, double, boost::numeric::odeint::vector_space_algebra>;
+    boost::numeric::odeint::modified_midpoint<vector_t, scalar_t, vector_t, scalar_t, boost::numeric::odeint::vector_space_algebra>;
 
 /**
  * 4th order Runge_Kutta stepper
  */
 using runge_kutta_4_t =
-    boost::numeric::odeint::runge_kutta4<vector_t, double, vector_t, double, boost::numeric::odeint::vector_space_algebra>;
+    boost::numeric::odeint::runge_kutta4<vector_t, scalar_t, vector_t, scalar_t, boost::numeric::odeint::vector_space_algebra>;
 
 /**
  * 5th order Runge_Kutta_Dopri stepper
  */
 using runge_kutta_dopri5_t =
-    boost::numeric::odeint::runge_kutta_dopri5<vector_t, double, vector_t, double, boost::numeric::odeint::vector_space_algebra>;
+    boost::numeric::odeint::runge_kutta_dopri5<vector_t, scalar_t, vector_t, scalar_t, boost::numeric::odeint::vector_space_algebra>;
 
 /**
  * Dense_output Runge_Kutta stepper
@@ -66,16 +68,16 @@ using dense_runge_kutta5_t =
  * Bulirsch_Stoer stepper
  */
 using bulirsch_stoer_t =
-    boost::numeric::odeint::bulirsch_stoer<vector_t, double, vector_t, double, boost::numeric::odeint::vector_space_algebra>;
+    boost::numeric::odeint::bulirsch_stoer<vector_t, scalar_t, vector_t, scalar_t, boost::numeric::odeint::vector_space_algebra>;
 
 /**
  * Adams_Bashforth stepper
  */
 template <size_t STEPS>
 using adams_bashforth_uncontrolled_t = boost::numeric::odeint::adams_bashforth<STEPS, vector_t,  // state
-                                                                               double,           // typename value
+                                                                               scalar_t,         // typename value
                                                                                vector_t,         // derivative
-                                                                               double,           // typename time
+                                                                               scalar_t,         // typename time
                                                                                boost::numeric::odeint::vector_space_algebra>;
 
 /**
@@ -85,9 +87,9 @@ using adams_bashforth_uncontrolled_t = boost::numeric::odeint::adams_bashforth<S
 template <size_t STEPS>
 using adams_bashforth_moulton_uncontrolled_t =
     boost::numeric::odeint::adams_bashforth_moulton<STEPS, vector_t,  // state
-                                                    double,           // typename value
+                                                    scalar_t,         // typename value
                                                     vector_t,         // derivative
-                                                    double,           // typename time
+                                                    scalar_t,         // typename time
                                                     boost::numeric::odeint::vector_space_algebra>;
 #endif
 

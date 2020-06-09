@@ -108,7 +108,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   systemCost systemCost(reference, Q, R, P, xNom, uNom, xFin, finalTime);
 
   // Rollout Class
-  ocs2::StateTriggeredRollout stateTriggeredRollout(STATE_DIM, INPUT_DIM, systemModel, rolloutSettings);
+  ocs2::StateTriggeredRollout stateTriggeredRollout(systemModel, rolloutSettings);
 
   // Operating points and PartitioningTimes
   scalar_array_t partitioningTimes;

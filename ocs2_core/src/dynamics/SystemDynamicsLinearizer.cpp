@@ -55,22 +55,23 @@ SystemDynamicsLinearizer& SystemDynamicsLinearizer::operator=(const SystemDynami
   controlledSystemPtr_.reset(other.controlledSystemPtr_->clone());
   doubleSidedDerivative_ = other.doubleSidedDerivative_;
   isSecondOrderSystem_ = other.isSecondOrderSystem_;
+  return *this;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsLinearizer::getFlowMapDerivativeState(matrix_t& A) {
-  A = finiteDifferenceDerivativeState(*controlledSystemPtr_, this->t_, this->x_, this->u_, Eigen::NumTraits<scalar_t>::epsilon(),
-                                      doubleSidedDerivative_, isSecondOrderSystem_);
+matrix_t SystemDynamicsLinearizer::getFlowMapDerivativeState() {
+  return finiteDifferenceDerivativeState(*controlledSystemPtr_, this->t_, this->x_, this->u_, Eigen::NumTraits<scalar_t>::epsilon(),
+                                         doubleSidedDerivative_, isSecondOrderSystem_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsLinearizer::getFlowMapDerivativeInput(matrix_t& B) {
-  B = finiteDifferenceDerivativeInput(*controlledSystemPtr_, this->t_, this->x_, this->u_, Eigen::NumTraits<scalar_t>::epsilon(),
-                                      doubleSidedDerivative_, isSecondOrderSystem_);
+matrix_t SystemDynamicsLinearizer::getFlowMapDerivativeInput() {
+  return finiteDifferenceDerivativeInput(*controlledSystemPtr_, this->t_, this->x_, this->u_, Eigen::NumTraits<scalar_t>::epsilon(),
+                                         doubleSidedDerivative_, isSecondOrderSystem_);
 }
 
 /******************************************************************************************************/

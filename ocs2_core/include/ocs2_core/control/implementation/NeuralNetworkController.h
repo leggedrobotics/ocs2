@@ -48,7 +48,7 @@ void NeuralNetworkController::loadNetwork(const std::string& filePath) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t NeuralNetworkController::computeInput(const scalar_t& t, const vector_t& x) {
+vector_t NeuralNetworkController::computeInput(scalar_t t, const vector_t& x) {
   Eigen::VectorXf net_input_float = state_in_transform_fct_(t, x);
   auto input_torch = torch::from_blob(net_input_float.data(), net_input_float.size());
   std::vector<torch::jit::IValue> inputs;

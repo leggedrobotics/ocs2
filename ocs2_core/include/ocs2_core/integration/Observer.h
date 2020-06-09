@@ -66,7 +66,7 @@ class Observer {
    * @param [in] state: Current state.
    * @param [in] time: Current time.
    */
-  void observe(OdeBase& system, const vector_t& state, const scalar_t time);
+  void observe(OdeBase& system, const vector_t& state, scalar_t time);
 
  private:
   scalar_array_t* timeTrajectoryPtr_;

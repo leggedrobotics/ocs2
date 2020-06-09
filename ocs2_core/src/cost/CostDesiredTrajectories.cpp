@@ -88,27 +88,29 @@ bool CostDesiredTrajectories::operator==(const CostDesiredTrajectories& other) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-void CostDesiredTrajectories::getDesiredState(scalar_t time, vector_t& desiredState) const {
+vector_t CostDesiredTrajectories::getDesiredState(scalar_t time) const {
+  vector_t desiredState;
   if (desiredTimeTrajectory_.empty() || desiredStateTrajectory_.empty()) {
-    // TODO(mspieler): where do we get dimensions from? Is this even a valid state?
-    // desiredState = vector_t::Zero(state_dim_);
+    // TODO(mspieler): error handling
     throw std::runtime_error("CostDesiredTrajectories is empty.");
   } else {
     LinearInterpolation::interpolate(time, desiredState, &desiredTimeTrajectory_, &desiredStateTrajectory_);
   }
+  return desiredState;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-void CostDesiredTrajectories::getDesiredInput(scalar_t time, vector_t& desiredInput) const {
+vector_t CostDesiredTrajectories::getDesiredInput(scalar_t time) const {
+  vector_t desiredInput;
   if (desiredTimeTrajectory_.empty() || desiredInputTrajectory_.empty()) {
-    // TODO(mspieler): where do we get dimensions from?
-    // desiredInput = vector_t::Zero(input_dim_);
+    // TODO(mspieler): error handling
     throw std::runtime_error("CostDesiredTrajectories is empty.");
   } else {
     LinearInterpolation::interpolate(time, desiredInput, &desiredTimeTrajectory_, &desiredInputTrajectory_);
   }
+  return desiredInput;
 }
 
 /******************************************************************************************************/
@@ -145,6 +147,7 @@ std::ostream& operator<<(std::ostream& out, const CostDesiredTrajectories& traj)
     }
 
   }  // end of i loop
+  return out;
 }
 
 /******************************************************************************************************/

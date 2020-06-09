@@ -58,109 +58,100 @@ CostFunctionLinearCombination* CostFunctionLinearCombination::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CostFunctionLinearCombination::getIntermediateCost(scalar_t& L) {
-  L = 0;
+scalar_t CostFunctionLinearCombination::getCost() {
+  scalar_t L = 0;
   for (auto& weightedCost : weightedCosts_) {
-    scalar_t LSingle = 0;
-    weightedCost.second->getIntermediateCost(LSingle);
-    L += weightedCost.first * LSingle;
+    L += weightedCost.first * weightedCost.second->getCost();
   }
+  return L;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CostFunctionLinearCombination::getIntermediateCostDerivativeState(vector_t& dLdx) {
-  dLdx = vector_t::Zero(x_.rows());
+vector_t CostFunctionLinearCombination::getCostDerivativeState() {
+  vector_t dLdx = vector_t::Zero(x_.rows());
   for (auto& weightedCost : weightedCosts_) {
-    vector_t dLdxSingle = vector_t::Zero(x_.rows());
-    weightedCost.second->getIntermediateCostDerivativeState(dLdxSingle);
-    dLdx += weightedCost.first * dLdxSingle;
+    dLdx += weightedCost.first * weightedCost.second->getCostDerivativeState();
   }
+  return dLdx;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CostFunctionLinearCombination::getIntermediateCostSecondDerivativeState(matrix_t& dLdxx) {
-  dLdxx = matrix_t::Zero(x_.rows(), x_.rows());
+matrix_t CostFunctionLinearCombination::getCostSecondDerivativeState() {
+  matrix_t dLdxx = matrix_t::Zero(x_.rows(), x_.rows());
   for (auto& weightedCost : weightedCosts_) {
-    matrix_t dLdxxSingle = matrix_t::Zero(x_.rows(), x_.rows());
-    weightedCost.second->getIntermediateCostSecondDerivativeState(dLdxxSingle);
-    dLdxx += weightedCost.first * dLdxxSingle;
+    dLdxx += weightedCost.first * weightedCost.second->getCostSecondDerivativeState();
   }
+  return dLdxx;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CostFunctionLinearCombination::getIntermediateCostDerivativeInput(vector_t& dLdu) {
-  dLdu = vector_t::Zero(u_.rows());
+vector_t CostFunctionLinearCombination::getCostDerivativeInput() {
+  vector_t dLdu = vector_t::Zero(u_.rows());
   for (auto& weightedCost : weightedCosts_) {
-    vector_t dLduSingle = vector_t::Zero(u_.rows());
-    weightedCost.second->getIntermediateCostDerivativeInput(dLduSingle);
-    dLdu += weightedCost.first * dLduSingle;
+    dLdu += weightedCost.first * weightedCost.second->getCostDerivativeInput();
   }
+  return dLdu;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CostFunctionLinearCombination::getIntermediateCostSecondDerivativeInput(matrix_t& dLduu) {
-  dLduu = matrix_t::Zero(u_.rows(), u_.rows());
+matrix_t CostFunctionLinearCombination::getCostSecondDerivativeInput() {
+  matrix_t dLduu = matrix_t::Zero(u_.rows(), u_.rows());
   for (auto& weightedCost : weightedCosts_) {
-    matrix_t dLduuSingle = matrix_t::Zero(u_.rows(), u_.rows());
-    weightedCost.second->getIntermediateCostSecondDerivativeInput(dLduuSingle);
-    dLduu += weightedCost.first * dLduuSingle;
+    dLduu += weightedCost.first * weightedCost.second->getCostSecondDerivativeInput();
   }
+  return dLduu;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CostFunctionLinearCombination::getIntermediateCostDerivativeInputState(matrix_t& dLdux) {
-  dLdux = matrix_t::Zero(u_.rows(), x_.rows());
+matrix_t CostFunctionLinearCombination::getCostDerivativeInputState() {
+  matrix_t dLdux = matrix_t::Zero(u_.rows(), x_.rows());
   for (auto& weightedCost : weightedCosts_) {
-    matrix_t dLduxSingle = matrix_t::Zero(u_.rows(), x_.rows());
-    weightedCost.second->getIntermediateCostDerivativeInputState(dLduxSingle);
-    dLdux += weightedCost.first * dLduxSingle;
+    dLdux += weightedCost.first * weightedCost.second->getCostDerivativeInputState();
   }
+  return dLdux;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CostFunctionLinearCombination::getTerminalCost(scalar_t& Phi) {
-  Phi = 0;
+scalar_t CostFunctionLinearCombination::getTerminalCost() {
+  scalar_t Phi = 0;
   for (auto& weightedCost : weightedCosts_) {
-    scalar_t PhiSingle = 0;
-    weightedCost.second->getTerminalCost(PhiSingle);
-    Phi += weightedCost.first * PhiSingle;
+    Phi += weightedCost.first * weightedCost.second->getTerminalCost();
   }
+  return Phi;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CostFunctionLinearCombination::getTerminalCostDerivativeState(vector_t& dPhidx) {
-  dPhidx = vector_t::Zero(x_.rows());
+vector_t CostFunctionLinearCombination::getTerminalCostDerivativeState() {
+  vector_t dPhidx = vector_t::Zero(x_.rows());
   for (auto& weightedCost : weightedCosts_) {
-    vector_t dPhidxSingle = vector_t::Zero(x_.rows());
-    weightedCost.second->getTerminalCostDerivativeState(dPhidxSingle);
-    dPhidx += weightedCost.first * dPhidxSingle;
+    dPhidx += weightedCost.first * weightedCost.second->getTerminalCostDerivativeState();
   }
+  return dPhidx;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CostFunctionLinearCombination::getTerminalCostSecondDerivativeState(matrix_t& dPhidxx) {
-  dPhidxx = matrix_t::Zero(x_.rows(), x_.rows());
+matrix_t CostFunctionLinearCombination::getTerminalCostSecondDerivativeState() {
+  matrix_t dPhidxx = matrix_t::Zero(x_.rows(), x_.rows());
   for (auto& weightedCost : weightedCosts_) {
-    matrix_t dPhidxxSingle = matrix_t::Zero(x_.rows(), x_.rows());
-    weightedCost.second->getTerminalCostSecondDerivativeState(dPhidxxSingle);
-    dPhidxx += weightedCost.first * dPhidxxSingle;
+    dPhidxx += weightedCost.first * weightedCost.second->getTerminalCostSecondDerivativeState();
   }
+  return dPhidxx;
 }
 
 /******************************************************************************************************/
@@ -176,7 +167,7 @@ void CostFunctionLinearCombination::setCostDesiredTrajectoriesPtr(const CostDesi
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CostFunctionLinearCombination::setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) {
+void CostFunctionLinearCombination::setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) {
   CostFunctionBase::setCurrentStateAndControl(t, x, u);
   for (auto& weightedCost : weightedCosts_) {
     weightedCost.second->setCurrentStateAndControl(t, x, u);
@@ -186,25 +177,23 @@ void CostFunctionLinearCombination::setCurrentStateAndControl(const scalar_t& t,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CostFunctionLinearCombination::getIntermediateCostDerivativeTime(scalar_t& dLdt) {
-  dLdt = 0;
+scalar_t CostFunctionLinearCombination::getCostDerivativeTime() {
+  scalar_t dLdt = 0;
   for (auto& weightedCost : weightedCosts_) {
-    scalar_t dLdtSingle = 0;
-    weightedCost.second->getIntermediateCostDerivativeTime(dLdtSingle);
-    dLdt += weightedCost.first * dLdtSingle;
+    dLdt += weightedCost.first * weightedCost.second->getCostDerivativeTime();
   }
+  return dLdt;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CostFunctionLinearCombination::getTerminalCostDerivativeTime(scalar_t& dPhidt) {
-  dPhidt = 0;
+scalar_t CostFunctionLinearCombination::getTerminalCostDerivativeTime() {
+  scalar_t dPhidt = 0;
   for (auto& weightedCost : weightedCosts_) {
-    scalar_t dPhidtSingle = 0;
-    weightedCost.second->getTerminalCostDerivativeTime(dPhidtSingle);
-    dPhidt += weightedCost.first * dPhidtSingle;
+    dPhidt += weightedCost.first * weightedCost.second->getTerminalCostDerivativeTime();
   }
+  return dPhidt;
 }
 
 }  // namespace ocs2

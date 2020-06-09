@@ -36,10 +36,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CppAdInterface::CppAdInterface(ad_parameterized_function_t adFunction, int rangeDim, int variableDim, int parameterDim,
-                               std::string modelName, std::string folderName, std::vector<std::string> compileFlags)
+CppAdInterface::CppAdInterface(ad_parameterized_function_t adFunction, size_t variableDim, size_t parameterDim, std::string modelName,
+                               std::string folderName, std::vector<std::string> compileFlags)
     : adFunction_(std::move(adFunction)),
-      rangeDim_(rangeDim),
+      rangeDim_(0),
       variableDim_(variableDim),
       parameterDim_(parameterDim),
       modelName_(std::move(modelName)),
@@ -51,17 +51,16 @@ CppAdInterface::CppAdInterface(ad_parameterized_function_t adFunction, int range
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CppAdInterface::CppAdInterface(ad_function_t adFunction, int rangeDim, int variableDim, std::string modelName, std::string folderName,
+CppAdInterface::CppAdInterface(ad_function_t adFunction, size_t variableDim, std::string modelName, std::string folderName,
                                std::vector<std::string> compileFlags)
-    : CppAdInterface([adFunction](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) { adFunction(x, y); }, rangeDim, variableDim,
-                     0, std::move(modelName), std::move(folderName), std::move(compileFlags)){};
+    : CppAdInterface([adFunction](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) { adFunction(x, y); }, variableDim, 0,
+                     std::move(modelName), std::move(folderName), std::move(compileFlags)){};
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 CppAdInterface::CppAdInterface(const CppAdInterface& rhs)
-    : CppAdInterface(rhs.adFunction_, rhs.rangeDim_, rhs.variableDim_, rhs.parameterDim_, rhs.modelName_, rhs.folderName_,
-                     rhs.compileFlags_) {
+    : CppAdInterface(rhs.adFunction_, rhs.variableDim_, rhs.parameterDim_, rhs.modelName_, rhs.folderName_, rhs.compileFlags_) {
   if (isLibraryAvailable()) {
     loadModels(false);
   }
@@ -82,9 +81,10 @@ void CppAdInterface::createModels(ApproximationOrder approximationOrder, bool ve
   ad_vector_t x = xp.segment(0, variableDim_);
   ad_vector_t p = xp.segment(variableDim_, parameterDim_);
   // dependent variable vector
-  ad_vector_t y(rangeDim_);
+  ad_vector_t y;
   // the model equation
   adFunction_(x, p, y);
+  rangeDim_ = y.rows();
   // create f: xp -> y and stop tape recording
   ad_fun_t fun(xp, y);
   // Optimize the operation sequence
@@ -130,6 +130,7 @@ void CppAdInterface::loadModels(bool verbose) {
   }
   dynamicLib_.reset(new CppAD::cg::LinuxDynamicLib<scalar_t>(libraryName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION));
   model_ = dynamicLib_->model(modelName_);
+  rangeDim_ = model_->Range();
 
   setSparsityNonzeros();
 }
@@ -152,7 +153,7 @@ vector_t CppAdInterface::getFunctionValue(const vector_t& x, const vector_t& p) 
   vector_t xp(variableDim_ + parameterDim_);
   xp << x, p;
 
-  vector_t functionValue(rangeDim_);
+  vector_t functionValue(model_->Range());
 
   model_->ForwardZero(xp, functionValue);
   assert(functionValue.allFinite());
@@ -177,7 +178,7 @@ matrix_t CppAdInterface::getJacobian(const vector_t& x, const vector_t& p) const
 
   // Write sparse elements into Eigen type. Only jacobian w.r.t. variables was requested, so cols should not contain elements corresponding
   // to parameters. Write to rowMajor type because sparsity is specified as row major.
-  rowMajor_matrix_t jacobian = rowMajor_matrix_t::Zero(rangeDim_, variableDim_);
+  rowMajor_matrix_t jacobian = rowMajor_matrix_t::Zero(model_->Range(), variableDim_);
   for (size_t i = 0; i < nnzJacobian_; i++) {
     jacobian(rows[i], cols[i]) = sparseJacobian[i];
   }

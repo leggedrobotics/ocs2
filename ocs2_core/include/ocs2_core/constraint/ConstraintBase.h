@@ -78,7 +78,7 @@ class ConstraintBase {
    * @param [in] x: Current state.
    * @param [in] u: Current input.
    */
-  virtual void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u);
+  virtual void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u);
 
   /**
    * Clones the class.
@@ -90,141 +90,105 @@ class ConstraintBase {
   /**
    * Computes the state-input equality constraints.
    *
-   * @param [out] e: The state-input equality constraints value.
+   * @return The state-input equality constraints value.
    */
-  virtual void getConstraint1(vector_t& e);
-
-  /**
-   * Gets the number of active state-input equality constraints.
-   *
-   * @param [in] time: time.
-   * @return number of state-input active equality constraints.
-   */
-  virtual size_t numStateInputConstraint(const scalar_t& time);
+  virtual vector_t getStateInputEqualityConstraint();
 
   /**
    * Gets the state-only equality constraints.
    *
-   * @param [out] h: The state-only (in)equality constraints value.
+   * @return The state-only equality constraints value.
    */
-  virtual void getConstraint2(vector_t& h);
-
-  /**
-   * Get the number of state-only active equality constraints.
-   *
-   * @param [in] time: time.
-   * @return number of state-only active (in)equality constraints.
-   */
-  virtual size_t numStateOnlyConstraint(const scalar_t& time);
+  virtual vector_t getStateEqualityConstraint();
 
   /**
    * Gets the inequality constraints.
    *
    *  \f$ h(x, u, t) \geq 0 \f$
    *
-   * @param [out] h: Vector of inequality constraints values.
+   * @return Vector of inequality constraints values.
    */
-  virtual void getInequalityConstraint(scalar_array_t& h);
-
-  /**
-   * Get the number of inequality constraints.
-   *
-   * @param [in] time: time.
-   * @return number of inequality constraints.
-   */
-  virtual size_t numInequalityConstraint(const scalar_t& time);
+  virtual scalar_array_t getInequalityConstraint();
 
   /**
    * Compute the final state-only equality constraints.
    *
-   * @param [out] h_f: The final state-only (in)equality constraints value.
+   * @return The final state-only equality constraints value.
    */
-  virtual void getFinalConstraint2(vector_t& h_f);
-
-  /**
-   * Get the number of final state-only active (in)equality constraints.
-   *
-   * @param [in] time: time.
-   * @return number of final state-only active equality constraints.
-   */
-  virtual size_t numStateOnlyFinalConstraint(const scalar_t& time);
+  virtual vector_t getFinalStateEqualityConstraint();
 
   /**
    * The C matrix at a given operating point for the linearized state-input constraints,
    * \f$ C(t) \delta x + D(t) \delta u + e(t) = 0 \f$.
    *
-   * @param [out] C: \f$ C(t) \f$ matrix.
+   * @return \f$ C(t) \f$ matrix.
    */
-  virtual void getConstraint1DerivativesState(matrix_t& C);
+  virtual matrix_t getStateInputEqualityConstraintDerivativesState();
 
   /**
    * The D matrix at a given operating point for the linearized state-input constraints,
    * \f$ C(t) \delta x + D(t) \delta u + e(t) = 0 \f$.
    *
-   * @param [out] D: \f$ D(t) \f$ matrix.
+   * @return \f$ D(t) \f$ matrix.
    */
-  virtual void getConstraint1DerivativesControl(matrix_t& D);
+  virtual matrix_t getStateInputEqualityConstraintDerivativesInput();
 
   /**
    * calculate and retrieve the the derivative of the state-input constraints w.r.t. event times.
-   * g1DevArray[i] is a vector of dimension MAX_CONSTRAINT1_DIM_ which is the partial derivative of
-   * state-input equality constraints with respect to i'th event time.
-   *
-   * Note that only nc1 top rows of g1DevArray[i] are valid where nc1 is the number of active
-   * state-input constraints at the current time.
+   * g1DevArray[i] is the partial derivative of state-input equality constraints with respect to i'th event time.
    *
    * If the constraints are not a function of event times either set the array size to zero (as the default)
-   * implementation or set it to an array of zero vector with a size equal to number event times.
+   * or set it to an array of zero vectors with a size equal to number event times.
    *
-   * @param [out] g1DevArray: an array of nc1-by-1 vector.
+   * @return array of vectors.
    */
-  virtual void getConstraint1DerivativesEventTimes(vector_array_t& g1DevArray);
+  virtual vector_array_t getStateInputEqualityConstraintDerivativesEventTimes();
 
   /**
    * The F matrix at a given operating point for the linearized state-only constraints,
    * \f$ F(t) \delta x + h(t) = 0 \f$.
    *
-   * @param [out] F: \f$ F(t) \f$ matrix.
+   * @return \f$ F(t) \f$ matrix.
    */
-  virtual void getConstraint2DerivativesState(matrix_t& F);
+  virtual matrix_t getStateEqualityConstraintDerivativesState();
 
   /**
    * Get the derivative of the inequality constraints.
-   * @param [out] dhdx: Vector of derivatives for each constraint with respect to state vector.
+   * @return Vector of derivatives for each constraint with respect to state vector.
    */
-  virtual void getInequalityConstraintDerivativesState(vector_array_t& dhdx);
+  virtual vector_array_t getInequalityConstraintDerivativesState();
 
   /**
    * Get the derivative of the inequality constraints.
-   * @param [out] dhdu: Vector derivatives for each constraint with respect to input vector.
+   * @return Vector derivatives for each constraint with respect to input vector.
    */
-  virtual void getInequalityConstraintDerivativesInput(vector_array_t& dhdu);
+  virtual vector_array_t getInequalityConstraintDerivativesInput();
 
   /**
    * Get the second derivative of the inequality constraints.
-   * @param [out] ddhdxdx: Vector of second derivatives for each constraint with respect to state vector.
+   * @return Vector of second derivatives for each constraint with respect to state vector.
    */
-  virtual void getInequalityConstraintSecondDerivativesState(matrix_array_t& ddhdxdx);
+  virtual matrix_array_t getInequalityConstraintSecondDerivativesState();
 
   /**
    * Get the second derivative of the inequality constraints.
-   * @param [out] ddhudu: Vector of second derivatives for each constraint with respect to input vector.
+   * @return Vector of second derivatives for each constraint with respect to input vector.
    */
-  virtual void getInequalityConstraintSecondDerivativesInput(matrix_array_t& ddhdudu);
+  virtual matrix_array_t getInequalityConstraintSecondDerivativesInput();
 
   /**
    * Get the second derivative of the inequality constraints.
-   * @param [out] ddhudx: Vector of second derivatives for each constraint with respect to input vector and state.
+   * @return Vector of second derivatives for each constraint with respect to input vector and state.
    */
-  virtual void getInequalityConstraintDerivativesInputState(matrix_array_t& ddhdudx);
+  virtual matrix_array_t getInequalityConstraintDerivativesInputState();
 
   /**
    * The F matrix at a given operating point for the linearized terminal state-only constraints,
    * \f$ F_f(t) \delta x + h_f(t) = 0 \f$.
    *
-   * @param [out] F_f: \f$ F_f(t) \f$ matrix.
+   * @return \f$ F_f(t) \f$ matrix.
    */
-  virtual void getFinalConstraint2DerivativesState(matrix_t& F_f);
+  virtual matrix_t getFinalStateEqualityConstraintDerivativesState();
 
  protected:
   size_t stateDim_;

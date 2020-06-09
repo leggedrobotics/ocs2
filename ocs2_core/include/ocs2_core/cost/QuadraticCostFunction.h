@@ -71,7 +71,7 @@ class QuadraticCostFunction : public CostFunctionBase {
    * @param [in] x: Current state vector.
    * @param [in] u: Current input vector.
    */
-  void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) override;
+  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) override;
 
   /**
    * Sets the current time, state, control input, and desired state and input.
@@ -83,71 +83,71 @@ class QuadraticCostFunction : public CostFunctionBase {
    * @param [in] uNominalIntermediate: Intermediate desired input vector.
    * @param [in] xNominalFinal: Final desired state vector.
    */
-  virtual void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u, const vector_t& xNominalIntermediate,
+  virtual void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u, const vector_t& xNominalIntermediate,
                                          const vector_t& uNominalIntermediate, const vector_t& xNominalFinal);
 
   /**
    * Get the intermediate cost.
    *
-   * @param [out] L: The intermediate cost value.
+   * @return The intermediate cost value.
    */
-  void getIntermediateCost(scalar_t& L) override;
+  scalar_t getCost() override;
 
   /**
    * Get the state derivative of the intermediate cost.
    *
-   * @param [out] dLdx: First order derivative of the intermediate cost with respect to state vector.
+   * @return First order derivative of the intermediate cost with respect to state vector.
    */
-  void getIntermediateCostDerivativeState(vector_t& dLdx) override;
+  vector_t getCostDerivativeState() override;
 
   /**
    * Get state second order derivative of the intermediate cost.
    *
-   * @param [out] dLdxx: Second order derivative of the intermediate cost with respect to state vector.
+   * @return Second order derivative of the intermediate cost with respect to state vector.
    */
-  void getIntermediateCostSecondDerivativeState(matrix_t& dLdxx) override;
+  matrix_t getCostSecondDerivativeState() override;
 
   /**
    * Get control input derivative of the intermediate cost.
    *
-   * @param [out] dLdu: First order derivative of the intermediate cost with respect to input vector.
+   * @return First order derivative of the intermediate cost with respect to input vector.
    */
-  void getIntermediateCostDerivativeInput(vector_t& dLdu) override;
+  vector_t getCostDerivativeInput() override;
 
   /**
    * Get control input second derivative of the intermediate cost.
    *
-   * @param [out] dLduu: Second order derivative of the intermediate cost with respect to input vector.
+   * @return Second order derivative of the intermediate cost with respect to input vector.
    */
-  void getIntermediateCostSecondDerivativeInput(matrix_t& dLduu) override;
+  matrix_t getCostSecondDerivativeInput() override;
 
   /**
    * Get the input-state derivative of the intermediate cost.
    *
-   * @param [out] dLdux: Second order derivative of the intermediate cost with respect to input vector and state.
+   * @return Second order derivative of the intermediate cost with respect to input vector and state.
    */
-  void getIntermediateCostDerivativeInputState(matrix_t& dLdux) override;
+  matrix_t getCostDerivativeInputState() override;
 
   /**
    * Get the terminal cost.
    *
-   * @param [out] cost: The final cost value.
+   * @return The final cost value.
    */
-  void getTerminalCost(scalar_t& cost) override;
+  scalar_t getTerminalCost() override;
 
   /**
    * Get the terminal cost state derivative.
    *
-   * @param [out] dPhidx: First order final cost derivative with respect to state vector.
+   * @return First order final cost derivative with respect to state vector.
    */
-  void getTerminalCostDerivativeState(vector_t& dPhidx) override;
+  vector_t getTerminalCostDerivativeState() override;
 
   /**
    * Get the terminal cost state second derivative
    *
-   * @param [out] dPhidxx: Second order final cost derivative with respect to state vector.
+   * @return Second order final cost derivative with respect to state vector.
    */
-  void getTerminalCostSecondDerivativeState(matrix_t& dPhidxx) override;
+  matrix_t getTerminalCostSecondDerivativeState() override;
 
  protected:
   matrix_t Q_;

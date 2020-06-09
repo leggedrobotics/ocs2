@@ -57,8 +57,7 @@ void Observer::observe(OdeBase& system, const vector_t& state, const scalar_t ti
     if (system.endModelDataIterator() == system.beginModelDataIterator()) {
       // since the flow map has not been called so far, call it once.
       // Note: This is a workaround for boost::odeint() as it calls observer() before flowMap()
-      vector_t dxdt;
-      system.computeFlowMap(time, state, dxdt);
+      system.computeFlowMap(time, state);
     }
     // get model data from current time step, search starting from most recent cache entry
     std::vector<ModelDataBase>::iterator modelData_i = system.endModelDataIterator();

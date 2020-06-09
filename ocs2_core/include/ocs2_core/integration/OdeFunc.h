@@ -37,14 +37,14 @@ namespace ocs2 {
 
 class OdeFunc final : public OdeBase {
  public:
-  explicit OdeFunc(std::function<void(const scalar_t& t, const vector_t& x, vector_t& dxdt)> flowMap);
+  explicit OdeFunc(std::function<vector_t(scalar_t t, const vector_t& x)> flowMap);
 
-  void computeFlowMap(const scalar_t& t, const vector_t& x, vector_t& dxdt) override;
+  vector_t computeFlowMap(scalar_t t, const vector_t& x) override;
 
-  void setFlowMap(std::function<void(const scalar_t& t, const vector_t& x, vector_t& dxdt)>&& flowMap);
+  void setFlowMap(std::function<vector_t(scalar_t t, const vector_t& x)>&& flowMap);
 
  private:
-  std::function<void(const scalar_t& t, const vector_t& x, vector_t& dxdt)> flowMap_;
+  std::function<vector_t(scalar_t t, const vector_t& x)> flowMap_;
 };
 
 }  // namespace ocs2

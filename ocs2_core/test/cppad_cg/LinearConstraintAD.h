@@ -39,68 +39,36 @@ class LinearConstraintAD : public ConstraintBaseAD {
   using ConstraintBaseAD::ad_scalar_t;
   using ConstraintBaseAD::ad_vector_t;
 
-  LinearConstraintAD(size_t stateDim, size_t inputDim, size_t numStateInputConstraint, const vector_t& e, const matrix_t& C,
-                     const matrix_t& D, size_t numStateOnlyConstraint, const vector_t& h, const matrix_t& F,
-                     size_t numStateOnlyFinalConstraint, const vector_t& h_f, const matrix_t& F_f)
-
-      : ConstraintBaseAD(stateDim, inputDim),
-        numStateInputConstraint_(numStateInputConstraint),
-        e_(e),
-        C_(C),
-        D_(D),
-        numStateOnlyConstraint_(numStateOnlyConstraint),
-        h_(h),
-        F_(F),
-        numStateOnlyFinalConstraint_(numStateOnlyFinalConstraint),
-        h_f_(h_f),
-        F_f_(F_f) {}
+  LinearConstraintAD(size_t stateDim, size_t inputDim, const vector_t& e, const matrix_t& C, const matrix_t& D, const vector_t& h,
+                     const matrix_t& F, const vector_t& h_f, const matrix_t& F_f)
+      : ConstraintBaseAD(stateDim, inputDim), e_(e), C_(C), D_(D), h_(h), F_(F), h_f_(h_f), F_f_(F_f) {}
 
   ~LinearConstraintAD() override = default;
 
   LinearConstraintAD(const LinearConstraintAD& rhs)
-      : ConstraintBaseAD(rhs),
-        numStateInputConstraint_(rhs.numStateInputConstraint_),
-        e_(rhs.e_),
-        C_(rhs.C_),
-        D_(rhs.D_),
-        numStateOnlyConstraint_(rhs.numStateOnlyConstraint_),
-        h_(rhs.h_),
-        F_(rhs.F_),
-        numStateOnlyFinalConstraint_(rhs.numStateOnlyFinalConstraint_),
-        h_f_(rhs.h_f_),
-        F_f_(rhs.F_f_) {}
+      : ConstraintBaseAD(rhs), e_(rhs.e_), C_(rhs.C_), D_(rhs.D_), h_(rhs.h_), F_(rhs.F_), h_f_(rhs.h_f_), F_f_(rhs.F_f_) {}
 
   LinearConstraintAD* clone() const override { return new LinearConstraintAD(*this); }
 
-  size_t numStateInputConstraint(const scalar_t& time) override { return numStateInputConstraint_; }
-
-  size_t numStateOnlyConstraint(const scalar_t& time) override { return numStateOnlyConstraint_; }
-
-  size_t numStateOnlyFinalConstraint(const scalar_t& time) override { return numStateOnlyFinalConstraint_; }
-
  protected:
-  void stateInputConstraint(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                            ad_vector_t& constraintVector) const override {
-    constraintVector = e_.cast<ad_scalar_t>() + C_.cast<ad_scalar_t>() * state + D_.cast<ad_scalar_t>() * input;
+  ad_vector_t stateInputConstraint(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const override {
+    return e_.cast<ad_scalar_t>() + C_.cast<ad_scalar_t>() * state + D_.cast<ad_scalar_t>() * input;
   }
 
-  void stateOnlyConstraint(ad_scalar_t time, const ad_vector_t& state, ad_vector_t& constraintVector) const override {
-    constraintVector = h_.cast<ad_scalar_t>() + F_.cast<ad_scalar_t>() * state;
+  ad_vector_t stateOnlyConstraint(ad_scalar_t time, const ad_vector_t& state) const override {
+    return h_.cast<ad_scalar_t>() + F_.cast<ad_scalar_t>() * state;
   }
 
-  void stateOnlyFinalConstraint(ad_scalar_t time, const ad_vector_t& state, ad_vector_t& constraintVector) const override {
-    constraintVector = h_f_.cast<ad_scalar_t>() + F_f_.cast<ad_scalar_t>() * state;
+  ad_vector_t stateOnlyFinalConstraint(ad_scalar_t time, const ad_vector_t& state) const override {
+    return h_f_.cast<ad_scalar_t>() + F_f_.cast<ad_scalar_t>() * state;
   }
 
  private:
-  size_t numStateInputConstraint_;
   vector_t e_;
   matrix_t C_;
   matrix_t D_;
-  size_t numStateOnlyConstraint_;
   vector_t h_;
   matrix_t F_;
-  size_t numStateOnlyFinalConstraint_;
   vector_t h_f_;
   matrix_t F_f_;
 };

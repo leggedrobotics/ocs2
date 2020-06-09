@@ -61,7 +61,7 @@ void ConstraintBaseAD::initialize(const std::string& modelName, const std::strin
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBaseAD::setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) {
+void ConstraintBaseAD::setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) {
   ConstraintBase::setCurrentStateAndControl(t, x, u);
 
   vector_t tapedTimeStateInput(1 + stateDim_ + inputDim_);
@@ -82,72 +82,72 @@ void ConstraintBaseAD::setCurrentStateAndControl(const scalar_t& t, const vector
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBaseAD::getConstraint1(vector_t& e) {
-  e = stateInputValues_;
+vector_t ConstraintBaseAD::getStateInputEqualityConstraint() {
+  return stateInputValues_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBaseAD::getConstraint2(vector_t& h) {
-  h = stateOnlyValues_;
+vector_t ConstraintBaseAD::getStateEqualityConstraint() {
+  return stateOnlyValues_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBaseAD::getFinalConstraint2(vector_t& h_f) {
-  h_f = stateOnlyFinalValues_;
+vector_t ConstraintBaseAD::getFinalStateEqualityConstraint() {
+  return stateOnlyFinalValues_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBaseAD::getConstraint1DerivativesState(matrix_t& C) {
-  C = stateInputJacobian_.middleCols(1, stateDim_);
+matrix_t ConstraintBaseAD::getStateInputEqualityConstraintDerivativesState() {
+  return stateInputJacobian_.middleCols(1, stateDim_);
 }
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 
-void ConstraintBaseAD::getConstraint1DerivativesControl(matrix_t& D) {
-  D = stateInputJacobian_.rightCols(inputDim_);
+matrix_t ConstraintBaseAD::getStateInputEqualityConstraintDerivativesInput() {
+  return stateInputJacobian_.rightCols(inputDim_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBaseAD::getConstraint2DerivativesState(matrix_t& F) {
-  F = stateOnlyJacobian_.rightCols(stateDim_);
+matrix_t ConstraintBaseAD::getStateEqualityConstraintDerivativesState() {
+  return stateOnlyJacobian_.rightCols(stateDim_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBaseAD::getFinalConstraint2DerivativesState(matrix_t& F_f) {
-  F_f = stateOnlyFinalJacobian_.rightCols(stateDim_);
+matrix_t ConstraintBaseAD::getFinalStateEqualityConstraintDerivativesState() {
+  return stateOnlyFinalJacobian_.rightCols(stateDim_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBaseAD::stateInputConstraint(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                                            ad_vector_t& constraintVector) const {
-  constraintVector = ad_vector_t(0);
+ConstraintBaseAD::ad_vector_t ConstraintBaseAD::stateInputConstraint(ad_scalar_t time, const ad_vector_t& state,
+                                                                     const ad_vector_t& input) const {
+  return ad_vector_t(0);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBaseAD::stateOnlyConstraint(ad_scalar_t time, const ad_vector_t& state, ad_vector_t& constraintVector) const {
-  constraintVector = ad_vector_t(0);
+ConstraintBaseAD::ad_vector_t ConstraintBaseAD::stateOnlyConstraint(ad_scalar_t time, const ad_vector_t& state) const {
+  return ad_vector_t(0);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBaseAD::stateOnlyFinalConstraint(ad_scalar_t time, const ad_vector_t& state, ad_vector_t& constraintVector) const {
-  constraintVector = ad_vector_t(0);
+ConstraintBaseAD::ad_vector_t ConstraintBaseAD::stateOnlyFinalConstraint(ad_scalar_t time, const ad_vector_t& state) const {
+  return ad_vector_t(0);
 }
 
 /******************************************************************************************************/
@@ -158,26 +158,25 @@ void ConstraintBaseAD::setADInterfaces(const std::string& modelName, const std::
     auto time = x(0);
     auto state = x.segment(1, stateDim_);
     auto input = x.segment(1 + stateDim_, inputDim_);
-    this->stateInputConstraint(time, state, input, y);
+    y = this->stateInputConstraint(time, state, input);
   };
   stateInputADInterfacePtr_.reset(
-      new CppAdInterface(stateInputConstraintAD, inputDim_, 1 + stateDim_ + inputDim_, modelName + "_stateInput", modelFolder));
+      new CppAdInterface(stateInputConstraintAD, 1 + stateDim_ + inputDim_, modelName + "_stateInput", modelFolder));
 
   auto stateOnlyConstraintAD = [this](const ad_vector_t& x, ad_vector_t& y) {
     auto time = x(0);
     auto state = x.segment(1, stateDim_);
-    this->stateOnlyConstraint(time, state, y);
+    y = this->stateOnlyConstraint(time, state);
   };
-  stateOnlyADInterfacePtr_.reset(
-      new CppAdInterface(stateOnlyConstraintAD, inputDim_, 1 + stateDim_, modelName + "_stateOnly", modelFolder));
+  stateOnlyADInterfacePtr_.reset(new CppAdInterface(stateOnlyConstraintAD, 1 + stateDim_, modelName + "_stateOnly", modelFolder));
 
   auto stateOnlyConstraintFinalAD = [this](const ad_vector_t& x, ad_vector_t& y) {
     auto time = x(0);
     auto state = x.segment(1, stateDim_);
-    this->stateOnlyFinalConstraint(time, state, y);
+    y = this->stateOnlyFinalConstraint(time, state);
   };
   stateOnlyFinalADInterfacePtr_.reset(
-      new CppAdInterface(stateOnlyConstraintFinalAD, inputDim_, 1 + stateDim_, modelName + "_stateOnlyFinal", modelFolder));
+      new CppAdInterface(stateOnlyConstraintFinalAD, 1 + stateDim_, modelName + "_stateOnlyFinal", modelFolder));
 }
 
 /******************************************************************************************************/

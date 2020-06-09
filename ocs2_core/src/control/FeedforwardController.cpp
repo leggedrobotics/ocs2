@@ -94,7 +94,7 @@ void FeedforwardController::setController(const scalar_array_t& controllerTime, 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t FeedforwardController::computeInput(const scalar_t& t, const vector_t& x) {
+vector_t FeedforwardController::computeInput(scalar_t t, const vector_t& x) {
   vector_t uff;
   LinearInterpolation::interpolate(t, uff, &timeStamp_, &uffArray_);
   return uff;
@@ -236,6 +236,7 @@ std::ostream& operator<<(std::ostream& out, const FeedforwardController& control
   for (int i = 0; i < controller.timeStamp_.size(); i++) {
     out << "t\t" << controller.timeStamp_[i] << "\tu\t" << controller.uffArray_[i].transpose() << '\n';
   }
+  return out;
 }
 
 }  // namespace ocs2

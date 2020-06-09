@@ -78,21 +78,21 @@ class ConstraintBaseAD : public ConstraintBase {
   void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                   bool verbose = true);
 
-  void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) final;
+  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) final;
 
-  void getConstraint1(vector_t& e) final;
+  vector_t getStateInputEqualityConstraint() final;
 
-  void getConstraint2(vector_t& h) final;
+  vector_t getStateEqualityConstraint() final;
 
-  void getFinalConstraint2(vector_t& h_f) final;
+  vector_t getFinalStateEqualityConstraint() final;
 
-  void getConstraint1DerivativesState(matrix_t& C) final;
+  matrix_t getStateInputEqualityConstraintDerivativesState() final;
 
-  void getConstraint1DerivativesControl(matrix_t& D) final;
+  matrix_t getStateInputEqualityConstraintDerivativesInput() final;
 
-  void getConstraint2DerivativesState(matrix_t& F) final;
+  matrix_t getStateEqualityConstraintDerivativesState() final;
 
-  void getFinalConstraint2DerivativesState(matrix_t& F_f) final;
+  matrix_t getFinalStateEqualityConstraintDerivativesState() final;
 
  protected:
   /**
@@ -101,28 +101,27 @@ class ConstraintBaseAD : public ConstraintBase {
    * @param [in] time: time.
    * @param [in] state: state vector.
    * @param [in] input: input vector
-   * @param [out] constraintVector: constraints vector.
+   * return constraints vector.
    */
-  virtual void stateInputConstraint(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                                    ad_vector_t& constraintVector) const;
+  virtual ad_vector_t stateInputConstraint(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const;
 
   /**
    * Interface method to the state-only equality constraints. This method should be implemented by the derived class.
    *
    * @param [in] time: time.
    * @param [in] state: state vector.
-   * @param [out] constraintVector: constraint vector.
+   * return constraint vector.
    */
-  virtual void stateOnlyConstraint(ad_scalar_t time, const ad_vector_t& state, ad_vector_t& constraintVector) const;
+  virtual ad_vector_t stateOnlyConstraint(ad_scalar_t time, const ad_vector_t& state) const;
 
   /**
    * Interface method to the state-only final equality constraints. This method should be implemented by the derived class.
    *
    * @param [in] time: time.
    * @param [in] state: state vector.
-   * @param [out] constraintVector: constraint vector.
+   * return constraint vector.
    */
-  virtual void stateOnlyFinalConstraint(ad_scalar_t time, const ad_vector_t& state, ad_vector_t& constraintVector) const;
+  virtual ad_vector_t stateOnlyFinalConstraint(ad_scalar_t time, const ad_vector_t& state) const;
 
  private:
   /**

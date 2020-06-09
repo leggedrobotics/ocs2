@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -80,9 +80,9 @@ class ControlledSystemBase : public OdeBase {
    *
    * @param [in] t: The current time.
    * @param [in] x: The current state.
-   * @param [out] dxdt: The state time derivative.
+   * @return The state time derivative.
    */
-  void computeFlowMap(const scalar_t& t, const vector_t& x, vector_t& dxdt) final;
+  vector_t computeFlowMap(scalar_t t, const vector_t& x) final;
 
   /**
    * Computes the flow map of a system with exogenous input.
@@ -90,9 +90,9 @@ class ControlledSystemBase : public OdeBase {
    * @param [in] t: The current time.
    * @param [in] x: The current state.
    * @param [in] u: The current input.
-   * @param [out] dxdt: The state time derivative.
+   * @return: The state time derivative.
    */
-  virtual void computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) = 0;
+  virtual vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) = 0;
 
   /**
    * Returns pointer to the class.

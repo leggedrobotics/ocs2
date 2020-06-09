@@ -51,81 +51,72 @@ inline void checkCostFunction(size_t numTests, ocs2::CostFunctionBase* cost1, oc
     cost1->setCurrentStateAndControl(0.0, x, u);
     cost2->setCurrentStateAndControl(0.0, x, u);
 
-    scalar_t L, ad_L;
-    cost1->getIntermediateCost(L);
-    cost2->getIntermediateCost(ad_L);
+    scalar_t L = cost1->getCost();
+    scalar_t ad_L = cost2->getCost();
     if (std::abs(L - ad_L) > precision) {
       std::cout << "L:    " << L << std::endl;
       std::cout << "al_L: " << ad_L << std::endl;
       success = false;
     }
 
-    vector_t dLdx(stateDim), ad_dLdx(stateDim);
-    cost1->getIntermediateCostDerivativeState(dLdx);
-    cost2->getIntermediateCostDerivativeState(ad_dLdx);
+    vector_t dLdx = cost1->getCostDerivativeState();
+    vector_t ad_dLdx = cost2->getCostDerivativeState();
     if (!dLdx.isApprox(ad_dLdx, precision)) {
       std::cout << "dLdx:    " << dLdx.transpose() << std::endl;
       std::cout << "al_dLdx: " << ad_dLdx.transpose() << std::endl;
       success = false;
     }
 
-    matrix_t dLdxx(stateDim, stateDim), ad_dLdxx(stateDim, stateDim);
-    cost1->getIntermediateCostSecondDerivativeState(dLdxx);
-    cost2->getIntermediateCostSecondDerivativeState(ad_dLdxx);
+    matrix_t dLdxx = cost1->getCostSecondDerivativeState();
+    matrix_t ad_dLdxx = cost2->getCostSecondDerivativeState();
     if (!dLdxx.isApprox(ad_dLdxx, precision)) {
       std::cout << "dLdxx:    \n" << dLdxx << std::endl;
       std::cout << "al_dLdxx: \n" << ad_dLdxx << std::endl;
       success = false;
     }
 
-    vector_t dLdu(inputDim), ad_dLdu(inputDim);
-    cost1->getIntermediateCostDerivativeInput(dLdu);
-    cost2->getIntermediateCostDerivativeInput(ad_dLdu);
+    vector_t dLdu = cost1->getCostDerivativeInput();
+    vector_t ad_dLdu = cost2->getCostDerivativeInput();
     if (!dLdu.isApprox(ad_dLdu, precision)) {
       std::cout << "dLdu:    " << dLdu.transpose() << std::endl;
       std::cout << "al_dLdu: " << ad_dLdu.transpose() << std::endl;
       success = false;
     }
 
-    matrix_t dLduu(inputDim, inputDim), ad_dLduu(inputDim, inputDim);
-    cost1->getIntermediateCostSecondDerivativeInput(dLduu);
-    cost2->getIntermediateCostSecondDerivativeInput(ad_dLduu);
+    matrix_t dLduu = cost1->getCostSecondDerivativeInput();
+    matrix_t ad_dLduu = cost2->getCostSecondDerivativeInput();
     if (!dLduu.isApprox(ad_dLduu, precision)) {
       std::cout << "dLduu:    \n" << dLduu << std::endl;
       std::cout << "al_dLduu: \n" << ad_dLduu << std::endl;
       success = false;
     }
 
-    matrix_t dLdux(inputDim, stateDim), ad_dLdux(inputDim, stateDim);
-    cost1->getIntermediateCostDerivativeInputState(dLdux);
-    cost2->getIntermediateCostDerivativeInputState(ad_dLdux);
+    matrix_t dLdux = cost1->getCostDerivativeInputState();
+    matrix_t ad_dLdux = cost2->getCostDerivativeInputState();
     if (!dLdux.isApprox(ad_dLdux, precision)) {
       std::cout << "dLdux:    \n" << dLdux << std::endl;
       std::cout << "al_dLdux: \n" << ad_dLdux << std::endl;
       success = false;
     }
 
-    scalar_t Phi, ad_Phi;
-    cost1->getTerminalCost(Phi);
-    cost2->getTerminalCost(ad_Phi);
+    scalar_t Phi = cost1->getTerminalCost();
+    scalar_t ad_Phi = cost2->getTerminalCost();
     if (std::abs(Phi - ad_Phi) > precision) {
       std::cout << "Phi:    " << Phi << std::endl;
       std::cout << "al_Phi: " << ad_Phi << std::endl;
       success = false;
     }
 
-    vector_t dPhidx(stateDim), ad_dPhidx(stateDim);
-    cost1->getTerminalCostDerivativeState(dPhidx);
-    cost2->getTerminalCostDerivativeState(ad_dPhidx);
+    vector_t dPhidx = cost1->getTerminalCostDerivativeState();
+    vector_t ad_dPhidx = cost2->getTerminalCostDerivativeState();
     if (!dPhidx.isApprox(ad_dPhidx, precision)) {
       std::cout << "dPhidx:    " << dPhidx.transpose() << std::endl;
       std::cout << "al_dPhidx: " << ad_dPhidx.transpose() << std::endl;
       success = false;
     }
 
-    matrix_t dPhidxx(stateDim, stateDim), ad_dPhidxx(stateDim, stateDim);
-    cost1->getTerminalCostSecondDerivativeState(dPhidxx);
-    cost2->getTerminalCostSecondDerivativeState(ad_dPhidxx);
+    matrix_t dPhidxx = cost1->getTerminalCostSecondDerivativeState();
+    matrix_t ad_dPhidxx = cost2->getTerminalCostSecondDerivativeState();
     if (!dPhidxx.isApprox(ad_dPhidxx, precision)) {
       std::cout << "dPhidxx:    \n" << dPhidxx << std::endl;
       std::cout << "al_dPhidxx: \n" << ad_dPhidxx << std::endl;

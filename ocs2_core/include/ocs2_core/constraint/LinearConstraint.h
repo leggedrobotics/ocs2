@@ -48,20 +48,16 @@ class LinearConstraint final : public ConstraintBase {
    *
    * @param[in] stateDim: State vector dimension
    * @param[in] inputDim: Input vector dimension
-   * @param[in] numStateInputConstraint: Number of state-input equality constraints
    * @param[in] e: Constant term in C * x + D * u + e = 0
    * @param[in] C: x factor in C * x + D * u + e = 0
    * @param[in] D: u factor in C * x + D * u + e = 0
-   * @param[in] numStateOnlyConstraint: Number of state-only equality constraints
    * @param[in] h: Constant term in F * x + h = 0
    * @param[in] F: x factor in F * x + h = 0
-   * @param[in] numStateOnlyFinalConstraint: Number of final time state-only equality constrains
    * @param[in] h_f: Constant term in F_f * x + h_f = 0 (at final time)
    * @param[in] F_f: x factor in F_f * x + h_f = 0 (at final time)
    */
-  LinearConstraint(size_t stateDim, size_t inputDim, size_t numStateInputConstraint, const vector_t& e, const matrix_t& C,
-                   const matrix_t& D, size_t numStateOnlyConstraint, const vector_t& h, const matrix_t& F,
-                   size_t numStateOnlyFinalConstraint, const vector_t& h_f, const matrix_t& F_f);
+  LinearConstraint(size_t stateDim, size_t inputDim, const vector_t& e, const matrix_t& C, const matrix_t& D, const vector_t& h,
+                   const matrix_t& F, const vector_t& h_f, const matrix_t& F_f);
 
   /**
    * @brief General constructor for equality and inequality constraints
@@ -70,17 +66,13 @@ class LinearConstraint final : public ConstraintBase {
    *
    * @param[in] stateDim: State vector dimension
    * @param[in] inputDim: Input vector dimension
-   * @param[in] numStateInputConstraint: Number of state-input equality constraints
    * @param[in] e: Constant term in C * x + D * u + e = 0
    * @param[in] C: x factor in C * x + D * u + e = 0
    * @param[in] D: u factor in C * x + D * u + e = 0
-   * @param[in] numStateOnlyConstraint: Number of state-only equality constraints
    * @param[in] h: Constant term in F * x + h = 0
    * @param[in] F: x factor in F * x + h = 0
-   * @param[in] numStateOnlyFinalConstraint: Number of final time state-only equality constrains
    * @param[in] h_f: Constant term in F_f * x + h_f = 0 (at final time)
    * @param[in] F_f: x factor in F_f * x + h_f = 0 (at final time)
-   * @param[in] numInequalityConstraint: Number of inequality constraints
    * @param[in] h0: Constant term in inequality constraint
    * @param[in] dhdx: Linear x multiplier in inequality constraint
    * @param[in] dhdu: Linear u multiplier in inequality constraint
@@ -88,62 +80,40 @@ class LinearConstraint final : public ConstraintBase {
    * @param[in] ddhdudu: Quadratic u multiplier in inequality constraint
    * @param[in] ddhdudx: Quadratic mixed term in inequality constraint
    */
-  LinearConstraint(size_t stateDim, size_t inputDim, size_t numStateInputConstraint, const vector_t& e, const matrix_t& C,
-                   const matrix_t& D, size_t numStateOnlyConstraint, const vector_t& h, const matrix_t& F,
-                   size_t numStateOnlyFinalConstraint, const vector_t& h_f, const matrix_t& F_f, size_t numInequalityConstraint,
-                   const scalar_array_t& h0, const vector_array_t& dhdx, const vector_array_t& dhdu, const matrix_array_t& ddhdxdx,
-                   const matrix_array_t& ddhdudu, const matrix_array_t& ddhdudx);
+  LinearConstraint(size_t stateDim, size_t inputDim, const vector_t& e, const matrix_t& C, const matrix_t& D, const vector_t& h,
+                   const matrix_t& F, const vector_t& h_f, const matrix_t& F_f, const scalar_array_t& h0, const vector_array_t& dhdx,
+                   const vector_array_t& dhdu, const matrix_array_t& ddhdxdx, const matrix_array_t& ddhdudu, const matrix_array_t& ddhdudx);
 
   virtual ~LinearConstraint() override = default;
 
   LinearConstraint* clone() const override;
 
-  void getConstraint1(vector_t& g1) override;
+  vector_t getStateInputEqualityConstraint() override;
+  vector_t getStateEqualityConstraint() override;
+  scalar_array_t getInequalityConstraint() override;
+  vector_t getFinalStateEqualityConstraint() override;
 
-  size_t numStateInputConstraint(const scalar_t& time) override;
-
-  void getConstraint2(vector_t& g2) override;
-
-  size_t numStateOnlyConstraint(const scalar_t& time) override;
-
-  void getInequalityConstraint(scalar_array_t& h) override;
-
-  size_t numInequalityConstraint(const scalar_t& time) override;
-
-  void getFinalConstraint2(vector_t& g2Final) override;
-
-  size_t numStateOnlyFinalConstraint(const scalar_t& time) override;
-
-  void getConstraint1DerivativesState(matrix_t& C) override;
-
-  void getConstraint1DerivativesControl(matrix_t& D) override;
-
-  void getConstraint2DerivativesState(matrix_t& F) override;
-
-  void getInequalityConstraintDerivativesState(vector_array_t& dhdx) override;
-  void getInequalityConstraintDerivativesInput(vector_array_t& dhdu) override;
-
-  void getInequalityConstraintSecondDerivativesState(matrix_array_t& ddhdxdx) override;
-  void getInequalityConstraintSecondDerivativesInput(matrix_array_t& ddhdudu) override;
-  void getInequalityConstraintDerivativesInputState(matrix_array_t& ddhdudx) override;
-
-  void getFinalConstraint2DerivativesState(matrix_t& F_f) override;
+  matrix_t getStateInputEqualityConstraintDerivativesState() override;
+  matrix_t getStateInputEqualityConstraintDerivativesInput() override;
+  matrix_t getStateEqualityConstraintDerivativesState() override;
+  vector_array_t getInequalityConstraintDerivativesState() override;
+  vector_array_t getInequalityConstraintDerivativesInput() override;
+  matrix_array_t getInequalityConstraintSecondDerivativesState() override;
+  matrix_array_t getInequalityConstraintSecondDerivativesInput() override;
+  matrix_array_t getInequalityConstraintDerivativesInputState() override;
+  matrix_t getFinalStateEqualityConstraintDerivativesState() override;
 
  public:
-  size_t numStateInputConstraint_;
   vector_t e_; /**< State input constraint */
   matrix_t C_; /**< State input constraint derivative wrt. state */
   matrix_t D_; /**< State input constraint derivative wrt. input */
 
-  size_t numStateOnlyConstraint_;
   vector_t h_; /**< State only constraint */
   matrix_t F_; /**< State only constraint derivative wrt. state */
 
-  size_t numStateOnlyFinalConstraint_;
   vector_t h_f_; /**< Final state only constraint */
   matrix_t F_f_; /**< Final state only constraint derivative wrt. state */
 
-  size_t numInequalityConstraint_;
   scalar_array_t h0_;      /**< Inequality constraint */
   vector_array_t dhdx_;    /**< Inequality constraint derivative wrt. state */
   vector_array_t dhdu_;    /**< Inequality constraint derivative wrt. input */

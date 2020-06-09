@@ -14,8 +14,10 @@ class MyCost : public RelaxedBarrierCost {
   virtual CostFunctionBase* clone() const { return new MyCost(*this); };
 
  protected:
-  virtual void intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input, const ad_vector_t& parameters,
-                                        ad_vector_t& costValues) const override {}
+  virtual ad_vector_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                               const ad_vector_t& parameters) const override {
+    return ad_vector_t::Zero(1);
+  }
 };
 
 TEST(testRelaxedBarrierCost, canConstructCost) {

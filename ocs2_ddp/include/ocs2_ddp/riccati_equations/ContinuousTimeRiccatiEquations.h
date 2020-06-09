@@ -130,9 +130,9 @@ class ContinuousTimeRiccatiEquations final : public OdeBase {
    * @param [in] Sm: \f$ S_m \f$
    * @param [in] Sv: \f$ S_v \f$
    * @param [in] s: \f$ s \f$
-   * @param [out] allSs: Single vector constructed by concatenating Sm, Sv and s.
+   * @return Single vector constructed by concatenating Sm, Sv and s.
    */
-  static void convert2Vector(const matrix_t& Sm, const vector_t& Sv, const scalar_t& s, vector_t& allSs);
+  static vector_t convert2Vector(const matrix_t& Sm, const vector_t& Sv, const scalar_t& s);
 
   /**
    * Transcribes the stacked vector allSs into a symmetric matrix, Sm, a vector, Sv and a single scalar, s.
@@ -162,18 +162,18 @@ class ContinuousTimeRiccatiEquations final : public OdeBase {
    *
    * @param [in] z: Normalized transition time
    * @param [in] allSs: A flattened vector constructed by concatenating Sm, Sv and s.
-   * @param [out] allSsPreEvent: mapped flattened state after transition.
+   * @return mapped flattened state after transition.
    */
-  void computeJumpMap(const scalar_t& z, const vector_t& allSs, vector_t& allSsPreEvent) override;
+  vector_t computeJumpMap(scalar_t z, const vector_t& allSs) override;
 
   /**
    * Computes derivatives.
    *
    * @param [in] z: Normalized time.
    * @param [in] allSs: A flattened vector constructed by concatenating Sm, Sv and s.
-   * @param [out] derivatives: d(allSs)/dz.
+   * @return d(allSs)/dz.
    */
-  void computeFlowMap(const scalar_t& z, const vector_t& allSs, vector_t& derivatives) override;
+  vector_t computeFlowMap(scalar_t z, const vector_t& allSs) override;
 
  private:
   /**

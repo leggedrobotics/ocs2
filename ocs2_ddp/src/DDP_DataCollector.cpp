@@ -155,9 +155,7 @@ void DDP_DataCollector::calculateStateInputConstraintsSensitivity(const GaussNew
                                                        inputTrajectoriesStock[i][k]);
 
       // evaluation
-      vector_array_t g1DevArray(numEventTimes);
-      const auto nc1 = systemConstraintsPtr_->numStateInputConstraint(timeTrajectoriesStock[i][k]);
-      systemConstraintsPtr_->getConstraint1DerivativesEventTimes(g1DevArray);
+      vector_array_t g1DevArray = systemConstraintsPtr_->getStateInputEqualityConstraintDerivativesEventTimes();
 
       // if derivatives where available
       if (g1DevArray.size() > 0) {
@@ -166,13 +164,15 @@ void DDP_DataCollector::calculateStateInputConstraintsSensitivity(const GaussNew
         }
 
         for (size_t j = 0; j < numEventTimes; j++) {
-          EvDevEventTimesTrajectoryStockSet[j][i][k] = g1DevArray[j].head(nc1);
+          EvDevEventTimesTrajectoryStockSet[j][i][k] = g1DevArray[j];
           EvDevEventTimesProjectedTrajectoriesStockSet[j][i][k] =
               riccatiModificationTrajectoriesStock_[i][k].constraintRangeProjector_ * EvDevEventTimesTrajectoryStockSet[j][i][k];
         }  // end of j loop
 
       } else {
         for (size_t j = 0; j < numEventTimes; j++) {
+          // TODO(mspieler): get nc1 from somewhere. But is it actually used when no derivatives available?
+          size_t nc1 = 0;
           EvDevEventTimesTrajectoryStockSet[j][i][k].setZero(nc1);
           EvDevEventTimesProjectedTrajectoriesStockSet[j][i][k].setZero();
         }  // end of j loop

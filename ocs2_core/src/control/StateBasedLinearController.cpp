@@ -45,8 +45,8 @@ void StateBasedLinearController::setController(ControllerBase* ctrlPtr) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t StateBasedLinearController::computeTrajectorySpreadingInput(const scalar_t& t, const vector_t& x,
-                                                                     const scalar_array_t& ctrlEventTimes, ControllerBase* ctrlPtr) {
+vector_t StateBasedLinearController::computeTrajectorySpreadingInput(scalar_t t, const vector_t& x, const scalar_array_t& ctrlEventTimes,
+                                                                     ControllerBase* ctrlPtr) {
   size_t currentMode = x.tail(1).value();
   size_t numEvents = ctrlEventTimes.size();
 
@@ -62,7 +62,7 @@ vector_t StateBasedLinearController::computeTrajectorySpreadingInput(const scala
   bool pastAllEvents = (currentMode >= numEvents - 1) && (t > tauMinus);
   const scalar_t eps = OCS2NumericTraits<scalar_t>::weakEpsilon();
 
-  if ((t > tauMinus && t < tau) || pastAllEvents) {  // normal case
+  if (pastAllEvents) {
     return ctrlPtr->computeInput(t, x);
     // return normal input signal
   } else if (t < tauMinus) {
@@ -74,12 +74,14 @@ vector_t StateBasedLinearController::computeTrajectorySpreadingInput(const scala
     return ctrlPtr->computeInput(tau - eps, x);
     // request input 1 epsilon before the designed event time
   }
+  // normal case: t > tauMinus && t < tau
+  return ctrlPtr->computeInput(t, x);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t StateBasedLinearController::computeInput(const scalar_t& t, const vector_t& x) {
+vector_t StateBasedLinearController::computeInput(scalar_t t, const vector_t& x) {
   return computeTrajectorySpreadingInput(t, x, ctrlEventTimes_, ctrlPtr_);
 }
 

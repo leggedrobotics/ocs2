@@ -82,27 +82,24 @@ void checkSystemDynamics(const size_t numTests, DerivativesBase* const linearSys
     linearSystem1->setCurrentStateAndControl(0.0, x, u);
     linearSystem2->setCurrentStateAndControl(0.0, x, u);
 
-    matrix_t A, ad_A;
-    linearSystem1->getFlowMapDerivativeState(A);
-    linearSystem2->getFlowMapDerivativeState(ad_A);
+    matrix_t A = linearSystem1->getFlowMapDerivativeState();
+    matrix_t ad_A = linearSystem2->getFlowMapDerivativeState();
     if (!A.isApprox(ad_A, precision)) {
       std::cout << "A:    " << A.transpose() << std::endl;
       std::cout << "al_A: " << ad_A.transpose() << std::endl;
       success = false;
     }
 
-    matrix_t B, ad_B;
-    linearSystem1->getFlowMapDerivativeInput(B);
-    linearSystem2->getFlowMapDerivativeInput(ad_B);
+    matrix_t B = linearSystem1->getFlowMapDerivativeInput();
+    matrix_t ad_B = linearSystem2->getFlowMapDerivativeInput();
     if (!B.isApprox(ad_B, precision)) {
       std::cout << "B:    " << B.transpose() << std::endl;
       std::cout << "al_B: " << ad_B.transpose() << std::endl;
       success = false;
     }
 
-    matrix_t G, ad_G;
-    linearSystem1->getJumpMapDerivativeState(G);
-    linearSystem2->getJumpMapDerivativeState(ad_G);
+    matrix_t G = linearSystem1->getJumpMapDerivativeState();
+    matrix_t ad_G = linearSystem2->getJumpMapDerivativeState();
     if (!G.isApprox(ad_G, precision)) {
       std::cout << "G:    " << G.transpose() << std::endl;
       std::cout << "al_G: " << ad_G.transpose() << std::endl;

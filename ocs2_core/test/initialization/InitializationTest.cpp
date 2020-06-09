@@ -91,7 +91,8 @@ TEST_F(InitializationTest, ZeroTimeInterval) {
 TEST_F(InitializationTest, Trajectory) {
   static constexpr size_t N = 20;
   scalar_array_t tTraj(N);
-  std::generate(tTraj.begin(), tTraj.end(), [n = 0]() mutable { return n++; });
+  scalar_t n = 0;
+  std::generate(tTraj.begin(), tTraj.end(), [&n]() mutable { return n++; });
   const vector_array_t xTraj(N, vector_t::Random(stateDim_));
   const vector_array_t uTraj(N, vector_t::Random(inputDim_));
   OperatingPoints operatingPoints(tTraj, xTraj, uTraj);

@@ -67,8 +67,8 @@ class CostDesiredTrajectories {
   inline vector_array_t& desiredInputTrajectory() { return desiredInputTrajectory_; }
   inline const vector_array_t& desiredInputTrajectory() const { return desiredInputTrajectory_; }
 
-  void getDesiredState(scalar_t time, vector_t& desiredState) const;
-  void getDesiredInput(scalar_t time, vector_t& desiredInput) const;
+  vector_t getDesiredState(scalar_t time) const;
+  vector_t getDesiredInput(scalar_t time) const;
   void display() const;
 
  private:

@@ -19,12 +19,12 @@ class EXP0_System : public ControlledSystemBase {
   EXP0_System() = default;
   ~EXP0_System() override = default;
 
-  void computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) {
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) final {
     Eigen::Matrix2d A;
     A << 0.6, 1.2, -0.8, 3.4;
     Eigen::Vector2d B;
     B << 1, 1;
-    dxdt = A * x + B * u;
+    return A * x + B * u;
   }
 
   EXP0_System* clone() const final { return new EXP0_System(*this); }
@@ -35,13 +35,15 @@ class EXP0_SystemDerivative : public DerivativesBase {
   EXP0_SystemDerivative() = default;
   ~EXP0_SystemDerivative() override = default;
 
-  void getFlowMapDerivativeState(matrix_t& A) final {
-    A.resize(2, 2);
+  matrix_t getFlowMapDerivativeState() final {
+    matrix_t A(2, 2);
     A << 0.6, 1.2, -0.8, 3.4;
+    return A;
   }
-  void getFlowMapDerivativeInput(matrix_t& B) final {
-    B.resize(2, 1);
+  matrix_t getFlowMapDerivativeInput() final {
+    matrix_t B(2, 1);
     B << 1, 1;
+    return B;
   }
 
   EXP0_SystemDerivative* clone() const final { return new EXP0_SystemDerivative(*this); }
@@ -55,13 +57,15 @@ class EXP1_SystemDerivative : public DerivativesBase {
   EXP1_SystemDerivative() = default;
   ~EXP1_SystemDerivative() override = default;
 
-  void getFlowMapDerivativeState(matrix_t& A) final {
-    A.resize(2, 2);
+  matrix_t getFlowMapDerivativeState() final {
+    matrix_t A(2, 2);
     A << 0, 0, 0, 0;
+    return A;
   }
-  void getFlowMapDerivativeInput(matrix_t& B) final {
-    B.resize(2, 1);
+  matrix_t getFlowMapDerivativeInput() final {
+    matrix_t B(2, 1);
     B << 0, 0;
+    return B;
   }
 
   EXP1_SystemDerivative* clone() const final { return new EXP1_SystemDerivative(*this); }
@@ -75,12 +79,12 @@ class EXP2_System : public ControlledSystemBase {
   EXP2_System() = default;
   ~EXP2_System() override = default;
 
-  void computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) final {
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) final {
     Eigen::Vector2d Ax;
     Ax << x(1), sin(x(0));
     Eigen::Vector2d B;
     B << 0, 0.1;  // just random values
-    dxdt = Ax + B * u;
+    return Ax + B * u;
   }
 
   EXP2_System* clone() const final { return new EXP2_System(*this); }
@@ -95,13 +99,15 @@ class EXP2_SystemDerivative : public DerivativesBase {
   ~EXP2_SystemDerivative() override = default;
 
   //! Linearised at \fn$ \theta=0 \fn$
-  void getFlowMapDerivativeState(matrix_t& A) final {
-    A.resize(2, 2);
+  matrix_t getFlowMapDerivativeState() final {
+    matrix_t A(2, 2);
     A << 0, 1, 1, 0;
+    return A;
   }
-  void getFlowMapDerivativeInput(matrix_t& B) final {
-    B.resize(2, 1);
+  matrix_t getFlowMapDerivativeInput() final {
+    matrix_t B(2, 1);
     B << 0, 0.1;
+    return B;
   }
 
   EXP2_SystemDerivative* clone() const final { return new EXP2_SystemDerivative(*this); }
@@ -116,13 +122,15 @@ class EXP3_SystemDerivative : public DerivativesBase {
   ~EXP3_SystemDerivative() override = default;
 
   //! Linearised at \fn$ \theta=\pi \fn$
-  void getFlowMapDerivativeState(matrix_t& A) final {
-    A.resize(2, 2);
+  matrix_t getFlowMapDerivativeState() final {
+    matrix_t A(2, 2);
     A << 0, 1, -1, 0;
+    return A;
   }
-  void getFlowMapDerivativeInput(matrix_t& B) final {
-    B.resize(2, 1);
+  matrix_t getFlowMapDerivativeInput() final {
+    matrix_t B(2, 1);
     B << 0, 0.1;
+    return B;
   }
 
   EXP3_SystemDerivative* clone() const final { return new EXP3_SystemDerivative(*this); }
@@ -302,11 +310,9 @@ TEST_F(SystemDynamicsLinearizerTest, testPendulum) {
 static bool derivativeChecker(ControlledSystemBase& nonlinearSystem, DerivativesBase& derivatives, scalar_t eps, scalar_t tolerance,
                               bool doubleSidedDerivative, bool isSecondOrderSystem, scalar_t t, const vector_t& x, const vector_t& u,
                               matrix_t& A_error, matrix_t& B_error) {
-  matrix_t A;
-  matrix_t B;
   derivatives.setCurrentStateAndControl(t, x, u);
-  derivatives.getFlowMapDerivativeState(A);
-  derivatives.getFlowMapDerivativeInput(B);
+  matrix_t A = derivatives.getFlowMapDerivativeState();
+  matrix_t B = derivatives.getFlowMapDerivativeInput();
 
   A_error = finiteDifferenceDerivativeState(nonlinearSystem, t, x, u, eps, doubleSidedDerivative, isSecondOrderSystem);
   B_error = finiteDifferenceDerivativeInput(nonlinearSystem, t, x, u, eps, doubleSidedDerivative, isSecondOrderSystem);

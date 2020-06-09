@@ -224,6 +224,8 @@ matrix_t SLQ::computeHamiltonianHessian(ddp_strategy::type strategy, const Model
       HmAug.noalias() += BASE::levenbergMarquardtModule_.riccatiMultiple * Bm.transpose() * Bm;
       return HmAug;
     }
+    default:
+      throw std::runtime_error("unknown ddp strategy");
   }  // end of switch-case
 }
 
@@ -259,8 +261,7 @@ void SLQ::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, cons
   auto& sTrajectory = BASE::sTrajectoryStock_[partitionIndex];
 
   // Convert final value of value function in vector format
-  vector_t allSsFinal;
-  ContinuousTimeRiccatiEquations::convert2Vector(SmFinal, SvFinal, sFinal, allSsFinal);
+  vector_t allSsFinal = ContinuousTimeRiccatiEquations::convert2Vector(SmFinal, SvFinal, sFinal);
 
   // Clear output containers
   SsNormalizedTime.clear();
@@ -344,11 +345,11 @@ void SLQ::integrateRiccatiEquationNominalTime(IntegratorBase& riccatiIntegrator,
 
     Observer observer(&allSsTrajectory);
     // solve Riccati equations
-    riccatiIntegrator.integrate_times(riccatiEquation, observer, allSsFinal, beginTimeItr, endTimeItr, BASE::ddpSettings_.minTimeStep_,
-                                      BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps);
+    riccatiIntegrator.integrateTimes(riccatiEquation, observer, allSsFinal, beginTimeItr, endTimeItr, BASE::ddpSettings_.minTimeStep_,
+                                     BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps);
 
     if (i < numEvents) {
-      riccatiEquation.computeJumpMap(*endTimeItr, allSsTrajectory.back(), allSsFinal);
+      allSsFinal = riccatiEquation.computeJumpMap(*endTimeItr, allSsTrajectory.back());
     }
   }  // end of i loop
 
@@ -392,14 +393,14 @@ void SLQ::integrateRiccatiEquationAdaptiveTime(IntegratorBase& riccatiIntegrator
 
     Observer observer(&allSsTrajectory, &SsNormalizedTime);
     // solve Riccati equations
-    riccatiIntegrator.integrate_adaptive(riccatiEquation, observer, allSsFinal, beginTime, endTime, BASE::ddpSettings_.minTimeStep_,
-                                         BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps);
+    riccatiIntegrator.integrateAdaptive(riccatiEquation, observer, allSsFinal, beginTime, endTime, BASE::ddpSettings_.minTimeStep_,
+                                        BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps);
 
     // if not the last interval which definitely does not have any event at
     // its final time (there is no even at the beginning of partition)
     if (i < numEvents) {
       SsNormalizedPostEventIndices.push_back(allSsTrajectory.size());
-      riccatiEquation.computeJumpMap(endTime, allSsTrajectory.back(), allSsFinal);
+      allSsFinal = riccatiEquation.computeJumpMap(endTime, allSsTrajectory.back());
     }
   }  // end of i loop
 }

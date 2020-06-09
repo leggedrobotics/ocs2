@@ -103,18 +103,15 @@ struct ModelDataBase {
   matrix_t costInputStateDerivative_;
 
   // state equality constraints
-  int numStateEqConstr_;
   vector_t stateEqConstr_;
   matrix_t stateEqConstrStateDerivative_;
 
   // state-input equality constraints
-  int numStateInputEqConstr_;
   vector_t stateInputEqConstr_;
   matrix_t stateInputEqConstrStateDerivative_;
   matrix_t stateInputEqConstrInputDerivative_;
 
   // inequality constraints
-  int numIneqConstr_;
   scalar_array_t ineqConstr_;
   vector_array_t ineqConstrStateDerivative_;
   vector_array_t ineqConstrInputDerivative_;

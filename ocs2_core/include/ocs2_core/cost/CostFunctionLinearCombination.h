@@ -48,19 +48,19 @@ class CostFunctionLinearCombination : public CostFunctionBase {
   CostFunctionLinearCombination() = delete;
 
   CostFunctionLinearCombination* clone() const override;
-  void getIntermediateCost(scalar_t& L) override;
-  void getIntermediateCostDerivativeState(vector_t& dLdx) override;
-  void getIntermediateCostSecondDerivativeState(matrix_t& dLdxx) override;
-  void getIntermediateCostDerivativeInput(vector_t& dLdu) override;
-  void getIntermediateCostSecondDerivativeInput(matrix_t& dLduu) override;
-  void getIntermediateCostDerivativeInputState(matrix_t& dLdux) override;
-  void getTerminalCost(scalar_t& Phi) override;
-  void getTerminalCostDerivativeState(vector_t& dPhidx) override;
-  void getTerminalCostSecondDerivativeState(matrix_t& dPhidxx) override;
+  scalar_t getCost() override;
+  vector_t getCostDerivativeState() override;
+  matrix_t getCostSecondDerivativeState() override;
+  vector_t getCostDerivativeInput() override;
+  matrix_t getCostSecondDerivativeInput() override;
+  matrix_t getCostDerivativeInputState() override;
+  scalar_t getTerminalCost() override;
+  vector_t getTerminalCostDerivativeState() override;
+  matrix_t getTerminalCostSecondDerivativeState() override;
   void setCostDesiredTrajectoriesPtr(const CostDesiredTrajectories* costDesiredTrajectoriesPtr) override;
-  void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) override;
-  void getIntermediateCostDerivativeTime(scalar_t& dLdt) override;
-  void getTerminalCostDerivativeTime(scalar_t& dPhidt) override;
+  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) override;
+  scalar_t getCostDerivativeTime() override;
+  scalar_t getTerminalCostDerivativeTime() override;
 
  protected:
   std::vector<WeightedCost> weightedCosts_;

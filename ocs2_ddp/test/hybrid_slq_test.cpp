@@ -125,17 +125,16 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
     EXPECT_GT(constraint3, 0);
 
     // Test 2 : No penetration of guardSurfaces
-    Eigen::VectorXd guardSurfacesValue;
-    systemDynamics.computeGuardSurfaces(solution.timeTrajectory_[i], solution.stateTrajectory_[i], guardSurfacesValue);
+    vector_t guardSurfaces = systemDynamics.computeGuardSurfaces(solution.timeTrajectory_[i], solution.stateTrajectory_[i]);
 
-    EXPECT_GT(guardSurfacesValue[0], -1e-10);
-    if (!(guardSurfacesValue[0] > -1e-10)) {
-      std::cout << solution.timeTrajectory_[i] << "," << guardSurfacesValue[0] << "," << guardSurfacesValue[1] << std::endl;
+    EXPECT_GT(guardSurfaces[0], -1e-10);
+    if (!(guardSurfaces[0] > -1e-10)) {
+      std::cout << solution.timeTrajectory_[i] << "," << guardSurfaces[0] << "," << guardSurfaces[1] << std::endl;
     }
 
-    EXPECT_GT(guardSurfacesValue[1], -1e-10);
-    if (!(guardSurfacesValue[1] > -1e-10)) {
-      std::cout << solution.timeTrajectory_[i] << "," << guardSurfacesValue[0] << "," << guardSurfacesValue[1] << std::endl;
+    EXPECT_GT(guardSurfaces[1], -1e-10);
+    if (!(guardSurfaces[1] > -1e-10)) {
+      std::cout << solution.timeTrajectory_[i] << "," << guardSurfaces[0] << "," << guardSurfaces[1] << std::endl;
     }
   }
   // Test 3: Check of cost function

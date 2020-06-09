@@ -46,7 +46,7 @@ std::pair<bool, size_t> StateTriggeredEventHandler::checkEvent(OdeBase& system, 
   size_t eventID = 0;
 
   // StateTriggered event
-  system.computeGuardSurfaces(time, state, guardSurfacesValuesCurrent_);
+  guardSurfacesValuesCurrent_ = system.computeGuardSurfaces(time, state);
 
   bool eventTriggered = false;
   if (time - lastEventTriggeredTime_ > minEventTimeDifference_) {

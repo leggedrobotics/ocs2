@@ -72,7 +72,7 @@ void testSecondOrderSystem(IntegratorType integrator_type) {
 
   // Adaptive time integrator
   Observer observer1(&stateTrajectory1, &timeTrajectory1);
-  integrator->integrate_adaptive(*sys, observer1, x0, t0, t1);
+  integrator->integrateAdaptive(*sys, observer1, x0, t0, t1);
 
   EXPECT_NEAR(timeTrajectory1.front(), t0, 1e-6);
   EXPECT_NEAR(timeTrajectory1.back(), t1, 1e-6);
@@ -81,7 +81,7 @@ void testSecondOrderSystem(IntegratorType integrator_type) {
 
   // Equidistant time integrator
   Observer observer2(&stateTrajectory2, &timeTrajectory2);
-  integrator->integrate_const(*sys, observer2, x0, t0, t1, dt);
+  integrator->integrateConst(*sys, observer2, x0, t0, t1, dt);
 
   EXPECT_NEAR(timeTrajectory2.front(), t0, 1e-6);
   EXPECT_NEAR(timeTrajectory2.back(), t1, 1e-6);
@@ -92,7 +92,7 @@ void testSecondOrderSystem(IntegratorType integrator_type) {
   Observer observer3(&stateTrajectory3);
 
   // integrate with given time trajectory
-  integrator->integrate_times(*sys, observer3, x0, timeTrajectory1.begin(), timeTrajectory1.end());
+  integrator->integrateTimes(*sys, observer3, x0, timeTrajectory1.begin(), timeTrajectory1.end());
 
   EXPECT_NEAR(stateTrajectory3.back()(1), 1.0, 1e-3);
 }
@@ -145,7 +145,7 @@ TEST(IntegrationTest, model_data_test) {
   sys->resetNumFunctionCalls();
 
   Observer observer(&stateTrajectory, &timeTrajectory, &modelDataTrajectory);
-  integrator->integrate_adaptive(*sys, observer, x0, 0.0, 10.0);
+  integrator->integrateAdaptive(*sys, observer, x0, 0.0, 10.0);
 
   vector_t dynamics;
   sys->systemFunction()(x0, dynamics, timeTrajectory.front());

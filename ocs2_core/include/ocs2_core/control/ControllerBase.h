@@ -59,7 +59,7 @@ class ControllerBase {
    * @param [in] x: Current state.
    * @return Current input.
    */
-  virtual vector_t computeInput(const scalar_t& t, const vector_t& x) = 0;
+  virtual vector_t computeInput(scalar_t t, const vector_t& x) = 0;
 
   /**
    * @brief Saves the controller at given time to an array of arrays structure for ROS transmission
@@ -144,7 +144,7 @@ class ControllerBase {
    * @brief Gets the event times for which the controller is designed.
    * @return The event times of the controller.
    */
-  virtual scalar_array_t controllerEventTimes() const {}
+  virtual scalar_array_t controllerEventTimes() const { return scalar_array_t(0); }
 
   /* State dimension getter */
   size_t getStateDim() const { return stateDim_; }

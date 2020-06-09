@@ -39,24 +39,26 @@ class ballDyn : public ControlledSystemBase {
   ballDyn() = default;
   ~ballDyn() = default;
 
-  void computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) override {
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) override {
     matrix_t A(2, 2);
     A << 0.0, 1.0, 0.0, 0.0;
     vector_t F(2, 1);
     F << 0.0, -9.81;
-
-    dxdt = A * x + F;
+    return A * x + F;
   }
 
-  void computeJumpMap(const scalar_t& time, const vector_t& state, vector_t& mappedState) override {
-    mappedState[0] = state[0];
-    mappedState[1] = -0.95 * state[1];
+  vector_t computeJumpMap(scalar_t t, const vector_t& x) override {
+    vector_t mappedState(2);
+    mappedState[0] = x[0];
+    mappedState[1] = -0.95 * x[1];
+    return mappedState;
   }
 
-  void computeGuardSurfaces(const scalar_t& time, const vector_t& state, vector_t& guardSurfacesValue) override {
-    guardSurfacesValue.resize(2);
-    guardSurfacesValue[0] = state[0];
-    guardSurfacesValue[1] = -state[0] + 0.5;
+  vector_t computeGuardSurfaces(scalar_t t, const vector_t& x) override {
+    vector_t guardSurfaces(2);
+    guardSurfaces[0] = x[0];
+    guardSurfaces[1] = -x[0] + 0.5;
+    return guardSurfaces;
   }
 
   ballDyn* clone() const override { return new ballDyn(*this); }

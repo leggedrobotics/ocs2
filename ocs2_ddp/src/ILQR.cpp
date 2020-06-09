@@ -120,18 +120,15 @@ void ILQR::discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelDa
    * linearize constraints
    */
   // state equality constraints
-  modelData.numStateEqConstr_ = continuousTimeModelData.numStateEqConstr_;
   modelData.stateEqConstr_ = continuousTimeModelData.stateEqConstr_;
   modelData.stateEqConstrStateDerivative_ = continuousTimeModelData.stateEqConstrStateDerivative_;
 
   // state-input equality constraints
-  modelData.numStateInputEqConstr_ = continuousTimeModelData.numStateInputEqConstr_;
   modelData.stateInputEqConstr_ = continuousTimeModelData.stateInputEqConstr_;
   modelData.stateInputEqConstrStateDerivative_ = continuousTimeModelData.stateInputEqConstrStateDerivative_;
   modelData.stateInputEqConstrInputDerivative_ = continuousTimeModelData.stateInputEqConstrInputDerivative_;
 
   // inequality constraints
-  modelData.numIneqConstr_ = continuousTimeModelData.numIneqConstr_;
   modelData.ineqConstr_ = continuousTimeModelData.ineqConstr_;
   modelData.ineqConstrStateDerivative_ = continuousTimeModelData.ineqConstrStateDerivative_;
   modelData.ineqConstrInputDerivative_ = continuousTimeModelData.ineqConstrInputDerivative_;
@@ -216,6 +213,8 @@ matrix_t ILQR::computeHamiltonianHessian(ddp_strategy::type strategy, const Mode
       SmPlus.diagonal() += BASE::levenbergMarquardtModule_.riccatiMultiple * vector_t::Ones(stateDim_);
       return (Rm + Bm.transpose() * SmPlus * Bm);
     }
+    default:
+      throw std::runtime_error("unknown ddp strategy");
   }  // end of switch-case
 }
 

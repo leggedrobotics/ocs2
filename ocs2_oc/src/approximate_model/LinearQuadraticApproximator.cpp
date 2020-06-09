@@ -61,33 +61,25 @@ void LinearQuadraticApproximator::approximateUnconstrainedLQProblemAtEventTime(c
   systemDerivativesPtr_->setCurrentStateAndControl(time, state, input);
 
   // get results
-  systemDerivativesPtr_->getJumpMapDerivativeState(modelData.dynamicsStateDerivative_);
-  systemDerivativesPtr_->getJumpMapDerivativeInput(modelData.dynamicsInputDerivative_);
+  modelData.dynamicsStateDerivative_ = systemDerivativesPtr_->getJumpMapDerivativeState();
+  modelData.dynamicsInputDerivative_ = systemDerivativesPtr_->getJumpMapDerivativeInput();
 
   // Final state-only equality constraint
   systemConstraintsPtr_->setCurrentStateAndControl(time, state, input);
 
-  // if final constraint type 2 is active
-  const size_t ncFinalEqStateOnly = systemConstraintsPtr_->numStateOnlyFinalConstraint(time);
-  if (ncFinalEqStateOnly > 0) {
-    systemConstraintsPtr_->getFinalConstraint2(modelData.stateEqConstr_);
-    systemConstraintsPtr_->getFinalConstraint2DerivativesState(modelData.stateEqConstrStateDerivative_);
-  } else {
-    modelData.stateEqConstrStateDerivative_.setZero(ncFinalEqStateOnly, modelData.stateDim_);
-  }
-  modelData.numIneqConstr_ = 0;          // no inequality constraint
-  modelData.numStateInputEqConstr_ = 0;  // no state-input equality constraint
-  modelData.numStateEqConstr_ = ncFinalEqStateOnly;
-  // TODO(mspieler): is slicing necessary here?
-  modelData.stateEqConstr_ = modelData.stateEqConstr_.head(ncFinalEqStateOnly);
-  modelData.stateEqConstrStateDerivative_ = modelData.stateEqConstrStateDerivative_.topRows(ncFinalEqStateOnly);
+  modelData.stateEqConstr_ = systemConstraintsPtr_->getFinalStateEqualityConstraint();
+  modelData.stateEqConstrStateDerivative_ = systemConstraintsPtr_->getFinalStateEqualityConstraintDerivativesState();
+
+  modelData.ineqConstr_.clear();             // no inequality constraint
+  modelData.stateInputEqConstr_.setZero(0);  // no state-input equality constraint
 
   // Final cost
   costFunctionPtr_->setCurrentStateAndControl(time, state, input);
-  costFunctionPtr_->getTerminalCost(modelData.cost_);
-  costFunctionPtr_->getTerminalCostDerivativeState(modelData.costStateDerivative_);
-  costFunctionPtr_->getTerminalCostSecondDerivativeState(modelData.costStateSecondDerivative_);
+  modelData.cost_ = costFunctionPtr_->getTerminalCost();
+  modelData.costStateDerivative_ = costFunctionPtr_->getTerminalCostDerivativeState();
+  modelData.costStateSecondDerivative_ = costFunctionPtr_->getTerminalCostSecondDerivativeState();
 
+  // TODO(mspieler): this isn't used anyway, maybe set to empty matrix instead?
   modelData.costInputDerivative_.setZero(input.rows());
   modelData.costInputSecondDerivative_.setZero(input.rows(), input.rows());
   modelData.costInputStateDerivative_.setZero(input.rows(), state.rows());
@@ -102,9 +94,9 @@ void LinearQuadraticApproximator::approximateDynamics(const scalar_t& time, cons
   systemDerivativesPtr_->setCurrentStateAndControl(time, state, input);
 
   // get results
-  systemDerivativesPtr_->getFlowMapDerivativeState(modelData.dynamicsStateDerivative_);
-  systemDerivativesPtr_->getFlowMapDerivativeInput(modelData.dynamicsInputDerivative_);
-  systemDerivativesPtr_->getDynamicsCovariance(modelData.dynamicsCovariance_);
+  modelData.dynamicsStateDerivative_ = systemDerivativesPtr_->getFlowMapDerivativeState();
+  modelData.dynamicsInputDerivative_ = systemDerivativesPtr_->getFlowMapDerivativeInput();
+  modelData.dynamicsCovariance_ = systemDerivativesPtr_->getDynamicsCovariance();
 
   // checking the numerical stability
   if (checkNumericalCharacteristics_) {
@@ -126,49 +118,28 @@ void LinearQuadraticApproximator::approximateConstraints(const scalar_t& time, c
   // set data
   systemConstraintsPtr_->setCurrentStateAndControl(time, state, input);
 
-  // constraint type 1
-  const size_t ncEqStateInput = systemConstraintsPtr_->numStateInputConstraint(time);
-  if (ncEqStateInput > input.rows()) {
+  // State-input equality constraint
+  modelData.stateInputEqConstr_ = systemConstraintsPtr_->getStateInputEqualityConstraint();
+  modelData.stateInputEqConstrStateDerivative_ = systemConstraintsPtr_->getStateInputEqualityConstraintDerivativesState();
+  modelData.stateInputEqConstrInputDerivative_ = systemConstraintsPtr_->getStateInputEqualityConstraintDerivativesInput();
+  if (modelData.stateInputEqConstr_.rows() > input.rows()) {
     throw std::runtime_error("Number of active state-input equality constraints should be less-equal to the input dimension.");
   }
-  // if constraint type 1 is active
-  if (ncEqStateInput > 0) {
-    systemConstraintsPtr_->getConstraint1(modelData.stateInputEqConstr_);
-    systemConstraintsPtr_->getConstraint1DerivativesState(modelData.stateInputEqConstrStateDerivative_);
-    systemConstraintsPtr_->getConstraint1DerivativesControl(modelData.stateInputEqConstrInputDerivative_);
-  } else {
-    modelData.stateInputEqConstr_.setZero(ncEqStateInput);
-    modelData.stateInputEqConstrStateDerivative_.setZero(ncEqStateInput, modelData.stateDim_);
-    modelData.stateInputEqConstrInputDerivative_.setZero(ncEqStateInput, modelData.inputDim_);
-  }
-  modelData.numStateInputEqConstr_ = ncEqStateInput;
 
-  // constraint type 2
-  const size_t ncEqStateOnly = systemConstraintsPtr_->numStateOnlyConstraint(time);
-  if (ncEqStateOnly > input.rows()) {
+  // State-only equality constraint
+  modelData.stateEqConstr_ = systemConstraintsPtr_->getStateEqualityConstraint();
+  modelData.stateEqConstrStateDerivative_ = systemConstraintsPtr_->getStateEqualityConstraintDerivativesState();
+  if (modelData.stateEqConstr_.rows() > input.rows()) {
     throw std::runtime_error("Number of active state-only equality constraints should be less-equal to the input dimension.");
   }
-  // if constraint type 2 is active
-  if (ncEqStateOnly > 0) {
-    systemConstraintsPtr_->getConstraint2(modelData.stateEqConstr_);
-    systemConstraintsPtr_->getConstraint2DerivativesState(modelData.stateEqConstrStateDerivative_);
-  } else {
-    modelData.stateEqConstr_.setZero(ncEqStateOnly);
-    modelData.stateEqConstrStateDerivative_.setZero(ncEqStateOnly, modelData.stateDim_);
-  }
-  modelData.numStateEqConstr_ = ncEqStateOnly;
 
   // Inequality constraint
-  const size_t ncIneq = systemConstraintsPtr_->numInequalityConstraint(time);
-  if (ncIneq > 0) {
-    systemConstraintsPtr_->getInequalityConstraint(modelData.ineqConstr_);
-    systemConstraintsPtr_->getInequalityConstraintDerivativesState(modelData.ineqConstrStateDerivative_);
-    systemConstraintsPtr_->getInequalityConstraintDerivativesInput(modelData.ineqConstrInputDerivative_);
-    systemConstraintsPtr_->getInequalityConstraintSecondDerivativesState(modelData.ineqConstrStateSecondDerivative_);
-    systemConstraintsPtr_->getInequalityConstraintSecondDerivativesInput(modelData.ineqConstrInputSecondDerivative_);
-    systemConstraintsPtr_->getInequalityConstraintDerivativesInputState(modelData.ineqConstrInputStateDerivative_);
-  }
-  modelData.numIneqConstr_ = ncIneq;
+  modelData.ineqConstr_ = systemConstraintsPtr_->getInequalityConstraint();
+  modelData.ineqConstrStateDerivative_ = systemConstraintsPtr_->getInequalityConstraintDerivativesState();
+  modelData.ineqConstrInputDerivative_ = systemConstraintsPtr_->getInequalityConstraintDerivativesInput();
+  modelData.ineqConstrStateSecondDerivative_ = systemConstraintsPtr_->getInequalityConstraintSecondDerivativesState();
+  modelData.ineqConstrInputSecondDerivative_ = systemConstraintsPtr_->getInequalityConstraintSecondDerivativesInput();
+  modelData.ineqConstrInputStateDerivative_ = systemConstraintsPtr_->getInequalityConstraintDerivativesInputState();
 
   if (checkNumericalCharacteristics_) {
     std::string err = modelData.checkConstraintProperties();
@@ -193,12 +164,12 @@ void LinearQuadraticApproximator::approximateIntermediateCost(const scalar_t& ti
   costFunctionPtr_->setCurrentStateAndControl(time, state, input);
 
   // get results
-  costFunctionPtr_->getIntermediateCost(modelData.cost_);
-  costFunctionPtr_->getIntermediateCostDerivativeState(modelData.costStateDerivative_);
-  costFunctionPtr_->getIntermediateCostSecondDerivativeState(modelData.costStateSecondDerivative_);
-  costFunctionPtr_->getIntermediateCostDerivativeInput(modelData.costInputDerivative_);
-  costFunctionPtr_->getIntermediateCostSecondDerivativeInput(modelData.costInputSecondDerivative_);
-  costFunctionPtr_->getIntermediateCostDerivativeInputState(modelData.costInputStateDerivative_);
+  modelData.cost_ = costFunctionPtr_->getCost();
+  modelData.costStateDerivative_ = costFunctionPtr_->getCostDerivativeState();
+  modelData.costStateSecondDerivative_ = costFunctionPtr_->getCostSecondDerivativeState();
+  modelData.costInputDerivative_ = costFunctionPtr_->getCostDerivativeInput();
+  modelData.costInputSecondDerivative_ = costFunctionPtr_->getCostSecondDerivativeInput();
+  modelData.costInputStateDerivative_ = costFunctionPtr_->getCostDerivativeInputState();
 
   // checking the numerical stability
   if (checkNumericalCharacteristics_) {

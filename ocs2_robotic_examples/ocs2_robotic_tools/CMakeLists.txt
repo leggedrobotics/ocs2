@@ -97,10 +97,11 @@ install(DIRECTORY
 ## $ catkin_test_results ../../../build/ocs2_robotic_tools
 
 catkin_add_gtest(rotation_transform_tests
-        test/common/TestRotationTransforms.cpp
-        )
+  test/common/TestRotationTransforms.cpp
+)
 target_link_libraries(rotation_transform_tests
-        ${catkin_LIBRARIES}
-        ${Boost_LIBRARIES}
-        )
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  gtest_main
+)
 target_compile_options(rotation_transform_tests PRIVATE ${OCS2_CXX_FLAGS})

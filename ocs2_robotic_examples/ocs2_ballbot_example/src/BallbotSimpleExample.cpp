@@ -78,8 +78,7 @@ int main(int argc, char** argv) {
    */
   std::unique_ptr<BallbotSystemDynamics> ballbotSystemDynamicsPtr(new BallbotSystemDynamics());
   ballbotSystemDynamicsPtr->initialize("ballbot_dynamics", libraryFolder, true, true);
-  std::unique_ptr<TimeTriggeredRollout> ballbotRolloutPtr(
-      new TimeTriggeredRollout(STATE_DIM_, INPUT_DIM_, *ballbotSystemDynamicsPtr, rolloutSettings));
+  std::unique_ptr<TimeTriggeredRollout> ballbotRolloutPtr(new TimeTriggeredRollout(*ballbotSystemDynamicsPtr, rolloutSettings));
 
   /*
    * Cost function

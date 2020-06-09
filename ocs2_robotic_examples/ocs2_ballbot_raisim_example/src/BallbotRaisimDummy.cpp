@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
                                                     "rollout", true);
   ocs2::ballbot::BallbotRaisimConversions conversions;
   ocs2::RaisimRollout simRollout(
-      ocs2::ballbot::STATE_DIM_, ocs2::ballbot::INPUT_DIM_, urdf,
+      urdf,
       std::bind(&ocs2::ballbot::BallbotRaisimConversions::stateToRaisimGenCoordGenVel, &conversions, std::placeholders::_1,
                 std::placeholders::_2),
       std::bind(&ocs2::ballbot::BallbotRaisimConversions::raisimGenCoordGenVelToState, &conversions, std::placeholders::_1,

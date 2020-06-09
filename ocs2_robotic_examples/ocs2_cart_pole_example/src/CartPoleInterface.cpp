@@ -86,7 +86,7 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
    */
   Rollout_Settings rolloutSettings;
   rolloutSettings.loadSettings(taskFile, "slq.rollout");
-  ddpCartPoleRolloutPtr_.reset(new TimeTriggeredRollout(STATE_DIM_, INPUT_DIM_, *cartPoleSystemDynamicsPtr_, rolloutSettings));
+  ddpCartPoleRolloutPtr_.reset(new TimeTriggeredRollout(*cartPoleSystemDynamicsPtr_, rolloutSettings));
 
   /*
    * Cost function

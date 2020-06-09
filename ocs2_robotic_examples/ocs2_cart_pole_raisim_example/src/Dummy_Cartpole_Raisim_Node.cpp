@@ -30,9 +30,8 @@ int main(int argc, char* argv[]) {
 
   // setup simulator rollouts
   std::unique_ptr<ocs2::RaisimRollout> simRollout(new ocs2::RaisimRollout(
-      ocs2::cartpole::STATE_DIM_, ocs2::cartpole::INPUT_DIM_, ros::package::getPath("ocs2_cart_pole_example") + "/urdf/cartpole.urdf",
-      &ocs2::cartpole::stateToRaisimGenCoordGenVel, &ocs2::cartpole::raisimGenCoordGenVelToState,
-      &ocs2::cartpole::inputToRaisimGeneralizedForce));
+      ros::package::getPath("ocs2_cart_pole_example") + "/urdf/cartpole.urdf", &ocs2::cartpole::stateToRaisimGenCoordGenVel,
+      &ocs2::cartpole::raisimGenCoordGenVelToState, &ocs2::cartpole::inputToRaisimGeneralizedForce));
 
   // MRT
   ocs2::MRT_ROS_Interface mrt(robotName);

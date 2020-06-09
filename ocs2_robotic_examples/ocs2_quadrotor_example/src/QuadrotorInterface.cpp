@@ -85,7 +85,7 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
    */
   Rollout_Settings rolloutSettings;
   rolloutSettings.loadSettings(taskFile, "slq.rollout");
-  ddpQuadrotorRolloutPtr_.reset(new TimeTriggeredRollout(STATE_DIM_, INPUT_DIM_, *quadrotorSystemDynamicsPtr_, rolloutSettings));
+  ddpQuadrotorRolloutPtr_.reset(new TimeTriggeredRollout(*quadrotorSystemDynamicsPtr_, rolloutSettings));
 
   /*
    * Cost function

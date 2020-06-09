@@ -31,13 +31,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-RaisimRollout::RaisimRollout(size_t stateDim, size_t inputDim, std::string urdf,
-                             state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel,
+RaisimRollout::RaisimRollout(std::string urdf, state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel,
                              raisim_gen_coord_gen_vel_to_state_t raisimGenCoordGenVelToState,
                              input_to_raisim_generalized_force_t inputToRaisimGeneralizedForce,
                              data_extraction_callback_t dataExtractionCallback, RaisimRolloutSettings raisimRolloutSettings,
                              input_to_raisim_pd_targets_t inputToRaisimPdTargets)
-    : RolloutBase(stateDim, inputDim, raisimRolloutSettings.rolloutSettings_),
+    : RolloutBase(raisimRolloutSettings.rolloutSettings_),
       raisimRolloutSettings_(std::move(raisimRolloutSettings)),
       urdf_(std::move(urdf)),
       ground_(nullptr),
@@ -85,7 +84,7 @@ RaisimRollout::RaisimRollout(size_t stateDim, size_t inputDim, std::string urdf,
 }
 
 RaisimRollout::RaisimRollout(const RaisimRollout& other)
-    : RaisimRollout(stateDim_, inputDim_, other.urdf_, other.stateToRaisimGenCoordGenVel_, other.raisimGenCoordGenVelToState_,
+    : RaisimRollout(other.urdf_, other.stateToRaisimGenCoordGenVel_, other.raisimGenCoordGenVelToState_,
                     other.inputToRaisimGeneralizedForce_, other.dataExtractionCallback_, other.raisimRolloutSettings_,
                     other.inputToRaisimPdTargets_) {
   if (other.heightMap_ != nullptr) {

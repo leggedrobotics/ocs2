@@ -85,7 +85,7 @@ class DdpCorrectnessTest : public testing::Test {
     }();
 
     // system rollout
-    rollout.reset(new ocs2::TimeTriggeredRollout(STATE_DIM, INPUT_DIM, *system, rolloutSettings));
+    rollout.reset(new ocs2::TimeTriggeredRollout(*system, rolloutSettings));
 
     startTime = nominalTrajectory.timeTrajectory.front();
     finalTime = nominalTrajectory.timeTrajectory.back();

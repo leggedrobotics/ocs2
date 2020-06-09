@@ -87,7 +87,7 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
    */
   Rollout_Settings rolloutSettings;
   rolloutSettings.loadSettings(taskFile, "slq.rollout");
-  ddpBallbotRolloutPtr_.reset(new TimeTriggeredRollout(STATE_DIM_, INPUT_DIM_, *ballbotSystemDynamicsPtr_, rolloutSettings));
+  ddpBallbotRolloutPtr_.reset(new TimeTriggeredRollout(*ballbotSystemDynamicsPtr_, rolloutSettings));
 
   /*
    * Cost function

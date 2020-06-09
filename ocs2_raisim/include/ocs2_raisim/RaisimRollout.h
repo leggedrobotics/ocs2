@@ -58,8 +58,6 @@ class RaisimRollout final : public RolloutBase {
   /**
    * Constructor
    *
-   * @param [in] stateDim: State vector dimension
-   * @param [in] inputDim: Input vector dimension
    * @param[in] path: Absolute file path to the *.urdf description or the urdf string (xml document)
    * @param[in] stateToRaisimGenCoordGenVel: Transformation function that converts ocs2 state to generalized coordinate and generalized
    * velocity used by Raisim
@@ -74,7 +72,7 @@ class RaisimRollout final : public RolloutBase {
    * @note The function handles stateToRaisimGenCoordGenVel, raisimGenCoordGenVelToState, inputToRaisimGeneralizedForce,
    * dataExtractionCallback, inputToRaisimPdTargets must be thread safe, i.e., multiple rollout instances might execute them in parallel
    */
-  RaisimRollout(size_t stateDim, size_t inputDim, std::string urdf, state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel,
+  RaisimRollout(std::string urdf, state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel,
                 raisim_gen_coord_gen_vel_to_state_t raisimGenCoordGenVelToState,
                 input_to_raisim_generalized_force_t inputToRaisimGeneralizedForce,
                 data_extraction_callback_t dataExtractionCallback = nullptr,

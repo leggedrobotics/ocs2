@@ -261,8 +261,7 @@ void SLQ::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, cons
   auto& sTrajectory = BASE::sTrajectoryStock_[partitionIndex];
 
   // Convert final value of value function in vector format
-  vector_t allSsFinal;
-  ContinuousTimeRiccatiEquations::convert2Vector(SmFinal, SvFinal, sFinal, allSsFinal);
+  vector_t allSsFinal = ContinuousTimeRiccatiEquations::convert2Vector(SmFinal, SvFinal, sFinal);
 
   // Clear output containers
   SsNormalizedTime.clear();

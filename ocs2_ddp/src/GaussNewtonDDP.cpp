@@ -852,8 +852,7 @@ scalar_t GaussNewtonDDP::calculateRolloutCost(const scalar_array2_t& timeTraject
   heuristicsFunction->setCurrentStateAndControl(timeTrajectoriesStock[finalActivePartition_].back(),
                                                 stateTrajectoriesStock[finalActivePartition_].back(),
                                                 inputTrajectoriesStock[finalActivePartition_].back());
-  scalar_t sHeuristics = heuristicsFunction->getTerminalCost();
-  totalCost += sHeuristics;
+  totalCost += heuristicsFunction->getTerminalCost();
 
   return totalCost;
 }

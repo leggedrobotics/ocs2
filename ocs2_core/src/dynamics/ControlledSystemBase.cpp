@@ -74,9 +74,8 @@ vector_t ControlledSystemBase::computeFlowMap(scalar_t t, const vector_t& x) {
   modelData.stateDim_ = x.rows();
   modelData.inputDim_ = u.rows();
 
-  vector_t dxdt = computeFlowMap(t, x, u);
-  modelData.dynamics_ = dxdt;
-  return dxdt;
+  modelData.dynamics_ = computeFlowMap(t, x, u);
+  return modelData.dynamics_;
 }
 
 }  // namespace ocs2

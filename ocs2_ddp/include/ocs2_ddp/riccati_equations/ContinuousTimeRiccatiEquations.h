@@ -130,9 +130,9 @@ class ContinuousTimeRiccatiEquations final : public OdeBase {
    * @param [in] Sm: \f$ S_m \f$
    * @param [in] Sv: \f$ S_v \f$
    * @param [in] s: \f$ s \f$
-   * @param [out] allSs: Single vector constructed by concatenating Sm, Sv and s.
+   * @return Single vector constructed by concatenating Sm, Sv and s.
    */
-  static void convert2Vector(const matrix_t& Sm, const vector_t& Sv, const scalar_t& s, vector_t& allSs);
+  static vector_t convert2Vector(const matrix_t& Sm, const vector_t& Sv, const scalar_t& s);
 
   /**
    * Transcribes the stacked vector allSs into a symmetric matrix, Sm, a vector, Sv and a single scalar, s.

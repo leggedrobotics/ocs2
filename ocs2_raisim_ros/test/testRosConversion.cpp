@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <ocs2_raisim_ros/RaisimHeightmapRosConverter.h>
 
-TEST(ocs2_raisim_ros, DISABLED_HeightmapRosConversion) {
+TEST(ocs2_raisim_ros, HeightmapRosConversion) {
   const raisim::TerrainProperties terrainProperties;
   constexpr double centerX = 0.2;
   constexpr double centerY = -2.1;
@@ -22,4 +22,12 @@ TEST(ocs2_raisim_ros, DISABLED_HeightmapRosConversion) {
 
   // Test gridMap1 against gridMap2
   ASSERT_TRUE(gridMap1->data[0].data == gridMap2->data[0].data);
+}
+
+int main(int argc, char** argv) {
+  // required for ros::Time()
+  ros::Time::init();
+
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

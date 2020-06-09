@@ -137,13 +137,6 @@ class FeedforwardController final : public ControllerBase {
    */
   bool empty() const override;
 
-  /**
-   * @brief Swap data with other object.
-   *
-   * @param other the object to be swapped with
-   */
-  void swap(FeedforwardController& other);
-
   FeedforwardController* clone() const override;
 
   void display() const override;

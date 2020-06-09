@@ -31,8 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <atomic>
 #include <condition_variable>
-// #include <csignal>
-// #include <ctime>
 #include <iostream>
 #include <memory>
 #include <mutex>

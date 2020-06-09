@@ -79,7 +79,7 @@ FeedforwardController::FeedforwardController(const FeedforwardController& other)
 /******************************************************************************************************/
 /******************************************************************************************************/
 FeedforwardController& FeedforwardController::operator=(FeedforwardController other) {
-  other.swap(*this);
+  swap(*this, other);
   return *this;
 }
 
@@ -201,16 +201,6 @@ bool FeedforwardController::empty() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void FeedforwardController::swap(FeedforwardController& other) {
-  using std::swap;  // enable ADL
-
-  swap(timeStamp_, other.timeStamp_);
-  swap(uffArray_, other.uffArray_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 FeedforwardController* FeedforwardController::clone() const {
   return new FeedforwardController(*this);
 }
@@ -226,7 +216,9 @@ void FeedforwardController::display() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void swap(FeedforwardController& a, FeedforwardController& b) {
-  a.swap(b);
+  ocs2::swap(static_cast<ControllerBase&>(a), static_cast<ControllerBase&>(b));
+  std::swap(a.timeStamp_, b.timeStamp_);
+  std::swap(a.uffArray_, b.uffArray_);
 }
 
 /******************************************************************************************************/

@@ -34,25 +34,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+// TODO(mspieler): change to sruct, define swap helper, delete default constructor.
+
 /**
  * This class contains the observation information.
  */
 class SystemObservation {
  public:
-  /**
-   * Constructor
-   */
-  SystemObservation() : subsystem_(0), time_(0.0), state_(vector_t()), input_(vector_t()) {}
+  /** Constructor */
+  SystemObservation() = default;
 
-  /**
-   * Destructor
-   */
+  /** Destructor */
   ~SystemObservation() = default;
 
-  /**
-   * Swap with other.
-   * @param other
-   */
+  /** Swap with other. */
   void swap(SystemObservation& other) {
     std::swap(time_, other.time_);
     std::swap(state_, other.state_);
@@ -93,10 +88,10 @@ class SystemObservation {
   }
 
  private:
-  size_t subsystem_;
-  scalar_t time_;
-  vector_t state_;
-  vector_t input_;
+  size_t subsystem_ = 0;
+  scalar_t time_ = 0.0;
+  vector_t state_ = vector_t();
+  vector_t input_ = vector_t();
 };
 
 }  // namespace ocs2

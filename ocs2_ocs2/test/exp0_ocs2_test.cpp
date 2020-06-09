@@ -104,7 +104,7 @@ TEST(exp0_ocs2_test, exp0_ocs2_test) {
   EXP0_SystemDerivative systemDerivative(modeScheduleManagerPtr);
 
   // system constraints
-  EXP0_SystemConstraint systemConstraint;
+  ConstraintBase systemConstraint;
 
   // system cost functions
   EXP0_CostFunction systemCostFunction(modeScheduleManagerPtr);

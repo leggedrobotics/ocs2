@@ -40,13 +40,10 @@ MPC_SLQ::MPC_SLQ(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr
                  const SLQ_Settings& slqSettings /* = SLQ_Settings()*/, const MPC_Settings& mpcSettings /* = MPC_Settings()*/,
                  const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
 
-    : MPC_BASE(stateDim, inputDim, partitioningTimes, mpcSettings) {
+    : MPC_BASE(partitioningTimes, mpcSettings) {
   // SLQ
   slqPtr_.reset(new SLQ(stateDim, inputDim, rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr,
                         operatingTrajectoriesPtr, slqSettings, heuristicsFunctionPtr));
-
-  // set base solver's pointer
-  MPC_BASE::setBaseSolverPtr(slqPtr_.get());
 }
 
 /******************************************************************************************************/

@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <Eigen/Dense>
+#include "ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h"
 
 namespace ocs2 {
 namespace ros_msg_conversions {
@@ -35,8 +35,7 @@ namespace ros_msg_conversions {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-template <class ContainerAllocator>
-void createObservationMsg(const SystemObservation& observation, ocs2_msgs::mpc_observation_<ContainerAllocator>& observationMsg) {
+void createObservationMsg(const SystemObservation& observation, ocs2_msgs::mpc_observation& observationMsg) {
   observationMsg.time = observation.time();
 
   observationMsg.state.value.resize(observation.state().rows());
@@ -55,8 +54,7 @@ void createObservationMsg(const SystemObservation& observation, ocs2_msgs::mpc_o
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-template <class ContainerAllocator>
-void readObservationMsg(const ocs2_msgs::mpc_observation_<ContainerAllocator>& observationMsg, SystemObservation& observation) {
+void readObservationMsg(const ocs2_msgs::mpc_observation& observationMsg, SystemObservation& observation) {
   observation.time() = observationMsg.time;
 
   const auto& state = observationMsg.state.value;
@@ -71,8 +69,7 @@ void readObservationMsg(const ocs2_msgs::mpc_observation_<ContainerAllocator>& o
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-template <class ContainerAllocator>
-void createModeScheduleMsg(const ModeSchedule& modeSchedule, ocs2_msgs::mode_schedule_<ContainerAllocator>& modeScheduleMsg) {
+void createModeScheduleMsg(const ModeSchedule& modeSchedule, ocs2_msgs::mode_schedule& modeScheduleMsg) {
   // event times
   modeScheduleMsg.eventTimes.clear();
   modeScheduleMsg.eventTimes.reserve(modeSchedule.eventTimes.size());
@@ -91,17 +88,16 @@ void createModeScheduleMsg(const ModeSchedule& modeSchedule, ocs2_msgs::mode_sch
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-template <class ContainerAllocator>
-ModeSchedule readModeScheduleMsg(const ocs2_msgs::mode_schedule_<ContainerAllocator>& modeScheduleMsg) {
+ModeSchedule readModeScheduleMsg(const ocs2_msgs::mode_schedule& modeScheduleMsg) {
   // event times
-  std::vector<scalar_t> eventTimes;
+  scalar_array_t eventTimes;
   eventTimes.reserve(modeScheduleMsg.eventTimes.size());
   for (const auto& ti : modeScheduleMsg.eventTimes) {
     eventTimes.push_back(ti);
   }
 
   // mode sequence
-  std::vector<size_t> modeSequence;
+  size_array_t modeSequence;
   modeSequence.reserve(modeScheduleMsg.modeSequence.size());
   for (const auto& si : modeScheduleMsg.modeSequence) {
     modeSequence.push_back(si);
@@ -113,9 +109,8 @@ ModeSchedule readModeScheduleMsg(const ocs2_msgs::mode_schedule_<ContainerAlloca
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-template <class ContainerAllocator>
 void createTargetTrajectoriesMsg(const CostDesiredTrajectories& costDesiredTrajectories,
-                                 ocs2_msgs::mpc_target_trajectories_<ContainerAllocator>& targetTrajectoriesMsg) {
+                                 ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg) {
   const auto& desiredTimeTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
   const auto& desiredStateTrajectory = costDesiredTrajectories.desiredStateTrajectory();
   const auto& desiredInputTrajectory = costDesiredTrajectories.desiredInputTrajectory();
@@ -143,8 +138,7 @@ void createTargetTrajectoriesMsg(const CostDesiredTrajectories& costDesiredTraje
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-template <class ContainerAllocator>
-void readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories_<ContainerAllocator>& targetTrajectoriesMsg,
+void readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg,
                                CostDesiredTrajectories& costDesiredTrajectories) {
   auto& desiredTimeTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
   auto& desiredStateTrajectory = costDesiredTrajectories.desiredStateTrajectory();

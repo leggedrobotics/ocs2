@@ -40,13 +40,10 @@ MPC_ILQR::MPC_ILQR(size_t stateDim, size_t inputDim, const RolloutBase* rolloutP
                    const ILQR_Settings& ilqrSettings /* = ILQR_Settings()*/, const MPC_Settings& mpcSettings /* = MPC_Settings()*/,
                    const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
 
-    : MPC_BASE(stateDim, inputDim, partitioningTimes, mpcSettings) {
+    : MPC_BASE(partitioningTimes, mpcSettings) {
   // ILQR
   ilqrPtr_.reset(new ILQR(stateDim, inputDim, rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr,
                           operatingTrajectoriesPtr, ilqrSettings, heuristicsFunctionPtr));
-
-  // set base solver's pointer
-  MPC_BASE::setBaseSolverPtr(ilqrPtr_.get());
 }
 
 /******************************************************************************************************/

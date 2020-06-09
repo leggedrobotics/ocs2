@@ -27,13 +27,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-// #include <Eigen/Dense>
-// #include <Eigen/StdVector>
-// #include <algorithm>
-// #include <iterator>
-// #include <type_traits>
-// #include <vector>
-
 #include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/Numerics.h>
@@ -49,9 +42,10 @@ OperatingPoints::OperatingPoints(const vector_t& stateOperatingPoint, const vect
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-OperatingPoints::OperatingPoints(scalar_array_t timeTrajectory, const vector_array_t& stateTrajectory,
-                                 const vector_array_t& inputTrajectory)
-    : timeTrajectory_(std::move(timeTrajectory)), stateTrajectory_(stateTrajectory), inputTrajectory_(inputTrajectory) {}
+OperatingPoints::OperatingPoints(scalar_array_t timeTrajectory, vector_array_t stateTrajectory, vector_array_t inputTrajectory)
+    : timeTrajectory_(std::move(timeTrajectory)),
+      stateTrajectory_(std::move(stateTrajectory)),
+      inputTrajectory_(std::move(inputTrajectory)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

@@ -78,9 +78,6 @@ void LinearQuadraticApproximator::approximateUnconstrainedLQProblemAtEventTime(c
   modelData.numIneqConstr_ = 0;          // no inequality constraint
   modelData.numStateInputEqConstr_ = 0;  // no state-input equality constraint
   modelData.numStateEqConstr_ = ncFinalEqStateOnly;
-  // TODO(mspieler): is slicing necessary here?
-  modelData.stateEqConstr_ = modelData.stateEqConstr_.head(ncFinalEqStateOnly);
-  modelData.stateEqConstrStateDerivative_ = modelData.stateEqConstrStateDerivative_.topRows(ncFinalEqStateOnly);
 
   // Final cost
   costFunctionPtr_->setCurrentStateAndControl(time, state, input);

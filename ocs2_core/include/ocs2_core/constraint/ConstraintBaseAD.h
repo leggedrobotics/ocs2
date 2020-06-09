@@ -54,7 +54,7 @@ class ConstraintBaseAD : public ConstraintBase {
    * @param[in] stateDim: State vector dimension
    * @param[in] inputDim: Input vector dimension
    */
-  explicit ConstraintBaseAD(size_t stateDim, size_t inputDim);
+  ConstraintBaseAD(size_t stateDim, size_t inputDim);
 
   /**
    * Copy constructor

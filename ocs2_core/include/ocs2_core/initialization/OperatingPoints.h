@@ -54,7 +54,7 @@ class OperatingPoints : public SystemOperatingTrajectoriesBase {
    * @param [in] stateTrajectory: The state operating trajectory.
    * @param [in] inputTrajectory: The input operating trajectory.
    */
-  OperatingPoints(scalar_array_t timeTrajectory, const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory);
+  OperatingPoints(scalar_array_t timeTrajectory, vector_array_t stateTrajectory, vector_array_t inputTrajectory);
 
   /**
    * Destructor

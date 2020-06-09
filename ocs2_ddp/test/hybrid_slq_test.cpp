@@ -71,7 +71,7 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
 
   // rollout
   hybridSysDynamics systemDynamics;
-  StateTriggeredRollout stateTriggeredRollout(stateDim, inputDim, systemDynamics, rolloutSettings);
+  StateTriggeredRollout stateTriggeredRollout(systemDynamics, rolloutSettings);
 
   // derivatives
   hybridSysDerivatives systemDerivatives;

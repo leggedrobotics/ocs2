@@ -44,11 +44,9 @@ class DoubleIntegratorDynamics final : public ControlledSystemBase {
    * @param [in] A: \f$ A(t) \f$ matrix.
    * @param [in] B: \f$ B(t) \f$ matrix.
    */
-  DoubleIntegratorDynamics(const matrix_t& A, const matrix_t& B) : A_(std::move(A)), B_(std::move(B)) {}
+  DoubleIntegratorDynamics(matrix_t A, matrix_t B) : A_(std::move(A)), B_(std::move(B)) {}
 
-  /**
-   * Destructor
-   */
+  /** Destructor */
   ~DoubleIntegratorDynamics() override = default;
 
   DoubleIntegratorDynamics* clone() const override { return new DoubleIntegratorDynamics(*this); }

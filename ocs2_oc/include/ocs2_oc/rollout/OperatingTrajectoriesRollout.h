@@ -47,14 +47,12 @@ class OperatingTrajectoriesRollout : public RolloutBase {
   /**
    * Constructor.
    *
-   * @param [in] stateDim: State vector dimension
-   * @param [in] inputDim: Input vector dimension
    * @param [in] operatingTrajectories: The operating trajectories used for initialization.
    * @param [in] rolloutSettings: The rollout settings.
    */
-  explicit OperatingTrajectoriesRollout(size_t stateDim, size_t inputDim, const SystemOperatingTrajectoriesBase& operatingTrajectories,
-                                        const Rollout_Settings& rolloutSettings = Rollout_Settings())
-      : RolloutBase(stateDim, inputDim, rolloutSettings), operatingTrajectoriesPtr_(operatingTrajectories.clone()) {}
+  OperatingTrajectoriesRollout(const SystemOperatingTrajectoriesBase& operatingTrajectories,
+                               const Rollout_Settings& rolloutSettings = Rollout_Settings())
+      : RolloutBase(rolloutSettings), operatingTrajectoriesPtr_(operatingTrajectories.clone()) {}
 
   /**
    * Default destructor.

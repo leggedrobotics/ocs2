@@ -163,7 +163,12 @@ void MRT_ROS_Interface::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_control
 
   if (N == 0) {
     throw std::runtime_error("MRT_ROS_Interface::mpcPolicyCallback -- Controller must not be empty");
+  } else if (N != msg->stateTrajectory.size() && N != msg->inputTrajectory.size()) {
+    throw std::runtime_error("MRT_ROS_Interface::mpcPolicyCallback -- Controller must have same size");
   }
+
+  const size_t stateDim = msg->stateTrajectory.front().value.size();
+  const size_t inputDim = msg->inputTrajectory.front().value.size();
 
   timeBuffer.clear();
   timeBuffer.reserve(N);
@@ -172,17 +177,11 @@ void MRT_ROS_Interface::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_control
   inputBuffer.clear();
   inputBuffer.reserve(N);
 
-  size_t stateDim = 0;
-  size_t inputDim = 0;
   for (size_t i = 0; i < N; i++) {
-    stateDim = msg->stateTrajectory[i].value.size();
-    inputDim = msg->inputTrajectory[i].value.size();
     timeBuffer.emplace_back(msg->timeTrajectory[i]);
     stateBuffer.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg->stateTrajectory[i].value.data(), stateDim).cast<scalar_t>());
     inputBuffer.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg->inputTrajectory[i].value.data(), inputDim).cast<scalar_t>());
   }  // end of i loop
-
-  assert(stateDim != 0 && inputDim != 0);
 
   // instantiate the correct controller
   switch (msg->controllerType) {

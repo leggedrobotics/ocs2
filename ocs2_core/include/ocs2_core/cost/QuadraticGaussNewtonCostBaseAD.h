@@ -56,7 +56,7 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
    * Default constructor
    *
    */
-  explicit QuadraticGaussNewtonCostBaseAD(size_t stateDim, size_t inputDim, size_t intermediateCostDim, size_t terminalCostDim);
+  QuadraticGaussNewtonCostBaseAD(size_t stateDim, size_t inputDim, size_t intermediateCostDim, size_t terminalCostDim);
 
   /**
    * Copy constructor

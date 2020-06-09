@@ -106,7 +106,7 @@ class MPC_MRT_Interface final : public MRT_BASE {
    * @param [in] state: query state
    * @param [out] nu: the Lagrange multiplier
    */
-  void getStateInputConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const;
+  void getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const;
 
  protected:
   /**

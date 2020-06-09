@@ -55,12 +55,11 @@ class LinearQuadraticApproximator {
    * @param [in] makePsdWillBePerformedLater: Whether or not the model will be rectified later outside of this class.
    */
   LinearQuadraticApproximator(const DerivativesBase& systemDerivatives, const ConstraintBase& systemConstraints,
-                              const CostFunctionBase& costFunction, const char algorithmName[] = "unknown",
-                              bool checkNumericalCharacteristics = true, bool makePsdWillBePerformedLater = false)
+                              const CostFunctionBase& costFunction, bool checkNumericalCharacteristics = true,
+                              bool makePsdWillBePerformedLater = false)
       : systemDerivativesPtr_(systemDerivatives.clone()),
         systemConstraintsPtr_(systemConstraints.clone()),
         costFunctionPtr_(costFunction.clone()),
-        algorithmName_(algorithmName),
         checkNumericalCharacteristics_(checkNumericalCharacteristics),
         makePsdWillBePerformedLater_(makePsdWillBePerformedLater) {}
 
@@ -147,7 +146,6 @@ class LinearQuadraticApproximator {
   std::unique_ptr<ConstraintBase> systemConstraintsPtr_;
   std::unique_ptr<CostFunctionBase> costFunctionPtr_;
 
-  std::string algorithmName_;
   bool checkNumericalCharacteristics_;
   bool makePsdWillBePerformedLater_;
 };

@@ -85,13 +85,13 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   /******************************************************************************************************/
   // system rollout
   EXP0_System systemDynamics(modeScheduleManagerPtr);
-  TimeTriggeredRollout timeTriggeredRollout(STATE_DIM, INPUT_DIM, systemDynamics, rolloutSettings);
+  TimeTriggeredRollout timeTriggeredRollout(systemDynamics, rolloutSettings);
 
   // system derivatives
   EXP0_SystemDerivative systemDerivative(modeScheduleManagerPtr);
 
   // system constraints
-  EXP0_SystemConstraint systemConstraint(STATE_DIM, INPUT_DIM);
+  ConstraintBase systemConstraint(STATE_DIM, INPUT_DIM);
 
   // system cost functions
   EXP0_CostFunction systemCostFunction(modeScheduleManagerPtr);

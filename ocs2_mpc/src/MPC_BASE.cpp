@@ -36,20 +36,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MPC_BASE::MPC_BASE(size_t stateDim, size_t inputDim, const scalar_array_t& partitioningTimes, MPC_Settings mpcSettings)
+MPC_BASE::MPC_BASE(const scalar_array_t& partitioningTimes, MPC_Settings mpcSettings)
 
     : mpcSettings_(std::move(mpcSettings)),
-      stateDim_(stateDim),
-      inputDim_(inputDim),
-      initRun_(true),
       initnumPartitions_(partitioningTimes.size() - 1),
       initPartitioningTimes_(partitioningTimes),
-      numPartitions_(0),
-      partitioningTimes_(0),
-      initActivePartitionIndex_(0),
-      finalActivePartitionIndex_(0),
-      lastControlDesignTime_(partitioningTimes.front()),
-      solverPtr_(nullptr) {
+      lastControlDesignTime_(partitioningTimes.front()) {
   if (partitioningTimes.size() < 2) {
     throw std::runtime_error("There should be at least one time partition.");
   }
@@ -85,15 +77,6 @@ void MPC_BASE::reset() {
   initRun_ = true;
 
   mpcTimer_.reset();
-
-  solverPtr_->reset();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void MPC_BASE::setBaseSolverPtr(Solver_BASE* solverPtr) {
-  solverPtr_ = solverPtr;
 }
 
 /******************************************************************************************************/
@@ -111,7 +94,7 @@ void MPC_BASE::rewind() {
   partitioningTimes_[3 * initnumPartitions_] = 3.0 * timeHorizon + partitioningTimes_[0];
 
   // Solver internal variables
-  solverPtr_->rewindOptimizer(initnumPartitions_);
+  getSolverPtr()->rewindOptimizer(initnumPartitions_);
 }
 
 /******************************************************************************************************/
@@ -222,7 +205,7 @@ bool MPC_BASE::run(const scalar_t& currentTime, const vector_t& currentState) {
   /******************************************************************************************
    * cost goal check
    ******************************************************************************************/
-  if (initRun_ && solverPtr_->getCostDesiredTrajectories().empty()) {
+  if (initRun_ && getSolverPtr()->getCostDesiredTrajectories().empty()) {
     std::cerr << "### WARNING: The initial desired trajectories are not set. "
                  "This may cause undefined behavior. Use the MPC_SLQ::setCostDesiredTrajectories() "
                  "method to provide appropriate goal trajectories."

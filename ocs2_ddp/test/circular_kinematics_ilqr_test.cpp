@@ -84,7 +84,7 @@ TEST(circular_kinematics_ilqr_test, circular_kinematics_ilqr_test) {
   /******************************************************************************************************/
   // system rollout and system derivatives
   CircularKinematicsSystem systemDynamics;
-  TimeTriggeredRollout timeTriggeredRollout(STATE_DIM, INPUT_DIM, systemDynamics, rolloutSettings);
+  TimeTriggeredRollout timeTriggeredRollout(systemDynamics, rolloutSettings);
 
   // cost functions
   CircularKinematicsCost systemCostFunction;

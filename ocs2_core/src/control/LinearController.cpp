@@ -242,13 +242,6 @@ void LinearController::display() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LinearController::swap(LinearController& other) {
-  ocs2::swap(*this, other);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 void LinearController::getFeedbackGain(scalar_t time, matrix_t& gain) const {
   LinearInterpolation::interpolate(time, gain, &timeStamp_, &gainArray_);
 }
@@ -293,12 +286,11 @@ scalar_array_t LinearController::controllerEventTimes() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void swap(LinearController& a, LinearController& b) noexcept {
-  using std::swap;
-  swap(static_cast<ControllerBase&>(a), static_cast<ControllerBase&>(b));
-  swap(a.timeStamp_, b.timeStamp_);
-  swap(a.biasArray_, b.biasArray_);
-  swap(a.deltaBiasArray_, b.deltaBiasArray_);
-  swap(a.gainArray_, b.gainArray_);
+  ocs2::swap(static_cast<ControllerBase&>(a), static_cast<ControllerBase&>(b));
+  std::swap(a.timeStamp_, b.timeStamp_);
+  std::swap(a.biasArray_, b.biasArray_);
+  std::swap(a.deltaBiasArray_, b.deltaBiasArray_);
+  std::swap(a.gainArray_, b.gainArray_);
 }
 
 /******************************************************************************************************/
@@ -311,6 +303,7 @@ std::ostream& operator<<(std::ostream& out, const LinearController& controller) 
     out << "bias: " << controller.biasArray_[k].transpose() << '\n';
     out << "gain: " << controller.gainArray_[k] << '\n';
   }
+  return out;
 }
 
 }  // namespace ocs2

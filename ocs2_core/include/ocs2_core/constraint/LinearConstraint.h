@@ -41,7 +41,7 @@ class LinearConstraint final : public ConstraintBase {
    * @param[in] stateDim: State vector dimension
    * @param[in] inputDim: Input vector dimension
    */
-  explicit LinearConstraint(size_t stateDim, size_t inputDim);
+  LinearConstraint(size_t stateDim, size_t inputDim);
 
   /**
    * @brief Constructor for only equality constraints
@@ -59,9 +59,8 @@ class LinearConstraint final : public ConstraintBase {
    * @param[in] h_f: Constant term in F_f * x + h_f = 0 (at final time)
    * @param[in] F_f: x factor in F_f * x + h_f = 0 (at final time)
    */
-  LinearConstraint(size_t stateDim, size_t inputDim, size_t numStateInputConstraint, const vector_t& e, const matrix_t& C,
-                   const matrix_t& D, size_t numStateOnlyConstraint, const vector_t& h, const matrix_t& F,
-                   size_t numStateOnlyFinalConstraint, const vector_t& h_f, const matrix_t& F_f);
+  LinearConstraint(size_t stateDim, size_t inputDim, size_t numStateInputConstraint, vector_t e, matrix_t C, matrix_t D,
+                   size_t numStateOnlyConstraint, vector_t h, matrix_t F, size_t numStateOnlyFinalConstraint, vector_t h_f, matrix_t F_f);
 
   /**
    * @brief General constructor for equality and inequality constraints
@@ -88,11 +87,10 @@ class LinearConstraint final : public ConstraintBase {
    * @param[in] ddhdudu: Quadratic u multiplier in inequality constraint
    * @param[in] ddhdudx: Quadratic mixed term in inequality constraint
    */
-  LinearConstraint(size_t stateDim, size_t inputDim, size_t numStateInputConstraint, const vector_t& e, const matrix_t& C,
-                   const matrix_t& D, size_t numStateOnlyConstraint, const vector_t& h, const matrix_t& F,
-                   size_t numStateOnlyFinalConstraint, const vector_t& h_f, const matrix_t& F_f, size_t numInequalityConstraint,
-                   const scalar_array_t& h0, const vector_array_t& dhdx, const vector_array_t& dhdu, const matrix_array_t& ddhdxdx,
-                   const matrix_array_t& ddhdudu, const matrix_array_t& ddhdudx);
+  LinearConstraint(size_t stateDim, size_t inputDim, size_t numStateInputConstraint, vector_t e, matrix_t C, matrix_t D,
+                   size_t numStateOnlyConstraint, vector_t h, matrix_t F, size_t numStateOnlyFinalConstraint, vector_t h_f, matrix_t F_f,
+                   size_t numInequalityConstraint, scalar_array_t h0, vector_array_t dhdx, vector_array_t dhdu, matrix_array_t ddhdxdx,
+                   matrix_array_t ddhdudu, matrix_array_t ddhdudx);
 
   virtual ~LinearConstraint() override = default;
 

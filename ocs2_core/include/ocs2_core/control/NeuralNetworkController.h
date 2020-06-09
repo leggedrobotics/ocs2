@@ -45,8 +45,8 @@ class NeuralNetworkController final : public ControllerBase {
 
   NeuralNetworkController() = default;
 
-  explicit NeuralNetworkController(const std::string& networkFilePath, state_in_transform_fct_t state_in_transform_fct,
-                                   control_out_transform_fct_t control_out_transform_fct);
+  NeuralNetworkController(const std::string& networkFilePath, state_in_transform_fct_t state_in_transform_fct,
+                          control_out_transform_fct_t control_out_transform_fct);
 
   void loadNetwork(const std::string& filePath);
 

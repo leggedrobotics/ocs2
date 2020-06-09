@@ -37,15 +37,15 @@ namespace ocs2 {
 LinearConstraint::LinearConstraint(size_t stateDim, size_t inputDim)
     : ConstraintBase(stateDim, inputDim),
       numStateInputConstraint_(0),
-      e_(vector_t()),
-      C_(matrix_t()),
-      D_(matrix_t()),
+      e_(0),
+      C_(0, stateDim),
+      D_(0, inputDim),
       numStateOnlyConstraint_(0),
-      h_(vector_t()),
-      F_(matrix_t()),
+      h_(0),
+      F_(0, stateDim),
       numStateOnlyFinalConstraint_(0),
-      h_f_(vector_t()),
-      F_f_(matrix_t()),
+      h_f_(0),
+      F_f_(0, stateDim),
       numInequalityConstraint_(0),
       h0_(),
       dhdx_(),
@@ -57,49 +57,47 @@ LinearConstraint::LinearConstraint(size_t stateDim, size_t inputDim)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearConstraint::LinearConstraint(size_t stateDim, size_t inputDim, size_t numStateInputConstraint, const vector_t& e, const matrix_t& C,
-                                   const matrix_t& D, size_t numStateOnlyConstraint, const vector_t& h, const matrix_t& F,
-                                   size_t numStateOnlyFinalConstraint, const vector_t& h_f, const matrix_t& F_f)
+LinearConstraint::LinearConstraint(size_t stateDim, size_t inputDim, size_t numStateInputConstraint, vector_t e, matrix_t C, matrix_t D,
+                                   size_t numStateOnlyConstraint, vector_t h, matrix_t F, size_t numStateOnlyFinalConstraint, vector_t h_f,
+                                   matrix_t F_f)
     : ConstraintBase(stateDim, inputDim),
       numStateInputConstraint_(numStateInputConstraint),
-      e_(e),
-      C_(C),
-      D_(D),
+      e_(std::move(e)),
+      C_(std::move(C)),
+      D_(std::move(D)),
       numStateOnlyConstraint_(numStateOnlyConstraint),
-      h_(h),
-      F_(F),
+      h_(std::move(h)),
+      F_(std::move(F)),
       numStateOnlyFinalConstraint_(numStateOnlyFinalConstraint),
-      h_f_(h_f),
-      F_f_(F_f),
+      h_f_(std::move(h_f)),
+      F_f_(std::move(F_f)),
       numInequalityConstraint_(0) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearConstraint::LinearConstraint(size_t stateDim, size_t inputDim, size_t numStateInputConstraint, const vector_t& e, const matrix_t& C,
-                                   const matrix_t& D, size_t numStateOnlyConstraint, const vector_t& h, const matrix_t& F,
-                                   size_t numStateOnlyFinalConstraint, const vector_t& h_f, const matrix_t& F_f,
-                                   size_t numInequalityConstraint, const scalar_array_t& h0, const vector_array_t& dhdx,
-                                   const vector_array_t& dhdu, const matrix_array_t& ddhdxdx, const matrix_array_t& ddhdudu,
-                                   const matrix_array_t& ddhdudx)
+LinearConstraint::LinearConstraint(size_t stateDim, size_t inputDim, size_t numStateInputConstraint, vector_t e, matrix_t C, matrix_t D,
+                                   size_t numStateOnlyConstraint, vector_t h, matrix_t F, size_t numStateOnlyFinalConstraint, vector_t h_f,
+                                   matrix_t F_f, size_t numInequalityConstraint, scalar_array_t h0, vector_array_t dhdx,
+                                   vector_array_t dhdu, matrix_array_t ddhdxdx, matrix_array_t ddhdudu, matrix_array_t ddhdudx)
     : ConstraintBase(stateDim, inputDim),
       numStateInputConstraint_(numStateInputConstraint),
-      e_(e),
-      C_(C),
-      D_(D),
+      e_(std::move(e)),
+      C_(std::move(C)),
+      D_(std::move(D)),
       numStateOnlyConstraint_(numStateOnlyConstraint),
-      h_(h),
-      F_(F),
+      h_(std::move(h)),
+      F_(std::move(F)),
       numStateOnlyFinalConstraint_(numStateOnlyFinalConstraint),
-      h_f_(h_f),
-      F_f_(F_f),
+      h_f_(std::move(h_f)),
+      F_f_(std::move(F_f)),
       numInequalityConstraint_(numInequalityConstraint),
-      h0_(h0),
-      dhdx_(dhdx),
-      dhdu_(dhdu),
-      ddhdxdx_(ddhdxdx),
-      ddhdudu_(ddhdudu),
-      ddhdudx_(ddhdudx) {}
+      h0_(std::move(h0)),
+      dhdx_(std::move(dhdx)),
+      dhdu_(std::move(dhdu)),
+      ddhdxdx_(std::move(ddhdxdx)),
+      ddhdudu_(std::move(ddhdudu)),
+      ddhdudx_(std::move(ddhdudx)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

@@ -67,13 +67,12 @@ GaussNewtonDDP::GaussNewtonDDP(size_t stateDim, size_t inputDim, const RolloutBa
     dynamicsForwardRolloutPtrStock_.emplace_back(rolloutPtr->clone());
 
     // initialize operating points
-    operatingTrajectoriesRolloutPtrStock_.emplace_back(
-        new OperatingTrajectoriesRollout(stateDim, inputDim, *operatingTrajectoriesPtr, rolloutPtr->settings()));
+    operatingTrajectoriesRolloutPtrStock_.emplace_back(new OperatingTrajectoriesRollout(*operatingTrajectoriesPtr, rolloutPtr->settings()));
 
     // initialize LQ approximator
     bool makePsdWillBePerformedLater = ddpSettings_.lineSearch_.hessianCorrectionStrategy_ != hessian_correction::Strategy::DIAGONAL_SHIFT;
     linearQuadraticApproximatorPtrStock_.emplace_back(
-        new LinearQuadraticApproximator(*systemDerivativesPtr, *systemConstraintsPtr, *costFunctionPtr, algorithmName_.c_str(),
+        new LinearQuadraticApproximator(*systemDerivativesPtr, *systemConstraintsPtr, *costFunctionPtr,
                                         ddpSettings_.checkNumericalStability_, makePsdWillBePerformedLater));
 
     // initialize heuristics functions
@@ -305,7 +304,7 @@ void GaussNewtonDDP::getValueFunctionStateDerivative(scalar_t time, const vector
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::getStateInputConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const {
+void GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const {
   const auto activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
   const auto indexAlpha = LinearInterpolation::timeSegment(time, &nominalTimeTrajectoriesStock_[activeSubsystem]);
@@ -368,7 +367,7 @@ void GaussNewtonDDP::rewindOptimizer(size_t firstIndex) {
   const size_t preservedLength = numPartitions_ - firstIndex;
   for (size_t i = 0; i < numPartitions_; i++) {
     if (i < preservedLength) {
-      nominalControllersStock_[i].swap(nominalControllersStock_[firstIndex + i]);
+      swap(nominalControllersStock_[i], nominalControllersStock_[firstIndex + i]);
       SmFinalStock_[i] = SmFinalStock_[firstIndex + i];
       SvFinalStock_[i] = SvFinalStock_[firstIndex + i];
       sFinalStock_[i] = sFinalStock_[firstIndex + i];
@@ -852,8 +851,7 @@ scalar_t GaussNewtonDDP::calculateRolloutCost(const scalar_array2_t& timeTraject
   heuristicsFunction->setCurrentStateAndControl(timeTrajectoriesStock[finalActivePartition_].back(),
                                                 stateTrajectoriesStock[finalActivePartition_].back(),
                                                 inputTrajectoriesStock[finalActivePartition_].back());
-  scalar_t sHeuristics = heuristicsFunction->getTerminalCost();
-  totalCost += sHeuristics;
+  totalCost += heuristicsFunction->getTerminalCost();
 
   return totalCost;
 }
@@ -1031,7 +1029,7 @@ void GaussNewtonDDP::lineSearchTask(LineSearchModule& lineSearchModule) {
       if (armijoCondition && stepLength > lineSearchModule.stepLengthStar) {
         lineSearchModule.stepLengthStar = stepLength;
         performanceIndex_ = performanceIndex;
-        nominalControllersStock_.swap(controllersStock);
+        swap(nominalControllersStock_, controllersStock);
         nominalTimeTrajectoriesStock_.swap(timeTrajectoriesStock);
         nominalPostEventIndicesStock_.swap(postEventIndicesStock);
         nominalStateTrajectoriesStock_.swap(stateTrajectoriesStock);
@@ -1836,7 +1834,7 @@ void GaussNewtonDDP::runInit() {
   computeControllerTimer_.startTimer();
   // cache controller
   std::swap(cachedControllerUpdateIS_, nominalControllerUpdateIS_);
-  cachedControllersStock_.swap(nominalControllersStock_);
+  swap(cachedControllersStock_, nominalControllersStock_);
   // update nominal controller
   calculateController();
   nominalControllerUpdateIS_ = calculateControllerUpdateIS(nominalControllersStock_);
@@ -1885,7 +1883,7 @@ void GaussNewtonDDP::runIteration() {
   computeControllerTimer_.startTimer();
   // cache controller
   std::swap(cachedControllerUpdateIS_, nominalControllerUpdateIS_);
-  cachedControllersStock_.swap(nominalControllersStock_);
+  swap(cachedControllersStock_, nominalControllersStock_);
   // update nominal controller
   calculateController();
   nominalControllerUpdateIS_ = calculateControllerUpdateIS(nominalControllersStock_);

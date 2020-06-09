@@ -48,12 +48,10 @@ class MPC_BASE {
   /**
    * Constructor
    *
-   * @param [in] stateDim: State vector dimension
-   * @param [in] inputDim: Input vector dimension
    * @param [in] partitioningTimes: Array of times to divide up the horizon
    * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
    */
-  MPC_BASE(size_t stateDim, size_t inputDim, const scalar_array_t& partitioningTimes, MPC_Settings mpcSettings);
+  MPC_BASE(const scalar_array_t& partitioningTimes, MPC_Settings mpcSettings);
 
   /**
    * destructor.
@@ -133,14 +131,6 @@ class MPC_BASE {
 
  protected:
   /**
-   * Sets pointer of the base solver. This method should be called in the constructor of
-   * the derived MPC class.
-   *
-   * @param solverPtr
-   */
-  void setBaseSolverPtr(Solver_BASE* solverPtr);
-
-  /**
    * Rewinds MPC.
    */
   virtual void rewind();
@@ -162,25 +152,19 @@ class MPC_BASE {
    *************/
   MPC_Settings mpcSettings_;
 
-  size_t stateDim_;
-  size_t inputDim_;
-
-  bool initRun_;
+  bool initRun_ = true;
 
   benchmark::RepeatedTimer mpcTimer_;
 
   size_t initnumPartitions_;
   scalar_array_t initPartitioningTimes_;
-  size_t numPartitions_;
-  scalar_array_t partitioningTimes_;
+  size_t numPartitions_ = 0;
+  scalar_array_t partitioningTimes_{};
 
-  size_t initActivePartitionIndex_;
-  size_t finalActivePartitionIndex_;
+  size_t initActivePartitionIndex_ = 0;
+  size_t finalActivePartitionIndex_ = 0;
 
   scalar_t lastControlDesignTime_;
-
- private:
-  Solver_BASE* solverPtr_;
 };
 
 }  // namespace ocs2

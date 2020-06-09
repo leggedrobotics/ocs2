@@ -208,7 +208,7 @@ class Solver_BASE {
    * @param [in] state: The inquiry state.
    * @param [out] nu: The Lagrange multiplier of the state-input equality constraints.
    */
-  virtual void getStateInputConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const = 0;
+  virtual void getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const = 0;
 
   /**
    * Rewinds optimizer internal variables.

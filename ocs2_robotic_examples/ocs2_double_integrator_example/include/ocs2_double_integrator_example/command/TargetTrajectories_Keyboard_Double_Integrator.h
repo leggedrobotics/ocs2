@@ -32,6 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
 
+#include "ocs2_double_integrator_example/definitions.h"
+
 namespace ocs2 {
 namespace double_integrator {
 
@@ -67,7 +69,7 @@ class TargetTrajectories_Keyboard_Double_Integrator final : public ocs2::TargetT
     // state
     desiredState = Eigen::Map<const vector_t>(commadLineTarget.data(), COMMAND_DIM_);
     // input
-    desiredInput = vector_t::Zero(1);
+    desiredInput = vector_t::Zero(INPUT_DIM_);
   }
 
  private:

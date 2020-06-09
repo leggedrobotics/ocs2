@@ -59,7 +59,7 @@ void Solver_BASE::run(scalar_t initTime, const vector_t& initState, scalar_t fin
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto Solver_BASE::primalSolution(scalar_t finalTime) const -> PrimalSolution {
+PrimalSolution Solver_BASE::primalSolution(scalar_t finalTime) const {
   PrimalSolution primalSolution;
   getPrimalSolution(finalTime, &primalSolution);
   return primalSolution;

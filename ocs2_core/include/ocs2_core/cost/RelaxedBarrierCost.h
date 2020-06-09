@@ -70,7 +70,7 @@ class RelaxedBarrierCost : public CostFunctionBase {
    *
    * @param Config : configuration object containing mu and delta
    */
-  explicit RelaxedBarrierCost(Config config, size_t stateDim, size_t inputDim, size_t intermediateCostDim, size_t terminalCostDim);
+  RelaxedBarrierCost(Config config, size_t stateDim, size_t inputDim, size_t intermediateCostDim, size_t terminalCostDim);
 
   /**
    * Constructior

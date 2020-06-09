@@ -126,11 +126,10 @@ TEST(riccati_ode_test, testFlattenSMatrix) {
   Sv << 11, 12, 13, 14;
   s = 15;
 
-  allSs.resize(15);
   allSs_expect.resize(15);
   allSs_expect << 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15;
 
-  riccati_t::convert2Vector(Sm, Sv, s, allSs);
+  allSs = riccati_t::convert2Vector(Sm, Sv, s);
 
   EXPECT_EQ(allSs, allSs_expect);
 }
@@ -153,7 +152,7 @@ TEST(riccati_ode_test, testFlattenAndUnflatten) {
   Sv_out.setZero(state_dim);
   s_out = 0.0;
 
-  riccati_t::convert2Vector(Sm, Sv, s, allSs);
+  allSs = riccati_t::convert2Vector(Sm, Sv, s);
   riccati_t::convert2Matrix(allSs, Sm_out, Sv_out, s_out);
 
   EXPECT_EQ(Sm, Sm_out);

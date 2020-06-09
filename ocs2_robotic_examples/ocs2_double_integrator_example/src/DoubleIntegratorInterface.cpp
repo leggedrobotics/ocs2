@@ -84,7 +84,7 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
    */
   Rollout_Settings rolloutSettings;
   rolloutSettings.loadSettings(taskFile, "slq.rollout");
-  ddpLinearSystemRolloutPtr_.reset(new TimeTriggeredRollout(STATE_DIM_, INPUT_DIM_, *linearSystemDynamicsPtr_, rolloutSettings));
+  ddpLinearSystemRolloutPtr_.reset(new TimeTriggeredRollout(*linearSystemDynamicsPtr_, rolloutSettings));
 
   /*
    * Cost function

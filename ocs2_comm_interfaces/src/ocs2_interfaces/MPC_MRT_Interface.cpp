@@ -178,8 +178,8 @@ void MPC_MRT_Interface::getValueFunctionStateDerivative(scalar_t time, const vec
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_MRT_Interface::getStateInputConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const {
-  mpc_.getSolverPtr()->getStateInputConstraintLagrangian(time, state, nu);
+void MPC_MRT_Interface::getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const {
+  mpc_.getSolverPtr()->getStateInputEqualityConstraintLagrangian(time, state, nu);
 }
 
 }  // namespace ocs2

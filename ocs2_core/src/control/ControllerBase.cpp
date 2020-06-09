@@ -63,9 +63,8 @@ void ControllerBase::unFlatten(const scalar_array_t& timeArray, const std::vecto
 /******************************************************************************************************/
 /***************************************************************************************************** */
 void swap(ControllerBase& a, ControllerBase& b) noexcept {
-  using std::swap;
-  swap(a.stateDim_, b.stateDim_);
-  swap(a.inputDim_, b.inputDim_);
+  std::swap(a.stateDim_, b.stateDim_);
+  std::swap(a.inputDim_, b.inputDim_);
 }
 
 }  // namespace ocs2

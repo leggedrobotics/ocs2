@@ -53,9 +53,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include "DDP_Settings.h"
-// #include "HessianCorrection.h"
 #include "riccati_equations/RiccatiModification.h"
-// #include "riccati_equations/RiccatiModificationInterpolation.h"
 
 namespace ocs2 {
 
@@ -142,7 +140,7 @@ class GaussNewtonDDP : public Solver_BASE {
 
   void getValueFunctionStateDerivative(scalar_t time, const vector_t& state, vector_t& Vx) const override;
 
-  void getStateInputConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const override;
+  void getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const override;
 
   void rewindOptimizer(size_t firstIndex) override;
 

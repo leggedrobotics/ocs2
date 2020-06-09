@@ -34,7 +34,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-inline void padeApproximation(double timeDelay, vector_t& numCoefficients, vector_t& denCoefficients, size_t numZeros, size_t numPoles) {
+inline void padeApproximation(scalar_t timeDelay, vector_t& numCoefficients, vector_t& denCoefficients, size_t numZeros, size_t numPoles) {
   numCoefficients.resize(numZeros + 1);
   denCoefficients.resize(numPoles + 1);
 
@@ -76,7 +76,7 @@ inline vector_t multiplyPolynomials(const vector_t& p_lhs, const vector_t& p_rhs
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TransferFunctionBase::TransferFunctionBase(vector_t numCoefficients, vector_t denCoefficients, double timedelay, bool balance)
+TransferFunctionBase::TransferFunctionBase(vector_t numCoefficients, vector_t denCoefficients, scalar_t timedelay, bool balance)
     : numCoefficients_(numCoefficients), denCoefficients_(denCoefficients), timeDelay_(timedelay), balance_(balance){};
 
 /******************************************************************************************************/
@@ -99,7 +99,7 @@ void TransferFunctionBase::absorbDelay(size_t numZeros, size_t numPoles) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void TransferFunctionBase::normalize() {
-  double scaling = denCoefficients_(0);
+  scalar_t scaling = denCoefficients_(0);
   numCoefficients_ /= scaling;
   denCoefficients_ /= scaling;
 }

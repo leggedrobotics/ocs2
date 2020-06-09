@@ -51,7 +51,7 @@ void ContinuousTimeRiccatiEquations::setRiskSensitiveCoefficient(scalar_t riskSe
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ContinuousTimeRiccatiEquations::convert2Vector(const matrix_t& Sm, const vector_t& Sv, const scalar_t& s, vector_t& allSs) {
+vector_t ContinuousTimeRiccatiEquations::convert2Vector(const matrix_t& Sm, const vector_t& Sv, const scalar_t& s) {
   /* Sm is symmetric. Here, we only extract the upper triangular part and
    * transcribe it in column-wise fashion into allSs*/
   size_t count = 0;  // count the total number of scalar entries covered
@@ -62,8 +62,7 @@ void ContinuousTimeRiccatiEquations::convert2Vector(const matrix_t& Sm, const ve
   assert(Sm.rows() == state_dim);
   assert(Sv.rows() == state_dim);
 
-  // ensure proper size in case of Eigen::Dynamic size.
-  allSs.resize(s_vector_dim(state_dim));
+  vector_t allSs(s_vector_dim(state_dim));
 
   for (size_t col = 0; col < state_dim; col++) {
     nRows = col + 1;
@@ -76,6 +75,8 @@ void ContinuousTimeRiccatiEquations::convert2Vector(const matrix_t& Sm, const ve
 
   /* add s as last element*/
   allSs.template tail<1>() << s;
+
+  return allSs;
 }
 
 /******************************************************************************************************/
@@ -89,8 +90,6 @@ void ContinuousTimeRiccatiEquations::convert2Matrix(const vector_t& allSs, matri
   const auto state_dim = riccati_matrix_dim(allSs.size());
   assert(state_dim > 0);
 
-  // ensure proper size in case of Eigen::Dynamic size.
-  Sv.resize(state_dim);
   Sm.resize(state_dim, state_dim);
 
   for (int col = 0; col < state_dim; col++) {
@@ -168,9 +167,7 @@ vector_t ContinuousTimeRiccatiEquations::computeJumpMap(scalar_t z, const vector
   scalar_t sPreEvent = continuousTimeRiccatiData_.s_ + jumpModelData.cost_;
   sPreEvent += Hv.dot(Sv_plus_Sm_Hv);
 
-  vector_t allSsPreEvent;
-  convert2Vector(SmPreEvent, SvPreEvent, sPreEvent, allSsPreEvent);
-  return allSsPreEvent;
+  return convert2Vector(SmPreEvent, SvPreEvent, sPreEvent);
 }
 
 /******************************************************************************************************/
@@ -194,9 +191,7 @@ vector_t ContinuousTimeRiccatiEquations::computeFlowMap(scalar_t z, const vector
                       continuousTimeRiccatiData_.ds_);
   }
 
-  vector_t derivatives;
-  convert2Vector(continuousTimeRiccatiData_.dSm_, continuousTimeRiccatiData_.dSv_, continuousTimeRiccatiData_.ds_, derivatives);
-  return derivatives;
+  return convert2Vector(continuousTimeRiccatiData_.dSm_, continuousTimeRiccatiData_.dSv_, continuousTimeRiccatiData_.ds_);
 }
 
 /******************************************************************************************************/

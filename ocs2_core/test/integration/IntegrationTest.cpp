@@ -153,7 +153,7 @@ TEST(IntegrationTest, model_data_test) {
   integrator.integrate_adaptive(*sys, observer, x0, 0.0, 10.0);
 
   Eigen::Vector2d dynamics;
-  sys->systemFunction()(x0, dynamics, timeTrajectory.front());
+  sys->computeFlowMap(timeTrajectory.front(), x0, dynamics);
   EXPECT_TRUE(modelDataTrajectory.front().dynamics_.isApprox(dynamics, 1e-3));
 
   EXPECT_EQ(modelDataTrajectory.size(), stateTrajectory.size())

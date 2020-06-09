@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h>
+#include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_switched_model_interface/logic/Gait.h>
 #include <ocs2_switched_model_interface/logic/GaitSchedule.h>
 #include <ocs2_switched_model_ros_interfaces/RosMsgConversions.h>
@@ -22,9 +24,13 @@ template <class ContainerAllocator>
 void createScheduledGaitMsg(const switched_model::Gait& gait, scalar_t startTime,
                             switched_model_msgs::scheduled_gait_<ContainerAllocator>& scheduledGaitMsg);
 
-void createTrajectoryRequestMsg(std::string command,
-                                const ocs2::SystemObservation<switched_model::STATE_DIM, switched_model::INPUT_DIM>& observation,
-                                const scalar_t offsetTime, switched_model_msgs::trajectory_request::Request& requestMsg);
+template <size_t STATE_DIM, size_t INPUT_DIM>
+void createTrajectoryRequestMsg(std::string command, const ocs2::SystemObservation<STATE_DIM, INPUT_DIM>& observation,
+                                const scalar_t offsetTime, switched_model_msgs::trajectory_request::Request& requestMsg) {
+  ocs2::ros_msg_conversions::createObservationMsg(observation, requestMsg.observation);
+  requestMsg.trajectoryCommand = std::move(command);
+  requestMsg.offsetTime = offsetTime;
+};
 
 void createTrajectoryResponseMsg(const ocs2::CostDesiredTrajectories& costTrajectories,
                                  const switched_model::GaitSchedule::GaitSequence& gaitSequence, std::vector<scalar_t> startTimes,
@@ -41,12 +47,16 @@ template <class ContainerAllocator>
 void readScheduledGaitMsg(const switched_model_msgs::scheduled_gait_<ContainerAllocator>& scheduledGaitMsg, scalar_t& startTime,
                           switched_model::Gait& gait);
 
+template <size_t STATE_DIM, size_t INPUT_DIM>
 void readTrajectoryRequestMsg(const switched_model_msgs::trajectory_request::Request& requestMsg, std::string& command,
-                              ocs2::SystemObservation<switched_model::STATE_DIM, switched_model::INPUT_DIM>& observation,
-                              scalar_t& offsetTime);
+                              ocs2::SystemObservation<STATE_DIM, INPUT_DIM>& observation, scalar_t& offsetTime) {
+  ocs2::ros_msg_conversions::readObservationMsg(requestMsg.observation, observation);
+  offsetTime = requestMsg.offsetTime;
+  command = requestMsg.trajectoryCommand;
+};
 
 void readTrajectoryResponseMsg(const switched_model_msgs::trajectory_request::Response& responseMsg,
-                               CostDesiredTrajectories& costTrajectories, switched_model::GaitSchedule::GaitSequence& gaitSequence,
+                               ocs2::CostDesiredTrajectories& costTrajectories, switched_model::GaitSchedule::GaitSequence& gaitSequence,
                                std::vector<scalar_t> startTimes);
 
 }  // namespace ros_msg_conversions

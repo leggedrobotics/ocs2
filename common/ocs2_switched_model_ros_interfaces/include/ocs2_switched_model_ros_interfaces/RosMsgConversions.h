@@ -22,15 +22,13 @@ template <class ContainerAllocator>
 void createScheduledGaitMsg(const switched_model::Gait& gait, scalar_t startTime,
                             switched_model_msgs::scheduled_gait_<ContainerAllocator>& scheduledGaitMsg);
 
-template <class ContainerAllocator>
-void createTrajectoryRequestMsg(const ocs2::SystemObservation<switched_model::STATE_DIM, switched_model::INPUT_DIM>& observation,
-                                const scalar_t offsetTime,
-                                switched_model_srvs::trajectory_request::Request<ContainerAllocator>& requestMsg);
+void createTrajectoryRequestMsg(std::string command,
+                                const ocs2::SystemObservation<switched_model::STATE_DIM, switched_model::INPUT_DIM>& observation,
+                                const scalar_t offsetTime, switched_model_msgs::trajectory_request::Request& requestMsg);
 
-template <class ContainerAllocator>
-void createTrajectoryResponseMsg(const switched_model::GaitSchedule::GaitSequence& gaitSequence,
-                                 const ocs2::CostDesiredTrajectories& costTrajectories, std::vector<scalar_t> startTimes,
-                                 switched_model_srvs::trajectory_request::Response<ContainerAllocator>& responseMsg);
+void createTrajectoryResponseMsg(const ocs2::CostDesiredTrajectories& costTrajectories,
+                                 const switched_model::GaitSchedule::GaitSequence& gaitSequence, std::vector<scalar_t> startTimes,
+                                 switched_model_msgs::trajectory_request::Response& responseMsg);
 
 template <class ContainerAllocator>
 void readGaitMsg(const switched_model_msgs::gait_<ContainerAllocator>& gaitMsg, switched_model::Gait& gait);
@@ -43,13 +41,11 @@ template <class ContainerAllocator>
 void readScheduledGaitMsg(const switched_model_msgs::scheduled_gait_<ContainerAllocator>& scheduledGaitMsg, scalar_t& startTime,
                           switched_model::Gait& gait);
 
-template <class ContainerAllocator>
-void readTrajectoryRequestMsg(const switched_model_srvs::trajectory_request::Request<ContainerAllocator>& requestMsg,
+void readTrajectoryRequestMsg(const switched_model_msgs::trajectory_request::Request& requestMsg, std::string& command,
                               ocs2::SystemObservation<switched_model::STATE_DIM, switched_model::INPUT_DIM>& observation,
                               scalar_t& offsetTime);
 
-template <class ContainerAllocator>
-void readTrajectoryResponseMsg(const switched_model_srvs::trajectory_request::Response<ContainerAllocator>& responseMsg,
+void readTrajectoryResponseMsg(const switched_model_msgs::trajectory_request::Response& responseMsg,
                                CostDesiredTrajectories& costTrajectories, switched_model::GaitSchedule::GaitSequence& gaitSequence,
                                std::vector<scalar_t> startTimes);
 

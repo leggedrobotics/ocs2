@@ -222,8 +222,6 @@ class RelaxedBarrierCost : public CostFunctionBase {
 
   size_t stateDim_;
   size_t inputDim_;
-  size_t intermediateCostDim_;
-  size_t terminalCostDim_;
 
   // Intermediate cost
   bool intermediateCostValuesComputed_;

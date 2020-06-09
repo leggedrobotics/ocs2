@@ -29,9 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <memory>
-
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 
 #include "ocs2_comm_interfaces/SystemObservation.h"
@@ -40,18 +38,9 @@ namespace ocs2 {
 
 /**
  * This class contains the policy requirements and desired set-point.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 struct CommandData {
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using dim_t = Dimensions<STATE_DIM, INPUT_DIM>;
-  using scalar_t = typename dim_t::scalar_t;
-
-  SystemObservation<STATE_DIM, INPUT_DIM> mpcInitObservation_;
+  SystemObservation mpcInitObservation_;
   CostDesiredTrajectories mpcCostDesiredTrajectories_;
 };
 

@@ -39,99 +39,39 @@ namespace ocs2 {
 
 /**
  * This class is an interface class for forward rollout of the system dynamics.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class OperatingTrajectoriesRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
+class OperatingTrajectoriesRollout : public RolloutBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = RolloutBase<STATE_DIM, INPUT_DIM>;
-
-  using typename BASE::controller_t;
-  using typename BASE::input_vector_array_t;
-  using typename BASE::input_vector_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::scalar_t;
-  using typename BASE::size_array_t;
-  using typename BASE::state_vector_array_t;
-  using typename BASE::state_vector_t;
-  using typename BASE::time_interval_array_t;
-
-  using operating_trajectories_t = SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM>;
+  using RolloutBase::time_interval_array_t;
 
   /**
    * Constructor.
    *
+   * @param [in] stateDim: State vector dimension
+   * @param [in] inputDim: Input vector dimension
    * @param [in] operatingTrajectories: The operating trajectories used for initialization.
    * @param [in] rolloutSettings: The rollout settings.
    */
-  explicit OperatingTrajectoriesRollout(const operating_trajectories_t& operatingTrajectories,
+  explicit OperatingTrajectoriesRollout(size_t stateDim, size_t inputDim, const SystemOperatingTrajectoriesBase& operatingTrajectories,
                                         const Rollout_Settings& rolloutSettings = Rollout_Settings())
-      : BASE(rolloutSettings), operatingTrajectoriesPtr_(operatingTrajectories.clone()) {}
+      : RolloutBase(stateDim, inputDim, rolloutSettings), operatingTrajectoriesPtr_(operatingTrajectories.clone()) {}
 
   /**
    * Default destructor.
    */
   ~OperatingTrajectoriesRollout() override = default;
 
-  OperatingTrajectoriesRollout<STATE_DIM, INPUT_DIM>* clone() const override {
-    return new OperatingTrajectoriesRollout<STATE_DIM, INPUT_DIM>(*operatingTrajectoriesPtr_, this->settings());
+  OperatingTrajectoriesRollout* clone() const override {
+    return new OperatingTrajectoriesRollout(stateDim_, inputDim_, *operatingTrajectoriesPtr_, this->settings());
   }
 
  protected:
-  state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
-                         scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, state_vector_array_t& stateTrajectory,
-                         input_vector_array_t& inputTrajectory, ModelDataBase::array_t* modelDataTrajectoryPtr) override {
-    const int numSubsystems = timeIntervalArray.size();
-    const int numEvents = numSubsystems - 1;
-
-    // clearing the output trajectories
-    timeTrajectory.clear();
-    timeTrajectory.reserve(2 * numSubsystems);
-    stateTrajectory.clear();
-    stateTrajectory.reserve(2 * numSubsystems);
-    inputTrajectory.clear();
-    inputTrajectory.reserve(2 * numSubsystems);
-    postEventIndicesStock.clear();
-    postEventIndicesStock.reserve(numEvents);
-
-    state_vector_t beginState = initState;
-    scalar_t beginTime, endTime;
-    for (int i = 0; i < numSubsystems; i++) {
-      // get operating trajectories
-      operatingTrajectoriesPtr_->getSystemOperatingTrajectories(beginState, timeIntervalArray[i].first, timeIntervalArray[i].second,
-                                                                timeTrajectory, stateTrajectory, inputTrajectory, true);
-
-      if (i < numEvents) {
-        postEventIndicesStock.push_back(stateTrajectory.size());
-        beginState = stateTrajectory.back();
-      }
-
-    }  // end of i loop
-
-    // filling the model data
-    if (modelDataTrajectoryPtr) {
-      modelDataTrajectoryPtr->clear();
-      modelDataTrajectoryPtr->reserve(timeTrajectory.size());
-      for (int i = 0; i < timeTrajectory.size(); i++) {
-        ModelDataBase modelDataTemp;
-        modelDataTemp.time_ = timeTrajectory[i];
-        modelDataTemp.stateDim_ = STATE_DIM;
-        modelDataTemp.inputDim_ = INPUT_DIM;
-        modelDataTemp.dynamics_.setZero(STATE_DIM);
-        modelDataTemp.dynamicsBias_.setZero(STATE_DIM);
-        modelDataTrajectoryPtr->emplace_back(modelDataTemp);
-      }  // end of i loop
-    }
-
-    return stateTrajectory.back();
-  }
+  vector_t runImpl(time_interval_array_t timeIntervalArray, const vector_t& initState, ControllerBase* controller,
+                   scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
+                   vector_array_t& inputTrajectory, std::vector<ModelDataBase>* modelDataTrajectoryPtr) override;
 
  private:
-  std::unique_ptr<operating_trajectories_t> operatingTrajectoriesPtr_;
+  std::unique_ptr<SystemOperatingTrajectoriesBase> operatingTrajectoriesPtr_;
 };
 
 }  // namespace ocs2

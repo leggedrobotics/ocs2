@@ -17,16 +17,12 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 ## catkin specific configuration ##
 ###################################
 
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIRS}
-)
-
 catkin_package(
   INCLUDE_DIRS
     include
     ${EIGEN3_INCLUDE_DIRS}
+  LIBRARIES
+    ${PROJECT_NAME}
   CATKIN_DEPENDS
     ocs2_ddp
     ocs2_core
@@ -34,6 +30,27 @@ catkin_package(
     ocs2_comm_interfaces
   DEPENDS
 )
+
+
+###########
+## Build ##
+###########
+
+include_directories(
+  include
+  ${EIGEN3_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS}
+)
+
+add_library(${PROJECT_NAME}
+  src/command/TargetTrajectories_Joystick_Interface.cpp
+  src/command/TargetTrajectories_Keyboard_Interface.cpp
+)
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
+
 
 add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp
@@ -56,6 +73,13 @@ endif(cmake_clang_tools_FOUND)
 #############
 ## Install ##
 #############
+
+install(
+  TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 install(DIRECTORY
             include/${PROJECT_NAME}/

@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -33,21 +33,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sstream>
 #include <vector>
 
-#include "ocs2_core/OCS2NumericTraits.h"
-#include "ocs2_core/misc/Numerics.h"
+#include <ocs2_core/OCS2NumericTraits.h>
+#include <ocs2_core/misc/Numerics.h>
 
 namespace ocs2 {
 namespace lookup {
 
 /**
  * finds the index of an element in a sorted dataArray which is equal to value (epsilon distance)
+ *
+ * @tparam SCALAR : scalar type
  * @param [in] dataArray: data array
  * @param [in] value: enquiry value
  * @return: index
  */
-template <typename scalar_t = double>
-size_t findFirstIndexWithinTol(const std::vector<scalar_t>& dataArray, scalar_t value,
-                               scalar_t eps = OCS2NumericTraits<scalar_t>::weakEpsilon()) {
+template <typename SCALAR = double>
+size_t findFirstIndexWithinTol(const std::vector<SCALAR>& dataArray, SCALAR value, SCALAR eps = OCS2NumericTraits<SCALAR>::weakEpsilon()) {
   // Search for a match by linearly traversing the data, returning first match
   for (size_t i = 0; i < dataArray.size(); i++) {
     if (std::abs(dataArray[i] - value) < eps) {
@@ -79,14 +80,14 @@ size_t findFirstIndexWithinTol(const std::vector<scalar_t>& dataArray, scalar_t 
  *       for example: if t1 = t2 = t3  and the requested time t <= t3 -> index = 1
  *
  *
- * @tparam scalar_t : numerical type of time
+ * @tparam SCALAR : numerical type of time
  * @param timeArray : sorted time array to perform the lookup in
  * @param time : enquiry time
  * @return index between [0, size(timeArray)]
  */
-template <typename scalar_t = double>
-int findIndexInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) {
-  auto lessOperator = [](scalar_t element, scalar_t value) { return !numerics::almost_ge(element, value); };
+template <typename SCALAR = double>
+int findIndexInTimeArray(const std::vector<SCALAR>& timeArray, SCALAR time) {
+  auto lessOperator = [](SCALAR element, SCALAR value) { return !numerics::almost_ge(element, value); };
   auto firstLargerValueIterator = std::lower_bound(timeArray.begin(), timeArray.end(), time, lessOperator);
   return static_cast<int>(firstLargerValueIterator - timeArray.begin());
 }
@@ -101,13 +102,13 @@ int findIndexInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) 
  *
  *  Corner cases are handled as in findIndexInTimeArray
  *
- * @tparam scalar_t : numerical type of time
+ * @tparam SCALAR : numerical type of time
  * @param timeArray : sorted time array to perform the lookup in
  * @param time : enquiry time
  * @return interval between [-1, size(timeArray)-1]
  */
-template <typename scalar_t = double>
-int findIntervalInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) {
+template <typename SCALAR = double>
+int findIntervalInTimeArray(const std::vector<SCALAR>& timeArray, SCALAR time) {
   if (!timeArray.empty()) {
     return findIndexInTimeArray(timeArray, time) - 1;
   } else {
@@ -116,14 +117,17 @@ int findIntervalInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t tim
 }
 
 /**
- *  Same as findIntervalInTimeArray except for 1 rule:
- *  if t = t0, a 0 is returned instead of -1
- *  This means that any query t_front <= t <= t_back gets assigned to a partition [0, size -2]
+ * Same as findIntervalInTimeArray except for 1 rule:
+ * if t = t0, a 0 is returned instead of -1
+ * This means that any query t_front <= t <= t_back gets assigned to a partition [0, size -2]
  *
- *  @return partition between [-1, size(timeArray)-1]
+ * @tparam SCALAR : scalar type
+ * @param timeArray : sorted time array to perform the lookup in
+ * @param time : enquiry time
+ * @return partition between [-1, size(timeArray)-1]
  */
-template <typename scalar_t = double>
-int findActiveIntervalInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) {
+template <typename SCALAR = double>
+int findActiveIntervalInTimeArray(const std::vector<SCALAR>& timeArray, SCALAR time) {
   if (!timeArray.empty() && !numerics::almost_eq(time, timeArray.front())) {
     return findIntervalInTimeArray(timeArray, time);
   } else {  // t = t0
@@ -136,10 +140,13 @@ int findActiveIntervalInTimeArray(const std::vector<scalar_t>& timeArray, scalar
  * throws an error if time before of after the end is selected.
  * Also throws on timeArrays that are empty or with 1 element only.
  *
+ * @tparam SCALAR : scalar type
+ * @param timeArray : sorted time array to perform the lookup in
+ * @param time : enquiry time
  * @return partition between [0, size(timeArray)-2]
  */
-template <typename scalar_t = double>
-int findBoundedActiveIntervalInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) {
+template <typename SCALAR = double>
+int findBoundedActiveIntervalInTimeArray(const std::vector<SCALAR>& timeArray, SCALAR time) {
   auto partition = findActiveIntervalInTimeArray(timeArray, time);
 
   if (timeArray.empty()) {

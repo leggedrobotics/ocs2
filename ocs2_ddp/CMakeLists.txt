@@ -6,7 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   ocs2_core
   ocs2_oc
-  ocs2_qp_solver
+  # ocs2_qp_solver
 )
 find_package(Boost REQUIRED COMPONENTS
   system
@@ -31,7 +31,7 @@ catkin_package(
   CATKIN_DEPENDS
     ocs2_core
     ocs2_oc
-    ocs2_qp_solver
+    # ocs2_qp_solver
   DEPENDS
     Boost
 )
@@ -49,10 +49,15 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
-  src/StrategySettings.cpp
-  src/HessianCorrection.cpp
   src/ContinuousTimeRiccatiEquations.cpp
   src/DiscreteTimeRiccatiEquations.cpp
+  src/DDP_DataCollector.cpp
+  src/GaussNewtonDDP.cpp
+  src/HessianCorrection.cpp
+  src/ILQR.cpp
+  src/RiccatiModification.cpp
+  src/SLQ.cpp
+  src/StrategySettings.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
@@ -107,6 +112,7 @@ target_link_libraries(exp0_slq_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  gtest_main
 )
 
 catkin_add_gtest(exp1_slq_test
@@ -116,6 +122,7 @@ target_link_libraries(exp1_slq_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  gtest_main
 )
 
 catkin_add_gtest(riccati_ode_test
@@ -124,6 +131,7 @@ catkin_add_gtest(riccati_ode_test
 target_link_libraries(riccati_ode_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  gtest_main
 )
 
 catkin_add_gtest(hybrid_slq_test
@@ -133,6 +141,7 @@ target_link_libraries(hybrid_slq_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  gtest_main
 )
 
 catkin_add_gtest(exp0_ilqr_test
@@ -142,6 +151,7 @@ target_link_libraries(exp0_ilqr_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  gtest_main
 )
 
 catkin_add_gtest(exp1_ilqr_test
@@ -151,6 +161,7 @@ target_link_libraries(exp1_ilqr_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  gtest_main
 )
 
 catkin_add_gtest(bouncing_mass_test
@@ -162,6 +173,7 @@ target_link_libraries(bouncing_mass_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  gtest_main
 )
 
 catkin_add_gtest(circular_kinematics_ilqr_test
@@ -171,6 +183,7 @@ target_link_libraries(circular_kinematics_ilqr_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  gtest_main
 )
 
 catkin_add_gtest(circular_kinematics_slq_test
@@ -180,13 +193,14 @@ target_link_libraries(circular_kinematics_slq_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  gtest_main
 )
 
-catkin_add_gtest(ddp_correctness_test
-  test/ddpCorrectnessTest.cpp
-)
-target_link_libraries(ddp_correctness_test
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
+# catkin_add_gtest(ddp_correctness_test
+#   test/ddpCorrectnessTest.cpp
+# )
+# target_link_libraries(ddp_correctness_test
+#   ${PROJECT_NAME}
+#   ${catkin_LIBRARIES}
+#   ${Boost_LIBRARIES}
+# )

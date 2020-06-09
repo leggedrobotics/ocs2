@@ -1,17 +1,16 @@
 #include <algorithm>
+#include <cmath>
+#include <iostream>
+#include <vector>
+
+#include <boost/numeric/odeint.hpp>
+
+#include <ocs2_core/Types.h>
+#include <ocs2_core/integration/eigenIntegration.h>
 
 #include "ocs2_ddp/test/bouncingmass/Reference.h"
 
-using DIMENSIONS = ocs2::Dimensions<3, 1>;
-using scalar_t = typename DIMENSIONS::scalar_t;
-using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-using state_vector_t = typename DIMENSIONS::state_vector_t;
-using input_vector_t = typename DIMENSIONS::input_vector_t;
-using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-using state_matrix_t = typename DIMENSIONS::state_matrix_t;
-using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
-
-Reference::Reference(scalar_t t0, scalar_t t1, state_vector_t p0, state_vector_t p1) {
+Reference::Reference(scalar_t t0, scalar_t t1, const vector_t& p0, const vector_t& p1) {
   Create5thOrdPol(t0, t1, p0, p1);
   polV_ = polyder(polX_);
   polU_ = polyder(polV_);
@@ -20,25 +19,22 @@ Reference::Reference(scalar_t t0, scalar_t t1, state_vector_t p0, state_vector_t
   t1_ = t1;
 }
 
-void Reference::getInput(scalar_t time, input_vector_t& input) {
-  input[0] = 0;
+void Reference::getInput(scalar_t time, vector_t& input) {
+  input.setZero(1);
   for (int i = 0; i < polU_.size(); i++) {
     input[0] += polU_[i] * std::pow(time, i);
   }
 }
 
-input_vector_t Reference::getInput(scalar_t time) {
-  input_vector_t input;
+vector_t Reference::getInput(scalar_t time) {
+  vector_t input;
   getInput(time, input);
   return input;
 }
 
-void Reference::getState(scalar_t time, state_vector_t& x) {
+void Reference::getState(scalar_t time, vector_t& x) {
   if (time <= t1_ && time >= t0_) {
-    x[0] = 0;
-    x[1] = 0;
-    x[2] = 0;
-
+    x.setZero(3);
     for (int i = 0; i < polU_.size(); i++) {
       x[0] += polX_[i] * std::pow(time, i);
       x[1] += polV_[i] * std::pow(time, i);
@@ -50,14 +46,12 @@ void Reference::getState(scalar_t time, state_vector_t& x) {
 
 void Reference::extendref(scalar_t delta, Reference* refPre, Reference* refPost) {
   delta_ = delta;
-  boost::numeric::odeint::runge_kutta_dopri5<Eigen::Vector3d, scalar_t, Eigen::Vector3d, scalar_t,
-                                             boost::numeric::odeint::vector_space_algebra>
-      stepper;
+  boost::numeric::odeint::runge_kutta_dopri5<vector_t, scalar_t, vector_t, scalar_t, boost::numeric::odeint::vector_space_algebra> stepper;
   // Lambda for general system dynamics, assuming that the reference input is available
-  auto model = [](const state_vector_t& x, state_vector_t& dxdt, const double t, input_vector_t uref) {
-    state_matrix_t A;
+  auto model = [](const vector_t& x, vector_t& dxdt, const double t, vector_t uref) {
+    matrix_t A(3, 3);
     A << 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
-    state_input_matrix_t B;
+    matrix_t B(3, 1);
     B << 0.0, 1.0, 0.0;
 
     dxdt = A * x + B * uref;
@@ -65,19 +59,19 @@ void Reference::extendref(scalar_t delta, Reference* refPre, Reference* refPost)
   // pre-part of extension
   if (refPre != nullptr) {
     // Construct Lambda to represent System Dynamics with correct reference input
-    auto preModel = [&refPre, &model](const state_vector_t& x, state_vector_t& dxdt, const double t) {
-      input_vector_t uref = refPre->getInput(t);
+    auto preModel = [&refPre, &model](const vector_t& x, vector_t& dxdt, const double t) {
+      vector_t uref = refPre->getInput(t);
       model(x, dxdt, t, uref);
     };
     // Construct lambda to act as observer, which will store the time and state trajectories
     scalar_array_t* timeStorePtr = &tPre_;
-    state_vector_array_t* stateStorePtr = &xPre_;
-    auto preObserver = [&timeStorePtr, &stateStorePtr](state_vector_t& x, scalar_t& t) {
+    vector_array_t* stateStorePtr = &xPre_;
+    auto preObserver = [&timeStorePtr, &stateStorePtr](vector_t& x, scalar_t& t) {
       timeStorePtr->push_back(t);
       stateStorePtr->push_back(x);
     };
 
-    state_vector_t x0;
+    vector_t x0;
     getState(t0_, x0);
     scalar_t t0 = t0_;
     scalar_t t1 = t0 - delta;
@@ -91,19 +85,19 @@ void Reference::extendref(scalar_t delta, Reference* refPre, Reference* refPost)
   // post-part of extension
   if (refPost != nullptr) {
     // Construct Lambda to represent System Dynamics with correct reference input
-    auto postModel = [&refPost, &model](const state_vector_t& x, state_vector_t& dxdt, const double t) {
-      input_vector_t uref = refPost->getInput(t);
+    auto postModel = [&refPost, &model](const vector_t& x, vector_t& dxdt, const double t) {
+      vector_t uref = refPost->getInput(t);
       model(x, dxdt, t, uref);
     };
     // Construct lambda to act as observer, which will store the time and state trajectories
     scalar_array_t* timeStorePtr = &tPost_;
-    state_vector_array_t* stateStorePtr = &xPost_;
-    auto postObserver = [&timeStorePtr, &stateStorePtr](state_vector_t& x, scalar_t& t) {
+    vector_array_t* stateStorePtr = &xPost_;
+    auto postObserver = [&timeStorePtr, &stateStorePtr](vector_t& x, scalar_t& t) {
       timeStorePtr->push_back(t);
       stateStorePtr->push_back(x);
     };
 
-    state_vector_t x0;
+    vector_t x0;
     getState(t1_, x0);
     scalar_t t0 = t1_;
     scalar_t t1 = t0 + delta;
@@ -112,7 +106,7 @@ void Reference::extendref(scalar_t delta, Reference* refPre, Reference* refPost)
   }
 }
 
-void Reference::Create5thOrdPol(scalar_t t0, scalar_t t1, state_vector_t p0, state_vector_t p1) {
+void Reference::Create5thOrdPol(scalar_t t0, scalar_t t1, const vector_t& p0, const vector_t& p1) {
   Eigen::Matrix<scalar_t, 6, 6> A;
   Eigen::Matrix<scalar_t, 6, 6> Ainv;
 
@@ -128,9 +122,9 @@ void Reference::Create5thOrdPol(scalar_t t0, scalar_t t1, state_vector_t p0, sta
   polX_ = Ainv * x;
 }
 
-void Reference::interpolate_ext(scalar_t time, state_vector_t& x) {
+void Reference::interpolate_ext(scalar_t time, vector_t& x) {
   scalar_array_t* tVec;
-  state_vector_array_t* xVec;
+  vector_array_t* xVec;
   if (time < t0_) {
     tVec = &tPre_;
     xVec = &xPre_;
@@ -167,7 +161,7 @@ void Reference::display() {
   scalar_t dt = 0.01;
   for (int i = 0; i < (t1_ - t0_) / dt; i++) {
     scalar_t t = t0_ + dt * i;
-    state_vector_t x;
+    vector_t x;
     getState(t, x);
 
     std::cerr << t << ";" << x[0] << ";" << x[1] << std::endl;

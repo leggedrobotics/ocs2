@@ -50,22 +50,25 @@ using scalar_array2_t = std::vector<scalar_array_t>;
 using scalar_array3_t = std::vector<scalar_array2_t>;
 
 /** Dynamic-size vector type. */
-using dynamic_vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
+using vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
 /** Dynamic vector's trajectory type. */
-using dynamic_vector_array_t = std::vector<dynamic_vector_t, Eigen::aligned_allocator<dynamic_vector_t>>;
+using vector_array_t = std::vector<vector_t, Eigen::aligned_allocator<vector_t>>;
 /** Array of dynamic vector's trajectory type. */
-using dynamic_vector_array2_t = std::vector<dynamic_vector_array_t, Eigen::aligned_allocator<dynamic_vector_array_t>>;
+using vector_array2_t = std::vector<vector_array_t, Eigen::aligned_allocator<vector_array_t>>;
 /** Array of arrays of dynamic vector trajectory type. */
-using dynamic_vector_array3_t = std::vector<dynamic_vector_array2_t, Eigen::aligned_allocator<dynamic_vector_array2_t>>;
+using vector_array3_t = std::vector<vector_array2_t, Eigen::aligned_allocator<vector_array2_t>>;
+
+/** Dynamic-size row vector type. */
+using row_vector_t = Eigen::Matrix<scalar_t, 1, Eigen::Dynamic>;
 
 /** Dynamic-size matrix type. */
-using dynamic_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic>;
+using matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic>;
 /** Dynamic matrix's trajectory type. */
-using dynamic_matrix_array_t = std::vector<dynamic_matrix_t, Eigen::aligned_allocator<dynamic_matrix_t>>;
+using matrix_array_t = std::vector<matrix_t, Eigen::aligned_allocator<matrix_t>>;
 /** Array of dynamic matrix's trajectory type. */
-using dynamic_matrix_array2_t = std::vector<dynamic_matrix_array_t, Eigen::aligned_allocator<dynamic_matrix_array_t>>;
+using matrix_array2_t = std::vector<matrix_array_t, Eigen::aligned_allocator<matrix_array_t>>;
 /** Array of arrays of dynamic matrix trajectory type. */
-using dynamic_matrix_array3_t = std::vector<dynamic_matrix_array2_t, Eigen::aligned_allocator<dynamic_matrix_array2_t>>;
+using matrix_array3_t = std::vector<matrix_array2_t, Eigen::aligned_allocator<matrix_array2_t>>;
 
 /** Eigen scalar type. */
 using eigen_scalar_t = Eigen::Matrix<scalar_t, 1, 1>;

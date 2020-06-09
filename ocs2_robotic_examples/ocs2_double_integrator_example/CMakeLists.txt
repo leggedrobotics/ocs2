@@ -8,7 +8,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   roslib
   ocs2_core
   ocs2_ddp
-  ocs2_ocs2
+  # ocs2_ocs2
   ocs2_mpc
   ocs2_comm_interfaces
   ocs2_robotic_tools
@@ -184,7 +184,7 @@ install(TARGETS double_integrator_interface DoubleIntegratorPyBindings_Cpp
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
-install(TARGETS 
+install(TARGETS
   double_integrator_mpc
   double_integrator_dummy_test
   double_integrator_target
@@ -208,29 +208,30 @@ endif()
 
 catkin_add_gtest(ocs2_double_integrator_no_ros_integration_test
   test/DoubleIntegratorNoRosIntegrationTest.cpp
-  )
+)
 add_dependencies(ocs2_double_integrator_no_ros_integration_test
   ${catkin_EXPORTED_TARGETS}
-  )
+)
 target_link_libraries(ocs2_double_integrator_no_ros_integration_test
   double_integrator_interface
   ${catkin_LIBRARIES}
-  )
+  gtest_main
+)
 
-catkin_add_gtest(ocs2_double_integrator_pybinding_test
-  test/DoubleIntegratorPyBindingTest.cpp
-  )
-add_dependencies(ocs2_double_integrator_pybinding_test
-  DoubleIntegratorPyBindings_Cpp
-  ${catkin_EXPORTED_TARGETS}
-  )
-target_link_libraries(ocs2_double_integrator_pybinding_test
-  DoubleIntegratorPyBindings_Cpp
-  ${catkin_LIBRARIES}
-  )
+# catkin_add_gtest(ocs2_double_integrator_pybinding_test
+#   test/DoubleIntegratorPyBindingTest.cpp
+#   )
+# add_dependencies(ocs2_double_integrator_pybinding_test
+#   DoubleIntegratorPyBindings_Cpp
+#   ${catkin_EXPORTED_TARGETS}
+#   )
+# target_link_libraries(ocs2_double_integrator_pybinding_test
+#   DoubleIntegratorPyBindings_Cpp
+#   ${catkin_LIBRARIES}
+#   )
 
-if(${pybind11_FOUND})
-  if (CATKIN_ENABLE_TESTING)
-    catkin_add_nosetests(test/DoubleIntegratorPyBindingTest.py)
-  endif(CATKIN_ENABLE_TESTING)
-endif(${pybind11_FOUND})
+# if(${pybind11_FOUND})
+#   if (CATKIN_ENABLE_TESTING)
+#     catkin_add_nosetests(test/DoubleIntegratorPyBindingTest.py)
+#   endif(CATKIN_ENABLE_TESTING)
+# endif(${pybind11_FOUND})

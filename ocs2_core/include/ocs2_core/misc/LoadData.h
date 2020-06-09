@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef OCS2_LOADEIGENMATRIX_H_
-#define OCS2_LOADEIGENMATRIX_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <iostream>
@@ -115,7 +114,7 @@ inline void loadCppDataType(const std::string& filename, const std::string& data
  *
  * @param [in] filename: File name which contains the configuration data.
  * @param [in] matrixName: The key name assigned to the matrix in the config file.
- * @param [out] matrix: The loaded matrix.
+ * @param [out] matrix: The loaded matrix, must have desired size.
  */
 template <typename Derived>
 inline void loadEigenMatrix(const std::string& filename, const std::string& matrixName, Eigen::MatrixBase<Derived>& matrix) {
@@ -123,6 +122,11 @@ inline void loadEigenMatrix(const std::string& filename, const std::string& matr
 
   size_t rows = matrix.rows();
   size_t cols = matrix.cols();
+
+  // TODO(mspieler): reconsider error handling
+  if (rows == 0 || cols == 0) {
+    throw std::runtime_error("Loading empty matrix is not allowed");
+  }
 
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);
@@ -211,5 +215,3 @@ void loadPartitioningTimes(const std::string& taskFile, scalar_t& timeHorizon, s
 
 }  // namespace loadData
 }  // namespace ocs2
-
-#endif /* OCS2_LOADEIGENMATRIX_H_ */

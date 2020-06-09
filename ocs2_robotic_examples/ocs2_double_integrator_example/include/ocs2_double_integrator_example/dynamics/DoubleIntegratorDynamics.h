@@ -31,34 +31,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
 
-#include "ocs2_double_integrator_example/definitions.h"
+#include <ocs2_double_integrator_example/definitions.h>
 
 namespace ocs2 {
 namespace double_integrator {
 
-class DoubleIntegratorDynamics final : public ControlledSystemBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> {
+class DoubleIntegratorDynamics final : public ControlledSystemBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using Ptr = std::shared_ptr<DoubleIntegratorDynamics>;
-  using ConstPtr = std::shared_ptr<const DoubleIntegratorDynamics>;
-
-  using BASE = ControlledSystemBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
-  using scalar_t = typename BASE::scalar_t;
-  using state_vector_t = typename BASE::state_vector_t;
-  using input_vector_t = typename BASE::input_vector_t;
-
-  using DIMENSIONS = Dimensions<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
-  using state_matrix_t = typename DIMENSIONS::state_matrix_t;
-  using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
-
   /**
    * Constructor
    *
    * @param [in] A: \f$ A(t) \f$ matrix.
    * @param [in] B: \f$ B(t) \f$ matrix.
    */
-  DoubleIntegratorDynamics(const state_matrix_t& A, const state_input_matrix_t& B) : A_(std::move(A)), B_(std::move(B)) {}
+  DoubleIntegratorDynamics(const matrix_t& A, const matrix_t& B) : A_(std::move(A)), B_(std::move(B)) {}
 
   /**
    * Destructor
@@ -67,14 +53,13 @@ class DoubleIntegratorDynamics final : public ControlledSystemBase<double_integr
 
   DoubleIntegratorDynamics* clone() const override { return new DoubleIntegratorDynamics(*this); }
 
-  void computeFlowMap(const scalar_t& time, const state_vector_t& state, const input_vector_t& input,
-                      state_vector_t& stateDerivative) override {
+  void computeFlowMap(const scalar_t& time, const vector_t& state, const vector_t& input, vector_t& stateDerivative) override {
     stateDerivative = A_ * state + B_ * input;
   }
 
  private:
-  state_matrix_t A_;
-  state_input_matrix_t B_;
+  matrix_t A_;
+  matrix_t B_;
 };
 
 }  // namespace double_integrator

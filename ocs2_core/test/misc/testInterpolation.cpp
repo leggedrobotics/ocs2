@@ -1,9 +1,9 @@
-
-
 #include <gtest/gtest.h>
-#include <ocs2_core/misc/LinearInterpolation.h>
-#include <Eigen/Dense>
+
 #include <iostream>
+
+#include <Eigen/Dense>
+#include <ocs2_core/misc/LinearInterpolation.h>
 
 TEST(testLinearInterpolation, testInterpolation) {
   using Data_T = Eigen::Matrix<double, 2,1>;
@@ -98,10 +98,4 @@ TEST(testLinearInterpolation, testDifferentEigenSizes) {
   ocs2::LinearInterpolation::interpolate(1.1, result, &times, &data);
   test = result.isApprox(data[1]);
   ASSERT_TRUE(test);
-}
-
-int main(int argc, char** argv)
-{
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

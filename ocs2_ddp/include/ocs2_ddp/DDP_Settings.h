@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/misc/LoadData.h>
 
-#include "ocs2_ddp/StrategySettings.h"
+#include "StrategySettings.h"
 
 namespace ocs2 {
 

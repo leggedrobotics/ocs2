@@ -29,31 +29,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/cost/CostFunctionBase.h>
+#include <memory>
 #include <utility>
-#include "ocs2_core/Dimensions.h"
+
+#include <ocs2_core/Types.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
 
 namespace ocs2 {
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class CostFunctionLinearCombination : public ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM> {
+class CostFunctionLinearCombination : public CostFunctionBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = CostFunctionBase<STATE_DIM, INPUT_DIM>;
-  using typename BASE::scalar_t;
-  using WeightedCost = std::pair<scalar_t, std::shared_ptr<BASE>>;
-  using typename BASE::dynamic_vector_array_t;
-  using typename BASE::dynamic_vector_t;
-  using typename BASE::input_matrix_t;
-  using typename BASE::input_state_matrix_t;
-  using typename BASE::input_vector_array_t;
-  using typename BASE::input_vector_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::state_input_matrix_t;
-  using typename BASE::state_matrix_t;
-  using typename BASE::state_vector_array_t;
-  using typename BASE::state_vector_t;
+  using WeightedCost = std::pair<scalar_t, std::shared_ptr<CostFunctionBase>>;
 
   explicit CostFunctionLinearCombination(const std::vector<WeightedCost>& weightedCosts);
 
@@ -61,18 +47,18 @@ class CostFunctionLinearCombination : public ocs2::CostFunctionBase<STATE_DIM, I
 
   CostFunctionLinearCombination() = delete;
 
-  CostFunctionLinearCombination<STATE_DIM, INPUT_DIM>* clone() const override;
+  CostFunctionLinearCombination* clone() const override;
   void getIntermediateCost(scalar_t& L) override;
-  void getIntermediateCostDerivativeState(state_vector_t& dLdx) override;
-  void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) override;
-  void getIntermediateCostDerivativeInput(input_vector_t& dLdu) override;
-  void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) override;
-  void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) override;
+  void getIntermediateCostDerivativeState(vector_t& dLdx) override;
+  void getIntermediateCostSecondDerivativeState(matrix_t& dLdxx) override;
+  void getIntermediateCostDerivativeInput(vector_t& dLdu) override;
+  void getIntermediateCostSecondDerivativeInput(matrix_t& dLduu) override;
+  void getIntermediateCostDerivativeInputState(matrix_t& dLdux) override;
   void getTerminalCost(scalar_t& Phi) override;
-  void getTerminalCostDerivativeState(state_vector_t& dPhidx) override;
-  void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override;
+  void getTerminalCostDerivativeState(vector_t& dPhidx) override;
+  void getTerminalCostSecondDerivativeState(matrix_t& dPhidxx) override;
   void setCostDesiredTrajectoriesPtr(const CostDesiredTrajectories* costDesiredTrajectoriesPtr) override;
-  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
+  void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) override;
   void getIntermediateCostDerivativeTime(scalar_t& dLdt) override;
   void getTerminalCostDerivativeTime(scalar_t& dPhidt) override;
 
@@ -81,5 +67,3 @@ class CostFunctionLinearCombination : public ocs2::CostFunctionBase<STATE_DIM, I
 };
 
 }  // namespace ocs2
-
-#include "implementation/CostFunctionLinearCombination.h"

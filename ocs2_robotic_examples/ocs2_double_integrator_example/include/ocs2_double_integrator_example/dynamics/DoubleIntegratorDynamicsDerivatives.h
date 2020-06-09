@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,32 +31,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/dynamics/DerivativesBase.h>
 
-#include "ocs2_double_integrator_example/definitions.h"
+#include <ocs2_double_integrator_example/definitions.h>
 
 namespace ocs2 {
 namespace double_integrator {
 
-class DoubleIntegratorDynamicsDerivatives final : public DerivativesBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> {
+class DoubleIntegratorDynamicsDerivatives final : public DerivativesBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using Ptr = std::shared_ptr<DoubleIntegratorDynamicsDerivatives>;
-  using ConstPtr = std::shared_ptr<const DoubleIntegratorDynamicsDerivatives>;
-
-  using BASE = DerivativesBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
-  using scalar_t = typename BASE::scalar_t;
-  using state_vector_t = typename BASE::state_vector_t;
-  using state_matrix_t = typename BASE::state_matrix_t;
-  using input_vector_t = typename BASE::input_vector_t;
-  using state_input_matrix_t = typename BASE::state_input_matrix_t;
-
   /**
    * Constructor
    *
    * @param [in] A: \f$ A(t) \f$ matrix.
    * @param [in] B: \f$ B(t) \f$ matrix.
    */
-  DoubleIntegratorDynamicsDerivatives(state_matrix_t A, state_input_matrix_t B) : A_(std::move(A)), B_(std::move(B)) {}
+  DoubleIntegratorDynamicsDerivatives(matrix_t A, matrix_t B) : A_(std::move(A)), B_(std::move(B)) {}
 
   /**
    * Destructor
@@ -65,13 +53,13 @@ class DoubleIntegratorDynamicsDerivatives final : public DerivativesBase<double_
 
   DoubleIntegratorDynamicsDerivatives* clone() const override { return new DoubleIntegratorDynamicsDerivatives(*this); }
 
-  void getFlowMapDerivativeState(state_matrix_t& A) override { A = A_; }
+  void getFlowMapDerivativeState(matrix_t& A) override { A = A_; }
 
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B = B_; }
+  void getFlowMapDerivativeInput(matrix_t& B) override { B = B_; }
 
  private:
-  state_matrix_t A_;
-  state_input_matrix_t B_;
+  matrix_t A_;
+  matrix_t B_;
 };
 
 }  // namespace double_integrator

@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,44 +29,27 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Dense>
-#include <list>
+#include <functional>
 #include <memory>
 
-#include "ocs2_core/Dimensions.h"
-#include "ocs2_core/model_data/ModelDataBase.h"
+#include <ocs2_core/Types.h>
+#include <ocs2_core/model_data/ModelDataBase.h>
 
 namespace ocs2 {
 
 /**
  * The base class for autonomous system dynamics.
- *
- * @tparam STATE_DIM: Dimension of the state space.
  */
-template <int STATE_DIM>
 class OdeBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using DIMENSIONS = Dimensions<STATE_DIM, 0>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-  using system_func_t = std::function<void(const state_vector_t& x, state_vector_t& dxdt, scalar_t t)>;
-  using model_data_array_t = ModelDataBase::array_t;
+  using system_func_t = std::function<void(const vector_t& x, vector_t& dxdt, scalar_t t)>;
 
   static constexpr size_t DEFAULT_MODEL_DATA_CACHE_SIZE = 7;
 
   /**
    * Constructor.
    */
-  OdeBase() : numFunctionCalls_(0) {
-    modelDataArray_.reserve(DEFAULT_MODEL_DATA_CACHE_SIZE);
-    systemFunction_ = [this](const state_vector_t& x, state_vector_t& dxdt, scalar_t t) {
-      numFunctionCalls_++;
-      computeFlowMap(t, x, dxdt);
-    };
-  }
+  OdeBase();
 
   /**
    * Default destructor
@@ -81,48 +64,43 @@ class OdeBase {
   /**
    * Get a system function callback that calls computeFlowMap for integration.
    */
-  system_func_t systemFunction() { return systemFunction_; }
+  system_func_t systemFunction();
 
   /**
    * Gets the number of function calls.
    *
    * @return size_t: number of function calls
    */
-  int getNumFunctionCalls() const { return numFunctionCalls_; }
+  int getNumFunctionCalls() const;
 
   /**
    * Resets the number of function calls to zero.
    *
    */
-  void resetNumFunctionCalls() { numFunctionCalls_ = 0; }
+  void resetNumFunctionCalls();
 
   /**
    * Returns model data array begin() iterator
    * @return modelDataArray_.begin()
    */
-  model_data_array_t::iterator beginModelDataIterator() { return modelDataArray_.begin(); }
+  std::vector<ModelDataBase>::iterator beginModelDataIterator();
 
   /**
    * Returns model data array end() iterator
    * @return modelDataArray_.end()
    */
-  model_data_array_t::iterator endModelDataIterator() { return modelDataArray_.end(); }
+  std::vector<ModelDataBase>::iterator endModelDataIterator();
 
   /**
    * Append model data array.
    * @return reference to new element.
    */
-  ModelDataBase& modelDataEmplaceBack() {
-    modelDataArray_.emplace_back();
-    return modelDataArray_.back();
-  }
+  ModelDataBase& modelDataEmplaceBack();
 
   /**
    * Clear model data array.
    */
-  void clearModelDataArray() {
-    modelDataArray_.clear();  // keeps allocated storage
-  }
+  void clearModelDataArray();
 
   /**
    * Computes the autonomous system dynamics.
@@ -130,7 +108,7 @@ class OdeBase {
    * @param [in] x: Current state.
    * @param [out] dxdt: Current state time derivative
    */
-  virtual void computeFlowMap(const scalar_t& t, const state_vector_t& x, state_vector_t& dxdt) = 0;
+  virtual void computeFlowMap(const scalar_t& t, const vector_t& x, vector_t& dxdt) = 0;
 
   /**
    * State map at the transition time
@@ -139,7 +117,7 @@ class OdeBase {
    * @param [in] state: transition state
    * @param [out] mappedState: mapped state after transition
    */
-  virtual void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) { mappedState = state; }
+  virtual void computeJumpMap(const scalar_t& time, const vector_t& state, vector_t& mappedState);
 
   /**
    * Interface method to the guard surfaces.
@@ -148,14 +126,12 @@ class OdeBase {
    * @param [in] state: transition state
    * @param [out] guardSurfacesValue: An array of guard surfaces values
    */
-  virtual void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) {
-    guardSurfacesValue = -dynamic_vector_t::Ones(1);
-  }
+  virtual void computeGuardSurfaces(const scalar_t& time, const vector_t& state, vector_t& guardSurfacesValue);
 
  protected:
   int numFunctionCalls_;
   system_func_t systemFunction_;
-  model_data_array_t modelDataArray_;
+  std::vector<ModelDataBase> modelDataArray_;
 };
 
 }  // namespace ocs2

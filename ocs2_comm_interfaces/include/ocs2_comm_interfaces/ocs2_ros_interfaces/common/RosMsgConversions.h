@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/logic/ModeSchedule.h>
 
@@ -49,9 +49,8 @@ namespace ros_msg_conversions {
  * @param [in] observation: The observation structure.
  * @param [out] observationMsg: The observation message.
  */
-template <class ContainerAllocator, size_t STATE_DIM, size_t INPUT_DIM>
-void createObservationMsg(const SystemObservation<STATE_DIM, INPUT_DIM>& observation,
-                          ocs2_msgs::mpc_observation_<ContainerAllocator>& observationMsg);
+template <class ContainerAllocator>
+void createObservationMsg(const SystemObservation& observation, ocs2_msgs::mpc_observation_<ContainerAllocator>& observationMsg);
 
 /**
  * Reads the observation message.
@@ -59,9 +58,8 @@ void createObservationMsg(const SystemObservation<STATE_DIM, INPUT_DIM>& observa
  * @param [in] observationMsg: The observation message.
  * @param [out] observation: The observation structure.
  */
-template <class ContainerAllocator, size_t STATE_DIM, size_t INPUT_DIM>
-void readObservationMsg(const ocs2_msgs::mpc_observation_<ContainerAllocator>& observationMsg,
-                        SystemObservation<STATE_DIM, INPUT_DIM>& observation);
+template <class ContainerAllocator>
+void readObservationMsg(const ocs2_msgs::mpc_observation_<ContainerAllocator>& observationMsg, SystemObservation& observation);
 
 /**
  * Creates the mode sequence message.

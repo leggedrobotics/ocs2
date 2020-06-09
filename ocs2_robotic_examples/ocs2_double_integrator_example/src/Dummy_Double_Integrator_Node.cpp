@@ -38,8 +38,8 @@ int main(int argc, char** argv) {
   const std::string robotName = "double_integrator";
   using interface_t = ocs2::double_integrator::DoubleIntegratorInterface;
   using vis_t = ocs2::double_integrator::DoubleIntegratorDummyVisualization;
-  using mrt_t = ocs2::MRT_ROS_Interface<ocs2::double_integrator::STATE_DIM_, ocs2::double_integrator::INPUT_DIM_>;
-  using dummy_t = ocs2::MRT_ROS_Dummy_Loop<ocs2::double_integrator::STATE_DIM_, ocs2::double_integrator::INPUT_DIM_>;
+  using mrt_t = ocs2::MRT_ROS_Interface;
+  using dummy_t = ocs2::MRT_ROS_Dummy_Loop;
 
   // task file
   if (argc <= 1) {
@@ -68,8 +68,9 @@ int main(int argc, char** argv) {
   dummyDoubleIntegrator.subscribeObservers({doubleIntegratorDummyVisualization});
 
   // initial state
-  mrt_t::system_observation_t initObservation;
+  ocs2::SystemObservation initObservation;
   initObservation.state() = doubleIntegratorInterface.getInitialState();
+  initObservation.input() = ocs2::vector_t::Zero(ocs2::double_integrator::INPUT_DIM_);
 
   // initial command
   ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time()}, {initObservation.state()}, {initObservation.input()});

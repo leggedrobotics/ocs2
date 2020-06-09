@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,6 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <iostream>
+
+#include <ocs2_core/misc/LinearAlgebra.h>
 #include <ocs2_core/model_data/ModelDataBase.h>
 
 namespace ocs2 {
@@ -42,24 +45,7 @@ ModelDataBase* ModelDataBase::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void ModelDataBase::display() const {
-#include <sstream>
-  std::stringstream msg;
-  msg << '\n';
-  msg << "time: " << time_ << '\n';
-  msg << "Dynamics: " << dynamics_.transpose() << '\n';
-  msg << "dynamicsBias: " << dynamicsBias_.transpose() << '\n';
-  msg << "Dynamics State Derivative:\n" << dynamicsStateDerivative_ << '\n';
-  msg << "Dynamics Input Derivative:\n" << dynamicsInputDerivative_ << '\n';
-  msg << "Dynamics Covariance:\n" << dynamicsCovariance_ << '\n';
-
-  msg << "Cost: " << cost_ << '\n';
-  msg << "Cost State Derivative: " << costStateDerivative_.transpose() << '\n';
-  msg << "Cost Input Derivative: " << costInputDerivative_.transpose() << '\n';
-  msg << "Cost State Second Derivative:\n" << costStateSecondDerivative_ << '\n';
-  msg << "Cost Input Second Derivative:\n" << costInputSecondDerivative_ << '\n';
-  msg << "Cost Input State Derivative:\n" << costInputStateDerivative_ << '\n';
-  msg << '\n';
-  std::cerr << msg.str();
+  std::cerr << *this;
 }
 
 /******************************************************************************************************/
@@ -193,16 +179,16 @@ std::string ModelDataBase::checkConstraintProperties() const {
   std::stringstream errorDescription;
 
   if (numStateInputEqConstr_ > 0) {
-    if (!stateInputEqConstr_.head(numStateInputEqConstr_).allFinite()) {
+    if (!stateInputEqConstr_.allFinite()) {
       errorDescription << "Input-state constraint is not finite.\n";
     }
-    if (!stateInputEqConstrStateDerivative_.topRows(numStateInputEqConstr_).allFinite()) {
+    if (!stateInputEqConstrStateDerivative_.allFinite()) {
       errorDescription << "Input-state constraint derivative w.r.t. state is not finite.\n";
     }
-    if (!stateInputEqConstrInputDerivative_.topRows(numStateInputEqConstr_).allFinite()) {
+    if (!stateInputEqConstrInputDerivative_.allFinite()) {
       errorDescription << "Input-state constraint derivative w.r.t. input is not finite.\n";
     }
-    size_t DmRank = LinearAlgebra::rank(stateInputEqConstrInputDerivative_.topRows(numStateInputEqConstr_));
+    size_t DmRank = LinearAlgebra::rank(stateInputEqConstrInputDerivative_);
     if (DmRank != numStateInputEqConstr_) {
       errorDescription << "Input-state constraint derivative w.r.t. input is not full-row rank. It's rank is " + std::to_string(DmRank) +
                               " while the expected rank is " + std::to_string(numStateInputEqConstr_) + ".\n";
@@ -210,10 +196,10 @@ std::string ModelDataBase::checkConstraintProperties() const {
   }
 
   if (numStateEqConstr_ > 0) {
-    if (!stateEqConstr_.head(numStateEqConstr_).allFinite()) {
+    if (!stateEqConstr_.allFinite()) {
       errorDescription << "State-only constraint is not finite.\n";
     }
-    if (!stateEqConstrStateDerivative_.topRows(numStateEqConstr_).allFinite()) {
+    if (!stateEqConstrStateDerivative_.allFinite()) {
       errorDescription << "State-only constraint derivative w.r.t. state is not finite.\n";
     }
   }
@@ -240,6 +226,27 @@ std::string ModelDataBase::checkConstraintProperties() const {
   }
 
   return errorDescription.str();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::ostream& operator<<(std::ostream& out, const ModelDataBase& data) {
+  out << '\n';
+  out << "time: " << data.time_ << '\n';
+  out << "Dynamics: " << data.dynamics_.transpose() << '\n';
+  out << "dynamicsBias: " << data.dynamicsBias_.transpose() << '\n';
+  out << "Dynamics State Derivative:\n" << data.dynamicsStateDerivative_ << '\n';
+  out << "Dynamics Input Derivative:\n" << data.dynamicsInputDerivative_ << '\n';
+  out << "Dynamics Covariance:\n" << data.dynamicsCovariance_ << '\n';
+
+  out << "Cost: " << data.cost_ << '\n';
+  out << "Cost State Derivative: " << data.costStateDerivative_.transpose() << '\n';
+  out << "Cost Input Derivative: " << data.costInputDerivative_.transpose() << '\n';
+  out << "Cost State Second Derivative:\n" << data.costStateSecondDerivative_ << '\n';
+  out << "Cost Input Second Derivative:\n" << data.costInputSecondDerivative_ << '\n';
+  out << "Cost Input State Derivative:\n" << data.costInputStateDerivative_ << '\n';
+  out << '\n';
 }
 
 }  // namespace ocs2

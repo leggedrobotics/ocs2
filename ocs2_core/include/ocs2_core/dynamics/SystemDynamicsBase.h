@@ -27,12 +27,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SYSTEMDYNAMICSBASE_OCS2_H_
-#define SYSTEMDYNAMICSBASE_OCS2_H_
+#pragma once
 
-#include "ocs2_core/Dimensions.h"
-#include "ocs2_core/dynamics/ControlledSystemBase.h"
-#include "ocs2_core/dynamics/DerivativesBase.h"
+#include <ocs2_core/Types.h>
+#include <ocs2_core/dynamics/ControlledSystemBase.h>
+#include <ocs2_core/dynamics/DerivativesBase.h>
 
 namespace ocs2 {
 
@@ -42,39 +41,13 @@ namespace ocs2 {
  * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$ \n
  * The linearized system jump map is defined as: \n
  * \f$ x^+ = G \delta x + H \delta u \f$ \n
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES = 1>
-class SystemDynamicsBase : public DerivativesBase<STATE_DIM, INPUT_DIM>, public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
+class SystemDynamicsBase : public DerivativesBase, public ControlledSystemBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using Ptr = std::shared_ptr<SystemDynamicsBase<STATE_DIM, INPUT_DIM> >;
-  using ConstPtr = std::shared_ptr<const SystemDynamicsBase<STATE_DIM, INPUT_DIM> >;
-
-  using DEV_BASE = DerivativesBase<STATE_DIM, INPUT_DIM>;
-  using DYN_BASE = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
-
-  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using input_vector_t = typename DIMENSIONS::input_vector_t;
-  using state_matrix_t = typename DIMENSIONS::state_matrix_t;
-  using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-  using dynamic_state_matrix_t = typename DIMENSIONS::dynamic_state_matrix_t;
-  using dynamic_input_matrix_t = typename DIMENSIONS::dynamic_input_matrix_t;
-
   /**
    * Default constructor
    */
-  SystemDynamicsBase() {
-    if (NUM_MODES == 0) {
-      throw std::runtime_error("The system should have at least one mode.");
-    }
-  }
+  SystemDynamicsBase(size_t stateDim_, size_t inputDim_);
 
   /**
    * Copy constructor
@@ -91,17 +64,11 @@ class SystemDynamicsBase : public DerivativesBase<STATE_DIM, INPUT_DIM>, public 
    *
    * @return A raw pointer to the class.
    */
-  virtual SystemDynamicsBase<STATE_DIM, INPUT_DIM>* clone() const = 0;
+  virtual SystemDynamicsBase* clone() const = 0;
 
-  /**
-   * Gets the number of the modes in the hybrid system.
-   * The minimum is one.
-   *
-   * @return Number of the modes in the hybrid system.
-   */
-  size_t getNumModes() const { return NUM_MODES; }
+ protected:
+  size_t stateDim_;
+  size_t inputDim_;
 };
 
 }  // namespace ocs2
-
-#endif /* SYSTEMDYNAMICSBASE_OCS2_H_ */

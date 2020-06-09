@@ -29,14 +29,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Dense>
-#include <Eigen/StdVector>
-#include <exception>
+#include <atomic>
+#include <limits>
 #include <memory>
 #include <utility>
-#include <vector>
 
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_core/integration/OdeBase.h>
 
 namespace ocs2 {
@@ -51,23 +49,9 @@ enum sys_event_id {
 
 /**
  * Event handler class for ode solvers.
- *
- * @tparam STATE_DIM: Dimension of the state space.
  */
-template <int STATE_DIM>
 class SystemEventHandler {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using DIMENSIONS = Dimensions<STATE_DIM, 0>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-
-  using system_t = OdeBase<STATE_DIM>;
-
   /**
    * Default constructor
    */
@@ -87,7 +71,7 @@ class SystemEventHandler {
    * @param [in] state: The current state vector.
    * @return pair of event flag and eventID
    */
-  virtual std::pair<bool, size_t> checkEvent(system_t& system, scalar_t time, const state_vector_t& state) { return {false, 0}; }
+  virtual std::pair<bool, size_t> checkEvent(OdeBase& system, scalar_t time, const vector_t& state);
 
   /**
    * The operation should be performed if an event is activated.
@@ -96,42 +80,19 @@ class SystemEventHandler {
    * @param [in] time: The current time.
    * @param [in] state: The current state vector.
    */
-  void handleEvent(system_t& system, scalar_t time, const state_vector_t& state) {
-    if (killIntegration_) {
-      throw std::runtime_error("Integration terminated due to an external signal triggered by a program.");
-    }
-
-    // max number of function calls
-    if (system.getNumFunctionCalls() > maxNumSteps_) {
-      std::string msg = "Integration terminated since the maximum number of function calls is reached. ";
-      msg += "State at termination time " + std::to_string(time) + ":\n [";
-      for (size_t i = 0; i < state.size() - 1; i++) {
-        msg += std::to_string(state(i)) + ", ";
-      }
-      msg += std::to_string(state(state.size() - 1)) + "]\n";
-      throw std::runtime_error(msg);
-    }
-
-    // derived class events
-    size_t eventID;
-    bool event;
-    std::tie(event, eventID) = this->checkEvent(system, time, state);
-    if (event) {
-      throw eventID;
-    }
-  }
+  void handleEvent(OdeBase& system, scalar_t time, const vector_t& state);
 
   /**
    * Resets the class.
    */
-  virtual void reset() {}
+  virtual void reset();
 
   /**
    * Sets the maximum number of integration points per a second for ode solvers.
    *
    * @param [in] maxNumSteps: maximum number of integration points
    */
-  void setMaxNumSteps(int maxNumSteps) { maxNumSteps_ = maxNumSteps; }
+  void setMaxNumSteps(int maxNumSteps);
 
  public:
   std::atomic_bool killIntegration_ = {false};

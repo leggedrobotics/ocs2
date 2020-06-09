@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -40,14 +40,14 @@ TEST(testModelDataBase, testModelDataLinearInterpolation) {
   // create data
   const size_t N = 10;
   std::vector<double> timeArray(N);
-  ModelDataBase::array_t modelDataBaseArray(N);
+  std::vector<ModelDataBase> modelDataBaseArray(N);
 
   for (size_t i = 0; i < N; i++) {
-	double t = 2.0 * i;
-	timeArray[i] = t;
-	modelDataBaseArray[i].time_ = t;
-	modelDataBaseArray[i].dynamics_ = Eigen::Vector3d::Ones() * t;
-	modelDataBaseArray[i].dynamicsStateDerivative_ = Eigen::Matrix3d::Ones() * t;
+    double t = 2.0 * i;
+    timeArray[i] = t;
+    modelDataBaseArray[i].time_ = t;
+    modelDataBaseArray[i].dynamics_ = Eigen::Vector3d::Ones() * t;
+    modelDataBaseArray[i].dynamicsStateDerivative_ = Eigen::Matrix3d::Ones() * t;
   }
 
   double time = 5.0;
@@ -64,18 +64,12 @@ TEST(testModelDataBase, testModelDataLinearInterpolation) {
   ModelData::interpolate(indexAlpha, enquiryMatrix, &modelDataBaseArray, ModelData::dynamicsStateDerivative);
 
   ASSERT_TRUE(enquiryScalar == time);
-  ASSERT_TRUE(enquiryVector.isApprox(Eigen::Vector3d::Ones()*time));
-  ASSERT_TRUE(enquiryMatrix.isApprox(Eigen::Matrix3d::Ones()*time));
+  ASSERT_TRUE(enquiryVector.isApprox(Eigen::Vector3d::Ones() * time));
+  ASSERT_TRUE(enquiryMatrix.isApprox(Eigen::Matrix3d::Ones() * time));
 }
 
 TEST(testModelDataBase, testMovableCopyable) {
   ASSERT_TRUE(std::is_copy_constructible<ModelDataBase>::value);
   ASSERT_TRUE(std::is_move_constructible<ModelDataBase>::value);
   ASSERT_TRUE(std::is_nothrow_move_constructible<ModelDataBase>::value);
-}
-
-int main(int argc, char** argv)
-{
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -47,35 +47,35 @@ namespace ocs2 {
  */
 struct ContinuousTimeRiccatiData {
   scalar_t s_;
-  dynamic_vector_t Sv_;
-  dynamic_matrix_t Sm_;
+  vector_t Sv_;
+  matrix_t Sm_;
 
   scalar_t ds_;
-  dynamic_vector_t dSv_;
-  dynamic_matrix_t dSm_;
+  vector_t dSv_;
+  matrix_t dSm_;
 
-  dynamic_vector_t projectedHv_;
-  dynamic_matrix_t projectedAm_;
-  dynamic_matrix_t projectedBm_;
-  dynamic_matrix_t projectedRm_;
-  dynamic_matrix_t dynamicsCovariance_;
+  vector_t projectedHv_;
+  matrix_t projectedAm_;
+  matrix_t projectedBm_;
+  matrix_t projectedRm_;
+  matrix_t dynamicsCovariance_;
 
-  dynamic_matrix_t deltaQm_;
+  matrix_t deltaQm_;
 
-  dynamic_matrix_t projectedGm_;
-  dynamic_vector_t projectedGv_;
+  matrix_t projectedGm_;
+  vector_t projectedGv_;
 
-  dynamic_matrix_t projectedKm_;
-  dynamic_vector_t projectedLv_;
+  matrix_t projectedKm_;
+  vector_t projectedLv_;
 
-  dynamic_matrix_t SmTrans_projectedAm_;
-  dynamic_matrix_t projectedKm_T_projectedGm_;
-  dynamic_matrix_t projectedRm_projectedKm_;
-  dynamic_vector_t projectedRm_projectedLv_;
+  matrix_t SmTrans_projectedAm_;
+  matrix_t projectedKm_T_projectedGm_;
+  matrix_t projectedRm_projectedKm_;
+  vector_t projectedRm_projectedLv_;
 
   // risk sensitive data
-  dynamic_vector_t Sigma_Sv_;
-  dynamic_matrix_t Sigma_Sm_;
+  vector_t Sigma_Sv_;
+  matrix_t Sigma_Sm_;
 };
 
 /**
@@ -103,12 +103,8 @@ static constexpr int riccati_matrix_dim(int flattened_dim) {
 /**
  * This class implements the Riccati differential equations for SLQ problem.
  */
-class ContinuousTimeRiccatiEquations final : public OdeBase<Eigen::Dynamic> {
+class ContinuousTimeRiccatiEquations final : public OdeBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = OdeBase<Eigen::Dynamic>;
-
   /**
    * Constructor.
    *
@@ -136,7 +132,7 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<Eigen::Dynamic> {
    * @param [in] s: \f$ s \f$
    * @param [out] allSs: Single vector constructed by concatenating Sm, Sv and s.
    */
-  static void convert2Vector(const dynamic_matrix_t& Sm, const dynamic_vector_t& Sv, const scalar_t& s, dynamic_vector_t& allSs);
+  static void convert2Vector(const matrix_t& Sm, const vector_t& Sv, const scalar_t& s, vector_t& allSs);
 
   /**
    * Transcribes the stacked vector allSs into a symmetric matrix, Sm, a vector, Sv and a single scalar, s.
@@ -146,7 +142,7 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<Eigen::Dynamic> {
    * @param [out] Sv: \f$ S_v \f$
    * @param [out] s: \f$ s \f$
    */
-  static void convert2Matrix(const dynamic_vector_t& allSs, dynamic_matrix_t& Sm, dynamic_vector_t& Sv, scalar_t& s);
+  static void convert2Matrix(const vector_t& allSs, matrix_t& Sm, vector_t& Sv, scalar_t& s);
 
   /**
    * Sets coefficients of the model.
@@ -157,9 +153,9 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<Eigen::Dynamic> {
    * @param [in] modelDataEventTimesPtr: A pointer to the model data at event times.
    * @param [in] riccatiModificationPtr: A pointer to the RiccatiModification trajectory.
    */
-  void setData(const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* projectedModelDataPtr,
-               const size_array_t* eventsPastTheEndIndecesPtr, const ModelDataBase::array_t* modelDataEventTimesPtr,
-               const riccati_modification::Data::array_t* riccatiModificationPtr);
+  void setData(const scalar_array_t* timeStampPtr, const std::vector<ModelDataBase>* projectedModelDataPtr,
+               const size_array_t* eventsPastTheEndIndecesPtr, const std::vector<ModelDataBase>* modelDataEventTimesPtr,
+               const std::vector<riccati_modification::Data>* riccatiModificationPtr);
 
   /**
    * Riccati jump map at switching moments
@@ -168,7 +164,7 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<Eigen::Dynamic> {
    * @param [in] allSs: A flattened vector constructed by concatenating Sm, Sv and s.
    * @param [out] allSsPreEvent: mapped flattened state after transition.
    */
-  void computeJumpMap(const scalar_t& z, const dynamic_vector_t& allSs, dynamic_vector_t& allSsPreEvent) override;
+  void computeJumpMap(const scalar_t& z, const vector_t& allSs, vector_t& allSsPreEvent) override;
 
   /**
    * Computes derivatives.
@@ -177,7 +173,7 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<Eigen::Dynamic> {
    * @param [in] allSs: A flattened vector constructed by concatenating Sm, Sv and s.
    * @param [out] derivatives: d(allSs)/dz.
    */
-  void computeFlowMap(const scalar_t& z, const dynamic_vector_t& allSs, dynamic_vector_t& derivatives) override;
+  void computeFlowMap(const scalar_t& z, const vector_t& allSs, vector_t& derivatives) override;
 
  private:
   /**
@@ -192,8 +188,8 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<Eigen::Dynamic> {
    * @param [out] dSv: The time derivative of the  Riccati vector.
    * @param [out] ds: The time derivative of the  Riccati scalar.
    */
-  void computeFlowMapSLQ(std::pair<int, scalar_t> indexAlpha, const dynamic_matrix_t& Sm, const dynamic_vector_t& Sv, const scalar_t& s,
-                         ContinuousTimeRiccatiData& creCache, dynamic_matrix_t& dSm, dynamic_vector_t& dSv, scalar_t& ds) const;
+  void computeFlowMapSLQ(std::pair<int, scalar_t> indexAlpha, const matrix_t& Sm, const vector_t& Sv, const scalar_t& s,
+                         ContinuousTimeRiccatiData& creCache, matrix_t& dSm, vector_t& dSv, scalar_t& ds) const;
 
   /**
    * Computes the Riccati equations for ILEG problem.
@@ -207,8 +203,8 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<Eigen::Dynamic> {
    * @param [out] dSv: The time derivative of the  Riccati vector.
    * @param [out] ds: The time derivative of the  Riccati scalar.
    */
-  void computeFlowMapILEG(std::pair<int, scalar_t> indexAlpha, const dynamic_matrix_t& Sm, const dynamic_vector_t& Sv, const scalar_t& s,
-                          ContinuousTimeRiccatiData& creCache, dynamic_matrix_t& dSm, dynamic_vector_t& dSv, scalar_t& ds) const;
+  void computeFlowMapILEG(std::pair<int, scalar_t> indexAlpha, const matrix_t& Sm, const vector_t& Sv, const scalar_t& s,
+                          ContinuousTimeRiccatiData& creCache, matrix_t& dSm, vector_t& dSv, scalar_t& ds) const;
 
  private:
   bool reducedFormRiccati_;
@@ -217,9 +213,9 @@ class ContinuousTimeRiccatiEquations final : public OdeBase<Eigen::Dynamic> {
 
   // array pointers
   const scalar_array_t* timeStampPtr_;
-  const ModelDataBase::array_t* projectedModelDataPtr_;
-  const ModelDataBase::array_t* modelDataEventTimesPtr_;
-  const riccati_modification::Data::array_t* riccatiModificationPtr_;
+  const std::vector<ModelDataBase>* projectedModelDataPtr_;
+  const std::vector<ModelDataBase>* modelDataEventTimesPtr_;
+  const std::vector<riccati_modification::Data>* riccatiModificationPtr_;
   scalar_array_t eventTimes_;
 
   ContinuousTimeRiccatiData continuousTimeRiccatiData_;

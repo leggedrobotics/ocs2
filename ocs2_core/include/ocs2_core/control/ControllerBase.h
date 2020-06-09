@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,44 +29,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Dense>
-#include <Eigen/StdVector>
-#include <iostream>
-#include <memory>
-#include <string>
-#include <vector>
-
-#include "ocs2_core/Dimensions.h"
-#include "ocs2_core/control/ControllerType.h"
+#include <ocs2_core/Types.h>
+#include <ocs2_core/control/ControllerType.h>
 
 namespace ocs2 {
 
 /**
  * The base class for all controllers.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 class ControllerBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using dimensions_t = Dimensions<STATE_DIM, INPUT_DIM>;
-  using scalar_t = typename dimensions_t::scalar_t;
-  using size_array_t = typename dimensions_t::size_array_t;
-  using scalar_array_t = typename dimensions_t::scalar_array_t;
-  using float_array_t = std::vector<float>;
-  using state_vector_t = typename dimensions_t::state_vector_t;
-  using input_vector_t = typename dimensions_t::input_vector_t;
-
-  using self_t = ControllerBase<STATE_DIM, INPUT_DIM>;
-  using array_t = std::vector<self_t, Eigen::aligned_allocator<self_t>>;
-
   /**
-   * Default constructor.
+   * Constructor.
+   *
+   * @param[in] stateDim: State vector dimension
+   * @param[in] inputDim: Input vector dimension
    */
-  ControllerBase() = default;
+  ControllerBase(size_t stateDim, size_t inputDim);
 
   /**
    * Default destructor.
@@ -80,21 +59,21 @@ class ControllerBase {
    * @param [in] x: Current state.
    * @return Current input.
    */
-  virtual input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) = 0;
+  virtual vector_t computeInput(const scalar_t& t, const vector_t& x) = 0;
 
   /**
    * @brief Saves the controller at given time to an array of arrays structure for ROS transmission
    * @param[in] timeArray array of query times
    * @param[out] flatArray2 The array of arrays that is to be filled, i.e., the compressed controller. One array per query time
    */
-  virtual void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const = 0;
+  virtual void flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const;
 
   /**
    * @brief Restores and initializes the controller from a flattened array
    * @param[in] timeArray array of times
    * @param[in] flatArray2 The array the represents the compressed controller
    */
-  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) = 0;
+  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<std::vector<float> const*>& flatArray2);
 
   /**
    * @brief Merges this controller with another controller that comes active later in time
@@ -116,7 +95,7 @@ class ControllerBase {
    *
    * @param[in] otherController: The control law to be appended.
    */
-  void concatenate(const ControllerBase* otherController) { concatenate(otherController, 0, otherController->size()); }
+  void concatenate(const ControllerBase* otherController);
 
   /**
    * @brief Returns the size of the controller.
@@ -166,6 +145,20 @@ class ControllerBase {
    * @return The event times of the controller.
    */
   virtual scalar_array_t controllerEventTimes() const {}
+
+  /* State dimension getter */
+  size_t getStateDim() const { return stateDim_; }
+
+  /* Input dimension getter */
+  size_t getInputDim() const { return inputDim_; }
+
+  friend void swap(ControllerBase& a, ControllerBase& b) noexcept;
+
+ protected:
+  size_t stateDim_;
+  size_t inputDim_;
 };
+
+void swap(ControllerBase& a, ControllerBase& b) noexcept;
 
 }  // namespace ocs2

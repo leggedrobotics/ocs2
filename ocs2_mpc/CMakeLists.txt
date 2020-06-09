@@ -25,6 +25,8 @@ catkin_package(
   INCLUDE_DIRS
     include
     ${EIGEN3_INCLUDE_DIRS}
+  LIBRARIES
+    ${PROJECT_NAME}
   CATKIN_DEPENDS
     ocs2_core
     ocs2_ddp
@@ -43,6 +45,17 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
+
+add_library(${PROJECT_NAME}
+  src/MPC_BASE.cpp
+  src/MPC_ILQR.cpp
+  # src/MPC_OCS2.cpp
+  src/MPC_SLQ.cpp
+)
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp
@@ -68,6 +81,13 @@ endif(cmake_clang_tools_FOUND)
 #############
 ## Install ##
 #############
+
+install(
+  TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})

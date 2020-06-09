@@ -27,24 +27,25 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <Eigen/Dense>
+
 namespace ocs2 {
 namespace ros_msg_conversions {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-template <class ContainerAllocator, size_t STATE_DIM, size_t INPUT_DIM>
-void createObservationMsg(const SystemObservation<STATE_DIM, INPUT_DIM>& observation,
-                          ocs2_msgs::mpc_observation_<ContainerAllocator>& observationMsg) {
+template <class ContainerAllocator>
+void createObservationMsg(const SystemObservation& observation, ocs2_msgs::mpc_observation_<ContainerAllocator>& observationMsg) {
   observationMsg.time = observation.time();
 
-  observationMsg.state.value.resize(STATE_DIM);
-  for (size_t i = 0; i < STATE_DIM; i++) {
+  observationMsg.state.value.resize(observation.state().rows());
+  for (size_t i = 0; i < observation.state().rows(); i++) {
     observationMsg.state.value[i] = observation.state(i);
   }
 
-  observationMsg.input.value.resize(INPUT_DIM);
-  for (size_t i = 0; i < INPUT_DIM; i++) {
+  observationMsg.input.value.resize(observation.input().rows());
+  for (size_t i = 0; i < observation.input().rows(); i++) {
     observationMsg.input.value[i] = observation.input(i);
   }
 
@@ -54,17 +55,15 @@ void createObservationMsg(const SystemObservation<STATE_DIM, INPUT_DIM>& observa
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-template <class ContainerAllocator, size_t STATE_DIM, size_t INPUT_DIM>
-void readObservationMsg(const ocs2_msgs::mpc_observation_<ContainerAllocator>& observationMsg,
-                        SystemObservation<STATE_DIM, INPUT_DIM>& observation) {
-  using scalar_t = typename SystemObservation<STATE_DIM, INPUT_DIM>::scalar_t;
+template <class ContainerAllocator>
+void readObservationMsg(const ocs2_msgs::mpc_observation_<ContainerAllocator>& observationMsg, SystemObservation& observation) {
   observation.time() = observationMsg.time;
 
-  observation.state() =
-      Eigen::Map<const Eigen::Matrix<float, STATE_DIM, 1>>(observationMsg.state.value.data(), STATE_DIM).template cast<scalar_t>();
+  const auto& state = observationMsg.state.value;
+  observation.state() = Eigen::Map<const Eigen::VectorXf>(state.data(), state.size()).cast<scalar_t>();
 
-  observation.input() =
-      Eigen::Map<const Eigen::Matrix<float, INPUT_DIM, 1>>(observationMsg.input.value.data(), INPUT_DIM).template cast<scalar_t>();
+  const auto& input = observationMsg.input.value;
+  observation.input() = Eigen::Map<const Eigen::VectorXf>(input.data(), input.size()).cast<scalar_t>();
 
   observation.subsystem() = observationMsg.subsystem;
 }
@@ -95,7 +94,7 @@ void createModeScheduleMsg(const ModeSchedule& modeSchedule, ocs2_msgs::mode_sch
 template <class ContainerAllocator>
 ModeSchedule readModeScheduleMsg(const ocs2_msgs::mode_schedule_<ContainerAllocator>& modeScheduleMsg) {
   // event times
-  std::vector<ModeSchedule::scalar_t> eventTimes;
+  std::vector<scalar_t> eventTimes;
   eventTimes.reserve(modeScheduleMsg.eventTimes.size());
   for (const auto& ti : modeScheduleMsg.eventTimes) {
     eventTimes.push_back(ti);
@@ -147,7 +146,6 @@ void createTargetTrajectoriesMsg(const CostDesiredTrajectories& costDesiredTraje
 template <class ContainerAllocator>
 void readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories_<ContainerAllocator>& targetTrajectoriesMsg,
                                CostDesiredTrajectories& costDesiredTrajectories) {
-  using scalar_t = CostDesiredTrajectories::scalar_t;
   auto& desiredTimeTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
   auto& desiredStateTrajectory = costDesiredTrajectories.desiredStateTrajectory();
   auto& desiredInputTrajectory = costDesiredTrajectories.desiredInputTrajectory();
@@ -165,7 +163,7 @@ void readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories_<Contain
 
     desiredStateTrajectory[i] = Eigen::Map<const Eigen::VectorXf>(targetTrajectoriesMsg.stateTrajectory[i].value.data(),
                                                                   targetTrajectoriesMsg.stateTrajectory[i].value.size())
-                                    .template cast<scalar_t>();
+                                    .cast<scalar_t>();
   }  // end of i loop
 
   // input
@@ -174,7 +172,7 @@ void readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories_<Contain
   for (size_t i = 0; i < N; i++) {
     desiredInputTrajectory[i] = Eigen::Map<const Eigen::VectorXf>(targetTrajectoriesMsg.inputTrajectory[i].value.data(),
                                                                   targetTrajectoriesMsg.inputTrajectory[i].value.size())
-                                    .template cast<scalar_t>();
+                                    .cast<scalar_t>();
   }  // end of i loop
 }
 

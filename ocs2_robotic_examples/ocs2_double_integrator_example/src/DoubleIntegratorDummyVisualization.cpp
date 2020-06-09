@@ -11,8 +11,8 @@ void DoubleIntegratorDummyVisualization::launchVisualizerNode(ros::NodeHandle& n
   jointPublisher_ = nodeHandle.advertise<sensor_msgs::JointState>("joint_states", 1);
 }
 
-void DoubleIntegratorDummyVisualization::update(const system_observation_t& observation, const primal_solution_t& policy,
-                                                const command_data_t& command) {
+void DoubleIntegratorDummyVisualization::update(const SystemObservation& observation, const PrimalSolution& policy,
+                                                const CommandData& command) {
   const auto& costDesiredTrajectories = command.mpcCostDesiredTrajectories_;
   sensor_msgs::JointState joint_state;
   joint_state.header.stamp = ros::Time::now();

@@ -1,9 +1,10 @@
-#include <ocs2_core/Dimensions.h>
 #include <ocs2_core/OCS2NumericTraits.h>
+#include <ocs2_core/Types.h>
 
 // Automatic Differentation
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_core/automatic_differentiation/CppAdSparsity.h>
+#include <ocs2_core/automatic_differentiation/FiniteDifferenceMethods.h>
 
 // Constraint
 #include <ocs2_core/constraint/ConstraintBase.h>
@@ -55,13 +56,13 @@
 // Logic
 #include <ocs2_core/logic/ModeSchedule.h>
 
-// Loopshaping
-#include <ocs2_core/loopshaping/Loopshaping.h>
+// // Loopshaping
+// #include <ocs2_core/loopshaping/Loopshaping.h>
 
 // Misc
 #include <ocs2_core/misc/Benchmark.h>
-#include <ocs2_core/misc/LTI_Equations.h>
-#include <ocs2_core/misc/LinearFunction.h>
+// #include <ocs2_core/misc/LTI_Equations.h>
+// #include <ocs2_core/misc/LinearFunction.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_core/misc/Lookup.h>

@@ -4,14 +4,16 @@
 
 #include "commonFixture.h"
 
+using namespace ocs2;
+
 class CppAdInterfaceNoParameterFixture : public CommonCppAdNoParameterFixture {};
 class CppAdInterfaceParameterizedFixture : public CommonCppAdParameterizedFixture {};
 
 TEST_F(CppAdInterfaceNoParameterFixture, testModelGeneration) {
-  ocs2::CppAdInterface<scalar_t> adInterface(funImpl, rangeDim_, variableDim_, "testModelWithoutParameters");
+  ocs2::CppAdInterface adInterface(funImpl, rangeDim_, variableDim_, "testModelWithoutParameters");
 
-  adInterface.createModels(ocs2::CppAdInterface<scalar_t>::ApproximationOrder::Second, true);
-  dynamic_vector_t x = dynamic_vector_t::Random(variableDim_);
+  adInterface.createModels(ocs2::CppAdInterface::ApproximationOrder::Second, true);
+  vector_t x = vector_t::Random(variableDim_);
 
   ASSERT_TRUE(adInterface.getFunctionValue(x).isApprox(testFun(x)));
   ASSERT_TRUE(adInterface.getJacobian(x).isApprox(testJacobian(x)));
@@ -19,11 +21,11 @@ TEST_F(CppAdInterfaceNoParameterFixture, testModelGeneration) {
 }
 
 TEST_F(CppAdInterfaceParameterizedFixture, testModelGeneration) {
-  ocs2::CppAdInterface<scalar_t> adInterface(funImpl, rangeDim_, variableDim_, parameterDim_, "testModelWithParameters");
+  ocs2::CppAdInterface adInterface(funImpl, rangeDim_, variableDim_, parameterDim_, "testModelWithParameters");
 
-  adInterface.createModels(ocs2::CppAdInterface<scalar_t>::ApproximationOrder::Second, true);
-  dynamic_vector_t x = dynamic_vector_t::Random(variableDim_);
-  dynamic_vector_t p = dynamic_vector_t::Random(parameterDim_);
+  adInterface.createModels(ocs2::CppAdInterface::ApproximationOrder::Second, true);
+  vector_t x = vector_t::Random(variableDim_);
+  vector_t p = vector_t::Random(parameterDim_);
 
   ASSERT_TRUE(adInterface.getFunctionValue(x, p).isApprox(testFun(x, p)));
   ASSERT_TRUE(adInterface.getJacobian(x, p).isApprox(testJacobian(x, p)));
@@ -32,11 +34,11 @@ TEST_F(CppAdInterfaceParameterizedFixture, testModelGeneration) {
 }
 
 TEST_F(CppAdInterfaceParameterizedFixture, loadIfAvailable) {
-  ocs2::CppAdInterface<scalar_t> adInterface(funImpl, rangeDim_, variableDim_, parameterDim_, "testModelLoadIfAvailable");
+  ocs2::CppAdInterface adInterface(funImpl, rangeDim_, variableDim_, parameterDim_, "testModelLoadIfAvailable");
 
-  adInterface.loadModelsIfAvailable(ocs2::CppAdInterface<scalar_t>::ApproximationOrder::Second, true);
-  dynamic_vector_t x = dynamic_vector_t::Random(variableDim_);
-  dynamic_vector_t p = dynamic_vector_t::Random(parameterDim_);
+  adInterface.loadModelsIfAvailable(ocs2::CppAdInterface::ApproximationOrder::Second, true);
+  vector_t x = vector_t::Random(variableDim_);
+  vector_t p = vector_t::Random(parameterDim_);
 
   ASSERT_TRUE(adInterface.getFunctionValue(x, p).isApprox(testFun(x, p)));
   ASSERT_TRUE(adInterface.getJacobian(x, p).isApprox(testJacobian(x, p)));

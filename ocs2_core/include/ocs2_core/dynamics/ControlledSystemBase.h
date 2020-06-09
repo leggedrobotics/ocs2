@@ -27,84 +27,53 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef CONTROLLEDSYSTEMBASE_OCS2_H_
-#define CONTROLLEDSYSTEMBASE_OCS2_H_
+#pragma once
 
-#include <Eigen/Dense>
-#include <Eigen/StdVector>
-#include <cstring>
-#include <vector>
+#include <ocs2_core/Types.h>
 
-#include "ocs2_core/Dimensions.h"
-#include "ocs2_core/control/ControllerBase.h"
-#include "ocs2_core/integration/OdeBase.h"
+#include <ocs2_core/control/ControllerBase.h>
+#include <ocs2_core/integration/OdeBase.h>
 
 namespace ocs2 {
 
 /**
  * The base class for non-autonomous system dynamics.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class ControlledSystemBase : public OdeBase<STATE_DIM> {
+class ControlledSystemBase : public OdeBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using Ptr = std::shared_ptr<ControlledSystemBase<STATE_DIM, INPUT_DIM> >;
-  using ConstPtr = std::shared_ptr<const ControlledSystemBase<STATE_DIM, INPUT_DIM> >;
-
-  using BASE = OdeBase<STATE_DIM>;
-
-  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-  using input_vector_t = typename DIMENSIONS::input_vector_t;
-  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
-  using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
-  using constraint1_vector_t = typename DIMENSIONS::constraint1_vector_t;
-  using constraint2_vector_t = typename DIMENSIONS::constraint2_vector_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-
-  using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
-
   /**
    * Constructor.
    */
-  ControlledSystemBase() : controllerPtr_(nullptr) {}
+  ControlledSystemBase();
 
   /**
    * Copy constructor.
    */
-  ControlledSystemBase(const ControlledSystemBase& rhs) { setController(rhs.controllerPtr()); }
+  ControlledSystemBase(const ControlledSystemBase& rhs);
 
   /**
    * Default destructor.
    */
-  virtual ~ControlledSystemBase() = default;
+  ~ControlledSystemBase() override = default;
 
   /**
    * Resets the internal classes.
    */
-  virtual void reset() { controllerPtr_ = nullptr; }
+  virtual void reset();
 
   /**
    * Sets the control policy using the controller class.
    *
    * @param [in] controllerPtr: A pointer to the control policy.
    */
-  void setController(controller_t* controllerPtr) { controllerPtr_ = controllerPtr; }
+  void setController(ControllerBase* controllerPtr);
 
   /**
    * Returns the controller pointer.
    *
    * @return A pointer to controller.
    */
-  controller_t* controllerPtr() const { return controllerPtr_; }
+  ControllerBase* controllerPtr() const;
 
   /**
    * Computes the flow map of a system.
@@ -113,15 +82,7 @@ class ControlledSystemBase : public OdeBase<STATE_DIM> {
    * @param [in] x: The current state.
    * @param [out] dxdt: The state time derivative.
    */
-  void computeFlowMap(const scalar_t& t, const state_vector_t& x, state_vector_t& dxdt) final {
-    input_vector_t u = controllerPtr_->computeInput(t, x);
-    ModelDataBase& modelData = this->modelDataEmplaceBack();
-    modelData.time_ = t;
-    modelData.stateDim_ = STATE_DIM;
-    modelData.inputDim_ = INPUT_DIM;
-    computeFlowMap(t, x, u, dxdt);
-    modelData.dynamics_ = dxdt;
-  }
+  void computeFlowMap(const scalar_t& t, const vector_t& x, vector_t& dxdt) final;
 
   /**
    * Computes the flow map of a system with exogenous input.
@@ -131,19 +92,17 @@ class ControlledSystemBase : public OdeBase<STATE_DIM> {
    * @param [in] u: The current input.
    * @param [out] dxdt: The state time derivative.
    */
-  virtual void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) = 0;
+  virtual void computeFlowMap(const scalar_t& t, const vector_t& x, const vector_t& u, vector_t& dxdt) = 0;
 
   /**
    * Returns pointer to the class.
    *
    * @return A raw pointer to the class.
    */
-  virtual ControlledSystemBase<STATE_DIM, INPUT_DIM>* clone() const = 0;
+  virtual ControlledSystemBase* clone() const = 0;
 
  private:
-  controller_t* controllerPtr_;  //! pointer to controller
+  ControllerBase* controllerPtr_;  //! pointer to controller
 };
 
 }  // namespace ocs2
-
-#endif

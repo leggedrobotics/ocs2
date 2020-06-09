@@ -29,16 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Dense>
-#include <Eigen/StdVector>
-#include <iostream>
-#include <memory>
-#include <sstream>
+#include <ostream>
 #include <string>
 #include <vector>
 
 #include "ocs2_core/Types.h"
-#include "ocs2_core/misc/LinearAlgebra.h"
 
 namespace ocs2 {
 
@@ -46,9 +41,6 @@ namespace ocs2 {
  * The base class for model data.
  */
 struct ModelDataBase {
-  using array_t = std::vector<ModelDataBase>;
-  using array2_t = std::vector<array_t>;
-
   /**
    * Creates a deep copy of the object.
    * @warning Cloning implies that the caller takes ownership and deletes the created object.
@@ -95,40 +87,42 @@ struct ModelDataBase {
   int inputDim_;
 
   // dynamics
-  dynamic_vector_t dynamics_;
-  dynamic_vector_t dynamicsBias_;
-  dynamic_matrix_t dynamicsStateDerivative_;
-  dynamic_matrix_t dynamicsInputDerivative_;
+  vector_t dynamics_;
+  vector_t dynamicsBias_;
+  matrix_t dynamicsStateDerivative_;
+  matrix_t dynamicsInputDerivative_;
 
-  dynamic_matrix_t dynamicsCovariance_;
+  matrix_t dynamicsCovariance_;
 
   // cost
   scalar_t cost_;
-  dynamic_vector_t costStateDerivative_;
-  dynamic_vector_t costInputDerivative_;
-  dynamic_matrix_t costStateSecondDerivative_;
-  dynamic_matrix_t costInputSecondDerivative_;
-  dynamic_matrix_t costInputStateDerivative_;
+  vector_t costStateDerivative_;
+  vector_t costInputDerivative_;
+  matrix_t costStateSecondDerivative_;
+  matrix_t costInputSecondDerivative_;
+  matrix_t costInputStateDerivative_;
 
   // state equality constraints
   int numStateEqConstr_;
-  dynamic_vector_t stateEqConstr_;
-  dynamic_matrix_t stateEqConstrStateDerivative_;
+  vector_t stateEqConstr_;
+  matrix_t stateEqConstrStateDerivative_;
 
   // state-input equality constraints
   int numStateInputEqConstr_;
-  dynamic_vector_t stateInputEqConstr_;
-  dynamic_matrix_t stateInputEqConstrStateDerivative_;
-  dynamic_matrix_t stateInputEqConstrInputDerivative_;
+  vector_t stateInputEqConstr_;
+  matrix_t stateInputEqConstrStateDerivative_;
+  matrix_t stateInputEqConstrInputDerivative_;
 
   // inequality constraints
   int numIneqConstr_;
   scalar_array_t ineqConstr_;
-  dynamic_vector_array_t ineqConstrStateDerivative_;
-  dynamic_vector_array_t ineqConstrInputDerivative_;
-  dynamic_matrix_array_t ineqConstrStateSecondDerivative_;
-  dynamic_matrix_array_t ineqConstrInputSecondDerivative_;
-  dynamic_matrix_array_t ineqConstrInputStateDerivative_;
+  vector_array_t ineqConstrStateDerivative_;
+  vector_array_t ineqConstrInputDerivative_;
+  matrix_array_t ineqConstrStateSecondDerivative_;
+  matrix_array_t ineqConstrInputSecondDerivative_;
+  matrix_array_t ineqConstrInputStateDerivative_;
 };
+
+std::ostream& operator<<(std::ostream& out, const ModelDataBase& data);
 
 }  // namespace ocs2

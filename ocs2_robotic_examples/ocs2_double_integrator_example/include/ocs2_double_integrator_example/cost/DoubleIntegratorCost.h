@@ -36,19 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace double_integrator {
 
-class DoubleIntegratorCost : public QuadraticCostFunction<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> {
+class DoubleIntegratorCost : public QuadraticCostFunction {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using Ptr = std::shared_ptr<DoubleIntegratorCost>;
-  using ConstPtr = std::shared_ptr<const DoubleIntegratorCost>;
-
-  using BASE = QuadraticCostFunction<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
-  using typename BASE::input_vector_t;
-  using typename BASE::scalar_t;
-  using typename BASE::state_matrix_t;
-  using typename BASE::state_vector_t;
-
   /**
    * Constructor for the running and final cost function defined as the following:
    * - \f$ L = 0.5(x-x_{nominal})' Q (x-x_{nominal}) + 0.5(u-u_{nominal})' R (u-u_{nominal}) \f$
@@ -57,8 +46,8 @@ class DoubleIntegratorCost : public QuadraticCostFunction<double_integrator::STA
    * @param [in] R: \f$ R \f$
    * @param [in] QFinal: \f$ Q_{final}\f$
    */
-  DoubleIntegratorCost(const state_matrix_t& Q, const input_matrix_t& R, const state_matrix_t& Q_final)
-      : QuadraticCostFunction(Q, R, state_vector_t::Zero(), input_vector_t::Zero(), Q_final, state_vector_t::Zero()) {}
+  DoubleIntegratorCost(const matrix_t& Q, const matrix_t& R, const matrix_t& Q_final)
+      : QuadraticCostFunction(Q, R, vector_t::Zero(STATE_DIM_), vector_t::Zero(INPUT_DIM_), Q_final, vector_t::Zero(STATE_DIM_)) {}
 
   /**
    * Destructor
@@ -67,13 +56,13 @@ class DoubleIntegratorCost : public QuadraticCostFunction<double_integrator::STA
 
   DoubleIntegratorCost* clone() const override { return new DoubleIntegratorCost(*this); }
 
-  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) final {
-    dynamic_vector_t xNominalDynamic(state_vector_t::Zero());
-    BASE::costDesiredTrajectoriesPtr_->getDesiredState(t, xNominalDynamic);
-    dynamic_vector_t uNominalDynamic(input_vector_t::Zero());
-    BASE::costDesiredTrajectoriesPtr_->getDesiredInput(t, uNominalDynamic);
+  void setCurrentStateAndControl(const scalar_t& t, const vector_t& x, const vector_t& u) final {
+    vector_t xNominal = vector_t::Zero(STATE_DIM_);
+    QuadraticCostFunction::costDesiredTrajectoriesPtr_->getDesiredState(t, xNominal);
+    vector_t uNominal = vector_t::Zero(INPUT_DIM_);
+    QuadraticCostFunction::costDesiredTrajectoriesPtr_->getDesiredInput(t, uNominal);
 
-    BASE::setCurrentStateAndControl(t, x, u, xNominalDynamic, uNominalDynamic, xNominalDynamic);
+    QuadraticCostFunction::setCurrentStateAndControl(t, x, u, xNominal, uNominal, xNominal);
   }
 };
 

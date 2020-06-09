@@ -1,9 +1,6 @@
+#pragma once
 
-
-#ifndef OCS2_CTRL_RANDOMMATRICES_H
-#define OCS2_CTRL_RANDOMMATRICES_H
-
-#include <Eigen/Dense>
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 namespace LinearAlgebra {
@@ -38,18 +35,15 @@ MatrixType generateSPDmatrix(int size) {
  * Compute random full row rank matrix
  * @return random SPD matrix.
  */
-Eigen::MatrixXd generateFullRowRankmatrix(size_t m, size_t n) {
+matrix_t generateFullRowRankmatrix(size_t m, size_t n) {
   if (m > n) {
     throw std::runtime_error("[generateFullRowRankmatrix] Can't generate matrix with more rows than columns");
   };
 
   // Some random constraint matrix
-  Eigen::MatrixXd A(m, n);
-  A.setRandom();
+  matrix_t A = matrix_t::Random(m, n);
   A.block(0, 0, m, m).setIdentity();  // Makes sure rows are independent
   return A;
 }
 }  // namespace LinearAlgebra
 }  // namespace ocs2
-
-#endif  // OCS2_CTRL_RANDOMMATRICES_H

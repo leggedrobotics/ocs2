@@ -46,45 +46,14 @@ namespace ocs2 {
 /**
  * A lean ROS independent interface to OCS2. In incorporates the functionality of the MPC and the MRT (trajectory tracking) modules.
  * Please refer to ocs2_double_integrator_example for a minimal example and tests
- * @tparam STATE_DIM
- * @tparam INPUT_DIM
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
+class MPC_MRT_Interface final : public MRT_BASE {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using Base = MRT_BASE<STATE_DIM, INPUT_DIM>;
-  using typename Base::command_data_t;
-  using typename Base::primal_solution_t;
-
-  using Ptr = std::shared_ptr<MPC_MRT_Interface<STATE_DIM, INPUT_DIM>>;
-
-  using mpc_t = MPC_BASE<STATE_DIM, INPUT_DIM>;
-
-  using scalar_t = typename mpc_t::scalar_t;
-  using scalar_array_t = typename mpc_t::scalar_array_t;
-  using scalar_array2_t = typename mpc_t::scalar_array2_t;
-  using size_array_t = typename mpc_t::size_array_t;
-  using state_vector_t = typename mpc_t::state_vector_t;
-  using state_vector_array_t = typename mpc_t::state_vector_array_t;
-  using state_vector_array2_t = typename mpc_t::state_vector_array2_t;
-  using input_vector_t = typename mpc_t::input_vector_t;
-  using input_vector_array_t = typename mpc_t::input_vector_array_t;
-  using input_vector_array2_t = typename mpc_t::input_vector_array2_t;
-  using controller_t = typename mpc_t::controller_t;
-  using controller_ptr_array_t = typename mpc_t::controller_ptr_array_t;
-  using input_state_matrix_t = typename mpc_t::input_state_matrix_t;
-  using input_state_matrix_array_t = typename mpc_t::input_state_matrix_array_t;
-  using dynamic_vector_t = typename mpc_t::dynamic_vector_t;
-
-  using system_observation_t = SystemObservation<STATE_DIM, INPUT_DIM>;
-
   /**
    * Constructor
    * @param [in] mpc: The underlying MPC class to be used.
    */
-  explicit MPC_MRT_Interface(mpc_t& mpc);
+  explicit MPC_MRT_Interface(MPC_BASE& mpc);
 
   /**
    * Destructor.
@@ -93,7 +62,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
 
   void resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) override;
 
-  void setCurrentObservation(const system_observation_t& currentObservation) override;
+  void setCurrentObservation(const SystemObservation& currentObservation) override;
 
   /**
    * Set new target trajectories to be tracked.
@@ -115,21 +84,21 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * @param state query state
    * @return value of the given state at the given time
    */
-  scalar_t getValueFunction(scalar_t time, const state_vector_t& state);
+  scalar_t getValueFunction(scalar_t time, const vector_t& state);
 
   /**
    * @brief Calculates the state derivative of the value function
    * @param [in] time the query time
    * @param [out] Vx partial derivative of the value function at requested time at nominal state
    */
-  void getValueFunctionStateDerivative(scalar_t time, const state_vector_t& state, dynamic_vector_t& Vx);
+  void getValueFunctionStateDerivative(scalar_t time, const vector_t& state, vector_t& Vx);
 
   /**
    * @brief getLinearFeedbackGain retrieves K matrix from solver
    * @param [in] time
    * @param [out] K
    */
-  void getLinearFeedbackGain(scalar_t time, input_state_matrix_t& K);
+  void getLinearFeedbackGain(scalar_t time, matrix_t& K);
 
   /**
    * @brief Computes the Lagrange multiplier related to the state-input constraints
@@ -137,7 +106,7 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] state: query state
    * @param [out] nu: the Lagrange multiplier
    */
-  void getStateInputConstraintLagrangian(scalar_t time, const state_vector_t& state, dynamic_vector_t& nu) const;
+  void getStateInputConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const;
 
  protected:
   /**
@@ -145,15 +114,15 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
    * This method is automatically called by advanceMpc()
    * @param [in] mpcInitObservation: The observation used to run the MPC.
    */
-  void fillMpcOutputBuffers(system_observation_t mpcInitObservation);
+  void fillMpcOutputBuffers(SystemObservation mpcInitObservation);
 
  protected:
-  mpc_t& mpc_;
+  MPC_BASE& mpc_;
 
   benchmark::RepeatedTimer mpcTimer_;
 
   // MPC inputs
-  system_observation_t currentObservation_;
+  SystemObservation currentObservation_;
   std::mutex observationMutex_;
   std::mutex costDesiredTrajectoriesBufferMutex_;
   std::atomic_bool costDesiredTrajectoriesBufferUpdated_;
@@ -161,5 +130,3 @@ class MPC_MRT_Interface final : public MRT_BASE<STATE_DIM, INPUT_DIM> {
 };
 
 }  // namespace ocs2
-
-#include "implementation/MPC_MRT_Interface.h"

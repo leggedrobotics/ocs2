@@ -36,7 +36,14 @@ namespace double_integrator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-DoubleIntegratorInterface::DoubleIntegratorInterface(const std::string& taskFileFolderName) {
+DoubleIntegratorInterface::DoubleIntegratorInterface(const std::string& taskFileFolderName)
+    : Q_(matrix_t::Zero(STATE_DIM_, STATE_DIM_)),
+      R_(matrix_t::Zero(INPUT_DIM_, INPUT_DIM_)),
+      QFinal_(matrix_t::Zero(STATE_DIM_, STATE_DIM_)),
+      xFinal_(vector_t::Zero(STATE_DIM_)),
+      xNominal_(vector_t::Zero(STATE_DIM_)),
+      uNominal_(vector_t::Zero(INPUT_DIM_)),
+      initialState_(vector_t::Zero(STATE_DIM_)) {
   taskFile_ = ros::package::getPath("ocs2_double_integrator_example") + "/config/" + taskFileFolderName + "/task.info";
   std::cerr << "Loading task file: " << taskFile_ << std::endl;
 
@@ -65,9 +72,9 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Dynamics
    */
-  dim_t::state_matrix_t A;
+  matrix_t A(STATE_DIM_, STATE_DIM_);
   A << 0.0, 1.0, 0.0, 0.0;
-  dim_t::state_input_matrix_t B;
+  matrix_t B(STATE_DIM_, INPUT_DIM_);
   B << 0.0, 1.0;
   linearSystemDynamicsPtr_.reset(new DoubleIntegratorDynamics(A, B));
   linearSystemDynamicsDerivativesPtr_.reset(new DoubleIntegratorDynamicsDerivatives(A, B));
@@ -77,7 +84,7 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
    */
   Rollout_Settings rolloutSettings;
   rolloutSettings.loadSettings(taskFile, "slq.rollout");
-  ddpLinearSystemRolloutPtr_.reset(new time_triggered_rollout_t(*linearSystemDynamicsPtr_, rolloutSettings));
+  ddpLinearSystemRolloutPtr_.reset(new TimeTriggeredRollout(STATE_DIM_, INPUT_DIM_, *linearSystemDynamicsPtr_, rolloutSettings));
 
   /*
    * Cost function
@@ -86,8 +93,8 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
   loadData::loadEigenMatrix(taskFile, "R", R_);
   loadData::loadEigenMatrix(taskFile, "Q_final", QFinal_);
   loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
-  xNominal_ = dim_t::state_vector_t::Zero();
-  uNominal_ = dim_t::input_vector_t::Zero();
+  xNominal_ = vector_t::Zero(STATE_DIM_);
+  uNominal_ = vector_t::Zero(INPUT_DIM_);
 
   std::cerr << "Q:  \n" << Q_ << std::endl;
   std::cerr << "R:  \n" << R_ << std::endl;
@@ -99,28 +106,27 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Constraints
    */
-  linearSystemConstraintPtr_.reset(new DoubleIntegratorConstraint);
+  linearSystemConstraintPtr_.reset(new ConstraintBase(STATE_DIM_, INPUT_DIM_));
 
   /*
    * Initialization
    */
-  //	cartPoleOperatingPointPtr_.reset(new CartPoleOperatingPoint(dim_t::state_vector_t::Zero(), dim_t::input_vector_t::Zero()));
-  linearSystemOperatingPointPtr_.reset(new DoubleIntegratorOperatingPoint(initialState_, dim_t::input_vector_t::Zero()));
+  linearSystemOperatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM_)));
 
   /*
    * Time partitioning which defines the time horizon and the number of data partitioning
    */
-  dim_t::scalar_t timeHorizon;
+  scalar_t timeHorizon;
   ocs2::loadData::loadPartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<DoubleIntegratorInterface::mpc_t> DoubleIntegratorInterface::getMpc() {
-  return std::unique_ptr<mpc_t>(new mpc_t(ddpLinearSystemRolloutPtr_.get(), linearSystemDynamicsDerivativesPtr_.get(),
-                                          linearSystemConstraintPtr_.get(), linearSystemCostPtr_.get(),
-                                          linearSystemOperatingPointPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_));
+std::unique_ptr<MPC_SLQ> DoubleIntegratorInterface::getMpc() {
+  return std::unique_ptr<MPC_SLQ>(new MPC_SLQ(
+      STATE_DIM_, INPUT_DIM_, ddpLinearSystemRolloutPtr_.get(), linearSystemDynamicsDerivativesPtr_.get(), linearSystemConstraintPtr_.get(),
+      linearSystemCostPtr_.get(), linearSystemOperatingPointPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_));
 }
 
 }  // namespace double_integrator

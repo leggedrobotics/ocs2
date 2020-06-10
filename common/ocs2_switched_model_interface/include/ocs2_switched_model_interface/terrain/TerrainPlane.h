@@ -34,9 +34,15 @@ inline vector3_t surfaceNormalInWorld(const TerrainPlane& terrainPlane) {
  * @return 2x3 matrix forming the [x-axis; y-axis] of the terrain
  */
 inline Eigen::Matrix<scalar_t, 2, 3> tangentialBasisFromSurfaceNormal(const vector3_t& surfaceNormal) {
+  // Cross with any vector that is not equal to surfaceNormal
+  vector3_t perpendicularVector = surfaceNormal.cross(vector3_t::UnitX());
+  if (perpendicularVector.squaredNorm() < 0.01) {  // check if unitX was too close to the surface normal.
+    perpendicularVector = surfaceNormal.cross(vector3_t::UnitY());
+  }
+
   // Assumes the surface normal is normalized
   Eigen::Matrix<scalar_t, 2, 3> tangentBasis;
-  tangentBasis.row(0) = surfaceNormal.cross(vector3_t::Ones()).normalized();  // Cross with any vector that is not equal to surfaceNormal
+  tangentBasis.row(0) = perpendicularVector.normalized();
   tangentBasis.row(1) = surfaceNormal.cross(tangentBasis.row(0));
   return tangentBasis;
 }

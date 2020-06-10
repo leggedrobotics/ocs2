@@ -45,6 +45,21 @@ TEST(TestTerrainPlane, tangentialBasisFromSurfaceNormal) {
   ASSERT_LT(std::abs(tangentialBasis.row(0).dot(tangentialBasis.row(1))), tol);
 }
 
+TEST(TestTerrainPlane, tangentialBasisFromSurfaceNormalUnitX) {
+  const auto surfaceNormal = vector3_t::UnitX();
+  const auto tangentialBasis = tangentialBasisFromSurfaceNormal(surfaceNormal);
+
+  // Normalized
+  ASSERT_DOUBLE_EQ(tangentialBasis.row(0).norm(), 1.0);
+  ASSERT_DOUBLE_EQ(tangentialBasis.row(1).norm(), 1.0);
+
+  // Ortogonal
+  const double tol = 1e-9;
+  ASSERT_LT(std::abs(tangentialBasis.row(0).dot(surfaceNormal)), tol);
+  ASSERT_LT(std::abs(tangentialBasis.row(1).dot(surfaceNormal)), tol);
+  ASSERT_LT(std::abs(tangentialBasis.row(0).dot(tangentialBasis.row(1))), tol);
+}
+
 TEST(TestTerrainPlane, orientationWorldToTerrainFromSurfaceNormalInWorld) {
   const vector3_t surfaceNormal = vector3_t::Random().normalized();
 

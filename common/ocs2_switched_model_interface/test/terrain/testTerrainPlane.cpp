@@ -38,7 +38,7 @@ TEST(TestTerrainPlane, tangentialBasisFromSurfaceNormal) {
   ASSERT_DOUBLE_EQ(tangentialBasis.row(0).norm(), 1.0);
   ASSERT_DOUBLE_EQ(tangentialBasis.row(1).norm(), 1.0);
 
-  // Ortogonal
+  // Orthogonal
   const double tol = 1e-9;
   ASSERT_LT(std::abs(tangentialBasis.row(0).dot(surfaceNormal)), tol);
   ASSERT_LT(std::abs(tangentialBasis.row(1).dot(surfaceNormal)), tol);
@@ -53,7 +53,7 @@ TEST(TestTerrainPlane, tangentialBasisFromSurfaceNormalUnitX) {
   ASSERT_DOUBLE_EQ(tangentialBasis.row(0).norm(), 1.0);
   ASSERT_DOUBLE_EQ(tangentialBasis.row(1).norm(), 1.0);
 
-  // Ortogonal
+  // Orthogonal
   const double tol = 1e-9;
   ASSERT_LT(std::abs(tangentialBasis.row(0).dot(surfaceNormal)), tol);
   ASSERT_LT(std::abs(tangentialBasis.row(1).dot(surfaceNormal)), tol);

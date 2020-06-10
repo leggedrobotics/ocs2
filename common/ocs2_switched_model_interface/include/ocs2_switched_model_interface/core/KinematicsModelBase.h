@@ -68,6 +68,6 @@ class KinematicsModelBase {
 };
 
 extern template class KinematicsModelBase<scalar_t>;
-extern template class KinematicsModelBase<ocs2::CppAdInterface<scalar_t>::ad_scalar_t>;
+extern template class KinematicsModelBase<ocs2::CppAdInterface::ad_scalar_t>;
 
 }  // end of namespace switched_model

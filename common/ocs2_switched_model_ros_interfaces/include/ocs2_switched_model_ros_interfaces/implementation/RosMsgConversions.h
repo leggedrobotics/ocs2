@@ -7,12 +7,12 @@ template <class ContainerAllocator>
 void createGaitMsg(const switched_model::Gait& gait, switched_model_msgs::gait_<ContainerAllocator>& gaitMsg) {
   gaitMsg.duration = gait.duration;
 
-  gaitMsg.eventPhases.resize(gait.eventPhases.size());
+  gaitMsg.eventPhases.reserve(gait.eventPhases.size());
   for (const auto& phase : gait.eventPhases) {
     gaitMsg.eventPhases.push_back(phase);
   }
 
-  gaitMsg.modeSequence.resize(gait.modeSequence.size());
+  gaitMsg.modeSequence.reserve(gait.modeSequence.size());
   for (const auto& mode : gait.modeSequence) {
     gaitMsg.modeSequence.push_back(mode);
   }
@@ -22,9 +22,9 @@ template <class ContainerAllocator>
 void readGaitMsg(const switched_model_msgs::gait_<ContainerAllocator>& gaitMsg, switched_model::Gait& gait) {
   gait.duration = gaitMsg.duration;
 
-  auto Nphases = gaitMsg.eventPhases.size();
+  auto Nphases = gaitMsg.modeSequence.size();
   if (Nphases == 0) {
-    throw std::runtime_error("An empty target trajectories message is received.");
+    throw std::runtime_error("An empty gait message is received.");
   }
   gait.eventPhases.assign(gaitMsg.eventPhases.begin(), gaitMsg.eventPhases.end());
   gait.modeSequence.assign(gaitMsg.modeSequence.begin(), gaitMsg.modeSequence.end());
@@ -45,7 +45,7 @@ void readScheduledGaitMsg(const switched_model_msgs::scheduled_gait_<ContainerAl
 }
 
 template <class ContainerAllocator>
-void createGaitSequenceMsg(const switched_model::GaitSchedule::GaitSequence& gaitSequence, const std::vector<scalar_t> startTimes,
+void createGaitSequenceMsg(const switched_model::GaitSchedule::GaitSequence& gaitSequence, const std::vector<scalar_t>& startTimes,
                            switched_model_msgs::gait_sequence_<ContainerAllocator>& gaitSequenceMsg) {
   if (gaitSequence.size() != startTimes.size()) {
     std::cerr << "creating gaitschedule with bad length of startTimes.";
@@ -61,7 +61,7 @@ void createGaitSequenceMsg(const switched_model::GaitSchedule::GaitSequence& gai
 
 template <class ContainerAllocator>
 void readGaitSequenceMsg(const switched_model_msgs::gait_sequence_<ContainerAllocator>& gaitSequenceMsg,
-                         switched_model::GaitSchedule::GaitSequence& gaitSequence, std::vector<scalar_t> startTimes) {
+                         switched_model::GaitSchedule::GaitSequence& gaitSequence, std::vector<scalar_t>& startTimes) {
   auto N = gaitSequenceMsg.gaits.size();
   gaitSequence.resize(N);
   startTimes.resize(N);
@@ -71,9 +71,8 @@ void readGaitSequenceMsg(const switched_model_msgs::gait_sequence_<ContainerAllo
   }
 }
 
-
 void createTrajectoryResponseMsg(const ocs2::CostDesiredTrajectories& costTrajectories,
-                                 const switched_model::GaitSchedule::GaitSequence& gaitSequence, std::vector<scalar_t> startTimes,
+                                 const switched_model::GaitSchedule::GaitSequence& gaitSequence, std::vector<scalar_t>& startTimes,
                                  switched_model_msgs::trajectory_request::Response& responseMsg) {
   ocs2::ros_msg_conversions::createTargetTrajectoriesMsg(costTrajectories, responseMsg.trajectory);
   createGaitSequenceMsg(gaitSequence, startTimes, responseMsg.gaits);
@@ -81,7 +80,7 @@ void createTrajectoryResponseMsg(const ocs2::CostDesiredTrajectories& costTrajec
 
 void readTrajectoryResponseMsg(const switched_model_msgs::trajectory_request::Response& responseMsg,
                                ocs2::CostDesiredTrajectories& costTrajectories, switched_model::GaitSchedule::GaitSequence& gaitSequence,
-                               std::vector<scalar_t> startTimes) {
+                               std::vector<scalar_t>& startTimes) {
   ocs2::ros_msg_conversions::readTargetTrajectoriesMsg(responseMsg.trajectory, costTrajectories);
   readGaitSequenceMsg(responseMsg.gaits, gaitSequence, startTimes);
 }

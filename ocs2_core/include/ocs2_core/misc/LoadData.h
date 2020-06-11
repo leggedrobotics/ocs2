@@ -131,8 +131,8 @@ inline void loadEigenMatrix(const std::string& filename, const std::string& matr
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);
 
-  const double scaling = pt.get<double>(matrixName + ".scaling", 1.0);
-  const double defaultValue = pt.get<double>(matrixName + ".default", 0.0);
+  const scalar_t scaling = pt.get<scalar_t>(matrixName + ".scaling", 1.0);
+  const scalar_t defaultValue = pt.get<scalar_t>(matrixName + ".default", 0.0);
 
   bool failed = false;
   for (size_t i = 0; i < rows; i++) {

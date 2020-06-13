@@ -96,8 +96,9 @@ add_library(${PROJECT_NAME}
   src/integration/StateTriggeredEventHandler.cpp
   src/integration/SystemEventHandler.cpp
   src/logic/ModeSchedule.cpp
-  # src/loopshaping/LoopshapingPropertyTree.cpp
-  # src/loopshaping/LoopshapingFilter.cpp
+  src/loopshaping/LoopshapingPropertyTree.cpp
+  src/loopshaping/LoopshapingFilter.cpp
+  src/loopshaping/LoopshapingOperatingPoint.cpp
   src/model_data/ModelDataBase.cpp
   src/misc/LinearAlgebra.cpp
   src/misc/ThreadPool.cpp
@@ -212,21 +213,21 @@ target_link_libraries(test_transferfunctionbase
   gtest_main
 )
 
-# catkin_add_gtest(${PROJECT_NAME}_loopshaping
+catkin_add_gtest(${PROJECT_NAME}_loopshaping
 #   test/loopshaping/testLoopshapingConfiguration.cpp
-#   test/loopshaping/testLoopshapingDefinition.cpp
+  test/loopshaping/testLoopshapingDefinition.cpp
 #   test/loopshaping/testLoopshapingDynamics.cpp
 #   test/loopshaping/testLoopshapingCost.cpp
 #   test/loopshaping/testLoopshapingConstraint.cpp
 #   test/loopshaping/testLoopshapingFilterDynamics.cpp
-# )
-# target_link_libraries(${PROJECT_NAME}_loopshaping
-#   ${PROJECT_NAME}
-#   ${Boost_LIBRARIES}
-#   ${catkin_LIBRARIES}
-#   -lstdc++fs
-#   gtest_main
-# )
+)
+target_link_libraries(${PROJECT_NAME}_loopshaping
+  ${PROJECT_NAME}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  -lstdc++fs
+  gtest_main
+)
 
 catkin_add_gtest(test_LinearAlgebra
   test/misc/testLinearAlgebra.cpp

@@ -13,53 +13,53 @@ Filter readSISOFilter(const boost::property_tree::ptree& pt, std::string filterN
   auto numRepeats = pt.get<size_t>(filterName + ".numRepeats");
   auto numPoles = pt.get<size_t>(filterName + ".numPoles");
   auto numZeros = pt.get<size_t>(filterName + ".numZeros");
-  auto DCGain = pt.get<double>(filterName + ".DCGain");
+  auto DCGain = pt.get<scalar_t>(filterName + ".DCGain");
   size_t numStates = numRepeats * numPoles;
   size_t numInputs = numRepeats;
   size_t numOutputs = numRepeats;
 
   // Setup Filter, convention a0*s^n + a1*s^(n-1) + ... + an
-  Eigen::VectorXd numerator(numZeros + 1);
+  vector_t numerator(numZeros + 1);
   numerator.setZero();
   numerator(0) = 1.0;
   for (size_t z = 0; z < numZeros; z++) {
-    auto zero = pt.get<double>(filterName + ".zeros." + "(" + std::to_string(z) + ")");
+    auto zero = pt.get<scalar_t>(filterName + ".zeros." + "(" + std::to_string(z) + ")");
     numerator.segment(1, z + 1) -= zero * numerator.segment(0, z + 1).eval();
   }
 
-  Eigen::VectorXd denominator(numPoles + 1);
+  vector_t denominator(numPoles + 1);
   denominator.setZero();
   denominator(0) = 1.0;
   for (size_t p = 0; p < numPoles; p++) {
-    auto pole = pt.get<double>(filterName + ".poles." + "(" + std::to_string(p) + ")");
+    auto pole = pt.get<scalar_t>(filterName + ".poles." + "(" + std::to_string(p) + ")");
     denominator.segment(1, p + 1) -= pole * denominator.segment(0, p + 1).eval();
   }
 
   // Scale
   if (DCGain > 0) {
-    double currentDCGain = numerator(numZeros) / denominator(numPoles);
+    scalar_t currentDCGain = numerator(numZeros) / denominator(numPoles);
     if (currentDCGain < 1e-6 || currentDCGain > 1e6) {
       throw std::runtime_error("Trouble rescaling transfer function, current DCGain: " + std::to_string(currentDCGain));
     }
-    double scaling = DCGain / currentDCGain;
+    scalar_t scaling = DCGain / currentDCGain;
     numerator *= scaling;
   }
 
   if (invert) {
-    Eigen::VectorXd temp;
+    vector_t temp;
     temp = numerator;
     numerator = denominator;
     denominator = temp;
   }
 
   // Convert to state space
-  Eigen::MatrixXd a, b, c, d;
+  matrix_t a, b, c, d;
   ocs2::tf2ss(numerator, denominator, a, b, c, d);
 
-  Eigen::MatrixXd A = Eigen::MatrixXd::Zero(numStates, numStates);
-  Eigen::MatrixXd B = Eigen::MatrixXd::Zero(numStates, numInputs);
-  Eigen::MatrixXd C = Eigen::MatrixXd::Zero(numInputs, numStates);
-  Eigen::MatrixXd D = Eigen::MatrixXd::Zero(numInputs, numInputs);
+  matrix_t A = matrix_t::Zero(numStates, numStates);
+  matrix_t B = matrix_t::Zero(numStates, numInputs);
+  matrix_t C = matrix_t::Zero(numInputs, numStates);
+  matrix_t D = matrix_t::Zero(numInputs, numInputs);
   size_t statecount = 0;
   for (size_t r = 0; r < numRepeats; r++) {
     A.block(statecount, statecount, numPoles, numPoles) = a;
@@ -74,7 +74,7 @@ Filter readSISOFilter(const boost::property_tree::ptree& pt, std::string filterN
 
 Filter readMIMOFilter(const boost::property_tree::ptree& pt, std::string filterName, bool invert) {
   auto numFilters = pt.get<size_t>(filterName + ".numFilters");
-  Eigen::MatrixXd A(0, 0), B(0, 0), C(0, 0), D(0, 0);
+  matrix_t A(0, 0), B(0, 0), C(0, 0), D(0, 0);
   if (numFilters > 0) {
     // Read the sisoFilters
     std::vector<Filter> sisoFilters;
@@ -91,10 +91,10 @@ Filter readMIMOFilter(const boost::property_tree::ptree& pt, std::string filterN
     }
 
     // Concatenate siso matrices into one MIMO filter
-    A = Eigen::MatrixXd::Zero(numStates, numStates);
-    B = Eigen::MatrixXd::Zero(numStates, numInputs);
-    C = Eigen::MatrixXd::Zero(numOutputs, numStates);
-    D = Eigen::MatrixXd::Zero(numOutputs, numInputs);
+    A = matrix_t::Zero(numStates, numStates);
+    B = matrix_t::Zero(numStates, numInputs);
+    C = matrix_t::Zero(numOutputs, numStates);
+    D = matrix_t::Zero(numOutputs, numInputs);
     size_t statecount(0), inputcount(0), outputcount(0);
     for (const auto& filt : sisoFilters) {
       A.block(statecount, statecount, filt.getNumStates(), filt.getNumStates()) = filt.getA();
@@ -115,7 +115,7 @@ std::shared_ptr<LoopshapingDefinition> load(const std::string& settingsFile) {
   boost::property_tree::read_info(settingsFile, pt);
   Filter r_filter = loopshaping_property_tree::readMIMOFilter(pt, "r_filter");
   Filter s_filter = loopshaping_property_tree::readMIMOFilter(pt, "s_inv_filter", true);
-  auto gamma = pt.get<double>("gamma");
+  auto gamma = pt.get<scalar_t>("gamma");
 
   if (r_filter.getNumOutputs() > 0 && s_filter.getNumOutputs() > 0) {
     throw std::runtime_error("[LoopshapingDefinition] using both r and s filter not implemented");

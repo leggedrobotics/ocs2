@@ -2,13 +2,10 @@
 // Created by ruben on 26.10.18.
 //
 
-#ifndef OCS2_LOOPSHAPINGDEFINITION_H
-#define OCS2_LOOPSHAPINGDEFINITION_H
+#pragma once
 
+#include <ocs2_core/Types.h>
 #include <ocs2_core/loopshaping/LoopshapingFilter.h>
-#include <Eigen/Dense>
-#include <memory>
-#include <vector>
 
 namespace ocs2 {
 
@@ -22,11 +19,9 @@ enum class LoopshapingType { outputpattern, inputpattern, eliminatepattern };
  */
 class LoopshapingDefinition {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  scalar_t gamma_;
 
-  double gamma_;
-
-  LoopshapingDefinition(LoopshapingType loopshapingType, Filter filter, double gamma = 0.9)
+  LoopshapingDefinition(LoopshapingType loopshapingType, Filter filter, scalar_t gamma = 0.9)
       : loopshapingType_(loopshapingType), filter_(std::move(filter)), gamma_(gamma) {}
 
   LoopshapingType getType() const { return loopshapingType_; };
@@ -34,13 +29,9 @@ class LoopshapingDefinition {
 
   void print() const { filter_.print(); };
 
-  template <typename DerivedStateVector, typename DerivedSystemState>
-  void getSystemState(const DerivedStateVector& state, DerivedSystemState& systemState) {
-    systemState = state.head(systemState.size());
-  };
+  void getSystemState(const vector_t& state, vector_t& systemState) { systemState = state.head(systemState.size()); };
 
-  template <typename DerivedStateVector, typename DerivedInputVector, typename DerivedSystemInput>
-  void getSystemInput(const DerivedStateVector& state, const DerivedInputVector& input, DerivedSystemInput& systemInput) {
+  void getSystemInput(const vector_t& state, const vector_t& input, vector_t& systemInput) {
     switch (loopshapingType_) {
       case LoopshapingType::outputpattern:
       case LoopshapingType::inputpattern:
@@ -54,13 +45,9 @@ class LoopshapingDefinition {
     }
   };
 
-  template <typename DerivedStateVector, typename DerivedFilterState>
-  void getFilterState(const DerivedStateVector& state, DerivedFilterState& filterState) {
-    filterState = state.tail(filter_.getNumStates());
-  };
+  void getFilterState(const vector_t& state, vector_t& filterState) { filterState = state.tail(filter_.getNumStates()); };
 
-  template <typename DerivedStateVector, typename DerivedInputVector, typename DerivedFilterInput>
-  void getFilteredInput(const DerivedStateVector& state, const DerivedInputVector& input, DerivedFilterInput& filterInput) {
+  void getFilteredInput(const vector_t& state, const vector_t& input, vector_t& filterInput) {
     switch (loopshapingType_) {
       case LoopshapingType::outputpattern:
         filterInput = filter_.getC() * state.tail(filter_.getNumStates()) + filter_.getD() * input.head(filter_.getNumInputs());
@@ -72,15 +59,12 @@ class LoopshapingDefinition {
     }
   };
 
-  template <typename DerivedSystemVector, typename DerivedFilterState, typename DerivedStateVector>
-  void concatenateSystemAndFilterState(const DerivedSystemVector& systemState, const DerivedFilterState& filterState,
-                                       DerivedStateVector& state) {
+  void concatenateSystemAndFilterState(const vector_t& systemState, const vector_t& filterState, vector_t& state) {
     state.head(systemState.size()) = systemState;
     state.tail(filter_.getNumStates()) = filterState;
   };
 
-  template <typename DerivedSystemInput, typename DerivedFilterInput, typename DerivedInput>
-  void concatenateSystemAndFilterInput(const DerivedSystemInput& systemInput, const DerivedFilterInput& filterInput, DerivedInput& input) {
+  void concatenateSystemAndFilterInput(const vector_t& systemInput, const vector_t& filterInput, vector_t& input) {
     switch (loopshapingType_) {
       case LoopshapingType::outputpattern:
         input.head(systemInput.size()) = systemInput;
@@ -95,8 +79,7 @@ class LoopshapingDefinition {
     }
   };
 
-  template <typename DerivedSystemInput, typename DerivedFilterState, typename DerivedFilterInput>
-  void getFilterEquilibrium(const DerivedSystemInput& systemInput, DerivedFilterState& filterState, DerivedFilterInput& filterInput) {
+  void getFilterEquilibrium(const vector_t& systemInput, vector_t& filterState, vector_t& filterInput) {
     switch (loopshapingType_) {
       case LoopshapingType::outputpattern:
         // When systemInput is the input to the filter
@@ -116,5 +99,3 @@ class LoopshapingDefinition {
 };
 
 }  // namespace ocs2
-
-#endif  // OCS2_LOOPSHAPINGDEFINITION_H

@@ -56,8 +56,8 @@
 // Logic
 #include <ocs2_core/logic/ModeSchedule.h>
 
-// // Loopshaping
-// #include <ocs2_core/loopshaping/Loopshaping.h>
+// Loopshaping
+#include <ocs2_core/loopshaping/Loopshaping.h>
 
 // Misc
 #include <ocs2_core/misc/Benchmark.h>

@@ -5,7 +5,7 @@
 #ifndef OCS2_LOOPSHAPINGCONSTRAINT_H
 #define OCS2_LOOPSHAPINGCONSTRAINT_H
 
-#include "ocs2_core/Dimensions.h"
+#include "ocs2_core/Types.h"
 #include "ocs2_core/constraint/ConstraintBase.h"
 #include "ocs2_core/loopshaping/LoopshapingDefinition.h"
 

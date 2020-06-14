@@ -5,7 +5,7 @@
 #ifndef OCS2_LOOPSHAPINGDYNAMICSDERIVATIVE_H
 #define OCS2_LOOPSHAPINGDYNAMICSDERIVATIVE_H
 
-#include "ocs2_core/Dimensions.h"
+#include "ocs2_core/Types.h"
 #include "ocs2_core/dynamics/DerivativesBase.h"
 #include "ocs2_core/loopshaping/LoopshapingDefinition.h"
 

@@ -114,7 +114,7 @@ std::shared_ptr<LoopshapingDefinition> load(const std::string& settingsFile) {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(settingsFile, pt);
   Filter r_filter = loopshaping_property_tree::readMIMOFilter(pt, "r_filter");
-  Filter s_filter = loopshaping_property_tree::readMIMOFilter(pt, "s_inv_filter", true);
+  Filter s_filter = loopshaping_property_tree::readMIMOFilter(pt, "s_inv_filter", /*invert=*/true);
   auto gamma = pt.get<scalar_t>("gamma");
 
   if (r_filter.getNumOutputs() > 0 && s_filter.getNumOutputs() > 0) {

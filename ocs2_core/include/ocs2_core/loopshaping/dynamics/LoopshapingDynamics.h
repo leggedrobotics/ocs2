@@ -5,7 +5,7 @@
 #ifndef OCS2_LOOPSHAPINGDYNAMICS_H
 #define OCS2_LOOPSHAPINGDYNAMICS_H
 
-#include "ocs2_core/Dimensions.h"
+#include "ocs2_core/Types.h"
 #include "ocs2_core/dynamics/ControlledSystemBase.h"
 #include "ocs2_core/loopshaping/LoopshapingDefinition.h"
 

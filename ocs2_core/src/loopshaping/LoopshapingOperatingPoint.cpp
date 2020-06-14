@@ -17,11 +17,10 @@ void LoopshapingOperatingPoint::getSystemOperatingTrajectories(const vector_t& i
     inputTrajectory.clear();
   }
 
-  vector_t initialSystemState;
   scalar_array_t systemTimeTrajectory;
   vector_array_t systemStateTrajectory;
   vector_array_t systemInputTrajectory;
-  loopshapingDefinition_->getSystemState(initialState, initialSystemState);
+  vector_t initialSystemState = loopshapingDefinition_->getSystemState(initialState);
 
   // Get system operating point
   systembase_->getSystemOperatingTrajectories(initialSystemState, startTime, finalTime, systemTimeTrajectory, systemStateTrajectory,
@@ -30,15 +29,11 @@ void LoopshapingOperatingPoint::getSystemOperatingTrajectories(const vector_t& i
   // Filter operating point
   vector_t equilibriumFilterState;
   vector_t equilibriumFilterInput;
-  vector_t state;
-  vector_t input;
   for (int k = 0; k < systemTimeTrajectory.size(); ++k) {
     loopshapingDefinition_->getFilterEquilibrium(systemInputTrajectory[k], equilibriumFilterState, equilibriumFilterInput);
-    loopshapingDefinition_->concatenateSystemAndFilterInput(systemInputTrajectory[k], equilibriumFilterInput, input);
-    loopshapingDefinition_->concatenateSystemAndFilterState(systemStateTrajectory[k], equilibriumFilterState, state);
     timeTrajectory.emplace_back(systemTimeTrajectory[k]);
-    inputTrajectory.emplace_back(input);
-    stateTrajectory.emplace_back(state);
+    inputTrajectory.emplace_back(loopshapingDefinition_->concatenateSystemAndFilterInput(systemInputTrajectory[k], equilibriumFilterInput));
+    stateTrajectory.emplace_back(loopshapingDefinition_->concatenateSystemAndFilterState(systemStateTrajectory[k], equilibriumFilterState));
   }
 }
 

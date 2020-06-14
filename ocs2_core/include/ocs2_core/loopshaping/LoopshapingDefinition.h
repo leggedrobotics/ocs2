@@ -19,79 +19,87 @@ enum class LoopshapingType { outputpattern, inputpattern, eliminatepattern };
  */
 class LoopshapingDefinition {
  public:
-  scalar_t gamma_;
-
   LoopshapingDefinition(LoopshapingType loopshapingType, Filter filter, scalar_t gamma = 0.9)
-      : loopshapingType_(loopshapingType), filter_(std::move(filter)), gamma_(gamma) {}
+      : gamma_(gamma), loopshapingType_(loopshapingType), filter_(std::move(filter)) {}
 
   LoopshapingType getType() const { return loopshapingType_; };
   const Filter& getInputFilter() const { return filter_; };
 
   void print() const { filter_.print(); };
 
-  void getSystemState(const vector_t& state, vector_t& systemState) { systemState = state.head(systemState.size()); };
+  vector_t getSystemState(const vector_t& state) const { return state.head(state.rows() - filter_.getNumStates()); };
 
-  void getSystemInput(const vector_t& state, const vector_t& input, vector_t& systemInput) {
+  vector_t getSystemInput(const vector_t& state, const vector_t& input) const {
     switch (loopshapingType_) {
-      case LoopshapingType::outputpattern:
+      case LoopshapingType::outputpattern: /* fall through */
       case LoopshapingType::inputpattern:
-        systemInput = input.head(systemInput.size());
-        break;
+        if (input.rows() > filter_.getNumInputs()) {
+          return input.head(input.rows() - filter_.getNumInputs());
+        } else {
+          return input;
+        }
       case LoopshapingType::eliminatepattern:
         // u = C*x + D*v
-        systemInput.noalias() = filter_.getC() * state.tail(filter_.getNumStates());
-        systemInput.noalias() += filter_.getD() * input;
-        break;
+        return filter_.getC() * state.tail(filter_.getNumStates()) + filter_.getD() * input;
+      default:
+        throw std::runtime_error("[LoopshapingDefinition::getSystemInput] invalid loopshaping type");
     }
   };
 
-  void getFilterState(const vector_t& state, vector_t& filterState) { filterState = state.tail(filter_.getNumStates()); };
+  vector_t getFilterState(const vector_t& state) const { return state.tail(filter_.getNumStates()); };
 
-  void getFilteredInput(const vector_t& state, const vector_t& input, vector_t& filterInput) {
+  vector_t getFilteredInput(const vector_t& state, const vector_t& input) const {
     switch (loopshapingType_) {
       case LoopshapingType::outputpattern:
-        filterInput = filter_.getC() * state.tail(filter_.getNumStates()) + filter_.getD() * input.head(filter_.getNumInputs());
-        break;
-      case LoopshapingType::inputpattern:
+        return filter_.getC() * state.tail(filter_.getNumStates()) + filter_.getD() * input.head(filter_.getNumInputs());
+      case LoopshapingType::inputpattern: /* fall through */
       case LoopshapingType::eliminatepattern:
-        filterInput = input.tail(filter_.getNumInputs());
-        break;
+        return input.tail(filter_.getNumInputs());
+      default:
+        throw std::runtime_error("[LoopshapingDefinition::getFilteredInput] invalid loopshaping type");
     }
   };
 
-  void concatenateSystemAndFilterState(const vector_t& systemState, const vector_t& filterState, vector_t& state) {
-    state.head(systemState.size()) = systemState;
-    state.tail(filter_.getNumStates()) = filterState;
+  vector_t concatenateSystemAndFilterState(const vector_t& systemState, const vector_t& filterState) const {
+    vector_t state(systemState.rows() + filter_.getNumStates());
+    state << systemState, filterState;
+    return state;
   };
 
-  void concatenateSystemAndFilterInput(const vector_t& systemInput, const vector_t& filterInput, vector_t& input) {
+  vector_t concatenateSystemAndFilterInput(const vector_t& systemInput, const vector_t& filterInput) const {
     switch (loopshapingType_) {
       case LoopshapingType::outputpattern:
-        input.head(systemInput.size()) = systemInput;
-        break;
-      case LoopshapingType::inputpattern:
-        input.head(systemInput.size()) = systemInput;
-        input.segment(systemInput.size(), filter_.getNumInputs()) = filterInput;
-        break;
+        return systemInput;
+      case LoopshapingType::inputpattern: {
+        vector_t input(systemInput.rows() + filterInput.rows());
+        input << systemInput, filterInput;
+        return input;
+      }
       case LoopshapingType::eliminatepattern:
-        input.head(filter_.getNumInputs()) = filterInput;
-        break;
+        return filterInput;
+      default:
+        throw std::runtime_error("[LoopshapingDefinition::concatenateSystemAndFilterInput] invalid loopshaping type");
     }
   };
 
-  void getFilterEquilibrium(const vector_t& systemInput, vector_t& filterState, vector_t& filterInput) {
+  void getFilterEquilibrium(const vector_t& systemInput, vector_t& filterState, vector_t& filterInput) const {
     switch (loopshapingType_) {
       case LoopshapingType::outputpattern:
         // When systemInput is the input to the filter
         filter_.findEquilibriumForInput(systemInput, filterState, filterInput);
         break;
-      case LoopshapingType::inputpattern:
+      case LoopshapingType::inputpattern: /* fall through */
       case LoopshapingType::eliminatepattern:
         // When systemInput is the output of the filter
         filter_.findEquilibriumForOutput(systemInput, filterState, filterInput);
         break;
+      default:
+        throw std::runtime_error("[LoopshapingDefinition::getFilterEquilibrium] invalid loopshaping type");
     }
   }
+
+ public:
+  scalar_t gamma_;
 
  private:
   Filter filter_;

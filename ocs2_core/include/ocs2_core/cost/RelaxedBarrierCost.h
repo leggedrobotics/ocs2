@@ -70,14 +70,14 @@ class RelaxedBarrierCost : public CostFunctionBase {
    *
    * @param Config : configuration object containing mu and delta
    */
-  RelaxedBarrierCost(Config config, size_t stateDim, size_t inputDim, size_t intermediateCostDim, size_t terminalCostDim);
+  RelaxedBarrierCost(Config config, size_t stateDim, size_t inputDim, size_t intermediateCostDim, size_t finalCostDim);
 
   /**
    * Constructior
    *
-   * @param Config : arrays with configuration objects containing mu and delta for each intermediate and terminal constraint
+   * @param Config : arrays with configuration objects containing mu and delta for each intermediate and final constraint
    */
-  explicit RelaxedBarrierCost(std::vector<Config> intermediateConfig, std::vector<Config> terminalConfig, size_t stateDim, size_t inputDim);
+  explicit RelaxedBarrierCost(std::vector<Config> intermediateConfig, std::vector<Config> finalConfig, size_t stateDim, size_t inputDim);
 
   /**
    * Copy constructor
@@ -101,29 +101,12 @@ class RelaxedBarrierCost : public CostFunctionBase {
   void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                   bool verbose = true);
 
-  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) final;
-
-  scalar_t getCost() override;
-
-  scalar_t getCostDerivativeTime() override;
-
-  vector_t getCostDerivativeState() override;
-
-  matrix_t getCostSecondDerivativeState() override;
-
-  vector_t getCostDerivativeInput() override;
-
-  matrix_t getCostSecondDerivativeInput() override;
-
-  matrix_t getCostDerivativeInputState() override;
-
-  scalar_t getTerminalCost() override;
-
-  scalar_t getTerminalCostDerivativeTime() override;
-
-  vector_t getTerminalCostDerivativeState() override;
-
-  matrix_t getTerminalCostSecondDerivativeState() override;
+  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
+  scalar_t finalCost(scalar_t t, const vector_t& x) override;
+  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
+  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
+  scalar_t costDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) override;
+  scalar_t finalCostDerivativeTime(scalar_t t, const vector_t& x) override;
 
  protected:
   /**
@@ -159,15 +142,15 @@ class RelaxedBarrierCost : public CostFunctionBase {
    * @param [in] parameters: parameter vector.
    * @param [out] costValue: costValues = g(x,t).
    */
-  virtual vector_t getTerminalParameters(scalar_t time) const;
+  virtual vector_t getFinalParameters(scalar_t time) const;
 
   /**
-   * Number of parameters for the terminal cost function.
+   * Number of parameters for the final cost function.
    * This number must be remain constant after the model libraries are created
    *
    * @return number of parameters
    */
-  virtual size_t getNumTerminalParameters() const;
+  virtual size_t getNumFinalParameters() const;
 
   /**
    * Interface method to the intermediate cost function. This method must be implemented by the derived class.
@@ -183,7 +166,7 @@ class RelaxedBarrierCost : public CostFunctionBase {
                                                const ad_vector_t& parameters) const = 0;
 
   /**
-   * Interface method to the terminal cost function. This method can be implemented by the derived class.
+   * Interface method to the final cost function. This method can be implemented by the derived class.
    *
    * @tparam scalar type. All the floating point operations should be with this type.
    * @param [in] time: time.
@@ -191,7 +174,7 @@ class RelaxedBarrierCost : public CostFunctionBase {
    * @param [in] parameters: parameter vector.
    * @return cost value.
    */
-  virtual ad_vector_t terminalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const;
+  virtual ad_vector_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const;
 
  private:
   /**
@@ -217,30 +200,26 @@ class RelaxedBarrierCost : public CostFunctionBase {
   scalar_t getPenaltyFunctionDerivative(scalar_t h, const Config& config) const;
   scalar_t getPenaltyFunctionSecondDerivative(scalar_t h, const Config& config) const;
 
-  std::unique_ptr<CppAdInterface> terminalADInterfacePtr_;
+  std::unique_ptr<CppAdInterface> finalADInterfacePtr_;
   std::unique_ptr<CppAdInterface> intermediateADInterfacePtr_;
 
   size_t stateDim_;
   size_t inputDim_;
 
   // Intermediate cost
-  bool intermediateCostValuesComputed_;
   vector_t intermediateCostValues_;
-  bool intermediateDerivativesComputed_;
   matrix_t intermediateJacobian_;
   vector_t intermediateParameters_;
   vector_t tapedTimeStateInput_;
 
   // Final cost
-  bool terminalCostValuesComputed_;
-  vector_t terminalCostValues_;
-  bool terminalDerivativesComputed_;
-  matrix_t terminalJacobian_;
-  vector_t terminalParameters_;
+  vector_t finalCostValues_;
+  matrix_t finalJacobian_;
+  vector_t finalParameters_;
   vector_t tapedTimeState_;
 
   std::vector<Config> intermediateConfig_;
-  std::vector<Config> terminalConfig_;
+  std::vector<Config> finalConfig_;
 };
 
 }  // namespace ocs2

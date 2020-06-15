@@ -29,31 +29,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <memory>
-
 #include "ocs2_core/Types.h"
 #include "ocs2_core/cost/CostDesiredTrajectories.h"
 
 namespace ocs2 {
 
 /**
- * Cost Function Base.
+ * Cost Function base class.
  */
 class CostFunctionBase {
  public:
-  /**
-   * Constructor
-   */
-  CostFunctionBase();
+  /** Constructor */
+  CostFunctionBase() = default;
 
-  /**
-   * Copy constructor
-   */
-  CostFunctionBase(const CostFunctionBase& rhs);
+  /** Copy constructor */
+  CostFunctionBase(const CostFunctionBase& rhs) = default;
 
-  /**
-   * Default destructor
-   */
+  /** Default destructor */
   virtual ~CostFunctionBase() = default;
 
   /**
@@ -63,117 +55,29 @@ class CostFunctionBase {
    */
   virtual void setCostDesiredTrajectoriesPtr(const CostDesiredTrajectories* costDesiredTrajectoriesPtr);
 
-  /**
-   * Returns pointer to the class.
-   *
-   * @return A raw pointer to the class.
-   */
+  /** Clone */
   virtual CostFunctionBase* clone() const = 0;
 
-  /**
-   * Sets the current time, state, and control input
-   *
-   * @param [in] t: Current time
-   * @param [in] x: Current state vector
-   * @param [in] u: Current input vector
-   */
-  virtual void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u);
-
   /** Evaluate the cost */
-  scalar_t getCost(scalar_t t, const vector_t& x, const vector_t& u);
+  virtual scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) = 0;
 
-  /** Gets the cost approximation */
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u);
+  /** Evaluate the final cost */
+  virtual scalar_t finalCost(scalar_t t, const vector_t& x) = 0;
 
-  /** Evaluate the terminal cost */
-  scalar_t getTerminalCost(scalar_t t, const vector_t& x);
+  /** Evaluate the cost quadratic approximation */
+  virtual ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) = 0;
 
-  /** Gets the terminal cost approximation */
-  ScalarFunctionQuadraticApproximation getTerminalQuadraticApproximation(scalar_t t, const vector_t& x);
+  /** Evaluate the final cost quadratic approximation */
+  virtual ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) = 0;
 
-  /**
-   * Get the intermediate cost.
-   *
-   * @param [out] L: The intermediate cost value.
-   */
-  virtual scalar_t getCost() = 0;
+  /** Time derivative of the intermediate cost */
+  virtual scalar_t costDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u);
 
-  /**
-   * Get the time derivative of the intermediate cost.
-   *
-   * @return The time derivative of intermediate cost.
-   */
-  virtual scalar_t getCostDerivativeTime();
-
-  /**
-   * Get the state derivative of the intermediate cost.
-   *
-   * @return First order derivative of the intermediate cost with respect to state vector, size \f$ n_x \f$.
-   */
-  virtual vector_t getCostDerivativeState() = 0;
-
-  /**
-   * Get state second order derivative of the intermediate cost.
-   *
-   * @return Second order derivative of the intermediate cost with respect to state vector, size \f$ n_x * n_x \f$.
-   */
-  virtual matrix_t getCostSecondDerivativeState() = 0;
-
-  /**
-   * Get control input derivative of the intermediate cost.
-   *
-   * @return First order derivative of the intermediate cost with respect to input vector, size \f$ n_u \f$.
-   */
-  virtual vector_t getCostDerivativeInput() = 0;
-
-  /**
-   * Get control input second derivative of the intermediate cost.
-   *
-   * @return Second order derivative of the intermediate cost with respect to input vector, size \f$ n_u * n_u \f$.
-   */
-  virtual matrix_t getCostSecondDerivativeInput() = 0;
-
-  /**
-   * Get the input-state derivative of the intermediate cost.
-   *
-   * @return Second order derivative of the intermediate cost with respect to input vector and state, size \f$ n_u * n_x \f$.
-   */
-  virtual matrix_t getCostDerivativeInputState() = 0;
-
-  /**
-   * Get the terminal cost.
-   *
-   * @return The final cost value.
-   */
-  virtual scalar_t getTerminalCost() = 0;
-
-  /**
-   * Get the time derivative of terminal cost.
-   *
-   * @return The time derivative of terminal cost.
-   */
-  virtual scalar_t getTerminalCostDerivativeTime();
-
-  /**
-   * Get the terminal cost state derivative of the terminal cost.
-   *
-   * @return First order final cost derivative with respect to state vector, size \f$ n_x \f$.
-   */
-  virtual vector_t getTerminalCostDerivativeState() = 0;
-
-  /**
-   * Get the terminal cost state second derivative of the terminal cost.
-   *
-   * @return Second order final cost derivative with respect to state vector, size \f$ n_x * n_x \f$.
-   */
-  virtual matrix_t getTerminalCostSecondDerivativeState() = 0;
+  /** Time derivative of final cost */
+  virtual scalar_t finalCostDerivativeTime(scalar_t t, const vector_t& x);
 
  protected:
-  const CostDesiredTrajectories* costDesiredTrajectoriesPtr_;
-
-  scalar_t t_;
-  vector_t x_;
-  vector_t u_;
+  const CostDesiredTrajectories* costDesiredTrajectoriesPtr_ = nullptr;
 };
 
 }  // namespace ocs2

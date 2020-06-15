@@ -73,7 +73,6 @@ void CostDesiredTrajectories::swap(CostDesiredTrajectories& other) {
   desiredTimeTrajectory_.swap(other.desiredTimeTrajectory_);
   desiredStateTrajectory_.swap(other.desiredStateTrajectory_);
   desiredInputTrajectory_.swap(other.desiredInputTrajectory_);
-  // std::swap()
 }
 
 /******************************************************************************************************/

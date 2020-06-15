@@ -56,7 +56,7 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
    * Default constructor
    *
    */
-  QuadraticGaussNewtonCostBaseAD(size_t stateDim, size_t inputDim, size_t intermediateCostDim, size_t terminalCostDim);
+  QuadraticGaussNewtonCostBaseAD(size_t stateDim, size_t inputDim, size_t intermediateCostDim, size_t finalCostDim);
 
   /**
    * Copy constructor
@@ -80,29 +80,16 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
   void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                   bool verbose = true);
 
-  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) override;
+  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
+  scalar_t finalCost(scalar_t t, const vector_t& x) override;
+  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
+  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
 
-  scalar_t getCost() override;
+  /** @note: Requires cost quadratic approximation to be called before */
+  scalar_t costDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) override;
 
-  scalar_t getCostDerivativeTime() override;
-
-  vector_t getCostDerivativeState() override;
-
-  matrix_t getCostSecondDerivativeState() override;
-
-  vector_t getCostDerivativeInput() override;
-
-  matrix_t getCostSecondDerivativeInput() override;
-
-  matrix_t getCostDerivativeInputState() override;
-
-  scalar_t getTerminalCost() override;
-
-  scalar_t getTerminalCostDerivativeTime() override;
-
-  vector_t getTerminalCostDerivativeState() override;
-
-  matrix_t getTerminalCostSecondDerivativeState() override;
+  /** @note: Requires final cost quadratic approximation to be called before */
+  scalar_t finalCostDerivativeTime(scalar_t t, const vector_t& x) override;
 
  protected:
   /**
@@ -122,20 +109,20 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
   virtual size_t getNumIntermediateParameters() const { return 0; }
 
   /**
-   * Gets a user-defined cost parameters, applied to the terminal costs
+   * Gets a user-defined cost parameters, applied to the final costs
    *
    * @param [in] time: Current time.
    * @return The cost function parameters at a certain time
    */
-  virtual vector_t getTerminalParameters(scalar_t time) const { return vector_t(0); }
+  virtual vector_t getFinalParameters(scalar_t time) const { return vector_t(0); }
 
   /**
-   * Number of parameters for the terminal cost function.
+   * Number of parameters for the final cost function.
    * This number must be remain constant after the model libraries are created
    *
    * @return number of parameters
    */
-  virtual size_t getNumTerminalParameters() const { return 0; }
+  virtual size_t getNumFinalParameters() const { return 0; }
 
   /**
    * Interface method to the cost term f such that the intermediate cost is
@@ -163,9 +150,8 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
    * @param [in] parameters: parameter vector.
    * @param [out] costValue: costValues = g(x,t).
    */
-  virtual void terminalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters,
-                                    ad_vector_t& costValues) const {
-    costValues = ad_vector_t::Zero(terminalCostDim_);
+  virtual void finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters, ad_vector_t& costValues) const {
+    costValues = ad_vector_t::Zero(finalCostDim_);
   }
 
  private:
@@ -191,26 +177,22 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
   size_t stateDim_;
   size_t inputDim_;
   size_t intermediateCostDim_;
-  size_t terminalCostDim_;
+  size_t finalCostDim_;
 
-  std::unique_ptr<CppAdInterface> terminalADInterfacePtr_;
+  std::unique_ptr<CppAdInterface> finalADInterfacePtr_;
   std::unique_ptr<CppAdInterface> intermediateADInterfacePtr_;
 
   // Intermediate cost
-  bool intermediateCostValuesComputed_;
   vector_t intermediateCostValues_;
-  bool intermediateDerivativesComputed_;
   vector_t intermediateParameters_;
   vector_t tapedTimeStateInput_;
   matrix_t intermediateJacobian_;
 
   // Final cost
-  bool terminalCostValuesComputed_;
-  vector_t terminalCostValues_;
-  bool terminalDerivativesComputed_;
-  vector_t terminalParameters_;
+  vector_t finalCostValues_;
+  vector_t finalParameters_;
   vector_t tapedTimeState_;
-  matrix_t terminalJacobian_;
+  matrix_t finalJacobian_;
 };
 
 }  // namespace ocs2

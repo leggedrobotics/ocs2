@@ -65,13 +65,7 @@ ControllerBase* ControlledSystemBase::controllerPtr() const {
 vector_t ControlledSystemBase::computeFlowMap(scalar_t t, const vector_t& x) {
   assert(controllerPtr_ != nullptr);
   vector_t u = controllerPtr_->computeInput(t, x);
-  ModelDataBase& modelData = this->modelDataEmplaceBack();
-  modelData.time_ = t;
-  modelData.stateDim_ = x.rows();
-  modelData.inputDim_ = u.rows();
-
-  modelData.dynamics_ = computeFlowMap(t, x, u);
-  return modelData.dynamics_;
+  return computeFlowMap(t, x, u);
 }
 
 }  // namespace ocs2

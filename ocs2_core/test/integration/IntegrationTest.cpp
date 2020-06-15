@@ -29,7 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include <fstream>
 #include <memory>
 
 #include <ocs2_core/control/LinearController.h>
@@ -112,52 +111,6 @@ TEST(IntegrationTest, SecondOrderSystem_AdamsBashfortMoulton) {
 }
 
 #endif
-
-TEST(IntegrationTest, model_data_test) {
-  const size_t stateDim = 2;
-  const size_t inputDim = 1;
-
-  matrix_t A(2, 2);
-  A << -2, -1,  // clang-format off
-        1,  0;  // clang-format on
-  matrix_t B(2, 1);
-  B << 1, 0;
-
-  auto sys = std::shared_ptr<ControlledSystemBase>(new LinearSystemDynamics(A, B));
-
-  const scalar_t t0 = 0.0;
-  const scalar_t t1 = 10.0;
-  vector_t x0 = vector_t::Zero(2);
-  scalar_array_t cntTimeStamp{0, 10};
-  vector_array_t uff(2, vector_t::Ones(1));
-  matrix_array_t k(2, matrix_t::Zero(1, 2));
-
-  auto controller = std::unique_ptr<LinearController>(new LinearController(stateDim, inputDim, cntTimeStamp, uff, k));
-  sys->setController(controller.get());
-
-  auto integrator = newIntegrator(IntegratorType::ODE45);
-
-  scalar_array_t timeTrajectory;
-  vector_array_t stateTrajectory;
-  std::vector<ModelDataBase> modelDataTrajectory;
-
-  // integrate adaptive
-  sys->resetNumFunctionCalls();
-
-  Observer observer(&stateTrajectory, &timeTrajectory, &modelDataTrajectory);
-  integrator->integrateAdaptive(*sys, observer, x0, 0.0, 10.0);
-
-  vector_t dynamics = sys->computeFlowMap(timeTrajectory.front(), x0);
-  EXPECT_TRUE(modelDataTrajectory.front().dynamics_.isApprox(dynamics, 1e-3));
-
-  EXPECT_EQ(modelDataTrajectory.size(), stateTrajectory.size())
-      << "MESSAGE: ModelData trajectory size is not equal to state trajectory size!";
-
-  for (int i = 0; i < stateTrajectory.size(); i++) {
-    ASSERT_FLOAT_EQ(modelDataTrajectory[i].time_, timeTrajectory[i])
-        << "MESSAGE: ModelData trajectory time does not match the time trajectory!";
-  }
-}
 
 TEST(IntegrationTest, integratorType_from_string) {
   IntegratorType type = integrator_type::fromString("ODE45");

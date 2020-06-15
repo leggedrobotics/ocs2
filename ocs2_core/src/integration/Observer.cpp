@@ -28,47 +28,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include <ocs2_core/integration/Observer.h>
-#include <ocs2_core/misc/Numerics.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-Observer::Observer(vector_array_t* stateTrajectoryPtr /*= nullptr*/, scalar_array_t* timeTrajectoryPtr /*= nullptr*/,
-                   std::vector<ModelDataBase>* modelDataTrajectoryPtr /*= nullptr*/)
-    : timeTrajectoryPtr_(timeTrajectoryPtr), stateTrajectoryPtr_(stateTrajectoryPtr), modelDataTrajectoryPtr_(modelDataTrajectoryPtr) {}
+Observer::Observer(vector_array_t* stateTrajectoryPtr /*= nullptr*/, scalar_array_t* timeTrajectoryPtr /*= nullptr*/)
+    : timeTrajectoryPtr_(timeTrajectoryPtr), stateTrajectoryPtr_(stateTrajectoryPtr) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void Observer::observe(OdeBase& system, const vector_t& state, const scalar_t time) {
+void Observer::observe(const vector_t& state, scalar_t time) {
   // Store data
   if (stateTrajectoryPtr_ != nullptr) {
     stateTrajectoryPtr_->push_back(state);
   }
   if (timeTrajectoryPtr_ != nullptr) {
     timeTrajectoryPtr_->push_back(time);
-  }
-
-  // extract cached model data
-  if (modelDataTrajectoryPtr_) {
-    // check for initial call
-    if (system.endModelDataIterator() == system.beginModelDataIterator()) {
-      // since the flow map has not been called so far, call it once.
-      // Note: This is a workaround for boost::odeint() as it calls observer() before flowMap()
-      system.computeFlowMap(time, state);
-    }
-    // get model data from current time step, search starting from most recent cache entry
-    std::vector<ModelDataBase>::iterator modelData_i = system.endModelDataIterator();
-    while (modelData_i != system.beginModelDataIterator()) {
-      --modelData_i;
-      if (numerics::almost_eq(modelData_i->time_, time)) {
-        modelDataTrajectoryPtr_->emplace_back(std::move(*modelData_i));
-        break;
-      }
-    }
-    system.clearModelDataArray();
   }
 }
 

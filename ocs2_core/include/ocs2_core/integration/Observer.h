@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,14 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Dense>
-#include <Eigen/StdVector>
-#include <string>
-#include <vector>
-
-#include "ocs2_core/Types.h"
-#include "ocs2_core/integration/OdeBase.h"
-#include "ocs2_core/model_data/ModelDataBase.h"
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 
@@ -50,10 +43,8 @@ class Observer {
    *
    * @param stateTrajectoryPtr: A pinter to an state trajectory container to store resulting state trajectory.
    * @param timeTrajectoryPtr: A pinter to an time trajectory container to store resulting time trajectory.
-   * @param modelDataTrajectoryPtr: A pinter to an model data trajectory container to store resulting model data trajectory.
    */
-  explicit Observer(vector_array_t* stateTrajectoryPtr = nullptr, scalar_array_t* timeTrajectoryPtr = nullptr,
-                    std::vector<ModelDataBase>* modelDataTrajectoryPtr = nullptr);
+  explicit Observer(vector_array_t* stateTrajectoryPtr = nullptr, scalar_array_t* timeTrajectoryPtr = nullptr);
 
   /**
    * Default destructor.
@@ -62,16 +53,14 @@ class Observer {
 
   /**
    * Observe function to retrieve the variable of interest.
-   * @param [in] system: system dynamics object.
    * @param [in] state: Current state.
    * @param [in] time: Current time.
    */
-  void observe(OdeBase& system, const vector_t& state, scalar_t time);
+  void observe(const vector_t& state, scalar_t time);
 
  private:
   scalar_array_t* timeTrajectoryPtr_;
   vector_array_t* stateTrajectoryPtr_;
-  std::vector<ModelDataBase>* modelDataTrajectoryPtr_;
 };
 
 }  // namespace ocs2

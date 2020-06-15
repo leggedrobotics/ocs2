@@ -39,7 +39,7 @@ SwitchedModelCostBase* SwitchedModelCostBase::clone() const {
   return new SwitchedModelCostBase(*this);
 }
 
-/******************************************************************************************************/
+/******************************************************************************************************
 /******************************************************************************************************/
 /******************************************************************************************************/
 void SwitchedModelCostBase::setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
@@ -47,11 +47,15 @@ void SwitchedModelCostBase::setCurrentStateAndControl(const scalar_t& t, const s
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(t);
 
   dynamic_vector_t xNominal = state_vector_t::Zero();
+  dynamic_vector_t uNominal;
   if (BASE::costDesiredTrajectoriesPtr_ != nullptr) {
     BASE::costDesiredTrajectoriesPtr_->getDesiredState(t, xNominal);
+    BASE::costDesiredTrajectoriesPtr_->getDesiredInput(t, uNominal);
   }
-  dynamic_vector_t uNominal;
-  inputFromContactFlags(contactFlags, xNominal, uNominal);
+  // If the input has non-zero values, don't overwrite it.
+  if (uNominal.isZero()) {
+    inputFromContactFlags(contactFlags, xNominal, uNominal);
+  };
 
   BASE::setCurrentStateAndControl(t, x, u, xNominal, uNominal, xNominal);
 }

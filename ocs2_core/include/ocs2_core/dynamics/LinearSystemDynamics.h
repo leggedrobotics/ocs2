@@ -45,17 +45,11 @@ class LinearSystemDynamics : public SystemDynamicsBase {
 
   vector_t computeJumpMap(scalar_t t, const vector_t& x) override;
 
-  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) override;
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
 
-  matrix_t getFlowMapDerivativeState() override;
+  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
 
-  matrix_t getFlowMapDerivativeInput() override;
-
-  matrix_t getJumpMapDerivativeState() override;
-
-  matrix_t getJumpMapDerivativeInput() override;
-
- private:
+ protected:
   matrix_t A_;
   matrix_t B_;
   matrix_t G_;

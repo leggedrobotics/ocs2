@@ -41,10 +41,8 @@ namespace ocs2 {
  */
 class ControlledSystemBase : public OdeBase {
  public:
-  /**
-   * Constructor.
-   */
-  ControlledSystemBase();
+  /** Default constructor. */
+  ControlledSystemBase() = default;
 
   /**
    * Copy constructor.
@@ -102,7 +100,7 @@ class ControlledSystemBase : public OdeBase {
   virtual ControlledSystemBase* clone() const = 0;
 
  private:
-  ControllerBase* controllerPtr_;  //! pointer to controller
+  ControllerBase* controllerPtr_ = nullptr;  //! pointer to controller
 };
 
 }  // namespace ocs2

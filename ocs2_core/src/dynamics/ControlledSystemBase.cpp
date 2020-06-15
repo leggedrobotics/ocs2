@@ -34,11 +34,6 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ControlledSystemBase::ControlledSystemBase() : controllerPtr_(nullptr) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 ControlledSystemBase::ControlledSystemBase(const ControlledSystemBase& rhs) {
   setController(rhs.controllerPtr());
 }
@@ -68,6 +63,7 @@ ControllerBase* ControlledSystemBase::controllerPtr() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t ControlledSystemBase::computeFlowMap(scalar_t t, const vector_t& x) {
+  assert(controllerPtr_ != nullptr);
   vector_t u = controllerPtr_->computeInput(t, x);
   ModelDataBase& modelData = this->modelDataEmplaceBack();
   modelData.time_ = t;

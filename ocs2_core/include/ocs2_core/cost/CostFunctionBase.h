@@ -79,6 +79,18 @@ class CostFunctionBase {
    */
   virtual void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u);
 
+  /** Evaluate the cost */
+  scalar_t getCost(scalar_t t, const vector_t& x, const vector_t& u);
+
+  /** Gets the cost approximation */
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u);
+
+  /** Evaluate the terminal cost */
+  scalar_t getTerminalCost(scalar_t t, const vector_t& x);
+
+  /** Gets the terminal cost approximation */
+  ScalarFunctionQuadraticApproximation getTerminalQuadraticApproximation(scalar_t t, const vector_t& x);
+
   /**
    * Get the intermediate cost.
    *

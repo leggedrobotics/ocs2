@@ -61,6 +61,49 @@ void CostFunctionBase::setCurrentStateAndControl(scalar_t t, const vector_t& x, 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+scalar_t CostFunctionBase::getCost(scalar_t t, const vector_t& x, const vector_t& u) {
+  setCurrentStateAndControl(t, x, u);
+  return getCost();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation CostFunctionBase::getQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  ScalarFunctionQuadraticApproximation quadraticCost;
+  setCurrentStateAndControl(t, x, u);
+  quadraticCost.dfdxx = getCostSecondDerivativeState();
+  quadraticCost.dfdux = getCostDerivativeInputState();
+  quadraticCost.dfduu = getCostSecondDerivativeInput();
+  quadraticCost.dfdx = getCostDerivativeState();
+  quadraticCost.dfdu = getCostDerivativeInput();
+  quadraticCost.f = getCost();
+  return quadraticCost;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t CostFunctionBase::getTerminalCost(scalar_t t, const vector_t& x) {
+  setCurrentStateAndControl(t, x, vector_t());
+  return getTerminalCost();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation CostFunctionBase::getTerminalQuadraticApproximation(scalar_t t, const vector_t& x) {
+  ScalarFunctionQuadraticApproximation quadraticCost;
+  setCurrentStateAndControl(t, x, vector_t());
+  quadraticCost.dfdxx = getTerminalCostSecondDerivativeState();
+  quadraticCost.dfdx = getTerminalCostDerivativeState();
+  quadraticCost.f = getTerminalCost();
+  return quadraticCost;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 scalar_t CostFunctionBase::getCostDerivativeTime() {
   return 0;
 }

@@ -31,44 +31,68 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
-#include <ocs2_core/dynamics/DerivativesBase.h>
 
 namespace ocs2 {
 
 /**
- * The system dynamics interface.
+ * The system dynamics and linearization class.
  * The linearized system flow map is defined as: \n
  * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$ \n
  * The linearized system jump map is defined as: \n
  * \f$ x^+ = G \delta x + H \delta u \f$ \n
  */
-class SystemDynamicsBase : public DerivativesBase, public ControlledSystemBase {
+class SystemDynamicsBase : public ControlledSystemBase {
  public:
-  /**
-   * Default constructor
-   */
-  SystemDynamicsBase(size_t stateDim_, size_t inputDim_);
+  /** Default Constructor */
+  SystemDynamicsBase() = default;
 
-  /**
-   * Copy constructor
-   */
+  /**Copy constructor */
   SystemDynamicsBase(const SystemDynamicsBase& rhs) = default;
 
-  /**
-   * Default destructor
-   */
+  /** Default destructor */
   ~SystemDynamicsBase() override = default;
 
-  /**
-   * Returns pointer to the class.
-   *
-   * @return A raw pointer to the class.
-   */
+  /** Clone. */
   virtual SystemDynamicsBase* clone() const = 0;
 
- protected:
-  size_t stateDim_;
-  size_t inputDim_;
+  /** Computes the linear approximation */
+  virtual VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) = 0;
+
+  /** Computes the jump map linear approximation */
+  virtual VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u);
+
+  /** Computes the guard surfaces linear approximation */
+  virtual VectorFunctionLinearApproximation guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u);
+
+  /**
+   * Get partial time derivative of the system flow map.
+   * \f$ \frac{\partial f}{\partial t}  \f$.
+   *
+   * @return \f$ \frac{\partial f}{\partial t} \f$ matrix, size \f$ n_x \f$.
+   */
+  virtual vector_t flowMapDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u);
+
+  /**
+   * Get partial time derivative of the system jump map.
+   * \f$ \frac{\partial g}{\partial t}  \f$.
+   *
+   * @return \f$ \frac{\partial g}{\partial t} \f$ matrix.
+   */
+  virtual vector_t jumpMapDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u);
+
+  /**
+   * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
+   *
+   * @return Derivative of the guard surfaces w.r.t. time.
+   */
+  virtual vector_t guardSurfacesDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u);
+
+  /**
+   * Get at a given operating point the covariance of the dynamics.
+   *
+   * @return The covariance of the dynamics.
+   */
+  virtual matrix_t dynamicsCovariance(scalar_t t, const vector_t& x, const vector_t& u);
 };
 
 }  // namespace ocs2

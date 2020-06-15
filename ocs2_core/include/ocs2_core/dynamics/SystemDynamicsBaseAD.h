@@ -76,21 +76,20 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
 
   vector_t computeGuardSurfaces(scalar_t time, const vector_t& state) final;
 
-  void setCurrentStateAndControl(scalar_t time, const vector_t& state, const vector_t& input) final;
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final;
 
-  vector_t getFlowMapDerivativeTime() final;
+  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final;
 
-  matrix_t getFlowMapDerivativeState() final;
+  VectorFunctionLinearApproximation guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final;
 
-  matrix_t getFlowMapDerivativeInput() final;
+  /** @note: Requires linear approximation to be called before */
+  vector_t flowMapDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) final;
 
-  vector_t getJumpMapDerivativeTime() final;
+  /** @note: Requires jump map linear approximation to be called before */
+  vector_t jumpMapDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) final;
 
-  matrix_t getJumpMapDerivativeState() final;
-
-  vector_t getGuardSurfacesDerivativeTime() final;
-
-  matrix_t getGuardSurfacesDerivativeState() final;
+  /** @note: Requires guard surfaces linear approximation to be called before */
+  vector_t guardSurfacesDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) final;
 
  protected:
   /**
@@ -141,6 +140,9 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
    * @param [in] verbose: display information
    */
   void loadModelsIfAvailable(bool verbose);
+
+  size_t stateDim_;
+  size_t inputDim_;
 
   std::unique_ptr<CppAdInterface> flowMapADInterfacePtr_;
   std::unique_ptr<CppAdInterface> jumpMapADInterfacePtr_;

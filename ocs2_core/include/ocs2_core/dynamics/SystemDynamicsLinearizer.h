@@ -34,7 +34,7 @@
 #include <ocs2_core/Types.h>
 #include <ocs2_core/automatic_differentiation/FiniteDifferenceMethods.h>
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
-#include <ocs2_core/dynamics/DerivativesBase.h>
+#include <ocs2_core/dynamics/SystemDynamicsBase.h>
 
 namespace ocs2 {
 
@@ -43,58 +43,30 @@ namespace ocs2 {
  *
  * - Linearized system:   \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$ \n
  */
-class SystemDynamicsLinearizer : public DerivativesBase {
+class SystemDynamicsLinearizer : public SystemDynamicsBase {
  public:
-  /**
-   * Constructor
-   */
+  /** Constructor */
   SystemDynamicsLinearizer(std::shared_ptr<ControlledSystemBase> nonlinearSystemPtr, bool doubleSidedDerivative = true,
-                           bool isSecondOrderSystem = false);
+                           bool isSecondOrderSystem = false, scalar_t eps = Eigen::NumTraits<scalar_t>::epsilon());
 
-  /**
-   * Copy constructor
-   *
-   * @param [in] other: Instance of the other class.
-   */
+  /** Copy constructor */
   SystemDynamicsLinearizer(const SystemDynamicsLinearizer& other);
 
-  /**
-   * Default destructor
-   */
+  /** Default destructor */
   ~SystemDynamicsLinearizer() override = default;
 
-  /**
-   * Copy assignment operator
-   */
-  SystemDynamicsLinearizer& operator=(const SystemDynamicsLinearizer& other);
-
-  /**
-   * The A matrix at a given operating point for the linearized system,
-   * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
-   *
-   * @return \f$ A(t) \f$ matrix.
-   */
-  matrix_t getFlowMapDerivativeState() override;
-
-  /**
-   * The B matrix at a given operating point for the linearized system,
-   * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$.
-   *
-   * @return \f$ B(t) \f$ matrix.
-   */
-  matrix_t getFlowMapDerivativeInput() override;
-
-  /**
-   * Returns pointer to the class.
-   *
-   * @return A raw pointer to the class.
-   */
+  /** Clone */
   SystemDynamicsLinearizer* clone() const override;
+
+  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) override;
+
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
 
  private:
   std::shared_ptr<ControlledSystemBase> controlledSystemPtr_;
   bool doubleSidedDerivative_;
   bool isSecondOrderSystem_;
+  scalar_t eps_;
 };
 
 }  // namespace ocs2

@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <functional>
 #include <iostream>
 
+#include "../include/testTools.h"
 #include "LinearSystemDynamicsAD.h"
 #include "ocs2_core/dynamics/LinearSystemDynamics.h"
 
@@ -66,46 +67,35 @@ class testCppADCG_dynamicsFixture : public ::testing::Test {
 /******************************************************************************/
 /******************************************************************************/
 /***************************************************************************** */
-void checkSystemDynamics(const size_t numTests, DerivativesBase* const linearSystem1, DerivativesBase* const linearSystem2, bool& success,
-                         size_t stateDim_, size_t inputDim_) {
-  success = true;
-
-  const scalar_t precision = 1e-9;
-
+void checkSystemDynamics(const size_t numTests, SystemDynamicsBase* const linearSystem1, SystemDynamicsBase* const linearSystem2,
+                         bool& success, size_t stateDim_, size_t inputDim_) {
   vector_t x;
   vector_t u;
+  const scalar_t t = 0;
+  const scalar_t precision = 1e-9;
 
-  for (size_t it = 0; it < numTests; it++) {
+  success = true;
+  for (size_t it = 0; it < numTests && success; it++) {
     x.setRandom(stateDim_);
     u.setRandom(inputDim_);
 
-    linearSystem1->setCurrentStateAndControl(0.0, x, u);
-    linearSystem2->setCurrentStateAndControl(0.0, x, u);
+    VectorFunctionLinearApproximation f1 = linearSystem1->linearApproximation(t, x, u);
+    VectorFunctionLinearApproximation f2 = linearSystem2->linearApproximation(t, x, u);
 
-    matrix_t A = linearSystem1->getFlowMapDerivativeState();
-    matrix_t ad_A = linearSystem2->getFlowMapDerivativeState();
-    if (!A.isApprox(ad_A, precision)) {
-      std::cout << "A:    " << A.transpose() << std::endl;
-      std::cout << "al_A: " << ad_A.transpose() << std::endl;
+    if (!isApprox(f1, f2, precision)) {
+      std::cout << "systemDynamic1:\n" << f1 << std::endl;
+      std::cout << "systemDynamic2:\n" << f2 << std::endl;
       success = false;
     }
 
-    matrix_t B = linearSystem1->getFlowMapDerivativeInput();
-    matrix_t ad_B = linearSystem2->getFlowMapDerivativeInput();
-    if (!B.isApprox(ad_B, precision)) {
-      std::cout << "B:    " << B.transpose() << std::endl;
-      std::cout << "al_B: " << ad_B.transpose() << std::endl;
+    VectorFunctionLinearApproximation g1 = linearSystem1->jumpMapLinearApproximation(t, x, u);
+    VectorFunctionLinearApproximation g2 = linearSystem2->jumpMapLinearApproximation(t, x, u);
+    if (!isApprox(g1, g2, precision)) {
+      std::cout << "jumpMap1:\n" << g1.dfdx << std::endl;
+      std::cout << "jumpMap2:\n" << g2.dfdx << std::endl;
       success = false;
     }
-
-    matrix_t G = linearSystem1->getJumpMapDerivativeState();
-    matrix_t ad_G = linearSystem2->getJumpMapDerivativeState();
-    if (!G.isApprox(ad_G, precision)) {
-      std::cout << "G:    " << G.transpose() << std::endl;
-      std::cout << "al_G: " << ad_G.transpose() << std::endl;
-      success = false;
-    }
-  }  // end of for loop
+  }
 }
 
 /******************************************************************************/
@@ -122,7 +112,7 @@ TEST_F(testCppADCG_dynamicsFixture, system_dynamics_test) {
 /******************************************************************************/
 /******************************************************************************/
 TEST_F(testCppADCG_dynamicsFixture, clone_test) {
-  std::unique_ptr<DerivativesBase> adLinearSystemPtr(adLinearSystem_->clone());
+  std::unique_ptr<SystemDynamicsBase> adLinearSystemPtr(adLinearSystem_->clone());
   bool success;
   checkSystemDynamics(100, linearSystem_.get(), adLinearSystemPtr.get(), success, stateDim_, inputDim_);
 
@@ -133,8 +123,8 @@ TEST_F(testCppADCG_dynamicsFixture, clone_test) {
 /******************************************************************************/
 /******************************************************************************/
 TEST_F(testCppADCG_dynamicsFixture, multithread_test) {
-  std::unique_ptr<DerivativesBase> linearSystemPtr(linearSystem_->clone());
-  std::unique_ptr<DerivativesBase> adLinearSystemPtr(adLinearSystem_->clone());
+  std::unique_ptr<SystemDynamicsBase> linearSystemPtr(linearSystem_->clone());
+  std::unique_ptr<SystemDynamicsBase> adLinearSystemPtr(adLinearSystem_->clone());
 
   bool success = false;
   std::thread thread1(checkSystemDynamics, 10000, linearSystem_.get(), adLinearSystem_.get(), std::ref(success), stateDim_, inputDim_);

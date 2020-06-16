@@ -77,9 +77,9 @@ class QuadraticCostFunctionAD : public CostFunctionBaseAD {
 
   size_t getNumIntermediateParameters() const override { return stateDim_ + inputDim_; };
 
-  vector_t getTerminalParameters(scalar_t time) const override { return xFinal_; }
+  vector_t getFinalParameters(scalar_t time) const override { return xFinal_; }
 
-  size_t getNumTerminalParameters() const override { return stateDim_; };
+  size_t getNumFinalParameters() const override { return stateDim_; };
 
   ad_scalar_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
                                        const ad_vector_t& parameters) const override {
@@ -92,7 +92,7 @@ class QuadraticCostFunctionAD : public CostFunctionBaseAD {
            0.5 * uDeviation.dot(R_.template cast<ad_scalar_t>() * uDeviation) + uDeviation.dot(P_.cast<ad_scalar_t>() * xDeviation);
   }
 
-  ad_scalar_t terminalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const override {
+  ad_scalar_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const override {
     ad_vector_t stateDesired = parameters.head(stateDim_);
     ad_vector_t xDeviation = state - stateDesired;
     return 0.5 * xDeviation.dot(QFinal_.cast<ad_scalar_t>() * xDeviation);

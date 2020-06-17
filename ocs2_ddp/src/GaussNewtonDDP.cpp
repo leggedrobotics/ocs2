@@ -43,7 +43,9 @@ GaussNewtonDDP::GaussNewtonDDP(size_t stateDim, size_t inputDim, const RolloutBa
                                const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
                                const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const DDP_Settings& ddpSettings,
                                const CostFunctionBase* heuristicsFunctionPtr, const char* algorithmName)
-    : Solver_BASE(stateDim, inputDim),
+    : Solver_BASE(),
+      stateDim_(stateDim),
+      inputDim_(inputDim),
       ddpSettings_(ddpSettings),
       threadPool_(ddpSettings.nThreads_, ddpSettings.threadPriority_),
       algorithmName_(algorithmName),

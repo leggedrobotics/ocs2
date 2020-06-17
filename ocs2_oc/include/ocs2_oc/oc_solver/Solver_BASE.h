@@ -52,7 +52,7 @@ class Solver_BASE {
   /**
    * Constructor.
    */
-  Solver_BASE(size_t stateDim, size_t inputDim) : stateDim_(stateDim), inputDim_(inputDim), costDesiredTrajectories_(0) {}
+  Solver_BASE() = default;
 
   /**
    * Default destructor.
@@ -241,13 +241,9 @@ class Solver_BASE {
 
   void postRun();
 
- protected:
-  size_t stateDim_;
-  size_t inputDim_;
-
  private:
   mutable std::mutex outputDisplayGuardMutex_;
-  CostDesiredTrajectories costDesiredTrajectories_;
+  CostDesiredTrajectories costDesiredTrajectories_{0};
   std::shared_ptr<ModeScheduleManager> modeScheduleManager_;
   std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModules_;
   ModeSchedule modeSchedule_;

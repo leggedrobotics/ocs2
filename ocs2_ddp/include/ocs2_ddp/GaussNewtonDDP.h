@@ -548,6 +548,9 @@ class GaussNewtonDDP : public Solver_BASE {
                const std::vector<ControllerBase*>& controllersPtrStock) override;
 
  protected:
+  size_t stateDim_;
+  size_t inputDim_;
+
   DDP_Settings ddpSettings_;
 
   ThreadPool threadPool_;

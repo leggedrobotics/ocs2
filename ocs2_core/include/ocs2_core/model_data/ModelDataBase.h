@@ -87,37 +87,21 @@ struct ModelDataBase {
   int inputDim_;
 
   // dynamics
-  vector_t dynamics_;
+  VectorFunctionLinearApproximation dynamics_;
   vector_t dynamicsBias_;
-  matrix_t dynamicsStateDerivative_;
-  matrix_t dynamicsInputDerivative_;
-
   matrix_t dynamicsCovariance_;
 
   // cost
-  scalar_t cost_;
-  vector_t costStateDerivative_;
-  vector_t costInputDerivative_;
-  matrix_t costStateSecondDerivative_;
-  matrix_t costInputSecondDerivative_;
-  matrix_t costInputStateDerivative_;
+  ScalarFunctionQuadraticApproximation cost_;
 
   // state equality constraints
-  vector_t stateEqConstr_;
-  matrix_t stateEqConstrStateDerivative_;
+  VectorFunctionLinearApproximation stateEqConstr_;
 
   // state-input equality constraints
-  vector_t stateInputEqConstr_;
-  matrix_t stateInputEqConstrStateDerivative_;
-  matrix_t stateInputEqConstrInputDerivative_;
+  VectorFunctionLinearApproximation stateInputEqConstr_;
 
   // inequality constraints
-  scalar_array_t ineqConstr_;
-  vector_array_t ineqConstrStateDerivative_;
-  vector_array_t ineqConstrInputDerivative_;
-  matrix_array_t ineqConstrStateSecondDerivative_;
-  matrix_array_t ineqConstrInputSecondDerivative_;
-  matrix_array_t ineqConstrInputStateDerivative_;
+  VectorFunctionQuadraticApproximation ineqConstr_;
 };
 
 std::ostream& operator<<(std::ostream& out, const ModelDataBase& data);

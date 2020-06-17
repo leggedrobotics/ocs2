@@ -36,7 +36,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 vector_t TimeTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray, const vector_t& initState, ControllerBase* controller,
                                        scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
-                                       vector_array_t& inputTrajectory, std::vector<ModelDataBase>* modelDataTrajectoryPtr) {
+                                       vector_array_t& inputTrajectory) {
   if (!controller) {
     throw std::runtime_error("The input controller is not set.");
   }
@@ -57,10 +57,6 @@ vector_t TimeTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray, 
   inputTrajectory.reserve(maxNumSteps + 1);
   postEventIndicesStock.clear();
   postEventIndicesStock.reserve(numEvents);
-  if (modelDataTrajectoryPtr) {
-    modelDataTrajectoryPtr->clear();
-    modelDataTrajectoryPtr->reserve(maxNumSteps + 1);
-  }
 
   // set controller
   systemDynamicsPtr_->setController(controller);
@@ -74,7 +70,7 @@ vector_t TimeTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray, 
   vector_t beginState = initState;
   int k_u = 0;  // control input iterator
   for (int i = 0; i < numSubsystems; i++) {
-    Observer observer(&stateTrajectory, &timeTrajectory, modelDataTrajectoryPtr);  // concatenate trajectory
+    Observer observer(&stateTrajectory, &timeTrajectory);  // concatenate trajectory
     // integrate controlled system
     dynamicsIntegratorPtr_->integrateAdaptive(*systemDynamicsPtr_, observer, beginState, timeIntervalArray[i].first,
                                               timeIntervalArray[i].second, this->settings().minTimeStep_, this->settings().absTolODE_,
@@ -84,9 +80,6 @@ vector_t TimeTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray, 
     if (this->settings().reconstructInputTrajectory_) {
       for (; k_u < timeTrajectory.size(); k_u++) {
         inputTrajectory.emplace_back(systemDynamicsPtr_->controllerPtr()->computeInput(timeTrajectory[k_u], stateTrajectory[k_u]));
-        if (modelDataTrajectoryPtr) {
-          (*modelDataTrajectoryPtr)[k_u].dynamicsBias_.setZero(stateTrajectory[k_u].size());
-        }
       }  // end of k_u loop
     }
 

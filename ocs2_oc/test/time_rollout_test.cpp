@@ -39,8 +39,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
-#include "ocs2_oc/test/EXP1.h"
-
 using namespace ocs2;
 
 TEST(time_rollout_test, time_rollout_test) {
@@ -86,11 +84,10 @@ TEST(time_rollout_test, time_rollout_test) {
   size_array_t eventsPastTheEndIndeces;
   vector_array_t stateTrajectory;
   vector_array_t inputTrajectory;
-  std::vector<ModelDataBase> modelDataTrajectory;
 
   size_t partitionIndex = 0;
   rolloutBasePtr->run(initTime, initState, finalTime, controller.get(), eventTimes, timeTrajectory, eventsPastTheEndIndeces,
-                      stateTrajectory, inputTrajectory, &modelDataTrajectory);
+                      stateTrajectory, inputTrajectory);
 
   /******************************************************************************************************/
   /******************************************************************************************************/
@@ -99,12 +96,4 @@ TEST(time_rollout_test, time_rollout_test) {
   const auto totalSize = timeTrajectory.size();
   ASSERT_EQ(totalSize, stateTrajectory.size());
   ASSERT_EQ(totalSize, inputTrajectory.size());
-  ASSERT_EQ(totalSize, modelDataTrajectory.size());
-
-  // check model data trajectory
-  for (const auto& modelData : modelDataTrajectory) {
-    ASSERT_EQ(modelData.stateDim_, stateTrajectory.front().rows());
-    ASSERT_EQ(modelData.inputDim_, inputTrajectory.front().rows());
-    ASSERT_EQ(modelData.dynamics_.rows(), stateTrajectory.front().rows());
-  }
 }

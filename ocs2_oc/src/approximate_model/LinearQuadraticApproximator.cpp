@@ -38,7 +38,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateUnconstrainedLQProblem(const scalar_t& time, const vector_t& state, const vector_t& input,
-                                                                    ModelDataBase& modelData) {
+                                                                    ModelDataBase& modelData) const {
   // dynamics
   approximateDynamics(time, state, input, modelData);
 
@@ -56,55 +56,36 @@ void LinearQuadraticApproximator::approximateUnconstrainedLQProblem(const scalar
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateUnconstrainedLQProblemAtEventTime(const scalar_t& time, const vector_t& state,
-                                                                               const vector_t& input, ModelDataBase& modelData) {
+                                                                               const vector_t& input, ModelDataBase& modelData) const {
   // Jump map
-  systemDerivativesPtr_->setCurrentStateAndControl(time, state, input);
-
-  // get results
-  modelData.dynamicsStateDerivative_ = systemDerivativesPtr_->getJumpMapDerivativeState();
-  modelData.dynamicsInputDerivative_ = systemDerivativesPtr_->getJumpMapDerivativeInput();
+  modelData.dynamics_ = systemDynamicsPtr_->jumpMapLinearApproximation(time, state, input);
 
   // Final state-only equality constraint
-  systemConstraintsPtr_->setCurrentStateAndControl(time, state, input);
+  modelData.stateEqConstr_ = systemConstraintsPtr_->finalStateEqualityConstraintLinearApproximation(time, state);
 
-  modelData.stateEqConstr_ = systemConstraintsPtr_->getFinalStateEqualityConstraint();
-  modelData.stateEqConstrStateDerivative_ = systemConstraintsPtr_->getFinalStateEqualityConstraintDerivativesState();
-
-  modelData.ineqConstr_.clear();             // no inequality constraint
-  modelData.stateInputEqConstr_.setZero(0);  // no state-input equality constraint
+  modelData.ineqConstr_.f.setZero(0);          // no inequality constraint
+  modelData.stateInputEqConstr_.f.setZero(0);  // no state-input equality constraint
 
   // Final cost
-  costFunctionPtr_->setCurrentStateAndControl(time, state, input);
-  modelData.cost_ = costFunctionPtr_->getTerminalCost();
-  modelData.costStateDerivative_ = costFunctionPtr_->getTerminalCostDerivativeState();
-  modelData.costStateSecondDerivative_ = costFunctionPtr_->getTerminalCostSecondDerivativeState();
-
-  // TODO(mspieler): this isn't used anyway, maybe set to empty matrix instead?
-  modelData.costInputDerivative_.setZero(input.rows());
-  modelData.costInputSecondDerivative_.setZero(input.rows(), input.rows());
-  modelData.costInputStateDerivative_.setZero(input.rows(), state.rows());
+  modelData.cost_ = costFunctionPtr_->finalCostQuadraticApproximation(time, state);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateDynamics(const scalar_t& time, const vector_t& state, const vector_t& input,
-                                                      ModelDataBase& modelData) {
-  // set data & do computation
-  systemDerivativesPtr_->setCurrentStateAndControl(time, state, input);
-
+                                                      ModelDataBase& modelData) const {
   // get results
-  modelData.dynamicsStateDerivative_ = systemDerivativesPtr_->getFlowMapDerivativeState();
-  modelData.dynamicsInputDerivative_ = systemDerivativesPtr_->getFlowMapDerivativeInput();
-  modelData.dynamicsCovariance_ = systemDerivativesPtr_->getDynamicsCovariance();
+  modelData.dynamics_ = systemDynamicsPtr_->linearApproximation(time, state, input);
+  modelData.dynamicsCovariance_ = systemDynamicsPtr_->dynamicsCovariance(time, state, input);
 
   // checking the numerical stability
   if (checkNumericalCharacteristics_) {
     std::string err = modelData.checkDynamicsDerivativsProperties();
     if (!err.empty()) {
       std::cerr << "what(): " << err << " at time " << time << " [sec]." << std::endl;
-      std::cerr << "Am: \n" << modelData.dynamicsStateDerivative_ << std::endl;
-      std::cerr << "Bm: \n" << modelData.dynamicsInputDerivative_ << std::endl;
+      std::cerr << "Am: \n" << modelData.dynamics_.dfdx << std::endl;
+      std::cerr << "Bm: \n" << modelData.dynamics_.dfdu << std::endl;
       throw std::runtime_error(err);
     }
   }
@@ -114,42 +95,31 @@ void LinearQuadraticApproximator::approximateDynamics(const scalar_t& time, cons
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateConstraints(const scalar_t& time, const vector_t& state, const vector_t& input,
-                                                         ModelDataBase& modelData) {
-  // set data
-  systemConstraintsPtr_->setCurrentStateAndControl(time, state, input);
-
+                                                         ModelDataBase& modelData) const {
   // State-input equality constraint
-  modelData.stateInputEqConstr_ = systemConstraintsPtr_->getStateInputEqualityConstraint();
-  modelData.stateInputEqConstrStateDerivative_ = systemConstraintsPtr_->getStateInputEqualityConstraintDerivativesState();
-  modelData.stateInputEqConstrInputDerivative_ = systemConstraintsPtr_->getStateInputEqualityConstraintDerivativesInput();
-  if (modelData.stateInputEqConstr_.rows() > input.rows()) {
+  modelData.stateInputEqConstr_ = systemConstraintsPtr_->stateInputEqualityConstraintLinearApproximation(time, state, input);
+  if (modelData.stateInputEqConstr_.f.rows() > input.rows()) {
     throw std::runtime_error("Number of active state-input equality constraints should be less-equal to the input dimension.");
   }
 
   // State-only equality constraint
-  modelData.stateEqConstr_ = systemConstraintsPtr_->getStateEqualityConstraint();
-  modelData.stateEqConstrStateDerivative_ = systemConstraintsPtr_->getStateEqualityConstraintDerivativesState();
-  if (modelData.stateEqConstr_.rows() > input.rows()) {
+  modelData.stateEqConstr_ = systemConstraintsPtr_->stateEqualityConstraintLinearApproximation(time, state);
+  if (modelData.stateEqConstr_.f.rows() > input.rows()) {
     throw std::runtime_error("Number of active state-only equality constraints should be less-equal to the input dimension.");
   }
 
   // Inequality constraint
-  modelData.ineqConstr_ = systemConstraintsPtr_->getInequalityConstraint();
-  modelData.ineqConstrStateDerivative_ = systemConstraintsPtr_->getInequalityConstraintDerivativesState();
-  modelData.ineqConstrInputDerivative_ = systemConstraintsPtr_->getInequalityConstraintDerivativesInput();
-  modelData.ineqConstrStateSecondDerivative_ = systemConstraintsPtr_->getInequalityConstraintSecondDerivativesState();
-  modelData.ineqConstrInputSecondDerivative_ = systemConstraintsPtr_->getInequalityConstraintSecondDerivativesInput();
-  modelData.ineqConstrInputStateDerivative_ = systemConstraintsPtr_->getInequalityConstraintDerivativesInputState();
+  modelData.ineqConstr_ = systemConstraintsPtr_->inequalityConstraintQuadraticApproximation(time, state, input);
 
   if (checkNumericalCharacteristics_) {
     std::string err = modelData.checkConstraintProperties();
     if (!err.empty()) {
       std::cerr << "what(): " << err << " at time " << time << " [sec]." << std::endl;
-      std::cerr << "Ev: " << modelData.stateInputEqConstr_.transpose() << std::endl;
-      std::cerr << "Cm: \n" << modelData.stateInputEqConstrStateDerivative_ << std::endl;
-      std::cerr << "Dm: \n" << modelData.stateInputEqConstrInputDerivative_ << std::endl;
-      std::cerr << "Hv: " << modelData.stateEqConstr_.transpose() << std::endl;
-      std::cerr << "Fm: \n" << modelData.stateEqConstrStateDerivative_ << std::endl;
+      std::cerr << "Ev: " << modelData.stateInputEqConstr_.f.transpose() << std::endl;
+      std::cerr << "Cm: \n" << modelData.stateInputEqConstr_.dfdx << std::endl;
+      std::cerr << "Dm: \n" << modelData.stateInputEqConstr_.dfdu << std::endl;
+      std::cerr << "Hv: " << modelData.stateEqConstr_.f.transpose() << std::endl;
+      std::cerr << "Fm: \n" << modelData.stateEqConstr_.dfdx << std::endl;
       throw std::runtime_error(err);
     }
   }
@@ -159,17 +129,9 @@ void LinearQuadraticApproximator::approximateConstraints(const scalar_t& time, c
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateIntermediateCost(const scalar_t& time, const vector_t& state, const vector_t& input,
-                                                              ModelDataBase& modelData) {
-  // set data
-  costFunctionPtr_->setCurrentStateAndControl(time, state, input);
-
+                                                              ModelDataBase& modelData) const {
   // get results
-  modelData.cost_ = costFunctionPtr_->getCost();
-  modelData.costStateDerivative_ = costFunctionPtr_->getCostDerivativeState();
-  modelData.costStateSecondDerivative_ = costFunctionPtr_->getCostSecondDerivativeState();
-  modelData.costInputDerivative_ = costFunctionPtr_->getCostDerivativeInput();
-  modelData.costInputSecondDerivative_ = costFunctionPtr_->getCostSecondDerivativeInput();
-  modelData.costInputStateDerivative_ = costFunctionPtr_->getCostDerivativeInputState();
+  modelData.cost_ = costFunctionPtr_->costQuadraticApproximation(time, state, input);
 
   // checking the numerical stability
   if (checkNumericalCharacteristics_) {
@@ -178,14 +140,14 @@ void LinearQuadraticApproximator::approximateIntermediateCost(const scalar_t& ti
       std::cerr << "what(): " << err << " at time " << time << " [sec]." << '\n';
       std::cerr << "x: " << state.transpose() << '\n';
       std::cerr << "u: " << input.transpose() << '\n';
-      std::cerr << "q: " << modelData.cost_ << '\n';
-      std::cerr << "Qv: " << modelData.costStateDerivative_.transpose() << '\n';
-      std::cerr << "Qm: \n" << modelData.costStateSecondDerivative_ << '\n';
-      std::cerr << "Qm eigenvalues : " << LinearAlgebra::eigenvalues(modelData.costStateSecondDerivative_).transpose() << '\n';
-      std::cerr << "Rv: " << modelData.costInputDerivative_.transpose() << '\n';
-      std::cerr << "Rm: \n" << modelData.costInputSecondDerivative_ << '\n';
-      std::cerr << "Rm eigenvalues : " << LinearAlgebra::eigenvalues(modelData.costInputSecondDerivative_).transpose() << '\n';
-      std::cerr << "Pm: \n" << modelData.costInputStateDerivative_ << '\n';
+      std::cerr << "q: " << modelData.cost_.f << '\n';
+      std::cerr << "Qv: " << modelData.cost_.dfdx.transpose() << '\n';
+      std::cerr << "Qm: \n" << modelData.cost_.dfdxx << '\n';
+      std::cerr << "Qm eigenvalues : " << LinearAlgebra::eigenvalues(modelData.cost_.dfdxx).transpose() << '\n';
+      std::cerr << "Rv: " << modelData.cost_.dfdu.transpose() << '\n';
+      std::cerr << "Rm: \n" << modelData.cost_.dfduu << '\n';
+      std::cerr << "Rm eigenvalues : " << LinearAlgebra::eigenvalues(modelData.cost_.dfduu).transpose() << '\n';
+      std::cerr << "Pm: \n" << modelData.cost_.dfdux << '\n';
       throw std::runtime_error(err);
     }
   }

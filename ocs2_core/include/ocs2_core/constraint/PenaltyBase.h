@@ -50,59 +50,16 @@ class PenaltyBase {
    * @param [in] h: Vector of inequality constraint values
    * @return Penalty: The penalty cost.
    */
-  scalar_t getPenaltyCost(const scalar_array_t& h) const;
+  scalar_t penaltyCost(const vector_t& h) const;
 
   /**
    * Get the derivative of the penalty cost.
    * Implements the chain rule between the inequality constraint and penalty function.
    *
-   * @param [in] h: Vector of inequality constraint values.
-   * @param [in] dhdx: Vector of inequality constraint derivatives with respect to state.
-   * @return penaltyDerivativeState: Derivative of the penalty cost with respect to state.
+   * @param [in] h: The inequality constraint quadratic approximation.
+   * @return The penalty cost quadratic approximation.
    */
-  vector_t getPenaltyCostDerivativeState(const scalar_array_t& h, const vector_array_t& dhdx) const;
-
-  /**
-   * Get the derivative of the penalty cost.
-   * Implements the chain rule between the inequality constraint and penalty function.
-   *
-   * @param [in] h: Vector of inequality constraint values.
-   * @param [in] dhdu: Vector of inequality constraint derivatives with respect to input vector.
-   * @return penaltyDerivativeInput: Derivative of the penalty cost with respect to input vector.
-   */
-  vector_t getPenaltyCostDerivativeInput(const scalar_array_t& h, const vector_array_t& dhdu) const;
-
-  /**
-   * Second derivative of penalty cost.
-   *
-   * @param [in] h: Vector of inequality constraint values.
-   * @param [in] dhdx: Vector of inequality constraint derivatives with respect to state.
-   * @param [in] ddhdxdx: Vector of inequality constraint second derivatives with respect to state.
-   * @return penaltySecondDerivativeState: Second derivative of the penalty cost with respect to state.
-   */
-  matrix_t getPenaltyCostSecondDerivativeState(const scalar_array_t& h, const vector_array_t& dhdx, const matrix_array_t& ddhdxdx) const;
-
-  /**
-   * Second derivative of penalty cost.
-   *
-   * @param [in] h: Vector of inequality constraint values.
-   * @param [in] dhdu: Vector of inequality constraint derivatives with respect to input.
-   * @param [in] ddhdudu: Vector of inequality constraint second derivatives with respect to input.
-   * @return penaltySecondDerivativeInput: Second derivative of the penalty cost with respect to input.
-   */
-  matrix_t getPenaltyCostSecondDerivativeInput(const scalar_array_t& h, const vector_array_t& dhdu, const matrix_array_t& ddhdudu) const;
-
-  /**
-   * Second derivative of penalty cost.
-   *
-   * @param [in] h: Vector of inequality constraint values.
-   * @param [in] dhdx: Vector of inequality constraint derivatives with respect to state.
-   * @param [in] dhdu: Vector of inequality constraint derivatives with respect to input.
-   * @param [in] ddhdudx: Vector of inequality constraint derivatives with respect to input and state.
-   * @return penaltyDerivativeInputState: Derivative of the penalty cost with respect to input and state.
-   */
-  matrix_t getPenaltyCostDerivativeInputState(const scalar_array_t& h, const vector_array_t& dhdx, const vector_array_t& dhdu,
-                                              const matrix_array_t& ddhdudx) const;
+  ScalarFunctionQuadraticApproximation penaltyCostQuadraticApproximation(const VectorFunctionQuadraticApproximation& h) const;
 
   /**
    * Computes the sum of squared constraint violation.
@@ -110,7 +67,7 @@ class PenaltyBase {
    * @param [in] h: Vector of inequality constraint values.
    * @return squaredViolation: sum of squared constraint violation.
    */
-  scalar_t getConstraintViolationSquaredNorm(const scalar_array_t& h) const;
+  scalar_t constraintViolationSquaredNorm(const vector_t& h) const;
 
  private:
   /**

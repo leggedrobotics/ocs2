@@ -34,7 +34,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ConstraintBaseAD::ConstraintBaseAD(size_t stateDim, size_t inputDim) : ConstraintBase(stateDim, inputDim){};
+ConstraintBaseAD::ConstraintBaseAD(size_t stateDim, size_t inputDim) : stateDim_(stateDim), inputDim_(inputDim){};
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -42,6 +42,8 @@ ConstraintBaseAD::ConstraintBaseAD(size_t stateDim, size_t inputDim) : Constrain
 ConstraintBaseAD::ConstraintBaseAD(const ConstraintBaseAD& rhs)
 
     : ConstraintBase(rhs),
+      stateDim_(rhs.stateDim_),
+      inputDim_(rhs.inputDim_),
       stateInputADInterfacePtr_(new CppAdInterface(*rhs.stateInputADInterfacePtr_)),
       stateOnlyADInterfacePtr_(new CppAdInterface(*rhs.stateOnlyADInterfacePtr_)),
       stateOnlyFinalADInterfacePtr_(new CppAdInterface(*rhs.stateOnlyFinalADInterfacePtr_)) {}
@@ -61,71 +63,72 @@ void ConstraintBaseAD::initialize(const std::string& modelName, const std::strin
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ConstraintBaseAD::setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) {
-  ConstraintBase::setCurrentStateAndControl(t, x, u);
-
-  vector_t tapedTimeStateInput(1 + stateDim_ + inputDim_);
-  tapedTimeStateInput << t, x, u;
-
-  vector_t tapedTimeState(1 + stateDim_);
-  tapedTimeState << t, x;
-
-  stateInputValues_ = stateInputADInterfacePtr_->getFunctionValue(tapedTimeStateInput);
-  stateOnlyValues_ = stateOnlyADInterfacePtr_->getFunctionValue(tapedTimeState);
-  stateOnlyFinalValues_ = stateOnlyFinalADInterfacePtr_->getFunctionValue(tapedTimeState);
-
-  stateInputJacobian_ = stateInputADInterfacePtr_->getJacobian(tapedTimeStateInput);
-  stateOnlyJacobian_ = stateOnlyADInterfacePtr_->getJacobian(tapedTimeState);
-  stateOnlyFinalJacobian_ = stateOnlyFinalADInterfacePtr_->getJacobian(tapedTimeState);
+vector_t ConstraintBaseAD::stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
+  tapedTimeStateInput_.resize(1 + stateDim_ + inputDim_);
+  tapedTimeStateInput_ << t, x, u;
+  return stateInputADInterfacePtr_->getFunctionValue(tapedTimeStateInput_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t ConstraintBaseAD::getStateInputEqualityConstraint() {
-  return stateInputValues_;
+vector_t ConstraintBaseAD::stateEqualityConstraint(scalar_t t, const vector_t& x) {
+  tapedTimeState_.resize(1 + stateDim_);
+  tapedTimeState_ << t, x;
+  return stateOnlyADInterfacePtr_->getFunctionValue(tapedTimeState_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t ConstraintBaseAD::getStateEqualityConstraint() {
-  return stateOnlyValues_;
+vector_t ConstraintBaseAD::finalStateEqualityConstraint(scalar_t t, const vector_t& x) {
+  tapedTimeState_.resize(1 + stateDim_);
+  tapedTimeState_ << t, x;
+  return stateOnlyFinalADInterfacePtr_->getFunctionValue(tapedTimeState_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t ConstraintBaseAD::getFinalStateEqualityConstraint() {
-  return stateOnlyFinalValues_;
+VectorFunctionLinearApproximation ConstraintBaseAD::stateInputEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x,
+                                                                                                    const vector_t& u) {
+  tapedTimeStateInput_.resize(1 + stateDim_ + inputDim_);
+  tapedTimeStateInput_ << t, x, u;
+  stateInputJacobian_ = stateInputADInterfacePtr_->getJacobian(tapedTimeStateInput_);
+
+  VectorFunctionLinearApproximation g;
+  g.f = stateInputADInterfacePtr_->getFunctionValue(tapedTimeStateInput_);
+  g.dfdx = stateInputJacobian_.middleCols(1, stateDim_);
+  g.dfdu = stateInputJacobian_.rightCols(inputDim_);
+  return g;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t ConstraintBaseAD::getStateInputEqualityConstraintDerivativesState() {
-  return stateInputJacobian_.middleCols(1, stateDim_);
-}
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+VectorFunctionLinearApproximation ConstraintBaseAD::stateEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x) {
+  tapedTimeState_.resize(1 + stateDim_);
+  tapedTimeState_ << t, x;
+  stateOnlyJacobian_ = stateOnlyADInterfacePtr_->getJacobian(tapedTimeState_);
 
-matrix_t ConstraintBaseAD::getStateInputEqualityConstraintDerivativesInput() {
-  return stateInputJacobian_.rightCols(inputDim_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_t ConstraintBaseAD::getStateEqualityConstraintDerivativesState() {
-  return stateOnlyJacobian_.rightCols(stateDim_);
+  VectorFunctionLinearApproximation g;
+  g.f = stateOnlyADInterfacePtr_->getFunctionValue(tapedTimeState_);
+  g.dfdx = stateOnlyJacobian_.rightCols(stateDim_);
+  return g;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t ConstraintBaseAD::getFinalStateEqualityConstraintDerivativesState() {
-  return stateOnlyFinalJacobian_.rightCols(stateDim_);
+VectorFunctionLinearApproximation ConstraintBaseAD::finalStateEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x) {
+  tapedTimeState_.resize(1 + stateDim_);
+  tapedTimeState_ << t, x;
+  stateOnlyFinalJacobian_ = stateOnlyFinalADInterfacePtr_->getJacobian(tapedTimeState_);
+
+  VectorFunctionLinearApproximation gf;
+  gf.f = stateOnlyFinalADInterfacePtr_->getFunctionValue(tapedTimeState_);
+  gf.dfdx = stateOnlyFinalJacobian_.rightCols(stateDim_);
+  return gf;
 }
 
 /******************************************************************************************************/

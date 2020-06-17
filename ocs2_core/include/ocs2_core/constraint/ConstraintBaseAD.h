@@ -78,21 +78,12 @@ class ConstraintBaseAD : public ConstraintBase {
   void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                   bool verbose = true);
 
-  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) final;
-
-  vector_t getStateInputEqualityConstraint() final;
-
-  vector_t getStateEqualityConstraint() final;
-
-  vector_t getFinalStateEqualityConstraint() final;
-
-  matrix_t getStateInputEqualityConstraintDerivativesState() final;
-
-  matrix_t getStateInputEqualityConstraintDerivativesInput() final;
-
-  matrix_t getStateEqualityConstraintDerivativesState() final;
-
-  matrix_t getFinalStateEqualityConstraintDerivativesState() final;
+  vector_t stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) final;
+  vector_t stateEqualityConstraint(scalar_t t, const vector_t& x) final;
+  vector_t finalStateEqualityConstraint(scalar_t t, const vector_t& x) final;
+  VectorFunctionLinearApproximation stateInputEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final;
+  VectorFunctionLinearApproximation stateEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x) final;
+  VectorFunctionLinearApproximation finalStateEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x) final;
 
  protected:
   /**
@@ -143,10 +134,15 @@ class ConstraintBaseAD : public ConstraintBase {
    */
   void loadModelsIfAvailable(bool verbose);
 
+  size_t stateDim_;
+  size_t inputDim_;
+
   std::unique_ptr<CppAdInterface> stateInputADInterfacePtr_;
   std::unique_ptr<CppAdInterface> stateOnlyADInterfacePtr_;
   std::unique_ptr<CppAdInterface> stateOnlyFinalADInterfacePtr_;
 
+  vector_t tapedTimeState_;
+  vector_t tapedTimeStateInput_;
   matrix_t stateInputJacobian_;
   matrix_t stateOnlyJacobian_;
   matrix_t stateOnlyFinalJacobian_;

@@ -35,30 +35,44 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 LinearConstraint::LinearConstraint(size_t stateDim, size_t inputDim)
-    : ConstraintBase(stateDim, inputDim), e_(0), C_(0, stateDim), D_(0, inputDim), h_(0), F_(0, stateDim), h_f_(0), F_f_(0, stateDim) {}
+    : e_(0),
+      C_(0, stateDim),
+      D_(0, inputDim),
+      h_(0),
+      F_(0, stateDim),
+      h_f_(0),
+      F_f_(0, stateDim),
+      h0_(0),
+      dhdx_(0, stateDim),
+      dhdu_(0, inputDim),
+      dhdxx_(0),
+      dhduu_(0),
+      dhdux_(0) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearConstraint::LinearConstraint(size_t stateDim, size_t inputDim, vector_t e, matrix_t C, matrix_t D, vector_t h, matrix_t F,
-                                   vector_t h_f, matrix_t F_f)
-    : ConstraintBase(stateDim, inputDim),
-      e_(std::move(e)),
+LinearConstraint::LinearConstraint(vector_t e, matrix_t C, matrix_t D, vector_t h, matrix_t F, vector_t h_f, matrix_t F_f)
+    : e_(std::move(e)),
       C_(std::move(C)),
       D_(std::move(D)),
       h_(std::move(h)),
       F_(std::move(F)),
       h_f_(std::move(h_f)),
-      F_f_(std::move(F_f)) {}
+      F_f_(std::move(F_f)),
+      h0_(0),
+      dhdx_(0, C.cols()),
+      dhdu_(0, D.cols()),
+      dhdxx_(0),
+      dhduu_(0),
+      dhdux_(0) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearConstraint::LinearConstraint(size_t stateDim, size_t inputDim, vector_t e, matrix_t C, matrix_t D, vector_t h, matrix_t F,
-                                   vector_t h_f, matrix_t F_f, scalar_array_t h0, vector_array_t dhdx, vector_array_t dhdu,
-                                   matrix_array_t ddhdxdx, matrix_array_t ddhdudu, matrix_array_t ddhdudx)
-    : ConstraintBase(stateDim, inputDim),
-      e_(std::move(e)),
+LinearConstraint::LinearConstraint(vector_t e, matrix_t C, matrix_t D, vector_t h, matrix_t F, vector_t h_f, matrix_t F_f, vector_t h0,
+                                   matrix_t dhdx, matrix_t dhdu, matrix_array_t dhdxx, matrix_array_t dhduu, matrix_array_t dhdux)
+    : e_(std::move(e)),
       C_(std::move(C)),
       D_(std::move(D)),
       h_(std::move(h)),
@@ -68,9 +82,9 @@ LinearConstraint::LinearConstraint(size_t stateDim, size_t inputDim, vector_t e,
       h0_(std::move(h0)),
       dhdx_(std::move(dhdx)),
       dhdu_(std::move(dhdu)),
-      ddhdxdx_(std::move(ddhdxdx)),
-      ddhdudu_(std::move(ddhdudu)),
-      ddhdudx_(std::move(ddhdudx)) {}
+      dhdxx_(std::move(dhdxx)),
+      dhduu_(std::move(dhduu)),
+      dhdux_(std::move(dhdux)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -82,26 +96,24 @@ LinearConstraint* LinearConstraint::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t LinearConstraint::getStateInputEqualityConstraint() {
-  return e_ + C_ * ConstraintBase::x_ + D_ * ConstraintBase::u_;
+vector_t LinearConstraint::stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
+  return e_ + C_ * x + D_ * u;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t LinearConstraint::getStateEqualityConstraint() {
-  return h_ + F_ * ConstraintBase::x_;
+vector_t LinearConstraint::stateEqualityConstraint(scalar_t t, const vector_t& x) {
+  return h_ + F_ * x;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_array_t LinearConstraint::getInequalityConstraint() {
-  scalar_array_t h(h0_.size());
-  for (size_t i = 0; i < h0_.size(); i++) {
-    h[i] = h0_[i] + dhdx_[i].dot(ConstraintBase::x_) + dhdu_[i].dot(ConstraintBase::u_) +
-           0.5 * ConstraintBase::x_.dot(ddhdxdx_[i] * ConstraintBase::x_) + 0.5 * ConstraintBase::u_.dot(ddhdudu_[i] * ConstraintBase::u_) +
-           ConstraintBase::u_.dot(ddhdudx_[i] * ConstraintBase::x_);
+vector_t LinearConstraint::inequalityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
+  vector_t h = h0_ + dhdx_ * x + dhdu_ * u;
+  for (size_t i = 0; i < h.rows(); i++) {
+    h[i] += 0.5 * x.dot(dhdxx_[i] * x) + 0.5 * u.dot(dhduu_[i] * u) + u.dot(dhdux_[i] * x);
   }
   return h;
 }
@@ -109,81 +121,60 @@ scalar_array_t LinearConstraint::getInequalityConstraint() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t LinearConstraint::getFinalStateEqualityConstraint() {
-  return h_f_ + F_f_ * ConstraintBase::x_;
+vector_t LinearConstraint::finalStateEqualityConstraint(scalar_t t, const vector_t& x) {
+  return h_f_ + F_f_ * x;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t LinearConstraint::getStateInputEqualityConstraintDerivativesState() {
-  return C_;
+VectorFunctionLinearApproximation LinearConstraint::stateInputEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x,
+                                                                                                    const vector_t& u) {
+  VectorFunctionLinearApproximation g;
+  g.f = e_ + C_ * x + D_ * u;
+  g.dfdx = C_;
+  g.dfdu = D_;
+  return g;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t LinearConstraint::getStateInputEqualityConstraintDerivativesInput() {
-  return D_;
+VectorFunctionLinearApproximation LinearConstraint::stateEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x) {
+  VectorFunctionLinearApproximation g;
+  g.f = h_ + F_ * x;
+  g.dfdx = F_;
+  return g;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t LinearConstraint::getStateEqualityConstraintDerivativesState() {
-  return F_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_array_t LinearConstraint::getInequalityConstraintDerivativesState() {
-  vector_array_t dhdx;
-  dhdx.reserve(h0_.size());
-  for (size_t i = 0; i < h0_.size(); i++) {
-    dhdx.emplace_back(dhdx_[i] + ddhdxdx_[i] * ConstraintBase::x_ + ddhdudx_[i].transpose() * ConstraintBase::u_);
+VectorFunctionQuadraticApproximation LinearConstraint::inequalityConstraintQuadraticApproximation(scalar_t t, const vector_t& x,
+                                                                                                  const vector_t& u) {
+  VectorFunctionQuadraticApproximation h;
+  h.f = h0_ + dhdx_ * x + dhdu_ * u;
+  h.dfdx = dhdx_;
+  h.dfdu = dhdu_;
+  for (size_t i = 0; i < h.f.rows(); i++) {
+    h.f[i] += 0.5 * x.dot(dhdxx_[i] * x) + 0.5 * u.dot(dhduu_[i] * u) + u.dot(dhdux_[i] * x);
+    h.dfdx.row(i) += (dhdxx_[i] * x + dhdux_[i].transpose() * u).transpose();
+    h.dfdu.row(i) += (dhduu_[i] * u + dhdux_[i] * x).transpose();
   }
-  return dhdx;
+  h.dfdxx = dhdxx_;
+  h.dfdux = dhdux_;
+  h.dfduu = dhduu_;
+  return h;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_array_t LinearConstraint::getInequalityConstraintDerivativesInput() {
-  vector_array_t dhdu;
-  dhdu.reserve(h0_.size());
-  for (size_t i = 0; i < h0_.size(); i++) {
-    dhdu.emplace_back(dhdu_[i] + ddhdudu_[i] * ConstraintBase::u_ + ddhdudx_[i] * ConstraintBase::x_);
-  }
-  return dhdu;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_array_t LinearConstraint::getInequalityConstraintSecondDerivativesState() {
-  return ddhdxdx_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_array_t LinearConstraint::getInequalityConstraintSecondDerivativesInput() {
-  return ddhdudu_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_array_t LinearConstraint::getInequalityConstraintDerivativesInputState() {
-  return ddhdudx_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_t LinearConstraint::getFinalStateEqualityConstraintDerivativesState() {
-  return F_f_;
+VectorFunctionLinearApproximation LinearConstraint::finalStateEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x) {
+  VectorFunctionLinearApproximation gf;
+  gf.f = h_f_ + F_f_ * x;
+  gf.dfdx = F_f_;
+  return gf;
 }
 
 }  // namespace ocs2

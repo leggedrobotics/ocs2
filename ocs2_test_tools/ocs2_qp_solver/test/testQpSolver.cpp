@@ -27,8 +27,8 @@ class QpSolverTest : public testing::Test {
 
   std::vector<ocs2::qp_solver::LinearQuadraticStage> lqProblem;
   ocs2::vector_t x0;
-  ocs2::qp_solver::ScalarFunctionQuadraticApproximation cost;
-  ocs2::qp_solver::VectorFunctionLinearApproximation constraints;
+  ocs2::ScalarFunctionQuadraticApproximation cost;
+  ocs2::VectorFunctionLinearApproximation constraints;
   ocs2::vector_t primalSolution;
   ocs2::vector_t dualSolution;
 };

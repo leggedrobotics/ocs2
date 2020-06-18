@@ -60,7 +60,7 @@ class DdpCorrectnessTest : public testing::Test {
                                         ocs2::vector_t::Random(INPUT_DIM), ocs2::vector_t::Random(STATE_DIM));
 
     // constraint
-    constraint.reset(new ocs2::ConstraintBase(STATE_DIM, INPUT_DIM));
+    constraint.reset(new ocs2::ConstraintBase());
 
     // system operating points
     nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, 1e-3);
@@ -106,17 +106,13 @@ class DdpCorrectnessTest : public testing::Test {
   }
 
   ocs2::scalar_t getQpCost(const ocs2::qp_solver::ContinuousTrajectory& qpSolution) const {
-    auto costFunc = [this](ocs2::scalar_t t, const ocs2::vector_t& x, const ocs2::vector_t& u) {
-      cost->setCurrentStateAndControl(t, x, u);
-      return cost->getCost();
-    };
+    auto costFunc = [this](ocs2::scalar_t t, const ocs2::vector_t& x, const ocs2::vector_t& u) { return cost->cost(t, x, u); };
     auto inputTrajectoryTemp = qpSolution.inputTrajectory;
     inputTrajectoryTemp.emplace_back(inputTrajectoryTemp.back());
     auto lAccum =
         ocs2::PerformanceIndicesRollout::rolloutCost(costFunc, qpSolution.timeTrajectory, qpSolution.stateTrajectory, inputTrajectoryTemp);
 
-    cost->setCurrentStateAndControl(qpSolution.timeTrajectory.back(), qpSolution.stateTrajectory.back(), ocs2::vector_t::Zero(INPUT_DIM));
-    return lAccum + cost->getTerminalCost();
+    return lAccum + cost->finalCost(qpSolution.timeTrajectory.back(), qpSolution.stateTrajectory.back());
   }
 
   ocs2::scalar_t relError(ocs2::vector_t ddpSol, const ocs2::vector_t& qpSol) const { return (ddpSol - qpSol).norm() / ddpSol.norm(); }

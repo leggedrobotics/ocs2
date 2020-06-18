@@ -49,15 +49,15 @@ class ILQR : public GaussNewtonDDP {
    * @param [in] stateDim: State vector dimension
    * @param [in] inputDim: Input vector dimension
    * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
-   * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
+   * @param [in] systemDynamicsPtr: The system dynamics and derivatives for the subsystems.
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
-   * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
+   * @param [in] costFunctionPtr: The cost function (intermediate and final costs) and its derivatives for subsystems.
    * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of ILQR.
    * @param [in] settings: Structure containing the settings for the ILQR algorithm.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
-   * defined, we will use the terminal cost function defined in costFunctionPtr.
+   * defined, we will use the final cost function defined in costFunctionPtr.
    */
-  ILQR(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const DerivativesBase* systemDerivativesPtr,
+  ILQR(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr,
        const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
        const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const ILQR_Settings& settings = ILQR_Settings(),
        const CostFunctionBase* heuristicsFunctionPtr = nullptr);

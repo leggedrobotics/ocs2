@@ -34,12 +34,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ILQR::ILQR(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const DerivativesBase* systemDerivativesPtr,
+ILQR::ILQR(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr,
            const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
            const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const ILQR_Settings& settings /*= ILQR_Settings()*/,
            const CostFunctionBase* heuristicsFunctionPtr /* = nullptr*/)
 
-    : BASE(stateDim, inputDim, rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
+    : BASE(stateDim, inputDim, rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
            settings.ddpSettings_, heuristicsFunctionPtr, "ILQR"),
       settings_(settings) {
   // Riccati Solver
@@ -102,39 +102,30 @@ void ILQR::discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelDa
   /*
    * linearize system dynamics
    */
-  modelData.dynamicsStateDerivative_ =
-      matrix_t::Identity(stateDim_, stateDim_) + continuousTimeModelData.dynamicsStateDerivative_ * timeStep;
-  modelData.dynamicsInputDerivative_ = continuousTimeModelData.dynamicsInputDerivative_ * timeStep;
+  modelData.dynamics_.dfdx = matrix_t::Identity(stateDim_, stateDim_) + continuousTimeModelData.dynamics_.dfdx * timeStep;
+  modelData.dynamics_.dfdu = continuousTimeModelData.dynamics_.dfdu * timeStep;
 
   /*
    * quadratic approximation to the cost function
    */
-  modelData.cost_ = continuousTimeModelData.cost_ * timeStep;
-  modelData.costStateDerivative_ = continuousTimeModelData.costStateDerivative_ * timeStep;
-  modelData.costStateSecondDerivative_ = continuousTimeModelData.costStateSecondDerivative_ * timeStep;
-  modelData.costInputDerivative_ = continuousTimeModelData.costInputDerivative_ * timeStep;
-  modelData.costInputSecondDerivative_ = continuousTimeModelData.costInputSecondDerivative_ * timeStep;
-  modelData.costInputStateDerivative_ = continuousTimeModelData.costInputStateDerivative_ * timeStep;
+  modelData.cost_.f = continuousTimeModelData.cost_.f * timeStep;
+  modelData.cost_.dfdx = continuousTimeModelData.cost_.dfdx * timeStep;
+  modelData.cost_.dfdxx = continuousTimeModelData.cost_.dfdxx * timeStep;
+  modelData.cost_.dfdu = continuousTimeModelData.cost_.dfdu * timeStep;
+  modelData.cost_.dfduu = continuousTimeModelData.cost_.dfduu * timeStep;
+  modelData.cost_.dfdux = continuousTimeModelData.cost_.dfdux * timeStep;
 
   /*
    * linearize constraints
    */
   // state equality constraints
   modelData.stateEqConstr_ = continuousTimeModelData.stateEqConstr_;
-  modelData.stateEqConstrStateDerivative_ = continuousTimeModelData.stateEqConstrStateDerivative_;
 
   // state-input equality constraints
   modelData.stateInputEqConstr_ = continuousTimeModelData.stateInputEqConstr_;
-  modelData.stateInputEqConstrStateDerivative_ = continuousTimeModelData.stateInputEqConstrStateDerivative_;
-  modelData.stateInputEqConstrInputDerivative_ = continuousTimeModelData.stateInputEqConstrInputDerivative_;
 
   // inequality constraints
   modelData.ineqConstr_ = continuousTimeModelData.ineqConstr_;
-  modelData.ineqConstrStateDerivative_ = continuousTimeModelData.ineqConstrStateDerivative_;
-  modelData.ineqConstrInputDerivative_ = continuousTimeModelData.ineqConstrInputDerivative_;
-  modelData.ineqConstrStateSecondDerivative_ = continuousTimeModelData.ineqConstrStateSecondDerivative_;
-  modelData.ineqConstrInputSecondDerivative_ = continuousTimeModelData.ineqConstrInputSecondDerivative_;
-  modelData.ineqConstrInputStateDerivative_ = continuousTimeModelData.ineqConstrInputStateDerivative_;
 }
 
 /******************************************************************************************************/
@@ -161,8 +152,8 @@ void ILQR::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, 
   const auto& nominalState = BASE::nominalStateTrajectoriesStock_[i][k];
   const auto& nominalInput = BASE::nominalInputTrajectoriesStock_[i][k];
 
-  const auto& EvProjected = BASE::projectedModelDataTrajectoriesStock_[i][k].stateInputEqConstr_;
-  const auto& CmProjected = BASE::projectedModelDataTrajectoriesStock_[i][k].stateInputEqConstrStateDerivative_;
+  const auto& EvProjected = BASE::projectedModelDataTrajectoriesStock_[i][k].stateInputEqConstr_.f;
+  const auto& CmProjected = BASE::projectedModelDataTrajectoriesStock_[i][k].stateInputEqConstr_.dfdx;
 
   const auto& Qu = BASE::riccatiModificationTrajectoriesStock_[i][k].constraintNullProjector_;
 
@@ -202,8 +193,8 @@ scalar_t ILQR::solveSequentialRiccatiEquations(const matrix_t& SmFinal, const ve
 /******************************************************************************************************/
 /******************************************************************************************************/
 matrix_t ILQR::computeHamiltonianHessian(ddp_strategy::type strategy, const ModelDataBase& modelData, const matrix_t& Sm) const {
-  const auto& Bm = modelData.dynamicsInputDerivative_;
-  const auto& Rm = modelData.costInputSecondDerivative_;
+  const auto& Bm = modelData.dynamics_.dfdu;
+  const auto& Rm = modelData.cost_.dfduu;
   switch (strategy) {
     case ddp_strategy::type::LINE_SEARCH: {
       return (Rm + Bm.transpose() * Sm * Bm);
@@ -288,14 +279,14 @@ void ILQR::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, con
                                                   riccatiModificationFinal);
 
     // projected feedforward
-    projectedLvFinal = -projectedModelDataFinal.costInputDerivative_ - riccatiModificationFinal.deltaGv_;
+    projectedLvFinal = -projectedModelDataFinal.cost_.dfdu - riccatiModificationFinal.deltaGv_;
     projectedLvFinal.noalias() -=
-        projectedModelDataFinal.dynamicsInputDerivative_.transpose() * BASE::SvTrajectoryStock_[partitionIndex][endTimeItr - 1];
+        projectedModelDataFinal.dynamics_.dfdu.transpose() * BASE::SvTrajectoryStock_[partitionIndex][endTimeItr - 1];
 
     // projected feedback
-    projectedKmFinal = -projectedModelDataFinal.costInputStateDerivative_ - riccatiModificationFinal.deltaGm_;
+    projectedKmFinal = -projectedModelDataFinal.cost_.dfdux - riccatiModificationFinal.deltaGm_;
     projectedKmFinal.noalias() -=
-        projectedModelDataFinal.dynamicsInputDerivative_.transpose() * BASE::SmTrajectoryStock_[partitionIndex][endTimeItr - 1];
+        projectedModelDataFinal.dynamics_.dfdu.transpose() * BASE::SmTrajectoryStock_[partitionIndex][endTimeItr - 1];
 
     /*
      * solve Riccati equations and compute projected model data and RiccatiModification for the intermediate times
@@ -318,9 +309,9 @@ void ILQR::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, con
     }  // end of k loop
 
     if (i > 0) {
-      const auto& qFinal = BASE::modelDataEventTimesStock_[partitionIndex][i - 1].cost_;
-      const auto& QvFinal = BASE::modelDataEventTimesStock_[partitionIndex][i - 1].costStateDerivative_;
-      const auto& QmFinal = BASE::modelDataEventTimesStock_[partitionIndex][i - 1].costStateSecondDerivative_;
+      const auto& qFinal = BASE::modelDataEventTimesStock_[partitionIndex][i - 1].cost_.f;
+      const auto& QvFinal = BASE::modelDataEventTimesStock_[partitionIndex][i - 1].cost_.dfdx;
+      const auto& QmFinal = BASE::modelDataEventTimesStock_[partitionIndex][i - 1].cost_.dfdxx;
       sFinalTemp = BASE::sTrajectoryStock_[partitionIndex][beginTimeItr] + qFinal;
       SvFinalTemp = BASE::SvTrajectoryStock_[partitionIndex][beginTimeItr] + QvFinal;
       SmFinalTemp = BASE::SmTrajectoryStock_[partitionIndex][beginTimeItr] + QmFinal;

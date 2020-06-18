@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/FeedforwardController.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_ddp/SLQ.h>
@@ -89,11 +90,8 @@ TEST(exp0_slq_test, exp0_slq_test) {
   EXP0_System systemDynamics(modeScheduleManagerPtr);
   TimeTriggeredRollout timeTriggeredRollout(systemDynamics, rolloutSettings);
 
-  // system derivatives
-  EXP0_SystemDerivative systemDerivative(modeScheduleManagerPtr);
-
   // system constraints
-  ConstraintBase systemConstraint(STATE_DIM, INPUT_DIM);
+  ConstraintBase systemConstraint;
 
   // system cost functions
   EXP0_CostFunction systemCostFunction(modeScheduleManagerPtr);
@@ -108,13 +106,13 @@ TEST(exp0_slq_test, exp0_slq_test) {
   /******************************************************************************************************/
   // SLQ - single-thread version
   slqSettings.ddpSettings_.nThreads_ = 1;
-  SLQ slqST(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
+  SLQ slqST(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories,
             slqSettings);
   slqST.setModeScheduleManager(modeScheduleManagerPtr);
 
   slqSettings.ddpSettings_.nThreads_ = 3;
   // SLQ - multi-thread version
-  SLQ slqMT(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
+  SLQ slqMT(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories,
             slqSettings);
   slqMT.setModeScheduleManager(modeScheduleManagerPtr);
 
@@ -217,11 +215,8 @@ TEST(exp0_slq_test, caching_test) {
   EXP0_System systemDynamics(modeScheduleManagerPtr);
   TimeTriggeredRollout timeTriggeredRollout(systemDynamics, rolloutSettings);
 
-  // system derivatives
-  EXP0_SystemDerivative systemDerivative(modeScheduleManagerPtr);
-
   // system constraints
-  ConstraintBase systemConstraint(STATE_DIM, INPUT_DIM);
+  ConstraintBase systemConstraint;
 
   // system cost functions
   EXP0_CostFunction systemCostFunction(modeScheduleManagerPtr);
@@ -235,7 +230,7 @@ TEST(exp0_slq_test, caching_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // SLQ - single-thread version
-  SLQ slqST(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
+  SLQ slqST(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories,
             slqSettings);
   slqST.setModeScheduleManager(modeScheduleManagerPtr);
 

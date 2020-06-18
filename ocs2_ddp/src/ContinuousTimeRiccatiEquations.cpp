@@ -140,7 +140,7 @@ vector_t ContinuousTimeRiccatiEquations::computeJumpMap(scalar_t z, const vector
   const auto& jumpModelData = (*modelDataEventTimesPtr_)[index];
 
   //  vector_t allSsJump;
-  //  convert2Vector(jumpModelData.costStateSecondDerivative_, jumpModelData.costStateDerivative_, jumpModelData.cost_, allSsJump);
+  //  convert2Vector(jumpModelData.cost_.dfdxx, jumpModelData.cost_.dfdx, jumpModelData.cost_.f, allSsJump);
   //
   //  allSsPreEvent = allSs + allSsJump;
 
@@ -150,21 +150,21 @@ vector_t ContinuousTimeRiccatiEquations::computeJumpMap(scalar_t z, const vector
   // TODO: Fix this
   const auto state_dim = continuousTimeRiccatiData_.Sm_.rows();
   const vector_t Hv = vector_t::Zero(state_dim);                 // jumpModelData.dynamicsBias_;
-  const matrix_t Am = matrix_t::Identity(state_dim, state_dim);  // jumpModelData.costStateSecondDerivative_;
+  const matrix_t Am = matrix_t::Identity(state_dim, state_dim);  // jumpModelData.cost_.dfdxx;
 
   // Sm
-  matrix_t SmPreEvent = jumpModelData.costStateSecondDerivative_;
+  matrix_t SmPreEvent = jumpModelData.cost_.dfdxx;
   continuousTimeRiccatiData_.SmTrans_projectedAm_.noalias() = continuousTimeRiccatiData_.Sm_.transpose() * Am;
   SmPreEvent.noalias() += continuousTimeRiccatiData_.SmTrans_projectedAm_.transpose() * Am;
 
   // Sv
   vector_t Sv_plus_Sm_Hv = continuousTimeRiccatiData_.Sv_;
   Sv_plus_Sm_Hv.noalias() += continuousTimeRiccatiData_.Sm_ * Hv;
-  vector_t SvPreEvent = jumpModelData.costStateDerivative_;
+  vector_t SvPreEvent = jumpModelData.cost_.dfdx;
   SvPreEvent.noalias() += Am.transpose() * Sv_plus_Sm_Hv;
 
   // s
-  scalar_t sPreEvent = continuousTimeRiccatiData_.s_ + jumpModelData.cost_;
+  scalar_t sPreEvent = continuousTimeRiccatiData_.s_ + jumpModelData.cost_.f;
   sPreEvent += Hv.dot(Sv_plus_Sm_Hv);
 
   return convert2Vector(SmPreEvent, SvPreEvent, sPreEvent);
@@ -209,19 +209,19 @@ void ContinuousTimeRiccatiEquations::computeFlowMapSLQ(std::pair<int, scalar_t> 
   // Hv
   ModelData::interpolate(indexAlpha, creCache.projectedHv_, projectedModelDataPtr_, ModelData::dynamicsBias);
   // Am
-  ModelData::interpolate(indexAlpha, creCache.projectedAm_, projectedModelDataPtr_, ModelData::dynamicsStateDerivative);
+  ModelData::interpolate(indexAlpha, creCache.projectedAm_, projectedModelDataPtr_, ModelData::dynamics_dfdx);
   // Bm
-  ModelData::interpolate(indexAlpha, creCache.projectedBm_, projectedModelDataPtr_, ModelData::dynamicsInputDerivative);
+  ModelData::interpolate(indexAlpha, creCache.projectedBm_, projectedModelDataPtr_, ModelData::dynamics_dfdu);
   // q
-  ModelData::interpolate(indexAlpha, ds, projectedModelDataPtr_, ModelData::cost);
+  ModelData::interpolate(indexAlpha, ds, projectedModelDataPtr_, ModelData::cost_f);
   // Qv
-  ModelData::interpolate(indexAlpha, dSv, projectedModelDataPtr_, ModelData::costStateDerivative);
+  ModelData::interpolate(indexAlpha, dSv, projectedModelDataPtr_, ModelData::cost_dfdx);
   // Qm
-  ModelData::interpolate(indexAlpha, dSm, projectedModelDataPtr_, ModelData::costStateSecondDerivative);
+  ModelData::interpolate(indexAlpha, dSm, projectedModelDataPtr_, ModelData::cost_dfdxx);
   // Rv
-  ModelData::interpolate(indexAlpha, creCache.projectedGv_, projectedModelDataPtr_, ModelData::costInputDerivative);
+  ModelData::interpolate(indexAlpha, creCache.projectedGv_, projectedModelDataPtr_, ModelData::cost_dfdu);
   // Pm
-  ModelData::interpolate(indexAlpha, creCache.projectedGm_, projectedModelDataPtr_, ModelData::costInputStateDerivative);
+  ModelData::interpolate(indexAlpha, creCache.projectedGm_, projectedModelDataPtr_, ModelData::cost_dfdux);
   // delatQm
   riccati_modification::interpolate(indexAlpha, creCache.deltaQm_, riccatiModificationPtr_, riccati_modification::deltaQm);
   // delatGm
@@ -246,7 +246,7 @@ void ContinuousTimeRiccatiEquations::computeFlowMapSLQ(std::pair<int, scalar_t> 
   creCache.projectedKm_T_projectedGm_.noalias() = creCache.projectedKm_.transpose() * creCache.projectedGm_;
   if (!reducedFormRiccati_) {
     // Rm
-    ModelData::interpolate(indexAlpha, creCache.projectedRm_, projectedModelDataPtr_, ModelData::costInputSecondDerivative);
+    ModelData::interpolate(indexAlpha, creCache.projectedRm_, projectedModelDataPtr_, ModelData::cost_dfduu);
     // [COMPLEXITY: nx * np^2]
     creCache.projectedRm_projectedKm_.noalias() = creCache.projectedRm_ * creCache.projectedKm_;
     // [COMPLEXITY: np^2]

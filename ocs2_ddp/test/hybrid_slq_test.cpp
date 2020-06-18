@@ -73,8 +73,6 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   hybridSysDynamics systemDynamics;
   StateTriggeredRollout stateTriggeredRollout(systemDynamics, rolloutSettings);
 
-  // derivatives
-  hybridSysDerivatives systemDerivatives;
   // constraints
   hybridSysConstraints systemConstraints;
   // cost function
@@ -97,7 +95,7 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
 
   std::cout << "Starting SLQ Procedure" << std::endl;
   // SLQ
-  SLQ slq(stateDim, inputDim, &stateTriggeredRollout, &systemDerivatives, &systemConstraints, &systemCost, &operatingTrajectories,
+  SLQ slq(stateDim, inputDim, &stateTriggeredRollout, &systemDynamics, &systemConstraints, &systemCost, &operatingTrajectories,
           slqSettings);
   slq.run(startTime, initState, finalTime, partitioningTimes);
   auto solution = slq.primalSolution(finalTime);

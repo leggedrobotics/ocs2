@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/dynamics/DerivativesBase.h>
+#include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
 #include <ocs2_core/misc/Benchmark.h>
@@ -103,16 +103,16 @@ class GaussNewtonDDP : public Solver_BASE {
    * @param [in] stateDim: State vector dimension
    * @param [in] inputDim: Input vector dimension
    * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
-   * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
+   * @param [in] systemDynamicsPtr: The system dynamics and derivatives for the subsystems.
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
-   * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
+   * @param [in] costFunctionPtr: The cost function (intermediate and final costs) and its derivatives for subsystems.
    * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization.
    * @param [in] ddpSettings: Structure containing the settings for the Gauss-Newton DDP algorithm.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation.
-   * If it is not defined, we will use the terminal cost function defined in costFunctionPtr.
+   * If it is not defined, we will use the final cost function defined in costFunctionPtr.
    * @param [in] algorithmName: It should be either SLQ ot ILQR.
    */
-  GaussNewtonDDP(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const DerivativesBase* systemDerivativesPtr,
+  GaussNewtonDDP(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr,
                  const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
                  const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const DDP_Settings& ddpSettings,
                  const CostFunctionBase* heuristicsFunctionPtr, const char* algorithmName);
@@ -652,9 +652,7 @@ class GaussNewtonDDP : public Solver_BASE {
   matrix_array_t SmFinalStock_;
   vector_array_t xFinalStock_;
 
-  scalar_t sHeuristics_;
-  vector_t SvHeuristics_;
-  matrix_t SmHeuristics_;
+  ScalarFunctionQuadraticApproximation heuristics_;
 
   ConstraintPenaltyCoefficients constraintPenaltyCoefficients_;
 

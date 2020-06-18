@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 
 #include <ocs2_core/control/FeedforwardController.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_ddp/SLQ.h>
@@ -89,11 +90,8 @@ TEST(exp1_slq_test, exp1_slq_test) {
   EXP1_System systemDynamics(modeScheduleManagerPtr);
   TimeTriggeredRollout timeTriggeredRollout(systemDynamics, rolloutSettings);
 
-  // system derivatives
-  EXP1_SystemDerivative systemDerivative(modeScheduleManagerPtr);
-
   // system constraints
-  ConstraintBase systemConstraint(STATE_DIM, INPUT_DIM);
+  ConstraintBase systemConstraint;
 
   // system cost functions
   EXP1_CostFunction systemCostFunction(modeScheduleManagerPtr);
@@ -108,13 +106,13 @@ TEST(exp1_slq_test, exp1_slq_test) {
   /******************************************************************************************************/
   // SLQ - single core version
   slqSettings.ddpSettings_.nThreads_ = 1;
-  SLQ slqST(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
+  SLQ slqST(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories,
             slqSettings);
   slqST.setModeScheduleManager(modeScheduleManagerPtr);
 
   slqSettings.ddpSettings_.nThreads_ = 3;
   // SLQ - multi-threaded version
-  SLQ slqMT(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
+  SLQ slqMT(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories,
             slqSettings);
   slqMT.setModeScheduleManager(modeScheduleManagerPtr);
 

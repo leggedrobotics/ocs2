@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // OCS2
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
+#include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
@@ -46,7 +47,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // CartPole
 #include "ocs2_cart_pole_example/CartPoleParameters.h"
-#include "ocs2_cart_pole_example/cost/CartPoleCost.h"
 #include "ocs2_cart_pole_example/definitions.h"
 #include "ocs2_cart_pole_example/dynamics/CartPoleSystemDynamics.h"
 
@@ -75,9 +75,7 @@ class CartPoleInterface final : public RobotInterface {
 
   const CartPoleSytemDynamics& getDynamics() const override { return *cartPoleSystemDynamicsPtr_; }
 
-  const CartPoleSytemDynamics& getDynamicsDerivatives() const override { return *cartPoleSystemDynamicsPtr_; }
-
-  const CartPoleCost& getCost() const override { return *cartPoleCostPtr_; }
+  const QuadraticCostFunction& getCost() const override { return *cartPoleCostPtr_; }
 
   const RolloutBase& getRollout() const { return *ddpCartPoleRolloutPtr_; }
 
@@ -103,7 +101,7 @@ class CartPoleInterface final : public RobotInterface {
   std::unique_ptr<RolloutBase> ddpCartPoleRolloutPtr_;
 
   std::unique_ptr<CartPoleSytemDynamics> cartPoleSystemDynamicsPtr_;
-  std::unique_ptr<CartPoleCost> cartPoleCostPtr_;
+  std::unique_ptr<QuadraticCostFunction> cartPoleCostPtr_;
   std::unique_ptr<ConstraintBase> cartPoleConstraintPtr_;
   std::unique_ptr<OperatingPoints> cartPoleOperatingPointPtr_;
 

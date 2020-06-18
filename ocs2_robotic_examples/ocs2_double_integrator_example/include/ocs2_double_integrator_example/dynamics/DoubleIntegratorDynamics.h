@@ -29,14 +29,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/dynamics/ControlledSystemBase.h>
+#include <ocs2_core/dynamics/SystemDynamicsBase.h>
 
 #include <ocs2_double_integrator_example/definitions.h>
 
 namespace ocs2 {
 namespace double_integrator {
 
-class DoubleIntegratorDynamics final : public ControlledSystemBase {
+class DoubleIntegratorDynamics final : public SystemDynamicsBase {
  public:
   /**
    * Constructor
@@ -52,6 +52,14 @@ class DoubleIntegratorDynamics final : public ControlledSystemBase {
   DoubleIntegratorDynamics* clone() const override { return new DoubleIntegratorDynamics(*this); }
 
   vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) override { return A_ * state + B_ * input; }
+
+  VectorFunctionLinearApproximation linearApproximation(scalar_t time, const vector_t& state, const vector_t& input) override {
+    VectorFunctionLinearApproximation dynamics;
+    dynamics.f = computeFlowMap(time, state, input);
+    dynamics.dfdx = A_;
+    dynamics.dfdu = B_;
+    return dynamics;
+  }
 
  private:
   matrix_t A_;

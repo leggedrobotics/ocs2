@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // OCS2
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
+#include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
@@ -47,7 +48,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cost/DoubleIntegratorCost.h"
 #include "definitions.h"
 #include "dynamics/DoubleIntegratorDynamics.h"
-#include "dynamics/DoubleIntegratorDynamicsDerivatives.h"
 
 namespace ocs2 {
 namespace double_integrator {
@@ -75,8 +75,6 @@ class DoubleIntegratorInterface final : public RobotInterface {
 
   const DoubleIntegratorDynamics& getDynamics() const override { return *linearSystemDynamicsPtr_; }
 
-  const DoubleIntegratorDynamicsDerivatives& getDynamicsDerivatives() const override { return *linearSystemDynamicsDerivativesPtr_; }
-
   const DoubleIntegratorCost& getCost() const override { return *linearSystemCostPtr_; }
 
   const RolloutBase& getRollout() const { return *ddpLinearSystemRolloutPtr_; }
@@ -103,7 +101,6 @@ class DoubleIntegratorInterface final : public RobotInterface {
   std::unique_ptr<RolloutBase> ddpLinearSystemRolloutPtr_;
 
   std::unique_ptr<DoubleIntegratorDynamics> linearSystemDynamicsPtr_;
-  std::unique_ptr<DoubleIntegratorDynamicsDerivatives> linearSystemDynamicsDerivativesPtr_;
   std::unique_ptr<DoubleIntegratorCost> linearSystemCostPtr_;
   std::unique_ptr<ConstraintBase> linearSystemConstraintPtr_;
   std::unique_ptr<OperatingPoints> linearSystemOperatingPointPtr_;

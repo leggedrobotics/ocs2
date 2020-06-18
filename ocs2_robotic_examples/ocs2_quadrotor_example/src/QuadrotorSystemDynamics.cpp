@@ -27,8 +27,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include "ocs2_quadrotor_example/dynamics/QuadrotorSystemDynamics.h"
+#include <cmath>
+
 #include <ocs2_robotic_tools/common/AngularVelocityMapping.h>
+#include "ocs2_quadrotor_example/dynamics/QuadrotorSystemDynamics.h"
 
 namespace ocs2 {
 namespace quadrotor {
@@ -69,14 +71,14 @@ vector_t QuadrotorSystemDynamics::computeFlowMap(scalar_t time, const vector_t& 
   scalar_t t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13;
 
   t2 = 1.0 / param_.quadrotorMass_;
-  t3 = std::cos(qth);
-  t4 = std::sin(qth);
+  t3 = cos(qth);
+  t4 = sin(qth);
   t5 = 1.0 / param_.Thxxyy_;
-  t6 = std::cos(qps);
-  t7 = std::sin(qps);
+  t6 = cos(qps);
+  t7 = sin(qps);
   t8 = dqph * dqph;
   t9 = qth * 2.0;
-  t10 = std::sin(t9);
+  t10 = sin(t9);
   t11 = 1.0 / t3;
   t12 = param_.Thzz_ * param_.Thzz_;
   t13 = t3 * t3;
@@ -89,9 +91,9 @@ vector_t QuadrotorSystemDynamics::computeFlowMap(scalar_t time, const vector_t& 
   stateDerivative(4) = eulerAngleDerivatives(1);
   stateDerivative(5) = eulerAngleDerivatives(2);
   stateDerivative(6) = Fz * t2 * t4;
-  stateDerivative(7) = -Fz * t2 * t3 * std::sin(qph);
+  stateDerivative(7) = -Fz * t2 * t3 * sin(qph);
 
-  stateDerivative(8) = t2 * (param_.quadrotorMass_ * param_.gravity_ - Fz * t3 * std::cos(qph)) * (-1.0);
+  stateDerivative(8) = t2 * (param_.quadrotorMass_ * param_.gravity_ - Fz * t3 * cos(qph)) * (-1.0);
   stateDerivative(9) =
       -t5 * t11 *
       (-Mx * t6 + My * t7 + param_.Thzz_ * dqps * dqth - param_.Thxxyy_ * dqph * dqth * t4 * (2.0) + param_.Thzz_ * dqph * dqth * t4);
@@ -105,131 +107,126 @@ vector_t QuadrotorSystemDynamics::computeFlowMap(scalar_t time, const vector_t& 
   return stateDerivative;
 }
 
-void QuadrotorSystemDynamics::setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) {
-  // BASE class method
-  SystemDynamicsBase::setCurrentStateAndControl(t, x, u);
+VectorFunctionLinearApproximation QuadrotorSystemDynamics::linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  VectorFunctionLinearApproximation dynamics;
+  dynamics.f = computeFlowMap(t, x, u);
 
   // Jacobian of angular velocity mapping
   Eigen::Matrix<scalar_t, 3, 1> eulerAngle = x.segment<3>(3);
   Eigen::Matrix<scalar_t, 3, 1> angularVelocity = x.segment<3>(9);
   jacobianOfAngularVelocityMapping_ = JacobianOfAngularVelocityMapping(eulerAngle, angularVelocity).transpose();
-}
 
-matrix_t QuadrotorSystemDynamics::getFlowMapDerivativeState() {
   // positions
-  scalar_t qxQ = SystemDynamicsBase::x_(0);  // x
-  scalar_t qyQ = SystemDynamicsBase::x_(1);  // y
-  scalar_t qzQ = SystemDynamicsBase::x_(2);  // z
+  scalar_t qxQ = x(0);  // x
+  scalar_t qyQ = x(1);  // y
+  scalar_t qzQ = x(2);  // z
 
   // euler angles xyz
-  scalar_t qph = SystemDynamicsBase::x_(3);
-  scalar_t qth = SystemDynamicsBase::x_(4);
-  scalar_t qps = SystemDynamicsBase::x_(5);
+  scalar_t qph = x(3);
+  scalar_t qth = x(4);
+  scalar_t qps = x(5);
 
   // positions derivatives
-  scalar_t dqxQ = SystemDynamicsBase::x_(6);  // x
-  scalar_t dqyQ = SystemDynamicsBase::x_(7);  // y
-  scalar_t dqzQ = SystemDynamicsBase::x_(8);  // z
+  scalar_t dqxQ = x(6);  // x
+  scalar_t dqyQ = x(7);  // y
+  scalar_t dqzQ = x(8);  // z
 
   // euler angle derivatives xyz
-  scalar_t dqph = SystemDynamicsBase::x_(9);
-  scalar_t dqth = SystemDynamicsBase::x_(10);
-  scalar_t dqps = SystemDynamicsBase::x_(11);
+  scalar_t dqph = x(9);
+  scalar_t dqth = x(10);
+  scalar_t dqps = x(11);
 
   // Applied force and momentums
-  scalar_t Fz = SystemDynamicsBase::u_(0);
-  scalar_t Mx = SystemDynamicsBase::u_(1);
-  scalar_t My = SystemDynamicsBase::u_(2);
-  scalar_t Mz = SystemDynamicsBase::u_(3);
+  scalar_t Fz = u(0);
+  scalar_t Mx = u(1);
+  scalar_t My = u(2);
+  scalar_t Mz = u(3);
 
-  scalar_t t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t26, t21, t22, t27, t23, t24, t25;
+  {  // derivative state
+    scalar_t t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t26, t21, t22, t27, t23, t24, t25;
 
-  t2 = 1.0 / param_.quadrotorMass_;
-  t3 = std::cos(qth);
-  t4 = std::sin(qph);
-  t5 = std::cos(qph);
-  t6 = std::sin(qth);
-  t7 = 1.0 / param_.Thxxyy_;
-  t8 = std::cos(qps);
-  t9 = std::sin(qps);
-  t10 = 1.0 / t3;
-  t11 = param_.Thxxyy_ * 2.0;
-  t12 = param_.Thzz_ - t11;
-  t13 = qth * 2.0;
-  t14 = std::cos(t13);
-  t15 = My * t9;
-  t16 = std::sin(t13);
-  t17 = 1.0 / (t3 * t3);
-  t18 = qth * 3.0;
-  t19 = std::sin(t18);
-  t20 = My * t8;
-  t21 = Mx * t9;
-  t22 = t20 + t21;
-  t23 = t3 * t3;
-  t24 = t6 * t6;
-  t25 = param_.Thzz_ * dqps * t6;
+    t2 = 1.0 / param_.quadrotorMass_;
+    t3 = cos(qth);
+    t4 = sin(qph);
+    t5 = cos(qph);
+    t6 = sin(qth);
+    t7 = 1.0 / param_.Thxxyy_;
+    t8 = cos(qps);
+    t9 = sin(qps);
+    t10 = 1.0 / t3;
+    t11 = param_.Thxxyy_ * 2.0;
+    t12 = param_.Thzz_ - t11;
+    t13 = qth * 2.0;
+    t14 = cos(t13);
+    t15 = My * t9;
+    t16 = sin(t13);
+    t17 = 1.0 / (t3 * t3);
+    t18 = qth * 3.0;
+    t19 = sin(t18);
+    t20 = My * t8;
+    t21 = Mx * t9;
+    t22 = t20 + t21;
+    t23 = t3 * t3;
+    t24 = t6 * t6;
+    t25 = param_.Thzz_ * dqps * t6;
 
-  matrix_t A;
-  A.setZero(STATE_DIM_, STATE_DIM_);
-  A.block<3, 3>(0, 6).setIdentity();
-  A.block<3, 3>(3, 3) = jacobianOfAngularVelocityMapping_.block<3, 3>(0, 0);
-  A.block<3, 3>(3, 9) = jacobianOfAngularVelocityMapping_.block<3, 3>(0, 3);
+    matrix_t& A = dynamics.dfdx;
+    A.setZero(STATE_DIM_, STATE_DIM_);
+    A.block<3, 3>(0, 6).setIdentity();
+    A.block<3, 3>(3, 3) = jacobianOfAngularVelocityMapping_.block<3, 3>(0, 0);
+    A.block<3, 3>(3, 9) = jacobianOfAngularVelocityMapping_.block<3, 3>(0, 3);
 
-  A(6, 4) = Fz * t2 * t3;
-  A(7, 3) = -Fz * t2 * t3 * t5;
-  A(7, 4) = Fz * t2 * t4 * t6;
-  A(8, 3) = -Fz * t2 * t3 * t4;
-  A(8, 4) = -Fz * t2 * t5 * t6;
-  A(9, 4) = -t6 * t7 * t17 *
-                (t15 - Mx * t8 + param_.Thzz_ * dqps * dqth - param_.Thxxyy_ * dqph * dqth * t6 * 2.0 + param_.Thzz_ * dqph * dqth * t6) -
-            dqph * dqth * t7 * t12;
-  A(9, 5) = -t7 * t10 * t22;
-  A(9, 9) = -dqth * t6 * t7 * t10 * t12;
-  A(9, 10) = -t7 * t10 * (param_.Thzz_ * dqps - param_.Thxxyy_ * dqph * t6 * 2.0 + param_.Thzz_ * dqph * t6);
-  A(9, 11) = -param_.Thzz_ * dqth * t7 * t10;
-  A(10, 4) = -dqph * t7 * (t25 + param_.Thxxyy_ * dqph * t14 - param_.Thzz_ * dqph * t14);
-  A(10, 5) = -t7 * (t15 - Mx * t8);
-  A(10, 9) = t7 * (-param_.Thxxyy_ * dqph * t16 + param_.Thzz_ * dqps * t3 + param_.Thzz_ * dqph * t16);
-  A(10, 11) = param_.Thzz_ * dqph * t3 * t7;
-  A(11, 4) = t7 * t17 *
-             (Mx * t8 * -4.0 + My * t9 * 4.0 + param_.Thzz_ * dqps * dqth * 4.0 - param_.Thxxyy_ * dqph * dqth * t6 * 9.0 -
-              param_.Thxxyy_ * dqph * dqth * t19 + param_.Thzz_ * dqph * dqth * t6 * 5.0 + param_.Thzz_ * dqph * dqth * t19) *
-             (1.0 / 4.0);
-  A(11, 5) = t6 * t7 * t10 * t22;
-  A(11, 9) = dqth * t7 * t10 * (param_.Thzz_ - t11 + param_.Thxxyy_ * t23 - param_.Thzz_ * t23);
-  A(11, 10) = t7 * t10 * (t25 - param_.Thxxyy_ * dqph - param_.Thxxyy_ * dqph * t24 + param_.Thzz_ * dqph * t24);
-  A(11, 11) = param_.Thzz_ * dqth * t6 * t7 * t10;
-  return A;
-}
+    A(6, 4) = Fz * t2 * t3;
+    A(7, 3) = -Fz * t2 * t3 * t5;
+    A(7, 4) = Fz * t2 * t4 * t6;
+    A(8, 3) = -Fz * t2 * t3 * t4;
+    A(8, 4) = -Fz * t2 * t5 * t6;
+    A(9, 4) = -t6 * t7 * t17 *
+                  (t15 - Mx * t8 + param_.Thzz_ * dqps * dqth - param_.Thxxyy_ * dqph * dqth * t6 * 2.0 + param_.Thzz_ * dqph * dqth * t6) -
+              dqph * dqth * t7 * t12;
+    A(9, 5) = -t7 * t10 * t22;
+    A(9, 9) = -dqth * t6 * t7 * t10 * t12;
+    A(9, 10) = -t7 * t10 * (param_.Thzz_ * dqps - param_.Thxxyy_ * dqph * t6 * 2.0 + param_.Thzz_ * dqph * t6);
+    A(9, 11) = -param_.Thzz_ * dqth * t7 * t10;
+    A(10, 4) = -dqph * t7 * (t25 + param_.Thxxyy_ * dqph * t14 - param_.Thzz_ * dqph * t14);
+    A(10, 5) = -t7 * (t15 - Mx * t8);
+    A(10, 9) = t7 * (-param_.Thxxyy_ * dqph * t16 + param_.Thzz_ * dqps * t3 + param_.Thzz_ * dqph * t16);
+    A(10, 11) = param_.Thzz_ * dqph * t3 * t7;
+    A(11, 4) = t7 * t17 *
+               (Mx * t8 * -4.0 + My * t9 * 4.0 + param_.Thzz_ * dqps * dqth * 4.0 - param_.Thxxyy_ * dqph * dqth * t6 * 9.0 -
+                param_.Thxxyy_ * dqph * dqth * t19 + param_.Thzz_ * dqph * dqth * t6 * 5.0 + param_.Thzz_ * dqph * dqth * t19) *
+               (1.0 / 4.0);
+    A(11, 5) = t6 * t7 * t10 * t22;
+    A(11, 9) = dqth * t7 * t10 * (param_.Thzz_ - t11 + param_.Thxxyy_ * t23 - param_.Thzz_ * t23);
+    A(11, 10) = t7 * t10 * (t25 - param_.Thxxyy_ * dqph - param_.Thxxyy_ * dqph * t24 + param_.Thzz_ * dqph * t24);
+    A(11, 11) = param_.Thzz_ * dqth * t6 * t7 * t10;
+  }
 
-matrix_t QuadrotorSystemDynamics::getFlowMapDerivativeInput() {
-  scalar_t qph = SystemDynamicsBase::x_(3);
-  scalar_t qth = SystemDynamicsBase::x_(4);
-  scalar_t qps = SystemDynamicsBase::x_(5);
+  {  // derivative input
+    scalar_t t2, t3, t4, t5, t6, t7, t8;
 
-  scalar_t t2, t3, t4, t5, t6, t7, t8;  // t9, t10, t11;
+    t2 = 1.0 / param_.quadrotorMass_;
+    t3 = cos(qth);
+    t4 = 1.0 / param_.Thxxyy_;
+    t5 = 1.0 / t3;
+    t6 = sin(qps);
+    t7 = cos(qps);
+    t8 = sin(qth);
 
-  t2 = 1.0 / param_.quadrotorMass_;
-  t3 = cos(qth);
-  t4 = 1.0 / param_.Thxxyy_;
-  t5 = 1.0 / t3;
-  t6 = sin(qps);
-  t7 = cos(qps);
-  t8 = sin(qth);
-
-  matrix_t B;
-  B.setZero(STATE_DIM_, INPUT_DIM_);
-  B(6, 0) = t2 * t8;
-  B(7, 0) = -t2 * t3 * sin(qph);
-  B(8, 0) = t2 * t3 * cos(qph);
-  B(9, 1) = t4 * t5 * t7;
-  B(9, 2) = -t4 * t5 * t6;
-  B(10, 1) = t4 * t6;
-  B(10, 2) = t4 * t7;
-  B(11, 1) = -t4 * t5 * t7 * t8;
-  B(11, 2) = t4 * t5 * t6 * t8;
-  B(11, 3) = 1.0 / param_.Thzz_;
-  return B;
+    matrix_t& B = dynamics.dfdu;
+    B.setZero(STATE_DIM_, INPUT_DIM_);
+    B(6, 0) = t2 * t8;
+    B(7, 0) = -t2 * t3 * sin(qph);
+    B(8, 0) = t2 * t3 * cos(qph);
+    B(9, 1) = t4 * t5 * t7;
+    B(9, 2) = -t4 * t5 * t6;
+    B(10, 1) = t4 * t6;
+    B(10, 2) = t4 * t7;
+    B(11, 1) = -t4 * t5 * t7 * t8;
+    B(11, 2) = t4 * t5 * t6 * t8;
+    B(11, 3) = 1.0 / param_.Thzz_;
+  }
+  return dynamics;
 }
 
 }  // namespace quadrotor

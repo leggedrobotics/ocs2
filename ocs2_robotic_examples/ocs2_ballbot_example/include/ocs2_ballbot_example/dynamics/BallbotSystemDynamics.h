@@ -51,21 +51,16 @@ class BallbotSystemDynamics : public SystemDynamicsBaseAD {
   using SystemDynamicsBaseAD::ad_scalar_t;
   using SystemDynamicsBaseAD::ad_vector_t;
 
-  /**
-   * Constructor.
-   */
+  /** Constructor */
   BallbotSystemDynamics() : SystemDynamicsBaseAD(STATE_DIM_, INPUT_DIM_) {
     wheelRadius_ = param_.wheelRadius_;
     ballRadius_ = param_.ballRadius_;
   }
 
-  /**
-   * Destructor
-   */
+  /** Destructor */
   ~BallbotSystemDynamics() override = default;
 
-  BallbotSystemDynamics(const BallbotSystemDynamics& rhs)
-      : SystemDynamicsBaseAD(rhs), param_(rhs.param_), wheelRadius_(rhs.wheelRadius_), ballRadius_(rhs.ballRadius_) {}
+  BallbotSystemDynamics(const BallbotSystemDynamics& rhs) = default;
 
   BallbotSystemDynamics* clone() const override { return new BallbotSystemDynamics(*this); }
 

@@ -6,6 +6,10 @@
 
 namespace ocs2 {
 
+/*
+ * FULL_STATE_DIM = SYSTEM_STATE_DIM + FILTER_STATE_DIM
+ * FULL_INPUT_DIM = FILTER_INPUT_DIM
+ */
 class LoopshapingCostEliminatePattern final : public LoopshapingCost {
  public:
   using BASE = LoopshapingCost;

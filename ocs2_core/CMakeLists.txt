@@ -103,6 +103,10 @@ add_library(${PROJECT_NAME}
   src/loopshaping/cost/LoopshapingCostEliminatePattern.cpp
   src/loopshaping/cost/LoopshapingCostInputPattern.cpp
   src/loopshaping/cost/LoopshapingCostOutputPattern.cpp
+  src/loopshaping/constraint/LoopshapingConstraint.cpp
+  src/loopshaping/constraint/LoopshapingConstraintEliminatePattern.cpp
+  src/loopshaping/constraint/LoopshapingConstraintInputPattern.cpp
+  src/loopshaping/constraint/LoopshapingConstraintOutputPattern.cpp
   src/model_data/ModelDataBase.cpp
   src/misc/LinearAlgebra.cpp
   src/misc/ThreadPool.cpp
@@ -219,7 +223,7 @@ target_link_libraries(test_transferfunctionbase
 
 catkin_add_gtest(${PROJECT_NAME}_loopshaping
   test/loopshaping/testLoopshapingConfiguration.cpp
-#   test/loopshaping/testLoopshapingConstraint.cpp
+  test/loopshaping/testLoopshapingConstraint.cpp
   test/loopshaping/testLoopshapingCost.cpp
   test/loopshaping/testLoopshapingDefinition.cpp
 #   test/loopshaping/testLoopshapingDynamics.cpp

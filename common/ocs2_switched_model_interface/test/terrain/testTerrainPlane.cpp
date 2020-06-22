@@ -95,7 +95,7 @@ TEST(TestTerrainPlane, projectPositionInWorldOntoPlane) {
 
   // Distance to plane
   const double tol = 1e-9;
-  ASSERT_LT(std::abs(terrainDistanceFromPositionInWorld(projectedPosition, randomPlane)), tol);
+  ASSERT_LT(std::abs(terrainDistanceAlongGravityFromPositionInWorld(projectedPosition, randomPlane)), tol);
 
   // Double projection
   ASSERT_TRUE(projectPositionInWorldOntoPlane(projectedPosition, randomPlane).isApprox(projectedPosition));
@@ -132,7 +132,7 @@ TEST(TestTerrainPlane, projectPositionInWorldOntoPlaneAlongGravity_randomTerrain
 
   // Distance to plane
   const double tol = 1e-9;
-  ASSERT_LT(std::abs(terrainDistanceFromPositionInWorld(projectedPosition, randomPlane)), tol);
+  ASSERT_LT(std::abs(terrainDistanceAlongGravityFromPositionInWorld(projectedPosition, randomPlane)), tol);
 
   // Double projection
   ASSERT_TRUE(projectPositionInWorldOntoPlane(projectedPosition, randomPlane).isApprox(projectedPosition));

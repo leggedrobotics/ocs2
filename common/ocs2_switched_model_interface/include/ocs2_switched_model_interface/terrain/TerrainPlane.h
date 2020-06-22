@@ -71,7 +71,7 @@ inline vector3_t positionInWorldFrameFromPositionInTerrain(const vector3_t& posi
 }
 
 /** Returns the z-direction distance between the terrain origin and a 3D point represented in world frame. */
-inline scalar_t terrainDistanceFromPositionInWorld(const vector3_t& positionWorld, const TerrainPlane& terrainPlane) {
+inline scalar_t terrainDistanceAlongGravityFromPositionInWorld(const vector3_t& positionWorld, const TerrainPlane& terrainPlane) {
   return positionInTerrainFrameFromPositionInWorld(positionWorld, terrainPlane).z();
 }
 

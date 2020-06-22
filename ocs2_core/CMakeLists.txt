@@ -80,6 +80,7 @@ add_library(${PROJECT_NAME}
   src/cost/RelaxedBarrierCost.cpp
   src/cost/CostFunctionLinearCombination.cpp
   src/cost/QuadraticCostFunction.cpp
+  src/cost/QuadraticGaussNewtonCostBaseAD.cpp
   src/dynamics/ControlledSystemBase.cpp
   src/dynamics/LinearSystemDynamics.cpp
   src/dynamics/SystemDynamicsBase.cpp

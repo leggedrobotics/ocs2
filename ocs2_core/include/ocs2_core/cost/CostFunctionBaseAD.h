@@ -88,7 +88,7 @@ class CostFunctionBaseAD : public CostFunctionBase {
    * @param [in] time: Current time.
    * @return The cost function parameters at a certain time
    */
-  virtual vector_t getIntermediateParameters(scalar_t time) const;
+  virtual vector_t getIntermediateParameters(scalar_t time) const { return vector_t(0); }
 
   /**
    * Number of parameters for the intermediate cost function.
@@ -96,7 +96,7 @@ class CostFunctionBaseAD : public CostFunctionBase {
    *
    * @return number of parameters
    */
-  virtual size_t getNumIntermediateParameters() const;
+  virtual size_t getNumIntermediateParameters() const { return 0; }
 
   /**
    * Gets a user-defined cost parameters, applied to the final costs
@@ -104,7 +104,7 @@ class CostFunctionBaseAD : public CostFunctionBase {
    * @param [in] time: Current time.
    * @return The cost function parameters at a certain time
    */
-  virtual vector_t getFinalParameters(scalar_t time) const;
+  virtual vector_t getFinalParameters(scalar_t time) const { return vector_t(0); }
 
   /**
    * Number of parameters for the final cost function.
@@ -112,7 +112,7 @@ class CostFunctionBaseAD : public CostFunctionBase {
    *
    * @return number of parameters
    */
-  virtual size_t getNumFinalParameters() const;
+  virtual size_t getNumFinalParameters() const { return 0; }
 
   /**
    * Interface method to the intermediate cost function. This method must be implemented by the derived class.
@@ -136,7 +136,9 @@ class CostFunctionBaseAD : public CostFunctionBase {
    * @param [in] parameters: parameter vector.
    * @return cost value.
    */
-  virtual ad_scalar_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const;
+  virtual ad_scalar_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const {
+    return ad_scalar_t(0);
+  }
 
  private:
   /**

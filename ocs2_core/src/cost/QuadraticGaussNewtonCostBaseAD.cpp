@@ -34,19 +34,16 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-QuadraticGaussNewtonCostBaseAD::QuadraticGaussNewtonCostBaseAD(size_t stateDim, size_t inputDim, size_t intermediateCostDim,
-                                                               size_t finalCostDim)
-    : stateDim_(stateDim), inputDim_(inputDim), intermediateCostDim_(intermediateCostDim), finalCostDim_(finalCostDim) {}
+QuadraticGaussNewtonCostBaseAD::QuadraticGaussNewtonCostBaseAD(size_t stateDim, size_t inputDim)
+    : stateDim_(stateDim), inputDim_(inputDim) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 QuadraticGaussNewtonCostBaseAD::QuadraticGaussNewtonCostBaseAD(const QuadraticGaussNewtonCostBaseAD& rhs)
     : CostFunctionBase(rhs),
-      stateDim_(stateDim),
-      inputDim_(inputDim),
-      intermediateCostDim_(intermediateCostDim),
-      finalCostDim_(finalCostDim),
+      stateDim_(rhs.stateDim_),
+      inputDim_(rhs.inputDim_),
       intermediateADInterfacePtr_(new CppAdInterface(*rhs.intermediateADInterfacePtr_)),
       finalADInterfacePtr_(new CppAdInterface(*rhs.finalADInterfacePtr_)) {}
 
@@ -61,12 +58,12 @@ void QuadraticGaussNewtonCostBaseAD::initialize(const std::string& modelName, co
   } else {
     loadModelsIfAvailable(verbose);
   }
-};
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t CostFunctionBaseAD::cost(scalar_t t, const vector_t& x, const vector_t& u) {
+scalar_t QuadraticGaussNewtonCostBaseAD::cost(scalar_t t, const vector_t& x, const vector_t& u) {
   tapedTimeStateInput_.resize(1 + stateDim_ + inputDim_);
   tapedTimeStateInput_ << t, x, u;
   intermediateParameters_ = getIntermediateParameters(t);
@@ -77,7 +74,7 @@ scalar_t CostFunctionBaseAD::cost(scalar_t t, const vector_t& x, const vector_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t CostFunctionBaseAD::finalCost(scalar_t t, const vector_t& x) {
+scalar_t QuadraticGaussNewtonCostBaseAD::finalCost(scalar_t t, const vector_t& x) {
   tapedTimeState_.resize(1 + stateDim_);
   tapedTimeState_ << t, x;
   finalParameters_ = getFinalParameters(t);
@@ -88,30 +85,29 @@ scalar_t CostFunctionBaseAD::finalCost(scalar_t t, const vector_t& x) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation CostFunctionBaseAD::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+ScalarFunctionQuadraticApproximation QuadraticGaussNewtonCostBaseAD::costQuadraticApproximation(scalar_t t, const vector_t& x,
+                                                                                                const vector_t& u) {
   tapedTimeStateInput_.resize(1 + stateDim_ + inputDim_);
   tapedTimeStateInput_ << t, x, u;
   intermediateParameters_ = getIntermediateParameters(t);
   intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
   intermediateCostValues_ = intermediateADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, intermediateParameters_);
+  const size_t costDim = intermediateCostValues_.rows();
 
   ScalarFunctionQuadraticApproximation L;
   L.f = 0.5 * intermediateCostValues_.dot(intermediateCostValues_);
-  L.dfdx = intermediateJacobian_.block(0, 1, intermediateCostDim_, stateDim_).transpose() * intermediateCostValues_;
-  L.dfdxx = intermediateJacobian_.block(0, 1, intermediateCostDim_, stateDim_).transpose() *
-            intermediateJacobian_.block(0, 1, intermediateCostDim_, stateDim_);
-  dLdu = intermediateJacobian_.block(0, 1 + stateDim_, intermediateCostDim_, inputDim_).transpose() * intermediateCostValues_;
-  L.dfduu = intermediateJacobian_.block(0, 1 + stateDim_, intermediateCostDim_, inputDim_).transpose() *
-            intermediateJacobian_.block(0, 1 + stateDim_, intermediateCostDim_, inputDim_);
-  L.dfdux = intermediateJacobian_.block(0, 1 + stateDim_, intermediateCostDim_, inputDim_).transpose() *
-            intermediateJacobian_.block(0, 1, intermediateCostDim_, stateDim_);
+  L.dfdx = intermediateJacobian_.block(0, 1, costDim, stateDim_).transpose() * intermediateCostValues_;
+  L.dfdxx = intermediateJacobian_.block(0, 1, costDim, stateDim_).transpose() * intermediateJacobian_.block(0, 1, costDim, stateDim_);
+  L.dfdu = intermediateJacobian_.rightCols(inputDim_).transpose() * intermediateCostValues_;
+  L.dfduu = intermediateJacobian_.rightCols(inputDim_).transpose() * intermediateJacobian_.rightCols(inputDim_);
+  L.dfdux = intermediateJacobian_.rightCols(inputDim_).transpose() * intermediateJacobian_.block(0, 1, costDim, stateDim_);
   return L;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation CostFunctionBaseAD::finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
+ScalarFunctionQuadraticApproximation QuadraticGaussNewtonCostBaseAD::finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
   tapedTimeState_.resize(1 + stateDim_);
   tapedTimeState_ << t, x;
   finalParameters_ = getFinalParameters(t);
@@ -120,64 +116,23 @@ ScalarFunctionQuadraticApproximation CostFunctionBaseAD::finalCostQuadraticAppro
 
   ScalarFunctionQuadraticApproximation Phi;
   Phi.f = 0.5 * finalCostValues_.dot(finalCostValues_);
-  Phi.dfdx = finalJacobian_.block(0, 1, finalCostDim_, stateDim_).transpose() * finalCostValues_;
-  Phi.dfdxx = finalJacobian_.block(0, 1, finalCostDim_, stateDim_).transpose() * finalJacobian_.block(0, 1, finalCostDim_, stateDim_);
+  Phi.dfdx = finalJacobian_.rightCols(stateDim_).transpose() * finalCostValues_;
+  Phi.dfdxx = finalJacobian_.rightCols(stateDim_).transpose() * finalJacobian_.rightCols(stateDim_);
   return Phi;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t CostFunctionBaseAD::costDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) {
+scalar_t QuadraticGaussNewtonCostBaseAD::costDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) {
   return intermediateCostValues_.transpose() * intermediateJacobian_.col(0);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t CostFunctionBaseAD::finalCostDerivativeTime(scalar_t t, const vector_t& x) {
+scalar_t QuadraticGaussNewtonCostBaseAD::finalCostDerivativeTime(scalar_t t, const vector_t& x) {
   return finalCostValues_.transpose() * finalJacobian_.col(0);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t QuadraticGaussNewtonCostBaseAD::getIntermediateParameters(scalar_t time) const {
-  return vector_t(0);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-size_t QuadraticGaussNewtonCostBaseAD::getNumIntermediateParameters() const {
-  return 0;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t QuadraticGaussNewtonCostBaseAD::getFinalParameters(scalar_t time) const {
-  return vector_t(0);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-size_t QuadraticGaussNewtonCostBaseAD::getNumFinalParameters() const {
-  return 0;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t QuadraticGaussNewtonCostBaseAD::intermediateCostFunction(ad_scalar_t time, const vector_t& state, const vector_t& input,
-                                                                  const vector_t& parameters) const = 0;
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t QuadraticGaussNewtonCostBaseAD::finalCostFunction(ad_scalar_t time, const vector_t& state, const vector_t& parameters) const {
-  return ad_vector_t::Zero(finalCostDim_);
 }
 
 /******************************************************************************************************/
@@ -190,16 +145,15 @@ void QuadraticGaussNewtonCostBaseAD::setADInterfaces(const std::string& modelNam
     auto input = x.tail(inputDim_);
     y = this->intermediateCostFunction(time, state, input, p);
   };
-  intermediateADInterfacePtr_.reset(new CppAdInterface(intermediateCostAd, intermediateCostDim_, 1 + stateDim_ + inputDim_,
-                                                       getNumIntermediateParameters(), modelName + "_intermediate", modelFolder));
+  intermediateADInterfacePtr_.reset(new CppAdInterface(intermediateCostAd, 1 + stateDim_ + inputDim_, getNumIntermediateParameters(),
+                                                       modelName + "_intermediate", modelFolder));
 
   auto finalCostAd = [this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
     auto time = x(0);
     auto state = x.tail(stateDim_);
     y = this->finalCostFunction(time, state, p);
   };
-  finalADInterfacePtr_.reset(
-      new CppAdInterface(finalCostAd, finalCostDim_, 1 + stateDim_, getNumFinalParameters(), modelName + "_final", modelFolder));
+  finalADInterfacePtr_.reset(new CppAdInterface(finalCostAd, 1 + stateDim_, getNumFinalParameters(), modelName + "_final", modelFolder));
 }
 
 /******************************************************************************************************/

@@ -56,7 +56,7 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
    * Default constructor
    *
    */
-  QuadraticGaussNewtonCostBaseAD(size_t stateDim, size_t inputDim, size_t intermediateCostDim, size_t finalCostDim);
+  QuadraticGaussNewtonCostBaseAD(size_t stateDim, size_t inputDim);
 
   /**
    * Copy constructor
@@ -134,10 +134,10 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
    * @param [in] state: state vector.
    * @param [in] input: input vector.
    * @param [in] parameters: parameter vector.
-   * @param [out] costValue: costValues = f(x,u,t).
+   * @return costValues = f(x,u,t).
    */
-  virtual void intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input, const ad_vector_t& parameters,
-                                        ad_vector_t& costValues) const = 0;
+  virtual ad_vector_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                               const ad_vector_t& parameters) const = 0;
 
   /**
    * Interface method to the cost term g such that the intermediate cost is
@@ -148,10 +148,10 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
    * @param [in] time: time.
    * @param [in] state: state vector.
    * @param [in] parameters: parameter vector.
-   * @param [out] costValue: costValues = g(x,t).
+   * @return costValues = g(x,t).
    */
-  virtual void finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters, ad_vector_t& costValues) const {
-    costValues = ad_vector_t::Zero(finalCostDim_);
+  virtual ad_vector_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const {
+    return ad_vector_t::Zero(1);
   }
 
  private:
@@ -176,8 +176,6 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
 
   size_t stateDim_;
   size_t inputDim_;
-  size_t intermediateCostDim_;
-  size_t finalCostDim_;
 
   std::unique_ptr<CppAdInterface> finalADInterfacePtr_;
   std::unique_ptr<CppAdInterface> intermediateADInterfacePtr_;

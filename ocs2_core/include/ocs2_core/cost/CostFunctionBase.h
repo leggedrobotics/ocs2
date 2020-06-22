@@ -71,10 +71,10 @@ class CostFunctionBase {
   virtual ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) = 0;
 
   /** Time derivative of the intermediate cost */
-  virtual scalar_t costDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u);
+  virtual scalar_t costDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) { return 0; }
 
   /** Time derivative of final cost */
-  virtual scalar_t finalCostDerivativeTime(scalar_t t, const vector_t& x);
+  virtual scalar_t finalCostDerivativeTime(scalar_t t, const vector_t& x) { return 0; }
 
  protected:
   const CostDesiredTrajectories* costDesiredTrajectoriesPtr_ = nullptr;

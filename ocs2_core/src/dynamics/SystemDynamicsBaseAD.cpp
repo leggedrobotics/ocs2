@@ -96,11 +96,11 @@ VectorFunctionLinearApproximation SystemDynamicsBaseAD::linearApproximation(scal
   tapedTimeStateInput << t, x, u;
   flowJacobian_ = flowMapADInterfacePtr_->getJacobian(tapedTimeStateInput);
 
-  VectorFunctionLinearApproximation apprximation;
-  apprximation.dfdx = flowJacobian_.middleCols(1, x.rows());
-  apprximation.dfdu = flowJacobian_.rightCols(u.rows());
-  apprximation.f = flowMapADInterfacePtr_->getFunctionValue(tapedTimeStateInput);
-  return apprximation;
+  VectorFunctionLinearApproximation approximation;
+  approximation.dfdx = flowJacobian_.middleCols(1, x.rows());
+  approximation.dfdu = flowJacobian_.rightCols(u.rows());
+  approximation.f = flowMapADInterfacePtr_->getFunctionValue(tapedTimeStateInput);
+  return approximation;
 }
 
 /******************************************************************************************************/
@@ -111,11 +111,11 @@ VectorFunctionLinearApproximation SystemDynamicsBaseAD::jumpMapLinearApproximati
   tapedTimeState << t, x;
   jumpJacobian_ = jumpMapADInterfacePtr_->getJacobian(tapedTimeState);
 
-  VectorFunctionLinearApproximation apprximation;
-  apprximation.dfdx = jumpJacobian_.rightCols(x.rows());
-  apprximation.dfdu = matrix_t::Zero(jumpJacobian_.rows(), u.rows());  // not provided
-  apprximation.f = jumpMapADInterfacePtr_->getFunctionValue(tapedTimeState);
-  return apprximation;
+  VectorFunctionLinearApproximation approximation;
+  approximation.dfdx = jumpJacobian_.rightCols(x.rows());
+  approximation.dfdu = matrix_t::Zero(jumpJacobian_.rows(), u.rows());  // not provided
+  approximation.f = jumpMapADInterfacePtr_->getFunctionValue(tapedTimeState);
+  return approximation;
 }
 
 /******************************************************************************************************/
@@ -126,11 +126,11 @@ VectorFunctionLinearApproximation SystemDynamicsBaseAD::guardSurfacesLinearAppro
   tapedTimeState << t, x;
   guardJacobian_ = guardSurfacesADInterfacePtr_->getJacobian(tapedTimeState);
 
-  VectorFunctionLinearApproximation apprximation;
-  apprximation.dfdx = guardJacobian_.rightCols(x.rows());
-  apprximation.dfdu = matrix_t::Zero(guardJacobian_.rows(), u.rows());  // not provided
-  apprximation.f = guardSurfacesADInterfacePtr_->getFunctionValue(tapedTimeState);
-  return apprximation;
+  VectorFunctionLinearApproximation approximation;
+  approximation.dfdx = guardJacobian_.rightCols(x.rows());
+  approximation.dfdu = matrix_t::Zero(guardJacobian_.rows(), u.rows());  // not provided
+  approximation.f = guardSurfacesADInterfacePtr_->getFunctionValue(tapedTimeState);
+  return approximation;
 }
 
 /******************************************************************************************************/

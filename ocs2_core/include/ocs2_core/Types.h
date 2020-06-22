@@ -100,7 +100,7 @@ struct ScalarFunctionQuadraticApproximation {
 
 /**
  * Defines the linear model of a vector-valued function
- * f(x,u) = dfdx dx + dfdu du + df
+ * f(x,u) = dfdx dx + dfdu du + f
  */
 struct VectorFunctionLinearApproximation {
   /** Derivative w.r.t state */

@@ -12,11 +12,11 @@ namespace switched_model {
 /**
  * This class models the terrain as a single infinite plane.
  */
-class TerrainModelPlanar : public TerrainModel {
+class PlanarTerrainModel : public TerrainModel {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  TerrainModelPlanar(TerrainPlane terrainPlane);
-  ~TerrainModelPlanar() override = default;
+  PlanarTerrainModel(TerrainPlane terrainPlane);
+  ~PlanarTerrainModel() override = default;
 
   TerrainPlane getLocalTerrainAtPositionInWorldAlongGravity(const vector3_t& positionInWorld) const override;
 

@@ -202,7 +202,7 @@ std::string ModelDataBase::checkConstraintProperties() const {
   }
 
   if (ineqConstr_.f.rows() > 0) {
-    if (ineqConstr_.f.allFinite()) {
+    if (!ineqConstr_.f.allFinite()) {
       errorDescription << "Inequality constraint is not finite.\n";
     }
     if (!ineqConstr_.dfdx.allFinite()) {

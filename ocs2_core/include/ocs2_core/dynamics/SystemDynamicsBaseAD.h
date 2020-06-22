@@ -48,14 +48,7 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
 
   SystemDynamicsBaseAD(size_t stateDim, size_t inputDim);
 
-  /**
-   * Copy constructor
-   */
-  SystemDynamicsBaseAD(const SystemDynamicsBaseAD& rhs);
-
-  /**
-   * Default destructor
-   */
+  /** Default destructor */
   ~SystemDynamicsBaseAD() override = default;
 
   /**
@@ -92,6 +85,9 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
   vector_t guardSurfacesDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) final;
 
  protected:
+  /** Copy constructor */
+  SystemDynamicsBaseAD(const SystemDynamicsBaseAD& rhs);
+
   /**
    * Interface method to the state flow map of the hybrid system. This method should be implemented by the derived class.
    *

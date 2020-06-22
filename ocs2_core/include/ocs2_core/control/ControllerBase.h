@@ -47,9 +47,7 @@ class ControllerBase {
    */
   ControllerBase(size_t stateDim, size_t inputDim);
 
-  /**
-   * Default destructor.
-   */
+  /** Default destructor. */
   virtual ~ControllerBase() = default;
 
   /**
@@ -155,6 +153,9 @@ class ControllerBase {
   friend void swap(ControllerBase& a, ControllerBase& b) noexcept;
 
  protected:
+  /** Copy constructor */
+  ControllerBase(const ControllerBase& rhs) = default;
+
   size_t stateDim_;
   size_t inputDim_;
 };

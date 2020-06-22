@@ -56,9 +56,6 @@ class ConstraintBase {
   /** Default constructor */
   ConstraintBase() = default;
 
-  /** Default copy constructor */
-  ConstraintBase(const ConstraintBase& rhs) = default;
-
   /** Default destructor */
   virtual ~ConstraintBase() = default;
 
@@ -154,6 +151,10 @@ class ConstraintBase {
    * @return array of vectors.
    */
   virtual vector_array_t stateInputEqualityConstraintDerivativesEventTimes(scalar_t t, const vector_t& x, const vector_t& u);
+
+ protected:
+  /** Default copy constructor */
+  ConstraintBase(const ConstraintBase& rhs) = default;
 };
 
 }  // end of namespace ocs2

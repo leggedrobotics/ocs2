@@ -46,9 +46,6 @@ class SystemDynamicsBase : public ControlledSystemBase {
   /** Default Constructor */
   SystemDynamicsBase() = default;
 
-  /**Copy constructor */
-  SystemDynamicsBase(const SystemDynamicsBase& rhs) = default;
-
   /** Default destructor */
   ~SystemDynamicsBase() override = default;
 
@@ -93,6 +90,10 @@ class SystemDynamicsBase : public ControlledSystemBase {
    * @return The covariance of the dynamics.
    */
   virtual matrix_t dynamicsCovariance(scalar_t t, const vector_t& x, const vector_t& u);
+
+ protected:
+  /**Copy constructor */
+  SystemDynamicsBase(const SystemDynamicsBase& rhs) = default;
 };
 
 }  // namespace ocs2

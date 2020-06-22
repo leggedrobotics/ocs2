@@ -44,19 +44,10 @@ class ControlledSystemBase : public OdeBase {
   /** Default constructor. */
   ControlledSystemBase() = default;
 
-  /**
-   * Copy constructor.
-   */
-  ControlledSystemBase(const ControlledSystemBase& rhs);
-
-  /**
-   * Default destructor.
-   */
+  /** Default destructor. */
   ~ControlledSystemBase() override = default;
 
-  /**
-   * Resets the internal classes.
-   */
+  /** Resets the internal classes. */
   virtual void reset();
 
   /**
@@ -98,6 +89,10 @@ class ControlledSystemBase : public OdeBase {
    * @return A raw pointer to the class.
    */
   virtual ControlledSystemBase* clone() const = 0;
+
+ protected:
+  /** Copy constructor. */
+  ControlledSystemBase(const ControlledSystemBase& rhs);
 
  private:
   ControllerBase* controllerPtr_ = nullptr;  //! pointer to controller

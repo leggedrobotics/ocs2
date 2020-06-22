@@ -43,7 +43,7 @@ namespace ocs2 {
  *
  * - Linearized system:   \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$ \n
  */
-class SystemDynamicsLinearizer : public SystemDynamicsBase {
+class SystemDynamicsLinearizer final : public SystemDynamicsBase {
  public:
   /** Constructor */
   SystemDynamicsLinearizer(std::shared_ptr<ControlledSystemBase> nonlinearSystemPtr, bool doubleSidedDerivative = true,

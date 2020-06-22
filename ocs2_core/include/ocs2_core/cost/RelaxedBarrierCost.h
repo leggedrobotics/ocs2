@@ -79,14 +79,7 @@ class RelaxedBarrierCost : public CostFunctionBase {
    */
   explicit RelaxedBarrierCost(std::vector<Config> intermediateConfig, std::vector<Config> finalConfig, size_t stateDim, size_t inputDim);
 
-  /**
-   * Copy constructor
-   */
-  RelaxedBarrierCost(const RelaxedBarrierCost& rhs);
-
-  /**
-   * Default destructor
-   */
+  /** Default destructor */
   virtual ~RelaxedBarrierCost() = default;
 
   /**
@@ -109,6 +102,9 @@ class RelaxedBarrierCost : public CostFunctionBase {
   scalar_t finalCostDerivativeTime(scalar_t t, const vector_t& x) override;
 
  protected:
+  /** Copy constructor */
+  RelaxedBarrierCost(const RelaxedBarrierCost& rhs);
+
   /**
    * Interface method to the cost term f such that the intermediate cost is
    * - \f$ L = RelaxedBarrierFunction(f(x,u,t)) \f$

@@ -52,14 +52,10 @@ enum sys_event_id {
  */
 class SystemEventHandler {
  public:
-  /**
-   * Default constructor
-   */
+  /** Default constructor */
   SystemEventHandler() = default;
 
-  /**
-   * Default destructor
-   */
+  /** Default destructor */
   virtual ~SystemEventHandler() = default;
 
   /**
@@ -86,6 +82,10 @@ class SystemEventHandler {
    * Resets the class.
    */
   virtual void reset();
+
+ private:
+  /** Copy constructor */
+  SystemEventHandler(const SystemEventHandler& rhs) = default;
 
  public:
   std::atomic_bool killIntegration_ = {false};

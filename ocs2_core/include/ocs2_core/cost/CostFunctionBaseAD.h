@@ -42,20 +42,10 @@ class CostFunctionBaseAD : public CostFunctionBase {
   using ad_scalar_t = typename CppAdInterface::ad_scalar_t;
   using ad_vector_t = typename CppAdInterface::ad_vector_t;
 
-  /**
-   * Default constructor
-   *
-   */
+  /** Default constructor */
   explicit CostFunctionBaseAD(size_t stateDim, size_t inputDim);
 
-  /**
-   * Copy constructor
-   */
-  CostFunctionBaseAD(const CostFunctionBaseAD& rhs);
-
-  /**
-   * Default destructor
-   */
+  /** Default destructor */
   virtual ~CostFunctionBaseAD() = default;
 
   /**
@@ -82,6 +72,9 @@ class CostFunctionBaseAD : public CostFunctionBase {
   scalar_t finalCostDerivativeTime(scalar_t t, const vector_t& x) final;
 
  protected:
+  /** Copy constructor */
+  CostFunctionBaseAD(const CostFunctionBaseAD& rhs);
+
   /**
    * Gets a user-defined cost parameters, applied to the intermediate costs
    *

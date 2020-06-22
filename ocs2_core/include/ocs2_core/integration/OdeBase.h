@@ -44,9 +44,6 @@ class OdeBase {
   /** Default destructor */
   virtual ~OdeBase() = default;
 
-  /** Copy constructor */
-  OdeBase(const OdeBase& rhs) : numFunctionCalls_(0) {}
-
   /** Returns the number of function calls. */
   int getNumFunctionCalls() const { return numFunctionCalls_; }
 
@@ -80,6 +77,9 @@ class OdeBase {
   virtual vector_t computeGuardSurfaces(scalar_t time, const vector_t& state);
 
  protected:
+  /** Copy constructor */
+  OdeBase(const OdeBase& rhs) : numFunctionCalls_(0) {}
+
   int numFunctionCalls_ = 0;
 };
 

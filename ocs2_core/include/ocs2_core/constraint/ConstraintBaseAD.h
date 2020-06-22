@@ -56,14 +56,7 @@ class ConstraintBaseAD : public ConstraintBase {
    */
   ConstraintBaseAD(size_t stateDim, size_t inputDim);
 
-  /**
-   * Copy constructor
-   */
-  ConstraintBaseAD(const ConstraintBaseAD& rhs);
-
-  /**
-   * Default destructor
-   */
+  /** Default destructor */
   ~ConstraintBaseAD() override = default;
 
   /**
@@ -86,6 +79,9 @@ class ConstraintBaseAD : public ConstraintBase {
   VectorFunctionLinearApproximation finalStateEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x) final;
 
  protected:
+  /** Copy constructor */
+  ConstraintBaseAD(const ConstraintBaseAD& rhs);
+
   /**
    * Interface method to the state-input equality constraints. This method should be implemented by the derived class.
    *

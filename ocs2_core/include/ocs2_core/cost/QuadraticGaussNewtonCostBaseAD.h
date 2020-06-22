@@ -52,20 +52,10 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
   using ad_scalar_t = typename CppAdInterface::ad_scalar_t;
   using ad_vector_t = typename CppAdInterface::ad_vector_t;
 
-  /**
-   * Default constructor
-   *
-   */
+  /** Default constructor */
   QuadraticGaussNewtonCostBaseAD(size_t stateDim, size_t inputDim);
 
-  /**
-   * Copy constructor
-   */
-  QuadraticGaussNewtonCostBaseAD(const QuadraticGaussNewtonCostBaseAD& rhs);
-
-  /**
-   * Default destructor
-   */
+  /** Default destructor */
   virtual ~QuadraticGaussNewtonCostBaseAD() = default;
 
   /**
@@ -92,6 +82,9 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
   scalar_t finalCostDerivativeTime(scalar_t t, const vector_t& x) override;
 
  protected:
+  /** Copy constructor */
+  QuadraticGaussNewtonCostBaseAD(const QuadraticGaussNewtonCostBaseAD& rhs);
+
   /**
    * Gets a user-defined cost parameters, applied to the intermediate costs
    *

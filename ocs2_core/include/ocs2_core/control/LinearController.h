@@ -41,61 +41,35 @@ namespace ocs2 {
  */
 class LinearController final : public ControllerBase {
  public:
-  /**
-   * Constructor, leaves object uninitialized
-   *
-   * @param[in] stateDim: State vector dimension
-   * @param[in] inputDim: Input vector dimension
-   */
-  LinearController(size_t stateDim, size_t inputDim);
+  /** Constructor, leaves object uninitialized */
+  LinearController() = default;
 
   /**
    * @brief Constructor initializes all required members of the controller.
    *
-   * @param[in] stateDim: State vector dimension
-   * @param[in] inputDim: Input vector dimension
    * @param [in] controllerTime: Time stamp array of the controller
    * @param [in] controllerBias: The bias array.
    * @param [in] controllerGain: The feedback gain array.
    */
-  LinearController(size_t stateDim, size_t inputDim, const scalar_array_t& controllerTime, const vector_array_t& controllerBias,
-                   const matrix_array_t& controllerGain);
+  LinearController(scalar_array_t controllerTime, vector_array_t controllerBias, matrix_array_t controllerGain)
+      : timeStamp_(std::move(controllerTime)), biasArray_(std::move(controllerBias)), gainArray_(std::move(controllerGain)) {}
 
-  /**
-   * @brief Copy constructor
-   * @param other LinearController object to copy from
-   */
+  /** Copy constructor */
   LinearController(const LinearController& other);
 
-  /**
-   * @brief LinearController move constructor -- not implemented for now
-   * @param other LinearController object to move from
-   * @todo Implement
-   */
+  /** Move constructor */
   LinearController(LinearController&& other);
 
-  /**
-   * @brief Copy assignment (copy and swap idiom)
-   * @param rhs LinearController object to assign from
-   */
+  /** Copy assignment (copy and swap idiom) */
   LinearController& operator=(const LinearController& rhs);
 
-  /**
-   * @brief Move assignment -- not implemented for now
-   * @param rhs LinearController object to assign from
-   * @todo Implement
-   */
+  /** Move assignment */
   LinearController& operator=(LinearController&& rhs);
 
-  /**
-   * @brief Destructor
-   */
+  /** Destructor */
   ~LinearController() override = default;
 
-  /**
-   * @brief Create a deep copy of the object.
-   * @return Pointer to a new instance.
-   */
+  /** Clone */
   LinearController* clone() const override;
 
   /**
@@ -104,15 +78,9 @@ class LinearController final : public ControllerBase {
    * @param [in] controllerBias: The bias array.
    * @param [in] controllerGain: The feedback gain array.
    */
-  void setController(const scalar_array_t& controllerTime, const vector_array_t& controllerBias, const matrix_array_t& controllerGain);
+  void setController(scalar_array_t controllerTime, vector_array_t controllerBias, matrix_array_t controllerGain);
 
   vector_t computeInput(scalar_t t, const vector_t& x) override;
-
-  void flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const override;
-
-  void flattenSingle(scalar_t time, std::vector<float>& flatArray) const;
-
-  void unFlatten(const scalar_array_t& timeArray, const std::vector<std::vector<float> const*>& flatArray2) override;
 
   void concatenate(const ControllerBase* nextController, int index, int length) override;
 
@@ -134,13 +102,21 @@ class LinearController final : public ControllerBase {
 
   scalar_array_t controllerEventTimes() const override;
 
-  friend void swap(LinearController& a, LinearController& b) noexcept;
+  void flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const override;
+
+  static LinearController unFlatten(size_t stateDim, size_t inputDim, const scalar_array_t& timeArray,
+                                    const std::vector<std::vector<float> const*>& flatArray2);
+
+ private:
+  void flattenSingle(scalar_t time, std::vector<float>& flatArray) const;
 
  public:
   scalar_array_t timeStamp_;
   vector_array_t biasArray_;
   vector_array_t deltaBiasArray_;
   matrix_array_t gainArray_;
+
+  friend void swap(LinearController& a, LinearController& b) noexcept;
 };
 
 void swap(LinearController& a, LinearController& b) noexcept;

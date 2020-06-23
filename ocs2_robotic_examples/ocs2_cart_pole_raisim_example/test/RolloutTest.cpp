@@ -40,7 +40,7 @@ TEST(ocs2_cart_pole_raisim_example, RolloutTest) {
   // define zero-input controller
   const scalar_array_t controllerTime{0.0, 1.0};
   const vector_array_t controllerInput(2, vector_t::Zero(INPUT_DIM_));
-  ocs2::FeedforwardController ctrl(STATE_DIM_, INPUT_DIM_, controllerTime, controllerInput);
+  ocs2::FeedforwardController ctrl(INPUT_DIM_, controllerTime, controllerInput);
 
   const double t0 = 0.2;
   const double tf = 2.2;

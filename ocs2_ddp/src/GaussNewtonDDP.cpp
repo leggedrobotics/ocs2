@@ -253,7 +253,7 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
     }
   } else {
     primalSolutionPtr->controllerPtr_.reset(
-        new FeedforwardController(stateDim_, inputDim_, primalSolutionPtr->timeTrajectory_, primalSolutionPtr->inputTrajectory_));
+        new FeedforwardController(inputDim_, primalSolutionPtr->timeTrajectory_, primalSolutionPtr->inputTrajectory_));
   }
 
   // fill mode schedule

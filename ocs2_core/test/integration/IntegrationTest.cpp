@@ -57,7 +57,7 @@ void testSecondOrderSystem(IntegratorType integrator_type) {
   vector_array_t uff(2, vector_t::Ones(1));
   matrix_array_t k(2, matrix_t::Zero(1, 2));
 
-  auto controller = std::unique_ptr<LinearController>(new LinearController(stateDim, inputDim, cntTimeStamp, uff, k));
+  auto controller = std::unique_ptr<LinearController>(new LinearController(cntTimeStamp, uff, k));
 
   sys->setController(controller.get());
 

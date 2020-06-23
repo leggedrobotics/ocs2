@@ -186,7 +186,7 @@ void MRT_ROS_Interface::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_control
   // instantiate the correct controller
   switch (msg->controllerType) {
     case ocs2_msgs::mpc_flattened_controller::CONTROLLER_FEEDFORWARD: {
-      controlBuffer.reset(new FeedforwardController(stateDim, inputDim));
+      controlBuffer.reset(new FeedforwardController(inputDim));
       break;
     }
     case ocs2_msgs::mpc_flattened_controller::CONTROLLER_LINEAR: {

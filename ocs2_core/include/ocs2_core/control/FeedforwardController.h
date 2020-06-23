@@ -43,82 +43,50 @@ namespace ocs2 {
  */
 class FeedforwardController final : public ControllerBase {
  public:
-  /**
-   * Constructor, leaves object uninitialized
-   *
-   * @param [in] stateDim: State vector dimension
-   * @param [in] inputDim: Input vector dimension
-   */
-  FeedforwardController(size_t stateDim, size_t inputDim);
+  /** Constructor, leaves object uninitialized */
+  FeedforwardController() = default;
 
   /**
-   * @brief Constructor initializes all required members of the controller.
+   * Constructor initializes all required members of the controller.
    *
-   * @param [in] stateDim: State vector dimension
-   * @param [in] inputDim: Input vector dimension
    * @param [in] controllerTime: Time stamp array of the controller
    * @param [in] controllerFeedforward: The feedforward control input array.
    */
-  FeedforwardController(size_t stateDim, size_t inputDim, const scalar_array_t& controllerTime,
-                        const vector_array_t& controllerFeedforward);
+  FeedforwardController(scalar_array_t controllerTime, vector_array_t controllerFeedforward)
+      : timeStamp_(std::move(controllerTime)), uffArray_(std::move(controllerFeedforward)) {}
 
   /**
-   * @brief Constructor to initialize the feedforward input data with a general controller rolled-out along a nominal stateTrajectory
+   * Constructor to initialize the feedforward input data with a general controller rolled-out along a nominal stateTrajectory
    *
-   * @param [in] stateDim: State vector dimension
-   * @param [in] inputDim: Input vector dimension
    * @param [in] controllerTime the times for the rollout
    * @param [in] stateTrajectory the states for the rollout
    * @param [in] controller the controller to extract the feedforward controls from during a rollout
    */
-  FeedforwardController(size_t stateDim, size_t inputDim, const scalar_array_t& controllerTime, const vector_array_t& stateTrajectory,
-                        ControllerBase* controller);
+  FeedforwardController(const scalar_array_t& controllerTime, const vector_array_t& stateTrajectory, ControllerBase* controller);
 
-  /**
-   * @brief Copy constructor
-   * @param other FeedforwardController object to copy from
-   */
+  /** Copy constructor */
   FeedforwardController(const FeedforwardController& other);
 
-  /**
-   * @brief Move constructor -- not implemented for now
-   * @param other FeedforwardController object to move from
-   * @todo Implement
-   */
-  FeedforwardController(FeedforwardController&& other) = delete;
+  /** Move constructor */
+  FeedforwardController(FeedforwardController&& other);
 
-  /**
-   * @brief Copy assignment (copy and swap idiom)
-   * @param other FeedforwardController object to assign from
-   */
-  FeedforwardController& operator=(FeedforwardController other);
+  /** Copy assignment (copy and swap idiom) */
+  FeedforwardController& operator=(const FeedforwardController& other);
 
-  /**
-   * @brief Move assignment -- not implemented for now
-   * @param other FeedforwardController object to assign from
-   * @todo Implement
-   */
-  FeedforwardController& operator=(FeedforwardController&& other) = delete;
+  /** Move assignment */
+  FeedforwardController& operator=(FeedforwardController&& other);
 
-  /**
-   * @brief Destructor
-   */
+  /** Destructor */
   virtual ~FeedforwardController() override = default;
 
   /**
-   * @brief setController Assign control law
+   * setController Assign control law
    * @param [in] controllerTime: Time stamp array of the controller
    * @param [in] controllerFeedforward: The feedforward control input array.
    */
-  void setController(const scalar_array_t& controllerTime, const vector_array_t& controllerFeedforward);
+  void setController(scalar_array_t controllerTime, vector_array_t controllerFeedforward);
 
   vector_t computeInput(scalar_t t, const vector_t& x) override;
-
-  void flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const override;
-
-  void flattenSingle(scalar_t time, std::vector<float>& flatArray) const;
-
-  void unFlatten(const scalar_array_t& timeArray, const std::vector<std::vector<float> const*>& flatArray2) override;
 
   void concatenate(const ControllerBase* nextController, int index, int length) override;
 
@@ -141,12 +109,22 @@ class FeedforwardController final : public ControllerBase {
 
   void display() const override;
 
+  void flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const override;
+
+  static FeedforwardController unFlatten(size_t inputDim, const scalar_array_t& timeArray,
+                                         const std::vector<std::vector<float> const*>& flatArray2);
+
+ private:
+  void flattenSingle(scalar_t time, std::vector<float>& flatArray) const;
+
  public:
   scalar_array_t timeStamp_;
   vector_array_t uffArray_;
+
+  friend void swap(FeedforwardController& a, FeedforwardController& b) noexcept;
 };
 
-void swap(FeedforwardController& a, FeedforwardController& b);
+void swap(FeedforwardController& a, FeedforwardController& b) noexcept;
 
 std::ostream& operator<<(std::ostream& out, const FeedforwardController& controller);
 

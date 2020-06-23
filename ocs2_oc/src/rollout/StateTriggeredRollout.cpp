@@ -58,7 +58,7 @@ vector_t StateTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray,
   eventsPastTheEndIndeces.reserve(maxNumSteps);
 
   // set controller
-  StateBasedLinearController trajectorySpreadingController(controller->getStateDim(), controller->getInputDim());
+  StateBasedLinearController trajectorySpreadingController;
   if (this->settings().useTrajectorySpreadingController_) {
     trajectorySpreadingController.setController(controller);
     systemDynamicsPtr_->setController(&trajectorySpreadingController);

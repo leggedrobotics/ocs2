@@ -39,13 +39,8 @@ namespace ocs2 {
  */
 class ControllerBase {
  public:
-  /**
-   * Constructor.
-   *
-   * @param[in] stateDim: State vector dimension
-   * @param[in] inputDim: Input vector dimension
-   */
-  ControllerBase(size_t stateDim, size_t inputDim);
+  /** Constructor */
+  ControllerBase() = default;
 
   /** Default destructor. */
   virtual ~ControllerBase() = default;
@@ -58,20 +53,6 @@ class ControllerBase {
    * @return Current input.
    */
   virtual vector_t computeInput(scalar_t t, const vector_t& x) = 0;
-
-  /**
-   * @brief Saves the controller at given time to an array of arrays structure for ROS transmission
-   * @param[in] timeArray array of query times
-   * @param[out] flatArray2 The array of arrays that is to be filled, i.e., the compressed controller. One array per query time
-   */
-  virtual void flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const;
-
-  /**
-   * @brief Restores and initializes the controller from a flattened array
-   * @param[in] timeArray array of times
-   * @param[in] flatArray2 The array the represents the compressed controller
-   */
-  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<std::vector<float> const*>& flatArray2);
 
   /**
    * @brief Merges this controller with another controller that comes active later in time
@@ -93,7 +74,7 @@ class ControllerBase {
    *
    * @param[in] otherController: The control law to be appended.
    */
-  void concatenate(const ControllerBase* otherController);
+  void concatenate(const ControllerBase* otherController) { concatenate(otherController, 0, otherController->size()); }
 
   /**
    * @brief Returns the size of the controller.
@@ -144,22 +125,19 @@ class ControllerBase {
    */
   virtual scalar_array_t controllerEventTimes() const { return {}; }
 
-  /* State dimension getter */
-  size_t getStateDim() const { return stateDim_; }
-
-  /* Input dimension getter */
-  size_t getInputDim() const { return inputDim_; }
-
-  friend void swap(ControllerBase& a, ControllerBase& b) noexcept;
+  /**
+   * Saves the controller at given time to an array of arrays structure for ROS transmission
+   *
+   * @param[in] timeArray array of query times
+   * @param[out] flatArray2 The array of arrays that is to be filled, i.e., the compressed controller. One array per query time
+   */
+  virtual void flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const {
+    throw std::runtime_error("ControllerBase::flatten: not implemented.");
+  }
 
  protected:
   /** Copy constructor */
   ControllerBase(const ControllerBase& rhs) = default;
-
-  size_t stateDim_;
-  size_t inputDim_;
 };
-
-void swap(ControllerBase& a, ControllerBase& b) noexcept;
 
 }  // namespace ocs2

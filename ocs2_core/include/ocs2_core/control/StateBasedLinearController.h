@@ -36,14 +36,10 @@ namespace ocs2 {
 
 class StateBasedLinearController final : public ControllerBase {
  public:
-  /**
-   * Default constructor.
-   */
-  StateBasedLinearController(size_t stateDim, size_t inputDim) : ControllerBase(stateDim, inputDim) {}
+  /** Default constructor */
+  StateBasedLinearController() = default;
 
-  /**
-   * Default destructor.
-   */
+  /** Default destructor */
   ~StateBasedLinearController() override = default;
 
   /**
@@ -68,10 +64,6 @@ class StateBasedLinearController final : public ControllerBase {
 
   vector_t computeInput(scalar_t t, const vector_t& x) override;
 
-  void flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const override;
-
-  void unFlatten(const scalar_array_t& timeArray, const std::vector<std::vector<float> const*>& flatArray2) override;
-
   void concatenate(const ControllerBase* nextController, int index, int length) override;
 
   int size() const override;
@@ -90,7 +82,7 @@ class StateBasedLinearController final : public ControllerBase {
 
  private:
   ControllerBase* ctrlPtr_ = nullptr;
-  scalar_array_t ctrlEventTimes_;
+  scalar_array_t ctrlEventTimes_{0};
 };
 
 }  // namespace ocs2

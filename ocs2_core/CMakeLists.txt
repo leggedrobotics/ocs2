@@ -91,7 +91,6 @@ add_library(${PROJECT_NAME}
   src/integration/Integrator.cpp
   src/integration/IntegratorBase.cpp
   src/integration/OdeBase.cpp
-  src/integration/OdeFunc.cpp
   src/integration/Observer.cpp
   src/integration/StateTriggeredEventHandler.cpp
   src/integration/SystemEventHandler.cpp
@@ -107,6 +106,9 @@ add_library(${PROJECT_NAME}
   src/loopshaping/constraint/LoopshapingConstraintEliminatePattern.cpp
   src/loopshaping/constraint/LoopshapingConstraintInputPattern.cpp
   src/loopshaping/constraint/LoopshapingConstraintOutputPattern.cpp
+  src/loopshaping/dynamics/LoopshapingDynamics.cpp
+  src/loopshaping/dynamics/LoopshapingDynamicsDerivative.cpp
+  src/loopshaping/dynamics/LoopshapingFilterDynamics.cpp
   src/model_data/ModelDataBase.cpp
   src/misc/LinearAlgebra.cpp
   src/misc/ThreadPool.cpp
@@ -226,8 +228,8 @@ catkin_add_gtest(${PROJECT_NAME}_loopshaping
   test/loopshaping/testLoopshapingConstraint.cpp
   test/loopshaping/testLoopshapingCost.cpp
   test/loopshaping/testLoopshapingDefinition.cpp
-#   test/loopshaping/testLoopshapingDynamics.cpp
-#   test/loopshaping/testLoopshapingFilterDynamics.cpp
+  test/loopshaping/testLoopshapingDynamics.cpp
+  test/loopshaping/testLoopshapingFilterDynamics.cpp
 )
 target_link_libraries(${PROJECT_NAME}_loopshaping
   ${PROJECT_NAME}

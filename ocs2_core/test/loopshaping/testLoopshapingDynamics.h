@@ -10,7 +10,6 @@
 #include "ocs2_core/loopshaping/LoopshapingDefinition.h"
 #include "ocs2_core/loopshaping/LoopshapingPropertyTree.h"
 #include "ocs2_core/loopshaping/dynamics/LoopshapingDynamics.h"
-#include "ocs2_core/loopshaping/dynamics/LoopshapingDynamicsDerivative.h"
 
 #include "testLoopshapingConfigurations.h"
 
@@ -35,9 +34,6 @@ class TestFixtureLoopShapingDynamics : public ::testing::Test {
     // Create Loopshaping Dynamics
     testLoopshapingDynamics = LoopshapingDynamics::create(*testSystem, loopshapingDefinition_);
 
-    // Create Loopshaping Derivatives
-    testLoopshapingDynamicsDerivative = LoopshapingDynamicsDerivative::create(*testSystem, loopshapingDefinition_);
-
     // Set up state and input
     t = 0.5;
     const scalar_t eps = 1e-2;
@@ -49,7 +45,6 @@ class TestFixtureLoopShapingDynamics : public ::testing::Test {
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
   std::unique_ptr<LinearSystemDynamics> testSystem;
   std::unique_ptr<LoopshapingDynamics> testLoopshapingDynamics;
-  std::unique_ptr<LoopshapingDynamicsDerivative> testLoopshapingDynamicsDerivative;
 
   const scalar_t tol = 1e-9;
 

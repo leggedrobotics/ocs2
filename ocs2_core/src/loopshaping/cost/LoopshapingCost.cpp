@@ -48,19 +48,6 @@ std::unique_ptr<LoopshapingCost> LoopshapingCost::create(const CostFunctionBase&
   }
 }
 
-void LoopshapingCost::setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) {
-  costApproximationValid_ = false;
-  costEvaluationValid_ = false;
-
-  t_ = t;
-  x_system_ = loopshapingDefinition_->getSystemState(x);
-  u_system_ = loopshapingDefinition_->getSystemInput(x, u);
-  x_filter_ = loopshapingDefinition_->getFilterState(x);
-  u_filter_ = loopshapingDefinition_->getFilteredInput(x, u);
-
-  CostFunctionBase::setCurrentStateAndControl(t, x, u);
-}
-
 void LoopshapingCost::setCostDesiredTrajectoriesPtr(const CostDesiredTrajectories* costDesiredTrajectoriesPtr) {
   if (costDesiredTrajectoriesPtr) {
     CostFunctionBase::setCostDesiredTrajectoriesPtr(costDesiredTrajectoriesPtr);
@@ -91,81 +78,47 @@ void LoopshapingCost::setCostDesiredTrajectoriesPtr(const CostDesiredTrajectorie
   }
 }
 
-scalar_t LoopshapingCost::getCost() {
-  computeCost();
-  const auto& gamma = loopshapingDefinition_->gamma_;
-  return gamma * c_filter_ + (1.0 - gamma) * c_system_;
-};
+scalar_t LoopshapingCost::cost(scalar_t t, const vector_t& x, const vector_t& u) {
+  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
+  const vector_t u_system = loopshapingDefinition_->getSystemInput(x, u);
+  const vector_t x_filter = loopshapingDefinition_->getFilterState(x);
+  const vector_t u_filter = loopshapingDefinition_->getFilteredInput(x, u);
 
-scalar_t LoopshapingCost::getCostDerivativeTime() {
-  computeApproximation();
+  const scalar_t L_system = systemCost_->cost(t, x_system, u_system);
+  const scalar_t L_filter = systemCost_->cost(t, x_system, u_filter);
+  const scalar_t gamma = loopshapingDefinition_->gamma_;
+
+  return gamma * L_filter + (1.0 - gamma) * L_system;
+}
+
+scalar_t LoopshapingCost::costDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) {
   // TODO(rgrandia)
   return 0;
 }
 
-scalar_t LoopshapingCost::getTerminalCost() {
-  systemCost_->setCurrentStateAndControl(t_, x_system_, u_system_);
-  return systemCost_->getTerminalCost();
+scalar_t LoopshapingCost::finalCost(scalar_t t, const vector_t& x) {
+  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
+  return systemCost_->finalCost(t, x_system);
 };
 
-scalar_t LoopshapingCost::getTerminalCostDerivativeTime() {
+scalar_t LoopshapingCost::finalCostDerivativeTime(scalar_t t, const vector_t& x) {
   return 0;
 }
 
-vector_t LoopshapingCost::getTerminalCostDerivativeState() {
-  systemCost_->setCurrentStateAndControl(t_, x_system_, u_system_);
-  vector_t dPhidx_system = systemCost_->getTerminalCostDerivativeState();
+ScalarFunctionQuadraticApproximation LoopshapingCost::finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
+  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
+  const auto Phi_system = systemCost_->finalCostQuadraticApproximation(t, x_system);
+
   const size_t FILTER_STATE_DIM = loopshapingDefinition_->getInputFilter().getNumStates();
-  const size_t SYSTEM_STATE_DIM = dPhidx_system.rows();
-  vector_t dPhidx(SYSTEM_STATE_DIM + FILTER_STATE_DIM);
-  dPhidx.head(SYSTEM_STATE_DIM) = dPhidx_system;
-  dPhidx.tail(FILTER_STATE_DIM).setZero();
-  return dPhidx;
-};
 
-matrix_t LoopshapingCost::getTerminalCostSecondDerivativeState() {
-  systemCost_->setCurrentStateAndControl(t_, x_system_, u_system_);
-  matrix_t dPhidxx_system = systemCost_->getTerminalCostSecondDerivativeState();
-  const size_t FILTER_STATE_DIM = loopshapingDefinition_->getInputFilter().getNumStates();
-  const size_t SYSTEM_STATE_DIM = dPhidxx_system.rows();
-  matrix_t dPhidxx = matrix_t::Zero(SYSTEM_STATE_DIM + FILTER_STATE_DIM, SYSTEM_STATE_DIM + FILTER_STATE_DIM);
-  dPhidxx.block(0, 0, SYSTEM_STATE_DIM, SYSTEM_STATE_DIM) = dPhidxx_system;
-  return dPhidxx;
-};
-
-void LoopshapingCost::computeCost() {
-  if (!costEvaluationValid_) {
-    systemCost_->setCurrentStateAndControl(t_, x_system_, u_system_);
-    c_system_ = systemCost_->getCost();
-
-    systemCost_->setCurrentStateAndControl(t_, x_system_, u_filter_);
-    c_filter_ = systemCost_->getCost();
-
-    costEvaluationValid_ = true;
-  }
-};
-
-void LoopshapingCost::computeApproximation() {
-  if (!costApproximationValid_) {
-    systemCost_->setCurrentStateAndControl(t_, x_system_, u_system_);
-    Q_system_ = systemCost_->getCostSecondDerivativeState();
-    P_system_ = systemCost_->getCostDerivativeInputState();
-    R_system_ = systemCost_->getCostSecondDerivativeInput();
-    q_system_ = systemCost_->getCostDerivativeState();
-    r_system_ = systemCost_->getCostDerivativeInput();
-    c_system_ = systemCost_->getCost();
-
-    systemCost_->setCurrentStateAndControl(t_, x_system_, u_filter_);
-    Q_filter_ = systemCost_->getCostSecondDerivativeState();
-    P_filter_ = systemCost_->getCostDerivativeInputState();
-    R_filter_ = systemCost_->getCostSecondDerivativeInput();
-    q_filter_ = systemCost_->getCostDerivativeState();
-    r_filter_ = systemCost_->getCostDerivativeInput();
-    c_filter_ = systemCost_->getCost();
-
-    costEvaluationValid_ = true;
-    costApproximationValid_ = true;
-  }
-};
+  ScalarFunctionQuadraticApproximation Phi;
+  Phi.f = Phi_system.f;
+  Phi.dfdx.resize(x.rows());
+  Phi.dfdx.head(x_system.rows()) = Phi_system.dfdx;
+  Phi.dfdx.tail(FILTER_STATE_DIM).setZero();
+  Phi.dfdxx.setZero(x.rows(), x.rows());
+  Phi.dfdxx.topLeftCorner(x_system.rows(), x_system.rows()) = Phi_system.dfdxx;
+  return Phi;
+}
 
 }  // namespace ocs2

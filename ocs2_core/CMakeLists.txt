@@ -107,7 +107,9 @@ add_library(${PROJECT_NAME}
   src/loopshaping/constraint/LoopshapingConstraintInputPattern.cpp
   src/loopshaping/constraint/LoopshapingConstraintOutputPattern.cpp
   src/loopshaping/dynamics/LoopshapingDynamics.cpp
-  src/loopshaping/dynamics/LoopshapingDynamicsDerivative.cpp
+  src/loopshaping/dynamics/LoopshapingDynamicsEliminatePattern.cpp
+  src/loopshaping/dynamics/LoopshapingDynamicsInputPattern.cpp
+  src/loopshaping/dynamics/LoopshapingDynamicsOutputPattern.cpp
   src/loopshaping/dynamics/LoopshapingFilterDynamics.cpp
   src/model_data/ModelDataBase.cpp
   src/misc/LinearAlgebra.cpp

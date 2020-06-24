@@ -35,159 +35,76 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-std::unique_ptr<LoopshapingConstraint> LoopshapingConstraint::create(size_t fullStateDim, size_t fullInputDim,
-                                                                     std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
+std::unique_ptr<LoopshapingConstraint> LoopshapingConstraint::create(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
   switch (loopshapingDefinition->getType()) {
     case LoopshapingType::outputpattern:
-      return std::unique_ptr<LoopshapingConstraint>(
-          new LoopshapingConstraintOutputPattern(fullStateDim, fullInputDim, std::move(loopshapingDefinition)));
+      return std::unique_ptr<LoopshapingConstraint>(new LoopshapingConstraintOutputPattern(std::move(loopshapingDefinition)));
     case LoopshapingType::inputpattern:
-      return std::unique_ptr<LoopshapingConstraint>(
-          new LoopshapingConstraintInputPattern(fullStateDim, fullInputDim, std::move(loopshapingDefinition)));
+      return std::unique_ptr<LoopshapingConstraint>(new LoopshapingConstraintInputPattern(std::move(loopshapingDefinition)));
     case LoopshapingType::eliminatepattern:
-      return std::unique_ptr<LoopshapingConstraint>(
-          new LoopshapingConstraintEliminatePattern(fullStateDim, fullInputDim, std::move(loopshapingDefinition)));
+      return std::unique_ptr<LoopshapingConstraint>(new LoopshapingConstraintEliminatePattern(std::move(loopshapingDefinition)));
     default:
       throw std::runtime_error("[LoopshapingConstraint::create] invalid loopshaping type");
   }
 }
 
-std::unique_ptr<LoopshapingConstraint> LoopshapingConstraint::create(size_t fullStateDim, size_t fullInputDim,
-                                                                     const ConstraintBase& systemConstraint,
+std::unique_ptr<LoopshapingConstraint> LoopshapingConstraint::create(const ConstraintBase& systemConstraint,
                                                                      std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
   switch (loopshapingDefinition->getType()) {
     case LoopshapingType::outputpattern:
       return std::unique_ptr<LoopshapingConstraint>(
-          new LoopshapingConstraintOutputPattern(fullStateDim, fullInputDim, systemConstraint, std::move(loopshapingDefinition)));
+          new LoopshapingConstraintOutputPattern(systemConstraint, std::move(loopshapingDefinition)));
     case LoopshapingType::inputpattern:
       return std::unique_ptr<LoopshapingConstraint>(
-          new LoopshapingConstraintInputPattern(fullStateDim, fullInputDim, systemConstraint, std::move(loopshapingDefinition)));
+          new LoopshapingConstraintInputPattern(systemConstraint, std::move(loopshapingDefinition)));
     case LoopshapingType::eliminatepattern:
       return std::unique_ptr<LoopshapingConstraint>(
-          new LoopshapingConstraintEliminatePattern(fullStateDim, fullInputDim, systemConstraint, std::move(loopshapingDefinition)));
+          new LoopshapingConstraintEliminatePattern(systemConstraint, std::move(loopshapingDefinition)));
     default:
       throw std::runtime_error("[LoopshapingConstraint::create] invalid loopshaping type");
   }
 }
 
-void LoopshapingConstraint::setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) {
-  systemStateInputConstraintApproximationValid_ = false;
-  systemInequalityConstraintApproximationValid_ = false;
-
-  ConstraintBase::setCurrentStateAndControl(t, x, u);
-
-  t_ = t;
-  x_system_ = loopshapingDefinition_->getSystemState(x);
-  u_system_ = loopshapingDefinition_->getSystemInput(x, u);
-  x_filter_ = loopshapingDefinition_->getFilterState(x);
-  u_filter_ = loopshapingDefinition_->getFilteredInput(x, u);
-
-  if (systemConstraint_) {
-    systemConstraint_->setCurrentStateAndControl(t, x_system_, u_system_);
-  }
+vector_t LoopshapingConstraint::stateEqualityConstraint(scalar_t t, const vector_t& x) {
+  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
+  return systemConstraint_->stateEqualityConstraint(t, x_system);
 }
 
-vector_t LoopshapingConstraint::getStateInputEqualityConstraint() {
-  vector_t e(0);
-  if (systemConstraint_) {
-    e = systemConstraint_->getStateInputEqualityConstraint();
-  }
-  appendStateInputEqualityConstraint(e);
-  return e;
+vector_t LoopshapingConstraint::inequalityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
+  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
+  const vector_t u_system = loopshapingDefinition_->getSystemInput(x, u);
+  return systemConstraint_->inequalityConstraint(t, x_system, u_system);
 }
 
-vector_t LoopshapingConstraint::getStateEqualityConstraint() {
-  if (systemConstraint_) {
-    return systemConstraint_->getStateEqualityConstraint();
-  } else {
-    return vector_t(0);
-  }
+vector_t LoopshapingConstraint::finalStateEqualityConstraint(scalar_t t, const vector_t& x) {
+  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
+  return systemConstraint_->finalStateEqualityConstraint(t, x_system);
 }
 
-scalar_array_t LoopshapingConstraint::getInequalityConstraint() {
-  if (systemConstraint_) {
-    return systemConstraint_->getInequalityConstraint();
-  } else {
-    return scalar_array_t(0);
-  }
+VectorFunctionLinearApproximation LoopshapingConstraint::stateEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x) {
+  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
+  const auto c_system = systemConstraint_->stateEqualityConstraintLinearApproximation(t, x_system);
+
+  VectorFunctionLinearApproximation c;
+  c.f = c_system.f;
+  c.dfdx.resize(c.f.rows(), x.rows());
+  c.dfdx.leftCols(x_system.rows()) = c_system.dfdx;
+  c.dfdx.rightCols(x.rows() - x_system.rows()).setZero();
+
+  return c;
 }
 
-vector_t LoopshapingConstraint::getFinalStateEqualityConstraint() {
-  if (systemConstraint_) {
-    return systemConstraint_->getFinalStateEqualityConstraint();
-  } else {
-    return vector_t(0);
-  }
-}
+VectorFunctionLinearApproximation LoopshapingConstraint::finalStateEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x) {
+  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
+  const auto cf_system = systemConstraint_->finalStateEqualityConstraintLinearApproximation(t, x_system);
 
-matrix_t LoopshapingConstraint::getStateInputEqualityConstraintDerivativesState() {
-  computeSystemStateInputConstraintDerivatives();  // updates C_system_
-  matrix_t C(0, ConstraintBase::stateDim_);
-  if (systemConstraint_) {
-    C_system_ = systemConstraint_->getStateInputEqualityConstraintDerivativesState();
-    C.resize(C_system_.rows(), ConstraintBase::stateDim_);
-    C.leftCols(C_system_.cols()) = C_system_;
-    C.rightCols(ConstraintBase::stateDim_ - C_system_.cols()).setZero();
-  }
-  appendStateInputEqualityConstraintDerivativeState(C);
-  return C;
-}
+  VectorFunctionLinearApproximation cf;
+  cf.f = cf_system.f;
+  cf.dfdx.resize(cf.f.rows(), x.rows());
+  cf.dfdx.leftCols(x_system.rows()) = cf_system.dfdx;
+  cf.dfdx.rightCols(x.rows() - x_system.rows()).setZero();
 
-matrix_t LoopshapingConstraint::getStateInputEqualityConstraintDerivativesInput() {
-  computeSystemStateInputConstraintDerivatives();  // updates D_system_
-  matrix_t D(0, ConstraintBase::inputDim_);
-  if (systemConstraint_) {
-    D.resize(D_system_.rows(), ConstraintBase::inputDim_);
-    D.leftCols(D_system_.cols()) = D_system_;
-    D.rightCols(ConstraintBase::inputDim_ - D_system_.cols()).setZero();
-  }
-  appendStateInputEqualityConstraintDerivativeInput(D);
-  return D;
-}
-
-matrix_t LoopshapingConstraint::getStateEqualityConstraintDerivativesState() {
-  matrix_t F(0, ConstraintBase::stateDim_);
-  if (systemConstraint_) {
-    matrix_t F_system = systemConstraint_->getStateEqualityConstraintDerivativesState();
-    F.resize(F_system.rows(), ConstraintBase::stateDim_);
-    F.leftCols(F_system.cols()) = F_system;
-    F.rightCols(ConstraintBase::stateDim_ - F_system.cols()).setZero();
-  }
-  return F;
-}
-
-matrix_t LoopshapingConstraint::getFinalStateEqualityConstraintDerivativesState() {
-  matrix_t F_f(0, ConstraintBase::stateDim_);
-  if (systemConstraint_) {
-    matrix_t F_f_system = systemConstraint_->getFinalStateEqualityConstraintDerivativesState();
-    F_f.resize(F_f_system.rows(), ConstraintBase::stateDim_);
-    F_f.leftCols(F_f_system.cols()) = F_f_system;
-    F_f.rightCols(ConstraintBase::stateDim_ - F_f_system.cols()).setZero();
-  }
-  return F_f;
-}
-
-void LoopshapingConstraint::computeSystemStateInputConstraintDerivatives() {
-  if (!systemStateInputConstraintApproximationValid_) {
-    if (systemConstraint_) {
-      C_system_ = systemConstraint_->getStateInputEqualityConstraintDerivativesState();
-      D_system_ = systemConstraint_->getStateInputEqualityConstraintDerivativesInput();
-    }
-    systemStateInputConstraintApproximationValid_ = true;
-  }
-}
-
-void LoopshapingConstraint::computeSystemInequalityConstraintDerivatives() {
-  if (!systemInequalityConstraintApproximationValid_) {
-    if (systemConstraint_) {
-      system_dhdx_ = systemConstraint_->getInequalityConstraintDerivativesState();
-      system_dhdu_ = systemConstraint_->getInequalityConstraintDerivativesInput();
-      system_dhdxx_ = systemConstraint_->getInequalityConstraintSecondDerivativesState();
-      system_dhduu_ = systemConstraint_->getInequalityConstraintSecondDerivativesInput();
-      system_dhdux_ = systemConstraint_->getInequalityConstraintDerivativesInputState();
-      systemInequalityConstraintApproximationValid_ = true;
-    }
-  }
+  return cf;
 }
 
 }  // namespace ocs2

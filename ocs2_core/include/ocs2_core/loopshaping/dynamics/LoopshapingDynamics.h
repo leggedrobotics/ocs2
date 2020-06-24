@@ -4,34 +4,41 @@
 
 #pragma once
 
+#include <memory>
+
 #include <ocs2_core/Types.h>
-#include <ocs2_core/dynamics/ControlledSystemBase.h>
+#include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
 
 namespace ocs2 {
-class LoopshapingDynamics : public ControlledSystemBase {
+class LoopshapingDynamics : public SystemDynamicsBase {
  public:
   ~LoopshapingDynamics() override = default;
 
-  static std::unique_ptr<LoopshapingDynamics> create(const ControlledSystemBase& controlledSystem,
+  static std::unique_ptr<LoopshapingDynamics> create(const SystemDynamicsBase& systemDynamics,
                                                      std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
-  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) override;
-  vector_t computeJumpMap(scalar_t time, const vector_t& state) override;
-  vector_t computeGuardSurfaces(scalar_t time, const vector_t& state) override;
+  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) final;
+  vector_t computeJumpMap(scalar_t time, const vector_t& state) final;
+  vector_t computeGuardSurfaces(scalar_t time, const vector_t& state) final;
+
+  VectorFunctionLinearApproximation guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final;
+
+  vector_t flowMapDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) final;
+  vector_t jumpMapDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) final;
+  vector_t guardSurfacesDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) final;
 
  protected:
   LoopshapingDynamics(const LoopshapingDynamics& obj)
-      : controlledSystem_(obj.controlledSystem_->clone()), loopshapingDefinition_(obj.loopshapingDefinition_) {}
+      : systemDynamics_(obj.systemDynamics_->clone()), loopshapingDefinition_(obj.loopshapingDefinition_) {}
 
-  LoopshapingDynamics(const ControlledSystemBase& controlledSystem, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
-      : controlledSystem_(controlledSystem.clone()), loopshapingDefinition_(std::move(loopshapingDefinition)){};
+  LoopshapingDynamics(const SystemDynamicsBase& systemDynamics, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+      : systemDynamics_(systemDynamics.clone()), loopshapingDefinition_(std::move(loopshapingDefinition)){};
 
+  std::unique_ptr<SystemDynamicsBase> systemDynamics_;
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
 
  private:
-  std::unique_ptr<ControlledSystemBase> controlledSystem_;
-
   virtual vector_t filterFlowmap(const vector_t& x_filter, const vector_t& u_filter, const vector_t& u_system) = 0;
 };
 

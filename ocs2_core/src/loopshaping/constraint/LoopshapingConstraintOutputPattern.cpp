@@ -31,65 +31,66 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-vector_array_t LoopshapingConstraintOutputPattern::getInequalityConstraintDerivativesState() {
-  vector_array_t dhdx;
-  this->computeSystemInequalityConstraintDerivatives();
-  if (systemConstraint_ && system_dhdx_.size() > 0) {
-    const size_t SYSTEM_STATE_DIM = system_dhdx_.front().rows();
-    const size_t FILTER_STATE_DIM = loopshapingDefinition_->getInputFilter().getNumStates();
-    dhdx.resize(system_dhdx_.size());
-    for (size_t i = 0; i < system_dhdx_.size(); i++) {
-      dhdx[i].resize(SYSTEM_STATE_DIM + FILTER_STATE_DIM);
-      dhdx[i].head(SYSTEM_STATE_DIM) = system_dhdx_[i];
-      dhdx[i].tail(FILTER_STATE_DIM).setZero();
-    }
+VectorFunctionQuadraticApproximation LoopshapingConstraintOutputPattern::inequalityConstraintQuadraticApproximation(scalar_t t,
+                                                                                                                    const vector_t& x,
+                                                                                                                    const vector_t& u) {
+  const auto& s_filter = loopshapingDefinition_->getInputFilter();
+  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
+  const vector_t u_system = loopshapingDefinition_->getSystemInput(x, u);
+  const size_t FILTER_STATE_DIM = s_filter.getNumStates();
+  const auto h_system = systemConstraint_->inequalityConstraintQuadraticApproximation(t, x_system, u_system);
+
+  VectorFunctionQuadraticApproximation h;
+  h.f = h_system.f;
+
+  h.dfdx.resize(h.f.rows(), x.rows());
+  h.dfdx.leftCols(x_system.rows()) = h_system.dfdx;
+  h.dfdx.rightCols(FILTER_STATE_DIM).setZero();
+
+  h.dfdu = h_system.dfdu;
+
+  h.dfdxx.resize(h.f.rows());
+  h.dfduu.resize(h.f.rows());
+  h.dfdux.resize(h.f.rows());
+  for (size_t i = 0; i < h.f.rows(); i++) {
+    h.dfdxx[i].setZero(x.rows(), x.rows());
+    h.dfdxx[i].topLeftCorner(x_system.rows(), x_system.rows()) = h_system.dfdxx[i];
+
+    h.dfduu[i] = h_system.dfduu[i];
+
+    h.dfdux[i].resize(u.rows(), x.rows());
+    h.dfdux[i].leftCols(x_system.rows()) = h_system.dfdux[i];
+    h.dfdux[i].rightCols(FILTER_STATE_DIM).setZero();
   }
-  return dhdx;
+
+  return h;
 }
 
-vector_array_t LoopshapingConstraintOutputPattern::getInequalityConstraintDerivativesInput() {
-  this->computeSystemInequalityConstraintDerivatives();
-  return system_dhdu_;
+vector_t LoopshapingConstraintOutputPattern::stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
+  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
+  const vector_t u_system = loopshapingDefinition_->getSystemInput(x, u);
+  return systemConstraint_->stateInputEqualityConstraint(t, x_system, u_system);
 }
 
-matrix_array_t LoopshapingConstraintOutputPattern::getInequalityConstraintSecondDerivativesState() {
-  matrix_array_t dhdxx;
-  this->computeSystemInequalityConstraintDerivatives();
-  if (systemConstraint_ && system_dhdxx_.size() > 0) {
-    const size_t SYSTEM_STATE_DIM = system_dhdxx_.front().rows();
-    const size_t FILTER_STATE_DIM = loopshapingDefinition_->getInputFilter().getNumStates();
-    dhdxx.resize(system_dhdxx_.size());
-    for (size_t i = 0; i < system_dhdxx_.size(); i++) {
-      dhdxx[i].resize(SYSTEM_STATE_DIM + FILTER_STATE_DIM, SYSTEM_STATE_DIM + FILTER_STATE_DIM);
-      dhdxx[i].topLeftCorner(SYSTEM_STATE_DIM, SYSTEM_STATE_DIM) = system_dhdxx_[i];
-      dhdxx[i].topRightCorner(SYSTEM_STATE_DIM, FILTER_STATE_DIM).setZero();
-      dhdxx[i].bottomLeftCorner(FILTER_STATE_DIM, SYSTEM_STATE_DIM).setZero();
-      dhdxx[i].bottomRightCorner(FILTER_STATE_DIM, FILTER_STATE_DIM).setZero();
-    }
-  }
-  return dhdxx;
-}
+VectorFunctionLinearApproximation LoopshapingConstraintOutputPattern::stateInputEqualityConstraintLinearApproximation(scalar_t t,
+                                                                                                                      const vector_t& x,
+                                                                                                                      const vector_t& u) {
+  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
+  const vector_t u_system = loopshapingDefinition_->getSystemInput(x, u);
+  const auto g_system = systemConstraint_->stateInputEqualityConstraintLinearApproximation(t, x_system, u_system);
 
-matrix_array_t LoopshapingConstraintOutputPattern::getInequalityConstraintSecondDerivativesInput() {
-  this->computeSystemInequalityConstraintDerivatives();
-  return system_dhduu_;
-}
+  VectorFunctionLinearApproximation g;
+  g.f = g_system.f;
 
-matrix_array_t LoopshapingConstraintOutputPattern::getInequalityConstraintDerivativesInputState() {
-  matrix_array_t dhdux;
-  this->computeSystemInequalityConstraintDerivatives();
-  if (systemConstraint_ && system_dhdux_.size() > 0) {
-    const size_t SYSTEM_STATE_DIM = system_dhdux_.front().cols();
-    const size_t SYSTEM_INPUT_DIM = system_dhdux_.front().rows();
-    const size_t FILTER_STATE_DIM = loopshapingDefinition_->getInputFilter().getNumStates();
-    dhdux.resize(system_dhdux_.size());
-    for (size_t i = 0; i < system_dhdux_.size(); i++) {
-      dhdux[i].resize(SYSTEM_INPUT_DIM, SYSTEM_STATE_DIM + FILTER_STATE_DIM);
-      dhdux[i].leftCols(SYSTEM_STATE_DIM) = system_dhdux_[i];
-      dhdux[i].rightCols(FILTER_STATE_DIM).setZero();
-    }
-  }
-  return dhdux;
+  g.dfdx.resize(g.f.rows(), x.rows());
+  g.dfdx.leftCols(x_system.rows()) = g_system.dfdx;
+  g.dfdx.rightCols(x.rows() - x_system.rows()).setZero();
+
+  g.dfdu.resize(g.f.rows(), u.rows());
+  g.dfdu.leftCols(u_system.rows()).noalias() = g_system.dfdu;
+  g.dfdu.rightCols(u.rows() - u_system.rows()).setZero();
+
+  return g;
 }
 
 }  // namespace ocs2

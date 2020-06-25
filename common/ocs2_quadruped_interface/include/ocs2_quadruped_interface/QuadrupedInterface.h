@@ -89,7 +89,7 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   virtual const rollout_base_t& getRollout() const = 0;
 
   /** Gets the solver synchronized modules */
-  virtual const synchronized_module_ptr_array_t& getSynchronizedModules() const {};
+  virtual const synchronized_module_ptr_array_t& getSynchronizedModules() const = 0;
 
   /** Loads {Q, R, Q_final} from file and maps R to taskspace of the initial state */
   static std::tuple<state_matrix_t, input_matrix_t, state_matrix_t> loadCostMatrices(const std::string& pathToConfigFile,

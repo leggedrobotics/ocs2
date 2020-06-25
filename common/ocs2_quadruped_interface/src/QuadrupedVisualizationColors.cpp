@@ -22,6 +22,8 @@ std::array<double, 3> getRGB(Color color) {
       return {0.6350, 0.0780, 0.1840};
     case Color::black:
       return {0.25, 0.25, 0.25};
+    default:
+      return {0.0, 0.0, 0.0};
   }
 }
 

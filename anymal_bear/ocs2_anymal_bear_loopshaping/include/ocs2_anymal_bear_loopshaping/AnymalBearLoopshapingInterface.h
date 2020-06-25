@@ -8,7 +8,7 @@
 
 namespace anymal {
 
-std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAnymalBearLoopshapingInterface(const std::string& taskName);
+std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAnymalBearLoopshapingInterface(const std::string& taskFolder);
 
 std::string getTaskFileFolderBearLoopshaping(const std::string& taskName);
 

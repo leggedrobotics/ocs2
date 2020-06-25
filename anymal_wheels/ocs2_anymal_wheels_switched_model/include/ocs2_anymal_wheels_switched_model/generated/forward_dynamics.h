@@ -115,16 +115,16 @@ private:
     Column6DS LF_THIGH_U;
     Scalar LF_THIGH_D;
     Scalar LF_THIGH_u;
-    // Link 'LF_shank_fixed' :
-    Matrix66S LF_shank_fixed_AI;
-    Velocity LF_shank_fixed_a;
-    Velocity LF_shank_fixed_v;
-    Velocity LF_shank_fixed_c;
-    Force    LF_shank_fixed_p;
+    // Link 'LF_SHANK' :
+    Matrix66S LF_SHANK_AI;
+    Velocity LF_SHANK_a;
+    Velocity LF_SHANK_v;
+    Velocity LF_SHANK_c;
+    Force    LF_SHANK_p;
 
-    Column6DS LF_shank_fixed_U;
-    Scalar LF_shank_fixed_D;
-    Scalar LF_shank_fixed_u;
+    Column6DS LF_SHANK_U;
+    Scalar LF_SHANK_D;
+    Scalar LF_SHANK_u;
     // Link 'LF_WHEEL_L' :
     Matrix66S LF_WHEEL_L_AI;
     Velocity LF_WHEEL_L_a;
@@ -155,16 +155,16 @@ private:
     Column6DS RF_THIGH_U;
     Scalar RF_THIGH_D;
     Scalar RF_THIGH_u;
-    // Link 'RF_shank_fixed' :
-    Matrix66S RF_shank_fixed_AI;
-    Velocity RF_shank_fixed_a;
-    Velocity RF_shank_fixed_v;
-    Velocity RF_shank_fixed_c;
-    Force    RF_shank_fixed_p;
+    // Link 'RF_SHANK' :
+    Matrix66S RF_SHANK_AI;
+    Velocity RF_SHANK_a;
+    Velocity RF_SHANK_v;
+    Velocity RF_SHANK_c;
+    Force    RF_SHANK_p;
 
-    Column6DS RF_shank_fixed_U;
-    Scalar RF_shank_fixed_D;
-    Scalar RF_shank_fixed_u;
+    Column6DS RF_SHANK_U;
+    Scalar RF_SHANK_D;
+    Scalar RF_SHANK_u;
     // Link 'RF_WHEEL_L' :
     Matrix66S RF_WHEEL_L_AI;
     Velocity RF_WHEEL_L_a;
@@ -195,16 +195,16 @@ private:
     Column6DS LH_THIGH_U;
     Scalar LH_THIGH_D;
     Scalar LH_THIGH_u;
-    // Link 'LH_shank_fixed' :
-    Matrix66S LH_shank_fixed_AI;
-    Velocity LH_shank_fixed_a;
-    Velocity LH_shank_fixed_v;
-    Velocity LH_shank_fixed_c;
-    Force    LH_shank_fixed_p;
+    // Link 'LH_SHANK' :
+    Matrix66S LH_SHANK_AI;
+    Velocity LH_SHANK_a;
+    Velocity LH_SHANK_v;
+    Velocity LH_SHANK_c;
+    Force    LH_SHANK_p;
 
-    Column6DS LH_shank_fixed_U;
-    Scalar LH_shank_fixed_D;
-    Scalar LH_shank_fixed_u;
+    Column6DS LH_SHANK_U;
+    Scalar LH_SHANK_D;
+    Scalar LH_SHANK_u;
     // Link 'LH_WHEEL_L' :
     Matrix66S LH_WHEEL_L_AI;
     Velocity LH_WHEEL_L_a;
@@ -235,16 +235,16 @@ private:
     Column6DS RH_THIGH_U;
     Scalar RH_THIGH_D;
     Scalar RH_THIGH_u;
-    // Link 'RH_shank_fixed' :
-    Matrix66S RH_shank_fixed_AI;
-    Velocity RH_shank_fixed_a;
-    Velocity RH_shank_fixed_v;
-    Velocity RH_shank_fixed_c;
-    Force    RH_shank_fixed_p;
+    // Link 'RH_SHANK' :
+    Matrix66S RH_SHANK_AI;
+    Velocity RH_SHANK_a;
+    Velocity RH_SHANK_v;
+    Velocity RH_SHANK_c;
+    Force    RH_SHANK_p;
 
-    Column6DS RH_shank_fixed_U;
-    Scalar RH_shank_fixed_D;
-    Scalar RH_shank_fixed_u;
+    Column6DS RH_SHANK_U;
+    Scalar RH_SHANK_D;
+    Scalar RH_SHANK_u;
     // Link 'RH_WHEEL_L' :
     Matrix66S RH_WHEEL_L_AI;
     Velocity RH_WHEEL_L_a;
@@ -263,20 +263,20 @@ template <typename TRAIT>
 inline void ForwardDynamics<TRAIT>::setJointStatus(const JointState& q) const {
     (motionTransforms-> fr_LF_HIP_X_fr_base)(q);
     (motionTransforms-> fr_LF_THIGH_X_fr_LF_HIP)(q);
-    (motionTransforms-> fr_LF_shank_fixed_X_fr_LF_THIGH)(q);
-    (motionTransforms-> fr_LF_WHEEL_L_X_fr_LF_shank_fixed)(q);
+    (motionTransforms-> fr_LF_SHANK_X_fr_LF_THIGH)(q);
+    (motionTransforms-> fr_LF_WHEEL_L_X_fr_LF_SHANK)(q);
     (motionTransforms-> fr_RF_HIP_X_fr_base)(q);
     (motionTransforms-> fr_RF_THIGH_X_fr_RF_HIP)(q);
-    (motionTransforms-> fr_RF_shank_fixed_X_fr_RF_THIGH)(q);
-    (motionTransforms-> fr_RF_WHEEL_L_X_fr_RF_shank_fixed)(q);
+    (motionTransforms-> fr_RF_SHANK_X_fr_RF_THIGH)(q);
+    (motionTransforms-> fr_RF_WHEEL_L_X_fr_RF_SHANK)(q);
     (motionTransforms-> fr_LH_HIP_X_fr_base)(q);
     (motionTransforms-> fr_LH_THIGH_X_fr_LH_HIP)(q);
-    (motionTransforms-> fr_LH_shank_fixed_X_fr_LH_THIGH)(q);
-    (motionTransforms-> fr_LH_WHEEL_L_X_fr_LH_shank_fixed)(q);
+    (motionTransforms-> fr_LH_SHANK_X_fr_LH_THIGH)(q);
+    (motionTransforms-> fr_LH_WHEEL_L_X_fr_LH_SHANK)(q);
     (motionTransforms-> fr_RH_HIP_X_fr_base)(q);
     (motionTransforms-> fr_RH_THIGH_X_fr_RH_HIP)(q);
-    (motionTransforms-> fr_RH_shank_fixed_X_fr_RH_THIGH)(q);
-    (motionTransforms-> fr_RH_WHEEL_L_X_fr_RH_shank_fixed)(q);
+    (motionTransforms-> fr_RH_SHANK_X_fr_RH_THIGH)(q);
+    (motionTransforms-> fr_RH_WHEEL_L_X_fr_RH_SHANK)(q);
 }
 
 template <typename TRAIT>

@@ -30,6 +30,12 @@ class AnymalWheelsKinematics final : public switched_model::KinematicsModelBase<
 
   AnymalWheelsKinematics<SCALAR_T>* clone() const override;
 
+  switched_model::vector3_s_t<SCALAR_T> positionBaseToWheelAxisInBaseFrame(
+      size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
+
+  switched_model::matrix3_s_t<SCALAR_T> wheelAxisOrientationInBaseFrame(
+      size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
+
   switched_model::vector3_s_t<SCALAR_T> positionBaseToFootInBaseFrame(
       size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const override;
 
@@ -42,13 +48,13 @@ class AnymalWheelsKinematics final : public switched_model::KinematicsModelBase<
 
 }  // namespace tpl
 
-using AnymalWheelsKinematics = tpl::AnymalWheelsKinematics<double>;
-using AnymalWheelsKinematicsAd = tpl::AnymalWheelsKinematics<ocs2::CppAdInterface<double>::ad_scalar_t>;
+using AnymalWheelsKinematics = tpl::AnymalWheelsKinematics<ocs2::scalar_t>;
+using AnymalWheelsKinematicsAd = tpl::AnymalWheelsKinematics<ocs2::CppAdInterface::ad_scalar_t>;
 
 }  // namespace anymal
 
 /**
  *  Explicit instantiation, for instantiation additional types, include the implementation file instead of this one.
  */
-extern template class anymal::tpl::AnymalWheelsKinematics<double>;
-extern template class anymal::tpl::AnymalWheelsKinematics<ocs2::CppAdInterface<double>::ad_scalar_t>;
+extern template class anymal::tpl::AnymalWheelsKinematics<ocs2::scalar_t>;
+extern template class anymal::tpl::AnymalWheelsKinematics<ocs2::CppAdInterface::ad_scalar_t>;

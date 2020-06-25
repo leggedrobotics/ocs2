@@ -6,10 +6,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Catkin packages we depend on
 set(CATKIN_PACKAGE_DEPENDENCIES
-  roslib
-  ocs2_raisim
-  ocs2_raisim_ros
   ocs2_anymal_bear
+  ocs2_anymal_raisim
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -28,12 +26,10 @@ endif(USE_RAISIM_VISUALIZER)
 ## catkin specific configuration ##
 ###################################
 catkin_package(
-  INCLUDE_DIRS
-    include
-  LIBRARIES
-    anymal_raisim_conversions
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
+  LIBRARIES
+    ${PROJECT_NAME}
 )
 
 
@@ -45,21 +41,22 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(anymal_raisim_conversions
-  src/AnymalRaisimConversions.cpp
+add_library(${PROJECT_NAME}
+  src/inputToRaisimGeneralizedForce.cpp
 )
-target_link_libraries(anymal_raisim_conversions
+target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
-target_compile_options(anymal_raisim_conversions PUBLIC ${OCS2_CXX_FLAGS})
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
+
 
 # Dummy node with raisim rollout
 add_executable(anymal_dummy_raisim
   src/AnymalRaisimDummy.cpp
 )
 target_link_libraries(anymal_dummy_raisim
-  anymal_raisim_conversions
   ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
 )
 if(USE_RAISIM_VISUALIZER)
   target_link_libraries(anymal_dummy_raisim
@@ -73,7 +70,7 @@ endif(USE_RAISIM_VISUALIZER)
 #########################
 find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
-  message(STATUS "Run clang tooling for target cartpole_dummy_raisim")
+  message(STATUS "Run clang tooling for ${PROJECT_NAME}")
   add_clang_tooling(
     TARGETS anymal_dummy_raisim
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -87,15 +84,12 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-)
 install(TARGETS anymal_dummy_raisim
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
-install(DIRECTORY launch
+install(DIRECTORY config launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
@@ -106,6 +100,6 @@ catkin_add_gtest(testAnymalRaisimConversions
   test/testAnymalRaisimConversions.cpp
 )
 target_link_libraries(testAnymalRaisimConversions
-  anymal_raisim_conversions
   ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
 )

@@ -46,13 +46,13 @@ class AnymalBearCom : public switched_model::ComModelBase<SCALAR_T> {
 
 }  // namespace tpl
 
-using AnymalBearCom = tpl::AnymalBearCom<double>;
-using AnymalBearComAd = tpl::AnymalBearCom<ocs2::CppAdInterface<double>::ad_scalar_t>;
+using AnymalBearCom = tpl::AnymalBearCom<ocs2::scalar_t>;
+using AnymalBearComAd = tpl::AnymalBearCom<ocs2::CppAdInterface::ad_scalar_t>;
 
 }  // namespace anymal
 
 /**
  *  Explicit instantiation, for instantiation additional types, include the implementation file instead of this one.
  */
-extern template class anymal::tpl::AnymalBearCom<double>;
-extern template class anymal::tpl::AnymalBearCom<ocs2::CppAdInterface<double>::ad_scalar_t>;
+extern template class anymal::tpl::AnymalBearCom<ocs2::scalar_t>;
+extern template class anymal::tpl::AnymalBearCom<ocs2::CppAdInterface::ad_scalar_t>;

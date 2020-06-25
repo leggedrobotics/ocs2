@@ -40,34 +40,34 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::MotionTransforms
     fr_base_X_fr_LF_HIP(),
     fr_LF_THIGH_X_fr_LF_HIP(),
     fr_LF_HIP_X_fr_LF_THIGH(),
-    fr_LF_shank_fixed_X_fr_LF_THIGH(),
-    fr_LF_THIGH_X_fr_LF_shank_fixed(),
-    fr_LF_WHEEL_L_X_fr_LF_shank_fixed(),
-    fr_LF_shank_fixed_X_fr_LF_WHEEL_L(),
+    fr_LF_SHANK_X_fr_LF_THIGH(),
+    fr_LF_THIGH_X_fr_LF_SHANK(),
+    fr_LF_WHEEL_L_X_fr_LF_SHANK(),
+    fr_LF_SHANK_X_fr_LF_WHEEL_L(),
     fr_RF_HIP_X_fr_base(),
     fr_base_X_fr_RF_HIP(),
     fr_RF_THIGH_X_fr_RF_HIP(),
     fr_RF_HIP_X_fr_RF_THIGH(),
-    fr_RF_shank_fixed_X_fr_RF_THIGH(),
-    fr_RF_THIGH_X_fr_RF_shank_fixed(),
-    fr_RF_WHEEL_L_X_fr_RF_shank_fixed(),
-    fr_RF_shank_fixed_X_fr_RF_WHEEL_L(),
+    fr_RF_SHANK_X_fr_RF_THIGH(),
+    fr_RF_THIGH_X_fr_RF_SHANK(),
+    fr_RF_WHEEL_L_X_fr_RF_SHANK(),
+    fr_RF_SHANK_X_fr_RF_WHEEL_L(),
     fr_LH_HIP_X_fr_base(),
     fr_base_X_fr_LH_HIP(),
     fr_LH_THIGH_X_fr_LH_HIP(),
     fr_LH_HIP_X_fr_LH_THIGH(),
-    fr_LH_shank_fixed_X_fr_LH_THIGH(),
-    fr_LH_THIGH_X_fr_LH_shank_fixed(),
-    fr_LH_WHEEL_L_X_fr_LH_shank_fixed(),
-    fr_LH_shank_fixed_X_fr_LH_WHEEL_L(),
+    fr_LH_SHANK_X_fr_LH_THIGH(),
+    fr_LH_THIGH_X_fr_LH_SHANK(),
+    fr_LH_WHEEL_L_X_fr_LH_SHANK(),
+    fr_LH_SHANK_X_fr_LH_WHEEL_L(),
     fr_RH_HIP_X_fr_base(),
     fr_base_X_fr_RH_HIP(),
     fr_RH_THIGH_X_fr_RH_HIP(),
     fr_RH_HIP_X_fr_RH_THIGH(),
-    fr_RH_shank_fixed_X_fr_RH_THIGH(),
-    fr_RH_THIGH_X_fr_RH_shank_fixed(),
-    fr_RH_WHEEL_L_X_fr_RH_shank_fixed(),
-    fr_RH_shank_fixed_X_fr_RH_WHEEL_L()
+    fr_RH_SHANK_X_fr_RH_THIGH(),
+    fr_RH_THIGH_X_fr_RH_SHANK(),
+    fr_RH_WHEEL_L_X_fr_RH_SHANK(),
+    fr_RH_SHANK_X_fr_RH_WHEEL_L()
 {
     updateParameters();
 }
@@ -115,34 +115,34 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::ForceTransforms
     fr_base_X_fr_LF_HIP(),
     fr_LF_THIGH_X_fr_LF_HIP(),
     fr_LF_HIP_X_fr_LF_THIGH(),
-    fr_LF_shank_fixed_X_fr_LF_THIGH(),
-    fr_LF_THIGH_X_fr_LF_shank_fixed(),
-    fr_LF_WHEEL_L_X_fr_LF_shank_fixed(),
-    fr_LF_shank_fixed_X_fr_LF_WHEEL_L(),
+    fr_LF_SHANK_X_fr_LF_THIGH(),
+    fr_LF_THIGH_X_fr_LF_SHANK(),
+    fr_LF_WHEEL_L_X_fr_LF_SHANK(),
+    fr_LF_SHANK_X_fr_LF_WHEEL_L(),
     fr_RF_HIP_X_fr_base(),
     fr_base_X_fr_RF_HIP(),
     fr_RF_THIGH_X_fr_RF_HIP(),
     fr_RF_HIP_X_fr_RF_THIGH(),
-    fr_RF_shank_fixed_X_fr_RF_THIGH(),
-    fr_RF_THIGH_X_fr_RF_shank_fixed(),
-    fr_RF_WHEEL_L_X_fr_RF_shank_fixed(),
-    fr_RF_shank_fixed_X_fr_RF_WHEEL_L(),
+    fr_RF_SHANK_X_fr_RF_THIGH(),
+    fr_RF_THIGH_X_fr_RF_SHANK(),
+    fr_RF_WHEEL_L_X_fr_RF_SHANK(),
+    fr_RF_SHANK_X_fr_RF_WHEEL_L(),
     fr_LH_HIP_X_fr_base(),
     fr_base_X_fr_LH_HIP(),
     fr_LH_THIGH_X_fr_LH_HIP(),
     fr_LH_HIP_X_fr_LH_THIGH(),
-    fr_LH_shank_fixed_X_fr_LH_THIGH(),
-    fr_LH_THIGH_X_fr_LH_shank_fixed(),
-    fr_LH_WHEEL_L_X_fr_LH_shank_fixed(),
-    fr_LH_shank_fixed_X_fr_LH_WHEEL_L(),
+    fr_LH_SHANK_X_fr_LH_THIGH(),
+    fr_LH_THIGH_X_fr_LH_SHANK(),
+    fr_LH_WHEEL_L_X_fr_LH_SHANK(),
+    fr_LH_SHANK_X_fr_LH_WHEEL_L(),
     fr_RH_HIP_X_fr_base(),
     fr_base_X_fr_RH_HIP(),
     fr_RH_THIGH_X_fr_RH_HIP(),
     fr_RH_HIP_X_fr_RH_THIGH(),
-    fr_RH_shank_fixed_X_fr_RH_THIGH(),
-    fr_RH_THIGH_X_fr_RH_shank_fixed(),
-    fr_RH_WHEEL_L_X_fr_RH_shank_fixed(),
-    fr_RH_shank_fixed_X_fr_RH_WHEEL_L()
+    fr_RH_SHANK_X_fr_RH_THIGH(),
+    fr_RH_THIGH_X_fr_RH_SHANK(),
+    fr_RH_WHEEL_L_X_fr_RH_SHANK(),
+    fr_RH_SHANK_X_fr_RH_WHEEL_L()
 {
     updateParameters();
 }
@@ -190,34 +190,34 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::HomogeneousTransforms
     fr_base_X_fr_LF_HIP(),
     fr_LF_THIGH_X_fr_LF_HIP(),
     fr_LF_HIP_X_fr_LF_THIGH(),
-    fr_LF_shank_fixed_X_fr_LF_THIGH(),
-    fr_LF_THIGH_X_fr_LF_shank_fixed(),
-    fr_LF_WHEEL_L_X_fr_LF_shank_fixed(),
-    fr_LF_shank_fixed_X_fr_LF_WHEEL_L(),
+    fr_LF_SHANK_X_fr_LF_THIGH(),
+    fr_LF_THIGH_X_fr_LF_SHANK(),
+    fr_LF_WHEEL_L_X_fr_LF_SHANK(),
+    fr_LF_SHANK_X_fr_LF_WHEEL_L(),
     fr_RF_HIP_X_fr_base(),
     fr_base_X_fr_RF_HIP(),
     fr_RF_THIGH_X_fr_RF_HIP(),
     fr_RF_HIP_X_fr_RF_THIGH(),
-    fr_RF_shank_fixed_X_fr_RF_THIGH(),
-    fr_RF_THIGH_X_fr_RF_shank_fixed(),
-    fr_RF_WHEEL_L_X_fr_RF_shank_fixed(),
-    fr_RF_shank_fixed_X_fr_RF_WHEEL_L(),
+    fr_RF_SHANK_X_fr_RF_THIGH(),
+    fr_RF_THIGH_X_fr_RF_SHANK(),
+    fr_RF_WHEEL_L_X_fr_RF_SHANK(),
+    fr_RF_SHANK_X_fr_RF_WHEEL_L(),
     fr_LH_HIP_X_fr_base(),
     fr_base_X_fr_LH_HIP(),
     fr_LH_THIGH_X_fr_LH_HIP(),
     fr_LH_HIP_X_fr_LH_THIGH(),
-    fr_LH_shank_fixed_X_fr_LH_THIGH(),
-    fr_LH_THIGH_X_fr_LH_shank_fixed(),
-    fr_LH_WHEEL_L_X_fr_LH_shank_fixed(),
-    fr_LH_shank_fixed_X_fr_LH_WHEEL_L(),
+    fr_LH_SHANK_X_fr_LH_THIGH(),
+    fr_LH_THIGH_X_fr_LH_SHANK(),
+    fr_LH_WHEEL_L_X_fr_LH_SHANK(),
+    fr_LH_SHANK_X_fr_LH_WHEEL_L(),
     fr_RH_HIP_X_fr_base(),
     fr_base_X_fr_RH_HIP(),
     fr_RH_THIGH_X_fr_RH_HIP(),
     fr_RH_HIP_X_fr_RH_THIGH(),
-    fr_RH_shank_fixed_X_fr_RH_THIGH(),
-    fr_RH_THIGH_X_fr_RH_shank_fixed(),
-    fr_RH_WHEEL_L_X_fr_RH_shank_fixed(),
-    fr_RH_shank_fixed_X_fr_RH_WHEEL_L()
+    fr_RH_SHANK_X_fr_RH_THIGH(),
+    fr_RH_THIGH_X_fr_RH_SHANK(),
+    fr_RH_WHEEL_L_X_fr_RH_SHANK(),
+    fr_RH_SHANK_X_fr_RH_WHEEL_L()
 {
     updateParameters();
 }
@@ -2242,7 +2242,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_HIP_X_fr_LF
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_THIGH::Type_fr_LF_shank_fixed_X_fr_LF_THIGH()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_THIGH::Type_fr_LF_SHANK_X_fr_LF_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -2268,7 +2268,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_THIGH:
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_THIGH& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_THIGH& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_THIGH::update(const JState& q) {
     Scalar s_q_LF_KFE_;
     Scalar c_q_LF_KFE_;
     
@@ -2292,7 +2292,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_shank_fixed
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_shank_fixed::Type_fr_LF_THIGH_X_fr_LF_shank_fixed()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_SHANK::Type_fr_LF_THIGH_X_fr_LF_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -2318,7 +2318,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_shank_fixed:
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_shank_fixed& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_SHANK& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_SHANK::update(const JState& q) {
     Scalar s_q_LF_KFE_;
     Scalar c_q_LF_KFE_;
     
@@ -2342,7 +2342,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -2368,7 +2368,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixe
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK::update(const JState& q) {
     Scalar s_q_LF_WHEEL_;
     Scalar c_q_LF_WHEEL_;
     
@@ -2392,7 +2392,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_f
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -2418,7 +2418,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L::update(const JState& q) {
     Scalar s_q_LF_WHEEL_;
     Scalar c_q_LF_WHEEL_;
     
@@ -2642,7 +2642,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_HIP_X_fr_RF
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_THIGH::Type_fr_RF_shank_fixed_X_fr_RF_THIGH()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_THIGH::Type_fr_RF_SHANK_X_fr_RF_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -2668,7 +2668,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_THIGH:
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_THIGH& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_THIGH& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_THIGH::update(const JState& q) {
     Scalar s_q_RF_KFE_;
     Scalar c_q_RF_KFE_;
     
@@ -2692,7 +2692,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_shank_fixed
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_shank_fixed::Type_fr_RF_THIGH_X_fr_RF_shank_fixed()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_SHANK::Type_fr_RF_THIGH_X_fr_RF_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -2718,7 +2718,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_shank_fixed:
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_shank_fixed& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_SHANK& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_SHANK::update(const JState& q) {
     Scalar s_q_RF_KFE_;
     Scalar c_q_RF_KFE_;
     
@@ -2742,7 +2742,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -2768,7 +2768,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixe
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK::update(const JState& q) {
     Scalar s_q_RF_WHEEL_;
     Scalar c_q_RF_WHEEL_;
     
@@ -2792,7 +2792,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_f
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -2818,7 +2818,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L::update(const JState& q) {
     Scalar s_q_RF_WHEEL_;
     Scalar c_q_RF_WHEEL_;
     
@@ -3042,7 +3042,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_HIP_X_fr_LH
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_THIGH::Type_fr_LH_shank_fixed_X_fr_LH_THIGH()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_THIGH::Type_fr_LH_SHANK_X_fr_LH_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -3068,7 +3068,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_THIGH:
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_THIGH& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_THIGH& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_THIGH::update(const JState& q) {
     Scalar s_q_LH_KFE_;
     Scalar c_q_LH_KFE_;
     
@@ -3092,7 +3092,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_shank_fixed
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_shank_fixed::Type_fr_LH_THIGH_X_fr_LH_shank_fixed()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_SHANK::Type_fr_LH_THIGH_X_fr_LH_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -3118,7 +3118,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_shank_fixed:
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_shank_fixed& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_SHANK& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_SHANK::update(const JState& q) {
     Scalar s_q_LH_KFE_;
     Scalar c_q_LH_KFE_;
     
@@ -3142,7 +3142,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -3168,7 +3168,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixe
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK::update(const JState& q) {
     Scalar s_q_LH_WHEEL_;
     Scalar c_q_LH_WHEEL_;
     
@@ -3192,7 +3192,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_f
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -3218,7 +3218,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L::update(const JState& q) {
     Scalar s_q_LH_WHEEL_;
     Scalar c_q_LH_WHEEL_;
     
@@ -3442,7 +3442,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_HIP_X_fr_RH
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_THIGH::Type_fr_RH_shank_fixed_X_fr_RH_THIGH()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_THIGH::Type_fr_RH_SHANK_X_fr_RH_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -3468,7 +3468,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_THIGH:
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_THIGH& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_THIGH& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_THIGH::update(const JState& q) {
     Scalar s_q_RH_KFE_;
     Scalar c_q_RH_KFE_;
     
@@ -3492,7 +3492,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_shank_fixed
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_shank_fixed::Type_fr_RH_THIGH_X_fr_RH_shank_fixed()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_SHANK::Type_fr_RH_THIGH_X_fr_RH_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -3518,7 +3518,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_shank_fixed:
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_shank_fixed& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_SHANK& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_SHANK::update(const JState& q) {
     Scalar s_q_RH_KFE_;
     Scalar c_q_RH_KFE_;
     
@@ -3542,7 +3542,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -3568,7 +3568,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixe
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK::update(const JState& q) {
     Scalar s_q_RH_WHEEL_;
     Scalar c_q_RH_WHEEL_;
     
@@ -3592,7 +3592,7 @@ const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_f
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L()
+iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -3618,7 +3618,7 @@ iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L& iit::ANYmal::tpl::MotionTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L::update(const JState& q) {
     Scalar s_q_RH_WHEEL_;
     Scalar c_q_RH_WHEEL_;
     
@@ -5659,7 +5659,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_HIP_X_fr_LF_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_THIGH::Type_fr_LF_shank_fixed_X_fr_LF_THIGH()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_THIGH::Type_fr_LF_SHANK_X_fr_LF_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -5685,7 +5685,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_THIGH::
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_THIGH& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_THIGH& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_THIGH::update(const JState& q) {
     Scalar s_q_LF_KFE_;
     Scalar c_q_LF_KFE_;
     
@@ -5709,7 +5709,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_shank_fixed_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_shank_fixed::Type_fr_LF_THIGH_X_fr_LF_shank_fixed()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_SHANK::Type_fr_LF_THIGH_X_fr_LF_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(0,5) = 0.28263;
@@ -5735,7 +5735,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_shank_fixed::
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_shank_fixed& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_SHANK& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_SHANK::update(const JState& q) {
     Scalar s_q_LF_KFE_;
     Scalar c_q_LF_KFE_;
     
@@ -5759,7 +5759,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_L
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -5785,7 +5785,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK::update(const JState& q) {
     Scalar s_q_LF_WHEEL_;
     Scalar c_q_LF_WHEEL_;
     
@@ -5809,7 +5809,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L()
 {
     (*this)(0,2) = 0;
     (*this)(0,5) = 0.2745;
@@ -5835,7 +5835,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L::update(const JState& q) {
     Scalar s_q_LF_WHEEL_;
     Scalar c_q_LF_WHEEL_;
     
@@ -6059,7 +6059,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_HIP_X_fr_RF_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_THIGH::Type_fr_RF_shank_fixed_X_fr_RF_THIGH()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_THIGH::Type_fr_RF_SHANK_X_fr_RF_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -6085,7 +6085,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_THIGH::
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_THIGH& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_THIGH& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_THIGH::update(const JState& q) {
     Scalar s_q_RF_KFE_;
     Scalar c_q_RF_KFE_;
     
@@ -6109,7 +6109,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_shank_fixed_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_shank_fixed::Type_fr_RF_THIGH_X_fr_RF_shank_fixed()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_SHANK::Type_fr_RF_THIGH_X_fr_RF_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(0,5) = 0.28263;
@@ -6135,7 +6135,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_shank_fixed::
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_shank_fixed& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_SHANK& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_SHANK::update(const JState& q) {
     Scalar s_q_RF_KFE_;
     Scalar c_q_RF_KFE_;
     
@@ -6159,7 +6159,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_R
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -6185,7 +6185,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK::update(const JState& q) {
     Scalar s_q_RF_WHEEL_;
     Scalar c_q_RF_WHEEL_;
     
@@ -6209,7 +6209,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L()
 {
     (*this)(0,2) = 0;
     (*this)(0,5) = 0.2745;
@@ -6235,7 +6235,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L::update(const JState& q) {
     Scalar s_q_RF_WHEEL_;
     Scalar c_q_RF_WHEEL_;
     
@@ -6459,7 +6459,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_HIP_X_fr_LH_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_THIGH::Type_fr_LH_shank_fixed_X_fr_LH_THIGH()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_THIGH::Type_fr_LH_SHANK_X_fr_LH_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -6485,7 +6485,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_THIGH::
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_THIGH& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_THIGH& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_THIGH::update(const JState& q) {
     Scalar s_q_LH_KFE_;
     Scalar c_q_LH_KFE_;
     
@@ -6509,7 +6509,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_shank_fixed_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_shank_fixed::Type_fr_LH_THIGH_X_fr_LH_shank_fixed()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_SHANK::Type_fr_LH_THIGH_X_fr_LH_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(0,5) = 0.28263;
@@ -6535,7 +6535,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_shank_fixed::
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_shank_fixed& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_SHANK& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_SHANK::update(const JState& q) {
     Scalar s_q_LH_KFE_;
     Scalar c_q_LH_KFE_;
     
@@ -6559,7 +6559,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_L
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -6585,7 +6585,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK::update(const JState& q) {
     Scalar s_q_LH_WHEEL_;
     Scalar c_q_LH_WHEEL_;
     
@@ -6609,7 +6609,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L()
 {
     (*this)(0,2) = 0;
     (*this)(0,5) = 0.2745;
@@ -6635,7 +6635,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L::update(const JState& q) {
     Scalar s_q_LH_WHEEL_;
     Scalar c_q_LH_WHEEL_;
     
@@ -6859,7 +6859,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_HIP_X_fr_RH_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_THIGH::Type_fr_RH_shank_fixed_X_fr_RH_THIGH()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_THIGH::Type_fr_RH_SHANK_X_fr_RH_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -6885,7 +6885,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_THIGH::
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_THIGH& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_THIGH& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_THIGH::update(const JState& q) {
     Scalar s_q_RH_KFE_;
     Scalar c_q_RH_KFE_;
     
@@ -6909,7 +6909,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_shank_fixed_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_shank_fixed::Type_fr_RH_THIGH_X_fr_RH_shank_fixed()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_SHANK::Type_fr_RH_THIGH_X_fr_RH_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(0,5) = 0.28263;
@@ -6935,7 +6935,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_shank_fixed::
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_shank_fixed& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_SHANK& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_SHANK::update(const JState& q) {
     Scalar s_q_RH_KFE_;
     Scalar c_q_RH_KFE_;
     
@@ -6959,7 +6959,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_R
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -6985,7 +6985,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK::update(const JState& q) {
     Scalar s_q_RH_WHEEL_;
     Scalar c_q_RH_WHEEL_;
     
@@ -7009,7 +7009,7 @@ const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L()
+iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L()
 {
     (*this)(0,2) = 0;
     (*this)(0,5) = 0.2745;
@@ -7035,7 +7035,7 @@ iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L
     (*this)(5,5) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L& iit::ANYmal::tpl::ForceTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L::update(const JState& q) {
     Scalar s_q_RH_WHEEL_;
     Scalar c_q_RH_WHEEL_;
     
@@ -8356,7 +8356,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_HIP_X_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_THIGH::Type_fr_LF_shank_fixed_X_fr_LF_THIGH()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_THIGH::Type_fr_LF_SHANK_X_fr_LF_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -8370,7 +8370,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_T
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_THIGH& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_THIGH& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_THIGH::update(const JState& q) {
     Scalar s_q_LF_KFE_;
     Scalar c_q_LF_KFE_;
     
@@ -8386,7 +8386,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_shank_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_shank_fixed::Type_fr_LF_THIGH_X_fr_LF_shank_fixed()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_SHANK::Type_fr_LF_THIGH_X_fr_LF_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -8402,7 +8402,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_shank_f
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_shank_fixed& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_SHANK& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_THIGH_X_fr_LF_SHANK::update(const JState& q) {
     Scalar s_q_LF_KFE_;
     Scalar c_q_LF_KFE_;
     
@@ -8416,7 +8416,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_THIGH_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -8430,7 +8430,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_shank
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_WHEEL_L_X_fr_LF_SHANK::update(const JState& q) {
     Scalar s_q_LF_WHEEL_;
     Scalar c_q_LF_WHEEL_;
     
@@ -8446,7 +8446,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_WHEEL_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0.08748;
@@ -8462,7 +8462,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_W
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_shank_fixed_X_fr_LF_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LF_SHANK_X_fr_LF_WHEEL_L::update(const JState& q) {
     Scalar s_q_LF_WHEEL_;
     Scalar c_q_LF_WHEEL_;
     
@@ -8596,7 +8596,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_HIP_X_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_THIGH::Type_fr_RF_shank_fixed_X_fr_RF_THIGH()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_THIGH::Type_fr_RF_SHANK_X_fr_RF_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -8610,7 +8610,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_T
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_THIGH& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_THIGH& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_THIGH::update(const JState& q) {
     Scalar s_q_RF_KFE_;
     Scalar c_q_RF_KFE_;
     
@@ -8626,7 +8626,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_shank_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_shank_fixed::Type_fr_RF_THIGH_X_fr_RF_shank_fixed()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_SHANK::Type_fr_RF_THIGH_X_fr_RF_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -8642,7 +8642,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_shank_f
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_shank_fixed& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_SHANK& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_THIGH_X_fr_RF_SHANK::update(const JState& q) {
     Scalar s_q_RF_KFE_;
     Scalar c_q_RF_KFE_;
     
@@ -8656,7 +8656,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_THIGH_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -8670,7 +8670,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_shank
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_WHEEL_L_X_fr_RF_SHANK::update(const JState& q) {
     Scalar s_q_RF_WHEEL_;
     Scalar c_q_RF_WHEEL_;
     
@@ -8686,7 +8686,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_WHEEL_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0.08748;
@@ -8702,7 +8702,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_W
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_shank_fixed_X_fr_RF_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RF_SHANK_X_fr_RF_WHEEL_L::update(const JState& q) {
     Scalar s_q_RF_WHEEL_;
     Scalar c_q_RF_WHEEL_;
     
@@ -8836,7 +8836,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_HIP_X_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_THIGH::Type_fr_LH_shank_fixed_X_fr_LH_THIGH()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_THIGH::Type_fr_LH_SHANK_X_fr_LH_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -8850,7 +8850,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_T
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_THIGH& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_THIGH& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_THIGH::update(const JState& q) {
     Scalar s_q_LH_KFE_;
     Scalar c_q_LH_KFE_;
     
@@ -8866,7 +8866,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_shank_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_shank_fixed::Type_fr_LH_THIGH_X_fr_LH_shank_fixed()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_SHANK::Type_fr_LH_THIGH_X_fr_LH_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -8882,7 +8882,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_shank_f
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_shank_fixed& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_SHANK& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_THIGH_X_fr_LH_SHANK::update(const JState& q) {
     Scalar s_q_LH_KFE_;
     Scalar c_q_LH_KFE_;
     
@@ -8896,7 +8896,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_THIGH_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -8910,7 +8910,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_shank
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_WHEEL_L_X_fr_LH_SHANK::update(const JState& q) {
     Scalar s_q_LH_WHEEL_;
     Scalar c_q_LH_WHEEL_;
     
@@ -8926,7 +8926,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_WHEEL_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = - 0.08748;
@@ -8942,7 +8942,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_W
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_shank_fixed_X_fr_LH_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_LH_SHANK_X_fr_LH_WHEEL_L::update(const JState& q) {
     Scalar s_q_LH_WHEEL_;
     Scalar c_q_LH_WHEEL_;
     
@@ -9076,7 +9076,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_HIP_X_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_THIGH::Type_fr_RH_shank_fixed_X_fr_RH_THIGH()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_THIGH::Type_fr_RH_SHANK_X_fr_RH_THIGH()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -9090,7 +9090,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_T
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_THIGH& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_THIGH::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_THIGH& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_THIGH::update(const JState& q) {
     Scalar s_q_RH_KFE_;
     Scalar c_q_RH_KFE_;
     
@@ -9106,7 +9106,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_shank_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_shank_fixed::Type_fr_RH_THIGH_X_fr_RH_shank_fixed()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_SHANK::Type_fr_RH_THIGH_X_fr_RH_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = 0;
@@ -9122,7 +9122,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_shank_f
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_shank_fixed& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_SHANK& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_THIGH_X_fr_RH_SHANK::update(const JState& q) {
     Scalar s_q_RH_KFE_;
     Scalar c_q_RH_KFE_;
     
@@ -9136,7 +9136,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_THIGH_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK()
 {
     (*this)(0,2) = 0;
     (*this)(1,2) = 0;
@@ -9150,7 +9150,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_shank
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_shank_fixed::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_WHEEL_L_X_fr_RH_SHANK::update(const JState& q) {
     Scalar s_q_RH_WHEEL_;
     Scalar c_q_RH_WHEEL_;
     
@@ -9166,7 +9166,7 @@ const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_WHEEL_
     return *this;
 }
 template <typename TRAIT>
-iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L()
+iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L()
 {
     (*this)(0,2) = 0;
     (*this)(0,3) = - 0.08748;
@@ -9182,7 +9182,7 @@ iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_W
     (*this)(3,3) = 1.0;
 }
 template <typename TRAIT>
-const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_shank_fixed_X_fr_RH_WHEEL_L::update(const JState& q) {
+const typename iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L& iit::ANYmal::tpl::HomogeneousTransforms<TRAIT>::Type_fr_RH_SHANK_X_fr_RH_WHEEL_L::update(const JState& q) {
     Scalar s_q_RH_WHEEL_;
     Scalar c_q_RH_WHEEL_;
     

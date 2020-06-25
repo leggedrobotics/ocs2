@@ -179,9 +179,9 @@ public:
     const Velocity& getVelocity_LF_THIGH() const { return LF_THIGH_v; }
     const Acceleration& getAcceleration_LF_THIGH() const { return LF_THIGH_a; }
     const Force& getForce_LF_THIGH() const { return LF_THIGH_f; }
-    const Velocity& getVelocity_LF_shank_fixed() const { return LF_shank_fixed_v; }
-    const Acceleration& getAcceleration_LF_shank_fixed() const { return LF_shank_fixed_a; }
-    const Force& getForce_LF_shank_fixed() const { return LF_shank_fixed_f; }
+    const Velocity& getVelocity_LF_SHANK() const { return LF_SHANK_v; }
+    const Acceleration& getAcceleration_LF_SHANK() const { return LF_SHANK_a; }
+    const Force& getForce_LF_SHANK() const { return LF_SHANK_f; }
     const Velocity& getVelocity_LF_WHEEL_L() const { return LF_WHEEL_L_v; }
     const Acceleration& getAcceleration_LF_WHEEL_L() const { return LF_WHEEL_L_a; }
     const Force& getForce_LF_WHEEL_L() const { return LF_WHEEL_L_f; }
@@ -191,9 +191,9 @@ public:
     const Velocity& getVelocity_RF_THIGH() const { return RF_THIGH_v; }
     const Acceleration& getAcceleration_RF_THIGH() const { return RF_THIGH_a; }
     const Force& getForce_RF_THIGH() const { return RF_THIGH_f; }
-    const Velocity& getVelocity_RF_shank_fixed() const { return RF_shank_fixed_v; }
-    const Acceleration& getAcceleration_RF_shank_fixed() const { return RF_shank_fixed_a; }
-    const Force& getForce_RF_shank_fixed() const { return RF_shank_fixed_f; }
+    const Velocity& getVelocity_RF_SHANK() const { return RF_SHANK_v; }
+    const Acceleration& getAcceleration_RF_SHANK() const { return RF_SHANK_a; }
+    const Force& getForce_RF_SHANK() const { return RF_SHANK_f; }
     const Velocity& getVelocity_RF_WHEEL_L() const { return RF_WHEEL_L_v; }
     const Acceleration& getAcceleration_RF_WHEEL_L() const { return RF_WHEEL_L_a; }
     const Force& getForce_RF_WHEEL_L() const { return RF_WHEEL_L_f; }
@@ -203,9 +203,9 @@ public:
     const Velocity& getVelocity_LH_THIGH() const { return LH_THIGH_v; }
     const Acceleration& getAcceleration_LH_THIGH() const { return LH_THIGH_a; }
     const Force& getForce_LH_THIGH() const { return LH_THIGH_f; }
-    const Velocity& getVelocity_LH_shank_fixed() const { return LH_shank_fixed_v; }
-    const Acceleration& getAcceleration_LH_shank_fixed() const { return LH_shank_fixed_a; }
-    const Force& getForce_LH_shank_fixed() const { return LH_shank_fixed_f; }
+    const Velocity& getVelocity_LH_SHANK() const { return LH_SHANK_v; }
+    const Acceleration& getAcceleration_LH_SHANK() const { return LH_SHANK_a; }
+    const Force& getForce_LH_SHANK() const { return LH_SHANK_f; }
     const Velocity& getVelocity_LH_WHEEL_L() const { return LH_WHEEL_L_v; }
     const Acceleration& getAcceleration_LH_WHEEL_L() const { return LH_WHEEL_L_a; }
     const Force& getForce_LH_WHEEL_L() const { return LH_WHEEL_L_f; }
@@ -215,9 +215,9 @@ public:
     const Velocity& getVelocity_RH_THIGH() const { return RH_THIGH_v; }
     const Acceleration& getAcceleration_RH_THIGH() const { return RH_THIGH_a; }
     const Force& getForce_RH_THIGH() const { return RH_THIGH_f; }
-    const Velocity& getVelocity_RH_shank_fixed() const { return RH_shank_fixed_v; }
-    const Acceleration& getAcceleration_RH_shank_fixed() const { return RH_shank_fixed_a; }
-    const Force& getForce_RH_shank_fixed() const { return RH_shank_fixed_f; }
+    const Velocity& getVelocity_RH_SHANK() const { return RH_SHANK_v; }
+    const Acceleration& getAcceleration_RH_SHANK() const { return RH_SHANK_a; }
+    const Force& getForce_RH_SHANK() const { return RH_SHANK_f; }
     const Velocity& getVelocity_RH_WHEEL_L() const { return RH_WHEEL_L_v; }
     const Acceleration& getAcceleration_RH_WHEEL_L() const { return RH_WHEEL_L_a; }
     const Force& getForce_RH_WHEEL_L() const { return RH_WHEEL_L_f; }
@@ -240,11 +240,11 @@ private:
     Velocity      LF_THIGH_v;
     Acceleration  LF_THIGH_a;
     Force         LF_THIGH_f;
-    // Link 'LF_shank_fixed' :
-    const InertiaMatrix& LF_shank_fixed_I;
-    Velocity      LF_shank_fixed_v;
-    Acceleration  LF_shank_fixed_a;
-    Force         LF_shank_fixed_f;
+    // Link 'LF_SHANK' :
+    const InertiaMatrix& LF_SHANK_I;
+    Velocity      LF_SHANK_v;
+    Acceleration  LF_SHANK_a;
+    Force         LF_SHANK_f;
     // Link 'LF_WHEEL_L' :
     const InertiaMatrix& LF_WHEEL_L_I;
     Velocity      LF_WHEEL_L_v;
@@ -260,11 +260,11 @@ private:
     Velocity      RF_THIGH_v;
     Acceleration  RF_THIGH_a;
     Force         RF_THIGH_f;
-    // Link 'RF_shank_fixed' :
-    const InertiaMatrix& RF_shank_fixed_I;
-    Velocity      RF_shank_fixed_v;
-    Acceleration  RF_shank_fixed_a;
-    Force         RF_shank_fixed_f;
+    // Link 'RF_SHANK' :
+    const InertiaMatrix& RF_SHANK_I;
+    Velocity      RF_SHANK_v;
+    Acceleration  RF_SHANK_a;
+    Force         RF_SHANK_f;
     // Link 'RF_WHEEL_L' :
     const InertiaMatrix& RF_WHEEL_L_I;
     Velocity      RF_WHEEL_L_v;
@@ -280,11 +280,11 @@ private:
     Velocity      LH_THIGH_v;
     Acceleration  LH_THIGH_a;
     Force         LH_THIGH_f;
-    // Link 'LH_shank_fixed' :
-    const InertiaMatrix& LH_shank_fixed_I;
-    Velocity      LH_shank_fixed_v;
-    Acceleration  LH_shank_fixed_a;
-    Force         LH_shank_fixed_f;
+    // Link 'LH_SHANK' :
+    const InertiaMatrix& LH_SHANK_I;
+    Velocity      LH_SHANK_v;
+    Acceleration  LH_SHANK_a;
+    Force         LH_SHANK_f;
     // Link 'LH_WHEEL_L' :
     const InertiaMatrix& LH_WHEEL_L_I;
     Velocity      LH_WHEEL_L_v;
@@ -300,11 +300,11 @@ private:
     Velocity      RH_THIGH_v;
     Acceleration  RH_THIGH_a;
     Force         RH_THIGH_f;
-    // Link 'RH_shank_fixed' :
-    const InertiaMatrix& RH_shank_fixed_I;
-    Velocity      RH_shank_fixed_v;
-    Acceleration  RH_shank_fixed_a;
-    Force         RH_shank_fixed_f;
+    // Link 'RH_SHANK' :
+    const InertiaMatrix& RH_SHANK_I;
+    Velocity      RH_SHANK_v;
+    Acceleration  RH_SHANK_a;
+    Force         RH_SHANK_f;
     // Link 'RH_WHEEL_L' :
     const InertiaMatrix& RH_WHEEL_L_I;
     Velocity      RH_WHEEL_L_v;
@@ -318,19 +318,19 @@ private:
     // The composite inertia tensors
     InertiaMatrix LF_HIP_Ic;
     InertiaMatrix LF_THIGH_Ic;
-    InertiaMatrix LF_shank_fixed_Ic;
+    InertiaMatrix LF_SHANK_Ic;
     const InertiaMatrix& LF_WHEEL_L_Ic;
     InertiaMatrix RF_HIP_Ic;
     InertiaMatrix RF_THIGH_Ic;
-    InertiaMatrix RF_shank_fixed_Ic;
+    InertiaMatrix RF_SHANK_Ic;
     const InertiaMatrix& RF_WHEEL_L_Ic;
     InertiaMatrix LH_HIP_Ic;
     InertiaMatrix LH_THIGH_Ic;
-    InertiaMatrix LH_shank_fixed_Ic;
+    InertiaMatrix LH_SHANK_Ic;
     const InertiaMatrix& LH_WHEEL_L_Ic;
     InertiaMatrix RH_HIP_Ic;
     InertiaMatrix RH_THIGH_Ic;
-    InertiaMatrix RH_shank_fixed_Ic;
+    InertiaMatrix RH_SHANK_Ic;
     const InertiaMatrix& RH_WHEEL_L_Ic;
 
 private:
@@ -342,20 +342,20 @@ inline void InverseDynamics<TRAIT>::setJointStatus(const JointState& q) const
 {
     (xm->fr_LF_HIP_X_fr_base)(q);
     (xm->fr_LF_THIGH_X_fr_LF_HIP)(q);
-    (xm->fr_LF_shank_fixed_X_fr_LF_THIGH)(q);
-    (xm->fr_LF_WHEEL_L_X_fr_LF_shank_fixed)(q);
+    (xm->fr_LF_SHANK_X_fr_LF_THIGH)(q);
+    (xm->fr_LF_WHEEL_L_X_fr_LF_SHANK)(q);
     (xm->fr_RF_HIP_X_fr_base)(q);
     (xm->fr_RF_THIGH_X_fr_RF_HIP)(q);
-    (xm->fr_RF_shank_fixed_X_fr_RF_THIGH)(q);
-    (xm->fr_RF_WHEEL_L_X_fr_RF_shank_fixed)(q);
+    (xm->fr_RF_SHANK_X_fr_RF_THIGH)(q);
+    (xm->fr_RF_WHEEL_L_X_fr_RF_SHANK)(q);
     (xm->fr_LH_HIP_X_fr_base)(q);
     (xm->fr_LH_THIGH_X_fr_LH_HIP)(q);
-    (xm->fr_LH_shank_fixed_X_fr_LH_THIGH)(q);
-    (xm->fr_LH_WHEEL_L_X_fr_LH_shank_fixed)(q);
+    (xm->fr_LH_SHANK_X_fr_LH_THIGH)(q);
+    (xm->fr_LH_WHEEL_L_X_fr_LH_SHANK)(q);
     (xm->fr_RH_HIP_X_fr_base)(q);
     (xm->fr_RH_THIGH_X_fr_RH_HIP)(q);
-    (xm->fr_RH_shank_fixed_X_fr_RH_THIGH)(q);
-    (xm->fr_RH_WHEEL_L_X_fr_RH_shank_fixed)(q);
+    (xm->fr_RH_SHANK_X_fr_RH_THIGH)(q);
+    (xm->fr_RH_WHEEL_L_X_fr_RH_SHANK)(q);
 }
 
 template <typename TRAIT>

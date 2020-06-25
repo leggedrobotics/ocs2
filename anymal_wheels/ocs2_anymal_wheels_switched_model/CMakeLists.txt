@@ -70,9 +70,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
 catkin_add_gtest(${PROJECT_NAME}_switched_model_test
   test/TestAnymalWheelsSwitchedModel.cpp
 )
-add_dependencies(${PROJECT_NAME}_switched_model_test
-  ${catkin_EXPORTED_TARGETS}
-)
 target_link_libraries(${PROJECT_NAME}_switched_model_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}

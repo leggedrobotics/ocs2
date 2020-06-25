@@ -46,8 +46,7 @@ switched_model::vector3_s_t<SCALAR_T> AnymalCrocKinematics<SCALAR_T>::positionBa
       return fr_trunk_X_fr_RH_foot_(jointPositions).template topRightCorner<3, 1>();
     }
     default:
-      std::runtime_error("Not defined foot index.");
-      break;
+      throw std::runtime_error("Not defined foot index.");
   }
 }
 
@@ -84,8 +83,7 @@ typename AnymalCrocKinematics<SCALAR_T>::joint_jacobian_t AnymalCrocKinematics<S
       break;
     }
     default: {
-      std::runtime_error("Not defined foot index.");
-      break;
+      throw std::runtime_error("Not defined foot index.");
     }
   }
 
@@ -119,8 +117,7 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalCrocKinematics<SCALAR_T>::footOrient
       return fr_base_X_fr_RH_FOOT(jointPositions).template topLeftCorner<3, 3>();
     }
     default:
-      std::runtime_error("Undefined endeffector index.");
-      break;
+      throw std::runtime_error("Undefined endeffector index.");
   }
 }
 
@@ -128,5 +125,5 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalCrocKinematics<SCALAR_T>::footOrient
 }  // end of namespace anymal
 
 // Explicit instantiation
-template class anymal::tpl::AnymalCrocKinematics<double>;
-template class anymal::tpl::AnymalCrocKinematics<ocs2::CppAdInterface<double>::ad_scalar_t>;
+template class anymal::tpl::AnymalCrocKinematics<ocs2::scalar_t>;
+template class anymal::tpl::AnymalCrocKinematics<ocs2::CppAdInterface::ad_scalar_t>;

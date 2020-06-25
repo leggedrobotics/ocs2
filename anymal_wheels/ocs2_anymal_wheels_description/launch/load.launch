@@ -4,13 +4,7 @@
 
   <!-- Load robot description -->
   <include file="$(find anymal_wheels_description)/launch/load.launch">
-    <arg name="simulation"                                     value="false"/>
     <arg name="description_name"                               value="$(arg description_name)"/>
-    <arg name="velodyne"                                       value="true"/>
-    <arg name="realsense"                                      value="true"/>
-    <arg name="teleop_head"                                    value="false"/>
-    <arg name="jetson"                                         value="false"/>
-    <arg name="forward_facing_vi_sensor"                       value="false"/>
   </include>
 
 </launch>

@@ -16,10 +16,8 @@
   <build_depend>cmake_modules</build_depend>
   <build_depend>cmake_clang_tools</build_depend>
 
-  <depend>roslib</depend>
-  <depend>ocs2_raisim</depend>
-  <depend>ocs2_raisim_ros</depend>
   <depend>ocs2_anymal_bear</depend>
+  <depend>ocs2_anymal_raisim</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

@@ -11,6 +11,7 @@
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/foot_planner/FootPhase.h"
 #include "ocs2_switched_model_interface/logic/SingleLegLogic.h"
+#include "ocs2_switched_model_interface/terrain/ConvexTerrain.h"
 #include "ocs2_switched_model_interface/terrain/TerrainModel.h"
 #include "ocs2_switched_model_interface/terrain/TerrainPlane.h"
 
@@ -39,16 +40,16 @@ class SwingTrajectoryPlanner {
 
   FootNormalConstraintMatrix getNormalDirectionConstraint(size_t leg, scalar_t time) const;
 
-  std::vector<TerrainPlane> getNominalFootholds(size_t leg) const { return nominalFootholdsPerLeg_[leg]; }
+  std::vector<ConvexTerrain> getNominalFootholds(size_t leg) const { return nominalFootholdsPerLeg_[leg]; }
 
  private:
   void updateLastContact(int leg, scalar_t expectedLiftOff, const vector3_t& currentFootPosition, const TerrainModel& terrainModel);
   std::pair<std::vector<scalar_t>, std::vector<std::unique_ptr<FootPhase>>> generateSwingTrajectories(
       int leg, const std::vector<ContactTiming>& contactTimings, scalar_t finalTime) const;
   scalar_t getSwingMotionScaling(scalar_t startTime, scalar_t endTime) const;
-  std::vector<TerrainPlane> selectNominalFootholdTerrain(int leg, const std::vector<ContactTiming>& contactTimings,
-                                                         const ocs2::CostDesiredTrajectories& costDesiredTrajectories, scalar_t finalTime,
-                                                         const TerrainModel& terrainModel) const;
+  std::vector<ConvexTerrain> selectNominalFootholdTerrain(int leg, const std::vector<ContactTiming>& contactTimings,
+                                                          const ocs2::CostDesiredTrajectories& costDesiredTrajectories, scalar_t finalTime,
+                                                          const TerrainModel& terrainModel) const;
 
   SwingTrajectoryPlannerSettings settings_;
   std::unique_ptr<ComModelBase<scalar_t>> comModel_;
@@ -58,7 +59,7 @@ class SwingTrajectoryPlanner {
   feet_array_t<std::vector<std::unique_ptr<FootPhase>>> feetNormalTrajectories_;
   feet_array_t<std::vector<scalar_t>> feetNormalTrajectoriesEvents_;
 
-  feet_array_t<std::vector<TerrainPlane>> nominalFootholdsPerLeg_;
+  feet_array_t<std::vector<ConvexTerrain>> nominalFootholdsPerLeg_;
 };
 
 }  // namespace switched_model

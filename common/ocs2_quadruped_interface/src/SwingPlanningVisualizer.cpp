@@ -29,11 +29,11 @@ void SwingPlanningVisualizer::preSolverRun(scalar_t initTime, scalar_t finalTime
     poseArray.poses.reserve(nominalFootholds.size());
 
     // Convert terrain planes to pose msgs
-    std::for_each(nominalFootholds.begin(), nominalFootholds.end(), [&](const TerrainPlane& foothold) {
+    std::for_each(nominalFootholds.begin(), nominalFootholds.end(), [&](const ConvexTerrain& foothold) {
       // Construct pose msg
       geometry_msgs::Pose pose;
-      pose.position = getPointMsg(foothold.positionInWorld);
-      Eigen::Quaterniond terrainOrientation(foothold.orientationWorldToTerrain.transpose());
+      pose.position = getPointMsg(foothold.plane.positionInWorld);
+      Eigen::Quaterniond terrainOrientation(foothold.plane.orientationWorldToTerrain.transpose());
       pose.orientation = getOrientationMsg(terrainOrientation);
 
       // Fill message container

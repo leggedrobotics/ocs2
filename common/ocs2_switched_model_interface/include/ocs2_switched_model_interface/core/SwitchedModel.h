@@ -57,6 +57,11 @@ const feet_array_t<std::string> feetNames{"LF", "RF", "LH", "RH"};
 using contact_flag_t = feet_array_t<bool>;  // Contact state per foot, true = in contact, false = not in contact
 
 template <typename SCALAR_T>
+using vector2_s_t = Eigen::Matrix<SCALAR_T, 2, 1>;
+using vector2_t = vector2_s_t<scalar_t>;
+using vector2_ad_t = vector2_s_t<ocs2::CppAdInterface::ad_scalar_t>;
+
+template <typename SCALAR_T>
 using vector3_s_t = Eigen::Matrix<SCALAR_T, 3, 1>;
 using vector3_t = vector3_s_t<scalar_t>;
 using vector3_ad_t = vector3_s_t<ocs2::CppAdInterface::ad_scalar_t>;

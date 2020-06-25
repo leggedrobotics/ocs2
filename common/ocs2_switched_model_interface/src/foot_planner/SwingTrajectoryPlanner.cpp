@@ -52,7 +52,8 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
     SwingPhase::SwingEvent liftOff{lastContacts_[leg].first, settings_.liftOffVelocity, &lastContacts_[leg].second};
     SwingPhase::SwingEvent touchDown = [&] {
       if (touchesDownAtLeastOnce(contactTimings)) {
-        return SwingPhase::SwingEvent{contactTimings.front().start, settings_.touchDownVelocity, &nominalFootholdsPerLeg_[leg].front()};
+        return SwingPhase::SwingEvent{contactTimings.front().start, settings_.touchDownVelocity,
+                                      &nominalFootholdsPerLeg_[leg].front().plane};
       } else {
         return SwingPhase::SwingEvent{finalTime + settings_.touchdownAfterHorizon, 0.0, nullptr};
       }
@@ -66,7 +67,7 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
   // Loop through contact phases
   for (int i = 0; i < contactTimings.size(); ++i) {
     const auto& currentContactTiming = contactTimings[i];
-    const TerrainPlane& nominalFoothold = nominalFootholdsPerLeg_[leg][i];
+    const TerrainPlane& nominalFoothold = nominalFootholdsPerLeg_[leg][i].plane;
 
     // If phase starts after the horizon, we don't need to plan for it
     if (currentContactTiming.start > finalTime) {
@@ -85,7 +86,8 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
       SwingPhase::SwingEvent touchDown = [&] {
         const bool nextContactExists = (i + 1) < contactTimings.size();
         if (nextContactExists) {
-          return SwingPhase::SwingEvent{contactTimings[i + 1].start, settings_.touchDownVelocity, &nominalFootholdsPerLeg_[leg][i + 1]};
+          return SwingPhase::SwingEvent{contactTimings[i + 1].start, settings_.touchDownVelocity,
+                                        &nominalFootholdsPerLeg_[leg][i + 1].plane};
         } else {
           return SwingPhase::SwingEvent{finalTime + settings_.touchdownAfterHorizon, 0.0, nullptr};
         }
@@ -109,14 +111,16 @@ scalar_t SwingTrajectoryPlanner::getSwingMotionScaling(scalar_t liftoffTime, sca
   }
 }
 
-std::vector<TerrainPlane> SwingTrajectoryPlanner::selectNominalFootholdTerrain(int leg, const std::vector<ContactTiming>& contactTimings,
-                                                                               const ocs2::CostDesiredTrajectories& costDesiredTrajectories,
-                                                                               scalar_t finalTime, const TerrainModel& terrainModel) const {
-  std::vector<TerrainPlane> nominalFootholdTerrain;
+std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
+    int leg, const std::vector<ContactTiming>& contactTimings, const ocs2::CostDesiredTrajectories& costDesiredTrajectories,
+    scalar_t finalTime, const TerrainModel& terrainModel) const {
+  std::vector<ConvexTerrain> nominalFootholdTerrain;
 
   // Nominal foothold is equal to current foothold for legs in contact
   if (startsWithStancePhase(contactTimings)) {
-    nominalFootholdTerrain.push_back(lastContacts_[leg].second);
+    ConvexTerrain convexTerrain;
+    convexTerrain.plane = lastContacts_[leg].second;
+    nominalFootholdTerrain.push_back(convexTerrain);
   }
 
   // For future contact phases, use costDesiredTrajectories at halve the contact phase
@@ -138,7 +142,14 @@ std::vector<TerrainPlane> SwingTrajectoryPlanner::selectNominalFootholdTerrain(i
       const auto desiredBasePose = comModel_->calculateBasePose(middleContactDesiredComPose);
       const auto nominalFootholdPositionInWorld = kinematicsModel_->footPositionInOriginFrame(leg, desiredBasePose, desiredJointPositions);
 
-      nominalFootholdTerrain.push_back(terrainModel.getLocalTerrainAtPositionInWorld(nominalFootholdPositionInWorld));
+      if (contactPhase.start < finalTime) {
+        ConvexTerrain convexTerrain = terrainModel.getConvexTerrainAtPositionInWorld(nominalFootholdPositionInWorld);
+        nominalFootholdTerrain.push_back(convexTerrain);
+      } else {  // After the horizon -> we are only interested in the position and orientation
+        ConvexTerrain convexTerrain;
+        convexTerrain.plane = terrainModel.getLocalTerrainAtPositionInWorld(nominalFootholdPositionInWorld);
+        nominalFootholdTerrain.push_back(convexTerrain);
+      }
     }
   }
 

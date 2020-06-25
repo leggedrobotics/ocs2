@@ -26,7 +26,7 @@ void SwitchedModelModeScheduleManager::preSolverRunImpl(scalar_t initTime, scala
   {
     std::lock_guard<LockableGaitSchedule> lock(*gaitSchedulePtr_);
     gaitSchedulePtr_->advanceToTime(initTime);
-    modeSchedule = gaitSchedulePtr_->getModeSchedule(2.0 * timeHorizon);
+    modeSchedule = gaitSchedulePtr_->getModeSchedule(1.5 * timeHorizon);
   }
 
   {

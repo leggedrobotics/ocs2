@@ -225,15 +225,15 @@ install(DIRECTORY urdf launch config rviz
 ## Testing ##
 #############
 
-catkin_add_gtest(ballbot_integration_test
-  test/ballbotIntegrationTest.cpp
-)
-target_link_libraries(ballbot_integration_test
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  gtest_main
-)
+# catkin_add_gtest(ballbot_integration_test
+#   test/ballbotIntegrationTest.cpp
+# )
+# target_link_libraries(ballbot_integration_test
+#   ${PROJECT_NAME}
+#   ${catkin_LIBRARIES}
+#   ${Boost_LIBRARIES}
+#   gtest_main
+# )
 
 # catkin_add_gtest(ballbot_pybindings_test
 #   test/PyBindingsTest.cpp

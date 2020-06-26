@@ -15,7 +15,7 @@ namespace switched_model {
 SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel,
                                              std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
                                              const state_matrix_t& Q, const input_matrix_t& R, const state_matrix_t& QFinal)
-    : BASE(Q, R, state_vector_t::Zero(), input_vector_t::Zero(), QFinal, state_vector_t::Zero()),
+    : BASE(Q, R, vector_t::Zero(STATE_DIM), vector_t::Zero(INPUT_DIM), QFinal, vector_t::Zero(STATE_DIM)),
       comModelPtr_(comModel.clone()),
       modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)) {
   if (!modeScheduleManagerPtr_) {
@@ -40,26 +40,25 @@ SwitchedModelCostBase* SwitchedModelCostBase::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SwitchedModelCostBase::setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
+std::pair<vector_t, vector_t> SwitchedModelCostBase::getNominalStateInput(scalar_t t, const vector_t& x, const vector_t& u) {
   // Get stance configuration
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(t);
 
-  dynamic_vector_t xNominal = state_vector_t::Zero();
+  vector_t xNominal = vector_t::Zero(STATE_DIM);
   if (BASE::costDesiredTrajectoriesPtr_ != nullptr) {
-    BASE::costDesiredTrajectoriesPtr_->getDesiredState(t, xNominal);
+    xNominal = BASE::costDesiredTrajectoriesPtr_->getDesiredState(t);
   }
-  dynamic_vector_t uNominal;
-  inputFromContactFlags(contactFlags, uNominal);
+  vector_t uNominal = inputFromContactFlags(contactFlags);
 
-  BASE::setCurrentStateAndControl(t, x, u, xNominal, uNominal, xNominal);
+  return {xNominal, uNominal};
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SwitchedModelCostBase::inputFromContactFlags(contact_flag_t contactFlags, dynamic_vector_t& inputs) {
+vector_t SwitchedModelCostBase::inputFromContactFlags(contact_flag_t contactFlags) {
   // Distribute total mass equally over active stance legs.
-  inputs.setZero(INPUT_DIM);
+  vector_t inputs = vector_t::Zero(INPUT_DIM);
 
   const scalar_t totalMass = comModelPtr_->totalMass() * 9.81;
   size_t numStanceLegs(0);
@@ -77,6 +76,7 @@ void SwitchedModelCostBase::inputFromContactFlags(contact_flag_t contactFlags, d
       }
     }
   }
+  return inputs;
 }
 
 }  // namespace switched_model

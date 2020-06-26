@@ -8,13 +8,11 @@
 
 namespace switched_model {
 
-class ComKinoSystemDynamicsAd : public ocs2::SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM> {
+class ComKinoSystemDynamicsAd : public ocs2::SystemDynamicsBaseAD {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using Base = ocs2::SystemDynamicsBaseAD<STATE_DIM, INPUT_DIM>;
-  using typename Base::ad_dynamic_vector_t;
+  using Base = ocs2::SystemDynamicsBaseAD;
   using typename Base::ad_scalar_t;
+  using typename Base::ad_vector_t;
 
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
@@ -27,8 +25,7 @@ class ComKinoSystemDynamicsAd : public ocs2::SystemDynamicsBaseAD<STATE_DIM, INP
 
   ComKinoSystemDynamicsAd* clone() const override;
 
-  void systemFlowMap(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                     ad_dynamic_vector_t& stateDerivative) const override;
+  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const override;
 
   template <typename SCALAR_T>
   static com_state_s_t<SCALAR_T> computeComStateDerivative(const ComModelBase<SCALAR_T>& comModel,

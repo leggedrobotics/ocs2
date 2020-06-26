@@ -15,9 +15,7 @@ ComKinoConstraintBaseAd::ComKinoConstraintBaseAd(const ad_kinematic_model_t& adK
       adComModelPtr_(adComModel.clone()),
       modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)),
       swingTrajectoryPlannerPtr_(std::move(swingTrajectoryPlannerPtr)),
-      options_(std::move(options)),
-      inequalityConstraintsComputed_(false),
-      stateInputConstraintsComputed_(false) {
+      options_(std::move(options)) {
   if (!modeScheduleManagerPtr_ || !swingTrajectoryPlannerPtr_) {
     throw std::runtime_error("[ComKinoConstraintBaseAD] ModeScheduleManager and SwingTrajectoryPlanner cannot be a nullptr");
   }
@@ -35,9 +33,7 @@ ComKinoConstraintBaseAd::ComKinoConstraintBaseAd(const ComKinoConstraintBaseAd& 
       swingTrajectoryPlannerPtr_(rhs.swingTrajectoryPlannerPtr_),
       options_(rhs.options_),
       inequalityConstraintCollection_(rhs.inequalityConstraintCollection_),
-      equalityStateInputConstraintCollection_(rhs.equalityStateInputConstraintCollection_),
-      inequalityConstraintsComputed_(false),
-      stateInputConstraintsComputed_(false) {}
+      equalityStateInputConstraintCollection_(rhs.equalityStateInputConstraintCollection_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -75,11 +71,7 @@ void ComKinoConstraintBaseAd::initializeConstraintTerms() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
-  stateInputConstraintsComputed_ = false;
-  inequalityConstraintsComputed_ = false;
-
-  Base::setCurrentStateAndControl(t, x, u);
+void ComKinoConstraintBaseAd::timeUpdate(scalar_t t) {
   numEventTimes_ = modeScheduleManagerPtr_->getModeSchedule().eventTimes.size();
   stanceLegs_ = modeScheduleManagerPtr_->getContactFlags(t);
 
@@ -109,176 +101,65 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
   }
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-size_t ComKinoConstraintBaseAd::numStateInputConstraint(const scalar_t& time) {
-  return equalityStateInputConstraintCollection_.getNumConstraints(time);
+vector_t ComKinoConstraintBaseAd::stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
+  timeUpdate(t);
+  return equalityStateInputConstraintCollection_.getValueAsVector(t, x, u);
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ComKinoConstraintBaseAd::getConstraint1(constraint1_vector_t& e) {
-  size_t numConstraints = numStateInputConstraint(Base::t_);
-  e.head(numConstraints) = equalityStateInputConstraintCollection_.getValueAsVector(Base::t_, Base::x_, Base::u_);
+vector_t ComKinoConstraintBaseAd::inequalityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
+  timeUpdate(t);
+  return inequalityConstraintCollection_.getValueAsVector(t, x, u);
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ComKinoConstraintBaseAd::getConstraint2(constraint2_vector_t& h) {}
+VectorFunctionLinearApproximation ComKinoConstraintBaseAd::stateInputEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x,
+                                                                                                           const vector_t& u) {
+  timeUpdate(t);
+  const size_t numConstraints = equalityStateInputConstraintCollection_.getNumConstraints(t);
+  const auto constraintApproximation = equalityStateInputConstraintCollection_.getLinearApproximationAsMatrices(t, x, u);
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-size_t ComKinoConstraintBaseAd::numStateOnlyConstraint(const scalar_t& time) {
-  return 0;
+  VectorFunctionLinearApproximation g;
+  g.f = constraintApproximation.constraintValues.head(numConstraints);
+  g.dfdx = constraintApproximation.derivativeState.topRows(numConstraints);
+  g.dfdu = constraintApproximation.derivativeInput.topRows(numConstraints);
+  return g;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ComKinoConstraintBaseAd::getInequalityConstraint(scalar_array_t& h) {
-  h = inequalityConstraintCollection_.getValue(Base::t_, Base::x_, Base::u_);
-}
+VectorFunctionQuadraticApproximation ComKinoConstraintBaseAd::inequalityConstraintQuadraticApproximation(scalar_t t, const vector_t& x,
+                                                                                                         const vector_t& u) {
+  timeUpdate(t);
+  const auto constraintApproximation = inequalityConstraintCollection_.getQuadraticApproximation(t, x, u);
+  const size_t numConstraints = constraintApproximation.constraintValues.size();
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-size_t ComKinoConstraintBaseAd::numInequalityConstraint(const scalar_t& time) {
-  return inequalityConstraintCollection_.getNumConstraints(time);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ComKinoConstraintBaseAd::getFinalConstraint2(constraint2_vector_t& h_f) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-size_t ComKinoConstraintBaseAd::numStateOnlyFinalConstraint(const scalar_t& time) {
-  return 0;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ComKinoConstraintBaseAd::getConstraint1DerivativesState(constraint1_state_matrix_t& C) {
-  if (!stateInputConstraintsComputed_) {
-    linearStateInputConstraintApproximation_ =
-        equalityStateInputConstraintCollection_.getLinearApproximationAsMatrices(Base::t_, Base::x_, Base::u_);
-    stateInputConstraintsComputed_ = true;
+  VectorFunctionQuadraticApproximation h;
+  h.f.resize(numConstraints);
+  h.dfdx.resize(numConstraints, x.rows());
+  h.dfdu.resize(numConstraints, u.rows());
+  h.dfdxx.resize(numConstraints);
+  h.dfduu.resize(numConstraints);
+  h.dfdux.resize(numConstraints);
+  for (size_t i = 0; i < numConstraints; i++) {
+    h.f(i) = constraintApproximation.constraintValues[i];
+    h.dfdx.row(i) = constraintApproximation.derivativeState[i];
+    h.dfdu.row(i) = constraintApproximation.derivativeInput[i];
+    h.dfdxx[i] = constraintApproximation.secondDerivativesState[i];
+    h.dfduu[i] = constraintApproximation.secondDerivativesInput[i];
+    h.dfdux[i] = constraintApproximation.derivativesInputState[i];
   }
-  size_t numConstraints = numStateInputConstraint(Base::t_);
-  C.topRows(numConstraints) = linearStateInputConstraintApproximation_.derivativeState.topRows(numConstraints);
+  return h;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::getConstraint1DerivativesControl(constraint1_input_matrix_t& D) {
-  if (!stateInputConstraintsComputed_) {
-    linearStateInputConstraintApproximation_ =
-        equalityStateInputConstraintCollection_.getLinearApproximationAsMatrices(Base::t_, Base::x_, Base::u_);
-    stateInputConstraintsComputed_ = true;
-  }
-  size_t numConstraints = numStateInputConstraint(Base::t_);
-  D.topRows(numConstraints) = linearStateInputConstraintApproximation_.derivativeInput.topRows(numConstraints);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ComKinoConstraintBaseAd::getConstraint1DerivativesEventTimes(constraint1_vector_array_t& g1DevArray) {
+vector_array_t ComKinoConstraintBaseAd::stateInputEqualityConstraintDerivativesEventTimes(scalar_t t, const vector_t& x,
+                                                                                          const vector_t& u) {
   // set all to zero
-  g1DevArray.resize(numEventTimes_);
-  for (constraint1_vector_t& g1Dev : g1DevArray) {
-    g1Dev.setZero();
+  const size_t numConstraints = equalityStateInputConstraintCollection_.getNumConstraints(t);
+  vector_array_t g1DevArray(numEventTimes_);
+  for (auto& g1Dev : g1DevArray) {
+    g1Dev.setZero(numConstraints);
   }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ComKinoConstraintBaseAd::getConstraint2DerivativesState(constraint2_state_matrix_t& F) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ComKinoConstraintBaseAd::getInequalityConstraintDerivativesState(state_vector_array_t& dhdx) {
-  if (!inequalityConstraintsComputed_) {
-    quadraticInequalityConstraintApproximation_ = inequalityConstraintCollection_.getQuadraticApproximation(Base::t_, Base::x_, Base::u_);
-    inequalityConstraintsComputed_ = true;
-  }
-  dhdx = std::move(quadraticInequalityConstraintApproximation_.derivativeState);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ComKinoConstraintBaseAd::getInequalityConstraintDerivativesInput(switched_model::ComKinoConstraintBaseAd::input_vector_array_t& dhdu) {
-  if (!inequalityConstraintsComputed_) {
-    quadraticInequalityConstraintApproximation_ = inequalityConstraintCollection_.getQuadraticApproximation(Base::t_, Base::x_, Base::u_);
-    inequalityConstraintsComputed_ = true;
-  }
-  dhdu = std::move(quadraticInequalityConstraintApproximation_.derivativeInput);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ComKinoConstraintBaseAd::getInequalityConstraintSecondDerivativesState(
-    switched_model::ComKinoConstraintBaseAd::state_matrix_array_t& ddhdxdx) {
-  if (!inequalityConstraintsComputed_) {
-    quadraticInequalityConstraintApproximation_ = inequalityConstraintCollection_.getQuadraticApproximation(Base::t_, Base::x_, Base::u_);
-    inequalityConstraintsComputed_ = true;
-  }
-  ddhdxdx = std::move(quadraticInequalityConstraintApproximation_.secondDerivativesState);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ComKinoConstraintBaseAd::getInequalityConstraintSecondDerivativesInput(
-    switched_model::ComKinoConstraintBaseAd::input_matrix_array_t& ddhdudu) {
-  if (!inequalityConstraintsComputed_) {
-    quadraticInequalityConstraintApproximation_ = inequalityConstraintCollection_.getQuadraticApproximation(Base::t_, Base::x_, Base::u_);
-    inequalityConstraintsComputed_ = true;
-  }
-  ddhdudu = std::move(quadraticInequalityConstraintApproximation_.secondDerivativesInput);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ComKinoConstraintBaseAd::getInequalityConstraintDerivativesInputState(
-    switched_model::ComKinoConstraintBaseAd::input_state_matrix_array_t& ddhdudx) {
-  if (!inequalityConstraintsComputed_) {
-    quadraticInequalityConstraintApproximation_ = inequalityConstraintCollection_.getQuadraticApproximation(Base::t_, Base::x_, Base::u_);
-    inequalityConstraintsComputed_ = true;
-  }
-  ddhdudx = std::move(quadraticInequalityConstraintApproximation_.derivativesInputState);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ComKinoConstraintBaseAd::getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ComKinoConstraintBaseAd::setStanceLegs(const contact_flag_t& stanceLegs) {
-  stanceLegs_ = stanceLegs;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ComKinoConstraintBaseAd::getStanceLegs(contact_flag_t& stanceLegs) {
-  stanceLegs = stanceLegs_;
+  return g1DevArray;
 }
 
 }  // end of namespace switched_model

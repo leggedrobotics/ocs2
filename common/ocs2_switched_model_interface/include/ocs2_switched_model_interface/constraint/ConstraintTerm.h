@@ -6,7 +6,9 @@
 
 #include <Eigen/Dense>
 #include <vector>
-#include "ocs2_core/Dimensions.h"
+
+#include <ocs2_core/Types.h>
+#include <ocs2_switched_model_interface/Dimensions.h>
 
 namespace ocs2 {
 

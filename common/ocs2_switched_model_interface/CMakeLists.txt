@@ -51,7 +51,7 @@ add_library(${PROJECT_NAME}
 	src/logic/SwitchedModelModeScheduleManager.cpp
 	src/EndEffectorConstraint.cpp
 	src/ComKinoConstraintBaseAd.cpp
-	src/AnymalWheelsComKinoConstraintAd.cpp
+	# src/AnymalWheelsComKinoConstraintAd.cpp
 	src/ComKinoOperatingPointsBase.cpp
 	src/ComKinoSystemDynamicsAd.cpp
 	src/ComModelBase.cpp

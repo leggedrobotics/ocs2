@@ -15,16 +15,9 @@
 
 namespace switched_model {
 
-class SwitchedModelCostBase : public ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM> {
+class SwitchedModelCostBase : public ocs2::QuadraticCostFunction {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  typedef ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM> BASE;
-  using typename BASE::dynamic_vector_t;
-  using typename BASE::input_matrix_t;
-  using typename BASE::input_vector_t;
-  using typename BASE::state_matrix_t;
-  using typename BASE::state_vector_t;
+  using BASE = ocs2::QuadraticCostFunction;
 
   using com_model_t = ComModelBase<scalar_t>;
 
@@ -41,10 +34,10 @@ class SwitchedModelCostBase : public ocs2::QuadraticCostFunction<STATE_DIM, INPU
   //! clone SwitchedModelCostBase class.
   SwitchedModelCostBase* clone() const override;
 
-  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
+  std::pair<vector_t, vector_t> getNominalStateInput(scalar_t t, const vector_t& x, const vector_t& u) override;
 
  private:
-  void inputFromContactFlags(contact_flag_t contactFlags, dynamic_vector_t& inputs);
+  vector_t inputFromContactFlags(contact_flag_t contactFlags);
 
   std::unique_ptr<com_model_t> comModelPtr_;
 

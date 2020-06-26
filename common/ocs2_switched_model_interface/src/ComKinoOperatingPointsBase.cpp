@@ -28,7 +28,7 @@ ComKinoOperatingPointsBase* ComKinoOperatingPointsBase::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto ComKinoOperatingPointsBase::computeInputOperatingPoints(contact_flag_t contactFlags) const -> input_vector_t {
+input_vector_t ComKinoOperatingPointsBase::computeInputOperatingPoints(contact_flag_t contactFlags) const {
   // Distribute total mass equally over active stance legs.
   input_vector_t inputs = input_vector_t::Zero();
 
@@ -55,9 +55,9 @@ auto ComKinoOperatingPointsBase::computeInputOperatingPoints(contact_flag_t cont
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoOperatingPointsBase::getSystemOperatingTrajectories(const state_vector_t& initialState, scalar_t startTime, scalar_t finalTime,
-                                                                scalar_array_t& timeTrajectory, state_vector_array_t& stateTrajectory,
-                                                                input_vector_array_t& inputTrajectory, bool concatOutput) {
+void ComKinoOperatingPointsBase::getSystemOperatingTrajectories(const vector_t& initialState, scalar_t startTime, scalar_t finalTime,
+                                                                scalar_array_t& timeTrajectory, vector_array_t& stateTrajectory,
+                                                                vector_array_t& inputTrajectory, bool concatOutput) {
   const auto midTime = 0.5 * (startTime + finalTime);
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(midTime);
   const auto inputOperatingPoint = computeInputOperatingPoints(contactFlags);

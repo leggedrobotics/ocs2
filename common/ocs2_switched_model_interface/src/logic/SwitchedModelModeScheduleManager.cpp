@@ -16,7 +16,7 @@ contact_flag_t SwitchedModelModeScheduleManager::getContactFlags(scalar_t time) 
   return modeNumber2StanceLeg(this->getModeSchedule().modeAtTime(time));
 }
 
-void SwitchedModelModeScheduleManager::preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+void SwitchedModelModeScheduleManager::preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
                                                         const ocs2::CostDesiredTrajectories& costDesiredTrajectory,
                                                         ocs2::ModeSchedule& modeSchedule) {
   const auto timeHorizon = finalTime - initTime;

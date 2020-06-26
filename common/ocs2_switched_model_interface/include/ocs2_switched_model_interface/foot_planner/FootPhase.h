@@ -6,12 +6,13 @@
 
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/foot_planner/SplineCpg.h"
+#include "ocs2_switched_model_interface/terrain/ConvexTerrain.h"
 #include "ocs2_switched_model_interface/terrain/TerrainPlane.h"
 
 namespace switched_model {
 
 /**
- * Linear constraint A_p * p + A_v * v + b = 0
+ * Linear constraint A_p * p_world + A_v * v_world + b = 0
  */
 struct FootNormalConstraintMatrix {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -20,18 +21,31 @@ struct FootNormalConstraintMatrix {
   scalar_t constant;
 };
 
+/**
+ * Linear inequality constraint A_p * p_world + b >=  0
+ */
+struct FootTangentialConstraintMatrix {
+  Eigen::Matrix<scalar_t, -1, 3> A;
+  dynamic_vector_t b;
+};
+
+FootTangentialConstraintMatrix tangentialConstraintsFromConvexTerrain(const ConvexTerrain& stanceTerrain);
+
 class FootPhase {
  public:
   virtual FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time, scalar_t positionGain) const = 0;
+  virtual const FootTangentialConstraintMatrix* getFootTangentialConstraintInWorldFrame() const { return nullptr; };
 };
 
 class StancePhase final : public FootPhase {
  public:
-  StancePhase(const TerrainPlane& stanceTerrain);
+  StancePhase(const ConvexTerrain& stanceTerrain);
   FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time, scalar_t positionGain) const override;
+  const FootTangentialConstraintMatrix* getFootTangentialConstraintInWorldFrame() const override;
 
  private:
-  const TerrainPlane* stanceTerrain_;
+  const ConvexTerrain* stanceTerrain_;
+  FootTangentialConstraintMatrix footTangentialConstraint_;
 };
 
 class SwingPhase final : public FootPhase {

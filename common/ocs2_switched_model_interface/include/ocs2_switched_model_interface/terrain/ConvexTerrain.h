@@ -11,10 +11,10 @@
 namespace switched_model {
 
 struct ConvexTerrain {
-  // Plane coordinate defining the origin of the terrain
+  /// Plane coordinate defining the origin of the terrain
   TerrainPlane plane;
 
-  // Boundary points x-y in the terrain frame
+  /// Boundary points x-y in the terrain frame, points are order counter-clockwise. The last point is connected to the first point
   std::vector<vector2_t> boundary;
 };
 

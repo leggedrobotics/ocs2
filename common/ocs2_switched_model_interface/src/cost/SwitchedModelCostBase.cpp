@@ -14,11 +14,13 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel,
+SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel, const ad_com_model_t& adComModel,
+                                             const ad_kinematic_model_t& adKinematicsModel,
                                              std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
-                                             const state_matrix_t& Q, const input_matrix_t& R, const state_matrix_t& QFinal)
-    : BASE(Q, R, state_vector_t::Zero(), input_vector_t::Zero(), QFinal, state_vector_t::Zero()),
-      comModelPtr_(comModel.clone()),
+                                             const state_matrix_t& Q, const input_matrix_t& R, const state_matrix_t& QFinal,
+                                             bool generateModels)
+    : comModelPtr_(comModel.clone()),
+      footPlacementCost_(new FootPlacementCost(FootPlacementCostParameters(), adComModel, adKinematicsModel, generateModels)),
       modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)) {
   if (!modeScheduleManagerPtr_) {
     throw std::runtime_error("[SwitchedModelCostBase] Mode schedule manager cannot be a nullptr");
@@ -29,12 +31,14 @@ SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel,
 /******************************************************************************************************/
 /******************************************************************************************************/
 SwitchedModelCostBase::SwitchedModelCostBase(const SwitchedModelCostBase& rhs)
-    : BASE(rhs), comModelPtr_(rhs.comModelPtr_->clone()), modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_) {}
+    : BASE(rhs),
+      comModelPtr_(rhs.comModelPtr_->clone()),
+      footPlacementCost_(rhs.footPlacementCost_->clone()),
+      modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-
 SwitchedModelCostBase* SwitchedModelCostBase::clone() const {
   return new SwitchedModelCostBase(*this);
 }
@@ -43,17 +47,25 @@ SwitchedModelCostBase* SwitchedModelCostBase::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void SwitchedModelCostBase::setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
+  BASE::setCurrentStateAndControl(t, x, u);
+
   // Get stance configuration
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(t);
 
+  // References for quadratic term
   dynamic_vector_t xNominal = state_vector_t::Zero();
   if (BASE::costDesiredTrajectoriesPtr_ != nullptr) {
     BASE::costDesiredTrajectoriesPtr_->getDesiredState(t, xNominal);
   }
   dynamic_vector_t uNominal;
   inputFromContactFlags(contactFlags, xNominal, uNominal);
+  xIntermediateDeviation_ = x - xNominal;
+  uIntermediateDeviation_ = u - uNominal;
+  xNominalFinal_ = xNominal;
 
-  BASE::setCurrentStateAndControl(t, x, u, xNominal, uNominal, xNominal);
+  // Foot placement costs
+  feet_array_t<FootTangentialConstraintMatrix*> constraints = {{nullptr}};
+  footPlacementCost_->setStateAndConstraint(x, constraints);
 }
 
 /******************************************************************************************************/
@@ -83,6 +95,47 @@ void SwitchedModelCostBase::inputFromContactFlags(const contact_flag_t& contactF
       }
     }
   }
+}
+
+void SwitchedModelCostBase::getIntermediateCost(scalar_t& L) {
+  L = 0.5 * xIntermediateDeviation_.dot(Q_ * xIntermediateDeviation_) + 0.5 * uIntermediateDeviation_.dot(R_ * uIntermediateDeviation_);
+  L += footPlacementCost_->getCostValue();
+}
+
+void SwitchedModelCostBase::getIntermediateCostDerivativeState(state_vector_t& dLdx) {
+  dLdx = Q_ * xIntermediateDeviation_;
+  dLdx += footPlacementCost_->getCostDerivativeState();
+}
+
+void SwitchedModelCostBase::getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) {
+  dLdxx = Q_;
+  dLdxx += footPlacementCost_->getCostSecondDerivativeState();
+}
+
+void SwitchedModelCostBase::getIntermediateCostDerivativeInput(input_vector_t& dLdu) {
+  dLdu = R_ * uIntermediateDeviation_;
+}
+
+void SwitchedModelCostBase::getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) {
+  dLduu = R_;
+}
+
+void SwitchedModelCostBase::getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) {
+  dLdux.setZero();
+}
+
+void SwitchedModelCostBase::getTerminalCost(scalar_t& cost) {
+  state_vector_t xFinalDeviation = BASE::x_ - xNominalFinal_;
+  cost = 0.5 * xFinalDeviation.dot(QFinal_ * xFinalDeviation);
+}
+
+void SwitchedModelCostBase::getTerminalCostDerivativeState(state_vector_t& dPhidx) {
+  state_vector_t xFinalDeviation = BASE::x_ - xNominalFinal_;
+  dPhidx = QFinal_ * xFinalDeviation;
+}
+
+void SwitchedModelCostBase::getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) {
+  dPhidxx = QFinal_;
 }
 
 }  // namespace switched_model

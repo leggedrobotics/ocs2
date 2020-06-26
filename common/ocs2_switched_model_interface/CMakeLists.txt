@@ -42,6 +42,8 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
+	src/cost/SwitchedModelCostBase.cpp
+	src/cost/FootPlacementCost.cpp
 	src/foot_planner/CubicSpline.cpp
 	src/foot_planner/FootPhase.cpp
 	src/foot_planner/SplineCpg.cpp
@@ -63,7 +65,6 @@ add_library(${PROJECT_NAME}
 	src/ComModelBase.cpp
 	src/KinematicsModelBase.cpp
 	src/ModelSettings.cpp
-	src/SwitchedModelCostBase.cpp
 	src/SwitchedModelStateEstimator.cpp
 )
 add_dependencies(${PROJECT_NAME}

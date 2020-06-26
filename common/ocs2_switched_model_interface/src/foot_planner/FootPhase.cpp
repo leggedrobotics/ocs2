@@ -6,6 +6,37 @@
 
 namespace switched_model {
 
+FootTangentialConstraintMatrix tangentialConstraintsFromConvexTerrain(const ConvexTerrain& stanceTerrain) {
+  FootTangentialConstraintMatrix constraints{};
+
+  int numberOfConstraints = stanceTerrain.boundary.size();
+  constraints.A.resize(numberOfConstraints, 3);
+  constraints.b.resize(numberOfConstraints, 1);
+
+  if (numberOfConstraints > 0) {
+    for (int i = 0; i < stanceTerrain.boundary.size(); ++i) {
+      // Determine next point in counter clockwise direction
+      int j = ((i + 1) < stanceTerrain.boundary.size()) ? i + 1 : 0;  // next point with wrap around
+      vector2_t start2end = stanceTerrain.boundary[j] - stanceTerrain.boundary[i];
+
+      // Get 2D constraint A_terrain * p_terrain + b >= 0
+      vector2_t A_terrain{-start2end.y(), start2end.x()};  // rotate 90deg around z to get a vector pointing to interior of the polygon
+      A_terrain.normalize();                               // make it a unit vector.
+      scalar_t b_terrain = A_terrain.dot(stanceTerrain.boundary[i]);  // Take offset of one of the points
+
+      // 3D position in terrain frame = T_R_W * (p_w - p_0)
+      // Take x-y only for the constraints: p_terrain = diag(1, 1, 0) * T_R_W * (p_w - p_0)
+      // Gives:
+      //    A_world = A_terrain * diag(1, 1, 0) * T_R_W
+      //    b_world = b_terrain  - A_terrain * diag(1, 1, 0) * T_R_W * p_0 = b_terrain - A_world * p_0
+      constraints.A.row(i) = A_terrain.transpose() * stanceTerrain.plane.orientationWorldToTerrain.topRows<2>();
+      constraints.b(i) = b_terrain - constraints.A.row(i) * stanceTerrain.plane.positionInWorld;
+    }
+  }
+
+  return constraints;
+}
+
 FootNormalConstraintMatrix computeFootNormalConstraint(scalar_t feedforwardVelocityInNormalDirection, scalar_t desiredTerrainDistance,
                                                        const TerrainPlane& terrainPlane, scalar_t positionGain) {
   // in surface normal direction : v_foot = v_ff - kp * (p_foot - p_des)
@@ -20,12 +51,21 @@ FootNormalConstraintMatrix computeFootNormalConstraint(scalar_t feedforwardVeloc
   return footNormalConstraint;
 }
 
-StancePhase::StancePhase(const TerrainPlane& stanceTerrain) : stanceTerrain_(&stanceTerrain) {}
+StancePhase::StancePhase(const ConvexTerrain& stanceTerrain)
+    : stanceTerrain_(&stanceTerrain), footTangentialConstraint_(tangentialConstraintsFromConvexTerrain(stanceTerrain)) {}
 
 FootNormalConstraintMatrix StancePhase::getFootNormalConstraintInWorldFrame(scalar_t time, scalar_t positionGain) const {
   const scalar_t feedForwardVelocity = 0.0;
   const scalar_t desiredTerrainDistance = 0.0;
-  return computeFootNormalConstraint(feedForwardVelocity, desiredTerrainDistance, *stanceTerrain_, positionGain);
+  return computeFootNormalConstraint(feedForwardVelocity, desiredTerrainDistance, stanceTerrain_->plane, positionGain);
+}
+
+const FootTangentialConstraintMatrix* StancePhase::getFootTangentialConstraintInWorldFrame() const {
+  if (footTangentialConstraint_.A.rows() > 0) {
+    return &footTangentialConstraint_;
+  } else {
+    return nullptr;
+  }
 }
 
 SwingPhase::SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touchDown) : liftOff_(liftOff), touchDown_(touchDown) {

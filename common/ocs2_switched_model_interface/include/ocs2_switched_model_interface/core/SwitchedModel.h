@@ -202,4 +202,11 @@ feet_array_t<vector3_s_t<SCALAR_T>> toArray(const joint_coordinate_s_t<SCALAR_T>
           valuesAsVector.template segment<3>(9)};
 }
 
+template <typename SCALAR_T>
+joint_coordinate_s_t<SCALAR_T> fromArray(const feet_array_t<vector3_s_t<SCALAR_T>>& valuesAsArray) {
+  joint_coordinate_s_t<SCALAR_T> valuesAsVector;
+  valuesAsVector << valuesAsArray[0], valuesAsArray[1], valuesAsArray[2], valuesAsArray[3];
+  return valuesAsVector;
+}
+
 }  // end of namespace switched_model

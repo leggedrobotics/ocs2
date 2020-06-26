@@ -67,7 +67,7 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
   // Loop through contact phases
   for (int i = 0; i < contactTimings.size(); ++i) {
     const auto& currentContactTiming = contactTimings[i];
-    const TerrainPlane& nominalFoothold = nominalFootholdsPerLeg_[leg][i].plane;
+    const ConvexTerrain& nominalFoothold = nominalFootholdsPerLeg_[leg][i];
 
     // If phase starts after the horizon, we don't need to plan for it
     if (currentContactTiming.start > finalTime) {
@@ -82,7 +82,7 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
 
     // generate swing phase afterwards if the current contact is finite and ends before the horizon
     if (hasEndTime(currentContactTiming) && currentContactTiming.end < finalTime) {
-      SwingPhase::SwingEvent liftOff{currentContactTiming.end, settings_.liftOffVelocity, &nominalFoothold};
+      SwingPhase::SwingEvent liftOff{currentContactTiming.end, settings_.liftOffVelocity, &nominalFoothold.plane};
       SwingPhase::SwingEvent touchDown = [&] {
         const bool nextContactExists = (i + 1) < contactTimings.size();
         if (nextContactExists) {

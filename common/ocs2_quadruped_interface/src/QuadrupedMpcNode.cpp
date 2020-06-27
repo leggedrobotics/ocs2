@@ -15,7 +15,6 @@ namespace switched_model {
 void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& quadrupedInterface, const ocs2::MPC_Settings& mpcSettings,
                       const ocs2::SLQ_Settings& slqSettings) {
   const std::string robotName = "anymal";
-  using mpc_ros_t = ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM>;
 
   auto gaitReceiver =
       std::make_shared<GaitReceiver>(nodeHandle, quadrupedInterface.getModeScheduleManagerPtr()->getGaitSchedule(), robotName);
@@ -25,7 +24,7 @@ void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& qua
   // launch MPC nodes
   auto mpcPtr = getMpc(quadrupedInterface, mpcSettings, slqSettings);
   mpcPtr->getSolverPtr()->setSynchronizedModules(solverModules);
-  mpc_ros_t mpcNode(*mpcPtr, robotName);
+  ocs2::MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(nodeHandle);
 }
 }  // namespace switched_model

@@ -60,7 +60,7 @@ add_library(${PROJECT_NAME}
   src/QuadrupedVisualizationColors.cpp
   src/QuadrupedVisualizationHelpers.cpp
   src/QuadrupedVisualizer.cpp
-  src/QuadrupedWheeledInterface.cpp
+  # src/QuadrupedWheeledInterface.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}

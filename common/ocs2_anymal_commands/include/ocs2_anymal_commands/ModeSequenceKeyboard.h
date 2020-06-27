@@ -12,8 +12,6 @@
 
 #include <ros/ros.h>
 
-#include <ocs2_core/Dimensions.h>
-
 #include <ocs2_switched_model_interface/logic/ModeSequenceTemplate.h>
 
 namespace switched_model {
@@ -21,7 +19,7 @@ namespace switched_model {
 /** This class implements ModeSequence communication using ROS. */
 class ModeSequenceKeyboard {
  public:
-  using scalar_t = ocs2::Dimensions<0, 0>::scalar_t;
+  using scalar_t = ocs2::scalar_t;
 
   ModeSequenceKeyboard(ros::NodeHandle nodeHandle, const std::string& gaitFile, const std::string& robotName, bool verbose = false);
 

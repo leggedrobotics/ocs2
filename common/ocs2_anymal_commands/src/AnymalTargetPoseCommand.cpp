@@ -39,8 +39,8 @@ int main(int argc, char* argv[]) {
   Eigen::Matrix<double, 12, 1> initJoints;
   ocs2::loadData::loadEigenMatrix(filename, "defaultJointState", initJoints);
 
-  switched_model::TargetTrajectories_Keyboard_Quadruped<double, 24, 24> targetPoseCommand(
-      argc, argv, "anymal", initZHeight, initJoints, targetDisplacementVelocity, targetRotationVelocity);
+  switched_model::TargetTrajectories_Keyboard_Quadruped targetPoseCommand(argc, argv, "anymal", initZHeight, initJoints,
+                                                                          targetDisplacementVelocity, targetRotationVelocity);
 
   targetPoseCommand.launchNodes();
 

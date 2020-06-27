@@ -13,6 +13,7 @@
 #include "ocs2_anymal_commands/TargetTrajectories_Keyboard_Quadruped.h"
 
 int main(int argc, char* argv[]) {
+  using scalar_t = ocs2::scalar_t;
   std::string filename;
 
   {
@@ -32,17 +33,16 @@ int main(int argc, char* argv[]) {
     return 1;  // Fail, and exit.
   }
 
-  const auto targetDisplacementVelocity = pt.get<double>("targetDisplacementVelocity");
-  const auto targetRotationVelocity = pt.get<double>("targetRotationVelocity");
-  const auto initZHeight = pt.get<double>("comHeight");
+  const auto targetDisplacementVelocity = pt.get<scalar_t>("targetDisplacementVelocity");
+  const auto targetRotationVelocity = pt.get<scalar_t>("targetRotationVelocity");
+  const auto initZHeight = pt.get<scalar_t>("comHeight");
 
-  Eigen::Matrix<double, 12, 1> initJoints;
+  Eigen::Matrix<scalar_t, 12, 1> initJoints;
   ocs2::loadData::loadEigenMatrix(filename, "defaultJointState", initJoints);
 
-  using quadrupedKeyboard = switched_model::TargetTrajectories_Keyboard_Quadruped<double, 24, 24>;
+  using quadrupedKeyboard = switched_model::TargetTrajectories_Keyboard_Quadruped;
   auto command_mode = quadrupedKeyboard::COMMAND_MODE::VELOCITY;
-  quadrupedKeyboard::scalar_array_t command_limits =
-      quadrupedKeyboard::scalar_array_t{2.0, 2.0, 0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0, 40.0, 40.0, 360.0};
+  std::vector<scalar_t> command_limits{2.0, 2.0, 0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0, 40.0, 40.0, 360.0};
 
   quadrupedKeyboard targetPoseCommand(argc, argv, "anymal", initZHeight, initJoints, targetDisplacementVelocity, targetRotationVelocity,
                                       command_limits, command_mode);

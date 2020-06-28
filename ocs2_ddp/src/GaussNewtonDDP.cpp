@@ -375,10 +375,10 @@ void GaussNewtonDDP::rewindOptimizer(size_t firstIndex) {
       xFinalStock_[i] = xFinalStock_[firstIndex + i];
     } else {
       nominalControllersStock_[i].clear();
-      SmFinalStock_[i].setZero();
-      SvFinalStock_[i].setZero();
+      SmFinalStock_[i].setZero(stateDim_, stateDim_);
+      SvFinalStock_[i].setZero(stateDim_);
       sFinalStock_[i] = 0.0;
-      xFinalStock_[i].setZero();
+      xFinalStock_[i].setZero(stateDim_);
     }
   }
 }
@@ -1095,6 +1095,7 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const matrix_t& SmF
   SmFinalStock_[finalActivePartition_] = SmFinal;
   SvFinalStock_[finalActivePartition_] = SvFinal;
   sFinalStock_[finalActivePartition_] = sFinal;
+  xFinalStock_[finalActivePartition_] = vector_t::Zero(stateDim_);  // TODO(mspieler) how to initialize properly?
 
   // solve it sequentially for the first time when useParallelRiccatiSolverFromInitItr_ is false
   if (iteration_ == 0 && !useParallelRiccatiSolverFromInitItr_) {

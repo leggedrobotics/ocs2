@@ -141,6 +141,7 @@ target_link_libraries(test_frictionConeConstraint
 
 catkin_add_gtest(test_${PROJECT_NAME}_footplanner
 	test/foot_planner/testSwingPhase.cpp
+	test/cost/testFootplacementCost.cpp
 	)
 target_link_libraries(test_${PROJECT_NAME}_footplanner
 	${PROJECT_NAME}

@@ -32,13 +32,14 @@ SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& fi
 class SwingTrajectoryPlanner {
  public:
   SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const ComModelBase<scalar_t>& comModel,
-                         const KinematicsModelBase<scalar_t>& kinematicsModel);
+                         const KinematicsModelBase<scalar_t>& kinematicsModel, const joint_coordinate_t& nominalJointPositions);
 
   void update(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState,
               const ocs2::CostDesiredTrajectories& costDesiredTrajectories,
               const feet_array_t<std::vector<ContactTiming>>& contactTimingsPerLeg, const TerrainModel& terrainModel);
 
   FootNormalConstraintMatrix getNormalDirectionConstraint(size_t leg, scalar_t time) const;
+  const FootTangentialConstraintMatrix* getTangentialDirectionConstraint(size_t leg, scalar_t time) const;
 
   std::vector<ConvexTerrain> getNominalFootholds(size_t leg) const { return nominalFootholdsPerLeg_[leg]; }
 
@@ -58,6 +59,7 @@ class SwingTrajectoryPlanner {
   feet_array_t<std::pair<scalar_t, TerrainPlane>> lastContacts_;
   feet_array_t<std::vector<std::unique_ptr<FootPhase>>> feetNormalTrajectories_;
   feet_array_t<std::vector<scalar_t>> feetNormalTrajectoriesEvents_;
+  feet_array_t<vector3_t> nominalConfigurationBaseToFootInBaseFrame_;
 
   feet_array_t<std::vector<ConvexTerrain>> nominalFootholdsPerLeg_;
 };

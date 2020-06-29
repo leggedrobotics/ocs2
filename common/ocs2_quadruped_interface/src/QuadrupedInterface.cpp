@@ -82,7 +82,8 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
 
   // Swing trajectory planner
   const auto swingTrajectorySettings = loadSwingTrajectorySettings(pathToConfigFile);
-  SwingTrajectoryPlanner swingTrajectoryPlanner{swingTrajectorySettings, getComModel(), getKinematicModel()};
+  SwingTrajectoryPlanner swingTrajectoryPlanner{swingTrajectorySettings, getComModel(), getKinematicModel(),
+                                                getJointPositions(initialState_)};
 
   // Terrain
   const auto loadedTerrain = loadTerrainPlane(pathToConfigFile, true);

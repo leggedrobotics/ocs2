@@ -17,13 +17,18 @@ namespace switched_model {
 SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel, const ad_com_model_t& adComModel,
                                              const ad_kinematic_model_t& adKinematicsModel,
                                              std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
+                                             std::shared_ptr<const SwingTrajectoryPlanner> swingTrajectoryPlannerPtr,
                                              const state_matrix_t& Q, const input_matrix_t& R, const state_matrix_t& QFinal,
                                              bool generateModels)
     : comModelPtr_(comModel.clone()),
       footPlacementCost_(new FootPlacementCost(FootPlacementCostParameters(), adComModel, adKinematicsModel, generateModels)),
-      modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)) {
-  if (!modeScheduleManagerPtr_) {
-    throw std::runtime_error("[SwitchedModelCostBase] Mode schedule manager cannot be a nullptr");
+      modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)),
+      swingTrajectoryPlannerPtr_(std::move(swingTrajectoryPlannerPtr)),
+      Q_(Q),
+      R_(R),
+      QFinal_(QFinal) {
+  if (!modeScheduleManagerPtr_ || !swingTrajectoryPlannerPtr_) {
+    throw std::runtime_error("[SwitchedModelCostBase] ModeScheduleManager and SwingTrajectoryPlanner cannot be a nullptr");
   }
 }
 
@@ -34,7 +39,11 @@ SwitchedModelCostBase::SwitchedModelCostBase(const SwitchedModelCostBase& rhs)
     : BASE(rhs),
       comModelPtr_(rhs.comModelPtr_->clone()),
       footPlacementCost_(rhs.footPlacementCost_->clone()),
-      modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_) {}
+      modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_),
+      swingTrajectoryPlannerPtr_(rhs.swingTrajectoryPlannerPtr_),
+      Q_(rhs.Q_),
+      R_(rhs.R_),
+      QFinal_(rhs.QFinal_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -64,7 +73,10 @@ void SwitchedModelCostBase::setCurrentStateAndControl(const scalar_t& t, const s
   xNominalFinal_ = xNominal;
 
   // Foot placement costs
-  feet_array_t<FootTangentialConstraintMatrix*> constraints = {{nullptr}};
+  feet_array_t<const FootTangentialConstraintMatrix*> constraints = {{nullptr}};
+  for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
+    constraints[leg] = swingTrajectoryPlannerPtr_->getTangentialDirectionConstraint(leg, t);
+  }
   footPlacementCost_->setStateAndConstraint(x, constraints);
 }
 

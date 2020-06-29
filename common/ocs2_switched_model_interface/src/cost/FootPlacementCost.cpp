@@ -26,7 +26,8 @@ FootPlacementCost* FootPlacementCost::clone() const {
   return new FootPlacementCost(*this);
 }
 
-void FootPlacementCost::setStateAndConstraint(const state_vector_t& x, const feet_array_t<FootTangentialConstraintMatrix*>& constraints) {
+void FootPlacementCost::setStateAndConstraint(const state_vector_t& x,
+                                              const feet_array_t<const FootTangentialConstraintMatrix*>& constraints) {
   x_ = x;
   constraints_ = constraints;
   constraintValuesUpdated_ = false;

@@ -14,7 +14,7 @@
 namespace switched_model {
 
 struct FootPlacementCostParameters {
-  scalar_t mu = 1.0;      // magnitude scaling
+  scalar_t mu = 0.1;      // magnitude scaling
   scalar_t delta = 0.01;  // [m] distance from constraint boundary where the barrier becomes quadratic.
 };
 
@@ -38,7 +38,7 @@ class FootPlacementCost {
 
   FootPlacementCost* clone() const;
 
-  void setStateAndConstraint(const state_vector_t& x, const feet_array_t<FootTangentialConstraintMatrix*>& constraints);
+  void setStateAndConstraint(const state_vector_t& x, const feet_array_t<const FootTangentialConstraintMatrix*>& constraints);
 
   scalar_t getCostValue();
   state_vector_t getCostDerivativeState();
@@ -58,7 +58,7 @@ class FootPlacementCost {
 
   FootPlacementCostParameters settings_;
   state_vector_t x_;
-  feet_array_t<FootTangentialConstraintMatrix*> constraints_;
+  feet_array_t<const FootTangentialConstraintMatrix*> constraints_;
 
   bool constraintValuesUpdated_;
   feet_array_t<dynamic_vector_t> constraintValues_;

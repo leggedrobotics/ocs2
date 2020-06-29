@@ -22,7 +22,7 @@ FootTangentialConstraintMatrix tangentialConstraintsFromConvexTerrain(const Conv
       // Get 2D constraint A_terrain * p_terrain + b >= 0
       vector2_t A_terrain{-start2end.y(), start2end.x()};  // rotate 90deg around z to get a vector pointing to interior of the polygon
       A_terrain.normalize();                               // make it a unit vector.
-      scalar_t b_terrain = A_terrain.dot(stanceTerrain.boundary[i]);  // Take offset of one of the points
+      scalar_t b_terrain = -A_terrain.dot(stanceTerrain.boundary[i]);  // Take offset of one of the points
 
       // 3D position in terrain frame = T_R_W * (p_w - p_0)
       // Take x-y only for the constraints: p_terrain = diag(1, 1, 0) * T_R_W * (p_w - p_0)

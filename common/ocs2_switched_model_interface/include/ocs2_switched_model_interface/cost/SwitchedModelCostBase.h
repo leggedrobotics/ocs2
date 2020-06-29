@@ -36,7 +36,8 @@ class SwitchedModelCostBase : public ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM
 
   //! Constructor
   SwitchedModelCostBase(const com_model_t& comModel, const ad_com_model_t& adComModel, const ad_kinematic_model_t& adKinematicsModel,
-                        std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr, const state_matrix_t& Q,
+                        std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
+                        std::shared_ptr<const SwingTrajectoryPlanner> swingTrajectoryPlannerPtr, const state_matrix_t& Q,
                         const input_matrix_t& R, const state_matrix_t& QFinal, bool generateModels);
 
   //! Copy constructor
@@ -68,6 +69,7 @@ class SwitchedModelCostBase : public ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM
   std::unique_ptr<com_model_t> comModelPtr_;
 
   std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
+  std::shared_ptr<const SwingTrajectoryPlanner> swingTrajectoryPlannerPtr_;
 
   // Quadratic cost terms
   state_matrix_t Q_;

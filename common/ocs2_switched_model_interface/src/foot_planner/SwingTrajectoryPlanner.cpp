@@ -7,12 +7,16 @@
 #include <ocs2_core/misc/Lookup.h>
 
 #include "ocs2_switched_model_interface/core/MotionPhaseDefinition.h"
+#include "ocs2_switched_model_interface/core/Rotations.h"
 
 namespace switched_model {
 
 SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const ComModelBase<scalar_t>& comModel,
-                                               const KinematicsModelBase<scalar_t>& kinematicsModel)
-    : settings_(std::move(settings)), comModel_(comModel.clone()), kinematicsModel_(kinematicsModel.clone()) {}
+                                               const KinematicsModelBase<scalar_t>& kinematicsModel,
+                                               const joint_coordinate_t& nominalJointPositions)
+    : settings_(std::move(settings)), comModel_(comModel.clone()), kinematicsModel_(kinematicsModel.clone()) {
+  nominalConfigurationBaseToFootInBaseFrame_ = kinematicsModel_->positionBaseToFeetInBaseFrame(nominalJointPositions);
+}
 
 void SwingTrajectoryPlanner::update(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState,
                                     const ocs2::CostDesiredTrajectories& costDesiredTrajectories,
@@ -40,6 +44,11 @@ void SwingTrajectoryPlanner::update(scalar_t initTime, scalar_t finalTime, const
 FootNormalConstraintMatrix SwingTrajectoryPlanner::getNormalDirectionConstraint(size_t leg, scalar_t time) const {
   const auto index = ocs2::lookup::findIndexInTimeArray(feetNormalTrajectoriesEvents_[leg], time);
   return feetNormalTrajectories_[leg][index]->getFootNormalConstraintInWorldFrame(time, settings_.errorGain);
+}
+
+const FootTangentialConstraintMatrix* SwingTrajectoryPlanner::getTangentialDirectionConstraint(size_t leg, scalar_t time) const {
+  const auto index = ocs2::lookup::findIndexInTimeArray(feetNormalTrajectoriesEvents_[leg], time);
+  return feetNormalTrajectories_[leg][index]->getFootTangentialConstraintInWorldFrame();
 }
 
 auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vector<ContactTiming>& contactTimings, scalar_t finalTime) const
@@ -134,13 +143,17 @@ std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
         }
       }();
 
-      // Compute foot position from cost desired trajectory
+      // Compute foot position from cost desired trajectory and nominal configuration
       ocs2::CostDesiredTrajectories::dynamic_vector_t state;
       costDesiredTrajectories.getDesiredState(middleContactTime, state);
       const base_coordinate_t middleContactDesiredComPose = state.head<BASE_COORDINATE_SIZE>();
-      const joint_coordinate_t desiredJointPositions = state.segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE);
       const auto desiredBasePose = comModel_->calculateBasePose(middleContactDesiredComPose);
-      const auto nominalFootholdPositionInWorld = kinematicsModel_->footPositionInOriginFrame(leg, desiredBasePose, desiredJointPositions);
+      const auto rotationBaseToWorld = rotationMatrixBaseToOrigin(getOrientation(desiredBasePose));
+      const vector3_t footXYoffsetInBase{nominalConfigurationBaseToFootInBaseFrame_[leg].x(),
+                                         nominalConfigurationBaseToFootInBaseFrame_[leg].y(), 0.0};
+      const vector3_t footZoffsetInWorld{0.0, 0.0, nominalConfigurationBaseToFootInBaseFrame_[leg].z()};
+      const vector3_t nominalFootholdPositionInWorld =
+          getPositionInOrigin(desiredBasePose) + rotationBaseToWorld * footXYoffsetInBase + footZoffsetInWorld;
 
       if (contactPhase.start < finalTime) {
         ConvexTerrain convexTerrain = terrainModel.getConvexTerrainAtPositionInWorld(nominalFootholdPositionInWorld);

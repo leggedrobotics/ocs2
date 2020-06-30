@@ -32,13 +32,18 @@ class GaitReceiver : public ocs2::SolverSynchronizedModule<STATE_DIM, INPUT_DIM>
 
  private:
   void mpcModeSequenceCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg);
+  void mpcScheduledGaitCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg);
 
   std::shared_ptr<LockableGaitSchedule> gaitSchedulePtr_;
 
   ros::Subscriber mpcModeSequenceSubscriber_;
+  ros::Subscriber mpcScheduledGaitSequenceSubscriber_;
 
   std::mutex receivedGaitMutex_;
-  Gait receivedGait_;
+
+  std::function<void(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+                     const ocs2::CostDesiredTrajectories& costDesiredTrajectory)>
+      setGaitAction_;
   bool gaitUpdated_;
 };
 

@@ -14,7 +14,6 @@ catkin_package(
   INCLUDE_DIRS
     include
   LIBRARIES
-    ${PROJECT_NAME}
   CATKIN_DEPENDS
     ocs2_msgs
     ocs2_comm_interfaces

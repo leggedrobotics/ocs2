@@ -4,9 +4,9 @@
 
 #include "ocs2_switched_model_interface/logic/GaitReceiver.h"
 
+#include <ocs2_switched_model_ros_interfaces/RosMsgConversions.h>
 #include "ocs2_switched_model_interface/core/MotionPhaseDefinition.h"
 #include "ocs2_switched_model_interface/logic/ModeSequenceTemplate.h"
-#include "ocs2_switched_model_ros_interfaces/RosMsgConversions.h"
 
 namespace switched_model {
 
@@ -14,8 +14,10 @@ GaitReceiver::GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<LockableG
     : gaitSchedulePtr_(std::move(gaitSchedulePtr)), gaitUpdated_(false) {
   mpcModeSequenceSubscriber_ = nodeHandle.subscribe(robotName + "_mpc_mode_schedule", 1, &GaitReceiver::mpcModeSequenceCallback, this,
                                                     ::ros::TransportHints().udp());
-  mpcScheduledGaitSubscriber_ = nodeHandle.subscribe(robotName + "_mpc_scheduled_mode_schedule", 1, &GaitReceiver::mpcScheduledGaitCallback,
-                                                     this, ::ros::TransportHints().udp());
+  mpcScheduledModeSequenceSubscriber_ = nodeHandle.subscribe(
+      robotName + "_mpc_scheduled_mode_schedule", 1, &GaitReceiver::mpcModeScheduledGaitCallback, this, ::ros::TransportHints().udp());
+  mpcGaitSequenceSubscriber_ = nodeHandle.subscribe(robotName + "_mpc_gait_schedule", 1, &GaitReceiver::mpcGaitSequenceCallback, this,
+                                                    ::ros::TransportHints().udp());
 }
 
 void GaitReceiver::preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
@@ -50,7 +52,7 @@ void GaitReceiver::mpcModeSequenceCallback(const ocs2_msgs::mode_schedule::Const
   gaitUpdated_ = true;
 }
 
-void GaitReceiver::mpcScheduledGaitCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg) {
+void GaitReceiver::mpcModeScheduledGaitCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg) {
   auto modeSequenceTemplate = readModeSequenceTemplateMsg(*msg);
   std::cout << "ScheduledGaitCallback:\n";
   Gait gait;
@@ -73,12 +75,12 @@ void GaitReceiver::mpcScheduledGaitCallback(const ocs2_msgs::mode_schedule::Cons
   gaitUpdated_ = true;
 }
 
-void GaitReceiver::gaitSequenceCallback(const switched_model_msgs::gait_sequence_::ConstPtr& msg) {
-  std::pair<GaitSequence&, std::vector<ocs2::scalar_t>&> scheduledGaitSequence;
-  switched_model::ros_msg_conversions::readGaitSequenceMsg(*msg, scheduledGaitSequence.first, scheduledGaitSequence.second);
+void GaitReceiver::mpcGaitSequenceCallback(const switched_model_msgs::gait_sequenceConstPtr& msg) {
+  std::pair<GaitSchedule::GaitSequence, std::vector<ocs2::scalar_t>> scheduledGaitSequence;
+  ros_msg_conversions::readGaitSequenceMsg(*msg, scheduledGaitSequence.first, scheduledGaitSequence.second);
 
   std::cout << "ScheduledGaitCallback:\n";
-  std::cout << *msg << modeSequenceTemplate << std::endl;
+  std::cout << *msg << std::endl;
 
   // For terrain offsetting
   // const auto HEIGHT_STATE_IDX = 5;

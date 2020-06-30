@@ -14,6 +14,7 @@
 
 #include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
 
+#include <switched_model_msgs/gait_sequence.h>
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/logic/GaitSchedule.h"
 
@@ -32,12 +33,14 @@ class GaitReceiver : public ocs2::SolverSynchronizedModule<STATE_DIM, INPUT_DIM>
 
  private:
   void mpcModeSequenceCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg);
-  void mpcScheduledGaitCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg);
-
-  std::shared_ptr<LockableGaitSchedule> gaitSchedulePtr_;
+  void mpcModeScheduledGaitCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg);
+  void mpcGaitSequenceCallback(const switched_model_msgs::gait_sequenceConstPtr& msg);
 
   ros::Subscriber mpcModeSequenceSubscriber_;
-  ros::Subscriber mpcScheduledGaitSequenceSubscriber_;
+  ros::Subscriber mpcScheduledModeSequenceSubscriber_;
+  ros::Subscriber mpcGaitSequenceSubscriber_;
+
+  std::shared_ptr<LockableGaitSchedule> gaitSchedulePtr_;
 
   std::mutex receivedGaitMutex_;
 

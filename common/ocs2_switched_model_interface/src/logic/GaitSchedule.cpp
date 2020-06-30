@@ -78,12 +78,12 @@ void GaitSchedule::setGaitSequenceAfterTime(const GaitSequence& gaitSequence, sc
 
 void GaitSchedule::adaptCurrentGait(
     const std::function<void(scalar_t& currentPhase, Gait& currentGait, scalar_t currTime, Gait& nextGait)>& gaitAdaptor) {
-  // Repeat the current gait if it is the last one in the schedule
-  if (std::next(gaitSchedule_.begin()) == gaitSchedule_.end()) {
+  // Repeat the last gait until we have 3 gaits in the schedule. This prevents that the gaitAdaptor modifies the nominal gait.
+  while (gaitSchedule_.size() < 3) {
     gaitSchedule_.push_back(gaitSchedule_.back());
   }
 
-  // Apply gait adaptation
+  // Apply gait adaptation to the current and next gait
   gaitAdaptor(phase_, gaitSchedule_.front(), time_, gaitSchedule_[1]);
 }
 

@@ -82,14 +82,6 @@ void GaitReceiver::mpcGaitSequenceCallback(const switched_model_msgs::gait_seque
   std::cout << "ScheduledGaitCallback:\n";
   std::cout << *msg << std::endl;
 
-  // For terrain offsetting
-  // const auto HEIGHT_STATE_IDX = 5;
-  // ocs2::SystemObservation<switched_model_loopshaping::STATE_DIM, switched_model_loopshaping::INPUT_DIM> observation =
-  //   ocs2MotionPlanner_->getCurrentObservation();
-  // for (auto& state : desiredTrajectory_.desiredStateTrajectory()) {
-  //   state[HEIGHT_STATE_IDX] += -ocs2TerrainPerception_->getHeightInTerrainFrame();
-  // }
-
   {
     std::lock_guard<std::mutex> lock(receivedGaitMutex_);
     setGaitAction_ = [=](scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,

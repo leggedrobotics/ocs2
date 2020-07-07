@@ -9,7 +9,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_oc
   ocs2_comm_interfaces
   switched_model_msgs
-  ocs2_switched_model_ros_interfaces
 )
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}

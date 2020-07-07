@@ -1,4 +1,4 @@
-#include <ocs2_switched_model_ros_interfaces/RosMsgConversions.h>
+#include "ocs2_switched_model_interface/ros_msg_conversions/RosMsgConversions.h"
 
 namespace switched_model {
 namespace ros_msg_conversions {

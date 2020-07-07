@@ -20,6 +20,5 @@
   <depend>ocs2_msgs</depend>
   <depend>ocs2_comm_interfaces</depend>
   <depend>switched_model_msgs</depend>
-  <depend>ocs2_switched_model_ros_interfaces</depend>
 
 </package>

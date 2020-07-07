@@ -3,10 +3,9 @@
 //
 
 #include "ocs2_switched_model_interface/logic/GaitReceiver.h"
-
-#include <ocs2_switched_model_ros_interfaces/RosMsgConversions.h>
 #include "ocs2_switched_model_interface/core/MotionPhaseDefinition.h"
 #include "ocs2_switched_model_interface/logic/ModeSequenceTemplate.h"
+#include "ocs2_switched_model_interface/ros_msg_conversions/RosMsgConversions.h"
 
 namespace switched_model {
 

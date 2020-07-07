@@ -2,9 +2,10 @@
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_switched_model_interface/logic/Gait.h>
-#include <ocs2_switched_model_interface/logic/GaitSchedule.h>
-#include <ocs2_switched_model_ros_interfaces/RosMsgConversions.h>
+
+#include "ocs2_switched_model_interface/logic/Gait.h"
+#include "ocs2_switched_model_interface/logic/GaitSchedule.h"
+
 #include <switched_model_msgs/gait.h>
 #include <switched_model_msgs/gait_sequence.h>
 #include <switched_model_msgs/scheduled_gait.h>

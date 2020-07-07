@@ -9,7 +9,6 @@
 
 #include <ocs2_core/logic/ModeSchedule.h>
 
-#include <switched_model_msgs/gait_sequence.h>
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/logic/Gait.h"
 

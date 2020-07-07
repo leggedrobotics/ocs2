@@ -1,3 +1,10 @@
+/*
+ * RosMsgConversions.h
+ *
+ *  Created on: Jul 7, 2020
+ *      Author: Oliver Harley, Marko Bjelonic
+ */
+
 #include "ocs2_switched_model_interface/ros_msg_conversions/RosMsgConversions.h"
 
 namespace switched_model {

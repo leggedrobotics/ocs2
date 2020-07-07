@@ -1,3 +1,10 @@
+/*
+ * RosMsgConversions.h
+ *
+ *  Created on: Jul 7, 2020
+ *      Author: Oliver Harley, Marko Bjelonic
+ */
+
 #pragma once
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h>

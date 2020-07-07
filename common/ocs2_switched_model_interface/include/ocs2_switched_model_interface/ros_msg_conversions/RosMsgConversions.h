@@ -2,7 +2,7 @@
  * RosMsgConversions.h
  *
  *  Created on: Jul 7, 2020
- *      Author: Oliver Harley, Marko Bjelonic
+ *      Author: Oliver Harley, Marko Bjelonic, Ruben Grandia
  */
 
 #pragma once

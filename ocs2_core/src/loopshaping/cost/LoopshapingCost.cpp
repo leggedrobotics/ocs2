@@ -52,36 +52,14 @@ void LoopshapingCost::setCostDesiredTrajectoriesPtr(const CostDesiredTrajectorie
   if (costDesiredTrajectoriesPtr) {
     CostFunctionBase::setCostDesiredTrajectoriesPtr(costDesiredTrajectoriesPtr);
 
-    // Desired trajectories are dynamic size -> must resize for future cast to fixed size vectors
-    size_t reference_length = costDesiredTrajectoriesPtr->desiredTimeTrajectory().size();
-
-    systemCostDesiredTrajectories_ = CostDesiredTrajectories(reference_length);
-    systemCostDesiredTrajectories_.desiredTimeTrajectory() = costDesiredTrajectoriesPtr->desiredTimeTrajectory();
-    auto& systemStateTrajectory = systemCostDesiredTrajectories_.desiredStateTrajectory();
-    auto& systemInputTrajectory = systemCostDesiredTrajectories_.desiredInputTrajectory();
-    const auto& stateTrajectory = costDesiredTrajectoriesPtr->desiredStateTrajectory();
-    const auto& inputTrajectory = costDesiredTrajectoriesPtr->desiredInputTrajectory();
-
-    assert(reference_length > 0);
-    const size_t FILTER_STATE_DIM = loopshapingDefinition_->getInputFilter().getNumStates();
-    const size_t FILTER_INPUT_DIM = loopshapingDefinition_->getInputFilter().getNumInputs();
-    const size_t SYSTEM_STATE_DIM = stateTrajectory.front().rows() - FILTER_STATE_DIM;
-    const size_t SYSTEM_INPUT_DIM = inputTrajectory.front().rows() - FILTER_INPUT_DIM;
-
-    for (int k = 0; k < reference_length; k++) {
-      // For now assume that cost DesiredTrajectory is specified w.r.t original system x, u
-      systemStateTrajectory[k] = stateTrajectory[k].head(SYSTEM_STATE_DIM);
-      systemInputTrajectory[k] = inputTrajectory[k].head(SYSTEM_INPUT_DIM);
-    }
-
-    systemCost_->setCostDesiredTrajectoriesPtr(&systemCostDesiredTrajectories_);
+    // For now assume that cost DesiredTrajectory is specified w.r.t original system x, u
+    systemCost_->setCostDesiredTrajectoriesPtr(costDesiredTrajectoriesPtr);
   }
 }
 
 scalar_t LoopshapingCost::cost(scalar_t t, const vector_t& x, const vector_t& u) {
   const vector_t x_system = loopshapingDefinition_->getSystemState(x);
   const vector_t u_system = loopshapingDefinition_->getSystemInput(x, u);
-  const vector_t x_filter = loopshapingDefinition_->getFilterState(x);
   const vector_t u_filter = loopshapingDefinition_->getFilteredInput(x, u);
 
   const scalar_t L_system = systemCost_->cost(t, x_system, u_system);
@@ -108,7 +86,6 @@ scalar_t LoopshapingCost::finalCostDerivativeTime(scalar_t t, const vector_t& x)
 ScalarFunctionQuadraticApproximation LoopshapingCost::finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
   const vector_t x_system = loopshapingDefinition_->getSystemState(x);
   const auto Phi_system = systemCost_->finalCostQuadraticApproximation(t, x_system);
-
   const size_t FILTER_STATE_DIM = loopshapingDefinition_->getInputFilter().getNumStates();
 
   ScalarFunctionQuadraticApproximation Phi;

@@ -36,7 +36,6 @@ class LoopshapingCost : public CostFunctionBase {
   std::unique_ptr<CostFunctionBase> systemCost_;
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
 
-  CostDesiredTrajectories systemCostDesiredTrajectories_;
   using CostFunctionBase::costDesiredTrajectoriesPtr_;
 };
 

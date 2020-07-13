@@ -12,11 +12,10 @@
   <buildtool_depend>catkin</buildtool_depend>
   <run_depend>ocs2_core</run_depend>
   <run_depend>ocs2_ddp</run_depend>
-  <run_depend>ocs2_ocs2</run_depend>
   <run_depend>ocs2_frank_wolfe</run_depend>
   <run_depend>ocs2_mpc</run_depend>
   <run_depend>ocs2_comm_interfaces</run_depend>
-  
+
    <export>
    	  <metapackage />
    </export>

@@ -33,20 +33,27 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <vector>
 
+#include <ocs2_core/Types.h>
+
 #include <boost/property_tree/info_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 
 namespace ocs2 {
 namespace cartpole {
 
-template <typename SCALAR_T>
 class CartPoleParameters {
  public:
   /**
    * Constructor.
    */
-  explicit CartPoleParameters(SCALAR_T cartMass = 1.0, SCALAR_T poleMass = 1.0, SCALAR_T poleLength = 1.0, SCALAR_T gravity = 9.8)
-      : cartMass_(cartMass), poleMass_(poleMass), poleLength_(poleLength), gravity_(gravity) {
+  explicit CartPoleParameters(scalar_t cartMass = 1.0, scalar_t poleMass = 1.0, scalar_t poleLength = 1.0, scalar_t gravity = 9.8)
+      : cartMass_(cartMass),
+        poleMass_(poleMass),
+        poleLength_(poleLength),
+        poleHalfLength_(0),
+        poleMoi_(0),
+        poleSteinerMoi_(0),
+        gravity_(gravity) {
     computeInertiaTerms();
   }
 
@@ -82,7 +89,7 @@ class CartPoleParameters {
     }
 
     try {
-      cartMass_ = pt.get<SCALAR_T>("CartPoleParameters.cartMass");
+      cartMass_ = pt.get<scalar_t>("CartPoleParameters.cartMass");
       if (verbose) {
         std::cerr << " #### cartMass ......... " << cartMass_ << std::endl;
       }
@@ -93,7 +100,7 @@ class CartPoleParameters {
     }
 
     try {
-      poleMass_ = pt.get<SCALAR_T>("CartPoleParameters.poleMass");
+      poleMass_ = pt.get<scalar_t>("CartPoleParameters.poleMass");
       if (verbose) {
         std::cerr << " #### poleMass ......... " << poleMass_ << std::endl;
       }
@@ -104,7 +111,7 @@ class CartPoleParameters {
     }
 
     try {
-      poleLength_ = pt.get<SCALAR_T>("CartPoleParameters.poleLength");
+      poleLength_ = pt.get<scalar_t>("CartPoleParameters.poleLength");
       if (verbose) {
         std::cerr << " #### poleLength ....... " << poleLength_ << std::endl;
       }
@@ -115,7 +122,7 @@ class CartPoleParameters {
     }
 
     try {
-      gravity_ = pt.get<SCALAR_T>("CartPoleParameters.gravity");
+      gravity_ = pt.get<scalar_t>("CartPoleParameters.gravity");
       if (verbose) {
         std::cerr << " #### gravity .......... " << gravity_ << std::endl;
       }
@@ -130,13 +137,13 @@ class CartPoleParameters {
 
  public:
   // For safety, these parameters cannot be modified
-  SCALAR_T cartMass_;        // [kg]
-  SCALAR_T poleMass_;        // [kg]
-  SCALAR_T poleLength_;      // [m]
-  SCALAR_T poleHalfLength_;  // [m]
-  SCALAR_T poleMoi_;         // [kg*m^2]
-  SCALAR_T poleSteinerMoi_;  // [kg*m^2]
-  SCALAR_T gravity_;         // [m/s^2]
+  scalar_t cartMass_;        // [kg]
+  scalar_t poleMass_;        // [kg]
+  scalar_t poleLength_;      // [m]
+  scalar_t poleHalfLength_;  // [m]
+  scalar_t poleMoi_;         // [kg*m^2]
+  scalar_t poleSteinerMoi_;  // [kg*m^2]
+  scalar_t gravity_;         // [m/s^2]
 
  private:
   void computeInertiaTerms() {

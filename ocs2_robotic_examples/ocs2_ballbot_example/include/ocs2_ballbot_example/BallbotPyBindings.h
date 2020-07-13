@@ -35,9 +35,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace ballbot {
 
-class BallbotPyBindings final : public PythonInterface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> {
+class BallbotPyBindings final : public PythonInterface {
  public:
-  using Base = PythonInterface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
+  using Base = PythonInterface;
 
   BallbotPyBindings(const std::string& taskFileFolder, bool async = false);
 };

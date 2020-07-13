@@ -69,13 +69,19 @@ void QuadraticCostFunction::setCurrentStateAndControl(scalar_t t, const vector_t
 void QuadraticCostFunction::setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u,
                                                       const vector_t& xNominalIntermediate, const vector_t& uNominalIntermediate,
                                                       const vector_t& xNominalFinal) {
-  CostFunctionBase::setCurrentStateAndControl(t, x, u);
+  // TODO(mspieler): quick hack to fix terminal cost evaluation
+  vector_t input = u;
+  if (input.size() == 0) {
+    input = vector_t::Zero(uNominalIntermediate_.rows());
+  }
+
+  CostFunctionBase::setCurrentStateAndControl(t, x, input);
 
   xNominalIntermediate_ = xNominalIntermediate;
   uNominalIntermediate_ = uNominalIntermediate;
   xNominalFinal_ = xNominalFinal;
   xIntermediateDeviation_ = x - xNominalIntermediate;
-  uIntermediateDeviation_ = u - uNominalIntermediate;
+  uIntermediateDeviation_ = input - uNominalIntermediate;
 }
 
 /******************************************************************************************************/

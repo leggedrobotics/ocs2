@@ -106,6 +106,8 @@ class IntegratorBase {
                       int maxNumSteps = std::numeric_limits<int>::max());
 
  protected:
+  system_func_t systemFunction(OdeBase& system, int maxNumSteps) const;
+
   virtual void runIntegrateConst(system_func_t system, observer_func_t observer, const vector_t& initialState, scalar_t startTime,
                                  scalar_t finalTime, scalar_t dt) = 0;
 

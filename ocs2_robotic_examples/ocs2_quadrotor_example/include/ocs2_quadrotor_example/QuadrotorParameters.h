@@ -36,13 +36,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <boost/property_tree/info_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 
+#include <ocs2_core/Types.h>
+
 namespace ocs2 {
 namespace quadrotor {
 
-template <typename SCALAR_T>
 class QuadrotorParameters {
  public:
-  QuadrotorParameters(SCALAR_T quadrotorMass = 1.0, SCALAR_T Thzz = 1.0, SCALAR_T Thxxyy = 1.0, SCALAR_T gravity = 9.8)
+  QuadrotorParameters(scalar_t quadrotorMass = 1.0, scalar_t Thzz = 1.0, scalar_t Thxxyy = 1.0, scalar_t gravity = 9.8)
       : quadrotorMass_(quadrotorMass), Thzz_(Thzz), Thxxyy_(Thxxyy), gravity_(gravity) {}
 
   ~QuadrotorParameters() = default;
@@ -55,28 +56,28 @@ class QuadrotorParameters {
     if (verbose) std::cerr << " #### =========================================" << std::endl;
 
     try {
-      quadrotorMass_ = pt.get<SCALAR_T>("QuadrotorParameters.quadrotorMass");
+      quadrotorMass_ = pt.get<scalar_t>("QuadrotorParameters.quadrotorMass");
       if (verbose) std::cerr << " #### quadrotorMass ......... " << quadrotorMass_ << std::endl;
     } catch (const std::exception& e) {
       if (verbose) std::cerr << " #### quadrotorMass ......... " << quadrotorMass_ << "\t(default)" << std::endl;
     }
 
     try {
-      Thzz_ = pt.get<SCALAR_T>("QuadrotorParameters.Thzz");
+      Thzz_ = pt.get<scalar_t>("QuadrotorParameters.Thzz");
       if (verbose) std::cerr << " #### Thzz .................. " << Thzz_ << std::endl;
     } catch (const std::exception& e) {
       if (verbose) std::cerr << " #### Thzz .................. " << Thzz_ << "\t(default)" << std::endl;
     }
 
     try {
-      Thxxyy_ = pt.get<SCALAR_T>("QuadrotorParameters.Thxxyy");
+      Thxxyy_ = pt.get<scalar_t>("QuadrotorParameters.Thxxyy");
       if (verbose) std::cerr << " #### Thxx/yy ............... " << Thxxyy_ << std::endl;
     } catch (const std::exception& e) {
       if (verbose) std::cerr << " #### Thxx/yy ............... " << Thxxyy_ << "\t(default)" << std::endl;
     }
 
     try {
-      gravity_ = pt.get<SCALAR_T>("QuadrotorParameters.gravity");
+      gravity_ = pt.get<scalar_t>("QuadrotorParameters.gravity");
       if (verbose) std::cerr << " #### gravity ............... " << gravity_ << std::endl;
     } catch (const std::exception& e) {
       if (verbose) std::cerr << " #### gravity ............... " << gravity_ << "\t(default)" << std::endl;
@@ -85,10 +86,10 @@ class QuadrotorParameters {
 
  public:
   // For safety, these parameters cannot be modified
-  SCALAR_T quadrotorMass_;  // [kg]
-  SCALAR_T Thzz_;
-  SCALAR_T Thxxyy_;
-  SCALAR_T gravity_;
+  scalar_t quadrotorMass_;  // [kg]
+  scalar_t Thzz_;
+  scalar_t Thxxyy_;
+  scalar_t gravity_;
 };
 
 }  // namespace quadrotor

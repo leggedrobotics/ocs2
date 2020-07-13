@@ -50,7 +50,7 @@ void GradientDescent::getCost(scalar_t& cost) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GradientDescent::getParameters(dynamic_vector_t& parameters) const {
+void GradientDescent::getParameters(vector_t& parameters) const {
   parameters = optimizedParameters_;
 }
 
@@ -78,9 +78,9 @@ NLP_Settings& GradientDescent::nlpSettings() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GradientDescent::lineSearch(const dynamic_vector_t& parameters, const dynamic_vector_t& gradient, NLP_Cost* costPtr,
-                                 NLP_Constraints* constraintsPtr, dynamic_vector_t& optimizedParameters, scalar_t& optimizedCost,
-                                 size_t& optimizedID, scalar_t& optimizedLearningRate) {
+void GradientDescent::lineSearch(const vector_t& parameters, const vector_t& gradient, NLP_Cost* costPtr, NLP_Constraints* constraintsPtr,
+                                 vector_t& optimizedParameters, scalar_t& optimizedCost, size_t& optimizedID,
+                                 scalar_t& optimizedLearningRate) {
   scalar_t learningRate, contractionRate;
   if (nlpSettings_.useAscendingLineSearchNLP_ == true) {
     learningRate = nlpSettings_.minLearningRate_;
@@ -103,7 +103,7 @@ void GradientDescent::lineSearch(const dynamic_vector_t& parameters, const dynam
 
   while (learningRate >= nlpSettings_.minLearningRate_) {
     // lineSerach parameter
-    dynamic_vector_t lsParameters = parameters - learningRate * gradient;
+    vector_t lsParameters = parameters - learningRate * gradient;
 
     // set the parameter
     size_t lsID = costPtr->setCurrentParameter(lsParameters);
@@ -130,7 +130,7 @@ void GradientDescent::lineSearch(const dynamic_vector_t& parameters, const dynam
     if (nlpSettings_.displayInfo_) {
       scalar_t equalitySE(0.0), inequalitySE(0.0);
       if (constraintsPtr) {
-        dynamic_vector_t g, h;
+        vector_t g, h;
         constraintsPtr->setCurrentParameter(lsParameters);
         constraintsPtr->getLinearEqualityConstraint(g);
         equalitySE = (g.size() > 0) ? g.squaredNorm() : 0.0;
@@ -175,7 +175,7 @@ void GradientDescent::lineSearch(const dynamic_vector_t& parameters, const dynam
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GradientDescent::run(const dynamic_vector_t& initParameters, const dynamic_vector_t& maxGradientInverse, NLP_Cost* costPtr,
+void GradientDescent::run(const vector_t& initParameters, const vector_t& maxGradientInverse, NLP_Cost* costPtr,
                           NLP_Constraints* constraintsPtr /* = nullptr*/) {
   // display
   if (nlpSettings_.displayInfo_) {
@@ -228,7 +228,7 @@ void GradientDescent::run(const dynamic_vector_t& initParameters, const dynamic_
 
     // compute the projected gradient
     if (constraintsPtr) {
-      dynamic_vector_t fwDescentDirection;
+      vector_t fwDescentDirection;
       frankWolfeDescentDirectionPtr_->run(optimizedParameters_, optimizedGradient_, maxGradientInverse, constraintsPtr, fwDescentDirection);
       optimizedGradient_ = -fwDescentDirection;
       // display

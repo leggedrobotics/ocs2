@@ -92,7 +92,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #  ${Boost_LIBRARIES}
 #)
 #target_compile_options(exp0_gddp_test PRIVATE ${OCS2_CXX_FLAGS})
-#
+
 #catkin_add_gtest(exp1_gddp_test
 #  test/exp1_gddp_test.cpp
 #)
@@ -101,7 +101,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #  ${Boost_LIBRARIES}
 #)
 #target_compile_options(exp1_gddp_test PRIVATE ${OCS2_CXX_FLAGS})
-#
+
 #catkin_add_gtest(exp0_ocs2_test
 #  test/exp0_ocs2_test.cpp
 #)
@@ -110,7 +110,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #  ${Boost_LIBRARIES}
 #)
 #target_compile_options(exp0_ocs2_test PRIVATE ${OCS2_CXX_FLAGS})
-#
+
 #catkin_add_gtest(exp1_ocs2_test
 #  test/exp1_ocs2_test.cpp
 #)

@@ -322,7 +322,7 @@ void CppAdInterface::setSparsityNonzeros() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CppAdInterface::SparsityPattern CppAdInterface::createJacobianSparsity(ad_fun_t& fun) const {
+cppad_sparsity::SparsityPattern CppAdInterface::createJacobianSparsity(ad_fun_t& fun) const {
   auto trueSparsity = cppad_sparsity::getJacobianSparsityPattern(fun);
   auto variableSparsity = cppad_sparsity::getJacobianVariableSparsity(rangeDim_, variableDim_);
   return cppad_sparsity::getIntersection(trueSparsity, variableSparsity);
@@ -331,7 +331,7 @@ CppAdInterface::SparsityPattern CppAdInterface::createJacobianSparsity(ad_fun_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CppAdInterface::SparsityPattern CppAdInterface::createHessianSparsity(ad_fun_t& fun) const {
+cppad_sparsity::SparsityPattern CppAdInterface::createHessianSparsity(ad_fun_t& fun) const {
   auto trueSparsity = cppad_sparsity::getHessianSparsityPattern(fun);
   auto variableSparsity = cppad_sparsity::getHessianVariableSparsity(variableDim_, parameterDim_);
   return cppad_sparsity::getIntersection(trueSparsity, variableSparsity);

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ocs2_cart_pole_example/definitions.h>
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 namespace cartpole {
@@ -11,9 +11,7 @@ namespace cartpole {
  * @param[in] state: the state to be converted
  * @return {q, dq} pair that represents the state
  */
-std::pair<Eigen::VectorXd, Eigen::VectorXd> stateToRaisimGenCoordGenVel(
-    const ocs2::Dimensions<STATE_DIM_, INPUT_DIM_>::state_vector_t& state,
-    const ocs2::Dimensions<STATE_DIM_, INPUT_DIM_>::input_vector_t&) {
+std::pair<Eigen::VectorXd, Eigen::VectorXd> stateToRaisimGenCoordGenVel(const vector_t& state, const vector_t&) {
   Eigen::VectorXd q(2), dq(2);
   q << state(1), state(0);
   dq << state(3), state(2);
@@ -27,9 +25,8 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> stateToRaisimGenCoordGenVel(
  * @param[in] dq the generalized velocity
  * @return the corresponding ocs2 cart pole state
  */
-ocs2::Dimensions<ocs2::cartpole::STATE_DIM_, ocs2::cartpole::INPUT_DIM_>::state_vector_t raisimGenCoordGenVelToState(
-    const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
-  ocs2::Dimensions<STATE_DIM_, INPUT_DIM_>::state_vector_t state;
+vector_t raisimGenCoordGenVelToState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
+  vector_t state(STATE_DIM_);
   state << q(1), q(0), dq(1), dq(0);
   return state;
 }
@@ -40,8 +37,7 @@ ocs2::Dimensions<ocs2::cartpole::STATE_DIM_, ocs2::cartpole::INPUT_DIM_>::state_
  * @param[in] state: The current state
  * @return The generalized forces to be applied to the system
  */
-Eigen::VectorXd inputToRaisimGeneralizedForce(double, const ocs2::Dimensions<STATE_DIM_, INPUT_DIM_>::input_vector_t& input,
-                                              const ocs2::Dimensions<STATE_DIM_, INPUT_DIM_>::state_vector_t&, const Eigen::VectorXd&,
+Eigen::VectorXd inputToRaisimGeneralizedForce(double, const vector_t& input, const vector_t&, const Eigen::VectorXd&,
                                               const Eigen::VectorXd&) {
   Eigen::VectorXd generalizedForce = Eigen::VectorXd::Zero(2);
   generalizedForce.tail(1) = input;

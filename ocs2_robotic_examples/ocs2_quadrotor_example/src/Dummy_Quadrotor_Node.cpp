@@ -29,49 +29,49 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
+#include <ros/init.h>
 
 #include "ocs2_quadrotor_example/QuadrotorInterface.h"
 #include "ocs2_quadrotor_example/definitions.h"
 #include "ocs2_quadrotor_example/ros_comm/QuadrotorDummyVisualization.h"
 
-using namespace ocs2;
-
 int main(int argc, char** argv) {
   const std::string robotName = "quadrotor";
-  using interface_t = ocs2::quadrotor::QuadrotorInterface;
-  using vis_t = ocs2::quadrotor::QuadrotorDummyVisualization;
-  using mrt_t = ocs2::MRT_ROS_Interface<ocs2::quadrotor::STATE_DIM_, ocs2::quadrotor::INPUT_DIM_>;
-  using dummy_t = ocs2::MRT_ROS_Dummy_Loop<ocs2::quadrotor::STATE_DIM_, ocs2::quadrotor::INPUT_DIM_>;
 
   // task file
-  if (argc <= 1) {
+  std::vector<std::string> programArgs{};
+  ::ros::removeROSArgs(argc, argv, programArgs);
+  if (programArgs.size() <= 1) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
-  std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+  std::string taskFileFolderName = std::string(programArgs[1]);
 
   // Initialize ros node
   ros::init(argc, argv, robotName + "_mrt");
   ros::NodeHandle nodeHandle;
 
   // Robot interface
-  interface_t quadrotorInterface(taskFileFolderName);
+  ocs2::quadrotor::QuadrotorInterface quadrotorInterface(taskFileFolderName);
 
   // MRT
-  mrt_t mrt(robotName);
+  ocs2::MRT_ROS_Interface mrt(robotName);
   mrt.initRollout(&quadrotorInterface.getRollout());
   mrt.launchNodes(nodeHandle);
 
   // Visualization
-  std::shared_ptr<vis_t> quadrotorDummyVisualization(new vis_t());
+  std::shared_ptr<ocs2::quadrotor::QuadrotorDummyVisualization> quadrotorDummyVisualization(
+      new ocs2::quadrotor::QuadrotorDummyVisualization());
 
   // Dummy loop
-  dummy_t dummyQuadrotor(mrt, quadrotorInterface.mpcSettings().mrtDesiredFrequency_, quadrotorInterface.mpcSettings().mpcDesiredFrequency_);
+  ocs2::MRT_ROS_Dummy_Loop dummyQuadrotor(mrt, quadrotorInterface.mpcSettings().mrtDesiredFrequency_,
+                                          quadrotorInterface.mpcSettings().mpcDesiredFrequency_);
   dummyQuadrotor.subscribeObservers({quadrotorDummyVisualization});
 
   // initial state
-  mrt_t::system_observation_t initObservation;
+  ocs2::SystemObservation initObservation;
   initObservation.state() = quadrotorInterface.getInitialState();
-
+  initObservation.input().setZero(ocs2::quadrotor::INPUT_DIM_);
+  initObservation.time() = 0;
   // initial command
   ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time()}, {initObservation.state()}, {initObservation.input()});
 

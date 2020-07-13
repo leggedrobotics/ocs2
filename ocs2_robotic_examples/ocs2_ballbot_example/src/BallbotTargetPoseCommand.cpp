@@ -33,7 +33,7 @@ using namespace ocs2;
 using namespace ballbot;
 
 int main(int argc, char* argv[]) {
-  TargetTrajectories_Keyboard_Ballbot<double> targetPoseCommand(argc, argv, "ballbot");
+  TargetTrajectories_Keyboard_Ballbot targetPoseCommand(argc, argv, "ballbot");
 
   targetPoseCommand.launchNodes();
 

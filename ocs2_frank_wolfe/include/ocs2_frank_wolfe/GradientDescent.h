@@ -80,7 +80,7 @@ class GradientDescent {
    *
    * @param [out] parameters: the parameter vector
    */
-  void getParameters(dynamic_vector_t& parameters) const;
+  void getParameters(vector_t& parameters) const;
 
   /**
    * Gets the iteration cost log.
@@ -117,7 +117,7 @@ class GradientDescent {
    * @param [in] costPtr: A pointer to the NLP cost.
    * @param [in] constraintsPtr: A pointer to the NLP constraints.
    */
-  void run(const dynamic_vector_t& initParameters, const dynamic_vector_t& maxGradientInverse, NLP_Cost* costPtr,
+  void run(const vector_t& initParameters, const vector_t& maxGradientInverse, NLP_Cost* costPtr,
            NLP_Constraints* constraintsPtr = nullptr);
 
  protected:
@@ -134,8 +134,8 @@ class GradientDescent {
    * @param [out] optimizedID: The ID of the optimized solution.
    * @param [out] optimizedLearningRate: The optimized learning rate.
    */
-  void lineSearch(const dynamic_vector_t& parameters, const dynamic_vector_t& gradient, NLP_Cost* costPtr, NLP_Constraints* constraintsPtr,
-                  dynamic_vector_t& optimizedParameters, scalar_t& optimizedCost, size_t& optimizedID, scalar_t& optimizedLearningRate);
+  void lineSearch(const vector_t& parameters, const vector_t& gradient, NLP_Cost* costPtr, NLP_Constraints* constraintsPtr,
+                  vector_t& optimizedParameters, scalar_t& optimizedCost, size_t& optimizedID, scalar_t& optimizedLearningRate);
 
   /*
    * Variables
@@ -145,8 +145,8 @@ class GradientDescent {
 
   scalar_t optimizedCost_;
   size_t optimizedID_;
-  dynamic_vector_t optimizedParameters_;
-  dynamic_vector_t optimizedGradient_;
+  vector_t optimizedParameters_;
+  vector_t optimizedGradient_;
   size_t numFuntionCall_;
 
   scalar_array_t iterationCost_;

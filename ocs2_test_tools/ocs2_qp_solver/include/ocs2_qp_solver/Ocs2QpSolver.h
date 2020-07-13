@@ -52,8 +52,7 @@ namespace qp_solver {
  * @return time, state, and input solution.
  */
 ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostWrapper costFunction, SystemWrapper systemDynamics,
-                                                               const ContinuousTrajectory& nominalTrajectory,
-                                                               const dynamic_vector_t& initialState);
+                                                               const ContinuousTrajectory& nominalTrajectory, const vector_t& initialState);
 
 }  // namespace qp_solver
 }  // namespace ocs2

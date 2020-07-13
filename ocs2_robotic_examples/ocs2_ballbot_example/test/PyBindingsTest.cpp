@@ -3,26 +3,17 @@
 #include <ocs2_ballbot_example/BallbotPyBindings.h>
 
 TEST(Ballbot, PyBindings) {
-  using bindings_t = ocs2::ballbot::BallbotPyBindings;
-  using state_vector_t = bindings_t::state_vector_t;
-  using input_vector_t = bindings_t::input_vector_t;
-  using state_matrix_array_t = bindings_t::state_matrix_array_t;
-  using scalar_array_t = bindings_t::scalar_array_t;
-  using state_vector_array_t = bindings_t::state_vector_array_t;
-  using input_vector_array_t = bindings_t::input_vector_array_t;
-  using input_state_matrix_array_t = bindings_t::input_state_matrix_array_t;
+  ocs2::ballbot::BallbotPyBindings bindings("mpc", false);
 
-  bindings_t bindings("mpc", false);
-
-  state_vector_t initState = state_vector_t::Zero();
+  vector_t initState = vector_t::Zero(ocs2::ballbot::STATE_DIM_);
   initState(0) = 0.0;
   initState(2) = 0.0;
 
   ocs2::CostDesiredTrajectories costDesiredTraj;
   costDesiredTraj.desiredTimeTrajectory().resize(2, 0.0);
   costDesiredTraj.desiredTimeTrajectory()[1] = 2.0;
-  costDesiredTraj.desiredInputTrajectory().resize(2, input_vector_t::Zero());
-  costDesiredTraj.desiredStateTrajectory().resize(2, state_vector_t::Zero());
+  costDesiredTraj.desiredInputTrajectory().resize(2, vector_t::Zero(ocs2::ballbot::INPUT_DIM_));
+  costDesiredTraj.desiredStateTrajectory().resize(2, vector_t::Zero(ocs2::ballbot::STATE_DIM_));
   costDesiredTraj.desiredStateTrajectory()[0] = initState;
 
   bindings.reset(costDesiredTraj);
@@ -59,15 +50,7 @@ TEST(Ballbot, PyBindings) {
 
   std::cout << "L: " << L << "\ndLdx: " << dLdx.transpose() << "\ndLdu: " << dLdu.transpose() << std::endl;
 
-//  auto Vx = bindings.getValueFunctionStateDerivative(t_arr[0], x_arr[0]);
-//  std::cout << "Vx: " << Vx.transpose() << std::endl;
-
   bindings.reset(costDesiredTraj);
   bindings.setObservation(0.0, initState);
   bindings.advanceMpc();
-}
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

@@ -55,10 +55,7 @@ class CppAdInterface {
   using ad_vector_t = Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, 1>;
   using ad_function_t = std::function<void(const ad_vector_t&, ad_vector_t&)>;
   using ad_parameterized_function_t = std::function<void(const ad_vector_t&, const ad_vector_t&, ad_vector_t&)>;
-
   using ad_fun_t = CppAD::ADFun<ad_base_t>;
-
-  using SparsityPattern = cppad_sparsity::SparsityPattern;
 
   /**
    * Constructor for parameterized functions
@@ -202,14 +199,14 @@ class CppAdInterface {
    * @param fun : taped ad function
    * @return Sparsity pattern that contains entries for variables only, not for parameters
    */
-  SparsityPattern createJacobianSparsity(ad_fun_t& fun) const;
+  cppad_sparsity::SparsityPattern createJacobianSparsity(ad_fun_t& fun) const;
 
   /**
    * Creates sparsity pattern for the Hessian that will be generated
    * @param fun : taped ad function
    * @return Sparsity pattern that contains entries for variables only, not for parameters
    */
-  SparsityPattern createHessianSparsity(ad_fun_t& fun) const;
+  cppad_sparsity::SparsityPattern createHessianSparsity(ad_fun_t& fun) const;
 
   std::unique_ptr<CppAD::cg::DynamicLib<scalar_t>> dynamicLib_;
   std::unique_ptr<CppAD::cg::GenericModel<scalar_t>> model_;

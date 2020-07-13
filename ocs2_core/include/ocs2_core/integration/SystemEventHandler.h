@@ -87,18 +87,8 @@ class SystemEventHandler {
    */
   virtual void reset();
 
-  /**
-   * Sets the maximum number of integration points per a second for ode solvers.
-   *
-   * @param [in] maxNumSteps: maximum number of integration points
-   */
-  void setMaxNumSteps(int maxNumSteps);
-
  public:
   std::atomic_bool killIntegration_ = {false};
-
- protected:
-  int maxNumSteps_ = std::numeric_limits<int>::max();
 };
 
 }  // namespace ocs2

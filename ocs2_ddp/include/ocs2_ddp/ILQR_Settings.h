@@ -34,8 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <string>
 
-#include <ocs2_core/Dimensions.h>
-
+#include <ocs2_core/Types.h>
 #include <ocs2_ddp/DDP_Settings.h>
 
 namespace ocs2 {

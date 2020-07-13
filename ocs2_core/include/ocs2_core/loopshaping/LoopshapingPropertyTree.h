@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ocs2_core/Types.h>
+
 #include <boost/property_tree/ptree.hpp>
 #include "LoopshapingDefinition.h"
 #include "LoopshapingFilter.h"

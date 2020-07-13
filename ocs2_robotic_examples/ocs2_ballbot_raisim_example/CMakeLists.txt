@@ -112,4 +112,5 @@ catkin_add_gtest(testBallbotRaisimConversions
 target_link_libraries(testBallbotRaisimConversions
   ballbot_raisim_conversions
   ${catkin_LIBRARIES}
+  gtest_main
 )

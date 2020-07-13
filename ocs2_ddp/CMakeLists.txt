@@ -6,7 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   ocs2_core
   ocs2_oc
-  # ocs2_qp_solver
+  ocs2_qp_solver
 )
 find_package(Boost REQUIRED COMPONENTS
   system
@@ -31,7 +31,7 @@ catkin_package(
   CATKIN_DEPENDS
     ocs2_core
     ocs2_oc
-    # ocs2_qp_solver
+    ocs2_qp_solver
   DEPENDS
     Boost
 )
@@ -196,11 +196,12 @@ target_link_libraries(circular_kinematics_slq_test
   gtest_main
 )
 
-# catkin_add_gtest(ddp_correctness_test
-#   test/ddpCorrectnessTest.cpp
-# )
-# target_link_libraries(ddp_correctness_test
-#   ${PROJECT_NAME}
-#   ${catkin_LIBRARIES}
-#   ${Boost_LIBRARIES}
-# )
+catkin_add_gtest(ddp_correctness_test
+  test/ddpCorrectnessTest.cpp
+)
+target_link_libraries(ddp_correctness_test
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  gtest_main
+)

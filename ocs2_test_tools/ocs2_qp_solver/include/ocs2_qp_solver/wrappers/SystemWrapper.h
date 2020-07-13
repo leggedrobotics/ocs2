@@ -48,9 +48,8 @@ namespace qp_solver {
 class SystemWrapper {
  public:
   /** Templated constructor to accept system dynamics of any size */
-  template <size_t STATE_DIM, size_t INPUT_DIM>
-  SystemWrapper(const ocs2::SystemDynamicsBase<STATE_DIM, INPUT_DIM>& systemDynamics)  // NOLINT(google-explicit-constructor)
-      : p_(new SystemHandle<STATE_DIM, INPUT_DIM>(systemDynamics)) {}
+  SystemWrapper(const ocs2::SystemDynamicsBase& systemDynamics)  // NOLINT(google-explicit-constructor)
+      : p_(systemDynamics.clone()) {}
 
   /** Copy constructor clones the underlying system dynamics */
   SystemWrapper(const SystemWrapper& other) : p_(other.p_->clone()) {}
@@ -68,61 +67,14 @@ class SystemWrapper {
   SystemWrapper& operator=(SystemWrapper&&) noexcept = default;
 
   /** Evaluates the flowmap */
-  dynamic_vector_t getFlowMap(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u);
+  vector_t getFlowMap(scalar_t t, const vector_t& x, const vector_t& u);
 
   /** Gets linear approximation */
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u);
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u);
 
  private:
-  /** Base class for a handle, virtualizes the access to the templated system dynamics*/
-  struct SystemHandleBase {
-    virtual ~SystemHandleBase() = default;
-    virtual std::unique_ptr<SystemHandleBase> clone() const = 0;
-    virtual void setCurrentStateAndControl(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u) = 0;
-    virtual dynamic_vector_t flowMap(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u) = 0;
-    virtual dynamic_matrix_t flowMapDerivativeState() = 0;
-    virtual dynamic_matrix_t flowMapDerivativeInput() = 0;
-  };
-  /** Only data member: contains a polymorphic handle that wraps the system dynamics function */
-  std::unique_ptr<SystemHandleBase> p_;
-
-  /** Templated handle, containing the pointer to the actually passed system dynamics function */
-  template <size_t STATE_DIM, size_t INPUT_DIM>
-  struct SystemHandle : public SystemHandleBase {
-    // declare const size types
-    using SystemDynamics_t = ocs2::SystemDynamicsBase<STATE_DIM, INPUT_DIM>;
-    using scalar_t = typename SystemDynamics_t::scalar_t;
-    using state_vector_t = typename SystemDynamics_t::state_vector_t;
-    using state_matrix_t = typename SystemDynamics_t::state_matrix_t;
-    using input_vector_t = typename SystemDynamics_t::input_vector_t;
-    using state_input_matrix_t = typename SystemDynamics_t::state_input_matrix_t;
-
-    // Constructor of the concrete handle
-    explicit SystemHandle(const SystemDynamics_t& systemDynamics) : hp_(systemDynamics.clone()) {}
-    // Clone, clones the underlying system dynamics
-    std::unique_ptr<SystemHandleBase> clone() const override { return std::unique_ptr<SystemHandleBase>(new SystemHandle(*hp_)); };
-    // Pointer to the actual system dynamics
-    std::unique_ptr<SystemDynamics_t> hp_;
-    // All function below wrap fixed size functions to dynamic size
-    void setCurrentStateAndControl(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u) override {
-      hp_->setCurrentStateAndControl(t, x, u);
-    }
-    dynamic_vector_t flowMap(scalar_t t, const dynamic_vector_t& x, const dynamic_vector_t& u) override {
-      state_vector_t dxdt;
-      hp_->computeFlowMap(t, x, u, dxdt);
-      return dxdt;
-    }
-    dynamic_matrix_t flowMapDerivativeState() override {
-      state_matrix_t dfdx;
-      hp_->getFlowMapDerivativeState(dfdx);
-      return dfdx;
-    }
-    dynamic_matrix_t flowMapDerivativeInput() override {
-      state_input_matrix_t dfdu;
-      hp_->getFlowMapDerivativeInput(dfdu);
-      return dfdu;
-    }
-  };
+  /** System dynamics function */
+  std::unique_ptr<ocs2::SystemDynamicsBase> p_;
 };
 
 }  // namespace qp_solver

@@ -43,15 +43,15 @@ namespace qp_solver {
  */
 struct ScalarFunctionQuadraticApproximation {
   /** Second derivative w.r.t state */
-  dynamic_matrix_t dfdxx;
+  matrix_t dfdxx;
   /** Second derivative w.r.t input (lhs) and state (rhs) */
-  dynamic_matrix_t dfdux;
+  matrix_t dfdux;
   /** Second derivative w.r.t input */
-  dynamic_matrix_t dfduu;
+  matrix_t dfduu;
   /** First derivative w.r.t state */
-  dynamic_vector_t dfdx;
+  vector_t dfdx;
   /** First derivative w.r.t input */
-  dynamic_vector_t dfdu;
+  vector_t dfdu;
   /** Constant term */
   scalar_t f = 0.;
 };
@@ -61,11 +61,11 @@ struct ScalarFunctionQuadraticApproximation {
  */
 struct VectorFunctionLinearApproximation {
   /** Derivative w.r.t state */
-  dynamic_matrix_t dfdx;
+  matrix_t dfdx;
   /** Derivative w.r.t input */
-  dynamic_matrix_t dfdu;
+  matrix_t dfdu;
   /** Constant term */
-  dynamic_vector_t f;
+  vector_t f;
 };
 
 /** Defines the quadratic cost and  linear dynamics at a give stage */

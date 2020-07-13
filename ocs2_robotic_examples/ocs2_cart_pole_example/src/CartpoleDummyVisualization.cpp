@@ -7,8 +7,7 @@
 namespace ocs2 {
 namespace cartpole {
 
-void CartpoleDummyVisualization::update(const system_observation_t& observation, const primal_solution_t& policy,
-                                        const command_data_t& command) {
+void CartpoleDummyVisualization::update(const SystemObservation& observation, const PrimalSolution& policy, const CommandData& command) {
   sensor_msgs::JointState joint_state;
   joint_state.header.stamp = ros::Time::now();
   joint_state.name.resize(2);

@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -36,7 +36,14 @@ namespace cartpole {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CartPoleInterface::CartPoleInterface(const std::string& taskFileFolderName) {
+CartPoleInterface::CartPoleInterface(const std::string& taskFileFolderName)
+    : qm_(STATE_DIM_, STATE_DIM_),
+      rm_(INPUT_DIM_, INPUT_DIM_),
+      qmFinal_(STATE_DIM_, STATE_DIM_),
+      xFinal_(STATE_DIM_),
+      xNominal_(STATE_DIM_),
+      uNominal_(INPUT_DIM_),
+      initialState_(STATE_DIM_) {
   taskFile_ = ros::package::getPath("ocs2_cart_pole_example") + "/config/" + taskFileFolderName + "/task.info";
   std::cerr << "Loading task file: " << taskFile_ << std::endl;
 
@@ -65,7 +72,7 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   /*
    * Cartpole parameters
    */
-  CartPoleParameters<dim_t::scalar_t> cartPoleParameters;
+  CartPoleParameters cartPoleParameters;
   cartPoleParameters.loadSettings(taskFile);
 
   /*
@@ -79,7 +86,7 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
    */
   Rollout_Settings rolloutSettings;
   rolloutSettings.loadSettings(taskFile, "slq.rollout");
-  ddpCartPoleRolloutPtr_.reset(new time_triggered_rollout_t(*cartPoleSystemDynamicsPtr_, rolloutSettings));
+  ddpCartPoleRolloutPtr_.reset(new TimeTriggeredRollout(*cartPoleSystemDynamicsPtr_, rolloutSettings));
 
   /*
    * Cost function
@@ -88,9 +95,9 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   loadData::loadEigenMatrix(taskFile, "R", rm_);
   loadData::loadEigenMatrix(taskFile, "Q_final", qmFinal_);
   loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
-  //	xNominal_ = dim_t::state_vector_t::Zero();
+
   xNominal_ = xFinal_;
-  uNominal_ = dim_t::input_vector_t::Zero();
+  uNominal_ = vector_t::Zero(INPUT_DIM_);
 
   std::cerr << "Q:  \n" << qm_ << std::endl;
   std::cerr << "R:  \n" << rm_ << std::endl;
@@ -103,27 +110,27 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   /*
    * Constraints
    */
-  cartPoleConstraintPtr_.reset(new CartPoleConstraint);
+  cartPoleConstraintPtr_.reset(new ConstraintBase(STATE_DIM_, INPUT_DIM_));
 
   /*
    * Initialization
    */
-  cartPoleOperatingPointPtr_.reset(new CartPoleOperatingPoint(initialState_, dim_t::input_vector_t::Zero()));
+  cartPoleOperatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM_)));
 
   /*
    * Time partitioning which defines the time horizon and the number of data partitioning
    */
-  dim_t::scalar_t timeHorizon;
+  scalar_t timeHorizon;
   ocs2::loadData::loadPartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<CartPoleInterface::mpc_t> CartPoleInterface::getMpc() {
-  return std::unique_ptr<mpc_t>(new mpc_t(ddpCartPoleRolloutPtr_.get(), cartPoleSystemDynamicsPtr_.get(), cartPoleConstraintPtr_.get(),
-                                          cartPoleCostPtr_.get(), cartPoleOperatingPointPtr_.get(), partitioningTimes_, slqSettings_,
-                                          mpcSettings_));
+std::unique_ptr<MPC_SLQ> CartPoleInterface::getMpc() {
+  return std::unique_ptr<MPC_SLQ>(new MPC_SLQ(STATE_DIM_, INPUT_DIM_, ddpCartPoleRolloutPtr_.get(), cartPoleSystemDynamicsPtr_.get(),
+                                              cartPoleConstraintPtr_.get(), cartPoleCostPtr_.get(), cartPoleOperatingPointPtr_.get(),
+                                              partitioningTimes_, slqSettings_, mpcSettings_));
 }
 
 }  // namespace cartpole

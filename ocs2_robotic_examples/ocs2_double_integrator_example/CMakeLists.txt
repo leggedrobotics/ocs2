@@ -24,13 +24,13 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-# Pybind11
-option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)
-if(USE_PYBIND_PYTHON_3)
-  set(PYTHON_EXECUTABLE /usr/bin/python3)
-  set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
-endif(USE_PYBIND_PYTHON_3)
-find_package(pybind11 QUIET)
+# # Pybind11
+# option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)
+# if(USE_PYBIND_PYTHON_3)
+#   set(PYTHON_EXECUTABLE /usr/bin/python3)
+#   set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
+# endif(USE_PYBIND_PYTHON_3)
+# find_package(pybind11 QUIET)
 
 ###################################
 ## catkin specific configuration ##
@@ -111,46 +111,46 @@ target_link_libraries(double_integrator_target
 )
 target_compile_options(double_integrator_target PRIVATE ${OCS2_CXX_FLAGS})
 
-# Pybindings Cpp library
-add_library(DoubleIntegratorPyBindings_Cpp
-  src/DoubleIntegratorPyBindings.cpp
-)
-add_dependencies(DoubleIntegratorPyBindings_Cpp
-  double_integrator_interface
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(DoubleIntegratorPyBindings_Cpp
-  double_integrator_interface
-  ${catkin_LIBRARIES}
-)
+# # Pybindings Cpp library
+# add_library(DoubleIntegratorPyBindings_Cpp
+#   src/DoubleIntegratorPyBindings.cpp
+# )
+# add_dependencies(DoubleIntegratorPyBindings_Cpp
+#   double_integrator_interface
+#   ${catkin_EXPORTED_TARGETS}
+# )
+# target_link_libraries(DoubleIntegratorPyBindings_Cpp
+#   double_integrator_interface
+#   ${catkin_LIBRARIES}
+# )
 
-# Build python bindings if possible
-if(${pybind11_FOUND})
-  pybind11_add_module(DoubleIntegratorPyBindings SHARED
-    src/pyBindModule.cpp
-  )
-  add_dependencies(DoubleIntegratorPyBindings
-    DoubleIntegratorPyBindings_Cpp
-    ${catkin_EXPORTED_TARGETS}
-  )
-  target_link_libraries(DoubleIntegratorPyBindings PRIVATE
-    DoubleIntegratorPyBindings_Cpp
-    ${catkin_LIBRARIES}
-  )
+# # Build python bindings if possible
+# if(${pybind11_FOUND})
+#   pybind11_add_module(DoubleIntegratorPyBindings SHARED
+#     src/pyBindModule.cpp
+#   )
+#   add_dependencies(DoubleIntegratorPyBindings
+#     DoubleIntegratorPyBindings_Cpp
+#     ${catkin_EXPORTED_TARGETS}
+#   )
+#   target_link_libraries(DoubleIntegratorPyBindings PRIVATE
+#     DoubleIntegratorPyBindings_Cpp
+#     ${catkin_LIBRARIES}
+#   )
 
-  if(USE_PYBIND_PYTHON_3)
-    # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
-    set_target_properties(DoubleIntegratorPyBindings
-      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
-    )
-  else(USE_PYBIND_PYTHON_3)
-    set_target_properties(DoubleIntegratorPyBindings
-        PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
-    )
-  endif(USE_PYBIND_PYTHON_3)
+#   if(USE_PYBIND_PYTHON_3)
+#     # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
+#     set_target_properties(DoubleIntegratorPyBindings
+#       PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
+#     )
+#   else(USE_PYBIND_PYTHON_3)
+#     set_target_properties(DoubleIntegratorPyBindings
+#         PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+#     )
+#   endif(USE_PYBIND_PYTHON_3)
 
-  catkin_python_setup()
-endif()
+#   catkin_python_setup()
+# endif()
 
 #########################
 ###   CLANG TOOLING   ###
@@ -174,7 +174,8 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS double_integrator_interface DoubleIntegratorPyBindings_Cpp
+install(TARGETS double_integrator_interface
+  # DoubleIntegratorPyBindings_Cpp
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

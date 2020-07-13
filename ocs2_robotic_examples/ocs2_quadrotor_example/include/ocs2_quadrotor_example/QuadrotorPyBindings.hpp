@@ -35,10 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace quadrotor {
 
-class QuadrotorPyBindings final : public PythonInterface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> {
+class QuadrotorPyBindings final : public PythonInterface {
  public:
-  using Base = PythonInterface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
-
   QuadrotorPyBindings(const std::string& taskFileFolder, bool async = false);
 };
 

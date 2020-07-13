@@ -87,8 +87,7 @@ size_t findFirstIndexWithinTol(const std::vector<SCALAR>& dataArray, SCALAR valu
  */
 template <typename SCALAR = double>
 int findIndexInTimeArray(const std::vector<SCALAR>& timeArray, SCALAR time) {
-  auto lessOperator = [](SCALAR element, SCALAR value) { return !numerics::almost_ge(element, value); };
-  auto firstLargerValueIterator = std::lower_bound(timeArray.begin(), timeArray.end(), time, lessOperator);
+  auto firstLargerValueIterator = std::lower_bound(timeArray.begin(), timeArray.end(), time);
   return static_cast<int>(firstLargerValueIterator - timeArray.begin());
 }
 

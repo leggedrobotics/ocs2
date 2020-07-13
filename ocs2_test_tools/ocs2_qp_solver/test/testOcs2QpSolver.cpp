@@ -16,26 +16,22 @@ class Ocs2QpSolverTest : public testing::Test {
   static constexpr size_t STATE_DIM = 3;
   static constexpr size_t INPUT_DIM = 2;
   static constexpr ocs2::scalar_t dt = 1e-3;
-  using SystemDynamics_t = ocs2::SystemDynamicsBase<STATE_DIM, INPUT_DIM>;
-  using costFunction_t = ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM>;
-  using input_vector_t = costFunction_t::input_vector_t;
-  using state_vector_t = costFunction_t::state_vector_t;
 
   Ocs2QpSolverTest() {
     srand(0);
-    cost = ocs2::qp_solver::getOcs2Cost<STATE_DIM, INPUT_DIM>(ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
-                                                              ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
-                                                              state_vector_t::Random(), input_vector_t::Random(), state_vector_t::Random());
-    system = ocs2::qp_solver::getOcs2Dynamics<STATE_DIM, INPUT_DIM>(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
+    cost = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
+                                        ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM), ocs2::vector_t::Random(STATE_DIM),
+                                        ocs2::vector_t::Random(INPUT_DIM), ocs2::vector_t::Random(STATE_DIM));
+    system = ocs2::qp_solver::getOcs2Dynamics(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
     nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
-    x0 = state_vector_t::Random();
+    x0 = ocs2::vector_t::Random(STATE_DIM);
     solution = solveLinearQuadraticOptimalControlProblem(*cost, *system, nominalTrajectory, x0);
   }
 
-  std::unique_ptr<costFunction_t> cost;
-  std::unique_ptr<SystemDynamics_t> system;
+  std::unique_ptr<ocs2::CostFunctionBase> cost;
+  std::unique_ptr<ocs2::SystemDynamicsBase> system;
   ocs2::qp_solver::ContinuousTrajectory nominalTrajectory;
-  state_vector_t x0;
+  ocs2::vector_t x0;
   ocs2::qp_solver::ContinuousTrajectory solution;
 };
 
@@ -50,7 +46,7 @@ TEST_F(Ocs2QpSolverTest, initialCondition) {
 
 TEST_F(Ocs2QpSolverTest, satisfiesDynamics) {
   // Forward integrate with solution u(t) and check x(t)
-  state_vector_t x = x0;
+  ocs2::vector_t x = x0;
   ocs2::qp_solver::SystemWrapper systemWrapper(*system);
   for (int k = 0; k < N; ++k) {
     auto dt = solution.timeTrajectory[k + 1] - solution.timeTrajectory[k];
@@ -72,16 +68,16 @@ TEST_F(Ocs2QpSolverTest, invariantUnderLinearization) {
 
 TEST_F(Ocs2QpSolverTest, knownSolutionAtOrigin) {
   // If the cost's nominal trajectory is set to zero, and the initial state is zero, then the solution has only zeros.
-  const auto zeroCost = ocs2::qp_solver::getOcs2Cost<STATE_DIM, INPUT_DIM>(
-      ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM), ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM), state_vector_t::Zero(),
-      input_vector_t::Zero(), state_vector_t::Zero());
-  const auto zeroX0 = state_vector_t::Zero();
+  const auto zeroCost = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
+                                                     ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM), ocs2::vector_t::Zero(STATE_DIM),
+                                                     ocs2::vector_t::Zero(INPUT_DIM), ocs2::vector_t::Zero(STATE_DIM));
+  const auto zeroX0 = ocs2::vector_t::Zero(STATE_DIM);
 
   // Obtain solution, with non-zero nominalTrajectory
   auto zeroSolution = solveLinearQuadraticOptimalControlProblem(*zeroCost, *system, nominalTrajectory, zeroX0);
 
-  ocs2::dynamic_vector_array_t allStatesZero(N + 1, ocs2::dynamic_vector_t::Zero(STATE_DIM));
-  ocs2::dynamic_vector_array_t allInputsZero(N, ocs2::dynamic_vector_t::Zero(INPUT_DIM));
+  ocs2::vector_array_t allStatesZero(N + 1, ocs2::vector_t::Zero(STATE_DIM));
+  ocs2::vector_array_t allInputsZero(N, ocs2::vector_t::Zero(INPUT_DIM));
   ASSERT_TRUE(ocs2::qp_solver::isEqual(zeroSolution.stateTrajectory, allStatesZero));
   ASSERT_TRUE(ocs2::qp_solver::isEqual(zeroSolution.inputTrajectory, allInputsZero));
 }

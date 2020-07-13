@@ -31,25 +31,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 
-#include "ocs2_cart_pole_example/CartPoleParameters.h"
 #include "ocs2_cart_pole_example/definitions.h"
 
 namespace ocs2 {
 namespace cartpole {
 
-class CartPoleCost final : public QuadraticCostFunction<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> {
+class CartPoleCost final : public QuadraticCostFunction {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using Ptr = std::shared_ptr<CartPoleCost>;
-  using ConstPtr = std::shared_ptr<const CartPoleCost>;
-
-  using BASE = QuadraticCostFunction<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
-  using scalar_t = typename BASE::scalar_t;
-  using state_vector_t = typename BASE::state_vector_t;
-  using state_matrix_t = typename BASE::state_matrix_t;
-  using input_vector_t = typename BASE::input_vector_t;
-  using input_matrix_t = typename BASE::input_matrix_t;
+  using BASE = ocs2::QuadraticCostFunction;
 
   /**
    * Constructor for the running and final cost function defined as the following:
@@ -62,8 +51,8 @@ class CartPoleCost final : public QuadraticCostFunction<cartpole::STATE_DIM_, ca
    * @param [in] xFinal: \f$ x_{final}\f$
    * @param [in] QFinal: \f$ Q_{final}\f$
    */
-  CartPoleCost(const state_matrix_t& Q, const input_matrix_t& R, const state_vector_t& x_nominal, const input_vector_t& u_nominal,
-               const state_matrix_t& Q_final, const state_vector_t& x_final)
+  CartPoleCost(const matrix_t& Q, const matrix_t& R, const vector_t& x_nominal, const vector_t& u_nominal, const matrix_t& Q_final,
+               const vector_t& x_final)
       : QuadraticCostFunction(Q, R, x_nominal, u_nominal, Q_final, x_final) {}
 
   /**

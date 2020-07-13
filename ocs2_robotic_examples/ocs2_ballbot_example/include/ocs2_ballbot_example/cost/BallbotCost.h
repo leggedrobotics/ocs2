@@ -26,7 +26,6 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
-
 #pragma once
 
 #include <ocs2_core/cost/QuadraticCostFunction.h>
@@ -36,18 +35,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace ballbot {
 
-class BallbotCost final : public ocs2::QuadraticCostFunction<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> {
+class BallbotCost final : public ocs2::QuadraticCostFunction {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using Ptr = std::shared_ptr<BallbotCost>;
-  using ConstPtr = std::shared_ptr<const BallbotCost>;
-
-  using BASE = ocs2::QuadraticCostFunction<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
-  using scalar_t = typename BASE::scalar_t;
-  using state_vector_t = typename BASE::state_vector_t;
-  using state_matrix_t = typename BASE::state_matrix_t;
-  using input_vector_t = typename BASE::input_vector_t;
+  using BASE = ocs2::QuadraticCostFunction;
 
   /**
    * Constructor for the running and final cost function defined as the following:
@@ -60,8 +50,8 @@ class BallbotCost final : public ocs2::QuadraticCostFunction<ballbot::STATE_DIM_
    * @param [in] QFinal: \f$ Q_{final}\f$
    * @param [in] xFinal: \f$ x_{final}\f$
    */
-  BallbotCost(const state_matrix_t& Q, const input_matrix_t& R, const state_vector_t& x_nominal, const input_vector_t& u_nominal,
-              const state_matrix_t& Q_final, const state_vector_t& x_final)
+  BallbotCost(const matrix_t& Q, const matrix_t& R, const vector_t& x_nominal, const vector_t& u_nominal, const matrix_t& Q_final,
+              const vector_t& x_final)
       : QuadraticCostFunction(Q, R, x_nominal, u_nominal, Q_final, x_final) {}
 
   /**
@@ -83,17 +73,13 @@ class BallbotCost final : public ocs2::QuadraticCostFunction<ballbot::STATE_DIM_
    * @param [in] x: Current state vector.
    * @param [in] u: Current input vector.
    */
-  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override {
-    dynamic_vector_t xNominal(static_cast<int>(ballbot::STATE_DIM_));
-    BASE::costDesiredTrajectoriesPtr_->getDesiredState(t, xNominal);
-    dynamic_vector_t uNominal(static_cast<int>(ballbot::INPUT_DIM_));
-    BASE::costDesiredTrajectoriesPtr_->getDesiredInput(t, uNominal);
+  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) override {
+    vector_t xNominal = BASE::costDesiredTrajectoriesPtr_->getDesiredState(t);
+    vector_t uNominal = BASE::costDesiredTrajectoriesPtr_->getDesiredInput(t);
 
     // set base class
     BASE::setCurrentStateAndControl(t, x, u, xNominal, uNominal, xNominal);
   }
-
- private:
 };
 
 }  // namespace ballbot

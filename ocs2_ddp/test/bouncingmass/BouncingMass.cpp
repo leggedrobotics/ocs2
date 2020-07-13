@@ -36,7 +36,7 @@
  * (1) No penetration of Guard Surfaces
  * (2) Check of cost function compared against cost calculated during trusted run of SLQ
  */
-TEST(testStateRollOut_SLQ, BouncingMassTest) {
+TEST(testStateRollOut_SLQ, DISABLED_BouncingMassTest) {
   using scalar_t = ocs2::scalar_t;
   using vector_t = ocs2::vector_t;
   using matrix_t = ocs2::matrix_t;

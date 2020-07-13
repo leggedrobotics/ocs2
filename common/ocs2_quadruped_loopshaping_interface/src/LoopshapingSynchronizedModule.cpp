@@ -7,23 +7,22 @@
 namespace switched_model_loopshaping {
 
 LoopshapingSynchronizedModule::LoopshapingSynchronizedModule(
-    std::vector<std::shared_ptr<switched_model_solver_module_t>> synchronizedModules,
+    std::vector<std::shared_ptr<ocs2::SolverSynchronizedModule>> synchronizedModules,
     std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinition)
     : synchronizedModules_(std::move(synchronizedModules)), loopshapingDefinition_(std::move(loopshapingDefinition)) {}
 
-void LoopshapingSynchronizedModule::preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+void LoopshapingSynchronizedModule::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
                                                  const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
-  switched_model_solver_module_t::state_vector_t systemState;
-  loopshapingDefinition_->getSystemState(currentState, systemState);
+  vector_t systemState = loopshapingDefinition_->getSystemState(currentState);
 
   for (auto& module : synchronizedModules_) {
     module->preSolverRun(initTime, finalTime, systemState, costDesiredTrajectory);
   }
 }
 
-void LoopshapingSynchronizedModule::postSolverRun(const primal_solution_t& primalSolution) {
+void LoopshapingSynchronizedModule::postSolverRun(const ocs2::PrimalSolution& primalSolution) {
   // TODO (rgrandia) convert primal solution.
-  switched_model_solver_module_t::primal_solution_t switchedModelPrimalSolution;
+  ocs2::PrimalSolution switchedModelPrimalSolution;
   for (auto& module : synchronizedModules_) {
     module->postSolverRun(switchedModelPrimalSolution);
   }

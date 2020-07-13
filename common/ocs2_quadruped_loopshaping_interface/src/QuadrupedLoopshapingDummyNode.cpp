@@ -14,27 +14,26 @@ namespace switched_model_loopshaping {
 void quadrupedLoopshapingDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedLoopshapingInterface& quadrupedInterface,
                                    double mrtDesiredFrequency, double mpcDesiredFrequency) {
   const std::string robotName = "anymal";
-  using vis_t = switched_model::QuadrupedVisualizer;
-  using vis_wrapper_t = QuadrupedLoopshapingVisualizer;
-  using mrt_t = ocs2::MRT_ROS_Interface<STATE_DIM, INPUT_DIM>;
-  using dummy_t = ocs2::MRT_ROS_Dummy_Loop<STATE_DIM, INPUT_DIM>;
 
   // MRT
-  mrt_t mrt(robotName);
+  ocs2::MRT_ROS_Interface mrt(robotName);
   mrt.initRollout(&quadrupedInterface.getRollout());
   mrt.launchNodes(nodeHandle);
 
   // Visualization
-  std::unique_ptr<vis_t> visualizer(new vis_t(quadrupedInterface.getKinematicModel(), quadrupedInterface.getComModel(), nodeHandle));
-  auto loopshapingVisualizer = std::make_shared<vis_wrapper_t>(quadrupedInterface.getLoopshapingDefinition(), std::move(visualizer));
+  std::unique_ptr<switched_model::QuadrupedVisualizer> visualizer(
+      new switched_model::QuadrupedVisualizer(quadrupedInterface.getKinematicModel(), quadrupedInterface.getComModel(), nodeHandle));
+  auto loopshapingVisualizer =
+      std::make_shared<QuadrupedLoopshapingVisualizer>(quadrupedInterface.getLoopshapingDefinition(), std::move(visualizer));
 
   // Dummy MRT
-  dummy_t dummySimulator(mrt, mrtDesiredFrequency, mpcDesiredFrequency);
+  ocs2::MRT_ROS_Dummy_Loop dummySimulator(mrt, mrtDesiredFrequency, mpcDesiredFrequency);
   dummySimulator.subscribeObservers({loopshapingVisualizer});
 
   // initial state
-  mrt_t::system_observation_t initObservation;
+  ocs2::SystemObservation initObservation;
   initObservation.state() = quadrupedInterface.getInitialState();
+  initObservation.input().setZero(INPUT_DIM);
   initObservation.subsystem() = switched_model::ModeNumber::STANCE;
 
   // initial command

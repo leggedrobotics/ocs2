@@ -12,21 +12,19 @@
 
 namespace switched_model_loopshaping {
 
-class LoopshapingModeScheduleManager : public ocs2::ModeScheduleManager<STATE_DIM, INPUT_DIM> {
-  using Base = ocs2::ModeScheduleManager<STATE_DIM, INPUT_DIM>;
+class LoopshapingModeScheduleManager : public ocs2::ModeScheduleManager {
+  using Base = ocs2::ModeScheduleManager;
 
  public:
-  using switched_mode_schedule_manager_t = switched_model::SwitchedModelModeScheduleManager;
-
   /** Mode schedule manager that is wrapped with loopshaping */
-  std::shared_ptr<switched_mode_schedule_manager_t> modeScheduleManager_;
+  std::shared_ptr<switched_model::SwitchedModelModeScheduleManager> modeScheduleManager_;
 
-  LoopshapingModeScheduleManager(std::shared_ptr<switched_mode_schedule_manager_t> modeScheduleManager,
+  LoopshapingModeScheduleManager(std::shared_ptr<switched_model::SwitchedModelModeScheduleManager> modeScheduleManager,
                                  std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinition);
 
   ~LoopshapingModeScheduleManager() override = default;
 
-  void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+  void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
                         const ocs2::CostDesiredTrajectories& costDesiredTrajectory, ocs2::ModeSchedule& modeSchedule) override;
 
  private:

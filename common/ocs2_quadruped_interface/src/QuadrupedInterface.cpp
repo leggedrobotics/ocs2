@@ -9,6 +9,7 @@
 #include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
 #include <ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h>
 #include <ocs2_switched_model_interface/logic/ModeSequenceTemplate.h>
+#include <ocs2_switched_model_interface/terrain/TerrainModelPlanar.h>
 
 namespace switched_model {
 
@@ -18,8 +19,8 @@ namespace switched_model {
 QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
                                        const com_model_t& comModel, const ad_com_model_t& adComModel, const std::string& pathToConfigFolder)
 
-    : kinematicModelPtr_(kinematicModel.clone()), comModelPtr_(comModel.clone()) {
-  loadSettings(pathToConfigFolder + "/task.info");
+    : kinematicModelPtr_(kinematicModel.clone()), comModelPtr_(comModel.clone()), configFile_(pathToConfigFolder + "/task.info") {
+  loadSettings(configFile_);
 }
 
 /******************************************************************************************************/
@@ -66,15 +67,30 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
   // Gait Schedule
   const auto initModeSchedule = loadModeSchedule(pathToConfigFile, "initialModeSchedule", false);
   const auto defaultModeSequenceTemplate = loadModeSequenceTemplate(pathToConfigFile, "defaultModeSequenceTemplate", false);
-  auto gaitSchedule =
-      std::make_shared<GaitSchedule>(initModeSchedule, defaultModeSequenceTemplate, modelSettings().phaseTransitionStanceTime_);
+  const auto defaultGait = [&] {
+    Gait gait{};
+    gait.duration = defaultModeSequenceTemplate.switchingTimes.back();
+    // Events: from time -> phase
+    std::for_each(defaultModeSequenceTemplate.switchingTimes.begin() + 1, defaultModeSequenceTemplate.switchingTimes.end() - 1,
+                  [&](double eventTime) { gait.eventPhases.push_back(eventTime / gait.duration); });
+    // Modes:
+    gait.modeSequence = defaultModeSequenceTemplate.modeSequence;
+    return gait;
+  }();
+
+  GaitSchedule gaitSchedule{0.0, defaultGait};
 
   // Swing trajectory planner
   const auto swingTrajectorySettings = loadSwingTrajectorySettings(pathToConfigFile);
-  auto swingTrajectoryPlanner = std::make_shared<SwingTrajectoryPlanner>(swingTrajectorySettings);
+  SwingTrajectoryPlanner swingTrajectoryPlanner{swingTrajectorySettings, getComModel(), getKinematicModel()};
+
+  // Terrain
+  const auto loadedTerrain = loadTerrainPlane(pathToConfigFile, true);
+  std::unique_ptr<TerrainModelPlanar> terrainModel(new TerrainModelPlanar(std::move(loadedTerrain)));
 
   // Mode schedule manager
-  modeScheduleManagerPtr_ = std::make_shared<SwitchedModelModeScheduleManager>(gaitSchedule, swingTrajectoryPlanner);
+  modeScheduleManagerPtr_ = std::make_shared<SwitchedModelModeScheduleManager>(std::move(gaitSchedule), std::move(swingTrajectoryPlanner),
+                                                                               std::move(terrainModel));
 
   // Display
   std::cerr << "\nTime Partition: {" << ocs2::toDelimitedString(partitioningTimes_) << "}\n";

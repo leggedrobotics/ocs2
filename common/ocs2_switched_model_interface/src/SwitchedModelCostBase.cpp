@@ -7,6 +7,8 @@
 
 #include "ocs2_switched_model_interface/cost/SwitchedModelCostBase.h"
 
+#include "ocs2_switched_model_interface/core/Rotations.h"
+
 namespace switched_model {
 
 /******************************************************************************************************/
@@ -48,7 +50,8 @@ std::pair<vector_t, vector_t> SwitchedModelCostBase::getNominalStateInput(scalar
   if (BASE::costDesiredTrajectoriesPtr_ != nullptr) {
     xNominal = BASE::costDesiredTrajectoriesPtr_->getDesiredState(t);
   }
-  vector_t uNominal = inputFromContactFlags(contactFlags);
+  vector_t uNominal;
+  inputFromContactFlags(contactFlags, xNominal, uNominal);
 
   return {xNominal, uNominal};
 }
@@ -56,9 +59,10 @@ std::pair<vector_t, vector_t> SwitchedModelCostBase::getNominalStateInput(scalar
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t SwitchedModelCostBase::inputFromContactFlags(contact_flag_t contactFlags) {
+void SwitchedModelCostBase::inputFromContactFlags(const contact_flag_t& contactFlags, const state_vector_t& nominalState,
+                                                  vector_t& inputs) {
   // Distribute total mass equally over active stance legs.
-  vector_t inputs = vector_t::Zero(INPUT_DIM);
+  inputs.setZero(INPUT_DIM);
 
   const scalar_t totalMass = comModelPtr_->totalMass() * 9.81;
   size_t numStanceLegs(0);
@@ -70,13 +74,15 @@ vector_t SwitchedModelCostBase::inputFromContactFlags(contact_flag_t contactFlag
   }
 
   if (numStanceLegs > 0) {
+    const matrix3_t b_R_o = rotationMatrixOriginToBase(getOrientation(getComPose(nominalState)));
+    const vector3_t forceInBase = b_R_o * vector3_t{0.0, 0.0, totalMass / numStanceLegs};
+
     for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
       if (contactFlags[i]) {
-        inputs(3 * i + 2) = totalMass / numStanceLegs;
+        inputs.segment<3>(3 * i) = forceInBase;
       }
     }
   }
-  return inputs;
 }
 
 }  // namespace switched_model

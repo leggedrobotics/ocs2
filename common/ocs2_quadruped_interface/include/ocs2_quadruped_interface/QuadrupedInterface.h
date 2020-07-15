@@ -95,11 +95,14 @@ class QuadrupedInterface : public ocs2::RobotInterface {
                                                                                      const kinematic_model_t& kinematicModel,
                                                                                      state_vector_t initialState);
 
+  const std::string& getConfigFile() const { return configFile_; }
+
  private:
   /** Load the general quadruped settings from file. */
   void loadSettings(const std::string& pathToConfigFile);
 
-  scalar_t timeHorizon_{1.0};
+  std::string configFile_;
+  scalar_t timeHorizon_ = 1.0;
   ocs2::Rollout_Settings rolloutSettings_;
   ModelSettings modelSettings_;
 
@@ -109,7 +112,6 @@ class QuadrupedInterface : public ocs2::RobotInterface {
 
   state_vector_t initialState_;
   scalar_array_t partitioningTimes_;
-  std::unique_ptr<ModeSequenceTemplate> defaultModeSequenceTemplate_;
 };
 
 }  // end of namespace switched_model

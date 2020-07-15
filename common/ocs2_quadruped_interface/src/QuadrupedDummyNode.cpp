@@ -7,6 +7,8 @@
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
+#include <ocs2_switched_model_interface/core/MotionPhaseDefinition.h>
+
 #include <ocs2_quadruped_interface/QuadrupedVisualizer.h>
 
 namespace switched_model {

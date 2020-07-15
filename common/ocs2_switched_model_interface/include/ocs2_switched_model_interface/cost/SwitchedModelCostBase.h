@@ -37,7 +37,7 @@ class SwitchedModelCostBase : public ocs2::QuadraticCostFunction {
   std::pair<vector_t, vector_t> getNominalStateInput(scalar_t t, const vector_t& x, const vector_t& u) override;
 
  private:
-  vector_t inputFromContactFlags(contact_flag_t contactFlags);
+  void inputFromContactFlags(const contact_flag_t& contactFlags, const state_vector_t& nominalState, vector_t& inputs);
 
   std::unique_ptr<com_model_t> comModelPtr_;
 

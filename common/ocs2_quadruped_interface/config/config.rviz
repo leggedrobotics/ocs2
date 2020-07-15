@@ -668,6 +668,14 @@ Visualization Manager:
           Topic: /ocs2_anymal/currentFeetPoses
           Unreliable: false
           Value: false
+        - Class: rviz/Marker
+          Enabled: true
+          Marker Topic: /ocs2_anymal/localTerrain
+          Name: LocalTerrain
+          Namespaces:
+            "": true
+          Queue Size: 100
+          Value: true
       Enabled: true
       Name: Current
   Enabled: true

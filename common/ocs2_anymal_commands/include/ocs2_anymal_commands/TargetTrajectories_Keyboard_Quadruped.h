@@ -54,7 +54,7 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
    * goalPoseLimit(11): \omega_Z
    */
   TargetTrajectories_Keyboard_Quadruped(int argc, char* argv[], const std::string& robotName, scalar_t initZHeight,
-                                        joint_coordinates_t defaultJointCoordinates, scalar_t targetDisplacementVelocity,
+                                        const joint_coordinates_t& defaultJointCoordinates, scalar_t targetDisplacementVelocity,
                                         scalar_t targetRotationVelocity,
                                         const scalar_array_t& goalPoseLimit = scalar_array_t{2.0, 1.0, 0.3, 45.0, 45.0, 360.0, 2.0, 2.0,
                                                                                              2.0, 2.0, 2.0, 2.0},

@@ -1,16 +1,9 @@
 
 mpcTimeHorizon
 {
-    timehorizon        1.0		; 1.2		; 0.8
+    timehorizon        1.0
     numPartitions      2
 }
-
-visualization
-{
-    slowdown     1.0
-    vizTime      200
-}
-
 
 model_settings
 {
@@ -31,18 +24,12 @@ model_settings
   swing_trajectory_settings
   {
     liftOffVelocity             0.2
-    touchDownVelocity           -0.4
+    touchDownVelocity          -0.4
     swingHeight                 0.1
     touchdownAfterHorizon       0.2
     errorGain                   5.0
     swingTimeScale              0.15
   }
-
-  useFeetTrajectoryFiltering    0
-  feetFilterFrequency           1000.0
-
-  eps 	2e-4
-  eta 	1e+2
 
   torqueMixingFactor            0.0
 
@@ -93,69 +80,55 @@ defaultModeSequenceTemplate
 
 slq
 {
-
-  useNominalTimeForBackwardPass 1
-  preComputeRiccatiTerms        1
-  RiccatiIntegratorType         ODE45  ; ODE45, ADAMS_BASHFORTH, BULIRSCH_STOER, ADAMS_BASHFORTH_MOULTON
-  adams_integrator_dt           0.01
-
-  warmStartGSLQ                 1
-  useLQForDerivatives           0
-  displayGradientDescent        0
-  tolGradientDescent            1e-2
-  acceptableTolGradientDescent  1e-2
-  maxIterationGradientDescent   5
-  minLearningRateNLP            0.05
-  maxLearningRateNLP            0.6
-  useAscendingLineSearchNLP     1
-  minEventTimeDifference        0.01
+  useNominalTimeForBackwardPass      true
+  RiccatiIntegratorType              ODE45
 
   ddp
   {
-    maxNumIterations              1      ;50
-    minLearningRate               1e-4     ;0.1
-    maxLearningRate               1.0
-    minRelCost                    0.1     ;0.01
-    stateConstraintPenaltyCoeff   5.0
-    stateConstraintPenaltyBase    0.0
-    inequalityConstraintDelta     5.0
-    inequalityConstraintMu        0.1
-    meritFunctionRho              50.0
-    constraintStepSize            1.0
-    displayInfo                   0
-    displayShortSummary           0
-    debugPrintRollout             0
+    nThreads                         3
+    threadPriority                   50
+    
+    maxNumIterations                 10
+    minRelCost                       0.1
+    constraintTolerance              5e-3
 
-    AbsTolODE                     1e-5  ;1e-6
-    RelTolODE                     1e-3  ;1e-4
-    minTimeStep                   1e-2
-    useMakePSD                    0
-    addedRiccatiDiagonal          1e-5
-    maxNumStepsPerSecond          1000
-    simulationIsConstrained       0
-    noStateConstraints            0
-    minAbsConstraint1ISE          5e-3
-    minRelConstraint1ISE          5e-6
-    checkNumericalStability       0
+    displayInfo                      false
+    displayShortSummary              false
+    checkNumericalStability          false
+    debugPrintRollout                false
+    debugCaching                     false
 
-    useMultiThreading             1
-    nThreads                      3
-    threadPriority                50
-    debugPrintMT                  0
-    lsStepsizeGreedy              1
+    AbsTolODE                        1e-5
+    RelTolODE                        1e-3
+    maxNumStepsPerSecond             1000
+    minTimeStep                      1e-2
+    
+    constraintPenaltyInitialValue    2.0
+    constraintPenaltyIncreaseRate    2.0
+    inequalityConstraintDelta        5.0
+    inequalityConstraintMu           0.1
 
-    useRiccatiSolver              1
-
-    useFeedbackPolicy             1
+    preComputeRiccatiTerms           true
+    useFeedbackPolicy                true
+    riskSensitiveCoeff               0.0
+    
+    strategy                         LINE_SEARCH
+    lineSearch                       
+    {
+        minStepLength                1e-4
+        maxStepLength                1.0
+        hessianCorrectionStrategy    DIAGONAL_SHIFT
+        hessianCorrectionMultiple    1e-5
+    }
   }
 
   rollout
   {
-    AbsTolODE                     1e-5  ;1e-6
-    RelTolODE                     1e-3  ;1e-4
+    AbsTolODE                     1e-5
+    RelTolODE                     1e-3
     minTimeStep                   1e-2
     maxNumStepsPerSecond          50000
-    checkNumericalStability       0
+    checkNumericalStability       false
   }
 }
 
@@ -164,28 +137,23 @@ mpc
   runtimeMaxNumIterations         1
   initMaxNumIterations            1
 
-  runtimeMinLearningRate          1e-2
-  runtimeMaxLearningRate          1.0
-  initMinLearningRate             1e-2
-  initMaxLearningRate             1.0
+  runtimeMinStepLength            1e-2
+  runtimeMaxStepLength            1.0
+  initMinStepLength               1e-2
+  initMaxStepLength               1.0
 
-  debugPrint                      0
-  coldStart                       0
-  recedingHorizon                 1	; use receding horizon MPC
+  debugPrint                      false
+  coldStart                       false
 
-  useParallelRiccatiSolver        1	; use disjoint riccati solver in MP case and recedingHorizon fashion
+  useParallelRiccatiSolver        true ; use disjoint riccati solver in MP case and recedingHorizon fashion
 
-  forwardSimulationTime           28	; [ms] MRT time
+  solutionTimeWindow              500 ; [ms]
 
-  rosMsgTimeWindow                100	; [ms]
-  adaptiveRosMsgTimeWindow        0
-
-  mpcDesiredFrequency             20 ; [Hz]
+  mpcDesiredFrequency             20  ; [Hz]
   mrtDesiredFrequency             400 ; [Hz]
   
-  maxTimeStep                     10e-3
+  maxTimeStep                     1e-2
 }
-
 
 ; initial state
 initialRobotState
@@ -201,18 +169,18 @@ initialRobotState
    (5,0) 0.57    ; z
 
    ; joint state
-   (6,0)  -0.25; -0.2      ; LF_HAA
-   (7,0)  0.6;  0.723    ; LF_HFE
-   (8,0)  -0.85; -1.458    ; LF_KFE
-   (9,0)  0.25; -0.2      ; RF_HAA
-   (10,0) 0.6;  0.723    ; RF_HFE
-   (11,0) -0.85; -1.458    ; RF_KFE
-   (12,0) -0.25; -0.2      ; LH_HAA
-   (13,0) -0.6; -0.723    ; LH_HFE
-   (14,0) 0.85;  1.458    ; LH_KFE
-   (15,0) 0.25; -0.2      ; RH_HAA
-   (16,0) -0.6; -0.723    ; RH_HFE
-   (17,0) 0.85;  1.458    ; RH_KFE
+   (6,0)  -0.25       ; LF_HAA
+   (7,0)   0.60       ; LF_HFE
+   (8,0)  -0.85       ; LF_KFE
+   (9,0)   0.25       ; RF_HAA
+   (10,0)  0.60       ; RF_HFE
+   (11,0) -0.85       ; RF_KFE
+   (12,0) -0.25       ; LH_HAA
+   (13,0) -0.60       ; LH_HFE
+   (14,0)  0.85       ; LH_KFE
+   (15,0)  0.25       ; RH_HAA
+   (16,0) -0.60       ; RH_HFE
+   (17,0)  0.85       ; RH_KFE
 
    ; angular velocity
    (18,0) 0.0    ; x
@@ -239,24 +207,23 @@ initialRobotState
    (35,0) 0.0    ; KFE
 }
 
-
 ; state weighting
 Q
 {
     scaling 1e+0
 
    ; orientation
-   (0,0) 100.0;   x
-   (1,1) 200.0;  y
-   (2,2) 200.0;  z
+   (0,0) 100.0     ; x
+   (1,1) 200.0     ; y
+   (2,2) 200.0     ; z
 
    ; positon
-   (3,3) 1000.0; x
-   (4,4) 1000.0; y
-   (5,5) 1500.0; z
+   (3,3) 1000.0     ; x
+   (4,4) 1000.0     ; y
+   (5,5) 1500.0     ; z
 
    ; angular velocity
-   (6,6)  5.0      ; x
+   (6,6)   5.0      ; x
    (7,7)  10.0      ; y
    (8,8)  10.0      ; z
 
@@ -266,52 +233,51 @@ Q
    (11,11)  30.0    ; z
 
    ; LF joints
-   (12,12) 20.0 ; LF_HAA  ; 100.0
-   (13,13) 20.0 ; LF_HFE  ; 70.0
-   (14,14) 10.0 ; LF_KFE  ; 50.0
+   (12,12) 20.0 ; LF_HAA
+   (13,13) 20.0 ; LF_HFE
+   (14,14) 10.0 ; LF_KFE
 
    ; RF joints
-   (15,15) 20.0 ; RF_HAA  ; 100.0
-   (16,16) 20.0 ; RF_HFE  ; 70.0
-   (17,17) 10.0 ; RF_KFE  ; 50.0
+   (15,15) 20.0 ; RF_HAA
+   (16,16) 20.0 ; RF_HFE
+   (17,17) 10.0 ; RF_KFE
 
    ; LH joints
-   (18,18) 20.0 ; LH_HAA  ; 100.0
-   (19,19) 20.0 ; LH_HFE  ; 70.0
-   (20,20) 10.0 ; LH_KFE  ; 50.0
+   (18,18) 20.0 ; LH_HAA
+   (19,19) 20.0 ; LH_HFE
+   (20,20) 10.0 ; LH_KFE
 
    ; RH joints
-   (21,21) 20.0 ; RH_HAA  ; 100.0
-   (22,22) 20.0 ; RH_HFE  ; 70.0
-   (23,23) 10.0 ; RH_KFE  ; 50.0
+   (21,21) 20.0 ; RH_HAA
+   (22,22) 20.0 ; RH_HFE
+   (23,23) 10.0 ; RH_KFE
 
    ; Filter
-   (24,24) 0.0;
-   (25,25) 0.0;
-   (26,26) 0.0;
-   (27,27) 0.0;
-   (28,28) 0.0;
-   (29,29) 0.0;
-   (30,30) 0.0;
-   (31,31) 0.0;
-   (32,32) 0.0;
-   (33,33) 0.0;
-   (34,34) 0.0;
-   (35,35) 0.0;
-   (36,36) 0.0;
-   (37,37) 0.0;
-   (38,38) 0.0;
-   (39,39) 0.0;
-   (40,40) 0.0;
-   (41,41) 0.0;
-   (42,42) 0.0;
-   (43,43) 0.0;
-   (44,44) 0.0;
-   (45,45) 0.0;
-   (46,46) 0.0;
-   (47,47) 0.0;
+   (24,24) 0.0
+   (25,25) 0.0
+   (26,26) 0.0
+   (27,27) 0.0
+   (28,28) 0.0
+   (29,29) 0.0
+   (30,30) 0.0
+   (31,31) 0.0
+   (32,32) 0.0
+   (33,33) 0.0
+   (34,34) 0.0
+   (35,35) 0.0
+   (36,36) 0.0
+   (37,37) 0.0
+   (38,38) 0.0
+   (39,39) 0.0
+   (40,40) 0.0
+   (41,41) 0.0
+   (42,42) 0.0
+   (43,43) 0.0
+   (44,44) 0.0
+   (45,45) 0.0
+   (46,46) 0.0
+   (47,47) 0.0
 }
-
 
 ; control weighting
 R
@@ -354,37 +320,36 @@ R
    (20,20) 1000    ; LH_KFE
 
    ; RH joint velocities
-   (21,21)  1000    ; RH_HAA
-   (22,22)  1000    ; RH_HFE
-   (23,23)  1000    ; RH_KFE
+   (21,21) 1000    ; RH_HAA
+   (22,22) 1000    ; RH_HFE
+   (23,23) 1000    ; RH_KFE
 
    ; Filter
-   (24,24) 0.0;
-   (25,25) 0.0;
-   (26,26) 0.0;
-   (27,27) 0.0;
-   (28,28) 0.0;
-   (29,29) 0.0;
-   (30,30) 0.0;
-   (31,31) 0.0;
-   (32,32) 0.0;
-   (33,33) 0.0;
-   (34,34) 0.0;
-   (35,35) 0.0;
-   (36,36) 0.0;
-   (37,37) 0.0;
-   (38,38) 0.0;
-   (39,39) 0.0;
-   (40,40) 0.0;
-   (41,41) 0.0;
-   (42,42) 0.0;
-   (43,43) 0.0;
-   (44,44) 0.0;
-   (45,45) 0.0;
-   (46,46) 0.0;
-   (47,47) 0.0;
+   (24,24) 0.0
+   (25,25) 0.0
+   (26,26) 0.0
+   (27,27) 0.0
+   (28,28) 0.0
+   (29,29) 0.0
+   (30,30) 0.0
+   (31,31) 0.0
+   (32,32) 0.0
+   (33,33) 0.0
+   (34,34) 0.0
+   (35,35) 0.0
+   (36,36) 0.0
+   (37,37) 0.0
+   (38,38) 0.0
+   (39,39) 0.0
+   (40,40) 0.0
+   (41,41) 0.0
+   (42,42) 0.0
+   (43,43) 0.0
+   (44,44) 0.0
+   (45,45) 0.0
+   (46,46) 0.0
+   (47,47) 0.0
 }
-
 
 ; state weighting
 Q_final
@@ -432,54 +397,28 @@ Q_final
   (23,23) 0.0    ; RH_KFE
 
   ; Filter
-  (24,24) 0.0;
-  (25,25) 0.0;
-  (26,26) 0.0;
-  (27,27) 0.0;
-  (28,28) 0.0;
-  (29,29) 0.0;
-  (30,30) 0.0;
-  (31,31) 0.0;
-  (32,32) 0.0;
-  (33,33) 0.0;
-  (34,34) 0.0;
-  (35,35) 0.0;
-  (36,36) 0.0;
-  (37,37) 0.0;
-  (38,38) 0.0;
-  (39,39) 0.0;
-  (40,40) 0.0;
-  (41,41) 0.0;
-  (42,42) 0.0;
-  (43,43) 0.0;
-  (44,44) 0.0;
-  (45,45) 0.0;
-  (46,46) 0.0;
-  (47,47) 0.0;
+  (24,24) 0.0
+  (25,25) 0.0
+  (26,26) 0.0
+  (27,27) 0.0
+  (28,28) 0.0
+  (29,29) 0.0
+  (30,30) 0.0
+  (31,31) 0.0
+  (32,32) 0.0
+  (33,33) 0.0
+  (34,34) 0.0
+  (35,35) 0.0
+  (36,36) 0.0
+  (37,37) 0.0
+  (38,38) 0.0
+  (39,39) 0.0
+  (40,40) 0.0
+  (41,41) 0.0
+  (42,42) 0.0
+  (43,43) 0.0
+  (44,44) 0.0
+  (45,45) 0.0
+  (46,46) 0.0
+  (47,47) 0.0
 }
-
-
-; Robot final CoM pose
-CoM_final_pose
-{
-  ; orientation
-  (0,0) 0.0      ; x
-  (1,0) 0.0      ; y 
-  (2,0) 0.0      ; z
-                
-  ; position
-  (3,0) 2.0      ; x ;1.0
-  (4,0) 0.0      ; y
-  (5,0) 0.0      ; z
-}
-
-; set the endeffector's constraint information in ascending order
-; endeffector_constraint_0
-;{
-;  type  GAP
-;  xMin  0.7  ;0.7
-;  xMax  1.7  ;1.4
-;  yMin  -10.0
-;  yMax  10.0
-;}
-

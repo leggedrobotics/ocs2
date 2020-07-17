@@ -58,7 +58,7 @@ TEST(time_rollout_test, time_rollout_test) {
   scalar_array_t cntTimeStamp{initTime, finalTime};
   vector_array_t uff(2, vector_t::Ones(nu));
   matrix_array_t k(2, matrix_t::Zero(nu, nx));
-  auto controller = std::unique_ptr<LinearController>(new LinearController(nx, nu, cntTimeStamp, uff, k));
+  auto controller = std::unique_ptr<LinearController>(new LinearController(cntTimeStamp, uff, k));
 
   vector_t initState = vector_t::Zero(nx);
 

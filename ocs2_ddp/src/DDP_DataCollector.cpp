@@ -64,7 +64,7 @@ void DDP_DataCollector::collect(const GaussNewtonDDP* constDdpPtr) {
   // data resizing
   bool numPartitionsChanged = numPartitions_ != ddpPtr->numPartitions_;
   if (numPartitionsChanged) {
-    resizeDataContainer(ddpPtr->numPartitions_, ddpPtr->stateDim_, ddpPtr->inputDim_);
+    resizeDataContainer(ddpPtr->numPartitions_);
   }
 
   numPartitions_ = ddpPtr->numPartitions_;
@@ -179,7 +179,7 @@ void DDP_DataCollector::calculateStateInputConstraintsSensitivity(const GaussNew
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void DDP_DataCollector::resizeDataContainer(size_t numPartitions, size_t stateDim, size_t inputDim) {
+void DDP_DataCollector::resizeDataContainer(size_t numPartitions) {
   if (numPartitions == 0) {
     throw std::runtime_error("The number of Partitions cannot be zero!");
   }
@@ -188,7 +188,7 @@ void DDP_DataCollector::resizeDataContainer(size_t numPartitions, size_t stateDi
    * Data which should be copied
    */
   // optimized controller
-  optimizedControllersStock_.resize(numPartitions, LinearController(stateDim, inputDim));
+  optimizedControllersStock_.resize(numPartitions);
 
   // nominal trajectories
   nominalTimeTrajectoriesStock_.resize(numPartitions);

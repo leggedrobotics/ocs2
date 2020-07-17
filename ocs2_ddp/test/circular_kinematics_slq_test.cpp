@@ -107,14 +107,12 @@ TEST(circular_kinematics_slq_test, circular_kinematics_slq_test) {
   /******************************************************************************************************/
   // SLQ - single-thread version
   slqSettings.ddpSettings_.nThreads_ = 1;
-  SLQ slqST(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories,
-            slqSettings);
+  SLQ slqST(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
 
   // SLQ - multi-thread version
   slqSettings.ddpSettings_.nThreads_ = 3;
   slqSettings.ddpSettings_.displayInfo_ = false;
-  SLQ slqMT(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories,
-            slqSettings);
+  SLQ slqMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
   slqMT.useParallelRiccatiSolverFromInitItr(false);
 
   // run single core SLQ

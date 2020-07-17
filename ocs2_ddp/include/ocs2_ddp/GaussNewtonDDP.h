@@ -100,8 +100,6 @@ class GaussNewtonDDP : public Solver_BASE {
   /**
    * Constructor
    *
-   * @param [in] stateDim: State vector dimension
-   * @param [in] inputDim: Input vector dimension
    * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
    * @param [in] systemDynamicsPtr: The system dynamics and derivatives for the subsystems.
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
@@ -112,10 +110,9 @@ class GaussNewtonDDP : public Solver_BASE {
    * If it is not defined, we will use the final cost function defined in costFunctionPtr.
    * @param [in] algorithmName: It should be either SLQ ot ILQR.
    */
-  GaussNewtonDDP(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr,
-                 const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
-                 const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const DDP_Settings& ddpSettings,
-                 const CostFunctionBase* heuristicsFunctionPtr, const char* algorithmName);
+  GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
+                 const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
+                 const DDP_Settings& ddpSettings, const CostFunctionBase* heuristicsFunctionPtr, const char* algorithmName);
 
   /**
    * Destructor.
@@ -548,9 +545,6 @@ class GaussNewtonDDP : public Solver_BASE {
                const std::vector<ControllerBase*>& controllersPtrStock) override;
 
  protected:
-  size_t stateDim_;
-  size_t inputDim_;
-
   DDP_Settings ddpSettings_;
 
   ThreadPool threadPool_;

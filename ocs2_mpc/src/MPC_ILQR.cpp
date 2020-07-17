@@ -34,16 +34,15 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MPC_ILQR::MPC_ILQR(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr,
-                   const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
-                   const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const scalar_array_t& partitioningTimes,
-                   const ILQR_Settings& ilqrSettings /* = ILQR_Settings()*/, const MPC_Settings& mpcSettings /* = MPC_Settings()*/,
-                   const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
+MPC_ILQR::MPC_ILQR(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
+                   const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
+                   const scalar_array_t& partitioningTimes, const ILQR_Settings& ilqrSettings /* = ILQR_Settings()*/,
+                   const MPC_Settings& mpcSettings /* = MPC_Settings()*/, const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
 
     : MPC_BASE(partitioningTimes, mpcSettings) {
   // ILQR
-  ilqrPtr_.reset(new ILQR(stateDim, inputDim, rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr,
-                          operatingTrajectoriesPtr, ilqrSettings, heuristicsFunctionPtr));
+  ilqrPtr_.reset(new ILQR(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, ilqrSettings,
+                          heuristicsFunctionPtr));
 }
 
 /******************************************************************************************************/

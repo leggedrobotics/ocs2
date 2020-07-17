@@ -130,11 +130,8 @@ class DDP_DataCollector {
    * Resizes the data of the other-class's member.
    *
    * @param numPartitions: Number of partitions.
-   * @param [in] stateDim: State vector dimension
-   * @param [in] inputDim: Input vector dimension
-   * @return True if number of partitions is changed.
    */
-  void resizeDataContainer(size_t numPartitions, size_t stateDim, size_t inputDim);
+  void resizeDataContainer(size_t numPartitions);
 
   /**
    * Calculates sensitivity of the state-input constraints to event times.

@@ -39,13 +39,11 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-GaussNewtonDDP::GaussNewtonDDP(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr,
+GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr,
                                const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
                                const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const DDP_Settings& ddpSettings,
                                const CostFunctionBase* heuristicsFunctionPtr, const char* algorithmName)
     : Solver_BASE(),
-      stateDim_(stateDim),
-      inputDim_(inputDim),
       ddpSettings_(ddpSettings),
       threadPool_(ddpSettings.nThreads_, ddpSettings.threadPriority_),
       algorithmName_(algorithmName),
@@ -240,7 +238,7 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
 
   // fill controller
   if (ddpSettings_.useFeedbackPolicy_) {
-    primalSolutionPtr->controllerPtr_.reset(new LinearController(stateDim_, inputDim_));
+    primalSolutionPtr->controllerPtr_.reset(new LinearController);
     // concatenate controller stock into a single controller
     for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
       // break if the start time of the partition is greater than the final time
@@ -253,7 +251,7 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
     }
   } else {
     primalSolutionPtr->controllerPtr_.reset(
-        new FeedforwardController(inputDim_, primalSolutionPtr->timeTrajectory_, primalSolutionPtr->inputTrajectory_));
+        new FeedforwardController(primalSolutionPtr->timeTrajectory_, primalSolutionPtr->inputTrajectory_));
   }
 
   // fill mode schedule
@@ -375,10 +373,10 @@ void GaussNewtonDDP::rewindOptimizer(size_t firstIndex) {
       xFinalStock_[i] = xFinalStock_[firstIndex + i];
     } else {
       nominalControllersStock_[i].clear();
-      SmFinalStock_[i].setZero(stateDim_, stateDim_);
-      SvFinalStock_[i].setZero(stateDim_);
+      SmFinalStock_[i].setZero(0, 0);
+      SvFinalStock_[i].setZero(0);
       sFinalStock_[i] = 0.0;
-      xFinalStock_[i].setZero(stateDim_);
+      xFinalStock_[i].setZero(0);
     }
   }
 }
@@ -453,14 +451,14 @@ void GaussNewtonDDP::setupOptimizer(size_t numPartitions) {
   /*
    * nominal trajectories
    */
-  nominalControllersStock_.resize(numPartitions, LinearController(stateDim_, inputDim_));
+  nominalControllersStock_.resize(numPartitions);
 
   nominalTimeTrajectoriesStock_.resize(numPartitions);
   nominalPostEventIndicesStock_.resize(numPartitions);
   nominalStateTrajectoriesStock_.resize(numPartitions);
   nominalInputTrajectoriesStock_.resize(numPartitions);
 
-  cachedControllersStock_.resize(numPartitions, LinearController(stateDim_, inputDim_));
+  cachedControllersStock_.resize(numPartitions);
   cachedTimeTrajectoriesStock_.resize(numPartitions);
   cachedPostEventIndicesStock_.resize(numPartitions);
   cachedStateTrajectoriesStock_.resize(numPartitions);
@@ -686,9 +684,9 @@ scalar_t GaussNewtonDDP::rolloutTrajectory(std::vector<LinearController>& contro
     modelDataTrajectoriesStock[i].resize(timeTrajectoriesStock[i].size());
     for (size_t k = 0; k < timeTrajectoriesStock[i].size(); k++) {
       modelDataTrajectoriesStock[i][k].time_ = timeTrajectoriesStock[i][k];
-      modelDataTrajectoriesStock[i][k].stateDim_ = stateDim_;
-      modelDataTrajectoriesStock[i][k].inputDim_ = inputDim_;
-      modelDataTrajectoriesStock[i][k].dynamicsBias_.setZero(stateDim_);
+      modelDataTrajectoriesStock[i][k].stateDim_ = stateTrajectoriesStock[i][k].size();
+      modelDataTrajectoriesStock[i][k].inputDim_ = inputTrajectoriesStock[i][k].size();
+      modelDataTrajectoriesStock[i][k].dynamicsBias_.setZero(stateTrajectoriesStock[i][k].size());
     }
 
     // total number of steps
@@ -968,7 +966,7 @@ void GaussNewtonDDP::lineSearchTask(LineSearchModule& lineSearchModule) {
 
   // local search forward simulation's variables
   PerformanceIndex performanceIndex;
-  std::vector<LinearController> controllersStock(numPartitions_, LinearController(stateDim_, inputDim_));
+  std::vector<LinearController> controllersStock(numPartitions_);
   scalar_array2_t timeTrajectoriesStock(numPartitions_);
   size_array2_t postEventIndicesStock(numPartitions_);
   vector_array2_t stateTrajectoriesStock(numPartitions_);
@@ -1408,7 +1406,7 @@ void GaussNewtonDDP::computeProjections(const matrix_t& Hm, const matrix_t& Dm, 
 
   // compute DmDagger, DmDaggerTHmDmDaggerUUT, HmInverseConstrainedLowRank
   if (Dm.rows() == 0) {
-    constraintRangeProjector.setZero(inputDim_, 0);
+    constraintRangeProjector.setZero(Dm.cols(), 0);
     constraintNullProjector = HmInvUmUmT;
 
   } else {
@@ -1881,7 +1879,7 @@ void GaussNewtonDDP::runIteration() {
 void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) {
   const size_t numPartitions = partitioningTimes.size() - 1;
 
-  std::vector<LinearController> noInitialController(numPartitions, LinearController(stateDim_, inputDim_));
+  std::vector<LinearController> noInitialController(numPartitions);
   std::vector<ControllerBase*> noInitialControllerPtrArray(numPartitions);
   for (size_t i = 0; i < numPartitions; i++) {
     noInitialControllerPtrArray[i] = &noInitialController[i];

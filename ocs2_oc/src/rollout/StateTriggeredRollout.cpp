@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_oc/rollout/RootFinder.h>
 
+#include <ocs2_core/control/StateBasedLinearController.h>
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
 
 namespace ocs2 {

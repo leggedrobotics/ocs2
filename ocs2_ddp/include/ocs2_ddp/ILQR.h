@@ -46,8 +46,6 @@ class ILQR : public GaussNewtonDDP {
   /**
    * Constructor
    *
-   * @param [in] stateDim: State vector dimension
-   * @param [in] inputDim: Input vector dimension
    * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
    * @param [in] systemDynamicsPtr: The system dynamics and derivatives for the subsystems.
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
@@ -57,10 +55,9 @@ class ILQR : public GaussNewtonDDP {
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the final cost function defined in costFunctionPtr.
    */
-  ILQR(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr,
-       const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
-       const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const ILQR_Settings& settings = ILQR_Settings(),
-       const CostFunctionBase* heuristicsFunctionPtr = nullptr);
+  ILQR(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
+       const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
+       const ILQR_Settings& settings = ILQR_Settings(), const CostFunctionBase* heuristicsFunctionPtr = nullptr);
 
   /**
    * Default destructor.

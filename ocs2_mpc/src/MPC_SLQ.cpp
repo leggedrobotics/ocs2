@@ -34,16 +34,15 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MPC_SLQ::MPC_SLQ(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr,
-                 const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
-                 const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const scalar_array_t& partitioningTimes,
-                 const SLQ_Settings& slqSettings /* = SLQ_Settings()*/, const MPC_Settings& mpcSettings /* = MPC_Settings()*/,
-                 const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
+MPC_SLQ::MPC_SLQ(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
+                 const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
+                 const scalar_array_t& partitioningTimes, const SLQ_Settings& slqSettings /* = SLQ_Settings()*/,
+                 const MPC_Settings& mpcSettings /* = MPC_Settings()*/, const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
 
     : MPC_BASE(partitioningTimes, mpcSettings) {
   // SLQ
-  slqPtr_.reset(new SLQ(stateDim, inputDim, rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
-                        slqSettings, heuristicsFunctionPtr));
+  slqPtr_.reset(new SLQ(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, slqSettings,
+                        heuristicsFunctionPtr));
 }
 
 /******************************************************************************************************/

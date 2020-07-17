@@ -1095,7 +1095,7 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const matrix_t& SmF
   SmFinalStock_[finalActivePartition_] = SmFinal;
   SvFinalStock_[finalActivePartition_] = SvFinal;
   sFinalStock_[finalActivePartition_] = sFinal;
-  xFinalStock_[finalActivePartition_] = vector_t::Zero(stateDim_);  // TODO(mspieler) how to initialize properly?
+  xFinalStock_[finalActivePartition_] = nominalStateTrajectoriesStock_[finalActivePartition_].back();
 
   // solve it sequentially for the first time when useParallelRiccatiSolverFromInitItr_ is false
   if (iteration_ == 0 && !useParallelRiccatiSolverFromInitItr_) {

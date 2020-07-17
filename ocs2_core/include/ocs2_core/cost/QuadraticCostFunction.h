@@ -56,7 +56,7 @@ class QuadraticCostFunction : public CostFunctionBase {
                         const vector_t& xNominalFinal, const matrix_t& P = matrix_t());
 
   /** Destructor */
-  virtual ~QuadraticCostFunction() override = default;
+  ~QuadraticCostFunction() override = default;
 
   /** Clone */
   QuadraticCostFunction* clone() const override;

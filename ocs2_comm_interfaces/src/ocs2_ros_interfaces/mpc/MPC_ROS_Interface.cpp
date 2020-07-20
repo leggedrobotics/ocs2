@@ -97,7 +97,7 @@ bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_ms
     ros_msg_conversions::readTargetTrajectoriesMsg(req.targetTrajectories, initCostDesiredTrajectories);
     reset(initCostDesiredTrajectories);
 
-    res.done = true;
+    res.done = static_cast<uint8_t>(true);
 
     std::cerr << std::endl
               << "\n#####################################################"
@@ -120,33 +120,25 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(bool c
                                                                           const CommandData& commandData) {
   ocs2_msgs::mpc_flattened_controller mpcPolicyMsg;
 
-  mpcPolicyMsg.controllerIsUpdated = controllerIsUpdated;
+  mpcPolicyMsg.controllerIsUpdated = static_cast<uint8_t>(controllerIsUpdated);
 
   ros_msg_conversions::createObservationMsg(commandData.mpcInitObservation_, mpcPolicyMsg.initObservation);
   ros_msg_conversions::createTargetTrajectoriesMsg(commandData.mpcCostDesiredTrajectories_, mpcPolicyMsg.planTargetTrajectories);
-
   ros_msg_conversions::createModeScheduleMsg(primalSolution.modeSchedule_, mpcPolicyMsg.modeSchedule);
 
-  ControllerType controllerType = primalSolution.controllerPtr_->getType();
-
-  // translate controllerType enum into message enum
-  switch (controllerType) {
-    case ControllerType::FEEDFORWARD: {
+  switch (primalSolution.controllerPtr_->getType()) {
+    case ControllerType::FEEDFORWARD:
       mpcPolicyMsg.controllerType = ocs2_msgs::mpc_flattened_controller::CONTROLLER_FEEDFORWARD;
       break;
-    }
-    case ControllerType::LINEAR: {
+    case ControllerType::LINEAR:
       mpcPolicyMsg.controllerType = ocs2_msgs::mpc_flattened_controller::CONTROLLER_LINEAR;
       break;
-    }
-    default: {
-      throw std::runtime_error("MPC_ROS_Interface: Unknown controller type.");
-      break;
-    }
+    default:
+      throw std::runtime_error("MPC_ROS_Interface::createMpcPolicyMsg: Unknown ControllerType");
   }
 
   // maximum length of the message
-  size_t N = primalSolution.timeTrajectory_.size();
+  const size_t N = primalSolution.timeTrajectory_.size();
 
   mpcPolicyMsg.timeTrajectory.clear();
   mpcPolicyMsg.timeTrajectory.reserve(N);
@@ -190,6 +182,8 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(bool c
     policyMsgDataPointers.push_back(&mpcPolicyMsg.data.back().data);
     timeTrajectoryTruncated.push_back(t);
   }  // end of k loop
+
+  // serialize controller into data buffer
   primalSolution.controllerPtr_->flatten(timeTrajectoryTruncated, policyMsgDataPointers);
 
   return mpcPolicyMsg;

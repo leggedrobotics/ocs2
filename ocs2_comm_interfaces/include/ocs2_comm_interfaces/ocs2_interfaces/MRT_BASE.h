@@ -145,7 +145,7 @@ class MRT_BASE {
    * @brief rolloutSet: Whether or not the internal rollout object has been set
    * @return True if a rollout object is available.
    */
-  bool isRolloutSet() const { return rolloutPtr_.get(); }
+  bool isRolloutSet() const { return rolloutPtr_ != nullptr; }
 
  protected:
   /**

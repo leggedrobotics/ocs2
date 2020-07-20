@@ -64,7 +64,7 @@ void MRT_ROS_Interface::resetMpcNode(const CostDesiredTrajectories& initCostDesi
   this->policyReceivedEver_ = false;
 
   ocs2_msgs::reset resetSrv;
-  resetSrv.request.reset = true;
+  resetSrv.request.reset = static_cast<uint8_t>(true);
 
   ros_msg_conversions::createTargetTrajectoriesMsg(initCostDesiredTrajectories, resetSrv.request.targetTrajectories);
 
@@ -124,51 +124,26 @@ void MRT_ROS_Interface::publisherWorkerThread() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_controller::ConstPtr& msg) {
-  std::lock_guard<std::mutex> lk(this->policyBufferMutex_);
-  auto& timeBuffer = this->primalSolutionBuffer_->timeTrajectory_;
-  auto& stateBuffer = this->primalSolutionBuffer_->stateTrajectory_;
-  auto& inputBuffer = this->primalSolutionBuffer_->inputTrajectory_;
-  auto& controlBuffer = this->primalSolutionBuffer_->controllerPtr_;
-  auto& modeScheduleBuffer = this->primalSolutionBuffer_->modeSchedule_;
-  auto& initObservationBuffer = this->commandBuffer_->mpcInitObservation_;
-  auto& costDesiredBuffer = this->commandBuffer_->mpcCostDesiredTrajectories_;
+void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller& msg, PrimalSolution& primalSolution,
+                                      CommandData& commandData) {
+  auto& timeBuffer = primalSolution.timeTrajectory_;
+  auto& stateBuffer = primalSolution.stateTrajectory_;
+  auto& inputBuffer = primalSolution.inputTrajectory_;
+  auto& controlBuffer = primalSolution.controllerPtr_;
 
-  // if MPC did not update the policy
-  if (!static_cast<bool>(msg->controllerIsUpdated)) {
-    timeBuffer.clear();
-    stateBuffer.clear();
-    inputBuffer.clear();
-    controlBuffer.reset(nullptr);
-    modeScheduleBuffer = ModeSchedule({}, {0});
-    initObservationBuffer = SystemObservation();
-    costDesiredBuffer.clear();
+  ros_msg_conversions::readObservationMsg(msg.initObservation, commandData.mpcInitObservation_);
+  ros_msg_conversions::readTargetTrajectoriesMsg(msg.planTargetTrajectories, commandData.mpcCostDesiredTrajectories_);
+  primalSolution.modeSchedule_ = ros_msg_conversions::readModeScheduleMsg(msg.modeSchedule);
 
-    this->policyUpdatedBuffer_ = false;
-    this->newPolicyInBuffer_ = true;
-
-    return;
-  }
-
-  ros_msg_conversions::readObservationMsg(msg->initObservation, initObservationBuffer);
-  ros_msg_conversions::readTargetTrajectoriesMsg(msg->planTargetTrajectories, costDesiredBuffer);
-  modeScheduleBuffer = ros_msg_conversions::readModeScheduleMsg(msg->modeSchedule);
-
-  this->policyUpdatedBuffer_ = msg->controllerIsUpdated;
-
-  const scalar_t partitionInitMargin = 1e-1;  //! @badcode Is this necessary?
-  this->partitioningTimesUpdate(initObservationBuffer.time() - partitionInitMargin, this->partitioningTimesBuffer_);
-
-  const size_t N = msg->timeTrajectory.size();
+  const size_t N = msg.timeTrajectory.size();
+  const size_t stateDim = msg.stateTrajectory.front().value.size();
+  const size_t inputDim = msg.inputTrajectory.front().value.size();
 
   if (N == 0) {
-    throw std::runtime_error("MRT_ROS_Interface::mpcPolicyCallback -- Controller must not be empty");
-  } else if (N != msg->stateTrajectory.size() && N != msg->inputTrajectory.size()) {
-    throw std::runtime_error("MRT_ROS_Interface::mpcPolicyCallback -- Controller must have same size");
+    throw std::runtime_error("MRT_ROS_Interface::readPolicyMsg: Controller must not be empty");
+  } else if (N != msg.stateTrajectory.size() && N != msg.inputTrajectory.size()) {
+    throw std::runtime_error("MRT_ROS_Interface::readPolicyMsg: Controller must have same size");
   }
-
-  const size_t stateDim = msg->stateTrajectory.front().value.size();
-  const size_t inputDim = msg->inputTrajectory.front().value.size();
 
   timeBuffer.clear();
   timeBuffer.reserve(N);
@@ -178,45 +153,76 @@ void MRT_ROS_Interface::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_control
   inputBuffer.reserve(N);
 
   for (size_t i = 0; i < N; i++) {
-    timeBuffer.emplace_back(msg->timeTrajectory[i]);
-    stateBuffer.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg->stateTrajectory[i].value.data(), stateDim).cast<scalar_t>());
-    inputBuffer.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg->inputTrajectory[i].value.data(), inputDim).cast<scalar_t>());
-  }  // end of i loop
-
-  // instantiate the correct controller
-  switch (msg->controllerType) {
-    case ocs2_msgs::mpc_flattened_controller::CONTROLLER_FEEDFORWARD: {
-      controlBuffer.reset(new FeedforwardController(inputDim));
-      break;
-    }
-    case ocs2_msgs::mpc_flattened_controller::CONTROLLER_LINEAR: {
-      controlBuffer.reset(new LinearController(stateDim, inputDim));
-      break;
-    }
-    default:
-      throw std::runtime_error("MRT_ROS_Interface::mpcPolicyCallback -- Unknown controllerType");
+    timeBuffer.emplace_back(msg.timeTrajectory[i]);
+    stateBuffer.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg.stateTrajectory[i].value.data(), stateDim).cast<scalar_t>());
+    inputBuffer.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg.inputTrajectory[i].value.data(), inputDim).cast<scalar_t>());
   }
 
   // check data size
-  if (msg->data.size() != N) {
-    throw std::runtime_error("Data has the wrong length");
+  if (msg.data.size() != N) {
+    throw std::runtime_error("MRT_ROS_Interface::readPolicyMsg: Data has the wrong length");
   }
 
   std::vector<std::vector<float> const*> controllerDataPtrArray(N, nullptr);
   for (int i = 0; i < N; i++) {
-    controllerDataPtrArray[i] = &(msg->data[i].data);
+    controllerDataPtrArray[i] = &(msg.data[i].data);
   }
 
-  // load the message data into controller
-  controlBuffer->unFlatten(timeBuffer, controllerDataPtrArray);
+  // instantiate the correct controller
+  switch (msg.controllerType) {
+    case ocs2_msgs::mpc_flattened_controller::CONTROLLER_FEEDFORWARD: {
+      auto controller = FeedforwardController::unFlatten(inputDim, timeBuffer, controllerDataPtrArray);
+      controlBuffer.reset(new FeedforwardController(std::move(controller)));
+      break;
+    }
+    case ocs2_msgs::mpc_flattened_controller::CONTROLLER_LINEAR: {
+      auto controller = LinearController::unFlatten(stateDim, inputDim, timeBuffer, controllerDataPtrArray);
+      controlBuffer.reset(new LinearController(std::move(controller)));
+      break;
+    }
+    default:
+      throw std::runtime_error("MRT_ROS_Interface::readPolicyMsg: Unknown controllerType");
+  }
+}
 
-  // allow user to modify the buffer
-  this->modifyBufferPolicy(*this->commandBuffer_, *this->primalSolutionBuffer_);
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void MRT_ROS_Interface::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_controller::ConstPtr& msg) {
+  std::lock_guard<std::mutex> lk(this->policyBufferMutex_);
+  auto& timeBuffer = this->primalSolutionBuffer_->timeTrajectory_;
+  auto& stateBuffer = this->primalSolutionBuffer_->stateTrajectory_;
+  auto& inputBuffer = this->primalSolutionBuffer_->inputTrajectory_;
+  auto& controlBuffer = this->primalSolutionBuffer_->controllerPtr_;
+  auto& modeScheduleBuffer = this->primalSolutionBuffer_->modeSchedule_;
+  auto& primalSolutionBuffer = *this->primalSolutionBuffer_;
+  auto& commandBuffer = *this->commandBuffer_;
 
-  if (!this->policyReceivedEver_ && this->policyUpdatedBuffer_) {
-    this->policyReceivedEver_ = true;
-    this->initPlanObservation_ = initObservationBuffer;
-    this->initCall(this->initPlanObservation_);
+  this->policyUpdatedBuffer_ = static_cast<bool>(msg->controllerIsUpdated);
+
+  // if MPC did not update the policy
+  if (!this->policyUpdatedBuffer_) {
+    timeBuffer.clear();
+    stateBuffer.clear();
+    inputBuffer.clear();
+    controlBuffer.reset(nullptr);
+    modeScheduleBuffer = ModeSchedule({}, {0});
+    commandBuffer.mpcInitObservation_ = SystemObservation();
+    commandBuffer.mpcCostDesiredTrajectories_.clear();
+  } else {
+    readPolicyMsg(*msg, primalSolutionBuffer, commandBuffer);
+
+    const scalar_t partitionInitMargin = 1e-1;  //! @badcode Is this necessary?
+    this->partitioningTimesUpdate(commandBuffer.mpcInitObservation_.time() - partitionInitMargin, this->partitioningTimesBuffer_);
+
+    // allow user to modify the buffer
+    this->modifyBufferPolicy(*this->commandBuffer_, *this->primalSolutionBuffer_);
+
+    if (!this->policyReceivedEver_) {
+      this->policyReceivedEver_ = true;
+      this->initPlanObservation_ = commandBuffer.mpcInitObservation_;
+      this->initCall(this->initPlanObservation_);
+    }
   }
 
   this->newPolicyInBuffer_ = true;

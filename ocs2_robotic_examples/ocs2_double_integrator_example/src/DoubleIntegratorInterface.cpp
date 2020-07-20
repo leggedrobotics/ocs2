@@ -123,7 +123,7 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<MPC_SLQ> DoubleIntegratorInterface::getMpc() {
-  return std::unique_ptr<MPC_SLQ>(new MPC_SLQ(STATE_DIM_, INPUT_DIM_, ddpLinearSystemRolloutPtr_.get(), linearSystemDynamicsPtr_.get(),
+  return std::unique_ptr<MPC_SLQ>(new MPC_SLQ(ddpLinearSystemRolloutPtr_.get(), linearSystemDynamicsPtr_.get(),
                                               linearSystemConstraintPtr_.get(), linearSystemCostPtr_.get(),
                                               linearSystemOperatingPointPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_));
 }

@@ -128,7 +128,7 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<MPC_ILQR> QuadrotorInterface::getMpc() {
-  return std::unique_ptr<MPC_ILQR>(new MPC_ILQR(STATE_DIM_, INPUT_DIM_, ddpQuadrotorRolloutPtr_.get(), quadrotorSystemDynamicsPtr_.get(),
+  return std::unique_ptr<MPC_ILQR>(new MPC_ILQR(ddpQuadrotorRolloutPtr_.get(), quadrotorSystemDynamicsPtr_.get(),
                                                 quadrotorConstraintPtr_.get(), quadrotorCostPtr_.get(), quadrotorOperatingPointPtr_.get(),
                                                 partitioningTimes_, ilqrSettings_, mpcSettings_));
 }

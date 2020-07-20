@@ -126,7 +126,7 @@ int main(int argc, char** argv) {
    * define solver and run
    */
   slqSettings.ddpSettings_.nThreads_ = 1;
-  SLQ slq(STATE_DIM_, INPUT_DIM_, ballbotRolloutPtr.get(), ballbotSystemDynamicsPtr.get(), ballbotConstraintPtr.get(), ballbotCostPtr.get(),
+  SLQ slq(ballbotRolloutPtr.get(), ballbotSystemDynamicsPtr.get(), ballbotConstraintPtr.get(), ballbotCostPtr.get(),
           ballbotOperatingPointPtr.get(), slqSettings);
   slq.run(0.0, xInit, timeHorizon, partitioningTimes);
 

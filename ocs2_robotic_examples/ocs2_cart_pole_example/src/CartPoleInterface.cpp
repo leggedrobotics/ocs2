@@ -128,9 +128,9 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<MPC_SLQ> CartPoleInterface::getMpc() {
-  return std::unique_ptr<MPC_SLQ>(new MPC_SLQ(STATE_DIM_, INPUT_DIM_, ddpCartPoleRolloutPtr_.get(), cartPoleSystemDynamicsPtr_.get(),
-                                              cartPoleConstraintPtr_.get(), cartPoleCostPtr_.get(), cartPoleOperatingPointPtr_.get(),
-                                              partitioningTimes_, slqSettings_, mpcSettings_));
+  return std::unique_ptr<MPC_SLQ>(new MPC_SLQ(ddpCartPoleRolloutPtr_.get(), cartPoleSystemDynamicsPtr_.get(), cartPoleConstraintPtr_.get(),
+                                              cartPoleCostPtr_.get(), cartPoleOperatingPointPtr_.get(), partitioningTimes_, slqSettings_,
+                                              mpcSettings_));
 }
 
 }  // namespace cartpole

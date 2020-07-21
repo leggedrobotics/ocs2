@@ -38,8 +38,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 vector_t StateTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray, const vector_t& initState, ControllerBase* controller,
                                         scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces,
-                                        vector_array_t& stateTrajectory, vector_array_t& inputTrajectory,
-                                        std::vector<ModelDataBase>* modelDataTrajectoryPtr) {
+                                        vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
   if (!controller) {
     throw std::runtime_error("The input controller is not set.");
   }
@@ -57,10 +56,6 @@ vector_t StateTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray,
   inputTrajectory.reserve(maxNumSteps + 1);
   eventsPastTheEndIndeces.clear();
   eventsPastTheEndIndeces.reserve(maxNumSteps);
-  if (modelDataTrajectoryPtr) {
-    modelDataTrajectoryPtr->clear();
-    modelDataTrajectoryPtr->reserve(maxNumSteps + 1);
-  }
 
   // set controller
   StateBasedLinearController trajectorySpreadingController(controller->getStateDim(), controller->getInputDim());
@@ -94,7 +89,7 @@ vector_t StateTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray,
   while (true) {  // keeps looping until end time condition is fulfilled, after which the loop is broken
     bool triggered = false;
     try {
-      Observer observer(&stateTrajectory, &timeTrajectory, modelDataTrajectoryPtr);  // concatenate trajectory
+      Observer observer(&stateTrajectory, &timeTrajectory);  // concatenate trajectory
       dynamicsIntegratorPtr_->integrateAdaptive(*systemDynamicsPtr_, observer, x0, t0, t1, this->settings().minTimeStep_,
                                                 this->settings().absTolODE_, this->settings().relTolODE_, maxNumSteps);
     } catch (const size_t& e) {
@@ -120,9 +115,6 @@ vector_t StateTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray,
     if (triggered && !accuracyCondition) {
       stateTrajectory.pop_back();
       timeTrajectory.pop_back();
-      if (modelDataTrajectoryPtr) {
-        modelDataTrajectoryPtr->pop_back();
-      }
     }
     triggered = false;
 
@@ -130,9 +122,6 @@ vector_t StateTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray,
     if (this->settings().reconstructInputTrajectory_) {
       for (; k_u < timeTrajectory.size(); k_u++) {
         inputTrajectory.emplace_back(systemDynamicsPtr_->controllerPtr()->computeInput(timeTrajectory[k_u], stateTrajectory[k_u]));
-        if (modelDataTrajectoryPtr) {
-          (*modelDataTrajectoryPtr)[k_u].dynamicsBias_.setZero(stateTrajectory[k_u].size());
-        }
       }  // end of k_u loop
     }
 
@@ -179,9 +168,6 @@ vector_t StateTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray,
       stateTrajectory.pop_back();
       timeTrajectory.pop_back();
       inputTrajectory.pop_back();
-      if (modelDataTrajectoryPtr) {
-        modelDataTrajectoryPtr->pop_back();
-      }
       k_u--;
     }
     singleEventIterations++;

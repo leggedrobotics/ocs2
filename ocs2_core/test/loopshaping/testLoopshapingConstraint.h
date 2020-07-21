@@ -50,16 +50,14 @@ class TestFixtureLoopShapingConstraint : public ::testing::Test {
     F_f.setRandom(numStateOnlyFinalConstraint, CONFIG::SYSTEM_STATE_DIM);
 
     size_t numInequalityConstraint = 10;
-    scalar_array_t h0;
-    vector_array_t dhdx;
-    vector_array_t dhdu;
+    vector_t h0(numInequalityConstraint);
+    matrix_t dhdx = matrix_t::Random(numInequalityConstraint, CONFIG::SYSTEM_STATE_DIM);
+    matrix_t dhdu = matrix_t::Random(numInequalityConstraint, CONFIG::SYSTEM_INPUT_DIM);
     matrix_array_t dhdxx;
     matrix_array_t dhduu;
     matrix_array_t dhdux;
     for (size_t i = 0; i < numInequalityConstraint; i++) {
-      h0.push_back(i);
-      dhdx.push_back(vector_t::Random(CONFIG::SYSTEM_STATE_DIM));
-      dhdu.push_back(vector_t::Random(CONFIG::SYSTEM_INPUT_DIM));
+      h0(i) = i;
       dhdxx.push_back(matrix_t::Random(CONFIG::SYSTEM_STATE_DIM, CONFIG::SYSTEM_STATE_DIM));
       dhduu.push_back(matrix_t::Random(CONFIG::SYSTEM_INPUT_DIM, CONFIG::SYSTEM_INPUT_DIM));
       dhdux.push_back(matrix_t::Random(CONFIG::SYSTEM_INPUT_DIM, CONFIG::SYSTEM_STATE_DIM));
@@ -69,12 +67,10 @@ class TestFixtureLoopShapingConstraint : public ::testing::Test {
     }
 
     // Make system Constraint
-    testSystemConstraint.reset(new LinearConstraint(CONFIG::SYSTEM_STATE_DIM, CONFIG::SYSTEM_INPUT_DIM, e, C, D, h, F, h_f, F_f, h0, dhdx,
-                                                    dhdu, dhdxx, dhduu, dhdux));
+    testSystemConstraint.reset(new LinearConstraint(e, C, D, h, F, h_f, F_f, h0, dhdx, dhdu, dhdxx, dhduu, dhdux));
 
     // Create Loopshaping constraint
-    testLoopshapingConstraint =
-        LoopshapingConstraint::create(CONFIG::FULL_STATE_DIM, CONFIG::FULL_INPUT_DIM, *testSystemConstraint, loopshapingDefinition_);
+    testLoopshapingConstraint = LoopshapingConstraint::create(*testSystemConstraint, loopshapingDefinition_);
   };
 
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;

@@ -34,10 +34,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t PenaltyBase::getPenaltyCost(const scalar_array_t& h) const {
+scalar_t PenaltyBase::penaltyCost(const vector_t& h) const {
   scalar_t penalty = 0;
-  for (const scalar_t& hi : h) {
-    penalty += getPenaltyFunctionValue(hi);
+  for (size_t i = 0; i < h.rows(); i++) {
+    penalty += getPenaltyFunctionValue(h(i));
   }
   return penalty;
 }
@@ -45,102 +45,47 @@ scalar_t PenaltyBase::getPenaltyCost(const scalar_array_t& h) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t PenaltyBase::getPenaltyCostDerivativeState(const scalar_array_t& h, const vector_array_t& dhdx) const {
-  const size_t numInequalityConstraints = h.size();
-  if (numInequalityConstraints != dhdx.size()) {
-    throw std::runtime_error("The inequality constraint should have the same size as it derivative.");
+ScalarFunctionQuadraticApproximation PenaltyBase::penaltyCostQuadraticApproximation(const VectorFunctionQuadraticApproximation& h) const {
+  const auto numInequalityConstraints = h.f.rows();
+  const auto stateDim = h.dfdx.cols();
+  const auto inputDim = h.dfdu.cols();
+
+  ScalarFunctionQuadraticApproximation penalty;
+  penalty.f = 0.0;
+  penalty.dfdx.setZero(stateDim);
+  penalty.dfdu.setZero(inputDim);
+  penalty.dfdxx.setZero(stateDim, stateDim);
+  penalty.dfduu.setZero(inputDim, inputDim);
+  penalty.dfdux.setZero(inputDim, stateDim);
+
+  vector_t penaltyDerivative(numInequalityConstraints);
+  vector_t penaltySecondDerivative(numInequalityConstraints);
+  for (size_t i = 0; i < numInequalityConstraints; i++) {
+    penaltyDerivative(i) = getPenaltyFunctionDerivative(h.f(i));
+    penaltySecondDerivative(i) = getPenaltyFunctionSecondDerivative(h.f(i));
+
+    penalty.f += getPenaltyFunctionValue(h.f(i));
+    penalty.dfdxx.noalias() += penaltyDerivative(i) * h.dfdxx[i];
+    penalty.dfduu.noalias() += penaltyDerivative(i) * h.dfduu[i];
+    penalty.dfdux.noalias() += penaltyDerivative(i) * h.dfdux[i];
   }
 
-  const auto stateDim = dhdx.front().size();
-  vector_t penaltyDerivativeState = vector_t::Zero(stateDim);
-  for (size_t i = 0; i < numInequalityConstraints; i++) {
-    penaltyDerivativeState.noalias() += getPenaltyFunctionDerivative(h[i]) * dhdx[i];
-  }
-  return penaltyDerivativeState;
+  penalty.dfdxx.noalias() += h.dfdx.transpose() * penaltySecondDerivative.asDiagonal() * h.dfdx;
+  penalty.dfduu.noalias() += h.dfdu.transpose() * penaltySecondDerivative.asDiagonal() * h.dfdu;
+  penalty.dfdux.noalias() += h.dfdu.transpose() * penaltySecondDerivative.asDiagonal() * h.dfdx;
+  penalty.dfdx = h.dfdx.transpose() * penaltyDerivative;
+  penalty.dfdu = h.dfdu.transpose() * penaltyDerivative;
+
+  return penalty;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t PenaltyBase::getPenaltyCostDerivativeInput(const scalar_array_t& h, const vector_array_t& dhdu) const {
-  const size_t numInequalityConstraints = h.size();
-  if (numInequalityConstraints != dhdu.size()) {
-    throw std::runtime_error("The inequality constraint should have the same size as it derivative.");
-  }
-
-  const auto inputDim = dhdu.front().size();
-  vector_t penaltyDerivativeInput = vector_t::Zero(inputDim);
-  for (size_t i = 0; i < numInequalityConstraints; i++) {
-    penaltyDerivativeInput.noalias() += getPenaltyFunctionDerivative(h[i]) * dhdu[i];
-  }
-  return penaltyDerivativeInput;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_t PenaltyBase::getPenaltyCostSecondDerivativeState(const scalar_array_t& h, const vector_array_t& dhdx,
-                                                          const matrix_array_t& ddhdxdx) const {
-  const size_t numInequalityConstraints = h.size();
-  if (numInequalityConstraints != dhdx.size() || numInequalityConstraints != ddhdxdx.size()) {
-    throw std::runtime_error("The inequality constraint should have the same size as it derivative.");
-  }
-
-  const auto stateDim = dhdx.front().size();
-  matrix_t penaltySecondDerivativeState = matrix_t::Zero(stateDim, stateDim);
-  for (size_t i = 0; i < numInequalityConstraints; i++) {
-    penaltySecondDerivativeState.noalias() += getPenaltyFunctionDerivative(h[i]) * ddhdxdx[i];
-    penaltySecondDerivativeState.noalias() += getPenaltyFunctionSecondDerivative(h[i]) * dhdx[i] * dhdx[i].transpose();
-  }
-  return penaltySecondDerivativeState;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_t PenaltyBase::getPenaltyCostSecondDerivativeInput(const scalar_array_t& h, const vector_array_t& dhdu,
-                                                          const matrix_array_t& ddhdudu) const {
-  const size_t numInequalityConstraints = h.size();
-  if (numInequalityConstraints != dhdu.size() || numInequalityConstraints != ddhdudu.size()) {
-    throw std::runtime_error("The inequality constraint should have the same size as it derivative.");
-  }
-
-  const auto inputDim = dhdu.front().size();
-  matrix_t penaltySecondDerivativeInput = matrix_t::Zero(inputDim, inputDim);
-  for (size_t i = 0; i < numInequalityConstraints; i++) {
-    penaltySecondDerivativeInput.noalias() += getPenaltyFunctionDerivative(h[i]) * ddhdudu[i];
-    penaltySecondDerivativeInput.noalias() += getPenaltyFunctionSecondDerivative(h[i]) * dhdu[i] * dhdu[i].transpose();
-  }
-  return penaltySecondDerivativeInput;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_t PenaltyBase::getPenaltyCostDerivativeInputState(const scalar_array_t& h, const vector_array_t& dhdx, const vector_array_t& dhdu,
-                                                         const matrix_array_t& ddhdudx) const {
-  const size_t numInequalityConstraints = h.size();
-  if (numInequalityConstraints != dhdx.size() || numInequalityConstraints != dhdu.size()) {
-    throw std::runtime_error("The inequality constraint should have the same size as it derivative.");
-  }
-
-  const auto stateDim = dhdx.front().size();
-  const auto inputDim = dhdu.front().size();
-  matrix_t penaltyDerivativeInputState = matrix_t::Zero(inputDim, stateDim);
-  for (size_t i = 0; i < numInequalityConstraints; i++) {
-    penaltyDerivativeInputState.noalias() += getPenaltyFunctionDerivative(h[i]) * ddhdudx[i];
-    penaltyDerivativeInputState.noalias() += getPenaltyFunctionSecondDerivative(h[i]) * dhdu[i] * dhdx[i].transpose();
-  }
-  return penaltyDerivativeInputState;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t PenaltyBase::getConstraintViolationSquaredNorm(const scalar_array_t& h) const {
+scalar_t PenaltyBase::constraintViolationSquaredNorm(const vector_t& h) const {
   scalar_t squaredViolation = 0;
-  for (const scalar_t& hi : h) {
-    scalar_t violation = std::max(0.0, -hi);
+  for (size_t i = 0; i < h.rows(); i++) {
+    scalar_t violation = std::max(0.0, -h(i));
     squaredViolation += violation * violation;
   }
   return squaredViolation;

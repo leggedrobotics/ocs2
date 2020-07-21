@@ -36,12 +36,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 LinearSystemDynamics::LinearSystemDynamics(const matrix_t& A, const matrix_t& B, const matrix_t& G /*= matrix_t()*/,
                                            const matrix_t& H /*= matrix_t()*/)
-    : SystemDynamicsBase(A.rows(), B.cols()), A_(A), B_(B), G_(G), H_(H) {
+    : SystemDynamicsBase(), A_(A), B_(B), G_(G), H_(H) {
   if (G_.size() == 0) {
-    G_ = matrix_t::Zero(stateDim_, stateDim_);
+    G_ = matrix_t::Zero(A.rows(), A.rows());
   }
   if (H_.size() == 0) {
-    H_ = matrix_t::Zero(stateDim_, inputDim_);
+    H_ = matrix_t::Zero(A.rows(), B.cols());
   }
 }
 
@@ -69,36 +69,23 @@ vector_t LinearSystemDynamics::computeJumpMap(scalar_t t, const vector_t& x) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LinearSystemDynamics::setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) {
-  SystemDynamicsBase::setCurrentStateAndControl(t, x, u);
+VectorFunctionLinearApproximation LinearSystemDynamics::linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  VectorFunctionLinearApproximation approximation;
+  approximation.dfdx = A_;
+  approximation.dfdu = B_;
+  approximation.f = A_ * x + B_ * u;
+  return approximation;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t LinearSystemDynamics::getFlowMapDerivativeState() {
-  return A_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_t LinearSystemDynamics::getFlowMapDerivativeInput() {
-  return B_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_t LinearSystemDynamics::getJumpMapDerivativeState() {
-  return G_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_t LinearSystemDynamics::getJumpMapDerivativeInput() {
-  return H_;
+VectorFunctionLinearApproximation LinearSystemDynamics::jumpMapLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  VectorFunctionLinearApproximation approximation;
+  approximation.dfdx = G_;
+  approximation.dfdu = H_;
+  approximation.f = G_ * x;
+  return approximation;
 }
 
 }  // namespace ocs2

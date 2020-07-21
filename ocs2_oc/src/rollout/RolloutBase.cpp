@@ -42,8 +42,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 vector_t RolloutBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, ControllerBase* controller,
                           const scalar_array_t& eventTimes, scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock,
-                          vector_array_t& stateTrajectory, vector_array_t& inputTrajectory,
-                          std::vector<ModelDataBase>* modelDataTrajectoryPtr /*= nullptr*/) {
+                          vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
   if (initTime > finalTime) {
     throw std::runtime_error("Initial time should be less-equal to final time.");
   }
@@ -74,7 +73,7 @@ vector_t RolloutBase::run(scalar_t initTime, const vector_t& initState, scalar_t
   }  // end of for loop
 
   return runImpl(std::move(timeIntervalArray), initState, controller, timeTrajectory, postEventIndicesStock, stateTrajectory,
-                 inputTrajectory, modelDataTrajectoryPtr);
+                 inputTrajectory);
 }
 
 /******************************************************************************************************/

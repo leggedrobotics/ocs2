@@ -38,11 +38,11 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-CostDesiredTrajectories::CostDesiredTrajectories(const scalar_array_t& desiredTimeTrajectory, const vector_array_t& desiredStateTrajectory,
-                                                 const vector_array_t& desiredInputTrajectory)
-    : desiredTimeTrajectory_(desiredTimeTrajectory),
-      desiredStateTrajectory_(desiredStateTrajectory),
-      desiredInputTrajectory_(desiredInputTrajectory) {}
+CostDesiredTrajectories::CostDesiredTrajectories(scalar_array_t desiredTimeTrajectory, vector_array_t desiredStateTrajectory,
+                                                 vector_array_t desiredInputTrajectory)
+    : desiredTimeTrajectory_(std::move(desiredTimeTrajectory)),
+      desiredStateTrajectory_(std::move(desiredStateTrajectory)),
+      desiredInputTrajectory_(std::move(desiredInputTrajectory)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -73,7 +73,6 @@ void CostDesiredTrajectories::swap(CostDesiredTrajectories& other) {
   desiredTimeTrajectory_.swap(other.desiredTimeTrajectory_);
   desiredStateTrajectory_.swap(other.desiredStateTrajectory_);
   desiredInputTrajectory_.swap(other.desiredInputTrajectory_);
-  // std::swap()
 }
 
 /******************************************************************************************************/

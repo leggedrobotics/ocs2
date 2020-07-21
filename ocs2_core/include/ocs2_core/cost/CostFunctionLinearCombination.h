@@ -48,19 +48,15 @@ class CostFunctionLinearCombination : public CostFunctionBase {
   CostFunctionLinearCombination() = delete;
 
   CostFunctionLinearCombination* clone() const override;
-  scalar_t getCost() override;
-  vector_t getCostDerivativeState() override;
-  matrix_t getCostSecondDerivativeState() override;
-  vector_t getCostDerivativeInput() override;
-  matrix_t getCostSecondDerivativeInput() override;
-  matrix_t getCostDerivativeInputState() override;
-  scalar_t getTerminalCost() override;
-  vector_t getTerminalCostDerivativeState() override;
-  matrix_t getTerminalCostSecondDerivativeState() override;
+
   void setCostDesiredTrajectoriesPtr(const CostDesiredTrajectories* costDesiredTrajectoriesPtr) override;
-  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) override;
-  scalar_t getCostDerivativeTime() override;
-  scalar_t getTerminalCostDerivativeTime() override;
+
+  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
+  scalar_t finalCost(scalar_t t, const vector_t& x) override;
+  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
+  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
+  scalar_t costDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) override;
+  scalar_t finalCostDerivativeTime(scalar_t t, const vector_t& x) override;
 
  protected:
   std::vector<WeightedCost> weightedCosts_;

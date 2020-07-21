@@ -31,66 +31,40 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-vector_t LoopshapingCostEliminatePattern::getCostDerivativeState() {
-  this->computeApproximation();
+ScalarFunctionQuadraticApproximation LoopshapingCostEliminatePattern::costQuadraticApproximation(scalar_t t, const vector_t& x,
+                                                                                                 const vector_t& u) {
   const scalar_t gamma = loopshapingDefinition_->gamma_;
   const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  const size_t FILTER_STATE_DIM = s_filter.getNumStates();
-  const size_t SYSTEM_STATE_DIM = q_system_.rows();
+  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
+  const vector_t u_system = loopshapingDefinition_->getSystemInput(x, u);
+  const vector_t x_filter = loopshapingDefinition_->getFilterState(x);
+  const vector_t u_filter = loopshapingDefinition_->getFilteredInput(x, u);
+  const auto& L_system = systemCost_->costQuadraticApproximation(t, x_system, u_system);
+  const auto& L_filter = systemCost_->costQuadraticApproximation(t, x_system, u_filter);
 
-  vector_t dLdx(SYSTEM_STATE_DIM + FILTER_STATE_DIM);
-  dLdx.head(SYSTEM_STATE_DIM).noalias() = gamma * q_filter_ + (1.0 - gamma) * q_system_;
-  dLdx.tail(FILTER_STATE_DIM).noalias() = (1.0 - gamma) * s_filter.getC().transpose() * r_system_;
-  return dLdx;
-}
+  ScalarFunctionQuadraticApproximation L;
+  L.f = gamma * L_filter.f + (1.0 - gamma) * L_system.f;
 
-matrix_t LoopshapingCostEliminatePattern::getCostSecondDerivativeState() {
-  this->computeApproximation();
-  const scalar_t gamma = loopshapingDefinition_->gamma_;
-  const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  const size_t FILTER_STATE_DIM = s_filter.getNumStates();
-  const size_t SYSTEM_STATE_DIM = q_system_.rows();
+  L.dfdx.resize(x_system.rows() + x_filter.rows());
+  L.dfdx.head(x_system.rows()).noalias() = gamma * L_filter.dfdx + (1.0 - gamma) * L_system.dfdx;
+  L.dfdx.tail(x_filter.rows()).noalias() = (1.0 - gamma) * s_filter.getC().transpose() * L_system.dfdu;
 
-  matrix_t dLdxx(SYSTEM_STATE_DIM + FILTER_STATE_DIM, SYSTEM_STATE_DIM + FILTER_STATE_DIM);
-  dLdxx.topLeftCorner(SYSTEM_STATE_DIM, SYSTEM_STATE_DIM).noalias() = gamma * Q_filter_ + (1.0 - gamma) * Q_system_;
-  dLdxx.topRightCorner(SYSTEM_STATE_DIM, FILTER_STATE_DIM).noalias() = (1.0 - gamma) * P_system_.transpose() * s_filter.getC();
-  dLdxx.bottomLeftCorner(FILTER_STATE_DIM, SYSTEM_STATE_DIM) = dLdxx.topRightCorner(SYSTEM_STATE_DIM, FILTER_STATE_DIM).transpose();
-  dLdxx.bottomRightCorner(FILTER_STATE_DIM, FILTER_STATE_DIM).noalias() =
-      (1.0 - gamma) * s_filter.getC().transpose() * R_system_ * s_filter.getC();
-  return dLdxx;
-}
+  L.dfdxx.resize(x_system.rows() + x_filter.rows(), x_system.rows() + x_filter.rows());
+  L.dfdxx.topLeftCorner(x_system.rows(), x_system.rows()).noalias() = gamma * L_filter.dfdxx + (1.0 - gamma) * L_system.dfdxx;
+  L.dfdxx.topRightCorner(x_system.rows(), x_filter.rows()).noalias() = (1.0 - gamma) * L_system.dfdux.transpose() * s_filter.getC();
+  L.dfdxx.bottomLeftCorner(x_filter.rows(), x_system.rows()) = L.dfdxx.topRightCorner(x_system.rows(), x_filter.rows()).transpose();
+  L.dfdxx.bottomRightCorner(x_filter.rows(), x_filter.rows()).noalias() =
+      (1.0 - gamma) * s_filter.getC().transpose() * L_system.dfduu * s_filter.getC();
 
-vector_t LoopshapingCostEliminatePattern::getCostDerivativeInput() {
-  this->computeApproximation();
-  const scalar_t gamma = loopshapingDefinition_->gamma_;
-  const auto& s_filter = loopshapingDefinition_->getInputFilter();
+  L.dfdu = gamma * L_filter.dfdu + (1.0 - gamma) * s_filter.getD().transpose() * L_system.dfdu;
+  L.dfduu = gamma * L_filter.dfduu + (1.0 - gamma) * s_filter.getD().transpose() * L_system.dfduu * s_filter.getD();
 
-  return gamma * r_filter_ + (1.0 - gamma) * s_filter.getD().transpose() * r_system_;
-}
+  L.dfdux.resize(u_filter.rows(), x_system.rows() + x_filter.rows());
+  L.dfdux.leftCols(x_system.rows()) = gamma * L_filter.dfdux;
+  L.dfdux.leftCols(x_system.rows()).noalias() += (1.0 - gamma) * s_filter.getD().transpose() * L_system.dfdux;
+  L.dfdux.rightCols(x_filter.rows()).noalias() = (1.0 - gamma) * s_filter.getD().transpose() * L_system.dfduu * s_filter.getC();
 
-matrix_t LoopshapingCostEliminatePattern::getCostSecondDerivativeInput() {
-  this->computeApproximation();
-  const scalar_t gamma = loopshapingDefinition_->gamma_;
-  const auto& s_filter = loopshapingDefinition_->getInputFilter();
-
-  matrix_t dLduu = gamma * R_filter_;
-  dLduu.noalias() += (1.0 - gamma) * s_filter.getD().transpose() * R_system_ * s_filter.getD();
-  return dLduu;
-}
-
-matrix_t LoopshapingCostEliminatePattern::getCostDerivativeInputState() {
-  this->computeApproximation();
-  const scalar_t gamma = loopshapingDefinition_->gamma_;
-  const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  const size_t FILTER_STATE_DIM = s_filter.getNumStates();
-  const size_t FILTER_INPUT_DIM = s_filter.getNumInputs();
-  const size_t SYSTEM_STATE_DIM = P_filter_.cols();
-
-  matrix_t dLdux(FILTER_INPUT_DIM, SYSTEM_STATE_DIM + FILTER_STATE_DIM);
-  dLdux.leftCols(SYSTEM_STATE_DIM) = gamma * P_filter_;
-  dLdux.leftCols(SYSTEM_STATE_DIM).noalias() += (1.0 - gamma) * s_filter.getD().transpose() * P_system_;
-  dLdux.rightCols(FILTER_STATE_DIM).noalias() = (1.0 - gamma) * s_filter.getD().transpose() * R_system_ * s_filter.getC();
-  return dLdux;
+  return L;
 }
 
 }  // namespace ocs2

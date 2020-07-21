@@ -15,12 +15,11 @@ class LoopshapingConstraintInputPattern final : public LoopshapingConstraint {
  public:
   using BASE = LoopshapingConstraint;
 
-  LoopshapingConstraintInputPattern(size_t fullStateDim, size_t fullInputDim, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
-      : BASE(fullStateDim, fullInputDim, std::move(loopshapingDefinition)){};
+  explicit LoopshapingConstraintInputPattern(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+      : BASE(std::move(loopshapingDefinition)){};
 
-  LoopshapingConstraintInputPattern(size_t fullStateDim, size_t fullInputDim, const ConstraintBase& systemConstraint,
-                                    std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
-      : BASE(fullStateDim, fullInputDim, systemConstraint, std::move(loopshapingDefinition)){};
+  LoopshapingConstraintInputPattern(const ConstraintBase& systemConstraint, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+      : BASE(systemConstraint, std::move(loopshapingDefinition)){};
 
   virtual ~LoopshapingConstraintInputPattern() = default;
 
@@ -28,32 +27,15 @@ class LoopshapingConstraintInputPattern final : public LoopshapingConstraint {
 
   LoopshapingConstraintInputPattern* clone() const override { return new LoopshapingConstraintInputPattern(*this); };
 
-  vector_array_t getInequalityConstraintDerivativesState() override;
-  vector_array_t getInequalityConstraintDerivativesInput() override;
-  matrix_array_t getInequalityConstraintSecondDerivativesState() override;
-  matrix_array_t getInequalityConstraintSecondDerivativesInput() override;
-  matrix_array_t getInequalityConstraintDerivativesInputState() override;
-
- private:
-  void appendStateInputEqualityConstraint(vector_t& e) override;
-  void appendStateInputEqualityConstraintDerivativeState(matrix_t& C) override;
-  void appendStateInputEqualityConstraintDerivativeInput(matrix_t& D) override;
+  vector_t stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) override;
+  VectorFunctionLinearApproximation stateInputEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x,
+                                                                                    const vector_t& u) override;
+  VectorFunctionQuadraticApproximation inequalityConstraintQuadraticApproximation(scalar_t t, const vector_t& x,
+                                                                                  const vector_t& u) override;
 
  protected:
   using BASE::loopshapingDefinition_;
   using BASE::systemConstraint_;
-
-  using BASE::t_;
-  using BASE::u_filter_;
-  using BASE::u_system_;
-  using BASE::x_filter_;
-  using BASE::x_system_;
-
-  using BASE::system_dhdu_;
-  using BASE::system_dhduu_;
-  using BASE::system_dhdux_;
-  using BASE::system_dhdx_;
-  using BASE::system_dhdxx_;
 };
 
 }  // namespace ocs2

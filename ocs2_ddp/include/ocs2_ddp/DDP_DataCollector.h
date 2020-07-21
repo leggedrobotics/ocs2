@@ -50,11 +50,11 @@ class DDP_DataCollector {
    * Constructor.
    *
    * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
-   * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
+   * @param [in] systemDynamicsPtr: The system dynamics and derivatives for the subsystems.
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
-   * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
+   * @param [in] costFunctionPtr: The cost function (intermediate and final costs) and its derivatives for subsystems.
    */
-  DDP_DataCollector(const RolloutBase* rolloutPtr, const DerivativesBase* systemDerivativesPtr, const ConstraintBase* systemConstraintsPtr,
+  DDP_DataCollector(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
                     const CostFunctionBase* costFunctionPtr);
 
   /**
@@ -109,10 +109,8 @@ class DDP_DataCollector {
   //  matrix_array2_t RmInvConstrainedCholTrajectoryStock_;
   //  matrix_array2_t DmDagerTrajectoriesStock_;
 
-  // terminal cost which is interpreted as the Heuristic function
-  scalar_t sHeuristics_;
-  vector_t SvHeuristics_;
-  matrix_t SmHeuristics_;
+  // final cost which is interpreted as the Heuristic function
+  ScalarFunctionQuadraticApproximation heuristics_;
 
   scalar_array2_t SsTimeTrajectoriesStock_;
   scalar_array2_t SsNormalizedTimeTrajectoriesStock_;
@@ -159,7 +157,7 @@ class DDP_DataCollector {
 
  private:
   std::unique_ptr<RolloutBase> rolloutPtr_;
-  std::unique_ptr<DerivativesBase> systemDerivativesPtr_;
+  std::unique_ptr<SystemDynamicsBase> systemDynamicsPtr_;
   std::unique_ptr<ConstraintBase> systemConstraintsPtr_;
   std::unique_ptr<CostFunctionBase> costFunctionPtr_;
 };

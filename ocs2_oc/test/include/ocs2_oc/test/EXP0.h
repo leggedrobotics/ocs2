@@ -29,15 +29,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <cmath>
-#include <limits>
 #include <memory>
 
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/dynamics/ControlledSystemBase.h>
-#include <ocs2_core/dynamics/DerivativesBase.h>
-#include <ocs2_core/initialization/OperatingPoints.h>
+#include <ocs2_core/cost/QuadraticCostFunction.h>
+#include <ocs2_core/dynamics/LinearSystemDynamics.h>
+#include <ocs2_core/dynamics/SystemDynamicsBase.h>
 
 #include <ocs2_oc/oc_solver/ModeScheduleManager.h>
 
@@ -46,19 +43,13 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_Sys1 : public ControlledSystemBase {
+class EXP0_Sys1 : public LinearSystemDynamics {
  public:
-  EXP0_Sys1() = default;
+  EXP0_Sys1() : LinearSystemDynamics(matrix_t(2, 2), matrix_t(2, 1)) {
+    LinearSystemDynamics::A_ << 0.6, 1.2, -0.8, 3.4;
+    LinearSystemDynamics::B_ << 1, 1;
+  };
   ~EXP0_Sys1() = default;
-
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) final {
-    matrix_t A(2, 2);
-    A << 0.6, 1.2, -0.8, 3.4;
-    vector_t B(2, 1);
-    B << 1, 1;
-
-    return A * x + B * u;
-  }
 
   EXP0_Sys1* clone() const final { return new EXP0_Sys1(*this); }
 };
@@ -66,19 +57,13 @@ class EXP0_Sys1 : public ControlledSystemBase {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_Sys2 : public ControlledSystemBase {
+class EXP0_Sys2 : public LinearSystemDynamics {
  public:
-  EXP0_Sys2() = default;
+  EXP0_Sys2() : LinearSystemDynamics(matrix_t(2, 2), matrix_t(2, 1)) {
+    LinearSystemDynamics::A_ << 4, 3, -1, 0;
+    LinearSystemDynamics::B_ << 2, -1;
+  };
   ~EXP0_Sys2() = default;
-
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) final {
-    matrix_t A(2, 2);
-    A << 4, 3, -1, 0;
-    vector_t B(2, 1);
-    B << 2, -1;
-
-    return A * x + B * u;
-  }
 
   EXP0_Sys2* clone() const final { return new EXP0_Sys2(*this); }
 };
@@ -86,7 +71,7 @@ class EXP0_Sys2 : public ControlledSystemBase {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_System : public ControlledSystemBase {
+class EXP0_System : public SystemDynamicsBase {
  public:
   explicit EXP0_System(std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr)
       : modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)), subsystemDynamicsPtr_(2) {
@@ -101,175 +86,18 @@ class EXP0_System : public ControlledSystemBase {
   EXP0_System* clone() const final { return new EXP0_System(*this); }
 
   vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) final {
-    auto activeMode = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
+    const auto activeMode = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
     return subsystemDynamicsPtr_[activeMode]->computeFlowMap(t, x, u);
   }
 
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final {
+    const auto activeMode = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
+    return subsystemDynamicsPtr_[activeMode]->linearApproximation(t, x, u);
+  }
+
  public:
-  std::vector<std::shared_ptr<ControlledSystemBase>> subsystemDynamicsPtr_;
+  std::vector<std::shared_ptr<SystemDynamicsBase>> subsystemDynamicsPtr_;
   std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr_;
-};
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-class EXP0_SysDerivative1 : public DerivativesBase {
- public:
-  EXP0_SysDerivative1() = default;
-  ~EXP0_SysDerivative1() = default;
-
-  matrix_t getFlowMapDerivativeState() final {
-    matrix_t A(2, 2);
-    A << 0.6, 1.2, -0.8, 3.4;
-    return A;
-  }
-  matrix_t getFlowMapDerivativeInput() final {
-    matrix_t B(2, 1);
-    B << 1, 1;
-    return B;
-  }
-
-  EXP0_SysDerivative1* clone() const final { return new EXP0_SysDerivative1(*this); }
-};
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-class EXP0_SysDerivative2 : public DerivativesBase {
- public:
-  EXP0_SysDerivative2() = default;
-  ~EXP0_SysDerivative2() = default;
-
-  matrix_t getFlowMapDerivativeState() final {
-    matrix_t A(2, 2);
-    A << 4, 3, -1, 0;
-    return A;
-  }
-  matrix_t getFlowMapDerivativeInput() final {
-    matrix_t B(2, 1);
-    B << 2, -1;
-    return B;
-  }
-
-  EXP0_SysDerivative2* clone() const final { return new EXP0_SysDerivative2(*this); }
-};
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-class EXP0_SystemDerivative : public DerivativesBase {
- public:
-  explicit EXP0_SystemDerivative(std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr)
-      : modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)), subsystemDerivativesPtr_(2) {
-    subsystemDerivativesPtr_[0].reset(new EXP0_SysDerivative1);
-    subsystemDerivativesPtr_[1].reset(new EXP0_SysDerivative2);
-  }
-
-  ~EXP0_SystemDerivative() override = default;
-
-  EXP0_SystemDerivative(const EXP0_SystemDerivative& other) : EXP0_SystemDerivative(other.modeScheduleManagerPtr_) {}
-
-  EXP0_SystemDerivative* clone() const final { return new EXP0_SystemDerivative(*this); }
-
-  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) final {
-    DerivativesBase::setCurrentStateAndControl(t, x, u);
-    activeMode_ = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
-    subsystemDerivativesPtr_[activeMode_]->setCurrentStateAndControl(t, x, u);
-  }
-
-  matrix_t getFlowMapDerivativeState() final { return subsystemDerivativesPtr_[activeMode_]->getFlowMapDerivativeState(); }
-
-  matrix_t getFlowMapDerivativeInput() final { return subsystemDerivativesPtr_[activeMode_]->getFlowMapDerivativeInput(); }
-
- public:
-  size_t activeMode_ = 0;
-  std::vector<std::shared_ptr<DerivativesBase>> subsystemDerivativesPtr_;
-  std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr_;
-};
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-class EXP0_CostFunction1 : public CostFunctionBase {
- public:
-  EXP0_CostFunction1() = default;
-  ~EXP0_CostFunction1() = default;
-
-  scalar_t getCost() final { return 0.5 * (x_(1) - 2.0) * (x_(1) - 2.0) + 0.5 * u_(0) * u_(0); }
-
-  vector_t getCostDerivativeState() final {
-    vector_t dLdx(2);
-    dLdx << 0.0, (x_(1) - 2.0);
-    return dLdx;
-  }
-  matrix_t getCostSecondDerivativeState() final {
-    matrix_t dLdxx(2, 2);
-    dLdxx << 0.0, 0.0, 0.0, 1.0;
-    return dLdxx;
-  }
-  vector_t getCostDerivativeInput() final {
-    vector_t dLdu(1);
-    dLdu << u_;
-    return dLdu;
-  }
-  matrix_t getCostSecondDerivativeInput() final {
-    matrix_t dLduu(1, 1);
-    dLduu << 1.0;
-    return dLduu;
-  }
-  matrix_t getCostDerivativeInputState() final { return matrix_t::Zero(1, 2); }
-  scalar_t getTerminalCost() final { return 0; }
-  vector_t getTerminalCostDerivativeState() final { return vector_t::Zero(2); }
-  matrix_t getTerminalCostSecondDerivativeState() final { return matrix_t::Zero(2, 2); }
-
-  EXP0_CostFunction1* clone() const final { return new EXP0_CostFunction1(*this); };
-};
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-class EXP0_CostFunction2 : public CostFunctionBase {
- public:
-  EXP0_CostFunction2() = default;
-  ~EXP0_CostFunction2() = default;
-
-  scalar_t getCost() final { return 0.5 * (x_(1) - 2.0) * (x_(1) - 2.0) + 0.5 * u_(0) * u_(0); }
-
-  vector_t getCostDerivativeState() final {
-    vector_t dLdx(2);
-    dLdx << 0.0, (x_(1) - 2.0);
-    return dLdx;
-  }
-  matrix_t getCostSecondDerivativeState() final {
-    matrix_t dLdxx(2, 2);
-    dLdxx << 0.0, 0.0, 0.0, 1.0;
-    return dLdxx;
-  }
-  vector_t getCostDerivativeInput() final {
-    vector_t dLdu(1);
-    dLdu << u_;
-    return dLdu;
-  }
-  matrix_t getCostSecondDerivativeInput() final {
-    matrix_t dLduu(1, 1);
-    dLduu << 1.0;
-    return dLduu;
-  }
-
-  matrix_t getCostDerivativeInputState() final {
-    matrix_t dLdxu;
-    dLdxu.setZero(1, 2);
-    return dLdxu;
-  }
-  scalar_t getTerminalCost() final { return 0.5 * (x_(0) - 4.0) * (x_(0) - 4.0) + 0.5 * (x_(1) - 2.0) * (x_(1) - 2.0); }
-  vector_t getTerminalCostDerivativeState() final {
-    vector_t dPhidx(2);
-    dPhidx << (x_(0) - 4.0), (x_(1) - 2.0);
-    return dPhidx;
-  }
-  matrix_t getTerminalCostSecondDerivativeState() final { return matrix_t::Identity(2, 2); }
-
-  EXP0_CostFunction2* clone() const final { return new EXP0_CostFunction2(*this); };
 };
 
 /******************************************************************************************************/
@@ -278,37 +106,52 @@ class EXP0_CostFunction2 : public CostFunctionBase {
 class EXP0_CostFunction : public CostFunctionBase {
  public:
   explicit EXP0_CostFunction(std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr)
-      : modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)), subsystemCostsPtr_(2) {
-    subsystemCostsPtr_[0].reset(new EXP0_CostFunction1);
-    subsystemCostsPtr_[1].reset(new EXP0_CostFunction2);
+      : modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)) {
+    matrix_t Q(2, 2);
+    matrix_t R(1, 1);
+    matrix_t Qf(2, 2);
+    vector_t x(2);
+    vector_t u(1);
+    vector_t xf(2);
+    Q << 0.0, 0.0, 0.0, 1.0;
+    R << 1.0;
+    Qf << 1.0, 0.0, 0.0, 1.0;
+    x << 0, 2.0;
+    u << 0.0;
+    xf << 4.0, 2.0;
+    subsystemCostsPtr_[0].reset(new QuadraticCostFunction(Q, R, x, u, matrix_t::Zero(2, 2), xf));
+    subsystemCostsPtr_[1].reset(new QuadraticCostFunction(Q, R, x, u, Qf, xf));
   }
 
-  ~EXP0_CostFunction() {}
+  ~EXP0_CostFunction() = default;
 
   EXP0_CostFunction(const EXP0_CostFunction& other) : EXP0_CostFunction(other.modeScheduleManagerPtr_) {}
 
   EXP0_CostFunction* clone() const final { return new EXP0_CostFunction(*this); }
 
-  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) final {
-    CostFunctionBase::setCurrentStateAndControl(t, x, u);
-    activeMode_ = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
-    subsystemCostsPtr_[activeMode_]->setCurrentStateAndControl(t, x, u);
+  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) final {
+    const auto activeMode = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
+    return subsystemCostsPtr_[activeMode]->cost(t, x, u);
   }
 
-  scalar_t getCost() final { return subsystemCostsPtr_[activeMode_]->getCost(); }
-  vector_t getCostDerivativeState() final { return subsystemCostsPtr_[activeMode_]->getCostDerivativeState(); }
-  matrix_t getCostSecondDerivativeState() final { return subsystemCostsPtr_[activeMode_]->getCostSecondDerivativeState(); }
-  vector_t getCostDerivativeInput() final { return subsystemCostsPtr_[activeMode_]->getCostDerivativeInput(); }
-  matrix_t getCostSecondDerivativeInput() final { return subsystemCostsPtr_[activeMode_]->getCostSecondDerivativeInput(); }
-  matrix_t getCostDerivativeInputState() final { return subsystemCostsPtr_[activeMode_]->getCostDerivativeInputState(); }
-  scalar_t getTerminalCost() { return subsystemCostsPtr_[activeMode_]->getTerminalCost(); }
-  vector_t getTerminalCostDerivativeState() final { return subsystemCostsPtr_[activeMode_]->getTerminalCostDerivativeState(); }
-  matrix_t getTerminalCostSecondDerivativeState() final { return subsystemCostsPtr_[activeMode_]->getTerminalCostSecondDerivativeState(); }
+  scalar_t finalCost(scalar_t t, const vector_t& x) final {
+    const auto activeMode = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
+    return subsystemCostsPtr_[activeMode]->finalCost(t, x);
+  }
+
+  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) final {
+    const auto activeMode = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
+    return subsystemCostsPtr_[activeMode]->costQuadraticApproximation(t, x, u);
+  }
+
+  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) final {
+    const auto activeMode = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
+    return subsystemCostsPtr_[activeMode]->finalCostQuadraticApproximation(t, x);
+  }
 
  public:
-  size_t activeMode_ = 0;
   std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr_;
-  std::vector<std::shared_ptr<CostFunctionBase>> subsystemCostsPtr_;
+  std::vector<std::shared_ptr<CostFunctionBase>> subsystemCostsPtr_{2};
 };
 
 }  // namespace ocs2

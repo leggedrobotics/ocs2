@@ -103,12 +103,12 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
   std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
   std::cerr << "x_final:  " << xFinal_.transpose() << std::endl;
 
-  quadrotorCostPtr_.reset(new QuadrotorCost(Q_, R_, xNominal_, uNominal_, QFinal_, xFinal_));
+  quadrotorCostPtr_.reset(new QuadraticCostFunction(Q_, R_, xNominal_, uNominal_, QFinal_, xFinal_));
 
   /*
    * Constraints
    */
-  quadrotorConstraintPtr_.reset(new ConstraintBase(STATE_DIM_, INPUT_DIM_));
+  quadrotorConstraintPtr_.reset(new ConstraintBase());
 
   /*
    * Initialization

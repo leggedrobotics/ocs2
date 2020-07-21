@@ -37,7 +37,7 @@ namespace ocs2 {
 vector_t OperatingTrajectoriesRollout::runImpl(time_interval_array_t timeIntervalArray, const vector_t& initState,
                                                ControllerBase* controller, scalar_array_t& timeTrajectory,
                                                size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
-                                               vector_array_t& inputTrajectory, std::vector<ModelDataBase>* modelDataTrajectoryPtr) {
+                                               vector_array_t& inputTrajectory) {
   const int numSubsystems = timeIntervalArray.size();
   const int numEvents = numSubsystems - 1;
 
@@ -64,24 +64,6 @@ vector_t OperatingTrajectoriesRollout::runImpl(time_interval_array_t timeInterva
     }
 
   }  // end of i loop
-
-  const size_t stateDim = stateTrajectory.front().rows();
-  const size_t inputDim = inputTrajectory.front().rows();
-
-  // filling the model data
-  if (modelDataTrajectoryPtr) {
-    modelDataTrajectoryPtr->clear();
-    modelDataTrajectoryPtr->reserve(timeTrajectory.size());
-    for (int i = 0; i < timeTrajectory.size(); i++) {
-      ModelDataBase modelDataTemp;
-      modelDataTemp.time_ = timeTrajectory[i];
-      modelDataTemp.stateDim_ = stateDim;
-      modelDataTemp.inputDim_ = inputDim;
-      modelDataTemp.dynamics_.setZero(stateDim);
-      modelDataTemp.dynamicsBias_.setZero(stateDim);
-      modelDataTrajectoryPtr->emplace_back(modelDataTemp);
-    }  // end of i loop
-  }
 
   return stateTrajectory.back();
 }

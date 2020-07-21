@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,7 +29,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_core/cost/CostFunctionBase.h"
+#include <utility>
+
+#include <ocs2_core/Types.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
 
 namespace ocs2 {
 
@@ -44,110 +47,49 @@ class QuadraticCostFunction : public CostFunctionBase {
    * - \f$ \Phi = 0.5(x-x_{f})' Q_{f} (x-x_{f}) \f$.
    * @param [in] Q: \f$ Q \f$
    * @param [in] R: \f$ R \f$
-   * @param [in] xNominalIntermediate: \f$ x_{n}\f$
-   * @param [in] uNominalIntermediate: \f$ u_{n}\f$
+   * @param [in] xNominal: \f$ x_{n}\f$
+   * @param [in] uNominal: \f$ u_{n}\f$
    * @param [in] xNominalFinal: \f$ x_{f}\f$
    * @param [in] QFinal: \f$ Q_{f}\f$
    */
-  QuadraticCostFunction(const matrix_t& Q, const matrix_t& R, const vector_t& xNominalIntermediate, const vector_t& uNominalIntermediate,
-                        const matrix_t& QFinal, const vector_t& xNominalFinal, const matrix_t& P = matrix_t());
+  QuadraticCostFunction(const matrix_t& Q, const matrix_t& R, const vector_t& xNominal, const vector_t& uNominal, const matrix_t& QFinal,
+                        const vector_t& xNominalFinal, const matrix_t& P = matrix_t());
 
-  /**
-   * Destructor
-   */
-  virtual ~QuadraticCostFunction() = default;
+  /** Destructor */
+  ~QuadraticCostFunction() override = default;
 
-  /**
-   * Returns pointer to the class.
-   *
-   * @return A raw pointer to the class.
-   */
+  /** Clone */
   QuadraticCostFunction* clone() const override;
 
   /**
-   * Sets the current time, state, and control input.
+   * Get the desired state and input for cost evaluation.
    *
-   * @param [in] t: Current time.
-   * @param [in] x: Current state vector.
-   * @param [in] u: Current input vector.
+   * Default implementation uses costDesiredTrajectoriesPtr_ if available, otherwise xNominal and uNominal are used.
+   * Override this method if another behavior is desired.
+   *
+   * @param [in] t: current time.
+   * @param [in] x: current state.
+   * @param [in] u: current input.
+   * @return pair of nominal state and input.
    */
-  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) override;
+  virtual std::pair<vector_t, vector_t> getNominalStateInput(scalar_t t, const vector_t& x, const vector_t& u);
 
   /**
-   * Sets the current time, state, control input, and desired state and input.
+   * Get the desired final state for cost evaluation.
    *
-   * @param [in] t: Current time.
-   * @param [in] x: Current state vector.
-   * @param [in] u: Current input vector.
-   * @param [in] xNominalIntermediate: Intermediate desired state vector.
-   * @param [in] uNominalIntermediate: Intermediate desired input vector.
-   * @param [in] xNominalFinal: Final desired state vector.
+   * Default implementation uses costDesiredTrajectoriesPtr_ if available, otherwise xNominalFinal is used.
+   * Override this method if another behavior is desired.
+   *
+   * @param [in] t: current time.
+   * @param [in] x: current state.
+   * @return nominal final state.
    */
-  virtual void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u, const vector_t& xNominalIntermediate,
-                                         const vector_t& uNominalIntermediate, const vector_t& xNominalFinal);
+  virtual vector_t getNominalFinalState(scalar_t t, const vector_t& x);
 
-  /**
-   * Get the intermediate cost.
-   *
-   * @return The intermediate cost value.
-   */
-  scalar_t getCost() override;
-
-  /**
-   * Get the state derivative of the intermediate cost.
-   *
-   * @return First order derivative of the intermediate cost with respect to state vector.
-   */
-  vector_t getCostDerivativeState() override;
-
-  /**
-   * Get state second order derivative of the intermediate cost.
-   *
-   * @return Second order derivative of the intermediate cost with respect to state vector.
-   */
-  matrix_t getCostSecondDerivativeState() override;
-
-  /**
-   * Get control input derivative of the intermediate cost.
-   *
-   * @return First order derivative of the intermediate cost with respect to input vector.
-   */
-  vector_t getCostDerivativeInput() override;
-
-  /**
-   * Get control input second derivative of the intermediate cost.
-   *
-   * @return Second order derivative of the intermediate cost with respect to input vector.
-   */
-  matrix_t getCostSecondDerivativeInput() override;
-
-  /**
-   * Get the input-state derivative of the intermediate cost.
-   *
-   * @return Second order derivative of the intermediate cost with respect to input vector and state.
-   */
-  matrix_t getCostDerivativeInputState() override;
-
-  /**
-   * Get the terminal cost.
-   *
-   * @return The final cost value.
-   */
-  scalar_t getTerminalCost() override;
-
-  /**
-   * Get the terminal cost state derivative.
-   *
-   * @return First order final cost derivative with respect to state vector.
-   */
-  vector_t getTerminalCostDerivativeState() override;
-
-  /**
-   * Get the terminal cost state second derivative
-   *
-   * @return Second order final cost derivative with respect to state vector.
-   */
-  matrix_t getTerminalCostSecondDerivativeState() override;
+  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
+  scalar_t finalCost(scalar_t t, const vector_t& x) override;
+  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
+  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
 
  protected:
   matrix_t Q_;
@@ -155,12 +97,8 @@ class QuadraticCostFunction : public CostFunctionBase {
   matrix_t P_;
   matrix_t QFinal_;
 
-  vector_t xNominalIntermediate_;
-  vector_t uNominalIntermediate_;
-
-  vector_t xIntermediateDeviation_;
-  vector_t uIntermediateDeviation_;
-
+  vector_t xNominal_;
+  vector_t uNominal_;
   vector_t xNominalFinal_;
 };
 

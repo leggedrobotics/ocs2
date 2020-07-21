@@ -30,19 +30,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 // C++
-#include <cstdlib>
-#include <iostream>
 #include <string>
 
 // OCS2
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
+#include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
 // Ballbot
-#include "ocs2_ballbot_example/cost/BallbotCost.h"
 #include "ocs2_ballbot_example/dynamics/BallbotSystemDynamics.h"
 
 namespace ocs2 {
@@ -73,9 +71,7 @@ class BallbotInterface final : public RobotInterface {
 
   const BallbotSystemDynamics& getDynamics() const override { return *ballbotSystemDynamicsPtr_; }
 
-  const BallbotSystemDynamics& getDynamicsDerivatives() const override { return *ballbotSystemDynamicsPtr_; }
-
-  const BallbotCost& getCost() const override { return *ballbotCostPtr_; }
+  const QuadraticCostFunction& getCost() const override { return *ballbotCostPtr_; }
 
   const RolloutBase& getRollout() const { return *ddpBallbotRolloutPtr_; }
 
@@ -101,7 +97,7 @@ class BallbotInterface final : public RobotInterface {
   std::unique_ptr<RolloutBase> ddpBallbotRolloutPtr_;
 
   std::unique_ptr<BallbotSystemDynamics> ballbotSystemDynamicsPtr_;
-  std::unique_ptr<BallbotCost> ballbotCostPtr_;
+  std::unique_ptr<QuadraticCostFunction> ballbotCostPtr_;
   std::unique_ptr<ConstraintBase> ballbotConstraintPtr_;
   std::unique_ptr<OperatingPoints> ballbotOperatingPointPtr_;
 

@@ -35,12 +35,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SLQ::SLQ(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const DerivativesBase* systemDerivativesPtr,
+SLQ::SLQ(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr,
          const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
          const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const SLQ_Settings& settings /*= SLQ_Settings()*/,
          const CostFunctionBase* heuristicsFunctionPtr /* = nullptr*/)
 
-    : BASE(stateDim, inputDim, rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
+    : BASE(stateDim, inputDim, rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
            settings.ddpSettings_, heuristicsFunctionPtr, "SLQ"),
       settings_(settings) {
   // Riccati Solver
@@ -119,16 +119,15 @@ void SLQ::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, s
   LinearInterpolation::interpolate(indexAlpha, nominalInput, &(BASE::nominalInputTrajectoriesStock_[i]));
 
   // BmProjected
-  ModelData::interpolate(indexAlpha, projectedBm, &BASE::projectedModelDataTrajectoriesStock_[i], ModelData::dynamicsInputDerivative);
+  ModelData::interpolate(indexAlpha, projectedBm, &BASE::projectedModelDataTrajectoriesStock_[i], ModelData::dynamics_dfdu);
   // PmProjected
-  ModelData::interpolate(indexAlpha, projectedPm, &BASE::projectedModelDataTrajectoriesStock_[i], ModelData::costInputStateDerivative);
+  ModelData::interpolate(indexAlpha, projectedPm, &BASE::projectedModelDataTrajectoriesStock_[i], ModelData::cost_dfdux);
   // RvProjected
-  ModelData::interpolate(indexAlpha, projectedRv, &BASE::projectedModelDataTrajectoriesStock_[i], ModelData::costInputDerivative);
+  ModelData::interpolate(indexAlpha, projectedRv, &BASE::projectedModelDataTrajectoriesStock_[i], ModelData::cost_dfdu);
   // EvProjected
-  ModelData::interpolate(indexAlpha, EvProjected, &BASE::projectedModelDataTrajectoriesStock_[i], ModelData::stateInputEqConstr);
+  ModelData::interpolate(indexAlpha, EvProjected, &BASE::projectedModelDataTrajectoriesStock_[i], ModelData::stateInputEqConstr_f);
   // CmProjected
-  ModelData::interpolate(indexAlpha, CmProjected, &BASE::projectedModelDataTrajectoriesStock_[i],
-                         ModelData::stateInputEqConstrStateDerivative);
+  ModelData::interpolate(indexAlpha, CmProjected, &BASE::projectedModelDataTrajectoriesStock_[i], ModelData::stateInputEqConstr_dfdx);
 
   // Qu
   riccati_modification::interpolate(indexAlpha, Qu, &BASE::riccatiModificationTrajectoriesStock_[i],
@@ -213,8 +212,8 @@ scalar_t SLQ::solveSequentialRiccatiEquations(const matrix_t& SmFinal, const vec
 /******************************************************************************************************/
 /******************************************************************************************************/
 matrix_t SLQ::computeHamiltonianHessian(ddp_strategy::type strategy, const ModelDataBase& modelData, const matrix_t& Sm) const {
-  const auto& Bm = modelData.dynamicsInputDerivative_;
-  const auto& Rm = modelData.costInputSecondDerivative_;
+  const auto& Bm = modelData.dynamics_.dfdu;
+  const auto& Rm = modelData.cost_.dfduu;
   switch (strategy) {
     case ddp_strategy::type::LINE_SEARCH: {
       return Rm;

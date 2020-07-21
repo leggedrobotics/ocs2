@@ -58,105 +58,6 @@ CostFunctionLinearCombination* CostFunctionLinearCombination::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t CostFunctionLinearCombination::getCost() {
-  scalar_t L = 0;
-  for (auto& weightedCost : weightedCosts_) {
-    L += weightedCost.first * weightedCost.second->getCost();
-  }
-  return L;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t CostFunctionLinearCombination::getCostDerivativeState() {
-  vector_t dLdx = vector_t::Zero(x_.rows());
-  for (auto& weightedCost : weightedCosts_) {
-    dLdx += weightedCost.first * weightedCost.second->getCostDerivativeState();
-  }
-  return dLdx;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_t CostFunctionLinearCombination::getCostSecondDerivativeState() {
-  matrix_t dLdxx = matrix_t::Zero(x_.rows(), x_.rows());
-  for (auto& weightedCost : weightedCosts_) {
-    dLdxx += weightedCost.first * weightedCost.second->getCostSecondDerivativeState();
-  }
-  return dLdxx;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t CostFunctionLinearCombination::getCostDerivativeInput() {
-  vector_t dLdu = vector_t::Zero(u_.rows());
-  for (auto& weightedCost : weightedCosts_) {
-    dLdu += weightedCost.first * weightedCost.second->getCostDerivativeInput();
-  }
-  return dLdu;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_t CostFunctionLinearCombination::getCostSecondDerivativeInput() {
-  matrix_t dLduu = matrix_t::Zero(u_.rows(), u_.rows());
-  for (auto& weightedCost : weightedCosts_) {
-    dLduu += weightedCost.first * weightedCost.second->getCostSecondDerivativeInput();
-  }
-  return dLduu;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_t CostFunctionLinearCombination::getCostDerivativeInputState() {
-  matrix_t dLdux = matrix_t::Zero(u_.rows(), x_.rows());
-  for (auto& weightedCost : weightedCosts_) {
-    dLdux += weightedCost.first * weightedCost.second->getCostDerivativeInputState();
-  }
-  return dLdux;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t CostFunctionLinearCombination::getTerminalCost() {
-  scalar_t Phi = 0;
-  for (auto& weightedCost : weightedCosts_) {
-    Phi += weightedCost.first * weightedCost.second->getTerminalCost();
-  }
-  return Phi;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t CostFunctionLinearCombination::getTerminalCostDerivativeState() {
-  vector_t dPhidx = vector_t::Zero(x_.rows());
-  for (auto& weightedCost : weightedCosts_) {
-    dPhidx += weightedCost.first * weightedCost.second->getTerminalCostDerivativeState();
-  }
-  return dPhidx;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_t CostFunctionLinearCombination::getTerminalCostSecondDerivativeState() {
-  matrix_t dPhidxx = matrix_t::Zero(x_.rows(), x_.rows());
-  for (auto& weightedCost : weightedCosts_) {
-    dPhidxx += weightedCost.first * weightedCost.second->getTerminalCostSecondDerivativeState();
-  }
-  return dPhidxx;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 void CostFunctionLinearCombination::setCostDesiredTrajectoriesPtr(const CostDesiredTrajectories* costDesiredTrajectoriesPtr) {
   CostFunctionBase::setCostDesiredTrajectoriesPtr(costDesiredTrajectoriesPtr);
   for (auto& weightedCost : weightedCosts_) {
@@ -167,20 +68,73 @@ void CostFunctionLinearCombination::setCostDesiredTrajectoriesPtr(const CostDesi
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CostFunctionLinearCombination::setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) {
-  CostFunctionBase::setCurrentStateAndControl(t, x, u);
+scalar_t CostFunctionLinearCombination::cost(scalar_t t, const vector_t& x, const vector_t& u) {
+  scalar_t L = 0.0;
   for (auto& weightedCost : weightedCosts_) {
-    weightedCost.second->setCurrentStateAndControl(t, x, u);
+    L += weightedCost.first * weightedCost.second->cost(t, x, u);
   }
+  return L;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t CostFunctionLinearCombination::getCostDerivativeTime() {
+scalar_t CostFunctionLinearCombination::finalCost(scalar_t t, const vector_t& x) {
+  scalar_t Phi = 0.0;
+  for (auto& weightedCost : weightedCosts_) {
+    Phi += weightedCost.first * weightedCost.second->finalCost(t, x);
+  }
+  return Phi;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation CostFunctionLinearCombination::costQuadraticApproximation(scalar_t t, const vector_t& x,
+                                                                                               const vector_t& u) {
+  ScalarFunctionQuadraticApproximation L;
+  L.f = 0.0;
+  L.dfdx.setZero(x.rows());
+  L.dfdu.setZero(u.rows());
+  L.dfdxx.setZero(x.rows(), x.rows());
+  L.dfdux.setZero(u.rows(), x.rows());
+  L.dfduu.setZero(u.rows(), u.rows());
+  for (auto& weightedCost : weightedCosts_) {
+    const auto cost = weightedCost.second->costQuadraticApproximation(t, x, u);
+    L.f += weightedCost.first * cost.f;
+    L.dfdx += weightedCost.first * cost.dfdx;
+    L.dfdu += weightedCost.first * cost.dfdu;
+    L.dfdxx += weightedCost.first * cost.dfdxx;
+    L.dfdux += weightedCost.first * cost.dfdux;
+    L.dfduu += weightedCost.first * cost.dfduu;
+  }
+  return L;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation CostFunctionLinearCombination::finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
+  ScalarFunctionQuadraticApproximation Phi;
+  Phi.f = 0.0;
+  Phi.dfdx.setZero(x.rows());
+  Phi.dfdxx.setZero(x.rows(), x.rows());
+  for (auto& weightedCost : weightedCosts_) {
+    const auto cost = weightedCost.second->finalCostQuadraticApproximation(t, x);
+    Phi.f += weightedCost.first * cost.f;
+    Phi.dfdx += weightedCost.first * cost.dfdx;
+    Phi.dfdxx += weightedCost.first * cost.dfdxx;
+  }
+  return Phi;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t CostFunctionLinearCombination::costDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) {
   scalar_t dLdt = 0;
   for (auto& weightedCost : weightedCosts_) {
-    dLdt += weightedCost.first * weightedCost.second->getCostDerivativeTime();
+    dLdt += weightedCost.first * weightedCost.second->costDerivativeTime(t, x, u);
   }
   return dLdt;
 }
@@ -188,10 +142,10 @@ scalar_t CostFunctionLinearCombination::getCostDerivativeTime() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t CostFunctionLinearCombination::getTerminalCostDerivativeTime() {
+scalar_t CostFunctionLinearCombination::finalCostDerivativeTime(scalar_t t, const vector_t& x) {
   scalar_t dPhidt = 0;
   for (auto& weightedCost : weightedCosts_) {
-    dPhidt += weightedCost.first * weightedCost.second->getTerminalCostDerivativeTime();
+    dPhidt += weightedCost.first * weightedCost.second->finalCostDerivativeTime(t, x);
   }
   return dPhidt;
 }

@@ -32,8 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/dynamics/ControlledSystemBase.h>
-#include <ocs2_core/dynamics/DerivativesBase.h>
+#include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 
 namespace ocs2 {
@@ -55,13 +54,7 @@ class RobotInterface {
    * @brief getDynamics
    * @return a reference to the interal system dynamics
    */
-  virtual const ControlledSystemBase& getDynamics() const = 0;
-
-  /**
-   * @brief getDynamicsDerivatives
-   * @return a reference to the internal system dynamics derivatives
-   */
-  virtual const DerivativesBase& getDynamicsDerivatives() const = 0;
+  virtual const SystemDynamicsBase& getDynamics() const = 0;
 
   /**
    * @brief getCost

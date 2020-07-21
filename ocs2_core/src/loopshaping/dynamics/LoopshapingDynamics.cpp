@@ -35,43 +35,62 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 vector_t LoopshapingDynamics::computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) {
-  const vector_t systemstate = loopshapingDefinition_->getSystemState(state);
-  const vector_t systeminput = loopshapingDefinition_->getSystemInput(state, input);
-  const vector_t filterstate = loopshapingDefinition_->getFilterState(state);
-  const vector_t filteredinput = loopshapingDefinition_->getFilteredInput(state, input);
+  const vector_t x_system = loopshapingDefinition_->getSystemState(state);
+  const vector_t u_system = loopshapingDefinition_->getSystemInput(state, input);
+  const vector_t x_filter = loopshapingDefinition_->getFilterState(state);
+  const vector_t u_filter = loopshapingDefinition_->getFilteredInput(state, input);
 
-  const vector_t systemstateDerivative = controlledSystem_->computeFlowMap(time, systemstate, systeminput);
-  const vector_t filterstateDerivative = filterFlowmap(filterstate, filteredinput, systeminput);
+  const vector_t dynamics_system = systemDynamics_->computeFlowMap(time, x_system, u_system);
+  const vector_t dynamics_filter = filterFlowmap(x_filter, u_filter, u_system);
 
-  return loopshapingDefinition_->concatenateSystemAndFilterState(systemstateDerivative, filterstateDerivative);
+  return loopshapingDefinition_->concatenateSystemAndFilterState(dynamics_system, dynamics_filter);
 }
 
 vector_t LoopshapingDynamics::computeJumpMap(scalar_t time, const vector_t& state) {
-  const vector_t systemstate = loopshapingDefinition_->getSystemState(state);
-  const vector_t systemMappedState = controlledSystem_->computeJumpMap(time, systemstate);
+  const vector_t x_system = loopshapingDefinition_->getSystemState(state);
+  const vector_t jumpMap_system = systemDynamics_->computeJumpMap(time, x_system);
 
   // Filter doesn't Jump
-  const vector_t filterMappedState = loopshapingDefinition_->getFilterState(state);
+  const vector_t jumMap_filter = loopshapingDefinition_->getFilterState(state);
 
-  return loopshapingDefinition_->concatenateSystemAndFilterState(systemMappedState, filterMappedState);
+  return loopshapingDefinition_->concatenateSystemAndFilterState(jumpMap_system, jumMap_filter);
 }
 
 vector_t LoopshapingDynamics::computeGuardSurfaces(scalar_t time, const vector_t& state) {
-  const vector_t systemstate = loopshapingDefinition_->getSystemState(state);
-
-  return controlledSystem_->computeGuardSurfaces(time, systemstate);
+  const vector_t x_system = loopshapingDefinition_->getSystemState(state);
+  return systemDynamics_->computeGuardSurfaces(time, x_system);
 }
 
-std::unique_ptr<LoopshapingDynamics> LoopshapingDynamics::create(const ControlledSystemBase& controlledSystem,
+VectorFunctionLinearApproximation LoopshapingDynamics::guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  throw std::runtime_error("[LoopshapingDynamics] Guard surfaces not implemented");
+}
+
+vector_t LoopshapingDynamics::flowMapDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) {
+  const vector_t system_df = systemDynamics_->flowMapDerivativeTime(t, x, u);
+  const vector_t filter_df = vector_t::Zero(loopshapingDefinition_->getInputFilter().getNumStates());
+  return loopshapingDefinition_->concatenateSystemAndFilterState(system_df, filter_df);
+}
+
+vector_t LoopshapingDynamics::jumpMapDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) {
+  const vector_t system_dg = systemDynamics_->jumpMapDerivativeTime(t, x, u);
+  const vector_t filter_dg = vector_t::Zero(loopshapingDefinition_->getInputFilter().getNumStates());
+  return loopshapingDefinition_->concatenateSystemAndFilterState(system_dg, filter_dg);
+}
+
+vector_t LoopshapingDynamics::guardSurfacesDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) {
+  throw std::runtime_error("[LoopshapingDynamics] Guard surfaces not implemented");
+}
+
+std::unique_ptr<LoopshapingDynamics> LoopshapingDynamics::create(const SystemDynamicsBase& systemDynamics,
                                                                  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
   switch (loopshapingDefinition->getType()) {
     case LoopshapingType::outputpattern:
-      return std::unique_ptr<LoopshapingDynamics>(new LoopshapingDynamicsOutputPattern(controlledSystem, std::move(loopshapingDefinition)));
+      return std::unique_ptr<LoopshapingDynamics>(new LoopshapingDynamicsOutputPattern(systemDynamics, std::move(loopshapingDefinition)));
     case LoopshapingType::inputpattern:
-      return std::unique_ptr<LoopshapingDynamics>(new LoopshapingDynamicsInputPattern(controlledSystem, std::move(loopshapingDefinition)));
+      return std::unique_ptr<LoopshapingDynamics>(new LoopshapingDynamicsInputPattern(systemDynamics, std::move(loopshapingDefinition)));
     case LoopshapingType::eliminatepattern:
       return std::unique_ptr<LoopshapingDynamics>(
-          new LoopshapingDynamicsEliminatePattern(controlledSystem, std::move(loopshapingDefinition)));
+          new LoopshapingDynamicsEliminatePattern(systemDynamics, std::move(loopshapingDefinition)));
     default:
       throw std::runtime_error("[LoopshapingDynamics::create] invalid loopshaping type");
   }

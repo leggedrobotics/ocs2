@@ -31,102 +31,71 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-vector_array_t LoopshapingConstraintEliminatePattern::getInequalityConstraintDerivativesState() {
-  vector_array_t dhdx;
-  this->computeSystemInequalityConstraintDerivatives();
+VectorFunctionQuadraticApproximation LoopshapingConstraintEliminatePattern::inequalityConstraintQuadraticApproximation(scalar_t t,
+                                                                                                                       const vector_t& x,
+                                                                                                                       const vector_t& u) {
   const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  dhdx.clear();
-  if (systemConstraint_ && system_dhdx_.size() > 0) {
-    const size_t SYSTEM_STATE_DIM = system_dhdx_.front().rows();
-    const size_t FILTER_STATE_DIM = s_filter.getNumStates();
-    dhdx.resize(system_dhdx_.size());
-    for (size_t i = 0; i < system_dhdx_.size(); i++) {
-      dhdx[i].resize(SYSTEM_STATE_DIM + FILTER_STATE_DIM);
-      dhdx[i].head(system_dhdx_[i].rows()) = system_dhdx_[i];
-      dhdx[i].tail(s_filter.getNumStates()).noalias() = s_filter.getC().transpose() * system_dhdu_[i];
-    }
-  }
-  return dhdx;
-}
-
-vector_array_t LoopshapingConstraintEliminatePattern::getInequalityConstraintDerivativesInput() {
-  vector_array_t dhdu;
-  this->computeSystemInequalityConstraintDerivatives();
-  const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  if (systemConstraint_) {
-    dhdu.resize(system_dhdu_.size());
-    for (size_t i = 0; i < system_dhdu_.size(); i++) {
-      dhdu[i].noalias() = s_filter.getD().transpose() * system_dhdu_[i];
-    }
-  }
-  return dhdu;
-}
-
-matrix_array_t LoopshapingConstraintEliminatePattern::getInequalityConstraintSecondDerivativesState() {
-  matrix_array_t dhdxx;
-  this->computeSystemInequalityConstraintDerivatives();
-  const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  if (systemConstraint_ && system_dhdxx_.size() > 0) {
-    const size_t SYSTEM_STATE_DIM = system_dhdxx_.front().rows();
-    const size_t FILTER_STATE_DIM = s_filter.getNumStates();
-    dhdxx.resize(system_dhdxx_.size());
-    for (size_t i = 0; i < system_dhdxx_.size(); i++) {
-      dhdxx[i].resize(SYSTEM_STATE_DIM + FILTER_STATE_DIM, SYSTEM_STATE_DIM + FILTER_STATE_DIM);
-      dhdxx[i].topLeftCorner(SYSTEM_STATE_DIM, SYSTEM_STATE_DIM) = system_dhdxx_[i];
-      dhdxx[i].topRightCorner(SYSTEM_STATE_DIM, FILTER_STATE_DIM).noalias() = system_dhdux_[i].transpose() * s_filter.getC();
-      dhdxx[i].bottomLeftCorner(FILTER_STATE_DIM, SYSTEM_STATE_DIM) =
-          dhdxx[i].topRightCorner(SYSTEM_STATE_DIM, FILTER_STATE_DIM).transpose();
-      dhdxx[i].bottomRightCorner(FILTER_STATE_DIM, FILTER_STATE_DIM).noalias() =
-          s_filter.getC().transpose() * system_dhduu_[i] * s_filter.getC();
-    }
-  }
-  return dhdxx;
-}
-
-matrix_array_t LoopshapingConstraintEliminatePattern::getInequalityConstraintSecondDerivativesInput() {
-  matrix_array_t dhduu;
-  this->computeSystemInequalityConstraintDerivatives();
-  const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  if (systemConstraint_) {
-    dhduu.resize(system_dhduu_.size());
-    for (size_t i = 0; i < system_dhduu_.size(); i++) {
-      dhduu[i].noalias() = s_filter.getD().transpose() * system_dhduu_[i] * s_filter.getD();
-    }
-  }
-  return dhduu;
-}
-
-matrix_array_t LoopshapingConstraintEliminatePattern::getInequalityConstraintDerivativesInputState() {
-  matrix_array_t dhdux;
-  this->computeSystemInequalityConstraintDerivatives();
-  const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  if (systemConstraint_ && system_dhdux_.size()) {
-    const size_t SYSTEM_STATE_DIM = system_dhdux_.front().cols();
-    const size_t FILTER_STATE_DIM = s_filter.getNumStates();
-    const size_t FILTER_INPUT_DIM = s_filter.getNumInputs();
-    // assert(SYSTEM_INPUT_DIM == FILTER_INPUT_DIM);
-    dhdux.resize(system_dhdux_.size());
-    for (size_t i = 0; i < system_dhdux_.size(); i++) {
-      dhdux[i].resize(FILTER_INPUT_DIM, FILTER_STATE_DIM + SYSTEM_STATE_DIM);
-      dhdux[i].leftCols(SYSTEM_STATE_DIM).noalias() = s_filter.getD().transpose() * system_dhdux_[i];
-      dhdux[i].rightCols(FILTER_STATE_DIM).noalias() = s_filter.getD().transpose() * system_dhduu_[i] * s_filter.getC();
-    }
-  }
-  return dhdux;
-}
-
-void LoopshapingConstraintEliminatePattern::appendStateInputEqualityConstraintDerivativeState(matrix_t& C) {
-  const auto& s_filter = loopshapingDefinition_->getInputFilter();
+  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
+  const vector_t u_system = loopshapingDefinition_->getSystemInput(x, u);
   const size_t FILTER_STATE_DIM = s_filter.getNumStates();
-  // C.leftCols(SYSTEM_STATE_DIM), stays unaltered
-  C.rightCols(FILTER_STATE_DIM).noalias() = D_system_ * s_filter.getC();
+  const auto h_system = systemConstraint_->inequalityConstraintQuadraticApproximation(t, x_system, u_system);
+
+  VectorFunctionQuadraticApproximation h;
+  h.f = h_system.f;
+
+  h.dfdx.resize(h.f.rows(), x.rows());
+  h.dfdx.leftCols(x_system.rows()) = h_system.dfdx;
+  h.dfdx.rightCols(FILTER_STATE_DIM).noalias() = h_system.dfdu * s_filter.getC();
+
+  h.dfdu.noalias() = h_system.dfdu * s_filter.getD();
+
+  h.dfdxx.resize(h.f.rows());
+  h.dfduu.resize(h.f.rows());
+  h.dfdux.resize(h.f.rows());
+  for (size_t i = 0; i < h.f.rows(); i++) {
+    h.dfdxx[i].resize(x.rows(), x.rows());
+    h.dfdxx[i].topLeftCorner(x_system.rows(), x_system.rows()) = h_system.dfdxx[i];
+    h.dfdxx[i].topRightCorner(x_system.rows(), FILTER_STATE_DIM).noalias() = h_system.dfdux[i].transpose() * s_filter.getC();
+    h.dfdxx[i].bottomLeftCorner(FILTER_STATE_DIM, x_system.rows()) =
+        h.dfdxx[i].topRightCorner(x_system.rows(), FILTER_STATE_DIM).transpose();
+    h.dfdxx[i].bottomRightCorner(FILTER_STATE_DIM, FILTER_STATE_DIM).noalias() =
+        s_filter.getC().transpose() * h_system.dfduu[i] * s_filter.getC();
+
+    h.dfduu[i].noalias() = s_filter.getD().transpose() * h_system.dfduu[i] * s_filter.getD();
+
+    h.dfdux[i].resize(u.rows(), x.rows());
+    h.dfdux[i].leftCols(x_system.rows()).noalias() = s_filter.getD().transpose() * h_system.dfdux[i];
+    h.dfdux[i].rightCols(FILTER_STATE_DIM).noalias() = s_filter.getD().transpose() * h_system.dfduu[i] * s_filter.getC();
+  }
+
+  return h;
 }
 
-void LoopshapingConstraintEliminatePattern::appendStateInputEqualityConstraintDerivativeInput(matrix_t& D) {
+vector_t LoopshapingConstraintEliminatePattern::stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
+  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
+  const vector_t u_system = loopshapingDefinition_->getSystemInput(x, u);
+  return systemConstraint_->stateInputEqualityConstraint(t, x_system, u_system);
+}
+
+VectorFunctionLinearApproximation LoopshapingConstraintEliminatePattern::stateInputEqualityConstraintLinearApproximation(
+    scalar_t t, const vector_t& x, const vector_t& u) {
   const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  // TODO(mspieler): This was the original implmentation, which looks wrong because it overwrites D.
-  // D.leftCols(FILTER_INPUT_DIM).noalias() = D_system_ * s_filter.getD();
-  D.noalias() = D_system_ * s_filter.getD();
+  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
+  const vector_t u_system = loopshapingDefinition_->getSystemInput(x, u);
+  const auto g_system = systemConstraint_->stateInputEqualityConstraintLinearApproximation(t, x_system, u_system);
+
+  VectorFunctionLinearApproximation g;
+  g.f = g_system.f;
+
+  g.dfdx.resize(g_system.f.rows(), x.rows());
+  g.dfdx.leftCols(x_system.rows()) = g_system.dfdx;
+  g.dfdx.rightCols(s_filter.getNumStates()).noalias() = g_system.dfdu * s_filter.getC();
+
+  g.dfdu.resize(g_system.f.rows(), u.rows());
+  g.dfdu.leftCols(s_filter.getNumInputs()).noalias() = g_system.dfdu * s_filter.getD();
+  g.dfdu.rightCols(u.rows() - s_filter.getNumInputs()).setZero();
+
+  return g;
 }
 
 }  // namespace ocs2

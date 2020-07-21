@@ -34,16 +34,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-QuadraticCostFunction::QuadraticCostFunction(const matrix_t& Q, const matrix_t& R, const vector_t& xNominalIntermediate,
-                                             const vector_t& uNominalIntermediate, const matrix_t& QFinal, const vector_t& xNominalFinal,
-                                             const matrix_t& P /* = matrix_t() */)
-    : Q_(Q),
-      R_(R),
-      P_(P),
-      QFinal_(QFinal),
-      xNominalIntermediate_(xNominalIntermediate),
-      uNominalIntermediate_(uNominalIntermediate),
-      xNominalFinal_(xNominalFinal) {
+QuadraticCostFunction::QuadraticCostFunction(const matrix_t& Q, const matrix_t& R, const vector_t& xNominal, const vector_t& uNominal,
+                                             const matrix_t& QFinal, const vector_t& xNominalFinal, const matrix_t& P /* = matrix_t() */)
+    : Q_(Q), R_(R), P_(P), QFinal_(QFinal), xNominal_(xNominal), uNominal_(uNominal), xNominalFinal_(xNominalFinal) {
   if (P_.size() == 0) {
     P_ = matrix_t::Zero(R.rows(), Q.rows());
   }
@@ -59,95 +52,76 @@ QuadraticCostFunction* QuadraticCostFunction::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void QuadraticCostFunction::setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) {
-  setCurrentStateAndControl(t, x, u, xNominalIntermediate_, uNominalIntermediate_, xNominalFinal_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void QuadraticCostFunction::setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u,
-                                                      const vector_t& xNominalIntermediate, const vector_t& uNominalIntermediate,
-                                                      const vector_t& xNominalFinal) {
-  // TODO(mspieler): quick hack to fix terminal cost evaluation
-  vector_t input = u;
-  if (input.size() == 0) {
-    input = vector_t::Zero(uNominalIntermediate_.rows());
+std::pair<vector_t, vector_t> QuadraticCostFunction::getNominalStateInput(scalar_t t, const vector_t& x, const vector_t& u) {
+  // TODO(mspieler): There should only be one way to set the nominal trajectory.
+  if (costDesiredTrajectoriesPtr_ != nullptr && !costDesiredTrajectoriesPtr_->empty()) {
+    return {costDesiredTrajectoriesPtr_->getDesiredState(t), costDesiredTrajectoriesPtr_->getDesiredInput(t)};
+  } else {
+    return {xNominal_, uNominal_};
   }
-
-  CostFunctionBase::setCurrentStateAndControl(t, x, input);
-
-  xNominalIntermediate_ = xNominalIntermediate;
-  uNominalIntermediate_ = uNominalIntermediate;
-  xNominalFinal_ = xNominalFinal;
-  xIntermediateDeviation_ = x - xNominalIntermediate;
-  uIntermediateDeviation_ = input - uNominalIntermediate;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t QuadraticCostFunction::getCost() {
-  return 0.5 * xIntermediateDeviation_.dot(Q_ * xIntermediateDeviation_) + 0.5 * uIntermediateDeviation_.dot(R_ * uIntermediateDeviation_) +
-         uIntermediateDeviation_.dot(P_ * xIntermediateDeviation_);
+vector_t QuadraticCostFunction::getNominalFinalState(scalar_t t, const vector_t& x) {
+  // TODO(mspieler): There should only be one way to set the nominal trajectory.
+  if (costDesiredTrajectoriesPtr_ != nullptr && !costDesiredTrajectoriesPtr_->empty()) {
+    return costDesiredTrajectoriesPtr_->getDesiredState(t);
+  } else {
+    return xNominalFinal_;
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t QuadraticCostFunction::getCostDerivativeState() {
-  return Q_ * xIntermediateDeviation_ + P_.transpose() * uIntermediateDeviation_;
+scalar_t QuadraticCostFunction::cost(scalar_t t, const vector_t& x, const vector_t& u) {
+  std::tie(xNominal_, uNominal_) = getNominalStateInput(t, x, u);
+  vector_t xDeviation = x - xNominal_;
+  vector_t uDeviation = u - uNominal_;
+  return 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation) + uDeviation.dot(P_ * xDeviation);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t QuadraticCostFunction::getCostSecondDerivativeState() {
-  return Q_;
+scalar_t QuadraticCostFunction::finalCost(scalar_t t, const vector_t& x) {
+  xNominalFinal_ = getNominalFinalState(t, x);
+  vector_t xDeviation = x - xNominalFinal_;
+  return 0.5 * xDeviation.dot(QFinal_ * xDeviation);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t QuadraticCostFunction::getCostDerivativeInput() {
-  return R_ * uIntermediateDeviation_ + P_ * xIntermediateDeviation_;
+ScalarFunctionQuadraticApproximation QuadraticCostFunction::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  std::tie(xNominal_, uNominal_) = getNominalStateInput(t, x, u);
+  vector_t xDeviation = x - xNominal_;
+  vector_t uDeviation = u - uNominal_;
+
+  ScalarFunctionQuadraticApproximation L;
+  L.f = 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation) + uDeviation.dot(P_ * xDeviation);
+  L.dfdx = Q_ * xDeviation + P_.transpose() * uDeviation;
+  L.dfdu = R_ * uDeviation + P_ * xDeviation;
+  L.dfdxx = Q_;
+  L.dfdux = P_;
+  L.dfduu = R_;
+  return L;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t QuadraticCostFunction::getCostSecondDerivativeInput() {
-  return R_;
-}
+ScalarFunctionQuadraticApproximation QuadraticCostFunction::finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
+  xNominalFinal_ = getNominalFinalState(t, x);
+  vector_t xDeviation = x - xNominalFinal_;
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_t QuadraticCostFunction::getCostDerivativeInputState() {
-  return P_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t QuadraticCostFunction::getTerminalCost() {
-  vector_t xFinalDeviation = CostFunctionBase::x_ - xNominalFinal_;
-  return 0.5 * xFinalDeviation.dot(QFinal_ * xFinalDeviation);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t QuadraticCostFunction::getTerminalCostDerivativeState() {
-  vector_t xFinalDeviation = CostFunctionBase::x_ - xNominalFinal_;
-  return QFinal_ * xFinalDeviation;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_t QuadraticCostFunction::getTerminalCostSecondDerivativeState() {
-  return QFinal_;
+  ScalarFunctionQuadraticApproximation Phi;
+  Phi.f = 0.5 * xDeviation.dot(QFinal_ * xDeviation);
+  Phi.dfdx = QFinal_ * xDeviation;
+  Phi.dfdxx = QFinal_;
+  return Phi;
 }
 
 }  // namespace ocs2

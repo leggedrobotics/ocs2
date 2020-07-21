@@ -42,20 +42,10 @@ class CostFunctionBaseAD : public CostFunctionBase {
   using ad_scalar_t = typename CppAdInterface::ad_scalar_t;
   using ad_vector_t = typename CppAdInterface::ad_vector_t;
 
-  /**
-   * Default constructor
-   *
-   */
+  /** Default constructor */
   explicit CostFunctionBaseAD(size_t stateDim, size_t inputDim);
 
-  /**
-   * Copy constructor
-   */
-  CostFunctionBaseAD(const CostFunctionBaseAD& rhs);
-
-  /**
-   * Default destructor
-   */
+  /** Default destructor */
   virtual ~CostFunctionBaseAD() = default;
 
   /**
@@ -70,38 +60,28 @@ class CostFunctionBaseAD : public CostFunctionBase {
   void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                   bool verbose = true);
 
-  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) final;
+  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) final;
+  scalar_t finalCost(scalar_t t, const vector_t& x) final;
+  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) final;
+  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) final;
 
-  scalar_t getCost() final;
+  /** @note: Requires cost quadratic approximation to be called before */
+  scalar_t costDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) final;
 
-  scalar_t getCostDerivativeTime() final;
-
-  vector_t getCostDerivativeState() final;
-
-  matrix_t getCostSecondDerivativeState() final;
-
-  vector_t getCostDerivativeInput() final;
-
-  matrix_t getCostSecondDerivativeInput() final;
-
-  matrix_t getCostDerivativeInputState() final;
-
-  scalar_t getTerminalCost() final;
-
-  scalar_t getTerminalCostDerivativeTime() final;
-
-  vector_t getTerminalCostDerivativeState() final;
-
-  matrix_t getTerminalCostSecondDerivativeState() final;
+  /** @note: Requires final cost quadratic approximation to be called before */
+  scalar_t finalCostDerivativeTime(scalar_t t, const vector_t& x) final;
 
  protected:
+  /** Copy constructor */
+  CostFunctionBaseAD(const CostFunctionBaseAD& rhs);
+
   /**
    * Gets a user-defined cost parameters, applied to the intermediate costs
    *
    * @param [in] time: Current time.
    * @return The cost function parameters at a certain time
    */
-  virtual vector_t getIntermediateParameters(scalar_t time) const;
+  virtual vector_t getIntermediateParameters(scalar_t time) const { return vector_t(0); }
 
   /**
    * Number of parameters for the intermediate cost function.
@@ -109,23 +89,23 @@ class CostFunctionBaseAD : public CostFunctionBase {
    *
    * @return number of parameters
    */
-  virtual size_t getNumIntermediateParameters() const;
+  virtual size_t getNumIntermediateParameters() const { return 0; }
 
   /**
-   * Gets a user-defined cost parameters, applied to the terminal costs
+   * Gets a user-defined cost parameters, applied to the final costs
    *
    * @param [in] time: Current time.
    * @return The cost function parameters at a certain time
    */
-  virtual vector_t getTerminalParameters(scalar_t time) const;
+  virtual vector_t getFinalParameters(scalar_t time) const { return vector_t(0); }
 
   /**
-   * Number of parameters for the terminal cost function.
+   * Number of parameters for the final cost function.
    * This number must be remain constant after the model libraries are created
    *
    * @return number of parameters
    */
-  virtual size_t getNumTerminalParameters() const;
+  virtual size_t getNumFinalParameters() const { return 0; }
 
   /**
    * Interface method to the intermediate cost function. This method must be implemented by the derived class.
@@ -141,7 +121,7 @@ class CostFunctionBaseAD : public CostFunctionBase {
                                                const ad_vector_t& parameters) const = 0;
 
   /**
-   * Interface method to the terminal cost function. This method can be implemented by the derived class.
+   * Interface method to the final cost function. This method can be implemented by the derived class.
    *
    * @tparam scalar type. All the floating point operations should be with this type.
    * @param [in] time: time.
@@ -149,7 +129,9 @@ class CostFunctionBaseAD : public CostFunctionBase {
    * @param [in] parameters: parameter vector.
    * @return cost value.
    */
-  virtual ad_scalar_t terminalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const;
+  virtual ad_scalar_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const {
+    return ad_scalar_t(0);
+  }
 
  private:
   /**
@@ -176,22 +158,20 @@ class CostFunctionBaseAD : public CostFunctionBase {
   size_t inputDim_;
 
  private:
-  std::unique_ptr<CppAdInterface> terminalADInterfacePtr_;
+  std::unique_ptr<CppAdInterface> finalADInterfacePtr_;
   std::unique_ptr<CppAdInterface> intermediateADInterfacePtr_;
 
   // Intermediate cost
-  bool intermediateDerivativesComputed_;
   vector_t intermediateParameters_;
   vector_t tapedTimeStateInput_;
   row_vector_t intermediateJacobian_;
   matrix_t intermediateHessian_;
 
   // Final cost
-  bool terminalDerivativesComputed_;
-  vector_t terminalParameters_;
+  vector_t finalParameters_;
   vector_t tapedTimeState_;
-  row_vector_t terminalJacobian_;
-  matrix_t terminalHessian_;
+  row_vector_t finalJacobian_;
+  matrix_t finalHessian_;
 };
 
 }  // namespace ocs2

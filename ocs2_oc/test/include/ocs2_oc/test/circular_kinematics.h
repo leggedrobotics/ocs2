@@ -46,14 +46,18 @@ namespace ocs2 {
  */
 class CircularKinematicsSystem final : public SystemDynamicsBase {
  public:
-  CircularKinematicsSystem() : SystemDynamicsBase(2, 2){};
+  CircularKinematicsSystem() = default;
   ~CircularKinematicsSystem() override = default;
 
   vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) override { return u; }
 
-  matrix_t getFlowMapDerivativeState() override { return matrix_t::Zero(2, 2); }
-
-  matrix_t getFlowMapDerivativeInput() override { return matrix_t::Identity(2, 2); }
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+    VectorFunctionLinearApproximation dynamics;
+    dynamics.f = computeFlowMap(t, x, u);
+    dynamics.dfdx.setZero(2, 2);
+    dynamics.dfdu.setIdentity(2, 2);
+    return dynamics;
+  }
 
   CircularKinematicsSystem* clone() const override { return new CircularKinematicsSystem(*this); }
 };
@@ -79,7 +83,7 @@ class CircularKinematicsCost final : public CostFunctionBaseAD {
     return 0.5 * pow(state(0) * input(1) - state(1) * input(0) - 1.0, 2) + 0.005 * input.dot(input);
   }
 
-  ad_scalar_t terminalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const override {
+  ad_scalar_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const override {
     return ad_scalar_t(0.0);
   }
 };
@@ -94,27 +98,24 @@ class CircularKinematicsCost final : public CostFunctionBaseAD {
  */
 class CircularKinematicsConstraints final : public ConstraintBase {
  public:
-  CircularKinematicsConstraints() : ConstraintBase(2, 2) {}
+  CircularKinematicsConstraints() = default;
   ~CircularKinematicsConstraints() override = default;
 
   CircularKinematicsConstraints* clone() const override { return new CircularKinematicsConstraints(*this); }
 
-  vector_t getStateInputEqualityConstraint() override {
+  vector_t stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) override {
     vector_t e(1);
-    e(0) = x_.dot(u_);
+    e << x.dot(u);
     return e;
   }
 
-  matrix_t getStateInputEqualityConstraintDerivativesState() override {
-    matrix_t C(1, 2);
-    C = u_.transpose();
-    return C;
-  }
-
-  matrix_t getStateInputEqualityConstraintDerivativesInput() override {
-    matrix_t D(1, 2);
-    D = x_.transpose();
-    return D;
+  VectorFunctionLinearApproximation stateInputEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x,
+                                                                                    const vector_t& u) override {
+    VectorFunctionLinearApproximation e;
+    e.f = stateInputEqualityConstraint(t, x, u);
+    e.dfdx = u.transpose();
+    e.dfdu = x.transpose();
+    return e;
   }
 };
 

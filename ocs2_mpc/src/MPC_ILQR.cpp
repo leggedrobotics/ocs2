@@ -34,7 +34,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MPC_ILQR::MPC_ILQR(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const DerivativesBase* systemDerivativesPtr,
+MPC_ILQR::MPC_ILQR(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr,
                    const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
                    const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const scalar_array_t& partitioningTimes,
                    const ILQR_Settings& ilqrSettings /* = ILQR_Settings()*/, const MPC_Settings& mpcSettings /* = MPC_Settings()*/,
@@ -42,7 +42,7 @@ MPC_ILQR::MPC_ILQR(size_t stateDim, size_t inputDim, const RolloutBase* rolloutP
 
     : MPC_BASE(partitioningTimes, mpcSettings) {
   // ILQR
-  ilqrPtr_.reset(new ILQR(stateDim, inputDim, rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr,
+  ilqrPtr_.reset(new ILQR(stateDim, inputDim, rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr,
                           operatingTrajectoriesPtr, ilqrSettings, heuristicsFunctionPtr));
 }
 

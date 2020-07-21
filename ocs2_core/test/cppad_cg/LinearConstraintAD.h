@@ -39,9 +39,9 @@ class LinearConstraintAD : public ConstraintBaseAD {
   using ConstraintBaseAD::ad_scalar_t;
   using ConstraintBaseAD::ad_vector_t;
 
-  LinearConstraintAD(size_t stateDim, size_t inputDim, const vector_t& e, const matrix_t& C, const matrix_t& D, const vector_t& h,
-                     const matrix_t& F, const vector_t& h_f, const matrix_t& F_f)
-      : ConstraintBaseAD(stateDim, inputDim), e_(e), C_(C), D_(D), h_(h), F_(F), h_f_(h_f), F_f_(F_f) {}
+  LinearConstraintAD(const vector_t& e, const matrix_t& C, const matrix_t& D, const vector_t& h, const matrix_t& F, const vector_t& h_f,
+                     const matrix_t& F_f)
+      : ConstraintBaseAD(C.cols(), D.cols()), e_(e), C_(C), D_(D), h_(h), F_(F), h_f_(h_f), F_f_(F_f) {}
 
   ~LinearConstraintAD() override = default;
 

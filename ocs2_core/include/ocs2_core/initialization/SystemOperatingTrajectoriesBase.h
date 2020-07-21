@@ -38,14 +38,10 @@ namespace ocs2 {
  */
 class SystemOperatingTrajectoriesBase {
  public:
-  /**
-   * Default constructor
-   */
+  /** Default constructor */
   SystemOperatingTrajectoriesBase() = default;
 
-  /**
-   * Default destructor.
-   */
+  /** Default destructor */
   virtual ~SystemOperatingTrajectoriesBase() = default;
 
   /**
@@ -70,6 +66,10 @@ class SystemOperatingTrajectoriesBase {
   virtual void getSystemOperatingTrajectories(const vector_t& initialState, scalar_t startTime, scalar_t finalTime,
                                               scalar_array_t& timeTrajectory, vector_array_t& stateTrajectory,
                                               vector_array_t& inputTrajectory, bool concatOutput) = 0;
+
+ protected:
+  /** Copy constructor */
+  SystemOperatingTrajectoriesBase(const SystemOperatingTrajectoriesBase& rhs) = default;
 };
 
 }  // namespace ocs2

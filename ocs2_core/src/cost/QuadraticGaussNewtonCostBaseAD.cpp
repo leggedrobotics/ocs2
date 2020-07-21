@@ -34,33 +34,18 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-QuadraticGaussNewtonCostBaseAD::QuadraticGaussNewtonCostBaseAD(size_t stateDim, size_t inputDim, size_t intermediateCostDim,
-                                                               size_t terminalCostDim)
-    : CostFunctionBase(),
-      stateDim_(stateDim),
-      inputDim_(inputDim),
-      intermediateCostDim_(intermediateCostDim),
-      terminalCostDim_(terminalCostDim),
-      intermediateCostValuesComputed_(false),
-      intermediateCostValues_(intermediateCostDim),
-      intermediateDerivativesComputed_(false),
-      intermediateParameters_(0),
-      tapedTimeStateInput_(1 + stateDim + inputDim),
-      intermediateJacobian_(intermediateCostDim, 1 + stateDim + inputDim),
-      terminalDerivativesComputed_(false),
-      terminalCostValues_(terminalCostDim),
-      terminalCostValuesComputed_(false),
-      terminalParameters_(0),
-      tapedTimeState_(1 + stateDim),
-      terminalJacobian_(terminalCostDim, 1 + stateDim) {}
+QuadraticGaussNewtonCostBaseAD::QuadraticGaussNewtonCostBaseAD(size_t stateDim, size_t inputDim)
+    : stateDim_(stateDim), inputDim_(inputDim) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 QuadraticGaussNewtonCostBaseAD::QuadraticGaussNewtonCostBaseAD(const QuadraticGaussNewtonCostBaseAD& rhs)
-    : QuadraticGaussNewtonCostBaseAD(rhs.stateDim_, rhs.inputDim_, rhs.intermediateCostDim_, rhs.terminalCostDim_),
+    : CostFunctionBase(rhs),
+      stateDim_(rhs.stateDim_),
+      inputDim_(rhs.inputDim_),
       intermediateADInterfacePtr_(new CppAdInterface(*rhs.intermediateADInterfacePtr_)),
-      terminalADInterfacePtr_(new CppAdInterface(*rhs.terminalADInterfacePtr_)) {}
+      finalADInterfacePtr_(new CppAdInterface(*rhs.finalADInterfacePtr_)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -73,221 +58,81 @@ void QuadraticGaussNewtonCostBaseAD::initialize(const std::string& modelName, co
   } else {
     loadModelsIfAvailable(verbose);
   }
-};
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void QuadraticGaussNewtonCostBaseAD::setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) {
-  CostFunctionBase::setCurrentStateAndControl(t, x, u);
-
-  tapedTimeState_ << t, x;
-  tapedTimeStateInput_ << t, x, u;
-
-  intermediateParameters_ = getIntermediateParameters(t);
-  terminalParameters_ = getTerminalParameters(t);
-
-  intermediateCostValuesComputed_ = false;
-  intermediateDerivativesComputed_ = false;
-  terminalDerivativesComputed_ = false;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t QuadraticGaussNewtonCostBaseAD::getCost() {
-  if (!intermediateCostValuesComputed_) {
-    intermediateCostValues_ = intermediateADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, intermediateParameters_);
-    intermediateCostValuesComputed_ = true;
-  }
+scalar_t QuadraticGaussNewtonCostBaseAD::cost(scalar_t t, const vector_t& x, const vector_t& u) {
+  tapedTimeStateInput_.resize(1 + stateDim_ + inputDim_);
+  tapedTimeStateInput_ << t, x, u;
+  intermediateParameters_ = getIntermediateParameters(t);
+  intermediateCostValues_ = intermediateADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, intermediateParameters_);
   return 0.5 * intermediateCostValues_.dot(intermediateCostValues_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t QuadraticGaussNewtonCostBaseAD::getCostDerivativeTime() {
-  if (!intermediateDerivativesComputed_) {
-    intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
-    intermediateDerivativesComputed_ = true;
-  }
-  if (!intermediateCostValuesComputed_) {
-    intermediateCostValues_ = intermediateADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, intermediateParameters_);
-    intermediateCostValuesComputed_ = true;
-  }
+scalar_t QuadraticGaussNewtonCostBaseAD::finalCost(scalar_t t, const vector_t& x) {
+  tapedTimeState_.resize(1 + stateDim_);
+  tapedTimeState_ << t, x;
+  finalParameters_ = getFinalParameters(t);
+  finalCostValues_ = finalADInterfacePtr_->getFunctionValue(tapedTimeState_, finalParameters_);
+  return 0.5 * finalCostValues_.dot(finalCostValues_);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation QuadraticGaussNewtonCostBaseAD::costQuadraticApproximation(scalar_t t, const vector_t& x,
+                                                                                                const vector_t& u) {
+  tapedTimeStateInput_.resize(1 + stateDim_ + inputDim_);
+  tapedTimeStateInput_ << t, x, u;
+  intermediateParameters_ = getIntermediateParameters(t);
+  intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
+  intermediateCostValues_ = intermediateADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, intermediateParameters_);
+  const size_t costDim = intermediateCostValues_.rows();
+
+  ScalarFunctionQuadraticApproximation L;
+  L.f = 0.5 * intermediateCostValues_.dot(intermediateCostValues_);
+  L.dfdx = intermediateJacobian_.block(0, 1, costDim, stateDim_).transpose() * intermediateCostValues_;
+  L.dfdxx = intermediateJacobian_.block(0, 1, costDim, stateDim_).transpose() * intermediateJacobian_.block(0, 1, costDim, stateDim_);
+  L.dfdu = intermediateJacobian_.rightCols(inputDim_).transpose() * intermediateCostValues_;
+  L.dfduu = intermediateJacobian_.rightCols(inputDim_).transpose() * intermediateJacobian_.rightCols(inputDim_);
+  L.dfdux = intermediateJacobian_.rightCols(inputDim_).transpose() * intermediateJacobian_.block(0, 1, costDim, stateDim_);
+  return L;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation QuadraticGaussNewtonCostBaseAD::finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
+  tapedTimeState_.resize(1 + stateDim_);
+  tapedTimeState_ << t, x;
+  finalParameters_ = getFinalParameters(t);
+  finalJacobian_ = finalADInterfacePtr_->getJacobian(tapedTimeState_, finalParameters_);
+  finalCostValues_ = finalADInterfacePtr_->getFunctionValue(tapedTimeState_, finalParameters_);
+
+  ScalarFunctionQuadraticApproximation Phi;
+  Phi.f = 0.5 * finalCostValues_.dot(finalCostValues_);
+  Phi.dfdx = finalJacobian_.rightCols(stateDim_).transpose() * finalCostValues_;
+  Phi.dfdxx = finalJacobian_.rightCols(stateDim_).transpose() * finalJacobian_.rightCols(stateDim_);
+  return Phi;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t QuadraticGaussNewtonCostBaseAD::costDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) {
   return intermediateCostValues_.transpose() * intermediateJacobian_.col(0);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t QuadraticGaussNewtonCostBaseAD::getCostDerivativeState() {
-  if (!intermediateDerivativesComputed_) {
-    intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
-    intermediateDerivativesComputed_ = true;
-  }
-  if (!intermediateCostValuesComputed_) {
-    intermediateCostValues_ = intermediateADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, intermediateParameters_);
-    intermediateCostValuesComputed_ = true;
-  }
-  return intermediateJacobian_.block(0, 1, intermediateCostDim_, stateDim_).transpose() * intermediateCostValues_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_t QuadraticGaussNewtonCostBaseAD::getCostSecondDerivativeState() {
-  if (!intermediateDerivativesComputed_) {
-    intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
-    intermediateDerivativesComputed_ = true;
-  }
-  if (!intermediateCostValuesComputed_) {
-    intermediateCostValues_ = intermediateADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, intermediateParameters_);
-    intermediateCostValuesComputed_ = true;
-  }
-  return intermediateJacobian_.block(0, 1, intermediateCostDim_, stateDim_).transpose() *
-         intermediateJacobian_.block(0, 1, intermediateCostDim_, stateDim_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t QuadraticGaussNewtonCostBaseAD::getCostDerivativeInput() {
-  if (!intermediateDerivativesComputed_) {
-    intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
-    intermediateDerivativesComputed_ = true;
-  }
-  if (!intermediateCostValuesComputed_) {
-    intermediateCostValues_ = intermediateADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, intermediateParameters_);
-    intermediateCostValuesComputed_ = true;
-  }
-  dLdu = intermediateJacobian_.block(0, 1 + stateDim_, intermediateCostDim_, inputDim_).transpose() * intermediateCostValues_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_t QuadraticGaussNewtonCostBaseAD::getCostSecondDerivativeInput() {
-  if (!intermediateDerivativesComputed_) {
-    intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
-    intermediateDerivativesComputed_ = true;
-  }
-  if (!intermediateCostValuesComputed_) {
-    intermediateCostValues_ = intermediateADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, intermediateParameters_);
-    intermediateCostValuesComputed_ = true;
-  }
-  return intermediateJacobian_.block(0, 1 + stateDim_, intermediateCostDim_, inputDim_).transpose() *
-         intermediateJacobian_.block(0, 1 + stateDim_, intermediateCostDim_, inputDim_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_t QuadraticGaussNewtonCostBaseAD::getCostDerivativeInputState() {
-  if (!intermediateDerivativesComputed_) {
-    intermediateJacobian_ = intermediateADInterfacePtr_->getJacobian(tapedTimeStateInput_, intermediateParameters_);
-    intermediateDerivativesComputed_ = true;
-  }
-  return intermediateJacobian_.block(0, 1 + stateDim_, intermediateCostDim_, inputDim_).transpose() *
-         intermediateJacobian_.block(0, 1, intermediateCostDim_, stateDim_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t QuadraticGaussNewtonCostBaseAD::getTerminalCost() {
-  if (terminalCostValuesComputed_) {
-    terminalCostValues_ = terminalADInterfacePtr_->getFunctionValue(tapedTimeState_, terminalParameters_);
-    terminalCostValuesComputed_ = true;
-  }
-  return 0.5 * terminalCostValues_.dot(terminalCostValues_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t QuadraticGaussNewtonCostBaseAD::getTerminalCostDerivativeTime() {
-  if (!terminalDerivativesComputed_) {
-    terminalJacobian_ = terminalADInterfacePtr_->getJacobian(tapedTimeState_, terminalParameters_);
-    terminalDerivativesComputed_ = true;
-  }
-  if (terminalCostValuesComputed_) {
-    terminalCostValues_ = terminalADInterfacePtr_->getFunctionValue(tapedTimeState_, terminalParameters_);
-    terminalCostValuesComputed_ = true;
-  }
-  return terminalCostValues_.transpose() * terminalJacobian_.col(0);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t QuadraticGaussNewtonCostBaseAD::getTerminalCostDerivativeState() {
-  if (!terminalDerivativesComputed_) {
-    terminalJacobian_ = terminalADInterfacePtr_->getJacobian(tapedTimeState_, terminalParameters_);
-    terminalDerivativesComputed_ = true;
-  }
-  if (terminalCostValuesComputed_) {
-    terminalCostValues_ = terminalADInterfacePtr_->getFunctionValue(tapedTimeState_, terminalParameters_);
-    terminalCostValuesComputed_ = true;
-  }
-  return terminalJacobian_.block(0, 1, terminalCostDim_, stateDim_).transpose() * terminalCostValues_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_t QuadraticGaussNewtonCostBaseAD::getTerminalCostSecondDerivativeState() {
-  if (!terminalDerivativesComputed_) {
-    terminalJacobian_ = terminalADInterfacePtr_->getJacobian(tapedTimeState_, terminalParameters_);
-    terminalDerivativesComputed_ = true;
-  }
-  if (terminalCostValuesComputed_) {
-    terminalCostValues_ = terminalADInterfacePtr_->getFunctionValue(tapedTimeState_, terminalParameters_);
-    terminalCostValuesComputed_ = true;
-  }
-  return terminalJacobian_.block(0, 1, terminalCostDim_, stateDim_).transpose() *
-         terminalJacobian_.block(0, 1, terminalCostDim_, stateDim_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t QuadraticGaussNewtonCostBaseAD::getIntermediateParameters(scalar_t time) const {
-  return vector_t(0);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-size_t QuadraticGaussNewtonCostBaseAD::getNumIntermediateParameters() const {
-  return 0;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t QuadraticGaussNewtonCostBaseAD::getTerminalParameters(scalar_t time) const {
-  return vector_t(0);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-size_t QuadraticGaussNewtonCostBaseAD::getNumTerminalParameters() const {
-  return 0;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t QuadraticGaussNewtonCostBaseAD::intermediateCostFunction(ad_scalar_t time, const vector_t& state, const vector_t& input,
-                                                                  const vector_t& parameters) const = 0;
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t QuadraticGaussNewtonCostBaseAD::terminalCostFunction(ad_scalar_t time, const vector_t& state, const vector_t& parameters) const {
-  return ad_vector_t::Zero(terminalCostDim_);
+scalar_t QuadraticGaussNewtonCostBaseAD::finalCostDerivativeTime(scalar_t t, const vector_t& x) {
+  return finalCostValues_.transpose() * finalJacobian_.col(0);
 }
 
 /******************************************************************************************************/
@@ -300,16 +145,15 @@ void QuadraticGaussNewtonCostBaseAD::setADInterfaces(const std::string& modelNam
     auto input = x.tail(inputDim_);
     y = this->intermediateCostFunction(time, state, input, p);
   };
-  intermediateADInterfacePtr_.reset(new CppAdInterface(intermediateCostAd, intermediateCostDim_, 1 + stateDim_ + inputDim_,
-                                                       getNumIntermediateParameters(), modelName + "_intermediate", modelFolder));
+  intermediateADInterfacePtr_.reset(new CppAdInterface(intermediateCostAd, 1 + stateDim_ + inputDim_, getNumIntermediateParameters(),
+                                                       modelName + "_intermediate", modelFolder));
 
-  auto terminalCostAd = [this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
+  auto finalCostAd = [this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
     auto time = x(0);
     auto state = x.tail(stateDim_);
-    y = this->terminalCostFunction(time, state, p);
+    y = this->finalCostFunction(time, state, p);
   };
-  terminalADInterfacePtr_.reset(new CppAdInterface(terminalCostAd, terminalCostDim_, 1 + stateDim_, getNumTerminalParameters(),
-                                                   modelName + "_terminal", modelFolder));
+  finalADInterfacePtr_.reset(new CppAdInterface(finalCostAd, 1 + stateDim_, getNumFinalParameters(), modelName + "_final", modelFolder));
 }
 
 /******************************************************************************************************/
@@ -317,7 +161,7 @@ void QuadraticGaussNewtonCostBaseAD::setADInterfaces(const std::string& modelNam
 /******************************************************************************************************/
 void QuadraticGaussNewtonCostBaseAD::createModels(bool verbose) {
   intermediateADInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
-  terminalADInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
+  finalADInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
 }
 
 /******************************************************************************************************/
@@ -325,7 +169,7 @@ void QuadraticGaussNewtonCostBaseAD::createModels(bool verbose) {
 /******************************************************************************************************/
 void QuadraticGaussNewtonCostBaseAD::loadModelsIfAvailable(bool verbose) {
   intermediateADInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
-  terminalADInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
+  finalADInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
 }
 
 }  // namespace ocs2

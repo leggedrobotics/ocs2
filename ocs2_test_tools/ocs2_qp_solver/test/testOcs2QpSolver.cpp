@@ -47,10 +47,9 @@ TEST_F(Ocs2QpSolverTest, initialCondition) {
 TEST_F(Ocs2QpSolverTest, satisfiesDynamics) {
   // Forward integrate with solution u(t) and check x(t)
   ocs2::vector_t x = x0;
-  ocs2::qp_solver::SystemWrapper systemWrapper(*system);
   for (int k = 0; k < N; ++k) {
     auto dt = solution.timeTrajectory[k + 1] - solution.timeTrajectory[k];
-    x += dt * systemWrapper.getFlowMap(solution.timeTrajectory[k], x, solution.inputTrajectory[k]);
+    x += dt * system->computeFlowMap(solution.timeTrajectory[k], x, solution.inputTrajectory[k]);
     ASSERT_TRUE(x.isApprox(solution.stateTrajectory[k + 1]));
   }
 }

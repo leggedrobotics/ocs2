@@ -33,18 +33,18 @@ namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
-DDP_DataCollector::DDP_DataCollector(const RolloutBase* rolloutPtr, const DerivativesBase* systemDerivativesPtr,
+/******************************************************************************************************/
+DDP_DataCollector::DDP_DataCollector(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr,
                                      const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr)
 
     : rolloutPtr_(rolloutPtr->clone()),
-      systemDerivativesPtr_(systemDerivativesPtr->clone()),
+      systemDynamicsPtr_(systemDynamicsPtr->clone()),
       systemConstraintsPtr_(systemConstraintsPtr->clone()),
       costFunctionPtr_(costFunctionPtr->clone()) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 void DDP_DataCollector::collect(const GaussNewtonDDP* constDdpPtr) {
   // TODO(mspieler): avoid const_cast
   auto* ddpPtr = const_cast<GaussNewtonDDP*>(constDdpPtr);
@@ -99,10 +99,8 @@ void DDP_DataCollector::collect(const GaussNewtonDDP* constDdpPtr) {
   // Riccati modification
   riccatiModificationTrajectoriesStock_.swap(ddpPtr->cachedRiccatiModificationTrajectoriesStock_);
 
-  // terminal cost which is interpreted as the Heuristic function
-  sHeuristics_ = ddpPtr->sHeuristics_;
-  SvHeuristics_.swap(ddpPtr->SvHeuristics_);
-  SmHeuristics_.swap(ddpPtr->SmHeuristics_);
+  // final cost which is interpreted as the Heuristic function
+  std::swap(heuristics_, ddpPtr->heuristics_);
 
   // Riccati coefficients
   SsTimeTrajectoriesStock_.swap(ddpPtr->SsTimeTrajectoryStock_);
@@ -120,7 +118,7 @@ void DDP_DataCollector::collect(const GaussNewtonDDP* constDdpPtr) {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 void DDP_DataCollector::calculateStateInputConstraintsSensitivity(const GaussNewtonDDP* constDdpPtr,
                                                                   const std::vector<scalar_array_t>& timeTrajectoriesStock,
                                                                   const vector_array2_t& stateTrajectoriesStock,
@@ -150,12 +148,9 @@ void DDP_DataCollector::calculateStateInputConstraintsSensitivity(const GaussNew
 
   for (size_t i = 0; i < constDdpPtr->numPartitions_; i++) {
     for (size_t k = 0; k < timeTrajectoriesStock[i].size(); k++) {
-      // set
-      systemConstraintsPtr_->setCurrentStateAndControl(timeTrajectoriesStock[i][k], stateTrajectoriesStock[i][k],
-                                                       inputTrajectoriesStock[i][k]);
-
       // evaluation
-      vector_array_t g1DevArray = systemConstraintsPtr_->getStateInputEqualityConstraintDerivativesEventTimes();
+      vector_array_t g1DevArray = systemConstraintsPtr_->stateInputEqualityConstraintDerivativesEventTimes(
+          timeTrajectoriesStock[i][k], stateTrajectoriesStock[i][k], inputTrajectoriesStock[i][k]);
 
       // if derivatives where available
       if (g1DevArray.size() > 0) {
@@ -183,7 +178,7 @@ void DDP_DataCollector::calculateStateInputConstraintsSensitivity(const GaussNew
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 void DDP_DataCollector::resizeDataContainer(size_t numPartitions, size_t stateDim, size_t inputDim) {
   if (numPartitions == 0) {
     throw std::runtime_error("The number of Partitions cannot be zero!");

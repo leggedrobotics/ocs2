@@ -80,7 +80,7 @@ add_library(${PROJECT_NAME}
   src/cost/RelaxedBarrierCost.cpp
   src/cost/CostFunctionLinearCombination.cpp
   src/cost/QuadraticCostFunction.cpp
-  src/dynamics/DerivativesBase.cpp
+  src/cost/QuadraticGaussNewtonCostBaseAD.cpp
   src/dynamics/ControlledSystemBase.cpp
   src/dynamics/LinearSystemDynamics.cpp
   src/dynamics/SystemDynamicsBase.cpp
@@ -107,7 +107,9 @@ add_library(${PROJECT_NAME}
   src/loopshaping/constraint/LoopshapingConstraintInputPattern.cpp
   src/loopshaping/constraint/LoopshapingConstraintOutputPattern.cpp
   src/loopshaping/dynamics/LoopshapingDynamics.cpp
-  src/loopshaping/dynamics/LoopshapingDynamicsDerivative.cpp
+  src/loopshaping/dynamics/LoopshapingDynamicsEliminatePattern.cpp
+  src/loopshaping/dynamics/LoopshapingDynamicsInputPattern.cpp
+  src/loopshaping/dynamics/LoopshapingDynamicsOutputPattern.cpp
   src/loopshaping/dynamics/LoopshapingFilterDynamics.cpp
   src/model_data/ModelDataBase.cpp
   src/misc/LinearAlgebra.cpp
@@ -259,10 +261,10 @@ target_link_libraries(test_lookup
   gtest_main
 )
 
-catkin_add_gtest(derivative_checker_unittest
+catkin_add_gtest(test_dynamics
   test/dynamics/testSystemDynamicsLinearizer.cpp
 )
-target_link_libraries(derivative_checker_unittest
+target_link_libraries(test_dynamics
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   gtest_main
@@ -278,20 +280,12 @@ target_link_libraries(test_ThreadPool
   gtest_main
 )
 
-catkin_add_gtest(test_CostFunctionLinearCombination
-  test/cost/testCostFunctionLinearCombination.cpp
-)
-target_link_libraries(test_CostFunctionLinearCombination
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
-  gtest_main
-)
-
-catkin_add_gtest(test_RelaxedBarrierCost
+catkin_add_gtest(test_cost
   test/cost/testRelaxedBarrierCost.cpp
+  test/cost/testCostFunctionLinearCombination.cpp
+  test/cost/testQuadraticCostFunction.cpp
 )
-target_link_libraries(test_RelaxedBarrierCost
+target_link_libraries(test_cost
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}

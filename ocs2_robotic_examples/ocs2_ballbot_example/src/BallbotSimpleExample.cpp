@@ -36,13 +36,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // OCS2
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
+#include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 // Ballbot
-#include "ocs2_ballbot_example/cost/BallbotCost.h"
 #include "ocs2_ballbot_example/definitions.h"
 #include "ocs2_ballbot_example/dynamics/BallbotSystemDynamics.h"
 
@@ -96,12 +96,12 @@ int main(int argc, char** argv) {
   vector_t xNominal = xInit;
   vector_t uNominal = vector_t::Zero(INPUT_DIM_);
 
-  std::unique_ptr<BallbotCost> ballbotCostPtr(new BallbotCost(Q, R, xNominal, uNominal, QFinal, xFinal));
+  std::unique_ptr<QuadraticCostFunction> ballbotCostPtr(new QuadraticCostFunction(Q, R, xNominal, uNominal, QFinal, xFinal));
 
   /*
    * Constraints
    */
-  std::unique_ptr<ConstraintBase> ballbotConstraintPtr(new ConstraintBase(STATE_DIM_, INPUT_DIM_));
+  std::unique_ptr<ConstraintBase> ballbotConstraintPtr(new ConstraintBase());
 
   /*
    * Initialization

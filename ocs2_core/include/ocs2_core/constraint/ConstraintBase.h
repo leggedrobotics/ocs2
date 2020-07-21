@@ -53,85 +53,93 @@ namespace ocs2 {
  */
 class ConstraintBase {
  public:
-  /**
-   * Constructor
-   *
-   * @param [in] stateDim: State vector dimension
-   * @param [in] inputDim: Input vector dimension
-   */
-  ConstraintBase(size_t stateDim, size_t inputDim);
+  /** Default constructor */
+  ConstraintBase() = default;
 
-  /**
-   * Default copy constructor
-   */
-  ConstraintBase(const ConstraintBase& rhs) = default;
-
-  /**
-   * Default destructor
-   */
+  /** Default destructor */
   virtual ~ConstraintBase() = default;
 
-  /**
-   * Sets the current time, state, and control input.
-   *
-   * @param [in] t: Current time.
-   * @param [in] x: Current state.
-   * @param [in] u: Current input.
-   */
-  virtual void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u);
-
-  /**
-   * Clones the class.
-   *
-   * @return A raw pointer to the class.
-   */
+  /** Clones the class. */
   virtual ConstraintBase* clone() const;
 
   /**
    * Computes the state-input equality constraints.
    *
+   * @param [in] t: Current time.
+   * @param [in] x: Current state.
+   * @param [in] u: Current input.
    * @return The state-input equality constraints value.
    */
-  virtual vector_t getStateInputEqualityConstraint();
+  virtual vector_t stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u);
 
   /**
    * Gets the state-only equality constraints.
    *
+   * @param [in] t: Current time.
+   * @param [in] x: Current state.
    * @return The state-only equality constraints value.
    */
-  virtual vector_t getStateEqualityConstraint();
+  virtual vector_t stateEqualityConstraint(scalar_t t, const vector_t& x);
 
   /**
    * Gets the inequality constraints.
    *
    *  \f$ h(x, u, t) \geq 0 \f$
    *
+   * @param [in] t: Current time.
+   * @param [in] x: Current state.
+   * @param [in] u: Current input.
    * @return Vector of inequality constraints values.
    */
-  virtual scalar_array_t getInequalityConstraint();
+  virtual vector_t inequalityConstraint(scalar_t t, const vector_t& x, const vector_t& u);
 
   /**
    * Compute the final state-only equality constraints.
    *
+   * @param [in] t: Current time.
+   * @param [in] x: Current state.
    * @return The final state-only equality constraints value.
    */
-  virtual vector_t getFinalStateEqualityConstraint();
+  virtual vector_t finalStateEqualityConstraint(scalar_t t, const vector_t& x);
 
   /**
-   * The C matrix at a given operating point for the linearized state-input constraints,
-   * \f$ C(t) \delta x + D(t) \delta u + e(t) = 0 \f$.
+   * Gets the state-input equality constraints linear approximation.
    *
-   * @return \f$ C(t) \f$ matrix.
+   * @param [in] t: Current time.
+   * @param [in] x: Current state.
+   * @param [in] u: Current input.
+   * @return The constraint function linear approximation
    */
-  virtual matrix_t getStateInputEqualityConstraintDerivativesState();
+  virtual VectorFunctionLinearApproximation stateInputEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x,
+                                                                                            const vector_t& u);
 
   /**
-   * The D matrix at a given operating point for the linearized state-input constraints,
-   * \f$ C(t) \delta x + D(t) \delta u + e(t) = 0 \f$.
+   * Gets the state-only equality constraints linear approximation.
    *
-   * @return \f$ D(t) \f$ matrix.
+   * @param [in] t: Current time.
+   * @param [in] x: Current state.
+   * @return The constraint function linear approximation (dfdu is not set)
    */
-  virtual matrix_t getStateInputEqualityConstraintDerivativesInput();
+  virtual VectorFunctionLinearApproximation stateEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x);
+
+  /**
+   * Gets the inequality constraints quadratic approximation.
+   *
+   * @param [in] t: Current time.
+   * @param [in] x: Current state.
+   * @param [in] u: Current input.
+   * @return The constraint function quadratic approximation
+   */
+  virtual VectorFunctionQuadraticApproximation inequalityConstraintQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u);
+
+  /**
+   * Gets the final state-only equality constraints linear approximation.
+   *
+   * @param [in] t: Current time.
+   * @param [in] x: Current state.
+   * @return The constraint function linear approximation (dfdu is not set)
+   */
+  virtual VectorFunctionLinearApproximation finalStateEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x);
 
   /**
    * calculate and retrieve the the derivative of the state-input constraints w.r.t. event times.
@@ -142,60 +150,11 @@ class ConstraintBase {
    *
    * @return array of vectors.
    */
-  virtual vector_array_t getStateInputEqualityConstraintDerivativesEventTimes();
-
-  /**
-   * The F matrix at a given operating point for the linearized state-only constraints,
-   * \f$ F(t) \delta x + h(t) = 0 \f$.
-   *
-   * @return \f$ F(t) \f$ matrix.
-   */
-  virtual matrix_t getStateEqualityConstraintDerivativesState();
-
-  /**
-   * Get the derivative of the inequality constraints.
-   * @return Vector of derivatives for each constraint with respect to state vector.
-   */
-  virtual vector_array_t getInequalityConstraintDerivativesState();
-
-  /**
-   * Get the derivative of the inequality constraints.
-   * @return Vector derivatives for each constraint with respect to input vector.
-   */
-  virtual vector_array_t getInequalityConstraintDerivativesInput();
-
-  /**
-   * Get the second derivative of the inequality constraints.
-   * @return Vector of second derivatives for each constraint with respect to state vector.
-   */
-  virtual matrix_array_t getInequalityConstraintSecondDerivativesState();
-
-  /**
-   * Get the second derivative of the inequality constraints.
-   * @return Vector of second derivatives for each constraint with respect to input vector.
-   */
-  virtual matrix_array_t getInequalityConstraintSecondDerivativesInput();
-
-  /**
-   * Get the second derivative of the inequality constraints.
-   * @return Vector of second derivatives for each constraint with respect to input vector and state.
-   */
-  virtual matrix_array_t getInequalityConstraintDerivativesInputState();
-
-  /**
-   * The F matrix at a given operating point for the linearized terminal state-only constraints,
-   * \f$ F_f(t) \delta x + h_f(t) = 0 \f$.
-   *
-   * @return \f$ F_f(t) \f$ matrix.
-   */
-  virtual matrix_t getFinalStateEqualityConstraintDerivativesState();
+  virtual vector_array_t stateInputEqualityConstraintDerivativesEventTimes(scalar_t t, const vector_t& x, const vector_t& u);
 
  protected:
-  size_t stateDim_;
-  size_t inputDim_;
-  scalar_t t_;
-  vector_t x_;
-  vector_t u_;
+  /** Default copy constructor */
+  ConstraintBase(const ConstraintBase& rhs) = default;
 };
 
 }  // end of namespace ocs2

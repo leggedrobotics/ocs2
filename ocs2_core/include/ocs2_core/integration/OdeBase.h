@@ -29,11 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <functional>
-#include <memory>
-
 #include <ocs2_core/Types.h>
-#include <ocs2_core/model_data/ModelDataBase.h>
 
 namespace ocs2 {
 
@@ -42,58 +38,17 @@ namespace ocs2 {
  */
 class OdeBase {
  public:
-  static constexpr size_t DEFAULT_MODEL_DATA_CACHE_SIZE = 7;
+  /** Default constructor */
+  OdeBase() = default;
 
-  /**
-   * Constructor.
-   */
-  OdeBase() { modelDataArray_.reserve(DEFAULT_MODEL_DATA_CACHE_SIZE); }
-
-  /**
-   * Default destructor
-   */
+  /** Default destructor */
   virtual ~OdeBase() = default;
 
-  /**
-   * Copy constructor
-   */
-  OdeBase(const OdeBase& rhs) : numFunctionCalls_(0) {}
+  /** Returns the number of function calls. */
+  int getNumFunctionCalls() const { return numFunctionCalls_; }
 
-  /**
-   * Gets the number of function calls.
-   *
-   * @return size_t: number of function calls
-   */
-  int getNumFunctionCalls() const;
-
-  /**
-   * Resets the number of function calls to zero.
-   *
-   */
-  void resetNumFunctionCalls();
-
-  /**
-   * Returns model data array begin() iterator
-   * @return modelDataArray_.begin()
-   */
-  std::vector<ModelDataBase>::iterator beginModelDataIterator();
-
-  /**
-   * Returns model data array end() iterator
-   * @return modelDataArray_.end()
-   */
-  std::vector<ModelDataBase>::iterator endModelDataIterator();
-
-  /**
-   * Append model data array.
-   * @return reference to new element.
-   */
-  ModelDataBase& modelDataEmplaceBack();
-
-  /**
-   * Clear model data array.
-   */
-  void clearModelDataArray();
+  /** Resets the number of function calls to zero. */
+  void resetNumFunctionCalls() { numFunctionCalls_ = 0; }
 
   /**
    * Computes the autonomous system dynamics.
@@ -122,8 +77,10 @@ class OdeBase {
   virtual vector_t computeGuardSurfaces(scalar_t time, const vector_t& state);
 
  protected:
+  /** Copy constructor */
+  OdeBase(const OdeBase& rhs) : numFunctionCalls_(0) {}
+
   int numFunctionCalls_ = 0;
-  std::vector<ModelDataBase> modelDataArray_;
 };
 
 }  // namespace ocs2

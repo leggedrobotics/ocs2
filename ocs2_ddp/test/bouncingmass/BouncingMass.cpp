@@ -5,6 +5,7 @@
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/control/StateBasedLinearController.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_ddp/SLQ.h>
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
 
@@ -88,9 +89,8 @@ TEST(testStateRollOut_SLQ, DISABLED_BouncingMassTest) {
   reference.extendref(delta);
 
   // Dynamics, Constraints and derivative classes
-  systemDynamics systemModel;
-  systemDerivative systemDerivatives;
-  systemConstraint systemConstraints;
+  BouncingMassDynamics systemDynamics;
+  ocs2::ConstraintBase systemConstraints;
 
   // Cost Function
   matrix_t Q(STATE_DIM, STATE_DIM);
@@ -105,10 +105,10 @@ TEST(testStateRollOut_SLQ, DISABLED_BouncingMassTest) {
   vector_t uNom(INPUT_DIM);
   uNom << 0;
   vector_t xFin = state0;
-  systemCost systemCost(reference, Q, R, P, xNom, uNom, xFin, finalTime);
+  BouncingMassCost systemCost(reference, Q, R, P, xNom, uNom, xFin, finalTime);
 
   // Rollout Class
-  ocs2::StateTriggeredRollout stateTriggeredRollout(systemModel, rolloutSettings);
+  ocs2::StateTriggeredRollout stateTriggeredRollout(systemDynamics, rolloutSettings);
 
   // Operating points and PartitioningTimes
   scalar_array_t partitioningTimes;
@@ -156,7 +156,7 @@ TEST(testStateRollOut_SLQ, DISABLED_BouncingMassTest) {
 
   ocs2::OperatingPoints operatingTrajectories(x0, u0);
   // SLQ
-  ocs2::SLQ slq(STATE_DIM, INPUT_DIM, &stateTriggeredRollout, &systemDerivatives, &systemConstraints, &systemCost, &operatingTrajectories,
+  ocs2::SLQ slq(STATE_DIM, INPUT_DIM, &stateTriggeredRollout, &systemDynamics, &systemConstraints, &systemCost, &operatingTrajectories,
                 slqSettings);
   slq.run(startTime, x0, finalTime, partitioningTimes, controllerPtrArray);
   auto solutionST = slq.primalSolution(finalTime);

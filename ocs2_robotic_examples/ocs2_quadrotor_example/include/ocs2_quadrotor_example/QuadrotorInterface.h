@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // OCS2
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
+#include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
@@ -40,7 +41,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Quadrotor
 #include "ocs2_quadrotor_example/QuadrotorParameters.h"
-#include "ocs2_quadrotor_example/cost/QuadrotorCost.h"
 #include "ocs2_quadrotor_example/definitions.h"
 #include "ocs2_quadrotor_example/dynamics/QuadrotorSystemDynamics.h"
 
@@ -70,9 +70,7 @@ class QuadrotorInterface final : public RobotInterface {
 
   const QuadrotorSystemDynamics& getDynamics() const override { return *quadrotorSystemDynamicsPtr_; }
 
-  const QuadrotorSystemDynamics& getDynamicsDerivatives() const override { return *quadrotorSystemDynamicsPtr_; }
-
-  const QuadrotorCost& getCost() const override { return *quadrotorCostPtr_; }
+  const QuadraticCostFunction& getCost() const override { return *quadrotorCostPtr_; }
 
   const RolloutBase& getRollout() const { return *ddpQuadrotorRolloutPtr_; }
 
@@ -95,7 +93,7 @@ class QuadrotorInterface final : public RobotInterface {
   std::unique_ptr<RolloutBase> ddpQuadrotorRolloutPtr_;
 
   std::unique_ptr<QuadrotorSystemDynamics> quadrotorSystemDynamicsPtr_;
-  std::unique_ptr<QuadrotorCost> quadrotorCostPtr_;
+  std::unique_ptr<QuadraticCostFunction> quadrotorCostPtr_;
   std::unique_ptr<ConstraintBase> quadrotorConstraintPtr_;
   std::unique_ptr<OperatingPoints> quadrotorOperatingPointPtr_;
 

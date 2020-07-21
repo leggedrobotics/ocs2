@@ -34,6 +34,51 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SystemDynamicsBase::SystemDynamicsBase(size_t stateDim, size_t inputDim) : stateDim_(stateDim), inputDim_(inputDim) {}
+VectorFunctionLinearApproximation SystemDynamicsBase::jumpMapLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  VectorFunctionLinearApproximation approximation;
+  approximation.dfdx.setIdentity(x.rows(), x.rows());
+  approximation.dfdu.setZero(x.rows(), u.rows());
+  approximation.f = this->computeJumpMap(t, x);
+  return approximation;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+VectorFunctionLinearApproximation SystemDynamicsBase::guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  VectorFunctionLinearApproximation approximation;
+  approximation.dfdx.setIdentity(1, x.rows());
+  approximation.dfdu.setZero(1, u.rows());
+  approximation.f = this->computeGuardSurfaces(t, x);
+  return approximation;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+vector_t SystemDynamicsBase::flowMapDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) {
+  return vector_t::Zero(x.rows());
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+vector_t SystemDynamicsBase::jumpMapDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) {
+  return vector_t::Zero(x.rows());
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+vector_t SystemDynamicsBase::guardSurfacesDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) {
+  return vector_t::Zero(1);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+matrix_t SystemDynamicsBase::dynamicsCovariance(scalar_t t, const vector_t& x, const vector_t& u) {
+  return matrix_t::Zero(0, 0);
+}
 
 }  // namespace ocs2

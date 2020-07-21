@@ -44,8 +44,7 @@ class QuadrotorSystemDynamics final : public SystemDynamicsBase {
    *
    * @param quadrotorParameters: Quadrotor parameters.
    */
-  QuadrotorSystemDynamics(const QuadrotorParameters& quadrotorParameters)
-      : SystemDynamicsBase(STATE_DIM_, INPUT_DIM_), param_(quadrotorParameters) {}
+  QuadrotorSystemDynamics(const QuadrotorParameters& quadrotorParameters) : param_(quadrotorParameters) {}
 
   /** Destructor */
   ~QuadrotorSystemDynamics() override = default;
@@ -53,9 +52,7 @@ class QuadrotorSystemDynamics final : public SystemDynamicsBase {
   QuadrotorSystemDynamics* clone() const override { return new QuadrotorSystemDynamics(*this); }
 
   vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) override;
-  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) override;
-  matrix_t getFlowMapDerivativeState() override;
-  matrix_t getFlowMapDerivativeInput() override;
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
 
  private:
   QuadrotorParameters param_;

@@ -27,6 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <iostream>
+
 #include <ros/package.h>
 
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
@@ -105,12 +107,12 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
   std::cerr << "x_final:  " << xFinal_.transpose() << std::endl;
 
-  ballbotCostPtr_.reset(new BallbotCost(Q_, R_, xNominal_, uNominal_, QFinal_, xFinal_));
+  ballbotCostPtr_.reset(new QuadraticCostFunction(Q_, R_, xNominal_, uNominal_, QFinal_, xFinal_));
 
   /*
    * Constraints
    */
-  ballbotConstraintPtr_.reset(new ConstraintBase(STATE_DIM_, INPUT_DIM_));
+  ballbotConstraintPtr_.reset(new ConstraintBase());
 
   /*
    * Initialization

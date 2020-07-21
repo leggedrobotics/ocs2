@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/FeedforwardController.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_ddp/ILQR.h>
@@ -87,11 +88,8 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   EXP0_System systemDynamics(modeScheduleManagerPtr);
   TimeTriggeredRollout timeTriggeredRollout(systemDynamics, rolloutSettings);
 
-  // system derivatives
-  EXP0_SystemDerivative systemDerivative(modeScheduleManagerPtr);
-
   // system constraints
-  ConstraintBase systemConstraint(STATE_DIM, INPUT_DIM);
+  ConstraintBase systemConstraint;
 
   // system cost functions
   EXP0_CostFunction systemCostFunction(modeScheduleManagerPtr);
@@ -106,14 +104,14 @@ TEST(exp0_ilqr_test, exp0_ilqr_test) {
   /******************************************************************************************************/
   // ILQR - single-threaded version
   ilqrSettings.ddpSettings_.nThreads_ = 1;
-  ILQR ilqrST(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
-              &operatingTrajectories, ilqrSettings);
+  ILQR ilqrST(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories,
+              ilqrSettings);
   ilqrST.setModeScheduleManager(modeScheduleManagerPtr);
 
   // ILQR - multi-threaded version
   ilqrSettings.ddpSettings_.nThreads_ = 3;
-  ILQR ilqrMT(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction,
-              &operatingTrajectories, ilqrSettings);
+  ILQR ilqrMT(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories,
+              ilqrSettings);
   ilqrMT.setModeScheduleManager(modeScheduleManagerPtr);
 
   // run single_threaded core ILQR

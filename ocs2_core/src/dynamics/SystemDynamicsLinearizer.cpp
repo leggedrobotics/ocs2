@@ -35,10 +35,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 SystemDynamicsLinearizer::SystemDynamicsLinearizer(std::shared_ptr<ControlledSystemBase> nonlinearSystemPtr,
-                                                   bool doubleSidedDerivative /*= true*/, bool isSecondOrderSystem /*= false*/)
+                                                   bool doubleSidedDerivative /*= true*/, bool isSecondOrderSystem /*= false*/,
+                                                   scalar_t eps /*= Eigen::NumTraits<scalar_t>::epsilon()*/)
     : controlledSystemPtr_(std::move(nonlinearSystemPtr)),
       doubleSidedDerivative_(doubleSidedDerivative),
-      isSecondOrderSystem_(isSecondOrderSystem) {}
+      isSecondOrderSystem_(isSecondOrderSystem),
+      eps_(eps) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -46,39 +48,32 @@ SystemDynamicsLinearizer::SystemDynamicsLinearizer(std::shared_ptr<ControlledSys
 SystemDynamicsLinearizer::SystemDynamicsLinearizer(const SystemDynamicsLinearizer& other)
     : controlledSystemPtr_(other.controlledSystemPtr_->clone()),
       doubleSidedDerivative_(other.doubleSidedDerivative_),
-      isSecondOrderSystem_(other.isSecondOrderSystem_) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-SystemDynamicsLinearizer& SystemDynamicsLinearizer::operator=(const SystemDynamicsLinearizer& other) {
-  controlledSystemPtr_.reset(other.controlledSystemPtr_->clone());
-  doubleSidedDerivative_ = other.doubleSidedDerivative_;
-  isSecondOrderSystem_ = other.isSecondOrderSystem_;
-  return *this;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_t SystemDynamicsLinearizer::getFlowMapDerivativeState() {
-  return finiteDifferenceDerivativeState(*controlledSystemPtr_, this->t_, this->x_, this->u_, Eigen::NumTraits<scalar_t>::epsilon(),
-                                         doubleSidedDerivative_, isSecondOrderSystem_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_t SystemDynamicsLinearizer::getFlowMapDerivativeInput() {
-  return finiteDifferenceDerivativeInput(*controlledSystemPtr_, this->t_, this->x_, this->u_, Eigen::NumTraits<scalar_t>::epsilon(),
-                                         doubleSidedDerivative_, isSecondOrderSystem_);
-}
+      isSecondOrderSystem_(other.isSecondOrderSystem_),
+      eps_(other.eps_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 SystemDynamicsLinearizer* SystemDynamicsLinearizer::clone() const {
   return new SystemDynamicsLinearizer(*this);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+vector_t SystemDynamicsLinearizer::computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) {
+  return controlledSystemPtr_->computeFlowMap(time, state, input);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+VectorFunctionLinearApproximation SystemDynamicsLinearizer::linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  VectorFunctionLinearApproximation linearDynamics;
+  linearDynamics.f = controlledSystemPtr_->computeFlowMap(t, x, u);
+  linearDynamics.dfdx = finiteDifferenceDerivativeState(*controlledSystemPtr_, t, x, u, eps_, doubleSidedDerivative_, isSecondOrderSystem_);
+  linearDynamics.dfdu = finiteDifferenceDerivativeInput(*controlledSystemPtr_, t, x, u, eps_, doubleSidedDerivative_, isSecondOrderSystem_);
+  return linearDynamics;
 }
 
 }  // namespace ocs2

@@ -105,12 +105,12 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
   std::cerr << "x_final:  " << xFinal_.transpose() << std::endl;
 
-  cartPoleCostPtr_.reset(new CartPoleCost(qm_, rm_, xNominal_, uNominal_, qmFinal_, xFinal_));
+  cartPoleCostPtr_.reset(new QuadraticCostFunction(qm_, rm_, xNominal_, uNominal_, qmFinal_, xFinal_));
 
   /*
    * Constraints
    */
-  cartPoleConstraintPtr_.reset(new ConstraintBase(STATE_DIM_, INPUT_DIM_));
+  cartPoleConstraintPtr_.reset(new ConstraintBase());
 
   /*
    * Initialization

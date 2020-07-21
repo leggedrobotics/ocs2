@@ -52,6 +52,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     return (*vec)[ind].FIELD##_;                                                                                      \
   }
 
+#define CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(FIELD, SUBFIELD)                    \
+  inline auto FIELD##_##SUBFIELD(const std::vector<ocs2::ModelDataBase>* vec, size_t ind) \
+      ->const decltype((*vec)[ind].FIELD##_.SUBFIELD)& {                                  \
+    return (*vec)[ind].FIELD##_.SUBFIELD;                                                 \
+  }
+
 namespace ocs2 {
 namespace ModelData {
 
@@ -99,30 +105,31 @@ inline ocs2::LinearInterpolation::index_alpha_t timeSegment(scalar_t enquiryTime
 CREATE_INTERPOLATION_ACCESS_FUNCTION(time)
 
 // dynamics
-CREATE_INTERPOLATION_ACCESS_FUNCTION(dynamics)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(dynamics, f)
 CREATE_INTERPOLATION_ACCESS_FUNCTION(dynamicsBias)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(dynamicsStateDerivative)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(dynamicsInputDerivative)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(dynamics, dfdx)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(dynamics, dfdu)
 CREATE_INTERPOLATION_ACCESS_FUNCTION(dynamicsCovariance)
 
 // cost
-CREATE_INTERPOLATION_ACCESS_FUNCTION(cost)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(costStateDerivative)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(costInputDerivative)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(costStateSecondDerivative)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(costInputSecondDerivative)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(costInputStateDerivative)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(cost, f)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(cost, dfdx)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(cost, dfdu)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(cost, dfdxx)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(cost, dfduu)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(cost, dfdux)
 
 // state equality constraints
-CREATE_INTERPOLATION_ACCESS_FUNCTION(stateEqConstr)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(stateEqConstrStateDerivative)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateEqConstr, f)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateEqConstr, dfdx)
 
 // state-input equality constraints
-CREATE_INTERPOLATION_ACCESS_FUNCTION(stateInputEqConstr)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(stateInputEqConstrStateDerivative)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(stateInputEqConstrInputDerivative)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateInputEqConstr, f)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateInputEqConstr, dfdx)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateInputEqConstr, dfdu)
 
 }  // namespace ModelData
 }  // namespace ocs2
 
 #undef CREATE_INTERPOLATION_ACCESS_FUNCTION
+#undef CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD

@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/LinearConstraint.h>
 
+#include "../include/testTools.h"
 #include "LinearConstraintAD.h"
 
 using namespace ocs2;
@@ -46,7 +47,6 @@ class testCppADCG_constraintFixture : public ::testing::Test {
   const size_t numStateInputConstraint_ = inputDim_ - 1;
   const size_t numStateOnlyConstraint_ = inputDim_ - 1;
   const size_t numStateOnlyFinalConstraint_ = inputDim_ - 1;
-  const size_t maxNumConstraint_ = inputDim_;
 
   testCppADCG_constraintFixture() { create(); };
 
@@ -59,9 +59,9 @@ class testCppADCG_constraintFixture : public ::testing::Test {
     vector_t h_f = vector_t::Random(numStateOnlyFinalConstraint_);
     matrix_t F_f = matrix_t::Random(numStateOnlyFinalConstraint_, stateDim_);
 
-    linearConstraint_.reset(new LinearConstraint(stateDim_, inputDim_, e, C, D, h, F, h_f, F_f));
+    linearConstraint_.reset(new LinearConstraint(e, C, D, h, F, h_f, F_f));
 
-    adLinearConstraint.reset(new LinearConstraintAD(stateDim_, inputDim_, e, C, D, h, F, h_f, F_f));
+    adLinearConstraint.reset(new LinearConstraintAD(e, C, D, h, F, h_f, F_f));
 
     boost::filesystem::path filePath(__FILE__);
     std::string libraryFolder = filePath.parent_path().generic_string() + "/testCppADCG_generated";
@@ -76,73 +76,37 @@ bool checkConstraints(const size_t numTests, ConstraintBase* const constraint1, 
                       size_t stateDim_, size_t inputDim_) {
   success = true;
   const scalar_t precision = 1e-9;
-
+  const scalar_t t = 0.0;
   vector_t x;
   vector_t u;
 
-  for (size_t it = 0; it < numTests; it++) {
+  for (size_t it = 0; it < numTests && success; it++) {
     x.setRandom(stateDim_);
     u.setRandom(inputDim_);
 
-    constraint1->setCurrentStateAndControl(0.0, x, u);
-    constraint2->setCurrentStateAndControl(0.0, x, u);
-
-    vector_t g1 = constraint1->getStateInputEqualityConstraint();
-    vector_t ad_g1 = constraint2->getStateInputEqualityConstraint();
-    if (!g1.isApprox(ad_g1, precision)) {
-      std::cout << "g1:    " << g1.transpose() << std::endl;
-      std::cout << "ad_g1: " << ad_g1.transpose() << std::endl;
+    auto g1 = constraint1->stateInputEqualityConstraintLinearApproximation(t, x, u);
+    auto g2 = constraint2->stateInputEqualityConstraintLinearApproximation(t, x, u);
+    if (!isApprox(g1, g2)) {
+      std::cout << "g1: \n" << g1 << std::endl;
+      std::cout << "g2: \n" << g2 << std::endl;
       success = false;
     }
 
-    vector_t g2 = constraint1->getStateEqualityConstraint();
-    vector_t ad_g2 = constraint2->getStateEqualityConstraint();
-    if (!g2.isApprox(ad_g2, precision)) {
-      std::cout << "g2:    " << g2.transpose() << std::endl;
-      std::cout << "ad_g2: " << ad_g2.transpose() << std::endl;
+    auto h1 = constraint1->stateEqualityConstraintLinearApproximation(t, x);
+    auto h2 = constraint2->stateEqualityConstraintLinearApproximation(t, x);
+    if (!isApprox(h1, h2)) {
+      std::cout << "h1: \n" << h1 << std::endl;
+      std::cout << "h2: \n" << h2 << std::endl;
       success = false;
     }
 
-    vector_t g2f = constraint1->getFinalStateEqualityConstraint();
-    vector_t ad_g2f = constraint2->getFinalStateEqualityConstraint();
-    if (!g2f.isApprox(ad_g2f, precision)) {
-      std::cout << "g2f:    " << g2f.transpose() << std::endl;
-      std::cout << "ad_g2f: " << ad_g2f.transpose() << std::endl;
+    auto hf1 = constraint1->finalStateEqualityConstraintLinearApproximation(t, x);
+    auto hf2 = constraint2->finalStateEqualityConstraintLinearApproximation(t, x);
+    if (!isApprox(hf1, hf2)) {
+      std::cout << "hf1: \n" << hf1 << std::endl;
+      std::cout << "hf2: \n" << hf2 << std::endl;
       success = false;
     }
-
-    matrix_t C1 = constraint1->getStateInputEqualityConstraintDerivativesState();
-    matrix_t ad_C1 = constraint2->getStateInputEqualityConstraintDerivativesState();
-    if (!C1.isApprox(ad_C1, precision)) {
-      std::cout << "C1:    " << C1.transpose() << std::endl;
-      std::cout << "ad_C1: " << ad_C1.transpose() << std::endl;
-      success = false;
-    }
-
-    matrix_t D1 = constraint1->getStateInputEqualityConstraintDerivativesInput();
-    matrix_t ad_D1 = constraint2->getStateInputEqualityConstraintDerivativesInput();
-    if (!D1.isApprox(ad_D1, precision)) {
-      std::cout << "D1:    " << D1.transpose() << std::endl;
-      std::cout << "ad_D1: " << ad_D1.transpose() << std::endl;
-      success = false;
-    }
-
-    matrix_t F2 = constraint1->getStateEqualityConstraintDerivativesState();
-    matrix_t ad_F2 = constraint2->getStateEqualityConstraintDerivativesState();
-    if (!F2.isApprox(ad_F2, precision)) {
-      std::cout << "F2:    " << F2.transpose() << std::endl;
-      std::cout << "ad_F2: " << ad_F2.transpose() << std::endl;
-      success = false;
-    }
-
-    matrix_t F2f = constraint1->getFinalStateEqualityConstraintDerivativesState();
-    matrix_t ad_F2f = constraint2->getFinalStateEqualityConstraintDerivativesState();
-    if (!F2f.isApprox(ad_F2f, precision)) {
-      std::cout << "F2f:    " << F2f.transpose() << std::endl;
-      std::cout << "ad_F2f: " << ad_F2f.transpose() << std::endl;
-      success = false;
-    }
-
   }  // end of for loop
 
   return success;

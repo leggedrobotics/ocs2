@@ -49,19 +49,10 @@ class DoubleIntegratorCost : public QuadraticCostFunction {
   DoubleIntegratorCost(const matrix_t& Q, const matrix_t& R, const matrix_t& Q_final)
       : QuadraticCostFunction(Q, R, vector_t::Zero(STATE_DIM_), vector_t::Zero(INPUT_DIM_), Q_final, vector_t::Zero(STATE_DIM_)) {}
 
-  /**
-   * Destructor
-   */
+  /** Destructor */
   ~DoubleIntegratorCost() override = default;
 
   DoubleIntegratorCost* clone() const override { return new DoubleIntegratorCost(*this); }
-
-  void setCurrentStateAndControl(scalar_t t, const vector_t& x, const vector_t& u) final {
-    vector_t xNominal = QuadraticCostFunction::costDesiredTrajectoriesPtr_->getDesiredState(t);
-    vector_t uNominal = QuadraticCostFunction::costDesiredTrajectoriesPtr_->getDesiredInput(t);
-
-    QuadraticCostFunction::setCurrentStateAndControl(t, x, u, xNominal, uNominal, xNominal);
-  }
 };
 
 }  // namespace double_integrator

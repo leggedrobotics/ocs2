@@ -46,8 +46,8 @@ TEST(testModelDataBase, testModelDataLinearInterpolation) {
     double t = 2.0 * i;
     timeArray[i] = t;
     modelDataBaseArray[i].time_ = t;
-    modelDataBaseArray[i].dynamics_ = Eigen::Vector3d::Ones() * t;
-    modelDataBaseArray[i].dynamicsStateDerivative_ = Eigen::Matrix3d::Ones() * t;
+    modelDataBaseArray[i].dynamics_.f = Eigen::Vector3d::Ones() * t;
+    modelDataBaseArray[i].dynamics_.dfdx = Eigen::Matrix3d::Ones() * t;
   }
 
   double time = 5.0;
@@ -58,10 +58,10 @@ TEST(testModelDataBase, testModelDataLinearInterpolation) {
   ModelData::interpolate(indexAlpha, enquiryScalar, &modelDataBaseArray, ModelData::time);
   // dynamic vector
   Eigen::VectorXd enquiryVector;
-  ModelData::interpolate(indexAlpha, enquiryVector, &modelDataBaseArray, ModelData::dynamics);
+  ModelData::interpolate(indexAlpha, enquiryVector, &modelDataBaseArray, ModelData::dynamics_f);
   // dynamic matrix
   Eigen::MatrixXd enquiryMatrix;
-  ModelData::interpolate(indexAlpha, enquiryMatrix, &modelDataBaseArray, ModelData::dynamicsStateDerivative);
+  ModelData::interpolate(indexAlpha, enquiryMatrix, &modelDataBaseArray, ModelData::dynamics_dfdx);
 
   ASSERT_TRUE(enquiryScalar == time);
   ASSERT_TRUE(enquiryVector.isApprox(Eigen::Vector3d::Ones() * time));

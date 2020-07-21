@@ -36,10 +36,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 MPC_SLQ::MPC_SLQ(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
                  const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
-                 const scalar_array_t& partitioningTimes, const SLQ_Settings& slqSettings /* = SLQ_Settings()*/,
+                 scalar_t timeHorizon, size_t numPartitions, const SLQ_Settings& slqSettings /* = SLQ_Settings()*/,
                  const MPC_Settings& mpcSettings /* = MPC_Settings()*/, const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
 
-    : MPC_BASE(partitioningTimes, mpcSettings) {
+    : MPC_BASE(timeHorizon, numPartitions, mpcSettings) {
   slqPtr_.reset(new SLQ(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, slqSettings,
                         heuristicsFunctionPtr));
 }
@@ -64,9 +64,9 @@ void MPC_SLQ::calculateController(scalar_t initTime, const vector_t& initState, 
     if (this->settings().debugPrint_) {
       std::cerr << "### Using cold initialization.\n";
     }
-    slqPtr_->run(initTime, initState, finalTime, MPC_BASE::partitioningTimes_);
+    slqPtr_->run(initTime, initState, finalTime, MPC_BASE::partitionTimes_);
   } else {
-    slqPtr_->run(initTime, initState, finalTime, MPC_BASE::partitioningTimes_, std::vector<ControllerBase*>());
+    slqPtr_->run(initTime, initState, finalTime, MPC_BASE::partitionTimes_, std::vector<ControllerBase*>());
   }
 }
 

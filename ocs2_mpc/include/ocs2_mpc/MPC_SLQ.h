@@ -49,17 +49,17 @@ class MPC_SLQ : public MPC_BASE {
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
    * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
    * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of SLQ.
-   * @param [in] partitioningTimes: This will be used as the initial time partitioning. As the MPC progresses the internal
-   * partitioningTimes will be shifted in time automatically.
+   * @param [in] timeHorizon: The MPC time horizon.
+   * @param [in] numPartitions: The number of time partitions.
    * @param [in] slqSettings: Structure containing the settings for the SLQ algorithm.
    * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
   MPC_SLQ(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
-          const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
-          const scalar_array_t& partitioningTimes, const SLQ_Settings& slqSettings = SLQ_Settings(),
-          const MPC_Settings& mpcSettings = MPC_Settings(), const CostFunctionBase* heuristicsFunctionPtr = nullptr);
+          const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, scalar_t timeHorizon,
+          size_t numPartitions, const SLQ_Settings& slqSettings = SLQ_Settings(), const MPC_Settings& mpcSettings = MPC_Settings(),
+          const CostFunctionBase* heuristicsFunctionPtr = nullptr);
 
   /** Default destructor. */
   ~MPC_SLQ() override = default;

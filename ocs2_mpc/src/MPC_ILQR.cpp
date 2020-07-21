@@ -36,10 +36,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 MPC_ILQR::MPC_ILQR(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
                    const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
-                   const scalar_array_t& partitioningTimes, const ILQR_Settings& ilqrSettings /* = ILQR_Settings()*/,
+                   scalar_t timeHorizon, size_t numPartitions, const ILQR_Settings& ilqrSettings /* = ILQR_Settings()*/,
                    const MPC_Settings& mpcSettings /* = MPC_Settings()*/, const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
 
-    : MPC_BASE(partitioningTimes, mpcSettings) {
+    : MPC_BASE(timeHorizon, numPartitions, mpcSettings) {
   ilqrPtr_.reset(new ILQR(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, ilqrSettings,
                           heuristicsFunctionPtr));
 }
@@ -64,10 +64,9 @@ void MPC_ILQR::calculateController(scalar_t initTime, const vector_t& initState,
     if (this->settings().debugPrint_) {
       std::cerr << "### Using cold initialization.\n";
     }
-    ilqrPtr_->run(initTime, initState, finalTime, MPC_BASE::partitioningTimes_);
-
+    ilqrPtr_->run(initTime, initState, finalTime, MPC_BASE::partitionTimes_);
   } else {
-    ilqrPtr_->run(initTime, initState, finalTime, MPC_BASE::partitioningTimes_, std::vector<ControllerBase*>());
+    ilqrPtr_->run(initTime, initState, finalTime, MPC_BASE::partitionTimes_, std::vector<ControllerBase*>());
   }
 }
 

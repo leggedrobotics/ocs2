@@ -27,8 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/misc/Lookup.h>
+#include <algorithm>
 
+#include <ocs2_core/misc/Lookup.h>
 #include <ocs2_mpc/MPC_BASE.h>
 
 namespace ocs2 {
@@ -36,15 +37,14 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MPC_BASE::MPC_BASE(const scalar_array_t& partitioningTimes, MPC_Settings mpcSettings)
-
-    : mpcSettings_(std::move(mpcSettings)), initnumPartitions_(partitioningTimes.size() - 1), initPartitioningTimes_(partitioningTimes) {
-  if (partitioningTimes.size() < 2) {
+MPC_BASE::MPC_BASE(scalar_t timeHorizon, size_t numPartitions, MPC_Settings mpcSettings)
+    : mpcSettings_(std::move(mpcSettings)), timeHorizon_(timeHorizon), numPartitions_(numPartitions) {
+  if (numPartitions < 1) {
     throw std::runtime_error("There should be at least one time partition.");
   }
 
   // Initialize partition times
-  partitioningTimes_ = initializePartitionTimes(initPartitioningTimes_);
+  partitionTimes_ = initializePartitionTimes(timeHorizon_, numPartitions_);
 }
 
 /******************************************************************************************************/
@@ -60,14 +60,18 @@ void MPC_BASE::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MPC_BASE::rewind() {
-  // Shift all partition times by 2 time horizons
-  const scalar_t timeHorizon = getTimeHorizon();
-  for (auto& t : partitioningTimes_) {
-    t += 2 * timeHorizon;
-  }
+  // Shift partition times forward, discard the first time block.
+  auto lastPartition = std::copy(partitionTimes_.begin() + numPartitions_, partitionTimes_.end(), partitionTimes_.begin());
+
+  // Update last partition time block, timeHorizon_ can have changed since the last rewind.
+  auto t = partitionTimes_.back();
+  std::generate(lastPartition, partitionTimes_.end(), [&]() {
+    t += timeHorizon_ / numPartitions_;
+    return t;
+  });
 
   // Solver internal variables
-  getSolverPtr()->rewindOptimizer(initnumPartitions_);
+  getSolverPtr()->rewindOptimizer(numPartitions_);
 }
 
 /******************************************************************************************************/
@@ -76,8 +80,8 @@ void MPC_BASE::rewind() {
 bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) {
   // check if the current time exceeds the solver final limit
   if (!initRun_ && currentTime >= getSolverPtr()->getFinalTime()) {
-    std::cerr << "WARNING: The MPC time-horizon is smaller than the MPC starting time." << std::endl;
-    std::cerr << "currentTime: " << currentTime << "\t Controller finalTime: " << getSolverPtr()->getFinalTime() << std::endl;
+    std::cerr << "WARNING: The MPC time-horizon is smaller than the MPC starting time.\n";
+    std::cerr << "currentTime: " << currentTime << "\t Controller finalTime: " << getSolverPtr()->getFinalTime() << '\n';
     return false;
   }
 
@@ -85,30 +89,18 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) {
   if (initRun_ && getSolverPtr()->getCostDesiredTrajectories().empty()) {
     std::cerr << "### WARNING: The initial desired trajectories are not set. "
                  "This may cause undefined behavior. Use the MPC_BASE::getSolverPtr()->setCostDesiredTrajectories() "
-                 "method to provide appropriate goal trajectories."
-              << std::endl;
+                 "method to provide appropriate goal trajectories.\n";
   }
 
   // adjusting the partitioning times based on the initial time
   if (initRun_) {
-    const scalar_t deltaTime = currentTime - partitioningTimes_[initnumPartitions_];
-    for (auto& t : partitioningTimes_) {
+    const scalar_t deltaTime = currentTime - partitionTimes_[numPartitions_];
+    for (auto& t : partitionTimes_) {
       t += deltaTime;
     }
   }
 
-  // rewind the optimizer
-  scalar_t finalTime = currentTime + getTimeHorizon();
-  if (finalTime > partitioningTimes_.back()) {
-    if (mpcSettings_.debugPrint_) {
-      std::cerr << "### MPC is rewinded at time " << currentTime << " [s]." << std::endl;
-    }
-    rewind();
-  }
-
-  // Adjust the initial and final time based on the partition times (must be after rewinding!)
-  scalar_t initTime = currentTime;
-  adjustmentTimeHorizon(partitioningTimes_, initTime, finalTime);
+  scalar_t finalTime = currentTime + timeHorizon_;
 
   // display
   if (mpcSettings_.debugPrint_) {
@@ -117,12 +109,23 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) {
     std::cerr << "#####################################################\n";
     std::cerr << "### MPC is called at time:  " << currentTime << " [s].\n";
     std::cerr << "### MPC final Time:         " << finalTime << " [s].\n";
-    std::cerr << "### MPC time horizon:       " << getTimeHorizon() << " [s]." << std::endl;
+    std::cerr << "### MPC time horizon:       " << timeHorizon_ << " [s].\n";
     mpcTimer_.startTimer();
   }
 
+  // rewind the optimizer
+  if (finalTime > partitionTimes_.back()) {
+    if (mpcSettings_.debugPrint_) {
+      std::cerr << "### MPC is rewinded at time " << currentTime << " [s].\n";
+    }
+    rewind();
+  }
+
+  // Adjust the initial and final time based on the partition times (must be after rewinding!)
+  adjustTimeHorizon(partitionTimes_, currentTime, finalTime);
+
   // calculate the MPC policy
-  calculateController(initTime, currentState, finalTime);
+  calculateController(currentTime, currentState, finalTime);
 
   // display
   if (mpcSettings_.debugPrint_) {
@@ -130,7 +133,7 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) {
     std::cerr << "### MPC runtime \n";
     std::cerr << "###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].\n";
     std::cerr << "###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].\n";
-    std::cerr << "###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+    std::cerr << "###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms].\n";
   }
 
   // set initRun flag to false
@@ -141,34 +144,30 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto MPC_BASE::initializePartitionTimes(const scalar_array_t& initPartitionTimes) const -> scalar_array_t {
-  if (initPartitionTimes.size() < 2) {
-    throw std::runtime_error("[MPC_BASE] There should be at least one time partition.");
-  }
-  scalar_array_t partitionTimes;
+scalar_array_t MPC_BASE::initializePartitionTimes(scalar_t timeHorizon, size_t numPartitions) {
+  // Create partition times over 3 timeHorizon
+  // partitionTimes = [ -T, ... , 0.0, ... T, ... 2T ]
 
-  // Add partition times before and after the current partition times
-  // Create partition times with [{initPartitionTimes - T}, {initPartitionTimes}, {initPartitionTimes + T}]
-  const scalar_t timeHorizon = initPartitionTimes.back() - initPartitionTimes.front();
-  for (int j = -1; j <= 1; j++) {
-    for (int i = 0; (i + 1) < initPartitionTimes.size(); i++) {
-      partitionTimes.push_back(j * timeHorizon + initPartitionTimes[i]);
-    }
+  scalar_array_t partitionTimes;
+  partitionTimes.resize(3 * numPartitions + 1);
+  partitionTimes[0] = -timeHorizon;
+  for (size_t i = 0; i < 3 * numPartitions; i++) {
+    partitionTimes[i + 1] = partitionTimes[i] + timeHorizon / numPartitions;
   }
-  partitionTimes.push_back(initPartitionTimes.back() + timeHorizon);
+
   return partitionTimes;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_BASE::adjustmentTimeHorizon(const scalar_array_t& partitioningTimes, scalar_t& initTime, scalar_t& finalTime) const {
+void MPC_BASE::adjustTimeHorizon(const scalar_array_t& partitionTimes, scalar_t& initTime, scalar_t& finalTime) {
   const scalar_t partitionTimeTolerance = 4e-3;       //! @badcode magic epsilon
   const scalar_t deltaTimePastFirstPartition = 1e-5;  //! @badcode magic epsilon
 
   // current active subsystem
-  const auto initActivePartitionIndex = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, initTime);
-  const auto initialActivePartitionTime = partitioningTimes[initActivePartitionIndex + 1];
+  const auto initActivePartitionIndex = lookup::findBoundedActiveIntervalInTimeArray(partitionTimes, initTime);
+  const auto initialActivePartitionTime = partitionTimes[initActivePartitionIndex + 1];
 
   // If the initial time is right before the start of the first partition, set it past the start of that partition
   if (initTime > initialActivePartitionTime - partitionTimeTolerance) {
@@ -176,8 +175,8 @@ void MPC_BASE::adjustmentTimeHorizon(const scalar_array_t& partitioningTimes, sc
   }
 
   // final active subsystem
-  const auto finalActivePartitionIndex = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes, finalTime);
-  const auto finalActivePartitionTime = partitioningTimes[initActivePartitionIndex + 1];
+  const auto finalActivePartitionIndex = lookup::findBoundedActiveIntervalInTimeArray(partitionTimes, finalTime);
+  const auto finalActivePartitionTime = partitionTimes[initActivePartitionIndex + 1];
 
   // If the final time is right after the final partition, shrink the horizon the end at that partition.
   if (finalTime < finalActivePartitionTime + partitionTimeTolerance) {

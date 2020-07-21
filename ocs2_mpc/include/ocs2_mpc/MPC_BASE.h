@@ -47,15 +47,19 @@ class MPC_BASE {
   /**
    * Constructor
    *
-   * @param [in] partitioningTimes: Array of times to divide up the horizon
+   * @param [in] timeHorizon: Time horizon length
+   * @param [in] numPartitions: Number of time partitions
    * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
    */
-  MPC_BASE(const scalar_array_t& partitioningTimes, MPC_Settings mpcSettings);
+  MPC_BASE(scalar_t timeHorizon, size_t numPartitions, MPC_Settings mpcSettings);
 
   /** Destructor. */
   virtual ~MPC_BASE() = default;
 
-  /** Resets the class to its state after construction. */
+  /**
+   * Resets the class to its state after construction.
+   * @note reset() must not be called while the solver is running.
+   */
   virtual void reset();
 
   /**
@@ -73,7 +77,10 @@ class MPC_BASE {
   virtual const Solver_BASE* getSolverPtr() const = 0;
 
   /** Returns the time horizon for which the optimizer is called. */
-  virtual scalar_t getTimeHorizon() const { return initPartitioningTimes_.back() - initPartitioningTimes_.front(); }
+  scalar_t getTimeHorizon() const { return timeHorizon_; }
+
+  /** Sets the new time horizon. */
+  void setTimeHorizon(scalar_t timeHorizon) { timeHorizon_ = timeHorizon; }
 
   /** Gets the MPC settings. */
   const MPC_Settings& settings() const { return mpcSettings_; }
@@ -92,29 +99,28 @@ class MPC_BASE {
   /** Rewinds MPC */
   void rewind();
 
+  static scalar_array_t initializePartitionTimes(scalar_t timeHorizon, size_t numPartitions);
+
   /**
-   * Adjustments time horizon.
+   * Adjust time horizon.
    *
-   * @param [in] partitioningTimes: Partitioning times after rewind.
+   * @param [in] partitionTimes: Partitioning times after rewind.
    * @param [in, out] initTime: Adjustments initial time.
    * @param [in, out] finalTime: Adjustments final time.
    */
-  void adjustmentTimeHorizon(const scalar_array_t& partitioningTimes, scalar_t& initTime, scalar_t& finalTime) const;
-
-  scalar_array_t initializePartitionTimes(const scalar_array_t& initPartitionTimes) const;
+  static void adjustTimeHorizon(const scalar_array_t& partitionTimes, scalar_t& initTime, scalar_t& finalTime);
 
  protected:
   bool initRun_ = true;
-  scalar_array_t partitioningTimes_{};
+  scalar_array_t partitionTimes_{};
 
  private:
   MPC_Settings mpcSettings_;
 
   benchmark::RepeatedTimer mpcTimer_;
 
-  size_t initnumPartitions_;
-  scalar_array_t initPartitioningTimes_;
-  size_t numPartitions_ = 0;
+  scalar_t timeHorizon_;
+  size_t numPartitions_;
 };
 
 }  // namespace ocs2

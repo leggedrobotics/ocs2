@@ -30,7 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/control/ControllerBase.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/misc/Benchmark.h>
 
@@ -53,14 +52,10 @@ class MPC_BASE {
    */
   MPC_BASE(const scalar_array_t& partitioningTimes, MPC_Settings mpcSettings);
 
-  /**
-   * destructor.
-   */
+  /** Destructor. */
   virtual ~MPC_BASE() = default;
 
-  /**
-   * Resets the class to its state after construction.
-   */
+  /** Resets the class to its state after construction. */
   virtual void reset();
 
   /**
@@ -69,8 +64,21 @@ class MPC_BASE {
    * @param [in] currentTime: The given time.
    * @param [in] currentState: The given state.
    */
-  virtual bool run(const scalar_t& currentTime, const vector_t& currentState);
+  virtual bool run(scalar_t currentTime, const vector_t& currentState);
 
+  /** Gets a pointer to the underlying solver used in the MPC. */
+  virtual Solver_BASE* getSolverPtr() = 0;
+
+  /** Gets a const pointer to the underlying solver used in the MPC. */
+  virtual const Solver_BASE* getSolverPtr() const = 0;
+
+  /** Returns the time horizon for which the optimizer is called. */
+  virtual scalar_t getTimeHorizon() const { return initPartitioningTimes_.back() - initPartitioningTimes_.front(); }
+
+  /** Gets the MPC settings. */
+  const MPC_Settings& settings() const { return mpcSettings_; }
+
+ protected:
   /**
    * Solves the optimal control problem for the given state and time period ([initTime,finalTime]).
    *
@@ -78,93 +86,35 @@ class MPC_BASE {
    * @param [in] initState: Initial state.
    * @param [in] finalTime: Final time. This value can be adjusted by the optimizer.
    */
-  virtual void calculateController(const scalar_t& initTime, const vector_t& initState, const scalar_t& finalTime) = 0;
+  virtual void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) = 0;
 
-  /**
-   * Gets a pointer to the underlying solver used in the MPC.
-   *
-   * @return A pointer to the underlying solver used in the MPC
-   */
-  virtual Solver_BASE* getSolverPtr() = 0;
-
-  /**
-   * Gets a const pointer to the underlying solver used in the MPC.
-   *
-   * @return A const pointer to the underlying solver used in the MPC
-   */
-  virtual const Solver_BASE* getSolverPtr() const = 0;
-
-  /**
-   * Returns the initial time for which the optimizer is called.
-   *
-   * @return Initial time
-   */
-  virtual scalar_t getStartTime() const;
-
-  /**
-   * Returns the final time for which the optimizer is called.
-   *
-   * @return Final time
-   */
-  virtual scalar_t getFinalTime() const;
-
-  /**
-   * Returns the time horizon for which the optimizer is called.
-   *
-   * @return Time horizon
-   */
-  virtual scalar_t getTimeHorizon() const;
-
-  /**
-   * Gets partitioning time.
-   *
-   * @param [out] Partitioning times
-   */
-  virtual void getPartitioningTimes(scalar_array_t& partitioningTimes) const;
-
-  /**
-   * Gets the MPC settings.
-   *
-   * @return structure which details MPC settings
-   */
-  const MPC_Settings& settings() const;
-
- protected:
-  /**
-   * Rewinds MPC.
-   */
-  virtual void rewind();
+ private:
+  /** Rewinds MPC */
+  void rewind();
 
   /**
    * Adjustments time horizon.
    *
    * @param [in] partitioningTimes: Partitioning times after rewind.
-   * @param [out] initTime: Adjustments initial time.
-   * @param [out] finalTime: Adjustments final time.
-   * @param [out] initActivePartitionIndex: Index of the initial active partition.
-   * @param [out] finalActivePartitionIndex: Index of the final active partition.
+   * @param [in, out] initTime: Adjustments initial time.
+   * @param [in, out] finalTime: Adjustments final time.
    */
-  virtual void adjustmentTimeHorizon(const scalar_array_t& partitioningTimes, scalar_t& initTime, scalar_t& finalTime,
-                                     size_t& initActivePartitionIndex, size_t& finalActivePartitionIndex) const;
+  void adjustmentTimeHorizon(const scalar_array_t& partitioningTimes, scalar_t& initTime, scalar_t& finalTime) const;
 
-  /*************
-   * Variables *
-   *************/
-  MPC_Settings mpcSettings_;
+  scalar_array_t initializePartitionTimes(const scalar_array_t& initPartitionTimes) const;
 
+ protected:
   bool initRun_ = true;
+  scalar_array_t partitioningTimes_{};
+
+ private:
+  MPC_Settings mpcSettings_;
 
   benchmark::RepeatedTimer mpcTimer_;
 
   size_t initnumPartitions_;
   scalar_array_t initPartitioningTimes_;
   size_t numPartitions_ = 0;
-  scalar_array_t partitioningTimes_{};
-
-  size_t initActivePartitionIndex_ = 0;
-  size_t finalActivePartitionIndex_ = 0;
-
-  scalar_t lastControlDesignTime_;
 };
 
 }  // namespace ocs2

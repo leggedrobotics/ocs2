@@ -59,11 +59,6 @@ struct MPC_Settings {
   /** This value determines to initialize the SLQ with the controller from previous call
    * (warm start) or the given operating trajectories (cold start). */
   bool coldStart_ = false;
-  /** Either to use the receding horizon MPC or not.*/
-  bool recedingHorizon_ = true;
-  /** If true the final time of the MPC will increase by the length of a time partition
-   * instead of commonly used scheme where the final time is gradual increased. */
-  bool blockwiseMovingHorizon_ = false;
   /** If set true, the parallel Riccati solver will be used from the first iteration of SLQ
    * solver. */
   bool useParallelRiccatiSolver_ = false;
@@ -114,8 +109,6 @@ struct MPC_Settings {
     loadData::loadPtreeValue(pt, initMinStepLength_, fieldName + ".initMinStepLength", verbose);
     loadData::loadPtreeValue(pt, debugPrint_, fieldName + ".debugPrint", verbose);
     loadData::loadPtreeValue(pt, coldStart_, fieldName + ".coldStart", verbose);
-    loadData::loadPtreeValue(pt, recedingHorizon_, fieldName + ".recedingHorizon", verbose);
-    loadData::loadPtreeValue(pt, blockwiseMovingHorizon_, fieldName + ".blockwiseMovingHorizon", verbose);
     loadData::loadPtreeValue(pt, useParallelRiccatiSolver_, fieldName + ".useParallelRiccatiSolver", verbose);
     loadData::loadPtreeValue(pt, solutionTimeWindow_, fieldName + ".solutionTimeWindow", verbose);
     loadData::loadPtreeValue(pt, mpcDesiredFrequency_, fieldName + ".mpcDesiredFrequency", verbose);

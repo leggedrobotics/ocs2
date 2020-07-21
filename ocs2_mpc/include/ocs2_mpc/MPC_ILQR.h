@@ -30,7 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_ddp/GaussNewtonDDP.h>
 #include <ocs2_ddp/ILQR.h>
 
 #include "MPC_BASE.h"
@@ -62,28 +61,20 @@ class MPC_ILQR : public MPC_BASE {
            const scalar_array_t& partitioningTimes, const ILQR_Settings& ilqrSettings = ILQR_Settings(),
            const MPC_Settings& mpcSettings = MPC_Settings(), const CostFunctionBase* heuristicsFunctionPtr = nullptr);
 
-  /**
-   * Default destructor.
-   */
+  /** Default destructor. */
   ~MPC_ILQR() override = default;
 
-  /**
-   * Gets the ILQR settings structure.
-   *
-   * @return ILQR settings structure
-   */
-  virtual ILQR_Settings& ilqrSettings();
+  /** Gets the ILQR settings structure. */
+  virtual ILQR_Settings& ilqrSettings() { return ilqrPtr_->settings(); }
 
-  ILQR* getSolverPtr() override;
+  ILQR* getSolverPtr() override { return ilqrPtr_.get(); }
 
-  const ILQR* getSolverPtr() const override;
-
-  void calculateController(const scalar_t& initTime, const vector_t& initState, const scalar_t& finalTime) override;
+  const ILQR* getSolverPtr() const override { return ilqrPtr_.get(); }
 
  protected:
-  /***********
-   * Variables
-   ***********/
+  void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override;
+
+ private:
   std::unique_ptr<ILQR> ilqrPtr_;
 };
 

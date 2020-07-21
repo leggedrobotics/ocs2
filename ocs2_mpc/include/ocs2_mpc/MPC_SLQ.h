@@ -30,7 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_ddp/GaussNewtonDDP.h>
 #include <ocs2_ddp/SLQ.h>
 
 #include "MPC_BASE.h"
@@ -62,28 +61,20 @@ class MPC_SLQ : public MPC_BASE {
           const scalar_array_t& partitioningTimes, const SLQ_Settings& slqSettings = SLQ_Settings(),
           const MPC_Settings& mpcSettings = MPC_Settings(), const CostFunctionBase* heuristicsFunctionPtr = nullptr);
 
-  /**
-   * Default destructor.
-   */
+  /** Default destructor. */
   ~MPC_SLQ() override = default;
 
-  /**
-   * Gets the SLQ settings structure.
-   *
-   * @return SLQ settings structure
-   */
-  virtual SLQ_Settings& slqSettings();
+  /** Gets the SLQ settings structure. */
+  virtual SLQ_Settings& slqSettings() { return slqPtr_->settings(); }
 
-  SLQ* getSolverPtr() override;
+  SLQ* getSolverPtr() override { return slqPtr_.get(); }
 
-  const SLQ* getSolverPtr() const override;
-
-  void calculateController(const scalar_t& initTime, const vector_t& initState, const scalar_t& finalTime) override;
+  const SLQ* getSolverPtr() const override { return slqPtr_.get(); }
 
  protected:
-  /***********
-   * Variables
-   ***********/
+  void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override;
+
+ private:
   std::unique_ptr<SLQ> slqPtr_;
 };
 

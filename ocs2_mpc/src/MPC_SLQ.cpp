@@ -40,7 +40,6 @@ MPC_SLQ::MPC_SLQ(const RolloutBase* rolloutPtr, const SystemDynamicsBase* system
                  const MPC_Settings& mpcSettings /* = MPC_Settings()*/, const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
 
     : MPC_BASE(partitioningTimes, mpcSettings) {
-  // SLQ
   slqPtr_.reset(new SLQ(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, slqSettings,
                         heuristicsFunctionPtr));
 }
@@ -48,60 +47,24 @@ MPC_SLQ::MPC_SLQ(const RolloutBase* rolloutPtr, const SystemDynamicsBase* system
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SLQ_Settings& MPC_SLQ::slqSettings() {
-  return slqPtr_->settings();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-SLQ* MPC_SLQ::getSolverPtr() {
-  return slqPtr_.get();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-const SLQ* MPC_SLQ::getSolverPtr() const {
-  return slqPtr_.get();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void MPC_SLQ::calculateController(const scalar_t& initTime, const vector_t& initState, const scalar_t& finalTime) {
-  //*****************************************************************************************
+void MPC_SLQ::calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
   // updating real-time iteration settings
-  //*****************************************************************************************
-  // number of iterations
-  if (MPC_BASE::initRun_ /*|| slqPtr_->getController().at(MPC_BASE::finalActivePartitionIndex_).empty()*/) {
-    slqPtr_->ddpSettings().maxNumIterations_ = MPC_BASE::mpcSettings_.initMaxNumIterations_;
-    slqPtr_->ddpSettings().lineSearch_.maxStepLength_ = MPC_BASE::mpcSettings_.initMaxStepLength_;
-    slqPtr_->ddpSettings().lineSearch_.minStepLength_ = MPC_BASE::mpcSettings_.initMinStepLength_;
+  if (MPC_BASE::initRun_) {
+    slqPtr_->ddpSettings().maxNumIterations_ = this->settings().initMaxNumIterations_;
+    slqPtr_->ddpSettings().lineSearch_.maxStepLength_ = this->settings().initMaxStepLength_;
+    slqPtr_->ddpSettings().lineSearch_.minStepLength_ = this->settings().initMinStepLength_;
   } else {
-    slqPtr_->ddpSettings().maxNumIterations_ = MPC_BASE::mpcSettings_.runtimeMaxNumIterations_;
-    slqPtr_->ddpSettings().lineSearch_.maxStepLength_ = MPC_BASE::mpcSettings_.runtimeMaxStepLength_;
-    slqPtr_->ddpSettings().lineSearch_.minStepLength_ = MPC_BASE::mpcSettings_.runtimeMinStepLength_;
+    slqPtr_->ddpSettings().maxNumIterations_ = this->settings().runtimeMaxNumIterations_;
+    slqPtr_->ddpSettings().lineSearch_.maxStepLength_ = this->settings().runtimeMaxStepLength_;
+    slqPtr_->ddpSettings().lineSearch_.minStepLength_ = this->settings().runtimeMinStepLength_;
   }
 
-  // use parallel Riccati solver at each call of realtime-iteration SLQ
-  if (!MPC_BASE::initRun_) {
-    slqPtr_->useParallelRiccatiSolverFromInitItr(MPC_BASE::mpcSettings_.useParallelRiccatiSolver_ &&
-                                                 MPC_BASE::mpcSettings_.recedingHorizon_);
-  } else {
-    slqPtr_->useParallelRiccatiSolverFromInitItr(false);
-  }
-
-  //*****************************************************************************************
   // calculate controller
-  //*****************************************************************************************
-  if (MPC_BASE::mpcSettings_.coldStart_ || MPC_BASE::initRun_) {
-    if (MPC_BASE::mpcSettings_.debugPrint_) {
-      std::cerr << "### Using cold initialization." << std::endl;
+  if (this->settings().coldStart_ || MPC_BASE::initRun_) {
+    if (this->settings().debugPrint_) {
+      std::cerr << "### Using cold initialization.\n";
     }
-
     slqPtr_->run(initTime, initState, finalTime, MPC_BASE::partitioningTimes_);
-
   } else {
     slqPtr_->run(initTime, initState, finalTime, MPC_BASE::partitioningTimes_, std::vector<ControllerBase*>());
   }

@@ -34,11 +34,11 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MPC_OCS2::MPC_OCS2(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr,
-                   const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
-                   const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const scalar_array_t& partitioningTimes,
-                   const SLQ_Settings& slqSettings /*= SLQ_Settings()*/, const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/,
-                   const MPC_Settings& mpcSettings /*= MPC_Settings()*/, const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
+MPC_OCS2::MPC_OCS2(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
+                   const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
+                   const scalar_array_t& partitioningTimes, const SLQ_Settings& slqSettings /*= SLQ_Settings()*/,
+                   const GDDP_Settings& gddpSettings /*= GDDP_Settings()*/, const MPC_Settings& mpcSettings /*= MPC_Settings()*/,
+                   const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
 
     : MPC_SLQ(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, partitioningTimes,
               slqSettings, mpcSettings, heuristicsFunctionPtr),

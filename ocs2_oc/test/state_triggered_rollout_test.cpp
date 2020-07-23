@@ -89,7 +89,7 @@ TEST(StateRolloutTests, rolloutTestBallDynamics) {
   matrix_t gain(nu, nx);
   gain << 0, 0;
   matrix_array_t gainArray(1, gain);
-  ocs2::LinearController control(nx, nu, timestamp, biasArray, gainArray);
+  ocs2::LinearController control(timestamp, biasArray, gainArray);
 
   // Trajectory storage
   scalar_array_t timeTrajectory(0);
@@ -175,7 +175,7 @@ TEST(StateRolloutTests, rolloutTestPendulumDynamics) {
   gain << 0, 0;
   matrix_array_t gainArray(1, gain);
 
-  ocs2::LinearController control(nx, nu, timestamp, biasArray, gainArray);
+  ocs2::LinearController control(timestamp, biasArray, gainArray);
 
   // Trajectory storage
   scalar_array_t timeTrajectory(0);
@@ -260,7 +260,7 @@ TEST(StateRolloutTests, runHybridDynamics) {
   matrix_t gain(nu, nx);
   gain << 0, 0, 0;
   matrix_array_t gainArray(1, gain);
-  ocs2::LinearController control(nx, nu, timestamp, biasArray, gainArray);
+  ocs2::LinearController control(timestamp, biasArray, gainArray);
 
   // Trajectory storage
   scalar_array_t timeTrajectory(0);

@@ -36,30 +36,15 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-FeedforwardController::FeedforwardController(size_t stateDim, size_t inputDim) : ControllerBase(stateDim, inputDim) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-FeedforwardController::FeedforwardController(size_t stateDim, size_t inputDim, const scalar_array_t& controllerTime,
-                                             const vector_array_t& controllerFeedforward)
-    : FeedforwardController(stateDim, inputDim) {
-  setController(controllerTime, controllerFeedforward);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-FeedforwardController::FeedforwardController(size_t stateDim, size_t inputDim, const scalar_array_t& controllerTime,
-                                             const vector_array_t& stateTrajectory, ControllerBase* controller)
-    : FeedforwardController(stateDim, inputDim) {
-  timeStamp_ = controllerTime;
-  uffArray_.clear();
-  uffArray_.reserve(controllerTime.size());
-
+FeedforwardController::FeedforwardController(const scalar_array_t& controllerTime, const vector_array_t& stateTrajectory,
+                                             ControllerBase* controller) {
   if (controllerTime.size() != stateTrajectory.size()) {
     throw std::runtime_error("FeedforwardController Constructor: controllerTime and stateTrajectory sizes mismatch.");
   }
+
+  timeStamp_ = controllerTime;
+  uffArray_.clear();
+  uffArray_.reserve(controllerTime.size());
 
   auto iTime = controllerTime.cbegin();
   auto iState = stateTrajectory.cbegin();
@@ -73,13 +58,20 @@ FeedforwardController::FeedforwardController(size_t stateDim, size_t inputDim, c
 /******************************************************************************************************/
 /******************************************************************************************************/
 FeedforwardController::FeedforwardController(const FeedforwardController& other)
-    : FeedforwardController(other.stateDim_, other.inputDim_, other.timeStamp_, other.uffArray_) {}
+    : FeedforwardController(other.timeStamp_, other.uffArray_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-FeedforwardController& FeedforwardController::operator=(FeedforwardController other) {
-  swap(*this, other);
+FeedforwardController::FeedforwardController(FeedforwardController&& other) : ControllerBase(other) {
+  swap(other, *this);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+FeedforwardController& FeedforwardController::operator=(FeedforwardController rhs) {
+  swap(rhs, *this);
   return *this;
 }
 
@@ -108,8 +100,7 @@ void FeedforwardController::flatten(const scalar_array_t& timeArray, const std::
   const auto dataSize = flatArray2.size();
 
   if (timeSize != dataSize) {
-    throw std::runtime_error("timeSize (" + std::to_string(timeSize) + ") and dataSize (" + std::to_string(dataSize) +
-                             ") must be equal in flatten method.");
+    throw std::runtime_error("timeSize and dataSize must be equal in flatten method.");
   }
 
   for (size_t i = 0; i < timeSize; i++) {
@@ -121,35 +112,39 @@ void FeedforwardController::flatten(const scalar_array_t& timeArray, const std::
 /******************************************************************************************************/
 /******************************************************************************************************/
 void FeedforwardController::flattenSingle(scalar_t time, std::vector<float>& flatArray) const {
+  /* Serialized feedforward controller:
+   * data = [
+   *   [ uff(t0)[:] ],
+   *   [ uff(t1)[:] ],
+   *   ...
+   *   [ uff(tN)[:] ]
+   * ]
+   */
+
   vector_t uff;
   LinearInterpolation::interpolate(time, uff, &timeStamp_, &uffArray_);
 
-  flatArray = std::move(std::vector<float>(uff.data(), uff.data() + inputDim_));
+  flatArray = std::vector<float>(uff.data(), uff.data() + uff.rows());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void FeedforwardController::unFlatten(const scalar_array_t& timeArray, const std::vector<std::vector<float> const*>& flatArray2) {
-  if (flatArray2[0]->size() != inputDim_) {
-    throw std::runtime_error("FeedforwardController::unFlatten received array of wrong length.");
-  }
-
-  timeStamp_ = timeArray;
-
-  uffArray_.clear();
-  uffArray_.reserve(flatArray2.size());
+FeedforwardController FeedforwardController::unFlatten(const scalar_array_t& timeArray,
+                                                       const std::vector<std::vector<float> const*>& flatArray2) {
+  vector_array_t uffArray;
+  uffArray.reserve(flatArray2.size());
 
   for (const auto& arr : flatArray2) {  // loop through time
-    uffArray_.emplace_back(Eigen::Map<const Eigen::VectorXf>(arr->data(), inputDim_).cast<scalar_t>());
+    uffArray.emplace_back(Eigen::Map<const Eigen::VectorXf>(arr->data(), arr->size()).cast<scalar_t>());
   }
+  return FeedforwardController(timeArray, std::move(uffArray));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void FeedforwardController::concatenate(const ControllerBase* nextController, int index, int length) {
-  // TODO(mspieler): why not use nextController->getType() and do static_cast?
   if (auto nextFfwdCtrl = dynamic_cast<const FeedforwardController*>(nextController)) {
     if (!timeStamp_.empty() && timeStamp_.back() > nextFfwdCtrl->timeStamp_.front()) {
       throw std::runtime_error("Concatenate requires that the nextController comes later in time.");
@@ -187,13 +182,6 @@ void FeedforwardController::clear() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void FeedforwardController::setZero() {
-  std::fill(uffArray_.begin(), uffArray_.end(), vector_t::Zero(inputDim_));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 bool FeedforwardController::empty() const {
   return timeStamp_.empty();
 }
@@ -215,8 +203,7 @@ void FeedforwardController::display() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void swap(FeedforwardController& a, FeedforwardController& b) {
-  ocs2::swap(static_cast<ControllerBase&>(a), static_cast<ControllerBase&>(b));
+void swap(FeedforwardController& a, FeedforwardController& b) noexcept {
   std::swap(a.timeStamp_, b.timeStamp_);
   std::swap(a.uffArray_, b.uffArray_);
 }

@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_oc/rollout/RootFinder.h>
 
+#include <ocs2_core/control/StateBasedLinearController.h>
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
 
 namespace ocs2 {
@@ -58,7 +59,7 @@ vector_t StateTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray,
   eventsPastTheEndIndeces.reserve(maxNumSteps);
 
   // set controller
-  StateBasedLinearController trajectorySpreadingController(controller->getStateDim(), controller->getInputDim());
+  StateBasedLinearController trajectorySpreadingController;
   if (this->settings().useTrajectorySpreadingController_) {
     trajectorySpreadingController.setController(controller);
     systemDynamicsPtr_->setController(&trajectorySpreadingController);

@@ -113,6 +113,15 @@ class MRT_ROS_Interface : public MRT_BASE {
   void mpcPolicyCallback(const ocs2_msgs::mpc_flattened_controller::ConstPtr& msg);
 
   /**
+   * Helper function to read a MPC policy message.
+   *
+   * @param [in] msg: A constant pointer to the message
+   * @param [out] primalSolution: The MPC policy data
+   * @param [out] commandData: The MPC command data
+   */
+  static void readPolicyMsg(const ocs2_msgs::mpc_flattened_controller& msg, PrimalSolution& primalSolution, CommandData& commandData);
+
+  /**
    * A thread function which sends the current state and checks for a new MPC update.
    */
   void publisherWorkerThread();

@@ -145,7 +145,7 @@ TEST_F(DdpCorrectnessTest, slq_solution_single_partition) {
   settings.ddpSettings_ = ddpSettings(partitioningTimes.size() - 1);
 
   // DDP
-  ocs2::SLQ ddp(STATE_DIM, INPUT_DIM, rollout.get(), system.get(), constraint.get(), cost.get(), operatingPoints.get(), settings);
+  ocs2::SLQ ddp(rollout.get(), system.get(), constraint.get(), cost.get(), operatingPoints.get(), settings);
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   const auto ddpSolution = ddp.primalSolution(finalTime);
   const auto ddpPerformanceIndeces = ddp.getPerformanceIndeces();
@@ -168,7 +168,7 @@ TEST_F(DdpCorrectnessTest, slq_solution_multiple_partition) {
   settings.ddpSettings_ = ddpSettings(partitioningTimes.size() - 1);
 
   // DDP
-  ocs2::SLQ ddp(STATE_DIM, INPUT_DIM, rollout.get(), system.get(), constraint.get(), cost.get(), operatingPoints.get(), settings);
+  ocs2::SLQ ddp(rollout.get(), system.get(), constraint.get(), cost.get(), operatingPoints.get(), settings);
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   const auto ddpSolution = ddp.primalSolution(finalTime);
   const auto ddpPerformanceIndeces = ddp.getPerformanceIndeces();
@@ -190,7 +190,7 @@ TEST_F(DdpCorrectnessTest, ilqr_solution_single_partition) {
   settings.ddpSettings_ = ddpSettings(partitioningTimes.size() - 1);
 
   // DDP
-  ocs2::ILQR ddp(STATE_DIM, INPUT_DIM, rollout.get(), system.get(), constraint.get(), cost.get(), operatingPoints.get(), settings);
+  ocs2::ILQR ddp(rollout.get(), system.get(), constraint.get(), cost.get(), operatingPoints.get(), settings);
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   const auto ddpSolution = ddp.primalSolution(finalTime);
   const auto ddpPerformanceIndeces = ddp.getPerformanceIndeces();
@@ -212,7 +212,7 @@ TEST_F(DdpCorrectnessTest, ilqr_solution_multiple_partition) {
   settings.ddpSettings_ = ddpSettings(partitioningTimes.size() - 1);
 
   // DDP
-  ocs2::ILQR ddp(STATE_DIM, INPUT_DIM, rollout.get(), system.get(), constraint.get(), cost.get(), operatingPoints.get(), settings);
+  ocs2::ILQR ddp(rollout.get(), system.get(), constraint.get(), cost.get(), operatingPoints.get(), settings);
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   const auto ddpSolution = ddp.primalSolution(finalTime);
   const auto ddpPerformanceIndeces = ddp.getPerformanceIndeces();

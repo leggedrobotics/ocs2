@@ -69,7 +69,6 @@ add_library(${PROJECT_NAME}
   src/constraint/LinearConstraint.cpp
   src/constraint/PenaltyBase.cpp
   src/constraint/RelaxedBarrierPenalty.cpp
-  src/control/ControllerBase.cpp
   src/control/FeedforwardController.cpp
   src/control/LinearController.cpp
   src/control/StateBasedLinearController.cpp
@@ -170,6 +169,16 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## $ catkin run_tests --no-deps --this
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_core
+
+catkin_add_gtest(test_control
+  test/control/testLinearController.cpp
+  test/control/testFeedforwardController.cpp
+)
+target_link_libraries(test_control
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
 
 catkin_add_gtest(initialization_unittest
   test/initialization/InitializationTest.cpp

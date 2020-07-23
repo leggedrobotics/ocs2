@@ -4,7 +4,6 @@
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/LinearController.h>
-#include <ocs2_core/control/StateBasedLinearController.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_ddp/SLQ.h>
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
@@ -151,13 +150,12 @@ TEST(testStateRollOut_SLQ, DISABLED_BouncingMassTest) {
     }
   }
 
-  ocs2::LinearController Control(STATE_DIM, INPUT_DIM, timeStampArray, controllerBiasArray, controllerGainArray);
+  ocs2::LinearController Control(timeStampArray, controllerBiasArray, controllerGainArray);
   std::vector<ocs2::ControllerBase*> controllerPtrArray = {&Control};
 
   ocs2::OperatingPoints operatingTrajectories(x0, u0);
   // SLQ
-  ocs2::SLQ slq(STATE_DIM, INPUT_DIM, &stateTriggeredRollout, &systemDynamics, &systemConstraints, &systemCost, &operatingTrajectories,
-                slqSettings);
+  ocs2::SLQ slq(&stateTriggeredRollout, &systemDynamics, &systemConstraints, &systemCost, &operatingTrajectories, slqSettings);
   slq.run(startTime, x0, finalTime, partitioningTimes, controllerPtrArray);
   auto solutionST = slq.primalSolution(finalTime);
 

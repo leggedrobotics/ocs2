@@ -34,13 +34,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ILQR::ILQR(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr,
-           const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
-           const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const ILQR_Settings& settings /*= ILQR_Settings()*/,
-           const CostFunctionBase* heuristicsFunctionPtr /* = nullptr*/)
+ILQR::ILQR(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
+           const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
+           const ILQR_Settings& settings /*= ILQR_Settings()*/, const CostFunctionBase* heuristicsFunctionPtr /* = nullptr*/)
 
-    : BASE(stateDim, inputDim, rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
-           settings.ddpSettings_, heuristicsFunctionPtr, "ILQR"),
+    : BASE(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings.ddpSettings_,
+           heuristicsFunctionPtr, "ILQR"),
       settings_(settings) {
   // Riccati Solver
   riccatiEquationsPtrStock_.clear();
@@ -102,7 +101,8 @@ void ILQR::discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelDa
   /*
    * linearize system dynamics
    */
-  modelData.dynamics_.dfdx = matrix_t::Identity(stateDim_, stateDim_) + continuousTimeModelData.dynamics_.dfdx * timeStep;
+  modelData.dynamics_.dfdx = matrix_t::Identity(continuousTimeModelData.stateDim_, continuousTimeModelData.stateDim_) +
+                             continuousTimeModelData.dynamics_.dfdx * timeStep;
   modelData.dynamics_.dfdu = continuousTimeModelData.dynamics_.dfdu * timeStep;
 
   /*
@@ -201,7 +201,7 @@ matrix_t ILQR::computeHamiltonianHessian(ddp_strategy::type strategy, const Mode
     }
     case ddp_strategy::type::LEVENBERG_MARQUARDT: {
       auto SmPlus = Sm;
-      SmPlus.diagonal() += BASE::levenbergMarquardtModule_.riccatiMultiple * vector_t::Ones(stateDim_);
+      SmPlus.diagonal() += vector_t::Constant(Sm.rows(), BASE::levenbergMarquardtModule_.riccatiMultiple);
       return (Rm + Bm.transpose() * SmPlus * Bm);
     }
     default:
@@ -291,7 +291,6 @@ void ILQR::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, con
     /*
      * solve Riccati equations and compute projected model data and RiccatiModification for the intermediate times
      */
-    matrix_t Bm_T_Sm(inputDim_, stateDim_);
     for (int k = endTimeItr - 2; k >= beginTimeItr; k--) {
       // project
       BASE::computeProjectionAndRiccatiModification(BASE::ddpSettings_.strategy_, BASE::modelDataTrajectoriesStock_[partitionIndex][k],

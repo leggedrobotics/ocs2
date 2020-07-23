@@ -37,22 +37,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearController::LinearController(size_t stateDim, size_t inputDim) : ControllerBase(stateDim, inputDim) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-LinearController::LinearController(size_t stateDim, size_t inputDim, const scalar_array_t& controllerTime,
-                                   const vector_array_t& controllerBias, const matrix_array_t& controllerGain)
-    : LinearController(stateDim, inputDim) {
-  setController(controllerTime, controllerBias, controllerGain);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-LinearController::LinearController(const LinearController& other)
-    : LinearController(other.stateDim_, other.stateDim_, other.timeStamp_, other.biasArray_, other.gainArray_) {
+LinearController::LinearController(const LinearController& other) : LinearController(other.timeStamp_, other.biasArray_, other.gainArray_) {
   deltaBiasArray_ = other.deltaBiasArray_;
 }
 
@@ -60,23 +45,14 @@ LinearController::LinearController(const LinearController& other)
 /******************************************************************************************************/
 /******************************************************************************************************/
 LinearController::LinearController(LinearController&& other) : ControllerBase(other) {
-  ocs2::swap(other, *this);
+  swap(other, *this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearController& LinearController::operator=(const LinearController& rhs) {
-  LinearController other(rhs);
-  ocs2::swap(other, *this);
-  return *this;
-}
-
-/*********s*********************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-LinearController& LinearController::operator=(LinearController&& rhs) {
-  ocs2::swap(rhs, *this);
+LinearController& LinearController::operator=(LinearController rhs) {
+  swap(rhs, *this);
   return *this;
 }
 
@@ -131,19 +107,44 @@ void LinearController::flatten(const scalar_array_t& timeArray, const std::vecto
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LinearController::flattenSingle(scalar_t time, std::vector<float>& flatArray) const {
+  /* Serialized linear controller:
+   * data = [
+   *   // t0
+   *   [
+   *     uff[0], k[0, :],
+   *     uff[1], k[1, :],
+   *     ...
+   *     uff[m], k[m, :]
+   *   ],
+   *
+   *   ...
+   *
+   *   // tN
+   *   [
+   *     uff[0], k[0, :],
+   *     uff[1], k[1, :],
+   *     ...
+   *     uff[m], k[m, :]
+   *   ]
+   * ]
+   */
+
   vector_t uff;
   const auto indexAlpha = LinearInterpolation::interpolate(time, uff, &timeStamp_, &biasArray_);
 
   matrix_t k;
   LinearInterpolation::interpolate(indexAlpha, k, &gainArray_);
 
+  const size_t stateDim = k.cols();
+  const size_t inputDim = k.rows();
+
   flatArray.clear();
   flatArray.resize(uff.size() + k.size());
 
-  for (int i = 0; i < k.rows(); i++) {  // i loops through input dim
-    flatArray[i * (k.cols() + 1) + 0] = static_cast<float>(uff(i));
-    for (int j = 0; j < k.cols(); j++) {  // j loops through state dim
-      flatArray[i * (k.cols() + 1) + j + 1] = static_cast<float>(k(i, j));
+  for (int i = 0; i < inputDim; i++) {  // i loops through rows of uff and k
+    flatArray[i * (stateDim + 1) + 0] = static_cast<float>(uff(i));
+    for (int j = 0; j < stateDim; j++) {  // j loops through cols of k
+      flatArray[i * (stateDim + 1) + j + 1] = static_cast<float>(k(i, j));
     }
   }
 }
@@ -151,27 +152,29 @@ void LinearController::flattenSingle(scalar_t time, std::vector<float>& flatArra
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LinearController::unFlatten(const scalar_array_t& timeArray, const std::vector<std::vector<float> const*>& flatArray2) {
-  if (flatArray2[0]->size() != inputDim_ + inputDim_ * stateDim_) {
-    throw std::runtime_error("LinearController::unFlatten received array of wrong length.");
-  }
+LinearController LinearController::unFlatten(const size_array_t& stateDim, const size_array_t& inputDim, const scalar_array_t& timeArray,
+                                             const std::vector<std::vector<float> const*>& flatArray2) {
+  vector_array_t bias;
+  matrix_array_t gain;
 
-  timeStamp_ = timeArray;
+  bias.reserve(flatArray2.size());
+  gain.reserve(flatArray2.size());
 
-  biasArray_.clear();
-  biasArray_.reserve(flatArray2.size());
-  gainArray_.clear();
-  gainArray_.reserve(flatArray2.size());
+  for (int k = 0; k < timeArray.size(); k++) {  // loop through time
+    if (flatArray2[k]->size() != inputDim[k] + inputDim[k] * stateDim[k]) {
+      throw std::runtime_error("LinearController::unFlatten received array of wrong length.");
+    }
 
-  for (const auto& arr : flatArray2) {  // loop through time
-    biasArray_.emplace_back(vector_t::Zero(inputDim_));
-    gainArray_.emplace_back(matrix_t::Zero(inputDim_, stateDim_));
+    bias.emplace_back(vector_t(inputDim[k]));
+    gain.emplace_back(matrix_t(inputDim[k], stateDim[k]));
 
-    for (int i = 0; i < inputDim_; i++) {  // loop through input dim
-      biasArray_.back()(i) = static_cast<scalar_t>((*arr)[i * (stateDim_ + 1) + 0]);
-      gainArray_.back().row(i) = Eigen::Map<const Eigen::VectorXf>(&((*arr)[i * (stateDim_ + 1) + 1]), stateDim_).cast<scalar_t>();
+    const auto& arr = *flatArray2[k];
+    for (int i = 0; i < inputDim[k]; i++) {  // loop through input dim
+      bias.back()(i) = static_cast<scalar_t>(arr[i * (stateDim[k] + 1) + 0]);
+      gain.back().row(i) = Eigen::Map<const Eigen::VectorXf>(&(arr[i * (stateDim[k] + 1) + 1]), stateDim[k]).cast<scalar_t>();
     }
   }
+  return LinearController(timeArray, std::move(bias), std::move(gain));
 }
 
 /******************************************************************************************************/
@@ -214,15 +217,6 @@ void LinearController::clear() {
   timeStamp_.clear();
   biasArray_.clear();
   gainArray_.clear();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void LinearController::setZero() {
-  std::fill(biasArray_.begin(), biasArray_.end(), vector_t::Zero(inputDim_));
-  std::fill(deltaBiasArray_.begin(), deltaBiasArray_.end(), vector_t::Zero(inputDim_));
-  std::fill(gainArray_.begin(), gainArray_.end(), matrix_t::Zero(inputDim_, stateDim_));
 }
 
 /******************************************************************************************************/
@@ -286,7 +280,6 @@ scalar_array_t LinearController::controllerEventTimes() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void swap(LinearController& a, LinearController& b) noexcept {
-  ocs2::swap(static_cast<ControllerBase&>(a), static_cast<ControllerBase&>(b));
   std::swap(a.timeStamp_, b.timeStamp_);
   std::swap(a.biasArray_, b.biasArray_);
   std::swap(a.deltaBiasArray_, b.deltaBiasArray_);

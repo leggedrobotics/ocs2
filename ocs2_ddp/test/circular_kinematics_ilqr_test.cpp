@@ -104,14 +104,12 @@ TEST(circular_kinematics_ilqr_test, circular_kinematics_ilqr_test) {
   /******************************************************************************************************/
   // ILQR - single-thread version
   ilqrSettings.ddpSettings_.nThreads_ = 1;
-  ILQR ilqrST(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories,
-              ilqrSettings);
+  ILQR ilqrST(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ilqrSettings);
 
   // ILQR - multi-thread version
   ilqrSettings.ddpSettings_.nThreads_ = 3;
   ilqrSettings.ddpSettings_.displayInfo_ = false;
-  ILQR ilqrMT(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories,
-              ilqrSettings);
+  ILQR ilqrMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ilqrSettings);
 
   // run single core ILQR
   if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_) {

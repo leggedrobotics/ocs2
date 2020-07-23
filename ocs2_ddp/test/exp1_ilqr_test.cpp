@@ -104,14 +104,12 @@ TEST(exp1_ilqr_test, exp1_ilqr_test) {
   /******************************************************************************************************/
   // ILQR - single-threaded version
   ilqrSettings.ddpSettings_.nThreads_ = 1;
-  ILQR ilqrST(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories,
-              ilqrSettings);
+  ILQR ilqrST(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ilqrSettings);
   ilqrST.setModeScheduleManager(modeScheduleManagerPtr);
 
   // ILQR - multi-threaded version
   ilqrSettings.ddpSettings_.nThreads_ = 3;
-  ILQR ilqrMT(STATE_DIM, INPUT_DIM, &timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories,
-              ilqrSettings);
+  ILQR ilqrMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ilqrSettings);
   ilqrMT.setModeScheduleManager(modeScheduleManagerPtr);
 
   // run single_threaded core ILQR

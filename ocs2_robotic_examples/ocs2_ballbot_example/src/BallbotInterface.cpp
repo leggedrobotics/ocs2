@@ -130,9 +130,9 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<MPC_SLQ> BallbotInterface::getMpc() {
-  return std::unique_ptr<MPC_SLQ>(new MPC_SLQ(STATE_DIM_, INPUT_DIM_, ddpBallbotRolloutPtr_.get(), ballbotSystemDynamicsPtr_.get(),
-                                              ballbotConstraintPtr_.get(), ballbotCostPtr_.get(), ballbotOperatingPointPtr_.get(),
-                                              partitioningTimes_, slqSettings_, mpcSettings_));
+  return std::unique_ptr<MPC_SLQ>(new MPC_SLQ(ddpBallbotRolloutPtr_.get(), ballbotSystemDynamicsPtr_.get(), ballbotConstraintPtr_.get(),
+                                              ballbotCostPtr_.get(), ballbotOperatingPointPtr_.get(), partitioningTimes_, slqSettings_,
+                                              mpcSettings_));
 }
 
 }  // namespace ballbot

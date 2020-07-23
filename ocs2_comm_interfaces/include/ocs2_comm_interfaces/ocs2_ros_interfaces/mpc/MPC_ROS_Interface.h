@@ -70,11 +70,6 @@ namespace ocs2 {
 class MPC_ROS_Interface {
  public:
   /**
-   * Default constructor
-   */
-  MPC_ROS_Interface() = default;
-
-  /**
    * Constructor.
    *
    * @param [in] mpc: The underlying MPC class to be used.
@@ -156,7 +151,7 @@ class MPC_ROS_Interface {
    *
    * @param [in] controllerIsUpdated: Whether the policy is updated.
    * @param [in] primalSolution: The policy data of the MPC.
-   * @param [in] commandDataPtr: The command data of the MPC.
+   * @param [in] commandData: The command data of the MPC.
    * @return MPC policy message.
    */
   static ocs2_msgs::mpc_flattened_controller createMpcPolicyMsg(bool controllerIsUpdated, const PrimalSolution& primalSolution,

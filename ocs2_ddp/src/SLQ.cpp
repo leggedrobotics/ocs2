@@ -35,13 +35,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SLQ::SLQ(size_t stateDim, size_t inputDim, const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr,
-         const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
-         const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const SLQ_Settings& settings /*= SLQ_Settings()*/,
-         const CostFunctionBase* heuristicsFunctionPtr /* = nullptr*/)
+SLQ::SLQ(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
+         const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
+         const SLQ_Settings& settings /*= SLQ_Settings()*/, const CostFunctionBase* heuristicsFunctionPtr /* = nullptr*/)
 
-    : BASE(stateDim, inputDim, rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
-           settings.ddpSettings_, heuristicsFunctionPtr, "SLQ"),
+    : BASE(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings.ddpSettings_,
+           heuristicsFunctionPtr, "SLQ"),
       settings_(settings) {
   // Riccati Solver
   riccatiEquationsPtrStock_.clear();

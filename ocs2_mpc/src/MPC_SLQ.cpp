@@ -36,10 +36,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 MPC_SLQ::MPC_SLQ(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
                  const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
-                 scalar_t timeHorizon, size_t numPartitions, const SLQ_Settings& slqSettings /* = SLQ_Settings()*/,
-                 const MPC_Settings& mpcSettings /* = MPC_Settings()*/, const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
+                 const SLQ_Settings& slqSettings /* = SLQ_Settings()*/, const MPC_Settings& mpcSettings /* = MPC_Settings()*/,
+                 const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
 
-    : MPC_BASE(timeHorizon, numPartitions, mpcSettings) {
+    : MPC_BASE(mpcSettings) {
   slqPtr_.reset(new SLQ(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, slqSettings,
                         heuristicsFunctionPtr));
 }

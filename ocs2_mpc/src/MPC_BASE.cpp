@@ -37,14 +37,13 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MPC_BASE::MPC_BASE(scalar_t timeHorizon, size_t numPartitions, MPC_Settings mpcSettings)
-    : mpcSettings_(std::move(mpcSettings)), timeHorizon_(timeHorizon), numPartitions_(numPartitions) {
-  if (numPartitions < 1) {
+MPC_BASE::MPC_BASE(MPC_Settings mpcSettings) : mpcSettings_(std::move(mpcSettings)), nextTimeHorizon_(mpcSettings_.timeHorizon_) {
+  if (mpcSettings_.numPartitions_ == 0) {
     throw std::runtime_error("There should be at least one time partition.");
   }
 
   // Initialize partition times
-  partitionTimes_ = initializePartitionTimes(timeHorizon_, numPartitions_);
+  partitionTimes_ = initializePartitionTimes(mpcSettings_.timeHorizon_, mpcSettings_.numPartitions_);
 }
 
 /******************************************************************************************************/
@@ -61,17 +60,18 @@ void MPC_BASE::reset() {
 /******************************************************************************************************/
 void MPC_BASE::rewind() {
   // Shift partition times forward, discard the first time block.
-  auto lastPartition = std::copy(partitionTimes_.begin() + numPartitions_, partitionTimes_.end(), partitionTimes_.begin());
+  auto lastPartition = std::copy(partitionTimes_.begin() + mpcSettings_.numPartitions_, partitionTimes_.end(), partitionTimes_.begin());
 
   // Update last partition time block, timeHorizon_ can have changed since the last rewind.
+  mpcSettings_.timeHorizon_ = nextTimeHorizon_;
   auto t = partitionTimes_.back();
   std::generate(lastPartition, partitionTimes_.end(), [&]() {
-    t += timeHorizon_ / numPartitions_;
+    t += mpcSettings_.timeHorizon_ / mpcSettings_.numPartitions_;
     return t;
   });
 
   // Solver internal variables
-  getSolverPtr()->rewindOptimizer(numPartitions_);
+  getSolverPtr()->rewindOptimizer(mpcSettings_.numPartitions_);
 }
 
 /******************************************************************************************************/
@@ -94,13 +94,13 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) {
 
   // adjusting the partitioning times based on the initial time
   if (initRun_) {
-    const scalar_t deltaTime = currentTime - partitionTimes_[numPartitions_];
+    const scalar_t deltaTime = currentTime - partitionTimes_[mpcSettings_.numPartitions_];
     for (auto& t : partitionTimes_) {
       t += deltaTime;
     }
   }
 
-  scalar_t finalTime = currentTime + timeHorizon_;
+  scalar_t finalTime = currentTime + mpcSettings_.timeHorizon_;
 
   // display
   if (mpcSettings_.debugPrint_) {
@@ -109,7 +109,7 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) {
     std::cerr << "#####################################################\n";
     std::cerr << "### MPC is called at time:  " << currentTime << " [s].\n";
     std::cerr << "### MPC final Time:         " << finalTime << " [s].\n";
-    std::cerr << "### MPC time horizon:       " << timeHorizon_ << " [s].\n";
+    std::cerr << "### MPC time horizon:       " << mpcSettings_.timeHorizon_ << " [s].\n";
     mpcTimer_.startTimer();
   }
 
@@ -162,6 +162,8 @@ scalar_array_t MPC_BASE::initializePartitionTimes(scalar_t timeHorizon, size_t n
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MPC_BASE::adjustTimeHorizon(const scalar_array_t& partitionTimes, scalar_t& initTime, scalar_t& finalTime) {
+  // TODO(mspieler): Workaround for when initTime and finalTime are close to a partition boundary.
+  //                 Times are rounded towards a smaller time horizon to avoid very short partitions.
   const scalar_t partitionTimeTolerance = 4e-3;       //! @badcode magic epsilon
   const scalar_t deltaTimePastFirstPartition = 1e-5;  //! @badcode magic epsilon
 

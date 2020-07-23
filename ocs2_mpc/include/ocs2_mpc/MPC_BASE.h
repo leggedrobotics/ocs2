@@ -47,11 +47,9 @@ class MPC_BASE {
   /**
    * Constructor
    *
-   * @param [in] timeHorizon: Time horizon length
-   * @param [in] numPartitions: Number of time partitions
    * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
    */
-  MPC_BASE(scalar_t timeHorizon, size_t numPartitions, MPC_Settings mpcSettings);
+  MPC_BASE(MPC_Settings mpcSettings);
 
   /** Destructor. */
   virtual ~MPC_BASE() = default;
@@ -77,10 +75,10 @@ class MPC_BASE {
   virtual const Solver_BASE* getSolverPtr() const = 0;
 
   /** Returns the time horizon for which the optimizer is called. */
-  scalar_t getTimeHorizon() const { return timeHorizon_; }
+  scalar_t getTimeHorizon() const { return mpcSettings_.timeHorizon_; }
 
-  /** Sets the new time horizon. */
-  void setTimeHorizon(scalar_t timeHorizon) { timeHorizon_ = timeHorizon; }
+  /** Sets the new time horizon, which will be updated at the next MPC rewind. */
+  void setTimeHorizon(scalar_t timeHorizon) { nextTimeHorizon_ = timeHorizon; }
 
   /** Gets the MPC settings. */
   const MPC_Settings& settings() const { return mpcSettings_; }
@@ -119,8 +117,7 @@ class MPC_BASE {
 
   benchmark::RepeatedTimer mpcTimer_;
 
-  scalar_t timeHorizon_;
-  size_t numPartitions_;
+  scalar_t nextTimeHorizon_;
 };
 
 }  // namespace ocs2

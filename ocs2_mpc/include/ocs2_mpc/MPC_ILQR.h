@@ -49,16 +49,14 @@ class MPC_ILQR : public MPC_BASE {
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
    * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
    * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of ILQR.
-   * @param [in] timeHorizon: The MPC time horizon.
-   * @param [in] numPartitions: The number of time partitions.
    * @param [in] ilqrSettings: Structure containing the settings for the ILQR algorithm.
    * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
   MPC_ILQR(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
-           const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, scalar_t timeHorizon,
-           size_t numPartitions, const ILQR_Settings& ilqrSettings = ILQR_Settings(), const MPC_Settings& mpcSettings = MPC_Settings(),
+           const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
+           const ILQR_Settings& ilqrSettings = ILQR_Settings(), const MPC_Settings& mpcSettings = MPC_Settings(),
            const CostFunctionBase* heuristicsFunctionPtr = nullptr);
 
   /** Default destructor. */

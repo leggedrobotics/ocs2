@@ -42,7 +42,12 @@ namespace ocs2 {
  * This structure holds all setting parameters for the MPC class.
  */
 struct MPC_Settings {
-  /** Number of iterations which will be used during MPC regular loop.. */
+  /** MPC time horizon lenght. */
+  double timeHorizon_ = 1.0;
+  /** Number of data partitions over the time horizon. */
+  size_t numPartitions_ = 2;
+
+  /** Number of iterations which will be used during MPC regular loop. */
   size_t runtimeMaxNumIterations_ = 15;
   /** Number of iterations which will be used during MPC initial run. */
   size_t initMaxNumIterations_ = 15;
@@ -101,6 +106,8 @@ struct MPC_Settings {
       std::cerr << " #### =============================================================================" << std::endl;
     }
 
+    loadData::loadPtreeValue(pt, timeHorizon_, fieldName + ".timeHorizon", verbose);
+    loadData::loadPtreeValue(pt, numPartitions_, fieldName + ".numPartitions", verbose);
     loadData::loadPtreeValue(pt, runtimeMaxNumIterations_, fieldName + ".runtimeMaxNumIterations", verbose);
     loadData::loadPtreeValue(pt, initMaxNumIterations_, fieldName + ".initMaxNumIterations", verbose);
     loadData::loadPtreeValue(pt, runtimeMaxStepLength_, fieldName + ".runtimeMaxStepLength", verbose);

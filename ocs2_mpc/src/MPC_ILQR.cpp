@@ -36,10 +36,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 MPC_ILQR::MPC_ILQR(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
                    const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
-                   scalar_t timeHorizon, size_t numPartitions, const ILQR_Settings& ilqrSettings /* = ILQR_Settings()*/,
-                   const MPC_Settings& mpcSettings /* = MPC_Settings()*/, const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
+                   const ILQR_Settings& ilqrSettings /* = ILQR_Settings()*/, const MPC_Settings& mpcSettings /* = MPC_Settings()*/,
+                   const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
 
-    : MPC_BASE(timeHorizon, numPartitions, mpcSettings) {
+    : MPC_BASE(mpcSettings) {
   ilqrPtr_.reset(new ILQR(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, ilqrSettings,
                           heuristicsFunctionPtr));
 }

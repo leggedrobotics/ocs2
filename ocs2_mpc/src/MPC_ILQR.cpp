@@ -36,11 +36,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 MPC_ILQR::MPC_ILQR(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
                    const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
-                   const scalar_array_t& partitioningTimes, const ILQR_Settings& ilqrSettings /* = ILQR_Settings()*/,
-                   const MPC_Settings& mpcSettings /* = MPC_Settings()*/, const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
+                   const ILQR_Settings& ilqrSettings /* = ILQR_Settings()*/, const MPC_Settings& mpcSettings /* = MPC_Settings()*/,
+                   const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
 
-    : MPC_BASE(partitioningTimes, mpcSettings) {
-  // ILQR
+    : MPC_BASE(mpcSettings) {
   ilqrPtr_.reset(new ILQR(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, ilqrSettings,
                           heuristicsFunctionPtr));
 }
@@ -48,62 +47,26 @@ MPC_ILQR::MPC_ILQR(const RolloutBase* rolloutPtr, const SystemDynamicsBase* syst
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ILQR_Settings& MPC_ILQR::ilqrSettings() {
-  return ilqrPtr_->settings();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-ILQR* MPC_ILQR::getSolverPtr() {
-  return ilqrPtr_.get();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-const ILQR* MPC_ILQR::getSolverPtr() const {
-  return ilqrPtr_.get();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void MPC_ILQR::calculateController(const scalar_t& initTime, const vector_t& initState, const scalar_t& finalTime) {
-  //*****************************************************************************************
+void MPC_ILQR::calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
   // updating real-time iteration settings
-  //*****************************************************************************************
-  // number of iterations
-  if (MPC_BASE::initRun_ /*|| ilqrPtr_->getController().at(MPC_BASE::finalActivePartitionIndex_).empty()*/) {
-    ilqrPtr_->ddpSettings().maxNumIterations_ = MPC_BASE::mpcSettings_.initMaxNumIterations_;
-    ilqrPtr_->ddpSettings().lineSearch_.maxStepLength_ = MPC_BASE::mpcSettings_.initMaxStepLength_;
-    ilqrPtr_->ddpSettings().lineSearch_.minStepLength_ = MPC_BASE::mpcSettings_.initMinStepLength_;
+  if (MPC_BASE::initRun_) {
+    ilqrPtr_->ddpSettings().maxNumIterations_ = this->settings().initMaxNumIterations_;
+    ilqrPtr_->ddpSettings().lineSearch_.maxStepLength_ = this->settings().initMaxStepLength_;
+    ilqrPtr_->ddpSettings().lineSearch_.minStepLength_ = this->settings().initMinStepLength_;
   } else {
-    ilqrPtr_->ddpSettings().maxNumIterations_ = MPC_BASE::mpcSettings_.runtimeMaxNumIterations_;
-    ilqrPtr_->ddpSettings().lineSearch_.maxStepLength_ = MPC_BASE::mpcSettings_.runtimeMaxStepLength_;
-    ilqrPtr_->ddpSettings().lineSearch_.minStepLength_ = MPC_BASE::mpcSettings_.runtimeMinStepLength_;
+    ilqrPtr_->ddpSettings().maxNumIterations_ = this->settings().runtimeMaxNumIterations_;
+    ilqrPtr_->ddpSettings().lineSearch_.maxStepLength_ = this->settings().runtimeMaxStepLength_;
+    ilqrPtr_->ddpSettings().lineSearch_.minStepLength_ = this->settings().runtimeMinStepLength_;
   }
 
-  // use parallel Riccati solver at each call of realtime-iteration ILQR
-  if (!MPC_BASE::initRun_) {
-    ilqrPtr_->useParallelRiccatiSolverFromInitItr(MPC_BASE::mpcSettings_.useParallelRiccatiSolver_ &&
-                                                  MPC_BASE::mpcSettings_.recedingHorizon_);
-  } else {
-    ilqrPtr_->useParallelRiccatiSolverFromInitItr(false);
-  }
-
-  //*****************************************************************************************
   // calculate controller
-  //*****************************************************************************************
-  if (MPC_BASE::mpcSettings_.coldStart_ || MPC_BASE::initRun_) {
-    if (MPC_BASE::mpcSettings_.debugPrint_) {
-      std::cerr << "### Using cold initialization." << std::endl;
+  if (this->settings().coldStart_ || MPC_BASE::initRun_) {
+    if (this->settings().debugPrint_) {
+      std::cerr << "### Using cold initialization.\n";
     }
-
-    ilqrPtr_->run(initTime, initState, finalTime, MPC_BASE::partitioningTimes_);
-
+    ilqrPtr_->run(initTime, initState, finalTime, MPC_BASE::partitionTimes_);
   } else {
-    ilqrPtr_->run(initTime, initState, finalTime, MPC_BASE::partitioningTimes_, std::vector<ControllerBase*>());
+    ilqrPtr_->run(initTime, initState, finalTime, MPC_BASE::partitionTimes_, std::vector<ControllerBase*>());
   }
 }
 

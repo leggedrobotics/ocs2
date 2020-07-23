@@ -111,12 +111,6 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
    * Initialization
    */
   linearSystemOperatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM_)));
-
-  /*
-   * Time partitioning which defines the time horizon and the number of data partitioning
-   */
-  scalar_t timeHorizon;
-  ocs2::loadData::loadPartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
 }
 
 /******************************************************************************************************/
@@ -125,7 +119,7 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
 std::unique_ptr<MPC_SLQ> DoubleIntegratorInterface::getMpc() {
   return std::unique_ptr<MPC_SLQ>(new MPC_SLQ(ddpLinearSystemRolloutPtr_.get(), linearSystemDynamicsPtr_.get(),
                                               linearSystemConstraintPtr_.get(), linearSystemCostPtr_.get(),
-                                              linearSystemOperatingPointPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_));
+                                              linearSystemOperatingPointPtr_.get(), slqSettings_, mpcSettings_));
 }
 
 }  // namespace double_integrator

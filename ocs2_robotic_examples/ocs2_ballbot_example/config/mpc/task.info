@@ -1,19 +1,12 @@
-; Time Horizon
-mpcTimeHorizon
-{
-    timehorizon      1.0
-    numPartitions    4
-}
-
 ; Mode sequence
 subsystemsSequence
 {
-    [0]     0
+  [0]     0
 }
 ; Template mode sequence
 templateSubsystemsSequence
 {
-    [0]     0
+  [0]     0
 }
 templateSwitchingTimes
 {
@@ -22,156 +15,155 @@ templateSwitchingTimes
 ; SLQ settings
 slq
 {
-    useNominalTimeForBackwardPass  0
-    RiccatiIntegratorType          ODE45  ; ODE45, ADAMS_BASHFORTH, BULIRSCH_STOER, ADAMS_BASHFORTH_MOULTON
-    adams_integrator_dt            0.01
-    preComputeRiccatiTerms         0
+  useNominalTimeForBackwardPass   false
+  RiccatiIntegratorType           ODE45  ; ODE45, ADAMS_BASHFORTH, BULIRSCH_STOER, ADAMS_BASHFORTH_MOULTON
 
-    ddp
+  ddp
+  {
+    nThreads                      1
+
+    maxNumIterations              10
+    minRelCost                    0.1
+    constraintTolerance           1e-3
+
+    displayInfo                   false
+    displayShortSummary           true
+    checkNumericalStability       false
+
+    AbsTolODE                     1e-5
+    RelTolODE                     1e-3
+    minTimeStep                   1e-3
+    maxNumStepsPerSecond          100000
+
+    inequalityConstraintMu        100.0
+    inequalityConstraintDelta     1.1
+
+    preComputeRiccatiTerms        true
+
+    useFeedbackPolicy             false
+
+    strategy                      LINE_SEARCH
+    lineSearch
     {
-        nThreads                       1
-        
-        maxNumIterations               10
-        minRelCost                     0.1
-        constraintTolerance            1e-3
-        
-        displayInfo                    0
-        displayShortSummary            1
-        checkNumericalStability        0
-
-        AbsTolODE                      1e-5
-        RelTolODE                      1e-3
-        minTimeStep                    1e-3
-        maxNumStepsPerSecond           100000
-        
-        inequalityConstraintMu         100.0
-        inequalityConstraintDelta      1.1
-
-        preComputeRiccatiTerms         1
-        
-        useFeedbackPolicy              0
-        
-        strategy                       LINE_SEARCH
-        lineSearch
-        {
-            minStepLength              1.0
-            maxStepLength              1.0
-            hessianCorrectionStrategy  DIAGONAL_SHIFT
-            hessianCorrectionMultiple  1e-3
-        }
+      minStepLength                 1.0
+      maxStepLength                 1.0
+      hessianCorrectionStrategy     DIAGONAL_SHIFT
+      hessianCorrectionMultiple     1e-3
     }
+  }
 
-    rollout
-    {
-        AbsTolODE                      1e-5    ;1e-6
-        RelTolODE                      1e-3    ;1e-4
-        minTimeStep                    1e-3
-        maxNumStepsPerSecond           100000
-        checkNumericalStability        0
-    }
+  rollout
+  {
+    AbsTolODE                     1e-5    ;1e-6
+    RelTolODE                     1e-3    ;1e-4
+    minTimeStep                   1e-3
+    maxNumStepsPerSecond          100000
+    checkNumericalStability       false
+  }
 }
 
 ; MPC settings
 mpc
 {
-    runtimeMaxNumIterations        1
-    initMaxNumIterations           10
-    runtimeMinStepLength           1.0
-    runtimeMaxStepLength           1.0
-    initMaxStepLength              1.0
-    initMinStepLength              0.1
-    coldStart                      0
-    recedingHorizon                1     ; use receding horizon MPC
-    useParallelRiccatiSolver       1     ; use disjoint riccati solver in MP case and recedingHorizon fashion
-    solutionTimeWindow             0.2   ; [s]
-    mpcDesiredFrequency            100   ; [Hz]
-    mrtDesiredFrequency            400   ; [Hz]
-    debugPrint                     0
+  timehorizon                    1.0
+  numPartitions                  4
+  runtimeMaxNumIterations        1
+  initMaxNumIterations           10
+  runtimeMinStepLength           1.0
+  runtimeMaxStepLength           1.0
+  initMaxStepLength              1.0
+  initMinStepLength              0.1
+  coldStart                      false
+  useParallelRiccatiSolver       true  ; use disjoint riccati solver in MP case and recedingHorizon fashion
+  solutionTimeWindow             0.2   ; [s]
+  mpcDesiredFrequency            100   ; [Hz]
+  mrtDesiredFrequency            400   ; [Hz]
+  debugPrint                     true
 }
 
 ; ballbot interface settings
 ballbot_interface
 {
-  recompileLibraries       1    ; put this flag to 1 to force recompilation of dynamics library
+  recompileLibraries       0    ; put this flag to 1 to force recompilation of dynamics library
 }
 
 
 ; initial state
 initialState
 {
-   (0,0) 0.0  ; px
-   (1,0) 0.0  ; py
-   (2,0) 0.0  ; thetaz
-   (3,0) 0.0  ; thetay
-   (4,0) 0.0  ; thetax
+  (0,0) 0.0  ; px
+  (1,0) 0.0  ; py
+  (2,0) 0.0  ; thetaz
+  (3,0) 0.0  ; thetay
+  (4,0) 0.0  ; thetax
 
-   (5,0) 0.0  ; px_dot
-   (6,0) 0.0  ; py_dot
-   (7,0) 0.0  ; thetaz_dot
-   (8,0) 0.0  ; thetay_dot
-   (9,0) 0.0  ; thetax_dot
+  (5,0) 0.0  ; px_dot
+  (6,0) 0.0  ; py_dot
+  (7,0) 0.0  ; thetaz_dot
+  (8,0) 0.0  ; thetay_dot
+  (9,0) 0.0  ; thetax_dot
 }
 
 ; state weight matrix
 Q
 {
-    scaling 1e+0
+  scaling 1e+0
 
-   (0,0) 110.0  ; px
-   (1,1) 110.0  ; py
-   (2,2) 400.0  ; thetaz
-   (3,3) 0.0  ; thetay
-   (4,4) 0.0  ; thetax
+  (0,0) 110.0  ; px
+  (1,1) 110.0  ; py
+  (2,2) 400.0  ; thetaz
+  (3,3) 0.0  ; thetay
+  (4,4) 0.0  ; thetax
 
-   (5,5) 35.0 ; px_dot
-   (6,6) 35.0 ; py_dot
-   (7,7) 30.0 ; thetaz_dot
-   (8,8) 20.0 ; thetay_dot
-   (9,9) 20.0 ; thetax_dot
+  (5,5) 35.0 ; px_dot
+  (6,6) 35.0 ; py_dot
+  (7,7) 30.0 ; thetaz_dot
+  (8,8) 20.0 ; thetay_dot
+  (9,9) 20.0 ; thetax_dot
 }
 
 ; control weight matrix
 R
 {
-   scaling 1e+0
+  scaling 1e+0
 
-   (0,0)  2.0  ; torque wheel1
-   (1,1)  2.0  ; torque wheel2
-   (2,2)  2.0  ; torque wheel3
+  (0,0)  2.0  ; torque wheel1
+  (1,1)  2.0  ; torque wheel2
+  (2,2)  2.0  ; torque wheel3
 }
 
 ; final state weight matrix
 Q_final
 {
-    scaling 1e+0
+  scaling 1e+0
 
-   (0,0) 0.0  ; px
-   (1,1) 0.0  ; py
-   (2,2) 0.0  ; thetaz
-   (3,3) 0.0  ; thetay
-   (4,4) 0.0  ; thetax
+  (0,0) 0.0  ; px
+  (1,1) 0.0  ; py
+  (2,2) 0.0  ; thetaz
+  (3,3) 0.0  ; thetay
+  (4,4) 0.0  ; thetax
 
-   (5,5) 0.0 ; px_dot
-   (6,6) 0.0 ; py_dot
-   (7,7) 0.0 ; thetaz_dot
-   (8,8) 0.0 ; thetay_dot
-   (9,9) 0.0 ; thetax_dot
+  (5,5) 0.0 ; px_dot
+  (6,6) 0.0 ; py_dot
+  (7,7) 0.0 ; thetaz_dot
+  (8,8) 0.0 ; thetay_dot
+  (9,9) 0.0 ; thetax_dot
 }
 
 ; final goal
 x_final
 {
-   (0,0) 0.0  ; px
-   (1,0) 0.0  ; py
-   (2,0) 0.0  ; thetaz
-   (3,0) 0.0  ; thetay
-   (4,0) 0.0  ; thetax
+  (0,0) 0.0  ; px
+  (1,0) 0.0  ; py
+  (2,0) 0.0  ; thetaz
+  (3,0) 0.0  ; thetay
+  (4,0) 0.0  ; thetax
 
-   (5,0) 0.0  ; px_dot
-   (6,0) 0.0  ; py_dot
-   (7,0) 0.0  ; thetaz_dot
-   (8,0) 0.0  ; thetay_dot
-   (9,0) 0.0  ; thetax_dot
+  (5,0) 0.0  ; px_dot
+  (6,0) 0.0  ; py_dot
+  (7,0) 0.0  ; thetaz_dot
+  (8,0) 0.0  ; thetay_dot
+  (9,0) 0.0  ; thetax_dot
 }
 
 

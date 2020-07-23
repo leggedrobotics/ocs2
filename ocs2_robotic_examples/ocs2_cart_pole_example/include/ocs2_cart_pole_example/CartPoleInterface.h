@@ -114,7 +114,7 @@ class CartPoleInterface final : public RobotInterface {
   vector_t uNominal_;
 
   size_t numPartitions_ = 0;
-  scalar_array_t partitioningTimes_;
+  scalar_t timeHorizon_ = 1.0;
   vector_t initialState_;
 };
 

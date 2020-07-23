@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
+#include <ocs2_core/misc/Lookup.h>
 
 #include <ocs2_ddp/GaussNewtonDDP.h>
 #include <ocs2_ddp/HessianCorrection.h>
@@ -508,15 +509,15 @@ void GaussNewtonDDP::setupOptimizer(size_t numPartitions) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::distributeWork() {
-  const int N = ddpSettings_.nThreads_;
-  startingIndicesRiccatiWorker_.resize(N);
-  endingIndicesRiccatiWorker_.resize(N);
+  const int numWorkers = ddpSettings_.nThreads_;
+  startingIndicesRiccatiWorker_.resize(numWorkers);
+  endingIndicesRiccatiWorker_.resize(numWorkers);
 
-  int subsystemsPerThread = (finalActivePartition_ - initActivePartition_ + 1) / N;
-  int remainingSubsystems = (finalActivePartition_ - initActivePartition_ + 1) % N;
+  const int subsystemsPerThread = (finalActivePartition_ - initActivePartition_ + 1) / numWorkers;
+  int remainingSubsystems = (finalActivePartition_ - initActivePartition_ + 1) % numWorkers;
 
   int startingId, endingId = finalActivePartition_;
-  for (size_t i = 0; i < N; i++) {
+  for (size_t i = 0; i < numWorkers; i++) {
     endingIndicesRiccatiWorker_[i] = endingId;
     if (remainingSubsystems > 0) {
       startingId = endingId - subsystemsPerThread;
@@ -527,7 +528,6 @@ void GaussNewtonDDP::distributeWork() {
     startingIndicesRiccatiWorker_[i] = startingId;
     endingId = startingId - 1;
   }
-
   // adding the inactive subsystems
   endingIndicesRiccatiWorker_.front() = numPartitions_ - 1;
   startingIndicesRiccatiWorker_.back() = 0;
@@ -536,7 +536,7 @@ void GaussNewtonDDP::distributeWork() {
     std::cerr << "Initial Active Subsystem: " << initActivePartition_ << std::endl;
     std::cerr << "Final Active Subsystem:   " << finalActivePartition_ << std::endl;
     std::cerr << "Backward path work distribution:" << std::endl;
-    for (size_t i = 0; i < N; i++) {
+    for (size_t i = 0; i < numWorkers; i++) {
       std::cerr << "start: " << startingIndicesRiccatiWorker_[i] << "\t";
       std::cerr << "end: " << endingIndicesRiccatiWorker_[i] << "\t";
       std::cerr << "num: " << endingIndicesRiccatiWorker_[i] - startingIndicesRiccatiWorker_[i] + 1 << std::endl;

@@ -320,10 +320,6 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MPC_ROS_Interface::mpcTargetTrajectoriesCallback(const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg) {
-  if (!mpc_.settings().recedingHorizon_) {
-    throw std::runtime_error("Target trajectories can only be updated in receding horizon mode.");
-  }
-
   std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
   ros_msg_conversions::readTargetTrajectoriesMsg(*msg, costDesiredTrajectoriesBuffer_);
   costDesiredTrajectoriesBufferUpdated_ = true;
@@ -359,11 +355,14 @@ void MPC_ROS_Interface::shutdownNode() {
 void MPC_ROS_Interface::spin() {
   ROS_INFO_STREAM("Start spinning now ...");
 
+#ifdef NDEBUG
   try {
+#endif
     // Equivalent to ros::spin() + check if master is alive
     while (::ros::ok() && ::ros::master::check()) {
       ::ros::getGlobalCallbackQueue()->callAvailable(ros::WallDuration(0.1));
     }
+#ifdef NDEBUG
   } catch (...) {
     // declaring that MPC is not updated anymore
     ocs2_msgs::mpc_flattened_controller mpcPolicyMsg;
@@ -371,6 +370,7 @@ void MPC_ROS_Interface::spin() {
     mpcPolicyPublisher_.publish(mpcPolicyMsg);
     throw;
   }
+#endif
 }
 
 /******************************************************************************************************/

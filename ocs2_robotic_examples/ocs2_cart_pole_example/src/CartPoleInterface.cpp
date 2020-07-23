@@ -116,12 +116,6 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
    * Initialization
    */
   cartPoleOperatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM_)));
-
-  /*
-   * Time partitioning which defines the time horizon and the number of data partitioning
-   */
-  scalar_t timeHorizon;
-  ocs2::loadData::loadPartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
 }
 
 /******************************************************************************************************/
@@ -129,8 +123,7 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 std::unique_ptr<MPC_SLQ> CartPoleInterface::getMpc() {
   return std::unique_ptr<MPC_SLQ>(new MPC_SLQ(ddpCartPoleRolloutPtr_.get(), cartPoleSystemDynamicsPtr_.get(), cartPoleConstraintPtr_.get(),
-                                              cartPoleCostPtr_.get(), cartPoleOperatingPointPtr_.get(), partitioningTimes_, slqSettings_,
-                                              mpcSettings_));
+                                              cartPoleCostPtr_.get(), cartPoleOperatingPointPtr_.get(), slqSettings_, mpcSettings_));
 }
 
 }  // namespace cartpole

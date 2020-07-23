@@ -30,7 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_ddp/GaussNewtonDDP.h>
 #include <ocs2_ddp/ILQR.h>
 
 #include "MPC_BASE.h"
@@ -50,8 +49,6 @@ class MPC_ILQR : public MPC_BASE {
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
    * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
    * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of ILQR.
-   * @param [in] partitioningTimes: This will be used as the initial time partitioning. As the MPC progresses the internal
-   * partitioningTimes will be shifted in time automatically.
    * @param [in] ilqrSettings: Structure containing the settings for the ILQR algorithm.
    * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
@@ -59,31 +56,23 @@ class MPC_ILQR : public MPC_BASE {
    */
   MPC_ILQR(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
            const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
-           const scalar_array_t& partitioningTimes, const ILQR_Settings& ilqrSettings = ILQR_Settings(),
-           const MPC_Settings& mpcSettings = MPC_Settings(), const CostFunctionBase* heuristicsFunctionPtr = nullptr);
+           const ILQR_Settings& ilqrSettings = ILQR_Settings(), const MPC_Settings& mpcSettings = MPC_Settings(),
+           const CostFunctionBase* heuristicsFunctionPtr = nullptr);
 
-  /**
-   * Default destructor.
-   */
+  /** Default destructor. */
   ~MPC_ILQR() override = default;
 
-  /**
-   * Gets the ILQR settings structure.
-   *
-   * @return ILQR settings structure
-   */
-  virtual ILQR_Settings& ilqrSettings();
+  /** Gets the ILQR settings structure. */
+  virtual ILQR_Settings& ilqrSettings() { return ilqrPtr_->settings(); }
 
-  ILQR* getSolverPtr() override;
+  ILQR* getSolverPtr() override { return ilqrPtr_.get(); }
 
-  const ILQR* getSolverPtr() const override;
-
-  void calculateController(const scalar_t& initTime, const vector_t& initState, const scalar_t& finalTime) override;
+  const ILQR* getSolverPtr() const override { return ilqrPtr_.get(); }
 
  protected:
-  /***********
-   * Variables
-   ***********/
+  void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override;
+
+ private:
   std::unique_ptr<ILQR> ilqrPtr_;
 };
 

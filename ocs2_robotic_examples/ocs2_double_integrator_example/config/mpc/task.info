@@ -1,19 +1,12 @@
-; Time Horizon
-mpcTimeHorizon
-{
-    timehorizon       2.5
-    numPartitions     2
-}
-
 ; Mode sequence
 subsystemsSequence
 {
-    [0]     0
+  [0]     0
 }
 ; Template mode sequence
 templateSubsystemsSequence
 {
-    [0]     0
+  [0]     0
 }
 templateSwitchingTimes
 {
@@ -22,114 +15,110 @@ templateSwitchingTimes
 ; SLQ settings
 slq
 {
-    RiccatiIntegratorType       ODE45 ; ODE45, ADAMS_BASHFORTH, BULIRSCH_STOER, ADAMS_BASHFORTH_MOULTON
-    adams_integrator_dt         0.01
+  RiccatiIntegratorType       ODE45 ; ODE45, ADAMS_BASHFORTH, BULIRSCH_STOER, ADAMS_BASHFORTH_MOULTON
 
-    ddp
+  ddp
+  {
+    nThreads                     1
+
+    maxNumIterations             10
+    minRelCost                   0.1
+    constraintTolerance          1e-3
+
+    displayInfo                  false
+    displayShortSummary          true
+    debugPrintRollout            false
+    checkNumericalStability      true
+
+    AbsTolODE                    1e-9
+    RelTolODE                    1e-6
+    minTimeStep                  1e-3
+    maxNumStepsPerSecond         100000
+
+    inequalityConstraintMu       100.0
+    inequalityConstraintDelta    1.1
+
+    preComputeRiccatiTerms       true
+
+    useFeedbackPolicy            true
+
+    strategy                       LINE_SEARCH
+    lineSearch
     {
-        nThreads                     1
-        
-        maxNumIterations             10
-        minRelCost                   0.1
-        constraintTolerance          1e-3
-        
-        displayInfo                  0
-        displayShortSummary          1
-        debugPrintRollout            0
-        checkNumericalStability      1
-        
-        AbsTolODE                    1e-9
-        RelTolODE                    1e-6
-        minTimeStep                  1e-3
-        maxNumStepsPerSecond         100000
-        
-        inequalityConstraintMu       100.0
-        inequalityConstraintDelta    1.1
-
-        preComputeRiccatiTerms       1
-
-        useFeedbackPolicy            1
-        
-        strategy                       LINE_SEARCH
-        lineSearch
-        {
-            minStepLength              1.0
-            maxStepLength              1.0
-            hessianCorrectionStrategy  EIGENVALUE_MODIFICATION
-            hessianCorrectionMultiple  1e-3
-        }
+      minStepLength              1.0
+      maxStepLength              1.0
+      hessianCorrectionStrategy  EIGENVALUE_MODIFICATION
+      hessianCorrectionMultiple  1e-3
     }
+  }
 
-    rollout
-    {
-        AbsTolODE                    1e-9
-        RelTolODE                    1e-6
-        minTimeStep                  1e-3
-        maxNumStepsPerSecond         100000
-        checkNumericalStability      1
-    }
+  rollout
+  {
+    AbsTolODE                    1e-9
+    RelTolODE                    1e-6
+    minTimeStep                  1e-3
+    maxNumStepsPerSecond         100000
+    checkNumericalStability      true
+  }
 }
 
 ; MPC settings
 mpc
 {
+  timeHorizon                 2.5
+  numPartitions               2
   runtimeMaxNumIterations     1
   initMaxNumIterations        100
   runtimeMaxStepLength        1.0
   runtimeMinStepLength        1.0
   initMinStepLength           0.1
   initMaxStepLength           1.0
-  coldStart                   0
-  recedingHorizon             1    ; use receding horizon MPC
-  useParallelRiccatiSolver    0    ; use disjoint riccati solver in MP case and recedingHorizon fashion
+  coldStart                   false
+  useParallelRiccatiSolver    false    ; use disjoint riccati solver in MP case and recedingHorizon fashion
   solutionTimeWindow          -1   ; maximum [s]
   mpcDesiredFrequency         100  ; [Hz]
   mrtDesiredFrequency         400  ; [Hz]
-  debugPrint                  1
+  debugPrint                  true
 }
 
 
 ; initial state
 initialState
 {
-   (0,0) 0.0    ; x1
-   (1,0) 0.0    ; x2
+  (0,0) 0.0    ; x1
+  (1,0) 0.0    ; x2
 }
 
 ; state weight matrix
 Q
 {
-    scaling 1e-1
-
-   (0,0)  1.0 ; x1
-   (1,1)  1.0 ; x2
+  scaling 1e-1
+  (0,0)  1.0 ; x1
+  (1,1)  1.0 ; x2
 }
 
 
 ; control weight matrix
 R
 {
-   scaling 1e-2
-
-   (0,0)  1.0
+  scaling 1e-2
+  (0,0)  1.0
 }
-
 
 ; final state weight matrix
 Q_final
 {
-    scaling 1e+1
-   (0,0)  2.7064  ; x11
-   (0,1)  3.1623  ; x12
-   (1,0)  3.1623  ; x21
-   (1,1)  8.5584  ; x22
-
+  scaling 1e+1
+  (0,0)  2.7064  ; x11
+  (0,1)  3.1623  ; x12
+  (1,0)  3.1623  ; x21
+  (1,1)  8.5584  ; x22
 }
 
 ; final goal
 x_final
 {
-   (0,0) 2.0    ; x1
-   (1,0) 0.0    ; x2
+  (0,0) 2.0    ; x1
+  (1,0) 0.0    ; x2
 }
 

@@ -118,11 +118,6 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
    * Initialization
    */
   ballbotOperatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM_)));
-
-  /*
-   * Time partitioning which defines the time horizon and the number of data partitioning
-   */
-  ocs2::loadData::loadPartitioningTimes(taskFile, timeHorizon_, numPartitions_, true);
 }
 
 /******************************************************************************************************/
@@ -130,8 +125,7 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 std::unique_ptr<MPC_SLQ> BallbotInterface::getMpc() {
   return std::unique_ptr<MPC_SLQ>(new MPC_SLQ(ddpBallbotRolloutPtr_.get(), ballbotSystemDynamicsPtr_.get(), ballbotConstraintPtr_.get(),
-                                              ballbotCostPtr_.get(), ballbotOperatingPointPtr_.get(), timeHorizon_, numPartitions_,
-                                              slqSettings_, mpcSettings_));
+                                              ballbotCostPtr_.get(), ballbotOperatingPointPtr_.get(), slqSettings_, mpcSettings_));
 }
 
 }  // namespace ballbot

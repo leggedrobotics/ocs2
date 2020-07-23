@@ -116,11 +116,6 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
   vector_t initialInput = vector_t::Zero(INPUT_DIM_);
   initialInput(0) = quadrotorParameters.quadrotorMass_ * quadrotorParameters.gravity_;
   quadrotorOperatingPointPtr_.reset(new OperatingPoints(initialState_, initialInput));
-
-  /*
-   * Time partitioning which defines the time horizon and the number of data partitioning
-   */
-  ocs2::loadData::loadPartitioningTimes(taskFile, timeHorizon_, numPartitions_, true);
 }
 
 /******************************************************************************************************/
@@ -129,7 +124,7 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
 std::unique_ptr<MPC_ILQR> QuadrotorInterface::getMpc() {
   return std::unique_ptr<MPC_ILQR>(new MPC_ILQR(ddpQuadrotorRolloutPtr_.get(), quadrotorSystemDynamicsPtr_.get(),
                                                 quadrotorConstraintPtr_.get(), quadrotorCostPtr_.get(), quadrotorOperatingPointPtr_.get(),
-                                                timeHorizon_, numPartitions_, ilqrSettings_, mpcSettings_));
+                                                ilqrSettings_, mpcSettings_));
 }
 
 }  // namespace quadrotor

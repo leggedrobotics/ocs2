@@ -16,7 +16,7 @@ TEST(testLinearController, testSerialization) {
 
   controller.flatten(time, dataPtr);
 
-  auto controllerOut = LinearController::unFlatten(3, 2, time, dataPtrConst);
+  auto controllerOut = LinearController::unFlatten({3, 3}, {2, 2}, time, dataPtrConst);
 
   for (int k = 0; k < time.size(); k++) {
     EXPECT_NEAR(controller.timeStamp_[k], controllerOut.timeStamp_[k], 1e-6);

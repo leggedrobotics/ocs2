@@ -136,8 +136,8 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
   primalSolution.modeSchedule_ = ros_msg_conversions::readModeScheduleMsg(msg.modeSchedule);
 
   const size_t N = msg.timeTrajectory.size();
-  const size_t stateDim = msg.stateTrajectory.front().value.size();
-  const size_t inputDim = msg.inputTrajectory.front().value.size();
+  size_array_t stateDim(N);
+  size_array_t inputDim(N);
 
   if (N == 0) {
     throw std::runtime_error("MRT_ROS_Interface::readPolicyMsg: Controller must not be empty");
@@ -154,8 +154,10 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
 
   for (size_t i = 0; i < N; i++) {
     timeBuffer.emplace_back(msg.timeTrajectory[i]);
-    stateBuffer.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg.stateTrajectory[i].value.data(), stateDim).cast<scalar_t>());
-    inputBuffer.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg.inputTrajectory[i].value.data(), inputDim).cast<scalar_t>());
+    stateDim[i] = msg.stateTrajectory[i].value.size();
+    stateBuffer.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg.stateTrajectory[i].value.data(), stateDim[i]).cast<scalar_t>());
+    inputDim[i] = msg.inputTrajectory[i].value.size();
+    inputBuffer.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg.inputTrajectory[i].value.data(), inputDim[i]).cast<scalar_t>());
   }
 
   // check data size
@@ -171,7 +173,7 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
   // instantiate the correct controller
   switch (msg.controllerType) {
     case ocs2_msgs::mpc_flattened_controller::CONTROLLER_FEEDFORWARD: {
-      auto controller = FeedforwardController::unFlatten(inputDim, timeBuffer, controllerDataPtrArray);
+      auto controller = FeedforwardController::unFlatten(timeBuffer, controllerDataPtrArray);
       controlBuffer.reset(new FeedforwardController(std::move(controller)));
       break;
     }

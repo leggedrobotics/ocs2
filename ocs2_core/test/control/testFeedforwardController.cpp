@@ -15,7 +15,7 @@ TEST(testFeedforwardController, testSerialization) {
 
   controller.flatten(time, dataPtr);
 
-  auto controllerOut = FeedforwardController::unFlatten(2, time, dataPtrConst);
+  auto controllerOut = FeedforwardController::unFlatten(time, dataPtrConst);
 
   for (int k = 0; k < time.size(); k++) {
     EXPECT_NEAR(controller.timeStamp_[k], controllerOut.timeStamp_[k], 1e-6);

@@ -72,8 +72,6 @@ class StateBasedLinearController final : public ControllerBase {
 
   void clear() override;
 
-  void setZero() override;
-
   bool empty() const override;
 
   void display() const override;

@@ -61,10 +61,7 @@ class LinearController final : public ControllerBase {
   LinearController(LinearController&& other);
 
   /** Copy assignment (copy and swap idiom) */
-  LinearController& operator=(const LinearController& rhs);
-
-  /** Move assignment */
-  LinearController& operator=(LinearController&& rhs);
+  LinearController& operator=(LinearController rhs);
 
   /** Destructor */
   ~LinearController() override = default;
@@ -78,7 +75,7 @@ class LinearController final : public ControllerBase {
    * @param [in] controllerBias: The bias array.
    * @param [in] controllerGain: The feedback gain array.
    */
-  void setController(scalar_array_t controllerTime, vector_array_t controllerBias, matrix_array_t controllerGain);
+  void setController(const scalar_array_t& controllerTime, const vector_array_t& controllerBias, const matrix_array_t& controllerGain);
 
   vector_t computeInput(scalar_t t, const vector_t& x) override;
 
@@ -89,8 +86,6 @@ class LinearController final : public ControllerBase {
   ControllerType getType() const override;
 
   void clear() override;
-
-  void setZero() override;
 
   bool empty() const override;
 
@@ -104,7 +99,7 @@ class LinearController final : public ControllerBase {
 
   void flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const override;
 
-  static LinearController unFlatten(size_t stateDim, size_t inputDim, const scalar_array_t& timeArray,
+  static LinearController unFlatten(const size_array_t& stateDim, const size_array_t& inputDim, const scalar_array_t& timeArray,
                                     const std::vector<std::vector<float> const*>& flatArray2);
 
  private:

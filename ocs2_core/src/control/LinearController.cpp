@@ -51,16 +51,7 @@ LinearController::LinearController(LinearController&& other) : ControllerBase(ot
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearController& LinearController::operator=(const LinearController& rhs) {
-  LinearController other(rhs);
-  swap(other, *this);
-  return *this;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-LinearController& LinearController::operator=(LinearController&& rhs) {
+LinearController& LinearController::operator=(LinearController rhs) {
   swap(rhs, *this);
   return *this;
 }
@@ -75,10 +66,11 @@ LinearController* LinearController::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LinearController::setController(scalar_array_t controllerTime, vector_array_t controllerBias, matrix_array_t controllerGain) {
-  timeStamp_ = std::move(controllerTime);
-  biasArray_ = std::move(controllerBias);
-  gainArray_ = std::move(controllerGain);
+void LinearController::setController(const scalar_array_t& controllerTime, const vector_array_t& controllerBias,
+                                     const matrix_array_t& controllerGain) {
+  timeStamp_ = controllerTime;
+  biasArray_ = controllerBias;
+  gainArray_ = controllerGain;
 }
 
 /******************************************************************************************************/
@@ -160,25 +152,26 @@ void LinearController::flattenSingle(scalar_t time, std::vector<float>& flatArra
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearController LinearController::unFlatten(size_t stateDim, size_t inputDim, const scalar_array_t& timeArray,
+LinearController LinearController::unFlatten(const size_array_t& stateDim, const size_array_t& inputDim, const scalar_array_t& timeArray,
                                              const std::vector<std::vector<float> const*>& flatArray2) {
-  if (flatArray2[0]->size() != inputDim + inputDim * stateDim) {
-    throw std::runtime_error("LinearController::unFlatten received array of wrong length.");
-  }
-
   vector_array_t bias;
   matrix_array_t gain;
 
   bias.reserve(flatArray2.size());
   gain.reserve(flatArray2.size());
 
-  for (const auto& arr : flatArray2) {  // loop through time
-    bias.emplace_back(vector_t::Zero(inputDim));
-    gain.emplace_back(matrix_t::Zero(inputDim, stateDim));
+  for (int k = 0; k < timeArray.size(); k++) {  // loop through time
+    if (flatArray2[k]->size() != inputDim[k] + inputDim[k] * stateDim[k]) {
+      throw std::runtime_error("LinearController::unFlatten received array of wrong length.");
+    }
 
-    for (int i = 0; i < inputDim; i++) {  // loop through input dim
-      bias.back()(i) = static_cast<scalar_t>((*arr)[i * (stateDim + 1) + 0]);
-      gain.back().row(i) = Eigen::Map<const Eigen::VectorXf>(&((*arr)[i * (stateDim + 1) + 1]), stateDim).cast<scalar_t>();
+    bias.emplace_back(vector_t(inputDim[k]));
+    gain.emplace_back(matrix_t(inputDim[k], stateDim[k]));
+
+    const auto& arr = *flatArray2[k];
+    for (int i = 0; i < inputDim[k]; i++) {  // loop through input dim
+      bias.back()(i) = static_cast<scalar_t>(arr[i * (stateDim[k] + 1) + 0]);
+      gain.back().row(i) = Eigen::Map<const Eigen::VectorXf>(&(arr[i * (stateDim[k] + 1) + 1]), stateDim[k]).cast<scalar_t>();
     }
   }
   return LinearController(timeArray, std::move(bias), std::move(gain));
@@ -224,15 +217,6 @@ void LinearController::clear() {
   timeStamp_.clear();
   biasArray_.clear();
   gainArray_.clear();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void LinearController::setZero() {
-  std::fill(biasArray_.begin(), biasArray_.end(), vector_t::Zero(0));
-  std::fill(deltaBiasArray_.begin(), deltaBiasArray_.end(), vector_t::Zero(0));
-  std::fill(gainArray_.begin(), gainArray_.end(), matrix_t::Zero(0, 0));
 }
 
 /******************************************************************************************************/

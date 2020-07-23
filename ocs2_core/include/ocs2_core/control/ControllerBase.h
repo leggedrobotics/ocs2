@@ -96,11 +96,6 @@ class ControllerBase {
   virtual void clear() = 0;
 
   /**
-   * @brief Fills all the data containers with zeros. Does not change size, does not change time array.
-   */
-  virtual void setZero() = 0;
-
-  /**
    * Returns whether the class contains any information.
    *
    * @return true if it contains no information, false otherwise.

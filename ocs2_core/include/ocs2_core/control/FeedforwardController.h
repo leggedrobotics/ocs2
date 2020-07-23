@@ -71,20 +71,17 @@ class FeedforwardController final : public ControllerBase {
   FeedforwardController(FeedforwardController&& other);
 
   /** Copy assignment (copy and swap idiom) */
-  FeedforwardController& operator=(const FeedforwardController& other);
-
-  /** Move assignment */
-  FeedforwardController& operator=(FeedforwardController&& other);
+  FeedforwardController& operator=(FeedforwardController rhs);
 
   /** Destructor */
-  virtual ~FeedforwardController() override = default;
+  ~FeedforwardController() override = default;
 
   /**
    * setController Assign control law
    * @param [in] controllerTime: Time stamp array of the controller
    * @param [in] controllerFeedforward: The feedforward control input array.
    */
-  void setController(scalar_array_t controllerTime, vector_array_t controllerFeedforward);
+  void setController(const scalar_array_t& controllerTime, const vector_array_t& controllerFeedforward);
 
   vector_t computeInput(scalar_t t, const vector_t& x) override;
 
@@ -96,13 +93,6 @@ class FeedforwardController final : public ControllerBase {
 
   void clear() override;
 
-  void setZero() override;
-
-  /**
-   * Returns whether the class is empty (i.e. whether its size is 0).
-   *
-   * @return true if the time container size is 0, false otherwise.
-   */
   bool empty() const override;
 
   FeedforwardController* clone() const override;
@@ -111,8 +101,7 @@ class FeedforwardController final : public ControllerBase {
 
   void flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const override;
 
-  static FeedforwardController unFlatten(size_t inputDim, const scalar_array_t& timeArray,
-                                         const std::vector<std::vector<float> const*>& flatArray2);
+  static FeedforwardController unFlatten(const scalar_array_t& timeArray, const std::vector<std::vector<float> const*>& flatArray2);
 
  private:
   void flattenSingle(scalar_t time, std::vector<float>& flatArray) const;

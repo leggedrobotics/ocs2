@@ -70,26 +70,17 @@ FeedforwardController::FeedforwardController(FeedforwardController&& other) : Co
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-FeedforwardController& FeedforwardController::operator=(const FeedforwardController& rhs) {
-  FeedforwardController other(rhs);
-  swap(*this, other);
+FeedforwardController& FeedforwardController::operator=(FeedforwardController rhs) {
+  swap(rhs, *this);
   return *this;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-FeedforwardController& FeedforwardController::operator=(FeedforwardController&& rhs) {
-  swap(*this, rhs);
-  return *this;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void FeedforwardController::setController(scalar_array_t controllerTime, vector_array_t controllerFeedforward) {
-  timeStamp_ = std::move(controllerTime);
-  uffArray_ = std::move(controllerFeedforward);
+void FeedforwardController::setController(const scalar_array_t& controllerTime, const vector_array_t& controllerFeedforward) {
+  timeStamp_ = controllerTime;
+  uffArray_ = controllerFeedforward;
 }
 
 /******************************************************************************************************/
@@ -133,23 +124,19 @@ void FeedforwardController::flattenSingle(scalar_t time, std::vector<float>& fla
   vector_t uff;
   LinearInterpolation::interpolate(time, uff, &timeStamp_, &uffArray_);
 
-  flatArray = std::move(std::vector<float>(uff.data(), uff.data() + uff.rows()));
+  flatArray = std::vector<float>(uff.data(), uff.data() + uff.rows());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-FeedforwardController FeedforwardController::unFlatten(size_t inputDim, const scalar_array_t& timeArray,
+FeedforwardController FeedforwardController::unFlatten(const scalar_array_t& timeArray,
                                                        const std::vector<std::vector<float> const*>& flatArray2) {
-  if (flatArray2[0]->size() != inputDim) {
-    throw std::runtime_error("FeedforwardController::unFlatten received array of wrong length.");
-  }
-
   vector_array_t uffArray;
   uffArray.reserve(flatArray2.size());
 
   for (const auto& arr : flatArray2) {  // loop through time
-    uffArray.emplace_back(Eigen::Map<const Eigen::VectorXf>(arr->data(), inputDim).cast<scalar_t>());
+    uffArray.emplace_back(Eigen::Map<const Eigen::VectorXf>(arr->data(), arr->size()).cast<scalar_t>());
   }
   return FeedforwardController(timeArray, std::move(uffArray));
 }
@@ -190,13 +177,6 @@ ControllerType FeedforwardController::getType() const {
 void FeedforwardController::clear() {
   timeStamp_.clear();
   uffArray_.clear();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void FeedforwardController::setZero() {
-  std::fill(uffArray_.begin(), uffArray_.end(), vector_t::Zero(0));
 }
 
 /******************************************************************************************************/

@@ -72,16 +72,16 @@ class DDP_DataCollector {
   /******************
    * DDP variables image
    ******************/
-  scalar_t initTime_;
-  scalar_t finalTime_;
+  scalar_t initTime_ = 0.0;
+  scalar_t finalTime_ = 0.0;
   vector_t initState_;
 
-  size_t initActivePartition_;
-  size_t finalActivePartition_;
+  size_t initActivePartition_ = 0;
+  size_t finalActivePartition_ = 0;
   size_t numPartitions_ = 0;
   scalar_array_t partitioningTimes_;
 
-  unsigned long long int rewindCounter_;
+  unsigned long long int rewindCounter_ = 0;
 
   ModeSchedule modeSchedule_;
 

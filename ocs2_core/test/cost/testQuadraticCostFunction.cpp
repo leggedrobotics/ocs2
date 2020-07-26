@@ -108,9 +108,11 @@ class CostNominalTrajectoryOverride : public QuadraticCostFunction {
     return {xNominalOverride_, uNominalOverride_};
   }
 
+ protected:
   /** Override nominal trajectory */
   vector_t getNominalFinalState(scalar_t t, const vector_t& x) final { return xNominalFinalOverride_; }
 
+ private:
   vector_t xNominalOverride_;
   vector_t uNominalOverride_;
   vector_t xNominalFinalOverride_;

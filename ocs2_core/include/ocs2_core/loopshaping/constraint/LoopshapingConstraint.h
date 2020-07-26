@@ -32,7 +32,7 @@ class LoopshapingConstraint : public ConstraintBase {
   LoopshapingConstraint(const ConstraintBase& systemConstraint, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
       : systemConstraint_(systemConstraint.clone()), loopshapingDefinition_(std::move(loopshapingDefinition)){};
 
-  LoopshapingConstraint(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+  explicit LoopshapingConstraint(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
       : systemConstraint_(new ConstraintBase()), loopshapingDefinition_(std::move(loopshapingDefinition)){};
 
   LoopshapingConstraint(const LoopshapingConstraint& obj) : ConstraintBase(obj), loopshapingDefinition_(obj.loopshapingDefinition_) {

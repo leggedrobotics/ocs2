@@ -35,7 +35,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void StateBasedLinearController::setController(ControllerBase* ctrlPtr) {
-  if (!ctrlPtr) {
+  if (ctrlPtr == nullptr) {
     throw std::runtime_error("The controller pointer is null!");
   }
   ctrlPtr_ = ctrlPtr;
@@ -47,7 +47,7 @@ void StateBasedLinearController::setController(ControllerBase* ctrlPtr) {
 /******************************************************************************************************/
 vector_t StateBasedLinearController::computeTrajectorySpreadingInput(scalar_t t, const vector_t& x, const scalar_array_t& ctrlEventTimes,
                                                                      ControllerBase* ctrlPtr) {
-  size_t currentMode = x.tail(1).value();
+  size_t currentMode = static_cast<size_t>(x.tail(1).value());
   size_t numEvents = ctrlEventTimes.size();
 
   if (numEvents == 0)  // Simple case in which the controller does not contain any events

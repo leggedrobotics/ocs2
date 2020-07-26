@@ -59,7 +59,7 @@ class StateTriggeredEventHandler final : public SystemEventHandler {
    * @param [in] state: The current state vector.
    * @return pair of event flag and eventID
    */
-  std::pair<bool, size_t> checkEvent(OdeBase& system, scalar_t time, const vector_t& state);
+  std::pair<bool, size_t> checkEvent(OdeBase& system, scalar_t time, const vector_t& state) override;
 
   /**
    * Sets parameters to control event times detection.
@@ -91,8 +91,8 @@ class StateTriggeredEventHandler final : public SystemEventHandler {
  protected:
   scalar_t minEventTimeDifference_;
   vector_t guardSurfacesValuesCurrent_;
-  vector_t guardSurfacesValuesPrevious_;  // memory
-  scalar_t lastEventTriggeredTime_;       // memory
+  vector_t guardSurfacesValuesPrevious_;
+  scalar_t lastEventTriggeredTime_ = std::numeric_limits<scalar_t>::lowest();
 };
 
 }  // namespace ocs2

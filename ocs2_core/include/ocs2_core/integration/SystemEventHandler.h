@@ -78,14 +78,12 @@ class SystemEventHandler {
    */
   void handleEvent(OdeBase& system, scalar_t time, const vector_t& state);
 
-  /**
-   * Resets the class.
-   */
-  virtual void reset();
+  /** Resets the class. */
+  virtual void reset() { killIntegration_ = false; };
 
  private:
   /** Copy constructor */
-  SystemEventHandler(const SystemEventHandler& rhs) = default;
+  SystemEventHandler(const SystemEventHandler& rhs) : SystemEventHandler() {}
 
  public:
   std::atomic_bool killIntegration_ = {false};

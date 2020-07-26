@@ -34,14 +34,15 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SystemDynamicsBaseAD::SystemDynamicsBaseAD(size_t stateDim, size_t inputDim)
-    : SystemDynamicsBase(), stateDim_(stateDim), inputDim_(inputDim) {}
+SystemDynamicsBaseAD::SystemDynamicsBaseAD(size_t stateDim, size_t inputDim) : stateDim_(stateDim), inputDim_(inputDim) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 SystemDynamicsBaseAD::SystemDynamicsBaseAD(const SystemDynamicsBaseAD& rhs)
     : SystemDynamicsBase(rhs),
+      stateDim_(rhs.stateDim_),
+      inputDim_(rhs.inputDim_),
       flowMapADInterfacePtr_(new CppAdInterface(*rhs.flowMapADInterfacePtr_)),
       jumpMapADInterfacePtr_(new CppAdInterface(*rhs.jumpMapADInterfacePtr_)),
       guardSurfacesADInterfacePtr_(new CppAdInterface(*rhs.guardSurfacesADInterfacePtr_)) {}

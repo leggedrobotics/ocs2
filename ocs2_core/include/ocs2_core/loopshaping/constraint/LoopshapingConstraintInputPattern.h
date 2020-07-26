@@ -21,7 +21,7 @@ class LoopshapingConstraintInputPattern final : public LoopshapingConstraint {
   LoopshapingConstraintInputPattern(const ConstraintBase& systemConstraint, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
       : BASE(systemConstraint, std::move(loopshapingDefinition)){};
 
-  virtual ~LoopshapingConstraintInputPattern() = default;
+  ~LoopshapingConstraintInputPattern() override = default;
 
   LoopshapingConstraintInputPattern(const LoopshapingConstraintInputPattern& obj) = default;
 

@@ -34,14 +34,13 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearSystemDynamics::LinearSystemDynamics(const matrix_t& A, const matrix_t& B, const matrix_t& G /*= matrix_t()*/,
-                                           const matrix_t& H /*= matrix_t()*/)
-    : SystemDynamicsBase(), A_(A), B_(B), G_(G), H_(H) {
+LinearSystemDynamics::LinearSystemDynamics(matrix_t A, matrix_t B, matrix_t G /*= matrix_t()*/, matrix_t H /*= matrix_t()*/)
+    : A_(std::move(A)), B_(std::move(B)), G_(std::move(G)), H_(std::move(H)) {
   if (G_.size() == 0) {
-    G_ = matrix_t::Zero(A.rows(), A.rows());
+    G_ = matrix_t::Zero(A_.rows(), A_.rows());
   }
   if (H_.size() == 0) {
-    H_ = matrix_t::Zero(A.rows(), B.cols());
+    H_ = matrix_t::Zero(A_.rows(), B_.cols());
   }
 }
 

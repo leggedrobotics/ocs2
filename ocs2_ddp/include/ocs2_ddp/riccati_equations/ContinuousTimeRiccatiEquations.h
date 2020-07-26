@@ -46,11 +46,11 @@ namespace ocs2 {
  * Data cache for continuous-time Riccati equation
  */
 struct ContinuousTimeRiccatiData {
-  scalar_t s_;
+  scalar_t s_ = 0.0;
   vector_t Sv_;
   matrix_t Sm_;
 
-  scalar_t ds_;
+  scalar_t ds_ = 0.0;
   vector_t dSv_;
   matrix_t dSm_;
 
@@ -97,7 +97,7 @@ static constexpr int s_vector_dim(int state_dim) {
  */
 static constexpr int riccati_matrix_dim(int flattened_dim) {
   /** If STATE_DIM=n, Then: n(n+1)/2 entries from triangular matrix Sm, n entries from vector Sv and +1 one from a scalar */
-  return flattened_dim == Eigen::Dynamic ? Eigen::Dynamic : (std::sqrt(8 * flattened_dim + 1) - 3) / 2;
+  return flattened_dim == Eigen::Dynamic ? Eigen::Dynamic : (static_cast<int>(std::sqrt(8 * flattened_dim + 1)) - 3) / 2;
 }
 
 /**
@@ -212,10 +212,10 @@ class ContinuousTimeRiccatiEquations final : public OdeBase {
   scalar_t riskSensitiveCoeff_ = 0.0;
 
   // array pointers
-  const scalar_array_t* timeStampPtr_;
-  const std::vector<ModelDataBase>* projectedModelDataPtr_;
-  const std::vector<ModelDataBase>* modelDataEventTimesPtr_;
-  const std::vector<riccati_modification::Data>* riccatiModificationPtr_;
+  const scalar_array_t* timeStampPtr_ = nullptr;
+  const std::vector<ModelDataBase>* projectedModelDataPtr_ = nullptr;
+  const std::vector<ModelDataBase>* modelDataEventTimesPtr_ = nullptr;
+  const std::vector<riccati_modification::Data>* riccatiModificationPtr_ = nullptr;
   scalar_array_t eventTimes_;
 
   ContinuousTimeRiccatiData continuousTimeRiccatiData_;

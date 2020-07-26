@@ -126,14 +126,13 @@ inline Eigen::Matrix<SCALAR_T, 6, 3> JacobianOfAngularVelocityMapping(const Eige
   using std::cos;
   using std::sin;
 
-  Eigen::Matrix<SCALAR_T, 6, 1> xAD;
-  xAD << eulerAnglesXyz, angularVelocity;
-  const SCALAR_T* x = xAD.data();
+  Eigen::Matrix<SCALAR_T, 6, 1> x;
+  x << eulerAnglesXyz, angularVelocity;
 
   std::array<SCALAR_T, 10> v;
 
   Eigen::Matrix<SCALAR_T, 6, 3> jac;
-  SCALAR_T* y = jac.data();
+  Eigen::Map<Eigen::Matrix<SCALAR_T, 3 * 6, 1>> y(jac.data());
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "cppcoreguidelines-pro-bounds-pointer-arithmetic"

@@ -77,7 +77,7 @@ void RelaxedBarrierCost::initialize(const std::string& modelName, const std::str
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t RelaxedBarrierCost::cost(scalar_t t, const vector_t& x, const vector_t& u) {
-  if (intermediateConfig_.size() == 0) {
+  if (intermediateConfig_.empty()) {
     return 0.0;
   }
 
@@ -96,7 +96,7 @@ scalar_t RelaxedBarrierCost::cost(scalar_t t, const vector_t& x, const vector_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t RelaxedBarrierCost::finalCost(scalar_t t, const vector_t& x) {
-  if (finalConfig_.size() == 0) {
+  if (finalConfig_.empty()) {
     return 0.0;
   }
 
@@ -116,7 +116,7 @@ scalar_t RelaxedBarrierCost::finalCost(scalar_t t, const vector_t& x) {
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation RelaxedBarrierCost::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
   ScalarFunctionQuadraticApproximation L;
-  if (intermediateConfig_.size() == 0) {
+  if (intermediateConfig_.empty()) {
     L.dfdxx.setZero(stateDim_, stateDim_);
     L.dfdux.setZero(inputDim_, stateDim_);
     L.dfduu.setZero(inputDim_, inputDim_);
@@ -157,7 +157,7 @@ ScalarFunctionQuadraticApproximation RelaxedBarrierCost::costQuadraticApproximat
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation RelaxedBarrierCost::finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
   ScalarFunctionQuadraticApproximation Phi;
-  if (finalConfig_.size() == 0) {
+  if (finalConfig_.empty()) {
     Phi.dfdxx.setZero(stateDim_, stateDim_);
     Phi.dfdx.setZero(stateDim_);
     Phi.f = 0.0;
@@ -189,7 +189,7 @@ ScalarFunctionQuadraticApproximation RelaxedBarrierCost::finalCostQuadraticAppro
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t RelaxedBarrierCost::costDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) {
-  if (intermediateConfig_.size() == 0) {
+  if (intermediateConfig_.empty()) {
     return 0.0;
   }
 
@@ -204,7 +204,7 @@ scalar_t RelaxedBarrierCost::costDerivativeTime(scalar_t t, const vector_t& x, c
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t RelaxedBarrierCost::finalCostDerivativeTime(scalar_t t, const vector_t& x) {
-  if (finalConfig_.size() == 0) {
+  if (finalConfig_.empty()) {
     return 0.0;
   }
 

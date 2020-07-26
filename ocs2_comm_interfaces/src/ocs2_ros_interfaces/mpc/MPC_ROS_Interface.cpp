@@ -366,7 +366,7 @@ void MPC_ROS_Interface::spin() {
   } catch (...) {
     // declaring that MPC is not updated anymore
     ocs2_msgs::mpc_flattened_controller mpcPolicyMsg;
-    mpcPolicyMsg.controllerIsUpdated = false;
+    mpcPolicyMsg.controllerIsUpdated = static_cast<uint8_t>(false);
     mpcPolicyPublisher_.publish(mpcPolicyMsg);
     throw;
   }

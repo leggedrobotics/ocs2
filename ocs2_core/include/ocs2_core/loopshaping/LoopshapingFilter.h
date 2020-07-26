@@ -12,7 +12,7 @@ class Filter {
  public:
   Filter();
 
-  Filter(const matrix_t& A, const matrix_t& B, const matrix_t& C, const matrix_t& D);
+  Filter(matrix_t A, matrix_t B, matrix_t C, matrix_t D);
 
   size_t getNumStates() const { return numStates_; };
   size_t getNumInputs() const { return numInputs_; };

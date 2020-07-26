@@ -34,11 +34,17 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-QuadraticCostFunction::QuadraticCostFunction(const matrix_t& Q, const matrix_t& R, const vector_t& xNominal, const vector_t& uNominal,
-                                             const matrix_t& QFinal, const vector_t& xNominalFinal, const matrix_t& P /* = matrix_t() */)
-    : Q_(Q), R_(R), P_(P), QFinal_(QFinal), xNominal_(xNominal), uNominal_(uNominal), xNominalFinal_(xNominalFinal) {
+QuadraticCostFunction::QuadraticCostFunction(matrix_t Q, matrix_t R, vector_t xNominal, vector_t uNominal, matrix_t QFinal,
+                                             vector_t xNominalFinal, matrix_t P /* = matrix_t() */)
+    : Q_(std::move(Q)),
+      R_(std::move(R)),
+      P_(std::move(P)),
+      QFinal_(std::move(QFinal)),
+      xNominal_(std::move(xNominal)),
+      uNominal_(std::move(uNominal)),
+      xNominalFinal_(std::move(xNominalFinal)) {
   if (P_.size() == 0) {
-    P_ = matrix_t::Zero(R.rows(), Q.rows());
+    P_ = matrix_t::Zero(R_.rows(), Q_.rows());
   }
 }
 

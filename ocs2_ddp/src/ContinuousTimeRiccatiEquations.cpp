@@ -110,7 +110,7 @@ void ContinuousTimeRiccatiEquations::convert2Matrix(const vector_t& allSs, matri
 /******************************************************************************************************/
 /******************************************************************************************************/
 void ContinuousTimeRiccatiEquations::setData(const scalar_array_t* timeStampPtr, const std::vector<ModelDataBase>* projectedModelDataPtr,
-                                             const size_array_t* postEventIndicesPtr,
+                                             const size_array_t* eventsPastTheEndIndecesPtr,
                                              const std::vector<ModelDataBase>* modelDataEventTimesPtr,
                                              const std::vector<riccati_modification::Data>* riccatiModificationPtr) {
   OdeBase::resetNumFunctionCalls();
@@ -122,8 +122,8 @@ void ContinuousTimeRiccatiEquations::setData(const scalar_array_t* timeStampPtr,
   riccatiModificationPtr_ = riccatiModificationPtr;
 
   eventTimes_.clear();
-  eventTimes_.reserve(postEventIndicesPtr->size());
-  for (const auto& postEventIndex : *postEventIndicesPtr) {
+  eventTimes_.reserve(eventsPastTheEndIndecesPtr->size());
+  for (const auto& postEventIndex : *eventsPastTheEndIndecesPtr) {
     eventTimes_.push_back((*timeStampPtr)[postEventIndex - 1]);
   }
 }
@@ -147,7 +147,7 @@ vector_t ContinuousTimeRiccatiEquations::computeJumpMap(scalar_t z, const vector
   // convert to Riccati coefficients
   convert2Matrix(allSs, continuousTimeRiccatiData_.Sm_, continuousTimeRiccatiData_.Sv_, continuousTimeRiccatiData_.s_);
 
-  // TODO: Fix this
+  // TODO(farbod): Fix this
   const auto state_dim = continuousTimeRiccatiData_.Sm_.rows();
   const vector_t Hv = vector_t::Zero(state_dim);                 // jumpModelData.dynamicsBias_;
   const matrix_t Am = matrix_t::Identity(state_dim, state_dim);  // jumpModelData.cost_.dfdxx;

@@ -22,7 +22,7 @@ class LoopshapingConstraintEliminatePattern final : public LoopshapingConstraint
                                         std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
       : BASE(systemConstraint, std::move(loopshapingDefinition)){};
 
-  virtual ~LoopshapingConstraintEliminatePattern() = default;
+  ~LoopshapingConstraintEliminatePattern() override = default;
 
   LoopshapingConstraintEliminatePattern(const LoopshapingConstraintEliminatePattern& obj) = default;
 

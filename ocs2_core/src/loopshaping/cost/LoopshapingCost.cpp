@@ -49,7 +49,7 @@ std::unique_ptr<LoopshapingCost> LoopshapingCost::create(const CostFunctionBase&
 }
 
 void LoopshapingCost::setCostDesiredTrajectoriesPtr(const CostDesiredTrajectories* costDesiredTrajectoriesPtr) {
-  if (costDesiredTrajectoriesPtr) {
+  if (costDesiredTrajectoriesPtr != nullptr) {
     CostFunctionBase::setCostDesiredTrajectoriesPtr(costDesiredTrajectoriesPtr);
 
     // For now assume that cost DesiredTrajectory is specified w.r.t original system x, u

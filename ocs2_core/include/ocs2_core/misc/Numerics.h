@@ -51,8 +51,8 @@ typename std::enable_if<std::is_floating_point<typename std::remove_reference<T1
                             std::is_floating_point<typename std::remove_reference<T2>::type>::value,
                         bool>::type
 almost_eq(T1&& x, T2&& y) {
-  typedef typename std::conditional<std::is_floating_point<typename std::remove_reference<T1>::type>::value,
-                                    typename std::remove_reference<T1>::type, typename std::remove_reference<T2>::type>::type TypeResult;
+  using TypeResult = typename std::conditional<std::is_floating_point<typename std::remove_reference<T1>::type>::value,
+                                               typename std::remove_reference<T1>::type, typename std::remove_reference<T2>::type>::type;
   // the machine epsilon has to be scaled to the magnitude of the values used
   // and multiplied by the desired precision in ULPs (units in the last place)
   return std::abs(x - y) <= std::numeric_limits<TypeResult>::epsilon() * std::abs(x + y)

@@ -82,9 +82,9 @@ struct ModelDataBase {
   /**
    * Variables
    */
-  scalar_t time_;
-  int stateDim_;
-  int inputDim_;
+  scalar_t time_ = 0;
+  int stateDim_ = 0;
+  int inputDim_ = 0;
 
   // dynamics
   VectorFunctionLinearApproximation dynamics_;

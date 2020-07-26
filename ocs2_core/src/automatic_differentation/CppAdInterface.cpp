@@ -39,7 +39,6 @@ namespace ocs2 {
 CppAdInterface::CppAdInterface(ad_parameterized_function_t adFunction, size_t variableDim, size_t parameterDim, std::string modelName,
                                std::string folderName, std::vector<std::string> compileFlags)
     : adFunction_(std::move(adFunction)),
-      rangeDim_(0),
       variableDim_(variableDim),
       parameterDim_(parameterDim),
       modelName_(std::move(modelName)),
@@ -64,7 +63,7 @@ CppAdInterface::CppAdInterface(const CppAdInterface& rhs)
   if (isLibraryAvailable()) {
     loadModels(false);
   }
-};
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

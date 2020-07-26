@@ -80,7 +80,7 @@ const Data_T& stdAccessFun(const std::vector<Data_T, Alloc>* vec, size_t ind) {
  */
 inline index_alpha_t timeSegment(scalar_t enquiryTime, const std::vector<scalar_t>* timeArrayPtr) {
   // corner cases (no time set OR single time element)
-  if (!timeArrayPtr || timeArrayPtr->size() <= 1) {
+  if (timeArrayPtr == nullptr || timeArrayPtr->size() <= 1) {
     return {0, scalar_t(1.0)};
   }
 
@@ -122,7 +122,7 @@ inline index_alpha_t timeSegment(scalar_t enquiryTime, const std::vector<scalar_
 template <typename Data_T, typename Field_T, class Alloc>
 void interpolate(index_alpha_t indexAlpha, Field_T& enquiryData, const std::vector<Data_T, Alloc>* dataPtr,
                  std::function<const Field_T&(const std::vector<Data_T, Alloc>*, size_t)> accessFun = stdAccessFun<Data_T, Alloc>) {
-  if (dataPtr) {
+  if (dataPtr != nullptr) {
     if (dataPtr->size() > 1) {
       // Normal interpolation case
       int index = indexAlpha.first;

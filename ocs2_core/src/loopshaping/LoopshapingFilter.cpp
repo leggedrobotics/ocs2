@@ -15,8 +15,14 @@ Filter::Filter() {
   D_.resize(0, 0);
 }
 
-Filter::Filter(const matrix_t& A, const matrix_t& B, const matrix_t& C, const matrix_t& D)
-    : A_(A), B_(B), C_(C), D_(D), numStates_(A.rows()), numInputs_(B.cols()), numOutputs_(C.rows()) {
+Filter::Filter(matrix_t A, matrix_t B, matrix_t C, matrix_t D)
+    : A_(std::move(A)),
+      B_(std::move(B)),
+      C_(std::move(C)),
+      D_(std::move(D)),
+      numStates_(A_.rows()),
+      numInputs_(B_.cols()),
+      numOutputs_(C_.rows()) {
   checkSize();
 }
 

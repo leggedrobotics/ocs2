@@ -77,7 +77,10 @@ inline vector_t multiplyPolynomials(const vector_t& p_lhs, const vector_t& p_rhs
 /******************************************************************************************************/
 /******************************************************************************************************/
 TransferFunctionBase::TransferFunctionBase(vector_t numCoefficients, vector_t denCoefficients, scalar_t timedelay, bool balance)
-    : numCoefficients_(numCoefficients), denCoefficients_(denCoefficients), timeDelay_(timedelay), balance_(balance){};
+    : numCoefficients_(std::move(numCoefficients)),
+      denCoefficients_(std::move(denCoefficients)),
+      timeDelay_(timedelay),
+      balance_(balance){};
 
 /******************************************************************************************************/
 /******************************************************************************************************/

@@ -37,7 +37,7 @@ namespace ocs2 {
 vector_t TimeTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray, const vector_t& initState, ControllerBase* controller,
                                        scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
                                        vector_array_t& inputTrajectory) {
-  if (!controller) {
+  if (controller == nullptr) {
     throw std::runtime_error("The input controller is not set.");
   }
 

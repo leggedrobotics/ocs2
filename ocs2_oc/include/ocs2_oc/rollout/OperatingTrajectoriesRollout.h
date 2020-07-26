@@ -50,13 +50,11 @@ class OperatingTrajectoriesRollout : public RolloutBase {
    * @param [in] operatingTrajectories: The operating trajectories used for initialization.
    * @param [in] rolloutSettings: The rollout settings.
    */
-  OperatingTrajectoriesRollout(const SystemOperatingTrajectoriesBase& operatingTrajectories,
-                               const Rollout_Settings& rolloutSettings = Rollout_Settings())
+  explicit OperatingTrajectoriesRollout(const SystemOperatingTrajectoriesBase& operatingTrajectories,
+                                        const Rollout_Settings& rolloutSettings = Rollout_Settings())
       : RolloutBase(rolloutSettings), operatingTrajectoriesPtr_(operatingTrajectories.clone()) {}
 
-  /**
-   * Default destructor.
-   */
+  /** Default destructor. */
   ~OperatingTrajectoriesRollout() override = default;
 
   OperatingTrajectoriesRollout* clone() const override {

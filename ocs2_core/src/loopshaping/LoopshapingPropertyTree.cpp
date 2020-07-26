@@ -122,14 +122,14 @@ std::shared_ptr<LoopshapingDefinition> load(const std::string& settingsFile) {
   }
 
   if (r_filter.getNumOutputs() > 0) {
-    return std::shared_ptr<LoopshapingDefinition>(new LoopshapingDefinition(LoopshapingType::outputpattern, r_filter, gamma));
+    return std::make_shared<LoopshapingDefinition>(LoopshapingType::outputpattern, r_filter, gamma);
   }
   if (s_filter.getNumOutputs() > 0) {
     auto eliminateInputs = pt.get<bool>("eliminateInputs");
     if (eliminateInputs) {
-      return std::shared_ptr<LoopshapingDefinition>(new LoopshapingDefinition(LoopshapingType::eliminatepattern, s_filter, gamma));
+      return std::make_shared<LoopshapingDefinition>(LoopshapingType::eliminatepattern, s_filter, gamma);
     } else {
-      return std::shared_ptr<LoopshapingDefinition>(new LoopshapingDefinition(LoopshapingType::inputpattern, s_filter, gamma));
+      return std::make_shared<LoopshapingDefinition>(LoopshapingType::inputpattern, s_filter, gamma);
     }
   }
 

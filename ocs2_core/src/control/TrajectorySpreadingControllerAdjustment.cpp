@@ -54,7 +54,7 @@ void TrajectorySpreadingControllerAdjustment::findEventTimesIndices(const scalar
 
       // if it is not the first event, use the index of the previous event for efficiency.
       // subjected to that they are in the same partition
-      typename scalar_array_t::const_iterator beginItr = controllersStock[p].timeStamp_.begin();
+      auto beginItr = controllersStock[p].timeStamp_.begin();
       if (j > 0 && eventsIndices[j - 1].first == p) {
         beginItr += eventsIndices[j - 1].second;
       }

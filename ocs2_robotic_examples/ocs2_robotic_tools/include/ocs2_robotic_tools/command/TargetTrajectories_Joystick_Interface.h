@@ -55,7 +55,7 @@ class TargetTrajectories_Joystick_Interface : public ocs2::TargetTrajectories_RO
   /**
    * Default destructor
    */
-  virtual ~TargetTrajectories_Joystick_Interface() = default;
+  ~TargetTrajectories_Joystick_Interface() override = default;
 
   /**
    * Gets the command vector size.

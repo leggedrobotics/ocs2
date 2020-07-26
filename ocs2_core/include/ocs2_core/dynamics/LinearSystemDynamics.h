@@ -35,7 +35,7 @@ namespace ocs2 {
 
 class LinearSystemDynamics : public SystemDynamicsBase {
  public:
-  LinearSystemDynamics(const matrix_t& A, const matrix_t& B, const matrix_t& G = matrix_t(), const matrix_t& H = matrix_t());
+  LinearSystemDynamics(matrix_t A, matrix_t B, matrix_t G = matrix_t(), matrix_t H = matrix_t());
 
   ~LinearSystemDynamics() override = default;
 

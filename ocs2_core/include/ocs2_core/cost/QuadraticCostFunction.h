@@ -52,8 +52,8 @@ class QuadraticCostFunction : public CostFunctionBase {
    * @param [in] xNominalFinal: \f$ x_{f}\f$
    * @param [in] QFinal: \f$ Q_{f}\f$
    */
-  QuadraticCostFunction(const matrix_t& Q, const matrix_t& R, const vector_t& xNominal, const vector_t& uNominal, const matrix_t& QFinal,
-                        const vector_t& xNominalFinal, const matrix_t& P = matrix_t());
+  QuadraticCostFunction(matrix_t Q, matrix_t R, vector_t xNominal, vector_t uNominal, matrix_t QFinal, vector_t xNominalFinal,
+                        matrix_t P = matrix_t());
 
   /** Destructor */
   ~QuadraticCostFunction() override = default;
@@ -61,6 +61,12 @@ class QuadraticCostFunction : public CostFunctionBase {
   /** Clone */
   QuadraticCostFunction* clone() const override;
 
+  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
+  scalar_t finalCost(scalar_t t, const vector_t& x) override;
+  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
+  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
+
+ protected:
   /**
    * Get the desired state and input for cost evaluation.
    *
@@ -86,12 +92,6 @@ class QuadraticCostFunction : public CostFunctionBase {
    */
   virtual vector_t getNominalFinalState(scalar_t t, const vector_t& x);
 
-  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
-  scalar_t finalCost(scalar_t t, const vector_t& x) override;
-  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
-  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
-
- protected:
   matrix_t Q_;
   matrix_t R_;
   matrix_t P_;

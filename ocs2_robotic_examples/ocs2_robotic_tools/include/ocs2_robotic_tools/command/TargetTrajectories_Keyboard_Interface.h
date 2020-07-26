@@ -58,7 +58,7 @@ class TargetTrajectories_Keyboard_Interface : public ocs2::TargetTrajectories_RO
   /**
    * Default destructor
    */
-  virtual ~TargetTrajectories_Keyboard_Interface() = default;
+  ~TargetTrajectories_Keyboard_Interface() override = default;
 
   /**
    * Gets the command vector size.

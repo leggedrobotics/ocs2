@@ -97,6 +97,7 @@ class BouncingMassCost final : public ocs2::QuadraticCostFunction {
     return {xRef, uRef};
   }
 
+ protected:
   vector_t getNominalFinalState(scalar_t t, const vector_t& x) final {
     // Terminal cost only calculated for final state, not for intermediate switch states
     if (std::fabs(t - timeFinal_) > ocs2::OCS2NumericTraits<scalar_t>::weakEpsilon()) {

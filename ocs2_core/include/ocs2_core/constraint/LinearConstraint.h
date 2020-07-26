@@ -80,7 +80,7 @@ class LinearConstraint final : public ConstraintBase {
   LinearConstraint(vector_t e, matrix_t C, matrix_t D, vector_t h, matrix_t F, vector_t h_f, matrix_t F_f, vector_t h0, matrix_t dhdx,
                    matrix_t dhdu, matrix_array_t dhdxx, matrix_array_t dhduu, matrix_array_t dhdux);
 
-  virtual ~LinearConstraint() override = default;
+  ~LinearConstraint() override = default;
 
   LinearConstraint* clone() const override;
 

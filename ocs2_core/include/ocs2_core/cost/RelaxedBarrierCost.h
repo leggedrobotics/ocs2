@@ -80,7 +80,7 @@ class RelaxedBarrierCost : public CostFunctionBase {
   explicit RelaxedBarrierCost(std::vector<Config> intermediateConfig, std::vector<Config> finalConfig, size_t stateDim, size_t inputDim);
 
   /** Default destructor */
-  virtual ~RelaxedBarrierCost() = default;
+  ~RelaxedBarrierCost() override = default;
 
   /**
    * Initializes model libraries

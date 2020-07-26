@@ -64,11 +64,11 @@ class GaussNewtonDDP : public Solver_BASE {
  public:
   // Line-Search
   struct LineSearchModule {
-    scalar_t baselineMerit;                              // the merit of the rollout for zero learning rate
-    std::atomic<scalar_t> stepLengthStar;                // the optimal step length.
+    scalar_t baselineMerit = 0.0;                        // the merit of the rollout for zero learning rate
+    std::atomic<scalar_t> stepLengthStar{0.0};           // the optimal step length.
     std::vector<LinearController> initControllersStock;  // needed for lineSearch
 
-    std::atomic_size_t alphaExpNext;
+    std::atomic_size_t alphaExpNext{0};
     std::vector<bool> alphaProcessed;
     std::mutex lineSearchResultMutex;
   };
@@ -82,14 +82,14 @@ class GaussNewtonDDP : public Solver_BASE {
   };
 
   struct ConstraintPenaltyCoefficients {
-    scalar_t stateEqualityPenaltyTol;
-    scalar_t stateEqualityPenaltyCoeff;
+    scalar_t stateEqualityPenaltyTol = 1e-3;
+    scalar_t stateEqualityPenaltyCoeff = 0.0;
 
-    scalar_t stateEqualityFinalPenaltyTol;
-    scalar_t stateEqualityFinalPenaltyCoeff;
+    scalar_t stateEqualityFinalPenaltyTol = 1e-3;
+    scalar_t stateEqualityFinalPenaltyCoeff = 0.0;
 
-    scalar_t stateInputEqualityPenaltyTol;
-    scalar_t stateInputEqualityPenaltyCoeff;
+    scalar_t stateInputEqualityPenaltyTol = 1e-3;
+    scalar_t stateInputEqualityPenaltyCoeff = 0.0;
   };
 
   /**
@@ -117,7 +117,7 @@ class GaussNewtonDDP : public Solver_BASE {
   /**
    * Destructor.
    */
-  virtual ~GaussNewtonDDP() override;
+  ~GaussNewtonDDP() override;
 
   void reset() override;
 
@@ -331,7 +331,7 @@ class GaussNewtonDDP : public Solver_BASE {
    * @param [in] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
    * @param [out] stateInputEqConstraintISE: The state-input equality constraints ISE.
    * @param [out] stateEqConstraintISE: The state-only equality constraints ISE.
-   * @param [out] stateEqFinalConstraintISE: The final state equality constraints ISE.
+   * @param [out] stateEqFinalConstraintSSE: The final state equality constraints Sum of Square Error (SSE).
    * @param [out] inequalityConstraintISE: The inequality constraints ISE.
    * @param [out] inequalityConstraintPenalty: The inequality constraints penalty.
    * @param [in] workerIndex: Working thread (default is 0).
@@ -341,7 +341,7 @@ class GaussNewtonDDP : public Solver_BASE {
   void calculateRolloutConstraintsISE(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
                                       const vector_array2_t& stateTrajectoriesStock, const vector_array2_t& inputTrajectoriesStock,
                                       scalar_t& stateInputEqConstraintISE, scalar_t& stateEqConstraintISE,
-                                      scalar_t& stateEqFinalConstraintISE, scalar_t& inequalityConstraintISE,
+                                      scalar_t& stateEqFinalConstraintSSE, scalar_t& inequalityConstraintISE,
                                       scalar_t& inequalityConstraintPenalty, size_t workerIndex = 0);
 
   /**
@@ -497,10 +497,10 @@ class GaussNewtonDDP : public Solver_BASE {
   /**
    * Updates the constraint penalty coefficients.
    * @param [in] stateEqConstraintISE: ISE of the intermediate state-only equality constraints.
-   * @param [in] stateEqFinalConstraintISE: ISE of the state-only equality constraints at event times.
+   * @param [in] stateEqFinalConstraintSSE: SSE of the state-only equality constraints at event times.
    * @param [in] stateInputEqConstraintISE: ISE of the intermediate state-input equality constraints.
    */
-  void updateConstraintPenalties(scalar_t stateEqConstraintISE, scalar_t stateEqFinalConstraintISE, scalar_t stateInputEqConstraintISE);
+  void updateConstraintPenalties(scalar_t stateEqConstraintISE, scalar_t stateEqFinalConstraintSSE, scalar_t stateInputEqConstraintISE);
 
   /**
    * Caches the iteration's data.
@@ -550,15 +550,15 @@ class GaussNewtonDDP : public Solver_BASE {
   ThreadPool threadPool_;
 
   // multi-threading helper variables
-  std::atomic_size_t nextTaskId_;
-  std::atomic_size_t nextTimeIndex_;
+  std::atomic_size_t nextTaskId_{0};
+  std::atomic_size_t nextTimeIndex_{0};
 
-  scalar_t initTime_;
-  scalar_t finalTime_;
+  scalar_t initTime_ = 0.0;
+  scalar_t finalTime_ = 0.0;
   vector_t initState_;
 
-  size_t initActivePartition_;
-  size_t finalActivePartition_;
+  size_t initActivePartition_ = 0;
+  size_t finalActivePartition_ = 0;
   size_t numPartitions_ = 0;
   scalar_array_t partitioningTimes_;
 
@@ -602,22 +602,22 @@ class GaussNewtonDDP : public Solver_BASE {
  private:
   std::string algorithmName_;
 
-  unsigned long long int rewindCounter_;
+  unsigned long long int rewindCounter_ = 0;
 
   bool useParallelRiccatiSolverFromInitItr_ = false;
 
   // trajectory spreading
   TrajectorySpreadingControllerAdjustment trajectorySpreadingController_;
 
-  std::atomic_size_t iteration_;
+  std::atomic_size_t iteration_{0};
 
   PerformanceIndex performanceIndex_;
 
   std::vector<PerformanceIndex> performanceIndexHistory_;
 
   // forward pass and backward pass average time step
-  scalar_t avgTimeStepFP_;
-  scalar_t avgTimeStepBP_;
+  scalar_t avgTimeStepFP_ = 0.0;
+  scalar_t avgTimeStepBP_ = 0.0;
 
   std::vector<std::unique_ptr<RolloutBase>> dynamicsForwardRolloutPtrStock_;
   std::vector<std::unique_ptr<RolloutBase>> operatingTrajectoriesRolloutPtrStock_;
@@ -625,7 +625,6 @@ class GaussNewtonDDP : public Solver_BASE {
   std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrStock_;
 
   scalar_t nominalControllerUpdateIS_ = 0.0;
-  bool isInitInternalControllerEmpty_;
 
   // used for caching the nominal trajectories for which the LQ problem is
   // constructed and solved before terminating run()

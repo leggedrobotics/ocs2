@@ -61,7 +61,7 @@ void MRT_ROS_Dummy_Loop::run(const SystemObservation& initObservation, const Cos
   // set the frequency ratio between MRT loop and MPC loop in the case of non realtime test
   size_t frequencyRatio = 1;
   if (!realtimeLoop_) {
-    frequencyRatio = mrtDesiredFrequency_ / mpcDesiredFrequency_;
+    frequencyRatio = static_cast<size_t>(mrtDesiredFrequency_ / mpcDesiredFrequency_);
   }
 
   size_t loopCounter = 0;

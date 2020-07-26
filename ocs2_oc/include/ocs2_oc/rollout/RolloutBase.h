@@ -52,7 +52,7 @@ class RolloutBase {
    *
    * @param [in] rolloutSettings: The rollout settings.
    */
-  RolloutBase(Rollout_Settings rolloutSettings = Rollout_Settings()) : rolloutSettings_(std::move(rolloutSettings)) {}
+  explicit RolloutBase(Rollout_Settings rolloutSettings = Rollout_Settings()) : rolloutSettings_(std::move(rolloutSettings)) {}
 
   /**
    * Default destructor.

@@ -43,10 +43,10 @@ class CostFunctionBaseAD : public CostFunctionBase {
   using ad_vector_t = typename CppAdInterface::ad_vector_t;
 
   /** Default constructor */
-  explicit CostFunctionBaseAD(size_t stateDim, size_t inputDim);
+  CostFunctionBaseAD(size_t stateDim, size_t inputDim);
 
   /** Default destructor */
-  virtual ~CostFunctionBaseAD() = default;
+  ~CostFunctionBaseAD() override = default;
 
   /**
    * Initializes model libraries

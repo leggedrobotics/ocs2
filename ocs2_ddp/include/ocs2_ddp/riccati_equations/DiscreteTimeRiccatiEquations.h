@@ -60,7 +60,7 @@ struct DiscreteTimeRiccatiData {
   vector_t Sigma_Sv_;
   matrix_t I_minus_Sm_Sigma_;
   matrix_t inv_I_minus_Sm_Sigma_;
-  scalar_t sNextStochastic_;
+  scalar_t sNextStochastic_ = 0.0;
   vector_t SvNextStochastic_;
   matrix_t SmNextStochastic_;
 };

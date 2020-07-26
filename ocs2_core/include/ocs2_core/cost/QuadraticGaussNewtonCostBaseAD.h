@@ -56,7 +56,7 @@ class QuadraticGaussNewtonCostBaseAD : public CostFunctionBase {
   QuadraticGaussNewtonCostBaseAD(size_t stateDim, size_t inputDim);
 
   /** Default destructor */
-  virtual ~QuadraticGaussNewtonCostBaseAD() = default;
+  ~QuadraticGaussNewtonCostBaseAD() override = default;
 
   /**
    * Initializes model libraries

@@ -123,15 +123,15 @@ void DDP_DataCollector::calculateStateInputConstraintsSensitivity(const GaussNew
                                                                   const std::vector<scalar_array_t>& timeTrajectoriesStock,
                                                                   const vector_array2_t& stateTrajectoriesStock,
                                                                   const vector_array2_t& inputTrajectoriesStock,
-                                                                  vector_array3_t& EvDevEventTimesTrajectoryStockSet,
+                                                                  vector_array3_t& EvDevEventTimesTrajectoriesStockSet,
                                                                   vector_array3_t& EvDevEventTimesProjectedTrajectoriesStockSet) {
   auto* ddpPtr = const_cast<GaussNewtonDDP*>(constDdpPtr);
 
   const size_t numEventTimes = constDdpPtr->getModeSchedule().eventTimes.size();
 
   // resizing EvDev container
-  EvDevEventTimesTrajectoryStockSet.resize(numEventTimes);
-  for (auto& EvDevEventTimesTrajectoryStock : EvDevEventTimesTrajectoryStockSet) {
+  EvDevEventTimesTrajectoriesStockSet.resize(numEventTimes);
+  for (auto& EvDevEventTimesTrajectoryStock : EvDevEventTimesTrajectoriesStockSet) {
     EvDevEventTimesTrajectoryStock.resize(constDdpPtr->numPartitions_);
     for (size_t i = 0; i < constDdpPtr->numPartitions_; i++) {
       EvDevEventTimesTrajectoryStock[i].resize(timeTrajectoriesStock[i].size());
@@ -153,22 +153,22 @@ void DDP_DataCollector::calculateStateInputConstraintsSensitivity(const GaussNew
           timeTrajectoriesStock[i][k], stateTrajectoriesStock[i][k], inputTrajectoriesStock[i][k]);
 
       // if derivatives where available
-      if (g1DevArray.size() > 0) {
+      if (!g1DevArray.empty()) {
         if (g1DevArray.size() != numEventTimes) {
           throw std::runtime_error("Incorrect array dimension for constraint1 derivatives w.r.t. event times.");
         }
 
         for (size_t j = 0; j < numEventTimes; j++) {
-          EvDevEventTimesTrajectoryStockSet[j][i][k] = g1DevArray[j];
+          EvDevEventTimesTrajectoriesStockSet[j][i][k] = g1DevArray[j];
           EvDevEventTimesProjectedTrajectoriesStockSet[j][i][k] =
-              riccatiModificationTrajectoriesStock_[i][k].constraintRangeProjector_ * EvDevEventTimesTrajectoryStockSet[j][i][k];
+              riccatiModificationTrajectoriesStock_[i][k].constraintRangeProjector_ * EvDevEventTimesTrajectoriesStockSet[j][i][k];
         }  // end of j loop
 
       } else {
         for (size_t j = 0; j < numEventTimes; j++) {
           // TODO(mspieler): get nc1 from somewhere. But is it actually used when no derivatives available?
           size_t nc1 = 0;
-          EvDevEventTimesTrajectoryStockSet[j][i][k].setZero(nc1);
+          EvDevEventTimesTrajectoriesStockSet[j][i][k].setZero(nc1);
           EvDevEventTimesProjectedTrajectoriesStockSet[j][i][k].setZero();
         }  // end of j loop
       }

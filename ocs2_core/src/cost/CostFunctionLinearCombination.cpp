@@ -34,8 +34,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CostFunctionLinearCombination::CostFunctionLinearCombination(const std::vector<WeightedCost>& weightedCosts)
-    : weightedCosts_(weightedCosts) {}
+CostFunctionLinearCombination::CostFunctionLinearCombination(std::vector<WeightedCost> weightedCosts)
+    : weightedCosts_(std::move(weightedCosts)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

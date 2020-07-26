@@ -21,7 +21,7 @@ class LoopshapingConstraintOutputPattern final : public LoopshapingConstraint {
   LoopshapingConstraintOutputPattern(const ConstraintBase& systemConstraint, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
       : BASE(systemConstraint, std::move(loopshapingDefinition)){};
 
-  virtual ~LoopshapingConstraintOutputPattern() = default;
+  ~LoopshapingConstraintOutputPattern() override = default;
 
   LoopshapingConstraintOutputPattern(const LoopshapingConstraintOutputPattern& obj) = default;
 

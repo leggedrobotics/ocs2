@@ -50,7 +50,7 @@ class SystemDynamicsBase : public ControlledSystemBase {
   ~SystemDynamicsBase() override = default;
 
   /** Clone. */
-  virtual SystemDynamicsBase* clone() const = 0;
+  SystemDynamicsBase* clone() const override = 0;
 
   /** Computes the linear approximation */
   virtual VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) = 0;

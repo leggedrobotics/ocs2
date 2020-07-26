@@ -214,11 +214,11 @@ class CppAdInterface {
   std::vector<std::string> compileFlags_;
 
   // Sizes
-  size_t rangeDim_;
   size_t variableDim_;
   size_t parameterDim_;
-  size_t nnzJacobian_;
-  size_t nnzHessian_;
+  size_t rangeDim_ = 0;
+  size_t nnzJacobian_ = 0;
+  size_t nnzHessian_ = 0;
 
   // Names
   std::string modelName_;

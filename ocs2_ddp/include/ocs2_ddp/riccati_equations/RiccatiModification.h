@@ -38,7 +38,7 @@ namespace riccati_modification {
  * The struct contains Riccati equation modification terms.
  */
 struct Data {
-  scalar_t time_;
+  scalar_t time_ = 0.0;
 
   matrix_t deltaQm_;
   matrix_t deltaGm_;

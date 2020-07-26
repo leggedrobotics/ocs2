@@ -99,7 +99,7 @@ void RolloutBase::display(const scalar_array_t& timeTrajectory, const size_array
       std::cerr << "Index: " << k << '\n';
       std::cerr << "Time:  " << std::setprecision(12) << timeTrajectory[k] << '\n';
       std::cerr << "State: " << std::setprecision(3) << stateTrajectory[k].transpose() << '\n';
-      if (inputTrajectory) {
+      if (inputTrajectory != nullptr) {
         std::cerr << "Input: " << std::setprecision(3) << (*inputTrajectory)[k].transpose() << '\n';
       }
 

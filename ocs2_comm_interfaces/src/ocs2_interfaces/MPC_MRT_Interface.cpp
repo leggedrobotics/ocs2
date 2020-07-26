@@ -155,7 +155,7 @@ void MPC_MRT_Interface::fillMpcOutputBuffers(SystemObservation mpcInitObservatio
 /******************************************************************************************************/
 void MPC_MRT_Interface::getLinearFeedbackGain(scalar_t time, matrix_t& K) {
   auto controller = dynamic_cast<LinearController*>(this->currentPrimalSolution_->controllerPtr_.get());
-  if (!controller) {
+  if (controller == nullptr) {
     throw std::runtime_error("Feedback gains only available with linear controller");
   }
   controller->getFeedbackGain(time, K);

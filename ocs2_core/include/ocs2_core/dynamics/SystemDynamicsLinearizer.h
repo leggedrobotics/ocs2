@@ -46,8 +46,8 @@ namespace ocs2 {
 class SystemDynamicsLinearizer final : public SystemDynamicsBase {
  public:
   /** Constructor */
-  SystemDynamicsLinearizer(std::shared_ptr<ControlledSystemBase> nonlinearSystemPtr, bool doubleSidedDerivative = true,
-                           bool isSecondOrderSystem = false, scalar_t eps = Eigen::NumTraits<scalar_t>::epsilon());
+  explicit SystemDynamicsLinearizer(std::shared_ptr<ControlledSystemBase> nonlinearSystemPtr, bool doubleSidedDerivative = true,
+                                    bool isSecondOrderSystem = false, scalar_t eps = Eigen::NumTraits<scalar_t>::epsilon());
 
   /** Copy constructor */
   SystemDynamicsLinearizer(const SystemDynamicsLinearizer& other);

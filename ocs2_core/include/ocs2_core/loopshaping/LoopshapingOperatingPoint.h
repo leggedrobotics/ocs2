@@ -16,7 +16,7 @@ class LoopshapingOperatingPoint final : public SystemOperatingTrajectoriesBase {
   LoopshapingOperatingPoint(const SystemOperatingTrajectoriesBase& systembase, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
       : SystemOperatingTrajectoriesBase(), systembase_(systembase.clone()), loopshapingDefinition_(std::move(loopshapingDefinition)) {}
 
-  virtual ~LoopshapingOperatingPoint() = default;
+  ~LoopshapingOperatingPoint() override = default;
 
   LoopshapingOperatingPoint(const LoopshapingOperatingPoint& obj)
       : SystemOperatingTrajectoriesBase(), systembase_(obj.systembase_->clone()), loopshapingDefinition_(obj.loopshapingDefinition_) {}

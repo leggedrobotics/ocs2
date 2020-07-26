@@ -41,7 +41,7 @@ class CostFunctionLinearCombination : public CostFunctionBase {
  public:
   using WeightedCost = std::pair<scalar_t, std::shared_ptr<CostFunctionBase>>;
 
-  explicit CostFunctionLinearCombination(const std::vector<WeightedCost>& weightedCosts);
+  explicit CostFunctionLinearCombination(std::vector<WeightedCost> weightedCosts);
 
   CostFunctionLinearCombination(const CostFunctionLinearCombination& rhs);
 

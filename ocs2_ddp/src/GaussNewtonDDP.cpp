@@ -47,9 +47,7 @@ GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynami
     : Solver_BASE(),
       ddpSettings_(ddpSettings),
       threadPool_(ddpSettings.nThreads_, ddpSettings.threadPriority_),
-      algorithmName_(algorithmName),
-      rewindCounter_(0),
-      iteration_(0) {
+      algorithmName_(algorithmName) {
   // Dynamics, Constraints, derivatives, and cost
   linearQuadraticApproximatorPtrStock_.clear();
   linearQuadraticApproximatorPtrStock_.reserve(ddpSettings_.nThreads_);
@@ -436,7 +434,7 @@ void GaussNewtonDDP::computeNormalizedTime(const scalar_array_t& timeTrajectory,
 /******************************************************************************************************/
 void GaussNewtonDDP::adjustController(const scalar_array_t& newEventTimes, const scalar_array_t& controllerEventTimes) {
   // adjust the nominal controllerStock using trajectory spreading
-  if (nominalControllersStock_.size() > 0) {
+  if (!nominalControllersStock_.empty()) {
     trajectorySpreadingController_.adjustController(newEventTimes, controllerEventTimes, nominalControllersStock_);
   }
 }
@@ -1300,7 +1298,7 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
     /*
      * compute and augment the LQ approximation of intermediate times for the partition i
      */
-    if (nominalTimeTrajectoriesStock_[i].size() > 0) {
+    if (!nominalTimeTrajectoriesStock_[i].empty()) {
       // set cost desired trajectories
       for (auto& lqApproximator : linearQuadraticApproximatorPtrStock_) {
         lqApproximator->costFunction().setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
@@ -1967,9 +1965,9 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   performanceIndexHistory_.clear();
 
   // check if after the truncation the internal controller is empty
-  isInitInternalControllerEmpty_ = false;
+  bool isInitInternalControllerEmpty = false;
   for (const auto& controller : nominalControllersStock_) {
-    isInitInternalControllerEmpty_ = isInitInternalControllerEmpty_ || controller.empty();
+    isInitInternalControllerEmpty = isInitInternalControllerEmpty || controller.empty();
   }
 
   // display
@@ -2025,12 +2023,12 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
                        cachedInequalityConstraintPenalty);
     switch (ddpSettings_.strategy_) {
       case ddp_strategy::type::LINE_SEARCH: {
-        isStepLengthStarZero = numerics::almost_eq(lineSearchModule_.stepLengthStar.load(), 0.0) && !isInitInternalControllerEmpty_;
+        isStepLengthStarZero = numerics::almost_eq(lineSearchModule_.stepLengthStar.load(), 0.0) && !isInitInternalControllerEmpty;
         isCostFunctionConverged = relCost <= ddpSettings_.minRelCost_;
         break;
       }
       case ddp_strategy::type::LEVENBERG_MARQUARDT: {
-        if (levenbergMarquardtModule_.numSuccessiveRejections == 0 && !isInitInternalControllerEmpty_) {
+        if (levenbergMarquardtModule_.numSuccessiveRejections == 0 && !isInitInternalControllerEmpty) {
           isCostFunctionConverged = relCost <= ddpSettings_.minRelCost_;
         }
         break;
@@ -2038,7 +2036,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     }
     isConstraintsSatisfied = performanceIndex_.stateInputEqConstraintISE <= ddpSettings_.constraintTolerance_;
     isOptimizationConverged = (isCostFunctionConverged || isStepLengthStarZero) && isConstraintsSatisfied;
-    isInitInternalControllerEmpty_ = false;
+    isInitInternalControllerEmpty = false;
 
   }  // end of while loop
 

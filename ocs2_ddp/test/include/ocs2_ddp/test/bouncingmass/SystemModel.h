@@ -45,13 +45,12 @@ using matrix_t = ocs2::matrix_t;
 
 class BouncingMassDynamics final : public ocs2::LinearSystemDynamics {
  public:
-  BouncingMassDynamics() : LinearSystemDynamics(matrix_t(STATE_DIM, STATE_DIM), matrix_t(STATE_DIM, INPUT_DIM)) {
+  BouncingMassDynamics()
+  : LinearSystemDynamics(matrix_t(STATE_DIM, STATE_DIM), matrix_t(STATE_DIM, INPUT_DIM), matrix_t(STATE_DIM, STATE_DIM)) {
     LinearSystemDynamics::A_ << 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
     LinearSystemDynamics::B_ << 0.0, 1.0, 0.0;
-
     const scalar_t e = 0.95;
-    delta_ << 0.0, 0.0, 0.0, 0.0, -(1.0 + e), 0.0, 0.0, 0.0, 0.0;
-    LinearSystemDynamics::G_ = matrix_t::Identity(STATE_DIM, STATE_DIM) + delta_;
+    LinearSystemDynamics::G_ << 1.0, 0.0, 0.0, 0.0, -e, 0.0, 0.0, 0.0, 1.0;
   }
 
   ~BouncingMassDynamics() override = default;
@@ -59,23 +58,28 @@ class BouncingMassDynamics final : public ocs2::LinearSystemDynamics {
   BouncingMassDynamics* clone() const override { return new BouncingMassDynamics(*this); }
 
   vector_t computeJumpMap(scalar_t t, const vector_t& x) override {
-    vector_t mappedState = x + delta_ * x;
-
-    if (x[2] < 5) {
-      mappedState[2] += 1;
+    vector_t mappedState = LinearSystemDynamics::computeJumpMap(t, x);
+    if (x(2) < 5) {
+      mappedState(2) += 1;
     }
     return mappedState;
   }
 
   vector_t computeGuardSurfaces(scalar_t t, const vector_t& x) override {
     vector_t guardSurfaces(1);
-    guardSurfaces[0] = x[0];
+    guardSurfaces(0) = x(0);
     return guardSurfaces;
   }
 
- private:
-  matrix_t delta_{STATE_DIM, STATE_DIM};
+  ocs2::VectorFunctionLinearApproximation guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) override {
+    ocs2::VectorFunctionLinearApproximation approximation;
+    approximation.dfdx.setIdentity(1, x.rows());
+    approximation.dfdu.setZero(1, u.rows());
+    approximation.f = computeGuardSurfaces(t, x);
+    return approximation;
+  }
 };
+
 
 class BouncingMassCost final : public ocs2::QuadraticCostFunction {
  public:

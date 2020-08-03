@@ -56,7 +56,7 @@ void SwitchedModelCostBase::setCurrentStateAndControl(const scalar_t& t, const s
   // TODO (rgrandia) : implement a better way to switch between heuristic inputs and tracking user defined inputs.
   if (uNominal.isZero()) {
     inputFromContactFlags(contactFlags, xNominal, uNominal);
-  };
+  }
 
   BASE::setCurrentStateAndControl(t, x, u, xNominal, uNominal, xNominal);
 }

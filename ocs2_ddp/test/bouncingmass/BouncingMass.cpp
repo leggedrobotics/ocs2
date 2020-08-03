@@ -36,7 +36,7 @@
  * (1) No penetration of Guard Surfaces
  * (2) Check of cost function compared against cost calculated during trusted run of SLQ
  */
-TEST(testStateRollOut_SLQ, DISABLED_BouncingMassTest) {
+TEST(testStateRollOut_SLQ, BouncingMassTest) {
   using scalar_t = ocs2::scalar_t;
   using vector_t = ocs2::vector_t;
   using matrix_t = ocs2::matrix_t;
@@ -75,11 +75,11 @@ TEST(testStateRollOut_SLQ, DISABLED_BouncingMassTest) {
   // Generation of Reference Trajectory
   const scalar_array_t trajTimes{0, 0.2, 0.8, 1.0, 1.2, 1.8, 2.0};
 
-  vector_t state0(STATE_DIM);  //	Intial and final state
+  vector_t state0(STATE_DIM);  //	Initial and final state
   state0 << 0.5, 0, 0;
   vector_t state1(STATE_DIM);  //	Hard impact
   state1 << 0, -5, 0;
-  vector_t state2(STATE_DIM);  // 	Soft impact
+  vector_t state2(STATE_DIM);  // Soft impact
   state2 << 0, -1, 0;
 
   const scalar_t delta = 0.5;

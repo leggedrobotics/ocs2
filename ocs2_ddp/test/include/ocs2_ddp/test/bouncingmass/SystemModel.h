@@ -64,7 +64,7 @@ class BouncingMassDynamics final : public ocs2::LinearSystemDynamics {
     return mappedState;
   }
 
-  vector_t computeGuardSurfaces(scalar_t t, const vector_t& x) {
+  vector_t computeGuardSurfaces(scalar_t t, const vector_t& x) override {
     vector_t guardSurfaces(1);
     guardSurfaces[0] = x[0];
     return guardSurfaces;

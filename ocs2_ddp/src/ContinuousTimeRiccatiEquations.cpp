@@ -132,40 +132,30 @@ void ContinuousTimeRiccatiEquations::setData(const scalar_array_t* timeStampPtr,
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t ContinuousTimeRiccatiEquations::computeJumpMap(scalar_t z, const vector_t& allSs) {
-  // epsilon is set to include times past event times which have been artificially increased in the rollout
-  scalar_t time = -z;
-  size_t index = lookup::findFirstIndexWithinTol(eventTimes_, time, 1e-5);
-
-  // jump model data
-  const auto& jumpModelData = (*modelDataEventTimesPtr_)[index];
-
-  //  vector_t allSsJump;
-  //  convert2Vector(jumpModelData.cost_.dfdxx, jumpModelData.cost_.dfdx, jumpModelData.cost_.f, allSsJump);
-  //
-  //  allSsPreEvent = allSs + allSsJump;
-
   // convert to Riccati coefficients
   convert2Matrix(allSs, continuousTimeRiccatiData_.Sm_, continuousTimeRiccatiData_.Sv_, continuousTimeRiccatiData_.s_);
 
-  // TODO(farbod): Fix this
-  const auto state_dim = continuousTimeRiccatiData_.Sm_.rows();
-  const vector_t Hv = vector_t::Zero(state_dim);                 // jumpModelData.dynamicsBias_;
-  const matrix_t Am = matrix_t::Identity(state_dim, state_dim);  // jumpModelData.cost_.dfdxx;
+  // epsilon is set to include times past event times which have been artificially increased in the rollout
+  const auto time = -z;
+  const auto index = lookup::findFirstIndexWithinTol(eventTimes_, time, 1e-5);
+
+  // jump model data
+  const auto& jumpModelData = (*modelDataEventTimesPtr_)[index];
+  const auto& Hv = jumpModelData.dynamicsBias_;
+  const auto& Am = jumpModelData.dynamics_.dfdx;
 
   // Sm
-  matrix_t SmPreEvent = jumpModelData.cost_.dfdxx;
   continuousTimeRiccatiData_.SmTrans_projectedAm_.noalias() = continuousTimeRiccatiData_.Sm_.transpose() * Am;
+  matrix_t SmPreEvent = jumpModelData.cost_.dfdxx;
   SmPreEvent.noalias() += continuousTimeRiccatiData_.SmTrans_projectedAm_.transpose() * Am;
 
   // Sv
-  vector_t Sv_plus_Sm_Hv = continuousTimeRiccatiData_.Sv_;
-  Sv_plus_Sm_Hv.noalias() += continuousTimeRiccatiData_.Sm_ * Hv;
+  const vector_t Sm_Hv = continuousTimeRiccatiData_.Sm_ * Hv;
   vector_t SvPreEvent = jumpModelData.cost_.dfdx;
-  SvPreEvent.noalias() += Am.transpose() * Sv_plus_Sm_Hv;
+  SvPreEvent.noalias() += Am.transpose() * (continuousTimeRiccatiData_.Sv_ + Sm_Hv);
 
   // s
-  scalar_t sPreEvent = continuousTimeRiccatiData_.s_ + jumpModelData.cost_.f;
-  sPreEvent += Hv.dot(Sv_plus_Sm_Hv);
+  scalar_t sPreEvent = continuousTimeRiccatiData_.s_ + jumpModelData.cost_.f + Hv.dot(continuousTimeRiccatiData_.Sv_ + 0.5 * Sm_Hv);
 
   return convert2Vector(SmPreEvent, SvPreEvent, sPreEvent);
 }

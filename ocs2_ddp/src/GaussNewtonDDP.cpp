@@ -1329,7 +1329,7 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
      * compute and augment the LQ approximation of the event times for the partition i.
      * also call shiftHessian on the event time's cost 2nd order derivative.
      */
-    size_t NE = nominalPostEventIndicesStock_[i].size();
+    const size_t NE = nominalPostEventIndicesStock_[i].size();
     modelDataEventTimesStock_[i].resize(NE);
     if (NE > 0) {
       // perform the approximateEventsLQWorker for partition i
@@ -1346,6 +1346,7 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
           linearQuadraticApproximatorPtrStock_[taskId]->approximateLQProblemAtEventTime(
               nominalTimeTrajectoriesStock_[i][k], nominalStateTrajectoriesStock_[i][k], nominalInputTrajectoriesStock_[i][k],
               modelDataEventTimesStock_[i][timeIndex]);
+          modelDataEventTimesStock_[i][timeIndex].dynamicsBias_.setZero(nominalStateTrajectoriesStock_[i][k].size());
           // augment cost
           augmentCostWorker(taskId, constraintPenaltyCoefficients_.stateEqualityFinalPenaltyCoeff, 0.0,
                             modelDataEventTimesStock_[i][timeIndex]);

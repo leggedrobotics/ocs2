@@ -17,10 +17,9 @@ std::unique_ptr<ocs2::SLQ> getSlq(const QuadrupedInterface& quadrupedInterface, 
 std::unique_ptr<ocs2::MPC_SLQ> getMpc(const QuadrupedInterface& quadrupedInterface, const ocs2::MPC_Settings& mpcSettings,
                                       const ocs2::SLQ_Settings& slqSettings) {
   if (!quadrupedInterface.modelSettings().gaitOptimization_) {
-    auto mpcPtr = std::unique_ptr<ocs2::MPC_SLQ>(
-        new ocs2::MPC_SLQ(&quadrupedInterface.getRollout(), &quadrupedInterface.getDynamics(), quadrupedInterface.getConstraintPtr(),
-                          &quadrupedInterface.getCost(), &quadrupedInterface.getOperatingPoints(),
-                          quadrupedInterface.getInitialPartitionTimes(), slqSettings, mpcSettings));
+    auto mpcPtr = std::unique_ptr<ocs2::MPC_SLQ>(new ocs2::MPC_SLQ(&quadrupedInterface.getRollout(), &quadrupedInterface.getDynamics(),
+                                                                   quadrupedInterface.getConstraintPtr(), &quadrupedInterface.getCost(),
+                                                                   &quadrupedInterface.getOperatingPoints(), slqSettings, mpcSettings));
     mpcPtr->getSolverPtr()->setModeScheduleManager(quadrupedInterface.getModeScheduleManagerPtr());
     return mpcPtr;
   } else {

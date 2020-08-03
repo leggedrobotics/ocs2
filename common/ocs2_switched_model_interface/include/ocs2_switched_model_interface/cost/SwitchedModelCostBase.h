@@ -34,6 +34,7 @@ class SwitchedModelCostBase : public ocs2::QuadraticCostFunction {
   //! clone SwitchedModelCostBase class.
   SwitchedModelCostBase* clone() const override;
 
+ protected:
   std::pair<vector_t, vector_t> getNominalStateInput(scalar_t t, const vector_t& x, const vector_t& u) override;
 
  private:

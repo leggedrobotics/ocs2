@@ -81,9 +81,6 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   /** Access to model settings */
   const ModelSettings& modelSettings() const { return modelSettings_; };
 
-  /** Gets the time horizon of MPC */
-  scalar_t getTimeHorizon() const { return timeHorizon_; }
-
   /** Gets the rollout class */
   virtual const ocs2::RolloutBase& getRollout() const = 0;
 
@@ -102,7 +99,6 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   void loadSettings(const std::string& pathToConfigFile);
 
   std::string configFile_;
-  scalar_t timeHorizon_ = 1.0;
   ocs2::Rollout_Settings rolloutSettings_;
   ModelSettings modelSettings_;
 

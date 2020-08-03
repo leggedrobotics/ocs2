@@ -1,13 +1,6 @@
-
-mpcTimeHorizon
-{
-    timehorizon        1.0
-    numPartitions      2
-}
-
 model_settings
 {
-  constrainedIntegration        1
+  constrainedIntegration        true
 
   gravitationalAcceleration     9.81
 
@@ -15,10 +8,10 @@ model_settings
   zDirectionPositionWeight      0.0
   zDirectionVelocityWeight      0.5
 
-  enforceFrictionConeConstraint 0
+  enforceFrictionConeConstraint false
   frictionCoefficient           0.7
 
-  enforceTorqueConstraint       0
+  enforceTorqueConstraint       false
   torqueLimit                   40.0
 
   swing_trajectory_settings
@@ -33,9 +26,9 @@ model_settings
 
   mpcGoalCommandDelay           0.1
 
-  gaitOptimization              0
+  gaitOptimization              false
 
-  recompileLibraries            1
+  recompileLibraries            true
 }
 
 terrainPlane
@@ -99,7 +92,7 @@ slq
     checkNumericalStability          false
     debugPrintRollout                false
     debugCaching                     false
-    
+
     AbsTolODE                        1e-5
     RelTolODE                        1e-3
     maxNumStepsPerSecond             50000
@@ -110,12 +103,12 @@ slq
     inequalityConstraintDelta        5.0
     inequalityConstraintMu           0.1
 
-    preComputeRiccatiTerms           1
-    useFeedbackPolicy                1
+    preComputeRiccatiTerms           true
+    useFeedbackPolicy                true
     riskSensitiveCoeff               0
 
     strategy                         LINE_SEARCH
-    lineSearch                       
+    lineSearch
     {
         minStepLength                1e-4
         maxStepLength                1.0
@@ -136,6 +129,9 @@ slq
 
 mpc
 {
+  timeHorizon                     1.0
+  numPartitions                   2
+
   runtimeMaxNumIterations         1
   initMaxNumIterations            10
 

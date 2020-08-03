@@ -54,10 +54,6 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
   rolloutSettings_.loadSettings(pathToConfigFile, "slq.rollout");
   modelSettings_ = loadModelSettings(pathToConfigFile);
 
-  // partitioning times
-  size_t numPartitions;
-  ocs2::loadData::loadPartitioningTimes(pathToConfigFile, timeHorizon_, numPartitions, partitioningTimes_, true);
-
   // initial state of the switched system
   Eigen::Matrix<scalar_t, RBD_STATE_DIM, 1> initRbdState;
   ocs2::loadData::loadEigenMatrix(pathToConfigFile, "initialRobotState", initRbdState);
@@ -93,7 +89,6 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
                                                                                std::move(terrainModel));
 
   // Display
-  std::cerr << "\nTime Partition: {" << ocs2::toDelimitedString(partitioningTimes_) << "}\n";
   std::cerr << "\nInitial Modes Schedule: \n" << initModeSchedule << std::endl;
   std::cerr << "\nDefault Modes Sequence Template: \n" << defaultModeSequenceTemplate << std::endl;
 }

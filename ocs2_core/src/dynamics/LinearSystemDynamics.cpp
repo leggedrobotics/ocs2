@@ -34,13 +34,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearSystemDynamics::LinearSystemDynamics(matrix_t A, matrix_t B, matrix_t G /*= matrix_t()*/, matrix_t H /*= matrix_t()*/)
-    : A_(std::move(A)), B_(std::move(B)), G_(std::move(G)), H_(std::move(H)) {
+LinearSystemDynamics::LinearSystemDynamics(matrix_t A, matrix_t B, matrix_t G /*= matrix_t()*/)
+    : A_(std::move(A)), B_(std::move(B)), G_(std::move(G)) {
   if (G_.size() == 0) {
-    G_ = matrix_t::Zero(A_.rows(), A_.rows());
-  }
-  if (H_.size() == 0) {
-    H_ = matrix_t::Zero(A_.rows(), B_.cols());
+    G_.setIdentity(A_.rows(), A_.rows());
   }
 }
 
@@ -72,7 +69,7 @@ VectorFunctionLinearApproximation LinearSystemDynamics::linearApproximation(scal
   VectorFunctionLinearApproximation approximation;
   approximation.dfdx = A_;
   approximation.dfdu = B_;
-  approximation.f = A_ * x + B_ * u;
+  approximation.f = computeFlowMap(t, x, u);
   return approximation;
 }
 
@@ -82,8 +79,8 @@ VectorFunctionLinearApproximation LinearSystemDynamics::linearApproximation(scal
 VectorFunctionLinearApproximation LinearSystemDynamics::jumpMapLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
   VectorFunctionLinearApproximation approximation;
   approximation.dfdx = G_;
-  approximation.dfdu = H_;
-  approximation.f = G_ * x;
+  approximation.dfdu.setZero(A_.rows(), B_.cols());
+  approximation.f = computeJumpMap(t, x);
   return approximation;
 }
 

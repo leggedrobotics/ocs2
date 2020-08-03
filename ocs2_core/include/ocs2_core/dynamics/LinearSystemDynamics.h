@@ -33,9 +33,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+/**
+ *
+ * A linear time invariant system with the following flow and jump maps:
+ *
+ * - \f$ \dot{x} = A * x + B * u   g(x) > 0, \f$
+ * - \f$ x^{+} = G * x^{-}         g(x) = 0. \f$
+ *
+ * where \f$ g(x) \f$ is the guard surface defined by OdeBase::computeGuardSurfaces(t, x).
+ */
 class LinearSystemDynamics : public SystemDynamicsBase {
  public:
-  LinearSystemDynamics(matrix_t A, matrix_t B, matrix_t G = matrix_t(), matrix_t H = matrix_t());
+  LinearSystemDynamics(matrix_t A, matrix_t B, matrix_t G = matrix_t());
 
   ~LinearSystemDynamics() override = default;
 
@@ -53,7 +62,6 @@ class LinearSystemDynamics : public SystemDynamicsBase {
   matrix_t A_;
   matrix_t B_;
   matrix_t G_;
-  matrix_t H_;
 };
 
 }  // namespace ocs2

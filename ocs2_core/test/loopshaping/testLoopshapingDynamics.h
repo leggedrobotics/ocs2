@@ -24,12 +24,11 @@ class TestFixtureLoopShapingDynamics : public ::testing::Test {
     loopshapingDefinition_ = loopshaping_property_tree::load(settingsFile);
 
     // Create system dynamics
-    matrix_t B, H, A, G;
+    matrix_t A, B, G;
     A.setRandom(CONFIG::SYSTEM_STATE_DIM, CONFIG::SYSTEM_STATE_DIM);
-    G.setRandom(CONFIG::SYSTEM_STATE_DIM, CONFIG::SYSTEM_STATE_DIM);
     B.setRandom(CONFIG::SYSTEM_STATE_DIM, CONFIG::SYSTEM_INPUT_DIM);
-    H.setRandom(CONFIG::SYSTEM_STATE_DIM, CONFIG::SYSTEM_INPUT_DIM);
-    testSystem.reset(new LinearSystemDynamics(A, B, G, H));
+    G.setRandom(CONFIG::SYSTEM_STATE_DIM, CONFIG::SYSTEM_STATE_DIM);
+    testSystem.reset(new LinearSystemDynamics(A, B, G));
 
     // Create Loopshaping Dynamics
     testLoopshapingDynamics = LoopshapingDynamics::create(*testSystem, loopshapingDefinition_);

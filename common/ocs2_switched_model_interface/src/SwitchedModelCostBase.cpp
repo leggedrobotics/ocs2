@@ -53,6 +53,7 @@ void SwitchedModelCostBase::setCurrentStateAndControl(const scalar_t& t, const s
     BASE::costDesiredTrajectoriesPtr_->getDesiredInput(t, uNominal);
   }
   // If the input has non-zero values, don't overwrite it.
+  // TODO (rgrandia) : implement a better way to switch between heuristic inputs and tracking user defined inputs.
   if (uNominal.isZero()) {
     inputFromContactFlags(contactFlags, xNominal, uNominal);
   };

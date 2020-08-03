@@ -47,7 +47,7 @@ VectorFunctionLinearApproximation SystemDynamicsBase::jumpMapLinearApproximation
 /******************************************************************************************************/
 VectorFunctionLinearApproximation SystemDynamicsBase::guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
   VectorFunctionLinearApproximation approximation;
-  approximation.dfdx.setIdentity(1, x.rows());
+  approximation.dfdx.setZero(1, x.rows());
   approximation.dfdu.setZero(1, u.rows());
   approximation.f = this->computeGuardSurfaces(t, x);
   return approximation;

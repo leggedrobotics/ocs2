@@ -42,6 +42,6 @@ vector_t OdeBase::computeJumpMap(scalar_t time, const vector_t& state) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t OdeBase::computeGuardSurfaces(scalar_t time, const vector_t& state) {
-  return -vector_t::Ones(1);
+  return vector_t::Ones(1);
 }
 }  // namespace ocs2

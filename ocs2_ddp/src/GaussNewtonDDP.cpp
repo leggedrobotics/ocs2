@@ -1343,7 +1343,7 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
         while ((timeIndex = nextTimeIndex_++) < nominalPostEventIndicesStock_[i].size()) {
           // execute approximateLQ for the given partition and event time index
           const size_t k = nominalPostEventIndicesStock_[i][timeIndex] - 1;
-          linearQuadraticApproximatorPtrStock_[taskId]->approximateUnconstrainedLQProblemAtEventTime(
+          linearQuadraticApproximatorPtrStock_[taskId]->approximateLQProblemAtEventTime(
               nominalTimeTrajectoriesStock_[i][k], nominalStateTrajectoriesStock_[i][k], nominalInputTrajectoriesStock_[i][k],
               modelDataEventTimesStock_[i][timeIndex]);
           // augment cost

@@ -81,8 +81,8 @@ void SLQ::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const 
     // get next time index is atomic
     while ((timeIndex = BASE::nextTimeIndex_++) < timeTrajectory.size()) {
       // execute approximateLQ for the given partition and time index
-      BASE::linearQuadraticApproximatorPtrStock_[taskId]->approximateUnconstrainedLQProblem(
-          timeTrajectory[timeIndex], stateTrajectory[timeIndex], inputTrajectory[timeIndex], modelDataTrajectory[timeIndex]);
+      BASE::linearQuadraticApproximatorPtrStock_[taskId]->approximateLQProblem(timeTrajectory[timeIndex], stateTrajectory[timeIndex],
+                                                                               inputTrajectory[timeIndex], modelDataTrajectory[timeIndex]);
     }
   };
 

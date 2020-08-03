@@ -91,26 +91,24 @@ class LinearQuadraticApproximator {
   CostFunctionBase& costFunction() const { return *costFunctionPtr_; }
 
   /**
-   * Calculates an LQ approximate of the unconstrained optimal control problem at a given time, state, and input.
+   * Calculates an LQ approximate of the constrained optimal control problem at a given time, state, and input.
    *
    * @param [in] time: The current time.
    * @param [in] state: The current state.
    * @param [in] input: The current input.
    * @param [out] modelData: The output data model.
    */
-  void approximateUnconstrainedLQProblem(const scalar_t& time, const vector_t& state, const vector_t& input,
-                                         ModelDataBase& modelData) const;
+  void approximateLQProblem(const scalar_t& time, const vector_t& state, const vector_t& input, ModelDataBase& modelData) const;
 
   /**
-   * Calculates an LQ approximate of the event times process.
+   * Calculates an LQ approximate of the constrained optimal control problem at an event time.
    *
    * @param [in] time: The current time.
    * @param [in] state: The current state.
    * @param [in] input: The current input.
    * @param [out] modelData: The output data model.
    */
-  void approximateUnconstrainedLQProblemAtEventTime(const scalar_t& time, const vector_t& state, const vector_t& input,
-                                                    ModelDataBase& modelData) const;
+  void approximateLQProblemAtEventTime(const scalar_t& time, const vector_t& state, const vector_t& input, ModelDataBase& modelData) const;
 
   /**
    * Calculates linearized system dynamics.
@@ -133,14 +131,14 @@ class LinearQuadraticApproximator {
   void approximateConstraints(const scalar_t& time, const vector_t& state, const vector_t& input, ModelDataBase& modelData) const;
 
   /**
-   * Calculates the intermediate cost function and its quadratic approximation.
+   * Calculates the cost function and its quadratic approximation.
    *
    * @param [in] time: The current time.
    * @param [in] state: The current state.
    * @param [in] input: The current input.
    * @param [in] modelData: Model data object.
    */
-  void approximateIntermediateCost(const scalar_t& time, const vector_t& state, const vector_t& input, ModelDataBase& modelData) const;
+  void approximateCost(const scalar_t& time, const vector_t& state, const vector_t& input, ModelDataBase& modelData) const;
 
  private:
   std::unique_ptr<SystemDynamicsBase> systemDynamicsPtr_;

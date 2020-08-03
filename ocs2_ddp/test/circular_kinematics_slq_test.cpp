@@ -48,7 +48,7 @@ TEST(circular_kinematics_slq_test, circular_kinematics_slq_test) {
   slqSettings.useNominalTimeForBackwardPass_ = true;
   slqSettings.ddpSettings_.preComputeRiccatiTerms_ = false;
   slqSettings.RiccatiIntegratorType_ = IntegratorType::ODE45;
-  slqSettings.ddpSettings_.displayInfo_ = true;
+  slqSettings.ddpSettings_.displayInfo_ = false;
   slqSettings.ddpSettings_.displayShortSummary_ = true;
   slqSettings.ddpSettings_.checkNumericalStability_ = false;
   slqSettings.ddpSettings_.debugPrintRollout_ = false;
@@ -59,7 +59,7 @@ TEST(circular_kinematics_slq_test, circular_kinematics_slq_test) {
   slqSettings.ddpSettings_.minRelCost_ = 1e-3;
   slqSettings.ddpSettings_.constraintTolerance_ = 1e-5;
   slqSettings.ddpSettings_.constraintPenaltyInitialValue_ = 2.0;
-  slqSettings.ddpSettings_.constraintPenaltyIncreaseRate_ = 2.0;
+  slqSettings.ddpSettings_.constraintPenaltyIncreaseRate_ = 1.5;
   slqSettings.ddpSettings_.strategy_ = ddp_strategy::type::LINE_SEARCH;
   slqSettings.ddpSettings_.lineSearch_.minStepLength_ = 0.01;
   slqSettings.ddpSettings_.lineSearch_.hessianCorrectionStrategy_ = hessian_correction::Strategy::CHOLESKY_MODIFICATION;
@@ -111,7 +111,6 @@ TEST(circular_kinematics_slq_test, circular_kinematics_slq_test) {
 
   // SLQ - multi-thread version
   slqSettings.ddpSettings_.nThreads_ = 3;
-  slqSettings.ddpSettings_.displayInfo_ = false;
   SLQ slqMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
   slqMT.useParallelRiccatiSolverFromInitItr(false);
 

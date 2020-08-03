@@ -45,7 +45,7 @@ enum { STATE_DIM = 2, INPUT_DIM = 2 };
 
 TEST(circular_kinematics_ilqr_test, circular_kinematics_ilqr_test) {
   ILQR_Settings ilqrSettings;
-  ilqrSettings.ddpSettings_.displayInfo_ = true;
+  ilqrSettings.ddpSettings_.displayInfo_ = false;
   ilqrSettings.ddpSettings_.displayShortSummary_ = true;
   ilqrSettings.ddpSettings_.checkNumericalStability_ = false;
   ilqrSettings.ddpSettings_.debugPrintRollout_ = false;
@@ -56,7 +56,7 @@ TEST(circular_kinematics_ilqr_test, circular_kinematics_ilqr_test) {
   ilqrSettings.ddpSettings_.minRelCost_ = 1e-3;
   ilqrSettings.ddpSettings_.constraintTolerance_ = 1e-5;
   ilqrSettings.ddpSettings_.constraintPenaltyInitialValue_ = 2.0;
-  ilqrSettings.ddpSettings_.constraintPenaltyIncreaseRate_ = 2.0;
+  ilqrSettings.ddpSettings_.constraintPenaltyIncreaseRate_ = 1.5;
   ilqrSettings.ddpSettings_.strategy_ = ddp_strategy::type::LINE_SEARCH;
   ilqrSettings.ddpSettings_.lineSearch_.minStepLength_ = 0.01;
   ilqrSettings.ddpSettings_.lineSearch_.hessianCorrectionStrategy_ = hessian_correction::Strategy::CHOLESKY_MODIFICATION;
@@ -108,7 +108,6 @@ TEST(circular_kinematics_ilqr_test, circular_kinematics_ilqr_test) {
 
   // ILQR - multi-thread version
   ilqrSettings.ddpSettings_.nThreads_ = 3;
-  ilqrSettings.ddpSettings_.displayInfo_ = false;
   ILQR ilqrMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ilqrSettings);
 
   // run single core ILQR

@@ -47,7 +47,7 @@ class DdpCorrectnessTest : public testing::Test {
   static constexpr size_t N = 50;
   static constexpr size_t STATE_DIM = 3;
   static constexpr size_t INPUT_DIM = 2;
-  static constexpr double solutionPrecision = 1e-3;
+  static constexpr ocs2::scalar_t solutionPrecision = 1e-3;
 
   DdpCorrectnessTest() {
     srand(0);
@@ -78,9 +78,9 @@ class DdpCorrectnessTest : public testing::Test {
     // rollout settings
     const ocs2::Rollout_Settings rolloutSettings = []() {
       ocs2::Rollout_Settings rolloutSettings;
-      rolloutSettings.absTolODE_ = 1e-10;
-      rolloutSettings.relTolODE_ = 1e-7;
-      rolloutSettings.maxNumStepsPerSecond_ = 10000;
+      rolloutSettings.absTolODE_ = 1e-12;
+      rolloutSettings.relTolODE_ = 1e-9;
+      rolloutSettings.maxNumStepsPerSecond_ = 100000;
       return rolloutSettings;
     }();
 
@@ -95,11 +95,11 @@ class DdpCorrectnessTest : public testing::Test {
     ocs2::DDP_Settings ddpSettings;
     ddpSettings.displayInfo_ = false;
     ddpSettings.displayShortSummary_ = false;
-    ddpSettings.absTolODE_ = 1e-10;
-    ddpSettings.relTolODE_ = 1e-7;
-    ddpSettings.maxNumStepsPerSecond_ = 10000;
-    ddpSettings.lineSearch_.minStepLength_ = 0.0001;
-    ddpSettings.minRelCost_ = 5e-4;
+    ddpSettings.absTolODE_ = 1e-12;
+    ddpSettings.relTolODE_ = 1e-9;
+    ddpSettings.maxNumStepsPerSecond_ = 100000;
+    ddpSettings.lineSearch_.minStepLength_ = 1e-4;
+    ddpSettings.minRelCost_ = 1e-4;
     ddpSettings.nThreads_ = numPartitions;
     ddpSettings.maxNumIterations_ = 2 + (numPartitions - 1);  // need an extra iteration for each added time partition
     return ddpSettings;
@@ -135,7 +135,7 @@ class DdpCorrectnessTest : public testing::Test {
 constexpr size_t DdpCorrectnessTest::N;
 constexpr size_t DdpCorrectnessTest::STATE_DIM;
 constexpr size_t DdpCorrectnessTest::INPUT_DIM;
-constexpr double DdpCorrectnessTest::solutionPrecision;
+constexpr ocs2::scalar_t DdpCorrectnessTest::solutionPrecision;
 
 TEST_F(DdpCorrectnessTest, slq_solution_single_partition) {
   ocs2::scalar_array_t partitioningTimes{startTime, finalTime};

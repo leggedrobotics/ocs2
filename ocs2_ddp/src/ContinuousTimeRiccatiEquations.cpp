@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_ddp/riccati_equations/ContinuousTimeRiccatiEquations.h>
 #include <ocs2_ddp/riccati_equations/RiccatiModificationInterpolation.h>
+#include <ocs2_ddp/riccati_equations/RiccatiTransversalityConditions.h>
 
 namespace ocs2 {
 
@@ -139,25 +140,10 @@ vector_t ContinuousTimeRiccatiEquations::computeJumpMap(scalar_t z, const vector
   const auto time = -z;
   const auto index = lookup::findFirstIndexWithinTol(eventTimes_, time, 1e-5);
 
-  // jump model data
-  const auto& jumpModelData = (*modelDataEventTimesPtr_)[index];
-  const auto& Hv = jumpModelData.dynamicsBias_;
-  const auto& Am = jumpModelData.dynamics_.dfdx;
+  const auto SsPreEvent = RiccatiTransversalityConditions((*modelDataEventTimesPtr_)[index], continuousTimeRiccatiData_.Sm_,
+                                                          continuousTimeRiccatiData_.Sv_, continuousTimeRiccatiData_.s_);
 
-  // Sm
-  continuousTimeRiccatiData_.SmTrans_projectedAm_.noalias() = continuousTimeRiccatiData_.Sm_.transpose() * Am;
-  matrix_t SmPreEvent = jumpModelData.cost_.dfdxx;
-  SmPreEvent.noalias() += continuousTimeRiccatiData_.SmTrans_projectedAm_.transpose() * Am;
-
-  // Sv
-  const vector_t Sm_Hv = continuousTimeRiccatiData_.Sm_ * Hv;
-  vector_t SvPreEvent = jumpModelData.cost_.dfdx;
-  SvPreEvent.noalias() += Am.transpose() * (continuousTimeRiccatiData_.Sv_ + Sm_Hv);
-
-  // s
-  scalar_t sPreEvent = continuousTimeRiccatiData_.s_ + jumpModelData.cost_.f + Hv.dot(continuousTimeRiccatiData_.Sv_ + 0.5 * Sm_Hv);
-
-  return convert2Vector(SmPreEvent, SvPreEvent, sPreEvent);
+  return convert2Vector(std::get<0>(SsPreEvent), std::get<1>(SsPreEvent), std::get<2>(SsPreEvent));
 }
 
 /******************************************************************************************************/

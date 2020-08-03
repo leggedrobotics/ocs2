@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_ddp/ILQR.h>
 
+#include <ocs2_ddp/riccati_equations/RiccatiTransversalityConditions.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -308,12 +310,9 @@ void ILQR::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, con
     }  // end of k loop
 
     if (i > 0) {
-      const auto& qFinal = BASE::modelDataEventTimesStock_[partitionIndex][i - 1].cost_.f;
-      const auto& QvFinal = BASE::modelDataEventTimesStock_[partitionIndex][i - 1].cost_.dfdx;
-      const auto& QmFinal = BASE::modelDataEventTimesStock_[partitionIndex][i - 1].cost_.dfdxx;
-      sFinalTemp = BASE::sTrajectoryStock_[partitionIndex][beginTimeItr] + qFinal;
-      SvFinalTemp = BASE::SvTrajectoryStock_[partitionIndex][beginTimeItr] + QvFinal;
-      SmFinalTemp = BASE::SmTrajectoryStock_[partitionIndex][beginTimeItr] + QmFinal;
+      std::tie(SmFinalTemp, SvFinalTemp, sFinalTemp) = RiccatiTransversalityConditions(
+          BASE::modelDataEventTimesStock_[partitionIndex][i - 1], BASE::SmTrajectoryStock_[partitionIndex][beginTimeItr],
+          BASE::SvTrajectoryStock_[partitionIndex][beginTimeItr], BASE::sTrajectoryStock_[partitionIndex][beginTimeItr]);
     }
   }  // end of i loop
 }

@@ -29,58 +29,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_ddp/GaussNewtonDDP.h"
-#include "ocs2_oc/rollout/TimeTriggeredRollout.h"
+#include <ocs2_core/Types.h>
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+
+#include "GaussNewtonDDP.h"
 
 namespace ocs2 {
 
 /**
  * Collects the required data from DDP instance. It uses swap method wherever it is possible.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 class DDP_DataCollector {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using ddp_t = GaussNewtonDDP<STATE_DIM, INPUT_DIM>;
-
-  using Ptr = std::shared_ptr<DDP_DataCollector<STATE_DIM, INPUT_DIM>>;
-
-  using controller_t = typename ddp_t::controller_t;
-  using controller_ptr_array_t = typename ddp_t::controller_ptr_array_t;
-  using linear_controller_t = typename ddp_t::linear_controller_t;
-  using linear_controller_array_t = typename ddp_t::linear_controller_array_t;
-  using size_array_t = typename ddp_t::size_array_t;
-  using size_array2_t = typename ddp_t::size_array2_t;
-  using scalar_t = typename ddp_t::scalar_t;
-  using scalar_array_t = typename ddp_t::scalar_array_t;
-  using scalar_array2_t = typename ddp_t::scalar_array2_t;
-  using scalar_array3_t = typename ddp_t::scalar_array3_t;
-  using state_vector_t = typename ddp_t::state_vector_t;
-  using state_vector_array_t = typename ddp_t::state_vector_array_t;
-  using state_vector_array2_t = typename ddp_t::state_vector_array2_t;
-  using input_vector_array_t = typename ddp_t::input_vector_array_t;
-  using input_vector_array2_t = typename ddp_t::input_vector_array2_t;
-  using state_matrix_array_t = typename ddp_t::state_matrix_array_t;
-  using state_matrix_t = typename ddp_t::state_matrix_t;
-  using state_matrix_array2_t = typename ddp_t::state_matrix_array2_t;
-  using dynamic_vector_t = typename ddp_t::dynamic_vector_t;
-  using dynamic_vector_array_t = typename ddp_t::dynamic_vector_array_t;
-  using dynamic_vector_array2_t = typename ddp_t::dynamic_vector_array2_t;
-  using dynamic_vector_array3_t = typename ddp_t::dynamic_vector_array3_t;
-  using dynamic_matrix_t = typename ddp_t::dynamic_matrix_t;
-  using dynamic_matrix_array_t = typename ddp_t::dynamic_matrix_array_t;
-  using dynamic_matrix_array2_t = typename ddp_t::dynamic_matrix_array2_t;
-  using dynamic_matrix_array3_t = typename ddp_t::dynamic_matrix_array3_t;
-
-  using derivatives_base_t = typename ddp_t::derivatives_base_t;
-  using constraint_base_t = typename ddp_t::constraint_base_t;
-  using cost_function_base_t = typename ddp_t::cost_function_base_t;
-  using rollout_base_t = typename ddp_t::rollout_base_t;
-
   /**
    * Default constructor.
    */
@@ -90,12 +50,12 @@ class DDP_DataCollector {
    * Constructor.
    *
    * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
-   * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
+   * @param [in] systemDynamicsPtr: The system dynamics and derivatives for the subsystems.
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
-   * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
+   * @param [in] costFunctionPtr: The cost function (intermediate and final costs) and its derivatives for subsystems.
    */
-  DDP_DataCollector(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
-                    const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr);
+  DDP_DataCollector(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
+                    const CostFunctionBase* costFunctionPtr);
 
   /**
    * Default destructor.
@@ -107,75 +67,71 @@ class DDP_DataCollector {
    *
    * @param constDdpPtr: A pointer to the DDP instance.
    */
-  void collect(const ddp_t* constDdpPtr);
+  void collect(const GaussNewtonDDP* constDdpPtr);
 
   /******************
    * DDP variables image
    ******************/
-  scalar_t initTime_;
-  scalar_t finalTime_;
-  state_vector_t initState_;
+  scalar_t initTime_ = 0.0;
+  scalar_t finalTime_ = 0.0;
+  vector_t initState_;
 
-  size_t initActivePartition_;
-  size_t finalActivePartition_;
+  size_t initActivePartition_ = 0;
+  size_t finalActivePartition_ = 0;
   size_t numPartitions_ = 0;
   scalar_array_t partitioningTimes_;
 
-  unsigned long long int rewindCounter_;
+  unsigned long long int rewindCounter_ = 0;
 
   ModeSchedule modeSchedule_;
 
-  linear_controller_array_t optimizedControllersStock_;
+  std::vector<LinearController> optimizedControllersStock_;
 
   scalar_array2_t nominalTimeTrajectoriesStock_;
   size_array2_t nominalPostEventIndicesStock_;
-  state_vector_array2_t nominalStateTrajectoriesStock_;
-  input_vector_array2_t nominalInputTrajectoriesStock_;
+  vector_array2_t nominalStateTrajectoriesStock_;
+  vector_array2_t nominalInputTrajectoriesStock_;
 
   // model data trajectory
-  ModelDataBase::array2_t modelDataTrajectoriesStock_;
+  std::vector<std::vector<ModelDataBase>> modelDataTrajectoriesStock_;
 
   // event times model data
-  ModelDataBase::array2_t modelDataEventTimesStock_;
+  std::vector<std::vector<ModelDataBase>> modelDataEventTimesStock_;
 
   // projected model data trajectory
-  ModelDataBase::array2_t projectedModelDataTrajectoriesStock_;
+  std::vector<std::vector<ModelDataBase>> projectedModelDataTrajectoriesStock_;
 
   // Riccati modification
-  riccati_modification::Data::array2_t riccatiModificationTrajectoriesStock_;
+  std::vector<std::vector<riccati_modification::Data>> riccatiModificationTrajectoriesStock_;
 
-  // TODO: delete this
-  //  dynamic_matrix_array2_t RmInverseTrajectoriesStock_;
-  //  dynamic_matrix_array2_t RmInvConstrainedCholTrajectoryStock_;
-  //  dynamic_matrix_array2_t DmDagerTrajectoriesStock_;
+  // TODO(mspieler): delete this
+  //  matrix_array2_t RmInverseTrajectoriesStock_;
+  //  matrix_array2_t RmInvConstrainedCholTrajectoryStock_;
+  //  matrix_array2_t DmDagerTrajectoriesStock_;
 
-  // terminal cost which is interpreted as the Heuristic function
-  scalar_t sHeuristics_;
-  dynamic_vector_t SvHeuristics_;
-  dynamic_matrix_t SmHeuristics_;
+  // final cost which is interpreted as the Heuristic function
+  ScalarFunctionQuadraticApproximation heuristics_;
 
   scalar_array2_t SsTimeTrajectoriesStock_;
   scalar_array2_t SsNormalizedTimeTrajectoriesStock_;
   size_array2_t SsNormalizedEventsPastTheEndIndecesStock_;
   scalar_array2_t sTrajectoriesStock_;
-  dynamic_vector_array2_t SvTrajectoriesStock_;
-  dynamic_matrix_array2_t SmTrajectoriesStock_;
+  vector_array2_t SvTrajectoriesStock_;
+  matrix_array2_t SmTrajectoriesStock_;
 
   /******************
    * DDP missing variables
    ******************/
-  dynamic_vector_array3_t EvDevEventTimesTrajectoryStockSet_;           // state-input constraint derivative w.r.t. event times
-  dynamic_vector_array3_t EvDevEventTimesProjectedTrajectoryStockSet_;  // DmDager * EvDevEventTimes
+  vector_array3_t EvDevEventTimesTrajectoryStockSet_;           // state-input constraint derivative w.r.t. event times
+  vector_array3_t EvDevEventTimesProjectedTrajectoryStockSet_;  // DmDager * EvDevEventTimes
 
  protected:
   /**
    * Resizes the data of the other-class's member.
    *
    * @param numPartitions: Number of partitions.
-   * @param otherPtr: A pointer to the OTHER_CLASS instance
-   * @return True if number of partitions is changed.
    */
-  void resizeDataContainer(const size_t& numPartitions);
+  void resizeDataContainer(size_t numPartitions);
 
   /**
    * Calculates sensitivity of the state-input constraints to event times.
@@ -189,19 +145,18 @@ class DDP_DataCollector {
    * @param [out] EvDevEventTimesProjectedTrajectoriesStockSet: The projected sensitivity of the state-input constraints to the event times,
    * Defined as (DmDager * EvDevEventTimes).
    */
-  void calculateStateInputConstraintsSensitivity(const ddp_t* constDdpPtr, const std::vector<scalar_array_t>& timeTrajectoriesStock,
-                                                 const state_vector_array2_t& stateTrajectoriesStock,
-                                                 const input_vector_array2_t& inputTrajectoriesStock,
-                                                 dynamic_vector_array3_t& EvDevEventTimesTrajectoriesStockSet,
-                                                 dynamic_vector_array3_t& EvDevEventTimesProjectedTrajectoriesStockSet);
+  void calculateStateInputConstraintsSensitivity(const GaussNewtonDDP* constDdpPtr,
+                                                 const std::vector<scalar_array_t>& timeTrajectoriesStock,
+                                                 const vector_array2_t& stateTrajectoriesStock,
+                                                 const vector_array2_t& inputTrajectoriesStock,
+                                                 vector_array3_t& EvDevEventTimesTrajectoriesStockSet,
+                                                 vector_array3_t& EvDevEventTimesProjectedTrajectoriesStockSet);
 
  private:
-  std::unique_ptr<rollout_base_t> rolloutPtr_;
-  std::unique_ptr<derivatives_base_t> systemDerivativesPtr_;
-  std::unique_ptr<constraint_base_t> systemConstraintsPtr_;
-  std::unique_ptr<cost_function_base_t> costFunctionPtr_;
+  std::unique_ptr<RolloutBase> rolloutPtr_;
+  std::unique_ptr<SystemDynamicsBase> systemDynamicsPtr_;
+  std::unique_ptr<ConstraintBase> systemConstraintsPtr_;
+  std::unique_ptr<CostFunctionBase> costFunctionPtr_;
 };
 
 }  // namespace ocs2
-
-#include "implementation/DDP_DataCollector.h"

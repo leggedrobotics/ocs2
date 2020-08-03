@@ -51,8 +51,7 @@ void ContinuousTimeRiccatiEquations::setRiskSensitiveCoefficient(scalar_t riskSe
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ContinuousTimeRiccatiEquations::convert2Vector(const dynamic_matrix_t& Sm, const dynamic_vector_t& Sv, const scalar_t& s,
-                                                    dynamic_vector_t& allSs) {
+vector_t ContinuousTimeRiccatiEquations::convert2Vector(const matrix_t& Sm, const vector_t& Sv, const scalar_t& s) {
   /* Sm is symmetric. Here, we only extract the upper triangular part and
    * transcribe it in column-wise fashion into allSs*/
   size_t count = 0;  // count the total number of scalar entries covered
@@ -63,27 +62,27 @@ void ContinuousTimeRiccatiEquations::convert2Vector(const dynamic_matrix_t& Sm, 
   assert(Sm.rows() == state_dim);
   assert(Sv.rows() == state_dim);
 
-  // ensure proper size in case of Eigen::Dynamic size.
-  allSs.resize(s_vector_dim(state_dim));
+  vector_t allSs(s_vector_dim(state_dim));
 
   for (size_t col = 0; col < state_dim; col++) {
     nRows = col + 1;
-    allSs.segment(count, nRows) << Eigen::Map<const dynamic_vector_t>(Sm.data() + col * state_dim, nRows);
+    allSs.segment(count, nRows) << Eigen::Map<const vector_t>(Sm.data() + col * state_dim, nRows);
     count += nRows;
   }
 
   /* add data from Sv on top*/
-  allSs.segment(count, state_dim) << Eigen::Map<const dynamic_vector_t>(Sv.data(), state_dim);
+  allSs.segment(count, state_dim) << Eigen::Map<const vector_t>(Sv.data(), state_dim);
 
   /* add s as last element*/
   allSs.template tail<1>() << s;
+
+  return allSs;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ContinuousTimeRiccatiEquations::convert2Matrix(const dynamic_vector_t& allSs, dynamic_matrix_t& Sm, dynamic_vector_t& Sv,
-                                                    scalar_t& s) {
+void ContinuousTimeRiccatiEquations::convert2Matrix(const vector_t& allSs, matrix_t& Sm, vector_t& Sv, scalar_t& s) {
   /* Sm is symmetric. Here, we map the first entries from allSs onto the upper triangular part of the symmetric matrix*/
   int count = 0;
   int nRows = 0;
@@ -91,19 +90,17 @@ void ContinuousTimeRiccatiEquations::convert2Matrix(const dynamic_vector_t& allS
   const auto state_dim = riccati_matrix_dim(allSs.size());
   assert(state_dim > 0);
 
-  // ensure proper size in case of Eigen::Dynamic size.
-  Sv.resize(state_dim);
   Sm.resize(state_dim, state_dim);
 
   for (int col = 0; col < state_dim; col++) {
     nRows = col + 1;
-    Sm.block(0, col, nRows, 1) << Eigen::Map<const dynamic_vector_t>(allSs.data() + count, nRows);
+    Sm.block(0, col, nRows, 1) << Eigen::Map<const vector_t>(allSs.data() + count, nRows);
     count += nRows;
   }
   Sm.template triangularView<Eigen::Lower>() = Sm.template triangularView<Eigen::Upper>().transpose();
 
   /* extract the vector Sv*/
-  Sv = Eigen::Map<const dynamic_vector_t>(allSs.data() + count, state_dim);
+  Sv = Eigen::Map<const vector_t>(allSs.data() + count, state_dim);
 
   /* extract s as the last element */
   s = allSs.template tail<1>()(0);
@@ -112,10 +109,11 @@ void ContinuousTimeRiccatiEquations::convert2Matrix(const dynamic_vector_t& allS
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ContinuousTimeRiccatiEquations::setData(const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* projectedModelDataPtr,
-                                             const size_array_t* postEventIndicesPtr, const ModelDataBase::array_t* modelDataEventTimesPtr,
-                                             const riccati_modification::Data::array_t* riccatiModificationPtr) {
-  BASE::resetNumFunctionCalls();
+void ContinuousTimeRiccatiEquations::setData(const scalar_array_t* timeStampPtr, const std::vector<ModelDataBase>* projectedModelDataPtr,
+                                             const size_array_t* eventsPastTheEndIndecesPtr,
+                                             const std::vector<ModelDataBase>* modelDataEventTimesPtr,
+                                             const std::vector<riccati_modification::Data>* riccatiModificationPtr) {
+  OdeBase::resetNumFunctionCalls();
 
   // saving array pointers
   timeStampPtr_ = timeStampPtr;
@@ -124,8 +122,8 @@ void ContinuousTimeRiccatiEquations::setData(const scalar_array_t* timeStampPtr,
   riccatiModificationPtr_ = riccatiModificationPtr;
 
   eventTimes_.clear();
-  eventTimes_.reserve(postEventIndicesPtr->size());
-  for (const auto& postEventIndex : *postEventIndicesPtr) {
+  eventTimes_.reserve(eventsPastTheEndIndecesPtr->size());
+  for (const auto& postEventIndex : *eventsPastTheEndIndecesPtr) {
     eventTimes_.push_back((*timeStampPtr)[postEventIndex - 1]);
   }
 }
@@ -133,7 +131,7 @@ void ContinuousTimeRiccatiEquations::setData(const scalar_array_t* timeStampPtr,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ContinuousTimeRiccatiEquations::computeJumpMap(const scalar_t& z, const dynamic_vector_t& allSs, dynamic_vector_t& allSsPreEvent) {
+vector_t ContinuousTimeRiccatiEquations::computeJumpMap(scalar_t z, const vector_t& allSs) {
   // epsilon is set to include times past event times which have been artificially increased in the rollout
   scalar_t time = -z;
   size_t index = lookup::findFirstIndexWithinTol(eventTimes_, time, 1e-5);
@@ -141,42 +139,42 @@ void ContinuousTimeRiccatiEquations::computeJumpMap(const scalar_t& z, const dyn
   // jump model data
   const auto& jumpModelData = (*modelDataEventTimesPtr_)[index];
 
-  //  dynamic_vector_t allSsJump;
-  //  convert2Vector(jumpModelData.costStateSecondDerivative_, jumpModelData.costStateDerivative_, jumpModelData.cost_, allSsJump);
+  //  vector_t allSsJump;
+  //  convert2Vector(jumpModelData.cost_.dfdxx, jumpModelData.cost_.dfdx, jumpModelData.cost_.f, allSsJump);
   //
   //  allSsPreEvent = allSs + allSsJump;
 
   // convert to Riccati coefficients
   convert2Matrix(allSs, continuousTimeRiccatiData_.Sm_, continuousTimeRiccatiData_.Sv_, continuousTimeRiccatiData_.s_);
 
-  // TODO: Fix this
+  // TODO(farbod): Fix this
   const auto state_dim = continuousTimeRiccatiData_.Sm_.rows();
-  const dynamic_vector_t Hv = dynamic_vector_t::Zero(state_dim);                 // jumpModelData.dynamicsBias_;
-  const dynamic_matrix_t Am = dynamic_matrix_t::Identity(state_dim, state_dim);  // jumpModelData.costStateSecondDerivative_;
+  const vector_t Hv = vector_t::Zero(state_dim);                 // jumpModelData.dynamicsBias_;
+  const matrix_t Am = matrix_t::Identity(state_dim, state_dim);  // jumpModelData.cost_.dfdxx;
 
   // Sm
-  dynamic_matrix_t SmPreEvent = jumpModelData.costStateSecondDerivative_;
+  matrix_t SmPreEvent = jumpModelData.cost_.dfdxx;
   continuousTimeRiccatiData_.SmTrans_projectedAm_.noalias() = continuousTimeRiccatiData_.Sm_.transpose() * Am;
   SmPreEvent.noalias() += continuousTimeRiccatiData_.SmTrans_projectedAm_.transpose() * Am;
 
   // Sv
-  dynamic_vector_t Sv_plus_Sm_Hv = continuousTimeRiccatiData_.Sv_;
+  vector_t Sv_plus_Sm_Hv = continuousTimeRiccatiData_.Sv_;
   Sv_plus_Sm_Hv.noalias() += continuousTimeRiccatiData_.Sm_ * Hv;
-  dynamic_vector_t SvPreEvent = jumpModelData.costStateDerivative_;
+  vector_t SvPreEvent = jumpModelData.cost_.dfdx;
   SvPreEvent.noalias() += Am.transpose() * Sv_plus_Sm_Hv;
 
   // s
-  scalar_t sPreEvent = continuousTimeRiccatiData_.s_ + jumpModelData.cost_;
+  scalar_t sPreEvent = continuousTimeRiccatiData_.s_ + jumpModelData.cost_.f;
   sPreEvent += Hv.dot(Sv_plus_Sm_Hv);
 
-  convert2Vector(SmPreEvent, SvPreEvent, sPreEvent, allSsPreEvent);
+  return convert2Vector(SmPreEvent, SvPreEvent, sPreEvent);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ContinuousTimeRiccatiEquations::computeFlowMap(const scalar_t& z, const dynamic_vector_t& allSs, dynamic_vector_t& derivatives) {
-  BASE::numFunctionCalls_++;
+vector_t ContinuousTimeRiccatiEquations::computeFlowMap(scalar_t z, const vector_t& allSs) {
+  OdeBase::numFunctionCalls_++;
 
   // index
   const scalar_t t = -z;  // denormalized time
@@ -193,15 +191,15 @@ void ContinuousTimeRiccatiEquations::computeFlowMap(const scalar_t& z, const dyn
                       continuousTimeRiccatiData_.ds_);
   }
 
-  convert2Vector(continuousTimeRiccatiData_.dSm_, continuousTimeRiccatiData_.dSv_, continuousTimeRiccatiData_.ds_, derivatives);
+  return convert2Vector(continuousTimeRiccatiData_.dSm_, continuousTimeRiccatiData_.dSv_, continuousTimeRiccatiData_.ds_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ContinuousTimeRiccatiEquations::computeFlowMapSLQ(std::pair<int, scalar_t> indexAlpha, const dynamic_matrix_t& Sm,
-                                                       const dynamic_vector_t& Sv, const scalar_t& s, ContinuousTimeRiccatiData& creCache,
-                                                       dynamic_matrix_t& dSm, dynamic_vector_t& dSv, scalar_t& ds) const {
+void ContinuousTimeRiccatiEquations::computeFlowMapSLQ(std::pair<int, scalar_t> indexAlpha, const matrix_t& Sm, const vector_t& Sv,
+                                                       const scalar_t& s, ContinuousTimeRiccatiData& creCache, matrix_t& dSm, vector_t& dSv,
+                                                       scalar_t& ds) const {
   /* note: according to some discussions on stackoverflow, it does not buy
    * computation time if multiplications with symmetric matrices are executed
    * using selfadjointView(). Doing the full multiplication seems to be faster
@@ -211,19 +209,19 @@ void ContinuousTimeRiccatiEquations::computeFlowMapSLQ(std::pair<int, scalar_t> 
   // Hv
   ModelData::interpolate(indexAlpha, creCache.projectedHv_, projectedModelDataPtr_, ModelData::dynamicsBias);
   // Am
-  ModelData::interpolate(indexAlpha, creCache.projectedAm_, projectedModelDataPtr_, ModelData::dynamicsStateDerivative);
+  ModelData::interpolate(indexAlpha, creCache.projectedAm_, projectedModelDataPtr_, ModelData::dynamics_dfdx);
   // Bm
-  ModelData::interpolate(indexAlpha, creCache.projectedBm_, projectedModelDataPtr_, ModelData::dynamicsInputDerivative);
+  ModelData::interpolate(indexAlpha, creCache.projectedBm_, projectedModelDataPtr_, ModelData::dynamics_dfdu);
   // q
-  ModelData::interpolate(indexAlpha, ds, projectedModelDataPtr_, ModelData::cost);
+  ModelData::interpolate(indexAlpha, ds, projectedModelDataPtr_, ModelData::cost_f);
   // Qv
-  ModelData::interpolate(indexAlpha, dSv, projectedModelDataPtr_, ModelData::costStateDerivative);
+  ModelData::interpolate(indexAlpha, dSv, projectedModelDataPtr_, ModelData::cost_dfdx);
   // Qm
-  ModelData::interpolate(indexAlpha, dSm, projectedModelDataPtr_, ModelData::costStateSecondDerivative);
+  ModelData::interpolate(indexAlpha, dSm, projectedModelDataPtr_, ModelData::cost_dfdxx);
   // Rv
-  ModelData::interpolate(indexAlpha, creCache.projectedGv_, projectedModelDataPtr_, ModelData::costInputDerivative);
+  ModelData::interpolate(indexAlpha, creCache.projectedGv_, projectedModelDataPtr_, ModelData::cost_dfdu);
   // Pm
-  ModelData::interpolate(indexAlpha, creCache.projectedGm_, projectedModelDataPtr_, ModelData::costInputStateDerivative);
+  ModelData::interpolate(indexAlpha, creCache.projectedGm_, projectedModelDataPtr_, ModelData::cost_dfdux);
   // delatQm
   riccati_modification::interpolate(indexAlpha, creCache.deltaQm_, riccatiModificationPtr_, riccati_modification::deltaQm);
   // delatGm
@@ -248,7 +246,7 @@ void ContinuousTimeRiccatiEquations::computeFlowMapSLQ(std::pair<int, scalar_t> 
   creCache.projectedKm_T_projectedGm_.noalias() = creCache.projectedKm_.transpose() * creCache.projectedGm_;
   if (!reducedFormRiccati_) {
     // Rm
-    ModelData::interpolate(indexAlpha, creCache.projectedRm_, projectedModelDataPtr_, ModelData::costInputSecondDerivative);
+    ModelData::interpolate(indexAlpha, creCache.projectedRm_, projectedModelDataPtr_, ModelData::cost_dfduu);
     // [COMPLEXITY: nx * np^2]
     creCache.projectedRm_projectedKm_.noalias() = creCache.projectedRm_ * creCache.projectedKm_;
     // [COMPLEXITY: np^2]
@@ -322,9 +320,9 @@ void ContinuousTimeRiccatiEquations::computeFlowMapSLQ(std::pair<int, scalar_t> 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ContinuousTimeRiccatiEquations::computeFlowMapILEG(std::pair<int, scalar_t> indexAlpha, const dynamic_matrix_t& Sm,
-                                                        const dynamic_vector_t& Sv, const scalar_t& s, ContinuousTimeRiccatiData& creCache,
-                                                        dynamic_matrix_t& dSm, dynamic_vector_t& dSv, scalar_t& ds) const {
+void ContinuousTimeRiccatiEquations::computeFlowMapILEG(std::pair<int, scalar_t> indexAlpha, const matrix_t& Sm, const vector_t& Sv,
+                                                        const scalar_t& s, ContinuousTimeRiccatiData& creCache, matrix_t& dSm,
+                                                        vector_t& dSv, scalar_t& ds) const {
   computeFlowMapSLQ(indexAlpha, Sm, Sv, s, creCache, dSm, dSv, ds);
 
   // Sigma

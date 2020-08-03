@@ -33,10 +33,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_core/cost/CostFunctionBase.h>
+#include <ocs2_core/dynamics/SystemDynamicsBase.h>
+
 #include "ocs2_qp_solver/QpSolverTypes.h"
 #include "ocs2_qp_solver/QpTrajectories.h"
-#include "ocs2_qp_solver/wrappers/CostWrapper.h"
-#include "ocs2_qp_solver/wrappers/SystemWrapper.h"
 
 namespace ocs2 {
 namespace qp_solver {
@@ -50,7 +51,7 @@ namespace qp_solver {
  * @param nominalTrajectory : time, state and input trajectory to make the linear quadratic approximation around
  * @return vector of discrete cost and dynamics at each node.
  */
-std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& cost, SystemWrapper& system,
+std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostFunctionBase& cost, SystemDynamicsBase& system,
                                                                   const ContinuousTrajectory& nominalTrajectory);
 
 /**
@@ -62,7 +63,7 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& c
  * @param end : linearization point at the end of the stage
  * @return discreted stage
  */
-LinearQuadraticStage approximateStage(CostWrapper& cost, SystemWrapper& system, TrajectoryRef start, StateTrajectoryRef end);
+LinearQuadraticStage approximateStage(CostFunctionBase& cost, SystemDynamicsBase& system, TrajectoryRef start, StateTrajectoryRef end);
 
 /**
  * Computes the cost integral from a start condition over a dt interval
@@ -71,7 +72,7 @@ LinearQuadraticStage approximateStage(CostWrapper& cost, SystemWrapper& system, 
  * @param dt : duration of the interval
  * @return Quadratic approximation of the accumulated costs
  */
-ScalarFunctionQuadraticApproximation approximateCost(CostWrapper& cost, TrajectoryRef start, scalar_t dt);
+ScalarFunctionQuadraticApproximation approximateCost(CostFunctionBase& cost, TrajectoryRef start, scalar_t dt);
 
 /**
  * Computes the discrete dynamics from a start condition over a dt interval
@@ -80,7 +81,7 @@ ScalarFunctionQuadraticApproximation approximateCost(CostWrapper& cost, Trajecto
  * @param dt : duration of the interval
  * @return Linear approximation of the discrete dynamcis
  */
-VectorFunctionLinearApproximation approximateDynamics(SystemWrapper& system, TrajectoryRef start, scalar_t dt);
+VectorFunctionLinearApproximation approximateDynamics(SystemDynamicsBase& system, TrajectoryRef start, scalar_t dt);
 
 }  // namespace qp_solver
 }  // namespace ocs2

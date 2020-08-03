@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int main(int argc, char** argv) {
   const std::string robotName = "double_integrator";
   using interface_t = ocs2::double_integrator::DoubleIntegratorInterface;
-  using mpc_ros_t = ocs2::MPC_ROS_Interface<ocs2::double_integrator::STATE_DIM_, ocs2::double_integrator::INPUT_DIM_>;
+  using mpc_ros_t = ocs2::MPC_ROS_Interface;
 
   // task file
   std::vector<std::string> programArgs{};

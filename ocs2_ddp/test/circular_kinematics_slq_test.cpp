@@ -44,8 +44,6 @@ using namespace ocs2;
 enum { STATE_DIM = 2, INPUT_DIM = 2 };
 
 TEST(circular_kinematics_slq_test, circular_kinematics_slq_test) {
-  using slq_t = SLQ<STATE_DIM, INPUT_DIM>;
-
   SLQ_Settings slqSettings;
   slqSettings.useNominalTimeForBackwardPass_ = true;
   slqSettings.ddpSettings_.preComputeRiccatiTerms_ = false;
@@ -72,25 +70,24 @@ TEST(circular_kinematics_slq_test, circular_kinematics_slq_test) {
   rolloutSettings.relTolODE_ = 1e-7;
   rolloutSettings.maxNumStepsPerSecond_ = 10000;
 
-  double startTime = 0.0;
-  double finalTime = 10.0;
+  scalar_t startTime = 0.0;
+  scalar_t finalTime = 10.0;
 
   // partitioning times
-  std::vector<double> partitioningTimes;
+  std::vector<scalar_t> partitioningTimes;
   partitioningTimes.push_back(startTime);
   partitioningTimes.push_back(finalTime / 2.0);
   partitioningTimes.push_back(finalTime);
 
-  using state_vector_t = CircularKinematicsSystem::state_vector_t;
-  using input_vector_t = CircularKinematicsSystem::input_vector_t;
-  CircularKinematicsSystem::state_vector_t initState(1.0, 0.0);  // radius 1.0
+  vector_t initState(2);
+  initState << 1.0, 0.0;  // radius 1.0
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
   // system rollout and system derivatives
   CircularKinematicsSystem systemDynamics;
-  TimeTriggeredRollout<STATE_DIM, INPUT_DIM> timeTriggeredRollout(systemDynamics, rolloutSettings);
+  TimeTriggeredRollout timeTriggeredRollout(systemDynamics, rolloutSettings);
 
   // cost functions
   CircularKinematicsCost systemCostFunction;
@@ -103,20 +100,19 @@ TEST(circular_kinematics_slq_test, circular_kinematics_slq_test) {
   CircularKinematicsConstraints systemConstraint;
 
   // system operatingTrajectories
-  state_vector_t stateOperatingPoint = initState;
-  CircularKinematicsSystemOperatingTrajectories operatingTrajectories(initState, input_vector_t::Zero());
+  OperatingPoints operatingTrajectories(initState, vector_t::Zero(INPUT_DIM));
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
   // SLQ - single-thread version
   slqSettings.ddpSettings_.nThreads_ = 1;
-  slq_t slqST(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
+  SLQ slqST(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
 
   // SLQ - multi-thread version
   slqSettings.ddpSettings_.nThreads_ = 3;
   slqSettings.ddpSettings_.displayInfo_ = false;
-  slq_t slqMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
+  SLQ slqMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
   slqMT.useParallelRiccatiSolverFromInitItr(false);
 
   // run single core SLQ
@@ -135,8 +131,8 @@ TEST(circular_kinematics_slq_test, circular_kinematics_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // get solution
-  slq_t::primal_solution_t solutionST = slqST.primalSolution(finalTime);
-  slq_t::primal_solution_t solutionMT = slqMT.primalSolution(finalTime);
+  auto solutionST = slqST.primalSolution(finalTime);
+  auto solutionMT = slqMT.primalSolution(finalTime);
 
   // get performance indices
   auto performanceIndecesST = slqST.getPerformanceIndeces();
@@ -145,20 +141,15 @@ TEST(circular_kinematics_slq_test, circular_kinematics_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
-  const double expectedCost = 0.1;
+  const scalar_t expectedCost = 0.1;
   ASSERT_LT(performanceIndecesST.totalCost - expectedCost, 0.0)
       << "MESSAGE: single-threaded SLQ failed in the Circular_Kinematics's cost test!";
   ASSERT_LT(performanceIndecesMT.totalCost - expectedCost, 0.0)
       << "MESSAGE: multi-threaded SLQ failed in the Circular_Kinematics's cost test!";
 
-  const double expectedISE1 = 0.0;
+  const scalar_t expectedISE1 = 0.0;
   ASSERT_LT(fabs(performanceIndecesST.stateInputEqConstraintISE - expectedISE1), slqSettings.ddpSettings_.constraintTolerance_)
       << "MESSAGE: single-threaded SLQ failed in the Circular_Kinematics's type-1 constraint ISE test!";
-  ASSERT_LT(fabs(performanceIndecesMT.stateInputEqConstraintISE  - expectedISE1), slqSettings.ddpSettings_.constraintTolerance_)
+  ASSERT_LT(fabs(performanceIndecesMT.stateInputEqConstraintISE - expectedISE1), slqSettings.ddpSettings_.constraintTolerance_)
       << "MESSAGE: multi-threaded SLQ failed in the Circular_Kinematics's type-1 constraint ISE test!";
-}
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -36,7 +36,14 @@ namespace quadrotor {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-QuadrotorInterface::QuadrotorInterface(const std::string& taskFileFolderName) {
+QuadrotorInterface::QuadrotorInterface(const std::string& taskFileFolderName)
+    : Q_(STATE_DIM_, STATE_DIM_),
+      R_(INPUT_DIM_, INPUT_DIM_),
+      QFinal_(STATE_DIM_, STATE_DIM_),
+      xFinal_(STATE_DIM_),
+      xNominal_(STATE_DIM_),
+      uNominal_(INPUT_DIM_),
+      initialState_(STATE_DIM_) {
   taskFile_ = ros::package::getPath("ocs2_quadrotor_example") + "/config/" + taskFileFolderName + "/task.info";
   std::cerr << "Loading task file: " << taskFile_ << std::endl;
 
@@ -65,21 +72,20 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
   /*
    * quadrotor parameters
    */
-  QuadrotorParameters<dim_t::scalar_t> quadrotorParameters;
+  QuadrotorParameters quadrotorParameters;
   quadrotorParameters.loadSettings(taskFile);
 
   /*
    * Dynamics and derivatives
    */
   quadrotorSystemDynamicsPtr_.reset(new QuadrotorSystemDynamics(quadrotorParameters));
-  quadrotorDynamicsDerivativesPtr_.reset(new QuadrotorDynamicsDerivatives(quadrotorParameters));
 
   /*
    * Rollout
    */
   Rollout_Settings rolloutSettings;
   rolloutSettings.loadSettings(taskFile, "slq.rollout");
-  ddpQuadrotorRolloutPtr_.reset(new time_triggered_rollout_t(*quadrotorSystemDynamicsPtr_, rolloutSettings));
+  ddpQuadrotorRolloutPtr_.reset(new TimeTriggeredRollout(*quadrotorSystemDynamicsPtr_, rolloutSettings));
 
   /*
    * Cost function
@@ -88,8 +94,8 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
   loadData::loadEigenMatrix(taskFile, "R", R_);
   loadData::loadEigenMatrix(taskFile, "Q_final", QFinal_);
   loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
-  xNominal_ = dim_t::state_vector_t::Zero();
-  uNominal_ = dim_t::input_vector_t::Zero();
+  xNominal_ = vector_t::Zero(STATE_DIM_);
+  uNominal_ = vector_t::Zero(INPUT_DIM_);
 
   std::cerr << "Q:  \n" << Q_ << std::endl;
   std::cerr << "R:  \n" << R_ << std::endl;
@@ -97,34 +103,28 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
   std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
   std::cerr << "x_final:  " << xFinal_.transpose() << std::endl;
 
-  quadrotorCostPtr_.reset(new QuadrotorCost(Q_, R_, xNominal_, uNominal_, QFinal_, xFinal_));
+  quadrotorCostPtr_.reset(new QuadraticCostFunction(Q_, R_, xNominal_, uNominal_, QFinal_, xFinal_));
 
   /*
    * Constraints
    */
-  quadrotorConstraintPtr_.reset(new QuadrotorConstraint);
+  quadrotorConstraintPtr_.reset(new ConstraintBase());
 
   /*
    * Initialization
    */
-  dim_t::input_vector_t initialInput = dim_t::input_vector_t::Zero();
+  vector_t initialInput = vector_t::Zero(INPUT_DIM_);
   initialInput(0) = quadrotorParameters.quadrotorMass_ * quadrotorParameters.gravity_;
-  quadrotorOperatingPointPtr_.reset(new QuadrotorOperatingPoint(initialState_, initialInput));
-
-  /*
-   * Time partitioning which defines the time horizon and the number of data partitioning
-   */
-  dim_t::scalar_t timeHorizon;
-  ocs2::loadData::loadPartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
+  quadrotorOperatingPointPtr_.reset(new OperatingPoints(initialState_, initialInput));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<QuadrotorInterface::mpc_t> QuadrotorInterface::getMpc() {
-  return std::unique_ptr<mpc_t>(new mpc_t(ddpQuadrotorRolloutPtr_.get(), quadrotorDynamicsDerivativesPtr_.get(),
-                                          quadrotorConstraintPtr_.get(), quadrotorCostPtr_.get(), quadrotorOperatingPointPtr_.get(),
-                                          partitioningTimes_, ilqrSettings_, mpcSettings_));
+std::unique_ptr<MPC_ILQR> QuadrotorInterface::getMpc() {
+  return std::unique_ptr<MPC_ILQR>(new MPC_ILQR(ddpQuadrotorRolloutPtr_.get(), quadrotorSystemDynamicsPtr_.get(),
+                                                quadrotorConstraintPtr_.get(), quadrotorCostPtr_.get(), quadrotorOperatingPointPtr_.get(),
+                                                ilqrSettings_, mpcSettings_));
 }
 
 }  // namespace quadrotor

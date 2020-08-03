@@ -34,7 +34,7 @@ catkin_package(
 )
 
 # find ocs2_core
-find_path(SOURCE_OCS2_CORE_DIR NAMES ocs2_core/Dimensions.h PATHS ${ocs2_core_INCLUDE_DIRS}... NO_DEFAULT_PATH)
+find_path(SOURCE_OCS2_CORE_DIR NAMES ocs2_core/Types.h PATHS ${ocs2_core_INCLUDE_DIRS}... NO_DEFAULT_PATH)
 if(EXISTS "${SOURCE_OCS2_CORE_DIR}")
   set(SOURCE_OCS2_CORE_DIR "${SOURCE_OCS2_CORE_DIR}/ocs2_core")
   message(STATUS "Found ocs2_core at: ${SOURCE_OCS2_CORE_DIR}")

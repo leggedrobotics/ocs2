@@ -4,27 +4,20 @@
 
 TEST(DoubleIntegratorTest, pyBindings) {
   using bindings_t = ocs2::double_integrator::DoubleIntegratorPyBindings;
-  using state_vector_t = bindings_t::state_vector_t;
-  using state_matrix_array_t = bindings_t::state_matrix_array_t;
-  using scalar_array_t = bindings_t::scalar_array_t;
-  using state_vector_array_t = bindings_t::state_vector_array_t;
-  using input_vector_array_t = bindings_t::input_vector_array_t;
-  using input_state_matrix_array_t = bindings_t::input_state_matrix_array_t;
-  using input_state_matrix_t = bindings_t::input_state_matrix_t;
 
   bindings_t bindings("mpc", false);
 
   ocs2::CostDesiredTrajectories costDesiredTraj;
   bindings.setTargetTrajectories(costDesiredTraj);
 
-  auto state = state_vector_t::Zero();
+  auto state = vector_t::Zero(ocs2::double_integrator::STATE_DIM_);
   bindings.setObservation(0.0, state);
 
   bindings.advanceMpc();
 
   auto t_arr = scalar_array_t();
-  auto x_arr = state_vector_array_t();
-  auto u_arr = input_vector_array_t();
+  auto x_arr = vector_array_t();
+  auto u_arr = vector_array_t();
 
   bindings.getMpcSolution(t_arr, x_arr, u_arr);
 

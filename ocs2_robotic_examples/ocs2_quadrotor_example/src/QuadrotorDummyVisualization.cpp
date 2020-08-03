@@ -7,8 +7,7 @@
 namespace ocs2 {
 namespace quadrotor {
 
-void QuadrotorDummyVisualization::update(const system_observation_t& observation, const primal_solution_t& policy,
-                                         const command_data_t& command) {
+void QuadrotorDummyVisualization::update(const SystemObservation& observation, const PrimalSolution& policy, const CommandData& command) {
   const auto& costDesiredTrajectories = command.mpcCostDesiredTrajectories_;
 
   // publish command transform

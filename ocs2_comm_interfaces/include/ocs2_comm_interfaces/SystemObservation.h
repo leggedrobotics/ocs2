@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,43 +29,26 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_core/Types.h>
 #include <iostream>
-
-#include <ocs2_core/Dimensions.h>
 
 namespace ocs2 {
 
+// TODO(mspieler): change to sruct, define swap helper, delete default constructor.
+
 /**
  * This class contains the observation information.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 class SystemObservation {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  /** Constructor */
+  SystemObservation() = default;
 
-  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using input_vector_t = typename DIMENSIONS::input_vector_t;
-
-  /**
-   * Constructor
-   */
-  SystemObservation() : subsystem_(0), time_(0.0), state_(state_vector_t::Zero()), input_(input_vector_t::Zero()) {}
-
-  /**
-   * Destructor
-   */
+  /** Destructor */
   ~SystemObservation() = default;
 
-  /**
-   * Swap with other.
-   * @param other
-   */
-  void swap(SystemObservation<STATE_DIM, INPUT_DIM>& other) {
+  /** Swap with other. */
+  void swap(SystemObservation& other) {
     std::swap(time_, other.time_);
     std::swap(state_, other.state_);
     std::swap(input_, other.input_);
@@ -75,13 +58,13 @@ class SystemObservation {
   inline scalar_t& time() { return time_; };
   inline const scalar_t& time() const { return time_; };
 
-  inline state_vector_t& state() { return state_; };
-  inline const state_vector_t& state() const { return state_; };
+  inline vector_t& state() { return state_; };
+  inline const vector_t& state() const { return state_; };
   inline scalar_t& state(const size_t& i) { return state_(i); };
   inline const scalar_t& state(const size_t& i) const { return state_(i); };
 
-  inline input_vector_t& input() { return input_; };
-  inline const input_vector_t& input() const { return input_; };
+  inline vector_t& input() { return input_; };
+  inline const vector_t& input() const { return input_; };
   inline scalar_t& input(const size_t& i) { return input_(i); };
   inline const scalar_t& input(const size_t& i) const { return input_(i); };
 
@@ -89,26 +72,26 @@ class SystemObservation {
   inline const size_t& subsystem() const { return subsystem_; };
 
   inline void display() const {
-    std::cerr << "Observation: " << std::endl;
-    std::cerr << "\t time:      " << time_ << std::endl;
-    std::cerr << "\t subsystem: " << subsystem_ << std::endl;
+    std::cerr << "Observation: \n" << std::endl;
+    std::cerr << "\t time:      " << time_ << '\n';
+    std::cerr << "\t subsystem: " << subsystem_ << '\n';
     std::cerr << "\t state:    [";
     for (int i = 0; i < state_.size() - 1; i++) {
       std::cerr << state_(i) << ", ";
     }
-    std::cerr << state_(state_.size() - 1) << "]" << std::endl;
+    std::cerr << state_(state_.size() - 1) << "]\n";
     std::cerr << "\t input:    [";
     for (int i = 0; i < input_.size() - 1; i++) {
       std::cerr << input_(i) << ", ";
     }
-    std::cerr << input_(input_.size() - 1) << "]" << std::endl;
+    std::cerr << input_(input_.size() - 1) << "]";
   }
 
  private:
-  size_t subsystem_;
-  scalar_t time_;
-  state_vector_t state_;
-  input_vector_t input_;
+  size_t subsystem_ = 0;
+  scalar_t time_ = 0.0;
+  vector_t state_ = vector_t();
+  vector_t input_ = vector_t();
 };
 
 }  // namespace ocs2

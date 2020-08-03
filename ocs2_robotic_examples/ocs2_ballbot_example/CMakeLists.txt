@@ -68,7 +68,6 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/BallbotInterface.cpp
   src/dynamics/BallbotSystemDynamics.cpp
-  src/solvers/BallbotSLQ.cpp
   src/BallbotDummyVisualization.cpp
 )
 add_dependencies(${PROJECT_NAME}
@@ -119,7 +118,7 @@ target_link_libraries(ballbot_target
   ${Boost_LIBRARIES}
 )
 target_compile_options(ballbot_target PRIVATE ${OCS2_CXX_FLAGS})
-        
+
 # Simple example
 add_executable(ballbot_simple_example
   src/BallbotSimpleExample.cpp
@@ -135,42 +134,42 @@ target_link_libraries(ballbot_simple_example
 )
 target_compile_options(ballbot_simple_example PRIVATE ${OCS2_CXX_FLAGS})
 
-# Pybindings Cpp library
-add_library(ballbotPyBindings_cpp
-  src/BallbotPyBindings.cpp
-)
-add_dependencies(ballbotPyBindings_cpp
-  ${PROJECT_NAME}
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(ballbotPyBindings_cpp
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+# # Pybindings Cpp library
+# add_library(ballbotPyBindings_cpp
+#   src/BallbotPyBindings.cpp
+# )
+# add_dependencies(ballbotPyBindings_cpp
+#   ${PROJECT_NAME}
+#   ${catkin_EXPORTED_TARGETS}
+# )
+# target_link_libraries(ballbotPyBindings_cpp
+#   ${PROJECT_NAME}
+#   ${catkin_LIBRARIES}
+# )
 
 # Build python bindings
-pybind11_add_module(BallbotPyBindings SHARED
-  src/pyBindModule.cpp
-)
-add_dependencies(BallbotPyBindings
-  ballbotPyBindings_cpp
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(BallbotPyBindings PRIVATE
-  ballbotPyBindings_cpp
-  ${catkin_LIBRARIES}
-)
+# pybind11_add_module(BallbotPyBindings SHARED
+#   src/pyBindModule.cpp
+# )
+# add_dependencies(BallbotPyBindings
+#   ballbotPyBindings_cpp
+#   ${catkin_EXPORTED_TARGETS}
+# )
+# target_link_libraries(BallbotPyBindings PRIVATE
+#   ballbotPyBindings_cpp
+#   ${catkin_LIBRARIES}
+# )
 
-if(USE_PYBIND_PYTHON_3)
-  # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
-  set_target_properties(BallbotPyBindings
-    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
-  )
-else(USE_PYBIND_PYTHON_3)
-  set_target_properties(BallbotPyBindings
-      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
-  )
-endif(USE_PYBIND_PYTHON_3)
+# if(USE_PYBIND_PYTHON_3)
+#   # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
+#   set_target_properties(BallbotPyBindings
+#     PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
+#   )
+# else(USE_PYBIND_PYTHON_3)
+#   set_target_properties(BallbotPyBindings
+#       PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+#   )
+# endif(USE_PYBIND_PYTHON_3)
 
 catkin_python_setup()
 
@@ -187,7 +186,7 @@ if(cmake_clang_tools_FOUND)
         ballbot_mpc
         ballbot_dummy_test
         ballbot_target
-        ballbotPyBindings_cpp
+        # ballbotPyBindings_cpp
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_EXCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/generated
@@ -199,7 +198,8 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS ${PROJECT_NAME} ballbotPyBindings_cpp
+install(TARGETS ${PROJECT_NAME}
+  # ballbotPyBindings_cpp
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -215,31 +215,33 @@ install(DIRECTORY urdf launch config rviz
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-# TODO handle python2/3 case properly
-install(TARGETS BallbotPyBindings
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
-)
+# # TODO handle python2/3 case properly
+# install(TARGETS BallbotPyBindings
+#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+#   LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+# )
 
 #############
 ## Testing ##
 #############
 
-catkin_add_gtest(ballbot_integration_test
-  test/ballbotIntegrationTest.cpp
-)
-target_link_libraries(ballbot_integration_test
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
+# catkin_add_gtest(ballbot_integration_test
+#   test/ballbotIntegrationTest.cpp
+# )
+# target_link_libraries(ballbot_integration_test
+#   ${PROJECT_NAME}
+#   ${catkin_LIBRARIES}
+#   ${Boost_LIBRARIES}
+#   gtest_main
+# )
 
-catkin_add_gtest(ballbot_pybindings_test
-  test/PyBindingsTest.cpp
-)
-target_link_libraries(ballbot_pybindings_test
-  ballbotPyBindings_cpp
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
-catkin_add_nosetests(test)
+# catkin_add_gtest(ballbot_pybindings_test
+#   test/PyBindingsTest.cpp
+# )
+# target_link_libraries(ballbot_pybindings_test
+#   ballbotPyBindings_cpp
+#   ${catkin_LIBRARIES}
+#   ${Boost_LIBRARIES}
+#   gtest_main
+# )
+# catkin_add_nosetests(test)

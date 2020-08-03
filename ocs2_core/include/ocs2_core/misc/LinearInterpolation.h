@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -38,13 +38,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <utility>
 #include <vector>
 
-#include "ocs2_core/Dimensions.h"
+#include "ocs2_core/Types.h"
 #include "ocs2_core/misc/Lookup.h"
 
 namespace ocs2 {
 namespace LinearInterpolation {
 
-using scalar_t = Dimensions<0, 0>::scalar_t;
 using index_alpha_t = std::pair<int, scalar_t>;
 
 /**
@@ -81,7 +80,7 @@ const Data_T& stdAccessFun(const std::vector<Data_T, Alloc>* vec, size_t ind) {
  */
 inline index_alpha_t timeSegment(scalar_t enquiryTime, const std::vector<scalar_t>* timeArrayPtr) {
   // corner cases (no time set OR single time element)
-  if (!timeArrayPtr || timeArrayPtr->size() <= 1) {
+  if (timeArrayPtr == nullptr || timeArrayPtr->size() <= 1) {
     return {0, scalar_t(1.0)};
   }
 
@@ -123,7 +122,7 @@ inline index_alpha_t timeSegment(scalar_t enquiryTime, const std::vector<scalar_
 template <typename Data_T, typename Field_T, class Alloc>
 void interpolate(index_alpha_t indexAlpha, Field_T& enquiryData, const std::vector<Data_T, Alloc>* dataPtr,
                  std::function<const Field_T&(const std::vector<Data_T, Alloc>*, size_t)> accessFun = stdAccessFun<Data_T, Alloc>) {
-  if (dataPtr) {
+  if (dataPtr != nullptr) {
     if (dataPtr->size() > 1) {
       // Normal interpolation case
       int index = indexAlpha.first;

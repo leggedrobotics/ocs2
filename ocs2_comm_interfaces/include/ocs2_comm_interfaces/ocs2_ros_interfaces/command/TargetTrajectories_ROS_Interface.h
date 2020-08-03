@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/ros.h>
 
+#include <ocs2_core/Types.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 
 // MPC messages
@@ -45,19 +46,9 @@ namespace ocs2 {
 
 /**
  * This class implements TargetTrajectories communication interface using ROS.
- *
- * @tparam SCALAR_T: scalar type.
  */
-template <typename SCALAR_T>
 class TargetTrajectories_ROS_Interface {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using scalar_t = CostDesiredTrajectories::scalar_t;
-  using scalar_array_t = CostDesiredTrajectories::scalar_array_t;
-  using dynamic_vector_t = CostDesiredTrajectories::dynamic_vector_t;
-  using dynamic_vector_array_t = CostDesiredTrajectories::dynamic_vector_array_t;
-
   /**
    * Constructor.
    *
@@ -95,5 +86,3 @@ class TargetTrajectories_ROS_Interface {
 };
 
 }  // namespace ocs2
-
-#include "implementation/TargetTrajectories_ROS_Interface.h"

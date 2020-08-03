@@ -14,15 +14,17 @@ TEST(BallbotIntegrationTest, createDummyMRT) {
   std::string taskFileFolderName = "mpc";
   ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
 
-  MRT_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> mrt("ballbot");
+  MRT_ROS_Interface mrt("ballbot");
 
   // Dummy ballbot
-  ocs2::MRT_ROS_Dummy_Loop<ocs2::ballbot::STATE_DIM_, ocs2::ballbot::INPUT_DIM_> dummyBallbot(
-      mrt, ballbotInterface.mpcSettings().mrtDesiredFrequency_, ballbotInterface.mpcSettings().mpcDesiredFrequency_);
+  MRT_ROS_Dummy_Loop dummyBallbot(mrt, ballbotInterface.mpcSettings().mrtDesiredFrequency_,
+                                  ballbotInterface.mpcSettings().mpcDesiredFrequency_);
 
   // Initialize dummy
-  ocs2::MRT_ROS_Dummy_Loop<ocs2::ballbot::STATE_DIM_, ocs2::ballbot::INPUT_DIM_>::system_observation_t initObservation;
+  SystemObservation initObservation;
   initObservation.state() = ballbotInterface.getInitialState();
+  initObservation.input().setZero(ocs2::ballbot::INPUT_DIM_);
+  initObservation.time() = 0;
 }
 
 TEST(BallbotIntegrationTest, createMPC) {
@@ -31,10 +33,5 @@ TEST(BallbotIntegrationTest, createMPC) {
 
   // Create MPC ROS node
   auto mpcPtr = ballbotInterface.getMpc();
-  MPC_ROS_Interface<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> mpcNode(*mpcPtr, "ballbot");
-}
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+  MPC_ROS_Interface mpcNode(*mpcPtr, "ballbot");
 }

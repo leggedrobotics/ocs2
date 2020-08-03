@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,120 +29,58 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Dense>
-#include <list>
-#include <memory>
-
-#include "ocs2_core/Dimensions.h"
-#include "ocs2_core/model_data/ModelDataBase.h"
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 
 /**
  * The base class for autonomous system dynamics.
- *
- * @tparam STATE_DIM: Dimension of the state space.
  */
-template <int STATE_DIM>
 class OdeBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  /** Default constructor */
+  OdeBase() = default;
 
-  using DIMENSIONS = Dimensions<STATE_DIM, 0>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-  using model_data_array_t = ModelDataBase::array_t;
-
-  static constexpr size_t DEFAULT_MODEL_DATA_CACHE_SIZE = 7;
-
-  /**
-   * Constructor.
-   */
-  OdeBase() { modelDataArray_.reserve(DEFAULT_MODEL_DATA_CACHE_SIZE); }
-
-  /**
-   * Default destructor
-   */
+  /** Default destructor */
   virtual ~OdeBase() = default;
 
-  /**
-   * Copy constructor
-   */
-  OdeBase(const OdeBase& rhs) : numFunctionCalls_(0) {}
-
-  /**
-   * Gets the number of function calls.
-   *
-   * @return size_t: number of function calls
-   */
+  /** Returns the number of function calls. */
   int getNumFunctionCalls() const { return numFunctionCalls_; }
 
-  /**
-   * Resets the number of function calls to zero.
-   *
-   */
+  /** Resets the number of function calls to zero. */
   void resetNumFunctionCalls() { numFunctionCalls_ = 0; }
-
-  /**
-   * Returns model data array begin() iterator
-   * @return modelDataArray_.begin()
-   */
-  model_data_array_t::iterator beginModelDataIterator() { return modelDataArray_.begin(); }
-
-  /**
-   * Returns model data array end() iterator
-   * @return modelDataArray_.end()
-   */
-  model_data_array_t::iterator endModelDataIterator() { return modelDataArray_.end(); }
-
-  /**
-   * Append model data array.
-   * @return reference to new element.
-   */
-  ModelDataBase& modelDataEmplaceBack() {
-    modelDataArray_.emplace_back();
-    return modelDataArray_.back();
-  }
-
-  /**
-   * Clear model data array.
-   */
-  void clearModelDataArray() {
-    modelDataArray_.clear();  // keeps allocated storage
-  }
 
   /**
    * Computes the autonomous system dynamics.
    * @param [in] t: Current time.
    * @param [in] x: Current state.
-   * @param [out] dxdt: Current state time derivative
+   * @return Current state time derivative
    */
-  virtual void computeFlowMap(const scalar_t& t, const state_vector_t& x, state_vector_t& dxdt) = 0;
+  virtual vector_t computeFlowMap(scalar_t t, const vector_t& x) = 0;
 
   /**
    * State map at the transition time
    *
    * @param [in] time: transition time
    * @param [in] state: transition state
-   * @param [out] mappedState: mapped state after transition
+   * @return mapped state after transition
    */
-  virtual void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) { mappedState = state; }
+  virtual vector_t computeJumpMap(scalar_t time, const vector_t& state);
 
   /**
    * Interface method to the guard surfaces.
    *
    * @param [in] time: transition time
    * @param [in] state: transition state
-   * @param [out] guardSurfacesValue: An array of guard surfaces values
+   * @return An array of guard surfaces values
    */
-  virtual void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) {
-    guardSurfacesValue = -dynamic_vector_t::Ones(1);
-  }
+  virtual vector_t computeGuardSurfaces(scalar_t time, const vector_t& state);
 
  protected:
+  /** Copy constructor */
+  OdeBase(const OdeBase& rhs) : numFunctionCalls_(0) {}
+
   int numFunctionCalls_ = 0;
-  model_data_array_t modelDataArray_;
 };
 
 }  // namespace ocs2

@@ -12,8 +12,8 @@
 
 int main(int argc, char* argv[]) {
   const std::string robotName = "ballbot";
-  using mrt_t = ocs2::MRT_ROS_Interface<ocs2::ballbot::STATE_DIM_, ocs2::ballbot::INPUT_DIM_>;
-  using dummy_t = ocs2::MRT_ROS_Dummy_Loop<ocs2::ballbot::STATE_DIM_, ocs2::ballbot::INPUT_DIM_>;
+  using mrt_t = ocs2::MRT_ROS_Interface;
+  using dummy_t = ocs2::MRT_ROS_Dummy_Loop;
   using vis_t = ocs2::ballbot::BallbotDummyVisualization;
 
   // task file
@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
   ocs2::RaisimRolloutSettings raisimRolloutSettings(ros::package::getPath("ocs2_ballbot_raisim_example") + "/config/raisim_rollout.info",
                                                     "rollout", true);
   ocs2::ballbot::BallbotRaisimConversions conversions;
-  ocs2::RaisimRollout<ocs2::ballbot::STATE_DIM_, ocs2::ballbot::INPUT_DIM_> simRollout(
+  ocs2::RaisimRollout simRollout(
       urdf,
       std::bind(&ocs2::ballbot::BallbotRaisimConversions::stateToRaisimGenCoordGenVel, &conversions, std::placeholders::_1,
                 std::placeholders::_2),
@@ -82,8 +82,10 @@ int main(int argc, char* argv[]) {
   dummyBallbot.subscribeObservers({ballbotDummyVisualization});
 
   // initial state and command
-  mrt_t::system_observation_t initObservation;
+  ocs2::SystemObservation initObservation;
   initObservation.state() = interface.getInitialState();
+  initObservation.input().setZero(ocs2::ballbot::INPUT_DIM_);
+  initObservation.time() = 0;
 
   // initial command
   ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time()}, {initObservation.state()}, {initObservation.input()});

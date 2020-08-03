@@ -19,13 +19,13 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-# Pybind11
-option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)
-if(USE_PYBIND_PYTHON_3)
-  set(PYTHON_EXECUTABLE /usr/bin/python3)
-  set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
-endif(USE_PYBIND_PYTHON_3)
-find_package(pybind11 QUIET)
+# # Pybind11
+# option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)
+# if(USE_PYBIND_PYTHON_3)
+#   set(PYTHON_EXECUTABLE /usr/bin/python3)
+#   set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
+# endif(USE_PYBIND_PYTHON_3)
+# find_package(pybind11 QUIET)
 
 ###################################
 ## catkin specific configuration ##
@@ -60,6 +60,7 @@ include_directories(
 # Quadrotor interface library
 add_library(quadrotor_interface
   src/QuadrotorInterface.cpp
+  src/QuadrotorSystemDynamics.cpp
 )
 add_dependencies(quadrotor_interface
   ${catkin_EXPORTED_TARGETS}
@@ -109,45 +110,45 @@ target_link_libraries(quadrotor_target
 )
 target_compile_options(quadrotor_target PRIVATE ${OCS2_CXX_FLAGS})
 
-# PyBindings library
-add_library(quadrotorPyBindings_Cpp
-  src/QuadrotorPyBindings.cpp
-)
-add_dependencies(quadrotorPyBindings_Cpp
-  quadrotor_interface
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(quadrotorPyBindings_Cpp
-  quadrotor_interface
-  ${catkin_LIBRARIES}
-)
+# # PyBindings library
+# add_library(quadrotorPyBindings_Cpp
+#   src/QuadrotorPyBindings.cpp
+# )
+# add_dependencies(quadrotorPyBindings_Cpp
+#   quadrotor_interface
+#   ${catkin_EXPORTED_TARGETS}
+# )
+# target_link_libraries(quadrotorPyBindings_Cpp
+#   quadrotor_interface
+#   ${catkin_LIBRARIES}
+# )
 
-if(${pybind11_FOUND})
-  pybind11_add_module(QuadrotorPyBindings SHARED
-    src/pyBindModule.cpp
-  )
-  add_dependencies(QuadrotorPyBindings
-    quadrotorPyBindings_Cpp
-    ${catkin_EXPORTED_TARGETS}
-  )
-  target_link_libraries(QuadrotorPyBindings PRIVATE
-    quadrotorPyBindings_Cpp
-    ${catkin_LIBRARIES}
-  )
+# if(${pybind11_FOUND})
+#   pybind11_add_module(QuadrotorPyBindings SHARED
+#     src/pyBindModule.cpp
+#   )
+#   add_dependencies(QuadrotorPyBindings
+#     quadrotorPyBindings_Cpp
+#     ${catkin_EXPORTED_TARGETS}
+#   )
+#   target_link_libraries(QuadrotorPyBindings PRIVATE
+#     quadrotorPyBindings_Cpp
+#     ${catkin_LIBRARIES}
+#   )
 
-  if(USE_PYBIND_PYTHON_3)
-  # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
-  set_target_properties(QuadrotorPyBindings
-    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
-  )
-  else(USE_PYBIND_PYTHON_3)
-  set_target_properties(QuadrotorPyBindings
-      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
-  )
-  endif(USE_PYBIND_PYTHON_3)
+#   if(USE_PYBIND_PYTHON_3)
+#   # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
+#   set_target_properties(QuadrotorPyBindings
+#     PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
+#   )
+#   else(USE_PYBIND_PYTHON_3)
+#   set_target_properties(QuadrotorPyBindings
+#       PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+#   )
+#   endif(USE_PYBIND_PYTHON_3)
 
-  catkin_python_setup()
-endif()
+#   catkin_python_setup()
+# endif()
 
 #########################
 ###   CLANG TOOLING   ###
@@ -161,7 +162,7 @@ if(cmake_clang_tools_FOUND)
       quadrotor_mpc
       quadrotor_dummy_test
       quadrotor_target
-      quadrotorPyBindings_Cpp
+      # quadrotorPyBindings_Cpp
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
@@ -172,7 +173,8 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS quadrotor_interface quadrotorPyBindings_Cpp
+install(TARGETS quadrotor_interface
+  # quadrotorPyBindings_Cpp
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -200,11 +202,11 @@ endif()
 ## Testing ##
 #############
 
-catkin_add_gtest(${PROJECT_NAME}_PyBindingsTest
-  test/PyBindingsTest.cpp
-)
-target_link_libraries(${PROJECT_NAME}_PyBindingsTest
-  quadrotorPyBindings_Cpp
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
+# catkin_add_gtest(${PROJECT_NAME}_PyBindingsTest
+#   test/PyBindingsTest.cpp
+# )
+# target_link_libraries(${PROJECT_NAME}_PyBindingsTest
+#   quadrotorPyBindings_Cpp
+#   ${catkin_LIBRARIES}
+#   ${Boost_LIBRARIES}
+# )

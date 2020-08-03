@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -32,22 +32,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 #include <Eigen/IterativeLinearSolvers>
 
-#include "ocs2_core/OCS2NumericTraits.h"
+#include <ocs2_core/OCS2NumericTraits.h>
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 namespace LinearAlgebra {
 
 // forward declarations
-void makePsdEigenvalue(Eigen::MatrixXd& squareMatrix, double minEigenvalue);
+void makePsdEigenvalue(matrix_t& squareMatrix, double minEigenvalue);
 
-void makePsdCholesky(Eigen::MatrixXd& A, double minEigenvalue);
+void makePsdCholesky(matrix_t& A, double minEigenvalue);
 
-void computeConstraintProjection(const Eigen::MatrixXd& Dm, const Eigen::MatrixXd& RmInvUmUmT, Eigen::MatrixXd& DmDagger,
-                                 Eigen::MatrixXd& DmDaggerTRmDmDaggerUUT, Eigen::MatrixXd& RmInvConstrainedUUT);
+void computeConstraintProjection(const matrix_t& Dm, const matrix_t& RmInvUmUmT, matrix_t& DmDagger, matrix_t& DmDaggerTRmDmDaggerUUT,
+                                 matrix_t& RmInvConstrainedUUT);
 
-int rank(const Eigen::MatrixXd& A);
+int rank(const matrix_t& A);
 
-Eigen::VectorXcd eigenvalues(const Eigen::MatrixXd& A);
+Eigen::VectorXcd eigenvalues(const matrix_t& A);
 
 /**
  * Makes the input matrix PSD using a eigenvalue decomposition.
@@ -58,7 +59,7 @@ Eigen::VectorXcd eigenvalues(const Eigen::MatrixXd& A);
  */
 template <typename Derived>
 void makePsdEigenvalue(Eigen::MatrixBase<Derived>& squareMatrix, double minEigenvalue = OCS2NumericTraits<double>::limitEpsilon()) {
-  Eigen::MatrixXd mat = squareMatrix;
+  matrix_t mat = squareMatrix;
   makePsdEigenvalue(mat, minEigenvalue);
   squareMatrix = mat;
 }
@@ -111,7 +112,7 @@ void makePsdGershgorin(Eigen::MatrixBase<Derived>& squareMatrix, double minEigen
  */
 template <typename Derived>
 void makePsdCholesky(Eigen::MatrixBase<Derived>& A, double minEigenvalue = OCS2NumericTraits<double>::limitEpsilon()) {
-  Eigen::MatrixXd mat = A;
+  matrix_t mat = A;
   makePsdCholesky(mat, minEigenvalue);
   A = mat;
 }
@@ -144,9 +145,9 @@ void computeInverseMatrixUUT(const Derived& Am, Derived& AmInvUmUmT) {
  * the dimension n_u*(n_u-n_c) with n_u = Rm.rows() and n_c = Dm.rows().
  */
 template <typename DerivedInputMatrix>
-void computeConstraintProjection(const Eigen::MatrixXd& Dm, const DerivedInputMatrix& RmInvUmUmT, Eigen::MatrixXd& DmDagger,
-                                 Eigen::MatrixXd& DmDaggerTRmDmDaggerUUT, Eigen::MatrixXd& RmInvConstrainedUUT) {
-  computeConstraintProjection(Dm, Eigen::MatrixXd(RmInvUmUmT), DmDagger, DmDaggerTRmDmDaggerUUT, RmInvConstrainedUUT);
+void computeConstraintProjection(const matrix_t& Dm, const DerivedInputMatrix& RmInvUmUmT, matrix_t& DmDagger,
+                                 matrix_t& DmDaggerTRmDmDaggerUUT, matrix_t& RmInvConstrainedUUT) {
+  computeConstraintProjection(Dm, matrix_t(RmInvUmUmT), DmDagger, DmDaggerTRmDmDaggerUUT, RmInvConstrainedUUT);
 }
 
 /**
@@ -156,7 +157,7 @@ void computeConstraintProjection(const Eigen::MatrixXd& Dm, const DerivedInputMa
  */
 template <typename Derived>
 int rank(const Derived& A) {
-  return rank(Eigen::MatrixXd(A));
+  return rank(matrix_t(A));
 }
 
 /**
@@ -166,7 +167,7 @@ int rank(const Derived& A) {
  */
 template <typename Derived>
 Eigen::VectorXcd eigenvalues(const Derived& A) {
-  return eigenvalues(Eigen::MatrixXd(A));
+  return eigenvalues(matrix_t(A));
 }
 
 }  // namespace LinearAlgebra

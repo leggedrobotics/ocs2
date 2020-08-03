@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -32,23 +32,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <atomic>
 #include <mutex>
 
+#include <ocs2_core/Types.h>
 #include <ocs2_core/logic/ModeSchedule.h>
-
-#include "ocs2_oc/oc_solver/SolverSynchronizedModule.h"
+#include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
 
 namespace ocs2 {
 
 /**
  * Manages the ModeSchedule of the solver.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class ModeScheduleManager : public SolverSynchronizedModule<STATE_DIM, INPUT_DIM> {
+class ModeScheduleManager : public SolverSynchronizedModule {
  public:
-  using Base = SolverSynchronizedModule<STATE_DIM, INPUT_DIM>;
-  using typename Base::primal_solution_t;
-  using typename Base::scalar_t;
-  using typename Base::state_vector_t;
-
   /**
    * Constructor.
    */
@@ -59,10 +53,10 @@ class ModeScheduleManager : public SolverSynchronizedModule<STATE_DIM, INPUT_DIM
    */
   ~ModeScheduleManager() override = default;
 
-  void preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
                     const CostDesiredTrajectories& costDesiredTrajectory) final;
 
-  void postSolverRun(const primal_solution_t& primalSolution) final {}
+  void postSolverRun(const PrimalSolution& primalSolution) final {}
 
   /**
    * Returns a const reference to ModeSchedule. This method is NOT thread safe.
@@ -96,7 +90,7 @@ class ModeScheduleManager : public SolverSynchronizedModule<STATE_DIM, INPUT_DIM
    * @param [in] costDesiredTrajectory : User defined cost desired trajectory
    * @param [in] modeSchedule : The current ModeSchedule
    */
-  virtual void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+  virtual void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
                                 const CostDesiredTrajectories& costDesiredTrajectory, ModeSchedule& modeSchedule) {}
 
  private:
@@ -108,5 +102,3 @@ class ModeScheduleManager : public SolverSynchronizedModule<STATE_DIM, INPUT_DIM
 };
 
 }  // namespace ocs2
-
-#include "implementation/ModeScheduleManager.h"

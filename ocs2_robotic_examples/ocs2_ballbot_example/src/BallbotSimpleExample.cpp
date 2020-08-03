@@ -34,26 +34,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/package.h>
 
 // OCS2
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
+#include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_core/misc/LoadData.h>
+#include <ocs2_mpc/MPC_SLQ.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 // Ballbot
-#include "ocs2_ballbot_example/cost/BallbotCost.h"
 #include "ocs2_ballbot_example/definitions.h"
 #include "ocs2_ballbot_example/dynamics/BallbotSystemDynamics.h"
-#include "ocs2_ballbot_example/solvers/BallbotSLQ.h"
 
 using namespace ocs2;
 using namespace ballbot;
 
 int main(int argc, char** argv) {
-  using dim_t = Dimensions<STATE_DIM_, INPUT_DIM_>;
-  using ballbotConstraint_t = ConstraintBase<STATE_DIM_, INPUT_DIM_>;
-  using ballbotOperatingPoint_t = OperatingPoints<STATE_DIM_, INPUT_DIM_>;
-
   /*
    * Setting paths
    */
@@ -82,45 +78,44 @@ int main(int argc, char** argv) {
    */
   std::unique_ptr<BallbotSystemDynamics> ballbotSystemDynamicsPtr(new BallbotSystemDynamics());
   ballbotSystemDynamicsPtr->initialize("ballbot_dynamics", libraryFolder, true, true);
-  std::unique_ptr<TimeTriggeredRollout<STATE_DIM_, INPUT_DIM_>> ballbotRolloutPtr(
-      new TimeTriggeredRollout<STATE_DIM_, INPUT_DIM_>(*ballbotSystemDynamicsPtr, rolloutSettings));
+  std::unique_ptr<TimeTriggeredRollout> ballbotRolloutPtr(new TimeTriggeredRollout(*ballbotSystemDynamicsPtr, rolloutSettings));
 
   /*
    * Cost function
    */
-  dim_t::state_matrix_t Q;
+  matrix_t Q(STATE_DIM_, STATE_DIM_);
   loadData::loadEigenMatrix(taskFile, "Q", Q);
-  dim_t::input_matrix_t R;
+  matrix_t R(INPUT_DIM_, INPUT_DIM_);
   loadData::loadEigenMatrix(taskFile, "R", R);
-  dim_t::state_matrix_t QFinal;
+  matrix_t QFinal(STATE_DIM_, STATE_DIM_);
   loadData::loadEigenMatrix(taskFile, "Q_final", QFinal);
-  dim_t::state_vector_t xFinal;
+  vector_t xFinal(STATE_DIM_);
   loadData::loadEigenMatrix(taskFile, "x_final", xFinal);
-  dim_t::state_vector_t xInit;
+  vector_t xInit(STATE_DIM_);
   loadData::loadEigenMatrix(taskFile, "initialState", xInit);
-  dim_t::state_vector_t xNominal = xInit;
-  dim_t::input_vector_t uNominal = dim_t::input_vector_t::Zero();
+  vector_t xNominal = xInit;
+  vector_t uNominal = vector_t::Zero(INPUT_DIM_);
 
-  std::unique_ptr<BallbotCost> ballbotCostPtr(new BallbotCost(Q, R, xNominal, uNominal, QFinal, xFinal));
+  std::unique_ptr<QuadraticCostFunction> ballbotCostPtr(new QuadraticCostFunction(Q, R, xNominal, uNominal, QFinal, xFinal));
 
   /*
    * Constraints
    */
-  std::unique_ptr<ballbotConstraint_t> ballbotConstraintPtr(new ballbotConstraint_t);
+  std::unique_ptr<ConstraintBase> ballbotConstraintPtr(new ConstraintBase());
 
   /*
    * Initialization
    */
-  std::unique_ptr<ballbotOperatingPoint_t> ballbotOperatingPointPtr(new ballbotOperatingPoint_t(xInit, dim_t::input_vector_t::Zero()));
+  std::unique_ptr<OperatingPoints> ballbotOperatingPointPtr(new OperatingPoints(xInit, vector_t::Zero(INPUT_DIM_)));
 
   /*
    * Time partitioning which defines the time horizon and the number of data partitioning
    */
-  dim_t::scalar_t timeHorizon;
+  scalar_t timeHorizon;
   loadData::loadCppDataType(taskFile, "mpcTimeHorizon.timehorizon", timeHorizon);
   size_t numPartitions;
   loadData::loadCppDataType(taskFile, "mpcTimeHorizon.numPartitions", numPartitions);
-  dim_t::scalar_array_t partitioningTimes(numPartitions + 1);
+  scalar_array_t partitioningTimes(numPartitions + 1);
   partitioningTimes[0] = 0.0;
   for (size_t i = 0; i < numPartitions; i++) {
     partitioningTimes[i + 1] = partitioningTimes[i] + timeHorizon / numPartitions;
@@ -131,14 +126,14 @@ int main(int argc, char** argv) {
    * define solver and run
    */
   slqSettings.ddpSettings_.nThreads_ = 1;
-  SLQ<STATE_DIM_, INPUT_DIM_> slqST(ballbotRolloutPtr.get(), ballbotSystemDynamicsPtr.get(), ballbotConstraintPtr.get(),
-                                    ballbotCostPtr.get(), ballbotOperatingPointPtr.get(), slqSettings);
-  slqST.run(0.0, xInit, timeHorizon, partitioningTimes);
+  SLQ slq(ballbotRolloutPtr.get(), ballbotSystemDynamicsPtr.get(), ballbotConstraintPtr.get(), ballbotCostPtr.get(),
+          ballbotOperatingPointPtr.get(), slqSettings);
+  slq.run(0.0, xInit, timeHorizon, partitioningTimes);
 
   /*
    * Perforce index
    */
-  auto performanceIndex = slqST.getPerformanceIndeces();
+  auto performanceIndex = slq.getPerformanceIndeces();
 
   return 0;
 }

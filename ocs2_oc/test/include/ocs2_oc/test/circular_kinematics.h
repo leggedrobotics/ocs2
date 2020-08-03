@@ -40,22 +40,24 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /**
- * This example defines an optimal control problem where a kinematically model particle is
+ * This example defines an optimal control problem where a kinematically modeled particle is
  * supposed to orbit a unite circle (defined as a constraint) with velocity of 1[m/s]
  * (defined as a cost).
  */
-class CircularKinematicsSystem final : public SystemDynamicsBase<2, 2> {
+class CircularKinematicsSystem final : public SystemDynamicsBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
   CircularKinematicsSystem() = default;
   ~CircularKinematicsSystem() override = default;
 
-  void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) override { dxdt = u; }
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) override { return u; }
 
-  void getFlowMapDerivativeState(state_matrix_t& A) override { A.setZero(); }
-
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) override { B.setIdentity(); }
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+    VectorFunctionLinearApproximation dynamics;
+    dynamics.f = computeFlowMap(t, x, u);
+    dynamics.dfdx.setZero(2, 2);
+    dynamics.dfdu.setIdentity(2, 2);
+    return dynamics;
+  }
 
   CircularKinematicsSystem* clone() const override { return new CircularKinematicsSystem(*this); }
 };
@@ -64,28 +66,25 @@ class CircularKinematicsSystem final : public SystemDynamicsBase<2, 2> {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /**
- * This example defines an optimal control problem where a kinematically model particle is
+ * This example defines an optimal control problem where a kinematically modeled particle is
  * supposed to orbit a unite circle (defined as a constraint) with velocity of 1[m/s]
  * (defined as a cost).
  */
-class CircularKinematicsCost final : public CostFunctionBaseAD<2, 2> {
+class CircularKinematicsCost final : public CostFunctionBaseAD {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  CircularKinematicsCost() = default;
+  CircularKinematicsCost() : CostFunctionBaseAD(2, 2) {}
   ~CircularKinematicsCost() override = default;
 
   CircularKinematicsCost* clone() const override { return new CircularKinematicsCost(*this); }
 
  protected:
-  void intermediateCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                                const ad_dynamic_vector_t& parameters, ad_scalar_t& costValue) const override {
-    costValue = 0.5 * pow(state(0) * input(1) - state(1) * input(0) - 1.0, 2) + 0.005 * input.dot(input);
+  ad_scalar_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                       const ad_vector_t& parameters) const override {
+    return 0.5 * pow(state(0) * input(1) - state(1) * input(0) - 1.0, 2) + 0.005 * input.dot(input);
   }
 
-  void terminalCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& parameters,
-                            ad_scalar_t& costValue) const override {
-    costValue = 0.0;
+  ad_scalar_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const override {
+    return ad_scalar_t(0.0);
   }
 };
 
@@ -93,31 +92,31 @@ class CircularKinematicsCost final : public CostFunctionBaseAD<2, 2> {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /**
- * This example defines an optimal control problem where a kinematically model particle is
+ * This example defines an optimal control problem where a kinematically modeled particle is
  * supposed to orbit a unite circle (defined as a constraint) with velocity of 1[m/s]
  * (defined as a cost).
  */
-class CircularKinematicsConstraints final : public ConstraintBase<2, 2> {
+class CircularKinematicsConstraints final : public ConstraintBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
   CircularKinematicsConstraints() = default;
   ~CircularKinematicsConstraints() override = default;
 
   CircularKinematicsConstraints* clone() const override { return new CircularKinematicsConstraints(*this); }
 
-  size_t numStateInputConstraint(const scalar_t& time) override { return 1; }
+  vector_t stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) override {
+    vector_t e(1);
+    e << x.dot(u);
+    return e;
+  }
 
-  void getConstraint1(constraint1_vector_t& e) override { e(0) = x_.dot(u_); }
-
-  void getConstraint1DerivativesState(constraint1_state_matrix_t& C) override { C.topRows(1) = u_.transpose(); }
-
-  void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) override { D.topRows(1) = x_.transpose(); }
+  VectorFunctionLinearApproximation stateInputEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x,
+                                                                                    const vector_t& u) override {
+    VectorFunctionLinearApproximation e;
+    e.f = stateInputEqualityConstraint(t, x, u);
+    e.dfdx = u.transpose();
+    e.dfdu = x.transpose();
+    return e;
+  }
 };
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-using CircularKinematicsSystemOperatingTrajectories = OperatingPoints<2, 2>;
 
 }  // namespace ocs2

@@ -29,34 +29,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Core>
-#include <csignal>
-#include <iomanip>
-#include <iostream>
 #include <string>
-#include <vector>
 
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/command/TargetTrajectories_ROS_Interface.h>
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 
 /**
  * This class lets the user to insert robot command form joystick.
- *
- * @tparam SCALAR_T: scalar type.
  */
-template <typename SCALAR_T>
-class TargetTrajectories_Joystick_Interface : public ocs2::TargetTrajectories_ROS_Interface<SCALAR_T> {
+class TargetTrajectories_Joystick_Interface : public ocs2::TargetTrajectories_ROS_Interface {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = ocs2::TargetTrajectories_ROS_Interface<SCALAR_T>;
-  using scalar_t = typename BASE::scalar_t;
-  using scalar_array_t = typename BASE::scalar_array_t;
-  using dynamic_vector_t = typename BASE::dynamic_vector_t;
-  using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
-  using cost_desired_trajectories_t = typename BASE::cost_desired_trajectories_t;
-
   /**
    * Constructor
    *
@@ -71,7 +55,7 @@ class TargetTrajectories_Joystick_Interface : public ocs2::TargetTrajectories_RO
   /**
    * Default destructor
    */
-  virtual ~TargetTrajectories_Joystick_Interface() = default;
+  ~TargetTrajectories_Joystick_Interface() override = default;
 
   /**
    * Gets the command vector size.
@@ -83,7 +67,7 @@ class TargetTrajectories_Joystick_Interface : public ocs2::TargetTrajectories_RO
   /**
    * Sets cost trajectories from input desired state, and publishes cost desired trajectories
    */
-  void publishTargetTrajectoriesFromDesiredState(cost_desired_trajectories_t costDesiredTrajectories);
+  void publishTargetTrajectoriesFromDesiredState(CostDesiredTrajectories costDesiredTrajectories);
 
  protected:
   /******
@@ -96,5 +80,3 @@ class TargetTrajectories_Joystick_Interface : public ocs2::TargetTrajectories_RO
 };
 
 }  // namespace ocs2
-
-#include "implementation/TargetTrajectories_Joystick_Interface.h"

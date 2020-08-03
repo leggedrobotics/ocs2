@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,7 +25,7 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
+******************************************************************************/
 
 #pragma once
 
@@ -126,14 +126,13 @@ inline Eigen::Matrix<SCALAR_T, 6, 3> JacobianOfAngularVelocityMapping(const Eige
   using std::cos;
   using std::sin;
 
-  Eigen::Matrix<SCALAR_T, 6, 1> xAD;
-  xAD << eulerAnglesXyz, angularVelocity;
-  const SCALAR_T* x = xAD.data();
+  Eigen::Matrix<SCALAR_T, 6, 1> x;
+  x << eulerAnglesXyz, angularVelocity;
 
   std::array<SCALAR_T, 10> v;
 
   Eigen::Matrix<SCALAR_T, 6, 3> jac;
-  SCALAR_T* y = jac.data();
+  Eigen::Map<Eigen::Matrix<SCALAR_T, 3 * 6, 1>> y(jac.data());
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "cppcoreguidelines-pro-bounds-pointer-arithmetic"

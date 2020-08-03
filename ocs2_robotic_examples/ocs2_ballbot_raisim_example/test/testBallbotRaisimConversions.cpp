@@ -2,6 +2,8 @@
 #include <ocs2_ballbot_raisim_example/BallbotRaisimConversions.h>
 #include <ocs2_robotic_tools/common/AngularVelocityMapping.h>
 
+#include <ocs2_ballbot_example/definitions.h>
+
 TEST(BallbotRaisimConversions, AngularVelocities) {
   const Eigen::Vector3d zeroEulerAngles(Eigen::Vector3d::Zero());
 
@@ -43,11 +45,8 @@ TEST(BallbotRaisimConversions, StateConversionSelfConsistency) {
   ocs2::ballbot::BallbotRaisimConversions conversions;
 
   for (int i = 0; i < 100; i++) {
-    ocs2::ballbot::BallbotRaisimConversions::state_vector_t ocs2_state;
-    ocs2::ballbot::BallbotRaisimConversions::input_vector_t dummyInput;
-    ocs2_state.setRandom();
-    ocs2_state *= 0.2;
-    dummyInput.setRandom();
+    ocs2::vector_t ocs2_state = 0.2 * ocs2::vector_t::Random(ocs2::ballbot::STATE_DIM_);
+    ocs2::vector_t dummyInput = ocs2::vector_t::Random(ocs2::ballbot::INPUT_DIM_);
 
     // consistency test ocs2 -> raisim -> ocs2
     Eigen::VectorXd q, dq;
@@ -61,9 +60,4 @@ TEST(BallbotRaisimConversions, StateConversionSelfConsistency) {
     EXPECT_TRUE(q.isApprox(q_calc));
     EXPECT_TRUE(dq.isApprox(dq_calc));
   }
-}
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

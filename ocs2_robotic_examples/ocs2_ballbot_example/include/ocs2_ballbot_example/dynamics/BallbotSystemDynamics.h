@@ -46,43 +46,28 @@ namespace ballbot {
  * (ballPosition_x, ballPosition_y, eulerAnglesZyx theta_z, eulerAnglesZyx theta_y, eulerAnglesZyx theta_x)
  * The control input are u = (torque_wheel1, torque_wheel2, torque_wheel3)
  */
-class BallbotSystemDynamics : public SystemDynamicsBaseAD<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> {
+class BallbotSystemDynamics : public SystemDynamicsBaseAD {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  using SystemDynamicsBaseAD::ad_scalar_t;
+  using SystemDynamicsBaseAD::ad_vector_t;
 
-  using BASE = ocs2::SystemDynamicsBaseAD<ballbot::STATE_DIM_, ballbot::INPUT_DIM_>;
-  using scalar_t = typename BASE::scalar_t;
-  using ad_scalar_t = typename BASE::ad_scalar_t;
-  using ad_dynamic_vector_t = typename BASE::ad_dynamic_vector_t;
-  using state_vector_t = typename BASE::state_vector_t;
-  using state_matrix_t = typename BASE::state_matrix_t;
-  using input_vector_t = typename BASE::input_vector_t;
-
-  using ballbot_parameters_t = BallbotParameters<scalar_t>;
-
-  /**
-   * Constructor.
-   */
-  BallbotSystemDynamics() : BASE() {
+  /** Constructor */
+  BallbotSystemDynamics() : SystemDynamicsBaseAD(STATE_DIM_, INPUT_DIM_) {
     wheelRadius_ = param_.wheelRadius_;
     ballRadius_ = param_.ballRadius_;
   }
 
-  /**
-   * Destructor
-   */
+  /** Destructor */
   ~BallbotSystemDynamics() override = default;
 
-  BallbotSystemDynamics(const BallbotSystemDynamics& rhs)
-      : BASE(rhs), param_(rhs.param_), wheelRadius_(rhs.wheelRadius_), ballRadius_(rhs.ballRadius_) {}
+  BallbotSystemDynamics(const BallbotSystemDynamics& rhs) = default;
 
   BallbotSystemDynamics* clone() const override { return new BallbotSystemDynamics(*this); }
 
-  void systemFlowMap(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                     ad_dynamic_vector_t& stateDerivative) const override;
+  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const override;
 
  private:
-  ballbot_parameters_t param_;
+  BallbotParameters param_;
   scalar_t wheelRadius_;
   scalar_t ballRadius_;
 };

@@ -102,7 +102,7 @@ TEST(exp1_gddp_test, optimum_gradient_test) {
   EXP1_SystemDerivative systemDerivative(modeScheduleManagerPtr);
 
   // system constraints
-  EXP1_SystemConstraint systemConstraint;
+  ConstraintBase systemConstraint;
 
   // system cost functions
   EXP1_CostFunction systemCostFunction(modeScheduleManagerPtr);

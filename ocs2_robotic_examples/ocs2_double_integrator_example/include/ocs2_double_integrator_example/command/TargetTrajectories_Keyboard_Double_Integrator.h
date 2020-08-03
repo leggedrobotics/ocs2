@@ -29,29 +29,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_robotic_tools/command/TargetPoseTransformation.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
+
+#include "ocs2_double_integrator_example/definitions.h"
 
 namespace ocs2 {
 namespace double_integrator {
 
 /**
  * This class implements TargetTrajectories communication using ROS.
- *
- * @tparam SCALAR_T: scalar type.
  */
-template <typename SCALAR_T>
-class TargetTrajectories_Keyboard_Double_Integrator final : public ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T> {
+class TargetTrajectories_Keyboard_Double_Integrator final : public ocs2::TargetTrajectories_Keyboard_Interface {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  enum { command_dim_ = 2 };
-
-  using BASE = ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T>;
-  using scalar_t = typename BASE::scalar_t;
-  using scalar_array_t = typename BASE::scalar_array_t;
-  using dynamic_vector_t = typename BASE::dynamic_vector_t;
-  using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
+  enum { COMMAND_DIM_ = 2 };
 
   /**
    * Constructor.
@@ -64,21 +55,21 @@ class TargetTrajectories_Keyboard_Double_Integrator final : public ocs2::TargetT
    */
   TargetTrajectories_Keyboard_Double_Integrator(int argc, char* argv[], const std::string& robotName = "robot",
                                                 const scalar_array_t& goalPoseLimit = scalar_array_t{10.0, 10.0})
-      : BASE(argc, argv, robotName, command_dim_, goalPoseLimit) {}
+      : ocs2::TargetTrajectories_Keyboard_Interface(argc, argv, robotName, COMMAND_DIM_, goalPoseLimit) {}
 
   /**
    * Default destructor
    */
   ~TargetTrajectories_Keyboard_Double_Integrator() override = default;
 
-  void toCostDesiredTimeStateInput(const scalar_array_t& commadLineTarget, scalar_t& desiredTime, dynamic_vector_t& desiredState,
-                                   dynamic_vector_t& desiredInput) override {
+  void toCostDesiredTimeStateInput(const scalar_array_t& commadLineTarget, scalar_t& desiredTime, vector_t& desiredState,
+                                   vector_t& desiredInput) override {
     // time
     desiredTime = 0.0;
     // state
-    desiredState = Eigen::Map<const dynamic_vector_t>(commadLineTarget.data(), command_dim_);
+    desiredState = Eigen::Map<const vector_t>(commadLineTarget.data(), COMMAND_DIM_);
     // input
-    desiredInput = dynamic_vector_t::Zero(1);
+    desiredInput = vector_t::Zero(INPUT_DIM_);
   }
 
  private:

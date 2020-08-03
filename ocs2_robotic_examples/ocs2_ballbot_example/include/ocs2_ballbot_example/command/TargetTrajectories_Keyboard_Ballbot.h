@@ -33,7 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_comm_interfaces/SystemObservation.h>
 #include <ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h>
 #include <ocs2_msgs/mpc_observation.h>
-#include <ocs2_robotic_tools/command/TargetPoseTransformation.h>
 #include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
 #include <mutex>
 
@@ -44,21 +43,10 @@ namespace ballbot {
 
 /**
  * This class implements TargetTrajectories communication using ROS.
- *
- * @tparam SCALAR_T: scalar type.
  */
-template <typename SCALAR_T>
-class TargetTrajectories_Keyboard_Ballbot final : public TargetTrajectories_Keyboard_Interface<SCALAR_T> {
+class TargetTrajectories_Keyboard_Ballbot final : public TargetTrajectories_Keyboard_Interface {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  enum { command_dim_ = 6 };
-
-  using BASE = TargetTrajectories_Keyboard_Interface<SCALAR_T>;
-  using typename BASE::dynamic_vector_array_t;
-  using typename BASE::dynamic_vector_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::scalar_t;
+  enum { COMMAND_DIM_ = 6 };
 
   /**
    * Constructor.
@@ -76,7 +64,7 @@ class TargetTrajectories_Keyboard_Ballbot final : public TargetTrajectories_Keyb
    */
   TargetTrajectories_Keyboard_Ballbot(int argc, char* argv[], const std::string& robotName = "robot",
                                       const scalar_array_t& goalPoseLimit = scalar_array_t{2.0, 2.0, 360.0, 2.0, 2.0, 2.0})
-      : BASE(argc, argv, robotName, command_dim_, goalPoseLimit) {
+      : TargetTrajectories_Keyboard_Interface(argc, argv, robotName, COMMAND_DIM_, goalPoseLimit) {
     observationSubscriber_ = this->nodeHandle_->subscribe("/" + robotName + "_mpc_observation", 1,
                                                           &TargetTrajectories_Keyboard_Ballbot::observationCallback, this);
   }
@@ -87,9 +75,9 @@ class TargetTrajectories_Keyboard_Ballbot final : public TargetTrajectories_Keyb
   ~TargetTrajectories_Keyboard_Ballbot() override = default;
 
   CostDesiredTrajectories toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) override {
-    auto deg2rad = [](const scalar_t& deg) { return (deg * M_PI / 180.0); };
+    auto deg2rad = [](scalar_t deg) { return (deg * M_PI / 180.0); };
 
-    SystemObservation<ballbot::STATE_DIM_, ballbot::INPUT_DIM_> observation;
+    SystemObservation observation;
     ::ros::spinOnce();
     {
       std::lock_guard<std::mutex> lock(latestObservationMutex_);
@@ -97,7 +85,7 @@ class TargetTrajectories_Keyboard_Ballbot final : public TargetTrajectories_Keyb
     }
 
     // desired state from command line (position is relative, velocity absolute)
-    dynamic_vector_t relativeState = Eigen::Map<const dynamic_vector_t>(commadLineTarget.data(), command_dim_);
+    vector_t relativeState = Eigen::Map<const vector_t>(commadLineTarget.data(), COMMAND_DIM_);
     relativeState(2) = deg2rad(commadLineTarget[2]);
 
     // Target reaching duration
@@ -115,7 +103,7 @@ class TargetTrajectories_Keyboard_Ballbot final : public TargetTrajectories_Keyb
     tDesiredTrajectory[1] = observation.time() + targetReachingDuration;
 
     // Desired state trajectory
-    typename CostDesiredTrajectories::dynamic_vector_array_t& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
+    vector_array_t& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
     xDesiredTrajectory.resize(2);
     xDesiredTrajectory[0] = observation.state();
     xDesiredTrajectory[1] = observation.state();
@@ -123,7 +111,7 @@ class TargetTrajectories_Keyboard_Ballbot final : public TargetTrajectories_Keyb
     xDesiredTrajectory[1].template tail<5>() << relativeState.template tail<3>(), 0.0, 0.0;
 
     // Desired input trajectory
-    typename CostDesiredTrajectories::dynamic_vector_array_t& uDesiredTrajectory = costDesiredTrajectories.desiredInputTrajectory();
+    vector_array_t& uDesiredTrajectory = costDesiredTrajectories.desiredInputTrajectory();
     uDesiredTrajectory.resize(2);
     uDesiredTrajectory[0].setZero(3);
     uDesiredTrajectory[1].setZero(3);

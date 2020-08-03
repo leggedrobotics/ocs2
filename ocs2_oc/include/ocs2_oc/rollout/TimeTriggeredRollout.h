@@ -42,29 +42,10 @@ namespace ocs2 {
 
 /**
  * This class is an interface class for forward rollout of the system dynamics.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
+class TimeTriggeredRollout : public RolloutBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = RolloutBase<STATE_DIM, INPUT_DIM>;
-  using typename BASE::controller_t;
-  using typename BASE::input_vector_array_t;
-  using typename BASE::input_vector_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::scalar_t;
-  using typename BASE::size_array_t;
-  using typename BASE::state_vector_array_t;
-  using typename BASE::state_vector_t;
-  using typename BASE::time_interval_array_t;
-
-  using event_handler_t = SystemEventHandler<STATE_DIM>;
-  using controlled_system_base_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
-  using ode_solver_t = IntegratorBase<STATE_DIM>;
+  using RolloutBase::time_interval_array_t;
 
   /**
    * Constructor.
@@ -72,10 +53,12 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
    * @param [in] systemDynamics: The system dynamics for forward rollout.
    * @param [in] rolloutSettings: The rollout settings.
    */
-  explicit TimeTriggeredRollout(const controlled_system_base_t& systemDynamics, Rollout_Settings rolloutSettings = Rollout_Settings())
-      : BASE(std::move(rolloutSettings)), systemDynamicsPtr_(systemDynamics.clone()), systemEventHandlersPtr_(new event_handler_t) {
+  explicit TimeTriggeredRollout(const ControlledSystemBase& systemDynamics, Rollout_Settings rolloutSettings = Rollout_Settings())
+      : RolloutBase(std::move(rolloutSettings)),
+        systemDynamicsPtr_(systemDynamics.clone()),
+        systemEventHandlersPtr_(new SystemEventHandler) {
     // construct dynamicsIntegratorsPtr
-    dynamicsIntegratorPtr_ = std::move(newIntegrator<STATE_DIM>(this->settings().integratorType_, systemEventHandlersPtr_));
+    dynamicsIntegratorPtr_ = std::move(newIntegrator(this->settings().integratorType_, systemEventHandlersPtr_));
   }
 
   /**
@@ -87,96 +70,28 @@ class TimeTriggeredRollout : public RolloutBase<STATE_DIM, INPUT_DIM> {
 
   TimeTriggeredRollout& operator=(const TimeTriggeredRollout&) = delete;
 
-  TimeTriggeredRollout<STATE_DIM, INPUT_DIM>* clone() const override {
-    return new TimeTriggeredRollout<STATE_DIM, INPUT_DIM>(*systemDynamicsPtr_, this->settings());
-  }
+  TimeTriggeredRollout* clone() const override { return new TimeTriggeredRollout(*systemDynamicsPtr_, this->settings()); }
 
   /**
    * Returns the underlying dynamics.
    */
-  controlled_system_base_t* systemDynamicsPtr() { return systemDynamicsPtr_.get(); }
+  ControlledSystemBase* systemDynamicsPtr() { return systemDynamicsPtr_.get(); }
 
   void abortRollout() override { systemEventHandlersPtr_->killIntegration_ = true; }
 
   void reactivateRollout() override { systemEventHandlersPtr_->killIntegration_ = false; }
 
  protected:
-  state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
-                         scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, state_vector_array_t& stateTrajectory,
-                         input_vector_array_t& inputTrajectory, ModelDataBase::array_t* modelDataTrajectoryPtr) override {
-    if (!controller) {
-      throw std::runtime_error("The input controller is not set.");
-    }
-
-    const int numSubsystems = timeIntervalArray.size();
-    const int numEvents = numSubsystems - 1;
-
-    // max number of steps for integration
-    const auto maxNumSteps = static_cast<size_t>(this->settings().maxNumStepsPerSecond_ *
-                                                 std::max(1.0, timeIntervalArray.back().second - timeIntervalArray.front().first));
-
-    // clearing the output trajectories
-    timeTrajectory.clear();
-    timeTrajectory.reserve(maxNumSteps + 1);
-    stateTrajectory.clear();
-    stateTrajectory.reserve(maxNumSteps + 1);
-    inputTrajectory.clear();
-    inputTrajectory.reserve(maxNumSteps + 1);
-    postEventIndicesStock.clear();
-    postEventIndicesStock.reserve(numEvents);
-    if (modelDataTrajectoryPtr) {
-      modelDataTrajectoryPtr->clear();
-      modelDataTrajectoryPtr->reserve(maxNumSteps + 1);
-    }
-
-    // set controller
-    systemDynamicsPtr_->setController(controller);
-
-    // reset function calls counter
-    systemDynamicsPtr_->resetNumFunctionCalls();
-
-    // reset the event class
-    systemEventHandlersPtr_->reset();
-
-    state_vector_t beginState = initState;
-    int k_u = 0;  // control input iterator
-    for (int i = 0; i < numSubsystems; i++) {
-      Observer<STATE_DIM> observer(&stateTrajectory, &timeTrajectory, modelDataTrajectoryPtr);  // concatenate trajectory
-      // integrate controlled system
-      dynamicsIntegratorPtr_->integrate_adaptive(*systemDynamicsPtr_, observer, beginState, timeIntervalArray[i].first,
-                                                 timeIntervalArray[i].second, this->settings().minTimeStep_, this->settings().absTolODE_,
-                                                 this->settings().relTolODE_, maxNumSteps);
-
-      // compute control input trajectory and concatenate to inputTrajectory
-      if (this->settings().reconstructInputTrajectory_) {
-        for (; k_u < timeTrajectory.size(); k_u++) {
-          inputTrajectory.emplace_back(systemDynamicsPtr_->controllerPtr()->computeInput(timeTrajectory[k_u], stateTrajectory[k_u]));
-          if (modelDataTrajectoryPtr) {
-            (*modelDataTrajectoryPtr)[k_u].dynamicsBias_.setZero(stateTrajectory[k_u].size());
-          }
-        }  // end of k_u loop
-      }
-
-      // a jump has taken place
-      if (i < numEvents) {
-        postEventIndicesStock.push_back(stateTrajectory.size());
-        // jump map
-        systemDynamicsPtr_->computeJumpMap(timeTrajectory.back(), stateTrajectory.back(), beginState);
-      }
-    }  // end of i loop
-
-    // check for the numerical stability
-    this->checkNumericalStability(controller, timeTrajectory, postEventIndicesStock, stateTrajectory, inputTrajectory);
-
-    return stateTrajectory.back();
-  }
+  vector_t runImpl(time_interval_array_t timeIntervalArray, const vector_t& initState, ControllerBase* controller,
+                   scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
+                   vector_array_t& inputTrajectory) override;
 
  private:
-  std::unique_ptr<controlled_system_base_t> systemDynamicsPtr_;
+  std::unique_ptr<ControlledSystemBase> systemDynamicsPtr_;
 
-  std::shared_ptr<event_handler_t> systemEventHandlersPtr_;
+  std::shared_ptr<SystemEventHandler> systemEventHandlersPtr_;
 
-  std::unique_ptr<ode_solver_t> dynamicsIntegratorPtr_;
+  std::unique_ptr<IntegratorBase> dynamicsIntegratorPtr_;
 };
 
 }  // namespace ocs2

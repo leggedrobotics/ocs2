@@ -106,11 +106,10 @@ install(DIRECTORY launch config
 #############
 ## Testing ##
 #############
-# catkin_add_gtest(testBallbotRaisimConversions
-#   test/testBallbotRaisimConversions.cpp
-# )
-# target_link_libraries(testBallbotRaisimConversions
-#   ballbot_raisim_conversions
-#   ${catkin_LIBRARIES}
-#   gtest_main
-# )
+catkin_add_gtest(testBallbotRaisimConversions
+  test/testBallbotRaisimConversions.cpp
+)
+target_link_libraries(testBallbotRaisimConversions
+  ballbot_raisim_conversions
+  ${catkin_LIBRARIES}
+)

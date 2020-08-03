@@ -35,3 +35,8 @@ TEST(BallbotIntegrationTest, createMPC) {
   auto mpcPtr = ballbotInterface.getMpc();
   MPC_ROS_Interface mpcNode(*mpcPtr, "ballbot");
 }
+
+int main(int argc, char** argv) {
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}

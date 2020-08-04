@@ -183,7 +183,7 @@ TEST_F(DdpCorrectnessTest, slq_solution_multiple_partition) {
       << "MESSAGE: multi-threaded SLQ failed in the optimal final state test!";
 }
 
-TEST_F(DdpCorrectnessTest, ilqr_solution_single_partition) {
+TEST_F(DdpCorrectnessTest, DISABLED_ilqr_solution_single_partition) {
   ocs2::scalar_array_t partitioningTimes{startTime, finalTime};
 
   ocs2::ILQR_Settings settings;
@@ -205,7 +205,7 @@ TEST_F(DdpCorrectnessTest, ilqr_solution_single_partition) {
       << "MESSAGE: ILQR failed in the optimal final state test!";
 }
 
-TEST_F(DdpCorrectnessTest, ilqr_solution_multiple_partition) {
+TEST_F(DdpCorrectnessTest, DISABLED_ilqr_solution_multiple_partition) {
   ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
 
   ocs2::ILQR_Settings settings;

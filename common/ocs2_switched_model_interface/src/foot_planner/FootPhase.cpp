@@ -42,7 +42,7 @@ void SwingPhase::setFullSwing(scalar_t swingHeight) {
 
     // touchdown seen from liftoff frame
     const scalar_t touchDownHeightInLiftOffFrame =
-        terrainDistanceFromPositionInWorld(touchDown_.terrainPlane->positionInWorld, *liftOff_.terrainPlane);
+        terrainSignedDistanceFromPositionInWorld(touchDown_.terrainPlane->positionInWorld, *liftOff_.terrainPlane);
     const scalar_t touchDownVelocityInLiftOffFrame =
         surfaceNormalInWorld(*liftOff_.terrainPlane).dot(touchDown_.velocity * surfaceNormalInWorld(*touchDown_.terrainPlane));
     const CubicSpline::Node touchDownInLiftOffFrame{touchDown_.time, touchDownHeightInLiftOffFrame, touchDownVelocityInLiftOffFrame};
@@ -51,7 +51,7 @@ void SwingPhase::setFullSwing(scalar_t swingHeight) {
     const vector3_t touchDownClearancePointInWorld =
         swingHeight * surfaceNormalInWorld(*touchDown_.terrainPlane) + touchDown_.terrainPlane->positionInWorld;
     const scalar_t midHeightInLiftOffFrame =
-        std::max(swingHeight, terrainDistanceFromPositionInWorld(touchDownClearancePointInWorld, *liftOff_.terrainPlane));
+        std::max(swingHeight, terrainSignedDistanceFromPositionInWorld(touchDownClearancePointInWorld, *liftOff_.terrainPlane));
 
     // Create spline in liftOffFrame
     liftOffMotion_.reset(new SplineCpg(liftOffInLiftOffFrame, midHeightInLiftOffFrame, touchDownInLiftOffFrame));
@@ -62,7 +62,7 @@ void SwingPhase::setFullSwing(scalar_t swingHeight) {
 
     // liftOff seen from touchdown frame
     const scalar_t liftOffHeightInTouchDownFrame =
-        terrainDistanceFromPositionInWorld(liftOff_.terrainPlane->positionInWorld, *touchDown_.terrainPlane);
+        terrainSignedDistanceFromPositionInWorld(liftOff_.terrainPlane->positionInWorld, *touchDown_.terrainPlane);
     const scalar_t liftOffVelocityInTouchDownFrame =
         surfaceNormalInWorld(*touchDown_.terrainPlane).dot(liftOff_.velocity * surfaceNormalInWorld(*liftOff_.terrainPlane));
     const CubicSpline::Node liftOffInTouchDownFrame{liftOff_.time, liftOffHeightInTouchDownFrame, liftOffVelocityInTouchDownFrame};
@@ -71,7 +71,7 @@ void SwingPhase::setFullSwing(scalar_t swingHeight) {
     const vector3_t liftOffClearancePointInWorld =
         swingHeight * surfaceNormalInWorld(*liftOff_.terrainPlane) + liftOff_.terrainPlane->positionInWorld;
     const scalar_t midHeightInTouchDownFrame =
-        std::max(swingHeight, terrainDistanceFromPositionInWorld(liftOffClearancePointInWorld, *touchDown_.terrainPlane));
+        std::max(swingHeight, terrainSignedDistanceFromPositionInWorld(liftOffClearancePointInWorld, *touchDown_.terrainPlane));
 
     // Create spline in touchDownFrame
     touchdownMotion_.reset(new SplineCpg(liftOffInTouchDownFrame, midHeightInTouchDownFrame, touchDownInTouchDownFrame));

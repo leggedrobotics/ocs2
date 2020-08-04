@@ -9,7 +9,7 @@
 #include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
 #include <ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h>
 #include <ocs2_switched_model_interface/logic/ModeSequenceTemplate.h>
-#include <ocs2_switched_model_interface/terrain/TerrainModelPlanar.h>
+#include <ocs2_switched_model_interface/terrain/PlanarTerrainModel.h>
 
 namespace switched_model {
 
@@ -86,7 +86,7 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
 
   // Terrain
   const auto loadedTerrain = loadTerrainPlane(pathToConfigFile, true);
-  std::unique_ptr<TerrainModelPlanar> terrainModel(new TerrainModelPlanar(std::move(loadedTerrain)));
+  std::unique_ptr<TerrainModel> terrainModel(new PlanarTerrainModel(std::move(loadedTerrain)));
 
   // Mode schedule manager
   modeScheduleManagerPtr_ = std::make_shared<SwitchedModelModeScheduleManager>(std::move(gaitSchedule), std::move(swingTrajectoryPlanner),

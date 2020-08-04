@@ -138,7 +138,7 @@ std::vector<TerrainPlane> SwingTrajectoryPlanner::selectNominalFootholdTerrain(i
       const auto desiredBasePose = comModel_->calculateBasePose(middleContactDesiredComPose);
       const auto nominalFootholdPositionInWorld = kinematicsModel_->footPositionInOriginFrame(leg, desiredBasePose, desiredJointPositions);
 
-      nominalFootholdTerrain.push_back(terrainModel.getLocalTerrainAtPositionInWorld(nominalFootholdPositionInWorld));
+      nominalFootholdTerrain.push_back(terrainModel.getLocalTerrainAtPositionInWorldAlongGravity(nominalFootholdPositionInWorld));
     }
   }
 
@@ -148,7 +148,7 @@ std::vector<TerrainPlane> SwingTrajectoryPlanner::selectNominalFootholdTerrain(i
 void SwingTrajectoryPlanner::updateLastContact(int leg, scalar_t expectedLiftOff, const vector3_t& currentFootPosition,
                                                const TerrainModel& terrainModel) {
   // Get orientation from terrain model, position from the kinematics
-  auto lastContactTerrain = terrainModel.getLocalTerrainAtPositionInWorld(currentFootPosition);
+  auto lastContactTerrain = terrainModel.getLocalTerrainAtPositionInWorldAlongGravity(currentFootPosition);
   lastContactTerrain.positionInWorld = currentFootPosition;
   lastContacts_[leg] = {expectedLiftOff, lastContactTerrain};
 }

@@ -57,7 +57,7 @@ class PythonInterface {
 
  public:
   /** Destructor */
-  ~PythonInterface() = default;
+  virtual ~PythonInterface() = default;
 
   /**
    * @brief resets MPC to its original state

@@ -44,7 +44,7 @@ class QuadrotorSystemDynamics final : public SystemDynamicsBase {
    *
    * @param quadrotorParameters: Quadrotor parameters.
    */
-  QuadrotorSystemDynamics(const QuadrotorParameters& quadrotorParameters) : param_(quadrotorParameters) {}
+  explicit QuadrotorSystemDynamics(QuadrotorParameters quadrotorParameters) : param_(std::move(quadrotorParameters)) {}
 
   /** Destructor */
   ~QuadrotorSystemDynamics() override = default;

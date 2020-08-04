@@ -54,7 +54,7 @@ class QuadrotorInterface final : public RobotInterface {
    *
    * @param [in] taskFileFolderName: The name of the folder containing task file
    */
-  QuadrotorInterface(const std::string& taskFileFolderName);
+  explicit QuadrotorInterface(const std::string& taskFileFolderName);
 
   /** Destructor */
   ~QuadrotorInterface() override = default;

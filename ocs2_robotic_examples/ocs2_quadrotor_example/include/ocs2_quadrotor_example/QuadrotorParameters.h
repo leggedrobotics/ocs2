@@ -43,7 +43,7 @@ namespace quadrotor {
 
 class QuadrotorParameters {
  public:
-  QuadrotorParameters(scalar_t quadrotorMass = 1.0, scalar_t Thzz = 1.0, scalar_t Thxxyy = 1.0, scalar_t gravity = 9.8)
+  explicit QuadrotorParameters(scalar_t quadrotorMass = 1.0, scalar_t Thzz = 1.0, scalar_t Thxxyy = 1.0, scalar_t gravity = 9.8)
       : quadrotorMass_(quadrotorMass), Thzz_(Thzz), Thxxyy_(Thxxyy), gravity_(gravity) {}
 
   ~QuadrotorParameters() = default;

@@ -49,6 +49,8 @@ add_library(${PROJECT_NAME}
 	src/logic/GaitSchedule.cpp
 	src/logic/ModeSequenceTemplate.cpp
 	src/logic/SwitchedModelModeScheduleManager.cpp
+	src/terrain/PlanarTerrainModel.cpp
+	src/terrain/TerrainPlane.cpp
 	src/EndEffectorConstraint.cpp
 	src/ComKinoConstraintBaseAd.cpp
 	src/AnymalWheelsComKinoConstraintAd.cpp
@@ -129,4 +131,12 @@ catkin_add_gtest(test_frictionConeConstraint
 target_link_libraries(test_frictionConeConstraint
 	${PROJECT_NAME}
 	${catkin_LIBRARIES}
+)
+
+catkin_add_gtest(test_${PROJECT_NAME}_terrain
+	test/terrain/testTerrainPlane.cpp
+)
+target_link_libraries(test_${PROJECT_NAME}_terrain
+	${PROJECT_NAME}
+	gtest_main
 )

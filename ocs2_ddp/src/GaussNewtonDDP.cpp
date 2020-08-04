@@ -1772,9 +1772,6 @@ void GaussNewtonDDP::runInit() {
   // disable Eigen multi-threading
   Eigen::setNbThreads(1);
 
-  // cache the nominal trajectories before the new rollout (time, state, input, ...)
-  swapDataToCache();
-
   // initial controller rollout
   forwardPassTimer_.startTimer();
   const size_t threadId = 0;
@@ -1979,10 +1976,11 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   // distribution of the sequential tasks (e.g. Riccati solver) in between threads
   distributeWork();
 
+  // cache the nominal trajectories before the new rollout (time, state, input, ...)
+  swapDataToCache();
+
   // run DDP initializer and update the member variables
   runInit();
-
-  performanceIndexHistory_.emplace_back(performanceIndex_);
 
   // convergence conditions variables
   bool isOptimizationConverged = false;
@@ -2005,23 +2003,18 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
       std::cerr << "max feedforward norm: " << maxDeltaUffNorm << std::endl;
     }
 
-    scalar_t cachedCost = performanceIndex_.totalCost;
-    scalar_t cachedStateInputEqConstraintISE = performanceIndex_.stateInputEqConstraintISE;
-    scalar_t cachedInequalityConstraintPenalty = performanceIndex_.inequalityConstraintPenalty;
-
     // cache the nominal trajectories before the new rollout (time, state, input, ...)
     swapDataToCache();
+    performanceIndexHistory_.push_back(performanceIndex_);
 
     // run the an iteration of the DDP algorithm and update the member variables
     runIteration();
 
-    performanceIndexHistory_.emplace_back(performanceIndex_);
-
     // loop break variables
     isCostFunctionConverged = false;
     isStepLengthStarZero = false;
-    relCost = std::abs(performanceIndex_.totalCost + performanceIndex_.inequalityConstraintPenalty - cachedCost -
-                       cachedInequalityConstraintPenalty);
+    relCost = std::abs(performanceIndex_.totalCost + performanceIndex_.inequalityConstraintPenalty -
+                       performanceIndexHistory_.back().totalCost - performanceIndexHistory_.back().inequalityConstraintPenalty);
     switch (ddpSettings_.strategy_) {
       case ddp_strategy::type::LINE_SEARCH: {
         isStepLengthStarZero = numerics::almost_eq(lineSearchModule_.stepLengthStar.load(), 0.0) && !isInitInternalControllerEmpty;
@@ -2052,6 +2045,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
   // cache the nominal trajectories before the new rollout (time, state, input, ...)
   swapDataToCache();
+  performanceIndexHistory_.push_back(performanceIndex_);
 
   // finding the final optimal stepLength and getting the optimal trajectories and controller
   searchStrategyTimer_.startTimer();
@@ -2060,6 +2054,8 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     case ddp_strategy::type::LEVENBERG_MARQUARDT: { levenbergMarquardt(levenbergMarquardtModule_); break; }
   }  // clang-format on
   searchStrategyTimer_.endTimer();
+
+  performanceIndexHistory_.push_back(performanceIndex_);
 
   // display
   if (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_) {

@@ -160,7 +160,7 @@ std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
         nominalFootholdTerrain.push_back(convexTerrain);
       } else {  // After the horizon -> we are only interested in the position and orientation
         ConvexTerrain convexTerrain;
-        convexTerrain.plane = terrainModel.getLocalTerrainAtPositionInWorld(nominalFootholdPositionInWorld);
+        convexTerrain.plane = terrainModel.getLocalTerrainAtPositionInWorldAlongGravity(nominalFootholdPositionInWorld);
         nominalFootholdTerrain.push_back(convexTerrain);
       }
     }
@@ -172,7 +172,7 @@ std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
 void SwingTrajectoryPlanner::updateLastContact(int leg, scalar_t expectedLiftOff, const vector3_t& currentFootPosition,
                                                const TerrainModel& terrainModel) {
   // Get orientation from terrain model, position from the kinematics
-  auto lastContactTerrain = terrainModel.getLocalTerrainAtPositionInWorld(currentFootPosition);
+  auto lastContactTerrain = terrainModel.getLocalTerrainAtPositionInWorldAlongGravity(currentFootPosition);
   lastContactTerrain.positionInWorld = currentFootPosition;
   lastContacts_[leg] = {expectedLiftOff, lastContactTerrain};
 }

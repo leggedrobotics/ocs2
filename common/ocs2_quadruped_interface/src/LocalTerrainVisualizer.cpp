@@ -34,7 +34,7 @@ void LocalTerrainVisualizer::postSolverRun(const primal_solution_t& primalSoluti
   // Obtain local terrain below the base
   const auto localBaseTerrain = [&] {
     std::lock_guard<ocs2::LockablePtr<TerrainModel>> lock(*terrainPptr_);
-    return (*terrainPptr_)->getLocalTerrainAtPositionInWorld(getPositionInOrigin(comPose));
+    return (*terrainPptr_)->getLocalTerrainAtPositionInWorldAlongGravity(getPositionInOrigin(comPose));
   }();
 
   planeVisualizer_.update(primalSolution.timeTrajectory_.front(), localBaseTerrain);

@@ -55,12 +55,11 @@ class testCostfunctionLinearCombinationFixture : public ::testing::Test {
     matrix_t Q = 5.0 * matrix_t::Random(state_dim_, state_dim_);
     matrix_t R = 3.0 * matrix_t::Random(input_dim_, input_dim_);
     matrix_t P = 2.0 * matrix_t::Random(input_dim_, state_dim_);
-    vector_t xNominal = vector_t::Random(state_dim_);
-    vector_t uNominal = vector_t::Random(input_dim_);
     matrix_t QFinal = 4.0 * matrix_t::Random(state_dim_, state_dim_);
     Q = (Q + Q.transpose()).eval();
     R = (R + R.transpose()).eval();
     QFinal = (QFinal + QFinal.transpose()).eval();
+    costDesiredTrajectories_ = CostDesiredTrajectories({0.0}, {vector_t::Random(state_dim_)}, {vector_t::Random(input_dim_)});
 
     double accumulatedWeights = 0;
     std::vector<WeightedCost> weightedCostVector;
@@ -75,18 +74,21 @@ class testCostfunctionLinearCombinationFixture : public ::testing::Test {
       accumulatedWeights += weight;
       weightedQuadraticCost.first = weight;
 
-      weightedQuadraticCost.second.reset(new QuadraticCostFunction(Q, R, xNominal, uNominal, QFinal, xNominal, P));
+      weightedQuadraticCost.second.reset(new QuadraticCostFunction(Q, R, QFinal, P));
+      weightedQuadraticCost.second->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories_);
 
       weightedCostVector.push_back(weightedQuadraticCost);
     }
 
     combinedCost_.reset(new CostFunctionLinearCombination(weightedCostVector));
-    quadraticCost_.reset(new QuadraticCostFunction(accumulatedWeights * Q, accumulatedWeights * R, xNominal, uNominal,
-                                                   accumulatedWeights * QFinal, xNominal, accumulatedWeights * P));
+    quadraticCost_.reset(
+        new QuadraticCostFunction(accumulatedWeights * Q, accumulatedWeights * R, accumulatedWeights * QFinal, accumulatedWeights * P));
+    quadraticCost_->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories_);
   }
 
   std::unique_ptr<CostFunctionLinearCombination> combinedCost_;
   std::unique_ptr<QuadraticCostFunction> quadraticCost_;
+  CostDesiredTrajectories costDesiredTrajectories_;
 };
 
 /******************************************************************************/

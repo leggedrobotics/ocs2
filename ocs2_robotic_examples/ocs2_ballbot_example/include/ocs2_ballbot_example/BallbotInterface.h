@@ -64,6 +64,7 @@ class BallbotInterface final : public RobotInterface {
   ~BallbotInterface() override = default;
 
   const vector_t& getInitialState() { return initialState_; }
+  const vector_t& getInitialTarget() { return xFinal_; }
 
   ddp::Settings& ddpSettings() { return ddpSettings_; }
 
@@ -104,16 +105,12 @@ class BallbotInterface final : public RobotInterface {
   std::unique_ptr<OperatingPoints> ballbotOperatingPointPtr_;
 
   // cost parameters
-  matrix_t Q_;
-  matrix_t R_;
-  matrix_t QFinal_;
-  vector_t xFinal_;
-  vector_t xNominal_;
-  vector_t uNominal_;
+  matrix_t Q_{STATE_DIM, STATE_DIM};
+  matrix_t R_{INPUT_DIM, INPUT_DIM};
+  matrix_t QFinal_{STATE_DIM, STATE_DIM};
 
-  size_t numPartitions_ = 0;
-  scalar_t timeHorizon_ = 1.0;
-  vector_t initialState_;
+  vector_t initialState_{STATE_DIM};
+  vector_t xFinal_{STATE_DIM};
 };
 
 }  // namespace ballbot

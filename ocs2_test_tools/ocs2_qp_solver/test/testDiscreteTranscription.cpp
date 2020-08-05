@@ -17,14 +17,17 @@ class DiscreteTranscriptionTest : public testing::Test {
   DiscreteTranscriptionTest() {
     srand(0);
     cost = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
-                                        ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM), ocs2::vector_t::Random(STATE_DIM),
-                                        ocs2::vector_t::Random(INPUT_DIM), ocs2::vector_t::Random(STATE_DIM));
+                                        ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM));
+    costDesiredTrajectories =
+        ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
+    cost->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
     system = ocs2::qp_solver::getOcs2Dynamics(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
     linearization = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
     lqp = ocs2::qp_solver::getLinearQuadraticApproximation(*cost, *system, linearization);
   }
 
   std::unique_ptr<ocs2::CostFunctionBase> cost;
+  ocs2::CostDesiredTrajectories costDesiredTrajectories;
   std::unique_ptr<ocs2::SystemDynamicsBase> system;
   ocs2::qp_solver::ContinuousTrajectory linearization;
   std::vector<ocs2::qp_solver::LinearQuadraticStage> lqp;

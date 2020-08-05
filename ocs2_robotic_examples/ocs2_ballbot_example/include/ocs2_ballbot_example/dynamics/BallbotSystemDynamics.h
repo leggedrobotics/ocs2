@@ -52,7 +52,7 @@ class BallbotSystemDynamics : public SystemDynamicsBaseAD {
   using SystemDynamicsBaseAD::ad_vector_t;
 
   /** Constructor */
-  BallbotSystemDynamics() : SystemDynamicsBaseAD(STATE_DIM_, INPUT_DIM_) {
+  BallbotSystemDynamics() : SystemDynamicsBaseAD(STATE_DIM, INPUT_DIM) {
     wheelRadius_ = param_.wheelRadius_;
     ballRadius_ = param_.ballRadius_;
   }

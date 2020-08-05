@@ -29,8 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <utility>
-
 #include <ocs2_core/Types.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 
@@ -47,13 +45,10 @@ class QuadraticCostFunction : public CostFunctionBase {
    * - \f$ \Phi = 0.5(x-x_{f})' Q_{f} (x-x_{f}) \f$.
    * @param [in] Q: \f$ Q \f$
    * @param [in] R: \f$ R \f$
-   * @param [in] xNominal: \f$ x_{n}\f$
-   * @param [in] uNominal: \f$ u_{n}\f$
-   * @param [in] xNominalFinal: \f$ x_{f}\f$
    * @param [in] QFinal: \f$ Q_{f}\f$
+   * @param [in] P: \f$ P \f$
    */
-  QuadraticCostFunction(matrix_t Q, matrix_t R, vector_t xNominal, vector_t uNominal, matrix_t QFinal, vector_t xNominalFinal,
-                        matrix_t P = matrix_t());
+  QuadraticCostFunction(matrix_t Q, matrix_t R, matrix_t QFinal, matrix_t P = matrix_t());
 
   /** Destructor */
   ~QuadraticCostFunction() override = default;
@@ -67,39 +62,10 @@ class QuadraticCostFunction : public CostFunctionBase {
   ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
 
  protected:
-  /**
-   * Get the desired state and input for cost evaluation.
-   *
-   * Default implementation uses costDesiredTrajectoriesPtr_ if available, otherwise xNominal and uNominal are used.
-   * Override this method if another behavior is desired.
-   *
-   * @param [in] t: current time.
-   * @param [in] x: current state.
-   * @param [in] u: current input.
-   * @return pair of nominal state and input.
-   */
-  virtual std::pair<vector_t, vector_t> getNominalStateInput(scalar_t t, const vector_t& x, const vector_t& u);
-
-  /**
-   * Get the desired final state for cost evaluation.
-   *
-   * Default implementation uses costDesiredTrajectoriesPtr_ if available, otherwise xNominalFinal is used.
-   * Override this method if another behavior is desired.
-   *
-   * @param [in] t: current time.
-   * @param [in] x: current state.
-   * @return nominal final state.
-   */
-  virtual vector_t getNominalFinalState(scalar_t t, const vector_t& x);
-
   matrix_t Q_;
   matrix_t R_;
   matrix_t P_;
   matrix_t QFinal_;
-
-  vector_t xNominal_;
-  vector_t uNominal_;
-  vector_t xNominalFinal_;
 };
 
 }  // namespace ocs2

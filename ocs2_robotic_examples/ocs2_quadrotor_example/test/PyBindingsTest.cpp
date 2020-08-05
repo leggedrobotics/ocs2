@@ -5,16 +5,16 @@
 TEST(QuadrotorTest, PyBindings) {
   ocs2::quadrotor::QuadrotorPyBindings bindings("mpc");
 
-  ocs2::vector_t initState = ocs2::vector_t::Zero(ocs2::quadrotor::STATE_DIM_);
+  ocs2::vector_t initState = ocs2::vector_t::Zero(ocs2::quadrotor::STATE_DIM);
   initState(0) = 0.0;
   initState(2) = 0.0;
-  const ocs2::vector_t zeroInput = ocs2::vector_t::Zero(ocs2::quadrotor::INPUT_DIM_);
+  const ocs2::vector_t zeroInput = ocs2::vector_t::Zero(ocs2::quadrotor::INPUT_DIM);
 
   ocs2::CostDesiredTrajectories costDesiredTraj;
   costDesiredTraj.desiredTimeTrajectory().resize(2, 0.0);
   costDesiredTraj.desiredTimeTrajectory()[1] = 2.0;
-  costDesiredTraj.desiredInputTrajectory().resize(2, ocs2::vector_t::Zero(ocs2::quadrotor::INPUT_DIM_));
-  costDesiredTraj.desiredStateTrajectory().resize(2, ocs2::vector_t::Zero(ocs2::quadrotor::STATE_DIM_));
+  costDesiredTraj.desiredInputTrajectory().resize(2, ocs2::vector_t::Zero(ocs2::quadrotor::INPUT_DIM));
+  costDesiredTraj.desiredStateTrajectory().resize(2, ocs2::vector_t::Zero(ocs2::quadrotor::STATE_DIM));
   costDesiredTraj.desiredStateTrajectory()[0] = initState;
 
   bindings.reset(costDesiredTraj);

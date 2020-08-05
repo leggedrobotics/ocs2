@@ -20,8 +20,10 @@ class Ocs2QpSolverTest : public testing::Test {
   Ocs2QpSolverTest() {
     srand(0);
     cost = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
-                                        ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM), ocs2::vector_t::Random(STATE_DIM),
-                                        ocs2::vector_t::Random(INPUT_DIM), ocs2::vector_t::Random(STATE_DIM));
+                                        ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM));
+    costDesiredTrajectories =
+        ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
+    cost->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
     system = ocs2::qp_solver::getOcs2Dynamics(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
     nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
     x0 = ocs2::vector_t::Random(STATE_DIM);
@@ -29,6 +31,7 @@ class Ocs2QpSolverTest : public testing::Test {
   }
 
   std::unique_ptr<ocs2::CostFunctionBase> cost;
+  ocs2::CostDesiredTrajectories costDesiredTrajectories;
   std::unique_ptr<ocs2::SystemDynamicsBase> system;
   ocs2::qp_solver::ContinuousTrajectory nominalTrajectory;
   ocs2::vector_t x0;
@@ -67,13 +70,12 @@ TEST_F(Ocs2QpSolverTest, invariantUnderLinearization) {
 
 TEST_F(Ocs2QpSolverTest, knownSolutionAtOrigin) {
   // If the cost's nominal trajectory is set to zero, and the initial state is zero, then the solution has only zeros.
-  const auto zeroCost = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
-                                                     ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM), ocs2::vector_t::Zero(STATE_DIM),
-                                                     ocs2::vector_t::Zero(INPUT_DIM), ocs2::vector_t::Zero(STATE_DIM));
+  costDesiredTrajectories = ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Zero(STATE_DIM)}, {ocs2::vector_t::Zero(INPUT_DIM)});
+  cost->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
   const auto zeroX0 = ocs2::vector_t::Zero(STATE_DIM);
 
   // Obtain solution, with non-zero nominalTrajectory
-  auto zeroSolution = solveLinearQuadraticOptimalControlProblem(*zeroCost, *system, nominalTrajectory, zeroX0);
+  auto zeroSolution = solveLinearQuadraticOptimalControlProblem(*cost, *system, nominalTrajectory, zeroX0);
 
   ocs2::vector_array_t allStatesZero(N + 1, ocs2::vector_t::Zero(STATE_DIM));
   ocs2::vector_array_t allInputsZero(N, ocs2::vector_t::Zero(INPUT_DIM));

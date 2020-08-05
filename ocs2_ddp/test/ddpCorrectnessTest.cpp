@@ -56,8 +56,10 @@ class DdpCorrectnessTest : public testing::Test {
 
     // cost
     cost = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
-                                        ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM), ocs2::vector_t::Random(STATE_DIM),
-                                        ocs2::vector_t::Random(INPUT_DIM), ocs2::vector_t::Random(STATE_DIM));
+                                        ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM));
+    costDesiredTrajectories =
+        ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
+    cost->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
 
     // constraint
     constraint.reset(new ocs2::ConstraintBase());
@@ -120,6 +122,7 @@ class DdpCorrectnessTest : public testing::Test {
   ocs2::scalar_t relError(ocs2::vector_t ddpSol, const ocs2::vector_t& qpSol) const { return (ddpSol - qpSol).norm() / ddpSol.norm(); }
 
   std::unique_ptr<ocs2::CostFunctionBase> cost;
+  ocs2::CostDesiredTrajectories costDesiredTrajectories;
   std::unique_ptr<ocs2::SystemDynamicsBase> system;
   std::unique_ptr<ocs2::ConstraintBase> constraint;
   std::unique_ptr<ocs2::OperatingPoints> operatingPoints;
@@ -146,17 +149,17 @@ TEST_F(DdpCorrectnessTest, slq_solution_single_partition) {
 
   // DDP
   ocs2::SLQ ddp(rollout.get(), system.get(), constraint.get(), cost.get(), operatingPoints.get(), ddpSettings);
+  ddp.setCostDesiredTrajectories(costDesiredTrajectories);
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   const auto ddpSolution = ddp.primalSolution(finalTime);
   const auto ddpPerformanceIndeces = ddp.getPerformanceIndeces();
 
-  ASSERT_LT((ddpPerformanceIndeces.totalCost - qpCost), 10.0 * ddpSettings.minRelCost_)
-      << "MESSAGE: SLQ failed in the optimal cost test!";
+  EXPECT_LT((ddpPerformanceIndeces.totalCost - qpCost), 10.0 * ddpSettings.minRelCost_) << "MESSAGE: SLQ failed in the optimal cost test!";
 
-  ASSERT_LT(relError(ddpSolution.inputTrajectory_.front(), qpSolution.inputTrajectory.front()), solutionPrecision)
+  EXPECT_LT(relError(ddpSolution.inputTrajectory_.front(), qpSolution.inputTrajectory.front()), solutionPrecision)
       << "MESSAGE: SLQ failed in the optimal initial input test!";
 
-  ASSERT_LT(relError(ddpSolution.stateTrajectory_.back(), qpSolution.stateTrajectory.back()), solutionPrecision)
+  EXPECT_LT(relError(ddpSolution.stateTrajectory_.back(), qpSolution.stateTrajectory.back()), solutionPrecision)
       << "MESSAGE: SLQ failed in the optimal final state test!";
 }
 
@@ -167,58 +170,60 @@ TEST_F(DdpCorrectnessTest, slq_solution_multiple_partition) {
 
   // DDP
   ocs2::SLQ ddp(rollout.get(), system.get(), constraint.get(), cost.get(), operatingPoints.get(), ddpSettings);
+  ddp.setCostDesiredTrajectories(costDesiredTrajectories);
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   const auto ddpSolution = ddp.primalSolution(finalTime);
   const auto ddpPerformanceIndeces = ddp.getPerformanceIndeces();
 
-  ASSERT_LT((ddpPerformanceIndeces.totalCost - qpCost), 10.0 * ddpSettings.minRelCost_)
+  EXPECT_LT((ddpPerformanceIndeces.totalCost - qpCost), 10.0 * ddpSettings.minRelCost_)
       << "MESSAGE: multi-threaded SLQ failed in the optimal cost test!";
 
-  ASSERT_LT(relError(ddpSolution.inputTrajectory_.front(), qpSolution.inputTrajectory.front()), solutionPrecision)
+  EXPECT_LT(relError(ddpSolution.inputTrajectory_.front(), qpSolution.inputTrajectory.front()), solutionPrecision)
       << "MESSAGE: multi-threaded SLQ failed in the optimal initial input test!";
 
-  ASSERT_LT(relError(ddpSolution.stateTrajectory_.back(), qpSolution.stateTrajectory.back()), solutionPrecision)
+  EXPECT_LT(relError(ddpSolution.stateTrajectory_.back(), qpSolution.stateTrajectory.back()), solutionPrecision)
       << "MESSAGE: multi-threaded SLQ failed in the optimal final state test!";
 }
 
-TEST_F(DdpCorrectnessTest, DISABLED_ilqr_solution_single_partition) {
+TEST_F(DdpCorrectnessTest, ilqr_solution_single_partition) {
   ocs2::scalar_array_t partitioningTimes{startTime, finalTime};
 
   const auto ddpSettings = getSettings(partitioningTimes.size() - 1, ocs2::ddp::algorithm::ILQR);
 
   // DDP
   ocs2::ILQR ddp(rollout.get(), system.get(), constraint.get(), cost.get(), operatingPoints.get(), ddpSettings);
+  ddp.setCostDesiredTrajectories(costDesiredTrajectories);
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   const auto ddpSolution = ddp.primalSolution(finalTime);
   const auto ddpPerformanceIndeces = ddp.getPerformanceIndeces();
 
-  ASSERT_LT((ddpPerformanceIndeces.totalCost - qpCost), 10.0 * ddpSettings.minRelCost_)
-      << "MESSAGE: ILQR failed in the optimal cost test!";
+  EXPECT_LT((ddpPerformanceIndeces.totalCost - qpCost), 10.0 * ddpSettings.minRelCost_) << "MESSAGE: ILQR failed in the optimal cost test!";
 
-  ASSERT_LT(relError(ddpSolution.inputTrajectory_.front(), qpSolution.inputTrajectory.front()), solutionPrecision)
+  EXPECT_LT(relError(ddpSolution.inputTrajectory_.front(), qpSolution.inputTrajectory.front()), solutionPrecision)
       << "MESSAGE: ILQR failed in the optimal initial input test!";
 
-  ASSERT_LT(relError(ddpSolution.stateTrajectory_.back(), qpSolution.stateTrajectory.back()), solutionPrecision)
+  EXPECT_LT(relError(ddpSolution.stateTrajectory_.back(), qpSolution.stateTrajectory.back()), solutionPrecision)
       << "MESSAGE: ILQR failed in the optimal final state test!";
 }
 
-TEST_F(DdpCorrectnessTest, DISABLED_ilqr_solution_multiple_partition) {
+TEST_F(DdpCorrectnessTest, ilqr_solution_multiple_partition) {
   ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
 
   const auto ddpSettings = getSettings(partitioningTimes.size() - 1, ocs2::ddp::algorithm::ILQR);
 
   // DDP
   ocs2::ILQR ddp(rollout.get(), system.get(), constraint.get(), cost.get(), operatingPoints.get(), ddpSettings);
+  ddp.setCostDesiredTrajectories(costDesiredTrajectories);
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   const auto ddpSolution = ddp.primalSolution(finalTime);
   const auto ddpPerformanceIndeces = ddp.getPerformanceIndeces();
 
-  ASSERT_LT((ddpPerformanceIndeces.totalCost - qpCost), 10.0 * ddpSettings.minRelCost_)
+  EXPECT_LT((ddpPerformanceIndeces.totalCost - qpCost), 10.0 * ddpSettings.minRelCost_)
       << "MESSAGE: multi-threaded ILQR failed in the optimal cost test!";
 
-  ASSERT_LT(relError(ddpSolution.inputTrajectory_.front(), qpSolution.inputTrajectory.front()), solutionPrecision)
+  EXPECT_LT(relError(ddpSolution.inputTrajectory_.front(), qpSolution.inputTrajectory.front()), solutionPrecision)
       << "MESSAGE: multi-threaded ILQR failed in the optimal initial input test!";
 
-  ASSERT_LT(relError(ddpSolution.stateTrajectory_.back(), qpSolution.stateTrajectory.back()), solutionPrecision)
+  EXPECT_LT(relError(ddpSolution.stateTrajectory_.back(), qpSolution.stateTrajectory.back()), solutionPrecision)
       << "MESSAGE: multi-threaded ILQR failed in the optimal final state test!";
 }

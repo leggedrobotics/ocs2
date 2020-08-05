@@ -78,15 +78,15 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   // cost function
   matrix_t Q(stateDim, stateDim);
   Q << 50, 0, 0, 0, 50, 0, 0, 0, 0;
-  matrix_t P(stateDim, stateDim);
-  P << 50, 0, 0, 0, 50, 0, 0, 0, 0;
+  matrix_t Qf(stateDim, stateDim);
+  Qf << 50, 0, 0, 0, 50, 0, 0, 0, 0;
   matrix_t R(inputDim, inputDim);
   R << 1;
-  matrix_t crossTerm = matrix_t::Zero(inputDim, stateDim);
   vector_t xNominal = vector_t::Zero(stateDim);
   vector_t uNominal = vector_t::Zero(inputDim);
+  CostDesiredTrajectories costDesiredTrajectories({startTime}, {xNominal}, {uNominal});
 
-  QuadraticCostFunction systemCost(Q, R, xNominal, uNominal, P, xNominal, crossTerm);
+  QuadraticCostFunction systemCost(Q, R, Qf);
 
   // operatingTrajectories
   vector_t stateOperatingPoint = vector_t::Zero(stateDim);
@@ -96,6 +96,7 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   std::cout << "Starting SLQ Procedure" << std::endl;
   // SLQ
   SLQ slq(&stateTriggeredRollout, &systemDynamics, &systemConstraints, &systemCost, &operatingTrajectories, ddpSettings);
+  slq.setCostDesiredTrajectories(costDesiredTrajectories);
   slq.run(startTime, initState, finalTime, partitioningTimes);
   auto solution = slq.primalSolution(finalTime);
   std::cout << "SLQ Procedure Done" << std::endl;

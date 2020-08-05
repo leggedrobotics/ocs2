@@ -45,8 +45,8 @@ TEST(BallbotRaisimConversions, StateConversionSelfConsistency) {
   ocs2::ballbot::BallbotRaisimConversions conversions;
 
   for (int i = 0; i < 100; i++) {
-    ocs2::vector_t ocs2_state = 0.2 * ocs2::vector_t::Random(ocs2::ballbot::STATE_DIM_);
-    ocs2::vector_t dummyInput = ocs2::vector_t::Random(ocs2::ballbot::INPUT_DIM_);
+    ocs2::vector_t ocs2_state = 0.2 * ocs2::vector_t::Random(ocs2::ballbot::STATE_DIM);
+    ocs2::vector_t dummyInput = ocs2::vector_t::Random(ocs2::ballbot::INPUT_DIM);
 
     // consistency test ocs2 -> raisim -> ocs2
     Eigen::VectorXd q, dq;

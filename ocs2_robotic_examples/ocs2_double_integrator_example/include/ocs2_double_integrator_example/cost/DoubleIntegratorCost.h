@@ -46,8 +46,7 @@ class DoubleIntegratorCost : public QuadraticCostFunction {
    * @param [in] R: \f$ R \f$
    * @param [in] QFinal: \f$ Q_{final}\f$
    */
-  DoubleIntegratorCost(const matrix_t& Q, const matrix_t& R, const matrix_t& Q_final)
-      : QuadraticCostFunction(Q, R, vector_t::Zero(STATE_DIM_), vector_t::Zero(INPUT_DIM_), Q_final, vector_t::Zero(STATE_DIM_)) {}
+  DoubleIntegratorCost(const matrix_t& Q, const matrix_t& R, const matrix_t& Q_final) : QuadraticCostFunction(Q, R, Q_final) {}
 
   /** Destructor */
   ~DoubleIntegratorCost() override = default;

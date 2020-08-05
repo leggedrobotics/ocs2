@@ -29,9 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <utility>
+
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/QuadraticCostFunction.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 
 #include "ocs2_ddp/test/bouncingmass/OverallReference.h"
@@ -42,11 +44,12 @@ static constexpr size_t INPUT_DIM = 1;
 using scalar_t = ocs2::scalar_t;
 using vector_t = ocs2::vector_t;
 using matrix_t = ocs2::matrix_t;
+using ScalarFunctionQuadraticApproximation = ocs2::ScalarFunctionQuadraticApproximation;
 
 class BouncingMassDynamics final : public ocs2::LinearSystemDynamics {
  public:
   BouncingMassDynamics()
-  : LinearSystemDynamics(matrix_t(STATE_DIM, STATE_DIM), matrix_t(STATE_DIM, INPUT_DIM), matrix_t(STATE_DIM, STATE_DIM)) {
+      : LinearSystemDynamics(matrix_t(STATE_DIM, STATE_DIM), matrix_t(STATE_DIM, INPUT_DIM), matrix_t(STATE_DIM, STATE_DIM)) {
     LinearSystemDynamics::A_ << 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
     LinearSystemDynamics::B_ << 0.0, 1.0, 0.0;
     const scalar_t e = 0.95;
@@ -80,18 +83,54 @@ class BouncingMassDynamics final : public ocs2::LinearSystemDynamics {
   }
 };
 
-
-class BouncingMassCost final : public ocs2::QuadraticCostFunction {
+class BouncingMassCost final : public ocs2::CostFunctionBase {
  public:
-  BouncingMassCost(OverallReference ref, matrix_t Q, matrix_t R, matrix_t P, vector_t xNom, vector_t uNom, vector_t xFin,
-                   scalar_t timeFinal)
-      : QuadraticCostFunction(Q, R, xNom, uNom, P, xFin), ref_(ref), timeFinal_(timeFinal) {}
+  BouncingMassCost(OverallReference ref, matrix_t Q, matrix_t R, matrix_t QFinal, scalar_t timeFinal)
+      : ref_(ref), timeFinal_(timeFinal), Q_(std::move(Q)), R_(std::move(R)), QFinal_(std::move(QFinal)) {}
 
   ~BouncingMassCost() override = default;
 
   BouncingMassCost* clone() const override { return new BouncingMassCost(*this); }
 
-  std::pair<vector_t, vector_t> getNominalStateInput(scalar_t t, const vector_t& x, const vector_t& u) override {
+  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) {
+    const auto stateInput = getNominalStateInput(t, x, u);
+    vector_t xDeviation = x - stateInput.first;
+    vector_t uDeviation = u - stateInput.second;
+    return 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation);
+  }
+
+  scalar_t finalCost(scalar_t t, const vector_t& x) {
+    vector_t xDeviation = x - getNominalFinalState(t, x);
+    return 0.5 * xDeviation.dot(QFinal_ * xDeviation);
+  }
+
+  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+    const auto stateInput = getNominalStateInput(t, x, u);
+    vector_t xDeviation = x - stateInput.first;
+    vector_t uDeviation = u - stateInput.second;
+
+    ScalarFunctionQuadraticApproximation L;
+    L.f = 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation);
+    L.dfdx = Q_ * xDeviation;
+    L.dfdu = R_ * uDeviation;
+    L.dfdxx = Q_;
+    L.dfdux.setZero(INPUT_DIM, STATE_DIM);
+    L.dfduu = R_;
+    return L;
+  }
+
+  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
+    vector_t xDeviation = x - getNominalFinalState(t, x);
+
+    ScalarFunctionQuadraticApproximation Phi;
+    Phi.f = 0.5 * xDeviation.dot(QFinal_ * xDeviation);
+    Phi.dfdx = QFinal_ * xDeviation;
+    Phi.dfdxx = QFinal_;
+    return Phi;
+  }
+
+ private:
+  std::pair<vector_t, vector_t> getNominalStateInput(scalar_t t, const vector_t& x, const vector_t& u) {
     vector_t xRef;
     vector_t uRef;
     const int currentMode = x.tail(1).value();
@@ -100,8 +139,7 @@ class BouncingMassCost final : public ocs2::QuadraticCostFunction {
     return {xRef, uRef};
   }
 
- protected:
-  vector_t getNominalFinalState(scalar_t t, const vector_t& x) override {
+  vector_t getNominalFinalState(scalar_t t, const vector_t& x) {
     // Terminal cost only calculated for final state, not for intermediate switch states
     if (std::fabs(t - timeFinal_) > ocs2::OCS2NumericTraits<scalar_t>::weakEpsilon()) {
       return x;
@@ -116,4 +154,7 @@ class BouncingMassCost final : public ocs2::QuadraticCostFunction {
  private:
   scalar_t timeFinal_;
   OverallReference ref_;
+  matrix_t Q_;
+  matrix_t R_;
+  matrix_t QFinal_;
 };

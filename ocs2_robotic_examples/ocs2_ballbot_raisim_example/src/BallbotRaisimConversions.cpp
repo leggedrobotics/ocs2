@@ -95,7 +95,7 @@ auto BallbotRaisimConversions::raisimGenCoordGenVelToState(const Eigen::VectorXd
     throw std::runtime_error("BallbotRaisimConversions::raisimGenCoordGenVelToState: pitch or roll diverged");
   }
 
-  vector_t state(ocs2::ballbot::STATE_DIM_);
+  vector_t state(ocs2::ballbot::STATE_DIM);
   state(0) = r_world_ball_inWorld(0);  // ball x
   state(1) = r_world_ball_inWorld(1);  // ball y
   state.segment<3>(2) = eulerAngles;   // base ypr in EulerAngles ZYX convention

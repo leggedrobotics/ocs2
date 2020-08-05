@@ -49,11 +49,12 @@ int main(int argc, char* argv[]) {
   // initial state
   ocs2::SystemObservation initObservation;
   initObservation.state() = cartPoleInterface.getInitialState();
-  initObservation.input().setZero(ocs2::cartpole::INPUT_DIM_);
-  initObservation.time() = 0;
+  initObservation.input().setZero(ocs2::cartpole::INPUT_DIM);
+  initObservation.time() = 0.0;
 
   // initial command
-  ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time()}, {initObservation.state()}, {initObservation.input()});
+  const ocs2::CostDesiredTrajectories initCostDesiredTrajectories({0.0}, {cartPoleInterface.getInitialTarget()},
+                                                                  {ocs2::vector_t::Zero(ocs2::cartpole::INPUT_DIM)});
 
   // Run dummy (loops while ros is ok)
   dummyCartpole.run(initObservation, initCostDesiredTrajectories);

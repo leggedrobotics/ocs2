@@ -34,15 +34,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-QuadraticCostFunction::QuadraticCostFunction(matrix_t Q, matrix_t R, vector_t xNominal, vector_t uNominal, matrix_t QFinal,
-                                             vector_t xNominalFinal, matrix_t P /* = matrix_t() */)
-    : Q_(std::move(Q)),
-      R_(std::move(R)),
-      P_(std::move(P)),
-      QFinal_(std::move(QFinal)),
-      xNominal_(std::move(xNominal)),
-      uNominal_(std::move(uNominal)),
-      xNominalFinal_(std::move(xNominalFinal)) {
+QuadraticCostFunction::QuadraticCostFunction(matrix_t Q, matrix_t R, matrix_t QFinal, matrix_t P /* = matrix_t() */)
+    : Q_(std::move(Q)), R_(std::move(R)), P_(std::move(P)), QFinal_(std::move(QFinal)) {
   if (P_.size() == 0) {
     P_ = matrix_t::Zero(R_.rows(), Q_.rows());
   }
@@ -58,34 +51,12 @@ QuadraticCostFunction* QuadraticCostFunction::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::pair<vector_t, vector_t> QuadraticCostFunction::getNominalStateInput(scalar_t t, const vector_t& x, const vector_t& u) {
-  // TODO(mspieler): There should only be one way to set the nominal trajectory.
-  if (costDesiredTrajectoriesPtr_ != nullptr && !costDesiredTrajectoriesPtr_->empty()) {
-    return {costDesiredTrajectoriesPtr_->getDesiredState(t), costDesiredTrajectoriesPtr_->getDesiredInput(t)};
-  } else {
-    return {xNominal_, uNominal_};
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t QuadraticCostFunction::getNominalFinalState(scalar_t t, const vector_t& x) {
-  // TODO(mspieler): There should only be one way to set the nominal trajectory.
-  if (costDesiredTrajectoriesPtr_ != nullptr && !costDesiredTrajectoriesPtr_->empty()) {
-    return costDesiredTrajectoriesPtr_->getDesiredState(t);
-  } else {
-    return xNominalFinal_;
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 scalar_t QuadraticCostFunction::cost(scalar_t t, const vector_t& x, const vector_t& u) {
-  std::tie(xNominal_, uNominal_) = getNominalStateInput(t, x, u);
-  vector_t xDeviation = x - xNominal_;
-  vector_t uDeviation = u - uNominal_;
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[QuadraticCostFunction] costDesiredTrajectoriesPtr_ is not set. Use setCostDesiredTrajectoriesPtr()");
+  }
+  vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
+  vector_t uDeviation = u - costDesiredTrajectoriesPtr_->getDesiredInput(t);
   return 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation) + uDeviation.dot(P_ * xDeviation);
 }
 
@@ -93,8 +64,10 @@ scalar_t QuadraticCostFunction::cost(scalar_t t, const vector_t& x, const vector
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t QuadraticCostFunction::finalCost(scalar_t t, const vector_t& x) {
-  xNominalFinal_ = getNominalFinalState(t, x);
-  vector_t xDeviation = x - xNominalFinal_;
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[QuadraticCostFunction] costDesiredTrajectoriesPtr_ is not set. Use setCostDesiredTrajectoriesPtr()");
+  }
+  vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
   return 0.5 * xDeviation.dot(QFinal_ * xDeviation);
 }
 
@@ -102,9 +75,11 @@ scalar_t QuadraticCostFunction::finalCost(scalar_t t, const vector_t& x) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation QuadraticCostFunction::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
-  std::tie(xNominal_, uNominal_) = getNominalStateInput(t, x, u);
-  vector_t xDeviation = x - xNominal_;
-  vector_t uDeviation = u - uNominal_;
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[QuadraticCostFunction] costDesiredTrajectoriesPtr_ is not set. Use setCostDesiredTrajectoriesPtr()");
+  }
+  vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
+  vector_t uDeviation = u - costDesiredTrajectoriesPtr_->getDesiredInput(t);
 
   ScalarFunctionQuadraticApproximation L;
   L.f = 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation) + uDeviation.dot(P_ * xDeviation);
@@ -120,8 +95,10 @@ ScalarFunctionQuadraticApproximation QuadraticCostFunction::costQuadraticApproxi
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation QuadraticCostFunction::finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
-  xNominalFinal_ = getNominalFinalState(t, x);
-  vector_t xDeviation = x - xNominalFinal_;
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[QuadraticCostFunction] costDesiredTrajectoriesPtr_ is not set. Use setCostDesiredTrajectoriesPtr()");
+  }
+  vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
 
   ScalarFunctionQuadraticApproximation Phi;
   Phi.f = 0.5 * xDeviation.dot(QFinal_ * xDeviation);

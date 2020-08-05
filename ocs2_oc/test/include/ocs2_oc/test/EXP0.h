@@ -110,17 +110,19 @@ class EXP0_CostFunction : public CostFunctionBase {
     matrix_t Q(2, 2);
     matrix_t R(1, 1);
     matrix_t Qf(2, 2);
-    vector_t x(2);
-    vector_t u(1);
-    vector_t xf(2);
     Q << 0.0, 0.0, 0.0, 1.0;
     R << 1.0;
     Qf << 1.0, 0.0, 0.0, 1.0;
-    x << 0, 2.0;
+    subsystemCostsPtr_[0].reset(new QuadraticCostFunction(Q, R, matrix_t::Zero(2, 2)));
+    subsystemCostsPtr_[1].reset(new QuadraticCostFunction(Q, R, Qf));
+
+    vector_t x(2);
+    vector_t u(1);
+    x << 4.0, 2.0;
     u << 0.0;
-    xf << 4.0, 2.0;
-    subsystemCostsPtr_[0].reset(new QuadraticCostFunction(Q, R, x, u, matrix_t::Zero(2, 2), xf));
-    subsystemCostsPtr_[1].reset(new QuadraticCostFunction(Q, R, x, u, Qf, xf));
+    costDesiredTrajectories_ = CostDesiredTrajectories({0.0}, {x}, {u});
+    subsystemCostsPtr_[0]->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories_);
+    subsystemCostsPtr_[1]->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories_);
   }
 
   ~EXP0_CostFunction() = default;
@@ -152,6 +154,7 @@ class EXP0_CostFunction : public CostFunctionBase {
  public:
   std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr_;
   std::vector<std::shared_ptr<CostFunctionBase>> subsystemCostsPtr_{2};
+  CostDesiredTrajectories costDesiredTrajectories_;
 };
 
 }  // namespace ocs2

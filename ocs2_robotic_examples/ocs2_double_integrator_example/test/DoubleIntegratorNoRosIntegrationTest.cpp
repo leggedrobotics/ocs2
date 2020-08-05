@@ -28,7 +28,7 @@ TEST(DoubleIntegratorIntegrationTest, synchronousTracking) {
   vector_t goalState = doubleIntegratorInterface.getXFinal();
   costDesiredTrajectories.desiredStateTrajectory().push_back(observation.state());
   costDesiredTrajectories.desiredStateTrajectory().push_back(goalState);
-  vector_t desiredInput = vector_t::Zero(INPUT_DIM_);
+  vector_t desiredInput = vector_t::Zero(INPUT_DIM);
   costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
   costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
   mpcInterface.setTargetTrajectories(costDesiredTrajectories);
@@ -49,7 +49,7 @@ TEST(DoubleIntegratorIntegrationTest, synchronousTracking) {
       size_t subsystem;
 
       mpcInterface.updatePolicy();
-      mpcInterface.evaluatePolicy(time, vector_t::Zero(STATE_DIM_), optimalState, optimalInput, subsystem);
+      mpcInterface.evaluatePolicy(time, vector_t::Zero(STATE_DIM), optimalState, optimalInput, subsystem);
 
       // use optimal state for the next observation:
       observation.state() = optimalState;
@@ -81,7 +81,7 @@ TEST(DoubleIntegratorIntegrationTest, asynchronousTracking) {
   vector_t goalState = doubleIntegratorInterface.getXFinal();
   costDesiredTrajectories.desiredStateTrajectory().push_back(initialState);
   costDesiredTrajectories.desiredStateTrajectory().push_back(goalState);
-  vector_t desiredInput = vector_t::Zero(INPUT_DIM_);
+  vector_t desiredInput = vector_t::Zero(INPUT_DIM);
   costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
   costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
   mpcInterface.setTargetTrajectories(costDesiredTrajectories);
@@ -107,7 +107,7 @@ TEST(DoubleIntegratorIntegrationTest, asynchronousTracking) {
         time += trackingIncrement;
         if (mpcInterface.initialPolicyReceived()) {
           mpcInterface.updatePolicy();
-          mpcInterface.evaluatePolicy(time, vector_t::Zero(STATE_DIM_), optimalState, optimalInput, subsystem);
+          mpcInterface.evaluatePolicy(time, vector_t::Zero(STATE_DIM), optimalState, optimalInput, subsystem);
         }
         if (std::abs(time - T) < 0.005) {
           ASSERT_NEAR(optimalState[0], goalState[0], 2e-2);

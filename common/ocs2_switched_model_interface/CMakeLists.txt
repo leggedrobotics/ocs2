@@ -138,13 +138,21 @@ target_link_libraries(test_frictionConeConstraint
 	${catkin_LIBRARIES}
 )
 
+catkin_add_gtest(test_${PROJECT_NAME}_core
+	test/core/testRotation.cpp
+)
+target_link_libraries(test_${PROJECT_NAME}_core
+	${PROJECT_NAME}
+	gtest_main
+)
+
 catkin_add_gtest(test_${PROJECT_NAME}_footplanner
 	test/foot_planner/testSwingPhase.cpp
-	)
+)
 target_link_libraries(test_${PROJECT_NAME}_footplanner
 	${PROJECT_NAME}
 	gtest_main
-	)
+)
 
 catkin_add_gtest(test_${PROJECT_NAME}_logic
 	test/logic/testExtractContractTimings.cpp

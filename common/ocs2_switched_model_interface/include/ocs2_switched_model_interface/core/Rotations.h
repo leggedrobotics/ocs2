@@ -51,7 +51,7 @@ Eigen::Matrix<SCALAR_T, 3, 3> rotationMatrixBaseToOrigin(const Eigen::Matrix<SCA
   o_R_b(1) = v[5] * v[1] + v[6] * v[7];
   v[4] = v[6] * v[4];
   o_R_b(2) = v[4] * v[1] + v[2] * v[7];
-  v[7] = 0 - v[7];
+  v[7] = -v[7];
   o_R_b(3) = v[0] * v[7];
   o_R_b(4) = v[5] * v[7] + v[6] * v[1];
   o_R_b(5) = v[4] * v[7] + v[2] * v[1];

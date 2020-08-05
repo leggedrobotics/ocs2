@@ -1,8 +1,37 @@
+"""
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
+
 import unittest
 import numpy as np
 
-from ocs2_double_integrator_example import mpc_interface
-from ocs2_double_integrator_example import (
+from ocs2_ballbot_example import mpc_interface
+from ocs2_ballbot_example import (
     scalar_array,
     vector_array,
     matrix_array,
@@ -10,26 +39,12 @@ from ocs2_double_integrator_example import (
 )
 
 
-"""
-# Python 3 import workaround (while ROS is still using python 2.7)
-import sys
-sys.path.append("/path/to/catkin_ws/devel/lib/python3.6/dist-packages/ocs2_double_integrator_example")
-from DoubleIntegratorPyBindings import mpc_interface
-from DoubleIntegratorPyBindings import import (
-    scalar_array,
-    vector_array,
-    matrix_array,
-    CostDesiredTrajectories,
-)
-"""
-
-
-class double_integrator_python_tests(unittest.TestCase):
+class ballbot_python_tests(unittest.TestCase):
     def setUp(self):
         print("Instantiating MPC interface")
         self.mpc = mpc_interface("mpc")
-        self.stateDim = 2
-        self.inputDim = 1
+        self.stateDim = 10
+        self.inputDim = 3
 
     def test_run_mpc(self):
         print("Setting up goal")
@@ -48,10 +63,10 @@ class double_integrator_python_tests(unittest.TestCase):
         self.mpc.reset(targetTrajectories)
 
         time = 0.0
-        x = np.zeros(2)
+        x = np.zeros(self.stateDim)
         x[0] = 0.3
         x[1] = 0.5
-        u = np.zeros(1)
+        u = np.zeros(self.inputDim)
 
         self.mpc.setObservation(time, x, u)
         self.mpc.advanceMpc()

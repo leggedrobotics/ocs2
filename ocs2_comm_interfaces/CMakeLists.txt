@@ -52,7 +52,6 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/ocs2_interfaces/MRT_BASE.cpp
   src/ocs2_interfaces/MPC_MRT_Interface.cpp
-  # src/ocs2_interfaces/Python_Interface.cpp
   src/ocs2_ros_interfaces/command/TargetTrajectories_ROS_Interface.cpp
   src/ocs2_ros_interfaces/common/RosMsgConversions.cpp
   src/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.cpp

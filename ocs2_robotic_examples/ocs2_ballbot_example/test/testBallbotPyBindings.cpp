@@ -1,19 +1,24 @@
 #include <gtest/gtest.h>
 
-#include <ocs2_double_integrator_example/DoubleIntegratorPyBindings.h>
+#include <ocs2_ballbot_example/BallbotPyBindings.h>
 
-TEST(DoubleIntegratorTest, pyBindings) {
-  using bindings_t = ocs2::double_integrator::DoubleIntegratorPyBindings;
+TEST(Ballbot, PyBindings) {
+  ocs2::ballbot::BallbotPyBindings bindings("mpc");
 
-  bindings_t bindings("mpc");
+  ocs2::vector_t initState = ocs2::vector_t::Zero(ocs2::ballbot::STATE_DIM_);
+  initState(0) = 0.0;
+  initState(2) = 0.0;
+  const ocs2::vector_t zeroInput = ocs2::vector_t::Zero(ocs2::ballbot::INPUT_DIM_);
 
   ocs2::CostDesiredTrajectories costDesiredTraj;
-  bindings.setTargetTrajectories(costDesiredTraj);
+  costDesiredTraj.desiredTimeTrajectory().resize(2, 0.0);
+  costDesiredTraj.desiredTimeTrajectory()[1] = 2.0;
+  costDesiredTraj.desiredInputTrajectory().resize(2, ocs2::vector_t::Zero(ocs2::ballbot::INPUT_DIM_));
+  costDesiredTraj.desiredStateTrajectory().resize(2, ocs2::vector_t::Zero(ocs2::ballbot::STATE_DIM_));
+  costDesiredTraj.desiredStateTrajectory()[0] = initState;
 
-  const ocs2::vector_t state = ocs2::vector_t::Zero(ocs2::double_integrator::STATE_DIM_);
-  const ocs2::vector_t zeroInput = ocs2::vector_t::Zero(ocs2::double_integrator::INPUT_DIM_);
-  bindings.setObservation(0.0, state, zeroInput);
-
+  bindings.reset(costDesiredTraj);
+  bindings.setObservation(0.0, initState, zeroInput);
   bindings.advanceMpc();
 
   ocs2::scalar_array_t t_arr;
@@ -40,11 +45,9 @@ TEST(DoubleIntegratorTest, pyBindings) {
   const auto L = bindings.costQuadraticApproximation(t_arr[0], x_arr[0], u_arr[0]);
   std::cout << "L: " << L.f << "\ndLdx: " << L.dfdx.transpose() << "\ndLdu: " << L.dfdu.transpose() << std::endl;
 
-  //  auto Vx = bindings.getValueFunctionStateDerivative(t_arr[0], x_arr[0]);
-  //  std::cout << "Vx: " << Vx.transpose() << std::endl;
-
-  auto K = bindings.getLinearFeedbackGain(t_arr[0]);
-  std::cout << "K: " << K << std::endl;
+  bindings.reset(costDesiredTraj);
+  bindings.setObservation(0.0, initState, zeroInput);
+  bindings.advanceMpc();
 }
 
 int main(int argc, char** argv) {

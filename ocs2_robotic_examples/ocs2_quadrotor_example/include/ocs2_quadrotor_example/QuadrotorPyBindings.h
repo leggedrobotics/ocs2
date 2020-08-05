@@ -29,7 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_comm_interfaces/ocs2_interfaces/Python_Interface.h>
+#include <ocs2_python_interface/PythonInterface.h>
+#include <ocs2_quadrotor_example/QuadrotorInterface.h>
 #include <ocs2_quadrotor_example/definitions.h>
 
 namespace ocs2 {
@@ -37,7 +38,10 @@ namespace quadrotor {
 
 class QuadrotorPyBindings final : public PythonInterface {
  public:
-  QuadrotorPyBindings(const std::string& taskFileFolder, bool async = false);
+  explicit QuadrotorPyBindings(const std::string& taskFileFolder) {
+    QuadrotorInterface quadrotorInterface(taskFileFolder);
+    init(quadrotorInterface, quadrotorInterface.getMpc());
+  }
 };
 
 }  // namespace quadrotor

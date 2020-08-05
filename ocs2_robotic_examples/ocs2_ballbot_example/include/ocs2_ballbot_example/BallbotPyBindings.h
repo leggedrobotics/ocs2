@@ -29,17 +29,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_ballbot_example/BallbotInterface.h>
 #include <ocs2_ballbot_example/definitions.h>
-#include <ocs2_comm_interfaces/ocs2_interfaces/Python_Interface.h>
+#include <ocs2_python_interface/PythonInterface.h>
 
 namespace ocs2 {
 namespace ballbot {
 
 class BallbotPyBindings final : public PythonInterface {
  public:
-  using Base = PythonInterface;
-
-  BallbotPyBindings(const std::string& taskFileFolder, bool async = false);
+  explicit BallbotPyBindings(const std::string& taskFileFolder) {
+    BallbotInterface robot(taskFileFolder);
+    PythonInterface::init(robot, robot.getMpc());
+  }
 };
 
 }  // namespace ballbot

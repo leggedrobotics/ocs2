@@ -12,7 +12,7 @@
 inline std::string getCommandLineString() {
   // Set up a thread to read user inputs
   std::string line{""};
-  bool lineRead;
+  std::atomic_bool lineRead(false);
   std::thread thr([&line, &lineRead]() {
     lineRead = false;
     getline(std::cin, line);

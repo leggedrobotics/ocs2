@@ -64,7 +64,7 @@ rollout
 ; MPC settings
 mpc
 {
-  timehorizon                    1.0
+  timeHorizon                    1.0
   numPartitions                  4
   runtimeMaxNumIterations        1
   initMaxNumIterations           10

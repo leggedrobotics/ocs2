@@ -93,18 +93,27 @@ GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynami
 /******************************************************************************************************/
 /******************************************************************************************************/
 GaussNewtonDDP::~GaussNewtonDDP() {
-  auto forwardPassTotal = forwardPassTimer_.getTotalInMilliseconds();
-  auto linearQuadraticApproximationTotal = linearQuadraticApproximationTimer_.getTotalInMilliseconds();
-  auto backwardPassTotal = backwardPassTimer_.getTotalInMilliseconds();
-  auto computeControllerTotal = computeControllerTimer_.getTotalInMilliseconds();
-  auto searchStrategyTotal = searchStrategyTimer_.getTotalInMilliseconds();
+  if (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_) {
+    printBenchmarkingInfo();
+  }
+}
 
-  auto benchmarkTotal =
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void GaussNewtonDDP::printBenchmarkingInfo() const {
+  const auto forwardPassTotal = forwardPassTimer_.getTotalInMilliseconds();
+  const auto linearQuadraticApproximationTotal = linearQuadraticApproximationTimer_.getTotalInMilliseconds();
+  const auto backwardPassTotal = backwardPassTimer_.getTotalInMilliseconds();
+  const auto computeControllerTotal = computeControllerTimer_.getTotalInMilliseconds();
+  const auto searchStrategyTotal = searchStrategyTimer_.getTotalInMilliseconds();
+
+  const auto benchmarkTotal =
       forwardPassTotal + linearQuadraticApproximationTotal + backwardPassTotal + computeControllerTotal + searchStrategyTotal;
 
-  if (benchmarkTotal > 0 && (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_)) {
+  if (benchmarkTotal > 0.0) {
     std::cerr << "\n########################################################################\n";
-    std::cerr << "Benchmarking\t           :\tAverage time [ms]   (% of total runtime)\n";
+    std::cerr << "DDP Benchmarking\t   :\tAverage time [ms]   (% of total runtime)\n";
     std::cerr << "\tForward Pass       :\t" << forwardPassTimer_.getAverageInMilliseconds() << " [ms] \t\t("
               << forwardPassTotal / benchmarkTotal * 100 << "%)\n";
     std::cerr << "\tLQ Approximation   :\t" << linearQuadraticApproximationTimer_.getAverageInMilliseconds() << " [ms] \t\t("

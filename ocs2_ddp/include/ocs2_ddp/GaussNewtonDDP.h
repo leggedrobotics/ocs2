@@ -140,6 +140,8 @@ class GaussNewtonDDP : public Solver_BASE {
 
   void rewindOptimizer(size_t firstIndex) override;
 
+  void printBenchmarkingInfo() const override;
+
   const unsigned long long int& getRewindCounter() const override { return rewindCounter_; }
 
   /**

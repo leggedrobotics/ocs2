@@ -225,6 +225,11 @@ class Solver_BASE {
   virtual const unsigned long long int& getRewindCounter() const = 0;
 
   /**
+   * Prints benchmarking info to output.
+   */
+  virtual void printBenchmarkingInfo() const {}
+
+  /**
    * Prints to output.
    *
    * @param [in] input text.

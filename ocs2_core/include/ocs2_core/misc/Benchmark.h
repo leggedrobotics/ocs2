@@ -31,6 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <chrono>
 
+#include "ocs2_core/Types.h"
+
 namespace ocs2 {
 namespace benchmark {
 
@@ -75,27 +77,27 @@ class RepeatedTimer {
   /**
    * @return Number of intervals that were timed
    */
-  int getNumTimedIntervals() { return numTimedIntervals_; }
+  int getNumTimedIntervals() const { return numTimedIntervals_; }
 
   /**
    * @return Total cumulative time of timed intervals
    */
-  double getTotalInMilliseconds() { return std::chrono::duration<double, std::milli>(totalTime_).count(); }
+  scalar_t getTotalInMilliseconds() const { return std::chrono::duration<scalar_t, std::milli>(totalTime_).count(); }
 
   /**
    * @return Maximum duration of a single interval
    */
-  double getMaxIntervalInMilliseconds() { return std::chrono::duration<double, std::milli>(maxIntervalTime_).count(); }
+  scalar_t getMaxIntervalInMilliseconds() const { return std::chrono::duration<scalar_t, std::milli>(maxIntervalTime_).count(); }
 
   /**
    * @return Duration of the last timed interval
    */
-  double getLastIntervalInMilliseconds() { return std::chrono::duration<double, std::milli>(lastIntervalTime_).count(); }
+  scalar_t getLastIntervalInMilliseconds() const { return std::chrono::duration<scalar_t, std::milli>(lastIntervalTime_).count(); }
 
   /**
    * @return Average duration of all timed intervals
    */
-  double getAverageInMilliseconds() { return getTotalInMilliseconds() / numTimedIntervals_; }
+  scalar_t getAverageInMilliseconds() const { return getTotalInMilliseconds() / numTimedIntervals_; }
 
  private:
   int numTimedIntervals_;

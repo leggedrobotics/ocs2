@@ -47,7 +47,7 @@ class DdpCorrectnessTest : public testing::Test {
   static constexpr size_t N = 50;
   static constexpr size_t STATE_DIM = 3;
   static constexpr size_t INPUT_DIM = 2;
-  static constexpr ocs2::scalar_t solutionPrecision = 1e-3;
+  static constexpr ocs2::scalar_t solutionPrecision = 2e-3;
 
   DdpCorrectnessTest() {
     srand(0);

@@ -111,7 +111,7 @@ void MPC_MRT_Interface::advanceMpc() {
 
   // measure the delay
   if (mpc_.settings().debugPrint_) {
-    std::cerr << "\n### MPC ROS runtime ";
+    std::cerr << "\n### MPC_MRT Benchmarking";
     std::cerr << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
     std::cerr << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].";
     std::cerr << "\n###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;

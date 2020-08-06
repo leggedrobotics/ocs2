@@ -103,7 +103,7 @@ bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_ms
               << "\n#####################################################"
               << "\n#################  MPC is reset.  ###################"
               << "\n#####################################################"
-              << "\n#####################################################" << std::endl;
+              << "\n#####################################################\n";
 
   } else {
     ROS_WARN_STREAM("Ineffective reset request.");
@@ -294,10 +294,10 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   // display
   if (mpc_.settings().debugPrint_) {
     std::cerr << '\n';
-    std::cerr << "### MPC ROS runtime\n";
-    std::cerr << "###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].\n";
-    std::cerr << "###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].\n";
-    std::cerr << "###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms].\n";
+    std::cerr << "\n### MPC_ROS Benchmarking";
+    std::cerr << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
+    std::cerr << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].";
+    std::cerr << "\n###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
   }
 
 #ifdef PUBLISH_THREAD

@@ -72,7 +72,7 @@ class SystemObservation {
   inline const size_t& subsystem() const { return subsystem_; };
 
   inline void display() const {
-    std::cerr << "Observation: \n" << std::endl;
+    std::cerr << "Observation: \n";
     std::cerr << "\t time:      " << time_ << '\n';
     std::cerr << "\t subsystem: " << subsystem_ << '\n';
     std::cerr << "\t state:    [";

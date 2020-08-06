@@ -130,10 +130,10 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) {
   // display
   if (mpcSettings_.debugPrint_) {
     mpcTimer_.endTimer();
-    std::cerr << "### MPC runtime \n";
-    std::cerr << "###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].\n";
-    std::cerr << "###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].\n";
-    std::cerr << "###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms].\n";
+    std::cerr << "\n### MPC Benchmarking";
+    std::cerr << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
+    std::cerr << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].";
+    std::cerr << "\n###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
   }
 
   // set initRun flag to false

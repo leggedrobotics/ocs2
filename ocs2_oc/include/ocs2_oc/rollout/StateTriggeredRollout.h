@@ -56,7 +56,7 @@ class StateTriggeredRollout : public RolloutBase {
    * @param [in] systemDynamics: The system dynamics for forward rollout.
    * @param [in] rolloutSettings: The rollout settings.
    */
-  explicit StateTriggeredRollout(const ControlledSystemBase& systemDynamics, Rollout_Settings rolloutSettings = Rollout_Settings())
+  explicit StateTriggeredRollout(const ControlledSystemBase& systemDynamics, rollout::Settings rolloutSettings = rollout::Settings())
       : RolloutBase(std::move(rolloutSettings)),
         systemDynamicsPtr_(systemDynamics.clone()),
         systemEventHandlersPtr_(new StateTriggeredEventHandler(this->settings().minTimeStep_)) {

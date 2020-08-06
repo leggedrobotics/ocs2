@@ -53,7 +53,7 @@ class TimeTriggeredRollout : public RolloutBase {
    * @param [in] systemDynamics: The system dynamics for forward rollout.
    * @param [in] rolloutSettings: The rollout settings.
    */
-  explicit TimeTriggeredRollout(const ControlledSystemBase& systemDynamics, Rollout_Settings rolloutSettings = Rollout_Settings())
+  explicit TimeTriggeredRollout(const ControlledSystemBase& systemDynamics, rollout::Settings rolloutSettings = rollout::Settings())
       : RolloutBase(std::move(rolloutSettings)),
         systemDynamicsPtr_(systemDynamics.clone()),
         systemEventHandlersPtr_(new SystemEventHandler) {

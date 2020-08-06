@@ -37,7 +37,7 @@ class DummyInterface final : public RobotInterface {
 
     operatingPointPtr_.reset(new OperatingPoints(vector_t::Zero(2), vector_t::Zero(1)));
 
-    Rollout_Settings rolloutSettings;
+    rollout::Settings rolloutSettings;
     rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr_, rolloutSettings));
   }
   ~DummyInterface() override = default;

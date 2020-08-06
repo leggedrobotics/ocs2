@@ -66,7 +66,7 @@ TEST(circular_kinematics_slq_test, circular_kinematics_slq_test) {
   ddpSettings.lineSearch_.hessianCorrectionStrategy_ = hessian_correction::Strategy::CHOLESKY_MODIFICATION;
   ddpSettings.lineSearch_.hessianCorrectionMultiple_ = 1e-3;
 
-  Rollout_Settings rolloutSettings;
+  rollout::Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-9;
   rolloutSettings.relTolODE_ = 1e-7;
   rolloutSettings.maxNumStepsPerSecond_ = 10000;

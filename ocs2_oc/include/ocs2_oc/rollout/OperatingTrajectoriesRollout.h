@@ -51,8 +51,8 @@ class OperatingTrajectoriesRollout : public RolloutBase {
    * @param [in] rolloutSettings: The rollout settings.
    */
   explicit OperatingTrajectoriesRollout(const SystemOperatingTrajectoriesBase& operatingTrajectories,
-                                        const Rollout_Settings& rolloutSettings = Rollout_Settings())
-      : RolloutBase(rolloutSettings), operatingTrajectoriesPtr_(operatingTrajectories.clone()) {}
+                                        rollout::Settings rolloutSettings = rollout::Settings())
+      : RolloutBase(std::move(rolloutSettings)), operatingTrajectoriesPtr_(operatingTrajectories.clone()) {}
 
   /** Default destructor. */
   ~OperatingTrajectoriesRollout() override = default;

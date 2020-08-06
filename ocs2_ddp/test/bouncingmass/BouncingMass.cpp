@@ -88,7 +88,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   ddpSettings.useFeedbackPolicy_ = true;
   ddpSettings.debugPrintRollout_ = false;
 
-  ocs2::Rollout_Settings rolloutSettings;
+  ocs2::rollout::Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;
   rolloutSettings.relTolODE_ = 1e-7;
   rolloutSettings.maxNumStepsPerSecond_ = 10000;

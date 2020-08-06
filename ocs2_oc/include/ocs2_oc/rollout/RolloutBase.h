@@ -52,7 +52,7 @@ class RolloutBase {
    *
    * @param [in] rolloutSettings: The rollout settings.
    */
-  explicit RolloutBase(Rollout_Settings rolloutSettings = Rollout_Settings()) : rolloutSettings_(std::move(rolloutSettings)) {}
+  explicit RolloutBase(rollout::Settings rolloutSettings) : rolloutSettings_(std::move(rolloutSettings)) {}
 
   /**
    * Default destructor.
@@ -64,14 +64,14 @@ class RolloutBase {
    *
    * @return The rollout settings.
    */
-  Rollout_Settings& settings() { return rolloutSettings_; }
+  rollout::Settings& settings() { return rolloutSettings_; }
 
   /**
    * Returns the rollout settings.
    *
    * @return The rollout settings.
    */
-  const Rollout_Settings& settings() const { return rolloutSettings_; }
+  const rollout::Settings& settings() const { return rolloutSettings_; }
 
   /**
    * The kills the integrator inside the rollout.
@@ -152,7 +152,7 @@ class RolloutBase {
                                const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory) const;
 
  private:
-  Rollout_Settings rolloutSettings_;
+  rollout::Settings rolloutSettings_;
 };
 
 }  // namespace ocs2

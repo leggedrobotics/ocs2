@@ -29,9 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_oc/rollout/Rollout_Settings.h>
-#include <Eigen/Dense>
 #include <raisim/object/ArticulatedSystem/ArticulatedSystem.hpp>
+
+#include <ocs2_core/Types.h>
+#include <ocs2_core/misc/LoadData.h>
+#include <ocs2_oc/rollout/Rollout_Settings.h>
 
 namespace ocs2 {
 
@@ -56,13 +58,13 @@ class RaisimRolloutSettings {
    * @param[in] generateTerrain Whether or not uneven terrain should be used inside raisim
    * @param[in] terrainRoughness: z scale of the raisim heightmap
    */
-  explicit RaisimRolloutSettings(Rollout_Settings rolloutSettings = Rollout_Settings(), bool setSimulatorStateOnRolloutRunAlways = true,
+  explicit RaisimRolloutSettings(rollout::Settings rolloutSettings = rollout::Settings(), bool setSimulatorStateOnRolloutRunAlways = true,
                                  bool setSimulatorStateOnRolloutRunOnce = false, int controlDecimation = 1,
                                  std::vector<std::string> orderedJointNames = {},
                                  raisim::ControlMode::Type controlMode = raisim::ControlMode::FORCE_AND_TORQUE,
                                  const Eigen::VectorXd& pGains = Eigen::VectorXd::Zero(0),  // NOLINT(modernize-pass-by-value)
                                  const Eigen::VectorXd& dGains = Eigen::VectorXd::Zero(0),  // NOLINT(modernize-pass-by-value)
-                                 bool generateTerrain = false, double terrainRoughness = 1.0, int terrainSeed = 1)
+                                 bool generateTerrain = false, scalar_t terrainRoughness = 1.0, int terrainSeed = 1)
       : rolloutSettings_(std::move(rolloutSettings)),
         setSimulatorStateOnRolloutRunAlways_(setSimulatorStateOnRolloutRunAlways),
         setSimulatorStateOnRolloutRunOnce_(setSimulatorStateOnRolloutRunOnce),
@@ -94,7 +96,7 @@ class RaisimRolloutSettings {
   void loadSettings(const std::string& filename, const std::string& fieldName, bool verbose = true);
 
  public:
-  Rollout_Settings rolloutSettings_;
+  rollout::Settings rolloutSettings_;
 
   bool setSimulatorStateOnRolloutRunAlways_;
   bool setSimulatorStateOnRolloutRunOnce_;
@@ -104,12 +106,12 @@ class RaisimRolloutSettings {
   Eigen::VectorXd pGains_;
   Eigen::VectorXd dGains_;
   bool generateTerrain_;
-  double terrainRoughness_;
+  scalar_t terrainRoughness_;
   int terrainSeed_;
 };
 
 inline void RaisimRolloutSettings::loadSettings(const std::string& filename, const std::string& fieldName, bool verbose) {
-  rolloutSettings_.loadSettings(filename, fieldName, verbose);
+  rolloutSettings_ = rollout::loadSettings(filename, fieldName, verbose);
 
   if (verbose) {
     std::cerr << "\n#### RaisimRolloutSettings:\n";
@@ -128,7 +130,7 @@ inline void RaisimRolloutSettings::loadSettings(const std::string& filename, con
   loadData::loadPtreeValue(pt, controlModeInt, raisimFieldName + ".controlMode", verbose);
   controlMode_ = static_cast<raisim::ControlMode::Type>(controlModeInt);
 
-  std::vector<double> pGainsVec, dGainsVec;
+  std::vector<scalar_t> pGainsVec, dGainsVec;
   loadData::loadStdVector(filename, raisimFieldName + ".pGains", pGainsVec, verbose);
   if (!pGainsVec.empty()) {
     pGains_ = Eigen::Map<Eigen::VectorXd>(pGainsVec.data(), pGainsVec.size());

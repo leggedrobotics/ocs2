@@ -28,6 +28,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include "ocs2_quadrotor_example/QuadrotorInterface.h"
+
+#include <ocs2_core/misc/LoadData.h>
+
 #include <ros/package.h>
 
 namespace ocs2 {
@@ -66,8 +69,8 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Solver settings
    */
-  ddpSettings_ = ddp::loadSettings(taskFile);
-  mpcSettings_ = mpc::loadSettings(taskFile);
+  ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
+  mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
 
   /*
    * quadrotor parameters
@@ -83,8 +86,7 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Rollout
    */
-  Rollout_Settings rolloutSettings;
-  rolloutSettings.loadSettings(taskFile, "rollout");
+  auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
   ddpQuadrotorRolloutPtr_.reset(new TimeTriggeredRollout(*quadrotorSystemDynamicsPtr_, rolloutSettings));
 
   /*

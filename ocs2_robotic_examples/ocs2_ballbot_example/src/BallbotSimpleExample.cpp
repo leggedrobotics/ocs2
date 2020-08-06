@@ -63,14 +63,13 @@ int main(int argc, char** argv) {
   /*
    * DDP settings
    */
-  auto ddpSettings = ddp::loadSettings(taskFile);
+  auto ddpSettings = ddp::loadSettings(taskFile, "ddp");
   ddpSettings.displayInfo_ = true;  // display iteration information
 
   /*
    * Rollout settings
    */
-  Rollout_Settings rolloutSettings;
-  rolloutSettings.loadSettings(taskFile, "slq.rollout");
+  auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
 
   /*
    * Rollout

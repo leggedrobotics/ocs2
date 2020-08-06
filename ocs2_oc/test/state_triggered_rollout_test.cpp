@@ -65,7 +65,7 @@ TEST(StateRolloutTests, rolloutTestBallDynamics) {
   const size_t nu = 1;
 
   // Construct State TriggerdRollout Object
-  ocs2::Rollout_Settings RolloutSettings;
+  ocs2::rollout::Settings RolloutSettings;
   RolloutSettings.absTolODE_ = 1e-10;
   RolloutSettings.relTolODE_ = 1e-7;
   ocs2::ballDyn dynamics;
@@ -152,7 +152,7 @@ TEST(StateRolloutTests, rolloutTestPendulumDynamics) {
   const size_t nu = 1;
 
   // Construct State TriggerdRollout Object
-  ocs2::Rollout_Settings rolloutSettings;
+  ocs2::rollout::Settings rolloutSettings;
   ocs2::pendulum_dyn dynamics;
   ocs2::StateTriggeredRollout rollout(dynamics, rolloutSettings);
   // Construct Variables for run
@@ -241,7 +241,7 @@ TEST(StateRolloutTests, runHybridDynamics) {
   std::vector<scalar_t> eventTimes(0);
   std::vector<size_t> subsystemsSequence{1};
   // Construct State TriggerdRollout Object
-  ocs2::Rollout_Settings rolloutSettings;
+  ocs2::rollout::Settings rolloutSettings;
   ocs2::hybridSysDynamics dynamics;
   ocs2::StateTriggeredRollout rollout(dynamics, rolloutSettings);
   // Construct Variables for run

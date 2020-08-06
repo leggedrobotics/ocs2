@@ -62,7 +62,7 @@ TEST(exp0_slq_test, exp0_slq_test) {
   ddpSettings.strategy_ = ddp_strategy::type::LINE_SEARCH;
   ddpSettings.lineSearch_.minStepLength_ = 0.0001;
 
-  Rollout_Settings rolloutSettings;
+  rollout::Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;
   rolloutSettings.relTolODE_ = 1e-7;
   rolloutSettings.maxNumStepsPerSecond_ = 10000;
@@ -188,7 +188,7 @@ TEST(exp0_slq_test, caching_test) {
   ddpSettings.strategy_ = ddp_strategy::type::LINE_SEARCH;
   ddpSettings.lineSearch_.minStepLength_ = 0.0001;
 
-  Rollout_Settings rolloutSettings;
+  rollout::Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;
   rolloutSettings.relTolODE_ = 1e-7;
   rolloutSettings.maxNumStepsPerSecond_ = 10000;

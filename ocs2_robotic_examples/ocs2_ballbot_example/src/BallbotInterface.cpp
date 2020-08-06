@@ -27,13 +27,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <iostream>
+#include "ocs2_ballbot_example/BallbotInterface.h"
+
+#include <ocs2_core/misc/LoadData.h>
 
 #include <ros/package.h>
-
-#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
-#include "ocs2_ballbot_example/BallbotInterface.h"
-#include "ocs2_ballbot_example/definitions.h"
 
 namespace ocs2 {
 namespace ballbot {
@@ -71,8 +69,8 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   /*
    * DDP-MPC settings
    */
-  ddpSettings_ = ddp::loadSettings(taskFile);
-  mpcSettings_ = mpc::loadSettings(taskFile);
+  ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
+  mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
 
   /*
    * Dynamics
@@ -87,8 +85,7 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   /*
    * Rollout
    */
-  Rollout_Settings rolloutSettings;
-  rolloutSettings.loadSettings(taskFile, "rollout");
+  auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
   ddpBallbotRolloutPtr_.reset(new TimeTriggeredRollout(*ballbotSystemDynamicsPtr_, rolloutSettings));
 
   /*

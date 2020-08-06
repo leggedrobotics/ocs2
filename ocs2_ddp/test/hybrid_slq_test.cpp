@@ -54,7 +54,7 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   ddpSettings.debugPrintRollout_ = false;
   ddpSettings.strategy_ = ddp_strategy::type::LINE_SEARCH;
 
-  Rollout_Settings rolloutSettings;
+  rollout::Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;
   rolloutSettings.relTolODE_ = 1e-7;
   rolloutSettings.maxNumStepsPerSecond_ = 10000;

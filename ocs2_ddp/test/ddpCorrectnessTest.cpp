@@ -76,8 +76,8 @@ class DdpCorrectnessTest : public testing::Test {
     qpCost = getQpCost(qpSolution);
 
     // rollout settings
-    const ocs2::Rollout_Settings rolloutSettings = []() {
-      ocs2::Rollout_Settings rolloutSettings;
+    const ocs2::rollout::Settings rolloutSettings = []() {
+      ocs2::rollout::Settings rolloutSettings;
       rolloutSettings.absTolODE_ = 1e-12;
       rolloutSettings.relTolODE_ = 1e-9;
       rolloutSettings.maxNumStepsPerSecond_ = 100000;

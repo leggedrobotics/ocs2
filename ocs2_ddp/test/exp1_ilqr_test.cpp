@@ -59,7 +59,7 @@ TEST(exp1_ilqr_test, exp1_ilqr_test) {
   ddpSettings.strategy_ = ddp_strategy::type::LINE_SEARCH;
   ddpSettings.lineSearch_.minStepLength_ = 0.0001;
 
-  Rollout_Settings rolloutSettings;
+  rollout::Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-11;
   rolloutSettings.relTolODE_ = 1e-8;
   rolloutSettings.maxNumStepsPerSecond_ = 10000;

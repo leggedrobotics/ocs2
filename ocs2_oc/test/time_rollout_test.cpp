@@ -72,7 +72,7 @@ TEST(time_rollout_test, time_rollout_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // Rollout Settings
-  Rollout_Settings rolloutSettings;
+  rollout::Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-7;
   rolloutSettings.relTolODE_ = 1e-5;
   rolloutSettings.maxNumStepsPerSecond_ = 10000;

@@ -28,6 +28,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include "ocs2_double_integrator_example/DoubleIntegratorInterface.h"
+
+#include <ocs2_core/misc/LoadData.h>
+
 #include <ros/package.h>
 
 namespace ocs2 {
@@ -66,8 +69,8 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
   /*
    * DDP-MPC settings
    */
-  ddpSettings_ = ddp::loadSettings(taskFile);
-  mpcSettings_ = mpc::loadSettings(taskFile);
+  ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
+  mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
 
   /*
    * Dynamics
@@ -81,8 +84,7 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Rollout
    */
-  Rollout_Settings rolloutSettings;
-  rolloutSettings.loadSettings(taskFile, "rollout");
+  auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
   ddpLinearSystemRolloutPtr_.reset(new TimeTriggeredRollout(*linearSystemDynamicsPtr_, rolloutSettings));
 
   /*

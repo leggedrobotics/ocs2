@@ -28,6 +28,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include "ocs2_cart_pole_example/CartPoleInterface.h"
+
+#include <ocs2_core/misc/LoadData.h>
+
 #include <ros/package.h>
 
 namespace ocs2 {
@@ -66,8 +69,8 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   /*
    * DDP-MPC settings
    */
-  ddpSettings_ = ddp::loadSettings(taskFile);
-  mpcSettings_ = mpc::loadSettings(taskFile);
+  ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
+  mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
 
   /*
    * Cartpole parameters
@@ -84,8 +87,7 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   /*
    * Rollout
    */
-  Rollout_Settings rolloutSettings;
-  rolloutSettings.loadSettings(taskFile, "rollout");
+  auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
   ddpCartPoleRolloutPtr_.reset(new TimeTriggeredRollout(*cartPoleSystemDynamicsPtr_, rolloutSettings));
 
   /*

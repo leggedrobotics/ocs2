@@ -37,12 +37,14 @@ void PoseCommandToCostDesiredRos::publishCostDesiredFromCommand(const PoseComman
   auto deg2rad = [](scalar_t deg) { return (deg * M_PI / 180.0); };
 
   ocs2::SystemObservation<STATE_DIM, INPUT_DIM> observation;
-  if (observation_) {
+  {
     std::lock_guard<std::mutex> lock(observationMutex_);
-    ocs2::ros_msg_conversions::readObservationMsg(*observation_, observation);
-  } else {
-    ROS_WARN_STREAM("No observation is received from the MPC node. Make sure the MPC node is running!");
-    return;
+    if (observation_) {
+      ocs2::ros_msg_conversions::readObservationMsg(*observation_, observation);
+    } else {
+      ROS_WARN_STREAM("No observation is received from the MPC node. Make sure the MPC node is running!");
+      return;
+    }
   }
 
   // Command to desired Base
@@ -51,7 +53,7 @@ void PoseCommandToCostDesiredRos::publishCostDesiredFromCommand(const PoseComman
   // Roll and pitch are absolute, yaw is relative
   vector3_t comOrientationDesired{deg2rad(command[3]), deg2rad(command[4]), deg2rad(command[5]) + observation.state()[2]};
   const auto desiredTime =
-      estimeTimeToTarget(comOrientationDesired.z() - observation.state()[2], comPositionDesired.x() - observation.state()[3],
+      desiredTimeToTarget(comOrientationDesired.z() - observation.state()[2], comPositionDesired.x() - observation.state()[3],
                          comPositionDesired.y() - observation.state()[4]);
 
   {  // Terrain adaptation
@@ -107,7 +109,7 @@ void PoseCommandToCostDesiredRos::terrainCallback(const visualization_msgs::Mark
   localTerrain_.orientationWorldToTerrain = orientationTerrainToWorld.toRotationMatrix().transpose();
 }
 
-scalar_t PoseCommandToCostDesiredRos::estimeTimeToTarget(scalar_t dyaw, scalar_t dx, scalar_t dy) const {
+scalar_t PoseCommandToCostDesiredRos::desiredTimeToTarget(scalar_t dyaw, scalar_t dx, scalar_t dy) const {
   scalar_t rotationTime = std::abs(dyaw) / targetRotationVelocity;
   scalar_t displacement = std::sqrt(dx * dx + dy * dy);
   scalar_t displacementTime = displacement / targetDisplacementVelocity;

@@ -73,19 +73,20 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   using vector_array_t = ocs2::vector_array_t;
   using matrix_array_t = ocs2::matrix_array_t;
 
-  ocs2::SLQ_Settings slqSettings;
-  slqSettings.useNominalTimeForBackwardPass_ = true;
-  slqSettings.ddpSettings_.displayInfo_ = false;
-  slqSettings.ddpSettings_.displayShortSummary_ = true;
-  slqSettings.ddpSettings_.maxNumIterations_ = 30;
-  slqSettings.ddpSettings_.minRelCost_ = 1e-4;
-  slqSettings.ddpSettings_.nThreads_ = 1;
-  slqSettings.ddpSettings_.checkNumericalStability_ = true;
-  slqSettings.ddpSettings_.absTolODE_ = 1e-10;
-  slqSettings.ddpSettings_.relTolODE_ = 1e-7;
-  slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
-  slqSettings.ddpSettings_.useFeedbackPolicy_ = true;
-  slqSettings.ddpSettings_.debugPrintRollout_ = false;
+  ocs2::ddp::Settings ddpSettings;
+  ddpSettings.algorithm_ = ocs2::ddp::algorithm::SLQ;
+  ddpSettings.displayInfo_ = false;
+  ddpSettings.displayShortSummary_ = true;
+  ddpSettings.maxNumIterations_ = 30;
+  ddpSettings.minRelCost_ = 1e-4;
+  ddpSettings.nThreads_ = 1;
+  ddpSettings.checkNumericalStability_ = true;
+  ddpSettings.absTolODE_ = 1e-10;
+  ddpSettings.relTolODE_ = 1e-7;
+  ddpSettings.maxNumStepsPerSecond_ = 10000;
+  ddpSettings.useNominalTimeForBackwardPass_ = true;
+  ddpSettings.useFeedbackPolicy_ = true;
+  ddpSettings.debugPrintRollout_ = false;
 
   ocs2::Rollout_Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;
@@ -184,13 +185,13 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
 
   ocs2::OperatingPoints operatingTrajectories(x0, u0);
   // SLQ
-  ocs2::SLQ slq(&stateTriggeredRollout, &systemDynamics, &systemConstraints, &systemCost, &operatingTrajectories, slqSettings);
+  ocs2::SLQ slq(&stateTriggeredRollout, &systemDynamics, &systemConstraints, &systemCost, &operatingTrajectories, ddpSettings);
   slq.run(startTime, x0, finalTime, partitioningTimes, controllerPtrArray);
   auto solutionST = slq.primalSolution(finalTime);
 
   for (int i = 0; i < solutionST.stateTrajectory_.size(); i++) {
     // Test 1: No penetration of Guard Surfaces
-    EXPECT_GT(solutionST.stateTrajectory_[i][0], -slqSettings.ddpSettings_.absTolODE_);
+    EXPECT_GT(solutionST.stateTrajectory_[i][0], -ddpSettings.absTolODE_);
     // Display output
     // format: idx;time;x[0];xref[0];x[1];xref[1];u;uref
     if (outputSolution) {
@@ -210,5 +211,5 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   // Test 2: Check of cost function
   auto performanceIndeces = slq.getPerformanceIndeces();
   const scalar_t expectedCost = 7.12;
-  EXPECT_LT(std::fabs(performanceIndeces.totalCost - expectedCost), 100 * slqSettings.ddpSettings_.minRelCost_);
+  EXPECT_LT(std::fabs(performanceIndeces.totalCost - expectedCost), 100 * ddpSettings.minRelCost_);
 }

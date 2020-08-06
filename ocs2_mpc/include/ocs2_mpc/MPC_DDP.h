@@ -30,16 +30,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_ddp/SLQ.h>
+#include <ocs2_ddp/GaussNewtonDDP.h>
 
 #include "MPC_BASE.h"
 
 namespace ocs2 {
 
 /**
- * This an MPC implementation with SLQ optimal control solver.
+ * This is an MPC implementation with DDP (SLQ or ILQR) optimal control solvers.
  */
-class MPC_SLQ : public MPC_BASE {
+class MPC_DDP : public MPC_BASE {
  public:
   /**
    * Constructor
@@ -49,31 +49,27 @@ class MPC_SLQ : public MPC_BASE {
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
    * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
    * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of SLQ.
-   * @param [in] slqSettings: Structure containing the settings for the SLQ algorithm.
+   * @param [in] ddpSettings: Structure containing the settings for the DDP algorithm.
    * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
-  MPC_SLQ(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
+  MPC_DDP(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
           const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
-          const SLQ_Settings& slqSettings = SLQ_Settings(), const MPC_Settings& mpcSettings = MPC_Settings(),
-          const CostFunctionBase* heuristicsFunctionPtr = nullptr);
+          ddp::Settings ddpSettings, mpc::Settings mpcSettings, const CostFunctionBase* heuristicsFunctionPtr = nullptr);
 
   /** Default destructor. */
-  ~MPC_SLQ() override = default;
+  ~MPC_DDP() override = default;
 
-  /** Gets the SLQ settings structure. */
-  virtual SLQ_Settings& slqSettings() { return slqPtr_->settings(); }
+  GaussNewtonDDP* getSolverPtr() override { return ddpPtr_.get(); }
 
-  SLQ* getSolverPtr() override { return slqPtr_.get(); }
-
-  const SLQ* getSolverPtr() const override { return slqPtr_.get(); }
+  const GaussNewtonDDP* getSolverPtr() const override { return ddpPtr_.get(); }
 
  protected:
   void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override;
 
  private:
-  std::unique_ptr<SLQ> slqPtr_;
+  std::unique_ptr<GaussNewtonDDP> ddpPtr_;
 };
 
 }  // namespace ocs2

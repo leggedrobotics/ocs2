@@ -64,10 +64,10 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
 
   /*
-   * SLQ-MPC settings
+   * DDP-MPC settings
    */
-  slqSettings_.loadSettings(taskFile);
-  mpcSettings_.loadSettings(taskFile);
+  ddpSettings_ = ddp::loadSettings(taskFile);
+  mpcSettings_ = mpc::loadSettings(taskFile);
 
   /*
    * Cartpole parameters
@@ -85,7 +85,7 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
    * Rollout
    */
   Rollout_Settings rolloutSettings;
-  rolloutSettings.loadSettings(taskFile, "slq.rollout");
+  rolloutSettings.loadSettings(taskFile, "rollout");
   ddpCartPoleRolloutPtr_.reset(new TimeTriggeredRollout(*cartPoleSystemDynamicsPtr_, rolloutSettings));
 
   /*
@@ -121,9 +121,9 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<MPC_SLQ> CartPoleInterface::getMpc() {
-  return std::unique_ptr<MPC_SLQ>(new MPC_SLQ(ddpCartPoleRolloutPtr_.get(), cartPoleSystemDynamicsPtr_.get(), cartPoleConstraintPtr_.get(),
-                                              cartPoleCostPtr_.get(), cartPoleOperatingPointPtr_.get(), slqSettings_, mpcSettings_));
+std::unique_ptr<MPC_DDP> CartPoleInterface::getMpc() {
+  return std::unique_ptr<MPC_DDP>(new MPC_DDP(ddpCartPoleRolloutPtr_.get(), cartPoleSystemDynamicsPtr_.get(), cartPoleConstraintPtr_.get(),
+                                              cartPoleCostPtr_.get(), cartPoleOperatingPointPtr_.get(), ddpSettings_, mpcSettings_));
 }
 
 }  // namespace cartpole

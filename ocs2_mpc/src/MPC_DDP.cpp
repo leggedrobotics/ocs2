@@ -27,36 +27,46 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_mpc/MPC_ILQR.h>
+#include <ocs2_mpc/MPC_DDP.h>
+
+#include <ocs2_ddp/ILQR.h>
+#include <ocs2_ddp/SLQ.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MPC_ILQR::MPC_ILQR(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
-                   const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
-                   const ILQR_Settings& ilqrSettings /* = ILQR_Settings()*/, const MPC_Settings& mpcSettings /* = MPC_Settings()*/,
-                   const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
+MPC_DDP::MPC_DDP(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
+                 const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
+                 ddp::Settings ddpSettings, mpc::Settings mpcSettings, const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
 
-    : MPC_BASE(mpcSettings) {
-  ilqrPtr_.reset(new ILQR(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, ilqrSettings,
-                          heuristicsFunctionPtr));
+    : MPC_BASE(std::move(mpcSettings)) {
+  switch (ddpSettings.algorithm_) {
+    case ddp::algorithm::SLQ:
+      ddpPtr_.reset(new SLQ(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
+                            std::move(ddpSettings), heuristicsFunctionPtr));
+      break;
+    case ddp::algorithm::ILQR:
+      ddpPtr_.reset(new ILQR(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
+                             std::move(ddpSettings), heuristicsFunctionPtr));
+      break;
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_ILQR::calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
+void MPC_DDP::calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
   // updating real-time iteration settings
   if (MPC_BASE::initRun_) {
-    ilqrPtr_->ddpSettings().maxNumIterations_ = this->settings().initMaxNumIterations_;
-    ilqrPtr_->ddpSettings().lineSearch_.maxStepLength_ = this->settings().initMaxStepLength_;
-    ilqrPtr_->ddpSettings().lineSearch_.minStepLength_ = this->settings().initMinStepLength_;
+    ddpPtr_->settings().maxNumIterations_ = this->settings().initMaxNumIterations_;
+    ddpPtr_->settings().lineSearch_.maxStepLength_ = this->settings().initMaxStepLength_;
+    ddpPtr_->settings().lineSearch_.minStepLength_ = this->settings().initMinStepLength_;
   } else {
-    ilqrPtr_->ddpSettings().maxNumIterations_ = this->settings().runtimeMaxNumIterations_;
-    ilqrPtr_->ddpSettings().lineSearch_.maxStepLength_ = this->settings().runtimeMaxStepLength_;
-    ilqrPtr_->ddpSettings().lineSearch_.minStepLength_ = this->settings().runtimeMinStepLength_;
+    ddpPtr_->settings().maxNumIterations_ = this->settings().runtimeMaxNumIterations_;
+    ddpPtr_->settings().lineSearch_.maxStepLength_ = this->settings().runtimeMaxStepLength_;
+    ddpPtr_->settings().lineSearch_.minStepLength_ = this->settings().runtimeMinStepLength_;
   }
 
   // calculate controller
@@ -64,9 +74,9 @@ void MPC_ILQR::calculateController(scalar_t initTime, const vector_t& initState,
     if (this->settings().debugPrint_) {
       std::cerr << "### Using cold initialization.\n";
     }
-    ilqrPtr_->run(initTime, initState, finalTime, MPC_BASE::partitionTimes_);
+    ddpPtr_->run(initTime, initState, finalTime, MPC_BASE::partitionTimes_);
   } else {
-    ilqrPtr_->run(initTime, initState, finalTime, MPC_BASE::partitionTimes_, std::vector<ControllerBase*>());
+    ddpPtr_->run(initTime, initState, finalTime, MPC_BASE::partitionTimes_, std::vector<ControllerBase*>());
   }
 }
 

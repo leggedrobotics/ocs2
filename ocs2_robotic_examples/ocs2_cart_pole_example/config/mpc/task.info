@@ -7,54 +7,53 @@ CartPoleParameters
   gravity      9.81
 }
 
-; SLQ settings
-slq
+; DDP settings
+ddp
 {
+  algorithm                      SLQ
+
+  nThreads                       1
+
+  maxNumIterations               10
+  minRelCost                     0.1
+  constraintTolerance            1e-3
+
+  displayInfo                    false
+  displayShortSummary            true
+  checkNumericalStability        true
+
+  AbsTolODE                      1e-9
+  RelTolODE                      1e-6
+  maxNumStepsPerSecond           100000
+  minTimeStep                    1e-3
+  backwardPassIntegratorType     ODE45
+
+  inequalityConstraintMu         100.0
+  inequalityConstraintDelta      1.1
+
+  preComputeRiccatiTerms         true
   useNominalTimeForBackwardPass  false
-  RiccatiIntegratorType          ODE45      ; ODE45, ADAMS_BASHFORTH, BULIRSCH_STOER, ADAMS_BASHFORTH_MOULTON
 
-  ddp
+  useFeedbackPolicy              false
+
+  strategy                       LINE_SEARCH
+  lineSearch
   {
-    nThreads                       1
-
-    maxNumIterations               10
-    minRelCost                     0.1
-    constraintTolerance            1e-3
-
-    displayInfo                    false
-    displayShortSummary            true
-    checkNumericalStability        true
-
-    AbsTolODE                      1e-9
-    RelTolODE                      1e-6
-    maxNumStepsPerSecond           100000
-    minTimeStep                    1e-3
-
-    inequalityConstraintMu         100.0
-    inequalityConstraintDelta      1.1
-
-    preComputeRiccatiTerms         true
-
-    useFeedbackPolicy              false
-
-    strategy                       LINE_SEARCH
-    lineSearch
-    {
-      minStepLength              1.0
-      maxStepLength              1.0
-      hessianCorrectionStrategy  EIGENVALUE_MODIFICATION
-      hessianCorrectionMultiple  1e-6
-    }
+    minStepLength              1.0
+    maxStepLength              1.0
+    hessianCorrectionStrategy  EIGENVALUE_MODIFICATION
+    hessianCorrectionMultiple  1e-6
   }
+}
 
-  rollout
-  {
-    AbsTolODE                    1e-9
-    RelTolODE                    1e-6
-    minTimeStep                  1e-3
-    maxNumStepsPerSecond         100000
-    checkNumericalStability      false
-  }
+; Rollout settings
+rollout
+{
+  AbsTolODE                    1e-9
+  RelTolODE                    1e-6
+  minTimeStep                  1e-3
+  maxNumStepsPerSecond         100000
+  checkNumericalStability      false
 }
 
 ; MPC settings

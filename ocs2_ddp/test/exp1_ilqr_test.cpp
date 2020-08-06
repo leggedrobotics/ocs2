@@ -44,19 +44,20 @@ using namespace ocs2;
 enum { STATE_DIM = 2, INPUT_DIM = 1 };
 
 TEST(exp1_ilqr_test, exp1_ilqr_test) {
-  ILQR_Settings ilqrSettings;
-  ilqrSettings.ddpSettings_.displayInfo_ = true;
-  ilqrSettings.ddpSettings_.displayShortSummary_ = true;
-  ilqrSettings.ddpSettings_.absTolODE_ = 1e-10;
-  ilqrSettings.ddpSettings_.relTolODE_ = 1e-7;
-  ilqrSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
-  ilqrSettings.ddpSettings_.maxNumIterations_ = 30;
-  ilqrSettings.ddpSettings_.minRelCost_ = 5e-4;
-  ilqrSettings.ddpSettings_.checkNumericalStability_ = true;
-  ilqrSettings.ddpSettings_.useFeedbackPolicy_ = false;
-  ilqrSettings.ddpSettings_.debugPrintRollout_ = false;
-  ilqrSettings.ddpSettings_.strategy_ = ddp_strategy::type::LINE_SEARCH;
-  ilqrSettings.ddpSettings_.lineSearch_.minStepLength_ = 0.0001;
+  ddp::Settings ddpSettings;
+  ddpSettings.algorithm_ = ddp::algorithm::ILQR;
+  ddpSettings.displayInfo_ = true;
+  ddpSettings.displayShortSummary_ = true;
+  ddpSettings.absTolODE_ = 1e-10;
+  ddpSettings.relTolODE_ = 1e-7;
+  ddpSettings.maxNumStepsPerSecond_ = 10000;
+  ddpSettings.maxNumIterations_ = 30;
+  ddpSettings.minRelCost_ = 5e-4;
+  ddpSettings.checkNumericalStability_ = true;
+  ddpSettings.useFeedbackPolicy_ = false;
+  ddpSettings.debugPrintRollout_ = false;
+  ddpSettings.strategy_ = ddp_strategy::type::LINE_SEARCH;
+  ddpSettings.lineSearch_.minStepLength_ = 0.0001;
 
   Rollout_Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-11;
@@ -103,23 +104,23 @@ TEST(exp1_ilqr_test, exp1_ilqr_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // ILQR - single-threaded version
-  ilqrSettings.ddpSettings_.nThreads_ = 1;
-  ILQR ilqrST(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ilqrSettings);
+  ddpSettings.nThreads_ = 1;
+  ILQR ilqrST(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ddpSettings);
   ilqrST.setModeScheduleManager(modeScheduleManagerPtr);
 
   // ILQR - multi-threaded version
-  ilqrSettings.ddpSettings_.nThreads_ = 3;
-  ILQR ilqrMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ilqrSettings);
+  ddpSettings.nThreads_ = 3;
+  ILQR ilqrMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ddpSettings);
   ilqrMT.setModeScheduleManager(modeScheduleManagerPtr);
 
   // run single_threaded core ILQR
-  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_) {
+  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n>>> single-threaded ILQR" << std::endl;
   }
   ilqrST.run(startTime, initState, finalTime, partitioningTimes);
 
   // run multi-threaded ILQR
-  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_) {
+  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n>>> multi-threaded ILQR" << std::endl;
   }
   ilqrMT.run(startTime, initState, finalTime, partitioningTimes);
@@ -139,25 +140,25 @@ TEST(exp1_ilqr_test, exp1_ilqr_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   const scalar_t expectedCost = 5.4399;
-  ASSERT_LT(fabs(performanceIndecesST.totalCost - expectedCost), 10 * ilqrSettings.ddpSettings_.minRelCost_)
+  ASSERT_LT(fabs(performanceIndecesST.totalCost - expectedCost), 10 * ddpSettings.minRelCost_)
       << "MESSAGE: single-threaded ILQR failed in the EXP1's cost test!";
-  ASSERT_LT(fabs(performanceIndecesMT.totalCost - expectedCost), 10 * ilqrSettings.ddpSettings_.minRelCost_)
+  ASSERT_LT(fabs(performanceIndecesMT.totalCost - expectedCost), 10 * ddpSettings.minRelCost_)
       << "MESSAGE: multi-threaded ILQR failed in the EXP1's cost test!";
 
   const scalar_t expectedISE1 = 0.0;
-  ASSERT_LT(fabs(performanceIndecesST.stateInputEqConstraintISE - expectedISE1), 10 * ilqrSettings.ddpSettings_.constraintTolerance_)
+  ASSERT_LT(fabs(performanceIndecesST.stateInputEqConstraintISE - expectedISE1), 10 * ddpSettings.constraintTolerance_)
       << "MESSAGE: single-threaded ILQR failed in the EXP1's type-1 constraint ISE test!";
-  ASSERT_LT(fabs(performanceIndecesMT.stateInputEqConstraintISE - expectedISE1), 10 * ilqrSettings.ddpSettings_.constraintTolerance_)
+  ASSERT_LT(fabs(performanceIndecesMT.stateInputEqConstraintISE - expectedISE1), 10 * ddpSettings.constraintTolerance_)
       << "MESSAGE: multi-threaded ILQR failed in the EXP1's type-1 constraint ISE test!";
 
   const scalar_t expectedISE2 = 0.0;
-  ASSERT_LT(fabs(performanceIndecesST.stateEqConstraintISE - expectedISE2), 10 * ilqrSettings.ddpSettings_.constraintTolerance_)
+  ASSERT_LT(fabs(performanceIndecesST.stateEqConstraintISE - expectedISE2), 10 * ddpSettings.constraintTolerance_)
       << "MESSAGE: single-threaded ILQR failed in the EXP1's type-2 constraint ISE test!";
-  ASSERT_LT(fabs(performanceIndecesMT.stateEqConstraintISE - expectedISE2), 10 * ilqrSettings.ddpSettings_.constraintTolerance_)
+  ASSERT_LT(fabs(performanceIndecesMT.stateEqConstraintISE - expectedISE2), 10 * ddpSettings.constraintTolerance_)
       << "MESSAGE: multi-threaded ILQR failed in the EXP1's type-2 constraint ISE test!";
 
   scalar_t ctrlFinalTime;
-  if (ilqrSettings.ddpSettings_.useFeedbackPolicy_) {
+  if (ddpSettings.useFeedbackPolicy_) {
     ctrlFinalTime = dynamic_cast<LinearController*>(solutionST.controllerPtr_.get())->timeStamp_.back();
   } else {
     ctrlFinalTime = dynamic_cast<FeedforwardController*>(solutionST.controllerPtr_.get())->timeStamp_.back();

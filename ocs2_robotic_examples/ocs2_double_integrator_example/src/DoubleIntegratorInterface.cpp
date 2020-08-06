@@ -64,10 +64,10 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
 
   /*
-   * SLQ-MPC settings
+   * DDP-MPC settings
    */
-  slqSettings_.loadSettings(taskFile);
-  mpcSettings_.loadSettings(taskFile);
+  ddpSettings_ = ddp::loadSettings(taskFile);
+  mpcSettings_ = mpc::loadSettings(taskFile);
 
   /*
    * Dynamics
@@ -82,7 +82,7 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
    * Rollout
    */
   Rollout_Settings rolloutSettings;
-  rolloutSettings.loadSettings(taskFile, "slq.rollout");
+  rolloutSettings.loadSettings(taskFile, "rollout");
   ddpLinearSystemRolloutPtr_.reset(new TimeTriggeredRollout(*linearSystemDynamicsPtr_, rolloutSettings));
 
   /*
@@ -116,10 +116,10 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<MPC_SLQ> DoubleIntegratorInterface::getMpc() {
-  return std::unique_ptr<MPC_SLQ>(new MPC_SLQ(ddpLinearSystemRolloutPtr_.get(), linearSystemDynamicsPtr_.get(),
+std::unique_ptr<MPC_DDP> DoubleIntegratorInterface::getMpc() {
+  return std::unique_ptr<MPC_DDP>(new MPC_DDP(ddpLinearSystemRolloutPtr_.get(), linearSystemDynamicsPtr_.get(),
                                               linearSystemConstraintPtr_.get(), linearSystemCostPtr_.get(),
-                                              linearSystemOperatingPointPtr_.get(), slqSettings_, mpcSettings_));
+                                              linearSystemOperatingPointPtr_.get(), ddpSettings_, mpcSettings_));
 }
 
 }  // namespace double_integrator

@@ -9,7 +9,6 @@
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 
 #include <ocs2_ddp/SLQ.h>
-#include <ocs2_ddp/SLQ_Settings.h>
 
 /*
  * Test for StateTriggeredRollout in combination with SLQ
@@ -38,21 +37,22 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   const size_t stateDim = STATE_DIM;
   const size_t inputDim = INPUT_DIM;
 
-  SLQ_Settings slqSettings;
-  slqSettings.useNominalTimeForBackwardPass_ = true;
-  slqSettings.ddpSettings_.displayInfo_ = true;
-  slqSettings.ddpSettings_.displayShortSummary_ = true;
-  slqSettings.ddpSettings_.maxNumIterations_ = 30;
-  slqSettings.ddpSettings_.nThreads_ = 1;
-  slqSettings.ddpSettings_.inequalityConstraintMu_ = 0.1;
-  slqSettings.ddpSettings_.inequalityConstraintDelta_ = 1e-6;
-  slqSettings.ddpSettings_.checkNumericalStability_ = false;
-  slqSettings.ddpSettings_.absTolODE_ = 1e-10;
-  slqSettings.ddpSettings_.relTolODE_ = 1e-7;
-  slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
-  slqSettings.ddpSettings_.useFeedbackPolicy_ = true;
-  slqSettings.ddpSettings_.debugPrintRollout_ = false;
-  slqSettings.ddpSettings_.strategy_ = ddp_strategy::type::LINE_SEARCH;
+  ddp::Settings ddpSettings;
+  ddpSettings.algorithm_ = ddp::algorithm::SLQ;
+  ddpSettings.displayInfo_ = true;
+  ddpSettings.displayShortSummary_ = true;
+  ddpSettings.maxNumIterations_ = 30;
+  ddpSettings.nThreads_ = 1;
+  ddpSettings.inequalityConstraintMu_ = 0.1;
+  ddpSettings.inequalityConstraintDelta_ = 1e-6;
+  ddpSettings.checkNumericalStability_ = false;
+  ddpSettings.absTolODE_ = 1e-10;
+  ddpSettings.relTolODE_ = 1e-7;
+  ddpSettings.maxNumStepsPerSecond_ = 10000;
+  ddpSettings.useNominalTimeForBackwardPass_ = true;
+  ddpSettings.useFeedbackPolicy_ = true;
+  ddpSettings.debugPrintRollout_ = false;
+  ddpSettings.strategy_ = ddp_strategy::type::LINE_SEARCH;
 
   Rollout_Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;
@@ -95,7 +95,7 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
 
   std::cout << "Starting SLQ Procedure" << std::endl;
   // SLQ
-  SLQ slq(&stateTriggeredRollout, &systemDynamics, &systemConstraints, &systemCost, &operatingTrajectories, slqSettings);
+  SLQ slq(&stateTriggeredRollout, &systemDynamics, &systemConstraints, &systemCost, &operatingTrajectories, ddpSettings);
   slq.run(startTime, initState, finalTime, partitioningTimes);
   auto solution = slq.primalSolution(finalTime);
   std::cout << "SLQ Procedure Done" << std::endl;
@@ -136,5 +136,5 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   }
   // Test 3: Check of cost function
   auto performanceIndecesST = slq.getPerformanceIndeces();
-  EXPECT_LT(std::fabs(performanceIndecesST.totalCost - 20.08), 10.0 * slqSettings.ddpSettings_.minRelCost_);
+  EXPECT_LT(std::fabs(performanceIndecesST.totalCost - 20.08), 10.0 * ddpSettings.minRelCost_);
 }

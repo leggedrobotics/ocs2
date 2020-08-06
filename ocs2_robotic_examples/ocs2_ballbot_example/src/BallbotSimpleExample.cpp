@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_core/misc/LoadData.h>
-#include <ocs2_mpc/MPC_SLQ.h>
+#include <ocs2_ddp/SLQ.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 // Ballbot
@@ -61,11 +61,10 @@ int main(int argc, char** argv) {
   std::cerr << "Generated library path: " << libraryFolder << std::endl;
 
   /*
-   * SLQ settings
+   * DDP settings
    */
-  SLQ_Settings slqSettings;
-  slqSettings.loadSettings(taskFile);
-  slqSettings.ddpSettings_.displayInfo_ = true;  // display iteration information
+  auto ddpSettings = ddp::loadSettings(taskFile);
+  ddpSettings.displayInfo_ = true;  // display iteration information
 
   /*
    * Rollout settings
@@ -112,9 +111,9 @@ int main(int argc, char** argv) {
    * Time partitioning which defines the time horizon and the number of data partitioning
    */
   scalar_t timeHorizon;
-  loadData::loadCppDataType(taskFile, "mpcTimeHorizon.timehorizon", timeHorizon);
+  loadData::loadCppDataType(taskFile, "mpc.timehorizon", timeHorizon);
   size_t numPartitions;
-  loadData::loadCppDataType(taskFile, "mpcTimeHorizon.numPartitions", numPartitions);
+  loadData::loadCppDataType(taskFile, "mpc.numPartitions", numPartitions);
   scalar_array_t partitioningTimes(numPartitions + 1);
   partitioningTimes[0] = 0.0;
   for (size_t i = 0; i < numPartitions; i++) {
@@ -125,9 +124,9 @@ int main(int argc, char** argv) {
   /*
    * define solver and run
    */
-  slqSettings.ddpSettings_.nThreads_ = 1;
+  ddpSettings.nThreads_ = 1;
   SLQ slq(ballbotRolloutPtr.get(), ballbotSystemDynamicsPtr.get(), ballbotConstraintPtr.get(), ballbotCostPtr.get(),
-          ballbotOperatingPointPtr.get(), slqSettings);
+          ballbotOperatingPointPtr.get(), ddpSettings);
   slq.run(0.0, xInit, timeHorizon, partitioningTimes);
 
   /*

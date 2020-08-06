@@ -49,7 +49,7 @@ class MPC_BASE {
    *
    * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
    */
-  MPC_BASE(MPC_Settings mpcSettings);
+  explicit MPC_BASE(mpc::Settings mpcSettings);
 
   /** Destructor. */
   virtual ~MPC_BASE() = default;
@@ -81,7 +81,7 @@ class MPC_BASE {
   void setTimeHorizon(scalar_t timeHorizon) { nextTimeHorizon_ = timeHorizon; }
 
   /** Gets the MPC settings. */
-  const MPC_Settings& settings() const { return mpcSettings_; }
+  const mpc::Settings& settings() const { return mpcSettings_; }
 
  protected:
   /**
@@ -113,11 +113,10 @@ class MPC_BASE {
   scalar_array_t partitionTimes_{};
 
  private:
-  MPC_Settings mpcSettings_;
+  mpc::Settings mpcSettings_;
+  scalar_t nextTimeHorizon_;
 
   benchmark::RepeatedTimer mpcTimer_;
-
-  scalar_t nextTimeHorizon_;
 };
 
 }  // namespace ocs2

@@ -86,7 +86,7 @@ void MPC_MRT_Interface::advanceMpc() {
     costDesiredTrajectoriesBufferUpdated_ = false;
 
     if (mpc_.settings().debugPrint_) {
-      std::cerr << "### The target position is updated to " << std::endl;
+      std::cerr << "### The target position is updated to\n";
       mpc_.getSolverPtr()->getCostDesiredTrajectories().display();
     }
   }
@@ -111,11 +111,10 @@ void MPC_MRT_Interface::advanceMpc() {
 
   // measure the delay
   if (mpc_.settings().debugPrint_) {
-    std::cerr << std::endl;
-    std::cerr << "### MPC ROS runtime " << std::endl;
-    std::cerr << "###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms]." << std::endl;
-    std::cerr << "###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms]." << std::endl;
-    std::cerr << "###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+    std::cerr << "\n### MPC ROS runtime ";
+    std::cerr << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
+    std::cerr << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].";
+    std::cerr << "\n###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
   }
 }
 

@@ -27,8 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_ddp/SLQ.h>
-#include <ocs2_ddp/riccati_equations/RiccatiModificationInterpolation.h>
+#include "ocs2_ddp/SLQ.h"
+#include "ocs2_ddp/riccati_equations/RiccatiModificationInterpolation.h"
 
 namespace ocs2 {
 
@@ -37,29 +37,32 @@ namespace ocs2 {
 /******************************************************************************************************/
 SLQ::SLQ(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
          const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
-         const SLQ_Settings& settings /*= SLQ_Settings()*/, const CostFunctionBase* heuristicsFunctionPtr /* = nullptr*/)
+         ddp::Settings ddpSettings, const CostFunctionBase* heuristicsFunctionPtr /* = nullptr*/)
 
-    : BASE(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings.ddpSettings_,
-           heuristicsFunctionPtr, "SLQ"),
-      settings_(settings) {
-  // Riccati Solver
-  riccatiEquationsPtrStock_.clear();
-  riccatiEquationsPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
-  riccatiIntegratorPtrStock_.clear();
-  riccatiIntegratorPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
-
-  IntegratorType integratorType = settings_.RiccatiIntegratorType_;
-  if (integratorType != IntegratorType::ODE45 && integratorType != IntegratorType::BULIRSCH_STOER) {
-    throw(
-        std::runtime_error("Unsupported Riccati equation integrator type: " + integrator_type::toString(settings_.RiccatiIntegratorType_)));
+    : BASE(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, std::move(ddpSettings),
+           heuristicsFunctionPtr) {
+  if (settings().algorithm_ != ddp::algorithm::SLQ) {
+    throw std::runtime_error("In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
+                             "\" while SLQ is instantiated!");
   }
 
-  for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
-    bool preComputeRiccatiTerms =
-        BASE::ddpSettings_.preComputeRiccatiTerms_ && (BASE::ddpSettings_.strategy_ == ddp_strategy::type::LINE_SEARCH);
-    bool isRiskSensitive = !numerics::almost_eq(BASE::ddpSettings_.riskSensitiveCoeff_, 0.0);
+  // Riccati Solver
+  riccatiEquationsPtrStock_.clear();
+  riccatiEquationsPtrStock_.reserve(settings().nThreads_);
+  riccatiIntegratorPtrStock_.clear();
+  riccatiIntegratorPtrStock_.reserve(settings().nThreads_);
+
+  const auto integratorType = settings().backwardPassIntegratorType_;
+  if (integratorType != IntegratorType::ODE45 && integratorType != IntegratorType::BULIRSCH_STOER) {
+    throw(std::runtime_error("Unsupported Riccati equation integrator type: " +
+                             integrator_type::toString(settings().backwardPassIntegratorType_)));
+  }
+
+  for (size_t i = 0; i < settings().nThreads_; i++) {
+    bool preComputeRiccatiTerms = settings().preComputeRiccatiTerms_ && (settings().strategy_ == ddp_strategy::type::LINE_SEARCH);
+    bool isRiskSensitive = !numerics::almost_eq(settings().riskSensitiveCoeff_, 0.0);
     riccatiEquationsPtrStock_.emplace_back(new ContinuousTimeRiccatiEquations(preComputeRiccatiTerms, isRiskSensitive));
-    riccatiEquationsPtrStock_.back()->setRiskSensitiveCoefficient(BASE::ddpSettings_.riskSensitiveCoeff_);
+    riccatiEquationsPtrStock_.back()->setRiskSensitiveCoefficient(settings().riskSensitiveCoeff_);
     riccatiIntegratorPtrStock_.emplace_back(newIntegrator(integratorType));
   }  // end of i loop
 
@@ -86,7 +89,7 @@ void SLQ::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const 
     }
   };
 
-  BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
+  BASE::runParallel(task, settings().nThreads_);
 }
 
 /******************************************************************************************************/
@@ -157,7 +160,7 @@ void SLQ::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, s
   BASE::nominalControllersStock_[i].deltaBiasArray_[k].noalias() += Qu * projectedLv;
 
   // checking the numerical stability of the controller parameters
-  if (BASE::ddpSettings_.checkNumericalStability_) {
+  if (settings().checkNumericalStability_) {
     try {
       if (!BASE::nominalControllersStock_[i].gainArray_[k].allFinite()) {
         throw std::runtime_error("Feedback gains are unstable.");
@@ -195,12 +198,12 @@ scalar_t SLQ::solveSequentialRiccatiEquations(const matrix_t& SmFinal, const vec
 
         // get next time index is atomic
         while ((timeIndex = BASE::nextTimeIndex_++) < N) {
-          BASE::computeProjectionAndRiccatiModification(BASE::ddpSettings_.strategy_, BASE::modelDataTrajectoriesStock_[i][timeIndex],
-                                                        SmDummy, BASE::projectedModelDataTrajectoriesStock_[i][timeIndex],
+          BASE::computeProjectionAndRiccatiModification(settings().strategy_, BASE::modelDataTrajectoriesStock_[i][timeIndex], SmDummy,
+                                                        BASE::projectedModelDataTrajectoriesStock_[i][timeIndex],
                                                         BASE::riccatiModificationTrajectoriesStock_[i][timeIndex]);
         }
       };
-      BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
+      BASE::runParallel(task, settings().nThreads_);
     }
   }
 
@@ -225,13 +228,6 @@ matrix_t SLQ::computeHamiltonianHessian(ddp_strategy::type strategy, const Model
     default:
       throw std::runtime_error("unknown ddp strategy");
   }  // end of switch-case
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-SLQ_Settings& SLQ::settings() {
-  return settings_;
 }
 
 /******************************************************************************************************/
@@ -276,7 +272,7 @@ void SLQ::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, cons
    *  if false: the SsNormalized time is a result of adaptive integration.
    */
   vector_array_t allSsTrajectory;
-  if (settings_.useNominalTimeForBackwardPass_) {
+  if (settings().useNominalTimeForBackwardPass_) {
     integrateRiccatiEquationNominalTime(*riccatiIntegratorPtrStock_[workerIndex], *riccatiEquationsPtrStock_[workerIndex],
                                         nominalTimeTrajectory, nominalEventsPastTheEndIndices, std::move(allSsFinal), SsNormalizedTime,
                                         SsNormalizedPostEventIndices, allSsTrajectory);
@@ -297,7 +293,7 @@ void SLQ::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, cons
     ContinuousTimeRiccatiEquations::convert2Matrix(allSsTrajectory[outputN - 1 - k], SmTrajectory[k], SvTrajectory[k], sTrajectory[k]);
   }  // end of k loop
 
-  if (BASE::ddpSettings_.debugPrintRollout_) {
+  if (settings().debugPrintRollout_) {
     std::cerr << std::endl << "+++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
     std::cerr << "Partition: " << partitionIndex << ", backward pass time trajectory";
     std::cerr << std::endl << "+++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
@@ -320,7 +316,7 @@ void SLQ::integrateRiccatiEquationNominalTime(IntegratorBase& riccatiIntegrator,
   const int nominalTimeSize = nominalTimeTrajectory.size();
   const int numEvents = nominalEventsPastTheEndIndices.size();
   auto partitionDuration = nominalTimeTrajectory.back() - nominalTimeTrajectory.front();
-  const auto maxNumSteps = static_cast<size_t>(BASE::ddpSettings_.maxNumStepsPerSecond_ * std::max(1.0, partitionDuration));
+  const auto maxNumSteps = static_cast<size_t>(settings().maxNumStepsPerSecond_ * std::max(1.0, partitionDuration));
 
   // normalized time and post event indices
   BASE::computeNormalizedTime(nominalTimeTrajectory, nominalEventsPastTheEndIndices, SsNormalizedTime, SsNormalizedPostEventIndices);
@@ -343,8 +339,8 @@ void SLQ::integrateRiccatiEquationNominalTime(IntegratorBase& riccatiIntegrator,
 
     Observer observer(&allSsTrajectory);
     // solve Riccati equations
-    riccatiIntegrator.integrateTimes(riccatiEquation, observer, allSsFinal, beginTimeItr, endTimeItr, BASE::ddpSettings_.minTimeStep_,
-                                     BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps);
+    riccatiIntegrator.integrateTimes(riccatiEquation, observer, allSsFinal, beginTimeItr, endTimeItr, settings().minTimeStep_,
+                                     settings().absTolODE_, settings().relTolODE_, maxNumSteps);
 
     if (i < numEvents) {
       allSsFinal = riccatiEquation.computeJumpMap(*endTimeItr, allSsTrajectory.back());
@@ -369,7 +365,7 @@ void SLQ::integrateRiccatiEquationAdaptiveTime(IntegratorBase& riccatiIntegrator
   const int nominalTimeSize = nominalTimeTrajectory.size();
   const int numEvents = nominalEventsPastTheEndIndices.size();
   auto partitionDuration = nominalTimeTrajectory.back() - nominalTimeTrajectory.front();
-  const auto maxNumSteps = static_cast<size_t>(BASE::ddpSettings_.maxNumStepsPerSecond_ * std::max(1.0, partitionDuration));
+  const auto maxNumSteps = static_cast<size_t>(settings().maxNumStepsPerSecond_ * std::max(1.0, partitionDuration));
 
   // Extract switching times from eventIndices and normalize them
   scalar_array_t SsNormalizedSwitchingTimes;
@@ -391,8 +387,8 @@ void SLQ::integrateRiccatiEquationAdaptiveTime(IntegratorBase& riccatiIntegrator
 
     Observer observer(&allSsTrajectory, &SsNormalizedTime);
     // solve Riccati equations
-    riccatiIntegrator.integrateAdaptive(riccatiEquation, observer, allSsFinal, beginTime, endTime, BASE::ddpSettings_.minTimeStep_,
-                                        BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps);
+    riccatiIntegrator.integrateAdaptive(riccatiEquation, observer, allSsFinal, beginTime, endTime, settings().minTimeStep_,
+                                        settings().absTolODE_, settings().relTolODE_, maxNumSteps);
 
     // if not the last interval which definitely does not have any event at
     // its final time (there is no even at the beginning of partition)

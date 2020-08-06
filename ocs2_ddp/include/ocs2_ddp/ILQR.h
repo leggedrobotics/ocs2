@@ -32,7 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 
 #include "GaussNewtonDDP.h"
-#include "ILQR_Settings.h"
 #include "riccati_equations/DiscreteTimeRiccatiEquations.h"
 
 namespace ocs2 {
@@ -51,25 +50,18 @@ class ILQR : public GaussNewtonDDP {
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
    * @param [in] costFunctionPtr: The cost function (intermediate and final costs) and its derivatives for subsystems.
    * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of ILQR.
-   * @param [in] settings: Structure containing the settings for the ILQR algorithm.
+   * @param [in] ddpSettings: Structure containing the settings for the DDP algorithm.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the final cost function defined in costFunctionPtr.
    */
   ILQR(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
-       const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
-       const ILQR_Settings& settings = ILQR_Settings(), const CostFunctionBase* heuristicsFunctionPtr = nullptr);
+       const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, ddp::Settings ddpSettings,
+       const CostFunctionBase* heuristicsFunctionPtr = nullptr);
 
   /**
    * Default destructor.
    */
   ~ILQR() override = default;
-
-  /**
-   * Gets a reference to the Options structure.
-   *
-   * @return a reference to the Options structure.
-   */
-  ILQR_Settings& settings();
 
  protected:
   void setupOptimizer(size_t numPartitions) override;
@@ -101,8 +93,6 @@ class ILQR : public GaussNewtonDDP {
   /****************
    *** Variables **
    ****************/
-  ILQR_Settings settings_;
-
   matrix_array2_t projectedKmTrajectoryStock_;  // projected feedback
   vector_array2_t projectedLvTrajectoryStock_;  // projected feedforward
 

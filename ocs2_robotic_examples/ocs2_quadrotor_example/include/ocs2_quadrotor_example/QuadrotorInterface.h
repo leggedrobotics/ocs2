@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
-#include <ocs2_mpc/MPC_ILQR.h>
+#include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
 // Quadrotor
@@ -59,14 +59,13 @@ class QuadrotorInterface final : public RobotInterface {
   /** Destructor */
   ~QuadrotorInterface() override = default;
 
-  /** Gets ILQR settings. */
-  ILQR_Settings& ilqrSettings() { return ilqrSettings_; }
-
   const vector_t& getInitialState() { return initialState_; }
 
-  MPC_Settings& mpcSettings() { return mpcSettings_; };
+  ddp::Settings& ddpSettings() { return ddpSettings_; }
 
-  std::unique_ptr<MPC_ILQR> getMpc();
+  mpc::Settings& mpcSettings() { return mpcSettings_; }
+
+  std::unique_ptr<MPC_DDP> getMpc();
 
   const QuadrotorSystemDynamics& getDynamics() const override { return *quadrotorSystemDynamicsPtr_; }
 
@@ -87,8 +86,8 @@ class QuadrotorInterface final : public RobotInterface {
   std::string taskFile_;
   std::string libraryFolder_;
 
-  ILQR_Settings ilqrSettings_;
-  MPC_Settings mpcSettings_;
+  ddp::Settings ddpSettings_;
+  mpc::Settings mpcSettings_;
 
   std::unique_ptr<RolloutBase> ddpQuadrotorRolloutPtr_;
 

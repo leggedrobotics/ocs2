@@ -57,6 +57,7 @@ add_library(${PROJECT_NAME}
   src/ILQR.cpp
   src/RiccatiModification.cpp
   src/SLQ.cpp
+  src/DDP_Settings.cpp
   src/StrategySettings.cpp
 )
 target_link_libraries(${PROJECT_NAME}

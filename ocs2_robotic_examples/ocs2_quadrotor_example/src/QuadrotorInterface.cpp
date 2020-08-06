@@ -66,8 +66,8 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Solver settings
    */
-  ilqrSettings_.loadSettings(taskFile);
-  mpcSettings_.loadSettings(taskFile);
+  ddpSettings_ = ddp::loadSettings(taskFile);
+  mpcSettings_ = mpc::loadSettings(taskFile);
 
   /*
    * quadrotor parameters
@@ -84,7 +84,7 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
    * Rollout
    */
   Rollout_Settings rolloutSettings;
-  rolloutSettings.loadSettings(taskFile, "slq.rollout");
+  rolloutSettings.loadSettings(taskFile, "rollout");
   ddpQuadrotorRolloutPtr_.reset(new TimeTriggeredRollout(*quadrotorSystemDynamicsPtr_, rolloutSettings));
 
   /*
@@ -121,10 +121,10 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<MPC_ILQR> QuadrotorInterface::getMpc() {
-  return std::unique_ptr<MPC_ILQR>(new MPC_ILQR(ddpQuadrotorRolloutPtr_.get(), quadrotorSystemDynamicsPtr_.get(),
-                                                quadrotorConstraintPtr_.get(), quadrotorCostPtr_.get(), quadrotorOperatingPointPtr_.get(),
-                                                ilqrSettings_, mpcSettings_));
+std::unique_ptr<MPC_DDP> QuadrotorInterface::getMpc() {
+  return std::unique_ptr<MPC_DDP>(new MPC_DDP(ddpQuadrotorRolloutPtr_.get(), quadrotorSystemDynamicsPtr_.get(),
+                                              quadrotorConstraintPtr_.get(), quadrotorCostPtr_.get(), quadrotorOperatingPointPtr_.get(),
+                                              ddpSettings_, mpcSettings_));
 }
 
 }  // namespace quadrotor

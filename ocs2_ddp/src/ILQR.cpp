@@ -38,21 +38,24 @@ namespace ocs2 {
 /******************************************************************************************************/
 ILQR::ILQR(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
            const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
-           const ILQR_Settings& settings /*= ILQR_Settings()*/, const CostFunctionBase* heuristicsFunctionPtr /* = nullptr*/)
+           ddp::Settings ddpSettings, const CostFunctionBase* heuristicsFunctionPtr /* = nullptr*/)
 
-    : BASE(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings.ddpSettings_,
-           heuristicsFunctionPtr, "ILQR"),
-      settings_(settings) {
+    : BASE(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, std::move(ddpSettings),
+           heuristicsFunctionPtr) {
+  if (settings().algorithm_ != ddp::algorithm::ILQR) {
+    throw std::runtime_error("In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
+                             "\" while ILQR is instantiated!");
+  }
+
   // Riccati Solver
   riccatiEquationsPtrStock_.clear();
-  riccatiEquationsPtrStock_.reserve(BASE::ddpSettings_.nThreads_);
+  riccatiEquationsPtrStock_.reserve(settings().nThreads_);
 
-  for (size_t i = 0; i < BASE::ddpSettings_.nThreads_; i++) {
-    bool preComputeRiccatiTerms =
-        BASE::ddpSettings_.preComputeRiccatiTerms_ && (BASE::ddpSettings_.strategy_ == ddp_strategy::type::LINE_SEARCH);
-    bool isRiskSensitive = !numerics::almost_eq(BASE::ddpSettings_.riskSensitiveCoeff_, 0.0);
+  for (size_t i = 0; i < settings().nThreads_; i++) {
+    bool preComputeRiccatiTerms = settings().preComputeRiccatiTerms_ && (settings().strategy_ == ddp_strategy::type::LINE_SEARCH);
+    bool isRiskSensitive = !numerics::almost_eq(settings().riskSensitiveCoeff_, 0.0);
     riccatiEquationsPtrStock_.emplace_back(new DiscreteTimeRiccatiEquations(preComputeRiccatiTerms, isRiskSensitive));
-    riccatiEquationsPtrStock_.back()->setRiskSensitiveCoefficient(BASE::ddpSettings_.riskSensitiveCoeff_);
+    riccatiEquationsPtrStock_.back()->setRiskSensitiveCoefficient(settings().riskSensitiveCoeff_);
   }  // end of i loop
 
   Eigen::initParallel();
@@ -93,7 +96,7 @@ void ILQR::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const
     }
   };
 
-  BASE::runParallel(task, BASE::ddpSettings_.nThreads_);
+  BASE::runParallel(task, settings().nThreads_);
 }
 
 /******************************************************************************************************/
@@ -170,7 +173,7 @@ void ILQR::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, 
   BASE::nominalControllersStock_[i].deltaBiasArray_[k].noalias() += Qu * projectedLvTrajectoryStock_[i][k];
 
   // checking the numerical stability of the controller parameters
-  if (BASE::ddpSettings_.checkNumericalStability_) {
+  if (settings().checkNumericalStability_) {
     try {
       if (!BASE::nominalControllersStock_[i].gainArray_[k].allFinite()) {
         throw std::runtime_error("Feedback gains are unstable.");
@@ -277,7 +280,7 @@ void ILQR::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, con
     auto& projectedKmFinal = projectedKmTrajectoryStock_[partitionIndex][endTimeItr - 1];
 
     const auto SmDummy = matrix_t::Zero(modelDataFinal.stateDim_, modelDataFinal.stateDim_);
-    BASE::computeProjectionAndRiccatiModification(BASE::ddpSettings_.strategy_, modelDataFinal, SmDummy, projectedModelDataFinal,
+    BASE::computeProjectionAndRiccatiModification(settings().strategy_, modelDataFinal, SmDummy, projectedModelDataFinal,
                                                   riccatiModificationFinal);
 
     // projected feedforward
@@ -295,10 +298,9 @@ void ILQR::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, con
      */
     for (int k = endTimeItr - 2; k >= beginTimeItr; k--) {
       // project
-      BASE::computeProjectionAndRiccatiModification(BASE::ddpSettings_.strategy_, BASE::modelDataTrajectoriesStock_[partitionIndex][k],
-                                                    BASE::SmTrajectoryStock_[partitionIndex][k + 1],
-                                                    BASE::projectedModelDataTrajectoriesStock_[partitionIndex][k],
-                                                    BASE::riccatiModificationTrajectoriesStock_[partitionIndex][k]);
+      BASE::computeProjectionAndRiccatiModification(
+          settings().strategy_, BASE::modelDataTrajectoriesStock_[partitionIndex][k], BASE::SmTrajectoryStock_[partitionIndex][k + 1],
+          BASE::projectedModelDataTrajectoriesStock_[partitionIndex][k], BASE::riccatiModificationTrajectoriesStock_[partitionIndex][k]);
 
       // compute one step of Riccati difference equations
       riccatiEquationsPtrStock_[workerIndex]->computeMap(
@@ -310,18 +312,11 @@ void ILQR::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, con
     }  // end of k loop
 
     if (i > 0) {
-      std::tie(SmFinalTemp, SvFinalTemp, sFinalTemp) = RiccatiTransversalityConditions(
+      std::tie(SmFinalTemp, SvFinalTemp, sFinalTemp) = riccatiTransversalityConditions(
           BASE::modelDataEventTimesStock_[partitionIndex][i - 1], BASE::SmTrajectoryStock_[partitionIndex][beginTimeItr],
           BASE::SvTrajectoryStock_[partitionIndex][beginTimeItr], BASE::sTrajectoryStock_[partitionIndex][beginTimeItr]);
     }
   }  // end of i loop
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-ILQR_Settings& ILQR::settings() {
-  return settings_;
 }
 
 /******************************************************************************************************/

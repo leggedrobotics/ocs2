@@ -37,7 +37,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MPC_BASE::MPC_BASE(MPC_Settings mpcSettings) : mpcSettings_(std::move(mpcSettings)), nextTimeHorizon_(mpcSettings_.timeHorizon_) {
+MPC_BASE::MPC_BASE(mpc::Settings mpcSettings) : mpcSettings_(std::move(mpcSettings)), nextTimeHorizon_(mpcSettings_.timeHorizon_) {
   if (mpcSettings_.numPartitions_ == 0) {
     throw std::runtime_error("There should be at least one time partition.");
   }
@@ -104,12 +104,12 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) {
 
   // display
   if (mpcSettings_.debugPrint_) {
-    std::cerr << "#####################################################\n";
-    std::cerr << "#####################################################\n";
-    std::cerr << "#####################################################\n";
-    std::cerr << "### MPC is called at time:  " << currentTime << " [s].\n";
-    std::cerr << "### MPC final Time:         " << finalTime << " [s].\n";
-    std::cerr << "### MPC time horizon:       " << mpcSettings_.timeHorizon_ << " [s].\n";
+    std::cerr << "\n#####################################################";
+    std::cerr << "\n#####################################################";
+    std::cerr << "\n#####################################################";
+    std::cerr << "\n### MPC is called at time:  " << currentTime << " [s].";
+    std::cerr << "\n### MPC final Time:         " << finalTime << " [s].";
+    std::cerr << "\n### MPC time horizon:       " << mpcSettings_.timeHorizon_ << " [s].\n";
     mpcTimer_.startTimer();
   }
 

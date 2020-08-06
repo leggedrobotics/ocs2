@@ -140,7 +140,7 @@ vector_t ContinuousTimeRiccatiEquations::computeJumpMap(scalar_t z, const vector
   const auto time = -z;
   const auto index = lookup::findFirstIndexWithinTol(eventTimes_, time, 1e-5);
 
-  const auto SsPreEvent = RiccatiTransversalityConditions((*modelDataEventTimesPtr_)[index], continuousTimeRiccatiData_.Sm_,
+  const auto SsPreEvent = riccatiTransversalityConditions((*modelDataEventTimesPtr_)[index], continuousTimeRiccatiData_.Sm_,
                                                           continuousTimeRiccatiData_.Sv_, continuousTimeRiccatiData_.s_);
 
   return convert2Vector(std::get<0>(SsPreEvent), std::get<1>(SsPreEvent), std::get<2>(SsPreEvent));

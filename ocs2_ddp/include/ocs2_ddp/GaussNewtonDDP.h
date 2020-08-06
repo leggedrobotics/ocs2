@@ -108,11 +108,10 @@ class GaussNewtonDDP : public Solver_BASE {
    * @param [in] ddpSettings: Structure containing the settings for the Gauss-Newton DDP algorithm.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation.
    * If it is not defined, we will use the final cost function defined in costFunctionPtr.
-   * @param [in] algorithmName: It should be either SLQ ot ILQR.
    */
   GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
                  const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
-                 const DDP_Settings& ddpSettings, const CostFunctionBase* heuristicsFunctionPtr, const char* algorithmName);
+                 ddp::Settings ddpSettings, const CostFunctionBase* heuristicsFunctionPtr);
 
   /**
    * Destructor.
@@ -141,17 +140,17 @@ class GaussNewtonDDP : public Solver_BASE {
 
   void rewindOptimizer(size_t firstIndex) override;
 
-  const unsigned long long int& getRewindCounter() const override;
+  const unsigned long long int& getRewindCounter() const override { return rewindCounter_; }
 
   /**
    * Write access to ddp settings
    */
-  DDP_Settings& ddpSettings();
+  ddp::Settings& settings() { return ddpSettings_; }
 
   /**
    * Const access to ddp settings
    */
-  const DDP_Settings& ddpSettings() const;
+  const ddp::Settings& settings() const { return ddpSettings_; }
 
   /**
    * Upon activation in the multi-thread Gauss-Newton DDP class (DDP_MT), the parallelization
@@ -161,7 +160,7 @@ class GaussNewtonDDP : public Solver_BASE {
    * @param [in] flag: If set true, the parallel Riccati solver will be used
    * from the first iteration.
    */
-  void useParallelRiccatiSolverFromInitItr(bool flag);
+  void useParallelRiccatiSolverFromInitItr(bool flag) { useParallelRiccatiSolverFromInitItr_ = flag; }
 
   /**
    * Computes the normalized time for Riccati backward pass.
@@ -545,10 +544,6 @@ class GaussNewtonDDP : public Solver_BASE {
                const std::vector<ControllerBase*>& controllersPtrStock) override;
 
  protected:
-  DDP_Settings ddpSettings_;
-
-  ThreadPool threadPool_;
-
   // multi-threading helper variables
   std::atomic_size_t nextTaskId_{0};
   std::atomic_size_t nextTimeIndex_{0};
@@ -600,7 +595,9 @@ class GaussNewtonDDP : public Solver_BASE {
   LevenbergMarquardtModule levenbergMarquardtModule_;
 
  private:
-  std::string algorithmName_;
+  ddp::Settings ddpSettings_;
+
+  std::unique_ptr<ThreadPool> threadPoolPtr_;
 
   unsigned long long int rewindCounter_ = 0;
 

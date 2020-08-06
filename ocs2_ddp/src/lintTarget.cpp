@@ -2,11 +2,8 @@
 #include <ocs2_ddp/DDP_Settings.h>
 #include <ocs2_ddp/GaussNewtonDDP.h>
 
-#include <ocs2_ddp/SLQ.h>
-#include <ocs2_ddp/SLQ_Settings.h>
-
 #include <ocs2_ddp/ILQR.h>
-#include <ocs2_ddp/ILQR_Settings.h>
+#include <ocs2_ddp/SLQ.h>
 
 // Riccati equations
 #include <ocs2_ddp/riccati_equations/ContinuousTimeRiccatiEquations.h>

@@ -33,7 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/SystemEventHandler.h>
 
 #include "GaussNewtonDDP.h"
-#include "SLQ_Settings.h"
 #include "riccati_equations/ContinuousTimeRiccatiEquations.h"
 
 namespace ocs2 {
@@ -53,25 +52,18 @@ class SLQ final : public GaussNewtonDDP {
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
    * @param [in] costFunctionPtr: The cost function (intermediate and final costs) and its derivatives for subsystems.
    * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of SLQ.
-   * @param [in] settings: Structure containing the settings for the SLQ algorithm.
+   * @param [in] ddpSettings: Structure containing the settings for the DDP algorithm.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the final cost function defined in costFunctionPtr.
    */
   SLQ(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
-      const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
-      const SLQ_Settings& settings = SLQ_Settings(), const CostFunctionBase* heuristicsFunctionPtr = nullptr);
+      const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, ddp::Settings ddpSettings,
+      const CostFunctionBase* heuristicsFunctionPtr = nullptr);
 
   /**
    * Default destructor.
    */
   ~SLQ() override = default;
-
-  /**
-   * Gets a reference to the Options structure.
-   *
-   * @return a reference to the Options structure.
-   */
-  SLQ_Settings& settings();
 
  protected:
   matrix_t computeHamiltonianHessian(ddp_strategy::type strategy, const ModelDataBase& modelData, const matrix_t& Sm) const override;
@@ -124,8 +116,6 @@ class SLQ final : public GaussNewtonDDP {
   /****************
    *** Variables **
    ****************/
-  SLQ_Settings settings_;
-
   std::vector<std::shared_ptr<ContinuousTimeRiccatiEquations>> riccatiEquationsPtrStock_;
   std::vector<std::unique_ptr<IntegratorBase>> riccatiIntegratorPtrStock_;
 };

@@ -72,9 +72,8 @@ void MRT_BASE::initRollout(const RolloutBase* rolloutPtr) {
 /******************************************************************************************************/
 void MRT_BASE::evaluatePolicy(scalar_t currentTime, const vector_t& currentState, vector_t& mpcState, vector_t& mpcInput, size_t& mode) {
   if (currentTime > currentPrimalSolution_->timeTrajectory_.back()) {
-    std::cerr << "The requested currentTime is greater than the received plan: " + std::to_string(currentTime) + ">" +
-                     std::to_string(currentPrimalSolution_->timeTrajectory_.back())
-              << std::endl;
+    std::cerr << "The requested currentTime is greater than the received plan: " << std::to_string(currentTime) << ">"
+              << std::to_string(currentPrimalSolution_->timeTrajectory_.back()) << "\n";
   }
 
   mpcInput = currentPrimalSolution_->controllerPtr_->computeInput(currentTime, currentState);
@@ -90,9 +89,8 @@ void MRT_BASE::evaluatePolicy(scalar_t currentTime, const vector_t& currentState
 void MRT_BASE::rolloutPolicy(scalar_t currentTime, const vector_t& currentState, const scalar_t& timeStep, vector_t& mpcState,
                              vector_t& mpcInput, size_t& mode) {
   if (currentTime > currentPrimalSolution_->timeTrajectory_.back()) {
-    std::cerr << "The requested currentTime is greater than the received plan: " + std::to_string(currentTime) + ">" +
-                     std::to_string(currentPrimalSolution_->timeTrajectory_.back())
-              << std::endl;
+    std::cerr << "The requested currentTime is greater than the received plan: " << std::to_string(currentTime) << ">"
+              << std::to_string(currentPrimalSolution_->timeTrajectory_.back()) << "\n";
   }
 
   if (!rolloutPtr_) {

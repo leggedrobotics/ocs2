@@ -44,23 +44,24 @@ using namespace ocs2;
 enum { STATE_DIM = 2, INPUT_DIM = 2 };
 
 TEST(circular_kinematics_ilqr_test, circular_kinematics_ilqr_test) {
-  ILQR_Settings ilqrSettings;
-  ilqrSettings.ddpSettings_.displayInfo_ = false;
-  ilqrSettings.ddpSettings_.displayShortSummary_ = true;
-  ilqrSettings.ddpSettings_.checkNumericalStability_ = false;
-  ilqrSettings.ddpSettings_.debugPrintRollout_ = false;
-  ilqrSettings.ddpSettings_.absTolODE_ = 1e-9;
-  ilqrSettings.ddpSettings_.relTolODE_ = 1e-7;
-  ilqrSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
-  ilqrSettings.ddpSettings_.maxNumIterations_ = 150;
-  ilqrSettings.ddpSettings_.minRelCost_ = 1e-3;
-  ilqrSettings.ddpSettings_.constraintTolerance_ = 1e-5;
-  ilqrSettings.ddpSettings_.constraintPenaltyInitialValue_ = 2.0;
-  ilqrSettings.ddpSettings_.constraintPenaltyIncreaseRate_ = 1.5;
-  ilqrSettings.ddpSettings_.strategy_ = ddp_strategy::type::LINE_SEARCH;
-  ilqrSettings.ddpSettings_.lineSearch_.minStepLength_ = 0.01;
-  ilqrSettings.ddpSettings_.lineSearch_.hessianCorrectionStrategy_ = hessian_correction::Strategy::CHOLESKY_MODIFICATION;
-  ilqrSettings.ddpSettings_.lineSearch_.hessianCorrectionMultiple_ = 1e-3;
+  ddp::Settings ddpSettings;
+  ddpSettings.algorithm_ = ddp::algorithm::ILQR;
+  ddpSettings.displayInfo_ = false;
+  ddpSettings.displayShortSummary_ = true;
+  ddpSettings.checkNumericalStability_ = false;
+  ddpSettings.debugPrintRollout_ = false;
+  ddpSettings.absTolODE_ = 1e-9;
+  ddpSettings.relTolODE_ = 1e-7;
+  ddpSettings.maxNumStepsPerSecond_ = 10000;
+  ddpSettings.maxNumIterations_ = 150;
+  ddpSettings.minRelCost_ = 1e-3;
+  ddpSettings.constraintTolerance_ = 1e-5;
+  ddpSettings.constraintPenaltyInitialValue_ = 2.0;
+  ddpSettings.constraintPenaltyIncreaseRate_ = 1.5;
+  ddpSettings.strategy_ = ddp_strategy::type::LINE_SEARCH;
+  ddpSettings.lineSearch_.minStepLength_ = 0.01;
+  ddpSettings.lineSearch_.hessianCorrectionStrategy_ = hessian_correction::Strategy::CHOLESKY_MODIFICATION;
+  ddpSettings.lineSearch_.hessianCorrectionMultiple_ = 1e-3;
 
   Rollout_Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-9;
@@ -103,21 +104,21 @@ TEST(circular_kinematics_ilqr_test, circular_kinematics_ilqr_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // ILQR - single-thread version
-  ilqrSettings.ddpSettings_.nThreads_ = 1;
-  ILQR ilqrST(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ilqrSettings);
+  ddpSettings.nThreads_ = 1;
+  ILQR ilqrST(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ddpSettings);
 
   // ILQR - multi-thread version
-  ilqrSettings.ddpSettings_.nThreads_ = 3;
-  ILQR ilqrMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ilqrSettings);
+  ddpSettings.nThreads_ = 3;
+  ILQR ilqrMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ddpSettings);
 
   // run single core ILQR
-  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_) {
+  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n>>> single-core ILQR" << std::endl;
   }
   ilqrST.run(startTime, initState, finalTime, partitioningTimes);
 
   // run multi-core ILQR
-  if (ilqrSettings.ddpSettings_.displayInfo_ || ilqrSettings.ddpSettings_.displayShortSummary_) {
+  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n>>> multi-core ILQR" << std::endl;
   }
   ilqrMT.run(startTime, initState, finalTime, partitioningTimes);
@@ -143,8 +144,8 @@ TEST(circular_kinematics_ilqr_test, circular_kinematics_ilqr_test) {
       << "MESSAGE: multi-threaded SLQ failed in the Circular_Kinematics's cost test!";
 
   const scalar_t expectedISE1 = 0.0;
-  ASSERT_LT(fabs(performanceIndecesST.stateInputEqConstraintISE - expectedISE1), ilqrSettings.ddpSettings_.constraintTolerance_)
+  ASSERT_LT(fabs(performanceIndecesST.stateInputEqConstraintISE - expectedISE1), ddpSettings.constraintTolerance_)
       << "MESSAGE: single-threaded SLQ failed in the Circular_Kinematics's type-1 constraint ISE test!";
-  ASSERT_LT(fabs(performanceIndecesMT.stateInputEqConstraintISE - expectedISE1), ilqrSettings.ddpSettings_.constraintTolerance_)
+  ASSERT_LT(fabs(performanceIndecesMT.stateInputEqConstraintISE - expectedISE1), ddpSettings.constraintTolerance_)
       << "MESSAGE: multi-threaded SLQ failed in the Circular_Kinematics's type-1 constraint ISE test!";
 }

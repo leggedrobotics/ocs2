@@ -42,12 +42,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr,
                                const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
-                               const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const DDP_Settings& ddpSettings,
-                               const CostFunctionBase* heuristicsFunctionPtr, const char* algorithmName)
-    : Solver_BASE(),
-      ddpSettings_(ddpSettings),
-      threadPool_(ddpSettings.nThreads_, ddpSettings.threadPriority_),
-      algorithmName_(algorithmName) {
+                               const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, ddp::Settings ddpSettings,
+                               const CostFunctionBase* heuristicsFunctionPtr)
+    : Solver_BASE(), ddpSettings_(std::move(ddpSettings)) {
+  // thread-pool
+  threadPoolPtr_.reset(new ThreadPool(ddpSettings_.nThreads_, ddpSettings_.threadPriority_));
+
   // Dynamics, Constraints, derivatives, and cost
   linearQuadraticApproximatorPtrStock_.clear();
   linearQuadraticApproximatorPtrStock_.reserve(ddpSettings_.nThreads_);
@@ -383,34 +383,6 @@ void GaussNewtonDDP::rewindOptimizer(size_t firstIndex) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-const unsigned long long int& GaussNewtonDDP::getRewindCounter() const {
-  return rewindCounter_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-DDP_Settings& GaussNewtonDDP::ddpSettings() {
-  return ddpSettings_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-const DDP_Settings& GaussNewtonDDP::ddpSettings() const {
-  return ddpSettings_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void GaussNewtonDDP::useParallelRiccatiSolverFromInitItr(bool flag) {
-  useParallelRiccatiSolverFromInitItr_ = flag;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 void GaussNewtonDDP::computeNormalizedTime(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
                                            scalar_array_t& normalizedTimeTrajectory, size_array_t& normalizedPostEventIndices) {
   const int N = timeTrajectory.size();
@@ -531,15 +503,15 @@ void GaussNewtonDDP::distributeWork() {
   startingIndicesRiccatiWorker_.back() = 0;
 
   if (ddpSettings_.displayInfo_) {
-    std::cerr << "Initial Active Subsystem: " << initActivePartition_ << std::endl;
-    std::cerr << "Final Active Subsystem:   " << finalActivePartition_ << std::endl;
-    std::cerr << "Backward path work distribution:" << std::endl;
+    std::cerr << "Initial Active Subsystem: " << initActivePartition_ << "\n";
+    std::cerr << "Final Active Subsystem:   " << finalActivePartition_ << "\n";
+    std::cerr << "Backward path work distribution:\n";
     for (size_t i = 0; i < numWorkers; i++) {
       std::cerr << "start: " << startingIndicesRiccatiWorker_[i] << "\t";
       std::cerr << "end: " << endingIndicesRiccatiWorker_[i] << "\t";
-      std::cerr << "num: " << endingIndicesRiccatiWorker_[i] - startingIndicesRiccatiWorker_[i] + 1 << std::endl;
+      std::cerr << "num: " << endingIndicesRiccatiWorker_[i] - startingIndicesRiccatiWorker_[i] + 1 << "\n";
     }
-    std::cerr << std::endl;
+    std::cerr << "\n";
   }
 }
 
@@ -547,7 +519,7 @@ void GaussNewtonDDP::distributeWork() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::runParallel(std::function<void(void)> taskFunction, size_t N) {
-  threadPool_.runParallel([&](int) { taskFunction(); }, N);
+  threadPoolPtr_->runParallel([&](int) { taskFunction(); }, N);
 }
 
 /******************************************************************************************************/
@@ -609,7 +581,7 @@ scalar_t GaussNewtonDDP::rolloutTrajectory(std::vector<LinearController>& contro
   if (ddpSettings_.debugPrintRollout_) {
     std::cerr << "[GaussNewtonDDP::rolloutTrajectory] for t = [" << initTime_ << ", " << finalTime_ << "]\n"
               << "\tcontroller available till t = " << controllerAvailableTill << "\n"
-              << "\twill use controller until t = " << useControllerTill << std::endl;
+              << "\twill use controller until t = " << useControllerTill << "\n";
   }
 
   size_t numSteps = 0;
@@ -624,14 +596,13 @@ scalar_t GaussNewtonDDP::rolloutTrajectory(std::vector<LinearController>& contro
     std::pair<scalar_t, scalar_t> operatingPointsFromTo{controllerRolloutFromTo.second, tf};
 
     if (ddpSettings_.debugPrintRollout_) {
-      std::cerr << "[GaussNewtonDDP::rolloutTrajectory] partition " << i << " for t = [" << t0 << ", " << tf << "]" << std::endl;
+      std::cerr << "[GaussNewtonDDP::rolloutTrajectory] partition " << i << " for t = [" << t0 << ", " << tf << "]\n";
       if (controllerRolloutFromTo.first < controllerRolloutFromTo.second) {
-        std::cerr << "\twill use controller for t = [" << controllerRolloutFromTo.first << ", " << controllerRolloutFromTo.second << "]"
-                  << std::endl;
+        std::cerr << "\twill use controller for t = [" << controllerRolloutFromTo.first << ", " << controllerRolloutFromTo.second << "]\n";
       }
       if (operatingPointsFromTo.first < operatingPointsFromTo.second) {
-        std::cerr << "\twill use operating points for t = [" << operatingPointsFromTo.first << ", " << operatingPointsFromTo.second << "]"
-                  << std::endl;
+        std::cerr << "\twill use operating points for t = [" << operatingPointsFromTo.first << ", " << operatingPointsFromTo.second
+                  << "]\n";
       }
     }
 
@@ -698,9 +669,9 @@ scalar_t GaussNewtonDDP::rolloutTrajectory(std::vector<LinearController>& contro
   // debug print
   if (ddpSettings_.debugPrintRollout_) {
     for (size_t i = 0; i < numPartitions_; i++) {
-      std::cerr << std::endl << "++++++++++++++++++++++++++++++" << std::endl;
+      std::cerr << "\n++++++++++++++++++++++++++++++\n";
       std::cerr << "Partition: " << i;
-      std::cerr << std::endl << "++++++++++++++++++++++++++++++" << std::endl;
+      std::cerr << "\n++++++++++++++++++++++++++++++\n";
       RolloutBase::display(timeTrajectoriesStock[i], postEventIndicesStock[i], stateTrajectoriesStock[i], &inputTrajectoriesStock[i]);
     }
   }
@@ -713,8 +684,8 @@ scalar_t GaussNewtonDDP::rolloutTrajectory(std::vector<LinearController>& contro
 /******************************************************************************************************/
 void GaussNewtonDDP::printRolloutInfo() const {
   std::cerr << performanceIndex_ << '\n';
-  std::cerr << "forward pass average time step:  " << avgTimeStepFP_ * 1e+3 << " [ms]." << std::endl;
-  std::cerr << "backward pass average time step: " << avgTimeStepBP_ * 1e+3 << " [ms]." << std::endl;
+  std::cerr << "forward pass average time step:  " << avgTimeStepFP_ * 1e+3 << " [ms].\n";
+  std::cerr << "backward pass average time step: " << avgTimeStepBP_ * 1e+3 << " [ms].\n";
 }
 
 /******************************************************************************************************/
@@ -952,7 +923,7 @@ void GaussNewtonDDP::lineSearch(LineSearchModule& lineSearchModule) {
 
   // display
   if (ddpSettings_.displayInfo_) {
-    std::cerr << "The chosen step length is: " + std::to_string(lineSearchModule.stepLengthStar) << std::endl;
+    std::cerr << "The chosen step length is: " + std::to_string(lineSearchModule.stepLengthStar) << "\n";
   }
 }
 
@@ -1132,7 +1103,7 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const matrix_t& SmF
             }
             std::cerr << "Sm[" << SsTimeTrajectoryStock_[i][kp] << "]:\n" << SmTrajectoryStock_[i][kp].norm() << "\n";
             std::cerr << "Sv[" << SsTimeTrajectoryStock_[i][kp] << "]:\t" << SvTrajectoryStock_[i][kp].transpose().norm() << "\n";
-            std::cerr << "s[" << SsTimeTrajectoryStock_[i][kp] << "]:\t" << sTrajectoryStock_[i][kp] << std::endl;
+            std::cerr << "s[" << SsTimeTrajectoryStock_[i][kp] << "]:\t" << sTrajectoryStock_[i][kp] << "\n";
           }
           throw;
         }
@@ -1427,7 +1398,7 @@ void GaussNewtonDDP::computeProjections(const matrix_t& Hm, const matrix_t& Dm, 
     matrix_t HmProjected = constraintNullProjector.transpose() * Hm * constraintNullProjector;
     const int nullSpaceDim = Hm.rows() - Dm.rows();
     if (!HmProjected.isApprox(matrix_t::Identity(nullSpaceDim, nullSpaceDim))) {
-      std::cerr << "HmProjected:\n" << HmProjected << std::endl;
+      std::cerr << "HmProjected:\n" << HmProjected << "\n";
       throw std::runtime_error("HmProjected should be identity!");
     }
   }
@@ -1891,10 +1862,9 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
                              const std::vector<ControllerBase*>& controllersPtrStock) {
   if (ddpSettings_.displayInfo_) {
-    std::cerr << std::endl;
-    std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-    std::cerr << "+++++++++++++ " + algorithmName_ + " solver is initialized ++++++++++++++" << std::endl;
-    std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+    std::cerr << "\n+++++++++++++ " + ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver is initialized ++++++++++++++";
+    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
   }
 
   // infeasible learning rate adjustment scheme
@@ -1907,7 +1877,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   }
 
   if (!initState.allFinite()) {
-    throw std::runtime_error("DDP: initial state is not finite (time: " + std::to_string(initTime) + " [sec]).");
+    throw std::runtime_error("DDP: Initial state is not finite (time: " + std::to_string(initTime) + " [sec]).");
   }
 
   // update numPartitions_ if it has been changed
@@ -1949,10 +1919,10 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
   // display
   if (ddpSettings_.displayInfo_) {
-    std::cerr << std::endl << "Rewind Counter: " << rewindCounter_ << std::endl;
-    std::cerr << algorithmName_ + " solver starts from initial time " << initTime << " to final time " << finalTime << ".";
-    std::cerr << this->getModeSchedule();
-    std::cerr << std::endl;
+    std::cerr << "\nRewind Counter: " << rewindCounter_ << "\n";
+    std::cerr << ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver starts from initial time " << initTime << " to final time "
+              << finalTime << ".\n";
+    std::cerr << this->getModeSchedule() << "\n";
   }
 
   iteration_ = 0;
@@ -1970,7 +1940,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
   // display
   if (ddpSettings_.displayInfo_) {
-    std::cerr << "\n#### Iteration " << iteration_ << " (Dynamics might have been violated)" << std::endl;
+    std::cerr << "\n#### Iteration " << iteration_ << " (Dynamics might have been violated)\n";
   }
 
   // distribution of the sequential tasks (e.g. Riccati solver) in between threads
@@ -1996,11 +1966,11 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
     // display the iteration's input update norm (before caching the old nominals)
     if (ddpSettings_.displayInfo_) {
-      std::cerr << "\n#### Iteration " << iteration_ << std::endl;
+      std::cerr << "\n#### Iteration " << iteration_ << "\n";
 
       scalar_t maxDeltaUffNorm, maxDeltaUeeNorm;
       calculateControllerUpdateMaxNorm(maxDeltaUffNorm, maxDeltaUeeNorm);
-      std::cerr << "max feedforward norm: " << maxDeltaUffNorm << std::endl;
+      std::cerr << "max feedforward norm: " << maxDeltaUffNorm << "\n";
     }
 
     // cache the nominal trajectories before the new rollout (time, state, input, ...)
@@ -2036,11 +2006,11 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
   // display the final iteration's input update norm (before caching the old nominals)
   if (ddpSettings_.displayInfo_) {
-    std::cerr << "\n#### Final rollout" << std::endl;
+    std::cerr << "\n#### Final rollout\n";
 
     scalar_t maxDeltaUffNorm, maxDeltaUeeNorm;
     calculateControllerUpdateMaxNorm(maxDeltaUffNorm, maxDeltaUeeNorm);
-    std::cerr << "max feedforward norm: " << maxDeltaUffNorm << std::endl;
+    std::cerr << "max feedforward norm: " << maxDeltaUffNorm << "\n";
   }
 
   // cache the nominal trajectories before the new rollout (time, state, input, ...)
@@ -2059,28 +2029,28 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
   // display
   if (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_) {
-    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-    std::cerr << "++++++++++++++ " + algorithmName_ + " solver has terminated +++++++++++++" << std::endl;
-    std::cerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-    std::cerr << "Time Period:                [" << initTime_ << " ," << finalTime_ << "]" << std::endl;
-    std::cerr << "Number of Iterations:       " << iteration_ + 1 << " out of " << ddpSettings_.maxNumIterations_ << std::endl;
+    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+    std::cerr << "\n++++++++++++++ " + ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver has terminated +++++++++++++";
+    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+    std::cerr << "Time Period:                [" << initTime_ << " ," << finalTime_ << "]\n";
+    std::cerr << "Number of Iterations:       " << iteration_ + 1 << " out of " << ddpSettings_.maxNumIterations_ << "\n";
 
     printRolloutInfo();
 
     if (isOptimizationConverged) {
       if (isStepLengthStarZero) {
-        std::cerr << algorithmName_ + " successfully terminates as step length reduced to zero." << std::endl;
+        std::cerr << ddp::toAlgorithmName(ddpSettings_.algorithm_) + " successfully terminates as step length reduced to zero.\n";
       }
       if (isCostFunctionConverged) {
-        std::cerr << algorithmName_ + " successfully terminates as cost relative change (relCost=" << relCost
-                  << ") reached to the minimum value." << std::endl;
+        std::cerr << ddp::toAlgorithmName(ddpSettings_.algorithm_) + " successfully terminates as cost relative change (relCost=" << relCost
+                  << ") reached to the minimum value.\n";
       }
       if (isConstraintsSatisfied) {
         std::cerr << "State-input equality constraint absolute ISE (absConstraint1ISE=" << performanceIndex_.stateInputEqConstraintISE
-                  << ") reached to its minimum value." << std::endl;
+                  << ") reached to its minimum value.\n";
       }
     } else {
-      std::cerr << "Maximum number of iterations has reached." << std::endl;
+      std::cerr << "Maximum number of iterations has reached.\n";
     }
     std::cerr << std::endl;
   }

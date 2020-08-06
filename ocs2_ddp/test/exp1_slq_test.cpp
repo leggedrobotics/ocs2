@@ -44,21 +44,22 @@ using namespace ocs2;
 enum { STATE_DIM = 2, INPUT_DIM = 1 };
 
 TEST(exp1_slq_test, exp1_slq_test) {
-  SLQ_Settings slqSettings;
-  slqSettings.useNominalTimeForBackwardPass_ = true;
-  slqSettings.ddpSettings_.preComputeRiccatiTerms_ = false;
-  slqSettings.ddpSettings_.displayInfo_ = true;
-  slqSettings.ddpSettings_.displayShortSummary_ = true;
-  slqSettings.ddpSettings_.maxNumIterations_ = 30;
-  slqSettings.ddpSettings_.maxNumIterations_ = 30;
-  slqSettings.ddpSettings_.checkNumericalStability_ = true;
-  slqSettings.ddpSettings_.absTolODE_ = 1e-10;
-  slqSettings.ddpSettings_.relTolODE_ = 1e-7;
-  slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
-  slqSettings.ddpSettings_.useFeedbackPolicy_ = false;
-  slqSettings.ddpSettings_.debugPrintRollout_ = false;
-  slqSettings.ddpSettings_.strategy_ = ddp_strategy::type::LINE_SEARCH;
-  slqSettings.ddpSettings_.lineSearch_.minStepLength_ = 0.0001;
+  ddp::Settings ddpSettings;
+  ddpSettings.algorithm_ = ddp::algorithm::SLQ;
+  ddpSettings.preComputeRiccatiTerms_ = false;
+  ddpSettings.displayInfo_ = true;
+  ddpSettings.displayShortSummary_ = true;
+  ddpSettings.maxNumIterations_ = 30;
+  ddpSettings.maxNumIterations_ = 30;
+  ddpSettings.checkNumericalStability_ = true;
+  ddpSettings.absTolODE_ = 1e-10;
+  ddpSettings.relTolODE_ = 1e-7;
+  ddpSettings.maxNumStepsPerSecond_ = 10000;
+  ddpSettings.useNominalTimeForBackwardPass_ = true;
+  ddpSettings.useFeedbackPolicy_ = false;
+  ddpSettings.debugPrintRollout_ = false;
+  ddpSettings.strategy_ = ddp_strategy::type::LINE_SEARCH;
+  ddpSettings.lineSearch_.minStepLength_ = 0.0001;
 
   Rollout_Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;
@@ -105,23 +106,23 @@ TEST(exp1_slq_test, exp1_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // SLQ - single core version
-  slqSettings.ddpSettings_.nThreads_ = 1;
-  SLQ slqST(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
+  ddpSettings.nThreads_ = 1;
+  SLQ slqST(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ddpSettings);
   slqST.setModeScheduleManager(modeScheduleManagerPtr);
 
-  slqSettings.ddpSettings_.nThreads_ = 3;
+  ddpSettings.nThreads_ = 3;
   // SLQ - multi-threaded version
-  SLQ slqMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
+  SLQ slqMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ddpSettings);
   slqMT.setModeScheduleManager(modeScheduleManagerPtr);
 
   // run single-threaded SLQ
-  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {
+  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n>>> single-core SLQ" << std::endl;
   }
   slqST.run(startTime, initState, finalTime, partitioningTimes);
 
   // run multi-threaded SLQ
-  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {
+  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n>>> multi-core SLQ" << std::endl;
   }
   slqMT.run(startTime, initState, finalTime, partitioningTimes);
@@ -141,25 +142,25 @@ TEST(exp1_slq_test, exp1_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   const scalar_t expectedCost = 5.4399;
-  ASSERT_LT(fabs(performanceIndecesST.totalCost - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_)
+  ASSERT_LT(fabs(performanceIndecesST.totalCost - expectedCost), 10 * ddpSettings.minRelCost_)
       << "MESSAGE: single-threaded SLQ failed in the EXP1's cost test!";
-  ASSERT_LT(fabs(performanceIndecesMT.totalCost - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_)
+  ASSERT_LT(fabs(performanceIndecesMT.totalCost - expectedCost), 10 * ddpSettings.minRelCost_)
       << "MESSAGE: multi-threaded SLQ failed in the EXP1's cost test!";
 
   const scalar_t expectedISE1 = 0.0;
-  ASSERT_LT(fabs(performanceIndecesST.stateInputEqConstraintISE - expectedISE1), 10 * slqSettings.ddpSettings_.constraintTolerance_)
+  ASSERT_LT(fabs(performanceIndecesST.stateInputEqConstraintISE - expectedISE1), 10 * ddpSettings.constraintTolerance_)
       << "MESSAGE: single-threaded SLQ failed in the EXP1's type-1 constraint ISE test!";
-  ASSERT_LT(fabs(performanceIndecesMT.stateInputEqConstraintISE - expectedISE1), 10 * slqSettings.ddpSettings_.constraintTolerance_)
+  ASSERT_LT(fabs(performanceIndecesMT.stateInputEqConstraintISE - expectedISE1), 10 * ddpSettings.constraintTolerance_)
       << "MESSAGE: multi-threaded SLQ failed in the EXP1's type-1 constraint ISE test!";
 
   const scalar_t expectedISE2 = 0.0;
-  ASSERT_LT(fabs(performanceIndecesST.stateEqConstraintISE - expectedISE2), 10 * slqSettings.ddpSettings_.constraintTolerance_)
+  ASSERT_LT(fabs(performanceIndecesST.stateEqConstraintISE - expectedISE2), 10 * ddpSettings.constraintTolerance_)
       << "MESSAGE: single-threaded SLQ failed in the EXP1's type-2 constraint ISE test!";
-  ASSERT_LT(fabs(performanceIndecesMT.stateEqConstraintISE - expectedISE2), 10 * slqSettings.ddpSettings_.constraintTolerance_)
+  ASSERT_LT(fabs(performanceIndecesMT.stateEqConstraintISE - expectedISE2), 10 * ddpSettings.constraintTolerance_)
       << "MESSAGE: multi-threaded SLQ failed in the EXP1's type-2 constraint ISE test!";
 
   scalar_t ctrlFinalTime;
-  if (slqSettings.ddpSettings_.useFeedbackPolicy_) {
+  if (ddpSettings.useFeedbackPolicy_) {
     ctrlFinalTime = dynamic_cast<LinearController*>(solutionST.controllerPtr_.get())->timeStamp_.back();
   } else {
     ctrlFinalTime = dynamic_cast<FeedforwardController*>(solutionST.controllerPtr_.get())->timeStamp_.back();

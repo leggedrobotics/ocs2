@@ -69,10 +69,10 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
 
   /*
-   * SLQ-MPC settings
+   * DDP-MPC settings
    */
-  slqSettings_.loadSettings(taskFile);
-  mpcSettings_.loadSettings(taskFile);
+  ddpSettings_ = ddp::loadSettings(taskFile);
+  mpcSettings_ = mpc::loadSettings(taskFile);
 
   /*
    * Dynamics
@@ -88,7 +88,7 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
    * Rollout
    */
   Rollout_Settings rolloutSettings;
-  rolloutSettings.loadSettings(taskFile, "slq.rollout");
+  rolloutSettings.loadSettings(taskFile, "rollout");
   ddpBallbotRolloutPtr_.reset(new TimeTriggeredRollout(*ballbotSystemDynamicsPtr_, rolloutSettings));
 
   /*
@@ -123,9 +123,9 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<MPC_SLQ> BallbotInterface::getMpc() {
-  return std::unique_ptr<MPC_SLQ>(new MPC_SLQ(ddpBallbotRolloutPtr_.get(), ballbotSystemDynamicsPtr_.get(), ballbotConstraintPtr_.get(),
-                                              ballbotCostPtr_.get(), ballbotOperatingPointPtr_.get(), slqSettings_, mpcSettings_));
+std::unique_ptr<MPC_DDP> BallbotInterface::getMpc() {
+  return std::unique_ptr<MPC_DDP>(new MPC_DDP(ddpBallbotRolloutPtr_.get(), ballbotSystemDynamicsPtr_.get(), ballbotConstraintPtr_.get(),
+                                              ballbotCostPtr_.get(), ballbotOperatingPointPtr_.get(), ddpSettings_, mpcSettings_));
 }
 
 }  // namespace ballbot

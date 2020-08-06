@@ -48,9 +48,9 @@ include_directories(
 
 add_library(${PROJECT_NAME}
   src/MPC_BASE.cpp
-  src/MPC_ILQR.cpp
+  src/MPC_DDP.cpp
+  src/MPC_Settings.cpp
   # src/MPC_OCS2.cpp
-  src/MPC_SLQ.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}

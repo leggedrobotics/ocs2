@@ -45,21 +45,22 @@ using namespace ocs2;
 enum { STATE_DIM = 2, INPUT_DIM = 1 };
 
 TEST(exp0_slq_test, exp0_slq_test) {
-  SLQ_Settings slqSettings;
-  slqSettings.useNominalTimeForBackwardPass_ = false;
-  slqSettings.ddpSettings_.preComputeRiccatiTerms_ = true;
-  slqSettings.ddpSettings_.displayInfo_ = true;
-  slqSettings.ddpSettings_.displayShortSummary_ = true;
-  slqSettings.ddpSettings_.absTolODE_ = 1e-10;
-  slqSettings.ddpSettings_.relTolODE_ = 1e-7;
-  slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
-  slqSettings.ddpSettings_.maxNumIterations_ = 30;
-  slqSettings.ddpSettings_.minRelCost_ = 5e-4;
-  slqSettings.ddpSettings_.checkNumericalStability_ = true;
-  slqSettings.ddpSettings_.useFeedbackPolicy_ = true;
-  slqSettings.ddpSettings_.debugPrintRollout_ = false;
-  slqSettings.ddpSettings_.strategy_ = ddp_strategy::type::LINE_SEARCH;
-  slqSettings.ddpSettings_.lineSearch_.minStepLength_ = 0.0001;
+  ddp::Settings ddpSettings;
+  ddpSettings.algorithm_ = ddp::algorithm::SLQ;
+  ddpSettings.preComputeRiccatiTerms_ = true;
+  ddpSettings.displayInfo_ = true;
+  ddpSettings.displayShortSummary_ = true;
+  ddpSettings.absTolODE_ = 1e-10;
+  ddpSettings.relTolODE_ = 1e-7;
+  ddpSettings.maxNumStepsPerSecond_ = 10000;
+  ddpSettings.maxNumIterations_ = 30;
+  ddpSettings.minRelCost_ = 5e-4;
+  ddpSettings.checkNumericalStability_ = true;
+  ddpSettings.useNominalTimeForBackwardPass_ = false;
+  ddpSettings.useFeedbackPolicy_ = true;
+  ddpSettings.debugPrintRollout_ = false;
+  ddpSettings.strategy_ = ddp_strategy::type::LINE_SEARCH;
+  ddpSettings.lineSearch_.minStepLength_ = 0.0001;
 
   Rollout_Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;
@@ -105,23 +106,23 @@ TEST(exp0_slq_test, exp0_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // SLQ - single-thread version
-  slqSettings.ddpSettings_.nThreads_ = 1;
-  SLQ slqST(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
+  ddpSettings.nThreads_ = 1;
+  SLQ slqST(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ddpSettings);
   slqST.setModeScheduleManager(modeScheduleManagerPtr);
 
-  slqSettings.ddpSettings_.nThreads_ = 3;
+  ddpSettings.nThreads_ = 3;
   // SLQ - multi-thread version
-  SLQ slqMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
+  SLQ slqMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ddpSettings);
   slqMT.setModeScheduleManager(modeScheduleManagerPtr);
 
   // run single core SLQ
-  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {
+  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n>>> single-core SLQ" << std::endl;
   }
   slqST.run(startTime, initState, finalTime, partitioningTimes);
 
   // run multi-core SLQ
-  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {
+  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n>>> multi-core SLQ" << std::endl;
   }
   slqMT.run(startTime, initState, finalTime, partitioningTimes);
@@ -141,25 +142,25 @@ TEST(exp0_slq_test, exp0_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   const scalar_t expectedCost = 9.766;
-  ASSERT_LT(fabs(performanceIndecesST.totalCost - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_)
+  ASSERT_LT(fabs(performanceIndecesST.totalCost - expectedCost), 10 * ddpSettings.minRelCost_)
       << "MESSAGE: single-threaded SLQ failed in the EXP1's cost test!";
-  ASSERT_LT(fabs(performanceIndecesMT.totalCost - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_)
+  ASSERT_LT(fabs(performanceIndecesMT.totalCost - expectedCost), 10 * ddpSettings.minRelCost_)
       << "MESSAGE: multi-threaded SLQ failed in the EXP1's cost test!";
 
   const scalar_t expectedISE1 = 0.0;
-  ASSERT_LT(fabs(performanceIndecesST.stateInputEqConstraintISE - expectedISE1), 10 * slqSettings.ddpSettings_.constraintTolerance_)
+  ASSERT_LT(fabs(performanceIndecesST.stateInputEqConstraintISE - expectedISE1), 10 * ddpSettings.constraintTolerance_)
       << "MESSAGE: single-threaded SLQ failed in the EXP1's type-1 constraint ISE test!";
-  ASSERT_LT(fabs(performanceIndecesMT.stateInputEqConstraintISE - expectedISE1), 10 * slqSettings.ddpSettings_.constraintTolerance_)
+  ASSERT_LT(fabs(performanceIndecesMT.stateInputEqConstraintISE - expectedISE1), 10 * ddpSettings.constraintTolerance_)
       << "MESSAGE: multi-threaded SLQ failed in the EXP1's type-1 constraint ISE test!";
 
   const scalar_t expectedISE2 = 0.0;
-  ASSERT_LT(fabs(performanceIndecesST.stateEqConstraintISE - expectedISE2), 10 * slqSettings.ddpSettings_.constraintTolerance_)
+  ASSERT_LT(fabs(performanceIndecesST.stateEqConstraintISE - expectedISE2), 10 * ddpSettings.constraintTolerance_)
       << "MESSAGE: single-threaded SLQ failed in the EXP1's type-2 constraint ISE test!";
-  ASSERT_LT(fabs(performanceIndecesMT.stateEqConstraintISE - expectedISE2), 10 * slqSettings.ddpSettings_.constraintTolerance_)
+  ASSERT_LT(fabs(performanceIndecesMT.stateEqConstraintISE - expectedISE2), 10 * ddpSettings.constraintTolerance_)
       << "MESSAGE: multi-threaded SLQ failed in the EXP1's type-2 constraint ISE test!";
 
   scalar_t ctrlFinalTime;
-  if (slqSettings.ddpSettings_.useFeedbackPolicy_) {
+  if (ddpSettings.useFeedbackPolicy_) {
     ctrlFinalTime = dynamic_cast<LinearController*>(solutionST.controllerPtr_.get())->timeStamp_.back();
   } else {
     ctrlFinalTime = dynamic_cast<FeedforwardController*>(solutionST.controllerPtr_.get())->timeStamp_.back();
@@ -169,22 +170,23 @@ TEST(exp0_slq_test, exp0_slq_test) {
 }
 
 TEST(exp0_slq_test, caching_test) {
-  SLQ_Settings slqSettings;
-  slqSettings.useNominalTimeForBackwardPass_ = false;
-  slqSettings.ddpSettings_.displayInfo_ = false;
-  slqSettings.ddpSettings_.displayShortSummary_ = true;
-  slqSettings.ddpSettings_.absTolODE_ = 1e-10;
-  slqSettings.ddpSettings_.relTolODE_ = 1e-7;
-  slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
-  slqSettings.ddpSettings_.maxNumIterations_ = 1;
-  slqSettings.ddpSettings_.minRelCost_ = 5e-4;
-  slqSettings.ddpSettings_.checkNumericalStability_ = true;
-  slqSettings.ddpSettings_.useFeedbackPolicy_ = true;
-  slqSettings.ddpSettings_.debugPrintRollout_ = false;
-  slqSettings.ddpSettings_.debugCaching_ = true;  // for this test, debugCaching_ should be active
-  slqSettings.ddpSettings_.nThreads_ = 1;         // single threaded
-  slqSettings.ddpSettings_.strategy_ = ddp_strategy::type::LINE_SEARCH;
-  slqSettings.ddpSettings_.lineSearch_.minStepLength_ = 0.0001;
+  ddp::Settings ddpSettings;
+  ddpSettings.algorithm_ = ddp::algorithm::SLQ;
+  ddpSettings.displayInfo_ = false;
+  ddpSettings.displayShortSummary_ = true;
+  ddpSettings.absTolODE_ = 1e-10;
+  ddpSettings.relTolODE_ = 1e-7;
+  ddpSettings.maxNumStepsPerSecond_ = 10000;
+  ddpSettings.maxNumIterations_ = 1;
+  ddpSettings.minRelCost_ = 5e-4;
+  ddpSettings.checkNumericalStability_ = true;
+  ddpSettings.useNominalTimeForBackwardPass_ = false;
+  ddpSettings.useFeedbackPolicy_ = true;
+  ddpSettings.debugPrintRollout_ = false;
+  ddpSettings.debugCaching_ = true;  // for this test, debugCaching_ should be active
+  ddpSettings.nThreads_ = 1;         // single threaded
+  ddpSettings.strategy_ = ddp_strategy::type::LINE_SEARCH;
+  ddpSettings.lineSearch_.minStepLength_ = 0.0001;
 
   Rollout_Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;
@@ -228,7 +230,7 @@ TEST(exp0_slq_test, caching_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // SLQ - single-thread version
-  SLQ slqST(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
+  SLQ slqST(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ddpSettings);
   slqST.setModeScheduleManager(modeScheduleManagerPtr);
 
   /******************************************************************************************************/

@@ -104,10 +104,10 @@ void MRT_ROS_Dummy_Loop::run(const SystemObservation& initObservation, const Cos
           mrt_.spinMRT();
         }
       }
-      std::cout << "<<< Message received at " << time << std::endl;
+      std::cout << "<<< Message received at " << time << "\n";
     }
 
-    std::cout << "### Current time " << time << std::endl;
+    std::cout << "### Current time " << time << "\n";
 
     // integrate nominal dynamics if available, otherwise fake simulation
     vector_t stateTemp = observation_.state();
@@ -130,7 +130,7 @@ void MRT_ROS_Dummy_Loop::run(const SystemObservation& initObservation, const Cos
       mrt_.setCurrentObservation(observation_);
     } else if (loopCounter % frequencyRatio == 0) {
       mrt_.setCurrentObservation(observation_);
-      std::cout << ">>> Observation is published at " << time << std::endl;
+      std::cout << ">>> Observation is published at " << time << "\n";
     }
 
     // Update observers

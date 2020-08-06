@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ddp/StrategySettings.h"
 
-#include <string>
+#include <algorithm>
 #include <unordered_map>
 
 #include <ocs2_core/misc/LoadData.h>
@@ -47,9 +47,10 @@ std::string toString(type strategy) {
   return strategyMap.at(strategy);
 }
 
-type fromString(const std::string& name) {
+type fromString(std::string name) {
   static const std::unordered_map<std::string, type> strategyMap{{"LINE_SEARCH", type::LINE_SEARCH},
                                                                  {"LEVENBERG_MARQUARDT", type::LEVENBERG_MARQUARDT}};
+  std::transform(name.begin(), name.end(), name.begin(), ::toupper);
   return strategyMap.at(name);
 }
 

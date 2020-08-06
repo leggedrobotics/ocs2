@@ -44,26 +44,27 @@ using namespace ocs2;
 enum { STATE_DIM = 2, INPUT_DIM = 2 };
 
 TEST(circular_kinematics_slq_test, circular_kinematics_slq_test) {
-  SLQ_Settings slqSettings;
-  slqSettings.useNominalTimeForBackwardPass_ = true;
-  slqSettings.ddpSettings_.preComputeRiccatiTerms_ = false;
-  slqSettings.RiccatiIntegratorType_ = IntegratorType::ODE45;
-  slqSettings.ddpSettings_.displayInfo_ = false;
-  slqSettings.ddpSettings_.displayShortSummary_ = true;
-  slqSettings.ddpSettings_.checkNumericalStability_ = false;
-  slqSettings.ddpSettings_.debugPrintRollout_ = false;
-  slqSettings.ddpSettings_.absTolODE_ = 1e-9;
-  slqSettings.ddpSettings_.relTolODE_ = 1e-7;
-  slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
-  slqSettings.ddpSettings_.maxNumIterations_ = 150;
-  slqSettings.ddpSettings_.minRelCost_ = 1e-3;
-  slqSettings.ddpSettings_.constraintTolerance_ = 1e-5;
-  slqSettings.ddpSettings_.constraintPenaltyInitialValue_ = 2.0;
-  slqSettings.ddpSettings_.constraintPenaltyIncreaseRate_ = 1.5;
-  slqSettings.ddpSettings_.strategy_ = ddp_strategy::type::LINE_SEARCH;
-  slqSettings.ddpSettings_.lineSearch_.minStepLength_ = 0.01;
-  slqSettings.ddpSettings_.lineSearch_.hessianCorrectionStrategy_ = hessian_correction::Strategy::CHOLESKY_MODIFICATION;
-  slqSettings.ddpSettings_.lineSearch_.hessianCorrectionMultiple_ = 1e-3;
+  ddp::Settings ddpSettings;
+  ddpSettings.algorithm_ = ddp::algorithm::SLQ;
+  ddpSettings.displayInfo_ = false;
+  ddpSettings.displayShortSummary_ = true;
+  ddpSettings.checkNumericalStability_ = false;
+  ddpSettings.debugPrintRollout_ = false;
+  ddpSettings.absTolODE_ = 1e-9;
+  ddpSettings.relTolODE_ = 1e-7;
+  ddpSettings.maxNumStepsPerSecond_ = 10000;
+  ddpSettings.backwardPassIntegratorType_ = IntegratorType::ODE45;
+  ddpSettings.maxNumIterations_ = 150;
+  ddpSettings.minRelCost_ = 1e-3;
+  ddpSettings.constraintTolerance_ = 1e-5;
+  ddpSettings.constraintPenaltyInitialValue_ = 2.0;
+  ddpSettings.constraintPenaltyIncreaseRate_ = 1.5;
+  ddpSettings.preComputeRiccatiTerms_ = false;
+  ddpSettings.useNominalTimeForBackwardPass_ = true;
+  ddpSettings.strategy_ = ddp_strategy::type::LINE_SEARCH;
+  ddpSettings.lineSearch_.minStepLength_ = 0.01;
+  ddpSettings.lineSearch_.hessianCorrectionStrategy_ = hessian_correction::Strategy::CHOLESKY_MODIFICATION;
+  ddpSettings.lineSearch_.hessianCorrectionMultiple_ = 1e-3;
 
   Rollout_Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-9;
@@ -106,22 +107,22 @@ TEST(circular_kinematics_slq_test, circular_kinematics_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // SLQ - single-thread version
-  slqSettings.ddpSettings_.nThreads_ = 1;
-  SLQ slqST(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
+  ddpSettings.nThreads_ = 1;
+  SLQ slqST(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ddpSettings);
 
   // SLQ - multi-thread version
-  slqSettings.ddpSettings_.nThreads_ = 3;
-  SLQ slqMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
+  ddpSettings.nThreads_ = 3;
+  SLQ slqMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ddpSettings);
   slqMT.useParallelRiccatiSolverFromInitItr(false);
 
   // run single core SLQ
-  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {
+  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n>>> single-core SLQ" << std::endl;
   }
   slqST.run(startTime, initState, finalTime, partitioningTimes);
 
   // run multi-core SLQ
-  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {
+  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n>>> multi-core SLQ" << std::endl;
   }
   slqMT.run(startTime, initState, finalTime, partitioningTimes);
@@ -147,8 +148,8 @@ TEST(circular_kinematics_slq_test, circular_kinematics_slq_test) {
       << "MESSAGE: multi-threaded SLQ failed in the Circular_Kinematics's cost test!";
 
   const scalar_t expectedISE1 = 0.0;
-  ASSERT_LT(fabs(performanceIndecesST.stateInputEqConstraintISE - expectedISE1), slqSettings.ddpSettings_.constraintTolerance_)
+  ASSERT_LT(fabs(performanceIndecesST.stateInputEqConstraintISE - expectedISE1), ddpSettings.constraintTolerance_)
       << "MESSAGE: single-threaded SLQ failed in the Circular_Kinematics's type-1 constraint ISE test!";
-  ASSERT_LT(fabs(performanceIndecesMT.stateInputEqConstraintISE - expectedISE1), slqSettings.ddpSettings_.constraintTolerance_)
+  ASSERT_LT(fabs(performanceIndecesMT.stateInputEqConstraintISE - expectedISE1), ddpSettings.constraintTolerance_)
       << "MESSAGE: multi-threaded SLQ failed in the Circular_Kinematics's type-1 constraint ISE test!";
 }

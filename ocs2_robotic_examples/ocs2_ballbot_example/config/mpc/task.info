@@ -12,54 +12,53 @@ templateSwitchingTimes
 {
 }
 
-; SLQ settings
-slq
+; DDP settings
+ddp
 {
-  useNominalTimeForBackwardPass   false
-  RiccatiIntegratorType           ODE45  ; ODE45, ADAMS_BASHFORTH, BULIRSCH_STOER, ADAMS_BASHFORTH_MOULTON
+  algorithm                     SLQ
+   
+  nThreads                      1
 
-  ddp
+  maxNumIterations              10
+  minRelCost                    0.1
+  constraintTolerance           1e-3
+
+  displayInfo                   false
+  displayShortSummary           true
+  checkNumericalStability       false
+
+  AbsTolODE                     1e-5
+  RelTolODE                     1e-3
+  minTimeStep                   1e-3
+  maxNumStepsPerSecond          100000
+  backwardPassIntegratorType    ODE45
+
+  inequalityConstraintMu        100.0
+  inequalityConstraintDelta     1.1
+
+  preComputeRiccatiTerms        true
+  useNominalTimeForBackwardPass false
+
+  useFeedbackPolicy             false
+  
+  strategy                      LINE_SEARCH
+  lineSearch
   {
-    nThreads                      1
-
-    maxNumIterations              10
-    minRelCost                    0.1
-    constraintTolerance           1e-3
-
-    displayInfo                   false
-    displayShortSummary           true
-    checkNumericalStability       false
-
-    AbsTolODE                     1e-5
-    RelTolODE                     1e-3
-    minTimeStep                   1e-3
-    maxNumStepsPerSecond          100000
-
-    inequalityConstraintMu        100.0
-    inequalityConstraintDelta     1.1
-
-    preComputeRiccatiTerms        true
-
-    useFeedbackPolicy             false
-
-    strategy                      LINE_SEARCH
-    lineSearch
-    {
-      minStepLength                 1.0
-      maxStepLength                 1.0
-      hessianCorrectionStrategy     DIAGONAL_SHIFT
-      hessianCorrectionMultiple     1e-3
-    }
+    minStepLength                 1.0
+    maxStepLength                 1.0
+    hessianCorrectionStrategy     DIAGONAL_SHIFT
+    hessianCorrectionMultiple     1e-3
   }
+}
 
-  rollout
-  {
-    AbsTolODE                     1e-5    ;1e-6
-    RelTolODE                     1e-3    ;1e-4
-    minTimeStep                   1e-3
-    maxNumStepsPerSecond          100000
-    checkNumericalStability       false
-  }
+; Rollout settings
+rollout
+{
+  AbsTolODE                     1e-5    ;1e-6
+  RelTolODE                     1e-3    ;1e-4
+  minTimeStep                   1e-3
+  maxNumStepsPerSecond          100000
+  checkNumericalStability       false
 }
 
 ; MPC settings

@@ -6,7 +6,7 @@
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
-#include <ocs2_mpc/MPC_SLQ.h>
+#include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_python_interface/PythonInterface.h>
@@ -42,11 +42,12 @@ class DummyInterface final : public RobotInterface {
   }
   ~DummyInterface() override = default;
 
-  std::unique_ptr<ocs2::MPC_SLQ> getMpc() {
-    SLQ_Settings slqSettings;
-    MPC_Settings mpcSettings;
-    return std::unique_ptr<MPC_SLQ>(new MPC_SLQ(rolloutPtr_.get(), dynamicsPtr_.get(), constraintPtr_.get(), costPtr_.get(),
-                                                operatingPointPtr_.get(), slqSettings, mpcSettings));
+  std::unique_ptr<ocs2::MPC_DDP> getMpc() {
+    ddp::Settings ddpSettings;
+    ddpSettings.algorithm_ = ddp::algorithm::SLQ;
+    mpc::Settings mpcSettings;
+    return std::unique_ptr<MPC_DDP>(new MPC_DDP(rolloutPtr_.get(), dynamicsPtr_.get(), constraintPtr_.get(), costPtr_.get(),
+                                                operatingPointPtr_.get(), ddpSettings, mpcSettings));
   }
 
   const SystemDynamicsBase& getDynamics() const override { return *dynamicsPtr_; }

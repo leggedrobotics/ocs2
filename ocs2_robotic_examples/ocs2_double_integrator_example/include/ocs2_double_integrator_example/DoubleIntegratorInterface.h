@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
-#include <ocs2_mpc/MPC_SLQ.h>
+#include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
 // Double Integrator
@@ -66,10 +66,12 @@ class DoubleIntegratorInterface final : public RobotInterface {
   ~DoubleIntegratorInterface() override = default;
 
   const vector_t& getInitialState() { return initialState_; }
-  SLQ_Settings& slqSettings() { return slqSettings_; };
-  MPC_Settings& mpcSettings() { return mpcSettings_; };
 
-  std::unique_ptr<ocs2::MPC_SLQ> getMpc();
+  ddp::Settings& ddpSettings() { return ddpSettings_; }
+
+  mpc::Settings& mpcSettings() { return mpcSettings_; }
+
+  std::unique_ptr<ocs2::MPC_DDP> getMpc();
 
   const vector_t& getXFinal() { return xFinal_; }
 
@@ -95,8 +97,8 @@ class DoubleIntegratorInterface final : public RobotInterface {
   std::string taskFile_;
   std::string libraryFolder_;
 
-  SLQ_Settings slqSettings_;
-  MPC_Settings mpcSettings_;
+  ddp::Settings ddpSettings_;
+  mpc::Settings mpcSettings_;
 
   std::unique_ptr<RolloutBase> ddpLinearSystemRolloutPtr_;
 

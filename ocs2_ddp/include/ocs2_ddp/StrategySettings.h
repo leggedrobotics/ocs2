@@ -58,7 +58,7 @@ std::string toString(type strategy);
  * Get DDP_Strategy type from string name, useful for reading config file
  * @param [in] name: DDP_Strategy name
  */
-type fromString(const std::string& name);
+type fromString(std::string name);
 
 }  // namespace ddp_strategy
 

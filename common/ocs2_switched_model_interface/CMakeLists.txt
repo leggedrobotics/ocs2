@@ -42,6 +42,7 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
+	src/constraint/FrictionConeConstraint.cpp
 	src/cost/SwitchedModelCostBase.cpp
 	src/cost/FootPlacementCost.cpp
 	src/foot_planner/CubicSpline.cpp

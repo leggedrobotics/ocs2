@@ -17,9 +17,7 @@ namespace switched_model {
 SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel,
                                              std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
                                              const state_matrix_t& Q, const input_matrix_t& R, const state_matrix_t& QFinal)
-    : BASE(Q, R, vector_t::Zero(STATE_DIM), vector_t::Zero(INPUT_DIM), QFinal, vector_t::Zero(STATE_DIM)),
-      comModelPtr_(comModel.clone()),
-      modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)) {
+    : BASE(Q, R, QFinal), comModelPtr_(comModel.clone()), modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)) {
   if (!modeScheduleManagerPtr_) {
     throw std::runtime_error("[SwitchedModelCostBase] Mode schedule manager cannot be a nullptr");
   }
@@ -42,18 +40,49 @@ SwitchedModelCostBase* SwitchedModelCostBase::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::pair<vector_t, vector_t> SwitchedModelCostBase::getNominalStateInput(scalar_t t, const vector_t& x, const vector_t& u) {
+scalar_t SwitchedModelCostBase::cost(scalar_t t, const vector_t& x, const vector_t& u) {
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[SwitchedModelCostBase] costDesiredTrajectoriesPtr_ is not set");
+  }
+
   // Get stance configuration
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(t);
 
-  vector_t xNominal = vector_t::Zero(STATE_DIM);
-  if (BASE::costDesiredTrajectoriesPtr_ != nullptr) {
-    xNominal = BASE::costDesiredTrajectoriesPtr_->getDesiredState(t);
-  }
   vector_t uNominal;
+  const vector_t xNominal = costDesiredTrajectoriesPtr_->getDesiredState(t);
   inputFromContactFlags(contactFlags, xNominal, uNominal);
 
-  return {xNominal, uNominal};
+  vector_t xDeviation = x - xNominal;
+  vector_t uDeviation = u - uNominal;
+  return 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation) + uDeviation.dot(P_ * xDeviation);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation SwitchedModelCostBase::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[SwitchedModelCostBase] costDesiredTrajectoriesPtr_ is not set");
+  }
+
+  // Get stance configuration
+  const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(t);
+
+  vector_t uNominal;
+  const vector_t xNominal = costDesiredTrajectoriesPtr_->getDesiredState(t);
+  inputFromContactFlags(contactFlags, xNominal, uNominal);
+
+  vector_t xDeviation = x - xNominal;
+  vector_t uDeviation = u - uNominal;
+
+  ScalarFunctionQuadraticApproximation L;
+  L.f = 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation) + uDeviation.dot(P_ * xDeviation);
+  L.dfdx = Q_ * xDeviation + P_.transpose() * uDeviation;
+  L.dfdu = R_ * uDeviation + P_ * xDeviation;
+  L.dfdxx = Q_;
+  L.dfdux = P_;
+  L.dfduu = R_;
+  return L;
 }
 
 /******************************************************************************************************/

@@ -7,15 +7,13 @@ namespace anymal {
 
 AnymalCrocPyBindings::AnymalCrocPyBindings(std::string taskName, bool async) : Base(async), taskName_(std::move(taskName)) {
   auto anymalCrocInterface = getAnymalCrocInterface(getTaskFileFolderCroc(taskName_));
-  ocs2::MPC_Settings mpcSettings;
-  mpcSettings.loadSettings(getTaskFilePathCroc(taskName_));
-  ocs2::SLQ_Settings slqSettings;
-  slqSettings.loadSettings(getTaskFilePathCroc(taskName_));
+  ocs2::mpc::Settings mpcSettings = ocs2::mpc::loadSettings(getTaskFilePathCroc(taskName_));
+  ocs2::ddp::Settings ddpSettings = ocs2::ddp::loadSettings(getTaskFilePathCroc(taskName_));
 
-  init(*anymalCrocInterface, switched_model::getMpc(*anymalCrocInterface, mpcSettings, slqSettings));
+  init(*anymalCrocInterface, switched_model::getMpc(*anymalCrocInterface, mpcSettings, ddpSettings));
 
   penalty_.reset(new ocs2::RelaxedBarrierPenalty<switched_model::STATE_DIM, switched_model::INPUT_DIM>(
-      slqSettings.ddpSettings_.inequalityConstraintMu_, slqSettings.ddpSettings_.inequalityConstraintDelta_));
+      ddpSettings.ddpSettings_.inequalityConstraintMu_, ddpSettings.ddpSettings_.inequalityConstraintDelta_));
 }
 
 void AnymalCrocPyBindings::visualizeTrajectory(const scalar_array_t& t, const state_vector_array_t& x, const input_vector_array_t& u,

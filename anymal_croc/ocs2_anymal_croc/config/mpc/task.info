@@ -73,58 +73,60 @@ defaultModeSequenceTemplate
   }
 }
 
-slq
+; DDP settings
+ddp
 {
-  useNominalTimeForBackwardPass      true
-  RiccatiIntegratorType              ODE45
+  algorithm                       SLQ
 
-  ddp
+  nThreads                        3
+  threadPriority                  50
+
+  maxNumIterations                10
+  minRelCost                      0.1
+  constraintTolerance             5e-3
+
+  displayInfo                     false
+  displayShortSummary             false
+  checkNumericalStability         false
+  debugPrintRollout               false
+  debugCaching                    false
+
+  AbsTolODE                       1e-5
+  RelTolODE                       1e-3
+  maxNumStepsPerSecond            50000
+  minTimeStep                     1e-2
+  backwardPassIntegratorType      ODE45
+
+  constraintPenaltyInitialValue   2.0
+  constraintPenaltyIncreaseRate   2.0
+  inequalityConstraintMu          0.1
+  inequalityConstraintDelta       5.0
+
+  preComputeRiccatiTerms          true
+  useNominalTimeForBackwardPass   true
+
+  useFeedbackPolicy               true
+
+  riskSensitiveCoeff              0
+
+  strategy                        LINE_SEARCH
+  lineSearch
   {
-    nThreads                         3
-    threadPriority                   50
-
-    maxNumIterations                 10
-    minRelCost                       0.1
-    constraintTolerance              5e-3
-
-    displayInfo                      false
-    displayShortSummary              false
-    checkNumericalStability          false
-    debugPrintRollout                false
-    debugCaching                     false
-
-    AbsTolODE                        1e-5
-    RelTolODE                        1e-3
-    maxNumStepsPerSecond             50000
-    minTimeStep                      1e-2
-
-    constraintPenaltyInitialValue    2.0
-    constraintPenaltyIncreaseRate    2.0
-    inequalityConstraintDelta        5.0
-    inequalityConstraintMu           0.1
-
-    preComputeRiccatiTerms           true
-    useFeedbackPolicy                true
-    riskSensitiveCoeff               0
-
-    strategy                         LINE_SEARCH
-    lineSearch
-    {
-        minStepLength                1e-4
-        maxStepLength                1.0
-        hessianCorrectionStrategy    DIAGONAL_SHIFT
-        hessianCorrectionMultiple    1e-5
-    }
+      minStepLength                 1e-4
+      maxStepLength                 1.0
+      hessianCorrectionStrategy     DIAGONAL_SHIFT
+      hessianCorrectionMultiple     1e-5
   }
+}
 
-  rollout
-  {
-    AbsTolODE                        1e-5
-    RelTolODE                        1e-3
-    minTimeStep                      1e-2
-    maxNumStepsPerSecond             50000
-    checkNumericalStability          false
-  }
+; Rollout settings
+rollout
+{
+  AbsTolODE                       1e-5
+  RelTolODE                       1e-3
+  minTimeStep                     1e-2
+  maxNumStepsPerSecond            50000
+  checkNumericalStability         false
 }
 
 mpc

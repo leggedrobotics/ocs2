@@ -76,7 +76,7 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   const scalar_array_t& getInitialPartitionTimes() const { return partitioningTimes_; }
 
   /** Access to rollout settings */
-  const ocs2::Rollout_Settings& rolloutSettings() const { return rolloutSettings_; }
+  const ocs2::rollout::Settings& rolloutSettings() const { return rolloutSettings_; }
 
   /** Access to model settings */
   const ModelSettings& modelSettings() const { return modelSettings_; };
@@ -99,7 +99,7 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   void loadSettings(const std::string& pathToConfigFile);
 
   std::string configFile_;
-  ocs2::Rollout_Settings rolloutSettings_;
+  ocs2::rollout::Settings rolloutSettings_;
   ModelSettings modelSettings_;
 
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;

@@ -51,7 +51,7 @@ auto QuadrupedInterface::loadCostMatrices(const std::string& pathToConfigFile, c
 /******************************************************************************************************/
 /******************************************************************************************************/
 void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
-  rolloutSettings_.loadSettings(pathToConfigFile, "slq.rollout");
+  rolloutSettings_ = ocs2::rollout::loadSettings(pathToConfigFile, "rollout");
   modelSettings_ = loadModelSettings(pathToConfigFile);
 
   // initial state of the switched system

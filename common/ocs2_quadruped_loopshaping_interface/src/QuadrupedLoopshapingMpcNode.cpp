@@ -12,7 +12,7 @@
 namespace switched_model_loopshaping {
 
 void quadrupedLoopshapingMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedLoopshapingInterface& quadrupedInterface,
-                                 const ocs2::MPC_Settings& mpcSettings, const ocs2::SLQ_Settings& slqSettings) {
+                                 const ocs2::mpc::Settings& mpcSettings, const ocs2::ddp::Settings& ddpSettings) {
   const std::string robotName = "anymal";
 
   auto gaitReceiver = std::make_shared<switched_model::GaitReceiver>(
@@ -21,7 +21,7 @@ void quadrupedLoopshapingMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedLoo
   loopshapingSolverModule->synchronizedModules_.push_back(gaitReceiver);
 
   // launch MPC nodes
-  auto mpcPtr = getMpc(quadrupedInterface, mpcSettings, slqSettings);
+  auto mpcPtr = getMpc(quadrupedInterface, mpcSettings, ddpSettings);
   mpcPtr->getSolverPtr()->setSynchronizedModules({loopshapingSolverModule});
   ocs2::MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(nodeHandle);

@@ -7,15 +7,13 @@ namespace anymal {
 
 AnymalBearPyBindings::AnymalBearPyBindings(std::string taskName, bool async) : Base(async), taskName_(std::move(taskName)) {
   auto anymalBearInterface = getAnymalBearInterface(getTaskFileFolderBear(taskName_));
-  ocs2::MPC_Settings mpcSettings;
-  mpcSettings.loadSettings(getTaskFilePathBear(taskName_));
-  ocs2::SLQ_Settings slqSettings;
-  slqSettings.loadSettings(getTaskFilePathBear(taskName_));
+  ocs2::mpc::Settings mpcSettings = ocs2::mpc::loadSettings(getTaskFilePathBear(taskName_));
+  ocs2::ddp::Settings ddpSettings = ocs2::ddp::loadSettings(getTaskFilePathBear(taskName_));
 
-  init(*anymalBearInterface, switched_model::getMpc(*anymalBearInterface, mpcSettings, slqSettings));
+  init(*anymalBearInterface, switched_model::getMpc(*anymalBearInterface, mpcSettings, ddpSettings));
 
-  penalty_.reset(new ocs2::RelaxedBarrierPenalty(slqSettings.ddpSettings_.inequalityConstraintMu_,
-                                                 slqSettings.ddpSettings_.inequalityConstraintDelta_));
+  penalty_.reset(new ocs2::RelaxedBarrierPenalty(ddpSettings.ddpSettings_.inequalityConstraintMu_,
+                                                 ddpSettings.ddpSettings_.inequalityConstraintDelta_));
 }
 
 void AnymalBearPyBindings::visualizeTrajectory(const scalar_array_t& t, const state_vector_array_t& x, const input_vector_array_t& u,

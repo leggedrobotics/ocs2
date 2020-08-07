@@ -6,20 +6,20 @@
 
 namespace switched_model {
 
-std::unique_ptr<ocs2::SLQ> getSlq(const QuadrupedInterface& quadrupedInterface, const ocs2::SLQ_Settings& slqSettings) {
+std::unique_ptr<ocs2::SLQ> getSlq(const QuadrupedInterface& quadrupedInterface, const ocs2::ddp::Settings& ddpSettings) {
   auto slqPtr = std::unique_ptr<ocs2::SLQ>(new ocs2::SLQ(&quadrupedInterface.getRollout(), &quadrupedInterface.getDynamics(),
                                                          quadrupedInterface.getConstraintPtr(), &quadrupedInterface.getCost(),
-                                                         &quadrupedInterface.getOperatingPoints(), slqSettings));
+                                                         &quadrupedInterface.getOperatingPoints(), ddpSettings));
   slqPtr->setModeScheduleManager(quadrupedInterface.getModeScheduleManagerPtr());
   return slqPtr;
 }
 
-std::unique_ptr<ocs2::MPC_SLQ> getMpc(const QuadrupedInterface& quadrupedInterface, const ocs2::MPC_Settings& mpcSettings,
-                                      const ocs2::SLQ_Settings& slqSettings) {
+std::unique_ptr<ocs2::MPC_DDP> getMpc(const QuadrupedInterface& quadrupedInterface, const ocs2::mpc::Settings& mpcSettings,
+                                      const ocs2::ddp::Settings& ddpSettings) {
   if (!quadrupedInterface.modelSettings().gaitOptimization_) {
-    auto mpcPtr = std::unique_ptr<ocs2::MPC_SLQ>(new ocs2::MPC_SLQ(&quadrupedInterface.getRollout(), &quadrupedInterface.getDynamics(),
+    auto mpcPtr = std::unique_ptr<ocs2::MPC_DDP>(new ocs2::MPC_DDP(&quadrupedInterface.getRollout(), &quadrupedInterface.getDynamics(),
                                                                    quadrupedInterface.getConstraintPtr(), &quadrupedInterface.getCost(),
-                                                                   &quadrupedInterface.getOperatingPoints(), slqSettings, mpcSettings));
+                                                                   &quadrupedInterface.getOperatingPoints(), ddpSettings, mpcSettings));
     mpcPtr->getSolverPtr()->setModeScheduleManager(quadrupedInterface.getModeScheduleManagerPtr());
     return mpcPtr;
   } else {

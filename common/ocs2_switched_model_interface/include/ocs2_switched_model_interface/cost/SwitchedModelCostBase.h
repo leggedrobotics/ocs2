@@ -34,8 +34,8 @@ class SwitchedModelCostBase : public ocs2::QuadraticCostFunction {
   //! clone SwitchedModelCostBase class.
   SwitchedModelCostBase* clone() const override;
 
- protected:
-  std::pair<vector_t, vector_t> getNominalStateInput(scalar_t t, const vector_t& x, const vector_t& u) override;
+  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
+  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
 
  private:
   void inputFromContactFlags(const contact_flag_t& contactFlags, const state_vector_t& nominalState, vector_t& inputs);

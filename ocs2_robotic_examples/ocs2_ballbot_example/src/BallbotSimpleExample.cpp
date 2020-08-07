@@ -87,8 +87,6 @@ int main(int argc, char** argv) {
   loadData::loadEigenMatrix(taskFile, "R", R);
   matrix_t QFinal(STATE_DIM, STATE_DIM);
   loadData::loadEigenMatrix(taskFile, "Q_final", QFinal);
-  vector_t xFinal(STATE_DIM);
-  loadData::loadEigenMatrix(taskFile, "x_final", xFinal);
   vector_t xInit(STATE_DIM);
   loadData::loadEigenMatrix(taskFile, "initialState", xInit);
 
@@ -124,7 +122,7 @@ int main(int argc, char** argv) {
   ddpSettings.nThreads_ = 1;
   SLQ slq(ballbotRolloutPtr.get(), ballbotSystemDynamicsPtr.get(), ballbotConstraintPtr.get(), ballbotCostPtr.get(),
           ballbotOperatingPointPtr.get(), ddpSettings);
-  slq.setCostDesiredTrajectories(CostDesiredTrajectories({0.0}, {xFinal}, {vector_t::Zero(INPUT_DIM)}));
+  slq.setCostDesiredTrajectories(CostDesiredTrajectories({0.0}, {xInit}, {vector_t::Zero(INPUT_DIM)}));
   slq.run(0.0, xInit, timeHorizon, partitioningTimes);
 
   /*

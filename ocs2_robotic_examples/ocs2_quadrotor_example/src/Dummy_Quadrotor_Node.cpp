@@ -74,8 +74,8 @@ int main(int argc, char** argv) {
   initObservation.time() = 0.0;
 
   // initial command
-  ocs2::CostDesiredTrajectories initCostDesiredTrajectories({0.0}, {quadrotorInterface.getInitialTarget()},
-                                                            {ocs2::vector_t::Zero(ocs2::quadrotor::INPUT_DIM)});
+  const ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time()}, {initObservation.state()},
+                                                                  {initObservation.input()});
 
   // Run dummy (loops while ros is ok)
   dummyQuadrotor.run(initObservation, initCostDesiredTrajectories);

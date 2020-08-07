@@ -87,13 +87,11 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   ocs2::loadData::loadEigenMatrix(taskFile, "Q", Q_);
   ocs2::loadData::loadEigenMatrix(taskFile, "R", R_);
   ocs2::loadData::loadEigenMatrix(taskFile, "Q_final", QFinal_);
-  ocs2::loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
 
   std::cerr << "Q:  \n" << Q_ << std::endl;
   std::cerr << "R:  \n" << R_ << std::endl;
   std::cerr << "Q_final:\n" << QFinal_ << std::endl;
   std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
-  std::cerr << "x_final:  " << xFinal_.transpose() << std::endl;
 
   ballbotCostPtr_.reset(new QuadraticCostFunction(Q_, R_, QFinal_));
 

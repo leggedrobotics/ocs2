@@ -64,7 +64,6 @@ class BallbotInterface final : public RobotInterface {
   ~BallbotInterface() override = default;
 
   const vector_t& getInitialState() { return initialState_; }
-  const vector_t& getInitialTarget() { return xFinal_; }
 
   ddp::Settings& ddpSettings() { return ddpSettings_; }
 
@@ -110,7 +109,6 @@ class BallbotInterface final : public RobotInterface {
   matrix_t QFinal_{STATE_DIM, STATE_DIM};
 
   vector_t initialState_{STATE_DIM};
-  vector_t xFinal_{STATE_DIM};
 };
 
 }  // namespace ballbot

@@ -88,8 +88,8 @@ int main(int argc, char* argv[]) {
   initObservation.time() = 0.0;
 
   // initial command
-  const ocs2::CostDesiredTrajectories initCostDesiredTrajectories({0.0}, {interface.getInitialTarget()},
-                                                                  {ocs2::vector_t::Zero(ocs2::ballbot::INPUT_DIM)});
+  const ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time()}, {initObservation.state()},
+                                                                  {initObservation.input()});
   // run dummy
   dummyBallbot.run(initObservation, initCostDesiredTrajectories);
 

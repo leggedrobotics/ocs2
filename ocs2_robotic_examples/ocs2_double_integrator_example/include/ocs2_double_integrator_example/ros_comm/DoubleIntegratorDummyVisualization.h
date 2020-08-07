@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/DummyObserver.h>
+#include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 
 #include "ocs2_double_integrator_example/definitions.h"
 

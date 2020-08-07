@@ -4,13 +4,17 @@ project(ocs2_cart_pole_example)
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(CATKIN_PACKAGE_DEPENDENCIES
+  ocs2_core
+  ocs2_ddp
+  ocs2_mpc
+  ocs2_ros_interfaces
+  ocs2_robotic_tools
+)
+
 find_package(catkin REQUIRED COMPONENTS
-   roslib
-   ocs2_core
-   ocs2_ddp
-   ocs2_mpc
-   ocs2_comm_interfaces
-   ocs2_robotic_tools
+  roslib
+  ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
 find_package(Boost REQUIRED COMPONENTS
@@ -33,11 +37,7 @@ catkin_package(
   LIBRARIES
     cartpole_interface
   CATKIN_DEPENDS
-    ocs2_core
-    ocs2_ddp
-    ocs2_mpc
-    ocs2_comm_interfaces
-    ocs2_robotic_tools
+    ${CATKIN_PACKAGE_DEPENDENCIES}
   DEPENDS
     Boost
 )

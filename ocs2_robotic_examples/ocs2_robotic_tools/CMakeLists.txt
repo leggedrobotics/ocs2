@@ -5,10 +5,10 @@ project(ocs2_robotic_tools)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(catkin REQUIRED COMPONENTS
-        ocs2_ddp
-        ocs2_core
-        ocs2_mpc
-        ocs2_comm_interfaces
+  ocs2_ddp
+  ocs2_core
+  ocs2_mpc
+  ocs2_ros_interfaces
 )
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
@@ -27,7 +27,7 @@ catkin_package(
     ocs2_ddp
     ocs2_core
     ocs2_mpc
-    ocs2_comm_interfaces
+    ocs2_ros_interfaces
   DEPENDS
 )
 

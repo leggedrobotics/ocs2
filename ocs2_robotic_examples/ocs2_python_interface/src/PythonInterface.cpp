@@ -27,9 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/misc/LinearAlgebra.h>
+#include "ocs2_python_interface/PythonInterface.h"
 
-#include <ocs2_python_interface/PythonInterface.h>
+#include <ocs2_core/misc/LinearAlgebra.h>
 
 namespace ocs2 {
 

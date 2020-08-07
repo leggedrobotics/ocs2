@@ -5,19 +5,19 @@ project(ocs2_ballbot_example)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
-    tf
-    urdf
-    kdl_parser
-    robot_state_publisher
-    visualization_msgs
-    pybind11_catkin
-    ocs2_core
-    ocs2_ddp
-    ocs2_mpc
-    ocs2_comm_interfaces
-    ocs2_robotic_tools
-    ocs2_python_interface
-    )
+  tf
+  urdf
+  kdl_parser
+  robot_state_publisher
+  visualization_msgs
+  pybind11_catkin
+  ocs2_core
+  ocs2_ddp
+  ocs2_mpc
+  ocs2_ros_interfaces
+  ocs2_robotic_tools
+  ocs2_python_interface
+)
 
 # Pybind11 configuration must occur before find_package(catkin)
 option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)

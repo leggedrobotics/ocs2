@@ -29,14 +29,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_ballbot_example/definitions.h>
-#include <ocs2_comm_interfaces/SystemObservation.h>
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h>
-#include <ocs2_msgs/mpc_observation.h>
-#include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
 #include <mutex>
 
 #include <ros/subscriber.h>
+
+#include <ocs2_ballbot_example/definitions.h>
+#include <ocs2_mpc/SystemObservation.h>
+#include <ocs2_msgs/mpc_observation.h>
+#include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
+#include <ocs2_ros_interfaces/common/RosMsgConversions.h>
 
 namespace ocs2 {
 namespace ballbot {

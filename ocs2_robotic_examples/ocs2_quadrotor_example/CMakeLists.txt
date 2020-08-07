@@ -8,7 +8,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   tf
   pybind11_catkin
   ocs2_mpc
-  ocs2_comm_interfaces
+  ocs2_ros_interfaces
   ocs2_robotic_tools
   ocs2_python_interface
 )

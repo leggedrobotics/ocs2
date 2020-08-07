@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <tf/transform_broadcaster.h>
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/DummyObserver.h>
+#include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 
 #include "ocs2_quadrotor_example/definitions.h"
 

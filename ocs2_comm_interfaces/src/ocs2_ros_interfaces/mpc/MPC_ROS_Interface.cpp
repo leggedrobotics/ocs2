@@ -392,10 +392,6 @@ void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) {
   // MPC reset service server
   mpcResetServiceServer_ = nodeHandle.advertiseService(robotName_ + "_mpc_reset", &MPC_ROS_Interface::resetMpcCallback, this);
 
-  for (auto& module : synchronizedRosModules_) {
-    module->subscribe(nodeHandle);
-  }
-
   // display
 #ifdef PUBLISH_THREAD
   ROS_INFO_STREAM("Publishing SLQ-MPC messages on a separate thread.");

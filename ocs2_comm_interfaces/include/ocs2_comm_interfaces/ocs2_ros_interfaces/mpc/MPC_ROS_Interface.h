@@ -58,7 +58,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_comm_interfaces/CommandData.h"
 #include "ocs2_comm_interfaces/SystemObservation.h"
 #include "ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h"
-#include "ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/SolverSynchronizedRosModule.h"
 
 #define PUBLISH_THREAD
 
@@ -93,14 +92,6 @@ class MPC_ROS_Interface {
    * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
    */
   virtual void reset(const CostDesiredTrajectories& initCostDesiredTrajectories);
-
-  /**
-   * Set all modules that need to be synchronized with the mpc. Must be called before launchNodes.
-   * This method does not add the modules to the solver
-   */
-  void subscribeSynchronizedModules(const std::vector<std::shared_ptr<SolverSynchronizedRosModule>>& synchronizedRosModules) {
-    synchronizedRosModules_ = synchronizedRosModules;
-  };
 
   /**
    * Shutdowns the ROS node.
@@ -206,8 +197,6 @@ class MPC_ROS_Interface {
   std::unique_ptr<CommandData> commandBuffer_;
 
   mutable std::mutex policyBufferMutex_;  // for policy variables WITH suffix (*Buffer_)
-
-  std::vector<std::shared_ptr<SolverSynchronizedRosModule>> synchronizedRosModules_;
 
   // multi-threading for publishers
   std::atomic_bool terminateThread_;

@@ -58,8 +58,10 @@ class testCppADCG_costFixture : public ::testing::Test {
     Q = (Q + Q.transpose()).eval();
     R = (R + R.transpose()).eval();
     QFinal = (QFinal + QFinal.transpose()).eval();
+    costDesiredTrajectories_ = CostDesiredTrajectories({0.0}, {xNominal}, {uNominal});
 
-    quadraticCost_.reset(new QuadraticCostFunction(Q, R, xNominal, uNominal, QFinal, xNominal, P));
+    quadraticCost_.reset(new QuadraticCostFunction(Q, R, QFinal, P));
+    quadraticCost_->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories_);
 
     boost::filesystem::path filePath(__FILE__);
     std::string libraryFolder = filePath.parent_path().generic_string() + "/testCppADCG_generated";
@@ -70,6 +72,7 @@ class testCppADCG_costFixture : public ::testing::Test {
 
   std::unique_ptr<QuadraticCostFunction> quadraticCost_;
   std::unique_ptr<QuadraticCostFunctionAD> adQuadraticCost_;
+  CostDesiredTrajectories costDesiredTrajectories_;
 };
 
 /******************************************************************************/

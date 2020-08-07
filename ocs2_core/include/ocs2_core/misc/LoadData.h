@@ -123,9 +123,8 @@ inline void loadEigenMatrix(const std::string& filename, const std::string& matr
   size_t rows = matrix.rows();
   size_t cols = matrix.cols();
 
-  // TODO(mspieler): reconsider error handling
   if (rows == 0 || cols == 0) {
-    throw std::runtime_error("Loading empty matrix is not allowed");
+    throw std::runtime_error("[loadEigenMatrix] Loading empty matrix \"" + matrixName + "\" is not allowed.");
   }
 
   boost::property_tree::ptree pt;
@@ -134,7 +133,7 @@ inline void loadEigenMatrix(const std::string& filename, const std::string& matr
   const scalar_t scaling = pt.get<scalar_t>(matrixName + ".scaling", 1.0);
   const scalar_t defaultValue = pt.get<scalar_t>(matrixName + ".default", 0.0);
 
-  bool failed = false;
+  size_t numFailed = 0;
   for (size_t i = 0; i < rows; i++) {
     for (size_t j = 0; j < cols; j++) {
       scalar_t aij;
@@ -142,14 +141,16 @@ inline void loadEigenMatrix(const std::string& filename, const std::string& matr
         aij = pt.get<scalar_t>(matrixName + "." + "(" + std::to_string(i) + "," + std::to_string(j) + ")");
       } catch (const std::exception&) {
         aij = defaultValue;
-        failed = true;
+        numFailed++;
       }
       matrix(i, j) = scaling * aij;
     }
   }
 
-  if (failed) {
-    std::cerr << "WARNING: Loaded at least one default value in matrix: " + matrixName + "!" << std::endl;
+  if (numFailed == matrix.size()) {
+    throw std::runtime_error("[loadEigenMatrix] Could not load matrix \"" + matrixName + "\" from file \"" + filename + "\".");
+  } else if (numFailed > 0) {
+    std::cerr << "WARNING: Loaded at least one default value in matrix: \"" + matrixName + "\"\n";
   }
 }
 

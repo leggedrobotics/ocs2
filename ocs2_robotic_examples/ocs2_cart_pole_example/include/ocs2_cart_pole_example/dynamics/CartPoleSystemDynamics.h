@@ -44,7 +44,7 @@ namespace cartpole {
 class CartPoleSytemDynamics : public SystemDynamicsBaseAD {
  public:
   explicit CartPoleSytemDynamics(const CartPoleParameters& cartPoleParameters)
-      : SystemDynamicsBaseAD(STATE_DIM_, INPUT_DIM_), param_(cartPoleParameters) {}
+      : SystemDynamicsBaseAD(STATE_DIM, INPUT_DIM), param_(cartPoleParameters) {}
 
   ~CartPoleSytemDynamics() override = default;
 
@@ -67,7 +67,7 @@ class CartPoleSytemDynamics : public SystemDynamicsBaseAD {
                                          input(0) + param_.poleMass_ * param_.poleHalfLength_ * pow(state(2), 2) * sinTheta);
 
     // dxdt
-    ad_vector_t stateDerivative(STATE_DIM_);
+    ad_vector_t stateDerivative(STATE_DIM);
     stateDerivative << state.tail<2>(), I.inverse() * rhs;
     return stateDerivative;
   }

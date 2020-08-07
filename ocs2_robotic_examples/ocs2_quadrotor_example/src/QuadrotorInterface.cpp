@@ -39,14 +39,7 @@ namespace quadrotor {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-QuadrotorInterface::QuadrotorInterface(const std::string& taskFileFolderName)
-    : Q_(STATE_DIM_, STATE_DIM_),
-      R_(INPUT_DIM_, INPUT_DIM_),
-      QFinal_(STATE_DIM_, STATE_DIM_),
-      xFinal_(STATE_DIM_),
-      xNominal_(STATE_DIM_),
-      uNominal_(INPUT_DIM_),
-      initialState_(STATE_DIM_) {
+QuadrotorInterface::QuadrotorInterface(const std::string& taskFileFolderName) {
   taskFile_ = ros::package::getPath("ocs2_quadrotor_example") + "/config/" + taskFileFolderName + "/task.info";
   std::cerr << "Loading task file: " << taskFile_ << std::endl;
 
@@ -75,8 +68,7 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
   /*
    * quadrotor parameters
    */
-  QuadrotorParameters quadrotorParameters;
-  quadrotorParameters.loadSettings(taskFile);
+  auto quadrotorParameters = quadrotor::loadSettings(taskFile, "QuadrotorParameters", true);
 
   /*
    * Dynamics and derivatives
@@ -95,17 +87,13 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
   loadData::loadEigenMatrix(taskFile, "Q", Q_);
   loadData::loadEigenMatrix(taskFile, "R", R_);
   loadData::loadEigenMatrix(taskFile, "Q_final", QFinal_);
-  loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
-  xNominal_ = vector_t::Zero(STATE_DIM_);
-  uNominal_ = vector_t::Zero(INPUT_DIM_);
 
   std::cerr << "Q:  \n" << Q_ << std::endl;
   std::cerr << "R:  \n" << R_ << std::endl;
   std::cerr << "Q_final:\n" << QFinal_ << std::endl;
   std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
-  std::cerr << "x_final:  " << xFinal_.transpose() << std::endl;
 
-  quadrotorCostPtr_.reset(new QuadraticCostFunction(Q_, R_, xNominal_, uNominal_, QFinal_, xFinal_));
+  quadrotorCostPtr_.reset(new QuadraticCostFunction(Q_, R_, QFinal_));
 
   /*
    * Constraints
@@ -115,7 +103,7 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Initialization
    */
-  vector_t initialInput = vector_t::Zero(INPUT_DIM_);
+  vector_t initialInput = vector_t::Zero(INPUT_DIM);
   initialInput(0) = quadrotorParameters.quadrotorMass_ * quadrotorParameters.gravity_;
   quadrotorOperatingPointPtr_.reset(new OperatingPoints(initialState_, initialInput));
 }

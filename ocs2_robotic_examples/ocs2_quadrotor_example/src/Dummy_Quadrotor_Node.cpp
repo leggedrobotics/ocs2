@@ -70,10 +70,12 @@ int main(int argc, char** argv) {
   // initial state
   ocs2::SystemObservation initObservation;
   initObservation.state() = quadrotorInterface.getInitialState();
-  initObservation.input().setZero(ocs2::quadrotor::INPUT_DIM_);
-  initObservation.time() = 0;
+  initObservation.input().setZero(ocs2::quadrotor::INPUT_DIM);
+  initObservation.time() = 0.0;
+
   // initial command
-  ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time()}, {initObservation.state()}, {initObservation.input()});
+  const ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time()}, {initObservation.state()},
+                                                                  {initObservation.input()});
 
   // Run dummy (loops while ros is ok)
   dummyQuadrotor.run(initObservation, initCostDesiredTrajectories);

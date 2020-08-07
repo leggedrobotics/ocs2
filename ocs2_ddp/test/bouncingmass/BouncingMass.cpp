@@ -130,11 +130,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   matrix_t P(STATE_DIM, STATE_DIM);
   P << 56.63, 7.07, 0.0, 7.07, 8.01, 0.0, 0.0, 0.0, 0.0;
 
-  vector_t xNom = state0;
-  vector_t uNom(INPUT_DIM);
-  uNom << 0;
-  vector_t xFin = state0;
-  BouncingMassCost systemCost(reference, Q, R, P, xNom, uNom, xFin, finalTime);
+  BouncingMassCost systemCost(reference, Q, R, P, finalTime);
 
   // Rollout Class
   ocs2::StateTriggeredRollout stateTriggeredRollout(systemDynamics, rolloutSettings);

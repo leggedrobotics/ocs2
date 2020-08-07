@@ -81,15 +81,15 @@ int main(int argc, char* argv[]) {
   dummy_t dummyBallbot(mrt, interface.mpcSettings().mrtDesiredFrequency_, interface.mpcSettings().mpcDesiredFrequency_);
   dummyBallbot.subscribeObservers({ballbotDummyVisualization});
 
-  // initial state and command
+  // initial state
   ocs2::SystemObservation initObservation;
   initObservation.state() = interface.getInitialState();
-  initObservation.input().setZero(ocs2::ballbot::INPUT_DIM_);
-  initObservation.time() = 0;
+  initObservation.input().setZero(ocs2::ballbot::INPUT_DIM);
+  initObservation.time() = 0.0;
 
   // initial command
-  ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time()}, {initObservation.state()}, {initObservation.input()});
-
+  const ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time()}, {initObservation.state()},
+                                                                  {initObservation.input()});
   // run dummy
   dummyBallbot.run(initObservation, initCostDesiredTrajectories);
 

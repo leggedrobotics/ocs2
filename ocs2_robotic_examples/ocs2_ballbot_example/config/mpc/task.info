@@ -16,7 +16,7 @@ templateSwitchingTimes
 ddp
 {
   algorithm                     SLQ
-   
+
   nThreads                      1
 
   maxNumIterations              10
@@ -40,7 +40,7 @@ ddp
   useNominalTimeForBackwardPass false
 
   useFeedbackPolicy             false
-  
+
   strategy                      LINE_SEARCH
   lineSearch
   {
@@ -147,22 +147,6 @@ Q_final
   (7,7) 0.0 ; thetaz_dot
   (8,8) 0.0 ; thetay_dot
   (9,9) 0.0 ; thetax_dot
-}
-
-; final goal
-x_final
-{
-  (0,0) 0.0  ; px
-  (1,0) 0.0  ; py
-  (2,0) 0.0  ; thetaz
-  (3,0) 0.0  ; thetay
-  (4,0) 0.0  ; thetax
-
-  (5,0) 0.0  ; px_dot
-  (6,0) 0.0  ; py_dot
-  (7,0) 0.0  ; thetaz_dot
-  (8,0) 0.0  ; thetay_dot
-  (9,0) 0.0  ; thetax_dot
 }
 
 

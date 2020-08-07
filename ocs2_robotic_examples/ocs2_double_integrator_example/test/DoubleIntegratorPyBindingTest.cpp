@@ -7,12 +7,11 @@ TEST(DoubleIntegratorTest, pyBindings) {
 
   bindings_t bindings("mpc");
 
-  ocs2::CostDesiredTrajectories costDesiredTraj;
-  bindings.setTargetTrajectories(costDesiredTraj);
-
-  const ocs2::vector_t state = ocs2::vector_t::Zero(ocs2::double_integrator::STATE_DIM_);
-  const ocs2::vector_t zeroInput = ocs2::vector_t::Zero(ocs2::double_integrator::INPUT_DIM_);
+  const ocs2::vector_t state = ocs2::vector_t::Zero(ocs2::double_integrator::STATE_DIM);
+  const ocs2::vector_t zeroInput = ocs2::vector_t::Zero(ocs2::double_integrator::INPUT_DIM);
   bindings.setObservation(0.0, state, zeroInput);
+
+  bindings.setTargetTrajectories(ocs2::CostDesiredTrajectories({0.0}, {state}, {zeroInput}));
 
   bindings.advanceMpc();
 

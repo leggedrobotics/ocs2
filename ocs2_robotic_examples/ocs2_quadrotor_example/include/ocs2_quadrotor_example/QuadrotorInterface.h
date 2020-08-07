@@ -97,16 +97,10 @@ class QuadrotorInterface final : public RobotInterface {
   std::unique_ptr<OperatingPoints> quadrotorOperatingPointPtr_;
 
   // cost parameters
-  matrix_t Q_;
-  matrix_t R_;
-  matrix_t QFinal_;
-  vector_t xFinal_;
-  vector_t xNominal_;
-  vector_t uNominal_;
-
-  size_t numPartitions_ = 0;
-  scalar_t timeHorizon_ = 1.0;
-  vector_t initialState_;
+  matrix_t Q_{STATE_DIM, STATE_DIM};
+  matrix_t R_{INPUT_DIM, INPUT_DIM};
+  matrix_t QFinal_{STATE_DIM, STATE_DIM};
+  vector_t initialState_{STATE_DIM};
 };
 
 }  // namespace quadrotor

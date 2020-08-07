@@ -42,7 +42,7 @@ namespace double_integrator {
  */
 class TargetTrajectories_Keyboard_Double_Integrator final : public ocs2::TargetTrajectories_Keyboard_Interface {
  public:
-  enum { COMMAND_DIM_ = 2 };
+  enum { COMMAND_DIM = 2 };
 
   /**
    * Constructor.
@@ -55,7 +55,7 @@ class TargetTrajectories_Keyboard_Double_Integrator final : public ocs2::TargetT
    */
   TargetTrajectories_Keyboard_Double_Integrator(int argc, char* argv[], const std::string& robotName = "robot",
                                                 const scalar_array_t& goalPoseLimit = scalar_array_t{10.0, 10.0})
-      : ocs2::TargetTrajectories_Keyboard_Interface(argc, argv, robotName, COMMAND_DIM_, goalPoseLimit) {}
+      : ocs2::TargetTrajectories_Keyboard_Interface(argc, argv, robotName, COMMAND_DIM, goalPoseLimit) {}
 
   /**
    * Default destructor
@@ -67,9 +67,9 @@ class TargetTrajectories_Keyboard_Double_Integrator final : public ocs2::TargetT
     // time
     desiredTime = 0.0;
     // state
-    desiredState = Eigen::Map<const vector_t>(commadLineTarget.data(), COMMAND_DIM_);
+    desiredState = Eigen::Map<const vector_t>(commadLineTarget.data(), COMMAND_DIM);
     // input
-    desiredInput = vector_t::Zero(INPUT_DIM_);
+    desiredInput = vector_t::Zero(INPUT_DIM);
   }
 
  private:

@@ -39,14 +39,7 @@ namespace cartpole {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CartPoleInterface::CartPoleInterface(const std::string& taskFileFolderName)
-    : qm_(STATE_DIM_, STATE_DIM_),
-      rm_(INPUT_DIM_, INPUT_DIM_),
-      qmFinal_(STATE_DIM_, STATE_DIM_),
-      xFinal_(STATE_DIM_),
-      xNominal_(STATE_DIM_),
-      uNominal_(INPUT_DIM_),
-      initialState_(STATE_DIM_) {
+CartPoleInterface::CartPoleInterface(const std::string& taskFileFolderName) {
   taskFile_ = ros::package::getPath("ocs2_cart_pole_example") + "/config/" + taskFileFolderName + "/task.info";
   std::cerr << "Loading task file: " << taskFile_ << std::endl;
 
@@ -98,16 +91,13 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   loadData::loadEigenMatrix(taskFile, "Q_final", qmFinal_);
   loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
 
-  xNominal_ = xFinal_;
-  uNominal_ = vector_t::Zero(INPUT_DIM_);
-
   std::cerr << "Q:  \n" << qm_ << std::endl;
   std::cerr << "R:  \n" << rm_ << std::endl;
   std::cerr << "Q_final:\n" << qmFinal_ << std::endl;
   std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
   std::cerr << "x_final:  " << xFinal_.transpose() << std::endl;
 
-  cartPoleCostPtr_.reset(new QuadraticCostFunction(qm_, rm_, xNominal_, uNominal_, qmFinal_, xFinal_));
+  cartPoleCostPtr_.reset(new QuadraticCostFunction(qm_, rm_, qmFinal_));
 
   /*
    * Constraints
@@ -117,7 +107,7 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   /*
    * Initialization
    */
-  cartPoleOperatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM_)));
+  cartPoleOperatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM)));
 }
 
 /******************************************************************************************************/

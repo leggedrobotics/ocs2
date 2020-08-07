@@ -45,7 +45,7 @@ namespace quadrotor {
  */
 class TargetTrajectories_Keyboard_Quadrotor final : public ocs2::TargetTrajectories_Keyboard_Interface {
  public:
-  enum { COMMAND_DIM_ = 12 };
+  enum { COMMAND_DIM = 12 };
 
   /**
    * Constructor.
@@ -72,7 +72,7 @@ class TargetTrajectories_Keyboard_Quadrotor final : public ocs2::TargetTrajector
   TargetTrajectories_Keyboard_Quadrotor(int argc, char* argv[], const std::string& robotName = "robot",
                                         const scalar_array_t& goalPoseLimit = scalar_array_t{10.0, 10.0, 10.0, 90.0, 90.0, 360.0, 2.0, 2.0,
                                                                                              2.0, 2.0, 2.0, 2.0})
-      : TargetTrajectories_Keyboard_Interface(argc, argv, robotName, COMMAND_DIM_, goalPoseLimit) {
+      : TargetTrajectories_Keyboard_Interface(argc, argv, robotName, COMMAND_DIM, goalPoseLimit) {
     observationSubscriber_ = this->nodeHandle_->subscribe("/" + robotName + "_mpc_observation", 1,
                                                           &TargetTrajectories_Keyboard_Quadrotor::observationCallback, this);
   }
@@ -96,7 +96,7 @@ class TargetTrajectories_Keyboard_Quadrotor final : public ocs2::TargetTrajector
     }
 
     // reversing the order of the position and orientation.
-    scalar_array_t commadLineTargetOrderCorrected(COMMAND_DIM_);
+    scalar_array_t commadLineTargetOrderCorrected(COMMAND_DIM);
     for (size_t j = 0; j < 3; j++) {
       // pose
       commadLineTargetOrderCorrected[j] = commadLineTarget[3 + j];
@@ -142,19 +142,19 @@ class TargetTrajectories_Keyboard_Quadrotor final : public ocs2::TargetTrajector
     // Desired state trajectory
     auto& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
     xDesiredTrajectory.resize(2);
-    xDesiredTrajectory[0].setZero(STATE_DIM_);
+    xDesiredTrajectory[0].setZero(STATE_DIM);
     xDesiredTrajectory[0].template segment<6>(0) = observation.state().template segment<6>(0);
     xDesiredTrajectory[0].template segment<6>(6) = observation.state().template segment<6>(6);
 
-    xDesiredTrajectory[1].resize(STATE_DIM_);
+    xDesiredTrajectory[1].resize(STATE_DIM);
     xDesiredTrajectory[1].setZero();
     xDesiredTrajectory[1].template segment<6>(0) = observation.state().template segment<6>(0) + targetPoseDisplacement;
     xDesiredTrajectory[1].template segment<6>(6) = targetVelocity;
 
     // Desired input trajectory
     costDesiredTrajectories.desiredInputTrajectory().resize(2);
-    costDesiredTrajectories.desiredInputTrajectory()[0] = vector_t::Zero(INPUT_DIM_);
-    costDesiredTrajectories.desiredInputTrajectory()[1] = vector_t::Zero(INPUT_DIM_);
+    costDesiredTrajectories.desiredInputTrajectory()[0] = vector_t::Zero(INPUT_DIM);
+    costDesiredTrajectories.desiredInputTrajectory()[1] = vector_t::Zero(INPUT_DIM);
 
     return costDesiredTrajectories;
   }

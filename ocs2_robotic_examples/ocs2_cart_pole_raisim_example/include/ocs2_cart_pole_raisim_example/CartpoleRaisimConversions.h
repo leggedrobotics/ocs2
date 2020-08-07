@@ -26,7 +26,7 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> stateToRaisimGenCoordGenVel(const ve
  * @return the corresponding ocs2 cart pole state
  */
 vector_t raisimGenCoordGenVelToState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
-  vector_t state(STATE_DIM_);
+  vector_t state(STATE_DIM);
   state << q(1), q(0), dq(1), dq(0);
   return state;
 }

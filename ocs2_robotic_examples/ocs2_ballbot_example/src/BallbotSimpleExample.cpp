@@ -81,20 +81,16 @@ int main(int argc, char** argv) {
   /*
    * Cost function
    */
-  matrix_t Q(STATE_DIM_, STATE_DIM_);
+  matrix_t Q(STATE_DIM, STATE_DIM);
   loadData::loadEigenMatrix(taskFile, "Q", Q);
-  matrix_t R(INPUT_DIM_, INPUT_DIM_);
+  matrix_t R(INPUT_DIM, INPUT_DIM);
   loadData::loadEigenMatrix(taskFile, "R", R);
-  matrix_t QFinal(STATE_DIM_, STATE_DIM_);
+  matrix_t QFinal(STATE_DIM, STATE_DIM);
   loadData::loadEigenMatrix(taskFile, "Q_final", QFinal);
-  vector_t xFinal(STATE_DIM_);
-  loadData::loadEigenMatrix(taskFile, "x_final", xFinal);
-  vector_t xInit(STATE_DIM_);
+  vector_t xInit(STATE_DIM);
   loadData::loadEigenMatrix(taskFile, "initialState", xInit);
-  vector_t xNominal = xInit;
-  vector_t uNominal = vector_t::Zero(INPUT_DIM_);
 
-  std::unique_ptr<QuadraticCostFunction> ballbotCostPtr(new QuadraticCostFunction(Q, R, xNominal, uNominal, QFinal, xFinal));
+  std::unique_ptr<QuadraticCostFunction> ballbotCostPtr(new QuadraticCostFunction(Q, R, QFinal));
 
   /*
    * Constraints
@@ -104,13 +100,13 @@ int main(int argc, char** argv) {
   /*
    * Initialization
    */
-  std::unique_ptr<OperatingPoints> ballbotOperatingPointPtr(new OperatingPoints(xInit, vector_t::Zero(INPUT_DIM_)));
+  std::unique_ptr<OperatingPoints> ballbotOperatingPointPtr(new OperatingPoints(xInit, vector_t::Zero(INPUT_DIM)));
 
   /*
    * Time partitioning which defines the time horizon and the number of data partitioning
    */
   scalar_t timeHorizon;
-  loadData::loadCppDataType(taskFile, "mpc.timehorizon", timeHorizon);
+  loadData::loadCppDataType(taskFile, "mpc.timeHorizon", timeHorizon);
   size_t numPartitions;
   loadData::loadCppDataType(taskFile, "mpc.numPartitions", numPartitions);
   scalar_array_t partitioningTimes(numPartitions + 1);
@@ -126,6 +122,7 @@ int main(int argc, char** argv) {
   ddpSettings.nThreads_ = 1;
   SLQ slq(ballbotRolloutPtr.get(), ballbotSystemDynamicsPtr.get(), ballbotConstraintPtr.get(), ballbotCostPtr.get(),
           ballbotOperatingPointPtr.get(), ddpSettings);
+  slq.setCostDesiredTrajectories(CostDesiredTrajectories({0.0}, {xInit}, {vector_t::Zero(INPUT_DIM)}));
   slq.run(0.0, xInit, timeHorizon, partitioningTimes);
 
   /*

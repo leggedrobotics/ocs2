@@ -83,7 +83,7 @@ vector_t QuadrotorSystemDynamics::computeFlowMap(scalar_t time, const vector_t& 
   t12 = param_.Thzz_ * param_.Thzz_;
   t13 = t3 * t3;
 
-  vector_t stateDerivative(STATE_DIM_);
+  vector_t stateDerivative(STATE_DIM);
   stateDerivative(0) = dqxQ;
   stateDerivative(1) = dqyQ;
   stateDerivative(2) = dqzQ;
@@ -171,7 +171,7 @@ VectorFunctionLinearApproximation QuadrotorSystemDynamics::linearApproximation(s
     t25 = param_.Thzz_ * dqps * t6;
 
     matrix_t& A = dynamics.dfdx;
-    A.setZero(STATE_DIM_, STATE_DIM_);
+    A.setZero(STATE_DIM, STATE_DIM);
     A.block<3, 3>(0, 6).setIdentity();
     A.block<3, 3>(3, 3) = jacobianOfAngularVelocityMapping_.block<3, 3>(0, 0);
     A.block<3, 3>(3, 9) = jacobianOfAngularVelocityMapping_.block<3, 3>(0, 3);
@@ -214,7 +214,7 @@ VectorFunctionLinearApproximation QuadrotorSystemDynamics::linearApproximation(s
     t8 = sin(qth);
 
     matrix_t& B = dynamics.dfdu;
-    B.setZero(STATE_DIM_, INPUT_DIM_);
+    B.setZero(STATE_DIM, INPUT_DIM);
     B(6, 0) = t2 * t8;
     B(7, 0) = -t2 * t3 * sin(qph);
     B(8, 0) = t2 * t3 * cos(qph);

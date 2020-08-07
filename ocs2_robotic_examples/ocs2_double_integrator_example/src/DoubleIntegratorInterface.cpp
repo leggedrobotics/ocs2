@@ -39,14 +39,7 @@ namespace double_integrator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-DoubleIntegratorInterface::DoubleIntegratorInterface(const std::string& taskFileFolderName)
-    : Q_(matrix_t::Zero(STATE_DIM_, STATE_DIM_)),
-      R_(matrix_t::Zero(INPUT_DIM_, INPUT_DIM_)),
-      QFinal_(matrix_t::Zero(STATE_DIM_, STATE_DIM_)),
-      xFinal_(vector_t::Zero(STATE_DIM_)),
-      xNominal_(vector_t::Zero(STATE_DIM_)),
-      uNominal_(vector_t::Zero(INPUT_DIM_)),
-      initialState_(vector_t::Zero(STATE_DIM_)) {
+DoubleIntegratorInterface::DoubleIntegratorInterface(const std::string& taskFileFolderName) {
   taskFile_ = ros::package::getPath("ocs2_double_integrator_example") + "/config/" + taskFileFolderName + "/task.info";
   std::cerr << "Loading task file: " << taskFile_ << std::endl;
 
@@ -75,9 +68,9 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Dynamics
    */
-  matrix_t A(STATE_DIM_, STATE_DIM_);
+  matrix_t A(STATE_DIM, STATE_DIM);
   A << 0.0, 1.0, 0.0, 0.0;
-  matrix_t B(STATE_DIM_, INPUT_DIM_);
+  matrix_t B(STATE_DIM, INPUT_DIM);
   B << 0.0, 1.0;
   linearSystemDynamicsPtr_.reset(new DoubleIntegratorDynamics(A, B));
 
@@ -94,8 +87,6 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
   loadData::loadEigenMatrix(taskFile, "R", R_);
   loadData::loadEigenMatrix(taskFile, "Q_final", QFinal_);
   loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
-  xNominal_ = vector_t::Zero(STATE_DIM_);
-  uNominal_ = vector_t::Zero(INPUT_DIM_);
 
   std::cerr << "Q:  \n" << Q_ << std::endl;
   std::cerr << "R:  \n" << R_ << std::endl;
@@ -112,7 +103,7 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Initialization
    */
-  linearSystemOperatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM_)));
+  linearSystemOperatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM)));
 }
 
 /******************************************************************************************************/

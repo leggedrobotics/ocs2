@@ -46,7 +46,7 @@ namespace ballbot {
  */
 class TargetTrajectories_Keyboard_Ballbot final : public TargetTrajectories_Keyboard_Interface {
  public:
-  enum { COMMAND_DIM_ = 6 };
+  enum { COMMAND_DIM = 6 };
 
   /**
    * Constructor.
@@ -64,7 +64,7 @@ class TargetTrajectories_Keyboard_Ballbot final : public TargetTrajectories_Keyb
    */
   TargetTrajectories_Keyboard_Ballbot(int argc, char* argv[], const std::string& robotName = "robot",
                                       const scalar_array_t& goalPoseLimit = scalar_array_t{2.0, 2.0, 360.0, 2.0, 2.0, 2.0})
-      : TargetTrajectories_Keyboard_Interface(argc, argv, robotName, COMMAND_DIM_, goalPoseLimit) {
+      : TargetTrajectories_Keyboard_Interface(argc, argv, robotName, COMMAND_DIM, goalPoseLimit) {
     observationSubscriber_ = this->nodeHandle_->subscribe("/" + robotName + "_mpc_observation", 1,
                                                           &TargetTrajectories_Keyboard_Ballbot::observationCallback, this);
   }
@@ -85,7 +85,7 @@ class TargetTrajectories_Keyboard_Ballbot final : public TargetTrajectories_Keyb
     }
 
     // desired state from command line (position is relative, velocity absolute)
-    vector_t relativeState = Eigen::Map<const vector_t>(commadLineTarget.data(), COMMAND_DIM_);
+    vector_t relativeState = Eigen::Map<const vector_t>(commadLineTarget.data(), COMMAND_DIM);
     relativeState(2) = deg2rad(commadLineTarget[2]);
 
     // Target reaching duration

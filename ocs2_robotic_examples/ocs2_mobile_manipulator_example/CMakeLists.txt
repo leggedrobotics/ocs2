@@ -5,15 +5,15 @@ project(ocs2_mobile_manipulator_example)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
-  ocs2_comm_interfaces
+  ocs2_ros_interfaces
   ocs2_core
   ocs2_ddp
-  ocs2_mpc_node
+  ocs2_mpc
   ocs2_robotic_tools
-  pinocchio
 )
 
 find_package(catkin REQUIRED COMPONENTS
+  roslib
   ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
@@ -21,6 +21,9 @@ find_package(Boost REQUIRED COMPONENTS
   system
   filesystem
 )
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(pinocchio REQUIRED pinocchio)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
@@ -38,6 +41,7 @@ catkin_package(
     ${CATKIN_PACKAGE_DEPENDENCIES}
   DEPENDS
     Boost
+    pinocchio
 )
 
 ###########
@@ -51,6 +55,8 @@ include_directories(
 
 # mobile maniulator interface library
 add_library(${PROJECT_NAME}
+  src/MobileManipulatorCost.cpp
+  src/MobileManipulatorDynamics.cpp
   src/MobileManipulatorInterface.cpp
 )
 add_dependencies(${PROJECT_NAME}

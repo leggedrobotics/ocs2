@@ -1,0 +1,78 @@
+model_settings
+{
+  recompileLibraries            true
+}
+
+; DDP settings
+ddp
+{
+  algorithm                     SLQ
+
+  nThreads                      1
+
+  maxNumIterations              10
+  minRelCost                    0.1
+  constraintTolerance           1e-3
+
+  displayInfo                   false
+  displayShortSummary           true
+  checkNumericalStability       false
+
+  AbsTolODE                     1e-5
+  RelTolODE                     1e-3
+  minTimeStep                   1e-3
+  maxNumStepsPerSecond          100000
+  backwardPassIntegratorType    ODE45
+
+  inequalityConstraintMu        100.0
+  inequalityConstraintDelta     1.1
+
+  preComputeRiccatiTerms        true
+  useNominalTimeForBackwardPass false
+
+  useFeedbackPolicy             false
+
+  strategy                      LINE_SEARCH
+  lineSearch
+  {
+    minStepLength                 1.0
+    maxStepLength                 1.0
+    hessianCorrectionStrategy     DIAGONAL_SHIFT
+    hessianCorrectionMultiple     1e-3
+  }
+}
+
+; Rollout settings
+rollout
+{
+  AbsTolODE                     1e-5    ;1e-6
+  RelTolODE                     1e-3    ;1e-4
+  minTimeStep                   1e-3
+  maxNumStepsPerSecond          100000
+  checkNumericalStability       false
+}
+
+; MPC settings
+mpc
+{
+  timeHorizon                    1.0
+  numPartitions                  4
+  runtimeMaxNumIterations        1
+  initMaxNumIterations           10
+  runtimeMinStepLength           1.0
+  runtimeMaxStepLength           1.0
+  initMaxStepLength              1.0
+  initMinStepLength              0.1
+  coldStart                      false
+  useParallelRiccatiSolver       true  ; use disjoint riccati solver in MP case and recedingHorizon fashion
+  solutionTimeWindow             0.2   ; [s]
+  mpcDesiredFrequency            100   ; [Hz]
+  mrtDesiredFrequency            400   ; [Hz]
+  debugPrint                     true
+}
+
+; initial state
+initialState
+{
+  (0,0) 0.0  ;
+}

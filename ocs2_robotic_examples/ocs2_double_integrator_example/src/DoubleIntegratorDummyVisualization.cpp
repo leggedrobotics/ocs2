@@ -44,7 +44,7 @@ void DoubleIntegratorDummyVisualization::update(const SystemObservation& observa
   joint_state.name.resize(2);
   joint_state.position.resize(2);
   joint_state.name[0] = "slider_to_cart";
-  joint_state.position[0] = observation.state()(0);
+  joint_state.position[0] = observation.state(0);
   joint_state.name[1] = "slider_to_target";
   joint_state.position[1] = costDesiredTrajectories.desiredStateTrajectory()[0](0);
 

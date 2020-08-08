@@ -69,9 +69,9 @@ void PythonInterface::reset(CostDesiredTrajectories targetTrajectories) {
 /******************************************************************************************************/
 void PythonInterface::setObservation(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u) {
   SystemObservation observation;
-  observation.time() = t;
-  observation.state() = x;
-  observation.input() = u;
+  observation.time = t;
+  observation.state = x;
+  observation.input = u;
   mpcMrtInterface_->setCurrentObservation(observation);
 }
 

@@ -58,8 +58,8 @@ void QuadrotorDummyVisualization::update(const SystemObservation& observation, c
   tfBroadcaster_.sendTransform(command_frame_transform);
 
   tf::Transform transform;
-  transform.setOrigin(tf::Vector3(observation.state()(0), observation.state()(1), observation.state()(2)));
-  tf::Quaternion q = tf::createQuaternionFromRPY(observation.state()(3), observation.state()(4), observation.state()(5));
+  transform.setOrigin(tf::Vector3(observation.state(0), observation.state(1), observation.state(2)));
+  tf::Quaternion q = tf::createQuaternionFromRPY(observation.state(3), observation.state(4), observation.state(5));
   transform.setRotation(q);
   tfBroadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "base"));
 }

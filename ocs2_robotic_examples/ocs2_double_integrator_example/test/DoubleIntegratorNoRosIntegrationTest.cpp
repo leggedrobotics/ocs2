@@ -47,8 +47,8 @@ TEST(DoubleIntegratorIntegrationTest, synchronousTracking) {
 
   // initialize observation:
   SystemObservation observation;
-  observation.state() = doubleIntegratorInterface.getInitialState();
-  observation.time() = time;
+  observation.state = doubleIntegratorInterface.getInitialState();
+  observation.time = time;
 
   mpcInterface.setCurrentObservation(observation);
 
@@ -57,7 +57,7 @@ TEST(DoubleIntegratorIntegrationTest, synchronousTracking) {
   costDesiredTrajectories.desiredTimeTrajectory().push_back(time);
   costDesiredTrajectories.desiredTimeTrajectory().push_back(time + 1);
   vector_t goalState = doubleIntegratorInterface.getXFinal();
-  costDesiredTrajectories.desiredStateTrajectory().push_back(observation.state());
+  costDesiredTrajectories.desiredStateTrajectory().push_back(observation.state);
   costDesiredTrajectories.desiredStateTrajectory().push_back(goalState);
   vector_t desiredInput = vector_t::Zero(INPUT_DIM);
   costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
@@ -83,13 +83,13 @@ TEST(DoubleIntegratorIntegrationTest, synchronousTracking) {
       mpcInterface.evaluatePolicy(time, vector_t::Zero(STATE_DIM), optimalState, optimalInput, subsystem);
 
       // use optimal state for the next observation:
-      observation.state() = optimalState;
-      observation.time() = time;
+      observation.state = optimalState;
+      observation.time = time;
       mpcInterface.setCurrentObservation(observation);
     }
   }
 
-  ASSERT_NEAR(observation.state()[0], goalState[0], 2e-2);
+  ASSERT_NEAR(observation.state(0), goalState(0), 2e-2);
 }
 
 TEST(DoubleIntegratorIntegrationTest, asynchronousTracking) {
@@ -157,8 +157,8 @@ TEST(DoubleIntegratorIntegrationTest, asynchronousTracking) {
       {
         std::lock_guard<std::mutex> lock(timeStateMutex);
         // use optimal state for the next observation:
-        observation.state() = optimalState;
-        observation.time() = time;
+        observation.state = optimalState;
+        observation.time = time;
       }
       mpcInterface.setCurrentObservation(observation);
       mpcInterface.advanceMpc();

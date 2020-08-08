@@ -71,13 +71,12 @@ int main(int argc, char** argv) {
 
   // initial state
   ocs2::SystemObservation initObservation;
-  initObservation.state() = ballbotInterface.getInitialState();
-  initObservation.input().setZero(ocs2::ballbot::INPUT_DIM);
-  initObservation.time() = 0.0;
+  initObservation.state = ballbotInterface.getInitialState();
+  initObservation.input.setZero(ocs2::ballbot::INPUT_DIM);
+  initObservation.time = 0.0;
 
   // initial command
-  const ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time()}, {initObservation.state()},
-                                                                  {initObservation.input()});
+  const ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time}, {initObservation.state}, {initObservation.input});
 
   // Run dummy (loops while ros is ok)
   dummyBallbot.run(initObservation, initCostDesiredTrajectories);

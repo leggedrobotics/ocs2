@@ -69,9 +69,9 @@ int main(int argc, char** argv) {
 
   // initial state
   ocs2::SystemObservation initObservation;
-  initObservation.state() = cartPoleInterface.getInitialState();
-  initObservation.input().setZero(ocs2::cartpole::INPUT_DIM);
-  initObservation.time() = 0.0;
+  initObservation.state = cartPoleInterface.getInitialState();
+  initObservation.input.setZero(ocs2::cartpole::INPUT_DIM);
+  initObservation.time = 0.0;
 
   // initial command
   const ocs2::CostDesiredTrajectories initCostDesiredTrajectories({0.0}, {cartPoleInterface.getInitialTarget()},

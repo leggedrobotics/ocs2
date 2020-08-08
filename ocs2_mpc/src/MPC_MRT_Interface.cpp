@@ -92,7 +92,7 @@ void MPC_MRT_Interface::advanceMpc() {
     }
   }
 
-  bool controllerIsUpdated = mpc_.run(currentObservation.time(), currentObservation.state());
+  bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state);
   if (!controllerIsUpdated) {
     return;
   }
@@ -104,7 +104,7 @@ void MPC_MRT_Interface::advanceMpc() {
   // check MPC delay and solution window compatibility
   scalar_t timeWindow = mpc_.settings().solutionTimeWindow_;
   if (mpc_.settings().solutionTimeWindow_ < 0) {
-    timeWindow = mpc_.getSolverPtr()->getFinalTime() - currentObservation.time();
+    timeWindow = mpc_.getSolverPtr()->getFinalTime() - currentObservation.time;
   }
   if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) {
     std::cerr << "WARNING: The solution time window might be shorter than the MPC delay!" << std::endl;
@@ -127,7 +127,7 @@ void MPC_MRT_Interface::fillMpcOutputBuffers(SystemObservation mpcInitObservatio
   std::lock_guard<std::mutex> policyBufferLock(this->policyBufferMutex_);
 
   // get solution
-  scalar_t startTime = mpcInitObservation.time();
+  scalar_t startTime = mpcInitObservation.time;
   scalar_t finalTime = startTime + mpc_.settings().solutionTimeWindow_;
   if (mpc_.settings().solutionTimeWindow_ < 0) {
     finalTime = mpc_.getSolverPtr()->getFinalTime();

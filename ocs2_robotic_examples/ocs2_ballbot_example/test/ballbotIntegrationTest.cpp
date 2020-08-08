@@ -49,9 +49,9 @@ TEST(BallbotIntegrationTest, createDummyMRT) {
 
   // Initialize dummy
   SystemObservation initObservation;
-  initObservation.state() = ballbotInterface.getInitialState();
-  initObservation.input().setZero(ocs2::ballbot::INPUT_DIM);
-  initObservation.time() = 0.0;
+  initObservation.state = ballbotInterface.getInitialState();
+  initObservation.input.setZero(ocs2::ballbot::INPUT_DIM);
+  initObservation.time = 0.0;
 }
 
 TEST(BallbotIntegrationTest, createMPC) {

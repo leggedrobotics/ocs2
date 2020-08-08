@@ -117,12 +117,12 @@ class TargetTrajectories_Keyboard_Quadrotor final : public ocs2::TargetTrajector
     // reversing the order of the position and orientation.
     {
       Eigen::Matrix<scalar_t, 3, 1> temp;
-      temp = targetPoseDisplacement.template head<3>();
-      targetPoseDisplacement.template head<3>() = targetPoseDisplacement.template tail<3>();
-      targetPoseDisplacement.template tail<3>() = temp;
-      temp = targetVelocity.template head<3>();
-      targetVelocity.template head<3>() = targetVelocity.template tail<3>();
-      targetVelocity.template tail<3>() = temp;
+      temp = targetPoseDisplacement.head<3>();
+      targetPoseDisplacement.head<3>() = targetPoseDisplacement.tail<3>();
+      targetPoseDisplacement.tail<3>() = temp;
+      temp = targetVelocity.head<3>();
+      targetVelocity.head<3>() = targetVelocity.tail<3>();
+      targetVelocity.tail<3>() = temp;
     }
 
     // targetReachingDuration
@@ -136,20 +136,20 @@ class TargetTrajectories_Keyboard_Quadrotor final : public ocs2::TargetTrajector
     // Desired time trajectory
     scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
     tDesiredTrajectory.resize(2);
-    tDesiredTrajectory[0] = observation.time();
-    tDesiredTrajectory[1] = observation.time() + targetReachingDuration;
+    tDesiredTrajectory[0] = observation.time;
+    tDesiredTrajectory[1] = observation.time + targetReachingDuration;
 
     // Desired state trajectory
     auto& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
     xDesiredTrajectory.resize(2);
     xDesiredTrajectory[0].setZero(STATE_DIM);
-    xDesiredTrajectory[0].template segment<6>(0) = observation.state().template segment<6>(0);
-    xDesiredTrajectory[0].template segment<6>(6) = observation.state().template segment<6>(6);
+    xDesiredTrajectory[0].segment<6>(0) = observation.state.segment<6>(0);
+    xDesiredTrajectory[0].segment<6>(6) = observation.state.segment<6>(6);
 
     xDesiredTrajectory[1].resize(STATE_DIM);
     xDesiredTrajectory[1].setZero();
-    xDesiredTrajectory[1].template segment<6>(0) = observation.state().template segment<6>(0) + targetPoseDisplacement;
-    xDesiredTrajectory[1].template segment<6>(6) = targetVelocity;
+    xDesiredTrajectory[1].segment<6>(0) = observation.state.segment<6>(0) + targetPoseDisplacement;
+    xDesiredTrajectory[1].segment<6>(6) = targetVelocity;
 
     // Desired input trajectory
     costDesiredTrajectories.desiredInputTrajectory().resize(2);

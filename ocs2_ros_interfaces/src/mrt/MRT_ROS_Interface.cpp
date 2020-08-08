@@ -215,7 +215,7 @@ void MRT_ROS_Interface::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_control
     readPolicyMsg(*msg, primalSolutionBuffer, commandBuffer);
 
     const scalar_t partitionInitMargin = 1e-1;  //! @badcode Is this necessary?
-    this->partitioningTimesUpdate(commandBuffer.mpcInitObservation_.time() - partitionInitMargin, this->partitioningTimesBuffer_);
+    this->partitioningTimesUpdate(commandBuffer.mpcInitObservation_.time - partitionInitMargin, this->partitioningTimesBuffer_);
 
     // allow user to modify the buffer
     this->modifyBufferPolicy(*this->commandBuffer_, *this->primalSolutionBuffer_);

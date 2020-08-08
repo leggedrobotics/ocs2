@@ -75,11 +75,11 @@ void BallbotDummyVisualization::update(const SystemObservation& observation, con
   tfBroadcaster_.sendTransform(command_frame_transform);
 
   // publish joints transforms
-  std::map<std::string, double> jointPositions{{"jball_x", observation.state()(0)},
-                                               {"jball_y", observation.state()(1)},
-                                               {"jbase_z", observation.state()(2)},
-                                               {"jbase_y", observation.state()(3)},
-                                               {"jbase_x", observation.state()(4)}};
+  std::map<std::string, double> jointPositions{{"jball_x", observation.state(0)},
+                                               {"jball_y", observation.state(1)},
+                                               {"jbase_z", observation.state(2)},
+                                               {"jbase_y", observation.state(3)},
+                                               {"jbase_x", observation.state(4)}};
   robotStatePublisherPtr_->publishTransforms(jointPositions, timeMsg, "");
 }
 

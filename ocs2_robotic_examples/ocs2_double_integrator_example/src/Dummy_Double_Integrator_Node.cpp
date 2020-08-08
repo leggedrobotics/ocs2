@@ -69,9 +69,9 @@ int main(int argc, char** argv) {
 
   // initial state
   ocs2::SystemObservation initObservation;
-  initObservation.time() = 0.0;
-  initObservation.state() = doubleIntegratorInterface.getInitialState();
-  initObservation.input() = ocs2::vector_t::Zero(ocs2::double_integrator::INPUT_DIM);
+  initObservation.time = 0.0;
+  initObservation.state = doubleIntegratorInterface.getInitialState();
+  initObservation.input = ocs2::vector_t::Zero(ocs2::double_integrator::INPUT_DIM);
 
   // initial command
   const ocs2::CostDesiredTrajectories initCostDesiredTrajectories({0.0}, {doubleIntegratorInterface.getInitialTarget()},

@@ -39,8 +39,8 @@ void CartpoleDummyVisualization::update(const SystemObservation& observation, co
   joint_state.position.resize(2);
   joint_state.name[0] = "slider_to_cart";
   joint_state.name[1] = "cart_to_pole";
-  joint_state.position[0] = observation.state()(1);
-  joint_state.position[1] = observation.state()(0);
+  joint_state.position[0] = observation.state(1);
+  joint_state.position[1] = observation.state(0);
   jointPublisher_.publish(joint_state);
 }
 

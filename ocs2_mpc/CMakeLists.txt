@@ -50,6 +50,7 @@ add_library(${PROJECT_NAME}
   src/MPC_BASE.cpp
   src/MPC_DDP.cpp
   src/MPC_Settings.cpp
+  src/SystemObservation.cpp
   src/MRT_BASE.cpp
   src/MPC_MRT_Interface.cpp
   # src/MPC_OCS2.cpp

@@ -27,28 +27,39 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
-
-#include <ostream>
-
-#include <ocs2_core/Types.h>
+#include "ocs2_mpc/SystemObservation.h"
 
 namespace ocs2 {
 
-/**
- * This class contains the observation information.
- */
-struct SystemObservation {
-  size_t mode = 0;
-  scalar_t time = 0.0;
-  vector_t state;
-  vector_t input;
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void swap(SystemObservation& a, SystemObservation& b) noexcept {
+  std::swap(a.mode, b.mode);
+  std::swap(a.time, b.time);
+  a.state.swap(b.state);
+  a.input.swap(b.input);
+}
 
-  friend void swap(SystemObservation& a, SystemObservation& b) noexcept;
-};
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::ostream& operator<<(std::ostream& out, const SystemObservation& observation) {
+  out << "Observation: \n";
+  out << "\t time:      " << observation.time << '\n';
+  out << "\t mode:      " << observation.mode << '\n';
+  out << "\t state:    [";
+  for (int i = 0; i < observation.state.size() - 1; i++) {
+    out << observation.state(i) << ", ";
+  }
+  out << observation.state(observation.state.size() - 1) << "]\n";
+  out << "\t input:    [";
+  for (int i = 0; i < observation.input.size() - 1; i++) {
+    out << observation.input(i) << ", ";
+  }
+  out << observation.input(observation.input.size() - 1) << "]";
 
-void swap(SystemObservation& a, SystemObservation& b) noexcept;
-
-std::ostream& operator<<(std::ostream& out, const SystemObservation& observation);
+  return out;
+}
 
 }  // namespace ocs2

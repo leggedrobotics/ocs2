@@ -65,7 +65,7 @@ void MRT_ROS_Dummy_Loop::run(const SystemObservation& initObservation, const Cos
   }
 
   size_t loopCounter = 0;
-  scalar_t time = initObservation.time();
+  scalar_t time = initObservation.time;
 
   // reset MPC node
   mrt_.resetMpcNode(initCostDesiredTrajectories);
@@ -110,17 +110,17 @@ void MRT_ROS_Dummy_Loop::run(const SystemObservation& initObservation, const Cos
     std::cout << "### Current time " << time << "\n";
 
     // integrate nominal dynamics if available, otherwise fake simulation
-    vector_t stateTemp = observation_.state();
+    vector_t stateTemp = observation_.state;
     if (mrt_.isRolloutSet()) {
-      mrt_.rolloutPolicy(time, stateTemp, timeStep, observation_.state(), observation_.input(), observation_.subsystem());
+      mrt_.rolloutPolicy(time, stateTemp, timeStep, observation_.state, observation_.input, observation_.mode);
     } else {
-      mrt_.evaluatePolicy(time + timeStep, stateTemp, observation_.state(), observation_.input(), observation_.subsystem());
+      mrt_.evaluatePolicy(time + timeStep, stateTemp, observation_.state, observation_.input, observation_.mode);
     }
 
     // time and loop counter increment
     loopCounter++;
     time += timeStep;
-    observation_.time() = time;
+    observation_.time = time;
 
     // user-defined modifications before publishing
     modifyObservation(observation_);

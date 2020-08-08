@@ -146,7 +146,7 @@ bool MRT_BASE::updatePolicy() {
 /******************************************************************************************************/
 void MRT_BASE::partitioningTimesUpdate(scalar_t time, scalar_array_t& partitioningTimes) const {
   partitioningTimes.resize(2);
-  partitioningTimes[0] = (policyReceivedEver_) ? initPlanObservation_.time() : time;
+  partitioningTimes[0] = (policyReceivedEver_) ? initPlanObservation_.time : time;
   partitioningTimes[1] = std::numeric_limits<scalar_t>::max();
 }
 

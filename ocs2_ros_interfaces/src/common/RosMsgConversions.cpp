@@ -36,34 +36,34 @@ namespace ros_msg_conversions {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 void createObservationMsg(const SystemObservation& observation, ocs2_msgs::mpc_observation& observationMsg) {
-  observationMsg.time = observation.time();
+  observationMsg.time = observation.time;
 
-  observationMsg.state.value.resize(observation.state().rows());
-  for (size_t i = 0; i < observation.state().rows(); i++) {
+  observationMsg.state.value.resize(observation.state.rows());
+  for (size_t i = 0; i < observation.state.rows(); i++) {
     observationMsg.state.value[i] = observation.state(i);
   }
 
-  observationMsg.input.value.resize(observation.input().rows());
-  for (size_t i = 0; i < observation.input().rows(); i++) {
+  observationMsg.input.value.resize(observation.input.rows());
+  for (size_t i = 0; i < observation.input.rows(); i++) {
     observationMsg.input.value[i] = observation.input(i);
   }
 
-  observationMsg.subsystem = observation.subsystem();
+  observationMsg.mode = observation.mode;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
 void readObservationMsg(const ocs2_msgs::mpc_observation& observationMsg, SystemObservation& observation) {
-  observation.time() = observationMsg.time;
+  observation.time = observationMsg.time;
 
   const auto& state = observationMsg.state.value;
-  observation.state() = Eigen::Map<const Eigen::VectorXf>(state.data(), state.size()).cast<scalar_t>();
+  observation.state = Eigen::Map<const Eigen::VectorXf>(state.data(), state.size()).cast<scalar_t>();
 
   const auto& input = observationMsg.input.value;
-  observation.input() = Eigen::Map<const Eigen::VectorXf>(input.data(), input.size()).cast<scalar_t>();
+  observation.input = Eigen::Map<const Eigen::VectorXf>(input.data(), input.size()).cast<scalar_t>();
 
-  observation.subsystem() = observationMsg.subsystem;
+  observation.mode = observationMsg.mode;
 }
 
 /******************************************************************************************************/

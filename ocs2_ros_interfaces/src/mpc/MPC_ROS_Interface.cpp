@@ -226,7 +226,7 @@ void MPC_ROS_Interface::fillMpcOutputBuffers(SystemObservation mpcInitObservatio
   std::lock_guard<std::mutex> policyBufferLock(policyBufferMutex_);
 
   // get solution
-  scalar_t finalTime = mpcInitObservation.time() + mpc_.settings().solutionTimeWindow_;
+  scalar_t finalTime = mpcInitObservation.time + mpc_.settings().solutionTimeWindow_;
   if (mpc_.settings().solutionTimeWindow_ < 0) {
     finalTime = mpc_.getSolverPtr()->getFinalTime();
   }
@@ -273,7 +273,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   }
 
   // run MPC
-  bool controllerIsUpdated = mpc_.run(currentObservation.time(), currentObservation.state());
+  bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state);
   if (!controllerIsUpdated) {
     return;
   }
@@ -285,7 +285,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   // check MPC delay and solution window compatibility
   scalar_t timeWindow = mpc_.settings().solutionTimeWindow_;
   if (mpc_.settings().solutionTimeWindow_ < 0) {
-    timeWindow = mpc_.getSolverPtr()->getFinalTime() - currentObservation.time();
+    timeWindow = mpc_.getSolverPtr()->getFinalTime() - currentObservation.time;
   }
   if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) {
     std::cerr << "WARNING: The solution time window might be shorter than the MPC delay!\n";

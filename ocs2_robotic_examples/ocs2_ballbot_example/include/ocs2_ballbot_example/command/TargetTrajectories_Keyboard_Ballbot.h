@@ -100,14 +100,14 @@ class TargetTrajectories_Keyboard_Ballbot final : public TargetTrajectories_Keyb
     CostDesiredTrajectories costDesiredTrajectories(2);
     scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
     tDesiredTrajectory.resize(2);
-    tDesiredTrajectory[0] = observation.time();
-    tDesiredTrajectory[1] = observation.time() + targetReachingDuration;
+    tDesiredTrajectory[0] = observation.time;
+    tDesiredTrajectory[1] = observation.time + targetReachingDuration;
 
     // Desired state trajectory
     vector_array_t& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
     xDesiredTrajectory.resize(2);
-    xDesiredTrajectory[0] = observation.state();
-    xDesiredTrajectory[1] = observation.state();
+    xDesiredTrajectory[0] = observation.state;
+    xDesiredTrajectory[1] = observation.state;
     xDesiredTrajectory[1].template head<3>() += relativeState.template head<3>();
     xDesiredTrajectory[1].template tail<5>() << relativeState.template tail<3>(), 0.0, 0.0;
 
